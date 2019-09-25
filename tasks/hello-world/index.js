@@ -2,6 +2,7 @@
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { log } = require('@cumulus/common');
+const { sleep } = require('@cumulus/common/util');
 const {
   deleteS3Object,
   s3ObjectExists,
@@ -56,6 +57,10 @@ async function throwErrorIfConfigured(event) {
  */
 async function helloWorld(event) {
   await throwErrorIfConfigured(event);
+
+  if (event.input && event.input.taskDurationInSecs) {
+    await sleep(event.input.taskDurationInSecs * 1000);
+  }
 
   return {
     hello: 'Hello World'

@@ -107,10 +107,20 @@ default:
         minTasks: 1
         count: 1
         maxTasks: 10
-        scaleInActivityScheduleTime: 5000
-        scaleInAdjustmentPercent: -5
-        scaleOutActivityScheduleTime: 10000
-        scaleOutAdjustmentPercent: 10
+        scaleIn:
+          metricName: ActivitiesScheduled
+          metricPeriod: 60
+          metricStat: Average
+          adjustmentPercent: -5
+          comparisonOperator: LessThanThreshold
+          threshold: 0.4
+        scaleOut:
+          metricName: ActivitiesScheduled
+          metricPeriod: 60
+          metricStat: Average
+          adjustmentPercent: 10
+          comparisonOperator: GreaterThanOrEqualToThreshold
+          threshold: 0.8
         activityName: EcsTaskHelloWorld
         envs:
           AWS_DEFAULT_REGION:
@@ -132,17 +142,27 @@ default:
             metric: MemoryUtilization
             statistic: SampleCount
             threshold: '{{ecs.services.EcsTaskHelloWorld.count}}'
-      EcsTaskHelloWorlKesCma:
+      EcsTaskHelloWorldKesCma:
         image: cumuluss/cumulus-ecs-task:1.3.0
         cpu: 400
         memory: 700
         minTasks: 1
         count: 1
         maxTasks: 10
-        scaleInActivityScheduleTime: 5000
-        scaleInAdjustmentPercent: -5
-        scaleOutActivityScheduleTime: 10000
-        scaleOutAdjustmentPercent: 10
+        scaleIn:
+          metricName: ActivityScheduleTime
+          metricPeriod: 60
+          metricStat: Average
+          adjustmentPercent: -5
+          comparisonOperator: LessThanThreshold
+          threshold: 5000
+        scaleOut:
+          metricName: ActivityScheduleTime
+          metricPeriod: 60
+          metricStat: Average
+          adjustmentPercent: 10
+          comparisonOperator: GreaterThanOrEqualToThreshold
+          threshold: 10000
         activityName: EcsTaskHelloWorldKesCma
         envs:
           AWS_DEFAULT_REGION:
@@ -163,7 +183,7 @@ default:
             evaluation_periods: 1
             metric: MemoryUtilization
             statistic: SampleCount
-            threshold: '{{ecs.services.EcsTaskHelloWorlKesCma.count}}'
+            threshold: '{{ecs.services.EcsTaskHelloWorldKesCma.count}}'
 
   activities:
     - name: EcsTaskHelloWorld

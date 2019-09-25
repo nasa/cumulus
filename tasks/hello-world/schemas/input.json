@@ -1,0 +1,8 @@
+{
+  "title": "HelloWorldInput",
+  "description": "Describes the input expected by the hello-world task",
+  "type": "object",
+  "properties": {
+    "taskDurationInSecs": { "type": "number" }
+  }
+}

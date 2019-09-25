@@ -1017,7 +1017,7 @@ Resources:
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs
 
-  {{# if this.scaleInAdjustmentPercent }}
+  {{# if this.scaleIn }}
   {{@key}}ECSServiceScalingInPolicy:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     DependsOn:
@@ -1034,10 +1034,10 @@ Resources:
         MinAdjustmentMagnitude: 1
         StepAdjustments:
           - MetricIntervalUpperBound: 0
-            ScalingAdjustment: {{this.scaleInAdjustmentPercent}}
-  {{/if}}{{! End of "if this.scaleInAdjustmentPercent" condition }}
+            ScalingAdjustment: {{this.scaleIn.adjustmentPercent}}
+  {{/if}}{{! End of "if this.scaleIn" condition }}
 
-  {{# if this.scaleOutAdjustmentPercent }}
+  {{# if this.scaleOut }}
   {{@key}}ECSServiceScalingOutPolicy:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
@@ -1052,10 +1052,10 @@ Resources:
         MinAdjustmentMagnitude: 1
         StepAdjustments:
           - MetricIntervalLowerBound: 0
-            ScalingAdjustment: {{this.scaleOutAdjustmentPercent}}
-  {{/if}}{{! End of "if this.scaleOutAdjustmentPercent" condition }}
+            ScalingAdjustment: {{this.scaleOut.adjustmentPercent}}
+  {{/if}}{{! End of "if this.scaleOut" condition }}
 
-  {{# if this.scaleInAdjustmentPercent }}{{# if this.scaleInActivityScheduleTime }}
+  {{# if this.scaleIn }}
   {{@key}}ECSServiceScalingInAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
@@ -1067,26 +1067,26 @@ Resources:
       Metrics:
         - Id: e1
           Expression: "FILL(m1, 0)"
-          Label: NormalizedActivityScheduleTime
+          Label: {{# if this.scaleIn.metricName}}Normalized{{this.scaleIn.metricName}}{{ else }}NormalizedActivityScheduleTime{{/if}}
         - Id: m1
           MetricStat:
             Metric:
               Namespace: AWS/States
-              MetricName: ActivityScheduleTime
+              MetricName: {{# if this.scaleIn.metricName}}{{this.scaleIn.metricName}}{{ else }}ActivityScheduleTime{{/if}}
               Dimensions:
                 - Name: ActivityArn
                   Value:
                     Ref:
                       {{this.activityName}}Activity
-            Period: 60
-            Stat: Average
+            Period: {{# if this.scaleIn.metricPeriod}}{{this.scaleIn.metricPeriod}}{{ else }}60{{/if}}
+            Stat: {{# if this.scaleIn.metricStat}}{{this.scaleIn.metricStat}}{{ else }}Average{{/if}}
           ReturnData: false
-      ComparisonOperator: LessThanThreshold
-      Threshold: {{this.scaleInActivityScheduleTime}}
+      ComparisonOperator: {{this.scaleIn.comparisonOperator}}
+      Threshold: {{this.scaleIn.threshold}}
       TreatMissingData: missing
-  {{/if}}{{/if}}{{! End of "if this.scaleInAdjustmentPercent && this.scaleInActivityScheduleTime" condition}}
+  {{/if}}{{! End of "if this.scaleIn" condition}}
 
-  {{# if this.scaleOutAdjustmentPercent }}{{# if this.scaleOutActivityScheduleTime }}
+  {{# if this.scaleOut }}
   {{@key}}ECSServiceScalingOutAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
@@ -1098,24 +1098,24 @@ Resources:
       Metrics:
         - Id: e1
           Expression: "FILL(m1, 0)"
-          Label: NormalizedActivityScheduleTime
+          Label: {{# if this.scaleOut.metricName}}Normalized{{this.scaleOut.metricName}}{{ else }}NormalizedActivityScheduleTime{{/if}}
         - Id: m1
           MetricStat:
             Metric:
               Namespace: AWS/States
-              MetricName: ActivityScheduleTime
+              MetricName: {{# if this.scaleOut.metricName}}{{this.scaleOut.metricName}}{{ else }}ActivityScheduleTime{{/if}}
               Dimensions:
                 - Name: ActivityArn
                   Value:
                     Ref:
                       {{this.activityName}}Activity
-            Period: 60
-            Stat: Average
+            Period: {{# if this.scaleOut.metricPeriod}}{{this.scaleOut.metricPeriod}}{{ else }}60{{/if}}
+            Stat: {{# if this.scaleOut.metricStat}}{{this.scaleOut.metricStat}}{{ else }}Average{{/if}}
           ReturnData: false
-      ComparisonOperator: GreaterThanOrEqualToThreshold
-      Threshold: {{this.scaleOutActivityScheduleTime}}
+      ComparisonOperator: {{this.scaleOut.comparisonOperator}}
+      Threshold: {{this.scaleOut.threshold}}
       TreatMissingData: missing
-  {{/if}}{{/if}}{{! End of "if this.scaleOutAdjustmentPercent && this.scaleOutActivityScheduleTime" condition}}
+  {{/if}}{{! End of "if this.scaleOut" condition}}
   {{/if}}{{/if}}{{! End of "if this.minTasks && this.maxTasks" condition }}
 
   {{@key}}ECSServiceTaskCountLowAlarm:
