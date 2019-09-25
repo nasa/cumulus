@@ -166,9 +166,8 @@ async function del(req, res) {
       await esClient.delete({
         id: collectionId,
         index: esIndex,
-        type: 'collection',
-        ignore: [404]
-      });
+        type: 'collection'
+      }, { ignore: [404] });
     }
 
     return res.send({ message: 'Record deleted' });
