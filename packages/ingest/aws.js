@@ -44,23 +44,6 @@ function getEndpoint(local = false, port = 8000) {
 /**
  * Returns execution ARN from a statement machine Arn and executionName
  *
- * @param {string} stateMachineArn -  state machine ARN
- * @param {string} executionName - state machine's execution name
- * @returns {string} Step Function Execution Arn
- */
-function getExecutionArn(stateMachineArn, executionName) {
-  deprecate(
-    '@cumulus/ingest/aws/getExecutionArn()',
-    '1.13.4',
-    '@cumulus/common/aws/getExecutionArn()'
-  );
-
-  return aws.getExecutionArn(stateMachineArn, executionName);
-}
-
-/**
- * Returns execution ARN from a statement machine Arn and executionName
- *
  * @param {string} executionArn - execution ARN
  * @returns {string} return aws console url for the execution
  */
@@ -401,6 +384,5 @@ module.exports = {
   getEndpoint,
   Events,
   StepFunction,
-  getExecutionArn,
   getExecutionUrl
 };

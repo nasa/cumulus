@@ -16,7 +16,7 @@ const {
   reportToFileType,
   submitReports
 } = require('../lib/ems');
-const { deconstructCollectionId } = require('../es/indexer');
+const { deconstructCollectionId } = require('../lib/utils');
 const { Search, defaultIndexAlias } = require('../es/search');
 
 /**
@@ -252,7 +252,8 @@ async function generateReport(reportType, startTime, endTime, collections) {
 
   const esIndex = process.env.ES_INDEX || defaultIndexAlias;
   const searchQuery = buildSearchQuery(esIndex, type, startTime, endTime);
-  let response = await esClient.search(searchQuery);
+  let response = await esClient.search(searchQuery)
+    .then((searchResponse) => searchResponse.body);
   let granules = response.hits.hits.map((s) => s._source);
   let records = buildEMSRecords(emsMappings[reportType], granules, collections);
   stream.write(records.length ? records.join('\n') : '');
@@ -263,7 +264,7 @@ async function generateReport(reportType, startTime, endTime, collections) {
     response = await esClient.scroll({ // eslint-disable-line no-await-in-loop
       scrollId: response._scroll_id,
       scroll: '30s'
-    });
+    }).then((scrollResponse) => scrollResponse.body);
     granules = response.hits.hits.map((s) => s._source);
     records = buildEMSRecords(emsMappings[reportType], granules, collections);
     stream.write(records.length ? `\n${records.join('\n')}` : '');

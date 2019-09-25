@@ -49,7 +49,7 @@ class Collection extends BaseSearch {
         }
       },
       size: 0
-    });
+    }).then((response) => response.body);
 
     // add aggs to res
     return records.map((record) => {

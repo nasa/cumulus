@@ -5,7 +5,7 @@ CNMToCMA:
   memory: 128
   s3Source:
     bucket: '{{buckets.shared.name}}'
-    key: daacs/podaac/cnmToGranule-1.0.2j.zip
+    key: daacs/podaac/cnmToGranule-1.0.2.j-update.zip
   useMessageAdapter: false
   launchInVpc: true
 CnmResponse:
@@ -125,6 +125,18 @@ SfSnsReport:
   layers:
     - '{{cma_layer}}'
   launchInVpc: true
+  tables:
+    - ExecutionsTable
+  envs:
+    execution_sns_topic_arn:
+      function: Ref
+      value: reportExecutionsSns
+    granule_sns_topic_arn:
+      function: Ref
+      value: reportGranulesSns
+    pdr_sns_topic_arn:
+      function: Ref
+      value: reportPdrsSns
 SyncGranule:
   handler: index.handler
   timeout: 300
@@ -143,6 +155,9 @@ SnsS3Test:
   handler: index.handler
   source: lambdas/snsS3Test/
   launchInVpc: true
+  envs:
+    stackName: '{{stackName}}'
+    system_bucket: '{{system_bucket}}'
 WaitForDeployment:
   handler: index.waitForDeploymentHandler
   source: node_modules/@cumulus/integration-tests/dist/

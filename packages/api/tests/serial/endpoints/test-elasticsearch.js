@@ -232,7 +232,8 @@ test.serial('Reindex success', async (t) => {
   t.is(3, indexStatus.primaries.docs.count);
 
   // Validate destination index mappings are correct
-  const fieldMappings = await esClient.indices.getMapping();
+  const fieldMappings = await esClient.indices.getMapping()
+    .then((mappingsResponse) => mappingsResponse.body);
 
   const sourceMapping = get(fieldMappings, esIndex);
   const destMapping = get(fieldMappings, destIndex);
@@ -375,12 +376,13 @@ test.serial('Change index', async (t) => {
   t.is(response.body.message,
     `Reindex success - alias ${aliasName} now pointing to ${destIndex}`);
 
-  const alias = await esClient.indices.getAlias({ name: aliasName });
+  const alias = await esClient.indices.getAlias({ name: aliasName })
+    .then((aliasResponse) => aliasResponse.body);
 
   // Test that the only index connected to the alias is the destination index
   t.deepEqual(Object.keys(alias), [destIndex]);
 
-  t.is(await esClient.indices.exists({ index: sourceIndex }), true);
+  t.is((await esClient.indices.exists({ index: sourceIndex })).body, true);
 
   await esClient.indices.delete({ index: destIndex });
 });
@@ -417,7 +419,7 @@ test.serial('Change index and delete source index', async (t) => {
 
   t.is(response.body.message,
     `Reindex success - alias ${aliasName} now pointing to ${destIndex} and index ${sourceIndex} deleted`);
-  t.is(await esClient.indices.exists({ index: sourceIndex }), false);
+  t.is((await esClient.indices.exists({ index: sourceIndex })).body, false);
 
   await esClient.indices.delete({ index: destIndex });
 });
@@ -440,7 +442,8 @@ test.serial('Reindex from database - create new index', async (t) => {
   t.is(response.body.message,
     `Indexing database to ${indexName}. Operation id: ${id}`);
 
-  const indexExists = await esClient.indices.exists({ index: indexName });
+  const indexExists = await esClient.indices.exists({ index: indexName })
+    .then((indexResponse) => indexResponse.body);
 
   t.true(indexExists);
 
