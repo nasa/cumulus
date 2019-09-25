@@ -811,7 +811,8 @@ async function waitForTestExecutionStart({
   bucket,
   findExecutionFn,
   findExecutionFnParams,
-  maxWaitSeconds = maxWaitForStartedExecutionSecs
+  maxWaitSeconds = maxWaitForStartedExecutionSecs,
+  startTask = 'SfSnsReport'
 }) {
   let timeWaitedSecs = 0;
   /* eslint-disable no-await-in-loop */
@@ -822,7 +823,7 @@ async function waitForTestExecutionStart({
 
     for (let executionCtr = 0; executionCtr < executions.length; executionCtr += 1) {
       const execution = executions[executionCtr];
-      const taskInput = await lambdaStep.getStepInput(execution.executionArn, 'SfSnsReport');
+      const taskInput = await lambdaStep.getStepInput(execution.executionArn, startTask);
       if (taskInput && findExecutionFn(taskInput, findExecutionFnParams)) {
         return execution;
       }

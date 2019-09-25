@@ -1,13 +1,15 @@
 RetryPassWorkflow:
   Comment: 'Tests Retry Configurations'
-  StartAt: StartStatus
+  StartAt: HelloWorld
   States:
-    StartStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
+    HelloWorld:
       CumulusConfig:
-        cumulus_message:
-          input: '{$}'
+        fail: true
+        passOnRetry: true
+        bucket: '{$.meta.buckets.internal.name}'
+        execution: '{$.cumulus_meta.execution_name}'
+      Type: Task
+      Resource: ${HelloWorldLambdaFunction.Arn}
       Retry:
         - &LambdaServiceExceptionRetry
           ErrorEquals:
@@ -17,56 +19,21 @@ RetryPassWorkflow:
           IntervalSeconds: 2
           MaxAttempts: 6
           BackoffRate: 2
-      Next: HelloWorld
-    HelloWorld:
-      CumulusConfig:
-        fail: true
-        passOnRetry: true
-        bucket: '{$.meta.buckets.internal.name}'
-        execution: '{$.cumulus_meta.execution_name}'
-      Type: Task
-      Resource: ${HelloWorldLambdaFunction.Arn}
-      Next: StopStatus
-      Retry:
-        - ErrorEquals:
-            - States.ALL
-          IntervalSeconds: 2
-          MaxAttempts: 3
-    StopStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        sfnEnd: true
-        stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal.name}'
-        stateMachine: '{$.cumulus_meta.state_machine}'
-        executionName: '{$.cumulus_meta.execution_name}'
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
           Next: WorkflowFailed
-      End: true
+      Next: WorkflowSucceeded
+    WorkflowSucceeded:
+      Type: Succeed
     WorkflowFailed:
       Type: Fail
       Cause: 'Workflow failed'
 
 HelloWorldFailWorkflow:
   Comment: 'Failing Hello World Workflow'
-  StartAt: StartStatus
+  StartAt: HelloWorld
   States:
-    StartStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Next: HelloWorld
     HelloWorld:
       CumulusConfig:
         fail: true
@@ -74,72 +41,39 @@ HelloWorldFailWorkflow:
       Resource: ${HelloWorldLambdaFunction.Arn}
       Retry:
         - <<: *LambdaServiceExceptionRetry
-      Next: StopStatus
-    StopStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        sfnEnd: true
-        stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal.name}'
-        stateMachine: '{$.cumulus_meta.state_machine}'
-        executionName: '{$.cumulus_meta.execution_name}'
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
           Next: WorkflowFailed
-      End: true
+      Next: WorkflowSucceeded
+    WorkflowSucceeded:
+      Type: Succeed
     WorkflowFailed:
       Type: Fail
       Cause: 'Workflow failed'
 
 RetryFailWorkflow:
   Comment: 'Tests Retries and Fail'
-  StartAt: StartStatus
+  StartAt: HelloWorld
   States:
-    StartStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Next: HelloWorld
     HelloWorld:
       CumulusConfig:
         fail: true
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
-      Next: StopStatus
       Retry:
         - ErrorEquals:
             - States.ALL
           IntervalSeconds: 2
           BackoffRate: 2
           MaxAttempts: 3
-    StopStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        sfnEnd: true
-        stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal.name}'
-        stateMachine: '{$.cumulus_meta.state_machine}'
-        executionName: '{$.cumulus_meta.execution_name}'
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
           Next: WorkflowFailed
-      End: true
+      Next: WorkflowSucceeded
+    WorkflowSucceeded:
+      Type: Succeed
     WorkflowFailed:
       Type: Fail
       Cause: 'Workflow failed'

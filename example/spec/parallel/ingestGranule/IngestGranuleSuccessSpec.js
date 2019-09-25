@@ -3,6 +3,7 @@
 const fs = require('fs-extra');
 const isNumber = require('lodash.isnumber');
 const isString = require('lodash.isstring');
+const isObject = require('lodash.isobject');
 const path = require('path');
 const { URL, resolve } = require('url');
 const difference = require('lodash.difference');
@@ -525,13 +526,23 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(record.execution).toEqual(getExecutionUrl(workflowExecutionArn));
     });
 
-    it('triggers the execution record being added to DynamoDB', async () => {
+    it('triggers the successful execution record being added to DynamoDB', async () => {
       const record = await waitForModelStatus(
         executionModel,
         { arn: workflowExecutionArn },
         'completed'
       );
       expect(record.status).toEqual('completed');
+    });
+
+    it('triggers the failed execution record being added to DynamoDB', async () => {
+      const record = await waitForModelStatus(
+        executionModel,
+        { arn: failingWorkflowExecution.executionArn },
+        'failed'
+      );
+      expect(record.status).toEqual('failed');
+      expect(isObject(record.error)).toBe(true);
     });
   });
 
@@ -610,7 +621,8 @@ describe('The S3 Ingest Granules workflow', () => {
             stackName: config.stackName,
             bucket: config.bucket,
             findExecutionFn: isReingestExecutionForGranuleId,
-            findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId }
+            findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId },
+            startTask: 'SyncGranule'
           });
 
           console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);

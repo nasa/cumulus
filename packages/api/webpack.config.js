@@ -18,6 +18,7 @@ module.exports = {
     indexFromDatabase: './lambdas/index-from-database.js',
     messageConsumer: './lambdas/message-consumer.js',
     payloadLogger: './lambdas/payload-logger.js',
+    publishReports: './lambdas/publish-reports.js',
     reportExecutions: './lambdas/report-executions.js',
     reportGranules: './lambdas/report-granules.js',
     reportPdrs: './lambdas/report-pdrs.js',

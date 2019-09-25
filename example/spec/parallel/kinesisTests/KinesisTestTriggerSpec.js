@@ -241,8 +241,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       let startStep;
       let endStep;
       beforeAll(async () => {
-        startStep = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SfSnsReport');
-        endStep = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'sf2snsEnd');
+        startStep = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CNMToCMA');
+        endStep = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CnmResponse');
       });
 
       it('records both the original and the final payload', async () => {
