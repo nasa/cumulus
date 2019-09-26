@@ -134,6 +134,7 @@ describe('Ingesting from PDR', () => {
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
       executionModel.delete({ arn: workflowExecution.executionArn }),
+      executionModel.delete({ arn: parsePdrExecutionArn }),
       apiTestUtils.deletePdr({
         prefix: config.stackName,
         pdr: pdrFilename
@@ -194,6 +195,7 @@ describe('Ingesting from PDR', () => {
       let parseLambdaOutput;
       let queueGranulesOutput;
       let expectedParsePdrOutput;
+      let ingestGranuleWorkflowArn;
 
       const outputPayloadFilename = './spec/parallel/ingest/resources/ParsePdr.output.json';
       const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
@@ -219,15 +221,10 @@ describe('Ingesting from PDR', () => {
 
       afterAll(async () => {
         // wait for child executions to complete
-        queueGranulesOutput = await lambdaStep.getStepOutput(
-          parsePdrExecutionArn,
-          'QueueGranules'
-        );
         await Promise.all(
           queueGranulesOutput.payload.running
             .map((arn) => waitForCompletedExecution(arn))
         );
-        await executionModel.delete({ arn: parsePdrExecutionArn });
         await granulesApiTestUtils.deleteGranule({
           prefix: config.stackName,
           granuleId: parseLambdaOutput.payload.granules[0].granuleId
@@ -312,7 +309,6 @@ describe('Ingesting from PDR', () => {
        * running workflow, so use that to get the status.
        */
       describe('IngestGranule workflow', () => {
-        let ingestGranuleWorkflowArn;
         let ingestGranuleExecutionStatus;
 
         beforeAll(async () => {
@@ -333,7 +329,6 @@ describe('Ingesting from PDR', () => {
                 granuleId: g.granuleId
               }))
           );
-          await executionModel.delete({ arn: ingestGranuleWorkflowArn });
         });
 
         it('executes successfully', () => {
@@ -354,8 +349,17 @@ describe('Ingesting from PDR', () => {
 
       /** This test relies on the previous 'IngestGranule workflow' to complete */
       describe('When accessing an execution via the API that was triggered from a parent step function', () => {
+        afterAll(async () => {
+          await executionModel.delete({ arn: ingestGranuleWorkflowArn });
+        });
+
         it('displays a link to the parent', async () => {
-          const ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
+          await waitForModelStatus(
+            executionModel,
+            { arn: ingestGranuleWorkflowArn },
+            'completed'
+          );
+
           const ingestGranuleExecutionResponse = await executionsApiTestUtils.getExecution({
             prefix: config.stackName,
             arn: ingestGranuleWorkflowArn
