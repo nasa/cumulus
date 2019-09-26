@@ -109,15 +109,17 @@ default:
         maxTasks: 10
         scaleIn:
           metricName: ActivitiesScheduled
-          metricPeriod: 60
-          metricStat: Average
+          namespace: AWS/States
+          period: 60
+          stat: Average
           adjustmentPercent: -5
           comparisonOperator: LessThanThreshold
           threshold: 0.4
         scaleOut:
           metricName: ActivitiesScheduled
-          metricPeriod: 60
-          metricStat: Average
+          namespace: AWS/States
+          period: 60
+          stat: Average
           adjustmentPercent: 10
           comparisonOperator: GreaterThanOrEqualToThreshold
           threshold: 0.8
@@ -151,15 +153,11 @@ default:
         maxTasks: 10
         scaleIn:
           metricName: ActivityScheduleTime
-          metricPeriod: 60
-          metricStat: Average
           adjustmentPercent: -5
           comparisonOperator: LessThanThreshold
           threshold: 5000
         scaleOut:
           metricName: ActivityScheduleTime
-          metricPeriod: 60
-          metricStat: Average
           adjustmentPercent: 10
           comparisonOperator: GreaterThanOrEqualToThreshold
           threshold: 10000

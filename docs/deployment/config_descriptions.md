@@ -270,46 +270,32 @@ cluster are under 25%, then the cluster size will be reduced by 5%.
 #### Service AutoScaling
 
 Cumulus supports automatically scaling the number of tasks configured for an ECS
-service. The scaling of tasks is based on the `ActivityScheduleTime` metric,
-which measures how long (in milliseconds) an activity waited before being picked
-up for processing. If the average activity is waiting more than the configured
-`scaleOutActivityScheduleTime` time, then additional tasks will be added to the
-service. If the average activity is waiting less than the configured
-`scaleInActivityScheduleTime` time, then tasks will be removed from the service.
-Ideally, the average wait time for tasks should settle somewhere between
-`scaleInActivityScheduleTime` and `scaleOutActivityScheduleTime`.
+service.  The scaling of tasks is based on the specified metric.
 
 Configuration values that affect ECS service autoscaling. These would all be
 defined for a specific service.
 
 * `minTasks`: the minimum number of tasks to maintain in a service
 * `maxTasks`: the maximum number of tasks to maintain in a service
-* `scaleInAdjustmentPercent`: the percentage to increase or decrease the number
-  of tasks in the cluster by when the "scale in" alarm is triggered. Since this
-  is a "scale in" setting, it should typically be a negative value. For more
-  information see the
+* `scaleIn`: the configuration for "scale in" alarm
+* `scaleOut`: the configuration for "scale out" alarm
+* `metricName`: the name of the metric, it could be a custom metric
+* `namespace`: the namespace of the metric, default value is `AWS/States`
+* `period`: the length of time associated with the metric statistic, the default value is 60 seconds
+* `stat`: the statistic of the metric, default to `Average`
+* `comparisonOperator`: the comparison operator for triggering an alarm
+* `threshold`: the threshold that the metric data is compared against in order to trigger the alarm
+* `adjustmentPercent`: the percentage to increase or decrease the number
+  of tasks in the cluster by when the "scale in" or "scale out" alarm is triggered. For a "scale in"
+  alarm it should typically be a negative value. For more information see the
   [PercentChangeInCapacity documentation](https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-scaling-simple-step.html#as-scaling-adjustment),
   specifically the section on `PercentChangeInCapacity`.
-* `scaleInActivityScheduleTime`: a duration in milliseconds. If the average task
-  is waiting for less than this amount of time before being started, then the
-  number of tasks configured for the service will be reduced
-* `scaleOutAdjustmentPercent`: the percentage to increase or decrease the number
-  of tasks in the cluster by when the "scale out" alarm is triggered. Since this
-  is a "scale out" setting, it should typically be a negative value. For more
-  information see the
-  [PercentChangeInCapacity documentation](https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-scaling-simple-step.html#as-scaling-adjustment),
-  specifically the section on `PercentChangeInCapacity`.
-  * `scaleOutActivityScheduleTime`: a duration in milliseconds. If the average
-    task is waiting for more than this amount of time before being started, then
-    the number of tasks configured for the service will be increased
 
 ##### Notes
 
 * `minTasks` and `maxTasks` are required for autoscaling to be enabled
-* `scaleInActivityScheduleTime` and `scaleInAdjustmentPercent` are required for
-  scaling in to be enabled
-* `scaleOutActivityScheduleTime` and `scaleOutAdjustmentPercent` are required
-  for scaling out to be enabled
+* `scaleIn` is required for scaling in to be enabled
+* `scaleOut` is required for scaling out to be enabled
 * When scaling of a service is triggered, the number of tasks will always change
   by at least 1, even if the number that would be changed based on the
   configured adjustment percent is less than 1.
@@ -324,13 +310,35 @@ ecs:
     ExampleService:
       minTasks: 1
       maxTasks: 10
-      scaleInActivityScheduleTime: 5000
-      scaleInAdjustmentPercent: -5
-      scaleOutActivityScheduleTime: 10000
-      scaleOutAdjustmentPercent: 10
+      scaleIn:
+        metricName: ActivityScheduleTime
+        namespace: AWS/States
+        period: 60
+        stat: Average
+        adjustmentPercent: -5
+        comparisonOperator: LessThanThreshold
+        threshold: 5000
+      scaleOut:
+        metricName: ActivityScheduleTime
+        namespace: AWS/States
+        period: 60
+        stat: Average
+        adjustmentPercent: 10
+        comparisonOperator: GreaterThanOrEqualToThreshold
+        threshold: 10000
+      activityName: ExampleService
 ```
 
-In this example configuration, the minimum number of tasks is 1 and the maximum
+In this example configuration, the scaling of tasks is based on the `ActivityScheduleTime` 
+metric, which measures how long (in milliseconds) an activity waited before being picked
+up for processing. If the average activity is waiting more than the configured
+`scaleOut.threshold` time, then additional tasks will be added to the
+service. If the average activity is waiting less than the configured
+`scaleIn.threshold` time, then tasks will be removed from the service.
+Ideally, the average wait time for tasks should settle somewhere between
+`scaleIn.threshold` and `scaleOut.threshold`.
+
+In this example, the minimum number of tasks is 1 and the maximum
 is 10. If the average time for activities to be started is less than 5 seconds,
 then the number of tasks configured for the service will be reduced by 5%. If
 the average time for activities to be started is greater than 10 seconds, then

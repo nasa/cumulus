@@ -1067,19 +1067,19 @@ Resources:
       Metrics:
         - Id: e1
           Expression: "FILL(m1, 0)"
-          Label: {{# if this.scaleIn.metricName}}Normalized{{this.scaleIn.metricName}}{{ else }}NormalizedActivityScheduleTime{{/if}}
+          Label: Normalized{{this.scaleIn.metricName}}
         - Id: m1
           MetricStat:
             Metric:
-              Namespace: AWS/States
-              MetricName: {{# if this.scaleIn.metricName}}{{this.scaleIn.metricName}}{{ else }}ActivityScheduleTime{{/if}}
+              MetricName: {{this.scaleIn.metricName}}
+              Namespace: {{# if this.scaleIn.namespace}}{{this.scaleIn.namespace}}{{ else }}AWS/States{{/if}}
               Dimensions:
                 - Name: ActivityArn
                   Value:
                     Ref:
                       {{this.activityName}}Activity
-            Period: {{# if this.scaleIn.metricPeriod}}{{this.scaleIn.metricPeriod}}{{ else }}60{{/if}}
-            Stat: {{# if this.scaleIn.metricStat}}{{this.scaleIn.metricStat}}{{ else }}Average{{/if}}
+            Period: {{# if this.scaleIn.period}}{{this.scaleIn.period}}{{ else }}60{{/if}}
+            Stat: {{# if this.scaleIn.stat}}{{this.scaleIn.stat}}{{ else }}Average{{/if}}
           ReturnData: false
       ComparisonOperator: {{this.scaleIn.comparisonOperator}}
       Threshold: {{this.scaleIn.threshold}}
@@ -1098,19 +1098,19 @@ Resources:
       Metrics:
         - Id: e1
           Expression: "FILL(m1, 0)"
-          Label: {{# if this.scaleOut.metricName}}Normalized{{this.scaleOut.metricName}}{{ else }}NormalizedActivityScheduleTime{{/if}}
+          Label: Normalized{{this.scaleOut.metricName}}
         - Id: m1
           MetricStat:
             Metric:
-              Namespace: AWS/States
-              MetricName: {{# if this.scaleOut.metricName}}{{this.scaleOut.metricName}}{{ else }}ActivityScheduleTime{{/if}}
+              MetricName: {{this.scaleOut.metricName}}
+              Namespace: {{# if this.scaleOut.namespace}}{{this.scaleOut.namespace}}{{ else }}AWS/States{{/if}}
               Dimensions:
                 - Name: ActivityArn
                   Value:
                     Ref:
                       {{this.activityName}}Activity
-            Period: {{# if this.scaleOut.metricPeriod}}{{this.scaleOut.metricPeriod}}{{ else }}60{{/if}}
-            Stat: {{# if this.scaleOut.metricStat}}{{this.scaleOut.metricStat}}{{ else }}Average{{/if}}
+            Period: {{# if this.scaleOut.period}}{{this.scaleOut.period}}{{ else }}60{{/if}}
+            Stat: {{# if this.scaleOut.stat}}{{this.scaleOut.stat}}{{ else }}Average{{/if}}
           ReturnData: false
       ComparisonOperator: {{this.scaleOut.comparisonOperator}}
       Threshold: {{this.scaleOut.threshold}}
