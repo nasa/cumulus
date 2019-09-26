@@ -19,9 +19,12 @@ const {
   addCollections,
   cleanupCollections,
   rulesList,
-  deleteRules
+  deleteRules,
+  granulesApi: granulesApiTestUtils
 } = require('@cumulus/integration-tests');
 const { randomString } = require('@cumulus/common/test-utils');
+
+const { waitForModelStatus } = require('../../helpers/apiUtils');
 
 const {
   loadConfig,
@@ -167,7 +170,11 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       s3().deleteObject({
         Bucket: testConfig.buckets.private.name,
         Key: `${filePrefix}/${fileData.name}`
-      }).promise()
+      }).promise(),
+      granulesApiTestUtils.deleteGranule({
+        prefix: testConfig.stackName,
+        granuleId
+      })
     ]);
   }
 
@@ -241,12 +248,16 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       let startStep;
       let endStep;
       beforeAll(async () => {
-        startStep = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CNMToCMA');
+        startStep = await lambdaStep.getStepInput(workflowExecution.executionArn, 'CNMToCMA');
         endStep = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CnmResponse');
       });
 
       it('records both the original and the final payload', async () => {
-        const executionRecord = await executionModel.get({ arn: workflowExecution.executionArn });
+        const executionRecord = await waitForModelStatus(
+          executionModel,
+          { arn: workflowExecution.executionArn },
+          'completed'
+        );
         expect(executionRecord.originalPayload).toEqual(startStep.payload);
         expect(executionRecord.finalPayload).toEqual(endStep.payload);
       });
@@ -322,6 +333,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     const badRecordIdentifier = randomString();
     badRecord.identifier = badRecordIdentifier;
     delete badRecord.product;
+    let failingWorkflowExecution;
 
     beforeAll(async () => {
       await tryCatchExit(cleanUp, async () => {
@@ -329,11 +341,15 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         await putRecordOnStream(streamName, badRecord);
 
         console.log('Waiting for step function to start...');
-        workflowExecution = await waitForTestSf(badRecordIdentifier, testWorkflow, maxWaitForSFExistSecs);
+        failingWorkflowExecution = await waitForTestSf(badRecordIdentifier, testWorkflow, maxWaitForSFExistSecs);
 
-        console.log(`Waiting for completed execution of ${workflowExecution.executionArn}.`);
-        executionStatus = await waitForCompletedExecution(workflowExecution.executionArn, maxWaitForExecutionSecs);
+        console.log(`Waiting for completed execution of ${failingWorkflowExecution.executionArn}.`);
+        executionStatus = await waitForCompletedExecution(failingWorkflowExecution.executionArn, maxWaitForExecutionSecs);
       });
+    });
+
+    afterAll(async () => {
+      await executionModel.delete({ arn: failingWorkflowExecution.executionArn });
     });
 
     it('executes but fails', () => {
@@ -341,13 +357,13 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     });
 
     it('sends the error to the CnmResponse task', async () => {
-      const CnmResponseInput = await lambdaStep.getStepInput(workflowExecution.executionArn, 'CnmResponse');
+      const CnmResponseInput = await lambdaStep.getStepInput(failingWorkflowExecution.executionArn, 'CnmResponse');
       expect(CnmResponseInput.exception.Error).toEqual('cumulus_message_adapter.message_parser.MessageAdapterException');
       expect(JSON.parse(CnmResponseInput.exception.Cause).errorMessage).toMatch(/An error occurred in the Cumulus Message Adapter: .+/);
     });
 
     it('outputs the record', async () => {
-      const lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CnmResponse', 'failure');
+      const lambdaOutput = await lambdaStep.getStepOutput(failingWorkflowExecution.executionArn, 'CnmResponse', 'failure');
       expect(lambdaOutput.error).toEqual('cumulus_message_adapter.message_parser.MessageAdapterException');
       expect(lambdaOutput.cause).toMatch(/.+An error occurred in the Cumulus Message Adapter: .+/);
       expect(lambdaOutput.cause).not.toMatch(/.+process hasn't exited.+/);
