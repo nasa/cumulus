@@ -315,11 +315,14 @@ describe('When the Sync Granule workflow is configured', () => {
     });
 
     describe('and it is configured to catch the duplicate error', () => {
-      const catchWorkflowName = 'SyncGranuleCatchDuplicateErrorTest';
-
       beforeAll(async () => {
         workflowExecution = await buildAndExecuteWorkflow(
-          config.stackName, config.bucket, catchWorkflowName, collection, provider, inputPayload
+          config.stackName,
+          config.bucket,
+          'SyncGranuleCatchDuplicateErrorTest',
+          collection,
+          provider,
+          inputPayload
         );
       });
 

@@ -441,14 +441,16 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(expectedTypes).toEqual(resource.map((r) => r.Type));
     });
 
-    it('includes the Earthdata login ID for requests to protected science files', async () => {
+    // TODO Re-enable when CUMULUS-1458 has been completed
+    xit('includes the Earthdata login ID for requests to protected science files', async () => {
       const filepath = `/${files[0].bucket}/${files[0].filepath}`;
       const s3SignedUrl = await getDistributionApiRedirect(filepath, accessToken);
       const earthdataLoginParam = new URL(s3SignedUrl).searchParams.get('x-EarthdataLoginUsername');
       expect(earthdataLoginParam).toEqual(process.env.EARTHDATA_USERNAME);
     });
 
-    it('downloads the requested science file for authorized requests', async () => {
+    // TODO Re-enable when CUMULUS-1458 has been completed
+    xit('downloads the requested science file for authorized requests', async () => {
       const scienceFileUrls = resourceURLs
         .filter((url) =>
           (url.startsWith(process.env.DISTRIBUTION_ENDPOINT) ||

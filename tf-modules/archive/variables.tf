@@ -64,10 +64,6 @@ variable "lambda_processing_role_arn" {
   type = string
 }
 
-variable "lambda_subnet_ids" {
-  type = list(string)
-}
-
 variable "message_consumer_function_arn" {
   type = string
 }
@@ -100,10 +96,6 @@ variable "urs_client_id" {
 variable "urs_client_password" {
   type        = string
   description = "The URS app password"
-}
-
-variable "vpc_id" {
-  type = string
 }
 
 # Optional
@@ -180,6 +172,11 @@ variable "ems_username" {
   default = "cumulus"
 }
 
+variable "lambda_subnet_ids" {
+  type    = list(string)
+  default = null
+}
+
 variable "launchpad_api" {
   type    = string
   default = "launchpadApi"
@@ -229,6 +226,11 @@ variable "urs_url" {
 variable "users" {
   type    = list(string)
   default = []
+}
+
+variable "vpc_id" {
+  type    = string
+  default = null
 }
 
 # clean_executions lambda config

@@ -48,11 +48,15 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
       "dynamodb:DeleteItem",
       "dynamodb:GetItem",
       "dynamodb:PutItem",
-      "dynamodb:Query",
       "dynamodb:Scan",
       "dynamodb:UpdateItem"
     ]
     resources = [for k, v in var.dynamo_tables : v.arn]
+  }
+
+  statement {
+    actions   = ["dynamodb:Query"]
+    resources = [for k, v in var.dynamo_tables : "${v.arn}/index/*"]
   }
 
   statement {

@@ -20,6 +20,10 @@ variable "cmr_username" {
   type = string
 }
 
+variable "cumulus_message_adapter_lambda_layer_arn" {
+  type = string
+}
+
 variable "data_persistence_remote_state_config" {
   type = object({ bucket = string, key = string })
 }
@@ -60,6 +64,11 @@ variable "vpc_id" {
 
 # Optional
 
+variable "buckets" {
+  type    = map(object({ name = string, type = string }))
+  default = {}
+}
+
 variable "distribution_url" {
   type    = string
   default = null
@@ -73,21 +82,6 @@ variable "key_name" {
 variable "region" {
   type    = string
   default = "us-east-1"
-}
-
-variable "private_buckets" {
-  type    = list(string)
-  default = []
-}
-
-variable "protected_buckets" {
-  type    = list(string)
-  default = []
-}
-
-variable "public_buckets" {
-  type    = list(string)
-  default = []
 }
 
 variable "permissions_boundary_arn" {

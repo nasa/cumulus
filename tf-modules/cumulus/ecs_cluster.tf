@@ -39,6 +39,7 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
       "ecs:Submit*",
       "ecs:UpdateContainerInstancesState",
       "lambda:GetFunction",
+      "lambda:GetLayerVersion",
       "lambda:invokeFunction",
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
@@ -72,7 +73,7 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
       "s3:PutLifecycleConfiguration",
       "s3:PutReplicationConfiguration"
     ]
-    resources = [for b in flatten([var.public_buckets, var.protected_buckets, var.private_buckets, var.system_bucket]) : "arn:aws:s3:::${b}"]
+    resources = [for b in local.all_bucket_names : "arn:aws:s3:::${b}"]
   }
 
   statement {
@@ -84,13 +85,12 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
       "s3:ListMultipartUploadParts",
       "s3:PutObject*"
     ]
-    resources = [for b in flatten([var.public_buckets, var.protected_buckets, var.private_buckets, var.system_bucket]) : "arn:aws:s3:::${b}/*"]
+    resources = [for b in local.all_bucket_names : "arn:aws:s3:::${b}/*"]
   }
 
   statement {
-    actions = ["dynamodb:Scan"]
-    # TODO I don't like the fact that we're making an assumption here about the names of our tables
-    resources = ["arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.prefix}-*"]
+    actions   = ["dynamodb:Scan"]
+    resources = [for k, v in var.dynamo_tables : v.arn]
   }
 
   statement {

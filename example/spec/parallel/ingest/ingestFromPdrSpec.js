@@ -22,10 +22,7 @@
  */
 
 const { Collection, Execution, Pdr } = require('@cumulus/api/models');
-
-const {
-  aws: { s3, deleteS3Object }
-} = require('@cumulus/common');
+const { s3, deleteS3Object } = require('@cumulus/common/aws');
 
 const {
   addCollections,

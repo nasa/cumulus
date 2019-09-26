@@ -16,9 +16,9 @@ module "archive" {
   ems_host = "change-ems-host"
 
   system_bucket     = var.system_bucket
-  public_buckets    = var.public_buckets
-  protected_buckets = var.protected_buckets
-  private_buckets   = var.private_buckets
+  public_buckets    = local.public_bucket_names
+  protected_buckets = local.protected_bucket_names
+  private_buckets   = local.private_bucket_names
 
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids
@@ -48,6 +48,20 @@ module "archive" {
   kinesis_inbound_event_logger_lambda_function_arn = module.ingest.kinesis_inbound_event_logger_lambda_function_arn
 
   # TODO We need to figure out how to make this dynamic
+  #
+  # From @mboyd
+  # OK, well I can help you unwind that ball of yarn when you get to it.
+  # However, I was curious so I looked into it.
+  #
+  # The name here is backgroundProcessing (without prefix) because that is the
+  # key of the queue in meta.queues of the execution message. The reason for
+  # that is in the code that creates the workflow templates:
+  #
+  # https://github.com/nasa/cumulus/blob/master/packages/deployment/lib/message.js#L115
+  #
+  # It gets the queue names by stripping SQSOutput from the Cloudformation
+  # template outputs. And these template outputs do not include prefix, but just
+  # the keys of the queues from config.sqs, thus backgroundProcessing
   background_queue_name = "backgroundProcessing"
 
   distribution_api_id = module.distribution.rest_api_id

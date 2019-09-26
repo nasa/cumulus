@@ -218,18 +218,11 @@ describe('When there are granule differences and granule reconciliation is run',
 
     await setupCollectionAndTestData(testSuffix, testDataFolder);
 
-    const ingestResults = await Promise.all([
-      // ingest a granule and publish it to CMR
+    [publishedGranuleId, dbGranuleId, cmrGranule] = await Promise.all([
       ingestAndPublishGranule(testSuffix, testDataFolder),
-
-      // ingest a granule but not publish it to CMR
       ingestAndPublishGranule(testSuffix, testDataFolder, false),
-
-      // ingest a granule to CMR only
       ingestGranuleToCMR(testSuffix, testDataFolder)
     ]);
-
-    [publishedGranuleId, dbGranuleId, cmrGranule] = ingestResults;
 
     // update one of the granule files in database so that that file won't match with CMR
     const granuleResponse = await granulesApiTestUtils.getGranule({
