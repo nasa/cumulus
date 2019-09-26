@@ -237,7 +237,7 @@ IngestGranule:
         - Variable: $.meta.process
           StringEquals: modis
           Next: ProcessingStep
-      Default: WorkflowFailed
+      Default: WorkflowSucceeded
     ProcessingStep:
       Parameters:
         cma:
