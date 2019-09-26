@@ -19,13 +19,13 @@ const { inTestMode } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/common');
 
 const { Search, defaultIndexAlias } = require('./search');
-const { deconstructCollectionId } = require('../lib/utils');
 const { Granule, Pdr, Execution } = require('../models');
 const { IndexExistsError } = require('../lib/errors');
 const mappings = require('../models/mappings.json');
 
 async function createIndex(esClient, indexName) {
-  const indexExists = await esClient.indices.exists({ index: indexName });
+  const indexExists = await esClient.indices.exists({ index: indexName })
+    .then((response) => response.body);
 
   if (indexExists) {
     throw new IndexExistsError(`Index ${indexName} exists and cannot be created.`);
@@ -89,7 +89,8 @@ async function indexLog(esClient, payloads, index = defaultIndexAlias, type = 'l
   });
 
   const actualEsClient = esClient || (await Search.es());
-  return actualEsClient.bulk({ body: body });
+  const bulkResponse = await actualEsClient.bulk({ body: body });
+  return bulkResponse.body;
 }
 
 /**
@@ -121,7 +122,8 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
 
   // adding or replacing record to ES
   const actualEsClient = esClient || (await Search.es());
-  return actualEsClient.index(params);
+  const indexResponse = await actualEsClient.index(params);
+  return indexResponse.body;
 }
 
 /**
@@ -136,17 +138,6 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
  */
 function indexExecution(esClient, payload, index = defaultIndexAlias, type = 'execution') {
   return genericRecordUpdate(esClient, payload.arn, payload, index, type);
-}
-
-/**
- * Extracts PDR info from a StepFunction message and save it to DynamoDB
- *
- * @param  {Object} payload  - Cumulus Step Function message
- * @returns {Promise<Object>} Elasticsearch response
- */
-function pdr(payload) {
-  const p = new Pdr();
-  return p.createPdrFromSns(payload);
 }
 
 /**
@@ -206,10 +197,9 @@ async function indexGranule(esClient, payload, index = defaultIndexAlias, type =
     type: 'deletedgranule',
     id: payload.granuleId,
     parent: payload.collectionId,
-    refresh: inTestMode(),
-    ignore: [404]
+    refresh: inTestMode()
   };
-  await esClient.delete(delGranParams);
+  await esClient.delete(delGranParams, { ignore: [404] });
 
   return genericRecordUpdate(
     esClient,
@@ -241,17 +231,6 @@ async function indexPdr(esClient, payload, index = defaultIndexAlias, type = 'pd
 }
 
 /**
- * Extracts granule info from a stepFunction message and save it to DynamoDB
- *
- * @param  {Object} payload  - Cumulus Step Function message
- * @returns {Promise<Array>} list of created records
- */
-function granule(payload) {
-  const g = new Granule();
-  return g.createGranulesFromSns(payload);
-}
-
-/**
  * delete a record from ElasticSearch
  *
  * @param  {Object} params
@@ -278,16 +257,18 @@ async function deleteRecord({
     refresh: inTestMode()
   };
 
+  let options = {};
+
   if (parent) params.parent = parent;
-  if (ignore) params.ignore = ignore;
+  if (ignore) options = { ignore };
 
   const actualEsClient = esClient || (await Search.es());
 
-  const getResponse = await actualEsClient.get(params);
-  const deleteResponse = await actualEsClient.delete(params);
+  const getResponse = await actualEsClient.get(params, options);
+  const deleteResponse = await actualEsClient.delete(params, options);
 
-  if (type === 'granule' && getResponse.found) {
-    const doc = getResponse._source;
+  if (type === 'granule' && getResponse.body.found) {
+    const doc = getResponse.body._source;
     doc.timestamp = Date.now();
     doc.deletedAt = Date.now();
 
@@ -302,7 +283,29 @@ async function deleteRecord({
       parent
     );
   }
-  return deleteResponse;
+  return deleteResponse.body;
+}
+
+/**
+ * Extracts granule info from a stepFunction message and save it to DynamoDB
+ *
+ * @param  {Object} payload  - Cumulus Step Function message
+ * @returns {Promise<Array>} list of created records
+ */
+function granule(payload) {
+  const g = new Granule();
+  return g.createGranulesFromSns(payload);
+}
+
+/**
+ * Extracts PDR info from a StepFunction message and save it to DynamoDB
+ *
+ * @param  {Object} payload  - Cumulus Step Function message
+ * @returns {Promise<Object>} Elasticsearch response
+ */
+function pdr(payload) {
+  const p = new Pdr();
+  return p.createPdrFromSns(payload);
 }
 
 /**
@@ -350,31 +353,6 @@ async function handlePayload(event) {
 }
 
 /**
- * processes the incoming log events coming from AWS
- * CloudWatch
- *
- * @param  {Object} event - incoming message from CloudWatch
- * @param  {Object} context - aws lambda context object
- * @param  {function} cb - aws lambda callback function
- */
-function logHandler(event, context, cb) {
-  log.debug(event);
-  const payload = Buffer.from(event.awslogs.data, 'base64');
-  zlib.gunzip(payload, (e, r) => {
-    try {
-      const logs = JSON.parse(r.toString());
-      log.debug(logs);
-      return indexLog(undefined, logs.logEvents)
-        .then((s) => cb(null, s))
-        .catch(cb);
-    } catch (err) {
-      log.error(e);
-      return cb(null);
-    }
-  });
-}
-
-/**
  * Lambda function handler for sns2elasticsearch
  *
  * @param  {Object} event - incoming message sns
@@ -403,10 +381,33 @@ function handler(event, context, cb) {
     .catch(cb);
 }
 
+/**
+ * processes the incoming log events coming from AWS
+ * CloudWatch
+ *
+ * @param  {Object} event - incoming message from CloudWatch
+ * @param  {Object} context - aws lambda context object
+ * @param  {function} cb - aws lambda callback function
+ */
+function logHandler(event, context, cb) {
+  log.debug(event);
+  const payload = Buffer.from(event.awslogs.data, 'base64');
+  zlib.gunzip(payload, (e, r) => {
+    try {
+      const logs = JSON.parse(r.toString());
+      log.debug(logs);
+      return indexLog(undefined, logs.logEvents)
+        .then((s) => cb(null, s))
+        .catch(cb);
+    } catch (err) {
+      log.error(e);
+      return cb(null);
+    }
+  });
+}
+
 module.exports = {
-  constructCollectionId,
   createIndex,
-  deconstructCollectionId,
   handler,
   logHandler,
   indexCollection,
@@ -416,9 +417,6 @@ module.exports = {
   indexGranule,
   indexPdr,
   indexExecution,
-  handlePayload,
   deleteRecord,
-  reingest,
-  granule,
-  pdr
+  reingest
 };

@@ -8,8 +8,8 @@
 const has = require('lodash.has');
 const omit = require('lodash.omit');
 const aws = require('aws-sdk');
-const httpAwsEs = require('http-aws-es');
-const elasticsearch = require('elasticsearch');
+const Connection = require('aws-elasticsearch-connector');
+const elasticsearch = require('@elastic/elasticsearch');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const queries = require('./queries');
 const aggs = require('./aggregations');
@@ -34,24 +34,31 @@ const getCredentials = () =>
  * @returns {string} elasticsearch local address
  */
 const getLocalEsHost = () => {
-  if (process.env.LOCAL_ES_HOST) return `${process.env.LOCAL_ES_HOST}:9200`;
-  if (process.env.LOCALSTACK_HOST) return `${process.env.LOCALSTACK_HOST}:4571`;
-  return 'localhost:9200';
+  if (process.env.LOCAL_ES_HOST) return `http://${process.env.LOCAL_ES_HOST}:9200`;
+  if (process.env.LOCALSTACK_HOST) return `http://${process.env.LOCALSTACK_HOST}:4571`;
+  return 'http://localhost:9200';
 };
 
 const esTestConfig = () => ({
-  host: getLocalEsHost(),
+  node: getLocalEsHost(),
   requestTimeout: 5000
 });
 
 const esProdConfig = async (host) => {
   if (!aws.config.credentials) await getCredentials();
 
+  let node = 'http://localhost:9200';
+
+  if (process.env.ES_HOST) {
+    node = `https://${process.env.ES_HOST}`;
+  } else if (host) {
+    node = `https://${host}`;
+  }
+
   return {
-    host: process.env.ES_HOST || host || 'localhost:9200',
-    connectionClass: httpAwsEs,
-    amazonES: {
-      region: process.env.AWS_DEFAULT_REGION || 'us-east-1',
+    node,
+    Connection,
+    awsConfig: {
       credentials: aws.config.credentials
     },
 
@@ -175,7 +182,7 @@ class BaseSearch {
         index: this.index,
         type: this.type,
         body: body
-      });
+      }).then((response) => response.body);
 
       if (result.hits.total > 1) {
         return { detail: 'More than one record was found!' };
@@ -235,7 +242,7 @@ class BaseSearch {
       completed: 0
     };
 
-    const item = ag.aggregations;
+    const item = ag.body.aggregations;
 
     const newObj = {
       averageDuration: item.averageDuration.value,
@@ -273,12 +280,12 @@ class BaseSearch {
       }
       const result = await this.client.search(searchParams);
 
-      const response = result.hits.hits.map((s) => s._source);
+      const response = result.body.hits.hits.map((s) => s._source);
 
       const meta = this._metaTemplate();
       meta.limit = this.size;
       meta.page = this.page;
-      meta.count = result.hits.total;
+      meta.count = result.body.hits.total;
 
       return {
         meta,
@@ -299,14 +306,14 @@ class BaseSearch {
       }
 
       const result = await this.client.search(searchParams);
-      const count = result.hits.total;
+      const count = result.body.hits.total;
 
       return {
         meta: {
           found: count,
           name: 'cumulus-api'
         },
-        counts: result.aggregations
+        counts: result.body.aggregations
       };
     } catch (e) {
       //log.error(e, logDetails);

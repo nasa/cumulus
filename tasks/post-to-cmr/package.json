@@ -38,7 +38,7 @@
   "dependencies": {
     "@cumulus/cmrjs": "1.14.1",
     "@cumulus/common": "1.14.1",
-    "@cumulus/cumulus-message-adapter-js": "^1.0.7",
+    "@cumulus/cumulus-message-adapter-js": "^1.0.8",
     "lodash.keyby": "^4.6.0"
   },
   "devDependencies": {
