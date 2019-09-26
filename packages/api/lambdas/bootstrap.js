@@ -67,11 +67,20 @@ async function findMissingMappings(esClient, index, newMappings) {
  * @returns {Promise} undefined
  */
 async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIndexAlias) {
-  if (!host) {
-    return;
-  }
+  if (!host) return;
 
   const esClient = await Search.es(host);
+
+  // Make sure that indexes are not automatically created
+  await esClient.cluster.putSettings({
+    body: {
+      persistent: { 'action.auto_create_index': false }
+    }
+  });
+
+  // If the alias already exists as an index, remove it
+  const { body: aliasExistsAsIndex } = await esClient.indices.exists({ index: alias });
+  if (aliasExistsAsIndex) await esClient.indices.delete({ index: alias });
 
   // check if the index exists
   const exists = await esClient.indices.exists({ index })
