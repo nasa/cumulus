@@ -18,12 +18,9 @@ HelloWorldWorkflow:
           IntervalSeconds: 2
           MaxAttempts: 6
           BackoffRate: 2
-      Next: WorkflowFailed
+      Next: WorkflowSucceeded
     WorkflowSucceeded:
       Type: Succeed
-    WorkflowFailed:
-      Type: Fail
-      Cause: 'Workflow failed'
 
 EcsHelloWorldWorkflow:
   Comment: 'Returns Hello World'
