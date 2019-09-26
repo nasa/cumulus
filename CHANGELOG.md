@@ -47,6 +47,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Update example SIPS workflows to utilize Parameterized CMA configuration
 - **CUMULUS-1448** Refactor workflows that are mutating cumulus_meta to utilize meta field
 
+- **CUMULUS-1375**
+  - Migrate Cumulus from deprecated Elasticsearch JS client to new, supported one in `@cumulus/api`
+
 ### Fixed
 
 - **CUMULUS-1432** `logs` endpoint filter correctly filters logs by level
