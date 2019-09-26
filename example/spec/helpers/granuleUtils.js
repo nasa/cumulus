@@ -12,9 +12,10 @@ const cloneDeep = require('lodash.clonedeep');
 /**
  * Adds updated url_path to a granule files object
  *
- * @param  {Array<object>} files - array of granule files
+ * @param  {Array<Object>} files - array of granule files
  * @param  {string} testId - Test ID to insert into url_path per-granule
  * @param  {string} collectionUrlPath - collection
+ * @returns {Array<Object>} - files updated
  */
 function addUrlPathToGranuleFiles(files, testId, collectionUrlPath) {
   const updatedFiles = cloneDeep(files);
@@ -31,6 +32,7 @@ function addUrlPathToGranuleFiles(files, testId, collectionUrlPath) {
  *
  * @param  {Array<Object>} granules - Array of granules with files to be updated
  * @param  {string} filePath - Filepath to add
+ * @returns {Array<Object>} - granules updated
  */
 function addUniqueGranuleFilePathToGranuleFiles(granules, filePath) {
   const updatedGranules = granules.map((originalGranule) => {

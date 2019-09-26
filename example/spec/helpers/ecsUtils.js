@@ -1,4 +1,5 @@
 'use strict';
+
 const AWS = require('aws-sdk');
 
 async function getEcsClusters() {
