@@ -45,7 +45,7 @@ test.serial('indexing log messages', async (t) => {
     body: {
       ids: event.logEvents.map((r) => r.id)
     }
-  });
+  }).then((getResponse) => getResponse.body);
   // console.log(JSON.stringify(records, null, 2));
   t.is(records.docs.length, 5);
 
@@ -67,6 +67,6 @@ test.serial('indexing log messages', async (t) => {
     index: esIndex,
     type: 'logs',
     body
-  });
+  }).then((searchResponse) => searchResponse.body);
   t.is(searchRecord.hits.total, 2);
 });

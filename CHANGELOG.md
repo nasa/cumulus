@@ -59,6 +59,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Removed
 
+- **CUMULUS-1375**
+  - Migrate Cumulus from deprecated Elasticsearch JS client to new, supported one in `@cumulus/api`
+
 - **CUMULUS-1449**
   - Retired `CumulusConfig` as part of step function definitions, as this is an artifact of the way Kes parses workflow definitions that was not possible to migrate to Terraform. Use AWS Parameters and the `workflow_config` key instead. See change note above.
   - Removed individual workflow templates.

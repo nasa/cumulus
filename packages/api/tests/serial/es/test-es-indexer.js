@@ -137,7 +137,8 @@ test.serial('indexing a deletedgranule record', async (t) => {
     parent: collectionId
   };
 
-  let record = await esClient.get(deletedGranParams);
+  let record = await esClient.get(deletedGranParams)
+    .then((response) => response.body);
   t.true(record.found);
   t.deepEqual(record._source.files, granule.files);
   t.is(record._parent, collectionId);
@@ -147,7 +148,8 @@ test.serial('indexing a deletedgranule record', async (t) => {
   // the deletedgranule record is removed if the granule is ingested again
   r = await indexer.indexGranule(esClient, granule, esIndex, granuletype);
   t.is(r.result, 'created');
-  record = await esClient.get(Object.assign(deletedGranParams, { ignore: [404] }));
+  record = await esClient.get(deletedGranParams, { ignore: [404] })
+    .then((response) => response.body);
   t.false(record.found);
 });
 
@@ -211,7 +213,8 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
     }
   };
 
-  response = await esClient.search(deletedGranParams);
+  response = await esClient.search(deletedGranParams)
+    .then((searchResponse) => searchResponse.body);
   t.is(response.hits.total, 11);
   response.hits.hits.forEach((r) => {
     t.is(r._parent, collectionId);
@@ -234,7 +237,7 @@ test.serial('indexing a rule record', async (t) => {
     index: esIndex,
     type: 'rule',
     id: testRecord.name
-  });
+  }).then((response) => response.body);
 
   t.is(record._id, testRecord.name);
   t.is(typeof record._source.timestamp, 'number');
@@ -255,7 +258,7 @@ test.serial('indexing a provider record', async (t) => {
     index: esIndex,
     type: 'provider',
     id: testRecord.id
-  });
+  }).then((response) => response.body);
 
   t.is(record._id, testRecord.id);
   t.is(typeof record._source.timestamp, 'number');
@@ -278,7 +281,7 @@ test.serial('indexing a collection record', async (t) => {
     index: esIndex,
     type: 'collection',
     id: collectionId
-  });
+  }).then((response) => response.body);
 
   t.is(record._id, collectionId);
   t.is(record._source.name, collection.name);
@@ -316,7 +319,7 @@ test.serial('indexing collection records with different versions', async (t) => 
       index: esIndex,
       type: 'collection',
       id: collectionId
-    });
+    }).then((response) => response.body);
 
     t.is(record._id, collectionId);
     t.is(record._source.name, name);
@@ -362,7 +365,7 @@ test.serial('updating a collection record', async (t) => {
     index: esIndex,
     type: 'collection',
     id: collectionId
-  });
+  }).then((response) => response.body);
 
   t.is(record._id, collectionId);
   t.is(record._source.name, updatedCollection.name);
@@ -395,7 +398,7 @@ test.serial('delete a provider record', async (t) => {
 
   await t.throwsAsync(
     () => esClient.get({ index: esIndex, type, id: testRecord.id }),
-    'Not Found'
+    'Response Error'
   );
 });
 
@@ -442,7 +445,7 @@ test.serial('pass a sns message to main handler', async (t) => {
     type: 'granule',
     id: granule.granuleId,
     parent: collectionId
-  });
+  }).then((response) => response.body);
   t.is(record._id, granule.granuleId);
 });
 
@@ -470,7 +473,7 @@ test.serial('pass a sns message to main handler with parse info', async (t) => {
     index: esIndex,
     type: 'pdr',
     id: pdr.name
-  });
+  }).then((response) => response.body);
   t.is(record._id, pdr.name);
   t.falsy(record._source.error);
 });
@@ -511,7 +514,7 @@ test.serial('indexing a granule record', async (t) => {
     type: 'granule',
     id: granule.granuleId,
     parent: collectionId
-  });
+  }).then((response) => response.body);
   t.is(record._id, granule.granuleId);
 });
 
@@ -534,7 +537,7 @@ test.serial('indexing a PDR record', async (t) => {
     index: esIndex,
     type: 'pdr',
     id: pdr.pdrName
-  });
+  }).then((response) => response.body);
   t.is(record._id, pdr.pdrName);
   t.falsy(record._source.error);
 });
@@ -544,7 +547,8 @@ test.serial('Create new index', async (t) => {
 
   await indexer.createIndex(esClient, newIndex);
 
-  const indexExists = await esClient.indices.exists({ index: newIndex });
+  const indexExists = await esClient.indices.exists({ index: newIndex })
+    .then((response) => response.body);
 
   t.true(indexExists);
 
