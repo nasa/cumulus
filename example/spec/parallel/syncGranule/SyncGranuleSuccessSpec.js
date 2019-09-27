@@ -255,7 +255,8 @@ describe('The Sync Granules workflow', () => {
         stackName: config.stackName,
         bucket: config.bucket,
         findExecutionFn: isReingestExecutionForGranuleId,
-        findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId }
+        findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId },
+        startTask: 'SyncGranule'
       });
 
       console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);
