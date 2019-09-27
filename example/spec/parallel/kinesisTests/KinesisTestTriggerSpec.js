@@ -222,7 +222,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         await putRecordOnStream(streamName, record);
 
         console.log('Waiting for step function to start...');
-        workflowExecution = await waitForTestSf(recordIdentifier, testWorkflow, maxWaitForSFExistSecs);
+        workflowExecution = await waitForTestSf(recordIdentifier, testWorkflow, maxWaitForSFExistSecs, 'CNMToCMA');
 
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}`);
         executionStatus = await waitForCompletedExecution(workflowExecution.executionArn, maxWaitForExecutionSecs);
@@ -341,7 +341,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         await putRecordOnStream(streamName, badRecord);
 
         console.log('Waiting for step function to start...');
-        failingWorkflowExecution = await waitForTestSf(badRecordIdentifier, testWorkflow, maxWaitForSFExistSecs);
+        failingWorkflowExecution = await waitForTestSf(badRecordIdentifier, testWorkflow, maxWaitForSFExistSecs, 'CNMToCMA');
 
         console.log(`Waiting for completed execution of ${failingWorkflowExecution.executionArn}.`);
         executionStatus = await waitForCompletedExecution(failingWorkflowExecution.executionArn, maxWaitForExecutionSecs);
