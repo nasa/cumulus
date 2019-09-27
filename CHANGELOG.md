@@ -38,17 +38,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1394**
   - Renamed `Execution.generateDocFromPayload()` to `Execution.generateRecord()` on executions model. The method generates an execution database record from a Cumulus execution message.
+
 - **CUMULUS-1432**
   - `logs` endpoint takes the level parameter as a string and not a number
   - Elasticsearch term query generation no longer converts numbers to boolean
+
 - **CUMULUS-1447**
   - Consolidated all remote message handling code into @common/aws
   - Update remote message code to handle updated CMA remote message flags
   - Update example SIPS workflows to utilize Parameterized CMA configuration
+
 - **CUMULUS-1448** Refactor workflows that are mutating cumulus_meta to utilize meta field
 
 - **CUMULUS-1375**
   - Migrate Cumulus from deprecated Elasticsearch JS client to new, supported one in `@cumulus/api`
+
+- **CUMULUS-1451**
+  - Elasticsearch cluster setting `auto_create_index` will be set to false. This had been causing issues in the bootstrap lambda on deploy.
 
 ### Fixed
 

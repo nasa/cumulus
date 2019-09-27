@@ -124,3 +124,28 @@ test.serial('Missing fields added to index', async (t) => {
 
   await esClient.indices.delete({ index: indexName });
 });
+
+test.serial('If an index exists with the alias name, it is deleted on bootstrap', async (t) => {
+  const indexName = randomString();
+  const testAlias = randomString();
+
+  esClient = await Search.es();
+
+  // Create index with name of alias we want to use
+  await esClient.indices.create({
+    index: testAlias,
+    body: { mappings }
+  });
+
+  await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
+  esClient = await Search.es();
+
+  // Get the index and make sure `testAlias` is not a key which would mean it's an index
+  // If you use indices.exist on testAlias it'll return true because the alias is applied to the index
+  // Here we're checking it's an alias, not an index
+  const { body: index } = await esClient.indices.get({ index: testAlias });
+
+  t.falsy(index[testAlias]);
+
+  await esClient.indices.delete({ index: indexName });
+});
