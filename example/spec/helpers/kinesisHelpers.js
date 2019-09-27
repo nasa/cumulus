@@ -265,7 +265,7 @@ async function waitForAllTestSf(recordIdentifier, workflowName, maxWaitTimeSecs,
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  * @throws {Error} - any AWS error, re-thrown from AWS execution or 'Workflow Never Started'.
  */
-async function waitForTestSf(recordIdentifier, workflowName, maxWaitTimeSecs, firstStep = 'SfSnsReport') {
+async function waitForTestSf(recordIdentifier, workflowName, maxWaitTimeSecs, firstStep) {
   const workflowExecutions = await waitForAllTestSf(recordIdentifier, workflowName, maxWaitTimeSecs, 1, firstStep);
 
   return workflowExecutions[0];
