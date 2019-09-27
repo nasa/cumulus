@@ -1,0 +1,18 @@
+publishReports:
+  handler: index.handler
+  timeout: 30
+  memory: 256
+  source: 'node_modules/@cumulus/api/dist/publishReports/'
+  launchInVpc: true
+  tables:
+    - ExecutionsTable
+  envs:
+    execution_sns_topic_arn:
+      function: Ref
+      value: reportExecutionsSns
+    granule_sns_topic_arn:
+      function: Ref
+      value: reportGranulesSns
+    pdr_sns_topic_arn:
+      function: Ref
+      value: reportPdrsSns
