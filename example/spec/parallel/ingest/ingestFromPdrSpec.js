@@ -203,7 +203,6 @@ describe('Ingesting from PDR', () => {
 
       beforeAll(async () => {
         parsePdrExecutionArn = queuePdrsOutput.payload.running[0];
-        console.log(`Wait for execution ${parsePdrExecutionArn}`);
 
         try {
           expectedParsePdrOutput = loadFileWithUpdatedGranuleIdPathAndCollection(
@@ -231,16 +230,8 @@ describe('Ingesting from PDR', () => {
         });
       });
 
-      it('a running pdr record is added to DynamoDB', async () => {
-        const record = await waitForModelStatus(
-          pdrModel,
-          { pdrName: pdrFilename },
-          'running'
-        );
-        expect(record.status).toEqual('running');
-      });
-
       it('executes successfully', async () => {
+        console.log(`Wait for execution ${parsePdrExecutionArn}`);
         parsePdrExecutionStatus = await waitForCompletedExecution(parsePdrExecutionArn);
         expect(parsePdrExecutionStatus).toEqual('SUCCEEDED');
       });
