@@ -141,8 +141,8 @@ test.serial('If an index exists with the alias name, it is deleted on bootstrap'
   esClient = await Search.es();
 
   // Get the index and make sure `testAlias` is not a key which would mean it's an index
-  // If you use indices.exist on testAlias it'll return true because the alias is applied to the index
-  // Here we're checking it's an alias, not an index
+  // If you use indices.exist on testAlias it'll return true because the alias is
+  // applied to the index. Here we're checking it's an alias, not an index
   const { body: index } = await esClient.indices.get({ index: testAlias });
 
   t.falsy(index[testAlias]);
