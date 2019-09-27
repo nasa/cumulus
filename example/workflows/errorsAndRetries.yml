@@ -11,24 +11,13 @@ RetryPassWorkflow:
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
       Retry:
-        - &LambdaServiceExceptionRetry
-          ErrorEquals:
-          - Lambda.ServiceException
-          - Lambda.AWSLambdaException
-          - Lambda.SdkClientException
-          IntervalSeconds: 2
-          MaxAttempts: 6
-          BackoffRate: 2
-      Catch:
         - ErrorEquals:
-          - States.ALL
-          Next: WorkflowFailed
+            - States.ALL
+          IntervalSeconds: 2
+          MaxAttempts: 3
       Next: WorkflowSucceeded
     WorkflowSucceeded:
       Type: Succeed
-    WorkflowFailed:
-      Type: Fail
-      Cause: 'Workflow failed'
 
 HelloWorldFailWorkflow:
   Comment: 'Failing Hello World Workflow'
@@ -40,17 +29,17 @@ HelloWorldFailWorkflow:
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
       Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Catch:
-        - ErrorEquals:
-          - States.ALL
-          Next: WorkflowFailed
+        - &LambdaServiceExceptionRetry
+          ErrorEquals:
+            - Lambda.ServiceException
+            - Lambda.AWSLambdaException
+            - Lambda.SdkClientException
+          IntervalSeconds: 2
+          MaxAttempts: 6
+          BackoffRate: 2
       Next: WorkflowSucceeded
     WorkflowSucceeded:
       Type: Succeed
-    WorkflowFailed:
-      Type: Fail
-      Cause: 'Workflow failed'
 
 RetryFailWorkflow:
   Comment: 'Tests Retries and Fail'
@@ -67,13 +56,6 @@ RetryFailWorkflow:
           IntervalSeconds: 2
           BackoffRate: 2
           MaxAttempts: 3
-      Catch:
-        - ErrorEquals:
-          - States.ALL
-          Next: WorkflowFailed
       Next: WorkflowSucceeded
     WorkflowSucceeded:
       Type: Succeed
-    WorkflowFailed:
-      Type: Fail
-      Cause: 'Workflow failed'
