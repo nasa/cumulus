@@ -801,6 +801,8 @@ async function getExecutions(workflowName, stackName, bucket, maxExecutionResult
  * findExecutionFnParams and returns a boolean indicating whether or not this is the correct
  * instance of the workflow
  * @param {Object} options.findExecutionFnParams - params to be passed into findExecutionFn
+ * @param {string} options.startTask - Name of task to check for step input. Input to this
+ * task will be evaluated by the compare function `findExecutionFn`.
  * @param {number} [options.maxWaitSeconds] - an optional custom wait time in seconds
  * @returns {undefined} - none
  * @throws {Error} if workflow was never started
@@ -811,8 +813,8 @@ async function waitForTestExecutionStart({
   bucket,
   findExecutionFn,
   findExecutionFnParams,
-  maxWaitSeconds = maxWaitForStartedExecutionSecs,
-  startTask = 'SfSnsReport'
+  startTask,
+  maxWaitSeconds = maxWaitForStartedExecutionSecs
 }) {
   let timeWaitedSecs = 0;
   /* eslint-disable no-await-in-loop */
