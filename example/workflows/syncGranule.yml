@@ -35,7 +35,7 @@ SyncGranuleCatchDuplicateErrorTest:
         - ErrorEquals:
           - 'DuplicateFile'
           ResultPath: '$.meta.caughtError'
-          Next: WorkflowFailed
+          Next: WorkflowSucceeded
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
