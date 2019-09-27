@@ -336,7 +336,8 @@ up for processing. If the average activity is waiting more than the configured
 service. If the average activity is waiting less than the configured
 `scaleIn.threshold` time, then tasks will be removed from the service.
 Ideally, the average wait time for tasks should settle somewhere between
-`scaleIn.threshold` and `scaleOut.threshold`.
+`scaleIn.threshold` and `scaleOut.threshold`. Scaling based on `ActivityScheduleTime`
+works well with short running tasks, and would not work for long running tasks.
 
 In this example, the minimum number of tasks is 1 and the maximum
 is 10. If the average time for activities to be started is less than 5 seconds,
