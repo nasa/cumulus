@@ -182,7 +182,7 @@ resource "aws_cloudwatch_metric_alarm" "scale_out" {
 
 resource "aws_cloudwatch_metric_alarm" "task_count_low" {
   alarm_description   = "There are less tasks running than the desired"
-  alarm_name          = "${local.full_name}-task-count-low"
+  alarm_name          = "${local.full_name}-TaskCountLowAlarm"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = 1
   metric_name         = "MemoryUtilization"
