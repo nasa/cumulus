@@ -8,6 +8,7 @@ Resources:
 {{#each dynamos}}
   {{@key}}DynamoDB:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
     Properties:
       AttributeDefinitions:
     {{#each this.attributes}}
@@ -143,6 +144,7 @@ Resources:
   #################################################
   {{es.name}}Domain:
     Type: "AWS::Elasticsearch::Domain"
+    DeletionPolicy: Retain
     Properties:
       DomainName: {{prefix}}-{{es.name}}
       ElasticsearchVersion: {{# if es.version}}{{es.version}}{{ else }}'5.3'{{/if}}
