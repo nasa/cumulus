@@ -215,6 +215,15 @@ describe('The S3 Ingest Granules workflow', () => {
     expect(record.status).toEqual('running');
   });
 
+  it('triggers a running PDR record being added to DynamoDB', async () => {
+    const record = await waitForModelStatus(
+      pdrModel,
+      { pdrName: inputPayload.pdr.name },
+      'running'
+    );
+    expect(record.status).toEqual('running');
+  });
+
   it('makes the granule available through the Cumulus API', async () => {
     await waitForModelStatus(
       granuleModel,
