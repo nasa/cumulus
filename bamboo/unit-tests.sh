@@ -9,4 +9,4 @@ docker exec -i ${container_id}\_build_env_1 /bin/bash -c 'cd /source/cumulus; ny
 # Run api tests
 docker exec -i ${container_id}\_build_env_1 /bin/bash -c 'cd /source/cumulus/packages/api; npm run test-coverage'
 # Report final code coverage
-docker exec -i ${container_id}\_build_env_1 /bin/bash -c 'cd /source/cumulus/packages/api; cp -a ../../.nyc_output/. .nyc_output/; nyc report'
+docker exec -i ${container_id}\_build_env_1 /bin/bash -c 'cd /source/cumulus; nyc report'
