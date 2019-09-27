@@ -11,10 +11,13 @@ const includes = require('lodash.includes');
 const intersection = require('lodash.intersection');
 
 const {
-  models: {
-    AccessToken, Execution, Granule, Collection, Provider
-  }
-} = require('@cumulus/api');
+  AccessToken,
+  Execution,
+  Granule,
+  Collection,
+  Pdr,
+  Provider
+} = require('@cumulus/api/models');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
   aws: {
@@ -124,6 +127,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let expectedPayload;
   let expectedS3TagSet;
   let postToCmrOutput;
+  let executionName;
 
   process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
   const accessTokensModel = new AccessToken();
@@ -136,7 +140,8 @@ describe('The S3 Ingest Granules workflow', () => {
   const collectionModel = new Collection();
   process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
   const providerModel = new Provider();
-  let executionName;
+  process.env.PdrsTable = `${config.stackName}-PdrsTable`;
+  const pdrModel = new Pdr();
 
   beforeAll(async () => {
     const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
@@ -194,6 +199,9 @@ describe('The S3 Ingest Granules workflow', () => {
       granulesApiTestUtils.removePublishedGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
+      }),
+      pdrModel.delete({
+        pdrName: inputPayload.pdr.name
       })
     ]);
   });
@@ -699,7 +707,8 @@ describe('The S3 Ingest Granules workflow', () => {
           stackName: config.stackName,
           bucket: config.bucket,
           findExecutionFn: isExecutionForGranuleId,
-          findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId }
+          findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId },
+          startTask: 'PostToCmr'
         });
 
         console.log(`Wait for completed execution ${publishGranuleExecution.executionArn}`);
