@@ -79,8 +79,17 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
   });
 
   // If the alias already exists as an index, remove it
-  const { body: aliasExistsAsIndex } = await esClient.indices.exists({ index: alias });
-  if (aliasExistsAsIndex) await esClient.indices.delete({ index: alias });
+  // We can't do a simple exists check here, because it'll return true if the alias
+  // is actually an alias assigned to an index. We do a get and check that the alias
+  // name is not the key, which would indicate it's an index
+  const { body: existingIndex } = await esClient.indices.get(
+    { index: alias },
+    { ignore: [404] }
+  );
+  if (existingIndex && existingIndex[alias]) {
+    log.info(`Deleting alias as index: ${alias}`);
+    await esClient.indices.delete({ index: alias });
+  }
 
   // check if the index exists
   const exists = await esClient.indices.exists({ index })
