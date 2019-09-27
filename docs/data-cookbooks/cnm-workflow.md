@@ -10,7 +10,7 @@ This entry documents how to setup a workflow that utilizes the built-in CNM/Kine
 
 Prior to working through this entry you should be familiar with the [Cloud Notification Mechanism](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism).
 
-## Sections:
+## Sections
 
 * [Prerequisites](#prerequisites)
 * [Configure the Workflow](#configure-the-workflow)
@@ -231,7 +231,6 @@ The `CnmResponse` lambda package is provided (as of release 1.8) in the `cumulus
 
 You can read more about the expected schema a `CnmResponse` record on the wiki page for [Cloud Notification Mechanism](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism#CloudNotificationMechanism-ResponseMessageFields).
 
-
 ###### Additional Tasks
 
 Lastly, this entry also includes the tasks  `SfSnsReport`, `SyncGranule` from the [example deployment](https://github.com/nasa/cumulus/tree/master/example) are defined in the `lambdas.yml`.
@@ -267,12 +266,13 @@ To add a rule via the dashboard (if you'd like to use the API, see the docs [her
 
 **Please Note:**
 
-- The rule's `value` attribute value must match the Amazon Resource Name [ARN](https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html) for the Kinesis data stream you've preconfigured.   You should be able to obtain this ARN from the Kinesis Dashboard entry for the selected stream.
-- The collection and provider should match the collection and provider you setup in the [`Prerequisites`](#prerequisites) section.
+* The rule's `value` attribute value must match the Amazon Resource Name [ARN](https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html) for the Kinesis data stream you've preconfigured.   You should be able to obtain this ARN from the Kinesis Dashboard entry for the selected stream.
+* The collection and provider should match the collection and provider you setup in the [`Prerequisites`](#prerequisites) section.
 
 Once you've clicked on 'submit' a new rule should appear in the dashboard's Rule Overview.
 
 ------------
+
 ## Execute the Workflow
 
 Once Cumulus has been redeployed and a rule has been added, we're ready to trigger the workflow and watch it execute.
@@ -291,9 +291,9 @@ Construct a JSON file containing an object that matches the values that have bee
 
 The following values (denoted by ${} in the sample below) should be replaced to match values we've previously configured:
 
--  `TEST_DATA_FILE_NAME`:  The filename of the test data that is available in the S3 (or other) provider we created earlier.
--  `TEST_DATA_URI`: The full S3 path to the test data (e.g. s3://bucket-name/path/granule)
--  `COLLECTION`:  The collection defined in the prerequisites for this product
+* `TEST_DATA_FILE_NAME`:  The filename of the test data that is available in the S3 (or other) provider we created earlier.
+* `TEST_DATA_URI`: The full S3 path to the test data (e.g. s3://bucket-name/path/granule)
+* `COLLECTION`:  The collection defined in the prerequisites for this product
 
 ```json
 {
@@ -328,8 +328,8 @@ aws kinesis put-record --stream-name YOUR_KINESIS_NOTIFICATION_STREAM_NAME_HERE 
 
 **Please note**: The above command uses the stream name, *not* the ARN.
 
-
 The command should return output similar to:
+
 ```json
 {
     "ShardId": "shardId-000000000000",
@@ -423,7 +423,6 @@ Example Output Payload:
   }
 ```
 
-
 #### SyncGranules
 
 This lambda will take the files listed in the payload and move them to `s3://{deployment-private-bucket}/file-staging/{deployment-name}/{COLLECTION}/{file_name}`.
@@ -436,7 +435,7 @@ If a prior step in the the workflow has failed, this will add a "FAILURE" record
 
 The data written to the `CnmResponseStream` should adhere to the [Response Message Fields](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism#CloudNotificationMechanism-ResponseMessageFields) schema.
 
-**Example CNM Success Response**
+**Example CNM Success Response**:
 
 ```json
 {
@@ -452,7 +451,7 @@ The data written to the `CnmResponseStream` should adhere to the [Response Messa
 }
 ```
 
-**Example CNM Error Response**
+**Example CNM Error Response**:
 
 ```json
 {
@@ -479,6 +478,7 @@ To test the failure scenario, send a record missing the `collection` key.
 In case of either success *or* failure, `CnmResponse` will then pass the results to `StopStatus`. `StopStatus` will cause the workflow to fail or succeed accordingly.
 
 -----------
+
 ## Verify results
 
 ### Check for successful execution on the dashboard
@@ -497,7 +497,7 @@ A `SUCCESS` notification should be present on the `CNMResponseStream` Kinesis st
 
 You should be able to validate the notification and response streams have the expected records with the following steps (the AWS CLI Kinesis [Basic Stream Operations](https://docs.aws.amazon.com/streams/latest/dev/fundamental-stream.html) is useful to review before proceeding):
 
-- Get a shard iterator (substituting your stream name as appropriate):
+Get a shard iterator (substituting your stream name as appropriate):
 
 ```bash
 aws kinesis get-shard-iterator \
@@ -565,8 +565,8 @@ For purposes of validating the workflow, it may be simpler to locate the workflo
 }
 ```
 
-
 ------------
+
 ## Kinesis Record Error Handling
 
 ### messageConsumer
