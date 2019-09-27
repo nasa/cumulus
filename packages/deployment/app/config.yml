@@ -305,13 +305,11 @@ default:
 
   lambdas: !!files [
   'lambdas.yml',
-  'node_modules/@cumulus/api/config/lambdas.yml',
-  'node_modules/@cumulus/api/config/workflowLambdas.yml'
+  'node_modules/@cumulus/api/config/lambdas.yml'
   ]
 
   workflowLambdas: !!files [
   'lambdas.yml',
-  'node_modules/@cumulus/api/config/workflowLambdas.yml'
   ]
 
   dashboard: !!files [

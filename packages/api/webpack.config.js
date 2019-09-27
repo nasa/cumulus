@@ -23,7 +23,6 @@ module.exports = {
     reportGranules: './lambdas/report-granules.js',
     reportPdrs: './lambdas/report-pdrs.js',
     sfScheduler: './lambdas/sf-scheduler.js',
-    sfSnsBroadcast: './lambdas/sf-sns-broadcast.js',
     sfSemaphoreDown: './lambdas/sf-semaphore-down.js',
     sfStarter: './lambdas/sf-starter.js'
   },
