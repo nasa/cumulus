@@ -42,9 +42,7 @@ DiscoverGranulesBrowseExample:
           - States.ALL
           ResultPath: '$.exception'
           Next: WorkflowFailed
-      Next: WorkflowSucceeded
-    WorkflowSucceeded:
-      Type: Succeed
+      End: true
     WorkflowFailed:
       Type: Fail
       Cause: 'Workflow failed'
@@ -158,9 +156,7 @@ CookbookBrowseExample:
           - States.ALL
           ResultPath: '$.exception'
           Next: WorkflowFailed
-      Next: WorkflowSucceeded
-    WorkflowSucceeded:
-      Type: Succeed
+      End: true
     WorkflowFailed:
       Type: Fail
       Cause: 'Workflow failed'

@@ -15,9 +15,7 @@ RetryPassWorkflow:
             - States.ALL
           IntervalSeconds: 2
           MaxAttempts: 3
-      Next: WorkflowSucceeded
-    WorkflowSucceeded:
-      Type: Succeed
+      End: true
 
 HelloWorldFailWorkflow:
   Comment: 'Failing Hello World Workflow'
@@ -37,9 +35,7 @@ HelloWorldFailWorkflow:
           IntervalSeconds: 2
           MaxAttempts: 6
           BackoffRate: 2
-      Next: WorkflowSucceeded
-    WorkflowSucceeded:
-      Type: Succeed
+    End: true
 
 RetryFailWorkflow:
   Comment: 'Tests Retries and Fail'
@@ -56,6 +52,4 @@ RetryFailWorkflow:
           IntervalSeconds: 2
           BackoffRate: 2
           MaxAttempts: 3
-      Next: WorkflowSucceeded
-    WorkflowSucceeded:
-      Type: Succeed
+      End: true
