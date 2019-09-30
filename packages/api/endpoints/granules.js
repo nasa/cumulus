@@ -3,6 +3,7 @@
 const router = require('express-promise-router')();
 const aws = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
+const elasticsearch = require('elasticsearch');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const Search = require('../es/search').Search;
 const indexer = require('../es/indexer');
@@ -181,9 +182,68 @@ async function get(req, res) {
   return res.send(result);
 }
 
+async function bulk(req, res) {
+  const data = req.body
+  console.log(req.body);
+
+  // In practice this is going to change - page through results and queue
+  // send request to Kibana
+  const query = data.query;
+  const index = data.index;
+  const response = {
+    hits: {
+      hits: [
+        { "name": "jacob", "dr": "dre", "granuleId": "L2_HR_PIXC_product_0001-of-4154" },
+        { "name": "bocaj", "who": "are you", "granuleId": "MOD09GQ.A5252833.awVbJG.006.4578722030158" }
+      ]
+    }
+  };
+  const hits = response.hits.hits;
+  console.log(response);
+
+  // add the response to a priority SQS queue
+  const queueName = data.queueName;
+  const workflowName = data.workflowName;
+  const granuleModelClient = new models.Granule();
+
+  // const client = new elasticsearch.Client({
+  //   host: [
+  //     {
+  //       host: process.env.METRICS_ES_HOST,
+  //       auth: process.env.METRICS_ES_AUTH,
+  //       protocol: 'https',
+  //       port: 443
+  //     }
+  //   ]
+  // });
+
+  // const result = await client.search({
+  //   index: index,
+  //   body: query
+  // });
+
+  // console.log(result);
+
+  // const applyWorkflowRequests = response.filter((item) => item._source.granuleId)
+  //   .map(async (item) => {
+  //     const granule = await granuleModelClient.get({ granuleId: item._source.granuleId });
+  //     return granuleModelClient.applyWorkflow(granule, workflowName, queueName);
+  //   });
+
+  const applyWorkflowRequests = hits.filter((item) => item.granuleId)
+      .map(async (item) => {
+        const granule = await granuleModelClient.get({ granuleId: item.granuleId });
+        return granuleModelClient.applyWorkflow(granule, workflowName, queueName);
+      });
+
+  await Promise.all(applyWorkflowRequests);
+  res.send(`On my wings! Workflow ${queueName}. \nResponse: ${JSON.stringify(response)}`);
+}
+
 router.get('/:granuleName', get);
 router.get('/', list);
 router.put('/:granuleName', put);
+router.post('/bulk', bulk);
 router.delete('/:granuleName', del);
 
 module.exports = router;
