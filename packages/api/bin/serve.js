@@ -132,7 +132,8 @@ async function createDBRecords(stackName, user) {
   const esClient = await Search.es(process.env.ES_HOST);
   const esIndex = process.env.esIndex;
   // Resets the ES client
-  await esClient.indices.delete({ index: esIndex });
+  await esClient.indices.delete({ index: esIndex })
+    .then((response) => response.body);
   await bootstrap.bootstrapElasticSearch(process.env.ES_HOST, esIndex);
 
   if (user) {

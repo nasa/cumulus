@@ -4,7 +4,7 @@ set +e
 
 echo Running parallel integration tests
 
-# print a dot to output every minute for travis
+# print a dot to output every minute for CI
 (while true; do sleep 60; echo .; done) &
 DOT_PID="$!"
 
