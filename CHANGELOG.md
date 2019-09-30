@@ -14,9 +14,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
   As this change is backward compatible in Cumulus Core, users wishing to utilize the previous version of the CMA may opt to transition to using a CMA lambda layer, or set `message_adapter_version` in their configuration to a version prior to v1.1.0.
 
+- **CUMULUS-1396** - Workflow steps using the `SfSnsReport` Lambda have now been deprecated (e.g. `StartStatus`, `StopStatus`). These steps were used for publishing ingest notifications and have been replaced by an implementation using Cloudwatch event triggers on Step Function state transitions to trigger a Lambda that publishes ingest notifications. For further detail on how ingest notifications are published, see the notes below on **CUMULUS-1394**. For examples of how to update your workflow definitinos, see our [example workflow definitions](https://github.com/nasa/cumulus/blob/master/example/workflows/).
+
 ### PLEASE NOTE
 
-- **CUMULUS-1394** - Ingest notifications are now provided via 3 separate SNS topics for executions, granules, and PDRs, instead of a single `sftracker` SNS topic. Whereas the `sftracker` SNS topic received a full Cumulus execution message, the new topics all receive generated records for the given object. The new topics are only published to if the given object exists for the current execution. For a given execution/granule/PDR, two messages will be received by each topic: one message indicating that ingest is running and another message indicating that ingest has completed or failed. The new SNS topics are:
+- **CUMULUS-1394** - Ingest notifications are now provided via 3 separate SNS topics for executions, granules, and PDRs, instead of a single `sftracker` SNS topic. Whereas the `sftracker` SNS topic received a full Cumulus execution message, the new topics all receive generated records for the given object. The new topics are only published to if the given object exists for the current execution. For a given execution/granule/PDR, **two messages will be received by each topic**: one message indicating that ingest is running and another message indicating that ingest has completed or failed. The new SNS topics are:
 
   - `reportExecutions` - Receives 1 message per execution
   - `reportGranules` - Receives 1 message per granule in an execution
@@ -33,6 +35,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - `getMessageExecutionArn()` - Get the execution ARN for a Cumulus execution message
     - `getMessageGranules()` - Get the granules from a Cumulus execution message, if any.
   - Added `@cumulus/common/cloudwatch-event/isFailedSfStatus()` to determine if a Step Function status from a Cloudwatch event is a failed status
+- **CUMULUS-1396**
+  - Added `@cumulus/common/sfnStep`:
+    - `LambdaStep` - A class for retrieving and parsing input and output to Lambda steps in AWS Step Functions
+    - `ActivityStep` - A class for retrieving and parsing input and output to ECS activity steps in AWS Step Functions
 
 ### Changed
 
