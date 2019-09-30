@@ -41,9 +41,7 @@ SyncGranule:
           - States.ALL
           ResultPath: '$.exception'
           Next: WorkflowFailed
-      Next: WorkflowSucceeded
-    WorkflowSucceeded:
-      Type: Succeed
+      End: true
     WorkflowFailed:
       Type: Fail
       Cause: 'Workflow failed'
@@ -336,9 +334,7 @@ PublishGranule:
           - States.ALL
           ResultPath: '$.exception'
           Next: WorkflowFailed
-      Next: WorkflowSucceeded
-    WorkflowSucceeded:
-      Type: Succeed
+      End: true
     WorkflowFailed:
       Type: Fail
       Cause: 'Workflow failed'
@@ -500,9 +496,7 @@ DiscoverGranules:
           - States.ALL
           ResultPath: '$.exception'
           Next: WorkflowFailed
-      Next: WorkflowSucceeded
-    WorkflowSucceeded:
-      Type: Succeed
+      End: true
     WorkflowFailed:
       Type: Fail
       Cause: 'Workflow failed'
@@ -552,9 +546,7 @@ DiscoverAndQueuePdrs:
           - States.ALL
           ResultPath: '$.exception'
           Next: WorkflowFailed
-      Next: WorkflowSucceeded
-    WorkflowSucceeded:
-      Type: Succeed
+      End: true
     WorkflowFailed:
       Type: Fail
       Cause: 'Workflow failed'
