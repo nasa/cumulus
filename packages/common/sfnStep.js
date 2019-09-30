@@ -17,21 +17,6 @@ class SfnStep {
   }
 
   /**
-   * `getTaskEnteredEvent` gets the task entered event for a step, given its schedule event
-   *
-   * @param  {Object} executionHistory - AWS Step Function execution history
-   * @param  {Object} scheduleEvent    - AWS Step Function schedule-type event
-   * @returns {Object}                 - AWS Step Function task entered-type event
-   */
-  getTaskEnteredEvent(executionHistory, scheduleEvent) {
-    return executionHistory.events.find((event) => {
-      const isTaskEnteredEvent = event.type === this.taskStartEvent;
-      const nextEventIsScheduleEvent = scheduleEvent.previousEventId === event.id;
-      return isTaskEnteredEvent && nextEventIsScheduleEvent;
-    });
-  }
-
-  /**
    * `getStartEvent` gets the "start" event for a step, given its schedule event
    *
    * @param  {Object} executionHistory - AWS Step Function execution history
