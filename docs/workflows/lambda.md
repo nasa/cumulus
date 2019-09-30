@@ -62,6 +62,7 @@ For new Node.js Lambdas, update `<daac>-deploy/lambdas.yml` by adding a new entr
 ```
 
 ### Java Lambda
+
 For a Java Lambda, as an example the test task in the 'task' folder of the [cumulus-message-adapter-java](https://github.com/nasa/cumulus-message-adapter-java) repository would be configured in lambdas.yml as follows:
 
 ```yaml
