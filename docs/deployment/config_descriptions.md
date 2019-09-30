@@ -270,7 +270,11 @@ cluster are under 25%, then the cluster size will be reduced by 5%.
 #### Service AutoScaling
 
 Cumulus supports automatically scaling the number of tasks configured for an ECS
-service.  The scaling of tasks is based on the specified metric.
+service.  The scaling of tasks is based on the specified metric. The metric can be one of
+[`Step Functions Activity Metrics`](https://docs.aws.amazon.com/step-functions/latest/dg/procedure-cw-metrics.html#cloudwatch-step-functions-activity-metrics) or a custom metric
+which is suitable for the ECS service.  For example, while autoscaling based on
+`ActivityScheduleTime` metric works well for the short-running tasks, `ActivitiesScheduled`
+metric makes more sense for the long-running tasks.
 
 Configuration values that affect ECS service autoscaling. These would all be
 defined for a specific service.
