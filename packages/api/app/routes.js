@@ -95,7 +95,7 @@ router.post('/refresh', token.refreshEndpoint);
 
 // SAML SSO
 router.get('/samlLogin', launchpadSaml.login);
-router.post('/saml/sso', launchpadSaml.sso);
+router.post('/saml/auth', launchpadSaml.auth);
 
 router.use('/dashboard', dashboard);
 

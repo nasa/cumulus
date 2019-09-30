@@ -17,8 +17,8 @@ const buildLaunchpadJwtToken = async (samlResponse) => {
 };
 
 const spOptions = {
-  entity_id: 'https://cumulus-sandbox.earthdata.nasa.gov', //'https://cumulus-sandbox.earthdata.nasa.gov/kk-test-integration', //process.env.ENTITY_ID,
-  assert_endpoint: 'https://cumulus-sandbox.earthdata.nasa.gov/saml/sso', // 'https://cumulus-sandbox.earthdata.nasa.gov/saml/sso', //process.env.ASSERT_ENDPOINT, // change to just /assert
+  entity_id: 'https://u8ne7bgicd.execute-api.us-east-1.amazonaws.com:8004/dev/',
+  assert_endpoint: 'https://u8ne7bgicd.execute-api.us-east-1.amazonaws.com:8004/dev/saml/auth',
   force_authn: false,
   nameid_format: 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
   sign_get_request: false,
@@ -53,7 +53,7 @@ const login = async (req, res) => {
 };
 
 // SAML AssertionConsumerService (ACS) endpoint.
-const sso = async (req, res) => {
+const auth = async (req, res) => {
   sp.post_assert(idp, { request_body: req.body }, (err, samlResponse) => {
     if (err != null) {
       console.log('assert error');
@@ -73,5 +73,5 @@ const sso = async (req, res) => {
 
 module.exports = {
   login,
-  sso
+  auth
 };

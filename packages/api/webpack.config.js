@@ -1,4 +1,5 @@
 'use strict';
+const path = require('path');
 
 module.exports = {
   mode: process.env.PRODUCTION ? 'production' : 'development',
@@ -26,6 +27,11 @@ module.exports = {
     sfSemaphoreDown: './lambdas/sf-semaphore-down.js',
     sfStarter: './lambdas/sf-starter.js'
   },
+  resolve: {
+    alias: {
+      'saml2-js': path.resolve(__dirname, 'node_modules/saml2-js/lib-js/saml2.js'),
+    }
+  },
   output: {
     libraryTarget: 'commonjs2',
     filename: '[name]/index.js'
@@ -35,6 +41,9 @@ module.exports = {
     'electron',
     { formidable: 'url' }
   ],
-  devtool: process.env.PRODUCTION ? false : 'inline-source-map',
-  target: 'node'
+  target: 'node',
+  node: {
+    __dirname: false,
+    __filename: false,
+  }
 };

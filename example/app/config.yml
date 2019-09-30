@@ -263,6 +263,7 @@ default:
     - username: pquinn1
     - username: menno.vandiermen
     - username: matthewsavoie
+    - username: mhsavoie
     - username: mboyd
     - username: jmcampbell
 
@@ -740,6 +741,22 @@ mhs4:
       port: 7004
       logApiGatewayToCloudWatch: true
   logToSharedDestination: '{{SHARED_LOG_DESTINATION_ARN}}'
+  cmr:
+    oauthProvider: launchpad
+    username: CmrUserNotUsed
+    password: CmrPasswordNotUsed
+  # oauth:
+  #   provider: launchpad
+  #   userGroup: GSFC-Cumulus-Dev
+  oauth:
+    provider: earthdatalogin
+    userGroup: n/a
+  samlConfig:
+    entityID: 'something'
+    assertEndpoint: 'something'
+    idpLogin: 'something'
+    launchpadCertPath: 'something'
+
 
 mhs2:
   prefix: mhs2
