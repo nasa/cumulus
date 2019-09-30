@@ -8,6 +8,8 @@ CNMToCMA:
     key: daacs/podaac/cnmToGranule-1.0.2.j-update.zip
   useMessageAdapter: false
   launchInVpc: true
+  envs:
+    CUMULUS_MESSAGE_ADAPTER_DIR: 'cumulus-message-adapter'
 CnmResponse:
   handler: 'gov.nasa.cumulus.CNMResponse::handleRequestStreams'
   timeout: 300
