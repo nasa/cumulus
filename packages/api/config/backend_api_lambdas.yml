@@ -15,6 +15,10 @@ ApiEndpoints:
     EARTHDATA_CLIENT_PASSWORD: '{{EARTHDATA_CLIENT_PASSWORD}}'
     OAUTH_PROVIDER: '{{parent.oauth.provider}}'
     oauth_user_group: '{{parent.oauth.userGroup}}'
+    ENTITY_ID: '{{parent.samlConfig.entityID}}'
+    ASSERT_ENDPOINT: '{{parent.samlConfig.assertEndpoint}}'
+    IDP_LOGIN: '{{parent.samlConfig.idpLogin}}'
+    LAUNCHPAD_CERT_PATH: '{{parent.samlConfig.launchpadCertPath}}'
     AccessTokensTable:
       function: Ref
       value: AccessTokensTableDynamoDB

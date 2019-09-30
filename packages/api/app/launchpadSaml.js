@@ -4,7 +4,7 @@ const saml2 = require('saml2-js');
 const { JSONPath } = require('jsonpath-plus');
 const { parseString } = require('xml2js');
 const { promisify } = require('util');
-const { flatten } = require('lodash.flatten');
+const flatten = require('lodash.flatten');
 
 const aws = require('@cumulus/common/aws');
 
@@ -61,7 +61,7 @@ const prepareSamlProviders = async () => {
 // Starting point for SAML SSO login
 const login = async (req, res) => {
   // saml2-js stuff
-  const { idp, sp } = prepareSamlProviders();
+  const { idp, sp } = await prepareSamlProviders();
   const relayState = req.query.RelayState;
   sp.create_login_request_url(
     idp,
@@ -76,7 +76,7 @@ const login = async (req, res) => {
 
 // SAML AssertionConsumerService (ACS) endpoint.
 const auth = async (req, res) => {
-  const { idp, sp } = prepareSamlProviders();
+  const { idp, sp } = await prepareSamlProviders();
   sp.post_assert(idp, { request_body: req.body }, (err, samlResponse) => {
     if (err != null) {
       console.log('SAML post assert error');
