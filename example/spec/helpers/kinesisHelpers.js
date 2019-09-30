@@ -5,10 +5,10 @@ const moment = require('moment');
 
 const { Kinesis } = require('aws-sdk');
 const { receiveSQSMessages } = require('@cumulus/common/aws');
+const { LambdaStep } = require('@cumulus/common/sfnStep');
 const { sleep } = require('@cumulus/common/util');
 
 const {
-  LambdaStep,
   getExecutions
 } = require('@cumulus/integration-tests');
 

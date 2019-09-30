@@ -1,9 +1,9 @@
 'use strict';
 
+const { LambdaStep } = require('@cumulus/common/sfnStep');
 const {
   rulesApi: rulesApiTestUtils,
   isWorkflowTriggeredByRule,
-  LambdaStep,
   removeRuleAddedParams,
   waitForTestExecutionStart
 } = require('@cumulus/integration-tests');

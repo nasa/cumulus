@@ -8,7 +8,6 @@ const {
   addCollections,
   cleanupCollections,
   granulesApi: granulesApiTestUtils,
-  LambdaStep,
   waitForTestExecutionStart,
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
@@ -22,6 +21,7 @@ const {
   },
   constructCollectionId
 } = require('@cumulus/common');
+const { LambdaStep } = require('@cumulus/common/sfnStep');
 const {
   loadConfig,
   templateFile,

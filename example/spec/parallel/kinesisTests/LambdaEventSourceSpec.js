@@ -3,13 +3,13 @@
 const {
   stringUtils: { globalReplace }
 } = require('@cumulus/common');
+const { LambdaStep } = require('@cumulus/common/sfnStep');
 const { Rule } = require('@cumulus/api/models');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 9 * 60 * 1000;
 
 const {
   addRulesWithPostfix,
-  LambdaStep,
   addProviders,
   cleanupProviders,
   addCollections,

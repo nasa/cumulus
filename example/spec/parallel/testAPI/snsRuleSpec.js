@@ -6,11 +6,11 @@ const {
   rulesApi: rulesApiTestUtils,
   isWorkflowTriggeredByRule,
   removeRuleAddedParams,
-  waitForTestExecutionStart,
-  LambdaStep
+  waitForTestExecutionStart
 } = require('@cumulus/integration-tests');
 
 const { sns, lambda } = require('@cumulus/common/aws');
+const { LambdaStep } = require('@cumulus/common/sfnStep');
 
 const {
   loadConfig,

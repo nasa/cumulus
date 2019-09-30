@@ -23,12 +23,12 @@ const {
   },
   constructCollectionId
 } = require('@cumulus/common');
+const { LambdaStep } = require('@cumulus/common/sfnStep');
 const { getUrl } = require('@cumulus/cmrjs');
 const {
   addCollections,
   api: apiTestUtils,
   buildAndExecuteWorkflow,
-  LambdaStep,
   conceptExists,
   getOnlineResources,
   granulesApi: granulesApiTestUtils,

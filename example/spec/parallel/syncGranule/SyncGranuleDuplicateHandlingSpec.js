@@ -9,6 +9,7 @@ const {
     randomString
   }
 } = require('@cumulus/common');
+const { LambdaStep } = require('@cumulus/common/sfnStep');
 const { models: { Granule, Pdr } } = require('@cumulus/api');
 const {
   addCollections,
@@ -17,8 +18,7 @@ const {
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
-  granulesApi: granulesApiTestUtils,
-  LambdaStep
+  granulesApi: granulesApiTestUtils
 } = require('@cumulus/integration-tests');
 const {
   deleteFolder,

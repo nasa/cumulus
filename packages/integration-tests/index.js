@@ -10,11 +10,10 @@ const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const pLimit = require('p-limit');
 const pMap = require('p-map');
-const { constructCollectionId } = require('@cumulus/common');
 
-const {
-  stringUtils: { globalReplace }
-} = require('@cumulus/common');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { ActivityStep, LambdaStep } = require('@cumulus/common/sfnStep');
+const { globalReplace } = require('@cumulus/common/string');
 
 const {
   dynamodb,
@@ -30,7 +29,6 @@ const {
   models: { Provider, Collection, Rule }
 } = require('@cumulus/api');
 
-const sfnStep = require('./sfnStep');
 const api = require('./api/api');
 const rulesApi = require('./api/rules');
 const emsApi = require('./api/ems');
@@ -46,7 +44,7 @@ const waitPeriodMs = 1000;
 
 const maxWaitForStartedExecutionSecs = 60 * 5;
 
-const lambdaStep = new sfnStep.LambdaStep();
+const lambdaStep = new LambdaStep();
 
 /**
  * Wait for an AsyncOperation to reach a given status
@@ -851,13 +849,8 @@ module.exports = {
   getWorkflowTemplate,
   waitForCompletedExecution,
   waitForTestExecutionStart,
-  ActivityStep: sfnStep.ActivityStep,
-  LambdaStep: sfnStep.LambdaStep,
-  /**
-   * @deprecated Since version 1.3. To be deleted version 2.0.
-   * Use sfnStep.LambdaStep.getStepOutput instead.
-   */
-  getLambdaOutput: new sfnStep.LambdaStep().getStepOutput,
+  ActivityStep,
+  LambdaStep,
   addCollections,
   addCustomUrlPathToCollectionFiles,
   listCollections,
