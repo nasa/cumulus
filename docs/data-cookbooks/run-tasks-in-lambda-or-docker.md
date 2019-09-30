@@ -52,7 +52,6 @@ Given the `QueueGranules` lambda package is already used in a Step Function Stat
     QueueGranules:
       Type: Task
       Resource: ${QueueGranulesLambdaFunction.Arn}
-      Next: StopStatus
 ```
 
 Given it has been discovered this task can no longer run in AWS Lambda, it can be run on the Cumulus ECS cluster by including the following in `app/config.yml`:
@@ -90,7 +89,6 @@ and then modifying the corresponding Step Function State Machine definition in a
     QueueGranules:
       Type: Task
       Resource: ${QueueGranulesActivity}
-      Next: StopStatus
 ```
 
 ## How do I name my resources? A short primer on Cumulus resource naming conventions

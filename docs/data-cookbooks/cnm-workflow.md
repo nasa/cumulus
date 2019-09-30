@@ -309,10 +309,6 @@ You can view the current running executions on the `Executions` dashboard page w
 
 As detailed above, once the record is added to the Kinesis data stream, the `messageConsumer` lambda will trigger the `CNMExampleWorkflow` .
 
-#### StartStatus
-
-The first task in the execution will report to Cumulus that the workflow has started execution and pass the CNM message to the next step in the workflow
-
 #### TranslateMessage
 
 `TranslateMessage` (which corresponds to the `CNMToCMA` lambda) will take the CNM object payload and add a granules object to the CMA payload that's consistent with other Cumulus ingest tasks, and add a key 'cnm' to 'meta' (as well as the payload) to store the original message.
@@ -436,10 +432,6 @@ The data written to the `CnmResponseStream` should adhere to the [Response Messa
 Note the `CnmResponse` state defined in the `workflows.yml` above configures `$.exception` to be passed to the `CnmResponse` lambda keyed under `config.WorkflowException`. This is required for the `CnmResponse` code to deliver a failure response.
 
 To test the failure scenario, send a record missing the `collection` key.
-
-#### StopStatus
-
-In case of either success *or* failure, `CnmResponse` will then pass the results to `StopStatus`. `StopStatus` will cause the workflow to fail or succeed accordingly.
 
 ------------
 
