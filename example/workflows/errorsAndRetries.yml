@@ -35,7 +35,7 @@ HelloWorldFailWorkflow:
           IntervalSeconds: 2
           MaxAttempts: 6
           BackoffRate: 2
-    End: true
+      End: true
 
 RetryFailWorkflow:
   Comment: 'Tests Retries and Fail'
