@@ -32,12 +32,12 @@ const getCollection = (collection) => {
  * @returns {Promise}
  */
 async function handleScheduleEvent(event) {
-  const [messageTemplate, provider, collection] = await Promise.all([
-    getMessageFromTemplate(event.template),
+  const [provider, collection] = await Promise.all([
     getProvider(event.provider),
     getCollection(event.collection)
   ]);
 
+  const messageTemplate = get(event, 'template');
   const queueName = get(event, 'queueName', 'startSF');
   const workflowDefinition = get(event, 'definition');
   const workflow = {
