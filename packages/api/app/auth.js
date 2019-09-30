@@ -6,6 +6,7 @@ const {
   TokenExpiredError
 } = require('jsonwebtoken');
 const log = require('@cumulus/common/log');
+const {ensureAuthorized: ensureLaunchpadAPIAuthorized} = require('./launchpadAuth');
 const { User, AccessToken } = require('../models');
 const { verifyJwtToken } = require('../lib/token');
 
@@ -51,6 +52,12 @@ async function ensureAuthorized(req, res, next) {
     return next();
   } catch (error) {
     log.error(error);
+    if (error instanceof JsonWebTokenError
+        && error.message === 'jwt malformed'
+        && process.env.OAUTH_PROVIDER === 'launchpad') {
+      // if the jwtToken wasn't valid, it was possible that it was a launchpad sm_token.
+      return ensureLaunchpadAPIAuthorized(req, res, next);
+    }
 
     if (error instanceof TokenExpiredError) {
       return res.boom.unauthorized('Access token has expired');

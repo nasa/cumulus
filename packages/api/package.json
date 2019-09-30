@@ -76,6 +76,7 @@
     "hsts": "^2.1.0",
     "is-ip": "^2.0.0",
     "json2csv": "^4.5.1",
+    "jsonpath-plus": "^1.1.0",
     "jsonwebtoken": "^8.4.0",
     "lambda-proxy-utils": "^1.4.0",
     "lodash": "4.17.12",

@@ -1,4 +1,3 @@
-
 'use strict';
 
 const launchpad = require('@cumulus/common/launchpad');

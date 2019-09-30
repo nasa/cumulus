@@ -732,6 +732,9 @@ mhs4:
   ecs:
     ssh: true
     keyPairName: mhs
+  launchpad:
+    api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1'
+    passphrase: '{{LAUNCHPAD_PASSPHRASE}}'
   apiConfigs:
     backend:
       private: true
@@ -752,10 +755,10 @@ mhs4:
     provider: earthdatalogin
     userGroup: n/a
   samlConfig:
-    entityID: 'something'
-    assertEndpoint: 'something'
-    idpLogin: 'something'
-    launchpadCertPath: 'something'
+    entityID: 'https://u8ne7bgicd.execute-api.us-east-1.amazonaws.com:8004/dev/'
+    assertEndpoint: 'https://u8ne7bgicd.execute-api.us-east-1.amazonaws.com:8004/dev/saml/auth'
+    idpLogin: 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso'
+    launchpadCertPath: 's3://mhs4-internal/mhs4/launchpad/launchpad-sbx-metadata.xml'
 
 
 mhs2:
