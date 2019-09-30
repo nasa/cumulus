@@ -34,9 +34,10 @@ if (process.env.FAKE_AUTH === 'true') {
   ensureAuthorized = token.ensureAuthorized;
 }
 
-if (process.env.OAUTH_PROVIDER === 'launchpad') {
-  ensureAuthorized = launchpadAuth.ensureAuthorized;
-}
+// TODO [MHS, 2019-10-01]  figure this out
+// if (process.env.OAUTH_PROVIDER === 'launchpad') {
+//   ensureAuthorized = launchpadAuth.ensureAuthorized;
+// }
 
 // collections endpoints
 router.use('/collections', ensureAuthorized, collections);

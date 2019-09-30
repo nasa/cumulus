@@ -18,7 +18,7 @@ ApiEndpoints:
     ENTITY_ID: '{{parent.samlConfig.entityID}}'
     ASSERT_ENDPOINT: '{{parent.samlConfig.assertEndpoint}}'
     IDP_LOGIN: '{{parent.samlConfig.idpLogin}}'
-    LAUNCHPAD_CERT_PATH: '{{parent.samlConfig.launchpadCertPath}}'
+    LAUNCHPAD_METADATA_PATH: '{{parent.samlConfig.launchpadMetadataPath}}'
     AccessTokensTable:
       function: Ref
       value: AccessTokensTableDynamoDB

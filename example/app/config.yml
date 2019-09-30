@@ -748,17 +748,17 @@ mhs4:
     oauthProvider: launchpad
     username: CmrUserNotUsed
     password: CmrPasswordNotUsed
-  # oauth:
-  #   provider: launchpad
-  #   userGroup: GSFC-Cumulus-Dev
   oauth:
-    provider: earthdatalogin
-    userGroup: n/a
+    provider: launchpad
+    userGroup: GSFC-Cumulus-Dev
+  # oauth:
+  #   provider: earthdatalogin
+  #   userGroup: n/a
   samlConfig:
     entityID: 'https://u8ne7bgicd.execute-api.us-east-1.amazonaws.com:8004/dev/'
     assertEndpoint: 'https://u8ne7bgicd.execute-api.us-east-1.amazonaws.com:8004/dev/saml/auth'
     idpLogin: 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso'
-    launchpadCertPath: 's3://{{buckets.internal.name}}/{{prefix}}/launchpad/launchpad-sbx-metadata.xml'
+    launchpadMetadataPath: 's3://{{buckets.internal.name}}/{{prefix}}/launchpad/launchpad-sbx-metadata.xml'
 
 
 mhs2:
