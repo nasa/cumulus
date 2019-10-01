@@ -32,7 +32,7 @@ HelloWorldWorkflow:
           workflow_config:
             StartStatus:
               cumulus_message:
-              input: '{$}' # Configuration to send the payload to the SNS Topic
+              input: '{{$}}' # Configuration to send the payload to the SNS Topic
       Next: HelloWorld
     HelloWorld:
       Parameters:
@@ -40,9 +40,9 @@ HelloWorldWorkflow:
           event.$: '$'
           workflow_config:
             HelloWorld:
-              buckets: '{$.meta.buckets}'
-              provider: '{$.meta.provider}'
-              collection: '{$.meta.collection}'
+              buckets: '{{$.meta.buckets}}'
+              provider: '{{$.meta.provider}}'
+              collection: '{{$.meta.collection}}'
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
       Next: StopStatus
@@ -55,12 +55,12 @@ HelloWorldWorkflow:
           workflow_config:
             StopStatus:
               sfnEnd: true # Indicates the end of the workflow
-              stack: '{$.meta.stack}'
-              bucket: '{$.meta.buckets.internal.name}'
-              stateMachine: '{$.cumulus_meta.state_machine}'
-              executionName: '{$.cumulus_meta.execution_name}'
+              stack: '{{$.meta.stack}}'
+              bucket: '{{$.meta.buckets.internal.name}}'
+              stateMachine: '{{$.cumulus_meta.state_machine}}'
+              executionName: '{{$.cumulus_meta.execution_name}}'
               cumulus_message:
-                input: '{$}' # Configuration to send the payload to the SNS Topic
+                input: '{{$}}' # Configuration to send the payload to the SNS Topic
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -81,10 +81,10 @@ DiscoverPdrs:
     cma:
       event.$: '$'
       workflow_config:
-        stack: '{$.meta.stack}'
-        provider: '{$.meta.provider}'
-        bucket: '{$.meta.buckets.internal.name}'
-        collection: '{$.meta.collection}'
+        stack: '{{$.meta.stack}}'
+        provider: '{{$.meta.provider}}'
+        bucket: '{{$.meta.buckets.internal.name}}'
+        collection: '{{$.meta.collection}}'
   Type: Task
   Resource: ${DiscoverPdrsLambdaFunction.Arn}
   Catch:
@@ -107,7 +107,7 @@ PdrStatusReport:
       workflow_config:
         PdrStatusReport:
           cumulus_message:
-            input: '{$}'
+            input: '{{$}}'
   ResultPath: null
   Type: Task
   Resource: ${SfSnsReportLambdaFunction.Arn}
