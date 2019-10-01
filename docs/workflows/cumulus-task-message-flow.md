@@ -15,7 +15,7 @@ The steps in this flow are detailed in sections below.
 
 A full **Cumulus Message** has the following keys:
 
-* **`cumulus_meta`:** System runtime information that should generally not be touched outside of Cumulus library code or the Cumulus Message Adapter. Stores meta information about the workflow such as the state machine name and the current workflow execution's name. This information is used to look up the current active task. The name of the current active task is used to look up the corresponding task's config in `workflow_config`.
+* **`cumulus_meta`:** System runtime information that should generally not be touched outside of Cumulus library code or the Cumulus Message Adapter. Stores meta information about the workflow such as the state machine name and the current workflow execution's name. This information is used to look up the current active task. The name of the current active task is used to look up the corresponding task's config in `task_config`.
 * **`meta`:** Runtime information captured by the workflow operators. Stores execution-agnostic variables.
 * **`payload`:** Payload is runtime information for the tasks.
 
@@ -28,12 +28,10 @@ Here's a simple example of a Cumulus Message:
 
 ```json
 {
-  "workflow_config": {
-    "Example": {
-      "inlinestr": "prefix{meta.foo}suffix",
-      "array": "{[$.meta.foo]}",
-      "object": "{{$.meta}}"
-    }
+  "task_config": {
+    "inlinestr": "prefix{meta.foo}suffix",
+    "array": "{[$.meta.foo]}",
+    "object": "{{$.meta}}"
   },
   "cumulus_meta": {
     "message_source": "sfn",
@@ -75,7 +73,7 @@ Once "my-large-event.json" is fetched from S3, it's returned from the fetch remo
 
 #### Preparation Step 2: Parse step function config from CMA configuration parameters
 
-This step  determines what current task is being executed. Note this is different from what lambda or activity is being executed, because the same lambda or activity can be used for different tasks. The current task name is used to load the appropriate configuration from the Cumulus Message's 'workflow_config' configuration parameter.
+This step  determines what current task is being executed. Note this is different from what lambda or activity is being executed, because the same lambda or activity can be used for different tasks. The current task name is used to load the appropriate configuration from the Cumulus Message's 'task_config' configuration parameter.
 
 #### Preparation Step 3: Load nested event
 
@@ -104,18 +102,16 @@ The config loaded from the **Fetch step function config** step may have a `cumul
 
 ```json
 {
-  "workflow_config": {
-    "Example": {
-      "bar": "baz",
-      "cumulus_message": {
-        "input": "{{$.payload.input}}",
-        "outputs": [
-          {
-            "source": "{{$.input.anykey}}",
-            "destination": "{{$.payload.out}}"
-          }
-        ]
-      }
+  "task_config": {
+    "bar": "baz",
+    "cumulus_message": {
+      "input": "{{$.payload.input}}",
+      "outputs": [
+        {
+          "source": "{{$.input.anykey}}",
+          "destination": "{{$.payload.out}}"
+        }
+      ]
     }
   },
   "cumulus_meta": {

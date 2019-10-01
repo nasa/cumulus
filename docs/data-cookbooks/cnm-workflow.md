@@ -223,7 +223,7 @@ CNMToCMA:
 
 `CNMToCMA` is meant for the beginning of a workflow: it maps CNM granule information to a payload for downstream tasks. This workflow will not utilize the payload. For other workflows, you would need to ensure that downstream tasks in your workflow either understand the CNM message *or* include a translation task like this one.
 
-You can also manipulate the data sent to downstream tasks using `workflow_config` for various states in `workflows.yml`. Read more about how to configure data on the [Workflow Input & Output](https://nasa.github.io/cumulus/docs/workflows/input_output) page.
+You can also manipulate the data sent to downstream tasks using `task_config` for various states in `workflows.yml`. Read more about how to configure data on the [Workflow Input & Output](https://nasa.github.io/cumulus/docs/workflows/input_output) page.
 
 ###### CnmResponse
 

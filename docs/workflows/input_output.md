@@ -163,12 +163,10 @@ DiscoverGranules:
 
 ```json
 {
-  "workflow_config": {
-    "Example": {
-      "inlinestr": "prefix{meta.foo}suffix",
-      "array": "{[$.meta.foo]}",
-      "object": "{{$.meta}}"
-    }
+  "task_config": {
+    "inlinestr": "prefix{meta.foo}suffix",
+    "array": "{[$.meta.foo]}",
+    "object": "{{$.meta}}"
   },
   "cumulus_meta": {
     "message_source": "sfn",
@@ -201,7 +199,7 @@ The message may contain a reference to an S3 Bucket, Key and TargetPath as follo
 ```
 
 
-#### workflow_config
+#### task_config
 
 This configuration key contains the input/output configuration values for definition of inputs/outputs via URL paths.
 **Important**:  These values are all relative to json object configured for `event.$`.
@@ -216,8 +214,7 @@ FunctionName:
     cma:
       event.$: '$'
       other_cma_configuration: '<config object>'
-      task_config:
-          workflow_config: '<workflow_config>'
+      task_config: '<task config>'
 
 ```
 
@@ -294,7 +291,7 @@ The CMA will attempt to pull the file stored at `Bucket`/`Key` and replace the v
 
 #### 3. Resolve URL templates in the task configuration
 
-In the workflow configuration (defined under the `workflow_config` key), each task has its own configuration, and it can use URL template as a value to achieve simplicity or for values only available at execution time. The Cumulus Message Adapter resolves the URL templates (relative to the event configuration key) and then passes message to next task. For example, given a task which has the following configuration:
+In the workflow configuration (defined under the `task_config` key), each task has its own configuration, and it can use URL template as a value to achieve simplicity or for values only available at execution time. The Cumulus Message Adapter resolves the URL templates (relative to the event configuration key) and then passes message to next task. For example, given a task which has the following configuration:
 
 ```yaml
     Discovery:
@@ -332,13 +329,11 @@ The corresponding Cumulus Message would contain:
         },
         ...
       },
-      "workflow_config": {
-        "Discovery": {
-          "provider: "{{$.meta.provider}}",
-          "inlinestr": "prefix{meta.foo}suffix",
-          "array": "{[$.meta.foo]}",
-          "object": "{{$.meta}}"
-        },
+      "task_config": {
+        "provider: "{{$.meta.provider}}",
+        "inlinestr": "prefix{meta.foo}suffix",
+        "array": "{[$.meta.foo]}",
+        "object": "{{$.meta}}"
         ...
       }
     }
@@ -372,7 +367,7 @@ URL template variables replace dotted paths inside curly brackets with their cor
 
 #### 4. Resolve task input
 
-By default, the incoming payload is the payload from the previous task.  The task can also be configured to use a portion of the payload its input message.  For example, given a task specifies `cma.workflow_config.{task_name}.cumulus_message.input`:
+By default, the incoming payload is the payload from the previous task.  The task can also be configured to use a portion of the payload its input message.  For example, given a task specifies `cma.task_config.cumulus_message.input`:
 
 ```yaml
     ExampleTask:
@@ -388,11 +383,9 @@ The task configuration in the message would be:
 
 ```json
     {
-      "workflow_config": {
-        "ExampleTask": {
-          "cumulus_message": {
-            "input": "{{$.payload.foo}}"
-          }
+      "task_config": {
+        "cumulus_message": {
+          "input": "{{$.payload.foo}}"
         }
       },
       "payload": {
@@ -416,7 +409,7 @@ The Cumulus Message Adapter will resolve the task input, instead of sending the 
 
 #### 5. Resolve task output
 
-By default, the task's return value is the next payload.  However, the workflow task configuration can specify a portion of the return value as the next payload, and can also augment values to other fields. Based on the task configuration under `cma.workflow_config.{task_name}.cumulus_message.outputs`, the Message Adapter uses a task's return value to output a message as configured by the task-specific config defined under `cma.workflow_config`. The Message Adapter dispatches a "source" to a "destination" as defined by URL templates stored in the task-specific `cumulus_message.outputs`. The value of the task's return value at the "source" URL is used to create or replace the value of the task's return value at the "destination" URL. For example, given a task specifies cumulus_message.output in its workflow configuration as follows:
+By default, the task's return value is the next payload.  However, the workflow task configuration can specify a portion of the return value as the next payload, and can also augment values to other fields. Based on the task configuration under `cma.task_config.cumulus_message.outputs`, the Message Adapter uses a task's return value to output a message as configured by the task-specific config defined under `cma.task_config`. The Message Adapter dispatches a "source" to a "destination" as defined by URL templates stored in the task-specific `cumulus_message.outputs`. The value of the task's return value at the "source" URL is used to create or replace the value of the task's return value at the "destination" URL. For example, given a task specifies cumulus_message.output in its workflow configuration as follows:
 
 ```yaml
     ExampleTask:
@@ -436,20 +429,18 @@ The corresponding Cumulus Message would be:
 
 ```json
     {
-      "workflow_config": {
-        "ExampleTask": {
-          "cumulus_message": {
-            "outputs": [
-              {
-                "source": "{{$}}",
-                "destination": "{{$.payload}}"
-              },
-              {
-                "source": "{{$.output.anykey}}",
-                "destination": "{{$.meta.baz}}"
-              }
-            ]
-          }
+      "task_config": {
+        "cumulus_message": {
+          "outputs": [
+            {
+              "source": "{{$}}",
+              "destination": "{{$.payload}}"
+            },
+            {
+              "source": "{{$.output.anykey}}",
+              "destination": "{{$.meta.baz}}"
+            }
+          ]
         }
       },
       "meta": {
@@ -475,8 +466,7 @@ The Cumulus Message Adapter would output the following Cumulus Message:
 
 ```json
     {
-      "workflow_config": {
-        "ExampleTask": {
+      "task_config": {
           "cumulus_message": {
             "outputs": [
               {
@@ -489,7 +479,6 @@ The Cumulus Message Adapter would output the following Cumulus Message:
               }
             ]
           }
-        }
       },
       "meta": {
         "foo": "bar",
@@ -520,20 +509,18 @@ For example, if the output message (post output configuration) from a cumulus me
       "ReplaceConfig": {
         "FullMessage": true
       },
-      "workflow_config": {
-        "ExampleTask": {
-          "cumulus_message": {
-            "outputs": [
-              {
-                "source": "{{$}}",
-                "destination": "{{$.payload}}"
-              },
-              {
-                "source": "{{$.output.anykey}}",
-                "destination": "{{$.meta.baz}}"
-              }
-            ]
-          }
+      "task_config": {
+        "cumulus_message": {
+          "outputs": [
+            {
+              "source": "{{$}}",
+              "destination": "{{$.payload}}"
+            },
+            {
+              "source": "{{$.output.anykey}}",
+              "destination": "{{$.meta.baz}}"
+            }
+          ]
         }
       },
       "meta": {
