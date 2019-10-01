@@ -7,6 +7,7 @@ exports.cliUtils = require('./cli-utils');
 exports.CloudFormationGateway = require('./CloudFormationGateway');
 exports.CollectionConfigStore = require('./collection-config-store').CollectionConfigStore;
 exports.constructCollectionId = require('./collection-config-store').constructCollectionId;
+exports.ecs = require('./ecs');
 exports.http = require('./http');
 exports.launchpad = require('./launchpad');
 exports.LaunchpadToken = require('./LaunchpadToken');

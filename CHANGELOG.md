@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - `reportGranules` - Receives 1 message per granule in an execution
   - `reportPdrs` - Receives 1 message per PDR
 
-- **CUMULUS-1470** ECS Service Autoscaling now uses the metric configured for the service rather than the `ActivityScheduleTime` metric.
+- **CUMULUS-1470** ECS Service Autoscaling now uses a configurable metric for the service rather than the `ActivityScheduleTime` metric.
 
 ### Added
 
@@ -51,7 +51,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1375**
   - Migrate Cumulus from deprecated Elasticsearch JS client to new, supported one in `@cumulus/api`
-- **CUMULUS-1470** ECS Service Autoscaling uses the specified metric
+- **CUMULUS-1470** ECS Service Autoscaling supports using specified autoscaling metrics
 
 ### Fixed
 

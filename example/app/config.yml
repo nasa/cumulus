@@ -116,7 +116,7 @@ default:
           stat: Average
           adjustmentPercent: -5
           comparisonOperator: LessThanThreshold
-          threshold: 0.4
+          threshold: 0.3
         scaleOut:
           metricName: ActivitiesScheduled
           namespace: AWS/States
@@ -124,7 +124,7 @@ default:
           stat: Average
           adjustmentPercent: 10
           comparisonOperator: GreaterThanOrEqualToThreshold
-          threshold: 0.8
+          threshold: 0.6
         activityName: EcsTaskHelloWorld
         envs:
           AWS_DEFAULT_REGION:
