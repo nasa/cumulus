@@ -756,7 +756,7 @@ mhs4:
   #   userGroup: n/a
   samlConfig:
     entityID: 'https://u8ne7bgicd.execute-api.us-east-1.amazonaws.com:8004/dev/'
-    assertEndpoint: 'https://u8ne7bgicd.execute-api.us-east-1.amazonaws.com:8004/dev/saml/auth'
+    assertionConsumerService: 'https://u8ne7bgicd.execute-api.us-east-1.amazonaws.com:8004/dev/saml/auth'
     idpLogin: 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso'
     launchpadMetadataPath: 's3://{{buckets.internal.name}}/{{prefix}}/launchpad/launchpad-sbx-metadata.xml'
 

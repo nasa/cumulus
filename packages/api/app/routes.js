@@ -24,7 +24,7 @@ const workflows = require('../endpoints/workflows');
 const dashboard = require('../endpoints/dashboard');
 const elasticsearch = require('../endpoints/elasticsearch');
 const ems = require('../endpoints/ems');
-const launchpadAuth = require('./launchpadAuth');
+const { launchpadProtectedAuth } = require('./launchpadAuth');
 const launchpadSaml = require('./launchpadSaml');
 
 let token = require('../endpoints/token');
@@ -33,11 +33,6 @@ if (process.env.FAKE_AUTH === 'true') {
   token = require('./testAuth'); // eslint-disable-line global-require
   ensureAuthorized = token.ensureAuthorized;
 }
-
-// TODO [MHS, 2019-10-01]  figure this out
-// if (process.env.OAUTH_PROVIDER === 'launchpad') {
-//   ensureAuthorized = launchpadAuth.ensureAuthorized;
-// }
 
 // collections endpoints
 router.use('/collections', ensureAuthorized, collections);
@@ -89,14 +84,23 @@ router.use('/version', version);
 // workflows endpoint
 router.use('/workflows', ensureAuthorized, workflows);
 
-router.delete('/token/:token', token.deleteTokenEndpoint);
-router.delete('/tokenDelete/:token', token.deleteTokenEndpoint);
-router.get('/token', token.tokenEndpoint);
-router.post('/refresh', token.refreshEndpoint);
+// OAuth Token endpoints
+if (launchpadProtectedAuth()) {
+  // SAML SSO
+  router.get('/samlLogin', launchpadSaml.login);
+  router.post('/saml/auth', launchpadSaml.auth);
+  // disabled for now
+  router.get('/token', launchpadSaml.tokenEndpoint);
+  router.post('/refresh', launchpadSaml.refreshEndpoint);
+  router.delete('/token/:token', launchpadSaml.deleteTokenEndpoint);
+  router.delete('/tokenDelete/:token', launchpadSaml.deleteTokenEndpoint);
+} else {
+  router.delete('/token/:token', token.deleteTokenEndpoint);
+  router.delete('/tokenDelete/:token', token.deleteTokenEndpoint);
+  router.get('/token', token.tokenEndpoint);
+  router.post('/refresh', token.refreshEndpoint);
+}
 
-// SAML SSO
-router.get('/samlLogin', launchpadSaml.login);
-router.post('/saml/auth', launchpadSaml.auth);
 
 router.use('/dashboard', dashboard);
 

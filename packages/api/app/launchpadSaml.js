@@ -44,7 +44,6 @@ const buildLaunchpadJwtToken = async (samlResponse) => {
     user: { name_id: username, session_index: accessToken }
   } = samlResponse;
 
-  // TODO [MHS, 2019-09-20]  how long?  Is there a way to see authentication duration with samlsso?
   const expirationTime = Date.now() + 60 * 60 * 1000;
   const accessTokenModel = new AccessToken();
   await accessTokenModel.create({ accessToken, expirationTime, username });
@@ -70,7 +69,7 @@ const prepareSamlProviders = async () => {
 
   const idpOptions = {
     sso_login_url: process.env.IDP_LOGIN,
-    sso_logout_url: null, // should probably figure this out?? Does launchpad have this?
+    sso_logout_url: null,
     certificates: LaunchpadX509Certificate
   };
 
@@ -89,7 +88,7 @@ const login = async (req, res) => {
     idp,
     { relay_state: relayState },
     (err, loginUrl) => {
-      if (err != null) return res.send(500); // TODO [MHS, 2019-09-19] should use BOOM
+      if (err != null) return res.boom.badRequest('Could not create login request url.', err);
       return res.redirect(loginUrl);
     }
   );
@@ -107,11 +106,22 @@ const auth = async (req, res) => {
         const Location = `${req.body.RelayState}/?token=${LaunchpadJwtToken}`;
         return res.redirect(Location);
       })
-      .catch((error) => res.boom.badRequest('Could not build JWToken from SAML response', error));
+      .catch((error) => res.boom.badRequest('Could not build JWT from SAML response', error));
   });
 };
 
+const notImplemented = async (req, res) => res.boom.notImplemented(
+  `endpoint: "${req.path}" not implemented. Login with launchpad.`
+);
+
+const tokenEndpoint = notImplemented;
+const refreshEndpoint = notImplemented;
+const deleteTokenEndpoint = notImplemented;
+
 module.exports = {
+  auth,
+  deleteTokenEndpoint,
   login,
-  auth
+  refreshEndpoint,
+  tokenEndpoint
 };

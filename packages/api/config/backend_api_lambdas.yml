@@ -16,7 +16,7 @@ ApiEndpoints:
     OAUTH_PROVIDER: '{{parent.oauth.provider}}'
     oauth_user_group: '{{parent.oauth.userGroup}}'
     ENTITY_ID: '{{parent.samlConfig.entityID}}'
-    ASSERT_ENDPOINT: '{{parent.samlConfig.assertEndpoint}}'
+    ASSERT_ENDPOINT: '{{parent.samlConfig.assertionConsumerService}}'
     IDP_LOGIN: '{{parent.samlConfig.idpLogin}}'
     LAUNCHPAD_METADATA_PATH: '{{parent.samlConfig.launchpadMetadataPath}}'
     AccessTokensTable:
