@@ -86,8 +86,7 @@ CNMExampleWorkflow:
       Paremeters:
         cma:
           event.$: '$'
-          workflow_config:
-            StartStatus:
+          task_config:
               cumulus_message:
                 input: '{{$}}'
       Next: TranslateMessage
@@ -102,8 +101,7 @@ CNMExampleWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            TranslateMessage:
+          task_config:
               cumulus_message:
                 outputs:
                   - source: '{{$.cnm}}'
@@ -120,8 +118,7 @@ CNMExampleWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            SyncGranule:
+          task_config:
               provider: '{{$.meta.provider}}'
               buckets: '{{$.meta.buckets}}'
               collection: '{{$.meta.collection}}'
@@ -150,8 +147,7 @@ CNMExampleWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            CnmResponse:
+          task_config:
               OriginalCNM: '{{$.meta.cnm}}'
               CNMResponseStream: 'ADD YOUR RESPONSE STREAM HERE'
               region: 'us-east-1'
@@ -179,8 +175,7 @@ CNMExampleWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            StopStatus:
+          task_config:
               sfnEnd: true
               stack: '{{$.meta.stack}}'
               bucket: '{{$.meta.buckets.internal.name}}'

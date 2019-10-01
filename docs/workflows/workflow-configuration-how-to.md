@@ -50,8 +50,7 @@ DiscoverGranules:
   Parameters:
     cma:
       event.$: '$'
-      workflow_config:
-        DiscoverGranules:
+      task_config:
           Provider: '{$.meta.provider}'
           collection: '{$.meta.collection}'
           buckets: '{$.meta.buckets}'
@@ -62,8 +61,7 @@ MoveGranules:
   Parameters:
     cma:
       event.$: '$'
-      workflow_config:
-        MoveGranules:
+      task_config:
           bucket: '{$.meta.buckets.internal.name}'
           buckets: '{$.meta.buckets}'
 ```
@@ -77,8 +75,7 @@ DiscoverGranules:
   Parameters:
     cma:
       event.$: '$'
-      workflow_config:
-        DiscoverGranules:
+      task_config:
           provider: '{$.meta.provider}'
           collection: '{$.meta.collection}'
           buckets:
@@ -92,8 +89,7 @@ DiscoverGranules:
   Parameters:
     cma:
       event.$: '$'
-      workflow_config:
-        DiscoverGranules:
+      task_config:
           provider: '{$.meta.provider}'
           collection: '{$.meta.collection}'
           buckets:
@@ -110,8 +106,7 @@ DiscoverGranules:
   Parameters:
     cma:
       event.$: '$'
-      workflow_config:
-        DiscoverGranules:
+      task_config:
           provider: '{$.meta.provider}'
           collection: '{$.meta.collection}'
           buckets:

@@ -216,8 +216,7 @@ FunctionName:
     cma:
       event.$: '$'
       other_cma_configuration: '<config object>'
-      workflow_config:
-        FunctionName:
+      task_config:
           workflow_config: '<workflow_config>'
 
 ```
@@ -229,8 +228,7 @@ StepFunction:
   Parameters:
     cma:
       event.$: '$'
-      workflow_config:
-        StepFunction:
+      task_config:
           sfnEnd: true
           stack: '{$.meta.stack}'
           bucket: '{$.meta.buckets.internal.name}'
@@ -303,8 +301,7 @@ In the workflow configuration (defined under the `workflow_config` key), each ta
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            Discovery:
+          task_config:
               provider: '{$.meta.provider}'
                 inlinestr: 'prefix{meta.foo}suffix'
                 array: '[$.meta.foo]'
@@ -382,8 +379,7 @@ By default, the incoming payload is the payload from the previous task.  The tas
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            ExampleTask:
+          task_config:
               cumulus_message:
                   input: '{$.payload.foo}'
 ```
@@ -427,8 +423,7 @@ By default, the task's return value is the next payload.  However, the workflow 
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            ExampleTask:
+          task_config:
               cumulus_message:
                   outputs:
                     - source: '{$}'

@@ -64,8 +64,7 @@ For any SIPS workflows using `queue-granules` or `queue-pdrs` that you want to u
     Parameters:
       cma:
         event.$: '$'
-        workflow_config:
-          QueueGranules:
+        task_config:
             provider: '{{$.meta.provider}}'
             internalBucket: '{{$.meta.buckets.internal.name}}'
             stackName: '{{$.meta.stack}}'
@@ -79,8 +78,7 @@ For any SIPS workflows using `queue-granules` or `queue-pdrs` that you want to u
     Parameters:
       cma:
         event.$: '$'
-        workflow_config:
-          QueuePdrs:
+        task_config:
             # configure the step to use your new queue
             queueUrl: '{{$.meta.queues.backgroundJobQueue}}'
             parsePdrMessageTemplateUri: '{{$.meta.templates.ParsePdr}}'

@@ -89,8 +89,7 @@ A few things to note about tasks in the workflow being added:
     Parameters:
       cma:
         event: '$'
-        workflow_config:
-          CmrStep:
+        task_config:
             bucket: '{{$.meta.buckets.internal.name}}'
             stack: '{{$.meta.stack}}'
             cmr: '{{$.meta.cmr}}'
@@ -116,8 +115,7 @@ Note that in the task, the event.config.cmr will contain the values you configur
     Parameters:
       cma:
         event.$: '$'
-        workflow_config:
-          ProcessingStep:
+        task_config:
             bucket: '{{$.meta.buckets.internal.name}}'
             collection: '{{$.meta.collection}}'
             cmrMetadataFormat: '{{$.meta.cmrMetadataFormat}}'
