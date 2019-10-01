@@ -20,7 +20,7 @@ More information on configuring an SNS topic or subscription in Cumulus can be f
 
 ## Sending an SNS message to report status
 
-SNS messages can be sent at anytime during the workflow execution by adding a workflow step to send the message. In the following example, a PDR status report step is configured to report PDR status. This is configured in `workflows/sips.yml`.
+SNS messages can be sent at anytime during the workflow execution by adding a workflow step to send the message using the `publishReports` Lambda. In the following example, a PDR status report step is configured to report PDR status. This is configured in `workflows/sips.yml`.
 
 ```yaml
 PdrStatusReport:
@@ -29,19 +29,7 @@ PdrStatusReport:
       input: '{$}'
   ResultPath: null
   Type: Task
-  Resource: ${SfSnsReportLambdaFunction.Arn}
-```
-
-### Task Configuration
-
-To use the `SfSnsReport` Lambda, the following configuration should be added to `lambas.yml`:
-
-```yaml
-SfSnsReport:
-  handler: index.handler
-  timeout: 300
-  source: 'node_modules/@cumulus/sf-sns-report/dist'
-  useMessageAdapter: true
+  Resource: ${publishReportsLambdaFunction.Arn}
 ```
 
 ### Subscribing Additional Listeners
@@ -65,11 +53,7 @@ Make sure that the receiver Lambda is configured in `lambdas.yml`.
 
 ### SNS message format
 
-The `SfSnsReport` lambda receives the Cumulus message [(as the lambda's task input)](../workflows/input_output.html#2-resolve-task-input) and is responsible for publishing the message to the sftracker SNS Topic. But before it publishes the message, `SfSnsReport` makes a determiniation about the workflow status and adds an additional metadata key to the message at `message.meta.status`.
-
-First it determines whether the workflow has finished by looking for the `sfnEnd` key in the `config` object. If the workflow has finished, it checks to see if it has failed by searching the input message for a non-empty `exception` object. The lambda updates the `message.meta.status` with `failed` or `completed` based on that result. If the workflow is not finished the lambda sets `message.meta.status` to `running`.
-
-This means that subscribers to the sftracker SNS Topic can expect to find the published message by parsing the JSON string representation of the message found in the [SNS event](https://docs.aws.amazon.com/lambda/latest/dg/eventsources.html#eventsources-sns) at `Records[].Sns.Message` and examining the `meta.status` value.  The value found at `Records[0].Sns.Message` will be a stringified version of the workflow's Cumulus message with the status metadata attached.
+Subscribers to the SNS Topics can expect to find the published messages by parsing the JSON string representation of the message found in the [SNS event](https://docs.aws.amazon.com/lambda/latest/dg/eventsources.html#eventsources-sns) at `Records[].Sns.Message` . The value found at `Records[0].Sns.Message` will be a stringified version of the ingest notification record to be saved for an execution, granule, or PDR.
 
 ## Summary
 
