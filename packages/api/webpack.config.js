@@ -1,4 +1,5 @@
 'use strict';
+
 const path = require('path');
 
 module.exports = {
@@ -27,9 +28,10 @@ module.exports = {
     sfSemaphoreDown: './lambdas/sf-semaphore-down.js',
     sfStarter: './lambdas/sf-starter.js'
   },
+  devtool: process.env.PRODUCTION ? false : 'inline-source-map',
   resolve: {
     alias: {
-      'saml2-js': path.resolve(__dirname, 'node_modules/saml2-js/lib-js/saml2.js'),
+      'saml2-js': path.resolve(__dirname, 'node_modules/saml2-js/lib-js/saml2.js')
     }
   },
   output: {
@@ -44,6 +46,6 @@ module.exports = {
   target: 'node',
   node: {
     __dirname: false,
-    __filename: false,
+    __filename: false
   }
 };
