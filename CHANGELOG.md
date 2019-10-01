@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
   As this change is backward compatible in Cumulus Core, users wishing to utilize the previous version of the CMA may opt to transition to using a CMA lambda layer, or set `message_adapter_version` in their configuration to a version prior to v1.1.0.
 
-- **CUMULUS-1396** - Workflow steps using the `SfSnsReport` Lambda have now been deprecated (e.g. `StartStatus`, `StopStatus`). These steps were used for publishing ingest notifications and have been replaced by an implementation using Cloudwatch events for Step Functions to trigger a Lambda that publishes ingest notifications. For further detail on how ingest notifications are published, see the notes below on **CUMULUS-1394**. For examples of how to update your workflow definitinos, see our [example workflow definitions](https://github.com/nasa/cumulus/blob/master/example/workflows/).
+- **CUMULUS-1396** - Workflow steps using the `SfSnsReport` Lambda have now been deprecated (e.g. `StartStatus`, `StopStatus`). These steps were used for publishing ingest notifications and have been replaced by an implementation using Cloudwatch events for Step Functions to trigger a Lambda that publishes ingest notifications. For further detail on how ingest notifications are published, see the notes below on **CUMULUS-1394**. For examples of how to update your workflow definitions, see our [example workflow definitions](https://github.com/nasa/cumulus/blob/master/example/workflows/).
 
 ### PLEASE NOTE
 
@@ -58,6 +58,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
+- **CUMULUS-1396** - Updated `@cumulus/common/StepFunctions.getExecutionHistory()` to recursively fetch execution history when `nextToken` is returned in response
 - **CUMULUS-1432** `logs` endpoint filter correctly filters logs by level
 - **CUMULUS-1484**  `useMessageAdapter` now does not set CUMULUS_MESSAGE_ADAPTER_DIR when `true`
 
