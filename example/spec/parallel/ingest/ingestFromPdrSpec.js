@@ -282,7 +282,7 @@ describe('Ingesting from PDR', () => {
       describe('PdrStatusReport lambda function', () => {
         let lambdaOutput;
         beforeAll(async () => {
-          lambdaOutput = await lambdaStep.getStepOutput(parsePdrExecutionArn, 'SfSnsReport');
+          lambdaOutput = await lambdaStep.getStepOutput(parsePdrExecutionArn, 'publishReports');
         });
 
         // SfSnsReport lambda is used in the workflow multiple times, apparantly, only the first output
