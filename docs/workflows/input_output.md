@@ -299,10 +299,10 @@ In the workflow configuration (defined under the `task_config` key), each task h
         cma:
           event.$: '$'
           task_config:
-              provider: '{$.meta.provider}'
-                inlinestr: 'prefix{meta.foo}suffix'
-                array: '[$.meta.foo]'
-                object: '{$.meta}'
+            provider: '{$.meta.provider}'
+              inlinestr: 'prefix{meta.foo}suffix'
+              array: '[$.meta.foo]'
+              object: '{$.meta}'
 ```
 
 *and* and incoming message that contains:
@@ -375,8 +375,8 @@ By default, the incoming payload is the payload from the previous task.  The tas
         cma:
           event.$: '$'
           task_config:
-              cumulus_message:
-                  input: '{$.payload.foo}'
+            cumulus_message:
+                input: '{$.payload.foo}'
 ```
 
 The task configuration in the message would be:
@@ -417,12 +417,12 @@ By default, the task's return value is the next payload.  However, the workflow 
         cma:
           event.$: '$'
           task_config:
-              cumulus_message:
-                  outputs:
-                    - source: '{$}'
-                      destination: '{$.payload}'
-                    - source: '{$.output.anykey}'
-                      destination: '{$.meta.baz}'
+            cumulus_message:
+                outputs:
+                  - source: '{$}'
+                    destination: '{$.payload}'
+                  - source: '{$.output.anykey}'
+                    destination: '{$.meta.baz}'
 ```
 
 The corresponding Cumulus Message would be:

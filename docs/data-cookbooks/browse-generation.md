@@ -90,12 +90,12 @@ A few things to note about tasks in the workflow being added:
       cma:
         event: '$'
         task_config:
-            bucket: '{{$.meta.buckets.internal.name}}'
-            stack: '{{$.meta.stack}}'
-            cmr: '{{$.meta.cmr}}'
-            process: '{{$.meta.process}}'
-            input_granules: '{{$.meta.input_granules}}'
-            granuleIdExtraction: '{{$.meta.collection.granuleIdExtraction}}'
+          bucket: '{{$.meta.buckets.internal.name}}'
+          stack: '{{$.meta.stack}}'
+          cmr: '{{$.meta.cmr}}'
+          process: '{{$.meta.process}}'
+          input_granules: '{{$.meta.input_granules}}'
+          granuleIdExtraction: '{{$.meta.collection.granuleIdExtraction}}'
     Type: Task
     Resource: ${PostToCmrLambdaFunction.Arn}
     Catch:
@@ -116,11 +116,11 @@ Note that in the task, the event.config.cmr will contain the values you configur
       cma:
         event.$: '$'
         task_config:
-            bucket: '{{$.meta.buckets.internal.name}}'
-            collection: '{{$.meta.collection}}'
-            cmrMetadataFormat: '{{$.meta.cmrMetadataFormat}}'
-            additionalUrls: '{{$.meta.additionalUrls}}'
-            generateFakeBrowse: true
+          bucket: '{{$.meta.buckets.internal.name}}'
+          collection: '{{$.meta.collection}}'
+          cmrMetadataFormat: '{{$.meta.cmrMetadataFormat}}'
+          additionalUrls: '{{$.meta.additionalUrls}}'
+          generateFakeBrowse: true
     Type: Task
     Resource: ${FakeProcessingLambdaFunction.Arn}
     Catch:

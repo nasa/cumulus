@@ -87,8 +87,8 @@ CNMExampleWorkflow:
         cma:
           event.$: '$'
           task_config:
-              cumulus_message:
-                input: '{{$}}'
+            cumulus_message:
+              input: '{{$}}'
       Next: TranslateMessage
       Catch:
         - ErrorEquals:
@@ -102,12 +102,12 @@ CNMExampleWorkflow:
         cma:
           event.$: '$'
           task_config:
-              cumulus_message:
-                outputs:
-                  - source: '{{$.cnm}}'
-                    destination: '{{$.meta.cnm}}'
-                  - source: '{{$}}'
-                    destination: '{{$.payload}}'
+            cumulus_message:
+              outputs:
+                - source: '{{$.cnm}}'
+                  destination: '{{$.meta.cnm}}'
+                - source: '{{$}}'
+                  destination: '{{$.payload}}'
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -119,17 +119,17 @@ CNMExampleWorkflow:
         cma:
           event.$: '$'
           task_config:
-              provider: '{{$.meta.provider}}'
-              buckets: '{{$.meta.buckets}}'
-              collection: '{{$.meta.collection}}'
-              downloadBucket: '{{$.meta.buckets.private.name}}'
-              stack: '{{$.meta.stack}}'
-              cumulus_message:
-                outputs:
-                  - source: '{{$.granules}}'
-                    destination: '{{$.meta.input_granules}}'
-                  - source: '{{$}}'
-                    destination: '{{$.payload}}'
+            provider: '{{$.meta.provider}}'
+            buckets: '{{$.meta.buckets}}'
+            collection: '{{$.meta.collection}}'
+            downloadBucket: '{{$.meta.buckets.private.name}}'
+            stack: '{{$.meta.stack}}'
+            cumulus_message:
+              outputs:
+                - source: '{{$.granules}}'
+                  destination: '{{$.meta.input_granules}}'
+                - source: '{{$}}'
+                  destination: '{{$.payload}}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
@@ -148,14 +148,14 @@ CNMExampleWorkflow:
         cma:
           event.$: '$'
           task_config:
-              OriginalCNM: '{{$.meta.cnm}}'
-              CNMResponseStream: 'ADD YOUR RESPONSE STREAM HERE'
-              region: 'us-east-1'
-              WorkflowException: '{{$.exception}}'
-              cumulus_message:
-                outputs:
-                  - source: '{{$}}'
-                    destination: '{{$.meta.cnmResponse}}'
+            OriginalCNM: '{{$.meta.cnm}}'
+            CNMResponseStream: 'ADD YOUR RESPONSE STREAM HERE'
+            region: 'us-east-1'
+            WorkflowException: '{{$.exception}}'
+            cumulus_message:
+              outputs:
+                - source: '{{$}}'
+                  destination: '{{$.meta.cnmResponse}}'
       Type: Task
       Resource: ${CnmResponseLambdaFunction.Arn}
       Retry:
@@ -176,13 +176,13 @@ CNMExampleWorkflow:
         cma:
           event.$: '$'
           task_config:
-              sfnEnd: true
-              stack: '{{$.meta.stack}}'
-              bucket: '{{$.meta.buckets.internal.name}}'
-              stateMachine: '{{$.cumulus_meta.state_machine}}'
-              executionName: '{{$.cumulus_meta.execution_name}}'
-              cumulus_message:
-                input: '{{$}}'
+            sfnEnd: true
+            stack: '{{$.meta.stack}}'
+            bucket: '{{$.meta.buckets.internal.name}}'
+            stateMachine: '{{$.cumulus_meta.state_machine}}'
+            executionName: '{{$.cumulus_meta.execution_name}}'
+            cumulus_message:
+              input: '{{$}}'
       Catch:
         - ErrorEquals:
           - States.ALL
