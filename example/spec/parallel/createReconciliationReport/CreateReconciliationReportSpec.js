@@ -252,6 +252,8 @@ describe('When there are granule differences and granule reconciliation is run',
     }).promise()
       .then((response) => JSON.parse(response.Body.toString()));
 
+    console.log(JSON.stringify(report, null, 2));
+
     console.log(`update granule files back ${publishedGranuleId}`);
     await granuleModel.update({ granuleId: publishedGranuleId }, { files: JSON.parse(granuleResponse.body).files });
   });
@@ -355,7 +357,6 @@ describe('When there are granule differences and granule reconciliation is run',
     // need to add the cmr granule back to the table, so the granule can be removed from api
     await granuleModel.create(cmrGranule);
     await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: cmrGranule.granuleId });
-    await waitForConceptExistsOutcome(cmrGranule.cmrLink, false);
     await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: cmrGranule.granuleId });
 
     const granuleResponse = await granulesApiTestUtils.getGranule({
@@ -363,7 +364,6 @@ describe('When there are granule differences and granule reconciliation is run',
       granuleId: publishedGranuleId
     });
     await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: publishedGranuleId });
-    await waitForConceptExistsOutcome(JSON.parse(granuleResponse.body).cmrLink, false);
     await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: publishedGranuleId });
   });
 });
