@@ -45,7 +45,6 @@ SyncGranule:
                   destination: '{$.payload}'
                 - source: '{$.process}'
                   destination: '{$.meta.process}'        
-      Parameters: '{$.meta}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
