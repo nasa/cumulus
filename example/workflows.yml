@@ -8,10 +8,9 @@ TestLambdaVersionWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            StartStatus:
-              cumulus_message:
-                input: '{$}'
+          task_config:
+            cumulus_message:
+              input: '{$}'
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Next: WaitForDeployment
@@ -27,15 +26,14 @@ TestLambdaVersionWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            StopStatus:
-              sfnEnd: true
-              stack: '{$.meta.stack}'
-              bucket: '{$.meta.buckets.internal.name}'
-              stateMachine: '{$.cumulus_meta.state_machine}'
-              executionName: '{$.cumulus_meta.execution_name}'
-              cumulus_message:
-                input: '{$}'
+          task_config:
+            sfnEnd: true
+            stack: '{$.meta.stack}'
+            bucket: '{$.meta.buckets.internal.name}'
+            stateMachine: '{$.cumulus_meta.state_machine}'
+            executionName: '{$.cumulus_meta.execution_name}'
+            cumulus_message:
+              input: '{$}'
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Catch:
@@ -56,10 +54,9 @@ WaitForDeployWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            StartStatus:
-              cumulus_message:
-                input: '{$}'
+          task_config:
+            cumulus_message:
+              input: '{$}'
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Next: HelloWorld
@@ -67,11 +64,10 @@ WaitForDeployWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            HelloWorld:
-              buckets: '{$.meta.buckets}'
-              provider: '{$.meta.provider}'
-              collection: '{$.meta.collection}'
+          task_config:
+            buckets: '{$.meta.buckets}'
+            provider: '{$.meta.provider}'
+            collection: '{$.meta.collection}'
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
       Next: WaitForDeployment
@@ -87,15 +83,14 @@ WaitForDeployWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            StopStatus:
-              sfnEnd: true
-              stack: '{$.meta.stack}'
-              bucket: '{$.meta.buckets.internal.name}'
-              stateMachine: '{$.cumulus_meta.state_machine}'
-              executionName: '{$.cumulus_meta.execution_name}'
-              cumulus_message:
-                input: '{$}'
+          task_config:
+            sfnEnd: true
+            stack: '{$.meta.stack}'
+            bucket: '{$.meta.buckets.internal.name}'
+            stateMachine: '{$.cumulus_meta.state_machine}'
+            executionName: '{$.cumulus_meta.execution_name}'
+            cumulus_message:
+              input: '{$}'
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Catch:

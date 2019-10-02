@@ -7,10 +7,9 @@ DiscoverGranulesBrowseExample:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            StatusReport:
-              cumulus_message:
-                input: '{$}'
+          task_config:
+            cumulus_message:
+              input: '{$}'
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Retry:
@@ -27,12 +26,11 @@ DiscoverGranulesBrowseExample:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            DiscoverGranules:
-              provider: '{$.meta.provider}'
-              collection: '{$.meta.collection}'
-              buckets: '{$.meta.buckets}'
-              stack: '{$.meta.stack}'
+          task_config:
+            provider: '{$.meta.provider}'
+            collection: '{$.meta.collection}'
+            buckets: '{$.meta.buckets}'
+            stack: '{$.meta.stack}'
       Type: Task
       Resource: ${DiscoverGranulesLambdaFunction.Arn}
       Retry:
@@ -47,14 +45,13 @@ DiscoverGranulesBrowseExample:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            QueueGranules:
-              provider: '{$.meta.provider}'
-              internalBucket: '{$.meta.buckets.internal.name}'
-              stackName: '{$.meta.stack}'
-              granuleIngestMessageTemplateUri: '{$.meta.template}'
-              granuleIngestWorkflow: 'IngestGranule'
-              queueUrl: '{$.meta.queues.startSF}'
+          task_config:
+            provider: '{$.meta.provider}'
+            internalBucket: '{$.meta.buckets.internal.name}'
+            stackName: '{$.meta.stack}'
+            granuleIngestMessageTemplateUri: '{$.meta.template}'
+            granuleIngestWorkflow: 'IngestGranule'
+            queueUrl: '{$.meta.queues.startSF}'
       Type: Task
       Resource: ${QueueGranulesLambdaFunction.Arn}
       Retry:
@@ -69,15 +66,14 @@ DiscoverGranulesBrowseExample:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            StopStatus:
-              sfnEnd: true
-              stack: '{$.meta.stack}'
-              bucket: '{$.meta.buckets.internal.name}'
-              stateMachine: '{$.cumulus_meta.state_machine}'
-              executionName: '{$.cumulus_meta.execution_name}'
-              cumulus_message:
-                input: '{$}'
+          task_config:
+            sfnEnd: true
+            stack: '{$.meta.stack}'
+            bucket: '{$.meta.buckets.internal.name}'
+            stateMachine: '{$.cumulus_meta.state_machine}'
+            executionName: '{$.cumulus_meta.execution_name}'
+            cumulus_message:
+              input: '{$}'
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Retry:
@@ -98,10 +94,9 @@ CookbookBrowseExample:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            Report:
-              cumulus_message:
-                input: '{$}'
+          task_config:
+            cumulus_message:
+              input: '{$}'
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       ResultPath: null
@@ -112,23 +107,22 @@ CookbookBrowseExample:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            SyncGranule:
-              buckets: '{$.meta.buckets}'
-              provider: '{$.meta.provider}'
-              collection: '{$.meta.collection}'
-              stack: '{$.meta.stack}'
-              downloadBucket: '{$.cumulus_meta.system_bucket}'
-              duplicateHandling: '{$.meta.collection.duplicateHandling}'
-              pdr: '{$.meta.pdr}'
-              cumulus_message:
-                outputs:
-                  - source: '{$.granules}'
-                    destination: '{$.meta.input_granules}'
-                  - source: '{$}'
-                    destination: '{$.payload}'
-                  - source: '{$.process}'
-                    destination: '{$.cumulus_meta.process}'
+          task_config:
+            buckets: '{$.meta.buckets}'
+            provider: '{$.meta.provider}'
+            collection: '{$.meta.collection}'
+            stack: '{$.meta.stack}'
+            downloadBucket: '{$.cumulus_meta.system_bucket}'
+            duplicateHandling: '{$.meta.collection.duplicateHandling}'
+            pdr: '{$.meta.pdr}'
+            cumulus_message:
+              outputs:
+                - source: '{$.granules}'
+                  destination: '{$.meta.input_granules}'
+                - source: '{$}'
+                  destination: '{$.payload}'
+                - source: '{$.process}'
+                  destination: '{$.cumulus_meta.process}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
@@ -146,19 +140,18 @@ CookbookBrowseExample:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            ProcessingStep:
-              bucket: '{$.meta.buckets.internal.name}'
-              collection: '{$.meta.collection}'
-              cmrMetadataFormat: '{$.meta.cmrMetadataFormat}'
-              additionalUrls: '{$.meta.additionalUrls}'
-              generateFakeBrowse: true
-              cumulus_message:
-                outputs:
-                  - source: '{$.granules}'
-                    destination: '{$.meta.input_granules}'
-                  - source: '{$.files}'
-                    destination: '{$.payload}'
+          task_config:
+            bucket: '{$.meta.buckets.internal.name}'
+            collection: '{$.meta.collection}'
+            cmrMetadataFormat: '{$.meta.cmrMetadataFormat}'
+            additionalUrls: '{$.meta.additionalUrls}'
+            generateFakeBrowse: true
+            cumulus_message:
+              outputs:
+                - source: '{$.granules}'
+                  destination: '{$.meta.input_granules}'
+                - source: '{$.files}'
+                  destination: '{$.payload}'
       Type: Task
       Resource: ${FakeProcessingLambdaFunction.Arn}
       Catch:
@@ -176,10 +169,9 @@ CookbookBrowseExample:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            FilesToGranulesStep:
-              inputGranules: '{$.meta.input_granules}'
-              granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+          task_config:
+            inputGranules: '{$.meta.input_granules}'
+            granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
       Type: Task
       Resource: ${FilesToGranulesLambdaFunction.Arn}
       Retry:
@@ -194,13 +186,12 @@ CookbookBrowseExample:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            MoveGranuleStep:
-              bucket: '{$.meta.buckets.internal.name}'
-              buckets: '{$.meta.buckets}'
-              distribution_endpoint: '{$.meta.distribution_endpoint}'
-              collection: '{$.meta.collection}'
-              duplicateHandling: '{$.meta.collection.duplicateHandling}'
+          task_config:
+            bucket: '{$.meta.buckets.internal.name}'
+            buckets: '{$.meta.buckets}'
+            distribution_endpoint: '{$.meta.distribution_endpoint}'
+            collection: '{$.meta.collection}'
+            duplicateHandling: '{$.meta.collection.duplicateHandling}'
       Type: Task
       Resource: ${MoveGranulesLambdaFunction.Arn}
       Retry:
@@ -215,15 +206,14 @@ CookbookBrowseExample:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            CmrStep:
-              bucket: '{$.meta.buckets.internal.name}'
-              stack: '{$.meta.stack}'
-              cmr: '{$.meta.cmr}'
-              launchpad: '{$.meta.launchpad}'
-              process: '{$.cumulus_meta.process}'
-              input_granules: '{$.meta.input_granules}'
-              granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+          task_config:
+            bucket: '{$.meta.buckets.internal.name}'
+            stack: '{$.meta.stack}'
+            cmr: '{$.meta.cmr}'
+            launchpad: '{$.meta.launchpad}'
+            process: '{$.cumulus_meta.process}'
+            input_granules: '{$.meta.input_granules}'
+            granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
       Type: Task
       Resource: ${PostToCmrLambdaFunction.Arn}
       Retry:
@@ -238,15 +228,14 @@ CookbookBrowseExample:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            StopStatus:
-              sfnEnd: true
-              stack: '{$.meta.stack}'
-              bucket: '{$.meta.buckets.internal.name}'
-              stateMachine: '{$.cumulus_meta.state_machine}'
-              executionName: '{$.cumulus_meta.execution_name}'
-              cumulus_message:
-                input: '{$}'
+          task_config:
+            sfnEnd: true
+            stack: '{$.meta.stack}'
+            bucket: '{$.meta.buckets.internal.name}'
+            stateMachine: '{$.cumulus_meta.state_machine}'
+            executionName: '{$.cumulus_meta.execution_name}'
+            cumulus_message:
+              input: '{$}'
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Retry:

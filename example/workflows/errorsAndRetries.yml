@@ -6,10 +6,9 @@ RetryPassWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            StartStatus:
-              cumulus_message:
-                input: '{$}'
+          task_config:
+            cumulus_message:
+              input: '{$}'
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Retry:
@@ -26,12 +25,11 @@ RetryPassWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            HelloWorld:
-              fail: true
-              passOnRetry: true
-              bucket: '{$.meta.buckets.internal.name}'
-              execution: '{$.cumulus_meta.execution_name}'
+          task_config:
+            fail: true
+            passOnRetry: true
+            bucket: '{$.meta.buckets.internal.name}'
+            execution: '{$.cumulus_meta.execution_name}'
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
       Next: StopStatus
@@ -44,15 +42,14 @@ RetryPassWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            StopStatus:
-              sfnEnd: true
-              stack: '{$.meta.stack}'
-              bucket: '{$.meta.buckets.internal.name}'
-              stateMachine: '{$.cumulus_meta.state_machine}'
-              executionName: '{$.cumulus_meta.execution_name}'
-              cumulus_message:
-                input: '{$}'
+          task_config:
+            sfnEnd: true
+            stack: '{$.meta.stack}'
+            bucket: '{$.meta.buckets.internal.name}'
+            stateMachine: '{$.cumulus_meta.state_machine}'
+            executionName: '{$.cumulus_meta.execution_name}'
+            cumulus_message:
+              input: '{$}'
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Retry:
@@ -74,10 +71,9 @@ HelloWorldFailWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            StartStatus:
-              cumulus_message:
-                input: '{$}'
+          task_config:
+            cumulus_message:
+              input: '{$}'
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Retry:
@@ -87,9 +83,8 @@ HelloWorldFailWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            HelloWorld:
-              fail: true
+          task_config:
+            fail: true
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
       Retry:
@@ -99,15 +94,14 @@ HelloWorldFailWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            StopStatus:
-              sfnEnd: true
-              stack: '{$.meta.stack}'
-              bucket: '{$.meta.buckets.internal.name}'
-              stateMachine: '{$.cumulus_meta.state_machine}'
-              executionName: '{$.cumulus_meta.execution_name}'
-              cumulus_message:
-                input: '{$}'
+          task_config:
+            sfnEnd: true
+            stack: '{$.meta.stack}'
+            bucket: '{$.meta.buckets.internal.name}'
+            stateMachine: '{$.cumulus_meta.state_machine}'
+            executionName: '{$.cumulus_meta.execution_name}'
+            cumulus_message:
+              input: '{$}'
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Retry:
@@ -129,10 +123,9 @@ RetryFailWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            StartStatus:
-              cumulus_message:
-                input: '{$}'
+          task_config:
+            cumulus_message:
+              input: '{$}'
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Retry:
@@ -142,9 +135,8 @@ RetryFailWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            HelloWorld:
-              fail: true
+          task_config:
+            fail: true
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
       Next: StopStatus
@@ -158,15 +150,14 @@ RetryFailWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          workflow_config:
-            StopStatus:
-              sfnEnd: true
-              stack: '{$.meta.stack}'
-              bucket: '{$.meta.buckets.internal.name}'
-              stateMachine: '{$.cumulus_meta.state_machine}'
-              executionName: '{$.cumulus_meta.execution_name}'
-              cumulus_message:
-                input: '{$}'
+          task_config:
+            sfnEnd: true
+            stack: '{$.meta.stack}'
+            bucket: '{$.meta.buckets.internal.name}'
+            stateMachine: '{$.cumulus_meta.state_machine}'
+            executionName: '{$.cumulus_meta.execution_name}'
+            cumulus_message:
+              input: '{$}'
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Retry:
