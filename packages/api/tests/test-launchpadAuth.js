@@ -144,3 +144,28 @@ test.serial('Request returns an unauthorized response when validation response d
   t.is(response.body.message, 'User not authorized');
   stub.restore();
 });
+
+test.serial('Requests to /token endpoint are disabled.', async (t) => {
+
+  const response = await request(app)
+        .get('/token')
+        .set('Accept', 'application/json')
+        .expect(501);
+
+  t.regex(response.body.message, /Login with launchpad/);
+});
+
+test.serial.only('Non-Launchpad protected API explicitly disallows valid Launchpad tokens.', async(t) => {
+  const stub = sinon.stub(launchpad, 'validateLaunchpadToken').returns(validateTokenResponse);
+  process.env.OAUTH_PROVIDER='earthdata';
+
+  const response = await request(app)
+        .get('/collections')
+        .set('Accept', 'application/json')
+        .set('Authorization', 'Bearer ValidAccessToken1')
+        .expect(403);
+
+  t.is(response.body.message, 'Invalid access token');
+  stub.restore();
+  process.env.OAUTH_PROVIDER='launchpad';
+});

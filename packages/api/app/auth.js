@@ -50,7 +50,7 @@ async function ensureAuthorized(req, res, next) {
     req.authorizedMetadata = { userName };
     return next();
   } catch (error) {
-    log.error(error);
+//    log.error(error);
     if (launchpadProtectedAuth()
         && error instanceof JsonWebTokenError
         && error.message === 'jwt malformed') {
