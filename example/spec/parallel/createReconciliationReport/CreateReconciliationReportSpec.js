@@ -359,10 +359,6 @@ describe('When there are granule differences and granule reconciliation is run',
     await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: cmrGranule.granuleId });
     await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: cmrGranule.granuleId });
 
-    const granuleResponse = await granulesApiTestUtils.getGranule({
-      prefix: config.stackName,
-      granuleId: publishedGranuleId
-    });
     await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: publishedGranuleId });
     await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: publishedGranuleId });
   });
