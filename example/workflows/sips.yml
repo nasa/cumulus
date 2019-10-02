@@ -285,7 +285,9 @@ IngestGranule:
         cma:
           event.$: '$'
           ReplaceConfig:
-            FullMessage: true
+            MaxSize: 1
+            Path: '$.payload'
+            TargetPath: '$.payload'
           task_config:
             buckets: '{$.meta.buckets}'
             provider: '{$.meta.provider}'
@@ -301,7 +303,7 @@ IngestGranule:
                 - source: '{$}'
                   destination: '{$.payload}'
                 - source: '{$.process}'
-                  destination: '{$.cumulus_meta.process}'
+                  destination: '{$.meta.process}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
