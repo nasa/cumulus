@@ -20,11 +20,22 @@ More information on configuring an SNS topic or subscription in Cumulus can be f
 
 ## Sending SNS messages to report status
 
-### Publishing directly to SNS topics
+### Publishing granule/PDR reports directly to SNS topics
 
-If you have a non-Cumulus workflow or process ingesting data and would like to update the status of your granules or PDRs, you can post directly to those SNS topics. Posting to these topics will result in Cumulus having a record of these ingestions and these ingestion process being visible on the Cumulus dashboard.
+If you have a non-Cumulus workflow or process ingesting data and would like to update the status of your granules or PDRs, you can publish directly to those SNS topics. Publishing messages to those topics will result in those messages being stored as granule/PDR records in the Cumulus database and having the status of those granules/PDRs being visible on the Cumulus dashboard.
 
-Posting directly to the topics will require knowing their ARNs, which can be found in the AWS Console by going to Cloudformation > Stacks > `<your_stack_name>` > Resources and then finding `reportGranulesSns` or `reportPdrsSns` in the list of resources.
+Posting directly to the topics will require knowing their ARNs. You can find the topic ARNs in the AWS Console by going to Cloudformation > Stacks > `<your_stack_name>` > Resources and then finding `reportGranulesSns` or `reportPdrsSns` in the list of resources. Or you can get the topic ARNs using the AWS CLI, replacing `<prefix>` with your deployed stack's prefix:
+
+```bash
+aws sns list-topics | grep <prefix>-reportGranulesSns
+```
+
+Once you have the topic ARN, you can use the AWS SDK for your language of choice to publish messages to the topic. The expected format of granule and PDR records can be found in the [data model schemas](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js). **Messages that do not conform to the schemas will fail to be created as records**.
+
+If you are not seeing records persist to the database or show up in the Cumulus dashboard, you can investigate the Cloudwatch logs of the SNS topic consumer Lambas:
+
+- `<prefix>-reportPdrs`
+- `<prefix>-reportGranules`
 
 ### In a workflow
 
@@ -40,7 +51,7 @@ PdrStatusReport:
   Resource: ${SfSnsReportLambdaFunction.Arn}
 ```
 
-### Task Configuration
+#### Task configuration
 
 To use the `SfSnsReport` Lambda, the following configuration should be added to `lambas.yml`:
 
