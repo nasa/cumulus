@@ -79,9 +79,19 @@ const prepareSamlProviders = async () => {
   return { idp, sp };
 };
 
-// Starting point for SAML SSO login
+
+/**
+ * Starting point for SAML SSO login
+ *
+ * Creates a login request url for a SAML Identity Provider and redirects to
+ * that location.
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Object} response redirect to the Identity Provider.
+ */
 const login = async (req, res) => {
-  // saml2-js stuff
+
   const { idp, sp } = await prepareSamlProviders();
   const relayState = req.query.RelayState;
   sp.create_login_request_url(
@@ -94,7 +104,17 @@ const login = async (req, res) => {
   );
 };
 
-// SAML AssertionConsumerService (ACS) endpoint.
+
+/**
+ *  SAML AssertionConsumerService (ACS) endpoint.
+ *
+ *  Receives and validates the POSTed response from Identity Provider Service.
+ *  Returns to the RelayState url appending a valid samlResponse-based JWT
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Object} response redirect back to the initiating requests relay state with a valid token query parameter.
+ */
 const auth = async (req, res) => {
   const { idp, sp } = await prepareSamlProviders();
   sp.post_assert(idp, { request_body: req.body }, (err, samlResponse) => {
@@ -116,11 +136,9 @@ const notImplemented = async (req, res) => res.boom.notImplemented(
 
 const tokenEndpoint = notImplemented;
 const refreshEndpoint = notImplemented;
-const deleteTokenEndpoint = notImplemented;
 
 module.exports = {
   auth,
-  deleteTokenEndpoint,
   login,
   refreshEndpoint,
   tokenEndpoint

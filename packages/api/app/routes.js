@@ -92,15 +92,12 @@ if (launchpadProtectedAuth()) {
   // disabled for now
   router.get('/token', launchpadSaml.tokenEndpoint);
   router.post('/refresh', launchpadSaml.refreshEndpoint);
-  router.delete('/token/:token', launchpadSaml.deleteTokenEndpoint);
-  router.delete('/tokenDelete/:token', launchpadSaml.deleteTokenEndpoint);
 } else {
-  router.delete('/token/:token', token.deleteTokenEndpoint);
-  router.delete('/tokenDelete/:token', token.deleteTokenEndpoint);
   router.get('/token', token.tokenEndpoint);
   router.post('/refresh', token.refreshEndpoint);
 }
-
+router.delete('/token/:token', token.deleteTokenEndpoint);
+router.delete('/tokenDelete/:token', token.deleteTokenEndpoint);
 
 router.use('/dashboard', dashboard);
 
