@@ -1,6 +1,8 @@
 'use strict';
 
 const path = require('path');
+const CopyPlugin = require('copy-webpack-plugin');
+
 
 module.exports = {
   mode: process.env.PRODUCTION ? 'production' : 'development',
@@ -31,9 +33,16 @@ module.exports = {
   devtool: process.env.PRODUCTION ? false : 'inline-source-map',
   resolve: {
     alias: {
-      'saml2-js': path.resolve(__dirname, 'node_modules/saml2-js/lib-js/saml2.js')
+      'saml2-js': path.resolve(__dirname, 'node_modules/saml2-js/lib-js/saml2.js'),
+      'ejs': path.resolve(__dirname, 'node_modules/ejs/ejs.min.js')
     }
   },
+  plugins:[
+    // templates to use saml2.js, dependency problem with xml-encryption package
+    new CopyPlugin([
+      { from: 'node_modules/xml-encryption/lib/templates', to: path.resolve(__dirname, 'dist/app/templates') },
+    ])
+  ],
   output: {
     libraryTarget: 'commonjs2',
     filename: '[name]/index.js'
