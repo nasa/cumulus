@@ -421,7 +421,7 @@ ParsePdr:
       Default: WorkflowSucceeded
     PdrStatusReport:
       Type: Task
-      Resource: ${publishReportsLambdaFunction.Arn}
+      Resource: ${SfSnsReportLambdaFunction.Arn}
       Parameters:
         cma:
           event.$: '$'
