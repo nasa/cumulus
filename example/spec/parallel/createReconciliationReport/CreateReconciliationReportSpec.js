@@ -25,8 +25,7 @@ const {
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
-  granulesApi: granulesApiTestUtils,
-  waitForConceptExistsOutcome
+  granulesApi: granulesApiTestUtils
 } = require('@cumulus/integration-tests');
 
 const {
