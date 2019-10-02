@@ -20,7 +20,9 @@ More information on configuring an SNS topic or subscription in Cumulus can be f
 
 ## Sending an SNS message to report status
 
-SNS messages can be sent at anytime during the workflow execution by adding a workflow step to send the message. In the following example, a PDR status report step is configured to report PDR status. This is configured in `workflows/sips.yml`.
+### In a workflow
+
+SNS messages can be sent at anytime during the workflow execution by adding a workflow step to send the message using the `SfSnsReport` Lambda. In the following example, a PDR status report step is configured to report PDR status. This is configured in `workflows/sips.yml`.
 
 ```yaml
 PdrStatusReport:
@@ -32,7 +34,7 @@ PdrStatusReport:
   Resource: ${SfSnsReportLambdaFunction.Arn}
 ```
 
-### Task Configuration
+#### Task Configuration
 
 To use the `SfSnsReport` Lambda, the following configuration should be added to `lambas.yml`:
 
