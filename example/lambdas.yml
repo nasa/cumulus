@@ -118,6 +118,25 @@ QueueGranules:
   layers:
     - '{{cma_layer}}'
   launchInVpc: true
+SfSnsReport:
+  handler: index.handler
+  timeout: 300
+  source: node_modules/@cumulus/sf-sns-report/dist
+  layers:
+    - '{{cma_layer}}'
+  launchInVpc: true
+  tables:
+    - ExecutionsTable
+  envs:
+    execution_sns_topic_arn:
+      function: Ref
+      value: reportExecutionsSns
+    granule_sns_topic_arn:
+      function: Ref
+      value: reportGranulesSns
+    pdr_sns_topic_arn:
+      function: Ref
+      value: reportPdrsSns
 SyncGranule:
   handler: index.handler
   timeout: 300
