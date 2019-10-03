@@ -68,9 +68,8 @@ EcsHelloWorldWorkflow:
         cma:
           event.$: '$'
           task_config:
-            StartStatus:
-              cumulus_message:
-                input: '{$}'
+            cumulus_message:
+              input: '{$}'
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Retry:
