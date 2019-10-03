@@ -44,8 +44,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
          - Disabled endpoints
             - `GET /token`
             - `POST /refresh`
-            - `DELETE /token/:token`
-            - `DELETE /tokenDelete/:token`
           - Changes authorization worklow:
            - `ensureAuthorized` now presumes the bearer token is a JWT and tries to validate.  If the token is malformed, it attempts to validate the token against Launchpad.  This allows users to bring their own token as described here https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication.  But it also allows dashboard users to manually authenticate via Launchpad SAML to receive a Launchpad-based JWT.
 
