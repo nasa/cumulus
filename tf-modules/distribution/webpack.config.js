@@ -12,6 +12,6 @@ module.exports = {
     'electron',
     { formidable: 'url' }
   ],
-  devtool: process.env.PRODUCTION ? false : 'inline-source-map',
+  devtool: process.env.PRODUCTION ? 'source-map' : 'inline-source-map',
   target: 'node'
 };
