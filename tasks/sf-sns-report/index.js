@@ -1,63 +1,8 @@
 'use strict';
 
 const get = require('lodash.get');
-const isObject = require('lodash.isobject');
 const { publishReportSnsMessages } = require('@cumulus/api/lambdas/publish-reports');
-const errors = require('@cumulus/common/errors');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
-
-/**
- * Determines if there was a valid exception in the input message
- *
- * @param {Object} event - aws event object
- * @returns {boolean} true if there was an exception, false otherwise
- */
-function eventFailed(event) {
-  // event has exception
-  // and it is needed to avoid flagging cases like "exception: {}" or "exception: 'none'"
-  if (isObject(event.exception)
-    && (Object.keys(event.exception).length > 0)) return true;
-
-  // Error and error keys are not part of the cumulus message
-  // and if they appear in the message something is seriously wrong
-  if (event.Error || event.error) return true;
-
-  return false;
-}
-
-/**
- * Builds error object based on error type
- *
- * @param {string} type - error type
- * @param {string} cause - error cause
- * @returns {Object} the error object
- */
-function buildError(type, cause) {
-  let ErrorClass;
-
-  if (Object.keys(errors).includes(type)) ErrorClass = errors[type];
-  else if (type === 'TypeError') ErrorClass = TypeError;
-  else ErrorClass = Error;
-
-  return new ErrorClass(cause);
-}
-
-/**
- * If the cumulus message shows that a previous step failed,
- * this function extracts the error message from the cumulus message
- * and fails the function with that information. This ensures that the
- * Step Function workflow fails with the correct error info
- *
- * @param {Object} event - aws event object
- * @returns {undefined} throws an error and does not return anything
- */
-function makeLambdaFunctionFail(event) {
-  const error = event.exception || event.error;
-
-  if (error) throw buildError(error.Error, error.Cause);
-
-  throw new Error('Step Function failed for an unknown reason.');
-}
 
 /**
  * Publishes incoming Cumulus Message in its entirety to
@@ -71,17 +16,11 @@ function makeLambdaFunctionFail(event) {
  *  failure.
  */
 async function publishSnsMessage(event) {
-  const config = get(event, 'config');
   const message = get(event, 'input');
 
-  const finished = get(config, 'sfnEnd', false);
-  const failed = eventFailed(message);
-
-  await publishReportSnsMessages(message, finished, failed);
-
-  if (failed) {
-    makeLambdaFunctionFail(message);
-  }
+  // Always assume that this step occurs in the middle of a workflow,
+  // not at the beginning or the end.
+  await publishReportSnsMessages(message, false, false);
 
   return get(message, 'payload', {});
 }
