@@ -154,7 +154,7 @@ test.serial('Requests to /token endpoint are disabled.', async (t) => {
   t.regex(response.body.message, /Login with launchpad/);
 });
 
-test.serial.only('Non-Launchpad protected API explicitly disallows valid Launchpad tokens.', async(t) => {
+test.serial('Non-Launchpad protected API explicitly disallows valid Launchpad tokens.', async (t) => {
   const stub = sinon.stub(launchpad, 'validateLaunchpadToken').returns(validateTokenResponse);
   process.env.OAUTH_PROVIDER = 'earthdata';
 
