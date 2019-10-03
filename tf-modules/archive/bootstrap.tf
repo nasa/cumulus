@@ -30,7 +30,10 @@ resource "aws_lambda_function" "custom_bootstrap" {
 }
 
 data "aws_lambda_invocation" "custom_bootstrap" {
-  depends_on    = [aws_lambda_function.custom_bootstrap]
+  depends_on = [
+    aws_lambda_function.custom_bootstrap,
+    null_resource.rsa_keys
+  ]
   function_name = aws_lambda_function.custom_bootstrap.function_name
 
   input = <<JSON
