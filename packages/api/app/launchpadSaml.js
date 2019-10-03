@@ -52,6 +52,8 @@ const buildLaunchpadJwt = async (samlResponse) => {
     user: { name_id: username, session_index: accessToken }
   } = samlResponse;
 
+  if (!username || !accessToken) throw new Error(`invalid SAML response received ${JSON.stringify(samlResponse)}`);
+
   const expirationTime = Date.now() + 60 * 60 * 1000;
   const accessTokenModel = new AccessToken();
   await accessTokenModel.create({ accessToken, expirationTime, username });

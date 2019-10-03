@@ -6,12 +6,35 @@ const rewire = require('rewire');
 
 const aws = require('@cumulus/common/aws');
 const { randomId } = require('@cumulus/common/test-utils');
-
+const { verifyJwtToken } = require('../../lib/token');
+const { AccessToken, User } = require('../../models');
 const launchpadSaml = rewire('../../app/launchpadSaml');
-
 const launchpadPublicCertificate = launchpadSaml.__get__(
   'launchpadPublicCertificate'
 );
+const buildLaunchpadJwt = launchpadSaml.__get__('buildLaunchpadJwt');
+
+process.env.UsersTable = randomId('usersTable');
+process.env.AccessTokensTable = randomId('tokenTable');
+process.env.stackName = randomId('stackname');
+process.env.TOKEN_SECRET = randomId('token_secret');
+process.env.system_bucket = randomId('system_bucket');
+
+const testBucketName = randomId('testbucket');
+const createBucket = (Bucket) =>
+  aws
+    .s3()
+    .createBucket({ Bucket })
+    .promise();
+const testBucketNames = [process.env.system_bucket, testBucketName];
+
+const successfulSamlResponse = {
+  user: {
+    name_id: randomId('name_id'),
+    session_index: randomId('session_index')
+  }
+};
+const badSamlResponse = { user: {} };
 
 const xmlMetadataFixture = fs.readFileSync(
   `${__dirname}/fixtures/launchpad-sbx-metadata.xml`,
@@ -32,21 +55,32 @@ const badMetadataFile = {
 const testFiles = [goodMetadataFile, badMetadataFile];
 
 const certificate = require('./fixtures/certificateFixture');
-const testBucketName = randomId('testbucket');
+
+let accessTokenModel;
+let userModel;
 
 test.before(async () => {
-  await aws.s3().createBucket({ Bucket: testBucketName }).promise();
+  accessTokenModel = new AccessToken();
+  await accessTokenModel.createTable();
+  userModel = new User();
+  await userModel.createTable();
+
+  await Promise.all(testBucketNames.map(createBucket));
   await Promise.all(
-    testFiles.map((f) => aws.s3PutObject({
-      Bucket: testBucketName,
-      Key: f.key,
-      Body: f.content
-    }))
+    testFiles.map((f) =>
+      aws.s3PutObject({
+        Bucket: testBucketName,
+        Key: f.key,
+        Body: f.content
+      }))
   );
+  // launchpadSaml.__set__('prepareSamlProviders', mockPrepareSamlProvider);
 });
 
 test.after.always(async () => {
-  await aws.recursivelyDeleteS3Bucket(testBucketName);
+  await Promise.all(testBucketNames.map(aws.recursivelyDeleteS3Bucket));
+  await accessTokenModel.deleteTable();
+  await userModel.deleteTable();
 });
 
 test.serial(
@@ -96,3 +130,24 @@ test.serial(
     });
   }
 );
+
+test('buildLaunchpadJwt returns a valid JWT with correct SAML information.', async (t) => {
+  const jwt = await buildLaunchpadJwt(successfulSamlResponse);
+  const decodedToken = verifyJwtToken(jwt);
+
+  t.is(decodedToken.username, successfulSamlResponse.user.name_id);
+  t.is(decodedToken.accessToken, successfulSamlResponse.user.session_index);
+
+  const modelToken = await accessTokenModel.get({
+    accessToken: successfulSamlResponse.user.session_index
+  });
+  t.is(modelToken.accessToken, successfulSamlResponse.user.session_index);
+  t.is(modelToken.username, successfulSamlResponse.user.name_id);
+});
+
+test('buildLaunchpadJwt throws with bad SAML information.', async (t) => {
+  await t.throwsAsync(buildLaunchpadJwt(badSamlResponse), {
+    instanceOf: Error,
+    message: 'invalid SAML response received {"user":{}}'
+  });
+});
