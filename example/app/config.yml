@@ -618,6 +618,7 @@ gitc:
 mvd:
   prefix: mvd
   prefixNoDash: mvd
+  useWorkflowLambdaVersions: false
   buckets:
     internal:
       name: '{{prefix}}-internal'
