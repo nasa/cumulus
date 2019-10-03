@@ -1,0 +1,3 @@
+aws_region = "us-east-1"
+prefix     = "PREFIX"
+subnet_ids = ["subnet-12345"]

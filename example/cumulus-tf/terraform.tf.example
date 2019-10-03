@@ -1,0 +1,7 @@
+terraform {
+  backend "s3" {
+    bucket         = "PREFIX-state"
+    key            = "PREFIX/cumulus/terraform.tfstate"
+    dynamodb_table = "PREFIX-tf-locks"
+  }
+}

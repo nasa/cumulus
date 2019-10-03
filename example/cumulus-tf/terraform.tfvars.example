@@ -1,22 +1,37 @@
 region = "us-east-1"
 
-cumulus_message_adapter_lambda_layer_arn = "arn:aws:lambda:us-east-1:123456789012:layer:Cumulus_Message_Adapter:4"
+cumulus_message_adapter_lambda_layer_arn = "arn:aws:lambda:us-east-1:12345:layer:Cumulus_Message_Adapter:4"
 
-permissions_boundary_arn = "arn:aws:iam::123456789012:policy/SomeRoleBoundary"
-prefix                   = "asdf"
-private_buckets          = ["asdf-private"]
-protected_buckets        = ["asdf-protected"]
-public_buckets           = ["asdf-public"]
-subnet_ids               = ["subnet-123456"]
-system_bucket            = "asdf-internal"
-vpc_id                   = "vpc-123456"
-key_name                 = "asdf"
+permissions_boundary_arn = "arn:aws:iam::12345:policy/NGAPShNonProdRoleBoundary"
+prefix                   = "PREFIX"
+buckets = {
+  internal = {
+    name = "PREFIX-internal"
+    type = "internal"
+  }
+  private = {
+    name = "PREFIX-private"
+    type = "private"
+  },
+  protected = {
+    name = "PREFIX-protected"
+    type = "protected"
+  },
+  public = {
+    name = "PREFIX-public"
+    type = "public"
+  }
+}
+subnet_ids    = ["subnet-12345"]
+system_bucket = "PREFIX-internal"
+vpc_id        = "vpc-12345"
+key_name      = "MY-KEY"
 
-cmr_client_id   = "cumulus-core-asdf"
+cmr_client_id   = "cumulus-core-PREFIX"
 cmr_environment = "UAT"
 cmr_password    = "password"
 cmr_provider    = "CUMULUS"
-cmr_username    = "asdf"
+cmr_username    = "username"
 
 urs_client_id       = "asdf"
 urs_client_password = "password"
@@ -24,6 +39,6 @@ urs_client_password = "password"
 token_secret = "asdf"
 
 data_persistence_remote_state_config = {
-  bucket = "asdf-tf-state"
-  key    = "asdf-data-persistence/terraform.tfstate"
+  bucket = "PREFIX-tf-state"
+  key    = "PREFIX-data-persistence/terraform.tfstate"
 }
