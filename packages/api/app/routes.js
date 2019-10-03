@@ -87,7 +87,7 @@ router.use('/workflows', ensureAuthorized, workflows);
 // OAuth Token endpoints
 if (launchpadProtectedAuth()) {
   // SAML SSO
-  router.get('/samlLogin', launchpadSaml.login);
+  router.get('/saml/login', launchpadSaml.login);
   router.post('/saml/auth', launchpadSaml.auth);
   // disabled for now
   router.get('/token', launchpadSaml.tokenEndpoint);

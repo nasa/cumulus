@@ -99,5 +99,3 @@ test.serial(
     });
   }
 );
-
-//test('buildLaunchpadJwt returns a valid JWT with a successful saml result', async (t) => {});
