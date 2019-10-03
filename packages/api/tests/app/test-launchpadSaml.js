@@ -2,10 +2,15 @@
 
 const fs = require('fs');
 const test = require('ava');
+const sinon = require('sinon');
 const rewire = require('rewire');
+const request = require('supertest');
+const { URL } = require('url');
+const saml2 = require('saml2-js');
 
 const aws = require('@cumulus/common/aws');
 const { randomId } = require('@cumulus/common/test-utils');
+
 const { verifyJwtToken } = require('../../lib/token');
 const { AccessToken, User } = require('../../models');
 const launchpadSaml = rewire('../../app/launchpadSaml');
@@ -14,27 +19,19 @@ const launchpadPublicCertificate = launchpadSaml.__get__(
 );
 const buildLaunchpadJwt = launchpadSaml.__get__('buildLaunchpadJwt');
 
+process.env.OAUTH_PROVIDER = 'launchpad';
 process.env.UsersTable = randomId('usersTable');
 process.env.AccessTokensTable = randomId('tokenTable');
 process.env.stackName = randomId('stackname');
 process.env.TOKEN_SECRET = randomId('token_secret');
-process.env.system_bucket = randomId('system_bucket');
+process.env.system_bucket = randomId('systembucket');
+
+const { app } = require('../../app');
 
 const testBucketName = randomId('testbucket');
-const createBucket = (Bucket) =>
-  aws
-    .s3()
-    .createBucket({ Bucket })
-    .promise();
+const createBucket = (Bucket) => aws.s3().createBucket({ Bucket }).promise();
 const testBucketNames = [process.env.system_bucket, testBucketName];
-
-const successfulSamlResponse = {
-  user: {
-    name_id: randomId('name_id'),
-    session_index: randomId('session_index')
-  }
-};
-const badSamlResponse = { user: {} };
+process.env.LAUNCHPAD_METADATA_PATH = `s3://${testBucketName}/valid-metadata.xml`;
 
 const xmlMetadataFixture = fs.readFileSync(
   `${__dirname}/fixtures/launchpad-sbx-metadata.xml`,
@@ -58,7 +55,6 @@ const certificate = require('./fixtures/certificateFixture');
 
 let accessTokenModel;
 let userModel;
-
 test.before(async () => {
   accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
@@ -74,7 +70,23 @@ test.before(async () => {
         Body: f.content
       }))
   );
-  // launchpadSaml.__set__('prepareSamlProviders', mockPrepareSamlProvider);
+});
+
+let sandbox;
+test.beforeEach(async (t) => {
+  sandbox = sinon.createSandbox();
+  const successfulSamlResponse = {
+    user: {
+      name_id: randomId('name_id'),
+      session_index: randomId('session_index')
+    }
+  };
+  const badSamlResponse = { user: {} };
+  t.context = { successfulSamlResponse, badSamlResponse };
+});
+
+test.afterEach(async () => {
+  sandbox.restore();
 });
 
 test.after.always(async () => {
@@ -132,22 +144,66 @@ test.serial(
 );
 
 test('buildLaunchpadJwt returns a valid JWT with correct SAML information.', async (t) => {
-  const jwt = await buildLaunchpadJwt(successfulSamlResponse);
+  const jwt = await buildLaunchpadJwt(t.context.successfulSamlResponse);
   const decodedToken = verifyJwtToken(jwt);
 
-  t.is(decodedToken.username, successfulSamlResponse.user.name_id);
-  t.is(decodedToken.accessToken, successfulSamlResponse.user.session_index);
+  t.is(decodedToken.username, t.context.successfulSamlResponse.user.name_id);
+  t.is(decodedToken.accessToken, t.context.successfulSamlResponse.user.session_index);
 
   const modelToken = await accessTokenModel.get({
-    accessToken: successfulSamlResponse.user.session_index
+    accessToken: t.context.successfulSamlResponse.user.session_index
   });
-  t.is(modelToken.accessToken, successfulSamlResponse.user.session_index);
-  t.is(modelToken.username, successfulSamlResponse.user.name_id);
+  t.is(modelToken.accessToken, t.context.successfulSamlResponse.user.session_index);
+  t.is(modelToken.username, t.context.successfulSamlResponse.user.name_id);
 });
 
 test('buildLaunchpadJwt throws with bad SAML information.', async (t) => {
-  await t.throwsAsync(buildLaunchpadJwt(badSamlResponse), {
+  await t.throwsAsync(buildLaunchpadJwt(t.context.badSamlResponse), {
     instanceOf: Error,
     message: 'invalid SAML response received {"user":{}}'
   });
+});
+
+test.serial('/saml/auth with bad metadata returns Bad Request.', async (t) => {
+  const callback = sandbox.fake.yields('post_assert callsback with Error', null);
+  const mockExample = sandbox.stub();
+  mockExample.ServiceProvider = sandbox.stub().returns({ post_assert: callback });
+  mockExample.IdentityProvider = sandbox.stub().returns({ object: 'unused IDP' });
+  sandbox.replace(saml2, 'ServiceProvider', mockExample.ServiceProvider);
+  sandbox.replace(saml2, 'IdentityProvider', mockExample.IdentityProvider);
+
+  const redirect = await request(app)
+    .post('/saml/auth')
+    .send({ SAMLResponse: '' })
+    .set('Accept', 'application/json')
+    .expect(400);
+
+  t.is(redirect.body.error, 'Bad Request');
+});
+
+test.serial('/saml/auth with good metadata returns redirect.', async (t) => {
+  const callback = sandbox.fake.yields(null, t.context.successfulSamlResponse);
+  const mockExample = sandbox.stub();
+  mockExample.ServiceProvider = sandbox.stub().returns({ post_assert: callback });
+  mockExample.IdentityProvider = sandbox.stub().returns({ object: 'unused IDP' });
+  sandbox.replace(saml2, 'ServiceProvider', mockExample.ServiceProvider);
+  sandbox.replace(saml2, 'IdentityProvider', mockExample.IdentityProvider);
+
+  const redirect = await request(app)
+    .post('/saml/auth')
+    .send({
+      SAMLResponse: 'mockedd in text',
+      RelayState: 'https://example.com'
+    })
+    .set('Accept', 'application/json')
+    .expect(302);
+
+  const redirectUrl = new URL(redirect.header.location);
+  const jwt = redirectUrl.searchParams.get('token');
+  const decodedToken = verifyJwtToken(jwt);
+  t.is(decodedToken.username, t.context.successfulSamlResponse.user.name_id);
+  t.is(
+    decodedToken.accessToken,
+    t.context.successfulSamlResponse.user.session_index
+  );
 });
