@@ -56,6 +56,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1451**
   - Elasticsearch cluster setting `auto_create_index` will be set to false. This had been causing issues in the bootstrap lambda on deploy.
 
+- **CUMULUS-1456**
+  - `@cumulus/api` endpoints default error handler uses `boom` package to format errors, which is consistent with other API endpoint errors.
+
 ### Fixed
 
 - **CUMULUS-1432** `logs` endpoint filter correctly filters logs by level
