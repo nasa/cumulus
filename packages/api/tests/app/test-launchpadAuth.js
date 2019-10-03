@@ -5,15 +5,15 @@ const sinon = require('sinon');
 const request = require('supertest');
 const launchpad = require('@cumulus/common/launchpad');
 const { randomId } = require('@cumulus/common/test-utils');
-const EsCollection = require('../es/collections');
-const models = require('../models');
-const assertions = require('../lib/assertions');
+const EsCollection = require('../../es/collections');
+const models = require('../../models');
+const assertions = require('../../lib/assertions');
 process.env.oauth_user_group = 'GSFC-Cumulus';
 process.env.OAUTH_PROVIDER = 'launchpad';
 process.env.AccessTokensTable = randomId('AccessTokens');
 process.env.system_bucket = randomId('bucket');
 process.env.stackName = randomId('stack');
-const { app } = require('../app');
+const { app } = require('../../app');
 
 const validateTokenResponse = {
   owner_auid: randomId('owner_auid'),

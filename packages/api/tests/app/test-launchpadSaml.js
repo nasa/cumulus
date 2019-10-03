@@ -3,15 +3,12 @@
 const fs = require('fs');
 const test = require('ava');
 const rewire = require('rewire');
-const request = require('supertest');
 
-const launchpad = require('@cumulus/common/launchpad');
 const aws = require('@cumulus/common/aws');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const launchpadSaml = rewire('../../app/launchpadSaml');
 
-const buildLaunchpadJwt = launchpadSaml.__get__('buildLaunchpadJwt');
 const launchpadPublicCertificate = launchpadSaml.__get__(
   'launchpadPublicCertificate'
 );
@@ -37,7 +34,7 @@ const testFiles = [goodMetadataFile, badMetadataFile];
 const certificate = require('./fixtures/certificateFixture');
 const testBucketName = randomId('testbucket');
 
-test.before(async (t) => {
+test.before(async () => {
   await aws.s3().createBucket({ Bucket: testBucketName }).promise();
   await Promise.all(
     testFiles.map((f) => aws.s3PutObject({
@@ -48,7 +45,7 @@ test.before(async (t) => {
   );
 });
 
-test.after.always(async (t) => {
+test.after.always(async () => {
   await aws.recursivelyDeleteS3Bucket(testBucketName);
 });
 

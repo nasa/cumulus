@@ -34,7 +34,7 @@ const launchpadPublicCertificate = async (launchpadPublicMetadataPath) => {
     throw error;
   }
   const metadata = await parseXmlString(launchpadMetatdataXML);
-  const certificate = JSONPath({wrap: false},'$..ds:X509Certificate', metadata);
+  const certificate = JSONPath({ wrap: false }, '$..ds:X509Certificate', metadata);
   if (certificate) return flatten(certificate);
   throw new Error(`Failed to retrieve Launchpad metadata X509 Certificate from ${launchpadPublicMetadataPath}`);
 };
@@ -120,7 +120,8 @@ const login = async (req, res) => {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Object} response redirect back to the initiating requests relay state with a valid token query parameter.
+ * @returns {Object} response redirect back to the initiating requests relay
+ *                   state with a valid token query parameter.
  */
 const auth = async (req, res) => {
   const { idp, sp } = await prepareSamlProviders();
