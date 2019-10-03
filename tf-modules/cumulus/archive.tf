@@ -2,6 +2,7 @@ module "archive" {
   source = "../archive"
 
   prefix = var.prefix
+  region = var.region
 
   permissions_boundary_arn = var.permissions_boundary_arn
 

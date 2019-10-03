@@ -27,6 +27,7 @@ module "cumulus" {
   cumulus_message_adapter_lambda_layer_arn = var.cumulus_message_adapter_lambda_layer_arn
 
   prefix = var.prefix
+  region = var.region
 
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.subnet_ids
