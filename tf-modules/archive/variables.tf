@@ -259,3 +259,7 @@ variable "non_complete_execution_payload_timeout" {
   type    = number
   default = 30
 }
+
+variable "region" {
+  type    = string
+}

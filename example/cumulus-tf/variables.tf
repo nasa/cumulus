@@ -25,7 +25,7 @@ variable "cumulus_message_adapter_lambda_layer_arn" {
 }
 
 variable "data_persistence_remote_state_config" {
-  type = object({ bucket = string, key = string })
+  type = object({ bucket = string, key = string, region = string })
 }
 
 variable "s3_replicator_config" {
