@@ -137,8 +137,7 @@ test.serial(
   async (t) => {
     await t.throwsAsync(launchpadPublicCertificate('s3://badBucket/location'), {
       instanceOf: Error,
-      message:
-        'Cumulus could not find Launchpad public xml metadata at s3://badBucket/location'
+      message: 'Cumulus could not find Launchpad public xml metadata at s3://badBucket/location'
     });
   }
 );
@@ -191,10 +190,7 @@ test.serial('/saml/auth with good metadata returns redirect.', async (t) => {
 
   const redirect = await request(app)
     .post('/saml/auth')
-    .send({
-      SAMLResponse: 'mockedd in text',
-      RelayState: 'https://example.com'
-    })
+    .send({ SAMLResponse: 'mocked inside test', RelayState: 'https://example.com' })
     .set('Accept', 'application/json')
     .expect(302);
 
@@ -202,8 +198,5 @@ test.serial('/saml/auth with good metadata returns redirect.', async (t) => {
   const jwt = redirectUrl.searchParams.get('token');
   const decodedToken = verifyJwtToken(jwt);
   t.is(decodedToken.username, t.context.successfulSamlResponse.user.name_id);
-  t.is(
-    decodedToken.accessToken,
-    t.context.successfulSamlResponse.user.session_index
-  );
+  t.is(decodedToken.accessToken, t.context.successfulSamlResponse.user.session_index);
 });
