@@ -251,8 +251,6 @@ describe('When there are granule differences and granule reconciliation is run',
     }).promise()
       .then((response) => JSON.parse(response.Body.toString()));
 
-    console.log(JSON.stringify(report, null, 2));
-
     console.log(`update granule files back ${publishedGranuleId}`);
     await granuleModel.update({ granuleId: publishedGranuleId }, { files: JSON.parse(granuleResponse.body).files });
   });
