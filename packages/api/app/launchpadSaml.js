@@ -23,12 +23,20 @@ const parseXmlString = promisify(parseString);
  * @returns {Promise<Array>} Array containing the X509Certificate from the input metadata file.
  */
 const launchpadPublicCertificate = async (launchpadPublicMetadataPath) => {
+  let launchpadMetatdataXML;
   const parsed = aws.parseS3Uri(launchpadPublicMetadataPath);
-  const launchpadMetatdataXML = (await aws.getS3Object(parsed.Bucket, parsed.Key)).Body.toString();
+  try {
+    launchpadMetatdataXML = (await aws.getS3Object(parsed.Bucket, parsed.Key)).Body.toString();
+  } catch (error) {
+    if (error.code === 'NoSuchKey' || error.code === 'NoSuchBucket') {
+      error.message = `Cumulus could not find Launchpad public xml metadata at ${launchpadPublicMetadataPath}`;
+    }
+    throw error;
+  }
   const metadata = await parseXmlString(launchpadMetatdataXML);
-  const certificate = JSONPath('$..ds:X509Certificate', metadata);
+  const certificate = JSONPath({wrap: false},'$..ds:X509Certificate', metadata);
   if (certificate) return flatten(certificate);
-  return [];
+  throw new Error(`Failed to retrieve Launchpad metadata X509 Certificate from ${launchpadPublicMetadataPath}`);
 };
 
 /**
@@ -39,7 +47,7 @@ const launchpadPublicCertificate = async (launchpadPublicMetadataPath) => {
  *
  * @returns {Promise<Object>} - a valid JWT token that can be used for authentication.
  */
-const buildLaunchpadJwtToken = async (samlResponse) => {
+const buildLaunchpadJwt = async (samlResponse) => {
   const {
     user: { name_id: username, session_index: accessToken }
   } = samlResponse;
@@ -91,7 +99,6 @@ const prepareSamlProviders = async () => {
  * @returns {Object} response redirect to the Identity Provider.
  */
 const login = async (req, res) => {
-
   const { idp, sp } = await prepareSamlProviders();
   const relayState = req.query.RelayState;
   sp.create_login_request_url(
@@ -121,7 +128,7 @@ const auth = async (req, res) => {
     if (err != null) {
       return res.boom.badRequest('SAML post assert error', err);
     }
-    return buildLaunchpadJwtToken(samlResponse)
+    return buildLaunchpadJwt(samlResponse)
       .then((LaunchpadJwtToken) => {
         const Location = `${req.body.RelayState}/?token=${LaunchpadJwtToken}`;
         return res.redirect(Location);
