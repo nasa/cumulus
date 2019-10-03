@@ -39,7 +39,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - **NOTE** to authenticate with Launchpad ensure your launchpad user_id is in the `<prefix>-UsersTable`
     - when Cumulus configured to protect API via Launchpad:
          - New endpoints
-            - `GET /saml/login` - starting point for SAML SSO creates the login request url and redirects to the SAML Identidy Provider Service (IDP)
+            - `GET /saml/login` - starting point for SAML SSO creates the login request url and redirects to the SAML Identity Provider Service (IDP)
             - `POST /saml/auth` - SAML Assertion Consumer Service.  POST receiver from SAML IDP.  Validates response, logs the user in, and returnes a SAML-based JWT.
          - Disabled endpoints
             - `GET /token`
