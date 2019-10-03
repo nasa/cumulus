@@ -22,6 +22,6 @@ Upload the PKI certificate pfx file to s3, use `{{system_bucket}}` as bucket nam
 
 LAUNCHPAD_PASSPHRASE=<LAUNCHPAD_PASSPHRASE>
 
-3. Configure the `oauth.provider` and `oath.userGroup` configuration parameters in `app/config.yml`. _Example configuration of the `oauth` variables can be found in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/app/config.yml)_
+3. Configure the `oauth.provider` and `oauth.userGroup` configuration parameters in `app/config.yml`. _Example configuration of the `oauth` variables can be found in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/app/config.yml)_
 
 `oauth.provider` in `app/config.yml` must be set to `launchpad` to use Launchpad authentication.
