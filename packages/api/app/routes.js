@@ -103,7 +103,7 @@ router.use('/ems', ensureAuthorized, ems);
 // eslint-disable-next-line no-unused-vars
 router.use((error, req, res, next) => {
   log.error(error);
-  return res.status(500).send({ error: error.message });
+  return res.boom.badRequest(error.message, error);
 });
 
 module.exports = router;
