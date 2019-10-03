@@ -29,7 +29,7 @@ In your `app/config.yml`, define a new queue with a `maxExecutions` value:
       consumer:
         - lambda: sqs2sfThrottle    # you must use this lambda
           schedule: rate(1 minute)
-          messageLimit: '{{sqs_consumer_rate}}'
+          messageLimit: '{{sqs_consumer_rate}'
           state: ENABLED
 ```
 
@@ -65,12 +65,12 @@ For any SIPS workflows using `queue-granules` or `queue-pdrs` that you want to u
       cma:
         event.$: '$'
         task_config:
-            provider: '{{$.meta.provider}}'
-            internalBucket: '{{$.meta.buckets.internal.name}}'
-            stackName: '{{$.meta.stack}}'
-            granuleIngestMessageTemplateUri: '{{$.meta.templates.IngestGranule}}'
+            provider: '{$.meta.provider}'
+            internalBucket: '{$.meta.buckets.internal.name}'
+            stackName: '{$.meta.stack}'
+            granuleIngestMessageTemplateUri: '{$.meta.templates.IngestGranule}'
             # configure the step to use your new queue
-            queueUrl: '{{$.meta.queues.backgroundJobQueue}}'
+            queueUrl: '{$.meta.queues.backgroundJobQueue}'
 ```
 
 ```yaml
@@ -80,10 +80,10 @@ For any SIPS workflows using `queue-granules` or `queue-pdrs` that you want to u
         event.$: '$'
         task_config:
             # configure the step to use your new queue
-            queueUrl: '{{$.meta.queues.backgroundJobQueue}}'
-            parsePdrMessageTemplateUri: '{{$.meta.templates.ParsePdr}}'
-            provider: '{{$.meta.provider}}'
-            collection: '{{$.meta.collection}}'
+            queueUrl: '{$.meta.queues.backgroundJobQueue}'
+            parsePdrMessageTemplateUri: '{$.meta.templates.ParsePdr}'
+            provider: '{$.meta.provider}'
+            collection: '{$.meta.collection}'
   ```
 
 After making these changes, re-deploy your Cumulus application for the execution throttling to take effect.

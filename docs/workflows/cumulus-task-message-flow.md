@@ -31,7 +31,7 @@ Here's a simple example of a Cumulus Message:
   "task_config": {
     "inlinestr": "prefix{meta.foo}suffix",
     "array": "{[$.meta.foo]}",
-    "object": "{{$.meta}}"
+    "object": "{$.meta}"
   },
   "cumulus_meta": {
     "message_source": "sfn",
@@ -105,11 +105,11 @@ The config loaded from the **Fetch step function config** step may have a `cumul
   "task_config": {
     "bar": "baz",
     "cumulus_message": {
-      "input": "{{$.payload.input}}",
+      "input": "{$.payload.input}",
       "outputs": [
         {
-          "source": "{{$.input.anykey}}",
-          "destination": "{{$.payload.out}}"
+          "source": "{$.input.anykey}",
+          "destination": "{$.payload.out}"
         }
       ]
     }

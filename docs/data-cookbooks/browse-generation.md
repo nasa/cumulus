@@ -90,12 +90,12 @@ A few things to note about tasks in the workflow being added:
       cma:
         event: '$'
         task_config:
-          bucket: '{{$.meta.buckets.internal.name}}'
-          stack: '{{$.meta.stack}}'
-          cmr: '{{$.meta.cmr}}'
-          process: '{{$.meta.process}}'
-          input_granules: '{{$.meta.input_granules}}'
-          granuleIdExtraction: '{{$.meta.collection.granuleIdExtraction}}'
+          bucket: '{$.meta.buckets.internal.name}'
+          stack: '{$.meta.stack}'
+          cmr: '{$.meta.cmr}'
+          process: '{$.meta.process}'
+          input_granules: '{$.meta.input_granules}'
+          granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
     Type: Task
     Resource: ${PostToCmrLambdaFunction.Arn}
     Catch:
@@ -116,10 +116,10 @@ Note that in the task, the event.config.cmr will contain the values you configur
       cma:
         event.$: '$'
         task_config:
-          bucket: '{{$.meta.buckets.internal.name}}'
-          collection: '{{$.meta.collection}}'
-          cmrMetadataFormat: '{{$.meta.cmrMetadataFormat}}'
-          additionalUrls: '{{$.meta.additionalUrls}}'
+          bucket: '{$.meta.buckets.internal.name}'
+          collection: '{$.meta.collection}'
+          cmrMetadataFormat: '{$.meta.cmrMetadataFormat}'
+          additionalUrls: '{$.meta.additionalUrls}'
           generateFakeBrowse: true
     Type: Task
     Resource: ${FakeProcessingLambdaFunction.Arn}
@@ -201,7 +201,7 @@ PostToCmr:
   useMessageAdapter: true
   launchInVpc: true
   envs:
-    system_bucket: '{{system_bucket}}'
+    system_bucket: '{{system_bucket}'
 ```
 
 **Please note**: ```FakeProcessing``` is the core provided browse/cmr generation we're using for the example.
@@ -507,10 +507,10 @@ In the above example, the critical portion of the output to ```FilesToGranules``
 In the example provided, the processing task is setup to return an object with the keys "files" and "granules".   In the cumulus_message configuration, the outputs are mapped in the configuration to the payload, granules to meta.input_granules:
 
 ```yaml
-            - source: '{{$.granules}}'
-              destination: '{{$.meta.input_granules}}'
-            - source: '{{$.files}}'
-              destination: '{{$.payload}}'
+            - source: '{$.granules}'
+              destination: '{$.meta.input_granules}'
+            - source: '{$.files}'
+              destination: '{$.payload}'
 ```
 
 Their expected values from the example above may be useful in constructing a processing task:

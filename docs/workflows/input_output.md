@@ -58,7 +58,7 @@ and include the reference in the Lambda configuration:
 ```yaml
     DiscoverPdrs:
       layers:
-        - '{{cma_layer}}'
+        - '{{cma_layer}'
 ```
 
 ***Please Note***: Updating/removing a layer does not change a deployed Lambda, so to update the CMA you should deploy a new version of the CMA layer, update the associated Lambda configuration to reference the new CMA version, and re-deploy your Lambdas.
@@ -166,7 +166,7 @@ DiscoverGranules:
   "task_config": {
     "inlinestr": "prefix{meta.foo}suffix",
     "array": "{[$.meta.foo]}",
-    "object": "{{$.meta}}"
+    "object": "{$.meta}"
   },
   "cumulus_meta": {
     "message_source": "sfn",
@@ -227,12 +227,12 @@ StepFunction:
       event.$: '$'
       task_config:
         sfnEnd: true
-        stack: '{{$.meta.stack}}'
-        bucket: '{{$.meta.buckets.internal.name}}'
-        stateMachine: '{{$.cumulus_meta.state_machine}}'
-        executionName: '{{$.cumulus_meta.execution_name}}'
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal.name}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
-          input: '{{$}}'
+          input: '{$}'
 ```
 
 ### Cumulus Message Adapter has the following steps:
@@ -299,10 +299,10 @@ In the workflow configuration (defined under the `task_config` key), each task h
         cma:
           event.$: '$'
           task_config:
-            provider: '{{$.meta.provider}}'
+            provider: '{$.meta.provider}'
               inlinestr: 'prefix{meta.foo}suffix'
               array: '{[$.meta.foo]}'
-              object: '{{$.meta}}'
+              object: '{$.meta}'
 ```
 
 *and* and incoming message that contains:
@@ -330,10 +330,10 @@ The corresponding Cumulus Message would contain:
         ...
       },
       "task_config": {
-        "provider: "{{$.meta.provider}}",
+        "provider: "{$.meta.provider}",
         "inlinestr": "prefix{meta.foo}suffix",
         "array": "{[$.meta.foo]}",
-        "object": "{{$.meta}}"
+        "object": "{$.meta}"
         ...
       }
     }
@@ -376,7 +376,7 @@ By default, the incoming payload is the payload from the previous task.  The tas
           event.$: '$'
           task_config:
             cumulus_message:
-                input: '{{$.payload.foo}}'
+                input: '{$.payload.foo}'
 ```
 
 The task configuration in the message would be:
@@ -385,7 +385,7 @@ The task configuration in the message would be:
     {
       "task_config": {
         "cumulus_message": {
-          "input": "{{$.payload.foo}}"
+          "input": "{$.payload.foo}"
         }
       },
       "payload": {
@@ -419,10 +419,10 @@ By default, the task's return value is the next payload.  However, the workflow 
           task_config:
             cumulus_message:
                 outputs:
-                  - source: '{{$}}'
-                    destination: '{{$.payload}}'
-                  - source: '{{$.output.anykey}}'
-                    destination: '{{$.meta.baz}}'
+                  - source: '{$}'
+                    destination: '{$.payload}'
+                  - source: '{$.output.anykey}'
+                    destination: '{$.meta.baz}'
 ```
 
 The corresponding Cumulus Message would be:
@@ -433,12 +433,12 @@ The corresponding Cumulus Message would be:
         "cumulus_message": {
           "outputs": [
             {
-              "source": "{{$}}",
-              "destination": "{{$.payload}}"
+              "source": "{$}",
+              "destination": "{$.payload}"
             },
             {
-              "source": "{{$.output.anykey}}",
-              "destination": "{{$.meta.baz}}"
+              "source": "{$.output.anykey}",
+              "destination": "{$.meta.baz}"
             }
           ]
         }
@@ -470,12 +470,12 @@ The Cumulus Message Adapter would output the following Cumulus Message:
           "cumulus_message": {
             "outputs": [
               {
-                "source": "{{$}}",
-                "destination": "{{$.payload}}"
+                "source": "{$}",
+                "destination": "{$.payload}"
               },
               {
-                "source": "{{$.output.anykey}}",
-                "destination": "{{$.meta.baz}}"
+                "source": "{$.output.anykey}",
+                "destination": "{$.meta.baz}"
               }
             ]
           }
@@ -513,12 +513,12 @@ For example, if the output message (post output configuration) from a cumulus me
         "cumulus_message": {
           "outputs": [
             {
-              "source": "{{$}}",
-              "destination": "{{$.payload}}"
+              "source": "{$}",
+              "destination": "{$.payload}"
             },
             {
-              "source": "{{$.output.anykey}}",
-              "destination": "{{$.meta.baz}}"
+              "source": "{$.output.anykey}",
+              "destination": "{$.meta.baz}"
             }
           ]
         }
