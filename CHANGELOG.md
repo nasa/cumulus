@@ -14,7 +14,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
   As this change is backward compatible in Cumulus Core, users wishing to utilize the previous version of the CMA may opt to transition to using a CMA lambda layer, or set `message_adapter_version` in their configuration to a version prior to v1.1.0.
 
-- **CUMULUS-1449** - Workflow configurations for the `QueueGranules` and `QueuePdrs` tasks need to be updated.
+- **CUMULUS-1449** -
+  Cumulus now uses a universal workflow template when starting workflow that contains general information specific to the deployment, but not specific to the workflow. Workflow task configs must be defined using AWS step function parameters. As part of this change, `CumulusConfig` has been retired and task configs must now be defined under the `cma.task_config` key in the Parameters section of a step function definition. See `example/workflows/sips.yml` in the core repository for examples of how to set the Parameters.
+
+  Additionally, workflow configurations for the `QueueGranules` and `QueuePdrs` tasks need to be updated:
+  - `queue-pdrs` config changes:
+    - `parsePdrMessageTemplateUri` replaced with `parsePdrWorkflow`, which is the workflow name (i.e. top-level name in `config.yml`).
+    - `internalBucket` and `stackName` configs now required to look up configuration from the deployment. Brings the task config in line with that of `queue-granules`.
+  - `queue-granules` config change: `ingestGranuleMessageTemplateUri` replaced with `ingestGranuleWorkflow`, which is the workflow name.
 
 ### PLEASE NOTE
 
@@ -50,12 +57,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1448** Refactor workflows that are mutating cumulus_meta to utilize meta field
 
 - **CUMULUS-1449**
-  - `queue-pdrs` config changes:
-    - `parsePdrMessageTemplateUri` replaced with `parsePdrWorkflow`, which is the workflow name (i.e. top-level name in `config.yml`).
-    - `internalBucket` and `stackName` configs now required to look up configuration from the deployment. Brings the task config in line with that of `queue-granules`.
-  - `queue-granules` config change: `ingestGranuleMessageTemplateUri` replaced with `ingestGranuleWorkflow`, which is the workflow name.
-  - Cumulus now uses a universal workflow template when starting workflow that contains general information specific to the deployment, but not specific to the workflow. Workflow task configs must be defined using AWS step function parameters. See following entry.
-  - Changed the way workflow configs are defined. Task configs must now be defined under the `cma.workflow_config.taskName` key in the Parameters section of a step function definition. See `example/workflows/sips.yml` in the core repository for examples of how to set the Parameters.
+  - `queue-pdrs` & `queue-granules` config changes. Details in breaking changes section.
+  - Cumulus now uses a universal workflow template when starting workflow that contains general information specific to the deployment, but not specific to the workflow.
+  - Changed the way workflow configs are defined, from `CumulusConfig` to a `task_config` AWS Parameter.
 
 ### Removed
 
@@ -63,7 +67,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Migrate Cumulus from deprecated Elasticsearch JS client to new, supported one in `@cumulus/api`
 
 - **CUMULUS-1449**
-  - Retired `CumulusConfig` as part of step function definitions, as this is an artifact of the way Kes parses workflow definitions that was not possible to migrate to Terraform. Use AWS Parameters and the `workflow_config` key instead. See change note above.
+  - Retired `CumulusConfig` as part of step function definitions, as this is an artifact of the way Kes parses workflow definitions that was not possible to migrate to Terraform. Use AWS Parameters and the `task_config` key instead. See change note above.
   - Removed individual workflow templates.
 
 ### Fixed

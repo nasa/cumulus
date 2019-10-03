@@ -130,7 +130,7 @@ process.env.ExecutionsTable = `${testConfig.stackName}-ExecutionsTable`;
 // configured to trigger workflows when new records arrive on a Kinesis
 // stream. When a record appears on the stream, the messageConsumer lambda
 // triggers workflows associated with the kinesis-type rules.
-describe('The Cloud Notification Mechanism Kinesis workflow', () => {
+xdescribe('The Cloud Notification Mechanism Kinesis workflow', () => {
   const maxWaitForSFExistSecs = 60 * 4;
   const maxWaitForExecutionSecs = 60 * 5;
   let executionStatus;
