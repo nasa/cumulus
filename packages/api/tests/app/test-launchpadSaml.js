@@ -51,7 +51,7 @@ const badMetadataFile = {
 };
 const testFiles = [goodMetadataFile, badMetadataFile];
 
-const certificate = require('./fixtures/certificateFixture');
+const certificate = require('./fixtures/_certificateFixture');
 
 let accessTokenModel;
 let userModel;
