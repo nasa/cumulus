@@ -18,3 +18,13 @@ To add a new Terraform module:
     - What is included in the module
     - How to deploy it
     - Description of the variables necessary to configure the module
+
+## Integrating a module with the Cumulus module
+
+To include a module in the Cumulus module:
+
+1. Add a `.tf` file to the `tf-modules/cumulus` directory that uses the module
+2. Add any variables necessary to support your modle to the `tf-modules/cumulus/variables.tf` file so that variables can be passed through the Cumulus module into the module
+3. If necessary, add any outputs from the module that should also be output from the Cumulus module to the `tf-modules/cumulus/outputs.tf` file
+
+### Integrating a module with the example "full" Cumulus deployment
