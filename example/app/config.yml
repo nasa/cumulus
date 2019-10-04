@@ -263,6 +263,7 @@ default:
     - username: pquinn1
     - username: menno.vandiermen
     - username: matthewsavoie
+    - username: mhsavoie
     - username: mboyd
     - username: jmcampbell
 
@@ -731,15 +732,34 @@ mhs4:
   ecs:
     ssh: true
     keyPairName: mhs
+  launchpad:
+    api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1'
+    passphrase: '{{LAUNCHPAD_PASSPHRASE}}'
   apiConfigs:
     backend:
       private: true
       port: 8004
     distribution:
       private: true
-      port: 7004
+      port: 7014
       logApiGatewayToCloudWatch: true
   logToSharedDestination: '{{SHARED_LOG_DESTINATION_ARN}}'
+  cmr:
+    oauthProvider: launchpad
+    username: CmrUserNotUsed
+    password: CmrPasswordNotUsed
+  oauth:
+    provider: launchpad
+    userGroup: GSFC-Cumulus-Dev
+  # oauth:
+  #   provider: earthdatalogin
+  #   userGroup: n/a
+  samlConfig:
+    entityID: 'https://u8ne7bgicd.execute-api.us-east-1.amazonaws.com:8004/dev/'
+    assertionConsumerService: 'https://u8ne7bgicd.execute-api.us-east-1.amazonaws.com:8004/dev/saml/auth'
+    idpLogin: 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso'
+    launchpadMetadataPath: 's3://{{buckets.internal.name}}/{{prefix}}/launchpad/launchpad-sbx-metadata.xml'
+
 
 mhs2:
   prefix: mhs2
