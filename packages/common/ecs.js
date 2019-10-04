@@ -7,14 +7,15 @@ const aws = require('./aws');
  *
  * @returns {Array<string>} the cluster arns
  */
-async function listEcsClusters() {
+async function listEcsClusterArns() {
   let response;
   let clusterArns = [];
   do {
     const nextToken = response ? response.nextToken : null;
-    const params = { maxResults: 100, nextToken };
+    const params = { nextToken };
+
     // eslint-disable-next-line no-await-in-loop
-    response = await aws.ecs().listClusters().promise(params);
+    response = await aws.ecs().listClusters(params).promise();
     clusterArns = clusterArns.concat(response.clusterArns);
   } while (response.nextToken);
 
@@ -22,27 +23,31 @@ async function listEcsClusters() {
 }
 
 /**
- * get cluster and service arns for the given stack and service task
+ * list the services for the given cluster
  *
- * @param {string} stackName -  The name of the stack
- * @param {string} taskName - The task name of ECS service
- * @returns {Object} the object with `cluster` and `service` arns
+ * @param {string} clusterArn - the cluster arn
+ * @param {string} launchType - the launch type, default to 'EC2'
+ * @param {string} schedulingStrategy - the scheduling strategy, default to 'REPLICA'
+ * @returns {Array<string>} the service arns
  */
-async function getEcsClusterService(stackName, taskName) {
-  const clusterArns = await listEcsClusters();
-  const clusterName = `${stackName}-CumulusECSCluster`;
-  const clusters = clusterArns.filter((clusterArn) => clusterArn.includes(clusterName));
-  if (clusters.length === 0) return Promise.reject(new Error(`ECS cluster not found ${clusterName}`));
+async function listEcsServiceArns(clusterArn, launchType, schedulingStrategy) {
+  let response;
+  let serviceArns = [];
+  do {
+    const nextToken = response ? response.nextToken : null;
+    const params = {
+      cluster: clusterArn,
+      launchType: launchType || 'EC2',
+      schedulingStrategy: schedulingStrategy || 'REPLICA',
+      nextToken
+    };
 
-  const cluster = clusters[0];
-  const params = { cluster, launchType: 'EC2', schedulingStrategy: 'REPLICA' };
-  const response = await aws.ecs().listServices(params).promise();
+    // eslint-disable-next-line no-await-in-loop
+    response = await aws.ecs().listServices(params).promise();
+    serviceArns = serviceArns.concat(response.serviceArns);
+  } while (response.nextToken);
 
-  const serviceName = `${stackName}-${taskName}ECSService`;
-  const services = response.serviceArns.filter((serviceArn) => serviceArn.includes(serviceName));
-  if (services.length === 0) return Promise.reject(new Error(`ECS service not found ${serviceName}`));
-
-  return { cluster, service: services[0] };
+  return serviceArns;
 }
 
 /**
@@ -56,13 +61,12 @@ async function getEcsClusterService(stackName, taskName) {
 async function getEcsServiceEvents(cluster, service, startTime) {
   const params = { cluster, services: [service] };
   const response = await aws.ecs().describeServices(params).promise();
-  const events = (response.services)[0].events
+  return response.services[0].events
     .filter((event) => event.createdAt.getTime() > startTime.getTime());
-  return events;
 }
 
 module.exports = {
-  listEcsClusters,
-  getEcsClusterService,
+  listEcsClusterArns,
+  listEcsServiceArns,
   getEcsServiceEvents
 };

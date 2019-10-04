@@ -1,7 +1,7 @@
 const range = require('lodash.range');
 const { sleep } = require('@cumulus/common/util');
-const { getEcsClusterService, getEcsServiceEvents } = require('@cumulus/common/ecs');
-const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
+const { getEcsServiceEvents } = require('@cumulus/common/ecs');
+const { buildAndExecuteWorkflow, getEcsClusterArn, getEcsServiceArn } = require('@cumulus/integration-tests');
 const { loadConfig } = require('../../helpers/testUtils');
 
 const awsConfig = loadConfig();
@@ -32,7 +32,8 @@ describe('The Hello World workflow using ECS and kes CMA', () => {
   it('performs ECS Service Autoscaling', async () => {
     // wait for the event messages
     await sleep(180 * 1000);
-    const { cluster, service } = await getEcsClusterService(awsConfig.stackName, 'EcsTaskHelloWorldKesCma');
+    const cluster = await getEcsClusterArn(awsConfig.stackName);
+    const service = await getEcsServiceArn(cluster, awsConfig.stackName, 'EcsTaskHelloWorldKesCma');
     console.log('getEcsServiceEvents', cluster, service, startTime);
     const serviceEvents = await getEcsServiceEvents(cluster, service, startTime);
     expect(serviceEvents.length).toBeGreaterThan(2);

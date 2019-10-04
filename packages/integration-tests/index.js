@@ -18,7 +18,6 @@ const {
 
 const {
   dynamodb,
-  ecs,
   s3,
   sfn
 } = require('@cumulus/common/aws');
@@ -39,6 +38,7 @@ const granulesApi = require('./api/granules');
 const EarthdataLogin = require('./api/EarthdataLogin');
 const distributionApi = require('./api/distribution');
 const cmr = require('./cmr.js');
+const ecs = require('./ecs');
 const lambda = require('./lambda');
 const waitForDeployment = require('./lambdas/waitForDeployment');
 
@@ -82,24 +82,6 @@ async function waitForAsyncOperationStatus({
     status,
     retries: retries - 1
   });
-}
-
-/**
- * Return the ARN of the Cumulus ECS cluster
- *
- * @param {string} stackName - the Cumulus stack name
- * @returns {string|undefined} - the cluster ARN or undefined if not found
- */
-async function getClusterArn(stackName) {
-  const { clusterArns } = await ecs().listClusters().promise();
-
-  const matchingArns = clusterArns.filter((arn) => arn.includes(`${stackName}-CumulusECSCluster`));
-
-  if (matchingArns.length !== 1) {
-    throw new Error(`Expected to find 1 cluster but found: ${matchingArns}`);
-  }
-
-  return matchingArns[0];
 }
 
 /**
@@ -873,7 +855,6 @@ module.exports = {
   deleteRules,
   removeRuleAddedParams,
   isWorkflowTriggeredByRule,
-  getClusterArn,
   getWorkflowArn,
   rulesList,
   waitForAsyncOperationStatus,
@@ -884,5 +865,7 @@ module.exports = {
   getExecutions,
   waitForDeploymentHandler: waitForDeployment.handler,
   getProviderHost,
-  getProviderPort
+  getProviderPort,
+  getEcsClusterArn: ecs.getEcsClusterArn,
+  getEcsServiceArn: ecs.getEcsServiceArn
 };

@@ -274,7 +274,7 @@ service.  The scaling of tasks is based on the specified metric. The metric can 
 [`Step Functions Activity Metrics`](https://docs.aws.amazon.com/step-functions/latest/dg/procedure-cw-metrics.html#cloudwatch-step-functions-activity-metrics) or a custom metric
 which is suitable for the ECS service.  For example, while autoscaling based on
 `ActivityScheduleTime` metric works well for the short-running tasks, `ActivitiesScheduled`
-metric makes more sense for the long-running tasks.
+makes more sense for the long-running tasks.
 
 Configuration values that affect ECS service autoscaling. These would all be
 defined for a specific service.

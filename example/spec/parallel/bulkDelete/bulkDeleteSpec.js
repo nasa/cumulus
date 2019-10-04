@@ -3,7 +3,7 @@
 const { ecs } = require('@cumulus/common/aws');
 const {
   api: apiTestUtils,
-  getClusterArn
+  getEcsClusterArn
 } = require('@cumulus/integration-tests');
 const { loadConfig } = require('../../helpers/testUtils');
 
@@ -21,7 +21,7 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
     process.env.system_bucket = config.buckets.internal.name;
 
     // Figure out what cluster we're using
-    clusterArn = await getClusterArn(config.stackName);
+    clusterArn = await getEcsClusterArn(config.stackName);
     if (!clusterArn) throw new Error('Unable to find ECS cluster');
 
     postBulkDeleteResponse = await apiTestUtils.postBulkDelete({
@@ -121,7 +121,7 @@ describe('POST /bulkDelete with a failed bulk delete operation', () => {
     config = loadConfig();
 
     // Figure out what cluster we're using
-    clusterArn = await getClusterArn(config.stackName);
+    clusterArn = await getEcsClusterArn(config.stackName);
     if (!clusterArn) throw new Error('Unable to find ECS cluster');
 
     postBulkDeleteResponse = await apiTestUtils.postBulkDelete({

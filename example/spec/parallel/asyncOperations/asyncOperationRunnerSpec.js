@@ -6,7 +6,7 @@ const {
   testUtils: { randomString }
 } = require('@cumulus/common');
 const {
-  getClusterArn,
+  getEcsClusterArn,
   waitForAsyncOperationStatus
 } = require('@cumulus/integration-tests');
 const { AsyncOperation } = require('@cumulus/api/models');
@@ -33,7 +33,7 @@ describe('The AsyncOperation task runner', () => {
     });
 
     // Find the ARN of the cluster
-    cluster = await getClusterArn(config.stackName);
+    cluster = await getEcsClusterArn(config.stackName);
 
     // Find the ARN of the AsyncOperationTaskDefinition
     const { taskDefinitionArns } = await ecs().listTaskDefinitions().promise();
