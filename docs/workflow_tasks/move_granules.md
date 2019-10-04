@@ -37,7 +37,7 @@ For the specifics, see the [Cumulus Tasks page](../tasks) entry for the schema.
 
 ### Configuration
 
-This task does expect values to be set in the CumulusConfig for the workflows.  A schema exists that defines the requirements for the task.
+This task does expect values to be set in the `workflow_config` CMA parameters for the workflows.  A schema exists that defines the requirements for the task.
 
 For the most recent config.json schema, please see the [Cumulus Tasks page](../tasks) entry for the schema.
 
