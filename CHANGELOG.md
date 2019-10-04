@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
   As this change is backward compatible in Cumulus Core, users wishing to utilize the previous version of the CMA may opt to transition to using a CMA lambda layer, or set `message_adapter_version` in their configuration to a version prior to v1.1.0.
 
+- **CUMULUS-1470** ECS Service Autoscaling now uses a configurable metric for the service rather than the `ActivityScheduleTime` metric.
+  - Users who are using ECS Service Autoscaling must update the Service AutoScaling configuration in `app/config.yml`.  The detailed description of the new configuration can be found in the [Service AutoScaling](https://nasa.github.io/cumulus/docs/deployment/config_descriptions#service-autoscaling).
+  - If the existing ECS Service Autoscaling configuration is not updated, the cloudformation template will not recognize the existing configuration and the ECS Service Autoscaling alarms and policies will not be created.
+
 ### PLEASE NOTE
 
 - **CUMULUS-1394** - Ingest notifications are now provided via 3 separate SNS topics for executions, granules, and PDRs, instead of a single `sftracker` SNS topic. Whereas the `sftracker` SNS topic received a full Cumulus execution message, the new topics all receive generated records for the given object. The new topics are only published to if the given object exists for the current execution. For a given execution/granule/PDR, two messages will be received by each topic: one message indicating that ingest is running and another message indicating that ingest has completed or failed. The new SNS topics are:
@@ -21,8 +25,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - `reportExecutions` - Receives 1 message per execution
   - `reportGranules` - Receives 1 message per granule in an execution
   - `reportPdrs` - Receives 1 message per PDR
-
-- **CUMULUS-1470** ECS Service Autoscaling now uses a configurable metric for the service rather than the `ActivityScheduleTime` metric.
 
 ### Added
 
