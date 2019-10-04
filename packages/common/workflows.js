@@ -58,16 +58,12 @@ async function getWorkflowArn(stackName, bucketName, workflowName) {
  */
 async function getWorkflowList(stackName, bucketName) {
   const workflowsListKey = `${stackName}/workflows/`;
-  try {
-    const workflows = await listS3ObjectsV2({
-      Bucket: bucketName,
-      Prefix: workflowsListKey
-    });
-    return Promise.all(workflows.map((obj) => getS3Object(bucketName, obj.Key)
-      .then((r) => JSON.parse(r.Body.toString()))));
-  } catch (err) {
-    throw err;
-  }
+  const workflows = await listS3ObjectsV2({
+    Bucket: bucketName,
+    Prefix: workflowsListKey
+  });
+  return Promise.all(workflows.map((obj) => getS3Object(bucketName, obj.Key)
+    .then((r) => JSON.parse(r.Body.toString()))));
 }
 
 module.exports = {
