@@ -125,6 +125,10 @@ test.before(async () => {
   // create a fake bucket
   await createBucket(process.env.system_bucket);
 
+  // create a workflow template fi;e
+  const tKey = `${process.env.stackName}/workflow_template.json`;
+  await putObject({ Bucket: process.env.system_bucket, Key: tKey, Body: '{}' });
+
   // create fake Collections table
   collectionModel = new models.Collection();
   await collectionModel.createTable();
@@ -349,8 +353,9 @@ test.serial('reingest a granule', async (t) => {
 
   // fake workflow
   const message = JSON.parse(fakeDescribeExecutionResult.input);
-  const key = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
-  await putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'test data' });
+  const wKey = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
+  await putObject({ Bucket: process.env.system_bucket, Key: wKey, Body: '{}' });
+
   const stub = sinon.stub(sfn(), 'describeExecution').returns({
     promise: () => Promise.resolve(fakeDescribeExecutionResult)
   });
@@ -387,8 +392,8 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
 
   //fake in-place workflow
   const message = JSON.parse(fakeSFResponse.execution.input);
-  const key = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
-  await putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'fake in-place workflow' });
+  const wKey = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
+  await putObject({ Bucket: process.env.system_bucket, Key: wKey, Body: '{}' });
 
   const fakeDescribeExecutionResult = {
     output: JSON.stringify({
