@@ -38,6 +38,8 @@
     "@cumulus/common": "1.14.1",
     "@cumulus/cumulus-message-adapter-js": "^1.0.8",
     "@cumulus/ingest": "1.14.1",
+    "babel-loader": "^8.0.6",
+    "babel-plugin-source-map-support": "^2.1.1",
     "p-map": "^2.1.0"
   },
   "devDependencies": {
