@@ -19,12 +19,23 @@ To add a new Terraform module:
     - How to deploy it
     - Description of the variables necessary to configure the module
 
-## Integrating a module with the Cumulus module
+## Integrating a module as a submodule
 
-To include a module in the Cumulus module:
+To include a module as a submodule:
 
-1. Add a `.tf` file to the `tf-modules/cumulus` directory that uses the module
-2. Add any variables necessary to support your modle to the `tf-modules/cumulus/variables.tf` file so that variables can be passed through the Cumulus module into the module
-3. If necessary, add any outputs from the module that should also be output from the Cumulus module to the `tf-modules/cumulus/outputs.tf` file
+1. Add any variables necessary to support the child module to the parent module's `variables.tf` file so that variables can be passed through the parent module into the child module
+    - Update the parent module's `terraform.tfvars.sample` file to reflect any new variables
+2. Add or update a `.tf` file in the parent module to include the child module. Pass through the necessary variables from the parent module to the child module.
+3. If necessary, add any outputs from the child module that should also be output from the parent module to the parent module's `outputs.tf` file
 
-### Integrating a module with the example "full" Cumulus deployment
+### Integrating a submodule with the Cumulus module
+
+The Cumulus module includes all of the resources and submodules that provide Cumulus functionality. It provides a Terraform module for integrators who want an "off the shelf" version of all Cumulus functionality.
+
+Follow the steps above to add a submodule to the Cumulus module.
+
+## Integrating a submodule with the example Cumulus deployment
+
+If you have already added your module to the [Cumulus module](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus), then it will automatically be included in the [example Cumulus deployment](https://github.com/nasa/cumulus/tree/master/example/cumulus-tf).
+
+If your module should not be included in the Cumulus module, for example if it is not providing default Cumulus functionality, then add or update `.tf` in the example Cumulus deployment to include it.
