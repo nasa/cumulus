@@ -34,8 +34,19 @@ The Cumulus module includes all of the resources and submodules that provide Cum
 
 Follow the steps above to add a submodule to the Cumulus module.
 
-## Integrating a submodule with the example Cumulus deployment
+### Integrating a submodule with the example Cumulus deployment
 
-If you have already added your module to the [Cumulus module](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus), then it will automatically be included in the [example Cumulus deployment](https://github.com/nasa/cumulus/tree/master/example/cumulus-tf).
+If you have already added the module to the [Cumulus module](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus), then it will automatically be included in the [example Cumulus deployment](https://github.com/nasa/cumulus/tree/master/example/cumulus-tf).
 
-If your module should not be included in the Cumulus module, for example if it is not providing default Cumulus functionality, then add or update `.tf` in the example Cumulus deployment to include it.
+If the module should not be included in the Cumulus module, for example if it is not providing core Cumulus functionality, then follow the steps above to include it directly as a submodule in the example Cumulus deployment.
+
+## Integrating a module into the CI/CD pipeline
+
+If the module has been integrated into the Cumulus module or the example Cumulus deployment as a submodule, then it will already be integrated into the Terraform deployment managed by the CI/CD pipeline.
+
+If the module is a standalone module that should not be integrated as a submodule (e.g. [`data-persistence`](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/outputs.tf)), then you will need to follow these steps to include it in the CI/CD pipeline:
+
+1. Add a reference implementation for using your module in the `example` directory. See the [reference implementation for the `data-persistence` module](https://github.com/nasa/cumulus/blob/master/example/data-persistence-tf).
+    - Make sure to include a [`provider` configuration](https://www.terraform.io/docs/configuration/providers.html) in your `.tf` files, which defines what provider will be interpret the Terraform reosources
+2. Update the [CI Terraform deployment script](https://github.com/nasa/cumulus/blob/master/bamboo/bootstrap-tf-deployment.sh) to deploy your module.
+    - Make sure to add remote state handling for deploying your module so that each CI build only update the existing deployment as necessary, because local Terraform state in the CI will not persist between builds.
