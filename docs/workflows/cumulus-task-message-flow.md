@@ -13,25 +13,25 @@ The steps in this flow are detailed in sections below.
 
 ## Cumulus Message Format
 
-Cumulus Messages come in 2 flavors: The full **Cumulus Message** and the **Cumulus Remote Message**. The Cumulus Remote Message points to a full Cumulus Message stored in S3 because of size limitations.
+A full **Cumulus Message** has the following keys:
 
-A full **Cumulus Message** has the 4 following keys:
-
-* **`workflow_config`:** Definition-time information to set up tasks. Optionally includes configuration for each task in the workflow, keyed by task name.
-* **`cumulus_meta`:** System runtime information that should generally not be touched outside of Cumulus library code or the Cumulus Message Adapter. Stores meta information about the workflow such as the state machine name and the current workflow execution's name. This information is used to look up the current active task. The name of the current active task is used to look up the corresponding task's config in `workflow_config`.
-* **`meta`:** Runtime information captured by the workflow operators. Stores execution-agnostic variables which can be re-used via templates in `workflow_config`.
+* **`cumulus_meta`:** System runtime information that should generally not be touched outside of Cumulus library code or the Cumulus Message Adapter. Stores meta information about the workflow such as the state machine name and the current workflow execution's name. This information is used to look up the current active task. The name of the current active task is used to look up the corresponding task's config in `task_config`.
+* **`meta`:** Runtime information captured by the workflow operators. Stores execution-agnostic variables.
 * **`payload`:** Payload is runtime information for the tasks.
+
+In adddition to the above keys, it *may* contain the following keys:
+
+* **`replace`:** A key generated in conjunction with the Cumulus Message adapter.  It contains the location on S3 for a message payload and a Target JSON path in the message to extract it to.
+* **`exception`:** A key used to track workflow exceptions, should not be modified outside of Cumulus library code.
 
 Here's a simple example of a Cumulus Message:
 
 ```json
 {
-  "workflow_config": {
-    "Example": {
-      "inlinestr": "prefix{meta.foo}suffix",
-      "array": "{[$.meta.foo]}",
-      "object": "{{$.meta}}"
-    }
+  "task_config": {
+    "inlinestr": "prefix{meta.foo}suffix",
+    "array": "{[$.meta.foo]}",
+    "object": "{$.meta}"
   },
   "cumulus_meta": {
     "message_source": "sfn",
@@ -48,13 +48,14 @@ Here's a simple example of a Cumulus Message:
 }
 ```
 
-A **Cumulus Remote Message** has only the keys `replace` and `cumulus_meta`.
+A message utilizing the Cumulus Remote message functionality must have at least the keys `replace` and `cumulus_meta`.   Depending on configuration other portions of the message may be present, however the `cumulus_meta`, `meta`, and `payload` keys must be present once extraction is complete.
 
 ```json
 {
   "replace": {
     "Bucket": "cumulus-bucket",
-    "Key": "my-large-event.json"
+    "Key": "my-large-event.json",
+    "TargetPath": "$"
   },
   "cumulus_meta": {}
 }
@@ -62,17 +63,17 @@ A **Cumulus Remote Message** has only the keys `replace` and `cumulus_meta`.
 
 ## Cumulus Message Preparation
 
-The event coming into a Cumulus Task is assumed to be a Cumulus Message or Cumulus Remote Message and should first be handled by the functions described below before being passed to the task application code.
+The event coming into a Cumulus Task is assumed to be a Cumulus Message and should first be handled by the functions described below before being passed to the task application code.
 
 #### Preparation Step 1: Fetch remote event
 
 Fetch remote event will fetch the full event from S3 if the cumulus message includes a `replace` key.
 
-Once "my-large-event.json" is fetched from S3, it's returned from the fetch remote event function. If no "replace" key is present, the event passed to the fetch remote event function is assumed to be a full Cumulus Message and returned as-is.
+Once "my-large-event.json" is fetched from S3, it's returned from the fetch remote event function. If no "replace" key is present, the event passed to the fetch remote event function is assumed to be a complete Cumulus Message and returned as-is.
 
-#### Preparation Step 2: Fetch step function config
+#### Preparation Step 2: Parse step function config from CMA configuration parameters
 
-Fetch step function config determines what current task is being executed. Note this is different from what lambda or activity is being executed, because the same lambda or activity can be used for different tasks. The current task name is used to load the appropriate configuration from the Cumulus Message's 'workflow_config'.
+This step  determines what current task is being executed. Note this is different from what lambda or activity is being executed, because the same lambda or activity can be used for different tasks. The current task name is used to load the appropriate configuration from the Cumulus Message's 'task_config' configuration parameter.
 
 #### Preparation Step 3: Load nested event
 
@@ -101,18 +102,16 @@ The config loaded from the **Fetch step function config** step may have a `cumul
 
 ```json
 {
-  "workflow_config": {
-    "Example": {
-      "bar": "baz",
-      "cumulus_message": {
-        "input": "{{$.payload.input}}",
-        "outputs": [
-          {
-            "source": "{{$.input.anykey}}",
-            "destination": "{{$.payload.out}}"
-          }
-        ]
-      }
+  "task_config": {
+    "bar": "baz",
+    "cumulus_message": {
+      "input": "{$.payload.input}",
+      "outputs": [
+        {
+          "source": "{$.input.anykey}",
+          "destination": "{$.payload.out}"
+        }
+      ]
     }
   },
   "cumulus_meta": {
@@ -133,6 +132,6 @@ The config loaded from the **Fetch step function config** step may have a `cumul
 
 #### Create Next Message Step 2: Store remote event
 
-**Store remote event** complements **Fetch remote event:** If the cumulus message is too big, it will be stored in S3 and the final output of the task will be Cumulus Remove Message - an object with only the `replace` and `cumulus_meta` keys. The `replace` key identifies where the large event has been stored in S3.
+ If the `ReplaceConfiguration` parameter is set, the configured key's value  will be stored in S3 and the final output of the task will include a `replace` key that contains configuration for a future step to extract the payload on S3 back into the Cumulus Message.   The `replace` key identifies where the large event node has been stored in S3.
 
 

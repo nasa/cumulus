@@ -98,7 +98,7 @@ AWS Step Functions permit [tasks](http://docs.aws.amazon.com/step-functions/late
 * **Leverages Existing Work**
   * The design leverages the existing work of Amazon by defining workflows using the [AWS Step Function State Language](http://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language.html#amazon-states-language). This is the language that was created for describing the state machines used in AWS Step Functions.
 * **Open for Extension**
-  * Both `meta` and `workflow_config` which are used for configuring at the collection and task levels do not dictate the fields and structure of the configuration. Additional task specific JSON schemas can be used for extending the validation of individual steps.
+  * Both `meta` and `task_config` which are used for configuring at the collection and task levels do not dictate the fields and structure of the configuration. Additional task specific JSON schemas can be used for extending the validation of individual steps.
 * **Data-centric Configuration**
   * The use of a single JSON configuration file allows this to be added to a workflow. We build additional support on top of the configuration file for simpler domain specific configuration or interactive GUIs.
 
