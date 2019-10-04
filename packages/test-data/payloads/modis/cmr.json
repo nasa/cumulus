@@ -60,11 +60,7 @@
     "id": "LPDAAC"
   },
   "resources": {
-    "templates": {
-      "ParsePdr": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflows/ParsePdr.json",
-      "DiscoverPdrs": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflows/DiscoverPdrs.json",
-      "IngestGranule": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflows/IngestGranule.json"
-    },
+    "template": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflow_template.json",
     "queues": {
       "startSF": "https://sqs.us-east-1.amazonaws.com/xxxxxxxx/lpdaac-cumulus-phaseIII-dev-startSF"
     },
