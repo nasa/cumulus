@@ -167,9 +167,7 @@ test.serial('/saml/auth with bad metadata returns Bad Request.', async (t) => {
   const callback = sandbox.fake.yields('post_assert callsback with Error', null);
   const mockExample = sandbox.stub();
   mockExample.ServiceProvider = sandbox.stub().returns({ post_assert: callback });
-  mockExample.IdentityProvider = sandbox.stub().returns({ object: 'unused IDP' });
   sandbox.replace(saml2, 'ServiceProvider', mockExample.ServiceProvider);
-  sandbox.replace(saml2, 'IdentityProvider', mockExample.IdentityProvider);
 
   const redirect = await request(app)
     .post('/saml/auth')
@@ -184,9 +182,7 @@ test.serial('/saml/auth with good metadata returns redirect.', async (t) => {
   const callback = sandbox.fake.yields(null, t.context.successfulSamlResponse);
   const mockExample = sandbox.stub();
   mockExample.ServiceProvider = sandbox.stub().returns({ post_assert: callback });
-  mockExample.IdentityProvider = sandbox.stub().returns({ object: 'unused IDP' });
   sandbox.replace(saml2, 'ServiceProvider', mockExample.ServiceProvider);
-  sandbox.replace(saml2, 'IdentityProvider', mockExample.IdentityProvider);
 
   const redirect = await request(app)
     .post('/saml/auth')
