@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   
   **Migration instructions**:
 
+  NOTE: These instructions require the use of Cumulus Message Adapter v1.1.x+.
+  Please ensure you are using a compatible version before attempting to migrate workflow configurations.
   When defining workflow steps, remove any `CumulusConfig` section, as shown below:
 
   ```yaml
