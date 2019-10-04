@@ -32,14 +32,14 @@ module.exports = {
   resolve: {
     alias: {
       'saml2-js': 'saml2-js/lib-js/saml2.js',
-      'ejs': 'ejs/ejs.min.js',
-      'handlebars': 'handlebars/dist/handlebars.js'
+      ejs: 'ejs/ejs.min.js',
+      handlebars: 'handlebars/dist/handlebars.js'
     }
   },
-  plugins:[
+  plugins: [
     // templates to use saml2.js, dependency problem with xml-encryption package
     new CopyPlugin([
-      { from: 'node_modules/xml-encryption/lib/templates', to: 'dist/app/templates' },
+      { from: 'node_modules/xml-encryption/lib/templates', to: 'app/templates' }
     ])
   ],
   output: {
