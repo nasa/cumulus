@@ -1,12 +1,12 @@
 'use strict';
 
 const test = require('ava');
-const { listEcsClusters } = require('../ecs');
+const { listEcsClusterArns } = require('../ecs');
 const aws = require('../aws');
 
 const { isNil } = require('../util');
 
-test.serial('listEcsClusters() returns an empty array if no clusters exist', async (t) => {
+test.serial('listEcsClusterArns() returns an empty array if no clusters exist', async (t) => {
   aws.ecs().listClusters = (params = {}) => ({
     promise: async () => {
       if (isNil(params.nextToken)) return { clusterArns: [] };
@@ -17,12 +17,12 @@ test.serial('listEcsClusters() returns an empty array if no clusters exist', asy
   });
 
   t.deepEqual(
-    await listEcsClusters(),
+    await listEcsClusterArns(),
     []
   );
 });
 
-test.serial('listEcsClusters() returns the list of cluster ARNs if no `nextToken` is returned by the ECS API', async (t) => {
+test.serial('listEcsClusterArns() returns the list of cluster ARNs if no `nextToken` is returned by the ECS API', async (t) => {
   const listClustersResponses = [
     { clusterArns: ['abc', 'def'] }
   ];
@@ -32,12 +32,12 @@ test.serial('listEcsClusters() returns the list of cluster ARNs if no `nextToken
   });
 
   t.deepEqual(
-    (await listEcsClusters()).sort(),
+    (await listEcsClusterArns()).sort(),
     ['abc', 'def'].sort()
   );
 });
 
-test.serial('listEcsClusters() returns the list of cluster ARNs if `nextToken` is returned by the ECS API', async (t) => {
+test.serial('listEcsClusterArns() returns the list of cluster ARNs if `nextToken` is returned by the ECS API', async (t) => {
   aws.ecs().listClusters = (params = {}) => ({
     promise: async () => {
       if (isNil(params.nextToken)) {
@@ -53,7 +53,7 @@ test.serial('listEcsClusters() returns the list of cluster ARNs if `nextToken` i
   });
 
   t.deepEqual(
-    (await listEcsClusters()).sort(),
+    (await listEcsClusterArns()).sort(),
     ['abc', 'def', 'ghi', 'jkl'].sort()
   );
 });
