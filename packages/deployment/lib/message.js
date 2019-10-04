@@ -4,6 +4,7 @@ const get = require('lodash.get');
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
 const omit = require('lodash.omit');
+const { deprecate } = require('@cumulus/common/util');
 
 /**
  * Because both kes and message adapter use Mustache for templating,
@@ -15,7 +16,7 @@ const omit = require('lodash.omit');
  */
 function fixCumulusMessageSyntax(cumulusConfig) {
   if (!cumulusConfig) return {};
-
+  deprecate('CumulusConfig', '1.15.0', 'AWS Parameters with task_config');
   const test = new RegExp('^([\\{]{1}|[\\[]{1})(\\$.*)([\\]]{1}|[\\}]{1})$');
 
   Object.keys(cumulusConfig).forEach((n) => {
@@ -63,6 +64,7 @@ function extractCumulusConfigFromSF(config) {
 
   // eslint-disable-next-line no-param-reassign
   config.workflowConfigs = workflowConfigs;
+  if (Object.keys(workflowConfigs)) deprecate('CumulusConfig', '1.15.0', 'AWS Parameters with task_config');
   return config;
 }
 
