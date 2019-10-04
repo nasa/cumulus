@@ -16,6 +16,12 @@ default:
     provider: earthdata
     userGroup: N/A
 
+  samlConfig:
+    entityID: 'YourEntityId'
+    assertionConsumerService: 'https://example.com/saml/auth'
+    idpLogin: 'https://example.gov/affwebservices/public/saml2sso'
+    launchpadMetadataPath: 's3://{{buckets.internal.name}}/{{prefix}}/launchpad/launchpad-sbx-metadata.xml'
+
   ## lambda function that returns temporary credentials
   sts_credentials_lambda: gsfc-ngap-sh-s3-sts-get-keys
 
