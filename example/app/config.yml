@@ -61,7 +61,7 @@ default:
   # test configuration ends
 
   cmaDir: '/opt/'
-  sandbox_cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:6
+  sandbox_cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:CMA_TEST:47
   sit_cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:2
   cma_layer: '{{sandbox_cma_layer}}'
   prefix: 'test-cumulus-integration'
@@ -619,6 +619,7 @@ gitc:
 mvd:
   prefix: mvd
   prefixNoDash: mvd
+  useWorkflowLambdaVersions: false
   buckets:
     internal:
       name: '{{prefix}}-internal'

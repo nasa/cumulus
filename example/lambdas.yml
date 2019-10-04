@@ -5,18 +5,20 @@ CNMToCMA:
   memory: 128
   s3Source:
     bucket: '{{buckets.shared.name}}'
-    key: daacs/podaac/cnmToGranule-1.0.2.j-update.zip
-  useMessageAdapter: false
+    key: daacs/podaac/cnmToGranule-1.2.1.zip
+  layers:
+    - '{{cma_layer}}'
   launchInVpc: true
 CnmResponse:
   handler: 'gov.nasa.cumulus.CNMResponse::handleRequestStreams'
   timeout: 300
-  useMessageAdapter: false
   runtime: java8
   memory: 256
   s3Source:
     bucket: '{{buckets.shared.name}}'
-    key: daacs/podaac/cnmResponse-1539812129616.zip
+    key: daacs/podaac/cnmResponse-1.2.1.zip
+  layers:
+    - '{{cma_layer}}'
   launchInVpc: true
 DiscoverGranules:
   handler: index.handler

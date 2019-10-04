@@ -2,10 +2,7 @@
 
 const get = require('lodash.get');
 
-const {
-  getMessageFromTemplate,
-  buildQueueMessageFromTemplate
-} = require('@cumulus/common/message');
+const { buildQueueMessageFromTemplate } = require('@cumulus/common/message');
 const { isNil } = require('@cumulus/common/util');
 const { SQS } = require('@cumulus/ingest/aws');
 const { Provider, Collection } = require('../models');
@@ -32,13 +29,18 @@ const getCollection = (collection) => {
  * @returns {Promise}
  */
 async function handleScheduleEvent(event) {
-  const [messageTemplate, provider, collection] = await Promise.all([
-    getMessageFromTemplate(event.template),
+  const [provider, collection] = await Promise.all([
     getProvider(event.provider),
     getCollection(event.collection)
   ]);
 
+  const messageTemplate = get(event, 'template');
   const queueName = get(event, 'queueName', 'startSF');
+  const workflowDefinition = get(event, 'definition');
+  const workflow = {
+    name: workflowDefinition.name,
+    arn: workflowDefinition.arn
+  };
 
   const message = buildQueueMessageFromTemplate({
     collection,
@@ -47,7 +49,8 @@ async function handleScheduleEvent(event) {
     queueName,
     customCumulusMeta: get(event, 'cumulus_meta', {}),
     customMeta: get(event, 'meta', {}),
-    payload: get(event, 'payload', {})
+    payload: get(event, 'payload', {}),
+    workflow
   });
 
   return SQS.sendMessage(message.meta.queues[queueName], message);
