@@ -19,6 +19,14 @@ To add a new Terraform module:
     - How to deploy it
     - Description of the variables necessary to configure the module
 
+## Testing deployment of your module
+
+If you want to test deploying your module by itself, you can follow these steps:
+
+1. Run `terraform init` (it is only necessary to do this before the first deployment)
+2. Copy `terraform.tfvars.sample` to `terraform.tfvars`, replacing the sample values with the correct values for your environment
+3. Deploy your module: `terraform apply`
+
 ## Integrating a module as a submodule
 
 To include a module as a submodule:
