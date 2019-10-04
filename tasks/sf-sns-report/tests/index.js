@@ -13,8 +13,11 @@ test.before(async () => {
   await s3().createBucket({ Bucket: bucket }).promise();
 });
 
+test.after.always(async () => {
+  await recursivelyDeleteS3Bucket(bucket);
+});
 
-test('send report when sfn is running', async (t) => {
+test('task returns payload as output', async (t) => {
   const event = {
     input: {
       meta: { topic_arn: 'test_topic_arn' },
@@ -27,62 +30,7 @@ test('send report when sfn is running', async (t) => {
   t.deepEqual(output, event.input.payload);
 });
 
-test('send report when sfn is running with exception', (t) => {
-  const event = {
-    input: {
-      meta: { topic_arn: 'test_topic_arn' },
-      exception: {
-        Error: 'TheError',
-        Cause: 'bucket not found'
-      },
-      anykey: 'anyvalue',
-      payload: { someKey: 'someValue' }
-    }
-  };
-
-  return publishSnsMessage(cloneDeep(event))
-    .catch((e) => {
-      t.is(e.message, event.input.exception.Cause);
-    });
-});
-
-test('send report when sfn is running with TypeError', (t) => {
-  const event = {
-    input: {
-      meta: { topic_arn: 'test_topic_arn' },
-      error: {
-        Error: 'TypeError',
-        Cause: 'resource not found'
-      },
-      anykey: 'anyvalue'
-    }
-  };
-
-  return publishSnsMessage(cloneDeep(event))
-    .catch((e) => {
-      t.is(e.message, event.input.error.Cause);
-    });
-});
-
-test('send report when sfn is running with known error type', (t) => {
-  const event = {
-    input: {
-      meta: { topic_arn: 'test_topic_arn' },
-      error: {
-        Error: 'PDRParsingError',
-        Cause: 'format error'
-      },
-      anykey: 'anyvalue'
-    }
-  };
-
-  return publishSnsMessage(cloneDeep(event))
-    .catch((e) => {
-      t.is(e.message, event.input.error.Cause);
-    });
-});
-
-test('send report when sfn is finished and granule has succeeded', async (t) => {
+test('task returns empty object when no payload is present on input to the task', async (t) => {
   const input = {
     meta: {
       topic_arn: 'test_topic_arn',
@@ -101,8 +49,4 @@ test('send report when sfn is finished and granule has succeeded', async (t) => 
 
   const output = await publishSnsMessage(cloneDeep(event));
   t.deepEqual(output, {});
-});
-
-test.after.always(async () => {
-  await recursivelyDeleteS3Bucket(bucket);
 });
