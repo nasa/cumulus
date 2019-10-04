@@ -34,7 +34,3 @@ variable "tags" {
   type    = map(string)
   default = null
 }
-
-variable "workflow_config" {
-  type = string
-}

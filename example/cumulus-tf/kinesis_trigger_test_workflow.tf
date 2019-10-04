@@ -10,95 +10,22 @@ module "kinesis_trigger_test_workflow" {
   system_bucket                         = var.system_bucket
   tags                                  = local.default_tags
 
-  workflow_config = <<JSON
-{
-  "StartStatus": {
-    "cumulus_message": {
-      "input": "{{$}}"
-    }
-  },
-  "TranslateMessage": {
-    "cumulus_message": {
-      "outputs": [
-        {
-          "source": "{{$.cnm}}",
-          "destination": "{{$.meta.cnm}}"
-        },
-        {
-          "source": "{{$}}",
-          "destination": "{{$.payload}}"
-        }
-      ]
-    }
-  },
-  "SyncGranule": {
-    "provider": "{{$.meta.provider}}",
-    "buckets": "{{$.meta.buckets}}",
-    "collection": "{{$.meta.collection}}",
-    "downloadBucket": "{{$.meta.buckets.private.name}}",
-    "stack": "{{$.meta.stack}}",
-    "cumulus_message": {
-      "outputs": [
-        {
-          "source": "{{$.granules}}",
-          "destination": "{{$.meta.input_granules}}"
-        },
-        {
-          "source": "{{$}}",
-          "destination": "{{$.payload}}"
-        }
-      ]
-    }
-  },
-  "CnmResponse": {
-    "OriginalCNM": "{{$.meta.cnm}}",
-    "CNMResponseStream": "{{$.meta.cnmResponseStream}}",
-    "region": "us-east-1",
-    "WorkflowException": "{{$.exception}}",
-    "cumulus_message": {
-      "outputs": [
-        {
-          "source": "{{$}}",
-          "destination": "{{$.meta.cnmResponse}}"
-        },
-        {
-          "source": "{{$}}",
-          "destination": "{{$.payload}}"
-        }
-      ]
-    }
-  },
-  "CnmResponseFail": {
-    "OriginalCNM": "{{$.meta.cnm}}",
-    "CNMResponseStream": "{{$.meta.cnmResponseStream}}",
-    "region": "us-east-1",
-    "WorkflowException": "{{$.exception}}",
-    "cumulus_message": {
-      "outputs": [
-        {
-          "source": "{{$}}",
-          "destination": "{{$.meta.cnmResponse}}"
-        },
-        {
-          "source": "{{$}}",
-          "destination": "{{$.payload}}"
-        }
-      ]
-    }
-  },
-  "StopStatus": {},
-  "StopStatusFail": {},
-  "WorkflowSucceeded": {},
-  "WorkflowFailed": {}
-}
-JSON
-
   state_machine_definition = <<JSON
 {
   "Comment": "Tests Workflow from Kinesis Stream",
   "StartAt": "StartStatus",
   "States": {
     "StartStatus": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "cumulus_message": {
+              "input": "{$}"
+            }
+          }
+        }
+      },
       "Type": "Task",
       "Resource": "${module.cumulus.sf_sns_report_task_lambda_function_arn}",
       "Retry": [
@@ -125,6 +52,25 @@ JSON
       "Next": "TranslateMessage"
     },
     "TranslateMessage": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$.cnm}",
+                  "destination": "{$.meta.cnm}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
+          }
+        }
+      },
       "Type": "Task",
       "Resource": "${aws_lambda_function.cnm_to_cma_task.arn}",
       "Retry": [
@@ -151,6 +97,34 @@ JSON
       "Next": "SyncGranule"
     },
     "SyncGranule": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "Path": "$.payload",
+            "TargetPath": "$.payload"
+          },
+          "task_config": {
+            "provider": "{$.meta.provider}",
+            "buckets": "{$.meta.buckets}",
+            "collection": "{$.meta.collection}",
+            "downloadBucket": "{$.meta.buckets.private.name}",
+            "stack": "{$.meta.stack}",
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$.granules}",
+                  "destination": "{$.meta.input_granules}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
+          }
+        }
+      },
       "Type": "Task",
       "Resource": "${module.cumulus.sync_granule_task_lambda_function_arn}",
       "Retry": [
@@ -174,6 +148,29 @@ JSON
       "Next": "CnmResponse"
     },
     "CnmResponse": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "OriginalCNM": "{$.meta.cnm}",
+            "CNMResponseStream": "{$.meta.cnmResponseStream}",
+            "region": "us-east-1",
+            "WorkflowException": "{$.exception}",
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$}",
+                  "destination": "{$.meta.cnmResponse}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
+          }
+        }
+      },
       "Type": "Task",
       "Resource": "${aws_lambda_function.cnm_response_task.arn}",
       "Retry": [
@@ -200,6 +197,29 @@ JSON
       "Next": "StopStatus"
     },
     "CnmResponseFail": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "OriginalCNM": "{$.meta.cnm}",
+            "CNMResponseStream": "{$.meta.cnmResponseStream}",
+            "region": "us-east-1",
+            "WorkflowException": "{$.exception}",
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$}",
+                  "destination": "{$.meta.cnmResponse}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
+          }
+        }
+      },
       "Type": "Task",
       "Resource": "${aws_lambda_function.cnm_response_task.arn}",
       "Retry": [

@@ -10,40 +10,6 @@ module "discover_granules_workflow" {
   system_bucket                         = var.system_bucket
   tags                                  = local.default_tags
 
-  workflow_config = <<JSON
-{
-  "StatusReport": {
-    "cumulus_message": {
-      "input": "{{$}}"
-    }
-  },
-  "DiscoverGranules": {
-    "provider": "{{$.meta.provider}}",
-    "collection": "{{$.meta.collection}}",
-    "buckets": "{{$.meta.buckets}}",
-    "stack": "{{$.meta.stack}}"
-  },
-  "QueueGranules": {
-    "provider": "{{$.meta.provider}}",
-    "internalBucket": "{{$.meta.buckets.internal.name}}",
-    "stackName": "{{$.meta.stack}}",
-    "granuleIngestMessageTemplateUri": "{{$.meta.templates.IngestGranule}}",
-    "queueUrl": "{{$.meta.queues.startSF}}"
-  },
-  "StopStatus": {
-    "sfnEnd": true,
-    "stack": "{{$.meta.stack}}",
-    "bucket": "{{$.meta.buckets.internal.name}}",
-    "stateMachine": "{{$.cumulus_meta.state_machine}}",
-    "executionName": "{{$.cumulus_meta.execution_name}}",
-    "cumulus_message": {
-      "input": "{{$}}"
-    }
-  },
-  "WorkflowFailed": {}
-}
-JSON
-
   state_machine_definition = <<JSON
 {
   "Comment": "Discovers new Granules from a given provider",
@@ -51,6 +17,16 @@ JSON
   "TimeoutSeconds": 18000,
   "States": {
     "StatusReport": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "cumulus_message": {
+              "input": "{$}"
+            }
+          }
+        }
+      },
       "Type": "Task",
       "Resource": "${module.cumulus.sf_sns_report_task_lambda_function_arn}",
       "Retry": [
@@ -68,6 +44,20 @@ JSON
       "Next": "DiscoverGranules"
     },
     "DiscoverGranules": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}",
+            "buckets": "{$.meta.buckets}",
+            "stack": "{$.meta.stack}"
+          }
+        }
+      },
       "Type": "Task",
       "Resource": "${module.cumulus.discover_granules_task_lambda_function_arn}",
       "Retry": [
@@ -94,6 +84,21 @@ JSON
       "Next": "QueueGranules"
     },
     "QueueGranules": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "queueUrl": "{$.meta.queues.startSF}",
+            "provider": "{$.meta.provider}",
+            "internalBucket": "{$.meta.buckets.internal.name}",
+            "stackName": "{$.meta.stack}",
+            "granuleIngestWorkflow": "${module.ingest_granule_workflow.name}"
+          }
+        }
+      },
       "Type": "Task",
       "Resource": "${module.cumulus.queue_granules_task_lambda_function_arn}",
       "Retry": [
@@ -120,6 +125,24 @@ JSON
       "Next": "StopStatus"
     },
     "StopStatus": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "sfnEnd": true,
+            "stack": "{$.meta.stack}",
+            "bucket": "{$.meta.buckets.internal.name}",
+            "stateMachine": "{$.cumulus_meta.state_machine}",
+            "executionName": "{$.cumulus_meta.execution_name}",
+            "cumulus_message": {
+              "input": "{$}"
+            }
+          }
+        }
+      },
       "Type": "Task",
       "Resource": "${module.cumulus.sf_sns_report_task_lambda_function_arn}",
       "Retry": [
