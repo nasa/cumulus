@@ -44,7 +44,7 @@ async function getWorkflowFile(stackName, bucketName, workflowName) {
  * @returns {Promise.<string>} workflow arn
  */
 async function getWorkflowArn(stackName, bucketName, workflowName) {
-  const workflow = await getWorkflowFile(stackName, bucketName, workflowName)
+  const workflow = await getWorkflowFile(stackName, bucketName, workflowName);
   return workflow.arn;
 }
 
