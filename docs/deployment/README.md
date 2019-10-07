@@ -282,6 +282,15 @@ dev:                            # deployment name
     api: <launchpad-api-endpoint>   # e.g. https://api.launchpad.nasa.gov/api/sm/v1
     passphrase: '{{LAUNCHPAD_PASSPHRASE}}'
 
+  # Optional if you are configuring Cumulus to authenticate the dashboard via NASA's Launchpad SAML implementation.
+  # see Wiki: https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+SAML+Launchpad+Integration
+  samlConfig:
+    entityID: '<<Configured SAML entity-id>>'
+    assertionConsumerService: '{{Cumulus API endpoint}}/saml/auth'
+    idpLogin: '<<nasa's saml2sso endpoint>>'
+    launchpadMetadataPath: 's3 url to identity provider public metadata xml file'
+
+
   app:                              # Override params to be passed to the app stack ('iam' and 'db' also allowed)
     params:
       - name: myAppStackParam
