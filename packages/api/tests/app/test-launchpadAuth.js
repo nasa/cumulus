@@ -4,19 +4,19 @@ const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
 const launchpad = require('@cumulus/common/launchpad');
-const { randomString } = require('@cumulus/common/test-utils');
-const EsCollection = require('../es/collections');
-const models = require('../models');
-const assertions = require('../lib/assertions');
+const { randomId } = require('@cumulus/common/test-utils');
+const EsCollection = require('../../es/collections');
+const models = require('../../models');
+const assertions = require('../../lib/assertions');
 process.env.oauth_user_group = 'GSFC-Cumulus';
 process.env.OAUTH_PROVIDER = 'launchpad';
-process.env.AccessTokensTable = randomString();
-process.env.system_bucket = randomString();
-process.env.stackName = randomString();
-const { app } = require('../app');
+process.env.AccessTokensTable = randomId('AccessTokens');
+process.env.system_bucket = randomId('bucket');
+process.env.stackName = randomId('stack');
+const { app } = require('../../app');
 
 const validateTokenResponse = {
-  owner_auid: randomString(),
+  owner_auid: randomId('owner_auid'),
   session_maxtimeout: 3600,
   session_starttime: 1564067402,
   status: 'success'
@@ -98,7 +98,7 @@ test.serial('API request with a stored non-expired token returns a successful re
 
 test.serial('API request with a stored expired token returns an expired response', async (t) => {
   const tokenResponse = {
-    owner_auid: randomString(),
+    owner_auid: randomId('owner_auid'),
     session_maxtimeout: 0,
     session_starttime: 1564067402,
     status: 'success'
@@ -143,4 +143,28 @@ test.serial('Request returns an unauthorized response when validation response d
 
   t.is(response.body.message, 'User not authorized');
   stub.restore();
+});
+
+test.serial('Requests to /token endpoint are disabled.', async (t) => {
+  const response = await request(app)
+    .get('/token')
+    .set('Accept', 'application/json')
+    .expect(501);
+
+  t.regex(response.body.message, /Login with launchpad/);
+});
+
+test.serial('Non-Launchpad protected API explicitly disallows valid Launchpad tokens.', async (t) => {
+  const stub = sinon.stub(launchpad, 'validateLaunchpadToken').returns(validateTokenResponse);
+  process.env.OAUTH_PROVIDER = 'earthdata';
+
+  const response = await request(app)
+    .get('/collections')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ValidAccessToken1')
+    .expect(403);
+
+  t.is(response.body.message, 'Invalid access token');
+  stub.restore();
+  process.env.OAUTH_PROVIDER = 'launchpad';
 });
