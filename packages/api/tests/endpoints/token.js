@@ -253,7 +253,7 @@ test.serial('GET /refresh with an unauthorized user results in an authorization 
   assertions.isUnauthorizedUserResponse(t, response);
 });
 
-test.serial('GET /refresh returns 500 if refresh token request fails', async (t) => {
+test.serial('GET /refresh returns 400 if refresh token request fails', async (t) => {
   const stub = sinon.stub(
     EarthdataLoginClient.prototype,
     'refreshAccessToken'
@@ -273,9 +273,9 @@ test.serial('GET /refresh returns 500 if refresh token request fails', async (t)
     .post('/refresh')
     .set('Accept', 'application/json')
     .send({ token: requestJwtToken })
-    .expect(500);
+    .expect(400);
 
-  t.is(response.status, 500);
+  t.is(response.status, 400);
   stub.restore();
 });
 
