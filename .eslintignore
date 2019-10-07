@@ -1,6 +1,7 @@
 **/.nyc_output/**
 **/coverage/**
 **/dist/**
+**/kes_dist/**
 **/node_modules/**
 **/webpack.config.js
 example/app/**
