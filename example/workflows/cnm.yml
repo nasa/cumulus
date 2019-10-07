@@ -3,11 +3,14 @@ KinesisTriggerTest:
   StartAt: StartStatus
   States:
     StartStatus:
+      Parameters:
+        cma:
+          event.$: '$'
+          task_config:
+            cumulus_message:
+              input: '{$}'
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
       Retry:
         - &LambdaServiceExceptionRetry
           ErrorEquals:
@@ -25,35 +28,41 @@ KinesisTriggerTest:
           Next: CnmResponseFail
       Next: TranslateMessage
     TranslateMessage:
+      Parameters:
+        cma:
+          event.$: '$'
+          task_config:
+            cumulus_message:
+              outputs:
+                - source: '{$.cnm}'
+                  destination: '{$.meta.cnm}'
+                - source: '{$}'
+                  destination: '{$.payload}'
       Type: Task
       Resource: ${CNMToCMALambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          outputs:
-            - source: '{$.cnm}'
-              destination: '{$.meta.cnm}'
-            - source: '{$}'
-              destination: '{$.payload}'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
         - <<: *ErrorEqualDefaults
       Next: SyncGranule
     SyncGranule:
+      Parameters:
+        cma:
+          event.$: '$'
+          task_config:
+            provider: '{$.meta.provider}'
+            buckets: '{$.meta.buckets}'
+            collection: '{$.meta.collection}'
+            downloadBucket: '{$.meta.buckets.private.name}'
+            stack: '{$.meta.stack}'
+            cumulus_message:
+              outputs:
+                - source: '{$.granules}'
+                  destination: '{$.meta.input_granules}'
+                - source: '{$}'
+                  destination: '{$.payload}' 
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
-      CumulusConfig:
-        provider: '{$.meta.provider}'
-        buckets: '{$.meta.buckets}'
-        collection: '{$.meta.collection}'
-        downloadBucket: '{$.meta.buckets.private.name}'
-        stack: '{$.meta.stack}'
-        cumulus_message:
-          outputs:
-            - source: '{$.granules}'
-              destination: '{$.meta.input_granules}'
-            - source: '{$}'
-              destination: '{$.payload}'
       Retry:
         - ErrorEquals:
             - States.ALL
@@ -63,17 +72,20 @@ KinesisTriggerTest:
         - <<: *ErrorEqualDefaults
       Next: CnmResponse
     CnmResponse: &CnmResponseDefaults
-      CumulusConfig:
-        OriginalCNM: '{$.meta.cnm}'
-        CNMResponseStream: '{$.meta.cnmResponseStream}'
-        region: 'us-east-1'
-        WorkflowException: '{$.exception}'
-        cumulus_message:
-          outputs:
-            - source: '{$}'
-              destination: '{$.meta.cnmResponse}'
-            - source: '{$}'
-              destination: '{$.payload}'
+      Parameters:
+        cma:
+          event.$: '$'
+          task_config:
+            OriginalCNM: '{$.meta.cnm}'
+            CNMResponseStream: '{$.meta.cnmResponseStream}'
+            region: 'us-east-1'
+            WorkflowException: '{$.exception}'
+            cumulus_message:
+              outputs:
+                - source: '{$}'
+                  destination: '{$.meta.cnmResponse}'
+                - source: '{$}'
+                  destination: '{$.payload}'
       Type: Task
       Resource: ${CnmResponseLambdaFunction.Arn}
       Retry:
@@ -84,6 +96,20 @@ KinesisTriggerTest:
       Next: StopStatus
     CnmResponseFail:
       <<: *CnmResponseDefaults
+      Parameters:
+        cma:
+          event.$: '$'
+          task_config:
+            OriginalCNM: '{$.meta.cnm}'
+            CNMResponseStream: '{$.meta.cnmResponseStream}'
+            region: 'us-east-1'
+            WorkflowException: '{$.exception}'
+            cumulus_message:
+              outputs:
+                - source: '{$}'
+                  destination: '{$.meta.cnmResponse}'
+                - source: '{$}'
+                  destination: '{$.payload}'
       Catch:
         - <<: *ErrorEqualDefaults
           Next: StopStatusFail

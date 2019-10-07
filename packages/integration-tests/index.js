@@ -13,13 +13,16 @@ const pMap = require('p-map');
 const { constructCollectionId } = require('@cumulus/common');
 
 const {
-  stringUtils: { globalReplace }
+  stringUtils: { globalReplace },
+  workflows: {
+    getWorkflowTemplate,
+    getWorkflowArn
+  }
 } = require('@cumulus/common');
 
 const {
   dynamodb,
   ecs,
-  s3,
   sfn
 } = require('@cumulus/common/aws');
 const StepFunctions = require('@cumulus/common/StepFunctions');
@@ -100,34 +103,6 @@ async function getClusterArn(stackName) {
   }
 
   return matchingArns[0];
-}
-
-/**
- * Get the template JSON from S3 for the workflow
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @param {string} workflowName - workflow name
- * @returns {Promise.<Object>} template as a JSON object
- */
-function getWorkflowTemplate(stackName, bucketName, workflowName) {
-  const key = `${stackName}/workflows/${workflowName}.json`;
-  return s3().getObject({ Bucket: bucketName, Key: key }).promise()
-    .then((templateJson) => JSON.parse(templateJson.Body.toString()));
-}
-
-/**
- * Get the workflow ARN for the given workflow from the
- * template stored on S3
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @param {string} workflowName - workflow name
- * @returns {Promise.<string>} - workflow arn
- */
-function getWorkflowArn(stackName, bucketName, workflowName) {
-  return getWorkflowTemplate(stackName, bucketName, workflowName)
-    .then((template) => template.cumulus_meta.state_machine);
 }
 
 /**
@@ -686,7 +661,7 @@ async function buildWorkflow(
 ) {
   setProcessEnvironment(stackName, bucketName);
 
-  const template = await getWorkflowTemplate(stackName, bucketName, workflowName);
+  const template = await getWorkflowTemplate(stackName, bucketName);
   const { name, version } = collection || {};
   const collectionInfo = collection
     ? await new Collection().get({ name, version })
@@ -697,6 +672,7 @@ async function buildWorkflow(
 
   template.meta.collection = collectionInfo;
   template.meta.provider = providerInfo;
+  template.meta.workflow_name = workflowName;
   template.meta = merge(template.meta, meta);
   template.payload = payload || {};
 
@@ -845,7 +821,6 @@ module.exports = {
   executeWorkflow,
   buildAndExecuteWorkflow,
   buildAndStartWorkflow,
-  getWorkflowTemplate,
   waitForCompletedExecution,
   waitForTestExecutionStart,
   ActivityStep: sfnStep.ActivityStep,
@@ -874,7 +849,6 @@ module.exports = {
   removeRuleAddedParams,
   isWorkflowTriggeredByRule,
   getClusterArn,
-  getWorkflowArn,
   rulesList,
   waitForAsyncOperationStatus,
   getLambdaVersions: lambda.getLambdaVersions,

@@ -14,6 +14,46 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
   As this change is backward compatible in Cumulus Core, users wishing to utilize the previous version of the CMA may opt to transition to using a CMA lambda layer, or set `message_adapter_version` in their configuration to a version prior to v1.1.0.
 
+- **CUMULUS-1449** -
+  Cumulus now uses a universal workflow template when starting workflow that contains general information specific to the deployment, but not specific to the workflow. Workflow task configs must be defined using AWS step function parameters. As part of this change, `CumulusConfig` has been retired and task configs must now be defined under the `cma.task_config` key in the Parameters section of a step function definition.
+  
+  **Migration instructions**:
+
+  NOTE: These instructions require the use of Cumulus Message Adapter v1.1.x+.
+  Please ensure you are using a compatible version before attempting to migrate workflow configurations.
+  When defining workflow steps, remove any `CumulusConfig` section, as shown below:
+
+  ```yaml
+  ParsePdr:
+    CumulusConfig:
+      provider: '{$.meta.provider}'
+      bucket: '{$.meta.buckets.internal.name}'
+      stack: '{$.meta.stack}'
+  ```
+
+  Instead, use AWS Parameters to pass `task_config` for the task directly into the Cumulus Message Adapter:
+
+  ```yaml
+  ParsePdr:
+    Parameters:
+      cma:
+        event.$: '$'
+        task_config:
+          provider: '{$.meta.provider}'
+          bucket: '{$.meta.buckets.internal.name}'
+          stack: '{$.meta.stack}'
+  ```
+
+  In this example, the `cma` key is used to pass parameters to the message adapter.
+  Using `task_config` in combination with `event.$: '$'` allows the message adapter to process `task_config` as the `config` passed to the Cumulus task.
+  See `example/workflows/sips.yml` in the core repository for further examples of how to set the Parameters.
+
+  Additionally, workflow configurations for the `QueueGranules` and `QueuePdrs` tasks need to be updated:
+  - `queue-pdrs` config changes:
+    - `parsePdrMessageTemplateUri` replaced with `parsePdrWorkflow`, which is the workflow name (i.e. top-level name in `config.yml`, e.g. 'ParsePdr').
+    - `internalBucket` and `stackName` configs now required to look up configuration from the deployment. Brings the task config in line with that of `queue-granules`.
+  - `queue-granules` config change: `ingestGranuleMessageTemplateUri` replaced with `ingestGranuleWorkflow`, which is the workflow name (e.g. 'IngestGranule').
+
 ### PLEASE NOTE
 
 - **CUMULUS-1394** - Ingest notifications are now provided via 3 separate SNS topics for executions, granules, and PDRs, instead of a single `sftracker` SNS topic. Whereas the `sftracker` SNS topic received a full Cumulus execution message, the new topics all receive generated records for the given object. The new topics are only published to if the given object exists for the current execution. For a given execution/granule/PDR, two messages will be received by each topic: one message indicating that ingest is running and another message indicating that ingest has completed or failed. The new SNS topics are:
@@ -24,6 +64,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- **CUMULUS-1435**
+  - Added `tf-modules/monitoring` Terraform module which includes cloudwatch dashboard
+    - Added Elasticsearch Service alarms to the cloudwatch dashboard
 - **CUMULUS-1394**
   - Added `Granule.generateGranuleRecord()` method to granules model to generate a granule database record from a Cumulus execution message
   - Added `Pdr.generatePdrRecord()` method to PDRs model to generate a granule database record from a Cumulus execution message
@@ -33,6 +76,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - `getMessageExecutionArn()` - Get the execution ARN for a Cumulus execution message
     - `getMessageGranules()` - Get the granules from a Cumulus execution message, if any.
   - Added `@cumulus/common/cloudwatch-event/isFailedSfStatus()` to determine if a Step Function status from a Cloudwatch event is a failed status
+
+- **CUMULUS-639**
+  - Adds SAML JWT and launchpad token authentication to Cumulus API (configurable)
+    - **NOTE** to authenticate with Launchpad ensure your launchpad user_id is in the `<prefix>-UsersTable`
+    - when Cumulus configured to protect API via Launchpad:
+         - New endpoints
+            - `GET /saml/login` - starting point for SAML SSO creates the login request url and redirects to the SAML Identity Provider Service (IDP)
+            - `POST /saml/auth` - SAML Assertion Consumer Service.  POST receiver from SAML IDP.  Validates response, logs the user in, and returnes a SAML-based JWT.
+         - Disabled endpoints
+            - `GET /token`
+            - `POST /refresh`
+          - Changes authorization worklow:
+           - `ensureAuthorized` now presumes the bearer token is a JWT and tries to validate.  If the token is malformed, it attempts to validate the token against Launchpad.  This allows users to bring their own token as described here https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication.  But it also allows dashboard users to manually authenticate via Launchpad SAML to receive a Launchpad-based JWT.
+
 
 ### Changed
 
@@ -50,8 +107,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1448** Refactor workflows that are mutating cumulus_meta to utilize meta field
 
+- **CUMULUS-1449**
+  - `queue-pdrs` & `queue-granules` config changes. Details in breaking changes section.
+  - Cumulus now uses a universal workflow template when starting workflow that contains general information specific to the deployment, but not specific to the workflow.
+  - Changed the way workflow configs are defined, from `CumulusConfig` to a `task_config` AWS Parameter.
+
+### Removed
+
 - **CUMULUS-1375**
   - Migrate Cumulus from deprecated Elasticsearch JS client to new, supported one in `@cumulus/api`
+
+- **CUMULUS-1449**
+  - Retired `CumulusConfig` as part of step function definitions, as this is an artifact of the way Kes parses workflow definitions that was not possible to migrate to Terraform. Use AWS Parameters and the `task_config` key instead. See change note above.
+  - Removed individual workflow templates.
 
 - **CUMULUS-1451**
   - Elasticsearch cluster setting `auto_create_index` will be set to false. This had been causing issues in the bootstrap lambda on deploy.

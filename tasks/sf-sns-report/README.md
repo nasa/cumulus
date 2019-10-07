@@ -6,38 +6,53 @@ If the task's input includes a `payload` key, the value of the key is returned a
 
 To report the PDR's progress as it's being processed, add the following step after the pdr-status-check:
 
+```yaml
     PdrStatusReport:
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
+      Parameters:
+        cma:
+          event.$: '$'
+          task_config:
+              cumulus_message:
+                input: '{$}'
       ResultPath: null
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
+```
 
 To report the start status of the step function:
 
+```yaml
     StatusReport:
-     CumulusConfig:
-       cumulus_message:
-         input: '{$}'
+      Parameters:
+        cma:
+          event.$: '$'
+          task_config:
+              cumulus_message:
+                input: '{$}'
      ResultPath: null
      Type: Task
      Resource: ${SfSnsReportLambdaFunction.Arn}
+```
 
 To report the final status of the step function:
 
+```yaml
     StopStatus:
-      CumulusConfig:
-        sfnEnd: true
-        stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal.name}'
-        stateMachine: '{$.cumulus_meta.state_machine}'
-        executionName: '{$.cumulus_meta.execution_name}'
-        cumulus_message:
-          input: '{$}'
+      Parameters:
+        cma:
+          event.$: '$'
+          task_config:
+              sfnEnd: true
+              stack: '{$.meta.stack}'
+              bucket: '{$.meta.buckets.internal.name}'
+              stateMachine: '{$.cumulus_meta.state_machine}'
+              executionName: '{$.cumulus_meta.execution_name}'
+              cumulus_message:
+                input: '{$}'
       ResultPath: null
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
+```
 
 ## What is Cumulus?
 
