@@ -66,7 +66,7 @@ async function validateUMMG(ummMetadata, identifier, provider) {
   }
 
   throw new ValidationError(
-    `Validation was not successful. UMM metadata Object: ${JSON.stringify(ummMetadata)}`
+    `Validation was not successful, CMR error message: ${JSON.stringify(result.body.errors)}`
   );
 }
 
