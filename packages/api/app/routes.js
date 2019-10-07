@@ -25,7 +25,7 @@ const dashboard = require('../endpoints/dashboard');
 const elasticsearch = require('../endpoints/elasticsearch');
 const ems = require('../endpoints/ems');
 const { launchpadProtectedAuth } = require('./launchpadAuth');
-const launchpadSaml = require('./launchpadSaml');
+const launchpadSaml = require('../endpoints/launchpadSaml');
 
 let token = require('../endpoints/token');
 let { ensureAuthorized } = require('./auth');
