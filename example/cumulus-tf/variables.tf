@@ -105,3 +105,8 @@ variable "log_destination_arn" {
   default     = null
   description = "Remote kinesis/destination arn for delivering logs. Requires log_api_gateway_to_cloudwatch set to true."
 }
+
+variable "archive_api_port" {
+  type    = number
+  default = null
+}
