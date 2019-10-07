@@ -62,7 +62,6 @@ test.serial('CMR.validateUMMG UMMG validation fails with error messages from CMR
   } catch (e) {
     t.true(e instanceof ValidationError);
     t.true(e.message.includes(cmrError));
-    t.pass();
   }
 });
 
@@ -94,6 +93,5 @@ test.serial('cmr-client.validate XML validation fails with error messages from C
   } catch (e) {
     t.true(e instanceof ValidationError);
     t.true(e.message.includes(cmrError));
-    t.pass();
   }
 });
