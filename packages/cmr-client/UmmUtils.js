@@ -13,9 +13,7 @@ const ValidationError = require('./ValidationError');
  * @param {Object} umm - UMM metadata object
  * @returns {string} UMM version for the given object
  */
-function ummVersion(umm) {
-  return get(umm, 'MetadataSpecification.Version', '1.4');
-}
+const ummVersion = (umm) => get(umm, 'MetadataSpecification.Version', '1.4');
 
 /**
  * Posts a given XML string to the validate endpoint of CMR and throws an
@@ -26,7 +24,7 @@ function ummVersion(umm) {
  * @param {string} provider - the CMR provider
  * @returns {Promise<undefined>}
  */
-async function validateUMMG(ummMetadata, identifier, provider) {
+const validateUMMG = async (ummMetadata, identifier, provider) => {
   const version = ummVersion(ummMetadata);
 
   const { statusCode, body } = await got.post(
@@ -45,7 +43,7 @@ async function validateUMMG(ummMetadata, identifier, provider) {
   if (statusCode === 200) return;
 
   throw new ValidationError(`Validation was not successful, CMR error message: ${JSON.stringify(body.errors)}`);
-}
+};
 
 module.exports = {
   ummVersion,
