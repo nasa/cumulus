@@ -82,6 +82,10 @@ resource "aws_api_gateway_rest_api" "api" {
   lifecycle {
     ignore_changes = [policy]
   }
+
+  endpoint_configuration {
+    types = var.private_archive_api_gateway ? ["PRIVATE"] : ["EDGE"]
+  }
 }
 
 resource "aws_lambda_permission" "api_endpoints_lambda_permission" {

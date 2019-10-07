@@ -233,6 +233,11 @@ variable "vpc_id" {
   default = null
 }
 
+variable "private_archive_api_gateway" {
+  type = bool
+  default = true
+}
+
 # clean_executions lambda config
 
 variable "daily_execution_payload_cleanup_schedule_expression" {
@@ -263,3 +268,4 @@ variable "non_complete_execution_payload_timeout" {
 variable "region" {
   type    = string
 }
+

@@ -234,3 +234,8 @@ variable "vpc_id" {
 variable "region" {
   type    = string
 }
+
+variable "private_archive_api_gateway" {
+  type = bool
+  default = true
+}

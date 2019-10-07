@@ -110,3 +110,8 @@ variable "archive_api_port" {
   type    = number
   default = null
 }
+
+variable "private_archive_api_gateway" {
+  type = bool
+  default = true
+}
