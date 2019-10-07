@@ -26,29 +26,38 @@ HelloWorldWorkflow:
     StartStatus:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn} # This will send a status message at the start of the workflow
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}' # Configuration to send the payload to the SNS Topic
+      Parameters:
+        cma:
+          event.$: '$'
+          task_config:
+            cumulus_message:
+            input: '{$}' # Configuration to send the payload to the SNS Topic
       Next: HelloWorld
     HelloWorld:
-      CumulusConfig:
-        buckets: '{$.meta.buckets}'
-        provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
+      Parameters:
+        cma:
+          event.$: '$'
+          task_config:
+            buckets: '{$.meta.buckets}'
+            provider: '{$.meta.provider}'
+            collection: '{$.meta.collection}'
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
       Next: StopStatus
     StopStatus:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn} # This will send a success status message at the end of the workflow
-      CumulusConfig:
-        sfnEnd: true # Indicates the end of the workflow
-        stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal.name}'
-        stateMachine: '{$.cumulus_meta.state_machine}'
-        executionName: '{$.cumulus_meta.execution_name}'
-        cumulus_message:
-          input: '{$}' # Configuration to send the payload to the SNS Topic
+      Parameters:
+        cma:
+          event.$: '$'
+          task_config:
+            sfnEnd: true # Indicates the end of the workflow
+            stack: '{$.meta.stack}'
+            bucket: '{$.meta.buckets.internal.name}'
+            stateMachine: '{$.cumulus_meta.state_machine}'
+            executionName: '{$.cumulus_meta.execution_name}'
+            cumulus_message:
+              input: '{$}' # Configuration to send the payload to the SNS Topic
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -65,11 +74,13 @@ To send an SNS message for an error case, you can configure your workflow to cat
 
 ```yaml
 DiscoverPdrs:
-  CumulusConfig:
-    stack: '{$.meta.stack}'
-    provider: '{$.meta.provider}'
-    bucket: '{$.meta.buckets.internal.name}'
-    collection: '{$.meta.collection}'
+  Parameters:
+    cma:
+      event.$: '$'
+      task_config: '{$.meta.stack}'
+        provider: '{$.meta.provider}'
+        bucket: '{$.meta.buckets.internal.name}'
+        collection: '{$.meta.collection}'
   Type: Task
   Resource: ${DiscoverPdrsLambdaFunction.Arn}
   Catch:
@@ -86,9 +97,12 @@ SNS messages can be sent at anytime during the workflow execution by adding a wo
 
 ```yaml
 PdrStatusReport:
-  CumulusConfig:
-    cumulus_message:
-      input: '{$}'
+  Parameters:
+    cma:
+      event.$: '$'
+      task_config:
+          cumulus_message:
+            input: '{$}'
   ResultPath: null
   Type: Task
   Resource: ${SfSnsReportLambdaFunction.Arn}

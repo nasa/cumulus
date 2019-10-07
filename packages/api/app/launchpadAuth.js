@@ -1,9 +1,10 @@
-
 'use strict';
 
 const launchpad = require('@cumulus/common/launchpad');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const { AccessToken } = require('../models');
+
+const launchpadProtectedAuth = () => (process.env.OAUTH_PROVIDER === 'launchpad');
 
 /**
  * An express middleware that checks if an incoming express
@@ -14,7 +15,7 @@ const { AccessToken } = require('../models');
  * @param {Function} next - express middleware callback function
  * @returns {Promise<Object>} - promise of an express response object
  */
-async function ensureAuthorized(req, res, next) {
+async function ensureLaunchpadAPIAuthorized(req, res, next) {
   // Verify that the Authorization header was set in the request
   const authorizationKey = req.headers.authorization;
   if (!authorizationKey) {
@@ -73,5 +74,6 @@ async function ensureAuthorized(req, res, next) {
 }
 
 module.exports = {
-  ensureAuthorized
+  ensureLaunchpadAPIAuthorized,
+  launchpadProtectedAuth
 };

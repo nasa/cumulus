@@ -34,6 +34,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - `getMessageGranules()` - Get the granules from a Cumulus execution message, if any.
   - Added `@cumulus/common/cloudwatch-event/isFailedSfStatus()` to determine if a Step Function status from a Cloudwatch event is a failed status
 
+- **CUMULUS-639**
+  - Adds SAML JWT and launchpad token authentication to Cumulus API (configurable)
+    - **NOTE** to authenticate with Launchpad ensure your launchpad user_id is in the `<prefix>-UsersTable`
+    - when Cumulus configured to protect API via Launchpad:
+         - New endpoints
+            - `GET /saml/login` - starting point for SAML SSO creates the login request url and redirects to the SAML Identity Provider Service (IDP)
+            - `POST /saml/auth` - SAML Assertion Consumer Service.  POST receiver from SAML IDP.  Validates response, logs the user in, and returnes a SAML-based JWT.
+         - Disabled endpoints
+            - `GET /token`
+            - `POST /refresh`
+          - Changes authorization worklow:
+           - `ensureAuthorized` now presumes the bearer token is a JWT and tries to validate.  If the token is malformed, it attempts to validate the token against Launchpad.  This allows users to bring their own token as described here https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication.  But it also allows dashboard users to manually authenticate via Launchpad SAML to receive a Launchpad-based JWT.
+
+
 ### Changed
 
 - **CUMULUS-1394**
