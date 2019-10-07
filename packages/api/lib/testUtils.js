@@ -42,7 +42,7 @@ async function deleteAliases() {
   return Promise.all(aliases.map((alias) => client.indices.deleteAlias({
     index: alias.index,
     name: '_all'
-  })));
+  }, { ignore: [404] })));
 }
 
 function fakeFileFactory(params = {}) {
