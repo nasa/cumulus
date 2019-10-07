@@ -573,6 +573,10 @@ jl:
     provider: launchpad
     userGroup: GSFC-Cumulus-Dev
 
+jl-cumulus:
+  prefix: jl-cumulus
+  prefixNoDash: jlCumulus
+
 gitc:
   prefix: {{PREFIX}}
   prefixNoDash: {{prefixNoDash}}

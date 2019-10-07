@@ -25,8 +25,7 @@ const {
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
-  granulesApi: granulesApiTestUtils,
-  waitForConceptExistsOutcome
+  granulesApi: granulesApiTestUtils
 } = require('@cumulus/integration-tests');
 
 const {
@@ -348,15 +347,9 @@ describe('When there are granule differences and granule reconciliation is run',
     // need to add the cmr granule back to the table, so the granule can be removed from api
     await granuleModel.create(cmrGranule);
     await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: cmrGranule.granuleId });
-    await waitForConceptExistsOutcome(cmrGranule.cmrLink, false);
     await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: cmrGranule.granuleId });
 
-    const granuleResponse = await granulesApiTestUtils.getGranule({
-      prefix: config.stackName,
-      granuleId: publishedGranuleId
-    });
     await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: publishedGranuleId });
-    await waitForConceptExistsOutcome(JSON.parse(granuleResponse.body).cmrLink, false);
     await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: publishedGranuleId });
   });
 });
