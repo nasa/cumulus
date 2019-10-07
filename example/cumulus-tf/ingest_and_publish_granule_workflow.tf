@@ -236,7 +236,7 @@ module "ingest_and_publish_granule_workflow" {
           "IntervalSeconds": 2,
           "MaxAttempts": 6
         }
-      ],
+      ]
     },
     "CmrStep": {
       "Parameters": {

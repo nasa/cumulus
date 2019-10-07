@@ -101,7 +101,7 @@ module "publish_granule_workflow" {
           }
         }
       },
-      "Type": "Task"
+      "Type": "Task",
       "Resource": "${module.cumulus.sf_sns_report_task_lambda_function_arn}",
       "End": true,
       "Catch": [
