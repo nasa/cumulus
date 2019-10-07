@@ -64,6 +64,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- **CUMULUS-1435**
+  - Added `tf-modules/monitoring` Terraform module which includes cloudwatch dashboard
+    - Added Elasticsearch Service alarms to the cloudwatch dashboard
 - **CUMULUS-1394**
   - Added `Granule.generateGranuleRecord()` method to granules model to generate a granule database record from a Cumulus execution message
   - Added `Pdr.generatePdrRecord()` method to PDRs model to generate a granule database record from a Cumulus execution message
