@@ -43,7 +43,6 @@
     "jsdoc-to-markdown": "^4.0.1",
     "lodash.some": "^4.6.0",
     "nock": "^10.0.6",
-    "rewire": "^4.0.1",
     "sinon": "^7.1.1"
   }
 }
