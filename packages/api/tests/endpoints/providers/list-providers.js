@@ -14,6 +14,7 @@ const { Search } = require('../../../es/search');
 const indexer = require('../../../es/indexer');
 const assertions = require('../../../lib/assertions');
 
+process.env.AccessTokensTable = randomString();
 process.env.UsersTable = randomString();
 process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
@@ -32,30 +33,30 @@ let accessTokenModel;
 let userModel;
 
 test.before(async () => {
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
+  accessTokenModel = new models.AccessToken();
+  providerModel = new models.Provider();
+  userModel = new models.User();
+
   process.env.esIndex = esIndex;
 
-  providerModel = new models.Provider();
-  await providerModel.createTable();
-
-  userModel = new models.User();
-  await userModel.createTable();
-
-  process.env.AccessTokensTable = randomString();
-  accessTokenModel = new models.AccessToken();
-  await accessTokenModel.createTable();
+  await Promise.all([
+    accessTokenModel.createTable(),
+    bootstrap.bootstrapElasticSearch('fakehost', esIndex),
+    providerModel.createTable(),
+    userModel.createTable()
+  ]);
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 
   esClient = await Search.es('fakehost');
 });
 
-test.after.always(async () => {
-  await accessTokenModel.deleteTable();
-  await providerModel.deleteTable();
-  await userModel.deleteTable();
-  await esClient.indices.delete({ index: esIndex });
-});
+test.after.always(() => Promise.all([
+  accessTokenModel.deleteTable(),
+  esClient.indices.delete({ index: esIndex }),
+  providerModel.deleteTable(),
+  userModel.deleteTable()
+]));
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
