@@ -1,11 +1,10 @@
-
 'use strict';
 
 const {
   JsonWebTokenError,
   TokenExpiredError
 } = require('jsonwebtoken');
-const log = require('@cumulus/common/log');
+const { ensureLaunchpadAPIAuthorized, launchpadProtectedAuth } = require('./launchpadAuth');
 const { User, AccessToken } = require('../models');
 const { verifyJwtToken } = require('../lib/token');
 
@@ -50,7 +49,11 @@ async function ensureAuthorized(req, res, next) {
     req.authorizedMetadata = { userName };
     return next();
   } catch (error) {
-    log.error(error);
+    if (launchpadProtectedAuth()
+        && error instanceof JsonWebTokenError
+        && error.message === 'jwt malformed') {
+      return ensureLaunchpadAPIAuthorized(req, res, next);
+    }
 
     if (error instanceof TokenExpiredError) {
       return res.boom.unauthorized('Access token has expired');
