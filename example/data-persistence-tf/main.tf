@@ -43,3 +43,8 @@ output "elasticsearch_hostname" {
 output "elasticsearch_security_group_id" {
   value = module.data_persistence.elasticsearch_security_group_id
 }
+
+output "elasticsearch_alarms" {
+  value = module.data_persistence.elasticsearch_alarms
+}
+
