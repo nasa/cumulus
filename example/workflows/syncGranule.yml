@@ -34,7 +34,7 @@ SyncGranuleCatchDuplicateErrorTest:
             - source: '{$}'
               destination: '{$.payload}'
             - source: '{$.process}'
-              destination: '{$.cumulus_meta.process}'
+              destination: '{$.meta.process}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:

@@ -37,7 +37,7 @@ const physicalId = 'cumulus-bootstraping-daac-ops-api-deployment';
 async function findMissingMappings(esClient, index, newMappings) {
   const typesResponse = await esClient.indices.getMapping({
     index
-  });
+  }).then((response) => response.body);
 
   const types = Object.keys(newMappings);
   const indexMappings = get(typesResponse, `${index}.mappings`);
@@ -67,14 +67,33 @@ async function findMissingMappings(esClient, index, newMappings) {
  * @returns {Promise} undefined
  */
 async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIndexAlias) {
-  if (!host) {
-    return;
-  }
+  if (!host) return;
 
   const esClient = await Search.es(host);
 
+  // Make sure that indexes are not automatically created
+  await esClient.cluster.putSettings({
+    body: {
+      persistent: { 'action.auto_create_index': false }
+    }
+  });
+
+  // If the alias already exists as an index, remove it
+  // We can't do a simple exists check here, because it'll return true if the alias
+  // is actually an alias assigned to an index. We do a get and check that the alias
+  // name is not the key, which would indicate it's an index
+  const { body: existingIndex } = await esClient.indices.get(
+    { index: alias },
+    { ignore: [404] }
+  );
+  if (existingIndex && existingIndex[alias]) {
+    log.info(`Deleting alias as index: ${alias}`);
+    await esClient.indices.delete({ index: alias });
+  }
+
   // check if the index exists
-  const exists = await esClient.indices.exists({ index });
+  const exists = await esClient.indices.exists({ index })
+    .then((response) => response.body);
 
   if (!exists) {
     // add mapping
@@ -96,7 +115,7 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
 
     const aliasExists = await esClient.indices.existsAlias({
       name: alias
-    });
+    }).then((response) => response.body);
 
     if (!aliasExists) {
       await esClient.indices.putAlias({
@@ -106,7 +125,8 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
 
       log.info(`Created alias ${alias} for index ${index}`);
     } else {
-      const indices = await esClient.indices.getAlias({ name: alias });
+      const indices = await esClient.indices.getAlias({ name: alias })
+        .then((response) => response.body);
 
       aliasedIndex = Object.keys(indices)[0];
 

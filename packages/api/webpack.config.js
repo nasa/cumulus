@@ -1,5 +1,7 @@
 'use strict';
 
+const CopyPlugin = require('copy-webpack-plugin');
+
 module.exports = {
   mode: process.env.PRODUCTION ? 'production' : 'development',
   entry: {
@@ -18,11 +20,28 @@ module.exports = {
     indexFromDatabase: './lambdas/index-from-database.js',
     messageConsumer: './lambdas/message-consumer.js',
     payloadLogger: './lambdas/payload-logger.js',
+    reportExecutions: './lambdas/report-executions.js',
+    reportGranules: './lambdas/report-granules.js',
+    reportPdrs: './lambdas/report-pdrs.js',
     sfScheduler: './lambdas/sf-scheduler.js',
     sfSnsBroadcast: './lambdas/sf-sns-broadcast.js',
     sfSemaphoreDown: './lambdas/sf-semaphore-down.js',
     sfStarter: './lambdas/sf-starter.js'
   },
+  devtool: process.env.PRODUCTION ? false : 'inline-source-map',
+  resolve: {
+    alias: {
+      'saml2-js': 'saml2-js/lib-js/saml2.js',
+      ejs: 'ejs/ejs.min.js',
+      handlebars: 'handlebars/dist/handlebars.js'
+    }
+  },
+  plugins: [
+    // templates to use saml2.js, dependency problem with xml-encryption package
+    new CopyPlugin([
+      { from: 'node_modules/xml-encryption/lib/templates', to: 'app/templates' }
+    ])
+  ],
   output: {
     libraryTarget: 'commonjs2',
     filename: '[name]/index.js'
@@ -32,6 +51,9 @@ module.exports = {
     'electron',
     { formidable: 'url' }
   ],
-  devtool: process.env.PRODUCTION ? false : 'inline-source-map',
-  target: 'node'
+  target: 'node',
+  node: {
+    __dirname: false,
+    __filename: false
+  }
 };

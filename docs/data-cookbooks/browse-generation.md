@@ -85,14 +85,17 @@ A few things to note about tasks in the workflow being added:
 * The CMR step in CookbookBrowseExample:
 
 ```yaml
- CmrStep:
-    CumulusConfig:
-      bucket: '{$.meta.buckets.internal.name}'
-      stack: '{$.meta.stack}'
-      cmr: '{$.meta.cmr}'
-      process: '{$.cumulus_meta.process}'
-      input_granules: '{$.meta.input_granules}'
-      granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+  CmrStep:
+    Parameters:
+      cma:
+        event: '$'
+        task_config:
+          bucket: '{$.meta.buckets.internal.name}'
+          stack: '{$.meta.stack}'
+          cmr: '{$.meta.cmr}'
+          process: '{$.meta.process}'
+          input_granules: '{$.meta.input_granules}'
+          granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
     Type: Task
     Resource: ${PostToCmrLambdaFunction.Arn}
     Catch:
@@ -109,12 +112,15 @@ Note that in the task, the event.config.cmr will contain the values you configur
 
 ```yaml
   ProcessingStep:
-    CumulusConfig:
-      bucket: '{$.meta.buckets.internal.name}'
-      collection: '{$.meta.collection}'
-      cmrMetadataFormat: '{$.meta.cmrMetadataFormat}'
-      additionalUrls: '{$.meta.additionalUrls}'
-      generateFakeBrowse: true
+    Parameters:
+      cma:
+        event.$: '$'
+        task_config:
+          bucket: '{$.meta.buckets.internal.name}'
+          collection: '{$.meta.collection}'
+          cmrMetadataFormat: '{$.meta.cmrMetadataFormat}'
+          additionalUrls: '{$.meta.additionalUrls}'
+          generateFakeBrowse: true
     Type: Task
     Resource: ${FakeProcessingLambdaFunction.Arn}
     Catch:
@@ -195,7 +201,7 @@ PostToCmr:
   useMessageAdapter: true
   launchInVpc: true
   envs:
-    system_bucket: '{{system_bucket}}'
+    system_bucket: '{{system_bucket}'
 ```
 
 **Please note**: ```FakeProcessing``` is the core provided browse/cmr generation we're using for the example.

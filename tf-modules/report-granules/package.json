@@ -1,15 +1,14 @@
 {
   "name": "report-granules",
-  "version": "1.14.1",
+  "version": "1.14.2",
   "description": "Cumulus Workflow Granule Reporting Module",
   "main": "index.js",
   "engines": {
     "node": ">=8.10.0"
   },
   "scripts": {
-    "test": "ava",
-    "build": "rm -rf dist && mkdir dist && webpack",
-    "watch": "rm -rf dist && mkdir dist && webpack --progress -w",
+    "build": "rm -rf dist && mkdir dist",
+    "watch": "rm -rf dist && mkdir dist",
     "prepare": "npm run build"
   },
   "repository": {
@@ -27,8 +26,8 @@
     "NASA"
   ],
   "dependencies": {
-    "@cumulus/api": "1.14.1",
-    "@cumulus/common": "1.14.1",
+    "@cumulus/api": "1.14.2",
+    "@cumulus/common": "1.14.2",
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {

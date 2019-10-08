@@ -21,7 +21,7 @@ variable "cmr_username" {
 }
 
 variable "dynamo_tables" {
-  type = map(string)
+  type = map(object({ name = string, arn = string }))
 }
 
 variable "ecs_cluster_desired_size" {
@@ -52,15 +52,15 @@ variable "elasticsearch_security_group_id" {
   type = string
 }
 
-variable "kinesis_inbound_event_logger" {
-  type = string
-}
-
 variable "lambda_subnet_ids" {
   type = list(string)
 }
 
 variable "prefix" {
+  type = string
+}
+
+variable "sts_credentials_lambda_function_arn" {
   type = string
 }
 
