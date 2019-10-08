@@ -11,6 +11,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1447** -
   The newest release of the Cumulus Message Adapter (v1.1.0) requires that parameterized configuration be used for remote message functionality. Once released, Kes will automatically bring in CMA v1.1.0 without additional configuration.
+  
+  **Migration instructions**
+  Oversized messages are no longer written to S3 automatically. In order to utilize remote messaging functionality, configure a `ReplaceConfig` AWS Step Function parameter on your CMA task:
+
+  ```yaml
+  ParsePdr:
+    Parameters:
+      cma:
+        event.$: '$'
+        ReplaceConfig:
+          FullMessage: true
+  ```
+  
+  Accepted fields in `ReplaceConfig` include `MaxSize`, `FullMessage`, `Path` and `TargetPath`.
+  See https://github.com/nasa/cumulus-message-adapter/blob/master/CONTRACT.md#remote-message-configuration for full details.
 
   As this change is backward compatible in Cumulus Core, users wishing to utilize the previous version of the CMA may opt to transition to using a CMA lambda layer, or set `message_adapter_version` in their configuration to a version prior to v1.1.0.
 
@@ -123,6 +138,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1451**
   - Elasticsearch cluster setting `auto_create_index` will be set to false. This had been causing issues in the bootstrap lambda on deploy.
+
+- **CUMULUS-1456**
+  - `@cumulus/api` endpoints default error handler uses `boom` package to format errors, which is consistent with other API endpoint errors.
 
 ### Fixed
 

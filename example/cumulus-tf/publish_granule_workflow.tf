@@ -10,105 +10,126 @@ module "publish_granule_workflow" {
   system_bucket                         = var.system_bucket
   tags                                  = local.default_tags
 
-  workflow_config = <<JSON
+  state_machine_definition = <<JSON
 {
-  "Report": {
-    "cumulus_message": {
-      "input": "{{$}}"
+  "Comment": "Publish Granule",
+  "StartAt": "Report",
+  "States": {
+    "Report": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "cumulus_message": {
+              "input": "{$}"
+            }
+          }
+        }
+      },
+      "Type": "Task",
+      "Next": "CmrStep",
+      "Resource": "${module.cumulus.sf_sns_report_task_lambda_function_arn}",
+      "Retry": [
+        {
+          "BackoffRate": 2,
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6
+        }
+      ]
+    },
+    "CmrStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "cumulus_message": {
+              "bucket": "{$.meta.buckets.internal.name}",
+              "stack": "{$.meta.stack}",
+              "cmr": "{$.meta.cmr}",
+              "launchpad": "{$.meta.launchpad}",
+              "process": "N/A"
+            }
+          }
+        }
+      },
+      "Type": "Task",
+      "Next": "StopStatus",
+      "Resource": "${module.cumulus.post_to_cmr_task_lambda_function_arn}",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "StopStatus",
+          "ResultPath": "$.exception"
+        }
+      ],
+      "Retry": [
+        {
+          "BackoffRate": 2,
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6
+        }
+      ]
+    },
+    "StopStatus": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "sfnEnd": true,
+            "stack": "{$.meta.stack}",
+            "bucket": "{$.meta.buckets.internal.name}",
+            "stateMachine": "{$.cumulus_meta.state_machine}",
+            "executionName": "{$.cumulus_meta.execution_name}",
+            "cumulus_message": {
+              "input": "{$}"
+            }
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${module.cumulus.sf_sns_report_task_lambda_function_arn}",
+      "End": true,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "Retry": [
+        {
+          "BackoffRate": 2,
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6
+        }
+      ]
+    },
+    "WorkflowFailed": {
+      "Cause": "Workflow failed",
+      "Type": "Fail"
     }
-  },
-  "CmrStep": {
-    "bucket": "{{$.meta.buckets.internal.name}}",
-    "stack": "{{$.meta.stack}}",
-    "cmr": "{{$.meta.cmr}}",
-    "process": "N/A"
-  },
-  "StopStatus": {
-    "sfnEnd": true,
-    "stack": "{{$.meta.stack}}",
-    "bucket": "{{$.meta.buckets.internal.name}}",
-    "stateMachine": "{{$.cumulus_meta.state_machine}}",
-    "executionName": "{{$.cumulus_meta.execution_name}}",
-    "cumulus_message": {
-      "input": "{{$}}"
-    }
-  },
-  "WorkflowFailed": {}
+  }
 }
 JSON
-
-  state_machine_definition = jsonencode({
-    Comment = "Publish Granule"
-    StartAt = "Report"
-    States = {
-      Report = {
-        Type     = "Task"
-        Resource = module.cumulus.sf_sns_report_task_lambda_function_arn
-        Retry = [
-          {
-            ErrorEquals = [
-              "Lambda.ServiceException",
-              "Lambda.AWSLambdaException",
-              "Lambda.SdkClientException"
-            ]
-            IntervalSeconds = 2
-            MaxAttempts     = 6
-            BackoffRate     = 2
-          }
-        ]
-        Next = "CmrStep"
-      }
-      CmrStep = {
-        Type     = "Task"
-        Resource = module.cumulus.post_to_cmr_task_lambda_function_arn
-        Retry = [
-          {
-            ErrorEquals = [
-              "Lambda.ServiceException",
-              "Lambda.AWSLambdaException",
-              "Lambda.SdkClientException"
-            ]
-            IntervalSeconds = 2
-            MaxAttempts     = 6
-            BackoffRate     = 2
-          }
-        ]
-        Catch = [
-          {
-            ErrorEquals = ["States.ALL"]
-            ResultPath  = "$.exception"
-            Next        = "StopStatus"
-          }
-        ]
-        Next = "StopStatus"
-      }
-      StopStatus = {
-        Type     = "Task",
-        Resource = module.cumulus.sf_sns_report_task_lambda_function_arn
-        Retry = [
-          {
-            ErrorEquals = [
-              "Lambda.ServiceException",
-              "Lambda.AWSLambdaException",
-              "Lambda.SdkClientException"
-            ]
-            IntervalSeconds = 2
-            MaxAttempts     = 6
-            BackoffRate     = 2
-          }
-        ]
-        Catch = [
-          {
-            ErrorEquals = ["States.ALL"]
-            Next        = "WorkflowFailed"
-          }
-        ]
-        End = true
-      }
-      WorkflowFailed = {
-        Type  = "Fail",
-        Cause = "Workflow failed"
-      }
-    }
-  })
 }
