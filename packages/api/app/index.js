@@ -14,7 +14,7 @@ const awsServerlessExpressMiddleware = require('aws-serverless-express/middlewar
 const router = require('./routes');
 
 const app = express();
-app.use(awsServerlessExpressMiddleware.eventContext({ deleteHeaders: false }));
+app.use(awsServerlessExpressMiddleware.eventContext());
 
 // logging config
 morgan.token('error_obj', (req, res) => {
