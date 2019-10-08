@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### BREAKING CHANGES
 
+Your Cumulus Message Adapter version should be pinned to `v1.0.13` or lower in your `app/config.yml` using `message_adapter_version: v1.0.13` OR you should use the workflow migration steps below to work with CMA v1.1.0+.
+
 - **CUMULUS-1447** -
   The newest release of the Cumulus Message Adapter (v1.1.0) requires that parameterized configuration be used for remote message functionality. Once released, Kes will automatically bring in CMA v1.1.0 without additional configuration.
 
