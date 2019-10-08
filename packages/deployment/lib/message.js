@@ -136,7 +136,7 @@ function generateWorkflowTemplate(config, outputs) {
       distribution_endpoint: config.distribution_endpoint,
       collection: {},
       provider: {},
-      template: `s3://${bucket}/${config.stack}/workflow_template.json`,
+      template: `s3://${bucket}/${config.stack}/workflows/template.json`,
       queues,
       queueExecutionLimits
     },
@@ -166,7 +166,7 @@ async function generateTemplates(config, outputs, uploader) {
     // generate workflow message template and upload it to s3.
     const template = generateWorkflowTemplate(config, outputs);
     console.log('Uploading Cumulus Universal Workflow Message Template ...');
-    const key = `${stack}/workflow_template.json`;
+    const key = `${stack}/workflows/template.json`;
     await uploader(bucket, key, JSON.stringify(template));
 
     // generate list of workflows and upload it to S3

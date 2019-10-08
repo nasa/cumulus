@@ -59,7 +59,7 @@ test.before(async () => {
   process.env.stackName = randomString();
   await s3().putObject({
     Bucket: process.env.system_bucket,
-    Key: `${process.env.stackName}/workflow_template.json`,
+    Key: `${process.env.stackName}/workflows/template.json`,
     Body: JSON.stringify({})
   }).promise();
 });

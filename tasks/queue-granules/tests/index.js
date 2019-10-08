@@ -57,7 +57,7 @@ test.beforeEach(async (t) => {
     name: t.context.workflow,
     arn: t.context.stateMachineArn
   };
-  const messageTemplateKey = `${t.context.stackName}/workflow_template.json`;
+  const messageTemplateKey = `${t.context.stackName}/workflows/template.json`;
   const workflowDefinitionKey = `${t.context.stackName}/workflows/${t.context.workflow}.json`;
   t.context.messageTemplateKey = messageTemplateKey;
   await Promise.all([

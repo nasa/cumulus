@@ -126,7 +126,7 @@ test.before(async () => {
   await createBucket(process.env.system_bucket);
 
   // create a workflow template fi;e
-  const tKey = `${process.env.stackName}/workflow_template.json`;
+  const tKey = `${process.env.stackName}/workflows/template.json`;
   await putObject({ Bucket: process.env.system_bucket, Key: tKey, Body: '{}' });
 
   // create fake Collections table

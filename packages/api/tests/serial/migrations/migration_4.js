@@ -17,7 +17,7 @@ process.env.system_bucket = randomString();
 
 const workflow = 'my-workflow';
 const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
-const templateFile = `${process.env.stackName}/workflow_template.json`;
+const templateFile = `${process.env.stackName}/workflows/template.json`;
 
 const kinesisRule = {
   name: 'my_kinesis_rule',

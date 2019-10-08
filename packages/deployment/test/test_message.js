@@ -85,7 +85,7 @@ test('generate a universal workflow template', (t) => {
   t.is(tt.cumulus_meta.system_bucket, 'cumulus-devseed-internal');
   t.is(tt.meta.workflow_name, null);
   t.is(tt.meta.cmr.password, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx');
-  t.is(tt.meta.template, 's3://cumulus-devseed-internal/lpdaac-cumulus/workflow_template.json');
+  t.is(tt.meta.template, 's3://cumulus-devseed-internal/lpdaac-cumulus/workflows/template.json');
   t.truthy(tt.meta.queues.startSF);
   t.is(tt.meta.queueExecutionLimits.startSFLowPriority, 5);
 });

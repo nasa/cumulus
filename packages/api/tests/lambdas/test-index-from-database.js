@@ -87,7 +87,7 @@ test.before(async () => {
   await rulesModel.createTable();
 
   const wKey = `${process.env.stackName}/workflows/${workflowList[0].name}.json`;
-  const tKey = `${process.env.stackName}/workflow_template.json`;
+  const tKey = `${process.env.stackName}/workflows/template.json`;
   await Promise.all([
     aws.promiseS3Upload({
       Bucket: process.env.system_bucket,

@@ -60,7 +60,7 @@
     "id": "LPDAAC"
   },
   "resources": {
-    "template": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflow_template.json",
+    "template": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflows/template.json",
     "queues": {
       "startSF": "https://sqs.us-east-1.amazonaws.com/xxxxxxxx/lpdaac-cumulus-phaseIII-dev-startSF"
     },

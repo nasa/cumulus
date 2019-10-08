@@ -74,7 +74,7 @@ test('Collection.delete() throws an exception if the collection has associated r
     }).promise(),
     s3().putObject({
       Bucket: process.env.system_bucket,
-      Key: `${process.env.stackName}/workflow_template.json`,
+      Key: `${process.env.stackName}/workflows/template.json`,
       Body: JSON.stringify({})
     }).promise()
   ]);

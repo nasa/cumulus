@@ -8,7 +8,7 @@
     "system_bucket": "cumulus-devseed-internal"
   },
   "meta": {
-    "template": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflow_template.json",
+    "template": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflows/template.json",
     "status": "running",
     "queues": {
       "startSF": "https://sqs.us-east-1.amazonaws.com/000000000000/lpdaac-cumulus-startSF"

@@ -7,7 +7,7 @@
     "system_bucket": "cumulus-devseed-internal"
   },
   "meta": {
-    "template": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflow_template.json",
+    "template": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflows/template.json",
     "status": "failed",
     "workflow_name": "ParsePdr",
     "queues": {
