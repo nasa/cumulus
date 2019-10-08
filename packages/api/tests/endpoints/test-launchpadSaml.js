@@ -206,7 +206,7 @@ test.serial('/token endpoint with a token query parameter returns the parameter.
     .set('Accept', 'application/json')
     .expect(200);
 
-  t.is(returnedToken.text, 'SomeRandomJWToken');
+  t.is(returnedToken.text, JSON.stringify({ message: { token: 'SomeRandomJWToken' } }));
 });
 
 test.serial('/token endpoint without a token query parameter redirects to saml/login.', async (t) => {

@@ -185,7 +185,7 @@ const samlToken = async (req, res) => {
     );
   }
 
-  if (req.query.token) return res.send(req.query.token);
+  if (req.query.token) return res.send({ message: { token: req.query.token } });
   return res.redirect(`/${stageName}/saml/login?RelayState=${relayState}`);
 };
 
