@@ -89,8 +89,8 @@ if (launchpadProtectedAuth()) {
   // SAML SSO
   router.get('/saml/login', launchpadSaml.login);
   router.post('/saml/auth', launchpadSaml.auth);
+  router.get('/token', launchpadSaml.samlToken);
   // disabled for now
-  router.get('/token', launchpadSaml.tokenEndpoint);
   router.post('/refresh', launchpadSaml.refreshEndpoint);
 } else {
   router.get('/token', token.tokenEndpoint);
