@@ -9,6 +9,8 @@ apt-get install -y zip
 set -ex
 . ./bamboo/abort-if-not-pr-or-redeployment.sh
 . ./bamboo/abort-if-skip-integration-tests.sh
+. ./bamboo/abort-if-terraform-branch.sh
+
 
 npm config set unsafe-perm true
 npm install
@@ -26,7 +28,7 @@ echo "Locking stack for deployment $DEPLOYMENT"
 
 cd example
 set +e
-
+``
 # Wait for the stack to be available
 node ./scripts/lock-stack.js true $DEPLOYMENT
 LOCK_EXISTS_STATUS=$?
