@@ -10,7 +10,7 @@ Cumulus Workflow error handling is configurable via Cumulus Workflow Definitions
 
 Cumulus Workflow Tasks _should_ throw errors and rely on the state machine logic to handle the error state. Errors and exceptions thrown in Cumulus Workflow Tasks using the Cumulus Message Adapter (CMA) are caught and rethrown by the CMA libraries _unless_ the error name contains `WorkflowError`.
 
-The former (tasks which throw errors which are not `WorkflowError`s) is the expected behavior. However a `WorklowError` can be used to handle errors that should _not_ result in task failure.
+The former (tasks which throw errors which are not `WorkflowError`s) is the expected behavior. However a `WorkflowError` can be used to handle errors that should _not_ result in task failure.
 
 ## Workflow Configuration
 
@@ -25,6 +25,7 @@ Some best practices for error handling in Cumulus Workflows are:
 **Example:**
 
 Note: In the example below, YAML syntax (i.e. `&ErrorEqualDefaults` and `<<: *ErrorEqualDefaults`) is used to create references to reusable blocks which makes the definition less repetitive. Read more here: [YAML - Anchors, References, Extend](https://blog.daemonl.com/2016/02/yaml.html).
+
 
 ```yaml
 CNMExampleWorkflow:

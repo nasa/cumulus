@@ -24,9 +24,12 @@ SNS messages can be sent at anytime during the workflow execution by adding a wo
 
 ```yaml
 PdrStatusReport:
-  CumulusConfig:
-    cumulus_message:
-      input: '{$}'
+  Parameters:
+    cma:
+      event.$: '$'
+      task_config:
+          cumulus_message:
+            input: '{$}'
   ResultPath: null
   Type: Task
   Resource: ${SfSnsReportLambdaFunction.Arn}

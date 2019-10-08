@@ -11,6 +11,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1447** -
   The newest release of the Cumulus Message Adapter (v1.1.0) requires that parameterized configuration be used for remote message functionality. Once released, Kes will automatically bring in CMA v1.1.0 without additional configuration.
+  
+  **Migration instructions**
+  Oversized messages are no longer written to S3 automatically. In order to utilize remote messaging functionality, configure a `ReplaceConfig` AWS Step Function parameter on your CMA task:
+
+  ```yaml
+  ParsePdr:
+    Parameters:
+      cma:
+        event.$: '$'
+        ReplaceConfig:
+          FullMessage: true
+  ```
+  
+  Accepted fields in `ReplaceConfig` include `MaxSize`, `FullMessage`, `Path` and `TargetPath`.
+  See https://github.com/nasa/cumulus-message-adapter/blob/master/CONTRACT.md#remote-message-configuration for full details.
 
   As this change is backward compatible in Cumulus Core, users wishing to utilize the previous version of the CMA may opt to transition to using a CMA lambda layer, or set `message_adapter_version` in their configuration to a version prior to v1.1.0.
 
@@ -40,7 +55,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - `LambdaStep` - A class for retrieving and parsing input and output to Lambda steps in AWS Step Functions
     - `ActivityStep` - A class for retrieving and parsing input and output to ECS activity steps in AWS Step Functions
 
+- **CUMULUS-639**
+  - Adds SAML JWT and launchpad token authentication to Cumulus API (configurable)
+    - **NOTE** to authenticate with Launchpad ensure your launchpad user_id is in the `<prefix>-UsersTable`
+    - when Cumulus configured to protect API via Launchpad:
+         - New endpoints
+            - `GET /saml/login` - starting point for SAML SSO creates the login request url and redirects to the SAML Identity Provider Service (IDP)
+            - `POST /saml/auth` - SAML Assertion Consumer Service.  POST receiver from SAML IDP.  Validates response, logs the user in, and returnes a SAML-based JWT.
+         - Disabled endpoints
+            - `GET /token`
+            - `POST /refresh`
+          - Changes authorization worklow:
+           - `ensureAuthorized` now presumes the bearer token is a JWT and tries to validate.  If the token is malformed, it attempts to validate the token against Launchpad.  This allows users to bring their own token as described here https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication.  But it also allows dashboard users to manually authenticate via Launchpad SAML to receive a Launchpad-based JWT.
+
+
 ### Changed
+
+- **CUMULUS-1485** Update `@cumulus/cmr-client` to return error message from CMR for validation failures.
 
 - **CUMULUS-1394**
   - Renamed `Execution.generateDocFromPayload()` to `Execution.generateRecord()` on executions model. The method generates an execution database record from a Cumulus execution message.
@@ -61,6 +92,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1451**
   - Elasticsearch cluster setting `auto_create_index` will be set to false. This had been causing issues in the bootstrap lambda on deploy.
+
+- **CUMULUS-1456**
+  - `@cumulus/api` endpoints default error handler uses `boom` package to format errors, which is consistent with other API endpoint errors.
 
 ### Fixed
 
