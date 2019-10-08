@@ -9,11 +9,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### BREAKING CHANGES
 
-- **CUMULUS-1447** -
-  The newest release of the Cumulus Message Adapter (v1.1.0) requires that parameterized configuration be used for remote message functionality. Once released, Kes will automatically bring in CMA v1.1.0 without additional configuration.
-  
-  **Migration instructions**
-  Oversized messages are no longer written to S3 automatically. In order to utilize remote messaging functionality, configure a `ReplaceConfig` AWS Step Function parameter on your CMA task:
+- **CUMULUS-1447** - The newest release of the Cumulus Message Adapter (v1.1.0)
+  requires that parameterized configuration be used for remote message
+  functionality. Once released, Kes will automatically bring in CMA v1.1.0
+  without additional configuration.
+
+  **Migration instructions** Oversized messages are no longer written to S3
+  automatically. In order to utilize remote messaging functionality, configure a
+  `ReplaceConfig` AWS Step Function parameter on your CMA task:
 
   ```yaml
   ParsePdr:
@@ -23,20 +26,31 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
         ReplaceConfig:
           FullMessage: true
   ```
-  
-  Accepted fields in `ReplaceConfig` include `MaxSize`, `FullMessage`, `Path` and `TargetPath`.
-  See https://github.com/nasa/cumulus-message-adapter/blob/master/CONTRACT.md#remote-message-configuration for full details.
 
-  As this change is backward compatible in Cumulus Core, users wishing to utilize the previous version of the CMA may opt to transition to using a CMA lambda layer, or set `message_adapter_version` in their configuration to a version prior to v1.1.0.
+  Accepted fields in `ReplaceConfig` include `MaxSize`, `FullMessage`, `Path`
+  and `TargetPath`. See
+  https://github.com/nasa/cumulus-message-adapter/blob/master/CONTRACT.md#remote-message-configuration
+  for full details.
 
-- **CUMULUS-1449** -
-  Cumulus now uses a universal workflow template when starting workflow that contains general information specific to the deployment, but not specific to the workflow. Workflow task configs must be defined using AWS step function parameters. As part of this change, `CumulusConfig` has been retired and task configs must now be defined under the `cma.task_config` key in the Parameters section of a step function definition.
-  
+  As this change is backward compatible in Cumulus Core, users wishing to
+  utilize the previous version of the CMA may opt to transition to using a CMA
+  lambda layer, or set `message_adapter_version` in their configuration to a
+  version prior to v1.1.0.
+
+- **CUMULUS-1449** - Cumulus now uses a universal workflow template when
+  starting workflow that contains general information specific to the
+  deployment, but not specific to the workflow. Workflow task configs must be
+  defined using AWS step function parameters. As part of this change,
+  `CumulusConfig` has been retired and task configs must now be defined under
+  the `cma.task_config` key in the Parameters section of a step function
+  definition.
+
   **Migration instructions**:
 
   NOTE: These instructions require the use of Cumulus Message Adapter v1.1.x+.
-  Please ensure you are using a compatible version before attempting to migrate workflow configurations.
-  When defining workflow steps, remove any `CumulusConfig` section, as shown below:
+  Please ensure you are using a compatible version before attempting to migrate
+  workflow configurations. When defining workflow steps, remove any
+  `CumulusConfig` section, as shown below:
 
   ```yaml
   ParsePdr:
@@ -59,15 +73,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
           stack: '{$.meta.stack}'
   ```
 
-  In this example, the `cma` key is used to pass parameters to the message adapter.
-  Using `task_config` in combination with `event.$: '$'` allows the message adapter to process `task_config` as the `config` passed to the Cumulus task.
-  See `example/workflows/sips.yml` in the core repository for further examples of how to set the Parameters.
+  In this example, the `cma` key is used to pass parameters to the message
+  adapter. Using `task_config` in combination with `event.$: '$'` allows the
+  message adapter to process `task_config` as the `config` passed to the Cumulus
+  task. See `example/workflows/sips.yml` in the core repository for further
+  examples of how to set the Parameters.
 
-  Additionally, workflow configurations for the `QueueGranules` and `QueuePdrs` tasks need to be updated:
+  Additionally, workflow configurations for the `QueueGranules` and `QueuePdrs`
+  tasks need to be updated:
   - `queue-pdrs` config changes:
-    - `parsePdrMessageTemplateUri` replaced with `parsePdrWorkflow`, which is the workflow name (i.e. top-level name in `config.yml`, e.g. 'ParsePdr').
-    - `internalBucket` and `stackName` configs now required to look up configuration from the deployment. Brings the task config in line with that of `queue-granules`.
-  - `queue-granules` config change: `ingestGranuleMessageTemplateUri` replaced with `ingestGranuleWorkflow`, which is the workflow name (e.g. 'IngestGranule').
+    - `parsePdrMessageTemplateUri` replaced with `parsePdrWorkflow`, which is
+      the workflow name (i.e. top-level name in `config.yml`, e.g. 'ParsePdr').
+    - `internalBucket` and `stackName` configs now required to look up
+      configuration from the deployment. Brings the task config in line with
+      that of `queue-granules`.
+  - `queue-granules` config change: `ingestGranuleMessageTemplateUri` replaced
+    with `ingestGranuleWorkflow`, which is the workflow name (e.g.
+    'IngestGranule').
 
 ### PLEASE NOTE
 

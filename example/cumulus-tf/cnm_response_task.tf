@@ -8,6 +8,8 @@ resource "aws_lambda_function" "cnm_response_task" {
   timeout       = 300
   memory_size   = 256
 
+  layers = [var.cumulus_message_adapter_lambda_layer_arn]
+
   environment {
     variables = {
       CMR_ENVIRONMENT             = var.cmr_environment

@@ -92,7 +92,7 @@ module "parse_pdr_workflow" {
             "provider": "{$.meta.provider}",
             "internalBucket": "{$.meta.buckets.internal.name}",
             "stackName": "{$.meta.stack}",
-            "granuleIngestMessageTemplateUri": "{$.meta.templates.IngestGranule}",
+            "granuleIngestWorkflow": "${module.ingest_granule_workflow.name}",
             "queueUrl": "{$.meta.queues.startSF}"
           }
         }
@@ -125,6 +125,29 @@ module "parse_pdr_workflow" {
     "CheckStatus": {
       "Type": "Task",
       "Resource": "${module.cumulus.pdr_status_check_task_lambda_function_arn}",
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "Path": "$.payload",
+            "TargetPath": "$.payload"
+          },
+          "task_config": {
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                },
+                {
+                  "source": "{$.isFinished}",
+                  "destination": "{$.meta.isPdrFinished}"
+                }
+              ]
+            }
+          }
+        }
+      },
       "Retry": [
         {
           "ErrorEquals": [
@@ -152,12 +175,12 @@ module "parse_pdr_workflow" {
       "Type": "Choice",
       "Choices": [
         {
-          "Variable": "$.cumulus_meta.isPdrFinished",
+          "Variable": "$.meta.isPdrFinished",
           "BooleanEquals": false,
           "Next": "PdrStatusReport"
         },
         {
-          "Variable": "$.cumulus_meta.isPdrFinished",
+          "Variable": "$.meta.isPdrFinished",
           "BooleanEquals": true,
           "Next": "StopStatus"
         }

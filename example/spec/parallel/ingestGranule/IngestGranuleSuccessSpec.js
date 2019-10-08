@@ -115,9 +115,6 @@ describe('The S3 Ingest Granules workflow', () => {
   const collectionDupeHandling = 'error';
 
   let workflowExecutionArn;
-  let failingWorkflowExecution;
-  let failedExecutionArn;
-  let failedExecutionName;
   let inputPayload;
   let expectedSyncGranulePayload;
   let expectedPayload;
@@ -135,7 +132,6 @@ describe('The S3 Ingest Granules workflow', () => {
   const collectionModel = new Collection();
   process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
   const providerModel = new Provider();
-  let executionName;
 
   beforeAll(async () => {
     const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
@@ -159,7 +155,7 @@ describe('The S3 Ingest Granules workflow', () => {
       s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
 
     const collectionUrlString = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
-    expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedSyncGranuleFilename, granuleId, testDataFolder, newCollectionId);
+    expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedSyncGranuleFilename, granuleId, testDataFolder, newCollectionId, config.stackName);
     expectedSyncGranulePayload.granules[0].dataType += testSuffix;
     expectedSyncGranulePayload.granules[0].files = addUrlPathToGranuleFiles(expectedSyncGranulePayload.granules[0].files, testId, '');
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
@@ -484,10 +480,14 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   describe('an SNS message', () => {
-    let existCheck = [];
+    let executionName;
+    let failedExecutionArn;
+    let failedExecutionName;
+    let failingWorkflowExecution;
 
     beforeAll(async () => {
       console.log('Start FailingExecution');
+
       failingWorkflowExecution = await buildAndExecuteWorkflow(
         config.stackName,
         config.bucket,
@@ -496,26 +496,31 @@ describe('The S3 Ingest Granules workflow', () => {
         provider,
         {}
       );
-      failedExecutionArn = failingWorkflowExecution.executionArn.split(':');
-      failedExecutionName = failedExecutionArn.pop();
+
+      failedExecutionArn = failingWorkflowExecution.executionArn;
+      failedExecutionName = failedExecutionArn.split(':').pop();
 
       executionName = postToCmrOutput.cumulus_meta.execution_name;
-      existCheck = await Promise.all([
-        s3ObjectExists({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }),
-        s3ObjectExists({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` })
-      ]);
     });
 
-    afterAll(async () => {
-      await executionModel.delete({ arn: failingWorkflowExecution.executionArn });
+    afterAll(() => executionModel.delete({ arn: failedExecutionArn }));
+
+    it('is published on a successful workflow completion', async () => {
+      const executionExists = await s3ObjectExists({
+        Bucket: config.bucket,
+        Key: `${config.stackName}/test-output/${executionName}.output`
+      });
+
+      expect(executionExists).toEqual(true);
     });
 
-    it('is published on a successful workflow completion', () => {
-      expect(existCheck[0]).toEqual(true);
-    });
+    it('is published on workflow failure', async () => {
+      const executionExists = await s3ObjectExists({
+        Bucket: config.bucket,
+        Key: `${config.stackName}/test-output/${failedExecutionName}.output`
+      });
 
-    it('is published on workflow failure', () => {
-      expect(existCheck[1]).toEqual(true);
+      expect(executionExists).toEqual(true);
     });
 
     it('triggers the granule record being added to DynamoDB', async () => {

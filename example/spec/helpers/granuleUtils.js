@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs-extra');
+const flow = require('lodash.flow');
 const {
   aws: { buildS3Uri, parseS3Uri, s3 },
   stringUtils: { globalReplace },
@@ -12,19 +13,20 @@ const cloneDeep = require('lodash.clonedeep');
 /**
  * Adds updated url_path to a granule files object
  *
- * @param  {Array<object>} files - array of granule files
- * @param  {string} testId - Test ID to insert into url_path per-granule
- * @param  {string} collectionUrlPath - collection
+ * @param {Array<Object>} files - array of granule files
+ * @param {string} testId - Test ID to insert into url_path per-granule
+ * @param {string} collectionUrlPath - collection
+ * @returns {Array<Object>} the files with updated url_path values
  */
-function addUrlPathToGranuleFiles(files, testId, collectionUrlPath) {
-  const updatedFiles = cloneDeep(files);
-  return updatedFiles.map((file) => {
-    const fileUpdate = cloneDeep(file);
-    const updatedUrlPath = Object.is(file.url_path, undefined) ? collectionUrlPath : `${file.url_path}/`;
-    fileUpdate.url_path = `${updatedUrlPath}${testId}/`;
-    return fileUpdate;
+const addUrlPathToGranuleFiles = (files, testId, collectionUrlPath) =>
+  files.map((file) => {
+    const updatedUrlPath = file.url_path === undefined ? collectionUrlPath : `${file.url_path}/`;
+
+    return {
+      ...file,
+      url_path: `${updatedUrlPath}${testId}/`
+    };
   });
-}
 
 /**
  * Add test-unique filepath to granule file filepath/filenames
@@ -120,12 +122,14 @@ async function setupTestGranuleForIngest(bucket, inputPayloadJson, granuleRegex,
  * @param {string} newCollectionId - the new collection id
  * @returns {Promise<Object>} - file as a JS object
  */
-function loadFileWithUpdatedGranuleIdPathAndCollection(file, newGranuleId, newPath, newCollectionId) {
-  const fileContents = fs.readFileSync(file, 'utf8');
-  const fileContentsWithId = globalReplace(fileContents, 'replace-me-granuleId', newGranuleId);
-  const fileContentsWithIdAndPath = globalReplace(fileContentsWithId, 'replace-me-path', newPath);
-  const fileContentsWithIdPathAndCollection = globalReplace(fileContentsWithIdAndPath, 'replace-me-collectionId', newCollectionId);
-  return JSON.parse(fileContentsWithIdPathAndCollection);
+function loadFileWithUpdatedGranuleIdPathAndCollection(file, newGranuleId, newPath, newCollectionId, stackId) {
+  return flow([
+    (x) => globalReplace(x, 'replace-me-granuleId', newGranuleId),
+    (x) => globalReplace(x, 'replace-me-path', newPath),
+    (x) => globalReplace(x, 'replace-me-collectionId', newCollectionId),
+    (x) => globalReplace(x, 'replace-me-stackId', stackId),
+    JSON.parse
+  ])(fs.readFileSync(file, 'utf8'));
 }
 
 module.exports = {
