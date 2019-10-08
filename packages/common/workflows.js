@@ -2,7 +2,7 @@
 
 const { getS3Object, listS3ObjectsV2 } = require('./aws');
 
-const templateKey = (stack) => `${stack}/workflow_template.json`;
+const templateKey = (stack) => `${stack}/workflows/template.json`;
 
 const workflowTemplateUri = (bucket, stack) => `s3://${bucket}/${templateKey(stack)}`;
 

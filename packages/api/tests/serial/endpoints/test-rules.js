@@ -29,7 +29,7 @@ const { app } = require('../../../app');
 
 const workflowName = randomString();
 const workflowfile = `${process.env.stackName}/workflows/${workflowName}.json`;
-const templateFile = `${process.env.stackName}/workflow_template.json`;
+const templateFile = `${process.env.stackName}/workflows/template.json`;
 
 const testRule = {
   name: 'make_coffee',
