@@ -1,6 +1,6 @@
 #!/bin/bash
 set -ex
-. ./bamboo/abort-if-not-pr-or-master.sh
+. ./bamboo/abort-if-not-pr.sh
 
 commit_message_contains_skip_audit_flag=false
 commit_matches_version_tag=false
