@@ -22,10 +22,6 @@ variable "sf_semaphore_down_lambda_function_arn" {
   type = string
 }
 
-variable "sftracker_sns_topic_arn" {
-  type = string
-}
-
 variable "system_bucket" {
   type = string
 }
