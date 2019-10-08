@@ -7,11 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.14.2] - 2019-10-08
+
 ### BREAKING CHANGES
 
 - **CUMULUS-1447** -
   The newest release of the Cumulus Message Adapter (v1.1.0) requires that parameterized configuration be used for remote message functionality. Once released, Kes will automatically bring in CMA v1.1.0 without additional configuration.
-  
+
   **Migration instructions**
   Oversized messages are no longer written to S3 automatically. In order to utilize remote messaging functionality, configure a `ReplaceConfig` AWS Step Function parameter on your CMA task:
 
@@ -23,7 +25,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
         ReplaceConfig:
           FullMessage: true
   ```
-  
+
   Accepted fields in `ReplaceConfig` include `MaxSize`, `FullMessage`, `Path` and `TargetPath`.
   See https://github.com/nasa/cumulus-message-adapter/blob/master/CONTRACT.md#remote-message-configuration for full details.
 
@@ -1451,7 +1453,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.14.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.14.2...HEAD
+[v1.14.2]: https://github.com/nasa/cumulus/compare/v1.14.1...v1.14.2
 [v1.14.1]: https://github.com/nasa/cumulus/compare/v1.14.0...v1.14.1
 [v1.14.0]: https://github.com/nasa/cumulus/compare/v1.13.5...v1.14.0
 [v1.13.5]: https://github.com/nasa/cumulus/compare/v1.13.4...v1.13.5
