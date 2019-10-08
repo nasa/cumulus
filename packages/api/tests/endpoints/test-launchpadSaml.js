@@ -223,13 +223,14 @@ test.serial('/token endpoint without a token query parameter redirects to saml/l
 test.serial('/token endpoint without proper context headers returns expectation failed.', async (t) => {
   const expectedError = {
     error: 'Expectation Failed',
-    message: 'Could not retrieve necessary information from express request object.',
+    message: ('Could not retrieve necessary information from express request object. '
+              + 'Incorrect relayState or stageName information in express request.'),
     statusCode: 417
   };
 
   const badHeaders = await request(app)
     .get('/token')
-    .set('x-apigateway-event', encodeURIComponent(JSON.stringify({ requestContext: {} })))
+    .set('x-apigateway-event', encodeURIComponent(JSON.stringify({ requestContext: { path: 'apath' } })))
     .set('x-apigateway-context', encodeURIComponent(JSON.stringify({})))
     .set('Accept', 'application/json')
     .expect(417);

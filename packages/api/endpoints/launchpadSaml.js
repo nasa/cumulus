@@ -179,10 +179,12 @@ const samlToken = async (req, res) => {
   try {
     relayState = encodeURIComponent(urlFromRequest(req));
     stageName = stageNameFromRequest(req);
-    if (!relayState || !stageName) throw new Error('bad');
+    if (!relayState || !stageName) {
+      throw new Error('Incorrect relayState or stageName information in express request.');
+    }
   } catch (error) {
     return res.boom.expectationFailed(
-      'Could not retrieve necessary information from express request object.'
+      'Could not retrieve necessary information from express request object. ' + error.message
     );
   }
 
