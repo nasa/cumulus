@@ -122,7 +122,7 @@ fi
 export PR_BRANCH=master
 if [[  $DEPLOYMENT =~ '-tf' ]]; then
   echo "Setting GIT_PR target branch to 'terraform'"
-  export $PR_BRANCH=terraform
+  export PR_BRANCH=terraform
 fi
 
 ## Run detect-pr script and set flag to true/false
