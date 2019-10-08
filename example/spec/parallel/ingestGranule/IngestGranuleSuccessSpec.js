@@ -926,14 +926,16 @@ describe('The S3 Ingest Granules workflow', () => {
 
       it('returns the expected workflow', async () => {
         const workflowResponse = await apiTestUtils.getWorkflow({
-          prefix: config.stackName,
-          workflowName: workflowName
+          workflowName,
+          prefix: config.stackName
         });
+
         const foundWorkflow = JSON.parse(workflowResponse.body);
+        expect(foundWorkflow.definition.Comment).toEqual(workflowConfig.Comment);
+
         const foundKeys = Object.keys(foundWorkflow.definition.States);
         const configKeys = Object.keys(workflowConfig.States);
-        expect(foundWorkflow.definition.Comment).toEqual(workflowConfig.Comment);
-        expect(foundKeys).toEqual(configKeys);
+        expect(foundKeys.sort()).toEqual(configKeys.sort());
       });
     });
   });

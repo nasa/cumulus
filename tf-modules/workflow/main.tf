@@ -33,7 +33,7 @@ locals {
   workflow_info = jsonencode({
     name       = var.name
     arn        = aws_sfn_state_machine.default.id
-    definition = var.state_machine_definition
+    definition = jsondecode(var.state_machine_definition)
   })
 }
 
