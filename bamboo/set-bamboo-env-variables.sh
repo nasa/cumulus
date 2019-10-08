@@ -71,29 +71,6 @@ fi
 echo export BRANCH=$BRANCH >> .bamboo_env_vars
 
 
-## Run detect-pr script and set flag to true/false
-## depending on if there is a PR associated with the
-## current ref from the current branch
-if [[ -z $GIT_PR ]]; then
-  echo "Setting GIT_PR"
-  set +e
-  node ./bamboo/detect-pr.js $BRANCH master
-  PR_CODE=$?
-  set -e
-  if [[ PR_CODE -eq 100 ]]; then
-    export GIT_PR=true
-    echo export GIT_PR=true >> .bamboo_env_vars
-  elif [[ PR_CODE -eq 0 ]]; then
-    export GIT_PR=false
-    echo export GIT_PR=false >> .bamboo_env_vars
-  else
-    echo "Error detecting PR status"
-    exit 1
-  fi
-fi
-
-echo GIT_PR is $GIT_PR
-
 ## If tag matching the current ref is a version tag, set
 export GIT_TAG=$(git describe --exact-match HEAD 2>/dev/null | sed -n '1p')
 if [[ $GIT_TAG =~ ^v[0-9]+.* ]]; then
@@ -141,6 +118,35 @@ if [[ $DEPLOYMENT =~ '-tf' ]]; then
   export AWS_ACCESS_KEY_ID=$bamboo_SECRET_NONPROD_AWS_ACCESS_KEY_ID
   export AWS_SECRET_ACCESS_KEY=$bamboo_SECRET_NONPROD_AWS_SECRET_ACCESS_KEY
 fi
+
+export $PR_BRANCH=master
+if [[  $DEPLOYMENT =~ '-tf' ]]; then
+  echo "Setting GIT_PR target branch to 'terraform'"
+  export $PR_BRANCH=terraform
+fi
+
+## Run detect-pr script and set flag to true/false
+## depending on if there is a PR associated with the
+## current ref from the current branch
+if [[ -z $GIT_PR ]]; then
+  echo "Setting GIT_PR"
+  set +e
+  node ./bamboo/detect-pr.js $BRANCH $PR_BRANCH
+  PR_CODE=$?
+  set -e
+  if [[ PR_CODE -eq 100 ]]; then
+    export GIT_PR=true
+    echo export GIT_PR=true >> .bamboo_env_vars
+  elif [[ PR_CODE -eq 0 ]]; then
+    export GIT_PR=false
+    echo export GIT_PR=false >> .bamboo_env_vars
+  else
+    echo "Error detecting PR status"
+    exit 1
+  fi
+fi
+
+echo GIT_PR is $GIT_PR
 
 ## Exporting the commit message as an env variable to be brought in
 ## for yes/no toggles on build
