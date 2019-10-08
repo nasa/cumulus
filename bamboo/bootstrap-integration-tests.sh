@@ -27,7 +27,7 @@ echo "Locking stack for deployment $DEPLOYMENT"
 
 cd example
 set +e
-``
+
 # Wait for the stack to be available
 node ./scripts/lock-stack.js true $DEPLOYMENT
 LOCK_EXISTS_STATUS=$?
