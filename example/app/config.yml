@@ -110,18 +110,44 @@ default:
         count: 1
         maxTasks: 10
         scaleIn:
-          metricName: ActivitiesScheduled
-          namespace: AWS/States
-          period: 60
-          stat: Average
+          Metrics:
+          - Id: e1
+            Expression: "FILL(m1, 0)"
+            Label: NormalizedActivitiesScheduled
+          - Id: m1
+            MetricStat:
+              Metric:
+                MetricName: ActivitiesScheduled
+                Namespace: AWS/States
+                Dimensions:
+                  - Name: ActivityArn
+                    Value:
+                      Ref:
+                        EcsTaskHelloWorldActivity
+              Period: 60
+              Stat: Average
+            ReturnData: false
           adjustmentPercent: -5
           comparisonOperator: LessThanThreshold
           threshold: 0.3
         scaleOut:
-          metricName: ActivitiesScheduled
-          namespace: AWS/States
-          period: 60
-          stat: Average
+          Metrics:
+          - Id: e1
+            Expression: "FILL(m1, 0)"
+            Label: NormalizedActivitiesScheduled
+          - Id: m1
+            MetricStat:
+              Metric:
+                MetricName: ActivitiesScheduled
+                Namespace: AWS/States
+                Dimensions:
+                  - Name: ActivityArn
+                    Value:
+                      Ref:
+                        EcsTaskHelloWorldActivity
+              Period: 60
+              Stat: Average
+            ReturnData: false
           adjustmentPercent: 10
           comparisonOperator: GreaterThanOrEqualToThreshold
           threshold: 0.6
@@ -154,12 +180,44 @@ default:
         count: 1
         maxTasks: 10
         scaleIn:
-          metricName: ActivityScheduleTime
+          Metrics:
+            - Id: e1
+              Expression: "FILL(m1, 0)"
+              Label: NormalizedActivityScheduleTime
+            - Id: m1
+              MetricStat:
+                Metric:
+                  MetricName: ActivityScheduleTime
+                  Namespace: AWS/States
+                  Dimensions:
+                    - Name: ActivityArn
+                      Value:
+                        Ref:
+                          EcsTaskHelloWorldKesCmaActivity
+                Period: 60
+                Stat: Average
+              ReturnData: false
           adjustmentPercent: -5
           comparisonOperator: LessThanThreshold
           threshold: 5000
         scaleOut:
-          metricName: ActivityScheduleTime
+          Metrics:
+            - Id: e1
+              Expression: "FILL(m1, 0)"
+              Label: NormalizedActivityScheduleTime
+            - Id: m1
+              MetricStat:
+                Metric:
+                  MetricName: ActivityScheduleTime
+                  Namespace: AWS/States
+                  Dimensions:
+                    - Name: ActivityArn
+                      Value:
+                        Ref:
+                          EcsTaskHelloWorldKesCmaActivity
+                Period: 60
+                Stat: Average
+              ReturnData: false
           adjustmentPercent: 10
           comparisonOperator: GreaterThanOrEqualToThreshold
           threshold: 10000

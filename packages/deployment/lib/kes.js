@@ -31,6 +31,7 @@ const fs = require('fs-extra');
 const Handlebars = require('handlebars');
 const path = require('path');
 const util = require('util');
+const jsyaml = require('js-yaml');
 const { sleep } = require('@cumulus/common/util');
 
 const Lambda = require('./lambda');
@@ -292,6 +293,12 @@ class UpdatedKes extends Kes {
           ? options.fn(this)
           : options.inverse(this))
     );
+
+    // convert object to YAML string and prepend spaces to the beginning of each line
+    Handlebars.registerHelper('ToYaml', (context, prependSpaces = 0) =>
+      jsyaml.safeDump(context)
+        .split('\n')
+        .map((line) => ' '.repeat(prependSpaces) + line).join('\n'));
 
     return super.parseCF(cfFile);
   }

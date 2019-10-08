@@ -1065,22 +1065,7 @@ Resources:
       DatapointsToAlarm: 1
       EvaluationPeriods: 1
       Metrics:
-        - Id: e1
-          Expression: "FILL(m1, 0)"
-          Label: Normalized{{this.scaleIn.metricName}}
-        - Id: m1
-          MetricStat:
-            Metric:
-              MetricName: {{this.scaleIn.metricName}}
-              Namespace: {{# if this.scaleIn.namespace}}{{this.scaleIn.namespace}}{{ else }}AWS/States{{/if}}
-              Dimensions:
-                - Name: ActivityArn
-                  Value:
-                    Ref:
-                      {{this.activityName}}Activity
-            Period: {{# if this.scaleIn.period}}{{this.scaleIn.period}}{{ else }}60{{/if}}
-            Stat: {{# if this.scaleIn.stat}}{{this.scaleIn.stat}}{{ else }}Average{{/if}}
-          ReturnData: false
+{{{ToYaml this.scaleIn.Metrics 8}}}
       ComparisonOperator: {{this.scaleIn.comparisonOperator}}
       Threshold: {{this.scaleIn.threshold}}
       TreatMissingData: missing
@@ -1096,22 +1081,7 @@ Resources:
       DatapointsToAlarm: 1
       EvaluationPeriods: 1
       Metrics:
-        - Id: e1
-          Expression: "FILL(m1, 0)"
-          Label: Normalized{{this.scaleOut.metricName}}
-        - Id: m1
-          MetricStat:
-            Metric:
-              MetricName: {{this.scaleOut.metricName}}
-              Namespace: {{# if this.scaleOut.namespace}}{{this.scaleOut.namespace}}{{ else }}AWS/States{{/if}}
-              Dimensions:
-                - Name: ActivityArn
-                  Value:
-                    Ref:
-                      {{this.activityName}}Activity
-            Period: {{# if this.scaleOut.period}}{{this.scaleOut.period}}{{ else }}60{{/if}}
-            Stat: {{# if this.scaleOut.stat}}{{this.scaleOut.stat}}{{ else }}Average{{/if}}
-          ReturnData: false
+{{{ToYaml this.scaleOut.Metrics 8}}}
       ComparisonOperator: {{this.scaleOut.comparisonOperator}}
       Threshold: {{this.scaleOut.threshold}}
       TreatMissingData: missing
