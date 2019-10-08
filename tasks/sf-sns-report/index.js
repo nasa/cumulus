@@ -2,7 +2,7 @@
 
 const get = require('lodash.get');
 const isObject = require('lodash.isobject');
-const { setGranuleStatus, sns } = require('@cumulus/common/aws');
+const { publishReportSnsMessages } = require('@cumulus/api/lambdas/publish-reports');
 const errors = require('@cumulus/common/errors');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 
@@ -67,10 +67,6 @@ function makeLambdaFunctionFail(event) {
  * Cumulus Message Adapter. See schemas/input.json for detailed input schema.
  * @param {Object} event.config - configuration object for the task
  * @param {Object} event.config.sfnEnd - indicate if it's the last step of the step function
- * @param {string} event.config.stack - the name of the deployment stack
- * @param {string} event.config.bucket - S3 bucket
- * @param {string} event.config.stateMachine - current state machine
- * @param {string} event.config.executionName - execution name
  * @returns {Promise.<Object>} - AWS SNS response or error in case of step function
  *  failure.
  */
@@ -79,33 +75,9 @@ async function publishSnsMessage(event) {
   const message = get(event, 'input');
 
   const finished = get(config, 'sfnEnd', false);
-  const topicArn = get(message, 'meta.topic_arn', null);
   const failed = eventFailed(message);
 
-  if (topicArn) {
-    // if this is the sns call at the end of the execution
-    if (finished) {
-      message.meta.status = failed ? 'failed' : 'completed';
-      const granuleId = get(message, 'meta.granuleId', null);
-      if (granuleId) {
-        await setGranuleStatus(
-          granuleId,
-          config.stack,
-          config.bucket,
-          config.stateMachine,
-          config.executionName,
-          message.meta.status
-        );
-      }
-    } else {
-      message.meta.status = 'running';
-    }
-
-    await sns().publish({
-      TopicArn: topicArn,
-      Message: JSON.stringify(message)
-    }).promise();
-  }
+  await publishReportSnsMessages(message, finished, failed);
 
   if (failed) {
     makeLambdaFunctionFail(message);

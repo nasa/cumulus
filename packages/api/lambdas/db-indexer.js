@@ -3,7 +3,8 @@
 const get = require('lodash.get');
 const pMap = require('p-map');
 const { AttributeValue } = require('dynamodb-data-types');
-const { log } = require('@cumulus/common');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const log = require('@cumulus/common/log');
 const { FileClass } = require('../models');
 const indexer = require('../es/indexer');
 const { Search } = require('../es/search');
@@ -114,7 +115,7 @@ function performDelete(esClient, tableIndex, fields, body) {
   let parent;
   const idKeys = Object.keys(fields);
   if (idKeys.length > 1) {
-    id = indexer.constructCollectionId(...Object.values(fields));
+    id = constructCollectionId(...Object.values(fields));
   } else {
     id = fields[idKeys[0]];
   }

@@ -1,15 +1,12 @@
 'use strict';
 
-const nock = require('nock');
 const sinon = require('sinon');
 const test = require('ava');
 const publicIp = require('public-ip');
 
 const {
   getIp,
-  ummVersion,
-  ummVersionToMetadataFormat,
-  validateUMMG
+  ummVersionToMetadataFormat
 } = require('../utils');
 
 let stub;
@@ -38,95 +35,10 @@ test('getIp throws an error when the error is unexpected', async (t) => {
   });
 });
 
-test('ummVersion returns UMM version if found on metadata object.', (t) => {
-  // https://bugs.earthdata.nasa.gov/browse/CUMULUS-1099
-  const metadata = {
-    restOfMetadataUpHere: 'it is all fake',
-    MetadataSpecification: {
-      URL: 'https://cdn.earthdata.nasa.gov/umm/granule/v1.5',
-      Name: 'UMM-G',
-      Version: '1.5'
-    }
-  };
-
-  const actual = ummVersion(metadata);
-
-  t.is('1.5', actual);
-});
-
-test('ummVersion returns default version 1.4 if object has no metadata specification.', (t) => {
-  // https://bugs.earthdata.nasa.gov/browse/CUMULUS-1099
-  const metadata = {
-    restOfMetadataUpHere: 'still fake',
-    MissingMetadataSpecification: 'nothing here'
-  };
-
-  const actual = ummVersion(metadata);
-
-  t.is('1.4', actual);
-});
-
 test('ummVersionToMetadataFormat returns correct metadata format for UMM-G versions', (t) => {
   let actual = ummVersionToMetadataFormat('1.4');
   t.is('umm_json_v1_4', actual);
 
   actual = ummVersionToMetadataFormat('1.5');
   t.is('umm_json_v1_5', actual);
-});
-
-test('validateUMMG calls post with correct metadata version when metadata version available', async (t) => {
-  // https://bugs.earthdata.nasa.gov/browse/CUMULUS-1099
-  console.log(process.env.CMR_HOST);
-  const identifier = 'fakeIdentifier';
-  const provider = 'fakeProvider';
-  const metadata = {
-    restOfMetadataUpHere: 'still fake',
-    MetadataSpecification: {
-      URL: 'https://cdn.earthdata.nasa.gov/umm/granule/v1.5',
-      Name: 'UMM-G',
-      Version: '1.5'
-    }
-  };
-
-  nock('https://cmr.uat.earthdata.nasa.gov')
-    .matchHeader('Accept', 'application/json')
-    .matchHeader('Content-type', 'application/vnd.nasa.cmr.umm+json;version=1.5')
-    .post(`/ingest/providers/${provider}/validate/granule/${identifier}`)
-    .reply(200);
-
-  process.env.CMR_ENVIRONMENT = 'UAT';
-  try {
-    const actual = await validateUMMG(metadata, identifier, provider);
-    t.true(actual);
-  } catch (error) {
-    t.fail(error);
-  }
-  t.true(nock.isDone());
-  nock.cleanAll();
-});
-
-test('validateUMMG calls post with default version (1.4) when metadata version unavailable', async (t) => {
-  // https://bugs.earthdata.nasa.gov/browse/CUMULUS-1099
-  const identifier = 'fakeIdentifier';
-  const provider = 'fakeProvider';
-  const metadata = {
-    restOfMetadataUpHere: 'still fake',
-    MissingMetadataSpecification: 'nothing here'
-  };
-
-  nock('https://cmr.uat.earthdata.nasa.gov')
-    .matchHeader('Accept', 'application/json')
-    .matchHeader('Content-type', 'application/vnd.nasa.cmr.umm+json;version=1.4')
-    .post(`/ingest/providers/${provider}/validate/granule/${identifier}`)
-    .reply(200);
-
-  process.env.CMR_ENVIRONMENT = 'UAT';
-  try {
-    const actual = await validateUMMG(metadata, identifier, provider);
-    t.true(actual);
-  } catch (error) {
-    t.fail(error);
-  }
-  t.true(nock.isDone());
-  nock.cleanAll();
 });

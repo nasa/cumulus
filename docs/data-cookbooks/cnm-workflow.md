@@ -83,9 +83,12 @@ CNMExampleWorkflow:
     StartStatus:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
+      Paremeters:
+        cma:
+          event.$: '$'
+          task_config:
+            cumulus_message:
+              input: '{$}'
       Next: TranslateMessage
       Catch:
         - ErrorEquals:
@@ -95,13 +98,16 @@ CNMExampleWorkflow:
     TranslateMessage:
       Type: Task
       Resource: ${CNMToCMALambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          outputs:
-            - source: '{$.cnm}'
-              destination: '{$.meta.cnm}'
-            - source: '{$}'
-              destination: '{$.payload}'
+      Parameters:
+        cma:
+          event.$: '$'
+          task_config:
+            cumulus_message:
+              outputs:
+                - source: '{$.cnm}'
+                  destination: '{$.meta.cnm}'
+                - source: '{$}'
+                  destination: '{$.payload}'
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -109,18 +115,21 @@ CNMExampleWorkflow:
           Next: CnmResponse
       Next: SyncGranule
     SyncGranule:
-      CumulusConfig:
-        provider: '{$.meta.provider}'
-        buckets: '{$.meta.buckets}'
-        collection: '{$.meta.collection}'
-        downloadBucket: '{$.meta.buckets.private.name}'
-        stack: '{$.meta.stack}'
-        cumulus_message:
-          outputs:
-            - source: '{$.granules}'
-              destination: '{$.meta.input_granules}'
-            - source: '{$}'
-              destination: '{$.payload}'
+      Parameters:
+        cma:
+          event.$: '$'
+          task_config:
+            provider: '{$.meta.provider}'
+            buckets: '{$.meta.buckets}'
+            collection: '{$.meta.collection}'
+            downloadBucket: '{$.meta.buckets.private.name}'
+            stack: '{$.meta.stack}'
+            cumulus_message:
+              outputs:
+                - source: '{$.granules}'
+                  destination: '{$.meta.input_granules}'
+                - source: '{$}'
+                  destination: '{$.payload}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
@@ -135,15 +144,18 @@ CNMExampleWorkflow:
           Next: CnmResponse
       Next: CnmResponse
     CnmResponse:
-      CumulusConfig:
-        OriginalCNM: '{$.meta.cnm}'
-        CNMResponseStream: 'ADD YOUR RESPONSE STREAM HERE'
-        region: 'us-east-1'
-        WorkflowException: '{$.exception}'
-        cumulus_message:
-          outputs:
-            - source: '{$}'
-              destination: '{$.meta.cnmResponse}'
+      Parameters:
+        cma:
+          event.$: '$'
+          task_config:
+            OriginalCNM: '{$.meta.cnm}'
+            CNMResponseStream: 'ADD YOUR RESPONSE STREAM HERE'
+            region: 'us-east-1'
+            WorkflowException: '{$.exception}'
+            cumulus_message:
+              outputs:
+                - source: '{$}'
+                  destination: '{$.meta.cnmResponse}'
       Type: Task
       Resource: ${CnmResponseLambdaFunction.Arn}
       Retry:
@@ -160,14 +172,17 @@ CNMExampleWorkflow:
     StopStatus:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        sfnEnd: true
-        stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal.name}'
-        stateMachine: '{$.cumulus_meta.state_machine}'
-        executionName: '{$.cumulus_meta.execution_name}'
-        cumulus_message:
-          input: '{$}'
+      Parameters:
+        cma:
+          event.$: '$'
+          task_config:
+            sfnEnd: true
+            stack: '{$.meta.stack}'
+            bucket: '{$.meta.buckets.internal.name}'
+            stateMachine: '{$.cumulus_meta.state_machine}'
+            executionName: '{$.cumulus_meta.execution_name}'
+            cumulus_message:
+              input: '{$}'
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -200,13 +215,15 @@ CNMToCMA:
   s3Source:
     bucket: 'cumulus-data-shared'
     key: 'daacs/podaac/cnmToGranule-1.0-wCMA.zip'
+  layers:
+    - arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:{{CMA_VERSION}}
   useMessageAdapter: false
   launchInVpc: true
 ```
 
 `CNMToCMA` is meant for the beginning of a workflow: it maps CNM granule information to a payload for downstream tasks. This workflow will not utilize the payload. For other workflows, you would need to ensure that downstream tasks in your workflow either understand the CNM message *or* include a translation task like this one.
 
-You can also manipulate the data sent to downstream tasks using `CumulusConfig` for various states in `workflows.yml`. Read more about how to configure data on the [Workflow Input & Output](https://nasa.github.io/cumulus/docs/workflows/input_output) page.
+You can also manipulate the data sent to downstream tasks using `task_config` for various states in `workflows.yml`. Read more about how to configure data on the [Workflow Input & Output](https://nasa.github.io/cumulus/docs/workflows/input_output) page.
 
 ###### CnmResponse
 

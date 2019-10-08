@@ -45,57 +45,72 @@ Buckets specified in `app/config.yml` will become part of the `meta` object of t
 
 To use the buckets specified in your config, you can do the following:
 
-```
+```yaml
 DiscoverGranules:
-      CumulusConfig:
-        provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
-        buckets: '{$.meta.buckets}'
+  Parameters:
+    cma:
+      event.$: '$'
+      task_config:
+          Provider: '{$.meta.provider}'
+          collection: '{$.meta.collection}'
+          buckets: '{$.meta.buckets}'
 ```
 
-```
+```yaml
 MoveGranules:
-      CumulusConfig:
-        bucket: '{$.meta.buckets.internal.name}'
-        buckets: '{$.meta.buckets}'
+  Parameters:
+    cma:
+      event.$: '$'
+      task_config:
+          bucket: '{$.meta.buckets.internal.name}'
+          buckets: '{$.meta.buckets}'
 ```
 
 ### Hardcode a bucket
 
 Bucket names can be hardcoded in your workflow configuration, for example:
 
-```
+```yaml
 DiscoverGranules:
-      CumulusConfig:
-        provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
-        buckets:
-          internal: 'sample-internal-bucket'
-          protected: 'sample-protected-bucket-2'
+  Parameters:
+    cma:
+      event.$: '$'
+      task_config:
+          provider: '{$.meta.provider}'
+          collection: '{$.meta.collection}'
+          buckets:
+            internal: 'sample-internal-bucket'
+            protected: 'sample-protected-bucket-2'
 ```
 Or you can do a combination of meta buckets and hardcoded:
 
-```
+```yaml
 DiscoverGranules:
-      CumulusConfig:
-        provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
-        buckets:
-          internal: 'sample-internal-bucket'
-          private: '{$.meta.buckets.private.name}'
+  Parameters:
+    cma:
+      event.$: '$'
+      task_config:
+          provider: '{$.meta.provider}'
+          collection: '{$.meta.collection}'
+          buckets:
+            internal: 'sample-internal-bucket'
+            private: '{$.meta.buckets.private.name}'
 ```
 
 ### Using meta and hardcoding
 
 Bucket names can be configured using a mixture of hardcoded values and values from the meta. For example, to configure the bucket based on the collection name you could do something like:
 
-```
+```yaml
 DiscoverGranules:
-      CumulusConfig:
-        provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
-        buckets:
-          internal: '{$.meta.collection.name}-bucket'
+  Parameters:
+    cma:
+      event.$: '$'
+      task_config:
+          provider: '{$.meta.provider}'
+          collection: '{$.meta.collection}'
+          buckets:
+            internal: '{$.meta.collection.name}-bucket'
 ```
 ## How to specify a file location in a bucket
 

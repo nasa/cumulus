@@ -72,9 +72,8 @@ async function del(req, res) {
       await esClient.delete({
         id: pdrName,
         index: esIndex,
-        type: 'pdr',
-        ignore: [404]
-      });
+        type: 'pdr'
+      }, { ignore: [404] });
     }
   } catch (err) {
     if (!isRecordDoesNotExistError(err)) throw err;
