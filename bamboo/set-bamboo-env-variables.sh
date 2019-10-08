@@ -119,7 +119,7 @@ if [[ $DEPLOYMENT =~ '-tf' ]]; then
   export AWS_SECRET_ACCESS_KEY=$bamboo_SECRET_NONPROD_AWS_SECRET_ACCESS_KEY
 fi
 
-export $PR_BRANCH=master
+export PR_BRANCH=master
 if [[  $DEPLOYMENT =~ '-tf' ]]; then
   echo "Setting GIT_PR target branch to 'terraform'"
   export $PR_BRANCH=terraform
