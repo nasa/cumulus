@@ -178,6 +178,16 @@ variable "ecs_efs_config" {
   default = null
 }
 
+variable "ecs_service_alarms" {
+  type = list(object({ name = string, arn = string }))
+  default = []
+}
+
+variable "elasticsearch_alarms" {
+  type = list(object({ name = string, arn = string }))
+  default = []
+}
+
 variable "key_name" {
   type    = string
   default = null

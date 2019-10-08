@@ -1,6 +1,6 @@
 #!/bin/bash
 set -ex
-. ./bamboo/abort-if-not-pr-or-master.sh
+. ./bamboo/abort-if-not-pr.sh
 
 container_id=${bamboo_planKey,,}
 container_id=${container_id/-/}

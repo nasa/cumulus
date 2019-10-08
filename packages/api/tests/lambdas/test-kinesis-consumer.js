@@ -128,15 +128,17 @@ test.beforeEach(async (t) => {
   };
   publishStub = sinon.stub(snsClient, 'publish').returns({ promise: () => Promise.resolve(t.context.publishResponse) });
   t.context.templateBucket = randomString();
+  t.context.workflow = randomString();
   t.context.stateMachineArn = randomString();
   const messageTemplateKey = `${randomString()}/template.json`;
 
   t.context.messageTemplateKey = messageTemplateKey;
   t.context.messageTemplate = {
-    cumulus_meta: {
-      state_machine: t.context.stateMachineArn
-    },
     meta: { queues: { startSF: stubQueueUrl } }
+  };
+  const workflowDefinition = {
+    name: t.context.workflow,
+    arn: t.context.stateMachineArn
   };
 
   await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
@@ -147,11 +149,12 @@ test.beforeEach(async (t) => {
   }).promise();
 
   sinon.stub(Rule, 'buildPayload').callsFake((item) => Promise.resolve({
-    template: `s3://${t.context.templateBucket}/${messageTemplateKey}`,
+    template: t.context.messageTemplate,
     provider: item.provider,
     collection: item.collection,
     meta: get(item, 'meta', {}),
-    payload: get(item, 'payload', {})
+    payload: get(item, 'payload', {}),
+    definition: workflowDefinition
   }));
   sinon.stub(Provider.prototype, 'get').returns(provider);
   sinon.stub(Collection.prototype, 'get').returns(collection);
@@ -198,7 +201,8 @@ test.serial('it should enqueue a message for each associated workflow', async (t
     meta: {
       queues: { startSF: stubQueueUrl },
       provider,
-      collection
+      collection,
+      workflow_name: t.context.workflow
     },
     payload: {
       collection: testCollectionName

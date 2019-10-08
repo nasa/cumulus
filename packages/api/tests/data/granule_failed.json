@@ -7,11 +7,7 @@
     "system_bucket": "cumulus-devseed-internal"
   },
   "meta": {
-    "templates": {
-      "ParsePdr": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflows/ParsePdr.json",
-      "DiscoverPdrs": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflows/DiscoverPdrs.json",
-      "IngestGranule": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflows/IngestGranule.json"
-    },
+    "template": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflow_template.json",
     "status": "failed",
     "workflow_name": "IngestGranule",
     "queues": {

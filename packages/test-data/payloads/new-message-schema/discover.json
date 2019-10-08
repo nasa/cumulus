@@ -22,10 +22,7 @@
     "queues": {
       "startSF": "https://sqs.us-east-1.amazonaws.com/xxxxx/ghrc-cumulus-dev-startSF"
     },
-    "templates": {
-      "IngestGranule": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflows/IngestGranule.json",
-      "ParsePdr": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflows/ParsePdr.json"
-    },
+    "template": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflow_template.json",
     "cumulus_meta": {
       "state_machine": "arn:aws:states:us-east-1:xxxxxx:stateMachine:DiscoverGranulesGHRCCumulusdevStateMachine",
       "state_machine_name": "DiscoverGranules",
