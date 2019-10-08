@@ -111,8 +111,9 @@ const login = async (req, res) => {
     idp,
     { relay_state: relayState },
     (err, loginUrl) => {
-      if (err != null)
+      if (err != null) {
         return res.boom.badRequest('Could not create login request url.', err);
+      }
       return res.redirect(loginUrl);
     }
   );
