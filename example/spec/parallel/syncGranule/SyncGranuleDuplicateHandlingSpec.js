@@ -86,7 +86,13 @@ describe('When the Sync Granule workflow is configured', () => {
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
     const newGranuleId = inputPayload.granules[0].granuleId;
 
-    expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, newGranuleId, testDataFolder, newCollectionId);
+    expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(
+      templatedOutputPayloadFilename,
+      newGranuleId,
+      testDataFolder,
+      newCollectionId,
+      config.stackName
+    );
     expectedPayload.granules[0].dataType += testSuffix;
 
     workflowExecution = await buildAndExecuteWorkflow(

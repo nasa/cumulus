@@ -53,6 +53,22 @@ function globalReplace(string, oldSubString, newSubString) {
 }
 
 /**
+ * Globally replaces substr in string with newSubstr
+ *
+ * @param {string} substr - The string to replace
+ * @param {string} newSubstr - The string replacement
+ * @param {string} string - The string to modify
+ * @returns {string} the modified string
+ *
+ * This is a curried function - https://lodash.com/docs/4.17.11#curry
+ *
+ * @static
+ */
+const globalReplaceC = curry(
+  (substr, newSubstr, string) => globalReplace(string, substr, newSubstr)
+);
+
+/**
  * Converts string, as a whole, to lower case just like String#toLowerCase
  *
  * @param {string} str - the string to convert
@@ -129,6 +145,7 @@ const isValidHostname = compose(matches(hostnameRegex), toLower);
 
 module.exports = {
   globalReplace,
+  globalReplaceC,
   isValidHostname,
   match,
   matches,

@@ -1,12 +1,12 @@
 'use strict';
 
 const fs = require('fs-extra');
-const flow = require('lodash.flow');
 const {
   aws: { buildS3Uri, parseS3Uri, s3 },
-  stringUtils: { globalReplace },
+  stringUtils: { globalReplaceC },
   testUtils: { randomStringFromRegex }
 } = require('@cumulus/common');
+const { thread } = require('@cumulus/common/util');
 const path = require('path');
 const cloneDeep = require('lodash.clonedeep');
 
@@ -90,14 +90,16 @@ function createGranuleFiles(granuleFiles, bucket, oldGranuleId, newGranuleId) {
  * @returns {Promise<Object>} - input payload as a JS object with the updated granule ids
  */
 async function setupTestGranuleForIngest(bucket, inputPayloadJson, granuleRegex, testSuffix = '', testDataFolder = null) {
-  // granule id for the new files
-  const newGranuleId = randomStringFromRegex(granuleRegex);
-  console.log(`\ngranule id: ${newGranuleId}`);
+  const payloadJson = testDataFolder ?
+    globalReplaceC('cumulus-test-data/pdrs', testDataFolder, inputPayloadJson) :
+    inputPayloadJson;
 
-  if (testDataFolder) inputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder); //eslint-disable-line no-param-reassign
-  const baseInputPayload = JSON.parse(inputPayloadJson);
+  const baseInputPayload = JSON.parse(payloadJson);
+
   const oldGranuleId = baseInputPayload.granules[0].granuleId;
   baseInputPayload.granules[0].dataType += testSuffix;
+
+  const newGranuleId = randomStringFromRegex(granuleRegex);
 
   await createGranuleFiles(
     baseInputPayload.granules[0].files,
@@ -106,31 +108,39 @@ async function setupTestGranuleForIngest(bucket, inputPayloadJson, granuleRegex,
     newGranuleId
   );
 
-  const baseInputPayloadJson = JSON.stringify(baseInputPayload);
-  const updatedInputPayloadJson = globalReplace(baseInputPayloadJson, oldGranuleId, newGranuleId);
-
-  return JSON.parse(updatedInputPayloadJson);
+  return thread(
+    baseInputPayload,
+    JSON.stringify,
+    globalReplaceC(oldGranuleId, newGranuleId),
+    JSON.parse
+  );
 }
 
 /**
- * Read the file, update it with the new granule id, path and collectionId,
- * and return the file as a JS object.
+ * Read the file, update it with the new granule id, path, collectionId, and
+ * stackId, and return the file as a JS object.
  *
- * @param {string} file - file path
+ * @param {string} filename - file path
  * @param {string} newGranuleId - new granule id
  * @param {string} newPath - the new data path
  * @param {string} newCollectionId - the new collection id
+ * @param {stackId} stackId - the new stack id
  * @returns {Promise<Object>} - file as a JS object
  */
-function loadFileWithUpdatedGranuleIdPathAndCollection(file, newGranuleId, newPath, newCollectionId, stackId) {
-  return flow([
-    (x) => globalReplace(x, 'replace-me-granuleId', newGranuleId),
-    (x) => globalReplace(x, 'replace-me-path', newPath),
-    (x) => globalReplace(x, 'replace-me-collectionId', newCollectionId),
-    (x) => globalReplace(x, 'replace-me-stackId', stackId),
-    JSON.parse
-  ])(fs.readFileSync(file, 'utf8'));
-}
+const loadFileWithUpdatedGranuleIdPathAndCollection = (
+  filename,
+  newGranuleId,
+  newPath,
+  newCollectionId,
+  stackId
+) => thread(
+  fs.readFileSync(filename, 'utf8'),
+  globalReplaceC('replace-me-granuleId', newGranuleId),
+  globalReplaceC('replace-me-path', newPath),
+  globalReplaceC('replace-me-collectionId', newCollectionId),
+  globalReplaceC('replace-me-stackId', stackId),
+  JSON.parse
+);
 
 module.exports = {
   addUniqueGranuleFilePathToGranuleFiles,
