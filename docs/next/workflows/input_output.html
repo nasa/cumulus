@@ -67,6 +67,9 @@
 <span class="hljs-attr">      handler:</span> <span class="hljs-string">index.handler</span>
 <span class="hljs-attr">      useMessageAdapter:</span> <span class="hljs-literal">true</span>
 </code></pre>
+<p>Optionally you can configure kes to specify the version of the CMA to be used using the <code>message_adapter_version</code> configuration key:</p>
+<pre><code class="hljs css language-yaml"><span class="hljs-attr">message_adapter_version:</span> <span class="hljs-string">v1.0.13</span>
+</code></pre>
 <h4><a class="anchor" aria-hidden="true" id="lambda-layer"></a><a href="#lambda-layer" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Lambda Layer</h4>
 <p>In order to make use of this configuration, a Lambda layer can be uploaded to your account.  Due to platform restrictions, Core cannot currently support sharable public layers, however you can support deploying the appropriate version from <a href="https://github.com/nasa/cumulus-message-adapter/releases">the release page</a> via the AWS <a href="https://console.aws.amazon.com/lambda/home?region=us-east-1#/layers">Layers Interface</a>, <em>or</em> the provided CMA <a href="https://www.terraform.io/">Terraform</a> module located at <a href="https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-message-adapter">tf-modules/cumulus-message-adapter</a>.</p>
 <p>Once you've deployed the layer, include the CMA in the configured Lambda layers:</p>
@@ -80,13 +83,13 @@
 <p>and include the reference in the Lambda configuration:</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-attr">    DiscoverPdrs:</span>
 <span class="hljs-attr">      layers:</span>
-<span class="hljs-bullet">        -</span> <span class="hljs-string">'<span class="hljs-template-variable">{{cma_layer}}</span>'</span>
-</code></pre>
-<p><strong><em>Please note</em></strong>: Updating/removing a layer does not change a deployed Lambda, so to update the CMA you should deploy a new version of the CMA layer, update the associated Lambda configuration to reference the new CMA version, and re-deploy your Lambdas.</p>
-<p><strong>Please Note</strong>: Updating the CMA without updating the lambda code will fail if operating with the Workflow Lambda Versions feature enabled.  If you are utilizing this option, we recommend continuing use of kes injection/manual addition for now.</p>
+<span class="hljs-bullet">        -</span> <span class="hljs-string">'<span class="hljs-template-variable">{{cma_layer}'
+</span></span></code></pre>
+<p><strong><em>Please Note</em></strong>: Updating/removing a layer does not change a deployed Lambda, so to update the CMA you should deploy a new version of the CMA layer, update the associated Lambda configuration to reference the new CMA version, and re-deploy your Lambdas.</p>
+<p><strong><em>Please Note</em></strong>: Updating the CMA without updating the lambda code will fail if operating with the Workflow Lambda Versions feature enabled.  If you are utilizing this option, we recommend continuing use of kes injection/manual addition for now.</p>
 <p>This method will be supported more fully once migration to Terraform Deployments has been completed.</p>
 <h4><a class="anchor" aria-hidden="true" id="manual-addition"></a><a href="#manual-addition" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Manual Addition</h4>
-<p>You can include the CMA package in the Lambda code in the <code>cumulus-message-adapter</code> sub-directory, this will achieve a similar result to kes injection, but  will require manual updates to update the CMA code.</p>
+<p>You can include the CMA package in the Lambda code in the <code>cumulus-message-adapter</code> sub-directory, this will achieve a similar result to kes injection, but will require manual updates to update the CMA code.</p>
 <p>Cumulus will set a default <code>CUMULUS_MESSAGE_ADAPTER_DIR</code> environment variable to the <code>cmaDir</code> global configuration value, which defaults to <code>/opt/</code>.   If <code>useMessageAdapter: true</code> is set, it will set it to the <code>cumulus-message-adapter</code> directory.</p>
 <p>If you are manually adding the message adapter to your source and utilizing the CMA, you should set the Lambda's <code>CUMULUS_MESSAGE_ADAPTER_DIR</code> environment variable to override this, or if you aren't utilizing the CMA layer, set the global <code>cmaDir</code> to the directory you're packaging your Lambda in.</p>
 <h3><a class="anchor" aria-hidden="true" id="cma-input-output"></a><a href="#cma-input-output" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>CMA Input/Output</h3>
@@ -96,15 +99,173 @@
 <li><code>config</code>: Task-specific configuration object with URL templates resolved.</li>
 </ul>
 <p>Output from the task application code is returned in and placed in the <code>payload</code> key by default, but the <code>config</code> key can also be used to return just a portion of the task output.</p>
+<h3><a class="anchor" aria-hidden="true" id="cma-configuration"></a><a href="#cma-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>CMA configuration</h3>
+<p>As of Cumulus &gt; 1.15 and CMA &gt; v1.1.1, configuration of the CMA is expected to be driven by AWS Step Function Parameters.</p>
+<p>Using the CMA package with the lambda by by any of the above mentioned methods (Manual, Kes, Lambda Layers) requires configuration for it's various features via a specific Step Function Parameters configuration format:</p>
+<pre><code class="hljs css language-yaml"><span class="hljs-attr">StepFunction:</span>
+<span class="hljs-attr">  Parameters:</span>
+<span class="hljs-attr">    cma:</span>
+      <span class="hljs-string">event.$:</span> <span class="hljs-string">'$'</span>
+      <span class="hljs-string">configuration</span> <span class="hljs-attr">keys:</span> <span class="hljs-string">...</span>
+</code></pre>
+<p>The <code>event.$: '$'</code> parameter is <em>required</em> as it passes the entire incoming message to the CMA client library for parsing, and the CMA itself to convert the incoming message into a Cumulus message for use in the function.</p>
+<p>The following are the CMA's current configuration settings:</p>
+<h4><a class="anchor" aria-hidden="true" id="replaceconfig-cumulus-remote-message"></a><a href="#replaceconfig-cumulus-remote-message" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>ReplaceConfig (Cumulus Remote Message)</h4>
+<p>Because of the potential size of a Cumulus message, mainly the <code>payload</code> field, a task can be set via configuration to store a portion of its output on S3 with a message key <code>Remote Message</code> that defines how to retrieve it and an empty JSON object <code>{}</code> in its place.   If the portion of the message targeted exceeds the configured <code>MaxSize</code> (defaults to 0 bytes) it will be written to S3.</p>
+<p>The CMA remote message functionality can be configured using parameters in several ways:</p>
+<h5><a class="anchor" aria-hidden="true" id="partial-message"></a><a href="#partial-message" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Partial Message</h5>
+<p>Setting the <code>Path</code>/<code>Target</code> path in the <code>ReplaceConfig</code> parameter (and optionally a non-default <code>MaxSize</code>)</p>
+<pre><code class="hljs css language-yaml"><span class="hljs-attr">DiscoverGranules:</span>
+<span class="hljs-attr">  Parameters:</span>
+<span class="hljs-attr">    cma:</span>
+      <span class="hljs-string">event.$:</span> <span class="hljs-string">'$'</span>
+<span class="hljs-attr">      ReplaceConfig:</span>
+<span class="hljs-attr">        MaxSize:</span> <span class="hljs-number">1</span>
+<span class="hljs-attr">        Path:</span> <span class="hljs-string">'$.payload'</span>
+<span class="hljs-attr">        TargetPath:</span> <span class="hljs-string">'$.payload'</span>
+</code></pre>
+<p>will result in any <code>payload</code> output larger than the <code>MaxSize</code> (in bytes) to be written to S3.  The CMA will then mark that the key has been replaced via a <code>replace</code> key on the event. When the CMA picks up the <code>replace</code> key in future steps, it will attempt to retrieve the output from S3 and write it back to <code>payload</code>.</p>
+<p>Note that you can optionally use a different <code>TargetPath</code> than <code>Path</code>, however as the target is a JSON path there must be a key to target for replacement in the output of that step.    Also note that the JSON path specified must target <em>one</em> node, otherwise the CMA will error, as it does not support multiple replacement targets.</p>
+<p>If <code>TargetPath</code> is omitted, it will default to the value for <code>Path</code>.</p>
+<h5><a class="anchor" aria-hidden="true" id="full-message"></a><a href="#full-message" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Full Message</h5>
+<p>Setting the following parameters for a lambda:</p>
+<pre><code class="hljs css language-yaml"><span class="hljs-attr">DiscoverGranules:</span>
+<span class="hljs-attr">  Parameters:</span>
+<span class="hljs-attr">    cma:</span>
+      <span class="hljs-string">event.$:</span> <span class="hljs-string">'$'</span>
+<span class="hljs-attr">      ReplaceConfig:</span>
+<span class="hljs-attr">        FullMessage:</span> <span class="hljs-literal">true</span>
+</code></pre>
+<p>will result in the CMA assuming the entire inbound message should be stored to S3 if it exceeds the default max size.</p>
+<p>This is effectively the same as doing:</p>
+<pre><code class="hljs css language-yaml"><span class="hljs-attr">DiscoverGranules:</span>
+<span class="hljs-attr">  Parameters:</span>
+<span class="hljs-attr">    cma:</span>
+      <span class="hljs-string">event.$:</span> <span class="hljs-string">'$'</span>
+<span class="hljs-attr">      ReplaceConfig:</span>
+<span class="hljs-attr">        MaxSize:</span> <span class="hljs-number">0</span>
+<span class="hljs-attr">        Path:</span> <span class="hljs-string">'$'</span>
+<span class="hljs-attr">        TargetPath:</span> <span class="hljs-string">'$'</span>
+</code></pre>
+<h5><a class="anchor" aria-hidden="true" id="cumulus-message-example"></a><a href="#cumulus-message-example" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Cumulus Message example:</h5>
+<pre><code class="hljs css language-json">{
+  <span class="hljs-attr">"task_config"</span>: {
+    <span class="hljs-attr">"inlinestr"</span>: <span class="hljs-string">"prefix{meta.foo}suffix"</span>,
+    <span class="hljs-attr">"array"</span>: <span class="hljs-string">"{[$.meta.foo]}"</span>,
+    <span class="hljs-attr">"object"</span>: <span class="hljs-string">"{$.meta}"</span>
+  },
+  <span class="hljs-attr">"cumulus_meta"</span>: {
+    <span class="hljs-attr">"message_source"</span>: <span class="hljs-string">"sfn"</span>,
+    <span class="hljs-attr">"state_machine"</span>: <span class="hljs-string">"arn:aws:states:us-east-1:1234:stateMachine:MySfn"</span>,
+    <span class="hljs-attr">"execution_name"</span>: <span class="hljs-string">"MyExecution__id-1234"</span>,
+    <span class="hljs-attr">"id"</span>: <span class="hljs-string">"id-1234"</span>
+  },
+  <span class="hljs-attr">"meta"</span>: {
+    <span class="hljs-attr">"foo"</span>: <span class="hljs-string">"bar"</span>
+  },
+  <span class="hljs-attr">"payload"</span>: {
+    <span class="hljs-attr">"anykey"</span>: <span class="hljs-string">"anyvalue"</span>
+  }
+}
+</code></pre>
+<h5><a class="anchor" aria-hidden="true" id="cumulus-remote-message-example"></a><a href="#cumulus-remote-message-example" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Cumulus Remote Message example:</h5>
+<p>The message may contain a reference to an S3 Bucket, Key and TargetPath as follows:</p>
+<pre><code class="hljs css language-json">{
+  <span class="hljs-attr">"replace"</span>: {
+    <span class="hljs-attr">"Bucket"</span>: <span class="hljs-string">"cumulus-bucket"</span>,
+    <span class="hljs-attr">"Key"</span>: <span class="hljs-string">"my-large-event.json"</span>,
+    <span class="hljs-attr">"TargetPath"</span>: <span class="hljs-string">"$"</span>
+  },
+  <span class="hljs-attr">"cumulus_meta"</span>: {}
+}
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="task_config"></a><a href="#task_config" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>task_config</h4>
+<p>This configuration key contains the input/output configuration values for definition of inputs/outputs via URL paths.
+<strong>Important</strong>:  These values are all relative to json object configured for <code>event.$</code>.</p>
+<p>This configuration's behavior is outlined in the CMA step description (Cumulus Message Adapter has the following steps) below.</p>
+<p>The configuration should follow the format:</p>
+<pre><code class="hljs css language-yaml"><span class="hljs-attr">FunctionName:</span>
+<span class="hljs-attr">  Parameters:</span>
+<span class="hljs-attr">    cma:</span>
+      <span class="hljs-string">event.$:</span> <span class="hljs-string">'$'</span>
+<span class="hljs-attr">      other_cma_configuration:</span> <span class="hljs-string">'&lt;config object&gt;'</span>
+<span class="hljs-attr">      task_config:</span> <span class="hljs-string">'&lt;task config&gt;'</span>
+
+</code></pre>
+<p>Example:</p>
+<pre><code class="hljs css language-yaml"><span class="hljs-attr">StepFunction:</span>
+<span class="hljs-attr">  Parameters:</span>
+<span class="hljs-attr">    cma:</span>
+      <span class="hljs-string">event.$:</span> <span class="hljs-string">'$'</span>
+<span class="hljs-attr">      task_config:</span>
+<span class="hljs-attr">        sfnEnd:</span> <span class="hljs-literal">true</span>
+<span class="hljs-attr">        stack:</span> <span class="hljs-string">'{$.meta.stack}'</span>
+<span class="hljs-attr">        bucket:</span> <span class="hljs-string">'{$.meta.buckets.internal.name}'</span>
+<span class="hljs-attr">        stateMachine:</span> <span class="hljs-string">'{$.cumulus_meta.state_machine}'</span>
+<span class="hljs-attr">        executionName:</span> <span class="hljs-string">'{$.cumulus_meta.execution_name}'</span>
+<span class="hljs-attr">        cumulus_message:</span>
+<span class="hljs-attr">          input:</span> <span class="hljs-string">'{$}'</span>
+</code></pre>
 <h3><a class="anchor" aria-hidden="true" id="cumulus-message-adapter-has-the-following-steps"></a><a href="#cumulus-message-adapter-has-the-following-steps" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Cumulus Message Adapter has the following steps:</h3>
-<h4><a class="anchor" aria-hidden="true" id="1-resolve-url-templates-in-the-task-configuration"></a><a href="#1-resolve-url-templates-in-the-task-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>1. Resolve URL templates in the task configuration</h4>
-<p>In the workflow configuration, each task has its own configuration, and it can use URL template as a value to achieve simplicity or for values only available at execution time. The Cumulus Message Adapter resolves the URL templates and then passes message to next task. For example, given a task which has the following configuration:</p>
+<h4><a class="anchor" aria-hidden="true" id="1-reformat-aws-step-function-message-into-cumulus-message"></a><a href="#1-reformat-aws-step-function-message-into-cumulus-message" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>1. Reformat AWS Step Function message into Cumulus Message</h4>
+<p>Due to the way AWS handles Parmeterized messages, when Parameters are used the CMA takes an inbound message:</p>
+<pre><code class="hljs css language-json">{
+  <span class="hljs-attr">"resource"</span>: <span class="hljs-string">"arn:aws:lambda:us-east-1:&lt;lambda arn values&gt;"</span>,
+  <span class="hljs-attr">"input"</span>: {
+    <span class="hljs-attr">"Other Parameter"</span>: {},
+    <span class="hljs-attr">"cma"</span>: {
+      <span class="hljs-attr">"ConfigKey"</span>: {
+        <span class="hljs-attr">"config values"</span>: <span class="hljs-string">"some config values"</span>
+      },
+      <span class="hljs-attr">"event"</span>: {
+        <span class="hljs-attr">"cumulus_meta"</span>: {},
+        <span class="hljs-attr">"payload"</span>: {},
+        <span class="hljs-attr">"meta"</span>: {},
+        <span class="hljs-attr">"exception"</span>: {}
+      }
+    }
+  }
+}
+</code></pre>
+<p>and takes the following actions:</p>
+<ul>
+<li>Takes the object at <code>input.cma.event</code> and makes it the full input</li>
+<li>Merges all of the keys except <code>event</code> under <code>input.cma</code> into the parent input object</li>
+</ul>
+<p>This results in the incoming message (presumably a Cumulus message) with any cma configuration parameters merged in being passed to the CMA.    <em>All other parameterized values defined outside of the <code>cma</code> key are ignored</em></p>
+<h4><a class="anchor" aria-hidden="true" id="2-resolve-remote-messages"></a><a href="#2-resolve-remote-messages" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>2. Resolve Remote Messages</h4>
+<p>If the incoming Cumulus message has a <code>replace</code> key value, the CMA will attempt to pull the payload from S3,</p>
+<p>For example, if the incoming contains the following:</p>
+<pre><code class="hljs css language-json">  "meta": {
+    "foo": {}
+  },
+  "replace": {
+    "TargetPath": "$.meta.foo",
+    "Bucket": "some_bucket",
+    "Key": "events/some-event-id"
+  }
+</code></pre>
+<p>The CMA will attempt to pull the file stored at <code>Bucket</code>/<code>Key</code> and replace the value at <code>TargetPath</code>, then remove the <code>replace</code> object entirely and continue.</p>
+<h4><a class="anchor" aria-hidden="true" id="3-resolve-url-templates-in-the-task-configuration"></a><a href="#3-resolve-url-templates-in-the-task-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>3. Resolve URL templates in the task configuration</h4>
+<p>In the workflow configuration (defined under the <code>task_config</code> key), each task has its own configuration, and it can use URL template as a value to achieve simplicity or for values only available at execution time. The Cumulus Message Adapter resolves the URL templates (relative to the event configuration key) and then passes message to next task. For example, given a task which has the following configuration:</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-attr">    Discovery:</span>
-<span class="hljs-attr">        CumulusConfig:</span>
-<span class="hljs-attr">          provider:</span> <span class="hljs-string">'{$.meta.provider}'</span>
-<span class="hljs-attr">          inlinestr:</span> <span class="hljs-string">'prefix{meta.foo}suffix'</span>
-<span class="hljs-attr">          array:</span> <span class="hljs-string">'[$.meta.foo]'</span>
-<span class="hljs-attr">          object:</span> <span class="hljs-string">'{$.meta}'</span>
+<span class="hljs-attr">      Parameters:</span>
+<span class="hljs-attr">        cma:</span>
+          <span class="hljs-string">event.$:</span> <span class="hljs-string">'$'</span>
+<span class="hljs-attr">          task_config:</span>
+<span class="hljs-attr">            provider:</span> <span class="hljs-string">'{$.meta.provider}'</span>
+<span class="hljs-attr">              inlinestr:</span> <span class="hljs-string">'prefix{meta.foo}suffix'</span>
+<span class="hljs-attr">              array:</span> <span class="hljs-string">'{[$.meta.foo]}'</span>
+<span class="hljs-attr">              object:</span> <span class="hljs-string">'{$.meta}'</span>
+</code></pre>
+<p><em>and</em> and incoming message that contains:</p>
+<pre><code class="hljs css language-json">      "meta": {
+        "foo": "bar",
+        "provider": {
+          "id": "FOO_DAAC",
+          "anykey": "anyvalue"
+        }
+      }
 </code></pre>
 <p>The corresponding Cumulus Message would contain:</p>
 <pre><code class="hljs css language-yaml">    <span class="hljs-string">{</span>
@@ -116,13 +277,11 @@
         <span class="hljs-string">},</span>
         <span class="hljs-string">...</span>
       <span class="hljs-string">},</span>
-<span class="hljs-attr">      "workflow_config":</span> <span class="hljs-string">{</span>
-<span class="hljs-attr">        "Discovery":</span> <span class="hljs-string">{</span>
-          <span class="hljs-string">"provider: "</span><span class="hljs-string">{{$.meta.provider}}",</span>
-<span class="hljs-attr">          "inlinestr":</span> <span class="hljs-string">"prefix{meta.foo}suffix"</span><span class="hljs-string">,</span>
-<span class="hljs-attr">          "array":</span> <span class="hljs-string">"{[$.meta.foo]}"</span><span class="hljs-string">,</span>
-<span class="hljs-attr">          "object":</span> <span class="hljs-string">"<span class="hljs-template-variable">{{$.meta}}</span>"</span>
-        <span class="hljs-string">},</span>
+<span class="hljs-attr">      "task_config":</span> <span class="hljs-string">{</span>
+        <span class="hljs-string">"provider: "</span><span class="hljs-string">{$.meta.provider}",</span>
+<span class="hljs-attr">        "inlinestr":</span> <span class="hljs-string">"prefix{meta.foo}suffix"</span><span class="hljs-string">,</span>
+<span class="hljs-attr">        "array":</span> <span class="hljs-string">"{[$.meta.foo]}"</span><span class="hljs-string">,</span>
+<span class="hljs-attr">        "object":</span> <span class="hljs-string">"{$.meta}"</span>
         <span class="hljs-string">...</span>
       <span class="hljs-string">}</span>
     <span class="hljs-string">}</span>
@@ -149,30 +308,31 @@
     <span class="hljs-string">}</span>
 </code></pre>
 <p>URL template variables replace dotted paths inside curly brackets with their corresponding value. If the Cumulus Message Adapter cannot resolve a value, it will ignore the template, leaving it verbatim in the string.  While seemingly complex, this allows significant decoupling of Tasks from one another and the data that drives them. Tasks are able to easily receive runtime configuration produced by previously run tasks and domain data.</p>
-<h4><a class="anchor" aria-hidden="true" id="2-resolve-task-input"></a><a href="#2-resolve-task-input" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>2. Resolve task input</h4>
-<p>By default, the incoming payload is the payload from the previous task.  The task can also be configured to use a portion of the payload its input message.  For example, given a task specifies cumulus_message.input:</p>
+<h4><a class="anchor" aria-hidden="true" id="4-resolve-task-input"></a><a href="#4-resolve-task-input" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>4. Resolve task input</h4>
+<p>By default, the incoming payload is the payload from the previous task.  The task can also be configured to use a portion of the payload its input message.  For example, given a task specifies <code>cma.task_config.cumulus_message.input</code>:</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-attr">    ExampleTask:</span>
-<span class="hljs-attr">      CumulusConfig:</span>
-<span class="hljs-attr">        cumulus_message:</span>
-<span class="hljs-attr">            input:</span> <span class="hljs-string">'{$.payload.foo}'</span>
+<span class="hljs-attr">      Parameters:</span>
+<span class="hljs-attr">        cma:</span>
+          <span class="hljs-string">event.$:</span> <span class="hljs-string">'$'</span>
+<span class="hljs-attr">          task_config:</span>
+<span class="hljs-attr">            cumulus_message:</span>
+<span class="hljs-attr">                input:</span> <span class="hljs-string">'{$.payload.foo}'</span>
 </code></pre>
 <p>The task configuration in the message would be:</p>
-<pre><code class="hljs css language-yaml">    <span class="hljs-string">{</span>
-<span class="hljs-attr">      "workflow_config":</span> <span class="hljs-string">{</span>
-<span class="hljs-attr">        "ExampleTask":</span> <span class="hljs-string">{</span>
-<span class="hljs-attr">          "cumulus_message":</span> <span class="hljs-string">{</span>
-<span class="hljs-attr">            "input":</span> <span class="hljs-string">"<span class="hljs-template-variable">{{$.payload.foo}}</span>"</span>
-          <span class="hljs-string">}</span>
-        <span class="hljs-string">}</span>
-      <span class="hljs-string">},</span>
-<span class="hljs-attr">      "payload":</span> <span class="hljs-string">{</span>
-<span class="hljs-attr">        "foo":</span> <span class="hljs-string">{</span>
-<span class="hljs-attr">          "anykey":</span> <span class="hljs-string">"anyvalue"</span>
-        <span class="hljs-string">}</span>
-      <span class="hljs-string">}</span>
-    <span class="hljs-string">}</span>
+<pre><code class="hljs css language-json">    {
+      <span class="hljs-attr">"task_config"</span>: {
+        <span class="hljs-attr">"cumulus_message"</span>: {
+          <span class="hljs-attr">"input"</span>: <span class="hljs-string">"{$.payload.foo}"</span>
+        }
+      },
+      <span class="hljs-attr">"payload"</span>: {
+        <span class="hljs-attr">"foo"</span>: {
+          <span class="hljs-attr">"anykey"</span>: <span class="hljs-string">"anyvalue"</span>
+        }
+      }
+    }
 </code></pre>
-<p>The Cumulus Message Adapter will resolve the task input, instead of sending the whole <code>&quot;payload&quot;</code> as task input, the task input would be:</p>
+<p>The Cumulus Message Adapter will resolve the task input, instead of sending the whole <code>payload</code> as task input, the task input would be:</p>
 <pre><code class="hljs css language-yaml">    <span class="hljs-string">{</span>
       <span class="hljs-string">"input"</span> <span class="hljs-string">:</span> <span class="hljs-string">{</span>
 <span class="hljs-attr">        "anykey":</span> <span class="hljs-string">"anyvalue"</span>
@@ -180,82 +340,130 @@
 <span class="hljs-attr">      "config":</span> <span class="hljs-string">{...}</span>
     <span class="hljs-string">}</span>
 </code></pre>
-<h4><a class="anchor" aria-hidden="true" id="3-resolve-task-output"></a><a href="#3-resolve-task-output" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>3. Resolve task output</h4>
-<p>By default, the task's return value is the next payload.  However, the workflow task configuration can specify a portion of the return value as the next payload, and can also augment values to other fields. Based on the task configuration under <code>cumulus_message.outputs</code>, the Message Adapter uses a task's return value to output a message as configured by the task-specific config defined under <code>workflow_config</code>. The Message Adapter dispatches a &quot;source&quot; to a &quot;destination&quot; as defined by URL templates stored in the task-specific <code>cumulus_message.outputs</code>. The value of the task's return value at the &quot;source&quot; URL is used to create or replace the value of the task's return value at the &quot;destination&quot; URL. For example, given a task specifies cumulus_message.output in its workflow configuration as follows:</p>
+<h4><a class="anchor" aria-hidden="true" id="5-resolve-task-output"></a><a href="#5-resolve-task-output" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>5. Resolve task output</h4>
+<p>By default, the task's return value is the next payload.  However, the workflow task configuration can specify a portion of the return value as the next payload, and can also augment values to other fields. Based on the task configuration under <code>cma.task_config.cumulus_message.outputs</code>, the Message Adapter uses a task's return value to output a message as configured by the task-specific config defined under <code>cma.task_config</code>. The Message Adapter dispatches a &quot;source&quot; to a &quot;destination&quot; as defined by URL templates stored in the task-specific <code>cumulus_message.outputs</code>. The value of the task's return value at the &quot;source&quot; URL is used to create or replace the value of the task's return value at the &quot;destination&quot; URL. For example, given a task specifies cumulus_message.output in its workflow configuration as follows:</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-attr">    ExampleTask:</span>
-<span class="hljs-attr">      CumulusConfig:</span>
-<span class="hljs-attr">        cumulus_message:</span>
-<span class="hljs-attr">            outputs:</span>
-<span class="hljs-attr">              - source:</span> <span class="hljs-string">'{$}'</span>
-<span class="hljs-attr">                destination:</span> <span class="hljs-string">'{$.payload}'</span>
-<span class="hljs-attr">              - source:</span> <span class="hljs-string">'{$.output.anykey}'</span>
-<span class="hljs-attr">                destination:</span> <span class="hljs-string">'{$.meta.baz}'</span>
+<span class="hljs-attr">      Parameters:</span>
+<span class="hljs-attr">        cma:</span>
+          <span class="hljs-string">event.$:</span> <span class="hljs-string">'$'</span>
+<span class="hljs-attr">          task_config:</span>
+<span class="hljs-attr">            cumulus_message:</span>
+<span class="hljs-attr">                outputs:</span>
+<span class="hljs-attr">                  - source:</span> <span class="hljs-string">'{$}'</span>
+<span class="hljs-attr">                    destination:</span> <span class="hljs-string">'{$.payload}'</span>
+<span class="hljs-attr">                  - source:</span> <span class="hljs-string">'{$.output.anykey}'</span>
+<span class="hljs-attr">                    destination:</span> <span class="hljs-string">'{$.meta.baz}'</span>
 </code></pre>
 <p>The corresponding Cumulus Message would be:</p>
-<pre><code class="hljs css language-yaml">    <span class="hljs-string">{</span>
-<span class="hljs-attr">      "workflow_config":</span> <span class="hljs-string">{</span>
-<span class="hljs-attr">        "ExampleTask":</span> <span class="hljs-string">{</span>
-<span class="hljs-attr">          "cumulus_message":</span> <span class="hljs-string">{</span>
-<span class="hljs-attr">            "outputs":</span> <span class="hljs-string">[</span>
-              <span class="hljs-string">{</span>
-<span class="hljs-attr">                "source":</span> <span class="hljs-string">"<span class="hljs-template-variable">{{$}}</span>"</span><span class="hljs-string">,</span>
-<span class="hljs-attr">                "destination":</span> <span class="hljs-string">"<span class="hljs-template-variable">{{$.payload}}</span>"</span>
-              <span class="hljs-string">},</span>
-              <span class="hljs-string">{</span>
-<span class="hljs-attr">                "source":</span> <span class="hljs-string">"<span class="hljs-template-variable">{{$.output.anykey}}</span>"</span><span class="hljs-string">,</span>
-<span class="hljs-attr">                "destination":</span> <span class="hljs-string">"<span class="hljs-template-variable">{{$.meta.baz}}</span>"</span>
-              <span class="hljs-string">}</span>
-            <span class="hljs-string">]</span>
-          <span class="hljs-string">}</span>
-        <span class="hljs-string">}</span>
-      <span class="hljs-string">},</span>
-<span class="hljs-attr">      "meta":</span> <span class="hljs-string">{</span>
-<span class="hljs-attr">        "foo":</span> <span class="hljs-string">"bar"</span>
-      <span class="hljs-string">},</span>
-<span class="hljs-attr">      "payload":</span> <span class="hljs-string">{</span>
-<span class="hljs-attr">        "anykey":</span> <span class="hljs-string">"anyvalue"</span>
-      <span class="hljs-string">}</span>
-    <span class="hljs-string">}</span>
+<pre><code class="hljs css language-json">    {
+      <span class="hljs-attr">"task_config"</span>: {
+        <span class="hljs-attr">"cumulus_message"</span>: {
+          <span class="hljs-attr">"outputs"</span>: [
+            {
+              <span class="hljs-attr">"source"</span>: <span class="hljs-string">"{$}"</span>,
+              <span class="hljs-attr">"destination"</span>: <span class="hljs-string">"{$.payload}"</span>
+            },
+            {
+              <span class="hljs-attr">"source"</span>: <span class="hljs-string">"{$.output.anykey}"</span>,
+              <span class="hljs-attr">"destination"</span>: <span class="hljs-string">"{$.meta.baz}"</span>
+            }
+          ]
+        }
+      },
+      <span class="hljs-attr">"meta"</span>: {
+        <span class="hljs-attr">"foo"</span>: <span class="hljs-string">"bar"</span>
+      },
+      <span class="hljs-attr">"payload"</span>: {
+        <span class="hljs-attr">"anykey"</span>: <span class="hljs-string">"anyvalue"</span>
+      }
+    }
 </code></pre>
 <p>Given the response from the task is:</p>
-<pre><code class="hljs css language-yaml">    <span class="hljs-string">{</span>
-<span class="hljs-attr">      "output":</span> <span class="hljs-string">{</span>
-<span class="hljs-attr">          "anykey":</span> <span class="hljs-string">"boo"</span>
-      <span class="hljs-string">}</span>
-    <span class="hljs-string">}</span>
+<pre><code class="hljs css language-json">    {
+      <span class="hljs-attr">"output"</span>: {
+          <span class="hljs-attr">"anykey"</span>: <span class="hljs-string">"boo"</span>
+      }
+    }
 </code></pre>
 <p>The Cumulus Message Adapter would output the following Cumulus Message:</p>
-<pre><code class="hljs css language-yaml">    <span class="hljs-string">{</span>
-<span class="hljs-attr">      "workflow_config":</span> <span class="hljs-string">{</span>
-<span class="hljs-attr">        "ExampleTask":</span> <span class="hljs-string">{</span>
-<span class="hljs-attr">          "cumulus_message":</span> <span class="hljs-string">{</span>
-<span class="hljs-attr">            "outputs":</span> <span class="hljs-string">[</span>
-              <span class="hljs-string">{</span>
-<span class="hljs-attr">                "source":</span> <span class="hljs-string">"<span class="hljs-template-variable">{{$}}</span>"</span><span class="hljs-string">,</span>
-<span class="hljs-attr">                "destination":</span> <span class="hljs-string">"<span class="hljs-template-variable">{{$.payload}}</span>"</span>
-              <span class="hljs-string">},</span>
-              <span class="hljs-string">{</span>
-<span class="hljs-attr">                "source":</span> <span class="hljs-string">"<span class="hljs-template-variable">{{$.output.anykey}}</span>"</span><span class="hljs-string">,</span>
-<span class="hljs-attr">                "destination":</span> <span class="hljs-string">"<span class="hljs-template-variable">{{$.meta.baz}}</span>"</span>
-              <span class="hljs-string">}</span>
-            <span class="hljs-string">]</span>
-          <span class="hljs-string">}</span>
-        <span class="hljs-string">}</span>
-      <span class="hljs-string">},</span>
-<span class="hljs-attr">      "meta":</span> <span class="hljs-string">{</span>
-<span class="hljs-attr">        "foo":</span> <span class="hljs-string">"bar"</span><span class="hljs-string">,</span>
-<span class="hljs-attr">        "baz":</span> <span class="hljs-string">"boo"</span>
-      <span class="hljs-string">},</span>
-<span class="hljs-attr">      "payload":</span> <span class="hljs-string">{</span>
-<span class="hljs-attr">        "output":</span> <span class="hljs-string">{</span>
-<span class="hljs-attr">          "anykey":</span> <span class="hljs-string">"boo"</span>
-        <span class="hljs-string">}</span>
-      <span class="hljs-string">}</span>
-    <span class="hljs-string">}</span>
+<pre><code class="hljs css language-json">    {
+      <span class="hljs-attr">"task_config"</span>: {
+          <span class="hljs-attr">"cumulus_message"</span>: {
+            <span class="hljs-attr">"outputs"</span>: [
+              {
+                <span class="hljs-attr">"source"</span>: <span class="hljs-string">"{$}"</span>,
+                <span class="hljs-attr">"destination"</span>: <span class="hljs-string">"{$.payload}"</span>
+              },
+              {
+                <span class="hljs-attr">"source"</span>: <span class="hljs-string">"{$.output.anykey}"</span>,
+                <span class="hljs-attr">"destination"</span>: <span class="hljs-string">"{$.meta.baz}"</span>
+              }
+            ]
+          }
+      },
+      <span class="hljs-attr">"meta"</span>: {
+        <span class="hljs-attr">"foo"</span>: <span class="hljs-string">"bar"</span>,
+        <span class="hljs-attr">"baz"</span>: <span class="hljs-string">"boo"</span>
+      },
+      <span class="hljs-attr">"payload"</span>: {
+        <span class="hljs-attr">"output"</span>: {
+          <span class="hljs-attr">"anykey"</span>: <span class="hljs-string">"boo"</span>
+        }
+      }
+    }
 </code></pre>
-<h4><a class="anchor" aria-hidden="true" id="4-validate-task-input-output-and-configuration-messages-against-the-schemas-provided"></a><a href="#4-validate-task-input-output-and-configuration-messages-against-the-schemas-provided" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>4. Validate task input, output and configuration messages against the schemas provided.</h4>
+<h4><a class="anchor" aria-hidden="true" id="6-apply-remote-message-configuration"></a><a href="#6-apply-remote-message-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>6. Apply Remote Message Configuration</h4>
+<p>If the <code>ReplaceConfig</code> configuration parameter is defined, the CMA will evaluate the configuration options provided, and if required write a portion of the Cumulus Message to S3, and add a <code>replace</code> key to the message for future steps to utilize.</p>
+<p><strong><em>Please Note</em></strong>: the non user-modifiable field <code>cumulus-meta</code> will always be retained, regardless of the configuration.</p>
+<p>For example, if the output message (post output configuration) from a cumulus message looks like:</p>
+<pre><code class="hljs css language-json">    {
+      <span class="hljs-attr">"cumulus_meta"</span>: {
+        <span class="hljs-attr">"some_key"</span>: <span class="hljs-string">"some_value"</span>
+      },
+      <span class="hljs-attr">"ReplaceConfig"</span>: {
+        <span class="hljs-attr">"FullMessage"</span>: <span class="hljs-literal">true</span>
+      },
+      <span class="hljs-attr">"task_config"</span>: {
+        <span class="hljs-attr">"cumulus_message"</span>: {
+          <span class="hljs-attr">"outputs"</span>: [
+            {
+              <span class="hljs-attr">"source"</span>: <span class="hljs-string">"{$}"</span>,
+              <span class="hljs-attr">"destination"</span>: <span class="hljs-string">"{$.payload}"</span>
+            },
+            {
+              <span class="hljs-attr">"source"</span>: <span class="hljs-string">"{$.output.anykey}"</span>,
+              <span class="hljs-attr">"destination"</span>: <span class="hljs-string">"{$.meta.baz}"</span>
+            }
+          ]
+        }
+      },
+      <span class="hljs-attr">"meta"</span>: {
+        <span class="hljs-attr">"foo"</span>: <span class="hljs-string">"bar"</span>,
+        <span class="hljs-attr">"baz"</span>: <span class="hljs-string">"boo"</span>
+      },
+      <span class="hljs-attr">"payload"</span>: {
+        <span class="hljs-attr">"output"</span>: {
+          <span class="hljs-attr">"anykey"</span>: <span class="hljs-string">"boo"</span>
+        }
+      }
+    }
+</code></pre>
+<p>the resultant output would look like:</p>
+<pre><code class="hljs css language-json">{
+  <span class="hljs-attr">"cumulus_meta"</span>: {
+    <span class="hljs-attr">"some_key"</span>: <span class="hljs-string">"some_value"</span>
+  },
+  <span class="hljs-attr">"replace"</span>: {
+    <span class="hljs-attr">"TargetPath"</span>: <span class="hljs-string">"$"</span>,
+    <span class="hljs-attr">"Bucket"</span>: <span class="hljs-string">"some-internal-bucket"</span>,
+    <span class="hljs-attr">"Key"</span>: <span class="hljs-string">"events/some-event-id"</span>
+  }
+}
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="additional-features"></a><a href="#additional-features" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Additional Features:</h3>
+<h4><a class="anchor" aria-hidden="true" id="validate-task-input-output-and-configuration-messages-against-the-schemas-provided"></a><a href="#validate-task-input-output-and-configuration-messages-against-the-schemas-provided" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Validate task input, output and configuration messages against the schemas provided.</h4>
 <p>The Cumulus Message Adapter has the capability to validate task input, output and configuration messages against their schemas.  The default location of the schemas is the schemas folder in the top level of the task and the default filenames are input.json, output.json, and config.json. The task can also configure a different schema location.  If no schema can be found, the Cumulus Message Adapter will not validate the messages.</p>
-</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cumulus/docs/next/workflows/protocol"><span class="arrow-prev">← </span><span>Workflow Protocol</span></a><a class="docs-next button" href="/cumulus/docs/next/workflows/cumulus-task-message-flow"><span>Cumulus Tasks: Message Flow</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#general-structure">General Structure</a></li><li><a href="#cumulus-message-adapter">Cumulus Message Adapter</a><ul class="toc-headings"><li><a href="#cma-input-output">CMA Input/Output</a></li><li><a href="#cumulus-message-adapter-has-the-following-steps">Cumulus Message Adapter has the following steps:</a></li></ul></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cumulus/docs/next/workflows/protocol"><span class="arrow-prev">← </span><span>Workflow Protocol</span></a><a class="docs-next button" href="/cumulus/docs/next/workflows/cumulus-task-message-flow"><span>Cumulus Tasks: Message Flow</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#general-structure">General Structure</a></li><li><a href="#cumulus-message-adapter">Cumulus Message Adapter</a><ul class="toc-headings"><li><a href="#cma-input-output">CMA Input/Output</a></li><li><a href="#cma-configuration">CMA configuration</a></li><li><a href="#cumulus-message-adapter-has-the-following-steps">Cumulus Message Adapter has the following steps:</a></li><li><a href="#additional-features">Additional Features:</a></li></ul></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;
