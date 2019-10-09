@@ -171,7 +171,7 @@ https://abc123.execute-api.us-east-1.amazonaws.com:7000/DEV/my-protected/path/to
 
 An S3 Access lambda is needed in the us-west-2 region to run the integration tests. To initially create the lambda, run:
 
-```
+```bash
 aws lambda create-function --region us-west-2  --function-name <STACK>-S3AccessTest --zip-file fileb://app/build/cloudformation/<ZIP>-S3AccessTest.zip  --role arn:aws:iam::<AWS_ACCOUNT_ID>:role/<PREFIX>-lambda-processing  --handler index.handler --runtime nodejs8.10 --profile <NGAP Profile>
 ```
 
@@ -179,7 +179,7 @@ Replace `<AWS_ACCOUNT_ID>` with your account Id, `<STACK>` with your stack name,
 
 If you need, after the initial creation of this lambda, you can update it by running:
 
-```
+```bash
 ./node_modules/.bin/kes lambda S3AccessTest deploy --kes-folder app --template node_modules/@cumulus/deployment/app --deployment <deployment> --region us-west-2 --profile < NGAP Profile >
 ```
 
@@ -195,11 +195,12 @@ A fake server is required for tests testing FTP/HTTP/HTTPS discover and download
 
 The Cloudformation template for the fake data server is in `fake-server.yml`. To setup the fake server run:
 
-```
+```bash
 aws cloudformation deploy --template-file fake-server.yml --stack-name <stack-name> --parameter-overrides VpcId=<vpc-XXXXX> SubnetId=<subnet-XXXXXX> AZone=<az-zone> Ngap=true --capabilities CAPABILITY_NAMED_IAM
 ```
 
-with the following parameters
+with the following parameters:
+
 * stack-name - stack name for the fake server
 * VpcId - vpc id
 * SubnetId - subent id
