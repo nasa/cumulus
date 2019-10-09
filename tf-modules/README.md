@@ -31,10 +31,10 @@ If you want to test deploying your module by itself, you can follow these steps:
 
 To include a module as a submodule:
 
-1. Add any variables necessary to support the child module to the parent module's `variables.tf` file so that variables can be passed through the parent module into the child module
+1. Add any variables necessary to support the submodule to the parent module's `variables.tf` file so that variables can be passed through the parent module into the submodule
     - Update the parent module's `terraform.tfvars.sample` file to reflect any new variables
-2. Add or update a `.tf` file in the parent module to include the child module. Pass through the necessary variables from the parent module to the child module.
-3. If necessary, add any outputs from the child module that should also be output from the parent module to the parent module's `outputs.tf` file
+2. Add or update a `.tf` file in the parent module to include the submodule. Pass through the necessary variables from the parent module to the submodule.
+3. If necessary, add any outputs from the submodule that should also be output from the parent module to the parent module's `outputs.tf` file
 
 ### Integrating a submodule with the Cumulus module
 
@@ -44,7 +44,7 @@ Follow the steps above to add a submodule to the Cumulus module.
 
 ### Integrating a submodule with the example Cumulus deployment
 
-If you have already added the module to the [Cumulus module](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus), then it will automatically be included in the [example Cumulus deployment](https://github.com/nasa/cumulus/tree/master/example/cumulus-tf).
+If you have already added a submodule to the [Cumulus module](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus), then it will automatically be included in the [example Cumulus deployment](https://github.com/nasa/cumulus/tree/master/example/cumulus-tf).
 
 If the module should not be included in the Cumulus module, for example if it is not providing core Cumulus functionality, then follow the steps above to include it directly as a submodule in the example Cumulus deployment.
 
