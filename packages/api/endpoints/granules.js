@@ -183,61 +183,29 @@ async function get(req, res) {
 }
 
 async function bulk(req, res) {
-  const data = req.body
-  console.log(req.body);
+  const payload = req.body
+  console.log(payload);
 
-  // In practice this is going to change - page through results and queue
-  // send request to Kibana
-  const query = data.query;
-  const index = data.index;
-  const response = {
-    hits: {
-      hits: [
-        { "name": "jacob", "dr": "dre", "granuleId": "L2_HR_PIXC_product_0001-of-4154" },
-        { "name": "bocaj", "who": "are you", "granuleId": "MOD09GQ.A5252833.awVbJG.006.4578722030158" }
-      ]
-    }
-  };
-  const hits = response.hits.hits;
-  console.log(response);
+  const asyncOperationModel = new models.AsyncOperation({
+    stackName: process.env.stackName,
+    systemBucket: process.env.system_bucket,
+    tableName: process.env.AsyncOperationsTable
+  });
 
-  // add the response to a priority SQS queue
-  const queueName = data.queueName;
-  const workflowName = data.workflowName;
-  const granuleModelClient = new models.Granule();
+  try {
+    const asyncOperation = await asyncOperationModel.start({
+      asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+      cluster: process.env.EcsCluster,
+      lambdaName: process.env.bulkOperationLambda,
+      payload: { payload, type: 'BULK_GRANULE'},
+      esHost: process.env.ES_HOST
+    });
+    res.send(`On my wings! Workflow ${queueName}. \nResponse: ${asyncOperation.id}`);
+  } catch (err) {
+    if (err.name !== 'EcsStartTaskError') throw err;
 
-  // const client = new elasticsearch.Client({
-  //   host: [
-  //     {
-  //       host: process.env.METRICS_ES_HOST,
-  //       auth: process.env.METRICS_ES_AUTH,
-  //       protocol: 'https',
-  //       port: 443
-  //     }
-  //   ]
-  // });
-
-  // const result = await client.search({
-  //   index: index,
-  //   body: query
-  // });
-
-  // console.log(result);
-
-  // const applyWorkflowRequests = response.filter((item) => item._source.granuleId)
-  //   .map(async (item) => {
-  //     const granule = await granuleModelClient.get({ granuleId: item._source.granuleId });
-  //     return granuleModelClient.applyWorkflow(granule, workflowName, queueName);
-  //   });
-
-  const applyWorkflowRequests = hits.filter((item) => item.granuleId)
-      .map(async (item) => {
-        const granule = await granuleModelClient.get({ granuleId: item.granuleId });
-        return granuleModelClient.applyWorkflow(granule, workflowName, queueName);
-      });
-
-  await Promise.all(applyWorkflowRequests);
-  res.send(`On my wings! Workflow ${queueName}. \nResponse: ${JSON.stringify(response)}`);
+    return res.boom.serverUnavailable(`Failed to run ECS task: ${err.message}`);
+  }
 }
 
 router.get('/:granuleName', get);

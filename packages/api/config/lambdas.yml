@@ -280,3 +280,15 @@ reportPdrs:
   launchInVpc: true
   tables:
     - PdrsTable
+
+BulkOperation:
+  handler: index.handler
+  timeout: 300
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist/bulkOperation/'
+  launchInVpc: true
+  envs:
+    GranulesTable:
+      function: Ref
+      value: GranulesTableDynamoDB
+    system_bucket: '{{parent.system_bucket}}'

@@ -8,6 +8,7 @@ module.exports = {
     app: './app/index.js',
     bootstrap: './lambdas/bootstrap.js',
     bulkDelete: './lambdas/bulk-delete.js',
+    bulkOperation: './lambdas/bulk-operation.js',
     cleanExecutions: './lambdas/cleanExecutions.js',
     createReconciliationReport: './lambdas/create-reconciliation-report.js',
     dbIndexer: './lambdas/db-indexer.js',

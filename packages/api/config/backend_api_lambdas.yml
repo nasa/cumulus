@@ -86,6 +86,9 @@ ApiEndpoints:
     IndexFromDatabaseLambda:
       function: Ref
       value: IndexFromDatabaseLambdaFunctionArn
+    BulkOperationLambda:
+      function: Ref
+      value: BulkOperationLambdaFunctionArn
     STSCredentialsLambda: '{{parent.sts_credentials_lambda}}'
     cmr_provider: '{{parent.cmr.provider}}'
     cmr_client_id: '{{parent.cmr.clientId}}'
