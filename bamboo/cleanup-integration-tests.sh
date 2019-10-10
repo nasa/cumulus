@@ -2,6 +2,8 @@
 set -ex
 . ./bamboo/abort-if-skip-integration-tests.sh
 . ./bamboo/abort-if-not-pr-or-redeployment.sh
+. ./bamboo/abort-if-terraform-branch.sh
+
 
 npm install
 . ./bamboo/set-bamboo-env-variables.sh
