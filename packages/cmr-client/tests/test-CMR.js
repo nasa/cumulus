@@ -5,8 +5,22 @@ const nock = require('nock');
 const some = require('lodash.some');
 
 const CMR = require('../CMR');
+const ValidationError = require('../ValidationError');
 
-test('CMR.searchCollection handles paging correctly.', async (t) => {
+test.before(() => {
+  nock.disableNetConnect();
+  nock.enableNetConnect('127.0.0.1');
+});
+
+test.afterEach.always(() => {
+  nock.cleanAll();
+});
+
+test.after.always(() => {
+  nock.enableNetConnect();
+});
+
+test.serial('CMR.searchCollection handles paging correctly.', async (t) => {
   const headers = { 'cmr-hits': 6 };
   const body1 = '{"feed":{"updated":"sometime","id":"someurl","title":"fake Cmr Results","entry":[{"cmrEntry1":"data1"}, {"cmrEntry2":"data2"}]}}';
   const body2 = '{"feed":{"updated":"anothertime","id":"another url","title":"more Results","entry":[{"cmrEntry3":"data3"}, {"cmrEntry4":"data4"}]}}';
@@ -71,4 +85,28 @@ test('getHeaders returns correct Content-type for xml metadata by default', (t) 
   t.is(headers['Content-type'], 'application/echo10+xml');
   t.is(headers['Client-Id'], 'clientID');
   t.is(headers.Accept, undefined);
+});
+
+test.only('ingestUMMGranule() throws an exception if the input fails validation', async (t) => {
+  const cmrSearch = new CMR({ provider: 'my-provider', token: 'abc' });
+
+  const ummgMetadata = { GranuleUR: 'asdf' };
+
+  const ummValidationError = {
+    errors: [
+      {
+        path: ['Temporal'],
+        errors: ['oh snap']
+      }
+    ]
+  };
+
+  nock('https://cmr.sit.earthdata.nasa.gov')
+    .post(`/ingest/providers/${cmrSearch.provider}/validate/granule/${ummgMetadata.GranuleUR}`)
+    .reply(422, ummValidationError);
+
+  await t.throwsAsync(
+    () => cmrSearch.ingestUMMGranule(ummgMetadata),
+    ValidationError
+  );
 });
