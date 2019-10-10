@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-1574**
+  - Added `GET /token` endpoint for SAML authorization when cumulus is protected by Launchpad.
+    This lets a user retieve a token by hand that can be presented to the API.
+
 ## [v1.14.2] - 2019-10-08
 
 ### BREAKING CHANGES
@@ -27,7 +33,6 @@ Your Cumulus Message Adapter version should be pinned to `v1.0.13` or lower in y
         ReplaceConfig:
           FullMessage: true
   ```
-
   Accepted fields in `ReplaceConfig` include `MaxSize`, `FullMessage`, `Path` and `TargetPath`.
   See https://github.com/nasa/cumulus-message-adapter/blob/master/CONTRACT.md#remote-message-configuration for full details.
 
@@ -61,7 +66,6 @@ Your Cumulus Message Adapter version should be pinned to `v1.0.13` or lower in y
             - `GET /saml/login` - starting point for SAML SSO creates the login request url and redirects to the SAML Identity Provider Service (IDP)
             - `POST /saml/auth` - SAML Assertion Consumer Service.  POST receiver from SAML IDP.  Validates response, logs the user in, and returnes a SAML-based JWT.
          - Disabled endpoints
-            - `GET /token`
             - `POST /refresh`
           - Changes authorization worklow:
            - `ensureAuthorized` now presumes the bearer token is a JWT and tries to validate.  If the token is malformed, it attempts to validate the token against Launchpad.  This allows users to bring their own token as described here https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication.  But it also allows dashboard users to manually authenticate via Launchpad SAML to receive a Launchpad-based JWT.
