@@ -30,7 +30,6 @@ resource "aws_lambda_function" "async_operation_success" {
   }
 }
 
-
 resource "aws_lambda_function" "sns_s3_test" {
   function_name    = "${var.prefix}-SnsS3Test"
   filename         = "${path.module}/../lambdas/snsS3Test/lambda.zip"
@@ -38,6 +37,13 @@ resource "aws_lambda_function" "sns_s3_test" {
   handler          = "index.handler"
   role             = module.cumulus.lambda_processing_role_arn
   runtime          = "nodejs8.10"
+
+  environment {
+    variables = {
+      system_bucket = var.system_bucket
+      stackName     = var.prefix
+    }
+  }
 
   tags = local.default_tags
 

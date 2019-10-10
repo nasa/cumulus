@@ -32,7 +32,8 @@
   "ava": {
     "files": [
       "tests/**"
-    ]
+    ],
+    "verbose": true
   },
   "nyc": {
     "exclude": [
@@ -60,6 +61,7 @@
     "lodash.compact": "^3.0.1",
     "lodash.curry": "^4.1.1",
     "lodash.findkey": "^4.6.0",
+    "lodash.flow": "^3.5.0",
     "lodash.flowright": "^3.5.0",
     "lodash.get": "^4.4.2",
     "lodash.isfunction": "^3.0.9",
