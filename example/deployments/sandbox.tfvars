@@ -26,3 +26,4 @@ s3_replicator_config = {
   target_bucket = ""
   target_prefix = ""
 }
+system_bucket="cumulus-test-sandbox-internal"
