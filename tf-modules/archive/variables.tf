@@ -261,5 +261,5 @@ variable "non_complete_execution_payload_timeout" {
 }
 
 variable "region" {
-  type    = string
+  type = string
 }

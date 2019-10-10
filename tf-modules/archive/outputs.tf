@@ -21,3 +21,7 @@ output "sftracker_sns_topic_arn" {
 output "log2elasticsearch_lambda_function_arn" {
   value = aws_lambda_function.log2elasticsearch.arn
 }
+
+output "report_executions_sns_topic_arn" {
+  value = aws_sns_topic.report_executions_topic.arn
+}

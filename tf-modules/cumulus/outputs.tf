@@ -27,7 +27,7 @@ output "sftracker_sns_topic_arn" {
 }
 
 output "report_executions_sns_topic_arn" {
-  value = module.ingest.report_executions_sns_topic_arn
+  value = module.archive.report_executions_sns_topic_arn
 }
 
 # Cumulus core task outputs

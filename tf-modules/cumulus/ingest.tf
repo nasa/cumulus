@@ -41,4 +41,6 @@ module "ingest" {
   log2elasticsearch_lambda_function_arn = module.archive.log2elasticsearch_lambda_function_arn
 
   queue_execution_limits = var.queue_execution_limits
+
+  report_executions_sns_topic_arn = module.archive.report_executions_sns_topic_arn
 }
