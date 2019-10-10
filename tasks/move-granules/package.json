@@ -30,7 +30,8 @@
       "tests/*.js"
     ],
     "fail-fast": true,
-    "serial": true
+    "serial": true,
+    "verbose": true
   },
   "nyc": {
     "exclude": [

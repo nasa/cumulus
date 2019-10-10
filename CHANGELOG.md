@@ -32,10 +32,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   https://github.com/nasa/cumulus-message-adapter/blob/master/CONTRACT.md#remote-message-configuration
   for full details.
 
+  Accepted fields in `ReplaceConfig` include `MaxSize`, `FullMessage`, `Path`
+  and `TargetPath`. See
+  https://github.com/nasa/cumulus-message-adapter/blob/master/CONTRACT.md#remote-message-configuration
+  for full details.
+
   As this change is backward compatible in Cumulus Core, users wishing to
   utilize the previous version of the CMA may opt to transition to using a CMA
   lambda layer, or set `message_adapter_version` in their configuration to a
   version prior to v1.1.0.
+
+- **CUMULUS-1449** - Cumulus now uses a universal workflow template when
+  starting workflow that contains general information specific to the
+  deployment, but not specific to the workflow. Workflow task configs must be
+  defined using AWS step function parameters. As part of this change,
+  `CumulusConfig` has been retired and task configs must now be defined under
+  the `cma.task_config` key in the Parameters section of a step function
+  definition.
 
 - **CUMULUS-1449** - Cumulus now uses a universal workflow template when
   starting workflow that contains general information specific to the
@@ -60,7 +73,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
       stack: '{$.meta.stack}'
   ```
 
-  Instead, use AWS Parameters to pass `task_config` for the task directly into the Cumulus Message Adapter:
+  Instead, use AWS Parameters to pass `task_config` for the task directly into
+  the Cumulus Message Adapter:
 
   ```yaml
   ParsePdr:
@@ -104,6 +118,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1435**
   - Added `tf-modules/monitoring` Terraform module which includes cloudwatch dashboard
     - Added Elasticsearch Service alarms to the cloudwatch dashboard
+
+- **CUMULUS-1574**
+  - Added `GET /token` endpoint for SAML authorization when cumulus is protected by Launchpad.
+    This lets a user retieve a token by hand that can be presented to the API.
+
 - **CUMULUS-1394**
   - Added `Granule.generateGranuleRecord()` method to granules model to generate a granule database record from a Cumulus execution message
   - Added `Pdr.generatePdrRecord()` method to PDRs model to generate a granule database record from a Cumulus execution message
@@ -122,13 +141,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
             - `GET /saml/login` - starting point for SAML SSO creates the login request url and redirects to the SAML Identity Provider Service (IDP)
             - `POST /saml/auth` - SAML Assertion Consumer Service.  POST receiver from SAML IDP.  Validates response, logs the user in, and returnes a SAML-based JWT.
          - Disabled endpoints
-            - `GET /token`
             - `POST /refresh`
           - Changes authorization worklow:
            - `ensureAuthorized` now presumes the bearer token is a JWT and tries to validate.  If the token is malformed, it attempts to validate the token against Launchpad.  This allows users to bring their own token as described here https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication.  But it also allows dashboard users to manually authenticate via Launchpad SAML to receive a Launchpad-based JWT.
 
 
 ### Changed
+
+- **CUMULUS-1485** Update `@cumulus/cmr-client` to return error message from CMR for validation failures.
 
 - **CUMULUS-1394**
   - Renamed `Execution.generateDocFromPayload()` to `Execution.generateRecord()` on executions model. The method generates an execution database record from a Cumulus execution message.
