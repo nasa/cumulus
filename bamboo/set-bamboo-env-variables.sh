@@ -100,15 +100,16 @@ fi
 ## Set integration stack name if it's not been overridden *or* set by SIT
 if [[ -z $DEPLOYMENT ]]; then
   DEPLOYMENT=$(node ./bamboo/select-stack.js)
+
+  if [[ $KES_DEPLOYMENT != true ]]; then
+    echo "Using terraform stack name $DEPLOYMENT-tf"
+    DEPLOYMENT=$DEPLOYMENT-tf
+  fi
+
   echo deployment "$DEPLOYMENT"
   if [[ $DEPLOYMENT == none ]]; then
     echo "Unable to determine integration stack" >&2
     exit 1
-  fi
-  if [[ $COMMIT_MESSAGE =~ deploy-terraform || $BRANCH =~ terraform ]]; then
-    echo "Detected terraform deployment branch or commit"
-    echo deployment "$DEPLOYMENT-tf"
-    DEPLOYMENT="$DEPLOYMENT-tf"
   fi
   echo export DEPLOYMENT=$DEPLOYMENT >> .bamboo_env_vars
 fi

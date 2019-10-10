@@ -1,4 +1,23 @@
 prefix            = "jl-tf"
-protected_buckets = ["jl-test-integration-protected", "jl-test-integration-protected-2"]
-public_buckets    = ["jl-test-integration-public"]
-private_buckets   = ["jl-test-integration-private"]
+buckets = {
+  internal = {
+    name = "jl-test-integration-internal"
+    type = "internal"
+  }
+  private = {
+    name = "jl-test-integration-private"
+    type = "private"
+  },
+  protected = {
+    name = "jl-test-integration-protected"
+    type = "protected"
+  },
+  protected-2 = {
+    name = "jl-test-integration-protected-2"
+    type = "protected"
+  },
+  public = {
+    name = "jl-test-integration-public"
+    type = "public"
+  }
+}
