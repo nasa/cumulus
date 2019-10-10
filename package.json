@@ -11,12 +11,12 @@
     "remove-locks": "lerna exec 'rm package-lock.json'",
     "install-locks": "lerna exec 'npm i --package-lock-only --no-audit' --parallel --no-sort",
     "lint": "eslint example packages/api packages/checksum packages/cmrjs packages/cmr-client packages/common packages/deployment packages/ingest tf-modules/s3-replicator tasks",
-    "test": "nyc lerna run --ignore cumulus-integration-tests test",
+    "test": "nyc lerna run --concurrency 1 --ignore cumulus-integration-tests test",
     "bootstrap": "lerna bootstrap --no-ci --force-local",
     "bootstrap-no-build": "lerna bootstrap --no-ci --force-local --ignore-scripts",
     "bootstrap-quiet": "lerna bootstrap --loglevel=error --no-ci --force-local",
     "update": "lerna version --exact --force-publish --no-git-tag-version --no-push",
-    "publish": "lerna publish --skip-git --yes --exact",
+    "publish": "lerna publish --skip-git --yes --exact --repo-version $VERSION",
     "clean": "lerna clean && rm -rf ./node_modules",
     "build": "lerna run --ignore cumulus-integration-tests build",
     "watch": "lerna run --parallel --no-sort watch",
@@ -56,8 +56,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "devDependencies": {
-    "ava": "^2.4.0",
+    "@octokit/graphql": "2.1.1",
     "audit-ci": "^2.0.1",
+    "ava": "^2.4.0",
     "babel-eslint": "^8.2.2",
     "coveralls": "^3.0.0",
     "eslint": "^5.5.0",
@@ -70,7 +71,6 @@
     "eslint-plugin-unicorn": "^4.0.3",
     "lerna": "^3.13.2",
     "nyc": "^14.0.0",
-    "@octokit/graphql": "2.1.1",
     "simple-git": "^1.96.0"
   },
   "dependencies": {
