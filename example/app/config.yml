@@ -820,6 +820,12 @@ jk2:
   prefix: jk2
   prefixNoDash: jk2
 
+jk-tf:
+  stackName: jk-tf
+  useWorkflowLambdaVersions: false
+  prefix: jk-tf
+  prefixNoDash: jk-tf
+
 jk3:
   stackName: jk3
   stackNameNoDash: jk3
