@@ -100,7 +100,13 @@ describe('The Sync Granules workflow', () => {
     await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
       s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
 
-    expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, newGranuleId, testDataFolder, newCollectionId);
+    expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(
+      templatedOutputPayloadFilename,
+      newGranuleId,
+      testDataFolder,
+      newCollectionId,
+      config.stackName
+    );
     expectedPayload.granules[0].dataType += testSuffix;
     expectedPayload.granules[0].files[0] = Object.assign(expectedPayload.granules[0].files[0], { checksum: '8d1ec5c0463e59d26adee87cdbbee816', checksumType: 'md5' });
 

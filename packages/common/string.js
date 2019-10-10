@@ -39,6 +39,30 @@ const unicodeEscapeCharacter = (char) =>
 const unicodeEscape = (str, regex = /[\s\S]/g) => str.replace(regex, unicodeEscapeCharacter);
 
 /**
+ * Return a new string with some or all matches of a pattern replaced by a
+ * replacement.
+ *
+ * @param {string|RegExp} pattern - if a string, this is the substring to be
+ *   replaced by `replacement`. If a RegExp, any match or matches will be
+ *   replaced by `replacement`.
+ * @param {string|function} replacement - if a string, the value to replace
+ *   `pattern` with. If a function, instances of `pattern` will be replaced with
+ *   the result of calling the function.
+ * @param {string} string - The string to modify
+ * @returns {string} the modified string
+ *
+ * For additional details on the pattern and replacement arguments, see:
+ *   https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#Parameters
+ *
+ * This is a curried function - https://lodash.com/docs/4.17.11#curry
+ *
+ * @static
+ */
+const replace = curry(
+  (pattern, replacement, string) => string.replace(pattern, replacement)
+);
+
+/**
  * Globally replaces oldSubstring in string with newSubString
  *
  * @param {string} string - The string to modify
@@ -132,6 +156,7 @@ module.exports = {
   isValidHostname,
   match,
   matches,
+  replace,
   toLower,
   toUpper,
   unicodeEscape

@@ -6,35 +6,8 @@ module "hello_world_workflow" {
   distribution_url                      = module.cumulus.distribution_url
   state_machine_role_arn                = module.cumulus.step_role_arn
   sf_semaphore_down_lambda_function_arn = module.cumulus.sf_semaphore_down_lambda_function_arn
-  sftracker_sns_topic_arn               = module.cumulus.sftracker_sns_topic_arn
   system_bucket                         = var.system_bucket
   tags                                  = local.default_tags
-
-  workflow_config = <<JSON
-{
-  "StartStatus": {
-    "cumulus_message": {
-      "input": "{{$}}"
-    }
-  },
-  "HelloWorld": {
-    "buckets": "{{$.meta.buckets}}",
-    "provider": "{{$.meta.provider}}",
-    "collection": "{{$.meta.collection}}"
-  },
-  "StopStatus": {
-    "sfnEnd": true,
-    "stack": "{{$.meta.stack}}",
-    "bucket": "{{$.meta.buckets.internal.name}}",
-    "stateMachine": "{{$.cumulus_meta.state_machine}}",
-    "executionName": "{{$.cumulus_meta.execution_name}}",
-    "cumulus_message": {
-      "input": "{{$}}"
-    }
-  },
-  "WorkflowFailed": {}
-}
-JSON
 
   state_machine_definition = <<JSON
 {
@@ -42,6 +15,16 @@ JSON
   "StartAt": "StartStatus",
   "States": {
     "StartStatus": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "cumulus_message": {
+              "input": "{$}"
+            }
+          }
+        }
+      },
       "Type": "Task",
       "Resource": "${module.cumulus.sf_sns_report_task_lambda_function_arn}",
       "Retry": [
@@ -59,6 +42,16 @@ JSON
       "Next": "HelloWorld"
     },
     "HelloWorld": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}"
+          }
+        }
+      },
       "Type": "Task",
       "Resource": "${module.cumulus.hello_world_task_lambda_function_arn}",
       "Retry": [
@@ -76,6 +69,24 @@ JSON
       "Next": "StopStatus"
     },
     "StopStatus": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "sfnEnd": true,
+            "stack": "{$.meta.stack}",
+            "bucket": "{$.meta.buckets.internal.name}",
+            "stateMachine": "{$.cumulus_meta.state_machine}",
+            "executionName": "{$.cumulus_meta.execution_name}",
+            "cumulus_message": {
+              "input": "{$}"
+            }
+          }
+        }
+      },
       "Type": "Task",
       "Resource": "${module.cumulus.sf_sns_report_task_lambda_function_arn}",
       "Retry": [
