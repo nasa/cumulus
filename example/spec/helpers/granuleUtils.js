@@ -3,7 +3,7 @@
 const fs = require('fs-extra');
 const {
   aws: { buildS3Uri, parseS3Uri, s3 },
-  stringUtils: { globalReplaceC },
+  stringUtils: { replace },
   testUtils: { randomStringFromRegex }
 } = require('@cumulus/common');
 const { thread } = require('@cumulus/common/util');
@@ -90,9 +90,17 @@ function createGranuleFiles(granuleFiles, bucket, oldGranuleId, newGranuleId) {
  * @returns {Promise<Object>} - input payload as a JS object with the updated granule ids
  */
 async function setupTestGranuleForIngest(bucket, inputPayloadJson, granuleRegex, testSuffix = '', testDataFolder = null) {
-  const payloadJson = testDataFolder ?
-    globalReplaceC('cumulus-test-data/pdrs', testDataFolder, inputPayloadJson) :
-    inputPayloadJson;
+  let payloadJson;
+
+  if (testDataFolder) {
+    payloadJson = replace(
+      new RegExp('cumulus-test-data/pdrs', 'g'),
+      testDataFolder,
+      inputPayloadJson
+    );
+  } else {
+    payloadJson = inputPayloadJson;
+  }
 
   const baseInputPayload = JSON.parse(payloadJson);
 
@@ -111,7 +119,7 @@ async function setupTestGranuleForIngest(bucket, inputPayloadJson, granuleRegex,
   return thread(
     baseInputPayload,
     JSON.stringify,
-    globalReplaceC(oldGranuleId, newGranuleId),
+    replace(new RegExp(oldGranuleId, 'g'), newGranuleId),
     JSON.parse
   );
 }
@@ -135,10 +143,10 @@ const loadFileWithUpdatedGranuleIdPathAndCollection = (
   stackId
 ) => thread(
   fs.readFileSync(filename, 'utf8'),
-  globalReplaceC('replace-me-granuleId', newGranuleId),
-  globalReplaceC('replace-me-path', newPath),
-  globalReplaceC('replace-me-collectionId', newCollectionId),
-  globalReplaceC('replace-me-stackId', stackId),
+  replace(new RegExp('replace-me-granuleId', 'g'), newGranuleId),
+  replace(new RegExp('replace-me-path', 'g'), newPath),
+  replace(new RegExp('replace-me-collectionId', 'g'), newCollectionId),
+  replace(new RegExp('replace-me-stackId', 'g'), stackId),
   JSON.parse
 );
 

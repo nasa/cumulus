@@ -39,6 +39,30 @@ const unicodeEscapeCharacter = (char) =>
 const unicodeEscape = (str, regex = /[\s\S]/g) => str.replace(regex, unicodeEscapeCharacter);
 
 /**
+ * Return a new string with some or all matches of a pattern replaced by a
+ * replacement.
+ *
+ * @param {string|RegExp} pattern - if a string, this is the substring to be
+ *   replaced by `replacement`. If a RegExp, any match or matches will be
+ *   replaced by `replacement`.
+ * @param {string|function} replacement - if a string, the value to replace
+ *   `pattern` with. If a function, instances of `pattern` will be replaced with
+ *   the result of calling the function.
+ * @param {string} string - The string to modify
+ * @returns {string} the modified string
+ *
+ * For additional details on the pattern and replacement arguments, see:
+ *   https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#Parameters
+ *
+ * This is a curried function - https://lodash.com/docs/4.17.11#curry
+ *
+ * @static
+ */
+const replace = curry(
+  (pattern, replacement, string) => string.replace(pattern, replacement)
+);
+
+/**
  * Globally replaces oldSubstring in string with newSubString
  *
  * @param {string} string - The string to modify
@@ -51,22 +75,6 @@ const unicodeEscape = (str, regex = /[\s\S]/g) => str.replace(regex, unicodeEsca
 function globalReplace(string, oldSubString, newSubString) {
   return string.replace(new RegExp(oldSubString, 'g'), newSubString);
 }
-
-/**
- * Globally replaces substr in string with newSubstr
- *
- * @param {string} substr - The string to replace
- * @param {string} newSubstr - The string replacement
- * @param {string} string - The string to modify
- * @returns {string} the modified string
- *
- * This is a curried function - https://lodash.com/docs/4.17.11#curry
- *
- * @static
- */
-const globalReplaceC = curry(
-  (substr, newSubstr, string) => globalReplace(string, substr, newSubstr)
-);
 
 /**
  * Converts string, as a whole, to lower case just like String#toLowerCase
@@ -145,10 +153,10 @@ const isValidHostname = compose(matches(hostnameRegex), toLower);
 
 module.exports = {
   globalReplace,
-  globalReplaceC,
   isValidHostname,
   match,
   matches,
+  replace,
   toLower,
   toUpper,
   unicodeEscape
