@@ -91,6 +91,10 @@ variable "report_granules_sns_topic_arn" {
   type = string
 }
 
+variable "report_pdrs_sns_topic_arn" {
+  type = string
+}
+
 variable "queue_execution_limits" {
   type    = map(number)
   default = {}

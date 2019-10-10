@@ -221,7 +221,7 @@ resource "aws_lambda_function" "sf_sns_report_task" {
       ExecutionsTable             = var.dynamo_tables.executions.name
       execution_sns_topic_arn     = var.report_executions_sns_topic_arn
       granule_sns_topic_arn       = var.report_granules_sns_topic_arn
-      pdr_sns_topic_arn           = module.report_pdrs.pdr_sns_arn
+      pdr_sns_topic_arn           = var.report_pdrs_sns_topic_arn
     }
   }
   tags = merge(local.default_tags, { Project = var.prefix })
