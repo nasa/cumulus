@@ -16,6 +16,12 @@ default:
     provider: earthdata
     userGroup: N/A
 
+  samlConfig:
+    entityID: 'YourEntityId'
+    assertionConsumerService: 'https://example.com/saml/auth'
+    idpLogin: 'https://example.gov/affwebservices/public/saml2sso'
+    launchpadMetadataPath: 's3://{{buckets.internal.name}}/{{prefix}}/launchpad/launchpad-sbx-metadata.xml'
+
   ## lambda function that returns temporary credentials
   sts_credentials_lambda: gsfc-ngap-sh-s3-sts-get-keys
 
@@ -181,18 +187,6 @@ default:
     scaleOutCooldown: 0
 
   sns:
-    # this topic receives all the updates from
-    # step functions
-    sftracker:
-      subscriptions:
-        lambda:
-          endpoint:
-            function: Fn::GetAtt
-            array:
-              - sns2elasticsearchLambdaFunction
-              - Arn
-          protocol: lambda
-
     # This topic receives errored kinesis messages and tries them again.
     kinesisFallback:
       subscriptions:
@@ -201,6 +195,36 @@ default:
             function: Fn::GetAtt
             array:
               - fallbackConsumerLambdaFunction
+              - Arn
+          protocol: lambda
+
+    reportExecutions:
+      subscriptions:
+        lambda:
+          endpoint:
+            function: Fn::GetAtt
+            array:
+              - reportExecutionsLambdaFunction
+              - Arn
+          protocol: lambda
+
+    reportGranules:
+      subscriptions:
+        lambda:
+          endpoint:
+            function: Fn::GetAtt
+            array:
+              - reportGranulesLambdaFunction
+              - Arn
+          protocol: lambda
+
+    reportPdrs:
+      subscriptions:
+        lambda:
+          endpoint:
+            function: Fn::GetAtt
+            array:
+              - reportPdrsLambdaFunction
               - Arn
           protocol: lambda
 

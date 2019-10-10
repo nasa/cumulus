@@ -25,6 +25,18 @@ const isTerminalSfStatus = isOneOf([
 ]);
 
 /**
+ * Determine if Step Function is in a failed state.
+ *
+ * @param {Object} status - A Step Function execution status from a Cloudwatch event
+ * @returns {boolean} - True if Step Function is in failed state.
+ */
+const isFailedSfStatus = isOneOf([
+  'ABORTED',
+  'FAILED',
+  'TIMED_OUT'
+]);
+
+/**
  * Get Step Function status from Cloudwatch event.
  *
  * @param {Object} event - A Cloudwatch event
@@ -65,5 +77,6 @@ module.exports = {
   getSfEventMessageObject,
   getSfEventStatus,
   isSfExecutionEvent,
+  isFailedSfStatus,
   isTerminalSfStatus
 };

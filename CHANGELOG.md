@@ -7,15 +7,104 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- **CUMULUS-1447** -
+  The newest release of the Cumulus Message Adapter (v1.1.0) requires that parameterized configuration be used for remote message functionality. Once released, Kes will automatically bring in CMA v1.1.0 without additional configuration.
+  
+  **Migration instructions**
+  Oversized messages are no longer written to S3 automatically. In order to utilize remote messaging functionality, configure a `ReplaceConfig` AWS Step Function parameter on your CMA task:
+
+  ```yaml
+  ParsePdr:
+    Parameters:
+      cma:
+        event.$: '$'
+        ReplaceConfig:
+          FullMessage: true
+  ```
+  
+  Accepted fields in `ReplaceConfig` include `MaxSize`, `FullMessage`, `Path` and `TargetPath`.
+  See https://github.com/nasa/cumulus-message-adapter/blob/master/CONTRACT.md#remote-message-configuration for full details.
+
+  As this change is backward compatible in Cumulus Core, users wishing to utilize the previous version of the CMA may opt to transition to using a CMA lambda layer, or set `message_adapter_version` in their configuration to a version prior to v1.1.0.
+
+### PLEASE NOTE
+
+- **CUMULUS-1394** - Ingest notifications are now provided via 3 separate SNS topics for executions, granules, and PDRs, instead of a single `sftracker` SNS topic. Whereas the `sftracker` SNS topic received a full Cumulus execution message, the new topics all receive generated records for the given object. The new topics are only published to if the given object exists for the current execution. For a given execution/granule/PDR, two messages will be received by each topic: one message indicating that ingest is running and another message indicating that ingest has completed or failed. The new SNS topics are:
+
+  - `reportExecutions` - Receives 1 message per execution
+  - `reportGranules` - Receives 1 message per granule in an execution
+  - `reportPdrs` - Receives 1 message per PDR
+
+### Added
+
+- **CUMULUS-1574**
+  - Added `GET /token` endpoint for SAML authorization when cumulus is protected by Launchpad.
+    This lets a user retieve a token by hand that can be presented to the API.
+
+- **CUMULUS-1394**
+  - Added `Granule.generateGranuleRecord()` method to granules model to generate a granule database record from a Cumulus execution message
+  - Added `Pdr.generatePdrRecord()` method to PDRs model to generate a granule database record from a Cumulus execution message
+  - Added helpers to `@cumulus/common/message`:
+    - `getMessageExecutionName()` - Get the execution name from a Cumulus execution message
+    - `getMessageStateMachineArn()` - Get the state machine ARN from a Cumulus execution message
+    - `getMessageExecutionArn()` - Get the execution ARN for a Cumulus execution message
+    - `getMessageGranules()` - Get the granules from a Cumulus execution message, if any.
+  - Added `@cumulus/common/cloudwatch-event/isFailedSfStatus()` to determine if a Step Function status from a Cloudwatch event is a failed status
+
+- **CUMULUS-639**
+  - Adds SAML JWT and launchpad token authentication to Cumulus API (configurable)
+    - **NOTE** to authenticate with Launchpad ensure your launchpad user_id is in the `<prefix>-UsersTable`
+    - when Cumulus configured to protect API via Launchpad:
+         - New endpoints
+            - `GET /saml/login` - starting point for SAML SSO creates the login request url and redirects to the SAML Identity Provider Service (IDP)
+            - `POST /saml/auth` - SAML Assertion Consumer Service.  POST receiver from SAML IDP.  Validates response, logs the user in, and returnes a SAML-based JWT.
+         - Disabled endpoints
+            - `POST /refresh`
+          - Changes authorization worklow:
+           - `ensureAuthorized` now presumes the bearer token is a JWT and tries to validate.  If the token is malformed, it attempts to validate the token against Launchpad.  This allows users to bring their own token as described here https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication.  But it also allows dashboard users to manually authenticate via Launchpad SAML to receive a Launchpad-based JWT.
+
+
 ### Changed
+
+- **CUMULUS-1485** Update `@cumulus/cmr-client` to return error message from CMR for validation failures.
+
+- **CUMULUS-1394**
+  - Renamed `Execution.generateDocFromPayload()` to `Execution.generateRecord()` on executions model. The method generates an execution database record from a Cumulus execution message.
 
 - **CUMULUS-1432**
   - `logs` endpoint takes the level parameter as a string and not a number
   - Elasticsearch term query generation no longer converts numbers to boolean
 
+- **CUMULUS-1447**
+  - Consolidated all remote message handling code into @common/aws
+  - Update remote message code to handle updated CMA remote message flags
+  - Update example SIPS workflows to utilize Parameterized CMA configuration
+
+- **CUMULUS-1448** Refactor workflows that are mutating cumulus_meta to utilize meta field
+
+- **CUMULUS-1375**
+  - Migrate Cumulus from deprecated Elasticsearch JS client to new, supported one in `@cumulus/api`
+
+- **CUMULUS-1451**
+  - Elasticsearch cluster setting `auto_create_index` will be set to false. This had been causing issues in the bootstrap lambda on deploy.
+
+- **CUMULUS-1456**
+  - `@cumulus/api` endpoints default error handler uses `boom` package to format errors, which is consistent with other API endpoint errors.
+
 ### Fixed
 
 - **CUMULUS-1432** `logs` endpoint filter correctly filters logs by level
+- **CUMULUS-1484**  `useMessageAdapter` now does not set CUMULUS_MESSAGE_ADAPTER_DIR when `true`
+
+### Removed
+
+- **CUMULUS-1394**
+  - Removed `sfTracker` SNS topic. Replaced by three new SNS topics for granule, execution, and PDR ingest notifications.
+  - Removed unused functions from `@cumulus/common/aws`:
+    - `getGranuleS3Params()`
+    - `setGranuleStatus()`
 
 ## [v1.14.1] - 2019-08-29
 
@@ -67,7 +156,7 @@ If you deploy with no distribution app your deployment will succeed but you may 
 
 - **CUMULUS-642**
   - Adds Launchpad as an authentication option for the Cumulus API.
-  - Updated deployment documentation and added [instructions to setup Cumulus API Launchpad authentication] (https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication)
+  - Updated deployment documentation and added [instructions to setup Cumulus API Launchpad authentication](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication)
 - **CUMULUS-1418**
   - Adds usage docs/testing of lambda layers (introduced in PR1125), updates Core example tasks to use the updated `cumulus-ecs-task` and a CMA layer instead of kes CMA injection.
   - Added Terraform module to publish CMA as layer to user account.

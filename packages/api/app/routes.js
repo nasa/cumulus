@@ -24,17 +24,14 @@ const workflows = require('../endpoints/workflows');
 const dashboard = require('../endpoints/dashboard');
 const elasticsearch = require('../endpoints/elasticsearch');
 const ems = require('../endpoints/ems');
-const launchpadAuth = require('./launchpadAuth');
+const { launchpadProtectedAuth } = require('./launchpadAuth');
+const launchpadSaml = require('../endpoints/launchpadSaml');
 
 let token = require('../endpoints/token');
 let { ensureAuthorized } = require('./auth');
 if (process.env.FAKE_AUTH === 'true') {
   token = require('./testAuth'); // eslint-disable-line global-require
   ensureAuthorized = token.ensureAuthorized;
-}
-
-if (process.env.OAUTH_PROVIDER === 'launchpad') {
-  ensureAuthorized = launchpadAuth.ensureAuthorized;
 }
 
 // collections endpoints
@@ -87,10 +84,20 @@ router.use('/version', version);
 // workflows endpoint
 router.use('/workflows', ensureAuthorized, workflows);
 
+// OAuth Token endpoints
+if (launchpadProtectedAuth()) {
+  // SAML SSO
+  router.get('/saml/login', launchpadSaml.login);
+  router.post('/saml/auth', launchpadSaml.auth);
+  router.get('/token', launchpadSaml.samlToken);
+  // disabled for now
+  router.post('/refresh', launchpadSaml.refreshEndpoint);
+} else {
+  router.get('/token', token.tokenEndpoint);
+  router.post('/refresh', token.refreshEndpoint);
+}
 router.delete('/token/:token', token.deleteTokenEndpoint);
 router.delete('/tokenDelete/:token', token.deleteTokenEndpoint);
-router.get('/token', token.tokenEndpoint);
-router.post('/refresh', token.refreshEndpoint);
 
 router.use('/dashboard', dashboard);
 
@@ -103,7 +110,7 @@ router.use('/ems', ensureAuthorized, ems);
 // eslint-disable-next-line no-unused-vars
 router.use((error, req, res, next) => {
   log.error(error);
-  return res.status(500).send({ error: error.message });
+  return res.boom.badRequest(error.message, error);
 });
 
 module.exports = router;
