@@ -50,12 +50,13 @@ class Stats extends BaseSearch {
       }
     };
 
-    const granules = await this.client.search(searchParams);
+    const granules = await this.client.search(searchParams)
+      .then((response) => response.body);
 
     const collections = await this.client.count({
       index: this.index,
       type: 'collection'
-    });
+    }).then((response) => response.body);
 
     const dateFormat = 'YYYY-MM-DDThh:mm:ssZ';
     const dateFrom = moment(this.params.timestamp__from).format(dateFormat);
@@ -119,7 +120,8 @@ class Stats extends BaseSearch {
       }
     };
 
-    const hist = await this.client.search(searchParams);
+    const hist = await this.client.search(searchParams)
+      .then((response) => response.body);
 
     return {
       meta: {
@@ -149,7 +151,8 @@ class Stats extends BaseSearch {
       }
     };
 
-    const count = await this.client.search(searchParams);
+    const count = await this.client.search(searchParams)
+      .then((response) => response.body);
 
     return {
       meta: {
@@ -182,7 +185,8 @@ class Stats extends BaseSearch {
       }
     };
 
-    const stats = await this.client.search(searchParams);
+    const stats = await this.client.search(searchParams)
+      .then((response) => response.body);
 
     return {
       meta: {
