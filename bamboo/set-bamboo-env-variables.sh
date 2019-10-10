@@ -20,6 +20,7 @@ declare -a param_list=(
   "bamboo_CMR_PASSWORD"
   "bamboo_CMR_USERNAME"
   "bamboo_DEPLOYMENT"
+  "bamboo_KES_DEPLOYMENT"
   "bamboo_PUBLISH_FLAG"
   "bamboo_USE_NPM_PACKAGES"
   "bamboo_REPORT_BUILD_STATUS"
@@ -114,14 +115,14 @@ if [[ -z $DEPLOYMENT ]]; then
   echo export DEPLOYMENT=$DEPLOYMENT >> .bamboo_env_vars
 fi
 
-if [[ $DEPLOYMENT =~ '-tf' ]]; then
+if [[ $KES_DEPLOYMENT != true ]]; then
   echo "Using NGAPShNonProd credentials"
   export AWS_ACCESS_KEY_ID=$bamboo_SECRET_NONPROD_AWS_ACCESS_KEY_ID
   export AWS_SECRET_ACCESS_KEY=$bamboo_SECRET_NONPROD_AWS_SECRET_ACCESS_KEY
 fi
 
 export PR_BRANCH=master
-if [[  $DEPLOYMENT =~ '-tf' ]]; then
+if [[  $KES_DEPLOYMENT != true ]]; then
   echo "Setting GIT_PR target branch to 'terraform'"
   export PR_BRANCH=terraform
 fi
@@ -158,8 +159,10 @@ fi
 
 ## Branch if branch is master, or a version tag is set, or the commit
 ## message explicitly calls for running redeploy tests
-if [[ $BRANCH == master || $VERSION_FLAG || $COMMIT_MESSAGE =~ run-redeploy-tests ]]; then
-  export RUN_REDEPLOYMENT=true
-  echo "Setting RUN_REDEPLOYMENT to true"
-  echo export RUN_REDEPLOYMENT="true" >> .bamboo_env_vars
+if [[ $KES_DEPLOYMENT == true ]]; then
+  if [[ $BRANCH == master || $VERSION_FLAG || $COMMIT_MESSAGE =~ run-redeploy-tests ]]; then
+    export RUN_REDEPLOYMENT=true
+    echo "Setting RUN_REDEPLOYMENT to true"
+    echo export RUN_REDEPLOYMENT="true" >> .bamboo_env_vars
+  fi
 fi
