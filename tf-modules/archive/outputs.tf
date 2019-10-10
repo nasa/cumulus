@@ -25,3 +25,7 @@ output "log2elasticsearch_lambda_function_arn" {
 output "report_executions_sns_topic_arn" {
   value = aws_sns_topic.report_executions_topic.arn
 }
+
+output "report_granules_sns_topic_arn" {
+  value = aws_sns_topic.report_granules_topic.arn
+}

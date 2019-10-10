@@ -220,7 +220,7 @@ resource "aws_lambda_function" "sf_sns_report_task" {
       stackName                   = var.prefix
       ExecutionsTable             = var.dynamo_tables.executions.name
       execution_sns_topic_arn     = var.report_executions_sns_topic_arn
-      granule_sns_topic_arn       = module.report_granules.granule_sns_arn
+      granule_sns_topic_arn       = var.report_granules_sns_topic_arn
       pdr_sns_topic_arn           = module.report_pdrs.pdr_sns_arn
     }
   }

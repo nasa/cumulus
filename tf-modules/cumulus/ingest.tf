@@ -43,4 +43,5 @@ module "ingest" {
   queue_execution_limits = var.queue_execution_limits
 
   report_executions_sns_topic_arn = module.archive.report_executions_sns_topic_arn
+  report_granules_sns_topic_arn   = module.archive.report_granules_sns_topic_arn
 }

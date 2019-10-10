@@ -1,8 +1,0 @@
-# Required
-granules_table       = "granulesTableName"
-prefix               = "myprefix"
-
-# Optional
-permissions_boundary = "arn:aws:iam::1234567890:policy/YourRoleBoundary"
-subnet_ids           = ["subnet-123456"]
-security_groups      = ["sg-123456"]
