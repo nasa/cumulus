@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ex
 
-TF_VERSION=$(cat .tfversion)	
+TF_VERSION=$(cat .tfversion)
 # Fetch terraform binary
 if ! curl -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip ; then
   echo "ERROR: coudn't download terraform script" >&2
@@ -64,12 +64,13 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -input=false \
   -var-file="../deployments/sandbox.tfvars" \
   -var-file="../deployments/$DEPLOYMENT.tfvars" \
+  -var "cumulus_message_adapter_lambda_layer_arn=arn:aws:lambda:us-east-1:$AWS_ACCOUNT_ID:layer:Cumulus_Message_Adapter:9" \
   -var "cmr_username=$CMR_USERNAME" \
   -var "cmr_password=$CMR_PASSWORD" \
   -var "cmr_client_id=cumulus-core-$DEPLOYMENT" \
   -var "cmr_provider=CUMULUS" \
   -var "cmr_environment=UAT" \
-  -var "data_persistence_remote_state_config={ bucket: \"$TFSTATE_BUCKET\", key: \"$DATA_PERSISTENCE_KEY\" }" \
+  -var "data_persistence_remote_state_config={ region: \"$AWS_REGION\", bucket: \"$TFSTATE_BUCKET\", key: \"$DATA_PERSISTENCE_KEY\" }" \
   -var "region=$AWS_REGION" \
   -var "vpc_id=$VPC_ID" \
   -var "subnet_ids=[\"$AWS_SUBNET\"]" \
