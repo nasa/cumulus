@@ -34,11 +34,9 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/api": "1.14.2",
-    "@cumulus/common": "1.14.2",
     "@cumulus/cumulus-message-adapter-js": "^1.0.8",
     "@cumulus/ingest": "1.14.2",
-    "lodash.get": "^4.4.2",
-    "lodash.isobject": "^3.0.2"
+    "lodash.get": "^4.4.2"
   },
   "devDependencies": {
     "ava": "^2.1.0",
