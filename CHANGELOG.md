@@ -64,22 +64,18 @@ Your Cumulus Message Adapter version should be pinned to `v1.0.13` or lower in y
   - Added `@cumulus/common/sfnStep`:
     - `LambdaStep` - A class for retrieving and parsing input and output to Lambda steps in AWS Step Functions
     - `ActivityStep` - A class for retrieving and parsing input and output to ECS activity steps in AWS Step Functions
-<<<<<<< HEAD
-=======
 
 - **CUMULUS-639**
   - Adds SAML JWT and launchpad token authentication to Cumulus API (configurable)
     - **NOTE** to authenticate with Launchpad ensure your launchpad user_id is in the `<prefix>-UsersTable`
     - when Cumulus configured to protect API via Launchpad:
-         - New endpoints
-            - `GET /saml/login` - starting point for SAML SSO creates the login request url and redirects to the SAML Identity Provider Service (IDP)
-            - `POST /saml/auth` - SAML Assertion Consumer Service.  POST receiver from SAML IDP.  Validates response, logs the user in, and returnes a SAML-based JWT.
-         - Disabled endpoints
-            - `POST /refresh`
-          - Changes authorization worklow:
-           - `ensureAuthorized` now presumes the bearer token is a JWT and tries to validate.  If the token is malformed, it attempts to validate the token against Launchpad.  This allows users to bring their own token as described here https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication.  But it also allows dashboard users to manually authenticate via Launchpad SAML to receive a Launchpad-based JWT.
-
->>>>>>> master
+      - New endpoints
+        - `GET /saml/login` - starting point for SAML SSO creates the login request url and redirects to the SAML Identity Provider Service (IDP)
+        - `POST /saml/auth` - SAML Assertion Consumer Service.  POST receiver from SAML IDP.  Validates response, logs the user in, and returnes a SAML-based JWT.
+    - Disabled endpoints
+      - `POST /refresh`
+      - Changes authorization worklow:
+      - `ensureAuthorized` now presumes the bearer token is a JWT and tries to validate.  If the token is malformed, it attempts to validate the token against Launchpad.  This allows users to bring their own token as described here https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication.  But it also allows dashboard users to manually authenticate via Launchpad SAML to receive a Launchpad-based JWT.
 
 ### Changed
 
