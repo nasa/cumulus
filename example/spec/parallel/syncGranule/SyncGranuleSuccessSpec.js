@@ -48,12 +48,6 @@ const granuleModel = new Granule();
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
-const outputPayloadTemplateFilename = './spec/parallel/syncGranule/SyncGranule.output.payload.template.json';
-const templatedOutputPayloadFilename = templateFile({
-  inputTemplateFilename: outputPayloadTemplateFilename,
-  config: config.SyncGranule
-});
-
 const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
@@ -99,6 +93,28 @@ describe('The Sync Granules workflow', () => {
     expectedS3TagSet = [{ Key: 'granuleId', Value: newGranuleId }];
     await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
       s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
+
+    const templatedOutputPayloadFilename = templateFile({
+      inputTemplateFilename: './spec/parallel/syncGranule/SyncGranule.output.payload.template.json',
+      config: {
+        granules: [
+          {
+            files: [
+              {
+                bucket: config.buckets.internal.name,
+                filename: `s3://${config.buckets.internal.name}/custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf`,
+                fileStagingDir: `custom-staging-dir/${config.stackName}/replace-me-collectionId`
+              },
+              {
+                bucket: config.buckets.internal.name,
+                filename: `s3://${config.buckets.internal.name}/custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf.met`,
+                fileStagingDir: `custom-staging-dir/${config.stackName}/replace-me-collectionId`
+              }
+            ]
+          }
+        ]
+      }
+    });
 
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, newGranuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
