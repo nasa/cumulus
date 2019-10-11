@@ -7,14 +7,14 @@ const {
   aws: { parseS3Uri, s3 },
   testUtils: { randomString }
 } = require('@cumulus/common');
+const { LambdaStep } = require('@cumulus/common/sfnStep');
 const {
   addCollections,
   addProviders,
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
-  granulesApi: granulesApiTestUtils,
-  LambdaStep
+  granulesApi: granulesApiTestUtils
 } = require('@cumulus/integration-tests');
 const {
   loadConfig,

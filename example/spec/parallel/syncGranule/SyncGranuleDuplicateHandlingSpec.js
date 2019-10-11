@@ -9,7 +9,8 @@ const {
     randomString
   }
 } = require('@cumulus/common');
-const { models: { Granule } } = require('@cumulus/api');
+const { LambdaStep } = require('@cumulus/common/sfnStep');
+const { models: { Granule, Pdr } } = require('@cumulus/api');
 const {
   addCollections,
   addProviders,
@@ -17,8 +18,7 @@ const {
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
-  granulesApi: granulesApiTestUtils,
-  LambdaStep
+  granulesApi: granulesApiTestUtils
 } = require('@cumulus/integration-tests');
 const {
   deleteFolder,
@@ -65,6 +65,9 @@ describe('When the Sync Granule workflow is configured', () => {
 
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
   const granuleModel = new Granule();
+
+  process.env.PdrsTable = `${config.stackName}-PdrsTable`;
+  const pdrModel = new Pdr();
 
   beforeAll(async () => {
     // populate collections, providers and test data
@@ -119,6 +122,9 @@ describe('When the Sync Granule workflow is configured', () => {
       granulesApiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
+      }),
+      pdrModel.delete({
+        pdrName: inputPayload.pdr.name
       })
     ]);
   });

@@ -1,13 +1,14 @@
 HelloWorldWorkflow:
   Comment: 'Returns Hello World'
-  StartAt: StartStatus
+  StartAt: HelloWorld
   States:
-    StartStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
+    HelloWorld:
       CumulusConfig:
-        cumulus_message:
-          input: '{$}'
+        buckets: '{$.meta.buckets}'
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+      Type: Task
+      Resource: ${HelloWorldLambdaFunction.Arn}
       Retry:
         - &LambdaServiceExceptionRetry
           ErrorEquals:
@@ -17,52 +18,12 @@ HelloWorldWorkflow:
           IntervalSeconds: 2
           MaxAttempts: 6
           BackoffRate: 2
-      Next: HelloWorld
-    HelloWorld:
-      CumulusConfig:
-        buckets: '{$.meta.buckets}'
-        provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
-      Type: Task
-      Resource: ${HelloWorldLambdaFunction.Arn}
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Next: StopStatus
-    StopStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        sfnEnd: true
-        stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal.name}'
-        stateMachine: '{$.cumulus_meta.state_machine}'
-        executionName: '{$.cumulus_meta.execution_name}'
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Catch:
-        - ErrorEquals:
-          - States.ALL
-          Next: WorkflowFailed
       End: true
-    WorkflowFailed:
-      Type: Fail
-      Cause: 'Workflow failed'
 
 EcsHelloWorldWorkflow:
   Comment: 'Returns Hello World'
-  StartAt: StartStatus
+  StartAt: EcsTaskHelloWorld
   States:
-    StartStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Next: EcsTaskHelloWorld
     EcsTaskHelloWorld:
       CumulusConfig:
         buckets: '{$.meta.buckets}'
@@ -75,20 +36,6 @@ EcsHelloWorldWorkflow:
         - ErrorEquals:
             - States.Timeout
           MaxAttempts: 1
-      Next: StopStatus
-    StopStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        sfnEnd: true
-        stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal.name}'
-        stateMachine: '{$.cumulus_meta.state_machine}'
-        executionName: '{$.cumulus_meta.execution_name}'
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -101,17 +48,8 @@ EcsHelloWorldWorkflow:
 
 EcsKesCMAHelloWorldWorkflow:
   Comment: 'Returns Hello World'
-  StartAt: StartStatus
+  StartAt: EcsTaskHelloWorld
   States:
-    StartStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Next: EcsTaskHelloWorld
     EcsTaskHelloWorld:
       CumulusConfig:
         buckets: '{$.meta.buckets}'
@@ -124,20 +62,6 @@ EcsKesCMAHelloWorldWorkflow:
         - ErrorEquals:
             - States.Timeout
           MaxAttempts: 1
-      Next: StopStatus
-    StopStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        sfnEnd: true
-        stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal.name}'
-        stateMachine: '{$.cumulus_meta.state_machine}'
-        executionName: '{$.cumulus_meta.execution_name}'
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL

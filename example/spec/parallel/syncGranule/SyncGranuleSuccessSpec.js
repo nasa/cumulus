@@ -8,7 +8,6 @@ const {
   addCollections,
   cleanupCollections,
   granulesApi: granulesApiTestUtils,
-  LambdaStep,
   waitForTestExecutionStart,
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
@@ -22,6 +21,7 @@ const {
   },
   constructCollectionId
 } = require('@cumulus/common');
+const { LambdaStep } = require('@cumulus/common/sfnStep');
 const {
   loadConfig,
   templateFile,
@@ -271,7 +271,8 @@ describe('The Sync Granules workflow', () => {
         stackName: config.stackName,
         bucket: config.bucket,
         findExecutionFn: isReingestExecutionForGranuleId,
-        findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId }
+        findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId },
+        startTask: 'SyncGranule'
       });
 
       console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);

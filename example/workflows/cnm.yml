@@ -1,13 +1,17 @@
 KinesisTriggerTest:
   Comment: 'Tests Workflow from Kinesis Stream'
-  StartAt: StartStatus
+  StartAt: TranslateMessage
   States:
-    StartStatus:
+    TranslateMessage:
       Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
+      Resource: ${CNMToCMALambdaFunction.Arn}
       CumulusConfig:
         cumulus_message:
-          input: '{$}'
+          outputs:
+            - source: '{$.cnm}'
+              destination: '{$.meta.cnm}'
+            - source: '{$}'
+              destination: '{$.payload}'
       Retry:
         - &LambdaServiceExceptionRetry
           ErrorEquals:
@@ -23,21 +27,6 @@ KinesisTriggerTest:
           - States.ALL
           ResultPath: '$.exception'
           Next: CnmResponseFail
-      Next: TranslateMessage
-    TranslateMessage:
-      Type: Task
-      Resource: ${CNMToCMALambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          outputs:
-            - source: '{$.cnm}'
-              destination: '{$.meta.cnm}'
-            - source: '{$}'
-              destination: '{$.payload}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Catch:
-        - <<: *ErrorEqualDefaults
       Next: SyncGranule
     SyncGranule:
       Type: Task
@@ -80,25 +69,12 @@ KinesisTriggerTest:
         - <<: *LambdaServiceExceptionRetry
       Catch:
         - <<: *ErrorEqualDefaults
-          Next: StopStatus
-      Next: StopStatus
+          Next: WorkflowFailed
+      Next: WorkflowSucceeded
     CnmResponseFail:
       <<: *CnmResponseDefaults
       Catch:
         - <<: *ErrorEqualDefaults
-          Next: StopStatusFail
-      Next: StopStatusFail
-    StopStatus: &StopStatusDefaults
-      Type: Task
-      Resource: ${sf2snsEndLambdaFunction.Arn}
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Next: WorkflowSucceeded
-    StopStatusFail:
-      <<: *StopStatusDefaults
-      Catch:
-        - ErrorEquals:
-          - States.ALL
           Next: WorkflowFailed
       Next: WorkflowFailed
     WorkflowSucceeded:
