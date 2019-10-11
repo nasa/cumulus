@@ -59,8 +59,7 @@ echo "terraform {
 
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
-../terraform plan \
-  -out=terraform.tfplan \
+../terraform apply \
   -input=false \
   -var-file="../deployments/sandbox.tfvars" \
   -var-file="../deployments/$DEPLOYMENT.tfvars" \
@@ -78,7 +77,6 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var "urs_client_password=$EARTHDATA_CLIENT_PASSWORD" \
   -var "token_secret=$TOKEN_SECRET" \
   -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/NGAPShNonProdRoleBoundary"
-../terraform apply "terraform.tfplan"
 
 # Test that deployment succeeded by failing on bad exit code.
 EXIT_CODE=$?
