@@ -37,14 +37,12 @@ DiscoverPdrs:
 FakeProcessing:
   handler: index.handler
   source: node_modules/@cumulus/test-processing/dist/
-  logToSharedDestination: '{{SHARED_LOG_DESTINATION_ARN}}'
   layers:
     - '{{cma_layer}}'
   launchInVpc: true
 FilesToGranules:
   handler: index.handler
   source: node_modules/@cumulus/files-to-granules/dist/
-  logToSharedDestination: '{{SHARED_LOG_DESTINATION_ARN}}'
   layers:
     - '{{cma_layer}}'
   launchInVpc: true
@@ -76,7 +74,6 @@ MoveGranules:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/move-granules/dist/
-  logToSharedDestination: '{{SHARED_LOG_DESTINATION_ARN}}'
   layers:
     - '{{cma_layer}}'
   launchInVpc: true
@@ -109,7 +106,7 @@ PostToCmr:
   memory: 256
   # logToElasticSearch: true
   source: node_modules/@cumulus/post-to-cmr/dist/
-  logToSharedDestination: '{{SHARED_LOG_DESTINATION_ARN}}'
+  logToElasticSearch: true
   layers:
     - '{{cma_layer}}'
   launchInVpc: true
@@ -126,7 +123,6 @@ SfSnsReport:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/sf-sns-report/dist
-  logToSharedDestination: '{{SHARED_LOG_DESTINATION_ARN}}'
   layers:
     - '{{cma_layer}}'
   launchInVpc: true
@@ -145,7 +141,6 @@ SfSnsReport:
 SyncGranule:
   handler: index.handler
   timeout: 300
-  logToSharedDestination: '{{SHARED_LOG_DESTINATION_ARN}}'
   source: node_modules/@cumulus/sync-granule/dist/
   layers:
     - '{{cma_layer}}'

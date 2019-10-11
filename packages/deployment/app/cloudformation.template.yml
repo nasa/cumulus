@@ -119,6 +119,10 @@ Resources:
           Fn::GetAtt:
             - IndexFromDatabaseLambdaFunction
             - Arn
+        BulkOperationLambdaFunctionArn:
+          Fn::GetAtt:
+            - BulkOperationLambdaFunction
+            - Arn
         # The backend API needs a reference to the distributionRestApi so
         # it can construct values for the DISTRIBUTION_REDIRECT_ENDPOINT
         # environment variable. The /granules endpoint uses this variable.

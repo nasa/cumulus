@@ -288,7 +288,6 @@ BulkOperation:
   source: 'node_modules/@cumulus/api/dist/bulkOperation/'
   launchInVpc: true
   envs:
-    GranulesTable:
-      function: Ref
-      value: GranulesTableDynamoDB
-    system_bucket: '{{parent.system_bucket}}'
+    tables:
+      - GranulesTable
+    system_bucket: '{{system_bucket}}'
