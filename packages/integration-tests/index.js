@@ -11,10 +11,7 @@ const fs = require('fs-extra');
 const pLimit = require('p-limit');
 const pMap = require('p-map');
 
-<<<<<<< HEAD
-=======
 const { pullStepFunctionEvent } = require('@cumulus/common/aws');
->>>>>>> master
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { ActivityStep, LambdaStep } = require('@cumulus/common/sfnStep');
 const { globalReplace } = require('@cumulus/common/string');
