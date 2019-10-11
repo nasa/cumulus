@@ -11,6 +11,10 @@ const fs = require('fs-extra');
 const pLimit = require('p-limit');
 const pMap = require('p-map');
 
+<<<<<<< HEAD
+=======
+const { pullStepFunctionEvent } = require('@cumulus/common/aws');
+>>>>>>> master
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { ActivityStep, LambdaStep } = require('@cumulus/common/sfnStep');
 const { globalReplace } = require('@cumulus/common/string');
@@ -823,7 +827,8 @@ async function waitForTestExecutionStart({
 
     for (let executionCtr = 0; executionCtr < executions.length; executionCtr += 1) {
       const execution = executions[executionCtr];
-      const taskInput = await lambdaStep.getStepInput(execution.executionArn, startTask);
+      let taskInput = await lambdaStep.getStepInput(execution.executionArn, startTask);
+      taskInput = await pullStepFunctionEvent(taskInput);
       if (taskInput && findExecutionFn(taskInput, findExecutionFnParams)) {
         return execution;
       }

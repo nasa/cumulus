@@ -9,9 +9,12 @@ const boom = require('express-boom');
 const morgan = require('morgan');
 
 const awsServerlessExpress = require('aws-serverless-express');
+const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware');
+
 const router = require('./routes');
 
 const app = express();
+app.use(awsServerlessExpressMiddleware.eventContext());
 
 // logging config
 morgan.token('error_obj', (req, res) => {
@@ -31,6 +34,7 @@ app.use(boom());
 app.use(morgan('combined'));
 app.use(cors());
 app.use(cookieParser());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json()); // for parsing application/json
 app.use(hsts({ maxAge: 31536000 }));
 

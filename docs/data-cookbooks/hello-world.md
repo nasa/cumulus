@@ -20,10 +20,13 @@ HelloWorldWorkflow:
   StartAt: HelloWorld
   States:
     HelloWorld:
-      CumulusConfig:
-        buckets: '{$.meta.buckets}'
-        provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
+      Parameters:
+        cma:
+          event.$: '$'
+          task_config:
+            buckets: '{$.meta.buckets}'
+            provider: '{$.meta.provider}'
+            collection: '{$.meta.collection}'
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
       Retry:

@@ -1,7 +1,6 @@
 'use strict';
 
 const got = require('got');
-const get = require('lodash.get');
 const publicIp = require('public-ip');
 const Logger = require('@cumulus/logger');
 
@@ -9,7 +8,7 @@ const searchConcept = require('./searchConcept');
 const ingestConcept = require('./ingestConcept');
 const deleteConcept = require('./deleteConcept');
 const getUrl = require('./getUrl');
-const ValidationError = require('./ValidationError');
+const { ummVersion, validateUMMG } = require('./UmmUtils');
 
 const log = new Logger({ sender: 'cmr-client' });
 
@@ -18,57 +17,6 @@ const logDetails = {
 };
 
 const IP_TIMEOUT_MS = 1 * 1000;
-
-/**
- * Find the UMM version as a decimal string.
- * If a version cannot be found on the input object
- * version 1.4 is assumed and returned.
- *
- * @param {Object} umm - UMM metadata object
- * @returns {string} UMM version for the given object
- *
- * @private
- */
-function ummVersion(umm) {
-  return get(umm, 'MetadataSpecification.Version', '1.4');
-}
-
-/**
- * Posts a given xml string to the validate endpoint of CMR
- * and promises true if valid.
- *
- * @param {string} ummMetadata - the UMM object
- * @param {string} identifier - the document identifier
- * @param {string} provider - the CMR provider
- * @returns {Promise<boolean>} returns true if the document is valid
- *
- * @private
- */
-async function validateUMMG(ummMetadata, identifier, provider) {
-  const version = ummVersion(ummMetadata);
-  let result;
-
-  try {
-    result = await got.post(`${getUrl('validate', provider)}granule/${identifier}`, {
-      json: true,
-      body: ummMetadata,
-      headers: {
-        Accept: 'application/json',
-        'Content-type': `application/vnd.nasa.cmr.umm+json;version=${version}`
-      }
-    });
-
-    if (result.statusCode === 200) {
-      return true;
-    }
-  } catch (e) {
-    result = e.response;
-  }
-
-  throw new ValidationError(
-    `Validation was not successful. UMM metadata Object: ${JSON.stringify(ummMetadata)}`
-  );
-}
 
 /**
  * Returns a valid a CMR token

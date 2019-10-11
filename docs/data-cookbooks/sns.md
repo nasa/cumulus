@@ -28,9 +28,12 @@ However, if you want to report your ingest status at any point during a workflow
 
 ```yaml
 PdrStatusReport:
-  CumulusConfig:
-    cumulus_message:
-      input: '{$}'
+  Parameters:
+    cma:
+      event.$: '$'
+      task_config:
+          cumulus_message:
+            input: '{$}'
   ResultPath: null
   Type: Task
   Resource: ${SfSnsReportLambdaFunction.Arn}
