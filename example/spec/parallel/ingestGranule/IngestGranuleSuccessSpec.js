@@ -86,16 +86,6 @@ const workflowConfigFile = './workflows/sips.yml';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
-const templatedSyncGranuleFilename = templateFile({
-  inputTemplateFilename: './spec/parallel/ingestGranule/SyncGranule.output.payload.template.json',
-  config: config[workflowName].SyncGranuleOutput
-});
-
-const templatedOutputPayloadFilename = templateFile({
-  inputTemplateFilename: './spec/parallel/ingestGranule/IngestGranule.output.payload.template.json',
-  config: config[workflowName].IngestGranuleOutput
-});
-
 const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
@@ -165,9 +155,66 @@ describe('The S3 Ingest Granules workflow', () => {
       s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
 
     const collectionUrlString = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
+
+    const templatedSyncGranuleFilename = templateFile({
+      inputTemplateFilename: './spec/parallel/ingestGranule/SyncGranule.output.payload.template.json',
+      config: {
+        granules: [
+          {
+            files: [
+              {
+                bucket: config.buckets.internal.name,
+                filename: `s3://${config.buckets.internal.name}/file-staging/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf`,
+                fileStagingDir: `file-staging/${config.stackName}/replace-me-collectionId`
+              },
+              {
+                bucket: config.buckets.internal.name,
+                filename: `s3://${config.buckets.internal.name}/file-staging/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf.met`,
+                fileStagingDir: `file-staging/${config.stackName}/replace-me-collectionId`
+              },
+              {
+                bucket: config.buckets.internal.name,
+                filename: `s3://${config.buckets.internal.name}/file-staging/${config.stackName}/replace-me-collectionId/replace-me-granuleId_ndvi.jpg`,
+                fileStagingDir: `file-staging/${config.stackName}/replace-me-collectionId`
+              }
+            ]
+          }
+        ]
+      }
+    });
+
     expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedSyncGranuleFilename, granuleId, testDataFolder, newCollectionId);
     expectedSyncGranulePayload.granules[0].dataType += testSuffix;
     expectedSyncGranulePayload.granules[0].files = addUrlPathToGranuleFiles(expectedSyncGranulePayload.granules[0].files, testId, '');
+
+    const templatedOutputPayloadFilename = templateFile({
+      inputTemplateFilename: './spec/parallel/ingestGranule/IngestGranule.output.payload.template.json',
+      config: {
+        granules: [
+          {
+            files: [
+              {
+                bucket: config.buckets.protected.name,
+                filename: `s3://${config.buckets.protected.name}/MOD09GQ___006/2017/MOD/replace-me-granuleId.hdf`
+              },
+              {
+                bucket: config.buckets.private.name,
+                filename: `s3://${config.buckets.private.name}/MOD09GQ___006/MOD/replace-me-granuleId.hdf.met`
+              },
+              {
+                bucket: config.buckets.public.name,
+                filename: `s3://${config.buckets.public.name}/MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg`
+              },
+              {
+                bucket: config.buckets['protected-2'].name,
+                filename: `s3://${config.buckets['protected-2'].name}/MOD09GQ___006/MOD/replace-me-granuleId.cmr.xml`
+              }
+            ]
+          }
+        ]
+      }
+    });
+
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
     expectedPayload.granules = addUniqueGranuleFilePathToGranuleFiles(expectedPayload.granules, testId);
