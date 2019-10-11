@@ -6,92 +6,19 @@ hide_title: true
 
 # SNS Notification in Workflows
 
-On deployment, an sftracker (Step function tracker) [SNS](https://aws.amazon.com/sns) topic is created and used for messages related to the workflow.
+On deployment, three [SNS topics](https://aws.amazon.com/sns) are created and used for handling notification messages related to the workflow. The `publishReports` Lambda publishes to these topics both when the workflow starts and when it reaches a terminal state (completion or failure). The following describes how many message(s) each topic receives **both on workflow start and workflow completion/failure**:
 
-Workflows can be configured to send SNS messages containing the Cumulus message throughout the workflow by using the [SF-SNS-Report lambda function](https://www.npmjs.com/package/@cumulus/sf-sns-report).
+- `reportExecutions` - Receives 1 message per workflow execution
+- `reportGranules` - Receives 1 message per granule in a workflow execution
+- `reportPdrs` - Receives 1 message per PDR
+
+![Diagram of architecture for reporting workflow ingest notifications from AWS Step Functions](assets/workflow_reporting_diagram.png)
+
+The `publishReports` Lambda is triggered via a [Cloudwatch rule for any Step Function execution state transitions](https://docs.aws.amazon.com/step-functions/latest/dg/cw-events.html). Both the `publishReports` Lambda and Cloudwatch rule and are included by default in a Cumulus deployment.
 
 More information on configuring an SNS topic or subscription in Cumulus can be found in our [developer documentation](../deployment/config_descriptions#sns).
 
-## Pre-Deployment Configuration
-
-### Workflow Configuration
-
-The [Hello World Workflow](data-cookbooks/hello-world.md) is configured to send an SNS message when starting the workflow and upon workflow completion. This is configured in `workflows/helloworld.yml`.
-
-```yaml
-HelloWorldWorkflow:
-  Comment: 'Returns Hello World'
-  StartAt: StartStatus
-  States:
-    StartStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn} # This will send a status message at the start of the workflow
-      Parameters:
-        cma:
-          event.$: '$'
-          task_config:
-            cumulus_message:
-            input: '{$}' # Configuration to send the payload to the SNS Topic
-      Next: HelloWorld
-    HelloWorld:
-      Parameters:
-        cma:
-          event.$: '$'
-          task_config:
-            buckets: '{$.meta.buckets}'
-            provider: '{$.meta.provider}'
-            collection: '{$.meta.collection}'
-      Type: Task
-      Resource: ${HelloWorldLambdaFunction.Arn}
-      Next: StopStatus
-    StopStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn} # This will send a success status message at the end of the workflow
-      Parameters:
-        cma:
-          event.$: '$'
-          task_config:
-            sfnEnd: true # Indicates the end of the workflow
-            stack: '{$.meta.stack}'
-            bucket: '{$.meta.buckets.internal.name}'
-            stateMachine: '{$.cumulus_meta.state_machine}'
-            executionName: '{$.cumulus_meta.execution_name}'
-            cumulus_message:
-              input: '{$}' # Configuration to send the payload to the SNS Topic
-      Catch:
-        - ErrorEquals:
-          - States.ALL
-          Next: WorkflowFailed
-      End: true
-    WorkflowFailed:
-      Type: Fail
-      Cause: 'Workflow failed'
-```
-
-#### Sending an SNS Message in an Error Case
-
-To send an SNS message for an error case, you can configure your workflow to catch errors and set the next workflow step on error to a step with the `SfSnsReportLambdaFunction` lambda function. This is configured in `workflows/sips.yml`.
-
-```yaml
-DiscoverPdrs:
-  Parameters:
-    cma:
-      event.$: '$'
-      task_config: '{$.meta.stack}'
-        provider: '{$.meta.provider}'
-        bucket: '{$.meta.buckets.internal.name}'
-        collection: '{$.meta.collection}'
-  Type: Task
-  Resource: ${DiscoverPdrsLambdaFunction.Arn}
-  Catch:
-    - ErrorEquals:
-      - States.ALL
-      ResultPath: '$.exception'
-      Next: StopStatus # On error, run the StopStatus step which calls the SfSnsReportLambdaFunction
-  Next: QueuePdrs # When no error, go to the next step in the workflow
-```
-
-#### Sending an SNS message to report status
+## Sending an SNS message to report status
 
 SNS messages can be sent at anytime during the workflow execution by adding a workflow step to send the message. In the following example, a PDR status report step is configured to report PDR status. This is configured in `workflows/sips.yml`.
 
@@ -106,12 +33,11 @@ PdrStatusReport:
   ResultPath: null
   Type: Task
   Resource: ${SfSnsReportLambdaFunction.Arn}
-  Next: StopStatus
 ```
 
 ### Task Configuration
 
-To use the SfSnsReport lambda, the following configuration should be added to `lambas.yml`:
+To use the `SfSnsReport` Lambda, the following configuration should be added to `lambas.yml`:
 
 ```yaml
 SfSnsReport:
@@ -123,11 +49,11 @@ SfSnsReport:
 
 ### Subscribing Additional Listeners
 
-Additional listeners to the SF tracker topic can be configured in `app/config.yml` under `sns.sftracker.subscriptions`. Shown below is configuration that subscribes an additional lambda function (`SnsS3Test`) to receive broadcasts from the `sftracker` SNS. The `endpoint` value depends on the protocol, and for a  lambda function, requres the function's Arn. In the configuration it is populated by finding the lambda's Arn attribute via [Fn::GetAtt](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html). Note the lambda name configured in `lambdas.yml` `SnsS3Test` needs to have it's name postpended with `LambdaFunction` to have the Arn correctly found.
+Additional listeners to SNS topics can be configured in `app/config.yml`. Shown below is configuration that subscribes an additional lambda function (`SnsS3Test`) to receive broadcasts from the `reportExecutions` SNS topic. The `endpoint` value depends on the protocol, which for a Lambda function requires the function's ARN. In the configuration it is populated by finding the lambda's ARN attribute via [Fn::GetAtt](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html). Note the lambda name configured in `lambdas.yml` `SnsS3Test` needs to have it's name postpended with `LambdaFunction` to have the ARN correctly found.
 
 ```yaml
 sns:
-  sftracker:
+  reportExecutions:
     subscriptions:
       additionalReceiver:                 # name of the new subscription.
         endpoint:
@@ -138,16 +64,16 @@ sns:
         protocol: lambda
 ```
 
-Make sure that the receiver lambda is configured in `lambdas.yml`.
+Make sure that the receiver Lambda is configured in `lambdas.yml`.
 
 ### SNS message format
 
-The configured `SfSnsReport` lambda receives the Cumulus message [(as the lambda's task input)](../workflows/input_output.html#2-resolve-task-input) and is responsible for publishing the message to the sftracker SNS Topic. But before it publishes the message, `SfSnsReport` makes a determiniation about the workflow status and adds an additional metadata key to the message at `message.meta.status`.
+The `SfSnsReport` lambda receives the Cumulus message [(as the lambda's task input)](../workflows/input_output.html#2-resolve-task-input) and is responsible for publishing the message to the sftracker SNS Topic. But before it publishes the message, `SfSnsReport` makes a determiniation about the workflow status and adds an additional metadata key to the message at `message.meta.status`.
 
-First it determines whether the workflow has finished by looking for the `sfnEnd` key in the `config` object.  If the workflow has finished, it checks to see if it has failed by searching the input message for a non-empty `exception` object. The lambda updates the `message.meta.status` with `failed` or `completed` based on that result.  If the workflow is not finished the lambda sets `message.meta.status` to `running`.
+First it determines whether the workflow has finished by looking for the `sfnEnd` key in the `config` object. If the workflow has finished, it checks to see if it has failed by searching the input message for a non-empty `exception` object. The lambda updates the `message.meta.status` with `failed` or `completed` based on that result. If the workflow is not finished the lambda sets `message.meta.status` to `running`.
 
 This means that subscribers to the sftracker SNS Topic can expect to find the published message by parsing the JSON string representation of the message found in the [SNS event](https://docs.aws.amazon.com/lambda/latest/dg/eventsources.html#eventsources-sns) at `Records[].Sns.Message` and examining the `meta.status` value.  The value found at `Records[0].Sns.Message` will be a stringified version of the workflow's Cumulus message with the status metadata attached.
 
 ## Summary
 
-The workflows can be configured to send SNS messages at any point. Additional listeners can be easily configured to trigger when a message is sent to the SNS topic.
+The workflows can be configured to send SNS messages at any point. Additional listeners can be easily configured to trigger when messages are sent to the SNS topics.

@@ -2,15 +2,8 @@
 
 TestLambdaVersionWorkflow:
   Comment: 'Tests Lambda update after redeploy'
-  StartAt: StartStatus
+  StartAt: WaitForDeployment
   States:
-    StartStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
-      Next: WaitForDeployment
     WaitForDeployment:
       Type: Task
       Resource: ${WaitForDeploymentLambdaFunction.Arn}
@@ -18,18 +11,6 @@ TestLambdaVersionWorkflow:
     VersionUpTest:
       Type: Task
       Resource: ${VersionUpTestLambdaFunction.Arn}
-      Next: StopStatus
-    StopStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        sfnEnd: true
-        stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal.name}'
-        stateMachine: '{$.cumulus_meta.state_machine}'
-        executionName: '{$.cumulus_meta.execution_name}'
-        cumulus_message:
-          input: '{$}'
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -42,15 +23,8 @@ TestLambdaVersionWorkflow:
 
 WaitForDeployWorkflow:
   Comment: 'Tests redeployment during workflow run'
-  StartAt: StartStatus
+  StartAt: HelloWorld
   States:
-    StartStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
-      Next: HelloWorld
     HelloWorld:
       CumulusConfig:
         buckets: '{$.meta.buckets}'
@@ -62,22 +36,6 @@ WaitForDeployWorkflow:
     WaitForDeployment:
       Type: Task
       Resource: ${WaitForDeploymentLambdaFunction.Arn}
-      Next: StopStatus
-      Catch:
-        - ErrorEquals:
-          - States.ALL
-          Next: WorkflowFailed
-    StopStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        sfnEnd: true
-        stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal.name}'
-        stateMachine: '{$.cumulus_meta.state_machine}'
-        executionName: '{$.cumulus_meta.execution_name}'
-        cumulus_message:
-          input: '{$}'
       Catch:
         - ErrorEquals:
           - States.ALL
