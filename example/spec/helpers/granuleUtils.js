@@ -97,6 +97,10 @@ async function setupTestGranuleForIngest(bucket, inputPayloadJson, granuleRegex,
   const oldGranuleId = baseInputPayload.granules[0].granuleId;
   baseInputPayload.granules[0].dataType += testSuffix;
 
+  if (baseInputPayload.pdr && baseInputPayload.pdr.name) {
+    baseInputPayload.pdr.name += testSuffix;
+  }
+
   await createGranuleFiles(
     baseInputPayload.granules[0].files,
     bucket,
