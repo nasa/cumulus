@@ -14,50 +14,7 @@ default:
     AsyncOperationsTable: '{{prefix}}-AsyncOperationsTable'
     asyncOperationRunnerRole: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway'
     sqs_consumer_rate: 300
-    IngestAndPublishGranule:
-      IngestGranuleOutput:
-        granules:
-          - files:
-            - bucket: '{{buckets.protected.name}}'
-              filename: "s3://{{buckets.protected.name}}/MOD09GQ___006/2017/MOD/replace-me-granuleId.hdf"
-            - bucket: '{{buckets.private.name}}'
-              filename: "s3://{{buckets.private.name}}/MOD09GQ___006/MOD/replace-me-granuleId.hdf.met"
-            - bucket: '{{buckets.public.name}}'
-              filename: "s3://{{buckets.public.name}}/MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg"
-            - bucket: '{{buckets.protected-2.name}}'
-              filename: "s3://{{buckets.protected-2.name}}/MOD09GQ___006/MOD/replace-me-granuleId.cmr.xml"
-      IngestUMMGranuleOutput:
-        granules:
-          - files:
-            - bucket: '{{buckets.protected.name}}'
-              filename: "s3://{{buckets.protected.name}}/MOD09GQ___006/2016/MOD/replace-me-granuleId.hdf"
-            - bucket: '{{buckets.private.name}}'
-              filename: "s3://{{buckets.private.name}}/MOD09GQ___006/MOD/replace-me-granuleId.hdf.met"
-            - bucket: '{{buckets.public.name}}'
-              filename: "s3://{{buckets.public.name}}/MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg"
-            - bucket: '{{buckets.protected-2.name}}'
-              filename: "s3://{{buckets.protected-2.name}}/MOD09GQ___006/MOD/replace-me-granuleId.cmr.json"
-      SyncGranuleOutput:
-        granules:
-          - files:
-            - bucket: '{{buckets.internal.name}}'
-              filename: 's3://{{buckets.internal.name}}/file-staging/{{prefix}}/replace-me-collectionId/replace-me-granuleId.hdf'
-              fileStagingDir: 'file-staging/{{prefix}}/replace-me-collectionId'
-            - bucket: '{{buckets.internal.name}}'
-              filename: 's3://{{buckets.internal.name}}/file-staging/{{prefix}}/replace-me-collectionId/replace-me-granuleId.hdf.met'
-              fileStagingDir: 'file-staging/{{prefix}}/replace-me-collectionId'
-            - bucket: '{{buckets.internal.name}}'
-              filename: 's3://{{buckets.internal.name}}/file-staging/{{prefix}}/replace-me-collectionId/replace-me-granuleId_ndvi.jpg'
-              fileStagingDir: 'file-staging/{{prefix}}/replace-me-collectionId'
-    SyncGranule:
-      granules:
-        - files:
-          - bucket: '{{buckets.internal.name}}'
-            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{prefix}}/replace-me-collectionId/replace-me-granuleId.hdf'
-            fileStagingDir: 'custom-staging-dir/{{prefix}}/replace-me-collectionId'
-          - bucket: '{{buckets.internal.name}}'
-            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{prefix}}/replace-me-collectionId/replace-me-granuleId.hdf.met'
-            fileStagingDir: 'custom-staging-dir/{{prefix}}/replace-me-collectionId'
+
   # test configuration ends
 
   cmaDir: '/opt/'
@@ -263,6 +220,7 @@ default:
     - username: pquinn1
     - username: menno.vandiermen
     - username: matthewsavoie
+    - username: mhsavoie
     - username: mboyd
     - username: jmcampbell
 
@@ -731,15 +689,34 @@ mhs4:
   ecs:
     ssh: true
     keyPairName: mhs
+  launchpad:
+    api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1'
+    passphrase: '{{LAUNCHPAD_PASSPHRASE}}'
   apiConfigs:
     backend:
       private: true
       port: 8004
     distribution:
       private: true
-      port: 7004
+      port: 7014
       logApiGatewayToCloudWatch: true
   logToSharedDestination: '{{SHARED_LOG_DESTINATION_ARN}}'
+  cmr:
+    oauthProvider: launchpad
+    username: CmrUserNotUsed
+    password: CmrPasswordNotUsed
+  oauth:
+    provider: launchpad
+    userGroup: GSFC-Cumulus-Dev
+  # oauth:
+  #   provider: earthdatalogin
+  #   userGroup: n/a
+  samlConfig:
+    entityID: 'https://u8ne7bgicd.execute-api.us-east-1.amazonaws.com:8004/dev/'
+    assertionConsumerService: 'https://u8ne7bgicd.execute-api.us-east-1.amazonaws.com:8004/dev/saml/auth'
+    idpLogin: 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso'
+    launchpadMetadataPath: 's3://{{buckets.internal.name}}/{{prefix}}/launchpad/launchpad-sbx-metadata.xml'
+
 
 mhs2:
   prefix: mhs2

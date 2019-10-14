@@ -9,8 +9,52 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### BREAKING CHANGES
 
+- **CUMULUS-1396** - **Workflow steps at the beginning and end of a workflow using the `SfSnsReport` Lambda have now been deprecated (e.g. `StartStatus`, `StopStatus`) and should be removed from your workflow definitions**. These steps were used for publishing ingest notifications and have been replaced by an implementation using Cloudwatch events for Step Functions to trigger a Lambda that publishes ingest notifications. For further detail on how ingest notifications are published, see the notes below on **CUMULUS-1394**. For examples of how to update your workflow definitions, see our [example workflow definitions](https://github.com/nasa/cumulus/blob/master/example/workflows/).
+
+### Added
+
+- **CUMULUS-1396**
+  - Added `@cumulus/common/sfnStep`:
+    - `LambdaStep` - A class for retrieving and parsing input and output to Lambda steps in AWS Step Functions
+    - `ActivityStep` - A class for retrieving and parsing input and output to ECS activity steps in AWS Step Functions
+
+- **CUMULUS-1574**
+  - Added `GET /token` endpoint for SAML authorization when cumulus is protected by Launchpad.
+    This lets a user retieve a token by hand that can be presented to the API.
+
+### Changed
+
+- **CUMULUS-1453**
+  - Removed config schema for `@cumulus/sf-sns-report` task
+  - Updated `@cumulus/sf-sns-report` to always assume that it is running as an intermediate step in a workflow, not as the first or last step
+
+### Fixed
+
+- **CUMULUS-1396** - Updated `@cumulus/common/StepFunctions.getExecutionHistory()` to recursively fetch execution history when `nextToken` is returned in response
+
+## [v1.14.2] - 2019-10-08
+
+### BREAKING CHANGES
+
+Your Cumulus Message Adapter version should be pinned to `v1.0.13` or lower in your `app/config.yml` using `message_adapter_version: v1.0.13` OR you should use the workflow migration steps below to work with CMA v1.1.1+.
+
 - **CUMULUS-1447** -
-  The newest release of the Cumulus Message Adapter (v1.1.0) requires that parameterized configuration be used for remote message functionality. Once released, Kes will automatically bring in CMA v1.1.0 without additional configuration.
+  The newest release of the Cumulus Message Adapter (v1.1.1) requires that parameterized configuration be used for remote message functionality. Once released, Kes will automatically bring in CMA v1.1.1 without additional configuration.
+
+  **Migration instructions**
+  Oversized messages are no longer written to S3 automatically. In order to utilize remote messaging functionality, configure a `ReplaceConfig` AWS Step Function parameter on your CMA task:
+
+  ```yaml
+  ParsePdr:
+    Parameters:
+      cma:
+        event.$: '$'
+        ReplaceConfig:
+          FullMessage: true
+  ```
+
+  Accepted fields in `ReplaceConfig` include `MaxSize`, `FullMessage`, `Path` and `TargetPath`.
+  See https://github.com/nasa/cumulus-message-adapter/blob/master/CONTRACT.md#remote-message-configuration for full details.
 
   As this change is backward compatible in Cumulus Core, users wishing to utilize the previous version of the CMA may opt to transition to using a CMA lambda layer, or set `message_adapter_version` in their configuration to a version prior to v1.1.0.
 
@@ -25,6 +69,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - `reportPdrs` - Receives 1 message per PDR
 
 ### Added
+
+- **CUMULUS-639**
+  - Adds SAML JWT and launchpad token authentication to Cumulus API (configurable)
+    - **NOTE** to authenticate with Launchpad ensure your launchpad user_id is in the `<prefix>-UsersTable`
+    - when Cumulus configured to protect API via Launchpad:
+      - New endpoints
+        - `GET /saml/login` - starting point for SAML SSO creates the login request url and redirects to the SAML Identity Provider Service (IDP)
+        - `POST /saml/auth` - SAML Assertion Consumer Service.  POST receiver from SAML IDP.  Validates response, logs the user in, and returnes a SAML-based JWT.
+    - Disabled endpoints
+      - `POST /refresh`
+      - Changes authorization worklow:
+      - `ensureAuthorized` now presumes the bearer token is a JWT and tries to validate.  If the token is malformed, it attempts to validate the token against Launchpad.  This allows users to bring their own token as described here https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication.  But it also allows dashboard users to manually authenticate via Launchpad SAML to receive a Launchpad-based JWT.
 
 - **CUMULUS-1394**
   - Added `Granule.generateGranuleRecord()` method to granules model to generate a granule database record from a Cumulus execution message
@@ -41,6 +97,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - `ActivityStep` - A class for retrieving and parsing input and output to ECS activity steps in AWS Step Functions
 
 ### Changed
+
+- **CUMULUS-1485** Update `@cumulus/cmr-client` to return error message from CMR for validation failures.
 
 - **CUMULUS-1394**
   - Renamed `Execution.generateDocFromPayload()` to `Execution.generateRecord()` on executions model. The method generates an execution database record from a Cumulus execution message.
@@ -61,6 +119,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1451**
   - Elasticsearch cluster setting `auto_create_index` will be set to false. This had been causing issues in the bootstrap lambda on deploy.
+
+- **CUMULUS-1456**
+  - `@cumulus/api` endpoints default error handler uses `boom` package to format errors, which is consistent with other API endpoint errors.
 
 ### Fixed
 
@@ -1424,7 +1485,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.14.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.14.2...HEAD
+[v1.14.2]: https://github.com/nasa/cumulus/compare/v1.14.1...v1.14.2
 [v1.14.1]: https://github.com/nasa/cumulus/compare/v1.14.0...v1.14.1
 [v1.14.0]: https://github.com/nasa/cumulus/compare/v1.13.5...v1.14.0
 [v1.13.5]: https://github.com/nasa/cumulus/compare/v1.13.4...v1.13.5
