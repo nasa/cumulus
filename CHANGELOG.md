@@ -7,11 +7,30 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- **CUMULUS-1396** - **Workflow steps at the beginning and end of a workflow using the `SfSnsReport` Lambda have now been deprecated (e.g. `StartStatus`, `StopStatus`)**. These steps were used for publishing ingest notifications and have been replaced by an implementation using Cloudwatch events for Step Functions to trigger a Lambda that publishes ingest notifications. For further detail on how ingest notifications are published, see the notes below on **CUMULUS-1394**. For examples of how to update your workflow definitions, see our [example workflow definitions](https://github.com/nasa/cumulus/blob/master/example/workflows/).
+
 ### Added
+
+- **CUMULUS-1396**
+  - Added `@cumulus/common/sfnStep`:
+    - `LambdaStep` - A class for retrieving and parsing input and output to Lambda steps in AWS Step Functions
+    - `ActivityStep` - A class for retrieving and parsing input and output to ECS activity steps in AWS Step Functions
 
 - **CUMULUS-1574**
   - Added `GET /token` endpoint for SAML authorization when cumulus is protected by Launchpad.
     This lets a user retieve a token by hand that can be presented to the API.
+
+### Changed
+
+- **CUMULUS-1453**
+  - Removed config schema for `@cumulus/sf-sns-report` task
+  - Updated `@cumulus/sf-sns-report` to always assume that it is running as an intermediate step in a workflow, not as the first or last step
+
+### Fixed
+
+- **CUMULUS-1396** - Updated `@cumulus/common/StepFunctions.getExecutionHistory()` to recursively fetch execution history when `nextToken` is returned in response
 
 ## [v1.14.2] - 2019-10-08
 
@@ -39,8 +58,6 @@ Your Cumulus Message Adapter version should be pinned to `v1.0.13` or lower in y
 
   As this change is backward compatible in Cumulus Core, users wishing to utilize the previous version of the CMA may opt to transition to using a CMA lambda layer, or set `message_adapter_version` in their configuration to a version prior to v1.1.0.
 
-- **CUMULUS-1396** - **Workflow steps at the beginning and end of a workflow using the `SfSnsReport` Lambda have now been deprecated (e.g. `StartStatus`, `StopStatus`)**. These steps were used for publishing ingest notifications and have been replaced by an implementation using Cloudwatch events for Step Functions to trigger a Lambda that publishes ingest notifications. For further detail on how ingest notifications are published, see the notes below on **CUMULUS-1394**. For examples of how to update your workflow definitions, see our [example workflow definitions](https://github.com/nasa/cumulus/blob/master/example/workflows/).
-
 ### PLEASE NOTE
 
 - **CUMULUS-1394** - Ingest notifications are now provided via 3 separate SNS topics for executions, granules, and PDRs, instead of a single `sftracker` SNS topic. Whereas the `sftracker` SNS topic received a full Cumulus execution message, the new topics all receive generated records for the given object. The new topics are only published to if the given object exists for the current execution. For a given execution/granule/PDR, **two messages will be received by each topic**: one message indicating that ingest is running and another message indicating that ingest has completed or failed. The new SNS topics are:
@@ -50,20 +67,6 @@ Your Cumulus Message Adapter version should be pinned to `v1.0.13` or lower in y
   - `reportPdrs` - Receives 1 message per PDR
 
 ### Added
-
-- **CUMULUS-1394**
-  - Added `Granule.generateGranuleRecord()` method to granules model to generate a granule database record from a Cumulus execution message
-  - Added `Pdr.generatePdrRecord()` method to PDRs model to generate a granule database record from a Cumulus execution message
-  - Added helpers to `@cumulus/common/message`:
-    - `getMessageExecutionName()` - Get the execution name from a Cumulus execution message
-    - `getMessageStateMachineArn()` - Get the state machine ARN from a Cumulus execution message
-    - `getMessageExecutionArn()` - Get the execution ARN for a Cumulus execution message
-    - `getMessageGranules()` - Get the granules from a Cumulus execution message, if any.
-  - Added `@cumulus/common/cloudwatch-event/isFailedSfStatus()` to determine if a Step Function status from a Cloudwatch event is a failed status
-- **CUMULUS-1396**
-  - Added `@cumulus/common/sfnStep`:
-    - `LambdaStep` - A class for retrieving and parsing input and output to Lambda steps in AWS Step Functions
-    - `ActivityStep` - A class for retrieving and parsing input and output to ECS activity steps in AWS Step Functions
 
 - **CUMULUS-639**
   - Adds SAML JWT and launchpad token authentication to Cumulus API (configurable)
@@ -76,6 +79,16 @@ Your Cumulus Message Adapter version should be pinned to `v1.0.13` or lower in y
       - `POST /refresh`
       - Changes authorization worklow:
       - `ensureAuthorized` now presumes the bearer token is a JWT and tries to validate.  If the token is malformed, it attempts to validate the token against Launchpad.  This allows users to bring their own token as described here https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication.  But it also allows dashboard users to manually authenticate via Launchpad SAML to receive a Launchpad-based JWT.
+
+- **CUMULUS-1394**
+  - Added `Granule.generateGranuleRecord()` method to granules model to generate a granule database record from a Cumulus execution message
+  - Added `Pdr.generatePdrRecord()` method to PDRs model to generate a granule database record from a Cumulus execution message
+  - Added helpers to `@cumulus/common/message`:
+    - `getMessageExecutionName()` - Get the execution name from a Cumulus execution message
+    - `getMessageStateMachineArn()` - Get the state machine ARN from a Cumulus execution message
+    - `getMessageExecutionArn()` - Get the execution ARN for a Cumulus execution message
+    - `getMessageGranules()` - Get the granules from a Cumulus execution message, if any.
+  - Added `@cumulus/common/cloudwatch-event/isFailedSfStatus()` to determine if a Step Function status from a Cloudwatch event is a failed status
 
 ### Changed
 
@@ -106,7 +119,6 @@ Your Cumulus Message Adapter version should be pinned to `v1.0.13` or lower in y
 
 ### Fixed
 
-- **CUMULUS-1396** - Updated `@cumulus/common/StepFunctions.getExecutionHistory()` to recursively fetch execution history when `nextToken` is returned in response
 - **CUMULUS-1432** `logs` endpoint filter correctly filters logs by level
 - **CUMULUS-1484**  `useMessageAdapter` now does not set CUMULUS_MESSAGE_ADAPTER_DIR when `true`
 
