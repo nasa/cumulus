@@ -22,9 +22,9 @@ More information on configuring an SNS topic or subscription in Cumulus can be f
 
 ### In a workflow
 
-As described above, ingest notifications will automatically be published to the SNS topics on workflow start and completion/failure, so **there is no need to include a workflow step to publish the initial or final status of your workflows**.
+As described above, ingest notifications will automatically be published to the SNS topics on workflow start and completion/failure, so **you should not include a workflow step to publish the initial or final status of your workflows**.
 
-However, if you want to report your ingest status at any point during a workflow execution, you can add a workflow step using the `SfSnsReport` Lambda. In the following example from [`workflows/sips.yml`](https://github.com/nasa/cumulus/blob/master/example/workflows/sips.yml), the `ParsePdr` workflow is configured to use the `SfnSnsReport` Lambda, primarily to update the PDR ingestion status.
+However, if you want to report your ingest status at any point **during a workflow execution**, you can add a workflow step using the `SfSnsReport` Lambda. In the following example from [`workflows/sips.yml`](https://github.com/nasa/cumulus/blob/master/example/workflows/sips.yml), the `ParsePdr` workflow is configured to use the `SfnSnsReport` Lambda, primarily to update the PDR ingestion status.
 
 ```yaml
 PdrStatusReport:
