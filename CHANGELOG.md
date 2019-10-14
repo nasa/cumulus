@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### BREAKING CHANGES
 
-- **CUMULUS-1396** - **Workflow steps at the beginning and end of a workflow using the `SfSnsReport` Lambda have now been deprecated (e.g. `StartStatus`, `StopStatus`)**. These steps were used for publishing ingest notifications and have been replaced by an implementation using Cloudwatch events for Step Functions to trigger a Lambda that publishes ingest notifications. For further detail on how ingest notifications are published, see the notes below on **CUMULUS-1394**. For examples of how to update your workflow definitions, see our [example workflow definitions](https://github.com/nasa/cumulus/blob/master/example/workflows/).
+- **CUMULUS-1396** - **Workflow steps at the beginning and end of a workflow using the `SfSnsReport` Lambda have now been deprecated (e.g. `StartStatus`, `StopStatus`) and should be removed from your workflow definitions**. These steps were used for publishing ingest notifications and have been replaced by an implementation using Cloudwatch events for Step Functions to trigger a Lambda that publishes ingest notifications. For further detail on how ingest notifications are published, see the notes below on **CUMULUS-1394**. For examples of how to update your workflow definitions, see our [example workflow definitions](https://github.com/nasa/cumulus/blob/master/example/workflows/).
 
 ### Added
 
