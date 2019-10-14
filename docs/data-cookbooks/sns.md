@@ -20,7 +20,11 @@ More information on configuring an SNS topic or subscription in Cumulus can be f
 
 ## Sending an SNS message to report status
 
-SNS messages can be sent at anytime during the workflow execution by adding a workflow step to send the message. In the following example, a PDR status report step is configured to report PDR status. This is configured in `workflows/sips.yml`.
+### In a workflow
+
+As described above, ingest notifications will automatically be published to the SNS topics on workflow start and completion/failure, so **you should not include a workflow step to publish the initial or final status of your workflows**.
+
+However, if you want to report your ingest status at any point **during a workflow execution**, you can add a workflow step using the `SfSnsReport` Lambda. In the following example from [`workflows/sips.yml`](https://github.com/nasa/cumulus/blob/master/example/workflows/sips.yml), the `ParsePdr` workflow is configured to use the `SfnSnsReport` Lambda, primarily to update the PDR ingestion status.
 
 ```yaml
 PdrStatusReport:
@@ -35,7 +39,7 @@ PdrStatusReport:
   Resource: ${SfSnsReportLambdaFunction.Arn}
 ```
 
-### Task Configuration
+#### Task Configuration
 
 To use the `SfSnsReport` Lambda, the following configuration should be added to `lambas.yml`:
 
