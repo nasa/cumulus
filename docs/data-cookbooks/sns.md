@@ -91,7 +91,7 @@ More information on configuring an SNS topic subscriptions in Cumulus can be fou
 
 ### SNS message format
 
-Subscribers to the SNS topics can expect to find the published message by parsing the JSON string representation of the message found in the [SNS event](https://docs.aws.amazon.com/lambda/latest/dg/eventsources.html#eventsources-sns) at `Records[].Sns.Message`. The value found at `Records[0].Sns.Message` will be a JSON stringified version of the ingest notification record for an execution, a granule, or a PDR.
+Subscribers to the SNS topics can expect to find the published message by parsing the JSON string representation of the message found in the [SNS event](https://docs.aws.amazon.com/lambda/latest/dg/eventsources.html#eventsources-sns) at `Records[0].Sns.Message`. The message will be a JSON stringified version of the ingest notification record for an execution, a granule, or a PDR.
 
 The record parsed from the JSON stringified version of the execution, granule, or PDR should conform to the [data model schema for the given record type](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js).
 
