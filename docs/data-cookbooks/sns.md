@@ -85,7 +85,7 @@ sns:
         protocol: lambda
 ```
 
-Make sure that the subscriber Lambda is configured in `lambdas.yml`. **Note that the Lambda name configured in `lambdas.yml`, `SnsS3Test`, needs to have its name postpended with `LambdaFunction` to have the ARN correctly found.**
+Make sure that the subscriber Lambda is configured in `lambdas.yml`. **Note that the Lambda name configured in `lambdas.yml`,`SnsS3Test`, needs to have its name postpended with `LambdaFunction` (similar to the example above) to have the ARN correctly found.**
 
 More information on configuring an SNS topic subscriptions in Cumulus can be found in our [developer documentation](../deployment/config_descriptions#sns).
 
