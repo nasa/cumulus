@@ -376,7 +376,9 @@ sns:
         protocol: lambda
 ```
 
-The above code is an example of configuration for an SNS topic that will be called `sftrackerSns` in the resulting `cloudformation.yml` file. Upon deployment, this configuration creates an SNS topic named `<prefix>-sftracker` and subscribes the resource named `sns2elasticsearchLambdaFunction` to that topic so that it will be triggered when any messages are added to that topic.
+The above code is an example of configuration for an SNS topic that will be called `sftrackerSns` in the resulting `cloudformation.yml` file. The `endpoint` value depends on the protocol, which for a Lambda function requires the function's ARN. In this configuration it is populated by finding the Lambda's ARN via [Fn::GetAtt](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html).
+
+Upon deployment, this configuration creates an SNS topic named `<prefix>-sftrackerSns` and subscribes the resource named `sns2elasticsearchLambdaFunction` to that topic so that it will be triggered when any messages are added to that topic.
 
 More information for each of the individual attributes can be found in [AWS SNS Topic Documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-sns-topic.html).
 

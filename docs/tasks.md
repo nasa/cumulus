@@ -91,9 +91,8 @@ Add discovered PDRs to a queue
 ---
 
 ### [@cumulus/sf-sns-report](https://github.com/nasa/cumulus/tree/master/tasks/sf-sns-report)
-Broadcasts an incoming Cumulus message to SNS
+Publish ingest notifications to SNS
 
-- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/sf-sns-report/schemas).
 - Resources: [npm](https://npmjs.com/package/@cumulus/sf-sns-report) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/sf-sns-report)
 
 ---
