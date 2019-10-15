@@ -6,7 +6,7 @@ resource "aws_sfn_state_machine" "default" {
 }
 
 resource "aws_cloudwatch_event_rule" "state_machine_execution_rule" {
-  # name = "${var.prefix}-${var.name}-rule"
+  name = "${var.prefix}-${var.name}-rule"
   event_pattern = jsonencode({
     source      = ["aws.states"]
     detail-type = ["Step Functions Execution Status Change"]
@@ -31,7 +31,7 @@ resource "aws_lambda_permission" "semaphore_down" {
 }
 
 resource "aws_cloudwatch_event_target" "publish_reports" {
-  rule      = aws_cloudwatch_event_rule.state_machine_execution_rule.arn
+  rule      = aws_cloudwatch_event_rule.state_machine_execution_rule.name
   arn       = var.publish_reports_lambda_function_arn
 }
 
