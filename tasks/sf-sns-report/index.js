@@ -1,5 +1,6 @@
 'use strict';
 
+const get = require('lodash.get');
 const { publishReportSnsMessages } = require('@cumulus/api/lambdas/publish-reports');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 
