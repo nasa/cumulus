@@ -18,6 +18,10 @@ variable "state_machine_role_arn" {
   type = string
 }
 
+variable "publish_reports_lambda_function_arn" {
+  type = string
+}
+
 variable "sf_semaphore_down_lambda_function_arn" {
   type = string
 }

@@ -90,6 +90,10 @@ output "post_to_cmr_task_lambda_function_arn" {
   value = module.ingest.post_to_cmr_task_lambda_function_arn
 }
 
+output "publish_reports_lambda_function_arn" {
+  value = module.archive.publish_reports_lambda_function_arn
+}
+
 output "sf_semaphore_down_lambda_function_arn" {
   value = module.ingest.sf_semaphore_down_lambda_function_arn
 }
