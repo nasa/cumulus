@@ -11,7 +11,6 @@ resource "aws_cloudwatch_event_rule" "state_machine_execution_rule" {
     source      = ["aws.states"]
     detail-type = ["Step Functions Execution Status Change"]
     detail = {
-      # status          = ["ABORTED", "FAILED", "SUCCEEDED", "TIMED_OUT"]
       stateMachineArn = [aws_sfn_state_machine.default.id]
     }
   })
