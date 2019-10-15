@@ -135,7 +135,14 @@ describe('The SNS-type rule', () => {
     let putRule;
 
     beforeAll(async () => {
-      const putRuleResponse = await rulesApiTestUtils.updateRule({ prefix: config.stackName, ruleName, updateParams: { state: 'DISABLED' } });
+      const putRuleResponse = await rulesApiTestUtils.updateRule({
+        prefix: config.stackName,
+        ruleName,
+        updateParams: {
+          ...postRule.record,
+          state: 'DISABLED'
+        }
+      });
       putRule = JSON.parse(putRuleResponse.body);
     });
 
@@ -153,7 +160,14 @@ describe('The SNS-type rule', () => {
     let putRule;
 
     beforeAll(async () => {
-      const putRuleResponse = await rulesApiTestUtils.updateRule({ prefix: config.stackName, ruleName, updateParams: { state: 'ENABLED' } });
+      const putRuleResponse = await rulesApiTestUtils.updateRule({
+        prefix: config.stackName,
+        ruleName,
+        updateParams: {
+          ...postRule.record,
+          state: 'ENABLED'
+        }
+      });
       putRule = JSON.parse(putRuleResponse.body);
     });
 
@@ -172,12 +186,29 @@ describe('The SNS-type rule', () => {
     beforeAll(async () => {
       const { TopicArn } = await SNS.createTopic({ Name: newValueTopicName }).promise();
       newTopicArn = TopicArn;
-      const putRuleResponse = await rulesApiTestUtils.updateRule({ prefix: config.stackName, ruleName, updateParams: { rule: { value: TopicArn, type: 'sns' } } });
+      const putRuleResponse = await rulesApiTestUtils.updateRule({
+        prefix: config.stackName,
+        ruleName,
+        updateParams: {
+          ...postRule.record,
+          rule: {
+            value: TopicArn,
+            type: 'sns'
+          }
+        }
+      });
       putRule = JSON.parse(putRuleResponse.body);
     });
 
     afterAll(async () => {
-      await rulesApiTestUtils.updateRule({ prefix: config.stackName, ruleName, updateParams: { state: 'DISABLED' } });
+      await rulesApiTestUtils.updateRule({
+        prefix: config.stackName,
+        ruleName,
+        updateParams: {
+          ...postRule.record,
+          state: 'DISABLED'
+        }
+      });
       await SNS.deleteTopic({ TopicArn: newTopicArn }).promise();
     });
 
@@ -213,7 +244,18 @@ describe('The SNS-type rule', () => {
       };
       const { SubscriptionArn } = await SNS.subscribe(subscriptionParams).promise();
       subscriptionArn = SubscriptionArn;
-      const putRuleResponse = await rulesApiTestUtils.updateRule({ prefix: config.stackName, ruleName, updateParams: { rule: { value: TopicArn, type: 'sns' }, state: 'ENABLED' } });
+      const putRuleResponse = await rulesApiTestUtils.updateRule({
+        prefix: config.stackName,
+        ruleName,
+        updateParams: {
+          ...postRule.record,
+          rule: {
+            value: TopicArn,
+            type: 'sns'
+          },
+          state: 'ENABLED'
+        }
+      });
       putRule = JSON.parse(putRuleResponse.body);
     });
 

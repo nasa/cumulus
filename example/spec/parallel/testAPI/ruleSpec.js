@@ -158,6 +158,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
         prefix: config.stackName,
         ruleName: helloWorldRule.name,
         updateParams: {
+          ...postRule.record,
           meta: {
             triggerRule: updatedCheck
           }
