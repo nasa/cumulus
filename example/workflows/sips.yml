@@ -1,28 +1,7 @@
 SyncGranule:
   Comment: 'Sync Granule'
-  StartAt: Report
+  StartAt: SyncGranule
   States:
-    Report:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      Parameters:
-        cma:
-          event.$: '$'
-          ReplaceConfig:
-            FullMessage: true
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - &LambdaServiceExceptionRetry
-          ErrorEquals:
-          - Lambda.ServiceException
-          - Lambda.AWSLambdaException
-          - Lambda.SdkClientException
-          IntervalSeconds: 2
-          MaxAttempts: 6
-          BackoffRate: 2
-      Next: SyncGranule
     SyncGranule:
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
@@ -40,42 +19,27 @@ SyncGranule:
         downloadBucket: '{$.cumulus_meta.system_bucket}'
         duplicateHandling: '{$.meta.collection.duplicateHandling}'
         cumulus_message:
+          input: '{$.payload}'
           outputs:
             - source: '{$.granules}'
               destination: '{$.meta.input_granules}'
             - source: '{$}'
               destination: '{$.payload}'
             - source: '{$.process}'
-              destination: '{$.meta.process}'    
+              destination: '{$.meta.process}'
       Retry:
-        - <<: *LambdaServiceExceptionRetry
+        - &LambdaServiceExceptionRetry
+          ErrorEquals:
+          - Lambda.ServiceException
+          - Lambda.AWSLambdaException
+          - Lambda.SdkClientException
+          IntervalSeconds: 2
+          MaxAttempts: 6
+          BackoffRate: 2
       Catch:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: StopStatus
-      Next: StopStatus
-    StopStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      Parameters:
-        cma:
-          event.$: '$'
-          ReplaceConfig:
-            FullMessage: true
-      CumulusConfig:
-        sfnEnd: true
-        stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal.name}'
-        stateMachine: '{$.cumulus_meta.state_machine}'
-        executionName: '{$.cumulus_meta.execution_name}'
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Catch:
-        - ErrorEquals:
-          - States.ALL
           Next: WorkflowFailed
       End: true
     WorkflowFailed:
@@ -84,23 +48,8 @@ SyncGranule:
 
 IngestAndPublishGranule:
   Comment: 'Ingest Granule'
-  StartAt: Report
+  StartAt: SyncGranule
   States:
-    Report:
-      Parameters:
-        cma:
-          event.$: '$'
-          ReplaceConfig:
-            FullMessage: true
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
-      ResultPath: null
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Next: SyncGranule
     SyncGranule:
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
@@ -119,6 +68,7 @@ IngestAndPublishGranule:
         duplicateHandling: '{$.meta.collection.duplicateHandling}'
         pdr: '{$.meta.pdr}'
         cumulus_message:
+          input: '{$.payload}'
           outputs:
             - source: '{$.granules}'
               destination: '{$.meta.input_granules}'
@@ -127,15 +77,12 @@ IngestAndPublishGranule:
             - source: '{$.process}'
               destination: '{$.meta.process}'
       Retry:
-          - ErrorEquals:
-              - States.ALL
-            IntervalSeconds: 2
-            MaxAttempts: 3
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: StopStatus
+          Next: WorkflowFailed
       Next: ChooseProcess
     ChooseProcess:
       Type: Choice
@@ -143,7 +90,7 @@ IngestAndPublishGranule:
         - Variable: $.meta.process
           StringEquals: modis
           Next: ProcessingStep
-      Default: StopStatus
+      Default: WorkflowSucceeded
     ProcessingStep:
       Type: Task
       Resource: ${FakeProcessingLambdaFunction.Arn}
@@ -165,7 +112,7 @@ IngestAndPublishGranule:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: StopStatus
+          Next: WorkflowFailed
       Retry:
         - ErrorEquals:
             - States.ALL
@@ -189,7 +136,7 @@ IngestAndPublishGranule:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: StopStatus
+          Next: WorkflowFailed
       Next: MoveGranuleStep
     MoveGranuleStep:
       Type: Task
@@ -211,7 +158,7 @@ IngestAndPublishGranule:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: StopStatus
+          Next: WorkflowFailed
       Next: CmrStep
     CmrStep:
       Type: Task
@@ -233,54 +180,18 @@ IngestAndPublishGranule:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: StopStatus
-      Next: StopStatus
-    StopStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      Parameters:
-        cma:
-          event.$: '$'
-          ReplaceConfig:
-            FullMessage: true
-      CumulusConfig:
-        sfnEnd: true
-        stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal.name}'
-        stateMachine: '{$.cumulus_meta.state_machine}'
-        executionName: '{$.cumulus_meta.execution_name}'
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Catch:
-        - ErrorEquals:
-          - States.ALL
           Next: WorkflowFailed
-      End: true
+      Next: WorkflowSucceeded
+    WorkflowSucceeded:
+      Type: Succeed
     WorkflowFailed:
       Type: Fail
       Cause: 'Workflow failed'
 
 IngestGranule:
   Comment: 'Ingest Granule'
-  StartAt: Report
+  StartAt: SyncGranule
   States:
-    Report:
-      Parameters:
-        cma:
-          event.$: '$'
-          ReplaceConfig:
-            FullMessage: true
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
-      ResultPath: null
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Next: SyncGranule
     SyncGranule:
       Parameters:
         cma:
@@ -297,6 +208,7 @@ IngestGranule:
         duplicateHandling: '{$.meta.collection.duplicateHandling}'
         pdr: '{$.meta.pdr}'
         cumulus_message:
+          input: '{$.payload}'
           outputs:
             - source: '{$.granules}'
               destination: '{$.meta.input_granules}'
@@ -315,7 +227,7 @@ IngestGranule:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: StopStatus
+          Next: WorkflowFailed
       Next: ChooseProcess
     ChooseProcess:
       Type: Choice
@@ -323,7 +235,7 @@ IngestGranule:
         - Variable: $.meta.process
           StringEquals: modis
           Next: ProcessingStep
-      Default: StopStatus
+      Default: WorkflowSucceeded
     ProcessingStep:
       Parameters:
         cma:
@@ -343,7 +255,7 @@ IngestGranule:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: StopStatus
+          Next: WorkflowFailed
       Retry:
         - ErrorEquals:
             - States.ALL
@@ -367,7 +279,7 @@ IngestGranule:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: StopStatus
+          Next: WorkflowFailed
       Next: MoveGranuleStep
     MoveGranuleStep:
       Type: Task
@@ -389,53 +301,18 @@ IngestGranule:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: StopStatus
-      Next: StopStatus
-    StopStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      Parameters:
-        cma:
-          event.$: '$'
-          ReplaceConfig:
-            FullMessage: true
-      CumulusConfig:
-        sfnEnd: true
-        stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal.name}'
-        stateMachine: '{$.cumulus_meta.state_machine}'
-        executionName: '{$.cumulus_meta.execution_name}'
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Catch:
-        - ErrorEquals:
-          - States.ALL
           Next: WorkflowFailed
-      End: true
+      Next: WorkflowSucceeded
+    WorkflowSucceeded:
+      Type: Succeed
     WorkflowFailed:
       Type: Fail
       Cause: 'Workflow failed'
 
 PublishGranule:
   Comment: 'Publish Granule'
-  StartAt: Report
+  StartAt: CmrStep
   States:
-    Report:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      Parameters:
-        cma:
-          event.$: '$'
-          ReplaceConfig:
-            FullMessage: true
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Next: CmrStep
     CmrStep:
       Type: Task
       Resource: ${PostToCmrLambdaFunction.Arn}
@@ -456,29 +333,6 @@ PublishGranule:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: StopStatus
-      Next: StopStatus
-    StopStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      Parameters:
-        cma:
-          event.$: '$'
-          ReplaceConfig:
-            FullMessage: true
-      CumulusConfig:
-        sfnEnd: true
-        stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal.name}'
-        stateMachine: '{$.cumulus_meta.state_machine}'
-        executionName: '{$.cumulus_meta.execution_name}'
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Catch:
-        - ErrorEquals:
-          - States.ALL
           Next: WorkflowFailed
       End: true
     WorkflowFailed:
@@ -487,17 +341,8 @@ PublishGranule:
 
 ParsePdr:
   Comment: 'Parse a given PDR'
-  StartAt: StatusReport
+  StartAt: ParsePdr
   States:
-    StatusReport:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Next: ParsePdr
     ParsePdr:
       Parameters:
         cma:
@@ -516,7 +361,7 @@ ParsePdr:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: StopStatus
+          Next: WorkflowFailed
       Next: QueueGranules
     QueueGranules:
       Parameters:
@@ -538,7 +383,7 @@ ParsePdr:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: StopStatus
+          Next: WorkflowFailed
       Next: CheckStatus
     CheckStatus:
       Type: Task
@@ -562,7 +407,7 @@ ParsePdr:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: StopStatus
+          Next: WorkflowFailed
       Next: CheckAgainChoice
     CheckAgainChoice:
       Type: Choice
@@ -572,8 +417,8 @@ ParsePdr:
           Next: PdrStatusReport
         - Variable: $.meta.isPdrFinished
           BooleanEquals: true
-          Next: StopStatus
-      Default: StopStatus
+          Next: WorkflowSucceeded
+      Default: WorkflowSucceeded
     PdrStatusReport:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
@@ -592,53 +437,23 @@ ParsePdr:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: StopStatus
+          Next: WorkflowFailed
       Next: WaitForSomeTime
     WaitForSomeTime:
       Type: Wait
       Seconds: 10
       Next: CheckStatus
-    StopStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      Parameters:
-        cma:
-          event.$: '$'
-          ReplaceConfig:
-            FullMessage: true
-      CumulusConfig:
-        sfnEnd: true
-        stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal.name}'
-        stateMachine: '{$.cumulus_meta.state_machine}'
-        executionName: '{$.cumulus_meta.execution_name}'
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Catch:
-        - ErrorEquals:
-          - States.ALL
-          Next: WorkflowFailed
-      End: true
+    WorkflowSucceeded:
+      Type: Succeed
     WorkflowFailed:
       Type: Fail
       Cause: 'Workflow failed'
 
 DiscoverGranules:
   Comment: 'Discovers new Granules from a given provider'
-  StartAt: StatusReport
+  StartAt: DiscoverGranules
   TimeoutSeconds: 18000 # 5 hours
   States:
-    StatusReport:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Next: DiscoverGranules
     DiscoverGranules:
       Parameters:
         cma:
@@ -658,7 +473,7 @@ DiscoverGranules:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: StopStatus
+          Next: WorkflowFailed
       Next: QueueGranules
     QueueGranules:
       Parameters:
@@ -680,29 +495,6 @@ DiscoverGranules:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: StopStatus
-      Next: StopStatus
-    StopStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      Parameters:
-        cma:
-          event.$: '$'
-          ReplaceConfig:
-            FullMessage: true
-      CumulusConfig:
-        sfnEnd: true
-        stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal.name}'
-        stateMachine: '{$.cumulus_meta.state_machine}'
-        executionName: '{$.cumulus_meta.execution_name}'
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Catch:
-        - ErrorEquals:
-          - States.ALL
           Next: WorkflowFailed
       End: true
     WorkflowFailed:
@@ -711,17 +503,8 @@ DiscoverGranules:
 
 DiscoverAndQueuePdrs:
   Comment: 'Discovers new PDRs from a given provider'
-  StartAt: StartStatus
+  StartAt: DiscoverPdrs
   States:
-    StartStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Next: DiscoverPdrs
     DiscoverPdrs:
       Type: Task
       Resource: ${DiscoverPdrsLambdaFunction.Arn}
@@ -741,7 +524,7 @@ DiscoverAndQueuePdrs:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: StopStatus
+          Next: WorkflowFailed
       Next: QueuePdrs
     QueuePdrs:
       Type: Task
@@ -762,29 +545,6 @@ DiscoverAndQueuePdrs:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: StopStatus
-      Next: StopStatus
-    StopStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      Parameters:
-        cma:
-          event.$: '$'
-          ReplaceConfig:
-            FullMessage: true
-      CumulusConfig:
-        sfnEnd: true
-        stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal.name}'
-        stateMachine: '{$.cumulus_meta.state_machine}'
-        executionName: '{$.cumulus_meta.execution_name}'
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Catch:
-        - ErrorEquals:
-          - States.ALL
           Next: WorkflowFailed
       End: true
     WorkflowFailed:

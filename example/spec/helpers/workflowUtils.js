@@ -51,6 +51,11 @@ function removeTaskFromWorkflow(workflowName, taskName, workflowConfigFile) {
     }
   });
 
+  // Update the workflow start task, if necessary.
+  if (!tasks.includes(workflowConfig.StartAt)) {
+    workflowConfig.StartAt = tasks[0];
+  }
+
   saveYmlConfigFile(config, workflowConfigFile);
 }
 

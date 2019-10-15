@@ -25,3 +25,5 @@ terraform.tfvars
 terraform.tf
 .terraform/
 test-output
+/config.yml
+/lambdas/*/lambda.zip

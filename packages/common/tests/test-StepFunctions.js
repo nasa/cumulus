@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const sinon = require('sinon');
 const aws = require('../aws');
 const StepFunctions = require('../StepFunctions');
 const { throttleOnce } = require('../test-utils');
@@ -18,12 +19,102 @@ const runWithStubbedAndThrottledSfnOperation = async (operation, response, fn) =
   }
 };
 
-test.serial('getExecutionHistory() retries if a ThrottlingException occurs',
-  (t) => runWithStubbedAndThrottledSfnOperation(
-    'getExecutionHistory',
-    5,
-    async () => t.is(await StepFunctions.getExecutionHistory(), 5)
-  ));
+test.serial('getExecutionHistory() retries if a ThrottlingException occurs', async (t) => {
+  const expectedResponse = { events: [{ test: 'test1' }] };
+  const promise = throttleOnce(() => Promise.resolve(expectedResponse));
+  const promiseSpy = sinon.spy();
+  const stub = sinon.stub(aws, 'sfn')
+    .returns({
+      getExecutionHistory: () => ({
+        promise: () => {
+          promiseSpy();
+          return promise();
+        }
+      })
+    });
+
+  try {
+    const response = await StepFunctions.getExecutionHistory();
+    t.deepEqual(response, expectedResponse);
+    t.is(promiseSpy.callCount, 2);
+  } finally {
+    stub.restore();
+  }
+});
+
+test.serial('getExecutionHistory() returns non-paginated list of events', async (t) => {
+  const firstResponse = {
+    events: [{
+      name: 'event1'
+    }]
+  };
+  const stub = sinon.stub(aws, 'sfn')
+    .returns({
+      getExecutionHistory: () => ({
+        promise: () => Promise.resolve(firstResponse)
+      })
+    });
+
+  try {
+    const response = await StepFunctions.getExecutionHistory();
+    t.deepEqual(response.events, firstResponse.events);
+  } finally {
+    stub.restore();
+  }
+});
+
+test.serial('getExecutionHistory() returns full, paginated list of events', async (t) => {
+  const firstToken = 'token1';
+  const firstResponse = {
+    nextToken: firstToken,
+    events: [{
+      name: 'event1'
+    }]
+  };
+  const secondToken = 'token2';
+  const secondResponse = {
+    nextToken: secondToken,
+    events: [{
+      name: 'event2'
+    }]
+  };
+  const thirdResponse = {
+    events: [{
+      name: 'event3'
+    }]
+  };
+  // Throw a throttling exception for the first response from
+  // aws.sfn().getExecutionHistory().promise()to simulate
+  // real-world throttling exceptions.
+  const firstResponsePromise = throttleOnce(() => Promise.resolve(firstResponse));
+  const stub = sinon.stub(aws, 'sfn')
+    .returns({
+      getExecutionHistory: (params) => ({
+        promise: () => {
+          if (!params || !params.nextToken) {
+            return firstResponsePromise();
+          }
+
+          if (params.nextToken === firstToken) {
+            return Promise.resolve(secondResponse);
+          }
+
+          return Promise.resolve(thirdResponse);
+        }
+      })
+    });
+
+  try {
+    const response = await StepFunctions.getExecutionHistory();
+    t.deepEqual(response.events, [
+      ...firstResponse.events,
+      ...secondResponse.events,
+      ...thirdResponse.events
+    ]);
+  } finally {
+    stub.restore();
+  }
+});
 
 test.serial('describeExecution() retries if a ThrottlingException occurs',
   (t) => runWithStubbedAndThrottledSfnOperation(
