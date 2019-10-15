@@ -100,6 +100,7 @@ describe('The Ingest Granule failure workflow', () => {
   });
 
   describe('When a workflow task is configured to catch a specific error and branch and the error is thrown by a Cumulus task', () => {
+    let execution;
     let executionArn;
     let executionStatus;
     let syncGranFailedDetail;
@@ -112,6 +113,19 @@ describe('The Ingest Granule failure workflow', () => {
         arn: executionArn
       });
       executionStatus = JSON.parse(executionStatusResponse.body);
+
+      // Wait for execution to be failed before getting execution record, so that
+      // the record should have the correct status
+      await waitForModelStatus(
+        executionModel,
+        { arn: executionArn },
+        'failed'
+      );
+      const executionResponse = await executionsApiTestUtils.getExecution({
+        prefix: config.stackName,
+        arn: executionArn
+      });
+      execution = JSON.parse(executionResponse.body);
     });
 
     it('branches appropriately according to the CMA output', async () => {
@@ -163,17 +177,6 @@ describe('The Ingest Granule failure workflow', () => {
     });
 
     it('logs the execution with the error message', async () => {
-      await waitForModelStatus(
-        executionModel,
-        { arn: executionArn },
-        'failed'
-      );
-      const executionResponse = await executionsApiTestUtils.getExecution({
-        prefix: config.stackName,
-        arn: executionArn
-      });
-      const execution = JSON.parse(executionResponse.body);
-      console.log(execution);
       expect(execution.error.Error).toBe(syncGranFailedDetail.error);
       expect(JSON.parse(execution.error.Cause)).toEqual(JSON.parse(syncGranFailedDetail.cause));
     });
