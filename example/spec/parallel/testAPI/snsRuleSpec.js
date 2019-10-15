@@ -52,6 +52,7 @@ describe('The SNS-type rule', () => {
   let postRule;
   let snsTopicArn;
   let newTopicArn;
+  let updatedRule;
 
   beforeAll(async () => {
     const { TopicArn } = await SNS.createTopic({ Name: snsTopicName }).promise();
@@ -132,8 +133,6 @@ describe('The SNS-type rule', () => {
   });
 
   describe('on update to a disabled state', () => {
-    let putRule;
-
     beforeAll(async () => {
       const putRuleResponse = await rulesApiTestUtils.updateRule({
         prefix: config.stackName,
@@ -143,11 +142,11 @@ describe('The SNS-type rule', () => {
           state: 'DISABLED'
         }
       });
-      putRule = JSON.parse(putRuleResponse.body);
+      updatedRule = JSON.parse(putRuleResponse.body);
     });
 
     it('saves its new state', () => {
-      expect(putRule.state).toBe('DISABLED');
+      expect(updatedRule.state).toBe('DISABLED');
     });
 
     it('deletes the policy and subscription', async () => {
@@ -157,22 +156,20 @@ describe('The SNS-type rule', () => {
   });
 
   describe('on update to an enabled state', () => {
-    let putRule;
-
     beforeAll(async () => {
       const putRuleResponse = await rulesApiTestUtils.updateRule({
         prefix: config.stackName,
         ruleName,
         updateParams: {
-          ...postRule.record,
+          ...updatedRule,
           state: 'ENABLED'
         }
       });
-      putRule = JSON.parse(putRuleResponse.body);
+      updatedRule = JSON.parse(putRuleResponse.body);
     });
 
     it('saves its new state', () => {
-      expect(putRule.state).toBe('ENABLED');
+      expect(updatedRule.state).toBe('ENABLED');
     });
 
     it('re-adds the subscription', async () => {
