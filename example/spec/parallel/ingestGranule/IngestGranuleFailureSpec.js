@@ -101,13 +101,12 @@ describe('The Ingest Granule failure workflow', () => {
 
   describe('When a workflow task is configured to catch a specific error and branch and the error is thrown by a Cumulus task', () => {
     let execution;
-    let executionArn;
     let executionStatus;
     let syncGranFailedDetail;
     let syncGranStepOutput;
 
     beforeAll(async () => {
-      executionArn = workflowExecution.executionArn;
+      const executionArn = workflowExecution.executionArn;
       const executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
         prefix: config.stackName,
         arn: executionArn
