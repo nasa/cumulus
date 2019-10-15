@@ -804,6 +804,10 @@ mboyd-int:
     ssh: true
     keyPairName: mboyd
 
+mboyd-test-tf:
+  prefix: mboyd-test-tf
+  prefixNoDash: mboydTestTf
+
 pq:
   prefix: pq
   prefixNoDash: pq
