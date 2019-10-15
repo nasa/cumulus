@@ -419,6 +419,7 @@ test.serial('disabling an SNS rule removes the event source mapping', async (t) 
   const rule = await rulesModel.create(item);
 
   t.is(rule.rule.value, snsTopicArn);
+  t.truthy(rule.rule.arn);
   t.is(rule.state, 'ENABLED');
 
   const updates = { name: rule.name, state: 'DISABLED' };
@@ -433,6 +434,57 @@ test.serial('disabling an SNS rule removes the event source mapping', async (t) 
   await rulesModel.delete(rule);
   snsStub.restore();
   lambdaStub.restore();
+});
+
+test.serial('enabling a disabled SNS rule and passing rule.arn throws specific error', async (t) => {
+  const snsTopicArn = randomString();
+  const snsStub = sinon.stub(aws, 'sns')
+    .returns({
+      listSubscriptionsByTopic: () => ({
+        promise: () => Promise.resolve({
+          Subscriptions: [{
+            Endpoint: process.env.messageConsumer,
+            SubscriptionArn: snsTopicArn
+          }]
+        })
+      }),
+      unsubscribe: () => ({
+        promise: () => Promise.resolve()
+      })
+    });
+
+  const item = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sns',
+      value: snsTopicArn
+    },
+    state: 'DISABLED'
+  });
+
+  const rule = await rulesModel.create(item);
+
+  t.is(rule.rule.value, snsTopicArn);
+  t.falsy(rule.rule.arn);
+  t.is(rule.state, 'DISABLED');
+
+  const updates = {
+    name: rule.name,
+    state: 'ENABLED',
+    rule: {
+      ...rule.rule,
+      arn: 'test-value'
+    }
+  };
+  try {
+    // Should fail because a disabled rule should not have an ARN
+    // when being updated
+    const error = await t.throwsAsync(rulesModel.update(rule, updates));
+    t.is(error.message, 'TESTING');
+  } finally {
+    await rulesModel.delete(rule);
+    snsStub.restore();
+  }
 });
 
 test.serial('updating an SNS rule updates the event source mapping', async (t) => {
