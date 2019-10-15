@@ -107,16 +107,24 @@ describe('The Ingest Granule failure workflow', () => {
 
     beforeAll(async () => {
       const executionArn = workflowExecution.executionArn;
-      const executionResponse = await executionsApiTestUtils.getExecution({
-        prefix: config.stackName,
-        arn: executionArn
-      });
-      execution = JSON.parse(executionResponse.body);
       const executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
         prefix: config.stackName,
         arn: executionArn
       });
       executionStatus = JSON.parse(executionStatusResponse.body);
+
+      // Wait for execution to be failed before getting execution record, so that
+      // the record should have the correct status
+      await waitForModelStatus(
+        executionModel,
+        { arn: executionArn },
+        'failed'
+      );
+      const executionResponse = await executionsApiTestUtils.getExecution({
+        prefix: config.stackName,
+        arn: executionArn
+      });
+      execution = JSON.parse(executionResponse.body);
     });
 
     it('branches appropriately according to the CMA output', async () => {
