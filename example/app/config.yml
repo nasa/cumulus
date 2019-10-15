@@ -805,8 +805,9 @@ mboyd-int:
     keyPairName: mboyd
 
 mboyd-test-tf:
+  stackName: mboyd-test-tf
   prefix: mboyd-test-tf
-  prefixNoDash: mboydTestTf
+  prefixNoDash: mboyd-test-tf
 
 pq:
   prefix: pq
