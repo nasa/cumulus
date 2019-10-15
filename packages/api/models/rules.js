@@ -142,6 +142,9 @@ class Rule extends Manager {
       break;
     case 'sns': {
       if (valueUpdated || stateChanged) {
+        if (updatedRuleItem.state === 'ENABLED' && stateChanged && updatedRuleItem.rule.arn) {
+          throw new Error('Including rule.arn is not allowed when enabling a disabled rule');
+        }
         let snsSubscriptionArn;
         if (updatedRuleItem.rule.arn) {
           await this.deleteSnsTrigger(updatedRuleItem);
