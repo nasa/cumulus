@@ -55,11 +55,7 @@
     "@cumulus/sf-sns-report": "1.14.2",
     "@cumulus/sync-granule": "1.14.2",
     "@cumulus/test-processing": "1.14.2",
-    "aws-sdk": "^2.227.1",
-    "child-process-promise": "^2.2.1",
-    "lodash.differencewith": "^4.5.0",
-    "lodash.isequal": "^4.5.0",
-    "p-retry": "^2.0.0"
+    "aws-sdk": "^2.227.1"
   },
   "devDependencies": {
     "@cumulus/test-data": "1.14.2",
@@ -85,11 +81,10 @@
     "lodash.unset": "^4.5.2",
     "mime-types": "^2.1.22",
     "moment": "^2.22.2",
-    "node-forge": "^0.7.5",
+    "p-retry": "^2.0.0",
     "p-timeout": "2.0.1",
     "parallel": "^1.2.0",
     "tempy": "^0.2.1",
-    "url-join": "^1.1.0",
     "uuid": "^3.2.1"
   }
 }

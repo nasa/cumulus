@@ -1,7 +1,6 @@
 'use strict';
 
-const isNil = require('lodash.isnil');
-
+const { isNil } = require('./util');
 const { pullStepFunctionEvent } = require('./aws');
 const log = require('./log');
 const StepFunctions = require('./StepFunctions');

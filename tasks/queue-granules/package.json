@@ -38,7 +38,6 @@
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {
-    "@mapbox/mock-aws-sdk-js": "0.0.5",
     "ava": "^2.1.0",
     "nyc": "^14.0.0",
     "webpack": "~4.5.0",

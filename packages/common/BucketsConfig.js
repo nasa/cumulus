@@ -1,7 +1,5 @@
 'use strict';
 
-const isUndefined = require('lodash.isundefined');
-
 const { createErrorType } = require('./errors');
 
 const BucketsConfigError = createErrorType('BucketsConfigError');
@@ -56,7 +54,7 @@ class BucketsConfig {
    * @returns {boolean} truthyness of this bucket existing in the configuration
    */
   exists(bucketName) {
-    return !isUndefined(this.key(bucketName));
+    return this.key(bucketName) !== undefined;
   }
 
   /**
