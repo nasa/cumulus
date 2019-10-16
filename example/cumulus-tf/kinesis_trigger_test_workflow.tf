@@ -13,44 +13,8 @@ module "kinesis_trigger_test_workflow" {
   state_machine_definition = <<JSON
 {
   "Comment": "Tests Workflow from Kinesis Stream",
-  "StartAt": "StartStatus",
+  "StartAt": "TranslateMessage",
   "States": {
-    "StartStatus": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "task_config": {
-            "cumulus_message": {
-              "input": "{$}"
-            }
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${module.cumulus.sf_sns_report_task_lambda_function_arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "ResultPath": "$.exception",
-          "Next": "CnmResponseFail"
-        }
-      ],
-      "Next": "TranslateMessage"
-    },
     "TranslateMessage": {
       "Parameters": {
         "cma": {
@@ -191,10 +155,10 @@ module "kinesis_trigger_test_workflow" {
             "States.ALL"
           ],
           "ResultPath": "$.exception",
-          "Next": "StopStatus"
+          "Next": "WorkflowFailed"
         }
       ],
-      "Next": "StopStatus"
+      "Next": "WorkflowSucceeded"
     },
     "CnmResponseFail": {
       "Parameters": {
@@ -240,52 +204,10 @@ module "kinesis_trigger_test_workflow" {
             "States.ALL"
           ],
           "ResultPath": "$.exception",
-          "Next": "StopStatusFail"
-        }
-      ],
-      "Next": "StopStatusFail"
-    },
-    "StopStatus": {
-      "Type": "Task",
-      "Resource": "${module.cumulus.sf2snsEnd_lambda_function_arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Next": "WorkflowSucceeded"
-    },
-    "StopStatusFail": {
-      "Type": "Task",
-      "Resource": "${module.cumulus.sf2snsEnd_lambda_function_arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Next": "WorkflowFailed",
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
           "Next": "WorkflowFailed"
         }
-      ]
+      ],
+      "Next": "WorkflowFailed"
     },
     "WorkflowSucceeded": {
       "Type": "Succeed"
