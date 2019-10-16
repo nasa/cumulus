@@ -76,35 +76,8 @@ module "ecs_hello_world_workflow" {
   state_machine_definition = <<JSON
 {
   "Comment": "Returns Hello World",
-  "StartAt": "StartStatus",
+  "StartAt": "EcsTaskHelloWorld",
   "States": {
-    "StartStatus": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "task_config": {
-            "cumulus_message": {
-              "input": "{$}"
-            }
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${module.cumulus.sf_sns_report_task_lambda_function_arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Next": "EcsTaskHelloWorld"
-    },
     "EcsTaskHelloWorld": {
       "Parameters": {
         "cma": {
@@ -127,54 +100,7 @@ module "ecs_hello_world_workflow" {
           "MaxAttempts": 1
         }
       ],
-      "Next": "StopStatus"
-    },
-    "StopStatus": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "ReplaceConfig": {
-            "FullMessage": true
-          },
-          "task_config": {
-            "sfnEnd": true,
-            "stack": "{$.meta.stack}",
-            "bucket": "{$.meta.buckets.internal.name}",
-            "stateMachine": "{$.cumulus_meta.state_machine}",
-            "executionName": "{$.cumulus_meta.execution_name}",
-            "cumulus_message": {
-              "input": "{$}"
-            }
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${module.cumulus.sf_sns_report_task_lambda_function_arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "Next": "WorkflowFailed"
-        }
-      ],
       "End": true
-    },
-    "WorkflowFailed": {
-      "Type": "Fail",
-      "Cause": "Workflow failed"
     }
   }
 }
