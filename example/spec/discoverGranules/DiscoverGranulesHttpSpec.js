@@ -1,6 +1,7 @@
 'use strict';
 
 const { Execution } = require('@cumulus/api/models');
+const { LambdaStep } = require('@cumulus/common/sfnStep');
 const {
   api: apiTestUtils,
   addCollections,
@@ -8,7 +9,6 @@ const {
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
-  LambdaStep,
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
 

@@ -6,11 +6,11 @@ const {
   rulesApi: rulesApiTestUtils,
   isWorkflowTriggeredByRule,
   removeRuleAddedParams,
-  waitForTestExecutionStart,
-  LambdaStep
+  waitForTestExecutionStart
 } = require('@cumulus/integration-tests');
 
 const { sns, lambda } = require('@cumulus/common/aws');
+const { LambdaStep } = require('@cumulus/common/sfnStep');
 
 const {
   loadConfig,
@@ -115,7 +115,8 @@ describe('The SNS-type rule', () => {
         stackName: config.stackName,
         bucket: config.bucket,
         findExecutionFn: isWorkflowTriggeredByRule,
-        findExecutionFnParams: { rule: ruleName }
+        findExecutionFnParams: { rule: ruleName },
+        startTask: 'HelloWorld'
       });
     });
 
@@ -125,7 +126,7 @@ describe('The SNS-type rule', () => {
     });
 
     it('passes the message as payload', async () => {
-      const executionInput = await lambdaStep.getStepInput(execution.executionArn, 'SfSnsReport');
+      const executionInput = await lambdaStep.getStepInput(execution.executionArn, 'HelloWorld');
       expect(executionInput.payload).toEqual(JSON.parse(snsMessage));
     });
   });
