@@ -100,10 +100,6 @@ variable "queue_execution_limits" {
   default = {}
 }
 
-variable "sftracker_sns_topic_arn" {
-  type = string
-}
-
 variable "system_bucket" {
   type = string
 }

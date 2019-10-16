@@ -22,10 +22,6 @@ output "s3_credentials_redirect_uri" {
 
 # SNS topics
 
-output "sftracker_sns_topic_arn" {
-  value = module.archive.sftracker_sns_topic_arn
-}
-
 output "report_executions_sns_topic_arn" {
   value = module.archive.report_executions_sns_topic_arn
 }
