@@ -3,13 +3,13 @@
 const {
   stringUtils: { globalReplace }
 } = require('@cumulus/common');
+const { LambdaStep } = require('@cumulus/common/sfnStep');
 const { Rule } = require('@cumulus/api/models');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 9 * 60 * 1000;
 
 const {
   addRulesWithPostfix,
-  LambdaStep,
   addProviders,
   cleanupProviders,
   addCollections,
@@ -128,14 +128,20 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
         await putRecordOnStream(streamName, record);
 
         console.log('Waiting for step function to start...');
-        workflowExecutions = await waitForAllTestSf(recordIdentifier, rules[1].workflow, maxWaitForSFExistSecs, 2);
+        workflowExecutions = await waitForAllTestSf(
+          recordIdentifier,
+          rules[1].workflow,
+          maxWaitForSFExistSecs,
+          2,
+          'HelloWorld'
+        );
       });
     });
 
     it('runs the HelloWorldWorkflow for L2_HR_PIXC and not MOD09GQ', async () => {
       expect(workflowExecutions.length).toEqual(1);
 
-      const taskInput = await lambdaStep.getStepInput(workflowExecutions[0].executionArn, 'SfSnsReport');
+      const taskInput = await lambdaStep.getStepInput(workflowExecutions[0].executionArn, 'HelloWorld');
 
       expect(taskInput.meta.collection.name).toEqual(`L2_HR_PIXC${testSuffix}`);
     });

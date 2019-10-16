@@ -10,6 +10,75 @@ const aws = require('../aws');
 const { UnparsableFileLocationError } = require('../errors.js');
 const { randomString, throttleOnce } = require('../test-utils');
 
+test('toSfnExecutionName() truncates names to 80 characters', (t) => {
+  t.is(
+    aws.toSfnExecutionName(
+      [
+        '123456789_123456789_123456789_123456789_',
+        '123456789_123456789_123456789_123456789_'
+      ],
+      ''
+    ),
+    '123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_'
+  );
+});
+
+test('toSfnExecutionName() joins fields by the given delimiter', (t) => {
+  t.is(
+    aws.toSfnExecutionName(['a', 'b', 'c'], '-'),
+    'a-b-c'
+  );
+});
+
+test('toSfnExecutionName() escapes occurrences of the delimiter in fields', (t) => {
+  t.is(
+    aws.toSfnExecutionName(['a', 'b-c', 'd'], '-'),
+    'a-b!u002dc-d'
+  );
+});
+
+test('toSfnExecutionName() escapes unsafe characters with unicode-like escape codes', (t) => {
+  t.is(
+    aws.toSfnExecutionName(['a', 'b$c', 'd'], '-'),
+    'a-b!u0024c-d'
+  );
+});
+
+test('toSfnExecutionName() escapes exclammation points (used for escape codes)', (t) => {
+  t.is(
+    aws.toSfnExecutionName(['a', 'b!c', 'd'], '-'),
+    'a-b!u0021c-d'
+  );
+});
+
+test('toSfnExecutionName() does not escape safe characters', (t) => {
+  t.is(
+    aws.toSfnExecutionName(['a', 'b.+-_=', 'c'], 'z'),
+    'azb.+-_=zc'
+  );
+});
+
+test('fromSfnExecutionName() returns fields separated by the given delimiter', (t) => {
+  t.deepEqual(
+    aws.fromSfnExecutionName('a-b-c', '-'),
+    ['a', 'b', 'c']
+  );
+});
+
+test('fromSfnExecutionName() interprets bang-escaped unicode in the input string', (t) => {
+  t.deepEqual(
+    aws.fromSfnExecutionName('a-b!u002dc-d', '-'),
+    ['a', 'b-c', 'd']
+  );
+});
+
+test('fromSfnExecutionName() copes with quotes in the input string', (t) => {
+  t.deepEqual(
+    aws.fromSfnExecutionName('foo"bar'),
+    ['foo"bar']
+  );
+});
+
 test('s3Join behaves as expected', (t) => {
   // Handles an array argument
   t.is(aws.s3Join(['a', 'b', 'c']), 'a/b/c');

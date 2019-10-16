@@ -92,7 +92,7 @@ If you created a new release plan in step one, you will need to create a new bam
 
 * **Immediately** go to plan configuration on the `Branch Details` tab, and enable `Change trigger`.  Set the `Trigger type` to manual, this will prevent commits to the branch from triggering the build plan
 
-* Go to the branch plan and set GIT_PR, USE_NPM_PACKAGES and PUBLISH_FLAG to true.  Select a DEPLOYMENT appropriate for the release (defaults to last committer). This should be `cumulus-from-npm` *except* in special cases such as incompatible backport branches.
+* Go to the branch plan and set GIT_PR, USE_NPM_PACKAGES, SKIP_AUDIT and PUBLISH_FLAG to true.  Select a DEPLOYMENT appropriate for the release (defaults to last committer). This should be `cumulus-from-npm` *except* in special cases such as incompatible backport branches.
 
 Bamboo will build and run lint, audit and unit tests against that tagged release, publish the new packages to NPM, and then run the integration tests using those newly released packages.
 

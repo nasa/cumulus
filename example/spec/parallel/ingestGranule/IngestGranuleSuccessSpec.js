@@ -3,6 +3,7 @@
 const fs = require('fs-extra');
 const isNumber = require('lodash.isnumber');
 const isString = require('lodash.isstring');
+const isObject = require('lodash.isobject');
 const path = require('path');
 const { URL, resolve } = require('url');
 const difference = require('lodash.difference');
@@ -10,10 +11,13 @@ const includes = require('lodash.includes');
 const intersection = require('lodash.intersection');
 
 const {
-  models: {
-    AccessToken, Execution, Granule, Collection, Provider
-  }
-} = require('@cumulus/api');
+  AccessToken,
+  Execution,
+  Granule,
+  Collection,
+  Pdr,
+  Provider
+} = require('@cumulus/api/models');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
   aws: {
@@ -26,6 +30,7 @@ const {
   },
   constructCollectionId
 } = require('@cumulus/common');
+const { LambdaStep } = require('@cumulus/common/sfnStep');
 const { getUrl } = require('@cumulus/cmrjs');
 const {
   addCollections,
@@ -33,7 +38,6 @@ const {
   executionsApi: executionsApiTestUtils,
   buildAndExecuteWorkflow,
   buildAndStartWorkflow,
-  LambdaStep,
   conceptExists,
   getOnlineResources,
   granulesApi: granulesApiTestUtils,
@@ -82,16 +86,6 @@ const workflowConfigFile = './workflows/sips.yml';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
-const templatedSyncGranuleFilename = templateFile({
-  inputTemplateFilename: './spec/parallel/ingestGranule/SyncGranule.output.payload.template.json',
-  config: config[workflowName].SyncGranuleOutput
-});
-
-const templatedOutputPayloadFilename = templateFile({
-  inputTemplateFilename: './spec/parallel/ingestGranule/IngestGranule.output.payload.template.json',
-  config: config[workflowName].IngestGranuleOutput
-});
-
 const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
@@ -132,6 +126,8 @@ describe('The S3 Ingest Granules workflow', () => {
   const collectionModel = new Collection();
   process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
   const providerModel = new Provider();
+  process.env.PdrsTable = `${config.stackName}-PdrsTable`;
+  const pdrModel = new Pdr();
 
   beforeAll(async () => {
     const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
@@ -155,9 +151,67 @@ describe('The S3 Ingest Granules workflow', () => {
       s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
 
     const collectionUrlString = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
+
+    const templatedSyncGranuleFilename = templateFile({
+      inputTemplateFilename: './spec/parallel/ingestGranule/SyncGranule.output.payload.template.json',
+      config: {
+        granules: [
+          {
+            files: [
+              {
+                bucket: config.buckets.internal.name,
+                filename: `s3://${config.buckets.internal.name}/file-staging/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf`,
+                fileStagingDir: `file-staging/${config.stackName}/replace-me-collectionId`
+              },
+              {
+                bucket: config.buckets.internal.name,
+                filename: `s3://${config.buckets.internal.name}/file-staging/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf.met`,
+                fileStagingDir: `file-staging/${config.stackName}/replace-me-collectionId`
+              },
+              {
+                bucket: config.buckets.internal.name,
+                filename: `s3://${config.buckets.internal.name}/file-staging/${config.stackName}/replace-me-collectionId/replace-me-granuleId_ndvi.jpg`,
+                fileStagingDir: `file-staging/${config.stackName}/replace-me-collectionId`
+              }
+            ]
+          }
+        ]
+      }
+    });
+
     expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedSyncGranuleFilename, granuleId, testDataFolder, newCollectionId, config.stackName);
+
     expectedSyncGranulePayload.granules[0].dataType += testSuffix;
     expectedSyncGranulePayload.granules[0].files = addUrlPathToGranuleFiles(expectedSyncGranulePayload.granules[0].files, testId, '');
+
+    const templatedOutputPayloadFilename = templateFile({
+      inputTemplateFilename: './spec/parallel/ingestGranule/IngestGranule.output.payload.template.json',
+      config: {
+        granules: [
+          {
+            files: [
+              {
+                bucket: config.buckets.protected.name,
+                filename: `s3://${config.buckets.protected.name}/MOD09GQ___006/2017/MOD/replace-me-granuleId.hdf`
+              },
+              {
+                bucket: config.buckets.private.name,
+                filename: `s3://${config.buckets.private.name}/MOD09GQ___006/MOD/replace-me-granuleId.hdf.met`
+              },
+              {
+                bucket: config.buckets.public.name,
+                filename: `s3://${config.buckets.public.name}/MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg`
+              },
+              {
+                bucket: config.buckets['protected-2'].name,
+                filename: `s3://${config.buckets['protected-2'].name}/MOD09GQ___006/MOD/replace-me-granuleId.cmr.xml`
+              }
+            ]
+          }
+        ]
+      }
+    });
+
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
     expectedPayload.granules = addUniqueGranuleFilePathToGranuleFiles(expectedPayload.granules, testId);
@@ -189,6 +243,9 @@ describe('The S3 Ingest Granules workflow', () => {
       granulesApiTestUtils.removePublishedGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
+      }),
+      pdrModel.delete({
+        pdrName: inputPayload.pdr.name
       })
     ]);
   });
@@ -197,6 +254,15 @@ describe('The S3 Ingest Granules workflow', () => {
     const record = await waitForModelStatus(
       executionModel,
       { arn: workflowExecutionArn },
+      'running'
+    );
+    expect(record.status).toEqual('running');
+  });
+
+  it('triggers a running PDR record being added to DynamoDB', async () => {
+    const record = await waitForModelStatus(
+      pdrModel,
+      { pdrName: inputPayload.pdr.name },
       'running'
     );
     expect(record.status).toEqual('running');
@@ -532,13 +598,23 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(record.execution).toEqual(getExecutionUrl(workflowExecutionArn));
     });
 
-    it('triggers the execution record being added to DynamoDB', async () => {
+    it('triggers the successful execution record being added to DynamoDB', async () => {
       const record = await waitForModelStatus(
         executionModel,
         { arn: workflowExecutionArn },
         'completed'
       );
       expect(record.status).toEqual('completed');
+    });
+
+    it('triggers the failed execution record being added to DynamoDB', async () => {
+      const record = await waitForModelStatus(
+        executionModel,
+        { arn: failingWorkflowExecution.executionArn },
+        'failed'
+      );
+      expect(record.status).toEqual('failed');
+      expect(isObject(record.error)).toBe(true);
     });
   });
 
@@ -617,7 +693,8 @@ describe('The S3 Ingest Granules workflow', () => {
             stackName: config.stackName,
             bucket: config.bucket,
             findExecutionFn: isReingestExecutionForGranuleId,
-            findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId }
+            findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId },
+            startTask: 'SyncGranule'
           });
 
           console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);
@@ -694,7 +771,8 @@ describe('The S3 Ingest Granules workflow', () => {
           stackName: config.stackName,
           bucket: config.bucket,
           findExecutionFn: isExecutionForGranuleId,
-          findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId }
+          findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId },
+          startTask: 'PostToCmr'
         });
 
         console.log(`Wait for completed execution ${publishGranuleExecution.executionArn}`);
