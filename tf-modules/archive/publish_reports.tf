@@ -42,6 +42,13 @@ data "aws_iam_policy_document" "publish_reports_policy_document" {
 
   statement {
     actions = [
+      "s3:GetObject*",
+    ]
+    resources = [for b in flatten([var.public_buckets, var.protected_buckets, var.private_buckets, var.system_bucket]) : "arn:aws:s3:::${b}/*"]
+  }
+
+  statement {
+    actions = [
       "SNS:Publish"
     ]
     resources = [
@@ -58,6 +65,14 @@ data "aws_iam_policy_document" "publish_reports_policy_document" {
     resources = [
       aws_sqs_queue.publish_reports_dead_letter_queue.arn
     ]
+  }
+
+  statement {
+    actions = [
+      "states:DescribeExecution",
+      "states:GetExecutionHistory"
+    ]
+    resources = ["*"]
   }
 }
 
@@ -82,7 +97,7 @@ resource "aws_lambda_function" "publish_reports" {
   handler          = "index.handler"
   runtime          = "nodejs8.10"
   timeout          = 30
-  memory_size      = 128
+  memory_size      = 256
 
   dead_letter_config {
     target_arn = aws_sqs_queue.publish_reports_dead_letter_queue.arn
