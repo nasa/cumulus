@@ -35,7 +35,6 @@
   "dependencies": {
     "@cumulus/api": "1.14.2",
     "@cumulus/cumulus-message-adapter-js": "^1.0.8",
-    "@cumulus/ingest": "1.14.2",
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {
