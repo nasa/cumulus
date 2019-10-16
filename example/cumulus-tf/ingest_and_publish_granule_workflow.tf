@@ -13,39 +13,8 @@ module "ingest_and_publish_granule_workflow" {
   state_machine_definition = <<JSON
 {
   "Comment": "Ingest Granule",
-  "StartAt": "Report",
+  "StartAt": "SyncGranule",
   "States": {
-    "Report": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "ReplaceConfig": {
-            "FullMessage": true
-          },
-          "task_config": {
-            "cumulus_message": {
-              "input": "{$}"
-            }
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${module.cumulus.sf_sns_report_task_lambda_function_arn}",
-      "Next": "SyncGranule",
-      "ResultPath": null,
-      "Retry": [
-        {
-          "BackoffRate": 2,
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6
-        }
-      ]
-    },
     "SyncGranule": {
       "Parameters": {
         "cma": {
@@ -63,6 +32,7 @@ module "ingest_and_publish_granule_workflow" {
             "duplicateHandling": "{$.meta.collection.duplicateHandling}",
             "pdr": "{$.meta.pdr}",
             "cumulus_message": {
+              "input": "{$.payload}",
               "outputs": [
                 {
                   "source": "{$.granules}",
@@ -89,7 +59,7 @@ module "ingest_and_publish_granule_workflow" {
           "ErrorEquals": [
             "States.ALL"
           ],
-          "Next": "StopStatus",
+          "Next": "WorkflowFailed",
           "ResultPath": "$.exception"
         }
       ],
@@ -111,7 +81,7 @@ module "ingest_and_publish_granule_workflow" {
           "Variable": "$.cumulus_meta.process"
         }
       ],
-      "Default": "StopStatus",
+      "Default": "WorkflowSucceeded",
       "Type": "Choice"
     },
     "ProcessingStep": {
@@ -145,7 +115,7 @@ module "ingest_and_publish_granule_workflow" {
           "ErrorEquals": [
             "States.ALL"
           ],
-          "Next": "StopStatus",
+          "Next": "WorkflowFailed",
           "ResultPath": "$.exception"
         }
       ],
@@ -180,7 +150,7 @@ module "ingest_and_publish_granule_workflow" {
           "ErrorEquals": [
             "States.ALL"
           ],
-          "Next": "StopStatus",
+          "Next": "WorkflowFailed",
           "ResultPath": "$.exception"
         }
       ],
@@ -221,7 +191,7 @@ module "ingest_and_publish_granule_workflow" {
           "ErrorEquals": [
             "States.ALL"
           ],
-          "Next": "StopStatus",
+          "Next": "WorkflowFailed",
           "ResultPath": "$.exception"
         }
       ],
@@ -255,13 +225,13 @@ module "ingest_and_publish_granule_workflow" {
       },
       "Type": "Task",
       "Resource": "${module.cumulus.post_to_cmr_task_lambda_function_arn}",
-      "Next": "StopStatus",
+      "Next": "WorkflowSucceeded",
       "Catch": [
         {
           "ErrorEquals": [
             "States.ALL"
           ],
-          "Next": "StopStatus",
+          "Next": "WorkflowFailed",
           "ResultPath": "$.exception"
         }
       ],
@@ -278,48 +248,8 @@ module "ingest_and_publish_granule_workflow" {
         }
       ]
     },
-    "StopStatus": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "ReplaceConfig": {
-            "FullMessage": true
-          },
-          "task_config": {
-            "sfnEnd": true,
-            "stack": "{$.meta.stack}",
-            "bucket": "{$.meta.buckets.internal.name}",
-            "stateMachine": "{$.cumulus_meta.state_machine}",
-            "executionName": "{$.cumulus_meta.execution_name}",
-            "cumulus_message": {
-              "input": "{$}"
-            }
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${module.cumulus.sf_sns_report_task_lambda_function_arn}",
-      "End": true,
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "Next": "WorkflowFailed"
-        }
-      ],
-      "Retry": [
-        {
-          "BackoffRate": 2,
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6
-        }
-      ]
+    "WorkflowSucceeded": {
+      "Type": "Succeed"
     },
     "WorkflowFailed": {
       "Cause": "Workflow failed",
