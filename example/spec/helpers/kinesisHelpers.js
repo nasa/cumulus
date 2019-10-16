@@ -18,7 +18,7 @@ const testConfig = loadConfig();
 
 const lambdaStep = new LambdaStep();
 
-const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: testConfig.awsRegion });
+const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: testConfig.AWS_REGION });
 
 const maxExecutionResults = 20;
 const waitPeriodMs = 1000;
