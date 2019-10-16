@@ -22,17 +22,15 @@
     "build": "true",
     "build-docs": "jsdoc2md --template templates/docs-API.hbs StepFunctions.js string.js URLUtils.js util.js > docs/API.md",
     "lint": "eslint .",
-    "mocha": "mocha test/**/*.js",
-    "mocha-coverage": "nyc mocha-webpack test/**/*.js",
-    "mocha-junit": "npm run mocha -- --reporter mocha-junit-reporter --reporter-options mochaFile=test-results.xml",
-    "test": "npm run mocha && ava",
-    "test-coverage": "npm run mocha && nyc ava",
-    "test-ci": "npm run lint && npm run mocha-junit"
+    "test": "ava",
+    "test-coverage": "nyc ava",
+    "test-ci": "npm run lint"
   },
   "ava": {
     "files": [
       "tests/**"
-    ]
+    ],
+    "verbose": true
   },
   "nyc": {
     "exclude": [
@@ -47,7 +45,6 @@
     "@cumulus/logger": "1.14.2",
     "ajv": "^5.2.2",
     "aws-sdk": "^2.250.1",
-    "expect.js": "^0.3.1",
     "follow-redirects": "^1.2.4",
     "fs-extra": "^5.0.0",
     "got": "^9.2.1",
@@ -68,8 +65,6 @@
     "lodash.omitby": "^4.6.0",
     "lodash.pick": "^4.4.0",
     "mime-types": "^2.1.22",
-    "mocha": "^5.0.4",
-    "mocha-junit-reporter": "^1.11.1",
     "node-forge": "^0.7.1",
     "p-limit": "^2.0.0",
     "p-map": "^1.2.0",
