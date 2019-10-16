@@ -8,7 +8,6 @@ const {
   addCollections,
   cleanupCollections,
   granulesApi: granulesApiTestUtils,
-  LambdaStep,
   waitForTestExecutionStart,
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
@@ -22,6 +21,7 @@ const {
   },
   constructCollectionId
 } = require('@cumulus/common');
+const { LambdaStep } = require('@cumulus/common/sfnStep');
 const {
   loadConfig,
   templateFile,
@@ -47,12 +47,6 @@ process.env.GranulesTable = `${config.stackName}-GranulesTable`;
 const granuleModel = new Granule();
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
-
-const outputPayloadTemplateFilename = './spec/parallel/syncGranule/SyncGranule.output.payload.template.json';
-const templatedOutputPayloadFilename = templateFile({
-  inputTemplateFilename: outputPayloadTemplateFilename,
-  config: config.SyncGranule
-});
 
 const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
@@ -100,6 +94,28 @@ describe('The Sync Granules workflow', () => {
     await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
       s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
 
+    const templatedOutputPayloadFilename = templateFile({
+      inputTemplateFilename: './spec/parallel/syncGranule/SyncGranule.output.payload.template.json',
+      config: {
+        granules: [
+          {
+            files: [
+              {
+                bucket: config.buckets.internal.name,
+                filename: `s3://${config.buckets.internal.name}/custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf`,
+                fileStagingDir: `custom-staging-dir/${config.stackName}/replace-me-collectionId`
+              },
+              {
+                bucket: config.buckets.internal.name,
+                filename: `s3://${config.buckets.internal.name}/custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf.met`,
+                fileStagingDir: `custom-staging-dir/${config.stackName}/replace-me-collectionId`
+              }
+            ]
+          }
+        ]
+      }
+    });
+
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(
       templatedOutputPayloadFilename,
       newGranuleId,
@@ -107,6 +123,7 @@ describe('The Sync Granules workflow', () => {
       newCollectionId,
       config.stackName
     );
+
     expectedPayload.granules[0].dataType += testSuffix;
     expectedPayload.granules[0].files[0] = Object.assign(expectedPayload.granules[0].files[0], { checksum: '8d1ec5c0463e59d26adee87cdbbee816', checksumType: 'md5' });
 
@@ -261,7 +278,8 @@ describe('The Sync Granules workflow', () => {
         stackName: config.stackName,
         bucket: config.bucket,
         findExecutionFn: isReingestExecutionForGranuleId,
-        findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId }
+        findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId },
+        startTask: 'SyncGranule'
       });
 
       console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);

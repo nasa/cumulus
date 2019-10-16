@@ -1,66 +1,52 @@
 KinesisTriggerTest:
-  Comment: 'Tests Workflow from Kinesis Stream'
-  StartAt: StartStatus
+  Comment: "Tests Workflow from Kinesis Stream"
+  StartAt: TranslateMessage
   States:
-    StartStatus:
+    TranslateMessage:
+      Type: Task
+      Resource: ${CNMToCMALambdaFunction.Arn}
       Parameters:
         cma:
-          event.$: '$'
+          event.$: "$"
           task_config:
             cumulus_message:
-              input: '{$}'
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
+              outputs:
+                - source: "{$.cnm}"
+                  destination: "{$.meta.cnm}"
+                - source: "{$}"
+                  destination: "{$.payload}"
       Retry:
         - &LambdaServiceExceptionRetry
           ErrorEquals:
-          - Lambda.ServiceException
-          - Lambda.AWSLambdaException
-          - Lambda.SdkClientException
+            - Lambda.ServiceException
+            - Lambda.AWSLambdaException
+            - Lambda.SdkClientException
           IntervalSeconds: 2
           MaxAttempts: 6
           BackoffRate: 2
       Catch:
         - &ErrorEqualDefaults
           ErrorEquals:
-          - States.ALL
-          ResultPath: '$.exception'
+            - States.ALL
+          ResultPath: "$.exception"
           Next: CnmResponseFail
-      Next: TranslateMessage
-    TranslateMessage:
-      Parameters:
-        cma:
-          event.$: '$'
-          task_config:
-            cumulus_message:
-              outputs:
-                - source: '{$.cnm}'
-                  destination: '{$.meta.cnm}'
-                - source: '{$}'
-                  destination: '{$.payload}'
-      Type: Task
-      Resource: ${CNMToCMALambdaFunction.Arn}
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Catch:
-        - <<: *ErrorEqualDefaults
       Next: SyncGranule
     SyncGranule:
       Parameters:
         cma:
-          event.$: '$'
+          event.$: "$"
           task_config:
-            provider: '{$.meta.provider}'
-            buckets: '{$.meta.buckets}'
-            collection: '{$.meta.collection}'
-            downloadBucket: '{$.meta.buckets.private.name}'
-            stack: '{$.meta.stack}'
+            provider: "{$.meta.provider}"
+            buckets: "{$.meta.buckets}"
+            collection: "{$.meta.collection}"
+            downloadBucket: "{$.meta.buckets.private.name}"
+            stack: "{$.meta.stack}"
             cumulus_message:
               outputs:
-                - source: '{$.granules}'
-                  destination: '{$.meta.input_granules}'
-                - source: '{$}'
-                  destination: '{$.payload}' 
+                - source: "{$.granules}"
+                  destination: "{$.meta.input_granules}"
+                - source: "{$}"
+                  destination: "{$.payload}"
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
@@ -74,61 +60,48 @@ KinesisTriggerTest:
     CnmResponse: &CnmResponseDefaults
       Parameters:
         cma:
-          event.$: '$'
+          event.$: "$"
           task_config:
-            OriginalCNM: '{$.meta.cnm}'
-            CNMResponseStream: '{$.meta.cnmResponseStream}'
-            region: 'us-east-1'
-            WorkflowException: '{$.exception}'
+            OriginalCNM: "{$.meta.cnm}"
+            CNMResponseStream: "{$.meta.cnmResponseStream}"
+            region: "us-east-1"
+            WorkflowException: "{$.exception}"
             cumulus_message:
               outputs:
-                - source: '{$}'
-                  destination: '{$.meta.cnmResponse}'
-                - source: '{$}'
-                  destination: '{$.payload}'
+                - source: "{$}"
+                  destination: "{$.meta.cnmResponse}"
+                - source: "{$}"
+                  destination: "{$.payload}"
       Type: Task
       Resource: ${CnmResponseLambdaFunction.Arn}
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
         - <<: *ErrorEqualDefaults
-          Next: StopStatus
-      Next: StopStatus
+          Next: WorkflowFailed
+      Next: WorkflowSucceeded
     CnmResponseFail:
       <<: *CnmResponseDefaults
       Parameters:
         cma:
-          event.$: '$'
+          event.$: "$"
           task_config:
-            OriginalCNM: '{$.meta.cnm}'
-            CNMResponseStream: '{$.meta.cnmResponseStream}'
-            region: 'us-east-1'
-            WorkflowException: '{$.exception}'
+            OriginalCNM: "{$.meta.cnm}"
+            CNMResponseStream: "{$.meta.cnmResponseStream}"
+            region: "us-east-1"
+            WorkflowException: "{$.exception}"
             cumulus_message:
               outputs:
-                - source: '{$}'
-                  destination: '{$.meta.cnmResponse}'
-                - source: '{$}'
-                  destination: '{$.payload}'
+                - source: "{$}"
+                  destination: "{$.meta.cnmResponse}"
+                - source: "{$}"
+                  destination: "{$.payload}"
       Catch:
         - <<: *ErrorEqualDefaults
-          Next: StopStatusFail
-      Next: StopStatusFail
-    StopStatus: &StopStatusDefaults
-      Type: Task
-      Resource: ${sf2snsEndLambdaFunction.Arn}
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Next: WorkflowSucceeded
-    StopStatusFail:
-      <<: *StopStatusDefaults
-      Catch:
-        - ErrorEquals:
-          - States.ALL
           Next: WorkflowFailed
       Next: WorkflowFailed
     WorkflowSucceeded:
       Type: Succeed
     WorkflowFailed:
       Type: Fail
-      Cause: 'Workflow failed'
+      Cause: "Workflow failed"

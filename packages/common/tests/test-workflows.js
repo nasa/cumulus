@@ -91,12 +91,13 @@ test('getWorkflowArn returns the arn of the correct workflow', async (t) => {
 });
 
 test('getWorkflowArn throws an error if no workflow file exists with the specified name', async (t) => {
-  await t.throwsAsync(
+  const err = await t.throwsAsync(
     getWorkflowArn(
       t.context.stackName,
       t.context.system_bucket,
       'missingWorkflow1'
-    ),
-    'The specified key does not exist.'
+    )
   );
+
+  t.true(err.message.startsWith('The specified key does not exist.'));
 });

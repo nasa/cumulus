@@ -3,8 +3,6 @@ const path = require('path');
 const configUtil = require('./config');
 const log = require('./log');
 
-const isMocha = process.argv[1] && process.argv[1].includes('mocha-webpack');
-
 // Defines whether we're in a Jupyter context or not as used with the Atom editor from Hydrogen
 // plugin. This is not set by Jupyter or Hydrogen and must be manually configured in Hydrogen
 // startup code settings with {"Javascript (Node.js)": "global.__isJupyter = true;"}
@@ -21,9 +19,7 @@ const isLocal = isDebug || isJupyter || isStdin || process.argv[2] === 'local';
 exports.isLocal = isLocal;
 
 let rootPath;
-if (isMocha) {
-  rootPath = '../../../..';
-} else if (isJupyter || isAva || isDebug) {
+if (isJupyter || isAva || isDebug) {
   rootPath = '../..';
 } else {
   rootPath = '../../..';
@@ -76,7 +72,7 @@ exports.parseWorkflows = (id, configFile = null) => {
  * @returns {Object} - The config object
  */
 exports.collectionMessageInput = (id, taskName, payload = (o) => o, configFile = null) => () => {
-  if (!isLocal && !isMocha && !isJupyter && !isAva) return null;
+  if (!isLocal && !isJupyter && !isAva) return null;
   const configPath = configFile || `${fileRoot()}/packages/common/test/config/test-collections.yml`;
   log.info(`CONFIG PATH: ${configPath}`);
   const configStr = fs.readFileSync(configPath).toString();

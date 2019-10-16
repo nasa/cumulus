@@ -102,8 +102,8 @@ A few things to note about tasks in the workflow being added:
       - ErrorEquals:
         - States.ALL
         ResultPath: '$.exception'
-        Next: StopStatus
-    Next: StopStatus
+        Next: WorkflowFailed
+    End: true
 ```
 
 Note that in the task, the event.config.cmr will contain the values you configured in the ```cmr``` configuration section above.
@@ -127,7 +127,7 @@ Note that in the task, the event.config.cmr will contain the values you configur
       - ErrorEquals:
         - States.ALL
         ResultPath: '$.exception'
-        Next: StopStatus
+        Next: WorkflowFailed
     Retry:
       - ErrorEquals:
           - States.ALL
