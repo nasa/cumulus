@@ -21,6 +21,13 @@ resource "aws_iam_role" "publish_reports_lambda_role" {
 data "aws_iam_policy_document" "publish_reports_policy_document" {
   statement {
     actions = [
+      "dynamoDb:getItem"
+    ]
+    resources = [var.dynamo_tables.executions.arn]
+  }
+
+  statement {
+    actions = [
       "ec2:CreateNetworkInterface",
       "ec2:DescribeNetworkInterfaces",
       "ec2:DeleteNetworkInterface"
