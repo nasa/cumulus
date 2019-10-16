@@ -2,7 +2,7 @@
 
 Broadcast an incoming Cumulus message to SNS.  This lambda function works with Cumulus Message Adapter, and it can be used anywhere in a step function workflow to report granule and PDR status.
 
- Note that the inital and final reporting of a granule/PDR status is now handled by Cumulus Core outside of the workflow process.  As of Cumulus > v1.14.2 use of this task to report start/stop status is deprecated as part of CUMULUS-1396.   This task should only be utilized if an update to status mid-workflow is desired.   See the CHANGELOG for more information.
+Note that the initial and final reporting of an execution/granule/PDR status is now handled by Cumulus outside of the workflow process, so the use of this task to report start/stop status is deprecated. **This task should only be utilized if an update to status mid-workflow is desired. **
 
 If the task's input includes a `payload` key, the value of the key is returned as the output of the task, otherwise the output will be an empty object.
 
