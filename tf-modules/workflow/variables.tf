@@ -34,3 +34,12 @@ variable "tags" {
   type    = map(string)
   default = null
 }
+
+variable "workflow_config" {
+  type = object({
+    distribution_url = string
+    publish_reports_lambda_function_arn = string
+    sf_semaphore_down_lambda_function_arn = string
+    step_role_arn = string
+  })
+}

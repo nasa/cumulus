@@ -3,10 +3,7 @@ module "retry_pass_workflow" {
 
   prefix                                = var.prefix
   name                                  = "RetryPassWorkflow"
-  distribution_url                      = module.cumulus.distribution_url
-  state_machine_role_arn                = module.cumulus.step_role_arn
-  sf_semaphore_down_lambda_function_arn = module.cumulus.sf_semaphore_down_lambda_function_arn
-  publish_reports_lambda_function_arn   = module.cumulus.publish_reports_lambda_function_arn
+  workflow_config                       = module.cumulus.workflow_config
   system_bucket                         = var.system_bucket
   tags                                  = local.default_tags
 

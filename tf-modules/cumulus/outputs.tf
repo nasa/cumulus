@@ -8,9 +8,9 @@ output "archive_api_redirect_uri" {
   value = module.archive.api_redirect_uri
 }
 
-output "distribution_url" {
-  value = module.distribution.distribution_url
-}
+# output "distribution_url" {
+#   value = module.distribution.distribution_url
+# }
 
 output "distribution_redirect_uri" {
   value = module.distribution.thin_egress_app_redirect_uri
@@ -80,18 +80,21 @@ output "sync_granule_task_lambda_function_arn" {
   value = module.ingest.sync_granule_task_lambda_function_arn
 }
 
+# Workflow config outputs
+
+output "workflow_config" {
+  value = {
+    distribution_url = module.distribution.distribution_url
+    publish_reports_lambda_function_arn = module.archive.publish_reports_lambda_function_arn
+    sf_semaphore_down_lambda_function_arn = module.ingest.sf_semaphore_down_lambda_function_arn
+    step_role_arn = module.ingest.step_role_arn
+  }
+}
+
 # Other Lambda outputs
 
 output "post_to_cmr_task_lambda_function_arn" {
   value = module.ingest.post_to_cmr_task_lambda_function_arn
-}
-
-output "publish_reports_lambda_function_arn" {
-  value = module.archive.publish_reports_lambda_function_arn
-}
-
-output "sf_semaphore_down_lambda_function_arn" {
-  value = module.ingest.sf_semaphore_down_lambda_function_arn
 }
 
 output "log2elasticsearch_lambda_function_arn" {
@@ -106,10 +109,6 @@ output "lambda_processing_role_arn" {
 
 output "scaling_role_arn" {
   value = module.ingest.scaling_role_arn
-}
-
-output "step_role_arn" {
-  value = module.ingest.step_role_arn
 }
 
 # ECS cluster
