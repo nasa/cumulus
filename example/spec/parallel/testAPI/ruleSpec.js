@@ -84,8 +84,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
         findExecutionFnParams: { ruleName: scheduledRuleName, execution },
         startTask: 'HelloWorld'
       }).catch((err) =>
-        expect(err.message).toEqual('Never found started workflow.')
-      );
+        expect(err.message).toEqual('Never found started workflow.'));
     });
   });
 });

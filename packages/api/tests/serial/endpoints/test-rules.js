@@ -19,7 +19,7 @@ const assertions = require('../../../lib/assertions');
   'UsersTable',
   'stackName',
   'system_bucket',
-  'TOKEN_SECRET',
+  'TOKEN_SECRET'
 // eslint-disable-next-line no-return-assign
 ].forEach((varName) => process.env[varName] = randomString());
 
