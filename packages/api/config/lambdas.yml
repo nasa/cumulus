@@ -287,7 +287,7 @@ BulkOperation:
   memory: 512
   source: 'node_modules/@cumulus/api/dist/bulkOperation/'
   launchInVpc: true
+  tables:
+    - GranulesTable
   envs:
-    tables:
-      - GranulesTable
     system_bucket: '{{system_bucket}}'

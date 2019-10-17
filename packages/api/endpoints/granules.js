@@ -196,11 +196,11 @@ async function bulk(req, res) {
     const asyncOperation = await asyncOperationModel.start({
       asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
       cluster: process.env.EcsCluster,
-      lambdaName: process.env.bulkOperationLambda,
-      payload: { payload, type: 'BULK_GRANULE'},
+      lambdaName: process.env.BulkOperationLambda,
+      payload: { payload, type: 'BULK_GRANULE', granulesTable: process.env.GranulesTable},
       esHost: process.env.ES_HOST
     });
-    res.send(`On my wings! Workflow ${queueName}. \nResponse: ${asyncOperation.id}`);
+    res.send(`On my wings!. \nStarted async-operation: ${asyncOperation.id}`);
   } catch (err) {
     if (err.name !== 'EcsStartTaskError') throw err;
 

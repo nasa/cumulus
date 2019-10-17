@@ -224,7 +224,7 @@ class Granule extends Manager {
         name,
         version
       },
-      queueName
+      // queueName
     });
 
     await this.updateStatus({ granuleId: g.granuleId }, 'running');
