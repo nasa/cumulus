@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+- **CUMULUS-1620** - Fixed bug where `message_adapter_version` does not correctly inject the CMA
+
 ## [v1.14.2] - 2019-10-08
 
 ### BREAKING CHANGES
