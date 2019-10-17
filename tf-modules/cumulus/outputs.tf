@@ -8,9 +8,9 @@ output "archive_api_redirect_uri" {
   value = module.archive.api_redirect_uri
 }
 
-# output "distribution_url" {
-#   value = module.distribution.distribution_url
-# }
+output "distribution_url" {
+  value = module.distribution.distribution_url
+}
 
 output "distribution_redirect_uri" {
   value = module.distribution.thin_egress_app_redirect_uri
@@ -84,10 +84,9 @@ output "sync_granule_task_lambda_function_arn" {
 
 output "workflow_config" {
   value = {
-    distribution_url = module.distribution.distribution_url
     publish_reports_lambda_function_arn = module.archive.publish_reports_lambda_function_arn
     sf_semaphore_down_lambda_function_arn = module.ingest.sf_semaphore_down_lambda_function_arn
-    step_role_arn = module.ingest.step_role_arn
+    state_machine_role_arn = module.ingest.step_role_arn
   }
 }
 
