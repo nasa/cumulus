@@ -79,11 +79,13 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
         bucket: config.bucket,
         findExecutionFn: (taskInput, params) =>
           taskInput.meta.triggerRule &&
-            (taskInput.meta.triggerRule === params.ruleName) &&
-            (taskInput.cumulus_meta.execution_name !== params.execution.name),
+          (taskInput.meta.triggerRule === params.ruleName) &&
+          (taskInput.cumulus_meta.execution_name !== params.execution.name),
         findExecutionFnParams: { ruleName: scheduledRuleName, execution },
         startTask: 'HelloWorld'
-      }).catch((err) => expect(err.message).toEqual('Never found started workflow'));
+      }).catch((err) =>
+        expect(err.message).toEqual('Never found started workflow.')
+      );
     });
   });
 });
@@ -170,7 +172,8 @@ describe('When I create a one-time rule via the Cumulus API', () => {
 
       await rulesApiTestUtils.rerunRule({
         prefix: config.stackName,
-        ruleName: helloWorldRule.name
+        ruleName: helloWorldRule.name,
+        updateParams: { ...updatedRule }
       });
 
       console.log(`Waiting for new execution of ${helloWorldRule.workflow} triggered by rerun of rule`);

@@ -124,25 +124,24 @@ async function deleteRule({ prefix, ruleName }) {
 }
 
 /**
- * Rerun a rule via the API
+ * Rerun a rule via the API.
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
  * @param {string} params.ruleName - the name of the rule to rerun
- * @returns {Promise<Object>} - promise that resolves to the output of the API lambda
+ * @param {Object} params.updateParams - key/value to update on the rule
+ * @returns {Promise<Object>} - promise that resolves to the output of the API
+ *    lambda
  */
-async function rerunRule({ prefix, ruleName }) {
-  const payload = {
-    httpMethod: 'PUT',
-    resource: '/{proxy+}',
-    path: `/rules/${ruleName}`,
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ action: 'rerun' })
-  };
-
-  return callRuleApiFunction(prefix, payload);
+async function rerunRule({ prefix, ruleName, updateParams = [] }) {
+  return updateRule({
+    prefix,
+    ruleName,
+    updateParams: {
+      ...updateParams,
+      action: 'rerun'
+    }
+  });
 }
 
 module.exports = {
