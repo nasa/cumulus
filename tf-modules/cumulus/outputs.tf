@@ -98,10 +98,6 @@ output "log2elasticsearch_lambda_function_arn" {
   value = module.archive.log2elasticsearch_lambda_function_arn
 }
 
-output "sf2snsEnd_lambda_function_arn" {
-  value = module.ingest.sf2snsEnd_lambda_function_arn
-}
-
 # IAM outputs
 
 output "lambda_processing_role_arn" {
