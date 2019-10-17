@@ -15,6 +15,7 @@ module.exports = {
     emsDistributionReport: './lambdas/ems-distribution-report.js',
     emsIngestReport: './lambdas/ems-ingest-report.js',
     emsProductMetadataReport: './lambdas/ems-metadata-report.js',
+    executeMigrations: './lambdas/executeMigrations.js',
     indexer: './es/indexer.js',
     indexFromDatabase: './lambdas/index-from-database.js',
     messageConsumer: './lambdas/message-consumer.js',
