@@ -32,7 +32,7 @@ const getExecutionRecord = (executionModel, executionArn) =>
       const record = await executionModel.get({ arn: executionArn });
       return record;
     },
-    { retries: 5 }
+    { retries: 3 }
   );
 
 class Execution extends Manager {
