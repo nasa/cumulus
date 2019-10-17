@@ -120,7 +120,7 @@ test('No error is thrown if nothing is in the database', async (t) => {
 });
 
 test('index executions', async (t) => {
-  const numItems = 10;
+  const numItems = 1;
 
   const fakeData = await Promise.all([
     addFakeData(numItems, fakeCollectionFactory, collectionModel),
