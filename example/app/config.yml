@@ -9,8 +9,8 @@ default:
     esHost: '{{esHost}}'
     streamName: '{{prefix}}-testStream'
     cnmResponseStream: '{{prefix}}-cnmResponseStream'
-    awsAccountId: '{{AWS_ACCOUNT_ID}}'
-    awsRegion: us-east-1
+    AWS_ACCOUNT_ID: '{{AWS_ACCOUNT_ID}}'
+    AWS_REGION: us-east-1
     AsyncOperationsTable: '{{prefix}}-AsyncOperationsTable'
     asyncOperationRunnerRole: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway'
     sqs_consumer_rate: 300

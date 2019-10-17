@@ -87,13 +87,17 @@ const loadConfigFromYml = () => {
   // Make sure that all environment variables are set
   [
     'AWS_REGION',
+    'AWS_ACCOUNT_ID',
     'EARTHDATA_CLIENT_ID',
     'EARTHDATA_CLIENT_PASSWORD',
     'EARTHDATA_PASSWORD',
     'EARTHDATA_USERNAME',
     'TOKEN_SECRET'
   ].forEach((x) => {
-    if (isNil(process.env[x])) process.env[x] = config[x];
+    if (isNil(process.env[x])) {
+      if (isNil(config[x])) throw new Error(`Test Config Value ${x} is not set.`);
+      process.env[x] = config[x];
+    }
   });
 
   return config;
