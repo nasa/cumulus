@@ -464,6 +464,32 @@ test('getGranulesForCollection() only returns granules belonging to the specifie
   t.is(await granules.shift(), null);
 });
 
+test('getGranulesForCollection() sorts its results by granuleId', async (t) => {
+  const { granuleModel } = t.context;
+
+  const collectionId = randomString();
+  const granules = [
+    fakeGranuleFactoryV2({ collectionId }),
+    fakeGranuleFactoryV2({ collectionId })
+  ];
+
+  await granuleModel.create(granules);
+
+  const granulesQueue = await granuleModel.getGranulesForCollection(collectionId);
+
+  const fetchedGranules = [
+    await granulesQueue.shift(),
+    await granulesQueue.shift()
+  ];
+
+  t.is(await granulesQueue.shift(), null);
+
+  t.deepEqual(
+    fetchedGranules.map((g) => g.granuleId).sort(),
+    granules.map((g) => g.granuleId).sort()
+  );
+});
+
 test('getGranulesForCollection() filters by status', async (t) => {
   const { granuleModel } = t.context;
 
