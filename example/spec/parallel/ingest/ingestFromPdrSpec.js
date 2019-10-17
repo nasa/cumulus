@@ -22,7 +22,9 @@
  */
 
 const { Collection, Execution, Pdr } = require('@cumulus/api/models');
+
 const { s3, deleteS3Object } = require('@cumulus/common/aws');
+const { LambdaStep } = require('@cumulus/common/sfnStep');
 
 const {
   addCollections,
@@ -33,7 +35,6 @@ const {
   cleanupProviders,
   cleanupCollections,
   granulesApi: granulesApiTestUtils,
-  LambdaStep,
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
 
@@ -90,6 +91,7 @@ describe('Ingesting from PDR', () => {
   const pdrModel = new Pdr();
 
   let parsePdrExecutionArn;
+  let workflowExecution;
 
   beforeAll(async () => {
     // populate collections, providers and test data
@@ -131,6 +133,8 @@ describe('Ingesting from PDR', () => {
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
+      executionModel.delete({ arn: workflowExecution.executionArn }),
+      executionModel.delete({ arn: parsePdrExecutionArn }),
       apiTestUtils.deletePdr({
         prefix: config.stackName,
         pdr: pdrFilename
@@ -139,7 +143,6 @@ describe('Ingesting from PDR', () => {
   });
 
   describe('The Discover and Queue PDRs workflow', () => {
-    let workflowExecution;
     let queuePdrsOutput;
 
     beforeAll(async () => {
@@ -192,6 +195,7 @@ describe('Ingesting from PDR', () => {
       let parseLambdaOutput;
       let queueGranulesOutput;
       let expectedParsePdrOutput;
+      let ingestGranuleWorkflowArn;
 
       const outputPayloadFilename = './spec/parallel/ingest/resources/ParsePdr.output.json';
       const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
@@ -199,7 +203,6 @@ describe('Ingesting from PDR', () => {
 
       beforeAll(async () => {
         parsePdrExecutionArn = queuePdrsOutput.payload.running[0];
-        console.log(`Wait for execution ${parsePdrExecutionArn}`);
 
         try {
           expectedParsePdrOutput = loadFileWithUpdatedGranuleIdPathAndCollection(
@@ -217,10 +220,6 @@ describe('Ingesting from PDR', () => {
 
       afterAll(async () => {
         // wait for child executions to complete
-        queueGranulesOutput = await lambdaStep.getStepOutput(
-          parsePdrExecutionArn,
-          'QueueGranules'
-        );
         await Promise.all(
           queueGranulesOutput.payload.running
             .map((arn) => waitForCompletedExecution(arn))
@@ -231,16 +230,8 @@ describe('Ingesting from PDR', () => {
         });
       });
 
-      xit('a running pdr record is added to DynamoDB', async () => {
-        const record = await waitForModelStatus(
-          pdrModel,
-          { pdrName: pdrFilename },
-          'running'
-        );
-        expect(record.status).toEqual('running');
-      });
-
       it('executes successfully', async () => {
+        console.log(`Wait for execution ${parsePdrExecutionArn}`);
         parsePdrExecutionStatus = await waitForCompletedExecution(parsePdrExecutionArn);
         expect(parsePdrExecutionStatus).toEqual('SUCCEEDED');
       });
@@ -288,7 +279,7 @@ describe('Ingesting from PDR', () => {
         });
       });
 
-      describe('SfSnsReport lambda function', () => {
+      describe('PdrStatusReport lambda function', () => {
         let lambdaOutput;
         beforeAll(async () => {
           lambdaOutput = await lambdaStep.getStepOutput(parsePdrExecutionArn, 'SfSnsReport');
@@ -297,8 +288,12 @@ describe('Ingesting from PDR', () => {
         // SfSnsReport lambda is used in the workflow multiple times, apparantly, only the first output
         // is retrieved which is the first step (StatusReport)
         it('has expected output message', () => {
-          expect(lambdaOutput.payload.pdr.path).toEqual(expectedParsePdrOutput.pdr.path);
-          expect(lambdaOutput.payload.pdr.name).toEqual(expectedParsePdrOutput.pdr.name);
+          // Sometimes PDR ingestion completes before this step is reached, so it is never invoked
+          // and there is no Lambda output to check.
+          if (lambdaOutput) {
+            expect(lambdaOutput.payload.pdr.path).toEqual(expectedParsePdrOutput.pdr.path);
+            expect(lambdaOutput.payload.pdr.name).toEqual(expectedParsePdrOutput.pdr.name);
+          }
         });
       });
 
@@ -309,7 +304,6 @@ describe('Ingesting from PDR', () => {
        * running workflow, so use that to get the status.
        */
       describe('IngestGranule workflow', () => {
-        let ingestGranuleWorkflowArn;
         let ingestGranuleExecutionStatus;
 
         beforeAll(async () => {
@@ -321,7 +315,7 @@ describe('Ingesting from PDR', () => {
 
         afterAll(async () => {
           // cleanup
-          const finalOutput = await lambdaStep.getStepOutput(ingestGranuleWorkflowArn, 'SfSnsReport');
+          const finalOutput = await lambdaStep.getStepOutput(ingestGranuleWorkflowArn, 'MoveGranules');
           // delete ingested granule(s)
           await Promise.all(
             finalOutput.payload.granules.map((g) =>
@@ -350,8 +344,17 @@ describe('Ingesting from PDR', () => {
 
       /** This test relies on the previous 'IngestGranule workflow' to complete */
       describe('When accessing an execution via the API that was triggered from a parent step function', () => {
+        afterAll(async () => {
+          await executionModel.delete({ arn: ingestGranuleWorkflowArn });
+        });
+
         it('displays a link to the parent', async () => {
-          const ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
+          await waitForModelStatus(
+            executionModel,
+            { arn: ingestGranuleWorkflowArn },
+            'completed'
+          );
+
           const ingestGranuleExecutionResponse = await executionsApiTestUtils.getExecution({
             prefix: config.stackName,
             arn: ingestGranuleWorkflowArn
@@ -398,7 +401,7 @@ describe('Ingesting from PDR', () => {
 
           // the output of the CheckStatus is used to determine the task of choice
           const checkStatusTaskName = 'CheckStatus';
-          const stopStatusTaskName = 'StopStatus';
+          const successStepName = 'WorkflowSucceeded';
           const pdrStatusReportTaskName = 'PdrStatusReport';
 
           let choiceVerified = false;
@@ -414,8 +417,10 @@ describe('Ingesting from PDR', () => {
               while (!nextTask && i < events.length - 1) {
                 i += 1;
                 const nextEvent = events[i];
-                if (nextEvent.type === 'TaskStateEntered' &&
-                  nextEvent.name) {
+                if ((
+                  nextEvent.type === 'TaskStateEntered' ||
+                  nextEvent.type === 'SucceedStateEntered'
+                ) && nextEvent.name) {
                   nextTask = nextEvent.name;
                 }
               }
@@ -423,7 +428,7 @@ describe('Ingesting from PDR', () => {
               expect(nextTask).toBeTruthy();
 
               if (isFinished === true) {
-                expect(nextTask).toEqual(stopStatusTaskName);
+                expect(nextTask).toEqual(successStepName);
               } else {
                 expect(nextTask).toEqual(pdrStatusReportTaskName);
               }
@@ -436,7 +441,7 @@ describe('Ingesting from PDR', () => {
       });
     });
 
-    describe('the sf-sns-report task has published a sns message and', () => {
+    describe('the reporting lambda has published a sns message and', () => {
       it('the execution record is added to DynamoDB', async () => {
         const record = await waitForModelStatus(
           executionModel,

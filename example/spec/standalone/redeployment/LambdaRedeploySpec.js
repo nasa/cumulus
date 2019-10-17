@@ -1,11 +1,11 @@
 'use strict';
 
+const { LambdaStep } = require('@cumulus/common/sfnStep');
 const {
   buildAndStartWorkflow,
   getLambdaAliases,
   getLambdaVersions,
-  waitForCompletedExecution,
-  LambdaStep
+  waitForCompletedExecution
 } = require('@cumulus/integration-tests');
 
 const fs = require('fs-extra');

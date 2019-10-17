@@ -8,14 +8,14 @@ const {
   testUtils: { randomString }
 } = require('@cumulus/common');
 const { isNil } = require('@cumulus/common/util');
+const { LambdaStep } = require('@cumulus/common/sfnStep');
 const {
   addCollections,
   addProviders,
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
-  granulesApi: granulesApiTestUtils,
-  LambdaStep
+  granulesApi: granulesApiTestUtils
 } = require('@cumulus/integration-tests');
 const {
   loadConfig,

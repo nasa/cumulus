@@ -100,7 +100,7 @@ resource "aws_security_group" "no_ingress_all_egress" {
 }
 
 resource "aws_sns_topic_subscription" "sns_s3_test" {
-  topic_arn = module.cumulus.sftracker_sns_topic_arn
+  topic_arn = module.cumulus.report_executions_sns_topic_arn
   protocol  = "lambda"
   endpoint  = aws_lambda_function.sns_s3_test.arn
 }
@@ -109,5 +109,5 @@ resource "aws_lambda_permission" "sns_s3_test" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.sns_s3_test.arn
   principal     = "sns.amazonaws.com"
-  source_arn    = module.cumulus.sftracker_sns_topic_arn
+  source_arn    = module.cumulus.report_executions_sns_topic_arn
 }

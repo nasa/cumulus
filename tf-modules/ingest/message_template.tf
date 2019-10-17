@@ -1,5 +1,5 @@
 locals {
-  message_template_key = "${var.prefix}/workflows/template.json"
+  message_template_key = "${var.prefix}/workflow_template.json"
 
   message_template = jsonencode({
     cumulus_meta = {

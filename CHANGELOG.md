@@ -9,19 +9,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### BREAKING CHANGES
 
-- **CUMULUS-1447** -
-  The newest release of the Cumulus Message Adapter (v1.1.0) requires that parameterized configuration be used for remote message functionality. Once released, Kes will automatically bring in CMA v1.1.0 without additional configuration.
+- **CUMULUS-1449** - Cumulus now uses a universal workflow template when
+  starting workflow that contains general information specific to the
+  deployment, but not specific to the workflow. Workflow task configs must be
+  defined using AWS step function parameters. As part of this change,
+  `CumulusConfig` has been retired and task configs must now be defined under
+  the `cma.task_config` key in the Parameters section of a step function
+  definition.
 
-  As this change is backward compatible in Cumulus Core, users wishing to utilize the previous version of the CMA may opt to transition to using a CMA lambda layer, or set `message_adapter_version` in their configuration to a version prior to v1.1.0.
-
-- **CUMULUS-1449** -
-  Cumulus now uses a universal workflow template when starting workflow that contains general information specific to the deployment, but not specific to the workflow. Workflow task configs must be defined using AWS step function parameters. As part of this change, `CumulusConfig` has been retired and task configs must now be defined under the `cma.task_config` key in the Parameters section of a step function definition.
-  
   **Migration instructions**:
 
   NOTE: These instructions require the use of Cumulus Message Adapter v1.1.x+.
-  Please ensure you are using a compatible version before attempting to migrate workflow configurations.
-  When defining workflow steps, remove any `CumulusConfig` section, as shown below:
+  Please ensure you are using a compatible version before attempting to migrate
+  workflow configurations. When defining workflow steps, remove any
+  `CumulusConfig` section, as shown below:
 
   ```yaml
   ParsePdr:
@@ -31,7 +32,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
       stack: '{$.meta.stack}'
   ```
 
-  Instead, use AWS Parameters to pass `task_config` for the task directly into the Cumulus Message Adapter:
+  Instead, use AWS Parameters to pass `task_config` for the task directly into
+  the Cumulus Message Adapter:
 
   ```yaml
   ParsePdr:
@@ -44,19 +46,84 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
           stack: '{$.meta.stack}'
   ```
 
-  In this example, the `cma` key is used to pass parameters to the message adapter.
-  Using `task_config` in combination with `event.$: '$'` allows the message adapter to process `task_config` as the `config` passed to the Cumulus task.
-  See `example/workflows/sips.yml` in the core repository for further examples of how to set the Parameters.
+  In this example, the `cma` key is used to pass parameters to the message
+  adapter. Using `task_config` in combination with `event.$: '$'` allows the
+  message adapter to process `task_config` as the `config` passed to the Cumulus
+  task. See `example/workflows/sips.yml` in the core repository for further
+  examples of how to set the Parameters.
 
-  Additionally, workflow configurations for the `QueueGranules` and `QueuePdrs` tasks need to be updated:
+  Additionally, workflow configurations for the `QueueGranules` and `QueuePdrs`
+  tasks need to be updated:
   - `queue-pdrs` config changes:
-    - `parsePdrMessageTemplateUri` replaced with `parsePdrWorkflow`, which is the workflow name (i.e. top-level name in `config.yml`, e.g. 'ParsePdr').
-    - `internalBucket` and `stackName` configs now required to look up configuration from the deployment. Brings the task config in line with that of `queue-granules`.
-  - `queue-granules` config change: `ingestGranuleMessageTemplateUri` replaced with `ingestGranuleWorkflow`, which is the workflow name (e.g. 'IngestGranule').
+    - `parsePdrMessageTemplateUri` replaced with `parsePdrWorkflow`, which is
+      the workflow name (i.e. top-level name in `config.yml`, e.g. 'ParsePdr').
+    - `internalBucket` and `stackName` configs now required to look up
+      configuration from the deployment. Brings the task config in line with
+      that of `queue-granules`.
+  - `queue-granules` config change: `ingestGranuleMessageTemplateUri` replaced
+    with `ingestGranuleWorkflow`, which is the workflow name (e.g.
+    'IngestGranule').
+
+- **CUMULUS-1396** - **Workflow steps at the beginning and end of a workflow
+  using the `SfSnsReport` Lambda have now been deprecated (e.g. `StartStatus`,
+  `StopStatus`) and should be removed from your workflow definitions**. These
+  steps were used for publishing ingest notifications and have been replaced by
+  an implementation using Cloudwatch events for Step Functions to trigger a
+  Lambda that publishes ingest notifications. For further detail on how ingest
+  notifications are published, see the notes below on **CUMULUS-1394**. For
+  examples of how to update your workflow definitions, see our
+  [example workflow definitions](https://github.com/nasa/cumulus/blob/master/example/workflows/).
+
+### Added
+
+- **CUMULUS-1396**
+  - Added `@cumulus/common/sfnStep`:
+    - `LambdaStep` - A class for retrieving and parsing input and output to Lambda steps in AWS Step Functions
+    - `ActivityStep` - A class for retrieving and parsing input and output to ECS activity steps in AWS Step Functions
+
+- **CUMULUS-1574**
+  - Added `GET /token` endpoint for SAML authorization when cumulus is protected by Launchpad.
+    This lets a user retieve a token by hand that can be presented to the API.
+
+### Changed
+
+- **CUMULUS-1453**
+  - Removed config schema for `@cumulus/sf-sns-report` task
+  - Updated `@cumulus/sf-sns-report` to always assume that it is running as an intermediate step in a workflow, not as the first or last step
+
+### Fixed
+
+- **CUMULUS-1396** - Updated `@cumulus/common/StepFunctions.getExecutionHistory()` to recursively fetch execution history when `nextToken` is returned in response
+
+## [v1.14.2] - 2019-10-08
+
+### BREAKING CHANGES
+
+Your Cumulus Message Adapter version should be pinned to `v1.0.13` or lower in your `app/config.yml` using `message_adapter_version: v1.0.13` OR you should use the workflow migration steps below to work with CMA v1.1.1+.
+
+- **CUMULUS-1447** -
+  The newest release of the Cumulus Message Adapter (v1.1.1) requires that parameterized configuration be used for remote message functionality. Once released, Kes will automatically bring in CMA v1.1.1 without additional configuration.
+
+  **Migration instructions**
+  Oversized messages are no longer written to S3 automatically. In order to utilize remote messaging functionality, configure a `ReplaceConfig` AWS Step Function parameter on your CMA task:
+
+  ```yaml
+  ParsePdr:
+    Parameters:
+      cma:
+        event.$: '$'
+        ReplaceConfig:
+          FullMessage: true
+  ```
+
+  Accepted fields in `ReplaceConfig` include `MaxSize`, `FullMessage`, `Path` and `TargetPath`.
+  See https://github.com/nasa/cumulus-message-adapter/blob/master/CONTRACT.md#remote-message-configuration for full details.
+
+  As this change is backward compatible in Cumulus Core, users wishing to utilize the previous version of the CMA may opt to transition to using a CMA lambda layer, or set `message_adapter_version` in their configuration to a version prior to v1.1.0.
 
 ### PLEASE NOTE
 
-- **CUMULUS-1394** - Ingest notifications are now provided via 3 separate SNS topics for executions, granules, and PDRs, instead of a single `sftracker` SNS topic. Whereas the `sftracker` SNS topic received a full Cumulus execution message, the new topics all receive generated records for the given object. The new topics are only published to if the given object exists for the current execution. For a given execution/granule/PDR, two messages will be received by each topic: one message indicating that ingest is running and another message indicating that ingest has completed or failed. The new SNS topics are:
+- **CUMULUS-1394** - Ingest notifications are now provided via 3 separate SNS topics for executions, granules, and PDRs, instead of a single `sftracker` SNS topic. Whereas the `sftracker` SNS topic received a full Cumulus execution message, the new topics all receive generated records for the given object. The new topics are only published to if the given object exists for the current execution. For a given execution/granule/PDR, **two messages will be received by each topic**: one message indicating that ingest is running and another message indicating that ingest has completed or failed. The new SNS topics are:
 
   - `reportExecutions` - Receives 1 message per execution
   - `reportGranules` - Receives 1 message per granule in an execution
@@ -64,9 +131,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- **CUMULUS-1435**
-  - Added `tf-modules/monitoring` Terraform module which includes cloudwatch dashboard
-    - Added Elasticsearch Service alarms to the cloudwatch dashboard
+- **CUMULUS-639**
+  - Adds SAML JWT and launchpad token authentication to Cumulus API (configurable)
+    - **NOTE** to authenticate with Launchpad ensure your launchpad user_id is in the `<prefix>-UsersTable`
+    - when Cumulus configured to protect API via Launchpad:
+      - New endpoints
+        - `GET /saml/login` - starting point for SAML SSO creates the login request url and redirects to the SAML Identity Provider Service (IDP)
+        - `POST /saml/auth` - SAML Assertion Consumer Service.  POST receiver from SAML IDP.  Validates response, logs the user in, and returnes a SAML-based JWT.
+    - Disabled endpoints
+      - `POST /refresh`
+      - Changes authorization worklow:
+      - `ensureAuthorized` now presumes the bearer token is a JWT and tries to validate.  If the token is malformed, it attempts to validate the token against Launchpad.  This allows users to bring their own token as described here https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication.  But it also allows dashboard users to manually authenticate via Launchpad SAML to receive a Launchpad-based JWT.
+
 - **CUMULUS-1394**
   - Added `Granule.generateGranuleRecord()` method to granules model to generate a granule database record from a Cumulus execution message
   - Added `Pdr.generatePdrRecord()` method to PDRs model to generate a granule database record from a Cumulus execution message
@@ -77,21 +153,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - `getMessageGranules()` - Get the granules from a Cumulus execution message, if any.
   - Added `@cumulus/common/cloudwatch-event/isFailedSfStatus()` to determine if a Step Function status from a Cloudwatch event is a failed status
 
-- **CUMULUS-639**
-  - Adds SAML JWT and launchpad token authentication to Cumulus API (configurable)
-    - **NOTE** to authenticate with Launchpad ensure your launchpad user_id is in the `<prefix>-UsersTable`
-    - when Cumulus configured to protect API via Launchpad:
-         - New endpoints
-            - `GET /saml/login` - starting point for SAML SSO creates the login request url and redirects to the SAML Identity Provider Service (IDP)
-            - `POST /saml/auth` - SAML Assertion Consumer Service.  POST receiver from SAML IDP.  Validates response, logs the user in, and returnes a SAML-based JWT.
-         - Disabled endpoints
-            - `GET /token`
-            - `POST /refresh`
-          - Changes authorization worklow:
-           - `ensureAuthorized` now presumes the bearer token is a JWT and tries to validate.  If the token is malformed, it attempts to validate the token against Launchpad.  This allows users to bring their own token as described here https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication.  But it also allows dashboard users to manually authenticate via Launchpad SAML to receive a Launchpad-based JWT.
-
-
 ### Changed
+
+- **CUMULUS-1485** Update `@cumulus/cmr-client` to return error message from CMR for validation failures.
 
 - **CUMULUS-1394**
   - Renamed `Execution.generateDocFromPayload()` to `Execution.generateRecord()` on executions model. The method generates an execution database record from a Cumulus execution message.
@@ -107,22 +171,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1448** Refactor workflows that are mutating cumulus_meta to utilize meta field
 
-- **CUMULUS-1449**
-  - `queue-pdrs` & `queue-granules` config changes. Details in breaking changes section.
-  - Cumulus now uses a universal workflow template when starting workflow that contains general information specific to the deployment, but not specific to the workflow.
-  - Changed the way workflow configs are defined, from `CumulusConfig` to a `task_config` AWS Parameter.
-
-### Removed
-
 - **CUMULUS-1375**
   - Migrate Cumulus from deprecated Elasticsearch JS client to new, supported one in `@cumulus/api`
 
-- **CUMULUS-1449**
-  - Retired `CumulusConfig` as part of step function definitions, as this is an artifact of the way Kes parses workflow definitions that was not possible to migrate to Terraform. Use AWS Parameters and the `task_config` key instead. See change note above.
-  - Removed individual workflow templates.
-
 - **CUMULUS-1451**
   - Elasticsearch cluster setting `auto_create_index` will be set to false. This had been causing issues in the bootstrap lambda on deploy.
+
+- **CUMULUS-1456**
+  - `@cumulus/api` endpoints default error handler uses `boom` package to format errors, which is consistent with other API endpoint errors.
 
 ### Fixed
 
@@ -1485,7 +1541,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.14.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.14.2...HEAD
+[v1.14.2]: https://github.com/nasa/cumulus/compare/v1.14.1...v1.14.2
 [v1.14.1]: https://github.com/nasa/cumulus/compare/v1.14.0...v1.14.1
 [v1.14.0]: https://github.com/nasa/cumulus/compare/v1.13.5...v1.14.0
 [v1.13.5]: https://github.com/nasa/cumulus/compare/v1.13.4...v1.13.5

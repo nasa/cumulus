@@ -9,7 +9,8 @@ const {
     randomString
   }
 } = require('@cumulus/common');
-const { models: { Granule } } = require('@cumulus/api');
+const { LambdaStep } = require('@cumulus/common/sfnStep');
+const { models: { Granule, Pdr } } = require('@cumulus/api');
 const {
   addCollections,
   addProviders,
@@ -17,8 +18,7 @@ const {
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
-  granulesApi: granulesApiTestUtils,
-  LambdaStep
+  granulesApi: granulesApiTestUtils
 } = require('@cumulus/integration-tests');
 const {
   deleteFolder,
@@ -40,12 +40,6 @@ const lambdaStep = new LambdaStep();
 const workflowName = 'SyncGranule';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
-
-const outputPayloadTemplateFilename = './spec/parallel/syncGranule/SyncGranule.output.payload.template.json';
-const templatedOutputPayloadFilename = templateFile({
-  inputTemplateFilename: outputPayloadTemplateFilename,
-  config: config.SyncGranule
-});
 
 const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
@@ -72,6 +66,9 @@ describe('When the Sync Granule workflow is configured', () => {
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
   const granuleModel = new Granule();
 
+  process.env.PdrsTable = `${config.stackName}-PdrsTable`;
+  const pdrModel = new Pdr();
+
   beforeAll(async () => {
     // populate collections, providers and test data
     await Promise.all([
@@ -86,7 +83,35 @@ describe('When the Sync Granule workflow is configured', () => {
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
     const newGranuleId = inputPayload.granules[0].granuleId;
 
-    expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, newGranuleId, testDataFolder, newCollectionId);
+    const templatedOutputPayloadFilename = templateFile({
+      inputTemplateFilename: './spec/parallel/syncGranule/SyncGranule.output.payload.template.json',
+      config: {
+        granules: [
+          {
+            files: [
+              {
+                bucket: config.buckets.internal.name,
+                filename: `s3://${config.buckets.internal.name}/custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf`,
+                fileStagingDir: `custom-staging-dir/${config.stackName}/replace-me-collectionId`
+              },
+              {
+                bucket: config.buckets.internal.name,
+                filename: `s3://${config.buckets.internal.name}/custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf.met`,
+                fileStagingDir: `custom-staging-dir/${config.stackName}/replace-me-collectionId`
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(
+      templatedOutputPayloadFilename,
+      newGranuleId,
+      testDataFolder,
+      newCollectionId,
+      config.stackName
+    );
     expectedPayload.granules[0].dataType += testSuffix;
 
     workflowExecution = await buildAndExecuteWorkflow(
@@ -103,6 +128,9 @@ describe('When the Sync Granule workflow is configured', () => {
       granulesApiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
+      }),
+      pdrModel.delete({
+        pdrName: inputPayload.pdr.name
       })
     ]);
   });
