@@ -1,19 +1,9 @@
 ## Note: Example workflows are located in the workflows/ folder
 
 TestLambdaVersionWorkflow:
-  Comment: 'Tests Lambda update after redeploy'
-  StartAt: StartStatus
+  Comment: "Tests Lambda update after redeploy"
+  StartAt: WaitForDeployment
   States:
-    StartStatus:
-      Parameters:
-        cma:
-          event.$: '$'
-          task_config:
-            cumulus_message:
-              input: '{$}'
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      Next: WaitForDeployment
     WaitForDeployment:
       Type: Task
       Resource: ${WaitForDeploymentLambdaFunction.Arn}
@@ -21,83 +11,38 @@ TestLambdaVersionWorkflow:
     VersionUpTest:
       Type: Task
       Resource: ${VersionUpTestLambdaFunction.Arn}
-      Next: StopStatus
-    StopStatus:
-      Parameters:
-        cma:
-          event.$: '$'
-          task_config:
-            sfnEnd: true
-            stack: '{$.meta.stack}'
-            bucket: '{$.meta.buckets.internal.name}'
-            stateMachine: '{$.cumulus_meta.state_machine}'
-            executionName: '{$.cumulus_meta.execution_name}'
-            cumulus_message:
-              input: '{$}'
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
       Catch:
         - ErrorEquals:
-          - States.ALL
+            - States.ALL
           Next: WorkflowFailed
       End: true
     WorkflowFailed:
       Type: Fail
-      Cause: 'Workflow failed'
-
+      Cause: "Workflow failed"
 
 WaitForDeployWorkflow:
-  Comment: 'Tests redeployment during workflow run'
-  StartAt: StartStatus
+  Comment: "Tests redeployment during workflow run"
+  StartAt: HelloWorld
   States:
-    StartStatus:
-      Parameters:
-        cma:
-          event.$: '$'
-          task_config:
-            cumulus_message:
-              input: '{$}'
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      Next: HelloWorld
     HelloWorld:
       Parameters:
         cma:
-          event.$: '$'
+          event.$: "$"
           task_config:
-            buckets: '{$.meta.buckets}'
-            provider: '{$.meta.provider}'
-            collection: '{$.meta.collection}'
+            buckets: "{$.meta.buckets}"
+            provider: "{$.meta.provider}"
+            collection: "{$.meta.collection}"
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
       Next: WaitForDeployment
     WaitForDeployment:
       Type: Task
       Resource: ${WaitForDeploymentLambdaFunction.Arn}
-      Next: StopStatus
       Catch:
         - ErrorEquals:
-          - States.ALL
-          Next: WorkflowFailed
-    StopStatus:
-      Parameters:
-        cma:
-          event.$: '$'
-          task_config:
-            sfnEnd: true
-            stack: '{$.meta.stack}'
-            bucket: '{$.meta.buckets.internal.name}'
-            stateMachine: '{$.cumulus_meta.state_machine}'
-            executionName: '{$.cumulus_meta.execution_name}'
-            cumulus_message:
-              input: '{$}'
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      Catch:
-        - ErrorEquals:
-          - States.ALL
+            - States.ALL
           Next: WorkflowFailed
       End: true
     WorkflowFailed:
       Type: Fail
-      Cause: 'Workflow failed'
+      Cause: "Workflow failed"

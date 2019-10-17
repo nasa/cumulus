@@ -12,23 +12,13 @@ Example task meant to be a sanity check/introduction to the Cumulus workflows.
 
 ### Workflow Configuration
 
-The [workflow definition](workflows/README.md) can be found in `cumulus/example/workflows/helloworld.yml` under `HelloWorldWorkflow:`
+The [workflow definition](workflows/README.md) can be found in [`cumulus/example/workflows/helloworld.yml`](https://github.com/nasa/cumulus/blob/master/example/workflows/helloworld.yml) under `HelloWorldWorkflow:`
 
 ```yaml
 HelloWorldWorkflow:
   Comment: 'Returns Hello World'
-  StartAt: StartStatus
+  StartAt: HelloWorld
   States:
-    StartStatus:
-      Parameters:
-        cma:
-          event.$: '$'
-          task_config:
-            cumulus_message:
-              input: '{$}'
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      Next: HelloWorld
     HelloWorld:
       Parameters:
         cma:
@@ -39,36 +29,24 @@ HelloWorldWorkflow:
             collection: '{$.meta.collection}'
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
-      Next: StopStatus
-    StopStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      Parameters:
-        cma:
-          event.$: '$'
-          task_config:
-            sfnEnd: true
-            stack: '{$.meta.stack}'
-            bucket: '{$.meta.buckets.internal.name}'
-            stateMachine: '{$.cumulus_meta.state_machine}'
-            executionName: '{$.cumulus_meta.execution_name}'
-            cumulus_message:
-              input: '{$}'
-      Catch:
+      Retry:
         - ErrorEquals:
-          - States.ALL
-          Next: WorkflowFailed
-      End: true
-    WorkflowFailed:
-      Type: Fail
-      Cause: 'Workflow failed'
+          - Lambda.ServiceException
+          - Lambda.AWSLambdaException
+          - Lambda.SdkClientException
+          IntervalSeconds: 2
+          MaxAttempts: 6
+          BackoffRate: 2
+      Next: WorkflowSucceeded
+    WorkflowSucceeded:
+      Type: Succeed
 ```
 
 Workflow **error-handling** can be configured as discussed in the [Error-Handling](error-handling.md) cookbook.
 
 ### Task Configuration
 
-The HelloWorld [task itself](workflows/developing-workflow-tasks.md) is defined in `cumulus/example/lambdas.yml` under `HelloWorld:`
+The HelloWorld [task itself](workflows/developing-workflow-tasks.md) is defined in [`cumulus/example/lambdas.yml`](https://github.com/nasa/cumulus/blob/master/example/lambdas.yml) under `HelloWorld:`
 
 ```yaml
 HelloWorld:
@@ -101,7 +79,7 @@ Our goal here is to create a rule through the Cumulus dashboard that will define
 }
 ```
 
-![](assets/hello_world_workflow.png)
+![Screenshot of AWS Step Function execution graph for the HelloWorld workflow](assets/hello_world_workflow.png)
 *Executed workflow as seen in AWS Console*
 
 ### Output/Results
