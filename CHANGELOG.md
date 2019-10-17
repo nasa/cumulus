@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Updated `@cumulus/sf-sns-report` to always assume that it is running as an intermediate step in a workflow, not as the first or last step
 
 ### Fixed
-
+- **CUMULUS-1620** - Fixed bug where `message_adapter_version` does not correctly inject the CMA
 - **CUMULUS-1396** - Updated `@cumulus/common/StepFunctions.getExecutionHistory()` to recursively fetch execution history when `nextToken` is returned in response
 
 ## [v1.14.2] - 2019-10-08
