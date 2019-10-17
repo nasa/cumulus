@@ -23,12 +23,12 @@ const {
   },
   constructCollectionId
 } = require('@cumulus/common');
+const { LambdaStep } = require('@cumulus/common/sfnStep');
 const { getUrl } = require('@cumulus/cmrjs');
 const {
   addCollections,
   api: apiTestUtils,
   buildAndExecuteWorkflow,
-  LambdaStep,
   conceptExists,
   getOnlineResources,
   granulesApi: granulesApiTestUtils,
@@ -64,11 +64,6 @@ const lambdaStep = new LambdaStep();
 const workflowName = 'IngestAndPublishGranule';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
-
-const templatedOutputPayloadFilename = templateFile({
-  inputTemplateFilename: './spec/parallel/ingestGranule/IngestGranule.UMM.output.payload.template.json',
-  config: config[workflowName].IngestUMMGranuleOutput
-});
 
 const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
@@ -133,6 +128,35 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
     const granuleId = inputPayload.granules[0].granuleId;
+
+    const templatedOutputPayloadFilename = templateFile({
+      inputTemplateFilename: './spec/parallel/ingestGranule/IngestGranule.UMM.output.payload.template.json',
+      config: {
+        granules: [
+          {
+            files: [
+              {
+                bucket: config.buckets.protected.name,
+                filename: `s3://${config.buckets.protected.name}/MOD09GQ___006/2016/MOD/replace-me-granuleId.hdf`
+              },
+              {
+                bucket: config.buckets.private.name,
+                filename: `s3://${config.buckets.private.name}/MOD09GQ___006/MOD/replace-me-granuleId.hdf.met`
+              },
+              {
+                bucket: config.buckets.public.name,
+                filename: `s3://${config.buckets.public.name}/MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg`
+              },
+              {
+                bucket: config.buckets['protected-2'].name,
+                filename: `s3://${config.buckets['protected-2'].name}/MOD09GQ___006/MOD/replace-me-granuleId.cmr.json`
+              }
+            ]
+          }
+        ]
+      }
+    });
+
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
     expectedPayload.granules = addUniqueGranuleFilePathToGranuleFiles(expectedPayload.granules, testId);

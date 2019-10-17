@@ -1,9 +1,9 @@
 'use strict';
 
+const { LambdaStep } = require('@cumulus/common/sfnStep');
 const {
   rulesApi: rulesApiTestUtils,
   isWorkflowTriggeredByRule,
-  LambdaStep,
   removeRuleAddedParams,
   waitForTestExecutionStart
 } = require('@cumulus/integration-tests');
@@ -50,7 +50,8 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
         bucket: config.bucket,
         findExecutionFn: (taskInput, params) =>
           taskInput.meta.triggerRule && (taskInput.meta.triggerRule === params.ruleName),
-        findExecutionFnParams: { ruleName: scheduledRuleName }
+        findExecutionFnParams: { ruleName: scheduledRuleName },
+        startTask: 'HelloWorld'
       });
 
       console.log(`Scheduled Execution ARN: ${execution.executionArn}`);
@@ -80,7 +81,8 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
           taskInput.meta.triggerRule &&
             (taskInput.meta.triggerRule === params.ruleName) &&
             (taskInput.cumulus_meta.execution_name !== params.execution.name),
-        findExecutionFnParams: { ruleName: scheduledRuleName, execution }
+        findExecutionFnParams: { ruleName: scheduledRuleName, execution },
+        startTask: 'HelloWorld'
       }).catch((err) => expect(err.message).toEqual('Never found started workflow'));
     });
   });
@@ -141,7 +143,8 @@ describe('When I create a one-time rule via the Cumulus API', () => {
         stackName: config.stackName,
         bucket: config.bucket,
         findExecutionFn: isWorkflowTriggeredByRule,
-        findExecutionFnParams: { rule: createdCheck }
+        findExecutionFnParams: { rule: createdCheck },
+        startTask: 'HelloWorld'
       });
       console.log(`Execution ARN: ${execution.executionArn}`);
     });
@@ -175,9 +178,10 @@ describe('When I create a one-time rule via the Cumulus API', () => {
         stackName: config.stackName,
         bucket: config.bucket,
         findExecutionFn: isWorkflowTriggeredByRule,
-        findExecutionFnParams: { rule: updatedCheck }
+        findExecutionFnParams: { rule: updatedCheck },
+        startTask: 'HelloWorld'
       });
-      const updatedTaskInput = await lambdaStep.getStepInput(updatedExecution.executionArn, 'SfSnsReport');
+      const updatedTaskInput = await lambdaStep.getStepInput(updatedExecution.executionArn, 'HelloWorld');
       expect(updatedExecution).not.toBeNull();
       expect(updatedTaskInput.meta.triggerRule).toEqual(updatedCheck);
     });
