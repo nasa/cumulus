@@ -19,34 +19,36 @@
   "parser": "babel-eslint",
   "env": {
     "jasmine": true,
-    "mocha": true,
     "node": true
   },
   "rules": {
-    "indent": [ "error", 2 ],
+    "indent": ["error", 2],
     "require-jsdoc": "off",
-    "valid-jsdoc": [ "warn", {
-      "prefer": {
-        "arg": "param",
-        "return": "returns"
-      },
-      "preferType": {
-        "Boolean": "boolean",
-        "Number": "number",
-        "String": "string",
-        "object": "Object",
-        "array": "Array",
-        "date": "Date",
-        "regexp": "RegExp",
-        "Regexp": "RegExp",
-        "promise": "Promise"
-      },
-      "requireParamDescription": false,
-      "requireParamType": true,
-      "requireReturn": false,
-      "requireReturnDescription": false,
-      "requireReturnType": true
-    }],
+    "valid-jsdoc": [
+      "warn",
+      {
+        "prefer": {
+          "arg": "param",
+          "return": "returns"
+        },
+        "preferType": {
+          "Boolean": "boolean",
+          "Number": "number",
+          "String": "string",
+          "object": "Object",
+          "array": "Array",
+          "date": "Date",
+          "regexp": "RegExp",
+          "Regexp": "RegExp",
+          "promise": "Promise"
+        },
+        "requireParamDescription": false,
+        "requireParamType": true,
+        "requireReturn": false,
+        "requireReturnDescription": false,
+        "requireReturnType": true
+      }
+    ],
     "jsdoc/check-param-names": "warn",
     "jsdoc/check-tag-names": "warn",
     "jsdoc/check-types": "off",
@@ -66,20 +68,14 @@
     "import/newline-after-import": "off",
     "class-methods-use-this": "off",
     "no-warning-comments": "off",
-    "no-unused-vars": [
-      "error",
-      { "argsIgnorePattern": "^_" }
-    ],
+    "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
     "no-useless-escape": "off",
     "no-console": "warn",
     "spaced-comment": "off",
     "require-yield": "off",
     "prefer-template": "warn",
     "no-underscore-dangle": "off",
-    "comma-dangle": [
-      "warn",
-      "never"
-    ],
+    "comma-dangle": ["warn", "never"],
     "strict": "off",
     "guard-for-in": "off",
     "object-shorthand": "off",
@@ -91,10 +87,7 @@
         "asyncArrow": "always"
       }
     ],
-    "brace-style": [
-      2,
-      "1tbs"
-    ],
+    "brace-style": [2, "1tbs"],
     "max-len": [
       2,
       {
@@ -110,7 +103,10 @@
     "implicit-arrow-linebreak": "off",
 
     "eslint-comments/no-unused-disable": "warn",
-    "eslint-comments/disable-enable-pair": ["error", {"allowWholeFile": true}],
+    "eslint-comments/disable-enable-pair": [
+      "error",
+      { "allowWholeFile": true }
+    ],
 
     "lodash/import-scope": ["error", "method-package"],
     "lodash/prefer-constant": "off",
@@ -124,34 +120,25 @@
   },
   "overrides": [
     {
-      "files": [
-        "packages/api/migrations/**/*.js"
-      ],
+      "files": ["packages/api/migrations/**/*.js"],
       "rules": {
         "no-console": "off"
       }
     },
     {
-      "files": [
-        "packages/deployment/**/*.js"
-      ],
+      "files": ["packages/deployment/**/*.js"],
       "rules": {
         "no-console": "off"
       }
     },
     {
-      "files": [
-        "**/bin/**/*.js"
-      ],
+      "files": ["**/bin/**/*.js"],
       "rules": {
         "no-console": "off"
       }
     },
     {
-      "files": [
-        "**/test/**/*.js",
-        "**/tests/**/*.js"
-      ],
+      "files": ["**/test/**/*.js", "**/tests/**/*.js"],
       "rules": {
         "no-console": "off",
         "no-new": "off",
@@ -159,9 +146,7 @@
       }
     },
     {
-      "files": [
-        "**/spec/**/*.js"
-      ],
+      "files": ["**/spec/**/*.js"],
       "rules": {
         "no-console": "off"
       }

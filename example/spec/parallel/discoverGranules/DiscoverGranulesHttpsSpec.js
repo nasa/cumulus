@@ -1,5 +1,6 @@
 const fs = require('fs-extra');
 const { Execution } = require('@cumulus/api/models');
+const { LambdaStep } = require('@cumulus/common/sfnStep');
 const {
   api: apiTestUtils,
   addCollections,
@@ -7,7 +8,6 @@ const {
   cleanupCollections,
   cleanupProviders,
   granulesApi: granulesApiTestUtils,
-  LambdaStep,
   getProviderHost,
   getProviderPort
 } = require('@cumulus/integration-tests');

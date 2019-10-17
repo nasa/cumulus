@@ -97,7 +97,31 @@ const executionExists = (executionArn) =>
  */
 const getExecutionHistory = aws.improveStackTrace(
   aws.retryOnThrottlingException(
-    (params) => aws.sfn().getExecutionHistory(params).promise()
+    async (
+      params,
+      previousResponse = {
+        events: []
+      }
+    ) => {
+      const response = await aws.sfn().getExecutionHistory(params).promise();
+      const events = [
+        ...previousResponse.events,
+        ...response.events
+      ];
+      // If there is a nextToken, recursively call this function to get all events
+      // in the execution history.
+      if (response.nextToken) {
+        return getExecutionHistory({
+          ...params,
+          nextToken: response.nextToken
+        }, {
+          events
+        });
+      }
+      return {
+        events
+      };
+    }
   )
 );
 

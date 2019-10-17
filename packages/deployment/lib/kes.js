@@ -350,6 +350,7 @@ class UpdatedKes extends Kes {
     const initializeNewRule = (rule) => {
       const newRule = cloneDeep(rule);
       newRule.stateMachines = [];
+      newRule.eventPattern.detail = newRule.eventPattern.detail || {};
       newRule.eventPattern.detail.stateMachineArn = [];
       return newRule;
     };

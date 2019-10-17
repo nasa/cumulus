@@ -7,6 +7,7 @@ const pick = require('lodash.pick');
 
 const aws = require('@cumulus/common/aws');
 const { getMessageExecutionArn } = require('@cumulus/common/message');
+const { ActivityStep, LambdaStep } = require('@cumulus/common/sfnStep');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const { randomId, randomNumber, randomString } = require('@cumulus/common/test-utils');
 
@@ -176,18 +177,20 @@ test.serial('lambda publishes correct execution record to SNS topic', async (t) 
     message
   );
 
-  await publishReports.handler(cwEventMessage);
+  try {
+    await publishReports.handler(cwEventMessage);
 
-  t.is(executionPublishSpy.callCount, 1);
-  // Ensure that the correct execution record is passed to publish handler
-  const executionPublishRecord = executionPublishSpy.args[0][0];
-  t.is(executionPublishRecord.arn, arn);
-  t.is(executionPublishRecord.name, executionName);
-  t.is(executionPublishRecord.status, 'running');
-  t.is(executionPublishRecord.createdAt, createdAtTime);
-
-  // revert the mocking
-  executionPublishMock();
+    t.is(executionPublishSpy.callCount, 1);
+    // Ensure that the correct execution record is passed to publish handler
+    const executionPublishRecord = executionPublishSpy.args[0][0];
+    t.is(executionPublishRecord.arn, arn);
+    t.is(executionPublishRecord.name, executionName);
+    t.is(executionPublishRecord.status, 'running');
+    t.is(executionPublishRecord.createdAt, createdAtTime);
+  } finally {
+    // revert the mocking
+    executionPublishMock();
+  }
 });
 
 test.serial('lambda publishes completed execution record to SNS topic', async (t) => {
@@ -206,27 +209,29 @@ test.serial('lambda publishes completed execution record to SNS topic', async (t
     }
   });
 
-  await executionModel.create({
-    arn,
-    name: executionName,
-    status: 'running',
-    createdAt: Date.now()
-  });
-
   const failedCwEventMessage = createCloudwatchEventMessage(
     'SUCCEEDED',
     message
   );
 
-  await publishReports.handler(failedCwEventMessage);
+  try {
+    await executionModel.create({
+      arn,
+      name: executionName,
+      status: 'running',
+      createdAt: Date.now()
+    });
 
-  t.is(executionPublishSpy.callCount, 1);
-  // Ensure that the correct execution record is passed to publish handler
-  const executionPublishRecord = executionPublishSpy.args[0][0];
-  t.is(executionPublishRecord.status, 'completed');
+    await publishReports.handler(failedCwEventMessage);
 
-  // revert the mocking
-  executionPublishMock();
+    t.is(executionPublishSpy.callCount, 1);
+    // Ensure that the correct execution record is passed to publish handler
+    const executionPublishRecord = executionPublishSpy.args[0][0];
+    t.is(executionPublishRecord.status, 'completed');
+  } finally {
+    // revert the mocking
+    executionPublishMock();
+  }
 });
 
 test.serial('lambda publishes failed execution record to SNS topic', async (t) => {
@@ -245,27 +250,37 @@ test.serial('lambda publishes failed execution record to SNS topic', async (t) =
     }
   });
 
-  await executionModel.create({
-    arn,
-    name: executionName,
-    status: 'running',
-    createdAt: Date.now()
-  });
-
   const failedCwEventMessage = createCloudwatchEventMessage(
     'FAILED',
     message
   );
 
-  await publishReports.handler(failedCwEventMessage);
+  // Stub the failed step message, otherwise the ARN from the
+  // failed execution input won't match the ARN in the message created
+  // for this test.
+  const getFailedStepStub = sinon.stub(LambdaStep.prototype, 'getFirstFailedStepMessage')
+    .callsFake(() => message);
 
-  t.is(executionPublishSpy.callCount, 1);
-  // Ensure that the correct execution record is passed to publish handler
-  const executionPublishRecord = executionPublishSpy.args[0][0];
-  t.is(executionPublishRecord.status, 'failed');
+  try {
+    await executionModel.create({
+      arn,
+      name: executionName,
+      status: 'running',
+      createdAt: Date.now()
+    });
 
-  // revert the mocking
-  executionPublishMock();
+    await publishReports.handler(failedCwEventMessage);
+
+    t.is(executionPublishSpy.callCount, 1);
+    // Ensure that the correct execution record is passed to publish handler
+    const executionPublishRecord = executionPublishSpy.args[0][0];
+    t.is(executionPublishRecord.arn, arn);
+    t.is(executionPublishRecord.status, 'failed');
+  } finally {
+    // revert the mocking
+    getFailedStepStub.restore();
+    executionPublishMock();
+  }
 });
 
 test.serial('lambda does not publish completed record for non-existent execution to SNS topic', async (t) => {
@@ -278,12 +293,14 @@ test.serial('lambda does not publish completed record for non-existent execution
     message
   );
 
-  await publishReports.handler(cwEventMessage);
+  try {
+    await publishReports.handler(cwEventMessage);
 
-  t.is(executionPublishSpy.callCount, 0);
-
-  // revert the mocking
-  executionPublishMock();
+    t.is(executionPublishSpy.callCount, 0);
+  } finally {
+    // revert the mocking
+    executionPublishMock();
+  }
 });
 
 test.serial('lambda without granules in message does not publish to granule SNS topic', async (t) => {
@@ -298,12 +315,14 @@ test.serial('lambda without granules in message does not publish to granule SNS 
     message
   );
 
-  await publishReports.handler(cwEventMessage);
+  try {
+    await publishReports.handler(cwEventMessage);
 
-  t.is(granulePublishSpy.callCount, 0);
-
-  // revert the mocking
-  granulePublishMock();
+    t.is(granulePublishSpy.callCount, 0);
+  } finally {
+    // revert the mocking
+    granulePublishMock();
+  }
 });
 
 test.serial('lambda ignores granules without granule ID', async (t) => {
@@ -321,12 +340,14 @@ test.serial('lambda ignores granules without granule ID', async (t) => {
     message
   );
 
-  await publishReports.handler(cwEventMessage);
+  try {
+    await publishReports.handler(cwEventMessage);
 
-  t.is(granulePublishSpy.callCount, 3);
-
-  // revert the mocking
-  granulePublishMock();
+    t.is(granulePublishSpy.callCount, 3);
+  } finally {
+    // revert the mocking
+    granulePublishMock();
+  }
 });
 
 test.serial('failure describing step function in handleGranuleMessages does not prevent publishing to SNS topic', async (t) => {
@@ -346,14 +367,16 @@ test.serial('failure describing step function in handleGranuleMessages does not 
     message
   );
 
-  await t.notThrowsAsync(
-    () => publishReports.handler(cwEventMessage)
-  );
+  try {
+    await t.notThrowsAsync(
+      () => publishReports.handler(cwEventMessage)
+    );
 
-  t.is(granulePublishSpy.callCount, 1);
-
-  // revert the mocking
-  granulePublishMock();
+    t.is(granulePublishSpy.callCount, 1);
+  } finally {
+    // revert the mocking
+    granulePublishMock();
+  }
 });
 
 test.serial('lambda publishes correct granules from payload.granules to SNS topic', async (t) => {
@@ -376,29 +399,31 @@ test.serial('lambda publishes correct granules from payload.granules to SNS topi
     message
   );
 
-  await publishReports.handler(cwEventMessage);
+  try {
+    await publishReports.handler(cwEventMessage);
 
-  t.plan(6);
-  t.is(granulePublishSpy.callCount, 5);
+    t.plan(6);
+    t.is(granulePublishSpy.callCount, 5);
 
-  // Ensure that correct granule records are actually being passed to publish handler
-  granulePublishSpy.args
-    .filter((args) => args[0].granuleId)
-    .map(([granuleRecord]) => t.deepEqual(
-      {
-        ...pick(granuleRecord, ['collectionId', 'status', 'createdAt']),
-        executionValid: granuleRecord.execution.includes(executionName)
-      },
-      {
-        collectionId,
-        status: 'running',
-        createdAt: createdAtTime,
-        executionValid: true
-      }
-    ));
-
-  // revert the mocking
-  granulePublishMock();
+    // Ensure that correct granule records are actually being passed to publish handler
+    granulePublishSpy.args
+      .filter((args) => args[0].granuleId)
+      .map(([granuleRecord]) => t.deepEqual(
+        {
+          ...pick(granuleRecord, ['collectionId', 'status', 'createdAt']),
+          executionValid: granuleRecord.execution.includes(executionName)
+        },
+        {
+          collectionId,
+          status: 'running',
+          createdAt: createdAtTime,
+          executionValid: true
+        }
+      ));
+  } finally {
+    // revert the mocking
+    granulePublishMock();
+  }
 });
 
 test.serial('lambda publishes correct granules from meta.input_granules to SNS topic', async (t) => {
@@ -425,29 +450,31 @@ test.serial('lambda publishes correct granules from meta.input_granules to SNS t
     message
   );
 
-  await publishReports.handler(cwEventMessage);
+  try {
+    await publishReports.handler(cwEventMessage);
 
-  t.plan(4);
-  t.is(granulePublishSpy.callCount, 3);
+    t.plan(4);
+    t.is(granulePublishSpy.callCount, 3);
 
-  // Ensure that granule records are actually being passed to publish handler
-  granulePublishSpy.args
-    .filter((args) => args[0].granuleId)
-    .map(([granuleRecord]) => t.deepEqual(
-      {
-        ...pick(granuleRecord, ['collectionId', 'status', 'createdAt']),
-        executionValid: granuleRecord.execution.includes(executionName)
-      },
-      {
-        collectionId,
-        status: 'running',
-        createdAt: createdAtTime,
-        executionValid: true
-      }
-    ));
-
-  // revert the mocking
-  granulePublishMock();
+    // Ensure that granule records are actually being passed to publish handler
+    granulePublishSpy.args
+      .filter((args) => args[0].granuleId)
+      .map(([granuleRecord]) => t.deepEqual(
+        {
+          ...pick(granuleRecord, ['collectionId', 'status', 'createdAt']),
+          executionValid: granuleRecord.execution.includes(executionName)
+        },
+        {
+          collectionId,
+          status: 'running',
+          createdAt: createdAtTime,
+          executionValid: true
+        }
+      ));
+  } finally {
+    // revert the mocking
+    granulePublishMock();
+  }
 });
 
 test.serial('lambda without PDR in message does not publish to PDR SNS topic', async (t) => {
@@ -462,12 +489,14 @@ test.serial('lambda without PDR in message does not publish to PDR SNS topic', a
     message
   );
 
-  await publishReports.handler(cwEventMessage);
+  try {
+    await publishReports.handler(cwEventMessage);
 
-  t.is(pdrPublishSpy.callCount, 0);
-
-  // revert the mocking
-  pdrPublishMock();
+    t.is(pdrPublishSpy.callCount, 0);
+  } finally {
+    // revert the mocking
+    pdrPublishMock();
+  }
 });
 
 test.serial('lambda without valid PDR in message does not publish to PDR SNS topic', async (t) => {
@@ -482,12 +511,14 @@ test.serial('lambda without valid PDR in message does not publish to PDR SNS top
     message
   );
 
-  await publishReports.handler(cwEventMessage);
+  try {
+    await publishReports.handler(cwEventMessage);
 
-  t.is(pdrPublishSpy.callCount, 0);
-
-  // revert the mocking
-  pdrPublishMock();
+    t.is(pdrPublishSpy.callCount, 0);
+  } finally {
+    // revert the mocking
+    pdrPublishMock();
+  }
 });
 
 test.serial('lambda publishes PDR from payload.pdr to SNS topic', async (t) => {
@@ -512,19 +543,21 @@ test.serial('lambda publishes PDR from payload.pdr to SNS topic', async (t) => {
     message
   );
 
-  await publishReports.handler(cwEventMessage);
+  try {
+    await publishReports.handler(cwEventMessage);
 
-  t.is(pdrPublishSpy.callCount, 1);
-  // Ensure that correct PDR record is passed to publish handler
-  const publishPdrRecord = pdrPublishSpy.args[0][0];
-  t.is(publishPdrRecord.pdrName, pdrName);
-  t.is(publishPdrRecord.provider, message.meta.provider.id);
-  t.is(publishPdrRecord.collectionId, collectionId);
-  t.is(publishPdrRecord.status, 'running');
-  t.is(publishPdrRecord.createdAt, createdAtTime);
-
-  // revert the mocking
-  pdrPublishMock();
+    t.is(pdrPublishSpy.callCount, 1);
+    // Ensure that correct PDR record is passed to publish handler
+    const publishPdrRecord = pdrPublishSpy.args[0][0];
+    t.is(publishPdrRecord.pdrName, pdrName);
+    t.is(publishPdrRecord.provider, message.meta.provider.id);
+    t.is(publishPdrRecord.collectionId, collectionId);
+    t.is(publishPdrRecord.status, 'running');
+    t.is(publishPdrRecord.createdAt, createdAtTime);
+  } finally {
+    // revert the mocking
+    pdrPublishMock();
+  }
 });
 
 test.serial('lambda publishes PDR from meta.pdr to SNS topic', async (t) => {
@@ -553,19 +586,21 @@ test.serial('lambda publishes PDR from meta.pdr to SNS topic', async (t) => {
     message
   );
 
-  await publishReports.handler(cwEventMessage);
+  try {
+    await publishReports.handler(cwEventMessage);
 
-  t.is(pdrPublishSpy.callCount, 1);
-  // Ensure that correct PDR record is passed to publish handler
-  const publishPdrRecord = pdrPublishSpy.args[0][0];
-  t.is(publishPdrRecord.pdrName, pdrName);
-  t.is(publishPdrRecord.provider, message.meta.provider.id);
-  t.is(publishPdrRecord.collectionId, collectionId);
-  t.is(publishPdrRecord.status, 'completed');
-  t.is(publishPdrRecord.createdAt, createdAtTime);
-
-  // revert the mocking
-  pdrPublishMock();
+    t.is(pdrPublishSpy.callCount, 1);
+    // Ensure that correct PDR record is passed to publish handler
+    const publishPdrRecord = pdrPublishSpy.args[0][0];
+    t.is(publishPdrRecord.pdrName, pdrName);
+    t.is(publishPdrRecord.provider, message.meta.provider.id);
+    t.is(publishPdrRecord.collectionId, collectionId);
+    t.is(publishPdrRecord.status, 'completed');
+    t.is(publishPdrRecord.createdAt, createdAtTime);
+  } finally {
+    // revert the mocking
+    pdrPublishMock();
+  }
 });
 
 test.serial('error handling execution record does not affect publishing to other topics', async (t) => {
@@ -575,7 +610,6 @@ test.serial('error handling execution record does not affect publishing to other
 
   const { message } = t.context;
 
-  // delete message.cumulus_meta.state_machine;
   const generateRecordStub = sinon.stub(Execution, 'generateRecord').callsFake(() => {
     throw new Error('error');
   });
@@ -585,17 +619,19 @@ test.serial('error handling execution record does not affect publishing to other
     message
   );
 
-  await publishReports.handler(cwEventMessage);
+  try {
+    await publishReports.handler(cwEventMessage);
 
-  t.is(executionPublishSpy.callCount, 0);
-  t.is(granulePublishSpy.callCount, 1);
-  t.is(pdrPublishSpy.callCount, 1);
-
-  // revert the mocking
-  executionPublishMock();
-  granulePublishMock();
-  pdrPublishMock();
-  generateRecordStub.restore();
+    t.is(executionPublishSpy.callCount, 0);
+    t.is(granulePublishSpy.callCount, 1);
+    t.is(pdrPublishSpy.callCount, 1);
+  } finally {
+    // revert the mocking
+    executionPublishMock();
+    granulePublishMock();
+    pdrPublishMock();
+    generateRecordStub.restore();
+  }
 });
 
 test.serial('error handling granule records does not affect publishing to other topics', async (t) => {
@@ -614,17 +650,19 @@ test.serial('error handling granule records does not affect publishing to other 
     message
   );
 
-  await publishReports.handler(cwEventMessage);
+  try {
+    await publishReports.handler(cwEventMessage);
 
-  t.is(executionPublishSpy.callCount, 1);
-  t.is(granulePublishSpy.callCount, 0);
-  t.is(pdrPublishSpy.callCount, 1);
-
-  // revert the mocking
-  executionPublishMock();
-  granulePublishMock();
-  pdrPublishMock();
-  generateRecordStub.restore();
+    t.is(executionPublishSpy.callCount, 1);
+    t.is(granulePublishSpy.callCount, 0);
+    t.is(pdrPublishSpy.callCount, 1);
+  } finally {
+    // revert the mocking
+    executionPublishMock();
+    granulePublishMock();
+    pdrPublishMock();
+    generateRecordStub.restore();
+  }
 });
 
 test.serial('error handling PDR record does not affect publishing to other topics', async (t) => {
@@ -643,17 +681,19 @@ test.serial('error handling PDR record does not affect publishing to other topic
     message
   );
 
-  await publishReports.handler(cwEventMessage);
+  try {
+    await publishReports.handler(cwEventMessage);
 
-  t.is(executionPublishSpy.callCount, 1);
-  t.is(granulePublishSpy.callCount, 1);
-  t.is(pdrPublishSpy.callCount, 0);
-
-  // revert the mocking
-  executionPublishMock();
-  granulePublishMock();
-  pdrPublishMock();
-  generateRecordStub.restore();
+    t.is(executionPublishSpy.callCount, 1);
+    t.is(granulePublishSpy.callCount, 1);
+    t.is(pdrPublishSpy.callCount, 0);
+  } finally {
+    // revert the mocking
+    executionPublishMock();
+    granulePublishMock();
+    pdrPublishMock();
+    generateRecordStub.restore();
+  }
 });
 
 test.serial('publish failure to executions topic does not affect publishing to other topics', async (t) => {
@@ -699,4 +739,114 @@ test.serial('publish failure to PDRs topic does not affect publishing to other t
   await publishReports.handler(cwEventMessage);
 
   t.is(snsPublishSpy.callCount, 2);
+});
+
+test.serial('handler publishes notification from input to first failed Lambda step in failed execution history', async (t) => {
+  const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
+
+  const cwEventMessage = createCloudwatchEventMessage(
+    'FAILED',
+    createCumulusMessage({
+      numberOfGranules: 1
+    })
+  );
+
+  const granuleId = randomId('granule');
+  const failedStepInputMessage = createCumulusMessage({
+    numberOfGranules: 2,
+    granuleParams: {
+      granuleId
+    }
+  });
+
+  const getFailedLambdaStepStub = sinon.stub(LambdaStep.prototype, 'getFirstFailedStepMessage')
+    .callsFake(() => failedStepInputMessage);
+  const getFailedActivityStepSpy = sinon.spy();
+  const getFailedActivityStepStub = sinon.stub(ActivityStep.prototype, 'getFirstFailedStepMessage')
+    .callsFake(getFailedActivityStepSpy);
+
+  try {
+    await publishReports.handler(cwEventMessage);
+
+    t.is(granulePublishSpy.callCount, 2);
+    t.is(granulePublishSpy.args[0][0].granuleId, granuleId);
+    t.is(granulePublishSpy.args[1][0].granuleId, granuleId);
+    t.false(getFailedActivityStepSpy.called);
+  } finally {
+    // revert the mocking
+    granulePublishMock();
+    getFailedActivityStepStub.restore();
+    getFailedLambdaStepStub.restore();
+  }
+});
+
+test.serial('handler publishes notification from input to first failed Activity step in failed execution history', async (t) => {
+  const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
+
+  const cwEventMessage = createCloudwatchEventMessage(
+    'FAILED',
+    createCumulusMessage({
+      numberOfGranules: 1
+    })
+  );
+
+  const granuleId = randomId('granule');
+  const failedStepInputMessage = createCumulusMessage({
+    numberOfGranules: 2,
+    granuleParams: {
+      granuleId
+    }
+  });
+
+  const getLambdaStepStub = sinon.stub(LambdaStep.prototype, 'getFirstFailedStepMessage')
+    .callsFake(() => undefined);
+  const getActivityStepStub = sinon.stub(ActivityStep.prototype, 'getFirstFailedStepMessage')
+    .callsFake(() => failedStepInputMessage);
+
+  try {
+    await publishReports.handler(cwEventMessage);
+
+    t.is(granulePublishSpy.callCount, 2);
+    t.is(granulePublishSpy.args[0][0].granuleId, granuleId);
+    t.is(granulePublishSpy.args[1][0].granuleId, granuleId);
+  } finally {
+    // revert the mocking
+    granulePublishMock();
+    getActivityStepStub.restore();
+    getLambdaStepStub.restore();
+  }
+});
+
+test.serial('handler publishes input to failed execution if failed step input cannot be retrieved', async (t) => {
+  const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
+
+  const granuleId = randomId('granule');
+  const message = createCumulusMessage({
+    numberOfGranules: 2,
+    granuleParams: {
+      granuleId
+    }
+  });
+  const cwEventMessage = createCloudwatchEventMessage(
+    'FAILED',
+    message
+  );
+
+  const getLambdaFailedStepStub = sinon.stub(LambdaStep.prototype, 'getFirstFailedStepMessage')
+    .callsFake(() => undefined);
+  const getActivityFailedStepStub = sinon.stub(ActivityStep.prototype, 'getFirstFailedStepMessage')
+    .callsFake(() => undefined);
+
+  try {
+    await publishReports.handler(cwEventMessage);
+
+    t.is(granulePublishSpy.callCount, 2);
+    t.is(granulePublishSpy.args[0][0].granuleId, granuleId);
+    t.is(granulePublishSpy.args[1][0].granuleId, granuleId);
+  } finally {
+    // revert the mocking
+    granulePublishMock();
+    getActivityFailedStepStub.restore();
+    getLambdaFailedStepStub.restore();
+  }
 });
