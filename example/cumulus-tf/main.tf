@@ -63,6 +63,7 @@ module "cumulus" {
   token_secret = var.token_secret
 
   archive_api_users = [
+    "chuckwondo",
     "jennyhliu",
     "jmcampbell",
     "jnorton1",
