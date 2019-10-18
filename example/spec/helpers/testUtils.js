@@ -94,6 +94,11 @@ const loadConfigFromYml = () => {
     config.stackName = process.env.DEPLOYMENT;
   }
 
+  // Set consumer rate which is being tested in kes config,
+  // whereas terraform deployment has obsolesced test configs.
+  // Unneeded when kes and its int-tests are officially retired.
+  if (isNil(config.sqs_consumer_rate)) config.sqs_consumer_rate = 300;
+
   // Make sure that all environment variables are set
   [
     'AWS_REGION',
