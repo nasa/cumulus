@@ -89,6 +89,11 @@ function loadConfigFromKes(type) {
 const loadConfigFromYml = () => {
   const config = loadYmlFile('./config.yml');
 
+  // Pull stackname from env in Bamboo CI
+  if (!isNil(process.env.DEPLOYMENT) && isNil(config.stackName)) {
+    config.stackName = process.env.DEPLOYMENT;
+  }
+
   // Make sure that all environment variables are set
   [
     'AWS_REGION',
