@@ -1,5 +1,24 @@
 prefix            = "lf-int-test-tf"
 system_bucket     = "lf-internal"
-private_buckets   = ["lf-private"]
-protected_buckets = ["lf-protected", "lf-protected-2"]
-public_buckets    = ["lf-cumulus-public"]
+buckets = {
+  internal = {
+    name = "lf-internal"
+    type = "internal"
+  }
+  private = {
+    name = "lf-private"
+    type = "private"
+  }
+  protected = {
+    name = "lf-protected"
+    type = "protected"
+  }
+  protected-2 = {
+    name = "lf-protected-2"
+    type = "protected"
+  }
+  public = {
+    name = "lf-cumulus-public"
+    type = "public"
+  }
+}
