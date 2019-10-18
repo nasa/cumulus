@@ -33,13 +33,12 @@ const collectionsForEms = ['A2_SI25_NRT', 'MUR-JPL-L4-GLOB-v4.1'];
 describe('The EMS product metadata report', () => {
   let config;
   let emsProductMetadataReportLambda;
-  let submitReport;
+  const submitReport = false;
 
   beforeAll(async () => {
     config = await loadConfig();
 
     emsProductMetadataReportLambda = `${config.stackName}-EmsProductMetadataReport`;
-    submitReport = config.ems.submitReport === 'true' || false;
 
     await addCollections(config.stackName, config.bucket, collectionsDir);
   });
