@@ -13,7 +13,12 @@ const pTimeout = require('p-timeout');
 const yaml = require('js-yaml');
 
 const {
-  aws: { s3, headObject, parseS3Uri },
+  aws: {
+    getS3Object,
+    headObject,
+    parseS3Uri,
+    s3
+  },
   stringUtils: { globalReplace },
   log
 } = require('@cumulus/common');
@@ -103,10 +108,22 @@ const loadConfigFromYml = () => {
   return config;
 };
 
-const loadConfig = (type = 'app') =>
-  (fs.existsSync('./config.yml') ?
+const loadConfig = async (type = 'app') => {
+  const configFromFile = fs.existsSync('./config.yml') ?
     loadConfigFromYml('./config.yml') :
-    loadConfigFromKes(type));
+    loadConfigFromKes(type);
+
+  const bucketsObject = await getS3Object(
+    configFromFile.bucket,
+    `${configFromFile.stackName}/workflows/buckets.json`
+  );
+
+  return {
+    ...configFromFile,
+    buckets: JSON.parse(bucketsObject.Body.toString())
+  };
+};
+
 
 /**
  * Creates a new file using a template file and configuration object which

@@ -15,10 +15,6 @@ const {
   runKes
 } = require('../../helpers/testUtils');
 
-const config = loadConfig();
-
-const lambdaStep = new LambdaStep();
-
 describe('When a workflow is running and a new version of a workflow lambda is deployed', () => {
   let workflowExecutionArn;
   let workflowStatus;
@@ -35,9 +31,13 @@ describe('When a workflow is running and a new version of a workflow lambda is d
 
   const lambdaFile = './lambdas/versionUpTest/index.js';
 
-  const lambdaName = `${config.stackName}-VersionUpTest`;
-
   beforeAll(async () => {
+    const config = await loadConfig();
+
+    const lambdaStep = new LambdaStep();
+
+    const lambdaName = `${config.stackName}-VersionUpTest`;
+
     await protectFile(lambdaFile, async () => {
       await fs.appendFile(lambdaFile, `// ${new Date()}`);
       await runKes(config);

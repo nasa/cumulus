@@ -21,7 +21,7 @@ describe('The AsyncOperation task runner', () => {
   let failFunctionName;
 
   beforeAll(async () => {
-    config = loadConfig();
+    config = await loadConfig();
 
     successFunctionName = `${config.stackName}-AsyncOperationSuccess`;
     failFunctionName = `${config.stackName}-AsyncOperationFail`;

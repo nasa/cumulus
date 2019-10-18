@@ -21,25 +21,31 @@ const {
 
 const { waitForModelStatus } = require('../helpers/apiUtils');
 
-const config = loadConfig();
-const testId = createTimestampedTestId(config.stackName, 'DiscoverGranules');
-const testSuffix = createTestSuffix(testId);
-const lambdaStep = new LambdaStep();
-
 const workflowName = 'DiscoverGranules';
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 2000000;
-process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-const executionModel = new Execution();
-
 
 describe('The Discover Granules workflow with http Protocol', () => {
   const providersDir = './data/providers/http/';
   const collectionsDir = './data/collections/http_testcollection_001/';
+
+  let config;
+  let executionModel;
   let httpWorkflowExecution;
+  let lambdaStep;
   let queueGranulesOutput;
+  let testId;
+  let testSuffix;
 
   beforeAll(async () => {
+    config = await loadConfig();
+
+    process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+    executionModel = new Execution();
+
+    testId = createTimestampedTestId(config.stackName, 'DiscoverGranules');
+    testSuffix = createTestSuffix(testId);
+
     const collection = { name: `http_testcollection${testSuffix}`, version: '001' };
     const provider = { id: `http_provider${testSuffix}` };
     // populate collections and providers
@@ -55,6 +61,8 @@ describe('The Discover Granules workflow with http Protocol', () => {
       collection,
       provider
     );
+
+    lambdaStep = new LambdaStep();
 
     queueGranulesOutput = await lambdaStep.getStepOutput(
       httpWorkflowExecution.executionArn,

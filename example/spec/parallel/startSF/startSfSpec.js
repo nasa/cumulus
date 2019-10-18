@@ -15,55 +15,6 @@ const {
   timestampedName
 } = require('../../helpers/testUtils');
 
-const config = loadConfig();
-
-const testName = createTimestampedTestId(config.stackName, 'testStartSf');
-
-const passSfRoleArn = `arn:aws:iam::${config.AWS_ACCOUNT_ID}:role/${config.stackName}-steprole`;
-
-const passSfName = timestampedName('passTestSf');
-const passSfDef = {
-  Comment: 'Pass-only step function',
-  StartAt: 'PassState',
-  States: {
-    PassState: {
-      Type: 'Pass',
-      ResultPath: '$.payload',
-      End: true
-    }
-  }
-};
-
-const passSfParams = {
-  name: passSfName,
-  definition: JSON.stringify(passSfDef),
-  roleArn: passSfRoleArn
-};
-
-const waitPassSfName = timestampedName('waitPassTestSf');
-const waitPassSfDef = {
-  Comment: 'Pass-only step function',
-  StartAt: 'WaitState',
-  States: {
-    WaitState: {
-      Type: 'Wait',
-      Seconds: 3,
-      Next: 'PassState'
-    },
-    PassState: {
-      Type: 'Pass',
-      ResultPath: '$.payload',
-      End: true
-    }
-  }
-};
-
-const waitPassSfParams = {
-  name: waitPassSfName,
-  definition: JSON.stringify(waitPassSfDef),
-  roleArn: passSfRoleArn
-};
-
 async function sendStartSfMessages({
   numOfMessages,
   queueMaxExecutions,
@@ -174,6 +125,62 @@ const deleteCloudwatchRuleWithTargets = async ({
 };
 
 describe('the sf-starter lambda function', () => {
+  let config;
+  let waitPassSfParams;
+  let testName;
+  let passSfParams;
+
+  beforeAll(async () => {
+    config = await loadConfig();
+
+    testName = createTimestampedTestId(config.stackName, 'testStartSf');
+
+    const passSfRoleArn = `arn:aws:iam::${config.awsAccountId}:role/${config.stackName}-steprole`;
+
+    const passSfName = timestampedName('passTestSf');
+    const passSfDef = {
+      Comment: 'Pass-only step function',
+      StartAt: 'PassState',
+      States: {
+        PassState: {
+          Type: 'Pass',
+          ResultPath: '$.payload',
+          End: true
+        }
+      }
+    };
+
+    passSfParams = {
+      name: passSfName,
+      definition: JSON.stringify(passSfDef),
+      roleArn: passSfRoleArn
+    };
+
+    const waitPassSfName = timestampedName('waitPassTestSf');
+    const waitPassSfDef = {
+      Comment: 'Pass-only step function',
+      StartAt: 'WaitState',
+      States: {
+        WaitState: {
+          Type: 'Wait',
+          Seconds: 3,
+          Next: 'PassState'
+        },
+        PassState: {
+          Type: 'Pass',
+          ResultPath: '$.payload',
+          End: true
+        }
+      }
+    };
+
+    waitPassSfParams = {
+      name: waitPassSfName,
+      definition: JSON.stringify(waitPassSfDef),
+      roleArn: passSfRoleArn
+    };
+  });
+
   it('has a configurable message limit', () => {
     const messageLimit = config.sqs_consumer_rate;
     expect(messageLimit).toBe(300);

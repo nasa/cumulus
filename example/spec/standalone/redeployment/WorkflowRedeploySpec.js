@@ -20,13 +20,11 @@ const {
 } = require('../../helpers/workflowUtils');
 
 const workflowsYmlFile = './workflows.yml';
-const config = loadConfig();
-
 
 const timeout = 30 * 60 * 1000; // Timout for test setup/teardown in milliseconds
 const deployTimeout = 15; // deployment timeout in minutes
 
-function redeployWithRetries() {
+function redeployWithRetries(config) {
   return pRetry(
     () => runKes(config, { timeout: deployTimeout }),
     {
@@ -37,7 +35,13 @@ function redeployWithRetries() {
 }
 
 describe('When a workflow', () => {
-  afterAll(redeployWithRetries);
+  let config;
+
+  beforeAll(async () => {
+    config = await loadConfig();
+  });
+
+  afterAll(() => redeployWithRetries(config));
 
   describe('is updated and deployed during a workflow execution', () => {
     let workflowExecutionArn;
