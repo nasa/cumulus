@@ -1,11 +1,12 @@
 const { aws: { deleteS3Files, listS3ObjectsV2 } } = require('@cumulus/common');
 const { loadConfig } = require('../helpers/testUtils');
-const testConfig = loadConfig();
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 
 describe('Cleans up Test Resources', () => {
   it('removes the test output', async () => {
+    const testConfig = await loadConfig();
+
     const params = {
       Bucket: testConfig.bucket,
       Prefix: `${testConfig.stackName}/test-output/`
