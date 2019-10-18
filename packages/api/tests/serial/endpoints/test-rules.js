@@ -307,7 +307,7 @@ test('PUT replaces a rule', async (t) => {
   // properties are dropped from the stored rule.
   t.truthy(testRule.provider);
 
-  const putRule = await request(app)
+  await request(app)
     .put(`/rules/${testRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)

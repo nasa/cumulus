@@ -3,9 +3,11 @@
 const clonedeep = require('lodash.clonedeep');
 
 const {
-  rulesApi: rulesApiTestUtils,
+  addCollections,
+  cleanupCollections,
   isWorkflowTriggeredByRule,
   removeRuleAddedParams,
+  rulesApi: rulesApiTestUtils,
   waitForTestExecutionStart
 } = require('@cumulus/integration-tests');
 
@@ -13,6 +15,8 @@ const { sns, lambda } = require('@cumulus/common/aws');
 const { LambdaStep } = require('@cumulus/common/sfnStep');
 
 const {
+  createTestSuffix,
+  createTimestampedTestId,
   loadConfig,
   timestampedName
 } = require('../../helpers/testUtils');
@@ -53,8 +57,17 @@ describe('The SNS-type rule', () => {
   let snsTopicArn;
   let newTopicArn;
   let updatedRule;
+  const testId = createTimestampedTestId(config.stackName, 'SnsRule');
+  const testSuffix = createTestSuffix(testId);
+  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+
+  snsRuleDefinition.collection = {
+    name: `MOD09GQ${testSuffix}`, version: '006'
+  };
 
   beforeAll(async () => {
+    await addCollections(config.stackName, config.bucket, collectionsDir,
+      testSuffix, testId);
     const { TopicArn } = await SNS.createTopic({ Name: snsTopicName }).promise();
     snsTopicArn = TopicArn;
     snsRuleDefinition.rule.value = TopicArn;
@@ -78,6 +91,15 @@ describe('The SNS-type rule', () => {
       // If the deletion test passed, this _should_ fail.  This is just handling
       // the case where the deletion test did not properly clean this up.
     }
+
+    console.log(`deleting rule ${snsRuleDefinition.name}`);
+
+    await rulesApiTestUtils.deleteRule({
+      prefix: config.stackName,
+      ruleName: snsRuleDefinition.name
+    });
+    await cleanupCollections(config.stackName, config.bucket, collectionsDir,
+      testSuffix);
   });
 
   describe('on creation', () => {

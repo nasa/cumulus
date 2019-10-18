@@ -67,8 +67,6 @@ async function updateRule({ prefix, ruleName, updateParams }) {
     body: JSON.stringify(updateParams)
   };
 
-  console.log('updateRule prefix and payload', prefix, payload);
-
   return callRuleApiFunction(prefix, payload);
 }
 

@@ -350,9 +350,6 @@ class Manager {
   }
 
   async update(itemKeys, updates = {}, fieldsToDelete = []) {
-    console.log('Base model update: itemKeys:', itemKeys);
-    console.log('Base model update: updates:', updates);
-    console.log('Base model update: fieldsToDelete:', fieldsToDelete);
     const actualUpdates = {
       ...updates,
       updatedAt: Date.now()
@@ -361,10 +358,8 @@ class Manager {
     // Make sure that we don't update the key fields
     Object.keys(itemKeys).forEach((property) => delete actualUpdates[property]);
     // Make sure we don't delete required fields
-    fieldsToDelete = fieldsToDelete.filter((f) =>
+    const optionalFieldsToDelete = fieldsToDelete.filter((f) =>
       !this.schema.required.includes(f));
-    console.log('Base model update: actualUpdates:', actualUpdates);
-    console.log('Base model update: fieldsToDelete:', fieldsToDelete);
 
     const currentItem = await this.get(itemKeys);
     const updatedItem = {
@@ -372,7 +367,7 @@ class Manager {
       ...updates
     };
 
-    fieldsToDelete.forEach((f) => {
+    optionalFieldsToDelete.forEach((f) => {
       delete updatedItem[f];
       delete actualUpdates[f];
     });
@@ -395,7 +390,7 @@ class Manager {
     });
 
     // Add keys to be deleted
-    fieldsToDelete.forEach((property) => {
+    optionalFieldsToDelete.forEach((property) => {
       attributeUpdates[property] = { Action: 'DELETE' };
     });
 
