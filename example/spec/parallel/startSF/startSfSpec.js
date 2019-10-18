@@ -181,11 +181,6 @@ describe('the sf-starter lambda function', () => {
     };
   });
 
-  it('has a configurable message limit', () => {
-    const messageLimit = config.sqs_consumer_rate;
-    expect(messageLimit).toBe(300);
-  });
-
   describe('when provided a queue', () => {
     const initialMessageCount = 30;
     const testMessageLimit = 25;
