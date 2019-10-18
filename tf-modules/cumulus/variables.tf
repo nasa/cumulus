@@ -170,7 +170,7 @@ variable "ecs_docker_hub_config" {
 
 variable "ecs_docker_storage_driver" {
   type    = string
-  default = "overlay2"
+  default = "devicemapper"
 }
 
 variable "ecs_efs_config" {
