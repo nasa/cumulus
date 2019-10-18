@@ -315,6 +315,8 @@ class UpdatedKes extends Kes {
     // If custom compile configuration flag not set, skip custom compilation
     if (!customCompile) return super.compileCF();
 
+    this.setParentOverrideConfigValues();
+
     // If not using message adapter, don't fetch it
     if (!filename) return this.superCompileCF();
 
@@ -428,7 +430,6 @@ class UpdatedKes extends Kes {
    * @returns {Promise} returns the promise of an AWS response object
    */
   async superCompileCF() {
-    this.setParentOverrideConfigValues();
     const lambda = new this.Lambda(this.config);
 
     // Process default dead letter queue configs  if this value is set
