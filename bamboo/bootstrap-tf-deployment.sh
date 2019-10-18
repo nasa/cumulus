@@ -30,13 +30,12 @@ echo "terraform {
 
 # Deploy data-persistence-tf via terraform
 echo "Deploying Cumulus data-persistence module to $DEPLOYMENT"
-../terraform plan \
-  -out=terraform.tfplan \
+../terraform apply \
+  -auto-approve \
   -input=false \
   -var "prefix=$DEPLOYMENT" \
   -var "aws_region=$AWS_REGION" \
   -var "subnet_ids=[\"$AWS_SUBNET\"]"
-../terraform apply "terraform.tfplan"
 
 # Test that deployment succeeded by failing on bad exit code.
 EXIT_CODE=$?
@@ -49,7 +48,7 @@ cd ../cumulus-tf
 echo "terraform {
   backend \"s3\" {
     bucket = \"$TFSTATE_BUCKET\"
-    key    = \"$DEPLOYMENT-tf/cumulus/terraform.tfstate\"
+    key    = \"$DEPLOYMENT/cumulus/terraform.tfstate\"
     region = \"$AWS_REGION\"
     dynamodb_table = \"$DEPLOYMENT-locks\"
   }
@@ -62,6 +61,7 @@ echo "terraform {
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
 ../terraform apply \
+  -auto-approve \
   -input=false \
   -var-file="../deployments/sandbox.tfvars" \
   -var-file="../deployments/$DEPLOYMENT.tfvars" \
