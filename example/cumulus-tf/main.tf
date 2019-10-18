@@ -80,6 +80,9 @@ module "cumulus" {
   distribution_url = var.distribution_url
 
   sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
+
+  archive_api_port = var.archive_api_port
+  private_archive_api_gateway = var.private_archive_api_gateway
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {
