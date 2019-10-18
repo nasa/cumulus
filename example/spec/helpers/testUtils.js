@@ -127,10 +127,18 @@ const loadConfig = async (type = 'app') => {
     configFromFile.bucket,
     `${configFromFile.stackName}/workflows/buckets.json`
   );
+  const buckets = JSON.parse(bucketsObject.Body.toString());
+
+  // assume only one internal bucket in config.
+  if (isNil(configFromFile.bucket)) {
+    configFromFile.bucket = buckets.filter(
+      (b) => b.type === 'internal'
+    )[0];
+  }
 
   return {
     ...configFromFile,
-    buckets: JSON.parse(bucketsObject.Body.toString())
+    buckets
   };
 };
 
