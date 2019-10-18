@@ -24,10 +24,10 @@ More information on configuring an SNS topic or subscription in Cumulus can be f
 
 If you have a non-Cumulus workflow or process ingesting data and would like to update the status of your granules or PDRs, you can publish directly to those SNS topics. Publishing messages to those topics will result in those messages being stored as granule/PDR records in the Cumulus database and having the status of those granules/PDRs being visible on the Cumulus dashboard.
 
-Posting directly to the topics will require knowing their ARNs. You can find the topic ARNs in the AWS Console by going to Cloudformation > Stacks > `<your_stack_name>` > Resources and then finding `reportGranulesSns` or `reportPdrsSns` in the list of resources. Or you can get the topic ARNs using the AWS CLI, replacing `<prefix>` with your deployed stack's prefix:
+Posting directly to the topics will require knowing their ARNs. You can get the topic ARNs using the AWS CLI, replacing `<prefix>` with your deployed stack's prefix:
 
 ```bash
-aws sns list-topics | grep <prefix>-reportGranulesSns
+aws sns list-topics | grep <prefix>-report-granules-topic
 ```
 
 Once you have the topic ARN, you can use the AWS SDK for your language of choice to publish messages to the topic. The expected format of granule and PDR records can be found in the [data model schemas](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js). **Messages that do not conform to the schemas will fail to be created as records**.

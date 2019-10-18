@@ -6,7 +6,6 @@ module "ingest" {
   buckets = var.buckets
 
   distribution_url                         = module.distribution.distribution_url
-  sftracker_sns_topic_arn                  = module.archive.sftracker_sns_topic_arn
   cumulus_message_adapter_lambda_layer_arn = var.cumulus_message_adapter_lambda_layer_arn
 
   # Buckets config
