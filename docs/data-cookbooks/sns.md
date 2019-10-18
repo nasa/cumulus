@@ -44,9 +44,9 @@ Then, when you run `terraform deploy`, you should see the topic ARNs printed to 
 Outputs:
 
 ...
-report_executions_sns_topic_arn = arn:aws:sns:us-east-1:000000000:<prefix>-report-executions-topic
-report_granules_sns_topic_arn = arn:aws:sns:us-east-1:000000000:<prefix>-report-executions-topic
-report_pdrs_sns_topic_arn = arn:aws:sns:us-east-1:000000000:<prefix>-report-pdrs-topic
+report_executions_sns_topic_arn = arn:aws:sns:us-east-1:xxxxxxxxx:<prefix>-report-executions-topic
+report_granules_sns_topic_arn = arn:aws:sns:us-east-1:xxxxxxxxx:<prefix>-report-executions-topic
+report_pdrs_sns_topic_arn = arn:aws:sns:us-east-1:xxxxxxxxx:<prefix>-report-pdrs-topic
 ```
 
 Once you have the topic ARN, you can use the AWS SDK for your language of choice to publish messages to the topic. The expected format of granule and PDR records can be found in the [data model schemas](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js). **Messages that do not conform to the schemas will fail to be created as records**.
