@@ -187,16 +187,19 @@ describe('the sf-starter lambda function', () => {
   });
 
   describe('when provided a queue', () => {
-    const sfStarterName = `${config.stackName}-sqs2sf`;
     const initialMessageCount = 30;
     const testMessageLimit = 25;
-    let qAttrParams;
+
     let messagesConsumed;
     let passSfArn;
+    let qAttrParams;
     let queueName;
     let queueUrl;
+    let sfStarterName;
 
     beforeAll(async () => {
+      sfStarterName = `${config.stackName}-sqs2sf`;
+
       queueName = `${testName}Queue`;
 
       const { QueueUrl } = await sqs().createQueue({
@@ -266,19 +269,21 @@ describe('the sf-starter lambda function', () => {
   });
 
   describe('when provided a queue with a maximum number of executions', () => {
-    let maxQueueUrl;
     let maxQueueName;
+    let maxQueueUrl;
     let messagesConsumed;
-    let waitPassSfArn;
     let ruleName;
-    let ruleTargetId;
     let rulePermissionId;
+    let ruleTargetId;
+    let semaphoreDownLambda;
+    let waitPassSfArn;
 
     const queueMaxExecutions = 5;
     const totalNumMessages = 20;
-    const semaphoreDownLambda = `${config.stackName}-sfSemaphoreDown`;
 
     beforeAll(async () => {
+      semaphoreDownLambda = `${config.stackName}-sfSemaphoreDown`;
+
       maxQueueName = `${testName}MaxQueue`;
 
       const { QueueUrl } = await sqs().createQueue({
