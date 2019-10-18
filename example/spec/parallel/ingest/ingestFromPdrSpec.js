@@ -21,7 +21,7 @@
  * Does not post to CMR (that is in a separate test)
  */
 
-const { Collection, Execution } = require('@cumulus/api/models');
+const { Collection, Execution, Pdr } = require('@cumulus/api/models');
 
 const { s3, deleteS3Object } = require('@cumulus/common/aws');
 const { LambdaStep } = require('@cumulus/common/sfnStep');
@@ -460,7 +460,7 @@ describe('Ingesting from PDR', () => {
 
       it('the pdr record is added to DynamoDB', async () => {
         const record = await waitForModelStatus(
-          pdrModel,
+          new Pdr(),
           { pdrName: pdrFilename },
           'completed'
         );
