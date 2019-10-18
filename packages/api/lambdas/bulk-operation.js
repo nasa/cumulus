@@ -16,10 +16,12 @@ async function bulkGranule(payload) {
   const workflowName = payload.workflowName;
   const granuleModelClient = new granuleModel();
 
+  const ids = payload.ids;
   const applyWorkflowRequests = ids.map(async (granuleId) => {
     try {
       const granule = await granuleModelClient.get({ granuleId });
       await granuleModelClient.applyWorkflow(granule, workflowName, queueName);
+      return granuleId;
     } catch (err) {
       return { granuleId, err };
     }
@@ -57,6 +59,11 @@ async function bulkGranule(payload) {
 };
 
 async function handler(event) {
+  if (!process.env.GranulesTable) { process.env.GranulesTable = event.granulesTable };
+  if (!process.env.system_bucket) { process.env.system_bucket = event.system_bucket };
+  if (!process.env.stackName) { process.env.stackName = event.stackName };
+  if (!process.env.invoke) { process.env.invoke = event.invoke };
+  console.log('Environment variables:', process.env);
   if (event.type == 'BULK_GRANULE') {
     return await bulkGranule(event.payload);
   }

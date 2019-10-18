@@ -197,7 +197,14 @@ async function bulk(req, res) {
       asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
       cluster: process.env.EcsCluster,
       lambdaName: process.env.BulkOperationLambda,
-      payload: { payload, type: 'BULK_GRANULE', granulesTable: process.env.GranulesTable},
+      payload: {
+        payload,
+        type: 'BULK_GRANULE',
+        granulesTable: process.env.GranulesTable,
+        system_bucket: process.env.system_bucket,
+        stackName: process.env.stackName,
+        invoke: process.env.invoke
+      },
       esHost: process.env.ES_HOST
     });
     res.send(`On my wings!. \nStarted async-operation: ${asyncOperation.id}`);
