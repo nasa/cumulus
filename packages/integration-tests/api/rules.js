@@ -67,6 +67,8 @@ async function updateRule({ prefix, ruleName, updateParams }) {
     body: JSON.stringify(updateParams)
   };
 
+  console.log('updateRule prefix and payload', prefix, payload);
+
   return callRuleApiFunction(prefix, payload);
 }
 
@@ -133,7 +135,7 @@ async function deleteRule({ prefix, ruleName }) {
  * @returns {Promise<Object>} - promise that resolves to the output of the API
  *    lambda
  */
-async function rerunRule({ prefix, ruleName, updateParams = [] }) {
+async function rerunRule({ prefix, ruleName, updateParams = {} }) {
   return updateRule({
     prefix,
     ruleName,

@@ -101,6 +101,8 @@ async function post(req, res) {
 async function put({ params: { name }, body }, res) {
   const model = new models.Rule();
 
+  console.log('Rule endpoint put name and body: ', name, body);
+
   if (name !== body.name) {
     return res.boom.badRequest(`Expected rule name to be '${name}', but found`
       + ` '${body.name}' in payload`);
@@ -123,6 +125,7 @@ async function put({ params: { name }, body }, res) {
 
     return res.send(newRule);
   } catch (e) {
+    console.log('Rule endpoint put error:', e);
     if (e instanceof RecordDoesNotExist) {
       return res.boom.notFound(`Rule '${name}' not found`);
     }

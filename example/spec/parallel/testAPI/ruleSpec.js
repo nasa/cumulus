@@ -19,7 +19,7 @@ process.env.system_bucket = config.buckets.internal.name;
 
 const lambdaStep = new LambdaStep();
 
-describe('When I create a scheduled rule via the Cumulus API', () => {
+xdescribe('When I create a scheduled rule via the Cumulus API', () => {
   let execution;
   const scheduledRuleName = timestampedName('SchedHelloWorldTest');
   const scheduledHelloWorldRule = {
@@ -31,6 +31,10 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
     },
     meta: {
       triggerRule: scheduledRuleName
+    },
+    collection: {
+      name: 'bar',
+      version: '1'
     }
   };
 
@@ -102,6 +106,10 @@ describe('When I create a one-time rule via the Cumulus API', () => {
     },
     meta: {
       triggerRule: createdCheck // used to detect that we're looking at the correct execution
+    },
+    collection: {
+      name: 'foo',
+      version: '1'
     }
   };
 

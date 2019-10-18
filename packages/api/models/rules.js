@@ -126,6 +126,11 @@ class Rule extends Manager {
     const valueUpdated = (updates.rule
       && updates.rule.value !== original.rule.value);
 
+    console.log('Rule model update: updatedRuleItem:', updatedRuleItem);
+    console.log('Rule model update: updates:', updates);
+    console.log('Rule model update: stateChanged:', stateChanged);
+    console.log('Rule model update: valueUpdated:', valueUpdated);
+
     switch (updatedRuleItem.rule.type) {
     case 'scheduled': {
       const payload = await Rule.buildPayload(updatedRuleItem);

@@ -20,7 +20,7 @@ const assertions = require('../../../lib/assertions');
   'stackName',
   'system_bucket',
   'TOKEN_SECRET'
-// eslint-disable-next-line no-return-assign
+  // eslint-disable-next-line no-return-assign
 ].forEach((varName) => process.env[varName] = randomString());
 
 // import the express app after setting the env variables
@@ -307,7 +307,7 @@ test('PUT replaces a rule', async (t) => {
   // properties are dropped from the stored rule.
   t.truthy(testRule.provider);
 
-  await request(app)
+  const putRule = await request(app)
     .put(`/rules/${testRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)

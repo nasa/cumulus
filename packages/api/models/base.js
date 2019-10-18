@@ -350,21 +350,32 @@ class Manager {
   }
 
   async update(itemKeys, updates = {}, fieldsToDelete = []) {
+    console.log('Base model update: itemKeys:', itemKeys);
+    console.log('Base model update: updates:', updates);
+    console.log('Base model update: fieldsToDelete:', fieldsToDelete);
     const actualUpdates = {
       ...updates,
       updatedAt: Date.now()
     };
 
     // Make sure that we don't update the key fields
-    const itemKeyNames = Object.keys(itemKeys);
-    itemKeyNames.forEach((property) => delete actualUpdates[property]);
+    Object.keys(itemKeys).forEach((property) => delete actualUpdates[property]);
+    // Make sure we don't delete required fields
+    fieldsToDelete = fieldsToDelete.filter((f) =>
+      !this.schema.required.includes(f));
+    console.log('Base model update: actualUpdates:', actualUpdates);
+    console.log('Base model update: fieldsToDelete:', fieldsToDelete);
 
     const currentItem = await this.get(itemKeys);
     const updatedItem = {
       ...currentItem,
       ...updates
     };
-    fieldsToDelete.forEach((f) => delete updatedItem[f]);
+
+    fieldsToDelete.forEach((f) => {
+      delete updatedItem[f];
+      delete actualUpdates[f];
+    });
 
     if (this.validate) {
       this.constructor.recordIsValid(
@@ -373,9 +384,6 @@ class Manager {
         this.removeAdditional
       );
     }
-
-    // Make sure that we don't try to update a field that's being deleted
-    fieldsToDelete.forEach((property) => delete actualUpdates[property]);
 
     // Build the actual update request
     const attributeUpdates = {};
