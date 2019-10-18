@@ -3,44 +3,15 @@ module "ingest_granule_catch_duplicate_error_test_workflow" {
 
   prefix                                = var.prefix
   name                                  = "IngestGranuleCatchDuplicateErrorTest"
-  distribution_url                      = module.cumulus.distribution_url
-  state_machine_role_arn                = module.cumulus.step_role_arn
-  sf_semaphore_down_lambda_function_arn = module.cumulus.sf_semaphore_down_lambda_function_arn
+  workflow_config                       = module.cumulus.workflow_config
   system_bucket                         = var.system_bucket
   tags                                  = local.default_tags
 
   state_machine_definition = <<JSON
 {
   "Comment": "Ingest Granule Catch Duplicate Error",
-  "StartAt": "Report",
+  "StartAt": "SyncGranule",
   "States": {
-    "Report": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "task_config": {
-            "cumulus_message": {
-              "input": "{$}"
-            }
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${module.cumulus.sf_sns_report_task_lambda_function_arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Next": "SyncGranule"
-    },
     "SyncGranule": {
       "Parameters": {
         "cma": {
@@ -58,6 +29,7 @@ module "ingest_granule_catch_duplicate_error_test_workflow" {
             "duplicateHandling": "{$.meta.collection.duplicateHandling}",
             "pdr": "{$.meta.pdr}",
             "cumulus_message": {
+              "input": "{$.payload}",
               "outputs": [
                 {
                   "source": "{$.granules}",
@@ -100,7 +72,7 @@ module "ingest_granule_catch_duplicate_error_test_workflow" {
             "States.ALL"
           ],
           "ResultPath": "$.exception",
-          "Next": "StopStatus"
+          "Next": "WorkflowFailed"
         }
       ],
       "Next": "ChooseProcess"
@@ -114,7 +86,7 @@ module "ingest_granule_catch_duplicate_error_test_workflow" {
           "Next": "ProcessingStep"
         }
       ],
-      "Default": "StopStatus"
+      "Default": "WorkflowSucceeded"
     },
     "ProcessingStep": {
       "Parameters": {
@@ -142,7 +114,7 @@ module "ingest_granule_catch_duplicate_error_test_workflow" {
             "States.ALL"
           ],
           "ResultPath": "$.exception",
-          "Next": "StopStatus"
+          "Next": "WorkflowFailed"
         }
       ],
       "Retry": [
@@ -186,7 +158,7 @@ module "ingest_granule_catch_duplicate_error_test_workflow" {
             "States.ALL"
           ],
           "ResultPath": "$.exception",
-          "Next": "StopStatus"
+          "Next": "WorkflowFailed"
         }
       ],
       "Next": "MoveGranuleStep"
@@ -231,53 +203,10 @@ module "ingest_granule_catch_duplicate_error_test_workflow" {
             "States.ALL"
           ],
           "ResultPath": "$.exception",
-          "Next": "StopStatus"
-        }
-      ],
-      "Next": "StopStatus"
-    },
-    "StopStatus": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "ReplaceConfig": {
-            "FullMessage": true
-          },
-          "task_config": {
-            "sfnEnd": true,
-            "stack": "{$.meta.stack}",
-            "bucket": "{$.meta.buckets.internal.name}",
-            "stateMachine": "{$.cumulus_meta.state_machine}",
-            "executionName": "{$.cumulus_meta.execution_name}",
-            "cumulus_message": {
-              "input": "{$}"
-            }
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${module.cumulus.sf_sns_report_task_lambda_function_arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
           "Next": "WorkflowFailed"
         }
       ],
-      "End": true
+      "Next": "WorkflowSucceeded"
     },
     "WorkflowFailed": {
       "Type": "Fail",

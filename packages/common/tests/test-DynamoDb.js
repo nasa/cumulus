@@ -1,5 +1,6 @@
 'use strict';
 
+const sinon = require('sinon');
 const test = require('ava');
 const aws = require('../aws');
 const { randomId } = require('../test-utils');
@@ -69,6 +70,32 @@ test('DynamoDb.get() throws RecordDoesNotExist when item does not exist', async 
     }),
     RecordDoesNotExist
   );
+});
+
+test.serial('DynamoDb.get() throws general error from failure on client.get', async (t) => {
+  const { client } = t.context;
+
+  const stub = sinon.stub(client, 'get')
+    .returns({
+      promise: () => {
+        throw new Error('fail');
+      }
+    });
+
+  try {
+    await t.throwsAsync(
+      () => DynamoDb.get({
+        tableName: process.env.tableName,
+        client,
+        item: {
+          hash: randomId('hash')
+        }
+      }),
+      { message: /fail/ }
+    );
+  } finally {
+    stub.restore();
+  }
 });
 
 test.serial('DynamoDb.scan() properly returns all paginated results', async (t) => {

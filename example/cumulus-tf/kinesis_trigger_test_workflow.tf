@@ -3,53 +3,15 @@ module "kinesis_trigger_test_workflow" {
 
   prefix                                = var.prefix
   name                                  = "KinesisTriggerTest"
-  distribution_url                      = module.cumulus.distribution_url
-  state_machine_role_arn                = module.cumulus.step_role_arn
-  sf_semaphore_down_lambda_function_arn = module.cumulus.sf_semaphore_down_lambda_function_arn
+  workflow_config                       = module.cumulus.workflow_config
   system_bucket                         = var.system_bucket
   tags                                  = local.default_tags
 
   state_machine_definition = <<JSON
 {
   "Comment": "Tests Workflow from Kinesis Stream",
-  "StartAt": "StartStatus",
+  "StartAt": "TranslateMessage",
   "States": {
-    "StartStatus": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "task_config": {
-            "cumulus_message": {
-              "input": "{$}"
-            }
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${module.cumulus.sf_sns_report_task_lambda_function_arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "ResultPath": "$.exception",
-          "Next": "CnmResponseFail"
-        }
-      ],
-      "Next": "TranslateMessage"
-    },
     "TranslateMessage": {
       "Parameters": {
         "cma": {
@@ -190,10 +152,10 @@ module "kinesis_trigger_test_workflow" {
             "States.ALL"
           ],
           "ResultPath": "$.exception",
-          "Next": "StopStatus"
+          "Next": "WorkflowFailed"
         }
       ],
-      "Next": "StopStatus"
+      "Next": "WorkflowSucceeded"
     },
     "CnmResponseFail": {
       "Parameters": {
@@ -239,52 +201,10 @@ module "kinesis_trigger_test_workflow" {
             "States.ALL"
           ],
           "ResultPath": "$.exception",
-          "Next": "StopStatusFail"
-        }
-      ],
-      "Next": "StopStatusFail"
-    },
-    "StopStatus": {
-      "Type": "Task",
-      "Resource": "${module.cumulus.sf2snsEnd_lambda_function_arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Next": "WorkflowSucceeded"
-    },
-    "StopStatusFail": {
-      "Type": "Task",
-      "Resource": "${module.cumulus.sf2snsEnd_lambda_function_arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Next": "WorkflowFailed",
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
           "Next": "WorkflowFailed"
         }
-      ]
+      ],
+      "Next": "WorkflowFailed"
     },
     "WorkflowSucceeded": {
       "Type": "Succeed"
