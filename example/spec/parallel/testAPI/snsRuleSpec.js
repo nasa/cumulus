@@ -17,29 +17,14 @@ const {
   timestampedName
 } = require('../../helpers/testUtils');
 
-const lambdaStep = new LambdaStep();
-const SNS = sns();
-const config = loadConfig();
-const ruleName = timestampedName('SnsRuleIntegrationTestRule');
-const snsTopicName = timestampedName(`${config.stackName}_SnsRuleIntegrationTestTopic`);
-const newValueTopicName = timestampedName(`${config.stackName}_SnsRuleValueChangeTestTopic`);
-const consumerName = `${config.stackName}-messageConsumer`;
-
-const snsMessage = '{"Data":{}}';
-const snsRuleDefinition = clonedeep(require('./snsRuleDef.json'));
-snsRuleDefinition.name = ruleName;
-snsRuleDefinition.meta.triggerRule = ruleName;
-process.env.stackName = config.stackName;
-process.env.system_bucket = config.system_bucket;
-
 async function getNumberOfTopicSubscriptions(snsTopicArn) {
-  const subs = await SNS.listSubscriptionsByTopic({ TopicArn: snsTopicArn }).promise();
+  const subs = await sns().listSubscriptionsByTopic({ TopicArn: snsTopicArn }).promise();
   return subs.Subscriptions.length;
 }
 
 const policyErrorMessage = 'The resource you requested does not exist.';
 
-async function shouldCatchPolicyError() {
+async function shouldCatchPolicyError(consumerName) {
   try {
     await lambda().getPolicy({ FunctionName: consumerName }).promise();
     return undefined;
@@ -49,11 +34,35 @@ async function shouldCatchPolicyError() {
 }
 
 describe('The SNS-type rule', () => {
-  let postRule;
-  let snsTopicArn;
+  let config;
+  let consumerName;
+  let lambdaStep;
   let newTopicArn;
+  let newValueTopicName;
+  let postRule;
+  let ruleName;
+  let SNS;
+  let snsMessage;
+  let snsRuleDefinition;
+  let snsTopicArn;
 
   beforeAll(async () => {
+    lambdaStep = new LambdaStep();
+    SNS = sns();
+    config = await loadConfig();
+    ruleName = timestampedName('SnsRuleIntegrationTestRule');
+    const snsTopicName = timestampedName(`${config.stackName}_SnsRuleIntegrationTestTopic`);
+    newValueTopicName = timestampedName(`${config.stackName}_SnsRuleValueChangeTestTopic`);
+    consumerName = `${config.stackName}-messageConsumer`;
+
+    snsMessage = '{"Data":{}}';
+    // eslint-disable-next-line global-require
+    snsRuleDefinition = clonedeep(require('./snsRuleDef.json'));
+    snsRuleDefinition.name = ruleName;
+    snsRuleDefinition.meta.triggerRule = ruleName;
+    process.env.stackName = config.stackName;
+    process.env.system_bucket = config.system_bucket;
+
     const { TopicArn } = await SNS.createTopic({ Name: snsTopicName }).promise();
     snsTopicArn = TopicArn;
     snsRuleDefinition.rule.value = TopicArn;
@@ -144,7 +153,7 @@ describe('The SNS-type rule', () => {
     });
 
     it('deletes the policy and subscription', async () => {
-      expect(await shouldCatchPolicyError()).toEqual(policyErrorMessage);
+      expect(await shouldCatchPolicyError(consumerName)).toEqual(policyErrorMessage);
       expect(await getNumberOfTopicSubscriptions(snsTopicArn)).toBe(0);
     });
   });
@@ -241,7 +250,7 @@ describe('The SNS-type rule', () => {
     });
 
     it('deletes the policy and subscription', async () => {
-      expect(await shouldCatchPolicyError()).toEqual(policyErrorMessage);
+      expect(await shouldCatchPolicyError(consumerName)).toEqual(policyErrorMessage);
       expect(await getNumberOfTopicSubscriptions(newTopicArn)).toBe(0);
     });
   });
