@@ -30,7 +30,6 @@ locals {
         passphrase  = var.launchpad_passphrase
       }
       distribution_endpoint = var.distribution_url
-      topic_arn             = var.sftracker_sns_topic_arn
       collection            = {}
       provider              = {}
       template              = "s3://${var.system_bucket}/${local.message_template_key}"

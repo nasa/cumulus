@@ -131,52 +131,6 @@ resource "aws_lambda_function" "schedule_sf" {
   }
 }
 
-resource "aws_lambda_function" "sf2snsEnd" {
-  function_name    = "${var.prefix}-sf2snsEnd"
-  filename         = "${path.module}/../../packages/api/dist/sfSnsBroadcast/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/sfSnsBroadcast/lambda.zip")
-  handler          = "index.end"
-  role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
-  timeout          = 100
-  memory_size      = 128
-  environment {
-    variables = {
-      CMR_ENVIRONMENT = var.cmr_environment
-      stackName       = var.prefix
-    }
-  }
-  tags = merge(local.default_tags, { Project = var.prefix })
-
-  vpc_config {
-    subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
-  }
-}
-
-resource "aws_lambda_function" "sf2snsStart" {
-  function_name    = "${var.prefix}-sf2snsStart"
-  filename         = "${path.module}/../../packages/api/dist/sfSnsBroadcast/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/sfSnsBroadcast/lambda.zip")
-  handler          = "index.start"
-  role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
-  timeout          = 100
-  memory_size      = 128
-  environment {
-    variables = {
-      CMR_ENVIRONMENT = var.cmr_environment
-      stackName       = var.prefix
-    }
-  }
-  tags = merge(local.default_tags, { Project = var.prefix })
-
-  vpc_config {
-    subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
-  }
-}
-
 resource "aws_lambda_function" "sf_semaphore_down" {
   function_name    = "${var.prefix}-sfSemaphoreDown"
   filename         = "${path.module}/../../packages/api/dist/sfSemaphoreDown/lambda.zip"
