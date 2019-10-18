@@ -16,8 +16,6 @@ On deployment, three [SNS topics](https://aws.amazon.com/sns) are created and us
 
 The `publishReports` Lambda is triggered via a [Cloudwatch rule for any Step Function execution state transitions](https://docs.aws.amazon.com/step-functions/latest/dg/cw-events.html). Both the `publishReports` Lambda and Cloudwatch rule and are included by default in a Cumulus deployment.
 
-More information on configuring an SNS topic or subscription in Cumulus can be found in our [developer documentation](../deployment/config_descriptions#sns).
-
 ## Sending SNS messages to report status
 
 ### Publishing granule/PDR reports directly to SNS topics
@@ -109,24 +107,31 @@ However, if you want to report your ingest status at any point **during a workfl
 
 ## Subscribing additional listeners to SNS topics
 
-Additional listeners to SNS topics can be configured in `app/config.yml`. Shown below is configuration that subscribes an additional Lambda function (`SnsS3Test`) to receive messages from the `reportExecutions` SNS topic. To subscribe to the `reportGranules` or `reportPdrs` SNS topics instead, simply replace `reportExecutions` in the code block below with either of those topic names.
+Additional listeners to SNS topics can be configured in a `.tf` file for your Cumulus deployment. Shown below is configuration that subscribes an additional Lambda function (`test_lambda`) to receive messages from the `report_executions` SNS topic. To subscribe to the `report_granules` or `report_pdrs` SNS topics instead, simply replace `report_executions` in the code block below with either of those values.
 
-```yaml
-sns:
-  reportExecutions:
-    subscriptions:
-      additionalReceiver:                 # name of the new subscription.
-        endpoint:
-          function: Fn::GetAtt
-          array:
-            - SnsS3TestLambdaFunction     # a lambda configured in lambdas.yml
-            - Arn
-        protocol: lambda
+```HCL
+resource "aws_lambda_function" "test_lambda" {
+  function_name    = "${var.prefix}-testLambda"
+  filename         = "./testLambda.zip"
+  source_code_hash = filebase64sha256("./testLambda.zip")
+  handler          = "index.handler"
+  role             = module.cumulus.lambda_processing_role_arn
+  runtime          = "nodejs8.10"
+}
+
+resource "aws_sns_topic_subscription" "test_lambda" {
+  topic_arn = module.cumulus.report_executions_sns_topic_arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.test_lambda.arn
+}
+
+resource "aws_lambda_permission" "test_lambda" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.test_lambda.arn
+  principal     = "sns.amazonaws.com"
+  source_arn    = module.cumulus.report_executions_sns_topic_arn
+}
 ```
-
-Make sure that the subscriber Lambda is configured in `lambdas.yml`. **Note that the Lambda name configured in `lambdas.yml`,`SnsS3Test`, needs to have its name postpended with `LambdaFunction` (as in the example above) to have the ARN correctly found.**
-
-More information on configuring an SNS topic subscriptions in Cumulus can be found in our [developer documentation](../deployment/config_descriptions#sns).
 
 ### SNS message format
 
