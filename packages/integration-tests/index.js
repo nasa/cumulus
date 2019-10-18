@@ -798,7 +798,9 @@ async function waitForTestExecutionStart({
     for (let executionCtr = 0; executionCtr < executions.length; executionCtr += 1) {
       const execution = executions[executionCtr];
       let taskInput = await lambdaStep.getStepInput(execution.executionArn, startTask);
-      taskInput = await pullStepFunctionEvent(taskInput);
+      if (taskInput) {
+        taskInput = await pullStepFunctionEvent(taskInput);
+      }
       if (taskInput && findExecutionFn(taskInput, findExecutionFnParams)) {
         return execution;
       }

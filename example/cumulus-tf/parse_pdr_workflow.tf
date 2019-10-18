@@ -3,44 +3,15 @@ module "parse_pdr_workflow" {
 
   prefix                                = var.prefix
   name                                  = "ParsePdr"
-  distribution_url                      = module.cumulus.distribution_url
-  state_machine_role_arn                = module.cumulus.step_role_arn
-  sf_semaphore_down_lambda_function_arn = module.cumulus.sf_semaphore_down_lambda_function_arn
+  workflow_config                       = module.cumulus.workflow_config
   system_bucket                         = var.system_bucket
   tags                                  = local.default_tags
 
   state_machine_definition = <<JSON
 {
   "Comment": "Parse a given PDR",
-  "StartAt": "StatusReport",
+  "StartAt": "ParsePdr",
   "States": {
-    "StatusReport": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "task_config": {
-            "cumulus_message": {
-              "input": "{$}"
-            }
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${module.cumulus.sf_sns_report_task_lambda_function_arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Next": "ParsePdr"
-    },
     "ParsePdr": {
       "Parameters": {
         "cma": {
@@ -75,7 +46,7 @@ module "parse_pdr_workflow" {
             "States.ALL"
           ],
           "ResultPath": "$.exception",
-          "Next": "StopStatus"
+          "Next": "WorkflowFailed"
         }
       ],
       "Next": "QueueGranules"
@@ -116,7 +87,7 @@ module "parse_pdr_workflow" {
             "States.ALL"
           ],
           "ResultPath": "$.exception",
-          "Next": "StopStatus"
+          "Next": "WorkflowFailed"
         }
       ],
       "Next": "CheckStatus"
@@ -165,7 +136,7 @@ module "parse_pdr_workflow" {
             "States.ALL"
           ],
           "ResultPath": "$.exception",
-          "Next": "StopStatus"
+          "Next": "WorkflowFailed"
         }
       ],
       "Next": "CheckAgainChoice"
@@ -181,10 +152,10 @@ module "parse_pdr_workflow" {
         {
           "Variable": "$.meta.isPdrFinished",
           "BooleanEquals": true,
-          "Next": "StopStatus"
+          "Next": "WorkflowSucceeded"
         }
       ],
-      "Default": "StopStatus"
+      "Default": "WorkflowSucceeded"
     },
     "PdrStatusReport": {
       "Parameters": {
@@ -221,7 +192,7 @@ module "parse_pdr_workflow" {
             "States.ALL"
           ],
           "ResultPath": "$.exception",
-          "Next": "StopStatus"
+          "Next": "WorkflowFailed"
         }
       ],
       "Next": "WaitForSomeTime"
@@ -231,52 +202,12 @@ module "parse_pdr_workflow" {
       "Seconds": 10,
       "Next": "CheckStatus"
     },
-    "StopStatus": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "ReplaceConfig": {
-            "FullMessage": true
-          },
-          "task_config": {
-            "sfnEnd": true,
-            "stack": "{$.meta.stack}",
-            "bucket": "{$.meta.buckets.internal.name}",
-            "stateMachine": "{$.cumulus_meta.state_machine}",
-            "executionName": "{$.cumulus_meta.execution_name}",
-            "cumulus_message": {
-              "input": "{$}"
-            }
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${module.cumulus.sf_sns_report_task_lambda_function_arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "Next": "WorkflowFailed"
-        }
-      ],
-      "End": true
-    },
     "WorkflowFailed": {
       "Type": "Fail",
       "Cause": "Workflow failed"
+    },
+    "WorkflowSucceeded": {
+      "Type": "Succeed"
     }
   }
 }

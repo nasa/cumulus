@@ -44,9 +44,12 @@ const get = aws.improveStackTrace(
       }
       return getResponse.Item;
     } catch (e) {
-      throw new RecordDoesNotExist(
-        `No record found for ${JSON.stringify(item)} in ${tableName}`
-      );
+      if (e instanceof RecordDoesNotExist) {
+        throw new RecordDoesNotExist(
+          `No record found for ${JSON.stringify(item)} in ${tableName}`
+        );
+      }
+      throw e;
     }
   }
 );

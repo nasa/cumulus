@@ -6,6 +6,7 @@ const clone = require('lodash.clonedeep');
 const omit = require('lodash.omit');
 const { randomString } = require('@cumulus/common/test-utils');
 const { parseS3Uri } = require('@cumulus/common/aws');
+const { RecordDoesNotExist } = require('@cumulus/common/errors');
 
 const models = require('../../models');
 const { fakeGranuleFactory, fakeFileFactory } = require('../../lib/testUtils');
@@ -49,15 +50,15 @@ test.serial('create files records from a granule and then delete them', async (t
   const validateFile = async (file) => {
     try {
       await fileModel.get({ bucket, key: file.key });
-      fail('Expected an exception to be thrown');
+      t.fail('Expected an exception to be thrown');
     } catch (err) {
-      t.true(err.message.includes('No record'));
+      t.true(err instanceof RecordDoesNotExist);
+      // t.true(err.message.includes('No record'));
     }
   };
 
   await Promise.all(granule.files.map(validateFile));
 });
-
 
 test.serial('create a granule wth 4 files, then remove one of the files', async (t) => {
   const bucket = randomString();
@@ -87,7 +88,7 @@ test.serial('create a granule wth 4 files, then remove one of the files', async 
 
   await t.throwsAsync(
     () => fileModel.get({ bucket: bucket, key: droppedFile.key }),
-    /No record/
+    { instanceOf: RecordDoesNotExist }
   );
 });
 
@@ -102,7 +103,7 @@ test.serial('create a granule wth 4 files with just a source, then remove one of
   await fileModel.createFilesFromGranule(granule);
 
   const newGranule = clone(granule);
-  const droppedFile = granule.files[0];
+  const droppedFile = parseS3Uri(granule.files[0].source);
   newGranule.files = drop(granule.files);
 
   await fileModel.deleteFilesAfterCompare(newGranule, granule);
@@ -119,8 +120,8 @@ test.serial('create a granule wth 4 files with just a source, then remove one of
   await Promise.all(newGranule.files.map(validateFile));
 
   await t.throwsAsync(
-    () => fileModel.get({ bucket: bucket, key: droppedFile.key }),
-    /No record/
+    () => fileModel.get({ bucket: bucket, key: droppedFile.Key }),
+    { instanceOf: RecordDoesNotExist }
   );
 });
 

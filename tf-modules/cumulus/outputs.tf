@@ -22,10 +22,6 @@ output "s3_credentials_redirect_uri" {
 
 # SNS topics
 
-output "sftracker_sns_topic_arn" {
-  value = module.archive.sftracker_sns_topic_arn
-}
-
 output "report_executions_sns_topic_arn" {
   value = module.archive.report_executions_sns_topic_arn
 }
@@ -84,22 +80,24 @@ output "sync_granule_task_lambda_function_arn" {
   value = module.ingest.sync_granule_task_lambda_function_arn
 }
 
+# Workflow config outputs
+
+output "workflow_config" {
+  value = {
+    publish_reports_lambda_function_arn = module.archive.publish_reports_lambda_function_arn
+    sf_semaphore_down_lambda_function_arn = module.ingest.sf_semaphore_down_lambda_function_arn
+    state_machine_role_arn = module.ingest.step_role_arn
+  }
+}
+
 # Other Lambda outputs
 
 output "post_to_cmr_task_lambda_function_arn" {
   value = module.ingest.post_to_cmr_task_lambda_function_arn
 }
 
-output "sf_semaphore_down_lambda_function_arn" {
-  value = module.ingest.sf_semaphore_down_lambda_function_arn
-}
-
 output "log2elasticsearch_lambda_function_arn" {
   value = module.archive.log2elasticsearch_lambda_function_arn
-}
-
-output "sf2snsEnd_lambda_function_arn" {
-  value = module.ingest.sf2snsEnd_lambda_function_arn
 }
 
 # IAM outputs
@@ -110,10 +108,6 @@ output "lambda_processing_role_arn" {
 
 output "scaling_role_arn" {
   value = module.ingest.scaling_role_arn
-}
-
-output "step_role_arn" {
-  value = module.ingest.step_role_arn
 }
 
 # ECS cluster
