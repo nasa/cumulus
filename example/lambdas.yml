@@ -54,13 +54,6 @@ HelloWorld:
   layers:
     - '{{cma_layer}}'
   launchInVpc: true
-HelloWorldKesCma:
-  handler: index.handler
-  timeout: 300
-  memory: 256
-  source: node_modules/@cumulus/hello-world/kes_dist/
-  useMessageAdapter: true
-  launchInVpc: true
 ModisProcessing:
   handler: lambda_handler.handler
   timeout: 300
