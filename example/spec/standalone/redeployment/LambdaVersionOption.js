@@ -11,17 +11,20 @@ const {
   runKes
 } = require('../../helpers/testUtils');
 
-const config = loadConfig();
-
-
 describe('When the useWorkflowLambdaVersions option is set to false the deployment', () => {
-  let workflowDefinitions;
+  let config;
+  let lambdaVersionStackName;
   let stackList;
-  const deletedStatuses = ['DELETE_COMPLETE'];
-  const lambdaVersionStackName = `${config.stackName}-WorkflowLambdaVersionsNestedStack`;
-  const startDate = new Date();
+  let startDate;
+  let workflowDefinitions;
 
   beforeAll(async () => {
+    config = await loadConfig();
+
+    const deletedStatuses = ['DELETE_COMPLETE'];
+    lambdaVersionStackName = `${config.stackName}-WorkflowLambdaVersionsNestedStack`;
+    startDate = new Date();
+
     await runKes(config);
 
     // Redeploy with custom configuration
