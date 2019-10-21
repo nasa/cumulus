@@ -113,7 +113,16 @@ SfSnsReport:
 
 ### Changed
 
-- **CUMULUS-1485** Update `@cumulus/cmr-client` to return error message from CMR for validation failures.
+- **CUMULUS-1308**
+  - HTTP PUT of a Collection, Provider, or Rule via the Cumulus API now
+    performs full replacement of the existing object with the object supplied
+    in the request payload.  Previous behavior was to perform a modification
+    (partial update) by merging the existing object with the (possibly partial)
+    object in the payload, but this did not conform to the HTTP standard, which
+    specifies PATCH as the means for modifications rather than replacements.
+
+- **CUMULUS-1375**
+  - Migrate Cumulus from deprecated Elasticsearch JS client to new, supported one in `@cumulus/api`
 
 - **CUMULUS-1394**
   - Renamed `Execution.generateDocFromPayload()` to `Execution.generateRecord()` on executions model. The method generates an execution database record from a Cumulus execution message.
@@ -129,14 +138,13 @@ SfSnsReport:
 
 - **CUMULUS-1448** Refactor workflows that are mutating cumulus_meta to utilize meta field
 
-- **CUMULUS-1375**
-  - Migrate Cumulus from deprecated Elasticsearch JS client to new, supported one in `@cumulus/api`
-
 - **CUMULUS-1451**
   - Elasticsearch cluster setting `auto_create_index` will be set to false. This had been causing issues in the bootstrap lambda on deploy.
 
 - **CUMULUS-1456**
   - `@cumulus/api` endpoints default error handler uses `boom` package to format errors, which is consistent with other API endpoint errors.
+
+- **CUMULUS-1485** Update `@cumulus/cmr-client` to return error message from CMR for validation failures.
 
 ### Fixed
 
