@@ -90,7 +90,7 @@ const loadConfigFromYml = () => {
   const config = loadYmlFile('./config.yml');
 
   // Pull stackname from env in Bamboo CI
-  if (!isNil(process.env.DEPLOYMENT) && isNil(config.stackName)) {
+  if (isNil(config.stackName) && !isNil(process.env.DEPLOYMENT)) {
     config.stackName = process.env.DEPLOYMENT;
   }
 
