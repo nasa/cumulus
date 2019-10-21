@@ -418,7 +418,7 @@ async function deleteCollections(stackName, bucketName, collections, postfix) {
  * @param {string} bucket - S3 internal bucket name
  * @param {string} collectionsDirectory - the directory of collection json files
  * @param {string} postfix - string that was appended to collection name
- * @returns {number} - number of deleted collections
+ * @returns {Promise<number>} - number of deleted collections
  */
 async function cleanupCollections(stackName, bucket, collectionsDirectory, postfix) {
   const collections = await listCollections(stackName, bucket, collectionsDirectory);
