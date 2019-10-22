@@ -1,0 +1,27 @@
+default:
+  bucket: cumulus-test-sandbox-internal
+  ems:
+    provider: CUMULUS
+    host: change-ems-host
+    port: 22
+    path: /
+    username: cumulus
+    privateKey: ems-private.pem
+    dataSource: UAT
+    submitReport: false
+    retentionInDays: 30
+
+mvd-tf:
+  bucket: mvd-internal
+
+jl-tf:
+  bucket: jl-test-integration-internal
+
+kk-test-tf:
+  bucket: kk-test-internal
+
+lf-int-test-tf:
+  bucket: lf-internal
+
+mth-tf:
+  bucket: mth-internal
