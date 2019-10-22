@@ -86,7 +86,7 @@ describe('The messageConsumer receives a bad record.\n', () => {
 
     streamName = `${testId}-KinesisTestErrorStream`;
     testConfig.streamName = streamName;
-    failureSqsUrl = `https://sqs.${testConfig.awsRegion}.amazonaws.com/${testConfig.awsAccountId}/${testConfig.stackName}-kinesisFailure`;
+    failureSqsUrl = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT_ID}/${testConfig.stackName}-kinesisFailure`;
 
     record.product.files[0].uri = globalReplace(record.product.files[0].uri, 'cumulus-test-data/pdrs', testDataFolder);
     record.provider += testSuffix;

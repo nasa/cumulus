@@ -135,7 +135,7 @@ describe('the sf-starter lambda function', () => {
 
     testName = createTimestampedTestId(config.stackName, 'testStartSf');
 
-    const passSfRoleArn = `arn:aws:iam::${config.awsAccountId}:role/${config.stackName}-steprole`;
+    const passSfRoleArn = `arn:aws:iam::${process.env.AWS_ACCOUNT_ID}:role/${config.stackName}-steprole`;
 
     const passSfName = timestampedName('passTestSf');
     const passSfDef = {
