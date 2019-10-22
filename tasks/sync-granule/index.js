@@ -103,7 +103,6 @@ exports.syncGranule = function syncGranule(event) {
       log.debug(`SyncGranule Complete. Returning output: ${JSON.stringify(output)}`);
       return output;
     }).catch((e) => {
-      console.log('caught error', e);
       log.debug('SyncGranule errored.');
       if (ingest.end) ingest.end();
 
