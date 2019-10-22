@@ -2,6 +2,7 @@
 
 const execa = require('execa');
 const fs = require('fs');
+const get = require('lodash.get');
 const { Config } = require('kes');
 const cloneDeep = require('lodash.clonedeep');
 const dotenv = require('dotenv');
@@ -26,6 +27,10 @@ const {
 const { isNil } = require('@cumulus/common/util');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
+
+const promisedCopyFile = promisify(fs.copyFile);
+const promisedReadFile = promisify(fs.readFile);
+const promisedUnlink = promisify(fs.unlink);
 
 const timestampedName = (name) => `${name}_${(new Date().getTime())}`;
 
@@ -87,12 +92,31 @@ function loadConfigFromKes(type) {
   return setConfig(config);
 }
 
-const loadConfigFromYml = () => {
-  // load .env if it exists
-  if (fs.existsSync('./.env')) {
-    dotenv.config({ path: './.env' });
+const loadConfigYmlFile = (stackName) => {
+  const ymlConfigs = loadYmlFile('./config.yml');
+  const stackConfig = get(ymlConfigs, stackName, {});
+
+  return {
+    ...ymlConfigs.default,
+    ...stackConfig,
+    stackName
+  };
+};
+
+const loadEnvFile = async (filename) => {
+  try {
+    const envConfig = dotenv.parse(await promisedReadFile(filename));
+
+    Object.keys(envConfig).forEach((k) => {
+      if (isNil(process.env[k])) process.env[k] = envConfig[k];
+    });
+  } catch (err) {
+    if (err.code === 'ENOENT') return;
+    throw err;
   }
-  // Make sure that all environment variables are set
+};
+
+const verifyRequiredEnvironmentVariables = () => {
   [
     'DEPLOYMENT',
     'AWS_REGION',
@@ -103,24 +127,18 @@ const loadConfigFromYml = () => {
     'EARTHDATA_USERNAME',
     'TOKEN_SECRET'
   ].forEach((x) => {
-    if (isNil(process.env[x])) throw new Error(`Environment variable ${x} is not set.`);
+    if (isNil(process.env[x])) {
+      throw new Error(`Environment variable "${x}" is not set.`);
+    }
   });
-
-  const stackName = process.env.DEPLOYMENT;
-
-  const ymlConfigs = loadYmlFile('./config.yml');
-  const config = {
-    stackName,
-    ...ymlConfigs.default,
-    ...ymlConfigs[stackName]
-  };
-
-  return config;
 };
 
 const loadConfig = async (type = 'app') => {
+  await loadEnvFile('./.env');
+  verifyRequiredEnvironmentVariables();
+
   const configFromFile = fs.existsSync('./config.yml') ?
-    loadConfigFromYml('./config.yml') :
+    loadConfigYmlFile(process.env.DEPLOYMENT) :
     loadConfigFromKes(type);
 
   const bucketsObject = await getS3Object(
@@ -134,7 +152,6 @@ const loadConfig = async (type = 'app') => {
     buckets
   };
 };
-
 
 /**
  * Creates a new file using a template file and configuration object which
@@ -328,9 +345,6 @@ async function getFileMetadata(file) {
 function getFilesMetadata(files) {
   return Promise.all(files.map(getFileMetadata));
 }
-
-const promisedCopyFile = promisify(fs.copyFile);
-const promisedUnlink = promisify(fs.unlink);
 
 /**
  * Creates a backup of a file, executes the specified function, and makes sure
