@@ -103,7 +103,7 @@ const loadConfigFromYml = () => {
     'EARTHDATA_USERNAME',
     'TOKEN_SECRET'
   ].forEach((x) => {
-    if (isNil(process.env[x])) throw new Error(`Test Config Env ${x} is not set.`);
+    if (isNil(process.env[x])) throw new Error(`Environment variable ${x} is not set.`);
   });
 
   const stackName = process.env.DEPLOYMENT;
