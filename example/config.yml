@@ -1,5 +1,6 @@
 default:
   bucket: cumulus-test-sandbox-internal
+  sqs_consumer_rate: 300
   ems:
     provider: CUMULUS
     host: change-ems-host
