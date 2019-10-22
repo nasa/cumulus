@@ -539,7 +539,7 @@ async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
 
       rule = Object.assign(rule, overrides);
       const ruleTemplate = Handlebars.compile(JSON.stringify(rule));
-      const templatedRule = JSON.parse(ruleTemplate(config));
+      const templatedRule = JSON.parse(ruleTemplate(Object.assign({}, config, process.env)));
 
       const r = new Rule();
       console.log(`adding rule ${JSON.stringify(templatedRule)}`);
