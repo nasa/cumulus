@@ -10,18 +10,13 @@ module "hello_world_service" {
   name   = "HelloWorld"
   tags   = local.default_tags
 
-  activity_arn                          = aws_sfn_activity.ecs_task_hello_world.id
   cluster_arn                           = module.cumulus.ecs_cluster_arn
   desired_count                         = 1
   image                                 = "cumuluss/cumulus-ecs-task:1.3.0"
   log2elasticsearch_lambda_function_arn = module.cumulus.log2elasticsearch_lambda_function_arn
-  scaling_role_arn                      = module.cumulus.scaling_role_arn
 
   cpu                = 400
   memory_reservation = 700
-
-  min_capacity = 1
-  max_capacity = 10
 
   environment = {
     AWS_DEFAULT_REGION = data.aws_region.current.name
@@ -44,31 +39,14 @@ module "hello_world_service" {
   }
 }
 
-resource "aws_cloudwatch_metric_alarm" "ecs_hello_world_task_count_high" {
-  alarm_description   = "There are more tasks running than the desired"
-  alarm_name          = "${var.prefix}-EcsTaskHelloWorld-TaskCountHighAlarm"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 1
-  metric_name         = "MemoryUtilization"
-  statistic           = "SampleCount"
-  threshold           = 1
-  period              = 60
-  namespace           = "AWS/ECS"
-  dimensions = {
-    ClusterName = module.cumulus.ecs_cluster_name
-    ServiceName = module.hello_world_service.service_name
-  }
-  tags = local.default_tags
-}
-
 module "ecs_hello_world_workflow" {
   source = "../../tf-modules/workflow"
 
-  prefix                                = var.prefix
-  name                                  = "EcsHelloWorldWorkflow"
-  workflow_config                       = module.cumulus.workflow_config
-  system_bucket                         = var.system_bucket
-  tags                                  = local.default_tags
+  prefix          = var.prefix
+  name            = "EcsHelloWorldWorkflow"
+  workflow_config = module.cumulus.workflow_config
+  system_bucket   = var.system_bucket
+  tags            = local.default_tags
 
   state_machine_definition = <<JSON
 {
