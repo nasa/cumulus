@@ -1,4 +1,5 @@
 const granuleModel = require('../models/granules');
+const elasticsearch = require('@elastic/elasticsearch');
 
 /**
  * Bulk apply workflow to either a list of granules (ids) or to a list of responses from
@@ -16,20 +17,43 @@ async function bulkGranule(payload) {
   const workflowName = payload.workflowName;
   const granuleModelClient = new granuleModel();
 
-  const ids = payload.ids;
-  const applyWorkflowRequests = ids.map(async (granuleId) => {
-    try {
-      const granule = await granuleModelClient.get({ granuleId });
-      await granuleModelClient.applyWorkflow(granule, workflowName, queueName);
-      return granuleId;
-    } catch (err) {
-      return { granuleId, err };
-    }
-  });
+  console.log('ids: ', payload.ids);
+  if (payload.ids && false) {
+    const ids = payload.ids;
+    applyWorkflowRequests = ids.map(async (granuleId) => {
+      try {
+        const granule = await granuleModelClient.get({ granuleId });
+        await granuleModelClient.applyWorkflow(granule, workflowName, queueName);
+        return granuleId;
+      } catch (err) {
+        return { granuleId, err };
+      }
+    });
+    const response = await Promise.all(applyWorkflowRequests);
+    console.log(response);
+    return response;
+  } else {
+    const query = payload.query;
+    const index = payload.index;
+    const client = new elasticsearch.Client({
+      node: process.env.METRICS_ES_HOST,
+      auth: {
+        username: process.env.METRICS_ES_USER,
+        password: process.env.METRICS_ES_PASS
+      },
+    });
 
-  const response = await Promise.all(applyWorkflowRequests);
-  console.log(response);
-  return response;
+    console.log('Ping...');
+    const pingResponse = await client.ping();
+    console.log(pingResponse);
+    console.log('Pong...');
+
+    console.log('Doing the search...');
+    const searchResponse = await client.search({ index, body: query });
+    console.log(JSON.stringify(searchResponse));
+    // Request against elastic search with pagenation
+    // page through response, for each item in each page, applyWorkflow
+  }
 
   // const client = new elasticsearch.Client({
   //   host: [

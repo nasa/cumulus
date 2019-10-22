@@ -291,3 +291,6 @@ BulkOperation:
     - GranulesTable
   envs:
     system_bucket: '{{system_bucket}}'
+    METRICS_ES_HOST: '{{METRICS_ES_HOST}}'
+    METRICS_ES_USER: '{{METRICS_ES_USER}}'
+    METRICS_ES_PASS: '{{METRICS_ES_PASS}}'
