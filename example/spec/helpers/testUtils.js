@@ -1,15 +1,16 @@
 'use strict';
 
+const execa = require('execa');
 const fs = require('fs');
 const { Config } = require('kes');
 const cloneDeep = require('lodash.clonedeep');
+const dotenv = require('dotenv');
 const mime = require('mime-types');
 const merge = require('lodash.merge');
 const path = require('path');
 const { promisify } = require('util');
-const tempy = require('tempy');
-const execa = require('execa');
 const pTimeout = require('p-timeout');
+const tempy = require('tempy');
 const yaml = require('js-yaml');
 
 const {
@@ -87,20 +88,13 @@ function loadConfigFromKes(type) {
 }
 
 const loadConfigFromYml = () => {
-  const config = loadYmlFile('./config.yml');
-
-  // Pull stackname from env in Bamboo CI
-  if (isNil(config.stackName) && !isNil(process.env.DEPLOYMENT)) {
-    config.stackName = process.env.DEPLOYMENT;
+  // load .env if it exists
+  if (fs.existsSync('./.env')) {
+    dotenv.config({ path: './.env' });
   }
-
-  // Set consumer rate which is being tested in kes config,
-  // whereas terraform deployment has obsolesced test configs.
-  // Unneeded when kes and its int-tests are officially retired.
-  if (isNil(config.sqs_consumer_rate)) config.sqs_consumer_rate = 300;
-
   // Make sure that all environment variables are set
   [
+    'DEPLOYMENT',
     'AWS_REGION',
     'AWS_ACCOUNT_ID',
     'EARTHDATA_CLIENT_ID',
@@ -109,11 +103,17 @@ const loadConfigFromYml = () => {
     'EARTHDATA_USERNAME',
     'TOKEN_SECRET'
   ].forEach((x) => {
-    if (isNil(process.env[x])) {
-      if (isNil(config[x])) throw new Error(`Test Config Value ${x} is not set.`);
-      process.env[x] = config[x];
-    }
+    if (isNil(process.env[x])) throw new Error(`Test Config Env ${x} is not set.`);
   });
+
+  const stackName = process.env.DEPLOYMENT;
+
+  const ymlConfigs = loadYmlFile('./config.yml');
+  const config = {
+    stackName,
+    ...ymlConfigs.default,
+    ...ymlConfigs[stackName]
+  };
 
   return config;
 };
@@ -128,13 +128,6 @@ const loadConfig = async (type = 'app') => {
     `${configFromFile.stackName}/workflows/buckets.json`
   );
   const buckets = JSON.parse(bucketsObject.Body.toString());
-
-  // assume only one internal bucket in config.
-  if (isNil(configFromFile.bucket)) {
-    configFromFile.bucket = buckets.filter(
-      (b) => b.type === 'internal'
-    )[0];
-  }
 
   return {
     ...configFromFile,
