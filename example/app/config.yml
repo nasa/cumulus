@@ -63,14 +63,7 @@ default:
         image: cumuluss/cumulus-ecs-task:1.3.0
         cpu: 400
         memory: 700
-        minTasks: 1
         count: 1
-        maxTasks: 10
-        scaleInActivityScheduleTime: 5000
-        scaleInAdjustmentPercent: -5
-        scaleOutActivityScheduleTime: 10000
-        scaleOutAdjustmentPercent: 10
-        activityName: EcsTaskHelloWorld
         envs:
           AWS_DEFAULT_REGION:
             function: Fn::Sub
@@ -83,26 +76,11 @@ default:
           - '--lambdaArn'
           - function: Ref
             value: HelloWorldLambdaFunction
-        alarms:
-          TaskCountHigh:
-            alarm_description: 'There are more tasks running than the desired'
-            comparison_operator: GreaterThanThreshold
-            evaluation_periods: 1
-            metric: MemoryUtilization
-            statistic: SampleCount
-            threshold: '{{ecs.services.EcsTaskHelloWorld.count}}'
-      EcsTaskHelloWorlKesCma:
+      EcsTaskHelloWorldKesCma:
         image: cumuluss/cumulus-ecs-task:1.3.0
         cpu: 400
         memory: 700
-        minTasks: 1
         count: 1
-        maxTasks: 10
-        scaleInActivityScheduleTime: 5000
-        scaleInAdjustmentPercent: -5
-        scaleOutActivityScheduleTime: 10000
-        scaleOutAdjustmentPercent: 10
-        activityName: EcsTaskHelloWorldKesCma
         envs:
           AWS_DEFAULT_REGION:
             function: Fn::Sub
@@ -115,14 +93,6 @@ default:
           - '--lambdaArn'
           - function: Ref
             value: HelloWorldKesCmaLambdaFunction
-        alarms:
-          TaskCountHigh:
-            alarm_description: 'There are more tasks running than the desired'
-            comparison_operator: GreaterThanThreshold
-            evaluation_periods: 1
-            metric: MemoryUtilization
-            statistic: SampleCount
-            threshold: '{{ecs.services.EcsTaskHelloWorlKesCma.count}}'
 
   activities:
     - name: EcsTaskHelloWorld
