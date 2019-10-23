@@ -26,6 +26,10 @@ output "report_executions_sns_topic_arn" {
   value = module.archive.report_executions_sns_topic_arn
 }
 
+output "report_granules_sns_topic_arn" {
+  value = module.archive.report_executions_sns_topic_arn
+}
+
 output "report_pdrs_sns_topic_arn" {
   value = module.archive.report_pdrs_sns_topic_arn
 }
