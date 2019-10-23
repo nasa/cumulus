@@ -4,16 +4,16 @@ const { ActivityStep } = require('@cumulus/common/sfnStep');
 const { loadConfig } = require('../../helpers/testUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 
-const awsConfig = loadConfig();
 const activityStep = new ActivityStep();
 
-
 describe('The Hello World workflow using ECS and CMA Layers', () => {
-  let workflowExecution = null;
-  process.env.ExecutionsTable = `${awsConfig.stackName}-ExecutionsTable`;
-  const executionModel = new Execution();
+  let workflowExecution;
 
   beforeAll(async () => {
+    const awsConfig = await loadConfig();
+
+    process.env.ExecutionsTable = `${awsConfig.stackName}-ExecutionsTable`;
+
     workflowExecution = await buildAndExecuteWorkflow(
       awsConfig.stackName,
       awsConfig.bucket,
@@ -43,7 +43,7 @@ describe('The Hello World workflow using ECS and CMA Layers', () => {
   describe('the sf-sns-report task has published a sns message and', () => {
     it('the execution record is added to DynamoDB', async () => {
       const record = await waitForModelStatus(
-        executionModel,
+        new Execution(),
         { arn: workflowExecution.executionArn },
         'completed'
       );

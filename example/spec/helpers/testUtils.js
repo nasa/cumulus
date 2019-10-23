@@ -1,25 +1,36 @@
 'use strict';
 
+const execa = require('execa');
 const fs = require('fs');
+const get = require('lodash.get');
 const { Config } = require('kes');
 const cloneDeep = require('lodash.clonedeep');
+const dotenv = require('dotenv');
 const mime = require('mime-types');
 const merge = require('lodash.merge');
 const path = require('path');
 const { promisify } = require('util');
-const tempy = require('tempy');
-const execa = require('execa');
 const pTimeout = require('p-timeout');
+const tempy = require('tempy');
 const yaml = require('js-yaml');
 
 const {
-  aws: { s3, headObject, parseS3Uri },
+  aws: {
+    getS3Object,
+    headObject,
+    parseS3Uri,
+    s3
+  },
   stringUtils: { globalReplace },
   log
 } = require('@cumulus/common');
 const { isNil } = require('@cumulus/common/util');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
+
+const promisedCopyFile = promisify(fs.copyFile);
+const promisedReadFile = promisify(fs.readFile);
+const promisedUnlink = promisify(fs.unlink);
 
 const timestampedName = (name) => `${name}_${(new Date().getTime())}`;
 
@@ -81,11 +92,33 @@ function loadConfigFromKes(type) {
   return setConfig(config);
 }
 
-const loadConfigFromYml = () => {
-  const config = loadYmlFile('./config.yml');
+const loadConfigYmlFile = (stackName) => {
+  const ymlConfigs = loadYmlFile('./config.yml');
+  const stackConfig = get(ymlConfigs, stackName, {});
 
-  // Make sure that all environment variables are set
+  return {
+    ...ymlConfigs.default,
+    ...stackConfig,
+    stackName
+  };
+};
+
+const loadEnvFile = async (filename) => {
+  try {
+    const envConfig = dotenv.parse(await promisedReadFile(filename));
+
+    Object.keys(envConfig).forEach((k) => {
+      if (isNil(process.env[k])) process.env[k] = envConfig[k];
+    });
+  } catch (err) {
+    if (err.code === 'ENOENT') return;
+    throw err;
+  }
+};
+
+const verifyRequiredEnvironmentVariables = () => {
   [
+    'DEPLOYMENT',
     'AWS_REGION',
     'AWS_ACCOUNT_ID',
     'EARTHDATA_CLIENT_ID',
@@ -95,18 +128,30 @@ const loadConfigFromYml = () => {
     'TOKEN_SECRET'
   ].forEach((x) => {
     if (isNil(process.env[x])) {
-      if (isNil(config[x])) throw new Error(`Test Config Value ${x} is not set.`);
-      process.env[x] = config[x];
+      throw new Error(`Environment variable "${x}" is not set.`);
     }
   });
-
-  return config;
 };
 
-const loadConfig = (type = 'app') =>
-  (fs.existsSync('./config.yml') ?
-    loadConfigFromYml('./config.yml') :
-    loadConfigFromKes(type));
+const loadConfig = async (type = 'app') => {
+  await loadEnvFile('./.env');
+  verifyRequiredEnvironmentVariables();
+
+  const configFromFile = fs.existsSync('./config.yml') ?
+    loadConfigYmlFile(process.env.DEPLOYMENT) :
+    loadConfigFromKes(type);
+
+  const bucketsObject = await getS3Object(
+    configFromFile.bucket,
+    `${configFromFile.stackName}/workflows/buckets.json`
+  );
+  const buckets = JSON.parse(bucketsObject.Body.toString());
+
+  return {
+    ...configFromFile,
+    buckets
+  };
+};
 
 /**
  * Creates a new file using a template file and configuration object which
@@ -300,9 +345,6 @@ async function getFileMetadata(file) {
 function getFilesMetadata(files) {
   return Promise.all(files.map(getFileMetadata));
 }
-
-const promisedCopyFile = promisify(fs.copyFile);
-const promisedUnlink = promisify(fs.unlink);
 
 /**
  * Creates a backup of a file, executes the specified function, and makes sure
