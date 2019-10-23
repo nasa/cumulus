@@ -29,7 +29,8 @@ module.exports = {
     reportPdrs: './lambdas/report-pdrs.js',
     sfScheduler: './lambdas/sf-scheduler.js',
     sfSemaphoreDown: './lambdas/sf-semaphore-down.js',
-    sfStarter: './lambdas/sf-starter.js'
+    sfStarter: './lambdas/sf-starter.js',
+    sqsMessageConsumer: './lambdas/sqs-message-consumer.js'
   },
   devtool: 'inline-source-map',
   resolve: {
