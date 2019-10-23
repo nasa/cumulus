@@ -1,16 +1,5 @@
 default:
   bucket: cumulus-test-sandbox-internal
-  sqs_consumer_rate: 300
-  ems:
-    provider: CUMULUS
-    host: change-ems-host
-    port: 22
-    path: /
-    username: cumulus
-    privateKey: ems-private.pem
-    dataSource: UAT
-    submitReport: false
-    retentionInDays: 30
 
 mvd-tf:
   bucket: mvd-internal
