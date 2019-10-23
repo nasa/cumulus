@@ -2,14 +2,22 @@
 
 set +e
 
-specName=$(echo $2 | rev | cut -d'/' -f 1 | cut -d'.' -f 2 | rev)
-outputPath="$1/$specName.txt"
+specName=$(echo "$2" | rev | cut -d'/' -f 1 | cut -d'.' -f 2 | rev)
+outputPath="${1}/${specName}-running.txt"
 
-echo $(date "+%Y%m%d-%H:%M:%S") run test $2 and output to $outputPath
+TIMESTAMP=$(date "+%Y-%m-%dT%H:%M:%S")
+echo "$TIMESTAMP jasmine $2 STARTED"
 
 jasmine "$2" > "$outputPath" 2>&1
 result=$?
 
-echo $(date "+%Y%m%d-%H:%M:%S") test $2 completed with result $result
+TIMESTAMP=$(date "+%Y-%m-%dT%H:%M:%S")
+if [ "$result" -eq "0" ]; then
+  echo "$TIMESTAMP jasmine $2 PASSED"
+  mv "$outputPath" "$1/${specName}-passed.txt"
+else
+  echo "$TIMESTAMP jasmine $2 FAILED"
+  mv "$outputPath" "$1/${specName}-failed.txt"
+fi
 
 exit $result
