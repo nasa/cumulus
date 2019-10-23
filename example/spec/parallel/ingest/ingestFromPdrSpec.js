@@ -55,7 +55,6 @@ const {
 
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 
-const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const taskName = 'DiscoverAndQueuePdrs';
 const origPdrFilename = 'MOD09GQ_1granule_v3.PDR';
@@ -71,29 +70,37 @@ const unmodifiedS3Data = [
 ];
 
 describe('Ingesting from PDR', () => {
-  const testId = createTimestampedTestId(config.stackName, 'IngestFromPdr');
-  const testSuffix = createTestSuffix(testId);
-  const testDataFolder = createTestDataPath(testId);
-
-  pdrFilename = `${testSuffix.slice(1)}_${origPdrFilename}`;
-
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
-  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-  const provider = { id: `s3_provider${testSuffix}` };
 
-  process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-  process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
-  process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-
-  const executionModel = new Execution();
-  const collectionModel = new Collection();
-  const pdrModel = new Pdr();
-
+  let collection;
+  let config;
+  let executionModel;
   let parsePdrExecutionArn;
+  let provider;
+  let testDataFolder;
+  let testSuffix;
   let workflowExecution;
 
   beforeAll(async () => {
+    config = await loadConfig();
+
+    process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+    process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+    process.env.PdrsTable = `${config.stackName}-PdrsTable`;
+
+    executionModel = new Execution();
+    const collectionModel = new Collection();
+
+    const testId = createTimestampedTestId(config.stackName, 'IngestFromPdr');
+    testSuffix = createTestSuffix(testId);
+    testDataFolder = createTestDataPath(testId);
+
+    pdrFilename = `${testSuffix.slice(1)}_${origPdrFilename}`;
+
+    collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+    provider = { id: `s3_provider${testSuffix}` };
+
     // populate collections, providers and test data
     await Promise.all([
       updateAndUploadTestDataToBucket(
@@ -453,7 +460,7 @@ describe('Ingesting from PDR', () => {
 
       it('the pdr record is added to DynamoDB', async () => {
         const record = await waitForModelStatus(
-          pdrModel,
+          new Pdr(),
           { pdrName: pdrFilename },
           'completed'
         );

@@ -13,7 +13,7 @@ describe('When an iam override template is in the APP directory and IAMs are dep
   let config;
   let cloudFormation;
   beforeAll(async () => {
-    config = loadConfig('iam');
+    config = await loadConfig('iam');
     // Compile with override file in test directory
     try {
       await fs.mkdir('test_iam_override');
@@ -43,7 +43,7 @@ describe('When an application override template is in the application directory'
   let config;
   let cloudFormation;
   beforeAll(async () => {
-    config = loadConfig();
+    config = await loadConfig();
     // Compile with override file in test directory
     try {
       await fs.mkdir('test_app_override');
