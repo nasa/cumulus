@@ -28,7 +28,7 @@ module.exports = {
     sfSemaphoreDown: './lambdas/sf-semaphore-down.js',
     sfStarter: './lambdas/sf-starter.js'
   },
-  devtool: process.env.PRODUCTION ? false : 'inline-source-map',
+  devtool: 'inline-source-map',
   resolve: {
     alias: {
       'saml2-js': 'saml2-js/lib-js/saml2.js',
@@ -51,7 +51,22 @@ module.exports = {
     'electron',
     { formidable: 'url' }
   ],
-  devtool: process.env.PRODUCTION ? 'source-map' : 'inline-source-map',
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              cacheDirectory: true
+            },
+          },
+        ],
+      },
+    ],
+  },
   target: 'node',
   node: {
     __dirname: false,
