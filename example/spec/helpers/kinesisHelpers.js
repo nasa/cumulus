@@ -14,14 +14,12 @@ const {
 
 const { loadConfig } = require('../helpers/testUtils');
 
-const testConfig = loadConfig();
-
 const lambdaStep = new LambdaStep();
-
-const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: testConfig.AWS_REGION });
 
 const maxExecutionResults = 20;
 const waitPeriodMs = 1000;
+
+const getRegion = () => process.env.AWS_REGION;
 
 /**
  * Helper to simplify common setup code.  wraps function in try catch block
@@ -55,6 +53,7 @@ async function tryCatchExit(cleanupCallback, wrappedFunction, ...args) {
  * @returns {string} stream status
  */
 async function getStreamStatus(StreamName) {
+  const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: getRegion() });
   const stream = await kinesis.describeStream({ StreamName }).promise();
   return stream.StreamDescription.StreamStatus;
 }
@@ -71,6 +70,8 @@ async function getStreamStatus(StreamName) {
  * @throws {Error} - Error describing current stream status
  */
 async function waitForActiveStream(streamName, initialDelaySecs = 10, maxRetries = 10) {
+  const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: getRegion() });
+
   let streamStatus = 'UNDEFINED';
   let stream;
   const displayName = streamName.split('-').pop();
@@ -102,6 +103,7 @@ async function waitForActiveStream(streamName, initialDelaySecs = 10, maxRetries
  * @returns {Promise<Object>} - a kinesis delete stream proxy object.
  */
 async function deleteTestStream(streamName) {
+  const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: getRegion() });
   return kinesis.deleteStream({ StreamName: streamName }).promise();
 }
 
@@ -113,6 +115,7 @@ async function deleteTestStream(streamName) {
  * @returns {Promise<Object>} - kinesis create stream promise if stream to be created.
  */
 async function createKinesisStream(streamName) {
+  const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: getRegion() });
   return pRetry(
     async () => {
       try {
@@ -136,6 +139,7 @@ async function createKinesisStream(streamName) {
  * @throws {Error} Kinesis error if stream cannot be created.
  */
 async function createOrUseTestStream(streamName) {
+  const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: getRegion() });
   let stream;
 
   try {
@@ -162,6 +166,8 @@ async function createOrUseTestStream(streamName) {
  * @returns {string}            - Shard iterator
  */
 async function getShardIterator(streamName) {
+  const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: getRegion() });
+
   const describeStreamParams = {
     StreamName: streamName
   };
@@ -190,6 +196,7 @@ async function getShardIterator(streamName) {
  * @returns {Array} Array of records from kinesis stream.
  */
 async function getRecords(shardIterator, records = []) {
+  const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: getRegion() });
   const data = await kinesis.getRecords({ ShardIterator: shardIterator }).promise();
   records.push(...data.Records);
   if ((data.NextShardIterator !== null) && (data.MillisBehindLatest > 0)) {
@@ -207,6 +214,7 @@ async function getRecords(shardIterator, records = []) {
  * @returns {Promise<Object>} - Kinesis putRecord response proxy object.
  */
 async function putRecordOnStream(streamName, record) {
+  const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: getRegion() });
   return kinesis.putRecord({
     Data: JSON.stringify(record),
     PartitionKey: '1',
@@ -226,6 +234,8 @@ async function putRecordOnStream(streamName, record) {
  * @throws {Error} - any AWS error, re-thrown from AWS execution or 'Workflow Never Started'.
  */
 async function waitForAllTestSf(recordIdentifier, workflowName, maxWaitTimeSecs, numExecutions, firstStep) {
+  const config = await loadConfig();
+
   let timeWaitedSecs = 0;
   const workflowExecutions = [];
   const startTime = moment();
@@ -234,7 +244,7 @@ async function waitForAllTestSf(recordIdentifier, workflowName, maxWaitTimeSecs,
   while (timeWaitedSecs < maxWaitTimeSecs && workflowExecutions.length < numExecutions) {
     await sleep(waitPeriodMs);
     timeWaitedSecs = (moment.duration(moment().diff(startTime)).asSeconds());
-    const executions = await getExecutions(workflowName, testConfig.stackName, testConfig.bucket, maxExecutionResults);
+    const executions = await getExecutions(workflowName, config.stackName, config.bucket, maxExecutionResults);
     // Search all recent executions for target recordIdentifier
     for (let ctr = 0; ctr < executions.length; ctr += 1) {
       const execution = executions[ctr];
