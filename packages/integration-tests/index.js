@@ -10,11 +10,11 @@ const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const pLimit = require('p-limit');
 const pMap = require('p-map');
-const { constructCollectionId } = require('@cumulus/common');
 
-const {
-  stringUtils: { globalReplace }
-} = require('@cumulus/common');
+const { pullStepFunctionEvent } = require('@cumulus/common/aws');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { ActivityStep, LambdaStep } = require('@cumulus/common/sfnStep');
+const { globalReplace } = require('@cumulus/common/string');
 
 const {
   dynamodb,
@@ -30,7 +30,6 @@ const {
   models: { Provider, Collection, Rule }
 } = require('@cumulus/api');
 
-const sfnStep = require('./sfnStep');
 const api = require('./api/api');
 const rulesApi = require('./api/rules');
 const emsApi = require('./api/ems');
@@ -46,7 +45,7 @@ const waitPeriodMs = 1000;
 
 const maxWaitForStartedExecutionSecs = 60 * 5;
 
-const lambdaStep = new sfnStep.LambdaStep();
+const lambdaStep = new LambdaStep();
 
 /**
  * Wait for an AsyncOperation to reach a given status
@@ -419,7 +418,7 @@ async function deleteCollections(stackName, bucketName, collections, postfix) {
  * @param {string} bucket - S3 internal bucket name
  * @param {string} collectionsDirectory - the directory of collection json files
  * @param {string} postfix - string that was appended to collection name
- * @returns {number} - number of deleted collections
+ * @returns {Promise<number>} - number of deleted collections
  */
 async function cleanupCollections(stackName, bucket, collectionsDirectory, postfix) {
   const collections = await listCollections(stackName, bucket, collectionsDirectory);
@@ -801,6 +800,8 @@ async function getExecutions(workflowName, stackName, bucket, maxExecutionResult
  * findExecutionFnParams and returns a boolean indicating whether or not this is the correct
  * instance of the workflow
  * @param {Object} options.findExecutionFnParams - params to be passed into findExecutionFn
+ * @param {string} options.startTask - Name of task to check for step input. Input to this
+ * task will be evaluated by the compare function `findExecutionFn`.
  * @param {number} [options.maxWaitSeconds] - an optional custom wait time in seconds
  * @returns {undefined} - none
  * @throws {Error} if workflow was never started
@@ -811,6 +812,7 @@ async function waitForTestExecutionStart({
   bucket,
   findExecutionFn,
   findExecutionFnParams,
+  startTask,
   maxWaitSeconds = maxWaitForStartedExecutionSecs
 }) {
   let timeWaitedSecs = 0;
@@ -822,7 +824,8 @@ async function waitForTestExecutionStart({
 
     for (let executionCtr = 0; executionCtr < executions.length; executionCtr += 1) {
       const execution = executions[executionCtr];
-      const taskInput = await lambdaStep.getStepInput(execution.executionArn, 'SfSnsReport');
+      let taskInput = await lambdaStep.getStepInput(execution.executionArn, startTask);
+      taskInput = await pullStepFunctionEvent(taskInput);
       if (taskInput && findExecutionFn(taskInput, findExecutionFnParams)) {
         return execution;
       }
@@ -848,13 +851,8 @@ module.exports = {
   getWorkflowTemplate,
   waitForCompletedExecution,
   waitForTestExecutionStart,
-  ActivityStep: sfnStep.ActivityStep,
-  LambdaStep: sfnStep.LambdaStep,
-  /**
-   * @deprecated Since version 1.3. To be deleted version 2.0.
-   * Use sfnStep.LambdaStep.getStepOutput instead.
-   */
-  getLambdaOutput: new sfnStep.LambdaStep().getStepOutput,
+  ActivityStep,
+  LambdaStep,
   addCollections,
   addCustomUrlPathToCollectionFiles,
   listCollections,

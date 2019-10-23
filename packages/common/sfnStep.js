@@ -1,13 +1,20 @@
 'use strict';
 
-const { s3, pullStepFunctionEvent } = require('@cumulus/common/aws');
-const StepFunctions = require('@cumulus/common/StepFunctions');
+const { isNil } = require('./util');
+const { pullStepFunctionEvent } = require('./aws');
+const log = require('./log');
+const StepFunctions = require('./StepFunctions');
 
 /**
  * `SfnStep` provides methods for getting the output of a step within an AWS
  * Step Function for a specific execution.
 */
 class SfnStep {
+  constructor() {
+    this.taskExitedEvent = 'TaskStateExited';
+    this.taskExitedDetailsKey = 'stateExitedEventDetails';
+  }
+
   /**
    * `getStartEvent` gets the "start" event for a step, given its schedule event
    *
@@ -51,15 +58,53 @@ class SfnStep {
     let startEvent = null;
     let completeEvent = null;
 
-    if (scheduleEvent.type !== this.startFailedEvent) {
-      startEvent = this.getStartEvent(executionHistory, scheduleEvent, this);
+    if (scheduleEvent.type !== this.scheduleFailedEvent) {
+      startEvent = this.getStartEvent(executionHistory, scheduleEvent);
 
       if (startEvent && startEvent.type !== this.startFailedEvent) {
-        completeEvent = this.getCompletionEvent(executionHistory, startEvent, this);
+        completeEvent = this.getCompletionEvent(executionHistory, startEvent);
         return { scheduleEvent, startEvent, completeEvent };
       }
     }
     return null;
+  }
+
+  /**
+   * Get the input to the first failed step in a Step function execution.
+   *
+   * @param {string} executionArn - Step function execution ARN
+   * @returns {Promise|undefined} - Input to the first failed step in the execution
+   */
+  async getFirstFailedStepMessage(executionArn) {
+    try {
+      // TODO: store execution history in memory to avoid multiple API requests on same
+      // class instance?
+      const { events } = await StepFunctions.getExecutionHistory({ executionArn });
+
+      // There may be multiple failed events in a retry scenario. Reverse the events
+      // list to more quickly find the last failed event in the history.
+      events.reverse();
+
+      const failedStepEvent = events
+        .find((event) => event.type === this.failureEvent);
+      if (!failedStepEvent) {
+        log.info(`Could not find failed step event for execution ${executionArn}`);
+        return Promise.resolve();
+      }
+
+      const failedStepExitedEvent = events.find((event) => {
+        const taskExitedEvent = event.type === this.taskExitedEvent;
+        const isStepFailed = event.previousEventId === failedStepEvent.id;
+        return taskExitedEvent && isStepFailed;
+      });
+      const failedEventDetails = failedStepExitedEvent[this.taskExitedDetailsKey];
+      const failedStepMessage = JSON.parse(failedEventDetails.output);
+
+      return this.parseStepMessage(failedStepMessage, failedEventDetails.resource);
+    } catch (err) {
+      log.error(err);
+      return Promise.resolve();
+    }
   }
 
   /**
@@ -84,14 +129,13 @@ class SfnStep {
     });
 
     if (scheduleEvents.length === 0) {
-      console.log(`Could not find step ${stepName} in execution.`);
+      log.info(`Could not find step ${stepName} in execution.`);
       return null;
     }
 
     return scheduleEvents.map((e) => this.getStepExecutionInstance(executionHistory, e))
       .filter((e) => e);
   }
-
 
   /**
    * Return truthyness of an execution being successful.
@@ -100,8 +144,7 @@ class SfnStep {
    * @returns {boolean} truthness of the execution being successful.
    */
   completedSuccessfulFilter(execution) {
-    return (execution.completeEvent !== undefined
-            && execution.completeEvent !== null
+    return (!isNil(execution.completeEvent)
             && execution.completeEvent.type === this.successEvent);
   }
 
@@ -115,31 +158,46 @@ class SfnStep {
    *                                          from the workflow execution of interest.
    */
   async getStepInput(workflowExecutionArn, stepName) {
-    const stepExecutions = await this.getStepExecutions(workflowExecutionArn, stepName, this);
+    const stepExecutions = await this.getStepExecutions(workflowExecutionArn, stepName);
     if (stepExecutions === null || stepExecutions.length === 0) {
-      console.log(`Could not find step ${stepName} in execution.`);
+      log.info(`Could not find step ${stepName} in execution.`);
       return null;
     }
 
     const scheduleEvent = stepExecutions[0].scheduleEvent;
     const eventWasSuccessful = scheduleEvent.type === this.scheduleSuccessfulEvent;
-    if (!eventWasSuccessful) console.log('Schedule event failed');
+    if (!eventWasSuccessful) log.info('Schedule event failed');
 
-    const subStepExecutionDetails = scheduleEvent.lambdaFunctionScheduledEventDetails;
-    let stepInput = JSON.parse(subStepExecutionDetails.input);
+    const subStepExecutionDetails = scheduleEvent[this.eventDetailsKeys.scheduled];
+    const stepInput = JSON.parse(subStepExecutionDetails.input);
+    return this.parseStepMessage(stepInput, stepName);
+  }
 
-    if (stepInput.cma) {
-      stepInput = { ...stepInput, ...stepInput.cma, ...stepInput.cma.event };
-      delete stepInput.cma;
-      delete stepInput.event;
+  /**
+   * Parse the step message.
+   *
+   * Merge possible keys from the CMA in the input and handle remote message
+   * retrieval if necessary.
+   *
+   * @param {Object} stepMessage - Details for the step
+   * @param {Object} stepMessage.input - Object containing input to the step
+   * @param {string} [stepName] - Name for the step being parsed. Optional.
+   * @returns {Object} - Parsed step input object
+   */
+  parseStepMessage(stepMessage, stepName) {
+    let parsedStepMessage = stepMessage;
+    if (stepMessage.cma) {
+      parsedStepMessage = { ...stepMessage, ...stepMessage.cma, ...stepMessage.cma.event };
+      delete parsedStepMessage.cma;
+      delete parsedStepMessage.event;
     }
 
-    if (stepInput.replace) {
-       // Message was too large and output was written to S3
-       console.log(`Retrieving ${stepName} output from ${JSON.stringify(stepInput.replace)}`);
-       stepInput = pullStepFunctionEvent(stepInput);
+    if (stepMessage.replace) {
+      // Message was too large and output was written to S3
+      log.info(`Retrieving ${stepName} output from ${JSON.stringify(stepMessage.replace)}`);
+      parsedStepMessage = pullStepFunctionEvent(stepMessage);
     }
-    return stepInput;
+    return parsedStepMessage;
   }
 
   /**
@@ -151,7 +209,7 @@ class SfnStep {
    */
   getSuccessOutput(stepExecution, stepName) {
     if (stepExecution.completeEvent.type !== this.successEvent) {
-      console.log(`Step ${stepName} did not complete successfully, as expected.`);
+      log.info(`Step ${stepName} did not complete successfully, as expected.`);
       return null;
     }
     const completeEventOutput = stepExecution.completeEvent[this.eventDetailsKeys.succeeded];
@@ -167,7 +225,7 @@ class SfnStep {
    */
   getFailureOutput(stepExecution, stepName) {
     if (stepExecution.completeEvent.type !== this.failureEvent) {
-      console.log(`Step ${stepName} did not fail, as expected.`);
+      log.info(`Step ${stepName} did not fail, as expected.`);
       return null;
     }
     const completeEventOutput = stepExecution.completeEvent[this.eventDetailsKeys.failed];
@@ -183,17 +241,18 @@ class SfnStep {
    * @returns {Object} object containing the payload, null if error
    */
   async getStepOutput(workflowExecutionArn, stepName, eventType = 'success') {
-    const stepExecutions = await this.getStepExecutions(workflowExecutionArn, stepName, this);
+    const stepExecutions = await this.getStepExecutions(workflowExecutionArn, stepName);
 
     if (stepExecutions === null) {
-      console.log(`Could not find step ${stepName} in execution.`);
+      log.info(`Could not find step ${stepName} in execution.`);
       return null;
     }
 
     // If querying for successful step output, use the first successful
     // execution or the last execution if none were successful
     let stepExecution;
-    const successfulPassedExecutions = stepExecutions.filter((e) => this.completedSuccessfulFilter(e));
+    const successfulPassedExecutions = stepExecutions
+      .filter((e) => this.completedSuccessfulFilter(e));
     if (eventType === 'success'
         && successfulPassedExecutions
         && successfulPassedExecutions.length > 0) {
@@ -202,9 +261,8 @@ class SfnStep {
       stepExecution = stepExecutions[stepExecutions.length - 1];
     }
 
-    if (typeof stepExecution.completeEvent === 'undefined'
-        || stepExecution.completeEvent === null) {
-      console.log(`Step ${stepName} did not complete as expected.`);
+    if (isNil(stepExecution.completeEvent)) {
+      log.info(`Step ${stepName} did not complete as expected.`);
       return null;
     }
 
@@ -216,13 +274,13 @@ class SfnStep {
     }
 
     if (!stepOutput) {
-      console.log(`Step ${stepName} did not complete ${eventType} as expected.`);
+      log.info(`Step ${stepName} did not complete ${eventType} as expected.`);
       return null;
     }
 
     if (stepOutput.replace) {
       // Message was too large and output was written to S3
-      console.log(`Retrieving ${stepName} output from ${JSON.stringify(stepOutput.replace)}`);
+      log.info(`Retrieving ${stepName} output from ${JSON.stringify(stepOutput.replace)}`);
       stepOutput = pullStepFunctionEvent(stepOutput);
     }
     return stepOutput;
@@ -247,6 +305,7 @@ class LambdaStep extends SfnStep {
       'LambdaFunctionStarted'
     ];
     this.successEvent = 'LambdaFunctionSucceeded';
+    this.taskStartEvent = 'TaskStateEntered';
     this.failureEvent = 'LambdaFunctionFailed';
     this.completionEvents = [
       this.successEvent,
@@ -266,7 +325,6 @@ class LambdaStep extends SfnStep {
  * `ActivityStep` is a step inside a step function that runs an AWS ECS activity.
  */
 class ActivityStep extends SfnStep {
-  //eslint-disable-next-line require-jsdoc
   constructor() {
     super();
     this.scheduleFailedEvent = 'ActivityScheduleFailed';

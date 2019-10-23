@@ -1,5 +1,6 @@
 'use strict';
 
+const omit = require('lodash.omit');
 const test = require('ava');
 const request = require('supertest');
 const cloneDeep = require('lodash.clonedeep');
@@ -7,29 +8,27 @@ const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
-const {
-  createFakeJwtAuthToken
-} = require('../../../lib/testUtils');
+const { createFakeJwtAuthToken } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const indexer = require('../../../es/indexer');
 const assertions = require('../../../lib/assertions');
 
-const esIndex = randomString();
-let esClient;
-
-process.env.AccessTokensTable = randomString();
-process.env.RulesTable = randomString();
-process.env.UsersTable = randomString();
-process.env.stackName = randomString();
-process.env.system_bucket = randomString();
-process.env.TOKEN_SECRET = randomString();
+[
+  'AccessTokensTable',
+  'RulesTable',
+  'UsersTable',
+  'stackName',
+  'system_bucket',
+  'TOKEN_SECRET'
+  // eslint-disable-next-line no-return-assign
+].forEach((varName) => process.env[varName] = randomString());
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
 
+const esIndex = randomString();
 const workflowName = randomString();
-const workflowfile = `${process.env.stackName}/workflows/${workflowName}.json`;
-
+const workflowFile = `${process.env.stackName}/workflows/${workflowName}.json`;
 const testRule = {
   name: 'make_coffee',
   workflow: workflowName,
@@ -44,6 +43,7 @@ const testRule = {
   state: 'DISABLED'
 };
 
+let esClient;
 let jwtAuthToken;
 let accessTokenModel;
 let ruleModel;
@@ -56,7 +56,7 @@ test.before(async () => {
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
   await aws.s3().putObject({
     Bucket: process.env.system_bucket,
-    Key: workflowfile,
+    Key: workflowFile,
     Body: 'test data'
   }).promise();
 
@@ -296,35 +296,64 @@ test('POST returns a record exists when one exists', async (t) => {
   t.falsy(record);
 });
 
-test('PUT updates a rule', async (t) => {
-  const newRule = Object.assign({}, testRule, { state: 'ENABLED' });
+test('PUT replaces a rule', async (t) => {
+  const expectedRule = {
+    ...omit(testRule, 'provider'),
+    state: 'ENABLED'
+  };
 
-  const response = await request(app)
+  // Make sure testRule contains values for the properties we omitted from
+  // expectedRule to confirm that after we replace (PUT) the rule those
+  // properties are dropped from the stored rule.
+  t.truthy(testRule.provider);
+
+  await request(app)
     .put(`/rules/${testRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({ state: 'ENABLED' })
+    .send(expectedRule)
     .expect(200);
 
-  const record = response.body;
-  newRule.createdAt = record.createdAt;
-  newRule.updatedAt = record.updatedAt;
-
-  t.deepEqual(record, newRule);
-});
-
-test('PUT returns "record does not exist"', async (t) => {
-  const response = await request(app)
-    .put('/rules/new_make_coffee')
+  const { body: actualRule } = await request(app)
+    .get(`/rules/${testRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({ state: 'ENABLED' })
+    .expect(200);
+
+  t.deepEqual(actualRule, {
+    ...expectedRule,
+    createdAt: actualRule.createdAt,
+    updatedAt: actualRule.updatedAt
+  });
+});
+
+test('PUT returns 404 for non-existent rule', async (t) => {
+  const name = 'new_make_coffee';
+  const response = await request(app)
+    .put(`/rules/${name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ name })
     .expect(404);
 
   const { message, record } = response.body;
-  t.is(message, 'Record does not exist');
+  t.truthy(message.includes(name));
   t.falsy(record);
 });
+
+test('PUT returns 400 for name mismatch between params and payload',
+  async (t) => {
+    const response = await request(app)
+      .put(`/rules/${randomString()}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send({ name: randomString() })
+      .expect(400);
+    const { message, record } = response.body;
+
+    t.truthy(message);
+    t.falsy(record);
+  });
 
 test('DELETE deletes a rule', async (t) => {
   const newRule = Object.assign({}, testRule, {

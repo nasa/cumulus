@@ -13,7 +13,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 
 const { verifyJwtToken } = require('../../lib/token');
 const { AccessToken, User } = require('../../models');
-const launchpadSaml = rewire('../../app/launchpadSaml');
+const launchpadSaml = rewire('../../endpoints/launchpadSaml');
 const launchpadPublicCertificate = launchpadSaml.__get__(
   'launchpadPublicCertificate'
 );
@@ -195,4 +195,45 @@ test.serial('/saml/auth with good metadata returns redirect.', async (t) => {
   const decodedToken = verifyJwtToken(jwt);
   t.is(decodedToken.username, t.context.successfulSamlResponse.user.name_id);
   t.is(decodedToken.accessToken, t.context.successfulSamlResponse.user.session_index);
+});
+
+
+test.serial('/token endpoint with a token query parameter returns the parameter.', async (t) => {
+  const returnedToken = await request(app)
+    .get('/token?token=SomeRandomJWToken')
+    .set('x-apigateway-event', encodeURIComponent(JSON.stringify({ requestContext: { path: '/irrelevant/', stage: 'anything' } })))
+    .set('x-apigateway-context', encodeURIComponent(JSON.stringify({})))
+    .set('Accept', 'application/json')
+    .expect(200);
+
+  t.is(returnedToken.text, JSON.stringify({ message: { token: 'SomeRandomJWToken' } }));
+});
+
+test.serial('/token endpoint without a token query parameter redirects to saml/login.', async (t) => {
+  const redirect = await request(app)
+    .get('/token')
+    .set('x-apigateway-event', encodeURIComponent(JSON.stringify({ requestContext: { path: '/token', stage: 'stagename' } })))
+    .set('x-apigateway-context', encodeURIComponent(JSON.stringify({})))
+    .set('Accept', 'application/json')
+    .expect(302);
+
+  t.regex(redirect.header.location, /\/stagename\/saml\/login\?RelayState=.*%2Ftoken/);
+});
+
+test.serial('/token endpoint without proper context headers returns expectation failed.', async (t) => {
+  const expectedError = {
+    error: 'Expectation Failed',
+    message: ('Could not retrieve necessary information from express request object. '
+              + 'Incorrect relayState or stageName information in express request.'),
+    statusCode: 417
+  };
+
+  const badHeaders = await request(app)
+    .get('/token')
+    .set('x-apigateway-event', encodeURIComponent(JSON.stringify({ requestContext: { path: 'apath' } })))
+    .set('x-apigateway-context', encodeURIComponent(JSON.stringify({})))
+    .set('Accept', 'application/json')
+    .expect(417);
+
+  t.deepEqual(expectedError, JSON.parse(badHeaders.error.text));
 });

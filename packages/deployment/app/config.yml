@@ -295,6 +295,15 @@ default:
       state: ENABLED
       targets:
         - lambda: sfSemaphoreDown
+    publishReports:
+      eventPattern:
+        source:
+          - aws.states
+        detail-type:
+          - "Step Functions Execution Status Change"
+      state: ENABLED
+      targets:
+        - lambda: publishReports
 
   useWorkflowLambdaVersions: true
 

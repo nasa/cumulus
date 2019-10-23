@@ -7,7 +7,8 @@ const {
   buildQueueMessageFromTemplate
 } = require('@cumulus/common/message');
 const { SQS } = require('@cumulus/ingest/aws');
-const { Provider, Collection } = require('../models');
+const Collection = require('../models/collections');
+const Provider = require('../models/providers');
 
 async function getProvider(providerId) {
   if (providerId) {

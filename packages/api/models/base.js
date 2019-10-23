@@ -356,15 +356,21 @@ class Manager {
     };
 
     // Make sure that we don't update the key fields
-    const itemKeyNames = Object.keys(itemKeys);
-    itemKeyNames.forEach((property) => delete actualUpdates[property]);
+    Object.keys(itemKeys).forEach((property) => delete actualUpdates[property]);
+    // Make sure we don't delete required fields
+    const optionalFieldsToDelete = fieldsToDelete.filter((f) =>
+      !this.schema.required.includes(f));
 
     const currentItem = await this.get(itemKeys);
     const updatedItem = {
       ...currentItem,
       ...updates
     };
-    fieldsToDelete.forEach((f) => delete updatedItem[f]);
+
+    optionalFieldsToDelete.forEach((f) => {
+      delete updatedItem[f];
+      delete actualUpdates[f];
+    });
 
     if (this.validate) {
       this.constructor.recordIsValid(
@@ -373,9 +379,6 @@ class Manager {
         this.removeAdditional
       );
     }
-
-    // Make sure that we don't try to update a field that's being deleted
-    fieldsToDelete.forEach((property) => delete actualUpdates[property]);
 
     // Build the actual update request
     const attributeUpdates = {};
@@ -387,7 +390,7 @@ class Manager {
     });
 
     // Add keys to be deleted
-    fieldsToDelete.forEach((property) => {
+    optionalFieldsToDelete.forEach((property) => {
       attributeUpdates[property] = { Action: 'DELETE' };
     });
 

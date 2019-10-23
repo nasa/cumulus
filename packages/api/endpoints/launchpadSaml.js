@@ -36,7 +36,9 @@ const launchpadPublicCertificate = async (launchpadPublicMetadataPath) => {
   const metadata = await parseXmlString(launchpadMetatdataXML);
   const certificate = JSONPath({ wrap: false }, '$..ds:X509Certificate', metadata);
   if (certificate) return flatten(certificate);
-  throw new Error(`Failed to retrieve Launchpad metadata X509 Certificate from ${launchpadPublicMetadataPath}`);
+  throw new Error(
+    `Failed to retrieve Launchpad metadata X509 Certificate from ${launchpadPublicMetadataPath}`
+  );
 };
 
 /**
@@ -52,8 +54,11 @@ const buildLaunchpadJwt = async (samlResponse) => {
     user: { name_id: username, session_index: accessToken }
   } = samlResponse;
 
-  if (!username || !accessToken) throw new Error(`invalid SAML response received ${JSON.stringify(samlResponse)}`);
-
+  if (!username || !accessToken) {
+    throw new Error(
+      `invalid SAML response received ${JSON.stringify(samlResponse)}`
+    );
+  }
   const expirationTime = Date.now() + 60 * 60 * 1000;
   const accessTokenModel = new AccessToken();
   await accessTokenModel.create({ accessToken, expirationTime, username });
@@ -61,8 +66,8 @@ const buildLaunchpadJwt = async (samlResponse) => {
 };
 
 /**
-* convenience function to set up SAML Identity and Service Providers
-*/
+ * convenience function to set up SAML Identity and Service Providers
+ */
 const prepareSamlProviders = async () => {
   const LaunchpadX509Certificate = await launchpadPublicCertificate(
     process.env.LAUNCHPAD_METADATA_PATH
@@ -89,7 +94,6 @@ const prepareSamlProviders = async () => {
   return { idp, sp };
 };
 
-
 /**
  * Starting point for SAML SSO login
  *
@@ -107,12 +111,13 @@ const login = async (req, res) => {
     idp,
     { relay_state: relayState },
     (err, loginUrl) => {
-      if (err != null) return res.boom.badRequest('Could not create login request url.', err);
+      if (err != null) {
+        return res.boom.badRequest('Could not create login request url.', err);
+      }
       return res.redirect(loginUrl);
     }
   );
 };
-
 
 /**
  *  SAML AssertionConsumerService (ACS) endpoint.
@@ -136,20 +141,67 @@ const auth = async (req, res) => {
         const Location = `${req.body.RelayState}/?token=${LaunchpadJwtToken}`;
         return res.redirect(Location);
       })
-      .catch((error) => res.boom.badRequest('Could not build JWT from SAML response', error));
+      .catch((error) =>
+        res.boom.badRequest('Could not build JWT from SAML response', error));
   });
 };
 
-const notImplemented = async (req, res) => res.boom.notImplemented(
-  `endpoint: "${req.path}" not implemented. Login with launchpad.`
-);
+/**
+ * Helper to pull the url the client sent from a request that has been updated
+ * with middleware to include the event context.
+ * @param {Object} req - express request object
+ * @returns {Object} - The url the client visited to generate the request.
+ */
+const urlFromRequest = (req) =>
+  `${req.protocol}://${req.get('host')}${req.apiGateway.event.requestContext.path}`;
 
-const tokenEndpoint = notImplemented;
+/**
+ * helper to grab stageName
+ *
+ * @param {Object} req - express request object
+ * @returns {string} - stage name of apigateway
+ */
+const stageNameFromRequest = (req) => req.apiGateway.event.requestContext.stage;
+
+/**
+ * SAML Token endpoint.
+ *
+ * Simply returns the token received as a query parameter or redirects to saml
+ * login to authenticate.
+ * @param {Object} req - express request
+ * @param {Object} res - express response
+ * @returns {Object} - Either JWToken presented as a query string in the
+ * request or a redirect back to saml/login endpoing to receive the token.
+ */
+const samlToken = async (req, res) => {
+  let relayState;
+  let stageName;
+  try {
+    relayState = encodeURIComponent(urlFromRequest(req));
+    stageName = stageNameFromRequest(req);
+    if (!relayState || !stageName) {
+      throw new Error('Incorrect relayState or stageName information in express request.');
+    }
+  } catch (error) {
+    return res.boom.expectationFailed(
+      'Could not retrieve necessary information from express request object. ' + error.message
+    );
+  }
+
+  if (req.query.token) return res.send({ message: { token: req.query.token } });
+  return res.redirect(`/${stageName}/saml/login?RelayState=${relayState}`);
+};
+
+const notImplemented = async (req, res) =>
+  res.boom.notImplemented(
+    `endpoint: "${req.path}" not implemented. Login with launchpad.`
+  );
+
 const refreshEndpoint = notImplemented;
 
 module.exports = {
   auth,
   login,
   refreshEndpoint,
-  tokenEndpoint
+  samlToken
 };

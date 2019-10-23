@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/hello-world",
-  "version": "1.14.1",
+  "version": "1.14.2",
   "description": "Example task",
   "main": "index.js",
   "directories": {
@@ -35,7 +35,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "1.14.1",
+    "@cumulus/common": "1.14.2",
     "@cumulus/cumulus-message-adapter-js": "^1.0.8"
   },
   "devDependencies": {
@@ -44,7 +44,6 @@
     "babel-plugin-source-map-support": "^2.1.1",
     "babel-preset-env": "^1.7.0",
     "nyc": "^14.0.0",
-    "proxyquire": "^2.0.0",
     "webpack": "~4.5.0",
     "webpack-cli": "~2.0.14"
   }

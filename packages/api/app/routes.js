@@ -25,7 +25,7 @@ const dashboard = require('../endpoints/dashboard');
 const elasticsearch = require('../endpoints/elasticsearch');
 const ems = require('../endpoints/ems');
 const { launchpadProtectedAuth } = require('./launchpadAuth');
-const launchpadSaml = require('./launchpadSaml');
+const launchpadSaml = require('../endpoints/launchpadSaml');
 
 let token = require('../endpoints/token');
 let { ensureAuthorized } = require('./auth');
@@ -89,8 +89,8 @@ if (launchpadProtectedAuth()) {
   // SAML SSO
   router.get('/saml/login', launchpadSaml.login);
   router.post('/saml/auth', launchpadSaml.auth);
+  router.get('/token', launchpadSaml.samlToken);
   // disabled for now
-  router.get('/token', launchpadSaml.tokenEndpoint);
   router.post('/refresh', launchpadSaml.refreshEndpoint);
 } else {
   router.get('/token', token.tokenEndpoint);
@@ -110,7 +110,7 @@ router.use('/ems', ensureAuthorized, ems);
 // eslint-disable-next-line no-unused-vars
 router.use((error, req, res, next) => {
   log.error(error);
-  return res.status(500).send({ error: error.message });
+  return res.boom.badRequest(error.message, error);
 });
 
 module.exports = router;

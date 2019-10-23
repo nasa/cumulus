@@ -1,14 +1,18 @@
 'use strict';
 
+const { LambdaStep } = require('@cumulus/common/sfnStep');
 const {
-  rulesApi: rulesApiTestUtils,
+  addCollections,
+  cleanupCollections,
   isWorkflowTriggeredByRule,
-  LambdaStep,
   removeRuleAddedParams,
+  rulesApi: rulesApiTestUtils,
   waitForTestExecutionStart
 } = require('@cumulus/integration-tests');
 
 const {
+  createTestSuffix,
+  createTimestampedTestId,
   loadConfig,
   timestampedName
 } = require('../../helpers/testUtils');
@@ -21,20 +25,21 @@ const lambdaStep = new LambdaStep();
 
 describe('When I create a scheduled rule via the Cumulus API', () => {
   let execution;
+  const testId = createTimestampedTestId(config.stackName, 'Rule');
+  const testSuffix = createTestSuffix(testId);
+  const collectionsDir = './data/collections/s3_MOD09GQ_006';
   const scheduledRuleName = timestampedName('SchedHelloWorldTest');
   const scheduledHelloWorldRule = {
     name: scheduledRuleName,
+    collection: { name: `MOD09GQ${testSuffix}`, version: '006' },
     workflow: 'HelloWorldWorkflow',
-    rule: {
-      type: 'scheduled',
-      value: 'rate(2 minutes)'
-    },
-    meta: {
-      triggerRule: scheduledRuleName
-    }
+    rule: { type: 'scheduled', value: 'rate(2 minutes)' },
+    meta: { triggerRule: scheduledRuleName }
   };
 
   beforeAll(async () => {
+    await addCollections(config.stackName, config.bucket, collectionsDir,
+      testSuffix, testId);
     // Create a scheduled rule
     await rulesApiTestUtils.postRule({
       prefix: config.stackName,
@@ -42,15 +47,27 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
     });
   });
 
+  afterAll(async () => {
+    console.log(`deleting rule ${scheduledRuleName.name}`);
+
+    await rulesApiTestUtils.deleteRule({
+      prefix: config.stackName,
+      ruleName: scheduledRuleName.name
+    });
+    await cleanupCollections(config.stackName, config.bucket, collectionsDir,
+      testSuffix);
+  });
+
   describe('The scheduled rule kicks off a workflow', () => {
     beforeAll(async () => {
-      execution = await waitForTestExecutionStart({
+      execution = waitForTestExecutionStart({
         workflowName: scheduledHelloWorldRule.workflow,
         stackName: config.stackName,
         bucket: config.bucket,
         findExecutionFn: (taskInput, params) =>
           taskInput.meta.triggerRule && (taskInput.meta.triggerRule === params.ruleName),
-        findExecutionFnParams: { ruleName: scheduledRuleName }
+        findExecutionFnParams: { ruleName: scheduledRuleName },
+        startTask: 'HelloWorld'
       });
 
       console.log(`Scheduled Execution ARN: ${execution.executionArn}`);
@@ -78,31 +95,36 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
         bucket: config.bucket,
         findExecutionFn: (taskInput, params) =>
           taskInput.meta.triggerRule &&
-            (taskInput.meta.triggerRule === params.ruleName) &&
-            (taskInput.cumulus_meta.execution_name !== params.execution.name),
-        findExecutionFnParams: { ruleName: scheduledRuleName, execution }
-      }).catch((err) => expect(err.message).toEqual('Never found started workflow'));
+          (taskInput.meta.triggerRule === params.ruleName) &&
+          (taskInput.cumulus_meta.execution_name !== params.execution.name),
+        findExecutionFnParams: { ruleName: scheduledRuleName, execution },
+        startTask: 'HelloWorld'
+      }).catch((err) =>
+        expect(err.message).toEqual('Never found started workflow.'));
     });
   });
 });
 
 describe('When I create a one-time rule via the Cumulus API', () => {
   let postRule = '';
+  const testId = createTimestampedTestId(config.stackName, 'Rule');
+  const testSuffix = createTestSuffix(testId);
+  const collectionsDir = './data/collections/s3_MOD09GQ_006';
   const oneTimeRuleName = timestampedName('HelloWorldIntegrationTestRule');
   const createdCheck = timestampedName('Created');
   const updatedCheck = timestampedName('Updated');
   const helloWorldRule = {
     name: oneTimeRuleName,
+    collection: { name: `MOD09GQ${testSuffix}`, version: '006' },
     workflow: 'HelloWorldWorkflow',
-    rule: {
-      type: 'onetime'
-    },
-    meta: {
-      triggerRule: createdCheck // used to detect that we're looking at the correct execution
-    }
+    rule: { type: 'onetime' },
+    // used to detect that we're looking at the correct execution
+    meta: { triggerRule: createdCheck }
   };
 
   beforeAll(async () => {
+    await addCollections(config.stackName, config.bucket, collectionsDir,
+      testSuffix, testId);
     // Create a one-time rule
     const postRuleResponse = await rulesApiTestUtils.postRule({
       prefix: config.stackName,
@@ -118,6 +140,8 @@ describe('When I create a one-time rule via the Cumulus API', () => {
       prefix: config.stackName,
       ruleName: helloWorldRule.name
     });
+    await cleanupCollections(config.stackName, config.bucket, collectionsDir,
+      testSuffix);
   });
 
   it('the rule is returned in the post response', () => {
@@ -141,7 +165,8 @@ describe('When I create a one-time rule via the Cumulus API', () => {
         stackName: config.stackName,
         bucket: config.bucket,
         findExecutionFn: isWorkflowTriggeredByRule,
-        findExecutionFnParams: { rule: createdCheck }
+        findExecutionFnParams: { rule: createdCheck },
+        startTask: 'HelloWorld'
       });
       console.log(`Execution ARN: ${execution.executionArn}`);
     });
@@ -155,6 +180,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
         prefix: config.stackName,
         ruleName: helloWorldRule.name,
         updateParams: {
+          ...postRule.record,
           meta: {
             triggerRule: updatedCheck
           }
@@ -162,11 +188,11 @@ describe('When I create a one-time rule via the Cumulus API', () => {
       });
 
       const updatedRule = JSON.parse(updatingRuleResponse.body);
-      console.log('Updated Rule', updatedRule);
 
       await rulesApiTestUtils.rerunRule({
         prefix: config.stackName,
-        ruleName: helloWorldRule.name
+        ruleName: helloWorldRule.name,
+        updateParams: { ...updatedRule }
       });
 
       console.log(`Waiting for new execution of ${helloWorldRule.workflow} triggered by rerun of rule`);
@@ -175,9 +201,10 @@ describe('When I create a one-time rule via the Cumulus API', () => {
         stackName: config.stackName,
         bucket: config.bucket,
         findExecutionFn: isWorkflowTriggeredByRule,
-        findExecutionFnParams: { rule: updatedCheck }
+        findExecutionFnParams: { rule: updatedCheck },
+        startTask: 'HelloWorld'
       });
-      const updatedTaskInput = await lambdaStep.getStepInput(updatedExecution.executionArn, 'SfSnsReport');
+      const updatedTaskInput = await lambdaStep.getStepInput(updatedExecution.executionArn, 'HelloWorld');
       expect(updatedExecution).not.toBeNull();
       expect(updatedTaskInput.meta.triggerRule).toEqual(updatedCheck);
     });

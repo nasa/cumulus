@@ -15,8 +15,6 @@ const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmr-client');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 
-const range = require('lodash.range');
-
 const { Granule } = require('../../models');
 const { filterDatabaseProperties } = require('../../lib/FileUtils');
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
@@ -449,46 +447,65 @@ test('scan() will translate old-style granule files into the new schema', async 
   );
 });
 
-test('getGranulesForCollection returns the queue of granules', async (t) => {
-  // create granules with different collectionIds and statuses
-  const collectionIds = ['testGetGranulesForCollection___v1', 'testGetGranulesForCollection___v2'];
-  const granulesV1 = range(5).map(() =>
-    fakeGranuleFactoryV2({ collectionId: collectionIds[0], status: 'completed' }));
-  const granulesV1Failed = range(5).map(() =>
-    fakeGranuleFactoryV2({ collectionId: collectionIds[0], status: 'failed' }));
-  const granulesV2 = range(5).map(() =>
-    fakeGranuleFactoryV2({ collectionId: collectionIds[1], status: 'completed' }));
+test('getGranulesForCollection() only returns granules belonging to the specified collection', async (t) => {
+  const { granuleModel } = t.context;
 
-  const granule = new Granule();
-  await granule.create(granulesV1.concat(granulesV1Failed).concat(granulesV2));
+  const expectedGranule = fakeGranuleFactoryV2({ collectionId: 'good-collection' });
 
-  // verify the granules retrieved meet the criteria and are in the correct order
+  await granuleModel.create([
+    expectedGranule,
+    fakeGranuleFactoryV2({ collectionId: 'bad-collection' })
+  ]);
 
-  // get all completed v1 granules
-  const queueV1Completed = granule.getGranulesForCollection(collectionIds[0], 'completed');
-  const sortedV1CompletedGranIds = granulesV1.map((gran) => gran.granuleId).sort();
-  for (let i = 0; i < 5; i += 1) {
-    const gran = await queueV1Completed.peek(); // eslint-disable-line no-await-in-loop
-    t.is(gran.granuleId, sortedV1CompletedGranIds[i]);
-    t.is(gran.collectionId, collectionIds[0]);
-    queueV1Completed.shift();
-  }
+  const granules = await granuleModel.getGranulesForCollection('good-collection');
 
-  t.is(await queueV1Completed.peek(), null);
+  const { granuleId } = await granules.shift();
+  t.is(granuleId, expectedGranule.granuleId);
+  t.is(await granules.shift(), null);
+});
 
-  // get all the v1 granules
-  const queueV1Grans = granule.getGranulesForCollection(collectionIds[0]);
-  const sortedV1GranuleIds = granulesV1.concat(granulesV1Failed)
-    .map((gran) => gran.granuleId).sort();
+test('getGranulesForCollection() sorts its results by granuleId', async (t) => {
+  const { granuleModel } = t.context;
 
-  for (let i = 0; i < 10; i += 1) {
-    const gran = await queueV1Grans.peek(); // eslint-disable-line no-await-in-loop
-    t.is(gran.granuleId, sortedV1GranuleIds[i]);
-    t.is(gran.collectionId, collectionIds[0]);
-    queueV1Grans.shift();
-  }
+  const collectionId = randomString();
+  const granules = [
+    fakeGranuleFactoryV2({ collectionId }),
+    fakeGranuleFactoryV2({ collectionId })
+  ];
 
-  t.is(await queueV1Grans.peek(), null);
+  await granuleModel.create(granules);
+
+  const granulesQueue = await granuleModel.getGranulesForCollection(collectionId);
+
+  const fetchedGranules = [
+    await granulesQueue.shift(),
+    await granulesQueue.shift()
+  ];
+
+  t.is(await granulesQueue.shift(), null);
+
+  t.deepEqual(
+    fetchedGranules.map((g) => g.granuleId).sort(),
+    granules.map((g) => g.granuleId).sort()
+  );
+});
+
+test('getGranulesForCollection() filters by status', async (t) => {
+  const { granuleModel } = t.context;
+
+  const collectionId = randomString();
+  const expectedGranule = fakeGranuleFactoryV2({ collectionId, status: 'completed' });
+
+  await granuleModel.create([
+    expectedGranule,
+    fakeGranuleFactoryV2({ collectionId, status: 'failed' })
+  ]);
+
+  const granules = await granuleModel.getGranulesForCollection(collectionId, 'completed');
+
+  const { granuleId } = await granules.shift();
+  t.is(granuleId, expectedGranule.granuleId);
+  t.is(await granules.shift(), null);
 });
 
 test('removing a granule from CMR fails if the granule is not in CMR', async (t) => {
