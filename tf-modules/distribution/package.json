@@ -30,6 +30,9 @@
   },
   "devDependencies": {
     "ava": "^2.1.0",
+    "babel-loader": "^8.0.6",
+    "babel-plugin-source-map-support": "^2.1.1",
+    "babel-preset-env": "^1.7.0",
     "sinon": "^7.3.2",
     "supertest": "^4.0.2",
     "webpack": "^4.35.0",
