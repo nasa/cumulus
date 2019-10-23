@@ -14,14 +14,13 @@ testOutputDir=scripts/test_output
 rm -r -f $testOutputDir
 mkdir -p $testOutputDir
 
-echo "" | ./node_modules/.bin/parallel -j 4 sh scripts/run_test.sh  $testOutputDir ::: $TESTS
+echo "" | ./node_modules/.bin/parallel -j 0 sh scripts/run_test.sh  $testOutputDir ::: $TESTS
 result=$?
 echo parallel tests complete: $result suite failures
 
 # print test output to console
-for testFile in $testOutputDir/*; do
-  cat $testFile
-done
+find "$testOutputDir" -mindepth 1 -maxdepth 1 -name '*-passed.txt' -exec cat {} \;
+find "$testOutputDir" -mindepth 1 -maxdepth 1 -name '*-failed.txt' -exec cat {} \;
 
 rm -rf $testOutputDir
 
