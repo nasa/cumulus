@@ -1,6 +1,10 @@
 #!/bin/bash
 set -ex
 
+apt-get update
+apt-get install -y python-pip
+pip install awscli
+
 TF_VERSION=$(cat .tfversion)
 # Fetch terraform binary
 if ! curl -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip ; then
