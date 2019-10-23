@@ -1,15 +1,7 @@
 const path = require('path');
 
-let mode = 'development';
-let devtool = 'inline-source-map';
-
-if(process.env.PRODUCTION) {
-  mode = 'production';
-  devtool = 'source-map';
-}
-
 module.exports = {
-  mode,
+  mode: process.env.PRODUCTION ? 'production' : 'development',
   entry: './index.js',
   output: {
     libraryTarget: 'commonjs2',
@@ -21,18 +13,22 @@ module.exports = {
     'electron',
     {'formidable': 'url'}
   ],
-  devtool,
-  target: 'node',
   module: {
     rules: [
       {
-        test: /\.jpg$/,
+        test: /\.js$/,
+        exclude: /node_modules/,
         use: [
           {
-            loader: 'file-loader',
-          }
-        ]
-      }
-    ]
-  }
+            loader: 'babel-loader',
+            options: {
+              cacheDirectory: true
+            },
+          },
+        ],
+      },
+    ],
+  },
+  devtool: 'inline-source-map',
+  target: 'node'
 };
