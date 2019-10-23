@@ -539,7 +539,11 @@ async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
 
       rule = Object.assign(rule, overrides);
       const ruleTemplate = Handlebars.compile(JSON.stringify(rule));
-      const templatedRule = JSON.parse(ruleTemplate(Object.assign({}, config, process.env)));
+      const templatedRule = JSON.parse(ruleTemplate(Object.assign({
+        AWS_ACCOUNT_ID: process.env.AWS_ACCOUNT_ID,
+        AWS_REGION: process.env.AWS_REGION
+      },
+      config)));
 
       const r = new Rule();
       console.log(`adding rule ${JSON.stringify(templatedRule)}`);
