@@ -1,4 +1,6 @@
 const path = require('path');
+// path to module root
+const root = path.resolve(__dirname);
 
 module.exports = {
   mode: process.env.PRODUCTION ? 'production' : 'development',
@@ -6,7 +8,11 @@ module.exports = {
   output: {
     libraryTarget: 'commonjs2',
     filename: 'index.js',
-    path: path.resolve(__dirname, 'dist')
+    path: path.resolve(__dirname, 'dist'),
+    devtoolModuleFilenameTemplate: (info) => {
+      const relativePath = path.relative(root, info.absoluteResourcePath)
+      return `webpack://${relativePath}`;
+    }
   },
   externals: [
     'aws-sdk',
