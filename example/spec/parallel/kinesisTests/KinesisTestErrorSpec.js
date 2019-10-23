@@ -38,40 +38,25 @@ const {
   createTestDataPath
 } = require('../../helpers/testUtils');
 
-const testConfig = loadConfig();
-const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestError');
-const testSuffix = createTestSuffix(testId);
-const testDataFolder = createTestDataPath(testId);
-const ruleSuffix = globalReplace(testSuffix, '-', '_');
-
-
 const record = JSON.parse(fs.readFileSync(`${__dirname}/data/records/L2_HR_PIXC_product_0001-of-4154.json`));
-record.product.files[0].uri = globalReplace(record.product.files[0].uri, 'cumulus-test-data/pdrs', testDataFolder);
-record.provider += testSuffix;
-record.collection += testSuffix;
 
 const ruleDirectory = './spec/parallel/kinesisTests/data/rules';
-const ruleOverride = {
-  name: `L2_HR_PIXC_kinesisRule${ruleSuffix}`,
-  collection: {
-    name: record.collection,
-    version: '000'
-  },
-  provider: record.provider
-};
 
 describe('The messageConsumer receives a bad record.\n', () => {
   const providersDir = './data/providers/PODAAC_SWOT/';
   const collectionsDir = './data/collections/L2_HR_PIXC-000/';
 
+  let failureSqsUrl;
+  let ruleOverride;
+  let ruleSuffix;
+  let streamName;
+  let testConfig;
+  let testSuffix;
+
   const testRecordIdentifier = randomString();
   record.identifier = testRecordIdentifier;
   const badRecord = { ...record };
   delete badRecord.collection;
-
-  const streamName = `${testId}-KinesisTestErrorStream`;
-  testConfig.streamName = streamName;
-  const failureSqsUrl = `https://sqs.${testConfig.awsRegion}.amazonaws.com/${testConfig.awsAccountId}/${testConfig.stackName}-kinesisFailure`;
 
   async function cleanUp() {
     if (this.ReceiptHandle) {
@@ -92,6 +77,30 @@ describe('The messageConsumer receives a bad record.\n', () => {
   }
 
   beforeAll(async () => {
+    testConfig = await loadConfig();
+
+    const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestError');
+    testSuffix = createTestSuffix(testId);
+    const testDataFolder = createTestDataPath(testId);
+    ruleSuffix = globalReplace(testSuffix, '-', '_');
+
+    streamName = `${testId}-KinesisTestErrorStream`;
+    testConfig.streamName = streamName;
+    failureSqsUrl = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT_ID}/${testConfig.stackName}-kinesisFailure`;
+
+    record.product.files[0].uri = globalReplace(record.product.files[0].uri, 'cumulus-test-data/pdrs', testDataFolder);
+    record.provider += testSuffix;
+    record.collection += testSuffix;
+
+    ruleOverride = {
+      name: `L2_HR_PIXC_kinesisRule${ruleSuffix}`,
+      collection: {
+        name: record.collection,
+        version: '000'
+      },
+      provider: record.provider
+    };
+
     // populate collections, providers and test data
     await Promise.all([
       addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
