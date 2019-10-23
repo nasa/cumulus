@@ -153,7 +153,7 @@ async function getExecutionStatus(executionArn) {
  *
  * @param {string} executionArn - ARN of the execution
  * @param {number} [timeout=600] - the time, in seconds, to wait for the
- *   execution to reach a terminal
+ *   execution to reach a terminal state
  * @returns {string} status
  */
 async function waitForCompletedExecution(executionArn, timeout = 600) {
