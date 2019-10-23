@@ -25,6 +25,9 @@
     "lodash.clonedeep": "^4.5.0"
   },
   "devDependencies": {
+    "babel-loader": "^8.0.6",
+    "babel-plugin-source-map-support": "^2.1.1",
+    "babel-preset-env": "^1.7.0",
     "file-loader": "^3.0.1",
     "webpack": "~4.5.0",
     "webpack-cli": "~2.0.14"

@@ -54,6 +54,9 @@
   "devDependencies": {
     "@cumulus/test-data": "1.14.1",
     "ava": "^2.1.0",
+    "babel-loader": "^8.0.6",
+    "babel-plugin-source-map-support": "^2.1.1",
+    "babel-preset-env": "^1.7.0",
     "lodash.set": "^4.3.2",
     "nyc": "^14.0.0",
     "proxyquire": "^2.0.0",
