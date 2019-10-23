@@ -35,7 +35,6 @@ const s3data = [
 ];
 
 describe('The Ingest Granule failure workflow', () => {
-
   const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
