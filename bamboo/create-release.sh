@@ -20,9 +20,10 @@ export VERSION=$(jq --raw-output .version lerna.json)
 (cd tf-modules/distribution && ./bin/build-tf-module.sh && cp ./dist/terraform-aws-cumulus-distribution.zip ../../terraform-aws-cumulus-distribution.zip)
 (cd tf-modules/s3-replicator && ./bin/build-tf-module.sh && cp ./dist/terraform-aws-cumulus-s3-replicator.zip ../../terraform-aws-cumulus-s3-replicator.zip)
 
-## Create zipfile
-zip -r -x \*node_modules\* -o terraform-aws-cumulus.zip tf-modules tasks packages
+## Create zipfiles
+zip -r -x \*node_modules\* -o terraform-aws-cumulus.zip tf-modules tasks/**/dist/** packages/**/dist/**
 (cd ./tf-modules/workflow; zip -r -x \*node_modules\* -o ../../terraform-aws-cumulus-workflow.zip .)
+(cd ./tf-modules/cumulus_ecs_service; zip -r -x \*node_modules\* -o ../../terraform-aws-cumulus-ecs-service.zip .)
 
 ### Release package
 echo $RELEASE_URL
@@ -30,3 +31,4 @@ curl -X POST -H "Authorization: token $TOKEN" --data-binary "@terraform-aws-cumu
 curl -X POST -H "Authorization: token $TOKEN" --data-binary "@terraform-aws-cumulus-workflow.zip" -H "Content-type: application/octet-stream" $RELEASE_URL/assets?name=terraform-aws-cumulus-workflow.zip
 curl -X POST -H "Authorization: token $TOKEN" --data-binary "@terraform-aws-cumulus-s3-replicator.zip" -H "Content-type: application/octet-stream" $RELEASE_URL/assets?name=terraform-aws-cumulus-s3-replicator.zip
 curl -X POST -H "Authorization: token $TOKEN" --data-binary "@terraform-aws-cumulus-distribution.zip" -H "Content-type: application/octet-stream" $RELEASE_URL/assets?name=terraform-aws-cumulus-distribution.zip
+curl -X POST -H "Authorization: token $TOKEN" --data-binary "@terraform-aws-cumulus-ecs-service.zip" -H "Content-type: application/octet-stream" $RELEASE_URL/assets?name=terraform-aws-cumulus-ecs-service.zip
