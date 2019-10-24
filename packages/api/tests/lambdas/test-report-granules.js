@@ -27,8 +27,8 @@ const fakeGranuleRecord = {
     Error: 'Error',
     Cause: 'Workflow failed'
   },
-  createdAt: Date.now(),
-  timestamp: Date.now() - randomNumber(10000000),
+  createdAt: Date.now() - randomNumber(10000000),
+  timestamp: Date.now(),
   timeToPreprocess: 0.123,
   timeToArchive: 0.123,
   processingStartDateTime: '2019-07-28T00:00:00.000Z',

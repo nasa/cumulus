@@ -9,12 +9,13 @@ const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const pLimit = require('p-limit');
+const pWaitFor = require('p-wait-for');
 const pMap = require('p-map');
-const { constructCollectionId } = require('@cumulus/common');
 
-const {
-  stringUtils: { globalReplace }
-} = require('@cumulus/common');
+const { pullStepFunctionEvent } = require('@cumulus/common/aws');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { ActivityStep, LambdaStep } = require('@cumulus/common/sfnStep');
+const { globalReplace } = require('@cumulus/common/string');
 
 const {
   dynamodb,
@@ -30,7 +31,6 @@ const {
   models: { Provider, Collection, Rule }
 } = require('@cumulus/api');
 
-const sfnStep = require('./sfnStep');
 const api = require('./api/api');
 const rulesApi = require('./api/rules');
 const emsApi = require('./api/ems');
@@ -46,7 +46,7 @@ const waitPeriodMs = 1000;
 
 const maxWaitForStartedExecutionSecs = 60 * 5;
 
-const lambdaStep = new sfnStep.LambdaStep();
+const lambdaStep = new LambdaStep();
 
 /**
  * Wait for an AsyncOperation to reach a given status
@@ -133,16 +133,19 @@ function getWorkflowArn(stackName, bucketName, workflowName) {
 /**
  * Get the status of a given execution
  *
- * If the execution does not exist, this will return 'RUNNING'.  This seems
- * surprising in the "don't surprise users of your code" sort of way.  If it
- * does not exist then the calling code should probably know that.  Something
- * to be refactored another day.
+ * If the execution does not exist, this will return 'STARTING'.
  *
  * @param {string} executionArn - ARN of the execution
  * @returns {Promise<string>} status
  */
 async function getExecutionStatus(executionArn) {
-  return (await StepFunctions.describeExecution({ executionArn })).status;
+  try {
+    const { status } = await StepFunctions.describeExecution({ executionArn });
+    return status;
+  } catch (err) {
+    if (err.code === 'ExecutionDoesNotExist') return 'STARTING';
+    throw err;
+  }
 }
 
 /**
@@ -150,50 +153,25 @@ async function getExecutionStatus(executionArn) {
  *
  * @param {string} executionArn - ARN of the execution
  * @param {number} [timeout=600] - the time, in seconds, to wait for the
- *   execution to reach a non-RUNNING state
+ *   execution to reach a terminal state
  * @returns {string} status
  */
 async function waitForCompletedExecution(executionArn, timeout = 600) {
-  let executionStatus;
-  let iteration = 0;
-  const sleepPeriodMs = 5000;
-  const maxMinutesWaitedForExecutionStart = 5;
-  const iterationsPerMinute = Math.floor(60000 / sleepPeriodMs);
-  const maxIterationsToStart = Math.floor(maxMinutesWaitedForExecutionStart * iterationsPerMinute);
+  let status;
 
-  const stopTime = Date.now() + (timeout * 1000);
-
-  /* eslint-disable no-await-in-loop */
-  do {
-    iteration += 1;
-    try {
-      executionStatus = await getExecutionStatus(executionArn);
-    } catch (err) {
-      if (!(err.code === 'ExecutionDoesNotExist') || iteration > maxIterationsToStart) {
-        console.log(`waitForCompletedExecution failed: ${err.code}, arn: ${executionArn}`);
-        throw err;
-      }
-      console.log("Execution does not exist... assuming it's still starting up.");
-      executionStatus = 'STARTING';
+  await pWaitFor(
+    async () => {
+      status = await getExecutionStatus(executionArn);
+      console.log(`${executionArn} status: ${status}`);
+      return status !== 'STARTING' && status !== 'RUNNING';
+    },
+    {
+      interval: 2000,
+      timeout: timeout * 1000
     }
-    if (executionStatus === 'RUNNING') {
-      // Output a 'heartbeat' every minute
-      if (!(iteration % iterationsPerMinute)) console.log('Execution running....');
-    }
-    await sleep(sleepPeriodMs);
-  } while (['RUNNING', 'STARTING'].includes(executionStatus) && Date.now() < stopTime);
-  /* eslint-enable no-await-in-loop */
+  );
 
-  if (executionStatus === 'RUNNING') {
-    const executionHistory = await StepFunctions.getExecutionHistory({
-      executionArn,
-      maxResults: 100
-    });
-    console.log(`waitForCompletedExecution('${executionArn}') timed out after ${timeout} seconds`);
-    console.log('Execution History:');
-    console.log(executionHistory);
-  }
-  return executionStatus;
+  return status;
 }
 
 /**
@@ -419,7 +397,7 @@ async function deleteCollections(stackName, bucketName, collections, postfix) {
  * @param {string} bucket - S3 internal bucket name
  * @param {string} collectionsDirectory - the directory of collection json files
  * @param {string} postfix - string that was appended to collection name
- * @returns {number} - number of deleted collections
+ * @returns {Promise<number>} - number of deleted collections
  */
 async function cleanupCollections(stackName, bucket, collectionsDirectory, postfix) {
   const collections = await listCollections(stackName, bucket, collectionsDirectory);
@@ -801,6 +779,8 @@ async function getExecutions(workflowName, stackName, bucket, maxExecutionResult
  * findExecutionFnParams and returns a boolean indicating whether or not this is the correct
  * instance of the workflow
  * @param {Object} options.findExecutionFnParams - params to be passed into findExecutionFn
+ * @param {string} options.startTask - Name of task to check for step input. Input to this
+ * task will be evaluated by the compare function `findExecutionFn`.
  * @param {number} [options.maxWaitSeconds] - an optional custom wait time in seconds
  * @returns {undefined} - none
  * @throws {Error} if workflow was never started
@@ -811,6 +791,7 @@ async function waitForTestExecutionStart({
   bucket,
   findExecutionFn,
   findExecutionFnParams,
+  startTask,
   maxWaitSeconds = maxWaitForStartedExecutionSecs
 }) {
   let timeWaitedSecs = 0;
@@ -822,7 +803,8 @@ async function waitForTestExecutionStart({
 
     for (let executionCtr = 0; executionCtr < executions.length; executionCtr += 1) {
       const execution = executions[executionCtr];
-      const taskInput = await lambdaStep.getStepInput(execution.executionArn, 'SfSnsReport');
+      let taskInput = await lambdaStep.getStepInput(execution.executionArn, startTask);
+      taskInput = await pullStepFunctionEvent(taskInput);
       if (taskInput && findExecutionFn(taskInput, findExecutionFnParams)) {
         return execution;
       }
@@ -848,13 +830,8 @@ module.exports = {
   getWorkflowTemplate,
   waitForCompletedExecution,
   waitForTestExecutionStart,
-  ActivityStep: sfnStep.ActivityStep,
-  LambdaStep: sfnStep.LambdaStep,
-  /**
-   * @deprecated Since version 1.3. To be deleted version 2.0.
-   * Use sfnStep.LambdaStep.getStepOutput instead.
-   */
-  getLambdaOutput: new sfnStep.LambdaStep().getStepOutput,
+  ActivityStep,
+  LambdaStep,
   addCollections,
   addCustomUrlPathToCollectionFiles,
   listCollections,

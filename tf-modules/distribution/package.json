@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/s3-credentials-endpoint",
   "private": true,
-  "version": "1.14.1",
+  "version": "1.14.2",
   "engines": {
     "node": ">=8.10.0"
   },
@@ -14,9 +14,9 @@
     "access": "public"
   },
   "dependencies": {
-    "@cumulus/api": "1.14.1",
-    "@cumulus/common": "1.14.1",
-    "@cumulus/logger": "1.14.1",
+    "@cumulus/api": "1.14.2",
+    "@cumulus/common": "1.14.2",
+    "@cumulus/logger": "1.14.2",
     "aws-serverless-express": "^3.3.6",
     "body-parser": "^1.19.0",
     "cookie-parser": "^1.4.4",
@@ -30,6 +30,9 @@
   },
   "devDependencies": {
     "ava": "^2.1.0",
+    "babel-loader": "^8.0.6",
+    "babel-plugin-source-map-support": "^2.1.1",
+    "babel-preset-env": "^1.7.0",
     "sinon": "^7.3.2",
     "supertest": "^4.0.2",
     "webpack": "^4.35.0",

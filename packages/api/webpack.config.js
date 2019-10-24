@@ -1,6 +1,9 @@
 'use strict';
 
 const CopyPlugin = require('copy-webpack-plugin');
+const path = require('path');
+// path to module root
+const root = path.resolve(__dirname);
 
 module.exports = {
   mode: process.env.PRODUCTION ? 'production' : 'development',
@@ -21,15 +24,15 @@ module.exports = {
     indexFromDatabase: './lambdas/index-from-database.js',
     messageConsumer: './lambdas/message-consumer.js',
     payloadLogger: './lambdas/payload-logger.js',
+    publishReports: './lambdas/publish-reports.js',
     reportExecutions: './lambdas/report-executions.js',
     reportGranules: './lambdas/report-granules.js',
     reportPdrs: './lambdas/report-pdrs.js',
     sfScheduler: './lambdas/sf-scheduler.js',
-    sfSnsBroadcast: './lambdas/sf-sns-broadcast.js',
     sfSemaphoreDown: './lambdas/sf-semaphore-down.js',
     sfStarter: './lambdas/sf-starter.js'
   },
-  devtool: process.env.PRODUCTION ? false : 'inline-source-map',
+  devtool: 'inline-source-map',
   resolve: {
     alias: {
       'saml2-js': 'saml2-js/lib-js/saml2.js',
@@ -45,13 +48,33 @@ module.exports = {
   ],
   output: {
     libraryTarget: 'commonjs2',
-    filename: '[name]/index.js'
+    filename: '[name]/index.js',
+    devtoolModuleFilenameTemplate: (info) => {
+      const relativePath = path.relative(root, info.absoluteResourcePath)
+      return `webpack://${relativePath}`;
+    }
   },
   externals: [
     'aws-sdk',
     'electron',
     { formidable: 'url' }
   ],
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              cacheDirectory: true
+            },
+          },
+        ],
+      },
+    ],
+  },
   target: 'node',
   node: {
     __dirname: false,

@@ -2,6 +2,8 @@
 
 Broadcast an incoming Cumulus message to SNS.  This lambda function works with Cumulus Message Adapter, and it can be used anywhere in a step function workflow to report granule and PDR status.
 
+Note that the initial and final reporting of an execution/granule/PDR status is now handled by Cumulus outside of the workflow process, so the use of this task to report start/stop status is deprecated. **This task should only be utilized if an update to status mid-workflow is desired.**
+
 If the task's input includes a `payload` key, the value of the key is returned as the output of the task, otherwise the output will be an empty object.
 
 To report the PDR's progress as it's being processed, add the following step after the pdr-status-check:
@@ -19,40 +21,6 @@ To report the PDR's progress as it's being processed, add the following step aft
       Resource: ${SfSnsReportLambdaFunction.Arn}
 ```
 
-To report the start status of the step function:
-
-```yaml
-    StatusReport:
-      Parameters:
-        cma:
-          event.$: '$'
-          task_config:
-              cumulus_message:
-                input: '{$}'
-     ResultPath: null
-     Type: Task
-     Resource: ${SfSnsReportLambdaFunction.Arn}
-```
-
-To report the final status of the step function:
-
-```yaml
-    StopStatus:
-      Parameters:
-        cma:
-          event.$: '$'
-          task_config:
-              sfnEnd: true
-              stack: '{$.meta.stack}'
-              bucket: '{$.meta.buckets.internal.name}'
-              stateMachine: '{$.cumulus_meta.state_machine}'
-              executionName: '{$.cumulus_meta.execution_name}'
-              cumulus_message:
-                input: '{$}'
-      ResultPath: null
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-```
 
 ## What is Cumulus?
 

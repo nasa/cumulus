@@ -1,7 +1,7 @@
 'use strict';
 
 const fs = require('fs-extra');
-const { models: { Granule } } = require('@cumulus/api');
+const { models: { Execution, Granule } } = require('@cumulus/api');
 const {
   addCollections,
   addProviders,
@@ -49,6 +49,9 @@ describe('The Ingest Granule failure workflow', () => {
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
   const granuleModel = new Granule();
 
+  process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+  const executionModel = new Execution();
+
   beforeAll(async () => {
     // populate collections, providers and test data
     await Promise.all([
@@ -84,6 +87,7 @@ describe('The Ingest Granule failure workflow', () => {
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
+      executionModel.delete({ arn: workflowExecution.executionArn }),
       granulesApiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
@@ -103,24 +107,32 @@ describe('The Ingest Granule failure workflow', () => {
 
     beforeAll(async () => {
       const executionArn = workflowExecution.executionArn;
-      const executionResponse = await executionsApiTestUtils.getExecution({
-        prefix: config.stackName,
-        arn: executionArn
-      });
-      execution = JSON.parse(executionResponse.body);
       const executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
         prefix: config.stackName,
         arn: executionArn
       });
       executionStatus = JSON.parse(executionStatusResponse.body);
+
+      // Wait for execution to be failed before getting execution record, so that
+      // the record should have the correct status
+      await waitForModelStatus(
+        executionModel,
+        { arn: executionArn },
+        'failed'
+      );
+      const executionResponse = await executionsApiTestUtils.getExecution({
+        prefix: config.stackName,
+        arn: executionArn
+      });
+      execution = JSON.parse(executionResponse.body);
     });
 
     it('branches appropriately according to the CMA output', async () => {
       expect(executionStatus.executionHistory).toBeTruthy();
-      const events = executionStatus.executionHistory.events;
+      const { events } = executionStatus.executionHistory;
 
       const syncGranuleTaskName = 'SyncGranule';
-      const stopStatusTaskName = 'StopStatus';
+      const failedStepName = 'WorkflowFailed';
 
       let choiceVerified = false;
       for (let i = 0; i < events.length; i += 1) {
@@ -141,13 +153,13 @@ describe('The Ingest Granule failure workflow', () => {
           while (!nextTask && i < events.length - 1) {
             i += 1;
             const nextEvent = events[i];
-            if (nextEvent.type === 'TaskStateEntered' &&
+            if (nextEvent.type === 'FailStateEntered' &&
               nextEvent.name) {
               nextTask = nextEvent.name;
             }
           }
 
-          expect(nextTask).toEqual(stopStatusTaskName);
+          expect(nextTask).toEqual(failedStepName);
           choiceVerified = true;
           break;
         }

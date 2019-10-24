@@ -1,5 +1,8 @@
 {
     "high": true,
     "retry-count": 20,
-    "whitelist": ["googleapis"]
+    "whitelist": [
+        "googleapis",
+        "https-proxy-agent"
+    ]
 }

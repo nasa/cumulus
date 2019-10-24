@@ -2,7 +2,7 @@
 
 const merge = require('lodash.merge');
 
-const { publishSnsMessage } = require('@cumulus/common/aws');
+const { publishSnsMessage, pullStepFunctionEvent } = require('@cumulus/common/aws');
 const { getExecutionUrl } = require('@cumulus/ingest/aws');
 const {
   getSfEventMessageObject,
@@ -15,6 +15,7 @@ const {
   getMessageExecutionArn,
   getMessageGranules
 } = require('@cumulus/common/message');
+const { ActivityStep, LambdaStep } = require('@cumulus/common/sfnStep');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 
 const Execution = require('../models/executions');
@@ -206,6 +207,29 @@ async function publishReportSnsMessages(eventMessage, isTerminalStatus, isFailed
 }
 
 /**
+ * Get message to use for publishing failed execution notifications.
+ *
+ * Try to get the input to the first failed step in the execution so we can
+ * update the status of any granules/PDRs that don't exist in the initial execution
+ * input. Falls back to overall execution input.
+ *
+ * @param {Object} inputMessage - Workflow execution input message
+ * @returns {Object} - Execution step message or execution input message
+ */
+async function getFailedExecutionMessage(inputMessage) {
+  const executionArn = getMessageExecutionArn(inputMessage);
+
+  const activityStep = new ActivityStep();
+  const lambdaStep = new LambdaStep();
+  const failedStepMessage = await lambdaStep.getFirstFailedStepMessage(executionArn)
+    || await activityStep.getFirstFailedStepMessage(executionArn);
+
+  // If input from the failed step cannot be retrieved, then fall back to execution
+  // input.
+  return failedStepMessage || inputMessage;
+}
+
+/**
  * Lambda handler for publish-reports Lambda.
  *
  * @param {Object} event - Cloudwatch event
@@ -216,19 +240,17 @@ async function handler(event) {
   const isTerminalStatus = isTerminalSfStatus(eventStatus);
   const isFailedStatus = isFailedSfStatus(eventStatus);
 
-  const eventMessage = isTerminalStatus && !isFailedStatus
+  // For terminal non-failed states, we want the output from the execution.
+  // For running states, there isn't any output, so we want input to the execution.
+  let eventMessage = isTerminalStatus && !isFailedStatus
     ? getSfEventMessageObject(event, 'output')
     : getSfEventMessageObject(event, 'input', '{}');
 
-  // TODO: Get event message from first failed step from execution history for failed executions
-  /*if (isFailedSfStatus) {
-    const executionArn = getMessageExecutionArn(eventMessage);
-    const executionHistory = await StepFunctions.getExecutionHistory({ executionArn });
-    for (let i = 0; i < executionHistory.events.length; i += 1) {
-      const sfEvent = executionHistory.events[i];
-      updatedEvents.push(getEventDetails(sfEvent));
-    }
-  }*/
+  if (isFailedStatus) {
+    eventMessage = await getFailedExecutionMessage(eventMessage);
+  }
+
+  eventMessage = await pullStepFunctionEvent(eventMessage);
 
   return publishReportSnsMessages(eventMessage, isTerminalStatus, isFailedStatus);
 }

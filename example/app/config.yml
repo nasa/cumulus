@@ -14,50 +14,7 @@ default:
     AsyncOperationsTable: '{{prefix}}-AsyncOperationsTable'
     asyncOperationRunnerRole: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway'
     sqs_consumer_rate: 300
-    IngestAndPublishGranule:
-      IngestGranuleOutput:
-        granules:
-          - files:
-            - bucket: '{{buckets.protected.name}}'
-              filename: "s3://{{buckets.protected.name}}/MOD09GQ___006/2017/MOD/replace-me-granuleId.hdf"
-            - bucket: '{{buckets.private.name}}'
-              filename: "s3://{{buckets.private.name}}/MOD09GQ___006/MOD/replace-me-granuleId.hdf.met"
-            - bucket: '{{buckets.public.name}}'
-              filename: "s3://{{buckets.public.name}}/MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg"
-            - bucket: '{{buckets.protected-2.name}}'
-              filename: "s3://{{buckets.protected-2.name}}/MOD09GQ___006/MOD/replace-me-granuleId.cmr.xml"
-      IngestUMMGranuleOutput:
-        granules:
-          - files:
-            - bucket: '{{buckets.protected.name}}'
-              filename: "s3://{{buckets.protected.name}}/MOD09GQ___006/2016/MOD/replace-me-granuleId.hdf"
-            - bucket: '{{buckets.private.name}}'
-              filename: "s3://{{buckets.private.name}}/MOD09GQ___006/MOD/replace-me-granuleId.hdf.met"
-            - bucket: '{{buckets.public.name}}'
-              filename: "s3://{{buckets.public.name}}/MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg"
-            - bucket: '{{buckets.protected-2.name}}'
-              filename: "s3://{{buckets.protected-2.name}}/MOD09GQ___006/MOD/replace-me-granuleId.cmr.json"
-      SyncGranuleOutput:
-        granules:
-          - files:
-            - bucket: '{{buckets.internal.name}}'
-              filename: 's3://{{buckets.internal.name}}/file-staging/{{prefix}}/replace-me-collectionId/replace-me-granuleId.hdf'
-              fileStagingDir: 'file-staging/{{prefix}}/replace-me-collectionId'
-            - bucket: '{{buckets.internal.name}}'
-              filename: 's3://{{buckets.internal.name}}/file-staging/{{prefix}}/replace-me-collectionId/replace-me-granuleId.hdf.met'
-              fileStagingDir: 'file-staging/{{prefix}}/replace-me-collectionId'
-            - bucket: '{{buckets.internal.name}}'
-              filename: 's3://{{buckets.internal.name}}/file-staging/{{prefix}}/replace-me-collectionId/replace-me-granuleId_ndvi.jpg'
-              fileStagingDir: 'file-staging/{{prefix}}/replace-me-collectionId'
-    SyncGranule:
-      granules:
-        - files:
-          - bucket: '{{buckets.internal.name}}'
-            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{prefix}}/replace-me-collectionId/replace-me-granuleId.hdf'
-            fileStagingDir: 'custom-staging-dir/{{prefix}}/replace-me-collectionId'
-          - bucket: '{{buckets.internal.name}}'
-            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{prefix}}/replace-me-collectionId/replace-me-granuleId.hdf.met'
-            fileStagingDir: 'custom-staging-dir/{{prefix}}/replace-me-collectionId'
+
   # test configuration ends
 
   cmaDir: '/opt/'
@@ -253,6 +210,7 @@ default:
   # URS users who should have access to the dashboard application.
   users:
     - username: aimeeb
+    - username: chuckwondo
     - username: jennyhliu
     - username: jnorton1
     - username: kbaynes
@@ -865,6 +823,14 @@ mboyd-int:
   ecs:
     ssh: true
     keyPairName: mboyd
+
+chuckulus:
+  prefix: chuckulus
+  prefixNoDash: chuckulus
+
+chuckulus-ci:
+  prefix: chuckulus-ci
+  prefixNoDash: chuckulusCI
 
 pq:
   prefix: pq
