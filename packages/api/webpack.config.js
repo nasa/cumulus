@@ -1,6 +1,9 @@
 'use strict';
 
 const CopyPlugin = require('copy-webpack-plugin');
+const path = require('path');
+// path to module root
+const root = path.resolve(__dirname);
 
 module.exports = {
   mode: process.env.PRODUCTION ? 'production' : 'development',
@@ -28,7 +31,7 @@ module.exports = {
     sfSemaphoreDown: './lambdas/sf-semaphore-down.js',
     sfStarter: './lambdas/sf-starter.js'
   },
-  devtool: process.env.PRODUCTION ? false : 'inline-source-map',
+  devtool: 'inline-source-map',
   resolve: {
     alias: {
       'saml2-js': 'saml2-js/lib-js/saml2.js',
@@ -44,13 +47,33 @@ module.exports = {
   ],
   output: {
     libraryTarget: 'commonjs2',
-    filename: '[name]/index.js'
+    filename: '[name]/index.js',
+    devtoolModuleFilenameTemplate: (info) => {
+      const relativePath = path.relative(root, info.absoluteResourcePath)
+      return `webpack://${relativePath}`;
+    }
   },
   externals: [
     'aws-sdk',
     'electron',
     { formidable: 'url' }
   ],
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              cacheDirectory: true
+            },
+          },
+        ],
+      },
+    ],
+  },
   target: 'node',
   node: {
     __dirname: false,
