@@ -13,7 +13,7 @@ export VERSION=$(jq --raw-output .version lerna.json)
    -d "{\"tag_name\": \"v$VERSION\", \"target_commitsh\": \"v$VERSION\", \"name\": \"v$VERSION\", \"body\": \"Release v$VERSION\" }"\
    -H "Content-Type: application/json"\
    -X POST\
-   https://api.github.com/repos/jkovarik/cumulus/releases |grep \"url\" |grep releases |sed -e 's/.*\(https.*\)\"\,/\1/'| sed -e 's/api/uploads/')
+   https://api.github.com/repos/nasa/cumulus/releases |grep \"url\" |grep releases |sed -e 's/.*\(https.*\)\"\,/\1/'| sed -e 's/api/uploads/')
 
 ## Build TF modules that require source building
 
