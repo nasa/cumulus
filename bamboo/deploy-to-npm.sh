@@ -17,3 +17,4 @@ npx lerna publish \
   --dist-tag=${NPM_TAG} \
   --exact
 
+. ./bamboo/create-release.sh
