@@ -40,6 +40,9 @@
   },
   "devDependencies": {
     "ava": "^2.1.0",
+    "babel-loader": "^8.0.6",
+    "babel-plugin-source-map-support": "^2.1.1",
+    "babel-preset-env": "^1.7.0",
     "lodash.isequal": "^4.5.0",
     "lodash.some": "^4.6.0",
     "nyc": "^14.0.0",
