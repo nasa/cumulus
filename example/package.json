@@ -60,6 +60,7 @@
   },
   "devDependencies": {
     "@cumulus/test-data": "1.14.2",
+    "dotenv": "^8.2.0",
     "execa": "^1.0.0",
     "fs-extra": "7.0.0",
     "got": "^9.6.0",

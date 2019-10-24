@@ -18,9 +18,6 @@ const {
 
 const { loadConfig } = require('../../helpers/testUtils');
 
-const config = loadConfig();
-const emsProductMetadataReportLambda = `${config.stackName}-EmsProductMetadataReport`;
-const submitReport = config.ems.submitReport === 'true' || false;
 const collectionsDir = './data/collections/ems';
 
 // sample collections in CMR and Cumulus for verification purpose
@@ -34,7 +31,15 @@ const collectionsOnlyInCmr = ['AST_L1A'];
 const collectionsForEms = ['A2_SI25_NRT', 'MUR-JPL-L4-GLOB-v4.1'];
 
 describe('The EMS product metadata report', () => {
+  let config;
+  let emsProductMetadataReportLambda;
+  const submitReport = false;
+
   beforeAll(async () => {
+    config = await loadConfig();
+
+    emsProductMetadataReportLambda = `${config.stackName}-EmsProductMetadataReport`;
+
     await addCollections(config.stackName, config.bucket, collectionsDir);
   });
 
