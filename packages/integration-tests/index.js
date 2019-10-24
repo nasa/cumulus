@@ -9,6 +9,7 @@ const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const pLimit = require('p-limit');
+const pWaitFor = require('p-wait-for');
 const pMap = require('p-map');
 
 const { pullStepFunctionEvent } = require('@cumulus/common/aws');
@@ -132,16 +133,19 @@ function getWorkflowArn(stackName, bucketName, workflowName) {
 /**
  * Get the status of a given execution
  *
- * If the execution does not exist, this will return 'RUNNING'.  This seems
- * surprising in the "don't surprise users of your code" sort of way.  If it
- * does not exist then the calling code should probably know that.  Something
- * to be refactored another day.
+ * If the execution does not exist, this will return 'STARTING'.
  *
  * @param {string} executionArn - ARN of the execution
  * @returns {Promise<string>} status
  */
 async function getExecutionStatus(executionArn) {
-  return (await StepFunctions.describeExecution({ executionArn })).status;
+  try {
+    const { status } = await StepFunctions.describeExecution({ executionArn });
+    return status;
+  } catch (err) {
+    if (err.code === 'ExecutionDoesNotExist') return 'STARTING';
+    throw err;
+  }
 }
 
 /**
@@ -149,50 +153,25 @@ async function getExecutionStatus(executionArn) {
  *
  * @param {string} executionArn - ARN of the execution
  * @param {number} [timeout=600] - the time, in seconds, to wait for the
- *   execution to reach a non-RUNNING state
+ *   execution to reach a terminal state
  * @returns {string} status
  */
 async function waitForCompletedExecution(executionArn, timeout = 600) {
-  let executionStatus;
-  let iteration = 0;
-  const sleepPeriodMs = 5000;
-  const maxMinutesWaitedForExecutionStart = 5;
-  const iterationsPerMinute = Math.floor(60000 / sleepPeriodMs);
-  const maxIterationsToStart = Math.floor(maxMinutesWaitedForExecutionStart * iterationsPerMinute);
+  let status;
 
-  const stopTime = Date.now() + (timeout * 1000);
-
-  /* eslint-disable no-await-in-loop */
-  do {
-    iteration += 1;
-    try {
-      executionStatus = await getExecutionStatus(executionArn);
-    } catch (err) {
-      if (!(err.code === 'ExecutionDoesNotExist') || iteration > maxIterationsToStart) {
-        console.log(`waitForCompletedExecution failed: ${err.code}, arn: ${executionArn}`);
-        throw err;
-      }
-      console.log("Execution does not exist... assuming it's still starting up.");
-      executionStatus = 'STARTING';
+  await pWaitFor(
+    async () => {
+      status = await getExecutionStatus(executionArn);
+      console.log(`${executionArn} status: ${status}`);
+      return status !== 'STARTING' && status !== 'RUNNING';
+    },
+    {
+      interval: 2000,
+      timeout: timeout * 1000
     }
-    if (executionStatus === 'RUNNING') {
-      // Output a 'heartbeat' every minute
-      if (!(iteration % iterationsPerMinute)) console.log('Execution running....');
-    }
-    await sleep(sleepPeriodMs);
-  } while (['RUNNING', 'STARTING'].includes(executionStatus) && Date.now() < stopTime);
-  /* eslint-enable no-await-in-loop */
+  );
 
-  if (executionStatus === 'RUNNING') {
-    const executionHistory = await StepFunctions.getExecutionHistory({
-      executionArn,
-      maxResults: 100
-    });
-    console.log(`waitForCompletedExecution('${executionArn}') timed out after ${timeout} seconds`);
-    console.log('Execution History:');
-    console.log(executionHistory);
-  }
-  return executionStatus;
+  return status;
 }
 
 /**
