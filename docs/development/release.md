@@ -98,25 +98,7 @@ Bamboo will build and run lint, audit and unit tests against that tagged release
 
 ### 9. Create a new Cumulus release on github
 
-The release scripts will automatically create a release based on the release version tag, as well as upload a multi-module Terraform `.zip` artifact containing filtered copies of the `tf-modules`, `packages` and `tasks` directories for use as as Terraform module sources.
-
-Additional resources should be manually created and added to the release following the steps below.
-
-The Cumulus Distribution Terraform module can be created by running:
-
-```bash
-$ (cd tf-modules/distribution && ./bin/build-tf-module.sh)
-```
-
-This will generate a file called
-`tf-modules/distribution/dist/terraform-aws-cumulus-distribution.zip`, which
-should be uploaded as an asset of the Github release.
-
-Similarily, the S3 Replicator Terraform module can be created by running:
-
-```bash
-$ (cd tf-modules/s3-replicator && ./bin/build-tf-module.sh)
-```
+The release scripts will automatically create a release based on the release version tag, as well as upload a multi-module Terraform `.zip` artifact containing filtered copies of the `tf-modules`, `packages` and `tasks` directories for use as as Terraform module sources.     Just make sure to verify the appropriate .zip files are present on Github.
 
 ## Troubleshooting
 
