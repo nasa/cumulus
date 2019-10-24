@@ -98,7 +98,7 @@ Bamboo will build and run lint, audit and unit tests against that tagged release
 
 ### 9. Create a new Cumulus release on github
 
-The release scripts will automatically create a release based on the release version tag, as well as upload a multi-module Terraform .zip artifact containing filtered copies  `tf-modules`, `packages` and `tasks` directories for use as as Terraform module sources.
+The release scripts will automatically create a release based on the release version tag, as well as upload a multi-module Terraform `.zip` artifact containing filtered copies of the `tf-modules`, `packages` and `tasks` directories for use as as Terraform module sources.
 
 Additionally, the following resources should be manually created and added to the distribution:
 
