@@ -18,7 +18,7 @@ The Cumulus Message Adapter libraries are called by the tasks with a callback fu
 
 A task's Lambda function can be configured to include a Cumulus Message Adapter library which constructs input/output messages and resolves task configurations.     The CMA can then be included in one of three ways:
 
-#### Kes Injection
+### Kes Injection
 
 In the Lambda function configuration file lambdas.yml, a task Lambda function can be configured to include the latest CMA via kes.  Kes will download and include the latest CMA package in the Lambda that's uploaded to AWS:
 
@@ -34,8 +34,7 @@ Optionally you can configure kes to specify the version of the CMA to be used us
 message_adapter_version: v1.0.13
 ```
 
-
-#### Lambda Layer
+### Lambda Layer
 
 In order to make use of this configuration, a Lambda layer can be uploaded to your account.  Due to platform restrictions, Core cannot currently support sharable public layers, however you can support deploying the appropriate version from [the release page](https://github.com/nasa/cumulus-message-adapter/releases) via the AWS [Layers Interface](https://console.aws.amazon.com/lambda/home?region=us-east-1#/layers), *or* the provided CMA [Terraform](https://www.terraform.io/) module located at [tf-modules/cumulus-message-adapter](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-message-adapter).
 
@@ -67,7 +66,7 @@ and include the reference in the Lambda configuration:
 
 This method will be supported more fully once migration to Terraform Deployments has been completed.
 
-#### Manual Addition
+### Manual Addition
 
 You can include the CMA package in the Lambda code in the `cumulus-message-adapter` sub-directory, this will achieve a similar result to kes injection, but will require manual updates to update the CMA code.
 
@@ -75,7 +74,7 @@ Cumulus will set a default `CUMULUS_MESSAGE_ADAPTER_DIR` environment variable to
 
 If you are manually adding the message adapter to your source and utilizing the CMA, you should set the Lambda's `CUMULUS_MESSAGE_ADAPTER_DIR` environment variable to override this, or if you aren't utilizing the CMA layer, set the global `cmaDir` to the directory you're packaging your Lambda in.
 
-### CMA Input/Output
+## CMA Input/Output
 
 Input to the task application code is a json object with keys:
 
@@ -84,8 +83,7 @@ Input to the task application code is a json object with keys:
 
 Output from the task application code is returned in and placed in the `payload` key by default, but the `config` key can also be used to return just a portion of the task output.
 
-
-### CMA configuration
+## CMA configuration
 
 As of Cumulus > 1.15 and CMA > v1.1.1, configuration of the CMA is expected to be driven by AWS Step Function Parameters.
 
@@ -103,13 +101,13 @@ The `event.$: '$'` parameter is *required* as it passes the entire incoming mess
 
 The following are the CMA's current configuration settings:
 
-#### ReplaceConfig (Cumulus Remote Message)
+### ReplaceConfig (Cumulus Remote Message)
 
 Because of the potential size of a Cumulus message, mainly the `payload` field, a task can be set via configuration to store a portion of its output on S3 with a message key `Remote Message` that defines how to retrieve it and an empty JSON object `{}` in its place.   If the portion of the message targeted exceeds the configured `MaxSize` (defaults to 0 bytes) it will be written to S3.
 
 The CMA remote message functionality can be configured using parameters in several ways:
 
-##### Partial Message
+#### Partial Message
 
 Setting the `Path`/`Target` path in the `ReplaceConfig` parameter (and optionally a non-default `MaxSize`)
 
@@ -130,7 +128,7 @@ Note that you can optionally use a different `TargetPath` than `Path`, however a
 
 If `TargetPath` is omitted, it will default to the value for `Path`.
 
-##### Full Message
+#### Full Message
 
 Setting the following parameters for a lambda:
 
@@ -158,8 +156,7 @@ DiscoverGranules:
         TargetPath: '$'
 ```
 
-
-##### Cumulus Message example:
+#### Cumulus Message example:
 
 ```json
 {
@@ -183,7 +180,7 @@ DiscoverGranules:
 }
 ```
 
-##### Cumulus Remote Message example:
+#### Cumulus Remote Message example:
 
 The message may contain a reference to an S3 Bucket, Key and TargetPath as follows:
 
@@ -198,8 +195,7 @@ The message may contain a reference to an S3 Bucket, Key and TargetPath as follo
 }
 ```
 
-
-#### task_config
+### task_config
 
 This configuration key contains the input/output configuration values for definition of inputs/outputs via URL paths.
 **Important**:  These values are all relative to json object configured for `event.$`.
@@ -235,9 +231,9 @@ StepFunction:
           input: '{$}'
 ```
 
-### Cumulus Message Adapter has the following steps:
+## Cumulus Message Adapter has the following steps:
 
-#### 1. Reformat AWS Step Function message into Cumulus Message
+### 1. Reformat AWS Step Function message into Cumulus Message
 
 Due to the way AWS handles Parmeterized messages, when Parameters are used the CMA takes an inbound message:
 
@@ -268,8 +264,7 @@ and takes the following actions:
 
 This results in the incoming message (presumably a Cumulus message) with any cma configuration parameters merged in being passed to the CMA.    *All other parameterized values defined outside of the `cma` key are ignored*
 
-
-#### 2. Resolve Remote Messages
+### 2. Resolve Remote Messages
 
 If the incoming Cumulus message has a `replace` key value, the CMA will attempt to pull the payload from S3,
 
@@ -288,8 +283,7 @@ For example, if the incoming contains the following:
 
 The CMA will attempt to pull the file stored at `Bucket`/`Key` and replace the value at `TargetPath`, then remove the `replace` object entirely and continue.
 
-
-#### 3. Resolve URL templates in the task configuration
+### 3. Resolve URL templates in the task configuration
 
 In the workflow configuration (defined under the `task_config` key), each task has its own configuration, and it can use URL template as a value to achieve simplicity or for values only available at execution time. The Cumulus Message Adapter resolves the URL templates (relative to the event configuration key) and then passes message to next task. For example, given a task which has the following configuration:
 
@@ -365,7 +359,7 @@ The message sent to the task would be:
 
 URL template variables replace dotted paths inside curly brackets with their corresponding value. If the Cumulus Message Adapter cannot resolve a value, it will ignore the template, leaving it verbatim in the string.  While seemingly complex, this allows significant decoupling of Tasks from one another and the data that drives them. Tasks are able to easily receive runtime configuration produced by previously run tasks and domain data.
 
-#### 4. Resolve task input
+### 4. Resolve task input
 
 By default, the incoming payload is the payload from the previous task.  The task can also be configured to use a portion of the payload its input message.  For example, given a task specifies `cma.task_config.cumulus_message.input`:
 
@@ -407,7 +401,7 @@ The Cumulus Message Adapter will resolve the task input, instead of sending the 
     }
 ```
 
-#### 5. Resolve task output
+### 5. Resolve task output
 
 By default, the task's return value is the next payload.  However, the workflow task configuration can specify a portion of the return value as the next payload, and can also augment values to other fields. Based on the task configuration under `cma.task_config.cumulus_message.outputs`, the Message Adapter uses a task's return value to output a message as configured by the task-specific config defined under `cma.task_config`. The Message Adapter dispatches a "source" to a "destination" as defined by URL templates stored in the task-specific `cumulus_message.outputs`. The value of the task's return value at the "source" URL is used to create or replace the value of the task's return value at the "destination" URL. For example, given a task specifies cumulus_message.output in its workflow configuration as follows:
 
@@ -492,12 +486,11 @@ The Cumulus Message Adapter would output the following Cumulus Message:
     }
 ```
 
-#### 6. Apply Remote Message Configuration
+### 6. Apply Remote Message Configuration
 
 If the `ReplaceConfig` configuration parameter is defined, the CMA will evaluate the configuration options provided, and if required write a portion of the Cumulus Message to S3, and add a `replace` key to the message for future steps to utilize.
 
 ***Please Note***: the non user-modifiable field `cumulus-meta` will always be retained, regardless of the configuration.
-
 
 For example, if the output message (post output configuration) from a cumulus message looks like:
 
@@ -550,7 +543,8 @@ the resultant output would look like:
 }
 ```
 
-### Additional Features:
-#### Validate task input, output and configuration messages against the schemas provided.
+## Additional Features
+
+### Validate task input, output and configuration messages against the schemas provided.
 
 The Cumulus Message Adapter has the capability to validate task input, output and configuration messages against their schemas.  The default location of the schemas is the schemas folder in the top level of the task and the default filenames are input.json, output.json, and config.json. The task can also configure a different schema location.  If no schema can be found, the Cumulus Message Adapter will not validate the messages.
