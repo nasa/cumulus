@@ -145,7 +145,7 @@ The Cumulus stack can authenticate with [Earthdata Login](https://urs.earthdata.
 
 _If you're re-deploying an existing Cumulus configuration you should skip to [Deploy the Cumulus instance](deployment-readme#deploy-the-cumulus-instance), as these values should already be configured._
 
-### Configure the Terraform backend
+### Create resources for Terraform state
 
 The state of the Terraform deployment is stored in S3. In the following
 examples, it will be assumed that state is being stored in a bucket called

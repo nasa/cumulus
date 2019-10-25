@@ -66,6 +66,8 @@ documentation:
 The recommended approach for handling remote state with Cumulus is to use the [S3 backend](https://www.terraform.io/docs/backends/types/s3.html).
 This backend stores state in S3 and uses a DynamoDB table for locking.
 
+### Creating resources for your remote state
+
 **It is strongly recommended that you enable bucket versioning on the S3 bucket** to
 allow for state recovery in the case of accidental deletions and human error.
 Bucket versioning can be enabled with the following AWS CLI command:
@@ -86,6 +88,8 @@ $ aws dynamodb create-table \
     --key-schema AttributeName=LockID,KeyType=HASH \
     --billing-mode PAY_PER_REQUEST
 ```
+
+### Configuring your Terraform backend
 
 Terraform can be configured to use the S3 backend by adding the following to
 your deployment's Terraform config. If following the file layout [described above](#adding-terraform-to-your-deployment),this should be added to your **terraform.tf** file.
