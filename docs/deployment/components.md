@@ -6,27 +6,13 @@ hide_title: true
 
 # Component-based Cumulus Deployment
 
-Cumulus is moving toward a more modular architecture, which will allow users to
+Cumulus is now released in a more modular architecture, which will allow users to
 pick and choose the individual components that they want to deploy. These
 components will be made available as [Terraform modules](https://www.terraform.io/docs/modules/index.html).
 
 Cumulus users will be able to add those individual components to their
 deployment and link them together using Terraform. In addition, users will be
 able to make use of the large number of publicly available modules on the [Terraform Module Registry](https://registry.terraform.io/).
-
-This document assumes familiarity with Terraform. If you are not comfortable
-working with Terraform, the following links should bring you up to speed:
-
-* [Introduction to Terraform](https://www.terraform.io/intro/index.html)
-* [Getting Started with Terraform and AWS](https://learn.hashicorp.com/terraform/?track=getting-started#getting-started)
-* [Terraform Configuration Language](https://www.terraform.io/docs/configuration/index.html)
-
-⚠️ Cumulus Terraform modules are targetted at Terraform v0.12.0 and higher.  To verify that the version of Terraform installed is at least v0.12.0, run:
-
-```shell
-$ terraform --version
-Terraform v0.12.2
-```
 
 ## Adding Terraform to your deployment
 

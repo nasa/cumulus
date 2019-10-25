@@ -22,8 +22,6 @@ serve. Documentation of the file format is available [here](https://github.com/a
 A simple config, which would use the same URL scheme that we are using now,
 would look something like this:
 
-**bucket_map.yaml**
-
 ```yaml
 MAP:
   my-protected: my-protected
