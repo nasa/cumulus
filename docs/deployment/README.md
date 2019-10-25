@@ -127,7 +127,7 @@ These resources only need to be created once per account.
 
 If you are deploying to an NGAP environment (a NASA managed AWS environment), the VPC, subnet, security group, and VPC endpoints should already be created for you.
 
-Note: Amazon ElasticSearch Service does not use a VPC Endpoint. To use ES within a VPC, run `aws iam create-service-linked-role --aws-service-name es.amazonaws.com` before deploying. This operation only needs to be done once per account, but it must be done for both NGAP and regular AWS environments.
+**Note:** Amazon ElasticSearch Service does not use a VPC Endpoint. To use ES within a VPC, run `aws iam create-service-linked-role --aws-service-name es.amazonaws.com` before deploying. This operation only needs to be done once per account, but it must be done for both NGAP and regular AWS environments.
 
 To configure Cumulus with these settings, populate your `terraform.tfvars` file with the relevant values, as shown below, before deploying Cumulus. If these values are omitted Cumulus resources that require a VPC will be created in the default VPC and security group.
 
@@ -274,6 +274,12 @@ elasticsearch_security_group_id = sg-12345
 
 Your data persistence resources are now deployed.
 
+## Deploy the Cumulus Message Adapter layer
+
+The [Cumulus Message Adapter (CMA)](./../workflows/input_output.md#cumulus-message-adapter) is necessary for interpreting the input and output of Cumulus workflow steps. The CMA is now integrated with Cumulus workflow steps as a Lambda layer. Follow the steps in the CMA documentation to [deploy the CMA as a Lambda layer](../workflows/input_output.md#lambda-layer).
+
+Make sure to copy the ARN of the deployed layer, as it will be used to configure the `cumulus-tf` deployment in the next step.
+
 ## Configure and deploy the `cumulus-tf` root module
 
 These steps should be executed in the `cumulus-tf` directory of the template repo that was cloned previously.
@@ -305,7 +311,7 @@ appropriate values.
 ```hcl
 region = "us-east-1"
 
-# TODO: document this
+# Layer ARN deployed in the previous step
 cumulus_message_adapter_lambda_layer_arn = "arn:aws:lambda:us-east-1:12345:layer:Cumulus_Message_Adapter:4"
 
 # URS users you want to have access to your API
@@ -369,7 +375,7 @@ determine the names of the resources created in `data-persistence-tf`.
 
 Run `terraform init` if this is your first time deploying this module.
 
-Run `terraform apply`.
+Run `terraform apply` to deploy the resources. Type `yes` when prompted to confirm that you want to create the resources.
 
 __Note:__ Be sure to copy the urls, as you will use them to update your EarthData application.
 

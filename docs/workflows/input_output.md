@@ -46,7 +46,7 @@ Once you've deployed the layer, include the CMA in the configured Lambda layers:
         - arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:{version number}
 ```
 
-In the future if you wish to update/change the CMA version you will need to update the deployed CMA, and update the layer configuration for the impacted Lambdas as needed, or re-run the Terraform module.     If you have a large number of Lambdas utilizing the CMA, you can include a configuration key in your `config.yml`:
+In the future if you wish to update/change the CMA version you will need to update the deployed CMA, and update the layer configuration for the impacted Lambdas as needed, or re-run the Terraform module. If you have a large number of Lambdas utilizing the CMA, you can include a configuration key in your `config.yml`:
 
 ```yaml
     cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:{version number}
