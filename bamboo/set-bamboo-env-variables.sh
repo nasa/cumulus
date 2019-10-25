@@ -17,6 +17,7 @@ declare -a param_list=(
   "bamboo_SECRET_VPC_CIDR_IP"
   "bamboo_AWS_REGION"
   "bamboo_TFSTATE_BUCKET"
+  "bamboo_TFSTATE_LOCK_TABLE"
   "bamboo_CMR_PASSWORD"
   "bamboo_CMR_USERNAME"
   "bamboo_DEPLOYMENT"
@@ -95,6 +96,7 @@ if [[ $bamboo_NGAP_ENV = "SIT" ]]; then
   export PROVIDER_HOST=$bamboo_SECRET_SIT_PROVIDER_HOST
   export SECURITY_GROUP=$bamboo_SECRET_SIT_SECURITY_GROUP
   export TFSTATE_BUCKET=$bamboo_SIT_TFSTATE_BUCKET
+  export TFSTATE_LOCK_TABLE=$bamboo_SIT_TFSTATE_LOCK_TABLE
   export SHARED_LOG_DESTINATION_ARN=$bamboo_SIT_SHARED_LOG_DESTINATION_ARN
   DEPLOYMENT=$bamboo_SIT_DEPLOYMENT
 fi
