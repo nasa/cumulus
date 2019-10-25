@@ -9,6 +9,7 @@ hide_title: true
 Cumulus is moving toward a more modular architecture, which will allow users to
 pick and choose the individual components that they want to deploy. These
 components will be made available as [Terraform modules](https://www.terraform.io/docs/modules/index.html).
+
 Cumulus users will be able to add those individual components to their
 deployment and link them together using Terraform. In addition, users will be
 able to make use of the large number of publicly available modules on the [Terraform Module Registry](https://registry.terraform.io/).
@@ -79,7 +80,7 @@ documentation:
 The recommended approach for handling remote state with Cumulus is to use the [S3 backend](https://www.terraform.io/docs/backends/types/s3.html).
 This backend stores state in S3 and uses a DynamoDB table for locking.
 
-It is highly recommended that you enable bucket versioning on the S3 bucket to
+**It is strongly recommended that you enable bucket versioning on the S3 bucket** to
 allow for state recovery in the case of accidental deletions and human error.
 Bucket versioning can be enabled with the following AWS CLI command:
 
@@ -101,8 +102,7 @@ $ aws dynamodb create-table \
 ```
 
 Terraform can be configured to use the S3 backend by adding the following to
-your deployment's Terraform config. If following the file layout [described above](#adding-terraform-to-your-deployment),
-this should be added to your **terraform.tf** file.
+your deployment's Terraform config. If following the file layout [described above](#adding-terraform-to-your-deployment),this should be added to your **terraform.tf** file.
 
 ```hcl
 terraform {

@@ -10,9 +10,27 @@ hide_title: true
 
 This is a guide for deploying a new instance of Cumulus.
 
-**Note:** Cumulus is in the process of moving from a monolithic deployment to
-a more modular deployment process. This document describes the current process.
-Instructions for deploying Cumulus components can be found [here](deployment/components.md).
+Cumulus is released in a modular architecture, which will allow users to
+pick and choose the individual components that they want to deploy. These
+components will be made available as [Terraform modules](https://www.terraform.io/docs/modules/index.html).
+
+Cumulus users will be able to add those individual components to their
+deployment and link them together using Terraform. In addition, users will be
+able to make use of the large number of publicly available modules on the [Terraform Module Registry](https://registry.terraform.io/).
+
+This document assumes familiarity with Terraform. If you are not comfortable
+working with Terraform, the following links should bring you up to speed:
+
+* [Introduction to Terraform](https://www.terraform.io/intro/index.html)
+* [Getting Started with Terraform and AWS](https://learn.hashicorp.com/terraform/?track=getting-started#getting-started)
+* [Terraform Configuration Language](https://www.terraform.io/docs/configuration/index.html)
+
+⚠️ Cumulus Terraform modules are targetted at Terraform v0.12.0 and higher.  To verify that the version of Terraform installed is at least v0.12.0, run:
+
+```shell
+$ terraform --version
+Terraform v0.12.2
+```
 
 This deployment document is current for the following component versions:
 
@@ -23,10 +41,7 @@ This deployment document is current for the following component versions:
 The process involves:
 
 * Creating [AWS S3 Buckets](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html).
-* Using [Kes](http://devseed.com/kes/) to transform kes templates (`cloudformation.template.yml`) into [AWS CloudFormation](https://aws.amazon.com/cloudformation/getting-started/) stack templates (`cloudformation.yml`) that are then deployed to AWS.
-* Before deploying the Cumulus software, a CloudFormation stack is deployed that creates necessary [IAM roles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) via the `iam` stack.
-* Database resources are configured and deployed via the `db` stack.
-* The Cumulus software is configured and deployed via the `app` stack.
+* Using [Terraform](https://www.terraform.io) to deploy resources to AWS
 
 --------------
 
@@ -35,18 +50,15 @@ The process involves:
 ### Linux/MacOS software requirements
 
 * git
-* [node 8.10](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
-* [npm](https://www.npmjs.com/get-npm)
-* sha1sum or md5sha1sum
 * zip
 * AWS CLI - [AWS command line interface](https://aws.amazon.com/cli/)
-* python
+* [Terraform](https://www.terraform.io)
 
 ### Credentials
 
 * [CMR](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/common-metadata-repository) username and password.  CMR credentials must be provided if you are exporting metadata to CMR with EarthData Client Login authentication. More information about CMR configuration can be found [here](./config_descriptions#cmr).
-* [Launchpad](https://launchpad.nasa.gov).  Launchpad credentials must be provided if you are using Launchpad authentication to export metadata to CMR or to authenticate with the Cumulus API. More information about CMR and Cumulus Launchpad authentication and configuration can be found [here](./config_descriptions#launchpad).
-* [EarthData Client login](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/earthdata-login) username and password. User must have the ability to administer and/or create applications in URS.  It's recommended to obtain an account in the test environment (UAT).
+* [Launchpad](https://launchpad.nasa.gov). Launchpad credentials must be provided if you are using Launchpad authentication to export metadata to CMR or to authenticate with the Cumulus API. More information about CMR and Cumulus Launchpad authentication and configuration can be found [here](./config_descriptions#launchpad).
+* [EarthData client login](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/earthdata-login) username and password. User must have the ability to administer and/or create applications in URS. It's recommended to obtain an account in the test environment (UAT).
 
 ### Needed Git Repositories
 
@@ -60,13 +72,13 @@ The process involves:
 
 _If you already are working with an existing `<daac>-deploy` repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS configuration.](deployment-readme#prepare-aws-configuration)_
 
-Clone template-deploy repo and name appropriately for your DAAC or organization
+Clone template-deploy repo and name appropriately for your DAAC or organization:
 
 ```bash
   $ git clone https://github.com/nasa/template-deploy <daac>-deploy
 ```
 
-Enter repository root directory
+Enter repository root directory:
 
 ```bash
   $ cd <daac>-deploy
