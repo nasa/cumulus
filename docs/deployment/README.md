@@ -84,11 +84,7 @@ Clone template-deploy repo and name appropriately for your DAAC or organization:
   $ git clone https://github.com/nasa/template-deploy <daac>-deploy
 ```
 
-Enter repository root directory:
-
-```bash
-  $ cd <daac>-deploy
-```
+We will return to [configuring this repo and using it for deployment below](#deploying-the-cumulus-instance).
 
 ## Prepare AWS configuration
 
@@ -133,7 +129,7 @@ If you are deploying to an NGAP environment (a NASA managed AWS environment), th
 
 Note: Amazon ElasticSearch Service does not use a VPC Endpoint. To use ES within a VPC, run `aws iam create-service-linked-role --aws-service-name es.amazonaws.com` before deploying. This operation only needs to be done once per account, but it must be done for both NGAP and regular AWS environments.
 
-To configure Cumulus with these settings, populate your `terraform.tfvars` file with the relevant values, as shown in the next section, before deploying Cumulus. If these values are omitted Cumulus resources that require a VPC will be created in the default VPC and security group.
+To configure Cumulus with these settings, populate your `terraform.tfvars` file with the relevant values, as shown below, before deploying Cumulus. If these values are omitted Cumulus resources that require a VPC will be created in the default VPC and security group.
 
 --------------
 
@@ -141,38 +137,13 @@ To configure Cumulus with these settings, populate your `terraform.tfvars` file 
 
 ### Configure EarthData application
 
-The Cumulus stack can authenticate with [Earthdata Login](https://urs.earthdata.nasa.gov/documentation). If you want to use this functionality, you must create and register a new Earthdata application. Use the [User Acceptance Tools (UAT) site](https://uat.urs.earthdata.nasa.gov) unless you intend use a different URS environment (which will require updating the `urs_url` value shown below). Follow the directions on [how to register an application.](https://wiki.earthdata.nasa.gov/display/EL/How+To+Register+An+Application). Use any url for the `Redirect URL`, it will be deleted in a later step. Also note the password in step 3 and client ID in step 4 use these to replace `EARTHDATA_CLIENT_ID` and `EARTHDATA_CLIENT_PASSWORD` in the `.env` file in the next step.
+The Cumulus stack can authenticate with [Earthdata Login](https://urs.earthdata.nasa.gov/documentation). If you want to use this functionality, you must create and register a new Earthdata application. Use the [User Acceptance Tools (UAT) site](https://uat.urs.earthdata.nasa.gov) unless you intend use a different URS environment (which will require updating the `urs_url` value shown below). Follow the directions on [how to register an application.](https://wiki.earthdata.nasa.gov/display/EL/How+To+Register+An+Application). Use any url for the `Redirect URL`, it will be deleted in a later step. Also note the password in step 3 and client ID in step 4 use these to replace `urs_client_id` and `urs_client_password` in the `terraform.tfvars` file shown below.
 
 --------------
 
 ## Configuring the Cumulus deployment
 
-### Set up an environment file
-
-_If you're adding a new deployment to an existing configuration repository or re-deploying an existing Cumulus configuration you should skip to [Deploy the Cumulus Stack](deployment-readme#deploy), as these values should already be configured._
-
-Copy `app/.env.sample` to `app/.env` and add CMR/earthdata client [credentials](deployment-readme#credentials):
-
-```shell
-  CMR_USERNAME=cmrusername                    # CMR Username For CMR Ingest API
-  CMR_PASSWORD=cmrpassword                    # CMR Password
-  EARTHDATA_CLIENT_ID=clientid                # EarthData Application ClientId
-  EARTHDATA_CLIENT_PASSWORD=clientpassword    # EarthData Application Password
-  VPC_ID=someid                               # VPC ID
-  SECURITY_GROUP=sg-0000abcd1234              # Security Group ID
-  AWS_SUBNET=somesubnet                       # VPC Subnet
-  AWS_ACCOUNT_ID=0000000                      # AWS Account ID
-  AWS_REGION=awsregion                        # AWS Region
-  TOKEN_SECRET=tokensecret                    # JWT Token Secret
-  LAUNCHPAD_PASSPHRASE=launchpadpassphrase    # passphrase for Launchpad PKI certificate,
-                                              # only set if Launchpad authentication is used
-```
-
-The `TOKEN_SECRET` is a string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is strongly recommended that this be a 32-character string.
-
-Note that the `.env.sample` file may be hidden, so if you do not see it, show hidden files.
-
-For security it is highly recommended that you prevent `app/.env` from being accidentally committed to the repository by keeping it in the `.gitignore` file at the root of this repository.
+_If you're re-deploying an existing Cumulus configuration you should skip to [Deploy the Cumulus instance](deployment-readme#deploy-the-cumulus-instance), as these values should already be configured._
 
 ### Configure the Terraform backend
 
@@ -215,7 +186,7 @@ $ aws dynamodb create-table \
 
 --------------
 
-## Deploying the Cumulus Instance
+## Deploy the Cumulus instance
 
 The Cumulus deployment is broken into two
 [Terraform root modules](https://www.terraform.io/docs/configuration/modules.html):
@@ -227,9 +198,7 @@ workflows, etc. The `cumulus-tf` module depends on the resources created in the
 
 ## Configure and deploy the `data-persistence-tf` root module
 
-**Reminder:** ElasticSearch is optional and can be disabled using `es: null` in your `config.yml`.
-
-These steps should be executed in the `data-persistence-tf` directory of the template deploy repo that was cloned above.
+These steps should be executed in the `data-persistence-tf` directory of the template deploy repo that was cloned previously.
 
 Create a `terraform.tf` file, substituting the appropriate values for `bucket`,
 `dynamodb_table`, and `<stack>`. This tells Terraform where to store its
@@ -251,15 +220,29 @@ terraform {
 Copy the `terraform.tfvars.example` file to `terraform.tfvars`, and fill in
 appropriate values.
 
-Run `terraform init`.
+**terraform.tfvars**:
 
-Run `terraform apply`.
+```hcl
+# Required
+aws_region = "us-east-1"
+prefix     = "PREFIX"
+subnet_ids = ["subnet-12345"]
 
-This will deploy your data persistence resources.
+# Optional
+include_elasticsearch = true
+```
+
+**Reminder:** Elasticsearch is optional and can be disabled using `include_elasticsearch = false` in your `terraform.tfvars`.
+
+Run `terraform init` if this is the first time deploying this module.
+
+Run `terraform apply` to deploy your data persistence resources. Type `yes` when prompted to confirm that you want to create the resources.
+
+Your data persistence resources are now deployed.
 
 ## Configure and deploy the `cumulus-tf` root module
 
-These steps should be executed in the `example/cumulus-tf` directory.
+These steps should be executed in the `cumulus-tf` directory of the template repo that was cloned previously.
 
 **Note:** When deploying to NGAP, these steps should be performed using `NGAPShNonProd` credentials.
 
@@ -283,15 +266,74 @@ terraform {
 Copy the `terraform.tfvars.example` file to `terraform.tfvars`, and fill in
 appropriate values.
 
+**terraform.tfvars:**
+
+```hcl
+region = "us-east-1"
+
+# TODO: document this
+cumulus_message_adapter_lambda_layer_arn = "arn:aws:lambda:us-east-1:12345:layer:Cumulus_Message_Adapter:4"
+
+# URS users you want to have access to your API
+archive_api_users = [ 'some_user' ]
+
+permissions_boundary_arn = "arn:aws:iam::12345:policy/NGAPShNonProdRoleBoundary"
+prefix                   = "PREFIX"
+buckets = {
+  internal = {
+    name = "PREFIX-internal"
+    type = "internal"
+  }
+  private = {
+    name = "PREFIX-private"
+    type = "private"
+  },
+  protected = {
+    name = "PREFIX-protected"
+    type = "protected"
+  },
+  public = {
+    name = "PREFIX-public"
+    type = "public"
+  }
+}
+subnet_ids    = ["subnet-12345"]
+system_bucket = "PREFIX-internal"
+vpc_id        = "vpc-12345"
+key_name      = "MY-KEY"
+
+cmr_client_id   = "cumulus-core-PREFIX"
+cmr_environment = "UAT"
+cmr_password    = "password"
+cmr_provider    = "CUMULUS"
+cmr_username    = "username"
+
+urs_client_id       = "asdf"
+urs_client_password = "password"
+
+token_secret = "asdf"
+
+data_persistence_remote_state_config = {
+  bucket = "PREFIX-tf-state"
+  key    = "PREFIX/data-persistence/terraform.tfstate"
+  region = "us-east-1"
+}
+
+# Optional
+oauth_provider = "earthdata"    # Can also be set to "launchpad"
+```
+
+**Note:** The `token_secret` is a string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is **strongly recommended that this value be a 32-character string**.
+
 **Note:** The `data_persistence_remote_state_config` section should contain the
 remote state values that you configured in
-`example/data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to
+`data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to
 determine the names of the resources created in `data-persistence-tf`.
 
 **Note:** When deploying to NGAP, the `permissions_boundary_arn` should refer to
 `NGAPShNonProdRoleBoundary`.
 
-Run `terraform init`.
+Run `terraform init` if this is your first time deploying this module.
 
 Run `terraform apply`.
 
