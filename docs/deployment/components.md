@@ -14,9 +14,9 @@ Cumulus users will be able to add those individual components to their
 deployment and link them together using Terraform. In addition, users will be
 able to make use of the large number of publicly available modules on the [Terraform Module Registry](https://registry.terraform.io/).
 
-## Adding Terraform to your deployment
+## Adding components to your Terraform deployment
 
-Although Terraform can be configured using a single file, it is recommended to
+Although Terraform components can be configured using a single file, it is recommended to
 add the following files to your deployment:
 
 * **variables.tf** - [input variables](https://www.terraform.io/docs/configuration/variables.html)

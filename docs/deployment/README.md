@@ -137,7 +137,7 @@ To configure Cumulus with these settings, populate your `terraform.tfvars` file 
 
 ### Configure EarthData application
 
-The Cumulus stack can authenticate with [Earthdata Login](https://urs.earthdata.nasa.gov/documentation). If you want to use this functionality, you must create and register a new Earthdata application. Use the [User Acceptance Tools (UAT) site](https://uat.urs.earthdata.nasa.gov) unless you intend use a different URS environment (which will require updating the `urs_url` value shown below). Follow the directions on [how to register an application.](https://wiki.earthdata.nasa.gov/display/EL/How+To+Register+An+Application). Use any url for the `Redirect URL`, it will be deleted in a later step. Also note the password in step 3 and client ID in step 4 use these to replace `urs_client_id` and `urs_client_password` in the `terraform.tfvars` file shown below.
+The Cumulus stack can authenticate with [Earthdata Login](https://urs.earthdata.nasa.gov/documentation). If you want to use this functionality, you must create and register a new Earthdata application. Use the [User Acceptance Tools (UAT) site](https://uat.urs.earthdata.nasa.gov) unless you intend use a different URS environment (which will require updating the `urs_url` value shown below). Follow the directions on [how to register an application.](https://wiki.earthdata.nasa.gov/display/EL/How+To+Register+An+Application). Use any url for the `Redirect URL`, it will be deleted in a later step. Also note the password in step 3 and client ID in step 4 use these to replace `urs_client_id` and `urs_client_password` in the `terraform.tfvars` for the `cumulus-tf` module shown below.
 
 --------------
 
@@ -188,13 +188,17 @@ $ aws dynamodb create-table \
 
 ## Deploy the Cumulus instance
 
-The Cumulus deployment is broken into two
+A typical Cumulus deployment is broken into two
 [Terraform root modules](https://www.terraform.io/docs/configuration/modules.html):
-`data-persistence-tf` and `cumulus-tf`. The `data-persistence-tf` module should
-be deployed first, and creates the Elasticsearch domain and Dynamo tables. The
-`cumulus-tf` module deploys the rest of Cumulus: distribution, API, ingest,
-workflows, etc. The `cumulus-tf` module depends on the resources created in the
-`data-persistence-tf` deployment.
+[`data-persistence`](https://github.com/nasa/cumulus/tree/master/tf-modules/data-persistence) and [`cumulus`](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus).
+
+The `data-persistence` module should
+be deployed first, and creates the Elasticsearch domain and DynamoDB tables. The
+`cumulus` module deploys the rest of Cumulus: distribution, API, ingest,
+workflows, etc. The `cumulus` module depends on the resources created in the
+`data-persistence` deployment.
+
+Each of these modules have to be deployed independently and require their own Terraform backend, variable, and output settings. The template deploy repo that was cloned previously already contains the scaffolding of the necessary files for the deployment of each module: `data-persistence-tf` deploys the `data-persistence` module and `cumulus-tf` deploys the `cumulus` module. For reference on the files that are included, see the [documentation on adding components to a Terraform deployment](components.md#adding-components-to-your-terraform-deployment).
 
 ## Configure and deploy the `data-persistence-tf` root module
 
@@ -234,9 +238,39 @@ include_elasticsearch = true
 
 **Reminder:** Elasticsearch is optional and can be disabled using `include_elasticsearch = false` in your `terraform.tfvars`.
 
-Run `terraform init` if this is the first time deploying this module.
+Run `terraform init` if this is the first time deploying this module. You should see output like:
 
-Run `terraform apply` to deploy your data persistence resources. Type `yes` when prompted to confirm that you want to create the resources.
+```shell
+* provider.aws: version = "~> 2.32"
+
+Terraform has been successfully initialized!
+```
+
+Run `terraform apply` to deploy your data persistence resources. Type `yes` when prompted to confirm that you want to create the resources. Assuming the operation is successful, you should see output like:
+
+```shell
+Apply complete! Resources: 16 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+dynamo_tables = {
+  "access_tokens" = {
+    "arn" = "arn:aws:dynamodb:us-east-1:12345:table/prefix-AccessTokensTable"
+    "name" = "prefix-AccessTokensTable"
+  }
+  # ... more tables ...
+}
+elasticsearch_alarms = [
+  {
+    "arn" = "arn:aws:cloudwatch:us-east-1:12345:alarm:prefix-es-vpc-NodesLowAlarm"
+    "name" = "prefix-es-vpc-NodesLowAlarm"
+  },
+  # ... more alarms ...
+]
+elasticsearch_domain_arn = arn:aws:es:us-east-1:12345:domain/prefix-es-vpc
+elasticsearch_hostname = vpc-prefix-es-vpc-abcdef.us-east-1.es.amazonaws.com
+elasticsearch_security_group_id = sg-12345
+```
 
 Your data persistence resources are now deployed.
 
