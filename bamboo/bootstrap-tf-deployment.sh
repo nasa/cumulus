@@ -24,7 +24,7 @@ echo "terraform {
     bucket = \"$TFSTATE_BUCKET\"
     key    = \"$DATA_PERSISTENCE_KEY\"
     region = \"$AWS_REGION\"
-    dynamodb_table = \"$DEPLOYMENT-locks\"
+    dynamodb_table = \"$TFSTATE_LOCK_TABLE\"
   }
 }" >> ci_backend.tf
 
@@ -54,7 +54,7 @@ echo "terraform {
     bucket = \"$TFSTATE_BUCKET\"
     key    = \"$DEPLOYMENT/cumulus/terraform.tfstate\"
     region = \"$AWS_REGION\"
-    dynamodb_table = \"$DEPLOYMENT-locks\"
+    dynamodb_table = \"$TFSTATE_LOCK_TABLE\"
   }
 }" >> ci_backend.tf
 
