@@ -154,7 +154,7 @@ default:
     docker:
       # Allowed registry values are 'dockerhub' and 'ecr'
       registry: dockerhub
-      storageDriver: overlay2
+      storageDriver: devicemapper
 
   es:
     name: es5vpc
