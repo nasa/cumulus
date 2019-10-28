@@ -86,3 +86,39 @@ test('does not strip leading spaces from name', async (t) => {
   const expectedFiles = [{ name: stubLink, path: myTestHttpDiscoveryClass.path }];
   t.deepEqual(actualFiles, expectedFiles);
 });
+
+test.serial('list() returns a valid exception if the connection times out', async (t) => {
+  class TestEmitter extends EventEmitter {
+    start() {
+      this.emit('fetchtimeout', {}, 100);
+    }
+  }
+
+  await t.throwsAsync(
+    () =>
+      http.__with__({
+        Crawler: TestEmitter
+      })(() => myTestHttpDiscoveryClass.list()),
+    'Connection timed out'
+  );
+});
+
+test.serial('list() returns an exception containing the HTTP status code if a fetcherror event occurs', async (t) => {
+  const queueItem = {};
+  const response = { statusCode: 401 };
+
+  class TestEmitter extends EventEmitter {
+    start() {
+      this.emit('fetcherror', queueItem, response);
+    }
+  }
+
+  const err = await t.throwsAsync(
+    () =>
+      http.__with__({
+        Crawler: TestEmitter
+      })(() => myTestHttpDiscoveryClass.list())
+  );
+
+  t.true(err.message.includes('401'));
+});
