@@ -1,9 +1,3 @@
----
-id: distribution_component
-title: Cumulus Distribution Terraform Module
-hide_title: true
----
-
 # Cumulus Distribution Terraform Module
 
 The Cumulus Distribution Terraform module deploys the Thin Egress App and the S3

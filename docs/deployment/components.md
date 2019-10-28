@@ -70,8 +70,8 @@ See the deployment documentation for a [walkthrough of creating resources for yo
 
 ## Available Cumulus Components
 
-* [Cumulus Distribution](./distribution_component) - the Thin Egress App, as
+* [Cumulus Distribution](https://github.com/nasa/cumulus/tree/master/tf-modules/distribution) - the Thin Egress App, as
   well as the S3 credentials endpoint, with a config targeted at Cumulus and
   NGAP.
-* [Thin Egress App](./thin_egress_app) - an app running in lambda that creates
+* [Thin Egress App](./thin_egress_app) - an app running in Lambda that creates
   temporary S3 links and provides URS integration.
