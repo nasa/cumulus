@@ -1,6 +1,6 @@
 {
   "name": "cumulus-integration-tests",
-  "version": "1.14.2",
+  "version": "1.14.4",
   "description": "Cumulus Integration Test Deployment",
   "private": true,
   "main": "index.js",
