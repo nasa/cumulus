@@ -85,6 +85,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added `GET /token` endpoint for SAML authorization when cumulus is protected by Launchpad.
     This lets a user retieve a token by hand that can be presented to the API.
 
+- **CUMULUS-1625**
+  - Added `sf_start_rate` variable to the `ingest` Terraform module, equivalent to `sqs_consumer_rate` in the old model, but will not be automatically applied to custom queues as that was.
+
 ### Changed
 
 - **CUMULUS-1453**
