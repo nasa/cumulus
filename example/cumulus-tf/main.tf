@@ -112,3 +112,11 @@ resource "aws_lambda_permission" "sns_s3_test" {
   principal     = "sns.amazonaws.com"
   source_arn    = module.cumulus.report_executions_sns_topic_arn
 }
+
+module "s3_access_test_lambda" {
+  source = "./modules/s3_access_test"
+
+  prefix = var.prefix
+  lambda_processing_role_arn = module.cumulus.lambda_processing_role_arn
+  region = "us-west-2"
+}
