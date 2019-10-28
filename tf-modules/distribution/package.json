@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/s3-credentials-endpoint",
   "private": true,
-  "version": "1.14.3",
+  "version": "1.14.4",
   "engines": {
     "node": ">=8.10.0"
   },
@@ -14,9 +14,9 @@
     "access": "public"
   },
   "dependencies": {
-    "@cumulus/api": "1.14.3",
-    "@cumulus/common": "1.14.3",
-    "@cumulus/logger": "1.14.3",
+    "@cumulus/api": "1.14.4",
+    "@cumulus/common": "1.14.4",
+    "@cumulus/logger": "1.14.4",
     "aws-serverless-express": "^3.3.6",
     "body-parser": "^1.19.0",
     "cookie-parser": "^1.4.4",
