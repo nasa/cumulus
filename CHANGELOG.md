@@ -56,6 +56,27 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Your Cumulus Message Adapter version should be pinned to `v1.0.13` or lower in your `app/config.yml` using `message_adapter_version: v1.0.13` OR you should use the workflow migration steps below to work with CMA v1.1.1+.
 
+- **CUMULUS-1394** - The implementation of the `SfSnsReport` Lambda requires additional environment variables for integration with the new ingest notification SNS topics. Therefore,  **you must update the definition of `SfSnsReport` in your `lambdas.yml` like so**:
+
+```yaml
+SfSnsReport:
+  handler: index.handler
+  timeout: 300
+  source: node_modules/@cumulus/sf-sns-report/dist
+  tables:
+    - ExecutionsTable
+  envs:
+    execution_sns_topic_arn:
+      function: Ref
+      value: reportExecutionsSns
+    granule_sns_topic_arn:
+      function: Ref
+      value: reportGranulesSns
+    pdr_sns_topic_arn:
+      function: Ref
+      value: reportPdrsSns
+```
+
 - **CUMULUS-1447** -
   The newest release of the Cumulus Message Adapter (v1.1.1) requires that parameterized configuration be used for remote message functionality. Once released, Kes will automatically bring in CMA v1.1.1 without additional configuration.
 
