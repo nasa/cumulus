@@ -375,17 +375,28 @@ determine the names of the resources created in `data-persistence-tf`.
 
 Run `terraform init` if this is your first time deploying this module.
 
-Run `terraform apply` to deploy the resources. Type `yes` when prompted to confirm that you want to create the resources.
+Run `terraform apply` to deploy the resources. Type `yes` when prompted to confirm that you want to create the resources. Assuming the operation is succesful, you should see output like this:
 
-__Note:__ Be sure to copy the urls, as you will use them to update your EarthData application.
+```shell
+Apply complete! Resources: 292 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+archive_api_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com/dev/token
+archive_api_uri = https://abc123.execute-api.us-east-1.amazonaws.com/dev/
+distribution_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/login
+distribution_url = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/
+```
+
+__Note:__ Be sure to copy the redirect URLs, as you will use them to update your EarthData application.
 
 ### Update Earthdata Application
 
-You will need to add two redirect urls to your EarthData login application.
+You will need to add two redirect URLs to your EarthData login application.
 Login to URS (UAT), and under My Applications -> Application Administration -> use the edit icon of your application.  Then under Manage -> redirect URIs, add the Backend API url returned from the stack deployment, e.g. `https://<czbbkscuy6>.execute-api.us-east-1.amazonaws.com/dev/token`.
-Also add the Distribution url `https://<kido2r7kji>.execute-api.us-east-1.amazonaws.com/dev/redirect`[^3]. You may also delete the placeholder url you used to create the application.
+Also add the Distribution url `https://<kido2r7kji>.execute-api.us-east-1.amazonaws.com/dev/login`[^3]. You may also delete the placeholder url you used to create the application.
 
-If you've lost track of the needed redirect URIs, they can be located on the [API Gateway](https://console.aws.amazon.com/apigateway).  Once there select `<prefix>-backend` and/or `<prefix>-distribution`, `Dashboard` and utilizing the base URL at the top of the page that is accompanied by the text `Invoke this API at:`.   Make sure to append `/token` for the backend URL and `/redirect` to the distribution URL.
+If you've lost track of the needed redirect URIs, they can be located on the [API Gateway](https://console.aws.amazon.com/apigateway).  Once there, select `<prefix>-archive` and/or `<prefix>-thin-egress-app-EgressGateway`, `Dashboard` and utilizing the base URL at the top of the page that is accompanied by the text `Invoke this API at:`.  Make sure to append `/token` for the archive URL and `/login` to the thin egress app URL.
 
 --------------
 
