@@ -276,7 +276,11 @@ Your data persistence resources are now deployed.
 
 ## Deploy the Cumulus Message Adapter layer
 
-The [Cumulus Message Adapter (CMA)](./../workflows/input_output.md#cumulus-message-adapter) is necessary for interpreting the input and output of Cumulus workflow steps. The CMA is now integrated with Cumulus workflow steps as a Lambda layer. Follow the steps in the CMA documentation to [deploy the CMA as a Lambda layer](../workflows/input_output.md#lambda-layer).
+**Note:**: If you are deploying in an NGAP environment, you should be able to use the existing Cumulus Message Adapter layer deployed in your environment.
+
+The [Cumulus Message Adapter (CMA)](./../workflows/input_output.md#cumulus-message-adapter) is necessary for interpreting the input and output of Cumulus workflow steps. The CMA is now integrated with Cumulus workflow steps as a Lambda layer.
+
+PLACEHOLDER FOR DEPLOYMENT STEPS
 
 Make sure to copy the ARN of the deployed layer, as it will be used to configure the `cumulus-tf` deployment in the next step.
 
