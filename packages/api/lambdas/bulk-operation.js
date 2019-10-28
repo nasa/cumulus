@@ -17,13 +17,17 @@ async function bulkGranule(payload) {
   const workflowName = payload.workflowName;
   const granuleModelClient = new granuleModel();
 
-  console.log('ids: ', payload.ids);
-  if (payload.ids && false) {
+  if (payload.ids) {
     const ids = payload.ids;
-    applyWorkflowRequests = ids.map(async (granuleId) => {
+    const applyWorkflowRequests = ids.map(async (granuleId) => {
       try {
         const granule = await granuleModelClient.get({ granuleId });
-        await granuleModelClient.applyWorkflow(granule, workflowName, queueName);
+        await granuleModelClient.applyWorkflow(
+          granule,
+          workflowName,
+          queueName,
+          process.env.asyncOperationId
+        );
         return granuleId;
       } catch (err) {
         return { granuleId, err };

@@ -37,6 +37,7 @@ class Execution extends Manager {
       stateMachineArn,
       executionName
     );
+    const asyncOperationId = get(message, 'cumulus_meta.asyncOperationId');
 
     const execution = aws.getExecutionUrl(arn);
     const collectionId = getCollectionIdFromMessage(message);
@@ -46,6 +47,7 @@ class Execution extends Manager {
     const record = {
       name: executionName,
       arn,
+      asyncOperationId,
       parentArn: get(message, 'cumulus_meta.parentExecutionArn'),
       execution,
       tasks: get(message, 'meta.workflow_tasks'),

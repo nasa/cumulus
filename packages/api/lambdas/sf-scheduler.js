@@ -42,6 +42,7 @@ async function handleScheduleEvent(event) {
   const customCumulusMeta = get(event, 'cumulus_meta', {});
   const payload = get(event, 'payload', {});
   const queueName = get(event, 'queueName', 'startSF');
+  const asyncOperationId = get(event, 'asyncOperationId');
   const templateUri = get(event, 'template');
 
   const messageTemplate = await getMessageFromTemplate(templateUri);
@@ -52,11 +53,14 @@ async function handleScheduleEvent(event) {
     messageTemplate,
     payload,
     queueName,
+    asyncOperationId,
     customMeta,
     customCumulusMeta,
     collection,
     provider
   });
+
+  console.log(JSON.stringify(message.meta.queues));
 
   return SQS.sendMessage(message.meta.queues[queueName], message);
 }

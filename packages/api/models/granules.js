@@ -211,7 +211,7 @@ class Granule extends Manager {
    * @param {string} workflow - the workflow name
    * @returns {Promise<undefined>} undefined
    */
-  async applyWorkflow(g, workflow, queueName=null) {
+  async applyWorkflow(g, workflow, queueName=undefined, asyncOperationId=undefined) {
     const { name, version } = deconstructCollectionId(g.collectionId);
 
     const lambdaPayload = await Rule.buildPayload({
@@ -224,7 +224,8 @@ class Granule extends Manager {
         name,
         version
       },
-      // queueName
+      queueName,
+      asyncOperationId
     });
 
     await this.updateStatus({ granuleId: g.granuleId }, 'running');
