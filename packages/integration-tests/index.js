@@ -59,14 +59,14 @@ const lambdaStep = new LambdaStep();
  *   table
  * @param {string} params.id - the id of the AsyncOperation
  * @param {string} params.status - the status to wait for
- * @param {number} params.retries - the number of times to retry Default: 5
+ * @param {number} params.retries - the number of times to retry Default: 10
  * @returns {Promise<Object>} - the AsyncOperation object
  */
 async function waitForAsyncOperationStatus({
   TableName,
   id,
   status,
-  retries = 5
+  retries = 10
 }) {
   const { Item } = await dynamodb().getItem({
     TableName,
