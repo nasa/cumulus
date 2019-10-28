@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/task-debug",
   "private": true,
-  "version": "1.14.3",
+  "version": "1.14.4",
   "description": "A harness for debugging workflows.",
   "main": "index.js",
   "homepage": "https://github.com/nasa/cumulus#readme",
@@ -18,7 +18,7 @@
     "url": "https://github.com/nasa/cumulus/issues"
   },
   "dependencies": {
-    "@cumulus/common": "1.14.3",
+    "@cumulus/common": "1.14.4",
     "commander": "^2.15.0"
   },
   "devDependencies": {

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.14.4] - 2019-10-25
+
+### Fixed
+
+- **CUMULUS-1632** - Pinned `aws-elasticsearch-connector` package in `@cumulus/api` to version `8.1.3`, since `8.2.0` includes breaking changes
+
 ## [v1.14.3] - 2019-10-18
 
 ### Fixed
@@ -1482,7 +1488,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.14.3...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.14.4...HEAD
+[v1.14.4]: https://github.com/nasa/cumulus/compare/v1.14.3...v1.14.4
 [v1.14.3]: https://github.com/nasa/cumulus/compare/v1.14.2...v1.14.3
 [v1.14.2]: https://github.com/nasa/cumulus/compare/v1.14.1...v1.14.2
 [v1.14.1]: https://github.com/nasa/cumulus/compare/v1.14.0...v1.14.1
