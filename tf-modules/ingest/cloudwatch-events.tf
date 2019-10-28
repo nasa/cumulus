@@ -9,7 +9,7 @@ resource "aws_cloudwatch_event_target" "background_processing_watcher" {
   rule = aws_cloudwatch_event_rule.background_processing_watcher.name
   arn  = aws_lambda_function.sqs2sfThrottle.arn
   input = jsonencode({
-    messageLimit = var.sf_start_rate ? var.sf_start_rate : 500
+    messageLimit = var.sf_start_rate == null ? 500 : var.sf_start_rate
     queueUrl     = aws_sqs_queue.background_processing.id
     timeLimit    = 60
   })
@@ -41,7 +41,7 @@ resource "aws_cloudwatch_event_target" "start_sf_watcher" {
   rule = aws_cloudwatch_event_rule.start_sf_watcher.name
   arn  = aws_lambda_function.sqs2sf.arn
   input = jsonencode({
-    messageLimit = var.sf_start_rate ? var.sf_start_rate : 500
+    messageLimit = var.sf_start_rate == null ? 500 : var.sf_start_rate
     queueUrl     = aws_sqs_queue.start_sf.id
     timeLimit    = 60
   })
