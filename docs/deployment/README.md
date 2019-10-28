@@ -398,7 +398,7 @@ __Note:__ Be sure to copy the redirect URLs, as you will use them to update your
 
 You will need to add two redirect URLs to your EarthData login application.
 Login to URS (UAT), and under My Applications -> Application Administration -> use the edit icon of your application.  Then under Manage -> redirect URIs, add the Backend API url returned from the stack deployment, e.g. `https://<czbbkscuy6>.execute-api.us-east-1.amazonaws.com/dev/token`.
-Also add the Distribution url `https://<kido2r7kji>.execute-api.us-east-1.amazonaws.com/dev/login`[^3]. You may also delete the placeholder url you used to create the application.
+Also add the Distribution url `https://<kido2r7kji>.execute-api.us-east-1.amazonaws.com/dev/login`[^1]. You may also delete the placeholder url you used to create the application.
 
 If you've lost track of the needed redirect URIs, they can be located on the [API Gateway](https://console.aws.amazon.com/apigateway).  Once there, select `<prefix>-archive` and/or `<prefix>-thin-egress-app-EgressGateway`, `Dashboard` and utilizing the base URL at the top of the page that is accompanied by the text `Invoke this API at:`.  Make sure to append `/token` for the archive URL and `/login` to the thin egress app URL.
 
@@ -462,9 +462,7 @@ To checkout and install a specific version of the dashboard:
 
 If you do not have the correct version of node installed, replace `nvm use` with `nvm install $(cat .nvmrc)` in the above example.
 
-### Dashboard configuration
-
-To configure your dashboard for deployment, update `cumulus-dashboard/app/scripts/config/config.js` by replacing the default apiRoot `https://wjdkfyb6t6.execute-api.us-east-1.amazonaws.com/dev/` with your app's apiRoot:[^2]
+### Dashboard configurationwjdkfyb6t6.execute-api.us-east-1.amazonaws.com/dev/` with your app's apiRoot:[^2]
 
 ```javascript
     apiRoot: process.env.APIROOT || 'https://<czbbkscuy6>.execute-api.us-east-1.amazonaws.com/dev/'
@@ -501,43 +499,34 @@ You should be able to visit the dashboard website at `http://<prefix>-dashboard.
 
 ## Updating Cumulus deployment
 
-Once deployed for the first time, any future updates to the role/stack configuration files/version of Cumulus can be deployed and will update the appropriate portions of the stack as needed.
+Once deployed for the first time, any future updates to the configuration files, Terraform files (`*.tf`), or version of Cumulus can be deployed and will update the appropriate portions of the stack as needed.
 
 ## Cumulus Versioning
 
 Cumulus uses a global versioning approach, meaning version numbers are consistent across all packages and tasks, and semantic versioning to track major, minor, and patch version (i.e. 1.0.0). We use Lerna to manage versioning.
 
-## Update roles
+## Update data persistence resources
+
+From your `data-persistence-tf` directory:
 
 ```bash
-  $ DEPLOYMENT=<deployment-name> \
-      AWS_REGION=<region> \ # e.g. us-east-1
+  $ AWS_REGION=<region> \ # e.g. us-east-1
       AWS_PROFILE=<profile> \
-      npm run deploy-iam
-```
-
-## Update database
-
-```bash
-  $ DEPLOYMENT=<deployment-name> \
-      AWS_REGION=<region> \ # e.g. us-east-1
-      AWS_PROFILE=<profile> \
-      npm run deploy-db
+      terraform apply
 ```
 
 ## Update Cumulus
 
+From your `cumulus-tf` directory:
+
 ```bash
-  $ DEPLOYMENT=<deployment-name> \
-      AWS_REGION=<region> \ # e.g. us-east-1
+  $ AWS_REGION=<region> \ # e.g. us-east-1
       AWS_PROFILE=<profile> \
-      npm run deploy-app
+      terraform apply
 ```
 
 ### Footnotes
 
-[^1]: The iam  actions require more permissions than a typical AWS user will have and should be run by an administrator.
+[^1]: To add another redirect URIs to your application. On Earthdata home page, select "My Applications". Scroll down to "Application Administration" and use the edit icon for your application. Then Manage -> Redirect URIs.
 
-[^2]: The API root can be found a number of ways. The easiest is to note it in the output of the app deployment step. But you can also find it from the `AWS console -> Amazon API Gateway -> APIs -> <prefix>-cumulus-backend -> Dashboard`, and reading the URL at the top "invoke this API"
-
-[^3]: To add another redirect URIs to your application. On EarthData home page, select "My Applications" Scroll down to "Application Administration" and use the edit icon for your application.  Then Manage -> Redirect URIs.
+[^2]: The API root can be found a number of ways. The easiest is to note it in the output of the app deployment step. But you can also find it from the `AWS console -> Amazon API Gateway -> APIs -> <prefix>-archive -> Dashboard`, and reading the URL at the top after "Invoke this API at"
