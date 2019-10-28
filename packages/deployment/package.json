@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/deployment",
-  "version": "1.14.3",
+  "version": "1.14.4",
   "description": "Deployment templates for cumulus",
   "bin": {
     "delete-stage": "bin/delete-stage-cli.js"
@@ -42,7 +42,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "1.14.3",
+    "@cumulus/common": "1.14.4",
     "aws-sdk": "^2.479.0",
     "commander": "^2.20.0",
     "extract-zip": "^1.6.6",

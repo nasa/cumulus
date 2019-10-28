@@ -1,7 +1,7 @@
 {
   "name": "report-executions",
   "private": true,
-  "version": "1.14.3",
+  "version": "1.14.4",
   "description": "Store workflow execution information to database",
   "main": "index.js",
   "engines": {
@@ -15,8 +15,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api": "1.14.3",
-    "@cumulus/common": "1.14.3",
+    "@cumulus/api": "1.14.4",
+    "@cumulus/common": "1.14.4",
     "lodash.get": "^4.4.2",
     "lodash.has": "^4.5.2"
   },
