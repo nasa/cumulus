@@ -83,6 +83,15 @@ Clone template-deploy repo and name appropriately for your DAAC or organization:
 
 We will return to [configuring this repo and using it for deployment below](#deploying-the-cumulus-instance).
 
+**Optional:** [Create a new repository](https://help.github.com/articles/creating-a-new-repository/) `<daac>-deploy` so that you can add your workflows and other modules to source control:
+
+```bash
+  $ git remote set-url origin https://github.com/nasa/<daac>-deploy
+  $ git push origin master
+```
+
+You can then [add/commit](https://help.github.com/articles/adding-a-file-to-a-repository-using-the-command-line/) changes as needed.
+
 ## Prepare AWS configuration
 
 ### Set Access Keys
