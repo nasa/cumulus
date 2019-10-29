@@ -280,3 +280,16 @@ reportPdrs:
   launchInVpc: true
   tables:
     - PdrsTable
+
+sqsMessageConsumer:
+  handler: index.handler
+  timeout: 100
+  memory: 256
+  source: 'node_modules/@cumulus/api/dist/sqsMessageConsumer/'
+  launchInVpc: true
+  tables:
+    - RulesTable
+    - CollectionsTable
+    - ProvidersTable
+  envs:
+    system_bucket: '{{system_bucket}}'
