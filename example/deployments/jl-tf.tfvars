@@ -1,4 +1,5 @@
 prefix            = "jl-tf"
+system_bucket     = "jl-test-integration-internal"
 buckets = {
   internal = {
     name = "jl-test-integration-internal"
