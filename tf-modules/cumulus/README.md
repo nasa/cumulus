@@ -4,9 +4,9 @@ This module provides an "off the shelf" version of a full Cumulus deployment fea
 
 ## Included resources
 
-- [Archive module](../archive/main.tf) - Resources related to tracking the ingested data from Cumulus workflows
-- [Ingest module](../ingest/main.tf) - Resources related to scheduling and running Cumulus workflows
-- [Distribution module](../distribution/main.tf) - Provides the Distribution API for accessing ingested data
+- [Archive module](../archive/README.md) - Resources related to tracking the ingested data from Cumulus workflows
+- [Ingest module](../ingest/README.md) - Resources related to scheduling and running Cumulus workflows
+- [Distribution module](../distribution/README.md) - Provides the Distribution API for accessing ingested data
 - [ECS cluster with configurable autoscaling](./ecs_cluster.tf)
 - [Monitoring module](../monitoring) - Cloudwatch dashboard and other resources for monitoring your Cumulus deployment
 
