@@ -22,6 +22,8 @@ serve. Documentation of the file format is available [here](https://github.com/a
 A simple config, which would use the same URL scheme that we are using now,
 would look something like this:
 
+**bucket_map.yaml:**
+
 ```yaml
 MAP:
   my-protected: my-protected
@@ -46,7 +48,7 @@ password is stored as `EARTHDATA_CLIENT_PASSWORD` in `app/.env`.
 This is pretty confusing, so an example should help. Let's say that we're using
 this `.env` file:
 
-**app/.env**
+**app/.env:**
 
 ```shell
 EARTHDATA_CLIENT_ID=my-client-id
