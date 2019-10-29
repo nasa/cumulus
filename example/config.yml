@@ -1,0 +1,17 @@
+default:
+  bucket: cumulus-test-sandbox-internal
+
+mvd-tf:
+  bucket: mvd-internal
+
+jl-tf:
+  bucket: jl-test-integration-internal
+
+kk-test-tf:
+  bucket: kk-test-internal
+
+lf-int-test-tf:
+  bucket: lf-internal
+
+mth-tf:
+  bucket: mth-internal

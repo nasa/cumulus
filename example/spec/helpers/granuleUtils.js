@@ -33,6 +33,7 @@ const addUrlPathToGranuleFiles = (files, testId, collectionUrlPath) =>
  *
  * @param  {Array<Object>} granules - Array of granules with files to be updated
  * @param  {string} filePath - Filepath to add
+ * @returns {Array<Object>} Updates granules array
  */
 function addUniqueGranuleFilePathToGranuleFiles(granules, filePath) {
   const updatedGranules = granules.map((originalGranule) => {
