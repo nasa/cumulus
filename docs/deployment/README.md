@@ -92,6 +92,8 @@ We will return to [configuring this repo and using it for deployment below](#dep
 
 You can then [add/commit](https://help.github.com/articles/adding-a-file-to-a-repository-using-the-command-line/) changes as needed.
 
+**Note**: If you are pushing your deployment code to a git repo, make sure to add `terraform.tf` and `terraform.tfvars` to `.gitignore`, **as these files will contain sensitive data related to your AWS account**.
+
 ## Prepare AWS configuration
 
 ### Set Access Keys
