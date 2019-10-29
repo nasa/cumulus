@@ -209,7 +209,7 @@ workflows, etc. The `cumulus` module depends on the resources created in the
 
 Each of these modules have to be deployed independently and require their own Terraform backend, variable, and output settings. The template deploy repo that was cloned previously already contains the scaffolding of the necessary files for the deployment of each module: `data-persistence-tf` deploys the `data-persistence` module and `cumulus-tf` deploys the `cumulus` module. For reference on the files that are included, see the [documentation on adding components to a Terraform deployment](components.md#adding-components-to-your-terraform-deployment).
 
-## Configure and deploy the `data-persistence-tf` root module
+### Configure and deploy the `data-persistence-tf` root module
 
 These steps should be executed in the `data-persistence-tf` directory of the template deploy repo that was cloned previously.
 
@@ -283,7 +283,7 @@ elasticsearch_security_group_id = sg-12345
 
 Your data persistence resources are now deployed.
 
-## Deploy the Cumulus Message Adapter layer
+### Deploy the Cumulus Message Adapter layer
 
 **Note:**: If you are deploying in an NGAP environment, you should be able to use the existing Cumulus Message Adapter layer deployed in your environment.
 
@@ -293,7 +293,7 @@ PLACEHOLDER FOR DEPLOYMENT STEPS
 
 Make sure to copy the ARN of the deployed layer, as it will be used to configure the `cumulus-tf` deployment in the next step.
 
-## Configure and deploy the `cumulus-tf` root module
+### Configure and deploy the `cumulus-tf` root module
 
 These steps should be executed in the `cumulus-tf` directory of the template repo that was cloned previously.
 
@@ -466,20 +466,16 @@ To checkout and install a specific version of the dashboard:
 
 If you do not have the correct version of node installed, replace `nvm use` with `nvm install $(cat .nvmrc)` in the above example.
 
-### Dashboard configurationwjdkfyb6t6.execute-api.us-east-1.amazonaws.com/dev/` with your app's apiRoot:[^2]
-
-```javascript
-    apiRoot: process.env.APIROOT || 'https://<czbbkscuy6>.execute-api.us-east-1.amazonaws.com/dev/'
-```
-
 ### Building the dashboard
 
 **Note**: These environment variables are available during the build: `APIROOT`, `DAAC_NAME`, `STAGE`, `HIDE_PDR`. Any of these can be set on the command line to override the values contained in `config.js` when running the build below.
 
+To configure your dashboard for deployment, set the `APIROOT` environment variable to your app's API root.[^2]
+
 Build the dashboard from the dashboard repository root directory, `cumulus-dashboard`:
 
 ```bash
-  $ npm run build
+  $ APIROOT=<your_api_root> npm run build
 ```
 
 ### Dashboard deployment
@@ -505,11 +501,11 @@ You should be able to visit the dashboard website at `http://<prefix>-dashboard.
 
 Once deployed for the first time, any future updates to the configuration files, Terraform files (`*.tf`), or version of Cumulus can be deployed and will update the appropriate portions of the stack as needed.
 
-## Cumulus Versioning
+### Cumulus Versioning
 
 Cumulus uses a global versioning approach, meaning version numbers are consistent across all packages and tasks, and semantic versioning to track major, minor, and patch version (i.e. 1.0.0). We use Lerna to manage versioning.
 
-## Update data persistence resources
+### Update data persistence resources
 
 From your `data-persistence-tf` directory:
 
@@ -519,7 +515,7 @@ From your `data-persistence-tf` directory:
       terraform apply
 ```
 
-## Update Cumulus
+### Update Cumulus
 
 From your `cumulus-tf` directory:
 
