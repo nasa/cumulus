@@ -13,28 +13,30 @@ const {
   timestampedName
 } = require('../../helpers/testUtils');
 
-const config = loadConfig();
-process.env.stackName = config.stackName;
-process.env.system_bucket = config.system_bucket;
-
-const lambdaStep = new LambdaStep();
-
 describe('When I create a scheduled rule via the Cumulus API', () => {
   let execution;
-  const scheduledRuleName = timestampedName('SchedHelloWorldTest');
-  const scheduledHelloWorldRule = {
-    name: scheduledRuleName,
-    workflow: 'HelloWorldWorkflow',
-    rule: {
-      type: 'scheduled',
-      value: 'rate(2 minutes)'
-    },
-    meta: {
-      triggerRule: scheduledRuleName
-    }
-  };
+  let scheduledRuleName;
+  let config;
+  let scheduledHelloWorldRule;
 
   beforeAll(async () => {
+    config = await loadConfig();
+    process.env.stackName = config.stackName;
+    process.env.system_bucket = config.system_bucket;
+
+    scheduledRuleName = timestampedName('SchedHelloWorldTest');
+    scheduledHelloWorldRule = {
+      name: scheduledRuleName,
+      workflow: 'HelloWorldWorkflow',
+      rule: {
+        type: 'scheduled',
+        value: 'rate(2 minutes)'
+      },
+      meta: {
+        triggerRule: scheduledRuleName
+      }
+    };
+
     // Create a scheduled rule
     await rulesApiTestUtils.postRule({
       prefix: config.stackName,
@@ -89,22 +91,35 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
 });
 
 describe('When I create a one-time rule via the Cumulus API', () => {
-  let postRule = '';
-  const oneTimeRuleName = timestampedName('HelloWorldIntegrationTestRule');
-  const createdCheck = timestampedName('Created');
-  const updatedCheck = timestampedName('Updated');
-  const helloWorldRule = {
-    name: oneTimeRuleName,
-    workflow: 'HelloWorldWorkflow',
-    rule: {
-      type: 'onetime'
-    },
-    meta: {
-      triggerRule: createdCheck // used to detect that we're looking at the correct execution
-    }
-  };
+  let config;
+  let createdCheck;
+  let helloWorldRule;
+  let lambdaStep;
+  let postRule;
+  let updatedCheck;
 
   beforeAll(async () => {
+    config = await loadConfig();
+    process.env.stackName = config.stackName;
+    process.env.system_bucket = config.system_bucket;
+
+    lambdaStep = new LambdaStep();
+
+    postRule = '';
+    const oneTimeRuleName = timestampedName('HelloWorldIntegrationTestRule');
+    createdCheck = timestampedName('Created');
+    updatedCheck = timestampedName('Updated');
+    helloWorldRule = {
+      name: oneTimeRuleName,
+      workflow: 'HelloWorldWorkflow',
+      rule: {
+        type: 'onetime'
+      },
+      meta: {
+        triggerRule: createdCheck // used to detect that we're looking at the correct execution
+      }
+    };
+
     // Create a one-time rule
     const postRuleResponse = await rulesApiTestUtils.postRule({
       prefix: config.stackName,

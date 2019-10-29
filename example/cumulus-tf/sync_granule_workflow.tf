@@ -37,7 +37,7 @@ module "sync_granule_workflow" {
                 },
                 {
                   "source": "{$.process}",
-                  "destination": "{$.cumulus_meta.process}"
+                  "destination": "{$.meta.process}"
                 }
               ]
             }

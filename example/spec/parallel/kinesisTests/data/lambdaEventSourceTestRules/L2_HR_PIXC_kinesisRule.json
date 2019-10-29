@@ -7,7 +7,7 @@
   "provider": "PODAAC_SWOT",
   "rule": {
     "type": "kinesis",
-    "value": "arn:aws:kinesis:{{awsRegion}}:{{awsAccountId}}:stream/{{streamName}}"
+    "value": "arn:aws:kinesis:{{AWS_REGION}}:{{AWS_ACCOUNT_ID}}:stream/{{streamName}}"
   },
   "state": "ENABLED",
   "workflow": "HelloWorldWorkflow"
