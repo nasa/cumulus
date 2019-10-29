@@ -41,7 +41,7 @@ module "ingest_and_publish_granule_workflow" {
                 },
                 {
                   "source": "{$.process}",
-                  "destination": "{$.cumulus_meta.process}"
+                  "destination": "{$.meta.process}"
                 }
               ]
             }
@@ -75,7 +75,7 @@ module "ingest_and_publish_granule_workflow" {
         {
           "Next": "ProcessingStep",
           "StringEquals": "modis",
-          "Variable": "$.cumulus_meta.process"
+          "Variable": "$.meta.process"
         }
       ],
       "Default": "WorkflowSucceeded",
@@ -216,7 +216,7 @@ module "ingest_and_publish_granule_workflow" {
             "bucket": "{$.meta.buckets.internal.name}",
             "stack": "{$.meta.stack}",
             "cmr": "{$.meta.cmr}",
-            "process": "{$.cumulus_meta.process}"
+            "process": "{$.meta.process}"
           }
         }
       },

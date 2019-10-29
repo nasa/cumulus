@@ -41,7 +41,7 @@ module "ingest_granule_catch_duplicate_error_test_workflow" {
                 },
                 {
                   "source": "{$.process}",
-                  "destination": "{$.cumulus_meta.process}"
+                  "destination": "{$.meta.process}"
                 }
               ]
             }
@@ -81,7 +81,7 @@ module "ingest_granule_catch_duplicate_error_test_workflow" {
       "Type": "Choice",
       "Choices": [
         {
-          "Variable": "$.cumulus_meta.process",
+          "Variable": "$.meta.process",
           "StringEquals": "modis",
           "Next": "ProcessingStep"
         }
