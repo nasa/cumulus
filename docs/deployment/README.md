@@ -507,7 +507,11 @@ Cumulus uses a global versioning approach, meaning version numbers are consisten
 
 ### Update data persistence resources
 
-From your `data-persistence-tf` directory:
+If necessary, update the line in `data-persistence-tf/main.tf` with the source for the `data-persistence` module in your deployment by replacing `v1.16.0` with the desired version of Cumulus:
+
+`source = "https://github.com/nasa/cumulus/releases/download/v1.16.0/terraform.zip//tf-modules/data-persistence""`
+
+Then, from your `data-persistence-tf` directory:
 
 ```bash
   $ AWS_REGION=<region> \ # e.g. us-east-1
@@ -517,7 +521,11 @@ From your `data-persistence-tf` directory:
 
 ### Update Cumulus
 
-From your `cumulus-tf` directory:
+If necessary, update the line in `cumulus-tf/main.tf` with the source for the `cumulus` module in your deployment by replacing `v1.16.0` with the desired version of Cumulus:
+
+`source = "https://github.com/nasa/cumulus/releases/download/v1.16.0/terraform.zip//tf-modules/cumulus""`
+
+Then, from your `cumulus-tf` directory:
 
 ```bash
   $ AWS_REGION=<region> \ # e.g. us-east-1
@@ -525,7 +533,7 @@ From your `cumulus-tf` directory:
       terraform apply
 ```
 
-### Footnotes
+## Footnotes
 
 [^1]: To add another redirect URIs to your application. On Earthdata home page, select "My Applications". Scroll down to "Application Administration" and use the edit icon for your application. Then Manage -> Redirect URIs.
 
