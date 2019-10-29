@@ -1,4 +1,5 @@
 SyncGranule:
+<<<<<<< HEAD
   Comment: "Sync Granule"
   StartAt: SyncGranule
   States:
@@ -33,13 +34,54 @@ SyncGranule:
             - Lambda.ServiceException
             - Lambda.AWSLambdaException
             - Lambda.SdkClientException
+=======
+  Comment: 'Sync Granule'
+  StartAt: SyncGranule
+  States:
+    SyncGranule:
+      Type: Task
+      Resource: ${SyncGranuleLambdaFunction.Arn}
+      Parameters:
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        buckets: '{$.meta.buckets}'
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+        stack: '{$.meta.stack}'
+        fileStagingDir: 'custom-staging-dir'
+        downloadBucket: '{$.cumulus_meta.system_bucket}'
+        duplicateHandling: '{$.meta.collection.duplicateHandling}'
+        cumulus_message:
+          input: '{$.payload}'
+          outputs:
+            - source: '{$.granules}'
+              destination: '{$.meta.input_granules}'
+            - source: '{$}'
+              destination: '{$.payload}'
+            - source: '{$.process}'
+              destination: '{$.meta.process}'
+      Retry:
+        - &LambdaServiceExceptionRetry
+          ErrorEquals:
+          - Lambda.ServiceException
+          - Lambda.AWSLambdaException
+          - Lambda.SdkClientException
+>>>>>>> master
           IntervalSeconds: 2
           MaxAttempts: 6
           BackoffRate: 2
       Catch:
         - ErrorEquals:
+<<<<<<< HEAD
             - States.ALL
           ResultPath: "$.exception"
+=======
+          - States.ALL
+          ResultPath: '$.exception'
+>>>>>>> master
           Next: WorkflowFailed
       End: true
     WorkflowFailed:
@@ -47,6 +89,7 @@ SyncGranule:
       Cause: "Workflow failed"
 
 IngestAndPublishGranule:
+<<<<<<< HEAD
   Comment: "Ingest Granule"
   StartAt: SyncGranule
   States:
@@ -76,12 +119,48 @@ IngestAndPublishGranule:
                   destination: "{$.meta.process}"
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
+=======
+  Comment: 'Ingest Granule'
+  StartAt: SyncGranule
+  States:
+    SyncGranule:
+      Type: Task
+      Resource: ${SyncGranuleLambdaFunction.Arn}
+      Parameters:
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            Path: '$.payload'
+            TargetPath: '$.payload'
+      CumulusConfig:
+        buckets: '{$.meta.buckets}'
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+        stack: '{$.meta.stack}'
+        downloadBucket: '{$.cumulus_meta.system_bucket}'
+        duplicateHandling: '{$.meta.collection.duplicateHandling}'
+        pdr: '{$.meta.pdr}'
+        cumulus_message:
+          input: '{$.payload}'
+          outputs:
+            - source: '{$.granules}'
+              destination: '{$.meta.input_granules}'
+            - source: '{$}'
+              destination: '{$.payload}'
+            - source: '{$.process}'
+              destination: '{$.meta.process}'
+>>>>>>> master
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
+<<<<<<< HEAD
             - States.ALL
           ResultPath: "$.exception"
+=======
+          - States.ALL
+          ResultPath: '$.exception'
+>>>>>>> master
           Next: WorkflowFailed
       Next: ChooseProcess
     ChooseProcess:
@@ -110,8 +189,13 @@ IngestAndPublishGranule:
       Resource: ${FakeProcessingLambdaFunction.Arn}
       Catch:
         - ErrorEquals:
+<<<<<<< HEAD
             - States.ALL
           ResultPath: "$.exception"
+=======
+          - States.ALL
+          ResultPath: '$.exception'
+>>>>>>> master
           Next: WorkflowFailed
       Retry:
         - ErrorEquals:
@@ -134,8 +218,13 @@ IngestAndPublishGranule:
         - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
+<<<<<<< HEAD
             - States.ALL
           ResultPath: "$.exception"
+=======
+          - States.ALL
+          ResultPath: '$.exception'
+>>>>>>> master
           Next: WorkflowFailed
       Next: MoveGranuleStep
     MoveGranuleStep:
@@ -156,8 +245,13 @@ IngestAndPublishGranule:
         - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
+<<<<<<< HEAD
             - States.ALL
           ResultPath: "$.exception"
+=======
+          - States.ALL
+          ResultPath: '$.exception'
+>>>>>>> master
           Next: WorkflowFailed
       Next: CmrStep
     CmrStep:
@@ -166,6 +260,7 @@ IngestAndPublishGranule:
           event.$: "$"
           ReplaceConfig:
             FullMessage: true
+<<<<<<< HEAD
           task_config:
             bucket: "{$.meta.buckets.internal.name}"
             stack: "{$.meta.stack}"
@@ -174,12 +269,25 @@ IngestAndPublishGranule:
             process: "{$.meta.process}"
       Type: Task
       Resource: ${PostToCmrLambdaFunction.Arn}
+=======
+      CumulusConfig:
+        bucket: '{$.meta.buckets.internal.name}'
+        stack: '{$.meta.stack}'
+        cmr: '{$.meta.cmr}'
+        launchpad: '{$.meta.launchpad}'
+        process: '{$.meta.process}'
+>>>>>>> master
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
+<<<<<<< HEAD
             - States.ALL
           ResultPath: "$.exception"
+=======
+          - States.ALL
+          ResultPath: '$.exception'
+>>>>>>> master
           Next: WorkflowFailed
       Next: WorkflowSucceeded
     WorkflowSucceeded:
@@ -189,7 +297,11 @@ IngestAndPublishGranule:
       Cause: "Workflow failed"
 
 IngestGranule:
+<<<<<<< HEAD
   Comment: "Ingest Granule"
+=======
+  Comment: 'Ingest Granule'
+>>>>>>> master
   StartAt: SyncGranule
   States:
     SyncGranule:
@@ -197,6 +309,7 @@ IngestGranule:
         cma:
           event.$: "$"
           ReplaceConfig:
+<<<<<<< HEAD
             MaxSize: 1
             Path: "$.payload"
             TargetPath: "$.payload"
@@ -217,6 +330,27 @@ IngestGranule:
                   destination: "{$.payload}"
                 - source: "{$.process}"
                   destination: "{$.meta.process}"
+=======
+            Path: '$.payload'
+            TargetPath: '$.payload'
+      CumulusConfig:
+        buckets: '{$.meta.buckets}'
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+        stack: '{$.meta.stack}'
+        downloadBucket: '{$.cumulus_meta.system_bucket}'
+        duplicateHandling: '{$.meta.collection.duplicateHandling}'
+        pdr: '{$.meta.pdr}'
+        cumulus_message:
+          input: '{$.payload}'
+          outputs:
+            - source: '{$.granules}'
+              destination: '{$.meta.input_granules}'
+            - source: '{$}'
+              destination: '{$.payload}'
+            - source: '{$.process}'
+              destination: '{$.meta.process}'
+>>>>>>> master
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
@@ -226,8 +360,13 @@ IngestGranule:
           MaxAttempts: 3
       Catch:
         - ErrorEquals:
+<<<<<<< HEAD
             - States.ALL
           ResultPath: "$.exception"
+=======
+          - States.ALL
+          ResultPath: '$.exception'
+>>>>>>> master
           Next: WorkflowFailed
       Next: ChooseProcess
     ChooseProcess:
@@ -254,8 +393,13 @@ IngestGranule:
       Resource: ${FakeProcessingLambdaFunction.Arn}
       Catch:
         - ErrorEquals:
+<<<<<<< HEAD
             - States.ALL
           ResultPath: "$.exception"
+=======
+          - States.ALL
+          ResultPath: '$.exception'
+>>>>>>> master
           Next: WorkflowFailed
       Retry:
         - ErrorEquals:
@@ -278,8 +422,13 @@ IngestGranule:
         - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
+<<<<<<< HEAD
             - States.ALL
           ResultPath: "$.exception"
+=======
+          - States.ALL
+          ResultPath: '$.exception'
+>>>>>>> master
           Next: WorkflowFailed
       Next: MoveGranuleStep
     MoveGranuleStep:
@@ -288,6 +437,7 @@ IngestGranule:
           event.$: "$"
           ReplaceConfig:
             FullMessage: true
+<<<<<<< HEAD
           task_config:
             bucket: "{$.meta.buckets.internal.name}"
             buckets: "{$.meta.buckets}"
@@ -296,6 +446,14 @@ IngestGranule:
             duplicateHandling: "{$.meta.collection.duplicateHandling}"
       Type: Task
       Resource: ${MoveGranulesLambdaFunction.Arn}
+=======
+      CumulusConfig:
+        bucket: '{$.meta.buckets.internal.name}'
+        buckets: '{$.meta.buckets}'
+        distribution_endpoint: '{$.meta.distribution_endpoint}'
+        collection: '{$.meta.collection}'
+        duplicateHandling: '{$.meta.collection.duplicateHandling}'
+>>>>>>> master
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
