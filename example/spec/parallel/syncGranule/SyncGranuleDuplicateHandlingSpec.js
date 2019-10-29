@@ -59,11 +59,9 @@ describe('When the Sync Granule workflow is configured', () => {
   let inputPayload;
   let granuleModel;
   let expectedPayload;
+  let pdrModel;
   let testSuffix;
   let testDataFolder;
-
-  process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-  const pdrModel = new Pdr();
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -81,6 +79,7 @@ describe('When the Sync Granule workflow is configured', () => {
     granuleModel = new Granule();
 
     process.env.PdrsTable = `${config.stackName}-PdrsTable`;
+    pdrModel = new Pdr();
 
     // populate collections, providers and test data
     await Promise.all([
