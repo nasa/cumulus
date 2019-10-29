@@ -499,7 +499,9 @@ You should be able to visit the dashboard website at `http://<prefix>-dashboard.
 
 ## Updating Cumulus deployment
 
-Once deployed for the first time, any future updates to the configuration files, Terraform files (`*.tf`), or version of Cumulus can be deployed and will update the appropriate portions of the stack as needed.
+After the initial deploy, any future updates to the Terraform deployment from configuration files, Terraform files (`*.tf`), or modules from a new version of Cumulus can be deployed and will update the appropriate portions of the stack as needed.
+
+To view the released module artifacts for each Cumulus core version, see the [Cumulus releases page](https://github.com/nasa/cumulus/releases).
 
 ### Cumulus Versioning
 
@@ -507,9 +509,9 @@ Cumulus uses a global versioning approach, meaning version numbers are consisten
 
 ### Update data persistence resources
 
-If necessary, update the line in `data-persistence-tf/main.tf` with the source for the `data-persistence` module in your deployment by replacing `v1.16.0` with the desired version of Cumulus:
+To update your Cumulus version, update the line in your Terraform deployment files with the source for the `data-persistence` module in your deployment by replacing `vx.x.x` with the desired version of Cumulus:
 
-`source = "https://github.com/nasa/cumulus/releases/download/v1.16.0/terraform.zip//tf-modules/data-persistence""`
+`source = "https://github.com/nasa/cumulus/releases/download/vx.x.x/terraform.zip//tf-modules/data-persistence""`
 
 Then, from your `data-persistence-tf` directory:
 
@@ -521,9 +523,9 @@ Then, from your `data-persistence-tf` directory:
 
 ### Update Cumulus
 
-If necessary, update the line in `cumulus-tf/main.tf` with the source for the `cumulus` module in your deployment by replacing `v1.16.0` with the desired version of Cumulus:
+To update your Cumulus version, update the line in your Terraform deployment files with the source for the `cumulus` module in your deployment by replacing `vx.x.x` with the desired version of Cumulus:
 
-`source = "https://github.com/nasa/cumulus/releases/download/v1.16.0/terraform.zip//tf-modules/cumulus""`
+`source = "https://github.com/nasa/cumulus/releases/download/vx.x.x/terraform.zip//tf-modules/cumulus""`
 
 Then, from your `cumulus-tf` directory:
 
