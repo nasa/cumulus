@@ -21,6 +21,7 @@ process.env.system_bucket = randomString();
 
 const workflow = randomString();
 const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
+const messageTemplateKey = `${process.env.stackName}/workflow_template.json`;
 
 let rulesModel;
 let queueUrls = [];
@@ -66,11 +67,19 @@ test.before(async () => {
   rulesModel = new models.Rule();
   await rulesModel.createTable();
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
-  await aws.s3().putObject({
+  
+  await Promise.all([
+    aws.s3PutObject({
+      Bucket: process.env.system_bucket,
+      Key: messageTemplateKey,
+      Body: JSON.stringify({meta: 'testmeta'})
+    }),
+    aws.s3PutObject({
     Bucket: process.env.system_bucket,
     Key: workflowfile,
     Body: JSON.stringify({ testworkflow: 'workflowconfig' })
-  }).promise();
+    })
+  ]);
   createdRules = await createRules();
 });
 
