@@ -1,7 +1,6 @@
 #!/bin/bash
 set -ex
-
-. ./bamboo/abort-if-not-pr.sh
+. ./bamboo/abort-if-not-pr-or-master.sh
 . ./bamboo/set-bamboo-env-variables.sh
 
 commit_message_contains_skip_audit_flag=false

@@ -47,6 +47,9 @@ describe('The Ingest Granule failure workflow', () => {
   let testSuffix;
   let workflowExecution;
 
+  process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+  const executionModel = new Execution();
+
   beforeAll(async () => {
     config = await loadConfig();
     const testId = createTimestampedTestId(config.stackName, 'IngestGranuleFailure');

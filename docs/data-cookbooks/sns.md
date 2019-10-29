@@ -133,6 +133,8 @@ resource "aws_lambda_permission" "test_lambda" {
 }
 ```
 
+More information on configuring an SNS topic subscriptions in Cumulus can be found in our [developer documentation](../deployment/config_descriptions#sns).
+
 ### SNS message format
 
 Subscribers to the SNS topics can expect to find the published message in the [SNS event](https://docs.aws.amazon.com/lambda/latest/dg/eventsources.html#eventsources-sns) at `Records[0].Sns.Message`. The message will be a JSON stringified version of the ingest notification record for an execution, a granule, or a PDR.

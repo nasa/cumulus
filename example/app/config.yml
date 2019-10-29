@@ -176,6 +176,7 @@ default:
   # URS users who should have access to the dashboard application.
   users:
     - username: aimeeb
+    - username: chuckwondo
     - username: jennyhliu
     - username: jnorton1
     - username: kbaynes
@@ -775,6 +776,14 @@ mboyd-int:
   ecs:
     ssh: true
     keyPairName: mboyd
+
+chuckulus:
+  prefix: chuckulus
+  prefixNoDash: chuckulus
+
+chuckulus-ci:
+  prefix: chuckulus-ci
+  prefixNoDash: chuckulusCI
 
 pq:
   prefix: pq
