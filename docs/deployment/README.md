@@ -17,12 +17,6 @@ working with Terraform, the following links should bring you up to speed:
 * [Getting Started with Terraform and AWS](https://learn.hashicorp.com/terraform/?track=getting-started#getting-started)
 * [Terraform Configuration Language](https://www.terraform.io/docs/configuration/index.html)
 
-This deployment document is current for the following component versions:
-
-* [Cumulus](https://github.com/nasa/cumulus)
-* [Deployment Template](https://github.com/nasa/template-deploy)
-* [Cumulus Dashboard](https://github.com/nasa/cumulus-dashboard)
-
 The process involves:
 
 * Creating [AWS S3 Buckets](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html).
@@ -68,9 +62,8 @@ Terraform v0.12.2
 
 ### Needed Git Repositories
 
-* [Cumulus](https://github.com/nasa/cumulus) (optional)
-* [Cumulus Dashboard](https://github.com/nasa/cumulus-dashboard)
 * [Deployment Template](https://github.com/nasa/cumulus-template-deploy)
+* [Cumulus Dashboard](https://github.com/nasa/cumulus-dashboard)
 
 ## Installation
 
