@@ -60,6 +60,7 @@ class Rule extends Manager {
       }
       break;
     }
+    case 'sqs':
     default:
       break;
     }
@@ -158,6 +159,11 @@ class Rule extends Manager {
       }
       break;
     }
+    case 'sqs':
+      if (valueUpdated && !(await aws.sqsQueueExists(updatedRuleItem.rule.value))) {
+        throw new Error(`SQS queue ${updatedRuleItem.rule.value} does not exist or your account does not have permissions to access it`);
+      }
+      break;
     default:
       break;
     }
@@ -231,6 +237,11 @@ class Rule extends Manager {
       }
       break;
     }
+    case 'sqs':
+      if (!(await aws.sqsQueueExists(newRuleItem.rule.value))) {
+        throw new Error(`SQS queue ${newRuleItem.rule.value} does not exist or your account does not have permissions to access it`);
+      }
+      break;
     default:
       throw new Error('Type not supported');
     }
@@ -415,6 +426,30 @@ class Rule extends Manager {
       SubscriptionArn: item.rule.arn
     };
     return aws.sns().unsubscribe(subscriptionParams).promise();
+  }
+
+  /**
+   * get all rules with specified type and state
+   *
+   * @param {string} type - rule type
+   * @param {string} state - rule state
+   * @returns {Promise<Object>}
+   */
+  async getRulesByTypeAndState(type, state) {
+    const scanResult = await this.scan({
+      names: {
+        '#st': 'state',
+        '#rl': 'rule',
+        '#tp': 'type'
+      },
+      filter: '#st = :enabledState AND #rl.#tp = :ruleType',
+      values: {
+        ':enabledState': state,
+        ':ruleType': type
+      }
+    });
+
+    return scanResult.Items;
   }
 }
 
