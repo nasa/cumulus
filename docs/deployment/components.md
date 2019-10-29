@@ -6,7 +6,7 @@ hide_title: true
 
 # Component-based Cumulus Deployment
 
-Cumulus is now released in a more modular architecture, which will allow users to
+Cumulus is now released in a modular architecture, which will allow users to
 pick and choose the individual components that they want to deploy. These
 components will be made available as [Terraform modules](https://www.terraform.io/docs/modules/index.html).
 
