@@ -91,7 +91,7 @@ async function ingestGranule(queue) {
   return granuleId;
 }
 
-describe('The SQS rule', () => {
+xdescribe('The SQS rule', () => {
   let ruleList = [];
   beforeAll(async () => {
     await setupCollectionAndTestData();
