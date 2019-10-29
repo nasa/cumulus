@@ -40,12 +40,13 @@ describe('The Ingest Granule failure workflow', () => {
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
   let config;
-  let executionModel;
-  let granuleModel;
   let inputPayload;
   let testDataFolder;
   let testSuffix;
   let workflowExecution;
+
+  process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+  const granuleModel = new Granule();
 
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
   const executionModel = new Execution();
@@ -58,12 +59,6 @@ describe('The Ingest Granule failure workflow', () => {
 
     const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
     const provider = { id: `s3_provider${testSuffix}` };
-
-    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-    granuleModel = new Granule();
-
-    process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-    executionModel = new Execution();
 
     // populate collections, providers and test data
     await Promise.all([
