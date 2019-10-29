@@ -67,17 +67,17 @@ test.before(async () => {
   rulesModel = new models.Rule();
   await rulesModel.createTable();
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
-  
+
   await Promise.all([
     aws.s3PutObject({
       Bucket: process.env.system_bucket,
       Key: messageTemplateKey,
-      Body: JSON.stringify({meta: 'testmeta'})
+      Body: JSON.stringify({ meta: 'testmeta' })
     }),
     aws.s3PutObject({
-    Bucket: process.env.system_bucket,
-    Key: workflowfile,
-    Body: JSON.stringify({ testworkflow: 'workflowconfig' })
+      Bucket: process.env.system_bucket,
+      Key: workflowfile,
+      Body: JSON.stringify({ testworkflow: 'workflowconfig' })
     })
   ]);
   createdRules = await createRules();
