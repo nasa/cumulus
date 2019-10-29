@@ -297,8 +297,6 @@ Make sure to copy the ARN of the deployed layer, as it will be used to configure
 
 These steps should be executed in the `cumulus-tf` directory of the template repo that was cloned previously.
 
-**Note:** When deploying to NGAP, these steps should be performed using `NGAPShNonProd` credentials.
-
 Create a `terraform.tf` file, substituting the appropriate values for `bucket`,
 `dynamodb_table`, and `<stack>`. This tells Terraform where to store its
 remote state.
@@ -382,9 +380,6 @@ oauth_provider = "earthdata"    # Can also be set to "launchpad"
 remote state values that you configured in
 `data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to
 determine the names of the resources created in `data-persistence-tf`.
-
-**Note:** When deploying to NGAP, the `permissions_boundary_arn` should refer to
-`NGAPShNonProdRoleBoundary`.
 
 Run `terraform init` if this is your first time deploying this module.
 
