@@ -51,12 +51,14 @@ For other cases,
 [installation instructions](https://learn.hashicorp.com/terraform/getting-started/install.html)
 are available.
 
-⚠️ Cumulus Terraform modules are targeted at Terraform v0.12.0 and higher.  To verify that the version of Terraform installed is at least v0.12.0, run:
+⚠️ Cumulus Terraform modules are targeted at Terraform v0.12.0 and higher. To verify that the version of Terraform installed is at least v0.12.0, run:
 
 ```shell
 $ terraform --version
 Terraform v0.12.2
 ```
+
+**Note:** If you have a CI environment (or any other machine) that you are using to deploy, **make sure that your local Terraform version is at least equal to the version on CI**, otherwise you will run into errors trying to re-deploy from your local machine.
 
 ### Credentials
 
