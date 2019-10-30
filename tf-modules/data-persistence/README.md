@@ -29,7 +29,7 @@ This module deploys data persistence resources, including DynamoDB tables and an
 
 ## Configuration
 
-Configuration variables are shown in [`terraform.tfvars.sample`](./terraform.tfvars.sample) and are explained below. See [variables.tf](./variables.tf) for default values.
+Configuration variables are shown in [`terraform.tfvars.example`](./terraform.tfvars.example) and are explained below. See [variables.tf](./variables.tf) for default values.
 
 - `prefix` - prefix to use for naming created resources
 - `es_trusted_role_arns` - IAM role ARNs that should be trusted for accessing Elasticsearch
