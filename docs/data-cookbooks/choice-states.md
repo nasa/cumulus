@@ -14,7 +14,7 @@ If the comparison evaluates to `true`, the `Next` state is followed.
 
 ## Example
 
-In [examples/workflows/sips.yml](https://github.com/nasa/cumulus/blob/master/example/workflows/sips.yml) the `ParsePdr` workflow uses a `Choice` state, `CheckAgainChoice`, to terminate the workflow once `meta.isPdrFinished: true` is returned by the `CheckStatus` state.
+In [examples/cumulus-tf/parse_pdr_workflow.tf](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/parse_pdr_workflow.tf) the `ParsePdr` workflow uses a `Choice` state, `CheckAgainChoice`, to terminate the workflow once `meta.isPdrFinished: true` is returned by the `CheckStatus` state.
 
 The `CheckAgainChoice` state definition requires an input object of the following structure:
 
@@ -28,16 +28,22 @@ The `CheckAgainChoice` state definition requires an input object of the followin
 
 Given the above input to the `CheckAgainChoice` state, the workflow would transition to the `PdrStatusReport` state.
 
-```yaml
-    CheckAgainChoice:
-      Type: Choice
-      Choices:
-        - Variable: $.meta.isPdrFinished
-          BooleanEquals: false
-          Next: PdrStatusReport
-        - Variable: $.meta.isPdrFinished
-          BooleanEquals: true
-          Next: WorkflowSucceeded
+```json
+"CheckAgainChoice": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.meta.isPdrFinished",
+          "BooleanEquals": false,
+          "Next": "PdrStatusReport"
+        },
+        {
+          "Variable": "$.meta.isPdrFinished",
+          "BooleanEquals": true,
+          "Next": "WorkflowSucceeded"
+        }
+      ],
+      "Default": "WorkflowSucceeded"
 ```
 
 ## Advanced: Loops in Cumulus Workflows
