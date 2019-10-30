@@ -418,7 +418,6 @@ Please note that the requirements are similar to the [Cumulus stack deployment r
 * [node 8.11.4](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
 * [npm](https://www.npmjs.com/get-npm)
 * [yarn](https://yarnpkg.com/en/docs/install#mac-stable)
-* sha1sum or md5sha1sum
 * zip
 * AWS CLI - [AWS command line interface](https://aws.amazon.com/cli/)
 * python
