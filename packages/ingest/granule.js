@@ -73,23 +73,22 @@ class Discover {
   }
 
   /**
-   * Receives a file object and adds granule-specific properties to it
+   * Receives a file object and adds granule-specific properties to it.
    *
    * @param {Object} file - the file object
-   * @returns {Object} Updated file with granuleId, bucket,
-   *                   file type, and url_path information
+   * @returns {Object} Updated file with granuleId added, and with bucket, file
+   *    type, and url_path added, if the file has an associated configuration
    */
   setGranuleInfo(file) {
-    const granuleIdMatch = file.name.match(this.collection.granuleIdExtraction);
-    const granuleId = granuleIdMatch[1];
-
+    const [, granuleId] = file.name.match(this.collection.granuleIdExtraction);
     const fileTypeConfig = this.fileTypeConfigForFile(file);
 
-    // Return the file with granuleId, bucket, and url_path added
+    // Return the file with granuleId added, and with bucket, url_path, and
+    // type added if there is a config for the file.
     return Object.assign(
       cloneDeep(file),
-      {
-        granuleId,
+      { granuleId },
+      !fileTypeConfig ? {} : {
         bucket: this.buckets[fileTypeConfig.bucket].name,
         url_path: fileTypeConfig.url_path || this.collection.url_path || '',
         type: fileTypeConfig.type || ''
@@ -106,7 +105,8 @@ class Discover {
    * @private
    */
   fileTypeConfigForFile(file) {
-    return this.collection.files.find((fileTypeConfig) => file.name.match(fileTypeConfig.regex));
+    return this.collection.files.find((fileTypeConfig) =>
+      file.name.match(fileTypeConfig.regex));
   }
 
   /**
@@ -118,8 +118,6 @@ class Discover {
     const discoveredFiles = (await this.list())
       // Make sure the file matches the granuleIdExtraction
       .filter((file) => file.name.match(this.collection.granuleIdExtraction))
-      // Make sure there is a config for this type of file
-      .filter((file) => this.fileTypeConfigForFile(file))
       // Add additional granule-related properties to the file
       .map((file) => this.setGranuleInfo(file));
 
@@ -132,8 +130,9 @@ class Discover {
       granuleId,
       dataType,
       version,
-      // Remove the granuleId property from each file
-      files: files.map((file) => omit(file, 'granuleId'))
+      // Retain only files with configs and omit granuleId from each file
+      files: files.filter((file) => this.fileTypeConfigForFile(file))
+        .map((file) => omit(file, 'granuleId'))
     }));
   }
 }

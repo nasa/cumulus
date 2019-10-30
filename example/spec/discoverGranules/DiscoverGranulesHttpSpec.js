@@ -36,6 +36,8 @@ describe('The Discover Granules workflow with http Protocol', () => {
   let queueGranulesOutput;
   let testId;
   let testSuffix;
+  let collection;
+  let provider;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -45,9 +47,9 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     testId = createTimestampedTestId(config.stackName, 'DiscoverGranules');
     testSuffix = createTestSuffix(testId);
+    collection = { name: `http_testcollection${testSuffix}`, version: '001' };
+    provider = { id: `http_provider${testSuffix}` };
 
-    const collection = { name: `http_testcollection${testSuffix}`, version: '001' };
-    const provider = { id: `http_provider${testSuffix}` };
     // populate collections and providers
     await Promise.all([
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
@@ -164,6 +166,43 @@ describe('The Discover Granules workflow with http Protocol', () => {
           }
           expect(logEntry.sender).not.toBe(undefined);
         });
+      });
+    });
+  });
+
+  describe('the DiscoverGranules Lambda', () => {
+    beforeAll(async () => {
+      await apiTestUtils.updateCollection({
+        prefix: config.stackName,
+        collection,
+        updateParams: { files: [] }
+      });
+
+      httpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
+        config.bucket, workflowName, collection, provider);
+    });
+
+    it('encounters a collection without a files configuration', async () => {
+      const lambdaInput = await lambdaStep.getStepInput(
+        httpWorkflowExecution.executionArn, 'DiscoverGranules'
+      );
+
+      expect(lambdaInput.meta.collection.files).toEqual([]);
+    });
+
+    it('executes successfully', () => {
+      expect(httpWorkflowExecution.status).toEqual('SUCCEEDED');
+    });
+
+    it('discovers granules, but output has no files', async () => {
+      const lambdaOutput = await lambdaStep.getStepOutput(
+        httpWorkflowExecution.executionArn, 'DiscoverGranules'
+      );
+
+      expect(lambdaOutput.payload.granules.length).toEqual(3);
+      lambdaOutput.payload.granules.forEach((granule, i) => {
+        expect(granule.granuleId).toEqual(`granule-${i + 1}`);
+        expect(granule.files.length).toEqual(0);
       });
     });
   });

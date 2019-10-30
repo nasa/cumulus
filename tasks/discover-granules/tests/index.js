@@ -15,9 +15,8 @@ const { discoverGranules } = require('..');
 
 const readFile = promisify(fs.readFile);
 
-const assertDiscoveredGranules = async (t, output) => {
-  await validateOutput(t, output);
-
+const assertDiscoveredGranules = (t, output) => {
+  validateOutput(t, output);
   t.is(output.granules.length, 3);
   t.is(output.granules[0].files.length, 2);
   t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].type));
@@ -40,11 +39,11 @@ test('discover granules sets the correct dataType for granules', async (t) => {
     port: 3030
   };
 
-  await validateConfig(t, event.config);
+  validateConfig(t, event.config);
 
   try {
     const output = await discoverGranules(event);
-    await assertDiscoveredGranules(t, output);
+    assertDiscoveredGranules(t, output);
 
     // Make sure we support datatype and collection name
     output.granules.forEach((granule) => {
@@ -70,10 +69,10 @@ test('discover granules using FTP', async (t) => {
     password: 'testpass'
   };
 
-  await validateConfig(t, event.config);
+  validateConfig(t, event.config);
 
   try {
-    await assertDiscoveredGranules(t, await discoverGranules(event));
+    assertDiscoveredGranules(t, await discoverGranules(event));
   } catch (e) {
     if (e.message.includes('getaddrinfo ENOTFOUND')) {
       t.pass('Ignoring this test. Test server seems to be down');
@@ -94,10 +93,10 @@ test('discover granules using SFTP', async (t) => {
     password: 'password'
   };
 
-  await validateConfig(t, event.config);
+  validateConfig(t, event.config);
 
   try {
-    await assertDiscoveredGranules(t, await discoverGranules(event));
+    assertDiscoveredGranules(t, await discoverGranules(event));
   } catch (e) {
     if (e.code === 'ECONNREFUSED') {
       t.pass('Ignoring this test. Remote host seems to be down.');
@@ -116,10 +115,10 @@ test('discover granules using HTTP', async (t) => {
     port: 3030
   };
 
-  await validateConfig(t, event.config);
+  validateConfig(t, event.config);
 
   try {
-    await assertDiscoveredGranules(t, await discoverGranules(event));
+    assertDiscoveredGranules(t, await discoverGranules(event));
   } catch (e) {
     if (e.message === 'Connection Refused') {
       t.pass('Ignoring this test. Remote host seems to be down.');
@@ -127,36 +126,37 @@ test('discover granules using HTTP', async (t) => {
   }
 });
 
-const discoverGranulesUsingS3 = (configure) => async (t) => {
-  const { event, event: { config } } = t.context;
-  // State sample files
-  const files = [
-    'granule-1.nc', 'granule-1.nc.md5',
-    'granule-2.nc', 'granule-2.nc.md5',
-    'granule-3.nc', 'granule-3.nc.md5'
-  ];
+const discoverGranulesUsingS3 = (configure, assert = assertDiscoveredGranules) =>
+  async (t) => {
+    const { event, event: { config } } = t.context;
+    // State sample files
+    const files = [
+      'granule-1.nc', 'granule-1.nc.md5',
+      'granule-2.nc', 'granule-2.nc.md5',
+      'granule-3.nc', 'granule-3.nc.md5'
+    ];
 
-  config.sourceBucketName = randomString();
-  config.collection.provider_path = randomString();
+    config.sourceBucketName = randomString();
+    config.collection.provider_path = randomString();
 
-  configure(config);
+    configure(config);
 
-  await validateConfig(t, config);
-  await s3().createBucket({ Bucket: config.sourceBucketName }).promise();
+    validateConfig(t, config);
+    await s3().createBucket({ Bucket: config.sourceBucketName }).promise();
 
-  try {
-    await Promise.all(files.map((file) =>
-      s3().putObject({
-        Bucket: config.sourceBucketName,
-        Key: `${config.collection.provider_path}/${file}`,
-        Body: `This is ${file}`
-      }).promise()));
-    await assertDiscoveredGranules(t, await discoverGranules(event));
-  } finally {
-    // Clean up
-    await recursivelyDeleteS3Bucket(config.sourceBucketName);
-  }
-};
+    try {
+      await Promise.all(files.map((file) =>
+        s3().putObject({
+          Bucket: config.sourceBucketName,
+          Key: `${config.collection.provider_path}/${file}`,
+          Body: `This is ${file}`
+        }).promise()));
+      assert(t, await discoverGranules(event));
+    } finally {
+      // Clean up
+      await recursivelyDeleteS3Bucket(config.sourceBucketName);
+    }
+  };
 
 test('discover granules using S3',
   discoverGranulesUsingS3((config) => {
@@ -165,6 +165,22 @@ test('discover granules using S3',
       protocol: 's3',
       host: config.sourceBucketName
     };
+  }));
+
+test('discover granules without collection files config using S3',
+  discoverGranulesUsingS3((config) => {
+    // Without file configs we should still discover granules, but the
+    // discovered granules might have empty files arrays.
+    config.collection.files = [];
+    config.provider = {
+      id: 'MODAPS',
+      protocol: 's3',
+      host: config.sourceBucketName
+    };
+  }, (t, output) => {
+    validateOutput(t, output);
+    t.is(output.granules.length, 3);
+    t.is(output.granules[0].files.length, 0);
   }));
 
 test('discover granules using S3 throws error when discovery fails',
