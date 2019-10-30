@@ -48,7 +48,6 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
 
     await addCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix, testId);
-
     // Create a scheduled rule
     console.log(`post rule ${scheduledRuleName}`);
     await rulesApiTestUtils.postRule({
