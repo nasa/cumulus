@@ -1,4 +1,4 @@
-# Cumulus Archive Terraform module
+# Cumulus - Archive Terraform module
 
 ## Input variables
 
@@ -14,9 +14,9 @@
 - **distribution_url** (string)
 - **dynamo_tables** map(object({ name = string, arn = string }))) - A map of objects with the `arn` and `name` of every DynamoDB table for your Cumulus deployment. This variable map should not be generated manually but should be taken from the [`dynamo_tables` output of the `data-persistence` module](../data-persistence/outputs.tf).
 - **ecs_cluster_name**
-- **elasticsearch_domain_arn** (string) - The ARN of your Elasticsearch domain. Should come from the [outputs of the `data-persistence` module](../data-persistence/outputs.tf).
-- **elasticsearch_hostname** (string) - The hostname of your Elasticsearch domain. Should come from the [outputs of the `data-persistence` module](../data-persistence/outputs.tf).
-- **elasticsearch_security_group_id** (string) - The ID of the security group used with your Elasticsearch domain. Should come from the [outputs of the `data-persistence` module](../data-persistence/outputs.tf).
+- **elasticsearch_domain_arn** (string) - The ARN of an Elasticsearch domain to use for storing data.
+- **elasticsearch_hostname** (string) - The hostname of an Elasticsearch domain to use for storing data.
+- **elasticsearch_security_group_id** (string) - The ID of the security group for the Elasticsearch domain specified by `elasticsearch_domain_arn`.
 - **ems_host** (string)
 - **kinesis_inbound_event_logger_lambda_function_arn** (string)
 - **lambda_processing_role_arn** (string)
