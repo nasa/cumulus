@@ -22,7 +22,7 @@ We will discuss how to run a processing workflow against an inbound granule that
 
 ### Cumulus
 
-This entry assumes you have a deployed instance of Cumulus (> version 1.11.3), and a working dashboard following the instructions in the [deployment documentation](../deployment/deployment-readme).  This entry also assumes you have some knowledge of how to configure Collections, Providers and Rules and basic Cumulus operation.
+This entry assumes you have a deployed instance of Cumulus v1.16.0 or later, and a working dashboard following the instructions in the [deployment documentation](../deployment/deployment-readme).  This entry also assumes you have some knowledge of how to configure Collections, Providers and Rules and basic Cumulus operation.
 
 Prior to working through this entry, you should be somewhat familiar with the [Hello World](hello-world) example the [Workflows](../workflows/workflows-readme) section of the documentation, and [building Cumulus lambdas](../workflows/lambda).
 
@@ -78,173 +78,204 @@ For this example, you are going to be adding two workflows to your Cumulus deplo
 
 #### Workflow Configuration
 
-Add the following to a new file ```browseExample.yml``` in your deployment's main directory (the same location your app directory, lambdas.yml, etc are), copy the example file [from github](https://github.com/nasa/cumulus/blob/master/example/workflows/browseExample.yml).  The file should contain the two example workflows.
+Add the following to a new file ```browse_example.tf``` in your deployment's main directory (the same location your app directory, lambdas.yml, etc are): [from github](https://github.com/nasa/cumulus/blob/master/example/workflows/browseExample.yml).  The file should contain the two example workflow modules.
+
+**Please Note**: You should update the `source =` line to match the current Cumulus `workflow` module deployment artifact to the version of Cumulus you're deploying:
+
+```source = "https://github.com/nasa/cumulus/releases/download/{version}/terraform-aws-cumulus.zip//tf-modules/cumulus"```
 
 A few things to note about tasks in the workflow being added:
 
 * The CMR step in CookbookBrowseExample:
 
-```yaml
-  CmrStep:
-    Parameters:
-      cma:
-        event: '$'
-        task_config:
-          bucket: '{$.meta.buckets.internal.name}'
-          stack: '{$.meta.stack}'
-          cmr: '{$.meta.cmr}'
-          process: '{$.meta.process}'
-          input_granules: '{$.meta.input_granules}'
-          granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
-    Type: Task
-    Resource: ${PostToCmrLambdaFunction.Arn}
-    Catch:
-      - ErrorEquals:
-        - States.ALL
-        ResultPath: '$.exception'
-        Next: WorkflowFailed
-    End: true
+```json
+"CmrStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "bucket": "{$.meta.buckets.internal.name}",
+            "stack": "{$.meta.stack}",
+            "cmr": "{$.meta.cmr}",
+            "launchpad": "{$.meta.launchpad}",
+            "process": "{$.meta.process}",
+            "input_granules": "{$.meta.input_granules}",
+            "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${module.cumulus.post_to_cmr_task_lambda_function_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "End": true
+    },
 ```
 
 Note that in the task, the event.config.cmr will contain the values you configured in the ```cmr``` configuration section above.
 
 * The Processing step in CookbookBrowseExample:
 
-```yaml
-  ProcessingStep:
-    Parameters:
-      cma:
-        event.$: '$'
-        task_config:
-          bucket: '{$.meta.buckets.internal.name}'
-          collection: '{$.meta.collection}'
-          cmrMetadataFormat: '{$.meta.cmrMetadataFormat}'
-          additionalUrls: '{$.meta.additionalUrls}'
-          generateFakeBrowse: true
-    Type: Task
-    Resource: ${FakeProcessingLambdaFunction.Arn}
-    Catch:
-      - ErrorEquals:
-        - States.ALL
-        ResultPath: '$.exception'
-        Next: WorkflowFailed
-    Retry:
-      - ErrorEquals:
-          - States.ALL
-        IntervalSeconds: 2
-        MaxAttempts: 3
-    Next: FilesToGranulesStep
+```json
+"ProcessingStep": {
+  "Parameters": {
+    "cma": {
+      "event.$": "$",
+      "task_config": {
+        "bucket": "{$.meta.buckets.internal.name}",
+        "collection": "{$.meta.collection}",
+        "cmrMetadataFormat": "{$.meta.cmrMetadataFormat}",
+        "additionalUrls": "{$.meta.additionalUrls}",
+        "generateFakeBrowse": true,
+        "cumulus_message": {
+          "outputs": [
+            {
+              "source": "{$.granules}",
+              "destination": "{$.meta.input_granules}"
+            },
+            {
+              "source": "{$.files}",
+              "destination": "{$.payload}"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "Type": "Task",
+  "Resource": "${module.cumulus.fake_processing_task_lambda_function_arn}",
+  "Catch": [
+    {
+      "ErrorEquals": [
+        "States.ALL"
+      ],
+      "ResultPath": "$.exception",
+      "Next": "WorkflowFailed"
+    }
+  ],
+  "Retry": [
+    {
+      "ErrorEquals": [
+        "States.ALL"
+      ],
+      "IntervalSeconds": 2,
+      "MaxAttempts": 3
+    }
+  ],
+  "Next": "FilesToGranulesStep"
+},
 ```
 
-**Please note**: ```FakeProcessing``` is the core provided browse/cmr generation we're using for the example in this entry.
+**Please note**: ```FakeProcessing``` is the core provided browse/cmr generation lambda we're using for the example in this entry.
 
  If you're not ingesting mock data matching the example, or would like to use modify the example to ingest your own data please see the [build-lambda](#build-lambda) section below.    You will need to configure a different lambda entry for your lambda and utilize it in place of the ```Resource``` defined in the example workflow.
 
-#### Cumulus Configuration
-
-In an editor, open app/config.yml and modify your stepFunctions key to contain the file you just created:
-
-```yaml
-stepFunctions: !!files [
-  {some list of workflows},
-  'browseExample.yml'
-]
-```
-
-This will cause kes to export the workflows in the new file along with the other workflows configured for your deployment.
-
 #### Lambdas
 
-Ensure the following lambdas are in your deployment's lambdas.yml (reference the [example lambdas.yml](https://github.com/nasa/cumulus/blob/master/example/lambdas.yml)):
-
-```yaml
-DiscoverGranules:
-  handler: index.handler
-  timeout: 300
-  memory: 512
-  source: node_modules/@cumulus/discover-granules/dist/
-  useMessageAdapter: true
-  launchInVpc: true
-QueueGranules:
-  handler: index.handler
-  timeout: 300
-  source: node_modules/@cumulus/queue-granules/dist/
-  useMessageAdapter: true
-  launchInVpc: true
-SyncGranule:
-  handler: index.handler
-  timeout: 300
-  logToElasticSearch: true
-  source: node_modules/@cumulus/sync-granule/dist/
-  useMessageAdapter: true
-  launchInVpc: true
-FilesToGranules:
-  handler: index.handler
-  source: node_modules/@cumulus/files-to-granules/dist/
-  launchInVpc: true
-FakeProcessing:
-  handler: index.handler
-  source: node_modules/@cumulus/test-processing/dist/
-  useMessageAdapter: true
-  launchInVpc: true
-MoveGranules:
-  handler: index.handler
-  timeout: 300
-  source: node_modules/@cumulus/move-granules/dist/
-  launchInVpc: true
-PostToCmr:
-  handler: index.handler
-  timeout: 300
-  memory: 256
-  logToElasticSearch: true
-  source: node_modules/@cumulus/post-to-cmr/dist/
-  useMessageAdapter: true
-  launchInVpc: true
-  envs:
-    system_bucket: '{{system_bucket}'
-```
+All lambdas utilized in this example are provided in a standard deployment of Cumulus and require no additional configuration.
 
 **Please note**: ```FakeProcessing``` is the core provided browse/cmr generation we're using for the example.
 
- If you're not ingesting mock data matching the example, or would like to use this entry to ingest your own data please see the [build-lambda](#build-lambda) section below.    You will need to configure a different lambda entry for your lambda and utilize it in place of the ```Resource``` defined in the example workflow.
+If you're not ingesting mock data matching the example, or would like to use this entry to ingest your own data please see the [build-lambda](#build-lambda) section below.    You will need to add a terraform ```aws_lambda_function``` resource to your deployment.
 
 #### Redeploy
 
-Once you've configured your CMR credentials, updated your workflow configuration, and updated your lambda configuration you should be able to redeploy your cumulus instance:
+Once you've configured your CMR credentials, updated your workflow configuration, and updated your lambda configuration you should be able to redeploy your cumulus instance by running the following commands:
 
-```./node_modules/.bin/kes cf deploy --kes-folder app --region <region> --template node_modules/@cumulus/deployment/app --deployment <deployment>```
+1)  ```terraform init```
 
-You should expect to see a successful deployment message similar to:
 
-```shell
-Template saved to app/cloudformation.yml
-Uploaded: s3://<bucket and key>/cloudformation.yml
-Waiting for the CF operation to complete
-CF operation is in state of UPDATE_COMPLETE
+You should expect to see output similar to:
 
-Here are the important URLs for this deployment:
+```bash
+$ terraform init
+Initializing modules...
+Downloading https://github.com/nasa/cumulus/releases/download/{version}/terraform-aws-cumulus-workflow.zip for cookbook_browse_example_workflow...
+- cookbook_browse_example_workflow in .terraform/modules/cookbook_browse_example_workflow
+Downloading https://github.com/nasa/cumulus/releases/download/{version}/terraform-aws-cumulus-workflow.zip for discover_granules_browse_example_workflow...
+- discover_granules_browse_example_workflow in .terraform/modules/discover_granules_browse_example_workflow
 
-Distribution:  https://example.com/
-Add this url to URS:  https://example.com/redirect
+Initializing the backend...
 
-Api:  XXXXXXX
-Add this url to URS:  XXXXXXXXXX
-Uploading Cumulus Message Templates for each Workflow ...
-......
-restarting ECS task XXXXXXXXXX
-ECS task aXXXXXXXX restarted
-api endpoints with the id XXXXXXXXXXX redeployed.
-Redeploying XXXXXXXXXX was throttled. Another attempt will be made in 20 seconds
-distribution endpoints with the id XXXXXXXXXX redeployed.
+Initializing provider plugins...
+
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.
 ```
 
-Wait for the above to complete. It's particularly important that the new workflow message template is uploaded for the workflow to complete.
+2) ```terraform apply```
 
+You should expect to see output similar to the following truncated example:
+```bash
+
+$ terraform apply
+module.cumulus.module.archive.null_resource.rsa_keys: Refreshing state... [id=xxxxxxxxx]
+data.terraform_remote_state.data_persistence: Refreshing state...
+module.cumulus.module.archive.aws_cloudwatch_event_rule.daily_execution_payload_cleanup: Refreshing state... [id=xxxx]
+
+....
+
+An execution plan has been generated and is shown below.
+Resource actions are indicated with the following symbols:
+  + create
+  ~ update in-place
+-/+ destroy and then create replacement
+ <= read (data resources)
+
+Terraform will perform the following actions:
+{...}
+Plan: 15 to add, 3 to change, 1 to destroy.
+
+Do you want to perform these actions?
+  Terraform will perform the actions described above.
+  Only 'yes' will be accepted to approve.
+
+  Enter a value: yes
+
+{...}
+
+Apply complete! Resources: 15 added, 3 changed, 1 destroyed.
+Releasing state lock. This may take a few moments...
+
+Outputs:
+
+archive_api_redirect_uri = {URL}
+archive_api_uri = {URL}
+distribution_redirect_uri = {URL}
+distribution_url = {URL}
+s3_credentials_redirect_uri = {URL}
+```
 -----------
 
 ## Configure Ingest
 
-Now that the Cumulus stacks for your deployment have been updated with the new workflows and code, we will use the Cumulus dashboard to configure an ingest collection, provider and rule so that we can trigger the configured workflow.
+Now that Cumulus has been updated updated with the new workflows and code, we will use the Cumulus dashboard to configure an ingest collection, provider and rule so that we can trigger the configured workflow.
 
 ### Add Collection
 
@@ -427,6 +458,8 @@ This section discusses the construction of a custom processing lambda to replace
 
 To ingest your own data using this example, you will need to construct your own lambda to replace the source in ProcessingStep that will generate browse imagery and provide or update a CMR metadata export file.
 
+You will then need to add the lambda to your Cumulus deployment as a `aws_lambda_function` Terraform resource.
+
 The discussion below outlines requirements for this lambda.
 
 ### Inputs
@@ -506,11 +539,11 @@ In the above example, the critical portion of the output to ```FilesToGranules``
 
 In the example provided, the processing task is setup to return an object with the keys "files" and "granules".   In the cumulus_message configuration, the outputs are mapped in the configuration to the payload, granules to meta.input_granules:
 
-```yaml
-            - source: '{$.granules}'
-              destination: '{$.meta.input_granules}'
-            - source: '{$.files}'
-              destination: '{$.payload}'
+```json
+          "task_config": {
+            "inputGranules": "{$.meta.input_granules}",
+            "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}"
+          }
 ```
 
 Their expected values from the example above may be useful in constructing a processing task:
