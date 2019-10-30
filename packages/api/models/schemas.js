@@ -83,7 +83,7 @@ module.exports.collection = {
     provider_path: {
       title: 'Provider Path',
       description: 'The path to look for the collection Granules or '
-                   + 'PDRs. Use regex for recursive search',
+        + 'PDRs. Use regex for recursive search',
       type: 'string',
       default: ''
     },
@@ -118,7 +118,7 @@ module.exports.collection = {
     sampleFileName: {
       title: 'Sample Filename',
       description: 'Is used to validate to test granule id '
-                   + 'validation and extraction regexes against',
+        + 'validation and extraction regexes against',
       type: 'string'
     },
     files: {
@@ -146,7 +146,7 @@ module.exports.collection = {
           url_path: {
             title: 'Url Path',
             description: 'Folder used to save the granule in the bucket. '
-                         + 'Defaults to the collection url path',
+              + 'Defaults to the collection url path',
             type: 'string'
           },
           type: {
@@ -380,7 +380,7 @@ module.exports.rule = {
       properties: {
         type: {
           type: 'string',
-          enum: ['onetime', 'scheduled', 'sns', 'kinesis']
+          enum: ['onetime', 'scheduled', 'sns', 'kinesis', 'sqs']
         },
         // Value is multi-use.   For a kinesis rule this is the target stream arn, for
         // a scheduled event it's the schedule pattern (e.g. cron), for a one-time rule.
@@ -420,7 +420,9 @@ module.exports.rule = {
       }
     }
   },
-  require: ['name', 'workflow', 'collection', 'rule', 'state']
+  required: [
+    'name', 'workflow', 'collection', 'rule', 'state', 'createdAt', 'updatedAt'
+  ]
 };
 
 // PDR Record Schema

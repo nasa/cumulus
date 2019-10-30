@@ -29,7 +29,8 @@ function determineIntegrationTestStackName(cb) {
     'Matt Savoie': 'mhs',
     'Jonathan Kovarik': 'jk',
     'Menno Van Diermen': 'mvd',
-    'Jacob Campbell': 'jc'
+    'Jacob Campbell': 'jc',
+    'Chuck Daniels': 'chuckulus-ci'
   };
 
   return git('.').log({ '--max-count': '1' }, (e, r) => {
