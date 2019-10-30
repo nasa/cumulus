@@ -12,37 +12,39 @@ This module provides an "off the shelf" version of a full Cumulus deployment fea
 
 ## Input variables
 
+Most of the variables to this module are passed through to the component child modules. For the definition of the variables that are passed on to the child modules, see the respective child module documentation linked above.
+
 ### Required
 
-- **cmr_client_id** (string)
-- **cmr_environment** (string)
-- **cmr_password** (string)
-- **cmr_provider** (string)
-- **cmr_username** (string)
-- **cumulus_message_adapter_lambda_layer_arn** (string)
-- **dynamo_tables** map(object({ name = string, arn = string })))
+- **cmr_client_id** (string) - Used in the Archive module and Ingest module
+- **cmr_environment** (string) - Used in the Archive module and Ingest module
+- **cmr_password** (string) - Used in the Archive module and Ingest module
+- **cmr_provider** (string) - Used in the Archive module and Ingest module
+- **cmr_username** (string) - Used in the Archive module and Ingest module
+- **cumulus_message_adapter_lambda_layer_arn** (string) - Used in the Ingest module
+- **dynamo_tables** map(object({ name = string, arn = string }))) - Used in the Archive module
 - **ecs_cluster_desired_size** (number) - The desired maximum number of instances for your ECS autoscaling group
 - **ecs_cluster_instance_subnet_ids** list(string) - The Subnet IDs to use for your ECS cluster instances.
 - **ecs_cluster_max_size** (number) - The maximum number of instances for your ECS cluster
 - **ecs_cluster_min_size** (number) - The minimum number of instances for your ECS cluster
-- **elasticsearch_domain_arn** (string)
-- **elasticsearch_hostname** (string)
-- **elasticsearch_security_group_id** (string)
+- **elasticsearch_domain_arn** (string) - Used in the Archive module
+- **elasticsearch_hostname** (string) - Used in the Archive module
+- **elasticsearch_security_group_id** (string) - Used in the Archive module
 - **prefix** (string)
-- **sts_credentials_lambda_name** (string)
+- **sts_credentials_lambda_name** (string) - Used in the Archive module
 - **system_bucket** (string)
 - **token_secret** (string)
-- **urs_client_id** (string)
-- **urs_client_password** (string)
+- **urs_client_id** (string) - Used in the Archive module
+- **urs_client_password** (string) - Used in the Archive module
 
 ### Optional
 
-- **archive_api_port** (number) - Port number that should be used for archive API requests
-- **archive_api_users** list(string) - List of Earthdata login usernames that should have access to the archive API
+- **archive_api_port** (number) - Used in the Archive module
+- **archive_api_users** list(string) - Used in the Archive module
 - **buckets** map(object) - Map of objects to specify the buckets for your deployment
-- **cmr_limit** (number) - Limit of the number of results to return from CMR
-- **cmr_oauth_provider** (string) - Oauth provider to use for authorizing requests to CMR. Defaults to `earthdata`, which is used in conjunction with the `cmr_username` and `cmr_password` variables. `launchpad` is another option, which requires the `launchpad_certificate` and `launchpad_api` variables.
-- **cmr_page_size** (number) - Default number of results to return per page when searching CMR for collections/granules.
+- **cmr_limit** (number) - Used in the Archive module
+- **cmr_oauth_provider** (string) - Used in the Archive module and Ingest module
+- **cmr_page_size** (number) - Used in the Archive module and Ingest module
 - **distribution_url** (string) - URL for the distribution API
 - **ecs_container_stop_timeout** (string) - Time duration to wait from when a task is stopped before its containers are forcefully killed if they do not exit normally on their own. Defaults to `2m`.
 - **ecs_cluster_instance_docker_volume_size** (number) - Size (in GB) of the volume that Docker uses for image and metadata storage. Defaults to `50`.
@@ -55,12 +57,12 @@ This module provides an "off the shelf" version of a full Cumulus deployment fea
 - **elasticsearch_alarms** list(object({ name = string, arn = string })) - List of Cloudwatch alarms monitoring Elasticsearch domain, if any.
 - **key_name** (string) - Name of EC2 key pair for accessing EC2 instances
 - **lambda_subnet_ids** list(string) - Subnet IDs for Lambdas
-- **launchpad_api** (string) - URL of Launchpad API. Required if using `cmr_oauth_provider = "launchpad"`.
-- **launchpad_certificate** (string) - Name of the Launchpad certificate uploaded to the `crypto` directory of the `system_bucket`. Defaults to `launchpad.pfx`.
-- **oauth_provider** (string) - Oauth provider to use for authorizing requests to the archive API. Defaults to `earthdata`. Also accepts `launchpad`.
-- **oauth_user_group** (string) - Oauth user group to validate the user against, if any. Applicable when using `oauth_provider = "launchpad"`.
-- **permissions_boundary_arn** (string) - ARN of an IAM permissions boundary to use when deploying. Applicable when deploying to a NASA NGAP environment.
-- **private_archive_api_gateway** (bool) - Whether to deploy the archive API as a private API gateway. Defaults to `true`.
+- **launchpad_api** (string) - Used in the Archive module
+- **launchpad_certificate** (string) - Used in the Archive module
+- **oauth_provider** (string) - Used in the Archive module
+- **oauth_user_group** (string) - Used in the Archive module
+- **permissions_boundary_arn** (string) - Used in the Archive module and Ingest module
+- **private_archive_api_gateway** (bool) - Used in the Archive module
 - **queue_execution_limits** (map(number)) - Map specifying maximum concurrent execution limits for the queue(s) identified by the keys. Default:
 
 ```hcl
@@ -69,7 +71,7 @@ This module provides an "off the shelf" version of a full Cumulus deployment fea
   }
 ```
 
-- **urs_url** (string) - The URL of the Earthdata Login site. Defaults to `https://urs.earthdata.nasa.gov/`.
+- **urs_url** (string) - Used in the Archive module
 - **vpc_id** (string) - VPC used by Lambda functions
 - **region** (string) - The AWS region to deploy to, defaults to `us-east-1`.
 
