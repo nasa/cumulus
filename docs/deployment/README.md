@@ -396,7 +396,7 @@ distribution_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com/D
 distribution_url = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/
 ```
 
-__Note:__ Be sure to copy the redirect URLs, as you will use them to update your EarthData application.
+__Note:__ Be sure to copy the redirect URLs, as you will use them to update your Earthdata application.
 
 ### Update Earthdata Application
 
