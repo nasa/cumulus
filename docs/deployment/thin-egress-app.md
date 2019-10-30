@@ -6,10 +6,9 @@ hide_title: true
 
 # Using the Thin Egress App for Cumulus distribution
 
-The [Thin Egress App](https://github.com/asfadmin/thin-egress-app) ("TEA") is
-deployed using [Terraform](https://terraform.io) modules. This document assumes
-that you have already followed [these instructions](./components) to to use
-Terraform with your deployment.
+The [Thin Egress App (TEA)](https://github.com/asfadmin/thin-egress-app) is an app running in Lambda that allows retrieving data from S3 using temporary links and provides URS integration.
+
+TEA is deployed using [Terraform](https://terraform.io) modules. Refer to [these instructions](./components) for guidance on how to integrate new components with your deployment.
 
 The TEA module provides [these instructions](https://github.com/asfadmin/thin-egress-app/blob/devel/NGAP-DEPLOY-README.MD)
 showing how to add it to your deployment. Below are some Cumulus-specific tips:

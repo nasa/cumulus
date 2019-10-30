@@ -14,6 +14,15 @@ Cumulus users will be able to add those individual components to their
 deployment and link them together using Terraform. In addition, users will be
 able to make use of the large number of publicly available modules on the [Terraform Module Registry](https://registry.terraform.io/).
 
+## Available Cumulus Components
+
+* [Cumulus](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus)
+* [Data persistence](https://github.com/nasa/cumulus/tree/master/tf-modules/data-persistence)
+* [ECS service](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-ecs-service)
+* [Distribution](https://github.com/nasa/cumulus/tree/master/tf-modules/distribution)
+* [Thin Egress App](./thin_egress_app)
+* [Workflow](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-ecs-service)
+
 ## Adding components to your Terraform deployment
 
 Although Terraform components can be configured using a single file, it is recommended to
@@ -67,11 +76,3 @@ The recommended approach for handling remote state with Cumulus is to use the [S
 This backend stores state in S3 and uses a DynamoDB table for locking.
 
 See the deployment documentation for a [walkthrough of creating resources for your remote state using an S3 backend](README.md#create-resources-for-terraform-state).
-
-## Available Cumulus Components
-
-* [Distribution](https://github.com/nasa/cumulus/tree/master/tf-modules/distribution) - the Thin Egress App, as
-  well as the S3 credentials endpoint, with a config targeted at Cumulus and
-  NGAP.
-* [Thin Egress App](./thin_egress_app) - an app running in Lambda that creates
-  temporary S3 links and provides URS integration.
