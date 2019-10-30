@@ -76,6 +76,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- **CUMULUS-1100**
+  - Added 30-day retention properties to all log groups that were missing those policies.
+
 - **CUMULUS-1396**
   - Added `@cumulus/common/sfnStep`:
     - `LambdaStep` - A class for retrieving and parsing input and output to Lambda steps in AWS Step Functions

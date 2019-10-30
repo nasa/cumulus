@@ -29,6 +29,7 @@ resource "aws_lambda_function" "sync_granule_task" {
 
 resource "aws_cloudwatch_log_group" "sync_granule_task" {
   name = "/aws/lambda/${aws_lambda_function.sync_granule_task.function_name}"
+  retention_in_days = 30
   tags = local.default_tags
 }
 
