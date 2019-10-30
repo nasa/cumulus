@@ -215,37 +215,11 @@ Each of these modules have to be deployed independently and require their own Te
 
 These steps should be executed in the `data-persistence-tf` directory of the template deploy repo that was cloned previously.
 
-Create a `terraform.tf` file, substituting the appropriate values for `bucket`,
-`dynamodb_table`, and `<stack>`. This tells Terraform where to store its
+Copy the [`terraform.tf.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/data-persistence-tf/terraform.tf.example) to `terraform.tf` file, substituting the appropriate values for `bucket`, `dynamodb_table`, and `<stack>`. This tells Terraform where to store its
 remote state.
 
-**terraform.tf**:
-
-```hcl
-terraform {
-  backend "s3" {
-    region         = "us-east-1"
-    bucket         = "my-tf-state"
-    key            = "terraform/state/<stack>/data-persistence-tf/terraform.tfstate"
-    dynamodb_table = "my-tf-locks"
-  }
-}
-```
-
-Copy the `terraform.tfvars.example` file to `terraform.tfvars`, and fill in
-appropriate values.
-
-**terraform.tfvars**:
-
-```hcl
-# Required
-aws_region = "us-east-1"
-prefix     = "PREFIX"
-subnet_ids = ["subnet-12345"]
-
-# Optional
-include_elasticsearch = true
-```
+Copy the [`terraform.tfvars.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/data-persistence-tf/terraform.tfvars.example) file to `terraform.tfvars`, and fill in
+appropriate values. See the [data-persistence module variable definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf) for more detail on each variable.
 
 **Reminder:** Elasticsearch is optional and can be disabled using `include_elasticsearch = false` in your `terraform.tfvars`.
 
@@ -299,82 +273,11 @@ Make sure to copy the ARN of the deployed layer, as it will be used to configure
 
 These steps should be executed in the `cumulus-tf` directory of the template repo that was cloned previously.
 
-Create a `terraform.tf` file, substituting the appropriate values for `bucket`,
-`dynamodb_table`, and `<stack>`. This tells Terraform where to store its
+Copy the [`terraform.tf.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/terraform.tf.example) to `terraform.tf` file, substituting the appropriate values for `bucket`, `dynamodb_table`, and `<stack>`. This tells Terraform where to store its
 remote state.
 
-**terraform.tf**:
-
-```hcl
-terraform {
-  backend "s3" {
-    region         = "us-east-1"
-    bucket         = "my-tf-state"
-    key            = "terraform/state/<stack>/cumulus-tf/terraform.tfstate"
-    dynamodb_table = "my-tf-locks"
-  }
-}
-```
-
-Copy the `terraform.tfvars.example` file to `terraform.tfvars`, and fill in
-appropriate values.
-
-**terraform.tfvars:**
-
-```hcl
-region = "us-east-1"
-
-# Layer ARN deployed in the previous step
-cumulus_message_adapter_lambda_layer_arn = "arn:aws:lambda:us-east-1:12345:layer:Cumulus_Message_Adapter:4"
-
-# URS users you want to have access to your API
-archive_api_users = [ 'some_user' ]
-
-permissions_boundary_arn = "arn:aws:iam::12345:policy/NGAPShNonProdRoleBoundary"
-prefix                   = "PREFIX"
-buckets = {
-  internal = {
-    name = "PREFIX-internal"
-    type = "internal"
-  }
-  private = {
-    name = "PREFIX-private"
-    type = "private"
-  },
-  protected = {
-    name = "PREFIX-protected"
-    type = "protected"
-  },
-  public = {
-    name = "PREFIX-public"
-    type = "public"
-  }
-}
-subnet_ids    = ["subnet-12345"]
-system_bucket = "PREFIX-internal"
-vpc_id        = "vpc-12345"
-key_name      = "MY-KEY"
-
-cmr_client_id   = "cumulus-core-PREFIX"
-cmr_environment = "UAT"
-cmr_password    = "password"
-cmr_provider    = "CUMULUS"
-cmr_username    = "username"
-
-urs_client_id       = "asdf"
-urs_client_password = "password"
-
-token_secret = "asdf"
-
-data_persistence_remote_state_config = {
-  bucket = "PREFIX-tf-state"
-  key    = "PREFIX/data-persistence/terraform.tfstate"
-  region = "us-east-1"
-}
-
-# Optional
-oauth_provider = "earthdata"    # Can also be set to "launchpad"
-```
+Copy the [`terraform.tfvars.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/terraform.tfvars.example) file to `terraform.tfvars`, and fill in
+appropriate values. See the [Cumulus module variable definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf) for more detail on each variable.
 
 **Note:** The `token_secret` is a string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is **strongly recommended that this value be a 32-character string**.
 
