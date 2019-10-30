@@ -96,9 +96,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- **CUMULUS-1449**
+  - `queue-pdrs` & `queue-granules` config changes. Details in breaking changes section.	
+  - Cumulus now uses a universal workflow template when starting workflow that contains general information specific to the deployment, but not specific to the workflow.	
+  - Changed the way workflow configs are defined, from `CumulusConfig` to a `task_config` AWS Parameter.
+
 - **CUMULUS-1453**
   - Removed config schema for `@cumulus/sf-sns-report` task
   - Updated `@cumulus/sf-sns-report` to always assume that it is running as an intermediate step in a workflow, not as the first or last step
+
+### Removed
+
+- **CUMULUS-1449**
+  - Retired `CumulusConfig` as part of step function definitions, as this is an artifact of the way Kes parses workflow definitions that was not possible to migrate to Terraform. Use AWS Parameters and the `task_config` key instead. See change note above.	
+  - Removed individual workflow templates.
 
 ### Fixed
 
