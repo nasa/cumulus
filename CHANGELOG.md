@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### BREAKING CHANGES
 
 - **CUMULUS-1449** - Cumulus now uses a universal workflow template when
-  starting workflow that contains general information specific to the
+  starting a workflow that contains general information specific to the
   deployment, but not specific to the workflow. Workflow task configs must be
   defined using AWS step function parameters. As part of this change,
   `CumulusConfig` has been retired and task configs must now be defined under
