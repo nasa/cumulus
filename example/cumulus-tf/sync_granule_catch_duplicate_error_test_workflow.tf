@@ -37,7 +37,7 @@ module "sync_granule_catch_duplicate_error_test" {
                 },
                 {
                   "source": "{$.process}",
-                  "destination": "{$.cumulus_meta.process}"
+                  "destination": "{$.meta.process}"
                 }
               ]
             }
