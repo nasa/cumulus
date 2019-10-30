@@ -87,42 +87,48 @@ async function post(req, res) {
 }
 
 /**
- * Updates an existing rule
+ * Replaces an existing rule.
  *
  * @param {Object} req - express request object
+ * @param {string} req.params.name - name of the rule to replace
+ * @param {Object} req.body - complete replacement rule
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @returns {Promise<Object>} the promise of express response object, which
+ *    is a Bad Request (400) if the rule's name property does not match the
+ *    name request parameter, or a Not Found (404) if there is no existing rule
+ *    with the specified name
  */
-async function put(req, res) {
-  const name = req.params.name;
-
-  const data = req.body;
-  const action = data.action;
-
+async function put({ params: { name }, body }, res) {
   const model = new models.Rule();
 
-  // get the record first
-  let originalData;
+  if (name !== body.name) {
+    return res.boom.badRequest(`Expected rule name to be '${name}', but found`
+      + ` '${body.name}' in payload`);
+  }
+
   try {
-    originalData = await model.get({ name });
+    const oldRule = await model.get({ name });
+
+    // if rule type is onetime no change is allowed unless it is a rerun
+    if (body.action === 'rerun') {
+      return models.Rule.invoke(oldRule).then(() => res.send(oldRule));
+    }
+
+    // Remove all fields from the existing rule that are not supplied in body
+    // since body is expected to be a replacement rule, not a partial rule
+    const fieldsToDelete = Object.keys(oldRule).filter((key) => !(key in body));
+    const newRule = await model.update(oldRule, body, fieldsToDelete);
+
+    if (inTestMode()) await addToES(newRule);
+
+    return res.send(newRule);
   } catch (e) {
-    if (e instanceof RecordDoesNotExist) return res.boom.notFound('Record does not exist');
+    if (e instanceof RecordDoesNotExist) {
+      return res.boom.notFound(`Rule '${name}' not found`);
+    }
+
     throw e;
   }
-
-  // if rule type is onetime no change is allowed unless it is a rerun
-  if (action === 'rerun') {
-    await models.Rule.invoke(originalData);
-    return res.send(originalData);
-  }
-
-  const d = await model.update(originalData, data);
-
-  if (inTestMode()) {
-    await addToES(d);
-  }
-
-  return res.send(d);
 }
 
 /**
