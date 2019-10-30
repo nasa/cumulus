@@ -100,6 +100,11 @@ variable "queue_execution_limits" {
   default = {}
 }
 
+variable "sf_start_rate" {
+  type    = number
+  default = null
+}
+
 variable "system_bucket" {
   type = string
 }

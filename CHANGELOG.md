@@ -76,6 +76,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- **CUMULUS-1100**
+  - Added 30-day retention properties to all log groups that were missing those policies.
+
 - **CUMULUS-1396**
   - Added `@cumulus/common/sfnStep`:
     - `LambdaStep` - A class for retrieving and parsing input and output to Lambda steps in AWS Step Functions
@@ -84,6 +87,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1574**
   - Added `GET /token` endpoint for SAML authorization when cumulus is protected by Launchpad.
     This lets a user retieve a token by hand that can be presented to the API.
+
+- **CUMULUS-1625**
+  - Added `sf_start_rate` variable to the `ingest` Terraform module, equivalent to `sqs_consumer_rate` in the old model, but will not be automatically applied to custom queues as that was.
 
 ### Changed
 
