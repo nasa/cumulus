@@ -33,8 +33,7 @@ HelloWorldFailWorkflow:
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
       Retry:
-        - &LambdaServiceExceptionRetry
-          ErrorEquals:
+        - ErrorEquals:
             - Lambda.ServiceException
             - Lambda.AWSLambdaException
             - Lambda.SdkClientException
