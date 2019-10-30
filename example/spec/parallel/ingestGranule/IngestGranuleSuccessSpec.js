@@ -101,30 +101,22 @@ describe('The S3 Ingest Granules workflow', () => {
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
   const collectionDupeHandling = 'error';
 
+  let accessTokensModel;
   let collection;
+  let collectionModel;
   let config;
+  let executionModel;
   let expectedPayload;
   let expectedS3TagSet;
   let expectedSyncGranulePayload;
+  let granuleModel;
   let inputPayload;
+  let pdrModel;
   let postToCmrOutput;
   let provider;
+  let providerModel;
   let testDataFolder;
   let workflowExecutionArn;
-
-  process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
-  const accessTokensModel = new AccessToken();
-  process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-  const granuleModel = new Granule();
-  process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-  const executionModel = new Execution();
-  process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
-  process.env.system_bucket = config.bucket;
-  const collectionModel = new Collection();
-  process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
-  const providerModel = new Provider();
-  process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-  const pdrModel = new Pdr();
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -136,6 +128,20 @@ describe('The S3 Ingest Granules workflow', () => {
     collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
     const newCollectionId = constructCollectionId(collection.name, collection.version);
     provider = { id: `s3_provider${testSuffix}` };
+
+    process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
+    accessTokensModel = new AccessToken();
+    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+    granuleModel = new Granule();
+    process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+    executionModel = new Execution();
+    process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+    process.env.system_bucket = config.bucket;
+    collectionModel = new Collection();
+    process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
+    providerModel = new Provider();
+    process.env.PdrsTable = `${config.stackName}-PdrsTable`;
+    pdrModel = new Pdr();
 
     const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
     const providerData = Object.assign({}, providerJson, {
