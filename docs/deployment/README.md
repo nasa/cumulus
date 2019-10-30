@@ -80,7 +80,7 @@ _If you already are working with an existing `<daac>-deploy` repository that is 
 Clone template-deploy repo and name appropriately for your DAAC or organization:
 
 ```bash
-  $ git clone https://github.com/nasa/template-deploy <daac>-deploy
+  git clone https://github.com/nasa/template-deploy <daac>-deploy
 ```
 
 We will return to [configuring this repo and using it for deployment below](#deploying-the-cumulus-instance).
@@ -88,8 +88,8 @@ We will return to [configuring this repo and using it for deployment below](#dep
 **Optional:** [Create a new repository](https://help.github.com/articles/creating-a-new-repository/) `<daac>-deploy` so that you can add your workflows and other modules to source control:
 
 ```bash
-  $ git remote set-url origin https://github.com/nasa/<daac>-deploy
-  $ git push origin master
+  git remote set-url origin https://github.com/nasa/<daac>-deploy
+  git push origin master
 ```
 
 You can then [add/commit](https://help.github.com/articles/adding-a-file-to-a-repository-using-the-command-line/) changes as needed.
@@ -103,9 +103,9 @@ You can then [add/commit](https://help.github.com/articles/adding-a-file-to-a-re
 You need to make some AWS information available to your environment. If you don't already have the access key and secret access key of an AWS user with IAM Create-User permissions, you must [Create Access Keys](https://docs.aws.amazon.com/general/latest/gr/managing-aws-access-keys.html) for such a user with IAM Create-User permissions, then export the access keys:
 
 ```bash
-  $ export AWS_ACCESS_KEY_ID=<AWS access key>
-  $ export AWS_SECRET_ACCESS_KEY=<AWS secret key>
-  $ export AWS_REGION=<region>
+  export AWS_ACCESS_KEY_ID=<AWS access key>
+  export AWS_SECRET_ACCESS_KEY=<AWS secret key>
+  export AWS_REGION=<region>
 ```
 
 If you don't want to set environment variables, [access keys can be stored locally via the AWS CLI.](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html)
@@ -359,10 +359,10 @@ Please note that the requirements are similar to the [Cumulus stack deployment r
 To install the dashboard clone the Cumulus-dashboard repository into the root deploy directory and install dependencies with `yarn install`:
 
 ```bash
-  $ git clone https://github.com/nasa/cumulus-dashboard
-  $ cd cumulus-dashboard
-  $ nvm use
-  $ yarn install
+  git clone https://github.com/nasa/cumulus-dashboard
+  cd cumulus-dashboard
+  nvm use
+  yarn install
 ```
 
 If you do not have the correct version of node installed, replace `nvm use` with `nvm install $(cat .nvmrc)` in the above example.
@@ -378,10 +378,10 @@ Each [release/version of the dashboard](https://github.com/nasa/cumulus-dashboar
 To checkout and install a specific version of the dashboard:
 
 ```bash
-  $ git fetch --tags
-  $ git checkout <version-number> # e.g. v1.2.0
-  $ nvm use
-  $ yarn install
+  git fetch --tags
+  git checkout <version-number> # e.g. v1.2.0
+  nvm use
+  yarn install
 ```
 
 If you do not have the correct version of node installed, replace `nvm use` with `nvm install $(cat .nvmrc)` in the above example.
@@ -395,7 +395,7 @@ To configure your dashboard for deployment, set the `APIROOT` environment variab
 Build the dashboard from the dashboard repository root directory, `cumulus-dashboard`:
 
 ```bash
-  $ APIROOT=<your_api_root> npm run build
+  APIROOT=<your_api_root> npm run build
 ```
 
 ### Dashboard deployment
@@ -405,7 +405,7 @@ Deploy dashboard to s3 bucket from the `cumulus-dashboard` directory:
 Using AWS CLI:
 
 ```bash
-  $ aws s3 sync dist s3://<prefix>-dashboard --acl public-read
+  aws s3 sync dist s3://<prefix>-dashboard --acl public-read
 ```
 
 From the S3 Console:

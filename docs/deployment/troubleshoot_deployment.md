@@ -40,7 +40,7 @@ Issues:
 
 See [vpc issues](#vpc)
 
-### Error: Stack.. is in ROLLBACK_COMPLETE (or ROLLBACK_FAILED) state and can not be updated.
+### Error: Stack.. is in ROLLBACK_COMPLETE (or ROLLBACK_FAILED) state and can not be updated
 
 The stack cannot be re-deployed if it is currently in ROLLBACK_COMPLETE or ROLLBACK_FAILED.
 
