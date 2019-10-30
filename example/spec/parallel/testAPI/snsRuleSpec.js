@@ -51,14 +51,16 @@ describe('The SNS-type rule', () => {
   let snsTopicArn;
 
   let updatedRule;
-  const testId = createTimestampedTestId(config.stackName, 'SnsRule');
-  const testSuffix = createTestSuffix(testId);
+  let testSuffix;
+
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
   beforeAll(async () => {
     lambdaStep = new LambdaStep();
     SNS = sns();
     config = await loadConfig();
+    const testId = createTimestampedTestId(config.stackName, 'SnsRule');
+    testSuffix = createTestSuffix(testId);
     ruleName = timestampedName('SnsRuleIntegrationTestRule');
     const snsTopicName = timestampedName(`${config.stackName}_SnsRuleIntegrationTestTopic`);
     newValueTopicName = timestampedName(`${config.stackName}_SnsRuleValueChangeTestTopic`);
