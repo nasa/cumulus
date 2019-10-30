@@ -101,6 +101,19 @@ if [[ $bamboo_NGAP_ENV = "SIT" ]]; then
   DEPLOYMENT=$bamboo_SIT_DEPLOYMENT
 fi
 
+## Override KES_DEPLOYMENT
+## Delete this when CI is switched to terraform for all of Core Team
+## (after v1.15, i.e. last non-Terraform release)
+if [[ $KES_DEPLOYMENT != true ]]; then
+  if [[ $COMMIT_MESSAGE =~ deploy-terraform || $BRANCH =~ terraform ]]; then
+    echo "Detected terraform deployment branch or commit"
+  else
+    echo "Did not detect terraform deployment, activating Kes"
+    export KES_DEPLOYMENT=true
+  fi
+fi
+## End override
+
 ## Set integration stack name if it's not been overridden *or* set by SIT
 if [[ -z $DEPLOYMENT ]]; then
   DEPLOYMENT=$(node ./bamboo/select-stack.js)
