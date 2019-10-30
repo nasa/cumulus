@@ -265,9 +265,25 @@ Your data persistence resources are now deployed.
 
 The [Cumulus Message Adapter (CMA)](./../workflows/input_output.md#cumulus-message-adapter) is necessary for interpreting the input and output of Cumulus workflow steps. The CMA is now integrated with Cumulus workflow steps as a Lambda layer.
 
-PLACEHOLDER FOR DEPLOYMENT STEPS
+To deploy a CMA layer to your account:
 
-Make sure to copy the ARN of the deployed layer, as it will be used to configure the `cumulus-tf` deployment in the next step.
+1. Go to the [CMA releases page](https://github.com/nasa/cumulus-message-adapter/releases) and download the `cumulus-message-adapter.zip` for the desired release
+2. Use the AWS CLI to publish your layer:
+
+```shell
+$ aws lambda publish-layer-version \
+  --layer-name prefix-CMA-layer \
+  --zip-file fileb://path/to/cumulus-message-adapter.zip
+
+{
+  ... more output ...
+  "LayerArn": "arn:aws:lambda:us-east-1:1234567890:layer:prefix-CMA-layer",
+  "LayerVersionArn": "arn:aws:lambda:us-east-1:1234567890:layer:prefix-CMA-layer:1",
+  ... more output ...
+}
+```
+
+Make sure to copy the `LayerVersionArn` of the deployed layer, as it will be used to configure the `cumulus-tf` deployment in the next step.
 
 ### Configure and deploy the `cumulus-tf` root module
 
