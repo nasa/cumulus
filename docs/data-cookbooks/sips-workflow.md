@@ -128,11 +128,14 @@ _**Please note:** To use this example in your deployment the `source` key for th
 
 The IngestGranule workflow processes and ingests a granule and posts the granule metadata to CMR.
 
-1. SyncGranule - [source](https://github.com/nasa/cumulus/tree/master/tasks/sync-granule).
-2. ProcessingStep - The processing step does not come from Cumulus core. The "AsterProcess," "ModisProcess," and "LegacyProcess" steps in the workflow picture below are examples of custom processing steps.
-3. CmrStep - [source](https://github.com/nasa/cumulus/tree/master/tasks/post-to-cmr)
+The lambdas below are included in the `cumulus` terraform module for use in your workflows:
 
-**Note:** Hitting CmrStep is not required and can be left out of the processing trajectory if desired (for example, in testing situations).
+1. SyncGranule - [source](https://github.com/nasa/cumulus/tree/master/tasks/sync-granule).
+2. CmrStep - [source](https://github.com/nasa/cumulus/tree/master/tasks/post-to-cmr)
+
+Additionally this workflow requires a ProcessingStep you must provide. The "AsterProcess," "ModisProcess," and "LegacyProcess" steps in the workflow picture below are examples of custom processing steps.
+
+**Note:** Using the CmrStep is not required and can be left out of the processing trajectory if desired (for example, in testing situations).
 
 ![Screenshot of execution graph for SIPS IngestGranule workflow in AWS Step Functions console](assets/sips-ingest-granule.png)
 
