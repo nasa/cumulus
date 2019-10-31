@@ -168,13 +168,17 @@ aws s3api create-bucket --bucket my-tf-state
 ```
 
 In order to help prevent loss of state information, **it is strongly recommended that
-versioning be enabled on the state bucket**:
+versioning be enabled on the state bucket**.
 
 ```shell
 aws s3api put-bucket-versioning \
     --bucket my-tf-state \
     --versioning-configuration Status=Enabled
 ```
+
+⚠️ **Note:**: If your state information does become lost or corrupt, then deployment (via
+`terraform apply`) will have unpredictable results, including possible loss of data and loss of
+deployed resources.
 
 Terraform uses a lock stored in DynamoDB in order to prevent multiple
 simultaneous updates. In the following examples, that table will be called
@@ -230,6 +234,8 @@ Run `terraform init` if this is the first time deploying this module. You should
 
 Terraform has been successfully initialized!
 ```
+
+⚠️ **Note:**: Running `terraform init` will create a `.terraform` directory in the current working directory. **Make sure not to delete or to alter the contents of this directory**. This directory contains a file identifying the storage of your remote state, so that each `terraform apply` command can determine the state of your deployed resources and only make the necessary changes.
 
 Run `terraform apply` to deploy your data persistence resources. Type `yes` when prompted to confirm that you want to create the resources. Assuming the operation is successful, you should see output like:
 
@@ -302,7 +308,7 @@ remote state values that you configured in
 `data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to
 determine the names of the resources created in `data-persistence-tf`.
 
-Run `terraform init` if this is your first time deploying this module.
+Run `terraform init` if this is your first time deploying this module. As with the `data-persistence-tf` module, **be sure not to delete or to alter the contents** of the `.terraform` directory created by this command.
 
 Run `terraform apply` to deploy the resources. Type `yes` when prompted to confirm that you want to create the resources. Assuming the operation is succesful, you should see output like this:
 
