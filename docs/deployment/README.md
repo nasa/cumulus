@@ -233,7 +233,7 @@ Run `terraform init` if:
 
 * This is the first time deploying the module
 * You have added any additional child modules, including [Cumulus components](./components.md#available-cumulus-components)
-* You have changed the version of any child modules
+* You have updated the `source` for any of the child modules
 
 You should see output like:
 
