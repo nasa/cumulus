@@ -42,7 +42,7 @@ You should have data available for Cumulus to ingest in an S3 bucket that matche
 
 For the purposes of this entry, we will be using a pre-configured  MOD09GQ version 006 CMR collection.    If you'd prefer to utilize the example processing code, using mocked up data files matching the file naming convention will suffice, so long as you also have a matching collection setup in CMR.
 
-If you'd prefer to ingest another data type, you will need to generate a processing lambda (see [Build Processing Lambda](#build-processing-lamvda) below).
+If you'd prefer to ingest another data type, you will need to generate a processing lambda (see [Build Processing Lambda](#build-processing-lambda) below).
 
 -----------
 
@@ -50,9 +50,7 @@ If you'd prefer to ingest another data type, you will need to generate a process
 
 ### CMR
 
-Visit the [CMR configuration documentation](../deployment/config_descriptions#cmr) for instructions on CMR integration and configuration.
-
-These configuration keys will be used in the CmrStep/PostToCmr Lambda function below.
+(Need section on updating CMR configuration in TF)
 
 ### Workflows
 
