@@ -56,7 +56,7 @@ If you'd prefer to ingest another data type, you will need to generate a process
 
 #### Summary
 
-For this example, you are going to be adding two workflows to your Cumulus deployment configuration.
+For this example, you are going to be adding two workflows to your Cumulus deployment.
 
 * DiscoverGranulesBrowseExample
 
@@ -76,11 +76,13 @@ For this example, you are going to be adding two workflows to your Cumulus deplo
 
 #### Workflow Configuration
 
-Add the following to a new file ```browse_example.tf``` in your deployment's main directory (the same location your app directory, lambdas.yml, etc are): [from github](https://github.com/nasa/cumulus/blob/master/example/workflows/browseExample.yml).  The file should contain the two example workflow modules.
+Add the following to a new file ```browse_example.tf``` in your deployment's main directory: [from github](https://github.com/nasa/cumulus/blob/master/example/workflows/browseExample.yml).  The file should contain the two example workflow modules.
 
 **Please Note**: You should update the `source =` line to match the current Cumulus `workflow` module deployment artifact to the version of Cumulus you're deploying:
 
-```source = "https://github.com/nasa/cumulus/releases/download/{version}/terraform-aws-cumulus.zip//tf-modules/cumulus"```
+```tcl
+source = "https://github.com/nasa/cumulus/releases/download/{version}/terraform-aws-cumulus.zip//tf-modules/cumulus"
+```
 
 A few things to note about tasks in the workflow being added:
 
@@ -129,7 +131,7 @@ A few things to note about tasks in the workflow being added:
     },
 ```
 
-Note that in the task, the event.config.cmr will contain the values you configured in the ```cmr``` configuration section above.
+Note that in the task, the ```CmrStep.Parameters.cma.task_config.cmr``` key will contain the values you configured in the ```cmr``` configuration section above.
 
 * The Processing step in CookbookBrowseExample:
 
@@ -183,15 +185,13 @@ Note that in the task, the event.config.cmr will contain the values you configur
 },
 ```
 
-**Please note**: ```FakeProcessing``` is the core provided browse/cmr generation lambda we're using for the example in this entry.
-
  If you're not ingesting mock data matching the example, or would like to use modify the example to ingest your own data please see the [build-lambda](#build-lambda) section below.    You will need to configure a different lambda entry for your lambda and utilize it in place of the ```Resource``` defined in the example workflow.
+
+ **Please note**: ```FakeProcessing``` is the core provided browse/cmr generation lambda we're using for the example in this entry.
 
 #### Lambdas
 
 All lambdas utilized in this example are provided in a standard deployment of Cumulus and require no additional configuration.
-
-**Please note**: ```FakeProcessing``` is the core provided browse/cmr generation we're using for the example.
 
 If you're not ingesting mock data matching the example, or would like to use this entry to ingest your own data please see the [build-lambda](#build-lambda) section below.    You will need to add a terraform ```aws_lambda_function``` resource to your deployment.
 
@@ -199,12 +199,11 @@ If you're not ingesting mock data matching the example, or would like to use thi
 
 Once you've configured your CMR credentials, updated your workflow configuration, and updated your lambda configuration you should be able to redeploy your cumulus instance by running the following commands:
 
-1)  ```terraform init```
-
+* ```terraform init```
 
 You should expect to see output similar to:
 
-```bash
+```sh
 $ terraform init
 Initializing modules...
 Downloading https://github.com/nasa/cumulus/releases/download/{version}/terraform-aws-cumulus-workflow.zip for cookbook_browse_example_workflow...
@@ -227,9 +226,10 @@ rerun this command to reinitialize your working directory. If you forget, other
 commands will detect it and remind you to do so if necessary.
 ```
 
-2) ```terraform apply```
+* ```terraform apply```
 
 You should expect to see output similar to the following truncated example:
+
 ```bash
 
 $ terraform apply
@@ -269,6 +269,7 @@ distribution_redirect_uri = {URL}
 distribution_url = {URL}
 s3_credentials_redirect_uri = {URL}
 ```
+
 -----------
 
 ## Configure Ingest
