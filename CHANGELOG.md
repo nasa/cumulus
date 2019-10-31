@@ -119,6 +119,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Cumulus now uses a universal workflow template when starting workflow that contains general information specific to the deployment, but not specific to the workflow.	
   - Changed the way workflow configs are defined, from `CumulusConfig` to a `task_config` AWS Parameter.
 
+- **CUMULUS-1452**
+  - Changed the default ECS docker storage drive to `devicemapper`
+
 - **CUMULUS-1453**
   - Removed config schema for `@cumulus/sf-sns-report` task
   - Updated `@cumulus/sf-sns-report` to always assume that it is running as an intermediate step in a workflow, not as the first or last step
@@ -133,6 +136,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1396** - Updated `@cumulus/common/StepFunctions.getExecutionHistory()` to recursively fetch execution history when `nextToken` is returned in response
 - **CUMULUS-1571** - Updated `@cumulus/common/DynamoDb.get()` to throw any errors encountered when trying to get a record and the record does exist
+
+- **CUMULUS-1452**
+  - Updated the EC2 initialization scripts to use full volume size for docker storage
+  - Changed the default ECS docker storage drive to `devicemapper`
 
 ## [v1.14.2] - 2019-10-08
 
