@@ -90,6 +90,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1625**
   - Added `sf_start_rate` variable to the `ingest` Terraform module, equivalent to `sqs_consumer_rate` in the old model, but will not be automatically applied to custom queues as that was.
+- **CUMULUS-1513**
+  - Added `sqs`-type rule support in the Cumulus API `@cumulus/api`
+  - Added `sqsMessageConsumer` lambda which processes messages from the SQS queues configured in the `sqs` rules.
 
 ### Changed
 
@@ -114,6 +117,27 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### BREAKING CHANGES
 
 Your Cumulus Message Adapter version should be pinned to `v1.0.13` or lower in your `app/config.yml` using `message_adapter_version: v1.0.13` OR you should use the workflow migration steps below to work with CMA v1.1.1+.
+
+- **CUMULUS-1394** - The implementation of the `SfSnsReport` Lambda requires additional environment variables for integration with the new ingest notification SNS topics. Therefore,  **you must update the definition of `SfSnsReport` in your `lambdas.yml` like so**:
+
+```yaml
+SfSnsReport:
+  handler: index.handler
+  timeout: 300
+  source: node_modules/@cumulus/sf-sns-report/dist
+  tables:
+    - ExecutionsTable
+  envs:
+    execution_sns_topic_arn:
+      function: Ref
+      value: reportExecutionsSns
+    granule_sns_topic_arn:
+      function: Ref
+      value: reportGranulesSns
+    pdr_sns_topic_arn:
+      function: Ref
+      value: reportPdrsSns
+```
 
 - **CUMULUS-1447** -
   The newest release of the Cumulus Message Adapter (v1.1.1) requires that parameterized configuration be used for remote message functionality. Once released, Kes will automatically bring in CMA v1.1.1 without additional configuration.
@@ -169,6 +193,17 @@ Your Cumulus Message Adapter version should be pinned to `v1.0.13` or lower in y
 
 ### Changed
 
+- **CUMULUS-1308**
+  - HTTP PUT of a Collection, Provider, or Rule via the Cumulus API now
+    performs full replacement of the existing object with the object supplied
+    in the request payload.  Previous behavior was to perform a modification
+    (partial update) by merging the existing object with the (possibly partial)
+    object in the payload, but this did not conform to the HTTP standard, which
+    specifies PATCH as the means for modifications rather than replacements.
+
+- **CUMULUS-1375**
+  - Migrate Cumulus from deprecated Elasticsearch JS client to new, supported one in `@cumulus/api`
+
 - **CUMULUS-1485** Update `@cumulus/cmr-client` to return error message from CMR for validation failures.
 
 - **CUMULUS-1394**
@@ -184,9 +219,6 @@ Your Cumulus Message Adapter version should be pinned to `v1.0.13` or lower in y
   - Update example SIPS workflows to utilize Parameterized CMA configuration
 
 - **CUMULUS-1448** Refactor workflows that are mutating cumulus_meta to utilize meta field
-
-- **CUMULUS-1375**
-  - Migrate Cumulus from deprecated Elasticsearch JS client to new, supported one in `@cumulus/api`
 
 - **CUMULUS-1451**
   - Elasticsearch cluster setting `auto_create_index` will be set to false. This had been causing issues in the bootstrap lambda on deploy.

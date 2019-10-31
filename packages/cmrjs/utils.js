@@ -132,7 +132,7 @@ async function validateUMMG(ummMetadata, identifier, provider) {
  */
 async function getIp() {
   deprecate('@cumulus/cmrjs/utils#getIp', '1.11.3');
-  return publicIp.v4()
+  return publicIp.v4({ https: true })
     .catch((err) => {
       if (err.message === 'Query timed out') {
         return process.env.USER_IP_ADDRESS || '10.0.0.0';

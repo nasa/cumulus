@@ -1,5 +1,6 @@
 'use strict';
 
+const omit = require('lodash.omit');
 const test = require('ava');
 const request = require('supertest');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -49,7 +50,10 @@ test.before(async () => {
 });
 
 test.beforeEach(async (t) => {
-  t.context.testProvider = fakeProviderFactory();
+  t.context.testProvider = {
+    ...fakeProviderFactory(),
+    cmKeyId: 'key'
+  };
   await providerModel.create(t.context.testProvider);
 });
 
@@ -72,34 +76,67 @@ test('CUMULUS-912 PUT with pathParameters and with an invalid access token retur
 
 test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test('PUT updates an existing provider, and that update is returned from the API', async (t) => {
-  const updateParams = {
-    globalConnectionLimit: t.context.testProvider.globalConnectionLimit + 1
-  };
+test('PUT replaces existing provider', async (t) => {
+  const { testProvider, testProvider: { id } } = t.context;
+  const expectedProvider = omit(testProvider,
+    ['globalConnectionLimit', 'protocol', 'cmKeyId']);
+
+  // Make sure testProvider contains values for the properties we omitted from
+  // expectedProvider to confirm that after we replace (PUT) the provider those
+  // properties are dropped from the stored provider.
+  t.truthy(testProvider.globalConnectionLimit);
+  t.truthy(testProvider.protocol);
+  t.truthy(testProvider.cmKeyId);
 
   await request(app)
-    .put(`/providers/${t.context.testProvider.id}`)
-    .send(updateParams)
+    .put(`/providers/${id}`)
+    .send(expectedProvider)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
-
 
   const { body: actualProvider } = await request(app)
-    .get(`/providers/${t.context.testProvider.id}`)
+    .get(`/providers/${id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const expectedProvider = {
-    ...t.context.testProvider,
-    ...updateParams,
+  t.deepEqual(actualProvider, {
+    ...expectedProvider,
+    globalConnectionLimit: 10, // Default value
+    protocol: 'http', // Default value
     createdAt: actualProvider.createdAt,
     updatedAt: actualProvider.updatedAt
-  };
-
-  t.deepEqual(actualProvider, expectedProvider);
+  });
 });
+
+test('PUT returns 404 for non-existent provider', async (t) => {
+  const id = randomString();
+  const response = await request(app)
+    .put(`/provider/${id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ id })
+    .expect(404);
+  const { message, record } = response.body;
+
+  t.truthy(message);
+  t.falsy(record);
+});
+
+test('PUT returns 400 for id mismatch between params and payload',
+  async (t) => {
+    const response = await request(app)
+      .put(`/providers/${randomString()}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send({ id: randomString() })
+      .expect(400);
+    const { message, record } = response.body;
+
+    t.truthy(message);
+    t.falsy(record);
+  });
 
 test('PUT without an Authorization header returns an Authorization Missing response and does not update an existing provider', async (t) => {
   const updatedLimit = t.context.testProvider.globalConnectionLimit + 1;

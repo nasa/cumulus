@@ -3,6 +3,7 @@
 const test = require('ava');
 const sinon = require('sinon');
 const cloneDeep = require('lodash.clonedeep');
+const range = require('lodash.range');
 
 const aws = require('@cumulus/common/aws');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
@@ -427,6 +428,7 @@ test.serial('disabling an SNS rule removes the event source mapping', async (t) 
   const rule = await rulesModel.create(item);
 
   t.is(rule.rule.value, snsTopicArn);
+  t.truthy(rule.rule.arn);
   t.is(rule.state, 'ENABLED');
 
   const updates = { name: rule.name, state: 'DISABLED' };
@@ -441,6 +443,57 @@ test.serial('disabling an SNS rule removes the event source mapping', async (t) 
   await rulesModel.delete(rule);
   snsStub.restore();
   lambdaStub.restore();
+});
+
+test.serial('enabling a disabled SNS rule and passing rule.arn throws specific error', async (t) => {
+  const snsTopicArn = randomString();
+  const snsStub = sinon.stub(aws, 'sns')
+    .returns({
+      listSubscriptionsByTopic: () => ({
+        promise: () => Promise.resolve({
+          Subscriptions: [{
+            Endpoint: process.env.messageConsumer,
+            SubscriptionArn: snsTopicArn
+          }]
+        })
+      }),
+      unsubscribe: () => ({
+        promise: () => Promise.resolve()
+      })
+    });
+
+  const item = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sns',
+      value: snsTopicArn
+    },
+    state: 'DISABLED'
+  });
+
+  const rule = await rulesModel.create(item);
+
+  t.is(rule.rule.value, snsTopicArn);
+  t.falsy(rule.rule.arn);
+  t.is(rule.state, 'DISABLED');
+
+  const updates = {
+    name: rule.name,
+    state: 'ENABLED',
+    rule: {
+      ...rule.rule,
+      arn: 'test-value'
+    }
+  };
+  try {
+    // Should fail because a disabled rule should not have an ARN
+    // when being updated
+    await t.throwsAsync(rulesModel.update(rule, updates), null,
+      'Including rule.arn is not allowed when enabling a disabled rule');
+  } finally {
+    await rulesModel.delete(rule);
+    snsStub.restore();
+  }
 });
 
 test.serial('updating an SNS rule updates the event source mapping', async (t) => {
@@ -628,4 +681,80 @@ test('update preserves nested keys', async (t) => {
 
   t.is(updatedRule.meta.foo, 'bar');
   t.deepEqual(updatedRule.meta.testObject, newTestObject);
+});
+
+test('getRulesByTypeAndState returns list of rules', async (t) => {
+  const queueUrl = await aws.createQueue(randomString());
+  const rules = [
+    fakeRuleFactoryV2({
+      workflow,
+      rule: {
+        type: 'onetime'
+      },
+      state: 'ENABLED'
+    }),
+    fakeRuleFactoryV2({
+      workflow,
+      rule: {
+        type: 'sqs',
+        value: queueUrl
+      },
+      state: 'ENABLED'
+    }),
+    fakeRuleFactoryV2({
+      workflow,
+      rule: {
+        type: 'onetime'
+      },
+      state: 'DISABLED'
+    })
+  ];
+  const createdRules = await Promise.all(
+    rules.map((rule) => rulesModel.create(rule))
+  );
+
+  aws.sqs().deleteQueue({ QueueUrl: queueUrl }).promise();
+
+  const result = await rulesModel.getRulesByTypeAndState('onetime', 'ENABLED');
+  t.truthy(result.find((rule) => rule.name === createdRules[0].name));
+  t.falsy(result.find((rule) => rule.name === createdRules[1].name));
+  t.falsy(result.find((rule) => rule.name === createdRules[2].name));
+});
+
+test('create, update and delete sqs type rule', async (t) => {
+  const queueUrls = await Promise.all(range(2).map(() => aws.createQueue(randomString())));
+
+  const rule = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sqs',
+      value: queueUrls[0]
+    },
+    state: 'ENABLED'
+  });
+
+  const createdRule = await rulesModel.create(rule);
+  t.deepEqual(createdRule.rule, rule.rule);
+
+  const testObject = {
+    key: randomString()
+  };
+  const updates = {
+    name: rule.name,
+    meta: {
+      testObject: testObject
+    },
+    rule: {
+      value: queueUrls[1]
+    }
+  };
+
+  const updatedRule = await rulesModel.update(createdRule, updates);
+  t.deepEqual(updatedRule.meta.testObject, testObject);
+  t.is(updatedRule.rule.value, queueUrls[1]);
+
+  await rulesModel.delete(updatedRule);
+  await Promise.all(
+    queueUrls.map((queueUrl) => aws.sqs().deleteQueue({ QueueUrl: queueUrl }).promise())
+  );
 });

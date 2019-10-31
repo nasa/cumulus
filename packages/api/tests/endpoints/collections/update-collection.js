@@ -1,5 +1,6 @@
 'use strict';
 
+const omit = require('lodash.omit');
 const test = require('ava');
 const request = require('supertest');
 const aws = require('@cumulus/common/aws');
@@ -84,19 +85,84 @@ test('CUMULUS-912 PUT with pathParameters and with an invalid access token retur
 
 test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test('PUT updates an existing collection', async (t) => {
-  const newPath = 'new_path';
-  const response = await request(app)
-    .put(`/collections/${t.context.testCollection.name}/${t.context.testCollection.version}`)
+test('PUT replaces an existing collection', async (t) => {
+  const { testCollection, testCollection: { name, version } } = t.context;
+  const expectedCollection = {
+    ...omit(testCollection, ['dataType', 'duplicateHandling']),
+    provider_path: 'test_path'
+  };
+
+  // Make sure testCollection contains values for the properties we omitted from
+  // expectedCollection to confirm that after we replace (PUT) the collection
+  // those properties are dropped from the stored collection.
+  t.truthy(testCollection.dataType);
+  t.truthy(testCollection.duplicateHandling);
+
+  await request(app)
+    .put(`/collections/${name}/${version}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({
-      name: t.context.testCollection.name,
-      version: t.context.testCollection.version,
-      provider_path: newPath
-    })
+    .send(expectedCollection)
     .expect(200);
 
-  const { provider_path } = response.body; // eslint-disable-line camelcase
-  t.is(provider_path, newPath);
+  const { body: actualCollection } = await request(app)
+    .get(`/collections/${name}/${version}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.deepEqual(actualCollection, {
+    ...expectedCollection,
+    duplicateHandling: 'error', // Default value
+    reportToEms: true, // Default value
+    createdAt: actualCollection.createdAt,
+    updatedAt: actualCollection.updatedAt
+  });
 });
+
+test('PUT returns 404 for non-existent collection', async (t) => {
+  const name = randomString();
+  const version = randomString();
+  const response = await request(app)
+    .put(`/collections/${name}/${version}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ name, version })
+    .expect(404);
+  const { message, record } = response.body;
+
+  t.truthy(message);
+  t.falsy(record);
+});
+
+test('PUT returns 400 for name mismatch between params and payload',
+  async (t) => {
+    const name = randomString();
+    const version = randomString();
+    const response = await request(app)
+      .put(`/collections/${name}/${version}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send({ name: randomString(), version })
+      .expect(400);
+    const { message, record } = response.body;
+
+    t.truthy(message);
+    t.falsy(record);
+  });
+
+test('PUT returns 400 for version mismatch between params and payload',
+  async (t) => {
+    const name = randomString();
+    const version = randomString();
+    const response = await request(app)
+      .put(`/collections/${name}/${version}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send({ name, version: randomString() })
+      .expect(400);
+    const { message, record } = response.body;
+
+    t.truthy(message);
+    t.falsy(record);
+  });

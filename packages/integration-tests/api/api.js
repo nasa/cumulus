@@ -23,7 +23,7 @@ function invokeApi(prefix, payload) {
       const outputPayload = JSON.parse(apiOutput.Payload);
 
       if (outputPayload.errorMessage
-          && outputPayload.errorMessage.includes('Task timed out')) {
+        && outputPayload.errorMessage.includes('Task timed out')) {
         throw new Error(`Error calling ${payload.path}: ${outputPayload.errorMessage}`);
       }
 
@@ -411,6 +411,12 @@ async function getWorkflow({ prefix, workflowName }) {
  * @returns {Promise<Object>} - the updated collection from the API
  */
 async function updateCollection({ prefix, collection, updateParams }) {
+  const originalCollection = JSON.parse((await getCollection({
+    prefix,
+    collectionName: collection.name,
+    collectionVersion: collection.version
+  })).body);
+
   const response = await callCumulusApi({
     prefix: prefix,
     payload: {
@@ -420,9 +426,13 @@ async function updateCollection({ prefix, collection, updateParams }) {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(Object.assign(collection, updateParams))
+      body: JSON.stringify({
+        ...originalCollection,
+        ...updateParams
+      })
     }
   });
+
   return verifyCumulusApiResponse(response);
 }
 

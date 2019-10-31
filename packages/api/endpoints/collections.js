@@ -110,38 +110,20 @@ async function post(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function put(req, res) {
-  const pname = req.params.name;
-  const pversion = req.params.version;
-
-  let data = req.body;
-
-  const name = data.name;
-  const version = data.version;
-
-  if (pname !== name || pversion !== version) {
-    return res.boom.notFound('name and version in path doesn\'t match the payload');
+async function put({ params: { name, version }, body }, res) {
+  if (name !== body.name || version !== body.version) {
+    return res.boom.badRequest('Expected collection name and version to be'
+      + ` '${name}' and '${version}', respectively, but found '${body.name}'`
+      + ` and '${body.version}' in payload`);
   }
 
-  const c = new models.Collection();
+  const collectionModel = new models.Collection();
 
-  // get the record first
-  try {
-    const originalData = await c.get({ name, version });
-    data = Object.assign({}, originalData, data);
-    const result = await c.create(data);
-
-    if (inTestMode()) {
-      await addToES(result);
-    }
-
-    return res.send(result);
-  } catch (err) {
-    if (err instanceof RecordDoesNotExist) {
-      return res.boom.notFound('Record does not exist');
-    }
-    throw err;
-  }
+  return (!(await collectionModel.exists(name, version)))
+    ? res.boom.notFound(`Collection '${name}' version '${version}' not found`)
+    : collectionModel.create(body)
+      .then((result) => (inTestMode() ? addToES(result).then(result) : result))
+      .then((result) => res.send(result));
 }
 
 /**

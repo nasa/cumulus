@@ -60,6 +60,7 @@ class Rule extends Manager {
       }
       break;
     }
+    case 'sqs':
     default:
       break;
     }
@@ -107,13 +108,16 @@ class Rule extends Manager {
   }
 
   /**
-   * Update a rule item
+   * Updates a rule item.
    *
    * @param {Object} original - the original rule
-   * @param {Object} updates - key/value fields for update, may not be a complete rule item
+   * @param {Object} updates - key/value fields for update; might not be a
+   *    complete rule item
+   * @param {Array<string>} [fieldsToDelete] - names of fields to delete from
+   *    rule
    * @returns {Promise} the response from database updates
    */
-  async update(original, updates) {
+  async update(original, updates, fieldsToDelete = []) {
     // Make a copy of the existing rule to preserve existing values
     let updatedRuleItem = cloneDeep(original);
 
@@ -121,7 +125,8 @@ class Rule extends Manager {
     merge(updatedRuleItem, updates);
 
     const stateChanged = (updates.state && updates.state !== original.state);
-    const valueUpdated = (updates.rule && updates.rule.value);
+    const valueUpdated = (updates.rule
+      && updates.rule.value !== original.rule.value);
 
     switch (updatedRuleItem.rule.type) {
     case 'scheduled': {
@@ -133,11 +138,15 @@ class Rule extends Manager {
       if (valueUpdated) {
         await this.deleteKinesisEventSources(updatedRuleItem);
         const updatedRuleItemArns = await this.addKinesisEventSources(updatedRuleItem);
-        updatedRuleItem = this.updateKinesisRuleArns(updatedRuleItem, updatedRuleItemArns);
+        updatedRuleItem = this.updateKinesisRuleArns(updatedRuleItem,
+          updatedRuleItemArns);
       }
       break;
     case 'sns': {
       if (valueUpdated || stateChanged) {
+        if (updatedRuleItem.state === 'ENABLED' && stateChanged && updatedRuleItem.rule.arn) {
+          throw new Error('Including rule.arn is not allowed when enabling a disabled rule');
+        }
         let snsSubscriptionArn;
         if (updatedRuleItem.rule.arn) {
           await this.deleteSnsTrigger(updatedRuleItem);
@@ -145,15 +154,22 @@ class Rule extends Manager {
         if (updatedRuleItem.state === 'ENABLED') {
           snsSubscriptionArn = await this.addSnsTrigger(updatedRuleItem);
         }
-        updatedRuleItem = this.updateSnsRuleArn(updatedRuleItem, snsSubscriptionArn);
+        updatedRuleItem = this.updateSnsRuleArn(updatedRuleItem,
+          snsSubscriptionArn);
       }
       break;
     }
+    case 'sqs':
+      if (valueUpdated && !(await aws.sqsQueueExists(updatedRuleItem.rule.value))) {
+        throw new Error(`SQS queue ${updatedRuleItem.rule.value} does not exist or your account does not have permissions to access it`);
+      }
+      break;
     default:
       break;
     }
 
-    return super.update({ name: original.name }, updatedRuleItem);
+    return super.update({ name: original.name }, updatedRuleItem,
+      fieldsToDelete);
   }
 
   static async buildPayload(item) {
@@ -221,6 +237,11 @@ class Rule extends Manager {
       }
       break;
     }
+    case 'sqs':
+      if (!(await aws.sqsQueueExists(newRuleItem.rule.value))) {
+        throw new Error(`SQS queue ${newRuleItem.rule.value} does not exist or your account does not have permissions to access it`);
+      }
+      break;
     default:
       throw new Error('Type not supported');
     }
@@ -405,6 +426,30 @@ class Rule extends Manager {
       SubscriptionArn: item.rule.arn
     };
     return aws.sns().unsubscribe(subscriptionParams).promise();
+  }
+
+  /**
+   * get all rules with specified type and state
+   *
+   * @param {string} type - rule type
+   * @param {string} state - rule state
+   * @returns {Promise<Object>}
+   */
+  async getRulesByTypeAndState(type, state) {
+    const scanResult = await this.scan({
+      names: {
+        '#st': 'state',
+        '#rl': 'rule',
+        '#tp': 'type'
+      },
+      filter: '#st = :enabledState AND #rl.#tp = :ruleType',
+      values: {
+        ':enabledState': state,
+        ':ruleType': type
+      }
+    });
+
+    return scanResult.Items;
   }
 }
 
