@@ -10,20 +10,27 @@ const privates = new WeakMap();
 class Logger {
   /**
    * @param {Object} options - options object
+   * @param {string} [options.executions]  - AWS stepfunction execution name
+   * @param {string} [options.granules] - stringified array of granule objects
+   * @param {string} [options.parentArn] - parent stepfunction execution ARN
+   * @param {boolean} [options.pretty=false] - stringify objects on multiple lines
    * @param {string} [options.sender="unknown"] - the sender of the log message
-   * @param {string} [options.executions]
+   * @param {string} [options.stackName] - cumulus stack name
    * @param {Console} [options.console=global.console] - the console to write
    *   log events to
-   * @param {string} [options.version]
+   * @param {string} [options.version] - Lambda function version
    */
   constructor(options) {
     privates.set(
       this,
       {
         executions: options.executions,
+        granules: options.granules,
+        parentArn: options.parentArn,
         pretty: options.pretty || false,
-        thisConsole: options.console || global.console,
         sender: options.sender || 'unknown',
+        stackName: options.stackName,
+        thisConsole: options.console || global.console,
         version: options.version
       }
     );
@@ -119,17 +126,23 @@ class Logger {
   _writeLogEvent(level, messageArgs, additionalKeys = {}) {
     const {
       executions,
+      granules,
+      parentArn,
       pretty,
       sender,
+      stackName,
       thisConsole,
       version
     } = privates.get(this);
 
     const standardLogEvent = {
       executions,
+      granules,
       level,
       message: format(...messageArgs),
+      parentArn,
       sender,
+      stackName,
       timestamp: (new Date()).toISOString(),
       version
     };

@@ -7,7 +7,10 @@ const isString = require('lodash.isstring');
 function logger() {
   return new Logger({
     executions: process.env.EXECUTIONS,
+    granules: process.env.GRANULES,
+    parentArn: process.env.PARENTARN,
     sender: process.env.SENDER,
+    stackName: process.env.STACKNAME,
     version: process.env.TASKVERSION
   });
 }
