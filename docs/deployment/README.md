@@ -235,8 +235,6 @@ Run `terraform init` if this is the first time deploying this module. You should
 Terraform has been successfully initialized!
 ```
 
-⚠️ **Note:**: Running `terraform init` will create a `.terraform` directory in the current working directory. **Make sure not to delete or to alter the contents of this directory**. This directory contains a file identifying the storage of your remote state, so that each `terraform apply` command can determine the state of your deployed resources and only make the necessary changes.
-
 Run `terraform apply` to deploy your data persistence resources. Type `yes` when prompted to confirm that you want to create the resources. Assuming the operation is successful, you should see output like:
 
 ```shell
@@ -308,7 +306,7 @@ remote state values that you configured in
 `data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to
 determine the names of the resources created in `data-persistence-tf`.
 
-Run `terraform init` if this is your first time deploying this module. As with the `data-persistence-tf` module, **be sure not to delete or to alter the contents** of the `.terraform` directory created by this command.
+Run `terraform init` if this is your first time deploying this module.
 
 Run `terraform apply` to deploy the resources. Type `yes` when prompted to confirm that you want to create the resources. Assuming the operation is succesful, you should see output like this:
 
@@ -433,13 +431,22 @@ To view the released module artifacts for each Cumulus core version, see the [Cu
 
 Cumulus uses a global versioning approach, meaning version numbers are consistent across all packages and tasks, and semantic versioning to track major, minor, and patch version (i.e. 1.0.0). We use Lerna to manage versioning.
 
+### Updating Cumulus version
+
+To update your Cumulus version:
+
+1. Find the desired release on the [Cumulus releases page](https://github.com/nasa/cumulus/releases)
+2. Update the `source` in your Terraform deployment files **for each of [your Cumulus modules](./components.md#available-cumulus-components)** by replacing `vx.x.x` with the desired version of Cumulus:
+
+    `source = "https://github.com/nasa/cumulus/releases/download/vx.x.x/terraform.zip//tf-modules/data-persistence"`
+
+3. Run `terraform init` to get the latest copies of your updated modules
+
 ### Update data persistence resources
 
-To update your Cumulus version, update the line in your Terraform deployment files with the source for the `data-persistence` module in your deployment by replacing `vx.x.x` with the desired version of Cumulus:
+**Note:** If you integrated any new modules or updated the versions of your module(s), you need to run `terraform init`.
 
-`source = "https://github.com/nasa/cumulus/releases/download/vx.x.x/terraform.zip//tf-modules/data-persistence""`
-
-Then, from your `data-persistence-tf` directory:
+From your `data-persistence-tf` directory:
 
 ```bash
   $ AWS_REGION=<region> \ # e.g. us-east-1
@@ -447,13 +454,11 @@ Then, from your `data-persistence-tf` directory:
       terraform apply
 ```
 
-### Update Cumulus
+### Update Cumulus resources
 
-To update your Cumulus version, update the line in your Terraform deployment files with the source for the `cumulus` module in your deployment by replacing `vx.x.x` with the desired version of Cumulus:
+**Note:** If you have added additional workflows, integrated any new modules, or updated the versions of your modules, you need to run `terraform init`.
 
-`source = "https://github.com/nasa/cumulus/releases/download/vx.x.x/terraform.zip//tf-modules/cumulus""`
-
-Then, from your `cumulus-tf` directory:
+From your `cumulus-tf` directory:
 
 ```bash
   $ AWS_REGION=<region> \ # e.g. us-east-1
