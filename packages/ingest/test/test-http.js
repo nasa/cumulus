@@ -5,6 +5,7 @@ const test = require('ava');
 const http = rewire('../http');
 const TestHttpMixin = http.httpMixin;
 const EventEmitter = require('events');
+const { Readable } = require('stream');
 const {
   calculateS3ObjectChecksum,
   fileExists,
@@ -13,15 +14,6 @@ const {
   headObject
 } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
-
-const setupCrawler = (stubLink) => {
-  class TestEmitter extends EventEmitter {
-    start() {
-      this.emit('fetchcomplete', null, `<a href="${stubLink}">link</a>`);
-    }
-  }
-  http.__set__('Crawler', TestEmitter);
-};
 
 class MyTestDiscoveryClass {
   constructor(useList) {
@@ -38,15 +30,30 @@ class MyTestDiscoveryClass {
 }
 
 class MyTestHttpDiscoveryClass extends TestHttpMixin(MyTestDiscoveryClass) {}
-const myTestHttpDiscoveryClass = new MyTestHttpDiscoveryClass();
 
-test('Download remote file to s3 with correct content-type', async (t) => {
+const testListWith = (discoverer, event, ...args) => {
+  class Crawler extends EventEmitter {
+    start() {
+      this.emit(event, ...args);
+    }
+  }
+
+  return http.__with__({
+    Crawler
+  })(() => discoverer.list());
+};
+
+test.beforeEach((t) => {
+  t.context.discoverer = new MyTestHttpDiscoveryClass();
+});
+
+test('sync() downloads remote file to s3 with correct content-type', async (t) => {
   const bucket = randomString();
   const key = randomString();
   const expectedContentType = 'application/x-hdf';
   try {
     await s3().createBucket({ Bucket: bucket }).promise();
-    await myTestHttpDiscoveryClass.sync(
+    await t.context.discoverer.sync(
       '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf', bucket, key
     );
     t.truthy(fileExists(bucket, key));
@@ -60,65 +67,97 @@ test('Download remote file to s3 with correct content-type', async (t) => {
   }
 });
 
-test('returns files with provider path', async (t) => {
-  const stubLink = 'file.txt';
-  setupCrawler(stubLink);
+test.serial('list() returns files with provider path', async (t) => {
+  const responseBody = '<html><body><a href="file.txt">asdf</a></body></html>';
 
-  const actualFiles = await myTestHttpDiscoveryClass.list();
-  const expectedFiles = [{ name: stubLink, path: myTestHttpDiscoveryClass.path }];
+  const actualFiles = await testListWith(
+    t.context.discoverer,
+    'fetchcomplete',
+    {},
+    Buffer.from(responseBody),
+    {}
+  );
+
+  const expectedFiles = [{ name: 'file.txt', path: '' }];
+
   t.deepEqual(actualFiles, expectedFiles);
 });
 
-test('strips trailing spaces from name', async (t) => {
-  const stubLink = 'fileWithTrailingSpaces.txt  ';
-  setupCrawler(stubLink);
+test.serial('list() strips trailing spaces from name', async (t) => {
+  const responseBody = '<html><body><a href="file.txt ">asdf</a></body></html>';
 
-  const actualFiles = await myTestHttpDiscoveryClass.list();
-  const expectedFiles = [{ name: 'fileWithTrailingSpaces.txt', path: myTestHttpDiscoveryClass.path }];
+  const actualFiles = await testListWith(
+    t.context.discoverer,
+    'fetchcomplete',
+    {},
+    Buffer.from(responseBody),
+    {}
+  );
+
+  const expectedFiles = [{ name: 'file.txt', path: '' }];
+
   t.deepEqual(actualFiles, expectedFiles);
 });
 
-test('does not strip leading spaces from name', async (t) => {
-  const stubLink = ' fileWithSpaces.txt';
-  setupCrawler(stubLink);
+test.serial('list() does not strip leading spaces from name', async (t) => {
+  const responseBody = '<html><body><a href=" file.txt ">asdf</a></body></html>';
 
-  const actualFiles = await myTestHttpDiscoveryClass.list();
-  const expectedFiles = [{ name: stubLink, path: myTestHttpDiscoveryClass.path }];
+  const actualFiles = await testListWith(
+    t.context.discoverer,
+    'fetchcomplete',
+    {},
+    Buffer.from(responseBody),
+    {}
+  );
+
+  const expectedFiles = [{ name: ' file.txt', path: '' }];
+
   t.deepEqual(actualFiles, expectedFiles);
 });
 
 test.serial('list() returns a valid exception if the connection times out', async (t) => {
-  class TestEmitter extends EventEmitter {
-    start() {
-      this.emit('fetchtimeout', {}, 100);
-    }
-  }
-
   await t.throwsAsync(
-    () =>
-      http.__with__({
-        Crawler: TestEmitter
-      })(() => myTestHttpDiscoveryClass.list()),
+    () => testListWith(t.context.discoverer, 'fetchtimeout', {}, 100),
     'Connection timed out'
   );
 });
 
-test.serial('list() returns an exception containing the HTTP status code if a fetcherror event occurs', async (t) => {
-  const queueItem = {};
-  const response = { statusCode: 401 };
+test.serial('list() returns an exception with helpful information if a fetcherror event occurs', async (t) => {
+  // The QueueItem that gets returned by the 'fetcherror' event
+  const queueItem = { url: 'http://localhost/asdf' };
 
-  class TestEmitter extends EventEmitter {
-    start() {
-      this.emit('fetcherror', queueItem, response);
+  // The http.IncomingMessage that gets returned by the 'fetcherror' event
+  let nextChunk = 'Login required';
+  const response = new Readable({
+    read() {
+      this.push(nextChunk);
+      nextChunk = null;
     }
-  }
+  });
+
+  response.statusCode = 401;
+  response.req = { method: 'GET' };
 
   const err = await t.throwsAsync(
-    () =>
-      http.__with__({
-        Crawler: TestEmitter
-      })(() => myTestHttpDiscoveryClass.list())
+    () => testListWith(t.context.discoverer, 'fetcherror', queueItem, response)
   );
 
   t.true(err.message.includes('401'));
+  t.is(err.details, 'Login required');
+});
+
+test.serial('list() returns an exception if a fetchclienterror event occurs', async (t) => {
+  await t.throwsAsync(
+    () => testListWith(t.context.discoverer, 'fetchclienterror'),
+    'Connection Refused'
+  );
+});
+
+test.serial('list() returns an exception if a fetch404 event occurs', async (t) => {
+  const err = await t.throwsAsync(
+    () => testListWith(t.context.discoverer, 'fetch404', { foo: 'bar' })
+  );
+
+  t.true(err.message.includes('Received a 404 error'));
+  t.deepEqual(err.details, { foo: 'bar' });
 });

@@ -47,7 +47,7 @@ module.exports.httpMixin = (superclass) => class extends superclass {
     const files = [];
 
     return new Promise((resolve, reject) => {
-      c.on('fetchcomplete', (queueItem, responseBuffer) => {
+      c.on('fetchcomplete', (_, responseBuffer) => {
         const lines = responseBuffer.toString().trim().split('\n');
         lines.forEach((line) => {
           const split = line.trim().split(pattern);
@@ -69,8 +69,20 @@ module.exports.httpMixin = (superclass) => class extends superclass {
       c.on('fetchtimeout', () =>
         reject(new errors.RemoteResourceError('Connection timed out')));
 
-      c.on('fetcherror', (_, response) =>
-        reject(new errors.RemoteResourceError(`fetcherror event received with HTTP status code ${response.statusCode}`)));
+      c.on('fetcherror', (queueItem, response) => {
+        let responseBody = '';
+        response.on('data', (chunk) => {
+          responseBody += chunk;
+        });
+
+        response.on('end', () => {
+          const err = new errors.RemoteResourceError(
+            `"${response.req.method} ${queueItem.url}" failed with status code ${response.statusCode}`
+          );
+          err.details = responseBody;
+          return reject(err);
+        });
+      });
 
       c.on('fetchclienterror', () => reject(new errors.RemoteResourceError('Connection Refused')));
 
