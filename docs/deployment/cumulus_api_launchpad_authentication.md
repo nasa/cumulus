@@ -14,16 +14,20 @@ Steps for setting up the Cumulus API to use Launchpad authentication can be foun
 
 ## Cumulus Configuration
 
-1. Upload PKI certificate to s3
+1. Upload PKI certificate to S3:
 
-  Upload the PKI certificate pfx file to s3, use `{{system_bucket}}` as bucket name and `{{prefix}}/crypto/launchpad.pfx` as key, `{{system_bucket}}` and `{{prefix}}` are configured in `app/config.yml`. If a different private key file name other than `launchpad.pfx` is used, specify it in the `launchpad` configuration in `app/config.yml`.
+    - Upload the PKI certificate `.pfx` file to S3
+    - Use `{{system_bucket}}` as bucket name and `{{prefix}}/crypto/launchpad.pfx` as key
+      - `{{system_bucket}}` and `{{prefix}}` are configured in `app/config.yml`.
+      - If a different private key file name other than `launchpad.pfx` is used, specify it in the `launchpad` configuration in `app/config.yml`.
 
 2. Provide passphrase of PKI certificate in `app/.env`
 
-  ```text
-    LAUNCHPAD_PASSPHRASE=<LAUNCHPAD_PASSPHRASE>
-  ```
+    ```text
+      LAUNCHPAD_PASSPHRASE=<LAUNCHPAD_PASSPHRASE>
+    ```
 
-3. Configure the `oauth.provider` and `oauth.userGroup` configuration parameters in `app/config.yml`. _Example configuration of the `oauth` variables can be found in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/app/config.yml)_
+3. Configure the `oauth.provider` and `oauth.userGroup` configuration parameters in `app/config.yml`.
 
-`oauth.provider` in `app/config.yml` must be set to `launchpad` to use Launchpad authentication.
+   - `oauth.provider` in `app/config.yml` **must be set to `launchpad` to use Launchpad authentication**.
+   - _Example configuration of the `oauth` variables can be found in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/app/config.yml)_
