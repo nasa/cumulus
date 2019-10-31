@@ -74,6 +74,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   examples of how to update your workflow definitions, see our
   [example workflow definitions](https://github.com/nasa/cumulus/blob/master/example/workflows/).
 
+- **CUMULUS-1470**
+  - Remove Cumulus-defined ECS service autoscaling, allowing integrators to
+    better customize autoscaling to meet their needs. In order to use
+    autoscaling with ECS services, appropriate
+    `AWS::ApplicationAutoScaling::ScalableTarget`,
+    `AWS::ApplicationAutoScaling::ScalingPolicy`, and `AWS::CloudWatch::Alarm`
+    resources should be defined in a kes overrides file. See
+    [example/app/cloudformation.template.yml](./example/app/cloudformation.template.yml)
+    for an example.
+  - The following config parameters are no longer used:
+    - ecs.services.\<NAME\>.minTasks
+    - ecs.services.\<NAME\>.maxTasks
+    - ecs.services.\<NAME\>.scaleInActivityScheduleTime
+    - ecs.services.\<NAME\>.scaleInAdjustmentPercent
+    - ecs.services.\<NAME\>.scaleOutActivityScheduleTime
+    - ecs.services.\<NAME\>.scaleOutAdjustmentPercent
+    - ecs.services.\<NAME\>.activityName
+
 ### Added
 
 - **CUMULUS-1100**
