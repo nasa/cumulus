@@ -384,7 +384,7 @@ Resources:
         {{# each this.targets}}
         - Id: {{@../key}}WatcherScheduler
           {{# if input}}
-          Input: {{input}}
+          Input: '{{{ToJson this.input}}}'
           {{/if}}
           Arn:
             Fn::GetAtt:
@@ -970,6 +970,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: {{../prefix}}-{{@key}}EcsLogs
+      RetentionInDays: 30
 
   {{@key}}EcsLogSubscription:
     Type: AWS::Logs::SubscriptionFilter
@@ -1253,6 +1254,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: {{../prefix}}-{{@key}}EcsLogs
+      RetentionInDays: 30
 
   {{@key}}EcsLogSubscription:
     Type: AWS::Logs::SubscriptionFilter

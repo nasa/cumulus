@@ -35,6 +35,8 @@ $ terraform --version
 Terraform v0.12.2
 ```
 
+**Note:** The version of terraform used in Bamboo is specified in the `example/.tfversion` file. It is recommended to use the same version locally to prevent inconsistencies and `upgrade to Terraform v<newer> or greater to work with this state` errors when working with deployments created or updated through Bamboo
+
 ## Clone and build Cumulus
 
 Clone the `nasa/cumulus` repo from <https://github.com/nasa/cumulus.git>

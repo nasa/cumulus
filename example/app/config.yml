@@ -176,7 +176,9 @@ default:
   # URS users who should have access to the dashboard application.
   users:
     - username: aimeeb
+    - username: chuckwondo
     - username: jennyhliu
+    - username: jhliu
     - username: jnorton1
     - username: kbaynes
     - username: kkelly
@@ -448,6 +450,7 @@ mth:
 jl:
   prefix: jl-test-integration
   prefixNoDash: JlTestIntegration
+  useWorkflowLambdaVersions: false
   buckets:
     private:
       name: jl-test-integration-private
@@ -495,6 +498,11 @@ jl:
   oauth:
     provider: launchpad
     userGroup: GSFC-Cumulus-Dev
+  samlConfig:
+    entityID: 'https://cumulus-sandbox.earthdata.nasa.gov/jl-test-integration'
+    assertionConsumerService: 'https://5hlnofihz8.execute-api.us-east-1.amazonaws.com:8000/dev/saml/auth'
+    idpLogin: 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso'
+    launchpadMetadataPath: 's3://{{buckets.internal.name}}/{{prefix}}/launchpad/launchpad-sbx-metadata.xml'
 
 jl-cumulus:
   prefix: jl-cumulus
@@ -775,6 +783,14 @@ mboyd-int:
   ecs:
     ssh: true
     keyPairName: mboyd
+
+chuckulus:
+  prefix: chuckulus
+  prefixNoDash: chuckulus
+
+chuckulus-ci:
+  prefix: chuckulus-ci
+  prefixNoDash: chuckulusCI
 
 pq:
   prefix: pq

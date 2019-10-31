@@ -104,7 +104,7 @@ resource "aws_lambda_function" "publish_reports" {
   handler          = "index.handler"
   runtime          = "nodejs8.10"
   timeout          = 30
-  memory_size      = 256
+  memory_size      = 512
 
   dead_letter_config {
     target_arn = aws_sqs_queue.publish_reports_dead_letter_queue.arn
