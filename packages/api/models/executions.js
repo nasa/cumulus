@@ -2,6 +2,7 @@
 
 const get = require('lodash.get');
 const pLimit = require('p-limit');
+const pRetry = require('p-retry');
 
 const { getExecutionArn } = require('@cumulus/common/aws');
 const {
@@ -14,6 +15,25 @@ const aws = require('@cumulus/ingest/aws');
 const executionSchema = require('./schemas').execution;
 const Manager = require('./base');
 const { parseException } = require('../lib/utils');
+
+/**
+ * Get an execution record.
+ *
+ * Use retry with exponential backoff to handle cases where record is still
+ * in the process of being created.
+ *
+ * @param {Execution} executionModel - Instance of Execution model
+ * @param {string} executionArn - A Step Function execution ARN
+ * @returns {Promise} - Promise resolving to execution record or rejecting
+ */
+const getExecutionRecord = (executionModel, executionArn) =>
+  pRetry(
+    async () => {
+      const record = await executionModel.get({ arn: executionArn });
+      return record;
+    },
+    { retries: 3 }
+  );
 
 class Execution extends Manager {
   constructor() {
@@ -59,7 +79,7 @@ class Execution extends Manager {
 
     const currentPayload = get(message, 'payload');
     if (['failed', 'completed'].includes(status)) {
-      const existingRecord = await new Execution().get({ arn });
+      const existingRecord = await getExecutionRecord(new Execution(), arn);
       record.finalPayload = currentPayload;
       record.originalPayload = existingRecord.originalPayload;
     } else {

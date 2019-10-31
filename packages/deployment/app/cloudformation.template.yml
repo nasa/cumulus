@@ -384,7 +384,7 @@ Resources:
         {{# each this.targets}}
         - Id: {{@../key}}WatcherScheduler
           {{# if input}}
-          Input: {{input}}
+          Input: '{{{ToJson this.input}}}'
           {{/if}}
           Arn:
             Fn::GetAtt:
