@@ -100,10 +100,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Removed config schema for `@cumulus/sf-sns-report` task
   - Updated `@cumulus/sf-sns-report` to always assume that it is running as an intermediate step in a workflow, not as the first or last step
 
+- **CUMULUS-1452**
+  - Changed the default ECS docker storage drive to `devicemapper`
+
 ### Fixed
 
 - **CUMULUS-1396** - Updated `@cumulus/common/StepFunctions.getExecutionHistory()` to recursively fetch execution history when `nextToken` is returned in response
 - **CUMULUS-1571** - Updated `@cumulus/common/DynamoDb.get()` to throw any errors encountered when trying to get a record and the record does exist
+
+- **CUMULUS-1452**
+  - Updated the EC2 initialization scripts to use full volume size for docker storage
+  - Changed the default ECS docker storage drive to `devicemapper`
 
 ## [v1.14.2] - 2019-10-08
 
