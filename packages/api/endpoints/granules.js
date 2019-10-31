@@ -3,7 +3,6 @@
 const router = require('express-promise-router')();
 const aws = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
-const elasticsearch = require('elasticsearch');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const Search = require('../es/search').Search;
 const indexer = require('../es/indexer');
