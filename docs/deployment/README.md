@@ -227,13 +227,23 @@ appropriate values. See the [data-persistence module variable definitions](https
 
 **Reminder:** Elasticsearch is optional and can be disabled using `include_elasticsearch = false` in your `terraform.tfvars`.
 
-Run `terraform init` if this is the first time deploying this module. You should see output like:
+#### Initialize Terraform
+
+Run `terraform init` if:
+
+* This is the first time deploying the module
+* You have added any additional child modules, including [Cumulus components](./components.md#available-cumulus-components)
+* You have changed the version of any child modules
+
+You should see output like:
 
 ```shell
 * provider.aws: version = "~> 2.32"
 
 Terraform has been successfully initialized!
 ```
+
+#### Deploy
 
 Run `terraform apply` to deploy your data persistence resources. Type `yes` when prompted to confirm that you want to create the resources. Assuming the operation is successful, you should see output like:
 
@@ -306,7 +316,11 @@ remote state values that you configured in
 `data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to
 determine the names of the resources created in `data-persistence-tf`.
 
-Run `terraform init` if this is your first time deploying this module.
+#### Initialize Terraform
+
+Follow the [above instructions to initialize Terraform](#initialize-terraform) if necessary.
+
+#### Deploy
 
 Run `terraform apply` to deploy the resources. Type `yes` when prompted to confirm that you want to create the resources. Assuming the operation is succesful, you should see output like this:
 
@@ -444,7 +458,7 @@ To update your Cumulus version:
 
 ### Update data persistence resources
 
-**Note:** If you integrated any new modules or updated the versions of your module(s), you need to run `terraform init`.
+**Reminder:** Follow the [above instructions to initialize Terraform](#initialize-terraform) if necessary.
 
 From your `data-persistence-tf` directory:
 
@@ -456,7 +470,7 @@ From your `data-persistence-tf` directory:
 
 ### Update Cumulus resources
 
-**Note:** If you have added additional workflows, integrated any new modules, or updated the versions of your modules, you need to run `terraform init`.
+**Reminder:** Follow the [above instructions to initialize Terraform](#initialize-terraform) if necessary.
 
 From your `cumulus-tf` directory:
 
