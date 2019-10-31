@@ -35,72 +35,143 @@ The `cumulus-ecs-task` container takes an AWS Lambda Amazon Resource Name (ARN) 
 
 ## Example: Replacing AWS Lambda with a Docker container run on ECS
 
-Whether using AWS Lambda or Step Functions Activities, there will be a lambda package defined in `lambdas.yml`:
+Whether using AWS Lambda or Step Functions Activities, there will be a lambda resource defined in a module or a top-level terraform file.
 
-```yaml
-QueueGranules:
-  handler: index.handler
-  timeout: 900
-  memory: 3008
-  source: node_modules/@cumulus/queue-granules/dist/
-  useMessageAdapter: true
+[Example](https://github.com/nasa/cumulus/blob/terraform/tf-modules/ingest/queue-granules-task.tf)
+
+Given the `QueueGranules` lambda package is already used in a Step Function State Machine definition in a `cumulus` terraform module submodule the following will exist in a workflow JSON definition:
+
+```json
+  "QueueGranules": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "provider": "{$.meta.provider}",
+            "internalBucket": "{$.meta.buckets.internal.name}",
+            "stackName": "{$.meta.stack}",
+            "granuleIngestWorkflow": "${module.ingest_granule_workflow.name}",
+            "queueUrl": "{$.meta.queues.startSF}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${module.cumulus.queue_granules_task_lambda_function_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "Next": "CheckStatus"
+    },
 ```
 
-Given the `QueueGranules` lambda package is already used in a Step Function State Machine definition, the following will exist in a workflow YAML file:
+Given it has been discovered this task can no longer run in AWS Lambda, it can be run on the Cumulus ECS cluster by adding the following to your terraform deployment (these examples are taken from the [example 'ecs hello world workflow'](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ecs_hello_world_workflow.tf)):
 
-```yaml
-    QueueGranules:
-      Type: Task
-      Resource: ${QueueGranulesLambdaFunction.Arn}
+* A `aws_sfn_activity` resource:
+
+```hcl
+resource "aws_sfn_activity" "ecs_task_hello_world" {
+  name = "${var.prefix}-EcsTaskHelloWorld"
+  tags = local.default_tags
+}
 ```
 
-Given it has been discovered this task can no longer run in AWS Lambda, it can be run on the Cumulus ECS cluster by including the following in `app/config.yml`:
 
-```yaml
-  ecs:
-    instanceType: t2.large
-    desiredInstances: 1
-    services:
-      QueueGranules:
-        docker: true
-        image: cumuluss/cumulus-ecs-task:1.2.5
-        memory: 4000
-        count: 1
-        envs:
-          AWS_DEFAULT_REGION:
-            function: Fn::Sub
-            value: '${AWS::Region}'
-        commands:
-          - cumulus-ecs-task
-          - '--activityArn'
-          - function: Ref
-            value: QueueGranulesActivity
-          - '--lambdaArn'
-          - function: Ref
-            value: QueueGranulesLambdaFunction
+* A instance of the `cumulus_ecs_service` module (found on the Cumulus [release](https://github.com/nasa/cumulus/releases page):
 
-  activities:
-    - name: QueueGranules
+```hcl
+
+module "hello_world_service" {
+  source = "https://github.com/nasa/cumulus/releases/download/{version}/terraform-aws-cumulus-ecs-service.zip"
+
+  prefix = var.prefix
+  name   = "HelloWorld"
+  tags   = local.default_tags
+
+  cluster_arn                           = module.cumulus.ecs_cluster_arn
+  desired_count                         = 1
+  image                                 = "cumuluss/cumulus-ecs-task:1.3.0"
+  log2elasticsearch_lambda_function_arn = module.cumulus.log2elasticsearch_lambda_function_arn
+
+  cpu                = 400
+  memory_reservation = 700
+
+  environment = {
+    AWS_DEFAULT_REGION = data.aws_region.current.name
+  }
+  command = [
+    "cumulus-ecs-task",
+    "--activityArn",
+    aws_sfn_activity.ecs_task_hello_world.id,
+    "--lambdaArn",
+    module.cumulus.hello_world_task_lambda_function_arn
+  ]
+  alarms = {
+    TaskCountHight = {
+      comparison_operator = "GreaterThanThreshold"
+      evaluation_periods  = 1
+      metric_name         = "MemoryUtilization"
+      statistic           = "SampleCount"
+      threshold           = 1
+    }
+  }
+}
 ```
 
-and then modifying the corresponding Step Function State Machine definition in a workflow YAML file:
+* An updated workflow to utilize the new resource:
 
-```yaml
-    QueueGranules:
-      Type: Task
-      Resource: ${QueueGranulesActivity}
+```hcl
+ "EcsTaskHelloWorld": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${aws_sfn_activity.ecs_task_hello_world.id}",
+      "TimeoutSeconds": 60,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.Timeout"
+          ],
+          "MaxAttempts": 1
+        }
+      ],
+      "End": true
+    }
 ```
 
 ## How do I name my resources? A short primer on Cumulus resource naming conventions
 
-Cumulus deployments currently depend on the [`kes`](https://github.com/developmentseed/kes) cli tool. `kes` references values in `app/config.yml`, `iam/config.yml`, lambda and workflow `.yml` files to populate the cloudformation templates that are a part of the `@cumulus/deployment` package. `kes` generates final cloudformation files and uploads them to AWS Cloudformation, creating or updating AWS Cloudformation Stacks.
-
 When deploying AWS Lambdas and AWS Activities as detailed above, note the following naming conventions:
 
-* `QueueGranules` in `lambdas.yml`: When kes generates the final cloudformation file, it will define a resource called `QueueGranulesLambdaFunction`. A valid lambda function resource name, such as `QueueGranulesLambdaFunction`, must be used in `app/config.yml` when passed as a command argument to `cumulus-ecs-task`.
-* `QueueGranules` in `app/config.yml`: The string `QueueGranules` exists twice in the `app/config.yml` above.
-  * The first occurrence is as a key under `services`. This key provides a descriptive prefix when naming the corresponding ECS Service. It will be included in final cloudformation YAML as an `AWS::ECS::Service` resource with the name `QueueGranulesECSService`. This ECS Service name prefix (`QueueGranules` in this example) can be anything since the service is not referenced in any other part of the deployment at this time.
-  * The second occurrence of `QueueGranules` is as a value under `activities: - name:`. The value of `activites: - name:` can be anything, but the `--activityArn` command argument passed to `cumulus-ecs-task` must use this value plus `Activity` as a suffix (`QueueGranulesActivity` in this example).
+* `aws_sfn_actifiy.name` and `aws_lambda+function.function_name` should  both be: ```${var.prefix}-FunctionName``` as this allows resources to be identified/associate with a particular deployment prefix, and is consistent with Cumulus provided lambdas.
 
 ## Final Note
 
