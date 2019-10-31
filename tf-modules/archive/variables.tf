@@ -197,6 +197,11 @@ variable "oauth_user_group" {
   default = "N/A"
 }
 
+variable "private_archive_api_gateway" {
+  type = bool
+  default = true
+}
+
 variable "private_buckets" {
   type    = list(string)
   default = []
@@ -231,11 +236,6 @@ variable "users" {
 variable "vpc_id" {
   type    = string
   default = null
-}
-
-variable "private_archive_api_gateway" {
-  type = bool
-  default = true
 }
 
 # clean_executions lambda config

@@ -10,23 +10,21 @@ hide_title: true
 
 This is a guide for deploying a new instance of Cumulus.
 
-**Note:** Cumulus is in the process of moving from a monolithic deployment to
-a more modular deployment process. This document describes the current process.
-Instructions for deploying Cumulus components can be found [here](deployment/components.md).
+This document assumes familiarity with Terraform. If you are not comfortable
+working with Terraform, the following links should bring you up to speed:
 
-This deployment document is current for the following component versions:
-
-* [Cumulus](https://github.com/nasa/cumulus)
-* [Deployment Template](https://github.com/nasa/template-deploy)
-* [Cumulus Dashboard](https://github.com/nasa/cumulus-dashboard)
+* [Introduction to Terraform](https://www.terraform.io/intro/index.html)
+* [Getting Started with Terraform and AWS](https://learn.hashicorp.com/terraform/?track=getting-started#getting-started)
+* [Terraform Configuration Language](https://www.terraform.io/docs/configuration/index.html)
 
 The process involves:
 
-* Creating [AWS S3 Buckets](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html).
-* Using [Kes](http://devseed.com/kes/) to transform kes templates (`cloudformation.template.yml`) into [AWS CloudFormation](https://aws.amazon.com/cloudformation/getting-started/) stack templates (`cloudformation.yml`) that are then deployed to AWS.
-* Before deploying the Cumulus software, a CloudFormation stack is deployed that creates necessary [IAM roles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) via the `iam` stack.
-* Database resources are configured and deployed via the `db` stack.
-* The Cumulus software is configured and deployed via the `app` stack.
+* Creating [AWS S3 Buckets](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html)
+* Configuring a VPC, if necessary
+* Configuring an Earthdata application, if necessary
+* Creating a Lambda layer for the [Cumulus Message Adapter](./../workflows/input_output.md#cumulus-message-adapter)
+* Creating resources for your Terraform backend
+* Using [Terraform](https://www.terraform.io) to deploy resources to AWS
 
 --------------
 
@@ -35,24 +33,43 @@ The process involves:
 ### Linux/MacOS software requirements
 
 * git
-* [node 8.10](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
-* [npm](https://www.npmjs.com/get-npm)
-* sha1sum or md5sha1sum
 * zip
 * AWS CLI - [AWS command line interface](https://aws.amazon.com/cli/)
-* python
+* [Terraform](https://www.terraform.io)
+
+#### Install Terraform
+
+If you are using a Mac and [Homebrew](https://brew.sh), installing Terraform is
+as simple as:
+
+```shell
+brew update
+brew install terraform
+```
+
+For other cases,
+[installation instructions](https://learn.hashicorp.com/terraform/getting-started/install.html)
+are available.
+
+⚠️ Cumulus Terraform modules are targeted at Terraform v0.12.0 and higher. To verify that the version of Terraform installed is at least v0.12.0, run:
+
+```shell
+$ terraform --version
+Terraform v0.12.2
+```
+
+**Note:** If you have a CI environment (or any other machine) that you are using to deploy, **make sure that your local Terraform version is at least equal to the version on CI**, otherwise you will run into errors trying to re-deploy from your local machine.
 
 ### Credentials
 
 * [CMR](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/common-metadata-repository) username and password.  CMR credentials must be provided if you are exporting metadata to CMR with EarthData Client Login authentication. More information about CMR configuration can be found [here](./config_descriptions#cmr).
-* [Launchpad](https://launchpad.nasa.gov).  Launchpad credentials must be provided if you are using Launchpad authentication to export metadata to CMR or to authenticate with the Cumulus API. More information about CMR and Cumulus Launchpad authentication and configuration can be found [here](./config_descriptions#launchpad).
-* [EarthData Client login](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/earthdata-login) username and password. User must have the ability to administer and/or create applications in URS.  It's recommended to obtain an account in the test environment (UAT).
+* [Launchpad](https://launchpad.nasa.gov). Launchpad credentials must be provided if you are using Launchpad authentication to export metadata to CMR or to authenticate with the Cumulus API. More information about CMR and Cumulus Launchpad authentication and configuration can be found [here](./config_descriptions#launchpad).
+* [EarthData client login](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/earthdata-login) username and password. User must have the ability to administer and/or create applications in URS. It's recommended to obtain an account in the test environment (UAT).
 
 ### Needed Git Repositories
 
-* [Cumulus](https://github.com/nasa/cumulus) (optional)
-* [Cumulus Dashboard](https://github.com/nasa/cumulus-dashboard)
 * [Deployment Template](https://github.com/nasa/cumulus-template-deploy)
+* [Cumulus Dashboard](https://github.com/nasa/cumulus-dashboard)
 
 ## Installation
 
@@ -60,44 +77,15 @@ The process involves:
 
 _If you already are working with an existing `<daac>-deploy` repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS configuration.](deployment-readme#prepare-aws-configuration)_
 
-Clone template-deploy repo and name appropriately for your DAAC or organization
+Clone template-deploy repo and name appropriately for your DAAC or organization:
 
 ```bash
   $ git clone https://github.com/nasa/template-deploy <daac>-deploy
 ```
 
-Enter repository root directory
+We will return to [configuring this repo and using it for deployment below](#deploying-the-cumulus-instance).
 
-```bash
-  $ cd <daac>-deploy
-```
-
-Then run:
-
-```bash
-  $ nvm use
-  $ npm install
-```
-
-If you do not have the correct version of node installed, replace `nvm use` with `nvm install $(cat .nvmrc)` in the above example.
-
-**Note**: The `npm install` command will add the [kes](http://devseed.com/kes/) utility to the `<daac>-deploy`'s `node_modules` directory and will be utilized later for most of the AWS deployment commands.
-
-#### Obtain Cumulus Packages
-
-Cumulus packages are installed from NPM using the `npm install` step above. For information on obtaining additional Cumulus packages, see [Obtaining Cumulus Packages](deployment/obtain_cumulus_packages.md).
-
-### Copy the sample template into your repository
-
-The [`Cumulus`](https://github.com/nasa/cumulus) project contains default configuration values in the `app.example` folder, however these need to be customized for your Cumulus app.
-
-Begin by copying the template directory to your project. You will modify it for your DAAC's specific needs later.
-
-```bash
-  $ cp -r ./node_modules/@cumulus/deployment/app.example ./app
-```
-
-**Optional:** [Create a new repository](https://help.github.com/articles/creating-a-new-repository/) `<daac>-deploy` so that you can track your DAAC's configuration changes:
+**Optional:** [Create a new repository](https://help.github.com/articles/creating-a-new-repository/) `<daac>-deploy` so that you can add your workflows and other modules to source control:
 
 ```bash
   $ git remote set-url origin https://github.com/nasa/<daac>-deploy
@@ -105,6 +93,8 @@ Begin by copying the template directory to your project. You will modify it for 
 ```
 
 You can then [add/commit](https://help.github.com/articles/adding-a-file-to-a-repository-using-the-command-line/) changes as needed.
+
+**Note**: If you are pushing your deployment code to a git repo, make sure to add `terraform.tf` and `terraform.tfvars` to `.gitignore`, **as these files will contain sensitive data related to your AWS account**.
 
 ## Prepare AWS configuration
 
@@ -132,7 +122,7 @@ You can create additional s3 buckets based on the needs of your workflows.
 
 These buckets do not need any non-default permissions to function with Cumulus, however your local security requirements may vary.
 
-**Note**: s3 bucket object names are global and must be unique across all accounts/locations/etc.
+**Note**: S3 bucket object names are global and must be unique across all accounts/locations/etc.
 
 ### VPC, Subnets and Security Group
 
@@ -147,10 +137,9 @@ These resources only need to be created once per account.
 
 If you are deploying to an NGAP environment (a NASA managed AWS environment), the VPC, subnet, security group, and VPC endpoints should already be created for you.
 
-Note: Amazon ElasticSearch Service does not use a VPC Endpoint. To use ES within a VPC, run `aws iam create-service-linked-role --aws-service-name es.amazonaws.com` before deploying. This operation only needs to be done once per account, but it must be done for both NGAP and regular AWS environments.
+**Note:** Amazon ElasticSearch Service does not use a VPC Endpoint. To use ES within a VPC, run `aws iam create-service-linked-role --aws-service-name es.amazonaws.com` before deploying. This operation only needs to be done once per account, but it must be done for both NGAP and regular AWS environments.
 
-To configure Cumulus with these settings, populate your `app/.env` file with the relevant values, as shown in the next section, before deploying Cumulus.
-If these values are omitted Cumulus resources that require a VPC will be created in the default VPC and security group.
+To configure Cumulus with these settings, populate your `terraform.tfvars` file with the relevant values, as shown below, before deploying Cumulus. If these values are omitted Cumulus resources that require a VPC will be created in the default VPC and security group.
 
 --------------
 
@@ -158,273 +147,203 @@ If these values are omitted Cumulus resources that require a VPC will be created
 
 ### Configure EarthData application
 
-The Cumulus stack is expected to authenticate with [Earthdata Login](https://urs.earthdata.nasa.gov/documentation). You must create and register a new application. Use the [User Acceptance Tools (UAT) site](https://uat.urs.earthdata.nasa.gov) unless you intend use a different URS environment (which will require updating the `urs_url` value shown below). Follow the directions on [how to register an application.](https://wiki.earthdata.nasa.gov/display/EL/How+To+Register+An+Application).  Use any url for the `Redirect URL`, it will be deleted in a later step. Also note the password in step 3 and client ID in step 4 use these to replace `EARTHDATA_CLIENT_ID` and `EARTHDATA_CLIENT_PASSWORD` in the `.env` file in the next step.
+The Cumulus stack can authenticate with [Earthdata Login](https://urs.earthdata.nasa.gov/documentation). If you want to use this functionality, you must create and register a new Earthdata application. Use the [User Acceptance Tools (UAT) site](https://uat.urs.earthdata.nasa.gov) unless you intend use a different URS environment (which will require updating the `urs_url` value shown below). Follow the directions on [how to register an application.](https://wiki.earthdata.nasa.gov/display/EL/How+To+Register+An+Application). Use any url for the `Redirect URL`, it will be deleted in a later step. Also note the password in step 3 and client ID in step 4 use these to replace `urs_client_id` and `urs_client_password` in the `terraform.tfvars` for the `cumulus-tf` module shown below.
 
 --------------
 
-## Configuring the Cumulus instance
+## Configuring the Cumulus deployment
 
-### Set up an environment file
+_If you're re-deploying an existing Cumulus configuration you should skip to [Deploy the Cumulus instance](deployment-readme#deploy-the-cumulus-instance), as these values should already be configured._
 
-_If you're adding a new deployment to an existing configuration repository or re-deploying an existing Cumulus configuration you should skip to [Deploy the Cumulus Stack](deployment-readme#deploy), as these values should already be configured._
+### Create resources for Terraform state
 
-Copy `app/.env.sample` to `app/.env` and add CMR/earthdata client [credentials](deployment-readme#credentials):
+The state of the Terraform deployment is stored in S3. In the following
+examples, it will be assumed that state is being stored in a bucket called
+`my-tf-state`. You can also use an existing bucket, if desired.
+
+Create the state bucket:
 
 ```shell
-  CMR_USERNAME=cmrusername                    # CMR Username For CMR Ingest API
-  CMR_PASSWORD=cmrpassword                    # CMR Password
-  EARTHDATA_CLIENT_ID=clientid                # EarthData Application ClientId
-  EARTHDATA_CLIENT_PASSWORD=clientpassword    # EarthData Application Password
-  VPC_ID=someid                               # VPC ID
-  SECURITY_GROUP=sg-0000abcd1234              # Security Group ID
-  AWS_SUBNET=somesubnet                       # VPC Subnet
-  AWS_ACCOUNT_ID=0000000                      # AWS Account ID
-  AWS_REGION=awsregion                        # AWS Region
-  TOKEN_SECRET=tokensecret                    # JWT Token Secret
-  LAUNCHPAD_PASSPHRASE=launchpadpassphrase    # passphrase for Launchpad PKI certificate,
-                                              # only set if Launchpad authentication is used
+aws s3api create-bucket --bucket my-tf-state
 ```
 
-The `TOKEN_SECRET` is a string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is strongly recommended that this be a 32-character string.
+In order to help prevent loss of state information, **it is strongly recommended that
+versioning be enabled on the state bucket**.
 
-Note that the `.env.sample` file may be hidden, so if you do not see it, show hidden files.
+```shell
+aws s3api put-bucket-versioning \
+    --bucket my-tf-state \
+    --versioning-configuration Status=Enabled
+```
 
-For security it is highly recommended that you prevent `app/.env` from being accidentally committed to the repository by keeping it in the `.gitignore` file at the root of this repository.
+⚠️ **Note:**: If your state information does become lost or corrupt, then deployment (via
+`terraform apply`) will have unpredictable results, including possible loss of data and loss of
+deployed resources.
 
-### Configure deployment with `<daac>-deploy/app/config.yml`
+Terraform uses a lock stored in DynamoDB in order to prevent multiple
+simultaneous updates. In the following examples, that table will be called
+`my-tf-locks`.
 
-**Sample new deployment added to config.yml**:
+Create the locks table:
 
-Descriptions of the fields can be found in [Configuration Descriptions](deployment/config_descriptions.md).
+⚠️ **Note:** The `--billing-mode` option was recently added to the AWS CLI. You
+may need to upgrade your version of the AWS CLI if you get an error about
+provisioned throughput when creating the table.
 
-```yaml
-dev:                            # deployment name
-  prefix: dev-cumulus           # Required. Prefixes stack names and CloudFormation-created resources and permissions
-  prefixNoDash: DevCumulus      # Required.
-  useNgapPermissionBoundary: true   # for NASA NGAP accounts
-
-  apiStage: dev                 # Optional
-
-  vpc:                          # Required for NGAP environments
-    vpcId: '{{VPC_ID}}'         # this has to be set in .env
-    subnets:
-      - '{{AWS_SUBNET}}'        # this has to be set in .env
-    securityGroup: '{{SECURITY_GROUP}}'   # this has to be set in .env
-
-  ecs:                          # Required
-    instanceType: t2.micro
-    desiredInstances: 0
-    availabilityZone: <subnet-id-zone>
-    amiid: <some-ami-id>
-
-  # Required. You can specify a different bucket for the system_bucket
-  system_bucket: '{{buckets.internal.name}}'
-
-  buckets:                          # Bucket configuration. Required.
-    internal:
-      name: dev-internal            # internal bucket name
-      type: internal
-    private:
-      name: dev-private             # private bucket name
-      type: private
-    protected:
-      name: dev-protected           # protected bucket name
-      type: protected
-    public:
-      name: dev-cumulus-public      # public bucket name
-      type: public
-    otherpublic:                    # Can have more than one of each type of bucket
-      name: dev-default
-      type: public
-
-  # Optional
-  urs_url: https://uat.urs.earthdata.nasa.gov/ # make sure to include the trailing slash
-
-  # if not specified, the value of the API gateway backend endpoint is used
-  # api_backend_url: https://apigateway-url-to-api-backend/ # make sure to include the trailing slash
-
-  # if not specified, the value of the API gateway distribution endpoint is used
-  # api_distribution_url: https://apigateway-url-to-distribution-app/ # make sure to include the trailing slash
-
-  # Required. URS users who should have access to the dashboard application and Cumulus API.
-  users:
-    - username: <user>
-    - username: <user2>
-
-  # Optional. Only necessary if you have workflows that integrate with CMR
-  cmr:
-    oauthProvider: <earthdata or launchpad>
-    username: '{{CMR_USERNAME}}'    # required if oauthProvider is earthdata
-    password: '{{CMR_PASSWORD}}'    # required if oauthProvider is earthdata
-    clientId: '<replace-with-daac-name>-{{prefix}}' # Client-ID submitted to CMR to identify origin of requests.
-    provider: CUMULUS                                  # Target provider in CMR
-
-  es:                               # Optional. Set to 'null' to disable elasticsearch.
-    name: myES5Domain               # Optional. Defaults to 'es5vpc'.
-    elasticSearchMapping: 2         # Optional, triggers elasticSearch re-bootstrap.
-                                    # Useful when e.g. mappings are updated.
-
-  # Optional, only necessary if EMS reports will be submitted to EMS
-  ems:
-    provider: CUMULUS
-    host: <ems-host>
-    path: <ems-report-path>
-    username: <ems-username>
-    dataSource: <report-datasource>
-    submitReport: true
-
-  oauth:
-    provider: launchpad     # If not provided, default authentication is Earthdata Login
-    userGroup: Cumulus-Dev  # Optional, only necessary if Launchpad authentication is used
-
-  # Optional, only necessary if Launchpad authentication is used for CMR or CUMULUS API
-  launchpad:
-    api: <launchpad-api-endpoint>   # e.g. https://api.launchpad.nasa.gov/api/sm/v1
-    passphrase: '{{LAUNCHPAD_PASSPHRASE}}'
-
-  # Optional if you are configuring Cumulus to authenticate the dashboard via NASA's Launchpad SAML implementation.
-  # see Wiki: https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+SAML+Launchpad+Integration
-  samlConfig:
-    entityID: '<<Configured SAML entity-id>>'
-    assertionConsumerService: '{{Cumulus API endpoint}}/saml/auth'
-    idpLogin: '<<nasa's saml2sso endpoint>>'
-    launchpadMetadataPath: 's3 url to identity provider public metadata xml file'
-
-
-  app:                              # Override params to be passed to the app stack ('iam' and 'db' also allowed)
-    params:
-      - name: myAppStackParam
-        value: SomeValue
+```shell
+$ aws dynamodb create-table \
+    --table-name my-tf-locks \
+    --attribute-definitions AttributeName=LockID,AttributeType=S \
+    --key-schema AttributeName=LockID,KeyType=HASH \
+    --billing-mode PAY_PER_REQUEST
+    --region us-east-1
 ```
 
 --------------
 
-## Deploying the Cumulus Instance
+## Deploy the Cumulus instance
 
-The `template-deploy` repository contains a script named `deploy-all` to assist with deploying Cumulus.
+A typical Cumulus deployment is broken into two
+[Terraform root modules](https://www.terraform.io/docs/configuration/modules.html):
+[`data-persistence`](https://github.com/nasa/cumulus/tree/master/tf-modules/data-persistence) and [`cumulus`](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus).
 
-```bash
-  $ DEPLOYMENT=<replace-with-deployment-name> AWS_PROFILE=<replace-wth-profile-name> npm run deploy-all
+The `data-persistence` module should
+be deployed first, and creates the Elasticsearch domain and DynamoDB tables. The
+`cumulus` module deploys the rest of Cumulus: distribution, API, ingest,
+workflows, etc. The `cumulus` module depends on the resources created in the
+`data-persistence` deployment.
+
+Each of these modules have to be deployed independently and require their own Terraform backend, variable, and output settings. The template deploy repo that was cloned previously already contains the scaffolding of the necessary files for the deployment of each module: `data-persistence-tf` deploys the `data-persistence` module and `cumulus-tf` deploys the `cumulus` module. For reference on the files that are included, see the [documentation on adding components to a Terraform deployment](components.md#adding-components-to-your-terraform-deployment).
+
+### Configure and deploy the `data-persistence-tf` root module
+
+These steps should be executed in the `data-persistence-tf` directory of the template deploy repo that was cloned previously.
+
+Copy the [`terraform.tf.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/data-persistence-tf/terraform.tf.example) to `terraform.tf` file, substituting the appropriate values for `bucket`, `dynamodb_table`, and `<stack>`. This tells Terraform where to store its
+remote state.
+
+Copy the [`terraform.tfvars.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/data-persistence-tf/terraform.tfvars.example) file to `terraform.tfvars`, and fill in
+appropriate values. See the [data-persistence module variable definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf) for more detail on each variable.
+
+**Reminder:** Elasticsearch is optional and can be disabled using `include_elasticsearch = false` in your `terraform.tfvars`.
+
+#### Initialize Terraform
+
+Run `terraform init` if:
+
+* This is the first time deploying the module
+* You have added any additional child modules, including [Cumulus components](./components.md#available-cumulus-components)
+* You have updated the `source` for any of the child modules
+
+You should see output like:
+
+```shell
+* provider.aws: version = "~> 2.32"
+
+Terraform has been successfully initialized!
 ```
 
-This script will run each stack's deploy script, in order. The subsections here cover deploying each stack in detail.
+#### Deploy
 
-### Deploy the Cumulus IAM stack
+Run `terraform apply` to deploy your data persistence resources. Type `yes` when prompted to confirm that you want to create the resources. Assuming the operation is successful, you should see output like:
 
-The `iam` deployment creates 7 [roles](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) and an [instance profile](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html) used internally by the Cumulus stack.
+```shell
+Apply complete! Resources: 16 added, 0 changed, 0 destroyed.
 
-**Deploy `iam` stack**[^1]
+Outputs:
 
-```bash
-  $ DEPLOYMENT=<iam-deployment-name> \
-      AWS_REGION=<region> \ # e.g. us-east-1
-      AWS_PROFILE=<profile> \
-      npm run deploy-iam
+dynamo_tables = {
+  "access_tokens" = {
+    "arn" = "arn:aws:dynamodb:us-east-1:12345:table/prefix-AccessTokensTable"
+    "name" = "prefix-AccessTokensTable"
+  }
+  # ... more tables ...
+}
+elasticsearch_alarms = [
+  {
+    "arn" = "arn:aws:cloudwatch:us-east-1:12345:alarm:prefix-es-vpc-NodesLowAlarm"
+    "name" = "prefix-es-vpc-NodesLowAlarm"
+  },
+  # ... more alarms ...
+]
+elasticsearch_domain_arn = arn:aws:es:us-east-1:12345:domain/prefix-es-vpc
+elasticsearch_hostname = vpc-prefix-es-vpc-abcdef.us-east-1.es.amazonaws.com
+elasticsearch_security_group_id = sg-12345
 ```
 
-**Note**: If this deployment fails check the deployment details in the AWS Cloud Formation Console for information. Permissions may need to be updated by your AWS administrator.
+Your data persistence resources are now deployed.
 
-If the `iam` deployment command  succeeds, you should see 7 new roles in the [IAM Console](https://console.aws.amazon.com/iam/home):
+### Deploy the Cumulus Message Adapter layer
 
-* `<prefix>-ecs`
-* `<prefix>-lambda-api-gateway`
-* `<prefix>-lambda-processing`
-* `<prefix>-scaling-role`
-* `<prefix>-steprole`
-* `<prefix>-distribution-api-lambda`
-* `<prefix>-migration-processing`
+**Note:**: If you are deploying in an NGAP environment, you should be able to use the existing Cumulus Message Adapter layer deployed in your environment.
 
-The same information can be obtained from the AWS CLI command: `aws iam list-roles`.
+The [Cumulus Message Adapter (CMA)](./../workflows/input_output.md#cumulus-message-adapter) is necessary for interpreting the input and output of Cumulus workflow steps. The CMA is now integrated with Cumulus workflow steps as a Lambda layer.
 
-The `iam` deployment also creates an instance profile named `<stack-name>-ecs` that can be viewed from the AWS CLI command: `aws iam list-instance-profiles`.
+To deploy a CMA layer to your account:
 
-### Deploy the Cumulus database stack
+1. Go to the [CMA releases page](https://github.com/nasa/cumulus-message-adapter/releases) and download the `cumulus-message-adapter.zip` for the desired release
+2. Use the AWS CLI to publish your layer:
 
-This section will cover deploying the DynamoDB and ElasticSearch resources.
-Reminder: ElasticSearch is optional and can be disabled using `es: null` in your `config.yml`.
+```shell
+$ aws lambda publish-layer-version \
+  --layer-name prefix-CMA-layer \
+  --zip-file fileb://path/to/cumulus-message-adapter.zip
 
-**Deploy `db` stack**
-
-```bash
-  $ DEPLOYMENT=<cumulus-deployment-name> \
-      AWS_REGION=<region> \ # e.g. us-east-1
-      AWS_PROFILE=<profile> \
-      npm run deploy-db
+{
+  ... more output ...
+  "LayerArn": "arn:aws:lambda:us-east-1:1234567890:layer:prefix-CMA-layer",
+  "LayerVersionArn": "arn:aws:lambda:us-east-1:1234567890:layer:prefix-CMA-layer:1",
+  ... more output ...
+}
 ```
 
+Make sure to copy the `LayerVersionArn` of the deployed layer, as it will be used to configure the `cumulus-tf` deployment in the next step.
 
-### Deploy the Cumulus application stack
+### Configure and deploy the `cumulus-tf` root module
 
-This section will cover deploying the primary Cumulus stack, containing compute resources, workflows and all other AWS resources not covered in the two stacks above.
+These steps should be executed in the `cumulus-tf` directory of the template repo that was cloned previously.
 
-Once the preceding configuration steps have completed, run the following to deploy Cumulus from your `<daac>-deploy` root directory:
+Copy the [`terraform.tf.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/terraform.tf.example) to `terraform.tf` file, substituting the appropriate values for `bucket`, `dynamodb_table`, and `<stack>`. This tells Terraform where to store its
+remote state.
 
-```bash
-  $ DEPLOYMENT=<cumulus-deployment-name> \
-      AWS_REGION=<region> \ # e.g. us-east-1
-      AWS_PROFILE=<profile> \
-      npm run deploy-app
+Copy the [`terraform.tfvars.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/terraform.tfvars.example) file to `terraform.tfvars`, and fill in
+appropriate values. See the [Cumulus module variable definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf) for more detail on each variable.
+
+**Note:** The `token_secret` is a string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is **strongly recommended that this value be a 32-character string**.
+
+**Note:** The `data_persistence_remote_state_config` section should contain the
+remote state values that you configured in
+`data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to
+determine the names of the resources created in `data-persistence-tf`.
+
+#### Initialize Terraform
+
+Follow the [above instructions to initialize Terraform](#initialize-terraform) if necessary.
+
+#### Deploy
+
+Run `terraform apply` to deploy the resources. Type `yes` when prompted to confirm that you want to create the resources. Assuming the operation is succesful, you should see output like this:
+
+```shell
+Apply complete! Resources: 292 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+archive_api_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com/dev/token
+archive_api_uri = https://abc123.execute-api.us-east-1.amazonaws.com/dev/
+distribution_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/login
+distribution_url = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/
 ```
 
-You can monitor the progess of the stack deployment from the [AWS CloudFormation Console](https://console.aws.amazon.com/cloudformation/home); this step takes a few minutes.
+__Note:__ Be sure to copy the redirect URLs, as you will use them to update your Earthdata application.
 
-A successful completion will result in output similar to:
+### Update Earthdata Application
 
-```bash
-  $ DEPLOYMENT=<cumulus-deployment-name> \
-      AWS_REGION=<region> \ # e.g. us-east-1
-      AWS_PROFILE=<profile> \
-      npm run deploy-app
-
-  Nested templates are found!
-
-  Compiling nested template for CumulusApiDistribution
-  Zipping app/build/cumulus_api/0000UUID-ApiDistribution.zip for ApiDistribution
-  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/lambdas/0000UUID-ApiDistribution.zip
-  Template saved to app/CumulusApiDistribution.yml
-  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/CumulusApiDistribution.yml
-
-  Compiling nested template for CumulusApiBackend
-  Zipping app/build/cumulus_api/0000UUID-ApiEndpoints.zip for ApiEndpoints
-  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/0000UUID-ApiEndpoints.zip
-  Template saved to app/CumulusApiBackend.yml
-  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/CumulusApiBackend.yml
-
-  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/lambdas/0000UUID-HelloWorld.zip
-  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/lambdas/0000UUID-sqs2sf.zip
-  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/lambdas/0000UUID-KinesisOutboundEventLogger.zip
-
-  Generating keys. It might take a few seconds!
-  Keys Generated
-  keys uploaded to S3
-
-  Template saved to app/cloudformation.yml
-  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/cloudformation.yml
-  Waiting for the CF operation to complete
-  CF operation is in state of CREATE_COMPLETE
-
-  Here are the important URLs for this deployment:
-
-  Distribution:  https://<kido2r7kji>.execute-api.us-east-1.amazonaws.com/dev/
-  Add this url to URS:  https://<kido2r7kji>.execute-api.us-east-1.amazonaws.com/dev/redirect
-
-  Api:  https://<czbbkscuy6>.execute-api.us-east-1.amazonaws.com/dev/
-  Add this url to URS:  https://<czbbkscuy6>.execute-api.us-east-1.amazonaws.com/dev/token
-
-  Uploading Workflow Input Templates
-  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/workflows/HelloWorldWorkflow.json
-  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/workflows/list.json
-```
-
-__Note:__ Be sure to copy the urls, as you will use them to update your EarthData application.
-
-### Update Earthdata Application.
-
-You will need to add two redirect urls to your EarthData login application.
+You will need to add two redirect URLs to your EarthData login application.
 Login to URS (UAT), and under My Applications -> Application Administration -> use the edit icon of your application.  Then under Manage -> redirect URIs, add the Backend API url returned from the stack deployment, e.g. `https://<czbbkscuy6>.execute-api.us-east-1.amazonaws.com/dev/token`.
-Also add the Distribution url `https://<kido2r7kji>.execute-api.us-east-1.amazonaws.com/dev/redirect`[^3]. You may also delete the placeholder url you used to create the application.
+Also add the Distribution url `https://<kido2r7kji>.execute-api.us-east-1.amazonaws.com/dev/login`[^1]. You may also delete the placeholder url you used to create the application.
 
-If you've lost track of the needed redirect URIs, they can be located on the [API Gateway](https://console.aws.amazon.com/apigateway).  Once there select `<prefix>-backend` and/or `<prefix>-distribution`, `Dashboard` and utilizing the base URL at the top of the page that is accompanied by the text `Invoke this API at:`.   Make sure to append `/token` for the backend URL and `/redirect` to the distribution URL.
+If you've lost track of the needed redirect URIs, they can be located on the [API Gateway](https://console.aws.amazon.com/apigateway).  Once there, select `<prefix>-archive` and/or `<prefix>-thin-egress-app-EgressGateway`, `Dashboard` and utilizing the base URL at the top of the page that is accompanied by the text `Invoke this API at:`.  Make sure to append `/token` for the archive URL and `/login` to the thin egress app URL.
 
 --------------
 
@@ -432,13 +351,12 @@ If you've lost track of the needed redirect URIs, they can be located on the [AP
 
 ### Dashboard Requirements
 
-Please note that the requirements are similar to the [Cumulus stack deployment requirements](deployment-readme#requirements), however the node version may vary slightly and the dashboard requires yarn.    The installation instructions below include a step that will install/use the required node version referenced in the `.nvmrc` file in the dashboard repository.
+Please note that the requirements are similar to the [Cumulus stack deployment requirements](deployment-readme#requirements), however the node version may vary slightly and the dashboard requires yarn. The installation instructions below include a step that will install/use the required node version referenced in the `.nvmrc` file in the dashboard repository.
 
 * git
 * [node 8.11.4](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
 * [npm](https://www.npmjs.com/get-npm)
 * [yarn](https://yarnpkg.com/en/docs/install#mac-stable)
-* sha1sum or md5sha1sum
 * zip
 * AWS CLI - [AWS command line interface](https://aws.amazon.com/cli/)
 * python
@@ -486,22 +404,16 @@ To checkout and install a specific version of the dashboard:
 
 If you do not have the correct version of node installed, replace `nvm use` with `nvm install $(cat .nvmrc)` in the above example.
 
-### Dashboard configuration
-
-To configure your dashboard for deployment, update `cumulus-dashboard/app/scripts/config/config.js` by replacing the default apiRoot `https://wjdkfyb6t6.execute-api.us-east-1.amazonaws.com/dev/` with your app's apiRoot:[^2]
-
-```javascript
-    apiRoot: process.env.APIROOT || 'https://<czbbkscuy6>.execute-api.us-east-1.amazonaws.com/dev/'
-```
-
 ### Building the dashboard
 
 **Note**: These environment variables are available during the build: `APIROOT`, `DAAC_NAME`, `STAGE`, `HIDE_PDR`. Any of these can be set on the command line to override the values contained in `config.js` when running the build below.
 
+To configure your dashboard for deployment, set the `APIROOT` environment variable to your app's API root.[^2]
+
 Build the dashboard from the dashboard repository root directory, `cumulus-dashboard`:
 
 ```bash
-  $ npm run build
+  $ APIROOT=<your_api_root> npm run build
 ```
 
 ### Dashboard deployment
@@ -525,43 +437,51 @@ You should be able to visit the dashboard website at `http://<prefix>-dashboard.
 
 ## Updating Cumulus deployment
 
-Once deployed for the first time, any future updates to the role/stack configuration files/version of Cumulus can be deployed and will update the appropriate portions of the stack as needed.
+After the initial deploy, any future updates to the Terraform deployment from configuration files, Terraform files (`*.tf`), or modules from a new version of Cumulus can be deployed and will update the appropriate portions of the stack as needed.
 
-## Cumulus Versioning
+To view the released module artifacts for each Cumulus core version, see the [Cumulus releases page](https://github.com/nasa/cumulus/releases).
+
+### Cumulus Versioning
 
 Cumulus uses a global versioning approach, meaning version numbers are consistent across all packages and tasks, and semantic versioning to track major, minor, and patch version (i.e. 1.0.0). We use Lerna to manage versioning.
 
-## Update roles
+### Updating Cumulus version
+
+To update your Cumulus version:
+
+1. Find the desired release on the [Cumulus releases page](https://github.com/nasa/cumulus/releases)
+2. Update the `source` in your Terraform deployment files **for each of [your Cumulus modules](./components.md#available-cumulus-components)** by replacing `vx.x.x` with the desired version of Cumulus:
+
+    `source = "https://github.com/nasa/cumulus/releases/download/vx.x.x/terraform.zip//tf-modules/data-persistence"`
+
+3. Run `terraform init` to get the latest copies of your updated modules
+
+### Update data persistence resources
+
+**Reminder:** Follow the [above instructions to initialize Terraform](#initialize-terraform) if necessary.
+
+From your `data-persistence-tf` directory:
 
 ```bash
-  $ DEPLOYMENT=<deployment-name> \
-      AWS_REGION=<region> \ # e.g. us-east-1
+  $ AWS_REGION=<region> \ # e.g. us-east-1
       AWS_PROFILE=<profile> \
-      npm run deploy-iam
+      terraform apply
 ```
 
-## Update database
+### Update Cumulus resources
+
+**Reminder:** Follow the [above instructions to initialize Terraform](#initialize-terraform) if necessary.
+
+From your `cumulus-tf` directory:
 
 ```bash
-  $ DEPLOYMENT=<deployment-name> \
-      AWS_REGION=<region> \ # e.g. us-east-1
+  $ AWS_REGION=<region> \ # e.g. us-east-1
       AWS_PROFILE=<profile> \
-      npm run deploy-db
+      terraform apply
 ```
 
-## Update Cumulus
+## Footnotes
 
-```bash
-  $ DEPLOYMENT=<deployment-name> \
-      AWS_REGION=<region> \ # e.g. us-east-1
-      AWS_PROFILE=<profile> \
-      npm run deploy-app
-```
+[^1]: To add another redirect URIs to your application. On Earthdata home page, select "My Applications". Scroll down to "Application Administration" and use the edit icon for your application. Then Manage -> Redirect URIs.
 
-### Footnotes
-
-[^1]: The iam  actions require more permissions than a typical AWS user will have and should be run by an administrator.
-
-[^2]: The API root can be found a number of ways. The easiest is to note it in the output of the app deployment step. But you can also find it from the `AWS console -> Amazon API Gateway -> APIs -> <prefix>-cumulus-backend -> Dashboard`, and reading the URL at the top "invoke this API"
-
-[^3]: To add another redirect URIs to your application. On EarthData home page, select "My Applications" Scroll down to "Application Administration" and use the edit icon for your application.  Then Manage -> Redirect URIs.
+[^2]: The API root can be found a number of ways. The easiest is to note it in the output of the app deployment step. But you can also find it from the `AWS console -> Amazon API Gateway -> APIs -> <prefix>-archive -> Dashboard`, and reading the URL at the top after "Invoke this API at"

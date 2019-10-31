@@ -2,12 +2,6 @@
 
 This module deploys data persistence resources, including DynamoDB tables and an Elasticsearch instance (which is optional).
 
-## Deployment
-
-1. Copy the .tfvars sample file: `cp terraform.tfvars.sample terraform.tfvars`
-2. Populate the sample file with values that apply to your AWS environment (see configuration variables section below).
-3. Deploy this module: `terraform apply`
-
 ## Included resources
 
 - DynamoDB tables:
@@ -29,7 +23,7 @@ This module deploys data persistence resources, including DynamoDB tables and an
 
 ## Configuration
 
-Configuration variables are shown in [`terraform.tfvars.sample`](./terraform.tfvars.sample) and are explained below. See [variables.tf](./variables.tf) for default values.
+Configuration variables are shown in [`terraform.tfvars.example`](./terraform.tfvars.example) and are explained below. See [variables.tf](./variables.tf) for default values.
 
 - `prefix` - prefix to use for naming created resources
 - `es_trusted_role_arns` - IAM role ARNs that should be trusted for accessing Elasticsearch
@@ -38,3 +32,15 @@ Configuration variables are shown in [`terraform.tfvars.sample`](./terraform.tfv
 - `elasticsearch_config` - Configuration for the Elasticsearch instance
 - `enable_point_in_time_tables` - Names of DynamoDB tables that should have point in time recovery enabled. Any of the table names [listed above](#included-resources) are valid (use the table name without the prefix).
 - `subnet_ids` - Subnet IDs that should be used when deploying Elasticsearch inside of a VPC. **If no subnet IDs are provided, Elasticsearch will not be deployed inside of a VPC.**
+
+## Example
+
+```hcl
+module "data_persistence" {
+  source = "https://github.com/nasa/cumulus/releases/download/v1.26.0/terraform-aws-cumulus.zip//tf-modules/data-persistence"
+
+  prefix                     = "my-prefix"
+  subnet_ids                 = ["subnet-123", "subnet-456"]
+  create_service_linked_role = true
+}
+```
