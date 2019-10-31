@@ -118,11 +118,14 @@ module "ingest_and_publish_granule_workflow" {
       ],
       "Retry": [
         {
+          "BackoffRate": 2,
           "ErrorEquals": [
-            "States.ALL"
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
           ],
           "IntervalSeconds": 2,
-          "MaxAttempts": 3
+          "MaxAttempts": 6
         }
       ]
     },
