@@ -54,6 +54,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1620** - Fixed bug where `message_adapter_version` does not correctly inject the CMA
 - **CUMULUS-1396** - Updated `@cumulus/common/StepFunctions.getExecutionHistory()` to recursively fetch execution history when `nextToken` is returned in response
 
+## [v1.14.4] - 2019-10-28
+
+### Fixed
+
+- **CUMULUS-1632** - Pinned `aws-elasticsearch-connector` package in `@cumulus/api` to version `8.1.3`, since `8.2.0` includes breaking changes
+
+## [v1.14.3] - 2019-10-18
+
+### Fixed
+
+- **CUMULUS-1620** - Fixed bug where `message_adapter_version` does not correctly inject the CMA
+
 ## [v1.14.2] - 2019-10-08
 
 ### BREAKING CHANGES
@@ -1529,7 +1541,9 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.14.2...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.14.4...HEAD
+[v1.14.4]: https://github.com/nasa/cumulus/compare/v1.14.3...v1.14.4
+[v1.14.3]: https://github.com/nasa/cumulus/compare/v1.14.2...v1.14.3
 [v1.14.2]: https://github.com/nasa/cumulus/compare/v1.14.1...v1.14.2
 [v1.14.1]: https://github.com/nasa/cumulus/compare/v1.14.0...v1.14.1
 [v1.14.0]: https://github.com/nasa/cumulus/compare/v1.13.5...v1.14.0
