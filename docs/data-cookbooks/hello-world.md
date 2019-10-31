@@ -12,50 +12,52 @@ Example task meant to be a sanity check/introduction to the Cumulus workflows.
 
 ### Workflow Configuration
 
-The [workflow definition](workflows/README.md) can be found in [`cumulus/example/workflows/helloworld.yml`](https://github.com/nasa/cumulus/blob/master/example/workflows/helloworld.yml) under `HelloWorldWorkflow:`
+A workflow resource can be found in the [template deploy repo's hello_world_workflow](https://github.com/nasa/cumulus-template-deploy/blob/CUMULUS-1556-add-deployment/cumulus-tf/hello_world_workflow.tf).
 
-```yaml
-HelloWorldWorkflow:
-  Comment: 'Returns Hello World'
-  StartAt: HelloWorld
-  States:
-    HelloWorld:
-      Parameters:
-        cma:
-          event.$: '$'
-          task_config:
-            buckets: '{$.meta.buckets}'
-            provider: '{$.meta.provider}'
-            collection: '{$.meta.collection}'
-      Type: Task
-      Resource: ${HelloWorldLambdaFunction.Arn}
-      Retry:
-        - ErrorEquals:
-          - Lambda.ServiceException
-          - Lambda.AWSLambdaException
-          - Lambda.SdkClientException
-          IntervalSeconds: 2
-          MaxAttempts: 6
-          BackoffRate: 2
-      Next: WorkflowSucceeded
-    WorkflowSucceeded:
-      Type: Succeed
+```json
+{
+  "Comment": "Returns Hello World",
+  "StartAt": "HelloWorld",
+  "States": {
+    "HelloWorld": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${module.cumulus.hello_world_task_lambda_function_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "End": true
+    }
+  }
+}
 ```
+
 
 Workflow **error-handling** can be configured as discussed in the [Error-Handling](error-handling.md) cookbook.
 
 ### Task Configuration
 
-The HelloWorld [task itself](workflows/developing-workflow-tasks.md) is defined in [`cumulus/example/lambdas.yml`](https://github.com/nasa/cumulus/blob/master/example/lambdas.yml) under `HelloWorld:`
+The HelloWorld [task](workflows/developing-workflow-tasks.md) is provided for you as part of the `cumulus` terraform module, no configuration is needed.
 
-```yaml
-HelloWorld:
-  handler: index.handler
-  timeout: 300
-  memory: 256
-  source: 'node_modules/@cumulus/hello-world/dist/'
-  useMessageAdapter: true
-```
+If manually adding the resource to a deployment, the lambda resource source is located in the Cumulus source at  [`cumulus/tf-modules/ingest/hello-world-task.tf`](https://github.com/nasa/cumulus/tf-modules/ingest/hello-world-task.tf).  The lambda source code is located in the Cumulus source at ['cumulus/tasks/hello-world/'](https://github.com/nasa/cumulus/tasks/hello-world/)
 
 ## Execution
 
