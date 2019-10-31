@@ -47,7 +47,7 @@ module.exports.httpMixin = (superclass) => class extends superclass {
     const files = [];
 
     return new Promise((resolve, reject) => {
-      c.on('fetchcomplete', (queueItem, responseBuffer) => {
+      c.on('fetchcomplete', (_, responseBuffer) => {
         const lines = responseBuffer.toString().trim().split('\n');
         lines.forEach((line) => {
           const split = line.trim().split(pattern);
@@ -66,17 +66,30 @@ module.exports.httpMixin = (superclass) => class extends superclass {
         return resolve(files);
       });
 
-      c.on('fetchtimeout', reject);
-      c.on('fetcherror', reject);
+      c.on('fetchtimeout', () =>
+        reject(new errors.RemoteResourceError('Connection timed out')));
+
+      c.on('fetcherror', (queueItem, response) => {
+        let responseBody = '';
+        response.on('data', (chunk) => {
+          responseBody += chunk;
+        });
+
+        response.on('end', () => {
+          const err = new errors.RemoteResourceError(
+            `"${response.req.method} ${queueItem.url}" failed with status code ${response.statusCode}`
+          );
+          err.details = responseBody;
+          return reject(err);
+        });
+      });
+
       c.on('fetchclienterror', () => reject(new errors.RemoteResourceError('Connection Refused')));
 
-      c.on('fetch404', (err) => {
-        const e = {
-          message: `Received a 404 error from ${this.endpoint}. Check your endpoint!`,
-          details: err
-        };
-
-        return reject(e);
+      c.on('fetch404', (queueItem, _) => {
+        const errorToThrow = new Error(`Received a 404 error from ${this.endpoint}. Check your endpoint!`);
+        errorToThrow.details = queueItem;
+        return reject(errorToThrow);
       });
 
       c.start();
