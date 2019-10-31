@@ -8,7 +8,7 @@
 const has = require('lodash.has');
 const omit = require('lodash.omit');
 const aws = require('aws-sdk');
-const Connection = require('aws-elasticsearch-connector');
+const { AmazonConnection } = require('aws-elasticsearch-connector');
 const elasticsearch = require('@elastic/elasticsearch');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const queries = require('./queries');
@@ -57,7 +57,7 @@ const esProdConfig = async (host) => {
 
   return {
     node,
-    Connection,
+    Connection: AmazonConnection,
     awsConfig: {
       credentials: aws.config.credentials
     },

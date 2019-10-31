@@ -31,7 +31,7 @@ EcsHelloWorldWorkflow:
         collection: '{$.meta.collection}'
       Type: Task
       Resource: ${EcsTaskHelloWorldActivity}
-      TimeoutSeconds: 60
+      TimeoutSeconds: 120
       Retry:
         - ErrorEquals:
             - States.Timeout
@@ -57,7 +57,7 @@ EcsKesCMAHelloWorldWorkflow:
         collection: '{$.meta.collection}'
       Type: Task
       Resource: ${EcsTaskHelloWorldKesCmaActivity}
-      TimeoutSeconds: 60
+      TimeoutSeconds: 120
       Retry:
         - ErrorEquals:
             - States.Timeout

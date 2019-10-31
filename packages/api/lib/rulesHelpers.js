@@ -2,11 +2,11 @@ const { schedule } = require('../lambdas/sf-scheduler');
 const Rule = require('../models/rules');
 
 /**
- * Queue a workflow message for the kinesis rule with the message passed
- * to kinesis as the payload
+ * Queue a workflow message for the kinesis/sqs rule with the message passed
+ * to stream/queue as the payload
  *
  * @param {Object} rule - rule to queue the message for
- * @param {Object} eventObject - message passed to kinesis
+ * @param {Object} eventObject - message passed to stream/queue
  * @returns {Promise} promise resolved when the message is queued
  */
 async function queueMessageForRule(rule, eventObject) {

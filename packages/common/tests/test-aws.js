@@ -355,3 +355,12 @@ test('getFileBucketAndKey throws UnparsableFileLocationError if location cannot 
     UnparsableFileLocationError
   );
 });
+
+test('sqsQueueExists detects if the queue does not exist or is not accessible', async (t) => {
+  const queueUrl = await aws.createQueue(randomString());
+  const queueName = queueUrl.split('/').pop();
+  t.true(await aws.sqsQueueExists(queueUrl));
+  t.true(await aws.sqsQueueExists(queueName));
+  t.false(await aws.sqsQueueExists(randomString()));
+  await aws.sqs().deleteQueue({ QueueUrl: queueUrl }).promise();
+});
