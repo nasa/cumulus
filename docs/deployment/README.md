@@ -168,13 +168,17 @@ aws s3api create-bucket --bucket my-tf-state
 ```
 
 In order to help prevent loss of state information, **it is strongly recommended that
-versioning be enabled on the state bucket**:
+versioning be enabled on the state bucket**.
 
 ```shell
 aws s3api put-bucket-versioning \
     --bucket my-tf-state \
     --versioning-configuration Status=Enabled
 ```
+
+⚠️ **Note:**: If your state information does become lost or corrupt, then deployment (via
+`terraform apply`) will have unpredictable results, including possible loss of data and loss of
+deployed resources.
 
 Terraform uses a lock stored in DynamoDB in order to prevent multiple
 simultaneous updates. In the following examples, that table will be called
@@ -223,13 +227,23 @@ appropriate values. See the [data-persistence module variable definitions](https
 
 **Reminder:** Elasticsearch is optional and can be disabled using `include_elasticsearch = false` in your `terraform.tfvars`.
 
-Run `terraform init` if this is the first time deploying this module. You should see output like:
+#### Initialize Terraform
+
+Run `terraform init` if:
+
+* This is the first time deploying the module
+* You have added any additional child modules, including [Cumulus components](./components.md#available-cumulus-components)
+* You have updated the `source` for any of the child modules
+
+You should see output like:
 
 ```shell
 * provider.aws: version = "~> 2.32"
 
 Terraform has been successfully initialized!
 ```
+
+#### Deploy
 
 Run `terraform apply` to deploy your data persistence resources. Type `yes` when prompted to confirm that you want to create the resources. Assuming the operation is successful, you should see output like:
 
@@ -302,7 +316,11 @@ remote state values that you configured in
 `data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to
 determine the names of the resources created in `data-persistence-tf`.
 
-Run `terraform init` if this is your first time deploying this module.
+#### Initialize Terraform
+
+Follow the [above instructions to initialize Terraform](#initialize-terraform) if necessary.
+
+#### Deploy
 
 Run `terraform apply` to deploy the resources. Type `yes` when prompted to confirm that you want to create the resources. Assuming the operation is succesful, you should see output like this:
 
@@ -427,13 +445,22 @@ To view the released module artifacts for each Cumulus core version, see the [Cu
 
 Cumulus uses a global versioning approach, meaning version numbers are consistent across all packages and tasks, and semantic versioning to track major, minor, and patch version (i.e. 1.0.0). We use Lerna to manage versioning.
 
+### Updating Cumulus version
+
+To update your Cumulus version:
+
+1. Find the desired release on the [Cumulus releases page](https://github.com/nasa/cumulus/releases)
+2. Update the `source` in your Terraform deployment files **for each of [your Cumulus modules](./components.md#available-cumulus-components)** by replacing `vx.x.x` with the desired version of Cumulus:
+
+    `source = "https://github.com/nasa/cumulus/releases/download/vx.x.x/terraform.zip//tf-modules/data-persistence"`
+
+3. Run `terraform init` to get the latest copies of your updated modules
+
 ### Update data persistence resources
 
-To update your Cumulus version, update the line in your Terraform deployment files with the source for the `data-persistence` module in your deployment by replacing `vx.x.x` with the desired version of Cumulus:
+**Reminder:** Follow the [above instructions to initialize Terraform](#initialize-terraform) if necessary.
 
-`source = "https://github.com/nasa/cumulus/releases/download/vx.x.x/terraform.zip//tf-modules/data-persistence""`
-
-Then, from your `data-persistence-tf` directory:
+From your `data-persistence-tf` directory:
 
 ```bash
   $ AWS_REGION=<region> \ # e.g. us-east-1
@@ -441,13 +468,11 @@ Then, from your `data-persistence-tf` directory:
       terraform apply
 ```
 
-### Update Cumulus
+### Update Cumulus resources
 
-To update your Cumulus version, update the line in your Terraform deployment files with the source for the `cumulus` module in your deployment by replacing `vx.x.x` with the desired version of Cumulus:
+**Reminder:** Follow the [above instructions to initialize Terraform](#initialize-terraform) if necessary.
 
-`source = "https://github.com/nasa/cumulus/releases/download/vx.x.x/terraform.zip//tf-modules/cumulus""`
-
-Then, from your `cumulus-tf` directory:
+From your `cumulus-tf` directory:
 
 ```bash
   $ AWS_REGION=<region> \ # e.g. us-east-1
