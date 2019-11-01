@@ -58,7 +58,7 @@ test('buildCumulusMeta returns expected object', (t) => {
     parentExecutionArn,
     execution_name: fakeExecutionName,
     asyncOperationId
-  })
+  });
 });
 
 test('getMessageExecutionName throws error if cumulus_meta.execution_name is missing', (t) => {

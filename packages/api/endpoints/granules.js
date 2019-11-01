@@ -182,8 +182,7 @@ async function get(req, res) {
 }
 
 async function bulk(req, res) {
-  const payload = req.body
-  console.log(payload);
+  const payload = req.body;
 
   const asyncOperationModel = new models.AsyncOperation({
     stackName: process.env.stackName,
@@ -206,7 +205,7 @@ async function bulk(req, res) {
       },
       esHost: process.env.ES_HOST
     });
-    res.send(asyncOperation);
+    return res.send(asyncOperation);
   } catch (err) {
     if (err.name !== 'EcsStartTaskError') throw err;
 

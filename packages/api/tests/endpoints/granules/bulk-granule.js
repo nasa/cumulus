@@ -29,7 +29,7 @@ process.env = {
 
 let accessTokenModel;
 let jwtAuthToken;
-let userModel
+let userModel;
 
 test.before(async () => {
   userModel = new models.User();
@@ -51,9 +51,9 @@ test.serial('Request to granules bulk endpoint starts an async-operation with th
   const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').returns(
     new Promise((resolve) => resolve({ id: asyncOperationId }))
   );
-  const expectedQueueName = "backgroundProcessing";
-  const expectedWorkflowName = "HelloWorldWorkflow";
-  const expectedIds = [ "MOD09GQ.A8592978.nofTNT.006.4914003503063" ];
+  const expectedQueueName = 'backgroundProcessing';
+  const expectedWorkflowName = 'HelloWorldWorkflow';
+  const expectedIds = ['MOD09GQ.A8592978.nofTNT.006.4914003503063'];
 
   const body = {
     queueName: expectedQueueName,
@@ -120,6 +120,6 @@ test.serial('Request to granules bulk endpoint starts an async-operation with th
     stackName: process.env.stackName,
     invoke: process.env.invoke,
   });
-  
+
   asyncOperationStartStub.restore();
 });

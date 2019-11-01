@@ -209,9 +209,16 @@ class Granule extends Manager {
    *
    * @param {Object} g - the granule object
    * @param {string} workflow - the workflow name
+   * @param {string} [queueName] - specify queue to append message to
+   * @param {string} [asyncOperationId] - specify asyncOperationId origin
    * @returns {Promise<undefined>} undefined
    */
-  async applyWorkflow(g, workflow, queueName=undefined, asyncOperationId=undefined) {
+  async applyWorkflow(
+    g,
+    workflow,
+    queueName = undefined,
+    asyncOperationId = undefined
+  ) {
     const { name, version } = deconstructCollectionId(g.collectionId);
 
     const lambdaPayload = await Rule.buildPayload({
