@@ -64,10 +64,6 @@ variable "lambda_processing_role_arn" {
   type = string
 }
 
-variable "lambda_subnet_ids" {
-  type = list(string)
-}
-
 variable "message_consumer_function_arn" {
   type = string
 }
@@ -100,10 +96,6 @@ variable "urs_client_id" {
 variable "urs_client_password" {
   type        = string
   description = "The URS app password"
-}
-
-variable "vpc_id" {
-  type = string
 }
 
 # Optional
@@ -180,6 +172,11 @@ variable "ems_username" {
   default = "cumulus"
 }
 
+variable "lambda_subnet_ids" {
+  type    = list(string)
+  default = null
+}
+
 variable "launchpad_api" {
   type    = string
   default = "launchpadApi"
@@ -231,6 +228,16 @@ variable "users" {
   default = []
 }
 
+variable "vpc_id" {
+  type    = string
+  default = null
+}
+
+variable "private_archive_api_gateway" {
+  type = bool
+  default = true
+}
+
 # clean_executions lambda config
 
 variable "daily_execution_payload_cleanup_schedule_expression" {
@@ -256,4 +263,8 @@ variable "non_complete_execution_payload_timeout_disable" {
 variable "non_complete_execution_payload_timeout" {
   type    = number
   default = 30
+}
+
+variable "region" {
+  type = string
 }

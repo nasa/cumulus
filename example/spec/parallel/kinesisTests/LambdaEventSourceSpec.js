@@ -38,15 +38,6 @@ const {
   waitForAllTestSf
 } = require('../../helpers/kinesisHelpers');
 
-const testConfig = loadConfig();
-const testId = createTimestampedTestId(testConfig.stackName, 'LambdaEventSourceTest');
-const testSuffix = createTestSuffix(testId);
-const testDataFolder = createTestDataPath(testId);
-const ruleSuffix = globalReplace(testSuffix, '-', '_');
-const lambdaStep = new LambdaStep();
-
-process.env.ExecutionsTable = `${testConfig.stackName}-ExecutionsTable`;
-
 const ruleDirectory = './spec/parallel/kinesisTests/data/lambdaEventSourceTestRules';
 const s3data = ['@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'];
 
@@ -61,10 +52,13 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
   const collectionsDir = './data/collections/L2_HR_PIXC-000/';
   const collectionsDirMOD09GQ = './data/collections/s3_MOD09GQ_006/';
 
-  const streamName = `${testId}-LambdaEventSourceTestStream`;
-  testConfig.streamName = streamName;
-
+  let lambdaStep;
   let rules;
+  let ruleSuffix;
+  let streamName;
+  let testConfig;
+  let testDataFolder;
+  let testSuffix;
 
   async function cleanUp() {
     // delete rules
@@ -82,6 +76,18 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
   }
 
   beforeAll(async () => {
+    testConfig = await loadConfig();
+    const testId = createTimestampedTestId(testConfig.stackName, 'LambdaEventSourceTest');
+    testSuffix = createTestSuffix(testId);
+    testDataFolder = createTestDataPath(testId);
+    ruleSuffix = globalReplace(testSuffix, '-', '_');
+    lambdaStep = new LambdaStep();
+
+    process.env.ExecutionsTable = `${testConfig.stackName}-ExecutionsTable`;
+
+    streamName = `${testId}-LambdaEventSourceTestStream`;
+    testConfig.streamName = streamName;
+
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(testConfig.bucket, s3data, testDataFolder),

@@ -7,9 +7,13 @@ const {
 
 const {
   buildQueueMessageFromTemplate,
-  getMessageFromTemplate,
   getQueueNameByUrl
 } = require('@cumulus/common/message');
+
+const {
+  getWorkflowArn,
+  getWorkflowTemplate
+} = require('@cumulus/common/workflows');
 
 /**
  * Enqueue a PDR to be parsed
@@ -26,16 +30,23 @@ const {
  * @returns {Promise} - resolves when the message has been enqueued
  */
 async function enqueueParsePdrMessage({
-  pdr,
-  queueUrl,
-  parsePdrMessageTemplateUri,
-  provider,
   collection,
-  parentExecutionArn
+  parentExecutionArn,
+  parsePdrWorkflow,
+  pdr,
+  provider,
+  stack,
+  systemBucket,
+  queueUrl
 }) {
-  const messageTemplate = await getMessageFromTemplate(parsePdrMessageTemplateUri);
+  const messageTemplate = await getWorkflowTemplate(stack, systemBucket);
+  const parsePdrArn = await getWorkflowArn(stack, systemBucket, parsePdrWorkflow);
   const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
   const payload = { pdr };
+  const workflow = {
+    name: parsePdrWorkflow,
+    arn: parsePdrArn
+  };
 
   const message = buildQueueMessageFromTemplate({
     collection,
@@ -43,7 +54,8 @@ async function enqueueParsePdrMessage({
     parentExecutionArn,
     payload,
     provider,
-    queueName
+    queueName,
+    workflow
   });
 
   const arn = getExecutionArn(
@@ -73,15 +85,18 @@ module.exports.enqueueParsePdrMessage = enqueueParsePdrMessage;
  * @returns {Promise} - resolves when the message has been enqueued
  */
 async function enqueueGranuleIngestMessage({
-  granule,
-  queueUrl,
-  granuleIngestMessageTemplateUri,
-  provider,
   collection,
+  granule,
+  granuleIngestWorkflow,
+  parentExecutionArn,
   pdr,
-  parentExecutionArn
+  provider,
+  stack,
+  systemBucket,
+  queueUrl
 }) {
-  const messageTemplate = await getMessageFromTemplate(granuleIngestMessageTemplateUri);
+  const messageTemplate = await getWorkflowTemplate(stack, systemBucket);
+  const ingestGranuleArn = await getWorkflowArn(stack, systemBucket, granuleIngestWorkflow);
   const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
 
   const payload = {
@@ -90,13 +105,19 @@ async function enqueueGranuleIngestMessage({
     ]
   };
 
+  const workflow = {
+    name: granuleIngestWorkflow,
+    arn: ingestGranuleArn
+  };
+
   const message = buildQueueMessageFromTemplate({
     collection,
     messageTemplate,
     parentExecutionArn,
     payload,
     provider,
-    queueName
+    queueName,
+    workflow
   });
 
   if (pdr) message.meta.pdr = pdr;

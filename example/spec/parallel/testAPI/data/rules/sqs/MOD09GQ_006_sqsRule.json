@@ -1,0 +1,17 @@
+{
+  "collection": {
+    "name": "MOD09GQ",
+    "version": "006"
+  },
+  "name": "MOD09GQ_006_sqsRule",
+  "provider": "s3_provider",
+  "meta": {
+    "metaflag": "testmeta"
+  },
+  "rule": {
+    "type": "sqs",
+    "value": "{{queueUrl}}"
+  },
+  "state": "ENABLED",
+  "workflow": "testworkflow"
+}

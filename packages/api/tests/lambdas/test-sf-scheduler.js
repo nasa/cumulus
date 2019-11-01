@@ -27,7 +27,8 @@ const scheduleEventTemplate = {
   provider: 'fakeProvider',
   cumulus_meta: {},
   payload: {},
-  template: 's3://somewhere/nice'
+  template: fakeMessageResponse,
+  definition: {}
 };
 const fakeCollection = {
   name: 'fakeCollection',
@@ -62,10 +63,6 @@ class FakeProvider {
 const getProvider = schedule.__get__('getProvider');
 const getCollection = schedule.__get__('getCollection');
 
-const restoreMessageFromTemplate = schedule.__set__(
-  'getMessageFromTemplate',
-  () => Promise.resolve(fakeMessageResponse)
-);
 const resetProvider = schedule.__set__('Provider', FakeProvider);
 const resetCollection = schedule.__set__('Collection', FakeCollection);
 
@@ -76,7 +73,6 @@ test.afterEach.always(() => {
 test.after.always(() => {
   resetProvider();
   resetCollection();
-  restoreMessageFromTemplate();
   sqsStub.restore();
 });
 

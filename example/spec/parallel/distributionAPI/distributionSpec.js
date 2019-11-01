@@ -23,13 +23,6 @@ const {
 } = require('../../helpers/testUtils');
 const { setDistributionApiEnvVars } = require('../../helpers/apiUtils');
 
-const config = loadConfig();
-
-const bucketsConfig = new BucketsConfig(config.buckets);
-const protectedBucketName = bucketsConfig.protectedBuckets()[0].name;
-const privateBucketName = bucketsConfig.privateBuckets()[0].name;
-const publicBucketName = bucketsConfig.publicBuckets()[0].name;
-process.env.stackName = config.stackName;
 const s3Data = ['@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'];
 
 /**
@@ -44,17 +37,30 @@ async function getTestAccessToken() {
   return accessTokenResponse.accessToken;
 }
 
-
-describe('Distribution API', () => {
-  const testId = createTimestampedTestId(config.stackName, 'DistributionAPITest');
-  const testDataFolder = createTestDataPath(testId);
-  console.log(`Distribution API tests running in ${testDataFolder}`);
-  const fileKey = `${testDataFolder}/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met`;
-
-  process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
-  const accessTokensModel = new AccessToken();
+// TODO Update these tests to use TEA
+xdescribe('Distribution API', () => {
+  let fileKey;
+  let privateBucketName;
+  let protectedBucketName;
+  let publicBucketName;
+  let testDataFolder;
 
   beforeAll(async () => {
+    const config = await loadConfig();
+
+    const bucketsConfig = new BucketsConfig(config.buckets);
+    protectedBucketName = bucketsConfig.protectedBuckets()[0].name;
+    privateBucketName = bucketsConfig.privateBuckets()[0].name;
+    publicBucketName = bucketsConfig.publicBuckets()[0].name;
+    process.env.stackName = config.stackName;
+
+    const testId = createTimestampedTestId(config.stackName, 'DistributionAPITest');
+    testDataFolder = createTestDataPath(testId);
+    console.log(`Distribution API tests running in ${testDataFolder}`);
+    fileKey = `${testDataFolder}/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met`;
+
+    process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
+
     await Promise.all([
       uploadTestDataToBucket(protectedBucketName, s3Data, testDataFolder),
       uploadTestDataToBucket(privateBucketName, s3Data, testDataFolder),
@@ -90,6 +96,7 @@ describe('Distribution API', () => {
     });
 
     afterAll(async () => {
+      const accessTokensModel = new AccessToken();
       await accessTokensModel.delete({ accessToken });
     });
 

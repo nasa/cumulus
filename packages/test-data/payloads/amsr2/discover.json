@@ -24,10 +24,7 @@
     "queues": {
       "startSF": "https://sqs.us-east-1.amazonaws.com/xxxxx/ghrc-cumulus-dev-startSF"
     },
-    "templates": {
-      "IngestGranule": "s3://test-deploy/ghrc-cumulus-dev/workflows/IngestGranule.json",
-      "DiscoverGranules": "s3://test-deploy/ghrc-cumulus-dev/workflows/DiscoverGranules.json"
-    }
+    "template": "s3://test-deploy/ghrc-cumulus-dev/workflow_template.json"
   },
   "ingest_meta": {
     "state_machine": "arn:aws:states:us-east-1:xxxxxx:stateMachine:DiscoverGranulesGHRCCumulusdevStateMachine",

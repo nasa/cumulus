@@ -18,7 +18,7 @@ const got = require('got');
  */
 async function invokeApiDistributionLambda(path, accessToken = '') {
   const lambda = new Lambda();
-  const FunctionName = `${process.env.stackName}-ApiDistribution`;
+  const FunctionName = `${process.env.stackName}-ApiDistribution`; // TODO How was this supposed to work now that we're using TEA?
 
   const event = {
     method: 'GET',

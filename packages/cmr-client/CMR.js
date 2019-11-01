@@ -18,6 +18,10 @@ const logDetails = {
 
 const IP_TIMEOUT_MS = 1 * 1000;
 
+const userIpAddress = () =>
+  publicIp.v4({ timeout: IP_TIMEOUT_MS })
+    .catch((_) => '127.0.0.1');
+
 /**
  * Returns a valid a CMR token
  *
@@ -47,7 +51,7 @@ async function updateToken(cmrProvider, clientId, username, password) {
           username: username,
           password: password,
           client_id: clientId,
-          user_ip_address: await publicIp.v4({ timeout: IP_TIMEOUT_MS }).catch((_) => '127.0.0.1'),
+          user_ip_address: await userIpAddress(),
           provider: cmrProvider
         }
       }

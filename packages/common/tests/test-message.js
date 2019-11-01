@@ -23,25 +23,30 @@ const fakeExecutionName = randomString();
 message.__set__('createExecutionName', () => fakeExecutionName);
 
 test('buildCumulusMeta returns expected object', (t) => {
+  const stateMachine = randomId('states');
   const queueName = randomId('queue');
   const asyncOperationId = randomString();
 
   let cumulusMeta = buildCumulusMeta({
+    stateMachine,
     queueName
   });
 
   t.deepEqual(cumulusMeta, {
+    state_machine: stateMachine,
     queueName,
     execution_name: fakeExecutionName
   });
 
   const parentExecutionArn = randomId('parentArn');
   cumulusMeta = buildCumulusMeta({
+    stateMachine,
     queueName,
     parentExecutionArn
   });
 
   t.deepEqual(cumulusMeta, {
+    state_machine: stateMachine,
     queueName,
     parentExecutionArn,
     execution_name: fakeExecutionName
@@ -200,13 +205,15 @@ test('buildQueueMessageFromTemplate does not overwrite contents from message tem
   const messageTemplate = {
     foo: 'bar',
     meta: {
-      workflows: {
-        workflow1: 'workflow1Template'
-      }
+      template: 's3://bucket/template.json'
     },
     cumulus_meta: {
       message_source: 'sfn'
     }
+  };
+  const workflow = {
+    name: randomId('workflow'),
+    arn: randomId('arn:aws:states:wf')
   };
   const provider = randomId('provider');
   const collection = randomId('collection');
@@ -218,7 +225,8 @@ test('buildQueueMessageFromTemplate does not overwrite contents from message tem
     collection,
     queueName,
     messageTemplate,
-    payload
+    payload,
+    workflow
   });
 
   const expectedMessage = {
@@ -226,14 +234,14 @@ test('buildQueueMessageFromTemplate does not overwrite contents from message tem
     meta: {
       provider,
       collection,
-      workflows: {
-        workflow1: 'workflow1Template'
-      }
+      template: 's3://bucket/template.json',
+      workflow_name: workflow.name
     },
     cumulus_meta: {
       message_source: 'sfn',
       execution_name: fakeExecutionName,
-      queueName
+      queueName,
+      state_machine: workflow.arn
     },
     payload
   };
@@ -243,6 +251,10 @@ test('buildQueueMessageFromTemplate does not overwrite contents from message tem
 
 test('buildQueueMessageFromTemplate returns message with correct payload', (t) => {
   const messageTemplate = {};
+  const workflow = {
+    name: randomId('workflow'),
+    arn: randomId('arn:aws:states:wf')
+  };
   const provider = randomId('provider');
   const collection = randomId('collection');
   const queueName = randomId('queue');
@@ -260,17 +272,20 @@ test('buildQueueMessageFromTemplate returns message with correct payload', (t) =
     collection,
     queueName,
     messageTemplate,
-    payload
+    payload,
+    workflow
   });
 
   const expectedMessage = {
     meta: {
       provider,
-      collection
+      collection,
+      workflow_name: workflow.name
     },
     cumulus_meta: {
       execution_name: fakeExecutionName,
-      queueName
+      queueName,
+      state_machine: workflow.arn
     },
     payload: {
       foo: 'bar',
@@ -295,6 +310,10 @@ test('buildQueueMessageFromTemplate returns expected message with undefined coll
       provider // should not be overridden
     }
   };
+  const workflow = {
+    name: randomId('workflow'),
+    arn: randomId('arn:aws:states:wf')
+  };
   const queueName = randomId('queue');
   const payload = {};
 
@@ -303,17 +322,20 @@ test('buildQueueMessageFromTemplate returns expected message with undefined coll
     collection: undefined,
     queueName,
     messageTemplate,
-    payload
+    payload,
+    workflow
   });
 
   const expectedMessage = {
     meta: {
       provider,
-      collection
+      collection,
+      workflow_name: workflow.name
     },
     cumulus_meta: {
       execution_name: fakeExecutionName,
-      queueName
+      queueName,
+      state_machine: workflow.arn
     },
     payload
   };
@@ -328,6 +350,10 @@ test('buildQueueMessageFromTemplate returns expected message with defined collec
       collection: 'fake-collection' // should get overriden
     }
   };
+  const workflow = {
+    name: randomId('workflow'),
+    arn: randomId('arn:aws:states:wf')
+  };
   const provider = randomId('provider');
   const collection = randomId('collection');
   const queueName = randomId('queue');
@@ -338,17 +364,20 @@ test('buildQueueMessageFromTemplate returns expected message with defined collec
     collection,
     queueName,
     messageTemplate,
-    payload
+    payload,
+    workflow
   });
 
   const expectedMessage = {
     meta: {
       provider,
-      collection
+      collection,
+      workflow_name: workflow.name
     },
     cumulus_meta: {
       execution_name: fakeExecutionName,
-      queueName
+      queueName,
+      state_machine: workflow.arn
     },
     payload
   };
@@ -377,6 +406,10 @@ test('buildQueueMessageFromTemplate returns expected message with custom cumulus
       key: 'value'
     }
   };
+  const workflow = {
+    name: randomId('workflow'),
+    arn: randomId('arn:aws:states:wf')
+  };
   const payload = {};
 
   const actualMessage = buildQueueMessageFromTemplate({
@@ -386,7 +419,8 @@ test('buildQueueMessageFromTemplate returns expected message with custom cumulus
     messageTemplate,
     customCumulusMeta,
     customMeta,
-    payload
+    payload,
+    workflow
   });
 
   const expectedMessage = {
@@ -396,11 +430,13 @@ test('buildQueueMessageFromTemplate returns expected message with custom cumulus
       foo: 'bar',
       object: {
         key: 'value'
-      }
+      },
+      workflow_name: workflow.name
     },
     cumulus_meta: {
       execution_name: fakeExecutionName,
       queueName,
+      state_machine: workflow.arn,
       foo: 'bar',
       object: {
         key: 'value'

@@ -3,6 +3,7 @@
 const test = require('ava');
 const sinon = require('sinon');
 const cloneDeep = require('lodash.clonedeep');
+const range = require('lodash.range');
 
 const aws = require('@cumulus/common/aws');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
@@ -17,6 +18,7 @@ process.env.system_bucket = randomString();
 
 const workflow = randomString();
 const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
+const templateFile = `${process.env.stackName}/workflow_template.json`;
 
 async function getKinesisEventMappings() {
   const eventLambdas = [process.env.messageConsumer, process.env.KinesisInboundEventLogger];
@@ -35,11 +37,18 @@ test.before(async () => {
   rulesModel = new models.Rule();
   await rulesModel.createTable();
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
-  await aws.s3().putObject({
-    Bucket: process.env.system_bucket,
-    Key: workflowfile,
-    Body: 'test data'
-  }).promise();
+  await Promise.all([
+    aws.s3().putObject({
+      Bucket: process.env.system_bucket,
+      Key: workflowfile,
+      Body: '{}'
+    }).promise(),
+    aws.s3().putObject({
+      Bucket: process.env.system_bucket,
+      Key: templateFile,
+      Body: '{}'
+    }).promise()
+  ]);
 });
 
 test.beforeEach(async (t) => {
@@ -672,4 +681,80 @@ test('update preserves nested keys', async (t) => {
 
   t.is(updatedRule.meta.foo, 'bar');
   t.deepEqual(updatedRule.meta.testObject, newTestObject);
+});
+
+test('getRulesByTypeAndState returns list of rules', async (t) => {
+  const queueUrl = await aws.createQueue(randomString());
+  const rules = [
+    fakeRuleFactoryV2({
+      workflow,
+      rule: {
+        type: 'onetime'
+      },
+      state: 'ENABLED'
+    }),
+    fakeRuleFactoryV2({
+      workflow,
+      rule: {
+        type: 'sqs',
+        value: queueUrl
+      },
+      state: 'ENABLED'
+    }),
+    fakeRuleFactoryV2({
+      workflow,
+      rule: {
+        type: 'onetime'
+      },
+      state: 'DISABLED'
+    })
+  ];
+  const createdRules = await Promise.all(
+    rules.map((rule) => rulesModel.create(rule))
+  );
+
+  aws.sqs().deleteQueue({ QueueUrl: queueUrl }).promise();
+
+  const result = await rulesModel.getRulesByTypeAndState('onetime', 'ENABLED');
+  t.truthy(result.find((rule) => rule.name === createdRules[0].name));
+  t.falsy(result.find((rule) => rule.name === createdRules[1].name));
+  t.falsy(result.find((rule) => rule.name === createdRules[2].name));
+});
+
+test('create, update and delete sqs type rule', async (t) => {
+  const queueUrls = await Promise.all(range(2).map(() => aws.createQueue(randomString())));
+
+  const rule = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sqs',
+      value: queueUrls[0]
+    },
+    state: 'ENABLED'
+  });
+
+  const createdRule = await rulesModel.create(rule);
+  t.deepEqual(createdRule.rule, rule.rule);
+
+  const testObject = {
+    key: randomString()
+  };
+  const updates = {
+    name: rule.name,
+    meta: {
+      testObject: testObject
+    },
+    rule: {
+      value: queueUrls[1]
+    }
+  };
+
+  const updatedRule = await rulesModel.update(createdRule, updates);
+  t.deepEqual(updatedRule.meta.testObject, testObject);
+  t.is(updatedRule.rule.value, queueUrls[1]);
+
+  await rulesModel.delete(updatedRule);
+  await Promise.all(
+    queueUrls.map((queueUrl) => aws.sqs().deleteQueue({ QueueUrl: queueUrl }).promise())
+  );
 });

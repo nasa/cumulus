@@ -733,6 +733,7 @@ async function updateEcho10XMLMetadata({
  * @param {boolean} params.published - indicate if publish is needed
  * @param {BucketsConfig} params.inBuckets - BucketsConfig instance if available, will
  *                                    default one build with s3 stored config.
+ * @param {string} params.cmrGranuleUrlType - type of granule CMR url
  * @returns {Promise} returns promise to publish metadata to CMR Service
  *                    or resolved promise if published === false.
  */

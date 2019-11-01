@@ -934,6 +934,23 @@ exports.deleteSQSMessage = improveStackTrace(
 );
 
 /**
+ * Test if an SQS queue exists
+ *
+ * @param {Object} queue - queue name or url
+ * @returns {Promise<boolean>} - a Promise that will resolve to a boolean indicating
+ *                               if the queue exists
+ */
+exports.sqsQueueExists = (queue) => {
+  const QueueName = queue.split('/').pop();
+  return exports.sqs().getQueueUrl({ QueueName }).promise()
+    .then(() => true)
+    .catch((e) => {
+      if (e.code === 'AWS.SimpleQueueService.NonExistentQueue') return false;
+      throw e;
+    });
+};
+
+/**
  * Returns execution ARN from a statement machine Arn and executionName
  *
  * @param {string} stateMachineArn - state machine ARN

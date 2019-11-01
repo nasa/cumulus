@@ -12,6 +12,7 @@ const pLimit = require('p-limit');
 const pWaitFor = require('p-wait-for');
 const pMap = require('p-map');
 
+const { getWorkflowTemplate, getWorkflowArn } = require('@cumulus/common/workflows');
 const { pullStepFunctionEvent } = require('@cumulus/common/aws');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { ActivityStep, LambdaStep } = require('@cumulus/common/sfnStep');
@@ -20,7 +21,6 @@ const { globalReplace } = require('@cumulus/common/string');
 const {
   dynamodb,
   ecs,
-  s3,
   sfn
 } = require('@cumulus/common/aws');
 const StepFunctions = require('@cumulus/common/StepFunctions');
@@ -59,14 +59,14 @@ const lambdaStep = new LambdaStep();
  *   table
  * @param {string} params.id - the id of the AsyncOperation
  * @param {string} params.status - the status to wait for
- * @param {number} params.retries - the number of times to retry Default: 5
+ * @param {number} params.retries - the number of times to retry Default: 10
  * @returns {Promise<Object>} - the AsyncOperation object
  */
 async function waitForAsyncOperationStatus({
   TableName,
   id,
   status,
-  retries = 5
+  retries = 10
 }) {
   const { Item } = await dynamodb().getItem({
     TableName,
@@ -100,34 +100,6 @@ async function getClusterArn(stackName) {
   }
 
   return matchingArns[0];
-}
-
-/**
- * Get the template JSON from S3 for the workflow
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @param {string} workflowName - workflow name
- * @returns {Promise.<Object>} template as a JSON object
- */
-function getWorkflowTemplate(stackName, bucketName, workflowName) {
-  const key = `${stackName}/workflows/${workflowName}.json`;
-  return s3().getObject({ Bucket: bucketName, Key: key }).promise()
-    .then((templateJson) => JSON.parse(templateJson.Body.toString()));
-}
-
-/**
- * Get the workflow ARN for the given workflow from the
- * template stored on S3
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @param {string} workflowName - workflow name
- * @returns {Promise.<string>} - workflow arn
- */
-function getWorkflowArn(stackName, bucketName, workflowName) {
-  return getWorkflowTemplate(stackName, bucketName, workflowName)
-    .then((template) => template.cumulus_meta.state_machine);
 }
 
 /**
@@ -546,7 +518,11 @@ async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
 
       rule = Object.assign(rule, overrides);
       const ruleTemplate = Handlebars.compile(JSON.stringify(rule));
-      const templatedRule = JSON.parse(ruleTemplate(config));
+      const templatedRule = JSON.parse(ruleTemplate(Object.assign({
+        AWS_ACCOUNT_ID: process.env.AWS_ACCOUNT_ID,
+        AWS_REGION: process.env.AWS_REGION
+      },
+      config)));
 
       const r = new Rule();
       console.log(`adding rule ${JSON.stringify(templatedRule)}`);
@@ -664,7 +640,7 @@ async function buildWorkflow(
 ) {
   setProcessEnvironment(stackName, bucketName);
 
-  const template = await getWorkflowTemplate(stackName, bucketName, workflowName);
+  const template = await getWorkflowTemplate(stackName, bucketName);
   const { name, version } = collection || {};
   const collectionInfo = collection
     ? await new Collection().get({ name, version })
@@ -675,6 +651,7 @@ async function buildWorkflow(
 
   template.meta.collection = collectionInfo;
   template.meta.provider = providerInfo;
+  template.meta.workflow_name = workflowName;
   template.meta = merge(template.meta, meta);
   template.payload = payload || {};
 
@@ -804,7 +781,9 @@ async function waitForTestExecutionStart({
     for (let executionCtr = 0; executionCtr < executions.length; executionCtr += 1) {
       const execution = executions[executionCtr];
       let taskInput = await lambdaStep.getStepInput(execution.executionArn, startTask);
-      taskInput = await pullStepFunctionEvent(taskInput);
+      if (taskInput) {
+        taskInput = await pullStepFunctionEvent(taskInput);
+      }
       if (taskInput && findExecutionFn(taskInput, findExecutionFnParams)) {
         return execution;
       }
@@ -827,7 +806,6 @@ module.exports = {
   executeWorkflow,
   buildAndExecuteWorkflow,
   buildAndStartWorkflow,
-  getWorkflowTemplate,
   waitForCompletedExecution,
   waitForTestExecutionStart,
   ActivityStep,
@@ -851,7 +829,6 @@ module.exports = {
   removeRuleAddedParams,
   isWorkflowTriggeredByRule,
   getClusterArn,
-  getWorkflowArn,
   rulesList,
   waitForAsyncOperationStatus,
   getLambdaVersions: lambda.getLambdaVersions,

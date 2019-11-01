@@ -5,6 +5,7 @@ const get = require('lodash.get');
 const merge = require('lodash.merge');
 const { invoke, Events } = require('@cumulus/ingest/aws');
 const aws = require('@cumulus/common/aws');
+const workflows = require('@cumulus/common/workflows');
 const Manager = require('./base');
 const { rule: ruleSchema } = require('./schemas');
 
@@ -59,6 +60,7 @@ class Rule extends Manager {
       }
       break;
     }
+    case 'sqs':
     default:
       break;
     }
@@ -157,6 +159,11 @@ class Rule extends Manager {
       }
       break;
     }
+    case 'sqs':
+      if (valueUpdated && !(await aws.sqsQueueExists(updatedRuleItem.rule.value))) {
+        throw new Error(`SQS queue ${updatedRuleItem.rule.value} does not exist or your account does not have permissions to access it`);
+      }
+      break;
     default:
       break;
     }
@@ -168,14 +175,17 @@ class Rule extends Manager {
   static async buildPayload(item) {
     // makes sure the workflow exists
     const bucket = process.env.system_bucket;
-    const key = `${process.env.stackName}/workflows/${item.workflow}.json`;
+    const stack = process.env.stackName;
+    const key = `${stack}/workflows/${item.workflow}.json`;
     const exists = await aws.fileExists(bucket, key);
 
     if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${key} for ${item.name}`);
 
-    const template = `s3://${bucket}/${key}`;
+    const definition = await workflows.getWorkflowFile(stack, bucket, item.workflow);
+    const template = await workflows.getWorkflowTemplate(stack, bucket);
     return {
       template,
+      definition,
       provider: item.provider,
       collection: item.collection,
       meta: get(item, 'meta', {}),
@@ -228,6 +238,11 @@ class Rule extends Manager {
       }
       break;
     }
+    case 'sqs':
+      if (!(await aws.sqsQueueExists(newRuleItem.rule.value))) {
+        throw new Error(`SQS queue ${newRuleItem.rule.value} does not exist or your account does not have permissions to access it`);
+      }
+      break;
     default:
       throw new Error('Type not supported');
     }
@@ -412,6 +427,30 @@ class Rule extends Manager {
       SubscriptionArn: item.rule.arn
     };
     return aws.sns().unsubscribe(subscriptionParams).promise();
+  }
+
+  /**
+   * get all rules with specified type and state
+   *
+   * @param {string} type - rule type
+   * @param {string} state - rule state
+   * @returns {Promise<Object>}
+   */
+  async getRulesByTypeAndState(type, state) {
+    const scanResult = await this.scan({
+      names: {
+        '#st': 'state',
+        '#rl': 'rule',
+        '#tp': 'type'
+      },
+      filter: '#st = :enabledState AND #rl.#tp = :ruleType',
+      values: {
+        ':enabledState': state,
+        ':ruleType': type
+      }
+    });
+
+    return scanResult.Items;
   }
 }
 

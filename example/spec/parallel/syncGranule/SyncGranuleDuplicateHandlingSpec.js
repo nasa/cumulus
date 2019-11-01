@@ -35,8 +35,7 @@ const {
   setupTestGranuleForIngest
 } = require('../../helpers/granuleUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
-const config = loadConfig();
-const lambdaStep = new LambdaStep();
+
 const workflowName = 'SyncGranule';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
@@ -46,30 +45,42 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
 ];
 
+const inputPayloadFilename = './spec/parallel/syncGranule/SyncGranule.input.payload.json';
+
+const providersDir = './data/providers/s3/';
+const collectionsDir = './data/collections/s3_MOD09GQ_006';
+
 describe('When the Sync Granule workflow is configured', () => {
-  const testId = createTimestampedTestId(config.stackName, 'SyncGranuleDuplicateHandling');
-  const testSuffix = createTestSuffix(testId);
-  const testDataFolder = createTestDataPath(testId);
-
-  const inputPayloadFilename = './spec/parallel/syncGranule/SyncGranule.input.payload.json';
-
-  const providersDir = './data/providers/s3/';
-  const collectionsDir = './data/collections/s3_MOD09GQ_006';
-  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-  const provider = { id: `s3_provider${testSuffix}` };
-  const newCollectionId = constructCollectionId(collection.name, collection.version);
-
-  let inputPayload;
-  let expectedPayload;
+  let config;
+  let lambdaStep;
   let workflowExecution;
-
-  process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-  const granuleModel = new Granule();
-
-  process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-  const pdrModel = new Pdr();
+  let collection;
+  let provider;
+  let inputPayload;
+  let granuleModel;
+  let expectedPayload;
+  let pdrModel;
+  let testSuffix;
+  let testDataFolder;
 
   beforeAll(async () => {
+    config = await loadConfig();
+    lambdaStep = new LambdaStep();
+
+    const testId = createTimestampedTestId(config.stackName, 'SyncGranuleDuplicateHandling');
+    testSuffix = createTestSuffix(testId);
+    testDataFolder = createTestDataPath(testId);
+
+    collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+    provider = { id: `s3_provider${testSuffix}` };
+    const newCollectionId = constructCollectionId(collection.name, collection.version);
+
+    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+    granuleModel = new Granule();
+
+    process.env.PdrsTable = `${config.stackName}-PdrsTable`;
+    pdrModel = new Pdr();
+
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
@@ -105,7 +116,13 @@ describe('When the Sync Granule workflow is configured', () => {
       }
     });
 
-    expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, newGranuleId, testDataFolder, newCollectionId);
+    expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(
+      templatedOutputPayloadFilename,
+      newGranuleId,
+      testDataFolder,
+      newCollectionId,
+      config.stackName
+    );
     expectedPayload.granules[0].dataType += testSuffix;
 
     workflowExecution = await buildAndExecuteWorkflow(
@@ -337,11 +354,14 @@ describe('When the Sync Granule workflow is configured', () => {
     });
 
     describe('and it is configured to catch the duplicate error', () => {
-      const catchWorkflowName = 'SyncGranuleCatchDuplicateErrorTest';
-
       beforeAll(async () => {
         workflowExecution = await buildAndExecuteWorkflow(
-          config.stackName, config.bucket, catchWorkflowName, collection, provider, inputPayload
+          config.stackName,
+          config.bucket,
+          'SyncGranuleCatchDuplicateErrorTest',
+          collection,
+          provider,
+          inputPayload
         );
       });
 

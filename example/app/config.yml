@@ -9,16 +9,15 @@ default:
     esHost: '{{esHost}}'
     streamName: '{{prefix}}-testStream'
     cnmResponseStream: '{{prefix}}-cnmResponseStream'
-    awsAccountId: '{{AWS_ACCOUNT_ID}}'
-    awsRegion: us-east-1
-    AsyncOperationsTable: '{{prefix}}-AsyncOperationsTable'
+    AWS_ACCOUNT_ID: '{{AWS_ACCOUNT_ID}}'
+    AWS_REGION: us-east-1
     asyncOperationRunnerRole: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway'
     sqs_consumer_rate: 300
 
   # test configuration ends
 
   cmaDir: '/opt/'
-  sandbox_cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:6
+  sandbox_cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:9
   sit_cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:2
   cma_layer: '{{sandbox_cma_layer}}'
   prefix: 'test-cumulus-integration'
@@ -63,14 +62,7 @@ default:
         image: cumuluss/cumulus-ecs-task:1.3.0
         cpu: 400
         memory: 700
-        minTasks: 1
         count: 1
-        maxTasks: 10
-        scaleInActivityScheduleTime: 5000
-        scaleInAdjustmentPercent: -5
-        scaleOutActivityScheduleTime: 10000
-        scaleOutAdjustmentPercent: 10
-        activityName: EcsTaskHelloWorld
         envs:
           AWS_DEFAULT_REGION:
             function: Fn::Sub
@@ -91,39 +83,6 @@ default:
             metric: MemoryUtilization
             statistic: SampleCount
             threshold: '{{ecs.services.EcsTaskHelloWorld.count}}'
-      EcsTaskHelloWorlKesCma:
-        image: cumuluss/cumulus-ecs-task:1.3.0
-        cpu: 400
-        memory: 700
-        minTasks: 1
-        count: 1
-        maxTasks: 10
-        scaleInActivityScheduleTime: 5000
-        scaleInAdjustmentPercent: -5
-        scaleOutActivityScheduleTime: 10000
-        scaleOutAdjustmentPercent: 10
-        activityName: EcsTaskHelloWorldKesCma
-        envs:
-          AWS_DEFAULT_REGION:
-            function: Fn::Sub
-            value: '${AWS::Region}'
-        commands:
-          - cumulus-ecs-task
-          - '--activityArn'
-          - function: Ref
-            value: EcsTaskHelloWorldKesCmaActivity
-          - '--lambdaArn'
-          - function: Ref
-            value: HelloWorldKesCmaLambdaFunction
-        alarms:
-          TaskCountHigh:
-            alarm_description: 'There are more tasks running than the desired'
-            comparison_operator: GreaterThanThreshold
-            evaluation_periods: 1
-            metric: MemoryUtilization
-            statistic: SampleCount
-            threshold: '{{ecs.services.EcsTaskHelloWorlKesCma.count}}'
-
   activities:
     - name: EcsTaskHelloWorld
     - name: EcsTaskHelloWorldKesCma
@@ -212,6 +171,7 @@ default:
     - username: aimeeb
     - username: chuckwondo
     - username: jennyhliu
+    - username: jhliu
     - username: jnorton1
     - username: kbaynes
     - username: kkelly
@@ -507,6 +467,7 @@ mth:
 jl:
   prefix: jl-test-integration
   prefixNoDash: JlTestIntegration
+  useWorkflowLambdaVersions: false
   buckets:
     private:
       name: jl-test-integration-private
@@ -554,6 +515,15 @@ jl:
   oauth:
     provider: launchpad
     userGroup: GSFC-Cumulus-Dev
+  samlConfig:
+    entityID: 'https://cumulus-sandbox.earthdata.nasa.gov/jl-test-integration'
+    assertionConsumerService: 'https://5hlnofihz8.execute-api.us-east-1.amazonaws.com:8000/dev/saml/auth'
+    idpLogin: 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso'
+    launchpadMetadataPath: 's3://{{buckets.internal.name}}/{{prefix}}/launchpad/launchpad-sbx-metadata.xml'
+
+jl-cumulus:
+  prefix: jl-cumulus
+  prefixNoDash: jlCumulus
 
 gitc:
   prefix: {{PREFIX}}
@@ -601,6 +571,7 @@ gitc:
 mvd:
   prefix: mvd
   prefixNoDash: mvd
+  useWorkflowLambdaVersions: false
   buckets:
     internal:
       name: '{{prefix}}-internal'
@@ -796,6 +767,12 @@ jk2:
   useWorkflowLambdaVersions: false
   prefix: jk2
   prefixNoDash: jk2
+
+jk-tf:
+  stackName: jk-tf
+  useWorkflowLambdaVersions: false
+  prefix: jk-tf
+  prefixNoDash: jk-tf
 
 jk3:
   stackName: jk3

@@ -24,16 +24,16 @@ resource "aws_lambda_function" "custom_bootstrap" {
   }
   tags = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
-    subnet_ids = var.lambda_subnet_ids
-    security_group_ids = [
-      aws_security_group.no_ingress_all_egress.id,
-      var.elasticsearch_security_group_id
-    ]
+    subnet_ids         = var.lambda_subnet_ids
+    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id, var.elasticsearch_security_group_id]
   }
 }
 
 data "aws_lambda_invocation" "custom_bootstrap" {
-  depends_on    = [aws_lambda_function.custom_bootstrap]
+  depends_on = [
+    aws_lambda_function.custom_bootstrap,
+    null_resource.rsa_keys
+  ]
   function_name = aws_lambda_function.custom_bootstrap.function_name
 
   input = <<JSON

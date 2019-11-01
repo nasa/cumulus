@@ -17,30 +17,39 @@ const {
   timestampedName
 } = require('../../helpers/testUtils');
 
-const config = loadConfig();
-process.env.stackName = config.stackName;
-process.env.system_bucket = config.buckets.internal.name;
-
-const lambdaStep = new LambdaStep();
-
 describe('When I create a scheduled rule via the Cumulus API', () => {
+  let config;
   let execution;
-  const testId = createTimestampedTestId(config.stackName, 'Rule');
-  const testSuffix = createTestSuffix(testId);
+  let scheduledRuleName;
+  let scheduledHelloWorldRule;
+  let testSuffix;
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
-  const scheduledRuleName = timestampedName('SchedHelloWorldTest');
-  const scheduledHelloWorldRule = {
-    name: scheduledRuleName,
-    collection: { name: `MOD09GQ${testSuffix}`, version: '006' },
-    workflow: 'HelloWorldWorkflow',
-    rule: { type: 'scheduled', value: 'rate(2 minutes)' },
-    meta: { triggerRule: scheduledRuleName }
-  };
 
   beforeAll(async () => {
+    config = await loadConfig();
+    process.env.stackName = config.stackName;
+    process.env.system_bucket = config.system_bucket;
+
+    const testId = createTimestampedTestId(config.stackName, 'Rule');
+    testSuffix = createTestSuffix(testId);
+    scheduledRuleName = timestampedName('SchedHelloWorldTest');
+    scheduledHelloWorldRule = {
+      name: scheduledRuleName,
+      collection: { name: `MOD09GQ${testSuffix}`, version: '006' },
+      workflow: 'HelloWorldWorkflow',
+      rule: {
+        type: 'scheduled',
+        value: 'rate(2 minutes)'
+      },
+      meta: {
+        triggerRule: scheduledRuleName
+      }
+    };
+
     await addCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix, testId);
     // Create a scheduled rule
+    console.log(`post rule ${scheduledRuleName}`);
     await rulesApiTestUtils.postRule({
       prefix: config.stackName,
       rule: scheduledHelloWorldRule
@@ -48,11 +57,11 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
   });
 
   afterAll(async () => {
-    console.log(`deleting rule ${scheduledRuleName.name}`);
+    console.log(`deleting rule ${scheduledRuleName}`);
 
     await rulesApiTestUtils.deleteRule({
       prefix: config.stackName,
-      ruleName: scheduledRuleName.name
+      ruleName: scheduledRuleName
     });
     await cleanupCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix);
@@ -60,7 +69,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
 
   describe('The scheduled rule kicks off a workflow', () => {
     beforeAll(async () => {
-      execution = waitForTestExecutionStart({
+      execution = await waitForTestExecutionStart({
         workflowName: scheduledHelloWorldRule.workflow,
         stackName: config.stackName,
         bucket: config.bucket,
@@ -106,23 +115,40 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
 });
 
 describe('When I create a one-time rule via the Cumulus API', () => {
-  let postRule = '';
-  const testId = createTimestampedTestId(config.stackName, 'Rule');
-  const testSuffix = createTestSuffix(testId);
+  let config;
+  let createdCheck;
+  let helloWorldRule;
+  let lambdaStep;
+  let postRule;
+  let testSuffix;
+  let updatedCheck;
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
-  const oneTimeRuleName = timestampedName('HelloWorldIntegrationTestRule');
-  const createdCheck = timestampedName('Created');
-  const updatedCheck = timestampedName('Updated');
-  const helloWorldRule = {
-    name: oneTimeRuleName,
-    collection: { name: `MOD09GQ${testSuffix}`, version: '006' },
-    workflow: 'HelloWorldWorkflow',
-    rule: { type: 'onetime' },
-    // used to detect that we're looking at the correct execution
-    meta: { triggerRule: createdCheck }
-  };
 
   beforeAll(async () => {
+    config = await loadConfig();
+    process.env.stackName = config.stackName;
+    process.env.system_bucket = config.system_bucket;
+
+    lambdaStep = new LambdaStep();
+
+    const testId = createTimestampedTestId(config.stackName, 'Rule');
+    testSuffix = createTestSuffix(testId);
+
+    const oneTimeRuleName = timestampedName('HelloWorldIntegrationTestRule');
+    createdCheck = timestampedName('Created');
+    updatedCheck = timestampedName('Updated');
+    helloWorldRule = {
+      name: oneTimeRuleName,
+      collection: { name: `MOD09GQ${testSuffix}`, version: '006' },
+      workflow: 'HelloWorldWorkflow',
+      rule: {
+        type: 'onetime'
+      },
+      meta: {
+        triggerRule: createdCheck // used to detect that we're looking at the correct execution
+      }
+    };
+
     await addCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix, testId);
     // Create a one-time rule

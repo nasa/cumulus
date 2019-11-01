@@ -78,7 +78,6 @@ const { isReingestExecutionForGranuleId } = require('../../helpers/workflowUtils
 
 const { getConfigObject } = require('../../helpers/configUtils');
 
-const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const workflowName = 'IngestAndPublishGranule';
 
@@ -97,43 +96,53 @@ function isExecutionForGranuleId(taskInput, params) {
 }
 
 describe('The S3 Ingest Granules workflow', () => {
-  const testId = createTimestampedTestId(config.stackName, 'IngestGranuleSuccess');
-  const testSuffix = createTestSuffix(testId);
-  const testDataFolder = createTestDataPath(testId);
   const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
-  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-  const newCollectionId = constructCollectionId(collection.name, collection.version);
-  const provider = { id: `s3_provider${testSuffix}` };
   const collectionDupeHandling = 'error';
 
-  let workflowExecutionArn;
-  let failingWorkflowExecution;
-  let failedExecutionArn;
-  let failedExecutionName;
-  let inputPayload;
-  let expectedSyncGranulePayload;
+  let accessTokensModel;
+  let collection;
+  let collectionModel;
+  let config;
+  let executionModel;
   let expectedPayload;
   let expectedS3TagSet;
+  let expectedSyncGranulePayload;
+  let granuleModel;
+  let inputPayload;
+  let pdrModel;
   let postToCmrOutput;
-  let executionName;
-
-  process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
-  const accessTokensModel = new AccessToken();
-  process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-  const granuleModel = new Granule();
-  process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-  const executionModel = new Execution();
-  process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
-  process.env.system_bucket = config.bucket;
-  const collectionModel = new Collection();
-  process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
-  const providerModel = new Provider();
-  process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-  const pdrModel = new Pdr();
+  let provider;
+  let providerModel;
+  let testDataFolder;
+  let workflowExecutionArn;
 
   beforeAll(async () => {
+    config = await loadConfig();
+
+    const testId = createTimestampedTestId(config.stackName, 'IngestGranuleSuccess');
+    const testSuffix = createTestSuffix(testId);
+    testDataFolder = createTestDataPath(testId);
+
+    collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+    const newCollectionId = constructCollectionId(collection.name, collection.version);
+    provider = { id: `s3_provider${testSuffix}` };
+
+    process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
+    accessTokensModel = new AccessToken();
+    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+    granuleModel = new Granule();
+    process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+    executionModel = new Execution();
+    process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+    process.env.system_bucket = config.bucket;
+    collectionModel = new Collection();
+    process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
+    providerModel = new Provider();
+    process.env.PdrsTable = `${config.stackName}-PdrsTable`;
+    pdrModel = new Pdr();
+
     const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
     const providerData = Object.assign({}, providerJson, {
       id: provider.id,
@@ -183,7 +192,8 @@ describe('The S3 Ingest Granules workflow', () => {
       }
     });
 
-    expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedSyncGranuleFilename, granuleId, testDataFolder, newCollectionId);
+    expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedSyncGranuleFilename, granuleId, testDataFolder, newCollectionId, config.stackName);
+
     expectedSyncGranulePayload.granules[0].dataType += testSuffix;
     expectedSyncGranulePayload.granules[0].files = addUrlPathToGranuleFiles(expectedSyncGranulePayload.granules[0].files, testId, '');
 
@@ -506,14 +516,16 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(expectedTypes).toEqual(resource.map((r) => r.Type));
     });
 
-    it('includes the Earthdata login ID for requests to protected science files', async () => {
+    // TODO Re-enable when CUMULUS-1458 has been completed
+    xit('includes the Earthdata login ID for requests to protected science files', async () => {
       const filepath = `/${files[0].bucket}/${files[0].filepath}`;
       const s3SignedUrl = await getDistributionApiRedirect(filepath, accessToken);
       const earthdataLoginParam = new URL(s3SignedUrl).searchParams.get('x-EarthdataLoginUsername');
       expect(earthdataLoginParam).toEqual(process.env.EARTHDATA_USERNAME);
     });
 
-    it('downloads the requested science file for authorized requests', async () => {
+    // TODO Re-enable when CUMULUS-1458 has been completed
+    xit('downloads the requested science file for authorized requests', async () => {
       const scienceFileUrls = resourceURLs
         .filter((url) =>
           (url.startsWith(process.env.DISTRIBUTION_ENDPOINT) ||
@@ -547,10 +559,14 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   describe('an SNS message', () => {
-    let existCheck = [];
+    let executionName;
+    let failedExecutionArn;
+    let failedExecutionName;
+    let failingWorkflowExecution;
 
     beforeAll(async () => {
       console.log('Start FailingExecution');
+
       failingWorkflowExecution = await buildAndExecuteWorkflow(
         config.stackName,
         config.bucket,
@@ -559,26 +575,31 @@ describe('The S3 Ingest Granules workflow', () => {
         provider,
         {}
       );
-      failedExecutionArn = failingWorkflowExecution.executionArn.split(':');
-      failedExecutionName = failedExecutionArn.pop();
+
+      failedExecutionArn = failingWorkflowExecution.executionArn;
+      failedExecutionName = failedExecutionArn.split(':').pop();
 
       executionName = postToCmrOutput.cumulus_meta.execution_name;
-      existCheck = await Promise.all([
-        s3ObjectExists({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }),
-        s3ObjectExists({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` })
-      ]);
     });
 
-    afterAll(async () => {
-      await executionModel.delete({ arn: failingWorkflowExecution.executionArn });
+    afterAll(() => executionModel.delete({ arn: failedExecutionArn }));
+
+    it('is published on a successful workflow completion', async () => {
+      const executionExists = await s3ObjectExists({
+        Bucket: config.bucket,
+        Key: `${config.stackName}/test-output/${executionName}.output`
+      });
+
+      expect(executionExists).toEqual(true);
     });
 
-    it('is published on a successful workflow completion', () => {
-      expect(existCheck[0]).toEqual(true);
-    });
+    it('is published on workflow failure', async () => {
+      const executionExists = await s3ObjectExists({
+        Bucket: config.bucket,
+        Key: `${config.stackName}/test-output/${failedExecutionName}.output`
+      });
 
-    it('is published on workflow failure', () => {
-      expect(existCheck[1]).toEqual(true);
+      expect(executionExists).toEqual(true);
     });
 
     it('triggers the granule record being added to DynamoDB', async () => {
@@ -996,14 +1017,16 @@ describe('The S3 Ingest Granules workflow', () => {
 
       it('returns the expected workflow', async () => {
         const workflowResponse = await apiTestUtils.getWorkflow({
-          prefix: config.stackName,
-          workflowName: workflowName
+          workflowName,
+          prefix: config.stackName
         });
+
         const foundWorkflow = JSON.parse(workflowResponse.body);
+        expect(foundWorkflow.definition.Comment).toEqual(workflowConfig.Comment);
+
         const foundKeys = Object.keys(foundWorkflow.definition.States);
         const configKeys = Object.keys(workflowConfig.States);
-        expect(foundWorkflow.definition.Comment).toEqual(workflowConfig.Comment);
-        expect(foundKeys).toEqual(configKeys);
+        expect(foundKeys.sort()).toEqual(configKeys.sort());
       });
     });
   });

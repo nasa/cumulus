@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sync-granule",
-  "version": "1.14.2",
+  "version": "1.14.4",
   "description": "Download a given granule",
   "main": "index.js",
   "directories": {
@@ -22,7 +22,7 @@
     "test-coverage": "nyc ava",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
-    "prepare": "npm run build"
+    "prepare": "npm run build && (cd dist && zip -r lambda.zip $(ls | grep -v lambda.zip))"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
@@ -35,13 +35,13 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "1.14.2",
+    "@cumulus/common": "1.14.4",
     "@cumulus/cumulus-message-adapter-js": "^1.0.8",
-    "@cumulus/ingest": "1.14.2",
+    "@cumulus/ingest": "1.14.4",
     "p-map": "^2.1.0"
   },
   "devDependencies": {
-    "@cumulus/test-data": "1.14.2",
+    "@cumulus/test-data": "1.14.4",
     "ava": "^2.1.0",
     "babel-loader": "^8.0.6",
     "babel-plugin-source-map-support": "^2.1.1",

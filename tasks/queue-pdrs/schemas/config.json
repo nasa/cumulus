@@ -6,13 +6,17 @@
     "collection",
     "provider",
     "queueUrl",
-    "parsePdrMessageTemplateUri"
+    "parsePdrWorkflow",
+    "stackName",
+    "internalBucket"
   ],
   "additionalProperties": false,
   "properties": {
     "collection": { "type": "object" },
     "provider": { "type": "object" },
     "queueUrl": { "type": "string" },
-    "parsePdrMessageTemplateUri": { "type": "string" }
+    "parsePdrWorkflow": { "type": "string" },
+    "internalBucket": { "type": "string" },
+    "stackName": { "type": "string" }
   }
 }
