@@ -50,7 +50,7 @@ If you'd prefer to ingest another data type, you will need to generate a process
 
 ### CMR
 
-(Need section on updating CMR configuration in TF)
+To run this example with successful exports to CMR you'll need to make sure the CMR configuration keys for the `cumulus` terraform module are configured per that module's [variables.tf file](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf).
 
 ### Workflows
 
