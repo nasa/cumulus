@@ -86,20 +86,20 @@ test.before(async () => {
   await providersModel.createTable();
   await rulesModel.createTable();
 
-  // upload workflow lists
-  const workflowsListKey = `${process.env.stackName}/workflows/list.json`;
-  await aws.promiseS3Upload({
-    Bucket: process.env.system_bucket,
-    Key: workflowsListKey,
-    Body: JSON.stringify(workflowList)
-  });
-
-  const workflow = `${process.env.stackName}/workflows/${workflowList[0].name}.json`;
-  await aws.promiseS3Upload({
-    Bucket: process.env.system_bucket,
-    Key: workflow,
-    Body: JSON.stringify(workflowList[0])
-  });
+  const wKey = `${process.env.stackName}/workflows/${workflowList[0].name}.json`;
+  const tKey = `${process.env.stackName}/workflow_template.json`;
+  await Promise.all([
+    aws.promiseS3Upload({
+      Bucket: process.env.system_bucket,
+      Key: wKey,
+      Body: JSON.stringify(workflowList[0])
+    }),
+    aws.promiseS3Upload({
+      Bucket: process.env.system_bucket,
+      Key: tKey,
+      Body: JSON.stringify({})
+    })
+  ]);
 });
 
 test.after.always(async () => {

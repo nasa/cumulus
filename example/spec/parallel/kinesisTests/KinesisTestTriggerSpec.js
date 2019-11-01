@@ -47,111 +47,41 @@ const {
   waitForTestSf
 } = require('../../helpers/kinesisHelpers');
 
-const testConfig = loadConfig();
-const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestTrigger');
-const testSuffix = createTestSuffix(testId);
-const testDataFolder = createTestDataPath(testId);
-const ruleSuffix = globalReplace(testSuffix, '-', '_');
 const testWorkflow = 'KinesisTriggerTest';
-
-const record = JSON.parse(fs.readFileSync(`${__dirname}/data/records/L2_HR_PIXC_product_0001-of-4154.json`));
-
-record.product.files[0].uri = globalReplace(record.product.files[0].uri, 'cumulus-test-data/pdrs', testDataFolder);
-record.provider += testSuffix;
-record.collection += testSuffix;
-
-const granuleId = record.product.name;
-const recordIdentifier = randomString();
-record.identifier = recordIdentifier;
-
-const lambdaStep = new LambdaStep();
-
-const recordFile = record.product.files[0];
-const expectedTranslatePayload = {
-  cnm: {
-    product: record.product,
-    identifier: recordIdentifier,
-    bucket: record.bucket,
-    provider: record.provider,
-    collection: record.collection
-  },
-  granules: [
-    {
-      granuleId: record.product.name,
-      files: [
-        {
-          name: recordFile.name,
-          fileType: recordFile.type, // change when CnmToGranule outputs 'type' instead
-          bucket: record.bucket,
-          path: testDataFolder,
-          url_path: recordFile.uri,
-          fileSize: recordFile.size // change when CnmToGranule outputs 'size' instead
-        }
-      ]
-    }
-  ]
-};
-
-const fileData = expectedTranslatePayload.granules[0].files[0];
-const filePrefix = `file-staging/${testConfig.stackName}/${record.collection}___000`;
-
-const fileDataWithFilename = {
-  ...fileData,
-  filename: `s3://${testConfig.buckets.private.name}/${filePrefix}/${recordFile.name}`,
-  bucket: testConfig.buckets.private.name,
-  url_path: '',
-  fileStagingDir: filePrefix,
-  size: fileData.fileSize
-};
-delete fileDataWithFilename.fileSize;
-
-const expectedSyncGranulesPayload = {
-  granules: [
-    {
-      granuleId: granuleId,
-      dataType: record.collection,
-      version: '000',
-      files: [fileDataWithFilename]
-    }
-  ]
-};
-
-const ruleDirectory = './spec/parallel/kinesisTests/data/rules';
-const ruleOverride = {
-  name: `L2_HR_PIXC_kinesisRule${ruleSuffix}`,
-  collection: {
-    name: record.collection,
-    version: '000'
-  },
-  provider: record.provider
-};
-
-const s3data = ['@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'];
-
-process.env.ExecutionsTable = `${testConfig.stackName}-ExecutionsTable`;
 
 // When kinesis-type rules exist, the Cumulus lambda messageConsumer is
 // configured to trigger workflows when new records arrive on a Kinesis
 // stream. When a record appears on the stream, the messageConsumer lambda
 // triggers workflows associated with the kinesis-type rules.
-describe('The Cloud Notification Mechanism Kinesis workflow', () => {
-  const maxWaitForSFExistSecs = 60 * 4;
-  const maxWaitForExecutionSecs = 60 * 5;
-  let executionStatus;
-  let s3FileHead;
-  let responseStreamShardIterator;
-  let logEventSourceMapping;
-  let workflowExecution;
-
-  const providersDir = './data/providers/PODAAC_SWOT/';
+xdescribe('The Cloud Notification Mechanism Kinesis workflow', () => {
   const collectionsDir = './data/collections/L2_HR_PIXC-000/';
+  const maxWaitForExecutionSecs = 60 * 5;
+  const maxWaitForSFExistSecs = 60 * 4;
+  const providersDir = './data/providers/PODAAC_SWOT/';
 
-  const streamName = `${testId}-KinesisTestTriggerStream`;
-  const cnmResponseStreamName = `${testId}-KinesisTestTriggerCnmResponseStream`;
-  testConfig.streamName = streamName;
-  testConfig.cnmResponseStream = cnmResponseStreamName;
-
-  const executionModel = new Execution();
+  let cnmResponseStreamName;
+  let executionModel;
+  let executionStatus;
+  let expectedSyncGranulesPayload;
+  let expectedTranslatePayload;
+  let fileData;
+  let filePrefix;
+  let granuleId;
+  let lambdaStep;
+  let logEventSourceMapping;
+  let record;
+  let recordFile;
+  let recordIdentifier;
+  let responseStreamShardIterator;
+  let ruleDirectory;
+  let ruleOverride;
+  let ruleSuffix;
+  let s3FileHead;
+  let streamName;
+  let testConfig;
+  let testDataFolder;
+  let testSuffix;
+  let workflowExecution;
 
   async function cleanUp() {
     // delete rule
@@ -179,6 +109,94 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   }
 
   beforeAll(async () => {
+    testConfig = await loadConfig();
+    const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestTrigger');
+    testSuffix = createTestSuffix(testId);
+    testDataFolder = createTestDataPath(testId);
+    ruleSuffix = globalReplace(testSuffix, '-', '_');
+
+    record = JSON.parse(fs.readFileSync(`${__dirname}/data/records/L2_HR_PIXC_product_0001-of-4154.json`));
+
+    record.product.files[0].uri = globalReplace(record.product.files[0].uri, 'cumulus-test-data/pdrs', testDataFolder);
+    record.provider += testSuffix;
+    record.collection += testSuffix;
+
+    granuleId = record.product.name;
+    recordIdentifier = randomString();
+    record.identifier = recordIdentifier;
+
+    lambdaStep = new LambdaStep();
+
+    recordFile = record.product.files[0];
+    expectedTranslatePayload = {
+      cnm: {
+        product: record.product,
+        identifier: recordIdentifier,
+        bucket: record.bucket,
+        provider: record.provider,
+        collection: record.collection
+      },
+      granules: [
+        {
+          granuleId: record.product.name,
+          files: [
+            {
+              name: recordFile.name,
+              type: recordFile.type,
+              bucket: record.bucket,
+              path: testDataFolder,
+              url_path: recordFile.uri,
+              size: recordFile.size
+            }
+          ]
+        }
+      ]
+    };
+
+    fileData = expectedTranslatePayload.granules[0].files[0];
+    filePrefix = `file-staging/${testConfig.stackName}/${record.collection}___000`;
+
+    const fileDataWithFilename = {
+      ...fileData,
+      filename: `s3://${testConfig.buckets.private.name}/${filePrefix}/${recordFile.name}`,
+      bucket: testConfig.buckets.private.name,
+      url_path: '',
+      fileStagingDir: filePrefix,
+      size: fileData.size
+    };
+
+    expectedSyncGranulesPayload = {
+      granules: [
+        {
+          granuleId: granuleId,
+          dataType: record.collection,
+          version: '000',
+          files: [fileDataWithFilename]
+        }
+      ]
+    };
+
+    ruleDirectory = './spec/parallel/kinesisTests/data/rules';
+    ruleOverride = {
+      name: `L2_HR_PIXC_kinesisRule${ruleSuffix}`,
+      collection: {
+        name: record.collection,
+        version: '000'
+      },
+      provider: record.provider
+    };
+
+    const s3data = ['@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'];
+
+    process.env.ExecutionsTable = `${testConfig.stackName}-ExecutionsTable`;
+
+    streamName = `${testId}-KinesisTestTriggerStream`;
+    cnmResponseStreamName = `${testId}-KinesisTestTriggerCnmResponseStream`;
+    testConfig.streamName = streamName;
+    testConfig.cnmResponseStream = cnmResponseStreamName;
+
+    executionModel = new Execution();
+
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(testConfig.bucket, s3data, testDataFolder),

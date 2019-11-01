@@ -24,7 +24,7 @@ const {
   createTestSuffix
 } = require('../../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
-const config = loadConfig();
+
 const workflowName = 'IngestGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
@@ -35,24 +35,33 @@ const s3data = [
 ];
 
 describe('The Ingest Granule failure workflow', () => {
-  const testId = createTimestampedTestId(config.stackName, 'IngestGranuleFailure');
-  const testSuffix = createTestSuffix(testId);
-  const testDataFolder = createTestDataPath(testId);
   const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
-  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-  const provider = { id: `s3_provider${testSuffix}` };
-  let workflowExecution = null;
+
+  let config;
+  let executionModel;
+  let granuleModel;
   let inputPayload;
-
-  process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-  const granuleModel = new Granule();
-
-  process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-  const executionModel = new Execution();
+  let testDataFolder;
+  let testSuffix;
+  let workflowExecution;
 
   beforeAll(async () => {
+    config = await loadConfig();
+    const testId = createTimestampedTestId(config.stackName, 'IngestGranuleFailure');
+    testSuffix = createTestSuffix(testId);
+    testDataFolder = createTestDataPath(testId);
+
+    const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+    const provider = { id: `s3_provider${testSuffix}` };
+
+    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+    granuleModel = new Granule();
+
+    process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+    executionModel = new Execution();
+
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),

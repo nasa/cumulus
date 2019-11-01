@@ -1,5 +1,6 @@
 resource "aws_cloudwatch_log_group" "async_operation" {
   name = "${var.prefix}-AsyncOperationEcsLogs"
+  retention_in_days = 30
   tags = local.default_tags
 }
 

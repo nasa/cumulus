@@ -184,7 +184,7 @@ const samlToken = async (req, res) => {
     }
   } catch (error) {
     return res.boom.expectationFailed(
-      'Could not retrieve necessary information from express request object. ' + error.message
+      `Could not retrieve necessary information from express request object. ${error.message}`
     );
   }
 

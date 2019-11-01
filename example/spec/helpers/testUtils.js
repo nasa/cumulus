@@ -1,24 +1,36 @@
 'use strict';
 
+const execa = require('execa');
 const fs = require('fs');
+const get = require('lodash.get');
 const { Config } = require('kes');
 const cloneDeep = require('lodash.clonedeep');
+const dotenv = require('dotenv');
 const mime = require('mime-types');
 const merge = require('lodash.merge');
 const path = require('path');
 const { promisify } = require('util');
-const tempy = require('tempy');
-const execa = require('execa');
 const pTimeout = require('p-timeout');
+const tempy = require('tempy');
 const yaml = require('js-yaml');
 
 const {
-  aws: { s3, headObject, parseS3Uri },
+  aws: {
+    getS3Object,
+    headObject,
+    parseS3Uri,
+    s3
+  },
   stringUtils: { globalReplace },
   log
 } = require('@cumulus/common');
+const { isNil } = require('@cumulus/common/util');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
+
+const promisedCopyFile = promisify(fs.copyFile);
+const promisedReadFile = promisify(fs.readFile);
+const promisedUnlink = promisify(fs.unlink);
 
 const timestampedName = (name) => `${name}_${(new Date().getTime())}`;
 
@@ -27,6 +39,16 @@ const createTestDataPath = (prefix) => `${prefix}-test-data/files`;
 const createTestSuffix = (prefix) => `_test-${prefix}`;
 
 const MILLISECONDS_IN_A_MINUTE = 60 * 1000;
+
+/**
+ * Load a yml file
+ *
+ * @param {string} filePath - workflow yml filepath
+ * @returns {Object} - JS Object representation of yml file
+ */
+function loadYmlFile(filePath) {
+  return yaml.safeLoad(fs.readFileSync(filePath, 'utf8'));
+}
 
 function setConfig(config) {
   const updatedConfig = cloneDeep(config);
@@ -44,14 +66,7 @@ function setConfig(config) {
   return updatedConfig.test_configs;
 }
 
-/**
- * Loads and parses the configuration defined in `./app/config.yml`
- *
- * @param {string} type - type of configuration to load (iam|app)
- *
- * @returns {Object} - Configuration object
-*/
-function loadConfig(type = 'app') {
+function loadConfigFromKes(type) {
   // make sure deployment env variable is set
   if (!process.env.DEPLOYMENT) {
     throw new Error(
@@ -76,6 +91,67 @@ function loadConfig(type = 'app') {
   const config = new Config(params[type]);
   return setConfig(config);
 }
+
+const loadConfigYmlFile = (stackName) => {
+  const ymlConfigs = loadYmlFile('./config.yml');
+  const stackConfig = get(ymlConfigs, stackName, {});
+
+  return {
+    ...ymlConfigs.default,
+    ...stackConfig,
+    stackName
+  };
+};
+
+const loadEnvFile = async (filename) => {
+  try {
+    const envConfig = dotenv.parse(await promisedReadFile(filename));
+
+    Object.keys(envConfig).forEach((k) => {
+      if (isNil(process.env[k])) process.env[k] = envConfig[k];
+    });
+  } catch (err) {
+    if (err.code === 'ENOENT') return;
+    throw err;
+  }
+};
+
+const verifyRequiredEnvironmentVariables = () => {
+  [
+    'DEPLOYMENT',
+    'AWS_REGION',
+    'AWS_ACCOUNT_ID',
+    'EARTHDATA_CLIENT_ID',
+    'EARTHDATA_CLIENT_PASSWORD',
+    'EARTHDATA_PASSWORD',
+    'EARTHDATA_USERNAME',
+    'TOKEN_SECRET'
+  ].forEach((x) => {
+    if (isNil(process.env[x])) {
+      throw new Error(`Environment variable "${x}" is not set.`);
+    }
+  });
+};
+
+const loadConfig = async (type = 'app') => {
+  await loadEnvFile('./.env');
+  verifyRequiredEnvironmentVariables();
+
+  const configFromFile = fs.existsSync('./config.yml') ?
+    loadConfigYmlFile(process.env.DEPLOYMENT) :
+    loadConfigFromKes(type);
+
+  const bucketsObject = await getS3Object(
+    configFromFile.bucket,
+    `${configFromFile.stackName}/workflows/buckets.json`
+  );
+  const buckets = JSON.parse(bucketsObject.Body.toString());
+
+  return {
+    ...configFromFile,
+    buckets
+  };
+};
 
 /**
  * Creates a new file using a template file and configuration object which
@@ -270,9 +346,6 @@ function getFilesMetadata(files) {
   return Promise.all(files.map(getFileMetadata));
 }
 
-const promisedCopyFile = promisify(fs.copyFile);
-const promisedUnlink = promisify(fs.unlink);
-
 /**
  * Creates a backup of a file, executes the specified function, and makes sure
  * that the file is restored from backup.
@@ -290,16 +363,6 @@ async function protectFile(file, fn) {
     await promisedCopyFile(backupLocation, file);
     await promisedUnlink(backupLocation);
   }
-}
-
-/**
- * Load a yml file
- *
- * @param {string} filePath - workflow yml filepath
- * @returns {Object} - JS Object representation of yml file
- */
-function loadYmlFile(filePath) {
-  return yaml.safeLoad(fs.readFileSync(filePath, 'utf8'));
 }
 
 const isLambdaStatusLogEntry = (logEntry) =>

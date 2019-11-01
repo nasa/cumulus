@@ -86,14 +86,18 @@ data "aws_iam_policy_document" "migration_processing_policy" {
       "dynamodb:DeleteItem",
       "dynamodb:GetItem",
       "dynamodb:PutItem",
-      "dynamodb:Query",
       "dynamodb:Scan",
       "dynamodb:UpdateItem",
       "dynamodb:BatchWriteItem",
       "dynamodb:UpdateContinuousBackups",
       "dynamodb:DescribeContinuousBackups",
     ]
-    resources = ["arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.prefix}-*"]
+    resources = [for k, v in var.dynamo_tables : v.arn]
+  }
+
+  statement {
+    actions   = ["dynamodb:Query"]
+    resources = [for k, v in var.dynamo_tables : "${v.arn}/index/*"]
   }
 
   statement {
@@ -103,7 +107,7 @@ data "aws_iam_policy_document" "migration_processing_policy" {
       "dynamodb:DescribeStream",
       "dynamodb:ListStreams",
     ]
-    resources = ["arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.prefix}-*/stream/*"]
+    resources = [for k, v in var.dynamo_tables : "${v.arn}/stream/*"]
   }
 
   statement {
@@ -148,8 +152,9 @@ resource "aws_lambda_function" "execute_migrations" {
     }
   }
   tags = merge(local.default_tags, { Project = var.prefix })
+
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id, var.elasticsearch_security_group_id]
   }
 }

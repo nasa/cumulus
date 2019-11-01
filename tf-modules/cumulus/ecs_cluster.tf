@@ -39,6 +39,7 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
       "ecs:Submit*",
       "ecs:UpdateContainerInstancesState",
       "lambda:GetFunction",
+      "lambda:GetLayerVersion",
       "lambda:invokeFunction",
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
@@ -72,7 +73,7 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
       "s3:PutLifecycleConfiguration",
       "s3:PutReplicationConfiguration"
     ]
-    resources = [for b in flatten([var.public_buckets, var.protected_buckets, var.private_buckets, var.system_bucket]) : "arn:aws:s3:::${b}"]
+    resources = [for b in local.all_bucket_names : "arn:aws:s3:::${b}"]
   }
 
   statement {
@@ -84,13 +85,12 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
       "s3:ListMultipartUploadParts",
       "s3:PutObject*"
     ]
-    resources = [for b in flatten([var.public_buckets, var.protected_buckets, var.private_buckets, var.system_bucket]) : "arn:aws:s3:::${b}/*"]
+    resources = [for b in local.all_bucket_names : "arn:aws:s3:::${b}/*"]
   }
 
   statement {
-    actions = ["dynamodb:Scan"]
-    # TODO I don't like the fact that we're making an assumption here about the names of our tables
-    resources = ["arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.prefix}-*"]
+    actions   = ["dynamodb:Scan"]
+    resources = [for k, v in var.dynamo_tables : v.arn]
   }
 
   statement {
@@ -158,24 +158,25 @@ data "aws_efs_mount_target" "ecs_cluster_instance" {
 
 locals {
   ecs_instance_autoscaling_cf_template_config = {
-    cluster_name           = aws_ecs_cluster.default.name
-    container_stop_timeout = var.ecs_container_stop_timeout,
-    docker_hub_config      = var.ecs_docker_hub_config,
-    docker_storage_driver  = var.ecs_docker_storage_driver,
-    docker_volume_size     = var.ecs_cluster_instance_docker_volume_size,
-    efs_dns_name           = var.ecs_efs_config == null ? null : data.aws_efs_mount_target.ecs_cluster_instance[0].dns_name,
-    efs_mount_point        = var.ecs_efs_config == null ? null : var.ecs_efs_config.mount_point,
-    image_id               = var.ecs_cluster_instance_image_id,
-    instance_profile       = aws_iam_instance_profile.ecs_cluster_instance.arn,
-    instance_type          = var.ecs_cluster_instance_type,
-    key_name               = var.key_name,
-    min_size               = var.ecs_cluster_min_size,
-    desired_capacity       = var.ecs_cluster_desired_size,
-    max_size               = var.ecs_cluster_max_size,
-    region                 = data.aws_region.current.name
-    security_group_id      = aws_security_group.ecs_cluster_instance.id,
-    subnet_ids             = var.ecs_cluster_instance_subnet_ids,
-    task_reaper_object     = aws_s3_bucket_object.task_reaper
+    cluster_name              = aws_ecs_cluster.default.name
+    container_stop_timeout    = var.ecs_container_stop_timeout,
+    docker_hub_config         = var.ecs_docker_hub_config,
+    docker_storage_driver     = var.ecs_docker_storage_driver,
+    docker_volume_size        = var.ecs_cluster_instance_docker_volume_size,
+    docker_volume_create_size = var.ecs_cluster_instance_docker_volume_size - 1,
+    efs_dns_name              = var.ecs_efs_config == null ? null : data.aws_efs_mount_target.ecs_cluster_instance[0].dns_name,
+    efs_mount_point           = var.ecs_efs_config == null ? null : var.ecs_efs_config.mount_point,
+    image_id                  = var.ecs_cluster_instance_image_id,
+    instance_profile          = aws_iam_instance_profile.ecs_cluster_instance.arn,
+    instance_type             = var.ecs_cluster_instance_type,
+    key_name                  = var.key_name,
+    min_size                  = var.ecs_cluster_min_size,
+    desired_capacity          = var.ecs_cluster_desired_size,
+    max_size                  = var.ecs_cluster_max_size,
+    region                    = data.aws_region.current.name
+    security_group_id         = aws_security_group.ecs_cluster_instance.id,
+    subnet_ids                = var.ecs_cluster_instance_subnet_ids,
+    task_reaper_object        = aws_s3_bucket_object.task_reaper
   }
 }
 

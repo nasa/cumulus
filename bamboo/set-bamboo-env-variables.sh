@@ -17,9 +17,11 @@ declare -a param_list=(
   "bamboo_SECRET_VPC_CIDR_IP"
   "bamboo_AWS_REGION"
   "bamboo_TFSTATE_BUCKET"
+  "bamboo_TFSTATE_LOCK_TABLE"
   "bamboo_CMR_PASSWORD"
   "bamboo_CMR_USERNAME"
   "bamboo_DEPLOYMENT"
+  "bamboo_KES_DEPLOYMENT"
   "bamboo_PUBLISH_FLAG"
   "bamboo_USE_NPM_PACKAGES"
   "bamboo_REPORT_BUILD_STATUS"
@@ -72,29 +74,6 @@ fi
 echo export BRANCH=$BRANCH >> .bamboo_env_vars
 
 
-## Run detect-pr script and set flag to true/false
-## depending on if there is a PR associated with the
-## current ref from the current branch
-if [[ -z $GIT_PR ]]; then
-  echo "Setting GIT_PR"
-  set +e
-  node ./bamboo/detect-pr.js $BRANCH master
-  PR_CODE=$?
-  set -e
-  if [[ PR_CODE -eq 100 ]]; then
-    export GIT_PR=true
-    echo export GIT_PR=true >> .bamboo_env_vars
-  elif [[ PR_CODE -eq 0 ]]; then
-    export GIT_PR=false
-    echo export GIT_PR=false >> .bamboo_env_vars
-  else
-    echo "Error detecting PR status"
-    exit 1
-  fi
-fi
-
-echo GIT_PR is $GIT_PR
-
 ## If tag matching the current ref is a version tag, set
 export GIT_TAG=$(git describe --exact-match HEAD 2>/dev/null | sed -n '1p')
 if [[ $GIT_TAG =~ ^v[0-9]+.* ]]; then
@@ -117,31 +96,68 @@ if [[ $bamboo_NGAP_ENV = "SIT" ]]; then
   export PROVIDER_HOST=$bamboo_SECRET_SIT_PROVIDER_HOST
   export SECURITY_GROUP=$bamboo_SECRET_SIT_SECURITY_GROUP
   export TFSTATE_BUCKET=$bamboo_SIT_TFSTATE_BUCKET
+  export TFSTATE_LOCK_TABLE=$bamboo_SIT_TFSTATE_LOCK_TABLE
   export SHARED_LOG_DESTINATION_ARN=$bamboo_SIT_SHARED_LOG_DESTINATION_ARN
   DEPLOYMENT=$bamboo_SIT_DEPLOYMENT
 fi
 
+## Override KES_DEPLOYMENT
+## Delete this when CI is switched to terraform for all of Core Team
+## (after v1.15, i.e. last non-Terraform release)
+if [[ $KES_DEPLOYMENT != true ]]; then
+  if [[ $COMMIT_MESSAGE =~ deploy-kes || $BRANCH =~ kes ]]; then
+    echo "Deploying Cumulus via Kes"
+    export KES_DEPLOYMENT=true
+  else
+    echo "Deploying Cumulus via Terraform"
+  fi
+fi
+## End override
+
 ## Set integration stack name if it's not been overridden *or* set by SIT
 if [[ -z $DEPLOYMENT ]]; then
   DEPLOYMENT=$(node ./bamboo/select-stack.js)
+
+  if [[ $KES_DEPLOYMENT != true ]]; then
+    echo "Using terraform stack name $DEPLOYMENT-tf"
+    DEPLOYMENT=$DEPLOYMENT-tf
+  fi
+
   echo deployment "$DEPLOYMENT"
   if [[ $DEPLOYMENT == none ]]; then
     echo "Unable to determine integration stack" >&2
     exit 1
   fi
-  if [[ $COMMIT_MESSAGE =~ deploy-terraform || $BRANCH =~ terraform ]]; then
-    echo "Detected terraform deployment branch or commit"
-    echo deployment "$DEPLOYMENT-tf"
-    DEPLOYMENT="$DEPLOYMENT-tf"
-  fi
   echo export DEPLOYMENT=$DEPLOYMENT >> .bamboo_env_vars
 fi
 
-if [[ $DEPLOYMENT =~ '-tf' ]]; then
-  echo "Using NGAPShNonProd credentials"
-  export AWS_ACCESS_KEY_ID=$bamboo_SECRET_NONPROD_AWS_ACCESS_KEY_ID
-  export AWS_SECRET_ACCESS_KEY=$bamboo_SECRET_NONPROD_AWS_SECRET_ACCESS_KEY
+# Target master by default.
+# Update with appropriate conditional
+# when creating a feature branch.
+export PR_BRANCH=master
+
+## Run detect-pr script and set flag to true/false
+## depending on if there is a PR associated with the
+## current ref from the current branch
+if [[ -z $GIT_PR ]]; then
+  echo "Setting GIT_PR"
+  set +e
+  node ./bamboo/detect-pr.js $BRANCH $PR_BRANCH
+  PR_CODE=$?
+  set -e
+  if [[ PR_CODE -eq 100 ]]; then
+    export GIT_PR=true
+    echo export GIT_PR=true >> .bamboo_env_vars
+  elif [[ PR_CODE -eq 0 ]]; then
+    export GIT_PR=false
+    echo export GIT_PR=false >> .bamboo_env_vars
+  else
+    echo "Error detecting PR status"
+    exit 1
+  fi
 fi
+
+echo GIT_PR is $GIT_PR
 
 ## Exporting the commit message as an env variable to be brought in
 ## for yes/no toggles on build
@@ -152,8 +168,10 @@ fi
 
 ## Branch if branch is master, or a version tag is set, or the commit
 ## message explicitly calls for running redeploy tests
-if [[ $BRANCH == master || $VERSION_FLAG || $COMMIT_MESSAGE =~ run-redeploy-tests ]]; then
-  export RUN_REDEPLOYMENT=true
-  echo "Setting RUN_REDEPLOYMENT to true"
-  echo export RUN_REDEPLOYMENT="true" >> .bamboo_env_vars
+if [[ $KES_DEPLOYMENT == true ]]; then
+  if [[ $BRANCH == master || $VERSION_FLAG || $COMMIT_MESSAGE =~ run-redeploy-tests ]]; then
+    export RUN_REDEPLOYMENT=true
+    echo "Setting RUN_REDEPLOYMENT to true"
+    echo export RUN_REDEPLOYMENT="true" >> .bamboo_env_vars
+  fi
 fi

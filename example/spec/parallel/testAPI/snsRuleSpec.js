@@ -21,29 +21,14 @@ const {
   timestampedName
 } = require('../../helpers/testUtils');
 
-const lambdaStep = new LambdaStep();
-const SNS = sns();
-const config = loadConfig();
-const ruleName = timestampedName('SnsRuleIntegrationTestRule');
-const snsTopicName = timestampedName(`${config.stackName}_SnsRuleIntegrationTestTopic`);
-const newValueTopicName = timestampedName(`${config.stackName}_SnsRuleValueChangeTestTopic`);
-const consumerName = `${config.stackName}-messageConsumer`;
-
-const snsMessage = '{"Data":{}}';
-const snsRuleDefinition = clonedeep(require('./snsRuleDef.json'));
-snsRuleDefinition.name = ruleName;
-snsRuleDefinition.meta.triggerRule = ruleName;
-process.env.stackName = config.stackName;
-process.env.system_bucket = config.buckets.internal.name;
-
 async function getNumberOfTopicSubscriptions(snsTopicArn) {
-  const subs = await SNS.listSubscriptionsByTopic({ TopicArn: snsTopicArn }).promise();
+  const subs = await sns().listSubscriptionsByTopic({ TopicArn: snsTopicArn }).promise();
   return subs.Subscriptions.length;
 }
 
 const policyErrorMessage = 'The resource you requested does not exist.';
 
-async function shouldCatchPolicyError() {
+async function shouldCatchPolicyError(consumerName) {
   try {
     await lambda().getPolicy({ FunctionName: consumerName }).promise();
     return undefined;
@@ -53,19 +38,45 @@ async function shouldCatchPolicyError() {
 }
 
 describe('The SNS-type rule', () => {
-  let postRule;
-  let snsTopicArn;
+  let config;
+  let consumerName;
+  let lambdaStep;
   let newTopicArn;
+  let newValueTopicName;
+  let postRule;
+  let ruleName;
+  let SNS;
+  let snsMessage;
+  let snsRuleDefinition;
+  let snsTopicArn;
+  let testSuffix;
   let updatedRule;
-  const testId = createTimestampedTestId(config.stackName, 'SnsRule');
-  const testSuffix = createTestSuffix(testId);
+
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
-  snsRuleDefinition.collection = {
-    name: `MOD09GQ${testSuffix}`, version: '006'
-  };
-
   beforeAll(async () => {
+    lambdaStep = new LambdaStep();
+    SNS = sns();
+    config = await loadConfig();
+    const testId = createTimestampedTestId(config.stackName, 'SnsRule');
+    testSuffix = createTestSuffix(testId);
+    ruleName = timestampedName('SnsRuleIntegrationTestRule');
+    const snsTopicName = timestampedName(`${config.stackName}_SnsRuleIntegrationTestTopic`);
+    newValueTopicName = timestampedName(`${config.stackName}_SnsRuleValueChangeTestTopic`);
+    consumerName = `${config.stackName}-messageConsumer`;
+
+    snsMessage = '{"Data":{}}';
+    // eslint-disable-next-line global-require
+    snsRuleDefinition = clonedeep(require('./snsRuleDef.json'));
+    snsRuleDefinition.name = ruleName;
+    snsRuleDefinition.meta.triggerRule = ruleName;
+    process.env.stackName = config.stackName;
+    process.env.system_bucket = config.system_bucket;
+
+    snsRuleDefinition.collection = {
+      name: `MOD09GQ${testSuffix}`, version: '006'
+    };
+
     await addCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix, testId);
     const { TopicArn } = await SNS.createTopic({ Name: snsTopicName }).promise();
@@ -172,7 +183,7 @@ describe('The SNS-type rule', () => {
     });
 
     it('deletes the policy and subscription', async () => {
-      expect(await shouldCatchPolicyError()).toEqual(policyErrorMessage);
+      expect(await shouldCatchPolicyError(consumerName)).toEqual(policyErrorMessage);
       expect(await getNumberOfTopicSubscriptions(snsTopicArn)).toBe(0);
     });
   });
@@ -302,7 +313,7 @@ describe('The SNS-type rule', () => {
     });
 
     it('deletes the policy and subscription', async () => {
-      expect(await shouldCatchPolicyError()).toEqual(policyErrorMessage);
+      expect(await shouldCatchPolicyError(consumerName)).toEqual(policyErrorMessage);
       expect(await getNumberOfTopicSubscriptions(newTopicArn)).toBe(0);
     });
   });

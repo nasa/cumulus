@@ -176,6 +176,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub '${Prefix}EcsLogs'
+      RetentionInDays: 30
 
   FakeProviderECSService:
     Type: AWS::ECS::Service

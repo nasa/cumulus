@@ -27,31 +27,20 @@ const {
   createTestSuffix
 } = require('../../helpers/testUtils');
 
-const config = loadConfig();
-const testId = createTimestampedTestId(config.stackName, 'sqsRule');
-const testSuffix = createTestSuffix(testId);
-const testDataFolder = createTestDataPath(testId);
-const ruleSuffix = globalReplace(testSuffix, '-', '_');
+let config;
+let testId;
+let testSuffix;
+let testDataFolder;
+let ruleSuffix;
+let ruleOverride;
 
 const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MOD09GQ_006';
-const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-const provider = { id: `s3_provider${testSuffix}` };
 const workflowName = 'IngestGranule';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
-
 const ruleDirectory = './spec/parallel/testAPI/data/rules/sqs';
-const ruleOverride = {
-  name: `MOD09GQ_006_sqsRule${ruleSuffix}`,
-  collection: {
-    name: collection.name,
-    version: collection.version
-  },
-  provider: provider.id,
-  workflow: workflowName
-};
 
 let queueUrl;
 
@@ -93,7 +82,25 @@ async function ingestGranule(queue) {
 
 describe('The SQS rule', () => {
   let ruleList = [];
+
   beforeAll(async () => {
+    config = await loadConfig();
+    testId = createTimestampedTestId(config.stackName, 'sqsRule');
+    testSuffix = createTestSuffix(testId);
+    testDataFolder = createTestDataPath(testId);
+    const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+    const provider = { id: `s3_provider${testSuffix}` };
+    ruleSuffix = globalReplace(testSuffix, '-', '_');
+    ruleOverride = {
+      name: `MOD09GQ_006_sqsRule${ruleSuffix}`,
+      collection: {
+        name: collection.name,
+        version: collection.version
+      },
+      provider: provider.id,
+      workflow: workflowName
+    };
+
     await setupCollectionAndTestData();
 
     // create SQS queue and add rule
@@ -116,17 +123,18 @@ describe('The SQS rule', () => {
 
   describe('When posting a message to the configured SQS queue', () => {
     let granuleId;
-    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-    const granuleModel = new Granule();
+
     beforeAll(async () => {
       granuleId = await ingestGranule(queueUrl);
     });
 
     afterAll(async () => {
-      await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: granuleId });
+      await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId });
     });
 
     it('workflow is kicked off, and the granule from the message is successfully ingested', async () => {
+      process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+      const granuleModel = new Granule();
       const record = await waitForModelStatus(
         granuleModel,
         { granuleId },
