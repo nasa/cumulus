@@ -53,16 +53,18 @@ test('buildCumulusMeta returns expected object', (t) => {
   });
 
   cumulusMeta = buildCumulusMeta({
-    queueName,
+    asyncOperationId,
     parentExecutionArn,
-    asyncOperationId
+    queueName,
+    stateMachine
   });
 
   t.deepEqual(cumulusMeta, {
-    queueName,
-    parentExecutionArn,
+    asyncOperationId,
     execution_name: fakeExecutionName,
-    asyncOperationId
+    state_machine: stateMachine,
+    parentExecutionArn,
+    queueName
   });
 });
 
