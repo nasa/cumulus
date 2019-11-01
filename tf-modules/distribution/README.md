@@ -28,7 +28,7 @@ Credentials Endpoint with a configuration targeted at Cumulus and NGAP.
   the S3 credentials endpoint to invoke, which whill return AWS API keys.
   Defaults to "gsfc-ngap-sh-s3-sts-get-keys".
 * **urs_url** (string) - The URL of the Earthdata Login site, defaults to
-  "https://urs.earthdata.nasa.gov"
+  <https://urs.earthdata.nasa.gov>
 
 ## Output variables
 
