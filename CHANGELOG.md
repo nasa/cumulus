@@ -44,6 +44,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added `sqs`-type rule support in the Cumulus API `@cumulus/api`
   - Added `sqsMessageConsumer` lambda which processes messages from the SQS queues configured in the `sqs` rules.
 
+- **CUMULUS-1619**
+  - Adds 3 new keys to `@cumulus/logger` to display granules, parentArn and stackName.
+
 ### Changed
 
 - **CUMULUS-1453**
