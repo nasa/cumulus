@@ -104,9 +104,8 @@ PostToCmr:
   handler: index.handler
   timeout: 300
   memory: 256
-  # logToElasticSearch: true
-  source: node_modules/@cumulus/post-to-cmr/dist/
   logToElasticSearch: true
+  source: node_modules/@cumulus/post-to-cmr/dist/
   layers:
     - '{{cma_layer}}'
   launchInVpc: true

@@ -25,7 +25,7 @@ const fakeMessageResponse = {
 const scheduleEventTemplate = {
   collection: 'fakeCollection',
   provider: 'fakeProvider',
-  cumulusMeta: {},
+  cumulus_meta: {},
   payload: {},
   template: 's3://somewhere/nice'
 };

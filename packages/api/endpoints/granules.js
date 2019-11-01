@@ -206,7 +206,7 @@ async function bulk(req, res) {
       },
       esHost: process.env.ES_HOST
     });
-    res.send(`On my wings!. \nStarted async-operation: ${asyncOperation.id}`);
+    res.send(asyncOperation);
   } catch (err) {
     if (err.name !== 'EcsStartTaskError') throw err;
 

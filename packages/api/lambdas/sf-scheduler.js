@@ -60,8 +60,6 @@ async function handleScheduleEvent(event) {
     provider
   });
 
-  console.log(JSON.stringify(message.meta.queues));
-
   return SQS.sendMessage(message.meta.queues[queueName], message);
 }
 

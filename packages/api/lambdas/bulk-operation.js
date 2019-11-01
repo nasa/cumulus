@@ -58,32 +58,6 @@ async function bulkGranule(payload) {
     // Request against elastic search with pagenation
     // page through response, for each item in each page, applyWorkflow
   }
-
-  // const client = new elasticsearch.Client({
-  //   host: [
-  //     {
-  //       host: process.env.METRICS_ES_HOST,
-  //       auth: process.env.METRICS_ES_AUTH,
-  //       protocol: 'https',
-  //       port: 443
-  //     }
-  //   ]
-  // });
-
-  // const result = await client.search({
-  //   index: index,
-  //   payload: query
-  // });
-
-  // console.log(result);
-
-  // const applyWorkflowRequests = response.filter((item) => item._source.granuleId)
-  //   .map(async (item) => {
-  //     const granule = await granuleModelClient.get({ granuleId: item._source.granuleId });
-  //     return granuleModelClient.applyWorkflow(granule, workflowName, queueName);
-  //   });
-
-  // await Promise.all(applyWorkflowRequests);
 };
 
 async function handler(event) {
