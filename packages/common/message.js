@@ -30,10 +30,10 @@ const buildCumulusMeta = ({
 }) => {
   const cumulusMeta = {
     execution_name: createExecutionName(),
-    asyncOperationId,
     queueName
   };
   if (parentExecutionArn) cumulusMeta.parentExecutionArn = parentExecutionArn;
+  if (asyncOperationId) cumulusMeta.asyncOperationId = asyncOperationId;
   return cumulusMeta;
 };
 
