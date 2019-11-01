@@ -12,3 +12,20 @@ Provides an ECS service and task definition, including autoscaling configuration
 ## Input variables
 
 See [variables.tf](./variables.tf) for the input variables to this module and the default values for optional variables.
+
+## Example
+
+```hcl
+module "example_ecs_service" {
+  source = "https://github.com/nasa/cumulus/releases/download/v1.26.0/terraform-aws-cumulus-ecs-service.zip/"
+
+  prefix = "my-prefix"
+  name   = "MyServiceName"
+
+  log2elasticsearch_lambda_function_arn = "arn:aws:lambda:us-east-1:1234567890:function:log2elasticsearch"
+
+  cluster_arn                           = "arn:aws:ecs:us-east-1:1234567890:cluster/MyECSCluster1"
+  desired_count                         = 1
+  image                                 = "cumuluss/cumulus-ecs-task:1.3.0"
+}
+```
