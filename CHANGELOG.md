@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### BREAKING CHANGES
 
 - **CUMULUS-1449** - Cumulus now uses a universal workflow template when
-  starting workflow that contains general information specific to the
+  starting a workflow that contains general information specific to the
   deployment, but not specific to the workflow. Workflow task configs must be
   defined using AWS step function parameters. As part of this change,
   `CumulusConfig` has been retired and task configs must now be defined under
@@ -74,6 +74,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   examples of how to update your workflow definitions, see our
   [example workflow definitions](https://github.com/nasa/cumulus/blob/master/example/workflows/).
 
+- **CUMULUS-1470**
+  - Remove Cumulus-defined ECS service autoscaling, allowing integrators to
+    better customize autoscaling to meet their needs. In order to use
+    autoscaling with ECS services, appropriate
+    `AWS::ApplicationAutoScaling::ScalableTarget`,
+    `AWS::ApplicationAutoScaling::ScalingPolicy`, and `AWS::CloudWatch::Alarm`
+    resources should be defined in a kes overrides file. See
+    [example/app/cloudformation.template.yml](./example/app/cloudformation.template.yml)
+    for an example.
+  - The following config parameters are no longer used:
+    - ecs.services.\<NAME\>.minTasks
+    - ecs.services.\<NAME\>.maxTasks
+    - ecs.services.\<NAME\>.scaleInActivityScheduleTime
+    - ecs.services.\<NAME\>.scaleInAdjustmentPercent
+    - ecs.services.\<NAME\>.scaleOutActivityScheduleTime
+    - ecs.services.\<NAME\>.scaleOutAdjustmentPercent
+    - ecs.services.\<NAME\>.activityName
+
 ### Added
 
 - **CUMULUS-1100**
@@ -96,12 +114,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- **CUMULUS-1449**
+  - `queue-pdrs` & `queue-granules` config changes. Details in breaking changes section.	
+  - Cumulus now uses a universal workflow template when starting workflow that contains general information specific to the deployment, but not specific to the workflow.	
+  - Changed the way workflow configs are defined, from `CumulusConfig` to a `task_config` AWS Parameter.
+
+- **CUMULUS-1452**
+  - Changed the default ECS docker storage drive to `devicemapper`
+
 - **CUMULUS-1453**
   - Removed config schema for `@cumulus/sf-sns-report` task
   - Updated `@cumulus/sf-sns-report` to always assume that it is running as an intermediate step in a workflow, not as the first or last step
 
-- **CUMULUS-1452**
-  - Changed the default ECS docker storage drive to `devicemapper`
+### Removed
+
+- **CUMULUS-1449**
+  - Retired `CumulusConfig` as part of step function definitions, as this is an artifact of the way Kes parses workflow definitions that was not possible to migrate to Terraform. Use AWS Parameters and the `task_config` key instead. See change note above.	
+  - Removed individual workflow templates.
 
 ### Fixed
 
