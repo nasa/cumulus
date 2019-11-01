@@ -76,7 +76,7 @@ For this example, you are going to be adding two workflows to your Cumulus deplo
 
 #### Workflow Configuration
 
-Add the following to a new file ```browse_example.tf``` in your deployment's main directory: [from github](https://github.com/nasa/cumulus/blob/master/example/workflows/browseExample.yml).  The file should contain the two example workflow modules.
+Add the following to a new file `browse_example.tf` in your deployment's main directory: [from github](https://github.com/nasa/cumulus/blob/master/example/workflows/browseExample.yml). The file should contain the two example workflow modules.
 
 **Please Note**: You should update the `source =` line to match the current Cumulus `workflow` module deployment artifact to the version of Cumulus you're deploying:
 
