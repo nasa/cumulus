@@ -193,8 +193,6 @@ Note that in the task, the `CmrStep.Parameters.cma.task_config.cmr` key will con
 
 All lambdas utilized in this example are provided in a standard deployment of Cumulus and require no additional configuration.
 
-If you're not ingesting mock data matching the example, or would like to use this entry to ingest your own data please see the [build-lambda](#build-lambda) section below.    You will need to add a terraform `aws_lambda_function` resource to your deployment.
-
 #### Redeploy
 
 Once you've configured your CMR credentials, updated your workflow configuration, and updated your lambda configuration you should be able to redeploy your cumulus instance by running the following commands:
