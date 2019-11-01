@@ -89,46 +89,46 @@ A few things to note about tasks in the workflow being added:
 * The CMR step in CookbookBrowseExample:
 
 ```json
-"CmrStep": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "task_config": {
-            "bucket": "{$.meta.buckets.internal.name}",
-            "stack": "{$.meta.stack}",
-            "cmr": "{$.meta.cmr}",
-            "launchpad": "{$.meta.launchpad}",
-            "process": "{$.meta.process}",
-            "input_granules": "{$.meta.input_granules}",
-            "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}"
-          }
+  "CmrStep": {
+    "Parameters": {
+      "cma": {
+        "event.$": "$",
+        "task_config": {
+          "bucket": "{$.meta.buckets.internal.name}",
+          "stack": "{$.meta.stack}",
+          "cmr": "{$.meta.cmr}",
+          "launchpad": "{$.meta.launchpad}",
+          "process": "{$.meta.process}",
+          "input_granules": "{$.meta.input_granules}",
+          "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}"
         }
-      },
-      "Type": "Task",
-      "Resource": "${module.cumulus.post_to_cmr_task_lambda_function_arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "ResultPath": "$.exception",
-          "Next": "WorkflowFailed"
-        }
-      ],
-      "End": true
+      }
     },
+    "Type": "Task",
+    "Resource": "${module.cumulus.post_to_cmr_task_lambda_function_arn}",
+    "Retry": [
+      {
+        "ErrorEquals": [
+          "Lambda.ServiceException",
+          "Lambda.AWSLambdaException",
+          "Lambda.SdkClientException"
+        ],
+        "IntervalSeconds": 2,
+        "MaxAttempts": 6,
+        "BackoffRate": 2
+      }
+    ],
+    "Catch": [
+      {
+        "ErrorEquals": [
+          "States.ALL"
+        ],
+        "ResultPath": "$.exception",
+        "Next": "WorkflowFailed"
+      }
+    ],
+    "End": true
+  }
 ```
 
 Note that in the task, the ```CmrStep.Parameters.cma.task_config.cmr``` key will contain the values you configured in the ```cmr``` configuration section above.
