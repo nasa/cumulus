@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/cmr-client",
-  "version": "1.13.5",
+  "version": "1.13.6",
   "engines": {
     "node": ">=8.10.0"
   },
@@ -32,7 +32,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/logger": "1.13.5",
+    "@cumulus/logger": "1.13.6",
     "got": "^9.6.0",
     "lodash.get": "^4.4.2",
     "lodash.property": "^4.4.2",

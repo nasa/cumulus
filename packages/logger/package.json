@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/logger",
-  "version": "1.13.5",
+  "version": "1.13.6",
   "description": "A log library for use on Cumulus",
   "keywords": [
     "GIBS",
