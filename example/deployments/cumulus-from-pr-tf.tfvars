@@ -1,1 +1,1 @@
-prefix = "test-pr-integration-tf"
+prefix = "cumulus-from-pr-tf"
