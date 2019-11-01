@@ -1,8 +1,8 @@
 {
   "default": true,
-  "MD013": false,
-  "MD024": false,
-  "MD025": { "front_matter_title": "" },
-  "MD029": { "style": "ordered" },
+  "line-length": false,
+  "no-duplicate-header": false,
+  "single-h1": { "front_matter_title": "" },
+  "ol-prefix": { "style": "ordered" },
   "no-hard-tabs": false
 }
