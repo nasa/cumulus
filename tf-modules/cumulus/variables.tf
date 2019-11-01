@@ -72,7 +72,7 @@ variable "elasticsearch_security_group_id" {
 }
 
 variable "prefix" {
-  description = "The unique prefix for your deployment's resources"
+  description = "The unique prefix for your deployment resources"
   type = string
 }
 

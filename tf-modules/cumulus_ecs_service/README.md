@@ -13,11 +13,15 @@ Provides an ECS service and task definition, including autoscaling configuration
 
 See [variables.tf](./variables.tf) for the input variables to this module and the default values for optional variables.
 
+## Outputs
+
+- **service_name** - Name of the created ECS service
+
 ## Example
 
 ```hcl
 module "example_ecs_service" {
-  source = "https://github.com/nasa/cumulus/releases/download/v1.26.0/terraform-aws-cumulus-ecs-service.zip/"
+  source = "https://github.com/nasa/cumulus/releases/download/v1.26.0/terraform-aws-cumulus-ecs-service.zip"
 
   prefix = "my-prefix"
   name   = "MyServiceName"
