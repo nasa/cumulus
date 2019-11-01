@@ -24,6 +24,7 @@ message.__set__('createExecutionName', () => fakeExecutionName);
 
 test('buildCumulusMeta returns expected object', (t) => {
   const queueName = randomId('queue');
+  const asyncOperationId = randomString();
 
   let cumulusMeta = buildCumulusMeta({
     queueName
@@ -45,6 +46,19 @@ test('buildCumulusMeta returns expected object', (t) => {
     parentExecutionArn,
     execution_name: fakeExecutionName
   });
+
+  cumulusMeta = buildCumulusMeta({
+    queueName,
+    parentExecutionArn,
+    asyncOperationId
+  });
+
+  t.deepEqual(cumulusMeta, {
+    queueName,
+    parentExecutionArn,
+    execution_name: fakeExecutionName,
+    asyncOperationId
+  })
 });
 
 test('getMessageExecutionName throws error if cumulus_meta.execution_name is missing', (t) => {
