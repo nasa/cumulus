@@ -60,19 +60,19 @@ For this example, you are going to be adding two workflows to your Cumulus deplo
 
 * DiscoverGranulesBrowseExample
 
-  This workflow will run the ```DiscoverGranules``` task, targeting the S3 bucket/folder mentioned in the prerequisites.    The output of that task will be passed into QueueGranules, which will trigger the second workflow for each granule to be ingested.   The example presented here will be a single granule with a .hdf data file and a .met metadata file only, however your setup may result in more granules, or different files.
+  This workflow will run the `DiscoverGranules` task, targeting the S3 bucket/folder mentioned in the prerequisites.    The output of that task will be passed into QueueGranules, which will trigger the second workflow for each granule to be ingested.   The example presented here will be a single granule with a .hdf data file and a .met metadata file only, however your setup may result in more granules, or different files.
 
 * CookbookBrowseExample
 
   This workflow will be triggered for each granule in the previous workflow.    It will utilize the SyncGranule task, which brings the files into a staging location in the Cumulus buckets.
 
-  The output from this task will be passed into the ```ProcessingStep``` step , which in this example will utilize the ```FakeProcessingLambda``` task we provide for testing/as an example in Core, however to use your own data you will need to write a lambda that generates the appropriate CMR metadata file and accepts and returns appropriate task inputs and outputs.
+  The output from this task will be passed into the `ProcessingStep` step , which in this example will utilize the `FakeProcessingLambda` task we provide for testing/as an example in Core, however to use your own data you will need to write a lambda that generates the appropriate CMR metadata file and accepts and returns appropriate task inputs and outputs.
 
-  From that task  we will utilize a core task ```FilesToGranules``` that will transform the processing output event.input list/config.InputGranules into an array of Cumulus [granules](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects.
+  From that task  we will utilize a core task `FilesToGranules` that will transform the processing output event.input list/config.InputGranules into an array of Cumulus [granules](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects.
 
-  Using the generated granules list, we will utilize the core task ```MoveGranules``` to move the granules to the target buckets as defined in the collection configuration.  That task will transfer the files to their final storage location and update the CMR metadata files and the granules list as output.
+  Using the generated granules list, we will utilize the core task `MoveGranules` to move the granules to the target buckets as defined in the collection configuration.  That task will transfer the files to their final storage location and update the CMR metadata files and the granules list as output.
 
-  That output will be used in the ```PostToCmr``` task combined with the previously generated CMR file to export the granule metadata to CMR.
+  That output will be used in the `PostToCmr` task combined with the previously generated CMR file to export the granule metadata to CMR.
 
 #### Workflow Configuration
 
@@ -131,7 +131,7 @@ A few things to note about tasks in the workflow being added:
   }
 ```
 
-Note that in the task, the ```CmrStep.Parameters.cma.task_config.cmr``` key will contain the values you configured in the ```cmr``` configuration section above.
+Note that in the task, the `CmrStep.Parameters.cma.task_config.cmr` key will contain the values you configured in the ```cmr``` configuration section above.
 
 * The Processing step in CookbookBrowseExample:
 
@@ -185,21 +185,21 @@ Note that in the task, the ```CmrStep.Parameters.cma.task_config.cmr``` key will
 },
 ```
 
- If you're not ingesting mock data matching the example, or would like to use modify the example to ingest your own data please see the [build-lambda](#build-lambda) section below.    You will need to configure a different lambda entry for your lambda and utilize it in place of the ```Resource``` defined in the example workflow.
+ If you're not ingesting mock data matching the example, or would like to use modify the example to ingest your own data please see the [build-lambda](#build-lambda) section below.    You will need to configure a different lambda entry for your lambda and utilize it in place of the `Resource` defined in the example workflow.
 
- **Please note**: ```FakeProcessing``` is the core provided browse/cmr generation lambda we're using for the example in this entry.
+ **Please note**: `FakeProcessing` is the core provided browse/cmr generation lambda we're using for the example in this entry.
 
 #### Lambdas
 
 All lambdas utilized in this example are provided in a standard deployment of Cumulus and require no additional configuration.
 
-If you're not ingesting mock data matching the example, or would like to use this entry to ingest your own data please see the [build-lambda](#build-lambda) section below.    You will need to add a terraform ```aws_lambda_function``` resource to your deployment.
+If you're not ingesting mock data matching the example, or would like to use this entry to ingest your own data please see the [build-lambda](#build-lambda) section below.    You will need to add a terraform `aws_lambda_function` resource to your deployment.
 
 #### Redeploy
 
 Once you've configured your CMR credentials, updated your workflow configuration, and updated your lambda configuration you should be able to redeploy your cumulus instance by running the following commands:
 
-* ```terraform init```
+* `terraform init`
 
 You should expect to see output similar to:
 
@@ -226,7 +226,7 @@ rerun this command to reinitialize your working directory. If you forget, other
 commands will detect it and remind you to do so if necessary.
 ```
 
-* ```terraform apply```
+* `terraform apply`
 
 You should expect to see output similar to the following truncated example:
 
@@ -368,7 +368,7 @@ Then click the gear in the upper right corner and click "ReRun":
 
 ![Screenshot of a rule edit page in the Cumulus dashboard with a pop-up menu open](../../assets/browse_processing_2.png)
 
-Tab over to executions and you should see the ```DiscoverGranulesBrowseExample``` workflow fire, succeed and then moments later the ```CookbookBrowseExample```.
+Tab over to executions and you should see the `DiscoverGranulesBrowseExample` workflow fire, succeed and then moments later the `CookbookBrowseExample`.
 
 ![Screenshot of page listing executions in the Cumulus dashboard](../../assets/browse_processing_3.png)
 
@@ -463,7 +463,7 @@ The discussion below outlines requirements for this lambda.
 
 ### Inputs
 
-The incoming message to the task defined in the  ```ProcessingStep``` as configured will have the following configuration values (accessible inside event.config courtesy of the message adapter):
+The incoming message to the task defined in the  `ProcessingStep` as configured will have the following configuration values (accessible inside event.config courtesy of the message adapter):
 
 #### Configuration
 
@@ -471,13 +471,13 @@ The incoming message to the task defined in the  ```ProcessingStep``` as configu
 
 * event.config.collection -- The full collection object we will configure in the [Configure Ingest](#configure-ingest) section. You can view the expected collection schema in the docs [here](data-cookbooks/setup.md) or in the source code [on github](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js). You need this as available input *and* output so you can update as needed.
 
-```event.config.additionalUrls```, ```generateFakeBrowse```  and ```event.config.cmrMetadataFormat``` from the example can be ignored as they're configuration flags for the provided example script.
+`event.config.additionalUrls`, `generateFakeBrowse`  and `event.config.cmrMetadataFormat` from the example can be ignored as they're configuration flags for the provided example script.
 
 #### Payload
 
 The 'payload' from the previous task is accessible via event.input. The expected payload output schema from SyncGranules can be viewed [here](https://github.com/nasa/cumulus/blob/master/tasks/move-granules/schemas/output.json).
 
-In our example, the payload would look like the following. **Note**: The types are set per-file based on what we configured in our collection, and were initially added as part of the ```DiscoverGranules``` step in the ```DiscoverGranulesBrowseExample``` workflow.
+In our example, the payload would look like the following. **Note**: The types are set per-file based on what we configured in our collection, and were initially added as part of the `DiscoverGranules` step in the `DiscoverGranulesBrowseExample` workflow.
 
 ```json
  "payload": {
@@ -522,19 +522,19 @@ The provided example script used in the example goes through all granules and ad
 
 The processing lambda you construct will need to do the following:
 
-* Create a browse image file based on the input data, and stage it to a location accessible to both this task and the ```FilesToGranules``` and ```MoveGranules``` tasks in a S3 bucket.
-* Add the browse file to the input granule files, making sure to set the granule file's type to ```browse```.
-* Update meta.input_granules with the updated granules list, as well as provide the files to be integrated by ```FilesToGranules``` as output from the task.
+* Create a browse image file based on the input data, and stage it to a location accessible to both this task and the `FilesToGranules` and `MoveGranules` tasks in a S3 bucket.
+* Add the browse file to the input granule files, making sure to set the granule file's type to `browse`.
+* Update meta.input_granules with the updated granules list, as well as provide the files to be integrated by `FilesToGranules` as output from the task.
 
 ### Generating/updating CMR metadata
 
-If you do not already have a CMR file in the granules list, you will need to generate one for valid export.   This example's processing script generates and adds it to the ```FilesToGranules``` file list via the payload  but it can be present in the InputGranules from the DiscoverGranules task as well if you'd prefer to pre-generate it.
+If you do not already have a CMR file in the granules list, you will need to generate one for valid export.   This example's processing script generates and adds it to the `FilesToGranules` file list via the payload  but it can be present in the InputGranules from the DiscoverGranules task as well if you'd prefer to pre-generate it.
 
-Both downstream tasks ```MoveGranules``` and ```PostToCmr``` expect a valid CMR file to be available if you want to export to CMR.
+Both downstream tasks `MoveGranules` and `PostToCmr` expect a valid CMR file to be available if you want to export to CMR.
 
 ### Expected Outputs for processing task/tasks
 
-In the above example, the critical portion of the output to ```FilesToGranules``` is the payload and meta.input_granules.
+In the above example, the critical portion of the output to `FilesToGranules` is the payload and meta.input_granules.
 
 In the example provided, the processing task is setup to return an object with the keys "files" and "granules".   In the cumulus_message configuration, the outputs are mapped in the configuration to the payload, granules to meta.input_granules:
 
@@ -549,9 +549,9 @@ Their expected values from the example above may be useful in constructing a pro
 
 #### payload
 
-The payload includes a full list of files to be 'moved' into the cumulus archive.   The ```FilesToGranules``` task will take this list, merge it with the information from ```InputGranules```, then pass that list to the ```MoveGranules``` task.  The ```MoveGranules``` task will then move the files to their targets and update the CMR metadata file if it exists with the updated granule locations.
+The payload includes a full list of files to be 'moved' into the cumulus archive.   The `FilesToGranules` task will take this list, merge it with the information from `InputGranules`, then pass that list to the `MoveGranules` task.  The `MoveGranules` task will then move the files to their targets and update the CMR metadata file if it exists with the updated granule locations.
 
-In the provided example, a payload being passed to the  ```FilesToGranules``` task should be expected to look like:
+In the provided example, a payload being passed to the  `FilesToGranules` task should be expected to look like:
 
 ```json
   "payload": [
@@ -564,11 +564,11 @@ In the provided example, a payload being passed to the  ```FilesToGranules``` ta
 
 This list is the list of granules ```FilesToGranules``` will act upon to add/merge with the input_granules object.
 
-The pathing is generated from sync-granules, but in principle the files can be staged wherever you like so long as the processing/```MoveGranules``` task's roles have access and the filename matches the collection configuration.
+The pathing is generated from sync-granules, but in principle the files can be staged wherever you like so long as the processing/`MoveGranules` task's roles have access and the filename matches the collection configuration.
 
 #### input_granules
 
-The ```FilesToGranules``` task utilizes the incoming payload to chose which files to move, but pulls all other metadata from meta.input_granules.  As such, the output payload in the example would look like:
+The `FilesToGranules` task utilizes the incoming payload to chose which files to move, but pulls all other metadata from meta.input_granules.  As such, the output payload in the example would look like:
 
 ```json
 "input_granules": [
