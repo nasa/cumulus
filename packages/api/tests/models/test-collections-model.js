@@ -66,11 +66,18 @@ test('Collection.delete() throws an exception if the collection has associated r
   });
 
   // The workflow message template must exist in S3 before the rule can be created
-  await s3().putObject({
-    Bucket: process.env.system_bucket,
-    Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
-    Body: JSON.stringify({})
-  }).promise();
+  await Promise.all([
+    s3().putObject({
+      Bucket: process.env.system_bucket,
+      Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
+      Body: JSON.stringify({})
+    }).promise(),
+    s3().putObject({
+      Bucket: process.env.system_bucket,
+      Key: `${process.env.stackName}/workflow_template.json`,
+      Body: JSON.stringify({})
+    }).promise()
+  ]);
 
   await ruleModel.create(rule);
 

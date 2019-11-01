@@ -1,48 +1,54 @@
 KinesisTriggerTest:
-  Comment: 'Tests Workflow from Kinesis Stream'
+  Comment: "Tests Workflow from Kinesis Stream"
   StartAt: TranslateMessage
   States:
     TranslateMessage:
       Type: Task
       Resource: ${CNMToCMALambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          outputs:
-            - source: '{$.cnm}'
-              destination: '{$.meta.cnm}'
-            - source: '{$}'
-              destination: '{$.payload}'
+      Parameters:
+        cma:
+          event.$: "$"
+          task_config:
+            cumulus_message:
+              outputs:
+                - source: "{$.cnm}"
+                  destination: "{$.meta.cnm}"
+                - source: "{$}"
+                  destination: "{$.payload}"
       Retry:
         - &LambdaServiceExceptionRetry
           ErrorEquals:
-          - Lambda.ServiceException
-          - Lambda.AWSLambdaException
-          - Lambda.SdkClientException
+            - Lambda.ServiceException
+            - Lambda.AWSLambdaException
+            - Lambda.SdkClientException
           IntervalSeconds: 2
           MaxAttempts: 6
           BackoffRate: 2
       Catch:
         - &ErrorEqualDefaults
           ErrorEquals:
-          - States.ALL
-          ResultPath: '$.exception'
+            - States.ALL
+          ResultPath: "$.exception"
           Next: CnmResponseFail
       Next: SyncGranule
     SyncGranule:
+      Parameters:
+        cma:
+          event.$: "$"
+          task_config:
+            provider: "{$.meta.provider}"
+            buckets: "{$.meta.buckets}"
+            collection: "{$.meta.collection}"
+            downloadBucket: "{$.meta.buckets.private.name}"
+            stack: "{$.meta.stack}"
+            cumulus_message:
+              outputs:
+                - source: "{$.granules}"
+                  destination: "{$.meta.input_granules}"
+                - source: "{$}"
+                  destination: "{$.payload}"
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
-      CumulusConfig:
-        provider: '{$.meta.provider}'
-        buckets: '{$.meta.buckets}'
-        collection: '{$.meta.collection}'
-        downloadBucket: '{$.meta.buckets.private.name}'
-        stack: '{$.meta.stack}'
-        cumulus_message:
-          outputs:
-            - source: '{$.granules}'
-              destination: '{$.meta.input_granules}'
-            - source: '{$}'
-              destination: '{$.payload}'
       Retry:
         - ErrorEquals:
             - States.ALL
@@ -52,17 +58,20 @@ KinesisTriggerTest:
         - <<: *ErrorEqualDefaults
       Next: CnmResponse
     CnmResponse: &CnmResponseDefaults
-      CumulusConfig:
-        OriginalCNM: '{$.meta.cnm}'
-        CNMResponseStream: '{$.meta.cnmResponseStream}'
-        region: 'us-east-1'
-        WorkflowException: '{$.exception}'
-        cumulus_message:
-          outputs:
-            - source: '{$}'
-              destination: '{$.meta.cnmResponse}'
-            - source: '{$}'
-              destination: '{$.payload}'
+      Parameters:
+        cma:
+          event.$: "$"
+          task_config:
+            OriginalCNM: "{$.meta.cnm}"
+            CNMResponseStream: "{$.meta.cnmResponseStream}"
+            region: "us-east-1"
+            WorkflowException: "{$.exception}"
+            cumulus_message:
+              outputs:
+                - source: "{$}"
+                  destination: "{$.meta.cnmResponse}"
+                - source: "{$}"
+                  destination: "{$.payload}"
       Type: Task
       Resource: ${CnmResponseLambdaFunction.Arn}
       Retry:
@@ -73,6 +82,20 @@ KinesisTriggerTest:
       Next: WorkflowSucceeded
     CnmResponseFail:
       <<: *CnmResponseDefaults
+      Parameters:
+        cma:
+          event.$: "$"
+          task_config:
+            OriginalCNM: "{$.meta.cnm}"
+            CNMResponseStream: "{$.meta.cnmResponseStream}"
+            region: "us-east-1"
+            WorkflowException: "{$.exception}"
+            cumulus_message:
+              outputs:
+                - source: "{$}"
+                  destination: "{$.meta.cnmResponse}"
+                - source: "{$}"
+                  destination: "{$.payload}"
       Catch:
         - <<: *ErrorEqualDefaults
           Next: WorkflowFailed
@@ -81,4 +104,4 @@ KinesisTriggerTest:
       Type: Succeed
     WorkflowFailed:
       Type: Fail
-      Cause: 'Workflow failed'
+      Cause: "Workflow failed"

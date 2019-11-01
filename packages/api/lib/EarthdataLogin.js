@@ -9,7 +9,8 @@ const {
   OAuth2
 } = require('./OAuth2');
 
-const isBadRequestError = (err) => err.name === 'HTTPError' && err.statusCode === 400;
+const isBadRequestError = ({ name, statusCode }) =>
+  name === 'HTTPError' && statusCode === 400;
 
 /**
  * This is an interface to the Earthdata Login service.

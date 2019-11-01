@@ -8,8 +8,8 @@ const aws = require('@cumulus/common/aws');
 const cmrjs = require('@cumulus/cmrjs');
 const { randomString } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
-const { noop } = require('@cumulus/common/util');
 const StepFunctions = require('@cumulus/common/StepFunctions');
+const workflows = require('@cumulus/common/workflows');
 
 const indexer = require('../../../es/indexer');
 const { Search } = require('../../../es/search');
@@ -35,7 +35,11 @@ let collectionModel;
 let executionModel;
 let granuleModel;
 let pdrsModel;
+let cmrStub;
 let stepFunctionsStub;
+let existsStub;
+let workflowStub;
+let templateStub;
 
 const input = JSON.stringify(granuleSuccess);
 const payload = JSON.parse(input);
@@ -75,13 +79,17 @@ test.before(async () => {
     productionDateTime: '2018-04-25T21:45:45.524Z'
   };
 
-  sinon.stub(cmrjs, 'getGranuleTemporalInfo').callsFake(() => fakeMetadata);
+  cmrStub = sinon.stub(cmrjs, 'getGranuleTemporalInfo').callsFake(() => fakeMetadata);
 
   stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').returns({
     input,
     startDate: new Date(Date.UTC(2019, 6, 28)),
     stopDate: new Date(Date.UTC(2019, 6, 28, 1))
   });
+
+  existsStub = sinon.stub(aws, 'fileExists').returns(true);
+  templateStub = sinon.stub(workflows, 'getWorkflowTemplate').returns({});
+  workflowStub = sinon.stub(workflows, 'getWorkflowFile').returns({});
 });
 
 test.after.always(async () => {
@@ -93,8 +101,11 @@ test.after.always(async () => {
   await esClient.indices.delete({ index: esIndex });
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
 
-  cmrjs.getGranuleTemporalInfo.restore();
+  cmrStub.restore();
   stepFunctionsStub.restore();
+  existsStub.restore();
+  templateStub.restore();
+  workflowStub.restore();
 });
 
 test.serial('indexing a deletedgranule record', async (t) => {
@@ -392,9 +403,6 @@ test.serial('delete a provider record', async (t) => {
 
 // This needs to be serial because it is stubbing aws.sfn's responses
 test.serial('reingest a granule', async (t) => {
-  const key = `${process.env.stackName}/workflows/${payload.meta.workflow_name}.json`;
-  await aws.s3().putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'test data' }).promise();
-
   payload.payload.granules[0].granuleId = randomString();
   const records = await granuleModel.createGranulesFromSns(payload);
   const record = records[0];
@@ -407,81 +415,6 @@ test.serial('reingest a granule', async (t) => {
   const newRecord = await g.get({ granuleId: record.granuleId });
 
   t.is(newRecord.status, 'running');
-});
-
-test.serial('pass a sns message to main handler', async (t) => {
-  const txt = fs.readFileSync(path.join(
-    __dirname,
-    '../../data/sns_message_granule.txt'
-  ), 'utf8');
-
-  const event = JSON.parse(JSON.parse(txt.toString()));
-  const resp = await indexer.handler(event, {}, noop);
-
-  t.is(resp.length, 1);
-  t.truthy(resp[0].sf);
-  t.truthy(resp[0].granule);
-  t.falsy(resp[0].pdr);
-
-  // fake granule index to elasticsearch (this is done in a lambda function)
-  await indexer.indexGranule(esClient, resp[0].granule[0]);
-
-  const msg = JSON.parse(event.Records[0].Sns.Message);
-  const granule = msg.payload.granules[0];
-  const collection = msg.meta.collection;
-  const collectionId = constructCollectionId(collection.name, collection.version);
-  // test granule record is added
-  const record = await esClient.get({
-    index: esIndex,
-    type: 'granule',
-    id: granule.granuleId,
-    parent: collectionId
-  }).then((response) => response.body);
-  t.is(record._id, granule.granuleId);
-});
-
-test.serial('pass a sns message to main handler with parse info', async (t) => {
-  const txt = fs.readFileSync(path.join(
-    __dirname,
-    '../../data/sns_message_parse_pdr.txt'
-  ), 'utf8');
-
-  const event = JSON.parse(JSON.parse(txt.toString()));
-  const resp = await indexer.handler(event, {}, noop);
-
-  t.is(resp.length, 1);
-  t.truthy(resp[0].sf);
-  t.is(resp[0].granule, null);
-  t.truthy(resp[0].pdr);
-
-  // fake pdr index to elasticsearch (this is done in a lambda function)
-  await indexer.indexPdr(esClient, resp[0].pdr);
-
-  const msg = JSON.parse(event.Records[0].Sns.Message);
-  const pdr = msg.payload.pdr;
-  // test granule record is added
-  const record = await esClient.get({
-    index: esIndex,
-    type: 'pdr',
-    id: pdr.name
-  }).then((response) => response.body);
-  t.is(record._id, pdr.name);
-  t.falsy(record._source.error);
-});
-
-test.serial('pass a sns message to main handler with discoverpdr info', async (t) => {
-  const txt = fs.readFileSync(path.join(
-    __dirname, '../../data/sns_message_discover_pdr.txt'
-  ), 'utf8');
-
-  const event = JSON.parse(JSON.parse(txt.toString()));
-
-  const resp = await indexer.handler(event, {}, noop);
-
-  t.is(resp.length, 1);
-  t.truthy(resp[0].sf);
-  t.is(resp[0].granule, null);
-  t.falsy(resp[0].pdr);
 });
 
 test.serial('indexing a granule record', async (t) => {

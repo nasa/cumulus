@@ -16,25 +16,31 @@ const {
 const mime = require('mime-types');
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
-const config = loadConfig();
 const workflowName = 'IngestGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
 describe('The FTP Ingest Granules workflow', () => {
-  const testId = createTimestampedTestId(config.stackName, 'IngestGranuleFtpSuccess');
-  const testSuffix = createTestSuffix(testId);
   const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranuleFtp.input.payload.json';
   const providersDir = './data/providers/ftp/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
-  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-  const provider = { id: `ftp_provider${testSuffix}` };
-  let workflowExecution = null;
-  let inputPayload;
 
-  process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-  const granuleModel = new Granule();
+  let config;
+  let granuleModel;
+  let inputPayload;
+  let testSuffix;
+  let workflowExecution;
 
   beforeAll(async () => {
+    config = await loadConfig();
+
+    const testId = createTimestampedTestId(config.stackName, 'IngestGranuleFtpSuccess');
+    testSuffix = createTestSuffix(testId);
+    const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+    const provider = { id: `ftp_provider${testSuffix}` };
+
+    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+    granuleModel = new Granule();
+
     // populate collections, providers and test data
     await Promise.all([
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),

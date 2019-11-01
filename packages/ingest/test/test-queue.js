@@ -11,16 +11,15 @@ test.beforeEach(async (t) => {
   t.context.templateBucket = randomString();
   await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
 
+  t.context.stackName = randomId('stack');
   t.context.queueName = randomId('queue');
   t.context.queueUrl = await createQueue();
   t.context.queueExecutionLimit = randomNumber();
 
+  t.context.workflow = randomString();
   t.context.stateMachineArn = randomString();
 
   t.context.messageTemplate = {
-    cumulus_meta: {
-      state_machine: t.context.stateMachineArn
-    },
     meta: {
       queues: {
         [t.context.queueName]: t.context.queueUrl
@@ -31,13 +30,27 @@ test.beforeEach(async (t) => {
     }
   };
 
-  const messageTemplateKey = `${randomString()}/template.json`;
+  const workflowDefinition = {
+    name: t.context.workflow,
+    arn: t.context.stateMachineArn
+  };
+
+  const messageTemplateKey = `${t.context.stackName}/workflow_template.json`;
+  const workflowDefinitionKey = `${t.context.stackName}/workflows/${t.context.workflow}.json`;
   t.context.messageTemplateKey = messageTemplateKey;
-  await s3PutObject({
-    Bucket: t.context.templateBucket,
-    Key: messageTemplateKey,
-    Body: JSON.stringify(t.context.messageTemplate)
-  });
+  await Promise.all([
+    s3PutObject({
+      Bucket: t.context.templateBucket,
+      Key: messageTemplateKey,
+      Body: JSON.stringify(t.context.messageTemplate)
+    }),
+    s3PutObject({
+      Bucket: t.context.templateBucket,
+      Key: workflowDefinitionKey,
+      Body: JSON.stringify(workflowDefinition)
+    })
+  ]);
+
 
   t.context.template = `s3://${t.context.templateBucket}/${messageTemplateKey}`;
 });
@@ -56,10 +69,10 @@ test.serial('the queue receives a correctly formatted workflow message without a
     queueName,
     queueUrl,
     stateMachineArn,
+    workflow,
     templateBucket,
-    messageTemplateKey
+    stackName
   } = t.context;
-  const templateUri = `s3://${templateBucket}/${messageTemplateKey}`;
   const collection = { name: 'test-collection', version: '0.0.0' };
   const provider = { id: 'test-provider' };
 
@@ -70,9 +83,11 @@ test.serial('the queue receives a correctly formatted workflow message without a
     output = await queue.enqueueGranuleIngestMessage({
       granule,
       queueUrl,
-      granuleIngestMessageTemplateUri: templateUri,
+      granuleIngestWorkflow: workflow,
       provider,
-      collection
+      collection,
+      systemBucket: templateBucket,
+      stack: stackName
     });
     receiveMessageResponse = await sqs().receiveMessage({
       QueueUrl: queueUrl,
@@ -99,7 +114,8 @@ test.serial('the queue receives a correctly formatted workflow message without a
         [queueName]: queueExecutionLimit
       },
       provider: provider,
-      collection: collection
+      collection: collection,
+      workflow_name: workflow
     },
     payload: { granules: [granule] }
   };
@@ -116,10 +132,10 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
     queueName,
     queueUrl,
     stateMachineArn,
+    workflow,
     templateBucket,
-    messageTemplateKey
+    stackName
   } = t.context;
-  const templateUri = `s3://${templateBucket}/${messageTemplateKey}`;
   const collection = { name: 'test-collection', version: '0.0.0' };
   const provider = { id: 'test-provider' };
   const pdr = { name: randomString(), path: randomString() };
@@ -132,11 +148,13 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
     output = await queue.enqueueGranuleIngestMessage({
       granule,
       queueUrl,
-      granuleIngestMessageTemplateUri: templateUri,
+      granuleIngestWorkflow: workflow,
       provider,
       collection,
       pdr,
-      parentExecutionArn: arn
+      parentExecutionArn: arn,
+      systemBucket: templateBucket,
+      stack: stackName
     });
     receiveMessageResponse = await sqs().receiveMessage({
       QueueUrl: queueUrl,
@@ -165,7 +183,8 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
       },
       provider: provider,
       collection: collection,
-      pdr: pdr
+      pdr: pdr,
+      workflow_name: workflow
     },
     payload: { granules: [granule] }
   };
@@ -184,9 +203,14 @@ test.serial('enqueueGranuleIngestMessage does not transform granule objects ', a
     foo: 'bar' // should not be removed or altered
   };
   const { queueUrl } = t.context;
-  const templateUri = `s3://${t.context.templateBucket}/${t.context.messageTemplateKey}`;
   const collection = { name: 'test-collection', version: '0.0.0' };
   const provider = { id: 'test-provider' };
+
+  const {
+    templateBucket,
+    stackName,
+    workflow
+  } = t.context;
 
   const expectedPayload = {
     granules: [
@@ -200,9 +224,11 @@ test.serial('enqueueGranuleIngestMessage does not transform granule objects ', a
     await queue.enqueueGranuleIngestMessage({
       granule,
       queueUrl,
-      granuleIngestMessageTemplateUri: templateUri,
+      granuleIngestWorkflow: workflow,
       provider,
-      collection
+      collection,
+      systemBucket: templateBucket,
+      stack: stackName
     });
     response = await sqs().receiveMessage({
       QueueUrl: queueUrl,

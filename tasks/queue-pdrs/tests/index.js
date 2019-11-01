@@ -6,6 +6,7 @@ const {
   createQueue,
   getExecutionArn,
   s3,
+  s3PutObject,
   sqs,
   recursivelyDeleteS3Bucket
 } = require('@cumulus/common/aws');
@@ -24,8 +25,10 @@ test.beforeEach(async (t) => {
   t.context.templateBucket = randomString();
   await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
 
+  t.context.workflow = randomString();
   t.context.stateMachineArn = randomString();
 
+  t.context.stackName = randomString();
   const queueName = randomId('queue');
   t.context.queueName = queueName;
   const queueUrl = await createQueue();
@@ -45,19 +48,34 @@ test.beforeEach(async (t) => {
       queueExecutionLimits: t.context.queueExecutionLimits
     }
   };
-  const messageTemplateKey = `${randomString()}/template.json`;
-  await s3().putObject({
-    Bucket: t.context.templateBucket,
-    Key: messageTemplateKey,
-    Body: JSON.stringify(t.context.messageTemplate)
-  }).promise();
+  const workflowDefinition = {
+    name: t.context.workflow,
+    arn: t.context.stateMachineArn
+  };
+  const messageTemplateKey = `${t.context.stackName}/workflow_template.json`;
+  const workflowDefinitionKey = `${t.context.stackName}/workflows/${t.context.workflow}.json`;
+  t.context.messageTemplateKey = messageTemplateKey;
+  await Promise.all([
+    s3PutObject({
+      Bucket: t.context.templateBucket,
+      Key: messageTemplateKey,
+      Body: JSON.stringify(t.context.messageTemplate)
+    }),
+    s3PutObject({
+      Bucket: t.context.templateBucket,
+      Key: workflowDefinitionKey,
+      Body: JSON.stringify(workflowDefinition)
+    })
+  ]);
 
   t.context.event = {
     config: {
       collection: { name: 'collection-name' },
       provider: { name: 'provider-name' },
       queueUrl,
-      parsePdrMessageTemplateUri: `s3://${t.context.templateBucket}/${messageTemplateKey}`
+      parsePdrWorkflow: t.context.workflow,
+      stackName: t.context.stackName,
+      internalBucket: t.context.templateBucket
     },
     input: {
       pdrs: []
@@ -134,7 +152,8 @@ test.serial('The correct message is enqueued', async (t) => {
     queueExecutionLimits,
     queueName,
     queues,
-    stateMachineArn
+    stateMachineArn,
+    workflow
   } = t.context;
 
   // if event.cumulus_config has 'state_machine' and 'execution_name', the enqueued message
@@ -188,7 +207,8 @@ test.serial('The correct message is enqueued', async (t) => {
         queues,
         queueExecutionLimits,
         collection: { name: 'collection-name' },
-        provider: { name: 'provider-name' }
+        provider: { name: 'provider-name' },
+        workflow_name: workflow
       },
       payload: {
         pdr: {

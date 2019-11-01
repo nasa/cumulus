@@ -1,7 +1,7 @@
 publishReports:
   handler: index.handler
   timeout: 30
-  memory: 256
+  memory: 512
   source: 'node_modules/@cumulus/api/dist/publishReports/'
   launchInVpc: true
   tables:

@@ -28,7 +28,9 @@ const { app } = require('../../../app');
 
 const esIndex = randomString();
 const workflowName = randomString();
-const workflowFile = `${process.env.stackName}/workflows/${workflowName}.json`;
+const workflowfile = `${process.env.stackName}/workflows/${workflowName}.json`;
+const templateFile = `${process.env.stackName}/workflow_template.json`;
+
 const testRule = {
   name: 'make_coffee',
   workflow: workflowName,
@@ -54,11 +56,18 @@ test.before(async () => {
   process.env.esIndex = esIndex;
   esClient = await Search.es('fakehost');
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
-  await aws.s3().putObject({
-    Bucket: process.env.system_bucket,
-    Key: workflowFile,
-    Body: 'test data'
-  }).promise();
+  await Promise.all([
+    aws.s3().putObject({
+      Bucket: process.env.system_bucket,
+      Key: workflowfile,
+      Body: '{}'
+    }).promise(),
+    aws.s3().putObject({
+      Bucket: process.env.system_bucket,
+      Key: templateFile,
+      Body: '{}'
+    }).promise()
+  ]);
 
   ruleModel = new models.Rule();
   await ruleModel.createTable();

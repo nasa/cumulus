@@ -1,50 +1,50 @@
 IngestGranuleCatchDuplicateErrorTest:
-  Comment: 'Ingest Granule Catch Duplicate Error'
+  Comment: "Ingest Granule Catch Duplicate Error"
   StartAt: SyncGranule
   States:
     SyncGranule:
-      Type: Task
-      Resource: ${SyncGranuleLambdaFunction.Arn}
       Parameters:
         cma:
-          event.$: '$'
+          event.$: "$"
           ReplaceConfig:
-            Path: '$.payload'
-            TargetPath: '$.payload'
-      CumulusConfig:
-        buckets: '{$.meta.buckets}'
-        provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
-        stack: '{$.meta.stack}'
-        downloadBucket: '{$.cumulus_meta.system_bucket}'
-        duplicateHandling: '{$.meta.collection.duplicateHandling}'
-        pdr: '{$.meta.pdr}'
-        cumulus_message:
-          input: '{$.payload}'
-          outputs:
-            - source: '{$.granules}'
-              destination: '{$.meta.input_granules}'
-            - source: '{$}'
-              destination: '{$.payload}'
-            - source: '{$.process}'
-              destination: '{$.meta.process}'
+            Path: "$.payload"
+            TargetPath: "$.payload"
+          task_config:
+            buckets: "{$.meta.buckets}"
+            provider: "{$.meta.provider}"
+            collection: "{$.meta.collection}"
+            stack: "{$.meta.stack}"
+            downloadBucket: "{$.cumulus_meta.system_bucket}"
+            duplicateHandling: "{$.meta.collection.duplicateHandling}"
+            pdr: "{$.meta.pdr}"
+            cumulus_message:
+              input: "{$.payload}"
+              outputs:
+                - source: "{$.granules}"
+                  destination: "{$.meta.input_granules}"
+                - source: "{$}"
+                  destination: "{$.payload}"
+                - source: "{$.process}"
+                  destination: "{$.meta.process}"
+      Type: Task
+      Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
         - &LambdaServiceExceptionRetry
           ErrorEquals:
-          - Lambda.ServiceException
-          - Lambda.AWSLambdaException
-          - Lambda.SdkClientException
+            - Lambda.ServiceException
+            - Lambda.AWSLambdaException
+            - Lambda.SdkClientException
           IntervalSeconds: 2
           MaxAttempts: 6
           BackoffRate: 2
       Catch:
         - ErrorEquals:
-          - 'DuplicateFile'
-          ResultPath: '$.meta.syncGranCaughtError'
+            - "DuplicateFile"
+          ResultPath: "$.meta.syncGranCaughtError"
           Next: WorkflowSucceeded
         - ErrorEquals:
-          - States.ALL
-          ResultPath: '$.exception'
+            - States.ALL
+          ResultPath: "$.exception"
           Next: WorkflowFailed
       Next: ChooseProcess
     ChooseProcess:
@@ -55,19 +55,22 @@ IngestGranuleCatchDuplicateErrorTest:
           Next: ProcessingStep
       Default: WorkflowSucceeded
     ProcessingStep:
-      CumulusConfig:
-        bucket: '{$.meta.buckets.internal.name}'
-        collection: '{$.meta.collection}'
-        cumulus_message:
-          outputs:
-            - source: '{$.files}'
-              destination: '{$.payload}'
+      Parameters:
+        cma:
+          event.$: "$"
+          task_config:
+            bucket: "{$.meta.buckets.internal.name}"
+            collection: "{$.meta.collection}"
+            cumulus_message:
+              outputs:
+                - source: "{$.files}"
+                  destination: "{$.payload}"
       Type: Task
       Resource: ${FakeProcessingLambdaFunction.Arn}
       Catch:
         - ErrorEquals:
-          - States.ALL
-          ResultPath: '$.exception'
+            - States.ALL
+          ResultPath: "$.exception"
           Next: WorkflowFailed
       Retry:
         - ErrorEquals:
@@ -76,42 +79,48 @@ IngestGranuleCatchDuplicateErrorTest:
           MaxAttempts: 3
       Next: FilesToGranulesStep
     FilesToGranulesStep:
-      CumulusConfig:
-        inputGranules: '{$.meta.input_granules}'
-        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+      Parameters:
+        cma:
+          event.$: "$"
+          task_config:
+            inputGranules: "{$.meta.input_granules}"
+            granuleIdExtraction: "{$.meta.collection.granuleIdExtraction}"
       Type: Task
       Resource: ${FilesToGranulesLambdaFunction.Arn}
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
-          - States.ALL
-          ResultPath: '$.exception'
+            - States.ALL
+          ResultPath: "$.exception"
           Next: WorkflowFailed
       Next: MoveGranuleStep
     MoveGranuleStep:
-      CumulusConfig:
-        bucket: '{$.meta.buckets.internal.name}'
-        buckets: '{$.meta.buckets}'
-        distribution_endpoint: '{$.meta.distribution_endpoint}'
-        collection: '{$.meta.collection}'
-        duplicateHandling: '{$.meta.collection.duplicateHandling}'
+      Parameters:
+        cma:
+          event.$: "$"
+          task_config:
+            bucket: "{$.meta.buckets.internal.name}"
+            buckets: "{$.meta.buckets}"
+            distribution_endpoint: "{$.meta.distribution_endpoint}"
+            collection: "{$.meta.collection}"
+            duplicateHandling: "{$.meta.collection.duplicateHandling}"
       Type: Task
       Resource: ${MoveGranulesLambdaFunction.Arn}
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
-          - 'DuplicateFile'
-          ResultPath: '$.meta.moveGranCaughtError'
+            - "DuplicateFile"
+          ResultPath: "$.meta.moveGranCaughtError"
           Next: WorkflowSucceeded
         - ErrorEquals:
-          - States.ALL
-          ResultPath: '$.exception'
+            - States.ALL
+          ResultPath: "$.exception"
           Next: WorkflowFailed
       Next: WorkflowSucceeded
     WorkflowFailed:
       Type: Fail
-      Cause: 'Workflow failed'
+      Cause: "Workflow failed"
     WorkflowSucceeded:
       Type: Succeed

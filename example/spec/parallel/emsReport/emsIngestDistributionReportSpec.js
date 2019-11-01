@@ -45,17 +45,6 @@ const {
   waitForModelStatus
 } = require('../../helpers/apiUtils');
 
-const config = loadConfig();
-
-process.env.stackName = config.stackName;
-
-const emsIngestReportLambda = `${config.stackName}-EmsIngestReport`;
-const emsDistributionReportLambda = `${config.stackName}-EmsDistributionReport`;
-const bucket = config.bucket;
-const emsProvider = config.ems.provider;
-const submitReport = config.ems.submitReport === 'true' || false;
-const dataSource = config.ems.dataSource || config.stackName;
-
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 
 const providersDir = './data/providers/s3/';
@@ -65,15 +54,8 @@ const collection = { name: 'MOD14A1', version: '006' };
 const collectionId = constructCollectionId(collection.name, collection.version);
 const granuleRegex = '^MOD14A1\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
-process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
-process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
-const accessTokensModel = new AccessToken();
-
-const granuleModel = new Granule();
-
 // add MOD14A1___006 collection
-async function setupCollectionAndTestData(testSuffix, testDataFolder) {
+async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
   const s3data = [
     '@cumulus/test-data/granules/MOD14A1.A2000049.h00v10.006.2015041132152.hdf.met',
     '@cumulus/test-data/granules/MOD14A1.A2000049.h00v10.006.2015041132152.hdf',
@@ -89,7 +71,7 @@ async function setupCollectionAndTestData(testSuffix, testDataFolder) {
 }
 
 // ingest a granule and publish if requested
-async function ingestAndPublishGranule(testSuffix, testDataFolder, publish = true) {
+async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publish = true) {
   const workflowName = publish ? 'IngestAndPublishGranule' : 'IngestGranule';
   const provider = { id: `s3_provider${testSuffix}` };
 
@@ -102,7 +84,7 @@ async function ingestAndPublishGranule(testSuffix, testDataFolder, publish = tru
   );
 
   await waitForModelStatus(
-    granuleModel,
+    new Granule(),
     { granuleId: inputPayload.granules[0].granuleId },
     'completed'
   );
@@ -113,11 +95,12 @@ async function ingestAndPublishGranule(testSuffix, testDataFolder, publish = tru
 /**
  * delete old granules
  *
+ * @param {string} stackName - the name of the stack
  * @param {number} retentionInDays - granules are deleted if older than specified days
  * @param {Array<string>} additionalGranuleIds - additional granules to delete
  */
-async function deleteOldGranules(retentionInDays, additionalGranuleIds) {
-  const dbGranulesIterator = granuleModel.getGranulesForCollection(collectionId, 'completed');
+async function deleteOldGranules(stackName, retentionInDays, additionalGranuleIds) {
+  const dbGranulesIterator = (new Granule()).getGranulesForCollection(collectionId, 'completed');
   let nextDbItem = await dbGranulesIterator.peek();
   while (nextDbItem) {
     const nextDbGranuleId = nextDbItem.granuleId;
@@ -125,10 +108,10 @@ async function deleteOldGranules(retentionInDays, additionalGranuleIds) {
     if (nextDbItem.createdAt <= offset || additionalGranuleIds.includes(nextDbGranuleId)) {
       if (nextDbItem.published) {
         // eslint-disable-next-line no-await-in-loop
-        await granulesApiTestUtils.removePublishedGranule({ prefix: config.stackName, granuleId: nextDbGranuleId });
+        await granulesApiTestUtils.removePublishedGranule({ prefix: stackName, granuleId: nextDbGranuleId });
       } else {
         // eslint-disable-next-line no-await-in-loop
-        await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: nextDbGranuleId });
+        await granulesApiTestUtils.deleteGranule({ prefix: stackName, granuleId: nextDbGranuleId });
       }
     }
 
@@ -138,21 +121,44 @@ async function deleteOldGranules(retentionInDays, additionalGranuleIds) {
 }
 
 // return granule files which can be downloaded
-async function getGranuleFilesForDownload(granuleId) {
-  const granuleResponse = await granulesApiTestUtils.getGranule({ prefix: config.stackName, granuleId });
+async function getGranuleFilesForDownload(stackName, granuleId) {
+  const granuleResponse = await granulesApiTestUtils.getGranule({ prefix: stackName, granuleId });
   const granule = JSON.parse(granuleResponse.body);
   const cmrResource = await getOnlineResources({ cmrMetadataFormat: 'echo10', ...granule });
   return granule.files
     .filter((file) => (cmrResource.filter((resource) => resource.href.endsWith(file.fileName)).length > 0));
 }
 
-describe('The EMS report', () => {
+// TODO Update this to work with the Thin Egress App
+xdescribe('The EMS report', () => {
+  let bucket;
+  let config;
+  let dataSource;
+  let deletedGranuleId;
+  let emsDistributionReportLambda;
+  let emsIngestReportLambda;
+  let emsProvider;
+  let ingestedGranuleIds;
+  let submitReport;
   let testDataFolder;
   let testSuffix;
-  let deletedGranuleId;
-  let ingestedGranuleIds;
 
   beforeAll(async () => {
+    config = await loadConfig();
+
+    process.env.stackName = config.stackName;
+
+    emsIngestReportLambda = `${config.stackName}-EmsIngestReport`;
+    emsDistributionReportLambda = `${config.stackName}-EmsDistributionReport`;
+    bucket = config.bucket;
+    emsProvider = config.ems.provider;
+    submitReport = config.ems.submitReport === 'true' || false;
+    dataSource = config.ems.dataSource || config.stackName;
+
+    process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+    process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
+
     // in order to generate the ingest reports here and by daily cron, we need to ingest granules
     // as well as delete granules
 
@@ -160,22 +166,22 @@ describe('The EMS report', () => {
     testSuffix = createTestSuffix(testId);
     testDataFolder = createTestDataPath(testId);
 
-    await setupCollectionAndTestData(testSuffix, testDataFolder);
+    await setupCollectionAndTestData(config, testSuffix, testDataFolder);
     // ingest one granule, this will be deleted later
-    deletedGranuleId = await ingestAndPublishGranule(testSuffix, testDataFolder);
+    deletedGranuleId = await ingestAndPublishGranule(config, testSuffix, testDataFolder);
 
     // delete granules ingested for this collection, so that ArchDel report can be generated.
     // leave some granules for distribution report since the granule and collection information
     // is needed for distributed files.
-    await deleteOldGranules(2, [deletedGranuleId]);
+    await deleteOldGranules(config.stackName, 2, [deletedGranuleId]);
 
     // ingest two new granules, so that Archive and Ingest reports can be generated
     ingestedGranuleIds = await Promise.all([
       // ingest a granule and publish it to CMR
-      ingestAndPublishGranule(testSuffix, testDataFolder),
+      ingestAndPublishGranule(config, testSuffix, testDataFolder),
 
       // ingest a granule but not publish it to CMR
-      ingestAndPublishGranule(testSuffix, testDataFolder, false)
+      ingestAndPublishGranule(config, testSuffix, testDataFolder, false)
     ]);
   });
 
@@ -326,15 +332,13 @@ describe('The EMS report', () => {
       accessToken = accessTokenResponse.accessToken;
     });
 
-    afterAll(async () => {
-      await accessTokensModel.delete({ accessToken });
-    });
+    afterAll(() => (new AccessToken()).delete({ accessToken }));
 
     // the s3 server access log records are delivered within a few hours of the time that they are recorded,
     // so we are not able to generate the distribution report immediately after submitting distribution requests,
     // the distribution requests submitted here are for nightly distribution report.
     it('downloads the files of the published granule for generating nightly distribution report', async () => {
-      const files = await getGranuleFilesForDownload(ingestedGranuleIds[0]);
+      const files = await getGranuleFilesForDownload(config.stackName, ingestedGranuleIds[0]);
       for (let i = 0; i < files.length; i += 1) {
         const filePath = `/${files[i].bucket}/${files[i].key}`;
         const downloadedFile = path.join(os.tmpdir(), files[i].fileName);

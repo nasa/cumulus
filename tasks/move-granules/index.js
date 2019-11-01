@@ -220,6 +220,7 @@ async function moveFilesForAllGranules(
  *
  * @param {Array<Object>} cmrFiles - array of objects that include CMR xmls uris and granuleIds
  * @param {Object} granulesObject - an object of the granules where the key is the granuleId
+ * @param {string} cmrGranuleUrlType - type of granule CMR url
  * @param {string} distEndpoint - the api distribution endpoint
  * @param {BucketsConfig} bucketsConfig - BucketsConfig instance
  * @returns {Promise} promise resolves when all files have been updated

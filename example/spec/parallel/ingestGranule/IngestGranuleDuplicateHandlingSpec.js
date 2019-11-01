@@ -28,7 +28,6 @@ const {
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 
-const config = loadConfig();
 const lambdaStep = new LambdaStep();
 // the workflow has no cmrstep
 const workflowName = 'IngestGranuleCatchDuplicateErrorTest';
@@ -42,28 +41,37 @@ const s3data = [
 ];
 
 describe('When the Ingest Granules workflow is configured\n', () => {
-  const testId = createTimestampedTestId(config.stackName, 'IngestGranuleDuplicateHandling');
-  const testSuffix = createTestSuffix(testId);
-  const testDataFolder = createTestDataPath(testId);
-
   const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
-  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-  const provider = { id: `s3_provider${testSuffix}` };
-
-  let workflowExecution;
-  let inputPayload;
+  let collection;
+  let collectionModel;
+  let config;
+  let granuleModel;
   let granulesIngested;
-
-  process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
-  const collectionModel = new Collection();
-
-  process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-  const granuleModel = new Granule();
+  let inputPayload;
+  let provider;
+  let testDataFolder;
+  let testSuffix;
+  let workflowExecution;
 
   beforeAll(async () => {
+    config = await loadConfig();
+
+    const testId = createTimestampedTestId(config.stackName, 'IngestGranuleDuplicateHandling');
+    testSuffix = createTestSuffix(testId);
+    testDataFolder = createTestDataPath(testId);
+
+    collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+    provider = { id: `s3_provider${testSuffix}` };
+
+    process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+    collectionModel = new Collection();
+
+    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+    granuleModel = new Granule();
+
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),

@@ -16,16 +16,11 @@ const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../..
 
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 
-const config = loadConfig();
-const testId = createTimestampedTestId(config.stackName, 'DiscoverGranules');
-const testSuffix = createTestSuffix(testId);
 const lambdaStep = new LambdaStep();
 
 const workflowName = 'DiscoverGranules';
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 2000000;
-process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-const executionModel = new Execution();
 
 // Note: This test runs in serial due to the logs endpoint tests
 
@@ -35,7 +30,17 @@ xdescribe('The Discover Granules workflow with https Protocol', () => {
   const collectionsDir = './data/collections/https_testcollection_001/';
   let httpsWorkflowExecution = null;
 
+  let config;
+  let testSuffix;
+
   beforeAll(async () => {
+    config = await loadConfig();
+
+    process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+
+    const testId = createTimestampedTestId(config.stackName, 'DiscoverGranules');
+    testSuffix = createTestSuffix(testId);
+
     const collection = { name: `https_testcollection${testSuffix}`, version: '001' };
 
     const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/https_provider.json`, 'utf8'));
@@ -116,6 +121,8 @@ xdescribe('The Discover Granules workflow with https Protocol', () => {
 
   describe('the sf-sns-report task has published a sns message and', () => {
     it('the execution record is added to DynamoDB', async () => {
+      const executionModel = new Execution();
+
       const record = await waitForModelStatus(
         executionModel,
         { arn: httpsWorkflowExecution.executionArn },

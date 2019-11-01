@@ -15,55 +15,6 @@ const {
   timestampedName
 } = require('../../helpers/testUtils');
 
-const config = loadConfig();
-
-const testName = createTimestampedTestId(config.stackName, 'testStartSf');
-
-const passSfRoleArn = `arn:aws:iam::${config.awsAccountId}:role/${config.stackName}-steprole`;
-
-const passSfName = timestampedName('passTestSf');
-const passSfDef = {
-  Comment: 'Pass-only step function',
-  StartAt: 'PassState',
-  States: {
-    PassState: {
-      Type: 'Pass',
-      ResultPath: '$.payload',
-      End: true
-    }
-  }
-};
-
-const passSfParams = {
-  name: passSfName,
-  definition: JSON.stringify(passSfDef),
-  roleArn: passSfRoleArn
-};
-
-const waitPassSfName = timestampedName('waitPassTestSf');
-const waitPassSfDef = {
-  Comment: 'Pass-only step function',
-  StartAt: 'WaitState',
-  States: {
-    WaitState: {
-      Type: 'Wait',
-      Seconds: 3,
-      Next: 'PassState'
-    },
-    PassState: {
-      Type: 'Pass',
-      ResultPath: '$.payload',
-      End: true
-    }
-  }
-};
-
-const waitPassSfParams = {
-  name: waitPassSfName,
-  definition: JSON.stringify(waitPassSfDef),
-  roleArn: passSfRoleArn
-};
-
 async function sendStartSfMessages({
   numOfMessages,
   queueMaxExecutions,
@@ -174,22 +125,76 @@ const deleteCloudwatchRuleWithTargets = async ({
 };
 
 describe('the sf-starter lambda function', () => {
-  it('has a configurable message limit', () => {
-    const messageLimit = config.sqs_consumer_rate;
-    expect(messageLimit).toBe(300);
+  let config;
+  let waitPassSfParams;
+  let testName;
+  let passSfParams;
+
+  beforeAll(async () => {
+    config = await loadConfig();
+
+    testName = createTimestampedTestId(config.stackName, 'testStartSf');
+
+    const passSfRoleArn = `arn:aws:iam::${process.env.AWS_ACCOUNT_ID}:role/${config.stackName}-steprole`;
+
+    const passSfName = timestampedName('passTestSf');
+    const passSfDef = {
+      Comment: 'Pass-only step function',
+      StartAt: 'PassState',
+      States: {
+        PassState: {
+          Type: 'Pass',
+          ResultPath: '$.payload',
+          End: true
+        }
+      }
+    };
+
+    passSfParams = {
+      name: passSfName,
+      definition: JSON.stringify(passSfDef),
+      roleArn: passSfRoleArn
+    };
+
+    const waitPassSfName = timestampedName('waitPassTestSf');
+    const waitPassSfDef = {
+      Comment: 'Pass-only step function',
+      StartAt: 'WaitState',
+      States: {
+        WaitState: {
+          Type: 'Wait',
+          Seconds: 3,
+          Next: 'PassState'
+        },
+        PassState: {
+          Type: 'Pass',
+          ResultPath: '$.payload',
+          End: true
+        }
+      }
+    };
+
+    waitPassSfParams = {
+      name: waitPassSfName,
+      definition: JSON.stringify(waitPassSfDef),
+      roleArn: passSfRoleArn
+    };
   });
 
   describe('when provided a queue', () => {
-    const sfStarterName = `${config.stackName}-sqs2sf`;
     const initialMessageCount = 30;
     const testMessageLimit = 25;
-    let qAttrParams;
+
     let messagesConsumed;
     let passSfArn;
+    let qAttrParams;
     let queueName;
     let queueUrl;
+    let sfStarterName;
 
     beforeAll(async () => {
+      sfStarterName = `${config.stackName}-sqs2sf`;
+
       queueName = `${testName}Queue`;
 
       const { QueueUrl } = await sqs().createQueue({
@@ -259,19 +264,21 @@ describe('the sf-starter lambda function', () => {
   });
 
   describe('when provided a queue with a maximum number of executions', () => {
-    let maxQueueUrl;
     let maxQueueName;
+    let maxQueueUrl;
     let messagesConsumed;
-    let waitPassSfArn;
     let ruleName;
-    let ruleTargetId;
     let rulePermissionId;
+    let ruleTargetId;
+    let semaphoreDownLambda;
+    let waitPassSfArn;
 
     const queueMaxExecutions = 5;
     const totalNumMessages = 20;
-    const semaphoreDownLambda = `${config.stackName}-sfSemaphoreDown`;
 
     beforeAll(async () => {
+      semaphoreDownLambda = `${config.stackName}-sfSemaphoreDown`;
+
       maxQueueName = `${testName}MaxQueue`;
 
       const { QueueUrl } = await sqs().createQueue({

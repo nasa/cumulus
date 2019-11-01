@@ -11,6 +11,7 @@
  */
 
 const curry = require('lodash.curry');
+const flow = require('lodash.flow');
 const fs = require('fs');
 const omitBy = require('lodash.omitby');
 const os = require('os');
@@ -191,3 +192,15 @@ exports.lookupMimeType = (key) => mime.lookup(key) || null;
  * @kind function
  */
 exports.isOneOf = curry((collection, val) => collection.includes(val));
+
+/**
+ * Pass a value through a pipeline of functions and return the result
+ *
+ * @param {*} value - the value to be passed through the pipeline of functions
+ * @param {...Function} fns - the functions to be invoked
+ * @returns {*} the result of passing the value through the functions
+ *
+ * - If no functions are provided, the value is returned.
+ * - Functions should expect a single argument
+ */
+exports.thread = (value, ...fns) => flow(fns)(value);

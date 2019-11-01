@@ -20,6 +20,11 @@ variable "cmr_username" {
   type = string
 }
 
+variable "cumulus_message_adapter_lambda_layer_arn" {
+  type    = string
+  default = null
+}
+
 variable "dynamo_tables" {
   type = map(object({ name = string, arn = string }))
 }
@@ -52,10 +57,6 @@ variable "elasticsearch_security_group_id" {
   type = string
 }
 
-variable "lambda_subnet_ids" {
-  type = list(string)
-}
-
 variable "prefix" {
   type = string
 }
@@ -82,10 +83,6 @@ variable "urs_client_password" {
   description = "The URS app password"
 }
 
-variable "vpc_id" {
-  type = string
-}
-
 # Optional
 
 variable "archive_api_port" {
@@ -98,9 +95,24 @@ variable "archive_api_users" {
   default = []
 }
 
+variable "buckets" {
+  type    = map(object({ name = string, type = string }))
+  default = {}
+}
+
+variable "cmr_limit" {
+  type    = number
+  default = 100
+}
+
 variable "cmr_oauth_provider" {
   type    = string
   default = "earthdata"
+}
+
+variable "cmr_page_size" {
+  type    = number
+  default = 50
 }
 
 variable "distribution_url" {
@@ -158,7 +170,7 @@ variable "ecs_docker_hub_config" {
 
 variable "ecs_docker_storage_driver" {
   type    = string
-  default = "overlay2"
+  default = "devicemapper"
 }
 
 variable "ecs_efs_config" {
@@ -166,8 +178,23 @@ variable "ecs_efs_config" {
   default = null
 }
 
+variable "ecs_service_alarms" {
+  type = list(object({ name = string, arn = string }))
+  default = []
+}
+
+variable "elasticsearch_alarms" {
+  type = list(object({ name = string, arn = string }))
+  default = []
+}
+
 variable "key_name" {
   type    = string
+  default = null
+}
+
+variable "lambda_subnet_ids" {
+  type    = list(string)
   default = null
 }
 
@@ -196,23 +223,29 @@ variable "permissions_boundary_arn" {
   default = null
 }
 
-variable "private_buckets" {
-  type    = list(string)
-  default = []
-}
-
-variable "protected_buckets" {
-  type    = list(string)
-  default = []
-}
-
-variable "public_buckets" {
-  type    = list(string)
-  default = []
+variable "queue_execution_limits" {
+  type = map(number)
+  default = {
+    backgroundProcessing = 5
+  }
 }
 
 variable "urs_url" {
   type        = string
   default     = "https://urs.earthdata.nasa.gov/"
   description = "The URL of the Earthdata Login site"
+}
+
+variable "vpc_id" {
+  type    = string
+  default = null
+}
+
+variable "region" {
+  type    = string
+}
+
+variable "private_archive_api_gateway" {
+  type = bool
+  default = true
 }

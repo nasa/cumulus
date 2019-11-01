@@ -28,15 +28,16 @@ async function queueGranules(event) {
   const executionArns = await Promise.all(
     granules.map(async (granule) => {
       const collectionConfig = await collectionConfigStore.get(granule.dataType, granule.version);
-
       return enqueueGranuleIngestMessage({
         granule,
         queueUrl: event.config.queueUrl,
-        granuleIngestMessageTemplateUri: event.config.granuleIngestMessageTemplateUri,
+        granuleIngestWorkflow: event.config.granuleIngestWorkflow,
         provider: event.config.provider,
         collection: collectionConfig,
         pdr: event.input.pdr,
-        parentExecutionArn: arn
+        parentExecutionArn: arn,
+        stack: event.config.stackName,
+        systemBucket: event.config.internalBucket
       });
     })
   );
