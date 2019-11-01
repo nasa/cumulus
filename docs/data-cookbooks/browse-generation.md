@@ -197,11 +197,11 @@ All lambdas utilized in this example are provided in a standard deployment of Cu
 
 Once you've configured your CMR credentials, updated your workflow configuration, and updated your lambda configuration you should be able to redeploy your cumulus instance by running the following commands:
 
-* `terraform init`
+**`terraform init`**
 
 You should expect to see output similar to:
 
-```sh
+ ```sh
 $ terraform init
 Initializing modules...
 Downloading https://github.com/nasa/cumulus/releases/download/{version}/terraform-aws-cumulus-workflow.zip for cookbook_browse_example_workflow...
@@ -224,7 +224,7 @@ rerun this command to reinitialize your working directory. If you forget, other
 commands will detect it and remind you to do so if necessary.
 ```
 
-* `terraform apply`
+**`terraform apply`**
 
 You should expect to see output similar to the following truncated example:
 
