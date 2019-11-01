@@ -20,7 +20,7 @@ The `CheckAgainChoice` state definition requires an input object of the followin
 
 ```json
 {
-  "cumulus_meta": {
+  "meta": {
     "isPdrFinished": false
   }
 }
@@ -44,6 +44,7 @@ Given the above input to the `CheckAgainChoice` state, the workflow would transi
         }
       ],
       "Default": "WorkflowSucceeded"
+}
 ```
 
 ## Advanced: Loops in Cumulus Workflows
