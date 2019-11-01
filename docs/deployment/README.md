@@ -445,6 +445,12 @@ To view the released module artifacts for each Cumulus core version, see the [Cu
 
 Cumulus uses a global versioning approach, meaning version numbers are consistent across all packages and tasks, and semantic versioning to track major, minor, and patch version (i.e. 1.0.0). We use Lerna to manage versioning.
 
+### Migrating to New Version
+
+When breaking changes have been introduced, the Cumulus Core team will publish instructions on migrating from one version to another. **IMPORTANT:** When upgrading through many versions, each migration should be done in the order of release (if going from version 1.1.0 from 1.3.0, upgrade from 1.1.0 to 1.2.0 and then to 1.3.0).
+
+Detailed release notes with migration instructions (if any) for each release can be found on the [Cumulus releases page](https://github.com/nasa/cumulus/releases).
+
 ### Updating Cumulus version
 
 To update your Cumulus version:
