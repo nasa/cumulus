@@ -1,1 +1,1 @@
-prefix = "nightly-tf"
+prefix = "cumulus-nightly-tf"
