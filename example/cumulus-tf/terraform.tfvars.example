@@ -43,6 +43,3 @@ data_persistence_remote_state_config = {
   key    = "PREFIX/data-persistence/terraform.tfstate"
   region = "us-east-1"
 }
-
-# Optional
-oauth_provider = "earthdata"    # Can also be set to "launchpad"
