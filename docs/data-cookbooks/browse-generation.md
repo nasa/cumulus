@@ -81,7 +81,7 @@ Add the following to a new file `browse_example.tf` in your deployment's main di
 **Please Note**: You should update the `source =` line to match the current Cumulus `workflow` module release artifact to the version of Cumulus you're deploying:
 
 ```hcl
-source = "https://github.com/nasa/cumulus/releases/download/{version}/terraform-aws-cumulus.zip//tf-modules/cumulus"
+source = "https://github.com/nasa/cumulus/releases/download/{version}/terraform-aws-cumulus-workflow.zip"
 ```
 
 A few things to note about tasks in the workflow being added:
