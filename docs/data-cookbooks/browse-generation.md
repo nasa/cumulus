@@ -187,7 +187,7 @@ Note that in the task, the `CmrStep.Parameters.cma.task_config.cmr` key will con
 
  If you're not ingesting mock data matching the example, or would like to use modify the example to ingest your own data please see the [build-lambda](#build-lambda) section below.    You will need to configure a different lambda entry for your lambda and utilize it in place of the `Resource` defined in the example workflow.
 
- **Please note**: `FakeProcessing` is the core provided browse/cmr generation lambda we're using for the example in this entry.
+ **Please note**: `FakeProcessing` is the core provided browse/CMR generation lambda we're using for the example in this entry.
 
 #### Lambdas
 
