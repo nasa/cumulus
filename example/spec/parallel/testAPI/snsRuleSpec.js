@@ -3,9 +3,11 @@
 const clonedeep = require('lodash.clonedeep');
 
 const {
-  rulesApi: rulesApiTestUtils,
+  addCollections,
+  cleanupCollections,
   isWorkflowTriggeredByRule,
   removeRuleAddedParams,
+  rulesApi: rulesApiTestUtils,
   waitForTestExecutionStart
 } = require('@cumulus/integration-tests');
 
@@ -13,6 +15,8 @@ const { sns, lambda } = require('@cumulus/common/aws');
 const { LambdaStep } = require('@cumulus/common/sfnStep');
 
 const {
+  createTestSuffix,
+  createTimestampedTestId,
   loadConfig,
   timestampedName
 } = require('../../helpers/testUtils');
@@ -45,11 +49,17 @@ describe('The SNS-type rule', () => {
   let snsMessage;
   let snsRuleDefinition;
   let snsTopicArn;
+  let testSuffix;
+  let updatedRule;
+
+  const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
   beforeAll(async () => {
     lambdaStep = new LambdaStep();
     SNS = sns();
     config = await loadConfig();
+    const testId = createTimestampedTestId(config.stackName, 'SnsRule');
+    testSuffix = createTestSuffix(testId);
     ruleName = timestampedName('SnsRuleIntegrationTestRule');
     const snsTopicName = timestampedName(`${config.stackName}_SnsRuleIntegrationTestTopic`);
     newValueTopicName = timestampedName(`${config.stackName}_SnsRuleValueChangeTestTopic`);
@@ -63,6 +73,12 @@ describe('The SNS-type rule', () => {
     process.env.stackName = config.stackName;
     process.env.system_bucket = config.system_bucket;
 
+    snsRuleDefinition.collection = {
+      name: `MOD09GQ${testSuffix}`, version: '006'
+    };
+
+    await addCollections(config.stackName, config.bucket, collectionsDir,
+      testSuffix, testId);
     const { TopicArn } = await SNS.createTopic({ Name: snsTopicName }).promise();
     snsTopicArn = TopicArn;
     snsRuleDefinition.rule.value = TopicArn;
@@ -86,6 +102,15 @@ describe('The SNS-type rule', () => {
       // If the deletion test passed, this _should_ fail.  This is just handling
       // the case where the deletion test did not properly clean this up.
     }
+
+    console.log(`deleting rule ${snsRuleDefinition.name}`);
+
+    await rulesApiTestUtils.deleteRule({
+      prefix: config.stackName,
+      ruleName: snsRuleDefinition.name
+    });
+    await cleanupCollections(config.stackName, config.bucket, collectionsDir,
+      testSuffix);
   });
 
   describe('on creation', () => {
@@ -141,15 +166,20 @@ describe('The SNS-type rule', () => {
   });
 
   describe('on update to a disabled state', () => {
-    let putRule;
-
     beforeAll(async () => {
-      const putRuleResponse = await rulesApiTestUtils.updateRule({ prefix: config.stackName, ruleName, updateParams: { state: 'DISABLED' } });
-      putRule = JSON.parse(putRuleResponse.body);
+      const putRuleResponse = await rulesApiTestUtils.updateRule({
+        prefix: config.stackName,
+        ruleName,
+        updateParams: {
+          ...postRule.record,
+          state: 'DISABLED'
+        }
+      });
+      updatedRule = JSON.parse(putRuleResponse.body);
     });
 
     it('saves its new state', () => {
-      expect(putRule.state).toBe('DISABLED');
+      expect(updatedRule.state).toBe('DISABLED');
     });
 
     it('deletes the policy and subscription', async () => {
@@ -159,15 +189,20 @@ describe('The SNS-type rule', () => {
   });
 
   describe('on update to an enabled state', () => {
-    let putRule;
-
     beforeAll(async () => {
-      const putRuleResponse = await rulesApiTestUtils.updateRule({ prefix: config.stackName, ruleName, updateParams: { state: 'ENABLED' } });
-      putRule = JSON.parse(putRuleResponse.body);
+      const putRuleResponse = await rulesApiTestUtils.updateRule({
+        prefix: config.stackName,
+        ruleName,
+        updateParams: {
+          ...updatedRule,
+          state: 'ENABLED'
+        }
+      });
+      updatedRule = JSON.parse(putRuleResponse.body);
     });
 
     it('saves its new state', () => {
-      expect(putRule.state).toBe('ENABLED');
+      expect(updatedRule.state).toBe('ENABLED');
     });
 
     it('re-adds the subscription', async () => {
@@ -181,12 +216,29 @@ describe('The SNS-type rule', () => {
     beforeAll(async () => {
       const { TopicArn } = await SNS.createTopic({ Name: newValueTopicName }).promise();
       newTopicArn = TopicArn;
-      const putRuleResponse = await rulesApiTestUtils.updateRule({ prefix: config.stackName, ruleName, updateParams: { rule: { value: TopicArn, type: 'sns' } } });
+      const putRuleResponse = await rulesApiTestUtils.updateRule({
+        prefix: config.stackName,
+        ruleName,
+        updateParams: {
+          ...postRule.record,
+          rule: {
+            value: TopicArn,
+            type: 'sns'
+          }
+        }
+      });
       putRule = JSON.parse(putRuleResponse.body);
     });
 
     afterAll(async () => {
-      await rulesApiTestUtils.updateRule({ prefix: config.stackName, ruleName, updateParams: { state: 'DISABLED' } });
+      await rulesApiTestUtils.updateRule({
+        prefix: config.stackName,
+        ruleName,
+        updateParams: {
+          ...postRule.record,
+          state: 'DISABLED'
+        }
+      });
       await SNS.deleteTopic({ TopicArn: newTopicArn }).promise();
     });
 
@@ -222,7 +274,18 @@ describe('The SNS-type rule', () => {
       };
       const { SubscriptionArn } = await SNS.subscribe(subscriptionParams).promise();
       subscriptionArn = SubscriptionArn;
-      const putRuleResponse = await rulesApiTestUtils.updateRule({ prefix: config.stackName, ruleName, updateParams: { rule: { value: TopicArn, type: 'sns' }, state: 'ENABLED' } });
+      const putRuleResponse = await rulesApiTestUtils.updateRule({
+        prefix: config.stackName,
+        ruleName,
+        updateParams: {
+          ...postRule.record,
+          rule: {
+            value: TopicArn,
+            type: 'sns'
+          },
+          state: 'ENABLED'
+        }
+      });
       putRule = JSON.parse(putRuleResponse.body);
     });
 

@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### BREAKING CHANGES
 
 - **CUMULUS-1449** - Cumulus now uses a universal workflow template when
-  starting workflow that contains general information specific to the
+  starting a workflow that contains general information specific to the
   deployment, but not specific to the workflow. Workflow task configs must be
   defined using AWS step function parameters. As part of this change,
   `CumulusConfig` has been retired and task configs must now be defined under
@@ -74,7 +74,46 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   examples of how to update your workflow definitions, see our
   [example workflow definitions](https://github.com/nasa/cumulus/blob/master/example/workflows/).
 
+- **CUMULUS-1470**
+  - Remove Cumulus-defined ECS service autoscaling, allowing integrators to
+    better customize autoscaling to meet their needs. In order to use
+    autoscaling with ECS services, appropriate
+    `AWS::ApplicationAutoScaling::ScalableTarget`,
+    `AWS::ApplicationAutoScaling::ScalingPolicy`, and `AWS::CloudWatch::Alarm`
+    resources should be defined in a kes overrides file. See
+    [example/app/cloudformation.template.yml](./example/app/cloudformation.template.yml)
+    for an example.
+  - The following config parameters are no longer used:
+    - ecs.services.\<NAME\>.minTasks
+    - ecs.services.\<NAME\>.maxTasks
+    - ecs.services.\<NAME\>.scaleInActivityScheduleTime
+    - ecs.services.\<NAME\>.scaleInAdjustmentPercent
+    - ecs.services.\<NAME\>.scaleOutActivityScheduleTime
+    - ecs.services.\<NAME\>.scaleOutAdjustmentPercent
+    - ecs.services.\<NAME\>.activityName
+
+- **CUMULUS-1470**
+  - Remove Cumulus-defined ECS service autoscaling, allowing integrators to
+    better customize autoscaling to meet their needs. In order to use
+    autoscaling with ECS services, appropriate
+    `AWS::ApplicationAutoScaling::ScalableTarget`,
+    `AWS::ApplicationAutoScaling::ScalingPolicy`, and `AWS::CloudWatch::Alarm`
+    resources should be defined in a kes overrides file. See
+    [example/app/cloudformation.template.yml](./example/app/cloudformation.template.yml)
+    for an example.
+  - The following config parameters are no longer used:
+    - ecs.services.\<NAME\>.minTasks
+    - ecs.services.\<NAME\>.maxTasks
+    - ecs.services.\<NAME\>.scaleInActivityScheduleTime
+    - ecs.services.\<NAME\>.scaleInAdjustmentPercent
+    - ecs.services.\<NAME\>.scaleOutActivityScheduleTime
+    - ecs.services.\<NAME\>.scaleOutAdjustmentPercent
+    - ecs.services.\<NAME\>.activityName
+
 ### Added
+
+- **CUMULUS-1100**
+  - Added 30-day retention properties to all log groups that were missing those policies.
 
 - **CUMULUS-1396**
   - Added `@cumulus/common/sfnStep`:
@@ -87,23 +126,77 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1625**
   - Added `sf_start_rate` variable to the `ingest` Terraform module, equivalent to `sqs_consumer_rate` in the old model, but will not be automatically applied to custom queues as that was.
+- **CUMULUS-1513**
+  - Added `sqs`-type rule support in the Cumulus API `@cumulus/api`
+  - Added `sqsMessageConsumer` lambda which processes messages from the SQS queues configured in the `sqs` rules.
 
 ### Changed
+
+- **CUMULUS-1449**
+  - `queue-pdrs` & `queue-granules` config changes. Details in breaking changes section.	
+  - Cumulus now uses a universal workflow template when starting workflow that contains general information specific to the deployment, but not specific to the workflow.	
+  - Changed the way workflow configs are defined, from `CumulusConfig` to a `task_config` AWS Parameter.
+
+- **CUMULUS-1452**
+  - Changed the default ECS docker storage drive to `devicemapper`
 
 - **CUMULUS-1453**
   - Removed config schema for `@cumulus/sf-sns-report` task
   - Updated `@cumulus/sf-sns-report` to always assume that it is running as an intermediate step in a workflow, not as the first or last step
 
-### Fixed
+### Removed
 
+- **CUMULUS-1449**
+  - Retired `CumulusConfig` as part of step function definitions, as this is an artifact of the way Kes parses workflow definitions that was not possible to migrate to Terraform. Use AWS Parameters and the `task_config` key instead. See change note above.	
+  - Removed individual workflow templates.
+
+### Fixed
+- **CUMULUS-1620** - Fixed bug where `message_adapter_version` does not correctly inject the CMA
 - **CUMULUS-1396** - Updated `@cumulus/common/StepFunctions.getExecutionHistory()` to recursively fetch execution history when `nextToken` is returned in response
 - **CUMULUS-1571** - Updated `@cumulus/common/DynamoDb.get()` to throw any errors encountered when trying to get a record and the record does exist
+
+- **CUMULUS-1452**
+  - Updated the EC2 initialization scripts to use full volume size for docker storage
+  - Changed the default ECS docker storage drive to `devicemapper`
+
+## [v1.14.4] - 2019-10-28
+
+### Fixed
+
+- **CUMULUS-1632** - Pinned `aws-elasticsearch-connector` package in `@cumulus/api` to version `8.1.3`, since `8.2.0` includes breaking changes
+
+## [v1.14.3] - 2019-10-18
+
+### Fixed
+
+- **CUMULUS-1620** - Fixed bug where `message_adapter_version` does not correctly inject the CMA
 
 ## [v1.14.2] - 2019-10-08
 
 ### BREAKING CHANGES
 
 Your Cumulus Message Adapter version should be pinned to `v1.0.13` or lower in your `app/config.yml` using `message_adapter_version: v1.0.13` OR you should use the workflow migration steps below to work with CMA v1.1.1+.
+
+- **CUMULUS-1394** - The implementation of the `SfSnsReport` Lambda requires additional environment variables for integration with the new ingest notification SNS topics. Therefore,  **you must update the definition of `SfSnsReport` in your `lambdas.yml` like so**:
+
+```yaml
+SfSnsReport:
+  handler: index.handler
+  timeout: 300
+  source: node_modules/@cumulus/sf-sns-report/dist
+  tables:
+    - ExecutionsTable
+  envs:
+    execution_sns_topic_arn:
+      function: Ref
+      value: reportExecutionsSns
+    granule_sns_topic_arn:
+      function: Ref
+      value: reportGranulesSns
+    pdr_sns_topic_arn:
+      function: Ref
+      value: reportPdrsSns
+```
 
 - **CUMULUS-1447** -
   The newest release of the Cumulus Message Adapter (v1.1.1) requires that parameterized configuration be used for remote message functionality. Once released, Kes will automatically bring in CMA v1.1.1 without additional configuration.
@@ -159,6 +252,17 @@ Your Cumulus Message Adapter version should be pinned to `v1.0.13` or lower in y
 
 ### Changed
 
+- **CUMULUS-1308**
+  - HTTP PUT of a Collection, Provider, or Rule via the Cumulus API now
+    performs full replacement of the existing object with the object supplied
+    in the request payload.  Previous behavior was to perform a modification
+    (partial update) by merging the existing object with the (possibly partial)
+    object in the payload, but this did not conform to the HTTP standard, which
+    specifies PATCH as the means for modifications rather than replacements.
+
+- **CUMULUS-1375**
+  - Migrate Cumulus from deprecated Elasticsearch JS client to new, supported one in `@cumulus/api`
+
 - **CUMULUS-1485** Update `@cumulus/cmr-client` to return error message from CMR for validation failures.
 
 - **CUMULUS-1394**
@@ -174,9 +278,6 @@ Your Cumulus Message Adapter version should be pinned to `v1.0.13` or lower in y
   - Update example SIPS workflows to utilize Parameterized CMA configuration
 
 - **CUMULUS-1448** Refactor workflows that are mutating cumulus_meta to utilize meta field
-
-- **CUMULUS-1375**
-  - Migrate Cumulus from deprecated Elasticsearch JS client to new, supported one in `@cumulus/api`
 
 - **CUMULUS-1451**
   - Elasticsearch cluster setting `auto_create_index` will be set to false. This had been causing issues in the bootstrap lambda on deploy.
@@ -1545,7 +1646,9 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.14.2...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.14.4...HEAD
+[v1.14.4]: https://github.com/nasa/cumulus/compare/v1.14.3...v1.14.4
+[v1.14.3]: https://github.com/nasa/cumulus/compare/v1.14.2...v1.14.3
 [v1.14.2]: https://github.com/nasa/cumulus/compare/v1.14.1...v1.14.2
 [v1.14.1]: https://github.com/nasa/cumulus/compare/v1.14.0...v1.14.1
 [v1.14.0]: https://github.com/nasa/cumulus/compare/v1.13.5...v1.14.0

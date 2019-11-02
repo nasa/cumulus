@@ -154,7 +154,7 @@ default:
     docker:
       # Allowed registry values are 'dockerhub' and 'ecr'
       registry: dockerhub
-      storageDriver: overlay2
+      storageDriver: devicemapper
 
   es:
     name: es5vpc
@@ -304,6 +304,15 @@ default:
       state: ENABLED
       targets:
         - lambda: publishReports
+
+    sqsMessageConsumer:
+      schedule: rate(1 minute)
+      state: ENABLED
+      targets:
+        - lambda: sqsMessageConsumer
+          input:
+            messageLimit: '{{sqs_consumer_rate}}'
+            timeLimit: 60
 
   useWorkflowLambdaVersions: true
 

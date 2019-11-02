@@ -1,1 +1,1 @@
-prefix = "test-npm-integration-tf"
+prefix = "cumulus-from-npm-tf"
