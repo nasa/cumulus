@@ -24,7 +24,7 @@ Prior to working through this entry you should be familiar with the [Cloud Notif
 
 ### Cumulus
 
-This entry assumes you have a deployed instance of Cumulus (>= version 1.8).
+This entry assumes you have a deployed instance of Cumulus (version >= 1.16.0).   The entry assumes you are deploying cumulus via the [`cumulus` terraform module](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus) sourced from the [release page](https://github.com/nasa/cumulus/releases).
 
 ### AWS CLI
 
@@ -68,7 +68,7 @@ Provided the prerequisites have been fulfilled, you can begin adding the needed 
 
 The following are steps that are required to set up your Cumulus instance to run the example workflow:
 
-### Example CNM Workflow:
+### Example CNM Workflow
 
 In this example, we're going to trigger a workflow by creating a Kinesis rule and sending a record to a Kinesis stream.
 
@@ -90,127 +90,127 @@ module "parse_pdr_workflow" {
   tags                                  = local.default_tags
 {
 state_machine_definition = <<JSON
-
-	"CNMExampleWorkflow": {
-		"Comment": "CNMExampleWorkflow",
-		"StartAt": "TranslateMessage",
-		"States": {
-			"TranslateMessage": {
-				"Type": "Task",
-				"Resource": "${aws_lambda_function.cnm_to_cma_task.arn}",
-				"Parameters": {
-					"cma": {
-						"event.$": "$",
-						"task_config": {
-							"cumulus_message": {
-								"outputs": [
-									{
-										"source": "{$.cnm}",
-										"destination": "{$.meta.cnm}"
-									},
-									{
-										"source": "{$}",
-										"destination": "{$.payload}"
-									}
-								]
-							}
-						}
-					}
-				},
-				"Catch": [
-					{
-						"ErrorEquals": [
-							"States.ALL"
-						],
-						"ResultPath": "$.exception",
-						"Next": "CnmResponse"
-					}
-				],
-				"Next": "SyncGranule"
-			},
-			"SyncGranule": {
-				"Parameters": {
-					"cma": {
-						"event.$": "$",
-						"task_config": {
-							"provider": "{$.meta.provider}",
-							"buckets": "{$.meta.buckets}",
-							"collection": "{$.meta.collection}",
-							"downloadBucket": "{$.meta.buckets.private.name}",
-							"stack": "{$.meta.stack}",
-							"cumulus_message": {
-								"outputs": [
-									{
-										"source": "{$.granules}",
-										"destination": "{$.meta.input_granules}"
-									},
-									{
-										"source": "{$}",
-										"destination": "{$.payload}"
-									}
-								]
-							}
-						}
-					}
-				},
-				"Type": "Task",
-				"Resource": "${module.cumulus.sync_granule_task_lambda_function_arn}",
-				"Retry": [
-					{
-						"ErrorEquals": [
-							"States.ALL"
-						],
-						"IntervalSeconds": 10,
-						"MaxAttempts": 3
-					}
-				],
-				"Catch": [
-					{
-						"ErrorEquals": [
-							"States.ALL"
-						],
-						"ResultPath": "$.exception",
-						"Next": "CnmResponse"
-					}
-				],
-				"Next": "CnmResponse"
-			},
-			"CnmResponse": {
-				"Parameters": {
-					"cma": {
-						"event.$": "$",
-						"task_config": {
-							"OriginalCNM": "{$.meta.cnm}",
-							"CNMResponseStream": "ADD YOUR RESPONSE STREAM HERE",
-							"region": "us-east-1",
-							"WorkflowException": "{$.exception}",
-							"cumulus_message": {
-								"outputs": [
-									{
-										"source": "{$}",
-										"destination": "{$.meta.cnmResponse}"
-									}
-								]
-							}
-						}
-					}
-				},
-				"Type": "Task",
-				"Resource": "${aws_lambda_function.cnm_response_task.arn}",
-				"Retry": [
-					{
-						"ErrorEquals": [
-							"States.ALL"
-						],
-						"IntervalSeconds": 5,
-						"MaxAttempts": 3
-					}
-				],
-				"End": true
-			}
-		}
-	}
+  "CNMExampleWorkflow": {
+    "Comment": "CNMExampleWorkflow",
+    "StartAt": "TranslateMessage",
+    "States": {
+      "TranslateMessage": {
+        "Type": "Task",
+        "Resource": "${aws_lambda_function.cnm_to_cma_task.arn}",
+        "Parameters": {
+          "cma": {
+            "event.$": "$",
+            "task_config": {
+              "cumulus_message": {
+                "outputs": [
+                  {
+                    "source": "{$.cnm}",
+                    "destination": "{$.meta.cnm}"
+                  },
+                  {
+                    "source": "{$}",
+                    "destination": "{$.payload}"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "Catch": [
+          {
+            "ErrorEquals": [
+              "States.ALL"
+            ],
+            "ResultPath": "$.exception",
+            "Next": "CnmResponse"
+          }
+        ],
+        "Next": "SyncGranule"
+      },
+      "SyncGranule": {
+        "Parameters": {
+          "cma": {
+            "event.$": "$",
+            "task_config": {
+              "provider": "{$.meta.provider}",
+              "buckets": "{$.meta.buckets}",
+              "collection": "{$.meta.collection}",
+              "downloadBucket": "{$.meta.buckets.private.name}",
+              "stack": "{$.meta.stack}",
+              "cumulus_message": {
+                "outputs": [
+                  {
+                    "source": "{$.granules}",
+                    "destination": "{$.meta.input_granules}"
+                  },
+                  {
+                    "source": "{$}",
+                    "destination": "{$.payload}"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "Type": "Task",
+        "Resource": "${module.cumulus.sync_granule_task_lambda_function_arn}",
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "States.ALL"
+            ],
+            "IntervalSeconds": 10,
+            "MaxAttempts": 3
+          }
+        ],
+        "Catch": [
+          {
+            "ErrorEquals": [
+              "States.ALL"
+            ],
+            "ResultPath": "$.exception",
+            "Next": "CnmResponse"
+          }
+        ],
+        "Next": "CnmResponse"
+      },
+      "CnmResponse": {
+        "Parameters": {
+          "cma": {
+            "event.$": "$",
+            "task_config": {
+              "OriginalCNM": "{$.meta.cnm}",
+              "CNMResponseStream": "ADD YOUR RESPONSE STREAM HERE",
+              "region": "us-east-1",
+              "WorkflowException": "{$.exception}",
+              "cumulus_message": {
+                "outputs": [
+                  {
+                    "source": "{$}",
+                    "destination": "{$.meta.cnmResponse}"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "Type": "Task",
+        "Resource": "${aws_lambda_function.cnm_response_task.arn}",
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "States.ALL"
+            ],
+            "IntervalSeconds": 5,
+            "MaxAttempts": 3
+          }
+        ],
+        "End": true
+      }
+    }
+  }
 }
+JSON
 ```
 
 Again, please make sure to modify the value CNMResponseStream to match the stream name (not ARN) for your Kinesis response stream.
@@ -219,11 +219,10 @@ Again, please make sure to modify the value CNMResponseStream to match the strea
 
 To execute this workflow, you're required to include several lambda resources in your deployment.  To do this, add the following task (lambda) definitions to your deployment along with the workflow you created above:
 
-* https://github.com/nasa/cumulus/blob/terraform/example/cumulus-tf/cnm_to_cma_task.tf
+* https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_to_cma_task.tf
 * https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_response_task.tf
 
-**Please note:** If you aren't utilizing the `terraform-aws-cumulus` module and/or the [deployment-template repo](https://github.com/nasa/cumulus-template-deploy), you will need to add the variables each expects, as well as ensure you have a compatible CMA layer.  See the [deployment instructions](../deployment/README.md) for more details on how to deploy the CMA.
-
+**Please note:** To utilize these tasks you need to ensure you have a compatible CMA layer.  See the [deployment instructions](../deployment/README.md) for more details on how to deploy a CMA layer.
 
 Below is a description of each of these tasks:
 
