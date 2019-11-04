@@ -31,11 +31,6 @@
       "deployment/components",
       "deployment/create_bucket",
       "deployment/server_access_logging",
-      "deployment/iam_roles",
-      "deployment/obtain_cumulus_packages",
-      "deployment/config_descriptions",
-      "deployment/cmr_launchpad_authentication",
-      "deployment/cumulus_api_launchpad_authentication",
       "deployment/troubleshoot_deployment",
       "deployment/distribution_component",
       "deployment/thin_egress_app"
@@ -46,7 +41,9 @@
       "additional-deployment-options/enable-api-logs",
       "additional-deployment-options/configure-cloudwatch-logs-delivery",
       "additional-deployment-options/additional-lambda-logging",
-      "additional-deployment-options/share-s3-access-logs"
+      "additional-deployment-options/share-s3-access-logs",
+      "additional-deployment-options/cmr_launchpad_authentication",
+      "additional-deployment-options/cumulus_api_launchpad_authentication"
     ],
     "Additional Features": [
       "features/data_in_dynamodb",
