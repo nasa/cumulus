@@ -5,12 +5,10 @@ const path = require('path');
 const { tmpdir } = require('os');
 const test = require('ava');
 const sinon = require('sinon');
-const pTimeout = require('p-timeout');
 
 const aws = require('../aws');
 const { UnparsableFileLocationError } = require('../errors.js');
 const { randomString, throttleOnce } = require('../test-utils');
-const { sleep } = require('../util');
 
 test('toSfnExecutionName() truncates names to 80 characters', (t) => {
   t.is(
@@ -365,86 +363,4 @@ test('sqsQueueExists detects if the queue does not exist or is not accessible', 
   t.true(await aws.sqsQueueExists(queueName));
   t.false(await aws.sqsQueueExists(randomString()));
   await aws.sqs().deleteQueue({ QueueUrl: queueUrl }).promise();
-});
-
-test('getS3Object() returns an existing S3 object', async (t) => {
-  const Bucket = randomString();
-  const Key = randomString();
-
-  try {
-    await aws.s3().createBucket({ Bucket }).promise();
-    await aws.s3().putObject({ Bucket, Key, Body: 'asdf' }).promise();
-
-    const response = await aws.getS3Object(Bucket, Key);
-    t.is(response.Body.toString(), 'asdf');
-  } finally {
-    await aws.recursivelyDeleteS3Bucket(Bucket);
-  }
-});
-
-test('getS3Object() immediately throws an exception if the requested bucket does not exist', async (t) => {
-  const promisedGetS3Object = aws.getS3Object(
-    randomString(),
-    'asdf'
-  );
-  const err = await t.throwsAsync(pTimeout(promisedGetS3Object, 5000));
-  t.is(err.code, 'NoSuchBucket');
-});
-
-test('getS3Object() throws an exception if the requested key does not exist', async (t) => {
-  const Bucket = randomString();
-
-  try {
-    await aws.s3().createBucket({ Bucket }).promise();
-
-    const err = await t.throwsAsync(
-      () => aws.getS3Object(
-        Bucket,
-        'does-not-exist',
-        { retries: 1 }
-      )
-    );
-    t.is(err.code, 'NoSuchKey');
-  } finally {
-    await aws.recursivelyDeleteS3Bucket(Bucket);
-  }
-});
-
-test('getS3Object() retries if the requested key does not exist', async (t) => {
-  const Bucket = randomString();
-  const Key = randomString();
-
-  try {
-    await aws.s3().createBucket({ Bucket }).promise();
-
-    const promisedGetS3Object = aws.getS3Object(Bucket, Key);
-    await sleep(5000)
-      .then(() => aws.s3().putObject({ Bucket, Key, Body: 'asdf' }).promise());
-
-    const response = await promisedGetS3Object;
-
-    t.is(response.Body.toString(), 'asdf');
-  } finally {
-    await aws.recursivelyDeleteS3Bucket(Bucket);
-  }
-});
-
-test.only('getS3Object() immediately throws an exception if retries are set to 0', async (t) => {
-  const Bucket = randomString();
-
-  try {
-    await aws.s3().createBucket({ Bucket }).promise();
-
-    const promisedGetS3Object = aws.getS3Object(
-      Bucket,
-      'asdf',
-      { retries: 0 }
-    );
-
-    const err = await t.throwsAsync(pTimeout(promisedGetS3Object, 5000));
-
-    t.is(err.code, 'NoSuchKey');
-  } finally {
-    await aws.recursivelyDeleteS3Bucket(Bucket);
-  }
 });
