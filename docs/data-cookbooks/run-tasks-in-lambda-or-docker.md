@@ -35,7 +35,7 @@ The `cumulus-ecs-task` container takes an AWS Lambda Amazon Resource Name (ARN) 
 
 # Example: Replacing AWS Lambda with a Docker container run on ECS
 
-This example will use an already-defined workflow from the `cumulus` module that includes the [`QueueGranules`] task(https://github.com/nasa/cumulus/blob/master/tf-modules/ingest/queue-granules-task.tf) in it's configuration.
+This example will use an already-defined workflow from the `cumulus` module that includes the [`QueueGranules` task](https://github.com/nasa/cumulus/blob/master/tf-modules/ingest/queue-granules-task.tf) in its configuration.
 
 The following example is an excerpt from the [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/tf-modules/ingest/queue-granules-task.tf) containing the step definition for the `QueueGranules` step:
 
