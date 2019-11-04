@@ -361,7 +361,14 @@ exports.s3PutObjectTagging = improveStackTrace(
 * @returns {Promise} - returns response from `S3.getObject` as a promise
 **/
 exports.getS3Object = improveStackTrace(
-  (Bucket, Key) => exports.s3().getObject({ Bucket, Key }).promise()
+  (Bucket, Key) =>
+    pRetry(
+      () => exports.s3().getObject({ Bucket, Key }).promise(),
+      {
+        retries: 10,
+        onFailedAttempt: (err) => log.debug(`getS3Object('${Bucket}', '${Key}') failed: ${err.message}. There are ${err.retriesLeft} retries left.`)
+      }
+    )
 );
 
 exports.getS3ObjectReadStream = (bucket, key) => exports.s3().getObject(
