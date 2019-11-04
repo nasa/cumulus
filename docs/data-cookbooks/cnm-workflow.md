@@ -24,7 +24,7 @@ Prior to working through this entry you should be familiar with the [Cloud Notif
 
 ### Cumulus
 
-This entry assumes you have a deployed instance of Cumulus (version >= 1.16.0).   The entry assumes you are deploying cumulus via the [`cumulus` terraform module](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus) sourced from the [release page](https://github.com/nasa/cumulus/releases).
+This entry assumes you have a deployed instance of Cumulus (version >= 1.16.0).   The entry assumes you are deploying Cumulus via the [`cumulus` terraform module](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus) sourced from the [release page](https://github.com/nasa/cumulus/releases).
 
 ### AWS CLI
 
