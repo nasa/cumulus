@@ -14,11 +14,15 @@ npm config set unsafe-perm true
 npm install
 . ./bamboo/set-bamboo-env-variables.sh
 
-if [[ $USE_NPM_PACKAGES == true ]]; then
-  echo "***Deploying stack with NPM packages"
-  (cd example && npm install)
+if [[ $USE_TERRAFORM_ZIPS == true ]]; then
+  echo "***Deploying stack with deployment packages"
+  cd example/cumulus-tf
+  sed -i 's/source = \"..\/..\//source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG/terraform-aws-cumulus.zip\/\//g' *.tf
+  cd ../data-persistence-tf
+  sed -i 's/source = \"..\/..\//source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG/terraform-aws-cumulus.zip\/\//g' *.tf
+  cd ../../
 else
-  echo "***Deploying stack with built packages"
+  echo "***Deploying stack with built source"
   npm run bootstrap
 fi
 
