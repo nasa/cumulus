@@ -275,7 +275,7 @@ Your data persistence resources are now deployed.
 
 ### Deploy the Cumulus Message Adapter layer
 
-**Note:**: If you are deploying in an NGAP environment, you should be able to use the existing Cumulus Message Adapter layer deployed in your environment.
+**Note:** If you are deploying in an NGAP environment, you should be able to use the existing Cumulus Message Adapter layer deployed in your environment.
 
 The [Cumulus Message Adapter (CMA)](./../workflows/input_output.md#cumulus-message-adapter) is necessary for interpreting the input and output of Cumulus workflow steps. The CMA is now integrated with Cumulus workflow steps as a Lambda layer.
 
@@ -434,57 +434,6 @@ You should be able to visit the dashboard website at `http://<prefix>-dashboard.
 `<prefix>-dashboard` -> "Properties" -> "Static website hosting" -> "Endpoint" and login with a user that you configured for access in the [Configure and Deploy the Cumulus Stack](deployment-readme#configure-and-deploy-the-cumulus-stack) step.
 
 --------------
-
-## Updating Cumulus deployment
-
-After the initial deploy, any future updates to the Terraform deployment from configuration files, Terraform files (`*.tf`), or modules from a new version of Cumulus can be deployed and will update the appropriate portions of the stack as needed.
-
-To view the released module artifacts for each Cumulus core version, see the [Cumulus releases page](https://github.com/nasa/cumulus/releases).
-
-### Cumulus Versioning
-
-Cumulus uses a global versioning approach, meaning version numbers are consistent across all packages and tasks, and semantic versioning to track major, minor, and patch version (i.e. 1.0.0). We use Lerna to manage versioning.
-
-### Migrating to New Version
-
-When breaking changes have been introduced, the Cumulus Core team will publish instructions on migrating from one version to another. **IMPORTANT:** When upgrading through many versions, each migration should be done in the order of release (if going from version 1.1.0 from 1.3.0, upgrade from 1.1.0 to 1.2.0 and then to 1.3.0).
-
-Detailed release notes with migration instructions (if any) for each release can be found on the [Cumulus releases page](https://github.com/nasa/cumulus/releases).
-
-### Updating Cumulus version
-
-To update your Cumulus version:
-
-1. Find the desired release on the [Cumulus releases page](https://github.com/nasa/cumulus/releases)
-2. Update the `source` in your Terraform deployment files **for each of [your Cumulus modules](./components.md#available-cumulus-components)** by replacing `vx.x.x` with the desired version of Cumulus:
-
-    `source = "https://github.com/nasa/cumulus/releases/download/vx.x.x/terraform.zip//tf-modules/data-persistence"`
-
-3. Run `terraform init` to get the latest copies of your updated modules
-
-### Update data persistence resources
-
-**Reminder:** Follow the [above instructions to initialize Terraform](#initialize-terraform) if necessary.
-
-From your `data-persistence-tf` directory:
-
-```bash
-  $ AWS_REGION=<region> \ # e.g. us-east-1
-      AWS_PROFILE=<profile> \
-      terraform apply
-```
-
-### Update Cumulus resources
-
-**Reminder:** Follow the [above instructions to initialize Terraform](#initialize-terraform) if necessary.
-
-From your `cumulus-tf` directory:
-
-```bash
-  $ AWS_REGION=<region> \ # e.g. us-east-1
-      AWS_PROFILE=<profile> \
-      terraform apply
-```
 
 ## Footnotes
 
