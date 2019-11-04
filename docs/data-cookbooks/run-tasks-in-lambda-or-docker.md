@@ -37,7 +37,7 @@ The `cumulus-ecs-task` container takes an AWS Lambda Amazon Resource Name (ARN) 
 
 This example will use an already-defined workflow from the `cumulus` module that includes the [`QueueGranules`] task(https://github.com/nasa/cumulus/blob/master/tf-modules/ingest/queue-granules-task.tf) in it's configuration.
 
-The following example is an excerpt from the [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/tf-modules/ingest/queue-granules-task.tf) containing the step definition for the `Queue Granules` step:
+The following example is an excerpt from the [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/tf-modules/ingest/queue-granules-task.tf) containing the step definition for the `QueueGranules` step:
 
 ```json
   "QueueGranules": {
