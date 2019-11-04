@@ -358,15 +358,24 @@ exports.s3PutObjectTagging = improveStackTrace(
 *
 * @param {string} Bucket - name of bucket
 * @param {string} Key - key for object (filepath + filename)
+* @param {Object} retryOptions - options to control retry behavior when an
+*   object does not exist. See https://github.com/tim-kos/node-retry#retryoperationoptions
 * @returns {Promise} - returns response from `S3.getObject` as a promise
 **/
 exports.getS3Object = improveStackTrace(
-  (Bucket, Key) =>
+  (Bucket, Key, retryOptions = {}) =>
     pRetry(
-      () => exports.s3().getObject({ Bucket, Key }).promise(),
+      async () => {
+        try {
+          return await exports.s3().getObject({ Bucket, Key }).promise();
+        } catch (err) {
+          if (err.code === 'NoSuchKey') throw err;
+          throw new pRetry.AbortError(err);
+        }
+      },
       {
-        retries: 10,
-        onFailedAttempt: (err) => log.debug(`getS3Object('${Bucket}', '${Key}') failed: ${err.message}. There are ${err.retriesLeft} retries left.`)
+        onFailedAttempt: (err) => log.debug(`getS3Object('${Bucket}', '${Key}') failed with ${err.retriesLeft} retries left: ${err.message}`),
+        ...retryOptions
       }
     )
 );
