@@ -1,5 +1,20 @@
 prefix = "kk-test-tf"
+buckets = {
+  internal = {
+    name = "kk-test-internal"
+    type = "internal"
+  }
+  private = {
+    name = "kk-test-private"
+    type = "private"
+  },
+  protected = {
+    name = "kk-test-protected"
+    type = "protected"
+  },
+  public = {
+    name = "kk-test-public"
+    type = "public"
+  }
+}
 system_bucket     = "kk-test-internal"
-private_buckets   = ["kk-test-private"]
-protected_buckets = ["kk-test-protected"]
-public_buckets    = ["kk-test-public"]

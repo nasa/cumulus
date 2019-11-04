@@ -1,34 +1,40 @@
 HelloWorldWorkflow:
-  Comment: 'Returns Hello World'
+  Comment: "Returns Hello World"
   StartAt: HelloWorld
   States:
     HelloWorld:
-      CumulusConfig:
-        buckets: '{$.meta.buckets}'
-        provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
+      Parameters:
+        cma:
+          event.$: "$"
+          task_config:
+            buckets: "{$.meta.buckets}"
+            provider: "{$.meta.provider}"
+            collection: "{$.meta.collection}"
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
       Retry:
         - &LambdaServiceExceptionRetry
           ErrorEquals:
-          - Lambda.ServiceException
-          - Lambda.AWSLambdaException
-          - Lambda.SdkClientException
+            - Lambda.ServiceException
+            - Lambda.AWSLambdaException
+            - Lambda.SdkClientException
           IntervalSeconds: 2
           MaxAttempts: 6
           BackoffRate: 2
       End: true
 
 EcsHelloWorldWorkflow:
-  Comment: 'Returns Hello World'
+  Comment: "Returns Hello World"
   StartAt: EcsTaskHelloWorld
   States:
     EcsTaskHelloWorld:
-      CumulusConfig:
-        buckets: '{$.meta.buckets}'
-        provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
+      Parameters:
+        cma:
+          event.$: "$"
+          task_config:
+            buckets: "{$.meta.buckets}"
+            provider: "{$.meta.provider}"
+            collection: "{$.meta.collection}"
       Type: Task
       Resource: ${EcsTaskHelloWorldActivity}
       TimeoutSeconds: 120
@@ -38,35 +44,9 @@ EcsHelloWorldWorkflow:
           MaxAttempts: 1
       Catch:
         - ErrorEquals:
-          - States.ALL
+            - States.ALL
           Next: WorkflowFailed
       End: true
     WorkflowFailed:
       Type: Fail
-      Cause: 'Workflow failed'
-
-
-EcsKesCMAHelloWorldWorkflow:
-  Comment: 'Returns Hello World'
-  StartAt: EcsTaskHelloWorld
-  States:
-    EcsTaskHelloWorld:
-      CumulusConfig:
-        buckets: '{$.meta.buckets}'
-        provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
-      Type: Task
-      Resource: ${EcsTaskHelloWorldKesCmaActivity}
-      TimeoutSeconds: 120
-      Retry:
-        - ErrorEquals:
-            - States.Timeout
-          MaxAttempts: 1
-      Catch:
-        - ErrorEquals:
-          - States.ALL
-          Next: WorkflowFailed
-      End: true
-    WorkflowFailed:
-      Type: Fail
-      Cause: 'Workflow failed'
+      Cause: "Workflow failed"

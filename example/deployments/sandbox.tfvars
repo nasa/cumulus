@@ -1,10 +1,29 @@
-system_bucket        = "cumulus-test-sandbox-internal"
-private_buckets      = ["cumulus-test-sandbox-private"]
-protected_buckets    = ["cumulus-test-sandbox-protected", "cumulus-test-sandbox-protected-2"]
-public_buckets       = ["cumulus-test-sandbox-public"]
+buckets = {
+  internal = {
+    name = "cumulus-test-sandbox-internal"
+    type = "internal"
+  }
+  private = {
+    name = "cumulus-test-sandbox-private"
+    type = "private"
+  },
+  protected = {
+    name = "cumulus-test-sandbox-protected"
+    type = "protected"
+  },
+  protected-2 = {
+    name = "cumulus-test-sandbox-protected-2"
+    type = "protected"
+  },
+  public = {
+    name = "cumulus-test-sandbox-public"
+    type = "public"
+  }
+}
 s3_replicator_config = {
   source_bucket = ""
   source_prefix = ""
   target_bucket = ""
   target_prefix = ""
 }
+system_bucket="cumulus-test-sandbox-internal"

@@ -17,6 +17,7 @@ process.env.system_bucket = randomString();
 
 const workflow = 'my-workflow';
 const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
+const templateFile = `${process.env.stackName}/workflow_template.json`;
 
 const kinesisRule = {
   name: 'my_kinesis_rule',
@@ -49,11 +50,18 @@ test.before(async () => {
   ruleModel = new models.Rule();
   await ruleModel.createTable();
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
-  await s3().putObject({
-    Bucket: process.env.system_bucket,
-    Key: workflowfile,
-    Body: 'test data'
-  }).promise();
+  await Promise.all([
+    aws.s3().putObject({
+      Bucket: process.env.system_bucket,
+      Key: workflowfile,
+      Body: '{}'
+    }).promise(),
+    aws.s3().putObject({
+      Bucket: process.env.system_bucket,
+      Key: templateFile,
+      Body: '{}'
+    }).promise()
+  ]);
 
   const eventMappingObjects = await getKinesisEventMappings();
   const sourceMappingLists = eventMappingObjects.map((mapObject) => mapObject.EventSourceMappings);

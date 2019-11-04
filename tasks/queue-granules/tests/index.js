@@ -6,6 +6,7 @@ const {
   createQueue,
   getExecutionArn,
   s3,
+  s3PutObject,
   sqs,
   recursivelyDeleteS3Bucket
 } = require('@cumulus/common/aws');
@@ -24,17 +25,14 @@ const { queueGranules } = require('..');
 test.beforeEach(async (t) => {
   t.context.internalBucket = `internal-bucket-${randomString().slice(0, 6)}`;
   t.context.stackName = `stack-${randomString().slice(0, 6)}`;
+  t.context.workflow = randomString();
   t.context.stateMachineArn = randomString();
-  t.context.templateBucket = randomString();
   t.context.collectionConfigStore = new CollectionConfigStore(
     t.context.internalBucket,
     t.context.stackName
   );
 
-  await Promise.all([
-    s3().createBucket({ Bucket: t.context.internalBucket }).promise(),
-    s3().createBucket({ Bucket: t.context.templateBucket }).promise()
-  ]);
+  await s3().createBucket({ Bucket: t.context.internalBucket }).promise();
 
   const queueName = randomId('queue');
   t.context.queueName = queueName;
@@ -48,7 +46,6 @@ test.beforeEach(async (t) => {
   };
   t.context.messageTemplate = {
     cumulus_meta: {
-      state_machine: t.context.stateMachineArn,
       queueName
     },
     meta: {
@@ -56,12 +53,25 @@ test.beforeEach(async (t) => {
       queueExecutionLimits: t.context.queueExecutionLimits
     }
   };
-  const messageTemplateKey = `${randomString()}/template.json`;
-  await s3().putObject({
-    Bucket: t.context.templateBucket,
-    Key: messageTemplateKey,
-    Body: JSON.stringify(t.context.messageTemplate)
-  }).promise();
+  const workflowDefinition = {
+    name: t.context.workflow,
+    arn: t.context.stateMachineArn
+  };
+  const messageTemplateKey = `${t.context.stackName}/workflow_template.json`;
+  const workflowDefinitionKey = `${t.context.stackName}/workflows/${t.context.workflow}.json`;
+  t.context.messageTemplateKey = messageTemplateKey;
+  await Promise.all([
+    s3PutObject({
+      Bucket: t.context.internalBucket,
+      Key: messageTemplateKey,
+      Body: JSON.stringify(t.context.messageTemplate)
+    }),
+    s3PutObject({
+      Bucket: t.context.internalBucket,
+      Key: workflowDefinitionKey,
+      Body: JSON.stringify(workflowDefinition)
+    })
+  ]);
 
   t.context.event = {
     config: {
@@ -69,7 +79,7 @@ test.beforeEach(async (t) => {
       stackName: t.context.stackName,
       provider: { name: 'provider-name' },
       queueUrl,
-      granuleIngestMessageTemplateUri: `s3://${t.context.templateBucket}/${messageTemplateKey}`
+      granuleIngestWorkflow: t.context.workflow
     },
     input: {
       granules: []
@@ -80,7 +90,6 @@ test.beforeEach(async (t) => {
 test.afterEach(async (t) => {
   await Promise.all([
     recursivelyDeleteS3Bucket(t.context.internalBucket),
-    recursivelyDeleteS3Bucket(t.context.templateBucket),
     sqs().deleteQueue({ QueueUrl: t.context.event.config.queueUrl }).promise()
   ]);
 });
@@ -197,7 +206,8 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
     queueName,
     queues,
     queueExecutionLimits,
-    stateMachineArn
+    stateMachineArn,
+    workflow
   } = t.context;
 
   const granule1 = {
@@ -257,7 +267,8 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
         queues,
         queueExecutionLimits,
         collection: collectionConfig1,
-        provider: { name: 'provider-name' }
+        provider: { name: 'provider-name' },
+        workflow_name: workflow
       },
       payload: {
         granules: [
@@ -288,7 +299,8 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
         queues,
         queueExecutionLimits,
         collection: collectionConfig2,
-        provider: { name: 'provider-name' }
+        provider: { name: 'provider-name' },
+        workflow_name: workflow
       },
       payload: {
         granules: [
@@ -311,7 +323,8 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     queueName,
     queues,
     queueExecutionLimits,
-    stateMachineArn
+    stateMachineArn,
+    workflow
   } = t.context;
 
   // if the event.cumulus_config has 'state_machine' and 'execution_name', the enqueued message
@@ -385,7 +398,8 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
         queueExecutionLimits,
         pdr: event.input.pdr,
         collection: collectionConfig1,
-        provider: { name: 'provider-name' }
+        provider: { name: 'provider-name' },
+        workflow_name: workflow
       },
       payload: {
         granules: [
@@ -418,7 +432,8 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
         queueExecutionLimits,
         pdr: event.input.pdr,
         collection: collectionConfig2,
-        provider: { name: 'provider-name' }
+        provider: { name: 'provider-name' },
+        workflow_name: workflow
       },
       payload: {
         granules: [

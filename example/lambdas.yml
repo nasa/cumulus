@@ -5,18 +5,20 @@ CNMToCMA:
   memory: 128
   s3Source:
     bucket: '{{buckets.shared.name}}'
-    key: daacs/podaac/cnmToGranule-1.0.2.j-update.zip
-  useMessageAdapter: false
+    key: daacs/podaac/cnmToGranule-1.2.1.zip
+  layers:
+    - '{{cma_layer}}'
   launchInVpc: true
 CnmResponse:
   handler: 'gov.nasa.cumulus.CNMResponse::handleRequestStreams'
   timeout: 300
-  useMessageAdapter: false
   runtime: java8
   memory: 256
   s3Source:
     bucket: '{{buckets.shared.name}}'
-    key: daacs/podaac/cnmResponse-1539812129616.zip
+    key: daacs/podaac/cnmResponse-1.2.1.zip
+  layers:
+    - '{{cma_layer}}'
   launchInVpc: true
 DiscoverGranules:
   handler: index.handler
@@ -53,12 +55,6 @@ HelloWorld:
   source: node_modules/@cumulus/hello-world/dist/
   layers:
     - '{{cma_layer}}'
-  launchInVpc: true
-HelloWorldKesCma:
-  handler: index.handler
-  timeout: 300
-  memory: 256
-  source: node_modules/@cumulus/hello-world/kes_dist/
   useMessageAdapter: true
   launchInVpc: true
 ModisProcessing:
@@ -167,10 +163,10 @@ VersionUpTest:
   source: lambdas/versionUpTest
   launchInVpc: true
 AsyncOperationSuccess:
-  handler: lambdas.success
+  handler: index.success
   source: 'lambdas/asyncOperations/'
   launchInVpc: true
 AsyncOperationFail:
-  handler: lambdas.fail
+  handler: index.fail
   source: 'lambdas/asyncOperations/'
   launchInVpc: true

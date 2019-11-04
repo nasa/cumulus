@@ -5,6 +5,7 @@ const get = require('lodash.get');
 const merge = require('lodash.merge');
 const { invoke, Events } = require('@cumulus/ingest/aws');
 const aws = require('@cumulus/common/aws');
+const workflows = require('@cumulus/common/workflows');
 const Manager = require('./base');
 const { rule: ruleSchema } = require('./schemas');
 
@@ -174,14 +175,17 @@ class Rule extends Manager {
   static async buildPayload(item) {
     // makes sure the workflow exists
     const bucket = process.env.system_bucket;
-    const key = `${process.env.stackName}/workflows/${item.workflow}.json`;
+    const stack = process.env.stackName;
+    const key = `${stack}/workflows/${item.workflow}.json`;
     const exists = await aws.fileExists(bucket, key);
 
     if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${key} for ${item.name}`);
 
-    const template = `s3://${bucket}/${key}`;
+    const definition = await workflows.getWorkflowFile(stack, bucket, item.workflow);
+    const template = await workflows.getWorkflowTemplate(stack, bucket);
     return {
       template,
+      definition,
       provider: item.provider,
       collection: item.collection,
       meta: get(item, 'meta', {}),

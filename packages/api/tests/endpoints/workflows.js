@@ -34,12 +34,14 @@ test.before(async () => {
   testBucketName = process.env.system_bucket;
 
   await s3().createBucket({ Bucket: testBucketName }).promise();
-  const workflowsListKey = `${process.env.stackName}/workflows/list.json`;
-  await promiseS3Upload({
-    Bucket: testBucketName,
-    Key: workflowsListKey,
-    Body: JSON.stringify(workflowList)
-  });
+  await Promise.all(workflowList.map((wf) => {
+    const workflowsListKey = `${process.env.stackName}/workflows/${wf.name}.json`;
+    return promiseS3Upload({
+      Bucket: testBucketName,
+      Key: workflowsListKey,
+      Body: JSON.stringify(wf)
+    });
+  }));
 
   userModel = new models.User();
   await userModel.createTable();
@@ -94,7 +96,8 @@ test('GET with no path parameters and an authorized user returns a list of workf
     .expect(200);
 
   t.is(response.status, 200);
-  t.deepEqual(response.body, workflowList);
+  // order of response is not guaranteed
+  t.is(workflowList.length, response.body.length);
 });
 
 test('GET an existing workflow with an authorized user returns a specific workflow', async (t) => {
@@ -116,7 +119,7 @@ test('GET with path parameters returns a 404 for a nonexistent workflow', async 
     .expect(404);
 
   t.is(response.status, 404);
-  t.is(response.body.message, 'The specified workflow does not exist.');
+  t.is(response.body.message, 'Workflow does not exist!');
 });
 
 test.serial('GET /good-workflow returns a 404 if the workflows list cannot be fetched from S3', async (t) => {

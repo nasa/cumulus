@@ -45,16 +45,7 @@ const collectionsTableName = (stackName) => `${stackName}-CollectionsTable`;
 
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MYD13Q1_006';
-const inputPayloadFilename = './spec/parallel/createReconciliationReport/IngestGranule.MYD13Q1_006.input.payload.json';
 const collection = { name: 'MYD13Q1', version: '006' };
-const collectionId = constructCollectionId(collection.name, collection.version);
-const granuleRegex = '^MYD13Q1\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
-
-const config = loadConfig();
-
-process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
-process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-const granuleModel = new Granule();
 
 async function findProtectedBucket(systemBucket, stackName) {
   const bucketsConfig = new BucketsConfig(await bucketsConfigJsonObject(systemBucket, stackName));
@@ -83,7 +74,7 @@ async function deleteReconciliationReports(systemBucket, stackName) {
 }
 
 // add MYD13Q1___006 collection
-async function setupCollectionAndTestData(testSuffix, testDataFolder) {
+async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
   const s3data = [
     '@cumulus/test-data/granules/MYD13Q1.A2002185.h00v09.006.2015149071135.hdf.met',
     '@cumulus/test-data/granules/MYD13Q1.A2002185.h00v09.006.2015149071135.hdf',
@@ -100,20 +91,29 @@ async function setupCollectionAndTestData(testSuffix, testDataFolder) {
 }
 
 // ingest a granule and publish if requested
-async function ingestAndPublishGranule(testSuffix, testDataFolder, publish = true) {
+async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publish = true) {
   const workflowName = publish ? 'IngestAndPublishGranule' : 'IngestGranule';
   const provider = { id: `s3_provider${testSuffix}` };
 
-  const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+  const inputPayloadJson = fs.readFileSync(
+    './spec/parallel/createReconciliationReport/IngestGranule.MYD13Q1_006.input.payload.json',
+    'utf8'
+  );
   // update test data filepaths
-  const inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, '', testDataFolder);
+  const inputPayload = await setupTestGranuleForIngest(
+    config.bucket,
+    inputPayloadJson,
+    '^MYD13Q1\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$',
+    '',
+    testDataFolder
+  );
 
   await buildAndExecuteWorkflow(
     config.stackName, config.bucket, workflowName, collection, provider, inputPayload
   );
 
   await waitForModelStatus(
-    granuleModel,
+    new Granule(),
     { granuleId: inputPayload.granules[0].granuleId },
     'completed'
   );
@@ -123,8 +123,8 @@ async function ingestAndPublishGranule(testSuffix, testDataFolder, publish = tru
 
 // ingest a granule to CMR and remove it from database
 // return granule object retrieved from database
-async function ingestGranuleToCMR(testSuffix, testDataFolder) {
-  const granuleId = await ingestAndPublishGranule(testSuffix, testDataFolder, true);
+async function ingestGranuleToCMR(config, testSuffix, testDataFolder) {
+  const granuleId = await ingestAndPublishGranule(config, testSuffix, testDataFolder, true);
 
   const response = await granulesApiTestUtils.getGranule({
     prefix: config.stackName,
@@ -132,7 +132,7 @@ async function ingestGranuleToCMR(testSuffix, testDataFolder) {
   });
   const granule = JSON.parse(response.body);
 
-  await granuleModel.delete({ granuleId });
+  await (new Granule()).delete({ granuleId });
   console.log(`\ningestGranuleToCMR granule id: ${granuleId}`);
   return granule;
 }
@@ -152,32 +152,38 @@ async function updateGranuleFile(granuleId, granuleFiles, regex, replacement) {
     updatedFile.key = updatedFile.key.replace(regex, replacement);
     return updatedFile;
   });
-  await granuleModel.update({ granuleId: granuleId }, { files: updatedFiles });
+  await (new Granule()).update({ granuleId: granuleId }, { files: updatedFiles });
   return { originalGranuleFile, updatedGranuleFile };
 }
 
 describe('When there are granule differences and granule reconciliation is run', () => {
-  let report;
-  let extraS3Object;
-  let extraFileInDb;
+  let cmrGranule;
+  let collectionId;
+  let config;
+  let dbGranuleId;
   let extraCumulusCollection;
+  let extraFileInDb;
+  let extraS3Object;
+  let granuleModel;
+  let originalGranuleFile;
   let protectedBucket;
+  let publishedGranuleId;
+  let report;
   let testDataFolder;
   let testSuffix;
-
-  process.env.CMR_ENVIRONMENT = 'UAT';
-  // granuleIds of the granules in both Cumulus and CMR, only in Cumulus
-  let publishedGranuleId;
-  let dbGranuleId;
-
-  // granule only in CMR
-  let cmrGranule;
-
-  // the original file and updated file object of granule files being updated
-  let originalGranuleFile;
   let updatedGranuleFile;
 
   beforeAll(async () => {
+    collectionId = constructCollectionId(collection.name, collection.version);
+
+    config = await loadConfig();
+
+    process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+    granuleModel = new Granule();
+
+    process.env.CMR_ENVIRONMENT = 'UAT';
+
     // Remove any pre-existing reconciliation reports
     await deleteReconciliationReports(config.bucket, config.stackName);
 
@@ -215,20 +221,13 @@ describe('When there are granule differences and granule reconciliation is run',
     testSuffix = createTestSuffix(testId);
     testDataFolder = createTestDataPath(testId);
 
-    await setupCollectionAndTestData(testSuffix, testDataFolder);
+    await setupCollectionAndTestData(config, testSuffix, testDataFolder);
 
-    const ingestResults = await Promise.all([
-      // ingest a granule and publish it to CMR
-      ingestAndPublishGranule(testSuffix, testDataFolder),
-
-      // ingest a granule but not publish it to CMR
-      ingestAndPublishGranule(testSuffix, testDataFolder, false),
-
-      // ingest a granule to CMR only
-      ingestGranuleToCMR(testSuffix, testDataFolder)
+    [publishedGranuleId, dbGranuleId, cmrGranule] = await Promise.all([
+      ingestAndPublishGranule(config, testSuffix, testDataFolder),
+      ingestAndPublishGranule(config, testSuffix, testDataFolder, false),
+      ingestGranuleToCMR(config, testSuffix, testDataFolder)
     ]);
-
-    [publishedGranuleId, dbGranuleId, cmrGranule] = ingestResults;
 
     // update one of the granule files in database so that that file won't match with CMR
     const granuleResponse = await granulesApiTestUtils.getGranule({

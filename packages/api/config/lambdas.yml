@@ -14,19 +14,6 @@ sqs2sfThrottle:
   tables:
     - SemaphoresTable
 
-sns2elasticsearch:
-  handler: index.handler
-  timeout: 100
-  useElasticSearch: '{{es.name}}'
-  launchInVpc: true
-  memory: 320
-  source: 'node_modules/@cumulus/api/dist/indexer/'
-  tables:
-    - GranulesTable
-    - ExecutionsTable
-    - PdrsTable
-  namedLambdaDeadLetterQueue: true
-
 log2elasticsearch:
   handler: index.logHandler
   timeout: 100
@@ -216,6 +203,8 @@ ScheduleSF:
   tables:
     - CollectionsTable
     - ProvidersTable
+  envs:
+    system_bucket: '{{system_bucket}}'
   namedLambdaDeadLetterQueue: true
 
 BulkDelete:

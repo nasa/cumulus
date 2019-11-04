@@ -1,7 +1,0 @@
-.terraform
-build
-node_modules
-package-lock.json
-*.tfvars
-*.tfstate*
-dist

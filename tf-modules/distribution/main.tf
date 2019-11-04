@@ -111,6 +111,8 @@ resource "aws_iam_role_policy" "s3_credentials_lambda" {
 }
 
 resource "aws_security_group" "s3_credentials_lambda" {
+  count = var.vpc_id == null ? 0 : 1
+
   vpc_id = var.vpc_id
 
   egress {
@@ -131,10 +133,12 @@ resource "aws_lambda_function" "s3_credentials" {
   runtime          = "nodejs8.10"
   timeout          = 10
   memory_size      = 320
+
   vpc_config {
     subnet_ids         = var.subnet_ids
-    security_group_ids = [aws_security_group.s3_credentials_lambda.id]
+    security_group_ids = var.subnet_ids == null ? null : [aws_security_group.s3_credentials_lambda[0].id]
   }
+
   environment {
     variables = {
       DISTRIBUTION_ENDPOINT          = module.thin_egress_app.api_endpoint

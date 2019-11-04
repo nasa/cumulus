@@ -16,20 +16,22 @@ describe('The AsyncOperation task runner', () => {
   let asyncOperationModel;
   let config;
   let cluster;
+  let asyncOperationsTableName;
   let asyncOperationTaskDefinition;
   let successFunctionName;
   let failFunctionName;
 
   beforeAll(async () => {
-    config = loadConfig();
+    config = await loadConfig();
 
+    asyncOperationsTableName = `${config.stackName}-AsyncOperationsTable`;
     successFunctionName = `${config.stackName}-AsyncOperationSuccess`;
     failFunctionName = `${config.stackName}-AsyncOperationFail`;
 
     asyncOperationModel = new AsyncOperation({
       stackName: config.stackName,
       systemBucket: config.bucket,
-      tableName: config.AsyncOperationsTable
+      tableName: asyncOperationsTableName
     });
 
     // Find the ARN of the cluster
@@ -68,7 +70,7 @@ describe('The AsyncOperation task runner', () => {
       ).promise();
 
       dynamoDbItem = await waitForAsyncOperationStatus({
-        TableName: config.AsyncOperationsTable,
+        TableName: asyncOperationsTableName,
         id: asyncOperationId,
         status: 'RUNNER_FAILED'
       });
@@ -115,7 +117,7 @@ describe('The AsyncOperation task runner', () => {
               name: 'AsyncOperation',
               environment: [
                 { name: 'asyncOperationId', value: asyncOperationId },
-                { name: 'asyncOperationsTable', value: config.AsyncOperationsTable },
+                { name: 'asyncOperationsTable', value: asyncOperationsTableName },
                 { name: 'lambdaName', value: successFunctionName },
                 { name: 'payloadUrl', value: payloadUrl }
               ]
@@ -135,7 +137,7 @@ describe('The AsyncOperation task runner', () => {
       ).promise();
 
       dynamoDbItem = await waitForAsyncOperationStatus({
-        TableName: config.AsyncOperationsTable,
+        TableName: asyncOperationsTableName,
         id: asyncOperationId,
         status: 'RUNNER_FAILED'
       });
@@ -189,7 +191,7 @@ describe('The AsyncOperation task runner', () => {
               name: 'AsyncOperation',
               environment: [
                 { name: 'asyncOperationId', value: asyncOperationId },
-                { name: 'asyncOperationsTable', value: config.AsyncOperationsTable },
+                { name: 'asyncOperationsTable', value: asyncOperationsTableName },
                 { name: 'lambdaName', value: successFunctionName },
                 { name: 'payloadUrl', value: `s3://${config.bucket}/${payloadKey}` }
               ]
@@ -209,7 +211,7 @@ describe('The AsyncOperation task runner', () => {
       ).promise();
 
       dynamoDbItem = await waitForAsyncOperationStatus({
-        TableName: config.AsyncOperationsTable,
+        TableName: asyncOperationsTableName,
         id: asyncOperationId,
         status: 'TASK_FAILED'
       });
@@ -265,7 +267,7 @@ describe('The AsyncOperation task runner', () => {
               name: 'AsyncOperation',
               environment: [
                 { name: 'asyncOperationId', value: asyncOperationId },
-                { name: 'asyncOperationsTable', value: config.AsyncOperationsTable },
+                { name: 'asyncOperationsTable', value: asyncOperationsTableName },
                 { name: 'lambdaName', value: successFunctionName },
                 { name: 'payloadUrl', value: `s3://${config.bucket}/${payloadKey}` }
               ]
@@ -285,7 +287,7 @@ describe('The AsyncOperation task runner', () => {
       ).promise();
 
       dynamoDbItem = await waitForAsyncOperationStatus({
-        TableName: config.AsyncOperationsTable,
+        TableName: asyncOperationsTableName,
         id: asyncOperationId,
         status: 'SUCCEEDED'
       });
@@ -341,7 +343,7 @@ describe('The AsyncOperation task runner', () => {
               name: 'AsyncOperation',
               environment: [
                 { name: 'asyncOperationId', value: asyncOperationId },
-                { name: 'asyncOperationsTable', value: config.AsyncOperationsTable },
+                { name: 'asyncOperationsTable', value: asyncOperationsTableName },
                 { name: 'lambdaName', value: failFunctionName },
                 { name: 'payloadUrl', value: `s3://${config.bucket}/${payloadKey}` }
               ]
@@ -361,7 +363,7 @@ describe('The AsyncOperation task runner', () => {
       ).promise();
 
       dynamoDbItem = await waitForAsyncOperationStatus({
-        TableName: config.AsyncOperationsTable,
+        TableName: asyncOperationsTableName,
         id: asyncOperationId,
         status: 'TASK_FAILED'
       });

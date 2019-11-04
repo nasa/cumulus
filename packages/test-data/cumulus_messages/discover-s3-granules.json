@@ -79,11 +79,7 @@
       "updatedAt": 1519166301521,
       "protocol": "http"
     },
-    "templates": {
-      "IngestGranule": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflows/IngestGranule.json",
-      "ParsePdr": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflows/ParsePdr.json",
-      "DiscoverPdrs": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflows/DiscoverPdrs.json"
-    },
+    "template": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflow_template.json",
     "queues": {
       "startSF": "https://sqs.us-east-1.amazonaws.com/000000000000/lpdaac-cumulus-startSF"
     },
