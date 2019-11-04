@@ -137,9 +137,9 @@ const loadConfig = async (type = 'app') => {
   await loadEnvFile('./.env');
   verifyRequiredEnvironmentVariables();
 
-  const configFromFile = fs.existsSync('./config.yml') ?
-    loadConfigYmlFile(process.env.DEPLOYMENT) :
-    loadConfigFromKes(type);
+  const configFromFile = Boolean(process.env.KES_DEPLOYMENT) === true ?
+    loadConfigFromKes(type) :
+    loadConfigYmlFile(process.env.DEPLOYMENT);
 
   const bucketsObject = await getS3Object(
     configFromFile.bucket,
