@@ -6,7 +6,7 @@ hide_title: true
 
 # S3 Server Access Logging
 
-Note: to support [EMS Reporting](../features/ems_reporting), you need to enable [Amazon S3 server access logging][awslogging] on all protected and public buckets.
+**Note:** To support [EMS Reporting](../features/ems_reporting), you need to enable [Amazon S3 server access logging][awslogging] on all protected and public buckets.
 
 ## Via AWS Console
 
@@ -14,7 +14,7 @@ Note: to support [EMS Reporting](../features/ems_reporting), you need to enable 
 
 ## Via [AWS Command Line Interface][cli]
 
-1. create a `logging.json` file with these contents, replacing `<stack-internal-bucket>` with your stack's internal bucket name, and `<stack>` with the name of your cumulus stack.
+1. Create a `logging.json` file with these contents, replacing `<stack-internal-bucket>` with your stack's internal bucket name, and `<stack>` with the name of your cumulus stack.
 
 	```json
 		{
@@ -33,9 +33,9 @@ Note: to support [EMS Reporting](../features/ems_reporting), you need to enable 
 
 3. Verify the logging policy exists on your buckets.
 
-```sh
-	aws s3api get-bucket-logging --bucket <protected/public-bucket-name>
-```
+	```sh
+		aws s3api get-bucket-logging --bucket <protected/public-bucket-name>
+	```
 
 [cli]: https://aws.amazon.com/cli/ "Amazon command line interface"
 [howtologging]: https://docs.aws.amazon.com/AmazonS3/latest/user-guide/server-access-logging.html "Amazon Console Instructions"

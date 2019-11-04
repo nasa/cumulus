@@ -1,6 +1,6 @@
 ---
 id: troubleshoot_deployment
-title: Troubleshooting Cumulus Deployment
+title: Troubleshooting
 hide_title: true
 ---
 
