@@ -95,7 +95,7 @@ resource "aws_sfn_activity" "queue_granules" {
 ```
 
 
-* A instance of the `cumulus_ecs_service` module (found on the Cumulus [release](https://github.com/nasa/cumulus/releases page) configured to provide the QueueGranules task:
+* An instance of the `cumulus_ecs_service` module (found on the Cumulus [release](https://github.com/nasa/cumulus/releases page) configured to provide the `QueueGranules` task:
 
 ```hcl
 
