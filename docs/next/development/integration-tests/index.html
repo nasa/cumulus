@@ -11,33 +11,15 @@ you can run the tests as described below:</p>
 <li>Deploy your instance integrations on aws and run tests by following the steps
 <a href="https://github.com/nasa/cumulus/tree/master/example/README.md">here</a></li>
 </ul>
-<h2><a class="anchor" aria-hidden="true" id="running-integration-tests-on-travis-ci"></a><a href="#running-integration-tests-on-travis-ci" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Running integration tests on Travis CI</h2>
-<p>Integration tests are run by default on Travis CI builds for the master branch,
+<h2><a class="anchor" aria-hidden="true" id="running-integration-tests-on-bamboo"></a><a href="#running-integration-tests-on-bamboo" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Running integration tests on Bamboo</h2>
+<p>Integration tests are run by default on Bamboo builds for the master branch,
 a tagged release, and branches with an open PR. If you want to skip the
 integration tests for a given commit for a PR branch, include <code>[skip-integration-tests]</code>
-in the commit message. To force integration tests to run on a branch that does
-not have a PR, include <code>[force-integration-tests]</code> in the commit message.</p>
-<p>Travis CI determines what stack to run the tests against based on the name of
-the branch. It expects that the branch name will be suffixed with a dash
-followed by the name of the stack to test against. For instance, to run against
-the &quot;test-123&quot; stack, a branch should be called &quot;something-test-123&quot;. If the
-stack cannot be determined from the branch name then the &quot;cumulus-from-pr&quot; stack
-will be used.</p>
+in the commit message.</p>
 <p>If you create a new stack and want to be able to run integration tests against
 it in CI, you will need to add it to
-<a href="travis-ci/select-stack.js">travis-ci/select-stack.js</a>.</p>
-<p>In order to prevent multiple instances of the integration tests from running
-against a stack at the same time, a lock file is created in S3 for each stack.
-Before integration tests start they will wait until that lock file is not
-present. They will then create that lock file, run the tests, and delete the
-lock file. The lock file will be located at
-<code>s3://${CACHE_BUCKET}/travis-ci-integration-tests/${DEPLOYMENT}.lock</code>. The lock
-file will contain a link to the Travis CI job that created the lock file. If
-your tests seem to be hung waiting for that lock file, check to see if the job
-that created the lock file is still running or has crashed. If it has crashed
-then the lock file should be deleted. You should also figure out why the lock
-file was not cleaned up and fix that for next time.</p>
-</span></div></article></div><div class="docs-prevnext"></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#running-integration-tests-on-aws">Running integration tests on AWS</a></li><li><a href="#running-integration-tests-on-travis-ci">Running integration tests on Travis CI</a></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+<a href="bamboo/select-stack.js">bamboo/select-stack.js</a>.</p>
+</span></div></article></div><div class="docs-prevnext"></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#running-integration-tests-on-aws">Running integration tests on AWS</a></li><li><a href="#running-integration-tests-on-bamboo">Running integration tests on Bamboo</a></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;
@@ -51,8 +33,8 @@ file was not cleaned up and fix that for next time.</p>
               </script><script>
               var search = docsearch({
                 
-                apiKey: 'f7e0be879553661f9043322d119069c8',
-                indexName: 'nasa_cumulus',
+                apiKey: 'undefined',
+                indexName: 'undefined',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>

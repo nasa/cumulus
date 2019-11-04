@@ -64,8 +64,8 @@
 <pre><code class="hljs"><span class="hljs-attr">namedLambdaDeadLetterQueue:</span> <span class="hljs-literal">true</span>
 </code></pre>
 <p>will create an SQS Dead Letter Queue named <code>{lambdaName}DeadLetterQueue</code> and set the lambda to target it.   The default retention configuration for this queue will be set with the following configurable values:</p>
-<pre><code class="hljs"><span class="hljs-attr">DLQDefaultTimeout:</span> <span class="hljs-number">60</span>  <span class="hljs-comment">## SQS Message Timer</span>
-<span class="hljs-attr">DLQDefaultMessageRetentionPeriod:</span> <span class="hljs-number">1209600</span> <span class="hljs-comment">## SQS Message Retention</span>
+<pre><code class="hljs"><span class="hljs-symbol">DLQDefaultTimeout:</span> <span class="hljs-number">60</span>  <span class="hljs-meta">## SQS Message Timer</span>
+<span class="hljs-symbol">DLQDefaultMessageRetentionPeriod:</span> <span class="hljs-number">1209600</span> <span class="hljs-meta">## SQS Message Retention</span>
 </code></pre>
 <p>These values can be overridden in the <code>app/config.yml</code> and will apply to all 'named' lambda Dead Letter Queues, subject to <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-limits.html">AWS SQS Limits</a></p>
 <h4><a class="anchor" aria-hidden="true" id="default-lambda-configuration"></a><a href="#default-lambda-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Default Lambda Configuration</h4>
@@ -82,7 +82,7 @@
 <p>Ideally an automated process should be configured to poll the queue and process messages off a dead letter queue.</p>
 <p>For aid in manually troubleshooting, you can utilize the <a href="https://console.aws.amazon.com/sqs/home">SQS Management console</a> to view/messages available in the queues setup for a particular stack.    The dead letter queues will have a Message Body containing the lambda payload, as well as Message Attributes that reference both the error returned and a RequestID which can be cross referenced to the associated Lambda's CloudWatch logs for more information:</p>
 <p><img src="/cumulus/docs/assets/sqs_message_attribute.png" alt="sqs message attributes"></p>
-</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cumulus/docs/v1.13.4/data_in_dynamodb"><span class="arrow-prev">← </span><span class="function-name-prevnext">Cumulus Metadata in DynamoDB</span></a><a class="docs-next button" href="/cumulus/docs/v1.13.4/ems_reporting"><span>EMS Reporting</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#startsf-sqs-queue">startSF SQS queue</a></li><li><a href="#named-lambda-dead-letter-queues">Named Lambda Dead Letter Queues</a></li><li><a href="#troubleshooting-utilizing-messages-in-a-dead-letter-queue">Troubleshooting/Utilizing messages in a <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html">Dead Letter Queue</a></a></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cumulus/docs/v1.13.4/data_in_dynamodb"><span class="arrow-prev">← </span><span class="function-name-prevnext">Cumulus Metadata in DynamoDB</span></a><a class="docs-next button" href="/cumulus/docs/v1.13.4/ems_reporting"><span>EMS Reporting</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#startsf-sqs-queue">startSF SQS queue</a></li><li><a href="#named-lambda-dead-letter-queues">Named Lambda Dead Letter Queues</a></li><li><a href="#troubleshooting-utilizing-messages-in-a-dead-letter-queue-https-docsawsamazoncom-awssimplequeueservice-latest-sqsdeveloperguide-sqs-dead-letter-queueshtml">Troubleshooting/Utilizing messages in a <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html">Dead Letter Queue</a></a></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;
@@ -96,8 +96,8 @@
               </script><script>
               var search = docsearch({
                 
-                apiKey: 'f7e0be879553661f9043322d119069c8',
-                indexName: 'nasa_cumulus',
+                apiKey: 'undefined',
+                indexName: 'undefined',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>

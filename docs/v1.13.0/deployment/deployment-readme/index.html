@@ -169,46 +169,46 @@ If these values are omitted Cumulus resources that require a VPC will be created
 <p><strong>Sample new deployment added to config.yml</strong>:</p>
 <p>Descriptions of the fields can be found in <a href="/cumulus/docs/v1.13.0/deployment/config_descriptions">Configuration Descriptions</a>.</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-attr">dev:</span>                            <span class="hljs-comment"># deployment name</span>
-  <span class="hljs-attr">prefix:</span> <span class="hljs-string">dev-cumulus</span>           <span class="hljs-comment"># Required. Prefixes stack names and CloudFormation-created resources and permissions</span>
-  <span class="hljs-attr">prefixNoDash:</span> <span class="hljs-string">DevCumulus</span>      <span class="hljs-comment"># Required.</span>
-  <span class="hljs-attr">useNgapPermissionBoundary:</span> <span class="hljs-literal">true</span>   <span class="hljs-comment"># for NASA NGAP accounts</span>
+<span class="hljs-attr">  prefix:</span> <span class="hljs-string">dev-cumulus</span>           <span class="hljs-comment"># Required. Prefixes stack names and CloudFormation-created resources and permissions</span>
+<span class="hljs-attr">  prefixNoDash:</span> <span class="hljs-string">DevCumulus</span>      <span class="hljs-comment"># Required.</span>
+<span class="hljs-attr">  useNgapPermissionBoundary:</span> <span class="hljs-literal">true</span>   <span class="hljs-comment"># for NASA NGAP accounts</span>
 
-  <span class="hljs-attr">apiStage:</span> <span class="hljs-string">dev</span>                 <span class="hljs-comment"># Optional</span>
+<span class="hljs-attr">  apiStage:</span> <span class="hljs-string">dev</span>                 <span class="hljs-comment"># Optional</span>
 
-  <span class="hljs-attr">vpc:</span>                          <span class="hljs-comment"># Required for NGAP environments</span>
-    <span class="hljs-attr">vpcId:</span> <span class="hljs-string">'<span class="hljs-template-variable">{{VPC_ID}}</span>'</span>         <span class="hljs-comment"># this has to be set in .env</span>
-    <span class="hljs-attr">subnets:</span>
-      <span class="hljs-bullet">-</span> <span class="hljs-string">'<span class="hljs-template-variable">{{AWS_SUBNET}}</span>'</span>        <span class="hljs-comment"># this has to be set in .env</span>
-    <span class="hljs-attr">securityGroup:</span> <span class="hljs-string">'<span class="hljs-template-variable">{{SECURITY_GROUP}}</span>'</span>   <span class="hljs-comment"># this has to be set in .env</span>
+<span class="hljs-attr">  vpc:</span>                          <span class="hljs-comment"># Required for NGAP environments</span>
+<span class="hljs-attr">    vpcId:</span> <span class="hljs-string">'<span class="hljs-template-variable">{{VPC_ID}}</span>'</span>         <span class="hljs-comment"># this has to be set in .env</span>
+<span class="hljs-attr">    subnets:</span>
+<span class="hljs-bullet">      -</span> <span class="hljs-string">'<span class="hljs-template-variable">{{AWS_SUBNET}}</span>'</span>        <span class="hljs-comment"># this has to be set in .env</span>
+<span class="hljs-attr">    securityGroup:</span> <span class="hljs-string">'<span class="hljs-template-variable">{{SECURITY_GROUP}}</span>'</span>   <span class="hljs-comment"># this has to be set in .env</span>
 
-  <span class="hljs-attr">ecs:</span>                          <span class="hljs-comment"># Required</span>
-    <span class="hljs-attr">instanceType:</span> <span class="hljs-string">t2.micro</span>
-    <span class="hljs-attr">desiredInstances:</span> <span class="hljs-number">0</span>
-    <span class="hljs-attr">availabilityZone:</span> <span class="hljs-string">&lt;subnet-id-zone&gt;</span>
-    <span class="hljs-attr">amiid:</span> <span class="hljs-string">&lt;some-ami-id&gt;</span>
+<span class="hljs-attr">  ecs:</span>                          <span class="hljs-comment"># Required</span>
+<span class="hljs-attr">    instanceType:</span> <span class="hljs-string">t2.micro</span>
+<span class="hljs-attr">    desiredInstances:</span> <span class="hljs-number">0</span>
+<span class="hljs-attr">    availabilityZone:</span> <span class="hljs-string">&lt;subnet-id-zone&gt;</span>
+<span class="hljs-attr">    amiid:</span> <span class="hljs-string">&lt;some-ami-id&gt;</span>
 
   <span class="hljs-comment"># Required. You can specify a different bucket for the system_bucket</span>
-  <span class="hljs-attr">system_bucket:</span> <span class="hljs-string">'<span class="hljs-template-variable">{{buckets.internal.name}}</span>'</span>
+<span class="hljs-attr">  system_bucket:</span> <span class="hljs-string">'<span class="hljs-template-variable">{{buckets.internal.name}}</span>'</span>
 
-  <span class="hljs-attr">buckets:</span>                          <span class="hljs-comment"># Bucket configuration. Required.</span>
-    <span class="hljs-attr">internal:</span>
-      <span class="hljs-attr">name:</span> <span class="hljs-string">dev-internal</span>            <span class="hljs-comment"># internal bucket name</span>
-      <span class="hljs-attr">type:</span> <span class="hljs-string">internal</span>
-    <span class="hljs-attr">private:</span>
-      <span class="hljs-attr">name:</span> <span class="hljs-string">dev-private</span>             <span class="hljs-comment"># private bucket name</span>
-      <span class="hljs-attr">type:</span> <span class="hljs-string">private</span>
-    <span class="hljs-attr">protected:</span>
-      <span class="hljs-attr">name:</span> <span class="hljs-string">dev-protected</span>           <span class="hljs-comment"># protected bucket name</span>
-      <span class="hljs-attr">type:</span> <span class="hljs-string">protected</span>
-    <span class="hljs-attr">public:</span>
-      <span class="hljs-attr">name:</span> <span class="hljs-string">dev-cumulus-public</span>      <span class="hljs-comment"># public bucket name</span>
-      <span class="hljs-attr">type:</span> <span class="hljs-string">public</span>
-    <span class="hljs-attr">otherpublic:</span>                    <span class="hljs-comment"># Can have more than one of each type of bucket</span>
-      <span class="hljs-attr">name:</span> <span class="hljs-string">dev-default</span>
-      <span class="hljs-attr">type:</span> <span class="hljs-string">public</span>
+<span class="hljs-attr">  buckets:</span>                          <span class="hljs-comment"># Bucket configuration. Required.</span>
+<span class="hljs-attr">    internal:</span>
+<span class="hljs-attr">      name:</span> <span class="hljs-string">dev-internal</span>            <span class="hljs-comment"># internal bucket name</span>
+<span class="hljs-attr">      type:</span> <span class="hljs-string">internal</span>
+<span class="hljs-attr">    private:</span>
+<span class="hljs-attr">      name:</span> <span class="hljs-string">dev-private</span>             <span class="hljs-comment"># private bucket name</span>
+<span class="hljs-attr">      type:</span> <span class="hljs-string">private</span>
+<span class="hljs-attr">    protected:</span>
+<span class="hljs-attr">      name:</span> <span class="hljs-string">dev-protected</span>           <span class="hljs-comment"># protected bucket name</span>
+<span class="hljs-attr">      type:</span> <span class="hljs-string">protected</span>
+<span class="hljs-attr">    public:</span>
+<span class="hljs-attr">      name:</span> <span class="hljs-string">dev-cumulus-public</span>      <span class="hljs-comment"># public bucket name</span>
+<span class="hljs-attr">      type:</span> <span class="hljs-string">public</span>
+<span class="hljs-attr">    otherpublic:</span>                    <span class="hljs-comment"># Can have more than one of each type of bucket</span>
+<span class="hljs-attr">      name:</span> <span class="hljs-string">dev-default</span>
+<span class="hljs-attr">      type:</span> <span class="hljs-string">public</span>
 
   <span class="hljs-comment"># Optional</span>
-  <span class="hljs-attr">urs_url:</span> <span class="hljs-string">https://uat.urs.earthdata.nasa.gov/</span> <span class="hljs-comment"># make sure to include the trailing slash</span>
+<span class="hljs-attr">  urs_url:</span> <span class="hljs-attr">https://uat.urs.earthdata.nasa.gov/</span> <span class="hljs-comment"># make sure to include the trailing slash</span>
 
   <span class="hljs-comment"># if not specified, the value of the API gateway backend endpoint is used</span>
   <span class="hljs-comment"># api_backend_url: https://apigateway-url-to-api-backend/ # make sure to include the trailing slash</span>
@@ -217,26 +217,26 @@ If these values are omitted Cumulus resources that require a VPC will be created
   <span class="hljs-comment"># api_distribution_url: https://apigateway-url-to-distribution-app/ # make sure to include the trailing slash</span>
 
   <span class="hljs-comment"># Required. URS users who should have access to the dashboard application and Cumulus API.</span>
-  <span class="hljs-attr">users:</span>
-    <span class="hljs-bullet">-</span> <span class="hljs-attr">username:</span> <span class="hljs-string">&lt;user&gt;</span>
-    <span class="hljs-bullet">-</span> <span class="hljs-attr">username:</span> <span class="hljs-string">&lt;user2&gt;</span>
+<span class="hljs-attr">  users:</span>
+<span class="hljs-attr">    - username:</span> <span class="hljs-string">&lt;user&gt;</span>
+<span class="hljs-attr">    - username:</span> <span class="hljs-string">&lt;user2&gt;</span>
   
   <span class="hljs-comment"># Optional. Only necessary if you have workflows that integrate with CMR</span>
-  <span class="hljs-attr">cmr:</span>
-    <span class="hljs-attr">username:</span> <span class="hljs-string">'<span class="hljs-template-variable">{{CMR_USERNAME}}</span>'</span>
-    <span class="hljs-attr">password:</span> <span class="hljs-string">'<span class="hljs-template-variable">{{CMR_PASSWORD}}</span>'</span>
-    <span class="hljs-attr">clientId:</span> <span class="hljs-string">'&lt;replace-with-daac-name&gt;-<span class="hljs-template-variable">{{prefix}}</span>'</span> <span class="hljs-comment"># Client-ID submitted to CMR to identify origin of requests.</span>
-    <span class="hljs-attr">provider:</span> <span class="hljs-string">CUMULUS</span>                                  <span class="hljs-comment"># Target provider in CMR</span>
+<span class="hljs-attr">  cmr:</span>
+<span class="hljs-attr">    username:</span> <span class="hljs-string">'<span class="hljs-template-variable">{{CMR_USERNAME}}</span>'</span>
+<span class="hljs-attr">    password:</span> <span class="hljs-string">'<span class="hljs-template-variable">{{CMR_PASSWORD}}</span>'</span>
+<span class="hljs-attr">    clientId:</span> <span class="hljs-string">'&lt;replace-with-daac-name&gt;-<span class="hljs-template-variable">{{prefix}}</span>'</span> <span class="hljs-comment"># Client-ID submitted to CMR to identify origin of requests.</span>
+<span class="hljs-attr">    provider:</span> <span class="hljs-string">CUMULUS</span>                                  <span class="hljs-comment"># Target provider in CMR</span>
 
-  <span class="hljs-attr">es:</span>                               <span class="hljs-comment"># Optional. Set to 'null' to disable elasticsearch.</span>
-    <span class="hljs-attr">name:</span> <span class="hljs-string">myES5Domain</span>               <span class="hljs-comment"># Optional. Defaults to 'es5vpc'.</span>
-    <span class="hljs-attr">elasticSearchMapping:</span> <span class="hljs-number">2</span>         <span class="hljs-comment"># Optional, triggers elasticSearch re-bootstrap.</span>
+<span class="hljs-attr">  es:</span>                               <span class="hljs-comment"># Optional. Set to 'null' to disable elasticsearch.</span>
+<span class="hljs-attr">    name:</span> <span class="hljs-string">myES5Domain</span>               <span class="hljs-comment"># Optional. Defaults to 'es5vpc'.</span>
+<span class="hljs-attr">    elasticSearchMapping:</span> <span class="hljs-number">2</span>         <span class="hljs-comment"># Optional, triggers elasticSearch re-bootstrap.</span>
                                     <span class="hljs-comment"># Useful when e.g. mappings are updated.</span>
 
-  <span class="hljs-attr">app:</span>                              <span class="hljs-comment"># Override params to be passed to the app stack ('iam' and 'db' also allowed)</span>
-    <span class="hljs-attr">params:</span>
-      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">myAppStackParam</span>
-        <span class="hljs-attr">value:</span> <span class="hljs-string">SomeValue</span>
+<span class="hljs-attr">  app:</span>                              <span class="hljs-comment"># Override params to be passed to the app stack ('iam' and 'db' also allowed)</span>
+<span class="hljs-attr">    params:</span>
+<span class="hljs-attr">      - name:</span> <span class="hljs-string">myAppStackParam</span>
+<span class="hljs-attr">        value:</span> <span class="hljs-string">SomeValue</span>
 </code></pre>
 <hr>
 <h2><a class="anchor" aria-hidden="true" id="deploying-the-cumulus-instance"></a><a href="#deploying-the-cumulus-instance" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Deploying the Cumulus Instance</h2>
@@ -434,7 +434,7 @@ Also add the Distribution url <code>https://&lt;kido2r7kji&gt;.execute-api.us-ea
 </li>
 </ol>
 </section>
-</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cumulus/docs/v1.13.0/workflow_tasks/parse_pdr"><span class="arrow-prev">← </span><span>Parse PDR</span></a><a class="docs-next button" href="/cumulus/docs/v1.13.0/deployment/create_bucket"><span>Creating an S3 Bucket</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#overview">Overview</a></li><li><a href="#requirements">Requirements</a><ul class="toc-headings"><li><a href="#linux-macos-software-requirements">Linux/MacOS software requirements</a></li><li><a href="#credentials">Credentials</a></li><li><a href="#needed-git-repositories">Needed Git Repositories</a></li></ul></li><li><a href="#installation">Installation</a><ul class="toc-headings"><li><a href="#prepare-daac-deployment-repository">Prepare DAAC deployment repository</a></li><li><a href="#copy-the-sample-template-into-your-repository">Copy the sample template into your repository</a></li></ul></li><li><a href="#prepare-aws-configuration">Prepare AWS configuration</a><ul class="toc-headings"><li><a href="#set-access-keys">Set Access Keys</a></li><li><a href="#create-s3-buckets">Create S3 Buckets</a></li><li><a href="#vpc-subnets-and-security-group">VPC, Subnets and Security Group</a></li></ul></li><li><a href="#earthdata-application">Earthdata Application</a><ul class="toc-headings"><li><a href="#configure-earthdata-application">Configure EarthData application</a></li></ul></li><li><a href="#configuring-the-cumulus-instance">Configuring the Cumulus instance</a><ul class="toc-headings"><li><a href="#set-up-an-environment-file">Set up an environment file</a></li><li><a href="#configure-deployment-with-deploy-app-configyml">Configure deployment with <code>-deploy/app/config.yml</code></a></li></ul></li><li><a href="#deploying-the-cumulus-instance">Deploying the Cumulus Instance</a><ul class="toc-headings"><li><a href="#deploy-the-cumulus-iam-stack">Deploy the Cumulus IAM stack</a></li><li><a href="#deploy-the-cumulus-database-stack">Deploy the Cumulus database stack</a></li><li><a href="#deploy-the-cumulus-application-stack">Deploy the Cumulus application stack</a></li><li><a href="#update-earthdata-application">Update Earthdata Application.</a></li></ul></li><li><a href="#deploy-cumulus-dashboard">Deploy Cumulus dashboard</a><ul class="toc-headings"><li><a href="#dashboard-requirements">Dashboard Requirements</a></li><li><a href="#prepare-aws">Prepare AWS</a></li><li><a href="#install-dashboard">Install dashboard</a></li><li><a href="#dashboard-configuration">Dashboard configuration</a></li><li><a href="#building-the-dashboard">Building the dashboard</a></li><li><a href="#dashboard-deployment">Dashboard deployment</a></li></ul></li><li><a href="#updating-cumulus-deployment">Updating Cumulus deployment</a></li><li><a href="#cumulus-versioning">Cumulus Versioning</a></li><li><a href="#update-roles">Update roles</a></li><li><a href="#update-database">Update database</a></li><li><a href="#update-cumulus">Update Cumulus</a><ul class="toc-headings"><li><a href="#footnotes">Footnotes</a></li></ul></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cumulus/docs/v1.13.0/workflow_tasks/parse_pdr"><span class="arrow-prev">← </span><span>Parse PDR</span></a><a class="docs-next button" href="/cumulus/docs/v1.13.0/deployment/create_bucket"><span>Creating an S3 Bucket</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#overview">Overview</a></li><li><a href="#requirements">Requirements</a><ul class="toc-headings"><li><a href="#linux-macos-software-requirements">Linux/MacOS software requirements</a></li><li><a href="#credentials">Credentials</a></li><li><a href="#needed-git-repositories">Needed Git Repositories</a></li></ul></li><li><a href="#installation">Installation</a><ul class="toc-headings"><li><a href="#prepare-daac-deployment-repository">Prepare DAAC deployment repository</a></li><li><a href="#copy-the-sample-template-into-your-repository">Copy the sample template into your repository</a></li></ul></li><li><a href="#prepare-aws-configuration">Prepare AWS configuration</a><ul class="toc-headings"><li><a href="#set-access-keys">Set Access Keys</a></li><li><a href="#create-s3-buckets">Create S3 Buckets</a></li><li><a href="#vpc-subnets-and-security-group">VPC, Subnets and Security Group</a></li></ul></li><li><a href="#earthdata-application">Earthdata Application</a><ul class="toc-headings"><li><a href="#configure-earthdata-application">Configure EarthData application</a></li></ul></li><li><a href="#configuring-the-cumulus-instance">Configuring the Cumulus instance</a><ul class="toc-headings"><li><a href="#set-up-an-environment-file">Set up an environment file</a></li><li><a href="#configure-deployment-with-daac-deploy-app-configyml">Configure deployment with <code>&lt;daac&gt;-deploy/app/config.yml</code></a></li></ul></li><li><a href="#deploying-the-cumulus-instance">Deploying the Cumulus Instance</a><ul class="toc-headings"><li><a href="#deploy-the-cumulus-iam-stack">Deploy the Cumulus IAM stack</a></li><li><a href="#deploy-the-cumulus-database-stack">Deploy the Cumulus database stack</a></li><li><a href="#deploy-the-cumulus-application-stack">Deploy the Cumulus application stack</a></li><li><a href="#update-earthdata-application">Update Earthdata Application.</a></li></ul></li><li><a href="#deploy-cumulus-dashboard">Deploy Cumulus dashboard</a><ul class="toc-headings"><li><a href="#dashboard-requirements">Dashboard Requirements</a></li><li><a href="#prepare-aws">Prepare AWS</a></li><li><a href="#install-dashboard">Install dashboard</a></li><li><a href="#dashboard-configuration">Dashboard configuration</a></li><li><a href="#building-the-dashboard">Building the dashboard</a></li><li><a href="#dashboard-deployment">Dashboard deployment</a></li></ul></li><li><a href="#updating-cumulus-deployment">Updating Cumulus deployment</a></li><li><a href="#cumulus-versioning">Cumulus Versioning</a></li><li><a href="#update-roles">Update roles</a></li><li><a href="#update-database">Update database</a></li><li><a href="#update-cumulus">Update Cumulus</a><ul class="toc-headings"><li><a href="#footnotes">Footnotes</a></li></ul></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;
@@ -448,8 +448,8 @@ Also add the Distribution url <code>https://&lt;kido2r7kji&gt;.execute-api.us-ea
               </script><script>
               var search = docsearch({
                 
-                apiKey: 'f7e0be879553661f9043322d119069c8',
-                indexName: 'nasa_cumulus',
+                apiKey: 'undefined',
+                indexName: 'undefined',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>

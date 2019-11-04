@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>CNM Workflow · Cumulus Documentation</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="# CNM Workflow"/><meta name="docsearch:version" content="v1.13.6"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="CNM Workflow · Cumulus Documentation"/><meta property="og:type" content="website"/><meta property="og:url" content="https://nasa.github.io/cumulus/"/><meta property="og:description" content="# CNM Workflow"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/cumulus/undefined"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="/cumulus/js/scrollSpy.js"></script><link rel="stylesheet" href="/cumulus/css/main.css"/><script src="/cumulus/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cumulus/"><h2 class="headerTitle">Cumulus Documentation</h2></a><a href="/cumulus/versions"><h3>v1.13.6</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="https://nasa.github.io/cumulus-api" target="_self">API Docs</a></li><li class=""><a href="/cumulus/docs/cumulus-docs-readme" target="_self">Developer Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/data-cookbooks/about-cookbooks" target="_self">Data-Cookbooks</a></li><li class=""><a href="/cumulus/docs/operator-docs/about-operator-docs" target="_self">Operator Docs</a></li><li class=""><a href="/cumulus/docs/team" target="_self">Team</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Cookbooks</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">About Cookbooks</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/about-cookbooks">About Cookbooks</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/setup">Data Cookbooks Setup</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Cookbooks</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/hello-world">HelloWorld Workflow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/sns">SNS Notification in Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/sips-workflow">Science Investigator-led Processing Systems (SIPS)</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/cumulus/docs/data-cookbooks/cnm-workflow">CNM Workflow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/error-handling">Error Handling in Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/choice-states">Choice States</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/cloudwatch-retention">Cloudwatch Retention</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/browse-generation">Ingest Browse Generation</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/tracking-files">Tracking Ancillary Files</a></li></ul></div></div></section></div><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>CNM Workflow · Cumulus Documentation</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="# CNM Workflow"/><meta name="docsearch:version" content="v1.14.4"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="CNM Workflow · Cumulus Documentation"/><meta property="og:type" content="website"/><meta property="og:url" content="https://nasa.github.io/cumulus/"/><meta property="og:description" content="# CNM Workflow"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/cumulus/undefined"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="/cumulus/js/scrollSpy.js"></script><link rel="stylesheet" href="/cumulus/css/main.css"/><script src="/cumulus/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cumulus/"><h2 class="headerTitle">Cumulus Documentation</h2></a><a href="/cumulus/versions"><h3>v1.14.4</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="https://nasa.github.io/cumulus-api" target="_self">API Docs</a></li><li class=""><a href="/cumulus/docs/cumulus-docs-readme" target="_self">Developer Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/data-cookbooks/about-cookbooks" target="_self">Data-Cookbooks</a></li><li class=""><a href="/cumulus/docs/operator-docs/about-operator-docs" target="_self">Operator Docs</a></li><li class=""><a href="/cumulus/docs/team" target="_self">Team</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Cookbooks</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">About Cookbooks</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/about-cookbooks">About Cookbooks</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/setup">Data Cookbooks Setup</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Cookbooks</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/hello-world">HelloWorld Workflow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/sns">SNS Notification in Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/sips-workflow">Science Investigator-led Processing Systems (SIPS)</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/cumulus/docs/data-cookbooks/cnm-workflow">CNM Workflow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/error-handling">Error Handling in Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/choice-states">Choice States</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/cloudwatch-retention">Cloudwatch Retention</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/browse-generation">Ingest Browse Generation</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/tracking-files">Tracking Ancillary Files</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/run-tasks-in-lambda-or-docker">Run Step Function Tasks in Lambda or Docker</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/throttling-queued-executions">Throttling queued executions</a></li></ul></div></div></section></div><script>
             var coll = document.getElementsByClassName('collapsible');
             var checkActiveCategory = true;
             for (var i = 0; i < coll.length; i++) {
@@ -101,9 +101,12 @@
     <span class="hljs-attr">StartStatus:</span>
       <span class="hljs-attr">Type:</span> <span class="hljs-string">Task</span>
       <span class="hljs-attr">Resource:</span> <span class="hljs-string">${SfSnsReportLambdaFunction.Arn}</span>
-      <span class="hljs-attr">CumulusConfig:</span>
-        <span class="hljs-attr">cumulus_message:</span>
-          <span class="hljs-attr">input:</span> <span class="hljs-string">'{$}'</span>
+      <span class="hljs-attr">Paremeters:</span>
+        <span class="hljs-attr">cma:</span>
+          <span class="hljs-string">event.$:</span> <span class="hljs-string">'$'</span>
+          <span class="hljs-attr">task_config:</span>
+            <span class="hljs-attr">cumulus_message:</span>
+              <span class="hljs-attr">input:</span> <span class="hljs-string">'{$}'</span>
       <span class="hljs-attr">Next:</span> <span class="hljs-string">TranslateMessage</span>
       <span class="hljs-attr">Catch:</span>
         <span class="hljs-bullet">-</span> <span class="hljs-attr">ErrorEquals:</span>
@@ -113,13 +116,16 @@
     <span class="hljs-attr">TranslateMessage:</span>
       <span class="hljs-attr">Type:</span> <span class="hljs-string">Task</span>
       <span class="hljs-attr">Resource:</span> <span class="hljs-string">${CNMToCMALambdaFunction.Arn}</span>
-      <span class="hljs-attr">CumulusConfig:</span>
-        <span class="hljs-attr">cumulus_message:</span>
-          <span class="hljs-attr">outputs:</span>
-            <span class="hljs-bullet">-</span> <span class="hljs-attr">source:</span> <span class="hljs-string">'{$.cnm}'</span>
-              <span class="hljs-attr">destination:</span> <span class="hljs-string">'{$.meta.cnm}'</span>
-            <span class="hljs-bullet">-</span> <span class="hljs-attr">source:</span> <span class="hljs-string">'{$}'</span>
-              <span class="hljs-attr">destination:</span> <span class="hljs-string">'{$.payload}'</span>
+      <span class="hljs-attr">Parameters:</span>
+        <span class="hljs-attr">cma:</span>
+          <span class="hljs-string">event.$:</span> <span class="hljs-string">'$'</span>
+          <span class="hljs-attr">task_config:</span>
+            <span class="hljs-attr">cumulus_message:</span>
+              <span class="hljs-attr">outputs:</span>
+                <span class="hljs-bullet">-</span> <span class="hljs-attr">source:</span> <span class="hljs-string">'{$.cnm}'</span>
+                  <span class="hljs-attr">destination:</span> <span class="hljs-string">'{$.meta.cnm}'</span>
+                <span class="hljs-bullet">-</span> <span class="hljs-attr">source:</span> <span class="hljs-string">'{$}'</span>
+                  <span class="hljs-attr">destination:</span> <span class="hljs-string">'{$.payload}'</span>
       <span class="hljs-attr">Catch:</span>
         <span class="hljs-bullet">-</span> <span class="hljs-attr">ErrorEquals:</span>
           <span class="hljs-bullet">-</span> <span class="hljs-string">States.ALL</span>
@@ -127,18 +133,21 @@
           <span class="hljs-attr">Next:</span> <span class="hljs-string">CnmResponse</span>
       <span class="hljs-attr">Next:</span> <span class="hljs-string">SyncGranule</span>
     <span class="hljs-attr">SyncGranule:</span>
-      <span class="hljs-attr">CumulusConfig:</span>
-        <span class="hljs-attr">provider:</span> <span class="hljs-string">'{$.meta.provider}'</span>
-        <span class="hljs-attr">buckets:</span> <span class="hljs-string">'{$.meta.buckets}'</span>
-        <span class="hljs-attr">collection:</span> <span class="hljs-string">'{$.meta.collection}'</span>
-        <span class="hljs-attr">downloadBucket:</span> <span class="hljs-string">'{$.meta.buckets.private.name}'</span>
-        <span class="hljs-attr">stack:</span> <span class="hljs-string">'{$.meta.stack}'</span>
-        <span class="hljs-attr">cumulus_message:</span>
-          <span class="hljs-attr">outputs:</span>
-            <span class="hljs-bullet">-</span> <span class="hljs-attr">source:</span> <span class="hljs-string">'{$.granules}'</span>
-              <span class="hljs-attr">destination:</span> <span class="hljs-string">'{$.meta.input_granules}'</span>
-            <span class="hljs-bullet">-</span> <span class="hljs-attr">source:</span> <span class="hljs-string">'{$}'</span>
-              <span class="hljs-attr">destination:</span> <span class="hljs-string">'{$.payload}'</span>
+      <span class="hljs-attr">Parameters:</span>
+        <span class="hljs-attr">cma:</span>
+          <span class="hljs-string">event.$:</span> <span class="hljs-string">'$'</span>
+          <span class="hljs-attr">task_config:</span>
+            <span class="hljs-attr">provider:</span> <span class="hljs-string">'{$.meta.provider}'</span>
+            <span class="hljs-attr">buckets:</span> <span class="hljs-string">'{$.meta.buckets}'</span>
+            <span class="hljs-attr">collection:</span> <span class="hljs-string">'{$.meta.collection}'</span>
+            <span class="hljs-attr">downloadBucket:</span> <span class="hljs-string">'{$.meta.buckets.private.name}'</span>
+            <span class="hljs-attr">stack:</span> <span class="hljs-string">'{$.meta.stack}'</span>
+            <span class="hljs-attr">cumulus_message:</span>
+              <span class="hljs-attr">outputs:</span>
+                <span class="hljs-bullet">-</span> <span class="hljs-attr">source:</span> <span class="hljs-string">'{$.granules}'</span>
+                  <span class="hljs-attr">destination:</span> <span class="hljs-string">'{$.meta.input_granules}'</span>
+                <span class="hljs-bullet">-</span> <span class="hljs-attr">source:</span> <span class="hljs-string">'{$}'</span>
+                  <span class="hljs-attr">destination:</span> <span class="hljs-string">'{$.payload}'</span>
       <span class="hljs-attr">Type:</span> <span class="hljs-string">Task</span>
       <span class="hljs-attr">Resource:</span> <span class="hljs-string">${SyncGranuleLambdaFunction.Arn}</span>
       <span class="hljs-attr">Retry:</span>
@@ -153,15 +162,18 @@
           <span class="hljs-attr">Next:</span> <span class="hljs-string">CnmResponse</span>
       <span class="hljs-attr">Next:</span> <span class="hljs-string">CnmResponse</span>
     <span class="hljs-attr">CnmResponse:</span>
-      <span class="hljs-attr">CumulusConfig:</span>
-        <span class="hljs-attr">OriginalCNM:</span> <span class="hljs-string">'{$.meta.cnm}'</span>
-        <span class="hljs-attr">CNMResponseStream:</span> <span class="hljs-string">'ADD YOUR RESPONSE STREAM HERE'</span>
-        <span class="hljs-attr">region:</span> <span class="hljs-string">'us-east-1'</span>
-        <span class="hljs-attr">WorkflowException:</span> <span class="hljs-string">'{$.exception}'</span>
-        <span class="hljs-attr">cumulus_message:</span>
-          <span class="hljs-attr">outputs:</span>
-            <span class="hljs-bullet">-</span> <span class="hljs-attr">source:</span> <span class="hljs-string">'{$}'</span>
-              <span class="hljs-attr">destination:</span> <span class="hljs-string">'{$.meta.cnmResponse}'</span>
+      <span class="hljs-attr">Parameters:</span>
+        <span class="hljs-attr">cma:</span>
+          <span class="hljs-string">event.$:</span> <span class="hljs-string">'$'</span>
+          <span class="hljs-attr">task_config:</span>
+            <span class="hljs-attr">OriginalCNM:</span> <span class="hljs-string">'{$.meta.cnm}'</span>
+            <span class="hljs-attr">CNMResponseStream:</span> <span class="hljs-string">'ADD YOUR RESPONSE STREAM HERE'</span>
+            <span class="hljs-attr">region:</span> <span class="hljs-string">'us-east-1'</span>
+            <span class="hljs-attr">WorkflowException:</span> <span class="hljs-string">'{$.exception}'</span>
+            <span class="hljs-attr">cumulus_message:</span>
+              <span class="hljs-attr">outputs:</span>
+                <span class="hljs-bullet">-</span> <span class="hljs-attr">source:</span> <span class="hljs-string">'{$}'</span>
+                  <span class="hljs-attr">destination:</span> <span class="hljs-string">'{$.meta.cnmResponse}'</span>
       <span class="hljs-attr">Type:</span> <span class="hljs-string">Task</span>
       <span class="hljs-attr">Resource:</span> <span class="hljs-string">${CnmResponseLambdaFunction.Arn}</span>
       <span class="hljs-attr">Retry:</span>
@@ -178,14 +190,17 @@
     <span class="hljs-attr">StopStatus:</span>
       <span class="hljs-attr">Type:</span> <span class="hljs-string">Task</span>
       <span class="hljs-attr">Resource:</span> <span class="hljs-string">${SfSnsReportLambdaFunction.Arn}</span>
-      <span class="hljs-attr">CumulusConfig:</span>
-        <span class="hljs-attr">sfnEnd:</span> <span class="hljs-literal">true</span>
-        <span class="hljs-attr">stack:</span> <span class="hljs-string">'{$.meta.stack}'</span>
-        <span class="hljs-attr">bucket:</span> <span class="hljs-string">'{$.meta.buckets.internal.name}'</span>
-        <span class="hljs-attr">stateMachine:</span> <span class="hljs-string">'{$.cumulus_meta.state_machine}'</span>
-        <span class="hljs-attr">executionName:</span> <span class="hljs-string">'{$.cumulus_meta.execution_name}'</span>
-        <span class="hljs-attr">cumulus_message:</span>
-          <span class="hljs-attr">input:</span> <span class="hljs-string">'{$}'</span>
+      <span class="hljs-attr">Parameters:</span>
+        <span class="hljs-attr">cma:</span>
+          <span class="hljs-string">event.$:</span> <span class="hljs-string">'$'</span>
+          <span class="hljs-attr">task_config:</span>
+            <span class="hljs-attr">sfnEnd:</span> <span class="hljs-literal">true</span>
+            <span class="hljs-attr">stack:</span> <span class="hljs-string">'{$.meta.stack}'</span>
+            <span class="hljs-attr">bucket:</span> <span class="hljs-string">'{$.meta.buckets.internal.name}'</span>
+            <span class="hljs-attr">stateMachine:</span> <span class="hljs-string">'{$.cumulus_meta.state_machine}'</span>
+            <span class="hljs-attr">executionName:</span> <span class="hljs-string">'{$.cumulus_meta.execution_name}'</span>
+            <span class="hljs-attr">cumulus_message:</span>
+              <span class="hljs-attr">input:</span> <span class="hljs-string">'{$}'</span>
       <span class="hljs-attr">Catch:</span>
         <span class="hljs-bullet">-</span> <span class="hljs-attr">ErrorEquals:</span>
           <span class="hljs-bullet">-</span> <span class="hljs-string">States.ALL</span>
@@ -210,11 +225,13 @@
   <span class="hljs-attr">s3Source:</span>
     <span class="hljs-attr">bucket:</span> <span class="hljs-string">'cumulus-data-shared'</span>
     <span class="hljs-attr">key:</span> <span class="hljs-string">'daacs/podaac/cnmToGranule-1.0-wCMA.zip'</span>
+  <span class="hljs-attr">layers:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-string">arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:{{CMA_VERSION}}</span>
   <span class="hljs-attr">useMessageAdapter:</span> <span class="hljs-literal">false</span>
   <span class="hljs-attr">launchInVpc:</span> <span class="hljs-literal">true</span>
 </code></pre>
 <p><code>CNMToCMA</code> is meant for the beginning of a workflow: it maps CNM granule information to a payload for downstream tasks. This workflow will not utilize the payload. For other workflows, you would need to ensure that downstream tasks in your workflow either understand the CNM message <em>or</em> include a translation task like this one.</p>
-<p>You can also manipulate the data sent to downstream tasks using <code>CumulusConfig</code> for various states in <code>workflows.yml</code>. Read more about how to configure data on the <a href="https://nasa.github.io/cumulus/docs/workflows/input_output">Workflow Input &amp; Output</a> page.</p>
+<p>You can also manipulate the data sent to downstream tasks using <code>task_config</code> for various states in <code>workflows.yml</code>. Read more about how to configure data on the <a href="https://nasa.github.io/cumulus/docs/workflows/input_output">Workflow Input &amp; Output</a> page.</p>
 <h6><a class="anchor" aria-hidden="true" id="cnmresponse"></a><a href="#cnmresponse" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>CnmResponse</h6>
 <p>The workflow defined above assumes a CNM response task defined in the <code>lambdas.yml</code> configuration file. Example:</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-attr">CnmResponse:</span>
@@ -513,8 +530,8 @@ Check the <a href="https://console.aws.amazon.com/sqs/home">Simple Queue Service
               </script><script>
               var search = docsearch({
                 
-                apiKey: 'f7e0be879553661f9043322d119069c8',
-                indexName: 'nasa_cumulus',
+                apiKey: 'undefined',
+                indexName: 'undefined',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>
