@@ -101,6 +101,19 @@ if [[ $bamboo_NGAP_ENV = "SIT" ]]; then
   DEPLOYMENT=$bamboo_SIT_DEPLOYMENT
 fi
 
+## Override KES_DEPLOYMENT
+## Delete this when CI is switched to terraform for all of Core Team
+## (after v1.15, i.e. last non-Terraform release)
+if [[ $KES_DEPLOYMENT != true ]]; then
+  if [[ $COMMIT_MESSAGE =~ deploy-kes || $BRANCH =~ kes ]]; then
+    echo "Deploying Cumulus via Kes"
+    export KES_DEPLOYMENT=true
+  else
+    echo "Deploying Cumulus via Terraform"
+  fi
+fi
+## End override
+
 ## Set integration stack name if it's not been overridden *or* set by SIT
 if [[ -z $DEPLOYMENT ]]; then
   DEPLOYMENT=$(node ./bamboo/select-stack.js)
@@ -118,17 +131,10 @@ if [[ -z $DEPLOYMENT ]]; then
   echo export DEPLOYMENT=$DEPLOYMENT >> .bamboo_env_vars
 fi
 
-if [[ $KES_DEPLOYMENT != true ]]; then
-  echo "Using NGAPShNonProd credentials"
-  export AWS_ACCESS_KEY_ID=$bamboo_SECRET_NONPROD_AWS_ACCESS_KEY_ID
-  export AWS_SECRET_ACCESS_KEY=$bamboo_SECRET_NONPROD_AWS_SECRET_ACCESS_KEY
-fi
-
+# Target master by default.
+# Update with appropriate conditional
+# when creating a feature branch.
 export PR_BRANCH=master
-if [[  $KES_DEPLOYMENT != true ]]; then
-  echo "Setting GIT_PR target branch to 'terraform'"
-  export PR_BRANCH=terraform
-fi
 
 ## Run detect-pr script and set flag to true/false
 ## depending on if there is a PR associated with the
