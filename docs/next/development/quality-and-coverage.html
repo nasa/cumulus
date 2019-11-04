@@ -1,7 +1,10 @@
 <!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>development/quality-and-coverage · Cumulus Documentation</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="# Code Coverage and Quality"/><meta name="docsearch:version" content="next"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="development/quality-and-coverage · Cumulus Documentation"/><meta property="og:type" content="website"/><meta property="og:url" content="https://nasa.github.io/cumulus/"/><meta property="og:description" content="# Code Coverage and Quality"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/cumulus/undefined"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="/cumulus/js/scrollSpy.js"></script><link rel="stylesheet" href="/cumulus/css/main.css"/><script src="/cumulus/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cumulus/"><h2 class="headerTitle">Cumulus Documentation</h2></a><a href="/cumulus/versions"><h3>next</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="https://nasa.github.io/cumulus-api" target="_self">API Docs</a></li><li class=""><a href="/cumulus/docs/next/cumulus-docs-readme" target="_self">Developer Docs</a></li><li class=""><a href="/cumulus/docs/next/data-cookbooks/about-cookbooks" target="_self">Data-Cookbooks</a></li><li class=""><a href="/cumulus/docs/next/operator-docs/about-operator-docs" target="_self">Operator Docs</a></li><li class=""><a href="/cumulus/docs/next/team" target="_self">Team</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container mainContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 class="postHeaderTitle">development/quality-and-coverage</h1></header><article><div><span><h1><a class="anchor" aria-hidden="true" id="code-coverage-and-quality"></a><a href="#code-coverage-and-quality" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Code Coverage and Quality</h1>
 <h2><a class="anchor" aria-hidden="true" id="code-coverage"></a><a href="#code-coverage" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Code Coverage</h2>
 <p>Code coverage is checked using <a href="https://github.com/istanbuljs/nyc">nyc</a>. The
-Bamboo build tests coverage. A summary can be viewed in the unit test build's output.</p>
+Travis CI build tests coverage. A summary can be viewed in the build's output.
+Detailed code coverage in html can be found by going to the Artifacts tab and
+navigating to <code>index.html</code> in the coverage folder. Clicking on <code>index.html</code> will
+take you to an html page showing code coverage for each individual file.</p>
 <p>The <code>npm test</code> command will output code coverage data for the entire Cumulus
 repository. To create an html report, run <code>nyc report --reporter html</code> and open
 the <code>index.html</code> file in the coverage folder.</p>
@@ -13,11 +16,39 @@ report can be created using <code>nyc report --reporter html</code> as described
 The configured eslint rules can be found in the project's
 <a href="https://github.com/nasa/cumulus/blob/master/.eslintrc.json">.eslintrc.json</a>
 file.</p>
-<p>To check the configured linting, run <code>npm run lint</code>.</p>
-<h2><a class="anchor" aria-hidden="true" id="audit"></a><a href="#audit" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Audit</h2>
-<p>This project uses <code>audit-ci</code> to run a security audit on the package dependency
-tree.   This must pass prior to merge.   To execute an audit, run <code>npm run audit</code>.</p>
-</span></div></article></div><div class="docs-prevnext"></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#code-coverage">Code Coverage</a></li><li><a href="#code-quality-checking">Code quality checking</a></li><li><a href="#audit">Audit</a></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+<p>In an effort to gradually reduce the number of eslint errors in our codebase,
+we are using a script called <code>eslint-ratchet</code>. It runs <code>eslint</code> against the
+repo and compares the number of errors to the previous number of errors. The
+previous number of errors is stored in the <code>.eslint-ratchet-high-water-mark</code>
+file, and tracked in git. If the script is run and the number of errors has
+been reduced, the new, lower score is stored in
+<code>.eslint-ratchet-high-water-mark</code> and should be committed into git. If the
+number of errors has increased, the script will fail and tell you that the
+number of errors has increased.</p>
+<p>To run the script, simply run <code>./bin/eslint-ratchet</code> from the top of the
+cumulus repository.</p>
+<p>The <code>eslint-ratchet</code> script is also part of our Travis CI build. If the number
+of eslint errors that Travis CI finds has increased, it will fail the build. If
+the number of errors has <em>decreased</em> from what is stored in
+<code>.eslint-ratchet-high-water-mark</code>, it will also fail the build. In that case,
+run <code>./bin/eslint-ratchet</code> and commit the new-and-improved
+<code>.eslint-ratchet-high-water-mark</code> file.</p>
+<p>To help prevent unexpected build failures in Travis CI, I suggest adding a
+local post-commit hook that will run eslint-ratchet after every commit. This
+will not cause your commits to fail if the score has increased, but it will
+let you know that there is a problem. To set up the post-commit hook, create a
+file called <code>.git/hooks/post-commit</code> which contains:</p>
+<pre><code class="hljs"><span class="hljs-meta">#!/bin/sh
+</span>
+<span class="hljs-built_in">set</span> -e
+
+<span class="hljs-built_in">echo</span> <span class="hljs-string">"Running ./bin/eslint-ratchet"</span>
+./bin/eslint-ratchet
+</code></pre>
+<p>Make sure the hook is executable with <code>chmod +x .git/hooks/post-commit</code></p>
+<p>This idea of ratcheting down the number of errors came from Vince Broz's
+excellent <a href="https://github.com/apiology/quality">quality</a> gem.</p>
+</span></div></article></div><div class="docs-prevnext"></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#code-coverage">Code Coverage</a></li><li><a href="#code-quality-checking">Code quality checking</a></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;

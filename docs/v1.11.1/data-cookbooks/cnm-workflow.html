@@ -95,105 +95,105 @@
 <p>The following <a href="/cumulus/docs/v1.11.1/workflows/workflows-readme">workflow definition</a> should be added to your deployment's <code>workflows.yml</code>.</p>
 <p>Update the <code>CNMResponseStream</code> key in the <code>CnmResponse</code> task to match the name of the Kinesis response stream you configured in the prerequisites section.</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-attr">CNMExampleWorkflow:</span>
-<span class="hljs-attr">  Comment:</span> <span class="hljs-string">CNMExampleWorkflow</span>
-<span class="hljs-attr">  StartAt:</span> <span class="hljs-string">StartStatus</span>
-<span class="hljs-attr">  States:</span>
-<span class="hljs-attr">    StartStatus:</span>
-<span class="hljs-attr">      Type:</span> <span class="hljs-string">Task</span>
-<span class="hljs-attr">      Resource:</span> <span class="hljs-string">${SfSnsReportLambdaFunction.Arn}</span>
-<span class="hljs-attr">      CumulusConfig:</span>
-<span class="hljs-attr">        cumulus_message:</span>
-<span class="hljs-attr">          input:</span> <span class="hljs-string">'{$}'</span>
-<span class="hljs-attr">      Next:</span> <span class="hljs-string">TranslateMessage</span>
-<span class="hljs-attr">      Catch:</span>
-<span class="hljs-attr">        - ErrorEquals:</span>
-<span class="hljs-bullet">          -</span> <span class="hljs-string">States.ALL</span>
-<span class="hljs-attr">          ResultPath:</span> <span class="hljs-string">'$.exception'</span>
-<span class="hljs-attr">          Next:</span> <span class="hljs-string">CnmResponse</span>
-<span class="hljs-attr">    TranslateMessage:</span>
-<span class="hljs-attr">      Type:</span> <span class="hljs-string">Task</span>
-<span class="hljs-attr">      Resource:</span> <span class="hljs-string">${CNMToCMALambdaFunction.Arn}</span>
-<span class="hljs-attr">      CumulusConfig:</span>
-<span class="hljs-attr">        cumulus_message:</span>
-<span class="hljs-attr">          outputs:</span>
-<span class="hljs-attr">            - source:</span> <span class="hljs-string">'{$.cnm}'</span>
-<span class="hljs-attr">              destination:</span> <span class="hljs-string">'{$.meta.cnm}'</span>
-<span class="hljs-attr">            - source:</span> <span class="hljs-string">'{$}'</span>
-<span class="hljs-attr">              destination:</span> <span class="hljs-string">'{$.payload}'</span>
-<span class="hljs-attr">      Catch:</span>
-<span class="hljs-attr">        - ErrorEquals:</span>
-<span class="hljs-bullet">          -</span> <span class="hljs-string">States.ALL</span>
-<span class="hljs-attr">          ResultPath:</span> <span class="hljs-string">'$.exception'</span>
-<span class="hljs-attr">          Next:</span> <span class="hljs-string">CnmResponse</span>
-<span class="hljs-attr">      Next:</span> <span class="hljs-string">SyncGranule</span>
-<span class="hljs-attr">    SyncGranule:</span>
-<span class="hljs-attr">      CumulusConfig:</span>
-<span class="hljs-attr">        provider:</span> <span class="hljs-string">'{$.meta.provider}'</span>
-<span class="hljs-attr">        buckets:</span> <span class="hljs-string">'{$.meta.buckets}'</span>
-<span class="hljs-attr">        collection:</span> <span class="hljs-string">'{$.meta.collection}'</span>
-<span class="hljs-attr">        downloadBucket:</span> <span class="hljs-string">'{$.meta.buckets.private.name}'</span>
-<span class="hljs-attr">        stack:</span> <span class="hljs-string">'{$.meta.stack}'</span>
-<span class="hljs-attr">        cumulus_message:</span>
-<span class="hljs-attr">          outputs:</span>
-<span class="hljs-attr">            - source:</span> <span class="hljs-string">'{$.granules}'</span>
-<span class="hljs-attr">              destination:</span> <span class="hljs-string">'{$.meta.input_granules}'</span>
-<span class="hljs-attr">            - source:</span> <span class="hljs-string">'{$}'</span>
-<span class="hljs-attr">              destination:</span> <span class="hljs-string">'{$.payload}'</span>
-<span class="hljs-attr">      Type:</span> <span class="hljs-string">Task</span>
-<span class="hljs-attr">      Resource:</span> <span class="hljs-string">${SyncGranuleLambdaFunction.Arn}</span>
-<span class="hljs-attr">      Retry:</span>
-<span class="hljs-attr">        - ErrorEquals:</span>
-<span class="hljs-bullet">            -</span> <span class="hljs-string">States.ALL</span>
-<span class="hljs-attr">          IntervalSeconds:</span> <span class="hljs-number">10</span>
-<span class="hljs-attr">          MaxAttempts:</span> <span class="hljs-number">3</span>
-<span class="hljs-attr">      Catch:</span>
-<span class="hljs-attr">        - ErrorEquals:</span>
-<span class="hljs-bullet">          -</span> <span class="hljs-string">States.ALL</span>
-<span class="hljs-attr">          ResultPath:</span> <span class="hljs-string">'$.exception'</span>
-<span class="hljs-attr">          Next:</span> <span class="hljs-string">CnmResponse</span>
-<span class="hljs-attr">      Next:</span> <span class="hljs-string">CnmResponse</span>
-<span class="hljs-attr">    CnmResponse:</span>
-<span class="hljs-attr">      CumulusConfig:</span>
-<span class="hljs-attr">        OriginalCNM:</span> <span class="hljs-string">'{$.meta.cnm}'</span>
-<span class="hljs-attr">        CNMResponseStream:</span> <span class="hljs-string">'ADD YOUR RESPONSE STREAM HERE'</span>
-<span class="hljs-attr">        region:</span> <span class="hljs-string">'us-east-1'</span>
-<span class="hljs-attr">        WorkflowException:</span> <span class="hljs-string">'{$.exception}'</span>
-<span class="hljs-attr">        cumulus_message:</span>
-<span class="hljs-attr">          outputs:</span>
-<span class="hljs-attr">            - source:</span> <span class="hljs-string">'{$}'</span>
-<span class="hljs-attr">              destination:</span> <span class="hljs-string">'{$.meta.cnmResponse}'</span>
-<span class="hljs-attr">      Type:</span> <span class="hljs-string">Task</span>
-<span class="hljs-attr">      Resource:</span> <span class="hljs-string">${CnmResponseLambdaFunction.Arn}</span>
-<span class="hljs-attr">      Retry:</span>
-<span class="hljs-attr">        - ErrorEquals:</span>
-<span class="hljs-bullet">            -</span> <span class="hljs-string">States.ALL</span>
-<span class="hljs-attr">          IntervalSeconds:</span> <span class="hljs-number">5</span>
-<span class="hljs-attr">          MaxAttempts:</span> <span class="hljs-number">3</span>
-<span class="hljs-attr">      Catch:</span>
-<span class="hljs-attr">        - ErrorEquals:</span>
-<span class="hljs-bullet">          -</span> <span class="hljs-string">States.ALL</span>
-<span class="hljs-attr">          ResultPath:</span> <span class="hljs-string">'$.exception'</span>
-<span class="hljs-attr">          Next:</span> <span class="hljs-string">StopStatus</span>
-<span class="hljs-attr">      Next:</span> <span class="hljs-string">StopStatus</span>
-<span class="hljs-attr">    StopStatus:</span>
-<span class="hljs-attr">      Type:</span> <span class="hljs-string">Task</span>
-<span class="hljs-attr">      Resource:</span> <span class="hljs-string">${SfSnsReportLambdaFunction.Arn}</span>
-<span class="hljs-attr">      CumulusConfig:</span>
-<span class="hljs-attr">        sfnEnd:</span> <span class="hljs-literal">true</span>
-<span class="hljs-attr">        stack:</span> <span class="hljs-string">'{$.meta.stack}'</span>
-<span class="hljs-attr">        bucket:</span> <span class="hljs-string">'{$.meta.buckets.internal.name}'</span>
-<span class="hljs-attr">        stateMachine:</span> <span class="hljs-string">'{$.cumulus_meta.state_machine}'</span>
-<span class="hljs-attr">        executionName:</span> <span class="hljs-string">'{$.cumulus_meta.execution_name}'</span>
-<span class="hljs-attr">        cumulus_message:</span>
-<span class="hljs-attr">          input:</span> <span class="hljs-string">'{$}'</span>
-<span class="hljs-attr">      Catch:</span>
-<span class="hljs-attr">        - ErrorEquals:</span>
-<span class="hljs-bullet">          -</span> <span class="hljs-string">States.ALL</span>
-<span class="hljs-attr">          Next:</span> <span class="hljs-string">WorkflowFailed</span>
-<span class="hljs-attr">      End:</span> <span class="hljs-literal">true</span>
-<span class="hljs-attr">    WorkflowFailed:</span>
-<span class="hljs-attr">      Type:</span> <span class="hljs-string">Fail</span>
-<span class="hljs-attr">      Cause:</span> <span class="hljs-string">'Workflow failed'</span>
+  <span class="hljs-attr">Comment:</span> <span class="hljs-string">CNMExampleWorkflow</span>
+  <span class="hljs-attr">StartAt:</span> <span class="hljs-string">StartStatus</span>
+  <span class="hljs-attr">States:</span>
+    <span class="hljs-attr">StartStatus:</span>
+      <span class="hljs-attr">Type:</span> <span class="hljs-string">Task</span>
+      <span class="hljs-attr">Resource:</span> <span class="hljs-string">${SfSnsReportLambdaFunction.Arn}</span>
+      <span class="hljs-attr">CumulusConfig:</span>
+        <span class="hljs-attr">cumulus_message:</span>
+          <span class="hljs-attr">input:</span> <span class="hljs-string">'{$}'</span>
+      <span class="hljs-attr">Next:</span> <span class="hljs-string">TranslateMessage</span>
+      <span class="hljs-attr">Catch:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-attr">ErrorEquals:</span>
+          <span class="hljs-bullet">-</span> <span class="hljs-string">States.ALL</span>
+          <span class="hljs-attr">ResultPath:</span> <span class="hljs-string">'$.exception'</span>
+          <span class="hljs-attr">Next:</span> <span class="hljs-string">CnmResponse</span>
+    <span class="hljs-attr">TranslateMessage:</span>
+      <span class="hljs-attr">Type:</span> <span class="hljs-string">Task</span>
+      <span class="hljs-attr">Resource:</span> <span class="hljs-string">${CNMToCMALambdaFunction.Arn}</span>
+      <span class="hljs-attr">CumulusConfig:</span>
+        <span class="hljs-attr">cumulus_message:</span>
+          <span class="hljs-attr">outputs:</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">source:</span> <span class="hljs-string">'{$.cnm}'</span>
+              <span class="hljs-attr">destination:</span> <span class="hljs-string">'{$.meta.cnm}'</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">source:</span> <span class="hljs-string">'{$}'</span>
+              <span class="hljs-attr">destination:</span> <span class="hljs-string">'{$.payload}'</span>
+      <span class="hljs-attr">Catch:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-attr">ErrorEquals:</span>
+          <span class="hljs-bullet">-</span> <span class="hljs-string">States.ALL</span>
+          <span class="hljs-attr">ResultPath:</span> <span class="hljs-string">'$.exception'</span>
+          <span class="hljs-attr">Next:</span> <span class="hljs-string">CnmResponse</span>
+      <span class="hljs-attr">Next:</span> <span class="hljs-string">SyncGranule</span>
+    <span class="hljs-attr">SyncGranule:</span>
+      <span class="hljs-attr">CumulusConfig:</span>
+        <span class="hljs-attr">provider:</span> <span class="hljs-string">'{$.meta.provider}'</span>
+        <span class="hljs-attr">buckets:</span> <span class="hljs-string">'{$.meta.buckets}'</span>
+        <span class="hljs-attr">collection:</span> <span class="hljs-string">'{$.meta.collection}'</span>
+        <span class="hljs-attr">downloadBucket:</span> <span class="hljs-string">'{$.meta.buckets.private.name}'</span>
+        <span class="hljs-attr">stack:</span> <span class="hljs-string">'{$.meta.stack}'</span>
+        <span class="hljs-attr">cumulus_message:</span>
+          <span class="hljs-attr">outputs:</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">source:</span> <span class="hljs-string">'{$.granules}'</span>
+              <span class="hljs-attr">destination:</span> <span class="hljs-string">'{$.meta.input_granules}'</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">source:</span> <span class="hljs-string">'{$}'</span>
+              <span class="hljs-attr">destination:</span> <span class="hljs-string">'{$.payload}'</span>
+      <span class="hljs-attr">Type:</span> <span class="hljs-string">Task</span>
+      <span class="hljs-attr">Resource:</span> <span class="hljs-string">${SyncGranuleLambdaFunction.Arn}</span>
+      <span class="hljs-attr">Retry:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-attr">ErrorEquals:</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-string">States.ALL</span>
+          <span class="hljs-attr">IntervalSeconds:</span> <span class="hljs-number">10</span>
+          <span class="hljs-attr">MaxAttempts:</span> <span class="hljs-number">3</span>
+      <span class="hljs-attr">Catch:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-attr">ErrorEquals:</span>
+          <span class="hljs-bullet">-</span> <span class="hljs-string">States.ALL</span>
+          <span class="hljs-attr">ResultPath:</span> <span class="hljs-string">'$.exception'</span>
+          <span class="hljs-attr">Next:</span> <span class="hljs-string">CnmResponse</span>
+      <span class="hljs-attr">Next:</span> <span class="hljs-string">CnmResponse</span>
+    <span class="hljs-attr">CnmResponse:</span>
+      <span class="hljs-attr">CumulusConfig:</span>
+        <span class="hljs-attr">OriginalCNM:</span> <span class="hljs-string">'{$.meta.cnm}'</span>
+        <span class="hljs-attr">CNMResponseStream:</span> <span class="hljs-string">'ADD YOUR RESPONSE STREAM HERE'</span>
+        <span class="hljs-attr">region:</span> <span class="hljs-string">'us-east-1'</span>
+        <span class="hljs-attr">WorkflowException:</span> <span class="hljs-string">'{$.exception}'</span>
+        <span class="hljs-attr">cumulus_message:</span>
+          <span class="hljs-attr">outputs:</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">source:</span> <span class="hljs-string">'{$}'</span>
+              <span class="hljs-attr">destination:</span> <span class="hljs-string">'{$.meta.cnmResponse}'</span>
+      <span class="hljs-attr">Type:</span> <span class="hljs-string">Task</span>
+      <span class="hljs-attr">Resource:</span> <span class="hljs-string">${CnmResponseLambdaFunction.Arn}</span>
+      <span class="hljs-attr">Retry:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-attr">ErrorEquals:</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-string">States.ALL</span>
+          <span class="hljs-attr">IntervalSeconds:</span> <span class="hljs-number">5</span>
+          <span class="hljs-attr">MaxAttempts:</span> <span class="hljs-number">3</span>
+      <span class="hljs-attr">Catch:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-attr">ErrorEquals:</span>
+          <span class="hljs-bullet">-</span> <span class="hljs-string">States.ALL</span>
+          <span class="hljs-attr">ResultPath:</span> <span class="hljs-string">'$.exception'</span>
+          <span class="hljs-attr">Next:</span> <span class="hljs-string">StopStatus</span>
+      <span class="hljs-attr">Next:</span> <span class="hljs-string">StopStatus</span>
+    <span class="hljs-attr">StopStatus:</span>
+      <span class="hljs-attr">Type:</span> <span class="hljs-string">Task</span>
+      <span class="hljs-attr">Resource:</span> <span class="hljs-string">${SfSnsReportLambdaFunction.Arn}</span>
+      <span class="hljs-attr">CumulusConfig:</span>
+        <span class="hljs-attr">sfnEnd:</span> <span class="hljs-literal">true</span>
+        <span class="hljs-attr">stack:</span> <span class="hljs-string">'{$.meta.stack}'</span>
+        <span class="hljs-attr">bucket:</span> <span class="hljs-string">'{$.meta.buckets.internal.name}'</span>
+        <span class="hljs-attr">stateMachine:</span> <span class="hljs-string">'{$.cumulus_meta.state_machine}'</span>
+        <span class="hljs-attr">executionName:</span> <span class="hljs-string">'{$.cumulus_meta.execution_name}'</span>
+        <span class="hljs-attr">cumulus_message:</span>
+          <span class="hljs-attr">input:</span> <span class="hljs-string">'{$}'</span>
+      <span class="hljs-attr">Catch:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-attr">ErrorEquals:</span>
+          <span class="hljs-bullet">-</span> <span class="hljs-string">States.ALL</span>
+          <span class="hljs-attr">Next:</span> <span class="hljs-string">WorkflowFailed</span>
+      <span class="hljs-attr">End:</span> <span class="hljs-literal">true</span>
+    <span class="hljs-attr">WorkflowFailed:</span>
+      <span class="hljs-attr">Type:</span> <span class="hljs-string">Fail</span>
+      <span class="hljs-attr">Cause:</span> <span class="hljs-string">'Workflow failed'</span>
 
 </code></pre>
 <p>Again, please make sure to modify the value CNMResponseStream to match the stream name (not ARN) for your Kinesis response stream.</p>
@@ -203,30 +203,30 @@
 <h6><a class="anchor" aria-hidden="true" id="cnmtocma"></a><a href="#cnmtocma" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>CNMToCMA</h6>
 <p>The example workflow assumes you have a CNM to Cumulus Message Adapter (CMA) translation lambda defined as <code>CNMToCMA</code> in the <code>lambdas.yml</code> file:</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-attr">CNMToCMA:</span>
-<span class="hljs-attr">  handler:</span> <span class="hljs-string">'gov.nasa.cumulus.CnmToGranuleHandler::handleRequestStreams'</span>
-<span class="hljs-attr">  timeout:</span> <span class="hljs-number">300</span>
-<span class="hljs-attr">  runtime:</span> <span class="hljs-string">java8</span>
-<span class="hljs-attr">  memory:</span> <span class="hljs-number">128</span>
-<span class="hljs-attr">  s3Source:</span>
-<span class="hljs-attr">    bucket:</span> <span class="hljs-string">'cumulus-data-shared'</span>
-<span class="hljs-attr">    key:</span> <span class="hljs-string">'daacs/podaac/cnmToGranule-1.0-wCMA.zip'</span>
-<span class="hljs-attr">  useMessageAdapter:</span> <span class="hljs-literal">false</span>
-<span class="hljs-attr">  launchInVpc:</span> <span class="hljs-literal">true</span>
+  <span class="hljs-attr">handler:</span> <span class="hljs-string">'gov.nasa.cumulus.CnmToGranuleHandler::handleRequestStreams'</span>
+  <span class="hljs-attr">timeout:</span> <span class="hljs-number">300</span>
+  <span class="hljs-attr">runtime:</span> <span class="hljs-string">java8</span>
+  <span class="hljs-attr">memory:</span> <span class="hljs-number">128</span>
+  <span class="hljs-attr">s3Source:</span>
+    <span class="hljs-attr">bucket:</span> <span class="hljs-string">'cumulus-data-shared'</span>
+    <span class="hljs-attr">key:</span> <span class="hljs-string">'daacs/podaac/cnmToGranule-1.0-wCMA.zip'</span>
+  <span class="hljs-attr">useMessageAdapter:</span> <span class="hljs-literal">false</span>
+  <span class="hljs-attr">launchInVpc:</span> <span class="hljs-literal">true</span>
 </code></pre>
 <p><code>CNMToCMA</code> is meant for the beginning of a workflow: it maps CNM granule information to a payload for downstream tasks. This workflow will not utilize the payload. For other workflows, you would need to ensure that downstream tasks in your workflow either understand the CNM message <em>or</em> include a translation task like this one.</p>
 <p>You can also manipulate the data sent to downstream tasks using <code>CumulusConfig</code> for various states in <code>workflows.yml</code>. Read more about how to configure data on the <a href="https://nasa.github.io/cumulus/docs/workflows/input_output">Workflow Input &amp; Output</a> page.</p>
 <h6><a class="anchor" aria-hidden="true" id="cnmresponse"></a><a href="#cnmresponse" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>CnmResponse</h6>
 <p>The workflow defined above assumes a CNM response task defined in the <code>lambdas.yml</code> configuration file. Example:</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-attr">CnmResponse:</span>
-<span class="hljs-attr">  handler:</span> <span class="hljs-string">'gov.nasa.cumulus.CNMResponse::handleRequestStreams'</span>
-<span class="hljs-attr">  timeout:</span> <span class="hljs-number">300</span>
-<span class="hljs-attr">  useMessageAdapter:</span> <span class="hljs-literal">false</span>
-<span class="hljs-attr">  runtime:</span> <span class="hljs-string">java8</span>
-<span class="hljs-attr">  memory:</span> <span class="hljs-number">256</span>
-<span class="hljs-attr">  s3Source:</span>
-<span class="hljs-attr">    bucket:</span> <span class="hljs-string">'cumulus-data-shared'</span>
-<span class="hljs-attr">    key:</span> <span class="hljs-string">'daacs/podaac/cnmResponse-1.0.zip'</span>
-<span class="hljs-attr">  launchInVpc:</span> <span class="hljs-literal">true</span>
+  <span class="hljs-attr">handler:</span> <span class="hljs-string">'gov.nasa.cumulus.CNMResponse::handleRequestStreams'</span>
+  <span class="hljs-attr">timeout:</span> <span class="hljs-number">300</span>
+  <span class="hljs-attr">useMessageAdapter:</span> <span class="hljs-literal">false</span>
+  <span class="hljs-attr">runtime:</span> <span class="hljs-string">java8</span>
+  <span class="hljs-attr">memory:</span> <span class="hljs-number">256</span>
+  <span class="hljs-attr">s3Source:</span>
+    <span class="hljs-attr">bucket:</span> <span class="hljs-string">'cumulus-data-shared'</span>
+    <span class="hljs-attr">key:</span> <span class="hljs-string">'daacs/podaac/cnmResponse-1.0.zip'</span>
+  <span class="hljs-attr">launchInVpc:</span> <span class="hljs-literal">true</span>
 </code></pre>
 <p>The <code>CnmResponse</code> lambda generates a CNM response message and puts it on a the <code>CNMResponseStream</code> Kinesis stream.</p>
 <p>The <code>CnmResponse</code> lambda package is provided (as of release 1.8) in the <code>cumulus-data-shared</code> bucket, with documentation provided in the <a href="https://git.earthdata.nasa.gov/projects/POCUMULUS/repos/cnmresponsetask/browse">source repository</a>.</p>

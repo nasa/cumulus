@@ -145,26 +145,26 @@
 <p><strong>Sample new deployment added to config.yml</strong>:</p>
 <p>Descriptions of the fields can be found in <a href="/cumulus/docs/v1.12.1/deployment/config_descriptions#iam-configuration">IAM Configuration Descriptions</a>.</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-attr">dev:</span>                                <span class="hljs-comment"># deployment name</span>
-<span class="hljs-attr">  prefix:</span> <span class="hljs-string">dev-cumulus</span>               <span class="hljs-comment"># prefixes CloudFormation-created IAM resources and permissions</span>
-<span class="hljs-attr">  stackName:</span> <span class="hljs-string">dev-cumulus-iams</span>       <span class="hljs-comment"># name of this IAM stack in CloudFormation (e.g. &lt;prefix&gt;-iams)</span>
-<span class="hljs-attr">  useNgapPermissionBoundary:</span> <span class="hljs-literal">true</span>   <span class="hljs-comment"># for NASA NGAP accounts</span>
+  <span class="hljs-attr">prefix:</span> <span class="hljs-string">dev-cumulus</span>               <span class="hljs-comment"># prefixes CloudFormation-created IAM resources and permissions</span>
+  <span class="hljs-attr">stackName:</span> <span class="hljs-string">dev-cumulus-iams</span>       <span class="hljs-comment"># name of this IAM stack in CloudFormation (e.g. &lt;prefix&gt;-iams)</span>
+  <span class="hljs-attr">useNgapPermissionBoundary:</span> <span class="hljs-literal">true</span>   <span class="hljs-comment"># for NASA NGAP accounts</span>
 
-<span class="hljs-attr">  buckets:</span>
-<span class="hljs-attr">    internal:</span>
-<span class="hljs-attr">      name:</span> <span class="hljs-string">dev-internal</span>            <span class="hljs-comment"># internal bucket name</span>
-<span class="hljs-attr">      type:</span> <span class="hljs-string">internal</span>
-<span class="hljs-attr">    private:</span>
-<span class="hljs-attr">      name:</span> <span class="hljs-string">dev-private</span>             <span class="hljs-comment"># private bucket name</span>
-<span class="hljs-attr">      type:</span> <span class="hljs-string">private</span>
-<span class="hljs-attr">    protected:</span>
-<span class="hljs-attr">      name:</span> <span class="hljs-string">dev-protected</span>           <span class="hljs-comment"># protected bucket name</span>
-<span class="hljs-attr">      type:</span> <span class="hljs-string">protected</span>
-<span class="hljs-attr">    public:</span>
-<span class="hljs-attr">      name:</span> <span class="hljs-string">dev-cumulus-public</span>      <span class="hljs-comment"># public bucket name</span>
-<span class="hljs-attr">      type:</span> <span class="hljs-string">public</span>
-<span class="hljs-attr">    otherpublic:</span>                    <span class="hljs-comment"># Can have more than one of each type of bucket</span>
-<span class="hljs-attr">      name:</span> <span class="hljs-string">dev-default</span>
-<span class="hljs-attr">      type:</span> <span class="hljs-string">public</span>
+  <span class="hljs-attr">buckets:</span>
+    <span class="hljs-attr">internal:</span>
+      <span class="hljs-attr">name:</span> <span class="hljs-string">dev-internal</span>            <span class="hljs-comment"># internal bucket name</span>
+      <span class="hljs-attr">type:</span> <span class="hljs-string">internal</span>
+    <span class="hljs-attr">private:</span>
+      <span class="hljs-attr">name:</span> <span class="hljs-string">dev-private</span>             <span class="hljs-comment"># private bucket name</span>
+      <span class="hljs-attr">type:</span> <span class="hljs-string">private</span>
+    <span class="hljs-attr">protected:</span>
+      <span class="hljs-attr">name:</span> <span class="hljs-string">dev-protected</span>           <span class="hljs-comment"># protected bucket name</span>
+      <span class="hljs-attr">type:</span> <span class="hljs-string">protected</span>
+    <span class="hljs-attr">public:</span>
+      <span class="hljs-attr">name:</span> <span class="hljs-string">dev-cumulus-public</span>      <span class="hljs-comment"># public bucket name</span>
+      <span class="hljs-attr">type:</span> <span class="hljs-string">public</span>
+    <span class="hljs-attr">otherpublic:</span>                    <span class="hljs-comment"># Can have more than one of each type of bucket</span>
+      <span class="hljs-attr">name:</span> <span class="hljs-string">dev-default</span>
+      <span class="hljs-attr">type:</span> <span class="hljs-string">public</span>
 </code></pre>
 <p><strong>Deploy <code>iam</code> stack</strong><sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup></p>
 <pre><code class="hljs css language-bash">  $ DEPLOYMENT=&lt;iam-deployment-name&gt; \
@@ -195,44 +195,44 @@
 <h3><a class="anchor" aria-hidden="true" id="sample-configyml"></a><a href="#sample-configyml" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Sample config.yml</h3>
 <p>Descriptions of the fields can be found in <a href="/cumulus/docs/v1.12.1/deployment/config_descriptions#app-configuration">App Configuration Descriptions</a>.</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-attr">dev:</span>                            <span class="hljs-comment"># deployment name</span>
-<span class="hljs-attr">  stackName:</span> <span class="hljs-string">dev-cumulus</span>        <span class="hljs-comment"># Required. See note below</span>
-<span class="hljs-attr">  stackNameNoDash:</span> <span class="hljs-string">DevCumulus</span>   <span class="hljs-comment"># Required.</span>
+  <span class="hljs-attr">stackName:</span> <span class="hljs-string">dev-cumulus</span>        <span class="hljs-comment"># Required. See note below</span>
+  <span class="hljs-attr">stackNameNoDash:</span> <span class="hljs-string">DevCumulus</span>   <span class="hljs-comment"># Required.</span>
 
-<span class="hljs-attr">  apiStage:</span> <span class="hljs-string">dev</span>                 <span class="hljs-comment"># Optional</span>
+  <span class="hljs-attr">apiStage:</span> <span class="hljs-string">dev</span>                 <span class="hljs-comment"># Optional</span>
 
-<span class="hljs-attr">  vpc:</span>                          <span class="hljs-comment"># Required for NGAP environments</span>
-<span class="hljs-attr">    vpcId:</span> <span class="hljs-string">'<span class="hljs-template-variable">{{VPC_ID}}</span>'</span>         <span class="hljs-comment"># this has to be set in .env</span>
-<span class="hljs-attr">    subnets:</span>
-<span class="hljs-bullet">      -</span> <span class="hljs-string">'<span class="hljs-template-variable">{{AWS_SUBNET}}</span>'</span>        <span class="hljs-comment"># this has to be set in .env</span>
+  <span class="hljs-attr">vpc:</span>                          <span class="hljs-comment"># Required for NGAP environments</span>
+    <span class="hljs-attr">vpcId:</span> <span class="hljs-string">'<span class="hljs-template-variable">{{VPC_ID}}</span>'</span>         <span class="hljs-comment"># this has to be set in .env</span>
+    <span class="hljs-attr">subnets:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">'<span class="hljs-template-variable">{{AWS_SUBNET}}</span>'</span>        <span class="hljs-comment"># this has to be set in .env</span>
 
-<span class="hljs-attr">  ecs:</span>                          <span class="hljs-comment"># Required</span>
-<span class="hljs-attr">    instanceType:</span> <span class="hljs-string">t2.micro</span>
-<span class="hljs-attr">    desiredInstances:</span> <span class="hljs-number">0</span>
-<span class="hljs-attr">    availabilityZone:</span> <span class="hljs-string">&lt;subnet-id-zone&gt;</span>
-<span class="hljs-attr">    amiid:</span> <span class="hljs-string">&lt;some-ami-id&gt;</span>
+  <span class="hljs-attr">ecs:</span>                          <span class="hljs-comment"># Required</span>
+    <span class="hljs-attr">instanceType:</span> <span class="hljs-string">t2.micro</span>
+    <span class="hljs-attr">desiredInstances:</span> <span class="hljs-number">0</span>
+    <span class="hljs-attr">availabilityZone:</span> <span class="hljs-string">&lt;subnet-id-zone&gt;</span>
+    <span class="hljs-attr">amiid:</span> <span class="hljs-string">&lt;some-ami-id&gt;</span>
 
   <span class="hljs-comment"># Required. You can specify a different bucket for the system_bucket</span>
-<span class="hljs-attr">  system_bucket:</span> <span class="hljs-string">'<span class="hljs-template-variable">{{buckets.internal.name}}</span>'</span>
+  <span class="hljs-attr">system_bucket:</span> <span class="hljs-string">'<span class="hljs-template-variable">{{buckets.internal.name}}</span>'</span>
 
   <span class="hljs-comment"># Required. Should be the same as in IAM deployment config.yml</span>
-<span class="hljs-attr">  buckets:</span>
-<span class="hljs-attr">    internal:</span>
-<span class="hljs-attr">        name:</span> <span class="hljs-string">dev-internal</span>
-<span class="hljs-attr">        type:</span> <span class="hljs-string">internal</span>
+  <span class="hljs-attr">buckets:</span>
+    <span class="hljs-attr">internal:</span>
+        <span class="hljs-attr">name:</span> <span class="hljs-string">dev-internal</span>
+        <span class="hljs-attr">type:</span> <span class="hljs-string">internal</span>
 
   <span class="hljs-comment"># Required. &lt;iams-prefix&gt; = prefix from IAM stack above.</span>
-<span class="hljs-attr">  iams:</span>
-<span class="hljs-attr">    ecsRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/&lt;iams-prefix&gt;-ecs'</span>
-<span class="hljs-attr">    lambdaApiGatewayRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/&lt;iams-prefix&gt;-lambda-api-gateway'</span>
-<span class="hljs-attr">    lambdaProcessingRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/&lt;iams-prefix&gt;-lambda-processing'</span>
-<span class="hljs-attr">    stepRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/&lt;iams-prefix&gt;-steprole'</span>
-<span class="hljs-attr">    instanceProfile:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:instance-profile/&lt;iams-prefix&gt;-ecs'</span>
-<span class="hljs-attr">    distributionRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/&lt;iams-prefix&gt;-distribution-api-lambda'</span>
-<span class="hljs-attr">    scalingRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/&lt;iams-prefix&gt;-scaling-role'</span>
-<span class="hljs-attr">    migrationRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/&lt;iams-prefix&gt;-migration-processing'</span>
+  <span class="hljs-attr">iams:</span>
+    <span class="hljs-attr">ecsRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/&lt;iams-prefix&gt;-ecs'</span>
+    <span class="hljs-attr">lambdaApiGatewayRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/&lt;iams-prefix&gt;-lambda-api-gateway'</span>
+    <span class="hljs-attr">lambdaProcessingRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/&lt;iams-prefix&gt;-lambda-processing'</span>
+    <span class="hljs-attr">stepRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/&lt;iams-prefix&gt;-steprole'</span>
+    <span class="hljs-attr">instanceProfile:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:instance-profile/&lt;iams-prefix&gt;-ecs'</span>
+    <span class="hljs-attr">distributionRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/&lt;iams-prefix&gt;-distribution-api-lambda'</span>
+    <span class="hljs-attr">scalingRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/&lt;iams-prefix&gt;-scaling-role'</span>
+    <span class="hljs-attr">migrationRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/&lt;iams-prefix&gt;-migration-processing'</span>
 
   <span class="hljs-comment"># Optional</span>
-<span class="hljs-attr">  urs_url:</span> <span class="hljs-attr">https://uat.urs.earthdata.nasa.gov/</span> <span class="hljs-comment"># make sure to include the trailing slash</span>
+  <span class="hljs-attr">urs_url:</span> <span class="hljs-string">https://uat.urs.earthdata.nasa.gov/</span> <span class="hljs-comment"># make sure to include the trailing slash</span>
 
   <span class="hljs-comment"># if not specified, the value of the API gateway backend endpoint is used</span>
   <span class="hljs-comment"># api_backend_url: https://apigateway-url-to-api-backend/ # make sure to include the trailing slash</span>
@@ -241,9 +241,9 @@
   <span class="hljs-comment"># api_distribution_url: https://apigateway-url-to-distribution-app/ # make sure to include the trailing slash</span>
 
   <span class="hljs-comment"># Required. URS users who should have access to the dashboard application.</span>
-<span class="hljs-attr">  users:</span>
-<span class="hljs-attr">    - username:</span> <span class="hljs-string">&lt;user&gt;</span>
-<span class="hljs-attr">    - username:</span> <span class="hljs-string">&lt;user2&gt;</span>
+  <span class="hljs-attr">users:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">username:</span> <span class="hljs-string">&lt;user&gt;</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">username:</span> <span class="hljs-string">&lt;user2&gt;</span>
 </code></pre>
 <p><strong>IMPORTANT NOTE</strong> - The <code>stackName</code> for this config <strong>must start with</strong> the value of the resource prefix for the IAM stack. By default, this means that the <code>stackName</code> should start with the value of the <a href="#configure-and-deploy-the-iam-stack"><code>prefix</code> set for the IAM stack above</a>. However, if you changed the value of the <code>ResourcePrefix</code> param in your IAM stack <code>config.yml</code>, you would use that value instead.</p>
 <h3><a class="anchor" aria-hidden="true" id="configure-earthdata-application"></a><a href="#configure-earthdata-application" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Configure EarthData application</h3>
