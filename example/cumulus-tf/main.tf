@@ -115,7 +115,6 @@ resource "aws_lambda_permission" "sns_s3_test" {
 
 module "s3_access_test_lambda" {
   source                     = "./modules/s3_access_test"
-  description                = "Lambda for integration testing direct S3 access"
 
   prefix                     = var.prefix
   lambda_processing_role_arn = module.cumulus.lambda_processing_role_arn
