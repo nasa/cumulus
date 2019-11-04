@@ -298,6 +298,8 @@ class UpdatedKes extends Kes {
     // If custom compile configuration flag not set, skip custom compilation
     if (!customCompile) return super.compileCF();
 
+    this.setParentOverrideConfigValues();
+
     // If not using message adapter, don't fetch it
     if (!filename) return this.superCompileCF();
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.13.6] - 2019-11-01
+
+CUMULUS-1620 - Fixed bug where message_adapter_version does not correctly inject the CMA
+
 ## [v1.13.5] - 2019-08-29
 
 - **CUMULUS-1455** - CMR token links updated to point to CMR legacy services rather than echo
@@ -1148,7 +1152,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.13.5...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.13.6...HEAD
+[v1.13.5]: https://github.com/nasa/cumulus/compare/v1.13.5...v1.13.6
 [v1.13.5]: https://github.com/nasa/cumulus/compare/v1.13.4...v1.13.5
 [v1.13.4]: https://github.com/nasa/cumulus/compare/v1.13.3...v1.13.4
 [v1.13.3]: https://github.com/nasa/cumulus/compare/v1.13.2...v1.13.3

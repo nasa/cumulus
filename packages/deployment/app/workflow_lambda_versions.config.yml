@@ -14,6 +14,7 @@ default:
   # user facing configuration flags
   override_with_parent:
     - maxNumberOfRetainedLambdas
+    - message_adapter_version
     - useWorkflowLambdaVersions
 
   # This flag sets if the template will add values to the config.oldLambdaInjection
