@@ -366,7 +366,7 @@ Then click the gear in the upper right corner and click "ReRun":
 
 ![Screenshot of a rule edit page in the Cumulus dashboard with a pop-up menu open](../../assets/browse_processing_2.png)
 
-Tab over to executions and you should see the `DiscoverGranulesBrowseExample` workflow fire, succeed and then moments later the `CookbookBrowseExample`.
+Tab over to executions and you should see the `DiscoverGranulesBrowseExample` workflow run, succeed, and then moments later the `CookbookBrowseExample` should run and succeed.
 
 ![Screenshot of page listing executions in the Cumulus dashboard](../../assets/browse_processing_3.png)
 
