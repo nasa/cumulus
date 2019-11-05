@@ -8,7 +8,7 @@ This Cumulus project seeks to address the existing need for a “native” cloud
 
 This documentation includes both guidelines, examples and source code docs.
 
-The documentation is accessible at <https://nasa.github.io/cumulus>
+The documentation is accessible at <https://nasa.github.io/cumulus>.
 
 ## Navigating the Cumulus Docs
 
