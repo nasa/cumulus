@@ -131,7 +131,7 @@ A few things to note about tasks in the workflow being added:
   }
 ```
 
-Note that in the task, the `CmrStep.Parameters.cma.task_config.cmr` key will contain the values you configured in the ```cmr``` configuration section above.
+Note that, in the task, the `CmrStep.Parameters.cma.task_config.cmr` key will contain the values you configured in the `cmr` configuration section above.
 
 * The Processing step in CookbookBrowseExample:
 
