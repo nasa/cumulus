@@ -35,7 +35,7 @@ The `cumulus-ecs-task` container takes an AWS Lambda Amazon Resource Name (ARN) 
 
 # Example: Replacing AWS Lambda with a Docker container run on ECS
 
-This example will use an already-defined workflow from the `cumulus` module that includes the [`QueueGranules`] task(https://github.com/nasa/cumulus/blob/master/tf-modules/ingest/queue-granules-task.tf) in it's configuration.
+This example will use an already-defined workflow from the `cumulus` module that includes the [`QueueGranules` task](https://github.com/nasa/cumulus/blob/master/tf-modules/ingest/queue-granules-task.tf) in its configuration.
 
 The following example is an excerpt from the [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf) containing the step definition for the `Queue Granules` step:
 
@@ -95,7 +95,7 @@ resource "aws_sfn_activity" "queue_granules" {
 ```
 
 
-* A instance of the `cumulus_ecs_service` module (found on the Cumulus [release](https://github.com/nasa/cumulus/releases page) configured to provide the QueueGranules task:
+* An instance of the `cumulus_ecs_service` module (found on the Cumulus [release](https://github.com/nasa/cumulus/releases page) configured to provide the `QueueGranules` task:
 
 ```hcl
 
@@ -125,7 +125,7 @@ module "queue_granules_service" {
     module.cumulus.queue_granules_task_lambda_function_arn
   ]
   alarms = {
-    TaskCountHight = {
+    TaskCountHigh = {
       comparison_operator = "GreaterThanThreshold"
       evaluation_periods  = 1
       metric_name         = "MemoryUtilization"
