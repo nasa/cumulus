@@ -31,7 +31,8 @@
       "!tests/serial/**/*.js",
       "!tests/endpoints/fixtures/**/*.js"
     ],
-    "fail-fast": true
+    "fail-fast": true,
+    "verbose": true
   },
   "nyc": {
     "exclude": [
