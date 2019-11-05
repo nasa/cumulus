@@ -54,6 +54,12 @@ const collection = { name: 'MOD14A1', version: '006' };
 const collectionId = constructCollectionId(collection.name, collection.version);
 const granuleRegex = '^MOD14A1\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
+const emsTestConfig = {
+  provider: 'CUMULUS',
+  submitReport: true,
+  dataSource: 'UAT'
+};
+
 // add MOD14A1___006 collection
 async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
   const s3data = [
@@ -129,8 +135,7 @@ async function getGranuleFilesForDownload(stackName, granuleId) {
     .filter((file) => (cmrResource.filter((resource) => resource.href.endsWith(file.fileName)).length > 0));
 }
 
-// TODO Update this to work with the Thin Egress App
-xdescribe('The EMS report', () => {
+describe('The EMS report', () => {
   let bucket;
   let config;
   let dataSource;
@@ -151,9 +156,9 @@ xdescribe('The EMS report', () => {
     emsIngestReportLambda = `${config.stackName}-EmsIngestReport`;
     emsDistributionReportLambda = `${config.stackName}-EmsDistributionReport`;
     bucket = config.bucket;
-    emsProvider = config.ems.provider;
-    submitReport = config.ems.submitReport === 'true' || false;
-    dataSource = config.ems.dataSource || config.stackName;
+    emsProvider = emsTestConfig.provider;
+    submitReport = emsTestConfig.submitReport === 'true' || false;
+    dataSource = emsTestConfig.dataSource || config.stackName;
 
     process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
     process.env.GranulesTable = `${config.stackName}-GranulesTable`;
@@ -337,7 +342,8 @@ xdescribe('The EMS report', () => {
     // the s3 server access log records are delivered within a few hours of the time that they are recorded,
     // so we are not able to generate the distribution report immediately after submitting distribution requests,
     // the distribution requests submitted here are for nightly distribution report.
-    it('downloads the files of the published granule for generating nightly distribution report', async () => {
+    // TODO Update this to work with the Thin Egress App
+    xit('downloads the files of the published granule for generating nightly distribution report', async () => {
       const files = await getGranuleFilesForDownload(config.stackName, ingestedGranuleIds[0]);
       for (let i = 0; i < files.length; i += 1) {
         const filePath = `/${files[i].bucket}/${files[i].key}`;
