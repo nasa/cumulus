@@ -57,7 +57,7 @@ Workflow **error-handling** can be configured as discussed in the [Error-Handlin
 
 The HelloWorld task is provided for you as part of the `cumulus` terraform module, no configuration is needed.
 
-If manually adding the resource to a deployment, the lambda resource source is located in the Cumulus source at  [`cumulus/tf-modules/ingest/hello-world-task.tf`](https://github.com/nasa/cumulus/tf-modules/ingest/hello-world-task.tf).  The lambda source code is located in the Cumulus source at ['cumulus/tasks/hello-world'](https://github.com/nasa/cumulus/tasks/hello-world/).
+If you want to manually deploy your own version of this Lambda for testing, you can copy the Lambda resource definition located in the Cumulus source code at  [`cumulus/tf-modules/ingest/hello-world-task.tf`](https://github.com/nasa/cumulus/tf-modules/ingest/hello-world-task.tf).  The Lambda source code is located in the Cumulus source code at ['cumulus/tasks/hello-world'](https://github.com/nasa/cumulus/tasks/hello-world/).
 
 ## Execution
 
