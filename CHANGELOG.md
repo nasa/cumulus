@@ -83,7 +83,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     `AWS::ApplicationAutoScaling::ScalableTarget`,
     `AWS::ApplicationAutoScaling::ScalingPolicy`, and `AWS::CloudWatch::Alarm`
     resources should be defined in a kes overrides file. See
-    [example/app/cloudformation.template.yml](./example/app/cloudformation.template.yml)
+    [this example](https://github.com/nasa/cumulus/blob/release-1.15.x/example/overrides/app/cloudformation.template.yml)
     for an example.
   - The following config parameters are no longer used:
     - ecs.services.\<NAME\>.minTasks
