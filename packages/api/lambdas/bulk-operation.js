@@ -1,4 +1,7 @@
 const elasticsearch = require('@elastic/elasticsearch');
+
+const log = require('@cumulus/common/log');
+
 const GranuleModel = require('../models/granules');
 
 /**
@@ -36,6 +39,14 @@ async function bulkGranule(payload) {
     });
     const response = await Promise.all(applyWorkflowRequests);
     return response;
+  }
+
+  log.info('No granule ids detected. Searching for granules in Elasticsearch.');
+
+  if (!process.env.METRICS_ES_HOST
+    || !process.env.METRICS_ES_USER
+    || !process.env.METRICS_ES_PASS) {
+    throw new Error('No ELK metrics stack configured.');
   }
 
   const query = payload.query;
