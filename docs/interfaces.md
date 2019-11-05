@@ -1,10 +1,8 @@
 ---
 id: interfaces
-title: Cumulus Interfaces
-hide_title: true
+title: Interfaces
+hide_title: false
 ---
-
-# Cumulus Interfaces
 
 Cumulus has multiple interfaces that allow interaction with discrete components of the system, such as starting workflows via SNS or Kinesis, manually queueing workflow start messages, submitting SNS notifications for completed workflows, and the many operations allowed by the Cumulus API.
 

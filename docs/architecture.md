@@ -1,21 +1,20 @@
 ---
 id: architecture
-title: Cumulus Architecture
-hide_title: true
+title: Architecture
+hide_title: false
 ---
 
-# Cumulus Architecture
 Below, find a diagram with the components that comprise an instance of Cumulus.
 
-![](assets/cumulus-arch-diagram.png)
+![Architecture diagram of a Cumulus deployment](assets/cumulus-arch-diagram.png)
 
 While the internals are complex, the boxes represent components which are easy to understand:
 
 * Every Cumulus application requires it's own Cumulus deployment (lower left corner)
 * Every Cumulus deployment comes with:
-    * DynamoDB and ElasticSearch datastores
-    * an API Gateway for managing collections, providers, granules and other Cumulus resources, and,
-    * internal lambda functions and queues for managing Cumulus workflows
+  * DynamoDB and ElasticSearch datastores
+  * an API Gateway for managing collections, providers, granules and other Cumulus resources, and,
+  * internal lambda functions and queues for managing Cumulus workflows
 * Every Cumulus application should define a set of workflows, which are deployed as AWS Step Functions along with all other AWS Cumulus resources.
 
 ## Developing a Cumulus Application
@@ -36,7 +35,6 @@ Cumulus is a collection of resources for Cumulus developers. These resources are
     * Elasticsearch for search on workflow executions and logs
     * DynamoDB for storing (earthdata) users, rules, collections and providers.
 3. **Cumulus API Default** and **Cumulus API V1:** Nested stacks deploying API Gateway resources
-
 
 ## Cumulus Dashboard
 
