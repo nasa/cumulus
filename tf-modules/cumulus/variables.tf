@@ -188,6 +188,51 @@ variable "elasticsearch_alarms" {
   default = []
 }
 
+variable "ems_datasource" {
+  type    = string
+  default = "UAT"
+}
+
+variable "ems_host" {
+  type = string
+  default = "change-ems-host"
+}
+
+variable "ems_path" {
+  type    = string
+  default = "/"
+}
+
+variable "ems_port" {
+  type    = number
+  default = 22
+}
+
+variable "ems_private_key" {
+  type    = string
+  default = "ems-private.pem"
+}
+
+variable "ems_provider" {
+  type    = string
+  default = "CUMULUS"
+}
+
+variable "ems_retention_in_days" {
+  type    = number
+  default = 30
+}
+
+variable "ems_submit_report" {
+  type    = bool
+  default = false
+}
+
+variable "ems_username" {
+  type    = string
+  default = "cumulus"
+}
+
 variable "key_name" {
   type    = string
   default = null
