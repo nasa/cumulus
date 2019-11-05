@@ -42,7 +42,7 @@ You should be able to quickly use the "Create Data Stream" button on the [Kinesi
 
 ![Screenshot of AWS console page for creating a Kinesis stream](assets/cnm_create_kinesis_stream.jpg)
 
-Please bear in mind that your `{{prefix}}-Lambda-processing` IAM role will need permissions to write to the response stream for this workflow to succeed if you create the Kinesis stream with a dashboard user.   If you are using the `cumulus` top-level module for your deployment this should be set properly.
+Please bear in mind that your `{{prefix}}-lambda-processing` IAM role will need permissions to write to the response stream for this workflow to succeed if you create the Kinesis stream with a dashboard user.   If you are using the `cumulus` top-level module for your deployment this should be set properly.
 
 If not, the most straightforward approach is to attach the `AmazonKinesisFullAccess` policy for the stream resource to whatever role your Lambda
 s are using, however your environment/security policies may require an approach specific to your deployment environment.
