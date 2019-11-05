@@ -1008,7 +1008,7 @@ exports.pullStepFunctionEvent = async (incomingEvent) => {
     return incomingEvent;
   }
   const event = cloneDeep(incomingEvent);
-  const remoteMsgS3Object = await exports.getS3Object(event.replace.Bucket, event.replace.Key);
+  const remoteMsgS3Object = await exports.getS3Object(event.replace.Bucket, event.replace.Key, { retries: 0 });
   const remoteMsg = JSON.parse(remoteMsgS3Object.Body.toString());
 
   let returnEvent = remoteMsg;
