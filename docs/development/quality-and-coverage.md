@@ -29,7 +29,7 @@ as a frontend to [markdownlint](https://www.npmjs.com/package/markdownlint) to c
 all of our markdown for style and formatting.   The configured rules can be found
 [here](https://github.com/nasa/cumulus/blob/master/.markdownlint.json).
 
-To check the configured markdown linting run `npm run lint-md`.
+To run linting on the markdown files  run `npm run lint-md`.
 
 ## Audit
 
