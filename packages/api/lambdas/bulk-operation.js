@@ -37,6 +37,7 @@ async function bulkGranule(payload) {
     const response = await Promise.all(applyWorkflowRequests);
     return response;
   }
+
   const query = payload.query;
   const index = payload.index;
   const client = new elasticsearch.Client({
@@ -44,7 +45,7 @@ async function bulkGranule(payload) {
     auth: {
       username: process.env.METRICS_ES_USER,
       password: process.env.METRICS_ES_PASS
-    },
+    }
   });
 
   console.log('Ping...');
