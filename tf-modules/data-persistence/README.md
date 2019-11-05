@@ -37,7 +37,7 @@ Configuration variables are shown in [`terraform.tfvars.example`](./terraform.tf
 
 ```hcl
 module "data_persistence" {
-  source = "https://github.com/nasa/cumulus/releases/download/v1.26.0/terraform-aws-cumulus.zip//tf-modules/data-persistence"
+  source = "https://github.com/nasa/cumulus/releases/download/vx.x.x/terraform-aws-cumulus.zip//tf-modules/data-persistence"
 
   prefix                     = "my-prefix"
   subnet_ids                 = ["subnet-123", "subnet-456"]

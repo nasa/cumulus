@@ -80,7 +80,7 @@ _If you already are working with an existing `<daac>-deploy` repository that is 
 Clone template-deploy repo and name appropriately for your DAAC or organization:
 
 ```bash
-  $ git clone https://github.com/nasa/template-deploy <daac>-deploy
+  git clone https://github.com/nasa/template-deploy <daac>-deploy
 ```
 
 We will return to [configuring this repo and using it for deployment below](#deploying-the-cumulus-instance).
@@ -88,8 +88,8 @@ We will return to [configuring this repo and using it for deployment below](#dep
 **Optional:** [Create a new repository](https://help.github.com/articles/creating-a-new-repository/) `<daac>-deploy` so that you can add your workflows and other modules to source control:
 
 ```bash
-  $ git remote set-url origin https://github.com/nasa/<daac>-deploy
-  $ git push origin master
+  git remote set-url origin https://github.com/nasa/<daac>-deploy
+  git push origin master
 ```
 
 You can then [add/commit](https://help.github.com/articles/adding-a-file-to-a-repository-using-the-command-line/) changes as needed.
@@ -103,9 +103,9 @@ You can then [add/commit](https://help.github.com/articles/adding-a-file-to-a-re
 You need to make some AWS information available to your environment. If you don't already have the access key and secret access key of an AWS user with IAM Create-User permissions, you must [Create Access Keys](https://docs.aws.amazon.com/general/latest/gr/managing-aws-access-keys.html) for such a user with IAM Create-User permissions, then export the access keys:
 
 ```bash
-  $ export AWS_ACCESS_KEY_ID=<AWS access key>
-  $ export AWS_SECRET_ACCESS_KEY=<AWS secret key>
-  $ export AWS_REGION=<region>
+  export AWS_ACCESS_KEY_ID=<AWS access key>
+  export AWS_SECRET_ACCESS_KEY=<AWS secret key>
+  export AWS_REGION=<region>
 ```
 
 If you don't want to set environment variables, [access keys can be stored locally via the AWS CLI.](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html)
@@ -275,7 +275,7 @@ Your data persistence resources are now deployed.
 
 ### Deploy the Cumulus Message Adapter layer
 
-**Note:**: If you are deploying in an NGAP environment, you should be able to use the existing Cumulus Message Adapter layer deployed in your environment.
+**Note:** If you are deploying in an NGAP environment, you should be able to use the existing Cumulus Message Adapter layer deployed in your environment.
 
 The [Cumulus Message Adapter (CMA)](./../workflows/input_output.md#cumulus-message-adapter) is necessary for interpreting the input and output of Cumulus workflow steps. The CMA is now integrated with Cumulus workflow steps as a Lambda layer.
 
@@ -377,10 +377,10 @@ Please note that the requirements are similar to the [Cumulus stack deployment r
 To install the dashboard clone the Cumulus-dashboard repository into the root deploy directory and install dependencies with `yarn install`:
 
 ```bash
-  $ git clone https://github.com/nasa/cumulus-dashboard
-  $ cd cumulus-dashboard
-  $ nvm use
-  $ yarn install
+  git clone https://github.com/nasa/cumulus-dashboard
+  cd cumulus-dashboard
+  nvm use
+  yarn install
 ```
 
 If you do not have the correct version of node installed, replace `nvm use` with `nvm install $(cat .nvmrc)` in the above example.
@@ -396,10 +396,10 @@ Each [release/version of the dashboard](https://github.com/nasa/cumulus-dashboar
 To checkout and install a specific version of the dashboard:
 
 ```bash
-  $ git fetch --tags
-  $ git checkout <version-number> # e.g. v1.2.0
-  $ nvm use
-  $ yarn install
+  git fetch --tags
+  git checkout <version-number> # e.g. v1.2.0
+  nvm use
+  yarn install
 ```
 
 If you do not have the correct version of node installed, replace `nvm use` with `nvm install $(cat .nvmrc)` in the above example.
@@ -413,7 +413,7 @@ To configure your dashboard for deployment, set the `APIROOT` environment variab
 Build the dashboard from the dashboard repository root directory, `cumulus-dashboard`:
 
 ```bash
-  $ APIROOT=<your_api_root> npm run build
+  APIROOT=<your_api_root> npm run build
 ```
 
 ### Dashboard deployment
@@ -423,7 +423,7 @@ Deploy dashboard to s3 bucket from the `cumulus-dashboard` directory:
 Using AWS CLI:
 
 ```bash
-  $ aws s3 sync dist s3://<prefix>-dashboard --acl public-read
+  aws s3 sync dist s3://<prefix>-dashboard --acl public-read
 ```
 
 From the S3 Console:
@@ -434,51 +434,6 @@ You should be able to visit the dashboard website at `http://<prefix>-dashboard.
 `<prefix>-dashboard` -> "Properties" -> "Static website hosting" -> "Endpoint" and login with a user that you configured for access in the [Configure and Deploy the Cumulus Stack](deployment-readme#configure-and-deploy-the-cumulus-stack) step.
 
 --------------
-
-## Updating Cumulus deployment
-
-After the initial deploy, any future updates to the Terraform deployment from configuration files, Terraform files (`*.tf`), or modules from a new version of Cumulus can be deployed and will update the appropriate portions of the stack as needed.
-
-To view the released module artifacts for each Cumulus core version, see the [Cumulus releases page](https://github.com/nasa/cumulus/releases).
-
-### Cumulus Versioning
-
-Cumulus uses a global versioning approach, meaning version numbers are consistent across all packages and tasks, and semantic versioning to track major, minor, and patch version (i.e. 1.0.0). We use Lerna to manage versioning.
-
-### Updating Cumulus version
-
-To update your Cumulus version:
-
-1. Find the desired release on the [Cumulus releases page](https://github.com/nasa/cumulus/releases)
-2. Update the `source` in your Terraform deployment files **for each of [your Cumulus modules](./components.md#available-cumulus-components)** by replacing `vx.x.x` with the desired version of Cumulus:
-
-    `source = "https://github.com/nasa/cumulus/releases/download/vx.x.x/terraform.zip//tf-modules/data-persistence"`
-
-3. Run `terraform init` to get the latest copies of your updated modules
-
-### Update data persistence resources
-
-**Reminder:** Follow the [above instructions to initialize Terraform](#initialize-terraform) if necessary.
-
-From your `data-persistence-tf` directory:
-
-```bash
-  $ AWS_REGION=<region> \ # e.g. us-east-1
-      AWS_PROFILE=<profile> \
-      terraform apply
-```
-
-### Update Cumulus resources
-
-**Reminder:** Follow the [above instructions to initialize Terraform](#initialize-terraform) if necessary.
-
-From your `cumulus-tf` directory:
-
-```bash
-  $ AWS_REGION=<region> \ # e.g. us-east-1
-      AWS_PROFILE=<profile> \
-      terraform apply
-```
 
 ## Footnotes
 

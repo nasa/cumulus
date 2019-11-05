@@ -24,15 +24,14 @@ PRs from forked repos cannot directly merged to master. Cumulus reviews must fol
 
 1. Create a new branch:
 
-```bash
-  $ git checkout -b from-<name-of-the-branch> master
-```
+    ```bash
+      git checkout -b from-<name-of-the-branch> master
+    ```
 
 2. Push the new branch to GitHub
-
 3. Change the destination of the forked PR to the new branch that was just pushed
 
-![screenshot 2018-10-12 14 37 49](https://user-images.githubusercontent.com/1933118/46869547-80d31480-ce2c-11e8-9d2f-b8e1ea01fdb6.png)
+    ![Screenshot of Github interface showing how to change the base branch of a pull request](https://user-images.githubusercontent.com/1933118/46869547-80d31480-ce2c-11e8-9d2f-b8e1ea01fdb6.png)
 
 4. After code review and approval, merge the forked PR to the new branch.
 
