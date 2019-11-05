@@ -272,72 +272,6 @@ specifically the section on <code>PercentChangeInCapacity</code>.</li>
 has been reserved, the size of the cluster will be increased by 10%. (There is a
 minimum change of 1 instance.) If <em>both</em> CPU and memory reservation for the
 cluster are under 25%, then the cluster size will be reduced by 5%.</p>
-<h4><a class="anchor" aria-hidden="true" id="service-autoscaling"></a><a href="#service-autoscaling" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Service AutoScaling</h4>
-<p>Cumulus supports automatically scaling the number of tasks configured for an ECS
-service. The scaling of tasks is based on the <code>ActivityScheduleTime</code> metric,
-which measures how long (in milliseconds) an activity waited before being picked
-up for processing. If the average activity is waiting more than the configured
-<code>scaleOutActivityScheduleTime</code> time, then additional tasks will be added to the
-service. If the average activity is waiting less than the configured
-<code>scaleInActivityScheduleTime</code> time, then tasks will be removed from the service.
-Ideally, the average wait time for tasks should settle somewhere between
-<code>scaleInActivityScheduleTime</code> and <code>scaleOutActivityScheduleTime</code>.</p>
-<p>Configuration values that affect ECS service autoscaling. These would all be
-defined for a specific service.</p>
-<ul>
-<li><code>minTasks</code>: the minimum number of tasks to maintain in a service</li>
-<li><code>maxTasks</code>: the maximum number of tasks to maintain in a service</li>
-<li><code>scaleInAdjustmentPercent</code>: the percentage to increase or decrease the number
-of tasks in the cluster by when the &quot;scale in&quot; alarm is triggered. Since this
-is a &quot;scale in&quot; setting, it should typically be a negative value. For more
-information see the
-<a href="https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-scaling-simple-step.html#as-scaling-adjustment">PercentChangeInCapacity documentation</a>,
-specifically the section on <code>PercentChangeInCapacity</code>.</li>
-<li><code>scaleInActivityScheduleTime</code>: a duration in milliseconds. If the average task
-is waiting for less than this amount of time before being started, then the
-number of tasks configured for the service will be reduced</li>
-<li><code>scaleOutAdjustmentPercent</code>: the percentage to increase or decrease the number
-of tasks in the cluster by when the &quot;scale out&quot; alarm is triggered. Since this
-is a &quot;scale out&quot; setting, it should typically be a negative value. For more
-information see the
-<a href="https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-scaling-simple-step.html#as-scaling-adjustment">PercentChangeInCapacity documentation</a>,
-specifically the section on <code>PercentChangeInCapacity</code>.
-<ul>
-<li><code>scaleOutActivityScheduleTime</code>: a duration in milliseconds. If the average
-task is waiting for more than this amount of time before being started, then
-the number of tasks configured for the service will be increased</li>
-</ul></li>
-</ul>
-<h5><a class="anchor" aria-hidden="true" id="notes"></a><a href="#notes" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Notes</h5>
-<ul>
-<li><code>minTasks</code> and <code>maxTasks</code> are required for autoscaling to be enabled</li>
-<li><code>scaleInActivityScheduleTime</code> and <code>scaleInAdjustmentPercent</code> are required for
-scaling in to be enabled</li>
-<li><code>scaleOutActivityScheduleTime</code> and <code>scaleOutAdjustmentPercent</code> are required
-for scaling out to be enabled</li>
-<li>When scaling of a service is triggered, the number of tasks will always change
-by at least 1, even if the number that would be changed based on the
-configured adjustment percent is less than 1.</li>
-</ul>
-<h5><a class="anchor" aria-hidden="true" id="example"></a><a href="#example" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Example</h5>
-<p>Only auto scaling-related fields are shown in this example config.</p>
-<pre><code class="hljs css language-yaml"><span class="hljs-attr">ecs:</span>
-  <span class="hljs-attr">services:</span>
-    <span class="hljs-attr">ExampleService:</span>
-      <span class="hljs-attr">minTasks:</span> <span class="hljs-number">1</span>
-      <span class="hljs-attr">maxTasks:</span> <span class="hljs-number">10</span>
-      <span class="hljs-attr">scaleInActivityScheduleTime:</span> <span class="hljs-number">5000</span>
-      <span class="hljs-attr">scaleInAdjustmentPercent:</span> <span class="hljs-number">-5</span>
-      <span class="hljs-attr">scaleOutActivityScheduleTime:</span> <span class="hljs-number">10000</span>
-      <span class="hljs-attr">scaleOutAdjustmentPercent:</span> <span class="hljs-number">10</span>
-</code></pre>
-<p>In this example configuration, the minimum number of tasks is 1 and the maximum
-is 10. If the average time for activities to be started is less than 5 seconds,
-then the number of tasks configured for the service will be reduced by 5%. If
-the average time for activities to be started is greater than 10 seconds, then
-the number of tasks configured for the service will be increased by 10%.
-Eventually, the average time that a task takes to start should hover between 5
-and 10 seconds.</p>
 <h3><a class="anchor" aria-hidden="true" id="es"></a><a href="#es" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>es</h3>
 <p>Configuration for the Amazon Elasticsearch Service (ES) instance. Optional. Set <code>es: null</code> to disable ElasticSearch.</p>
 <p>VPC note: When using Amazon ElasticSearch Service in a VPC run <code>aws iam create-service-linked-role --aws-service-name es.amazonaws.com</code> before deploying. This operation only needs to be done once per account.</p>
@@ -366,7 +300,8 @@ and 10 seconds.</p>
             <span class="hljs-bullet">-</span> <span class="hljs-string">Arn</span>
         <span class="hljs-attr">protocol:</span> <span class="hljs-string">lambda</span>
 </code></pre>
-<p>The above code is an example of configuration for an SNS topic that will be called <code>sftrackerSns</code> in the resulting <code>cloudformation.yml</code> file. Upon deployment, this configuration creates an SNS topic named <code>&lt;prefix&gt;-sftracker</code> and subscribes the resource named <code>sns2elasticsearchLambdaFunction</code> to that topic so that it will be triggered when any messages are added to that topic.</p>
+<p>The above code is an example of configuration for an SNS topic that will be called <code>sftrackerSns</code> in the resulting <code>cloudformation.yml</code> file. The <code>endpoint</code> value depends on the protocol, which for a Lambda function requires the function's ARN. In this configuration it is populated by finding the Lambda's ARN via <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html">Fn::GetAtt</a>.</p>
+<p>Upon deployment, this configuration creates an SNS topic named <code>&lt;prefix&gt;-sftrackerSns</code> and subscribes the resource named <code>sns2elasticsearchLambdaFunction</code> to that topic so that it will be triggered when any messages are added to that topic.</p>
 <p>More information for each of the individual attributes can be found in <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-sns-topic.html">AWS SNS Topic Documentation</a>.</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-attr">sns:</span> <span class="hljs-string">...</span>
   <span class="hljs-attr">sftrackerSubscription:</span>
@@ -434,8 +369,8 @@ $ aws iam list-instance-profiles | grep Arn
               </script><script>
               var search = docsearch({
                 
-                apiKey: 'undefined',
-                indexName: 'undefined',
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>

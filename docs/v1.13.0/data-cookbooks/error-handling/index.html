@@ -70,60 +70,60 @@
 <p><strong>Example:</strong></p>
 <p>Note: In the example below, YAML syntax (i.e. <code>&amp;ErrorEqualDefaults</code> and <code>&lt;&lt;: *ErrorEqualDefaults</code>) is used to create references to reusable blocks which makes the definition less repetitive. Read more here: <a href="https://blog.daemonl.com/2016/02/yaml.html">YAML - Anchors, References, Extend</a>.</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-attr">CNMExampleWorkflow:</span>
-<span class="hljs-attr">  Comment:</span> <span class="hljs-string">'Tests Workflow from Kinesis Stream'</span>
-<span class="hljs-attr">  StartAt:</span> <span class="hljs-string">StartStatus</span>
-<span class="hljs-attr">  States:</span>
-<span class="hljs-attr">    StartStatus:</span>
-<span class="hljs-attr">      Type:</span> <span class="hljs-string">Task</span>
-<span class="hljs-attr">      Resource:</span> <span class="hljs-string">${SfSnsReportLambdaFunction.Arn}</span>
-<span class="hljs-attr">      Catch:</span>
-<span class="hljs-bullet">        -</span> <span class="hljs-meta">&amp;ErrorEqualDefaults</span>
-<span class="hljs-attr">          ErrorEquals:</span>
-<span class="hljs-bullet">          -</span> <span class="hljs-string">States.ALL</span>
-<span class="hljs-attr">          ResultPath:</span> <span class="hljs-string">'$.exception'</span>
-<span class="hljs-attr">          Next:</span> <span class="hljs-string">CnmResponseFail</span>
-<span class="hljs-attr">      Next:</span> <span class="hljs-string">TranslateMessage</span>
-<span class="hljs-attr">    TranslateMessage:</span>
-<span class="hljs-attr">      Type:</span> <span class="hljs-string">Task</span>
-<span class="hljs-attr">      Resource:</span> <span class="hljs-string">${CNMToCMALambdaFunction.Arn}</span>
-<span class="hljs-attr">      Catch:</span>
-<span class="hljs-bullet">        -</span> <span class="hljs-string">&lt;&lt;:</span> <span class="hljs-meta">*ErrorEqualDefaults</span>
-<span class="hljs-attr">      Next:</span> <span class="hljs-string">SyncGranule</span>
-<span class="hljs-attr">    SyncGranule:</span>
-<span class="hljs-attr">      Type:</span> <span class="hljs-string">Task</span>
-<span class="hljs-attr">      Resource:</span> <span class="hljs-string">${SyncGranuleLambdaFunction.Arn}</span>
-<span class="hljs-attr">      Catch:</span>
-<span class="hljs-bullet">        -</span> <span class="hljs-string">&lt;&lt;:</span> <span class="hljs-meta">*ErrorEqualDefaults</span>
-<span class="hljs-attr">      Next:</span> <span class="hljs-string">CnmResponse</span>
-<span class="hljs-attr">    CnmResponse:</span> <span class="hljs-meta">&amp;CnmResponseDefaults</span>
-<span class="hljs-attr">      Type:</span> <span class="hljs-string">Task</span>
-<span class="hljs-attr">      Resource:</span> <span class="hljs-string">${CnmResponseLambdaFunction.Arn}</span>
-<span class="hljs-attr">      Catch:</span>
-<span class="hljs-bullet">        -</span> <span class="hljs-string">&lt;&lt;:</span> <span class="hljs-meta">*ErrorEqualDefaults</span>
-<span class="hljs-attr">          Next:</span> <span class="hljs-string">StopStatus</span>
-<span class="hljs-attr">      Next:</span> <span class="hljs-string">StopStatus</span>
-<span class="hljs-attr">    CnmResponseFail:</span>
+  <span class="hljs-attr">Comment:</span> <span class="hljs-string">'Tests Workflow from Kinesis Stream'</span>
+  <span class="hljs-attr">StartAt:</span> <span class="hljs-string">StartStatus</span>
+  <span class="hljs-attr">States:</span>
+    <span class="hljs-attr">StartStatus:</span>
+      <span class="hljs-attr">Type:</span> <span class="hljs-string">Task</span>
+      <span class="hljs-attr">Resource:</span> <span class="hljs-string">${SfSnsReportLambdaFunction.Arn}</span>
+      <span class="hljs-attr">Catch:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-meta">&amp;ErrorEqualDefaults</span>
+          <span class="hljs-attr">ErrorEquals:</span>
+          <span class="hljs-bullet">-</span> <span class="hljs-string">States.ALL</span>
+          <span class="hljs-attr">ResultPath:</span> <span class="hljs-string">'$.exception'</span>
+          <span class="hljs-attr">Next:</span> <span class="hljs-string">CnmResponseFail</span>
+      <span class="hljs-attr">Next:</span> <span class="hljs-string">TranslateMessage</span>
+    <span class="hljs-attr">TranslateMessage:</span>
+      <span class="hljs-attr">Type:</span> <span class="hljs-string">Task</span>
+      <span class="hljs-attr">Resource:</span> <span class="hljs-string">${CNMToCMALambdaFunction.Arn}</span>
+      <span class="hljs-attr">Catch:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-string">&lt;&lt;:</span> <span class="hljs-meta">*ErrorEqualDefaults</span>
+      <span class="hljs-attr">Next:</span> <span class="hljs-string">SyncGranule</span>
+    <span class="hljs-attr">SyncGranule:</span>
+      <span class="hljs-attr">Type:</span> <span class="hljs-string">Task</span>
+      <span class="hljs-attr">Resource:</span> <span class="hljs-string">${SyncGranuleLambdaFunction.Arn}</span>
+      <span class="hljs-attr">Catch:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-string">&lt;&lt;:</span> <span class="hljs-meta">*ErrorEqualDefaults</span>
+      <span class="hljs-attr">Next:</span> <span class="hljs-string">CnmResponse</span>
+    <span class="hljs-attr">CnmResponse:</span> <span class="hljs-meta">&amp;CnmResponseDefaults</span>
+      <span class="hljs-attr">Type:</span> <span class="hljs-string">Task</span>
+      <span class="hljs-attr">Resource:</span> <span class="hljs-string">${CnmResponseLambdaFunction.Arn}</span>
+      <span class="hljs-attr">Catch:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-string">&lt;&lt;:</span> <span class="hljs-meta">*ErrorEqualDefaults</span>
+          <span class="hljs-attr">Next:</span> <span class="hljs-string">StopStatus</span>
+      <span class="hljs-attr">Next:</span> <span class="hljs-string">StopStatus</span>
+    <span class="hljs-attr">CnmResponseFail:</span>
       <span class="hljs-string">&lt;&lt;:</span> <span class="hljs-meta">*CnmResponseDefaults</span>
-<span class="hljs-attr">      Catch:</span>
-<span class="hljs-bullet">        -</span> <span class="hljs-string">&lt;&lt;:</span> <span class="hljs-meta">*ErrorEqualDefaults</span>
-<span class="hljs-attr">          Next:</span> <span class="hljs-string">StopStatusFail</span>
-<span class="hljs-attr">      Next:</span> <span class="hljs-string">StopStatusFail</span>
-<span class="hljs-attr">    StopStatus:</span> <span class="hljs-meta">&amp;StopStatusDefaults</span>
-<span class="hljs-attr">      Type:</span> <span class="hljs-string">Task</span>
-<span class="hljs-attr">      Resource:</span> <span class="hljs-string">${sf2snsEndLambdaFunction.Arn}</span>
-<span class="hljs-attr">      Next:</span> <span class="hljs-string">WorkflowSucceeded</span>
-<span class="hljs-attr">    StopStatusFail:</span>
+      <span class="hljs-attr">Catch:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-string">&lt;&lt;:</span> <span class="hljs-meta">*ErrorEqualDefaults</span>
+          <span class="hljs-attr">Next:</span> <span class="hljs-string">StopStatusFail</span>
+      <span class="hljs-attr">Next:</span> <span class="hljs-string">StopStatusFail</span>
+    <span class="hljs-attr">StopStatus:</span> <span class="hljs-meta">&amp;StopStatusDefaults</span>
+      <span class="hljs-attr">Type:</span> <span class="hljs-string">Task</span>
+      <span class="hljs-attr">Resource:</span> <span class="hljs-string">${sf2snsEndLambdaFunction.Arn}</span>
+      <span class="hljs-attr">Next:</span> <span class="hljs-string">WorkflowSucceeded</span>
+    <span class="hljs-attr">StopStatusFail:</span>
       <span class="hljs-string">&lt;&lt;:</span> <span class="hljs-meta">*StopStatusDefaults</span>
-<span class="hljs-attr">      Catch:</span>
-<span class="hljs-attr">        - ErrorEquals:</span>
-<span class="hljs-bullet">          -</span> <span class="hljs-string">States.ALL</span>
-<span class="hljs-attr">          Next:</span> <span class="hljs-string">WorkflowFailed</span>
-<span class="hljs-attr">      Next:</span> <span class="hljs-string">WorkflowFailed</span>
-<span class="hljs-attr">    WorkflowSucceeded:</span>
-<span class="hljs-attr">      Type:</span> <span class="hljs-string">Succeed</span>
-<span class="hljs-attr">    WorkflowFailed:</span>
-<span class="hljs-attr">      Type:</span> <span class="hljs-string">Fail</span>
-<span class="hljs-attr">      Cause:</span> <span class="hljs-string">'Workflow failed'</span>
+      <span class="hljs-attr">Catch:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-attr">ErrorEquals:</span>
+          <span class="hljs-bullet">-</span> <span class="hljs-string">States.ALL</span>
+          <span class="hljs-attr">Next:</span> <span class="hljs-string">WorkflowFailed</span>
+      <span class="hljs-attr">Next:</span> <span class="hljs-string">WorkflowFailed</span>
+    <span class="hljs-attr">WorkflowSucceeded:</span>
+      <span class="hljs-attr">Type:</span> <span class="hljs-string">Succeed</span>
+    <span class="hljs-attr">WorkflowFailed:</span>
+      <span class="hljs-attr">Type:</span> <span class="hljs-string">Fail</span>
+      <span class="hljs-attr">Cause:</span> <span class="hljs-string">'Workflow failed'</span>
 </code></pre>
 <p>The above results in a workflow which is visualized in the diagram below:</p>
 <p><img src="/cumulus/docs/assets/kinesis-workflow.png" alt="Kinesis Workflow"></p>
@@ -143,8 +143,8 @@
               </script><script>
               var search = docsearch({
                 
-                apiKey: 'undefined',
-                indexName: 'undefined',
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>

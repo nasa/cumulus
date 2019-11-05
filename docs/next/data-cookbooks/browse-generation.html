@@ -119,8 +119,8 @@
       <span class="hljs-bullet">-</span> <span class="hljs-attr">ErrorEquals:</span>
         <span class="hljs-bullet">-</span> <span class="hljs-string">States.ALL</span>
         <span class="hljs-attr">ResultPath:</span> <span class="hljs-string">'$.exception'</span>
-        <span class="hljs-attr">Next:</span> <span class="hljs-string">StopStatus</span>
-    <span class="hljs-attr">Next:</span> <span class="hljs-string">StopStatus</span>
+        <span class="hljs-attr">Next:</span> <span class="hljs-string">WorkflowFailed</span>
+    <span class="hljs-attr">End:</span> <span class="hljs-literal">true</span>
 </code></pre>
 <p>Note that in the task, the event.config.cmr will contain the values you configured in the <code>cmr</code> configuration section above.</p>
 <ul>
@@ -142,7 +142,7 @@
       <span class="hljs-bullet">-</span> <span class="hljs-attr">ErrorEquals:</span>
         <span class="hljs-bullet">-</span> <span class="hljs-string">States.ALL</span>
         <span class="hljs-attr">ResultPath:</span> <span class="hljs-string">'$.exception'</span>
-        <span class="hljs-attr">Next:</span> <span class="hljs-string">StopStatus</span>
+        <span class="hljs-attr">Next:</span> <span class="hljs-string">WorkflowFailed</span>
     <span class="hljs-attr">Retry:</span>
       <span class="hljs-bullet">-</span> <span class="hljs-attr">ErrorEquals:</span>
           <span class="hljs-bullet">-</span> <span class="hljs-string">States.ALL</span>
@@ -523,8 +523,8 @@ Host: {{data_source_bucket}}
               </script><script>
               var search = docsearch({
                 
-                apiKey: 'undefined',
-                indexName: 'undefined',
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>

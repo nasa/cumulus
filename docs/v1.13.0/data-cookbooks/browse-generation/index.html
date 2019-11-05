@@ -104,55 +104,55 @@
 <ul>
 <li>The CMR step in CookbookBrowseExample:</li>
 </ul>
-<pre><code class="hljs"><span class="hljs-attr"> CmrStep:</span>
-<span class="hljs-attr">      CumulusConfig:</span>
-<span class="hljs-attr">        bucket:</span> <span class="hljs-string">'{$.meta.buckets.internal.name}'</span>
-<span class="hljs-attr">        stack:</span> <span class="hljs-string">'{$.meta.stack}'</span>
-<span class="hljs-attr">        cmr:</span> <span class="hljs-string">'{$.meta.cmr}'</span>
-<span class="hljs-attr">        process:</span> <span class="hljs-string">'{$.cumulus_meta.process}'</span>
-<span class="hljs-attr">        input_granules:</span> <span class="hljs-string">'{$.meta.input_granules}'</span>
-<span class="hljs-attr">        granuleIdExtraction:</span> <span class="hljs-string">'{$.meta.collection.granuleIdExtraction}'</span>
-<span class="hljs-attr">      Type:</span> <span class="hljs-string">Task</span>
-<span class="hljs-attr">      Resource:</span> <span class="hljs-string">${PostToCmrLambdaFunction.Arn}</span>
-<span class="hljs-attr">      Catch:</span>
-<span class="hljs-attr">        - ErrorEquals:</span>
-<span class="hljs-bullet">          -</span> <span class="hljs-string">States.ALL</span>
-<span class="hljs-attr">          ResultPath:</span> <span class="hljs-string">'$.exception'</span>
-<span class="hljs-attr">          Next:</span> <span class="hljs-string">StopStatus</span>
-<span class="hljs-attr">      Next:</span> <span class="hljs-string">StopStatus</span>
+<pre><code class="hljs"> <span class="hljs-attr">CmrStep:</span>
+      <span class="hljs-attr">CumulusConfig:</span>
+        <span class="hljs-attr">bucket:</span> <span class="hljs-string">'{$.meta.buckets.internal.name}'</span>
+        <span class="hljs-attr">stack:</span> <span class="hljs-string">'{$.meta.stack}'</span>
+        <span class="hljs-attr">cmr:</span> <span class="hljs-string">'{$.meta.cmr}'</span>
+        <span class="hljs-attr">process:</span> <span class="hljs-string">'{$.cumulus_meta.process}'</span>
+        <span class="hljs-attr">input_granules:</span> <span class="hljs-string">'{$.meta.input_granules}'</span>
+        <span class="hljs-attr">granuleIdExtraction:</span> <span class="hljs-string">'{$.meta.collection.granuleIdExtraction}'</span>
+      <span class="hljs-attr">Type:</span> <span class="hljs-string">Task</span>
+      <span class="hljs-attr">Resource:</span> <span class="hljs-string">${PostToCmrLambdaFunction.Arn}</span>
+      <span class="hljs-attr">Catch:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-attr">ErrorEquals:</span>
+          <span class="hljs-bullet">-</span> <span class="hljs-string">States.ALL</span>
+          <span class="hljs-attr">ResultPath:</span> <span class="hljs-string">'$.exception'</span>
+          <span class="hljs-attr">Next:</span> <span class="hljs-string">StopStatus</span>
+      <span class="hljs-attr">Next:</span> <span class="hljs-string">StopStatus</span>
 </code></pre>
 <p>Note that in the task, the event.config.cmr will contain the values you configured in the <code>cmr</code> configuration section above.</p>
 <ul>
 <li>The Processing step in CookbookBrowseExample:</li>
 </ul>
-<pre><code class="hljs"><span class="hljs-attr">    ProcessingStep:</span>
-<span class="hljs-attr">      CumulusConfig:</span>
-<span class="hljs-attr">        bucket:</span> <span class="hljs-string">'{$.meta.buckets.internal.name}'</span>
-<span class="hljs-attr">        collection:</span> <span class="hljs-string">'{$.meta.collection}'</span>
-<span class="hljs-attr">        cmrMetadataFormat:</span> <span class="hljs-string">'{$.meta.cmrMetadataFormat}'</span>
-<span class="hljs-attr">        additionalUrls:</span> <span class="hljs-string">'{$.meta.additionalUrls}'</span>
-<span class="hljs-attr">        generateFakeBrowse:</span> <span class="hljs-literal">true</span>
-<span class="hljs-attr">      Type:</span> <span class="hljs-string">Task</span>
-<span class="hljs-attr">      Resource:</span> <span class="hljs-string">${FakeProcessingLambdaFunction.Arn}</span>
-<span class="hljs-attr">      Catch:</span>
-<span class="hljs-attr">        - ErrorEquals:</span>
-<span class="hljs-bullet">          -</span> <span class="hljs-string">States.ALL</span>
-<span class="hljs-attr">          ResultPath:</span> <span class="hljs-string">'$.exception'</span>
-<span class="hljs-attr">          Next:</span> <span class="hljs-string">StopStatus</span>
-<span class="hljs-attr">      Retry:</span>
-<span class="hljs-attr">        - ErrorEquals:</span>
-<span class="hljs-bullet">            -</span> <span class="hljs-string">States.ALL</span>
-<span class="hljs-attr">          IntervalSeconds:</span> <span class="hljs-number">2</span>
-<span class="hljs-attr">          MaxAttempts:</span> <span class="hljs-number">3</span>
-<span class="hljs-attr">      Next:</span> <span class="hljs-string">FilesToGranulesStep</span>
+<pre><code class="hljs">    <span class="hljs-attr">ProcessingStep:</span>
+      <span class="hljs-attr">CumulusConfig:</span>
+        <span class="hljs-attr">bucket:</span> <span class="hljs-string">'{$.meta.buckets.internal.name}'</span>
+        <span class="hljs-attr">collection:</span> <span class="hljs-string">'{$.meta.collection}'</span>
+        <span class="hljs-attr">cmrMetadataFormat:</span> <span class="hljs-string">'{$.meta.cmrMetadataFormat}'</span>
+        <span class="hljs-attr">additionalUrls:</span> <span class="hljs-string">'{$.meta.additionalUrls}'</span>
+        <span class="hljs-attr">generateFakeBrowse:</span> <span class="hljs-literal">true</span>
+      <span class="hljs-attr">Type:</span> <span class="hljs-string">Task</span>
+      <span class="hljs-attr">Resource:</span> <span class="hljs-string">${FakeProcessingLambdaFunction.Arn}</span>
+      <span class="hljs-attr">Catch:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-attr">ErrorEquals:</span>
+          <span class="hljs-bullet">-</span> <span class="hljs-string">States.ALL</span>
+          <span class="hljs-attr">ResultPath:</span> <span class="hljs-string">'$.exception'</span>
+          <span class="hljs-attr">Next:</span> <span class="hljs-string">StopStatus</span>
+      <span class="hljs-attr">Retry:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-attr">ErrorEquals:</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-string">States.ALL</span>
+          <span class="hljs-attr">IntervalSeconds:</span> <span class="hljs-number">2</span>
+          <span class="hljs-attr">MaxAttempts:</span> <span class="hljs-number">3</span>
+      <span class="hljs-attr">Next:</span> <span class="hljs-string">FilesToGranulesStep</span>
 </code></pre>
 <p><strong>Please note</strong>: <code>FakeProcessing</code> is the core provided browse/cmr generation we're using for the example in this entry.</p>
 <p>If you're not ingesting mock data matching the example, or would like to use modify the example to ingest your own data please see the <a href="#build-lambda">build-lambda</a> section below.    You will need to configure a different lambda entry for your lambda and utilize it in place of the <code>Resource</code> defined in the example workflow.</p>
 <h4><a class="anchor" aria-hidden="true" id="cumulus-configuration"></a><a href="#cumulus-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Cumulus Configuration</h4>
 <p>In an editor, open app/config.yml and modify your stepFunctions key to contain the file you just created:</p>
 <pre><code class="hljs">stepFunctions: !!files [
-  {some <span class="hljs-built_in">list</span> <span class="hljs-keyword">of</span> workflows},
-  <span class="hljs-symbol">'browseExample</span>.yml'
+  {some list of workflows},
+  <span class="hljs-string">'browseExample.yml'</span>
 ]
 </code></pre>
 <p>This will cause kes to export the workflows in the new file along with the other workflows configured for your deployment.</p>
@@ -209,25 +209,25 @@
 <p>Once you've configured your CMR credentials, updated your workflow configuration, and updated your lambda configuration you should be able to redeploy your cumulus instance:</p>
 <p><code>./node_modules/.bin/kes cf deploy --kes-folder app --region &lt;region&gt; --template node_modules/@cumulus/deployment/app --deployment &lt;deployment&gt;</code></p>
 <p>You should expect to see a successful deployment message similar to:</p>
-<pre><code class="hljs">Template saved <span class="hljs-built_in">to</span> app/cloudformation.yml
-Uploaded: s3://&lt;bucket <span class="hljs-keyword">and</span> key&gt;/cloudformation.yml
-Waiting <span class="hljs-keyword">for</span> <span class="hljs-keyword">the</span> CF operation <span class="hljs-built_in">to</span> complete
-CF operation is <span class="hljs-keyword">in</span> state <span class="hljs-keyword">of</span> UPDATE_COMPLETE
+<pre><code class="hljs"><span class="hljs-attr">Template</span> <span class="hljs-string">saved to app/cloudformation.yml</span>
+<span class="hljs-attr">Uploaded</span>: <span class="hljs-string">s3://&lt;bucket and key&gt;/cloudformation.yml</span>
+<span class="hljs-attr">Waiting</span> <span class="hljs-string">for the CF operation to complete</span>
+<span class="hljs-attr">CF</span> <span class="hljs-string">operation is in state of UPDATE_COMPLETE</span>
 
-Here are <span class="hljs-keyword">the</span> important URLs <span class="hljs-keyword">for</span> this deployment:
+<span class="hljs-attr">Here</span> <span class="hljs-string">are the important URLs for this deployment:</span>
 
-Distribution:  <span class="hljs-keyword">https</span>://example.com/
-Add this url <span class="hljs-built_in">to</span> URS:  <span class="hljs-keyword">https</span>://example.com/redirect
+<span class="hljs-attr">Distribution</span>:  <span class="hljs-string">https://example.com/</span>
+<span class="hljs-attr">Add</span> <span class="hljs-string">this url to URS:  https://example.com/redirect</span>
 
-Api:  XXXXXXX
-Add this url <span class="hljs-built_in">to</span> URS:  XXXXXXXXXX
-Uploading Cumulus Message Templates <span class="hljs-keyword">for</span> <span class="hljs-keyword">each</span> Workflow ...
-......
-restarting ECS task XXXXXXXXXX
-ECS task aXXXXXXXX restarted
-api endpoints <span class="hljs-keyword">with</span> <span class="hljs-keyword">the</span> id XXXXXXXXXXX redeployed.
-Redeploying XXXXXXXXXX was throttled. Another attempt will be made <span class="hljs-keyword">in</span> <span class="hljs-number">20</span> <span class="hljs-built_in">seconds</span>
-distribution endpoints <span class="hljs-keyword">with</span> <span class="hljs-keyword">the</span> id XXXXXXXXXX redeployed.
+<span class="hljs-attr">Api</span>:  <span class="hljs-string">XXXXXXX</span>
+<span class="hljs-attr">Add</span> <span class="hljs-string">this url to URS:  XXXXXXXXXX</span>
+<span class="hljs-attr">Uploading</span> <span class="hljs-string">Cumulus Message Templates for each Workflow ...</span>
+<span class="hljs-attr">......</span>
+<span class="hljs-attr">restarting</span> <span class="hljs-string">ECS task XXXXXXXXXX</span>
+<span class="hljs-attr">ECS</span> <span class="hljs-string">task aXXXXXXXX restarted</span>
+<span class="hljs-attr">api</span> <span class="hljs-string">endpoints with the id XXXXXXXXXXX redeployed.</span>
+<span class="hljs-attr">Redeploying</span> <span class="hljs-string">XXXXXXXXXX was throttled. Another attempt will be made in 20 seconds</span>
+<span class="hljs-attr">distribution</span> <span class="hljs-string">endpoints with the id XXXXXXXXXX redeployed.</span>
 </code></pre>
 <p>Wait for the above to complete. It's particularly important that the new workflow message template is uploaded for the workflow to complete.</p>
 <hr>
@@ -518,8 +518,8 @@ distribution endpoints <span class="hljs-keyword">with</span> <span class="hljs-
               </script><script>
               var search = docsearch({
                 
-                apiKey: 'undefined',
-                indexName: 'undefined',
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>

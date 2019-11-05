@@ -60,8 +60,8 @@
 Note that entries delimited as &lt;name&gt; are intended to be read as objects where <code>name</code> is the key, not the value, e.g.:</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-comment"># Config for 'dynamos.\&lt;name\&gt;.read' where `name = UsersTable`</span>
 <span class="hljs-attr">dynamos:</span>
-<span class="hljs-attr">  UsersTable:</span>
-<span class="hljs-attr">    read:</span> <span class="hljs-number">5</span>
+  <span class="hljs-attr">UsersTable:</span>
+    <span class="hljs-attr">read:</span> <span class="hljs-number">5</span>
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="configyml-explained"></a><a href="#configyml-explained" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>config.yml Explained</h3>
 <table>
@@ -145,10 +145,10 @@ CMR_PASSWORD=cmrpassword
 </code></pre>
 <p>These values will be imported via kes in your configuration file.   You should ensure your <code>app/config.yml</code> contains the following lines:</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-attr">cmr:</span>
-<span class="hljs-attr">  username:</span> <span class="hljs-string">'<span class="hljs-template-variable">{{CMR_USERNAME}}</span>'</span>
-<span class="hljs-attr">  provider:</span> <span class="hljs-string">'&lt;replace-with-cmr-provider&gt;'</span>
-<span class="hljs-attr">  clientId:</span> <span class="hljs-string">'&lt;replace-with-daac-name&gt;-<span class="hljs-template-variable">{{prefix}}</span>'</span>
-<span class="hljs-attr">  password:</span> <span class="hljs-string">'<span class="hljs-template-variable">{{CMR_PASSWORD}}</span>'</span>
+  <span class="hljs-attr">username:</span> <span class="hljs-string">'<span class="hljs-template-variable">{{CMR_USERNAME}}</span>'</span>
+  <span class="hljs-attr">provider:</span> <span class="hljs-string">'&lt;replace-with-cmr-provider&gt;'</span>
+  <span class="hljs-attr">clientId:</span> <span class="hljs-string">'&lt;replace-with-daac-name&gt;-<span class="hljs-template-variable">{{prefix}}</span>'</span>
+  <span class="hljs-attr">password:</span> <span class="hljs-string">'<span class="hljs-template-variable">{{CMR_PASSWORD}}</span>'</span>
 </code></pre>
 <p><code>clientId</code> and <code>provider</code> should be configured to point to a user specified CMR <code>clientId</code> and <code>provider</code>. We use the <code>CUMULUS</code> provider in our configurations, but users can specify their own.</p>
 <h3><a class="anchor" aria-hidden="true" id="users"></a><a href="#users" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>users</h3>
@@ -198,11 +198,11 @@ specifically the section on <code>PercentChangeInCapacity</code>.</li>
 </ul>
 <pre><code class="hljs css language-yaml"><span class="hljs-comment"># Defaults</span>
 <span class="hljs-attr">ecs:</span>
-<span class="hljs-attr">  clusterAutoscaling:</span>
-<span class="hljs-attr">    scaleInThresholdPercent:</span> <span class="hljs-number">25</span>
-<span class="hljs-attr">    scaleInAdjustmentPercent:</span> <span class="hljs-bullet">-5</span>
-<span class="hljs-attr">    scaleOutThresholdPercent:</span> <span class="hljs-number">75</span>
-<span class="hljs-attr">    scaleOutAdjustmentPercent:</span> <span class="hljs-number">10</span>
+  <span class="hljs-attr">clusterAutoscaling:</span>
+    <span class="hljs-attr">scaleInThresholdPercent:</span> <span class="hljs-number">25</span>
+    <span class="hljs-attr">scaleInAdjustmentPercent:</span> <span class="hljs-number">-5</span>
+    <span class="hljs-attr">scaleOutThresholdPercent:</span> <span class="hljs-number">75</span>
+    <span class="hljs-attr">scaleOutAdjustmentPercent:</span> <span class="hljs-number">10</span>
 </code></pre>
 <p>The default behavior is that, if more than 75% of your cluster's CPU or memory
 has been reserved, the size of the cluster will be increased by 10%. (There is a
@@ -258,14 +258,14 @@ configured adjustment percent is less than 1.</li>
 <p><strong>Example</strong></p>
 <p>Only auto scaling-related fields are shown in this example config.</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-attr">ecs:</span>
-<span class="hljs-attr">  services:</span>
-<span class="hljs-attr">    ExampleService:</span>
-<span class="hljs-attr">      minTasks:</span> <span class="hljs-number">1</span>
-<span class="hljs-attr">      maxTasks:</span> <span class="hljs-number">10</span>
-<span class="hljs-attr">      scaleInActivityScheduleTime:</span> <span class="hljs-number">5000</span>
-<span class="hljs-attr">      scaleInAdjustmentPercent:</span> <span class="hljs-bullet">-5</span>
-<span class="hljs-attr">      scaleOutActivityScheduleTime:</span> <span class="hljs-number">10000</span>
-<span class="hljs-attr">      scaleOutAdjustmentPercent:</span> <span class="hljs-number">10</span>
+  <span class="hljs-attr">services:</span>
+    <span class="hljs-attr">ExampleService:</span>
+      <span class="hljs-attr">minTasks:</span> <span class="hljs-number">1</span>
+      <span class="hljs-attr">maxTasks:</span> <span class="hljs-number">10</span>
+      <span class="hljs-attr">scaleInActivityScheduleTime:</span> <span class="hljs-number">5000</span>
+      <span class="hljs-attr">scaleInAdjustmentPercent:</span> <span class="hljs-number">-5</span>
+      <span class="hljs-attr">scaleOutActivityScheduleTime:</span> <span class="hljs-number">10000</span>
+      <span class="hljs-attr">scaleOutAdjustmentPercent:</span> <span class="hljs-number">10</span>
 </code></pre>
 <p>In this example configuration, the minimum number of tasks is 1 and the maximum
 is 10. If the average time for activities to be started is less than 5 seconds,
@@ -277,58 +277,58 @@ and 10 seconds.</p>
 <h3><a class="anchor" aria-hidden="true" id="es"></a><a href="#es" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>es</h3>
 <p>Configuration for the Amazon Elasticsearch Service (ES) instance. Optional. Set <code>es: null</code> to disable ElasticSearch.</p>
 <p>You can update <code>es</code> properties and add additional ES alarms. For example:</p>
-<pre><code class="hljs css language-yaml"><span class="hljs-attr">  es:</span>
-<span class="hljs-attr">    instanceCount:</span> <span class="hljs-number">2</span>
-<span class="hljs-attr">    alarms:</span>
-<span class="hljs-attr">      NodesHigh:</span>
-<span class="hljs-attr">        alarm_description:</span> <span class="hljs-string">'There are more instances running than the desired'</span>
-<span class="hljs-attr">        comparison_operator:</span> <span class="hljs-string">GreaterThanThreshold</span>
-<span class="hljs-attr">        threshold:</span> <span class="hljs-string">'<span class="hljs-template-variable">{{es.instanceCount}}</span>'</span>
-<span class="hljs-attr">        metric:</span> <span class="hljs-string">Nodes</span>
+<pre><code class="hljs css language-yaml">  <span class="hljs-attr">es:</span>
+    <span class="hljs-attr">instanceCount:</span> <span class="hljs-number">2</span>
+    <span class="hljs-attr">alarms:</span>
+      <span class="hljs-attr">NodesHigh:</span>
+        <span class="hljs-attr">alarm_description:</span> <span class="hljs-string">'There are more instances running than the desired'</span>
+        <span class="hljs-attr">comparison_operator:</span> <span class="hljs-string">GreaterThanThreshold</span>
+        <span class="hljs-attr">threshold:</span> <span class="hljs-string">'<span class="hljs-template-variable">{{es.instanceCount}}</span>'</span>
+        <span class="hljs-attr">metric:</span> <span class="hljs-string">Nodes</span>
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="sns"></a><a href="#sns" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>sns</h3>
 <p>Cumulus supports configuration and deployment of SNS topics and subscribers using <code>app/config.yml</code>. In the following code snippets we'll see an example topic and subscriber configuration.</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-attr">sns:</span>
   <span class="hljs-comment"># this topic receives all the updates from</span>
   <span class="hljs-comment"># step functions</span>
-<span class="hljs-attr">  sftracker:</span>
-<span class="hljs-attr">    subscriptions:</span>
-<span class="hljs-attr">      lambda:</span>
-<span class="hljs-attr">        endpoint:</span>
-<span class="hljs-attr">          function:</span> <span class="hljs-attr">Fn::GetAtt</span>
-<span class="hljs-attr">          array:</span>
-<span class="hljs-bullet">            -</span> <span class="hljs-string">sns2elasticsearchLambdaFunction</span>
-<span class="hljs-bullet">            -</span> <span class="hljs-string">Arn</span>
-<span class="hljs-attr">        protocol:</span> <span class="hljs-string">lambda</span>
+  <span class="hljs-attr">sftracker:</span>
+    <span class="hljs-attr">subscriptions:</span>
+      <span class="hljs-attr">lambda:</span>
+        <span class="hljs-attr">endpoint:</span>
+          <span class="hljs-attr">function:</span> <span class="hljs-string">Fn::GetAtt</span>
+          <span class="hljs-attr">array:</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-string">sns2elasticsearchLambdaFunction</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-string">Arn</span>
+        <span class="hljs-attr">protocol:</span> <span class="hljs-string">lambda</span>
 </code></pre>
 <p>The above code is an example of configuration for an SNS topic that will be called <code>sftrackerSns</code> in the resulting <code>cloudformation.yml</code> file. Upon deployment, this configuration creates an SNS topic named <code>&lt;prefix&gt;-sftracker</code> and subscribes the resource named <code>sns2elasticsearchLambdaFunction</code> to that topic so that it will be triggered when any messages are added to that topic.</p>
 <p>More information for each of the individual attributes can be found in <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-sns-topic.html">AWS SNS Topic Documentation</a>.</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-comment"># sns: ...</span>
-<span class="hljs-attr">  sftrackerSubscription:</span>
-<span class="hljs-attr">    arn:</span>
-<span class="hljs-attr">      Fn:</span><span class="hljs-string">:GetAtt:</span>
-<span class="hljs-bullet">        -</span> <span class="hljs-string">sftrackerSns</span>
-<span class="hljs-bullet">        -</span> <span class="hljs-string">Arn</span>
-<span class="hljs-attr">      endpoint:</span>
-<span class="hljs-attr">        function:</span> <span class="hljs-attr">Fn::GetAtt</span>
-<span class="hljs-attr">          array:</span>
-<span class="hljs-bullet">            -</span> <span class="hljs-string">someOtherLambdaFunction</span>
-<span class="hljs-bullet">            -</span> <span class="hljs-string">Arn</span>
-<span class="hljs-attr">        protocol:</span> <span class="hljs-string">lambda</span>
+  <span class="hljs-attr">sftrackerSubscription:</span>
+    <span class="hljs-attr">arn:</span>
+      <span class="hljs-attr">Fn::GetAtt:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-string">sftrackerSns</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-string">Arn</span>
+      <span class="hljs-attr">endpoint:</span>
+        <span class="hljs-attr">function:</span> <span class="hljs-string">Fn::GetAtt</span>
+          <span class="hljs-attr">array:</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-string">someOtherLambdaFunction</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-string">Arn</span>
+        <span class="hljs-attr">protocol:</span> <span class="hljs-string">lambda</span>
 </code></pre>
 <p>This snippet is an example of configuration for a list of SNS Subscriptions. We are adding an existing lambda function (<code>someOtherLambdaFunction</code>) as a subscriber to an existing SNS Topic (<code>sfTrackerSns</code>). That is, this configuration assumes that the <code>sftrackerSns</code> Topic is configured elsewhere (as shown above) and that the definition of a lambda function, <code>someOtherLambdaFunction</code>, is in your configuration.</p>
 <p>The main difference between this and the previous example is the inclusion of the <code>sns.arn</code> attribute - this tells our deployment/compiling step that we're configuring subscriptions, not a new topic. More information for each of the individual attributes can be found in <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-sns-subscription.html">AWS SNS Subscription Documentation</a>.</p>
 <h3><a class="anchor" aria-hidden="true" id="iams"></a><a href="#iams" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>iams</h3>
 <p>Optional. Overrides allowed if your IAM role ARNs do not match the following convention used in <code>@cumulus/deployment/app/config.yml</code>:</p>
-<pre><code class="hljs css language-yaml"><span class="hljs-attr">  iams:</span>
-<span class="hljs-attr">    ecsRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/<span class="hljs-template-variable">{{prefix}}</span>-ecs'</span>
-<span class="hljs-attr">    lambdaApiGatewayRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/<span class="hljs-template-variable">{{prefix}}</span>-lambda-api-gateway'</span>
-<span class="hljs-attr">    lambdaProcessingRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/<span class="hljs-template-variable">{{prefix}}</span>-lambda-processing'</span>
-<span class="hljs-attr">    stepRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/<span class="hljs-template-variable">{{prefix}}</span>-steprole'</span>
-<span class="hljs-attr">    instanceProfile:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:instance-profile/<span class="hljs-template-variable">{{prefix}}</span>-ecs'</span>
-<span class="hljs-attr">    distributionRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/<span class="hljs-template-variable">{{prefix}}</span>-distribution-api-lambda'</span>
-<span class="hljs-attr">    scalingRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/<span class="hljs-template-variable">{{prefix}}</span>-scaling-role'</span>
-<span class="hljs-attr">    migrationRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/<span class="hljs-template-variable">{{prefix}}</span>-migration-processing'</span>
+<pre><code class="hljs css language-yaml">  <span class="hljs-attr">iams:</span>
+    <span class="hljs-attr">ecsRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/<span class="hljs-template-variable">{{prefix}}</span>-ecs'</span>
+    <span class="hljs-attr">lambdaApiGatewayRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/<span class="hljs-template-variable">{{prefix}}</span>-lambda-api-gateway'</span>
+    <span class="hljs-attr">lambdaProcessingRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/<span class="hljs-template-variable">{{prefix}}</span>-lambda-processing'</span>
+    <span class="hljs-attr">stepRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/<span class="hljs-template-variable">{{prefix}}</span>-steprole'</span>
+    <span class="hljs-attr">instanceProfile:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:instance-profile/<span class="hljs-template-variable">{{prefix}}</span>-ecs'</span>
+    <span class="hljs-attr">distributionRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/<span class="hljs-template-variable">{{prefix}}</span>-distribution-api-lambda'</span>
+    <span class="hljs-attr">scalingRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/<span class="hljs-template-variable">{{prefix}}</span>-scaling-role'</span>
+    <span class="hljs-attr">migrationRoleArn:</span> <span class="hljs-string">'arn:aws:iam::<span class="hljs-template-variable">{{AWS_ACCOUNT_ID}}</span>:role/<span class="hljs-template-variable">{{prefix}}</span>-migration-processing'</span>
 </code></pre>
 <p>To override, add the ARNs for each of the seven roles and one instanceProfile created in the <a href="create-iam-roles">Create IAM Roles</a> step. You can retrieve the ARNs from:</p>
 <pre><code class="hljs">$ aws iam list-roles | grep Arn
@@ -339,12 +339,12 @@ $ aws iam list-instance-profiles | grep Arn
 <p>Use the apiConfigs to configure <a href="https://aws.amazon.com/blogs/compute/introducing-amazon-api-gateway-private-endpoints/">private endpoints in API Gateway</a>. The key for <code>apiConfigs</code> should be <code>backend</code> or <code>distribution</code>. To deploy a private API Gateway, set <code>private: true</code>. The <code>port</code> option can be set if you would like to configure tunneling via a certain port.</p>
 <p>Example:</p>
 <pre><code class="hljs"><span class="hljs-attr">apiConfigs:</span>
-<span class="hljs-attr">  backend:</span>
-<span class="hljs-attr">    private:</span> <span class="hljs-literal">true</span>
-<span class="hljs-attr">    port:</span> <span class="hljs-number">8000</span>
-<span class="hljs-attr">  distribution:</span>
-<span class="hljs-attr">    private:</span> <span class="hljs-literal">true</span>
-<span class="hljs-attr">    port:</span> <span class="hljs-number">7000</span>
+  <span class="hljs-attr">backend:</span>
+    <span class="hljs-attr">private:</span> <span class="hljs-literal">true</span>
+    <span class="hljs-attr">port:</span> <span class="hljs-number">8000</span>
+  <span class="hljs-attr">distribution:</span>
+    <span class="hljs-attr">private:</span> <span class="hljs-literal">true</span>
+    <span class="hljs-attr">port:</span> <span class="hljs-number">7000</span>
 </code></pre>
 <p><strong>Note:</strong> If you deploy a private API Gateway and you want to go back to public (Edge), that will not work via the deployment since AWS does not allow you to convert a private API Gateway to public. The easiest way is to follow the steps in <a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-api-migration.html">this document</a> to switch your endpoint configuration to <code>Regional</code>, then to <code>Edge</code> using either the AWS Console or the CLI. Then you can redeploy with the <code>private: true</code> option removed.</p>
 <h1><a class="anchor" aria-hidden="true" id="footnotes"></a><a href="#footnotes" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Footnotes</h1>
@@ -369,8 +369,8 @@ $ aws iam list-instance-profiles | grep Arn
               </script><script>
               var search = docsearch({
                 
-                apiKey: 'undefined',
-                indexName: 'undefined',
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>

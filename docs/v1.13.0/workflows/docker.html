@@ -183,14 +183,14 @@ def process(indir, outdir):
 </code></pre>
 <p>Where collection-name is the name of the data collection, such as 'avaps', or 'cpl'.  For example, an abridged version of the data for CPL includes:</p>
 <pre><code class="hljs">├── cpl
-│   ├── <span class="hljs-selector-tag">input</span>
-│   │   ├── HS3_CPL_ATB_12203a_20120906<span class="hljs-selector-class">.hdf5</span>
-│   │   ├── HS3_CPL_OP_12203a_20120906<span class="hljs-selector-class">.hdf5</span>
+│   ├── input
+│   │   ├── <span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">HS3_CPL_ATB_12203a_20120906</span>.</span></span>hdf5
+│   │   ├── <span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">HS3_CPL_OP_12203a_20120906</span>.</span></span>hdf5
 │   └── output
-│       ├── HS3_CPL_ATB_12203a_20120906<span class="hljs-selector-class">.nc</span>
-│       ├── HS3_CPL_ATB_12203a_20120906<span class="hljs-selector-class">.nc</span><span class="hljs-selector-class">.meta</span><span class="hljs-selector-class">.xml</span>
-│       ├── HS3_CPL_OP_12203a_20120906<span class="hljs-selector-class">.nc</span>
-│       ├── HS3_CPL_OP_12203a_20120906<span class="hljs-selector-class">.nc</span><span class="hljs-selector-class">.meta</span><span class="hljs-selector-class">.xml</span>
+│       ├── <span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">HS3_CPL_ATB_12203a_20120906</span>.</span></span>nc
+│       ├── <span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">HS3_CPL_ATB_12203a_20120906</span>.</span></span>nc.meta.xml
+│       ├── <span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">HS3_CPL_OP_12203a_20120906</span>.</span></span>nc
+│       ├── <span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">HS3_CPL_OP_12203a_20120906</span>.</span></span>nc.meta.xml
 </code></pre>
 <p>Contained in the input directory are all possible sets of data files, while the output directory is the expected result of processing. In this case the hdf5 files are converted to NetCDF files and XML metadata files are generated.</p>
 <p>The docker image for a process can be used on the retrieved test data. First create a test-output directory in the newly created data directory.</p>
@@ -217,8 +217,8 @@ def process(indir, outdir):
               </script><script>
               var search = docsearch({
                 
-                apiKey: 'undefined',
-                indexName: 'undefined',
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>
