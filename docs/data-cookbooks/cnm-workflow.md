@@ -42,9 +42,10 @@ You should be able to quickly use the "Create Data Stream" button on the [Kinesi
 
 ![Screenshot of AWS console page for creating a Kinesis stream](assets/cnm_create_kinesis_stream.jpg)
 
-Please bear in mind that your `{{prefix}}-lambda-processing` IAM role will need permissions to write to the response stream for this workflow to succeed if you create the Kinesis stream with a dashboard user.   If you are using the `cumulus` top-level module for your deployment this should be set properly.
+Please bear in mind that your `{{prefix}}-Lambda-processing` IAM role will need permissions to write to the response stream for this workflow to succeed if you create the Kinesis stream with a dashboard user.   If you are using the `cumulus` top-level module for your deployment this should be set properly.
 
-If not, the most straightforward approach is to attach the `AmazonKinesisFullAccess` policy for the stream resource to whatever role your lambdas are using, however your environment/security policies may require an approach specific to your deployment environment.
+If not, the most straightforward approach is to attach the `AmazonKinesisFullAccess` policy for the stream resource to whatever role your Lambda
+s are using, however your environment/security policies may require an approach specific to your deployment environment.
 
 In operational environments it's likely science data providers would typically be responsible for providing a Kinesis stream with the appropriate permissions.
 
@@ -217,7 +218,7 @@ Again, please make sure to modify the value CNMResponseStream to match the strea
 
 ### Lambda Configuration
 
-To execute this workflow, you're required to include several lambda resources in your deployment.  To do this, add the following task (lambda) definitions to your deployment along with the workflow you created above:
+To execute this workflow, you're required to include several Lambda resources in your deployment.  To do this, add the following task (Lambda) definitions to your deployment along with the workflow you created above:
 
 * https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_to_cma_task.tf
 * https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_response_task.tf
@@ -234,9 +235,9 @@ You can also manipulate the data sent to downstream tasks using `task_config` fo
 
 ##### CnmResponse
 
-The `CnmResponse` lambda generates a CNM response message and puts it on a the `CNMResponseStream` Kinesis stream.
+The `CnmResponse` Lambda generates a CNM response message and puts it on a the `CNMResponseStream` Kinesis stream.
 
-The `CnmResponse` lambda package is provided (as of release 1.8) in the `cumulus-data-shared` bucket, with documentation provided in the [source repository](https://git.earthdata.nasa.gov/projects/POCUMULUS/repos/cnmresponsetask/browse).
+The `CnmResponse` Lambda package is provided (as of release 1.8) in the `cumulus-data-shared` bucket, with documentation provided in the [source repository](https://git.earthdata.nasa.gov/projects/POCUMULUS/repos/cnmresponsetask/browse).
 
 You can read more about the expected schema a `CnmResponse` record on the wiki page for [Cloud Notification Mechanism](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism#CloudNotificationMechanism-ResponseMessageFields).
 
@@ -252,7 +253,7 @@ Please refer to `Updating Cumulus deployment` in the [deployment documentation](
 
 ### Rule Configuration
 
-Cumulus includes a `messageConsumer` lambda function ([message-consumer](https://github.com/nasa/cumulus/blob/master/packages/api/lambdas/message-consumer.js)). Cumulus kinesis-type rules create the [event source mappings](https://docs.aws.amazon.com/lambda/latest/dg/API_CreateEventSourceMapping.html) between Kinesis streams and the `messageConsumer` lambda. The `messageConsumer` lambda consumes records from one or more Kinesis streams, as defined by enabled kinesis-type rules. When new records are pushed to one of these streams, the `messageConsumer` triggers workflows associated with the enabled kinesis-type rules.
+Cumulus includes a `messageConsumer` Lambda function ([message-consumer](https://github.com/nasa/cumulus/blob/master/packages/api/lambdas/message-consumer.js)). Cumulus kinesis-type rules create the [event source mappings](https://docs.aws.amazon.com/lambda/latest/dg/API_CreateEventSourceMapping.html) between Kinesis streams and the `messageConsumer` Lambda. The `messageConsumer` Lambda consumes records from one or more Kinesis streams, as defined by enabled kinesis-type rules. When new records are pushed to one of these streams, the `messageConsumer` triggers workflows associated with the enabled kinesis-type rules.
 
 To add a rule via the dashboard (if you'd like to use the API, see the docs [here](https://nasa.github.io/cumulus-api/#create-rule)), navigate to the `Rules` page and click `Add a rule`, then configure the new rule using the following template (substituting correct values for parameters denoted by `${}`:
 
@@ -288,7 +289,7 @@ Once Cumulus has been redeployed and a rule has been added, we're ready to trigg
 
 ### How to Trigger the Workflow
 
-To trigger matching workflows, you will need to put a record on the Kinesis stream the [message-consumer](https://github.com/nasa/cumulus/blob/master/packages/api/lambdas/message-consumer.js) lambda will recognize as a matching event. Most importantly, it should include a `collection` key / value pair that matches a valid collection.
+To trigger matching workflows, you will need to put a record on the Kinesis stream the [message-consumer](https://github.com/nasa/cumulus/blob/master/packages/api/lambdas/message-consumer.js) Lambda will recognize as a matching event. Most importantly, it should include a `collection` key / value pair that matches a valid collection.
 
 For the purpose of this example, the easiest way to accomplish this is using the [AWS CLI](https://aws.amazon.com/cli/).
 
@@ -346,21 +347,21 @@ The command should return output similar to:
 }
 ```
 
-This command will put a record containing the JSON from the `--data` flag onto the Kinesis data stream. The `messageConsumer` lambda will consume the record and construct a valid CMA payload to trigger workflows. For this example, the record will trigger the `CNMExampleWorkflow` workflow as defined by the rule previously configured.
+This command will put a record containing the JSON from the `--data` flag onto the Kinesis data stream. The `messageConsumer` Lambda will consume the record and construct a valid CMA payload to trigger workflows. For this example, the record will trigger the `CNMExampleWorkflow` workflow as defined by the rule previously configured.
 
 You can view the current running executions on the `Executions` dashboard page which presents a list of all executions, their status (running, failed, or completed), to which workflow the execution belongs, along with other information.
 
 ### Verify Workflow Execution
 
-As detailed above, once the record is added to the Kinesis data stream, the `messageConsumer` lambda will trigger the `CNMExampleWorkflow` .
+As detailed above, once the record is added to the Kinesis data stream, the `messageConsumer` Lambda will trigger the `CNMExampleWorkflow` .
 
 #### TranslateMessage
 
-`TranslateMessage` (which corresponds to the `CNMToCMA` lambda) will take the CNM object payload and add a granules object to the CMA payload that's consistent with other Cumulus ingest tasks, and add a key 'cnm' to 'meta' (as well as the payload) to store the original message.
+`TranslateMessage` (which corresponds to the `CNMToCMA` Lambda) will take the CNM object payload and add a granules object to the CMA payload that's consistent with other Cumulus ingest tasks, and add a key 'cnm' to 'meta' (as well as the payload) to store the original message.
 
 *For more on the Message Adapter, please see [the Message Flow documentation](workflows/cumulus-task-message-flow.md)*.
 
-An example of what is happening in the `CNMToCMA` lambda is as follows:
+An example of what is happening in the `CNMToCMA` Lambda is as follows:
 
 Example Input Payload:
 
@@ -430,7 +431,7 @@ Example Output Payload:
 
 #### SyncGranules
 
-This lambda will take the files listed in the payload and move them to `s3://{deployment-private-bucket}/file-staging/{deployment-name}/{COLLECTION}/{file_name}`.
+This Lambda will take the files listed in the payload and move them to `s3://{deployment-private-bucket}/file-staging/{deployment-name}/{COLLECTION}/{file_name}`.
 
 #### CnmResponse
 
@@ -474,7 +475,7 @@ The data written to the `CnmResponseStream` should adhere to the [Response Messa
 }
 ```
 
-Note the `CnmResponse` state defined in the `workflows.yml` above configures `$.exception` to be passed to the `CnmResponse` lambda keyed under `config.WorkflowException`. This is required for the `CnmResponse` code to deliver a failure response.
+Note the `CnmResponse` state defined in the `workflows.yml` above configures `$.exception` to be passed to the `CnmResponse` Lambda keyed under `config.WorkflowException`. This is required for the `CnmResponse` code to deliver a failure response.
 
 To test the failure scenario, send a record missing the `collection` key.
 
@@ -575,13 +576,13 @@ For purposes of validating the workflow, it may be simpler to locate the workflo
 
 The default Kinesis stream processing in the Cumulus system is configured for record error tolerance.
 
-When the `messageConsumer` fails to process a record, the failure is captured and the record is published to the `kinesisFallback` SNS Topic. The `kinesisFallback` SNS topic broadcasts the record and a subscribed copy of the `messageConsumer` lambda named `kinesisFallback` consumes these failures.
+When the `messageConsumer` fails to process a record, the failure is captured and the record is published to the `kinesisFallback` SNS Topic. The `kinesisFallback` SNS topic broadcasts the record and a subscribed copy of the `messageConsumer` Lambda named `kinesisFallback` consumes these failures.
 
-At this point, the [normal lambda asynchronous invocation retry behavior](https://docs.aws.amazon.com/lambda/latest/dg/retries-on-errors.html) will attempt to process the record 3 mores times. After this, if the record cannot successfully be processed, it is written to a [dead letter queue](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html). Cumulus' dead letter queue is an SQS Queue named `kinesisFailure`. Operators can use this queue to inspect failed records.
+At this point, the [normal Lambda asynchronous invocation retry behavior](https://docs.aws.amazon.com/lambda/latest/dg/retries-on-errors.html) will attempt to process the record 3 mores times. After this, if the record cannot successfully be processed, it is written to a [dead letter queue](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html). Cumulus' dead letter queue is an SQS Queue named `kinesisFailure`. Operators can use this queue to inspect failed records.
 
 This system ensures when `messageConsumer` fails to process a record and trigger a workflow, the record is retried 3 times. This retry behavior improves system reliability in case of any external service failure outside of Cumulus control.
 
-The Kinesis error handling system - the `kinesisFallback` SNS topic, `messageConsumer` lambda, and `kinesisFailure` SQS queue - come with the API package and do not need to be configured by the operator.
+The Kinesis error handling system - the `kinesisFallback` SNS topic, `messageConsumer` Lambda, and `kinesisFailure` SQS queue - come with the API package and do not need to be configured by the operator.
 
 To examine records that were unable to be processed at any step you need to go look at the dead letter queue `{{prefix}}-kinesisFailure`.
 Check the [Simple Queue Service (SQS) console](https://console.aws.amazon.com/sqs/home). Select your queue, and under the `Queue Actions` tab, you can choose `View/Delete Messages`. `Start polling` for messages and you will see records that failed to process through the `messageConsumer`.
@@ -592,14 +593,14 @@ Note, these are only records that occurred when processing records from Kinesis 
 
 #### Notification Stream messages
 
-Cumulus includes two lambdas (`KinesisInboundEventLogger` and `KinesisOutboundEventLogger`) that utilize the same code to take a Kinesis record event as input, deserialize the data field and output the modified event to the logs.
+Cumulus includes two Lambdas (`KinesisInboundEventLogger` and `KinesisOutboundEventLogger`) that utilize the same code to take a Kinesis record event as input, deserialize the data field and output the modified event to the logs.
 
 When a `kinesis` rule is created, in addition to the `messageConsumer` event mapping, an event mapping is created to trigger `KinesisInboundEventLogger` to record a log of the inbound record, to allow for analysis in case of unexpected failure.
 
 #### Response Stream messages
 
-Cumulus also supports this feature for all outbound  messages.  To take advantage of this feature, you will need to set an event mapping on the `KinesisOutboundEventLogger` lambda that targets your `cnmResponseStream`.   You can do this in the Lambda management page for `KinesisOutboundEventLogger`.    Add a Kinesis trigger, and configure it to target the cnmResponseStream for your workflow:
+Cumulus also supports this feature for all outbound  messages.  To take advantage of this feature, you will need to set an event mapping on the `KinesisOutboundEventLogger` Lambda that targets your `cnmResponseStream`.   You can do this in the Lambda management page for `KinesisOutboundEventLogger`.    Add a Kinesis trigger, and configure it to target the cnmResponseStream for your workflow:
 
 ![Screenshot of configuration for Kinesis stream trigger on KinesisOutboundEventLogger Lambda](assets/KinesisLambdaTriggerConfiguration.png)
 
-Once this is done, all records sent to the cnmResponseStream will also be logged in CloudWatch.    For more on configuring lambdas to trigger on Kinesis events, please see [creating an event source mapping](https://docs.aws.amazon.com/lambda/latest/dg/with-kinesis.html#services-kinesis-eventsourcemapping).
+Once this is done, all records sent to the cnmResponseStream will also be logged in CloudWatch.    For more on configuring Lambdas to trigger on Kinesis events, please see [creating an event source mapping](https://docs.aws.amazon.com/lambda/latest/dg/with-kinesis.html#services-kinesis-eventsourcemapping).
