@@ -17,7 +17,7 @@ See [variables.tf](./variables.tf) for the input variables to this module and th
 
 ```hcl
 module "my_workflow" {
-  source = "https://github.com/nasa/cumulus/releases/download/v1.26.0/terraform-aws-cumulus-workflow.zip"
+  source = "https://github.com/nasa/cumulus/releases/download/vx.x.x/terraform-aws-cumulus-workflow.zip"
 
   prefix = "my-prefix"
   name   = "MyWorkflowName"
