@@ -59,7 +59,7 @@ module "discover_granules_browse_example_workflow" {
             "internalBucket": "{$.meta.buckets.internal.name}",
             "stackName": "{$.meta.stack}",
             "granuleIngestMessageTemplateUri": "{$.meta.template}",
-            "granuleIngestWorkflow": "IngestGranule",
+            "granuleIngestWorkflow": "CookbookBrowseExample",
             "queueUrl": "{$.meta.queues.startSF}"
           }
         }
