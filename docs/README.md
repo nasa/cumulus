@@ -20,4 +20,4 @@ The documentation is accessible at <https://nasa.github.io/cumulus>.
 
 ## Contributing
 
-Please refer to: <https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md> for information
+Please refer to: <https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md> for information.
