@@ -136,7 +136,7 @@ module "queue_granules_service" {
 }
 ```
 
-* An updated [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/tf-modules/ingest/queue-granules-task.tf) to utilize the new resource (the resource key in the `QueueGranules` step has been updated to:
+* An updated [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf) to utilize the new resource (the resource key in the `QueueGranules` step has been updated to:
 
 `"Resource": "${aws_sfn_activity.queue_granules.id}"`)`
 
