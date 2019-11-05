@@ -34,6 +34,7 @@ To check the configured markdown linting run `npm run lint-md`.
 ## Audit
 
 This project uses `audit-ci` to run a security audit on the package dependency
-tree.   This must pass prior to merge.   The configured rules for `audit-ci` can be found [here](https://github.com/nasa/cumulus/blob/master/audit-ci.json).
+tree.   This must pass prior to merge.   The configured rules for `audit-ci` can be
+found [here](https://github.com/nasa/cumulus/blob/master/audit-ci.json).
 
 To execute an audit, run `npm run audit`.
