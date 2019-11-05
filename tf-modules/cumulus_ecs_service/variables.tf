@@ -6,7 +6,7 @@ variable "cluster_arn" {
 }
 
 variable "image" {
-  description = "Reference to a Docker image"
+  description = "Image used to start the container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
   type = string
 }
 
