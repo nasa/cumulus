@@ -1,13 +1,16 @@
 RetryPassWorkflow:
-  Comment: 'Tests Retry Configurations'
+  Comment: "Tests Retry Configurations"
   StartAt: HelloWorld
   States:
     HelloWorld:
-      CumulusConfig:
-        fail: true
-        passOnRetry: true
-        bucket: '{$.meta.buckets.internal.name}'
-        execution: '{$.cumulus_meta.execution_name}'
+      Parameters:
+        cma:
+          event.$: "$"
+          task_config:
+            fail: true
+            passOnRetry: true
+            bucket: "{$.meta.buckets.internal.name}"
+            execution: "{$.cumulus_meta.execution_name}"
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
       Retry:
@@ -18,17 +21,19 @@ RetryPassWorkflow:
       End: true
 
 HelloWorldFailWorkflow:
-  Comment: 'Failing Hello World Workflow'
+  Comment: "Failing Hello World Workflow"
   StartAt: HelloWorld
   States:
     HelloWorld:
-      CumulusConfig:
-        fail: true
+      Parameters:
+        cma:
+          event.$: "$"
+          task_config:
+            fail: true
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
       Retry:
-        - &LambdaServiceExceptionRetry
-          ErrorEquals:
+        - ErrorEquals:
             - Lambda.ServiceException
             - Lambda.AWSLambdaException
             - Lambda.SdkClientException
@@ -38,12 +43,15 @@ HelloWorldFailWorkflow:
       End: true
 
 RetryFailWorkflow:
-  Comment: 'Tests Retries and Fail'
+  Comment: "Tests Retries and Fail"
   StartAt: HelloWorld
   States:
     HelloWorld:
-      CumulusConfig:
-        fail: true
+      Parameters:
+        cma:
+          event.$: "$"
+          task_config:
+            fail: true
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
       Retry:

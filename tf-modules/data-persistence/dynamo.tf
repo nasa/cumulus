@@ -209,10 +209,10 @@ resource "aws_dynamodb_table" "rules_table" {
 resource "aws_dynamodb_table" "semaphores_table" {
   name         = local.table_names.semaphores_table
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "name"
+  hash_key     = "key"
 
   attribute {
-    name = "name"
+    name = "key"
     type = "S"
   }
 

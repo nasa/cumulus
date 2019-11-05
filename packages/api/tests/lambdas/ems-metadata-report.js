@@ -102,7 +102,8 @@ test.serial('generateReport creates flat file for collections in both CUMULUS an
     + '3|&|BIOSPHERE|&|NASA/GSFC/SED/ESD/HBSL/BISB/MODAPS|&|testEmsProvider|&|AQUA|&|MODIS|&|E|&|1'
   ];
   // check the number of records for each report
-  const content = (await aws.getS3Object(parsed.Bucket, parsed.Key)).Body.toString();
+  const s3Object = await aws.getS3Object(parsed.Bucket, parsed.Key, { retries: 0 });
+  const content = s3Object.Body.toString();
   const records = content.split('\n');
   t.deepEqual(records, expectedRecords);
 });
@@ -123,7 +124,8 @@ test.serial('generateReport creates flat file for one collection which is in bot
     + '3|&|SPECTRAL/ENGINEERING,CRYOSPHERE,OCEANS|&|NASA/MSFC/GHRC|&|testEmsProvider|&|GCOM-W1|&|AMSR2|&|E|&|1'
   ];
   // check the number of records for each report
-  const content = (await aws.getS3Object(parsed.Bucket, parsed.Key)).Body.toString();
+  const s3Object = await aws.getS3Object(parsed.Bucket, parsed.Key, { retries: 0 });
+  const content = s3Object.Body.toString();
   const records = content.split('\n');
   t.deepEqual(records, expectedRecords);
 });

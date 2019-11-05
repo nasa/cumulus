@@ -20,10 +20,9 @@ test_app/
 scripts/test_output/
 *.tfplan
 *.tfstate*
-ci_backend.tf
+*backend.tf
 terraform.tfvars
 terraform.tf
 .terraform/
 test-output
-/config.yml
 /lambdas/*/lambda.zip

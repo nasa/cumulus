@@ -39,44 +39,54 @@ const {
 const { isReingestExecutionForGranuleId } = require('../../helpers/workflowUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 
-const config = loadConfig();
-const lambdaStep = new LambdaStep();
 const workflowName = 'SyncGranule';
-
-process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-const granuleModel = new Granule();
-
-const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
-
-const s3data = [
-  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
-  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
-];
+const providersDir = './data/providers/s3/';
+const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
 describe('The Sync Granules workflow', () => {
-  const testId = createTimestampedTestId(config.stackName, 'SyncGranuleSuccess');
-  const testSuffix = createTestSuffix(testId);
-  const testDataFolder = createTestDataPath(testId);
-
-  const inputPayloadFilename = './spec/parallel/syncGranule/SyncGranule.input.payload.json';
-
-  const providersDir = './data/providers/s3/';
-  const collectionsDir = './data/collections/s3_MOD09GQ_006';
-  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-  const provider = { id: `s3_provider${testSuffix}` };
-  const newCollectionId = constructCollectionId(collection.name, collection.version);
-
-  let inputPayload;
+  let collection;
+  let config;
+  let executionModel;
   let expectedPayload;
   let expectedS3TagSet;
+  let granuleModel;
+  let inputPayload;
+  let lambdaStep;
+  let provider;
+  let testDataFolder;
+  let testSuffix;
   let workflowExecution;
 
-  process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-  const executionModel = new Execution();
-  process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
-  const collectionModel = new Collection();
-
   beforeAll(async () => {
+    config = await loadConfig();
+    lambdaStep = new LambdaStep();
+
+    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+    granuleModel = new Granule();
+
+    const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
+
+    const s3data = [
+      '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
+      '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
+    ];
+
+    const testId = createTimestampedTestId(config.stackName, 'SyncGranuleSuccess');
+    testSuffix = createTestSuffix(testId);
+    testDataFolder = createTestDataPath(testId);
+
+    const inputPayloadFilename = './spec/parallel/syncGranule/SyncGranule.input.payload.json';
+
+
+    collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+    provider = { id: `s3_provider${testSuffix}` };
+    const newCollectionId = constructCollectionId(collection.name, collection.version);
+
+    process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+    executionModel = new Execution();
+    process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+    const collectionModel = new Collection();
+
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
@@ -116,7 +126,14 @@ describe('The Sync Granules workflow', () => {
       }
     });
 
-    expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, newGranuleId, testDataFolder, newCollectionId);
+    expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(
+      templatedOutputPayloadFilename,
+      newGranuleId,
+      testDataFolder,
+      newCollectionId,
+      config.stackName
+    );
+
     expectedPayload.granules[0].dataType += testSuffix;
     expectedPayload.granules[0].files[0] = Object.assign(expectedPayload.granules[0].files[0], { checksum: '8d1ec5c0463e59d26adee87cdbbee816', checksumType: 'md5' });
 

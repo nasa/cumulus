@@ -156,3 +156,15 @@ resource "aws_cloudwatch_metric_alarm" "es_nodes_low" {
   alarm_description   = "There are less instances running than the desired"
   tags                = local.default_tags
 }
+
+resource "aws_cloudwatch_metric_alarm" "es_nodes_high" {
+  alarm_name          = "${local.es_domain_name}-NodesHighAlarm"
+  comparison_operator = "GreaterThanThreshold"
+  namespace           = "AWS/ES"
+  evaluation_periods  = "5"
+  metric_name         = "Nodes"
+  period              = "60"
+  statistic           = "Average"
+  threshold           = var.elasticsearch_config.instance_count
+  alarm_description   = "There are less instances running than the desired"
+}

@@ -69,14 +69,23 @@ resource "aws_lambda_function" "api" {
   }
   memory_size = 756
   tags        = merge(local.default_tags, { Project = var.prefix })
+
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id, var.elasticsearch_security_group_id]
   }
 }
 
 resource "aws_api_gateway_rest_api" "api" {
   name = "${var.prefix}-archive"
+
+  lifecycle {
+    ignore_changes = [policy]
+  }
+
+  endpoint_configuration {
+    types = var.private_archive_api_gateway ? ["PRIVATE"] : ["EDGE"]
+  }
 }
 
 resource "aws_lambda_permission" "api_endpoints_lambda_permission" {

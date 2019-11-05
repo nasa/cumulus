@@ -1,0 +1,8 @@
+terraform {
+  backend "s3" {
+    region         = "us-east-1"
+    bucket         = "PREFIX-state"
+    key            = "PREFIX/data-persistence/terraform.tfstate"
+    dynamodb_table = "PREFIX-tf-locks"
+  }
+}

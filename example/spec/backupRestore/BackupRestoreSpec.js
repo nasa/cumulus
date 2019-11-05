@@ -11,18 +11,22 @@ const { fakeGranuleFactory } = require('@cumulus/api/lib/testUtils');
 const { loadConfig } = require('../helpers/testUtils');
 
 let tempFolder;
-const config = loadConfig();
 
 describe('Backup and Restore', () => {
+  let config;
+
   let initialRecordCount;
   let restoreFile;
   const granuleIds = [];
   const limit = 30;
-  process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-  const model = new Granule();
-
+  let model;
 
   beforeAll(async () => {
+    config = await loadConfig();
+
+    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+    model = new Granule();
+
     // create temp folder
     tempFolder = fs.mkdtempSync(`${os.tmpdir()}${path.sep}`);
 

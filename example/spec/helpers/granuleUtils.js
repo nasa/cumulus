@@ -3,34 +3,37 @@
 const fs = require('fs-extra');
 const {
   aws: { buildS3Uri, parseS3Uri, s3 },
-  stringUtils: { globalReplace },
+  stringUtils: { replace },
   testUtils: { randomStringFromRegex }
 } = require('@cumulus/common');
+const { thread } = require('@cumulus/common/util');
 const path = require('path');
 const cloneDeep = require('lodash.clonedeep');
 
 /**
  * Adds updated url_path to a granule files object
  *
- * @param  {Array<object>} files - array of granule files
- * @param  {string} testId - Test ID to insert into url_path per-granule
- * @param  {string} collectionUrlPath - collection
+ * @param {Array<Object>} files - array of granule files
+ * @param {string} testId - Test ID to insert into url_path per-granule
+ * @param {string} collectionUrlPath - collection
+ * @returns {Array<Object>} the files with updated url_path values
  */
-function addUrlPathToGranuleFiles(files, testId, collectionUrlPath) {
-  const updatedFiles = cloneDeep(files);
-  return updatedFiles.map((file) => {
-    const fileUpdate = cloneDeep(file);
-    const updatedUrlPath = Object.is(file.url_path, undefined) ? collectionUrlPath : `${file.url_path}/`;
-    fileUpdate.url_path = `${updatedUrlPath}${testId}/`;
-    return fileUpdate;
+const addUrlPathToGranuleFiles = (files, testId, collectionUrlPath) =>
+  files.map((file) => {
+    const updatedUrlPath = file.url_path === undefined ? collectionUrlPath : `${file.url_path}/`;
+
+    return {
+      ...file,
+      url_path: `${updatedUrlPath}${testId}/`
+    };
   });
-}
 
 /**
  * Add test-unique filepath to granule file filepath/filenames
  *
  * @param  {Array<Object>} granules - Array of granules with files to be updated
  * @param  {string} filePath - Filepath to add
+ * @returns {Array<Object>} Updates granules array
  */
 function addUniqueGranuleFilePathToGranuleFiles(granules, filePath) {
   const updatedGranules = granules.map((originalGranule) => {
@@ -88,15 +91,24 @@ function createGranuleFiles(granuleFiles, bucket, oldGranuleId, newGranuleId) {
  * @returns {Promise<Object>} - input payload as a JS object with the updated granule ids
  */
 async function setupTestGranuleForIngest(bucket, inputPayloadJson, granuleRegex, testSuffix = '', testDataFolder = null) {
-  // granule id for the new files
-  const newGranuleId = randomStringFromRegex(granuleRegex);
-  console.log(`\ngranule id: ${newGranuleId}`);
+  let payloadJson;
 
-  if (testDataFolder) inputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder); //eslint-disable-line no-param-reassign
-  const baseInputPayload = JSON.parse(inputPayloadJson);
+  if (testDataFolder) {
+    payloadJson = replace(
+      new RegExp('cumulus-test-data/pdrs', 'g'),
+      testDataFolder,
+      inputPayloadJson
+    );
+  } else {
+    payloadJson = inputPayloadJson;
+  }
+
+  const baseInputPayload = JSON.parse(payloadJson);
+
   const oldGranuleId = baseInputPayload.granules[0].granuleId;
   baseInputPayload.granules[0].dataType += testSuffix;
 
+  const newGranuleId = randomStringFromRegex(granuleRegex);
   if (baseInputPayload.pdr && baseInputPayload.pdr.name) {
     baseInputPayload.pdr.name += testSuffix;
   }
@@ -108,29 +120,39 @@ async function setupTestGranuleForIngest(bucket, inputPayloadJson, granuleRegex,
     newGranuleId
   );
 
-  const baseInputPayloadJson = JSON.stringify(baseInputPayload);
-  const updatedInputPayloadJson = globalReplace(baseInputPayloadJson, oldGranuleId, newGranuleId);
-
-  return JSON.parse(updatedInputPayloadJson);
+  return thread(
+    baseInputPayload,
+    JSON.stringify,
+    replace(new RegExp(oldGranuleId, 'g'), newGranuleId),
+    JSON.parse
+  );
 }
 
 /**
- * Read the file, update it with the new granule id, path and collectionId,
- * and return the file as a JS object.
+ * Read the file, update it with the new granule id, path, collectionId, and
+ * stackId, and return the file as a JS object.
  *
- * @param {string} file - file path
+ * @param {string} filename - file path
  * @param {string} newGranuleId - new granule id
  * @param {string} newPath - the new data path
  * @param {string} newCollectionId - the new collection id
+ * @param {stackId} stackId - the new stack id
  * @returns {Promise<Object>} - file as a JS object
  */
-function loadFileWithUpdatedGranuleIdPathAndCollection(file, newGranuleId, newPath, newCollectionId) {
-  const fileContents = fs.readFileSync(file, 'utf8');
-  const fileContentsWithId = globalReplace(fileContents, 'replace-me-granuleId', newGranuleId);
-  const fileContentsWithIdAndPath = globalReplace(fileContentsWithId, 'replace-me-path', newPath);
-  const fileContentsWithIdPathAndCollection = globalReplace(fileContentsWithIdAndPath, 'replace-me-collectionId', newCollectionId);
-  return JSON.parse(fileContentsWithIdPathAndCollection);
-}
+const loadFileWithUpdatedGranuleIdPathAndCollection = (
+  filename,
+  newGranuleId,
+  newPath,
+  newCollectionId,
+  stackId
+) => thread(
+  fs.readFileSync(filename, 'utf8'),
+  replace(new RegExp('replace-me-granuleId', 'g'), newGranuleId),
+  replace(new RegExp('replace-me-path', 'g'), newPath),
+  replace(new RegExp('replace-me-collectionId', 'g'), newCollectionId),
+  replace(new RegExp('replace-me-stackId', 'g'), stackId),
+  JSON.parse
+);
 
 module.exports = {
   addUniqueGranuleFilePathToGranuleFiles,

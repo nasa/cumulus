@@ -4,8 +4,8 @@ module "distribution" {
   distribution_url                    = var.distribution_url
   permissions_boundary_arn            = var.permissions_boundary_arn
   prefix                              = var.prefix
-  protected_buckets                   = var.protected_buckets
-  public_buckets                      = var.public_buckets
+  protected_buckets                   = local.protected_bucket_names
+  public_buckets                      = local.public_bucket_names
   sts_credentials_lambda_function_arn = var.sts_credentials_lambda_function_arn
   subnet_ids                          = var.lambda_subnet_ids
   system_bucket                       = var.system_bucket

@@ -2,7 +2,6 @@ const { LambdaStep } = require('@cumulus/common/sfnStep');
 const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
 const { loadConfig } = require('../../helpers/testUtils');
 
-const awsConfig = loadConfig();
 const lambdaStep = new LambdaStep();
 
 /**
@@ -33,9 +32,11 @@ describe('When a task is configured', () => {
   let retryPassLambdaExecutions = null;
   let retryFailLambdaExecutions = null;
 
-  process.env.ExecutionsTable = `${awsConfig.stackName}-ExecutionsTable`;
-
   beforeAll(async () => {
+    const awsConfig = await loadConfig();
+
+    process.env.ExecutionsTable = `${awsConfig.stackName}-ExecutionsTable`;
+
     const retryPassPromise = buildAndExecuteWorkflow(
       awsConfig.stackName,
       awsConfig.bucket,

@@ -54,6 +54,7 @@
     "lodash.compact": "^3.0.1",
     "lodash.curry": "^4.1.1",
     "lodash.findkey": "^4.6.0",
+    "lodash.flow": "^3.5.0",
     "lodash.flowright": "^3.5.0",
     "lodash.get": "^4.4.2",
     "lodash.isfunction": "^3.0.9",
@@ -68,7 +69,7 @@
     "node-forge": "^0.7.1",
     "p-limit": "^2.0.0",
     "p-map": "^1.2.0",
-    "p-retry": "^2.0.0",
+    "p-retry": "^4.2.0",
     "pump": "^3.0.0",
     "randexp": "^0.4.9",
     "ssh2": "^0.5.5",
@@ -81,6 +82,7 @@
     "lodash.range": "^3.2.0",
     "nock": "^10.0.0",
     "nyc": "^14.0.0",
+    "p-timeout": "^3.2.0",
     "rewire": "^4.0.1",
     "sinon": "^7.1.1"
   }

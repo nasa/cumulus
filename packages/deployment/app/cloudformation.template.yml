@@ -970,6 +970,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: {{../prefix}}-{{@key}}EcsLogs
+      RetentionInDays: 30
 
   {{@key}}EcsLogSubscription:
     Type: AWS::Logs::SubscriptionFilter
@@ -1133,6 +1134,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: {{../prefix}}-{{@key}}EcsLogs
+      RetentionInDays: 30
 
   {{@key}}EcsLogSubscription:
     Type: AWS::Logs::SubscriptionFilter

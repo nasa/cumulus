@@ -1,7 +1,7 @@
 ## Note: Example workflows are located in the workflows/ folder
 
 TestLambdaVersionWorkflow:
-  Comment: 'Tests Lambda update after redeploy'
+  Comment: "Tests Lambda update after redeploy"
   StartAt: WaitForDeployment
   States:
     WaitForDeployment:
@@ -13,23 +13,25 @@ TestLambdaVersionWorkflow:
       Resource: ${VersionUpTestLambdaFunction.Arn}
       Catch:
         - ErrorEquals:
-          - States.ALL
+            - States.ALL
           Next: WorkflowFailed
       End: true
     WorkflowFailed:
       Type: Fail
-      Cause: 'Workflow failed'
-
+      Cause: "Workflow failed"
 
 WaitForDeployWorkflow:
-  Comment: 'Tests redeployment during workflow run'
+  Comment: "Tests redeployment during workflow run"
   StartAt: HelloWorld
   States:
     HelloWorld:
-      CumulusConfig:
-        buckets: '{$.meta.buckets}'
-        provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
+      Parameters:
+        cma:
+          event.$: "$"
+          task_config:
+            buckets: "{$.meta.buckets}"
+            provider: "{$.meta.provider}"
+            collection: "{$.meta.collection}"
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
       Next: WaitForDeployment
@@ -38,9 +40,9 @@ WaitForDeployWorkflow:
       Resource: ${WaitForDeploymentLambdaFunction.Arn}
       Catch:
         - ErrorEquals:
-          - States.ALL
+            - States.ALL
           Next: WorkflowFailed
       End: true
     WorkflowFailed:
       Type: Fail
-      Cause: 'Workflow failed'
+      Cause: "Workflow failed"
