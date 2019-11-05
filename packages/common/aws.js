@@ -5,7 +5,6 @@ const fs = require('fs');
 const { JSONPath } = require('jsonpath-plus');
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
-const cloneDeep = require('lodash.clonedeep');
 const pMap = require('p-map');
 const pRetry = require('p-retry');
 const pump = require('pump');
@@ -1000,15 +999,17 @@ exports.isThrottlingException = (err) => err.code === 'ThrottlingException';
  * Given a Cumulus step function event, if the message is on S3, pull the full message
  * from S3 and return, otherwise return the event.
  *
- * @param {Object} incomingEvent - the Cumulus event
+ * @param {Object} event - the Cumulus event
  * @returns {Object} - the full Cumulus message
  */
-exports.pullStepFunctionEvent = async (incomingEvent) => {
-  if (!incomingEvent.replace) {
-    return incomingEvent;
-  }
-  const event = cloneDeep(incomingEvent);
-  const remoteMsgS3Object = await exports.getS3Object(event.replace.Bucket, event.replace.Key, { retries: 0 });
+exports.pullStepFunctionEvent = async (event) => {
+  if (!event.replace) return event;
+
+  const remoteMsgS3Object = await exports.getS3Object(
+    event.replace.Bucket,
+    event.replace.Key,
+    { retries: 0 }
+  );
   const remoteMsg = JSON.parse(remoteMsgS3Object.Body.toString());
 
   let returnEvent = remoteMsg;
