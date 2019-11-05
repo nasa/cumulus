@@ -24,9 +24,10 @@ const parseXmlString = promisify(parseString);
  */
 const launchpadPublicCertificate = async (launchpadPublicMetadataPath) => {
   let launchpadMetatdataXML;
-  const parsed = aws.parseS3Uri(launchpadPublicMetadataPath);
+  const { Bucket, Key } = aws.parseS3Uri(launchpadPublicMetadataPath);
   try {
-    launchpadMetatdataXML = (await aws.getS3Object(parsed.Bucket, parsed.Key)).Body.toString();
+    const s3Object = await aws.getS3Object(Bucket, Key, { retries: 0 });
+    launchpadMetatdataXML = s3Object.Body.toString();
   } catch (error) {
     if (error.code === 'NoSuchKey' || error.code === 'NoSuchBucket') {
       error.message = `Cumulus could not find Launchpad public xml metadata at ${launchpadPublicMetadataPath}`;

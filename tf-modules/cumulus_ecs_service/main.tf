@@ -7,6 +7,7 @@ data "aws_region" "current" {}
 
 resource "aws_cloudwatch_log_group" "default" {
   name = "${local.full_name}EcsLogs"
+  retention_in_days = 30
   tags = var.tags
 }
 

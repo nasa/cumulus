@@ -82,7 +82,7 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var "urs_client_id=$EARTHDATA_CLIENT_ID" \
   -var "urs_client_password=$EARTHDATA_CLIENT_PASSWORD" \
   -var "token_secret=$TOKEN_SECRET" \
-  -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/NGAPShNonProdRoleBoundary"
+  -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/NGAPShRoleBoundary"
 
 # Test that deployment succeeded by failing on bad exit code.
 EXIT_CODE=$?

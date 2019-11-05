@@ -1,43 +1,40 @@
 const path = require('path');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
-
-let mode = 'development';
-let devtool = 'inline-source-map';
-
-if (process.env.PRODUCTION) {
-   mode = 'production';
-   devtool = false;
-}
+// path to module root
+const root = path.resolve(__dirname);
 
 module.exports = {
-  mode,
+  mode: process.env.PRODUCTION ? 'production' : 'development',
   entry: './index.js',
   output: {
     libraryTarget: 'commonjs2',
     filename: 'index.js',
-    path: path.resolve(__dirname, 'dist')
+    path: path.resolve(__dirname, 'dist'),
+    devtoolModuleFilenameTemplate: (info) => {
+      const relativePath = path.relative(root, info.absoluteResourcePath)
+      return `webpack://${relativePath}`;
+    }
   },
   externals: [
     'aws-sdk',
     'electron',
     {'formidable': 'url'}
   ],
-  devtool,
-  target: 'node',
-  optimization: {
-    minimizer: [
-      new UglifyJsPlugin({
-        parallel: true,  // Webpack default
-        cache: true ,     // Webpack default
-                    uglifyOptions: {
-          /*
-              inlining is broken sometimes where inlined function uses the same variable name as inlining function.
-              See https://github.com/mishoo/UglifyJS2/issues/2842, https://github.com/mishoo/UglifyJS2/issues/2843
-              and https://github.com/webpack-contrib/uglifyjs-webpack-plugin/issues/264
-           */
-          compress: { inline: false },
-        },
-      })
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              cacheDirectory: true
+            },
+          },
+        ],
+      },
     ],
-  }
+  },
+  devtool: 'inline-source-map',
+  target: 'node'
 };

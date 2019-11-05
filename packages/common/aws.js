@@ -5,7 +5,6 @@ const fs = require('fs');
 const { JSONPath } = require('jsonpath-plus');
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
-const cloneDeep = require('lodash.clonedeep');
 const pMap = require('p-map');
 const pRetry = require('p-retry');
 const pump = require('pump');
@@ -358,10 +357,26 @@ exports.s3PutObjectTagging = improveStackTrace(
 *
 * @param {string} Bucket - name of bucket
 * @param {string} Key - key for object (filepath + filename)
+* @param {Object} retryOptions - options to control retry behavior when an
+*   object does not exist. See https://github.com/tim-kos/node-retry#retryoperationoptions
 * @returns {Promise} - returns response from `S3.getObject` as a promise
 **/
 exports.getS3Object = improveStackTrace(
-  (Bucket, Key) => exports.s3().getObject({ Bucket, Key }).promise()
+  (Bucket, Key, retryOptions = {}) =>
+    pRetry(
+      async () => {
+        try {
+          return await exports.s3().getObject({ Bucket, Key }).promise();
+        } catch (err) {
+          if (err.code === 'NoSuchKey') throw err;
+          throw new pRetry.AbortError(err);
+        }
+      },
+      {
+        onFailedAttempt: (err) => log.debug(`getS3Object('${Bucket}', '${Key}') failed with ${err.retriesLeft} retries left: ${err.message}`),
+        ...retryOptions
+      }
+    )
 );
 
 exports.getS3ObjectReadStream = (bucket, key) => exports.s3().getObject(
@@ -934,6 +949,23 @@ exports.deleteSQSMessage = improveStackTrace(
 );
 
 /**
+ * Test if an SQS queue exists
+ *
+ * @param {Object} queue - queue name or url
+ * @returns {Promise<boolean>} - a Promise that will resolve to a boolean indicating
+ *                               if the queue exists
+ */
+exports.sqsQueueExists = (queue) => {
+  const QueueName = queue.split('/').pop();
+  return exports.sqs().getQueueUrl({ QueueName }).promise()
+    .then(() => true)
+    .catch((e) => {
+      if (e.code === 'AWS.SimpleQueueService.NonExistentQueue') return false;
+      throw e;
+    });
+};
+
+/**
  * Returns execution ARN from a statement machine Arn and executionName
  *
  * @param {string} stateMachineArn - state machine ARN
@@ -967,15 +999,17 @@ exports.isThrottlingException = (err) => err.code === 'ThrottlingException';
  * Given a Cumulus step function event, if the message is on S3, pull the full message
  * from S3 and return, otherwise return the event.
  *
- * @param {Object} incomingEvent - the Cumulus event
+ * @param {Object} event - the Cumulus event
  * @returns {Object} - the full Cumulus message
  */
-exports.pullStepFunctionEvent = async (incomingEvent) => {
-  if (!incomingEvent.replace) {
-    return incomingEvent;
-  }
-  const event = cloneDeep(incomingEvent);
-  const remoteMsgS3Object = await exports.getS3Object(event.replace.Bucket, event.replace.Key);
+exports.pullStepFunctionEvent = async (event) => {
+  if (!event.replace) return event;
+
+  const remoteMsgS3Object = await exports.getS3Object(
+    event.replace.Bucket,
+    event.replace.Key,
+    { retries: 0 }
+  );
   const remoteMsg = JSON.parse(remoteMsgS3Object.Body.toString());
 
   let returnEvent = remoteMsg;

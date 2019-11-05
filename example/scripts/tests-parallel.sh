@@ -19,9 +19,8 @@ result=$?
 echo parallel tests complete: $result suite failures
 
 # print test output to console
-for testFile in $testOutputDir/*; do
-  cat $testFile
-done
+find "$testOutputDir" -mindepth 1 -maxdepth 1 -name '*-passed.txt' -exec cat {} \;
+find "$testOutputDir" -mindepth 1 -maxdepth 1 -name '*-failed.txt' -exec cat {} \;
 
 rm -rf $testOutputDir
 
