@@ -71,7 +71,6 @@ describe('The SNS-type rule', () => {
     snsRuleDefinition.name = ruleName;
     snsRuleDefinition.meta.triggerRule = ruleName;
     process.env.stackName = config.stackName;
-    process.env.system_bucket = config.system_bucket;
 
     snsRuleDefinition.collection = {
       name: `MOD09GQ${testSuffix}`, version: '006'
