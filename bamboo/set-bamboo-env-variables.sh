@@ -37,6 +37,9 @@ declare -a param_list=(
   "bamboo_SECRET_DOCSEARCH_API_KEY"
   "bamboo_SECRET_LAUNCHPAD_PASSPHRASE"
   "bamboo_SKIP_AUDIT"
+  "bamboo_METRICS_ES_HOST"
+  "bamboo_METRICS_ES_USER"
+  "bamboo_SECRET_METRICS_ES_PASS"
 )
 regex='bamboo(_SECRET)?_(.*)'
 

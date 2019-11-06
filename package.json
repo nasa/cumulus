@@ -57,7 +57,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@octokit/graphql": "2.1.1",
-    "audit-ci": "^2.0.1",
+    "audit-ci": "^2.4.2",
     "ava": "^2.4.0",
     "babel-eslint": "^8.2.2",
     "coveralls": "^3.0.0",
