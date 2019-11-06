@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- **CUMULUS-1639**
+  - Because of
+    [S3's Data Consistency Model](https://docs.aws.amazon.com/AmazonS3/latest/dev/Introduction.html#BasicsObjects),
+    there may be situations where a GET operation for an object can temporarily
+    return a `NoSuchKey` response even if that object _has_ been created. The
+    `@cumulus/common/aws.getS3Object()` function will now retry up to 10 times
+    if a `NoSuchKey` response is returned by S3. This can behavior can be
+    overridden by passing `{ retries: 0 }` as the `retryOptions` argument.
+
 ## [v1.15.0] - 2019-11-04
 
 ### BREAKING CHANGES
@@ -116,15 +127,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added `sqsMessageConsumer` lambda which processes messages from the SQS queues configured in the `sqs` rules.
 
 ### Changed
-
-- **CUMULUS-1639**
-  - Because of
-    [S3's Data Consistency Model](https://docs.aws.amazon.com/AmazonS3/latest/dev/Introduction.html#BasicsObjects),
-    there may be situations where a GET operation for an object can temporarily
-    return a `NoSuchKey` response even if that object _has_ been created. The
-    `@cumulus/common/aws.getS3Object()` function will now retry up to 10 times
-    if a `NoSuchKey` response is returned by S3. This can behavior can be
-    overridden by passing `{ retries: 0 }` as the `retryOptions` argument.
 
 - **CUMULUS-1449**
   - `queue-pdrs` & `queue-granules` config changes. Details in breaking changes section.
