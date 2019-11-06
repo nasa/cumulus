@@ -42,7 +42,6 @@ This configuration option, when set to true, will disable all cleanup of "non-co
 
 Default value is `false`.
 
-
 #### non_complete_execution_payload_timeout _(number)_
 
 This flag defines the cleanup threshold for executions with a status other than 'complete' in days.   Records with updateTime values older than this with payload information  will have that information removed.
