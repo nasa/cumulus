@@ -51,6 +51,11 @@ done
 ## Get the current git SHA
 export GIT_SHA=$(git rev-parse HEAD)
 
+## Always set GIT_PR true if master branch
+if [[ $BRANCH == master ]]; then
+  export GIT_PR=true
+fi
+
 ## This should take a blank value from the global options, and
 ## is intended to allow an override for a custom branch build.
 if [[ ! -z $bamboo_GIT_PR ]]; then
