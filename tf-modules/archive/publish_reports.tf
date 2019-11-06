@@ -92,6 +92,7 @@ resource "aws_iam_role_policy" "publish_reports_lambda_role_policy" {
 resource "aws_sqs_queue" "publish_reports_dead_letter_queue" {
   name                       = "${var.prefix}-publishReportsDeadLetterQueue"
   receive_wait_time_seconds  = 20
+  message_retention_seconds  = 1209600
   visibility_timeout_seconds = 60
   tags                       = local.default_tags
 }
