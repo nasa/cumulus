@@ -39,7 +39,6 @@ On-demand backups help with long-term archival requirements for regulatory compl
 
 ## Enabling PITR during deployment
 
-
 By default, the Cumulus [data-persistence module](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence) enables PITR on the default tables listed in the [module's variable defaults](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf) for `enable_point_in_time_tables`.  At the time of writing, that list includes:
 
 * CollectionsTable
