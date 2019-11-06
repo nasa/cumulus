@@ -14,15 +14,15 @@ module "archive" {
   elasticsearch_hostname          = var.elasticsearch_hostname
   elasticsearch_security_group_id = var.elasticsearch_security_group_id
 
-  ems_host            = var.ems_config.host
-  ems_port            = var.ems_config.port
-  ems_path            = var.ems_config.path
-  ems_dataSource      = var.ems_config.datasource
-  ems_privateKey      = var.ems_config.private_key
-  ems_provider        = var.ems_config.provider
-  ems_retentionInDays = var.ems_config.retention_in_days
-  ems_submitReport    = var.ems_config.submit_report
-  ems_username        = var.ems_config.username
+  ems_host              = var.ems_host
+  ems_port              = var.ems_port
+  ems_path              = var.ems_path
+  ems_datasource        = var.ems_datasource
+  ems_private_key       = var.ems_private_key
+  ems_provider          = var.ems_provider
+  ems_retention_in_days = var.ems_retention_in_days
+  ems_submit_report     = var.ems_submit_report
+  ems_username          = var.ems_username
 
   system_bucket     = var.system_bucket
   public_buckets    = local.public_bucket_names
