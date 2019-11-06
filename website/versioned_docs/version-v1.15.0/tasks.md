@@ -1,5 +1,5 @@
 ---
-id: version-1.15.0-tasks
+id: version-v1.15.0-tasks
 title: Cumulus Tasks
 hide_title: true
 original_id: tasks
