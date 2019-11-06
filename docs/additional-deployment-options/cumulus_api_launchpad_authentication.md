@@ -23,8 +23,8 @@ Steps for setting up the Cumulus API to use Launchpad authentication can be foun
 
 2. Provide passphrase of PKI certificate in `terraform.tfvars` for your [Cumulus deployment](../deployment/README.md#configure-and-deploy-the-cumulus-tf-root-module)
 
-    ```
-      launchpad_passphrase=<LAUNCHPAD_PASSPHRASE>
+    ```text
+      launchpad_passphrase=LAUNCHPAD_PASSPHRASE
     ```
 
 3. Configure the `oauth_provider` and `oauth_user_group` configuration parameters in `terraform.tfvars` for your [Cumulus deployment](../deployment/README.md#configure-and-deploy-the-cumulus-tf-root-module)

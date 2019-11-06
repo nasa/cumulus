@@ -23,11 +23,11 @@ Steps for setting up the CMR Client to use Launchpad authentication can be found
 
 2. Provide passphrase of PKI certificate in `terraform.tfvars` for your [Cumulus deployment](../deployment/README.md#configure-and-deploy-the-cumulus-tf-root-module)
 
-    ```
-      launchpad_passphrase=<LAUNCHPAD_PASSPHRASE>
+    ```text
+      launchpad_passphrase=LAUNCHPAD_PASSPHRASE
     ```
 
-3. Configure your deployment variables for Launchpad integration in `cumulus-tf/terraform.tfvars`.
+3. Configure your deployment variables for Launchpad integration in `terraform.tfvars` for your [Cumulus deployment](../deployment/README.md#configure-and-deploy-the-cumulus-tf-root-module).
 
    - `cmr_oauth_provider` in `terraform.tfvars` for your Cumulus deployment **must be set to `launchpad` to use Launchpad authentication**.
    - _Example configuration of other variables necessary for Launchpad integration can be found in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/deployment/sandbox.tfvars)_
