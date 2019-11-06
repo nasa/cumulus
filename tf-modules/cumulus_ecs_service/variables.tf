@@ -21,7 +21,7 @@ variable "name" {
 }
 
 variable "prefix" {
-  description = "The unique prefix for your deployment resources"""
+  description = "The unique prefix for your deployment resources"
   type = string
 }
 

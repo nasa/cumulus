@@ -242,6 +242,12 @@ variable "launchpad_certificate" {
   default = "launchpad.pfx"
 }
 
+variable "launchpad_passphrase" {
+  description = "Passphrase of Launchpad certificate. Required if using `cmr_oauth_provider = 'launchpad'`."
+  type    = string
+  default = ""
+}
+
 variable "oauth_provider" {
   description = "Oauth provider to use for authorizing requests to the archive API. Also accepts 'launchhpad'"
   type    = string
@@ -249,7 +255,7 @@ variable "oauth_provider" {
 }
 
 variable "oauth_user_group" {
-  description = "Oauth user group to validate the user against"
+  description = "Oauth user group to validate the user against when using `oauth_provider = 'launchpad'`."
   type    = string
   default = "N/A"
 }

@@ -187,6 +187,11 @@ variable "launchpad_certificate" {
   default = "launchpad.pfx"
 }
 
+variable "launchpad_passphrase" {
+  type    = string
+  default = ""
+}
+
 variable "oauth_provider" {
   type    = string
   default = "earthdata"
