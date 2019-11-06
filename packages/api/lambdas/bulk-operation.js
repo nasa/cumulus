@@ -4,6 +4,26 @@ const log = require('@cumulus/common/log');
 
 const GranuleModel = require('../models/granules');
 
+function applyWorkflowToGranules(granuleIds, workflowName, queueName) {
+  const granuleModelClient = new GranuleModel();
+
+  const applyWorkflowRequests = granuleIds.map(async (granuleId) => {
+    try {
+      const granule = await granuleModelClient.get({ granuleId });
+      await granuleModelClient.applyWorkflow(
+        granule,
+        workflowName,
+        queueName,
+        process.env.asyncOperationId
+      );
+      return granuleId;
+    } catch (err) {
+      return { granuleId, err };
+    }
+  });
+  return Promise.all(applyWorkflowRequests);
+}
+
 /**
  * Bulk apply workflow to either a list of granules (ids) or to a list of responses from
  * ES using the provided query and index.
@@ -19,26 +39,9 @@ const GranuleModel = require('../models/granules');
 async function bulkGranule(payload) {
   const queueName = payload.queueName;
   const workflowName = payload.workflowName;
-  const granuleModelClient = new GranuleModel();
 
   if (payload.ids) {
-    const ids = payload.ids;
-    const applyWorkflowRequests = ids.map(async (granuleId) => {
-      try {
-        const granule = await granuleModelClient.get({ granuleId });
-        await granuleModelClient.applyWorkflow(
-          granule,
-          workflowName,
-          queueName,
-          process.env.asyncOperationId
-        );
-        return granuleId;
-      } catch (err) {
-        return { granuleId, err };
-      }
-    });
-    const response = await Promise.all(applyWorkflowRequests);
-    return response;
+    return applyWorkflowToGranules(payload.ids, workflowName, queueName);
   }
 
   log.info('No granule ids detected. Searching for granules in Elasticsearch.');
@@ -59,14 +62,9 @@ async function bulkGranule(payload) {
     }
   });
 
-  console.log('Ping...');
-  const pingResponse = await client.ping();
-  console.log(pingResponse);
-  console.log('Pong...');
-
-  console.log('Doing the search...');
+  // TO DO
+  // Update to take the search repsonse, get graules, and kick off workflows
   const searchResponse = await client.search({ index, body: query });
-  console.log(JSON.stringify(searchResponse));
   return searchResponse;
   // Request against elastic search with pagenation
   // page through response, for each item in each page, applyWorkflow
