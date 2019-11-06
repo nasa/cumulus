@@ -17,17 +17,17 @@ Steps for setting up the Cumulus API to use Launchpad authentication can be foun
 1. Upload PKI certificate to S3:
 
     - Upload the PKI certificate `.pfx` file to S3
-    - Use `{{system_bucket}}` as bucket name and `{{prefix}}/crypto/launchpad.pfx` as key
-      - `{{system_bucket}}` and `{{prefix}}` are configured in `app/config.yml`.
-      - If a different private key file name other than `launchpad.pfx` is used, specify it in the `launchpad` configuration in `app/config.yml`.
+    - Use `system_bucket` as bucket name and `<prefix>/crypto/launchpad.pfx` as key
+      - `system_bucket` and `prefix` are configured in `terraform.tfvars` for your [Cumulus deployment](../deployment/README.md#configure-and-deploy-the-cumulus-tf-root-module).
+      - If a different private key file name other than `launchpad.pfx` is used, specify it in the `launchpad_certificate` configuration in `terraform.tfvars`.
 
-2. Provide passphrase of PKI certificate in `app/.env`
+2. Provide passphrase of PKI certificate in `terraform.tfvars` for your [Cumulus deployment](../deployment/README.md#configure-and-deploy-the-cumulus-tf-root-module)
 
     ```text
-      LAUNCHPAD_PASSPHRASE=<LAUNCHPAD_PASSPHRASE>
+      launchpad_passphrase=LAUNCHPAD_PASSPHRASE
     ```
 
-3. Configure the `oauth.provider` and `oauth.userGroup` configuration parameters in `app/config.yml`.
+3. Configure the `oauth_provider` and `oauth_user_group` configuration parameters in `terraform.tfvars` for your [Cumulus deployment](../deployment/README.md#configure-and-deploy-the-cumulus-tf-root-module)
 
-   - `oauth.provider` in `app/config.yml` **must be set to `launchpad` to use Launchpad authentication**.
-   - _Example configuration of the `oauth` variables can be found in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/app/config.yml)_
+   - `oauth_provider` in `terraform.tfvars` **must be set to `launchpad` to use Launchpad authentication**.
+   - _Example configuration of the `oauth_user_group` variable and other variables necessary for Launchpad integration can be found in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/deployment/sandbox.tfvars)_
