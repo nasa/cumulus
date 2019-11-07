@@ -48,6 +48,15 @@ module "cumulus" {
   cmr_password    = var.cmr_password
   cmr_provider    = var.cmr_provider
 
+  cmr_oauth_provider = var.cmr_oauth_provider
+
+  launchpad_api = var.launchpad_api
+  launchpad_certificate = var.launchpad_certificate
+  launchpad_passphrase = var.launchpad_passphrase
+
+  oauth_provider   = var.oauth_provider
+  oauth_user_group = var.oauth_user_group
+
   permissions_boundary_arn = var.permissions_boundary_arn
 
   system_bucket = var.system_bucket

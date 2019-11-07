@@ -22,7 +22,19 @@ file.
 
 To check the configured linting, run `npm run lint`.
 
+## Documentation quality checking
+
+This project uses [markdownlint-cli](https://www.npmjs.com/package/markdownlint-cli)
+as a frontend to [markdownlint](https://www.npmjs.com/package/markdownlint) to check
+all of our markdown for style and formatting.   The configured rules can be found
+[here](https://github.com/nasa/cumulus/blob/master/.markdownlint.json).
+
+To run linting on the markdown files, run `npm run lint-md`.
+
 ## Audit
 
 This project uses `audit-ci` to run a security audit on the package dependency
-tree.   This must pass prior to merge.   To execute an audit, run `npm run audit`.
+tree.   This must pass prior to merge.   The configured rules for `audit-ci` can be
+found [here](https://github.com/nasa/cumulus/blob/master/audit-ci.json).
+
+To execute an audit, run `npm run audit`.

@@ -1,14 +1,14 @@
 ---
 id: glossary
-title: Cumulus Glossary
-hide_title: true
+title: Glossary
+hide_title: false
 ---
 
-# AWS Glossary
+## AWS Glossary
 
 For terms/items from Amazon/AWS not mentioned in this glossary, please refer to the [AWS Glossary](https://docs.aws.amazon.com/general/latest/gr/glos-chap.html).
 
-# Cumulus Glossary of Terms
+## Cumulus Glossary of Terms
 
 ### API Gateway
 
