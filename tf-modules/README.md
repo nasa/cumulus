@@ -11,13 +11,13 @@ To add a new Terraform module:
 1. Create a new directory in this `tf-modules` directory.
     - Make sure to copy the `.gitignore` from one of the existing modules
 2. Add `.tf` files specifying the resources that should be included for your module.
-3. Define any variables that will be needed for your resources in a `variables.tf` file. See [Terraform documentation on input variables](https://www.terraform.io/docs/configuration/variables.html).
+3. Define any variables that will be needed for your resources in a `variables.tf` file. See [Terraform documentation on input variables](https://www.terraform.io/docs/configuration/variables.html). Variables should include a `description` documenting their purpose.
 4. If resources defined by your module will need to be referenced by other modules, then include an `outputs.tf` which defines outputs that can be referenced by other Terraform modules/resources. See the [Terraform documentation on output values](https://www.terraform.io/docs/configuration/outputs.html) and [an example for the `data-persistence` module](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/outputs.tf).
 5. Add a `terraform.tfvars.sample` file showing sample values for the input variables supported by your module
 6. Add a `README.md` which, at minimum, documents:
     - What is included in the module
-    - How to deploy it
-    - Description of the variables necessary to configure the module
+    - An example of how to deploy it
+    - Any additional context for the input variables of this module
 
 ## Testing deployment of your module
 

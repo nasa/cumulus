@@ -33,6 +33,7 @@ module "archive" {
 
   launchpad_api         = var.launchpad_api
   launchpad_certificate = var.launchpad_certificate
+  launchpad_passphrase  = var.launchpad_passphrase
 
   urs_url             = "https://uat.urs.earthdata.nasa.gov"
   urs_client_id       = var.urs_client_id

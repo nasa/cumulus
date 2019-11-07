@@ -1,25 +1,120 @@
-module "ingest_and_publish_granule_workflow" {
+module "discover_granules_browse_example_workflow" {
   source = "../../tf-modules/workflow"
 
   prefix                                = var.prefix
-  name                                  = "IngestAndPublishGranule"
+  name                                  = "DiscoverGranulesBrowseExample"
   workflow_config                       = module.cumulus.workflow_config
   system_bucket                         = var.system_bucket
   tags                                  = local.default_tags
 
   state_machine_definition = <<JSON
 {
-  "Comment": "Ingest Granule",
+  "Comment": "Example for Browse Generation Data Cookbook",
+  "StartAt": "DiscoverGranules",
+  "TimeoutSeconds": 18000,
+  "States": {
+    "DiscoverGranules": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}",
+            "buckets": "{$.meta.buckets}",
+            "stack": "{$.meta.stack}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${module.cumulus.discover_granules_task_lambda_function_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "Next": "QueueGranules"
+    },
+    "QueueGranules": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "provider": "{$.meta.provider}",
+            "internalBucket": "{$.meta.buckets.internal.name}",
+            "stackName": "{$.meta.stack}",
+            "granuleIngestMessageTemplateUri": "{$.meta.template}",
+            "granuleIngestWorkflow": "CookbookBrowseExample",
+            "queueUrl": "{$.meta.queues.startSF}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${module.cumulus.queue_granules_task_lambda_function_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "End": true
+    },
+    "WorkflowFailed": {
+      "Type": "Fail",
+      "Cause": "Workflow failed"
+    }
+  }
+}
+JSON
+}
+
+module "cookbook_browse_example_workflow" {
+  source = "../../tf-modules/workflow"
+
+  prefix                                = var.prefix
+  name                                  = "CookbookBrowseExample"
+  workflow_config                       = module.cumulus.workflow_config
+  system_bucket                         = var.system_bucket
+  tags                                  = local.default_tags
+
+  state_machine_definition = <<JSON
+{
   "StartAt": "SyncGranule",
   "States": {
     "SyncGranule": {
       "Parameters": {
         "cma": {
           "event.$": "$",
-          "ReplaceConfig": {
-            "Path": "$.payload",
-            "TargetPath": "$.payload"
-          },
           "task_config": {
             "buckets": "{$.meta.buckets}",
             "provider": "{$.meta.provider}",
@@ -50,16 +145,6 @@ module "ingest_and_publish_granule_workflow" {
       },
       "Type": "Task",
       "Resource": "${module.cumulus.sync_granule_task_lambda_function_arn}",
-      "Next": "ChooseProcess",
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "Next": "WorkflowFailed",
-          "ResultPath": "$.exception"
-        }
-      ],
       "Retry": [
         {
           "ErrorEquals": [
@@ -68,33 +153,34 @@ module "ingest_and_publish_granule_workflow" {
           "IntervalSeconds": 2,
           "MaxAttempts": 3
         }
-      ]
-    },
-    "ChooseProcess": {
-      "Choices": [
+      ],
+      "Catch": [
         {
-          "Next": "ProcessingStep",
-          "StringEquals": "modis",
-          "Variable": "$.meta.process"
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
         }
       ],
-      "Default": "WorkflowSucceeded",
-      "Type": "Choice"
+      "Next": "ProcessingStep"
     },
     "ProcessingStep": {
       "Parameters": {
         "cma": {
           "event.$": "$",
-          "ReplaceConfig": {
-            "FullMessage": true
-          },
           "task_config": {
             "bucket": "{$.meta.buckets.internal.name}",
             "collection": "{$.meta.collection}",
             "cmrMetadataFormat": "{$.meta.cmrMetadataFormat}",
             "additionalUrls": "{$.meta.additionalUrls}",
+            "generateFakeBrowse": true,
             "cumulus_message": {
               "outputs": [
+                {
+                  "source": "{$.granules}",
+                  "destination": "{$.meta.input_granules}"
+                },
                 {
                   "source": "{$.files}",
                   "destination": "{$.payload}"
@@ -106,36 +192,30 @@ module "ingest_and_publish_granule_workflow" {
       },
       "Type": "Task",
       "Resource": "${module.cumulus.fake_processing_task_lambda_function_arn}",
-      "Next": "FilesToGranulesStep",
       "Catch": [
         {
           "ErrorEquals": [
             "States.ALL"
           ],
-          "Next": "WorkflowFailed",
-          "ResultPath": "$.exception"
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
         }
       ],
       "Retry": [
         {
-          "BackoffRate": 2,
           "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
+            "States.ALL"
           ],
           "IntervalSeconds": 2,
-          "MaxAttempts": 6
+          "MaxAttempts": 3
         }
-      ]
+      ],
+      "Next": "FilesToGranulesStep"
     },
     "FilesToGranulesStep": {
       "Parameters": {
         "cma": {
           "event.$": "$",
-          "ReplaceConfig": {
-            "FullMessage": true
-          },
           "task_config": {
             "inputGranules": "{$.meta.input_granules}",
             "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}"
@@ -143,37 +223,34 @@ module "ingest_and_publish_granule_workflow" {
         }
       },
       "Type": "Task",
-      "Next": "MoveGranuleStep",
       "Resource": "${module.cumulus.files_to_granules_task_lambda_function_arn}",
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "Next": "WorkflowFailed",
-          "ResultPath": "$.exception"
-        }
-      ],
       "Retry": [
         {
-          "BackoffRate": 2,
           "ErrorEquals": [
             "Lambda.ServiceException",
             "Lambda.AWSLambdaException",
             "Lambda.SdkClientException"
           ],
           "IntervalSeconds": 2,
-          "MaxAttempts": 6
+          "MaxAttempts": 6,
+          "BackoffRate": 2
         }
-      ]
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "Next": "MoveGranuleStep"
     },
     "MoveGranuleStep": {
       "Parameters": {
         "cma": {
           "event.$": "$",
-          "ReplaceConfig": {
-            "FullMessage": true
-          },
           "task_config": {
             "bucket": "{$.meta.buckets.internal.name}",
             "buckets": "{$.meta.buckets}",
@@ -185,76 +262,72 @@ module "ingest_and_publish_granule_workflow" {
       },
       "Type": "Task",
       "Resource": "${module.cumulus.move_granules_task_lambda_function_arn}",
-      "Next": "CmrStep",
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "Next": "WorkflowFailed",
-          "ResultPath": "$.exception"
-        }
-      ],
       "Retry": [
         {
-          "BackoffRate": 2,
           "ErrorEquals": [
             "Lambda.ServiceException",
             "Lambda.AWSLambdaException",
             "Lambda.SdkClientException"
           ],
           "IntervalSeconds": 2,
-          "MaxAttempts": 6
+          "MaxAttempts": 6,
+          "BackoffRate": 2
         }
-      ]
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "Next": "CmrStep"
     },
     "CmrStep": {
       "Parameters": {
         "cma": {
           "event.$": "$",
-          "ReplaceConfig": {
-            "FullMessage": true
-          },
           "task_config": {
             "bucket": "{$.meta.buckets.internal.name}",
             "stack": "{$.meta.stack}",
             "cmr": "{$.meta.cmr}",
             "launchpad": "{$.meta.launchpad}",
-            "process": "{$.meta.process}"
+            "process": "{$.meta.process}",
+            "input_granules": "{$.meta.input_granules}",
+            "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}"
           }
         }
       },
       "Type": "Task",
       "Resource": "${module.cumulus.post_to_cmr_task_lambda_function_arn}",
-      "Next": "WorkflowSucceeded",
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "Next": "WorkflowFailed",
-          "ResultPath": "$.exception"
-        }
-      ],
       "Retry": [
         {
-          "BackoffRate": 2,
           "ErrorEquals": [
             "Lambda.ServiceException",
             "Lambda.AWSLambdaException",
             "Lambda.SdkClientException"
           ],
           "IntervalSeconds": 2,
-          "MaxAttempts": 6
+          "MaxAttempts": 6,
+          "BackoffRate": 2
         }
-      ]
-    },
-    "WorkflowSucceeded": {
-      "Type": "Succeed"
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "End": true
     },
     "WorkflowFailed": {
-      "Cause": "Workflow failed",
-      "Type": "Fail"
+      "Type": "Fail",
+      "Cause": "Workflow failed"
     }
   }
 }

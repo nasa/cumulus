@@ -29,6 +29,10 @@ resource "aws_dynamodb_table" "access_tokens_table" {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.access_tokens_table)
   }
 
+  lifecycle {
+    prevent_destroy = true
+  }
+
   tags = local.default_tags
 }
 
@@ -44,6 +48,10 @@ resource "aws_dynamodb_table" "async_operations_table" {
 
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.async_operations_table)
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 
   tags = local.default_tags
@@ -71,6 +79,10 @@ resource "aws_dynamodb_table" "collections_table" {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.collections_table)
   }
 
+  lifecycle {
+    prevent_destroy = true
+  }
+
   tags = local.default_tags
 }
 
@@ -88,6 +100,10 @@ resource "aws_dynamodb_table" "executions_table" {
 
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.executions_table)
+  }
+  
+  lifecycle {
+    prevent_destroy = true
   }
 
   tags = local.default_tags
@@ -113,6 +129,10 @@ resource "aws_dynamodb_table" "files_table" {
 
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.files_table)
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 
   tags = local.default_tags
@@ -146,6 +166,10 @@ resource "aws_dynamodb_table" "granules_table" {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.granules_table)
   }
 
+  lifecycle {
+    prevent_destroy = true
+  }
+
   tags = local.default_tags
 }
 
@@ -163,6 +187,10 @@ resource "aws_dynamodb_table" "pdrs_table" {
 
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.pdrs_table)
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 
   tags = local.default_tags
@@ -184,6 +212,10 @@ resource "aws_dynamodb_table" "providers_table" {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.providers_table)
   }
 
+  lifecycle {
+    prevent_destroy = true
+  }
+
   tags = local.default_tags
 }
 
@@ -203,6 +235,10 @@ resource "aws_dynamodb_table" "rules_table" {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.rules_table)
   }
 
+  lifecycle {
+    prevent_destroy = true
+  }
+
   tags = local.default_tags
 }
 
@@ -218,6 +254,10 @@ resource "aws_dynamodb_table" "semaphores_table" {
 
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.semaphores_table)
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 
   tags = local.default_tags
@@ -237,6 +277,10 @@ resource "aws_dynamodb_table" "users_table" {
 
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.users_table)
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 
   tags = local.default_tags

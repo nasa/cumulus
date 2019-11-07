@@ -137,13 +137,14 @@ const loadConfig = async (type = 'app') => {
   await loadEnvFile('./.env');
   verifyRequiredEnvironmentVariables();
 
-  const configFromFile = Boolean(process.env.KES_DEPLOYMENT) === true ?
+  const configFromFile = process.env.KES_DEPLOYMENT.toString() === 'true' ?
     loadConfigFromKes(type) :
     loadConfigYmlFile(process.env.DEPLOYMENT);
 
   const bucketsObject = await getS3Object(
     configFromFile.bucket,
-    `${configFromFile.stackName}/workflows/buckets.json`
+    `${configFromFile.stackName}/workflows/buckets.json`,
+    { retries: 0 }
   );
   const buckets = JSON.parse(bucketsObject.Body.toString());
 
