@@ -56,6 +56,35 @@ const createPdrMessage = ({
   }
 });
 
+test('generatePdrRecord() returns null if message.payload.pdr is not set', (t) => {
+  const pdrRecord = Pdr.generatePdrRecord({});
+
+  t.is(pdrRecord, null);
+});
+
+test('generatePdrRecord() returns null if message.payload.pdr.name is not set', (t) => {
+  const pdrRecord = Pdr.generatePdrRecord({
+    payload: {
+      pdr: {}
+    }
+  });
+
+  t.is(pdrRecord, null);
+});
+
+// Addresses CUMULUS-1644
+test('generatePdrRecord() ignores a PDR set in message.meta.pdr', (t) => {
+  const pdrRecord = Pdr.generatePdrRecord({
+    meta: {
+      pdr: {
+        name: 'my-pdr'
+      }
+    }
+  });
+
+  t.is(pdrRecord, null);
+});
+
 test('generatePdrRecord() sets correct progress value for running PDR', async (t) => {
   const pdrName = randomId('pdr');
   const message = createPdrMessage({
@@ -201,27 +230,6 @@ test('createPdrFromSns() creates a PDR record when payload.pdr is set', async (t
   });
 
   message.payload.pdr = {
-    name: pdrName
-  };
-
-  await pdrsModel.createPdrFromSns(message);
-
-  const { collection } = message.meta;
-  const collectionId = constructCollectionId(collection.name, collection.version);
-
-  const record = await pdrsModel.get({ pdrName });
-  t.is(record.createdAt, createdAtTime);
-  t.is(record.collectionId, collectionId);
-});
-
-test('createPdrFromSns() creates a PDR record when meta.pdr is set', async (t) => {
-  const pdrName = randomId('pdr');
-  const createdAtTime = Date.now() - 1000;
-  const message = createPdrMessage({
-    createdAtTime
-  });
-
-  message.meta.pdr = {
     name: pdrName
   };
 
