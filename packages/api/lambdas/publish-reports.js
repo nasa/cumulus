@@ -78,8 +78,11 @@ async function handleExecutionMessage(eventMessage) {
     const executionRecord = await Execution.generateRecord(eventMessage);
     return publishExecutionSnsMessage(executionRecord);
   } catch (err) {
-    log.error('Error handling execution message', err);
-    log.info('Execution message', eventMessage);
+    log.error(
+      `Failed to create database record for execution ${getMessageExecutionArn(eventMessage)}: ${err.message}`,
+      'Cause: ', err,
+      'Execution message: ', eventMessage
+    );
     return Promise.resolve();
   }
 }
@@ -110,9 +113,12 @@ async function buildAndPublishGranule(
     );
     return publishGranuleSnsMessage(granuleRecord);
   } catch (err) {
-    log.error('Error handling granule from message', err);
-    log.info('Granule from message', granule);
-    log.info('Execution message', eventMessage);
+    log.error(
+      `Failed to create database record for granule ${granule.granuleId}: ${err.message}`,
+      'Cause: ', err,
+      'Granule data: ', granule,
+      'Execution message: ', eventMessage
+    );
     return Promise.resolve();
   }
 }
@@ -126,7 +132,7 @@ async function buildAndPublishGranule(
 async function handleGranuleMessages(eventMessage) {
   const granules = getMessageGranules(eventMessage);
   if (!granules) {
-    log.info('No granules to process on the message');
+    log.info(`No granules to process in the payload: ${eventMessage.payload}`);
     return Promise.resolve();
   }
 
@@ -143,7 +149,6 @@ async function handleGranuleMessages(eventMessage) {
   try {
     return Promise.all(
       granules
-        .filter((granule) => granule.granuleId)
         .map((granule) => buildAndPublishGranule(
           granule,
           eventMessage,
@@ -152,8 +157,10 @@ async function handleGranuleMessages(eventMessage) {
         ))
     );
   } catch (err) {
-    log.error('Error handling granule records', err);
-    log.info('Execution message', eventMessage);
+    log.error(
+      'Error handling granule records: ', err,
+      'Execution message: ', eventMessage
+    );
     return Promise.resolve();
   }
 }
@@ -170,8 +177,11 @@ async function handlePdrMessage(eventMessage) {
     if (!pdrRecord) return Promise.resolve();
     return publishPdrSnsMessage(pdrRecord);
   } catch (err) {
-    log.error('Error trying to generate PDR', err);
-    log.info('Execution message', eventMessage);
+    log.error(
+      `Failed to create database record for PDR ${eventMessage.payload.pdr.name}: ${err.message}`,
+      'Error handling PDR from message', err,
+      'Execution message', eventMessage
+    );
     return Promise.resolve();
   }
 }

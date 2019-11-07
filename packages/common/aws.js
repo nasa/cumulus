@@ -860,26 +860,32 @@ exports.createQueue = createQueue;
  *
  * @param {string} snsTopicArn - SNS topic ARN
  * @param {Object} message - Message object
+ * @param {Object} retryOptions - options to control retry behavior when publishing
+ * a message fails. See https://github.com/tim-kos/node-retry#retryoperationoptions
  * @returns {Promise}
  */
 exports.publishSnsMessage = async (
   snsTopicArn,
-  message
-) => {
-  try {
-    if (!snsTopicArn) {
-      throw new Error('Missing SNS topic ARN');
-    }
+  message,
+  retryOptions = {}
+) =>
+  pRetry(
+    async () => {
+      if (!snsTopicArn) {
+        throw new pRetry.AbortError('Missing SNS topic ARN');
+      }
 
-    await exports.sns().publish({
-      TopicArn: snsTopicArn,
-      Message: JSON.stringify(message)
-    }).promise();
-  } catch (err) {
-    log.error(`Failed to post message to SNS topic: ${snsTopicArn}`, err);
-    log.info('Undelivered message', message);
-  }
-};
+      await exports.sns().publish({
+        TopicArn: snsTopicArn,
+        Message: JSON.stringify(message)
+      }).promise();
+    },
+    {
+      maxTimeout: 5000,
+      onFailedAttempt: (err) => log.debug(`publishSnsMessage('${snsTopicArn}', '${message}') failed with ${err.retriesLeft} retries left: ${err.message}`),
+      ...retryOptions
+    }
+  );
 
 /**
 * Send a message to AWS SQS

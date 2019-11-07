@@ -315,6 +315,7 @@ class Granule extends Manager {
     executionUrl,
     executionDescription = {}
   ) {
+    if (!granule.granuleId) throw new Error(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
     const collectionId = getCollectionIdFromMessage(message);
 
     const granuleFiles = await buildDatabaseFiles({
