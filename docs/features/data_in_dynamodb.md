@@ -83,7 +83,3 @@ To restore data from a json file run the following command:
 ## DynamoDB Auto Scaling
 
 Cumulus deployed tables from the [data-persistence module](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence) are set to [`on-demand'](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadWriteCapacityMode.html#HowItWorks.OnDemand) mode.
-
-### Important Note
-
-DynamoDB Auto Scaling does not happen instantaneously. Delays of up to 10 minutes in auto scaling were experienced when load testing, and some requests failed. If application owners expect a high volume of throughput (for example, when doing a re-processing campaign), they should deploy tables with min capacity set at the required levels for meeting the expected request load.
