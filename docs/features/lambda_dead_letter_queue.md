@@ -33,8 +33,8 @@ The following built-in Cumulus Lambdas are setup with DLQs to allow handling of 
 * JobsLambda (writes logs outputs to Elasticsearch)
 * log2elasticsearch (Lambda that exports logs into Elasticsearch)
 * ScheduleSF (the SF Scheduler lambda that places messages on the start SF queue, see [Workflow Triggers](../workflows/workflow-triggers.md))
-* publishReports  (Lambda that publishes messages to the SNS topics for execution, granule and pdr reporting)
-* reportGranules, reportExecutions, reportPdrs (Lambdas responsible for updating records based on messages in the queues updated by publishReports)
+* publishReports  (Lambda that publishes messages to the SNS topics for execution, granule and PDR reporting)
+* reportGranules, reportExecutions, reportPdrs (Lambdas responsible for updating records based on messages in the queues published by publishReports)
 
 ## Troubleshooting/Utilizing messages in a [Dead Letter Queue](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html)
 

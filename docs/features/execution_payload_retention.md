@@ -20,7 +20,7 @@ The following configuration flags have been made available in the `cumulus` modu
 
 #### daily_execution_payload_cleanup_schedule_expression _(string)_
 
-This configuration option sets the execution times for this lambda to run, using a Cloud Watch cron expression.
+This configuration option sets the execution times for this Lambda to run, using a Cloudwatch cron expression.
 
 Default value is `"cron(0 4 * * ? *)"`.
 
@@ -32,7 +32,7 @@ Default value is `false`.
 
 #### complete_execution_payload_timeout _(number)_
 
-This flag defines the cleanup threshold for executions with a 'completed' status in days.   Records with updateTime values older than this with payload information  will have that information removed.
+This flag defines the cleanup threshold for executions with a 'completed' status in days.   Records with `updatedAt` values older than this with payload information  will have that information removed.
 
 Default value is `10`.
 
