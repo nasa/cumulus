@@ -73,7 +73,7 @@ saml_launchpad_metadata_path    = "s3 url to identity provider public metadata x
 key_name      = "MY-KEY"
 
 # Optional
-metrics_es_host = "https://xxxxxxxxxx.cloudfront.net"
+metrics_es_host = "xxxxxxxxxx.cloudfront.net"
 metrics_es_username = "user"
 metrics_es_password = "password"
 
