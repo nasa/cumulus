@@ -53,7 +53,7 @@ For Cumulus instances running on NGAP, submit a [NGAP service desk ticket](https
 
 ### 3) Send public key to EMS. Lambda will provide private key when sftp files to EMS
 
-Upload the corresponding private key to s3, use `{{system_bucket}}` as bucket name and `{{prefix}}/crypto/ems-private.pem` as key,  `{{system_bucket}}` and `{{prefix}}` are configured in `app/config.yml`.  If a different private key file name other than `ems-private.pem` is used, specify it in the `ems` configuration in `app/config.yml`.
+Upload the corresponding private key to s3, use `system_bucket` as bucket name and `{prefix}/crypto/ems-private.pem` as key,  `system_bucket` and `prefix` are configured in your deployment's `terraform.tfvars` file.  If a different private key file name other than `ems-private.pem` is used, specify it in the `ems_private_key` configuration in `terraform.tfvars`.
 
 ### 4) Create a data manifest file manually and send it to EMS team, and EMS team will configure the data provider on their side.  _Example configuration of the data manifest file can be found in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/data/ems)_
 
@@ -61,7 +61,7 @@ Upload the corresponding private key to s3, use `{{system_bucket}}` as bucket na
 
 ### 6) Configure the `ems` configuration parameters in `app/config.yml`. _Example configuration of the `ems` can be found in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/app/config.yml)_
 
-If the `submitReport` is not set to `true` in the configuration, the reports are still generated in `s3://{{buckets.internal.name}/{{prefix}}/ems/{{filename}}` for Product Metadata and Ingest reports, and `s3://{{buckets.internal.name}/{{prefix}}/ems-distribution/reports/{{filename}}` for Distribution reports, but they won't be submitted to EMS.
+If  `ems_submit_report` is not set to `true` in the configuration, the reports are still generated in `s3://{buckets.internal.name}/{prefix}/ems/{filename}` for Product Metadata and Ingest reports, and `s3://{buckets.internal.name}/{prefix}/ems-distribution/reports/{filename}` for Distribution reports, but they won't be submitted to EMS.
 
 Submitted reports will be saved to `sent` folder.
 
