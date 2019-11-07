@@ -1,7 +1,8 @@
 ---
-id: config_descriptions
+id: version-1.15.0-config_descriptions
 title: Configuration Descriptions
 hide_title: true
+original_id: config_descriptions
 ---
 
 # Cumulus Configuration

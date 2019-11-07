@@ -46,6 +46,7 @@ function createTaskMarkdown(taskName) {
 
   const header = homepage ? `[${name}](${homepage})` : name;
   output.push(`### ${header}`);
+  output.push('');
   output.push(description);
   output.push('');
   if (homepage) {
