@@ -58,7 +58,7 @@ cumulus-api CLI also includes a backup and restore command. The CLI backup comma
 
 ### Backup with the CLI
 
-To backup a table with the CLI, make sure `@cumulus/api` package is installed using [npm](https://www.npmjs.com/), making sure to reference the correct version:
+To backup a table with the CLI, install the `@cumulus/api` package using [npm](https://www.npmjs.com/), making sure to install the same version as your Cumulus deployment:
 
 ```bash
 npm install -g @cumulus/api@version
