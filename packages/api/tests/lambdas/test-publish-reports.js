@@ -426,40 +426,6 @@ test.serial('lambda publishes correct granules from payload.granules to SNS topi
   }
 });
 
-test.serial('lambda does not publish granules from meta.input_granules to SNS topic', async (t) => {
-  const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
-
-  const collectionId = `${randomId('MOD')}___${randomNumber()}`;
-  const executionName = randomId('execution');
-  const createdAtTime = Date.now();
-  const message = createCumulusMessage({
-    numberOfGranules: 3,
-    collectionId,
-    cMetaParams: {
-      execution_name: executionName,
-      workflow_start_time: createdAtTime
-    }
-  });
-
-  const { granules } = message.payload;
-  delete message.payload;
-  message.meta.input_granules = granules;
-
-  const cwEventMessage = createCloudwatchEventMessage(
-    'RUNNING',
-    message
-  );
-
-  try {
-    await publishReports.handler(cwEventMessage);
-
-    t.is(granulePublishSpy.callCount, 0);
-  } finally {
-    // revert the mocking
-    granulePublishMock();
-  }
-});
-
 test.serial('lambda without PDR in message does not publish to PDR SNS topic', async (t) => {
   const { message } = t.context;
 

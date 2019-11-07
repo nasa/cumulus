@@ -370,8 +370,7 @@ class Granule extends Manager {
    * @returns {Promise<Array>} granule records
    */
   async createGranulesFromSns(cumulusMessage) {
-    const granules = get(cumulusMessage, 'payload.granules')
-      || get(cumulusMessage, 'meta.input_granules');
+    const granules = get(cumulusMessage, 'payload.granules');
 
     if (!granules) return null;
 

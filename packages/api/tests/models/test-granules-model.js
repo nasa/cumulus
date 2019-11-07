@@ -935,7 +935,6 @@ test(
 
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     delete cumulusMessage.payload.granules;
-    delete cumulusMessage.meta.input_granules;
 
     const result = await granuleModel.createGranulesFromSns(cumulusMessage);
 
