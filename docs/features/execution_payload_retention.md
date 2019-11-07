@@ -32,7 +32,7 @@ Default value is `false`.
 
 #### complete_execution_payload_timeout _(number)_
 
-This flag defines the cleanup threshold for executions with a 'completed' status in days.   Records with updateTime values older than this with payload information  will have that information removed.
+This flag defines the cleanup threshold for executions with a 'completed' status in days.   Records with `updatedAt` values older than this with payload information  will have that information removed.
 
 Default value is `10`.
 
