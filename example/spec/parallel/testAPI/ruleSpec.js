@@ -28,7 +28,6 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
   beforeAll(async () => {
     config = await loadConfig();
     process.env.stackName = config.stackName;
-    process.env.system_bucket = config.system_bucket;
 
     const testId = createTimestampedTestId(config.stackName, 'Rule');
     testSuffix = createTestSuffix(testId);
@@ -127,7 +126,6 @@ describe('When I create a one-time rule via the Cumulus API', () => {
   beforeAll(async () => {
     config = await loadConfig();
     process.env.stackName = config.stackName;
-    process.env.system_bucket = config.system_bucket;
 
     lambdaStep = new LambdaStep();
 
