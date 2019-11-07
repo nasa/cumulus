@@ -136,6 +136,7 @@ SfSnsReport:
 SyncGranule:
   handler: index.handler
   timeout: 300
+  logToElasticSearch: true
   source: node_modules/@cumulus/sync-granule/dist/
   layers:
     - '{{cma_layer}}'
