@@ -379,7 +379,7 @@ test.serial('failure describing step function in handleGranuleMessages does not 
   }
 });
 
-test.serial('lambda publishes correct granules from payload.granules to SNS topic', async (t) => {
+test.serial.only('lambda publishes correct granules from payload.granules to SNS topic', async (t) => {
   const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
 
   const collectionId = `${randomId('MOD')}___${randomNumber()}`;
@@ -393,16 +393,6 @@ test.serial('lambda publishes correct granules from payload.granules to SNS topi
       workflow_start_time: createdAtTime
     }
   });
-
-  await executionModel.create(
-    fakeExecutionFactoryV2({
-      execution: message.cumulus_meta.execution_name,
-      arn: aws.getExecutionArn(
-        message.cumulus_meta.state_machine,
-        message.cumulus_meta.execution_name
-      )
-    })
-  );
 
   const cwEventMessage = createCloudwatchEventMessage(
     'RUNNING',
