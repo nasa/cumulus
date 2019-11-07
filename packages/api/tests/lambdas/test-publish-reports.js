@@ -379,7 +379,7 @@ test.serial('failure describing step function in handleGranuleMessages does not 
   }
 });
 
-test.serial.only('lambda publishes correct granules from payload.granules to SNS topic', async (t) => {
+test.serial('lambda publishes correct granules from payload.granules to SNS topic', async (t) => {
   const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
 
   const collectionId = `${randomId('MOD')}___${randomNumber()}`;
