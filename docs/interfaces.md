@@ -12,6 +12,22 @@ The diagram below illustrates the workflow process in detail and the various int
 
 ![Architecture diagram showing the interfaces for triggering and reporting of Cumulus workflow executions](../assets/interfaces.svg)
 
-## Kinesis stream workflow trigger
+## Workflow triggers and queuing
+
+### Kinesis stream
 
 As a Kinesis stream is consumed by the `messageConsumer` Lambda to queue workflow executions, the incoming event is validated against [this consumer schema](https://github.com/nasa/cumulus/blob/master/packages/api/lambdas/kinesis-consumer-event-schema.json) by the [`ajv` package](https://www.npmjs.com/package/ajv).
+
+### SQS queue for executions
+
+The messages put into the SQS queue for executions should conform to the [Cumulus message format](workflows/cumulus-task-message-flow.md#cumulus-message-format).
+
+## Workflow reporting
+
+### SNS reporting topics
+
+The messages published to the SNS reporting topics (executions, granules, PDRs) should conform to the [model schema](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) for each data type.
+
+### Cumulus API
+
+See the [Cumulus API documentation](https://nasa.github.io/cumulus-api/).
