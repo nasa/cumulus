@@ -54,6 +54,7 @@ export GIT_SHA=$(git rev-parse HEAD)
 ## Always set GIT_PR true if master branch
 if [[ $BRANCH == master ]]; then
   export GIT_PR=true
+  echo export GIT_PR=true >> .bamboo_env_vars
 fi
 
 ## This should take a blank value from the global options, and
