@@ -855,9 +855,8 @@ async function createQueue(queueName) {
 exports.createQueue = createQueue;
 
 /**
- * Publish a message to an SNS topic.
- *
- * Catch any thrown errors and log them.
+ * Publish a message to an SNS topic. Does not catch
+ * errors, to allow more specific handling by the caller.
  *
  * @param {string} snsTopicArn - SNS topic ARN
  * @param {Object} message - Message object

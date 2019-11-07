@@ -76,7 +76,7 @@ async function publishPdrSnsMessage(
 async function handleExecutionMessage(eventMessage) {
   try {
     const executionRecord = await Execution.generateRecord(eventMessage);
-    return publishExecutionSnsMessage(executionRecord);
+    return await publishExecutionSnsMessage(executionRecord);
   } catch (err) {
     log.error(
       `Failed to create database record for execution ${getMessageExecutionArn(eventMessage)}: ${err.message}`,
@@ -111,7 +111,7 @@ async function buildAndPublishGranule(
       executionUrl,
       executionDescription
     );
-    return publishGranuleSnsMessage(granuleRecord);
+    return await publishGranuleSnsMessage(granuleRecord);
   } catch (err) {
     log.error(
       `Failed to create database record for granule ${granule.granuleId}: ${err.message}`,
@@ -175,7 +175,7 @@ async function handlePdrMessage(eventMessage) {
   try {
     const pdrRecord = Pdr.generatePdrRecord(eventMessage);
     if (!pdrRecord) return Promise.resolve();
-    return publishPdrSnsMessage(pdrRecord);
+    return await publishPdrSnsMessage(pdrRecord);
   } catch (err) {
     log.error(
       `Failed to create database record for PDR ${eventMessage.payload.pdr.name}: ${err.message}`,
