@@ -22,11 +22,22 @@ As a Kinesis stream is consumed by the `messageConsumer` Lambda to queue workflo
 
 The messages put into the SQS queue for executions should conform to the [Cumulus message format](workflows/cumulus-task-message-flow.md#cumulus-message-format).
 
+## Workflow executions
+
+See the [documentation on Cumulus workflows](./workflows/README.md).
+
 ## Workflow reporting
 
 ### SNS reporting topics
 
+For granule and PDR reporting, the topics will only receive data if the [Cumulus workflow execution message](workflows/cumulus-task-message-flow.md#cumulus-message-format) meets the following criteria:
+
+- Granules - workflow message contains granule data in `payload.granules`
+- PDRs - workflow message contains PDR data in `payload.pdr`
+
 The messages published to the SNS reporting topics (executions, granules, PDRs) should conform to the [model schema](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) for each data type.
+
+Further detail on workflow SNS reporting and how to interact with these interfaces can be found in the [SNS workflow notifications data cookbook](data-cookbooks/sns.md).
 
 ### Cumulus API
 
