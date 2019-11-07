@@ -49,11 +49,10 @@ if [[ $LOCK_EXIST_STATUS -gt 0 ]]; then
 fi
 set -e
 
-if [[ $DEPLOYMENT =~ '-tf' ]]; then
-  echo "Running Terraform deployment $DEPLOYMENT"
-  . ../bamboo/abort-if-not-terraform.sh
-  . ../bamboo/bootstrap-tf-deployment.sh
-else
+if [[ $KES_DEPLOYMENT == true ]]; then
   echo "Running Kes deployment $DEPLOYMENT"
   . ../bamboo/bootstrap-kes-deployment.sh
+else
+  echo "Running Terraform deployment $DEPLOYMENT"
+  . ../bamboo/bootstrap-tf-deployment.sh
 fi
