@@ -373,6 +373,7 @@ exports.getS3Object = improveStackTrace(
         }
       },
       {
+        maxTimeout: 10000,
         onFailedAttempt: (err) => log.debug(`getS3Object('${Bucket}', '${Key}') failed with ${err.retriesLeft} retries left: ${err.message}`),
         ...retryOptions
       }
@@ -1056,7 +1057,7 @@ exports.retryOnThrottlingException = (fn, options) =>
   (...args) =>
     pRetry(
       () => fn(...args).catch(retryIfThrottlingException),
-      options
+      { maxTimeout: 5000, ...options }
     );
 
 /**

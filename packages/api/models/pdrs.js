@@ -63,8 +63,7 @@ class Pdr extends Manager {
     }
 
     if (!pdr.name) {
-      log.info('Could not find name on PDR object', pdr);
-      return record;
+      throw new Error('Could not find name on PDR object', pdr);
     }
 
     const arn = getMessageExecutionArn(message);
