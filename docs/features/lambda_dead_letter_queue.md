@@ -24,7 +24,7 @@ These DLQs are setup with the following configuration:
   visibility_timeout_seconds = 60
 ```
 
-#### Default Lambda Configuration
+### **Default Lambda Configuration**
 
 The following built-in Cumulus Lambdas are setup with DLQs to allow handling of process failures:
 
