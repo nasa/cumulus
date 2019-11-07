@@ -813,3 +813,35 @@ chuckulus-ci:
 pq:
   prefix: pq
   prefixNoDash: pq
+
+bt:
+  prefix: bt
+  prefixNoDash: bt
+  logToSharedDestination: '{{SHARED_LOG_DESTINATION_ARN}}'
+  users:
+    - username: brian.tennity
+
+bt-sit:
+  prefix: bt-sit
+  prefixNoDash: btSit
+  cma_layer: '{{sit_cma_layer}}'
+  buckets:
+    internal:
+      name: bt-sit-internal
+      type: internal
+    private:
+      name: bt-sit-private
+      type: private
+    protected:
+      name: cumulus-sit-protected
+      type: protected
+    public:
+      name: cumulus-sit-public
+      type: public
+    protected-2:
+      name: cumulus-sit-protected
+      type: protected
+    dashboard:
+      name: bt-sit-dashboard
+      type: shared
+
