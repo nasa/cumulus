@@ -3,6 +3,7 @@ const elasticsearch = require('@elastic/elasticsearch');
 const log = require('@cumulus/common/log');
 
 const GranuleModel = require('../models/granules');
+const SCROLL_SIZE = 500 // default size in Kibana
 
 function applyWorkflowToGranules(granuleIds, workflowName, queueName) {
   const granuleModelClient = new GranuleModel();
@@ -39,35 +40,62 @@ function applyWorkflowToGranules(granuleIds, workflowName, queueName) {
 async function bulkGranule(payload) {
   const queueName = payload.queueName;
   const workflowName = payload.workflowName;
+  const granuleIds = payload.ids || [];
 
-  if (payload.ids) {
-    return applyWorkflowToGranules(payload.ids, workflowName, queueName);
-  }
+  // query ElasticSearch if needed
+  if (granuleIds.length == 0 && payload.query){
+    log.info('No granule ids detected. Searching for granules in Elasticsearch.');
 
-  log.info('No granule ids detected. Searching for granules in Elasticsearch.');
-
-  if (!process.env.METRICS_ES_HOST
-    || !process.env.METRICS_ES_USER
-    || !process.env.METRICS_ES_PASS) {
-    throw new Error('No ELK metrics stack configured.');
-  }
-
-  const query = payload.query;
-  const index = payload.index;
-  const client = new elasticsearch.Client({
-    node: process.env.METRICS_ES_HOST,
-    auth: {
-      username: process.env.METRICS_ES_USER,
-      password: process.env.METRICS_ES_PASS
+    if (!process.env.METRICS_ES_HOST
+      || !process.env.METRICS_ES_USER
+      || !process.env.METRICS_ES_PASS) {
+      throw new Error('No ELK metrics stack configured.');
     }
-  });
 
-  // TO DO
-  // Update to take the search repsonse, get graules, and kick off workflows
-  const searchResponse = await client.search({ index, body: query });
-  return searchResponse;
-  // Request against elastic search with pagenation
-  // page through response, for each item in each page, applyWorkflow
+    const query = payload.query;
+    const index = payload.index;
+    const responseQueue = [];
+
+    const esUrl = 'https://' + process.env.METRICS_ES_USER + ':' +
+      process.env.METRICS_ES_PASS + '@' + process.env.METRICS_ES_HOST;
+    const client = new elasticsearch.Client({
+      node: esUrl
+    });
+
+    try {
+      const searchResponse = await client.search({
+        index: index,
+        scroll: '30s',
+        size: SCROLL_SIZE,
+        _source: ['granuleId'],
+        body: query
+      });
+
+      responseQueue.push(searchResponse);
+
+      while(responseQueue.length){
+        const { body } = responseQueue.shift();
+
+        body.hits.hits.forEach((hit) => {
+          granuleIds.push(hit._source.granuleId);
+        });
+
+        if (body.hits.total != granuleIds.length){
+          responseQueue.push(
+            await client.scroll({
+              scrollId: body._scroll_id,
+              scroll: '30s'
+            })
+          );
+        }
+      }
+    } catch (e) {
+      console.log("ERROR: " + e);
+    }
+  }
+
+  console.log('Granule IDs: ', granuleIds);
+  return applyWorkflowToGranules(granuleIds, workflowName, queueName);
 }
 
 async function handler(event) {
