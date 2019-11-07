@@ -543,44 +543,6 @@ test.serial('lambda publishes PDR from payload.pdr to SNS topic', async (t) => {
   }
 });
 
-test.serial('lambda does not publish PDR from meta.pdr to SNS topic', async (t) => {
-  const pdrPublishMock = publishReports.__set__('publishPdrSnsMessage', pdrPublishSpy);
-
-  const message = createCumulusMessage({
-    pdrParams: {
-      name: randomString()
-    },
-    collectionId: `${randomId('MOD')}___${randomNumber()}`,
-    cMetaParams: {
-      workflow_start_time: Date.now()
-    }
-  });
-
-  message.meta.pdr = message.payload.pdr;
-  delete message.payload.pdr;
-
-  await executionModel.create(
-    fakeExecutionFactoryV2({
-      execution: message.cumulus_meta.execution_name,
-      arn: aws.getExecutionArn(
-        message.cumulus_meta.state_machine,
-        message.cumulus_meta.execution_name
-      )
-    })
-  );
-
-  const cwEventMessage = createCloudwatchEventMessage('SUCCEEDED', message);
-
-  try {
-    await publishReports.handler(cwEventMessage);
-
-    t.is(pdrPublishSpy.callCount, 0);
-  } finally {
-    // revert the mocking
-    pdrPublishMock();
-  }
-});
-
 test.serial('error handling execution record does not affect publishing to other topics', async (t) => {
   const pdrPublishMock = publishReports.__set__('publishPdrSnsMessage', pdrPublishSpy);
   const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);

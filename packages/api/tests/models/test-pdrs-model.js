@@ -72,19 +72,6 @@ test('generatePdrRecord() returns null if message.payload.pdr.name is not set', 
   t.is(pdrRecord, null);
 });
 
-// Addresses CUMULUS-1644
-test('generatePdrRecord() ignores a PDR set in message.meta.pdr', (t) => {
-  const pdrRecord = Pdr.generatePdrRecord({
-    meta: {
-      pdr: {
-        name: 'my-pdr'
-      }
-    }
-  });
-
-  t.is(pdrRecord, null);
-});
-
 test('generatePdrRecord() sets correct progress value for running PDR', async (t) => {
   const pdrName = randomId('pdr');
   const message = createPdrMessage({
