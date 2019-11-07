@@ -29,3 +29,5 @@ saml_entity_id                  = "https://cumulus-sandbox.earthdata.nasa.gov/jl
 saml_assertion_consumer_service = "https://5hlnofihz8.execute-api.us-east-1.amazonaws.com:8000/dev/saml/auth"
 saml_idp_login                  = "https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso"
 saml_launchpad_metadata_path    = "s3://jl-test-integration-internal/jl-tf/launchpad/launchpad-sbx-metadata.xml"
+
+archive_api_port = 8000
