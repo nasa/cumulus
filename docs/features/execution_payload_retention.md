@@ -38,7 +38,7 @@ Default value is `10`.
 
 #### non_complete_execution_payload_timeout_disable _(bool)_
 
-This configuration option, when set to true, will disable all cleanup of "non-complete" (any status _other_ than `completed`) execution payloads (e.g. ).
+This configuration option, when set to true, will disable all cleanup of "non-complete" (any status _other_ than `completed`) execution payloads.
 
 Default value is `false`.
 
