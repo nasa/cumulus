@@ -30,6 +30,10 @@ resource "aws_elasticsearch_domain" "es" {
     automated_snapshot_start_hour = 0
   }
 
+  lifecycle {
+    prevent_destroy = true
+  }
+
   tags = local.default_tags
 }
 

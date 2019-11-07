@@ -6,30 +6,26 @@ hide_title: true
 
 # Component-based Cumulus Deployment
 
-Cumulus is moving toward a more modular architecture, which will allow users to
+Cumulus is now released in a modular architecture, which will allow users to
 pick and choose the individual components that they want to deploy. These
 components will be made available as [Terraform modules](https://www.terraform.io/docs/modules/index.html).
+
 Cumulus users will be able to add those individual components to their
 deployment and link them together using Terraform. In addition, users will be
 able to make use of the large number of publicly available modules on the [Terraform Module Registry](https://registry.terraform.io/).
 
-This document assumes familiarity with Terraform. If you are not comfortable
-working with Terraform, the following links should bring you up to speed:
+## Available Cumulus Components
 
-* [Introduction to Terraform](https://www.terraform.io/intro/index.html)
-* [Getting Started with Terraform and AWS](https://learn.hashicorp.com/terraform/?track=getting-started#getting-started)
-* [Terraform Configuration Language](https://www.terraform.io/docs/configuration/index.html)
+* [Cumulus](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus)
+* [Data persistence](https://github.com/nasa/cumulus/tree/master/tf-modules/data-persistence)
+* [ECS service](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-ecs-service)
+* [Distribution](https://github.com/nasa/cumulus/tree/master/tf-modules/distribution)
+* [Thin Egress App](./thin_egress_app)
+* [Workflow](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-ecs-service)
 
-⚠️ Cumulus Terraform modules are targetted at Terraform v0.12.0 and higher.  To verify that the version of Terraform installed is at least v0.12.0, run:
+## Adding components to your Terraform deployment
 
-```shell
-$ terraform --version
-Terraform v0.12.2
-```
-
-## Adding Terraform to your deployment
-
-Although Terraform can be configured using a single file, it is recommended to
+Although Terraform components can be configured using a single file, it is recommended to
 add the following files to your deployment:
 
 * **variables.tf** - [input variables](https://www.terraform.io/docs/configuration/variables.html)
@@ -79,46 +75,4 @@ documentation:
 The recommended approach for handling remote state with Cumulus is to use the [S3 backend](https://www.terraform.io/docs/backends/types/s3.html).
 This backend stores state in S3 and uses a DynamoDB table for locking.
 
-It is highly recommended that you enable bucket versioning on the S3 bucket to
-allow for state recovery in the case of accidental deletions and human error.
-Bucket versioning can be enabled with the following AWS CLI command:
-
-```shell
-$ aws s3api put-bucket-versioning \
-    --bucket my-tf-state-bucket \
-    --versioning-configuration Status=Enabled
-```
-
-The S3 backend provides state locking and consistency checking using a DynamoDB
-table. That table can be created with the following command:
-
-```shell
-$ aws dynamodb create-table \
-    --table-name my-tf-locks-table \
-    --attribute-definitions AttributeName=LockID,AttributeType=S \
-    --key-schema AttributeName=LockID,KeyType=HASH \
-    --billing-mode PAY_PER_REQUEST
-```
-
-Terraform can be configured to use the S3 backend by adding the following to
-your deployment's Terraform config. If following the file layout [described above](#adding-terraform-to-your-deployment),
-this should be added to your **terraform.tf** file.
-
-```hcl
-terraform {
-  backend "s3" {
-    region         = "us-east-1"
-    bucket         = "my-tf-state-bucket"
-    key            = "terraform.tfstate"
-    dynamodb_table = "my-tf-locks-table"
-  }
-}
-```
-
-## Available Cumulus Components
-
-* [Cumulus Distribution](./distribution_component) - the Thin Egress App, as
-  well as the S3 credentials endpoint, with a config targeted at Cumulus and
-  NGAP.
-* [Thin Egress App](./thin_egress_app) - an app running in lambda that creates
-  temporary S3 links and provides URS integration.
+See the deployment documentation for a [walkthrough of creating resources for your remote state using an S3 backend](README.md#create-resources-for-terraform-state).
