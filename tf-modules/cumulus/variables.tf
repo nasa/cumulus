@@ -248,6 +248,21 @@ variable "launchpad_passphrase" {
   default = ""
 }
 
+variable "metrics_es_host" {
+  type = string
+  default = null
+}
+
+variable "metrics_es_password" {
+  type = string
+  default = null
+}
+
+variable "metrics_es_username" {
+  type = string
+  default = null
+}
+
 variable "oauth_provider" {
   description = "Oauth provider to use for authorizing requests to the archive API. Also accepts 'launchhpad'"
   type    = string
