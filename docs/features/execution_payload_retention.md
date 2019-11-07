@@ -20,7 +20,7 @@ The following configuration flags have been made available in the `cumulus` modu
 
 #### daily_execution_payload_cleanup_schedule_expression _(string)_
 
-This configuration option sets the execution times for this lambda to run, using a Cloud Watch cron expression.
+This configuration option sets the execution times for this Lambda to run, using a Cloudwatch cron expression.
 
 Default value is `"cron(0 4 * * ? *)"`.
 
