@@ -631,7 +631,8 @@ module.exports.execution = {
     },
     collectionId: { type: 'string' },
     duration: { type: 'number' },
-    parentArn: { type: 'string' }
+    parentArn: { type: 'string' },
+    asyncOperationId: { type: 'string' }
   },
   required: [
     'arn',

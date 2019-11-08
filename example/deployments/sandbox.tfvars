@@ -27,3 +27,8 @@ s3_replicator_config = {
   target_prefix = ""
 }
 system_bucket="cumulus-test-sandbox-internal"
+
+launchpad_api = "https://api.launchpad.nasa.gov/icam/api/sm/v1"
+launchpad_certificate = "launchpad.pfx"
+
+oauth_user_group = "GSFC-Cumulus-Dev"

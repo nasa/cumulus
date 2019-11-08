@@ -24,6 +24,36 @@ variable "cumulus_message_adapter_lambda_layer_arn" {
   type = string
 }
 
+variable "cmr_oauth_provider" {
+  type = string
+  default = "earthdata"
+}
+
+variable "launchpad_api" {
+  type = string
+  default = "launchpadApi"
+}
+
+variable "launchpad_certificate" {
+  type = string
+  default = "launchpad.pfx"
+}
+
+variable "launchpad_passphrase" {
+  type = string
+  default = ""
+}
+
+variable "oauth_provider" {
+  type    = string
+  default = "earthdata"
+}
+
+variable "oauth_user_group" {
+  type    = string
+  default = "N/A"
+}
+
 variable "data_persistence_remote_state_config" {
   type = object({ bucket = string, key = string, region = string })
 }
@@ -114,4 +144,19 @@ variable "archive_api_port" {
 variable "private_archive_api_gateway" {
   type = bool
   default = true
+}
+
+variable "metrics_es_host" {
+  type = string
+  default = null
+}
+
+variable "metrics_es_password" {
+  type = string
+  default = null
+}
+
+variable "metrics_es_username" {
+  type = string
+  default = null
 }

@@ -30,6 +30,7 @@ function determineIntegrationTestStackName(cb) {
     'Jonathan Kovarik': 'jk',
     'Menno Van Diermen': 'mvd',
     'Jacob Campbell': 'jc',
+    ifestus: 'jc',
     'Chuck Daniels': 'chuckulus-ci'
   };
 

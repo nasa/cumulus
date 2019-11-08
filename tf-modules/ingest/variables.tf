@@ -69,6 +69,7 @@ variable "launchpad_certificate" {
 
 variable "launchpad_passphrase" {
   type = string
+  default = ""
 }
 
 variable "log2elasticsearch_lambda_function_arn" {

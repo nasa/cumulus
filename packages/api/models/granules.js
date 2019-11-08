@@ -209,9 +209,16 @@ class Granule extends Manager {
    *
    * @param {Object} g - the granule object
    * @param {string} workflow - the workflow name
+   * @param {string} [queueName] - specify queue to append message to
+   * @param {string} [asyncOperationId] - specify asyncOperationId origin
    * @returns {Promise<undefined>} undefined
    */
-  async applyWorkflow(g, workflow) {
+  async applyWorkflow(
+    g,
+    workflow,
+    queueName = undefined,
+    asyncOperationId = undefined
+  ) {
     const { name, version } = deconstructCollectionId(g.collectionId);
 
     const lambdaPayload = await Rule.buildPayload({
@@ -223,7 +230,9 @@ class Granule extends Manager {
       collection: {
         name,
         version
-      }
+      },
+      queueName,
+      asyncOperationId
     });
 
     await this.updateStatus({ granuleId: g.granuleId }, 'running');
@@ -370,8 +379,7 @@ class Granule extends Manager {
    * @returns {Promise<Array>} granule records
    */
   async createGranulesFromSns(cumulusMessage) {
-    const granules = get(cumulusMessage, 'payload.granules')
-      || get(cumulusMessage, 'meta.input_granules');
+    const granules = get(cumulusMessage, 'payload.granules');
 
     if (!granules) return null;
 

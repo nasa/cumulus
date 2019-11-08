@@ -137,7 +137,7 @@ const loadConfig = async (type = 'app') => {
   await loadEnvFile('./.env');
   verifyRequiredEnvironmentVariables();
 
-  const configFromFile = Boolean(process.env.KES_DEPLOYMENT) === true ?
+  const configFromFile = process.env.KES_DEPLOYMENT === 'true' ?
     loadConfigFromKes(type) :
     loadConfigYmlFile(process.env.DEPLOYMENT);
 

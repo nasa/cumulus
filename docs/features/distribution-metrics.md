@@ -16,7 +16,8 @@ The metrics team has taken care of setting up logstash to ingest the files that 
 
 Once Cumulus has been configured to deliver Cloudwatch logs to the ESDIS Metrics team, you can create a Kibana index pattern associated with your Cumulus stack.  The metrics team has worked out a convention with the Cumulus devlopers to ensure access to your stack's logs.  The important piece is that the Kibana index pattern is created with the exact name of the prefix (stackName) with which cumulus was deployed.
 
-### Cumulus / ESDIS Metrics distribution system.
+### Cumulus / ESDIS Metrics distribution system
+
 ![Configuration of Cumulus/Metrics coordination](assets/AWS-Cross-account-log-delivery-and-metrics.png)
 
 ## Kibana Index
@@ -30,9 +31,5 @@ Step 1: create the index by selecting `Management`, Kibana `Index Patterns`.  Us
 Step 2: Set the Time Filter field name to `@timestamp` with the pulldown option. Very importantly `Show advanced options` to create a Custom index Pattern ID that is your `<prefix>`.  Then `Create index pattern`. This important convention allows the dashboard to know which index to use to find the distribution metrics for a particular stack.
 
 ![Image of Step 2 configuring kibana console](assets/kibana-step2.png)
-
-
-
-
 
 [^1]: The Kibana console will not let you create an index if it doesn't match at least one Elasticsearch index.
