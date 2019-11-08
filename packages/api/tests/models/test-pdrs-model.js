@@ -62,14 +62,13 @@ test('generatePdrRecord() returns null if message.payload.pdr is not set', (t) =
   t.is(pdrRecord, null);
 });
 
-test('generatePdrRecord() returns null if message.payload.pdr.name is not set', (t) => {
-  const pdrRecord = Pdr.generatePdrRecord({
+test('generatePdrRecord() throws error if message.payload.pdr.name is not set', (t) => {
+  t.throws(() => Pdr.generatePdrRecord({
     payload: {
       pdr: {}
     }
-  });
-
-  t.is(pdrRecord, null);
+  }),
+  'Could not find name on PDR object {}');
 });
 
 test('generatePdrRecord() sets correct progress value for running PDR', async (t) => {
