@@ -33,6 +33,14 @@ data "aws_iam_policy_document" "report_executions_policy_document" {
     ]
     resources = ["*"]
   }
+  statement {
+    actions = [
+      "sqs:SendMessage"
+    ]
+    resources = [
+      aws_sqs_queue.report_executions_dead_letter_queue.arn
+    ]
+  }
 }
 
 resource "aws_iam_role_policy" "report_executions_lambda_role_policy" {
@@ -149,6 +157,14 @@ data "aws_iam_policy_document" "report_granules_policy_document" {
     ]
     resources = ["*"]
   }
+  statement {
+    actions = [
+      "sqs:SendMessage"
+    ]
+    resources = [
+      aws_sqs_queue.report_granules_dead_letter_queue.arn
+    ]
+  }
 }
 
 resource "aws_iam_role_policy" "report_granules_lambda_role_policy" {
@@ -254,6 +270,14 @@ data "aws_iam_policy_document" "report_pdrs_policy_document" {
       "logs:PutLogEvents"
     ]
     resources = ["*"]
+  }
+  statement {
+    actions = [
+      "sqs:SendMessage"
+    ]
+    resources = [
+      aws_sqs_queue.report_pdrs_dead_letter_queue.arn
+    ]
   }
 }
 
