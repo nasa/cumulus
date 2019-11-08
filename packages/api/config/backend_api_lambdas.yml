@@ -15,6 +15,8 @@ ApiEndpoints:
     EARTHDATA_CLIENT_PASSWORD: '{{EARTHDATA_CLIENT_PASSWORD}}'
     OAUTH_PROVIDER: '{{parent.oauth.provider}}'
     oauth_user_group: '{{parent.oauth.userGroup}}'
+    METRICS_ES_HOST: '{{METRICS_ES_HOST}}'
+    METRICS_ES_AUTH: '{{METRICS_ES_USER}}:{{METRICS_ES_PASS}}'
     ENTITY_ID: '{{parent.samlConfig.entityID}}'
     ASSERT_ENDPOINT: '{{parent.samlConfig.assertionConsumerService}}'
     IDP_LOGIN: '{{parent.samlConfig.idpLogin}}'
@@ -83,6 +85,9 @@ ApiEndpoints:
     IndexFromDatabaseLambda:
       function: Ref
       value: IndexFromDatabaseLambdaFunctionArn
+    BulkOperationLambda:
+      function: Ref
+      value: BulkOperationLambdaFunctionArn
     STSCredentialsLambda: '{{parent.sts_credentials_lambda}}'
     cmr_provider: '{{parent.cmr.provider}}'
     cmr_client_id: '{{parent.cmr.clientId}}'
