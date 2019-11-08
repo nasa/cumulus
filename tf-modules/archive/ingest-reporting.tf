@@ -41,6 +41,14 @@ resource "aws_iam_role_policy" "report_executions_lambda_role_policy" {
   policy = data.aws_iam_policy_document.report_executions_policy_document.json
 }
 
+resource "aws_sqs_queue" "report_executions_dead_letter_queue" {
+  name                       = "${var.prefix}-reportExecutionsDeadLetterQueue"
+  receive_wait_time_seconds  = 20
+  message_retention_seconds  = 1209600
+  visibility_timeout_seconds = 60
+  tags                       = local.default_tags
+}
+
 resource "aws_lambda_function" "report_executions" {
   depends_on = ["aws_cloudwatch_log_group.report_executions_logs"]
 
@@ -52,6 +60,11 @@ resource "aws_lambda_function" "report_executions" {
   runtime          = "nodejs8.10"
   timeout          = 30
   memory_size      = 128
+
+
+  dead_letter_config {
+    target_arn = aws_sqs_queue.report_executions_dead_letter_queue.arn
+  }
 
   vpc_config {
     subnet_ids = var.lambda_subnet_ids
@@ -144,6 +157,14 @@ resource "aws_iam_role_policy" "report_granules_lambda_role_policy" {
   policy = data.aws_iam_policy_document.report_granules_policy_document.json
 }
 
+resource "aws_sqs_queue" "report_granules_dead_letter_queue" {
+  name                       = "${var.prefix}-reportGranulesDeadLetterQueue"
+  receive_wait_time_seconds  = 20
+  message_retention_seconds  = 1209600
+  visibility_timeout_seconds = 60
+  tags                       = local.default_tags
+}
+
 resource "aws_lambda_function" "report_granules" {
   filename         = "${path.module}/../../packages/api/dist/reportGranules/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/reportGranules/lambda.zip")
@@ -153,6 +174,11 @@ resource "aws_lambda_function" "report_granules" {
   runtime          = "nodejs8.10"
   timeout          = 30
   memory_size      = 256
+
+
+  dead_letter_config {
+    target_arn = aws_sqs_queue.report_granules_dead_letter_queue.arn
+  }
 
   vpc_config {
     subnet_ids = var.lambda_subnet_ids
@@ -237,6 +263,14 @@ resource "aws_iam_role_policy" "report_pdrs_lambda_role_policy" {
   policy = data.aws_iam_policy_document.report_pdrs_policy_document.json
 }
 
+resource "aws_sqs_queue" "report_pdrs_dead_letter_queue" {
+  name                       = "${var.prefix}-reportPdrsDeadLetterQueue"
+  receive_wait_time_seconds  = 20
+  message_retention_seconds  = 1209600
+  visibility_timeout_seconds = 60
+  tags                       = local.default_tags
+}
+
 resource "aws_lambda_function" "report_pdrs" {
   filename         = "${path.module}/../../packages/api/dist/reportPdrs/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/reportPdrs/lambda.zip")
@@ -246,6 +280,10 @@ resource "aws_lambda_function" "report_pdrs" {
   runtime          = "nodejs8.10"
   timeout          = 30
   memory_size      = 128
+
+  dead_letter_config {
+    target_arn = aws_sqs_queue.report_pdrs_dead_letter_queue.arn
+  }
 
   vpc_config {
     subnet_ids = var.lambda_subnet_ids
