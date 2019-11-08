@@ -7,7 +7,30 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- **CUMULUS-1639**
+  - Because of
+    [S3's Data Consistency Model](https://docs.aws.amazon.com/AmazonS3/latest/dev/Introduction.html#BasicsObjects),
+    there may be situations where a GET operation for an object can temporarily
+    return a `NoSuchKey` response even if that object _has_ been created. The
+    `@cumulus/common/aws.getS3Object()` function will now retry up to 10 times
+    if a `NoSuchKey` response is returned by S3. This can behavior can be
+    overridden by passing `{ retries: 0 }` as the `retryOptions` argument.
+
+## [v1.15.0] - 2019-11-04
+
 ### BREAKING CHANGES
+
+- **CUMULUS-1644** - When a workflow execution begins or ends, the workflow
+  payload is parsed and any new or updated PDRs or granules referenced in that
+  workflow are stored to the Cumulus archive. The defined interface says that a
+  PDR in `payload.pdr` will be added to the archive, and any granules in
+  `payload.granules` will also be added to the archive. In previous releases,
+  PDRs found in `meta.pdr` and granules found in `meta.input_granules` were also
+  added to the archive. This caused unexpected behavior and has been removed.
+  Only PDRs from `payload.pdr` and granules from `payload.granules` will now be
+  added to the Cumulus archive.
 
 - **CUMULUS-1449** - Cumulus now uses a universal workflow template when
   starting a workflow that contains general information specific to the
@@ -81,25 +104,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     `AWS::ApplicationAutoScaling::ScalableTarget`,
     `AWS::ApplicationAutoScaling::ScalingPolicy`, and `AWS::CloudWatch::Alarm`
     resources should be defined in a kes overrides file. See
-    [example/app/cloudformation.template.yml](./example/app/cloudformation.template.yml)
-    for an example.
-  - The following config parameters are no longer used:
-    - ecs.services.\<NAME\>.minTasks
-    - ecs.services.\<NAME\>.maxTasks
-    - ecs.services.\<NAME\>.scaleInActivityScheduleTime
-    - ecs.services.\<NAME\>.scaleInAdjustmentPercent
-    - ecs.services.\<NAME\>.scaleOutActivityScheduleTime
-    - ecs.services.\<NAME\>.scaleOutAdjustmentPercent
-    - ecs.services.\<NAME\>.activityName
-
-- **CUMULUS-1470**
-  - Remove Cumulus-defined ECS service autoscaling, allowing integrators to
-    better customize autoscaling to meet their needs. In order to use
-    autoscaling with ECS services, appropriate
-    `AWS::ApplicationAutoScaling::ScalableTarget`,
-    `AWS::ApplicationAutoScaling::ScalingPolicy`, and `AWS::CloudWatch::Alarm`
-    resources should be defined in a kes overrides file. See
-    [example/app/cloudformation.template.yml](./example/app/cloudformation.template.yml)
+    [this example](https://github.com/nasa/cumulus/blob/release-1.15.x/example/overrides/app/cloudformation.template.yml)
     for an example.
   - The following config parameters are no longer used:
     - ecs.services.\<NAME\>.minTasks
@@ -126,6 +131,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1625**
   - Added `sf_start_rate` variable to the `ingest` Terraform module, equivalent to `sqs_consumer_rate` in the old model, but will not be automatically applied to custom queues as that was.
+
 - **CUMULUS-1513**
   - Added `sqs`-type rule support in the Cumulus API `@cumulus/api`
   - Added `sqsMessageConsumer` lambda which processes messages from the SQS queues configured in the `sqs` rules.
@@ -160,8 +166,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Removed individual workflow templates.
 
 ### Fixed
+
 - **CUMULUS-1620** - Fixed bug where `message_adapter_version` does not correctly inject the CMA
+
 - **CUMULUS-1396** - Updated `@cumulus/common/StepFunctions.getExecutionHistory()` to recursively fetch execution history when `nextToken` is returned in response
+
 - **CUMULUS-1571** - Updated `@cumulus/common/DynamoDb.get()` to throw any errors encountered when trying to get a record and the record does exist
 
 - **CUMULUS-1452**
@@ -1655,7 +1664,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.14.4...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.15.0...HEAD
+[v1.15.0]: https://github.com/nasa/cumulus/compare/v1.14.4...v1.15.0
 [v1.14.4]: https://github.com/nasa/cumulus/compare/v1.14.3...v1.14.4
 [v1.14.3]: https://github.com/nasa/cumulus/compare/v1.14.2...v1.14.3
 [v1.14.2]: https://github.com/nasa/cumulus/compare/v1.14.1...v1.14.2

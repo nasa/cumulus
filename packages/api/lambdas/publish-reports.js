@@ -58,9 +58,9 @@ async function publishGranuleSnsMessage(
  * @param {Object} pdrRecord - A PDR record.
  * @param {string} [pdrSnsTopicArn]
  *   SNS topic ARN for reporting PDRs. Defaults to `process.env.pdr_sns_topic_arn`.
- * @returns {Promise}
+ * @returns {Promise<undefined>}
  */
-async function publishPdrSnsMessage(
+function publishPdrSnsMessage(
   pdrRecord,
   pdrSnsTopicArn = process.env.pdr_sns_topic_arn
 ) {
@@ -162,17 +162,17 @@ async function handleGranuleMessages(eventMessage) {
  * Publish PDR record to SNS topic.
  *
  * @param {Object} eventMessage - Workflow execution message
- * @returns {Promise}
+ * @returns {Promise<Object|null>}
  */
 async function handlePdrMessage(eventMessage) {
   try {
     const pdrRecord = Pdr.generatePdrRecord(eventMessage);
-    if (!pdrRecord) return Promise.resolve();
+    if (!pdrRecord) return null;
     return publishPdrSnsMessage(pdrRecord);
   } catch (err) {
     log.error('Error trying to generate PDR', err);
     log.info('Execution message', eventMessage);
-    return Promise.resolve();
+    return null;
   }
 }
 

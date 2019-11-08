@@ -1,9 +1,3 @@
----
-id: distribution_component
-title: Cumulus Distribution Terraform Module
-hide_title: true
----
-
 # Cumulus Distribution Terraform Module
 
 The Cumulus Distribution Terraform module deploys the Thin Egress App and the S3
@@ -34,7 +28,7 @@ Credentials Endpoint with a configuration targeted at Cumulus and NGAP.
   the S3 credentials endpoint to invoke, which whill return AWS API keys.
   Defaults to "gsfc-ngap-sh-s3-sts-get-keys".
 * **urs_url** (string) - The URL of the Earthdata Login site, defaults to
-  "https://urs.earthdata.nasa.gov"
+  <https://urs.earthdata.nasa.gov>
 
 ## Output variables
 
