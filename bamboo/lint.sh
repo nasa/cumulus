@@ -4,4 +4,5 @@ set -ex
 
 npm install
 npm run bootstrap-no-build
+npm run lint-md
 npm run lint
