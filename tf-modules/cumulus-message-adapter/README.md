@@ -1,6 +1,6 @@
 # Cumulus Message Adapter
 
-This pacakge creates a lambda layer for upload/use of the [Cumulus Message Adapter](https://github.com/nasa/cumulus-message-adapter).    This can be utilized in combination with the kes deployment tool per the [input/output Cumulus documentation](https://github.com/nasa/cumulus/docs/next/workflows/input_output).
+This package creates a Lambda layer for upload/use of the [Cumulus Message Adapter](https://github.com/nasa/cumulus-message-adapter). This layer can be utilized in combination with a Cumulus deployment per the [input/output Cumulus documentation](https://github.com/nasa/cumulus/docs/next/workflows/input_output).
 
 ## Deployment
 

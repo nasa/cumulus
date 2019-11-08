@@ -97,40 +97,52 @@ Finally, let's create a [rule](data-cookbooks/setup.md#rules). In this example w
 
 ## DiscoverAndQueuePdrs Workflow
 
-This workflow will (as the name might suggest) discover PDRs and queue them to be processed. Duplicate PDRs will be dealt with according to the configured duplicate handling setting in the collection.
+This workflow will discover PDRs and queue them to be processed. Duplicate PDRs will be dealt with according to the configured duplicate handling setting in the collection.   The lambdas below are included in the `cumulus` terraform module for use in your workflows:
 
-1. DiscoverPdrs - [npm package](https://www.npmjs.com/package/@cumulus/discover-pdrs), [source](https://github.com/nasa/cumulus/tree/master/tasks/discover-pdrs)
-2. QueuePdrs - [npm package](https://www.npmjs.com/package/@cumulus/queue-pdrs), [source](https://github.com/nasa/cumulus/tree/master/tasks/queue-pdrs)
+1. DiscoverPdrs - [source](https://github.com/nasa/cumulus/tree/master/tasks/discover-pdrs)
+2. QueuePdrs - [source](https://github.com/nasa/cumulus/tree/master/tasks/queue-pdrs)
 
 ![Screenshot of execution graph for DiscoverAndQueuePdrs workflow in the AWS Step Functions console](assets/sips-discover-and-queue-pdrs-execution.png)
 
-_Example configuration for this workflow can be found in the `DiscoverAndQueuePdrs` object defined in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/workflows/sips.yml)_
+_An example workflow module configuration can be viewed in the Cumulus source for the [discover_and_queue_pdrs_workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_and_queue_pdrs_workflow.tf)._
+
+_**Please note:** To use this example workflow module as a template for a new workflow in your deployment the `source` key for the workflow module would need to point to a release of the cumulus-workflow (terraform-aws-cumulus-workflow.zip) module on our [release](https://github.com/nasa/cumulus/releases) page, as all of the provided Cumulus workflows are internally self-referential._
 
 ## ParsePdr Workflow
 
 The ParsePdr workflow will parse a PDR, queue the specified granules (duplicates are handled according to the duplicate handling setting) and periodically check the status of those queued granules. This workflow will not succeed until all the granules included in the PDR are successfully ingested. If one of those fails, the ParsePdr worklfow will fail. **NOTE** that ParsePdr may spin up multiple IngestGranule workflows in parallel, depending on the granules included in the PDR.
 
-1. ParsePdr - [npm package](https://www.npmjs.com/package/@cumulus/parse-pdr), [source](https://github.com/nasa/cumulus/tree/master/tasks/parse-pdr)
-2. QueueGranules - [npm package](https://www.npmjs.com/package/@cumulus/queue-granules), [source](https://github.com/nasa/cumulus/tree/master/tasks/queue-granules)
-3. CheckStatus - [npm package](https://www.npmjs.com/package/@cumulus/pdr-status-check), [source](https://github.com/nasa/cumulus/tree/master/tasks/pdr-status-check)
+The lambdas below are included in the `cumulus` terraform module for use in your workflows:
+
+1. ParsePdr - [source](https://github.com/nasa/cumulus/tree/master/tasks/parse-pdr)
+2. QueueGranules - [source](https://github.com/nasa/cumulus/tree/master/tasks/queue-granules)
+3. CheckStatus - [source](https://github.com/nasa/cumulus/tree/master/tasks/pdr-status-check)
 
 ![Screenshot of execution graph for SIPS Parse PDR workflow in AWS Step Functions console](assets/sips-parse-pdr.png)
 
-_Example configuration for this workflow can be found in the `ParsePdr` object defined in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/workflows/sips.yml)_
+_An example workflow module configuration can be viewed in the Cumulus source for the [parse_pdr_workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/parse_pdr_workflow.tf)._
+
+_**Please note:** To use this example workflow module as a template for a new workflow in your deployment the `source` key for the workflow module would need to point to a release of the cumulus-workflow (terraform-aws-cumulus-workflow.zip) module on our [release](https://github.com/nasa/cumulus/releases) page, as all of the provided Cumulus workflows are internally self-referential._
 
 ## IngestGranule Workflow
 
 The IngestGranule workflow processes and ingests a granule and posts the granule metadata to CMR.
 
-1. SyncGranule - [npm package](https://www.npmjs.com/package/@cumulus/sync-granule), [source](https://github.com/nasa/cumulus/tree/master/tasks/sync-granule)
-2. ProcessingStep - The processing step does not come from Cumulus core. The "AsterProcess," "ModisProcess," and "LegacyProcess" steps in the workflow picture below are examples of custom processing steps.
-3. CmrStep - [npm package](https://www.npmjs.com/package/@cumulus/post-to-cmr), [source](https://github.com/nasa/cumulus/tree/master/tasks/post-to-cmr)
+The lambdas below are included in the `cumulus` terraform module for use in your workflows:
 
-**Note:** Hitting CmrStep is not required and can be left out of the processing trajectory if desired (for example, in testing situations).
+1. SyncGranule - [source](https://github.com/nasa/cumulus/tree/master/tasks/sync-granule).
+2. CmrStep - [source](https://github.com/nasa/cumulus/tree/master/tasks/post-to-cmr)
+
+Additionally this workflow requires a ProcessingStep you must provide. The "AsterProcess," "ModisProcess," and "LegacyProcess" steps in the workflow picture below are examples of custom processing steps.
+
+**Note:** Using the CmrStep is not required and can be left out of the processing trajectory if desired (for example, in testing situations).
 
 ![Screenshot of execution graph for SIPS IngestGranule workflow in AWS Step Functions console](assets/sips-ingest-granule.png)
 
-_Example configuration for this workflow can be found in the `IngestGranule` object defined in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/workflows/sips.yml)_
+_An example workflow module configuration can be viewed in the Cumulus source for the [ingest_granule_workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_granule_workflow.tf)._
+
+_**Please note:** To use this example workflow module as a template for a new workflow in your deployment the `source` key for the workflow module would need to point to a release of the cumulus-workflow (terraform-aws-cumulus-workflow.zip) module on our [release](https://github.com/nasa/cumulus/releases) page, as all of the provided Cumulus workflows are internally self-referential._
+
 
 ## Summary
 

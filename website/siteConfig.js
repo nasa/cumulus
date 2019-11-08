@@ -85,7 +85,10 @@ const siteConfig = {
   // On page navigation for the current documentation page.
   onPageNav: 'separate',
   // No .html extensions for paths.
-  cleanUrl: true
+  cleanUrl: true,
+
+  // Allow docs navigation sections to be collapsed
+  docsSideNavCollapsible: true
 
   // You may provide arbitrary config keys to be used as needed by your
   // template. For example, if you need your repo's URL...
