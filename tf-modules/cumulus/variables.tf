@@ -159,7 +159,7 @@ variable "ecs_cluster_instance_docker_volume_size" {
 variable "ecs_cluster_instance_image_id" {
   type        = string
   description = "AMI ID of ECS instances"
-  default     = "ami-03e7dd4efa9b91eda"
+  default     = "ami-0fa9de75aa0a1f1b3"
 }
 
 variable "ecs_cluster_instance_type" {
