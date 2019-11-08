@@ -89,7 +89,11 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
   }
 
   statement {
-    actions   = ["dynamodb:Scan"]
+    actions   = [
+      "dynamodb:GetItem",
+      "dynamodb:UpdateItem",
+      "dynamodb:Scan"
+    ]
     resources = [for k, v in var.dynamo_tables : v.arn]
   }
 
