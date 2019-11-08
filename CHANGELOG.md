@@ -22,6 +22,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### BREAKING CHANGES
 
+- **CUMULUS-1644** - When a workflow execution begins or ends, the workflow
+  payload is parsed and any new or updated PDRs or granules referenced in that
+  workflow are stored to the Cumulus archive. The defined interface says that a
+  PDR in `payload.pdr` will be added to the archive, and any granules in
+  `payload.granules` will also be added to the archive. In previous releases,
+  PDRs found in `meta.pdr` and granules found in `meta.input_granules` were also
+  added to the archive. This caused unexpected behavior and has been removed.
+  Only PDRs from `payload.pdr` and granules from `payload.granules` will now be
+  added to the Cumulus archive.
+
 - **CUMULUS-1449** - Cumulus now uses a universal workflow template when
   starting a workflow that contains general information specific to the
   deployment, but not specific to the workflow. Workflow task configs must be

@@ -862,7 +862,7 @@ exports.createQueue = createQueue;
  * @param {Object} message - Message object
  * @param {Object} retryOptions - options to control retry behavior when publishing
  * a message fails. See https://github.com/tim-kos/node-retry#retryoperationoptions
- * @returns {Promise}
+ * @returns {Promise<undefined>}
  */
 exports.publishSnsMessage = async (
   snsTopicArn,
