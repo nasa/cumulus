@@ -16,15 +16,33 @@ To reduce storage requirements, a CloudWatch rule (`{stack-name}-dailyExecutionP
 
 ### Configuration
 
-The following configuration flags have been added.  They may be overridden in your deployment configuration by adding the appropriate keys:
+The following configuration flags have been made available in the `cumulus` module.   They may be overridden in your deployment's instance of the `cumulus` module by adding the following configuration options:
 
-- complete_execution_payload_timeout
+#### daily_execution_payload_cleanup_schedule_expression _(string)_
 
-This flag defines the cleanup threshold for executions with a 'complete' status in days.   Records with updateTime values older than this with payload information  will have that information removed.
+This configuration option sets the execution times for this Lambda to run, using a Cloudwatch cron expression.
 
-Default value is 10 days.
+Default value is `"cron(0 4 * * ? *)"`.
 
-- non_complete_execution_payload_timeout
+#### complete_execution_payload_timeout_disable _(bool)_
+
+This configuration option, when set to true, will disable all cleanup of `completed` execution payloads.
+
+Default value is `false`.
+
+#### complete_execution_payload_timeout _(number)_
+
+This flag defines the cleanup threshold for executions with a 'completed' status in days.   Records with `updatedAt` values older than this with payload information  will have that information removed.
+
+Default value is `10`.
+
+#### non_complete_execution_payload_timeout_disable _(bool)_
+
+This configuration option, when set to true, will disable all cleanup of "non-complete" (any status _other_ than `completed`) execution payloads.
+
+Default value is `false`.
+
+#### non_complete_execution_payload_timeout _(number)_
 
 This flag defines the cleanup threshold for executions with a status other than 'complete' in days.   Records with updateTime values older than this with payload information  will have that information removed.
 
@@ -33,12 +51,3 @@ Default value is 30 days.
 - complete_execution_payload_disable/non_complete_execution_payload_disable
 
 These flags (true/false) determine if the cleanup script's logic for 'complete' and 'non-complete' executions will run.   Default value is false for both.
-
-#### Default configuration example:
-
-```
-  non_complete_execution_payload_timeout: 30
-  complete_execution_payload_timeout: 10
-  complete_execution_payload_disable: false
-  non_complete_execution_payload_disable: false
-```
