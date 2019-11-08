@@ -54,12 +54,6 @@ const collection = { name: 'MOD14A1', version: '006' };
 const collectionId = constructCollectionId(collection.name, collection.version);
 const granuleRegex = '^MOD14A1\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
-const emsTestConfig = {
-  provider: 'CUMULUS',
-  submitReport: true,
-  dataSource: 'UAT'
-};
-
 // add MOD14A1___006 collection
 async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
   const s3data = [
@@ -156,6 +150,7 @@ describe('The EMS report', () => {
     emsIngestReportLambda = `${config.stackName}-EmsIngestReport`;
     emsDistributionReportLambda = `${config.stackName}-EmsDistributionReport`;
     bucket = config.bucket;
+    const emsTestConfig = await emsApi.getLambdaEmsSettings(emsDistributionReportLambda);
     emsProvider = emsTestConfig.provider;
     submitReport = emsTestConfig.submitReport === 'true' || false;
     dataSource = emsTestConfig.dataSource || config.stackName;
