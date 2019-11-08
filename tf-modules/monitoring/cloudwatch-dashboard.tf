@@ -1,3 +1,6 @@
+provider "aws" {
+  version = "~> 2.31"
+}
 
 resource "aws_cloudwatch_dashboard" "cloudwatch_dashboard" {
    dashboard_name = "${var.prefix}-CloudWatch-Dashboard"

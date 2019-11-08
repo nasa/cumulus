@@ -1,3 +1,7 @@
+provider "aws" {
+  version = "~> 2.31"
+}
+
 locals {
   cluster_name = reverse(split("/", var.cluster_arn))[0]
   full_name    = "${var.prefix}-${var.name}"

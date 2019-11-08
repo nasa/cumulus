@@ -63,11 +63,11 @@ output "elasticsearch_alarms" {
   value = [
     {
       name = aws_cloudwatch_metric_alarm.es_nodes_low.alarm_name
-      arn = aws_cloudwatch_metric_alarm.es_nodes_low.arn
+      arn  = aws_cloudwatch_metric_alarm.es_nodes_low.arn
     },
     {
       name = aws_cloudwatch_metric_alarm.es_nodes_high.alarm_name
-      arn = aws_cloudwatch_metric_alarm.es_nodes_high.arn
+      arn  = aws_cloudwatch_metric_alarm.es_nodes_high.arn
     }
   ]
 }
