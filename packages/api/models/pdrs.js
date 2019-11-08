@@ -57,12 +57,12 @@ class Pdr extends Manager {
   static generatePdrRecord(message) {
     const pdr = get(message, 'payload.pdr');
 
-    if (!pdr) {
+    if (!pdr) { // We got a message with no PDR (OK)
       log.info('No PDRs to process on the message');
       return null;
     }
 
-    if (!pdr.name) {
+    if (!pdr.name) { // We got a message with a PDR but no name to identify it (Not OK)
       throw new Error(`Could not find name on PDR object ${JSON.stringify(pdr)}`);
     }
 
