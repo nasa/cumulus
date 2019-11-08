@@ -176,19 +176,6 @@ test('getMessageGranules returns granules from payload.granules', (t) => {
   t.deepEqual(result, granules);
 });
 
-test('getMessageGranules returns granules from meta.input_granules', (t) => {
-  const granules = [{
-    granuleId: randomId('granule')
-  }];
-  const testMessage = {
-    meta: {
-      input_granules: granules
-    }
-  };
-  const result = getMessageGranules(testMessage);
-  t.deepEqual(result, granules);
-});
-
 test('getMessageGranules returns nothing when granules are absent from message', (t) => {
   const testMessage = {};
   const result = getMessageGranules(testMessage);

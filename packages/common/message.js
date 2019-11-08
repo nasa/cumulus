@@ -159,11 +159,10 @@ const getMessageExecutionName = (message) => {
  * Get granules from execution message.
  *
  * @param {Object} message - An execution message
- * @returns {Array<Object>} - An array of granule objects
+ * @returns {Array<Object>|undefined} - An array of granule objects, or
+ *   undefined if `message.payload.granules` is not set
  */
-const getMessageGranules = (message) =>
-  get(message, 'payload.granules')
-  || get(message, 'meta.input_granules');
+const getMessageGranules = (message) => get(message, 'payload.granules');
 
 /**
  * Get the state machine ARN from a workflow message.
