@@ -18,6 +18,7 @@ variable "create_service_linked_role" {
 
 provider "aws" {
   region = var.aws_region
+  version = "~> 2.31"
 }
 
 module "data_persistence" {

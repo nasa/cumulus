@@ -860,7 +860,7 @@ exports.createQueue = createQueue;
  *
  * @param {string} snsTopicArn - SNS topic ARN
  * @param {Object} message - Message object
- * @returns {Promise}
+ * @returns {Promise<undefined>}
  */
 exports.publishSnsMessage = async (
   snsTopicArn,
