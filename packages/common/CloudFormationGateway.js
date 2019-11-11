@@ -35,6 +35,7 @@ class CloudFormationGateway {
         }
       },
       {
+        maxTimeout: 5000,
         onFailedAttempt: () => log.debug('ThrottlingException when calling cloudformation.describeStacks(), will retry.')
       }
     );
