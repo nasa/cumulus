@@ -175,7 +175,7 @@ The message may contain a reference to an S3 Bucket, Key and TargetPath as follo
 This configuration key contains the input/output configuration values for definition of inputs/outputs via URL paths.
 **Important**:  These values are all relative to json object configured for `event.$`.
 
-This configuration's behavior is outlined in the CMA step description (Cumulus Message Adapter has the following steps) below.
+This configuration's behavior is outlined in the CMA step description [below](#cumulus-message-adapter-steps).
 
 The configuration should follow the format:
 
