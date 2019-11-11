@@ -85,7 +85,7 @@ AWS Step functions are described in detail in the AWS documentation but they pro
 
 #### Workflow Scheduler
 
-The scheduler is responsible for initiating a step function and passing in the relevant data for a collection. This is currently configured as an interval for each collection. The scheduler service creates the initial event by combining the collection configuration with the AWS execution context provided by its CloudFormation template.
+The scheduler is responsible for initiating a step function and passing in the relevant data for a collection. This is currently configured as an interval for each collection. The scheduler service creates the initial event by combining the collection configuration with the AWS execution context defined via the `cumulus` terraform module.
 
 ### Tasks
 
