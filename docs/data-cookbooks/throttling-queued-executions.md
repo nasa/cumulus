@@ -102,11 +102,9 @@ Follow the instructions to [re-deploy your Cumulus application](../deployment/up
 
 #### Integrate queue with queuing steps in workflows
 
-For any workflows using `queue-granules` or `queue-pdrs` that you want to use your new queue, update the Cumulus configuration of those steps in your workflows.
+For any workflows using `QueueGranules` or `QueuePdrs` that you want to use your new queue, update the Cumulus configuration of those steps in your workflows.
 
-As seen in this example configuration for a `QueueGranules` step (a full example can be found in the [discover granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf)), update the `queueUrl` to reference the new throttled queue.
-
-> **Please note:** Make sure that the key (`backgroundJobQueue` of `$.meta.queues.backgroundJobQueue`) used to identify the queue matches the identifier that was [defined previously for the queue](#set-maximum-executions-for-the-queue).
+As seen in this example configuration for a `QueueGranules` step (a full example can be found in the [discover granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf)), update the `queueUrl` to reference the new throttled queue:
 
 ```json
   "QueueGranules": {
@@ -127,7 +125,9 @@ As seen in this example configuration for a `QueueGranules` step (a full example
     },
 ```
 
-Similarly, for a `QueuePdrs` step:
+> **Please note:** Make sure that the key (`backgroundJobQueue` of `$.meta.queues.backgroundJobQueue`) used to identify the queue matches the identifier that was [defined previously for the queue](#set-maximum-executions-for-the-queue).
+
+Similarly, for a `QueuePdrs` step (see [example discover PDRs workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_and_queue_pdrs_workflow.tf)):
 
 ```json
   "QueuePdrs": {
