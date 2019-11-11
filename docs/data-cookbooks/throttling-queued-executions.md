@@ -100,42 +100,60 @@ Follow the instructions to [re-deploy your Cumulus application](../deployment/up
 
 ### Integrate your queue with workflows and/or rules
 
-#### Integrate queue with queuing steps in SIPS workflows
+#### Integrate queue with queuing steps in workflows
 
-For any SIPS workflows using `queue-granules` or `queue-pdrs` that you want to use your new queue, update the Cumulus configuration of those steps in your workflows.
+For any workflows using `queue-granules` or `queue-pdrs` that you want to use your new queue, update the Cumulus configuration of those steps in your workflows.
 
-```yaml
-  QueueGranules:
-    Parameters:
-      cma:
-        event.$: '$'
-        task_config:
-            provider: '{$.meta.provider}'
-            internalBucket: '{$.meta.buckets.internal.name}'
-            stackName: '{$.meta.stack}'
-            granuleIngestMessageTemplateUri: '{$.meta.templates.IngestGranule}'
-            # configure the step to use your new queue
-            queueUrl: '{$.meta.queues.backgroundJobQueue}'
+As seen in this example configuration for a `QueueGranules` step (a full example can be found in the [discover granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf)), update the `queueUrl` to reference the new throttled queue.
+
+> **Please note:** Make sure that the key (`backgroundJobQueue` of `$.meta.queues.backgroundJobQueue`) used to identify the queue matches the identifier that was [defined previously for the queue](#set-maximum-executions-for-the-queue).
+
+```json
+  "QueueGranules": {
+    "Parameters": {
+      "cma": {
+        "event.$": "$",
+        "ReplaceConfig": {
+          "FullMessage": true
+        },
+        "task_config": {
+          "queueUrl": "{$.meta.queues.backgroundJobQueue}",
+          "provider": "{$.meta.provider}",
+          "internalBucket": "{$.meta.buckets.internal.name}",
+          "stackName": "{$.meta.stack}",
+          "granuleIngestWorkflow": "${module.ingest_granule_workflow.name}"
+        }
+      }
+    },
 ```
 
-```yaml
-  QueuePdrs:
-    Parameters:
-      cma:
-        event.$: '$'
-        task_config:
-            # configure the step to use your new queue
-            queueUrl: '{$.meta.queues.backgroundJobQueue}'
-            parsePdrMessageTemplateUri: '{$.meta.templates.ParsePdr}'
-            provider: '{$.meta.provider}'
-            collection: '{$.meta.collection}'
-  ```
+Similarly, for a `QueuePdrs` step:
 
-After making these changes, re-deploy your Cumulus application for the execution throttling to take effect.
+```json
+  "QueuePdrs": {
+    "Parameters": {
+      "cma": {
+        "event.$": "$",
+        "ReplaceConfig": {
+          "FullMessage": true
+        },
+        "task_config": {
+          "queueUrl": "{$.meta.queues.backgroundJobQueue}",
+          "provider": "{$.meta.provider}",
+          "collection": "{$.meta.collection}",
+          "internalBucket": "{$.meta.buckets.internal.name}",
+          "stackName": "{$.meta.stack}",
+          "parsePdrWorkflow": "${module.parse_pdr_workflow.name}"
+        }
+      }
+    },
+```
+
+After making these changes, [re-deploy your Cumulus application](../deployment/upgrade.md#update-cumulus-resources) for the execution throttling to take effect on workflow executions queued by these workflows.
 
 #### Create/update a rule to use your new queue
 
-Create or update a rule definition to include a `queueName` property that refers to your new queue:
+Create or update a rule definition to include a `queueName` property that refers to your new queue, where `queueName` matches the identifier that was [defined previously for the queue](#set-maximum-executions-for-the-queue):
 
 ```json
 {
