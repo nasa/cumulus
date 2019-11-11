@@ -353,10 +353,6 @@ describe('the sf-starter lambda function', () => {
       expect(messagesConsumed).toBeGreaterThan(0);
     });
 
-    /**
-     * Failing intermittently
-     * Filed CUMULUS-1367 to address
-     */
     it('to trigger workflows', async () => {
       const { executions } = await StepFunctions.listExecutions({ stateMachineArn: waitPassSfArn });
       const runningExecutions = executions.filter((execution) => execution.status === 'RUNNING');
