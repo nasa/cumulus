@@ -7,6 +7,10 @@ locals {
     ScheduleSFDeadLetterQueue = aws_sqs_queue.schedule_sf_dead_letter_queue.id
   }
 
+  default_queue_execution_limits = {
+    backgroundProcessing = 5
+  }
+
   message_template_key = "${var.prefix}/workflow_template.json"
 
   message_template = jsonencode({
@@ -42,7 +46,7 @@ locals {
       provider              = {}
       template              = "s3://${var.system_bucket}/${local.message_template_key}"
       queues                = merge(local.default_queues, var.custom_queues)
-      queueExecutionLimits  = var.queue_execution_limits
+      queueExecutionLimits  = merge(local.default_queue_execution_limits, var.queue_execution_limits)
     }
     payload   = {}
     exception = null
