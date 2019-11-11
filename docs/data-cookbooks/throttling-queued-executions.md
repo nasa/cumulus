@@ -16,7 +16,7 @@ Limiting the number of executions that can be running from a given queue is usef
 
 ### Create and deploy the queue
 
-#### Define a queue
+#### Add a new queue
 
 In a `.tf` file for your [Cumulus deployment](./../deployment/README.md#deploy-the-cumulus-instance), add a new SQS queue:
 
@@ -28,9 +28,9 @@ resource "aws_sqs_queue" "background_job_queue" {
 }
 ```
 
-#### Set maximum executions for your queue
+#### Set maximum executions for the queue
 
-Define the `queue_execution_limits` variable for the `cumulus` module in your [Cumulus deployment](./../deployment/README.md#deploy-the-cumulus-instance) to specify the maximum concurrent executions for your queue:
+Define the `queue_execution_limits` variable for the `cumulus` module in your [Cumulus deployment](./../deployment/README.md#deploy-the-cumulus-instance) to specify the maximum concurrent executions for the queue:
 
 ```hcl
 module "cumulus" {
@@ -42,12 +42,36 @@ module "cumulus" {
 }
 ```
 
-#### Attach consumer
+#### Setup consumer for the queue
 
-TODO
+Add the `sqs2sfThrottle` Lambda as the consumer for the queue and add a Cloudwatch event rule/target to read from the queue on a scheduled basis.
 
-> **Please note:** You **must use the `sqs2sfThrottle` lambda as the consumer for any queue with a `maxExecutions` value** or else the execution throttling will not work correctly.
-Additionally, please allow at least 60 seconds after creation before using the queue as associated infrastructure and triggers are set up and made ready.
+> **Please note**: You **must use the `sqs2sfThrottle` Lambda as the consumer for any queue with a queue execution limit** or else the execution throttling will not work correctly. Additionally, please allow at least 60 seconds after creation before using the queue while associated infrastructure and triggers are set up and made ready.
+
+`aws_sqs_queue.background_job_queue.id` refers to the [queue resource defined above](#add-a-new-queue).
+
+```hcl
+resource "aws_cloudwatch_event_rule" "background_job_queue_watcher" {
+  schedule_expression = "rate(1 minute)"
+}
+
+resource "aws_cloudwatch_event_target" "background_job_queue_watcher" {
+  rule = aws_cloudwatch_event_rule.background_job_queue_watcher.name
+  arn  = aws_lambda_function.sqs2sfThrottle.arn
+  input = jsonencode({
+    messageLimit = 500
+    queueUrl     = aws_sqs_queue.background_job_queue.id
+    timeLimit    = 60
+  })
+}
+
+resource "aws_lambda_permission" "background_job_queue_watcher" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.sqs2sfThrottle.arn
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.background_job_queue_watcher.arn
+}
+```
 
 #### Re-deploy your Cumulus app
 
@@ -128,7 +152,7 @@ After creating/updating the rule, any subsequent invocations of the rule should 
 
 ![Architecture diagram showing how queued execution throttling works](assets/queued-execution-throttling.png)
 
-Execution throttling based on the queue works by manually keeping a count (semaphore) of how many executions are running for the queue at a time. The key operation that prevents the number of executions from exceeding the maximum for the queue is that before starting new executions, the `sqs2sfThrottle` lambda attempts to increment the semaphore and responds as follows:
+Execution throttling based on the queue works by manually keeping a count (semaphore) of how many executions are running for the queue at a time. The key operation that prevents the number of executions from exceeding the maximum for the queue is that before starting new executions, the `sqs2sfThrottle` Lambda attempts to increment the semaphore and responds as follows:
 
 - If the increment operation is successful, then the count was not at the maximum and an execution is started
 - If the increment operation fails, then the count was already at the maximum so no execution is started
