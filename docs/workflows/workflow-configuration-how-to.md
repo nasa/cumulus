@@ -133,7 +133,7 @@ Or you can do a combination of meta buckets and hardcoded:
 
 Bucket names can be configured using a mixture of hardcoded values and values from the meta. For example, to configure the bucket based on the collection name you could do something like:
 
-```yaml
+```json
 {
   "DiscoverGranules": {
     "Parameters": {
