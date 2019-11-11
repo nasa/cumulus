@@ -63,3 +63,8 @@ oauth_user_group = "usergroup"
 
 # Optional
 key_name      = "MY-KEY"
+
+# Optional
+metrics_es_host = "https://xxxxxxxxxx.cloudfront.net"
+metrics_es_username = "user"
+metrics_es_password = "password"
