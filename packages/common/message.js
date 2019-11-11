@@ -24,6 +24,7 @@ const createExecutionName = () => uuidv4();
  * @returns {Object}
  */
 const buildCumulusMeta = ({
+  asyncOperationId,
   parentExecutionArn,
   queueName,
   stateMachine
@@ -34,6 +35,7 @@ const buildCumulusMeta = ({
     state_machine: stateMachine
   };
   if (parentExecutionArn) cumulusMeta.parentExecutionArn = parentExecutionArn;
+  if (asyncOperationId) cumulusMeta.asyncOperationId = asyncOperationId;
   return cumulusMeta;
 };
 
@@ -83,6 +85,7 @@ function buildQueueMessageFromTemplate({
   collection,
   parentExecutionArn,
   queueName,
+  asyncOperationId,
   messageTemplate,
   payload,
   workflow,
@@ -90,6 +93,7 @@ function buildQueueMessageFromTemplate({
   customMeta = {}
 }) {
   const cumulusMeta = buildCumulusMeta({
+    asyncOperationId,
     parentExecutionArn,
     queueName,
     stateMachine: workflow.arn
