@@ -30,7 +30,11 @@ resource "aws_sqs_queue" "background_job_queue" {
 
 #### Set maximum executions for the queue
 
-Define the `queue_execution_limits` variable for the `cumulus` module in your [Cumulus deployment](./../deployment/README.md#deploy-the-cumulus-instance) to specify the maximum concurrent executions for the queue:
+Define the `queue_execution_limits` variable for the `cumulus` module in your [Cumulus deployment](./../deployment/README.md#deploy-the-cumulus-instance) to specify the maximum concurrent executions for the queue.
+
+Also, add the queue to the map of `custom_queues` you have added for your deployment.
+
+> **Please note:** The key name used in the `queue_execution_limits` and `custom_queues` maps to identify the new queue is arbitrary, but **the key must be the same in both maps for execution throttling to work**.
 
 ```hcl
 module "cumulus" {
@@ -38,6 +42,10 @@ module "cumulus" {
 
   queue_execution_limits = {
     backgroundJobQueue   = 5
+  }
+
+  custom_queues = {
+    backgroundJobQueue = aws_sqs_queue.background_job_queue.id
   }
 }
 ```
