@@ -16,24 +16,37 @@ Limiting the number of executions that can be running from a given queue is usef
 
 ### Create and deploy the queue
 
-#### Define a queue with a maximum number of executions
+#### Define a queue
 
-In your `app/config.yml`, define a new queue with a `maxExecutions` value:
+In a `.tf` file for your [Cumulus deployment](./../deployment/README.md#deploy-the-cumulus-instance), add a new SQS queue:
 
-```yaml
-  sqs:
-    backgroundJobQueue:
-      visibilityTimeout: 60
-      retry: 30
-      maxExecutions: 5
-      consumer:
-        - lambda: sqs2sfThrottle    # you must use this lambda
-          schedule: rate(1 minute)
-          messageLimit: '{{sqs_consumer_rate}'
-          state: ENABLED
+```hcl
+resource "aws_sqs_queue" "background_job_queue" {
+  name                       = "${var.prefix}-backgroundJobQueue"
+  receive_wait_time_seconds  = 20
+  visibility_timeout_seconds = 60
+}
 ```
 
-**Please note that you must use the `sqs2sfThrottle` lambda as the consumer for any queue with a `maxExecutions` value** or else the execution throttling will not work correctly.
+#### Set maximum executions for your queue
+
+Define the `queue_execution_limits` variable for the `cumulus` module in your [Cumulus deployment](./../deployment/README.md#deploy-the-cumulus-instance) to specify the maximum concurrent executions for your queue:
+
+```hcl
+module "cumulus" {
+  # ... other variables
+
+  queue_execution_limits = {
+    backgroundJobQueue   = 5
+  }
+}
+```
+
+#### Attach consumer
+
+TODO
+
+> **Please note:** You **must use the `sqs2sfThrottle` lambda as the consumer for any queue with a `maxExecutions` value** or else the execution throttling will not work correctly.
 Additionally, please allow at least 60 seconds after creation before using the queue as associated infrastructure and triggers are set up and made ready.
 
 #### Re-deploy your Cumulus app
