@@ -126,6 +126,7 @@ async function createKinesisStream(streamName) {
       }
     },
     {
+      maxTimeout: 20000,
       onFailedAttempt: () => console.log('LimitExceededException when calling kinesis.createStream(), will retry.')
     }
   );

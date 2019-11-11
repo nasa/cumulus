@@ -50,6 +50,10 @@ module "archive" {
   message_consumer_function_arn                    = module.ingest.message_consumer_lambda_function_arn
   kinesis_inbound_event_logger_lambda_function_arn = module.ingest.kinesis_inbound_event_logger_lambda_function_arn
 
+  metrics_es_host     = var.metrics_es_host
+  metrics_es_password = var.metrics_es_password
+  metrics_es_username = var.metrics_es_username
+
   daily_execution_payload_cleanup_schedule_expression = var.daily_execution_payload_cleanup_schedule_expression
   complete_execution_payload_timeout_disable = var.complete_execution_payload_timeout_disable
   complete_execution_payload_timeout = var.complete_execution_payload_timeout
