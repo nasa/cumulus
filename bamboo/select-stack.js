@@ -12,7 +12,7 @@ function determineIntegrationTestStackName(cb) {
   // Nightly cron job
   //if (process.env.TRAVIS_EVENT_TYPE === 'cron') return cb('cumulus-nightly');
 
-  if (branch === 'master') return cb('cumulus-from-source');
+  if (branch === 'master') return cb('cumulus-source');
 
   const stacks = {
     'Aimee Barciauskas': 'aimee',
