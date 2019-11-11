@@ -81,9 +81,9 @@ resource "aws_lambda_permission" "background_job_queue_watcher" {
 }
 ```
 
-#### Re-deploy your Cumulus app
+#### Re-deploy your Cumulus application
 
-Once you [re-deploy your Cumulus application](../deployment/deployment-readme#update-cumulus), all of your workflow templates will be updated to the include information about your queue (the output below is partial output from an expected workflow template):
+Follow the instructions to [re-deploy your Cumulus application](../deployment/upgrade.md#update-cumulus-resources). After you have re-deployed, your workflow template will be updated to the include information about the queue (the output below is partial output from an expected workflow template):
 
 ```json
 {
