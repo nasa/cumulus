@@ -50,6 +50,10 @@ urs_client_password = "password"
 
 token_secret = "asdf"
 
+metrics_es_host = "https://xxxxxxxxxx.cloudfront.net"
+metrics_es_username = "user"
+metrics_es_password = "password"
+
 data_persistence_remote_state_config = {
   bucket = "PREFIX-tf-state"
   key    = "PREFIX/data-persistence/terraform.tfstate"
