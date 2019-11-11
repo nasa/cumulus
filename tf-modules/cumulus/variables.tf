@@ -141,7 +141,7 @@ variable "cmr_page_size" {
 variable "custom_queues" {
   description = "Map of SQS queue identifiers to queue URLs"
   type    = map(string)
-  default = null
+  default = {}
 }
 
 variable "distribution_url" {
@@ -296,9 +296,7 @@ variable "private_archive_api_gateway" {
 variable "queue_execution_limits" {
   description = "Map specifying maximum concurrent execution limits for the queue(s) identified by the keys"
   type = map(number)
-  default = {
-    backgroundProcessing = 5
-  }
+  default = {}
 }
 
 variable "region" {
