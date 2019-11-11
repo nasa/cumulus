@@ -42,6 +42,11 @@ variable "cumulus_message_adapter_lambda_layer_arn" {
   default = null
 }
 
+variable "custom_queues" {
+  type    = map(string)
+  default = null
+}
+
 variable "distribution_url" {
   type = string
 }

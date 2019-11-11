@@ -138,6 +138,12 @@ variable "cmr_page_size" {
   default = 50
 }
 
+variable "custom_queues" {
+  description = "Map of SQS queue identifiers to queue URLs"
+  type    = map(string)
+  default = null
+}
+
 variable "distribution_url" {
   description = " URL for the distribution API"
   type    = string
