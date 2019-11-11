@@ -6,7 +6,7 @@ hide_title: true
 
 # About
 
-## What is a data cookbook?
+## Introduction
 
 The following data cookbooks are documents containing examples and explanations of workflows in the Cumulus framework. Additionally, the following data cookbooks should serve to help unify an institution/user group on a set of terms.
 
@@ -23,4 +23,3 @@ As shown in detail in the "Add a New Page and Sidebars" section in [Cumulus Docs
 [Developing Workflow Tasks](workflows/developing-workflow-tasks.md)
 
 [Workflow Configuration How-to's](workflows/workflow-configuration-how-to.md)
-

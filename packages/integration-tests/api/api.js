@@ -31,6 +31,7 @@ function invokeApi(prefix, payload) {
     },
     {
       retries: 3,
+      maxTimeout: 10000,
       onFailedAttempt: (error) => console.log(`API invoke error: ${error.message}. Retrying.`)
     }
   );

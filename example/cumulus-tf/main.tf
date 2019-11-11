@@ -7,6 +7,7 @@ locals {
 provider "aws" {
   region  = var.region
   profile = var.aws_profile
+  version = "~> 2.31"
 }
 
 data "aws_caller_identity" "current" {}

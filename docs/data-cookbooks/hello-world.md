@@ -50,7 +50,6 @@ A workflow definition can be found in the [template repository hello_world_workf
 }
 ```
 
-
 Workflow **error-handling** can be configured as discussed in the [Error-Handling](error-handling.md) cookbook.
 
 ### Task Configuration

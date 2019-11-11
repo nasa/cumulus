@@ -48,6 +48,7 @@ async function handleScheduleEvent(event) {
     messageTemplate,
     provider,
     queueName,
+    asyncOperationId: get(event, 'asyncOperationId'),
     customCumulusMeta: get(event, 'cumulus_meta', {}),
     customMeta: get(event, 'meta', {}),
     payload: get(event, 'payload', {}),

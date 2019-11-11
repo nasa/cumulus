@@ -11,7 +11,7 @@ const { ActivityStep, LambdaStep } = require('@cumulus/common/sfnStep');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const { randomId, randomNumber, randomString } = require('@cumulus/common/test-utils');
 
-const { fakeFileFactory } = require('../../lib/testUtils');
+const { fakeExecutionFactoryV2, fakeFileFactory } = require('../../lib/testUtils');
 const { deconstructCollectionId } = require('../../lib/utils');
 const Execution = require('../../models/executions');
 const Granule = require('../../models/granules');
@@ -426,57 +426,6 @@ test.serial('lambda publishes correct granules from payload.granules to SNS topi
   }
 });
 
-test.serial('lambda publishes correct granules from meta.input_granules to SNS topic', async (t) => {
-  const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
-
-  const collectionId = `${randomId('MOD')}___${randomNumber()}`;
-  const executionName = randomId('execution');
-  const createdAtTime = Date.now();
-  const message = createCumulusMessage({
-    numberOfGranules: 3,
-    collectionId,
-    cMetaParams: {
-      execution_name: executionName,
-      workflow_start_time: createdAtTime
-    }
-  });
-
-  const { granules } = message.payload;
-  delete message.payload;
-  message.meta.input_granules = granules;
-
-  const cwEventMessage = createCloudwatchEventMessage(
-    'RUNNING',
-    message
-  );
-
-  try {
-    await publishReports.handler(cwEventMessage);
-
-    t.plan(4);
-    t.is(granulePublishSpy.callCount, 3);
-
-    // Ensure that granule records are actually being passed to publish handler
-    granulePublishSpy.args
-      .filter((args) => args[0].granuleId)
-      .map(([granuleRecord]) => t.deepEqual(
-        {
-          ...pick(granuleRecord, ['collectionId', 'status', 'createdAt']),
-          executionValid: granuleRecord.execution.includes(executionName)
-        },
-        {
-          collectionId,
-          status: 'running',
-          createdAt: createdAtTime,
-          executionValid: true
-        }
-      ));
-  } finally {
-    // revert the mocking
-    granulePublishMock();
-  }
-});
-
 test.serial('lambda without PDR in message does not publish to PDR SNS topic', async (t) => {
   const { message } = t.context;
 
@@ -553,49 +502,6 @@ test.serial('lambda publishes PDR from payload.pdr to SNS topic', async (t) => {
     t.is(publishPdrRecord.provider, message.meta.provider.id);
     t.is(publishPdrRecord.collectionId, collectionId);
     t.is(publishPdrRecord.status, 'running');
-    t.is(publishPdrRecord.createdAt, createdAtTime);
-  } finally {
-    // revert the mocking
-    pdrPublishMock();
-  }
-});
-
-test.serial('lambda publishes PDR from meta.pdr to SNS topic', async (t) => {
-  const pdrPublishMock = publishReports.__set__('publishPdrSnsMessage', pdrPublishSpy);
-
-  const pdrName = randomString();
-  const pdrParams = {
-    name: pdrName
-  };
-  const collectionId = `${randomId('MOD')}___${randomNumber()}`;
-  const createdAtTime = Date.now();
-  const message = createCumulusMessage({
-    pdrParams,
-    collectionId,
-    cMetaParams: {
-      workflow_start_time: createdAtTime
-    }
-  });
-
-  const { pdr } = message.payload;
-  delete message.payload.pdr;
-  message.meta.pdr = pdr;
-
-  const cwEventMessage = createCloudwatchEventMessage(
-    'SUCCEEDED',
-    message
-  );
-
-  try {
-    await publishReports.handler(cwEventMessage);
-
-    t.is(pdrPublishSpy.callCount, 1);
-    // Ensure that correct PDR record is passed to publish handler
-    const publishPdrRecord = pdrPublishSpy.args[0][0];
-    t.is(publishPdrRecord.pdrName, pdrName);
-    t.is(publishPdrRecord.provider, message.meta.provider.id);
-    t.is(publishPdrRecord.collectionId, collectionId);
-    t.is(publishPdrRecord.status, 'completed');
     t.is(publishPdrRecord.createdAt, createdAtTime);
   } finally {
     // revert the mocking
@@ -744,12 +650,19 @@ test.serial('publish failure to PDRs topic does not affect publishing to other t
 test.serial('handler publishes notification from input to first failed Lambda step in failed execution history', async (t) => {
   const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
 
-  const cwEventMessage = createCloudwatchEventMessage(
-    'FAILED',
-    createCumulusMessage({
-      numberOfGranules: 1
+  const message = createCumulusMessage({ numberOfGranules: 1 });
+
+  await executionModel.create(
+    fakeExecutionFactoryV2({
+      execution: message.cumulus_meta.execution_name,
+      arn: aws.getExecutionArn(
+        message.cumulus_meta.state_machine,
+        message.cumulus_meta.execution_name
+      )
     })
   );
+
+  const cwEventMessage = createCloudwatchEventMessage('FAILED', message);
 
   const granuleId = randomId('granule');
   const failedStepInputMessage = createCumulusMessage({
@@ -758,6 +671,16 @@ test.serial('handler publishes notification from input to first failed Lambda st
       granuleId
     }
   });
+
+  await executionModel.create(
+    fakeExecutionFactoryV2({
+      execution: failedStepInputMessage.cumulus_meta.execution_name,
+      arn: aws.getExecutionArn(
+        failedStepInputMessage.cumulus_meta.state_machine,
+        failedStepInputMessage.cumulus_meta.execution_name
+      )
+    })
+  );
 
   const getFailedLambdaStepStub = sinon.stub(LambdaStep.prototype, 'getFirstFailedStepMessage')
     .callsFake(() => failedStepInputMessage);
@@ -783,10 +706,16 @@ test.serial('handler publishes notification from input to first failed Lambda st
 test.serial('handler publishes notification from input to first failed Activity step in failed execution history', async (t) => {
   const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
 
-  const cwEventMessage = createCloudwatchEventMessage(
-    'FAILED',
-    createCumulusMessage({
-      numberOfGranules: 1
+  const message = createCumulusMessage({ numberOfGranules: 1 });
+  const cwEventMessage = createCloudwatchEventMessage('FAILED', message);
+
+  await executionModel.create(
+    fakeExecutionFactoryV2({
+      execution: message.cumulus_meta.execution_name,
+      arn: aws.getExecutionArn(
+        message.cumulus_meta.state_machine,
+        message.cumulus_meta.execution_name
+      )
     })
   );
 
@@ -797,6 +726,16 @@ test.serial('handler publishes notification from input to first failed Activity 
       granuleId
     }
   });
+
+  await executionModel.create(
+    fakeExecutionFactoryV2({
+      execution: failedStepInputMessage.cumulus_meta.execution_name,
+      arn: aws.getExecutionArn(
+        failedStepInputMessage.cumulus_meta.state_machine,
+        failedStepInputMessage.cumulus_meta.execution_name
+      )
+    })
+  );
 
   const getLambdaStepStub = sinon.stub(LambdaStep.prototype, 'getFirstFailedStepMessage')
     .callsFake(() => undefined);
@@ -827,10 +766,18 @@ test.serial('handler publishes input to failed execution if failed step input ca
       granuleId
     }
   });
-  const cwEventMessage = createCloudwatchEventMessage(
-    'FAILED',
-    message
+
+  await executionModel.create(
+    fakeExecutionFactoryV2({
+      execution: message.cumulus_meta.execution_name,
+      arn: aws.getExecutionArn(
+        message.cumulus_meta.state_machine,
+        message.cumulus_meta.execution_name
+      )
+    })
   );
+
+  const cwEventMessage = createCloudwatchEventMessage('FAILED', message);
 
   const getLambdaFailedStepStub = sinon.stub(LambdaStep.prototype, 'getFirstFailedStepMessage')
     .callsFake(() => undefined);
