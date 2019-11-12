@@ -96,21 +96,21 @@ Create a `terraform.tf` file, substituting the appropriate values for `bucket`,
 `dynamodb_table`, and `<stack>`. This tells Terraform where to store its
 remote state.
 
-**terraform.tf**
+**terraform.tf:**
 
 ```hcl
 terraform {
   backend "s3" {
     region         = "us-east-1"
-    bucket         = "my-tf-state"
-    key            = "terraform/state/<stack>/data-persistence-tf/terraform.tfstate"
-    dynamodb_table = "my-tf-locks"
+    bucket         = "PREFIX-state"
+    key            = "PREFIX/data-persistence/terraform.tfstate"
+    dynamodb_table = "PREFIX-tf-locks"
   }
 }
 ```
 
 Copy the `terraform.tfvars.example` file to `terraform.tfvars`, and fill in
-appropriate values.
+appropriate values. For additional information about the variables, see the [variable definitions for the `data-persistence` module](../tf-modules/data-persistence/variables.tf).
 
 Run `terraform init`.
 
@@ -122,35 +122,30 @@ This will deploy your data persistence resources.
 
 These steps should be executed in the `example/cumulus-tf` directory.
 
-**Note:** These steps should be performed using `NGAPShNonProd` credentials.
-
 Create a `terraform.tf` file, substituting the appropriate values for `bucket`,
 `dynamodb_table`, and `<stack>`. This tells Terraform where to store its
 remote state.
 
-**terraform.tf**
+**terraform.tf:**
 
 ```hcl
 terraform {
   backend "s3" {
     region         = "us-east-1"
-    bucket         = "my-tf-state"
-    key            = "terraform/state/<stack>/cumulus-tf/terraform.tfstate"
-    dynamodb_table = "my-tf-locks"
+    bucket         = "PREFIX-state"
+    key            = "PREFIX/cumulus/terraform.tfstate"
+    dynamodb_table = "PREFIX-tf-locks"
   }
 }
 ```
 
 Copy the `terraform.tfvars.example` file to `terraform.tfvars`, and fill in
-appropriate values.
+appropriate values. For additional information about the variables, see the [variable definitions for the `cumulus` module](../tf-modules/cumulus/variables.tf).
 
 **Note:** The `data_persistence_remote_state_config` section should contain the
 remote state values that you configured in
 `example/data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to
 determine the names of the resources created in `data-persistence-tf`.
-
-**Note:** When deploying to NGAP, the `permissions_boundary_arn` should refer to
-`NGAPShNonProdRoleBoundary`.
 
 Run `terraform init`.
 
@@ -189,7 +184,7 @@ Jasmine supports wildcard expressions for running tests, so an entire test folde
 
 ### Running Tests on SIT
 
-In the event you are running tests outside of the cumulus sandbox environment you will need to follow the [directions](#update-providers) to update your fake data server providers. Alternatively, you can set the environment variable `PROVIDER_HOST` to point to the private IP address of your FakeProvider EC2 instance.
+In the event that you are running the tests outside of the Cumulus sandbox environment you will need to follow the [directions](#fake-data-server) to update your fake data server providers. Alternatively, you can set the environment variable `PROVIDER_HOST` to point to the private IP address of your FakeProvider EC2 instance.
 
 ## Adding tests
 
@@ -219,12 +214,14 @@ aws cloudformation deploy --template-file fake-server.yml --stack-name <stack-na
 
 with the following parameters:
 
-- stack-name - stack name for the fake server
-- VpcId - vpc id
-- SubnetId - subent id
-- AZone - availability zone, needs to match the subnet id's availability zone
-- Ngap - true if in an NASA NGAP environment, will add the NGAP permission boundary to the IAM role created
+- stack-name - Stack name for the fake server
+- VpcId - VPC ID
+- SubnetId - Subnet ID
+- AZone - Availability zone, needs to match the Subnet ID's availability zone
+- Ngap - `true` if in an NASA NGAP environment, will add the NGAP permission boundary to the IAM role created
 
-<a name="update-providers"></a>In the outputs section of your Cloudformation deployment in the AWS console, you can find the address of the fake server created. In the provider configurations in `example/data/providers`, update the providers to use the correct host address.
+In the outputs section of your Cloudformation deployment in the AWS console, you can find the IP address of the fake server created. To use this fake server with the tests, update the provider configurations in `example/data/providers` to use this host address.
 
-By default, the data location is the `cumulus-data-shared` S3 bucket. To use a different bucket for test data, update `fake-server.yml` with the alternative bucket.
+### Update data bucket
+
+By default, the data location is the `cumulus-data-shared` S3 bucket. To use a different bucket for test data, update `fake-server.yml` with the alternative bucket and re-deploy the fake data server.

@@ -540,7 +540,7 @@ the resultant output would look like:
 }
 ```
 
-## Additional Feature
+## Additional features
 
 ### Validate task input, output and configuration messages against the schemas provided
 
