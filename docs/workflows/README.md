@@ -28,11 +28,11 @@ We want to use lego-like individual steps that can be composed by an operator.
 
 Individual steps should ...
 
-* be as ignorant as possible of the overall flow. They should not be aware of previous steps.
-* be runnable on their own.
-* define their input and output in simple data structures.
-* be domain agnostic.
-  * Don't make assumptions of specifics of what goes into a granule for example.
+* Be as ignorant as possible of the overall flow. They should not be aware of previous steps.
+* Be runnable on their own.
+* Define their input and output in simple data structures.
+* Be domain agnostic.
+* Not make assumptions of specifics of what goes into a granule for example.
 
 #### Scalable
 
