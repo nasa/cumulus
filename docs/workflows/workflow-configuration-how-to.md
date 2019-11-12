@@ -67,6 +67,8 @@ To use the buckets specified in the configuration, you can do the following:
 }
 ```
 
+Or, to map a specific bucket to a config value for a task:
+
 ```json
 {
   "MoveGranules": {
