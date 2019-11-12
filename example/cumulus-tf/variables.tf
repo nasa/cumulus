@@ -165,3 +165,18 @@ variable "private_archive_api_gateway" {
   type = bool
   default = true
 }
+
+variable "metrics_es_host" {
+  type = string
+  default = null
+}
+
+variable "metrics_es_password" {
+  type = string
+  default = null
+}
+
+variable "metrics_es_username" {
+  type = string
+  default = null
+}

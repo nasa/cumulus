@@ -24,6 +24,7 @@ resource "aws_lambda_function" "api" {
       AsyncOperationTaskDefinition = aws_ecs_task_definition.async_operation.arn
       AsyncOperationsTable         = var.dynamo_tables.async_operations.name
       BulkDeleteLambda             = aws_lambda_function.bulk_delete.arn
+      BulkOperationLambda          = aws_lambda_function.bulk_operation.arn
       CMR_ENVIRONMENT              = var.cmr_environment
       CollectionsTable             = var.dynamo_tables.collections.name
       EARTHDATA_BASE_URL           = "${replace(var.urs_url, "//*$/", "/")}" # Makes sure there's one and only one trailing slash
