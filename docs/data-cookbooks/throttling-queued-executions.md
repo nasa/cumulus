@@ -143,6 +143,8 @@ Similarly, for a `QueuePdrs` step (see [example discover PDRs workflow](https://
         }
       }
     },
+    // more configuration
+  }
 ```
 
 After making these changes, [re-deploy your Cumulus application](../deployment/upgrade.md#update-cumulus-resources) for the execution throttling to take effect on workflow executions queued by these workflows.
