@@ -100,9 +100,10 @@ Follow the instructions to [re-deploy your Cumulus application](../deployment/up
 
 For any workflows using `QueueGranules` or `QueuePdrs` that you want to use your new queue, update the Cumulus configuration of those steps in your workflows.
 
-As seen in this example configuration for a `QueueGranules` step (a full example can be found in the [discover granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf)), update the `queueUrl` to reference the new throttled queue:
+As seen in this partial configuration for a `QueueGranules` step (a full example of the step definition can be found in the [discover granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf)), update the `queueUrl` to reference the new throttled queue:
 
 ```json
+{
   "QueueGranules": {
     "Parameters": {
       "cma": {
@@ -119,15 +120,16 @@ As seen in this example configuration for a `QueueGranules` step (a full example
         }
       }
     }
-    // ... more configuration ...
   }
+}
 ```
 
 > **Please note:** Make sure that the last component of the JSON path for the `queueUrl` (`backgroundJobQueue` of `$.meta.queues.backgroundJobQueue`) used to identify the queue matches the `id` that was [defined previously for the queue](#set-maximum-executions-for-the-queue).
 
-Similarly, for a `QueuePdrs` step (see [example discover PDRs workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_and_queue_pdrs_workflow.tf)):
+Similarly, for a `QueuePdrs` step (see [example discover PDRs workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_and_queue_pdrs_workflow.tf) for full step definition):
 
 ```json
+{
   "QueuePdrs": {
     "Parameters": {
       "cma": {
@@ -145,8 +147,8 @@ Similarly, for a `QueuePdrs` step (see [example discover PDRs workflow](https://
         }
       }
     }
-    // ... more configuration ...
   }
+}
 ```
 
 After making these changes, [re-deploy your Cumulus application](../deployment/upgrade.md#update-cumulus-resources) for the execution throttling to take effect on workflow executions queued by these workflows.
