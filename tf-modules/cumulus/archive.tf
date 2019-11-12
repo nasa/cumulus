@@ -35,6 +35,11 @@ module "archive" {
   launchpad_certificate = var.launchpad_certificate
   launchpad_passphrase  = var.launchpad_passphrase
 
+  saml_entity_id                  = var.saml_entity_id
+  saml_assertion_consumer_service = var.saml_assertion_consumer_service
+  saml_idp_login                  = var.saml_idp_login
+  saml_launchpad_metadata_path    = var.saml_launchpad_metadata_path
+
   urs_url             = "https://uat.urs.earthdata.nasa.gov"
   urs_client_id       = var.urs_client_id
   urs_client_password = var.urs_client_password
