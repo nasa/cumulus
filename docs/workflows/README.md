@@ -38,13 +38,13 @@ Individual steps should ...
 
 The ingest architecture needs to be scalable both to handle ingesting hundreds of millions of granules and interpret dozens of different workflows.
 
-#### Data Provenance
+### Data Provenance
 
 * We should have traceability for how data was produced and where it comes from.
 * Use immutable representations of data. Data once received is not overwritten. Data can be removed for cleanup.
 * All software is versioned. We can trace transformation of data by tracking the immutable source data and the versioned software applied to it.
 
-#### Operator Visibility and Control
+### Operator Visibility and Control
 
 * Operators should be able to see and understand everything that is happening in the system.
 * It should be obvious why things are happening and straightforward to diagnose problems.
