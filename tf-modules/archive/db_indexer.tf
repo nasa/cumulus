@@ -1,6 +1,7 @@
 resource "aws_sqs_queue" "db_indexer_dead_letter_queue" {
   name                       = "${var.prefix}-dbIndexerDeadLetterQueue"
   receive_wait_time_seconds  = 20
+  message_retention_seconds  = 1209600
   visibility_timeout_seconds = 60
   tags                       = local.default_tags
 }

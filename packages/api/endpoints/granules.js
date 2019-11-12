@@ -181,9 +181,42 @@ async function get(req, res) {
   return res.send(result);
 }
 
+async function bulk(req, res) {
+  const payload = req.body;
+
+  const asyncOperationModel = new models.AsyncOperation({
+    stackName: process.env.stackName,
+    systemBucket: process.env.system_bucket,
+    tableName: process.env.AsyncOperationsTable
+  });
+
+  try {
+    const asyncOperation = await asyncOperationModel.start({
+      asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+      cluster: process.env.EcsCluster,
+      lambdaName: process.env.BulkOperationLambda,
+      payload: {
+        payload,
+        type: 'BULK_GRANULE',
+        granulesTable: process.env.GranulesTable,
+        system_bucket: process.env.system_bucket,
+        stackName: process.env.stackName,
+        invoke: process.env.invoke
+      },
+      esHost: process.env.ES_HOST
+    });
+    return res.send(asyncOperation);
+  } catch (err) {
+    if (err.name !== 'EcsStartTaskError') throw err;
+
+    return res.boom.serverUnavailable(`Failed to run ECS task: ${err.message}`);
+  }
+}
+
 router.get('/:granuleName', get);
 router.get('/', list);
 router.put('/:granuleName', put);
+router.post('/bulk', bulk);
 router.delete('/:granuleName', del);
 
 module.exports = router;

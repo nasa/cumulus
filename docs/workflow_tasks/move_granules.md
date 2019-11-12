@@ -12,18 +12,18 @@ Links to the npm package, task input, output and configuration schema definition
 
 ## Summary
 
-This task utilizes the incoming ```event.input``` array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects to do the following:
+This task utilizes the incoming `event.input` array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects to do the following:
 
 * Move granules from their 'staging' location to the final location (as configured in the Sync Granules task)
 
-* Update the ```event.input``` object with the new file locations.
+* Update the `event.input` object with the new file locations.
 
-* If the granule has a ECHO10/UMM CMR file(.cmr.xml or .cmr.json) file included in the ```event.input```:
-  *  Update that file's access locations
-  *  Add it to the appropriate access URL category for the CMR filetype as defined by granule CNM filetype.
-  *  Set the CMR file to 'metadata' in the output granules object and add it to  the granule files if it's not already present.
+* If the granule has a ECHO10/UMM CMR file(.cmr.xml or .cmr.json) file included in the `event.input`:
+  * Update that file's access locations
+  * Add it to the appropriate access URL category for the CMR filetype as defined by granule CNM filetype.
+  * Set the CMR file to 'metadata' in the output granules object and add it to  the granule files if it's not already present.
 
-      Please note: **Granules without a valid CNM type set in the granule file type field in ```event.input``` will be treated as 'data' in the updated CMR metadata file**
+    > **Please note:** Granules without a valid CNM type set in the granule file type field in `event.input` will be treated as "data" in the updated CMR metadata file
 
 * Task then outputs an updated list of [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects.
 

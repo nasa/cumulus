@@ -16,6 +16,9 @@ The Docker container expects a number of environment variables to be set:
 The built image is deployed to
 https://hub.docker.com/r/cumuluss/async-operation/
 
+## Logs
+Logs will be output to `${stackName}-${OperationName}EcsLogs`
+
 ## Building and Deploying
 
 Run the following commands. Replace <build-number> with the next build number.
