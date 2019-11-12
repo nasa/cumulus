@@ -118,7 +118,9 @@ As seen in this example configuration for a `QueueGranules` step (a full example
           "granuleIngestWorkflow": "${module.ingest_granule_workflow.name}"
         }
       }
-    },
+    }
+    // ... more configuration ...
+  }
 ```
 
 > **Please note:** Make sure that the last component of the JSON path for the `queueUrl` (`backgroundJobQueue` of `$.meta.queues.backgroundJobQueue`) used to identify the queue matches the `id` that was [defined previously for the queue](#set-maximum-executions-for-the-queue).
@@ -142,8 +144,8 @@ Similarly, for a `QueuePdrs` step (see [example discover PDRs workflow](https://
           "parsePdrWorkflow": "${module.parse_pdr_workflow.name}"
         }
       }
-    },
-    // more configuration
+    }
+    // ... more configuration ...
   }
 ```
 
