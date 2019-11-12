@@ -237,6 +237,26 @@ variable "public_buckets" {
   default = []
 }
 
+variable "saml_entity_id" {
+  type    = string
+  default = "N/A"
+}
+
+variable "saml_assertion_consumer_service" {
+  type    = string
+  default = "N/A"
+}
+
+variable "saml_idp_login" {
+  type    = string
+  default = "N/A"
+}
+
+variable "saml_launchpad_metadata_path" {
+  type    = string
+  default = "N/A"
+}
+
 variable "sts_credentials_lambda" {
   type    = string
   default = "gsfc-ngap-sh-s3-sts-get-keys"
