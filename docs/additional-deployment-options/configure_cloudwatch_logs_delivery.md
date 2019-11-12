@@ -6,12 +6,13 @@ hide_title: true
 
 # Configure API Gateway CloudWatch Logs Delivery
 
-It is possible to deliver CloudWatch API execution and access logs to a cross-account shared AWS::Logs::Destination. An operator does this by adding the key `logToSharedDestination` whose value is a writable log destination to the default level of the Cumulus `config.yml`.
+It is possible to deliver CloudWatch API execution and access logs to a cross-account shared AWS::Logs::Destination. An operator does this by setting the `log_destination_arn` variable whose value is the ARN of a writable log destination to the variables passed to the `cumulus` module.
 
 ```yaml
-default:
-  logToSharedDestination: arn:aws:logs:us-east-1:123456789012:destination:CumulusLogDestination
+log_api_gateway_to_cloudwatch = true
+log_destination_arn           = arn:aws:logDestination
 ```
+
 The value can be either an [AWS::Logs::Destination](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-logs-destination.html) or a [Kinesis Stream](https://aws.amazon.com/kinesis/data-streams/) Arn to which your account can write.
 
 For NASA/NGAP deployments an operator should make a request to the metrics team for write access and the correct shared Logs Destination for further processing in their [ELK](https://www.elastic.co/elk-stack) stack.
