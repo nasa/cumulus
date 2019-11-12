@@ -140,8 +140,8 @@ variable "cmr_page_size" {
 
 variable "custom_queues" {
   description = "Map of SQS queue identifiers to queue URLs"
-  type    = map(string)
-  default = {}
+  type    = list(object({ id = string, url = string }))
+  default = []
 }
 
 variable "distribution_url" {
@@ -293,15 +293,15 @@ variable "private_archive_api_gateway" {
   default = true
 }
 
-variable "queue_execution_limits" {
-  description = "Map specifying maximum concurrent execution limits for the queue(s) identified by the keys"
-  type = map(number)
-  default = {}
-}
-
 variable "region" {
   description = "The AWS region to deploy to"
   type    = string
+}
+
+variable "throttled_queues" {
+  description = "Array of configuration for custom queues with execution limits"
+  type    = list(object({ id = string, url = string, execution_limit = number }))
+  default = []
 }
 
 variable "urs_url" {

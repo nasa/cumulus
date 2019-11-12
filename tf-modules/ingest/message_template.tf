@@ -6,10 +6,13 @@ locals {
     kinesisFailure            = aws_sqs_queue.kinesis_failure.id
     ScheduleSFDeadLetterQueue = aws_sqs_queue.schedule_sf_dead_letter_queue.id
   }
+  custom_queues = { for queue in var.custom_queues: queue.id => queue.url }
+  custom_throttled_queues = { for queue in var.throttled_queues: queue.id => queue.url }
 
   default_queue_execution_limits = {
     backgroundProcessing = 5
   }
+  custom_queue_execution_limits = { for queue in var.throttled_queues: queue.id => queue.execution_limit }
 
   message_template_key = "${var.prefix}/workflow_template.json"
 
@@ -45,8 +48,8 @@ locals {
       collection            = {}
       provider              = {}
       template              = "s3://${var.system_bucket}/${local.message_template_key}"
-      queues                = merge(local.default_queues, var.custom_queues)
-      queueExecutionLimits  = merge(local.default_queue_execution_limits, var.queue_execution_limits)
+      queues                = merge(local.default_queues, local.custom_queues, local.custom_throttled_queues)
+      queueExecutionLimits  = merge(local.default_queue_execution_limits, local.custom_queue_execution_limits)
     }
     payload   = {}
     exception = null
