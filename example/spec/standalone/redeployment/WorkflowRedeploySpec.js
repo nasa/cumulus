@@ -28,8 +28,7 @@ function redeployWithRetries(config) {
   return pRetry(
     () => runKes(config, { timeout: deployTimeout }),
     {
-      retries: 2,
-      minTimeout: 0
+      retries: 2
     }
   );
 }

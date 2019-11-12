@@ -1,8 +1,9 @@
 region = "us-east-1"
 
+# Replace 12345 with your actual AWS account ID
 cumulus_message_adapter_lambda_layer_arn = "arn:aws:lambda:us-east-1:12345:layer:Cumulus_Message_Adapter:4"
+permissions_boundary_arn = "arn:aws:iam::12345:policy/NGAPShRoleBoundary"
 
-permissions_boundary_arn = "arn:aws:iam::12345:policy/NGAPShNonProdRoleBoundary"
 prefix                   = "PREFIX"
 buckets = {
   internal = {
@@ -25,7 +26,6 @@ buckets = {
 subnet_ids    = ["subnet-12345"]
 system_bucket = "PREFIX-internal"
 vpc_id        = "vpc-12345"
-key_name      = "MY-KEY"
 
 cmr_client_id   = "cumulus-core-PREFIX"
 cmr_environment = "UAT"
@@ -33,7 +33,23 @@ cmr_password    = "password"
 cmr_provider    = "CUMULUS"
 cmr_username    = "username"
 
+# Earthdata application client ID/password for authentication
+urs_client_id       = "asdf"
+urs_client_password = "password"
+
+token_secret = "asdf"
+
+data_persistence_remote_state_config = {
+  bucket = "PREFIX-tf-state"
+  key    = "PREFIX/data-persistence/terraform.tfstate"
+  region = "us-east-1"
+}
+
 cmr_oauth_provider = "earthdata"
+
+# Make archive API run as a private API gateway and accessible on port 8000
+archive_api_port = 8000
+private_archive_api_gateway = true
 
 # Optional. Required if using cmr_oauth_provider = "launchpad"
 launchpad_api = "launchpadApi"
@@ -45,17 +61,18 @@ oauth_provider   = "earthdata"
 # Optional. Oauth user group to validate the user against when using oauth_provider = "launchpad"
 oauth_user_group = "usergroup"
 
-urs_client_id       = "asdf"
-urs_client_password = "password"
+# Optional.  When using oauth_provider = "launchpad", and if you are configuring Cumulus to authenticate
+# the dashboard via NASA's Launchpad SAML implementation.
+# see Wiki: https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+SAML+Launchpad+Integration
+saml_entity_id                  = "Configured SAML entity-id"
+saml_assertion_consumer_service = "<Cumulus API endpoint>/saml/auth, e.g. https://example.com/saml/auth"
+saml_idp_login                  = "nasa's saml2sso endpoint, e.g. https://example.gov/affwebservices/public/saml2sso"
+saml_launchpad_metadata_path    = "s3 url to identity provider public metadata xml file, e.g. s3://system_bucket/PREFIX/launchpad/launchpad-sbx-metadata.xml"
 
-token_secret = "asdf"
+# Optional
+key_name      = "MY-KEY"
 
+# Optional
 metrics_es_host = "https://xxxxxxxxxx.cloudfront.net"
 metrics_es_username = "user"
 metrics_es_password = "password"
-
-data_persistence_remote_state_config = {
-  bucket = "PREFIX-tf-state"
-  key    = "PREFIX/data-persistence/terraform.tfstate"
-  region = "us-east-1"
-}

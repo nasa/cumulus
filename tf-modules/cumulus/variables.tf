@@ -298,6 +298,30 @@ variable "region" {
   type    = string
 }
 
+variable "saml_entity_id" {
+  description = "The endpoint EntityID from the Launchpad Integration Request"
+  type    = string
+  default = "N/A"
+}
+
+variable "saml_assertion_consumer_service" {
+  description = "The URL Bindings Assertion Point from the Launchpad Integration Request"
+  type    = string
+  default = "N/A"
+}
+
+variable "saml_idp_login" {
+  description = "The SAML Identity Provider's saml2sso endpoint"
+  type    = string
+  default = "N/A"
+}
+
+variable "saml_launchpad_metadata_path" {
+  description = "The S3 url of the Identity Provider public metadata xml file"
+  type    = string
+  default = "N/A"
+}
+
 variable "throttled_queues" {
   description = "Array of configuration for custom queues with execution limits"
   type    = list(object({ id = string, url = string, execution_limit = number }))
