@@ -56,7 +56,7 @@ The Ingest Workflow Architecture is defined by two entity types, [Workflows](#wo
 
 Workflows and tasks are configured as Terraform resources. A scheduler initiates workflows as configured by that JSON file.
 
-![Diagram showing the flow for a collection ingest through step functions via tasks](assets/ingest_diagram.png)
+![Diagram showing the Step Function execution path through workflow tasks for a collection ingest](assets/ingest_diagram.png)
 
 See the [Example GIBS Ingest Architecture](#example-gibs-ingest-architecture) showing how workflows and tasks are used to define the GIBS Ingest Architecture.
 
