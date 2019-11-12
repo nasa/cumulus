@@ -13,38 +13,33 @@ The [workflow-trigger](../workflows/workflow-triggers) for the startSF queue has
 This queue can then be monitored for failures to initiate a workflow.   Please note that workflow failures will not show up in this queue, only repeated failure to trigger a workflow.
 
 ## Named Lambda Dead Letter Queues
-Cumulus provides the ability to configure a default named [Dead Letter Queue](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html) for lambdas.   This is intended to be utilized for non-workflow lambdas (such as ScheduleSF) to capture lambda failures for further processing.
 
-Adding the following configuration to a lambda in `app/lambdas.yml`:
+Cumulus provides configured [Dead Letter Queues](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html) (`DLQ`) for non-workflow Lambdas (such as ScheduleSF) to capture Lambda failures for further processing.
 
-```
-namedLambdaDeadLetterQueue: true
-```
+These DLQs are setup with the following configuration:
 
-will create an SQS Dead Letter Queue named `{lambdaName}DeadLetterQueue` and set the lambda to target it.   The default retention configuration for this queue will be set with the following configurable values:
-
-```
-DLQDefaultTimeout: 60  ## SQS Message Timer
-DLQDefaultMessageRetentionPeriod: 1209600 ## SQS Message Retention
+```hcl
+  receive_wait_time_seconds  = 20
+  message_retention_seconds  = 1209600
+  visibility_timeout_seconds = 60
 ```
 
-These values can be overridden in the `app/config.yml` and will apply to all 'named' lambda Dead Letter Queues, subject to [AWS SQS Limits](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-limits.html)
+### **Default Lambda Configuration**
 
-#### Default Lambda Configuration
-
-The following built-in cumulus lambdas have this feature enabled by default to allow handling of process failures:
+The following built-in Cumulus Lambdas are setup with DLQs to allow handling of process failures:
 
 * dbIndexer (Updates Elasticsearch based on DynamoDB events)
-* EmsIngestReport (Daily EMS ingest report generation lambda)
+* EmsIngestReport (Daily EMS ingest report generation Lambda)
 * JobsLambda (writes logs outputs to Elasticsearch)
 * log2elasticsearch (Lambda that exports logs into Elasticsearch)
-* ScheduleSF (The SF Scheduler lambda that places messages on the start SF queue, see [Workflow Triggers](../workflows/workflow-triggers.md))
-* sns2elasticsearch (API Lambda that takes a payload from a workflow and indexes it into Elasticsearch)
+* ScheduleSF (the SF Scheduler Lambda that places messages on the queue that is used to start workflows, see [Workflow Triggers](../workflows/workflow-triggers.md))
+* publishReports  (Lambda that publishes messages to the SNS topics for execution, granule and PDR reporting)
+* reportGranules, reportExecutions, reportPdrs (Lambdas responsible for updating records based on messages in the queues published by publishReports)
 
 ## Troubleshooting/Utilizing messages in a [Dead Letter Queue](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html)
 
 Ideally an automated process should be configured to poll the queue and process messages off a dead letter queue.
 
-For aid in manually troubleshooting, you can utilize the [SQS Management console](https://console.aws.amazon.com/sqs/home) to view/messages available in the queues setup for a particular stack.    The dead letter queues will have a Message Body containing the lambda payload, as well as Message Attributes that reference both the error returned and a RequestID which can be cross referenced to the associated Lambda's CloudWatch logs for more information:
+For aid in manually troubleshooting, you can utilize the [SQS Management console](https://console.aws.amazon.com/sqs/home) to view/messages available in the queues setup for a particular stack.    The dead letter queues will have a Message Body containing the Lambda payload, as well as Message Attributes that reference both the error returned and a RequestID which can be cross referenced to the associated Lambda's CloudWatch logs for more information:
 
 ![sqs message attributes](assets/sqs_message_attribute.png)

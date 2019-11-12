@@ -192,6 +192,21 @@ variable "launchpad_passphrase" {
   default = ""
 }
 
+variable "metrics_es_host" {
+  type = string
+  default = null
+}
+
+variable "metrics_es_password" {
+  type = string
+  default = null
+}
+
+variable "metrics_es_username" {
+  type = string
+  default = null
+}
+
 variable "oauth_provider" {
   type    = string
   default = "earthdata"
@@ -243,29 +258,35 @@ variable "vpc_id" {
   default = null
 }
 
-# clean_executions lambda config
+## clean_executions lambda config
 
 variable "daily_execution_payload_cleanup_schedule_expression" {
   type    = string
   default = "cron(0 4 * * ? *)"
+  description = "Cloud Watch cron schedule for the execution payload cleanup lambda"
 }
 
 variable "complete_execution_payload_timeout_disable" {
   type    = bool
   default = false
+  description = "Boolean flag that when set to true will disable 'complete' execution cleanup"
 }
 
 variable "complete_execution_payload_timeout" {
   type    = number
   default = 10
+  description = "Number of days to retain 'complete' execution payload records in the database"
 }
 
 variable "non_complete_execution_payload_timeout_disable" {
   type    = bool
   default = false
+  description = "Boolean flag that when set to true will disable 'complete' execution cleanup"
+
 }
 
 variable "non_complete_execution_payload_timeout" {
+  description = "Number of days to retain 'non-complete' execution payload records in the database"
   type    = number
   default = 30
 }

@@ -220,8 +220,8 @@ Again, please make sure to modify the value CNMResponseStream to match the strea
 
 To execute this workflow, you're required to include several Lambda resources in your deployment.  To do this, add the following task (Lambda) definitions to your deployment along with the workflow you created above:
 
-* https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_to_cma_task.tf
-* https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_response_task.tf
+* <https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_to_cma_task.tf>
+* <https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_response_task.tf>
 
 **Please note:** To utilize these tasks you need to ensure you have a compatible CMA layer.  See the [deployment instructions](../deployment/README.md#deploy-cumulus-message-adapter-layer) for more details on how to deploy a CMA layer.
 
@@ -516,8 +516,8 @@ which should result in an output to:
 }
 ```
 
-- Re-trigger the workflow by using the `put-record` command from
-- As the workflow completes, use the output from the `get-shard-iterator` command to request data from the stream:
+* Re-trigger the workflow by using the `put-record` command from
+* As the workflow completes, use the output from the `get-shard-iterator` command to request data from the stream:
 
 ```bash
 aws kinesis get-records --shard-iterator SHARD_ITERATOR_VALUE

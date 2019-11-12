@@ -26,7 +26,7 @@ The constructed granules object is created using PDR metadata to determine value
 
 Granule file types are converted from the PDR spec types to CNM types according to the following translation table:
 
-```
+```text
   HDF: 'data',
   'HDF-EOS': 'data',
   SCIENCE: 'data',

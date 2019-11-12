@@ -373,6 +373,7 @@ exports.getS3Object = improveStackTrace(
         }
       },
       {
+        maxTimeout: 10000,
         onFailedAttempt: (err) => log.debug(`getS3Object('${Bucket}', '${Key}') failed with ${err.retriesLeft} retries left: ${err.message}`),
         ...retryOptions
       }
@@ -854,32 +855,37 @@ async function createQueue(queueName) {
 exports.createQueue = createQueue;
 
 /**
- * Publish a message to an SNS topic.
- *
- * Catch any thrown errors and log them.
+ * Publish a message to an SNS topic. Does not catch
+ * errors, to allow more specific handling by the caller.
  *
  * @param {string} snsTopicArn - SNS topic ARN
  * @param {Object} message - Message object
- * @returns {Promise}
+ * @param {Object} retryOptions - options to control retry behavior when publishing
+ * a message fails. See https://github.com/tim-kos/node-retry#retryoperationoptions
+ * @returns {Promise<undefined>}
  */
 exports.publishSnsMessage = async (
   snsTopicArn,
-  message
-) => {
-  try {
-    if (!snsTopicArn) {
-      throw new Error('Missing SNS topic ARN');
-    }
+  message,
+  retryOptions = {}
+) =>
+  pRetry(
+    async () => {
+      if (!snsTopicArn) {
+        throw new pRetry.AbortError('Missing SNS topic ARN');
+      }
 
-    await exports.sns().publish({
-      TopicArn: snsTopicArn,
-      Message: JSON.stringify(message)
-    }).promise();
-  } catch (err) {
-    log.error(`Failed to post message to SNS topic: ${snsTopicArn}`, err);
-    log.info('Undelivered message', message);
-  }
-};
+      await exports.sns().publish({
+        TopicArn: snsTopicArn,
+        Message: JSON.stringify(message)
+      }).promise();
+    },
+    {
+      maxTimeout: 5000,
+      onFailedAttempt: (err) => log.debug(`publishSnsMessage('${snsTopicArn}', '${message}') failed with ${err.retriesLeft} retries left: ${err.message}`),
+      ...retryOptions
+    }
+  );
 
 /**
 * Send a message to AWS SQS
@@ -1050,7 +1056,7 @@ exports.retryOnThrottlingException = (fn, options) =>
   (...args) =>
     pRetry(
       () => fn(...args).catch(retryIfThrottlingException),
-      options
+      { maxTimeout: 5000, ...options }
     );
 
 /**
