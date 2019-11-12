@@ -45,7 +45,7 @@ module "sync_granule_catch_duplicate_error_test" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.sync_granule_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.sync_granule_task.task_arn}",
       "Retry": [
         {
           "ErrorEquals": [

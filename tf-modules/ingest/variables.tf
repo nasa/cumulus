@@ -110,6 +110,11 @@ variable "system_bucket" {
   type = string
 }
 
+variable "task_version" {
+  type = string
+  default = null
+}
+
 variable "vpc_id" {
   type    = string
   default = null

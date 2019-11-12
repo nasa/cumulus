@@ -49,7 +49,7 @@ module "ingest_and_publish_granule_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.sync_granule_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.sync_granule_task.task_arn}",
       "Next": "ChooseProcess",
       "Catch": [
         {
@@ -105,7 +105,7 @@ module "ingest_and_publish_granule_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.fake_processing_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.fake_processing.task_arn}",
       "Next": "FilesToGranulesStep",
       "Catch": [
         {
@@ -144,7 +144,7 @@ module "ingest_and_publish_granule_workflow" {
       },
       "Type": "Task",
       "Next": "MoveGranuleStep",
-      "Resource": "${module.cumulus.files_to_granules_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.files_to_granules_task.task_arn}",
       "Catch": [
         {
           "ErrorEquals": [
@@ -184,7 +184,7 @@ module "ingest_and_publish_granule_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.move_granules_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.move_granules_task.task_arn}",
       "Next": "CmrStep",
       "Catch": [
         {
@@ -225,7 +225,7 @@ module "ingest_and_publish_granule_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.post_to_cmr_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.post_to_cmr_task.task_arn}",
       "Next": "WorkflowSucceeded",
       "Catch": [
         {

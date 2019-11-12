@@ -22,7 +22,7 @@ module "hello_world_fail_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.hello_world_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.hello_world_task.task_arn}",
       "Retry": [
         {
           "ErrorEquals": [

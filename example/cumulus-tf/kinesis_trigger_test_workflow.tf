@@ -33,7 +33,7 @@ module "kinesis_trigger_test_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${aws_lambda_function.cnm_to_cma_task.arn}",
+      "Resource": "${aws_lambda_function.cnm_to_cma_task.arn}:${aws_lambda_function.cnm_to_cma_task.version}",
       "Retry": [
         {
           "ErrorEquals": [
@@ -87,7 +87,7 @@ module "kinesis_trigger_test_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.sync_granule_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.sync_granule_task.task_arn}",
       "Retry": [
         {
           "ErrorEquals": [
@@ -133,7 +133,7 @@ module "kinesis_trigger_test_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${aws_lambda_function.cnm_response_task.arn}",
+      "Resource": "${aws_lambda_function.cnm_response_task.arn}:${aws_lambda_function.cnm_response_task.version}",
       "Retry": [
         {
           "ErrorEquals": [
@@ -182,7 +182,7 @@ module "kinesis_trigger_test_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${aws_lambda_function.cnm_response_task.arn}",
+      "Resource": "${aws_lambda_function.cnm_response_task.arn}:${aws_lambda_function.cnm_response_task.version}",
       "Retry": [
         {
           "ErrorEquals": [

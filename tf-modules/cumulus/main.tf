@@ -3,6 +3,8 @@ provider "aws" {
 }
 
 locals {
+  cumulus_version = trimspace(file("${path.module}/version.txt"))
+
   all_bucket_names       = [for k, v in var.buckets : v.name]
   private_bucket_names   = [for k, v in var.buckets : v.name if v.type == "private"]
   protected_bucket_names = [for k, v in var.buckets : v.name if v.type == "protected"]

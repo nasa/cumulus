@@ -28,7 +28,7 @@ module "discover_and_queue_pdrs_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.discover_pdrs_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.discover_pdrs_task.task_arn}",
       "Retry": [
         {
           "ErrorEquals": [
@@ -70,7 +70,7 @@ module "discover_and_queue_pdrs_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.queue_pdrs_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.queue_pdrs_task.task_arn}",
       "Retry": [
         {
           "ErrorEquals": [

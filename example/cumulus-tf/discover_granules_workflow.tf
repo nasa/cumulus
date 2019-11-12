@@ -29,7 +29,7 @@ module "discover_granules_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.discover_granules_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.discover_granules_task.task_arn}",
       "Retry": [
         {
           "ErrorEquals": [
@@ -70,7 +70,7 @@ module "discover_granules_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.queue_granules_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.queue_granules_task.task_arn}",
       "Retry": [
         {
           "ErrorEquals": [

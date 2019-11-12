@@ -27,7 +27,7 @@ module "parse_pdr_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.parse_pdr_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.parse_pdr_task.task_arn}",
       "Retry": [
         {
           "ErrorEquals": [
@@ -68,7 +68,7 @@ module "parse_pdr_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.queue_granules_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.queue_granules_task.task_arn}",
       "Retry": [
         {
           "ErrorEquals": [
@@ -94,7 +94,7 @@ module "parse_pdr_workflow" {
     },
     "CheckStatus": {
       "Type": "Task",
-      "Resource": "${module.cumulus.pdr_status_check_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.pdr_status_check_task.task_arn}",
       "Parameters": {
         "cma": {
           "event.$": "$",

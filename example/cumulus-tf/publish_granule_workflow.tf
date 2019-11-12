@@ -29,7 +29,7 @@ module "publish_granule_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.post_to_cmr_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.post_to_cmr_task.task_arn}",
       "Catch": [
         {
           "ErrorEquals": [

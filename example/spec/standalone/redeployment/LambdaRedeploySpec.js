@@ -1,6 +1,8 @@
 'use strict';
 
-const { LambdaStep } = require('@cumulus/common/sfnStep');
+const execa = require('execa');
+const path = require('path');
+const { getExecutionHistory } = require('@cumulus/common/StepFunctions');
 const {
   buildAndStartWorkflow,
   getLambdaAliases,
@@ -11,83 +13,144 @@ const {
 const fs = require('fs-extra');
 const {
   loadConfig,
-  protectFile,
-  runKes
+  protectFile
 } = require('../../helpers/testUtils');
 
-describe('When a workflow is running and a new version of a workflow lambda is deployed', () => {
-  let workflowExecutionArn;
-  let workflowStatus;
-  let testVersionOutput;
+const terraformApply = () =>
+  execa(
+    'terraform',
+    ['apply', '-auto-approve'],
+    {
+      cwd: path.join(process.cwd(), 'cumulus-tf'),
+      stdout: process.stdout,
+      stderr: process.stderr
+    }
+  );
 
-  let startVersions;
-  let endVersions;
-  let startAliases;
-  let endAliases;
-  let startVersionNumbers;
-  let endVersionNumbers;
-  let startAliasVersionNumbers;
+const buildZip = () =>
+  execa(
+    'zip',
+    ['lambda.zip', 'index.js'],
+    {
+      stdout: process.stdout,
+      stderr: process.stderr,
+      cwd: 'lambdas/versionUpTest'
+    }
+  );
+
+describe('When a workflow is running and a new version of a workflow lambda is deployed', () => {
+  let beforeAllFailed = false;
   let endAliasVersionNumbers;
+  let endVersionNumbers;
+  let executionArn;
+  let lambdaName;
+  let startAliasVersionNumbers;
+  let startVersionNumbers;
 
   const lambdaFile = './lambdas/versionUpTest/index.js';
 
   beforeAll(async () => {
-    const config = await loadConfig();
+    try {
+      const config = await loadConfig();
 
-    const lambdaStep = new LambdaStep();
+      await protectFile(lambdaFile, async () => {
+        await fs.writeFile(
+          lambdaFile,
+          "exports.handler = async () => 'Correct Version';\n"
+        );
+        await buildZip();
+        await terraformApply();
+      });
 
-    const lambdaName = `${config.stackName}-VersionUpTest`;
+      lambdaName = `${config.stackName}-VersionUpTest`;
 
-    await protectFile(lambdaFile, async () => {
-      await fs.appendFile(lambdaFile, `// ${new Date()}`);
-      await runKes(config);
-    });
+      const [
+        startVersions,
+        startAliases
+      ] = await Promise.all([
+        getLambdaVersions(lambdaName),
+        getLambdaAliases(lambdaName)
+      ]);
 
-    startVersions = await getLambdaVersions(lambdaName);
-    startAliases = await getLambdaAliases(lambdaName);
+      startVersionNumbers = startVersions
+        .map((x) => x.Version)
+        .filter((x) => x !== '$LATEST');
 
-    workflowExecutionArn = await buildAndStartWorkflow(
-      config.stackName,
-      config.bucket,
-      'TestLambdaVersionWorkflow'
-    );
+      startAliasVersionNumbers = startAliases.map((x) => x.FunctionVersion);
 
-    await protectFile(lambdaFile, async () => {
-      await fs.appendFile(lambdaFile, `// ${new Date()}`);
-      await runKes(config);
-    });
+      executionArn = await buildAndStartWorkflow(
+        config.stackName,
+        config.bucket,
+        'TestLambdaVersionWorkflow'
+      );
 
-    workflowStatus = await waitForCompletedExecution(workflowExecutionArn);
-    testVersionOutput = await lambdaStep.getStepOutput(
-      workflowExecutionArn,
-      lambdaName
-    );
+      await protectFile(lambdaFile, async () => {
+        await fs.writeFile(
+          lambdaFile,
+          "exports.handler = async () => 'Wrong Version';\n"
+        );
+        await buildZip();
+        await terraformApply();
+      });
 
-    endVersions = await getLambdaVersions(lambdaName);
-    endAliases = await getLambdaAliases(lambdaName);
-    endVersionNumbers = endVersions.map((x) => x.Version).filter((x) => (x !== '$LATEST'));
-    startVersionNumbers = startVersions.map((x) => x.Version).filter((x) => (x !== '$LATEST'));
-    endAliasVersionNumbers = endAliases.map((x) => x.FunctionVersion);
-    startAliasVersionNumbers = startAliases.map((x) => x.FunctionVersion);
+      const workflowStatus = await waitForCompletedExecution(executionArn);
+      if (workflowStatus !== 'SUCCEEDED') throw new Error(`Workflow failed: ${executionArn}`);
+
+      const [
+        endVersions,
+        endAliases
+      ] = await Promise.all([
+        getLambdaVersions(lambdaName),
+        getLambdaAliases(lambdaName)
+      ]);
+
+      endVersionNumbers = endVersions
+        .map((x) => x.Version)
+        .filter((x) => x !== '$LATEST');
+
+      endAliasVersionNumbers = endAliases.map((x) => x.FunctionVersion);
+    } catch (err) {
+      beforeAllFailed = true;
+      console.log('Exception in beforeAll():', err);
+      throw err;
+    }
   });
 
-  it('the workflow executes successfully', () => {
-    expect(workflowStatus).toEqual('SUCCEEDED');
-  });
+  it('uses the original software version', async () => {
+    if (beforeAllFailed) fail('beforeAll() failed');
+    else {
+      const executionHistory = await getExecutionHistory({ executionArn });
 
-  it('uses the original software version', () => {
-    expect(testVersionOutput.payload).toEqual({ output: 'Current Version' });
+      const successEvent = executionHistory.events.find(
+        (event) => event.type === 'LambdaFunctionSucceeded'
+      );
+
+      if (successEvent) {
+        expect(successEvent.lambdaFunctionSucceededEventDetails.output).toEqual('"Correct Version"');
+      } else {
+        fail('No LambdaFunctionSucceeded event found');
+      }
+    }
   });
 
   it('creates a new Lambda Version', () => {
-    expect(Math.max(...endVersionNumbers) - Math.max(...startVersionNumbers)).toEqual(1);
+    if (beforeAllFailed) fail('beforeAll() failed');
+    else {
+      expect(Math.max(...endVersionNumbers) - Math.max(...startVersionNumbers)).toEqual(1);
+    }
   });
 
   it('creates an updated Alias', () => {
-    expect(Math.max(...endAliasVersionNumbers) - Math.max(...startAliasVersionNumbers)).toEqual(1);
+    if (beforeAllFailed) fail('beforeAll() failed');
+    else {
+      expect(Math.max(...endAliasVersionNumbers) - Math.max(...startAliasVersionNumbers)).toEqual(1);
+    }
   });
 
   it('creates aliases for all deployed versions', () => {
-    expect(endAliasVersionNumbers.sort()).toEqual(endVersionNumbers.sort());
+    if (beforeAllFailed) fail('beforeAll() failed');
+    else {
+      expect(endAliasVersionNumbers.sort()).toEqual(endVersionNumbers.sort());
+    }
   });
 });

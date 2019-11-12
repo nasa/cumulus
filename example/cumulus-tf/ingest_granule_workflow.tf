@@ -49,7 +49,7 @@ module "ingest_granule_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.sync_granule_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.sync_granule_task.task_arn}",
       "Retry": [
         {
           "ErrorEquals": [
@@ -100,7 +100,7 @@ module "ingest_granule_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.fake_processing_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.fake_processing.task_arn}",
       "Catch": [
         {
           "ErrorEquals": [
@@ -132,7 +132,7 @@ module "ingest_granule_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.files_to_granules_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.files_to_granules_task.task_arn}",
       "Retry": [
         {
           "ErrorEquals": [
@@ -170,7 +170,7 @@ module "ingest_granule_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.move_granules_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.move_granules_task.task_arn}",
       "Retry": [
         {
           "ErrorEquals": [

@@ -1,6 +1,8 @@
 module "ingest" {
   source = "../ingest"
 
+  task_version = local.cumulus_version
+
   prefix = var.prefix
 
   buckets = var.buckets
