@@ -270,6 +270,20 @@ reportPdrs:
   tables:
     - PdrsTable
 
+BulkOperation:
+  handler: index.handler
+  timeout: 300
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist/bulkOperation/'
+  launchInVpc: true
+  tables:
+    - GranulesTable
+  envs:
+    system_bucket: '{{system_bucket}}'
+    METRICS_ES_HOST: '{{METRICS_ES_HOST}}'
+    METRICS_ES_USER: '{{METRICS_ES_USER}}'
+    METRICS_ES_PASS: '{{METRICS_ES_PASS}}'
+
 sqsMessageConsumer:
   handler: index.handler
   timeout: 100

@@ -51,20 +51,19 @@ class Pdr extends Manager {
    * Generate a PDR record.
    *
    * @param {Object} message - A workflow execution message
-   * @returns {Object} - A PDR record
+   * @returns {Object|null} - A PDR record, or null if `message.payload.pdr` is
+   *   not set
    */
   static generatePdrRecord(message) {
-    const pdr = get(message, 'payload.pdr', get(message, 'meta.pdr'));
-    let record;
+    const pdr = get(message, 'payload.pdr');
 
-    if (!pdr) {
+    if (!pdr) { // We got a message with no PDR (OK)
       log.info('No PDRs to process on the message');
-      return record;
+      return null;
     }
 
-    if (!pdr.name) {
-      log.info('Could not find name on PDR object', pdr);
-      return record;
+    if (!pdr.name) { // We got a message with a PDR but no name to identify it (Not OK)
+      throw new Error(`Could not find name on PDR object ${JSON.stringify(pdr)}`);
     }
 
     const arn = getMessageExecutionArn(message);
@@ -86,7 +85,7 @@ class Pdr extends Manager {
       progress = 100;
     }
 
-    record = {
+    const record = {
       pdrName: pdr.name,
       collectionId,
       status: get(message, 'meta.status'),

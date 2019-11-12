@@ -25,6 +25,7 @@ resource "aws_sqs_queue" "schedule_sf_dead_letter_queue" {
   name                       = "${var.prefix}-ScheduleSFDeadLetterQueue"
   receive_wait_time_seconds  = 20
   visibility_timeout_seconds = 60
+  message_retention_seconds  = 1209600
   tags                       = local.default_tags
 }
 

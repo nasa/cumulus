@@ -35,8 +35,7 @@ async function waitForModelStatus(model, params, status) {
       }
 
       return record;
-    },
-    { retries: 10 }
+    }
   );
 }
 

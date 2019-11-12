@@ -122,6 +122,7 @@ async function fetchLambdaFunction(codeUrl) {
         .pipe(file);
     }),
     {
+      maxTimeout: 10000,
       onFailedAttempt: (err) => {
         const message = (err.attemptsLeft > 0)
           ? `Failed to download lambda function (will retry): ${err}`

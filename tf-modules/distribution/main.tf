@@ -1,3 +1,7 @@
+provider "aws" {
+  version = "~> 2.31"
+}
+
 locals {
   default_tags           = { Deployment = var.prefix }
   thin_egress_stack_name = "${var.prefix}-thin-egress-app"

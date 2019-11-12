@@ -56,6 +56,9 @@ Parameters:
   IndexFromDatabaseLambdaFunctionArn:
     Type: String
     Description: 'IndexFromDatabaseLambda Lambda function ARN'
+  BulkOperationLambdaFunctionArn:
+    Type: String
+    Description: 'BulkOperation Lambda function ARN'
   distributionRestApi:
     Type: String
     Description: Distribution REST API ID

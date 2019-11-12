@@ -1,3 +1,7 @@
+provider "aws" {
+  version = "~> 2.31"
+}
+
 resource "null_resource" "get_newest_CMA" {
   triggers = {
     always_run = "${timestamp()}"

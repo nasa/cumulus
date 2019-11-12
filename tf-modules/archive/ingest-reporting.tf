@@ -33,12 +33,28 @@ data "aws_iam_policy_document" "report_executions_policy_document" {
     ]
     resources = ["*"]
   }
+  statement {
+    actions = [
+      "sqs:SendMessage"
+    ]
+    resources = [
+      aws_sqs_queue.report_executions_dead_letter_queue.arn
+    ]
+  }
 }
 
 resource "aws_iam_role_policy" "report_executions_lambda_role_policy" {
   name   = "${var.prefix}_report_executions_lambda_role_policy"
   role   = aws_iam_role.report_executions_lambda_role.id
   policy = data.aws_iam_policy_document.report_executions_policy_document.json
+}
+
+resource "aws_sqs_queue" "report_executions_dead_letter_queue" {
+  name                       = "${var.prefix}-reportExecutionsDeadLetterQueue"
+  receive_wait_time_seconds  = 20
+  message_retention_seconds  = 1209600
+  visibility_timeout_seconds = 60
+  tags                       = local.default_tags
 }
 
 resource "aws_lambda_function" "report_executions" {
@@ -52,6 +68,11 @@ resource "aws_lambda_function" "report_executions" {
   runtime          = "nodejs8.10"
   timeout          = 30
   memory_size      = 128
+
+
+  dead_letter_config {
+    target_arn = aws_sqs_queue.report_executions_dead_letter_queue.arn
+  }
 
   vpc_config {
     subnet_ids = var.lambda_subnet_ids
@@ -136,12 +157,28 @@ data "aws_iam_policy_document" "report_granules_policy_document" {
     ]
     resources = ["*"]
   }
+  statement {
+    actions = [
+      "sqs:SendMessage"
+    ]
+    resources = [
+      aws_sqs_queue.report_granules_dead_letter_queue.arn
+    ]
+  }
 }
 
 resource "aws_iam_role_policy" "report_granules_lambda_role_policy" {
   name   = "${var.prefix}_report_granules_lambda_role_policy"
   role   = aws_iam_role.report_granules_lambda_role.id
   policy = data.aws_iam_policy_document.report_granules_policy_document.json
+}
+
+resource "aws_sqs_queue" "report_granules_dead_letter_queue" {
+  name                       = "${var.prefix}-reportGranulesDeadLetterQueue"
+  receive_wait_time_seconds  = 20
+  message_retention_seconds  = 1209600
+  visibility_timeout_seconds = 60
+  tags                       = local.default_tags
 }
 
 resource "aws_lambda_function" "report_granules" {
@@ -153,6 +190,11 @@ resource "aws_lambda_function" "report_granules" {
   runtime          = "nodejs8.10"
   timeout          = 30
   memory_size      = 256
+
+
+  dead_letter_config {
+    target_arn = aws_sqs_queue.report_granules_dead_letter_queue.arn
+  }
 
   vpc_config {
     subnet_ids = var.lambda_subnet_ids
@@ -229,12 +271,28 @@ data "aws_iam_policy_document" "report_pdrs_policy_document" {
     ]
     resources = ["*"]
   }
+  statement {
+    actions = [
+      "sqs:SendMessage"
+    ]
+    resources = [
+      aws_sqs_queue.report_pdrs_dead_letter_queue.arn
+    ]
+  }
 }
 
 resource "aws_iam_role_policy" "report_pdrs_lambda_role_policy" {
   name   = "${var.prefix}_report_pdrs_lambda_role_policy"
   role   = aws_iam_role.report_pdrs_lambda_role.id
   policy = data.aws_iam_policy_document.report_pdrs_policy_document.json
+}
+
+resource "aws_sqs_queue" "report_pdrs_dead_letter_queue" {
+  name                       = "${var.prefix}-reportPdrsDeadLetterQueue"
+  receive_wait_time_seconds  = 20
+  message_retention_seconds  = 1209600
+  visibility_timeout_seconds = 60
+  tags                       = local.default_tags
 }
 
 resource "aws_lambda_function" "report_pdrs" {
@@ -246,6 +304,10 @@ resource "aws_lambda_function" "report_pdrs" {
   runtime          = "nodejs8.10"
   timeout          = 30
   memory_size      = 128
+
+  dead_letter_config {
+    target_arn = aws_sqs_queue.report_pdrs_dead_letter_queue.arn
+  }
 
   vpc_config {
     subnet_ids = var.lambda_subnet_ids

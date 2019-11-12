@@ -33,7 +33,7 @@ If your task requires more than any of these resources or an unsupported runtime
 
 The `cumulus-ecs-task` container takes an AWS Lambda Amazon Resource Name (ARN) as an argument (see `--lambdaArn` in the example below). This ARN argument is defined at deployment time. The `cumulus-ecs-task` worker polls for new Step Function Activity Tasks. When a Step Function executes, the worker (container) picks up the activity task and runs the code contained in the lambda package defined on deployment.
 
-# Example: Replacing AWS Lambda with a Docker container run on ECS
+## Example: Replacing AWS Lambda with a Docker container run on ECS
 
 This example will use an already-defined workflow from the `cumulus` module that includes the [`QueueGranules` task](https://github.com/nasa/cumulus/blob/master/tf-modules/ingest/queue-granules-task.tf) in its configuration.
 
@@ -94,8 +94,7 @@ resource "aws_sfn_activity" "queue_granules" {
 }
 ```
 
-
-* An instance of the `cumulus_ecs_service` module (found on the Cumulus [release](https://github.com/nasa/cumulus/releases page) configured to provide the `QueueGranules` task:
+* An instance of the `cumulus_ecs_service` module (found on the [Cumulus releases page](https://github.com/nasa/cumulus/releases) configured to provide the `QueueGranules` task:
 
 ```hcl
 
@@ -245,10 +244,10 @@ module "cookbook_discover_granules_workflow" {
 }
 JSON
 }
-
 ```
+
 If you then run this workflow in place of the `DiscoverGranules` workflow, the `QueueGranules` step would run as an ECS task instead of a lambda.
 
-# Final Note
+## Final note
 
 Step Function Activities and AWS Lambda are not the only ways to run tasks in an AWS Step Function. Learn more about other service integrations, including direct ECS integration via the [AWS Service Integrations](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-connectors.html) page.
