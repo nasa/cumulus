@@ -62,7 +62,7 @@ Python Lambdas are created the same way as the Node.js example [above](#node.js-
 
 ## Cumulus Message Adapter
 
-For Lambdas wishing to utilize the Cumulus Message Adapter(CMA), you should define a `layers` key on your Lambda resource with the CMA you wish to include. See the [input_output docs](workflows/input_output.md) for more on how to create/use the CMA.
+For Lambdas wishing to utilize the [Cumulus Message Adapter(CMA)](cumulus-task-message-flow), you should define a `layers` key on your Lambda resource with the CMA you wish to include. See the [input_output docs](workflows/input_output.md) for more on how to create/use the CMA.
 
 ## Other Lambda Options
 
