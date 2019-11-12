@@ -30,23 +30,19 @@ resource "aws_sqs_queue" "background_job_queue" {
 
 #### Set maximum executions for the queue
 
-Define the `queue_execution_limits` variable for the `cumulus` module in your [Cumulus deployment](./../deployment/README.md#deploy-the-cumulus-instance) to specify the maximum concurrent executions for the queue.
+Define the `throttled_queues` variable for the `cumulus` module in your [Cumulus deployment](./../deployment/README.md#deploy-the-cumulus-instance) to specify the maximum concurrent executions for the queue.
 
-Also, add the queue to the map of `custom_queues` you have added for your deployment.
-
-> **Please note:** The key name used in the `queue_execution_limits` and `custom_queues` maps to identify the new queue is arbitrary, but **the key must be the same in both maps for execution throttling to work**.
+> **Please note:** The `id` used to identify the new queue is arbitrary, but **will be used to refer to this queue later when configuring workflows and rules**.
 
 ```hcl
 module "cumulus" {
   # ... other variables
 
-  queue_execution_limits = {
-    backgroundJobQueue   = 5
-  }
-
-  custom_queues = {
-    backgroundJobQueue = aws_sqs_queue.background_job_queue.id
-  }
+  throttled_queues = [{
+    id = "backgroundJobQueue",
+    url = aws_sqs_queue.background_job_queue.id,
+    execution_limit = 5
+  }]
 }
 ```
 
@@ -65,7 +61,7 @@ resource "aws_cloudwatch_event_rule" "background_job_queue_watcher" {
 
 resource "aws_cloudwatch_event_target" "background_job_queue_watcher" {
   rule = aws_cloudwatch_event_rule.background_job_queue_watcher.name
-  arn  = aws_lambda_function.sqs2sfThrottle.arn
+  arn  = module.cumulus.sqs2sfThrottle_lambda_function_arn
   input = jsonencode({
     messageLimit = 500
     queueUrl     = aws_sqs_queue.background_job_queue.id
@@ -75,7 +71,7 @@ resource "aws_cloudwatch_event_target" "background_job_queue_watcher" {
 
 resource "aws_lambda_permission" "background_job_queue_watcher" {
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.sqs2sfThrottle.arn
+  function_name = module.cumulus.sqs2sfThrottle_lambda_function_arn
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.background_job_queue_watcher.arn
 }
@@ -125,7 +121,7 @@ As seen in this example configuration for a `QueueGranules` step (a full example
     },
 ```
 
-> **Please note:** Make sure that the key (`backgroundJobQueue` of `$.meta.queues.backgroundJobQueue`) used to identify the queue matches the identifier that was [defined previously for the queue](#set-maximum-executions-for-the-queue).
+> **Please note:** Make sure that the last component of the JSON path for the `queueUrl` (`backgroundJobQueue` of `$.meta.queues.backgroundJobQueue`) used to identify the queue matches the `id` that was [defined previously for the queue](#set-maximum-executions-for-the-queue).
 
 Similarly, for a `QueuePdrs` step (see [example discover PDRs workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_and_queue_pdrs_workflow.tf)):
 
@@ -153,7 +149,7 @@ After making these changes, [re-deploy your Cumulus application](../deployment/u
 
 #### Create/update a rule to use your new queue
 
-Create or update a rule definition to include a `queueName` property that refers to your new queue, where `queueName` matches the identifier that was [defined previously for the queue](#set-maximum-executions-for-the-queue):
+Create or update a rule definition to include a `queueName` property that refers to your new queue, where `queueName` matches the `id` that was [defined previously for the queue](#set-maximum-executions-for-the-queue):
 
 ```json
 {
