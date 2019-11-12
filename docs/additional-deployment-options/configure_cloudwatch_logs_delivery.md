@@ -6,7 +6,7 @@ hide_title: true
 
 # Configure API Gateway CloudWatch Logs Delivery
 
-It is possible to deliver CloudWatch API execution and access logs to a cross-account shared AWS::Logs::Destination. An operator does this by setting the `log_destination_arn` variable whose value is the ARN of a writable log destination to the variables passed to the `cumulus` module.
+It is possible to deliver CloudWatch API execution and access logs to a cross-account shared AWS::Logs::Destination. An operator does this by configuring the `cumulus` module for [your deployment](../deployment/README.md#configure-and-deploy-the-cumulus-tf-root-module) as shown below. The value of the `log_destination_arn` variable is the ARN of a writable log destination.
 
 ```yaml
 log_api_gateway_to_cloudwatch = true
