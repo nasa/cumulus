@@ -10,7 +10,7 @@ hide_title: true
 
 ### Bucket configuration
 
-Buckets configured in your deployment for the `cumulus` module's inputs will ultimately become part of the workflow configuration. `type` of a bucket relies on the how that bucket will be used:
+Buckets configured in your deployment for the `cumulus` module's inputs will ultimately become part of the workflow configuration. The `type` property of a bucket relies on the how that bucket will be used:
 
 * `public` indicates a completely public bucket.
 * `internal` type is for system use.
