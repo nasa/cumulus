@@ -58,6 +58,11 @@ module "cumulus" {
   oauth_provider   = var.oauth_provider
   oauth_user_group = var.oauth_user_group
 
+  saml_entity_id                  = var.saml_entity_id
+  saml_assertion_consumer_service = var.saml_assertion_consumer_service
+  saml_idp_login                  = var.saml_idp_login
+  saml_launchpad_metadata_path    = var.saml_launchpad_metadata_path
+
   permissions_boundary_arn = var.permissions_boundary_arn
 
   system_bucket = var.system_bucket
