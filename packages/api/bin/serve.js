@@ -8,8 +8,8 @@ const indexer = require('../es/indexer');
 const { Search } = require('../es/search');
 const models = require('../models');
 const testUtils = require('../lib/testUtils');
-const workflowList = require('../app/data/workflow_list.json');
 
+const workflowList = testUtils.getWorkflowList();
 const defaultLocalStackName = 'localrun';
 
 async function createTable(Model, tableName) {
@@ -30,19 +30,18 @@ async function createTable(Model, tableName) {
 }
 
 async function populateBucket(bucket, stackName) {
-  // upload workflow lists
-  const workflowsListKey = `${stackName}/workflows/list.json`;
-  await promiseS3Upload({
+  // upload workflow files
+  await Promise.all(workflowList.map((obj) => promiseS3Upload({
     Bucket: bucket,
-    Key: workflowsListKey,
-    Body: JSON.stringify(workflowList)
-  });
-
-  const workflow = `${stackName}/workflows/${workflowList[0].name}.json`;
+    Key: `${obj.name}.json`,
+    Body: JSON.stringify(obj)
+  })));
+  // upload workflow template
+  const workflow = `${stackName}/workflow_template.json`;
   await promiseS3Upload({
     Bucket: bucket,
     Key: workflow,
-    Body: JSON.stringify(workflowList[0])
+    Body: JSON.stringify({})
   });
 }
 
