@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+**Please note**:
+- Your workflow tasks should use `cumulus-message-adapter-js` version 1.0.9+ to utilize new granule, parentArn, and stackName fields on the logs.
+
 ### Added
 
 - **CUMULUS-1580**
@@ -22,6 +25,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     `@cumulus/common/aws.getS3Object()` function will now retry up to 10 times
     if a `NoSuchKey` response is returned by S3. This can behavior can be
     overridden by passing `{ retries: 0 }` as the `retryOptions` argument.
+
+- **CUMULUS-1619**
+  - Adds 3 new keys to `@cumulus/logger` to display granules, parentArn and stackName.
+  - Depends on `cumulus-message-adapter-js` version 1.0.9+. Cumulus tasks updated to use this version.
 
 ## [v1.15.0] - 2019-11-04
 
@@ -140,9 +147,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1513**
   - Added `sqs`-type rule support in the Cumulus API `@cumulus/api`
   - Added `sqsMessageConsumer` lambda which processes messages from the SQS queues configured in the `sqs` rules.
-
-- **CUMULUS-1619**
-  - Adds 3 new keys to `@cumulus/logger` to display granules, parentArn and stackName.
 
 ### Changed
 
