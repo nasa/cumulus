@@ -22,9 +22,10 @@ A task's Lambda function can be configured to include a Cumulus Message Adapter 
 
 In order to make use of this configuration, a Lambda layer must be uploaded to your account.  Due to platform restrictions, Core cannot currently support sharable public layers, however you can support deploying the appropriate version from [the release page](https://github.com/nasa/cumulus-message-adapter/releases) via the AWS [Layers Interface](https://console.aws.amazon.com/lambda/home?region=us-east-1#/layers), *or* the provided CMA [Terraform](https://www.terraform.io/) module located at [tf-modules/cumulus-message-adapter](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-message-adapter).
 
-Once you've deployed the layer, include the CMA layer in your  `cumulus_message_adapter_lambda_layer_arn` `tfvars` file if using the `cumulus` module for inclusion in all core Cumulus lambdas.
+Once you've deployed the layer, integrate the CMA layer with your Lambdas:
 
-Likewise, if including your own Lambda or ECS task Terraform modules, make sure to include that layer to include the CMA into your own code, and set a `CUMULUS_MESSAGE_ADAPTER_DIR` to `/opt` to make use of the CMA.
+- If using the `cumulus` module, set the `cumulus_message_adapter_lambda_layer_arn` in your `.tfvars` file to integrate the CMA layer with all core Cumulus lambdas.
+- If including your own Lambda or ECS task Terraform modules, specify the CMA layer ARN in the Terraform resource definitions.  Also, make sure to set the `CUMULUS_MESSAGE_ADAPTER_DIR` environment variable for the task to `/opt` for the CMA integration to work properly.
 
 In the future if you wish to update/change the CMA version you will need to update the deployed CMA, and update the layer configuration for the impacted Lambdas as needed.}.
 
