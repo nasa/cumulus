@@ -132,7 +132,7 @@ async function buildAndPublishGranule(
 async function handleGranuleMessages(eventMessage) {
   const granules = getMessageGranules(eventMessage);
   if (!granules) {
-    log.info(`No granules to process in the payload: ${eventMessage.payload}`);
+    log.info(`No granules to process in the payload: ${JSON.stringify(eventMessage.payload)}`);
     return Promise.resolve();
   }
 

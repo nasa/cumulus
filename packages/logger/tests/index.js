@@ -164,6 +164,20 @@ test('Logger.info() logs version if specified', (t) => {
   t.is(testConsole.stdoutLogEntries[0].version, 'my-version');
 });
 
+test('Logger.info() logs asyncOperationId if specified', (t) => {
+  const { testConsole } = t.context;
+
+  const logger = new Logger({
+    console: testConsole,
+    asyncOperationId: 'async-id-12345'
+  });
+
+  logger.info('hello');
+
+  t.is(testConsole.stdoutLogEntries.length, 1);
+  t.is(testConsole.stdoutLogEntries[0].asyncOperationId, 'async-id-12345');
+});
+
 test('Logger.info() ignores unknown keys', (t) => {
   const { testConsole } = t.context;
 

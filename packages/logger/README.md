@@ -19,6 +19,7 @@ Log events may have the following options keys:
 - **parentArn** (string)
 - **stackName** (string)
 - **version** (string)
+- **asyncOperationId** (string)
 
 Log events may also contain user-specified keys.
 
@@ -51,7 +52,7 @@ log.info('hello, world');
 
 ## API
 
-### `new Logger({ [executions], [granules], [parentArn], [sender], [stackName], [version] })`
+### `new Logger({ [executions], [granules], [parentArn], [sender], [stackName], [version], [asyncOperationId] })`
 
 #### executions
 
@@ -89,6 +90,12 @@ Cumulus stack name.
 Type: `string`
 
 An optional version.
+
+#### asyncOperationId
+
+Type: `string`
+
+An optional async operation id associated with a workflow.
 
 ### `log.debug([...messageArgs])`
 

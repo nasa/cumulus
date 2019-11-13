@@ -16,6 +16,8 @@ class Logger {
    * @param {boolean} [options.pretty=false] - stringify objects on multiple lines
    * @param {string} [options.sender="unknown"] - the sender of the log message
    * @param {string} [options.stackName] - cumulus stack name
+   * @param {string} [options.asyncOperationId] - async operation id associated with the
+   *  kickoff of the workflow (optional)
    * @param {Console} [options.console=global.console] - the console to write
    *   log events to
    * @param {string} [options.version] - Lambda function version
@@ -30,6 +32,7 @@ class Logger {
         pretty: options.pretty || false,
         sender: options.sender || 'unknown',
         stackName: options.stackName,
+        asyncOperationId: options.asyncOperationId,
         thisConsole: options.console || global.console,
         version: options.version
       }
@@ -131,6 +134,7 @@ class Logger {
       pretty,
       sender,
       stackName,
+      asyncOperationId,
       thisConsole,
       version
     } = privates.get(this);
@@ -143,6 +147,7 @@ class Logger {
       parentArn,
       sender,
       stackName,
+      asyncOperationId,
       timestamp: (new Date()).toISOString(),
       version
     };

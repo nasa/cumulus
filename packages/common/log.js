@@ -11,7 +11,8 @@ function logger() {
     parentArn: process.env.PARENTARN,
     sender: process.env.SENDER,
     stackName: process.env.STACKNAME,
-    version: process.env.TASKVERSION
+    version: process.env.TASKVERSION,
+    asyncOperationId: process.env.ASYNCOPERATIONID
   });
 }
 
