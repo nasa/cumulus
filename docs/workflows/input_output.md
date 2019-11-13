@@ -22,8 +22,8 @@ A task's Lambda function can be configured to include a Cumulus Message Adapter 
 
 In order to make use of this configuration, a Lambda layer must be uploaded to your account.  Due to platform restrictions, Core cannot currently support sharable public layers, however you can deploy the appropriate version from [the release page](https://github.com/nasa/cumulus-message-adapter/releases) in two ways:
 
- - Uploading the CMA release artifact via the AWS [Layers Interface](https://console.aws.amazon.com/lambda/home?region=us-east-1#/layers)
- - Using [Terraform](https://www.terraform.io/) to deploy the provided CMA module located at [tf-modules/cumulus-message-adapter](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-message-adapter).
+- Uploading the CMA release artifact via the AWS [Layers Interface](https://console.aws.amazon.com/lambda/home?region=us-east-1#/layers)
+- Using [Terraform](https://www.terraform.io/) to deploy the provided CMA module located at [tf-modules/cumulus-message-adapter](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-message-adapter).
 
 Once you've deployed the layer, integrate the CMA layer with your Lambdas:
 
@@ -46,8 +46,8 @@ If you are manually adding the message adapter to your source and utilizing the 
 
 Input to the task application code is a json object with keys:
 
-* `input`: By default, the incoming payload is the payload output from the previous task, or it can be a portion of the payload as configured for the task in the corresponding `.yml` file in the `workflows` directory.
-* `config`: Task-specific configuration object with URL templates resolved.
+- `input`: By default, the incoming payload is the payload output from the previous task, or it can be a portion of the payload as configured for the task in the corresponding `.yml` file in the `workflows` directory.
+- `config`: Task-specific configuration object with URL templates resolved.
 
 Output from the task application code is returned in and placed in the `payload` key by default, but the `config` key can also be used to return just a portion of the task output.
 
@@ -253,8 +253,8 @@ Due to the way AWS handles Parmeterized messages, when Parameters are used the C
 
 and takes the following actions:
 
-* Takes the object at `input.cma.event` and makes it the full input
-* Merges all of the keys except `event` under `input.cma` into the parent input object
+- Takes the object at `input.cma.event` and makes it the full input
+- Merges all of the keys except `event` under `input.cma` into the parent input object
 
 This results in the incoming message (presumably a Cumulus message) with any cma configuration parameters merged in being passed to the CMA.    *All other parameterized values defined outside of the `cma` key are ignored*
 
@@ -301,11 +301,13 @@ Discovery:
 *and* and incoming message that contains:
 
 ```json
-"meta": {
-  "foo": "bar",
-  "provider": {
-    "id": "FOO_DAAC",
-    "anykey": "anyvalue"
+{
+  "meta": {
+    "foo": "bar",
+    "provider": {
+      "id": "FOO_DAAC",
+      "anykey": "anyvalue"
+    }
   }
 }
 ```
