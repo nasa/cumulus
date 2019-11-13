@@ -46,7 +46,7 @@ resource "aws_lambda_function" "function" {
 
 Make sure to include a `vpc_config` that matches the information you've provided the `cumulus` module if intending to integrate the lambda with a Cumulus deployment.
 
-Also note that for this example to work, you will need to have `default_tags` defined as in the [example](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf), or in the [template-deploy-repo](https://github.com/nasa/cumulus-template-deploy/blob/CUMULUS-1556-add-deployment/cumulus-tf/main.tf).
+Also note that for this example to work, you will need to have `default_tags` defined as in the [example](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf), or in the [template-deploy-repo](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/main.tf).
 
 ### Java Lambda
 
