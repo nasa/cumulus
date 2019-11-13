@@ -183,4 +183,4 @@ This shows the GIBS Ingest Architecture as an example of the use of the Ingest W
 
 This shows a visualization of an execution of the ingets granules workflow in step functions. The steps highlighted in green are the ones that executed and completed successfully.
 
-![GIBS ingest_granules workflow diagram](assets/gibs_ingest_granules_workflow.png)
+![Diagram showing the AWS Step Function execution path for a GIBS ingest granules workflow](assets/gibs_ingest_granules_workflow.png)
