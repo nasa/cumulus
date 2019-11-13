@@ -114,6 +114,12 @@ variable "vpc_id" {
 
 # Optional
 
+variable "api_gateway_stage" {
+  type        = string
+  default     = "dev"
+  description = "The archive API Gateway stage to create"
+}
+
 variable "buckets" {
   type    = map(object({ name = string, type = string }))
   default = {}
