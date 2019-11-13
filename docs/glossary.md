@@ -135,7 +135,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
 ### Module (Terraform)
 
-  Refers to a [terraform module](https://www.terraform.io/docs/configuration/modules.html)
+  Refers to a [terraform module](https://www.terraform.io/docs/configuration/modules.html).
 
 ### Node
 
