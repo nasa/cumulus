@@ -14,7 +14,7 @@ The full set of available core Lambda functions can be found in the deployed `cu
 
 The tasks source is located in the Cumulus repository at [cumulus/tasks](https://github.com/nasa/cumulus/tree/master/tasks).
 
-You can also develop your own Lambda function, read more on the [Lambda Functions](workflows/lambda.md) page.
+You can also develop your own Lambda function. See the [Lambda Functions](workflows/lambda.md) page to learn more.
 
 ## ECS Activities
 
