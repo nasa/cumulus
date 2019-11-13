@@ -1,13 +1,25 @@
-locals {
-  default_tags = {
-    Deployment = var.prefix
+terraform {
+  required_providers {
+    aws  = ">= 2.31.0"
+    null = "~> 2.1"
   }
 }
 
 provider "aws" {
   region  = var.region
   profile = var.aws_profile
-  version = "~> 2.31"
+}
+
+provider "aws" {
+  alias   = "usw2"
+  region  = "us-west-2"
+  profile = var.aws_profile
+}
+
+locals {
+  default_tags = {
+    Deployment = var.prefix
+  }
 }
 
 data "aws_caller_identity" "current" {}
@@ -51,9 +63,9 @@ module "cumulus" {
 
   cmr_oauth_provider = var.cmr_oauth_provider
 
-  launchpad_api = var.launchpad_api
+  launchpad_api         = var.launchpad_api
   launchpad_certificate = var.launchpad_certificate
-  launchpad_passphrase = var.launchpad_passphrase
+  launchpad_passphrase  = var.launchpad_passphrase
 
   oauth_provider   = var.oauth_provider
   oauth_user_group = var.oauth_user_group
@@ -97,7 +109,7 @@ module "cumulus" {
 
   sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
 
-  archive_api_port = var.archive_api_port
+  archive_api_port            = var.archive_api_port
   private_archive_api_gateway = var.private_archive_api_gateway
 }
 
@@ -129,9 +141,12 @@ resource "aws_lambda_permission" "sns_s3_test" {
 }
 
 module "s3_access_test_lambda" {
-  source                     = "./modules/s3_access_test"
+  source = "./modules/s3_access_test"
 
   prefix                     = var.prefix
   lambda_processing_role_arn = module.cumulus.lambda_processing_role_arn
-  region                     = "us-west-2"
+
+  providers = {
+    aws = "aws.usw2"
+  }
 }
