@@ -52,7 +52,13 @@ log.info('hello, world');
 
 ## API
 
-### `new Logger({ [executions], [granules], [parentArn], [sender], [stackName], [version], [asyncOperationId] })`
+### `new Logger({ [asyncOperationId], [executions], [granules], [parentArn], [sender], [stackName], [version] })`
+
+#### asyncOperationId
+
+Type: `string`
+
+An optional async operation id associated with a workflow.
 
 #### executions
 
@@ -90,12 +96,6 @@ Cumulus stack name.
 Type: `string`
 
 An optional version.
-
-#### asyncOperationId
-
-Type: `string`
-
-An optional async operation id associated with a workflow.
 
 ### `log.debug([...messageArgs])`
 

@@ -26,13 +26,13 @@ class Logger {
     privates.set(
       this,
       {
+        asyncOperationId: options.asyncOperationId,
         executions: options.executions,
         granules: options.granules,
         parentArn: options.parentArn,
         pretty: options.pretty || false,
         sender: options.sender || 'unknown',
         stackName: options.stackName,
-        asyncOperationId: options.asyncOperationId,
         thisConsole: options.console || global.console,
         version: options.version
       }
@@ -128,18 +128,19 @@ class Logger {
 
   _writeLogEvent(level, messageArgs, additionalKeys = {}) {
     const {
+      asyncOperationId,
       executions,
       granules,
       parentArn,
       pretty,
       sender,
       stackName,
-      asyncOperationId,
       thisConsole,
       version
     } = privates.get(this);
 
     const standardLogEvent = {
+      asyncOperationId,
       executions,
       granules,
       level,
@@ -147,7 +148,6 @@ class Logger {
       parentArn,
       sender,
       stackName,
-      asyncOperationId,
       timestamp: (new Date()).toISOString(),
       version
     };
