@@ -4,7 +4,7 @@ title: Workflows Input & Output
 hide_title: true
 ---
 
-# Ingest Inputs and Return Values
+# Workflow Inputs and Return Values
 
 ## General Structure
 
