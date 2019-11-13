@@ -177,7 +177,7 @@ This shows the GIBS Ingest Architecture as an example of the use of the Ingest W
 
 #### GIBS Ingest Workflows
 
-![GIBS ingest workflow diagram](assets/ingest_diagram_gibs.png)
+![Diagram showing the AWS Step Function execution path for a GIBS ingest workflow](assets/ingest_diagram_gibs.png)
 
 #### GIBS Ingest Granules Workflow
 
