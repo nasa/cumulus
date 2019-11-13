@@ -24,7 +24,7 @@ Addtionally you may chose to include any of the other languages AWS [supports](h
 
 For a new Node.js Lambda, create a new function and add an `aws_lambda_function` resource to your Cumulus deployment (for examples, see the example in source [example/lambdas.tf](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/lambdas.tf) and [ingest/lambda-functions.tf](https://github.com/nasa/cumulus/blob/master/tf-modules/ingest/lambda-functions.tf)) as either a new `.tf` file, or added to an existing `.tf` file:
 
-```tcl
+```hcl
 resource "aws_lambda_function" "function" {
   function_name    = "${var.prefix}-function"
   filename         = "/path/to/zip/lambda.zip"
