@@ -34,7 +34,7 @@ Individual steps should ...
 * Be domain agnostic.
 * Not make assumptions of specifics of what goes into a granule for example.
 
-#### Scalable
+### Scalable
 
 The ingest architecture needs to be scalable both to handle ingesting hundreds of millions of granules and interpret dozens of different workflows.
 
