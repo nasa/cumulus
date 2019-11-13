@@ -28,7 +28,7 @@ For a new Node.js Lambda, create a new function and add an `aws_lambda_function`
 resource "aws_lambda_function" "function" {
   function_name    = "${var.prefix}-function"
   filename         = "/path/to/zip/lambda.zip"
-  source_code_hash = filebase64sha256("/path/to/zip/lambda.zip/lambda.zip")
+  source_code_hash = filebase64sha256("/path/to/zip/lambda.zip")
   handler          = "index.handler"
   role             = module.cumulus.lambda_processing_role_arn
   runtime          = "nodejs8.10"
