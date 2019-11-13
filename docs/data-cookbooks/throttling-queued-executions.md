@@ -18,7 +18,7 @@ Limiting the number of executions that can be running from a given queue is usef
 
 #### Add a new queue
 
-In a `.tf` file for your [Cumulus deployment](./../deployment/README.md#deploy-the-cumulus-instance), add a new SQS queue:
+In a `.tf` file for your [Cumulus deployment](./../deployment/deployment-readme#deploy-the-cumulus-instance), add a new SQS queue:
 
 ```hcl
 resource "aws_sqs_queue" "background_job_queue" {
@@ -30,7 +30,7 @@ resource "aws_sqs_queue" "background_job_queue" {
 
 #### Set maximum executions for the queue
 
-Define the `throttled_queues` variable for the `cumulus` module in your [Cumulus deployment](./../deployment/README.md#deploy-the-cumulus-instance) to specify the maximum concurrent executions for the queue.
+Define the `throttled_queues` variable for the `cumulus` module in your [Cumulus deployment](./../deployment/deployment-readme#deploy-the-cumulus-instance) to specify the maximum concurrent executions for the queue.
 
 > **Please note:** The `id` used to identify the new queue is arbitrary, but **will be used to refer to this queue later when configuring workflows and rules**.
 
@@ -79,7 +79,7 @@ resource "aws_lambda_permission" "background_job_queue_watcher" {
 
 #### Re-deploy your Cumulus application
 
-Follow the instructions to [re-deploy your Cumulus application](../deployment/upgrade.md#update-cumulus-resources). After you have re-deployed, your workflow template will be updated to the include information about the queue (the output below is partial output from an expected workflow template):
+Follow the instructions to [re-deploy your Cumulus application](./../deployment/upgrade-readme#update-cumulus-resources). After you have re-deployed, your workflow template will be updated to the include information about the queue (the output below is partial output from an expected workflow template):
 
 ```json
 {
@@ -151,7 +151,7 @@ Similarly, for a `QueuePdrs` step (see [example discover PDRs workflow](https://
 }
 ```
 
-After making these changes, [re-deploy your Cumulus application](../deployment/upgrade.md#update-cumulus-resources) for the execution throttling to take effect on workflow executions queued by these workflows.
+After making these changes, [re-deploy your Cumulus application](./../deployment/upgrade-readme#update-cumulus-resources) for the execution throttling to take effect on workflow executions queued by these workflows.
 
 #### Create/update a rule to use your new queue
 
