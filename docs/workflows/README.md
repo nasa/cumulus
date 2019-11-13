@@ -103,6 +103,7 @@ AWS Step Functions permit [tasks](http://docs.aws.amazon.com/step-functions/late
   * Both `meta` and `task_config` which are used for configuring at the collection and task levels do not dictate the fields and structure of the configuration. Additional task specific JSON schemas can be used for extending the validation of individual steps.
 * **Data-centric Configuration**
   * The use of a single JSON configuration file allows this to be added to a workflow. We build additional support on top of the configuration file for simpler domain specific configuration or interactive GUIs.
+
 For more details on Task Messages and Configuration, visit [Cumulus configuration and message protocol documentation](cumulus-task-message-flow.md).
 
 ### Ingest Deploy
