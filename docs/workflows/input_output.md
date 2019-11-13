@@ -36,7 +36,7 @@ In the future if you wish to update/change the CMA version you will need to upda
 
 ### Manual Addition
 
-You can include the CMA package in the Lambda code in the `cumulus-message-adapter` sub-directory in your lambda `.zip`, for any lambda runtime that includes a `python` [runtime](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html).  `python 2` is included in lambda runtimes that use Amazon Linux, however `Amazon Linux 2` will not support this directly.
+You can include the CMA package in the Lambda code in the `cumulus-message-adapter` sub-directory in your lambda `.zip`, for any Lambda runtime that includes a `python` [runtime](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html).  `python 2` is included in Lambda runtimes that use `Amazon Linux`, however `Amazon Linux 2` will not support this directly.
 
 > **Please note:** It is expected that upcoming Cumulus releases will update the CMA layer to include a python runtime.
 
