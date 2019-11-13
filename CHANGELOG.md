@@ -14,6 +14,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- **CUMULUS-1561**
+  - Fix the way that we are handling Terraform provider version requirements
+  - Pass provider configs into child modules using the method that the
+    [Terraform documentation](https://www.terraform.io/docs/configuration/modules.html#providers-within-modules)
+    suggests
+  - Remove the `region` input variable from the `s3_access_test` Terraform module
+  - Remove the `aws_profile` and `aws_region` input variables from the
+    `s3-replicator` Terraform module
+
 - **CUMULUS-1639**
   - Because of
     [S3's Data Consistency Model](https://docs.aws.amazon.com/AmazonS3/latest/dev/Introduction.html#BasicsObjects),
@@ -22,6 +31,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     `@cumulus/common/aws.getS3Object()` function will now retry up to 10 times
     if a `NoSuchKey` response is returned by S3. This can behavior can be
     overridden by passing `{ retries: 0 }` as the `retryOptions` argument.
+
+### Removed
+
+- **CUMULUS-1559**
+  - `logToSharedDestination` has been migrated to the Terraform deployment as `log_api_gateway_to_cloudwatch` and will ONLY apply to egress lambdas.
+  Due to the differences in the Terraform deployment model, we cannot support a global log subscription toggle for a configurable subset of lambdas.
+  However, setting up your own log forwarding for a Lambda with Terraform is fairly simple, as you will only need to add SubscriptionFilters to your Terraform configuration, one per log group.
+  See [the Terraform documentation](https://www.terraform.io/docs/providers/aws/r/cloudwatch_log_subscription_filter.html) for details on how to do this.
+  An empty FilterPattern ("") will capture all logs in a group.
 
 ## [v1.15.0] - 2019-11-04
 

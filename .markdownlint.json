@@ -3,5 +3,6 @@
   "line-length": false,
   "no-duplicate-header": false,
   "single-h1": { "front_matter_title": "" },
-  "ol-prefix": { "style": "ordered" }
+  "ol-prefix": { "style": "ordered" },
+  "no-inline-html": { "allowed_elements": ["code", "br"] }
 }

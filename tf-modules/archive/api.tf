@@ -66,6 +66,10 @@ resource "aws_lambda_function" "api" {
       system_bucket                = var.system_bucket
       public_buckets               = join(",", var.public_buckets)
       protected_buckets            = join(",", var.protected_buckets)
+      ENTITY_ID                    = var.saml_entity_id
+      ASSERT_ENDPOINT              = var.saml_assertion_consumer_service
+      IDP_LOGIN                    = var.saml_idp_login
+      LAUNCHPAD_METADATA_PATH      = var.saml_launchpad_metadata_path
     }
   }
   memory_size = 756

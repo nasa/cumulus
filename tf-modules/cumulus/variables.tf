@@ -248,6 +248,18 @@ variable "launchpad_passphrase" {
   default = ""
 }
 
+variable "log_api_gateway_to_cloudwatch" {
+  type        = bool
+  default     = false
+  description = "Boolean switch to enable/disable logging of API Gateway distribution traffic to CloudWatch."
+}
+
+variable "log_destination_arn" {
+  type        = string
+  default     = null
+  description = "shared AWS:Log:Destination value. Requires log_api_gateway_to_cloudwatch set to true."
+}
+
 variable "metrics_es_host" {
   type = string
   default = null
@@ -298,6 +310,30 @@ variable "queue_execution_limits" {
 variable "region" {
   description = "The AWS region to deploy to"
   type    = string
+}
+
+variable "saml_entity_id" {
+  description = "The endpoint EntityID from the Launchpad Integration Request"
+  type    = string
+  default = "N/A"
+}
+
+variable "saml_assertion_consumer_service" {
+  description = "The URL Bindings Assertion Point from the Launchpad Integration Request"
+  type    = string
+  default = "N/A"
+}
+
+variable "saml_idp_login" {
+  description = "The SAML Identity Provider's saml2sso endpoint"
+  type    = string
+  default = "N/A"
+}
+
+variable "saml_launchpad_metadata_path" {
+  description = "The S3 url of the Identity Provider public metadata xml file"
+  type    = string
+  default = "N/A"
 }
 
 variable "urs_url" {
