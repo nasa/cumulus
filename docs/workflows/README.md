@@ -54,7 +54,7 @@ The ingest architecture needs to be scalable both to handle ingesting hundreds o
 
 The Ingest Workflow Architecture is defined by two entity types, [Workflows](#workflows) and [Tasks](#tasks). A Workflow is a set of composed Tasks to complete an objective such as ingesting a granule. Tasks are the individual steps of a Workflow that perform one job. The workflow is responsible for executing the right task based on the current state and response from the last task executed. Tasks are completely decoupled in that they don't call each other or even need to know about the presence of other tasks.
 
-Workflows and tasks are configured as Terraform resources. A scheduler initiates workflows as configured by that JSON file.
+Workflows and tasks are configured as Terraform resources, which are triggered via configured `rules` within Cumulus.
 
 ![Diagram showing the Step Function execution path through workflow tasks for a collection ingest](assets/ingest_diagram.png)
 
