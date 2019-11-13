@@ -111,6 +111,8 @@ module "cumulus" {
 
   archive_api_port            = var.archive_api_port
   private_archive_api_gateway = var.private_archive_api_gateway
+  log_api_gateway_to_cloudwatch = var.log_api_gateway_to_cloudwatch
+  log_destination_arn = var.log_destination_arn
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {
