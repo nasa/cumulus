@@ -282,7 +282,6 @@ The CMA will attempt to pull the file stored at `Bucket`/`Key` and replace the v
 In the workflow configuration (defined under the `task_config` key), each task has its own configuration, and it can use URL template as a value to achieve simplicity or for values only available at execution time. The Cumulus Message Adapter resolves the URL templates (relative to the event configuration key) and then passes message to next task. For example, given a task which has the following configuration:
 
 ```json
-Discovery:
 {
   "Parameters": {
     "cma": {
