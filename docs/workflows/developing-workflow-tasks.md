@@ -10,7 +10,7 @@ Workflow tasks can be either AWS Lambda Functions or ECS Activities.
 
 ## Lambda functions
 
-The full set of available core Lambda functions can be found in the deployed `cumulus` module zipfile at `/tasks`, and can be referenced in workflows via the outputs from that module (see the `cumulus-template-deploy` [repo](https://github.com/nasa/cumulus-template-deploy/tree/CUMULUS-1556-add-deployment/cumulus-tf) for an example).
+The full set of available core Lambda functions can be found in the deployed `cumulus` module zipfile at `/tasks`, as well as reference documentation [here](tasks.md).  These Lambdas can be referenced in workflows via the outputs from that module (see the `cumulus-template-deploy` [repo](https://github.com/nasa/cumulus-template-deploy/tree/master/cumulus-tf) for an example).
 
 The tasks source is located in the Cumulus repository at [cumulus/tasks](https://github.com/nasa/cumulus/tree/master/tasks).
 
