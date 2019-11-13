@@ -1,6 +1,5 @@
 'use strict';
 
-const fs = require('fs');
 const pLimit = require('p-limit');
 const { s3, promiseS3Upload } = require('@cumulus/common/aws');
 const { randomString, randomId, inTestMode } = require('@cumulus/common/test-utils');
@@ -10,8 +9,7 @@ const { Search } = require('../es/search');
 const models = require('../models');
 const testUtils = require('../lib/testUtils');
 
-const workflowDir = 'app/data';
-const workflowList = fs.readdirSync(workflowDir).map((f) => JSON.parse(fs.readFileSync(`${workflowDir}/${f}`).toString()));
+const workflowList = testUtils.getWorkflowList();
 const defaultLocalStackName = 'localrun';
 
 async function createTable(Model, tableName) {
