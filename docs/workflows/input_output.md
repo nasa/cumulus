@@ -30,15 +30,15 @@ Once you've deployed the layer, integrate the CMA layer with your Lambdas:
 - If using the `cumulus` module, set the `cumulus_message_adapter_lambda_layer_arn` in your `.tfvars` file to integrate the CMA layer with all core Cumulus lambdas.
 - If including your own Lambda or ECS task Terraform modules, specify the CMA layer ARN in the Terraform resource definitions.  Also, make sure to set the `CUMULUS_MESSAGE_ADAPTER_DIR` environment variable for the task to `/opt` for the CMA integration to work properly.
 
-In the future if you wish to update/change the CMA version you will need to update the deployed CMA, and update the layer configuration for the impacted Lambdas as needed.}.
+In the future if you wish to update/change the CMA version you will need to update the deployed CMA, and update the layer configuration for the impacted Lambdas as needed.
 
 ***Please Note***: Updating/removing a layer does not change a deployed Lambda, so to update the CMA you should deploy a new version of the CMA layer, update the associated Lambda configuration to reference the new CMA version, and re-deploy your Lambdas.
 
 ### Manual Addition
 
-You can include the CMA package in the Lambda code in the `cumulus-message-adapter` sub-directory in your lambda `.zip`, for any lambda runtime that includes a `python` [runtime](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html).  `python 2` is included in lambda runtimes that use Amazon Linux, however `Amazon Linux 2` will not support this directly.
+You can include the CMA package in the Lambda code in the `cumulus-message-adapter` sub-directory in your lambda `.zip`, for any Lambda runtime that includes a `python` [runtime](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html).  `python 2` is included in Lambda runtimes that use `Amazon Linux`, however `Amazon Linux 2` will not support this directly.
 
-_It is expected that upcoming Cumulus releases will update the CMA layer to include a python runtime._
+> **Please note:** It is expected that upcoming Cumulus releases will update the CMA layer to include a python runtime.
 
 If you are manually adding the message adapter to your source and utilizing the CMA, you should set the Lambda's `CUMULUS_MESSAGE_ADAPTER_DIR` environment variable to target the installation path for the CMA.
 
@@ -55,7 +55,7 @@ Output from the task application code is returned in and placed in the `payload`
 
 As of Cumulus > 1.15 and CMA > v1.1.1, configuration of the CMA is expected to be driven by AWS Step Function Parameters.
 
-Using the CMA package with the lambda by by any of the above mentioned methods (Manual, Kes, Lambda Layers) requires configuration for it's various features via a specific Step Function Parameters configuration format (see sample workflows in the [examples cumulus-tf source](https://github.com/nasa/cumulus/tree/master/example/cumulus-tf) for more examples):
+Using the CMA package with the Lambda by any of the above mentioned methods (Lambda Layers, manual) requires configuration for its various features via a specific Step Function Parameters configuration format (see sample workflows in the [examples cumulus-tf source](https://github.com/nasa/cumulus/tree/master/example/cumulus-tf) for more examples):
 
 ```json
 {
