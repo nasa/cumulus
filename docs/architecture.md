@@ -30,7 +30,7 @@ For NASA use, this is assumed to be [CMR](<https://earthdata.nasa.gov/eosdis/sci
 
 The core of the ingest and processing capabilities in Cumulus is built into the deployed AWS [Step Function](https://aws.amazon.com/step-functions/) workflows.    Cumulus rules trigger workflows via either Cloud Watch rules, Kinesis streams, SNS topic, or SQS queue.   The workflows then run with a configured [Cumulus message](./workflows/cumulus-task-message-flow), utilizing built-in processes to report status of granules, PDRs, executions, etc to the [Data Persistence](#data-persistence) components.
 
-Workflows can optionally report granule metadata to [CMR](<https://earthdata.nasa.gov/eosdis/science-system-description/eosdis-components/cmr>), and if configured to use the [Cumulus message adapter (CMA)](<https://github.com/nasa/cumulus-message-adapter>), workflow steps can report metrics information to a shared SNS topic, which could be subscribed to for near real time granule, execution, and PDR status. This could be used for metrics reporting using an external ELK stack, for example.
+Workflows can optionally report granule metadata to [CMR](<https://earthdata.nasa.gov/eosdis/science-system-description/eosdis-components/cmr>), and workflow steps can report metrics information to a shared SNS topic, which could be subscribed to for near real time granule, execution, and PDR status. This could be used for metrics reporting using an external ELK stack, for example.
 
 #### Data persistence
 
