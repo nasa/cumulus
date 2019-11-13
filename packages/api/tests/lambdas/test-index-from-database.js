@@ -14,12 +14,13 @@ const {
   fakeGranuleFactoryV2,
   fakePdrFactoryV2,
   fakeProviderFactory,
-  fakeRuleFactoryV2
+  fakeRuleFactoryV2,
+  getWorkflowList
 } = require('../../lib/testUtils');
 const bootstrap = require('../../lambdas/bootstrap');
 const { Search } = require('../../es/search');
-const workflowList = require('../../app/data/workflow_list.json');
 
+const workflowList = getWorkflowList();
 // create all the variables needed across this test
 let esClient;
 let esIndex;
