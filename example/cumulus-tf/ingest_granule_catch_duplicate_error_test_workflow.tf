@@ -1,11 +1,11 @@
 module "ingest_granule_catch_duplicate_error_test_workflow" {
   source = "../../tf-modules/workflow"
 
-  prefix                                = var.prefix
-  name                                  = "IngestGranuleCatchDuplicateErrorTest"
-  workflow_config                       = module.cumulus.workflow_config
-  system_bucket                         = var.system_bucket
-  tags                                  = local.default_tags
+  prefix          = var.prefix
+  name            = "IngestGranuleCatchDuplicateErrorTest"
+  workflow_config = module.cumulus.workflow_config
+  system_bucket   = var.system_bucket
+  tags            = local.default_tags
 
   state_machine_definition = <<JSON
 {
@@ -107,7 +107,7 @@ module "ingest_granule_catch_duplicate_error_test_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.fake_processing.task_arn}",
+      "Resource": "${module.cumulus.fake_processing_task.task_arn}",
       "Catch": [
         {
           "ErrorEquals": [

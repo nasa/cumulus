@@ -16,16 +16,21 @@ const {
   protectFile
 } = require('../../helpers/testUtils');
 
-const terraformApply = () =>
-  execa(
+const terraformApply = (versioning = true) => {
+  const versioningArgs = versioning ?
+    ['-var', 'enable_task_versioning=true'] :
+    [];
+
+  return execa(
     'terraform',
-    ['apply', '-auto-approve'],
+    ['apply', '-auto-approve', ...versioningArgs],
     {
       cwd: path.join(process.cwd(), 'cumulus-tf'),
       stdout: process.stdout,
       stderr: process.stderr
     }
   );
+};
 
 const buildZip = () =>
   execa(
@@ -115,6 +120,8 @@ describe('When a workflow is running and a new version of a workflow lambda is d
       throw err;
     }
   });
+
+  afterAll(() => terraformApply(false));
 
   it('uses the original software version', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');

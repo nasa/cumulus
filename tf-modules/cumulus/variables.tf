@@ -218,6 +218,12 @@ variable "elasticsearch_alarms" {
   default = []
 }
 
+variable "enable_task_versioning" {
+  description = "Enable versioning and aliases for Cumulus core workflow tasks"
+  type = bool
+  default = false
+}
+
 variable "key_name" {
   description = "Name of EC2 key pair for accessing EC2 instances"
   type    = string

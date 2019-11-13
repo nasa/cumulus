@@ -24,7 +24,7 @@ module "sync_granule_task" {
 
   layers = [var.cumulus_message_adapter_lambda_layer_arn]
 
-  enable_versioning = true
+  enable_versioning = var.enable_task_versioning
 
   tags = merge(local.default_tags, { Project = var.prefix })
 }

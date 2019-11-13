@@ -27,34 +27,27 @@ output "message_consumer_lambda_function_arn" {
 }
 
 output "move_granules_task" {
-  value = move_granules_task
+  value = module.move_granules_task
 }
 
 output "parse_pdr_task" {
-  value = parse_pdr_task
+  value = module.parse_pdr_task
 }
 
 output "pdr_status_check_task" {
-  value = pdr_status_check_task
+  value = module.pdr_status_check_task
+}
+
+output "post_to_cmr_task" {
+  value = module.post_to_cmr_task
 }
 
 output "queue_granules_task" {
-  value = queue_granules_task
+  value = module.queue_granules_task
 }
 
-output "queue_granules_task" {
-  value = queue_granules_task
-}
-
-output "queue_pdrs_task_lambda_function_arn" {
-  value = aws_lambda_function.queue_pdrs_task.arn
-}
-
-output "queue_pdrs_task_lambda_function" {
-  value = {
-    arn     = aws_lambda_function.queue_pdrs_task.arn
-    version = aws_lambda_function.queue_pdrs_task.version
-  }
+output "queue_pdrs_task" {
+  value = module.queue_pdrs_task
 }
 
 output "schedule_sf_lambda_function_arn" {
@@ -70,7 +63,7 @@ output "sf_semaphore_down_lambda_function_arn" {
 }
 
 output "sync_granule_task" {
-  value = sync_granule_task
+  value = module.sync_granule_task
 }
 
 output "step_role_arn" {

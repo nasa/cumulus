@@ -29,6 +29,11 @@ variable "cmr_oauth_provider" {
   default = "earthdata"
 }
 
+variable "enable_task_versioning" {
+  type = bool
+  default = false
+}
+
 variable "launchpad_api" {
   type = string
   default = "launchpadApi"

@@ -7,6 +7,8 @@ module "ingest" {
 
   buckets = var.buckets
 
+  enable_task_versioning = var.enable_task_versioning
+
   distribution_url                         = module.distribution.distribution_url
   cumulus_message_adapter_lambda_layer_arn = var.cumulus_message_adapter_lambda_layer_arn
 

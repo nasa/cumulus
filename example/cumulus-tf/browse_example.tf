@@ -1,11 +1,11 @@
 module "discover_granules_browse_example_workflow" {
   source = "../../tf-modules/workflow"
 
-  prefix                                = var.prefix
-  name                                  = "DiscoverGranulesBrowseExample"
-  workflow_config                       = module.cumulus.workflow_config
-  system_bucket                         = var.system_bucket
-  tags                                  = local.default_tags
+  prefix          = var.prefix
+  name            = "DiscoverGranulesBrowseExample"
+  workflow_config = module.cumulus.workflow_config
+  system_bucket   = var.system_bucket
+  tags            = local.default_tags
 
   state_machine_definition = <<JSON
 {
@@ -101,11 +101,11 @@ JSON
 module "cookbook_browse_example_workflow" {
   source = "../../tf-modules/workflow"
 
-  prefix                                = var.prefix
-  name                                  = "CookbookBrowseExample"
-  workflow_config                       = module.cumulus.workflow_config
-  system_bucket                         = var.system_bucket
-  tags                                  = local.default_tags
+  prefix          = var.prefix
+  name            = "CookbookBrowseExample"
+  workflow_config = module.cumulus.workflow_config
+  system_bucket   = var.system_bucket
+  tags            = local.default_tags
 
   state_machine_definition = <<JSON
 {
@@ -191,7 +191,7 @@ module "cookbook_browse_example_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.fake_processing.task_arn}",
+      "Resource": "${module.cumulus.fake_processing_task.task_arn}",
       "Catch": [
         {
           "ErrorEquals": [

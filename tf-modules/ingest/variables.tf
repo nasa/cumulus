@@ -50,6 +50,11 @@ variable "dynamo_tables" {
   type = map(object({ name = string, arn = string }))
 }
 
+variable "enable_task_versioning" {
+  type = bool
+  default = false
+}
+
 variable "lambda_processing_role_arn" {
   type = string
 }

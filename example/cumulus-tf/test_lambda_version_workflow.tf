@@ -3,19 +3,19 @@ module "version_up_test" {
 
   prefix        = var.prefix
   system_bucket = var.system_bucket
-  task_version  = var.task_version
+  task_version  = "test"
 
   function_name = "VersionUpTest"
-  filename = "${path.module}/../lambdas/versionUpTest/lambda.zip"
+  filename      = "${path.module}/../lambdas/versionUpTest/lambda.zip"
 
-  handler               = "index.handler"
-  role                  = module.cumulus.lambda_processing_role_arn
-  runtime               = "nodejs8.10"
+  handler = "index.handler"
+  role    = module.cumulus.lambda_processing_role_arn
+  runtime = "nodejs8.10"
 
-  subnet_ids            = var.subnet_ids
-  security_group_ids    = [aws_security_group.no_ingress_all_egress.id]
+  subnet_ids         = var.subnet_ids
+  security_group_ids = [aws_security_group.no_ingress_all_egress.id]
 
-  enable_versioning = true
+  enable_versioning = var.enable_task_versioning
 
   tags = local.default_tags
 }
@@ -23,11 +23,11 @@ module "version_up_test" {
 module "test_lambda_version_workflow" {
   source = "../../tf-modules/workflow"
 
-  prefix                                = var.prefix
-  name                                  = "TestLambdaVersionWorkflow"
-  workflow_config                       = module.cumulus.workflow_config
-  system_bucket                         = var.system_bucket
-  tags                                  = local.default_tags
+  prefix          = var.prefix
+  name            = "TestLambdaVersionWorkflow"
+  workflow_config = module.cumulus.workflow_config
+  system_bucket   = var.system_bucket
+  tags            = local.default_tags
 
   state_machine_definition = <<JSON
 {
