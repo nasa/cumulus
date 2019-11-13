@@ -35,6 +35,11 @@ module "archive" {
   launchpad_certificate = var.launchpad_certificate
   launchpad_passphrase  = var.launchpad_passphrase
 
+  saml_entity_id                  = var.saml_entity_id
+  saml_assertion_consumer_service = var.saml_assertion_consumer_service
+  saml_idp_login                  = var.saml_idp_login
+  saml_launchpad_metadata_path    = var.saml_launchpad_metadata_path
+
   urs_url             = "https://uat.urs.earthdata.nasa.gov"
   urs_client_id       = var.urs_client_id
   urs_client_password = var.urs_client_password
@@ -49,6 +54,17 @@ module "archive" {
   schedule_sf_function_arn                         = module.ingest.schedule_sf_lambda_function_arn
   message_consumer_function_arn                    = module.ingest.message_consumer_lambda_function_arn
   kinesis_inbound_event_logger_lambda_function_arn = module.ingest.kinesis_inbound_event_logger_lambda_function_arn
+
+  metrics_es_host     = var.metrics_es_host
+  metrics_es_password = var.metrics_es_password
+  metrics_es_username = var.metrics_es_username
+
+  daily_execution_payload_cleanup_schedule_expression = var.daily_execution_payload_cleanup_schedule_expression
+  complete_execution_payload_timeout_disable = var.complete_execution_payload_timeout_disable
+  complete_execution_payload_timeout = var.complete_execution_payload_timeout
+  non_complete_execution_payload_timeout_disable = var.non_complete_execution_payload_timeout_disable
+  non_complete_execution_payload_timeout = var.non_complete_execution_payload_timeout
+
 
   # TODO We need to figure out how to make this dynamic
   #

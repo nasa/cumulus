@@ -248,6 +248,21 @@ variable "launchpad_passphrase" {
   default = ""
 }
 
+variable "metrics_es_host" {
+  type = string
+  default = null
+}
+
+variable "metrics_es_password" {
+  type = string
+  default = null
+}
+
+variable "metrics_es_username" {
+  type = string
+  default = null
+}
+
 variable "oauth_provider" {
   description = "Oauth provider to use for authorizing requests to the archive API. Also accepts 'launchhpad'"
   type    = string
@@ -285,6 +300,30 @@ variable "region" {
   type    = string
 }
 
+variable "saml_entity_id" {
+  description = "The endpoint EntityID from the Launchpad Integration Request"
+  type    = string
+  default = "N/A"
+}
+
+variable "saml_assertion_consumer_service" {
+  description = "The URL Bindings Assertion Point from the Launchpad Integration Request"
+  type    = string
+  default = "N/A"
+}
+
+variable "saml_idp_login" {
+  description = "The SAML Identity Provider's saml2sso endpoint"
+  type    = string
+  default = "N/A"
+}
+
+variable "saml_launchpad_metadata_path" {
+  description = "The S3 url of the Identity Provider public metadata xml file"
+  type    = string
+  default = "N/A"
+}
+
 variable "urs_url" {
   description = "The URL of the Earthdata login (URS) site"
   type        = string
@@ -295,4 +334,37 @@ variable "vpc_id" {
   description = "VPC used by Lambda functions"
   type    = string
   default = null
+}
+
+# archive module clean_executions lambda configuration
+
+variable "daily_execution_payload_cleanup_schedule_expression" {
+  type    = string
+  default = "cron(0 4 * * ? *)"
+  description = "Cloud Watch cron schedule for the execution payload cleanup lambda"
+}
+
+variable "complete_execution_payload_timeout_disable" {
+  type    = bool
+  default = false
+  description = "Boolean flag that when set to true will disable 'complete' execution cleanup"
+}
+
+variable "complete_execution_payload_timeout" {
+  type    = number
+  default = 10
+  description = "Number of days to retain 'complete' execution payload records in the database"
+}
+
+variable "non_complete_execution_payload_timeout_disable" {
+  type    = bool
+  default = false
+  description = "Boolean flag that when set to true will disable 'complete' execution cleanup"
+
+}
+
+variable "non_complete_execution_payload_timeout" {
+  description = "Number of days to retain 'non-complete' execution payload records in the database"
+  type    = number
+  default = 30
 }

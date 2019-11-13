@@ -37,6 +37,9 @@ declare -a param_list=(
   "bamboo_SECRET_DOCSEARCH_API_KEY"
   "bamboo_SECRET_LAUNCHPAD_PASSPHRASE"
   "bamboo_SKIP_AUDIT"
+  "bamboo_METRICS_ES_HOST"
+  "bamboo_METRICS_ES_USER"
+  "bamboo_SECRET_METRICS_ES_PASS"
 )
 regex='bamboo(_SECRET)?_(.*)'
 
@@ -54,6 +57,7 @@ export GIT_SHA=$(git rev-parse HEAD)
 ## Always set GIT_PR true if master branch
 if [[ $BRANCH == master ]]; then
   export GIT_PR=true
+  echo export GIT_PR=true >> .bamboo_env_vars
 fi
 
 ## This should take a blank value from the global options, and

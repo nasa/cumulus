@@ -1,3 +1,7 @@
+provider "aws" {
+  version = "~> 2.31"
+}
+
 resource "aws_sfn_state_machine" "default" {
   name       = "${var.prefix}-${var.name}"
   role_arn   = var.workflow_config.state_machine_role_arn

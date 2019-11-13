@@ -259,6 +259,30 @@ cumulus-sit:
 # CUMULUS individual deployments.
 # -------------------------------
 
+jc-sit:
+  prefix: jc-sit
+  prefixNoDash: jcSit
+  cma_layer: '{{SIT_CMA_LAYER}}'
+  buckets:
+    internal:
+      name: jc-sit-internal
+      type: internal
+    private:
+      name: jc-sit-private
+      type: private
+    protected:
+      name: cumulus-sit-protected
+      type: protected
+    public:
+      name: cumulus-sit-public
+      type: public
+    protected-2:
+      name: cumulus-sit-protected
+      type: protected
+    dashboard:
+      name: jc-sit-dashboard
+      type: shared
+
 jk-sit:
   stackName: jk-sit
   stackNameNoDash: jkSit

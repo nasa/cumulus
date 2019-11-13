@@ -68,6 +68,26 @@ variable "prefix" {
   type = string
 }
 
+variable "saml_entity_id" {
+  type    = string
+  default = "N/A"
+}
+
+variable "saml_assertion_consumer_service" {
+  type    = string
+  default = "N/A"
+}
+
+variable "saml_idp_login" {
+  type    = string
+  default = "N/A"
+}
+
+variable "saml_launchpad_metadata_path" {
+  type    = string
+  default = "N/A"
+}
+
 variable "subnet_ids" {
   type = list(string)
 }
@@ -144,4 +164,19 @@ variable "archive_api_port" {
 variable "private_archive_api_gateway" {
   type = bool
   default = true
+}
+
+variable "metrics_es_host" {
+  type = string
+  default = null
+}
+
+variable "metrics_es_password" {
+  type = string
+  default = null
+}
+
+variable "metrics_es_username" {
+  type = string
+  default = null
 }
