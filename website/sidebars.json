@@ -53,7 +53,8 @@
       "features/distribution-metrics"
     ],
     "Troubleshooting": [
-      "system-documentation/system-documentation"
+      "troubleshooting/troubleshooting-readme",
+      "troubleshooting/troubleshooting-deployment"
     ],
     "Cumulus Development": [
       "adding-a-task",
