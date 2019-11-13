@@ -28,6 +28,6 @@ For assistance in creating a `task definition` within the module read the [AWS T
 
 ECS activities require a docker image.  Cumulus provides a docker image ([source](https://github.com/nasa/cumulus-ecs-task) for node 8.10 lambdas on dockerhub: [cumuluss/cumulus-ecs-task](https://hub.docker.com/r/cumuluss/cumulus-ecs-task).
 
-### Alterante Docker Images
+### Alternate Docker Images
 
 Custom docker images/runtimes are supported as are private registries.  For details on configuring a private registry/image see the AWS documentation on [Private Registry Authentication for Tasks](Private Registry Authentication for Tasks).
