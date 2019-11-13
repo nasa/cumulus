@@ -22,7 +22,7 @@ ECS activities are supported via the [`cumulus_ecs_module`](https://github.com/n
 
 Please read the module [README](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus_ecs_service/README.md) for configuration details.
 
-For assistance in creating a `task definition` within the module read the [AWS Task Definitoin Docs](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/create-task-definition.html).
+For assistance in creating a `task definition` within the module read the [AWS Task Definition Docs](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/create-task-definition.html).
 
 ### Cumulus Docker Image
 
