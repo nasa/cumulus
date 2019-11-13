@@ -30,4 +30,4 @@ ECS activities require a docker image.  Cumulus provides a docker image ([source
 
 ### Alternate Docker Images
 
-Custom docker images/runtimes are supported as are private registries.  For details on configuring a private registry/image see the AWS documentation on [Private Registry Authentication for Tasks](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/private-auth.html)
+Custom docker images/runtimes are supported as are private registries.  For details on configuring a private registry/image see the AWS documentation on [Private Registry Authentication for Tasks](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/private-auth.html).
