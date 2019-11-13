@@ -18,6 +18,12 @@ While the diagram can feel complex, it can easily be digested in several major c
 
 End Users can access data via Cumulus's `distribution` submodule, which includes ASF's [thin egress application](https://github.com/asfadmin/thin-egress-app), this provides authenticated data egress, temporary S3 links and other statistics features.
 
+#### Data search
+
+End user exporsure of Cumulus's holdings is expected to be provided by an external service.
+
+For NASA use, this is assumed to be [CMR](<https://earthdata.nasa.gov/eosdis/science-system-description/eosdis-components/cmr>) in this diagram.
+
 ### Data ingest
 
 #### Workflows
@@ -32,7 +38,7 @@ Cumulus entity state data is stored in a set of [DynamoDB](https://aws.amazon.co
 
 #### Data discovery
 
-Data discovery is assumed to be provided via external service.  For NASA use, this is assumed to be [CMR](<https://earthdata.nasa.gov/eosdis/science-system-description/eosdis-components/cmr>).
+Discovering data for ingest is handled via workflow step componoents using Cumulus `provider` and `collection` configurations and various triggers.    Data can be ingested from AWS S3, FTP, HTTPS and more.
 
 ### Maintenance
 
@@ -54,4 +60,5 @@ The [data persistence](https://github.com/nasa/cumulus/tree/master/tf-modules/da
 
 Other modules are provided as artifacts on the [release](https://github.com/nasa/cumulus/releases) page for use in users configuring their own deployment and contain extracted subcomponents of the [cumulus](#cumulus) module.  For more on these components see the [components documentation](deployment/components).
 
-For more on the specific structure, examples of use and how to deploy and more, please see the [deployment](deployment/deployment-readme) docs as well as the [cumulus-template-deploy](https://github.com/nasa/cumulus-template-deploy) repo.
+For more on the specific structure, examples of use and how to deploy and more, please see the [deployment](deployment/deployment-readme) docs as well as the [cumulus-template-deploy](https://github.com/nasa/cumulus-template-deploy) repo
+.
