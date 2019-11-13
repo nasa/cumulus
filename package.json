@@ -11,7 +11,7 @@
     "remove-locks": "lerna exec 'rm package-lock.json'",
     "install-locks": "lerna exec --no-sort -- npm i --package-lock-only --no-audit",
     "lint": "eslint example packages/api packages/checksum packages/cmrjs packages/cmr-client packages/common packages/deployment packages/ingest tf-modules/s3-replicator tasks",
-    "lint-md": "markdownlint docs/{deployment,development,operator-docs}/*.md tf-modules/**/*.md tf-modules/*.md",
+    "lint-md": "markdownlint docs/{data-cookbooks,deployment,development,features,operator-docs,system-documentation,workflow_tasks}/*.md tf-modules/**/*.md tf-modules/*.md",
     "test": "nyc lerna run --concurrency 1 --ignore cumulus-integration-tests test",
     "bootstrap": "lerna bootstrap --no-ci --force-local",
     "bootstrap-no-build": "lerna bootstrap --no-ci --force-local --ignore-scripts",

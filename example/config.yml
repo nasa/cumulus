@@ -4,6 +4,9 @@ default:
 mvd-tf:
   bucket: mvd-internal
 
+mvd-dev-tf:
+  bucket: mvd-internal
+
 jl-tf:
   bucket: jl-test-integration-internal
 

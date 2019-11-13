@@ -14,7 +14,15 @@ module "archive" {
   elasticsearch_hostname          = var.elasticsearch_hostname
   elasticsearch_security_group_id = var.elasticsearch_security_group_id
 
-  ems_host = "change-ems-host"
+  ems_host              = var.ems_host
+  ems_port              = var.ems_port
+  ems_path              = var.ems_path
+  ems_datasource        = var.ems_datasource
+  ems_private_key       = var.ems_private_key
+  ems_provider          = var.ems_provider
+  ems_retention_in_days = var.ems_retention_in_days
+  ems_submit_report     = var.ems_submit_report
+  ems_username          = var.ems_username
 
   system_bucket     = var.system_bucket
   public_buckets    = local.public_bucket_names
@@ -34,6 +42,11 @@ module "archive" {
   launchpad_api         = var.launchpad_api
   launchpad_certificate = var.launchpad_certificate
   launchpad_passphrase  = var.launchpad_passphrase
+
+  saml_entity_id                  = var.saml_entity_id
+  saml_assertion_consumer_service = var.saml_assertion_consumer_service
+  saml_idp_login                  = var.saml_idp_login
+  saml_launchpad_metadata_path    = var.saml_launchpad_metadata_path
 
   urs_url             = "https://uat.urs.earthdata.nasa.gov"
   urs_client_id       = var.urs_client_id
