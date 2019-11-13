@@ -59,7 +59,7 @@ Upload the corresponding private key to s3, use `system_bucket` as bucket name a
 
 ### 5) Create a data collection to send to EMS.  The report will be automatically generated and submit to EMS, and this step will be deleted after [CUMULUS-1273](https://bugs.earthdata.nasa.gov/browse/CUMULUS-1273) is completed
 
-### 6) Configure the `ems` configuration parameters in `app/config.yml`. _Example configuration of the `ems` can be found in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/app/config.yml)_
+### 6) Configure the `ems*` configuration variables passed to the `cumulus` terraform module. _Example configuration of the `ems*` variables can be found in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/terraform.tfvars.example)_
 
 If  `ems_submit_report` is not set to `true` in the configuration, the reports are still generated in `s3://{buckets.internal.name}/{prefix}/ems/{filename}` for Product Metadata and Ingest reports, and `s3://{buckets.internal.name}/{prefix}/ems-distribution/reports/{filename}` for Distribution reports, but they won't be submitted to EMS.
 
