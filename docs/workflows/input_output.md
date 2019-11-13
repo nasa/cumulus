@@ -58,10 +58,13 @@ As of Cumulus > 1.15 and CMA > v1.1.1, configuration of the CMA is expected to b
 Using the CMA package with the lambda by by any of the above mentioned methods (Manual, Kes, Lambda Layers) requires configuration for it's various features via a specific Step Function Parameters configuration format (see sample workflows in the [examples cumulus-tf source](https://github.com/nasa/cumulus/tree/master/example/cumulus-tf) for more examples):
 
 ```json
+{
   "cma": {
     "event.$": "$",
     "ReplaceConfig": "{some config}",
     "task_config": "{some config}"
+  }
+}
 ```
 
 The `"event.$": "$"` parameter is *required* as it passes the entire incoming message to the CMA client library for parsing, and the CMA itself to convert the incoming message into a Cumulus message for use in the function.
