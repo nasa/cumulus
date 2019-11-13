@@ -28,7 +28,7 @@ Granule file types are converted from the PDR spec types to CNM types according 
 
 ```text
   HDF: 'data',
-  'HDF-EOS': 'data',
+  HDF-EOS: 'data',
   SCIENCE: 'data',
   BROWSE: 'browse',
   METADATA: 'metadata',
