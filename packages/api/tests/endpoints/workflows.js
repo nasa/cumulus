@@ -9,10 +9,10 @@ const {
   recursivelyDeleteS3Bucket
 } = require('@cumulus/common/aws');
 
-const workflowList = require('../data/workflow_list.json');
 const models = require('../../models');
 const {
-  createFakeJwtAuthToken
+  createFakeJwtAuthToken,
+  getWorkflowList
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
 
@@ -25,6 +25,7 @@ process.env.system_bucket = randomString();
 // import the express app after setting the env variables
 const { app } = require('../../app');
 
+const workflowList = getWorkflowList();
 let accessTokenModel;
 let userModel;
 let testBucketName;

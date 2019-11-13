@@ -29,7 +29,7 @@ We use the open-source static website generator [Docusaurus](https://docusaurus.
 
 Adding a new page should be as simple as writing some documentation in markdown, placing it under the correct directory in the `docs/` folder and adding some configuration values wrapped by `---` at the top of the file. There are many files that already have this header which can be used as reference.
 
-```
+```markdown
 ---
 id: doc-unique-id    # unique id for this document. This must be unique accross ALL documentation under docs/
 title: Title Of Doc  # Whatever title you feel like adding. This will show up as the index to this page on the sidebar.
@@ -47,14 +47,22 @@ We lean heavily on Docusaurus for versioning. Their suggestions and walkthrough 
 
 Search on our documentation site is taken care of by [DocSearch](https://community.algolia.com/docsearch/). We have been provided with an `apiKey` and an `indexName` by DocSearch that we include in our `website/siteConfig.js` file. The rest, indexing and actual searching, we leave to DocSearch. Our builds expect environment variables for both these values to exist - `DOCSEARCH_API_KEY` and `DOCSEARCH_NAME_INDEX`.
 
-## Add a new task
+### Add a new task
+
 The tasks list in docs/tasks.md is generated from the list of task package in the task folder. Do not edit the docs/tasks.md file directly.
 
 [Read more about adding a new task.](adding-a-task.md)
 
-## Editing the tasks.md header or template
+### Editing the tasks.md header or template
 
 Look at the `bin/build-tasks-doc.js` and `bin/tasks-header.md` files to edit the output of the tasks build script.
 
+### Editing diagrams
+
+For some diagrams included in the documentation, the raw source is included in the `docs/assets/raw` directory to allow for easy updating in the future:
+
+- `assets/interfaces.svg` -> `assets/raw/interfaces.drawio` (generated using [draw.io](https://www.draw.io/))
+
 ## Deployment
+
 The `master` branch is automatically built and deployed to `gh-pages` branch. The `gh-pages` branch is served by Github Pages. Do not make edits to the `gh-pages` branch.

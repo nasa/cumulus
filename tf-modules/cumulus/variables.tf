@@ -224,6 +224,60 @@ variable "elasticsearch_alarms" {
   default = []
 }
 
+variable "ems_datasource" {
+  type        = string
+  description = "the data source of EMS reports"
+  default     = "UAT"
+}
+
+variable "ems_host" {
+  type        = string
+  description = "EMS host"
+  default     = "change-ems-host"
+}
+
+variable "ems_path" {
+  type        = string
+  description = "EMS host directory path for reports"
+  default     = "/"
+}
+
+variable "ems_port" {
+  type        = number
+  description = "EMS host port"
+  default     = 22
+}
+
+variable "ems_private_key" {
+  type        = string
+  description = "the private key file used for sending reports to EMS"
+  default     = "ems-private.pem"
+}
+
+variable "ems_provider" {
+  type        = string
+  description = "the provider used for sending reports to EMS"
+  default     = "CUMULUS"
+}
+
+variable "ems_retention_in_days" {
+  type        = number
+  description = "the retention in days for reports and s3 server access logs"
+  default     = 30
+}
+
+variable "ems_submit_report" {
+  type        = bool
+  description = "toggle whether the reports will be sent to EMS"
+  default     = false
+}
+
+variable "ems_username" {
+  type        = string
+  description = "the username used for sending reports to EMS"
+  default     = "cumulus"
+}
+
 variable "key_name" {
   description = "Name of EC2 key pair for accessing EC2 instances"
   type    = string
@@ -252,6 +306,18 @@ variable "launchpad_passphrase" {
   description = "Passphrase of Launchpad certificate. Required if using `cmr_oauth_provider = 'launchpad'`."
   type    = string
   default = ""
+}
+
+variable "log_api_gateway_to_cloudwatch" {
+  type        = bool
+  default     = false
+  description = "Boolean switch to enable/disable logging of API Gateway distribution traffic to CloudWatch."
+}
+
+variable "log_destination_arn" {
+  type        = string
+  default     = null
+  description = "shared AWS:Log:Destination value. Requires log_api_gateway_to_cloudwatch set to true."
 }
 
 variable "metrics_es_host" {
