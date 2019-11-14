@@ -103,6 +103,10 @@ module "cumulus" {
 
   token_secret = var.token_secret
 
+  metrics_es_host     = var.metrics_es_host
+  metrics_es_password = var.metrics_es_password
+  metrics_es_username = var.metrics_es_username
+
   archive_api_users = [
     "chuckwondo",
     "jennyhliu",
