@@ -7,11 +7,12 @@
       "glossary",
       "team"
     ],
-    "What are Cumulus Workflows?": [
+    "Cumulus Workflows": [
       "workflows/workflows-readme",
       "workflows/protocol",
       "workflows/input_output",
       "workflows/cumulus-task-message-flow",
+      "workflows/developing-a-cumulus-workflow",
       "workflows/developing-workflow-tasks",
       "workflows/lambda",
       "workflows/docker",
@@ -35,10 +36,7 @@
       "deployment/thin_egress_app"
     ],
     "Deployment Options":[
-      "additional-deployment-options/delete-api-gateway-stages",
-      "additional-deployment-options/enable-gateway-logging-permissions",
-      "additional-deployment-options/enable-api-logs",
-      "additional-deployment-options/configure-cloudwatch-logs-delivery",
+      "additional-deployment-options/api-gateway-logging",
       "additional-deployment-options/share-s3-access-logs",
       "additional-deployment-options/cmr_launchpad_authentication",
       "additional-deployment-options/cumulus_api_launchpad_authentication"
@@ -53,7 +51,8 @@
       "features/distribution-metrics"
     ],
     "Troubleshooting": [
-      "system-documentation/system-documentation"
+      "troubleshooting/troubleshooting-readme",
+      "troubleshooting/troubleshooting-deployment"
     ],
     "Cumulus Development": [
       "adding-a-task",
