@@ -22,3 +22,5 @@ buckets = {
     type = "public"
   }
 }
+
+ems_submit_report = true
