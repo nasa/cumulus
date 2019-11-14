@@ -17,7 +17,7 @@ In combination with the [Cumulus message](cumulus-task-message-flow), the workfl
 
 Using the module also ensures that your workflows will continue to be compatible with future versions of Cumulus.
 
-For more on the full set of current available options for the module, please consult the [README](https://github.com/nasa/cumulus/blob/master/tf-modules/workflow/README.md).
+For more on the full set of current available options for the module, please consult the module [README](https://github.com/nasa/cumulus/blob/master/tf-modules/workflow/README.md).
 
 ## Adding a new Cumulus workflow to your deployment
 
