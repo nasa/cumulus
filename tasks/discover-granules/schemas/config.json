@@ -51,6 +51,10 @@
         "granuleId": { "type": "string" },
         "sampleFileName": { "type": "string" },
         "granuleIdExtraction": { "type": "string" },
+        "ignoreFilesConfig": {
+          "type": "boolean",
+          "description": "When true, ignore this collection's files config list for determining which files to ingest for a granule, and ingest them all.  Otherwise, ingest only files that match a regex in one of this collection's files config list.  When this property is specified on a collection, it overrides the default value set on the task."
+        },
         "files": {
           "type": "array",
           "items": {
@@ -63,6 +67,11 @@
           }
         }
       }
+    },
+    "ignoreFilesConfig": {
+      "description": "Global default for whether or not to ignore a collection's files config list for filtering granule files for ingestion.  See same property name at collection level.",
+      "type": "boolean",
+      "default": false
     },
     "useList": {
       "description": "flag to tell ftp server to use 'LIST' instead of 'STAT'",

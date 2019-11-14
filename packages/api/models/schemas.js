@@ -121,6 +121,17 @@ module.exports.collection = {
         + 'validation and extraction regexes against',
       type: 'string'
     },
+    ignoreFilesConfig: {
+      title: 'Ignore Files Configuration During Discovery',
+      description: "When true, ignore this collection's files config list for"
+        + " determining which files to ingest for a granule, and ingest all of"
+        + " them.  When false, ingest only files that match a regex in one of"
+        + " this collection's files config list.  When this property is"
+        + " specified on a collection, it overrides the default value set on"
+        + " the DiscoverGranules task (which itself defaults to false, if not"
+        + " explicitly set on the task).",
+      type: 'boolean'
+    },
     files: {
       title: 'Files',
       description: 'List of file definitions',

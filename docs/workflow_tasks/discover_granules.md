@@ -50,6 +50,26 @@ A list of buckets with types that will be used to assign bucket targets based on
 
 A Cumulus [collection](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) object.    Used to define granule file groupings and granule metadata for discovered files.   The collection object utilizes the collection type key to generate types in the output object on discovery.
 
+#### Ignore Files Configuration (`ignoreFilesConfig`)
+
+The `boolean` property `ignoreFilesConfig` indicates whether or not to ignore
+the `files` configuration for a collection during granule discovery.  By
+default, this property is `false`, meaning that during discovery, a collection's
+`files` configuration is used to select which files to include in a granule's
+file list, such that only files with names that match one of the regular
+expressions specified in the collection's `files` configuration are added to the
+granule's file list.
+
+This property supports cases where such file filtering is not desired during the
+discovery phase.  By setting this property to `true`, a collection's `files`
+configuration is ignored, such that _all_ files for a granule are included in a
+granule's file list.  That is, no such filtering based on filename occurs as
+described above.
+
+Further, this "global" default (i.e., the value at the task level applies to
+all collections, by default) may be overridden at the collection level for
+cases where the behavior must differ from the default.
+
 ## Task Outputs
 
 This task outputs an assembled array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects as the payload for the next task, and returns only the expected payload for the next task.

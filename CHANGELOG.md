@@ -229,8 +229,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 none of its files has a matching file type in the associated collection
 configuration. Previously, if all files for a granule were unmatched by a file
 type configuration, the granule was excluded from the discovery results.
-Now, instead, such a granule is included in the discovery results, but with an
-empty file list.
+Further, added support for a `boolean` property `ignoreFilesConfig`, which
+controls how a granule's files are filtered at discovery time.
 
 ## [v1.14.2] - 2019-10-08
 

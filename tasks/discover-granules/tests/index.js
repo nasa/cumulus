@@ -18,7 +18,7 @@ const readFile = promisify(fs.readFile);
 const assertDiscoveredGranules = (t, output) => {
   validateOutput(t, output);
   t.is(output.granules.length, 3);
-  t.is(output.granules[0].files.length, 2);
+  output.granules.forEach(({ files }) => t.is(files.length, 2));
   t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].type));
 };
 
@@ -139,7 +139,7 @@ const discoverGranulesUsingS3 = (configure, assert = assertDiscoveredGranules) =
     config.sourceBucketName = randomString();
     config.collection.provider_path = randomString();
 
-    configure(config);
+    configure(t);
 
     validateConfig(t, config);
     await s3().createBucket({ Bucket: config.sourceBucketName }).promise();
@@ -159,7 +159,7 @@ const discoverGranulesUsingS3 = (configure, assert = assertDiscoveredGranules) =
   };
 
 test('discover granules using S3',
-  discoverGranulesUsingS3((config) => {
+  discoverGranulesUsingS3(({ context: { event: { config } } }) => {
     config.provider = {
       id: 'MODAPS',
       protocol: 's3',
@@ -168,9 +168,9 @@ test('discover granules using S3',
   }));
 
 test('discover granules without collection files config using S3',
-  discoverGranulesUsingS3((config) => {
-    // Without file configs we should still discover granules, but the
-    // discovered granules might have empty files arrays.
+  discoverGranulesUsingS3(({ context: { event: { config } } }) => {
+    // Without files config we should still discover granules, but the
+    // discovered granules will have empty files arrays.
     config.collection.files = [];
     config.provider = {
       id: 'MODAPS',
@@ -180,12 +180,85 @@ test('discover granules without collection files config using S3',
   }, (t, output) => {
     validateOutput(t, output);
     t.is(output.granules.length, 3);
-    t.is(output.granules[0].files.length, 0);
+    output.granules.forEach(({ files }) => t.is(files.length, 0));
+  }));
+
+test('discover granules without collection files config, but configuring collection to ignore it, using S3',
+  discoverGranulesUsingS3(({ context: { event: { config } } }) => {
+    // Without files config we should still discover granules, and the
+    // discovered granules' files arrays will include all files because we're
+    // ignoring the (empty) files config for filtering files.
+    config.collection.files = [];
+    config.collection.ignoreFilesConfig = true;
+    config.provider = {
+      id: 'MODAPS',
+      protocol: 's3',
+      host: config.sourceBucketName
+    };
+  }, (t, output) => {
+    validateOutput(t, output);
+    t.is(output.granules.length, 3);
+    output.granules.forEach(({ files }) => t.is(files.length, 2));
+  }));
+
+test('discover granules without collection files config, but configuring task to ignore it, using S3',
+  discoverGranulesUsingS3(({ context: { event: { config } } }) => {
+    // Without file configs we should still discover granules, and the
+    // discovered granules files arrays will include all files because we're
+    // ignoring the (empty) files config for filtering files.
+    config.collection.files = [];
+    config.ignoreFilesConfig = true;
+    config.provider = {
+      id: 'MODAPS',
+      protocol: 's3',
+      host: config.sourceBucketName
+    };
+  }, (t, output) => {
+    validateOutput(t, output);
+    t.is(output.granules.length, 3);
+    output.granules.forEach(({ files }) => t.is(files.length, 2));
+  }));
+
+test('discover granules without collection files config, but configuring task to ignore it and overriding collection config not to ignore it, using S3',
+  discoverGranulesUsingS3(({ context: { event: { config } } }) => {
+    // Without files config we should still discover granules, and the
+    // discovered granules files arrays should be empty even though the task is
+    // configured to ignore the files config, but collection setting overrides
+    // it to NOT ignore the files config.
+    config.collection.files = [];
+    config.ignoreFilesConfig = true;
+    config.collection.ignoreFilesConfig = false;
+    config.provider = {
+      id: 'MODAPS',
+      protocol: 's3',
+      host: config.sourceBucketName
+    };
+  }, (t, output) => {
+    validateOutput(t, output);
+    t.is(output.granules.length, 3);
+    output.granules.forEach(({ files }) => t.is(files.length, 0));
+  }));
+
+test('discover granules without collection files config for .nc files using S3',
+  discoverGranulesUsingS3(({ context: { event: { config } } }) => {
+    // With a collection files config that does not have a matching config for
+    // all granule files, only matching files should end up in a granule's
+    // files array.
+    config.collection.files = config.collection.files.slice(1);
+    config.provider = {
+      id: 'MODAPS',
+      protocol: 's3',
+      host: config.sourceBucketName
+    };
+  }, (t, output) => {
+    validateOutput(t, output);
+    t.is(output.granules.length, 3);
+    output.granules.forEach(({ files }) => t.is(files.length, 1));
   }));
 
 test('discover granules using S3 throws error when discovery fails',
   async (t) => {
-    const assert = discoverGranulesUsingS3((config) => {
+    const assert = discoverGranulesUsingS3(({ context: { event: { config } } }) => {
       config.provider = {
         id: 'MODAPS',
         protocol: 's3',

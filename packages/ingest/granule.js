@@ -45,6 +45,7 @@ class Discover {
     this.collection = event.config.collection;
     this.provider = event.config.provider;
     this.useList = event.config.useList;
+    this.ignoreFilesConfig = event.config.ignoreFilesConfig;
     this.event = event;
 
     this.port = this.provider.port;
@@ -110,9 +111,24 @@ class Discover {
   }
 
   /**
-   * Discover new granules
+   * Returns a possibly empty array of discovered granules.  Each granule will
+   * contain a possibly empty array of files, influenced by the `boolean`
+   * property `ignoreFilesConfig`.  By default, this property is `false`,
+   * meaning that this collection's `files` configuration is _not_ ignored, and
+   * a granule's `files` array will contain _only_ files with names that match
+   * one of the regular expressions in the collection's `files` configuration.
    *
-   * @returns {Array<Object>} a list of discovered granules
+   * By setting `ignoreFilesConfig` to `true`, the collection's `files`
+   * configuration is ignored, such that no files are filtered out based on the
+   * regular expressions in the collection's `files` configuration.  Instead,
+   * _all_ files for a granule are included in the granule's `files` array.
+   *
+   * The property may be set in the `DiscoverGranules` task configuration, in
+   * which case the specified value serves as the default value for all
+   * collections, unless the property is specified on a collection, in which
+   * case it overrides the default value specified at the task level.
+   *
+   * @returns {Array<Object>} an array of discovered granules
    */
   async discover() {
     const discoveredFiles = (await this.list())
@@ -124,14 +140,20 @@ class Discover {
     // Group the files by granuleId
     const filesByGranuleId = groupBy(discoveredFiles, (file) => file.granuleId);
     const { dataType, version } = this.collection;
+    // If the collection specifies a value for ignoreFilesConfig, then use
+    // that value as an override.  Otherwise, use what is configured on the
+    // task as a default.
+    const ignoreFilesConfig = get(this.collection, 'ignoreFilesConfig',
+      this.ignoreFilesConfig);
 
     // Build and return the granules
     return Object.entries(filesByGranuleId).map(([granuleId, files]) => ({
       granuleId,
       dataType,
       version,
-      // Retain only files with configs and omit granuleId from each file
-      files: files.filter((file) => this.fileTypeConfigForFile(file))
+      // Unless ignoring the files config, retain only files matching a config
+      files: files
+        .filter((file) => ignoreFilesConfig || this.fileTypeConfigForFile(file))
         .map((file) => omit(file, 'granuleId'))
     }));
   }
