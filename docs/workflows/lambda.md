@@ -25,7 +25,7 @@ Addtionally you may chose to include any of the other languages AWS [supports](h
 For a new Node.js Lambda, create a new function and add an `aws_lambda_function` resource to your Cumulus deployment (for examples, see the example in source [example/lambdas.tf](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/lambdas.tf) and [ingest/lambda-functions.tf](https://github.com/nasa/cumulus/blob/master/tf-modules/ingest/lambda-functions.tf)) as either a new `.tf` file, or added to an existing `.tf` file:
 
 ```hcl
-resource "aws_lambda_function" "function" {
+resource "aws_lambda_function" "myfunction" {
   function_name    = "${var.prefix}-function"
   filename         = "/path/to/zip/lambda.zip"
   source_code_hash = filebase64sha256("/path/to/zip/lambda.zip")
@@ -33,7 +33,7 @@ resource "aws_lambda_function" "function" {
   role             = module.cumulus.lambda_processing_role_arn
   runtime          = "nodejs8.10"
 
-  tags = local.default_tags
+  tags = { Deployment = var.prefix }
 
   vpc_config {
     subnet_ids         = var.subnet_ids
@@ -69,3 +69,15 @@ For Lambdas wishing to utilize the [Cumulus Message Adapter(CMA)](cumulus-task-m
 ## Other Lambda Options
 
 Cumulus supports all of the options available to you via the `aws_lambda_function` Terraform resource.   For more information on what's available, check out the [Terraform resource docs](https://www.terraform.io/docs/providers/aws/r/lambda_function.html).
+
+### Cloudwatch log groups
+
+If you want to enable [Cloudwatch](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/index.html) logging for your Lambda resource, you'll need to add a `aws_cloudwatch_log_group` resource to your Lambda definition:
+
+```hcl
+resource "aws_cloudwatch_log_group" "sync_granule_task" {
+  name = "/aws/lambda/${aws_lambda_function.myfunction.function_name}"
+  retention_in_days = 30
+  tags = { Deployment = var.prefix }
+}
+```
