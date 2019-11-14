@@ -10,7 +10,12 @@ hide_title: true
 
 To facilitate adding a workflows to your deployment Cumulus provides a [workflow module](https://github.com/nasa/cumulus/tree/master/tf-modules/workflow).
 
-In combination with the [Cumulus message](cumulus-task-message-flow) it provides a way to easily turn a step function definition into a Cumulus workflow, complete with [AWS CloudWatch events](https://docs.aws.amazon.com/cloudwatch/index.html) that handle database updates for Cumulus objects (e.g. `executions`, `granules`, etc), can seamlessly take advantage of of our [throttling](../data-cookbookx/throttling-queued-executions) feature, as well as ensuring that your workflows will continue to be compatible with future versions of Cumulus.
+In combination with the [Cumulus message](cumulus-task-message-flow), the workflow module provides a way to easily turn a Step Function definition into a Cumulus workflow, complete with:
+
+- [AWS CloudWatch events](https://docs.aws.amazon.com/cloudwatch/index.html) that handle database updates for Cumulus objects (e.g. `executions`, `granules`, etc)
+- Built-in integration with our [throttling](../data-cookbookx/throttling-queued-executions) feature
+
+Using the module also ensures that your workflows will continue to be compatible with future versions of Cumulus.
 
 For more on the full set of current available options for the module, please consult the [README](https://github.com/nasa/cumulus/blob/master/tf-modules/workflow/README.md).
 
@@ -46,7 +51,7 @@ In the above example, you would add your `state_machine_definition` using the [A
 
 For a functional example of a basic workflow, please take a look at the [hello_world_workflow](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/hello_world_workflow.tf).
 
-For  more complete/advanced examples, please read the following cookbook entries/topics:
+For more complete/advanced examples, please read the following cookbook entries/topics:
 
 - [HelloWorld workflow](../data-cookbooks/hello-world)
 - [SIPS workflow](../data-cookbooks/sips-workflow)
