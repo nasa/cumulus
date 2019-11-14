@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 **Please note**:
-- Your workflow tasks should use `cumulus-message-adapter-js` version 1.0.9+ to utilize new granule, parentArn, and stackName fields on the logs.
+- Your workflow tasks should use `cumulus-message-adapter-js` version 1.0.10+ to utilize new granule, parentArn, asyncOperationId, and stackName fields on the logs.
 
 ### Added
 
@@ -36,8 +36,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     overridden by passing `{ retries: 0 }` as the `retryOptions` argument.
 
 - **CUMULUS-1619**
-  - Adds 3 new keys to `@cumulus/logger` to display granules, parentArn and stackName.
-  - Depends on `cumulus-message-adapter-js` version 1.0.9+. Cumulus tasks updated to use this version.
+  - Adds 4 new keys to `@cumulus/logger` to display granules, parentArn, asyncOperationId, and stackName.
+  - Depends on `cumulus-message-adapter-js` version 1.0.10+. Cumulus tasks updated to use this version.
 
 ### Removed
 
