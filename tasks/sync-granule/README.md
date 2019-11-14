@@ -3,6 +3,7 @@
 Download a given granule from a given provider to S3
 
 ## Message Configuration
+
 ### Config
 
 | field name | type | default | values | description

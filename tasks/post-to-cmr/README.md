@@ -5,7 +5,7 @@ This lambda function posts granule metadata to [CMR (Common Metadata Repository)
 It will use the information contained in a metadata file on S3 and post that information to the CMR service.
 The S3 metadata file can be either `ECHO10 xml` metadata with extension `.cmr.xml` or `UMM-G JSON` with extension `.cmr.json`.
 
-## What metadata fields will cumulus update and manage?
+## Metadata fields updated/managed by Cumulus
 
 The `move-granules` task and the `(api)granules.move` function will both update the metadata files on S3. For UMM-G JSON metadata, `RelatedUrls` are updated, while ECHO10 XML metadata will maintain the metadata in `OnlineAccessURLs`.
 
@@ -42,7 +42,6 @@ Output object fields:
 | ---------- | ---- | ------- | ------ | -----------
 | granules | array\<object\> | N/A | List of granule objects published to CMR
 | process | string | N/A | Process the granules went through
-
 
 ## About Cumulus
 
