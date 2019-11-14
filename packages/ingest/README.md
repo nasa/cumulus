@@ -43,4 +43,4 @@ All modules are accessible using require: `require('@cumulus/ingest/<MODULE_NAME
 
 ## Contributing
 
-[See our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md)
+To make a contribution, please [see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).

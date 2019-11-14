@@ -25,4 +25,4 @@ import payload from '@cumulus/test-data/payloads/new-message-schema/ingest.json'
 
 ## Contributing
 
-[See our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md)
+To make a contribution, please [see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).
