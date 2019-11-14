@@ -75,7 +75,7 @@ Cumulus supports all of the options available to you via the `aws_lambda_functio
 If you want to enable [Cloudwatch](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/index.html) logging for your Lambda resource, you'll need to add a `aws_cloudwatch_log_group` resource to your Lambda definition:
 
 ```hcl
-resource "aws_cloudwatch_log_group" "sync_granule_task" {
+resource "aws_cloudwatch_log_group" "myfunction_log_group" {
   name = "/aws/lambda/${aws_lambda_function.myfunction.function_name}"
   retention_in_days = 30
   tags = { Deployment = var.prefix }
