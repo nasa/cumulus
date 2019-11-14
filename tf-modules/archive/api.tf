@@ -92,7 +92,7 @@ data "aws_iam_policy_document" "private_api_policy_document" {
     condition {
       test     = "StringEquals"
       variable = "aws:SourceVpc"
-      values = ["${var.vpc_id}"]
+      values = [var.vpc_id]
     }
   }
 }
