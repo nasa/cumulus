@@ -17,10 +17,10 @@ hide_title: true
 - Mark Boyd ([@markdboyd](https://github.com/markdboyd))
 - Matt Savoie ([@flamingbear](https://github.com/flamingbear))
 - Menno Van Diermen ([@nemreid](https://github.com/nemreid))
-- Patrick Quinn ([@bilts](https://github.com/bilts))
 
 ### Cumulus Emeritus Team
 
 - Aimee Barciauskas ([@abarciauskas-bgse](https://github.com/abarciauskas-bgse))
 - Alireza Jazayeri ([@scisco](https://github.com/scisco))
+- Patrick Quinn ([@bilts](https://github.com/bilts))
 - Seth Vincent ([@sethvincent](https://github.com/sethvincent))
