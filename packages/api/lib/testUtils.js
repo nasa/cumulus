@@ -1,10 +1,14 @@
 'use strict';
 
+const fs = require('fs');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { Search } = require('../es/search');
 const { createJwtToken } = require('./token');
 
 const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
+
+const dataDir = 'app/data';
+const getWorkflowList = () => fs.readdirSync(dataDir).map((f) => JSON.parse(fs.readFileSync(`${dataDir}/${f}`).toString()));
 
 /**
  * mocks the context object of the lambda function with
@@ -286,9 +290,8 @@ async function createFakeJwtAuthToken({ accessTokenModel, userModel }) {
 }
 
 module.exports = {
-  isLocalApi,
   createFakeJwtAuthToken,
-  testEndpoint,
+  deleteAliases,
   fakeAccessTokenFactory,
   fakeGranuleFactory,
   fakeGranuleFactoryV2,
@@ -302,5 +305,7 @@ module.exports = {
   fakeFileFactory,
   fakeUserFactory,
   fakeProviderFactory,
-  deleteAliases
+  getWorkflowList,
+  isLocalApi,
+  testEndpoint
 };
