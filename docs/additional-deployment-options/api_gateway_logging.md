@@ -8,9 +8,7 @@ hide_title: true
 
 ## Enabling API Gateway logging
 
-In order to enable API Access and Execution logging, configure the Cumulus deployment by setting `log_api_gateway_to_cloudwatch` on the `cumulus` module .
-
-For example to enable API logging on the Distribution API:
+In order to enable API Access and Execution logging, configure the Cumulus deployment by setting `log_api_gateway_to_cloudwatch` on the `cumulus` module:
 
 ```hcl
 log_api_gateway_to_cloudwatch = true
@@ -28,7 +26,7 @@ This is a one time operation that must be performed on each AWS account to allow
 
 The `AmazonAPIGatewayPushToCloudWatchLogs` managed policy, with an ARN of `arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs`, has all the required permissions to enable API Gateway logging to CloudWatch.  To grant these permissions to your account, first create an IAM role with `apigateway.amazonaws.com` as its trusted entity.
 
-Save this snippet as `apigateway-policy.json`
+Save this snippet as `apigateway-policy.json`.
 
 ```json
 {

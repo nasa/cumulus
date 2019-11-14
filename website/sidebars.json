@@ -36,7 +36,6 @@
     ],
     "Deployment Options":[
       "additional-deployment-options/api-gateway-logging",
-      "additional-deployment-options/delete-api-gateway-stages",      
       "additional-deployment-options/share-s3-access-logs",
       "additional-deployment-options/cmr_launchpad_authentication",
       "additional-deployment-options/cumulus_api_launchpad_authentication"
