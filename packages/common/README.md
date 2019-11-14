@@ -3,8 +3,9 @@
 Common libraries used in Cumulus.
 
 ## Usage
-```
-$ npm install @cumulus/common
+
+```bash
+  npm install @cumulus/common
 ```
 
 ## About Cumulus

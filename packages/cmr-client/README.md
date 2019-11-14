@@ -23,17 +23,28 @@ A class to simplify requests to the CMR
 
 **Kind**: global class
 
-* [CMR](#CMR)
-    * [new CMR(params)](#new_CMR_new)
-    * [.getToken()](#CMR+getToken) ⇒ <code>Promise.&lt;string&gt;</code>
-    * [.getHeaders(params)](#CMR+getHeaders) ⇒ <code>Object</code>
-    * [.ingestCollection(xml)](#CMR+ingestCollection) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.ingestGranule(xml)](#CMR+ingestGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.ingestUMMGranule(ummgMetadata)](#CMR+ingestUMMGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.deleteCollection(datasetID)](#CMR+deleteCollection) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.deleteGranule(granuleUR)](#CMR+deleteGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.searchCollections(params, [format])](#CMR+searchCollections) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.searchGranules(params, [format])](#CMR+searchGranules) ⇒ <code>Promise.&lt;Object&gt;</code>
+- [@cumulus/cmr-client](#cumuluscmr-client)
+  - [API](#api)
+    - [Classes](#classes)
+    - [CMR](#cmr)
+      - [new CMR(params)](#new-cmrparams)
+      - [cmrClient.getToken() ⇒ <code>Promise.&lt;string&gt;</code>](#cmrclientgettoken-%e2%87%92-codepromiseltstringgtcode)
+      - [cmrClient.getHeaders(params) ⇒ <code>Object</code>](#cmrclientgetheadersparams-%e2%87%92-codeobjectcode)
+      - [cmrClient.ingestCollection(xml) ⇒ <code>Promise.&lt;Object&gt;</code>](#cmrclientingestcollectionxml-%e2%87%92-codepromiseltobjectgtcode)
+      - [cmrClient.ingestGranule(xml) ⇒ <code>Promise.&lt;Object&gt;</code>](#cmrclientingestgranulexml-%e2%87%92-codepromiseltobjectgtcode)
+      - [cmrClient.ingestUMMGranule(ummgMetadata) ⇒ <code>Promise.&lt;Object&gt;</code>](#cmrclientingestummgranuleummgmetadata-%e2%87%92-codepromiseltobjectgtcode)
+      - [cmrClient.deleteCollection(datasetID) ⇒ <code>Promise.&lt;Object&gt;</code>](#cmrclientdeletecollectiondatasetid-%e2%87%92-codepromiseltobjectgtcode)
+      - [cmrClient.deleteGranule(granuleUR) ⇒ <code>Promise.&lt;Object&gt;</code>](#cmrclientdeletegranulegranuleur-%e2%87%92-codepromiseltobjectgtcode)
+      - [cmrClient.searchCollections(params, [format]) ⇒ <code>Promise.&lt;Object&gt;</code>](#cmrclientsearchcollectionsparams-format-%e2%87%92-codepromiseltobjectgtcode)
+      - [cmrClient.searchGranules(params, [format]) ⇒ <code>Promise.&lt;Object&gt;</code>](#cmrclientsearchgranulesparams-format-%e2%87%92-codepromiseltobjectgtcode)
+    - [CMRSearchConceptQueue](#cmrsearchconceptqueue)
+      - [new CMRSearchConceptQueue(params)](#new-cmrsearchconceptqueueparams)
+      - [cmrSearchConceptQueue.peek() ⇒ <code>Promise.&lt;Object&gt;</code>](#cmrsearchconceptqueuepeek-%e2%87%92-codepromiseltobjectgtcode)
+      - [cmrSearchConceptQueue.shift() ⇒ <code>Promise.&lt;Object&gt;</code>](#cmrsearchconceptqueueshift-%e2%87%92-codepromiseltobjectgtcode)
+  - [CMR Docs](#cmr-docs)
+  - [About Cumulus](#about-cumulus)
+  - [Test](#test)
+  - [Contributing](#contributing)
 
 <a name="new_CMR_new"></a>
 
@@ -243,7 +254,6 @@ Cumulus is a cloud-based data ingest, archive, distribution and management proto
 ## Test
 
 Test with `npm run test`.
-
 
 ## Contributing
 

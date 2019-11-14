@@ -10,7 +10,7 @@ Cumulus is a cloud-based data ingest, archive, distribution and management proto
 
 ## Installation
 
-```
+```bash
 npm install @cumulus/ingest
 ```
 
@@ -20,7 +20,7 @@ Running tests locally requires [localstack](https://github.com/localstack/locals
 
 With localstack running, you can run tests using:
 
-```
+```bash
 LOCALSTACK_HOST=localhost npm test
 ```
 

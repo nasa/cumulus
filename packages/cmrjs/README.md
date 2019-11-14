@@ -16,9 +16,8 @@ Test with `npm run test`.
 
 Documentation on the CMR REST API endpoints is here:
 
-- https://cmr.earthdata.nasa.gov/search/site/search_api_docs.html
-- https://cmr.earthdata.nasa.gov/ingest/site/ingest_api_docs.html
-
+- <https://cmr.earthdata.nasa.gov/search/site/search_api_docs.html>
+- <https://cmr.earthdata.nasa.gov/ingest/site/ingest_api_docs.html>
 
 ## Contributing
 

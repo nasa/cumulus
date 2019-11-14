@@ -32,8 +32,8 @@ Example log event:
 
 ## Install
 
-```
-$ npm install @cumulus/logger
+```bash
+npm install @cumulus/logger
 ```
 
 ## Usage

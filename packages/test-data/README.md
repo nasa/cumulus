@@ -10,7 +10,7 @@ Cumulus is a cloud-based data ingest, archive, distribution and management proto
 
 ## Installation
 
-```
+```bash
 npm install @cumulus/test-data
 ```
 
