@@ -121,12 +121,6 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
   For more information, see [AWS IAMs](https://aws.amazon.com/iam/).
 
-### Kes
-
-  A tool used for managing and deploying AWS Cloudformation Stacks.  Used in Cumulus to deploy various stacks.
-
-  For more information, see the [devseed documentation page](http://devseed.com/kes/).
-
 ### Kinesis
 
   Amazon's platform for streaming data on AWS.
@@ -138,6 +132,10 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
   AWS's cloud  service that lets you run code without provisioning or managing servers.
 
   For more information, see [AWS's lambda page](https://aws.amazon.com/lambda/).
+
+### Module (Terraform)
+
+  Refers to a [terraform module](https://www.terraform.io/docs/configuration/modules.html).
 
 ### Node
 
@@ -181,7 +179,6 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
   For more information, see [AWS's s3 page](https://imgs.xkcd.com/comics/marsiforming_2x.png).
 
-
 ### SIPS
 
   Science Investigator-led Processing Systems.   In the context of DAAC ingest, this refers to data producers/providers.
@@ -204,7 +201,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
   A collection of AWS resources you can manage as a single unit.
 
-  In the context of Cumulus this is managed via [CloudFormation Templates](https://aws.amazon.com/cloudformation/aws-cloudformation-templates/).
+  In the context of Cumulus, this refers to a deployment of the `cumulus` and `data-persistence` modules that is managed by [Terraform](https://www.terraform.io/)
 
 ### Step Function
 
