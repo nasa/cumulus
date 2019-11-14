@@ -1,6 +1,6 @@
 # @cumulus/task-debug
 
-## What is Cumulus?
+## About Cumulus
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
 
@@ -43,4 +43,4 @@ debugging to avoid the need to generate and deal with source maps
 
 ## Contributing
 
-See [Cumulus README](https://github.com/nasa/cumulus/blob/master/README.md#installing-and-deploying)
+[See our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md)

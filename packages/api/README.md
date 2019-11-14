@@ -1,10 +1,10 @@
 # @cumulus/api
 
-*An API for the Cumulus Framework*
+## An API for the Cumulus Framework
 
-This module build the Cumulus API for the Cumulus framework. It uses a combination of AWS services to create an API interface for configuring, managing and monitoring the Cumulus framework.
+This module builds the Cumulus API for the Cumulus framework. It uses a combination of AWS services to create an API interface for configuring, managing and monitoring the Cumulus framework.
 
-For the full documentation of the API see: https://nasa.github.io/cumulus-api
+For the full documentation of the API see <https://nasa.github.io/cumulus-api>.
 
 ## Development
 
@@ -13,7 +13,7 @@ For the full documentation of the API see: https://nasa.github.io/cumulus-api
 To run the API locally using Localstack for AWS services without Earthdata authentication required:
 
 ```bash
-  $ npm run serve
+  npm run serve
 ```
 
 To run the API locally using Localstack for AWS services with Earthdata authentication required:
@@ -53,13 +53,13 @@ You can get the value for `ES_HOST` for your stack using the AWS CLI, where `<yo
 To run the distribution API locally using Localstack for AWS services without Earthdata authentication required:
 
 ```bash
-  $ npm run serve-dist
+  npm run serve-dist
 ```
 
 To run the distribution API locally using Localstack for AWS services with Earthdata authentication required:
 
 ```bash
-  $ EARTHDATA_CLIENT_ID=<your_client_id> EARTHDATA_CLIENT_PASSWORD=<your_password> npm run serve-dist-oauth
+  EARTHDATA_CLIENT_ID=<your_client_id> EARTHDATA_CLIENT_PASSWORD=<your_password> npm run serve-dist-oauth
 ```
 
 To run the distribution API locally using your deployed stack with Earthdata authentication required:
@@ -150,16 +150,6 @@ cumulus-api complete-reindex --help
     -h, --help                        output usage information
 ```
 
-## What is Cumulus?
-
-Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
-
-[Cumulus Documentation](https://nasa.github.io/cumulus)
-
-## Contributing
-
-See [Cumulus README](https://github.com/nasa/cumulus/blob/master/README.md#installing-and-deploying)
-
 ## Running Tests
 
 Running tests for message-consumer depends on localstack. Once you have installed localstack, start it:
@@ -173,3 +163,13 @@ Then you can run tests locally via:
 ```bash
 LOCALSTACK_HOST=localhost IS_LOCAL=true npm run test
 ```
+
+## About Cumulus
+
+Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
+
+[Cumulus Documentation](https://nasa.github.io/cumulus)
+
+## Contributing
+
+[See our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md)

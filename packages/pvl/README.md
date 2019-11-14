@@ -1,6 +1,6 @@
 # @cumulus/pvl
 
-## What is Cumulus?
+## About Cumulus
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
 
@@ -154,4 +154,4 @@ Run tests with `npm test`.
 
 ## Contributing
 
-See [Cumulus README](https://github.com/nasa/cumulus/blob/master/README.md#installing-and-deploying)
+[See our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md)

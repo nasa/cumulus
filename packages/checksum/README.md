@@ -1,7 +1,7 @@
 # @cumulus/checksum
 
 
-## What is Cumulus?
+## About Cumulus
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's
 future Earth science data streams.
