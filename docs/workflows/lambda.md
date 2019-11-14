@@ -48,6 +48,8 @@ Make sure to include a `vpc_config` that matches the information you've provided
 
 Also note that for this example to work, you will need to have `default_tags` defined as in the [example](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf), or in the [template-deploy-repo](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/main.tf).
 
+**Please note**: Cumulus follows the convention of tagging resources with the `prefix` variable `{ Deployment = var.prefix }` that you pass to the `cumulus` module.   For resources defined outside of Core, it's recommended that you adopt this convention as it makes resources and/or deployment recovery scenarios much easier to manage.
+
 ### Java Lambda
 
 Java Lambdas are created in much the same way as the Node.js example [above](#node.js-lambda).
