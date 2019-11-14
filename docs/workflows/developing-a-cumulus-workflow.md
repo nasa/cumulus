@@ -44,7 +44,7 @@ In the above example, you would add your `state_machine_definition` using the [A
 
 ## Examples
 
-For a functional example of a basic workflow, please take a look at the [hello_world_workflow](https://github.com/nasa/cumulus-template-deploy/blob/CUMULUS-1556-add-deployment/cumulus-tf/hello_world_workflow.tf).
+For a functional example of a basic workflow, please take a look at the [hello_world_workflow](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/hello_world_workflow.tf).
 
 For  more complete/advanced examples, please read the following cookbook entries/topics:
 
