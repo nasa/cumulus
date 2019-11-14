@@ -1,10 +1,10 @@
 ---
 id: troubleshooting-deployment
-title: Deployment
+title: Troubleshooting your deployment
 hide_title: true
 ---
 
-# Troubleshooting deployment
+# Troubleshooting your deployment
 
 ## `The provided execution role does not have permissions to call SendMessage on SQS`
 
