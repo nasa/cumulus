@@ -1,11 +1,13 @@
+terraform {
+  required_providers {
+    aws = ">= 2.31.0"
+  }
+}
+
 locals {
   default_tags = {
     Deployment = var.prefix
   }
-}
-
-provider "aws" {
-  region = var.region
 }
 
 resource "aws_lambda_function" "s3_acccess_test" {

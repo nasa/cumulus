@@ -1,7 +1,7 @@
-provider "aws" {
-  region  = var.aws_region
-  profile = var.aws_profile
-  version = "~> 2.31"
+terraform {
+  required_providers {
+    aws = ">= 2.31.0"
+  }
 }
 
 locals {
