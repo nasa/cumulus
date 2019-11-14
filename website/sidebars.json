@@ -7,11 +7,12 @@
       "glossary",
       "team"
     ],
-    "What are Cumulus Workflows?": [
+    "Cumulus Workflows": [
       "workflows/workflows-readme",
       "workflows/protocol",
       "workflows/input_output",
       "workflows/cumulus-task-message-flow",
+      "workflows/developing-a-cumulus-workflow",
       "workflows/developing-workflow-tasks",
       "workflows/lambda",
       "workflows/docker",
