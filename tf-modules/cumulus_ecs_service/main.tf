@@ -1,5 +1,7 @@
-provider "aws" {
-  version = "~> 2.31"
+terraform {
+  required_providers {
+    aws = ">= 2.31.0"
+  }
 }
 
 locals {
@@ -10,9 +12,9 @@ locals {
 data "aws_region" "current" {}
 
 resource "aws_cloudwatch_log_group" "default" {
-  name = "${local.full_name}EcsLogs"
+  name              = "${local.full_name}EcsLogs"
   retention_in_days = 30
-  tags = var.tags
+  tags              = var.tags
 }
 
 resource "aws_ecs_task_definition" "default" {
