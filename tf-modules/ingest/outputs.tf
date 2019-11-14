@@ -62,6 +62,10 @@ output "sf_semaphore_down_lambda_function_arn" {
   value = aws_lambda_function.sf_semaphore_down.arn
 }
 
+output "sqs2sfThrottle_lambda_function_arn" {
+  value = aws_lambda_function.sqs2sfThrottle.arn
+}
+
 output "sync_granule_task_lambda_function_arn" {
   value = aws_lambda_function.sync_granule_task.arn
 }
