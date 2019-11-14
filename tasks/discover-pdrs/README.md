@@ -17,7 +17,7 @@ Discover PDRs in FTP/HTTP/HTTPS/SFTP/S3 endpoints
 | --------   | ------- | ----------
 | N/A        | N/A     | N/A
 
-## What is Cumulus?
+## About Cumulus
 
 Cumulus is a cloud-based data ingest, archive, distribution and management
 prototype for NASA's future Earth science data streams.
@@ -26,4 +26,4 @@ prototype for NASA's future Earth science data streams.
 
 ## Contributing
 
-See [Cumulus README](https://github.com/nasa/cumulus/blob/master/README.md#installing-and-deploying)
+[See our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md)
