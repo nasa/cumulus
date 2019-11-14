@@ -10,7 +10,7 @@ hide_title: true
 ### via console
 An operator can easily delete an existing API Gateway stage through the [API Gateway Console](https://console.aws.amazon.com/apigateway/). For each of the deployed APIs `<stackname>-backend` and `<stackname>-distribution`, select the API and then select `stages`, finally select the deployed stage and use the `Delete Stage` button.
 
-![Sample image of API Gateway Console](assets/APIGateway-Delete-Stage.png)
+![Screenshot of the AWS API Gateway console showing to delete an API gateway stage](assets/APIGateway-Delete-Stage.png)
 
 
 ### via command line
