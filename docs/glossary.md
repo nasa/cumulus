@@ -181,7 +181,6 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
   For more information, see [AWS's s3 page](https://imgs.xkcd.com/comics/marsiforming_2x.png).
 
-
 ### SIPS
 
   Science Investigator-led Processing Systems.   In the context of DAAC ingest, this refers to data producers/providers.
