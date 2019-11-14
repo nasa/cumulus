@@ -14,6 +14,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- **CUMULUS-1561**
+  - Fix the way that we are handling Terraform provider version requirements
+  - Pass provider configs into child modules using the method that the
+    [Terraform documentation](https://www.terraform.io/docs/configuration/modules.html#providers-within-modules)
+    suggests
+  - Remove the `region` input variable from the `s3_access_test` Terraform module
+  - Remove the `aws_profile` and `aws_region` input variables from the
+    `s3-replicator` Terraform module
+
 - **CUMULUS-1639**
   - Because of
     [S3's Data Consistency Model](https://docs.aws.amazon.com/AmazonS3/latest/dev/Introduction.html#BasicsObjects),
