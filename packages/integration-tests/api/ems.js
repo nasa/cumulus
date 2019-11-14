@@ -1,6 +1,25 @@
 'use strict';
 
+const {
+  aws: { lambda }
+} = require('@cumulus/common');
 const { callCumulusApi } = require('./api');
+
+/**
+ * Fetch deployment's `ems_*` environment variables.
+ *
+ * @param {string} lambdaName - deployment prefix
+ * @returns {Promise<Object>} map of ems_* lambda envs
+ */
+async function getLambdaEmsSettings(lambdaName) {
+  const config = await lambda().getFunctionConfiguration({ FunctionName: lambdaName }).promise();
+  const envs = config.Environment.Variables;
+  return Object.keys(envs).reduce((map, key) => {
+    if (!key.startsWith('ems_')) return map;
+    const shortKey = key.slice('ems_'.length);
+    return { ...map, [shortKey]: envs[key] };
+  }, {});
+}
 
 /**
  * Post a request to the ems API
@@ -25,4 +44,7 @@ async function createEmsReports({ prefix, request }) {
   });
 }
 
-module.exports = { createEmsReports };
+module.exports = {
+  createEmsReports,
+  getLambdaEmsSettings
+};

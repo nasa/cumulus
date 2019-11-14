@@ -39,7 +39,6 @@
       "additional-deployment-options/enable-gateway-logging-permissions",
       "additional-deployment-options/enable-api-logs",
       "additional-deployment-options/configure-cloudwatch-logs-delivery",
-      "additional-deployment-options/additional-lambda-logging",
       "additional-deployment-options/share-s3-access-logs",
       "additional-deployment-options/cmr_launchpad_authentication",
       "additional-deployment-options/cumulus_api_launchpad_authentication"
