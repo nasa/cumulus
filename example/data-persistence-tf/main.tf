@@ -16,9 +16,14 @@ variable "create_service_linked_role" {
   default = false
 }
 
+terraform {
+  required_providers {
+    aws = ">= 2.31.0"
+  }
+}
+
 provider "aws" {
   region = var.aws_region
-  version = "~> 2.31"
 }
 
 module "data_persistence" {
