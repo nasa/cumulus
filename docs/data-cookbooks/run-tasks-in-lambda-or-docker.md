@@ -16,12 +16,12 @@ Lambda provides serverless architecture, providing the best option for minimizin
 
 You should use AWS Lambda whenever all of the following are true:
 
-* The task runs on one of the supported [Lambda Runtimes](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html). At time of this writing, supported runtimes include versions of python, Java, Ruby, node.js, Go and .NET.
-* The lambda package is less than 50 MB in size, zipped.
-* The task consumes less than each of the following resources:
-  * 3008 MB memory allocation
-  * 512 MB disk storage (must be written to `/tmp`)
-  * 15 minutes of execution time
+- The task runs on one of the supported [Lambda Runtimes](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html). At time of this writing, supported runtimes include versions of python, Java, Ruby, node.js, Go and .NET.
+- The lambda package is less than 50 MB in size, zipped.
+- The task consumes less than each of the following resources:
+  - 3008 MB memory allocation
+  - 512 MB disk storage (must be written to `/tmp`)
+  - 15 minutes of execution time
 
 See [this page](https://docs.aws.amazon.com/lambda/latest/dg/limits.html) for a complete and up-to-date list of AWS Lambda limits.
 
@@ -57,7 +57,7 @@ The following example is an excerpt from the [Discover Granules workflow](https:
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.queue_granules_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.queue_granules_task.task_arn}",
       "Retry": [
         {
           "ErrorEquals": [
@@ -85,7 +85,7 @@ The following example is an excerpt from the [Discover Granules workflow](https:
 
 Given it has been discovered this task can no longer run in AWS Lambda, you can instead run it on the Cumulus ECS cluster by adding the following resources to your terraform deployment (by either adding a new `.tf` file or updating an existing one):
 
-* A `aws_sfn_activity` resource:
+- A `aws_sfn_activity` resource:
 
 ```hcl
 resource "aws_sfn_activity" "queue_granules" {
@@ -94,7 +94,7 @@ resource "aws_sfn_activity" "queue_granules" {
 }
 ```
 
-* An instance of the `cumulus_ecs_service` module (found on the [Cumulus releases page](https://github.com/nasa/cumulus/releases) configured to provide the `QueueGranules` task:
+- An instance of the `cumulus_ecs_service` module (found on the [Cumulus releases page](https://github.com/nasa/cumulus/releases) configured to provide the `QueueGranules` task:
 
 ```hcl
 
@@ -121,7 +121,7 @@ module "queue_granules_service" {
     "--activityArn",
     aws_sfn_activity.queue_granules.id,
     "--lambdaArn",
-    module.cumulus.queue_granules_task_lambda_function_arn
+    module.cumulus.queue_granules_task.task_arn
   ]
   alarms = {
     TaskCountHigh = {
@@ -135,7 +135,7 @@ module "queue_granules_service" {
 }
 ```
 
-* An updated [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf) to utilize the new resource (the resource key in the `QueueGranules` step has been updated to:
+- An updated [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf) to utilize the new resource (the resource key in the `QueueGranules` step has been updated to:
 
 `"Resource": "${aws_sfn_activity.queue_granules.id}"`)`
 
@@ -171,7 +171,7 @@ module "cookbook_discover_granules_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.discover_granules_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.discover_granules_task.task_arn}",
       "Retry": [
         {
           "ErrorEquals": [
