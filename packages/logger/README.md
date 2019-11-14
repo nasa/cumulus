@@ -95,10 +95,10 @@ Type: `Error`
 
 If the last argument is an Error then the following additional properties will be set on the log event:
 
-* **error** (Object)
-  * **name** (string)
-  * **message** (string)
-  * **stack** (Array\<string\>) - the lines of the stack trace
+- **error** (Object)
+  - **name** (string)
+  - **message** (string)
+  - **stack** (Array\<string\>) - the lines of the stack trace
 
 ### log.fatal([...messageArgs])
 
