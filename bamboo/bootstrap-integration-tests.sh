@@ -8,11 +8,12 @@ apt-get install -y zip
 # End temp fix
 set -ex
 . ./bamboo/abort-if-not-pr-or-redeployment.sh
-. ./bamboo/abort-if-skip-integration-tests.sh
 
 npm config set unsafe-perm true
 npm install
 . ./bamboo/set-bamboo-env-variables.sh
+. ./bamboo/abort-if-skip-integration-tests.sh
+
 
 if [[ $USE_NPM_PACKAGES == true ]]; then
   echo "***Deploying stack with NPM packages"
