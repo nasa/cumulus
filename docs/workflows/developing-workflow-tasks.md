@@ -24,7 +24,7 @@ Please read the module [README](https://github.com/nasa/cumulus/blob/master/tf-m
 
 For assistance in creating a `task definition` within the module read the [AWS Task Definition Docs](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/create-task-definition.html).
 
-For a concrete example of using the `cumulus_ecs_module`, please see the related [cookbook entry](http://localhost:3000/cumulus/docs/next/data-cookbooks/run-tasks-in-lambda-or-docker).
+For a step-by-step example of using the `cumulus_ecs_module`, please see the related [cookbook entry](http://localhost:3000/cumulus/docs/next/data-cookbooks/run-tasks-in-lambda-or-docker).
 
 ### Cumulus Docker Image
 
