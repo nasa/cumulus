@@ -9,10 +9,10 @@ const {
   recursivelyDeleteS3Bucket
 } = require('@cumulus/common/aws');
 
-const workflowList = require('../data/workflow_list.json');
 const models = require('../../models');
 const {
-  createFakeJwtAuthToken
+  createFakeJwtAuthToken,
+  getWorkflowList
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
 
@@ -25,6 +25,7 @@ process.env.system_bucket = randomString();
 // import the express app after setting the env variables
 const { app } = require('../../app');
 
+const workflowList = getWorkflowList();
 let accessTokenModel;
 let userModel;
 let testBucketName;
@@ -124,13 +125,17 @@ test('GET with path parameters returns a 404 for a nonexistent workflow', async 
 
 test.serial('GET /good-workflow returns a 404 if the workflows list cannot be fetched from S3', async (t) => {
   const realBucket = process.env.system_bucket;
-  process.env.system_bucket = 'bucket-does-not-exist';
-  const response = await request(app)
-    .get('/workflows/HelloWorldWorkflow')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(404);
+  try {
+    process.env.system_bucket = 'bucket-does-not-exist';
 
-  t.is(response.status, 404);
-  process.env.system_bucket = realBucket;
+    const response = await request(app)
+      .get('/workflows/HelloWorldWorkflow')
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .expect(404);
+
+    t.is(response.status, 404);
+  } finally {
+    process.env.system_bucket = realBucket;
+  }
 });

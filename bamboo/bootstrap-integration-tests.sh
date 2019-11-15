@@ -8,11 +8,12 @@ apt-get install -y zip
 # End temp fix
 set -ex
 . ./bamboo/abort-if-not-pr-or-redeployment.sh
-. ./bamboo/abort-if-skip-integration-tests.sh
 
 npm config set unsafe-perm true
 npm install
 . ./bamboo/set-bamboo-env-variables.sh
+. ./bamboo/abort-if-skip-integration-tests.sh
+
 
 if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   echo "***Deploying stack with deployment packages"
@@ -53,11 +54,10 @@ if [[ $LOCK_EXIST_STATUS -gt 0 ]]; then
 fi
 set -e
 
-if [[ $DEPLOYMENT =~ '-tf' ]]; then
-  echo "Running Terraform deployment $DEPLOYMENT"
-  . ../bamboo/abort-if-not-terraform.sh
-  . ../bamboo/bootstrap-tf-deployment.sh
-else
+if [[ $KES_DEPLOYMENT == true ]]; then
   echo "Running Kes deployment $DEPLOYMENT"
   . ../bamboo/bootstrap-kes-deployment.sh
+else
+  echo "Running Terraform deployment $DEPLOYMENT"
+  . ../bamboo/bootstrap-tf-deployment.sh
 fi

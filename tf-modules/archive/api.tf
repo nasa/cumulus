@@ -24,6 +24,7 @@ resource "aws_lambda_function" "api" {
       AsyncOperationTaskDefinition = aws_ecs_task_definition.async_operation.arn
       AsyncOperationsTable         = var.dynamo_tables.async_operations.name
       BulkDeleteLambda             = aws_lambda_function.bulk_delete.arn
+      BulkOperationLambda          = aws_lambda_function.bulk_operation.arn
       CMR_ENVIRONMENT              = var.cmr_environment
       CollectionsTable             = var.dynamo_tables.collections.name
       EARTHDATA_BASE_URL           = "${replace(var.urs_url, "//*$/", "/")}" # Makes sure there's one and only one trailing slash
@@ -65,6 +66,10 @@ resource "aws_lambda_function" "api" {
       system_bucket                = var.system_bucket
       public_buckets               = join(",", var.public_buckets)
       protected_buckets            = join(",", var.protected_buckets)
+      ENTITY_ID                    = var.saml_entity_id
+      ASSERT_ENDPOINT              = var.saml_assertion_consumer_service
+      IDP_LOGIN                    = var.saml_idp_login
+      LAUNCHPAD_METADATA_PATH      = var.saml_launchpad_metadata_path
     }
   }
   memory_size = 756

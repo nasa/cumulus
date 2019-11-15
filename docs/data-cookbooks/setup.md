@@ -40,6 +40,7 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 |url_path|`"{cmrMetadata.Granule.Collection.ShortName}/`<br/>`{substring(file.name, 0, 3)}"`|No|Filename without extension|
 
 ### files-object
+
 |Key  |Value  |Required  |Description|
 |:---:|:-----:|:--------:|-----------|
 |regex|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$"`|Yes|Regex used to identify the file|
@@ -64,7 +65,7 @@ Providers generate and distribute input data that Cumulus obtains and sends to w
 |username|`${username}`|No|Username for access to the provider. Plain-text or encrypted. Encrypted is highly encouraged|
 |password|`${password}`|No|Password for accces to the provider. Plain-text or encrypted. Encrypted is highly encouraged|
 
-_The above optional attributes are not shown in the example provided, but they have been included in this document for completeness_
+**Note:** The above optional attributes are not shown in the example provided, but they have been included in this document for completeness.
 
 ## Rules
 

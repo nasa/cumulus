@@ -5,6 +5,7 @@ hide_title: true
 ---
 
 # Dockerizing Data Processing
+
 The software used for processing data amongst DAAC's is developed in a variety of languages, and with different sets of dependencies and build environments. To standardize processing, Docker allows us to provide an environment (called an image) to meet the needs of any processing software, while running on the kernel of the host server (in this case, an EC2 instance). This lightweight virtualization does not carry the overhead of any additional VM, providing near-instant startup and the ability to run any dockerized process as a command-line call.
 
 ## Using Docker
@@ -13,7 +14,9 @@ Docker images are run using the `docker` command and can be used to build a Dock
 
 To run a command using docker-compose use:
 
-	$ docker-compose run *command*
+```bash
+docker-compose run *command*
+```
 
 where *commmand* is one of
 
@@ -25,21 +28,23 @@ where *commmand* is one of
 
 Docker images that are built can be stored in the cloud in a Docker registry. Currently we are using the AWS Docker Registry, called ECR. To access these images, you must first log in using your AWS credentials, and use AWS CLI to get the proper login string:
 
-```
+```bash
 # install awscli
-$ pip install awscli
+pip install awscli
 
 # login to the AWS Docker registry
-$ aws ecr get-login --region us-east-1 | source /dev/stdin
+aws ecr get-login --region us-east-1 | source /dev/stdin
 ```
 
 As long as you have permissions to access the NASA Cumulus AWS account, this will allow you to pull images from AWS ECR, and push rebuilt or new images there as well. Docker-compose may also be used to push images.
 
-    $ docker-compose push
+```bash
+docker-compose push
+```
 
 Which will push the built image to AWS ECR. Note that the image built by docker-compose will have is the `:latest` tag, and will overwrite the `:latest` tagged docker image on the registry.  This file should be updated to push to a different tag if overwriting is not desired.
 
-In normal use-cases, though, CircleCI takes care of this building and deploying process, as far as production.
+In normal use-cases for most production images on either repository,  CircleCI takes care of this building and deploying process
 
 ### Source Control and Versions
 
@@ -57,12 +62,11 @@ Docker images are built in layers, allowing common dependencies to be shared to 
 
 The docker-base image can be interacted with by running it in interactive mode (ie, `docker run -it docker-base`, since the default "entrypoint" to the image is a bash shell.
 
-
 ### docker-data example: docker-hs3-avaps
 
 To create a new processing stream for a data collection, a Dockerfile is used to specify what additional dependencies may be required, and to build them in that environment, if necessary. An example Dockerfile is shown here, for the hs3avaps collection.
 
-```
+```bash
 # cumulus processing Dockerfile: docker-hs3-avaps
 
 FROM 000000000000.dkr.ecr.us-east-1.amazonaws.com/cumulus-base:latest
@@ -91,15 +95,17 @@ All of the processing is managed through a handler, which is called when the doc
 
 The py-cumulus library provides some helper functions that can be used for logging, writing metadata, and testing. Py-cumulus is installed in the docker-base image. Currently, there are three modules:
 
-    import cumulus.logutils
-    import cumulus.metadata
-    import cumulus.process
+```python
+import cumulus.logutils
+import cumulus.metadata
+import cumulus.process
+```
 
 ### Example process handler
 
 An example process handler is given here, in this case a shortened version of the hs3-cpl data collection. The main function at the bottom passes the provided input and output directory arguments to the process() function. The first thing process() does is to get the Cumulus logger. The Cumulus logger will send output to both stdout and Splunk, to be used in the Cumulus pipeline. Log strings are made using the make_log_string() function which properly formats a message to be handled by Splunk.
 
-```
+```python
 #!/usr/bin/env python
 
 import os
@@ -164,11 +170,13 @@ After setting up logging the code has a for-loop for processing any matching hdf
 
 It is important to have tests for data processing, however in many cases datafiles can be large so it is not practical to store the test data in the repository. Instead, test data is currrently stored on AWS S3, and can be retrieved using the AWS CLI.
 
-    $ aws s3 sync s3://cumulus-ghrc-logs/sample-data/collection-name data
+```bash
+aws s3 sync s3://cumulus-ghrc-logs/sample-data/collection-name data
+```
 
 Where collection-name is the name of the data collection, such as 'avaps', or 'cpl'.  For example, an abridged version of the data for CPL includes:
 
-```
+```txt
 ├── cpl
 │   ├── input
 │   │   ├── HS3_CPL_ATB_12203a_20120906.hdf5
@@ -184,14 +192,20 @@ Contained in the input directory are all possible sets of data files, while the 
 
 The docker image for a process can be used on the retrieved test data. First create a test-output directory in the newly created data directory.
 
-    $ mkdir data/test-output
+```bash
+mkdir data/test-output
+```
 
 Then run the docker image using docker-compose.
 
-    $ docker-compose run test
+```bash
+docker-compose run test
+```
 
 This will process the data in the data/input directory and put the output into data/test-output. Repositories also include Python based tests which will validate this newly created output to the contents of data/output. Use Python's Nose tool to run the included tests.
 
-    $ nosetests
+```bash
+nosetests
+```
 
 If the data/test-output directory validated against the contents of data/output the tests will be successful, otherwise an error will be reported.

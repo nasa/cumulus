@@ -25,6 +25,7 @@ message.__set__('createExecutionName', () => fakeExecutionName);
 test('buildCumulusMeta returns expected object', (t) => {
   const stateMachine = randomId('states');
   const queueName = randomId('queue');
+  const asyncOperationId = randomString();
 
   let cumulusMeta = buildCumulusMeta({
     stateMachine,
@@ -49,6 +50,21 @@ test('buildCumulusMeta returns expected object', (t) => {
     queueName,
     parentExecutionArn,
     execution_name: fakeExecutionName
+  });
+
+  cumulusMeta = buildCumulusMeta({
+    asyncOperationId,
+    parentExecutionArn,
+    queueName,
+    stateMachine
+  });
+
+  t.deepEqual(cumulusMeta, {
+    asyncOperationId,
+    execution_name: fakeExecutionName,
+    state_machine: stateMachine,
+    parentExecutionArn,
+    queueName
   });
 });
 
@@ -154,19 +170,6 @@ test('getMessageGranules returns granules from payload.granules', (t) => {
   const testMessage = {
     payload: {
       granules
-    }
-  };
-  const result = getMessageGranules(testMessage);
-  t.deepEqual(result, granules);
-});
-
-test('getMessageGranules returns granules from meta.input_granules', (t) => {
-  const granules = [{
-    granuleId: randomId('granule')
-  }];
-  const testMessage = {
-    meta: {
-      input_granules: granules
     }
   };
   const result = getMessageGranules(testMessage);

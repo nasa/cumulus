@@ -24,6 +24,7 @@ const createExecutionName = () => uuidv4();
  * @returns {Object}
  */
 const buildCumulusMeta = ({
+  asyncOperationId,
   parentExecutionArn,
   queueName,
   stateMachine
@@ -34,6 +35,7 @@ const buildCumulusMeta = ({
     state_machine: stateMachine
   };
   if (parentExecutionArn) cumulusMeta.parentExecutionArn = parentExecutionArn;
+  if (asyncOperationId) cumulusMeta.asyncOperationId = asyncOperationId;
   return cumulusMeta;
 };
 
@@ -83,6 +85,7 @@ function buildQueueMessageFromTemplate({
   collection,
   parentExecutionArn,
   queueName,
+  asyncOperationId,
   messageTemplate,
   payload,
   workflow,
@@ -90,6 +93,7 @@ function buildQueueMessageFromTemplate({
   customMeta = {}
 }) {
   const cumulusMeta = buildCumulusMeta({
+    asyncOperationId,
     parentExecutionArn,
     queueName,
     stateMachine: workflow.arn
@@ -155,11 +159,10 @@ const getMessageExecutionName = (message) => {
  * Get granules from execution message.
  *
  * @param {Object} message - An execution message
- * @returns {Array<Object>} - An array of granule objects
+ * @returns {Array<Object>|undefined} - An array of granule objects, or
+ *   undefined if `message.payload.granules` is not set
  */
-const getMessageGranules = (message) =>
-  get(message, 'payload.granules')
-  || get(message, 'meta.input_granules');
+const getMessageGranules = (message) => get(message, 'payload.granules');
 
 /**
  * Get the state machine ARN from a workflow message.
@@ -247,7 +250,7 @@ const hasQueueAndExecutionLimit = (message) => {
  **/
 async function getMessageFromTemplate(templateUri) {
   const parsedS3Uri = parseS3Uri(templateUri);
-  const data = await getS3Object(parsedS3Uri.Bucket, parsedS3Uri.Key);
+  const data = await getS3Object(parsedS3Uri.Bucket, parsedS3Uri.Key, { retries: 0 });
   return JSON.parse(data.Body);
 }
 

@@ -2,6 +2,8 @@ module "distribution" {
   source = "../distribution"
 
   distribution_url                    = var.distribution_url
+  log_api_gateway_to_cloudwatch       = var.log_api_gateway_to_cloudwatch
+  log_destination_arn                 = var.log_destination_arn
   permissions_boundary_arn            = var.permissions_boundary_arn
   prefix                              = var.prefix
   protected_buckets                   = local.protected_bucket_names

@@ -1,5 +1,7 @@
-provider "aws" {
-  version = ">= 2.21.0"
+terraform {
+  required_providers {
+    aws = ">= 2.31.0"
+  }
 }
 
 locals {

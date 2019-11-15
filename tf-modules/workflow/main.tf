@@ -1,3 +1,9 @@
+terraform {
+  required_providers {
+    aws = ">= 2.31.0"
+  }
+}
+
 resource "aws_sfn_state_machine" "default" {
   name       = "${var.prefix}-${var.name}"
   role_arn   = var.workflow_config.state_machine_role_arn
@@ -30,8 +36,8 @@ resource "aws_lambda_permission" "semaphore_down" {
 }
 
 resource "aws_cloudwatch_event_target" "publish_reports" {
-  rule      = aws_cloudwatch_event_rule.state_machine_execution_rule.name
-  arn       = var.workflow_config.publish_reports_lambda_function_arn
+  rule = aws_cloudwatch_event_rule.state_machine_execution_rule.name
+  arn  = var.workflow_config.publish_reports_lambda_function_arn
 }
 
 resource "aws_lambda_permission" "publish_reports" {

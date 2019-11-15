@@ -25,7 +25,6 @@ declare -a param_list=(
   "bamboo_PUBLISH_FLAG"
   "bamboo_USE_NPM_PACKAGES"
   "bamboo_REPORT_BUILD_STATUS"
-  "bamboo_SHARED_LOG_DESTINATION_ARN"
   "bamboo_SECRET_NPM_TOKEN"
   "bamboo_SECRET_TOKEN_SECRET"
   "bamboo_SECRET_EARTHDATA_USERNAME"
@@ -36,7 +35,12 @@ declare -a param_list=(
   "bamboo_SECRET_DOCSEARCH_INDEX_NAME"
   "bamboo_SECRET_DOCSEARCH_API_KEY"
   "bamboo_SECRET_LAUNCHPAD_PASSPHRASE"
+  "bamboo_SHARED_LOG_DESTINATION_ARN"
   "bamboo_SKIP_AUDIT"
+  "bamboo_SKIP_INTEGRATION_TESTS"
+  "bamboo_METRICS_ES_HOST"
+  "bamboo_METRICS_ES_USER"
+  "bamboo_SECRET_METRICS_ES_PASS"
 )
 regex='bamboo(_SECRET)?_(.*)'
 
@@ -50,6 +54,12 @@ done
 
 ## Get the current git SHA
 export GIT_SHA=$(git rev-parse HEAD)
+
+## Always set GIT_PR true if master branch
+if [[ $BRANCH == master ]]; then
+  export GIT_PR=true
+  echo export GIT_PR=true >> .bamboo_env_vars
+fi
 
 ## This should take a blank value from the global options, and
 ## is intended to allow an override for a custom branch build.
@@ -101,36 +111,6 @@ if [[ $bamboo_NGAP_ENV = "SIT" ]]; then
   DEPLOYMENT=$bamboo_SIT_DEPLOYMENT
 fi
 
-## Override KES_DEPLOYMENT
-## Delete this when CI is switched to terraform for all of Core Team
-## (after v1.15, i.e. last non-Terraform release)
-if [[ $KES_DEPLOYMENT != true ]]; then
-  if [[ $COMMIT_MESSAGE =~ deploy-kes || $BRANCH =~ kes ]]; then
-    echo "Deploying Cumulus via Kes"
-    export KES_DEPLOYMENT=true
-  else
-    echo "Deploying Cumulus via Terraform"
-  fi
-fi
-## End override
-
-## Set integration stack name if it's not been overridden *or* set by SIT
-if [[ -z $DEPLOYMENT ]]; then
-  DEPLOYMENT=$(node ./bamboo/select-stack.js)
-
-  if [[ $KES_DEPLOYMENT != true ]]; then
-    echo "Using terraform stack name $DEPLOYMENT-tf"
-    DEPLOYMENT=$DEPLOYMENT-tf
-  fi
-
-  echo deployment "$DEPLOYMENT"
-  if [[ $DEPLOYMENT == none ]]; then
-    echo "Unable to determine integration stack" >&2
-    exit 1
-  fi
-  echo export DEPLOYMENT=$DEPLOYMENT >> .bamboo_env_vars
-fi
-
 # Target master by default.
 # Update with appropriate conditional
 # when creating a feature branch.
@@ -164,6 +144,32 @@ echo GIT_PR is $GIT_PR
 if [[ -z $COMMIT_MESSAGE ]]; then
   export COMMIT_MESSAGE=$(git log --pretty='format:%Creset%s' -1)
   echo export COMMIT_MESSAGE=\"$COMMIT_MESSAGE\" >> .bamboo_env_vars
+fi
+
+## Override KES_DEPLOYMENT options (for e.g. backports)
+if [[ $COMMIT_MESSAGE =~ deploy-kes || $BRANCH =~ kes ]]; then
+  echo "Running CI with Kes"
+  export KES_DEPLOYMENT=true
+  echo export KES_DEPLOYMENT=true >> .bamboo_env_vars
+else
+  echo "Running CI with Terraform"
+fi
+
+## Set integration stack name if it's not been overridden *or* set by SIT
+if [[ -z $DEPLOYMENT ]]; then
+  DEPLOYMENT=$(node ./bamboo/select-stack.js)
+
+  if [[ $KES_DEPLOYMENT != true ]]; then
+    echo "Using terraform stack name $DEPLOYMENT-tf"
+    DEPLOYMENT=$DEPLOYMENT-tf
+  fi
+
+  echo deployment "$DEPLOYMENT"
+  if [[ $DEPLOYMENT == none ]]; then
+    echo "Unable to determine integration stack" >&2
+    exit 1
+  fi
+  echo export DEPLOYMENT=$DEPLOYMENT >> .bamboo_env_vars
 fi
 
 ## Branch if branch is master, or a version tag is set, or the commit

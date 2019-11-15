@@ -1,5 +1,5 @@
 ---
-id: system-documentation
+id: troubleshooting-readme
 title: Troubleshooting Cumulus
 hide_title: true
 ---
@@ -16,9 +16,9 @@ For more information, read the [Backup and Restore documentation](features/data_
 
 ## Elasticsearch reindexing
 
-If new Elasticsearch mappings are added to Cumulus, they are automatically added to the index upon deploy. If you run into issues with your Elasticsearch index, a reindex operation is available via a command-line tool in the Cumulus API.
+If new Elasticsearch mappings are added to Cumulus, they are automatically added to the index upon deploy. If you run into issues with your Elasticsearch index, a reindex operation is available via the Cumulus API.
 
-Information on how to reindex Elasticsearch is in the [Cumulus API package documentation](https://www.npmjs.com/package/@cumulus/api#reindexing-elasticsearch-indices).
+Information on how to reindex Elasticsearch is in the [Cumulus API  documentation](https://nasa.github.io/cumulus-api/#elasticsearch-1).
 
 ## Troubleshooting Workflows
 

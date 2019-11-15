@@ -1,7 +1,12 @@
+terraform {
+  required_providers {
+    aws = ">= 2.31.0"
+  }
+}
 
 resource "aws_cloudwatch_dashboard" "cloudwatch_dashboard" {
-   dashboard_name = "${var.prefix}-CloudWatch-Dashboard"
-   dashboard_body = <<EOF
+  dashboard_name = "${var.prefix}-CloudWatch-Dashboard"
+  dashboard_body = <<EOF
   {
     "widgets": [
       {
@@ -20,7 +25,7 @@ resource "aws_cloudwatch_dashboard" "cloudwatch_dashboard" {
           "markdown": "## Alarms"
         }
       }
-      %{ for alarm in var.elasticsearch_alarms }
+      %{for alarm in var.elasticsearch_alarms}
       ,
       {
         "type":"metric",
@@ -34,7 +39,7 @@ resource "aws_cloudwatch_dashboard" "cloudwatch_dashboard" {
           "view": "singleValue"
         }
       }
-      %{ endfor }
+      %{endfor}
       ,
       {
         "type": "text",
@@ -52,7 +57,7 @@ resource "aws_cloudwatch_dashboard" "cloudwatch_dashboard" {
           "markdown": "## Alarms"
         }
       }
-      %{ for alarm in var.ecs_service_alarms }
+      %{for alarm in var.ecs_service_alarms}
       ,
       {
         "type":"metric",
@@ -66,7 +71,7 @@ resource "aws_cloudwatch_dashboard" "cloudwatch_dashboard" {
           "view": "singleValue"
         }
       }
-      %{ endfor }
+      %{endfor}
    ]
   }
   EOF
