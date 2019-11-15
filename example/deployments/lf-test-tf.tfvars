@@ -1,4 +1,4 @@
-prefix            = "lf-int-test-tf"
+prefix            = "lf-test-tf"
 system_bucket     = "lf-internal"
 buckets = {
   internal = {
