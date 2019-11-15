@@ -57,7 +57,7 @@ The other resolution (that scales but takes some time) that was found is as foll
 3. Un-comment the definitions.
 4. `terraform apply` to recreate the lambdas.
 
-If this problem occurs with Core lambdas and you are using the `t.zip` file source distributed in our release, we recommend using the non-scaling approach as the number of lambdas we distribute is in the low teens, which are likely to be easier and faster to reconfigure one-by-one compared to editing our configs.
+If this problem occurs with Core lambdas and you are using the `terraform-aws-cumulus.zip` file source distributed in our release, we recommend using the non-scaling approach as the number of lambdas we distribute is in the low teens, which are likely to be easier and faster to reconfigure one-by-one compared to editing our configs.
 
 [Discussed in the Earthdata Wiki](https://wiki.earthdata.nasa.gov/display/CUMULUS/KMS+Exception%3A+AccessDeniedException).
 
