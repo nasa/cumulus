@@ -257,7 +257,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
         collection,
         updateParams: {
           files: [],
-          ignoreFilesConfig: true
+          ignoreFilesConfigForDiscovery: true
         }
       });
 

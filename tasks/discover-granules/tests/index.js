@@ -189,7 +189,7 @@ test('discover granules without collection files config, but configuring collect
     // discovered granules' files arrays will include all files because we're
     // ignoring the (empty) files config for filtering files.
     config.collection.files = [];
-    config.collection.ignoreFilesConfig = true;
+    config.collection.ignoreFilesConfigForDiscovery = true;
     config.provider = {
       id: 'MODAPS',
       protocol: 's3',
@@ -207,7 +207,7 @@ test('discover granules without collection files config, but configuring task to
     // discovered granules files arrays will include all files because we're
     // ignoring the (empty) files config for filtering files.
     config.collection.files = [];
-    config.ignoreFilesConfig = true;
+    config.ignoreFilesConfigForDiscovery = true;
     config.provider = {
       id: 'MODAPS',
       protocol: 's3',
@@ -221,13 +221,9 @@ test('discover granules without collection files config, but configuring task to
 
 test('discover granules without collection files config, but configuring task to ignore it and overriding collection config not to ignore it, using S3',
   discoverGranulesUsingS3(({ context: { event: { config } } }) => {
-    // Without files config we should still discover granules, and the
-    // discovered granules files arrays should be empty even though the task is
-    // configured to ignore the files config, but collection setting overrides
-    // it to NOT ignore the files config.
     config.collection.files = [];
-    config.ignoreFilesConfig = true;
-    config.collection.ignoreFilesConfig = false;
+    config.ignoreFilesConfigForDiscovery = false;
+    config.collection.ignoreFilesConfigForDiscovery = true;
     config.provider = {
       id: 'MODAPS',
       protocol: 's3',
