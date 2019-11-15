@@ -31,7 +31,7 @@ A workflow definition can be found in the [template repository hello_world_workf
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.hello_world_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.hello_world_task.task_arn}",
       "Retry": [
         {
           "ErrorEquals": [
@@ -56,7 +56,7 @@ Workflow **error-handling** can be configured as discussed in the [Error-Handlin
 
 The HelloWorld task is provided for you as part of the `cumulus` terraform module, no configuration is needed.
 
-If you want to manually deploy your own version of this Lambda for testing, you can copy the Lambda resource definition located in the Cumulus source code at  [`cumulus/tf-modules/ingest/hello-world-task.tf`](https://github.com/nasa/cumulus/tf-modules/ingest/hello-world-task.tf).  The Lambda source code is located in the Cumulus source code at ['cumulus/tasks/hello-world'](https://github.com/nasa/cumulus/tasks/hello-world/).
+If you want to manually deploy your own version of this Lambda for testing, you can copy the Lambda resource definition located in the Cumulus source code at [`cumulus/tf-modules/ingest/hello-world-task.tf`](https://github.com/nasa/cumulus/tf-modules/ingest/hello-world-task.tf). The Lambda source code is located in the Cumulus source code at ['cumulus/tasks/hello-world'](https://github.com/nasa/cumulus/tasks/hello-world/).
 
 ## Execution
 
@@ -81,7 +81,7 @@ Our goal here is to create a rule through the Cumulus dashboard that will define
 ```
 
 ![Screenshot of AWS Step Function execution graph for the HelloWorld workflow](assets/hello_world_workflow.png)
-*Executed workflow as seen in AWS Console*
+_Executed workflow as seen in AWS Console_
 
 ### Output/Results
 
