@@ -1,30 +1,30 @@
 output "discover_granules_task" {
   value = {
-    task_arn : aws_lambda_function.discover_granules_task.arn
+    task_arn = aws_lambda_function.discover_granules_task.arn
   }
 }
 
 output "discover_pdrs_task" {
   value = {
-    task_arn : aws_lambda_function.discover_pdrs_task.arn
+    task_arn = aws_lambda_function.discover_pdrs_task.arn
   }
 }
 
 output "fake_processing_task" {
   value = {
-    task_arn : aws_lambda_function.fake_processing_task.arn
+    task_arn = aws_lambda_function.fake_processing_task.arn
   }
 }
 
 output "files_to_granules_task" {
   value = {
-    task_arn : aws_lambda_function.files_to_granules_task.arn
+    task_arn = aws_lambda_function.files_to_granules_task.arn
   }
 }
 
 output "hello_world_task" {
   value = {
-    task_arn : aws_lambda_function.hello_world_task.arn
+    task_arn = aws_lambda_function.hello_world_task.arn
   }
 }
 
@@ -38,37 +38,37 @@ output "message_consumer_lambda_function_arn" {
 
 output "move_granules_task" {
   value = {
-    task_arn : aws_lambda_function.move_granules_task.arn
+    task_arn = aws_lambda_function.move_granules_task.arn
   }
 }
 
 output "parse_pdr_task" {
   value = {
-    task_arn : aws_lambda_function.parse_pdr_task.arn
+    task_arn = aws_lambda_function.parse_pdr_task.arn
   }
 }
 
 output "pdr_status_check_task" {
   value = {
-    task_arn : aws_lambda_function.pdr_status_check_task.arn
+    task_arn = aws_lambda_function.pdr_status_check_task.arn
   }
 }
 
 output "post_to_cmr_task" {
   value = {
-    task_arn : aws_lambda_function.post_to_cmr_task.arn
+    task_arn = aws_lambda_function.post_to_cmr_task.arn
   }
 }
 
 output "queue_granules_task" {
   value = {
-    task_arn : aws_lambda_function.queue_granules_task.arn
+    task_arn = aws_lambda_function.queue_granules_task.arn
   }
 }
 
 output "queue_pdrs_task" {
   value = {
-    task_arn : aws_lambda_function.queue_pdrs_task.arn
+    task_arn = aws_lambda_function.queue_pdrs_task.arn
   }
 }
 
@@ -78,7 +78,7 @@ output "schedule_sf_lambda_function_arn" {
 
 output "sf_sns_report_task" {
   value = {
-    task_arn : aws_lambda_function.sf_sns_report_task.arn
+    task_arn = aws_lambda_function.sf_sns_report_task.arn
   }
 }
 
@@ -92,7 +92,7 @@ output "sqs2sfThrottle_lambda_function_arn" {
 
 output "sync_granule_task" {
   value = {
-    task_arn : aws_lambda_function.sync_granule_task.arn
+    task_arn = aws_lambda_function.sync_granule_task.arn
   }
 }
 
