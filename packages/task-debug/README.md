@@ -1,13 +1,5 @@
 # @cumulus/task-debug
 
-## What is Cumulus?
-
-Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
-
-[Cumulus Documentation](https://nasa.github.io/cumulus)
-
-# Task Debug Harness
-
 This package provides an executable that can run a workflow defined in a yml file to aid in
 development and debugging. The yml file format is the same as the format used for deployments.
 
@@ -21,7 +13,7 @@ state within tasks.
 
 ## Usage
 
-``` bash
+```bash
 node src/index.js debugg -c <collection-id> -b <s3-bucket> -w <workflow> <config-file>
 ```
 
@@ -41,6 +33,12 @@ to add branching support later.
 * Because of the dynamic loading of tasks it is recommend to use node 8 without transpiling when
 debugging to avoid the need to generate and deal with source maps
 
+## About Cumulus
+
+Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
+
+[Cumulus Documentation](https://nasa.github.io/cumulus)
+
 ## Contributing
 
-See [Cumulus README](https://github.com/nasa/cumulus/blob/master/README.md#installing-and-deploying)
+To make a contribution, please [see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).
