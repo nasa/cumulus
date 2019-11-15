@@ -46,7 +46,7 @@ More information on kinesis error handling is [here](data-cookbooks/cnm-workflow
 
 `KMS Exception: AccessDeniedExceptionKMS Message: The ciphertext refers to a customer master key that does not exist, does not exist in this region, or you are not allowed to access.`
 
-The above error was being thrown by cumulus lambda function invocation. The KMS key is the encryption key used to encrypt lambda environment variables. The root cause of this error is unknown, but is speculated to caused by deleting and recreating, with the same name, the IAM role the lambda uses.
+The above error was being thrown by cumulus lambda function invocation. The KMS key is the encryption key used to encrypt lambda environment variables. The root cause of this error is unknown, but is speculated to be caused by deleting and recreating, with the same name, the IAM role the lambda uses.
 
 On a lambda level, this error can be resolved by updating the KMS Key to `aws/lambda`. We've done this through the management console. Unfortunately, this approach doesn't scale well.
 
@@ -57,7 +57,7 @@ The other resolution (that scales but takes some time) that was found is as foll
 3. Un-comment the definitions.
 4. `terraform apply` to recreate the lambdas.
 
-If this problem occurs with Core lambdas and you are using the `.zip` file source distributed in our release, we recommend using the non-scaling approach as the number of lambdas we distribute is in the low teens, which are likely to be easier and faster to reconfigure one-by-one compared to editing our configs.
+If this problem occurs with Core lambdas and you are using the `t.zip` file source distributed in our release, we recommend using the non-scaling approach as the number of lambdas we distribute is in the low teens, which are likely to be easier and faster to reconfigure one-by-one compared to editing our configs.
 
 [Discussed in the Earthdata Wiki](https://wiki.earthdata.nasa.gov/display/CUMULUS/KMS+Exception%3A+AccessDeniedException).
 
