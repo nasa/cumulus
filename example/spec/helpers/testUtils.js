@@ -143,8 +143,7 @@ const loadConfig = async (type = 'app') => {
 
   const bucketsObject = await getS3Object(
     configFromFile.bucket,
-    `${configFromFile.stackName}/workflows/buckets.json`,
-    { retries: 0 }
+    `${configFromFile.stackName}/workflows/buckets.json`
   );
   const buckets = JSON.parse(bucketsObject.Body.toString());
 
