@@ -102,6 +102,12 @@ variable "urs_client_password" {
 
 # Optional
 
+variable "api_gateway_stage" {
+  type        = string
+  default     = "dev"
+  description = "The archive API Gateway stage to create"
+}
+
 variable "archive_api_port" {
   description = "Port number that should be used for archive API requests"
   type    = number

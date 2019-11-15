@@ -1,5 +1,5 @@
 ---
-id: system-documentation
+id: troubleshooting-readme
 title: Troubleshooting Cumulus
 hide_title: true
 ---
