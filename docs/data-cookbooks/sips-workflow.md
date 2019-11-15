@@ -16,7 +16,7 @@ In this document, we assume the user already has a provider endpoint configured 
 
 We need to have a [provider](data-cookbooks/setup.md#providers) from whom data can be ingested. Our provider is an S3 provider hosted in the `cumulus-test-internal` bucket.
 
-![Screenshot of Cumulus dashboard screen configuring a SIPS provider](assets/sips-provider.png)
+![Screenshot of Cumulus dashboard screen for configuring an S3 provider](assets/sips-provider.png)
 
 ### Collection
 
@@ -102,7 +102,7 @@ This workflow will discover PDRs and queue them to be processed. Duplicate PDRs 
 1. DiscoverPdrs - [source](https://github.com/nasa/cumulus/tree/master/tasks/discover-pdrs)
 2. QueuePdrs - [source](https://github.com/nasa/cumulus/tree/master/tasks/queue-pdrs)
 
-![Screenshot of execution graph for DiscoverAndQueuePdrs workflow in the AWS Step Functions console](assets/sips-discover-and-queue-pdrs-execution.png)
+![Screenshot of execution graph for discover and queue PDRs workflow in the AWS Step Functions console](assets/sips-discover-and-queue-pdrs-execution.png)
 
 _An example workflow module configuration can be viewed in the Cumulus source for the [discover_and_queue_pdrs_workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_and_queue_pdrs_workflow.tf)._
 
@@ -133,13 +133,13 @@ The lambdas below are included in the `cumulus` terraform module for use in your
 1. SyncGranule - [source](https://github.com/nasa/cumulus/tree/master/tasks/sync-granule).
 2. CmrStep - [source](https://github.com/nasa/cumulus/tree/master/tasks/post-to-cmr)
 
-Additionally this workflow requires a ProcessingStep you must provide. The "AsterProcess," "ModisProcess," and "LegacyProcess" steps in the workflow picture below are examples of custom processing steps.
+Additionally this workflow requires a processing step you must provide. The ProcessingStep step in the workflow picture below is an example of a custom processing step.
 
 **Note:** Using the CmrStep is not required and can be left out of the processing trajectory if desired (for example, in testing situations).
 
 ![Screenshot of execution graph for SIPS IngestGranule workflow in AWS Step Functions console](assets/sips-ingest-granule.png)
 
-_An example workflow module configuration can be viewed in the Cumulus source for the [ingest_granule_workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_granule_workflow.tf)._
+_An example workflow module configuration can be viewed in the Cumulus source for the [ingest_and_publish_granule_workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.tf)._
 
 _**Please note:** To use this example workflow module as a template for a new workflow in your deployment the `source` key for the workflow module would need to point to a release of the cumulus-workflow (terraform-aws-cumulus-workflow.zip) module on our [release](https://github.com/nasa/cumulus/releases) page, as all of the provided Cumulus workflows are internally self-referential._
 
