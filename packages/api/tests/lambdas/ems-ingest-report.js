@@ -189,7 +189,7 @@ test.serial('generate reports for the previous day', async (t) => {
     t.truthy(exists);
 
     // check the number of records for each report
-    const s3Object = await aws.getS3Object(parsed.Bucket, parsed.Key, { retries: 0 });
+    const s3Object = await aws.getS3Object(parsed.Bucket, parsed.Key);
     const content = s3Object.Body.toString();
     const records = content.split('\n');
     const expectedNumRecords = (report.reportType === 'delete') ? 4 : 8;
@@ -229,7 +229,7 @@ test.serial('generate reports for the one day, and run multiple times', async (t
     t.truthy(exists);
 
     // check the number of records for each report
-    const s3Object = await aws.getS3Object(parsed.Bucket, parsed.Key, { retries: 0 });
+    const s3Object = await aws.getS3Object(parsed.Bucket, parsed.Key);
     const records = s3Object.Body.toString();
     const expectedNumRecords = (report.reportType === 'delete') ? 4 : 8;
     t.is(records.split('\n').length, expectedNumRecords);
@@ -253,7 +253,7 @@ test.serial('generate reports for the past two days', async (t) => {
     t.truthy(exists);
 
     // check the number of records for each report
-    const s3Object = await aws.getS3Object(parsed.Bucket, parsed.Key, { retries: 0 });
+    const s3Object = await aws.getS3Object(parsed.Bucket, parsed.Key);
     const records = s3Object.Body.toString();
     const expectedNumRecords = (report.reportType === 'delete') ? 4 : 8;
     t.is(records.split('\n').length, expectedNumRecords);
@@ -278,7 +278,7 @@ test.serial('generate reports for the past two days for a given collection', asy
     t.truthy(exists);
 
     // check the number of records for each report
-    const s3Object = await aws.getS3Object(parsed.Bucket, parsed.Key, { retries: 0 });
+    const s3Object = await aws.getS3Object(parsed.Bucket, parsed.Key);
     const records = s3Object.Body.toString();
     const expectedNumRecords = (report.reportType === 'delete') ? 3 : 7;
     t.is(records.split('\n').length, expectedNumRecords);

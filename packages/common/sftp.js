@@ -58,7 +58,7 @@ class Sftp {
       }
 
       log.debug(`Reading Key: ${this.options.privateKey} bucket:${bucket},stack:${stackName}`);
-      const priv = await getS3Object(bucket, `${stackName}/crypto/${this.options.privateKey}`, { retries: 0 });
+      const priv = await getS3Object(bucket, `${stackName}/crypto/${this.options.privateKey}`);
 
       if (this.options.cmKeyId) {
         // we are using AWS KMS and the privateKey is encrypted
