@@ -76,7 +76,7 @@ However, if you want to report your ingest status at any point **during a workfl
     },
     "ResultPath": null,
     "Type": "Task",
-    "Resource": "${module.cumulus.sf_sns_report_task_lambda_function_arn}",
+    "Resource": "${module.cumulus.sf_sns_report_task.task_arn}",
     "Retry": [
       {
         "ErrorEquals": [
