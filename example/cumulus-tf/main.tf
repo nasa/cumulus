@@ -65,6 +65,10 @@ module "cumulus" {
   ems_submit_report     = var.ems_submit_report
   ems_username          = var.ems_username
 
+  metrics_es_host     = var.metrics_es_host
+  metrics_es_password = var.metrics_es_password
+  metrics_es_username = var.metrics_es_username
+
   cmr_client_id   = var.cmr_client_id
   cmr_environment = "UAT"
   cmr_username    = var.cmr_username
