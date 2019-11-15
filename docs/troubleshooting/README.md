@@ -48,7 +48,7 @@ More information on kinesis error handling is [here](data-cookbooks/cnm-workflow
 
 The above error was being thrown by cumulus lambda function invocation. The KMS key is the encryption key used to encrypt lambda environment variables. The root cause of this error is unknown, but is speculated to be caused by deleting and recreating, with the same name, the IAM role the lambda uses.
 
-On a lambda level, this error can be resolved by updating the KMS Key to `aws/lambda`. We've done this through the management console. Unfortunately, this approach doesn't scale well.
+This error can be resolved by switching the lambda's execution role to a different one and then back through the Lambda management console. Unfortunately, this approach doesn't scale well.
 
 The other resolution (that scales but takes some time) that was found is as follows:
 
