@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@cumulus/common": "1.15.0",
-    "@cumulus/cumulus-message-adapter-js": "^1.0.8"
+    "@cumulus/cumulus-message-adapter-js": "^1.0.10"
   },
   "devDependencies": {
     "ava": "^2.1.0",

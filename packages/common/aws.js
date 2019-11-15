@@ -45,7 +45,7 @@ const improveStackTrace = (fn) =>
       return await fn(...args);
     } catch (err) {
       setErrorStack(err, tracerError.stack);
-      err.message = `${err.message}; Function params: ${args}`;
+      err.message = `${err.message}; Function params: ${JSON.stringify(args, null, 2)}`;
       throw err;
     }
   };
