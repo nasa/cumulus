@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.14.3] - 2019-11-15
+
 ### Added
 
 - **CUMULUS-1580**
@@ -1689,7 +1691,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.15.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.16.0...HEAD
+[v1.16.0]: https://github.com/nasa/cumulus/compare/v1.15.0...v1.16.0
 [v1.15.0]: https://github.com/nasa/cumulus/compare/v1.14.4...v1.15.0
 [v1.14.4]: https://github.com/nasa/cumulus/compare/v1.14.3...v1.14.4
 [v1.14.3]: https://github.com/nasa/cumulus/compare/v1.14.2...v1.14.3
