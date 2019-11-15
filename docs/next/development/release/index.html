@@ -12,9 +12,9 @@
 <p>When changes are ready to be released, the Cumulus version number must be updated.</p>
 <p>Lerna handles the process of deciding which version number should be used as long as the developer specifies whether the change is a major, minor, or patch change.</p>
 <p>To update Cumulus's version number run:</p>
-<pre><code class="hljs css language-bash">  $ npm run update
+<pre><code class="hljs css language-bash">  npm run update
 </code></pre>
-<p><img src="https://static.notion-static.com/13acbe0a-c59d-4c42-90eb-23d4ec65c9db/Screen_Shot_2018-03-15_at_12.21.16_PM.png" alt=""></p>
+<p><img src="https://static.notion-static.com/13acbe0a-c59d-4c42-90eb-23d4ec65c9db/Screen_Shot_2018-03-15_at_12.21.16_PM.png" alt="Screenshot of terminal showing interactive prompt from Lerna for selecting the new release version"></p>
 <p>Lerna will handle updating the packages and all of the dependent package version numbers. If a dependency has not been changed with the update, however, lerna will not update the version of the dependency.</p>
 <h3><a class="anchor" aria-hidden="true" id="3-check-cumulus-dashboard-prs-for-version-bump"></a><a href="#3-check-cumulus-dashboard-prs-for-version-bump" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>3. Check Cumulus Dashboard PRs for Version Bump</h3>
 <p>There may be unreleased changes in the Cumulus Dashboard <a href="https://github.com/nasa/cumulus-dashboard">project</a> that rely on this unreleased Cumulus Core version.</p>
@@ -37,13 +37,13 @@ git add .
 <p>Create a PR against the minor version branch. Verify that the Bamboo build for the PR succeeds and then merge to the minor version branch.</p>
 <h3><a class="anchor" aria-hidden="true" id="7-create-a-git-tag-for-the-release"></a><a href="#7-create-a-git-tag-for-the-release" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>7. Create a git tag for the release</h3>
 <p>Create and push a new git tag:</p>
-<pre><code class="hljs css language-bash">  $ git tag -a v1.x.x -m <span class="hljs-string">"Release 1.x.x"</span>
-  $ git push origin v1.x.x
+<pre><code class="hljs css language-bash">  git tag -a v1.x.x -m <span class="hljs-string">"Release 1.x.x"</span>
+  git push origin v1.x.x
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="8-running-the-deployment"></a><a href="#8-running-the-deployment" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>8. Running the deployment</h3>
 <p>Publishing of new releases is handled by a Bamboo release plan and is manually triggered.</p>
 <p>If you created a new release plan in step one, you will need to create a new bamboo deployment plan</p>
-<h4><a class="anchor" aria-hidden="true" id="creating-a-bamboo-deployment-plan"></a><a href="#creating-a-bamboo-deployment-plan" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Creating a Bamboo Deployment plan:</h4>
+<h4><a class="anchor" aria-hidden="true" id="creating-a-bamboo-deployment-plan"></a><a href="#creating-a-bamboo-deployment-plan" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Creating a Bamboo Deployment plan</h4>
 <ul>
 <li><p>In the Cumulus Core project (<a href="https://ci.earthdata.nasa.gov/browse/CUM-CBA">https://ci.earthdata.nasa.gov/browse/CUM-CBA</a>), click Actions -&gt; Configure Plan</p></li>
 <li><p>Scroll to the bottom of the branch list and click <code>Create Plan Branch</code></p></li>
@@ -55,20 +55,20 @@ git add .
 </ul>
 <p>Bamboo will build and run lint, audit and unit tests against that tagged release, publish the new packages to NPM, and then run the integration tests using those newly released packages.</p>
 <h3><a class="anchor" aria-hidden="true" id="9-create-a-new-cumulus-release-on-github"></a><a href="#9-create-a-new-cumulus-release-on-github" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>9. Create a new Cumulus release on github</h3>
-<p>The Cumulus Distribution Terraform module can be created by running:</p>
-<pre><code class="hljs css language-bash">$ (<span class="hljs-built_in">cd</span> tf-modules/distribution &amp;&amp; ./bin/build-tf-module.sh)
-</code></pre>
-<p>This will generate a file called
-<code>tf-modules/distribution/dist/terraform-aws-cumulus-distribution.zip</code>, which
-should be uploaded as an asset of the Github release.</p>
-<p>Similarily, the S3 Replicator Terraform module can be created by running:</p>
-<pre><code class="hljs css language-bash">$ (<span class="hljs-built_in">cd</span> tf-modules/s3-replicator &amp;&amp; ./bin/build-tf-module.sh)
-</code></pre>
+<p>The CI release scripts will automatically create a release based on the release version tag, as well as uploading release artifacts to the Github release for the Terraform modules provided by Cumulus. The Terraform release artifacts include:</p>
+<ul>
+<li>A multi-module Terraform <code>.zip</code> artifact containing filtered copies of the <code>tf-modules</code>, <code>packages</code>, and <code>tasks</code> directories for use as Terraform module sources.</li>
+<li>A S3 replicator module</li>
+<li>A workflow module</li>
+<li>A distribution API module</li>
+<li>An ECS service module</li>
+</ul>
+<p>Just make sure to verify the appropriate .zip files are present on Github after the release process is complete.</p>
 <h2><a class="anchor" aria-hidden="true" id="troubleshooting"></a><a href="#troubleshooting" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Troubleshooting</h2>
 <h3><a class="anchor" aria-hidden="true" id="delete-and-regenerate-the-tag"></a><a href="#delete-and-regenerate-the-tag" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Delete and regenerate the tag</h3>
 <p>To delete a published tag to re-tag, follow these steps:</p>
-<pre><code class="hljs css language-bash">  $ git tag -d v1.x.x
-  $ git push -d origin v1.x.x
+<pre><code class="hljs css language-bash">  git tag -d v1.x.x
+  git push -d origin v1.x.x
 </code></pre>
 </span></div></article></div><div class="docs-prevnext"></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#versioning">Versioning</a></li><li><a href="#updating-cumulus-version-and-publishing-to-npm">Updating Cumulus version and publishing to NPM</a><ul class="toc-headings"><li><a href="#1-create-a-branch-for-the-new-release">1. Create a branch for the new release</a></li><li><a href="#2-update-the-cumulus-version-number">2. Update the Cumulus version number</a></li><li><a href="#3-check-cumulus-dashboard-prs-for-version-bump">3. Check Cumulus Dashboard PRs for Version Bump</a></li><li><a href="#4-update-changelogmd">4. Update CHANGELOG.md</a></li><li><a href="#5-cut-new-version-of-cumulus-documentation">5. Cut new version of Cumulus Documentation</a></li><li><a href="#6-create-a-pull-request-against-the-minor-version-branch">6. Create a pull request against the minor version branch</a></li><li><a href="#7-create-a-git-tag-for-the-release">7. Create a git tag for the release</a></li><li><a href="#8-running-the-deployment">8. Running the deployment</a></li><li><a href="#9-create-a-new-cumulus-release-on-github">9. Create a new Cumulus release on github</a></li></ul></li><li><a href="#troubleshooting">Troubleshooting</a><ul class="toc-headings"><li><a href="#delete-and-regenerate-the-tag">Delete and regenerate the tag</a></li></ul></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
@@ -84,8 +84,8 @@ should be uploaded as an asset of the Github release.</p>
               </script><script>
               var search = docsearch({
                 
-                apiKey: 'undefined',
-                indexName: 'undefined',
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>

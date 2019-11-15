@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Throttling queued executions · Cumulus Documentation</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="# Throttling queued executions"/><meta name="docsearch:version" content="next"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Throttling queued executions · Cumulus Documentation"/><meta property="og:type" content="website"/><meta property="og:url" content="https://nasa.github.io/cumulus/"/><meta property="og:description" content="# Throttling queued executions"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/cumulus/undefined"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="/cumulus/js/scrollSpy.js"></script><link rel="stylesheet" href="/cumulus/css/main.css"/><script src="/cumulus/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cumulus/"><h2 class="headerTitle">Cumulus Documentation</h2></a><a href="/cumulus/versions"><h3>next</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="https://nasa.github.io/cumulus-api" target="_self">API Docs</a></li><li class=""><a href="/cumulus/docs/next/cumulus-docs-readme" target="_self">Developer Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/next/data-cookbooks/about-cookbooks" target="_self">Data-Cookbooks</a></li><li class=""><a href="/cumulus/docs/next/operator-docs/about-operator-docs" target="_self">Operator Docs</a></li><li class=""><a href="/cumulus/docs/next/team" target="_self">Team</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Cookbooks</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">About Cookbooks</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/about-cookbooks">About Cookbooks</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/setup">Data Cookbooks Setup</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Cookbooks</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/hello-world">HelloWorld Workflow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/sns">SNS Notification in Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/sips-workflow">Science Investigator-led Processing Systems (SIPS)</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/cnm-workflow">CNM Workflow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/error-handling">Error Handling in Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/choice-states">Choice States</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/cloudwatch-retention">Cloudwatch Retention</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/browse-generation">Ingest Browse Generation</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/tracking-files">Tracking Ancillary Files</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/run-tasks-in-lambda-or-docker">Run Step Function Tasks in Lambda or Docker</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/throttling-queued-executions">Throttling queued executions</a></li></ul></div></div></section></div><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Throttling queued executions · Cumulus Documentation</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="# Throttling queued executions"/><meta name="docsearch:version" content="next"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Throttling queued executions · Cumulus Documentation"/><meta property="og:type" content="website"/><meta property="og:url" content="https://nasa.github.io/cumulus/"/><meta property="og:description" content="# Throttling queued executions"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/cumulus/undefined"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="/cumulus/js/scrollSpy.js"></script><link rel="stylesheet" href="/cumulus/css/main.css"/><script src="/cumulus/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cumulus/"><h2 class="headerTitle">Cumulus Documentation</h2></a><a href="/cumulus/versions"><h3>next</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="https://nasa.github.io/cumulus-api" target="_self">API Docs</a></li><li class=""><a href="/cumulus/docs/next/cumulus-docs-readme" target="_self">Developer Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/next/data-cookbooks/about-cookbooks" target="_self">Data-Cookbooks</a></li><li class=""><a href="/cumulus/docs/next/operator-docs/about-operator-docs" target="_self">Operator Docs</a></li><li class=""><a href="/cumulus/docs/next/team" target="_self">Team</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Cookbooks</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">About Cookbooks<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/about-cookbooks">About Cookbooks</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/setup">Data Cookbooks Setup</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Cookbooks<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/hello-world">HelloWorld Workflow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/sns">SNS Notification in Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/sips-workflow">Science Investigator-led Processing Systems (SIPS)</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/cnm-workflow">CNM Workflow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/error-handling">Error Handling in Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/choice-states">Choice States</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/cloudwatch-retention">Cloudwatch Retention</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/browse-generation">Ingest Browse Generation</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/tracking-files">Tracking Ancillary Files</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/run-tasks-in-lambda-or-docker">Run Step Function Tasks in Lambda or Docker</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/throttling-queued-executions">Throttling queued executions</a></li></ul></div></div></section></div><script>
             var coll = document.getElementsByClassName('collapsible');
             var checkActiveCategory = true;
             for (var i = 0; i < coll.length; i++) {
@@ -60,23 +60,58 @@
 <p>Limiting the number of executions that can be running from a given queue is useful for controlling the cloud resource usage of workflows that may be lower priority, such as granule reingestion or reprocessing campaigns. It could also be useful for preventing workflows from exceeding known resource limits, such as a maximum number of open connections to a data provider.</p>
 <h2><a class="anchor" aria-hidden="true" id="implementing-the-queue"></a><a href="#implementing-the-queue" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Implementing the queue</h2>
 <h3><a class="anchor" aria-hidden="true" id="create-and-deploy-the-queue"></a><a href="#create-and-deploy-the-queue" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create and deploy the queue</h3>
-<h4><a class="anchor" aria-hidden="true" id="define-a-queue-with-a-maximum-number-of-executions"></a><a href="#define-a-queue-with-a-maximum-number-of-executions" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Define a queue with a maximum number of executions</h4>
-<p>In your <code>app/config.yml</code>, define a new queue with a <code>maxExecutions</code> value:</p>
-<pre><code class="hljs css language-yaml">  <span class="hljs-attr">sqs:</span>
-    <span class="hljs-attr">backgroundJobQueue:</span>
-      <span class="hljs-attr">visibilityTimeout:</span> <span class="hljs-number">60</span>
-      <span class="hljs-attr">retry:</span> <span class="hljs-number">30</span>
-      <span class="hljs-attr">maxExecutions:</span> <span class="hljs-number">5</span>
-      <span class="hljs-attr">consumer:</span>
-        <span class="hljs-bullet">-</span> <span class="hljs-attr">lambda:</span> <span class="hljs-string">sqs2sfThrottle</span>    <span class="hljs-comment"># you must use this lambda</span>
-          <span class="hljs-attr">schedule:</span> <span class="hljs-string">rate(1</span> <span class="hljs-string">minute)</span>
-          <span class="hljs-attr">messageLimit:</span> <span class="hljs-string">'<span class="hljs-template-variable">{{sqs_consumer_rate}'
-          state: ENABLED
-</span></span></code></pre>
-<p><strong>Please note that you must use the <code>sqs2sfThrottle</code> lambda as the consumer for any queue with a <code>maxExecutions</code> value</strong> or else the execution throttling will not work correctly.
-Additionally, please allow at least 60 seconds after creation before using the queue as associated infrastructure and triggers are set up and made ready.</p>
-<h4><a class="anchor" aria-hidden="true" id="re-deploy-your-cumulus-app"></a><a href="#re-deploy-your-cumulus-app" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Re-deploy your Cumulus app</h4>
-<p>Once you <a href="../deployment/deployment-readme#update-cumulus">re-deploy your Cumulus application</a>, all of your workflow templates will be updated to the include information about your queue (the output below is partial output from an expected workflow template):</p>
+<h4><a class="anchor" aria-hidden="true" id="add-a-new-queue"></a><a href="#add-a-new-queue" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Add a new queue</h4>
+<p>In a <code>.tf</code> file for your <a href="./../deployment/deployment-readme#deploy-the-cumulus-instance">Cumulus deployment</a>, add a new SQS queue:</p>
+<pre><code class="hljs css language-hcl">resource <span class="hljs-string">"aws_sqs_queue"</span> <span class="hljs-string">"background_job_queue"</span> {
+  <span class="hljs-attr">name</span>                       = <span class="hljs-string">"<span class="hljs-subst">${var.prefix}</span>-backgroundJobQueue"</span>
+  <span class="hljs-attr">receive_wait_time_seconds</span>  = <span class="hljs-number">20</span>
+  <span class="hljs-attr">visibility_timeout_seconds</span> = <span class="hljs-number">60</span>
+}
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="set-maximum-executions-for-the-queue"></a><a href="#set-maximum-executions-for-the-queue" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Set maximum executions for the queue</h4>
+<p>Define the <code>throttled_queues</code> variable for the <code>cumulus</code> module in your <a href="./../deployment/deployment-readme#deploy-the-cumulus-instance">Cumulus deployment</a> to specify the maximum concurrent executions for the queue.</p>
+<blockquote>
+<p><strong>Please note:</strong> The <code>id</code> used to identify the new queue is arbitrary, but <strong>will be used to refer to this queue later when configuring workflows and rules</strong>.</p>
+</blockquote>
+<pre><code class="hljs css language-hcl">module <span class="hljs-string">"cumulus"</span> {
+  # ... other <span class="hljs-keyword">variables</span>
+
+  throttled_queues <span class="hljs-comment">= [{</span>
+    id <span class="hljs-comment">=</span> <span class="hljs-comment">"backgroundJobQueue"</span><span class="hljs-comment">,</span>
+    url <span class="hljs-comment">= aws_sqs_queue.background_job_queue.id,</span>
+    execution_limit <span class="hljs-comment">= 5</span>
+  }]
+}
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="setup-consumer-for-the-queue"></a><a href="#setup-consumer-for-the-queue" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Setup consumer for the queue</h4>
+<p>Add the <code>sqs2sfThrottle</code> Lambda as the consumer for the queue and add a Cloudwatch event rule/target to read from the queue on a scheduled basis.</p>
+<blockquote>
+<p><strong>Please note</strong>: You <strong>must use the <code>sqs2sfThrottle</code> Lambda as the consumer for any queue with a queue execution limit</strong> or else the execution throttling will not work correctly. Additionally, please allow at least 60 seconds after creation before using the queue while associated infrastructure and triggers are set up and made ready.</p>
+</blockquote>
+<p><code>aws_sqs_queue.background_job_queue.id</code> refers to the <a href="#add-a-new-queue">queue resource defined above</a>.</p>
+<pre><code class="hljs css language-hcl">resource <span class="hljs-string">"aws_cloudwatch_event_rule"</span> <span class="hljs-string">"background_job_queue_watcher"</span> {
+  schedule_expression = <span class="hljs-string">"rate(1 minute)"</span>
+}
+<span class="hljs-built_in">
+resource </span><span class="hljs-string">"aws_cloudwatch_event_target"</span> <span class="hljs-string">"background_job_queue_watcher"</span> {
+  rule = aws_cloudwatch_event_rule.background_job_queue_watcher.name
+  arn  = module.cumulus.sqs2sfThrottle_lambda_function_arn
+  input = jsonencode({
+    messageLimit = 500
+    queueUrl     = aws_sqs_queue.background_job_queue.id
+    timeLimit    = 60
+  })
+}
+<span class="hljs-built_in">
+resource </span><span class="hljs-string">"aws_lambda_permission"</span> <span class="hljs-string">"background_job_queue_watcher"</span> {
+  action        = <span class="hljs-string">"lambda:InvokeFunction"</span>
+  function_name = module.cumulus.sqs2sfThrottle_lambda_function_arn
+  principal     = <span class="hljs-string">"events.amazonaws.com"</span>
+  source_arn    = aws_cloudwatch_event_rule.background_job_queue_watcher.arn
+}
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="re-deploy-your-cumulus-application"></a><a href="#re-deploy-your-cumulus-application" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Re-deploy your Cumulus application</h4>
+<p>Follow the instructions to <a href="./../deployment/upgrade-readme#update-cumulus-resources">re-deploy your Cumulus application</a>. After you have re-deployed, your workflow template will be updated to the include information about the queue (the output below is partial output from an expected workflow template):</p>
 <pre><code class="hljs css language-json">{
   <span class="hljs-attr">"meta"</span>: {
     <span class="hljs-attr">"queues"</span>: {
@@ -89,34 +124,57 @@ Additionally, please allow at least 60 seconds after creation before using the q
 }
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="integrate-your-queue-with-workflows-and-or-rules"></a><a href="#integrate-your-queue-with-workflows-and-or-rules" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Integrate your queue with workflows and/or rules</h3>
-<h4><a class="anchor" aria-hidden="true" id="integrate-queue-with-queuing-steps-in-sips-workflows"></a><a href="#integrate-queue-with-queuing-steps-in-sips-workflows" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Integrate queue with queuing steps in SIPS workflows</h4>
-<p>For any SIPS workflows using <code>queue-granules</code> or <code>queue-pdrs</code> that you want to use your new queue, update the Cumulus configuration of those steps in your workflows.</p>
-<pre><code class="hljs css language-yaml">  <span class="hljs-attr">QueueGranules:</span>
-    <span class="hljs-attr">Parameters:</span>
-      <span class="hljs-attr">cma:</span>
-        <span class="hljs-string">event.$:</span> <span class="hljs-string">'$'</span>
-        <span class="hljs-attr">task_config:</span>
-            <span class="hljs-attr">provider:</span> <span class="hljs-string">'{$.meta.provider}'</span>
-            <span class="hljs-attr">internalBucket:</span> <span class="hljs-string">'{$.meta.buckets.internal.name}'</span>
-            <span class="hljs-attr">stackName:</span> <span class="hljs-string">'{$.meta.stack}'</span>
-            <span class="hljs-attr">granuleIngestMessageTemplateUri:</span> <span class="hljs-string">'{$.meta.templates.IngestGranule}'</span>
-            <span class="hljs-comment"># configure the step to use your new queue</span>
-            <span class="hljs-attr">queueUrl:</span> <span class="hljs-string">'{$.meta.queues.backgroundJobQueue}'</span>
+<h4><a class="anchor" aria-hidden="true" id="integrate-queue-with-queuing-steps-in-workflows"></a><a href="#integrate-queue-with-queuing-steps-in-workflows" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Integrate queue with queuing steps in workflows</h4>
+<p>For any workflows using <code>QueueGranules</code> or <code>QueuePdrs</code> that you want to use your new queue, update the Cumulus configuration of those steps in your workflows.</p>
+<p>As seen in this partial configuration for a <code>QueueGranules</code> step (a full example of the step definition can be found in the <a href="https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf">discover granules workflow</a>), update the <code>queueUrl</code> to reference the new throttled queue:</p>
+<pre><code class="hljs css language-json">{
+  <span class="hljs-attr">"QueueGranules"</span>: {
+    <span class="hljs-attr">"Parameters"</span>: {
+      <span class="hljs-attr">"cma"</span>: {
+        <span class="hljs-attr">"event.$"</span>: <span class="hljs-string">"$"</span>,
+        <span class="hljs-attr">"ReplaceConfig"</span>: {
+          <span class="hljs-attr">"FullMessage"</span>: <span class="hljs-literal">true</span>
+        },
+        <span class="hljs-attr">"task_config"</span>: {
+          <span class="hljs-attr">"queueUrl"</span>: <span class="hljs-string">"{$.meta.queues.backgroundJobQueue}"</span>,
+          <span class="hljs-attr">"provider"</span>: <span class="hljs-string">"{$.meta.provider}"</span>,
+          <span class="hljs-attr">"internalBucket"</span>: <span class="hljs-string">"{$.meta.buckets.internal.name}"</span>,
+          <span class="hljs-attr">"stackName"</span>: <span class="hljs-string">"{$.meta.stack}"</span>,
+          <span class="hljs-attr">"granuleIngestWorkflow"</span>: <span class="hljs-string">"${module.ingest_granule_workflow.name}"</span>
+        }
+      }
+    }
+  }
+}
 </code></pre>
-<pre><code class="hljs css language-yaml">  <span class="hljs-attr">QueuePdrs:</span>
-    <span class="hljs-attr">Parameters:</span>
-      <span class="hljs-attr">cma:</span>
-        <span class="hljs-string">event.$:</span> <span class="hljs-string">'$'</span>
-        <span class="hljs-attr">task_config:</span>
-            <span class="hljs-comment"># configure the step to use your new queue</span>
-            <span class="hljs-attr">queueUrl:</span> <span class="hljs-string">'{$.meta.queues.backgroundJobQueue}'</span>
-            <span class="hljs-attr">parsePdrMessageTemplateUri:</span> <span class="hljs-string">'{$.meta.templates.ParsePdr}'</span>
-            <span class="hljs-attr">provider:</span> <span class="hljs-string">'{$.meta.provider}'</span>
-            <span class="hljs-attr">collection:</span> <span class="hljs-string">'{$.meta.collection}'</span>
+<blockquote>
+<p><strong>Please note:</strong> Make sure that the last component of the JSON path for the <code>queueUrl</code> (<code>backgroundJobQueue</code> of <code>$.meta.queues.backgroundJobQueue</code>) used to identify the queue matches the <code>id</code> that was <a href="#set-maximum-executions-for-the-queue">defined previously for the queue</a>.</p>
+</blockquote>
+<p>Similarly, for a <code>QueuePdrs</code> step (see <a href="https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_and_queue_pdrs_workflow.tf">example discover PDRs workflow</a> for full step definition):</p>
+<pre><code class="hljs css language-json">{
+  <span class="hljs-attr">"QueuePdrs"</span>: {
+    <span class="hljs-attr">"Parameters"</span>: {
+      <span class="hljs-attr">"cma"</span>: {
+        <span class="hljs-attr">"event.$"</span>: <span class="hljs-string">"$"</span>,
+        <span class="hljs-attr">"ReplaceConfig"</span>: {
+          <span class="hljs-attr">"FullMessage"</span>: <span class="hljs-literal">true</span>
+        },
+        <span class="hljs-attr">"task_config"</span>: {
+          <span class="hljs-attr">"queueUrl"</span>: <span class="hljs-string">"{$.meta.queues.backgroundJobQueue}"</span>,
+          <span class="hljs-attr">"provider"</span>: <span class="hljs-string">"{$.meta.provider}"</span>,
+          <span class="hljs-attr">"collection"</span>: <span class="hljs-string">"{$.meta.collection}"</span>,
+          <span class="hljs-attr">"internalBucket"</span>: <span class="hljs-string">"{$.meta.buckets.internal.name}"</span>,
+          <span class="hljs-attr">"stackName"</span>: <span class="hljs-string">"{$.meta.stack}"</span>,
+          <span class="hljs-attr">"parsePdrWorkflow"</span>: <span class="hljs-string">"${module.parse_pdr_workflow.name}"</span>
+        }
+      }
+    }
+  }
+}
 </code></pre>
-<p>After making these changes, re-deploy your Cumulus application for the execution throttling to take effect.</p>
+<p>After making these changes, <a href="./../deployment/upgrade-readme#update-cumulus-resources">re-deploy your Cumulus application</a> for the execution throttling to take effect on workflow executions queued by these workflows.</p>
 <h4><a class="anchor" aria-hidden="true" id="create-update-a-rule-to-use-your-new-queue"></a><a href="#create-update-a-rule-to-use-your-new-queue" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create/update a rule to use your new queue</h4>
-<p>Create or update a rule definition to include a <code>queueName</code> property that refers to your new queue:</p>
+<p>Create or update a rule definition to include a <code>queueName</code> property that refers to your new queue, where <code>queueName</code> matches the <code>id</code> that was <a href="#set-maximum-executions-for-the-queue">defined previously for the queue</a>:</p>
 <pre><code class="hljs css language-json">{
   <span class="hljs-attr">"name"</span>: <span class="hljs-string">"s3_provider_rule"</span>,
   <span class="hljs-attr">"workflow"</span>: <span class="hljs-string">"DiscoverAndQueuePdrs"</span>,
@@ -134,8 +192,8 @@ Additionally, please allow at least 60 seconds after creation before using the q
 </code></pre>
 <p>After creating/updating the rule, any subsequent invocations of the rule should respect the maximum number of executions when starting workflows from the queue.</p>
 <h2><a class="anchor" aria-hidden="true" id="architecture"></a><a href="#architecture" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Architecture</h2>
-<p><img src="/cumulus/docs/assets/queued-execution-throttling.png" alt="Architecture diagram showing how queued execution throttling works"></p>
-<p>Execution throttling based on the queue works by manually keeping a count (semaphore) of how many executions are running for the queue at a time. The key operation that prevents the number of executions from exceeding the maximum for the queue is that before starting new executions, the <code>sqs2sfThrottle</code> lambda attempts to increment the semaphore and responds as follows:</p>
+<p><img src="/cumulus/docs/assets/queued-execution-throttling.png" alt="Architecture diagram showing how executions started from a queue are throttled to a maximum concurrent limit"></p>
+<p>Execution throttling based on the queue works by manually keeping a count (semaphore) of how many executions are running for the queue at a time. The key operation that prevents the number of executions from exceeding the maximum for the queue is that before starting new executions, the <code>sqs2sfThrottle</code> Lambda attempts to increment the semaphore and responds as follows:</p>
 <ul>
 <li>If the increment operation is successful, then the count was not at the maximum and an execution is started</li>
 <li>If the increment operation fails, then the count was already at the maximum so no execution is started</li>
@@ -161,8 +219,8 @@ Additionally, please allow at least 60 seconds after creation before using the q
               </script><script>
               var search = docsearch({
                 
-                apiKey: 'undefined',
-                indexName: 'undefined',
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>SNS Notification in Workflows · Cumulus Documentation</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="# SNS Notification in Workflows"/><meta name="docsearch:version" content="next"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="SNS Notification in Workflows · Cumulus Documentation"/><meta property="og:type" content="website"/><meta property="og:url" content="https://nasa.github.io/cumulus/"/><meta property="og:description" content="# SNS Notification in Workflows"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/cumulus/undefined"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="/cumulus/js/scrollSpy.js"></script><link rel="stylesheet" href="/cumulus/css/main.css"/><script src="/cumulus/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cumulus/"><h2 class="headerTitle">Cumulus Documentation</h2></a><a href="/cumulus/versions"><h3>next</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="https://nasa.github.io/cumulus-api" target="_self">API Docs</a></li><li class=""><a href="/cumulus/docs/next/cumulus-docs-readme" target="_self">Developer Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/next/data-cookbooks/about-cookbooks" target="_self">Data-Cookbooks</a></li><li class=""><a href="/cumulus/docs/next/operator-docs/about-operator-docs" target="_self">Operator Docs</a></li><li class=""><a href="/cumulus/docs/next/team" target="_self">Team</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Cookbooks</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">About Cookbooks</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/about-cookbooks">About Cookbooks</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/setup">Data Cookbooks Setup</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Cookbooks</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/hello-world">HelloWorld Workflow</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/sns">SNS Notification in Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/sips-workflow">Science Investigator-led Processing Systems (SIPS)</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/cnm-workflow">CNM Workflow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/error-handling">Error Handling in Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/choice-states">Choice States</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/cloudwatch-retention">Cloudwatch Retention</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/browse-generation">Ingest Browse Generation</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/tracking-files">Tracking Ancillary Files</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/run-tasks-in-lambda-or-docker">Run Step Function Tasks in Lambda or Docker</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/throttling-queued-executions">Throttling queued executions</a></li></ul></div></div></section></div><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>SNS Notification in Workflows · Cumulus Documentation</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="# SNS Notification in Workflows"/><meta name="docsearch:version" content="next"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="SNS Notification in Workflows · Cumulus Documentation"/><meta property="og:type" content="website"/><meta property="og:url" content="https://nasa.github.io/cumulus/"/><meta property="og:description" content="# SNS Notification in Workflows"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/cumulus/undefined"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="/cumulus/js/scrollSpy.js"></script><link rel="stylesheet" href="/cumulus/css/main.css"/><script src="/cumulus/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cumulus/"><h2 class="headerTitle">Cumulus Documentation</h2></a><a href="/cumulus/versions"><h3>next</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="https://nasa.github.io/cumulus-api" target="_self">API Docs</a></li><li class=""><a href="/cumulus/docs/next/cumulus-docs-readme" target="_self">Developer Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/next/data-cookbooks/about-cookbooks" target="_self">Data-Cookbooks</a></li><li class=""><a href="/cumulus/docs/next/operator-docs/about-operator-docs" target="_self">Operator Docs</a></li><li class=""><a href="/cumulus/docs/next/team" target="_self">Team</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Cookbooks</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">About Cookbooks<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/about-cookbooks">About Cookbooks</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/setup">Data Cookbooks Setup</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Cookbooks<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/hello-world">HelloWorld Workflow</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/sns">SNS Notification in Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/sips-workflow">Science Investigator-led Processing Systems (SIPS)</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/cnm-workflow">CNM Workflow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/error-handling">Error Handling in Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/choice-states">Choice States</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/cloudwatch-retention">Cloudwatch Retention</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/browse-generation">Ingest Browse Generation</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/tracking-files">Tracking Ancillary Files</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/run-tasks-in-lambda-or-docker">Run Step Function Tasks in Lambda or Docker</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/next/data-cookbooks/throttling-queued-executions">Throttling queued executions</a></li></ul></div></div></section></div><script>
             var coll = document.getElementsByClassName('collapsible');
             var checkActiveCategory = true;
             for (var i = 0; i < coll.length; i++) {
@@ -63,12 +63,26 @@
 </ul>
 <p><img src="/cumulus/docs/assets/workflow_reporting_diagram.png" alt="Diagram of architecture for reporting workflow ingest notifications from AWS Step Functions"></p>
 <p>The <code>publishReports</code> Lambda is triggered via a <a href="https://docs.aws.amazon.com/step-functions/latest/dg/cw-events.html">Cloudwatch rule for any Step Function execution state transitions</a>. Both the <code>publishReports</code> Lambda and Cloudwatch rule and are included by default in a Cumulus deployment.</p>
-<p>More information on configuring an SNS topic or subscription in Cumulus can be found in our <a href="../deployment/config_descriptions#sns">developer documentation</a>.</p>
 <h2><a class="anchor" aria-hidden="true" id="sending-sns-messages-to-report-status"></a><a href="#sending-sns-messages-to-report-status" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Sending SNS messages to report status</h2>
 <h3><a class="anchor" aria-hidden="true" id="publishing-granule-pdr-reports-directly-to-sns-topics"></a><a href="#publishing-granule-pdr-reports-directly-to-sns-topics" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Publishing granule/PDR reports directly to SNS topics</h3>
 <p>If you have a non-Cumulus workflow or process ingesting data and would like to update the status of your granules or PDRs, you can publish directly to those SNS topics. Publishing messages to those topics will result in those messages being stored as granule/PDR records in the Cumulus database and having the status of those granules/PDRs being visible on the Cumulus dashboard.</p>
-<p>Posting directly to the topics will require knowing their ARNs. You can find the topic ARNs in the AWS Console by going to Cloudformation &gt; Stacks &gt; <code>&lt;your_stack_name&gt;</code> &gt; Resources and then finding <code>reportGranulesSns</code> or <code>reportPdrsSns</code> in the list of resources. Or you can get the topic ARNs using the AWS CLI, replacing <code>&lt;prefix&gt;</code> with your deployed stack's prefix:</p>
-<pre><code class="hljs css language-bash">aws sns list-topics | grep &lt;prefix&gt;-reportGranulesSns
+<p>Posting directly to the topics will require knowing their ARNs. Assuming that you are using the <a href="https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus"><code>cumulus</code> module</a> for your deployment, you can get the topic ARNs by adding them to <code>outputs.tf</code> for your Terraform deployment <a href="https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/outputs.tf">as in our example deployment</a>:</p>
+<pre><code class="hljs css language-hcl">output <span class="hljs-string">"report_executions_sns_topic_arn"</span> {
+  <span class="hljs-keyword">value</span> = <span class="hljs-keyword">module</span>.cumulus.report<span class="hljs-number">_</span>executions<span class="hljs-number">_</span>sns<span class="hljs-number">_</span>topic<span class="hljs-number">_</span>arn
+}
+output <span class="hljs-string">"report_granules_sns_topic_arn"</span> {
+  <span class="hljs-keyword">value</span> = <span class="hljs-keyword">module</span>.cumulus.report<span class="hljs-number">_</span>executions<span class="hljs-number">_</span>sns<span class="hljs-number">_</span>topic<span class="hljs-number">_</span>arn
+}
+output <span class="hljs-string">"report_pdrs_sns_topic_arn"</span> {
+  <span class="hljs-keyword">value</span> = <span class="hljs-keyword">module</span>.cumulus.report<span class="hljs-number">_p</span>drs<span class="hljs-number">_</span>sns<span class="hljs-number">_</span>topic<span class="hljs-number">_</span>arn
+}
+</code></pre>
+<p>Then, when you run <code>terraform deploy</code>, you should see the topic ARNs printed to your console:</p>
+<pre><code class="hljs css language-bash">Outputs:
+...
+report_executions_sns_topic_arn = arn:aws:sns:us-east-1:xxxxxxxxx:&lt;prefix&gt;-report-executions-topic
+report_granules_sns_topic_arn = arn:aws:sns:us-east-1:xxxxxxxxx:&lt;prefix&gt;-report-executions-topic
+report_pdrs_sns_topic_arn = arn:aws:sns:us-east-1:xxxxxxxxx:&lt;prefix&gt;-report-pdrs-topic
 </code></pre>
 <p>Once you have the topic ARN, you can use the AWS SDK for your language of choice to publish messages to the topic. The expected format of granule and PDR records can be found in the <a href="https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js">data model schemas</a>. <strong>Messages that do not conform to the schemas will fail to be created as records</strong>.</p>
 <p>If you are not seeing records persist to the database or show up in the Cumulus dashboard, you can investigate the Cloudwatch logs of the SNS topic consumer Lambas:</p>
@@ -78,41 +92,72 @@
 </ul>
 <h3><a class="anchor" aria-hidden="true" id="in-a-workflow"></a><a href="#in-a-workflow" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>In a workflow</h3>
 <p>As described above, ingest notifications will automatically be published to the SNS topics on workflow start and completion/failure, so <strong>you should not include a workflow step to publish the initial or final status of your workflows</strong>.</p>
-<p>However, if you want to report your ingest status at any point <strong>during a workflow execution</strong>, you can add a workflow step using the <code>SfSnsReport</code> Lambda. In the following example from <a href="https://github.com/nasa/cumulus/blob/master/example/workflows/sips.yml"><code>workflows/sips.yml</code></a>, the <code>ParsePdr</code> workflow is configured to use the <code>SfnSnsReport</code> Lambda, primarily to update the PDR ingestion status.</p>
-<pre><code class="hljs css language-yaml"><span class="hljs-attr">PdrStatusReport:</span>
-  <span class="hljs-attr">Parameters:</span>
-    <span class="hljs-attr">cma:</span>
-      <span class="hljs-string">event.$:</span> <span class="hljs-string">'$'</span>
-      <span class="hljs-attr">task_config:</span>
-          <span class="hljs-attr">cumulus_message:</span>
-            <span class="hljs-attr">input:</span> <span class="hljs-string">'{$}'</span>
-  <span class="hljs-attr">ResultPath:</span> <span class="hljs-literal">null</span>
-  <span class="hljs-attr">Type:</span> <span class="hljs-string">Task</span>
-  <span class="hljs-attr">Resource:</span> <span class="hljs-string">${SfSnsReportLambdaFunction.Arn}</span>
-</code></pre>
-<h4><a class="anchor" aria-hidden="true" id="task-configuration"></a><a href="#task-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Task configuration</h4>
-<p>To use the <code>SfSnsReport</code> Lambda, the following configuration should be added to <code>lambas.yml</code>:</p>
-<pre><code class="hljs css language-yaml"><span class="hljs-attr">SfSnsReport:</span>
-  <span class="hljs-attr">handler:</span> <span class="hljs-string">index.handler</span>
-  <span class="hljs-attr">timeout:</span> <span class="hljs-number">300</span>
-  <span class="hljs-attr">source:</span> <span class="hljs-string">'node_modules/@cumulus/sf-sns-report/dist'</span>
-  <span class="hljs-attr">useMessageAdapter:</span> <span class="hljs-literal">true</span>
+<p>However, if you want to report your ingest status at any point <strong>during a workflow execution</strong>, you can add a workflow step using the <code>SfSnsReport</code> Lambda. In the following example from <a href="https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/parse_pdr_workflow.tf"><code>cumulus-tf/pase_pdr_workflow.tf</code></a>, the <code>ParsePdr</code> workflow is configured to use the <code>SfnSnsReport</code> Lambda, primarily to update the PDR ingestion status.</p>
+<pre><code class="hljs css language-json">  "PdrStatusReport": {
+    "Parameters": {
+      "cma": {
+        "event.$": "$",
+        "ReplaceConfig": {
+          "FullMessage": true
+        },
+        "task_config": {
+          "cumulus_message": {
+            "input": "{$}"
+          }
+        }
+      }
+    },
+    "ResultPath": null,
+    "Type": "Task",
+    "Resource": "${module.cumulus.sf_sns_report_task.task_arn}",
+    "Retry": [
+      {
+        "ErrorEquals": [
+          "Lambda.ServiceException",
+          "Lambda.AWSLambdaException",
+          "Lambda.SdkClientException"
+        ],
+        "IntervalSeconds": 2,
+        "MaxAttempts": 6,
+        "BackoffRate": 2
+      }
+    ],
+    "Catch": [
+      {
+        "ErrorEquals": [
+          "States.ALL"
+        ],
+        "ResultPath": "$.exception",
+        "Next": "WorkflowFailed"
+      }
+    ],
+    "Next": "WaitForSomeTime"
+  },
 </code></pre>
 <h2><a class="anchor" aria-hidden="true" id="subscribing-additional-listeners-to-sns-topics"></a><a href="#subscribing-additional-listeners-to-sns-topics" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Subscribing additional listeners to SNS topics</h2>
-<p>Additional listeners to SNS topics can be configured in <code>app/config.yml</code>. Shown below is configuration that subscribes an additional Lambda function (<code>SnsS3Test</code>) to receive messages from the <code>reportExecutions</code> SNS topic. To subscribe to the <code>reportGranules</code> or <code>reportPdrs</code> SNS topics instead, simply replace <code>reportExecutions</code> in the code block below with either of those topic names.</p>
-<pre><code class="hljs css language-yaml"><span class="hljs-attr">sns:</span>
-  <span class="hljs-attr">reportExecutions:</span>
-    <span class="hljs-attr">subscriptions:</span>
-      <span class="hljs-attr">additionalReceiver:</span>                 <span class="hljs-comment"># name of the new subscription.</span>
-        <span class="hljs-attr">endpoint:</span>
-          <span class="hljs-attr">function:</span> <span class="hljs-string">Fn::GetAtt</span>
-          <span class="hljs-attr">array:</span>
-            <span class="hljs-bullet">-</span> <span class="hljs-string">SnsS3TestLambdaFunction</span>     <span class="hljs-comment"># a lambda configured in lambdas.yml</span>
-            <span class="hljs-bullet">-</span> <span class="hljs-string">Arn</span>
-        <span class="hljs-attr">protocol:</span> <span class="hljs-string">lambda</span>
+<p>Additional listeners to SNS topics can be configured in a <code>.tf</code> file for your Cumulus deployment. Shown below is configuration that subscribes an additional Lambda function (<code>test_lambda</code>) to receive messages from the <code>report_executions</code> SNS topic. To subscribe to the <code>report_granules</code> or <code>report_pdrs</code> SNS topics instead, simply replace <code>report_executions</code> in the code block below with either of those values.</p>
+<pre><code class="hljs css language-hcl">resource <span class="hljs-string">"aws_lambda_function"</span> <span class="hljs-string">"test_lambda"</span> {
+  function_name    = <span class="hljs-string">"<span class="hljs-variable">${var.prefix}</span>-testLambda"</span>
+  filename         = <span class="hljs-string">"./testLambda.zip"</span>
+  source_code_hash = filebase64sha256(<span class="hljs-string">"./testLambda.zip"</span>)
+  handler          = <span class="hljs-string">"index.handler"</span>
+  role             = module.cumulus.lambda_processing_role_arn
+  runtime          = <span class="hljs-string">"nodejs8.10"</span>
+}
+<span class="hljs-built_in">
+resource </span><span class="hljs-string">"aws_sns_topic_subscription"</span> <span class="hljs-string">"test_lambda"</span> {
+  topic_arn = module.cumulus.report_executions_sns_topic_arn
+  protocol  = <span class="hljs-string">"lambda"</span>
+  endpoint  = aws_lambda_function.test_lambda.arn
+}
+<span class="hljs-built_in">
+resource </span><span class="hljs-string">"aws_lambda_permission"</span> <span class="hljs-string">"test_lambda"</span> {
+  action        = <span class="hljs-string">"lambda:InvokeFunction"</span>
+  function_name = aws_lambda_function.test_lambda.arn
+  principal     = <span class="hljs-string">"sns.amazonaws.com"</span>
+  source_arn    = module.cumulus.report_executions_sns_topic_arn
+}
 </code></pre>
-<p>Make sure that the subscriber Lambda is configured in <code>lambdas.yml</code>. <strong>Note that the Lambda name configured in <code>lambdas.yml</code>,<code>SnsS3Test</code>, needs to have its name postpended with <code>LambdaFunction</code> (as in the example above) to have the ARN correctly found.</strong></p>
-<p>More information on configuring an SNS topic subscriptions in Cumulus can be found in our <a href="../deployment/config_descriptions#sns">developer documentation</a>.</p>
 <h3><a class="anchor" aria-hidden="true" id="sns-message-format"></a><a href="#sns-message-format" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>SNS message format</h3>
 <p>Subscribers to the SNS topics can expect to find the published message in the <a href="https://docs.aws.amazon.com/lambda/latest/dg/eventsources.html#eventsources-sns">SNS event</a> at <code>Records[0].Sns.Message</code>. The message will be a JSON stringified version of the ingest notification record for an execution, a granule, or a PDR.</p>
 <p>The record parsed from the JSON stringified version of the execution, granule, or PDR should conform to the <a href="https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js">data model schema for the given record type</a>.</p>
@@ -132,8 +177,8 @@
               </script><script>
               var search = docsearch({
                 
-                apiKey: 'undefined',
-                indexName: 'undefined',
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Cumulus Metadata in DynamoDB · Cumulus Documentation</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="# Cumulus Metadata in DynamoDB"/><meta name="docsearch:version" content="v1.16.0"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Cumulus Metadata in DynamoDB · Cumulus Documentation"/><meta property="og:type" content="website"/><meta property="og:url" content="https://nasa.github.io/cumulus/"/><meta property="og:description" content="# Cumulus Metadata in DynamoDB"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/cumulus/undefined"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="/cumulus/js/scrollSpy.js"></script><link rel="stylesheet" href="/cumulus/css/main.css"/><script src="/cumulus/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cumulus/"><h2 class="headerTitle">Cumulus Documentation</h2></a><a href="/cumulus/versions"><h3>v1.16.0</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="https://nasa.github.io/cumulus-api" target="_self">API Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/cumulus-docs-readme" target="_self">Developer Docs</a></li><li class=""><a href="/cumulus/docs/data-cookbooks/about-cookbooks" target="_self">Data-Cookbooks</a></li><li class=""><a href="/cumulus/docs/operator-docs/about-operator-docs" target="_self">Operator Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/team" target="_self">Team</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Additional Features</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">About Cumulus<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/cumulus/docs/cumulus-docs-readme">Introduction</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/architecture">Architecture</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/interfaces">Interfaces</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/glossary">Glossary</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/team">Team</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Cumulus Workflows<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/cumulus/docs/workflows/workflows-readme">Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/workflows/protocol">Workflow Protocol</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/workflows/input_output">Workflows Input &amp; Output</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/workflows/cumulus-task-message-flow">Cumulus Tasks: Message Flow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/workflows/developing-a-cumulus-workflow">Developing A Cumulus Workflow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/workflows/developing-workflow-tasks">Developing Workflow Tasks</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/workflows/lambda">Develop Lambda Functions</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/workflows/docker">Dockerizing Data Processing</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/workflows/workflow-configuration-how-to">Workflow Configuration How To&#x27;s</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/workflows/workflow-triggers">Workflow Triggers</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Tasks<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/cumulus/docs/tasks">Cumulus Tasks</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/workflow_tasks/discover_granules">Discover Granules</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/workflow_tasks/files_to_granules">Files To Granules</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/workflow_tasks/move_granules">Move Granules</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/workflow_tasks/parse_pdr">Parse PDR</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Deployment<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/cumulus/docs/deployment/deployment-readme">How to Deploy Cumulus</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/deployment/upgrade-readme">Upgrading Cumulus</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/deployment/components">Cumulus Components</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/deployment/create_bucket">Creating an S3 Bucket</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/deployment/server_access_logging">S3 Server Access Logging</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/deployment/troubleshoot_deployment">Troubleshooting</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/deployment/thin_egress_app">Thin Egress App</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Deployment Options<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/cumulus/docs/additional-deployment-options/api-gateway-logging">API Gateway Logging</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/additional-deployment-options/share-s3-access-logs">Share S3 Access Logs</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/additional-deployment-options/cmr_launchpad_authentication">CMR Launchpad Authentication</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/additional-deployment-options/cumulus_api_launchpad_authentication">Cumulus API Launchpad Authentication</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Additional Features<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem navListItemActive"><a class="navItem" href="/cumulus/docs/features/data_in_dynamodb">Cumulus Metadata in DynamoDB</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/features/dead_letter_queues">Dead Letter Queues</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/features/ems_reporting">EMS Reporting</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/features/execution_payload_retention">Execution Payload Retention</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/features/lambda_versioning">Lambda Versioning</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/features/ancillary_metadata">Ancillary Metadata Export</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/features/distribution-metrics">Cumulus Distribution Metrics</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Troubleshooting<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/cumulus/docs/troubleshooting/troubleshooting-readme">Troubleshooting Cumulus</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Cumulus Development<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/cumulus/docs/adding-a-task">Contributing a Task</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/docs-how-to">Cumulus Documentation: How To&#x27;s</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="post"><header class="postHeader"></header><article><div><span><h1><a class="anchor" aria-hidden="true" id="cumulus-metadata-in-dynamodb"></a><a href="#cumulus-metadata-in-dynamodb" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Cumulus Metadata in DynamoDB</h1>
+<ul>
+<li><a href="#backup-and-restore-with-aws">DynamoDB Backup and Restore</a></li>
+<li><a href="#dynamodb-auto-scaling">DynamoDB Auto Scaling</a></li>
+</ul>
+<p><a href="https://www.npmjs.com/package/@cumulus/api">@cumulus/api</a> uses a number of methods to preserve the metadata generated in a Cumulus instance.</p>
+<p>All configurations and system-generated metadata is stored in DynamoDB tables except the logs. System logs are stored in the AWS CloudWatch service.</p>
+<p><code>@cumulus/api</code> uses the following DynamoDB tables:</p>
+<ul>
+<li><strong>Users:</strong> api/dashboard users</li>
+<li><strong>Collections:</strong> collection records</li>
+<li><strong>Providers:</strong> provider records</li>
+<li><strong>Rules:</strong> rules for managing and running workflows</li>
+<li><strong>Executions:</strong> workflow executions (step function executions)</li>
+<li><strong>Granules:</strong> granules processed by the Cumulus instance</li>
+<li><strong>PDRs:</strong> PDRs processed in Cumulus</li>
+</ul>
+<p>Amazon DynamoDB stores three geographically distributed replicas of each table to enable high availability and data durability. Amazon DynamoDB runs exclusively on solid-state drives (SSDs). SSDs help AWS achieve the design goals of predictable low-latency response times for storing and accessing data at any scale.</p>
+<h2><a class="anchor" aria-hidden="true" id="backup-and-restore-with-aws"></a><a href="#backup-and-restore-with-aws" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Backup and Restore with AWS</h2>
+<p>You can enable point-in-time recovery (PITR) as well as create an on-demand backup for your Amazon DynamoDB tables.</p>
+<p>PITR provides continuous backups of your DynamoDB table data. You can enable PITR with a single click from the AWS Management Console or a single API call. When enabled, DynamoDB maintains continuous backups of your table up to the last 35 days. You can recover a copy of that table to a previous state at any point in time from the moment you enable PITR, up to a maximum of the 35 preceding days. PITR provides continuous backups until you explicitly disable it.</p>
+<p>On-demand backups allow you to create backups of DynamoDB table data and its settings. You can initiate an on-demand backup at any time with a single click from the AWS Management Console or a single API call. You can restore the backups to a new DynamoDB table in the same AWS Region at any time.</p>
+<p>PITR gives your DynamoDB tables continuous protection from accidental writes and deletes. With PITR, you do not have to worry about creating, maintaining, or scheduling backups. You enable PITR on your table and your backup is available for restore at any point in time from the moment you enable it, up to a maximum of the 35 preceding days. For example, imagine a test script writing accidentally to a production DynamoDB table. You could recover your table to any point in time within the last 35 days.</p>
+<p>On-demand backups help with long-term archival requirements for regulatory compliance. On-demand backups give you full-control of managing the lifecycle of your backups, from creating as many backups as you need to retaining these for as long as you need.</p>
+<h2><a class="anchor" aria-hidden="true" id="enabling-pitr-during-deployment"></a><a href="#enabling-pitr-during-deployment" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Enabling PITR during deployment</h2>
+<p>By default, the Cumulus <a href="https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence">data-persistence module</a> enables PITR on the default tables listed in the <a href="https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf">module's variable defaults</a> for <code>enable_point_in_time_tables</code>.  At the time of writing, that list includes:</p>
+<ul>
+<li>CollectionsTable</li>
+<li>ExecutionsTable</li>
+<li>FilesTable</li>
+<li>GranulesTable</li>
+<li>PdrsTable</li>
+<li>ProvidersTable</li>
+<li>RulesTable</li>
+<li>UsersTable</li>
+</ul>
+<p>If you wish to change this list, simply update your deployment's <code>data_persistence</code> module (<a href="https://github.com/nasa/cumulus-template-deploy/blob/master/data-persistence-tf/main.tf">here</a> in the <code>template-deploy</code> repository) to pass the correct list of tables.</p>
+<h2><a class="anchor" aria-hidden="true" id="backup-and-restore-with-cumulus-api-cli"></a><a href="#backup-and-restore-with-cumulus-api-cli" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Backup and Restore with cumulus-api CLI</h2>
+<p>cumulus-api CLI also includes a backup and restore command. The CLI backup command downloads the content of any of your DynamoDB tables to <code>.json</code> files. You can also use these <code>.json</code> files to restore the records to another DynamoDB table.</p>
+<h3><a class="anchor" aria-hidden="true" id="backup-with-the-cli"></a><a href="#backup-with-the-cli" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Backup with the CLI</h3>
+<p>To backup a table with the CLI, install the <code>@cumulus/api</code> package using <a href="https://www.npmjs.com/">npm</a>, making sure to install the same version as your Cumulus deployment:</p>
+<pre><code class="hljs css language-bash">npm install -g @cumulus/api@version
+</code></pre>
+<p>Then run:</p>
+<pre><code class="hljs css language-bash">cumulus-api backup --table &lt;table-name&gt;
+</code></pre>
+<p>the backup will be stored at <code>backups/&lt;table-name&gt;.json</code></p>
+<h3><a class="anchor" aria-hidden="true" id="restore-with-the-cli"></a><a href="#restore-with-the-cli" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Restore with the CLI</h3>
+<p>To restore data from a json file run the following command:</p>
+<pre><code class="hljs css language-bash">     ./node_modules/.bin/cumulus-api restore backups/&lt;table-name&gt;.json --table &lt;new-table-name&gt;
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="dynamodb-auto-scaling"></a><a href="#dynamodb-auto-scaling" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>DynamoDB Auto Scaling</h2>
+<p>Cumulus deployed tables from the <a href="https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence">data-persistence module</a> are set to <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadWriteCapacityMode.html#HowItWorks.OnDemand">`on-demand'</a> mode.</p>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cumulus/docs/additional-deployment-options/cumulus_api_launchpad_authentication"><span class="arrow-prev">← </span><span>Cumulus API Launchpad Authentication</span></a><a class="docs-next button" href="/cumulus/docs/features/dead_letter_queues"><span>Dead Letter Queues</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#backup-and-restore-with-aws">Backup and Restore with AWS</a></li><li><a href="#enabling-pitr-during-deployment">Enabling PITR during deployment</a></li><li><a href="#backup-and-restore-with-cumulus-api-cli">Backup and Restore with cumulus-api CLI</a><ul class="toc-headings"><li><a href="#backup-with-the-cli">Backup with the CLI</a></li><li><a href="#restore-with-the-cli">Restore with the CLI</a></li></ul></li><li><a href="#dynamodb-auto-scaling">DynamoDB Auto Scaling</a></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>

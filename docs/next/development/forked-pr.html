@@ -17,16 +17,12 @@
 <p>The request will then either be merged, declined, or an adjustment to the code will be requested via the issue opened with the original PR request.</p>
 <p>PRs from forked repos cannot directly merged to master. Cumulus reviews must follow the following steps before completing the review process:</p>
 <ol>
-<li>Create a new branch:</li>
-</ol>
-<pre><code class="hljs css language-bash">  $ git checkout -b from-&lt;name-of-the-branch&gt; master
-</code></pre>
-<ol start="2">
+<li><p>Create a new branch:</p>
+<pre><code class="hljs css language-bash">  git checkout -b from-&lt;name-of-the-branch&gt; master
+</code></pre></li>
 <li><p>Push the new branch to GitHub</p></li>
-<li><p>Change the destination of the forked PR to the new branch that was just pushed</p></li>
-</ol>
-<p><img src="https://user-images.githubusercontent.com/1933118/46869547-80d31480-ce2c-11e8-9d2f-b8e1ea01fdb6.png" alt="screenshot 2018-10-12 14 37 49"></p>
-<ol start="4">
+<li><p>Change the destination of the forked PR to the new branch that was just pushed</p>
+<p><img src="https://user-images.githubusercontent.com/1933118/46869547-80d31480-ce2c-11e8-9d2f-b8e1ea01fdb6.png" alt="Screenshot of Github interface showing how to change the base branch of a pull request"></p></li>
 <li><p>After code review and approval, merge the forked PR to the new branch.</p></li>
 <li><p>Create a PR for the new branch to master.</p></li>
 <li><p>If the CI tests pass, merge the new branch to master and close the issue.   If the CI tests do not pass, request an amended PR from the original author/ or resolve failures as appropriate.</p></li>
@@ -45,8 +41,8 @@
               </script><script>
               var search = docsearch({
                 
-                apiKey: 'undefined',
-                indexName: 'undefined',
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>
