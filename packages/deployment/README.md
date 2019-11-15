@@ -2,7 +2,7 @@
 
 @cumulus/deployment includes cloudformation templates needed for a successful deployment of a Cumulus Instance. The templates can be used with [kes](https://github.com/developmentseed/kes), a node CLI helper for AWS CloudFormation.
 
-## What is Cumulus?
+## About Cumulus
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
 
@@ -14,4 +14,4 @@ See the [Cumulus deployment documentation](https://nasa.github.io/cumulus/docs/d
 
 ## Contributing
 
-See [Cumulus README](https://github.com/nasa/cumulus/blob/master/README.md#installing-and-deploying)
+To make a contribution, please [see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).
