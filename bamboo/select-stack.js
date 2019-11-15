@@ -31,7 +31,8 @@ function determineIntegrationTestStackName(cb) {
     'Menno Van Diermen': 'mvd',
     'Jacob Campbell': 'jc',
     ifestus: 'jc',
-    'Chuck Daniels': 'chuckulus-ci'
+    'Chuck Daniels': 'chuckulus-ci',
+    'Brian Tennity': 'bt-tf'
   };
 
   return git('.').log({ '--max-count': '1' }, (e, r) => {
