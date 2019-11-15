@@ -7,7 +7,7 @@ const { createJwtToken } = require('./token');
 
 const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
 
-const dataDir = `${process.cwd().split('cumulus')[0]}/cumulus/packages/api/app/data`;
+const dataDir = 'app/data';
 const getWorkflowList = () => fs.readdirSync(dataDir).map((f) => JSON.parse(fs.readFileSync(`${dataDir}/${f}`).toString()));
 
 /**
