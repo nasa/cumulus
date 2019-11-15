@@ -2,7 +2,7 @@
 
 @cumulus/integration-tests provides a CLI and functions for testing Cumulus workflow executions in a Cumulus deployment.
 
-## What is Cumulus?
+## About Cumulus
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
 
@@ -10,13 +10,13 @@ Cumulus is a cloud-based data ingest, archive, distribution and management proto
 
 ## Installation
 
-```
+```bash
 npm install @cumulus/integration-tests
 ```
 
 ## Usage
 
-```
+```bash
 Usage: cumulus-test TYPE COMMAND [options]
 
 
@@ -34,12 +34,11 @@ Usage: cumulus-test TYPE COMMAND [options]
 
     workflow  Execute a workflow and determine if the workflow completes successfully
 ```
-i.e. to test the HelloWorld workflow:
+
+For example, to test the HelloWorld workflow:
 
 `cumulus-test workflow --stack-name helloworld-cumulus --bucket-name cumulus-bucket-internal --workflow HelloWorldWorkflow --input-file ./helloWorldInput.json`
 
-
-
 ## Contributing
 
-See [Cumulus README](https://github.com/nasa/cumulus/blob/master/README.md#installing-and-deploying)
+To make a contribution, please [see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).

@@ -3,7 +3,7 @@
 Lambda function handler for checking the status of a workflow (step function) execution. Expects a payload object which includes the name of a PDR.
 The concurrency of SFN API calls is set to 10 by default, and it's configurable by setting the Lambda environment variable CONCURRENCY.
 
-## What is Cumulus?
+## About Cumulus
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
 
@@ -11,4 +11,4 @@ Cumulus is a cloud-based data ingest, archive, distribution and management proto
 
 ## Contributing
 
-See [Cumulus README](https://github.com/nasa/cumulus/blob/master/README.md#installing-and-deploying)
+To make a contribution, please [see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).

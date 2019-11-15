@@ -360,11 +360,11 @@ Once you've configured the Collection and Provider and added a onetime rule, you
 
 Go to the Rules tab, click the rule you just created:
 
-![Screenshot of the Rules overview page in the Cumulus dashboard](../../assets/browse_processing_1.png)
+![Screenshot of the Rules overview page with a list of rules in the Cumulus dashboard](../../assets/browse_processing_1.png)
 
-Then click the gear in the upper right corner and click "ReRun":
+Then click the gear in the upper right corner and click "Rerun":
 
-![Screenshot of a rule edit page in the Cumulus dashboard with a pop-up menu open](../../assets/browse_processing_2.png)
+![Screenshot of clicking the button to rerun a workflow rule from the rule edit page in the Cumulus dashboard](../../assets/browse_processing_2.png)
 
 Tab over to executions and you should see the `DiscoverGranulesBrowseExample` workflow run, succeed, and then moments later the `CookbookBrowseExample` should run and succeed.
 
@@ -374,11 +374,11 @@ Tab over to executions and you should see the `DiscoverGranulesBrowseExample` wo
 
 You can verify your data has ingested by clicking the successful workflow entry:
 
-![Screenshot of entry from table listing executions in the Cumulus dashboard](../../assets/browse_processing_4.png)
+![Screenshot of individual entry from table listing executions in the Cumulus dashboard](../../assets/browse_processing_4.png)
 
 Select "Show Output" on the next page
 
-![Screenshot of show output button from individual execution page in the Cumulus dashboard](../../assets/browse_processing_5.png)
+![Screenshot of "Show output" button from individual execution page in the Cumulus dashboard](../../assets/browse_processing_5.png)
 
 and you should see in the payload from the workflow something similar to:
 

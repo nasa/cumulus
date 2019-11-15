@@ -3,6 +3,7 @@
 Download a given granule from a given provider to S3
 
 ## Message Configuration
+
 ### Config
 
 | field name | type | default | values | description
@@ -17,7 +18,7 @@ Download a given granule from a given provider to S3
 | pdr | object | | | Object containing the name and path for a PDR file
 | stack | string | | | The name of the deployment stack to use. Useful as a prefix.
 
-## What is Cumulus?
+## About Cumulus
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
 
@@ -25,4 +26,4 @@ Cumulus is a cloud-based data ingest, archive, distribution and management proto
 
 ## Contributing
 
-See [Cumulus README](https://github.com/nasa/cumulus/blob/master/README.md#installing-and-deploying)
+To make a contribution, please [see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).
