@@ -1,11 +1,11 @@
 module "retry_pass_workflow" {
   source = "../../tf-modules/workflow"
 
-  prefix                                = var.prefix
-  name                                  = "RetryPassWorkflow"
-  workflow_config                       = module.cumulus.workflow_config
-  system_bucket                         = var.system_bucket
-  tags                                  = local.default_tags
+  prefix          = var.prefix
+  name            = "RetryPassWorkflow"
+  workflow_config = module.cumulus.workflow_config
+  system_bucket   = var.system_bucket
+  tags            = local.default_tags
 
   state_machine_definition = <<JSON
 {
@@ -25,7 +25,7 @@ module "retry_pass_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.hello_world_task_lambda_function_arn}",
+      "Resource": "${module.cumulus.hello_world_task.task_arn}",
       "Retry": [
         {
           "ErrorEquals": [
