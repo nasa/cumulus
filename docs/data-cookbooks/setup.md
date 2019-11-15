@@ -34,7 +34,7 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 |files|`<JSON Object>` of files defined [here](#files-object)|Yes|Describe the individual files that will exist for each granule in this collection (size, browse, meta, etc.)|
 |dataType|`"MOD09GQ"`|No|Can be specified, but this value will default to the collection_name if not|
 |duplicateHandling|`"replace"`|No|<code>("replace"&#124;"version"&#124;"skip")</code> determines granule duplicate handling scheme|
-|process|`"modis"`|No|The options for this are found in the ChooseProcess step definition in [sips.yml](https://github.com/nasa/cumulus/tree/master/example/workflows/sips.yml)|
+|process|`"modis"`|No|Example options for this are found in the ChooseProcess step definition in [the IngestAndPublish workflow definition](https://github.com/nasa/cumulus/tree/master/example/cumulus-tf/ingest_and_publish_granule_workflow.tf)|
 |provider_path|`"cumulus-test-data/pdrs"`|No|This collection is expecting to find data in a `cumulus-test-data/pdrs` directory, whether that be in S3 or at an http endpoint|
 |meta|`<JSON Object>` of MetaData for the collection|No|MetaData for the collection. This metadata will be available to workflows for this collection via the [Cumulus Message Adapter](workflows/input_output.md).
 |url_path|`"{cmrMetadata.Granule.Collection.ShortName}/`<br/>`{substring(file.name, 0, 3)}"`|No|Filename without extension|

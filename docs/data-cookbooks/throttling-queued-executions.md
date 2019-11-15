@@ -16,29 +16,70 @@ Limiting the number of executions that can be running from a given queue is usef
 
 ### Create and deploy the queue
 
-#### Define a queue with a maximum number of executions
+#### Add a new queue
 
-In your `app/config.yml`, define a new queue with a `maxExecutions` value:
+In a `.tf` file for your [Cumulus deployment](./../deployment/deployment-readme#deploy-the-cumulus-instance), add a new SQS queue:
 
-```yaml
-  sqs:
-    backgroundJobQueue:
-      visibilityTimeout: 60
-      retry: 30
-      maxExecutions: 5
-      consumer:
-        - lambda: sqs2sfThrottle    # you must use this lambda
-          schedule: rate(1 minute)
-          messageLimit: '{{sqs_consumer_rate}'
-          state: ENABLED
+```hcl
+resource "aws_sqs_queue" "background_job_queue" {
+  name                       = "${var.prefix}-backgroundJobQueue"
+  receive_wait_time_seconds  = 20
+  visibility_timeout_seconds = 60
+}
 ```
 
-**Please note that you must use the `sqs2sfThrottle` lambda as the consumer for any queue with a `maxExecutions` value** or else the execution throttling will not work correctly.
-Additionally, please allow at least 60 seconds after creation before using the queue as associated infrastructure and triggers are set up and made ready.
+#### Set maximum executions for the queue
 
-#### Re-deploy your Cumulus app
+Define the `throttled_queues` variable for the `cumulus` module in your [Cumulus deployment](./../deployment/deployment-readme#deploy-the-cumulus-instance) to specify the maximum concurrent executions for the queue.
 
-Once you [re-deploy your Cumulus application](../deployment/deployment-readme#update-cumulus), all of your workflow templates will be updated to the include information about your queue (the output below is partial output from an expected workflow template):
+> **Please note:** The `id` used to identify the new queue is arbitrary, but **will be used to refer to this queue later when configuring workflows and rules**.
+
+```hcl
+module "cumulus" {
+  # ... other variables
+
+  throttled_queues = [{
+    id = "backgroundJobQueue",
+    url = aws_sqs_queue.background_job_queue.id,
+    execution_limit = 5
+  }]
+}
+```
+
+#### Setup consumer for the queue
+
+Add the `sqs2sfThrottle` Lambda as the consumer for the queue and add a Cloudwatch event rule/target to read from the queue on a scheduled basis.
+
+> **Please note**: You **must use the `sqs2sfThrottle` Lambda as the consumer for any queue with a queue execution limit** or else the execution throttling will not work correctly. Additionally, please allow at least 60 seconds after creation before using the queue while associated infrastructure and triggers are set up and made ready.
+
+`aws_sqs_queue.background_job_queue.id` refers to the [queue resource defined above](#add-a-new-queue).
+
+```hcl
+resource "aws_cloudwatch_event_rule" "background_job_queue_watcher" {
+  schedule_expression = "rate(1 minute)"
+}
+
+resource "aws_cloudwatch_event_target" "background_job_queue_watcher" {
+  rule = aws_cloudwatch_event_rule.background_job_queue_watcher.name
+  arn  = module.cumulus.sqs2sfThrottle_lambda_function_arn
+  input = jsonencode({
+    messageLimit = 500
+    queueUrl     = aws_sqs_queue.background_job_queue.id
+    timeLimit    = 60
+  })
+}
+
+resource "aws_lambda_permission" "background_job_queue_watcher" {
+  action        = "lambda:InvokeFunction"
+  function_name = module.cumulus.sqs2sfThrottle_lambda_function_arn
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.background_job_queue_watcher.arn
+}
+```
+
+#### Re-deploy your Cumulus application
+
+Follow the instructions to [re-deploy your Cumulus application](./../deployment/upgrade-readme#update-cumulus-resources). After you have re-deployed, your workflow template will be updated to the include information about the queue (the output below is partial output from an expected workflow template):
 
 ```json
 {
@@ -55,42 +96,66 @@ Once you [re-deploy your Cumulus application](../deployment/deployment-readme#up
 
 ### Integrate your queue with workflows and/or rules
 
-#### Integrate queue with queuing steps in SIPS workflows
+#### Integrate queue with queuing steps in workflows
 
-For any SIPS workflows using `queue-granules` or `queue-pdrs` that you want to use your new queue, update the Cumulus configuration of those steps in your workflows.
+For any workflows using `QueueGranules` or `QueuePdrs` that you want to use your new queue, update the Cumulus configuration of those steps in your workflows.
 
-```yaml
-  QueueGranules:
-    Parameters:
-      cma:
-        event.$: '$'
-        task_config:
-            provider: '{$.meta.provider}'
-            internalBucket: '{$.meta.buckets.internal.name}'
-            stackName: '{$.meta.stack}'
-            granuleIngestMessageTemplateUri: '{$.meta.templates.IngestGranule}'
-            # configure the step to use your new queue
-            queueUrl: '{$.meta.queues.backgroundJobQueue}'
+As seen in this partial configuration for a `QueueGranules` step (a full example of the step definition can be found in the [discover granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf)), update the `queueUrl` to reference the new throttled queue:
+
+```json
+{
+  "QueueGranules": {
+    "Parameters": {
+      "cma": {
+        "event.$": "$",
+        "ReplaceConfig": {
+          "FullMessage": true
+        },
+        "task_config": {
+          "queueUrl": "{$.meta.queues.backgroundJobQueue}",
+          "provider": "{$.meta.provider}",
+          "internalBucket": "{$.meta.buckets.internal.name}",
+          "stackName": "{$.meta.stack}",
+          "granuleIngestWorkflow": "${module.ingest_granule_workflow.name}"
+        }
+      }
+    }
+  }
+}
 ```
 
-```yaml
-  QueuePdrs:
-    Parameters:
-      cma:
-        event.$: '$'
-        task_config:
-            # configure the step to use your new queue
-            queueUrl: '{$.meta.queues.backgroundJobQueue}'
-            parsePdrMessageTemplateUri: '{$.meta.templates.ParsePdr}'
-            provider: '{$.meta.provider}'
-            collection: '{$.meta.collection}'
-  ```
+> **Please note:** Make sure that the last component of the JSON path for the `queueUrl` (`backgroundJobQueue` of `$.meta.queues.backgroundJobQueue`) used to identify the queue matches the `id` that was [defined previously for the queue](#set-maximum-executions-for-the-queue).
 
-After making these changes, re-deploy your Cumulus application for the execution throttling to take effect.
+Similarly, for a `QueuePdrs` step (see [example discover PDRs workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_and_queue_pdrs_workflow.tf) for full step definition):
+
+```json
+{
+  "QueuePdrs": {
+    "Parameters": {
+      "cma": {
+        "event.$": "$",
+        "ReplaceConfig": {
+          "FullMessage": true
+        },
+        "task_config": {
+          "queueUrl": "{$.meta.queues.backgroundJobQueue}",
+          "provider": "{$.meta.provider}",
+          "collection": "{$.meta.collection}",
+          "internalBucket": "{$.meta.buckets.internal.name}",
+          "stackName": "{$.meta.stack}",
+          "parsePdrWorkflow": "${module.parse_pdr_workflow.name}"
+        }
+      }
+    }
+  }
+}
+```
+
+After making these changes, [re-deploy your Cumulus application](./../deployment/upgrade-readme#update-cumulus-resources) for the execution throttling to take effect on workflow executions queued by these workflows.
 
 #### Create/update a rule to use your new queue
 
-Create or update a rule definition to include a `queueName` property that refers to your new queue:
+Create or update a rule definition to include a `queueName` property that refers to your new queue, where `queueName` matches the `id` that was [defined previously for the queue](#set-maximum-executions-for-the-queue):
 
 ```json
 {
@@ -113,9 +178,9 @@ After creating/updating the rule, any subsequent invocations of the rule should 
 
 ## Architecture
 
-![Architecture diagram showing how queued execution throttling works](assets/queued-execution-throttling.png)
+![Architecture diagram showing how executions started from a queue are throttled to a maximum concurrent limit](assets/queued-execution-throttling.png)
 
-Execution throttling based on the queue works by manually keeping a count (semaphore) of how many executions are running for the queue at a time. The key operation that prevents the number of executions from exceeding the maximum for the queue is that before starting new executions, the `sqs2sfThrottle` lambda attempts to increment the semaphore and responds as follows:
+Execution throttling based on the queue works by manually keeping a count (semaphore) of how many executions are running for the queue at a time. The key operation that prevents the number of executions from exceeding the maximum for the queue is that before starting new executions, the `sqs2sfThrottle` Lambda attempts to increment the semaphore and responds as follows:
 
 - If the increment operation is successful, then the count was not at the maximum and an execution is started
 - If the increment operation fails, then the count was already at the maximum so no execution is started

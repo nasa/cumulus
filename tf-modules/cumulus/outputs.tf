@@ -36,72 +36,76 @@ output "report_pdrs_sns_topic_arn" {
 
 # Cumulus core task outputs
 
-output "discover_granules_task_lambda_function_arn" {
-  value = module.ingest.discover_granules_task_lambda_function_arn
+output "discover_granules_task" {
+  value = module.ingest.discover_granules_task
 }
 
-output "discover_pdrs_task_lambda_function_arn" {
-  value = module.ingest.discover_pdrs_task_lambda_function_arn
+output "discover_pdrs_task" {
+  value = module.ingest.discover_pdrs_task
 }
 
-output "fake_processing_task_lambda_function_arn" {
-  value = module.ingest.fake_processing_task_lambda_function_arn
+output "fake_processing_task" {
+  value = module.ingest.fake_processing_task
 }
 
-output "files_to_granules_task_lambda_function_arn" {
-  value = module.ingest.files_to_granules_task_lambda_function_arn
+output "files_to_granules_task" {
+  value = module.ingest.files_to_granules_task
 }
 
-output "hello_world_task_lambda_function_arn" {
-  value = module.ingest.hello_world_task_lambda_function_arn
+output "hello_world_task" {
+  value = module.ingest.hello_world_task
 }
 
-output "move_granules_task_lambda_function_arn" {
-  value = module.ingest.move_granules_task_lambda_function_arn
+output "move_granules_task" {
+  value = module.ingest.move_granules_task
 }
 
-output "parse_pdr_task_lambda_function_arn" {
-  value = module.ingest.parse_pdr_task_lambda_function_arn
+output "parse_pdr_task" {
+  value = module.ingest.parse_pdr_task
 }
 
-output "pdr_status_check_task_lambda_function_arn" {
-  value = module.ingest.pdr_status_check_task_lambda_function_arn
+output "pdr_status_check_task" {
+  value = module.ingest.pdr_status_check_task
 }
 
-output "queue_granules_task_lambda_function_arn" {
-  value = module.ingest.queue_granules_task_lambda_function_arn
+output "queue_granules_task" {
+  value = module.ingest.queue_granules_task
 }
 
-output "queue_pdrs_task_lambda_function_arn" {
-  value = module.ingest.queue_pdrs_task_lambda_function_arn
+output "queue_pdrs_task" {
+  value = module.ingest.queue_pdrs_task
 }
 
-output "sf_sns_report_task_lambda_function_arn" {
-  value = module.ingest.sf_sns_report_task_lambda_function_arn
+output "sf_sns_report_task" {
+  value = module.ingest.sf_sns_report_task
 }
 
-output "sync_granule_task_lambda_function_arn" {
-  value = module.ingest.sync_granule_task_lambda_function_arn
+output "sync_granule_task" {
+  value = module.ingest.sync_granule_task
 }
 
 # Workflow config outputs
 
 output "workflow_config" {
   value = {
-    publish_reports_lambda_function_arn = module.archive.publish_reports_lambda_function_arn
+    publish_reports_lambda_function_arn   = module.archive.publish_reports_lambda_function_arn
     sf_semaphore_down_lambda_function_arn = module.ingest.sf_semaphore_down_lambda_function_arn
-    state_machine_role_arn = module.ingest.step_role_arn
+    state_machine_role_arn                = module.ingest.step_role_arn
   }
 }
 
 # Other Lambda outputs
 
-output "post_to_cmr_task_lambda_function_arn" {
-  value = module.ingest.post_to_cmr_task_lambda_function_arn
+output "post_to_cmr_task" {
+  value = module.ingest.post_to_cmr_task
 }
 
 output "log2elasticsearch_lambda_function_arn" {
   value = module.archive.log2elasticsearch_lambda_function_arn
+}
+
+output "sqs2sfThrottle_lambda_function_arn" {
+  value = module.ingest.sqs2sfThrottle_lambda_function_arn
 }
 
 # IAM outputs

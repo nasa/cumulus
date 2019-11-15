@@ -36,8 +36,8 @@ Example log event:
 
 ## Install
 
-```
-$ npm install @cumulus/logger
+```bash
+npm install @cumulus/logger
 ```
 
 ## Usage
@@ -123,10 +123,10 @@ Type: `Error`
 
 If the last argument is an Error then the following additional properties will be set on the log event:
 
-* **error** (Object)
-  * **name** (string)
-  * **message** (string)
-  * **stack** (Array\<string\>) - the lines of the stack trace
+- **error** (Object)
+  - **name** (string)
+  - **message** (string)
+  - **stack** (Array\<string\>) - the lines of the stack trace
 
 ### `log.fatal([...messageArgs])`
 
@@ -187,7 +187,7 @@ Type: `...any`
 
 See [console.log()](https://nodejs.org/dist/latest-v8.x/docs/api/console.html#console_console_log_data_args).
 
-## What is Cumulus?
+## About Cumulus
 
 Cumulus is a cloud-based data ingest, archive, distribution and management
 prototype for NASA's future Earth science data streams.
@@ -196,4 +196,4 @@ prototype for NASA's future Earth science data streams.
 
 ## Contributing
 
-See [Cumulus README](https://github.com/nasa/cumulus/blob/master/README.md#installing-and-deploying)
+To make a contribution, please [see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).

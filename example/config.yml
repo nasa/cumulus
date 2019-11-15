@@ -13,7 +13,7 @@ jl-tf:
 kk-test-tf:
   bucket: kk-test-internal
 
-lf-int-test-tf:
+lf-test-tf:
   bucket: lf-internal
 
 mth-tf:

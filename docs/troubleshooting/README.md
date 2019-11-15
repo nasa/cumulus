@@ -1,5 +1,5 @@
 ---
-id: system-documentation
+id: troubleshooting-readme
 title: Troubleshooting Cumulus
 hide_title: true
 ---
@@ -46,15 +46,18 @@ More information on kinesis error handling is [here](data-cookbooks/cnm-workflow
 
 `KMS Exception: AccessDeniedExceptionKMS Message: The ciphertext refers to a customer master key that does not exist, does not exist in this region, or you are not allowed to access.`
 
-The above error was being thrown by cumulus lambda function invocation. The KMS key is the encryption key used to encrypt lambda environment variables. The root cause of this error is unknown.
+The above error was being thrown by cumulus lambda function invocation. The KMS key is the encryption key used to encrypt lambda environment variables. The root cause of this error is unknown, but is speculated to be caused by deleting and recreating, with the same name, the IAM role the lambda uses.
 
-On a lambda level, this error can be resolved by updating the KMS Key to `aws/lambda`. We've done this through the management console. Unfortunately, this approach doesn't scale well.
+This error can be resolved by switching the lambda's execution role to a different one and then back through the Lambda management console. Unfortunately, this approach doesn't scale well.
 
 The other resolution (that scales but takes some time) that was found is as follows:
 
-1. Delete the whole `{{#each nested_templates}}` section from `@cumulus/deployment/app/cloudformation.template.yml` and redeploy the primary stack.
-2. Reinstall dependencies via `npm`.
-3. Re-deploy the stack.
+1. Comment out all lambda definitions (and dependent resources) in your Terraform configuration.
+2. `terraform apply` to delete the lambdas.
+3. Un-comment the definitions.
+4. `terraform apply` to recreate the lambdas.
+
+If this problem occurs with Core lambdas and you are using the `terraform-aws-cumulus.zip` file source distributed in our release, we recommend using the non-scaling approach as the number of lambdas we distribute is in the low teens, which are likely to be easier and faster to reconfigure one-by-one compared to editing our configs.
 
 [Discussed in the Earthdata Wiki](https://wiki.earthdata.nasa.gov/display/CUMULUS/KMS+Exception%3A+AccessDeniedException).
 
@@ -62,16 +65,16 @@ The other resolution (that scales but takes some time) that was found is as foll
 
 This error is shown in the CloudWatch logs for a Lambda function.
 
-One possible cause is that the Lambda definition in `lambdas.yml` is not pointing to the directory for the `index.js` source file. In order to resolve this issue, update the lambda definition in `lambdas.yml` to point to the parent directory of the `index.js` file.
+One possible cause is that the Lambda definition in the `.tf` file defining the lambda is not pointing to the correct packaged lambda source file. In order to resolve this issue, update the lambda definition to point directly to the packaged (e.g. `.zip`) lambda source file.
 
-```yaml
-DiscoverGranules:
-  handler: index.handler
-  timeout: 300
-  source: 'node_modules/@cumulus/discover-granules/dist/'
-  useMessageAdapter: true
+```hcl
+resource "aws_lambda_function" "discover_granules_task" {
+  function_name    = "${var.prefix}-DiscoverGranules"
+  filename         = "${path.module}/../../tasks/discover-granules/dist/lambda.zip"
+  handler          = "index.handler"
+}
 ```
 
-If you are seeing this error when using the Lambda as a step in a Cumulus workflow, then inspect the output for this Lambda step in the AWS Step Function console. If you see the error `Cannot find module 'node_modules/@cumulus/cumulus-message-adapter-js'`, then you need to set `useMessageAdapter: true` in the Lambda definition in `lambdas.yml`.
+If you are seeing this error when using the Lambda as a step in a Cumulus workflow, then inspect the output for this Lambda step in the AWS Step Function console. If you see the error `Cannot find module 'node_modules/@cumulus/cumulus-message-adapter-js'`, then you need to ensure the lambda's packaged dependencies include `cumulus-message-adapter-js`.
 
 [Discussed in the Earthdata Wiki](https://wiki.earthdata.nasa.gov/display/CUMULUS/Troubleshooting).

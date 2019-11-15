@@ -252,7 +252,7 @@ async function getXMLMetadataAsString(xmlFilePath) {
     throw new errors.XmlMetaFileNotFound('XML Metadata file not provided');
   }
   const { Bucket, Key } = aws.parseS3Uri(xmlFilePath);
-  const obj = await aws.getS3Object(Bucket, Key);
+  const obj = await aws.getS3Object(Bucket, Key, { retries: 5 });
   return obj.Body.toString();
 }
 
@@ -273,7 +273,7 @@ async function parseXmlString(xml) {
  */
 async function metadataObjectFromCMRJSONFile(cmrFilename) {
   const { Bucket, Key } = aws.parseS3Uri(cmrFilename);
-  const obj = await aws.getS3Object(Bucket, Key);
+  const obj = await aws.getS3Object(Bucket, Key, { retries: 5 });
   return JSON.parse(obj.Body.toString());
 }
 
