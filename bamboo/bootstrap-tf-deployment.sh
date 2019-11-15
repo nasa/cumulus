@@ -30,8 +30,7 @@ echo "terraform {
 
 # Initialize deployment
 ../terraform init \
-  -input=false \
-  -reconfigure
+  -input=false
 
 # Deploy data-persistence-tf via terraform
 echo "Deploying Cumulus data-persistence module to $DEPLOYMENT"
@@ -61,8 +60,7 @@ echo "terraform {
 
 # Initialize deployment
 ../terraform init \
-  -input=false \
-  -reconfigure
+  -input=false
 
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
