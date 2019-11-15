@@ -601,6 +601,6 @@ When a `kinesis` rule is created, in addition to the `messageConsumer` event map
 
 Cumulus also supports this feature for all outbound  messages.  To take advantage of this feature, you will need to set an event mapping on the `KinesisOutboundEventLogger` Lambda that targets your `cnmResponseStream`.   You can do this in the Lambda management page for `KinesisOutboundEventLogger`.    Add a Kinesis trigger, and configure it to target the cnmResponseStream for your workflow:
 
-![Screenshot of AWS console showing configuration for Kinesis stream trigger on KinesisOutboundEventLogger Lambda](assets/KinesisLambdaTriggerConfiguration.png)
+![Screenshot of the AWS console showing configuration for Kinesis stream trigger on KinesisOutboundEventLogger Lambda](assets/KinesisLambdaTriggerConfiguration.png)
 
 Once this is done, all records sent to the cnmResponseStream will also be logged in CloudWatch.    For more on configuring Lambdas to trigger on Kinesis events, please see [creating an event source mapping](https://docs.aws.amazon.com/lambda/latest/dg/with-kinesis.html#services-kinesis-eventsourcemapping).
