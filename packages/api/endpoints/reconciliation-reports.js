@@ -42,11 +42,7 @@ async function get(req, res) {
   const key = `${process.env.stackName}/reconciliation-reports/${name}`;
 
   try {
-    const file = await aws.getS3Object(
-      process.env.system_bucket,
-      key,
-      { retries: 0 }
-    );
+    const file = await aws.getS3Object(process.env.system_bucket, key);
     return res.send(JSON.parse(file.Body.toString()));
   } catch (err) {
     if (err.name === 'NoSuchKey') {
