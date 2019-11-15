@@ -28,9 +28,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     [S3's Data Consistency Model](https://docs.aws.amazon.com/AmazonS3/latest/dev/Introduction.html#BasicsObjects),
     there may be situations where a GET operation for an object can temporarily
     return a `NoSuchKey` response even if that object _has_ been created. The
-    `@cumulus/common/aws.getS3Object()` function will now retry up to 10 times
-    if a `NoSuchKey` response is returned by S3. This can behavior can be
-    overridden by passing `{ retries: 0 }` as the `retryOptions` argument.
+    `@cumulus/common/aws.getS3Object()` function has been updated to support
+    retries if a `NoSuchKey` response is returned by S3. This behavior can be
+    enabled by passing a `retryOptions` object to that function. Supported
+    values for that object can be found here:
+    <https://github.com/tim-kos/node-retry#retryoperationoptions>
 
 ### Removed
 
@@ -160,6 +162,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added `sqsMessageConsumer` lambda which processes messages from the SQS queues configured in the `sqs` rules.
 
 ### Changed
+
+- **CUMULUS-1639**
+  - Because of
+    [S3's Data Consistency Model](https://docs.aws.amazon.com/AmazonS3/latest/dev/Introduction.html#BasicsObjects),
+    there may be situations where a GET operation for an object can temporarily
+    return a `NoSuchKey` response even if that object _has_ been created. The
+    `@cumulus/common/aws.getS3Object()` function will now retry up to 10 times
+    if a `NoSuchKey` response is returned by S3. This can behavior can be
+    overridden by passing `{ retries: 0 }` as the `retryOptions` argument.
 
 - **CUMULUS-1449**
   - `queue-pdrs` & `queue-granules` config changes. Details in breaking changes section.
