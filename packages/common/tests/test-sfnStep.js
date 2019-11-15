@@ -26,7 +26,8 @@ const createFakeExecutionHistory = ({
   stepName = randomId('stepName'),
   stepType = 'lambda',
   timestamp = Date.now(),
-  failed = true
+  failed = true,
+  finalEventType = 'taskExit'
 }) => {
   const isLambdaHistory = stepType === 'lambda';
   const scheduledDetailsKey = isLambdaHistory
@@ -43,45 +44,58 @@ const createFakeExecutionHistory = ({
     completionEventType = isLambdaHistory ? 'LambdaFunctionSucceeded' : 'ActivitySucceeded';
   }
 
-  return {
-    events: [
-      {
-        timestamp,
-        type: isLambdaHistory ? 'LambdaFunctionScheduled' : 'ActivityScheduled',
-        id: 30,
-        previousEventId: 29,
-        [scheduledDetailsKey]: {
-          resource: stepName,
-          input: JSON.stringify(message)
-        }
-      },
-      {
-        timestamp: timestamp + 100,
-        type: isLambdaHistory ? 'LambdaFunctionStarted' : 'ActivityStarted',
-        id: 31,
-        previousEventId: 30
-      },
-      {
-        timestamp: timestamp + 200,
-        type: completionEventType,
-        id: 32,
-        previousEventId: 31,
-        [failureDetailsKey]: failedStepOutput
-      },
-      {
-        timestamp: timestamp + 200,
-        type: 'TaskStateExited',
-        id: 33,
-        previousEventId: 32,
-        stateExitedEventDetails: {
-          name: stepName,
-          output: JSON.stringify({
-            ...message,
-            exception: failedStepException
-          })
-        }
+  const events = [
+    {
+      timestamp,
+      type: isLambdaHistory ? 'LambdaFunctionScheduled' : 'ActivityScheduled',
+      id: 30,
+      previousEventId: 29,
+      [scheduledDetailsKey]: {
+        resource: stepName,
+        input: JSON.stringify(message)
       }
-    ]
+    },
+    {
+      timestamp: timestamp + 100,
+      type: isLambdaHistory ? 'LambdaFunctionStarted' : 'ActivityStarted',
+      id: 31,
+      previousEventId: 30
+    },
+    {
+      timestamp: timestamp + 200,
+      type: completionEventType,
+      id: 32,
+      previousEventId: 31,
+      [failureDetailsKey]: failedStepOutput
+    }
+  ];
+
+  if (finalEventType === 'taskExit') {
+    events.push({
+      timestamp: timestamp + 200,
+      type: 'TaskStateExited',
+      id: 33,
+      previousEventId: 32,
+      stateExitedEventDetails: {
+        name: stepName,
+        output: JSON.stringify({
+          ...message,
+          exception: failedStepException
+        })
+      }
+    });
+  } else if (finalEventType === 'executionFail') {
+    events.push({
+      timestamp: timestamp + 200,
+      type: 'ExecutionFailed',
+      id: 33,
+      previousEventId: 32,
+      executionFailedEventDetails: failedStepException
+    });
+  }
+
+  return {
+    events
   };
 };
 
@@ -238,6 +252,37 @@ test.serial('LambdaStep.getFirstFailedStepMessage() returns correct message', as
     const expectedMessage = {
       ...message,
       exception: failedStepException
+    };
+    t.deepEqual(failedStepInput, expectedMessage);
+  } finally {
+    getExecutionHistoryStub.restore();
+  }
+});
+
+test.serial.only('LambdaStep.getFirstFailedStepMessage() returns correct message for failed workflow with single step', async (t) => {
+  // execution ARN doesn't matter because we're mocking the call to get
+  // execution history
+  const executionArn = randomId('execution');
+  const message = createCumulusMessage({
+    payload: {
+      foo: 'bar'
+    }
+  });
+
+  const stepName = randomId('step');
+  const fakeExecutionHistory = createFakeExecutionHistory({
+    message,
+    stepName,
+    finalEventType: 'executionFail'
+  });
+  const getExecutionHistoryStub = sinon.stub(StepFunctions, 'getExecutionHistory')
+    .callsFake(() => fakeExecutionHistory);
+
+  try {
+    const lambdaStep = new LambdaStep();
+    const failedStepInput = await lambdaStep.getFirstFailedStepMessage(executionArn);
+    const expectedMessage = {
+      ...failedStepException
     };
     t.deepEqual(failedStepInput, expectedMessage);
   } finally {
