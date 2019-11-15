@@ -6,7 +6,7 @@ hide_title: true
 
 # Configuration and Message Use Diagram
 
-![Diagram showing the scheduling and execution of Cumulus workflows, including expected schemas for workflow step inputs and outputs](assets/cumulus_configuration_and_message_schema_diagram.png)
+![A diagram showing at which point in a workflow the Cumulus message is checked for conformity with the message schema and where the configuration is checked for conformity with the configuration schema](assets/cumulus_configuration_and_message_schema_diagram.png)
 
 * **Configuration** - The Cumulus workflow configuration defines everything needed to describe an instance of Cumulus.
 * **Scheduler** - This starts ingest of a collection on configured intervals.
