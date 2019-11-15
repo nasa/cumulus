@@ -3,11 +3,12 @@
 Common libraries used in Cumulus.
 
 ## Usage
-```
-$ npm install @cumulus/common
+
+```bash
+  npm install @cumulus/common
 ```
 
-## What is Cumulus?
+## About Cumulus
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
 
@@ -35,4 +36,4 @@ Cumulus is a cloud-based data ingest, archive, distribution and management proto
 
 ## Contributing
 
-See [Cumulus README](https://github.com/nasa/cumulus/blob/master/README.md#installing-and-deploying)
+To make a contribution, please [see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).
