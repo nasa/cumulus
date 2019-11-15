@@ -487,7 +487,7 @@ To test the failure scenario, send a record missing the `collection` key.
 
 Following the successful execution of this workflow, you should expect to see the workflow complete successfully on the dashboard:
 
-![Screenshot of Cumulus dashboard showing a successful CNM workflow appearing on the executions page](assets/cnm_success_example.png)
+![Screenshot of a successful CNM workflow appearing on the executions page of the Cumulus dashboard](assets/cnm_success_example.png)
 
 ### Check the test granule has been delivered to S3 staging
 
