@@ -2,7 +2,7 @@
 
 @cumulus/ingest is a collection of modules for discovering and ingesting data.
 
-## What is Cumulus?
+## About Cumulus
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
 
@@ -10,7 +10,7 @@ Cumulus is a cloud-based data ingest, archive, distribution and management proto
 
 ## Installation
 
-```
+```bash
 npm install @cumulus/ingest
 ```
 
@@ -20,7 +20,7 @@ Running tests locally requires [localstack](https://github.com/localstack/locals
 
 With localstack running, you can run tests using:
 
-```
+```bash
 LOCALSTACK_HOST=localhost npm test
 ```
 
@@ -43,4 +43,4 @@ All modules are accessible using require: `require('@cumulus/ingest/<MODULE_NAME
 
 ## Contributing
 
-See [Cumulus README](https://github.com/nasa/cumulus/blob/master/README.md#installing-and-deploying)
+To make a contribution, please [see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).

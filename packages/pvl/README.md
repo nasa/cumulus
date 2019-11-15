@@ -1,6 +1,6 @@
 # @cumulus/pvl
 
-## What is Cumulus?
+## About Cumulus
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
 
@@ -12,9 +12,9 @@ A JS module to parse and serialize Parameter Value Language, a data markup langu
 
 ### How-to
 
-#### Parse!
+#### Parse
 
-```
+```js
 > const pvl = require('./pvl/index.js')
 
 > const input = (`
@@ -46,9 +46,9 @@ PVLRoot {
 '{"store":[["ORIGINATING_SYSTEM",{"value":"ASTER_FTP","type":"text string"}],["OBJECT",{"store":[["DATA_TYPE",{"value":"AST_L1A","type":"text string"}],["OBJECT",{"store":[["FILE_ID",{"value":"pg-PR1A0000-2017040601_000_001","type":"text string"}],["FILE_TYPE",{"value":"SCIENCE","type":"text string"}],["FILE_SIZE",{"value":116503123,"type":"numeric"}]],"identifier":"FILE_SPEC","type":"OBJECT"}],["OBJECT",{"store":[["FILE_ID",{"value":"pg-BR1A0000-2017040601_000_001","type":"text string"}],["FILE_TYPE",{"value":"BROWSE","type":"text string"}],["FILE_SIZE",{"value":166428,"type":"numeric"}]],"identifier":"FILE_SPEC","type":"OBJECT"}]],"identifier":"FILE_GROUP","type":"OBJECT"}]],"type":"ROOT","depth":0}'
 ```
 
-#### Serialize!
+#### Serialize
 
-```
+```js
 ...
 > const serialized = pvl.jsToPVL(parsed)
 
@@ -70,9 +70,9 @@ END_OBJECT = FILE_GROUP;
 
 ```
 
-#### Traverse the object and get values!
+#### Traverse the object and get values
 
-```
+```js
 ...
 > parsed.get('ORIGINATING_SYSTEM')  // Get the item with the given key
 PVLTextString { value: 'ASTER_FTP', type: 'text string' }
@@ -105,9 +105,9 @@ PVLTextString { value: 'ASTER_FTP', type: 'text string' }
 'pg-BR1A0000-2017040601_000_001'
 ```
 
-#### Roll your own!
+#### Roll your own
 
-```
+```js
 ...
 > const PVLRoot = pvl.models.PVLRoot
 > const PVLTextString = pvl.models.PVLTextString
@@ -154,4 +154,4 @@ Run tests with `npm test`.
 
 ## Contributing
 
-See [Cumulus README](https://github.com/nasa/cumulus/blob/master/README.md#installing-and-deploying)
+To make a contribution, please [see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).

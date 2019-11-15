@@ -58,6 +58,7 @@ module "archive" {
 
   api_port = var.archive_api_port
   private_archive_api_gateway = var.private_archive_api_gateway
+  api_gateway_stage = var.api_gateway_stage
 
   schedule_sf_function_arn                         = module.ingest.schedule_sf_lambda_function_arn
   message_consumer_function_arn                    = module.ingest.message_consumer_lambda_function_arn

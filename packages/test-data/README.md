@@ -2,7 +2,7 @@
 
 @cumulus/test-data provides a collection of example data for use in testing Cumulus modules.
 
-## What is Cumulus?
+## About Cumulus
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
 
@@ -10,7 +10,7 @@ Cumulus is a cloud-based data ingest, archive, distribution and management proto
 
 ## Installation
 
-```
+```bash
 npm install @cumulus/test-data
 ```
 
@@ -25,4 +25,4 @@ import payload from '@cumulus/test-data/payloads/new-message-schema/ingest.json'
 
 ## Contributing
 
-See [Cumulus README](https://github.com/nasa/cumulus/blob/master/README.md#installing-and-deploying)
+To make a contribution, please [see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).

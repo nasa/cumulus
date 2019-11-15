@@ -4,5 +4,5 @@
   "no-duplicate-header": false,
   "single-h1": { "front_matter_title": "" },
   "ol-prefix": { "style": "ordered" },
-  "no-inline-html": { "allowed_elements": ["code", "br"] }
+  "no-inline-html": { "allowed_elements": ["code", "br", "ul", "li"] }
 }
