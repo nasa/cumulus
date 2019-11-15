@@ -26,7 +26,7 @@ const launchpadPublicCertificate = async (launchpadPublicMetadataPath) => {
   let launchpadMetatdataXML;
   const { Bucket, Key } = aws.parseS3Uri(launchpadPublicMetadataPath);
   try {
-    const s3Object = await aws.getS3Object(Bucket, Key, { retries: 0 });
+    const s3Object = await aws.getS3Object(Bucket, Key);
     launchpadMetatdataXML = s3Object.Body.toString();
   } catch (error) {
     if (error.code === 'NoSuchKey' || error.code === 'NoSuchBucket') {

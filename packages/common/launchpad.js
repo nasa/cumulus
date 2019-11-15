@@ -33,7 +33,7 @@ async function getValidLaunchpadTokenFromS3() {
 
   let token = null;
   if (keyExists) {
-    const s3object = await getS3Object(s3location.Bucket, s3location.Key, { retries: 0 });
+    const s3object = await getS3Object(s3location.Bucket, s3location.Key);
     const launchpadToken = JSON.parse(s3object.Body.toString());
 
     // check if token is still valid
