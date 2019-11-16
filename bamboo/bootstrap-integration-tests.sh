@@ -19,7 +19,6 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   echo "***Deploying stack with deployment packages"
 
   ## Update cumulus-tf
-
   cd example/cumulus-tf
   # Update to use workflow module
   sed -i "s/source = \"..\/..\/tf-modules\/workflow/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus-workflow.zip\/\//g" *.tf
