@@ -107,7 +107,7 @@ test.serial('uploadEcho10CMRFile uploads CMR File to S3 correctly, preserving ta
     const newXmlString = '<Granule>new-granule</Granule>';
     await uploadEcho10CMRFile(newXmlString, cmrFile);
 
-    const s3Obj = await getS3Object(cmrFile.bucket, cmrFile.key, { retries: 0 });
+    const s3Obj = await getS3Object(cmrFile.bucket, cmrFile.key);
     t.is(s3Obj.Body.toString(), newXmlString);
     t.is(s3Obj.ContentType, 'application/xml');
 
@@ -136,7 +136,7 @@ test.serial('uploadUMMGJSONCMRFile uploads CMR File to S3 correctly, preserving 
     const newFakeMetaObj = { newFake: 'granule' };
     await uploadUMMGJSONCMRFile(newFakeMetaObj, cmrFile);
 
-    const s3Obj = await getS3Object(cmrFile.bucket, cmrFile.key, { retries: 0 });
+    const s3Obj = await getS3Object(cmrFile.bucket, cmrFile.key);
     t.is(s3Obj.Body.toString(), JSON.stringify(newFakeMetaObj));
     t.is(s3Obj.ContentType, 'application/json');
 

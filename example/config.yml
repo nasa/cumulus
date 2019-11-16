@@ -4,13 +4,16 @@ default:
 mvd-tf:
   bucket: mvd-internal
 
+mvd-dev-tf:
+  bucket: mvd-internal
+
 jl-tf:
   bucket: jl-test-integration-internal
 
 kk-test-tf:
   bucket: kk-test-internal
 
-lf-int-test-tf:
+lf-test-tf:
   bucket: lf-internal
 
 mth-tf:

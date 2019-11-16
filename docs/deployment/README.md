@@ -345,6 +345,10 @@ Also add the Distribution url `https://<kido2r7kji>.execute-api.us-east-1.amazon
 
 If you've lost track of the needed redirect URIs, they can be located on the [API Gateway](https://console.aws.amazon.com/apigateway).  Once there, select `<prefix>-archive` and/or `<prefix>-thin-egress-app-EgressGateway`, `Dashboard` and utilizing the base URL at the top of the page that is accompanied by the text `Invoke this API at:`.  Make sure to append `/token` for the archive URL and `/login` to the thin egress app URL.
 
+### Troubleshooting
+
+Please see our [troubleshooting documentation for any issues with your deployment](./troubleshoot_deployment.md).
+
 --------------
 
 ## Deploy Cumulus dashboard

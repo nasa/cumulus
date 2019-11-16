@@ -54,8 +54,10 @@ output "schedule_sf_lambda_function_arn" {
   value = aws_lambda_function.schedule_sf.arn
 }
 
-output "sf_sns_report_task_lambda_function_arn" {
-  value = aws_lambda_function.sf_sns_report_task.arn
+output "sf_sns_report_task" {
+  value = {
+    task_arn = aws_lambda_function.sf_sns_report_task.arn
+  }
 }
 
 output "sf_semaphore_down_lambda_function_arn" {
@@ -64,6 +66,10 @@ output "sf_semaphore_down_lambda_function_arn" {
 
 output "sync_granule_task" {
   value = module.sync_granule_task
+}
+
+output "sqs2sfThrottle_lambda_function_arn" {
+  value = aws_lambda_function.sqs2sfThrottle.arn
 }
 
 output "step_role_arn" {

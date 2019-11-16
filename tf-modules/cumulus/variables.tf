@@ -102,6 +102,12 @@ variable "urs_client_password" {
 
 # Optional
 
+variable "api_gateway_stage" {
+  type        = string
+  default     = "dev"
+  description = "The archive API Gateway stage to create"
+}
+
 variable "archive_api_port" {
   description = "Port number that should be used for archive API requests"
   type    = number
@@ -138,6 +144,12 @@ variable "cmr_page_size" {
   default = 50
 }
 
+variable "custom_queues" {
+  description = "Map of SQS queue identifiers to queue URLs"
+  type    = list(object({ id = string, url = string }))
+  default = []
+}
+
 variable "distribution_url" {
   description = " URL for the distribution API"
   type    = string
@@ -159,7 +171,7 @@ variable "ecs_cluster_instance_docker_volume_size" {
 variable "ecs_cluster_instance_image_id" {
   type        = string
   description = "AMI ID of ECS instances"
-  default     = "ami-03e7dd4efa9b91eda"
+  default     = "ami-0fa9de75aa0a1f1b3"
 }
 
 variable "ecs_cluster_instance_type" {
@@ -222,6 +234,60 @@ variable "enable_task_versioning" {
   description = "Enable versioning and aliases for Cumulus core workflow tasks"
   type = bool
   default = false
+}
+
+variable "ems_datasource" {
+  type        = string
+  description = "the data source of EMS reports"
+  default     = "UAT"
+}
+
+variable "ems_host" {
+  type        = string
+  description = "EMS host"
+  default     = "change-ems-host"
+}
+
+variable "ems_path" {
+  type        = string
+  description = "EMS host directory path for reports"
+  default     = "/"
+}
+
+variable "ems_port" {
+  type        = number
+  description = "EMS host port"
+  default     = 22
+}
+
+variable "ems_private_key" {
+  type        = string
+  description = "the private key file used for sending reports to EMS"
+  default     = "ems-private.pem"
+}
+
+variable "ems_provider" {
+  type        = string
+  description = "the provider used for sending reports to EMS"
+  default     = "CUMULUS"
+}
+
+variable "ems_retention_in_days" {
+  type        = number
+  description = "the retention in days for reports and s3 server access logs"
+  default     = 30
+}
+
+variable "ems_submit_report" {
+  type        = bool
+  description = "toggle whether the reports will be sent to EMS"
+  default     = false
+}
+
+variable "ems_username" {
+  type        = string
+  description = "the username used for sending reports to EMS"
+  default     = "cumulus"
 }
 
 variable "key_name" {
@@ -305,14 +371,6 @@ variable "private_archive_api_gateway" {
   default = true
 }
 
-variable "queue_execution_limits" {
-  description = "Map specifying maximum concurrent execution limits for the queue(s) identified by the keys"
-  type = map(number)
-  default = {
-    backgroundProcessing = 5
-  }
-}
-
 variable "region" {
   description = "The AWS region to deploy to"
   type    = string
@@ -340,6 +398,12 @@ variable "saml_launchpad_metadata_path" {
   description = "The S3 url of the Identity Provider public metadata xml file"
   type    = string
   default = "N/A"
+}
+
+variable "throttled_queues" {
+  description = "Array of configuration for custom queues with execution limits"
+  type    = list(object({ id = string, url = string, execution_limit = number }))
+  default = []
 }
 
 variable "urs_url" {

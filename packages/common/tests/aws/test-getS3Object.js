@@ -41,25 +41,25 @@ test('getS3Object() throws an exception if the requested key does not exist', as
   t.is(err.code, 'NoSuchKey');
 });
 
-test('getS3Object() retries if the requested key does not exist', async (t) => {
+test('getS3Object() immediately throws an exception if the requested key does not exist', async (t) => {
+  const { Bucket } = t.context;
+
+  const promisedGetS3Object = getS3Object(Bucket, 'asdf');
+
+  const err = await t.throwsAsync(pTimeout(promisedGetS3Object, 5000));
+
+  t.is(err.code, 'NoSuchKey');
+});
+
+test('getS3Object() will retry if the requested key does not exist', async (t) => {
   const { Bucket } = t.context;
   const Key = randomString();
 
-  const promisedGetS3Object = getS3Object(Bucket, Key);
+  const promisedGetS3Object = getS3Object(Bucket, Key, { retries: 5 });
   await sleep(3000)
     .then(() => s3().putObject({ Bucket, Key, Body: 'asdf' }).promise());
 
   const response = await promisedGetS3Object;
 
   t.is(response.Body.toString(), 'asdf');
-});
-
-test('getS3Object() immediately throws an exception if retries are set to 0', async (t) => {
-  const { Bucket } = t.context;
-
-  const promisedGetS3Object = getS3Object(Bucket, 'asdf', { retries: 0 });
-
-  const err = await t.throwsAsync(pTimeout(promisedGetS3Object, 5000));
-
-  t.is(err.code, 'NoSuchKey');
 });

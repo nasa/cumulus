@@ -14,7 +14,15 @@ module "archive" {
   elasticsearch_hostname          = var.elasticsearch_hostname
   elasticsearch_security_group_id = var.elasticsearch_security_group_id
 
-  ems_host = "change-ems-host"
+  ems_host              = var.ems_host
+  ems_port              = var.ems_port
+  ems_path              = var.ems_path
+  ems_datasource        = var.ems_datasource
+  ems_private_key       = var.ems_private_key
+  ems_provider          = var.ems_provider
+  ems_retention_in_days = var.ems_retention_in_days
+  ems_submit_report     = var.ems_submit_report
+  ems_username          = var.ems_username
 
   system_bucket     = var.system_bucket
   public_buckets    = local.public_bucket_names
@@ -50,6 +58,7 @@ module "archive" {
 
   api_port = var.archive_api_port
   private_archive_api_gateway = var.private_archive_api_gateway
+  api_gateway_stage = var.api_gateway_stage
 
   schedule_sf_function_arn                         = module.ingest.schedule_sf_lambda_function_arn
   message_consumer_function_arn                    = module.ingest.message_consumer_lambda_function_arn

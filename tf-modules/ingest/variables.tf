@@ -42,6 +42,12 @@ variable "cumulus_message_adapter_lambda_layer_arn" {
   default = null
 }
 
+variable "custom_queues" {
+  description = "Map of SQS queue identifiers to queue URLs"
+  type    = list(object({ id = string, url = string }))
+  default = []
+}
+
 variable "distribution_url" {
   type = string
 }
@@ -101,11 +107,6 @@ variable "report_pdrs_sns_topic_arn" {
   type = string
 }
 
-variable "queue_execution_limits" {
-  type    = map(number)
-  default = {}
-}
-
 variable "sf_start_rate" {
   type    = number
   default = null
@@ -118,6 +119,12 @@ variable "system_bucket" {
 variable "task_version" {
   type = string
   default = null
+}
+
+variable "throttled_queues" {
+  description = "Array of configuration for custom queues with execution limits"
+  type    = list(object({ id = string, url = string, execution_limit = number }))
+  default = []
 }
 
 variable "vpc_id" {

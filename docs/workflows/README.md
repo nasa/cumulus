@@ -5,6 +5,7 @@ hide_title: true
 ---
 
 # Workflows
+
 Workflows are comprised of one or more AWS Lambda Functions and ECS Activities to discover, ingest, process, manage and archive data.
 
 Provider data ingest and GIBS have a set of common needs in getting data from a source system and into the cloud where they can be distributed to end users. These common needs are:
@@ -17,44 +18,45 @@ The high level view of the architecture and many of the individual steps are the
 
 AWS and other cloud vendors provide an ideal solution for parts of these problems but there needs to be a higher level solution to allow the composition of AWS components into a full featured solution. The Ingest Workflow Architecture is designed to meet the needs for Earth Science data ingest and transformation.
 
-### Goals
+## Goals
 
-#### Flexibility and Composability
+### Flexibility and Composability
 
 The steps to ingest and process data is different for each collection within a provider. Ingest should be as flexible as possible in the rearranging of steps and configuration.
 
 We want to use lego-like individual steps that can be composed by an operator.
 
 Individual steps should ...
-  * be as ignorant as possible of the overall flow. They should not be aware of previous steps.
-  * be runnable on their own.
-  * define their input and output in simple data structures.
-  * be domain agnostic.
-    * Don't make assumptions of specifics of what goes into a granule for example.
 
-#### Scalable
+* Be as ignorant as possible of the overall flow. They should not be aware of previous steps.
+* Be runnable on their own.
+* Define their input and output in simple data structures.
+* Be domain agnostic.
+* Not make assumptions of specifics of what goes into a granule for example.
+
+### Scalable
 
 The ingest architecture needs to be scalable both to handle ingesting hundreds of millions of granules and interpret dozens of different workflows.
 
-#### Data Provenance
+### Data Provenance
 
-  * We should have traceability for how data was produced and where it comes from.
-  * Use immutable representations of data. Data once received is not overwritten. Data can be removed for cleanup.
-  * All software is versioned. We can trace transformation of data by tracking the immutable source data and the versioned software applied to it.
+* We should have traceability for how data was produced and where it comes from.
+* Use immutable representations of data. Data once received is not overwritten. Data can be removed for cleanup.
+* All software is versioned. We can trace transformation of data by tracking the immutable source data and the versioned software applied to it.
 
-#### Operator Visibility and Control.
+### Operator Visibility and Control
 
-  * Operators should be able to see and understand everything that is happening in the system.
-  * It should be obvious why things are happening and straightforward to diagnose problems.
-  * We generally assume that the operators know best in terms of the limits on a providers infrastructure, how often things need to be done, and details of a collection. The architecture should defer to their decisions and knowledge while providing safety nets to prevent problems.
+* Operators should be able to see and understand everything that is happening in the system.
+* It should be obvious why things are happening and straightforward to diagnose problems.
+* We generally assume that the operators know best in terms of the limits on a providers infrastructure, how often things need to be done, and details of a collection. The architecture should defer to their decisions and knowledge while providing safety nets to prevent problems.
 
 ## A Reconfigurable Workflow Architecture
 
 The Ingest Workflow Architecture is defined by two entity types, [Workflows](#workflows) and [Tasks](#tasks). A Workflow is a set of composed Tasks to complete an objective such as ingesting a granule. Tasks are the individual steps of a Workflow that perform one job. The workflow is responsible for executing the right task based on the current state and response from the last task executed. Tasks are completely decoupled in that they don't call each other or even need to know about the presence of other tasks.
 
-Workflows and tasks are configured via a [JSON configuration file](#collection-configuration-file). A scheduler initiates workflows as configured by that JSON file.
+Workflows and tasks are configured as Terraform resources, which are triggered via configured `rules` within Cumulus.
 
-![](assets/ingest_diagram.png)
+![Diagram showing the Step Function execution path through workflow tasks for a collection ingest](assets/ingest_diagram.png)
 
 See the [Example GIBS Ingest Architecture](#example-gibs-ingest-architecture) showing how workflows and tasks are used to define the GIBS Ingest Architecture.
 
@@ -83,7 +85,7 @@ AWS Step functions are described in detail in the AWS documentation but they pro
 
 #### Workflow Scheduler
 
-The scheduler is responsible for initiating a step function and passing in the relevant data for a collection. This is currently configured as an interval for each collection. The Scheduler service creates the initial event by combining the collection configuration with the AWS execution context provided by its CloudFormation template.
+The scheduler is responsible for initiating a step function and passing in the relevant data for a collection. This is currently configured as an interval for each collection. The scheduler service creates the initial event by combining the collection configuration with the AWS execution context defined via the `cumulus` terraform module.
 
 ### Tasks
 
@@ -102,35 +104,19 @@ AWS Step Functions permit [tasks](http://docs.aws.amazon.com/step-functions/late
 * **Data-centric Configuration**
   * The use of a single JSON configuration file allows this to be added to a workflow. We build additional support on top of the configuration file for simpler domain specific configuration or interactive GUIs.
 
-See the [Configuration File Schema](#collection-configuration-json-schema).
-
-For more details on Task Messages and Configuration, visit [Cumulus Configuration and Message Protocol](cumulus-task-message-flow.md).
+For more details on Task Messages and Configuration, visit [Cumulus configuration and message protocol documentation](cumulus-task-message-flow.md).
 
 ### Ingest Deploy
 
-To view deployment documentation, please see [Deployment of Cumulus Documentation](deployment/README.md).
+To view deployment documentation, please see the [Cumulus deployment documentation](deployment/README.md).
 
-## Risks, Tradeoffs, and Benefits
+## Tradeoffs, and Benefits
 
-This section documents various risks, tradeoffs, and benefits of the Ingest Workflow Architecture.
-
-### Risks
-
-This section documents potential risks and mitigations of the Ingest Workflow Architecture.
-
-#### AWS Step Functions are relatively new.
-
-AWS Step Functions were introduced and made public on December 1, 2016. As a newer service in AWS this could mean that they have reliability issues or may undergo changing. There are several reasons why this risk may not be significant.
-
-* AWS Step Functions is the next version of an older service Simple Workflow Service (SWS) built by the same team. It incorporates lessons learned from the previous one. SWS is now deprecated by AWS.
-* In an introductory video, AWS stated that they've been using Step Functions internally before release.
-* Tasks are built on older technologies. Even the newest one, Lambda is several years old.
-
-Missing features is likely to be encountered. We found there is now built in For-Each capability. We can work around problems like this, as shown in the [GIBS Ingest Architecture](#example-gibs-ingest-architecture) by splitting the workflow. This does increase the complexity of the overall solution by requiring more workflow definitions.
+This section documents various tradeoffs and benefits of the Ingest Workflow Architecture.
 
 ### Tradeoffs
 
-#### Workflow execution is handled completely by AWS.
+#### Workflow execution is handled completely by AWS
 
 This means we can't add our own code into the orchestration of the workflow. We can't add new features not supported by Step Functions. We can't do things like enforce that the responses from tasks always conform to a schema or extract the configuration for a task ahead of it's execution.
 
@@ -191,11 +177,10 @@ This shows the GIBS Ingest Architecture as an example of the use of the Ingest W
 
 #### GIBS Ingest Workflows
 
-![](assets/ingest_diagram_gibs.png)
+![Diagram showing the AWS Step Function execution path for a GIBS ingest workflow](assets/ingest_diagram_gibs.png)
 
 #### GIBS Ingest Granules Workflow
 
 This shows a visualization of an execution of the ingets granules workflow in step functions. The steps highlighted in green are the ones that executed and completed successfully.
 
-![](assets/gibs_ingest_granules_workflow.png)
-
+![Diagram showing the AWS Step Function execution path for a GIBS ingest granules workflow](assets/gibs_ingest_granules_workflow.png)

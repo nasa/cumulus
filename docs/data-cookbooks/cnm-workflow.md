@@ -12,19 +12,19 @@ Prior to working through this entry you should be familiar with the [Cloud Notif
 
 ## Sections
 
-* [Prerequisites](#prerequisites)
-* [Configure the Workflow](#configure-the-workflow)
-* [Execute the Workflow](#execute-the-workflow)
-* [Verify Results](#verify-results)
-* [Kinesis Record Error Handling](#kinesis-record-error-handling)
+- [Prerequisites](#prerequisites)
+- [Configure the Workflow](#configure-the-workflow)
+- [Execute the Workflow](#execute-the-workflow)
+- [Verify Results](#verify-results)
+- [Kinesis Record Error Handling](#kinesis-record-error-handling)
 
-------------
+---
 
 ## Prerequisites
 
 ### Cumulus
 
-This entry assumes you have a deployed instance of Cumulus (version >= 1.16.0).   The entry assumes you are deploying Cumulus via the [`cumulus` terraform module](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus) sourced from the [release page](https://github.com/nasa/cumulus/releases).
+This entry assumes you have a deployed instance of Cumulus (version >= 1.16.0). The entry assumes you are deploying Cumulus via the [`cumulus` terraform module](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus) sourced from the [release page](https://github.com/nasa/cumulus/releases).
 
 ### AWS CLI
 
@@ -42,7 +42,7 @@ You should be able to quickly use the "Create Data Stream" button on the [Kinesi
 
 ![Screenshot of AWS console page for creating a Kinesis stream](assets/cnm_create_kinesis_stream.jpg)
 
-Please bear in mind that your `{{prefix}}-lambda-processing` IAM role will need permissions to write to the response stream for this workflow to succeed if you create the Kinesis stream with a dashboard user.   If you are using the `cumulus` top-level module for your deployment this should be set properly.
+Please bear in mind that your `{{prefix}}-lambda-processing` IAM role will need permissions to write to the response stream for this workflow to succeed if you create the Kinesis stream with a dashboard user. If you are using the `cumulus` top-level module for your deployment this should be set properly.
 
 If not, the most straightforward approach is to attach the `AmazonKinesisFullAccess` policy for the stream resource to whatever role your Lambda
 s are using, however your environment/security policies may require an approach specific to your deployment environment.
@@ -53,15 +53,15 @@ For more information on how this process works and how to develop a process that
 
 ### Source Data
 
-This entry will run the SyncGranule task against a single target data file.  To that end it will require a single data file to be present in an S3 bucket matching the Provider configured in the next section.
+This entry will run the SyncGranule task against a single target data file. To that end it will require a single data file to be present in an S3 bucket matching the Provider configured in the next section.
 
 ### Collection and Provider
 
-Cumulus will need to be configured with a Collection and Provider entry of your choosing.  The provider should match the location of the source data from the `Ingest Source Data` section.
+Cumulus will need to be configured with a Collection and Provider entry of your choosing. The provider should match the location of the source data from the `Ingest Source Data` section.
 
-This can be done via the [Cumulus Dashboard](https://github.com/nasa/cumulus-dashboard) if installed or the [API](../api.md).  It is strongly recommended to use the dashboard if possible.
+This can be done via the [Cumulus Dashboard](https://github.com/nasa/cumulus-dashboard) if installed or the [API](../api.md). It is strongly recommended to use the dashboard if possible.
 
-------------
+---
 
 ## Configure the Workflow
 
@@ -77,8 +77,8 @@ The following [workflow definition](workflows/README.md) should be added to a ne
 
 Add the folowing to the new terraform file in your deployment directory, updating the following:
 
-* Set the `CNMResponseStream` key in the `CnmResponse` task in the workflow JSON to match the name of the Kinesis response stream you configured in the prerequisites section
-* Update the `source` key to the workflow module to match the Cumulus release associated with your deployment.
+- Set the `CNMResponseStream` key in the `CnmResponse` task in the workflow JSON to match the name of the Kinesis response stream you configured in the prerequisites section
+- Update the `source` key to the workflow module to match the Cumulus release associated with your deployment.
 
 ```hcl
 module "parse_pdr_workflow" {
@@ -154,7 +154,7 @@ state_machine_definition = <<JSON
           }
         },
         "Type": "Task",
-        "Resource": "${module.cumulus.sync_granule_task_lambda_function_arn}",
+        "Resource": "${module.cumulus.sync_granule_task.task_arn}",
         "Retry": [
           {
             "ErrorEquals": [
@@ -218,18 +218,18 @@ Again, please make sure to modify the value CNMResponseStream to match the strea
 
 ### Lambda Configuration
 
-To execute this workflow, you're required to include several Lambda resources in your deployment.  To do this, add the following task (Lambda) definitions to your deployment along with the workflow you created above:
+To execute this workflow, you're required to include several Lambda resources in your deployment. To do this, add the following task (Lambda) definitions to your deployment along with the workflow you created above:
 
-* <https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_to_cma_task.tf>
-* <https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_response_task.tf>
+- <https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_to_cma_task.tf>
+- <https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_response_task.tf>
 
-**Please note:** To utilize these tasks you need to ensure you have a compatible CMA layer.  See the [deployment instructions](../deployment/README.md#deploy-cumulus-message-adapter-layer) for more details on how to deploy a CMA layer.
+**Please note:** To utilize these tasks you need to ensure you have a compatible CMA layer. See the [deployment instructions](../deployment/README.md#deploy-cumulus-message-adapter-layer) for more details on how to deploy a CMA layer.
 
 Below is a description of each of these tasks:
 
 #### CNMToCMA
 
-`CNMToCMA` is meant for the beginning of a workflow: it maps CNM granule information to a payload for downstream tasks. For other CNM workflows, you would need to ensure that downstream tasks in your workflow either understand the CNM message *or* include a translation task like this one.
+`CNMToCMA` is meant for the beginning of a workflow: it maps CNM granule information to a payload for downstream tasks. For other CNM workflows, you would need to ensure that downstream tasks in your workflow either understand the CNM message _or_ include a translation task like this one.
 
 You can also manipulate the data sent to downstream tasks using `task_config` for various states in your workflow resource configuration. Read more about how to configure data on the [Workflow Input & Output](https://nasa.github.io/cumulus/docs/workflows/input_output) page.
 
@@ -276,12 +276,12 @@ To add a rule via the dashboard (if you'd like to use the API, see the docs [her
 
 **Please Note:**
 
-* The rule's `value` attribute value must match the Amazon Resource Name [ARN](https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html) for the Kinesis data stream you've preconfigured.   You should be able to obtain this ARN from the Kinesis Dashboard entry for the selected stream.
-* The collection and provider should match the collection and provider you setup in the [`Prerequisites`](#prerequisites) section.
+- The rule's `value` attribute value must match the Amazon Resource Name [ARN](https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html) for the Kinesis data stream you've preconfigured. You should be able to obtain this ARN from the Kinesis Dashboard entry for the selected stream.
+- The collection and provider should match the collection and provider you setup in the [`Prerequisites`](#prerequisites) section.
 
 Once you've clicked on 'submit' a new rule should appear in the dashboard's Rule Overview.
 
-------------
+---
 
 ## Execute the Workflow
 
@@ -297,13 +297,13 @@ For the purpose of this example, the easiest way to accomplish this is using the
 
 Construct a JSON file containing an object that matches the values that have been previously setup. This JSON object should be a valid [Cloud Notification Mechanism](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism) message.
 
-**Please note**: *this example is somewhat contrived, as the downstream tasks don't care about most of these fields. A 'real' data ingest workflow would.*
+**Please note**: _this example is somewhat contrived, as the downstream tasks don't care about most of these fields. A 'real' data ingest workflow would._
 
-The following values (denoted by ${} in the sample below) should be replaced to match values we've previously configured:
+The following values (denoted by \${} in the sample below) should be replaced to match values we've previously configured:
 
-* `TEST_DATA_FILE_NAME`:  The filename of the test data that is available in the S3 (or other) provider we created earlier.
-* `TEST_DATA_URI`: The full S3 path to the test data (e.g. s3://bucket-name/path/granule)
-* `COLLECTION`:  The collection defined in the prerequisites for this product
+- `TEST_DATA_FILE_NAME`: The filename of the test data that is available in the S3 (or other) provider we created earlier.
+- `TEST_DATA_URI`: The full S3 path to the test data (e.g. s3://bucket-name/path/granule)
+- `COLLECTION`: The collection defined in the prerequisites for this product
 
 ```json
 {
@@ -336,14 +336,14 @@ Using the JSON file you created, push it to the Kinesis notification stream:
 aws kinesis put-record --stream-name YOUR_KINESIS_NOTIFICATION_STREAM_NAME_HERE --partition-key 1 --data file:///path/to/file.json
 ```
 
-**Please note**: The above command uses the stream name, *not* the ARN.
+**Please note**: The above command uses the stream name, _not_ the ARN.
 
 The command should return output similar to:
 
 ```json
 {
-    "ShardId": "shardId-000000000000",
-    "SequenceNumber": "42356659532578640215890215117033555573986830588739321858"
+  "ShardId": "shardId-000000000000",
+  "SequenceNumber": "42356659532578640215890215117033555573986830588739321858"
 }
 ```
 
@@ -359,7 +359,7 @@ As detailed above, once the record is added to the Kinesis data stream, the `mes
 
 `TranslateMessage` (which corresponds to the `CNMToCMA` Lambda) will take the CNM object payload and add a granules object to the CMA payload that's consistent with other Cumulus ingest tasks, and add a key 'cnm' to 'meta' (as well as the payload) to store the original message.
 
-*For more on the Message Adapter, please see [the Message Flow documentation](workflows/cumulus-task-message-flow.md)*.
+_For more on the Message Adapter, please see [the Message Flow documentation](workflows/cumulus-task-message-flow.md)_.
 
 An example of what is happening in the `CNMToCMA` Lambda is as follows:
 
@@ -447,12 +447,12 @@ The data written to the `CnmResponseStream` should adhere to the [Response Messa
 {
   "provider": "PODAAC_SWOT",
   "collection": "SWOT_Prod_l2:1",
-  "ingestTime":"2017-09-30T03:45:29.791198",
-  "receivedTime":"2017-09-30T03:42:31.634552",
-  "deliveryTime":"2017-09-30T03:42:29.791198",
+  "ingestTime": "2017-09-30T03:45:29.791198",
+  "receivedTime": "2017-09-30T03:42:31.634552",
+  "deliveryTime": "2017-09-30T03:42:29.791198",
   "identifier": "1234-abcd-efg0-9876",
   "response": {
-    "status":"SUCCESS"
+    "status": "SUCCESS"
   }
 }
 ```
@@ -463,23 +463,23 @@ The data written to the `CnmResponseStream` should adhere to the [Response Messa
 {
   "provider": "PODAAC_SWOT",
   "collection": "SWOT_Prod_l2:1",
-  "ingestTime":"2017-09-30T03:45:29.791198",
-  "deliveryTime":"2017-09-30T03:42:29.791198",
-  "receivedTime":"2017-09-30T03:42:31.634552",
+  "ingestTime": "2017-09-30T03:45:29.791198",
+  "deliveryTime": "2017-09-30T03:42:29.791198",
+  "receivedTime": "2017-09-30T03:42:31.634552",
   "identifier": "1234-abcd-efg0-9876",
   "response": {
-    "status":"FAILURE",
+    "status": "FAILURE",
     "errorCode": "INGEST_ERROR",
     "errorMessage": "File [cumulus-dev-a4d38f59-5e57-590c-a2be-58640db02d91/prod_20170926T11:30:36/production_file.nc] did not match gve checksum value."
   }
 }
 ```
 
-Note the `CnmResponse` state defined in the `workflows.yml` above configures `$.exception` to be passed to the `CnmResponse` Lambda keyed under `config.WorkflowException`. This is required for the `CnmResponse` code to deliver a failure response.
+Note the `CnmResponse` state defined in the `.tf` workflow definition above configures `$.exception` to be passed to the `CnmResponse` Lambda keyed under `config.WorkflowException`. This is required for the `CnmResponse` code to deliver a failure response.
 
 To test the failure scenario, send a record missing the `collection` key.
 
-------------
+---
 
 ## Verify results
 
@@ -487,7 +487,7 @@ To test the failure scenario, send a record missing the `collection` key.
 
 Following the successful execution of this workflow, you should expect to see the workflow complete successfully on the dashboard:
 
-![Example of a successful CNM worflow in the Cumulus dashboard](assets/cnm_success_example.png)
+![Screenshot of a successful CNM workflow appearing on the executions page of the Cumulus dashboard](assets/cnm_success_example.png)
 
 ### Check the test granule has been delivered to S3 staging
 
@@ -516,8 +516,8 @@ which should result in an output to:
 }
 ```
 
-* Re-trigger the workflow by using the `put-record` command from
-* As the workflow completes, use the output from the `get-shard-iterator` command to request data from the stream:
+- Re-trigger the workflow by using the `put-record` command from
+- As the workflow completes, use the output from the `get-shard-iterator` command to request data from the stream:
 
 ```bash
 aws kinesis get-records --shard-iterator SHARD_ITERATOR_VALUE
@@ -527,22 +527,22 @@ This should result in output similar to:
 
 ```json
 {
-    "Records": [
-        {
-            "SequenceNumber": "49586720336541656798369548102057798835250389930873978882",
-            "ApproximateArrivalTimestamp": 1532664689.128,
-            "Data": "eyJpZGVudGlmaWVyICI6InRlc3RJZGVudGlmaWVyMTIzNDU2IiwidmVyc2lvbiI6IjAwNiIsImNvbGxlY3Rpb24iOiJNT0QwOUdRIiwicHJvdmlkZXIiOiJUZXN0UHJvdmlkZXIiLCJwcm9kdWN0U2l6ZSI6MTkwODYzNS4wLCJyZXNwb25zZSI6eyJzdGF0dXMiOiJTVUNDRVNTIn0sInByb2Nlc3NDb21wbGV0ZVRpbWUiOiIyMDE4LTA3LTI3VDA0OjExOjI4LjkxOSJ9",
-            "PartitionKey": "1"
-        },
-        {
-            "SequenceNumber": "49586720336541656798369548102059007761070005796999266306",
-            "ApproximateArrivalTimestamp": 1532664707.149,
-            "Data": "eyJpZGVudGlmaWVyICI6InRlc3RJZGVudGlmaWVyMTIzNDU2IiwidmVyc2lvbiI6IjAwNiIsImNvbGxlY3Rpb24iOiJNT0QwOUdRIiwicHJvdmlkZXIiOiJUZXN0UHJvdmlkZXIiLCJwcm9kdWN0U2l6ZSI6MTkwODYzNS4wLCJyZXNwb25zZSI6eyJzdGF0dXMiOiJTVUNDRVNTIn0sInByb2Nlc3NDb21wbGV0ZVRpbWUiOiIyMDE4LTA3LTI3VDA0OjExOjQ2Ljk1OCJ9",
-            "PartitionKey": "1"
-        }
-    ],
-    "NextShardIterator": "AAAAAAAAAAFo9SkF8RzVYIEmIsTN+1PYuyRRdlj4Gmy3dBzsLEBxLo4OU+2Xj1AFYr8DVBodtAiXbs3KD7tGkOFsilD9R5tA+5w9SkGJZ+DRRXWWCywh+yDPVE0KtzeI0andAXDh9yTvs7fLfHH6R4MN9Gutb82k3lD8ugFUCeBVo0xwJULVqFZEFh3KXWruo6KOG79cz2EF7vFApx+skanQPveIMz/80V72KQvb6XNmg6WBhdjqAA==",
-    "MillisBehindLatest": 0
+  "Records": [
+    {
+      "SequenceNumber": "49586720336541656798369548102057798835250389930873978882",
+      "ApproximateArrivalTimestamp": 1532664689.128,
+      "Data": "eyJpZGVudGlmaWVyICI6InRlc3RJZGVudGlmaWVyMTIzNDU2IiwidmVyc2lvbiI6IjAwNiIsImNvbGxlY3Rpb24iOiJNT0QwOUdRIiwicHJvdmlkZXIiOiJUZXN0UHJvdmlkZXIiLCJwcm9kdWN0U2l6ZSI6MTkwODYzNS4wLCJyZXNwb25zZSI6eyJzdGF0dXMiOiJTVUNDRVNTIn0sInByb2Nlc3NDb21wbGV0ZVRpbWUiOiIyMDE4LTA3LTI3VDA0OjExOjI4LjkxOSJ9",
+      "PartitionKey": "1"
+    },
+    {
+      "SequenceNumber": "49586720336541656798369548102059007761070005796999266306",
+      "ApproximateArrivalTimestamp": 1532664707.149,
+      "Data": "eyJpZGVudGlmaWVyICI6InRlc3RJZGVudGlmaWVyMTIzNDU2IiwidmVyc2lvbiI6IjAwNiIsImNvbGxlY3Rpb24iOiJNT0QwOUdRIiwicHJvdmlkZXIiOiJUZXN0UHJvdmlkZXIiLCJwcm9kdWN0U2l6ZSI6MTkwODYzNS4wLCJyZXNwb25zZSI6eyJzdGF0dXMiOiJTVUNDRVNTIn0sInByb2Nlc3NDb21wbGV0ZVRpbWUiOiIyMDE4LTA3LTI3VDA0OjExOjQ2Ljk1OCJ9",
+      "PartitionKey": "1"
+    }
+  ],
+  "NextShardIterator": "AAAAAAAAAAFo9SkF8RzVYIEmIsTN+1PYuyRRdlj4Gmy3dBzsLEBxLo4OU+2Xj1AFYr8DVBodtAiXbs3KD7tGkOFsilD9R5tA+5w9SkGJZ+DRRXWWCywh+yDPVE0KtzeI0andAXDh9yTvs7fLfHH6R4MN9Gutb82k3lD8ugFUCeBVo0xwJULVqFZEFh3KXWruo6KOG79cz2EF7vFApx+skanQPveIMz/80V72KQvb6XNmg6WBhdjqAA==",
+  "MillisBehindLatest": 0
 }
 ```
 
@@ -568,7 +568,7 @@ For purposes of validating the workflow, it may be simpler to locate the workflo
 }
 ```
 
-------------
+---
 
 ## Kinesis Record Error Handling
 
@@ -599,8 +599,8 @@ When a `kinesis` rule is created, in addition to the `messageConsumer` event map
 
 #### Response Stream messages
 
-Cumulus also supports this feature for all outbound  messages.  To take advantage of this feature, you will need to set an event mapping on the `KinesisOutboundEventLogger` Lambda that targets your `cnmResponseStream`.   You can do this in the Lambda management page for `KinesisOutboundEventLogger`.    Add a Kinesis trigger, and configure it to target the cnmResponseStream for your workflow:
+Cumulus also supports this feature for all outbound messages. To take advantage of this feature, you will need to set an event mapping on the `KinesisOutboundEventLogger` Lambda that targets your `cnmResponseStream`. You can do this in the Lambda management page for `KinesisOutboundEventLogger`. Add a Kinesis trigger, and configure it to target the cnmResponseStream for your workflow:
 
-![Screenshot of configuration for Kinesis stream trigger on KinesisOutboundEventLogger Lambda](assets/KinesisLambdaTriggerConfiguration.png)
+![Screenshot of the AWS console showing configuration for Kinesis stream trigger on KinesisOutboundEventLogger Lambda](assets/KinesisLambdaTriggerConfiguration.png)
 
-Once this is done, all records sent to the cnmResponseStream will also be logged in CloudWatch.    For more on configuring Lambdas to trigger on Kinesis events, please see [creating an event source mapping](https://docs.aws.amazon.com/lambda/latest/dg/with-kinesis.html#services-kinesis-eventsourcemapping).
+Once this is done, all records sent to the cnmResponseStream will also be logged in CloudWatch. For more on configuring Lambdas to trigger on Kinesis events, please see [creating an event source mapping](https://docs.aws.amazon.com/lambda/latest/dg/with-kinesis.html#services-kinesis-eventsourcemapping).

@@ -26,7 +26,7 @@ module "hello_world_service" {
     "--activityArn",
     aws_sfn_activity.ecs_task_hello_world.id,
     "--lambdaArn",
-    "${module.cumulus.hello_world_task.task_arn}"
+    module.cumulus.hello_world_task.task_arn
   ]
   alarms = {
     TaskCountHight = {

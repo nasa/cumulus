@@ -6,23 +6,7 @@ Note that the initial and final reporting of an execution/granule/PDR status is 
 
 If the task's input includes a `payload` key, the value of the key is returned as the output of the task, otherwise the output will be an empty object.
 
-To report the PDR's progress as it's being processed, add the following step after the pdr-status-check:
-
-```yaml
-    PdrStatusReport:
-      Parameters:
-        cma:
-          event.$: '$'
-          task_config:
-              cumulus_message:
-                input: '{$}'
-      ResultPath: null
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-```
-
-
-## What is Cumulus?
+## About Cumulus
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
 
@@ -30,4 +14,4 @@ Cumulus is a cloud-based data ingest, archive, distribution and management proto
 
 ## Contributing
 
-See [Cumulus README](https://github.com/nasa/cumulus/blob/master/README.md#installing-and-deploying)
+To make a contribution, please [see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).

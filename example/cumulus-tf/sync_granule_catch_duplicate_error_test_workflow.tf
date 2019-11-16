@@ -1,11 +1,11 @@
 module "sync_granule_catch_duplicate_error_test" {
   source = "../../tf-modules/workflow"
 
-  prefix                                = var.prefix
-  name                                  = "SyncGranuleCatchDuplicateErrorTest"
-  workflow_config                       = module.cumulus.workflow_config
-  system_bucket                         = var.system_bucket
-  tags                                  = local.default_tags
+  prefix          = var.prefix
+  name            = "SyncGranuleCatchDuplicateErrorTest"
+  workflow_config = module.cumulus.workflow_config
+  system_bucket   = var.system_bucket
+  tags            = local.default_tags
 
   state_machine_definition = <<JSON
 {

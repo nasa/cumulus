@@ -43,7 +43,8 @@ module "ingest" {
 
   log2elasticsearch_lambda_function_arn = module.archive.log2elasticsearch_lambda_function_arn
 
-  queue_execution_limits = var.queue_execution_limits
+  custom_queues = var.custom_queues
+  throttled_queues = var.throttled_queues
 
   report_executions_sns_topic_arn = module.archive.report_executions_sns_topic_arn
   report_granules_sns_topic_arn   = module.archive.report_granules_sns_topic_arn

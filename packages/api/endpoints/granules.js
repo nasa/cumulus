@@ -184,6 +184,10 @@ async function get(req, res) {
 async function bulk(req, res) {
   const payload = req.body;
 
+  if (!payload.workflowName) {
+    return res.boom.badRequest('workflowName is required.');
+  }
+
   const asyncOperationModel = new models.AsyncOperation({
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,

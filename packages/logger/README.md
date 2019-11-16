@@ -15,7 +15,11 @@ Log events always have the following keys:
 Log events may have the following options keys:
 
 - **executions** (string)
+- **granules** (string [stringified array of objects])
+- **parentArn** (string)
+- **stackName** (string)
 - **version** (string)
+- **asyncOperationId** (string)
 
 Log events may also contain user-specified keys.
 
@@ -32,8 +36,8 @@ Example log event:
 
 ## Install
 
-```
-$ npm install @cumulus/logger
+```bash
+npm install @cumulus/logger
 ```
 
 ## Usage
@@ -48,7 +52,31 @@ log.info('hello, world');
 
 ## API
 
-### new Logger({ [sender], [executions], [version] })
+### `new Logger({ [asyncOperationId], [executions], [granules], [parentArn], [sender], [stackName], [version] })`
+
+#### asyncOperationId
+
+Type: `string`
+
+An optional async operation id associated with a workflow.
+
+#### executions
+
+Type: `string`
+
+An optional description of the executions.
+
+#### granules
+
+type: `string`
+
+An optional granules string. Generally a stringified array of granule objects.
+
+#### parentArn
+
+type: `string`
+
+An optional stepfunction ARN of the parent workflow that triggered the current execution.
 
 #### sender
 
@@ -57,11 +85,11 @@ Type: `string`
 The sender of the log event.  Typically a Lambda Function Name or ECS Task Name.
 Defaults to "unknown".
 
-#### executions
+#### stackName
 
-Type: `string`
+type: `string`
 
-An optional description of the executions.
+Cumulus stack name.
 
 #### version
 
@@ -69,7 +97,7 @@ Type: `string`
 
 An optional version.
 
-### log.debug([...messageArgs])
+### `log.debug([...messageArgs])`
 
 Writes a log event to stdout with level set to "debug".
 
@@ -79,7 +107,7 @@ Type: `...any`
 
 See [console.log()](https://nodejs.org/dist/latest-v8.x/docs/api/console.html#console_console_log_data_args).
 
-### log.error([...messageArgs][, error])
+### `log.error([...messageArgs][, error])`
 
 Writes a log event to stderr with level set to "error".
 
@@ -95,12 +123,12 @@ Type: `Error`
 
 If the last argument is an Error then the following additional properties will be set on the log event:
 
-* **error** (Object)
-  * **name** (string)
-  * **message** (string)
-  * **stack** (Array\<string\>) - the lines of the stack trace
+- **error** (Object)
+  - **name** (string)
+  - **message** (string)
+  - **stack** (Array\<string\>) - the lines of the stack trace
 
-### log.fatal([...messageArgs])
+### `log.fatal([...messageArgs])`
 
 Writes a log event to stdout with level set to "fatal".
 
@@ -110,7 +138,7 @@ Type: `...any`
 
 See [console.log()](https://nodejs.org/dist/latest-v8.x/docs/api/console.html#console_console_log_data_args).
 
-### log.info([...messageArgs])
+### `log.info([...messageArgs])`
 
 Writes a log event to stdout with level set to "info".
 
@@ -120,7 +148,7 @@ Type: `...any`
 
 See [console.log()](https://nodejs.org/dist/latest-v8.x/docs/api/console.html#console_console_log_data_args).
 
-### log.infoWithAdditionalKeys(additionalKeys, ...messageArgs)
+### `log.infoWithAdditionalKeys(additionalKeys, ...messageArgs)`
 
 Writes a log event to stdout with level set to "info".  In addition to the
 standard keys, additional keys will be added to the event.  If an additional key
@@ -139,7 +167,7 @@ Type: `...any`
 
 See [console.log()](https://nodejs.org/dist/latest-v8.x/docs/api/console.html#console_console_log_data_args).
 
-### log.trace([...messageArgs])
+### `log.trace([...messageArgs])`
 
 Writes a log event to stdout with level set to "trace".
 
@@ -149,7 +177,7 @@ Type: `...any`
 
 See [console.log()](https://nodejs.org/dist/latest-v8.x/docs/api/console.html#console_console_log_data_args).
 
-### log.warn([...messageArgs])
+### `log.warn([...messageArgs])`
 
 Writes a log event to stdout with level set to "debug".
 
@@ -159,7 +187,7 @@ Type: `...any`
 
 See [console.log()](https://nodejs.org/dist/latest-v8.x/docs/api/console.html#console_console_log_data_args).
 
-## What is Cumulus?
+## About Cumulus
 
 Cumulus is a cloud-based data ingest, archive, distribution and management
 prototype for NASA's future Earth science data streams.
@@ -168,4 +196,4 @@ prototype for NASA's future Earth science data streams.
 
 ## Contributing
 
-See [Cumulus README](https://github.com/nasa/cumulus/blob/master/README.md#installing-and-deploying)
+To make a contribution, please [see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).

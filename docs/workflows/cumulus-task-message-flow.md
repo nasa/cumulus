@@ -5,9 +5,10 @@ hide_title: true
 ---
 
 # Cumulus Tasks: Message Flow
+
 Cumulus Tasks comprise Cumulus Workflows and are either AWS Lambda tasks or AWS Elastic Container Service (ECS) activities. Cumulus Tasks permit a payload as input to the main task application code. The task payload is additionally wrapped by the [Cumulus Message Adapter](https://github.com/nasa/cumulus-message-adapter). The Cumulus Message Adapter supplies additional information supporting message templating and metadata management of these workflows.
 
-![](assets/cumulus-task-message-flow.png)
+![Diagram showing how incoming and outgoing Cumulus messages for workflow steps are handled by the Cumulus Message Adapter](assets/cumulus-task-message-flow.png)
 
 The steps in this flow are detailed in sections below.
 
@@ -65,7 +66,7 @@ A message utilizing the Cumulus Remote message functionality must have at least 
 
 The event coming into a Cumulus Task is assumed to be a Cumulus Message and should first be handled by the functions described below before being passed to the task application code.
 
-#### Preparation Step 1: Fetch remote event
+### Preparation Step 1: Fetch remote event
 
 Fetch remote event will fetch the full event from S3 if the cumulus message includes a `replace` key.
 
@@ -91,12 +92,11 @@ After message prep, the message passed to the task application code is of the fo
 }
 ```
 
-
 ## Create Next Message functions
 
 Whatever comes out of the task application code is used to construct an outgoing Cumulus Message.
 
-#### Create Next Message Step 1: Assign outputs
+### Create Next Message Step 1: Assign outputs
 
 The config loaded from the **Fetch step function config** step may have a `cumulus_message` key. This can be used to "dispatch" fields from the task's application output to a destination in the final event output (via URL templating). Here's an example where the value of `input.anykey` would be dispatched as the value of `payload.out` in the final cumulus message:
 
@@ -133,5 +133,3 @@ The config loaded from the **Fetch step function config** step may have a `cumul
 #### Create Next Message Step 2: Store remote event
 
  If the `ReplaceConfiguration` parameter is set, the configured key's value  will be stored in S3 and the final output of the task will include a `replace` key that contains configuration for a future step to extract the payload on S3 back into the Cumulus Message.   The `replace` key identifies where the large event node has been stored in S3.
-
-

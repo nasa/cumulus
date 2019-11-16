@@ -64,7 +64,7 @@ class LaunchpadToken {
     }
 
     log.debug(`Reading Key: ${this.certificate} bucket:${bucket},stack:${stackName}`);
-    const pfx = (await getS3Object(bucket, `${stackName}/crypto/${this.certificate}`, { retries: 0 })).Body;
+    const pfx = (await getS3Object(bucket, `${stackName}/crypto/${this.certificate}`)).Body;
 
     const passphrase = this.encrypted
       ? await DefaultProvider.decrypt(this.passphrase) : this.passphrase;

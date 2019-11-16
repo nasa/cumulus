@@ -76,8 +76,8 @@ output "queue_pdrs_task" {
   value = module.ingest.queue_pdrs_task
 }
 
-output "sf_sns_report_task_lambda_function_arn" {
-  value = module.ingest.sf_sns_report_task_lambda_function_arn
+output "sf_sns_report_task" {
+  value = module.ingest.sf_sns_report_task
 }
 
 output "sync_granule_task" {
@@ -92,9 +92,9 @@ output "post_to_cmr_task" {
 
 output "workflow_config" {
   value = {
-    publish_reports_lambda_function_arn = module.archive.publish_reports_lambda_function_arn
+    publish_reports_lambda_function_arn   = module.archive.publish_reports_lambda_function_arn
     sf_semaphore_down_lambda_function_arn = module.ingest.sf_semaphore_down_lambda_function_arn
-    state_machine_role_arn = module.ingest.step_role_arn
+    state_machine_role_arn                = module.ingest.step_role_arn
   }
 }
 
@@ -102,6 +102,10 @@ output "workflow_config" {
 
 output "log2elasticsearch_lambda_function_arn" {
   value = module.archive.log2elasticsearch_lambda_function_arn
+}
+
+output "sqs2sfThrottle_lambda_function_arn" {
+  value = module.ingest.sqs2sfThrottle_lambda_function_arn
 }
 
 # IAM outputs

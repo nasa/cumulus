@@ -55,6 +55,16 @@ module "cumulus" {
   urs_client_id       = var.urs_client_id
   urs_client_password = var.urs_client_password
 
+  ems_host              = var.ems_host
+  ems_port              = var.ems_port
+  ems_path              = var.ems_path
+  ems_datasource        = var.ems_datasource
+  ems_private_key       = var.ems_private_key
+  ems_provider          = var.ems_provider
+  ems_retention_in_days = var.ems_retention_in_days
+  ems_submit_report     = var.ems_submit_report
+  ems_username          = var.ems_username
+
   cmr_client_id   = var.cmr_client_id
   cmr_environment = "UAT"
   cmr_username    = var.cmr_username
@@ -111,6 +121,7 @@ module "cumulus" {
 
   archive_api_port            = var.archive_api_port
   private_archive_api_gateway = var.private_archive_api_gateway
+  api_gateway_stage = var.api_gateway_stage
   log_api_gateway_to_cloudwatch = var.log_api_gateway_to_cloudwatch
   log_destination_arn = var.log_destination_arn
 }

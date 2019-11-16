@@ -45,7 +45,7 @@ const improveStackTrace = (fn) =>
       return await fn(...args);
     } catch (err) {
       setErrorStack(err, tracerError.stack);
-      err.message = `${err.message}; Function params: ${args}`;
+      err.message = `${err.message}; Function params: ${JSON.stringify(args, null, 2)}`;
       throw err;
     }
   };
@@ -359,10 +359,11 @@ exports.s3PutObjectTagging = improveStackTrace(
 * @param {string} Key - key for object (filepath + filename)
 * @param {Object} retryOptions - options to control retry behavior when an
 *   object does not exist. See https://github.com/tim-kos/node-retry#retryoperationoptions
+*   By default, retries will not be performed
 * @returns {Promise} - returns response from `S3.getObject` as a promise
 **/
 exports.getS3Object = improveStackTrace(
-  (Bucket, Key, retryOptions = {}) =>
+  (Bucket, Key, retryOptions = { retries: 0 }) =>
     pRetry(
       async () => {
         try {
