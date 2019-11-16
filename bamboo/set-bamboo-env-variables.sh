@@ -24,6 +24,7 @@ declare -a param_list=(
   "bamboo_KES_DEPLOYMENT"
   "bamboo_PUBLISH_FLAG"
   "bamboo_USE_NPM_PACKAGES"
+  "bamboo_USE_TERRAFORM_ZIPS"
   "bamboo_REPORT_BUILD_STATUS"
   "bamboo_SECRET_NPM_TOKEN"
   "bamboo_SECRET_TOKEN_SECRET"
