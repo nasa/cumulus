@@ -29,10 +29,14 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   sed -i "s/source = \"..\/..\/tf-modules\/cumulus/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus.zip\/\/tf-modules\/cumulus/g" *.tf
 
   ## Update data-persistence
-
   cd ../data-persistence-tf
   sed -i "s/source = \"..\/..\/tf-modules\/data-persistence/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus.zip\/\/tf-modules\/data-persistence/g" *.tf
-  cd ../../
+
+  ## Prepare repo lambdas
+  cd ..
+  npm run prepare
+  cd ..
+
 else
   echo "***Deploying stack with built source"
   npm run bootstrap
