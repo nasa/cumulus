@@ -1,5 +1,5 @@
 module "version_up_test" {
-  source = "../../tf-modules/workflow_task"
+  source = "../../tf-modules/cumulus_lambda_function"
 
   prefix        = var.prefix
   system_bucket = var.system_bucket

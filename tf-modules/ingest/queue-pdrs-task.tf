@@ -1,5 +1,5 @@
 module "queue_pdrs_task" {
-  source = "../workflow_task"
+  source = "../cumulus_lambda_function"
 
   prefix        = var.prefix
   system_bucket = var.system_bucket
