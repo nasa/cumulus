@@ -5,7 +5,7 @@ module "move_granules_task" {
   system_bucket = var.system_bucket
   task_version  = var.task_version
 
-  function_name = "HelloWorld"
+  function_name = "MoveGranules"
   filename = "${path.module}/../../tasks/move-granules/dist/lambda.zip"
 
   handler               = "index.handler"

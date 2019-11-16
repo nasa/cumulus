@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1580**
   - Added `/granules/bulk` endpoint to `@cumulus/api` to perform bulk actions on granules given either a list of granule ids or an Elasticsearch query and the workflow to perform.
+- **CUMULUS-1561**
+  - The `cumulus` Terraform module now supports versioning of the Cumulus Core
+    tasks. That module contains an input variable called
+    `enable_task_versioning`, which defaults to `false`. If that variable is set
+    to `true`, then Lambda versioning will be enabled on the Cumulus Core tasks.
+    In addition, Lambda function aliases will be created for each of those
+    Lambda function versions.
 
 ### Changed
 

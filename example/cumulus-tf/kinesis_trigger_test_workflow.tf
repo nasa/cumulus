@@ -33,7 +33,7 @@ module "kinesis_trigger_test_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${aws_lambda_function.cnm_to_cma_task.arn}:${aws_lambda_function.cnm_to_cma_task.version}",
+      "Resource": "${aws_lambda_function.cnm_to_cma_task.arn}",
       "Retry": [
         {
           "ErrorEquals": [

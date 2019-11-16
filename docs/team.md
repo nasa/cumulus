@@ -13,7 +13,7 @@ hide_title: true
 - Juanisa McCoy ([@jjmccoy](https://github.com/jjmccoy))
 - Katherine Kelly ([@kkelly51](https://github.com/kkelly51))
 - Lauren Frederick ([@laurenfrederick](https://github.com/laurenfrederick))
-- Marc Huffnagle([@yjpa7145](https://github.com/yjpa7145))
+- Marc Huffnagle ([@yjpa7145](https://github.com/yjpa7145))
 - Mark Boyd ([@markdboyd](https://github.com/markdboyd))
 - Matt Savoie ([@flamingbear](https://github.com/flamingbear))
 - Menno Van Diermen ([@nemreid](https://github.com/nemreid))

@@ -1,1 +1,1 @@
-exports.handler = async () => 'Correct Version 1';
+exports.handler = async () => 'Correct Version';
