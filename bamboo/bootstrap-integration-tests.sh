@@ -33,7 +33,7 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
 
   ## Prepare repo lambdas
   cd ..
-  npm run prepare
+  npm install && npm run prepare
   cd ..
 
 else
