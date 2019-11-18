@@ -16,7 +16,7 @@ Cumulus currently supports the following environments for Cumulus Message Adapte
 * [Java 8](https://docs.aws.amazon.com/lambda/latest/dg/java-programming-model.html)
 * [Python 2.7, 3.6](https://docs.aws.amazon.com/lambda/latest/dg/python-programming-model.html)
 
-Addtionally you may chose to include any of the other languages AWS [supports](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html) as a resource with reduced feature support.
+Additionally you may chose to include any of the other languages AWS [supports](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html) as a resource with reduced feature support.
 
 ## Deploy a Lambda
 

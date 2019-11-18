@@ -63,7 +63,7 @@ Providers generate and distribute input data that Cumulus obtains and sends to w
 |host|`"cumulus-data-shared"`|Yes|Host where the files will exist or s3 bucket if "s3" provider|
 |port|`${port_number}`|No|Port to connect with the provider on|
 |username|`${username}`|No|Username for access to the provider. Plain-text or encrypted. Encrypted is highly encouraged|
-|password|`${password}`|No|Password for accces to the provider. Plain-text or encrypted. Encrypted is highly encouraged|
+|password|`${password}`|No|Password for acccess to the provider. Plain-text or encrypted. Encrypted is highly encouraged|
 
 **Note:** The above optional attributes are not shown in the example provided, but they have been included in this document for completeness.
 

@@ -322,7 +322,7 @@ Follow the [above instructions to initialize Terraform](#initialize-terraform) i
 
 #### Deploy
 
-Run `terraform apply` to deploy the resources. Type `yes` when prompted to confirm that you want to create the resources. Assuming the operation is succesful, you should see output like this:
+Run `terraform apply` to deploy the resources. Type `yes` when prompted to confirm that you want to create the resources. Assuming the operation is successful, you should see output like this:
 
 ```shell
 Apply complete! Resources: 292 added, 0 changed, 0 destroyed.
