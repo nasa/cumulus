@@ -176,7 +176,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
     });
   });
 
-  describe('the DiscoverGranules Lambda', () => {
+  describe('the DiscoverGranules Lambda with no files config', () => {
     beforeAll(async () => {
       await apiTestUtils.updateCollection({
         prefix: config.stackName,
@@ -213,7 +213,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
     });
   });
 
-  describe('the DiscoverGranules Lambda', () => {
+  describe('the DiscoverGranules Lambda with partial files config', () => {
     beforeAll(async () => {
       await apiTestUtils.updateCollection({
         prefix: config.stackName,
@@ -250,7 +250,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
     });
   });
 
-  describe('the DiscoverGranules Lambda', () => {
+  describe('the DiscoverGranules Lambda ignoring files config', () => {
     beforeAll(async () => {
       await apiTestUtils.updateCollection({
         prefix: config.stackName,
