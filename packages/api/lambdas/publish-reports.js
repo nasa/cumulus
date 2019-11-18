@@ -231,8 +231,8 @@ async function getFailedExecutionMessage(inputMessage) {
 
   const activityStep = new ActivityStep();
   const lambdaStep = new LambdaStep();
-  const failedStepMessage = await lambdaStep.getFirstFailedStepMessage(executionArn)
-    || await activityStep.getFirstFailedStepMessage(executionArn);
+  const failedStepMessage = await lambdaStep.getLastFailedStepMessage(executionArn)
+    || await activityStep.getLastFailedStepMessage(executionArn);
 
   // If input from the failed step cannot be retrieved, then fall back to execution
   // input.

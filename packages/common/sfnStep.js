@@ -70,12 +70,13 @@ class SfnStep {
   }
 
   /**
-   * Get the input to the first failed step in a Step function execution.
+   * Get the output of the last failed step in a Step function execution.
    *
    * @param {string} executionArn - Step function execution ARN
-   * @returns {Promise|undefined} - Input to the first failed step in the execution
+   * @returns {Promise<Object>|undefined}
+   *   Cumulus message output from the last failed step in the execution
    */
-  async getFirstFailedStepMessage(executionArn) {
+  async getLastFailedStepMessage(executionArn) {
     try {
       // TODO: store execution history in memory to avoid multiple API requests on same
       // class instance?
