@@ -35,54 +35,54 @@ if (process.env.FAKE_AUTH === 'true') {
 }
 
 // collections endpoints
-router.use('/collections', collections);
+router.use('/collections', ensureAuthorized, collections);
 
 // granules endpoints
-router.use('/granules', granules);
+router.use('/granules', ensureAuthorized, granules);
 
 // granule csv endpoints
-router.use('/granule-csv', granuleCsv);
+router.use('/granule-csv', ensureAuthorized, granuleCsv);
 
 // provider endpoints
-router.use('/providers', providers);
+router.use('/providers', ensureAuthorized, providers);
 
 // pdr endpoints
-router.use('/pdrs', pdrs);
+router.use('/pdrs', ensureAuthorized, pdrs);
 
 // rules endpoints
-router.use('/rules', rules);
+router.use('/rules', ensureAuthorized, rules);
 
 // executions endpoints
-router.use('/executions/status', executionStatus);
-router.use('/executions', executions);
+router.use('/executions/status', ensureAuthorized, executionStatus);
+router.use('/executions', ensureAuthorized, executions);
 
 // async operation endpoint
-router.use('/asyncOperations', asyncOperations);
+router.use('/asyncOperations', ensureAuthorized, asyncOperations);
 
 // bulk delete endpoint
-router.use('/bulkDelete', bulkDelete);
+router.use('/bulkDelete', ensureAuthorized, bulkDelete);
 
 // instance meta endpoint
-router.use('/instanceMeta', instanceMeta);
+router.use('/instanceMeta', ensureAuthorized, instanceMeta);
 
 // logs endpoint
-router.use('/logs', logs);
+router.use('/logs', ensureAuthorized, logs);
 
 // logs endpoint
-router.use('/reconciliationReports', reconcilliationReports);
+router.use('/reconciliationReports', ensureAuthorized, reconcilliationReports);
 
 // schemas endpoint
-router.use('/schemas', schemas);
+router.use('/schemas', ensureAuthorized, schemas);
 
 // stats endpoint
-router.use('/stats', stats);
+router.use('/stats', ensureAuthorized, stats);
 
 // version endpoint
 // this endpoint is not behind authentication
 router.use('/version', version);
 
 // workflows endpoint
-router.use('/workflows', workflows);
+router.use('/workflows', ensureAuthorized, workflows);
 
 // OAuth Token endpoints
 if (launchpadProtectedAuth()) {
@@ -101,9 +101,9 @@ router.delete('/tokenDelete/:token', token.deleteTokenEndpoint);
 
 router.use('/dashboard', dashboard);
 
-router.use('/elasticsearch', elasticsearch);
+router.use('/elasticsearch', ensureAuthorized, elasticsearch);
 
-router.use('/ems', ems);
+router.use('/ems', ensureAuthorized, ems);
 
 // Catch and send the error message down (instead of just 500: internal server error)
 // Need all 4 params, because that's how express knows this is the error handler
