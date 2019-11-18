@@ -76,7 +76,7 @@ For this example, you are going to be adding two workflows to your Cumulus deplo
 
 #### Workflow Configuration
 
-Add the following to a new file `browse_example.tf` in your deployment's main directory: [from github](https://github.com/nasa/cumulus/blob/master/example/workflows/browseExample.yml). The file should contain the two example workflow modules.
+Add the following to a new file `browse_example.tf` in your deployment's main directory: [from github](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/browse_example.tf). The file should contain the two example workflow modules.
 
 **Please Note**: You should update the `source =` line to match the current Cumulus `workflow` module release artifact to the version of Cumulus you're deploying:
 
@@ -465,7 +465,7 @@ The incoming message to the task defined in the `ProcessingStep` as configured w
 
 #### Configuration
 
-- event.config.bucket -- the bucket configured in config.yml as your 'internal' bucket.
+- event.config.bucket -- the name of the bucket configured in `terraform.tfvars` as your `internal` bucket.
 
 - event.config.collection -- The full collection object we will configure in the [Configure Ingest](#configure-ingest) section. You can view the expected collection schema in the docs [here](data-cookbooks/setup.md) or in the source code [on github](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js). You need this as available input _and_ output so you can update as needed.
 
