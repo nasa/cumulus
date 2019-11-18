@@ -1,5 +1,7 @@
 'use strict';
 
+const cloneDeep = require('lodash.clonedeep');
+
 const { isNil } = require('./util');
 const { pullStepFunctionEvent } = require('./aws');
 const log = require('./log');
@@ -13,6 +15,15 @@ class SfnStep {
   constructor() {
     this.taskExitedEvent = 'TaskStateExited';
     this.taskExitedDetailsKey = 'stateExitedEventDetails';
+    this.failedExecutionEvent = 'ExecutionFailed';
+    this.failedExecutionDetailsKey = 'executionFailedEventDetails';
+  }
+
+  async getExecutionHistory(executionArn) {
+    if (!this.events) {
+      const { events } = await StepFunctions.getExecutionHistory({ executionArn });
+      this.events = events;
+    }
   }
 
   /**
@@ -70,42 +81,65 @@ class SfnStep {
   }
 
   /**
-   * Get the output of the last failed step in a Step function execution.
+   * Get the event for the last failed step in a Step function execution.
    *
    * @param {string} executionArn - Step function execution ARN
    * @returns {Promise<Object>|undefined}
+   *   Execution history event for the last failed step in the execution
+   */
+  async getLastFailedStepEvent(executionArn) {
+    // TODO: store execution history in memory to avoid multiple API requests on same
+    // class instance?
+    // const { events } = await StepFunctions.getExecutionHistory({ executionArn });
+    await this.getExecutionHistory(executionArn);
+    const events = cloneDeep(this.events);
+
+    // There may be multiple failed events in a retry scenario. Reverse the events
+    // list to more quickly find the last failed event in the history.
+    events.reverse();
+
+    const failedStepEvent = events
+      .find((event) => event.type === this.failureEvent);
+
+    return {
+      failedStepId: failedStepEvent.id,
+      failedStepDetails: failedStepEvent[this.eventDetailsKeys.failed]
+    };
+  }
+
+  /**
+   * Get the output of the last failed step in a Step function execution.
+   *
+   * @param {string} executionArn - Step function execution ARN
+   * @param {number} failedStepId - Event ID for last failed step in execution
+   * @returns {Promise<Object>}
    *   Cumulus message output from the last failed step in the execution
    */
-  async getLastFailedStepMessage(executionArn) {
-    try {
-      // TODO: store execution history in memory to avoid multiple API requests on same
-      // class instance?
-      const { events } = await StepFunctions.getExecutionHistory({ executionArn });
+  async getLastFailedStepMessage(executionArn, failedStepId) {
+    // TODO: store execution history in memory to avoid multiple API requests on same
+    // class instance?
+    // const { events } = await StepFunctions.getExecutionHistory({ executionArn });
+    await this.getExecutionHistory(executionArn);
+    const events = cloneDeep(this.events);
 
-      // There may be multiple failed events in a retry scenario. Reverse the events
-      // list to more quickly find the last failed event in the history.
-      events.reverse();
+    // There may be multiple failed events in a retry scenario. Reverse the events
+    // list to more quickly find the last failed event in the history.
+    events.reverse();
 
-      const failedStepEvent = events
-        .find((event) => event.type === this.failureEvent);
-      if (!failedStepEvent) {
-        log.info(`Could not find failed step event for execution ${executionArn}`);
-        return Promise.resolve();
-      }
+    const failedStepExitedEvent = events.find((event) => {
+      const taskExitedEvent = event.type === this.taskExitedEvent;
+      const isStepFailed = event.previousEventId === failedStepId;
+      return taskExitedEvent && isStepFailed;
+    });
 
-      const failedStepExitedEvent = events.find((event) => {
-        const taskExitedEvent = event.type === this.taskExitedEvent;
-        const isStepFailed = event.previousEventId === failedStepEvent.id;
-        return taskExitedEvent && isStepFailed;
-      });
-      const failedEventDetails = failedStepExitedEvent[this.taskExitedDetailsKey];
-      const failedStepMessage = JSON.parse(failedEventDetails.output);
-
-      return this.parseStepMessage(failedStepMessage, failedEventDetails.resource);
-    } catch (err) {
-      log.error(err);
-      return Promise.resolve();
+    if (!failedStepExitedEvent) {
+      throw new Error(`Could not find ${this.taskExitedEvent} for execution ${executionArn}`);
     }
+
+    const failedEventDetails = failedStepExitedEvent[this.taskExitedDetailsKey];
+    const failedStepMessage = JSON.parse(failedEventDetails.output);
+
+    return this.parseStepMessage(failedStepMessage, failedEventDetails.resource);
   }
 
   /**

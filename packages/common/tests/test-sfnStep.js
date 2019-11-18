@@ -6,7 +6,7 @@ const isObject = require('lodash.isobject');
 
 const { ActivityStep, LambdaStep } = require('../sfnStep');
 const StepFunctions = require('../StepFunctions');
-const { randomId } = require('../test-utils');
+const { randomId, randomNumber } = require('../test-utils');
 
 const ingestGranuleFailHistory = require('./data/ingest_granule_fail_history.json');
 const ingestPublishGranuleFailHistory = require('./data/ingest_publish_granule_fail_history.json');
@@ -23,6 +23,7 @@ const failedStepException = {
 
 const createFakeExecutionHistory = ({
   message,
+  failedStepId,
   stepName = randomId('stepName'),
   stepType = 'lambda',
   timestamp = Date.now(),
@@ -48,8 +49,6 @@ const createFakeExecutionHistory = ({
     {
       timestamp,
       type: isLambdaHistory ? 'LambdaFunctionScheduled' : 'ActivityScheduled',
-      id: 30,
-      previousEventId: 29,
       [scheduledDetailsKey]: {
         resource: stepName,
         input: JSON.stringify(message)
@@ -57,15 +56,12 @@ const createFakeExecutionHistory = ({
     },
     {
       timestamp: timestamp + 100,
-      type: isLambdaHistory ? 'LambdaFunctionStarted' : 'ActivityStarted',
-      id: 31,
-      previousEventId: 30
+      type: isLambdaHistory ? 'LambdaFunctionStarted' : 'ActivityStarted'
     },
     {
       timestamp: timestamp + 200,
       type: completionEventType,
-      id: 32,
-      previousEventId: 31,
+      id: failedStepId,
       [failureDetailsKey]: failedStepOutput
     }
   ];
@@ -74,8 +70,8 @@ const createFakeExecutionHistory = ({
     events.push({
       timestamp: timestamp + 200,
       type: 'TaskStateExited',
-      id: 33,
-      previousEventId: 32,
+      id: failedStepId + 1,
+      previousEventId: failedStepId,
       stateExitedEventDetails: {
         name: stepName,
         output: JSON.stringify({
@@ -88,8 +84,8 @@ const createFakeExecutionHistory = ({
     events.push({
       timestamp: timestamp + 200,
       type: 'ExecutionFailed',
-      id: 33,
-      previousEventId: 32,
+      id: failedStepId + 1,
+      previousEventId: failedStepId,
       executionFailedEventDetails: failedStepException
     });
   }
@@ -111,7 +107,7 @@ const createCumulusMessage = ({
   payload
 });
 
-test.serial('ActivityStep.getFirstFailedStepMessage() does not throw error', async (t) => {
+test.serial.skip('ActivityStep.getLastFailedStepMessage() does not throw error', async (t) => {
   // execution ARN doesn't matter because we're mocking the call to get
   // execution history
   const executionArn = randomId('execution');
@@ -124,14 +120,14 @@ test.serial('ActivityStep.getFirstFailedStepMessage() does not throw error', asy
   try {
     const activityStep = new ActivityStep();
     await t.notThrowsAsync(
-      activityStep.getFirstFailedStepMessage(executionArn)
+      activityStep.getLastFailedStepMessage(executionArn)
     );
   } finally {
     getExecutionHistoryStub.restore();
   }
 });
 
-test.serial('ActivityStep.getFirstFailedStepMessage() returns undefined if failed step cannot be found', async (t) => {
+test.serial('ActivityStep.getLastFailedStepEvent() returns undefined if failed step cannot be found', async (t) => {
   // execution ARN doesn't matter because we're mocking the call to get
   // execution history
   const executionArn = randomId('execution');
@@ -148,13 +144,13 @@ test.serial('ActivityStep.getFirstFailedStepMessage() returns undefined if faile
 
   try {
     const activityStep = new ActivityStep();
-    t.is(await activityStep.getFirstFailedStepMessage(executionArn), undefined);
+    t.is(await activityStep.getLastFailedStepEvent(executionArn), undefined);
   } finally {
     getExecutionHistoryStub.restore();
   }
 });
 
-test.serial('ActivityStep.getFirstFailedStepMessage() returns correct message', async (t) => {
+test.serial('ActivityStep.getLastFailedStepMessage() returns correct message', async (t) => {
   // execution ARN doesn't matter because we're mocking the call to get
   // execution history
   const executionArn = randomId('execution');
@@ -165,17 +161,19 @@ test.serial('ActivityStep.getFirstFailedStepMessage() returns correct message', 
   });
 
   const stepName = randomId('step');
+  const failedStepId = randomNumber();
   const fakeExecutionHistory = createFakeExecutionHistory({
     message,
     stepName,
-    stepType: 'activity'
+    stepType: 'activity',
+    failedStepId
   });
   const getExecutionHistoryStub = sinon.stub(StepFunctions, 'getExecutionHistory')
     .callsFake(() => fakeExecutionHistory);
 
   try {
     const activityStep = new ActivityStep();
-    const failedStepInput = await activityStep.getFirstFailedStepMessage(executionArn);
+    const failedStepInput = await activityStep.getLastFailedStepMessage(executionArn, failedStepId);
     const expectedMessage = {
       ...message,
       exception: failedStepException
@@ -186,7 +184,7 @@ test.serial('ActivityStep.getFirstFailedStepMessage() returns correct message', 
   }
 });
 
-test.serial('LambdaStep.getFirstFailedStepMessage() does not throw error', async (t) => {
+test.serial.skip('LambdaStep.getLastFailedStepMessage() does not throw error', async (t) => {
   // execution ARN doesn't matter because we're mocking the call to get
   // execution history
   const executionArn = randomId('execution');
@@ -199,14 +197,14 @@ test.serial('LambdaStep.getFirstFailedStepMessage() does not throw error', async
   try {
     const lambdaStep = new LambdaStep();
     await t.notThrowsAsync(
-      lambdaStep.getFirstFailedStepMessage(executionArn)
+      lambdaStep.getLastFailedStepMessage(executionArn)
     );
   } finally {
     getExecutionHistoryStub.restore();
   }
 });
 
-test.serial('LambdaStep.getFirstFailedStepMessage() returns undefined if failed step cannot be found', async (t) => {
+test.serial('LambdaStep.getLastFailedStepEvent() returns undefined if failed step cannot be found', async (t) => {
   // execution ARN doesn't matter because we're mocking the call to get
   // execution history
   const executionArn = randomId('execution');
@@ -222,13 +220,13 @@ test.serial('LambdaStep.getFirstFailedStepMessage() returns undefined if failed 
 
   try {
     const lambdaStep = new LambdaStep();
-    t.is(await lambdaStep.getFirstFailedStepMessage(executionArn), undefined);
+    t.is(await lambdaStep.getLastFailedStepEvent(executionArn), undefined);
   } finally {
     getExecutionHistoryStub.restore();
   }
 });
 
-test.serial('LambdaStep.getFirstFailedStepMessage() returns correct message', async (t) => {
+test.serial('LambdaStep.getLastFailedStepMessage() returns correct message', async (t) => {
   // execution ARN doesn't matter because we're mocking the call to get
   // execution history
   const executionArn = randomId('execution');
@@ -239,7 +237,9 @@ test.serial('LambdaStep.getFirstFailedStepMessage() returns correct message', as
   });
 
   const stepName = randomId('step');
+  const failedStepId = randomNumber();
   const fakeExecutionHistory = createFakeExecutionHistory({
+    failedStepId,
     message,
     stepName
   });
@@ -248,7 +248,7 @@ test.serial('LambdaStep.getFirstFailedStepMessage() returns correct message', as
 
   try {
     const lambdaStep = new LambdaStep();
-    const failedStepInput = await lambdaStep.getFirstFailedStepMessage(executionArn);
+    const failedStepInput = await lambdaStep.getLastFailedStepMessage(executionArn, failedStepId);
     const expectedMessage = {
       ...message,
       exception: failedStepException
@@ -259,7 +259,7 @@ test.serial('LambdaStep.getFirstFailedStepMessage() returns correct message', as
   }
 });
 
-test.serial.only('LambdaStep.getFirstFailedStepMessage() returns correct message for failed workflow with single step', async (t) => {
+test.serial.skip('LambdaStep.getLastFailedStepMessage() returns correct message for failed workflow with single step', async (t) => {
   // execution ARN doesn't matter because we're mocking the call to get
   // execution history
   const executionArn = randomId('execution');
@@ -280,7 +280,8 @@ test.serial.only('LambdaStep.getFirstFailedStepMessage() returns correct message
 
   try {
     const lambdaStep = new LambdaStep();
-    const failedStepInput = await lambdaStep.getFirstFailedStepMessage(executionArn);
+    const failedStepInput = await lambdaStep.getLastFailedStepMessage(executionArn);
+    debugger;
     const expectedMessage = {
       ...failedStepException
     };
@@ -300,7 +301,8 @@ test.serial('gets message exception when failed step retry occurs', async (t) =>
 
   try {
     const lambdaStep = new LambdaStep();
-    const failedStepMessage = await lambdaStep.getFirstFailedStepMessage(executionArn);
+    const { failedStepId } = await lambdaStep.getLastFailedStepEvent(executionArn);
+    const failedStepMessage = await lambdaStep.getLastFailedStepMessage(executionArn, failedStepId);
     t.true(isObject(failedStepMessage.exception));
     t.is(failedStepMessage.exception.Error, 'FileNotFound');
   } finally {
@@ -318,7 +320,8 @@ test.serial('gets message exception when no step retry occurs', async (t) => {
 
   try {
     const lambdaStep = new LambdaStep();
-    const failedStepMessage = await lambdaStep.getFirstFailedStepMessage(executionArn);
+    const { failedStepId } = await lambdaStep.getLastFailedStepEvent(executionArn);
+    const failedStepMessage = await lambdaStep.getLastFailedStepMessage(executionArn, failedStepId);
     t.true(isObject(failedStepMessage.exception));
     t.is(failedStepMessage.exception.Error, 'CumulusMessageAdapterExecutionError');
   } finally {

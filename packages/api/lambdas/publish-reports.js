@@ -228,15 +228,32 @@ async function publishReportSnsMessages(eventMessage, isTerminalStatus, isFailed
  */
 async function getFailedExecutionMessage(inputMessage) {
   const executionArn = getMessageExecutionArn(inputMessage);
+  let exception;
 
-  const activityStep = new ActivityStep();
-  const lambdaStep = new LambdaStep();
-  const failedStepMessage = await lambdaStep.getLastFailedStepMessage(executionArn)
-    || await activityStep.getLastFailedStepMessage(executionArn);
+  try {
+    const activityStep = new ActivityStep();
+    const lambdaStep = new LambdaStep();
 
-  // If input from the failed step cannot be retrieved, then fall back to execution
-  // input.
-  return failedStepMessage || inputMessage;
+    const {
+      failedStepId,
+      failedStepDetails
+    } = await lambdaStep.getLastFailedStepEvent(executionArn)
+      || await activityStep.getLastFailedStepEvent(executionArn);
+    exception = failedStepDetails;
+
+    const failedStepMessage = await lambdaStep.getLastFailedStepMessage(executionArn, failedStepId)
+      || await activityStep.getLastFailedStepMessage(executionArn, failedStepId);
+
+    return failedStepMessage;
+  } catch (err) {
+    log.error(err);
+    // If input from the failed step cannot be retrieved, then fall back to execution
+    // input.
+    return {
+      ...inputMessage,
+      exception
+    };
+  }
 }
 
 /**
