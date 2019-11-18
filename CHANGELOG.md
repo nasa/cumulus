@@ -34,6 +34,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     values for that object can be found here:
     <https://github.com/tim-kos/node-retry#retryoperationoptions>
 
+- **CUMULUS-1579**
+  - Elasticsearch list queries use `match` instead of `term`. `term` had been analyzing the terms and not supporting `-` in the field values.
+
 ### Removed
 
 - **CUMULUS-1559**
