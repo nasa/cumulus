@@ -175,6 +175,7 @@ default:
     - username: jnorton1
     - username: kbaynes
     - username: kkelly
+    - username: kakelly2
     - username: kovarik
     - username: lfrederick
     - username: mhuffnagle2
@@ -712,7 +713,7 @@ mhs4:
     assertionConsumerService: 'https://u8ne7bgicd.execute-api.us-east-1.amazonaws.com:8004/dev/saml/auth'
     idpLogin: 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso'
     launchpadMetadataPath: 's3://{{buckets.internal.name}}/{{prefix}}/launchpad/launchpad-sbx-metadata.xml'
-
+  useWorkflowLambdaVersions: true
 
 mhs2:
   prefix: mhs2

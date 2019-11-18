@@ -64,6 +64,17 @@ test('sender defaults to "unknown"', (t) => {
   t.is(testConsole.stdoutLogEntries[0].sender, 'unknown');
 });
 
+test('Logger.info() accepts placeholder arguments', (t) => {
+  const { testConsole } = t.context;
+
+  const logger = new Logger({ console: testConsole });
+
+  logger.info('%s %s', 'hello', 'world');
+
+  t.is(testConsole.stdoutLogEntries.length, 1);
+  t.is(testConsole.stdoutLogEntries[0].message, 'hello world');
+});
+
 test('Logger.info() creates the expected log entry', (t) => {
   const { testConsole } = t.context;
 
@@ -81,17 +92,6 @@ test('Logger.info() creates the expected log entry', (t) => {
   t.is(moment(logEntry.timestamp, moment.ISO_8601, true).isValid(), true);
 });
 
-test('Logger.info() accepts placeholder arguments', (t) => {
-  const { testConsole } = t.context;
-
-  const logger = new Logger({ console: testConsole });
-
-  logger.info('%s %s', 'hello', 'world');
-
-  t.is(testConsole.stdoutLogEntries.length, 1);
-  t.is(testConsole.stdoutLogEntries[0].message, 'hello world');
-});
-
 test('Logger.info() logs executions if specified', (t) => {
   const { testConsole } = t.context;
 
@@ -106,6 +106,50 @@ test('Logger.info() logs executions if specified', (t) => {
   t.is(testConsole.stdoutLogEntries[0].executions, 'my-executions');
 });
 
+test('Logger.info() logs granules if specified', (t) => {
+  const { testConsole } = t.context;
+
+  const logger = new Logger({
+    console: testConsole,
+    granules: '[{"granule":"testing"}]'
+  });
+
+  logger.info('hello');
+
+  t.is(testConsole.stdoutLogEntries.length, 1);
+  t.is(testConsole.stdoutLogEntries[0].granules, '[{"granule":"testing"}]');
+});
+
+test('Logger.info() logs parentArn if specified', (t) => {
+  const { testConsole } = t.context;
+  const arnString = 'arn:aws:fakearnString';
+
+  const logger = new Logger({
+    console: testConsole,
+    parentArn: arnString
+  });
+
+  logger.info('hello');
+
+  t.is(testConsole.stdoutLogEntries.length, 1);
+  t.is(testConsole.stdoutLogEntries[0].parentArn, arnString);
+});
+
+test('Logger.info() logs stackName if specified', (t) => {
+  const { testConsole } = t.context;
+  const stackName = 'fakeStackname';
+
+  const logger = new Logger({
+    console: testConsole,
+    stackName
+  });
+
+  logger.info('hello');
+
+  t.is(testConsole.stdoutLogEntries.length, 1);
+  t.is(testConsole.stdoutLogEntries[0].stackName, stackName);
+});
+
 test('Logger.info() logs version if specified', (t) => {
   const { testConsole } = t.context;
 
@@ -118,6 +162,34 @@ test('Logger.info() logs version if specified', (t) => {
 
   t.is(testConsole.stdoutLogEntries.length, 1);
   t.is(testConsole.stdoutLogEntries[0].version, 'my-version');
+});
+
+test('Logger.info() logs asyncOperationId if specified', (t) => {
+  const { testConsole } = t.context;
+
+  const logger = new Logger({
+    console: testConsole,
+    asyncOperationId: 'async-id-12345'
+  });
+
+  logger.info('hello');
+
+  t.is(testConsole.stdoutLogEntries.length, 1);
+  t.is(testConsole.stdoutLogEntries[0].asyncOperationId, 'async-id-12345');
+});
+
+test('Logger.info() ignores unknown keys', (t) => {
+  const { testConsole } = t.context;
+
+  const logger = new Logger({
+    console: testConsole,
+    unknownKey: 'anything at all'
+  });
+
+  logger.info('hello');
+
+  t.is(testConsole.stdoutLogEntries.length, 1);
+  t.is(testConsole.stdoutLogEntries[0].unknownKey, undefined);
 });
 
 test('Logger.error() creates the expected log entry', (t) => {
