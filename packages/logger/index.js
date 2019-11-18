@@ -10,20 +10,30 @@ const privates = new WeakMap();
 class Logger {
   /**
    * @param {Object} options - options object
+   * @param {string} [options.executions]  - AWS stepfunction execution name
+   * @param {string} [options.granules] - stringified array of granule objects
+   * @param {string} [options.parentArn] - parent stepfunction execution ARN
+   * @param {boolean} [options.pretty=false] - stringify objects on multiple lines
    * @param {string} [options.sender="unknown"] - the sender of the log message
-   * @param {string} [options.executions]
+   * @param {string} [options.stackName] - cumulus stack name
+   * @param {string} [options.asyncOperationId] - async operation id associated with the
+   *  kickoff of the workflow (optional)
    * @param {Console} [options.console=global.console] - the console to write
    *   log events to
-   * @param {string} [options.version]
+   * @param {string} [options.version] - Lambda function version
    */
   constructor(options) {
     privates.set(
       this,
       {
+        asyncOperationId: options.asyncOperationId,
         executions: options.executions,
+        granules: options.granules,
+        parentArn: options.parentArn,
         pretty: options.pretty || false,
-        thisConsole: options.console || global.console,
         sender: options.sender || 'unknown',
+        stackName: options.stackName,
+        thisConsole: options.console || global.console,
         version: options.version
       }
     );
@@ -118,18 +128,26 @@ class Logger {
 
   _writeLogEvent(level, messageArgs, additionalKeys = {}) {
     const {
+      asyncOperationId,
       executions,
+      granules,
+      parentArn,
       pretty,
       sender,
+      stackName,
       thisConsole,
       version
     } = privates.get(this);
 
     const standardLogEvent = {
+      asyncOperationId,
       executions,
+      granules,
       level,
       message: format(...messageArgs),
+      parentArn,
       sender,
+      stackName,
       timestamp: (new Date()).toISOString(),
       version
     };
