@@ -15,12 +15,12 @@ const { discoverGranules } = require('..');
 
 const readFile = promisify(fs.readFile);
 
-const assertDiscoveredGranules = (t, output) => {
-  validateOutput(t, output);
+async function assertDiscoveredGranules(t, output) {
+  await validateOutput(t, output);
   t.is(output.granules.length, 3);
   output.granules.forEach(({ files }) => t.is(files.length, 2));
   t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].type));
-};
+}
 
 test.beforeEach(async (t) => {
   const eventPath = path.join(__dirname, 'fixtures', 'mur.json');
@@ -39,11 +39,11 @@ test('discover granules sets the correct dataType for granules', async (t) => {
     port: 3030
   };
 
-  validateConfig(t, event.config);
+  await validateConfig(t, event.config);
 
   try {
     const output = await discoverGranules(event);
-    assertDiscoveredGranules(t, output);
+    await assertDiscoveredGranules(t, output);
 
     // Make sure we support datatype and collection name
     output.granules.forEach((granule) => {
@@ -69,7 +69,7 @@ test('discover granules using FTP', async (t) => {
     password: 'testpass'
   };
 
-  validateConfig(t, event.config);
+  await validateConfig(t, event.config);
 
   try {
     assertDiscoveredGranules(t, await discoverGranules(event));
@@ -93,7 +93,7 @@ test('discover granules using SFTP', async (t) => {
     password: 'password'
   };
 
-  validateConfig(t, event.config);
+  await validateConfig(t, event.config);
 
   try {
     assertDiscoveredGranules(t, await discoverGranules(event));
@@ -115,7 +115,7 @@ test('discover granules using HTTP', async (t) => {
     port: 3030
   };
 
-  validateConfig(t, event.config);
+  await validateConfig(t, event.config);
 
   try {
     assertDiscoveredGranules(t, await discoverGranules(event));
@@ -141,7 +141,7 @@ const discoverGranulesUsingS3 = (configure, assert = assertDiscoveredGranules) =
 
     configure(t);
 
-    validateConfig(t, config);
+    await validateConfig(t, config);
     await s3().createBucket({ Bucket: config.sourceBucketName }).promise();
 
     try {
@@ -151,7 +151,7 @@ const discoverGranulesUsingS3 = (configure, assert = assertDiscoveredGranules) =
           Key: `${config.collection.provider_path}/${file}`,
           Body: `This is ${file}`
         }).promise()));
-      assert(t, await discoverGranules(event));
+      await assert(t, await discoverGranules(event));
     } finally {
       // Clean up
       await recursivelyDeleteS3Bucket(config.sourceBucketName);
@@ -177,8 +177,8 @@ test('discover granules without collection files config using S3',
       protocol: 's3',
       host: config.sourceBucketName
     };
-  }, (t, output) => {
-    validateOutput(t, output);
+  }, async (t, output) => {
+    await validateOutput(t, output);
     t.is(output.granules.length, 3);
     output.granules.forEach(({ files }) => t.is(files.length, 0));
   }));
@@ -195,8 +195,8 @@ test('discover granules without collection files config, but configuring collect
       protocol: 's3',
       host: config.sourceBucketName
     };
-  }, (t, output) => {
-    validateOutput(t, output);
+  }, async (t, output) => {
+    await validateOutput(t, output);
     t.is(output.granules.length, 3);
     output.granules.forEach(({ files }) => t.is(files.length, 2));
   }));
@@ -213,8 +213,8 @@ test('discover granules without collection files config, but configuring task to
       protocol: 's3',
       host: config.sourceBucketName
     };
-  }, (t, output) => {
-    validateOutput(t, output);
+  }, async (t, output) => {
+    await validateOutput(t, output);
     t.is(output.granules.length, 3);
     output.granules.forEach(({ files }) => t.is(files.length, 2));
   }));
@@ -229,8 +229,8 @@ test('discover granules without collection files config, but configuring task to
       protocol: 's3',
       host: config.sourceBucketName
     };
-  }, (t, output) => {
-    validateOutput(t, output);
+  }, async (t, output) => {
+    await validateOutput(t, output);
     t.is(output.granules.length, 3);
     output.granules.forEach(({ files }) => t.is(files.length, 0));
   }));
@@ -246,8 +246,8 @@ test('discover granules without collection files config for .nc files using S3',
       protocol: 's3',
       host: config.sourceBucketName
     };
-  }, (t, output) => {
-    validateOutput(t, output);
+  }, async (t, output) => {
+    await validateOutput(t, output);
     t.is(output.granules.length, 3);
     output.granules.forEach(({ files }) => t.is(files.length, 1));
   }));
