@@ -1,37 +1,33 @@
 'use strict';
 
-const pRetry = require('p-retry');
+const S3 = require('aws-sdk/clients/s3');
+const fs = require('fs-extra');
+const path = require('path');
+const execa = require('execa');
 
 const {
   buildAndStartWorkflow,
   waitForCompletedExecution,
-  executionsApi: executionsApiTestUtils
+  executionsApi: {
+    getExecutionStatus
+  }
 } = require('@cumulus/integration-tests');
+
+const { randomString } = require('@cumulus/common/test-utils');
 
 const {
   loadConfig,
-  protectFile,
-  runKes
+  protectFile
 } = require('../../helpers/testUtils');
 
-const {
-  removeWorkflow,
-  removeTaskFromWorkflow
-} = require('../../helpers/workflowUtils');
-
-const workflowsYmlFile = './workflows.yml';
-
 const timeout = 30 * 60 * 1000; // Timout for test setup/teardown in milliseconds
-const deployTimeout = 15; // deployment timeout in minutes
 
-function redeployWithRetries(config) {
-  return pRetry(
-    () => runKes(config, { timeout: deployTimeout }),
-    {
-      retries: 2
-    }
-  );
-}
+const terraformApply = () =>
+  execa('terraform', ['apply', '-auto-approve'], {
+    cwd: path.join(process.cwd(), 'cumulus-tf'),
+    stdout: process.stdout,
+    stderr: process.stderr
+  });
 
 describe('When a workflow', () => {
   let config;
@@ -40,27 +36,63 @@ describe('When a workflow', () => {
     config = await loadConfig();
   });
 
-  afterAll(() => redeployWithRetries(config));
+  afterAll(terraformApply);
 
   describe('is updated and deployed during a workflow execution', () => {
+    let redeployFinishedKey;
     let workflowExecutionArn;
     let workflowStatus;
 
     beforeAll(
       async () => {
+        // Make sure that the stack is in the expected state
+        await terraformApply();
+
+        redeployFinishedKey = `${config.stackName}/WorkflowRedeploySpec/${randomString()}`;
+
         // Kick off the workflow, don't wait for completion
         workflowExecutionArn = await buildAndStartWorkflow(
           config.stackName,
           config.bucket,
-          'WaitForDeployWorkflow'
+          'WaitForDeployWorkflow',
+          null,
+          null,
+          null,
+          {
+            waitForS3ObjectToExistParams: {
+              Bucket: config.bucket,
+              Key: redeployFinishedKey
+            }
+          }
         );
 
-        await protectFile(workflowsYmlFile, async () => {
-          removeTaskFromWorkflow('WaitForDeployWorkflow', 'HelloWorld', workflowsYmlFile);
-          await runKes(config, { timeout: deployTimeout });
-        });
+        await protectFile(
+          path.join(process.cwd(), 'cumulus-tf', 'wait_for_deploy_workflow.tf'),
+          async (workflowFilename) => {
+            await fs.copy(
+              path.join(__dirname, 'wait_for_deploy_without_hello_world_workflow.tf'),
+              workflowFilename
+            );
+
+            await terraformApply();
+          }
+        );
+
+        const s3 = new S3();
+
+        // This is the S3 object that the workflow is waiting to exist
+        await s3.putObject({
+          Bucket: config.bucket,
+          Key: redeployFinishedKey,
+          Body: 'asdf'
+        }).promise();
 
         workflowStatus = await waitForCompletedExecution(workflowExecutionArn);
+
+        await s3.deleteObject({
+          Bucket: config.bucket,
+          Key: redeployFinishedKey
+        }).promise();
       },
       timeout
     );
@@ -73,7 +105,7 @@ describe('When a workflow', () => {
       let executionStatus;
 
       beforeAll(async () => {
-        const executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
+        const executionStatusResponse = await getExecutionStatus({
           prefix: config.stackName,
           arn: workflowExecutionArn
         });
@@ -92,37 +124,6 @@ describe('When a workflow', () => {
 
         expect(helloWorldScheduledEvents.length).toEqual(1);
       });
-    });
-  });
-
-  // Disabled per CUMULUS-941
-  xdescribe('is removed and deployed during a workflow execution', () => {
-    let workflowExecutionArn = null;
-    let workflowStatus = null;
-
-    beforeAll(
-      async () => {
-        // Kick off the workflow, don't wait for completion
-        workflowExecutionArn = await buildAndStartWorkflow(
-          config.stackName,
-          config.bucket,
-          'WaitForDeployWorkflow'
-        );
-
-        await protectFile(workflowsYmlFile, async () => {
-          removeWorkflow('WaitForDeployWorkflow', workflowsYmlFile);
-          await runKes(config, { timeout: deployTimeout });
-        });
-
-        workflowStatus = await waitForCompletedExecution(workflowExecutionArn);
-      },
-      timeout
-    );
-
-    xit('the workflow has executed successfully and is returned when querying the API', () => {
-      expect(workflowStatus).toBeTruthy();
-      expect(workflowStatus.arn).toEqual(workflowExecutionArn);
-      expect(workflowStatus.status).toEqual('completed');
     });
   });
 });

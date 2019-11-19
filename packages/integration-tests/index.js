@@ -721,8 +721,15 @@ async function buildAndStartWorkflow(
   payload,
   meta = {}
 ) {
-  const workflowMsg = await
-  buildWorkflow(stackName, bucketName, workflowName, collection, provider, payload, meta);
+  const workflowMsg = await buildWorkflow(
+    stackName,
+    bucketName,
+    workflowName,
+    collection,
+    provider,
+    payload,
+    meta
+  );
   return startWorkflow(stackName, bucketName, workflowName, workflowMsg);
 }
 

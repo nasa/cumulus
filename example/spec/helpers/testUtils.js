@@ -1,7 +1,7 @@
 'use strict';
 
 const execa = require('execa');
-const fs = require('fs');
+const fs = require('fs-extra');
 const get = require('lodash.get');
 const { Config } = require('kes');
 const cloneDeep = require('lodash.clonedeep');
@@ -9,7 +9,6 @@ const dotenv = require('dotenv');
 const mime = require('mime-types');
 const merge = require('lodash.merge');
 const path = require('path');
-const { promisify } = require('util');
 const pTimeout = require('p-timeout');
 const tempy = require('tempy');
 const yaml = require('js-yaml');
@@ -27,10 +26,6 @@ const {
 const { isNil } = require('@cumulus/common/util');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
-
-const promisedCopyFile = promisify(fs.copyFile);
-const promisedReadFile = promisify(fs.readFile);
-const promisedUnlink = promisify(fs.unlink);
 
 const timestampedName = (name) => `${name}_${(new Date().getTime())}`;
 
@@ -105,7 +100,7 @@ const loadConfigYmlFile = (stackName) => {
 
 const loadEnvFile = async (filename) => {
   try {
-    const envConfig = dotenv.parse(await promisedReadFile(filename));
+    const envConfig = dotenv.parse(await fs.readFile(filename));
 
     Object.keys(envConfig).forEach((k) => {
       if (isNil(process.env[k])) process.env[k] = envConfig[k];
@@ -355,13 +350,12 @@ function getFilesMetadata(files) {
  */
 async function protectFile(file, fn) {
   const backupLocation = tempy.file();
-  await promisedCopyFile(file, backupLocation);
+  await fs.copy(file, backupLocation);
 
   try {
-    return await Promise.resolve().then(fn);
+    return await fn(file);
   } finally {
-    await promisedCopyFile(backupLocation, file);
-    await promisedUnlink(backupLocation);
+    await fs.move(backupLocation, file, { overwrite: true });
   }
 }
 

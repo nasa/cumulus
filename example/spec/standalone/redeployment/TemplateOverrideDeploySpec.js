@@ -7,7 +7,7 @@ const {
   runKes
 } = require('../../helpers/testUtils');
 
-const { loadYmlFile } = require('../../helpers/configUtils');
+const { loadYmlFile } = require('../../helpers/testUtils');
 
 describe('When an iam override template is in the APP directory and IAMs are deployed', () => {
   let config;

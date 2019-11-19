@@ -52,3 +52,20 @@ resource "aws_lambda_function" "sns_s3_test" {
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
   }
 }
+
+resource "aws_lambda_function" "wait_for_s3_object_to_exist" {
+  function_name    = "${var.prefix}-WaitForS3ObjectToExist"
+  filename         = "${path.module}/../lambdas/waitForS3ObjectToExist/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../lambdas/waitForS3ObjectToExist/lambda.zip")
+  handler          = "index.handler"
+  role             = module.cumulus.lambda_processing_role_arn
+  runtime          = "nodejs10.x"
+  timeout          = 60
+
+  tags = local.default_tags
+
+  vpc_config {
+    subnet_ids         = var.subnet_ids
+    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+  }
+}

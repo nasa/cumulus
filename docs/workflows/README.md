@@ -10,9 +10,9 @@ Workflows are comprised of one or more AWS Lambda Functions and ECS Activities t
 
 Provider data ingest and GIBS have a set of common needs in getting data from a source system and into the cloud where they can be distributed to end users. These common needs are:
 
-* **Data Discovery** - Crawling, polling, or detecting changes from a variety of sources.
-* **Data Transformation** - Taking data files in their original format and extracting and transforming them into another desired format such as visible browse images.
-* **Archival** - Storage of the files in a location that's accessible to end users.
+- **Data Discovery** - Crawling, polling, or detecting changes from a variety of sources.
+- **Data Transformation** - Taking data files in their original format and extracting and transforming them into another desired format such as visible browse images.
+- **Archival** - Storage of the files in a location that's accessible to end users.
 
 The high level view of the architecture and many of the individual steps are the same but the details of ingesting each type of collection differs. Different collection types and different providers have different needs. The individual _boxes_ of a workflow are not only different. The branching, error handling, and multiplicity of the _arrows_ connecting the boxes are also different. Some need visible images rendered from component data files from multiple collections. Some need to contact the CMR with updated metadata. Some will have different retry strategies to handle availability issues with source data systems.
 
@@ -28,11 +28,11 @@ We want to use lego-like individual steps that can be composed by an operator.
 
 Individual steps should ...
 
-* Be as ignorant as possible of the overall flow. They should not be aware of previous steps.
-* Be runnable on their own.
-* Define their input and output in simple data structures.
-* Be domain agnostic.
-* Not make assumptions of specifics of what goes into a granule for example.
+- Be as ignorant as possible of the overall flow. They should not be aware of previous steps.
+- Be runnable on their own.
+- Define their input and output in simple data structures.
+- Be domain agnostic.
+- Not make assumptions of specifics of what goes into a granule for example.
 
 ### Scalable
 
@@ -40,15 +40,15 @@ The ingest architecture needs to be scalable both to handle ingesting hundreds o
 
 ### Data Provenance
 
-* We should have traceability for how data was produced and where it comes from.
-* Use immutable representations of data. Data once received is not overwritten. Data can be removed for cleanup.
-* All software is versioned. We can trace transformation of data by tracking the immutable source data and the versioned software applied to it.
+- We should have traceability for how data was produced and where it comes from.
+- Use immutable representations of data. Data once received is not overwritten. Data can be removed for cleanup.
+- All software is versioned. We can trace transformation of data by tracking the immutable source data and the versioned software applied to it.
 
 ### Operator Visibility and Control
 
-* Operators should be able to see and understand everything that is happening in the system.
-* It should be obvious why things are happening and straightforward to diagnose problems.
-* We generally assume that the operators know best in terms of the limits on a providers infrastructure, how often things need to be done, and details of a collection. The architecture should defer to their decisions and knowledge while providing safety nets to prevent problems.
+- Operators should be able to see and understand everything that is happening in the system.
+- It should be obvious why things are happening and straightforward to diagnose problems.
+- We generally assume that the operators know best in terms of the limits on a providers infrastructure, how often things need to be done, and details of a collection. The architecture should defer to their decisions and knowledge while providing safety nets to prevent problems.
 
 ## A Reconfigurable Workflow Architecture
 
@@ -68,20 +68,27 @@ A workflow is a provider-configured set of steps that describe the process to in
 
 AWS Step functions are described in detail in the AWS documentation but they provide several benefits which are applicable to AWS.
 
-* Prebuilt solution
-* Operations Visibility
-  * Visual diagram
-  * Every execution is recorded with both inputs and output for every step.
-* Composability
-  * Allow composing AWS Lambdas and code running in other steps. Code can be run in EC2 to interface with it or even on premise if desired.
-  * Step functions allow specifying when steps run in parallel or choices between steps based on data from the previous step.
-* Flexibility
-  * Step functions are designed to be easy to build new applications and reconfigure. We're exposing that flexibility directly to the provider.
-* Reliability and Error Handling
-  * Step functions allow configuration of retries and adding handling of error conditions.
-* Described via data
-  * This makes it easy to save the step function in configuration management solutions.
-  * We can build simple interfaces on top of the flexibility provided.
+- Prebuilt solution
+- Operations Visibility
+  - Visual diagram
+  - Every execution is recorded with both inputs and output for every step.
+- Composability
+  - Allow composing AWS Lambdas and code running in other steps. Code can be run in EC2 to interface with it or even on premise if desired.
+  - Step functions allow specifying when steps run in parallel or choices between steps based on data from the previous step.
+- Flexibility
+  - Step functions are designed to be easy to build new applications and reconfigure. We're exposing that flexibility directly to the provider.
+- Reliability and Error Handling
+  - Step functions allow configuration of retries and adding handling of error conditions.
+- Described via data
+  - This makes it easy to save the step function in configuration management solutions.
+  - We can build simple interfaces on top of the flexibility provided.
+
+#### AWS Step Functions considerations
+
+- According to the
+  [AWS DeleteStateMachine documentation](https://docs.aws.amazon.com/step-functions/latest/apireference/API_DeleteStateMachine.html),
+  deleting a workflow while it has an execution in-progress will result in that
+  execution being deleted the next time it makes a state transition.
 
 #### Workflow Scheduler
 
@@ -91,18 +98,18 @@ The scheduler is responsible for initiating a step function and passing in the r
 
 A workflow is composed of tasks. Each task is responsible for performing a discrete step of the ingest process. These can be activities like:
 
-* Crawling a provider website for new data.
-* Uploading data from a provider to S3.
-* Executing a process to transform data.
+- Crawling a provider website for new data.
+- Uploading data from a provider to S3.
+- Executing a process to transform data.
 
 AWS Step Functions permit [tasks](http://docs.aws.amazon.com/step-functions/latest/dg/concepts-tasks.html#concepts-tasks) to be code running anywhere, even on premise. We expect most tasks will be written as Lambda functions in order to take advantage of the easy deployment, scalability, and cost benefits provided by AWS Lambda.
 
-* **Leverages Existing Work**
-  * The design leverages the existing work of Amazon by defining workflows using the [AWS Step Function State Language](http://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language.html#amazon-states-language). This is the language that was created for describing the state machines used in AWS Step Functions.
-* **Open for Extension**
-  * Both `meta` and `task_config` which are used for configuring at the collection and task levels do not dictate the fields and structure of the configuration. Additional task specific JSON schemas can be used for extending the validation of individual steps.
-* **Data-centric Configuration**
-  * The use of a single JSON configuration file allows this to be added to a workflow. We build additional support on top of the configuration file for simpler domain specific configuration or interactive GUIs.
+- **Leverages Existing Work**
+  - The design leverages the existing work of Amazon by defining workflows using the [AWS Step Function State Language](http://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language.html#amazon-states-language). This is the language that was created for describing the state machines used in AWS Step Functions.
+- **Open for Extension**
+  - Both `meta` and `task_config` which are used for configuring at the collection and task levels do not dictate the fields and structure of the configuration. Additional task specific JSON schemas can be used for extending the validation of individual steps.
+- **Data-centric Configuration**
+  - The use of a single JSON configuration file allows this to be added to a workflow. We build additional support on top of the configuration file for simpler domain specific configuration or interactive GUIs.
 
 For more details on Task Messages and Configuration, visit [Cumulus configuration and message protocol documentation](cumulus-task-message-flow.md).
 
@@ -154,17 +161,17 @@ AWS Step Functions scale up as needed and aren't limited by a set of number of s
 
 #### Monitoring and Auditing
 
-* Every execution is captured.
-* Every task run has captured input and outputs.
-* CloudWatch Metrics can be [used for monitoring](https://docs.aws.amazon.com/step-functions/latest/dg/procedure-cw-metrics.html) many of the events with the StepFunctions. It can also generate alarms for the whole process.
-* Visual report of the entire configuration.
-  * Errors and success states are highlighted visually in the flow.
+- Every execution is captured.
+- Every task run has captured input and outputs.
+- CloudWatch Metrics can be [used for monitoring](https://docs.aws.amazon.com/step-functions/latest/dg/procedure-cw-metrics.html) many of the events with the StepFunctions. It can also generate alarms for the whole process.
+- Visual report of the entire configuration.
+  - Errors and success states are highlighted visually in the flow.
 
 #### Data Provenance
 
-* Monitoring and auditing ensures we know the data that was given to a task.
-* Workflows are versioned and the state machines stored in AWS Step Functions are immutable. Once created they cannot change.
-* Versioning of data in S3 or using immutable records in S3 will mean we always know what data was created as the result of a step or fed into a step.
+- Monitoring and auditing ensures we know the data that was given to a task.
+- Workflows are versioned and the state machines stored in AWS Step Functions are immutable. Once created they cannot change.
+- Versioning of data in S3 or using immutable records in S3 will mean we always know what data was created as the result of a step or fed into a step.
 
 ## Appendix
 
@@ -172,8 +179,8 @@ AWS Step Functions scale up as needed and aren't limited by a set of number of s
 
 This shows the GIBS Ingest Architecture as an example of the use of the Ingest Workflow Architecture.
 
-* The GIBS Ingest Architecture consists of two workflows per collection type. There is one for discovery and one for ingest. The final stage of discovery triggers multiple ingest workflows for each MRF granule that needs to be generated.
-* It demonstrates both lambdas as tasks and a container used for MRF generation.
+- The GIBS Ingest Architecture consists of two workflows per collection type. There is one for discovery and one for ingest. The final stage of discovery triggers multiple ingest workflows for each MRF granule that needs to be generated.
+- It demonstrates both lambdas as tasks and a container used for MRF generation.
 
 #### GIBS Ingest Workflows
 
