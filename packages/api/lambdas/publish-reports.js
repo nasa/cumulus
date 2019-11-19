@@ -234,19 +234,23 @@ async function getFailedExecutionMessage(inputMessage) {
     const activityStep = new ActivityStep();
     const lambdaStep = new LambdaStep();
 
-    const {
-      failedStepId,
-      failedStepDetails
-    } = await lambdaStep.getLastFailedStepEvent(executionArn)
-      || await activityStep.getLastFailedStepEvent(executionArn);
+    const { events, failedStepId, failedStepDetails } = (
+      await lambdaStep.getLastFailedStepEvent(executionArn)
+      || await activityStep.getLastFailedStepEvent(executionArn)
+    );
     exception = failedStepDetails;
 
-    const failedStepMessage = await lambdaStep.getLastFailedStepMessage(executionArn, failedStepId)
-      || await activityStep.getLastFailedStepMessage(executionArn, failedStepId);
+    const failedStepOutput = (
+      await lambdaStep.getLastFailedStepOutput(events, executionArn, failedStepId)
+      || await activityStep.getLastFailedStepOutput(events, executionArn, failedStepId)
+    );
 
-    return failedStepMessage;
+    return failedStepOutput;
   } catch (err) {
-    log.error(err);
+    log.info(
+      `Could not retrieve output from last failed step in execution ${executionArn}, falling back to execution input`,
+      'Cause:', err
+    );
     // If input from the failed step cannot be retrieved, then fall back to execution
     // input.
     return {

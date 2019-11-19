@@ -1,7 +1,5 @@
 'use strict';
 
-const cloneDeep = require('lodash.clonedeep');
-
 const { isNil } = require('./util');
 const { pullStepFunctionEvent } = require('./aws');
 const log = require('./log');
@@ -17,13 +15,6 @@ class SfnStep {
     this.taskExitedDetailsKey = 'stateExitedEventDetails';
     this.failedExecutionEvent = 'ExecutionFailed';
     this.failedExecutionDetailsKey = 'executionFailedEventDetails';
-  }
-
-  async getExecutionHistory(executionArn) {
-    if (!this.events) {
-      const { events } = await StepFunctions.getExecutionHistory({ executionArn });
-      this.events = events;
-    }
   }
 
   /**
@@ -88,11 +79,7 @@ class SfnStep {
    *   Execution history event for the last failed step in the execution
    */
   async getLastFailedStepEvent(executionArn) {
-    // TODO: store execution history in memory to avoid multiple API requests on same
-    // class instance?
-    // const { events } = await StepFunctions.getExecutionHistory({ executionArn });
-    await this.getExecutionHistory(executionArn);
-    const events = cloneDeep(this.events);
+    const { events } = await StepFunctions.getExecutionHistory({ executionArn });
 
     // There may be multiple failed events in a retry scenario. Reverse the events
     // list to more quickly find the last failed event in the history.
@@ -102,6 +89,7 @@ class SfnStep {
       .find((event) => event.type === this.failureEvent);
 
     return {
+      events,
       failedStepId: failedStepEvent.id,
       failedStepDetails: failedStepEvent[this.eventDetailsKeys.failed]
     };
@@ -110,22 +98,13 @@ class SfnStep {
   /**
    * Get the output of the last failed step in a Step function execution.
    *
+   * @param {Array<Object>} events - Events from execution history
    * @param {string} executionArn - Step function execution ARN
    * @param {number} failedStepId - Event ID for last failed step in execution
    * @returns {Promise<Object>}
    *   Cumulus message output from the last failed step in the execution
    */
-  async getLastFailedStepMessage(executionArn, failedStepId) {
-    // TODO: store execution history in memory to avoid multiple API requests on same
-    // class instance?
-    // const { events } = await StepFunctions.getExecutionHistory({ executionArn });
-    await this.getExecutionHistory(executionArn);
-    const events = cloneDeep(this.events);
-
-    // There may be multiple failed events in a retry scenario. Reverse the events
-    // list to more quickly find the last failed event in the history.
-    events.reverse();
-
+  async getLastFailedStepOutput(events, executionArn, failedStepId) {
     const failedStepExitedEvent = events.find((event) => {
       const taskExitedEvent = event.type === this.taskExitedEvent;
       const isStepFailed = event.previousEventId === failedStepId;
@@ -133,7 +112,7 @@ class SfnStep {
     });
 
     if (!failedStepExitedEvent) {
-      throw new Error(`Could not find ${this.taskExitedEvent} for execution ${executionArn}`);
+      throw new Error(`Could not find ${this.taskExitedEvent} event after step ID ${failedStepId} for execution ${executionArn}`);
     }
 
     const failedEventDetails = failedStepExitedEvent[this.taskExitedDetailsKey];
