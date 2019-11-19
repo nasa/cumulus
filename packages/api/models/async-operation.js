@@ -93,7 +93,7 @@ class AsyncOperation extends Manager {
       }
     }).promise();
 
-    // If creating the stack failed, update the database
+    // If creating the task failed, update the database
     if (runTaskResponse.failures.length > 0) {
       return this.update(
         { id },
