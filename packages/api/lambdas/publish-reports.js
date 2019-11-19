@@ -251,10 +251,10 @@ async function getFailedExecutionMessage(inputMessage) {
 
     return failedStepOutput;
   } catch (err) {
-    log.info(
-      `Could not retrieve output from last failed step in execution ${executionArn}, falling back to execution input`,
-      'Cause:', err
-    );
+    log.info({
+      message: `Could not retrieve output from last failed step in execution ${executionArn}, falling back to execution input`,
+      error: err
+    });
     // If input from the failed step cannot be retrieved, then fall back to execution
     // input.
     return {
