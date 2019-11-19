@@ -71,15 +71,16 @@ function publishPdrSnsMessage(
  * Publish execution record to SNS topic.
  *
  * @param {Object} eventMessage - Workflow execution message
+ * @param {string} executionArn - Step function execution ARN
  * @returns {Promise}
  */
-async function handleExecutionMessage(eventMessage) {
+async function handleExecutionMessage(eventMessage, executionArn) {
   try {
     const executionRecord = await Execution.generateRecord(eventMessage);
     return await publishExecutionSnsMessage(executionRecord);
   } catch (err) {
     log.fatal(
-      `Failed to create database record for execution ${getMessageExecutionArn(eventMessage)}: ${err.message}`,
+      `Failed to create database record for execution ${executionArn}: ${err.message}`,
       'Cause: ', err,
       'Execution message: ', eventMessage
     );
@@ -127,16 +128,16 @@ async function buildAndPublishGranule(
  * Publish individual granule messages to SNS topic.
  *
  * @param {Object} eventMessage - Workflow execution message
+ * @param {string} executionArn - Step function execution ARN
  * @returns {Promise}
  */
-async function handleGranuleMessages(eventMessage) {
+async function handleGranuleMessages(eventMessage, executionArn) {
   const granules = getMessageGranules(eventMessage);
   if (!granules) {
     log.info(`No granules to process in the payload: ${eventMessage.payload}`);
     return Promise.resolve();
   }
 
-  const executionArn = getMessageExecutionArn(eventMessage);
   const executionUrl = getExecutionUrl(executionArn);
 
   let executionDescription;
@@ -209,9 +210,12 @@ async function publishReportSnsMessages(eventMessage, isTerminalStatus, isFailed
     }
   });
 
+  const executionArn = getMessageExecutionArn(eventMessage);
+  log.info(`Publishing reports for execution ${executionArn}`);
+
   return Promise.all([
-    handleExecutionMessage(eventMessage),
-    handleGranuleMessages(eventMessage),
+    handleExecutionMessage(eventMessage, executionArn),
+    handleGranuleMessages(eventMessage, executionArn),
     handlePdrMessage(eventMessage)
   ]);
 }
