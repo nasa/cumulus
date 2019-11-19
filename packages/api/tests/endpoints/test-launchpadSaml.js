@@ -80,15 +80,15 @@ test.beforeEach(async (t) => {
   const validUser = randomId('userId');
   const unauthorizedIndex = randomId('session_index');
   const unauthorizedUser = randomId('userId');
-  const userGroup =  randomId('userGroup');
+  const userGroup = randomId('userGroup');
   process.env.oauth_user_group = userGroup;
 
   const successfulSamlResponse = {
     user: {
       name_id: 'junk-dont-use-this-any-more',
-      session_index: validIndex ,
+      session_index: validIndex,
       attributes: {
-        UserId: [ validUser ],
+        UserId: [validUser],
         userGroup: [
           `cn=${userGroup},ou=254886,ou=ROLES,ou=Groups,dc=nasa,dc=gov`
         ]
@@ -100,7 +100,7 @@ test.beforeEach(async (t) => {
     user: {
       session_index: unauthorizedIndex,
       attributes: {
-        UserId: [ unauthorizedUser ],
+        UserId: [unauthorizedUser],
         userGroup: [
           'cn=WrongUserGroup,ou=254886,ou=ROLES,ou=Groups,dc=nasa,dc=gov'
         ]
@@ -183,7 +183,7 @@ test(
   'authorizedUserGroup returns true if samlUserGroup contains authorized group',
   (t) => {
     const samlUserGroup = 'cn=GSFC-Cumulus-Dev,ou=254886,ou=ROLES,ou=Groups,dc=nasa,dc=gov';
-    const authorizedGroup =  'GSFC-Cumulus-Dev';
+    const authorizedGroup = 'GSFC-Cumulus-Dev';
 
     t.true(authorizedUserGroup(samlUserGroup, authorizedGroup));
   }
@@ -192,10 +192,10 @@ test(
 test(
   'authorizedUserGroup returns false if samlUserGroup does not contain authorized group',
   (t) => {
-  const samlUserGroup = 'cn=wrongUserGroup,ou=254886,ou=ROLES,ou=Groups,dc=nasa,dc=gov';
-  const authorizedGroup =  'GSFC-Cumulus-Dev';
+    const samlUserGroup = 'cn=wrongUserGroup,ou=254886,ou=ROLES,ou=Groups,dc=nasa,dc=gov';
+    const authorizedGroup = 'GSFC-Cumulus-Dev';
 
-  t.false(authorizedUserGroup(samlUserGroup, authorizedGroup));
+    t.false(authorizedUserGroup(samlUserGroup, authorizedGroup));
   }
 );
 
