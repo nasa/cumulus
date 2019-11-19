@@ -23,7 +23,7 @@ const failedStepException = {
 
 const createFakeExecutionHistory = ({
   message,
-  failedStepId,
+  completedStepId = randomNumber(),
   stepName = randomId('stepName'),
   stepType = 'lambda',
   timestamp = Date.now(),
@@ -34,14 +34,14 @@ const createFakeExecutionHistory = ({
   const scheduledDetailsKey = isLambdaHistory
     ? 'lambdaFunctionScheduledEventDetails'
     : 'activityScheduledEventDetails';
-  const failureDetailsKey = isLambdaHistory
-    ? 'lambdaFunctionFailedEventDetails'
-    : 'activityFailedEventDetails';
 
+  let completedDetailsKey;
   let completionEventType;
   if (failed) {
+    completedDetailsKey = isLambdaHistory ? 'lambdaFunctionFailedEventDetails' : 'activityFailedEventDetails';
     completionEventType = isLambdaHistory ? 'LambdaFunctionFailed' : 'ActivityFailed';
   } else {
+    completedDetailsKey = isLambdaHistory ? 'lambdaFunctionSucceededEventDetails' : 'activitySucceededEventDetails';
     completionEventType = isLambdaHistory ? 'LambdaFunctionSucceeded' : 'ActivitySucceeded';
   }
 
@@ -61,22 +61,25 @@ const createFakeExecutionHistory = ({
     {
       timestamp: timestamp + 200,
       type: completionEventType,
-      id: failedStepId,
-      [failureDetailsKey]: failedStepOutput
+      id: completedStepId,
+      [completedDetailsKey]: failed ? failedStepOutput : {}
     }
   ];
 
   if (finalEventType === 'taskExit') {
+    const additionalOutput = failed
+      ? { exception: failedStepException }
+      : {};
     events.push({
       timestamp: timestamp + 200,
       type: 'TaskStateExited',
-      id: failedStepId + 1,
-      previousEventId: failedStepId,
+      id: completedStepId + 1,
+      previousEventId: completedStepId,
       stateExitedEventDetails: {
         name: stepName,
         output: JSON.stringify({
           ...message,
-          exception: failedStepException
+          ...additionalOutput
         })
       }
     });
@@ -84,8 +87,8 @@ const createFakeExecutionHistory = ({
     events.push({
       timestamp: timestamp + 200,
       type: 'ExecutionFailed',
-      id: failedStepId + 1,
-      previousEventId: failedStepId,
+      id: completedStepId + 1,
+      previousEventId: completedStepId,
       executionFailedEventDetails: failedStepException
     });
   }
@@ -107,33 +110,22 @@ const createCumulusMessage = ({
   payload
 });
 
-test.serial.skip('ActivityStep.getLastFailedStepMessage() does not throw error', async (t) => {
-  // execution ARN doesn't matter because we're mocking the call to get
-  // execution history
-  const executionArn = randomId('execution');
-
-  const getExecutionHistoryStub = sinon.stub(StepFunctions, 'getExecutionHistory')
-    .callsFake(() => {
-      throw new Error('error');
-    });
-
-  try {
-    const activityStep = new ActivityStep();
-    await t.notThrowsAsync(
-      activityStep.getLastFailedStepMessage(executionArn)
-    );
-  } finally {
-    getExecutionHistoryStub.restore();
+test.beforeEach((t) => {
+  t.context.completedStepId = randomNumber();
+  t.context.invalidFailedStepId = randomNumber();
+  // Ensure that the invalid failed step ID does not match an event ID
+  // in the execution history
+  while (t.context.completedStepId === t.context.invalidFailedStepId) {
+    t.context.invalidFailedStepId = randomNumber();
   }
 });
 
-test.serial('ActivityStep.getLastFailedStepEvent() returns undefined if failed step cannot be found', async (t) => {
+test.serial('ActivityStep.getLastFailedStepEvent() throws error if failed step cannot be found', async (t) => {
   // execution ARN doesn't matter because we're mocking the call to get
   // execution history
   const executionArn = randomId('execution');
 
   const message = createCumulusMessage();
-
   const fakeExecutionHistory = createFakeExecutionHistory({
     message,
     failed: false,
@@ -144,13 +136,43 @@ test.serial('ActivityStep.getLastFailedStepEvent() returns undefined if failed s
 
   try {
     const activityStep = new ActivityStep();
-    t.is(await activityStep.getLastFailedStepEvent(executionArn), undefined);
+    await t.throwsAsync(activityStep.getLastFailedStepEvent(executionArn));
   } finally {
     getExecutionHistoryStub.restore();
   }
 });
 
-test.serial('ActivityStep.getLastFailedStepMessage() returns correct message', async (t) => {
+test.serial('ActivityStep.getLastFailedStepOutput() throws error if output from failed step cannot be found', async (t) => {
+  const { completedStepId, invalidFailedStepId } = t.context;
+  // execution ARN doesn't matter because we're mocking the call to get
+  // execution history
+  const executionArn = randomId('execution');
+
+  const message = createCumulusMessage();
+  const fakeExecutionHistory = createFakeExecutionHistory({
+    message,
+    failed: false,
+    stepType: 'activity',
+    completedStepId
+  });
+  const getExecutionHistoryStub = sinon.stub(StepFunctions, 'getExecutionHistory')
+    .callsFake(() => fakeExecutionHistory);
+
+  try {
+    const activityStep = new ActivityStep();
+    await t.throwsAsync(
+      activityStep.getLastFailedStepOutput(
+        fakeExecutionHistory.events,
+        executionArn,
+        invalidFailedStepId
+      )
+    );
+  } finally {
+    getExecutionHistoryStub.restore();
+  }
+});
+
+test.serial('ActivityStep.getLastFailedStepOutput() returns correct message', async (t) => {
   // execution ARN doesn't matter because we're mocking the call to get
   // execution history
   const executionArn = randomId('execution');
@@ -161,19 +183,23 @@ test.serial('ActivityStep.getLastFailedStepMessage() returns correct message', a
   });
 
   const stepName = randomId('step');
-  const failedStepId = randomNumber();
+  const completedStepId = randomNumber();
   const fakeExecutionHistory = createFakeExecutionHistory({
     message,
     stepName,
     stepType: 'activity',
-    failedStepId
+    completedStepId
   });
   const getExecutionHistoryStub = sinon.stub(StepFunctions, 'getExecutionHistory')
     .callsFake(() => fakeExecutionHistory);
 
   try {
     const activityStep = new ActivityStep();
-    const failedStepInput = await activityStep.getLastFailedStepMessage(executionArn, failedStepId);
+    const failedStepInput = await activityStep.getLastFailedStepOutput(
+      fakeExecutionHistory.events,
+      executionArn,
+      completedStepId
+    );
     const expectedMessage = {
       ...message,
       exception: failedStepException
@@ -184,33 +210,12 @@ test.serial('ActivityStep.getLastFailedStepMessage() returns correct message', a
   }
 });
 
-test.serial.skip('LambdaStep.getLastFailedStepMessage() does not throw error', async (t) => {
-  // execution ARN doesn't matter because we're mocking the call to get
-  // execution history
-  const executionArn = randomId('execution');
-
-  const getExecutionHistoryStub = sinon.stub(StepFunctions, 'getExecutionHistory')
-    .callsFake(() => {
-      throw new Error('error');
-    });
-
-  try {
-    const lambdaStep = new LambdaStep();
-    await t.notThrowsAsync(
-      lambdaStep.getLastFailedStepMessage(executionArn)
-    );
-  } finally {
-    getExecutionHistoryStub.restore();
-  }
-});
-
-test.serial('LambdaStep.getLastFailedStepEvent() returns undefined if failed step cannot be found', async (t) => {
+test.serial('LambdaStep.getLastFailedStepEvent() throws error if failed step cannot be found', async (t) => {
   // execution ARN doesn't matter because we're mocking the call to get
   // execution history
   const executionArn = randomId('execution');
 
   const message = createCumulusMessage();
-
   const fakeExecutionHistory = createFakeExecutionHistory({
     message,
     failed: false
@@ -220,13 +225,43 @@ test.serial('LambdaStep.getLastFailedStepEvent() returns undefined if failed ste
 
   try {
     const lambdaStep = new LambdaStep();
-    t.is(await lambdaStep.getLastFailedStepEvent(executionArn), undefined);
+    await t.throwsAsync(lambdaStep.getLastFailedStepEvent(executionArn));
   } finally {
     getExecutionHistoryStub.restore();
   }
 });
 
-test.serial('LambdaStep.getLastFailedStepMessage() returns correct message', async (t) => {
+test.serial('LambdaStep.getLastFailedStepOutput() throws error if output from failed step cannot be found', async (t) => {
+  const { completedStepId, invalidFailedStepId } = t.context;
+
+  // execution ARN doesn't matter because we're mocking the call to get
+  // execution history
+  const executionArn = randomId('execution');
+  const message = createCumulusMessage();
+  const fakeExecutionHistory = createFakeExecutionHistory({
+    message,
+    failed: false,
+    stepType: 'activity',
+    completedStepId
+  });
+  const getExecutionHistoryStub = sinon.stub(StepFunctions, 'getExecutionHistory')
+    .callsFake(() => fakeExecutionHistory);
+
+  try {
+    const lambdaStep = new LambdaStep();
+    await t.throwsAsync(
+      lambdaStep.getLastFailedStepOutput(
+        fakeExecutionHistory.events,
+        executionArn,
+        invalidFailedStepId
+      )
+    );
+  } finally {
+    getExecutionHistoryStub.restore();
+  }
+});
+
+test.serial('LambdaStep.getLastFailedStepOutput() returns correct message', async (t) => {
   // execution ARN doesn't matter because we're mocking the call to get
   // execution history
   const executionArn = randomId('execution');
@@ -237,9 +272,9 @@ test.serial('LambdaStep.getLastFailedStepMessage() returns correct message', asy
   });
 
   const stepName = randomId('step');
-  const failedStepId = randomNumber();
+  const completedStepId = randomNumber();
   const fakeExecutionHistory = createFakeExecutionHistory({
-    failedStepId,
+    completedStepId,
     message,
     stepName
   });
@@ -248,7 +283,11 @@ test.serial('LambdaStep.getLastFailedStepMessage() returns correct message', asy
 
   try {
     const lambdaStep = new LambdaStep();
-    const failedStepInput = await lambdaStep.getLastFailedStepMessage(executionArn, failedStepId);
+    const failedStepInput = await lambdaStep.getLastFailedStepOutput(
+      fakeExecutionHistory.events,
+      executionArn,
+      completedStepId
+    );
     const expectedMessage = {
       ...message,
       exception: failedStepException
@@ -259,7 +298,7 @@ test.serial('LambdaStep.getLastFailedStepMessage() returns correct message', asy
   }
 });
 
-test.serial.skip('LambdaStep.getLastFailedStepMessage() returns correct message for failed workflow with single step', async (t) => {
+test.serial.skip('LambdaStep.getLastFailedStepOutput() returns correct message for failed workflow with single step', async (t) => {
   // execution ARN doesn't matter because we're mocking the call to get
   // execution history
   const executionArn = randomId('execution');
@@ -280,8 +319,7 @@ test.serial.skip('LambdaStep.getLastFailedStepMessage() returns correct message 
 
   try {
     const lambdaStep = new LambdaStep();
-    const failedStepInput = await lambdaStep.getLastFailedStepMessage(executionArn);
-    debugger;
+    const failedStepInput = await lambdaStep.getLastFailedStepOutput(executionArn);
     const expectedMessage = {
       ...failedStepException
     };
@@ -302,7 +340,11 @@ test.serial('gets message exception when failed step retry occurs', async (t) =>
   try {
     const lambdaStep = new LambdaStep();
     const { failedStepId } = await lambdaStep.getLastFailedStepEvent(executionArn);
-    const failedStepMessage = await lambdaStep.getLastFailedStepMessage(executionArn, failedStepId);
+    const failedStepMessage = await lambdaStep.getLastFailedStepOutput(
+      ingestGranuleFailHistory.events,
+      executionArn,
+      failedStepId
+    );
     t.true(isObject(failedStepMessage.exception));
     t.is(failedStepMessage.exception.Error, 'FileNotFound');
   } finally {
@@ -321,7 +363,11 @@ test.serial('gets message exception when no step retry occurs', async (t) => {
   try {
     const lambdaStep = new LambdaStep();
     const { failedStepId } = await lambdaStep.getLastFailedStepEvent(executionArn);
-    const failedStepMessage = await lambdaStep.getLastFailedStepMessage(executionArn, failedStepId);
+    const failedStepMessage = await lambdaStep.getLastFailedStepOutput(
+      ingestPublishGranuleFailHistory.events,
+      executionArn,
+      failedStepId
+    );
     t.true(isObject(failedStepMessage.exception));
     t.is(failedStepMessage.exception.Error, 'CumulusMessageAdapterExecutionError');
   } finally {

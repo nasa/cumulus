@@ -75,7 +75,7 @@ class SfnStep {
    * Get the event for the last failed step in a Step function execution.
    *
    * @param {string} executionArn - Step function execution ARN
-   * @returns {Promise<Object>|undefined}
+   * @returns {Promise<Object>}
    *   Execution history event for the last failed step in the execution
    */
   async getLastFailedStepEvent(executionArn) {
