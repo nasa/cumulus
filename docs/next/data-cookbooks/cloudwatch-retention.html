@@ -60,7 +60,7 @@
 <p>In addition to getting your aws-cli <a href="https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html">set-up</a>, there are two values you'll need to acquire.</p>
 <ol>
 <li><code>log-group-name</code>: the name of the log group who's retention policy (retention time) you'd like to change. We'll use <code>/aws/lambda/KinesisInboundLogger</code> in our examples.</li>
-<li><code>retention-in-days</code>: the number of days you'd like to retain the logs in the specified log group for. There is a list of possbile values available in the <a href="https://docs.aws.amazon.com/cli/latest/reference/logs/put-retention-policy.html">aws logs documentation</a>.</li>
+<li><code>retention-in-days</code>: the number of days you'd like to retain the logs in the specified log group for. There is a list of possible values available in the <a href="https://docs.aws.amazon.com/cli/latest/reference/logs/put-retention-policy.html">aws logs documentation</a>.</li>
 </ol>
 <p>For example, if we wanted to set log retention to 30 days on our <code>KinesisInboundLogger</code> lambda, we would write:</p>
 <pre><code class="hljs css language-bash">aws logs put-retention-policy --<span class="hljs-built_in">log</span>-group-name <span class="hljs-string">"/aws/lambda/KinesisInboundLogger"</span> --retention-in-days 30
@@ -90,8 +90,8 @@
               </script><script>
               var search = docsearch({
                 
-                apiKey: 'f7e0be879553661f9043322d119069c8',
-                indexName: 'nasa_cumulus',
+                apiKey: 'undefined',
+                indexName: 'undefined',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>

@@ -85,7 +85,7 @@ report_granules_sns_topic_arn = arn:aws:sns:us-east-1:xxxxxxxxx:&lt;prefix&gt;-r
 report_pdrs_sns_topic_arn = arn:aws:sns:us-east-1:xxxxxxxxx:&lt;prefix&gt;-report-pdrs-topic
 </code></pre>
 <p>Once you have the topic ARN, you can use the AWS SDK for your language of choice to publish messages to the topic. The expected format of granule and PDR records can be found in the <a href="https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js">data model schemas</a>. <strong>Messages that do not conform to the schemas will fail to be created as records</strong>.</p>
-<p>If you are not seeing records persist to the database or show up in the Cumulus dashboard, you can investigate the Cloudwatch logs of the SNS topic consumer Lambas:</p>
+<p>If you are not seeing records persist to the database or show up in the Cumulus dashboard, you can investigate the Cloudwatch logs of the SNS topic consumer Lambdas:</p>
 <ul>
 <li><code>&lt;prefix&gt;-reportPdrs</code></li>
 <li><code>&lt;prefix&gt;-reportGranules</code></li>
@@ -177,8 +177,8 @@ resource </span><span class="hljs-string">"aws_lambda_permission"</span> <span c
               </script><script>
               var search = docsearch({
                 
-                apiKey: 'f7e0be879553661f9043322d119069c8',
-                indexName: 'nasa_cumulus',
+                apiKey: 'undefined',
+                indexName: 'undefined',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>

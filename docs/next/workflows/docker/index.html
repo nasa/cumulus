@@ -61,10 +61,10 @@
 <p>To run a command using docker-compose use:</p>
 <pre><code class="hljs css language-bash">docker-compose run *<span class="hljs-built_in">command</span>*
 </code></pre>
-<p>where <em>commmand</em> is one of</p>
+<p>where <em>command</em> is one of</p>
 <ul>
 <li><em>build</em>: Build and tag the image using the Dockerfile</li>
-<li><em>bash</em>: Run the Dockerfile interatively (via a bash shell)</li>
+<li><em>bash</em>: Run the Dockerfile interactively (via a bash shell)</li>
 <li><em>test</em>: Processes data in the directory <em>data/input</em> and saves the output to the <em>data/test-output</em> directory. These directories must exist.</li>
 </ul>
 <h3><a class="anchor" aria-hidden="true" id="the-docker-registry"></a><a href="#the-docker-registry" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>The Docker Registry</h3>
@@ -86,7 +86,7 @@ aws ecr get-login --region us-east-1 | <span class="hljs-built_in">source</span>
 <p>The generation of the released tagged images are created and deployed automatically with Circle-CI, the continuous integration system used by Cumulus. When new commits are merged into a branch, the appropriate Docker image is built, tested, and deployed to the Docker registry. More on testing below.</p>
 <h2><a class="anchor" aria-hidden="true" id="docker-images"></a><a href="#docker-images" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Docker Images</h2>
 <h3><a class="anchor" aria-hidden="true" id="docker-base"></a><a href="#docker-base" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>docker-base</h3>
-<p>Docker images are built in layers, allowing common dependencies to be shared to child Docker images. A base docker image is provided that includes some dependencies shared among the current HS3 data processing codes. This includes NetCDF liraries, AWS Cli, Python, Git, as well as py-cumulus, a collection of Python utilities that are used in the processing scripts. The docker-base repository is used to generate new images that are then stored in AWS ECR.</p>
+<p>Docker images are built in layers, allowing common dependencies to be shared to child Docker images. A base docker image is provided that includes some dependencies shared among the current HS3 data processing codes. This includes NetCDF libraries, AWS Cli, Python, Git, as well as py-cumulus, a collection of Python utilities that are used in the processing scripts. The docker-base repository is used to generate new images that are then stored in AWS ECR.</p>
 <p>The docker-base image can be interacted with by running it in interactive mode (ie, <code>docker run -it docker-base</code>, since the default &quot;entrypoint&quot; to the image is a bash shell.</p>
 <h3><a class="anchor" aria-hidden="true" id="docker-data-example-docker-hs3-avaps"></a><a href="#docker-data-example-docker-hs3-avaps" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>docker-data example: docker-hs3-avaps</h3>
 <p>To create a new processing stream for a data collection, a Dockerfile is used to specify what additional dependencies may be required, and to build them in that environment, if necessary. An example Dockerfile is shown here, for the hs3avaps collection.</p>
@@ -178,7 +178,7 @@ CMD [<span class="hljs-string">"input"</span>, <span class="hljs-string">"output
 <li>write out metadata generated for this file</li>
 </ol>
 <h2><a class="anchor" aria-hidden="true" id="process-testing"></a><a href="#process-testing" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Process Testing</h2>
-<p>It is important to have tests for data processing, however in many cases datafiles can be large so it is not practical to store the test data in the repository. Instead, test data is currrently stored on AWS S3, and can be retrieved using the AWS CLI.</p>
+<p>It is important to have tests for data processing, however in many cases datafiles can be large so it is not practical to store the test data in the repository. Instead, test data is currently stored on AWS S3, and can be retrieved using the AWS CLI.</p>
 <pre><code class="hljs css language-bash">aws s3 sync s3://cumulus-ghrc-logs/sample-data/collection-name data
 </code></pre>
 <p>Where collection-name is the name of the data collection, such as 'avaps', or 'cpl'.  For example, an abridged version of the data for CPL includes:</p>
@@ -217,8 +217,8 @@ CMD [<span class="hljs-string">"input"</span>, <span class="hljs-string">"output
               </script><script>
               var search = docsearch({
                 
-                apiKey: 'f7e0be879553661f9043322d119069c8',
-                indexName: 'nasa_cumulus',
+                apiKey: 'undefined',
+                indexName: 'undefined',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>

@@ -139,7 +139,7 @@
 <p><em>An example workflow module configuration can be viewed in the Cumulus source for the <a href="https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_and_queue_pdrs_workflow.tf">discover_and_queue_pdrs_workflow</a>.</em></p>
 <p><em><strong>Please note:</strong> To use this example workflow module as a template for a new workflow in your deployment the <code>source</code> key for the workflow module would need to point to a release of the cumulus-workflow (terraform-aws-cumulus-workflow.zip) module on our <a href="https://github.com/nasa/cumulus/releases">release</a> page, as all of the provided Cumulus workflows are internally self-referential.</em></p>
 <h2><a class="anchor" aria-hidden="true" id="parsepdr-workflow"></a><a href="#parsepdr-workflow" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>ParsePdr Workflow</h2>
-<p>The ParsePdr workflow will parse a PDR, queue the specified granules (duplicates are handled according to the duplicate handling setting) and periodically check the status of those queued granules. This workflow will not succeed until all the granules included in the PDR are successfully ingested. If one of those fails, the ParsePdr worklfow will fail. <strong>NOTE</strong> that ParsePdr may spin up multiple IngestGranule workflows in parallel, depending on the granules included in the PDR.</p>
+<p>The ParsePdr workflow will parse a PDR, queue the specified granules (duplicates are handled according to the duplicate handling setting) and periodically check the status of those queued granules. This workflow will not succeed until all the granules included in the PDR are successfully ingested. If one of those fails, the ParsePdr workflow will fail. <strong>NOTE</strong> that ParsePdr may spin up multiple IngestGranule workflows in parallel, depending on the granules included in the PDR.</p>
 <p>The lambdas below are included in the <code>cumulus</code> terraform module for use in your workflows:</p>
 <ol>
 <li>ParsePdr - <a href="https://github.com/nasa/cumulus/tree/master/tasks/parse-pdr">source</a></li>
@@ -177,8 +177,8 @@
               </script><script>
               var search = docsearch({
                 
-                apiKey: 'f7e0be879553661f9043322d119069c8',
-                indexName: 'nasa_cumulus',
+                apiKey: 'undefined',
+                indexName: 'undefined',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>
