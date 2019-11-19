@@ -72,7 +72,7 @@ test('discover granules using FTP', async (t) => {
   await validateConfig(t, event.config);
 
   try {
-    assertDiscoveredGranules(t, await discoverGranules(event));
+    await assertDiscoveredGranules(t, await discoverGranules(event));
   } catch (e) {
     if (e.message.includes('getaddrinfo ENOTFOUND')) {
       t.pass('Ignoring this test. Test server seems to be down');
@@ -96,7 +96,7 @@ test('discover granules using SFTP', async (t) => {
   await validateConfig(t, event.config);
 
   try {
-    assertDiscoveredGranules(t, await discoverGranules(event));
+    await assertDiscoveredGranules(t, await discoverGranules(event));
   } catch (e) {
     if (e.code === 'ECONNREFUSED') {
       t.pass('Ignoring this test. Remote host seems to be down.');
@@ -118,7 +118,7 @@ test('discover granules using HTTP', async (t) => {
   await validateConfig(t, event.config);
 
   try {
-    assertDiscoveredGranules(t, await discoverGranules(event));
+    await assertDiscoveredGranules(t, await discoverGranules(event));
   } catch (e) {
     if (e.message === 'Connection Refused') {
       t.pass('Ignoring this test. Remote host seems to be down.');
