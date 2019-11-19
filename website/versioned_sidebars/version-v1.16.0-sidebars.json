@@ -1,0 +1,91 @@
+{
+  "version-v1.16.0-docs": {
+    "About Cumulus": [
+      "version-v1.16.0-cumulus-docs-readme",
+      "version-v1.16.0-architecture",
+      "version-v1.16.0-interfaces",
+      "version-v1.16.0-glossary",
+      "version-v1.16.0-team"
+    ],
+    "Cumulus Workflows": [
+      "version-v1.16.0-workflows/workflows-readme",
+      "version-v1.16.0-workflows/protocol",
+      "version-v1.16.0-workflows/input_output",
+      "version-v1.16.0-workflows/cumulus-task-message-flow",
+      "version-v1.16.0-workflows/developing-a-cumulus-workflow",
+      "version-v1.16.0-workflows/developing-workflow-tasks",
+      "version-v1.16.0-workflows/lambda",
+      "version-v1.16.0-workflows/docker",
+      "version-v1.16.0-workflows/workflow-configuration-how-to",
+      "version-v1.16.0-workflows/workflow-triggers"
+    ],
+    "Tasks": [
+      "version-v1.16.0-tasks",
+      "version-v1.16.0-workflow_tasks/discover_granules",
+      "version-v1.16.0-workflow_tasks/files_to_granules",
+      "version-v1.16.0-workflow_tasks/move_granules",
+      "version-v1.16.0-workflow_tasks/parse_pdr"
+    ],
+    "Deployment": [
+      "version-v1.16.0-deployment/deployment-readme",
+      "version-v1.16.0-deployment/upgrade-readme",
+      "version-v1.16.0-deployment/components",
+      "version-v1.16.0-deployment/create_bucket",
+      "version-v1.16.0-deployment/server_access_logging",
+      "version-v1.16.0-deployment/troubleshoot_deployment",
+      "version-v1.16.0-deployment/thin_egress_app"
+    ],
+    "Deployment Options": [
+      "version-v1.16.0-additional-deployment-options/api-gateway-logging",
+      "version-v1.16.0-additional-deployment-options/share-s3-access-logs",
+      "version-v1.16.0-additional-deployment-options/cmr_launchpad_authentication",
+      "version-v1.16.0-additional-deployment-options/cumulus_api_launchpad_authentication"
+    ],
+    "Additional Features": [
+      "version-v1.16.0-features/data_in_dynamodb",
+      "version-v1.16.0-features/dead_letter_queues",
+      "version-v1.16.0-features/ems_reporting",
+      "version-v1.16.0-features/execution_payload_retention",
+      "version-v1.16.0-features/lambda_versioning",
+      "version-v1.16.0-features/ancillary_metadata",
+      "version-v1.16.0-features/distribution-metrics"
+    ],
+    "Troubleshooting": [
+      "version-v1.16.0-troubleshooting/troubleshooting-readme",
+      "version-v1.16.0-troubleshooting/troubleshooting-deployment"
+    ],
+    "Cumulus Development": [
+      "version-v1.16.0-adding-a-task",
+      "version-v1.16.0-docs-how-to"
+    ]
+  },
+  "version-v1.16.0-Data Cookbooks": {
+    "About Cookbooks": [
+      "version-v1.16.0-data-cookbooks/about-cookbooks",
+      "version-v1.16.0-data-cookbooks/setup"
+    ],
+    "Cookbooks": [
+      "version-v1.16.0-data-cookbooks/hello-world",
+      "version-v1.16.0-data-cookbooks/sns",
+      "version-v1.16.0-data-cookbooks/sips-workflow",
+      "version-v1.16.0-data-cookbooks/cnm-workflow",
+      "version-v1.16.0-data-cookbooks/error-handling",
+      "version-v1.16.0-data-cookbooks/choice-states",
+      "version-v1.16.0-data-cookbooks/cloudwatch-retention",
+      "version-v1.16.0-data-cookbooks/browse-generation",
+      "version-v1.16.0-data-cookbooks/tracking-files",
+      "version-v1.16.0-data-cookbooks/run-tasks-in-lambda-or-docker",
+      "version-v1.16.0-data-cookbooks/throttling-queued-executions"
+    ]
+  },
+  "version-v1.16.0-Operator Docs": {
+    "About Operator Docs": [
+      "version-v1.16.0-operator-docs/about-operator-docs"
+    ],
+    "Configuration": [
+      "version-v1.16.0-operator-docs/update-cumulus-dependencies",
+      "version-v1.16.0-operator-docs/lifecycle-policies",
+      "version-v1.16.0-operator-docs/locating-access-logs"
+    ]
+  }
+}
