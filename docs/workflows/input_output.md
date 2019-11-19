@@ -46,7 +46,7 @@ If you are manually adding the message adapter to your source and utilizing the 
 
 Input to the task application code is a json object with keys:
 
-- `input`: By default, the incoming payload is the payload output from the previous task, or it can be a portion of the payload as configured for the task in the corresponding `.yml` file in the `workflows` directory.
+- `input`: By default, the incoming payload is the payload output from the previous task, or it can be a portion of the payload as configured for the task in the corresponding `.tf` workflow definition file.
 - `config`: Task-specific configuration object with URL templates resolved.
 
 Output from the task application code is returned in and placed in the `payload` key by default, but the `config` key can also be used to return just a portion of the task output.

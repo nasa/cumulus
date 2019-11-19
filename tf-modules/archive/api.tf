@@ -81,12 +81,30 @@ resource "aws_lambda_function" "api" {
   }
 }
 
+data "aws_iam_policy_document" "private_api_policy_document" {
+  statement {
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+    actions = [ "*" ]
+    resources = ["*"]
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceVpc"
+      values = [var.vpc_id]
+    }
+  }
+}
+
 resource "aws_api_gateway_rest_api" "api" {
   name = "${var.prefix}-archive"
 
   lifecycle {
     ignore_changes = [policy]
   }
+
+  policy = var.private_archive_api_gateway ? data.aws_iam_policy_document.private_api_policy_document.json : null
 
   endpoint_configuration {
     types = var.private_archive_api_gateway ? ["PRIVATE"] : ["EDGE"]

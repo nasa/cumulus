@@ -475,7 +475,7 @@ The data written to the `CnmResponseStream` should adhere to the [Response Messa
 }
 ```
 
-Note the `CnmResponse` state defined in the `workflows.yml` above configures `$.exception` to be passed to the `CnmResponse` Lambda keyed under `config.WorkflowException`. This is required for the `CnmResponse` code to deliver a failure response.
+Note the `CnmResponse` state defined in the `.tf` workflow definition above configures `$.exception` to be passed to the `CnmResponse` Lambda keyed under `config.WorkflowException`. This is required for the `CnmResponse` code to deliver a failure response.
 
 To test the failure scenario, send a record missing the `collection` key.
 
