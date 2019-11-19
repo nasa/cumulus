@@ -19,7 +19,6 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   echo "***Deploying stack with deployment packages"
 
   ## Update cumulus-tf
-
   cd example/cumulus-tf
   # Update to use workflow module
   sed -i "s/source = \"..\/..\/tf-modules\/workflow/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus-workflow.zip\/\//g" *.tf
@@ -29,10 +28,14 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   sed -i "s/source = \"..\/..\/tf-modules\/cumulus/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus.zip\/\/tf-modules\/cumulus/g" *.tf
 
   ## Update data-persistence
-
   cd ../data-persistence-tf
   sed -i "s/source = \"..\/..\/tf-modules\/data-persistence/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus.zip\/\/tf-modules\/data-persistence/g" *.tf
-  cd ../../
+
+  ## Prepare repo lambdas
+  cd ..
+  npm install && npm run prepare
+  cd ..
+
 else
   echo "***Deploying stack with built source"
   npm run bootstrap
