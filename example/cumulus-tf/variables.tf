@@ -130,7 +130,6 @@ variable "distribution_url" {
   default = null
 }
 
-
 variable "ems_datasource" {
   type        = string
   description = "the data source of EMS reports"
@@ -240,4 +239,10 @@ variable "metrics_es_password" {
 variable "metrics_es_username" {
   type = string
   default = null
+}
+
+variable "urs_url" {
+  description = "The URL of the Earthdata login (URS) site"
+  type        = string
+  default     = "https://uat.urs.earthdata.nasa.gov/"
 }

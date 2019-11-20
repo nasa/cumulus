@@ -51,7 +51,7 @@ module "cumulus" {
   ecs_cluster_max_size            = 2
   key_name                        = var.key_name
 
-  urs_url             = "https://uat.urs.earthdata.nasa.gov"
+  urs_url             = var.urs_url
   urs_client_id       = var.urs_client_id
   urs_client_password = var.urs_client_password
 
