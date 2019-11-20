@@ -195,7 +195,7 @@ $ aws dynamodb create-table \
     --table-name my-tf-locks \
     --attribute-definitions AttributeName=LockID,AttributeType=S \
     --key-schema AttributeName=LockID,KeyType=HASH \
-    --billing-mode PAY_PER_REQUEST
+    --billing-mode PAY_PER_REQUEST \
     --region us-east-1
 ```
 
@@ -287,7 +287,8 @@ To deploy a CMA layer to your account:
 ```shell
 $ aws lambda publish-layer-version \
   --layer-name prefix-CMA-layer \
-  --zip-file fileb://path/to/cumulus-message-adapter.zip
+  --region us-east-1 \
+  --zip-file fileb:///path/to/cumulus-message-adapter.zip
 
 {
   ... more output ...
