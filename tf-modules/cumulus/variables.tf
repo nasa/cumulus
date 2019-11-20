@@ -150,6 +150,12 @@ variable "custom_queues" {
   default = []
 }
 
+variable "distribution_api_gateway_stage" {
+  description = "The distribution API Gateway stage to create"
+  type    = string
+  default = "dev"
+}
+
 variable "distribution_url" {
   description = " URL for the distribution API"
   type    = string
