@@ -257,11 +257,6 @@ variable "saml_launchpad_metadata_path" {
   default = "N/A"
 }
 
-variable "sts_credentials_lambda" {
-  type    = string
-  default = "gsfc-ngap-sh-s3-sts-get-keys"
-}
-
 variable "urs_url" {
   type        = string
   default     = "https://urs.earthdata.nasa.gov/"

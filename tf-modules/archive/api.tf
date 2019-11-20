@@ -44,7 +44,6 @@ resource "aws_lambda_function" "api" {
       ProvidersTable               = var.dynamo_tables.providers.name
       RulesTable                   = var.dynamo_tables.rules.name
       oauth_user_group             = var.oauth_user_group
-      STSCredentialsLambda         = var.sts_credentials_lambda
       TOKEN_REDIRECT_ENDPOINT      = local.api_redirect_uri
       TOKEN_SECRET                 = var.token_secret
       UsersTable                   = var.dynamo_tables.users.name
