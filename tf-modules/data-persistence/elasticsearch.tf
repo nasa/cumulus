@@ -115,10 +115,6 @@ resource "aws_elasticsearch_domain" "es_vpc" {
     automated_snapshot_start_hour = 0
   }
 
-  depends_on = [
-    "aws_iam_service_linked_role.es"
-  ]
-
   tags = local.default_tags
 }
 
