@@ -176,7 +176,7 @@ aws s3api put-bucket-versioning \
     --versioning-configuration Status=Enabled
 ```
 
-⚠️ **Note:**: If your state information does become lost or corrupt, then deployment (via
+⚠️ **Note:** If your state information does become lost or corrupt, then deployment (via
 `terraform apply`) will have unpredictable results, including possible loss of data and loss of
 deployed resources.
 
