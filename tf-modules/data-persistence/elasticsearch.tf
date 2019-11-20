@@ -58,11 +58,6 @@ resource "aws_elasticsearch_domain_policy" "es_domain_policy" {
   access_policies = data.aws_iam_policy_document.es_access_policy[0].json
 }
 
-resource "aws_iam_service_linked_role" "es" {
-  count            = local.deploy_inside_vpc && var.create_service_linked_role ? 1 : 0
-  aws_service_name = "es.amazonaws.com"
-}
-
 # Elasticsearch domain in a VPC
 
 data "aws_subnet" "first_es_domain_subnet" {
