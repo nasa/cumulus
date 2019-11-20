@@ -118,7 +118,7 @@ test.serial('Request to granules bulk endpoint starts an async-operation with th
     granulesTable: process.env.GranulesTable,
     system_bucket: process.env.system_bucket,
     stackName: process.env.stackName,
-    invoke: process.env.invoke,
+    invoke: process.env.invoke
   });
 
   asyncOperationStartStub.restore();
