@@ -37,10 +37,11 @@ data "aws_lambda_function" "sts_credentials" {
 module "cumulus" {
   source = "../../tf-modules/cumulus"
 
+  deploy_distribution_s3_credentials_endpoint = false
+
   cumulus_message_adapter_lambda_layer_arn = var.cumulus_message_adapter_lambda_layer_arn
 
   prefix = var.prefix
-  region = var.region
 
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.subnet_ids

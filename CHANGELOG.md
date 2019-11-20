@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 **Please note**:
 - Your workflow tasks should use `cumulus-message-adapter-js` version 1.0.10+ to utilize new granule, parentArn, asyncOperationId, and stackName fields on the logs.
 
+### BREAKING CHANGES
+
+- **CUMULUS-1321**
+  - The `region` argument to the `cumulus` Terraform module has been removed
+
+
 ### Changed
 
 - **CUMULUS-1619**
@@ -19,6 +25,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [v1.16.0] - 2019-11-15
 
 ### Added
+
+- **CUMULUS-1321**
+  - A `deploy_distribution_s3_credentials_endpoint` variable has been added to
+    the `cumulus` Terraform module. If true, the NGAP-backed S3 credentials
+    endpoint will be added to the Thin Egress App's API. Default: true
 
 - **CUMULUS-1580**
   - Added `/granules/bulk` endpoint to `@cumulus/api` to perform bulk actions on granules given either a list of granule ids or an Elasticsearch query and the workflow to perform.

@@ -150,6 +150,12 @@ variable "custom_queues" {
   default = []
 }
 
+variable "deploy_distribution_s3_credentials_endpoint" {
+  description = "Whether or not to include the S3 credentials endpoint in the Thin Egress App"
+  type = bool
+  default = true
+}
+
 variable "distribution_url" {
   description = " URL for the distribution API"
   type    = string
@@ -363,11 +369,6 @@ variable "private_archive_api_gateway" {
   description = "Whether to deploy the archive API as a private API gateway"
   type = bool
   default = true
-}
-
-variable "region" {
-  description = "The AWS region to deploy to"
-  type    = string
 }
 
 variable "saml_entity_id" {
