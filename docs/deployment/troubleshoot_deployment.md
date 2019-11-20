@@ -20,9 +20,9 @@ You may see this error the first time you run `terraform apply` for your Cumulus
 
 ### `ValidationException: You must specify exactly one subnet.` when deploying the data-persistence module
 
-This can happen if you have multiple subnets configured for the Elasticsearch
-cluster, but your config is only creating one ES instance. Updating the
-`elasticsearch_config` to increase the number of instances should address this
+This can happen if you have multiple `subnet_ids` configured for your `data-persistence` module
+cluster, but your config is only creating one Elasticsearch instance. To fix the
+issue, update the `elasticsearch_config` variable for your `data-persistence` module to increase the number of instances:
 issue:
 
 ```hcl
