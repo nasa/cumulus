@@ -114,7 +114,7 @@ If you don't want to set environment variables, [access keys can be stored local
 
 See [creating s3 buckets](deployment/create_bucket.md) for more information on how to create a bucket.
 
-The following s3 bucket should be created (replacing prefix with whatever you'd like, generally your organization/DAAC's name):
+The following s3 bucket should be created (replacing `<prefix>` with whatever you'd like, generally your organization/DAAC's name):
 
 * `<prefix>-internal`
 
@@ -219,7 +219,7 @@ Each of these modules have to be deployed independently and require their own Te
 
 These steps should be executed in the `data-persistence-tf` directory of the template deploy repo that was cloned previously.
 
-Copy the [`terraform.tf.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/data-persistence-tf/terraform.tf.example) to `terraform.tf` file, substituting the appropriate values for `bucket`, `dynamodb_table`, and `<stack>`. This tells Terraform where to store its
+Copy the [`terraform.tf.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/data-persistence-tf/terraform.tf.example) to `terraform.tf` file, substituting the appropriate values for `bucket`, `dynamodb_table`, and `PREFIX` (whatever prefix for your DAAC/organization you choose). This tells Terraform where to store its
 remote state.
 
 Copy the [`terraform.tfvars.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/data-persistence-tf/terraform.tfvars.example) file to `terraform.tfvars`, and fill in
@@ -304,7 +304,7 @@ Make sure to copy the `LayerVersionArn` of the deployed layer, as it will be use
 
 These steps should be executed in the `cumulus-tf` directory of the template repo that was cloned previously.
 
-Copy the [`terraform.tf.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/terraform.tf.example) to `terraform.tf` file, substituting the appropriate values for `bucket`, `dynamodb_table`, and `<stack>`. This tells Terraform where to store its
+Copy the [`terraform.tf.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/terraform.tf.example) to `terraform.tf` file, substituting the appropriate values for `bucket`, `dynamodb_table`, and `PREFIX`. This tells Terraform where to store its
 remote state.
 
 Copy the [`terraform.tfvars.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/terraform.tfvars.example) file to `terraform.tfvars`, and fill in
