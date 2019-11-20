@@ -15,7 +15,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1321**
   - The `region` argument to the `cumulus` Terraform module has been removed
 
-
 ### Changed
 
 - **CUMULUS-1619**
