@@ -240,9 +240,3 @@ variable "metrics_es_username" {
   type = string
   default = null
 }
-
-variable "urs_url" {
-  description = "The URL of the Earthdata login (URS) site"
-  type        = string
-  default     = "https://uat.urs.earthdata.nasa.gov/"
-}
