@@ -10,6 +10,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 **Please note**:
 - Your workflow tasks should use `cumulus-message-adapter-js` version 1.0.10+ to utilize new granule, parentArn, asyncOperationId, and stackName fields on the logs.
 
+### Changed
+
+- **CUMULUS-1579**
+  - Elasticsearch list queries use `match` instead of `term`. `term` had been analyzing the terms and not supporting `-` in the field values.
+
+- **CUMULUS-1619**
+  - Adds 4 new keys to `@cumulus/logger` to display granules, parentArn, asyncOperationId, and stackName.
+  - Depends on `cumulus-message-adapter-js` version 1.0.10+. Cumulus tasks updated to use this version.
+
+## [v1.16.0] - 2019-11-15
+
 ### Added
 
 - **CUMULUS-1580**
@@ -36,13 +47,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     enabled by passing a `retryOptions` object to that function. Supported
     values for that object can be found here:
     <https://github.com/tim-kos/node-retry#retryoperationoptions>
-
-- **CUMULUS-1579**
-  - Elasticsearch list queries use `match` instead of `term`. `term` had been analyzing the terms and not supporting `-` in the field values.
-
-- **CUMULUS-1619**
-  - Adds 4 new keys to `@cumulus/logger` to display granules, parentArn, asyncOperationId, and stackName.
-  - Depends on `cumulus-message-adapter-js` version 1.0.10+. Cumulus tasks updated to use this version.
 
 ### Removed
 
@@ -223,6 +227,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - **CUMULUS-1620** - Fixed bug where `message_adapter_version` does not correctly inject the CMA
+
+- **CUMULUS-1572** - A granule is now included in discovery results even when
+none of its files has a matching file type in the associated collection
+configuration. Previously, if all files for a granule were unmatched by a file
+type configuration, the granule was excluded from the discovery results.
+Further, added support for a `boolean` property
+`ignoreFilesConfigForDiscovery`, which controls how a granule's files are
+filtered at discovery time.
 
 ## [v1.14.2] - 2019-10-08
 
@@ -1699,7 +1711,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.15.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.16.0...HEAD
+[v1.16.0]: https://github.com/nasa/cumulus/compare/v1.15.0...v1.16.0
 [v1.15.0]: https://github.com/nasa/cumulus/compare/v1.14.4...v1.15.0
 [v1.14.4]: https://github.com/nasa/cumulus/compare/v1.14.3...v1.14.4
 [v1.14.3]: https://github.com/nasa/cumulus/compare/v1.14.2...v1.14.3
