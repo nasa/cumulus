@@ -45,7 +45,9 @@ async function ensureAuthorized(req, res, next) {
 
     // TODO [MHS, 2019-11-18] This might have to change for launchpad auth and
     // only be done during non-launchpad auth.
-    await userModel.get({ userName });
+    if (!launchpadProtectedAuth()) {
+      await userModel.get({ userName });
+    }
     await access.get({ accessToken });
     // Adds additional metadata that authorized endpoints can access.
     req.authorizedMetadata = { userName };
