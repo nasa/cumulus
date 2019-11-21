@@ -74,22 +74,15 @@ class SfnStep {
   /**
    * Get the event for the last failed step in a Step function execution.
    *
-   * @param {string} executionArn - Step function execution ARN
+   * @param {Array<Object>} events - Events from execution history
    * @returns {Promise<Object>}
    *   Execution history event for the last failed step in the execution
    */
-  async getLastFailedStepEvent(executionArn) {
-    const { events } = await StepFunctions.getExecutionHistory({ executionArn });
-
-    // There may be multiple failed events in a retry scenario. Reverse the events
-    // list to more quickly find the last failed event in the history.
-    events.reverse();
-
+  async getLastFailedStepEvent(events) {
     const failedStepEvent = events
       .find((event) => event.type === this.failureEvent);
 
     return {
-      events,
       failedStepId: failedStepEvent.id,
       failedStepDetails: failedStepEvent[this.eventDetailsKeys.failed]
     };
@@ -119,6 +112,27 @@ class SfnStep {
     const failedStepMessage = JSON.parse(failedEventDetails.output);
 
     return this.parseStepMessage(failedStepMessage, failedEventDetails.resource);
+  }
+
+  async getOutputOfLastFailedStep(executionArn, inputMessage) {
+    const { events } = await StepFunctions.getExecutionHistory({ executionArn });
+
+    // There may be multiple failed events in a retry scenario. Reverse the events
+    // list to more quickly find the last failed event in the history.
+    events.reverse();
+
+    let exception;
+
+    try {
+      const { failedStepId, failedStepDetails } = await this.getLastFailedStepEvent(events);
+      exception = failedStepDetails;
+      return await this.getLastFailedStepOutput(events, executionArn, failedStepId);
+    } catch (err) {
+      return {
+        ...inputMessage,
+        exception
+      };
+    }
   }
 
   /**
