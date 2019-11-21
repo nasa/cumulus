@@ -99,6 +99,7 @@ resource "aws_elasticsearch_domain" "es_vpc" {
   cluster_config {
     instance_count = var.elasticsearch_config.instance_count
     instance_type  = var.elasticsearch_config.instance_type
+    zone_awareness_enabled = length(var.subnet_ids) > 1
   }
 
   ebs_options {
