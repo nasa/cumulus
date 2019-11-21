@@ -77,10 +77,10 @@ Terraform v0.12.2
 
 _If you already are working with an existing `<daac>-deploy` repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS configuration.](deployment-readme#prepare-aws-configuration)_
 
-Clone template-deploy repo and name appropriately for your DAAC or organization:
+Clone the `cumulus-template-deploy` repo and name appropriately for your DAAC or organization:
 
 ```bash
-  git clone https://github.com/nasa/template-deploy <daac>-deploy
+  git clone https://github.com/nasa/cumulus-template-deploy <daac>-deploy
 ```
 
 We will return to [configuring this repo and using it for deployment below](#deploying-the-cumulus-instance).
