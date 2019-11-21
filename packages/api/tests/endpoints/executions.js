@@ -71,10 +71,10 @@ test.before(async () => {
     }
   ];
 
-  const exeuctionIndexPromises = executions
+  const executionIndexPromises = executions
     .map((execution) => indexer.indexExecution(esClient, execution));
 
-  await Promise.all(exeuctionIndexPromises);
+  await Promise.all(executionIndexPromises);
 
   await esClient.indices.refresh();
 });
