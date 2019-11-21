@@ -65,7 +65,7 @@ resource "aws_lambda_function" "report_executions" {
   function_name    = "${var.prefix}-reportExecutions"
   role             = aws_iam_role.report_executions_lambda_role.arn
   handler          = "index.handler"
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 30
   memory_size      = 128
 
@@ -187,7 +187,7 @@ resource "aws_lambda_function" "report_granules" {
   function_name    = "${var.prefix}-reportGranules"
   role             = aws_iam_role.report_granules_lambda_role.arn
   handler          = "index.handler"
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 30
   memory_size      = 256
 
@@ -301,7 +301,7 @@ resource "aws_lambda_function" "report_pdrs" {
   function_name    = "${var.prefix}-reportPdrs"
   role             = "${aws_iam_role.report_pdrs_lambda_role.arn}"
   handler          = "index.handler"
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 30
   memory_size      = 128
 

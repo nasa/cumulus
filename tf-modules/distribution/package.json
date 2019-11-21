@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.16.0",
   "engines": {
-    "node": ">=8.10.0"
+    "node": ">=10.16.3"
   },
   "scripts": {
     "build": "webpack && (cd dist && rm -f package.zip && zip src.zip index.js)",

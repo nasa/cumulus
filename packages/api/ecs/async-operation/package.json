@@ -1,6 +1,6 @@
 {
   "engines": {
-    "node": ">=8.10.0"
+    "node": ">=10.16.3"
   },
   "dependencies": {
     "@cumulus/logger": "^1.13.0",

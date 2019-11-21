@@ -38,10 +38,26 @@ function testEndpoint(endpoint, event, testCallback) {
  * @returns {Promise<Array>} a list of elasticsearch responses
  */
 async function deleteAliases() {
-  const client = await Search.es();
-  const aliasResponse = await client.cat.aliases({ format: 'json' });
-  const aliases = aliasResponse.body;
+  debugger;
+  let client;
+  try {
+    debugger;
+    client = await Search.es();
+  } catch(e) {
+    debugger;
+  }
+  debugger;
 
+  let aliasResponse;
+  let aliases;
+  try {
+    aliasResponse = await client.cat.aliases({ format: 'json' });
+    aliases = aliasResponse.body;
+  } catch (error) {
+    debugger;
+  }
+
+  debugger;
   // delete all aliases
   return Promise.all(aliases.map((alias) => client.indices.deleteAlias({
     index: alias.index,

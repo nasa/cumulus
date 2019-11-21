@@ -4,7 +4,7 @@
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
-    "node": ">=8.10.0"
+    "node": ">=10.16.3"
   },
   "bin": {
     "cumulus-api": "./bin/cli.js"

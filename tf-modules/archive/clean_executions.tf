@@ -12,7 +12,7 @@ resource "aws_lambda_function" "clean_executions" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/cleanExecutions/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 900
   memory_size      = 192
   dead_letter_config {

@@ -22,7 +22,7 @@
     "prepare": "npm run build && (cd dist && zip -r lambda.zip index.js schemas)"
   },
   "engines": {
-    "node": ">=8.10.0"
+    "node": ">=10.16.3"
   },
   "nyc": {
     "exclude": [

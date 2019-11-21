@@ -44,29 +44,37 @@ test.after.always(async () => {
 });
 
 test.before(async () => {
+  debugger;
   await deleteAliases();
+  debugger;
 
   await bootstrapElasticSearch('fakehost', esIndex);
+  debugger;
   process.env.esIndex = esIndex;
+  debugger;
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
+  debugger;
   // create fake Users table
   userModel = new User();
   await userModel.createTable();
-
+  debugger;
   accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 
+  debugger;
   esClient = await Search.es('fakehost');
 
+  debugger;
   // Index some fake logs
   const inputtxt = fs.readFileSync(path.join(__dirname, '../data/log_events_input.txt'), 'utf8');
   const event = JSON.parse(JSON.parse(inputtxt.toString()));
   await indexer.indexLog(esClient, event.logEvents);
 
   await esClient.indices.refresh();
+  debugger;
 });
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
