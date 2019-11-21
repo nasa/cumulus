@@ -90,7 +90,7 @@ test.beforeEach(async (t) => {
       attributes: {
         UserId: [validUser],
         userGroup: [
-          `cn=${userGroup},ou=254886,ou=ROLES,ou=Groups,dc=nasa,dc=gov`
+          `cn=${userGroup},ou=254886,ou=ROLES,ou=Groups,dc=nasa,dc=gov^cn=AM-Application-Administrator,ou=ICAM,ou=Groups,dc=nasa,dc=gov`
         ]
       }
     }
