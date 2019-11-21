@@ -8,13 +8,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 **Please note**:
+
 - Your workflow tasks should use `cumulus-message-adapter-js` version 1.0.10+ to utilize new granule, parentArn, asyncOperationId, and stackName fields on the logs.
+- The `data-persistence` module no longer manages the creation of an Elasticsearch service-linked role for deploying Elasticsearch to a VPC. Follow the [deployment instructions on preparing your VPC](https://nasa.github.io/cumulus/docs/deployment/deployment-readme#vpc-subnets-and-security-group) for guidance on how to create the Elasticsearch service-linked role manually.
 
 ### Changed
 
 - **CUMULUS-1619**
   - Adds 4 new keys to `@cumulus/logger` to display granules, parentArn, asyncOperationId, and stackName.
   - Depends on `cumulus-message-adapter-js` version 1.0.10+. Cumulus tasks updated to use this version.
+
+### Removed
+
+- Removed `create_service_linked_role` variable from `tf-modules/data-persistence` module.
 
 ## [v1.16.0] - 2019-11-15
 
