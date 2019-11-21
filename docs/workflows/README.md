@@ -88,7 +88,11 @@ AWS Step functions are described in detail in the AWS documentation but they pro
 - According to the
   [AWS DeleteStateMachine documentation](https://docs.aws.amazon.com/step-functions/latest/apireference/API_DeleteStateMachine.html),
   deleting a workflow while it has an execution in-progress will result in that
-  execution being deleted the next time it makes a state transition.    As a result, changes to your workflow that cause Terraform to remove and re-add your workflow may result in this occurring.       If this is of concern, you should consider creating a new duplicate workflow and update related rules, then wait until the original is no longer in use.
+  execution being deleted the next time it makes a state transition. As a
+  result, changes to your workflow that cause Terraform to remove and re-add
+  your workflow may result in this occurring. If this is of concern, you should
+  consider creating a new duplicate workflow and update related rules, then wait
+  until the original is no longer in use.
 
 #### Workflow Scheduler
 
