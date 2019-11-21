@@ -20,7 +20,7 @@ End Users can access data via Cumulus's `distribution` submodule, which includes
 
 #### Data search
 
-End user exporsure of Cumulus's holdings is expected to be provided by an external service.
+End user exposure of Cumulus's holdings is expected to be provided by an external service.
 
 For NASA use, this is assumed to be [CMR](<https://earthdata.nasa.gov/eosdis/science-system-description/eosdis-components/cmr>) in this diagram.
 

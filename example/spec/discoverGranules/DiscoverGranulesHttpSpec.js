@@ -36,6 +36,8 @@ describe('The Discover Granules workflow with http Protocol', () => {
   let queueGranulesOutput;
   let testId;
   let testSuffix;
+  let collection;
+  let provider;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -45,14 +47,20 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     testId = createTimestampedTestId(config.stackName, 'DiscoverGranules');
     testSuffix = createTestSuffix(testId);
+    collection = { name: `http_testcollection${testSuffix}`, version: '001' };
+    provider = { id: `http_provider${testSuffix}` };
 
-    const collection = { name: `http_testcollection${testSuffix}`, version: '001' };
-    const provider = { id: `http_provider${testSuffix}` };
     // populate collections and providers
     await Promise.all([
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       addProviders(config.stackName, config.bucket, providersDir, null, testSuffix)
     ]);
+
+    collection = JSON.parse((await apiTestUtils.getCollection({
+      prefix: config.stackName,
+      collectionName: collection.name,
+      collectionVersion: collection.version
+    })).body);
 
     httpWorkflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
@@ -164,6 +172,120 @@ describe('The Discover Granules workflow with http Protocol', () => {
           }
           expect(logEntry.sender).not.toBe(undefined);
         });
+      });
+    });
+  });
+
+  describe('the DiscoverGranules Lambda with no files config', () => {
+    beforeAll(async () => {
+      await apiTestUtils.updateCollection({
+        prefix: config.stackName,
+        collection,
+        updateParams: { files: [] }
+      });
+
+      httpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
+        config.bucket, workflowName, collection, provider);
+    });
+
+    it('encounters a collection without a files configuration', async () => {
+      const lambdaInput = await lambdaStep.getStepInput(
+        httpWorkflowExecution.executionArn, 'DiscoverGranules'
+      );
+
+      expect(lambdaInput.meta.collection.files).toEqual([]);
+    });
+
+    it('executes successfully', () => {
+      expect(httpWorkflowExecution.status).toEqual('SUCCEEDED');
+    });
+
+    it('discovers granules, but output has no files', async () => {
+      const lambdaOutput = await lambdaStep.getStepOutput(
+        httpWorkflowExecution.executionArn, 'DiscoverGranules'
+      );
+
+      expect(lambdaOutput.payload.granules.length).toEqual(3);
+      lambdaOutput.payload.granules.forEach((granule, i) => {
+        expect(granule.granuleId).toEqual(`granule-${i + 1}`);
+        expect(granule.files.length).toEqual(0);
+      });
+    });
+  });
+
+  describe('the DiscoverGranules Lambda with partial files config', () => {
+    beforeAll(async () => {
+      await apiTestUtils.updateCollection({
+        prefix: config.stackName,
+        collection,
+        updateParams: { files: [collection.files[0]] }
+      });
+
+      httpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
+        config.bucket, workflowName, collection, provider);
+    });
+
+    it('encounters a collection with a files configuration that does not match all files', async () => {
+      const lambdaInput = await lambdaStep.getStepInput(
+        httpWorkflowExecution.executionArn, 'DiscoverGranules'
+      );
+
+      expect(lambdaInput.meta.collection.files).toEqual([collection.files[0]]);
+    });
+
+    it('executes successfully', () => {
+      expect(httpWorkflowExecution.status).toEqual('SUCCEEDED');
+    });
+
+    it('discovers granules, but output does not include all files', async () => {
+      const lambdaOutput = await lambdaStep.getStepOutput(
+        httpWorkflowExecution.executionArn, 'DiscoverGranules'
+      );
+
+      expect(lambdaOutput.payload.granules.length).toEqual(3);
+      lambdaOutput.payload.granules.forEach((granule, i) => {
+        expect(granule.granuleId).toEqual(`granule-${i + 1}`);
+        expect(granule.files.length).toEqual(1);
+      });
+    });
+  });
+
+  describe('the DiscoverGranules Lambda ignoring files config', () => {
+    beforeAll(async () => {
+      await apiTestUtils.updateCollection({
+        prefix: config.stackName,
+        collection,
+        updateParams: {
+          files: [],
+          ignoreFilesConfigForDiscovery: true
+        }
+      });
+
+      httpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
+        config.bucket, workflowName, collection, provider);
+    });
+
+    it('encounters a collection that has no files config, but should ignore files config', async () => {
+      const lambdaInput = await lambdaStep.getStepInput(
+        httpWorkflowExecution.executionArn, 'DiscoverGranules'
+      );
+
+      expect(lambdaInput.meta.collection.files).toEqual([]);
+    });
+
+    it('executes successfully', () => {
+      expect(httpWorkflowExecution.status).toEqual('SUCCEEDED');
+    });
+
+    it('discovers granules, but output includes all files', async () => {
+      const lambdaOutput = await lambdaStep.getStepOutput(
+        httpWorkflowExecution.executionArn, 'DiscoverGranules'
+      );
+
+      expect(lambdaOutput.payload.granules.length).toEqual(3);
+      lambdaOutput.payload.granules.forEach((granule, i) => {
+        expect(granule.granuleId).toEqual(`granule-${i + 1}`);
+        expect(granule.files.length).toEqual(2);
       });
     });
   });
