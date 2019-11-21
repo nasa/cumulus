@@ -219,7 +219,7 @@ Each of these modules have to be deployed independently and require their own Te
 
 These steps should be executed in the `data-persistence-tf` directory of the template deploy repo that was cloned previously.
 
-Copy the [`terraform.tf.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/data-persistence-tf/terraform.tf.example) to `terraform.tf` file, substituting the appropriate values for `bucket`, `dynamodb_table`, and `PREFIX` (whatever prefix for your DAAC/organization you choose). This tells Terraform where to store its
+Copy the [`terraform.tf.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/data-persistence-tf/terraform.tf.example) to `terraform.tf` file, substituting the appropriate values for `bucket`, `dynamodb_table`, and `PREFIX` (whatever prefix you've chosen for your deployment). This tells Terraform where to store its
 remote state.
 
 Copy the [`terraform.tfvars.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/data-persistence-tf/terraform.tfvars.example) file to `terraform.tfvars`, and fill in
