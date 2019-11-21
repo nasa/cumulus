@@ -43,9 +43,8 @@ async function ensureAuthorized(req, res, next) {
     const userModel = new User();
     const access = new AccessToken();
 
-    // TODO [MHS, 2019-11-18] This might have to change for launchpad auth and
-    // only be done during non-launchpad auth.
     if (!launchpadProtectedAuth()) {
+      // Only verify user if we're not launchpad protected
       await userModel.get({ userName });
     }
     await access.get({ accessToken });
