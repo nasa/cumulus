@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- **CUMULUS-1578**
+    - Updates SAML launchpad configuration to authorize via configured userGroup.
+     [See the NASA specific documentation (protected)](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+SAML+Launchpad+Integration)
+
+
 - **CUMULUS-1619**
   - Adds 4 new keys to `@cumulus/logger` to display granules, parentArn, asyncOperationId, and stackName.
   - Depends on `cumulus-message-adapter-js` version 1.0.10+. Cumulus tasks updated to use this version.
