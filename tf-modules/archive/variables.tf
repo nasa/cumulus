@@ -264,7 +264,7 @@ variable "sts_credentials_lambda" {
 
 variable "urs_url" {
   type        = string
-  default     = "https://urs.earthdata.nasa.gov/"
+  default     = "https://uat.urs.earthdata.nasa.gov/"
   description = "The URL of the Earthdata Login site"
 }
 
