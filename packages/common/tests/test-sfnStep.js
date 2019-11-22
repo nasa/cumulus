@@ -1,7 +1,6 @@
 'use strict';
 
 const test = require('ava');
-const isObject = require('lodash.isobject');
 
 const {
   getExecutionFailedEvent,
@@ -10,9 +9,6 @@ const {
   getTaskExitedEventOutput
 } = require('../sfnStep');
 const { randomId, randomNumber } = require('../test-utils');
-
-const ingestGranuleFailHistory = require('./data/ingest_granule_fail_history.json');
-const ingestPublishGranuleFailHistory = require('./data/ingest_publish_granule_fail_history.json');
 
 const failedStepOutput = {
   error: 'Error',
@@ -231,24 +227,4 @@ test('getExecutionFailedEvent returns falsy if task exited event cannot be found
     { id: invalidFailedStepId }
   );
   t.falsy(failedExecutionEvent);
-});
-
-test('gets message exception when failed step retry occurs', (t) => {
-  const { events } = ingestGranuleFailHistory;
-
-  const lastStepFailedEvent = getLastFailedStepEvent(events);
-  const failedStepExitedEvent = getStepExitedEvent(events, lastStepFailedEvent);
-  const failedStepOutputMessage = JSON.parse(getTaskExitedEventOutput(failedStepExitedEvent));
-  t.true(isObject(failedStepOutputMessage.exception));
-  t.is(failedStepOutputMessage.exception.Error, 'FileNotFound');
-});
-
-test('gets message exception when no step retry occurs', (t) => {
-  const { events } = ingestPublishGranuleFailHistory;
-
-  const lastStepFailedEvent = getLastFailedStepEvent(events);
-  const failedStepExitedEvent = getStepExitedEvent(events, lastStepFailedEvent);
-  const failedStepOutputMessage = JSON.parse(getTaskExitedEventOutput(failedStepExitedEvent));
-  t.true(isObject(failedStepOutputMessage.exception));
-  t.is(failedStepOutputMessage.exception.Error, 'CumulusMessageAdapterExecutionError');
 });
