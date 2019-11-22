@@ -232,36 +232,56 @@ async function publishReportSnsMessages(eventMessage, isTerminalStatus, isFailed
  */
 async function getFailedExecutionMessage(inputMessage) {
   const executionArn = getMessageExecutionArn(inputMessage);
-  let exception;
+  // let exception;
 
-  try {
-    const activityStep = new ActivityStep();
-    const lambdaStep = new LambdaStep();
+  // try {
+  //   const activityStep = new ActivityStep();
+  //   const lambdaStep = new LambdaStep();
 
-    const { events, failedStepId, failedStepDetails } = (
-      await lambdaStep.getLastFailedStepEvent(executionArn)
-      || await activityStep.getLastFailedStepEvent(executionArn)
-    );
-    exception = failedStepDetails;
+  // const { events, failedStepId, failedStepDetails } = (
+  //   await lambdaStep.getLastFailedStepEvent(executionArn)
+  //   || await activityStep.getLastFailedStepEvent(executionArn)
+  // );
+  // exception = failedStepDetails;
 
-    const failedStepOutput = (
-      await lambdaStep.getLastFailedStepOutput(events, executionArn, failedStepId)
-      || await activityStep.getLastFailedStepOutput(events, executionArn, failedStepId)
-    );
+  // const failedStepOutput = (
+  //   await lambdaStep.getLastFailedStepOutput(events, executionArn, failedStepId)
+  //   || await activityStep.getLastFailedStepOutput(events, executionArn, failedStepId)
+  // );
 
-    return failedStepOutput;
-  } catch (err) {
-    log.info(
-      `Could not retrieve output from last failed step in execution ${executionArn}, falling back to execution input`,
-      'Error:', err
-    );
-    // If input from the failed step cannot be retrieved, then fall back to execution
-    // input.
-    return {
-      ...inputMessage,
-      exception
-    };
+  // return failedStepOutput;
+
+  // } catch (err) {
+  //   log.info(
+  //     `Could not retrieve output from last failed step in execution ${executionArn}, falling back to execution input`,
+  //     'Error:', err
+  //   );
+  //   // If input from the failed step cannot be retrieved, then fall back to execution
+  //   // input.
+  //   return {
+  //     ...inputMessage,
+  //     exception
+  //   };
+  // }
+
+  const activityStep = new ActivityStep();
+  const lambdaStep = new LambdaStep();
+
+  const { exception, outputMessage } = (
+    await lambdaStep.getDetailsOfLastFailedStep(executionArn)
+    || await activityStep.getDetailsOfLastFailedStep(executionArn)
+  );
+
+  if (outputMessage) {
+    return outputMessage;
   }
+
+  // If input from the failed step cannot be retrieved, then fall back to execution
+  // input.
+  return {
+    ...inputMessage,
+    exception
+  };
 }
 
 /**
