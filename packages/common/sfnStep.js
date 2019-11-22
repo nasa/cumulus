@@ -23,11 +23,11 @@ const getLastFailedStepEvent = (events) => {
   return stepFailedEvents[stepFailedEvents.length - 1];
 };
 
-const getFailedStepExitedEvent = (events, lastStepFailedEvent) =>
+const getStepExitedEvent = (events, lastStepEvent) =>
   events.find(
     (event) =>
       event.type === taskExitedEventType
-        && event.previousEventId === lastStepFailedEvent.id
+        && event.previousEventId === lastStepEvent.id
   );
 
 const getExecutionFailedEvent = (events, lastStepFailedEvent) =>
@@ -374,7 +374,7 @@ class ActivityStep extends SfnStep {
 module.exports = {
   getExecutionFailedEvent,
   getLastFailedStepEvent,
-  getFailedStepExitedEvent,
+  getStepExitedEvent,
   getTaskExitedEventOutput,
   ActivityStep,
   LambdaStep

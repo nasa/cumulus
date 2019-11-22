@@ -6,7 +6,7 @@ const isObject = require('lodash.isobject');
 const {
   getExecutionFailedEvent,
   getLastFailedStepEvent,
-  getFailedStepExitedEvent,
+  getStepExitedEvent,
   getTaskExitedEventOutput
 } = require('../sfnStep');
 const { randomId, randomNumber } = require('../test-utils');
@@ -123,7 +123,7 @@ test.beforeEach((t) => {
   }
 });
 
-test('getLastFailedStepEvent returns falsey if failed step event cannot be found', (t) => {
+test('getLastFailedStepEvent returns falsy if failed step event cannot be found', (t) => {
   const message = createCumulusMessage();
   const fakeExecutionHistory = createFakeExecutionHistory({
     message,
@@ -149,32 +149,29 @@ test('getLastFailedStepEvent returns failed lambda step event', (t) => {
   t.truthy(getLastFailedStepEvent(fakeExecutionHistory.events));
 });
 
-test('getFailedStepExitedEvent returns falsey if task exited event cannot be found', (t) => {
-  const { invalidFailedStepId } = t.context;
+test('getStepExitedEvent returns falsy if task exited event cannot be found', (t) => {
+  const { completedStepId, invalidFailedStepId } = t.context;
 
   const message = createCumulusMessage();
-  const completedStepId = randomNumber();
   const fakeExecutionHistory = createFakeExecutionHistory({
     message,
     failed: false,
-    stepType: 'activity',
     completedStepId
   });
-  t.falsy(getFailedStepExitedEvent(fakeExecutionHistory.events, { id: invalidFailedStepId }));
+  t.falsy(getStepExitedEvent(fakeExecutionHistory.events, { id: invalidFailedStepId }));
 });
 
-test('getFailedStepExitedEvent returns correct task exited event', (t) => {
+test('getStepExitedEvent returns correct task exited event', (t) => {
   const { completedStepId } = t.context;
 
   const message = createCumulusMessage();
   const fakeExecutionHistory = createFakeExecutionHistory({
     message,
     failed: false,
-    stepType: 'activity',
     completedStepId
   });
 
-  const taskExitedEvent = getFailedStepExitedEvent(
+  const taskExitedEvent = getStepExitedEvent(
     fakeExecutionHistory.events,
     { id: completedStepId }
   );
@@ -217,11 +214,30 @@ test('getExecutionFailedEvent returns execution failed event for single task exe
   t.truthy(failedExecutionEvent.executionFailedEventDetails);
 });
 
+test('getExecutionFailedEvent returns falsy if task exited event cannot be found', (t) => {
+  const { completedStepId, invalidFailedStepId } = t.context;
+
+  const message = createCumulusMessage();
+  const stepName = randomId('step');
+  const fakeExecutionHistory = createFakeExecutionHistory({
+    message,
+    stepName,
+    finalEventType: 'executionFail',
+    completedStepId
+  });
+
+  const failedExecutionEvent = getExecutionFailedEvent(
+    fakeExecutionHistory.events,
+    { id: invalidFailedStepId }
+  );
+  t.falsy(failedExecutionEvent);
+});
+
 test('gets message exception when failed step retry occurs', (t) => {
   const { events } = ingestGranuleFailHistory;
 
   const lastStepFailedEvent = getLastFailedStepEvent(events);
-  const failedStepExitedEvent = getFailedStepExitedEvent(events, lastStepFailedEvent);
+  const failedStepExitedEvent = getStepExitedEvent(events, lastStepFailedEvent);
   const failedStepOutputMessage = JSON.parse(getTaskExitedEventOutput(failedStepExitedEvent));
   t.true(isObject(failedStepOutputMessage.exception));
   t.is(failedStepOutputMessage.exception.Error, 'FileNotFound');
@@ -231,7 +247,7 @@ test('gets message exception when no step retry occurs', (t) => {
   const { events } = ingestPublishGranuleFailHistory;
 
   const lastStepFailedEvent = getLastFailedStepEvent(events);
-  const failedStepExitedEvent = getFailedStepExitedEvent(events, lastStepFailedEvent);
+  const failedStepExitedEvent = getStepExitedEvent(events, lastStepFailedEvent);
   const failedStepOutputMessage = JSON.parse(getTaskExitedEventOutput(failedStepExitedEvent));
   t.true(isObject(failedStepOutputMessage.exception));
   t.is(failedStepOutputMessage.exception.Error, 'CumulusMessageAdapterExecutionError');
