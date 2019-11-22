@@ -8,17 +8,17 @@ hide_title: true
 
 ## Storage Configuration
 
-Cumulus allows for the configuration of many buckets for your files. Buckets are created and added to your deployment as part of the [deployment process](deployment/deployment-readme#create-s3-buckets).
+Cumulus allows for the configuration of many buckets for your files. Buckets are created and added to your deployment as part of the [deployment process](../deployment/deployment-readme#create-s3-buckets).
 
 Organizing your data is important for metrics you may want to collect. AWS S3 metrics are calculated at the bucket level, so it is easy to get metrics by bucket. You can get storage metrics at the key prefix level, but that is done through the CLI, which can be very slow for large buckets. It is very difficult to estimate costs at the prefix level.
 
-In your [collection configuration](../data-cookbooks/setup#collections), you specify where you want the files to be stored post-processing. This is done by matching a regular expression on the file with the configured bucket.
+In your Cumulus [collection configuration](../data-cookbooks/setup#collections), you specify where you want the files to be stored post-processing. This is done by matching a regular expression on the file with the configured bucket.
 
 Note that in the collection configuration, the `bucket` field is the key to the `buckets` variable in the deployment's `.tfvars` file.
 
 ### Organizing By Bucket
 
-You could also specify separate groups of buckets for each collection, which could look like the example below.
+You can specify separate groups of buckets for each collection, which could look like the example below.
 
 ```json
 {
@@ -135,7 +135,7 @@ The `url_path` can be overidden directly on the file configuration. The example 
 
 Usage by bucket can be obtained in your [AWS Billing Dashboard](https://console.aws.amazon.com/billing/home) via an [S3 Usage Report](https://docs.aws.amazon.com/AmazonS3/latest/dev/aws-usage-report.html). You can download your usage report for a period of time and review your storage and requests at the bucket level.
 
-Bucket metrics can also be found in the [AWS CloudWatch Metrics Console](https://console.aws.amazon.com/cloudwatch/home#metricsV2:graph=~();namespace=~'AWS*2fS3) (also see [Using Amazon CloudWatch Metrics(https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/working_with_metrics.html)]).
+Bucket metrics can also be found in the [AWS CloudWatch Metrics Console](https://console.aws.amazon.com/cloudwatch/home#metricsV2:graph=~();namespace=~'AWS*2fS3) (also see [Using Amazon CloudWatch Metrics](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/working_with_metrics.html)).
 
 Navigate to `Storage Metrics` and select the `BucketName` for all buckets you are interested in. The available metrics are `BucketSizeInBytes` and `NumberOfObjects`.
 
@@ -174,7 +174,17 @@ Note that this can be a long-running operation for large buckets.
 
 ## Calculating Cost By Collection
 
+### NASA NGAP Environment
 
+If using an NGAP account, the cost per bucket can be found in your CloudTamer console, in the `Financials` section of your account information. This is calculated on a monthly basis.
+
+There is no easy way to get the cost by folder in the buckets. You could calculate an estimate using the storage per prefix vs. the storage of the bucket.
+
+### Outside of NGAP
+
+You can enabled [S3 Cost Allocation Tags](https://docs.aws.amazon.com/AmazonS3/latest/dev/CostAllocTagging.html) and tag your buckets. From there, you can view the cost breakdown in your [AWS Billing Dashboard](https://console.aws.amazon.com/billing/home) via the Cost Explorer. Cost Allocation Tagging is available at the bucket level.
+
+There is no easy way to get the cost by folder in the buckets. You could calculate an estimate using the storage per prefix vs. the storage of the bucket.
 
 
 
