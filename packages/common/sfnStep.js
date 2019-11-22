@@ -37,7 +37,7 @@ const getExecutionFailedEvent = (events, lastStepFailedEvent) =>
         && event.previousEventId === lastStepFailedEvent.id
   );
 
-const getTaskExitedEventDetails = (event) => event[taskExitedEventDetailsKey].output;
+const getTaskExitedEventOutput = (event) => event[taskExitedEventDetailsKey].output;
 
 /**
  * `SfnStep` provides methods for getting the output of a step within an AWS
@@ -375,7 +375,7 @@ module.exports = {
   getExecutionFailedEvent,
   getLastFailedStepEvent,
   getFailedStepExitedEvent,
-  getTaskExitedEventDetails,
+  getTaskExitedEventOutput,
   ActivityStep,
   LambdaStep
 };
