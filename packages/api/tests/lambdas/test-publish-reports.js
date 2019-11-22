@@ -775,9 +775,6 @@ test.serial('handler publishes notification from output of first failed Activity
       ]
     });
 
-  // const parseMessageStub = sinon.stub(SfnStep, 'parseStepMessage')
-  //   .resolves(failedStepInputMessage);
-
   try {
     await publishReports.handler(cwEventMessage);
 
@@ -788,7 +785,6 @@ test.serial('handler publishes notification from output of first failed Activity
     // revert the mocking
     granulePublishMock();
     getExecutionHistoryStub.restore();
-    // parseMessageStub.restore();
   }
 });
 
@@ -864,7 +860,7 @@ test.serial('handler publishes execution record with exception for failed execut
   }
 });
 
-test.serial.skip('handler publishes input to failed execution if failed step input cannot be retrieved', async (t) => {
+test.serial('handler publishes input to failed execution if failed step input cannot be retrieved', async (t) => {
   const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
   const executionPublishMock = publishReports.__set__('publishExecutionSnsMessage', executionPublishSpy);
 
