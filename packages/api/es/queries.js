@@ -60,7 +60,7 @@ const build = {
     }
 
     return {
-      term: {
+      match: {
         [fieldName]: i.value
       }
     };
