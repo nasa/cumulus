@@ -20,6 +20,7 @@ const publishReports = rewire('../../lambdas/publish-reports');
 
 const ingestGranuleFailHistory = require('../data/ingest_granule_fail_history.json');
 const ingestPublishGranuleFailHistory = require('../data/ingest_publish_granule_fail_history.json');
+const singleTaskFailHistory = require('../data/single_task_fail_history.json');
 
 let snsStub;
 let executionPublishSpy;
@@ -791,17 +792,25 @@ test.serial('handler publishes notification from output of first failed Activity
 test.serial('handler publishes execution record with exception for failed execution history with no step retry', async (t) => {
   const executionPublishMock = publishReports.__set__('publishExecutionSnsMessage', executionPublishSpy);
 
-  const cwEventMessage = createCloudwatchEventMessage('FAILED', ingestGranuleFailHistory);
+  const stateMachineArn = 'arn:aws:states:us-east-1:12345678:stateMachine:prefixTestIngestGranuleStateMachine-I7e85YUgyKKe';
+  const executionName = '348f36d0-1462-4c3a-a391-151cab953e55';
 
   await executionModel.create(
     fakeExecutionFactoryV2({
-      execution: '348f36d0-1462-4c3a-a391-151cab953e55',
+      execution: executionName,
       arn: aws.getExecutionArn(
-        'arn:aws:states:us-east-1:12345678:stateMachine:prefixTestIngestGranuleStateMachine-I7e85YUgyKKe',
-        '348f36d0-1462-4c3a-a391-151cab953e55'
+        stateMachineArn,
+        executionName
       )
     })
   );
+
+  const cwEventMessage = createCloudwatchEventMessage('FAILED', {
+    cumulus_meta: {
+      state_machine: stateMachineArn,
+      execution_name: executionName
+    }
+  });
 
   const { events } = ingestGranuleFailHistory;
   const getExecutionHistoryStub = sinon.stub(StepFunctions, 'getExecutionHistory')
@@ -827,17 +836,25 @@ test.serial('handler publishes execution record with exception for failed execut
 test.serial('handler publishes execution record with exception for failed execution history with step retry', async (t) => {
   const executionPublishMock = publishReports.__set__('publishExecutionSnsMessage', executionPublishSpy);
 
-  const cwEventMessage = createCloudwatchEventMessage('FAILED', ingestGranuleFailHistory);
+  const stateMachineArn = 'arn:aws:states:us-east-1:12345678:stateMachine:prefixTestIngestAndPublishGranuleStateMachine-0XRIQUlu8AMx';
+  const executionName = 'c6e73f70-4505-4694-ace5-57b687bee216';
 
   await executionModel.create(
     fakeExecutionFactoryV2({
-      execution: 'c6e73f70-4505-4694-ace5-57b687bee216',
+      execution: executionName,
       arn: aws.getExecutionArn(
-        'arn:aws:states:us-east-1:12345678:stateMachine:prefixTestIngestAndPublishGranuleStateMachine-0XRIQUlu8AMx',
-        'c6e73f70-4505-4694-ace5-57b687bee216'
+        stateMachineArn,
+        executionName
       )
     })
   );
+
+  const cwEventMessage = createCloudwatchEventMessage('FAILED', {
+    cumulus_meta: {
+      state_machine: stateMachineArn,
+      execution_name: executionName
+    }
+  });
 
   const { events } = ingestPublishGranuleFailHistory;
   const getExecutionHistoryStub = sinon.stub(StepFunctions, 'getExecutionHistory')
@@ -861,65 +878,44 @@ test.serial('handler publishes execution record with exception for failed execut
 });
 
 test.serial('handler publishes input to failed execution if failed step input cannot be retrieved', async (t) => {
-  const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
   const executionPublishMock = publishReports.__set__('publishExecutionSnsMessage', executionPublishSpy);
 
-  const failedStepException = {
-    Error: 'error',
-    Cause: 'cause'
-  };
-
-  const granuleId = randomId('granule');
-  const message = createCumulusMessage({
-    numberOfGranules: 2,
-    granuleParams: {
-      granuleId
-    }
-  });
+  const stateMachineArn = 'arn:aws:states:us-east-1:12345678:stateMachine:prefixTestIngestAndPublishGranuleStateMachine-0XRIQUlu8AMx';
+  const executionName = 'abcdef-12345-abdcde-1234-abc';
 
   await executionModel.create(
     fakeExecutionFactoryV2({
-      execution: message.cumulus_meta.execution_name,
+      execution: executionName,
       arn: aws.getExecutionArn(
-        message.cumulus_meta.state_machine,
-        message.cumulus_meta.execution_name
+        stateMachineArn,
+        executionName
       )
     })
   );
 
-  const cwEventMessage = createCloudwatchEventMessage('FAILED', message);
+  const cwEventMessage = createCloudwatchEventMessage('FAILED', {
+    cumulus_meta: {
+      state_machine: stateMachineArn,
+      execution_name: executionName
+    }
+  });
 
+  const { events } = singleTaskFailHistory;
   const getExecutionHistoryStub = sinon.stub(StepFunctions, 'getExecutionHistory')
     .resolves({
-      events: [
-        {
-          type: 'LambdaFunctionSucceeded',
-          id: 1,
-          lambdaFunctionSucceededEventDetails: { }
-        },
-        {
-          type: 'TaskStateExited',
-          id: 2,
-          previousEventId: 1,
-          stateExitedEventDetails: {
-            output: JSON.stringify(failedStepInputMessage)
-          }
-        }
-      ]
+      events
     });
 
   try {
     await publishReports.handler(cwEventMessage);
 
-    t.is(granulePublishSpy.callCount, 2);
-    t.is(granulePublishSpy.args[0][0].granuleId, granuleId);
-    t.is(granulePublishSpy.args[1][0].granuleId, granuleId);
-
     t.is(executionPublishSpy.callCount, 1);
-    t.deepEqual(executionPublishSpy.args[0][0].error, failedStepException);
+    t.deepEqual(executionPublishSpy.args[0][0].error, {
+      error: 'Error',
+      cause: '{\"errorMessage\":\"Step configured to force fail\",\"errorType\":\"Error\",\"stackTrace\":[\"throwErrorIfConfigured (/var/task/webpack:/index.js:47:11)\",\"helloWorld (/var/task/webpack:/index.js:58:9)\",\"promisedNestedEvent.then (/var/task/webpack:/node_modules/@cumulus/message-adapter-js/index.js:263:1)\",\"<anonymous>\",\"process._tickDomainCallback (internal/process/next_tick.js:228:7)\"]}'
+    });
   } finally {
     // revert the mocking
-    granulePublishMock();
     executionPublishMock();
     getExecutionHistoryStub.restore();
   }
