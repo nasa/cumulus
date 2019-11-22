@@ -7,7 +7,6 @@ const StepFunctions = require('./StepFunctions');
 
 const activityFailedEventType = 'ActivityFailed';
 const lambdaFailedEventType = 'LambdaFunctionFailed';
-const failedExecutionEventType = 'ExecutionFailed';
 
 const taskExitedEventType = 'TaskStateExited';
 const taskExitedEventDetailsKey = 'stateExitedEventDetails';
@@ -28,13 +27,6 @@ const getStepExitedEvent = (events, lastStepEvent) =>
     (event) =>
       event.type === taskExitedEventType
         && event.previousEventId === lastStepEvent.id
-  );
-
-const getExecutionFailedEvent = (events, lastStepFailedEvent) =>
-  events.find(
-    (event) =>
-      event.type === failedExecutionEventType
-        && event.previousEventId === lastStepFailedEvent.id
   );
 
 const getTaskExitedEventOutput = (event) => event[taskExitedEventDetailsKey].output;
@@ -342,7 +334,6 @@ class ActivityStep extends SfnStep {
 }
 
 module.exports = {
-  getExecutionFailedEvent,
   getLastFailedStepEvent,
   getStepExitedEvent,
   getTaskExitedEventOutput,
