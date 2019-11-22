@@ -79,8 +79,7 @@ async function bulkGranule(payload) {
         body.hits.hits.forEach((hit) => {
           granuleIds.push(hit._source.granuleId);
         });
-
-        if (body.hits.total != granuleIds.length){
+        if (body.hits.total.value != granuleIds.length){
           responseQueue.push(
             await client.scroll({
               scrollId: body._scroll_id,
@@ -94,8 +93,11 @@ async function bulkGranule(payload) {
     }
   }
 
-  console.log('Granule IDs: ', granuleIds);
-  return applyWorkflowToGranules(granuleIds, workflowName, queueName);
+  // Remove duplicate Granule IDs
+  const uniqueGranuleIds = [...new Set(granuleIds)];
+  console.log('Granule IDs: ', uniqueGranuleIds);
+
+  return applyWorkflowToGranules(uniqueGranuleIds, workflowName, queueName);
 }
 
 async function handler(event) {
