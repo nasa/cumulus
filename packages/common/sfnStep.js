@@ -5,16 +5,70 @@ const { pullStepFunctionEvent } = require('./aws');
 const log = require('./log');
 const StepFunctions = require('./StepFunctions');
 
+const activityFailedEventType = 'ActivityFailed';
+const lambdaFailedEventType = 'LambdaFunctionFailed';
+const failedExecutionEventType = 'ExecutionFailed';
+
+const taskExitedEventType = 'TaskStateExited';
+const taskExitedEventDetailsKey = 'stateExitedEventDetails';
+
+const getLastFailedStepEvent = (events) => {
+  const stepFailedEvents = events.filter(
+    (event) =>
+      [
+        lambdaFailedEventType,
+        activityFailedEventType
+      ].includes(event.type)
+  );
+  return stepFailedEvents[stepFailedEvents.length - 1];
+};
+
+const getFailedStepExitedEvent = (events, lastStepFailedEvent) =>
+  events.find(
+    (event) =>
+      event.type === taskExitedEventType
+        && event.previousEventId === lastStepFailedEvent.id
+  );
+
+const getExecutionFailedEvent = (events, lastStepFailedEvent) =>
+  events.find(
+    (event) =>
+      event.type === failedExecutionEventType
+        && event.previousEventId === lastStepFailedEvent.id
+  );
+
+const getTaskExitedEventDetails = (event) => event[taskExitedEventDetailsKey].output;
+
 /**
  * `SfnStep` provides methods for getting the output of a step within an AWS
  * Step Function for a specific execution.
 */
 class SfnStep {
-  constructor() {
-    this.taskExitedEvent = 'TaskStateExited';
-    this.taskExitedDetailsKey = 'stateExitedEventDetails';
-    this.failedExecutionEvent = 'ExecutionFailed';
-    this.failedExecutionDetailsKey = 'executionFailedEventDetails';
+  /**
+   * Parse the step message.
+   *
+   * Merge possible keys from the CMA in the input and handle remote message
+   * retrieval if necessary.
+   *
+   * @param {Object} stepMessage - Details for the step
+   * @param {Object} stepMessage.input - Object containing input to the step
+   * @param {string} [stepName] - Name for the step being parsed. Optional.
+   * @returns {Object} - Parsed step input object
+   */
+  static async parseStepMessage(stepMessage, stepName) {
+    let parsedStepMessage = stepMessage;
+    if (stepMessage.cma) {
+      parsedStepMessage = { ...stepMessage, ...stepMessage.cma, ...stepMessage.cma.event };
+      delete parsedStepMessage.cma;
+      delete parsedStepMessage.event;
+    }
+
+    if (stepMessage.replace) {
+      // Message was too large and output was written to S3
+      log.info(`Retrieving ${stepName} output from ${JSON.stringify(stepMessage.replace)}`);
+      parsedStepMessage = pullStepFunctionEvent(stepMessage);
+    }
+    return parsedStepMessage;
   }
 
   /**
@@ -71,21 +125,8 @@ class SfnStep {
     return null;
   }
 
-  /**
-   * Get the event for the last failed step in a Step function execution.
-   *
-   * @param {Array<Object>} events - Events from execution history
-   * @returns {Promise<Object>}
-   *   Execution history event for the last failed step in the execution
-   */
-  async getLastFailedStepEvent(events) {
-    const failedStepEvent = events
-      .find((event) => event.type === this.failureEvent);
-
-    return {
-      failedStepId: failedStepEvent.id,
-      failedStepDetails: failedStepEvent[this.eventDetailsKeys.failed]
-    };
+  getFailedEventDetails(event) {
+    return event[this.eventDetailsKeys.failed];
   }
 
   /**
@@ -112,29 +153,6 @@ class SfnStep {
     const failedStepMessage = JSON.parse(failedEventDetails.output);
 
     return this.parseStepMessage(failedStepMessage, failedEventDetails.resource);
-  }
-
-  async getDetailsOfLastFailedStep(executionArn) {
-    const { events } = await StepFunctions.getExecutionHistory({ executionArn });
-
-    // There may be multiple failed events in a retry scenario. Reverse the events
-    // list to more quickly find the last failed event in the history.
-    events.reverse();
-
-    let exception;
-    let outputMessage;
-
-    try {
-      const { failedStepId, failedStepDetails } = await this.getLastFailedStepEvent(events);
-      exception = failedStepDetails;
-      outputMessage = await this.getLastFailedStepOutput(events, executionArn, failedStepId);
-    } catch (err) {
-      return { exception };
-    }
-
-    return {
-      outputMessage
-    };
   }
 
   /**
@@ -201,33 +219,6 @@ class SfnStep {
     const subStepExecutionDetails = scheduleEvent[this.eventDetailsKeys.scheduled];
     const stepInput = JSON.parse(subStepExecutionDetails.input);
     return this.parseStepMessage(stepInput, stepName);
-  }
-
-  /**
-   * Parse the step message.
-   *
-   * Merge possible keys from the CMA in the input and handle remote message
-   * retrieval if necessary.
-   *
-   * @param {Object} stepMessage - Details for the step
-   * @param {Object} stepMessage.input - Object containing input to the step
-   * @param {string} [stepName] - Name for the step being parsed. Optional.
-   * @returns {Object} - Parsed step input object
-   */
-  parseStepMessage(stepMessage, stepName) {
-    let parsedStepMessage = stepMessage;
-    if (stepMessage.cma) {
-      parsedStepMessage = { ...stepMessage, ...stepMessage.cma, ...stepMessage.cma.event };
-      delete parsedStepMessage.cma;
-      delete parsedStepMessage.event;
-    }
-
-    if (stepMessage.replace) {
-      // Message was too large and output was written to S3
-      log.info(`Retrieving ${stepName} output from ${JSON.stringify(stepMessage.replace)}`);
-      parsedStepMessage = pullStepFunctionEvent(stepMessage);
-    }
-    return parsedStepMessage;
   }
 
   /**
@@ -336,7 +327,7 @@ class LambdaStep extends SfnStep {
     ];
     this.successEvent = 'LambdaFunctionSucceeded';
     this.taskStartEvent = 'TaskStateEntered';
-    this.failureEvent = 'LambdaFunctionFailed';
+    this.failureEvent = lambdaFailedEventType;
     this.completionEvents = [
       this.successEvent,
       this.failureEvent,
@@ -365,7 +356,7 @@ class ActivityStep extends SfnStep {
     this.startEvents = ['ActivityStarted'];
     this.startFailedEvent = undefined; // there is no 'ActivityStartFailed'
     this.successEvent = 'ActivitySucceeded';
-    this.failureEvent = 'ActivityFailed';
+    this.failureEvent = activityFailedEventType;
     this.completionEvents = [
       this.successEvent,
       this.failureEvent,
@@ -381,6 +372,10 @@ class ActivityStep extends SfnStep {
 }
 
 module.exports = {
+  getExecutionFailedEvent,
+  getLastFailedStepEvent,
+  getFailedStepExitedEvent,
+  getTaskExitedEventDetails,
   ActivityStep,
   LambdaStep
 };
