@@ -18,8 +18,8 @@ const {
 const {
   getExecutionFailedEvent,
   getLastFailedStepEvent,
-  getFailedStepExitedEvent,
-  getTaskExitedEventDetails,
+  getStepExitedEvent,
+  getTaskExitedEventOutput,
   SfnStep
 } = require('@cumulus/common/sfnStep');
 const StepFunctions = require('@cumulus/common/StepFunctions');
@@ -240,24 +240,24 @@ async function getFailedExecutionMessage(inputMessage) {
   try {
     const executionArn = getMessageExecutionArn(inputMessage);
     const { events } = await StepFunctions.getExecutionHistory({ executionArn });
-    let exception;
 
     const lastStepFailedEvent = getLastFailedStepEvent(events);
-    if (lastStepFailedEvent) {
-      exception = lastStepFailedEvent.lambdaFunctionFailedEventDetails
-        || lastStepFailedEvent.activityFailedEventDetails;
-    } else {
-      const executionFailedEvent = getExecutionFailedEvent(events);
-      exception = executionFailedEvent.executionFailedEventDetails;
-    }
-
-    const failedStepExitedEvent = getFailedStepExitedEvent(events, lastStepFailedEvent);
+    const failedStepExitedEvent = getStepExitedEvent(events, lastStepFailedEvent);
 
     if (!failedStepExitedEvent) {
       log.info(
         `Could not retrieve output from last failed step in execution ${executionArn}, falling back to execution input`,
         'Error:', new Error(`Could not find TaskStateExited event after step ID ${lastStepFailedEvent.id} for execution ${executionArn}`)
       );
+
+      let exception;
+      if (lastStepFailedEvent) {
+        exception = lastStepFailedEvent.lambdaFunctionFailedEventDetails
+          || lastStepFailedEvent.activityFailedEventDetails;
+      } else {
+        const executionFailedEvent = getExecutionFailedEvent(events);
+        exception = executionFailedEvent.executionFailedEventDetails;
+      }
 
       // If input from the failed step cannot be retrieved, then fall back to execution
       // input.
@@ -267,8 +267,9 @@ async function getFailedExecutionMessage(inputMessage) {
       };
     }
 
+    const taskExitedEventOutput = getTaskExitedEventOutput(failedStepExitedEvent);
     return await SfnStep.parseStepMessage(
-      JSON.parse(getTaskExitedEventDetails(failedStepExitedEvent)),
+      JSON.parse(taskExitedEventOutput),
       failedStepExitedEvent.resource
     );
   } catch (err) {

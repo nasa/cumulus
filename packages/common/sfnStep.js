@@ -125,36 +125,6 @@ class SfnStep {
     return null;
   }
 
-  getFailedEventDetails(event) {
-    return event[this.eventDetailsKeys.failed];
-  }
-
-  /**
-   * Get the output of the last failed step in a Step function execution.
-   *
-   * @param {Array<Object>} events - Events from execution history
-   * @param {string} executionArn - Step function execution ARN
-   * @param {number} failedStepId - Event ID for last failed step in execution
-   * @returns {Promise<Object>}
-   *   Cumulus message output from the last failed step in the execution
-   */
-  async getLastFailedStepOutput(events, executionArn, failedStepId) {
-    const failedStepExitedEvent = events.find((event) => {
-      const taskExitedEvent = event.type === this.taskExitedEvent;
-      const isStepFailed = event.previousEventId === failedStepId;
-      return taskExitedEvent && isStepFailed;
-    });
-
-    if (!failedStepExitedEvent) {
-      throw new Error(`Could not find ${this.taskExitedEvent} event after step ID ${failedStepId} for execution ${executionArn}`);
-    }
-
-    const failedEventDetails = failedStepExitedEvent[this.taskExitedDetailsKey];
-    const failedStepMessage = JSON.parse(failedEventDetails.output);
-
-    return this.parseStepMessage(failedStepMessage, failedEventDetails.resource);
-  }
-
   /**
    * Get the events for the step execution for the given workflow execution.
    * If there are multiple executions of a step, we currently assume a retry and return
@@ -218,7 +188,7 @@ class SfnStep {
 
     const subStepExecutionDetails = scheduleEvent[this.eventDetailsKeys.scheduled];
     const stepInput = JSON.parse(subStepExecutionDetails.input);
-    return this.parseStepMessage(stepInput, stepName);
+    return SfnStep.parseStepMessage(stepInput, stepName);
   }
 
   /**
@@ -376,6 +346,7 @@ module.exports = {
   getLastFailedStepEvent,
   getStepExitedEvent,
   getTaskExitedEventOutput,
+  SfnStep,
   ActivityStep,
   LambdaStep
 };
