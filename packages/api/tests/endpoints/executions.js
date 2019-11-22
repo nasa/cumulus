@@ -117,7 +117,7 @@ test('GET logs returns all executions', async (t) => {
   t.is(response.body.meta.count, 2);
 });
 
-test.only('GET executions with asyncOperationId filter returns the correct executions', async (t) => {
+test('GET executions with asyncOperationId filter returns the correct executions', async (t) => {
   const response = await request(app)
     .get('/executions?asyncOperationId=012345-12345')
     .set('Accept', 'application/json')
