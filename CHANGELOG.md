@@ -15,7 +15,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
-- Changed the default value of the `api_gateway_stage` variable to `dev` in the `tf-modules/distribution` Terraform module
 - **CUMULUS-1579**
   - Elasticsearch list queries use `match` instead of `term`. `term` had been analyzing the terms and not supporting `-` in the field values.
 

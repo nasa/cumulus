@@ -24,7 +24,7 @@ variable "urs_client_password" {
 
 variable "api_gateway_stage" {
   type        = string
-  default     = "dev"
+  default     = "DEV"
   description = "The API Gateway stage to create"
 }
 
