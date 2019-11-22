@@ -114,7 +114,7 @@ class SfnStep {
     return this.parseStepMessage(failedStepMessage, failedEventDetails.resource);
   }
 
-  async getOutputOfLastFailedStep(executionArn, inputMessage) {
+  async getDetailsOfLastFailedStep(executionArn) {
     const { events } = await StepFunctions.getExecutionHistory({ executionArn });
 
     // There may be multiple failed events in a retry scenario. Reverse the events
@@ -122,17 +122,19 @@ class SfnStep {
     events.reverse();
 
     let exception;
+    let outputMessage;
 
     try {
       const { failedStepId, failedStepDetails } = await this.getLastFailedStepEvent(events);
       exception = failedStepDetails;
-      return await this.getLastFailedStepOutput(events, executionArn, failedStepId);
+      outputMessage = await this.getLastFailedStepOutput(events, executionArn, failedStepId);
     } catch (err) {
-      return {
-        ...inputMessage,
-        exception
-      };
+      return { exception };
     }
+
+    return {
+      outputMessage
+    };
   }
 
   /**
