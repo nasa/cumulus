@@ -7,7 +7,6 @@ const pick = require('lodash.pick');
 
 const aws = require('@cumulus/common/aws');
 const { getMessageExecutionArn } = require('@cumulus/common/message');
-const { SfnStep } = require('@cumulus/common/sfnStep');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const { randomId, randomNumber, randomString } = require('@cumulus/common/test-utils');
 
@@ -22,8 +21,6 @@ const publishReports = rewire('../../lambdas/publish-reports');
 const ingestGranuleFailHistory = require('../data/ingest_granule_fail_history.json');
 const ingestPublishGranuleFailHistory = require('../data/ingest_publish_granule_fail_history.json');
 
-// let getFailedActivityEventStub;
-// let getFailedLambdaEventStub;
 let snsStub;
 let executionPublishSpy;
 let granulePublishSpy;
@@ -105,11 +102,6 @@ test.before(async () => {
   granulePublishSpy = sinon.spy();
   pdrPublishSpy = sinon.spy();
   snsPublishSpy = sinon.spy(aws.sns(), 'publish');
-
-  // getFailedActivityEventStub = sinon.stub(ActivityStep.prototype, 'getLastFailedStepEvent')
-  //   .resolves({});
-  // getFailedLambdaEventStub = sinon.stub(LambdaStep.prototype, 'getLastFailedStepEvent')
-  //   .resolves({});
 });
 
 test.beforeEach((t) => {
@@ -146,8 +138,6 @@ test.afterEach.always(() => {
 });
 
 test.after.always(async () => {
-  // getFailedActivityEventStub.restore();
-  // getFailedLambdaEventStub.restore();
   snsStub.restore();
   await executionModel.deleteTable();
 });
@@ -267,11 +257,11 @@ test.serial('lambda publishes failed execution record to SNS topic', async (t) =
     message
   );
 
-  // Stub the failed step message, otherwise the ARN from the
-  // failed execution input won't match the ARN in the message created
-  // for this test.
-  const getFailedStepStub = sinon.stub(LambdaStep.prototype, 'getLastFailedStepOutput')
-    .callsFake(() => message);
+  // Stub StepFunctions.getExecutionHistory() to throw an error to simplify this test
+  const getExecutionHistoryStub = sinon.stub(StepFunctions, 'getExecutionHistory')
+    .callsFake(() => {
+      throw new Error('error');
+    });
 
   try {
     await executionModel.create({
@@ -290,7 +280,7 @@ test.serial('lambda publishes failed execution record to SNS topic', async (t) =
     t.is(executionPublishRecord.status, 'failed');
   } finally {
     // revert the mocking
-    getFailedStepStub.restore();
+    getExecutionHistoryStub.restore();
     executionPublishMock();
   }
 });
@@ -729,7 +719,7 @@ test.serial('handler publishes notification from output of last failed Lambda st
   }
 });
 
-test.serial('handler publishes notification from input to first failed Activity step in failed execution history', async (t) => {
+test.serial('handler publishes notification from output of first failed Activity step in failed execution history', async (t) => {
   const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
 
   const message = createCumulusMessage({ numberOfGranules: 1 });
@@ -921,15 +911,6 @@ test.serial.skip('handler publishes input to failed execution if failed step inp
         }
       ]
     });
-
-  // const getLambdaFailedStepStub = sinon.stub(LambdaStep.prototype, 'getLastFailedStepOutput')
-  //   .callsFake(() => {
-  //     throw new Error('error');
-  //   });
-  // const getActivityFailedStepStub = sinon.stub(ActivityStep.prototype, 'getLastFailedStepOutput')
-  //   .callsFake(() => {
-  //     throw new Error('error');
-  //   });
 
   try {
     await publishReports.handler(cwEventMessage);
