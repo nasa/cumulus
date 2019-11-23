@@ -77,10 +77,10 @@ Terraform v0.12.2
 
 _If you already are working with an existing `<daac>-deploy` repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS configuration.](deployment-readme#prepare-aws-configuration)_
 
-Clone template-deploy repo and name appropriately for your DAAC or organization:
+Clone the `cumulus-template-deploy` repo and name appropriately for your DAAC or organization:
 
 ```bash
-  git clone https://github.com/nasa/template-deploy <daac>-deploy
+  git clone https://github.com/nasa/cumulus-template-deploy <daac>-deploy
 ```
 
 We will return to [configuring this repo and using it for deployment below](#deploying-the-cumulus-instance).
@@ -114,7 +114,7 @@ If you don't want to set environment variables, [access keys can be stored local
 
 See [creating s3 buckets](deployment/create_bucket.md) for more information on how to create a bucket.
 
-The following s3 bucket should be created (replacing prefix with whatever you'd like, generally your organization/DAAC's name):
+The following s3 bucket should be created (replacing `<prefix>` with whatever you'd like, generally your organization/DAAC's name):
 
 * `<prefix>-internal`
 
@@ -137,7 +137,7 @@ These resources only need to be created once per account.
 
 If you are deploying to an NGAP environment (a NASA managed AWS environment), the VPC, subnet, security group, and VPC endpoints should already be created for you.
 
-**Note:** Amazon ElasticSearch Service does not use a VPC Endpoint. To use ES within a VPC, run `aws iam create-service-linked-role --aws-service-name es.amazonaws.com` before deploying. This operation only needs to be done once per account, but it must be done for both NGAP and regular AWS environments.
+**Note:** Amazon Elasticsearch Service does not use a VPC Endpoint. To use ES within a VPC, run `aws iam create-service-linked-role --aws-service-name es.amazonaws.com` before deploying. This operation only needs to be done once per account, but it must be done for both NGAP and regular AWS environments.
 
 To configure Cumulus with these settings, populate your `terraform.tfvars` file with the relevant values, as shown below, before deploying Cumulus. If these values are omitted Cumulus resources that require a VPC will be created in the default VPC and security group.
 
@@ -176,7 +176,7 @@ aws s3api put-bucket-versioning \
     --versioning-configuration Status=Enabled
 ```
 
-⚠️ **Note:**: If your state information does become lost or corrupt, then deployment (via
+⚠️ **Note:** If your state information does become lost or corrupt, then deployment (via
 `terraform apply`) will have unpredictable results, including possible loss of data and loss of
 deployed resources.
 
@@ -195,7 +195,7 @@ $ aws dynamodb create-table \
     --table-name my-tf-locks \
     --attribute-definitions AttributeName=LockID,AttributeType=S \
     --key-schema AttributeName=LockID,KeyType=HASH \
-    --billing-mode PAY_PER_REQUEST
+    --billing-mode PAY_PER_REQUEST \
     --region us-east-1
 ```
 
@@ -219,13 +219,15 @@ Each of these modules have to be deployed independently and require their own Te
 
 These steps should be executed in the `data-persistence-tf` directory of the template deploy repo that was cloned previously.
 
-Copy the [`terraform.tf.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/data-persistence-tf/terraform.tf.example) to `terraform.tf` file, substituting the appropriate values for `bucket`, `dynamodb_table`, and `<stack>`. This tells Terraform where to store its
+Copy the [`terraform.tf.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/data-persistence-tf/terraform.tf.example) to `terraform.tf` file, substituting the appropriate values for `bucket`, `dynamodb_table`, and `PREFIX` (whatever prefix you've chosen for your deployment). This tells Terraform where to store its
 remote state.
 
 Copy the [`terraform.tfvars.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/data-persistence-tf/terraform.tfvars.example) file to `terraform.tfvars`, and fill in
 appropriate values. See the [data-persistence module variable definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf) for more detail on each variable.
 
 **Reminder:** Elasticsearch is optional and can be disabled using `include_elasticsearch = false` in your `terraform.tfvars`.
+
+**Reminder:** If you are including `subnet_ids` in your `terraform.tfvars`, Elasticsearch will need a service-linked role to deploy successfully. Follow the [instructions above](#vpc-subnets-and-security-group) to create the service-linked role if you haven't already.
 
 #### Initialize Terraform
 
@@ -287,7 +289,8 @@ To deploy a CMA layer to your account:
 ```shell
 $ aws lambda publish-layer-version \
   --layer-name prefix-CMA-layer \
-  --zip-file fileb://path/to/cumulus-message-adapter.zip
+  --region us-east-1 \
+  --zip-file fileb:///path/to/cumulus-message-adapter.zip
 
 {
   ... more output ...
@@ -303,7 +306,7 @@ Make sure to copy the `LayerVersionArn` of the deployed layer, as it will be use
 
 These steps should be executed in the `cumulus-tf` directory of the template repo that was cloned previously.
 
-Copy the [`terraform.tf.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/terraform.tf.example) to `terraform.tf` file, substituting the appropriate values for `bucket`, `dynamodb_table`, and `<stack>`. This tells Terraform where to store its
+Copy the [`terraform.tf.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/terraform.tf.example) to `terraform.tf` file, substituting the appropriate values for `bucket`, `dynamodb_table`, and `PREFIX`. This tells Terraform where to store its
 remote state.
 
 Copy the [`terraform.tfvars.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/terraform.tfvars.example) file to `terraform.tfvars`, and fill in
