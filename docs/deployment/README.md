@@ -137,7 +137,7 @@ These resources only need to be created once per account.
 
 If you are deploying to an NGAP environment (a NASA managed AWS environment), the VPC, subnet, security group, and VPC endpoints should already be created for you.
 
-**Note:** Amazon ElasticSearch Service does not use a VPC Endpoint. To use ES within a VPC, run `aws iam create-service-linked-role --aws-service-name es.amazonaws.com` before deploying. This operation only needs to be done once per account, but it must be done for both NGAP and regular AWS environments.
+**Note:** Amazon Elasticsearch Service does not use a VPC Endpoint. To use ES within a VPC, run `aws iam create-service-linked-role --aws-service-name es.amazonaws.com` before deploying. This operation only needs to be done once per account, but it must be done for both NGAP and regular AWS environments.
 
 To configure Cumulus with these settings, populate your `terraform.tfvars` file with the relevant values, as shown below, before deploying Cumulus. If these values are omitted Cumulus resources that require a VPC will be created in the default VPC and security group.
 
@@ -226,6 +226,8 @@ Copy the [`terraform.tfvars.example`](https://github.com/nasa/cumulus-template-d
 appropriate values. See the [data-persistence module variable definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf) for more detail on each variable.
 
 **Reminder:** Elasticsearch is optional and can be disabled using `include_elasticsearch = false` in your `terraform.tfvars`.
+
+**Reminder:** If you are including `subnet_ids` in your `terraform.tfvars`, Elasticsearch will need a service-linked role to deploy successfully. Follow the [instructions above](#vpc-subnets-and-security-group) to create the service-linked role if you haven't already.
 
 #### Initialize Terraform
 
