@@ -16,8 +16,6 @@ const {
   getMessageGranules
 } = require('@cumulus/common/message');
 const {
-  getExecutionFailedEvent,
-  getLastFailedStepEvent,
   getStepExitedEvent,
   getTaskExitedEventOutput,
   SfnStep

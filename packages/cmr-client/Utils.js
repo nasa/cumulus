@@ -4,7 +4,6 @@ const { promisify } = require('util');
 const xml2js = require('xml2js');
 
 async function parseXMLString(xmlString) {
-  console.log('xml string:', xmlString);
   const parseString = promisify(xml2js.parseString);
   const xmlParseOptions = {
     ignoreAttrs: true,
