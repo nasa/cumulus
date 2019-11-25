@@ -10,16 +10,16 @@ const {
   isFailedSfStatus,
   isTerminalSfStatus
 } = require('@cumulus/common/cloudwatch-event');
+const {
+  getStepExitedEvent,
+  getTaskExitedEventOutput
+} = require('@cumulus/common/execution-history');
 const log = require('@cumulus/common/log');
 const {
   getMessageExecutionArn,
   getMessageGranules
 } = require('@cumulus/common/message');
-const {
-  getStepExitedEvent,
-  getTaskExitedEventOutput,
-  SfnStep
-} = require('@cumulus/common/sfnStep');
+const { SfnStep } = require('@cumulus/common/sfnStep');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 
 const Execution = require('../models/executions');
