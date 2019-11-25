@@ -5,22 +5,8 @@ const { pullStepFunctionEvent } = require('./aws');
 const log = require('./log');
 const StepFunctions = require('./StepFunctions');
 
-const activityFailedEventType = 'ActivityFailed';
-const lambdaFailedEventType = 'LambdaFunctionFailed';
-
 const taskExitedEventType = 'TaskStateExited';
 const taskExitedEventDetailsKey = 'stateExitedEventDetails';
-
-const getLastFailedStepEvent = (events) => {
-  const stepFailedEvents = events.filter(
-    (event) =>
-      [
-        lambdaFailedEventType,
-        activityFailedEventType
-      ].includes(event.type)
-  );
-  return stepFailedEvents[stepFailedEvents.length - 1];
-};
 
 const getStepExitedEvent = (events, lastStepEvent) =>
   events.find(
@@ -289,7 +275,7 @@ class LambdaStep extends SfnStep {
     ];
     this.successEvent = 'LambdaFunctionSucceeded';
     this.taskStartEvent = 'TaskStateEntered';
-    this.failureEvent = lambdaFailedEventType;
+    this.failureEvent = 'LambdaFunctionFailed';
     this.completionEvents = [
       this.successEvent,
       this.failureEvent,
@@ -318,7 +304,7 @@ class ActivityStep extends SfnStep {
     this.startEvents = ['ActivityStarted'];
     this.startFailedEvent = undefined; // there is no 'ActivityStartFailed'
     this.successEvent = 'ActivitySucceeded';
-    this.failureEvent = activityFailedEventType;
+    this.failureEvent = 'ActivityFailed';
     this.completionEvents = [
       this.successEvent,
       this.failureEvent,
@@ -334,7 +320,6 @@ class ActivityStep extends SfnStep {
 }
 
 module.exports = {
-  getLastFailedStepEvent,
   getStepExitedEvent,
   getTaskExitedEventOutput,
   SfnStep,

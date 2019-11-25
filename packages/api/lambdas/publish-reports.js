@@ -240,7 +240,11 @@ async function getFailedExecutionMessage(inputMessage) {
     const executionArn = getMessageExecutionArn(inputMessage);
     const { events } = await StepFunctions.getExecutionHistory({ executionArn });
 
-    const lastStepFailedEvent = getLastFailedStepEvent(events);
+    const stepFailedEvents = events.filter(
+      (event) =>
+        ['ActivityFailed', 'LambdaFunctionFailed'].includes(event.type)
+    );
+    const lastStepFailedEvent = stepFailedEvents[stepFailedEvents.length - 1];
     const failedStepExitedEvent = getStepExitedEvent(events, lastStepFailedEvent);
 
     if (!failedStepExitedEvent) {

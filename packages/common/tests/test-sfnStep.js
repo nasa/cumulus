@@ -119,32 +119,6 @@ test.beforeEach((t) => {
   }
 });
 
-test('getLastFailedStepEvent returns falsy if failed step event cannot be found', (t) => {
-  const message = createCumulusMessage();
-  const fakeExecutionHistory = createFakeExecutionHistory({
-    message,
-    failed: false
-  });
-  t.falsy(getLastFailedStepEvent(fakeExecutionHistory.events));
-});
-
-test('getLastFailedStepEvent returns failed activity step event', (t) => {
-  const message = createCumulusMessage();
-  const fakeExecutionHistory = createFakeExecutionHistory({
-    message,
-    stepType: 'activity'
-  });
-  t.truthy(getLastFailedStepEvent(fakeExecutionHistory.events));
-});
-
-test('getLastFailedStepEvent returns failed lambda step event', (t) => {
-  const message = createCumulusMessage();
-  const fakeExecutionHistory = createFakeExecutionHistory({
-    message
-  });
-  t.truthy(getLastFailedStepEvent(fakeExecutionHistory.events));
-});
-
 test('getStepExitedEvent returns falsy if task exited event cannot be found', (t) => {
   const { completedStepId, invalidFailedStepId } = t.context;
 
