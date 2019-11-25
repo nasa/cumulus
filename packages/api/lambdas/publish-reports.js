@@ -77,10 +77,12 @@ function publishPdrSnsMessage(
  * Publish execution record to SNS topic.
  *
  * @param {Object} eventMessage - Workflow execution message
- * @param {string} executionArn - Step function execution ARN
  * @returns {Promise}
  */
-async function handleExecutionMessage(eventMessage, executionArn) {
+async function handleExecutionMessage(eventMessage) {
+  const executionArn = getMessageExecutionArn(eventMessage);
+  log.info(`Publishing reports for execution ${executionArn}`);
+
   try {
     const executionRecord = await Execution.generateRecord(eventMessage);
     return await publishExecutionSnsMessage(executionRecord);
@@ -134,16 +136,16 @@ async function buildAndPublishGranule(
  * Publish individual granule messages to SNS topic.
  *
  * @param {Object} eventMessage - Workflow execution message
- * @param {string} executionArn - Step function execution ARN
  * @returns {Promise}
  */
-async function handleGranuleMessages(eventMessage, executionArn) {
+async function handleGranuleMessages(eventMessage) {
   const granules = getMessageGranules(eventMessage);
   if (!granules) {
     log.info(`No granules to process in the payload: ${JSON.stringify(eventMessage.payload)}`);
     return Promise.resolve();
   }
 
+  const executionArn = getMessageExecutionArn(eventMessage);
   const executionUrl = getExecutionUrl(executionArn);
 
   let executionDescription;
@@ -216,12 +218,9 @@ async function publishReportSnsMessages(eventMessage, isTerminalStatus, isFailed
     }
   });
 
-  const executionArn = getMessageExecutionArn(eventMessage);
-  log.info(`Publishing reports for execution ${executionArn}`);
-
   return Promise.all([
-    handleExecutionMessage(eventMessage, executionArn),
-    handleGranuleMessages(eventMessage, executionArn),
+    handleExecutionMessage(eventMessage),
+    handleGranuleMessages(eventMessage),
     handlePdrMessage(eventMessage)
   ]);
 }
