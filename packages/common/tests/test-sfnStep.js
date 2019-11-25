@@ -1,17 +1,17 @@
 'use strict';
 
 const test = require('ava');
-const sinon = require('sinon');
+const rewire = require('rewire');
 
-const aws = require('../aws');
+const SfnStepModule = rewire('../sfnStep');
 
 const {
   SfnStep,
   getStepExitedEvent,
   getTaskExitedEventOutput
-} = require('../sfnStep');
+} = SfnStepModule;
 
-test('getStepExitedEvent returns falsy if task exited event cannot be found', (t) => {
+test('getStepExitedEvent returns undefined if task exited event cannot be found', (t) => {
   const events = [
     {
       type: 'LambdafunctionFailed',
@@ -28,7 +28,7 @@ test('getStepExitedEvent returns falsy if task exited event cannot be found', (t
     }
   ];
 
-  t.falsy(getStepExitedEvent(events, { id: 3 }));
+  t.is(getStepExitedEvent(events, { id: 3 }), undefined);
 });
 
 test('getStepExitedEvent returns correct task exited event', (t) => {
@@ -92,7 +92,7 @@ test('SfnStep.parseStepMessage parses message correctly', async (t) => {
   });
 });
 
-test.serial('SfnStep.parseStepMessage returns correct output for remote payload', async (t) => {
+test.serial('SfnStep.parseStepMessage returns correct output for for remote message', async (t) => {
   const event = {
     key: 'value',
     cma: {
@@ -108,46 +108,6 @@ test.serial('SfnStep.parseStepMessage returns correct output for remote payload'
     }
   };
 
-  const remotePayload = {
-    granule1: 'granule1',
-    granule2: 'granule2'
-  };
-
-  const getObjectStub = sinon.stub(aws, 's3').returns({
-    getObject: () => ({
-      promise: () => Promise.resolve({
-        Body: JSON.stringify(remotePayload)
-      })
-    })
-  });
-
-  try {
-    t.deepEqual(await SfnStep.parseStepMessage(event), {
-      key: 'value',
-      foo: 'bar',
-      payload: remotePayload
-    });
-  } finally {
-    getObjectStub.restore();
-  }
-});
-
-test.serial('SfnStep.parseStepMessage returns correct output for full remote message', async (t) => {
-  const event = {
-    key: 'value',
-    cma: {
-      foo: 'bar',
-      event: {
-        payload: {},
-        replace: {
-          Bucket: 'somebucket',
-          Key: 'somekey',
-          TargetPath: '$'
-        }
-      }
-    }
-  };
-
   const fullRemoteMessage = {
     cumulus_meta: {
       state_machine: 'machine'
@@ -158,17 +118,11 @@ test.serial('SfnStep.parseStepMessage returns correct output for full remote mes
     }
   };
 
-  const getObjectStub = sinon.stub(aws, 's3').returns({
-    getObject: () => ({
-      promise: () => Promise.resolve({
-        Body: JSON.stringify(fullRemoteMessage)
-      })
-    })
-  });
+  const pullSfEventMock = SfnStepModule.__set__('pullStepFunctionEvent', async () => fullRemoteMessage);
 
   try {
     t.deepEqual(await SfnStep.parseStepMessage(event), fullRemoteMessage);
   } finally {
-    getObjectStub.restore();
+    pullSfEventMock();
   }
 });
