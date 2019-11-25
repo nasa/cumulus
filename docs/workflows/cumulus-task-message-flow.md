@@ -20,7 +20,7 @@ A full **Cumulus Message** has the following keys:
 * **`meta`:** Runtime information captured by the workflow operators. Stores execution-agnostic variables.
 * **`payload`:** Payload is runtime information for the tasks.
 
-In adddition to the above keys, it *may* contain the following keys:
+In addition to the above keys, it *may* contain the following keys:
 
 * **`replace`:** A key generated in conjunction with the Cumulus Message adapter.  It contains the location on S3 for a message payload and a Target JSON path in the message to extract it to.
 * **`exception`:** A key used to track workflow exceptions, should not be modified outside of Cumulus library code.
