@@ -38,7 +38,7 @@ Cumulus entity state data is stored in a set of [DynamoDB](https://aws.amazon.co
 
 #### Data discovery
 
-Discovering data for ingest is handled via workflow step componoents using Cumulus `provider` and `collection` configurations and various triggers.    Data can be ingested from AWS S3, FTP, HTTPS and more.
+Discovering data for ingest is handled via workflow step components using Cumulus `provider` and `collection` configurations and various triggers.    Data can be ingested from AWS S3, FTP, HTTPS and more.
 
 ### Maintenance
 
@@ -46,7 +46,7 @@ System maintenance personnel have access to manage ingest and various portions o
 
 ## Deployment Structure
 
-Cumulus is deployed via [Terraform](https://www.terraform.io/) and is organized internally into two seperate top-level modules, as well as several external modules.
+Cumulus is deployed via [Terraform](https://www.terraform.io/) and is organized internally into two separate top-level modules, as well as several external modules.
 
 ### Cumulus
 
