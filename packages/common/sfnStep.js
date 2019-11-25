@@ -41,10 +41,10 @@ class SfnStep {
       delete parsedStepMessage.event;
     }
 
-    if (stepMessage.replace) {
+    if (parsedStepMessage.replace) {
       // Message was too large and output was written to S3
-      log.info(`Retrieving ${stepName} output from ${JSON.stringify(stepMessage.replace)}`);
-      parsedStepMessage = pullStepFunctionEvent(stepMessage);
+      log.info(`Retrieving ${stepName} output from ${JSON.stringify(parsedStepMessage.replace)}`);
+      parsedStepMessage = await pullStepFunctionEvent(parsedStepMessage);
     }
     return parsedStepMessage;
   }
