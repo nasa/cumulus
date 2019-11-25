@@ -150,6 +150,12 @@ variable "custom_queues" {
   default = []
 }
 
+variable "distribution_api_gateway_stage" {
+  description = "The distribution API Gateway stage to create"
+  type    = string
+  default = "DEV"
+}
+
 variable "distribution_url" {
   description = " URL for the distribution API"
   type    = string
@@ -403,7 +409,7 @@ variable "throttled_queues" {
 variable "urs_url" {
   description = "The URL of the Earthdata login (URS) site"
   type        = string
-  default     = "https://urs.earthdata.nasa.gov/"
+  default     = "https://uat.urs.earthdata.nasa.gov/"
 }
 
 variable "vpc_id" {
