@@ -229,7 +229,7 @@ Example:
 
 ### 1. Reformat AWS Step Function message into Cumulus Message
 
-Due to the way AWS handles Parmeterized messages, when Parameters are used the CMA takes an inbound message:
+Due to the way AWS handles Parameterized messages, when Parameters are used the CMA takes an inbound message:
 
 ```json
 {
