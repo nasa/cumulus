@@ -26,6 +26,7 @@ This module deploys data persistence resources, including DynamoDB tables and an
 Configuration variables are shown in [`terraform.tfvars.example`](./terraform.tfvars.example) and are explained below. See [variables.tf](./variables.tf) for default values.
 
 - `prefix` - prefix to use for naming created resources
+- `custom_domain_name` - Custom domain name to use for Elasticsearch instance
 - `es_trusted_role_arns` - IAM role ARNs that should be trusted for accessing Elasticsearch
 - `include_elasticsearch` - Whether to include Elasticsearch in the deployment. `false` will exclude Elasticsearch from the deployment.
 - `elasticsearch_config` - Configuration for the Elasticsearch instance
@@ -40,6 +41,5 @@ module "data_persistence" {
 
   prefix                     = "my-prefix"
   subnet_ids                 = ["subnet-123", "subnet-456"]
-  create_service_linked_role = true
 }
 ```
