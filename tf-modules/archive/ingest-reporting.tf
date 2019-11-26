@@ -8,6 +8,7 @@ resource "aws_iam_role" "report_executions_lambda_role" {
   # tags                 = local.default_tags
 }
 
+# TODO Needs to be updated to handle writing to SNS instead of Dynamo
 data "aws_iam_policy_document" "report_executions_policy_document" {
   statement {
     actions = [
@@ -83,7 +84,7 @@ resource "aws_lambda_function" "report_executions" {
 
   environment {
     variables = {
-      ExecutionsTable = var.dynamo_tables.executions.name
+      execution_sns_topic_arn = aws_sns_topic.report_executions_topic.arn
     }
   }
 
@@ -108,10 +109,11 @@ resource "aws_lambda_permission" "report_executions_permission" {
   source_arn    = "${aws_sns_topic.report_executions_topic.arn}"
 }
 
-resource "aws_sns_topic_subscription" "report_executions_subscription" {
-  topic_arn = "${aws_sns_topic.report_executions_topic.arn}"
-  protocol  = "lambda"
-  endpoint  = "${aws_lambda_function.report_executions.arn}"
+resource "aws_lambda_event_source_mapping" "executions_table_db_indexer" {
+  event_source_arn  = data.aws_dynamodb_table.executions.stream_arn
+  function_name     = aws_lambda_function.report_executions.arn
+  starting_position = "TRIM_HORIZON"
+  batch_size        = 10
 }
 
 # Report granules

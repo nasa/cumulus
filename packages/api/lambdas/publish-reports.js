@@ -1,15 +1,14 @@
 'use strict';
 
-const merge = require('lodash.merge');
+const get = require('lodash.get');
+const set = require('lodash.set');
 
-const { publishSnsMessage, pullStepFunctionEvent } = require('@cumulus/common/aws');
-const { getExecutionUrl } = require('@cumulus/ingest/aws');
 const {
-  getSfEventMessageObject,
-  getSfEventStatus,
-  isFailedSfStatus,
-  isTerminalSfStatus
-} = require('@cumulus/common/cloudwatch-event');
+  dynamodbDocClient,
+  publishSnsMessage,
+  pullStepFunctionEvent
+} = require('@cumulus/common/aws');
+const { getExecutionUrl } = require('@cumulus/ingest/aws');
 const log = require('@cumulus/common/log');
 const {
   getMessageExecutionArn,
@@ -25,21 +24,6 @@ const StepFunctions = require('@cumulus/common/StepFunctions');
 const Execution = require('../models/executions');
 const Granule = require('../models/granules');
 const Pdr = require('../models/pdrs');
-
-/**
- * Publish SNS message for execution reporting.
- *
- * @param {Object} executionRecord - An execution record
- * @param {string} [executionSnsTopicArn]
- *  SNS topic ARN for reporting executions. Defaults to `process.env.execution_sns_topic_arn`.
- * @returns {Promise}
- */
-async function publishExecutionSnsMessage(
-  executionRecord,
-  executionSnsTopicArn = process.env.execution_sns_topic_arn
-) {
-  return publishSnsMessage(executionSnsTopicArn, executionRecord);
-}
 
 /**
  * Publish SNS message for granule reporting.
@@ -71,26 +55,59 @@ function publishPdrSnsMessage(
   return publishSnsMessage(pdrSnsTopicArn, pdrRecord);
 }
 
+const buildExecutionDocClientUpdateParams = (TableName, item) => {
+  const ExpressionAttributeNames = {};
+  const ExpressionAttributeValues = {};
+  const setUpdateExpressions = [];
+
+  Object.entries(item).forEach(([key, value]) => {
+    if (key === 'arn') return;
+
+    ExpressionAttributeNames[`#${key}`] = key;
+    ExpressionAttributeValues[`:${key}`] = value;
+
+    if (item.status === 'running') {
+      if (['createdAt', 'updatedAt', 'timestamp', 'originalPayload'].includes(key)) {
+        setUpdateExpressions.push(`#${key} = :${key}`);
+      } else {
+        setUpdateExpressions.push(`#${key} = if_not_exists(#${key}, :${key})`);
+      }
+    } else {
+      setUpdateExpressions.push(`#${key} = :${key}`);
+    }
+  });
+
+  return {
+    TableName,
+    Key: { arn: item.arn },
+    ExpressionAttributeNames,
+    ExpressionAttributeValues,
+    UpdateExpression: `SET ${setUpdateExpressions.join(', ')}`
+  };
+};
+
 /**
- * Publish execution record to SNS topic.
+ * Given a Cumulus message, write an execution item to DynamoDB
  *
- * @param {Object} eventMessage - Workflow execution message
+ * @param {Object} cumulusMessage - Cumulus message
  * @returns {Promise}
  */
-async function handleExecutionMessage(eventMessage) {
-  const executionArn = getMessageExecutionArn(eventMessage);
-  log.info(`Publishing reports for execution ${executionArn}`);
-
+async function handleExecutionMessage(cumulusMessage) {
   try {
-    const executionRecord = await Execution.generateRecord(eventMessage);
-    return await publishExecutionSnsMessage(executionRecord);
+    const updateParams = buildExecutionDocClientUpdateParams(
+      process.env.ExecutionsTable,
+      Execution.generateRecord(cumulusMessage)
+    );
+
+    await dynamodbDocClient().update(updateParams).promise();
   } catch (err) {
+    const executionArn = getMessageExecutionArn(cumulusMessage);
+
     log.fatal(
       `Failed to create database record for execution ${executionArn}: ${err.message}`,
       'Cause: ', err,
-      'Execution message: ', eventMessage
+      'Execution message: ', cumulusMessage
     );
-    return Promise.resolve();
   }
 }
 
@@ -194,36 +211,6 @@ async function handlePdrMessage(eventMessage) {
 }
 
 /**
- * Publish messages to SNS report topics.
- *
- * @param {Object} eventMessage - Workflow execution message
- * @param {boolean} isTerminalStatus - true if workflow is in a terminal state
- * @param {boolean} isFailedStatus - true if workflow is in a failed state
- * @returns {Promise}
- */
-async function publishReportSnsMessages(eventMessage, isTerminalStatus, isFailedStatus) {
-  let status;
-
-  if (isTerminalStatus) {
-    status = isFailedStatus ? 'failed' : 'completed';
-  } else {
-    status = 'running';
-  }
-
-  merge(eventMessage, {
-    meta: {
-      status
-    }
-  });
-
-  return Promise.all([
-    handleExecutionMessage(eventMessage),
-    handleGranuleMessages(eventMessage),
-    handlePdrMessage(eventMessage)
-  ]);
-}
-
-/**
  * Get message to use for publishing failed execution notifications.
  *
  * Try to get the input to the first failed step in the execution so we can
@@ -272,6 +259,38 @@ async function getFailedExecutionMessage(inputMessage) {
   }
 }
 
+const executionStatusToWorkflowStatus = (executionStatus) => {
+  const statusMap = {
+    ABORTED: 'failed',
+    FAILED: 'failed',
+    RUNNING: 'running',
+    SUCCEEDED: 'completed',
+    TIMED_OUT: 'failed'
+  };
+
+  return statusMap[executionStatus];
+};
+
+const getCumulusMessageFromExecutionEvent = async (executionEvent) => {
+  let cumulusMessage;
+
+  if (executionEvent.detail.status === 'RUNNING') {
+    cumulusMessage = JSON.parse(executionEvent.detail.input);
+  } else if (executionEvent.detail.status === 'SUCCEEDED') {
+    cumulusMessage = JSON.parse(executionEvent.detail.output);
+  } else {
+    const inputMessage = JSON.parse(get(executionEvent, 'detail.input', '{}'));
+    cumulusMessage = await getFailedExecutionMessage(inputMessage);
+  }
+
+  const fullCumulusMessage = await pullStepFunctionEvent(cumulusMessage);
+
+  const workflowStatus = executionStatusToWorkflowStatus(executionEvent.detail.status);
+  set(fullCumulusMessage, 'meta.status', workflowStatus);
+
+  return fullCumulusMessage;
+};
+
 /**
  * Lambda handler for publish-reports Lambda.
  *
@@ -279,26 +298,15 @@ async function getFailedExecutionMessage(inputMessage) {
  * @returns {Promise}
  */
 async function handler(event) {
-  const eventStatus = getSfEventStatus(event);
-  const isTerminalStatus = isTerminalSfStatus(eventStatus);
-  const isFailedStatus = isFailedSfStatus(eventStatus);
+  const eventMessage = await getCumulusMessageFromExecutionEvent(event);
 
-  // For terminal non-failed states, we want the output from the execution.
-  // For running states, there isn't any output, so we want input to the execution.
-  let eventMessage = isTerminalStatus && !isFailedStatus
-    ? getSfEventMessageObject(event, 'output')
-    : getSfEventMessageObject(event, 'input', '{}');
-
-  if (isFailedStatus) {
-    eventMessage = await getFailedExecutionMessage(eventMessage);
-  }
-
-  eventMessage = await pullStepFunctionEvent(eventMessage);
-
-  return publishReportSnsMessages(eventMessage, isTerminalStatus, isFailedStatus);
+  return Promise.all([
+    handleExecutionMessage(eventMessage),
+    handleGranuleMessages(eventMessage),
+    handlePdrMessage(eventMessage)
+  ]);
 }
 
 module.exports = {
-  handler,
-  publishReportSnsMessages
+  handler
 };

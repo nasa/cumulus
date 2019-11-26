@@ -2,38 +2,17 @@
 
 const get = require('lodash.get');
 const pLimit = require('p-limit');
-const pRetry = require('p-retry');
 
-const { getExecutionArn } = require('@cumulus/common/aws');
 const {
   getCollectionIdFromMessage,
-  getMessageExecutionName,
-  getMessageStateMachineArn
+  getMessageExecutionArn,
+  getMessageExecutionName
 } = require('@cumulus/common/message');
 const aws = require('@cumulus/ingest/aws');
 
 const executionSchema = require('./schemas').execution;
 const Manager = require('./base');
 const { parseException } = require('../lib/utils');
-
-/**
- * Get an execution record.
- *
- * Use retry with exponential backoff to handle cases where record is still
- * in the process of being created.
- *
- * @param {Execution} executionModel - Instance of Execution model
- * @param {string} executionArn - A Step Function execution ARN
- * @returns {Promise} - Promise resolving to execution record or rejecting
- */
-const getExecutionRecord = (executionModel, executionArn) =>
-  pRetry(
-    async () => {
-      const record = await executionModel.get({ arn: executionArn });
-      return record;
-    },
-    { retries: 3 }
-  );
 
 class Execution extends Manager {
   constructor() {
@@ -45,51 +24,30 @@ class Execution extends Manager {
   }
 
   /**
-   * Generate an execution record from a workflow execution message.
+   * Generate an execution record from a Cumulus message.
    *
-   * @param {Object} message - A workflow execution message
+   * @param {Object} cumulusMessage - A Cumulus message
    * @returns {Object} An execution record
    */
-  static async generateRecord(message) {
-    const executionName = getMessageExecutionName(message);
-    const stateMachineArn = getMessageStateMachineArn(message);
-    const arn = getExecutionArn(
-      stateMachineArn,
-      executionName
-    );
-    const asyncOperationId = get(message, 'cumulus_meta.asyncOperationId');
+  static generateRecord(cumulusMessage) {
+    const arn = getMessageExecutionArn(cumulusMessage);
+    const now = Date.now();
 
-    const execution = aws.getExecutionUrl(arn);
-    const collectionId = getCollectionIdFromMessage(message);
-
-    const status = get(message, 'meta.status', 'unknown');
-
-    const record = {
-      name: executionName,
+    return {
+      name: getMessageExecutionName(cumulusMessage),
       arn,
-      asyncOperationId,
-      parentArn: get(message, 'cumulus_meta.parentExecutionArn'),
-      execution,
-      tasks: get(message, 'meta.workflow_tasks'),
-      error: parseException(message.exception),
-      type: get(message, 'meta.workflow_name'),
-      collectionId,
-      status,
-      createdAt: get(message, 'cumulus_meta.workflow_start_time'),
-      timestamp: Date.now()
+      asyncOperationId: get(cumulusMessage, 'cumulus_meta.asyncOperationId'),
+      parentArn: get(cumulusMessage, 'cumulus_meta.parentExecutionArn'),
+      execution: aws.getExecutionUrl(arn),
+      tasks: get(cumulusMessage, 'meta.workflow_tasks'),
+      error: parseException(cumulusMessage.exception),
+      type: get(cumulusMessage, 'meta.workflow_name'),
+      collectionId: getCollectionIdFromMessage(cumulusMessage),
+      status: get(cumulusMessage, 'meta.status'),
+      createdAt: get(cumulusMessage, 'cumulus_meta.workflow_start_time'),
+      timestamp: now,
+      updatedAt: now
     };
-
-    const currentPayload = get(message, 'payload');
-    if (['failed', 'completed'].includes(status)) {
-      const existingRecord = await getExecutionRecord(new Execution(), arn);
-      record.finalPayload = currentPayload;
-      record.originalPayload = existingRecord.originalPayload;
-    } else {
-      record.originalPayload = currentPayload;
-    }
-
-    record.duration = (record.timestamp - record.createdAt) / 1000;
-    return record;
   }
 
   /**
@@ -134,29 +92,6 @@ class Execution extends Manager {
       return Promise.resolve();
     }));
     return Promise.all(updatePromises);
-  }
-
-  /**
-   * Update an existing execution record, replacing all fields except originalPayload
-   * adding the existing payload to the finalPayload database field
-   *
-   * @param {Object} message - A workflow execution message
-   * @returns {Promise<Object>} An execution record
-   */
-  async updateExecutionFromSns(message) {
-    const record = await Execution.generateRecord(message);
-    return this.create(record);
-  }
-
-  /**
-   * Create a new execution record from incoming SNS messages
-   *
-   * @param {Object} message - A workflow execution message
-   * @returns {Promise<Object>} An execution record
-   */
-  async createExecutionFromSns(message) {
-    const record = await Execution.generateRecord(message);
-    return this.create(record);
   }
 
   /**
