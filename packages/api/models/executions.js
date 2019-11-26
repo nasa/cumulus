@@ -8,6 +8,7 @@ const {
   getMessageExecutionArn,
   getMessageExecutionName
 } = require('@cumulus/common/message');
+const { isNil } = require('@cumulus/common/util');
 const aws = require('@cumulus/ingest/aws');
 
 const executionSchema = require('./schemas').execution;
@@ -31,7 +32,12 @@ class Execution extends Manager {
    */
   static generateRecord(cumulusMessage) {
     const arn = getMessageExecutionArn(cumulusMessage);
+    if (isNil(arn)) throw new Error('Unable to determine execution ARN from Cumulus message');
+
     const now = Date.now();
+    const createdAt = get(cumulusMessage, 'cumulus_meta.workflow_start_time');
+
+    const status = get(cumulusMessage, 'meta.status');
 
     return {
       name: getMessageExecutionName(cumulusMessage),
@@ -43,10 +49,13 @@ class Execution extends Manager {
       error: parseException(cumulusMessage.exception),
       type: get(cumulusMessage, 'meta.workflow_name'),
       collectionId: getCollectionIdFromMessage(cumulusMessage),
-      status: get(cumulusMessage, 'meta.status'),
-      createdAt: get(cumulusMessage, 'cumulus_meta.workflow_start_time'),
+      status,
+      createdAt,
       timestamp: now,
-      updatedAt: now
+      updatedAt: now,
+      originalPayload: status === 'running' ? cumulusMessage.Payload : undefined,
+      finalPayload: status === 'running' ? undefined : cumulusMessage.Payload,
+      duration: (now - createdAt) / 1000
     };
   }
 
@@ -100,6 +109,43 @@ class Execution extends Manager {
   async deleteExecutions() {
     const executions = await this.scan();
     return Promise.all(executions.Items.map((execution) => super.delete({ arn: execution.arn })));
+  }
+
+  buildDocClientUpdateParams(item) {
+    const ExpressionAttributeNames = {};
+    const ExpressionAttributeValues = {};
+    const setUpdateExpressions = [];
+
+    Object.entries(item).forEach(([key, value]) => {
+      if (key === 'arn') return;
+
+      ExpressionAttributeNames[`#${key}`] = key;
+      ExpressionAttributeValues[`:${key}`] = value;
+
+      if (item.status === 'running') {
+        if (['createdAt', 'updatedAt', 'timestamp', 'originalPayload'].includes(key)) {
+          setUpdateExpressions.push(`#${key} = :${key}`);
+        } else {
+          setUpdateExpressions.push(`#${key} = if_not_exists(#${key}, :${key})`);
+        }
+      } else {
+        setUpdateExpressions.push(`#${key} = :${key}`);
+      }
+    });
+
+    return {
+      TableName: this.tableName,
+      Key: { arn: item.arn },
+      ExpressionAttributeNames,
+      ExpressionAttributeValues,
+      UpdateExpression: `SET ${setUpdateExpressions.join(', ')}`
+    };
+  }
+
+  async storeExecutionFromCumulusMessage(cumulusMessage) {
+    const executionItem = Execution.generateRecord(cumulusMessage);
+    const updateParams = this.buildDocClientUpdateParams(executionItem);
+    await this.dynamodbDocClient.update(updateParams).promise();
   }
 }
 

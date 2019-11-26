@@ -1,29 +1,17 @@
 'use strict';
 
-const get = require('lodash.get');
-const set = require('lodash.set');
-
-const {
-  dynamodbDocClient,
-  publishSnsMessage,
-  pullStepFunctionEvent
-} = require('@cumulus/common/aws');
+const { publishSnsMessage } = require('@cumulus/common/aws');
 const { getExecutionUrl } = require('@cumulus/ingest/aws');
 const log = require('@cumulus/common/log');
 const {
   getMessageExecutionArn,
   getMessageGranules
 } = require('@cumulus/common/message');
-const {
-  getStepExitedEvent,
-  getTaskExitedEventOutput,
-  SfnStep
-} = require('@cumulus/common/sfnStep');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 
-const Execution = require('../models/executions');
 const Granule = require('../models/granules');
 const Pdr = require('../models/pdrs');
+const { getCumulusMessageFromExecutionEvent } = require('../lib/cwSfExecutionEventUtils');
 
 /**
  * Publish SNS message for granule reporting.
@@ -53,62 +41,6 @@ function publishPdrSnsMessage(
   pdrSnsTopicArn = process.env.pdr_sns_topic_arn
 ) {
   return publishSnsMessage(pdrSnsTopicArn, pdrRecord);
-}
-
-const buildExecutionDocClientUpdateParams = (TableName, item) => {
-  const ExpressionAttributeNames = {};
-  const ExpressionAttributeValues = {};
-  const setUpdateExpressions = [];
-
-  Object.entries(item).forEach(([key, value]) => {
-    if (key === 'arn') return;
-
-    ExpressionAttributeNames[`#${key}`] = key;
-    ExpressionAttributeValues[`:${key}`] = value;
-
-    if (item.status === 'running') {
-      if (['createdAt', 'updatedAt', 'timestamp', 'originalPayload'].includes(key)) {
-        setUpdateExpressions.push(`#${key} = :${key}`);
-      } else {
-        setUpdateExpressions.push(`#${key} = if_not_exists(#${key}, :${key})`);
-      }
-    } else {
-      setUpdateExpressions.push(`#${key} = :${key}`);
-    }
-  });
-
-  return {
-    TableName,
-    Key: { arn: item.arn },
-    ExpressionAttributeNames,
-    ExpressionAttributeValues,
-    UpdateExpression: `SET ${setUpdateExpressions.join(', ')}`
-  };
-};
-
-/**
- * Given a Cumulus message, write an execution item to DynamoDB
- *
- * @param {Object} cumulusMessage - Cumulus message
- * @returns {Promise}
- */
-async function handleExecutionMessage(cumulusMessage) {
-  try {
-    const updateParams = buildExecutionDocClientUpdateParams(
-      process.env.ExecutionsTable,
-      Execution.generateRecord(cumulusMessage)
-    );
-
-    await dynamodbDocClient().update(updateParams).promise();
-  } catch (err) {
-    const executionArn = getMessageExecutionArn(cumulusMessage);
-
-    log.fatal(
-      `Failed to create database record for execution ${executionArn}: ${err.message}`,
-      'Cause: ', err,
-      'Execution message: ', cumulusMessage
-    );
-  }
 }
 
 /**
@@ -211,87 +143,6 @@ async function handlePdrMessage(eventMessage) {
 }
 
 /**
- * Get message to use for publishing failed execution notifications.
- *
- * Try to get the input to the first failed step in the execution so we can
- * update the status of any granules/PDRs that don't exist in the initial execution
- * input. Falls back to overall execution input.
- *
- * @param {Object} inputMessage - Workflow execution input message
- * @returns {Object} - Execution step message or execution input message
- */
-async function getFailedExecutionMessage(inputMessage) {
-  try {
-    const executionArn = getMessageExecutionArn(inputMessage);
-    const { events } = await StepFunctions.getExecutionHistory({ executionArn });
-
-    const stepFailedEvents = events.filter(
-      (event) =>
-        ['ActivityFailed', 'LambdaFunctionFailed'].includes(event.type)
-    );
-    const lastStepFailedEvent = stepFailedEvents[stepFailedEvents.length - 1];
-    const failedStepExitedEvent = getStepExitedEvent(events, lastStepFailedEvent);
-
-    if (!failedStepExitedEvent) {
-      log.info(
-        `Could not retrieve output from last failed step in execution ${executionArn}, falling back to execution input`,
-        'Error:', new Error(`Could not find TaskStateExited event after step ID ${lastStepFailedEvent.id} for execution ${executionArn}`)
-      );
-
-      const exception = lastStepFailedEvent.lambdaFunctionFailedEventDetails
-        || lastStepFailedEvent.activityFailedEventDetails;
-
-      // If input from the failed step cannot be retrieved, then fall back to execution
-      // input.
-      return {
-        ...inputMessage,
-        exception
-      };
-    }
-
-    const taskExitedEventOutput = getTaskExitedEventOutput(failedStepExitedEvent);
-    return await SfnStep.parseStepMessage(
-      JSON.parse(taskExitedEventOutput),
-      failedStepExitedEvent.resource
-    );
-  } catch (err) {
-    return inputMessage;
-  }
-}
-
-const executionStatusToWorkflowStatus = (executionStatus) => {
-  const statusMap = {
-    ABORTED: 'failed',
-    FAILED: 'failed',
-    RUNNING: 'running',
-    SUCCEEDED: 'completed',
-    TIMED_OUT: 'failed'
-  };
-
-  return statusMap[executionStatus];
-};
-
-const getCumulusMessageFromExecutionEvent = async (executionEvent) => {
-  let cumulusMessage;
-
-  if (executionEvent.detail.status === 'RUNNING') {
-    cumulusMessage = JSON.parse(executionEvent.detail.input);
-  } else if (executionEvent.detail.status === 'SUCCEEDED') {
-    cumulusMessage = JSON.parse(executionEvent.detail.output);
-  } else {
-    const inputMessage = JSON.parse(get(executionEvent, 'detail.input', '{}'));
-    cumulusMessage = await getFailedExecutionMessage(inputMessage);
-  }
-
-  const fullCumulusMessage = await pullStepFunctionEvent(cumulusMessage);
-
-  const workflowStatus = executionStatusToWorkflowStatus(executionEvent.detail.status);
-  set(fullCumulusMessage, 'meta.status', workflowStatus);
-
-  return fullCumulusMessage;
-};
-
-/**
  * Lambda handler for publish-reports Lambda.
  *
  * @param {Object} event - Cloudwatch event
@@ -301,7 +152,6 @@ async function handler(event) {
   const eventMessage = await getCumulusMessageFromExecutionEvent(event);
 
   return Promise.all([
-    handleExecutionMessage(eventMessage),
     handleGranuleMessages(eventMessage),
     handlePdrMessage(eventMessage)
   ]);
