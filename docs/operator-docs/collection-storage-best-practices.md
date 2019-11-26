@@ -4,13 +4,70 @@ title: Collection Storage Best Practices
 hide_title: true
 ---
 
-# Collection Storage Best Practices
+# Collection Cost Tracking and Storage Best Practices
+
+Organizing your data is important for metrics you may want to collect. AWS S3 storage and cost metrics are calculated at the bucket level, so it is easy to get metrics by bucket. You can get storage metrics at the key prefix level, but that is done through the CLI, which can be very slow for large buckets. It is very difficult to estimate costs at the prefix level.
+
+## Calculating Storage By Collection
+
+### By bucket
+
+Usage by bucket can be obtained in your [AWS Billing Dashboard](https://console.aws.amazon.com/billing/home) via an [S3 Usage Report](https://docs.aws.amazon.com/AmazonS3/latest/dev/aws-usage-report.html). You can download your usage report for a period of time and review your storage and requests at the bucket level.
+
+Bucket metrics can also be found in the [AWS CloudWatch Metrics Console](https://console.aws.amazon.com/cloudwatch/home#metricsV2:graph=~();namespace=~'AWS*2fS3) (also see [Using Amazon CloudWatch Metrics](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/working_with_metrics.html)).
+
+Navigate to `Storage Metrics` and select the `BucketName` for all buckets you are interested in. The available metrics are `BucketSizeInBytes` and `NumberOfObjects`.
+
+In the `Graphed metrics` tab, you can select the type of statistic (i.e. average, minimum, maximum) and the period for the stats. At the top, it's useful to select from the dropdown to view the metrics as a number. You can also select the time period for which you want to see stats.
+
+Alternatively you can query CloudWatch using the CLI.
+
+This command will return the average number of bytes in the bucket `test-bucket` for 7/31/2019:
+
+```
+aws cloudwatch get-metric-statistics --namespace AWS/S3 --start-time 2019-07-31T00:00:00 --end-time 2019-08-01T00:00:00 --period 86400 --statistics Average --region us-east-1 --metric-name BucketSizeBytes --dimensions Name=BucketName,Value=test-bucket Name=StorageType,Value=StandardStorage
+```
+
+The result looks like:
+
+```
+{
+    "Datapoints": [
+        {
+            "Timestamp": "2019-07-31T00:00:00Z",
+            "Average": 150996467959.0,
+            "Unit": "Bytes"
+        }
+    ],
+    "Label": "BucketSizeBytes"
+}
+```
+
+### By key prefix
+
+AWS does not offer storage and usage statistics at a key prefix level. Via the AWS CLI, you can get the total storage for a bucket or folder. The following command would get the storage for folder `example-folder` in bucket `sample-bucket`:
+
+`aws s3 ls --summarize --human-readable --recursive s3://sample-bucket/example-folder | grep 'Total'`
+
+Note that this can be a long-running operation for large buckets.
+
+## Calculating Cost By Collection
+
+### NASA NGAP Environment
+
+If using an NGAP account, the cost per bucket can be found in your CloudTamer console, in the `Financials` section of your account information. This is calculated on a monthly basis.
+
+There is no easy way to get the cost by folder in the buckets. You could calculate an estimate using the storage per prefix vs. the storage of the bucket.
+
+### Outside of NGAP
+
+You can enabled [S3 Cost Allocation Tags](https://docs.aws.amazon.com/AmazonS3/latest/dev/CostAllocTagging.html) and tag your buckets. From there, you can view the cost breakdown in your [AWS Billing Dashboard](https://console.aws.amazon.com/billing/home) via the Cost Explorer. Cost Allocation Tagging is available at the bucket level.
+
+There is no easy way to get the cost by folder in the buckets. You could calculate an estimate using the storage per prefix vs. the storage of the bucket.
 
 ## Storage Configuration
 
 Cumulus allows for the configuration of many buckets for your files. Buckets are created and added to your deployment as part of the [deployment process](../deployment/deployment-readme#create-s3-buckets).
-
-Organizing your data is important for metrics you may want to collect. AWS S3 metrics are calculated at the bucket level, so it is easy to get metrics by bucket. You can get storage metrics at the key prefix level, but that is done through the CLI, which can be very slow for large buckets. It is very difficult to estimate costs at the prefix level.
 
 In your Cumulus [collection configuration](../data-cookbooks/setup#collections), you specify where you want the files to be stored post-processing. This is done by matching a regular expression on the file with the configured bucket.
 
@@ -127,65 +184,6 @@ The `url_path` can be overidden directly on the file configuration. The example 
   ]
 }
 ```
-
-
-## Calculating Storage By Collection
-
-### By bucket
-
-Usage by bucket can be obtained in your [AWS Billing Dashboard](https://console.aws.amazon.com/billing/home) via an [S3 Usage Report](https://docs.aws.amazon.com/AmazonS3/latest/dev/aws-usage-report.html). You can download your usage report for a period of time and review your storage and requests at the bucket level.
-
-Bucket metrics can also be found in the [AWS CloudWatch Metrics Console](https://console.aws.amazon.com/cloudwatch/home#metricsV2:graph=~();namespace=~'AWS*2fS3) (also see [Using Amazon CloudWatch Metrics](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/working_with_metrics.html)).
-
-Navigate to `Storage Metrics` and select the `BucketName` for all buckets you are interested in. The available metrics are `BucketSizeInBytes` and `NumberOfObjects`.
-
-In the `Graphed metrics` tab, you can select the type of statistic (i.e. average, minimum, maximum) and the period for the stats. At the top, it's useful to select from the dropdown to view the metrics as a number. You can also select the time period for which you want to see stats.
-
-Alternatively you can query CloudWatch using the CLI.
-
-This command will return the average number of bytes in the bucket `test-bucket` for 7/31/2019:
-
-```
-aws cloudwatch get-metric-statistics --namespace AWS/S3 --start-time 2019-07-31T00:00:00 --end-time 2019-08-01T00:00:00 --period 86400 --statistics Average --region us-east-1 --metric-name BucketSizeBytes --dimensions Name=BucketName,Value=test-bucket Name=StorageType,Value=StandardStorage
-```
-
-The result looks like:
-
-```
-{
-    "Datapoints": [
-        {
-            "Timestamp": "2019-07-31T00:00:00Z",
-            "Average": 150996467959.0,
-            "Unit": "Bytes"
-        }
-    ],
-    "Label": "BucketSizeBytes"
-}
-```
-
-### By key prefix
-
-AWS does not offer storage and usage statistics at a key prefix level. Via the AWS CLI, you can get the total storage for a bucket or folder. The following command would get the storage for folder `example-folder` in bucket `sample-bucket`:
-
-`aws s3 ls --summarize --human-readable --recursive s3://sample-bucket/example-folder | grep 'Total'`
-
-Note that this can be a long-running operation for large buckets.
-
-## Calculating Cost By Collection
-
-### NASA NGAP Environment
-
-If using an NGAP account, the cost per bucket can be found in your CloudTamer console, in the `Financials` section of your account information. This is calculated on a monthly basis.
-
-There is no easy way to get the cost by folder in the buckets. You could calculate an estimate using the storage per prefix vs. the storage of the bucket.
-
-### Outside of NGAP
-
-You can enabled [S3 Cost Allocation Tags](https://docs.aws.amazon.com/AmazonS3/latest/dev/CostAllocTagging.html) and tag your buckets. From there, you can view the cost breakdown in your [AWS Billing Dashboard](https://console.aws.amazon.com/billing/home) via the Cost Explorer. Cost Allocation Tagging is available at the bucket level.
-
-There is no easy way to get the cost by folder in the buckets. You could calculate an estimate using the storage per prefix vs. the storage of the bucket.
-
 
 
 
