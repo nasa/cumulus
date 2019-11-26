@@ -266,7 +266,7 @@ terraform import module.data_persistence.aws_elasticsearch_domain.es_vpc PREFIX-
 You will also need to make sure to set these variables in your `terraform.tfvars` file:
 
 ```hcl
-prefix = PREFIX     # must match prefix of existing deployment
+prefix = "PREFIX"     # must match prefix of existing deployment
 custom_domain_name = "PREFIX-es5vpc"  # must match existing Elasticsearch domain name
 ```
 
