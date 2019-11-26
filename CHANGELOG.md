@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- **CUMULUS-1563**
+  - Added `custom_domain_name` variable to `tf-modules/data-persistence` module
 - **CUMULUS-1654**
   - Added new helpers to `@cumulus/common/execution-history`:
     - `getStepExitedEvent()` returns the `TaskStateExited` event in a workflow execution history after the given step completion/failure event
