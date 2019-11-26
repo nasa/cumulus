@@ -58,11 +58,6 @@ resource "aws_elasticsearch_domain_policy" "es_domain_policy" {
   access_policies = data.aws_iam_policy_document.es_access_policy[0].json
 }
 
-resource "aws_iam_service_linked_role" "es" {
-  count            = local.deploy_inside_vpc && var.create_service_linked_role ? 1 : 0
-  aws_service_name = "es.amazonaws.com"
-}
-
 # Elasticsearch domain in a VPC
 
 data "aws_subnet" "first_es_domain_subnet" {
@@ -99,6 +94,7 @@ resource "aws_elasticsearch_domain" "es_vpc" {
   cluster_config {
     instance_count = var.elasticsearch_config.instance_count
     instance_type  = var.elasticsearch_config.instance_type
+    zone_awareness_enabled = length(var.subnet_ids) > 1
   }
 
   ebs_options {
@@ -119,10 +115,6 @@ resource "aws_elasticsearch_domain" "es_vpc" {
   snapshot_options {
     automated_snapshot_start_hour = 0
   }
-
-  depends_on = [
-    "aws_iam_service_linked_role.es"
-  ]
 
   tags = local.default_tags
 }

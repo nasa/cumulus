@@ -10,12 +10,16 @@ const {
   isFailedSfStatus,
   isTerminalSfStatus
 } = require('@cumulus/common/cloudwatch-event');
+const {
+  getStepExitedEvent,
+  getTaskExitedEventOutput
+} = require('@cumulus/common/execution-history');
 const log = require('@cumulus/common/log');
 const {
   getMessageExecutionArn,
   getMessageGranules
 } = require('@cumulus/common/message');
-const { ActivityStep, LambdaStep } = require('@cumulus/common/sfnStep');
+const { SfnStep } = require('@cumulus/common/sfnStep');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 
 const Execution = require('../models/executions');
@@ -74,12 +78,15 @@ function publishPdrSnsMessage(
  * @returns {Promise}
  */
 async function handleExecutionMessage(eventMessage) {
+  const executionArn = getMessageExecutionArn(eventMessage);
+  log.info(`Publishing reports for execution ${executionArn}`);
+
   try {
     const executionRecord = await Execution.generateRecord(eventMessage);
     return await publishExecutionSnsMessage(executionRecord);
   } catch (err) {
     log.fatal(
-      `Failed to create database record for execution ${getMessageExecutionArn(eventMessage)}: ${err.message}`,
+      `Failed to create database record for execution ${executionArn}: ${err.message}`,
       'Cause: ', err,
       'Execution message: ', eventMessage
     );
@@ -227,16 +234,42 @@ async function publishReportSnsMessages(eventMessage, isTerminalStatus, isFailed
  * @returns {Object} - Execution step message or execution input message
  */
 async function getFailedExecutionMessage(inputMessage) {
-  const executionArn = getMessageExecutionArn(inputMessage);
+  try {
+    const executionArn = getMessageExecutionArn(inputMessage);
+    const { events } = await StepFunctions.getExecutionHistory({ executionArn });
 
-  const activityStep = new ActivityStep();
-  const lambdaStep = new LambdaStep();
-  const failedStepMessage = await lambdaStep.getFirstFailedStepMessage(executionArn)
-    || await activityStep.getFirstFailedStepMessage(executionArn);
+    const stepFailedEvents = events.filter(
+      (event) =>
+        ['ActivityFailed', 'LambdaFunctionFailed'].includes(event.type)
+    );
+    const lastStepFailedEvent = stepFailedEvents[stepFailedEvents.length - 1];
+    const failedStepExitedEvent = getStepExitedEvent(events, lastStepFailedEvent);
 
-  // If input from the failed step cannot be retrieved, then fall back to execution
-  // input.
-  return failedStepMessage || inputMessage;
+    if (!failedStepExitedEvent) {
+      log.info(
+        `Could not retrieve output from last failed step in execution ${executionArn}, falling back to execution input`,
+        'Error:', new Error(`Could not find TaskStateExited event after step ID ${lastStepFailedEvent.id} for execution ${executionArn}`)
+      );
+
+      const exception = lastStepFailedEvent.lambdaFunctionFailedEventDetails
+        || lastStepFailedEvent.activityFailedEventDetails;
+
+      // If input from the failed step cannot be retrieved, then fall back to execution
+      // input.
+      return {
+        ...inputMessage,
+        exception
+      };
+    }
+
+    const taskExitedEventOutput = getTaskExitedEventOutput(failedStepExitedEvent);
+    return await SfnStep.parseStepMessage(
+      JSON.parse(taskExitedEventOutput),
+      failedStepExitedEvent.resource
+    );
+  } catch (err) {
+    return inputMessage;
+  }
 }
 
 /**

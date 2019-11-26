@@ -34,6 +34,7 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 |files|`<JSON Object>` of files defined [here](#files-object)|Yes|Describe the individual files that will exist for each granule in this collection (size, browse, meta, etc.)|
 |dataType|`"MOD09GQ"`|No|Can be specified, but this value will default to the collection_name if not|
 |duplicateHandling|`"replace"`|No|<code>("replace"&#124;"version"&#124;"skip")</code> determines granule duplicate handling scheme|
+|ignoreFilesConfigForDiscovery|`false` (default)|No|By default, during discovery only files that match one of the regular expressions in this collection's `files` attribute (see above) are ingested.  Setting this to `true` will ignore the `files` attribute during discovery, meaning that all files for a granule (i.e., all files with filenames matching `granuleIdExtraction`) will be ingested even when they don't match a regular expression in the `files` attribute at _discovery_ time.  (NOTE: this attribute does not appear in the example file, but is listed here for completeness.)
 |process|`"modis"`|No|Example options for this are found in the ChooseProcess step definition in [the IngestAndPublish workflow definition](https://github.com/nasa/cumulus/tree/master/example/cumulus-tf/ingest_and_publish_granule_workflow.tf)|
 |provider_path|`"cumulus-test-data/pdrs"`|No|This collection is expecting to find data in a `cumulus-test-data/pdrs` directory, whether that be in S3 or at an http endpoint|
 |meta|`<JSON Object>` of MetaData for the collection|No|MetaData for the collection. This metadata will be available to workflows for this collection via the [Cumulus Message Adapter](workflows/input_output.md).
@@ -63,7 +64,7 @@ Providers generate and distribute input data that Cumulus obtains and sends to w
 |host|`"cumulus-data-shared"`|Yes|Host where the files will exist or s3 bucket if "s3" provider|
 |port|`${port_number}`|No|Port to connect with the provider on|
 |username|`${username}`|No|Username for access to the provider. Plain-text or encrypted. Encrypted is highly encouraged|
-|password|`${password}`|No|Password for accces to the provider. Plain-text or encrypted. Encrypted is highly encouraged|
+|password|`${password}`|No|Password for acccess to the provider. Plain-text or encrypted. Encrypted is highly encouraged|
 
 **Note:** The above optional attributes are not shown in the example provided, but they have been included in this document for completeness.
 

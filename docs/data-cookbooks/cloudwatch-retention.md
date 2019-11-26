@@ -13,7 +13,7 @@ Our lambdas dump logs to [AWS CloudWatch](https://aws.amazon.com/cloudwatch/). B
 In addition to getting your aws-cli [set-up](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html), there are two values you'll need to acquire.
 
 1. `log-group-name`: the name of the log group who's retention policy (retention time) you'd like to change. We'll use `/aws/lambda/KinesisInboundLogger` in our examples.
-2. `retention-in-days`: the number of days you'd like to retain the logs in the specified log group for. There is a list of possbile values available in the [aws logs documentation](https://docs.aws.amazon.com/cli/latest/reference/logs/put-retention-policy.html).
+2. `retention-in-days`: the number of days you'd like to retain the logs in the specified log group for. There is a list of possible values available in the [aws logs documentation](https://docs.aws.amazon.com/cli/latest/reference/logs/put-retention-policy.html).
 
 For example, if we wanted to set log retention to 30 days on our `KinesisInboundLogger` lambda, we would write:
 
