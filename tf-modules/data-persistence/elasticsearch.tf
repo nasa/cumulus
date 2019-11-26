@@ -4,7 +4,7 @@ locals {
   deploy_outside_vpc = var.include_elasticsearch && local.inside_vpc == false
   include_es_policy  = length(var.es_trusted_role_arns) > 0 ? true : false
   default_domain_name = "${var.prefix}-${var.elasticsearch_config.domain_name}${local.inside_vpc ? "-vpc" : ""}"
-  es_domain_name     = var.custom_domain_name == null ?  local.default_domain_name : var.custom_domain_name
+  es_domain_name     = var.custom_domain_name == null ? local.default_domain_name : var.custom_domain_name
 }
 
 resource "aws_elasticsearch_domain" "es" {
