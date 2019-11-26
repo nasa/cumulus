@@ -5,18 +5,6 @@ const { pullStepFunctionEvent } = require('./aws');
 const log = require('./log');
 const StepFunctions = require('./StepFunctions');
 
-const taskExitedEventType = 'TaskStateExited';
-const taskExitedEventDetailsKey = 'stateExitedEventDetails';
-
-const getStepExitedEvent = (events, lastStepEvent) =>
-  events.find(
-    (event) =>
-      event.type === taskExitedEventType
-        && event.previousEventId === lastStepEvent.id
-  );
-
-const getTaskExitedEventOutput = (event) => event[taskExitedEventDetailsKey].output;
-
 /**
  * `SfnStep` provides methods for getting the output of a step within an AWS
  * Step Function for a specific execution.
@@ -320,8 +308,6 @@ class ActivityStep extends SfnStep {
 }
 
 module.exports = {
-  getStepExitedEvent,
-  getTaskExitedEventOutput,
   SfnStep,
   ActivityStep,
   LambdaStep
