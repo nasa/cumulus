@@ -49,7 +49,7 @@ async function bulkGranule(payload) {
     if (!process.env.METRICS_ES_HOST
       || !process.env.METRICS_ES_USER
       || !process.env.METRICS_ES_PASS) {
-      throw new Error('No ELK metrics stack configured.');
+      throw new Error('ELK Metrics stack not configured');
     }
 
     const query = payload.query;
@@ -101,6 +101,10 @@ async function handler(event) {
   if (!process.env.system_bucket) process.env.system_bucket = event.system_bucket;
   if (!process.env.stackName) process.env.stackName = event.stackName;
   if (!process.env.invoke) process.env.invoke = event.invoke;
+  if (!process.env.METRICS_ES_HOST) process.env.METRICS_ES_HOST = event.esHost;
+  if (!process.env.METRICS_ES_USER) process.env.METRICS_ES_USER = event.esUser;
+  if (!process.env.METRICS_ES_PASS) process.env.METRICS_ES_PASS = event.esPassword;
+
   if (event.type === 'BULK_GRANULE') {
     return bulkGranule(event.payload);
   }
