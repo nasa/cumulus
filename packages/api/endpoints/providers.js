@@ -18,6 +18,7 @@ async function addToES(record) {
   const esClient = await Search.es(process.env.ES_HOST);
   const esIndex = process.env.esIndex;
   await indexer.indexProvider(esClient, record, esIndex);
+  return record;
 }
 
 /**

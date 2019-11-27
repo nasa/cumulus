@@ -16,7 +16,8 @@ const indexer = require('../es/indexer');
 async function addToES(record) {
   const esClient = await Search.es(process.env.ES_HOST);
   const esIndex = process.env.esIndex;
-  return indexer.indexRule(esClient, record, esIndex);
+  await indexer.indexRule(esClient, record, esIndex);
+  return record;
 }
 
 /**

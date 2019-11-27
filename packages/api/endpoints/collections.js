@@ -19,7 +19,8 @@ const { AssociatedRulesError, BadRequestError } = require('../lib/errors');
 async function addToES(record) {
   const esClient = await Search.es(process.env.ES_HOST);
   const esIndex = process.env.esIndex;
-  return indexer.indexCollection(esClient, record, esIndex);
+  await indexer.indexCollection(esClient, record, esIndex);
+  return record;
 }
 
 /**
