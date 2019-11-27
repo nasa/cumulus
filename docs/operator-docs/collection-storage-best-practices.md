@@ -24,13 +24,13 @@ Alternatively you can query CloudWatch using the CLI.
 
 This command will return the average number of bytes in the bucket `test-bucket` for 7/31/2019:
 
-```
+```bash
 aws cloudwatch get-metric-statistics --namespace AWS/S3 --start-time 2019-07-31T00:00:00 --end-time 2019-08-01T00:00:00 --period 86400 --statistics Average --region us-east-1 --metric-name BucketSizeBytes --dimensions Name=BucketName,Value=test-bucket Name=StorageType,Value=StandardStorage
 ```
 
 The result looks like:
 
-```
+```json
 {
     "Datapoints": [
         {
@@ -184,6 +184,3 @@ The `url_path` can be overidden directly on the file configuration. The example 
   ]
 }
 ```
-
-
-
