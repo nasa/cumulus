@@ -350,7 +350,7 @@ If you've lost track of the needed redirect URIs, they can be located on the [AP
 
 ### Troubleshooting
 
-Please see our [troubleshooting documentation for any issues with your deployment](../troubleshooting/troubleshoot_deployment.md).
+Please see our [troubleshooting documentation for any issues with your deployment](../troubleshooting/troubleshooting-deployment).
 
 --------------
 
