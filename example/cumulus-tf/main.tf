@@ -116,7 +116,8 @@ module "cumulus" {
     "mboyd",
     "menno.vandiermen",
     "mhuffnagle2",
-    "pquinn1"
+    "pquinn1",
+    "brian.tennity"
   ]
 
   distribution_url = var.distribution_url
