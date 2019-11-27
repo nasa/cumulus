@@ -33,7 +33,7 @@ Removed module.data_persistence.aws_elasticsearch_domain.es_vpc[0]
 Successfully removed 1 resource instance(s).
 ```
 
-After removing that entry from the Terraform state, `terraform apply` should work correctly.
+After removing the entry from the Terraform state, `terraform apply` should work correctly.
 
 ## Deploying Cumulus
 
