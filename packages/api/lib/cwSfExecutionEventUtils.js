@@ -8,9 +8,9 @@ const { pullStepFunctionEvent } = require('@cumulus/common/aws');
 const { getMessageExecutionArn } = require('@cumulus/common/message');
 const {
   getStepExitedEvent,
-  getTaskExitedEventOutput,
-  SfnStep
-} = require('@cumulus/common/sfnStep');
+  getTaskExitedEventOutput
+} = require('@cumulus/common/execution-history');
+const { SfnStep } = require('@cumulus/common/sfnStep');
 
 const executionStatusToWorkflowStatus = (executionStatus) => {
   const statusMap = {
@@ -94,5 +94,6 @@ const getCumulusMessageFromExecutionEvent = async (executionEvent) => {
 };
 
 module.exports = {
+  getFailedExecutionMessage,
   getCumulusMessageFromExecutionEvent
 };

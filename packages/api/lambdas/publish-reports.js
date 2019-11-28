@@ -143,6 +143,19 @@ async function handlePdrMessage(eventMessage) {
 }
 
 /**
+ * Publish messages to SNS report topics.
+ *
+ * @param {Object} eventMessage - Workflow execution message
+ * @returns {Promise}
+ */
+function publishReportSnsMessages(eventMessage) {
+  return Promise.all([
+    handleGranuleMessages(eventMessage),
+    handlePdrMessage(eventMessage)
+  ]);
+}
+
+/**
  * Lambda handler for publish-reports Lambda.
  *
  * @param {Object} event - Cloudwatch event
@@ -150,13 +163,10 @@ async function handlePdrMessage(eventMessage) {
  */
 async function handler(event) {
   const eventMessage = await getCumulusMessageFromExecutionEvent(event);
-
-  return Promise.all([
-    handleGranuleMessages(eventMessage),
-    handlePdrMessage(eventMessage)
-  ]);
+  return publishReportSnsMessages(eventMessage);
 }
 
 module.exports = {
-  handler
+  handler,
+  publishReportSnsMessages
 };

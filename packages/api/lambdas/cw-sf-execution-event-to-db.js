@@ -13,7 +13,6 @@ const handler = async (event) => {
   try {
     await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
   } catch (err) {
-    // TODO Figure out what we actually want to happen when this fails
     const executionArn = getMessageExecutionArn(cumulusMessage);
     log.fatal(`Failed to create database record for execution ${executionArn}: ${err.message}`);
   }

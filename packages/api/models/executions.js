@@ -8,7 +8,7 @@ const {
   getMessageExecutionArn,
   getMessageExecutionName
 } = require('@cumulus/common/message');
-const { isNil } = require('@cumulus/common/util');
+const { isNil, removeNilProperties } = require('@cumulus/common/util');
 const aws = require('@cumulus/ingest/aws');
 
 const executionSchema = require('./schemas').execution;
@@ -39,7 +39,7 @@ class Execution extends Manager {
 
     const status = get(cumulusMessage, 'meta.status');
 
-    return {
+    const record = {
       name: getMessageExecutionName(cumulusMessage),
       arn,
       asyncOperationId: get(cumulusMessage, 'cumulus_meta.asyncOperationId'),
@@ -53,10 +53,12 @@ class Execution extends Manager {
       createdAt,
       timestamp: now,
       updatedAt: now,
-      originalPayload: status === 'running' ? cumulusMessage.Payload : undefined,
-      finalPayload: status === 'running' ? undefined : cumulusMessage.Payload,
+      originalPayload: status === 'running' ? cumulusMessage.payload : undefined,
+      finalPayload: status === 'running' ? undefined : cumulusMessage.payload,
       duration: (now - createdAt) / 1000
     };
+
+    return removeNilProperties(record);
   }
 
   /**
@@ -118,6 +120,7 @@ class Execution extends Manager {
 
     Object.entries(item).forEach(([key, value]) => {
       if (key === 'arn') return;
+      if (value === undefined) return;
 
       ExpressionAttributeNames[`#${key}`] = key;
       ExpressionAttributeValues[`:${key}`] = value;
@@ -133,6 +136,8 @@ class Execution extends Manager {
       }
     });
 
+    if (setUpdateExpressions.length === 0) return null;
+
     return {
       TableName: this.tableName,
       Key: { arn: item.arn },
@@ -145,6 +150,7 @@ class Execution extends Manager {
   async storeExecutionFromCumulusMessage(cumulusMessage) {
     const executionItem = Execution.generateRecord(cumulusMessage);
     const updateParams = this.buildDocClientUpdateParams(executionItem);
+
     await this.dynamodbDocClient.update(updateParams).promise();
   }
 }
