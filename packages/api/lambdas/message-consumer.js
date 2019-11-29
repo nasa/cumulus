@@ -242,5 +242,6 @@ function handler(event, context, cb) {
 
 module.exports = {
   getRules,
+  processRecord,
   handler
 };
