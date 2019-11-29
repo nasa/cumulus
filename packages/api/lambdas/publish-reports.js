@@ -43,56 +43,26 @@ function publishPdrSnsMessage(
   return publishSnsMessage(pdrSnsTopicArn, pdrRecord);
 }
 
-/**
- * Build a granule record and publish it to SNS for granule reporting.
- *
- * @param {Object} granule - A granule object
- * @param {Object} eventMessage - A workflow execution message
- * @param {string} executionUrl - A Step Function execution URL
- * @param {Object} [executionDescription={}] - Defaults to empty object
- * @param {Date} executionDescription.startDate - Start date of the workflow execution
- * @param {Date} executionDescription.stopDate - Stop date of the workflow execution
- * @returns {Promise}
- */
-async function buildAndPublishGranule(
-  granule,
-  eventMessage,
-  executionUrl,
-  executionDescription = {}
-) {
+const publishGranuleRecord = async (granuleRecord) => {
   try {
-    const granuleRecord = await Granule.generateGranuleRecord(
-      granule,
-      eventMessage,
-      executionUrl,
-      executionDescription
-    );
-    return await publishGranuleSnsMessage(granuleRecord);
+    await publishGranuleSnsMessage(granuleRecord);
   } catch (err) {
     log.fatal(
-      `Failed to create database record for granule ${granule.granuleId}: ${err.message}`,
+      `Failed to create database record for granule ${granuleRecord.granuleId}: ${err.message}`,
       'Cause: ', err,
-      'Granule data: ', granule,
-      'Execution message: ', eventMessage
+      'Granule record: ', granuleRecord
     );
-    return Promise.resolve();
   }
-}
+};
 
-/**
- * Publish individual granule messages to SNS topic.
- *
- * @param {Object} eventMessage - Workflow execution message
- * @returns {Promise}
- */
-async function handleGranuleMessages(eventMessage) {
-  const granules = getMessageGranules(eventMessage);
+const getGranuleRecordsFromCumulusMessage = async (cumulusMessage) => {
+  const granules = getMessageGranules(cumulusMessage);
   if (!granules) {
-    log.info(`No granules to process in the payload: ${JSON.stringify(eventMessage.payload)}`);
-    return Promise.resolve();
+    log.info(`No granules to process in the payload: ${JSON.stringify(cumulusMessage.payload)}`);
+    return [];
   }
 
-  const executionArn = getMessageExecutionArn(eventMessage);
+  const executionArn = getMessageExecutionArn(cumulusMessage);
   const executionUrl = getExecutionUrl(executionArn);
 
   let executionDescription;
@@ -103,22 +73,36 @@ async function handleGranuleMessages(eventMessage) {
   }
 
   try {
-    return Promise.all(
+    return await Promise.all(
       granules
-        .map((granule) => buildAndPublishGranule(
-          granule,
-          eventMessage,
-          executionUrl,
-          executionDescription
-        ))
+        .map((granule) =>
+          Granule.generateGranuleRecord(
+            granule,
+            cumulusMessage,
+            executionUrl,
+            executionDescription
+          ))
     );
   } catch (err) {
+    // FIXME This probably isn't the behavior we want. If one granule is
+    // malformed, all of the granules will fail.
     log.error(
       'Error handling granule records: ', err,
-      'Execution message: ', eventMessage
+      'Execution message: ', cumulusMessage
     );
-    return Promise.resolve();
+    return [];
   }
+};
+
+/**
+ * Publish individual granule messages to SNS topic.
+ *
+ * @param {Object} eventMessage - Workflow execution message
+ * @returns {Promise}
+ */
+async function handleGranuleMessages(eventMessage) {
+  const granuleRecords = await getGranuleRecordsFromCumulusMessage(eventMessage);
+  await Promise.all(granuleRecords.map(publishGranuleRecord));
 }
 
 /**
@@ -130,15 +114,13 @@ async function handleGranuleMessages(eventMessage) {
 async function handlePdrMessage(eventMessage) {
   try {
     const pdrRecord = Pdr.generatePdrRecord(eventMessage);
-    if (!pdrRecord) return null;
-    return await publishPdrSnsMessage(pdrRecord);
+    if (pdrRecord) await publishPdrSnsMessage(pdrRecord);
   } catch (err) {
     log.fatal(
       `Failed to create database record for PDR ${eventMessage.payload.pdr.name}: ${err.message}`,
       'Error handling PDR from message', err,
       'Execution message', eventMessage
     );
-    return null;
   }
 }
 
@@ -167,6 +149,10 @@ async function handler(event) {
 }
 
 module.exports = {
+  getGranuleRecordsFromCumulusMessage,
   handler,
+  handleGranuleMessages,
+  handlePdrMessage,
+  publishGranuleRecord,
   publishReportSnsMessages
 };
