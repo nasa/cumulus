@@ -66,19 +66,10 @@ async function processShard(stream, shard) {
  * Fetch all records within a kinesis stream and process them through
  * message-consumer's processRecord function.
  *
- * @param {Object} event - Input object
+ * @param {string} stream - kinesis stream name
  * @returns {number} number of records successfully processed from stream
  */
-async function handler(event) {
-  if (!process.env.endTimestamp) process.env.endTimestamp = event.endTimestamp;
-  if (!process.env.startTimestamp) process.env.startTimestamp = event.startTimestamp;
-  if (!process.env.CollectionsTable) process.env.CollectionsTable = event.collectionsTable;
-  if (!process.env.RulesTable) process.env.RulesTable = event.rulesTable;
-  if (!process.env.ProvidersTable) process.env.ProvidersTable = event.providersTable;
-  if (!process.env.system_bucket) process.env.system_bucket = event.system_bucket;
-  if (!process.env.FallbackTopicArn) process.env.FallbackTopicArn = event.fallbackTopicArn;
-
-  const stream = event.kinesisStream;
+async function handleStream(stream) {
   const shardHandlers = [];
   let shardListToken;
 
@@ -101,8 +92,36 @@ async function handler(event) {
   } while (shardListToken !== undefined);
   const shardResults = await Promise.all(shardHandlers);
   const recordsProcessed = shardResults.reduce(tallyReducer, 0);
-  log.info(`Processed ${recordsProcessed} records`);
-  return recordsProcessed;
+  const outMsg = `Processed ${recordsProcessed} kinesis records`;
+  log.info(outMsg);
+  return outMsg;
+}
+
+/**
+ * Manual Consumer handler. Determines operation from input.
+ * Supports manually consuming:
+ * - Kinesis records.
+ *
+ * @param {Object} event - input params object
+ * @returns {string} String describing outcome
+ */
+async function handler(event) {
+  if (!process.env.endTimestamp) process.env.endTimestamp = event.endTimestamp;
+  if (!process.env.startTimestamp) process.env.startTimestamp = event.startTimestamp;
+  if (!process.env.CollectionsTable) process.env.CollectionsTable = event.collectionsTable;
+  if (!process.env.RulesTable) process.env.RulesTable = event.rulesTable;
+  if (!process.env.ProvidersTable) process.env.ProvidersTable = event.providersTable;
+  if (!process.env.system_bucket) process.env.system_bucket = event.system_bucket;
+  if (!process.env.FallbackTopicArn) process.env.FallbackTopicArn = event.fallbackTopicArn;
+
+  if (event.kinesisStream !== undefined) {
+    log.info(`Processing records from stream ${event.kinesisStream}`);
+    return handleStream(event.kinesisStream);
+  }
+
+  const errMsg = 'Manual consumer could not determine expected operation.';
+  log.error(errMsg);
+  return errMsg;
 }
 
 module.exports = {
