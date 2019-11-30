@@ -79,13 +79,10 @@ async function handler(event) {
     const shardCalls = data.Shards.map((shard) => processShard(stream, shard).catch(log.error));
     shardHandlers.push(...shardCalls);
   } while (shardListToken !== undefined);
-  return Promise.all(shardHandlers).then(
-    (shardResults) => {
-      const finalTally = shardResults.reduce(tallyReducer, 0);
-      log.info(`Processed ${finalTally} records`);
-      return finalTally;
-    }
-  );
+  const shardResults = await Promise.all(shardHandlers);
+  const recordsProcessed = shardResults.reduce(tallyReducer, 0);
+  log.info(`Processed ${recordsProcessed} records`);
+  return recordsProcessed;
 }
 
 module.exports = {
