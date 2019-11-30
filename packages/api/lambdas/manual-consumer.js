@@ -8,6 +8,12 @@ const { processRecord } = require('./message-consumer');
 const Kinesis = aws.kinesis();
 const tallyReducer = (acc, cur) => acc + cur;
 
+/**
+ * Process a batch of kinesisRecords.
+ *
+ * @param {Array<Object>} records - list of kinesis records
+ * @returns {Array<number>} list of numbers, 1 for processed, 0 for error/skipped
+ */
 async function processRecords(records) {
   return Promise.all(records.map(async (record) => {
     if (new Date(record.ApproximateArrivalTimestamp) > new Date(process.env.endTimestamp)) {
@@ -23,6 +29,14 @@ async function processRecords(records) {
   }));
 }
 
+/**
+ * Process all records within a shard between start and end timestamps.
+ * Starts at beginning of shard (TRIM_HORIZON) if no start timestamp is given.
+ *
+ * @param {string} stream - Stream name
+ * @param {Object} shard - Shard object returned by listShards
+ * @returns {number} number of records successfully processed from shard
+ */
 async function processShard(stream, shard) {
   const params = {
     StreamName: stream,
@@ -31,7 +45,6 @@ async function processShard(stream, shard) {
   };
   if (process.env.startTimestamp !== 'undefined') params.Timestamp = process.env.startTimestamp;
   let shardIter = (await Kinesis.getShardIterator(params).promise().catch(log.error)).ShardIterator;
-  log.info(`shardIter: ${JSON.stringify(shardIter)}`);
   let records = [];
   const recordsRequests = [];
   while (shardIter !== null) {
@@ -49,6 +62,13 @@ async function processShard(stream, shard) {
   return (await Promise.all(recordsRequests)).reduce(tallyReducer, 0);
 }
 
+/**
+ * Fetch all records within a kinesis stream and process them through
+ * message-consumer's processRecord function.
+ *
+ * @param {Object} event - Input object
+ * @returns {number} number of records successfully processed from stream
+ */
 async function handler(event) {
   if (!process.env.endTimestamp) process.env.endTimestamp = event.endTimestamp;
   if (!process.env.startTimestamp) process.env.startTimestamp = event.startTimestamp;
