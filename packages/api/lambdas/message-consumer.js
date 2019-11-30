@@ -199,9 +199,7 @@ function processRecord(record, fromSNS) {
     } catch (err) {
       log.error('Caught error parsing JSON:');
       log.error(err);
-      if (fromSNS) {
-        return handleProcessRecordError(err, record, isKinesisRetry, fromSNS);
-      }
+      return handleProcessRecordError(err, record, isKinesisRetry, fromSNS);
     }
   }
 

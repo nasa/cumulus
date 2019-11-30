@@ -39,7 +39,6 @@ async function processShard(stream, shard) {
     const response = await Kinesis.getRecords({
       ShardIterator: shardIter
     }).promise().catch(log.error);
-    log.info(response);
     records = response.Records;
     shardIter = response.NextShardIterator;
     if (response.MillisBehindLatest === 0) shardIter = null;
@@ -59,31 +58,34 @@ async function handler(event) {
   if (!process.env.system_bucket) process.env.system_bucket = event.system_bucket;
   if (!process.env.FallbackTopicArn) process.env.FallbackTopicArn = event.fallbackTopicArn;
 
+  const stream = event.kinesisStream;
   const shardHandlers = [];
   let shardListToken;
-  const shardProcessor = processShard.bind(null, event.kinesisStream);
 
   do {
     const params = {};
     if (shardListToken !== undefined) params.NextToken = shardListToken;
-    else params.StreamName = event.kinesisStream;
+    else params.StreamName = stream;
     // disable eslint as listShards must be performed serially and cannot
     // be done concurrently due to reliance on previous call's NextToken
     /* eslint-disable-next-line no-await-in-loop */
     const data = (await Kinesis.listShards(params).promise().catch(log.error));
     if (!data) {
-      log.error(`No shards found for stream ${event.kinesisStream}`);
+      log.error(`No shards found for stream ${stream}`);
       break;
     }
     log.info(`Processing records from ${data.Shards.length} shards..`);
     shardListToken = data.NextToken;
-    const shardCalls = data.Shards.map(shardProcessor);
+    const shardCalls = data.Shards.map((shard) => processShard(stream, shard).catch(log.error));
     shardHandlers.push(...shardCalls);
   } while (shardListToken !== undefined);
-
-  await Promise.all(shardHandlers);
-  const recordsProcessed = shardHandlers.reduce(tallyReducer, 0);
-  log.info(`Processed ${recordsProcessed} records`);
+  return Promise.all(shardHandlers).then(
+    (shardResults) => {
+      const finalTally = shardResults.reduce(tallyReducer, 0);
+      log.info(`Processed ${finalTally} records`);
+      return finalTally;
+    }
+  );
 }
 
 module.exports = {
