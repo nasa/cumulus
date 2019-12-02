@@ -67,16 +67,21 @@ async function processShard(stream, shard) {
  * message-consumer's processRecord function.
  *
  * @param {string} stream - kinesis stream name
+ * @param {Date|string|number} [streamCreationTimestamp] - Optional. Stream
+ * creation time stamp used to differentiate streams that have a name used by a previous stream.
  * @returns {number} number of records successfully processed from stream
  */
-async function handleStream(stream) {
+async function handleStream(stream, streamCreationTimestamp) {
   const shardHandlers = [];
   let shardListToken;
 
   do {
     const params = {};
     if (shardListToken !== undefined) params.NextToken = shardListToken;
-    else params.StreamName = stream;
+    else {
+      params.StreamName = stream;
+      if (streamCreationTimestamp) params.StreamCreationTimestamp = streamCreationTimestamp;
+    }
     // disable eslint as listShards must be performed serially and cannot
     // be done concurrently due to reliance on previous call's NextToken
     /* eslint-disable-next-line no-await-in-loop */
@@ -116,11 +121,11 @@ async function handler(event) {
 
   if (event.kinesisStream !== undefined) {
     log.info(`Processing records from stream ${event.kinesisStream}`);
-    return handleStream(event.kinesisStream);
+    return handleStream(event.kinesisStream, event.kinesisStreamCreationTimestamp);
   }
 
   const errMsg = 'Manual consumer could not determine expected operation.';
-  log.error(errMsg);
+  log.fatal(errMsg);
   return errMsg;
 }
 
