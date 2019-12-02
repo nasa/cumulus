@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { sqs } = require('@cumulus/common/aws');
 const { Search } = require('../es/search');
 const { createJwtToken } = require('./token');
 
@@ -289,8 +290,50 @@ async function createFakeJwtAuthToken({ accessTokenModel, userModel }) {
   return createJwtToken({ accessToken, expirationTime, username: userRecord.userName });
 }
 
+/**
+ * create a dead-letter queue and a source queue
+ *
+ * @param {string} queueNamePrefix - prefix of the queue name
+ * @returns {Object} - {deadLetterQueueUrl: <url>, queueUrl: <url>} queues created
+ */
+async function createSqsQueues(queueNamePrefix) {
+  // dead letter queue
+  const deadLetterQueueName = `${queueNamePrefix}DeadLetterQueue`;
+  const deadLetterQueueParms = {
+    QueueName: deadLetterQueueName,
+    Attributes: {
+      VisibilityTimeout: '300'
+    }
+  };
+  const { QueueUrl: deadLetterQueueUrl } = await sqs()
+    .createQueue(deadLetterQueueParms).promise();
+  const qAttrParams = {
+    QueueUrl: deadLetterQueueUrl,
+    AttributeNames: ['QueueArn']
+  };
+  const { Attributes: { QueueArn: deadLetterQueueArn } } = await sqs()
+    .getQueueAttributes(qAttrParams).promise();
+
+  // source queue
+  const queueName = `${queueNamePrefix}Queue`;
+  const queueParms = {
+    QueueName: queueName,
+    Attributes: {
+      RedrivePolicy: JSON.stringify({
+        deadLetterTargetArn: deadLetterQueueArn,
+        maxReceiveCount: 3
+      }),
+      VisibilityTimeout: '300'
+    }
+  };
+
+  const { QueueUrl: queueUrl } = await sqs().createQueue(queueParms).promise();
+  return { deadLetterQueueUrl, queueUrl };
+}
+
 module.exports = {
   createFakeJwtAuthToken,
+  createSqsQueues,
   deleteAliases,
   fakeAccessTokenFactory,
   fakeGranuleFactory,

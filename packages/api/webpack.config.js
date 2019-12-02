@@ -31,7 +31,8 @@ module.exports = {
     sfScheduler: './lambdas/sf-scheduler.js',
     sfSemaphoreDown: './lambdas/sf-semaphore-down.js',
     sfStarter: './lambdas/sf-starter.js',
-    sqsMessageConsumer: './lambdas/sqs-message-consumer.js'
+    sqsMessageConsumer: './lambdas/sqs-message-consumer.js',
+    sqsMessageRemover: './lambdas/sqs-message-remover.js'
   },
   devtool: 'inline-source-map',
   resolve: {
