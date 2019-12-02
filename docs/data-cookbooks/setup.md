@@ -108,4 +108,4 @@ The `rule - value` entry depends on the type of run:
 * If this is a scheduled rule this field must hold a valid [cron-type expression or rate expression](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html).
 * If this is a kinesis rule, this must be a configured `${Kinesis_stream_ARN}`. [Example](data-cookbooks/cnm-workflow.md#rule-configuration)
 * If this is an sns rule, this must be an existing `${SNS_Topic_Arn}`. [Example](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/snsRuleDef.json)
-* If this is an sqs rule, this must be an existing `${SQS_QueueUrl}` that your account has permissions to access. [Example](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/data/rules/sqs/MOD09GQ_006_sqsRule.json)
+* If this is an sqs rule, this must be an existing `${SQS_QueueUrl}` that your account has permissions to access, and also you must configure a dead-letter queue for this SQS queue. [Example](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/data/rules/sqs/MOD09GQ_006_sqsRule.json)

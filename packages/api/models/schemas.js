@@ -378,6 +378,17 @@ module.exports.rule = {
     meta: {
       title: 'Optional MetaData for the Rule',
       type: 'object',
+      properties: {
+        retries: {
+          description: 'number of retries on errors, for sqs-type rule only',
+          type: 'number',
+          default: 3
+        },
+        visibilityTimeout: {
+          description: 'visibilityTimeout in seconds for the inflight messages, for sqs-type rule only',
+          type: 'number'
+        }
+      },
       additionalProperties: true
     },
     queueName: {

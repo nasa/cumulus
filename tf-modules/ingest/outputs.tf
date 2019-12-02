@@ -86,6 +86,10 @@ output "sf_semaphore_down_lambda_function_arn" {
   value = aws_lambda_function.sf_semaphore_down.arn
 }
 
+output "sqs_message_remover_lambda_function_arn" {
+  value = aws_lambda_function.sqs_message_remover.arn
+}
+
 output "sqs2sfThrottle_lambda_function_arn" {
   value = aws_lambda_function.sqs2sfThrottle.arn
 }
