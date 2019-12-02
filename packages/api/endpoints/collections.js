@@ -5,22 +5,10 @@ const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const { constructCollectionId } = require('@cumulus/common');
 const { Search } = require('../es/search');
-const indexer = require('../es/indexer');
+const { addToLocalES, indexCollection } = require('../es/indexer');
 const models = require('../models');
 const Collection = require('../es/collections');
 const { AssociatedRulesError, BadRequestError } = require('../lib/errors');
-
-/**
- * Index a collection to Elasticsearch.
- *
- * @param {Object} record - Collection record object
- * @returns {Promise} - Promise of indexing operation
- */
-async function addToES(record) {
-  const esClient = await Search.es(process.env.ES_HOST);
-  const esIndex = process.env.esIndex;
-  return indexer.indexCollection(esClient, record, esIndex);
-}
 
 /**
  * List all collections.
@@ -85,7 +73,7 @@ async function post(req, res) {
         await c.create(data);
 
         if (inTestMode()) {
-          await addToES(data);
+          await addToLocalES(data, indexCollection);
         }
 
         return res.send({ message: 'Record saved', record: data });
@@ -122,8 +110,12 @@ async function put({ params: { name, version }, body }, res) {
   return (!(await collectionModel.exists(name, version)))
     ? res.boom.notFound(`Collection '${name}' version '${version}' not found`)
     : collectionModel.create(body)
-      .then((result) => (inTestMode() ? addToES(result).then(result) : result))
-      .then((result) => res.send(result));
+      .then((record) => (
+        inTestMode()
+          ? addToLocalES(record, indexCollection).then(() => record)
+          : record
+      ))
+      .then((record) => res.send(record));
 }
 
 /**
