@@ -6,19 +6,7 @@ const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const models = require('../models');
 const { AssociatedRulesError } = require('../lib/errors');
 const { Search } = require('../es/search');
-const indexer = require('../es/indexer');
-
-/**
- * Index a provider to Elasticsearch.
- *
- * @param {Object} record - Provider record object
- * @returns {Promise} - Promise of indexing operation
- */
-async function addToES(record) {
-  const esClient = await Search.es(process.env.ES_HOST);
-  const esIndex = process.env.esIndex;
-  await indexer.indexProvider(esClient, record, esIndex);
-}
+const { addToLocalES, indexProvider } = require('../es/indexer');
 
 /**
  * List all providers
@@ -78,7 +66,7 @@ async function post(req, res) {
       const record = await providerModel.create(data);
 
       if (inTestMode()) {
-        await addToES(record);
+        await addToLocalES(record, indexProvider);
       }
       return res.send({ record, message: 'Record saved' });
     }
@@ -105,7 +93,11 @@ async function put({ params: { id }, body }, res) {
   return (!(await providerModel.exists(id)))
     ? res.boom.notFound(`Provider with ID '${id}' not found`)
     : providerModel.create(body)
-      .then((record) => (inTestMode() ? addToES(record).then(record) : record))
+      .then((record) => (
+        inTestMode()
+          ? addToLocalES(record, indexProvider).then(() => record)
+          : record
+      ))
       .then((record) => res.send(record));
 }
 
