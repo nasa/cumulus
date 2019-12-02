@@ -93,7 +93,11 @@ async function put({ params: { id }, body }, res) {
   return (!(await providerModel.exists(id)))
     ? res.boom.notFound(`Provider with ID '${id}' not found`)
     : providerModel.create(body)
-      .then((record) => (inTestMode() ? addToLocalES(record, indexProvider).then(record) : record))
+      .then((record) => (
+        inTestMode()
+          ? addToLocalES(record, indexProvider).then(() => record)
+          : record
+      ))
       .then((record) => res.send(record));
 }
 

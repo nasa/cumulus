@@ -110,12 +110,12 @@ async function put({ params: { name, version }, body }, res) {
   return (!(await collectionModel.exists(name, version)))
     ? res.boom.notFound(`Collection '${name}' version '${version}' not found`)
     : collectionModel.create(body)
-      .then((result) => (
+      .then((record) => (
         inTestMode()
-          ? addToLocalES(result, indexCollection).then(result)
-          : result
+          ? addToLocalES(record, indexCollection).then(() => record)
+          : record
       ))
-      .then((result) => res.send(result));
+      .then((record) => res.send(record));
 }
 
 /**
