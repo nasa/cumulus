@@ -32,12 +32,12 @@ const log = require('@cumulus/common/log');
 function isSqsQueueUpdateNeeded(event) {
   const eventStatus = getSfEventStatus(event);
   const eventMessage = getSfEventMessageObject(event, 'input', '{}');
-  const eventSourceType = get(eventMessage, 'meta.eventSource.type');
 
   if (!isSfExecutionEvent(event)
     || !isTerminalSfStatus(eventStatus)
-    || eventSourceType !== 'sqs'
+    || get(eventMessage, 'meta.eventSource.type') !== 'sqs'
     || get(eventMessage, 'meta.eventSource.deleteCompletedMessage', false) !== true
+    || get(eventMessage, 'meta.eventSource.workflow_name') === null
     || get(eventMessage, 'meta.eventSource.workflow_name') !== get(eventMessage, 'meta.workflow_name')) {
     return false;
   }
@@ -51,7 +51,7 @@ function isSqsQueueUpdateNeeded(event) {
  * @param {Object} event - Cloudwatch event
  */
 async function updateSqsQueue(event) {
-  if (!isSqsQueueUpdateNeeded(event)) return 'Not an event for updating SQS queue';
+  if (!isSqsQueueUpdateNeeded(event)) return 'Not a valid event for updating SQS queue';
 
   const eventStatus = getSfEventStatus(event);
   const eventMessage = getSfEventMessageObject(event, 'input', '{}');
