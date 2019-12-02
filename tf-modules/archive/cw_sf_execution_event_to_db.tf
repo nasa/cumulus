@@ -20,9 +20,34 @@ data "aws_iam_policy_document" "cw_sf_execution_event_to_db_lambda" {
     actions = ["s3:GetObject"]
     resources = ["arn:aws:s3:::${var.system_bucket}/*"]
   }
+
+  statement {
+    actions = [
+      "ec2:CreateNetworkInterface",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:DeleteNetworkInterface"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:DescribeLogStreams",
+      "logs:PutLogEvents"
+    ]
+    resources = ["*"]
+  }
+
+  # Required for DLQ
+  # statement {
+  #   actions = ["sqs:SendMessage"]
+  #   resources = [aws_sqs_queue.report_executions_dead_letter_queue.arn]
+  # }
 }
 
-resource "aws_iam_role_policy" "publish_reports_lambda_role_policy" {
+resource "aws_iam_role_policy" "cw_sf_execution_event_to_db_lambda_role_policy" {
   # name   = "${var.prefix}_publish_reports_lambda_role_policy"
   role   = aws_iam_role.cw_sf_execution_event_to_db_lambda.id
   policy = data.aws_iam_policy_document.cw_sf_execution_event_to_db_lambda.json

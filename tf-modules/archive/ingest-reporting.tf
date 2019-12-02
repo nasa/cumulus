@@ -12,6 +12,40 @@ data "aws_iam_policy_document" "publish_executions_policy_document" {
     actions   = ["sns:Publish"]
     resources = [aws_sns_topic.report_executions_topic.arn]
   }
+
+  statement {
+    actions = [
+      "ec2:CreateNetworkInterface",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:DeleteNetworkInterface"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:DescribeLogStreams",
+      "logs:PutLogEvents"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    actions = ["sqs:SendMessage"]
+    resources = [aws_sqs_queue.publish_executions_dead_letter_queue.arn]
+  }
+
+  statement {
+    actions = [
+      "dynamodb:GetRecords",
+      "dynamodb:GetShardIterator",
+      "dynamodb:DescribeStream",
+      "dynamodb:ListStreams"
+    ]
+    resources = ["${var.dynamo_tables.executions.arn}/stream/*"]
+  }
 }
 
 resource "aws_iam_role_policy" "publish_executions_lambda_role_policy" {
@@ -79,7 +113,7 @@ resource "aws_lambda_permission" "publish_executions_permission" {
   source_arn    = "${aws_sns_topic.report_executions_topic.arn}"
 }
 
-resource "aws_lambda_event_source_mapping" "executions_table_db_indexer" {
+resource "aws_lambda_event_source_mapping" "publish_executions" {
   event_source_arn  = data.aws_dynamodb_table.executions.stream_arn
   function_name     = aws_lambda_function.publish_executions.arn
   starting_position = "TRIM_HORIZON"
