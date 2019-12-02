@@ -7,7 +7,6 @@ const pick = require('lodash.pick');
 
 const aws = require('@cumulus/common/aws');
 const { getMessageExecutionArn } = require('@cumulus/common/message');
-const { ActivityStep, LambdaStep } = require('@cumulus/common/sfnStep');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const { randomId, randomNumber, randomString } = require('@cumulus/common/test-utils');
 
@@ -18,6 +17,10 @@ const Granule = require('../../models/granules');
 const Pdr = require('../../models/pdrs');
 
 const publishReports = rewire('../../lambdas/publish-reports');
+
+const ingestGranuleFailHistory = require('../data/ingest_granule_fail_history.json');
+const ingestPublishGranuleFailHistory = require('../data/ingest_publish_granule_fail_history.json');
+const singleTaskFailHistory = require('../data/single_task_fail_history.json');
 
 let snsStub;
 let executionPublishSpy;
@@ -255,11 +258,11 @@ test.serial('lambda publishes failed execution record to SNS topic', async (t) =
     message
   );
 
-  // Stub the failed step message, otherwise the ARN from the
-  // failed execution input won't match the ARN in the message created
-  // for this test.
-  const getFailedStepStub = sinon.stub(LambdaStep.prototype, 'getFirstFailedStepMessage')
-    .callsFake(() => message);
+  // Stub StepFunctions.getExecutionHistory() to throw an error to simplify this test
+  const getExecutionHistoryStub = sinon.stub(StepFunctions, 'getExecutionHistory')
+    .callsFake(() => {
+      throw new Error('error');
+    });
 
   try {
     await executionModel.create({
@@ -278,7 +281,7 @@ test.serial('lambda publishes failed execution record to SNS topic', async (t) =
     t.is(executionPublishRecord.status, 'failed');
   } finally {
     // revert the mocking
-    getFailedStepStub.restore();
+    getExecutionHistoryStub.restore();
     executionPublishMock();
   }
 });
@@ -647,7 +650,7 @@ test.serial('publish failure to PDRs topic does not affect publishing to other t
   t.is(snsPublishSpy.callCount, 2);
 });
 
-test.serial('handler publishes notification from input to first failed Lambda step in failed execution history', async (t) => {
+test.serial('handler publishes notification from output of last failed Lambda step in failed execution history', async (t) => {
   const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
 
   const message = createCumulusMessage({ numberOfGranules: 1 });
@@ -682,11 +685,27 @@ test.serial('handler publishes notification from input to first failed Lambda st
     })
   );
 
-  const getFailedLambdaStepStub = sinon.stub(LambdaStep.prototype, 'getFirstFailedStepMessage')
-    .callsFake(() => failedStepInputMessage);
-  const getFailedActivityStepSpy = sinon.spy();
-  const getFailedActivityStepStub = sinon.stub(ActivityStep.prototype, 'getFirstFailedStepMessage')
-    .callsFake(getFailedActivityStepSpy);
+  const getExecutionHistoryStub = sinon.stub(StepFunctions, 'getExecutionHistory')
+    .resolves({
+      events: [
+        {
+          type: 'LambdaFunctionFailed',
+          id: 1,
+          lambdaFunctionFailedEventDetails: {
+            error: 'Error',
+            cause: 'Cause'
+          }
+        },
+        {
+          type: 'TaskStateExited',
+          id: 2,
+          previousEventId: 1,
+          stateExitedEventDetails: {
+            output: JSON.stringify(failedStepInputMessage)
+          }
+        }
+      ]
+    });
 
   try {
     await publishReports.handler(cwEventMessage);
@@ -694,16 +713,14 @@ test.serial('handler publishes notification from input to first failed Lambda st
     t.is(granulePublishSpy.callCount, 2);
     t.is(granulePublishSpy.args[0][0].granuleId, granuleId);
     t.is(granulePublishSpy.args[1][0].granuleId, granuleId);
-    t.false(getFailedActivityStepSpy.called);
   } finally {
     // revert the mocking
     granulePublishMock();
-    getFailedActivityStepStub.restore();
-    getFailedLambdaStepStub.restore();
+    getExecutionHistoryStub.restore();
   }
 });
 
-test.serial('handler publishes notification from input to first failed Activity step in failed execution history', async (t) => {
+test.serial('handler publishes notification from output of first failed Activity step in failed execution history', async (t) => {
   const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
 
   const message = createCumulusMessage({ numberOfGranules: 1 });
@@ -737,10 +754,27 @@ test.serial('handler publishes notification from input to first failed Activity 
     })
   );
 
-  const getLambdaStepStub = sinon.stub(LambdaStep.prototype, 'getFirstFailedStepMessage')
-    .callsFake(() => undefined);
-  const getActivityStepStub = sinon.stub(ActivityStep.prototype, 'getFirstFailedStepMessage')
-    .callsFake(() => failedStepInputMessage);
+  const getExecutionHistoryStub = sinon.stub(StepFunctions, 'getExecutionHistory')
+    .resolves({
+      events: [
+        {
+          type: 'ActivityFailed',
+          id: 1,
+          activityFailedEventDetails: {
+            error: 'Error',
+            cause: 'Cause'
+          }
+        },
+        {
+          type: 'TaskStateExited',
+          id: 2,
+          previousEventId: 1,
+          stateExitedEventDetails: {
+            output: JSON.stringify(failedStepInputMessage)
+          }
+        }
+      ]
+    });
 
   try {
     await publishReports.handler(cwEventMessage);
@@ -751,49 +785,138 @@ test.serial('handler publishes notification from input to first failed Activity 
   } finally {
     // revert the mocking
     granulePublishMock();
-    getActivityStepStub.restore();
-    getLambdaStepStub.restore();
+    getExecutionHistoryStub.restore();
+  }
+});
+
+test.serial('handler publishes execution record with exception for failed execution history with no step retry', async (t) => {
+  const executionPublishMock = publishReports.__set__('publishExecutionSnsMessage', executionPublishSpy);
+
+  const stateMachineArn = 'arn:aws:states:us-east-1:12345678:stateMachine:prefixTestIngestGranuleStateMachine-I7e85YUgyKKe';
+  const executionName = '348f36d0-1462-4c3a-a391-151cab953e55';
+
+  await executionModel.create(
+    fakeExecutionFactoryV2({
+      execution: executionName,
+      arn: aws.getExecutionArn(
+        stateMachineArn,
+        executionName
+      )
+    })
+  );
+
+  const cwEventMessage = createCloudwatchEventMessage('FAILED', {
+    cumulus_meta: {
+      state_machine: stateMachineArn,
+      execution_name: executionName
+    }
+  });
+
+  const { events } = ingestGranuleFailHistory;
+  const getExecutionHistoryStub = sinon.stub(StepFunctions, 'getExecutionHistory')
+    .resolves({
+      events
+    });
+
+  try {
+    await publishReports.handler(cwEventMessage);
+
+    t.is(executionPublishSpy.callCount, 1);
+    t.deepEqual(executionPublishSpy.args[0][0].error, {
+      Error: 'FileNotFound',
+      Cause: '{\"errorMessage\":\"Source file not found s3://cumulus-test-sandbox-internal/non-existent-path/non-existent-file\",\"errorType\":\"FileNotFound\",\"stackTrace\":[\"S3Granule.sync (/var/task/index.js:132551:13)\",\"<anonymous>\",\"process._tickDomainCallback (internal/process/next_tick.js:228:7)\"]}'
+    });
+  } finally {
+    // revert the mocking
+    executionPublishMock();
+    getExecutionHistoryStub.restore();
+  }
+});
+
+test.serial('handler publishes execution record with exception for failed execution history with step retry', async (t) => {
+  const executionPublishMock = publishReports.__set__('publishExecutionSnsMessage', executionPublishSpy);
+
+  const stateMachineArn = 'arn:aws:states:us-east-1:12345678:stateMachine:prefixTestIngestAndPublishGranuleStateMachine-0XRIQUlu8AMx';
+  const executionName = 'c6e73f70-4505-4694-ace5-57b687bee216';
+
+  await executionModel.create(
+    fakeExecutionFactoryV2({
+      execution: executionName,
+      arn: aws.getExecutionArn(
+        stateMachineArn,
+        executionName
+      )
+    })
+  );
+
+  const cwEventMessage = createCloudwatchEventMessage('FAILED', {
+    cumulus_meta: {
+      state_machine: stateMachineArn,
+      execution_name: executionName
+    }
+  });
+
+  const { events } = ingestPublishGranuleFailHistory;
+  const getExecutionHistoryStub = sinon.stub(StepFunctions, 'getExecutionHistory')
+    .resolves({
+      events
+    });
+
+  try {
+    await publishReports.handler(cwEventMessage);
+
+    t.is(executionPublishSpy.callCount, 1);
+    t.deepEqual(executionPublishSpy.args[0][0].error, {
+      Error: 'CumulusMessageAdapterExecutionError',
+      Cause: "{\"errorMessage\":\"Unexpected error:<class 'jsonschema.exceptions.ValidationError'>. input schema: u'granules' is a required property\\n\\nFailed validating u'required' in schema:\\n    {u'description': u'Describes the input expected by the sync-granule task',\\n     u'properties': {u'granules': {u'items': {u'properties': {u'dataType': {u'type': u'string'},\\n                                                              u'files': {u'items': {u'properties': {u'bucket': {u'type': u'string'},\\n                                                                                                    u'filename': {u'type': u'string'},\\n                                                                                                    u'name': {u'type': u'string'},\\n                                                                                                    u'path': {u'type': u'string'},\\n                                                                                                    u'type': {u'type': u'string'}},\\n                                                                                    u'required': [u'name',\\n                                                                                                  u'path'],\\n                                                                                    u'type': u'object'},\\n                                                                         u'type': u'array'},\\n                                                              u'granuleId': {u'type': u'string'},\\n                                                              u'version': {u'type': u'string'}},\\n                                              u'required': [u'granuleId',\\n                                                            u'files'],\\n                                              u'type': u'object'},\\n                                   u'type': u'array'}},\\n     u'required': [u'granules'],\\n     u'title': u'SyncGranuleInput',\\n     u'type': u'object'}\\n\\nOn instance:\\n    {}\",\"errorType\":\"CumulusMessageAdapterExecutionError\",\"stackTrace\":[\"\",\"Failed validating u'required' in schema:\",\"    {u'description': u'Describes the input expected by the sync-granule task',\",\"     u'properties': {u'granules': {u'items': {u'properties': {u'dataType': {u'type': u'string'},\",\"                                                              u'files': {u'items': {u'properties': {u'bucket': {u'type': u'string'},\",\"                                                                                                    u'filename': {u'type': u'string'},\",\"                                                                                                    u'name': {u'type': u'string'},\",\"                                                                                                    u'path': {u'type': u'string'},\",\"                                                                                                    u'type': {u'type': u'string'}},\",\"                                                                                    u'required': [u'name',\",\"                                                                                                  u'path'],\",\"                                                                                    u'type': u'object'},\",\"                                                                         u'type': u'array'},\",\"                                                              u'granuleId': {u'type': u'string'},\",\"                                                              u'version': {u'type': u'string'}},\",\"                                              u'required': [u'granuleId',\",\"                                                            u'files'],\",\"                                              u'type': u'object'},\",\"                                   u'type': u'array'}},\",\"     u'required': [u'granules'],\",\"     u'title': u'SyncGranuleInput',\",\"     u'type': u'object'}\",\"\",\"On instance:\",\"    {}\",\"ChildProcess.cumulusMessageAdapter.on (/var/task/index.js:133161:19)\",\"emitTwo (events.js:126:13)\",\"ChildProcess.emit (events.js:214:7)\",\"maybeClose (internal/child_process.js:925:16)\",\"Process.ChildProcess._handle.onexit (internal/child_process.js:209:5)\"]}"
+    });
+  } finally {
+    // revert the mocking
+    executionPublishMock();
+    getExecutionHistoryStub.restore();
   }
 });
 
 test.serial('handler publishes input to failed execution if failed step input cannot be retrieved', async (t) => {
-  const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
+  const executionPublishMock = publishReports.__set__('publishExecutionSnsMessage', executionPublishSpy);
 
-  const granuleId = randomId('granule');
-  const message = createCumulusMessage({
-    numberOfGranules: 2,
-    granuleParams: {
-      granuleId
-    }
-  });
+  const stateMachineArn = 'arn:aws:states:us-east-1:12345678:stateMachine:prefixTestIngestAndPublishGranuleStateMachine-0XRIQUlu8AMx';
+  const executionName = 'abcdef-12345-abdcde-1234-abc';
 
   await executionModel.create(
     fakeExecutionFactoryV2({
-      execution: message.cumulus_meta.execution_name,
+      execution: executionName,
       arn: aws.getExecutionArn(
-        message.cumulus_meta.state_machine,
-        message.cumulus_meta.execution_name
+        stateMachineArn,
+        executionName
       )
     })
   );
 
-  const cwEventMessage = createCloudwatchEventMessage('FAILED', message);
+  const cwEventMessage = createCloudwatchEventMessage('FAILED', {
+    cumulus_meta: {
+      state_machine: stateMachineArn,
+      execution_name: executionName
+    }
+  });
 
-  const getLambdaFailedStepStub = sinon.stub(LambdaStep.prototype, 'getFirstFailedStepMessage')
-    .callsFake(() => undefined);
-  const getActivityFailedStepStub = sinon.stub(ActivityStep.prototype, 'getFirstFailedStepMessage')
-    .callsFake(() => undefined);
+  const { events } = singleTaskFailHistory;
+  const getExecutionHistoryStub = sinon.stub(StepFunctions, 'getExecutionHistory')
+    .resolves({
+      events
+    });
 
   try {
     await publishReports.handler(cwEventMessage);
 
-    t.is(granulePublishSpy.callCount, 2);
-    t.is(granulePublishSpy.args[0][0].granuleId, granuleId);
-    t.is(granulePublishSpy.args[1][0].granuleId, granuleId);
+    t.is(executionPublishSpy.callCount, 1);
+    t.deepEqual(executionPublishSpy.args[0][0].error, {
+      error: 'Error',
+      cause: '{\"errorMessage\":\"Step configured to force fail\",\"errorType\":\"Error\",\"stackTrace\":[\"throwErrorIfConfigured (/var/task/webpack:/index.js:47:11)\",\"helloWorld (/var/task/webpack:/index.js:58:9)\",\"promisedNestedEvent.then (/var/task/webpack:/node_modules/@cumulus/message-adapter-js/index.js:263:1)\",\"<anonymous>\",\"process._tickDomainCallback (internal/process/next_tick.js:228:7)\"]}'
+    });
   } finally {
     // revert the mocking
-    granulePublishMock();
-    getActivityFailedStepStub.restore();
-    getLambdaFailedStepStub.restore();
+    executionPublishMock();
+    getExecutionHistoryStub.restore();
   }
 });
