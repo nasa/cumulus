@@ -8,7 +8,8 @@ class Consumer {
     queueUrl,
     messageLimit = 1,
     timeLimit = 90,
-    visibilityTimeout
+    visibilityTimeout,
+    deleteProcessedMessage = true
   }) {
     this.queueUrl = queueUrl;
     this.messageLimit = messageLimit;
@@ -16,12 +17,13 @@ class Consumer {
     this.timeLimit = timeLimit * 1000;
     this.now = Date.now();
     this.timeLapsed = false;
+    this.deleteProcessedMessage = deleteProcessedMessage;
   }
 
   async processMessage(message, fn) {
     try {
       await fn(message);
-      await deleteSQSMessage(this.queueUrl, message.ReceiptHandle);
+      if (this.deleteProcessedMessage) await deleteSQSMessage(this.queueUrl, message.ReceiptHandle);
       return 1;
     } catch (e) {
       log.error(e);
