@@ -43,6 +43,11 @@ const getFailedExecutionMessage = async (inputMessage) => {
       (event) =>
         ['ActivityFailed', 'LambdaFunctionFailed'].includes(event.type)
     );
+    if (stepFailedEvents.length === 0) {
+      log.info(`No failed step events found in execution ${executionArn}`);
+      return inputMessage;
+    }
+
     const lastStepFailedEvent = stepFailedEvents[stepFailedEvents.length - 1];
     const failedStepExitedEvent = getStepExitedEvent(events, lastStepFailedEvent);
 

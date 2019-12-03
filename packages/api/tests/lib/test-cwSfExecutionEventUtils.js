@@ -59,7 +59,29 @@ test('getFailedExecutionMessage() returns the input message if there is an error
   t.deepEqual(actualResult, inputMessage);
 });
 
-test.todo('getFailedExecutionMessage() does ?something? when no ActivityFailed or LambdaFunctionFailed events are found in the execution history');
+test('getFailedExecutionMessage() returns the input message when no ActivityFailed or LambdaFunctionFailed events are found in the execution history', async (t) => {
+  const inputMessage = {
+    cumulus_meta: {
+      state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
+      execution_name: 'my-execution-name'
+    }
+  };
+
+  const actualResult = await cwSfExecutionEventUtils.__with__({
+    StepFunctions: {
+      getExecutionHistory: ({ executionArn }) => {
+        if (executionArn !== 'arn:aws:states:us-east-1:111122223333:execution:HelloWorld-StateMachine:my-execution-name') {
+          throw new Error(`Expected executionArn === 'arn:aws:states:us-east-1:111122223333:execution:HelloWorld-StateMachine:my-execution-name' but got ${executionArn}`);
+        }
+        return {
+          events: []
+        };
+      }
+    }
+  })(() => getFailedExecutionMessage(inputMessage));
+
+  t.deepEqual(actualResult, inputMessage);
+});
 
 test('getFailedExecutionMessage() returns the input message with the details from the last failed step event in the exception field if the failed step exited event cannot be found', async (t) => {
   const inputMessage = {
