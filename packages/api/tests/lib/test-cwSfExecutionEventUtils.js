@@ -50,6 +50,8 @@ test('getFailedExecutionMessage() returns the Cumulus message from the output of
 });
 
 test('getFailedExecutionMessage() returns the input message if there is an error fetching the output of the last failed step', async (t) => {
+  // This invalid message will cause getFailedExecutionMessage to fail because
+  // it does not contain cumulus_meta.state_machine or cumulus_meta.execution_name
   const inputMessage = { a: 1 };
 
   const actualResult = await getFailedExecutionMessage(inputMessage);
