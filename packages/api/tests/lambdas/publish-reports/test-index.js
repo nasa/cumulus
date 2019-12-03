@@ -223,7 +223,6 @@ test.serial('handlePdrMessage() publishes a PDR record to SNS', async (t) => {
 test.serial('handlePdrMessage() does not publish a PDR record to SNS if the Cumulus message does not contain a PDR', async (t) => {
   const { cumulusMessage, QueueUrl } = t.context;
 
-  delete cumulusMessage.payload.granules;
   delete cumulusMessage.payload.pdr;
 
   await publishReports.handlePdrMessage(cumulusMessage);
@@ -234,7 +233,6 @@ test.serial('handlePdrMessage() does not publish a PDR record to SNS if the Cumu
 test.serial('handlePdrMessage() does not throw an exception if generating the PDR record fails', async (t) => {
   const { cumulusMessage } = t.context;
 
-  delete cumulusMessage.payload.granules;
   delete cumulusMessage.payload.pdr.name;
 
   await t.notThrowsAsync(
@@ -246,8 +244,6 @@ test.serial('handlePdrMessage() does not throw an exception if generating the PD
 
 test.serial('handlePdrMessage() does not throw an exception if publishing the PDR record to SNS fails', async (t) => {
   const { cumulusMessage } = t.context;
-
-  delete cumulusMessage.payload.granules;
 
   await t.notThrowsAsync(
     () => publishReports.__with__({
