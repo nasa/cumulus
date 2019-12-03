@@ -98,8 +98,8 @@ An example of an SQS rule configuration is [here](https://github.com/nasa/cumulu
 
 |Key  |Value  |Required|Description|
 |:---:|:-----:|:------:|-----------|
-|retries|`3`|No|Number of retries on errors, for sqs-type rule only. Default to 3.|
-|visibilityTimeout|`900`|No|VisibilityTimeout in seconds for the inflight messages, for sqs-type rule only. Default to the visibility timeout of the SQS queue when the rule is created.|
+|retries|`3`|No|Number of retries on errors, for sqs-type rule only. Defaults to 3.|
+|visibilityTimeout|`900`|No|VisibilityTimeout in seconds for the inflight messages, for sqs-type rule only. Defaults to the visibility timeout of the SQS queue when the rule is created.|
 
 ### rule-object
 
@@ -121,7 +121,7 @@ The `rule - value` entry depends on the type of run:
 ### sqs-type rule features
 
 * When an SQS rule is triggered, the SQS message remains on the queue.
-* The SQS message is not processed multiple times in parallel when visibility timeout is properly set.
+* The SQS message is not processed multiple times in parallel when visibility timeout is properly set.  You should set the visibility timeout to the maximum expected length of the workflow with padding. Longer is better to avoid parallel processing.
 * The SQS message visibility timeout can be overridden by the rule.
 * Upon successful workflow execution, the SQS message is removed from the queue.
 * Upon failed execution(s), the workflow is run 3 or configured number of times.
