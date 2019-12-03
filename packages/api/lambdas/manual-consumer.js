@@ -86,7 +86,7 @@ async function handleStream(stream, streamCreationTimestamp) {
     // be done concurrently due to reliance on previous call's NextToken
     /* eslint-disable-next-line no-await-in-loop */
     const data = (await Kinesis.listShards(params).promise().catch(log.error));
-    if (!data) {
+    if (!data || !data.Shards || data.Shards.length === 0) {
       log.error(`No shards found for stream ${stream}`);
       break;
     }
