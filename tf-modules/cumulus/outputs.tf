@@ -91,6 +91,7 @@ output "workflow_config" {
     publish_reports_lambda_function_arn   = module.archive.publish_reports_lambda_function_arn
     sf_semaphore_down_lambda_function_arn = module.ingest.sf_semaphore_down_lambda_function_arn
     state_machine_role_arn                = module.ingest.step_role_arn
+    sqs_message_remover_lambda_function_arn = module.ingest.sqs_message_remover_lambda_function_arn
   }
 }
 
