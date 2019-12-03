@@ -1,12 +1,39 @@
 ---
-id: troubleshoot_deployment
-title: Troubleshooting
+id: troubleshooting-deployment
+title: Troubleshooting Deployment
 hide_title: true
 ---
 
-# Troubleshooting
+# Troubleshooting Deployment
 
 This document provides 'notes' on frequently encountered deployment issues. The issues reported are organized by relevant subsection.
+
+## Deploying data persistence resources
+
+### `Invalid index: aws_elasticsearch_domain.es_vpc[0] is empty tuple`
+
+You may see this error if the Elasticsearch domain tracked by your Terraform state cannot be found or no longer exists. This could happen if you have accidentally deleted your Elasticsearch domain, producing an error on your next `terraform apply` that looks something like:
+
+```plain
+Error: Invalid index
+
+  on ../../tf-modules/data-persistence/elasticsearch.tf line 144, in resource "aws_elasticsearch_domain_policy" "es_vpc_domain_policy":
+ 144:       "Resource": "${aws_elasticsearch_domain.es_vpc[[0].arn}/*"
+    ----------------
+     aws_elasticsearch_domain.es_vpc[0] is empty tuple
+
+The given key does not identify an element in this collection value.
+```
+
+To resolve this issue, you need to manually remove the entry from your Terraform state referencing the missing resource:
+
+```bash
+$ terraform state rm module.data_persistence.aws_elasticsearch_domain.es_vpc
+Removed module.data_persistence.aws_elasticsearch_domain.es_vpc[0]
+Successfully removed 1 resource instance(s).
+```
+
+After removing the entry from the Terraform state, `terraform apply` should work correctly.
 
 ## Deploying Cumulus
 
