@@ -41,16 +41,23 @@ data "aws_iam_policy_document" "cw_sf_execution_event_to_db_lambda" {
   }
 
   # Required for DLQ
-  # statement {
-  #   actions = ["sqs:SendMessage"]
-  #   resources = [aws_sqs_queue.report_executions_dead_letter_queue.arn]
-  # }
+  statement {
+    actions = ["sqs:SendMessage"]
+    resources = [aws_sqs_queue.cw_sf_execution_event_to_db_dead_letter_queue.arn]
+  }
 }
 
 resource "aws_iam_role_policy" "cw_sf_execution_event_to_db_lambda_role_policy" {
-  # name   = "${var.prefix}_publish_reports_lambda_role_policy"
   role   = aws_iam_role.cw_sf_execution_event_to_db_lambda.id
   policy = data.aws_iam_policy_document.cw_sf_execution_event_to_db_lambda.json
+}
+
+resource "aws_sqs_queue" "cw_sf_execution_event_to_db_dead_letter_queue" {
+  name                       = "${var.prefix}-cwSfExecutionEventToDbDeadLetterQueue"
+  receive_wait_time_seconds  = 20
+  message_retention_seconds  = 1209600
+  visibility_timeout_seconds = 60
+  tags                       = local.default_tags
 }
 
 resource "aws_lambda_function" "cw_sf_execution_event_to_db" {
@@ -61,9 +68,9 @@ resource "aws_lambda_function" "cw_sf_execution_event_to_db" {
   handler          = "index.handler"
   runtime          = "nodejs8.10"
 
-  # dead_letter_config {
-  #   target_arn = aws_sqs_queue.publish_reports_dead_letter_queue.arn
-  # }
+  dead_letter_config {
+    target_arn = aws_sqs_queue.cw_sf_execution_event_to_db_dead_letter_queue.arn
+  }
 
   environment {
     variables = {
