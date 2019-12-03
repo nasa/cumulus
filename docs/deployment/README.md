@@ -270,6 +270,8 @@ prefix = "PREFIX"     # must match prefix of existing deployment
 custom_domain_name = "PREFIX-es5vpc"  # must match existing Elasticsearch domain name
 ```
 
+> **Note:** If you are importing data resources from a previous version of Cumulus deployed using Cloudformation, then make sure [`DeletionPolicy: Retain`](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-attribute-deletionpolicy.html) is set on the data resources in the Cloudformation stack before deleting that stack. Otherwise, the imported data resources will be destroyed when you delete that stack. As of Cumulus version 1.15.0, `DeletionPolicy: Retain` is set by default for the data resources in the Cloudformation stack.
+
 #### Deploy
 
 Run `terraform apply` to deploy your data persistence resources. Type `yes` when prompted to confirm that you want to create the resources. Assuming the operation is successful, you should see output like:
