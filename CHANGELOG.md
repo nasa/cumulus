@@ -38,7 +38,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Changed `@cumulus/common/SfnStep.parseStepMessage()` to a static class method
 
 - **CUMULUS-1641**
-  - Added `meta.retries` and `meta.visibilityTimeout` properties to sqs-type rule.
+  - Added `meta.retries` and `meta.visibilityTimeout` properties to sqs-type rule. To create sqs-type rule, you're required to configure a dead-letter queue on your queue.
   - Added `sqsMessageRemover` lambda which removes the message from SQS queue upon successful workflow execution.
   - Updated `sqsMessageConsumer` lambda to not delete message from SQS queue, and to retry the SQS message for configured number of times.
 
