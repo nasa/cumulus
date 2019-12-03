@@ -12,10 +12,10 @@ const tallyReducer = (acc, cur) => acc + cur;
  * Process a batch of kinesisRecords.
  *
  * @param {Array<Object>} records - list of kinesis records
- * @returns {Array<number>} list of numbers, 1 for processed, 0 for error/skipped
+ * @returns {number} number of records successfully processed
  */
 async function processRecords(records) {
-  return Promise.all(records.map(async (record) => {
+  const results = await Promise.all(records.map(async (record) => {
     if (new Date(record.ApproximateArrivalTimestamp) > new Date(process.env.endTimestamp)) {
       return 0;
     }
@@ -27,39 +27,77 @@ async function processRecords(records) {
       return 0;
     }
   }));
+  const tally = results.reduce(tallyReducer, 0);
+  if (records.length > tally) {
+    const failures = records.length - tally;
+    log.debug(`Failed to process ${failures} records from batch of ${records.length}`);
+  }
+  return tally;
 }
 
 /**
- * Process all records within a shard between start and end timestamps.
- * Starts at beginning of shard (TRIM_HORIZON) if no start timestamp is given.
+ * Recursively process all records within a shard between start and end timestamps.
+ * Starts at beginning of shard (TRIM_HORIZON) if no start timestamp is available.
  *
- * @param {string} stream - Stream name
- * @param {Object} shard - Shard object returned by listShards
+ * @param {Array<Promise>} recordPromiseList - list of promises from calls to processRecords
+ * @param {string} shardIterator - ShardIterator Id
+ * @returns {Array<Promise>} list of promises from calls to processRecords
+ */
+async function processShard(recordPromiseList, shardIterator) {
+  const response = await Kinesis.getRecords({
+    ShardIterator: shardIterator
+  }).promise().catch(log.error);
+  const nextShardIterator = response.NextShardIterator;
+  recordPromiseList.push(processRecords(response.Records));
+  if (response.MillisBehindLatest === 0) return recordPromiseList;
+  return processShard(recordPromiseList, nextShardIterator);
+}
+
+/**
+ * Handle shard by creating shardIterator and calling processShard.
+ *
+ * @param {string} stream - kinesis stream name
+ * @param {Object} shard - shard object returned by listShards
  * @returns {number} number of records successfully processed from shard
  */
-async function processShard(stream, shard) {
+async function handleShard(stream, shard) {
   const params = {
     StreamName: stream,
     ShardId: shard.ShardId,
     ShardIteratorType: (process.env.startTimestamp !== 'undefined' ? 'AT_TIMESTAMP' : 'TRIM_HORIZON')
   };
   if (process.env.startTimestamp !== 'undefined') params.Timestamp = process.env.startTimestamp;
-  let shardIter = (await Kinesis.getShardIterator(params).promise().catch(log.error)).ShardIterator;
-  let records = [];
-  const recordsRequests = [];
-  while (shardIter !== null) {
-    /* eslint-disable-next-line no-await-in-loop */
-    const response = await Kinesis.getRecords({
-      ShardIterator: shardIter
-    }).promise().catch(log.error);
-    records = response.Records;
-    shardIter = response.NextShardIterator;
-    if (response.MillisBehindLatest === 0) shardIter = null;
-    recordsRequests.push(processRecords(records).then(
-      (recArr) => recArr.reduce(tallyReducer, 0)
-    ));
+  const shardIterator = (
+    await Kinesis.getShardIterator(params).promise().catch(log.error)
+  ).ShardIterator;
+  const tallyList = await Promise.all(await processShard([], shardIterator));
+  const shardTally = tallyList.reduce(tallyReducer, 0);
+  return shardTally;
+}
+
+/**
+ * Recursively fetch all records within a kinesis stream and process them through
+ * message-consumer's processRecord function.
+ *
+ * @param {string} stream - Kinesis stream name
+ * @param {Array<Promise>} shardPromiseList - list of promises from calls to processShard
+ * @param {Object} params - listShards query params
+ * @returns {Array<Promise>} list of promises from calls to processShard
+ */
+async function processStream(stream, shardPromiseList, params) {
+  const data = (await Kinesis.listShards(params).promise().catch(log.error));
+  if (!data || !data.Shards || data.Shards.length === 0) {
+    log.error(`No shards founds for params ${JSON.stringify(params)}.`);
+    return shardPromiseList;
   }
-  return (await Promise.all(recordsRequests)).reduce(tallyReducer, 0);
+  log.info(`Processing records from ${data.Shards.length} shards..`);
+  const shardCalls = data.Shards.map((shard) => handleShard(stream, shard).catch(log.error));
+  shardPromiseList.push(...shardCalls);
+  if (!data.NextToken) {
+    return shardPromiseList;
+  }
+  const newParams = { NextToken: data.NextToken };
+  return processStream(stream, shardPromiseList, newParams);
 }
 
 /**
@@ -72,32 +110,14 @@ async function processShard(stream, shard) {
  * @returns {number} number of records successfully processed from stream
  */
 async function handleStream(stream, streamCreationTimestamp) {
-  const shardHandlers = [];
-  let shardListToken;
-
-  do {
-    const params = {};
-    if (shardListToken !== undefined) params.NextToken = shardListToken;
-    else {
-      params.StreamName = stream;
-      if (streamCreationTimestamp) params.StreamCreationTimestamp = streamCreationTimestamp;
-    }
-    // disable eslint as listShards must be performed serially and cannot
-    // be done concurrently due to reliance on previous call's NextToken
-    /* eslint-disable-next-line no-await-in-loop */
-    const data = (await Kinesis.listShards(params).promise().catch(log.error));
-    if (!data || !data.Shards || data.Shards.length === 0) {
-      log.error(`No shards found for stream ${stream}`);
-      break;
-    }
-    log.info(`Processing records from ${data.Shards.length} shards..`);
-    shardListToken = data.NextToken;
-    const shardCalls = data.Shards.map((shard) => processShard(stream, shard).catch(log.error));
-    shardHandlers.push(...shardCalls);
-  } while (shardListToken !== undefined);
-  const shardResults = await Promise.all(shardHandlers);
-  const recordsProcessed = shardResults.reduce(tallyReducer, 0);
-  const outMsg = `Processed ${recordsProcessed} kinesis records`;
+  const initialParams = {
+    StreamName: stream
+  };
+  if (streamCreationTimestamp) initialParams.StreamCreationTimestamp = streamCreationTimestamp;
+  const streamPromiseList = await processStream(stream, [], initialParams);
+  const streamResults = await Promise.all(streamPromiseList);
+  const recordsProcessed = streamResults.reduce(tallyReducer, 0);
+  const outMsg = `Processed ${recordsProcessed} kinesis records from stream ${stream}`;
   log.info(outMsg);
   return outMsg;
 }
