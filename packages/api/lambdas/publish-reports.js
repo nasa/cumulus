@@ -8,6 +8,7 @@ const {
   getMessageGranules
 } = require('@cumulus/common/message');
 const StepFunctions = require('@cumulus/common/StepFunctions');
+const { isNil } = require('@cumulus/common/util');
 
 const Granule = require('../models/granules');
 const Pdr = require('../models/pdrs');
@@ -72,26 +73,27 @@ const getGranuleRecordsFromCumulusMessage = async (cumulusMessage) => {
     log.error(`Could not describe execution ${executionArn}`, err);
   }
 
-  try {
-    return await Promise.all(
-      granules
-        .map((granule) =>
-          Granule.generateGranuleRecord(
-            granule,
-            cumulusMessage,
-            executionUrl,
-            executionDescription
-          ))
-    );
-  } catch (err) {
-    // FIXME This probably isn't the behavior we want. If one granule is
-    // malformed, all of the granules will fail.
-    log.error(
-      'Error handling granule records: ', err,
-      'Execution message: ', cumulusMessage
-    );
-    return [];
-  }
+  const promisedGranuleRecords = granules
+    .map(async (granule) => {
+      try {
+        return await Granule.generateGranuleRecord(
+          granule,
+          cumulusMessage,
+          executionUrl,
+          executionDescription
+        );
+      } catch (err) {
+        log.error(
+          'Error handling granule records: ', err,
+          'Execution message: ', cumulusMessage
+        );
+        return null;
+      }
+    });
+
+  const granuleRecords = await Promise.all(promisedGranuleRecords);
+
+  return granuleRecords.filter((r) => !isNil(r));
 };
 
 /**

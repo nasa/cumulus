@@ -129,12 +129,20 @@ test('getGranuleRecordsFromCumulusMessage() returns a granule record even if the
   t.is(granuleRecords[0].granuleId, 'granule-1');
 });
 
-test('getGranuleRecordsFromCumulusMessage() returns an empty array if there was a failure building the granule record', async (t) => {
+test('getGranuleRecordsFromCumulusMessage() returns the list of valid granules if one of the granules failed to be generated', async (t) => {
   const { cumulusMessage } = t.context;
 
+  // Add a valid granule
+  cumulusMessage.payload.granules.push({
+    ...cumulusMessage.payload.granules[0],
+    granuleId: 'granule-x'
+  });
+
+  // Delete the granuleId of the first granule, so that it will fail to be generated
   delete cumulusMessage.payload.granules[0].granuleId;
 
   const granuleRecords = await getGranuleRecordsFromCumulusMessage(cumulusMessage);
 
-  t.is(granuleRecords.length, 0);
+  t.is(granuleRecords.length, 1);
+  t.is(granuleRecords[0].granuleId, 'granule-x');
 });
