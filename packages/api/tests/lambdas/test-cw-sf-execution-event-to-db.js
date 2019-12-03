@@ -95,6 +95,7 @@ test('The cw-cf-execution-event-to-db Lambda function does not throw an exceptio
 
   const cumulusMessage = {
     cumulus_meta: {
+      // Because state_machine is missing, generating this execution record will fail
       execution_name: executionName,
       workflow_start_time: Date.now()
     },
