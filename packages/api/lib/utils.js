@@ -20,7 +20,7 @@ function parseException(exception) {
   if (isObject(exception)) return exception;
   return {
     Error: 'Unknown Error',
-    Cause: JSON.stringify(exception)
+    Cause: exception
   };
 }
 
