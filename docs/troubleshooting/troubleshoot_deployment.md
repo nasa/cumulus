@@ -8,6 +8,18 @@ hide_title: true
 
 This document provides 'notes' on frequently encountered deployment issues. The issues reported are organized by relevant subsection.
 
+## Terraform Init
+
+The `TF_LOG` environment variable can be set to help debug Terraform-specific issues. See [Terraform debugging](https://www.terraform.io/docs/internals/debugging.html).
+
+Example: `export TF_LOG=DEBUG`
+
+### `Failed to get existing workspaces: AccessDenied: Access Denied`
+
+This is an issue accessing the remote configuration in your S3 bucket. You can check your access to the bucket via the CLI using `aws s3 ls <bucket-name>`. If that works, Terraform may be looking at the incorrect bucket.
+
+When switching between accounts, you may need to use the [`-reconfigure`](https://www.terraform.io/docs/commands/init.html#backend-initialization) option and run `terraform init -reconfigure`.
+
 ## Deploying data persistence resources
 
 ### `Invalid index: aws_elasticsearch_domain.es_vpc[0] is empty tuple`
