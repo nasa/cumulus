@@ -48,6 +48,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
+- **CUMULUS-1668** - Fixed a race condition where executions may not have been
+  added to the database correctly
 - **CUMULUS-1654** - Fixed issue with `publishReports` Lambda not including workflow execution error information for failed workflows with a single step
 - Fixed `tf-modules/cumulus` module so that the `urs_url` variable is passed on to its invocation of the `tf-modules/archive` module
 
