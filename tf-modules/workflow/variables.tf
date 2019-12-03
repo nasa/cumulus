@@ -27,6 +27,7 @@ variable "workflow_config" {
     publish_reports_lambda_function_arn = string
     sf_semaphore_down_lambda_function_arn = string
     state_machine_role_arn = string
+    sqs_message_remover_lambda_function_arn = string
   })
 }
 

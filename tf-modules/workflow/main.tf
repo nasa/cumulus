@@ -59,6 +59,18 @@ resource "aws_lambda_permission" "cw_sf_execution_event_to_db" {
   source_arn    = aws_cloudwatch_event_rule.state_machine_execution_rule.arn
 }
 
+resource "aws_cloudwatch_event_target" "sqs_message_remover" {
+  rule = aws_cloudwatch_event_rule.state_machine_execution_rule.name
+  arn  = var.workflow_config.sqs_message_remover_lambda_function_arn
+}
+
+resource "aws_lambda_permission" "sqs_message_remover" {
+  action        = "lambda:InvokeFunction"
+  function_name = var.workflow_config.sqs_message_remover_lambda_function_arn
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.state_machine_execution_rule.arn
+}
+
 locals {
   workflow_info = jsonencode({
     name       = var.name
