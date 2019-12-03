@@ -3,7 +3,7 @@
 const fs = require('fs-extra');
 const { stringUtils: { globalReplace } } = require('@cumulus/common');
 const { sqs, receiveSQSMessages } = require('@cumulus/common/aws');
-const { createSqsQueues } = require('@cumulus/api/lib/testUtils');
+const { createSqsQueues, getSqsQueueMessageCounts } = require('@cumulus/api/lib/testUtils');
 const { Granule } = require('@cumulus/api/models');
 const { sleep } = require('@cumulus/common/util');
 const {
@@ -62,7 +62,7 @@ async function setupCollectionAndTestData() {
 }
 
 async function cleanUp() {
-  console.log(`\nDeleting ${ruleOverride.name}`);
+  console.log(`\nDeleting rule ${ruleOverride.name}`);
   const rules = await rulesList(config.stackName, config.bucket, ruleDirectory);
   await deleteRules(config.stackName, config.bucket, rules, ruleSuffix);
   await Promise.all([
@@ -129,14 +129,14 @@ describe('The SQS rule', () => {
 
   describe('When posting messages to the configured SQS queue', () => {
     let granuleId;
-    const inputPayload = { foo: 'bar' };
+    const invalidMessage = { foo: 'bar' };
 
     beforeAll(async () => {
       // post a valid message for ingesting a granule
       granuleId = await ingestGranule(queues.queueUrl);
 
       // post a non-processable message
-      await sqs().sendMessage({ QueueUrl: queues.queueUrl, MessageBody: JSON.stringify(inputPayload) }).promise();
+      await sqs().sendMessage({ QueueUrl: queues.queueUrl, MessageBody: JSON.stringify(invalidMessage) }).promise();
     });
 
     afterAll(async () => {
@@ -173,18 +173,14 @@ describe('The SQS rule', () => {
         expect(messages.length).toBe(1);
         // maxReceiveCount of RedrivePolicy is 3
         expect(parseInt(messages[0].Attributes.ApproximateReceiveCount, 10)).toBe(4);
-        expect(messages[0].Body).toEqual(inputPayload);
+        expect(messages[0].Body).toEqual(invalidMessage);
       });
     });
 
     it('messages are picked up and removed from source queue', async () => {
-      const qAttrParams = {
-        QueueUrl: queues.queueUrl,
-        AttributeNames: ['All']
-      };
-      const attributes = await sqs().getQueueAttributes(qAttrParams).promise();
-      expect(parseInt(attributes.Attributes.ApproximateNumberOfMessages, 10)).toBe(0);
-      expect(parseInt(attributes.Attributes.ApproximateNumberOfMessagesNotVisible, 10)).toBe(0);
+      const numberOfMessages = await getSqsQueueMessageCounts(queues.queueUrl);
+      expect(numberOfMessages.numberOfMessagesAvailable).toBe(0);
+      expect(numberOfMessages.numberOfMessagesNotVisible).toBe(0);
     });
   });
 });

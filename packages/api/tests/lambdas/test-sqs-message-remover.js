@@ -7,7 +7,7 @@ const get = require('lodash.get');
 const aws = require('@cumulus/common/aws');
 const { sleep } = require('@cumulus/common/util');
 const { randomString } = require('@cumulus/common/test-utils');
-const { createSqsQueues } = require('../../lib/testUtils');
+const { createSqsQueues, getSqsQueueMessageCounts } = require('../../lib/testUtils');
 
 const sqsMessageRemover = rewire('../../lambdas/sqs-message-remover');
 const updateSqsQueue = sqsMessageRemover.__get__('updateSqsQueue');
@@ -47,23 +47,6 @@ const createCloudwatchEventMessage = ({
   const detail = { status, input: message };
   return { source, detail };
 };
-
-async function getNumberOfMessages(queueUrl) {
-  const qAttrParams = {
-    QueueUrl: queueUrl,
-    AttributeNames: ['All']
-  };
-  const attributes = await aws.sqs().getQueueAttributes(qAttrParams).promise();
-  const {
-    ApproximateNumberOfMessages: numberOfMessagesAvailable,
-    ApproximateNumberOfMessagesNotVisible: numberOfMessagesNotVisible
-  } = attributes.Attributes;
-
-  return {
-    numberOfMessagesAvailable: parseInt(numberOfMessagesAvailable, 10),
-    numberOfMessagesNotVisible: parseInt(numberOfMessagesNotVisible, 10)
-  };
-}
 
 const assertInvalidSqsQueueUpdateEvent = (t, output) =>
   t.is(output, 'Not a valid event for updating SQS queue');
@@ -141,7 +124,7 @@ test('sqsMessageRemover lambda removes message from queue when workflow succeede
     })
   );
 
-  const numberOfMessages = await getNumberOfMessages(sqsQueues.queueUrl);
+  const numberOfMessages = await getSqsQueueMessageCounts(sqsQueues.queueUrl);
   t.is(numberOfMessages.numberOfMessagesAvailable, 0);
   t.is(numberOfMessages.numberOfMessagesNotVisible, 0);
 
@@ -166,12 +149,12 @@ test('sqsMessageRemover lambda updates message visibilityTimeout when workflow f
     })
   );
 
-  let numberOfMessages = await getNumberOfMessages(sqsQueues.queueUrl);
+  let numberOfMessages = await getSqsQueueMessageCounts(sqsQueues.queueUrl);
   t.is(numberOfMessages.numberOfMessagesAvailable, 0);
   t.is(numberOfMessages.numberOfMessagesNotVisible, 1);
 
   await sleep(5 * 1000);
-  numberOfMessages = await getNumberOfMessages(sqsQueues.queueUrl);
+  numberOfMessages = await getSqsQueueMessageCounts(sqsQueues.queueUrl);
   t.is(numberOfMessages.numberOfMessagesAvailable, 1);
   t.is(numberOfMessages.numberOfMessagesNotVisible, 0);
 

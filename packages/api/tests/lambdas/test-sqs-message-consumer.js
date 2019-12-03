@@ -9,7 +9,7 @@ const aws = require('@cumulus/common/aws');
 const { sleep } = require('@cumulus/common/util');
 const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../models');
-const { fakeRuleFactoryV2, createSqsQueues } = require('../../lib/testUtils');
+const { fakeRuleFactoryV2, createSqsQueues, getSqsQueueMessageCounts } = require('../../lib/testUtils');
 const rulesHelpers = require('../../lib/rulesHelpers');
 
 const sqsMessageConsumer = rewire('../../lambdas/sqs-message-consumer');
@@ -169,10 +169,10 @@ test.serial('processQueues processes messages from the ENABLED sqs rule', async 
   t.is(queueMessageFromEnabledRuleStub.notCalled, true);
 
   // messages are picked up from the correct queue
-  const numberOfMessages = await getNumberOfMessages(sqsQueues[0].queueUrl);
+  const numberOfMessages = await getSqsQueueMessageCounts(sqsQueues[0].queueUrl);
   t.is(numberOfMessages.numberOfMessagesAvailable, 0);
 
-  const numberOfMessagesQueue1 = await getNumberOfMessages(sqsQueues[1].queueUrl);
+  const numberOfMessagesQueue1 = await getSqsQueueMessageCounts(sqsQueues[1].queueUrl);
   t.is(numberOfMessagesQueue1.numberOfMessagesAvailable, 3);
 
   // processed messages stay in queue until workflow execution succeeds
@@ -211,11 +211,11 @@ test.serial('messages failed to be processed are retried', async (t) => {
   queueMessageStub.resetHistory();
 
   // messages are picked up from the source queue
-  const numberOfMessages = await getNumberOfMessages(sqsQueues[0].queueUrl);
+  const numberOfMessages = await getSqsQueueMessageCounts(sqsQueues[0].queueUrl);
   t.is(numberOfMessages.numberOfMessagesAvailable, 0);
 
   // messages are moved to dead-letter queue after retries
-  const numberOfMessagesDLQ = await getNumberOfMessages(sqsQueues[0].deadLetterQueueUrl);
+  const numberOfMessagesDLQ = await getSqsQueueMessageCounts(sqsQueues[0].deadLetterQueueUrl);
   t.is(numberOfMessagesDLQ.numberOfMessagesAvailable, 2);
 
   queueMessageStub.restore();

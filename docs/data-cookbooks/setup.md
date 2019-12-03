@@ -98,8 +98,8 @@ An example of an SQS rule configuration is [here](https://github.com/nasa/cumulu
 
 |Key  |Value  |Required|Description|
 |:---:|:-----:|:------:|-----------|
-|retries|`3`|No|Number of retries on errors, for sqs-type rule only|
-|visibilityTimeout|`120`|No|VisibilityTimeout in seconds for the inflight messages, for sqs-type rule only|
+|retries|`3`|No|Number of retries on errors, for sqs-type rule only. Default to 3.|
+|visibilityTimeout|`900`|No|VisibilityTimeout in seconds for the inflight messages, for sqs-type rule only. Default to the visibility timeout of the SQS queue when the rule is created.|
 
 ### rule-object
 
