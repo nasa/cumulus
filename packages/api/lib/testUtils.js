@@ -331,6 +331,30 @@ async function createSqsQueues(queueNamePrefix) {
   return { deadLetterQueueUrl, queueUrl };
 }
 
+/**
+ * get message counts of the given SQS queue
+ *
+ * @param {string} queueUrl - SQS queue URL
+ * @returns {Object} - message counts
+ * {numberOfMessagesAvailable: <number>, numberOfMessagesNotVisible: <number>}
+ */
+async function getSqsQueueMessageCounts(queueUrl) {
+  const qAttrParams = {
+    QueueUrl: queueUrl,
+    AttributeNames: ['All']
+  };
+  const attributes = await sqs().getQueueAttributes(qAttrParams).promise();
+  const {
+    ApproximateNumberOfMessages: numberOfMessagesAvailable,
+    ApproximateNumberOfMessagesNotVisible: numberOfMessagesNotVisible
+  } = attributes.Attributes;
+
+  return {
+    numberOfMessagesAvailable: parseInt(numberOfMessagesAvailable, 10),
+    numberOfMessagesNotVisible: parseInt(numberOfMessagesNotVisible, 10)
+  };
+}
+
 module.exports = {
   createFakeJwtAuthToken,
   createSqsQueues,
@@ -348,6 +372,7 @@ module.exports = {
   fakeFileFactory,
   fakeUserFactory,
   fakeProviderFactory,
+  getSqsQueueMessageCounts,
   getWorkflowList,
   isLocalApi,
   testEndpoint

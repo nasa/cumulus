@@ -380,12 +380,11 @@ module.exports.rule = {
       type: 'object',
       properties: {
         retries: {
-          description: 'Number of retries on errors, for sqs-type rule only',
-          type: 'number',
-          default: 3
+          description: 'Number of retries on errors, for sqs-type rule only. Default to 3.',
+          type: 'number'
         },
         visibilityTimeout: {
-          description: 'VisibilityTimeout in seconds for the inflight messages, for sqs-type rule only',
+          description: 'VisibilityTimeout in seconds for the inflight messages, for sqs-type rule only.  Default to the visibility timeout of the SQS queue when the rule is created.',
           type: 'number'
         }
       },

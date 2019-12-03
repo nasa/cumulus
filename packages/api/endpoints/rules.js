@@ -5,19 +5,7 @@ const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const models = require('../models');
 const { Search } = require('../es/search');
-const indexer = require('../es/indexer');
-
-/**
- * Index a rule to Elasticsearch.
- *
- * @param {Object} record - Collection record object
- * @returns {Promise} - Promise of indexing operation
- */
-async function addToES(record) {
-  const esClient = await Search.es(process.env.ES_HOST);
-  const esIndex = process.env.esIndex;
-  return indexer.indexRule(esClient, record, esIndex);
-}
+const { addToLocalES, indexRule } = require('../es/indexer');
 
 /**
  * List all rules.
@@ -75,12 +63,12 @@ async function post(req, res) {
     return res.boom.conflict(`A record already exists for ${name}`);
   } catch (e) {
     if (e instanceof RecordDoesNotExist) {
-      const r = await model.create(data);
+      const record = await model.create(data);
 
       if (inTestMode()) {
-        await addToES(r);
+        await addToLocalES(record, indexRule);
       }
-      return res.send({ message: 'Record saved', record: r });
+      return res.send({ message: 'Record saved', record });
     }
     throw e;
   }
@@ -119,7 +107,7 @@ async function put({ params: { name }, body }, res) {
     const fieldsToDelete = Object.keys(oldRule).filter((key) => !(key in body));
     const newRule = await model.update(oldRule, body, fieldsToDelete);
 
-    if (inTestMode()) await addToES(newRule);
+    if (inTestMode()) await addToLocalES(newRule, indexRule);
 
     return res.send(newRule);
   } catch (e) {

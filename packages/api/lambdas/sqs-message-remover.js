@@ -49,9 +49,10 @@ function isSqsQueueUpdateNeeded(event) {
  * Update SQS queue when workflow of the message is completed
  *
  * @param {Object} event - Cloudwatch event
+ * @returns {Promise} A promise indicating function completion
  */
 async function updateSqsQueue(event) {
-  if (!isSqsQueueUpdateNeeded(event)) return 'Not a valid event for updating SQS queue';
+  if (!isSqsQueueUpdateNeeded(event)) return Promise.resolve('Not a valid event for updating SQS queue');
 
   const eventStatus = getSfEventStatus(event);
   const eventMessage = getSfEventMessageObject(event, 'input', '{}');
@@ -81,16 +82,18 @@ async function updateSqsQueue(event) {
 }
 
 /**
- * Lambda handler for sqs-message-remover Lambda
+ * Lambda handler for sqsMessageRemover Lambda
  *
- * This Lambda function works together with sqs-message-consumer. sqs-message-consumer lambda
- * consumes message from SQS queue, and sqs-message-remover deletes the message from the SQS
- * queue when the workflow triggered by the message is completed successfully.
+ * This Lambda is triggered via a [Cloudwatch rule for any Step Function execution status
+ * changes] (https://docs.aws.amazon.com/step-functions/latest/dg/cw-events.html).
+ * It works together with sqsMessageConsumer. sqsMessageConsumer lambda
+ * consumes message from SQS queue, and sqsMessageRemover deletes the message from the SQS
+ * queue when the workflow triggered by the message is executed successfully.
  *
  * @param {Object} event - Cloudwatch event
  * @returns {Promise}
  */
-async function handler(event) {
+function handler(event) {
   return updateSqsQueue(event);
 }
 
