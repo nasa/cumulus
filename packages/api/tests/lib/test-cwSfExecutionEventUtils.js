@@ -103,7 +103,9 @@ test('getFailedExecutionMessage() returns the input message with the details fro
               // lastStepFailedEvent
               type: 'LambdaFunctionFailed',
               id: 1,
-              lambdaFunctionFailedEventDetails: 'my-details'
+              lambdaFunctionFailedEventDetails: {
+                type: 'really bad'
+              }
             }
           ]
         };
@@ -113,7 +115,9 @@ test('getFailedExecutionMessage() returns the input message with the details fro
 
   const expectedResult = {
     ...inputMessage,
-    exception: 'my-details'
+    exception: {
+      type: 'really bad'
+    }
   };
 
   t.deepEqual(actualResult, expectedResult);
