@@ -83,7 +83,7 @@ test('getFailedExecutionMessage() returns the input message when no ActivityFail
   t.deepEqual(actualResult, inputMessage);
 });
 
-test('getFailedExecutionMessage() returns the input message with the details from the last failed step event in the exception field if the failed step exited event cannot be found', async (t) => {
+test('getFailedExecutionMessage() returns the input message with the details from the last failed lambda step event in the exception field if the failed step exited event cannot be found', async (t) => {
   const inputMessage = {
     cumulus_meta: {
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
@@ -118,42 +118,6 @@ test('getFailedExecutionMessage() returns the input message with the details fro
     exception: {
       type: 'really bad'
     }
-  };
-
-  t.deepEqual(actualResult, expectedResult);
-});
-
-test('getFailedExecutionMessage() returns the input message with the details from the last failed lambda step event in the exception field if the failed step exited event cannot be found', async (t) => {
-  const inputMessage = {
-    cumulus_meta: {
-      state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
-      execution_name: 'my-execution-name'
-    }
-  };
-
-  const actualResult = await cwSfExecutionEventUtils.__with__({
-    StepFunctions: {
-      getExecutionHistory: ({ executionArn }) => {
-        if (executionArn !== 'arn:aws:states:us-east-1:111122223333:execution:HelloWorld-StateMachine:my-execution-name') {
-          throw new Error(`Expected executionArn === 'arn:aws:states:us-east-1:111122223333:execution:HelloWorld-StateMachine:my-execution-name' but got ${executionArn}`);
-        }
-        return {
-          events: [
-            {
-              // lastStepFailedEvent
-              type: 'LambdaFunctionFailed',
-              id: 1,
-              lambdaFunctionFailedEventDetails: 'my-details'
-            }
-          ]
-        };
-      }
-    }
-  })(() => getFailedExecutionMessage(inputMessage));
-
-  const expectedResult = {
-    ...inputMessage,
-    exception: 'my-details'
   };
 
   t.deepEqual(actualResult, expectedResult);
