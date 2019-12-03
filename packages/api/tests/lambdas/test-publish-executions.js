@@ -3,7 +3,7 @@
 const test = require('ava');
 const { sns, sqs } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
-const { handler } = require('../../lambdas/publish-excecutions');
+const { handler } = require('../../lambdas/publish-executions');
 
 test.before(async (t) => {
   const topicName = randomString();

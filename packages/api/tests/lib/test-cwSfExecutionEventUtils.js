@@ -143,7 +143,9 @@ test('getFailedExecutionMessage() returns the input message with the details fro
               // lastStepFailedEvent
               type: 'ActivityFailed',
               id: 1,
-              activityFailedEventDetails: 'my-details'
+              activityFailedEventDetails: {
+                reason: 'busted'
+              }
             }
           ]
         };
@@ -153,7 +155,9 @@ test('getFailedExecutionMessage() returns the input message with the details fro
 
   const expectedResult = {
     ...inputMessage,
-    exception: 'my-details'
+    exception: {
+      reason: 'busted'
+    }
   };
 
   t.deepEqual(actualResult, expectedResult);
@@ -163,13 +167,19 @@ test('getCumulusMessageFromExecutionEvent() returns the event input for a RUNNIN
   const event = {
     detail: {
       status: 'RUNNING',
-      input: JSON.stringify({ a: 1 })
+      input: JSON.stringify({ a: 1 }),
+      startDate: 123,
+      stopDate: null
     }
   };
 
   const message = await getCumulusMessageFromExecutionEvent(event);
 
   const expectedMessage = {
+    cumulus_meta: {
+      workflow_start_time: 123,
+      workflow_stop_time: null
+    },
     meta: {
       status: 'running'
     },
@@ -183,13 +193,19 @@ test('getCumulusMessageFromExecutionEvent() returns the event output for a SUCCE
   const event = {
     detail: {
       status: 'SUCCEEDED',
-      output: JSON.stringify({ a: 1 })
+      output: JSON.stringify({ a: 1 }),
+      startDate: 123,
+      stopDate: 124
     }
   };
 
   const message = await getCumulusMessageFromExecutionEvent(event);
 
   const expectedMessage = {
+    cumulus_meta: {
+      workflow_start_time: 123,
+      workflow_stop_time: 124
+    },
     meta: {
       status: 'completed'
     },
@@ -210,7 +226,9 @@ test('getCumulusMessageFromExecutionEvent() returns the failed execution message
   const event = {
     detail: {
       status: 'FAILED',
-      input: JSON.stringify(input)
+      input: JSON.stringify(input),
+      startDate: 123,
+      stopDate: 124
     }
   };
 
@@ -245,6 +263,10 @@ test('getCumulusMessageFromExecutionEvent() returns the failed execution message
   })(() => getCumulusMessageFromExecutionEvent(event));
 
   const expectedMessage = {
+    cumulus_meta: {
+      workflow_start_time: 123,
+      workflow_stop_time: 124
+    },
     meta: {
       status: 'failed'
     },

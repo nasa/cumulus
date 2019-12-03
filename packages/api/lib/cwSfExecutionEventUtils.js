@@ -95,6 +95,9 @@ const getCumulusMessageFromExecutionEvent = async (executionEvent) => {
   const workflowStatus = executionStatusToWorkflowStatus(executionEvent.detail.status);
   set(fullCumulusMessage, 'meta.status', workflowStatus);
 
+  set(fullCumulusMessage, 'cumulus_meta.workflow_start_time', executionEvent.detail.startDate);
+  set(fullCumulusMessage, 'cumulus_meta.workflow_stop_time', executionEvent.detail.stopDate);
+
   return fullCumulusMessage;
 };
 

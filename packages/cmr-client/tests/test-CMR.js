@@ -87,7 +87,7 @@ test('getHeaders returns correct Content-type for xml metadata by default', (t) 
   t.is(headers.Accept, undefined);
 });
 
-test.only('ingestUMMGranule() throws an exception if the input fails validation', async (t) => {
+test('ingestUMMGranule() throws an exception if the input fails validation', async (t) => {
   const cmrSearch = new CMR({ provider: 'my-provider', token: 'abc' });
 
   const ummgMetadata = { GranuleUR: 'asdf' };

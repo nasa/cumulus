@@ -34,10 +34,12 @@ class Execution extends Manager {
     const arn = getMessageExecutionArn(cumulusMessage);
     if (isNil(arn)) throw new Error('Unable to determine execution ARN from Cumulus message');
 
-    const now = Date.now();
-    const createdAt = get(cumulusMessage, 'cumulus_meta.workflow_start_time');
-
     const status = get(cumulusMessage, 'meta.status');
+    if (!status) throw new Error('Unable to determine status from Cumulus message');
+
+    const now = Date.now();
+    const workflowStartTime = get(cumulusMessage, 'cumulus_meta.workflow_start_time');
+    const workflowStopTime = get(cumulusMessage, 'cumulus_meta.workflow_stop_time');
 
     const record = {
       name: getMessageExecutionName(cumulusMessage),
@@ -50,12 +52,12 @@ class Execution extends Manager {
       type: get(cumulusMessage, 'meta.workflow_name'),
       collectionId: getCollectionIdFromMessage(cumulusMessage),
       status,
-      createdAt,
+      createdAt: workflowStartTime,
       timestamp: now,
       updatedAt: now,
       originalPayload: status === 'running' ? cumulusMessage.payload : undefined,
       finalPayload: status === 'running' ? undefined : cumulusMessage.payload,
-      duration: (now - createdAt) / 1000
+      duration: isNil(workflowStopTime) ? 0 : (workflowStopTime - workflowStartTime) / 1000
     };
 
     return removeNilProperties(record);

@@ -16,7 +16,8 @@ test.beforeEach(async (t) => {
     cumulus_meta: {
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
       execution_name: 'my-execution-name',
-      workflow_start_time: 123
+      workflow_start_time: 123,
+      workflow_stop_time: null
     },
     meta: {
       status: 'running',
@@ -51,7 +52,7 @@ test('generateRecord() returns the correct record in the basic case', (t) => {
     timestamp: actualRecord.timestamp,
     updatedAt: actualRecord.updatedAt,
     originalPayload: 'my-payload',
-    duration: (actualRecord.timestamp - 123) / 1000
+    duration: 0
   };
 
   t.deepEqual(actualRecord, expectedRecord);
@@ -65,8 +66,13 @@ test('generateRecord() throws an exception if the execution ARN cannot be determ
   );
 });
 
-test.todo('generateRecord() does ?something? if cumulus_meta.workflow_start_time is not present');
-test.todo('generateRecord() does ?something? if meta.status is not present');
+test('generateRecord() throws an exception if meta.status is not present', (t) => {
+  const { cumulusMessage } = t.context;
+
+  delete cumulusMessage.meta.status;
+
+  t.throws(() => Execution.generateRecord(cumulusMessage));
+});
 
 test('generateRecord() returns a record with asyncOperationId when available', (t) => {
   const { cumulusMessage } = t.context;
@@ -118,6 +124,19 @@ test('generateRecord() returns a record with correct payload for non-running mes
 
   t.is(record.finalPayload, 'my-payload');
   t.is(record.originalPayload, undefined);
+});
+
+test('generateRecord() returns a record with correct duration for non-running messages', (t) => {
+  const { cumulusMessage } = t.context;
+
+  cumulusMessage.meta.status = 'completed';
+
+  const startTime = cumulusMessage.cumulus_meta.workflow_start_time;
+  cumulusMessage.cumulus_meta.workflow_stop_time = startTime + 1000;
+
+  const record = Execution.generateRecord(cumulusMessage);
+
+  t.is(record.duration, 1);
 });
 
 test('buildDocClientUpdateParams() returns null for an empty item', (t) => {

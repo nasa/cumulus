@@ -48,6 +48,7 @@ data "aws_iam_policy_document" "cw_sf_execution_event_to_db_lambda" {
 }
 
 resource "aws_iam_role_policy" "cw_sf_execution_event_to_db_lambda_role_policy" {
+  name   = "${var.prefix}_cw_sf_execution_event_to_db_lambda_role_policy"
   role   = aws_iam_role.cw_sf_execution_event_to_db_lambda.id
   policy = data.aws_iam_policy_document.cw_sf_execution_event_to_db_lambda.json
 }

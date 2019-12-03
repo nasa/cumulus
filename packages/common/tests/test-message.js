@@ -186,11 +186,11 @@ test('getMessageGranules returns nothing when granules are absent from message',
   t.is(result, undefined);
 });
 
-test('getMessageTemplate throws error if invalid S3 URI is provided', async (t) => {
+test('getMessageFromTemplate throws error if invalid S3 URI is provided', async (t) => {
   await t.throwsAsync(() => getMessageFromTemplate('fake-uri'));
 });
 
-test('getMessageTemplate throws error if non-existent S3 URI is provided', async (t) => {
+test('getMessageFromTemplate throws error if non-existent S3 URI is provided', async (t) => {
   await t.throwsAsync(() => getMessageFromTemplate('s3://some-bucket/some-key'));
 });
 
@@ -441,4 +441,4 @@ test('buildQueueMessageFromTemplate returns expected message with custom cumulus
   t.deepEqual(actualMessage, expectedMessage);
 });
 
-test.todo('getMessageTemplate throws error if message template body is not JSON');
+test.todo('getMessageFromTemplate throws error if message template body is not JSON');

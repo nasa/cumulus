@@ -112,7 +112,6 @@ resource "aws_lambda_function" "publish_reports" {
 
   environment {
     variables = {
-      ExecutionsTable         = var.dynamo_tables.executions.name
       granule_sns_topic_arn   = aws_sns_topic.report_granules_topic.arn
       pdr_sns_topic_arn       = aws_sns_topic.report_pdrs_topic.arn
     }
