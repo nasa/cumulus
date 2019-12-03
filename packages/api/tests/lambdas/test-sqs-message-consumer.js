@@ -70,23 +70,6 @@ async function createRules(meta) {
   );
 }
 
-async function getNumberOfMessages(queueUrl) {
-  const qAttrParams = {
-    QueueUrl: queueUrl,
-    AttributeNames: ['All']
-  };
-  const attributes = await aws.sqs().getQueueAttributes(qAttrParams).promise();
-  const {
-    ApproximateNumberOfMessages: numberOfMessagesAvailable,
-    ApproximateNumberOfMessagesNotVisible: numberOfMessagesNotVisible
-  } = attributes.Attributes;
-
-  return {
-    numberOfMessagesAvailable: parseInt(numberOfMessagesAvailable, 10),
-    numberOfMessagesNotVisible: parseInt(numberOfMessagesNotVisible, 10)
-  };
-}
-
 test.before(async () => {
   // create Rules table
   rulesModel = new models.Rule();
