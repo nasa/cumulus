@@ -22,6 +22,7 @@ module.exports = {
     executeMigrations: './lambdas/executeMigrations.js',
     indexer: './es/indexer.js',
     indexFromDatabase: './lambdas/index-from-database.js',
+    manualConsumer: './lambdas/manual-consumer.js',
     messageConsumer: './lambdas/message-consumer.js',
     payloadLogger: './lambdas/payload-logger.js',
     publishReports: './lambdas/publish-reports.js',
