@@ -267,9 +267,11 @@ test('handler returns error string if no valid param is provided to determine in
 
 test.serial('handler calls handleStream if valid parameters are provided', async (t) => {
   const logInfo = sinon.spy(log, 'info');
-  const restorehandleStream = manualConsumer.__set__('handleStream', () => Promise.resolve(true));
-  await manualConsumer.handler({ type: 'kinesis', kinesisStream: 'validstream' });
+  const expectedOutput = 'testing-output';
+  const restorehandleStream = manualConsumer.__set__('handleStream', () => Promise.resolve(expectedOutput));
+  const actualOutput = await manualConsumer.handler({ type: 'kinesis', kinesisStream: 'validstream' });
   logInfo.restore();
   restorehandleStream();
+  t.is(actualOutput, expectedOutput);
   t.true(logInfo.calledOnce);
 });
