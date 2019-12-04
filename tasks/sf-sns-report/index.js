@@ -12,11 +12,17 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
  * @returns {Promise<Object>} - Payload object from the Cumulus message
  */
 async function publishSnsMessage(event) {
-  const message = get(event, 'input');
+  const meta = get(event, 'input.meta', {});
 
-  // Always assume that this step occurs in the middle of a workflow,
-  // not at the beginning or the end.
-  await publishReportSnsMessages(message, false, false);
+  const message = {
+    ...event.input,
+    meta: {
+      ...meta,
+      status: 'running'
+    }
+  };
+
+  await publishReportSnsMessages(message);
 
   return get(message, 'payload', {});
 }

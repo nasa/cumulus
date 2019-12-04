@@ -46,7 +46,6 @@ test.serial('SfnStep.parseStepMessage returns correct output for for remote mess
       }
     }
   };
-
   const fullRemoteMessage = {
     cumulus_meta: {
       state_machine: 'machine'

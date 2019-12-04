@@ -3,6 +3,7 @@
 const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
 const merge = require('lodash.merge');
+const set = require('lodash.set');
 const { invoke, Events } = require('@cumulus/ingest/aws');
 const aws = require('@cumulus/common/aws');
 const workflows = require('@cumulus/common/workflows');
@@ -160,9 +161,7 @@ class Rule extends Manager {
       break;
     }
     case 'sqs':
-      if (valueUpdated && !(await aws.sqsQueueExists(updatedRuleItem.rule.value))) {
-        throw new Error(`SQS queue ${updatedRuleItem.rule.value} does not exist or your account does not have permissions to access it`);
-      }
+      updatedRuleItem = await this.validateAndUpdateSqsRule(updatedRuleItem);
       break;
     default:
       break;
@@ -239,9 +238,7 @@ class Rule extends Manager {
       break;
     }
     case 'sqs':
-      if (!(await aws.sqsQueueExists(newRuleItem.rule.value))) {
-        throw new Error(`SQS queue ${newRuleItem.rule.value} does not exist or your account does not have permissions to access it`);
-      }
+      newRuleItem = await this.validateAndUpdateSqsRule(newRuleItem);
       break;
     default:
       throw new Error('Type not supported');
@@ -427,6 +424,36 @@ class Rule extends Manager {
       SubscriptionArn: item.rule.arn
     };
     return aws.sns().unsubscribe(subscriptionParams).promise();
+  }
+
+  /**
+   * validate and update sqs rule with queue property
+   *
+   * @param {Object} rule the sqs rule
+   * @returns {Object} the updated sqs rule
+   */
+  async validateAndUpdateSqsRule(rule) {
+    const queueUrl = rule.rule.value;
+    if (!(await aws.sqsQueueExists(queueUrl))) {
+      throw new Error(`SQS queue ${queueUrl} does not exist or your account does not have permissions to access it`);
+    }
+
+    const qAttrParams = {
+      QueueUrl: queueUrl,
+      AttributeNames: ['All']
+    };
+    const attributes = await aws.sqs().getQueueAttributes(qAttrParams).promise();
+    if (!attributes.Attributes.RedrivePolicy) {
+      throw new Error(`SQS queue ${rule} does not have a dead-letter queue configured`);
+    }
+
+    // update rule meta
+    if (!get(rule, 'meta.visibilityTimeout')) {
+      set(rule, 'meta.visibilityTimeout', parseInt(attributes.Attributes.VisibilityTimeout, 10));
+    }
+
+    if (!get(rule, 'meta.retries')) set(rule, 'meta.retries', 3);
+    return rule;
   }
 
   /**

@@ -26,7 +26,7 @@ cmr_oauth_provider = "launchpad"
 oauth_provider   = "launchpad"
 
 saml_entity_id                  = "https://cumulus-sandbox.earthdata.nasa.gov/jl-tf"
-saml_assertion_consumer_service = "https://wu3xqw5hag.execute-api.us-east-1.amazonaws.com:8000/dev/saml/auth"
+saml_assertion_consumer_service = "https://dz5bdrhmhd.execute-api.us-east-1.amazonaws.com:8000/dev/saml/auth"
 saml_idp_login                  = "https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso"
 saml_launchpad_metadata_path    = "s3://jl-test-integration-internal/jl-tf/launchpad/launchpad-sbx-metadata.xml"
 

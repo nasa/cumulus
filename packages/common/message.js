@@ -6,9 +6,8 @@ const uuidv4 = require('uuid/v4');
 
 const { constructCollectionId } = require('./collection-config-store');
 const { isNil } = require('./util');
-const { getExecutionArn } = require('./aws');
-
 const {
+  getExecutionArn,
   getS3Object,
   parseS3Uri
 } = require('./aws');
@@ -185,18 +184,14 @@ const getMessageStateMachineArn = (message) => {
  * @returns {null|string} - A state machine execution ARN
  */
 const getMessageExecutionArn = (message) => {
-  let stateMachineArn;
-  let executionName;
   try {
-    stateMachineArn = getMessageStateMachineArn(message);
-    executionName = getMessageExecutionName(message);
+    return getExecutionArn(
+      getMessageStateMachineArn(message),
+      getMessageExecutionName(message)
+    );
   } catch (err) {
     return null;
   }
-  return getExecutionArn(
-    stateMachineArn,
-    executionName
-  );
 };
 
 /**
