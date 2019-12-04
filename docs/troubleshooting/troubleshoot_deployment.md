@@ -8,11 +8,13 @@ hide_title: true
 
 This document provides 'notes' on frequently encountered deployment issues. The issues reported are organized by relevant subsection.
 
-## Terraform Init
+## Terraform Logging
 
 The `TF_LOG` environment variable can be set to help debug Terraform-specific issues. See [Terraform debugging](https://www.terraform.io/docs/internals/debugging.html).
 
-Example: `export TF_LOG=DEBUG`
+For example `export TF_LOG=DEBUG` will log verbose output from Terraform commands to help debug issues.
+
+## Terraform Init
 
 ### `Failed to get existing workspaces: AccessDenied: Access Denied`
 
