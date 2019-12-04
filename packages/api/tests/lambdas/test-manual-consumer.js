@@ -111,7 +111,7 @@ test.serial('processRecordBatch skips records newer than the endTimestamp but co
 test.serial('processRecordBatch logs errors for processRecord failures and does not count them as successes', async (t) => {
   const processRecord = sinon.stub(messageConsumer, 'processRecord').throws();
   const logError = sinon.spy(log, 'error');
-  const logDebug = sinon.spy(log, 'debug');
+  const logWarn = sinon.spy(log, 'warn');
   const result = await manualConsumer.processRecordBatch([
     { Data: 'record1', ApproximateArrivalTimestamp: Date.now() },
     { Data: 'record2', ApproximateArrivalTimestamp: Date.now() }
@@ -119,10 +119,11 @@ test.serial('processRecordBatch logs errors for processRecord failures and does 
 
   processRecord.restore();
   logError.restore();
+  logWarn.restore();
 
   t.true(processRecord.calledTwice);
   t.true(logError.calledTwice);
-  t.true(logDebug.calledOnce);
+  t.true(logWarn.calledOnce);
   t.is(result, 0);
 });
 
@@ -262,4 +263,13 @@ test.serial('handler should not overwrite existing envs', async (t) => {
 
 test('handler returns error string if no valid param is provided to determine intended operation', async (t) => {
   t.is(await manualConsumer.handler({}), 'Manual consumer could not determine expected operation.');
+});
+
+test.serial('handler calls handleStream if valid parameters are provided', async (t) => {
+  const logInfo = sinon.spy(log, 'info');
+  const restorehandleStream = manualConsumer.__set__('handleStream', () => Promise.resolve(true));
+  await manualConsumer.handler({ type: 'kinesis', kinesisStream: 'validstream' });
+  logInfo.restore();
+  restorehandleStream();
+  t.true(logInfo.calledOnce);
 });
