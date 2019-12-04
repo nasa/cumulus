@@ -1,344 +1,363 @@
 'use strict';
 
 const test = require('ava');
-const cloneDeep = require('lodash.clonedeep');
-
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
-const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const Execution = require('../../models/executions');
 
-const pdrSuccessFixture = require('../data/pdr_success.json');
-const pdrFailureFixture = require('../data/pdr_failure.json');
-
-let executionModel;
-
-const originalPayload = { op: 'originalPayload' };
-const stateMachineArn = 'arn:aws:states:us-east-1:123456789012:stateMachine:HelloStateMachine';
-const executionArnBase = 'arn:aws:states:us-east-1:123456789012:execution:HelloStateMachine';
-
-const getExecutionArn = (executionName) => `${executionArnBase}:${executionName}`;
-const getExecutionUrl = (arn) => `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${arn}`;
-
-const createExecutionMessage = ({
-  executionName,
-  status = 'running'
-}) => ({
-  cumulus_meta: {
-    execution_name: executionName,
-    state_machine: stateMachineArn,
-    workflow_start_time: Date.now()
-  },
-  meta: {
-    collection: {
-      name: randomString(),
-      version: randomString()
-    },
-    provider: {
-      host: randomString(),
-      protocol: 's3'
-    },
-    workflow_name: 'test',
-    status,
-    workflow_tasks: {
-      task1: {
-        arn: randomString(),
-        name: randomString(),
-        version: 1
-      }
-    }
-  }
-});
-
-test.before(async () => {
+test.before(async (t) => {
   process.env.ExecutionsTable = randomString();
-  executionModel = new Execution();
-  await executionModel.createTable();
-});
-
-test.after.always(async () => {
-  await executionModel.deleteTable();
+  t.context.executionModel = new Execution();
+  await t.context.executionModel.createTable();
 });
 
 test.beforeEach(async (t) => {
-  t.context.executionName = randomString();
-  t.context.arn = getExecutionArn(t.context.executionName);
-  t.context.executionUrl = getExecutionUrl(t.context.arn);
-});
-
-test.afterEach.always(async (t) => {
-  await executionModel.delete({ arn: t.context.arn });
-});
-
-test.serial('generateRecord() using payload without cumulus_meta.state_machine throws error', async (t) => {
-  await t.throwsAsync(
-    () => Execution.generateRecord({
-      cumulus_meta: {
-        execution_name: randomString()
+  t.context.cumulusMessage = {
+    cumulus_meta: {
+      state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
+      execution_name: 'my-execution-name',
+      workflow_start_time: 123,
+      workflow_stop_time: null
+    },
+    meta: {
+      status: 'running',
+      collection: {
+        name: 'my-name',
+        version: 'my-version'
       }
-    })
-  );
-});
-
-test.serial('generateRecord() using payload without cumulus_meta.execution_name throws error', async (t) => {
-  await t.throwsAsync(
-    () => Execution.generateRecord({
-      cumulus_meta: {
-        state_machine: randomString()
-      }
-    })
-  );
-});
-
-test('generateRecord() generates the correct record for a running execution', async (t) => {
-  const { arn, executionName, executionUrl } = t.context;
-  const message = createExecutionMessage({
-    executionName
-  });
-  message.payload = { foo: 'bar' };
-
-  const record = await Execution.generateRecord(message);
-
-  const { collection } = message.meta;
-
-  t.is(record.name, executionName);
-  t.is(record.arn, arn);
-  t.is(record.status, 'running');
-  t.is(record.execution, executionUrl);
-  t.is(record.type, message.meta.workflow_name);
-  t.is(record.createdAt, message.cumulus_meta.workflow_start_time);
-  t.is(record.collectionId, constructCollectionId(collection.name, collection.version));
-  // Seems like this is wrong. If message.exception is undefined, then record.error
-  // should be undefined or an empty object?
-  t.deepEqual(record.error, { Error: 'Unknown Error', Cause: undefined });
-  t.deepEqual(record.tasks, message.meta.workflow_tasks);
-  t.deepEqual(record.originalPayload, message.payload);
-  t.is(typeof record.timestamp, 'number');
-  t.is(typeof record.duration, 'number');
-});
-
-test('generateRecord() correctly updates an execution record', async (t) => {
-  const { arn, executionName, executionUrl } = t.context;
-
-  const message = createExecutionMessage({
-    executionName
-  });
-
-  message.payload = originalPayload;
-  const originalRecord = await Execution.generateRecord(message);
-
-  await executionModel.create(originalRecord);
-
-  const { collection } = message.meta;
-
-  message.meta.status = 'failed';
-  message.exception = {
-    Error: 'Test error',
-    Cause: 'Error cause'
+    },
+    payload: 'my-payload'
   };
-  const finalPayload = { foo: 'bar' };
-  message.payload = finalPayload;
-  const updatedRecord = await Execution.generateRecord(message, true);
 
-  t.is(updatedRecord.name, executionName);
-  t.is(updatedRecord.arn, arn);
-  t.is(updatedRecord.status, 'failed');
-  t.is(updatedRecord.execution, executionUrl);
-  t.is(updatedRecord.type, message.meta.workflow_name);
-  t.is(updatedRecord.createdAt, message.cumulus_meta.workflow_start_time);
-  t.is(updatedRecord.collectionId, constructCollectionId(collection.name, collection.version));
-  t.is(typeof updatedRecord.error, 'object');
-  t.is(updatedRecord.createdAt, message.cumulus_meta.workflow_start_time);
-  t.is(typeof updatedRecord.timestamp, 'number');
-  t.is(typeof updatedRecord.duration, 'number');
-  t.deepEqual(updatedRecord.originalPayload, originalPayload);
-  t.deepEqual(updatedRecord.finalPayload, finalPayload);
+  t.context.executionArn = 'arn:aws:states:us-east-1:111122223333:execution:HelloWorld-StateMachine:my-execution-name';
 });
 
-test('generateRecord() throws error when trying to update a non-existent record', async (t) => {
-  const { executionName } = t.context;
+test.after.always(async (t) => {
+  await t.context.executionModel.deleteTable();
+});
 
-  const message = createExecutionMessage({
-    executionName,
+test('generateRecord() returns the correct record in the basic case', (t) => {
+  const { cumulusMessage, executionArn } = t.context;
+
+  const actualRecord = Execution.generateRecord(cumulusMessage);
+
+  const expectedRecord = {
+    name: 'my-execution-name',
+    arn: executionArn,
+    execution: `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`,
+    collectionId: 'my-name___my-version',
+    error: {},
+    status: 'running',
+    createdAt: 123,
+    timestamp: actualRecord.timestamp,
+    updatedAt: actualRecord.updatedAt,
+    originalPayload: 'my-payload',
+    duration: 0
+  };
+
+  t.deepEqual(actualRecord, expectedRecord);
+});
+
+test('generateRecord() throws an exception if the execution ARN cannot be determined', (t) => {
+  t.throws(
+    () => Execution.generateRecord({
+      cumulus_meta: {}
+    })
+  );
+});
+
+test('generateRecord() throws an exception if meta.status is not present', (t) => {
+  const { cumulusMessage } = t.context;
+
+  delete cumulusMessage.meta.status;
+
+  t.throws(() => Execution.generateRecord(cumulusMessage));
+});
+
+test('generateRecord() returns a record with asyncOperationId when available', (t) => {
+  const { cumulusMessage } = t.context;
+
+  cumulusMessage.cumulus_meta.asyncOperationId = 'my-asyncOperationId';
+
+  const record = Execution.generateRecord(cumulusMessage);
+
+  t.is(record.asyncOperationId, 'my-asyncOperationId');
+});
+
+test('generateRecord() returns a record with parentArn when available', (t) => {
+  const { cumulusMessage } = t.context;
+
+  cumulusMessage.cumulus_meta.parentExecutionArn = 'my-parentArn';
+
+  const record = Execution.generateRecord(cumulusMessage);
+
+  t.is(record.parentArn, 'my-parentArn');
+});
+
+test('generateRecord() returns a record with tasks when available', (t) => {
+  const { cumulusMessage } = t.context;
+
+  cumulusMessage.meta.workflow_tasks = 'my-tasks';
+
+  const record = Execution.generateRecord(cumulusMessage);
+
+  t.is(record.tasks, 'my-tasks');
+});
+
+test('generateRecord() returns a record with type when available', (t) => {
+  const { cumulusMessage } = t.context;
+
+  cumulusMessage.meta.workflow_name = 'my-workflow-name';
+
+  const record = Execution.generateRecord(cumulusMessage);
+
+  t.is(record.type, 'my-workflow-name');
+});
+
+test('generateRecord() returns a record with correct payload for non-running messages', (t) => {
+  const { cumulusMessage } = t.context;
+
+  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.payload = 'my-payload';
+
+  const record = Execution.generateRecord(cumulusMessage);
+
+  t.is(record.finalPayload, 'my-payload');
+  t.is(record.originalPayload, undefined);
+});
+
+test('generateRecord() returns a record with correct duration for non-running messages', (t) => {
+  const { cumulusMessage } = t.context;
+
+  cumulusMessage.meta.status = 'completed';
+
+  const startTime = cumulusMessage.cumulus_meta.workflow_start_time;
+  cumulusMessage.cumulus_meta.workflow_stop_time = startTime + 1000;
+
+  const record = Execution.generateRecord(cumulusMessage);
+
+  t.is(record.duration, 1);
+});
+
+test('buildDocClientUpdateParams() returns null for an empty item', (t) => {
+  const { executionModel } = t.context;
+
+  t.is(executionModel.buildDocClientUpdateParams({}), null);
+});
+
+test('buildDocClientUpdateParams() does not try to update the arn', (t) => {
+  const { executionModel } = t.context;
+
+  const item = {
+    arn: 'abc-123',
+    name: 'frank'
+  };
+
+  const actualParams = executionModel.buildDocClientUpdateParams(item);
+
+  t.false(Object.keys(actualParams.ExpressionAttributeNames).includes('#arn'));
+  t.false(Object.keys(actualParams.ExpressionAttributeValues).includes(':arn'));
+  t.false(actualParams.UpdateExpression.includes('arn'));
+});
+
+test('buildDocClientUpdateParams() does not try to update a value to `undefined`', (t) => {
+  const { executionModel } = t.context;
+
+  const item = {
+    arn: 'abc-123',
+    name: 'frank',
+    wrong: undefined
+  };
+
+  const actualParams = executionModel.buildDocClientUpdateParams(item);
+
+  t.false(Object.keys(actualParams.ExpressionAttributeNames).includes('#wrong'));
+  t.false(Object.keys(actualParams.ExpressionAttributeValues).includes(':wrong'));
+  t.false(actualParams.UpdateExpression.includes('wrong'));
+});
+
+test('buildDocClientUpdateParams() returns the correct result for a running item', (t) => {
+  const { executionModel } = t.context;
+
+  const item = {
+    arn: 'abc-123',
+    status: 'running',
+    createdAt: 123,
+    updatedAt: 124,
+    timestamp: 124,
+    originalPayload: 'my-original-payload'
+  };
+
+  const actualParams = executionModel.buildDocClientUpdateParams(item);
+
+  t.is(actualParams.TableName, process.env.ExecutionsTable);
+  t.deepEqual(actualParams.Key, { arn: 'abc-123' });
+
+  t.true(actualParams.UpdateExpression.startsWith('SET '));
+  t.false(actualParams.UpdateExpression.includes('REMOVE '));
+  t.false(actualParams.UpdateExpression.includes('ADD '));
+  t.false(actualParams.UpdateExpression.includes('DELETE '));
+
+  t.is(actualParams.ExpressionAttributeNames['#status'], 'status');
+  t.is(actualParams.ExpressionAttributeValues[':status'], 'running');
+  t.true(actualParams.UpdateExpression.includes('#status = if_not_exists(#status, :status)'));
+
+  t.is(actualParams.ExpressionAttributeNames['#createdAt'], 'createdAt');
+  t.is(actualParams.ExpressionAttributeValues[':createdAt'], 123);
+  t.true(actualParams.UpdateExpression.includes('#createdAt = :createdAt'));
+
+  t.is(actualParams.ExpressionAttributeNames['#updatedAt'], 'updatedAt');
+  t.is(actualParams.ExpressionAttributeValues[':updatedAt'], 124);
+  t.true(actualParams.UpdateExpression.includes('#updatedAt = :updatedAt'));
+
+  t.is(actualParams.ExpressionAttributeNames['#timestamp'], 'timestamp');
+  t.is(actualParams.ExpressionAttributeValues[':timestamp'], 124);
+  t.true(actualParams.UpdateExpression.includes('#timestamp = :timestamp'));
+
+  t.is(actualParams.ExpressionAttributeNames['#originalPayload'], 'originalPayload');
+  t.is(actualParams.ExpressionAttributeValues[':originalPayload'], 'my-original-payload');
+  t.true(actualParams.UpdateExpression.includes('#originalPayload = :originalPayload'));
+});
+
+test('buildDocClientUpdateParams() always updates values for a non-running item', (t) => {
+  const { executionModel } = t.context;
+
+  const item = {
+    arn: 'abc-123',
     status: 'completed'
-  });
-
-  await t.throwsAsync(
-    () => Execution.generateRecord(message),
-    { instanceOf: RecordDoesNotExist }
-  );
-});
-
-test('updateExecutionFromSns() updates a successful execution record', async (t) => {
-  const newPayload = cloneDeep(pdrSuccessFixture);
-
-  const originalStatus = newPayload.meta.status;
-  newPayload.meta.status = 'running';
-
-  await executionModel.createExecutionFromSns(newPayload);
-
-  newPayload.meta.status = originalStatus;
-
-  const record = await executionModel.updateExecutionFromSns(newPayload);
-
-  t.is(record.status, 'completed');
-  t.is(record.type, newPayload.meta.workflow_name);
-  t.is(record.createdAt, newPayload.cumulus_meta.workflow_start_time);
-});
-
-test('updateExecutionFromSns() updates a failed execution record', async (t) => {
-  const newPayload = cloneDeep(pdrFailureFixture);
-
-  const originalStatus = newPayload.meta.status;
-  newPayload.meta.status = 'running';
-
-  await executionModel.createExecutionFromSns(newPayload);
-
-  newPayload.meta.status = originalStatus;
-
-  const record = await executionModel.updateExecutionFromSns(newPayload);
-
-  t.is(record.status, 'failed');
-  t.is(record.type, newPayload.meta.workflow_name);
-  t.is(typeof record.error, 'object');
-  t.is(record.createdAt, newPayload.cumulus_meta.workflow_start_time);
-});
-
-test('Creating an execution adds a record to the database with matching values', async (t) => {
-  const { arn, executionName } = t.context;
-
-  const message = createExecutionMessage({ executionName });
-  message.payload = originalPayload;
-
-  await executionModel.createExecutionFromSns(message);
-  const record = await executionModel.get({ arn });
-
-  const expectedRecord = {
-    ...record,
-    originalPayload
   };
-  t.deepEqual(record, expectedRecord);
+
+  const actualParams = executionModel.buildDocClientUpdateParams(item);
+
+  t.is(actualParams.ExpressionAttributeNames['#status'], 'status');
+  t.is(actualParams.ExpressionAttributeValues[':status'], 'completed');
+  t.true(actualParams.UpdateExpression.includes('#status = :status'));
 });
 
-test('Updating an existing record updates the record as expected', async (t) => {
-  const { arn, executionName } = t.context;
+test.serial('buildDocClientUpdateParams() output can be used to create a new running execution', async (t) => {
+  const { executionModel } = t.context;
 
-  const message = createExecutionMessage({ executionName });
+  const item = {
+    arn: randomString(),
+    status: 'running'
+  };
 
-  await executionModel.createExecutionFromSns(message);
-  const originalRecord = await executionModel.get({ arn });
+  const params = executionModel.buildDocClientUpdateParams(item);
 
-  const finalPayload = { test: 'payloadValue' };
-  message.meta.status = 'completed';
-  message.payload = finalPayload;
+  await executionModel.dynamodbDocClient.update(params).promise();
 
-  await executionModel.updateExecutionFromSns(message);
+  const fetchedItem = await executionModel.get({ arn: item.arn });
 
-  const record = await executionModel.get({ arn });
+  t.is(fetchedItem.status, 'running');
+});
 
-  const expectedRecord = {
-    ...originalRecord,
-    finalPayload,
+test.serial('buildDocClientUpdateParams() output can be used to update a running execution', async (t) => {
+  const { executionModel } = t.context;
+
+  const originalItem = {
+    arn: randomString(),
+    status: 'running',
+    updatedAt: 123,
+    name: 'frank'
+  };
+
+  await executionModel.create(originalItem);
+
+  const updatedItem = {
+    ...originalItem,
+    updatedAt: 321,
+    name: 'joe'
+  };
+
+  const params = executionModel.buildDocClientUpdateParams(updatedItem);
+
+  await executionModel.dynamodbDocClient.update(params).promise();
+
+  const fetchedItem = await executionModel.get({ arn: originalItem.arn });
+
+  t.is(fetchedItem.status, 'running');
+  t.is(fetchedItem.updatedAt, 321);
+  t.is(fetchedItem.name, 'frank');
+});
+
+test.serial('buildDocClientUpdateParams() output can be used to create a new completed execution', async (t) => {
+  const { executionModel } = t.context;
+
+  const item = {
+    arn: randomString(),
+    status: 'completed'
+  };
+
+  const params = executionModel.buildDocClientUpdateParams(item);
+
+  await executionModel.dynamodbDocClient.update(params).promise();
+
+  const fetchedItem = await executionModel.get({ arn: item.arn });
+
+  t.is(fetchedItem.status, 'completed');
+});
+
+test.serial('buildDocClientUpdateParams() output can be used to update a completed execution', async (t) => {
+  const { executionModel } = t.context;
+
+  const originalItem = {
+    arn: randomString(),
+    status: 'running',
+    updatedAt: 123,
+    name: 'frank'
+  };
+
+  await executionModel.create(originalItem);
+
+  const updatedItem = {
+    ...originalItem,
     status: 'completed',
-    type: 'test',
-    duration: record.duration,
-    timestamp: record.timestamp,
-    updatedAt: record.updatedAt
+    updatedAt: 321,
+    name: 'joe'
   };
 
-  t.deepEqual(record, expectedRecord);
+  const params = executionModel.buildDocClientUpdateParams(updatedItem);
+
+  await executionModel.dynamodbDocClient.update(params).promise();
+
+  const fetchedItem = await executionModel.get({ arn: originalItem.arn });
+
+  t.is(fetchedItem.status, 'completed');
+  t.is(fetchedItem.updatedAt, 321);
+  t.is(fetchedItem.name, 'joe');
 });
 
-test.serial('RemoveOldPayloadRecords removes payload attributes from old non-completed records', async (t) => {
-  const { arn, executionName } = t.context;
-  const message = createExecutionMessage({ executionName });
+test.serial('buildDocClientUpdateParams() output will not allow a running status to replace a completed status', async (t) => {
+  const { executionModel } = t.context;
 
-  await executionModel.createExecutionFromSns(message);
-  message.payload = { test: 'payloadValue' };
-  await executionModel.updateExecutionFromSns(message);
-  await executionModel.removeOldPayloadRecords(100, 0, true, false);
+  const originalItem = {
+    arn: randomString(),
+    status: 'completed',
+    name: 'frank'
+  };
 
-  const updatedRecord = await executionModel.get({ arn });
-  t.falsy(updatedRecord.originalPayload);
+  await executionModel.create(originalItem);
+
+  const updatedItem = {
+    ...originalItem,
+    status: 'running'
+  };
+
+  const params = executionModel.buildDocClientUpdateParams(updatedItem);
+
+  await executionModel.dynamodbDocClient.update(params).promise();
+
+  const fetchedItem = await executionModel.get({ arn: originalItem.arn });
+
+  t.is(fetchedItem.status, 'completed');
 });
 
-test.serial('RemoveOldPayloadRecords fails to remove payload attributes from non-completed records when disabled', async (t) => {
-  const { arn, executionName } = t.context;
-  const message = createExecutionMessage({ executionName });
+test.serial('storeExecutionFromCumulusMessage() stores an execution record to the database from a Cumulus message', async (t) => {
+  const { executionArn, cumulusMessage, executionModel } = t.context;
 
-  message.payload = { test: 'value1' };
-  await executionModel.createExecutionFromSns(message);
-  message.payload = { test: 'value2' };
-  await executionModel.updateExecutionFromSns(message);
-  await executionModel.removeOldPayloadRecords(100, 0, true, true);
+  await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
 
-  const updatedRecord = await executionModel.get({ arn });
-  t.truthy(updatedRecord.originalPayload);
-});
+  const fetchedItem = await executionModel.get({ arn: executionArn });
 
-test.serial('RemoveOldPayloadRecords removes payload attributes from old completed records', async (t) => {
-  const { arn, executionName } = t.context;
-
-  const message = createExecutionMessage({ executionName });
-
-  message.payload = { test: 'value1' };
-  await executionModel.createExecutionFromSns(message);
-  message.payload = { test: 'value2' };
-  message.meta.status = 'completed';
-  await executionModel.updateExecutionFromSns(message);
-  await executionModel.removeOldPayloadRecords(0, 100, false, true);
-
-  const updatedRecord = await executionModel.get({ arn });
-  t.falsy(updatedRecord.originalPayload);
-  t.falsy(updatedRecord.finalPayload);
-});
-
-test.serial('RemoveOldPayloadRecords fails to remove payload attributes from old completed records when disabled', async (t) => {
-  const { arn, executionName } = t.context;
-
-  const message = createExecutionMessage({ executionName });
-
-  message.payload = { test: 'value1' };
-  await executionModel.createExecutionFromSns(message);
-  message.payload = { test: 'value2' };
-  message.meta.status = 'completed';
-  await executionModel.updateExecutionFromSns(message);
-  await executionModel.removeOldPayloadRecords(0, 100, true, true);
-
-  const updatedRecord = await executionModel.get({ arn });
-  t.truthy(updatedRecord.originalPayload);
-  t.truthy(updatedRecord.finalPayload);
-});
-
-test.serial('RemoveOldPayloadRecords does not remove attributes from new non-completed records', async (t) => {
-  const { arn, executionName } = t.context;
-  const message = createExecutionMessage({ executionName });
-
-  const payload = { test: 'payloadValue' };
-  message.payload = payload;
-  await executionModel.createExecutionFromSns(message);
-  await executionModel.removeOldPayloadRecords(1, 1, false, false);
-
-  const updatedRecord = await executionModel.get({ arn });
-  t.deepEqual(updatedRecord.originalPayload, payload);
-});
-
-test.serial('RemoveOldPayloadRecords does not remove attributes from new completed records', async (t) => {
-  const { arn, executionName } = t.context;
-
-  const message = createExecutionMessage({ executionName });
-
-  message.payload = originalPayload;
-  await executionModel.createExecutionFromSns(message);
-  const updatePayload = { test: 'payloadValue' };
-  message.payload = updatePayload;
-  message.meta.status = 'completed';
-  await executionModel.updateExecutionFromSns(message);
-  await executionModel.removeOldPayloadRecords(0, 100, true, true);
-  await executionModel.removeOldPayloadRecords(1, 1, false, false);
-
-  const updatedRecord = await executionModel.get({ arn });
-  t.deepEqual(originalPayload, updatedRecord.originalPayload);
-  t.deepEqual(updatePayload, updatedRecord.finalPayload);
+  t.is(fetchedItem.status, 'running');
 });

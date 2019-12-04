@@ -6,6 +6,10 @@ output "api_redirect_uri" {
   value = local.api_redirect_uri
 }
 
+output "cw_sf_execution_event_to_db_lambda_function_arn" {
+  value = aws_lambda_function.cw_sf_execution_event_to_db.arn
+}
+
 output "encrypted_cmr_password" {
   value = jsondecode(data.aws_lambda_invocation.custom_bootstrap.result).Data.CmrPassword
 }

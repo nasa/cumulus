@@ -1,21 +1,18 @@
 # Report executions
 
-resource "aws_iam_role" "report_executions_lambda_role" {
-  name                 = "${var.prefix}-ReportExecutionsLambda"
+resource "aws_iam_role" "publish_executions_lambda_role" {
+  name                 = "${var.prefix}-PublishExecutionsLambda"
   assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
-  # TODO Re-enable once IAM permissions have been fixed
-  # tags                 = local.default_tags
+  tags                 = local.default_tags
 }
 
-data "aws_iam_policy_document" "report_executions_policy_document" {
+data "aws_iam_policy_document" "publish_executions_policy_document" {
   statement {
-    actions = [
-      "dynamoDb:getItem",
-      "dynamoDb:putItem"
-    ]
-    resources = [var.dynamo_tables.executions.arn]
+    actions   = ["sns:Publish"]
+    resources = [aws_sns_topic.report_executions_topic.arn]
   }
+
   statement {
     actions = [
       "ec2:CreateNetworkInterface",
@@ -24,6 +21,7 @@ data "aws_iam_policy_document" "report_executions_policy_document" {
     ]
     resources = ["*"]
   }
+
   statement {
     actions = [
       "logs:CreateLogGroup",
@@ -33,37 +31,44 @@ data "aws_iam_policy_document" "report_executions_policy_document" {
     ]
     resources = ["*"]
   }
+
+  statement {
+    actions = ["sqs:SendMessage"]
+    resources = [aws_sqs_queue.publish_executions_dead_letter_queue.arn]
+  }
+
   statement {
     actions = [
-      "sqs:SendMessage"
+      "dynamodb:GetRecords",
+      "dynamodb:GetShardIterator",
+      "dynamodb:DescribeStream",
+      "dynamodb:ListStreams"
     ]
-    resources = [
-      aws_sqs_queue.report_executions_dead_letter_queue.arn
-    ]
+    resources = ["${var.dynamo_tables.executions.arn}/stream/*"]
   }
 }
 
-resource "aws_iam_role_policy" "report_executions_lambda_role_policy" {
-  name   = "${var.prefix}_report_executions_lambda_role_policy"
-  role   = aws_iam_role.report_executions_lambda_role.id
-  policy = data.aws_iam_policy_document.report_executions_policy_document.json
+resource "aws_iam_role_policy" "publish_executions_lambda_role_policy" {
+  name   = "${var.prefix}_publish_executions_lambda_role_policy"
+  role   = aws_iam_role.publish_executions_lambda_role.id
+  policy = data.aws_iam_policy_document.publish_executions_policy_document.json
 }
 
-resource "aws_sqs_queue" "report_executions_dead_letter_queue" {
-  name                       = "${var.prefix}-reportExecutionsDeadLetterQueue"
+resource "aws_sqs_queue" "publish_executions_dead_letter_queue" {
+  name                       = "${var.prefix}-publishExecutionsDeadLetterQueue"
   receive_wait_time_seconds  = 20
   message_retention_seconds  = 1209600
   visibility_timeout_seconds = 60
   tags                       = local.default_tags
 }
 
-resource "aws_lambda_function" "report_executions" {
-  depends_on = ["aws_cloudwatch_log_group.report_executions_logs"]
+resource "aws_lambda_function" "publish_executions" {
+  depends_on = ["aws_cloudwatch_log_group.publish_executions_logs"]
 
-  filename         = "${path.module}/../../packages/api/dist/reportExecutions/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/reportExecutions/lambda.zip")
-  function_name    = "${var.prefix}-reportExecutions"
-  role             = aws_iam_role.report_executions_lambda_role.arn
+  filename         = "${path.module}/../../packages/api/dist/publishExecutions/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/publishExecutions/lambda.zip")
+  function_name    = "${var.prefix}-publishExecutions"
+  role             = aws_iam_role.publish_executions_lambda_role.arn
   handler          = "index.handler"
   runtime          = "nodejs8.10"
   timeout          = 30
@@ -71,7 +76,7 @@ resource "aws_lambda_function" "report_executions" {
 
 
   dead_letter_config {
-    target_arn = aws_sqs_queue.report_executions_dead_letter_queue.arn
+    target_arn = aws_sqs_queue.publish_executions_dead_letter_queue.arn
   }
 
   vpc_config {
@@ -83,15 +88,15 @@ resource "aws_lambda_function" "report_executions" {
 
   environment {
     variables = {
-      ExecutionsTable = var.dynamo_tables.executions.name
+      execution_sns_topic_arn = aws_sns_topic.report_executions_topic.arn
     }
   }
 
   tags = local.default_tags
 }
 
-resource "aws_cloudwatch_log_group" "report_executions_logs" {
-  name              = "/aws/lambda/${var.prefix}-reportExecutions"
+resource "aws_cloudwatch_log_group" "publish_executions_logs" {
+  name              = "/aws/lambda/${var.prefix}-publishExecutions"
   retention_in_days = 14
   tags              = local.default_tags
 }
@@ -101,17 +106,18 @@ resource "aws_sns_topic" "report_executions_topic" {
   tags = local.default_tags
 }
 
-resource "aws_lambda_permission" "report_executions_permission" {
+resource "aws_lambda_permission" "publish_executions_permission" {
   action        = "lambda:InvokeFunction"
-  function_name = "${aws_lambda_function.report_executions.function_name}"
+  function_name = "${aws_lambda_function.publish_executions.function_name}"
   principal     = "sns.amazonaws.com"
   source_arn    = "${aws_sns_topic.report_executions_topic.arn}"
 }
 
-resource "aws_sns_topic_subscription" "report_executions_subscription" {
-  topic_arn = "${aws_sns_topic.report_executions_topic.arn}"
-  protocol  = "lambda"
-  endpoint  = "${aws_lambda_function.report_executions.arn}"
+resource "aws_lambda_event_source_mapping" "publish_executions" {
+  event_source_arn  = data.aws_dynamodb_table.executions.stream_arn
+  function_name     = aws_lambda_function.publish_executions.arn
+  starting_position = "TRIM_HORIZON"
+  batch_size        = 10
 }
 
 # Report granules
