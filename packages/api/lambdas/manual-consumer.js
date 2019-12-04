@@ -3,24 +3,84 @@
 const aws = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
 
-const { processRecord } = require('./message-consumer');
+const messageConsumer = require('./message-consumer');
 
 const Kinesis = aws.kinesis();
 const tallyReducer = (acc, cur) => acc + cur;
 
 /**
- * Process a batch of kinesisRecords.
+ * This function will accept as valid input an event whose `endTimestamp` and `startTimestamp`
+ * fields must contain valid input to the `new Date()` constructor if they exist.
+ * They will then be populated into `process.env` as ISO strings.
+ *
+ * @param {Object} event - input object
+ */
+const configureTimestampEnvs = (event) => {
+  if (!process.env.endTimestamp && event.endTimestamp) {
+    const dateObj = new Date(event.endTimestamp);
+    if (Number.isNaN(dateObj.valueOf())) throw new Error(`${event.endTimestamp} is not a valid end date.`);
+    process.env.endTimestamp = dateObj.toISOString();
+  }
+  if (!process.env.startTimestamp && event.startTimestamp) {
+    const dateObj = new Date(event.startTimestamp);
+    if (Number.isNaN(dateObj.valueOf())) throw new Error(`${event.startTimestamp} is not a valid end date.`);
+    process.env.startTimestamp = dateObj.toISOString();
+  }
+};
+
+/**
+ * Set up params object for call to `Kinesis.getShardIterator()`.
+ * Creates timestamp params if `process.env.startTimestamp` is set.
+ *
+ * @param {string} stream - stream name
+ * @param {string} shardId - shard ID
+ * @returns {Object} getShardIterator params
+ */
+const setupIteratorParams = (stream, shardId) => {
+  const params = {
+    StreamName: stream,
+    ShardId: shardId
+  };
+  if (process.env.startTimestamp) {
+    params.ShardIteratorType = 'AT_TIMESTAMP';
+    params.Timestamp = process.env.startTimestamp;
+  } else {
+    params.ShardIteratorType = 'TRIM_HORIZON';
+  }
+  return params;
+};
+
+/**
+ * Set up params object for call to `Kinesis.listShards()`.
+ * `streamCreationTimestamp` is required when multiple streams with the same
+ * name exist in the Kinesis API (e.g. deleted and current streams).
+ *
+ * @param {string} stream - kinesis stream name
+ * @param {Date|string|number} [streamCreationTimestamp] - Stream creation timestamp
+ * used to differentiate streams that have a name used by a previous stream.
+ * @returns {Object} number of records successfully processed from stream
+ */
+const setupShardParams = (stream, streamCreationTimestamp) => {
+  const params = {
+    StreamName: stream
+  };
+  if (streamCreationTimestamp) params.StreamCreationTimestamp = streamCreationTimestamp;
+  return params;
+};
+
+/**
+ * Process a batch of kinesis records.
  *
  * @param {Array<Object>} records - list of kinesis records
  * @returns {number} number of records successfully processed
  */
-async function processRecords(records) {
+async function processRecordBatch(records) {
   const results = await Promise.all(records.map(async (record) => {
     if (new Date(record.ApproximateArrivalTimestamp) > new Date(process.env.endTimestamp)) {
-      return 0;
+      return 1;
     }
     try {
-      await processRecord({ kinesis: { data: record.Data } });
+      await messageConsumer.processRecord({ kinesis: { data: record.Data } });
       return 1;
     } catch (err) {
       log.error(err);
@@ -39,40 +99,46 @@ async function processRecords(records) {
  * Recursively process all records within a shard between start and end timestamps.
  * Starts at beginning of shard (TRIM_HORIZON) if no start timestamp is available.
  *
- * @param {Array<Promise>} recordPromiseList - list of promises from calls to processRecords
+ * @param {Array<Promise>} recordPromiseList - list of promises from calls to processRecordBatch
  * @param {string} shardIterator - ShardIterator Id
- * @returns {Array<Promise>} list of promises from calls to processRecords
+ * @returns {Array<Promise>} list of promises from calls to processRecordBatch
  */
 async function processShard(recordPromiseList, shardIterator) {
-  const response = await Kinesis.getRecords({
-    ShardIterator: shardIterator
-  }).promise().catch(log.error);
-  const nextShardIterator = response.NextShardIterator;
-  recordPromiseList.push(processRecords(response.Records));
-  if (response.MillisBehindLatest === 0) return recordPromiseList;
-  return processShard(recordPromiseList, nextShardIterator);
+  try {
+    const response = await Kinesis.getRecords({
+      ShardIterator: shardIterator
+    }).promise();
+    recordPromiseList.push(processRecordBatch(response.Records));
+    if (response.MillisBehindLatest === 0 || !response.NextShardIterator) return recordPromiseList;
+    const nextShardIterator = response.NextShardIterator;
+    log.debug("I'm alive!");
+    return processShard(recordPromiseList, nextShardIterator);
+  } catch (error) {
+    log.error(error);
+    return recordPromiseList;
+  }
 }
 
 /**
  * Handle shard by creating shardIterator and calling processShard.
  *
  * @param {string} stream - kinesis stream name
- * @param {Object} shard - shard object returned by listShards
+ * @param {string} shardId - shard ID
  * @returns {number} number of records successfully processed from shard
  */
-async function handleShard(stream, shard) {
-  const params = {
-    StreamName: stream,
-    ShardId: shard.ShardId,
-    ShardIteratorType: (process.env.startTimestamp !== 'undefined' ? 'AT_TIMESTAMP' : 'TRIM_HORIZON')
-  };
-  if (process.env.startTimestamp !== 'undefined') params.Timestamp = process.env.startTimestamp;
-  const shardIterator = (
-    await Kinesis.getShardIterator(params).promise().catch(log.error)
-  ).ShardIterator;
-  const tallyList = await Promise.all(await processShard([], shardIterator));
-  const shardTally = tallyList.reduce(tallyReducer, 0);
-  return shardTally;
+async function handleShard(stream, shardId) {
+  const iteratorParams = setupIteratorParams(stream, shardId);
+  try {
+    const shardIterator = (
+      await Kinesis.getShardIterator(iteratorParams).promise()
+    ).ShardIterator;
+    const tallyList = await Promise.all(await processShard([], shardIterator));
+    const shardTally = tallyList.reduce(tallyReducer, 0);
+    return shardTally;
+  } catch (err) {
+    log.error(err);
+    return 0;
+  }
 }
 
 /**
@@ -85,18 +151,20 @@ async function handleShard(stream, shard) {
  * @returns {Array<Promise>} list of promises from calls to processShard
  */
 async function processStream(stream, shardPromiseList, params) {
-  const data = (await Kinesis.listShards(params).promise().catch(log.error));
-  if (!data || !data.Shards || data.Shards.length === 0) {
-    log.error(`No shards founds for params ${JSON.stringify(params)}.`);
+  const listShardsResponse = (await Kinesis.listShards(params).promise().catch(log.error));
+  if (!listShardsResponse || !listShardsResponse.Shards || listShardsResponse.Shards.length === 0) {
+    log.error(`No shards found for params ${JSON.stringify(params)}.`);
     return shardPromiseList;
   }
-  log.info(`Processing records from ${data.Shards.length} shards..`);
-  const shardCalls = data.Shards.map((shard) => handleShard(stream, shard).catch(log.error));
+  log.info(`Processing records from ${listShardsResponse.Shards.length} shards..`);
+  const shardCalls = listShardsResponse.Shards.map(
+    (shard) => handleShard(stream, shard.ShardId).catch(log.error)
+  );
   shardPromiseList.push(...shardCalls);
-  if (!data.NextToken) {
+  if (!listShardsResponse.NextToken) {
     return shardPromiseList;
   }
-  const newParams = { NextToken: data.NextToken };
+  const newParams = { NextToken: listShardsResponse.NextToken };
   return processStream(stream, shardPromiseList, newParams);
 }
 
@@ -105,15 +173,12 @@ async function processStream(stream, shardPromiseList, params) {
  * message-consumer's processRecord function.
  *
  * @param {string} stream - kinesis stream name
- * @param {Date|string|number} [streamCreationTimestamp] - Optional. Stream
- * creation time stamp used to differentiate streams that have a name used by a previous stream.
+ * @param {Date|string|number} [streamCreationTimestamp] - Optional. Stream creation
+ * timestamp used to differentiate streams that have a name used by a previous stream.
  * @returns {number} number of records successfully processed from stream
  */
 async function handleStream(stream, streamCreationTimestamp) {
-  const initialParams = {
-    StreamName: stream
-  };
-  if (streamCreationTimestamp) initialParams.StreamCreationTimestamp = streamCreationTimestamp;
+  const initialParams = setupShardParams(stream, streamCreationTimestamp);
   const streamPromiseList = await processStream(stream, [], initialParams);
   const streamResults = await Promise.all(streamPromiseList);
   const recordsProcessed = streamResults.reduce(tallyReducer, 0);
@@ -131,13 +196,12 @@ async function handleStream(stream, streamCreationTimestamp) {
  * @returns {string} String describing outcome
  */
 async function handler(event) {
-  if (!process.env.endTimestamp) process.env.endTimestamp = event.endTimestamp;
-  if (!process.env.startTimestamp) process.env.startTimestamp = event.startTimestamp;
-  if (!process.env.CollectionsTable) process.env.CollectionsTable = event.collectionsTable;
-  if (!process.env.RulesTable) process.env.RulesTable = event.rulesTable;
-  if (!process.env.ProvidersTable) process.env.ProvidersTable = event.providersTable;
+  configureTimestampEnvs(event);
+  if (!process.env.CollectionsTable) process.env.CollectionsTable = event.CollectionsTable;
+  if (!process.env.RulesTable) process.env.RulesTable = event.RulesTable;
+  if (!process.env.ProvidersTable) process.env.ProvidersTable = event.ProvidersTable;
   if (!process.env.system_bucket) process.env.system_bucket = event.system_bucket;
-  if (!process.env.FallbackTopicArn) process.env.FallbackTopicArn = event.fallbackTopicArn;
+  if (!process.env.FallbackTopicArn) process.env.FallbackTopicArn = event.FallbackTopicArn;
 
   if (event.kinesisStream !== undefined) {
     log.info(`Processing records from stream ${event.kinesisStream}`);
@@ -150,5 +214,13 @@ async function handler(event) {
 }
 
 module.exports = {
-  handler
+  configureTimestampEnvs,
+  handler,
+  handleShard,
+  handleStream,
+  processRecordBatch,
+  processShard,
+  processStream,
+  setupIteratorParams,
+  setupShardParams
 };
