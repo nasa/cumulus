@@ -38,6 +38,7 @@ resource "aws_lambda_function" "api" {
       ExecutionsTable              = var.dynamo_tables.executions.name
       GranulesTable                = var.dynamo_tables.granules.name
       IndexFromDatabaseLambda      = aws_lambda_function.index_from_database.arn
+      KinesisFallbackTopicArn      = var.kinesis_fallback_topic_arn
       KinesisInboundEventLogger    = var.kinesis_inbound_event_logger_lambda_function_arn
       OAUTH_PROVIDER               = var.oauth_provider
       PdrsTable                    = var.dynamo_tables.pdrs.name

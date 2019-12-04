@@ -28,8 +28,16 @@ output "hello_world_task" {
   }
 }
 
+output "kinesis_fallback_topic_arn" {
+  value = aws_sns_topic.kinesis_fallback.arn
+}
+
 output "kinesis_inbound_event_logger_lambda_function_arn" {
   value = aws_lambda_function.kinesis_inbound_event_logger.arn
+}
+
+output "manual_consumer_lambda_function_arn" {
+  value = aws_lambda_function.manual_consumer.arn
 }
 
 output "message_consumer_lambda_function_arn" {

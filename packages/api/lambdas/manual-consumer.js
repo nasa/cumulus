@@ -90,7 +90,7 @@ async function processRecordBatch(records) {
   const tally = results.reduce(tallyReducer, 0);
   if (records.length > tally) {
     const failures = records.length - tally;
-    log.debug(`Failed to process ${failures} records from batch of ${records.length}`);
+    log.warn(`Failed to process ${failures} records from batch of ${records.length}`);
   }
   return tally;
 }
@@ -111,7 +111,6 @@ async function processShard(recordPromiseList, shardIterator) {
     recordPromiseList.push(processRecordBatch(response.Records));
     if (response.MillisBehindLatest === 0 || !response.NextShardIterator) return recordPromiseList;
     const nextShardIterator = response.NextShardIterator;
-    log.debug("I'm alive!");
     return processShard(recordPromiseList, nextShardIterator);
   } catch (error) {
     log.error(error);
@@ -203,7 +202,7 @@ async function handler(event) {
   if (!process.env.system_bucket) process.env.system_bucket = event.system_bucket;
   if (!process.env.FallbackTopicArn) process.env.FallbackTopicArn = event.FallbackTopicArn;
 
-  if (event.kinesisStream !== undefined) {
+  if (event.type === 'kinesis' && event.kinesisStream !== undefined) {
     log.info(`Processing records from stream ${event.kinesisStream}`);
     return handleStream(event.kinesisStream, event.kinesisStreamCreationTimestamp);
   }
