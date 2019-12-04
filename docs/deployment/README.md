@@ -54,8 +54,15 @@ For other cases,
 are available.
 
 ```shell
-$ tfenv install <version>
-$ tfenv use <version>
+$ tfenv install 0.12.12
+[INFO] Installing Terraform v0.12.13
+...
+[INFO] Switching completed
+
+$ tfenv use 0.12.12
+[INFO] Switching to v0.12.12
+...
+[INFO] Switching completed
 ```
 
 It is recommended to stay on the Cumulus Core TF version which can be found [here](https://github.com/nasa/cumulus/blob/master/example/.tfversion). Any changes to that will be noted in the release notes.
