@@ -3,6 +3,7 @@
 const get = require('lodash.get');
 const isInteger = require('lodash.isinteger');
 const isObject = require('lodash.isobject');
+const { isNil } = require('@cumulus/common/util');
 
 function errorify(err) {
   return JSON.stringify(err, Object.getOwnPropertyNames(err));
@@ -15,19 +16,12 @@ function errorify(err) {
  * @returns {string} an stringified exception
  */
 function parseException(exception) {
-  // null is considered object
-  if (exception === null) {
-    return {};
-  }
-
-  if (!isObject(exception)) {
-    const converted = JSON.stringify(exception);
-    if (converted === 'undefined') {
-      return {};
-    }
-    return { Error: 'Unknown Error', Cause: converted };
-  }
-  return exception;
+  if (isNil(exception)) return {};
+  if (isObject(exception)) return exception;
+  return {
+    Error: 'Unknown Error',
+    Cause: exception
+  };
 }
 
 /**
