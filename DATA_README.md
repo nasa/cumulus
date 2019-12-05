@@ -4,6 +4,10 @@ Cumulus uses DynamoDB for database storage. While DynamoDB is a schemaless datab
 
 The data models managed by Cumulus and their schema definitions can be found in the [Cumulus source code](./packages/api/models/schemas.js).
 
+## Documenting changes
+
+All changes to the database models should be noted in the [data model CHANGELOG](./DATA_CHANGELOG.md).
+
 ## Managing data schemas
 
 By default, all changes to Cumulus data models should be **backwards-compatible with all previous versions of the data models since the last data migration (if any)**.
