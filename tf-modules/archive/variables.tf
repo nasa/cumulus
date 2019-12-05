@@ -259,7 +259,7 @@ variable "saml_launchpad_metadata_path" {
 
 variable "urs_url" {
   type        = string
-  default     = "https://urs.earthdata.nasa.gov/"
+  default     = "https://uat.urs.earthdata.nasa.gov/"
   description = "The URL of the Earthdata Login site"
 }
 

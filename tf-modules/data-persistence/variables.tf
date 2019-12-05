@@ -7,10 +7,10 @@ variable "prefix" {
 
 # Optional
 
-variable "create_service_linked_role" {
-  description = "Whether to create an IAM service linked role for Elasticsearch"
-  type        = bool
-  default     = true
+variable "custom_domain_name" {
+  description = "Custom domain name for Elasticsearch"
+  type        = string
+  default     = null
 }
 
 variable "elasticsearch_config" {

@@ -1,0 +1,22 @@
+{
+  "version": "0",
+  "id": "315c1398-40ff-a850-213b-158f73e60175",
+  "detail-type": "Step Functions Execution Status Change",
+  "source": "aws.states",
+  "account": "1234",
+  "time": "2019-02-26T19:42:21Z",
+  "region": "us-east-1",
+  "resources": [
+    "arn:aws:states:us-east-1:1234:execution:state-machine-name:execution-name"
+  ],
+  "detail": {
+    "executionArn": "arn:aws:states:us-east-1:1234:execution:state-machine-name:execution-name",
+    "stateMachineArn": "arn:aws:states:us-east-1:1234:stateMachine:state-machine",
+    "name": "execution-name",
+    "status": "RUNNING",
+    "startDate": 1551225271984,
+    "stopDate": null,
+    "input": "{}",
+    "output": null
+  }
+}

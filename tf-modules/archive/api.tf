@@ -69,6 +69,9 @@ resource "aws_lambda_function" "api" {
       ASSERT_ENDPOINT              = var.saml_assertion_consumer_service
       IDP_LOGIN                    = var.saml_idp_login
       LAUNCHPAD_METADATA_PATH      = var.saml_launchpad_metadata_path
+      METRICS_ES_HOST              = var.metrics_es_host
+      METRICS_ES_USER              = var.metrics_es_username
+      METRICS_ES_PASS              = var.metrics_es_password
     }
   }
   memory_size = 756

@@ -43,7 +43,10 @@ async function ensureAuthorized(req, res, next) {
     const userModel = new User();
     const access = new AccessToken();
 
-    await userModel.get({ userName });
+    if (!launchpadProtectedAuth()) {
+      // Only verify user if we're not launchpad protected
+      await userModel.get({ userName });
+    }
     await access.get({ accessToken });
     // Adds additional metadata that authorized endpoints can access.
     req.authorizedMetadata = { userName };
