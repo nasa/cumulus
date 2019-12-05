@@ -6,7 +6,9 @@ hide_title: true
 
 # How to replay Kinesis messages after an outage
 
-After a period of outage, it may be necessary for a DAAC to reprocess or 'replay' messages that arrived on a Kinesis stream but did not trigger an ingest. This document serves as an outline on how to start a replay operation, and how to perform status tracking.
+After a period of outage, it may be necessary for a DAAC to reprocess or 'replay' messages that arrived on an AWS Kinesis Data Stream but did not trigger an ingest. This document serves as an outline on how to start a replay operation, and how to perform status tracking.
+
+NOTE: This operation flow effectively changes only the trigger mechanism for Kinesis ingest notifications. The existence of valid Kinesis-type rules and all other normal requirements for the triggering of ingest via Kinesis still apply.
 
 ## Replays endpoint
 
