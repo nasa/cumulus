@@ -16,16 +16,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- **CUMULUS-1654**
-  - Added new helpers to `@cumulus/common/execution-history`:
-    - `getStepExitedEvent()` returns the `TaskStateExited` event in a workflow execution history after the given step completion/failure event
-    - `getTaskExitedEventOutput()` returns the output message for a `TaskStateExited` event in a workflow execution history
-
 - **CUMULUS-630**
   - Added support for replaying Kinesis records on a stream into the Cumulus Kinesis workflow triggering mechanism, either all the records, or some time slice delimited by start and end timestamps.
   - Added `/replays` endpoint for triggering replays to the operator API.
   - Added `Replay Kinesis Messages` doc to Operator Docs.
   - Added `manualConsumer` lambda function to consume a Kinesis stream. Used by the replay AsyncOperation.
+
+- **CUMULUS-1654**
+  - Added new helpers to `@cumulus/common/execution-history`:
+    - `getStepExitedEvent()` returns the `TaskStateExited` event in a workflow execution history after the given step completion/failure event
+    - `getTaskExitedEventOutput()` returns the output message for a `TaskStateExited` event in a workflow execution history
 
 ### Changed
 
