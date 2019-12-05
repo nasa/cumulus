@@ -10,12 +10,14 @@ By default, all changes to Cumulus data models should be **backwards-compatible 
 
 By "backwards-compatible", we mean that **any new required fields must be nullable or translatable**.
 
-Making new field(s) translatable means that they must be able to be populated from data contained in **any previous version of the database schema**. Furthermore, there must be code written (preferably in the data model "read" method) that **does populate** the value of new field(s) based on existing data in the records.
+Making new field(s) translatable means that they must be able to be populated from data contained in **any previous version of the database schema**.
 
 Enforcing backwards compatibility means that database operations can conform to the following rules:
 
 - Database writes must be able to accept **any schema version**
-- Database reads should be translated to always responses according to the **latest schema version**
+- Database reads should be translated to always return responses matching the **latest schema version**
+
+Preferably, consistency for database reads should be implemented by updating the database model read method to populate the value of new field(s) based on existing data in the records.
 
 ## Risks of breaking changes to schemas
 
