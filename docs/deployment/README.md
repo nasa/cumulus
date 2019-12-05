@@ -39,7 +39,7 @@ The process involves:
 
 #### Install Terraform
 
-It is recommended to keep a consistent version of Terraform as you deploy. Once your state files are migrated to a higher version, they are not always backwards compatible so integrators should pin their Terraform version. This is easily accomplished using the Terraform Version Manager [tfenv](https://github.com/tfutils/tfenv). If you have a CI environment (or any other machine) that you are using to deploy, **make sure that your local Terraform version is at least equal to the version on CI**, otherwise you will run into errors trying to re-deploy from your local machine.
+It is recommended to keep a consistent version of Terraform as you deploy. Once your state files are migrated to a higher version, they are not always backwards compatible so integrators should pin their Terraform version. This is easily accomplished using the Terraform Version Manager [tfenv](https://github.com/tfutils/tfenv). If you have a CI environment (or any other machine) that you are using to deploy the same stack, **you should pin your version across those machines as well*, otherwise you will run into errors trying to re-deploy from your local machine.
 
 If you are using a Mac and [Homebrew](https://brew.sh), installing tfenv is
 as simple as:
