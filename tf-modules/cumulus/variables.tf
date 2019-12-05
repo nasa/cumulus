@@ -77,7 +77,8 @@ variable "prefix" {
 }
 
 variable "sts_credentials_lambda_function_arn" {
-  type = string
+  type    = string
+  default = null
 }
 
 variable "system_bucket" {
