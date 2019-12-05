@@ -39,3 +39,8 @@ If for some reason, schema changes must be made that cannot be made backwards co
 If the change is approved, then a **migration script must be provided** to update all existing data stored by Cumulus to the new schemas. In order to run the migration, there will be necessary downtime for ingest operations, otherwise ongoing workflows would continue to save records that are incompatible with the new schemas.
 
 Once a migration has been performed, then the expectation of backwards compatibility is relative to **all versions of the schemas since the most recent data migration**.
+
+## Release guidelines
+
+- Backwards compatible schema changes can be released in a minor version of Cumulus
+- Breaking schema changes **should be released in a major version of Cumulus**
