@@ -60,11 +60,11 @@ const setupIteratorParams = (stream, shardId) => {
  * used to differentiate streams that have a name used by a previous stream.
  * @returns {Object} number of records successfully processed from stream
  */
-const setupShardParams = (stream, streamCreationTimestamp) => {
+const setupListShardParams = (stream, streamCreationTimestamp) => {
   const params = {
     StreamName: stream
   };
-  if (streamCreationTimestamp) params.StreamCreationTimestamp = streamCreationTimestamp;
+  if (streamCreationTimestamp) params.StreamCreationTimestamp = new Date(streamCreationTimestamp);
   return params;
 };
 
@@ -177,7 +177,7 @@ async function processStream(stream, shardPromiseList, params) {
  * @returns {number} number of records successfully processed from stream
  */
 async function handleStream(stream, streamCreationTimestamp) {
-  const initialParams = setupShardParams(stream, streamCreationTimestamp);
+  const initialParams = setupListShardParams(stream, streamCreationTimestamp);
   const streamPromiseList = await processStream(stream, [], initialParams);
   const streamResults = await Promise.all(streamPromiseList);
   const recordsProcessed = streamResults.reduce(tallyReducer, 0);
@@ -221,5 +221,5 @@ module.exports = {
   processShard,
   processStream,
   setupIteratorParams,
-  setupShardParams
+  setupListShardParams
 };

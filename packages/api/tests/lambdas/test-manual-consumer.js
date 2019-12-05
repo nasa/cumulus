@@ -58,23 +58,23 @@ test.serial('setupIteratorParams returns AT_TIMESTAMP iterator params if timesta
   t.deepEqual(expectedParams, actualParams);
 });
 
-test('setupShardParams returns params with no StreamCreationTimestamp if it is omitted', (t) => {
+test('setupListShardParams returns params with no StreamCreationTimestamp if it is omitted', (t) => {
   const stream = 'stream-1234';
   const expectedParams = {
     StreamName: stream
   };
-  const actualParams = manualConsumer.setupShardParams(stream);
+  const actualParams = manualConsumer.setupListShardParams(stream);
   t.deepEqual(expectedParams, actualParams);
 });
 
-test('setupShardParams returns params with StreamCreationTimestamp if it is provided', (t) => {
+test('setupListShardParams returns params with StreamCreationTimestamp if it is provided', (t) => {
   const stream = 'stream-1234';
   const creationTimestamp = '1969-12-31T16:00:00.000Z';
   const expectedParams = {
     StreamName: stream,
-    StreamCreationTimestamp: creationTimestamp
+    StreamCreationTimestamp: new Date(creationTimestamp)
   };
-  const actualParams = manualConsumer.setupShardParams(stream, creationTimestamp);
+  const actualParams = manualConsumer.setupListShardParams(stream, creationTimestamp);
   t.deepEqual(expectedParams, actualParams);
 });
 
