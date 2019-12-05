@@ -20,11 +20,11 @@ async function startKinesisReplayAsyncOperation(req, res) {
   const payload = req.body;
 
   if (!payload.type) {
-    return res.boom.badRequest('replay type is required.');
+    return res.boom.badRequest('replay type is required');
   }
 
   if (payload.type === 'kinesis' && !payload.kinesisStream) {
-    return res.boom.badRequest('kinesisStream is required for kinesis-type replay.');
+    return res.boom.badRequest('kinesisStream is required for kinesis-type replay');
   }
 
   const input = {
