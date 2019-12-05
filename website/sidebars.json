@@ -86,6 +86,9 @@
       "operator-docs/update-cumulus-dependencies",
       "operator-docs/lifecycle-policies",
       "operator-docs/locating-access-logs"
+    ],
+    "Operations": [
+      "operator-docs/replay-kinesis-messages"
     ]
   }
 }

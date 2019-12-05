@@ -22,11 +22,11 @@ The required and optional fields that should be part of the body of this request
 
 | Field | Type | Required | Description |
 | ------ | ------ | ------ | ------ |
-| type | string | required | Currently only accepts 'kinesis' |
-| kinesisStream | string | if `type: kinesis` | any valid kinesis stream name (*not* ARN) |
-| kinesisStreamCreationTimestamp | string | optional | any input valid for a JS Date constructor, see [AWS documentation on StreamCreationTimestamp](https://docs.aws.amazon.com/kinesis/latest/APIReference/API_ListShards.html#API_ListShards_RequestSyntax) for details on this field. |
-| endTimestamp | string | optional | any input valid for a JS Date constructor. Messages newer than this timestamp will be skipped.
-| startTimestamp | string | optional | any input valid for a JS Date constructor. Messages will be fetched from the Kinesis stream starting at this timestamp. Ignored if it is further in the past than the stream's retention period. |
+| `type` | string | required | Currently only accepts `kinesis`. |
+| `kinesisStream` | string | for type `kinesis` | Any valid kinesis stream name (*not* ARN) |
+| `kinesisStreamCreationTimestamp` | * | optional | Any input valid for a JS Date constructor. For reasons to use this field see [AWS documentation on StreamCreationTimestamp](https://docs.aws.amazon.com/kinesis/latest/APIReference/API_ListShards.html#API_ListShards_RequestSyntax). |
+| `endTimestamp` | * | optional | Any input valid for a JS Date constructor. Messages newer than this timestamp will be skipped.
+| `startTimestamp` | * | optional | Any input valid for a JS Date constructor. Messages will be fetched from the Kinesis stream starting at this timestamp. Ignored if it is further in the past than the stream's retention period. |
 
 ## Status tracking
 
