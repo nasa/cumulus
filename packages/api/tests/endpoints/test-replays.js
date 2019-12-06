@@ -114,6 +114,7 @@ test.serial('request to replays endpoint with valid kinesis parameters starts an
     CollectionsTable: process.env.CollectionsTable,
     RulesTable: process.env.RulesTable,
     ProvidersTable: process.env.ProvidersTable,
+    stackName: process.env.stackName,
     system_bucket: process.env.system_bucket,
     FallbackTopicArn: process.env.KinesisFallbackTopicArn,
     ...body
