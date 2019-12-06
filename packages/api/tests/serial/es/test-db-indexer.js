@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const rewire = require('rewire');
 const aws = require('@cumulus/common/aws');
 const attr = require('dynamodb-data-types').AttributeValue;
 const { randomString } = require('@cumulus/common/test-utils');
@@ -9,7 +10,7 @@ const { constructCollectionId } = require('@cumulus/common/collection-config-sto
 const models = require('../../../models');
 const { Search } = require('../../../es/search');
 const bootstrap = require('../../../lambdas/bootstrap');
-const { handler } = require('../../../lambdas/db-indexer');
+const dbIndexer = rewire('../../../lambdas/db-indexer');
 const {
   fakeCollectionFactory,
   fakeGranuleFactoryV2,
@@ -17,6 +18,8 @@ const {
   fakeFileFactory,
   deleteAliases
 } = require('../../../lib/testUtils');
+
+const { handler } = dbIndexer;
 
 let esClient;
 const esIndex = randomString();
@@ -289,23 +292,17 @@ test.serial('create, update and delete an execution in dynamodb and es', async (
 });
 
 test.serial('The db-indexer does not throw an exception when execution fails', async (t) => {
-  const esHostBefore = process.env.LOCAL_ES_HOST;
+  const insertRecord = buildExecutionRecord({
+    type: 'INSERT',
+    newExecution: fakeExecutionFactory()
+  });
 
-  try {
-    process.env.LOCAL_ES_HOST = '127.0.0.2';
-
-    const insertRecord = buildExecutionRecord({
-      type: 'INSERT',
-      newExecution: fakeExecutionFactory()
-    });
-
-    // fake the lambda trigger
-    await handler({ Records: [insertRecord] });
-
-    t.pass();
-  } catch (err) {
-    t.fail('An exception should not have been thrown');
-  } finally {
-    process.env.LOCAL_ES_HOST = esHostBefore;
-  }
+  // fake the lambda trigger
+  await t.notThrowsAsync(
+    dbIndexer.__with__({
+      indexer: {
+        indexExecution: () => Promise.reject(new Error('oh no'))
+      }
+    })(() => handler({ Records: [insertRecord] }))
+  );
 });
