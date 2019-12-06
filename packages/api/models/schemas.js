@@ -121,6 +121,16 @@ module.exports.collection = {
         + 'validation and extraction regexes against',
       type: 'string'
     },
+    ignoreFilesConfigForDiscovery: {
+      title: 'Ignore Files Configuration During Discovery',
+      description: "When true, ignore this collection's files config list for"
+        + " determining which files to ingest for a granule, and ingest all of"
+        + " them.  When false, ingest only files that match a regex in one of"
+        + " this collection's files config list.  When this property is"
+        + " specified on a task, it overrides the value set on a collection."
+        + " Defaults to false.",
+      type: 'boolean'
+    },
     files: {
       title: 'Files',
       description: 'List of file definitions',
@@ -368,6 +378,16 @@ module.exports.rule = {
     meta: {
       title: 'Optional MetaData for the Rule',
       type: 'object',
+      properties: {
+        retries: {
+          description: 'Number of retries on errors, for sqs-type rule only. Default to 3.',
+          type: 'number'
+        },
+        visibilityTimeout: {
+          description: 'VisibilityTimeout in seconds for the inflight messages, for sqs-type rule only.  Default to the visibility timeout of the SQS queue when the rule is created.',
+          type: 'number'
+        }
+      },
       additionalProperties: true
     },
     queueName: {

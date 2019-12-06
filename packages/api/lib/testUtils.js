@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { sqs } = require('@cumulus/common/aws');
 const { Search } = require('../es/search');
 const { createJwtToken } = require('./token');
 
@@ -289,8 +290,74 @@ async function createFakeJwtAuthToken({ accessTokenModel, userModel }) {
   return createJwtToken({ accessToken, expirationTime, username: userRecord.userName });
 }
 
+/**
+ * create a dead-letter queue and a source queue
+ *
+ * @param {string} queueNamePrefix - prefix of the queue name
+ * @returns {Object} - {deadLetterQueueUrl: <url>, queueUrl: <url>} queues created
+ */
+async function createSqsQueues(queueNamePrefix) {
+  // dead letter queue
+  const deadLetterQueueName = `${queueNamePrefix}DeadLetterQueue`;
+  const deadLetterQueueParms = {
+    QueueName: deadLetterQueueName,
+    Attributes: {
+      VisibilityTimeout: '300'
+    }
+  };
+  const { QueueUrl: deadLetterQueueUrl } = await sqs()
+    .createQueue(deadLetterQueueParms).promise();
+  const qAttrParams = {
+    QueueUrl: deadLetterQueueUrl,
+    AttributeNames: ['QueueArn']
+  };
+  const { Attributes: { QueueArn: deadLetterQueueArn } } = await sqs()
+    .getQueueAttributes(qAttrParams).promise();
+
+  // source queue
+  const queueName = `${queueNamePrefix}Queue`;
+  const queueParms = {
+    QueueName: queueName,
+    Attributes: {
+      RedrivePolicy: JSON.stringify({
+        deadLetterTargetArn: deadLetterQueueArn,
+        maxReceiveCount: 3
+      }),
+      VisibilityTimeout: '300'
+    }
+  };
+
+  const { QueueUrl: queueUrl } = await sqs().createQueue(queueParms).promise();
+  return { deadLetterQueueUrl, queueUrl };
+}
+
+/**
+ * get message counts of the given SQS queue
+ *
+ * @param {string} queueUrl - SQS queue URL
+ * @returns {Object} - message counts
+ * {numberOfMessagesAvailable: <number>, numberOfMessagesNotVisible: <number>}
+ */
+async function getSqsQueueMessageCounts(queueUrl) {
+  const qAttrParams = {
+    QueueUrl: queueUrl,
+    AttributeNames: ['All']
+  };
+  const attributes = await sqs().getQueueAttributes(qAttrParams).promise();
+  const {
+    ApproximateNumberOfMessages: numberOfMessagesAvailable,
+    ApproximateNumberOfMessagesNotVisible: numberOfMessagesNotVisible
+  } = attributes.Attributes;
+
+  return {
+    numberOfMessagesAvailable: parseInt(numberOfMessagesAvailable, 10),
+    numberOfMessagesNotVisible: parseInt(numberOfMessagesNotVisible, 10)
+  };
+}
+
 module.exports = {
   createFakeJwtAuthToken,
+  createSqsQueues,
   deleteAliases,
   fakeAccessTokenFactory,
   fakeGranuleFactory,
@@ -305,6 +372,7 @@ module.exports = {
   fakeFileFactory,
   fakeUserFactory,
   fakeProviderFactory,
+  getSqsQueueMessageCounts,
   getWorkflowList,
   isLocalApi,
   testEndpoint

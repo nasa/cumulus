@@ -40,7 +40,6 @@ module "cumulus" {
   cumulus_message_adapter_lambda_layer_arn = var.cumulus_message_adapter_lambda_layer_arn
 
   prefix = var.prefix
-  region = var.region
 
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.subnet_ids
@@ -64,6 +63,10 @@ module "cumulus" {
   ems_retention_in_days = var.ems_retention_in_days
   ems_submit_report     = var.ems_submit_report
   ems_username          = var.ems_username
+
+  metrics_es_host     = var.metrics_es_host
+  metrics_es_password = var.metrics_es_password
+  metrics_es_username = var.metrics_es_username
 
   cmr_client_id   = var.cmr_client_id
   cmr_environment = "UAT"
@@ -112,7 +115,8 @@ module "cumulus" {
     "mboyd",
     "menno.vandiermen",
     "mhuffnagle2",
-    "pquinn1"
+    "pquinn1",
+    "brian.tennity"
   ]
 
   distribution_url = var.distribution_url

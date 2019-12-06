@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sf-sns-report",
-  "version": "1.16.0",
+  "version": "1.16.1",
   "description": "Broadcasts an incoming Cumulus message to SNS",
   "main": "index.js",
   "directories": {
@@ -33,12 +33,12 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api": "1.16.0",
-    "@cumulus/cumulus-message-adapter-js": "^1.0.8",
+    "@cumulus/api": "1.16.1",
+    "@cumulus/cumulus-message-adapter-js": "^1.0.10",
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {
-    "@cumulus/common": "1.16.0",
+    "@cumulus/common": "1.16.1",
     "ava": "^2.1.0",
     "babel-loader": "^8.0.6",
     "babel-plugin-source-map-support": "^2.1.1",

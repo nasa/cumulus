@@ -3,6 +3,11 @@ set -ex
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-publish.sh
 
+if [[ ! $PUBLISH_FLAG == true ]]; then
+  >&2 echo "******Skipping publish to npm step as PUBLISH_FLAG is not set"
+  exit 0
+fi
+
 export VERSION=$(jq --raw-output .version lerna.json)
 export NPM_TAG=$(node ./bamboo/npm-tag.js);
 
@@ -15,6 +20,6 @@ npx lerna publish \
   --yes \
   --force-publish=* \
   --dist-tag=${NPM_TAG} \
-  --exact#
+  --exact
 
 . ./bamboo/create-release.sh

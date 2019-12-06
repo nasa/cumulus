@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sync-granule",
-  "version": "1.16.0",
+  "version": "1.16.1",
   "description": "Download a given granule",
   "main": "index.js",
   "directories": {
@@ -35,13 +35,13 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "1.16.0",
-    "@cumulus/cumulus-message-adapter-js": "^1.0.8",
-    "@cumulus/ingest": "1.16.0",
+    "@cumulus/common": "1.16.1",
+    "@cumulus/cumulus-message-adapter-js": "^1.0.10",
+    "@cumulus/ingest": "1.16.1",
     "p-map": "^2.1.0"
   },
   "devDependencies": {
-    "@cumulus/test-data": "1.16.0",
+    "@cumulus/test-data": "1.16.1",
     "ava": "^2.1.0",
     "babel-loader": "^8.0.6",
     "babel-plugin-source-map-support": "^2.1.1",

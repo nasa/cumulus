@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/discover-granules",
-  "version": "1.16.0",
+  "version": "1.16.1",
   "description": "Discover Granules in FTP/HTTP/HTTPS/SFTP/S3 endpoints",
   "main": "index.js",
   "directories": {
@@ -38,9 +38,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "1.16.0",
-    "@cumulus/cumulus-message-adapter-js": "^1.0.8",
-    "@cumulus/ingest": "1.16.0"
+    "@cumulus/common": "1.16.1",
+    "@cumulus/cumulus-message-adapter-js": "^1.0.10",
+    "@cumulus/ingest": "1.16.1"
   },
   "devDependencies": {
     "ava": "^2.1.0",

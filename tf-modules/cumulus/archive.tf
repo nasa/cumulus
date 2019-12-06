@@ -2,7 +2,6 @@ module "archive" {
   source = "../archive"
 
   prefix = var.prefix
-  region = var.region
 
   permissions_boundary_arn = var.permissions_boundary_arn
 
@@ -48,7 +47,7 @@ module "archive" {
   saml_idp_login                  = var.saml_idp_login
   saml_launchpad_metadata_path    = var.saml_launchpad_metadata_path
 
-  urs_url             = "https://uat.urs.earthdata.nasa.gov"
+  urs_url             = var.urs_url
   urs_client_id       = var.urs_client_id
   urs_client_password = var.urs_client_password
 

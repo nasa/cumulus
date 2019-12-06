@@ -33,7 +33,7 @@ async function populateBucket(bucket, stackName) {
   // upload workflow files
   await Promise.all(workflowList.map((obj) => promiseS3Upload({
     Bucket: bucket,
-    Key: `${obj.name}.json`,
+    Key: `${stackName}/workflows/${obj.name}.json`,
     Body: JSON.stringify(obj)
   })));
   // upload workflow template

@@ -34,6 +34,7 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 |files|`<JSON Object>` of files defined [here](#files-object)|Yes|Describe the individual files that will exist for each granule in this collection (size, browse, meta, etc.)|
 |dataType|`"MOD09GQ"`|No|Can be specified, but this value will default to the collection_name if not|
 |duplicateHandling|`"replace"`|No|<code>("replace"&#124;"version"&#124;"skip")</code> determines granule duplicate handling scheme|
+|ignoreFilesConfigForDiscovery|`false` (default)|No|By default, during discovery only files that match one of the regular expressions in this collection's `files` attribute (see above) are ingested.  Setting this to `true` will ignore the `files` attribute during discovery, meaning that all files for a granule (i.e., all files with filenames matching `granuleIdExtraction`) will be ingested even when they don't match a regular expression in the `files` attribute at _discovery_ time.  (NOTE: this attribute does not appear in the example file, but is listed here for completeness.)
 |process|`"modis"`|No|Example options for this are found in the ChooseProcess step definition in [the IngestAndPublish workflow definition](https://github.com/nasa/cumulus/tree/master/example/cumulus-tf/ingest_and_publish_granule_workflow.tf)|
 |provider_path|`"cumulus-test-data/pdrs"`|No|This collection is expecting to find data in a `cumulus-test-data/pdrs` directory, whether that be in S3 or at an http endpoint|
 |meta|`<JSON Object>` of MetaData for the collection|No|MetaData for the collection. This metadata will be available to workflows for this collection via the [Cumulus Message Adapter](workflows/input_output.md).
@@ -81,6 +82,7 @@ An example of an SQS rule configuration is [here](https://github.com/nasa/cumulu
 |workflow|`"CNMExampleWorkflow"`|Yes|Name of the workflow to be run. A list of available workflows can be found on the Workflows page|
 |provider|`"PODAAC_SWOT"`|No|Configured provider's ID. This can be found on the Providers dashboard page|
 |collection|`<JSON Object>` collection object shown [below](#collection-object)|Yes|Name and version of the collection this rule will moderate. Relates to a collection configured and found in the Collections page|
+|meta|`<JSON Object>` of MetaData for the rule|No|MetaData for the rule. This metadata will be available to workflows for this rule via the [Cumulus Message Adapter](workflows/input_output.md).
 |rule|`<JSON Object>` rule type and associated values - discussed [below](#rule-object)|Yes|Object defining the type and subsequent attributes of the rule|
 |state|`"ENABLED"`|No|<code>("ENABLED"&#124;"DISABLED")</code> whether or not the rule will be active. Defaults to `"ENABLED"`.|
 |tags|`["kinesis", "podaac"]`|No|An array of strings that can be used to simplify search|
@@ -91,6 +93,13 @@ An example of an SQS rule configuration is [here](https://github.com/nasa/cumulu
 |:---:|:-----:|:------:|-----------|
 |name|`"L2_HR_PIXC"`|Yes|Name of a collection defined/configured in the Collections dashboard page|
 |version|`"000"`|Yes|Version number of a collection defined/configured in the Collections dashboard page|
+
+### meta-object
+
+|Key  |Value  |Required|Description|
+|:---:|:-----:|:------:|-----------|
+|retries|`3`|No|Number of retries on errors, for sqs-type rule only. Defaults to 3.|
+|visibilityTimeout|`900`|No|VisibilityTimeout in seconds for the inflight messages, for sqs-type rule only. Defaults to the visibility timeout of the SQS queue when the rule is created.|
 
 ### rule-object
 
@@ -107,4 +116,14 @@ The `rule - value` entry depends on the type of run:
 * If this is a scheduled rule this field must hold a valid [cron-type expression or rate expression](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html).
 * If this is a kinesis rule, this must be a configured `${Kinesis_stream_ARN}`. [Example](data-cookbooks/cnm-workflow.md#rule-configuration)
 * If this is an sns rule, this must be an existing `${SNS_Topic_Arn}`. [Example](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/snsRuleDef.json)
-* If this is an sqs rule, this must be an existing `${SQS_QueueUrl}` that your account has permissions to access. [Example](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/data/rules/sqs/MOD09GQ_006_sqsRule.json)
+* If this is an sqs rule, this must be an existing `${SQS_QueueUrl}` that your account has permissions to access, and also you must configure a dead-letter queue for this SQS queue. [Example](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/data/rules/sqs/MOD09GQ_006_sqsRule.json)
+
+### sqs-type rule features
+
+* When an SQS rule is triggered, the SQS message remains on the queue.
+* The SQS message is not processed multiple times in parallel when visibility timeout is properly set.  You should set the visibility timeout to the maximum expected length of the workflow with padding. Longer is better to avoid parallel processing.
+* The SQS message visibility timeout can be overridden by the rule.
+* Upon successful workflow execution, the SQS message is removed from the queue.
+* Upon failed execution(s), the workflow is run 3 or configured number of times.
+* Upon failed execution(s), the visibility timeout will be set to 5s to allow retries.
+* After configured number of failed retries, the SQS message is moved to the dead-letter queue configured for the SQS queue.

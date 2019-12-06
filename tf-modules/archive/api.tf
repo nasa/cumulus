@@ -44,7 +44,6 @@ resource "aws_lambda_function" "api" {
       ProvidersTable               = var.dynamo_tables.providers.name
       RulesTable                   = var.dynamo_tables.rules.name
       oauth_user_group             = var.oauth_user_group
-      STSCredentialsLambda         = var.sts_credentials_lambda
       TOKEN_REDIRECT_ENDPOINT      = local.api_redirect_uri
       TOKEN_SECRET                 = var.token_secret
       UsersTable                   = var.dynamo_tables.users.name
@@ -70,6 +69,9 @@ resource "aws_lambda_function" "api" {
       ASSERT_ENDPOINT              = var.saml_assertion_consumer_service
       IDP_LOGIN                    = var.saml_idp_login
       LAUNCHPAD_METADATA_PATH      = var.saml_launchpad_metadata_path
+      METRICS_ES_HOST              = var.metrics_es_host
+      METRICS_ES_USER              = var.metrics_es_username
+      METRICS_ES_PASS              = var.metrics_es_password
     }
   }
   memory_size = 756

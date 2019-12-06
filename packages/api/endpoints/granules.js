@@ -184,6 +184,25 @@ async function get(req, res) {
 async function bulk(req, res) {
   const payload = req.body;
 
+  if (!payload.workflowName) {
+    return res.boom.badRequest('workflowName is required.');
+  }
+
+  if (!payload.ids && !payload.query) {
+    return res.boom.badRequest('One of ids or query is required');
+  }
+
+  if (payload.query
+    && !(process.env.METRICS_ES_HOST
+    && process.env.METRICS_ES_USER
+    && process.env.METRICS_ES_PASS)) {
+    return res.boom.badRequest('ELK Metrics stack not configured');
+  }
+
+  if (payload.query && !payload.index) {
+    return res.boom.badRequest('Index is required if query is sent');
+  }
+
   const asyncOperationModel = new models.AsyncOperation({
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
@@ -201,10 +220,14 @@ async function bulk(req, res) {
         granulesTable: process.env.GranulesTable,
         system_bucket: process.env.system_bucket,
         stackName: process.env.stackName,
-        invoke: process.env.invoke
+        invoke: process.env.invoke,
+        esHost: process.env.METRICS_ES_HOST,
+        esUser: process.env.METRICS_ES_USER,
+        esPassword: process.env.METRICS_ES_PASS
       },
       esHost: process.env.ES_HOST
     });
+
     return res.send(asyncOperation);
   } catch (err) {
     if (err.name !== 'EcsStartTaskError') throw err;
