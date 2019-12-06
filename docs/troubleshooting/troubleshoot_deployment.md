@@ -1,12 +1,53 @@
 ---
-id: troubleshoot_deployment
-title: Troubleshooting
+id: troubleshooting-deployment
+title: Troubleshooting Deployment
 hide_title: true
 ---
 
-# Troubleshooting
+# Troubleshooting Deployment
 
 This document provides 'notes' on frequently encountered deployment issues. The issues reported are organized by relevant subsection.
+
+## Terraform Logging
+
+The `TF_LOG` environment variable can be set to help debug Terraform-specific issues. See [Terraform debugging](https://www.terraform.io/docs/internals/debugging.html).
+
+For example `export TF_LOG=DEBUG` will log verbose output from Terraform commands to help debug issues.
+
+## Terraform Init
+
+### `Failed to get existing workspaces: AccessDenied: Access Denied`
+
+This is an issue accessing the remote configuration in your S3 bucket. You can check your access to the bucket via the CLI using `aws s3 ls <bucket-name>`. If that works, Terraform may be looking at the incorrect bucket.
+
+When switching between accounts, you may need to use the [`-reconfigure`](https://www.terraform.io/docs/commands/init.html#backend-initialization) option and run `terraform init -reconfigure`.
+
+## Deploying data persistence resources
+
+### `Invalid index: aws_elasticsearch_domain.es_vpc[0] is empty tuple`
+
+You may see this error if the Elasticsearch domain tracked by your Terraform state cannot be found or no longer exists. This could happen if you have accidentally deleted your Elasticsearch domain, producing an error on your next `terraform apply` that looks something like:
+
+```plain
+Error: Invalid index
+
+  on ../../tf-modules/data-persistence/elasticsearch.tf line 144, in resource "aws_elasticsearch_domain_policy" "es_vpc_domain_policy":
+ 144:       "Resource": "${aws_elasticsearch_domain.es_vpc[[0].arn}/*"
+    ----------------
+     aws_elasticsearch_domain.es_vpc[0] is empty tuple
+
+The given key does not identify an element in this collection value.
+```
+
+To resolve this issue, you need to manually remove the entry from your Terraform state referencing the missing resource:
+
+```bash
+$ terraform state rm module.data_persistence.aws_elasticsearch_domain.es_vpc
+Removed module.data_persistence.aws_elasticsearch_domain.es_vpc[0]
+Successfully removed 1 resource instance(s).
+```
+
+After removing the entry from the Terraform state, `terraform apply` should work correctly.
 
 ## Deploying Cumulus
 

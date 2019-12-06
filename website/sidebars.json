@@ -32,7 +32,6 @@
       "deployment/components",
       "deployment/create_bucket",
       "deployment/server_access_logging",
-      "deployment/troubleshoot_deployment",
       "deployment/thin_egress_app"
     ],
     "Deployment Options":[
@@ -83,9 +82,9 @@
       "operator-docs/about-operator-docs"
     ],
     "Configuration": [
-      "operator-docs/update-cumulus-dependencies",
       "operator-docs/lifecycle-policies",
-      "operator-docs/locating-access-logs"
+      "operator-docs/locating-access-logs",
+      "operator-docs/collection-storage-best-practices"
     ]
   }
 }

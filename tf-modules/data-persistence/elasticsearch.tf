@@ -3,7 +3,8 @@ locals {
   deploy_inside_vpc  = var.include_elasticsearch && local.inside_vpc
   deploy_outside_vpc = var.include_elasticsearch && local.inside_vpc == false
   include_es_policy  = length(var.es_trusted_role_arns) > 0 ? true : false
-  es_domain_name     = "${var.prefix}-${var.elasticsearch_config.domain_name}${local.inside_vpc ? "-vpc" : ""}"
+  default_domain_name = "${var.prefix}-${var.elasticsearch_config.domain_name}${local.inside_vpc ? "-vpc" : ""}"
+  es_domain_name     = var.custom_domain_name == null ? local.default_domain_name : var.custom_domain_name
 }
 
 resource "aws_elasticsearch_domain" "es" {
@@ -56,11 +57,6 @@ resource "aws_elasticsearch_domain_policy" "es_domain_policy" {
   count           = local.deploy_outside_vpc && local.include_es_policy ? 1 : 0
   domain_name     = aws_elasticsearch_domain.es[0].domain_name
   access_policies = data.aws_iam_policy_document.es_access_policy[0].json
-}
-
-resource "aws_iam_service_linked_role" "es" {
-  count            = local.deploy_inside_vpc && var.create_service_linked_role ? 1 : 0
-  aws_service_name = "es.amazonaws.com"
 }
 
 # Elasticsearch domain in a VPC
@@ -120,10 +116,6 @@ resource "aws_elasticsearch_domain" "es_vpc" {
   snapshot_options {
     automated_snapshot_start_hour = 0
   }
-
-  depends_on = [
-    "aws_iam_service_linked_role.es"
-  ]
 
   tags = local.default_tags
 }

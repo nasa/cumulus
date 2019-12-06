@@ -10,7 +10,7 @@ The diagram below illustrates the workflow process in detail and the various int
 
 **Note:** This diagram is current of v1.15.0.
 
-![Architecture diagram showing the interfaces for triggering and reporting of Cumulus workflow executions](../assets/interfaces.svg)
+![Architecture diagram showing the interfaces for triggering and reporting of Cumulus workflow executions](assets/interfaces.svg)
 
 ## Workflow triggers and queuing
 

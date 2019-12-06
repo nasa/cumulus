@@ -8,17 +8,70 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 **Please note**:
+
 - Your workflow tasks should use `cumulus-message-adapter-js` version 1.0.10+ to utilize new granule, parentArn, asyncOperationId, and stackName fields on the logs.
+- The `data-persistence` module no longer manages the creation of an Elasticsearch service-linked role for deploying Elasticsearch to a VPC. Follow the [deployment instructions on preparing your VPC](https://nasa.github.io/cumulus/docs/deployment/deployment-readme#vpc-subnets-and-security-group) for guidance on how to create the Elasticsearch service-linked role manually.
+- There is now a `distribution_api_gateway_stage` variable for the `tf-modules/cumulus` Terraform module that will be used as the API gateway stage name used for the distribution API (Thin Egress App)
+- Default value for the `urs_url` variable is now `https://uat.urs.earthdata.nasa.gov/` in the `tf-modules/cumulus` and `tf-modules/archive` Terraform modules. So deploying the `cumulus` module without a `urs_url` variable set will integrate your Cumulus deployment with the UAT URS environment.
+
+### Added
+
+- **CUMULUS-1563**
+  - Added `custom_domain_name` variable to `tf-modules/data-persistence` module
+- **CUMULUS-1654**
+  - Added new helpers to `@cumulus/common/execution-history`:
+    - `getStepExitedEvent()` returns the `TaskStateExited` event in a workflow execution history after the given step completion/failure event
+    - `getTaskExitedEventOutput()` returns the output message for a `TaskStateExited` event in a workflow execution history
+
+### BREAKING CHANGES
+
+- **CUMULUS-1321**
+  - The `region` argument to the `cumulus` Terraform module has been removed
 
 ### Changed
+
+- **CUMULUS-1578**
+  - Updates SAML launchpad configuration to authorize via configured userGroup.
+   [See the NASA specific documentation (protected)](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+SAML+Launchpad+Integration)
+
+- **CUMULUS-1579**
+  - Elasticsearch list queries use `match` instead of `term`. `term` had been analyzing the terms and not supporting `-` in the field values.
 
 - **CUMULUS-1619**
   - Adds 4 new keys to `@cumulus/logger` to display granules, parentArn, asyncOperationId, and stackName.
   - Depends on `cumulus-message-adapter-js` version 1.0.10+. Cumulus tasks updated to use this version.
 
+- **CUMULUS-1654**
+  - Changed `@cumulus/common/SfnStep.parseStepMessage()` to a static class method
+
+- **CUMULUS-1641**
+  - Added `meta.retries` and `meta.visibilityTimeout` properties to sqs-type rule. To create sqs-type rule, you're required to configure a dead-letter queue on your queue.
+  - Added `sqsMessageRemover` lambda which removes the message from SQS queue upon successful workflow execution.
+  - Updated `sqsMessageConsumer` lambda to not delete message from SQS queue, and to retry the SQS message for configured number of times.
+
+### Removed
+
+- Removed `create_service_linked_role` variable from `tf-modules/data-persistence` module.
+
+### Fixed
+
+- **CUMULUS-1668** - Fixed a race condition where executions may not have been
+  added to the database correctly
+- **CUMULUS-1654** - Fixed issue with `publishReports` Lambda not including workflow execution error information for failed workflows with a single step
+- Fixed `tf-modules/cumulus` module so that the `urs_url` variable is passed on to its invocation of the `tf-modules/archive` module
+
 ## [v1.16.0] - 2019-11-15
 
 ### Added
+
+- **CUMULUS-1321**
+  - A `deploy_distribution_s3_credentials_endpoint` variable has been added to
+    the `cumulus` Terraform module. If true, the NGAP-backed S3 credentials
+    endpoint will be added to the Thin Egress App's API. Default: true
+
+- **CUMULUS-1544**
+  - Updated the `/granules/bulk` endpoint to correctly query Elasticsearch when
+  granule ids are not provided.
 
 - **CUMULUS-1580**
   - Added `/granules/bulk` endpoint to `@cumulus/api` to perform bulk actions on granules given either a list of granule ids or an Elasticsearch query and the workflow to perform.
