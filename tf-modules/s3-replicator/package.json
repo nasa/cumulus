@@ -1,6 +1,6 @@
 {
   "name": "s3-replicator",
-  "version": "1.16.0",
+  "version": "1.16.1",
   "description": "Replicate S3 Events to alternate bucket. Solves same-region replication.",
   "main": "index.js",
   "engines": {

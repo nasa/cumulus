@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.16.1] - 2019-12-6
+
 **Please note**:
 
-- Your workflow tasks should use `cumulus-message-adapter-js` version 1.0.10+ to utilize new granule, parentArn, asyncOperationId, and stackName fields on the logs.
+- Your workflow tasks should use the following versions of the CMA libraries to utilize new granule, parentArn, asyncOperationId, and stackName fields on the logs:
+  - `cumulus-message-adapter-js` version 1.0.10+
+  - `cumulus-message-adapter-python` version 1.1.1+
+  - `cumulus-message-adapter-java` version 1.2.11+
 - The `data-persistence` module no longer manages the creation of an Elasticsearch service-linked role for deploying Elasticsearch to a VPC. Follow the [deployment instructions on preparing your VPC](https://nasa.github.io/cumulus/docs/deployment/deployment-readme#vpc-subnets-and-security-group) for guidance on how to create the Elasticsearch service-linked role manually.
 - There is now a `distribution_api_gateway_stage` variable for the `tf-modules/cumulus` Terraform module that will be used as the API gateway stage name used for the distribution API (Thin Egress App)
 - Default value for the `urs_url` variable is now `https://uat.urs.earthdata.nasa.gov/` in the `tf-modules/cumulus` and `tf-modules/archive` Terraform modules. So deploying the `cumulus` module without a `urs_url` variable set will integrate your Cumulus deployment with the UAT URS environment.
@@ -1761,7 +1766,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.16.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.16.1...HEAD
+[v1.16.0]: https://github.com/nasa/cumulus/compare/v1.16.0...v1.16.1
 [v1.16.0]: https://github.com/nasa/cumulus/compare/v1.15.0...v1.16.0
 [v1.15.0]: https://github.com/nasa/cumulus/compare/v1.14.4...v1.15.0
 [v1.14.4]: https://github.com/nasa/cumulus/compare/v1.14.3...v1.14.4
