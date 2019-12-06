@@ -41,7 +41,7 @@ const getLocalEsHost = () => {
 
 const esTestConfig = () => ({
   node: getLocalEsHost(),
-  requestTimeout: 1000,
+  requestTimeout: 5000,
   maxRetries: 0
 });
 
