@@ -62,6 +62,7 @@ resource "aws_lambda_function" "api" {
       launchpad_api                = var.launchpad_api
       launchpad_certificate        = var.launchpad_certificate
       launchpad_passphrase         = jsondecode(data.aws_lambda_invocation.custom_bootstrap.result).Data.LaunchpadPassphrase
+      ManualConsumerLambda         = var.manual_consumer_function_arn
       messageConsumer              = var.message_consumer_function_arn
       stackName                    = var.prefix
       system_bucket                = var.system_bucket

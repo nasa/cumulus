@@ -93,8 +93,9 @@ test.serial('processRecordBatch calls processRecord on each valid record and ret
   t.true(processRecord.calledTwice);
 });
 
-test.serial('processRecordBatch skips records newer than the endTimestamp but counts skipped records as successful', async (t) => {
+test.serial('processRecordBatch skips records newer than the endTimestamp and logs info', async (t) => {
   const processRecord = sinon.stub(messageConsumer, 'processRecord').returns(true);
+  const logInfo = sinon.spy(log, 'info');
   process.env.endTimestamp = new Date(Date.now() - 1000);
   const result = await manualConsumer.processRecordBatch([
     { Data: 'record1', ApproximateArrivalTimestamp: Date.now() },
@@ -102,9 +103,11 @@ test.serial('processRecordBatch skips records newer than the endTimestamp but co
   ]);
 
   processRecord.restore();
+  logInfo.restore();
   delete process.env.endTimestamp;
 
-  t.is(result, 2);
+  t.is(result, 0);
+  t.true(logInfo.called);
   t.true(processRecord.notCalled);
 });
 
@@ -230,6 +233,7 @@ test.serial('handler sets envs from event', async (t) => {
     CollectionsTable: 'test-CollectionsTable',
     RulesTable: 'test-RulesTable',
     ProvidersTable: 'test-ProvidersTable',
+    stackName: 'test-stack',
     system_bucket: 'test-bucket',
     FallbackTopicArn: 'arn:aws:sns:us-east-1:00000000000:fallbackTopic'
   };
@@ -247,6 +251,7 @@ test.serial('handler should not overwrite existing envs', async (t) => {
     CollectionsTable: 'test-CollectionsTable',
     RulesTable: 'test-RulesTable',
     ProvidersTable: 'test-ProvidersTable',
+    stackName: 'test-stack',
     system_bucket: 'test-bucket',
     FallbackTopicArn: 'arn:aws:sns:us-east-1:00000000000:fallbackTopic'
   };

@@ -31,6 +31,7 @@ async function startKinesisReplayAsyncOperation(req, res) {
     CollectionsTable: process.env.CollectionsTable,
     RulesTable: process.env.RulesTable,
     ProvidersTable: process.env.ProvidersTable,
+    stackName: process.env.stackName,
     system_bucket: process.env.system_bucket,
     FallbackTopicArn: process.env.KinesisFallbackTopicArn,
     ...payload

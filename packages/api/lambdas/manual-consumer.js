@@ -77,22 +77,27 @@ const setupListShardParams = (stream, streamCreationTimestamp) => {
 async function processRecordBatch(records) {
   const results = await Promise.all(records.map(async (record) => {
     if (new Date(record.ApproximateArrivalTimestamp) > new Date(process.env.endTimestamp)) {
-      return 1;
+      return 'skip';
     }
     try {
-      await messageConsumer.processRecord({ kinesis: { data: record.Data } });
-      return 1;
+      await messageConsumer.processRecord({ kinesis: { data: record.Data } }, false);
+      return 'ok';
     } catch (err) {
       log.error(err);
-      return 0;
+      return 'err';
     }
   }));
-  const tally = results.reduce(tallyReducer, 0);
-  if (records.length > tally) {
-    const failures = records.length - tally;
-    log.warn(`Failed to process ${failures} records from batch of ${records.length}`);
+  const { skip, err, ok } = results.reduce((acc, cur) => {
+    acc[cur] += 1;
+    return acc;
+  }, { skip: 0, err: 0, ok: 0 });
+  if (skip > 0) {
+    log.info(`Skipped ${skip} of ${records.length} records in batch for arriving after endTimestamp`);
   }
-  return tally;
+  if (err > 0) {
+    log.warn(`Failed to process ${err} of ${records.length} records in batch`);
+  }
+  return ok;
 }
 
 /**
@@ -199,6 +204,7 @@ async function handler(event) {
   if (!process.env.CollectionsTable) process.env.CollectionsTable = event.CollectionsTable;
   if (!process.env.RulesTable) process.env.RulesTable = event.RulesTable;
   if (!process.env.ProvidersTable) process.env.ProvidersTable = event.ProvidersTable;
+  if (!process.env.stackName) process.env.stackName = event.stackName;
   if (!process.env.system_bucket) process.env.system_bucket = event.system_bucket;
   if (!process.env.FallbackTopicArn) process.env.FallbackTopicArn = event.FallbackTopicArn;
 
