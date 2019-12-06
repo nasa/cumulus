@@ -14,7 +14,7 @@ The `TF_LOG` environment variable can be set to help debug Terraform-specific is
 
 For example `export TF_LOG=DEBUG` will log verbose output from Terraform commands to help debug issues.
 
-## Terraform Init
+## `terraform init`
 
 ### `Failed to get existing workspaces: AccessDenied: Access Denied`
 
