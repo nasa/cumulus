@@ -135,6 +135,8 @@ module "queue_granules_service" {
 }
 ```
 
+> **Please note:** If you have updated the code for the Lambda specified by `--lambdaArn`, you will have to manually restart the tasks in your ECS service before invocation of the Step Function activity will use the updated Lambda code.
+
 - An updated [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf) to utilize the new resource (the resource key in the `QueueGranules` step has been updated to:
 
 `"Resource": "${aws_sfn_activity.queue_granules.id}"`)`

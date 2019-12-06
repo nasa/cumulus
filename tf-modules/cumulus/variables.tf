@@ -77,7 +77,8 @@ variable "prefix" {
 }
 
 variable "sts_credentials_lambda_function_arn" {
-  type = string
+  type    = string
+  default = null
 }
 
 variable "system_bucket" {
@@ -148,6 +149,12 @@ variable "custom_queues" {
   description = "Map of SQS queue identifiers to queue URLs"
   type    = list(object({ id = string, url = string }))
   default = []
+}
+
+variable "deploy_distribution_s3_credentials_endpoint" {
+  description = "Whether or not to include the S3 credentials endpoint in the Thin Egress App"
+  type = bool
+  default = true
 }
 
 variable "distribution_api_gateway_stage" {
@@ -369,11 +376,6 @@ variable "private_archive_api_gateway" {
   description = "Whether to deploy the archive API as a private API gateway"
   type = bool
   default = true
-}
-
-variable "region" {
-  description = "The AWS region to deploy to"
-  type    = string
 }
 
 variable "saml_entity_id" {

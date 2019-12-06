@@ -265,11 +265,6 @@ variable "saml_launchpad_metadata_path" {
   default = "N/A"
 }
 
-variable "sts_credentials_lambda" {
-  type    = string
-  default = "gsfc-ngap-sh-s3-sts-get-keys"
-}
-
 variable "urs_url" {
   type        = string
   default     = "https://uat.urs.earthdata.nasa.gov/"
@@ -317,8 +312,4 @@ variable "non_complete_execution_payload_timeout" {
   description = "Number of days to retain 'non-complete' execution payload records in the database"
   type    = number
   default = 30
-}
-
-variable "region" {
-  type = string
 }
