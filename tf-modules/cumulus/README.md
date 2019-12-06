@@ -36,7 +36,6 @@ module "cumulus" {
   cumulus_message_adapter_lambda_layer_arn = "arn:aws:lambda:us-east-1:1234567890:layer:Cumulus_Message_Adapter:1"
 
   prefix = "my-prefix"
-  region = "us-east-1"
 
   vpc_id            = "vpc-123"
   lambda_subnet_ids = ["subnet-123", "subnet-456"]
