@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 **Please note**:
 
+- The `region` argument to the `cumulus` Terraform module has been removed. You may see a warning or error if you have that variable populated.
 - Your workflow tasks should use the following versions of the CMA libraries to utilize new granule, parentArn, asyncOperationId, and stackName fields on the logs:
   - `cumulus-message-adapter-js` version 1.0.10+
   - `cumulus-message-adapter-python` version 1.1.1+
@@ -27,11 +28,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added new helpers to `@cumulus/common/execution-history`:
     - `getStepExitedEvent()` returns the `TaskStateExited` event in a workflow execution history after the given step completion/failure event
     - `getTaskExitedEventOutput()` returns the output message for a `TaskStateExited` event in a workflow execution history
-
-### BREAKING CHANGES
-
-- **CUMULUS-1321**
-  - The `region` argument to the `cumulus` Terraform module has been removed
 
 ### Changed
 
@@ -57,6 +53,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Removed
 
 - Removed `create_service_linked_role` variable from `tf-modules/data-persistence` module.
+
+- **CUMULUS-1321**
+  - The `region` argument to the `cumulus` Terraform module has been removed
 
 ### Fixed
 
@@ -1767,7 +1766,7 @@ We may need to update the api documentation to reflect this.
 ## [v1.0.0] - 2018-02-23
 
 [Unreleased]: https://github.com/nasa/cumulus/compare/v1.16.1...HEAD
-[v1.16.0]: https://github.com/nasa/cumulus/compare/v1.16.0...v1.16.1
+[v1.16.1]: https://github.com/nasa/cumulus/compare/v1.16.0...v1.16.1
 [v1.16.0]: https://github.com/nasa/cumulus/compare/v1.15.0...v1.16.0
 [v1.15.0]: https://github.com/nasa/cumulus/compare/v1.14.4...v1.15.0
 [v1.14.4]: https://github.com/nasa/cumulus/compare/v1.14.3...v1.14.4
