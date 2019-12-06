@@ -28,6 +28,11 @@ variable "api_gateway_stage" {
   description = "The API Gateway stage to create"
 }
 
+variable "deploy_s3_credentials_endpoint" {
+  type    = bool
+  default = true
+}
+
 variable "distribution_url" {
   type        = string
   default     = null
@@ -64,14 +69,9 @@ variable "public_buckets" {
   description = "A list of public buckets"
 }
 
-variable "region" {
-  type        = string
-  default     = "us-east-1"
-  description = "The AWS region to deploy to"
-}
-
 variable "sts_credentials_lambda_function_arn" {
   type = string
+  default = null
 }
 
 variable "subnet_ids" {

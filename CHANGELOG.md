@@ -23,6 +23,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - `getStepExitedEvent()` returns the `TaskStateExited` event in a workflow execution history after the given step completion/failure event
     - `getTaskExitedEventOutput()` returns the output message for a `TaskStateExited` event in a workflow execution history
 
+### BREAKING CHANGES
+
+- **CUMULUS-1321**
+  - The `region` argument to the `cumulus` Terraform module has been removed
+
 ### Changed
 
 - **CUMULUS-1578**
@@ -58,6 +63,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [v1.16.0] - 2019-11-15
 
 ### Added
+
+- **CUMULUS-1321**
+  - A `deploy_distribution_s3_credentials_endpoint` variable has been added to
+    the `cumulus` Terraform module. If true, the NGAP-backed S3 credentials
+    endpoint will be added to the Thin Egress App's API. Default: true
 
 - **CUMULUS-1544**
   - Updated the `/granules/bulk` endpoint to correctly query Elasticsearch when
