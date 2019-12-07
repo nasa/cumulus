@@ -10,6 +10,6 @@ git clone --depth=50 --branch=gh-pages "https://${GITHUB_USER}:${GITHUB_TOKEN}@g
   rm -rf *
   rsync -av ../website/build/Cumulus/ .
   git add .
-  git commit -m "Automated build in Bamboo CI"
+  git commit -m "Automated build in Bamboo CI" --allow-empty
   git push
 )
