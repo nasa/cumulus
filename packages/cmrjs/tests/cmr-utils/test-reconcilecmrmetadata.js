@@ -1,7 +1,8 @@
+'use strict';
+
 const test = require('ava');
 const sinon = require('sinon');
 const rewire = require('rewire');
-
 
 const cmrUtils = rewire('../../cmr-utils');
 
@@ -43,7 +44,10 @@ test('reconcileCMRMetadata does not call updateCMRMetadata if no metadatafile pr
   const fakeUpdateCMRMetadata = sinon.fake.resolves(true);
   const restoreUpdateCMRMetadata = cmrUtils.__set__('updateCMRMetadata', fakeUpdateCMRMetadata);
 
+  const cmrClient = {};
+
   const results = await cmrUtils.reconcileCMRMetadata({
+    cmrClient,
     granuleId: granId,
     updatedFiles,
     distEndpoint,
@@ -68,7 +72,10 @@ test('reconcileCMRMetadata calls updateCMRMetadata if metadatafile present', asy
   const fakeUpdateCMRMetadata = sinon.fake.resolves(true);
   const restoreUpdateCMRMetadata = cmrUtils.__set__('updateCMRMetadata', fakeUpdateCMRMetadata);
 
+  const cmrClient = {};
+
   const params = {
+    cmrClient,
     granuleId: granId,
     updatedFiles,
     distEndpoint,
@@ -103,7 +110,10 @@ test('reconcileCMRMetadata logs an error if multiple metadatafiles present.', as
   const fakeUpdateCMRMetadata = sinon.fake.resolves(true);
   const restoreUpdateCMRMetadata = cmrUtils.__set__('updateCMRMetadata', fakeUpdateCMRMetadata);
 
+  const cmrClient = {};
+
   const results = await cmrUtils.reconcileCMRMetadata({
+    cmrClient,
     granuleId: granId,
     updatedFiles,
     distEndpoint,
@@ -134,8 +144,11 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
   const fakePublishECHO10XML2CMR = sinon.fake.resolves({});
   const restorePublishECHO10XML2CMR = cmrUtils.__set__('publishECHO10XML2CMR', fakePublishECHO10XML2CMR);
 
+  const cmrClient = {};
+
   // act
   await cmrUtils.reconcileCMRMetadata({
+    cmrClient,
     granuleId: granId,
     updatedFiles,
     distEndpoint,
@@ -194,7 +207,10 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
     granuleId: granId
   };
 
+  const cmrClient = {};
+
   await cmrUtils.reconcileCMRMetadata({
+    cmrClient,
     granuleId: granId,
     updatedFiles,
     distEndpoint,
@@ -252,8 +268,11 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
   process.env.stackName = stackName;
   const testCreds = setTestCredentials();
 
+  const cmrClient = {};
+
   // act
   await cmrUtils.reconcileCMRMetadata({
+    cmrClient,
     granuleId: granId,
     updatedFiles,
     distEndpoint,
@@ -292,8 +311,11 @@ test('updateCMRMetadata file throws error if incorrect cmrfile provided', async 
   } = t.context;
   const updateCMRMetadata = cmrUtils.__get__('updateCMRMetadata');
 
+  const cmrClient = {};
+
   await t.throwsAsync(
     () => updateCMRMetadata({
+      cmrClient,
       granuleId: granId,
       cmrFile: badCMRFile,
       files: updatedFiles,
@@ -311,31 +333,28 @@ test('updateCMRMetadata file throws error if incorrect cmrfile provided', async 
 test('publishUMMGJSON2CMR calls ingestUMMGranule with ummgMetadata via valid CMR object', async (t) => {
   const cmrPublishObject = {
     filename: 'cmrfilename',
-    metadataObject: { fake: 'metadata', GranuleUR: 'fakeGranuleID' },
+    metadataObject: {
+      fake: 'metadata',
+      GranuleUR: 'fakeGranuleID'
+    },
     granuleId: 'fakeGranuleID'
   };
-  const creds = setTestCredentials();
-  const systemBucket = process.env.system_bucket;
-  const stackName = process.env.stackName;
+
   const publishUMMGJSON2CMR = cmrUtils.__get__('publishUMMGJSON2CMR');
-  const ingestFake = sinon.fake.resolves({ result: { 'concept-id': 'fakeID' } });
-  const cmrFake = sinon.fake.returns({ ingestUMMGranule: ingestFake });
 
-  const restoreCMR = cmrUtils.__set__('CMR', cmrFake);
+  let ingestUMMGranuleCalled = false;
 
-  // Act
-  try {
-    await publishUMMGJSON2CMR(cmrPublishObject, creds, systemBucket, stackName);
-  } catch (error) {
-    console.log(error);
-  }
+  const cmrClient = {
+    async ingestUMMGranule(...args) {
+      ingestUMMGranuleCalled = true;
 
+      t.deepEqual(args, [cmrPublishObject.metadataObject]);
 
-  // Assert
-  t.true(cmrFake.calledOnceWithExactly(creds));
-  t.true(ingestFake.calledOnceWithExactly(cmrPublishObject.metadataObject));
+      return { result: { 'concept-id': 'fakeID' } };
+    }
+  };
 
-  // Cleanup
-  restoreCMR();
-  sinon.restore();
+  await publishUMMGJSON2CMR(cmrPublishObject, cmrClient);
+
+  t.true(ingestUMMGranuleCalled);
 });

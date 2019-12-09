@@ -135,6 +135,7 @@ const localStackPorts = {
   redshift: 4577,
   route53: 4580,
   s3: 4572,
+  secretsmanager: 4584,
   ses: 4579,
   sns: 4575,
   sqs: 4576,
@@ -150,6 +151,8 @@ const localStackPorts = {
  *   supported by LocalStack
  */
 function localstackSupportedService(Service) {
+  // This `serviceIdentifier` is not part of the documented API, but it seems to
+  // be working for the time being.
   const serviceIdentifier = Service.serviceIdentifier;
   return Object.keys(localStackPorts).includes(serviceIdentifier);
 }

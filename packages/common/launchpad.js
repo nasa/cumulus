@@ -56,26 +56,24 @@ async function getValidLaunchpadTokenFromS3() {
  * @returns {Promise.<string>} - the Launchpad token
  */
 async function getLaunchpadToken(params) {
-  let token = await getValidLaunchpadTokenFromS3();
+  const token = await getValidLaunchpadTokenFromS3();
 
-  if (!token) {
-    log.debug('getLaunchpadToken requesting launchpad token');
-    const launchpad = new LaunchpadToken(params);
-    const tokenObject = await launchpad.requestToken();
+  if (token) return token;
 
-    // add session_starttime to token object, assume token is generated 60s ago
-    tokenObject.session_starttime = (Date.now() / 1000 - 60);
-    const s3location = launchpadTokenBucketKey();
-    await s3PutObject({
-      Bucket: s3location.Bucket,
-      Key: s3location.Key,
-      Body: JSON.stringify(tokenObject)
-    });
+  log.debug('getLaunchpadToken requesting launchpad token');
+  const launchpad = new LaunchpadToken(params);
+  const tokenObject = await launchpad.requestToken();
 
-    token = tokenObject.sm_token;
-  }
+  // add session_starttime to token object, assume token is generated 60s ago
+  tokenObject.session_starttime = (Date.now() / 1000 - 60);
+  const s3location = launchpadTokenBucketKey();
+  await s3PutObject({
+    Bucket: s3location.Bucket,
+    Key: s3location.Key,
+    Body: JSON.stringify(tokenObject)
+  });
 
-  return token;
+  return tokenObject.sm_token;
 }
 
 /**
@@ -118,5 +116,7 @@ async function validateLaunchpadToken(params, token, userGroup) {
   return result;
 }
 
-module.exports.getLaunchpadToken = getLaunchpadToken;
-module.exports.validateLaunchpadToken = validateLaunchpadToken;
+module.exports = {
+  getLaunchpadToken,
+  validateLaunchpadToken
+};

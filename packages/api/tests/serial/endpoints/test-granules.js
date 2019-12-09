@@ -1,5 +1,6 @@
 'use strict';
 
+const nock = require('nock');
 const fs = require('fs');
 const request = require('supertest');
 const path = require('path');
@@ -7,16 +8,15 @@ const sinon = require('sinon');
 const test = require('ava');
 const {
   buildS3Uri,
+  s3,
+  secretsManager,
   sfn
 } = require('@cumulus/common/aws');
 const aws = require('@cumulus/common/aws');
-const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmr-client');
 const {
   metadataObjectFromCMRFile
 } = require('@cumulus/cmrjs/cmr-utils');
-const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
-const launchpad = require('@cumulus/common/launchpad');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 
 const assertions = require('../../../lib/assertions');
@@ -39,7 +39,6 @@ process.env.CollectionsTable = randomId('collection');
 process.env.GranulesTable = randomId('granules');
 process.env.UsersTable = randomId('users');
 process.env.stackName = randomId('stackname');
-process.env.system_bucket = randomId('system_bucket');
 process.env.TOKEN_SECRET = randomId('secret');
 
 // import the express app after setting the env variables
@@ -113,6 +112,36 @@ let accessToken;
 let userModel;
 
 test.before(async () => {
+  nock.disableNetConnect();
+  nock.enableNetConnect('127.0.0.1');
+
+  process.env.system_bucket = randomId('system_bucket');
+  await createBucket(process.env.system_bucket);
+
+  process.env.cmr_provider = randomString();
+  process.env.cmr_client_id = randomString();
+  process.env.cmr_username = randomString();
+  process.env.cmr_password_secret_name = randomString();
+  await secretsManager().createSecret({
+    Name: process.env.cmr_password_secret_name,
+    SecretString: randomString()
+  }).promise();
+
+  process.env.launchpad_api = 'https://api.launchpad.nasa.gov/icam/api/sm/v1';
+
+  process.env.launchpad_certificate = randomString();
+  await s3().putObject({
+    Bucket: process.env.system_bucket,
+    Key: `${process.env.stackName}/crypto/${process.env.launchpad_certificate}`,
+    Body: randomString()
+  }).promise();
+
+  process.env.launchpad_passphrase_secret_name = randomString();
+  await secretsManager().createSecret({
+    Name: process.env.launchpad_passphrase_secret_name,
+    SecretString: randomString()
+  }).promise();
+
   esIndex = randomId('esindex');
   process.env.esIndex = esIndex;
 
@@ -121,9 +150,6 @@ test.before(async () => {
 
   // add fake elasticsearch index
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
-
-  // create a fake bucket
-  await createBucket(process.env.system_bucket);
 
   // create a workflow template fi;e
   const tKey = `${process.env.stackName}/workflow_template.json`;
@@ -148,6 +174,16 @@ test.before(async () => {
 });
 
 test.beforeEach(async (t) => {
+  nock.cleanAll();
+
+  nock('https://cmr.uat.earthdata.nasa.gov')
+    .post('/legacy-services/rest/tokens')
+    .reply(200, { token: { id: randomString() } });
+
+  nock('https://api.launchpad.nasa.gov')
+    .get('/icam/api/sm/v1/gettoken')
+    .reply(200, { sm_token: randomString() });
+
   t.context.testCollection = fakeCollectionFactory({
     name: 'fakeCollection',
     dataType: 'fakeCollection',
@@ -168,6 +204,14 @@ test.beforeEach(async (t) => {
 });
 
 test.after.always(async () => {
+  nock.cleanAll();
+  nock.enableNetConnect();
+
+  await secretsManager().deleteSecret({
+    SecretId: process.env.cmr_password_secret_name,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
+
   await collectionModel.deleteTable();
   await granuleModel.deleteTable();
   await accessTokenModel.deleteTable();
@@ -429,82 +473,71 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
 });
 
 test.serial('remove a granule from CMR', async (t) => {
-  sinon.stub(
-    DefaultProvider,
-    'decrypt'
-  ).callsFake(() => Promise.resolve('fakePassword'));
+  const granule = fakeGranuleFactoryV2({
+    published: true,
+    cmrLink: 'http://www.example.com/my-granule.json'
+  });
 
-  sinon.stub(
-    CMR.prototype,
-    'deleteGranule'
-  ).callsFake(() => Promise.resolve());
+  await granuleModel.create(granule);
 
-  sinon.stub(
-    cmrjs,
-    'getMetadata'
-  ).callsFake(() => Promise.resolve({ title: t.context.fakeGranules[0].granuleId }));
+  nock('http://www.example.com')
+    .get('/my-granule.json')
+    .reply(200, { feed: { entry: [{ title: 'my-granule-ur' }] } });
 
-  const response = await request(app)
-    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+  nock('https://cmr.sit.earthdata.nasa.gov')
+    .delete(`/ingest/providers/${process.env.cmr_provider}/granules/my-granule-ur`)
+    .reply(200, '<a />');
+
+  const { body } = await request(app)
+    .put(`/granules/${granule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${accessToken}`)
     .send({ action: 'removeFromCmr' })
     .expect(200);
 
-  const body = response.body;
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'removeFromCmr');
 
-  const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
+  const updatedGranule = await granuleModel.get({ granuleId: granule.granuleId });
   t.is(updatedGranule.published, false);
   t.is(updatedGranule.cmrLink, undefined);
-
-  CMR.prototype.deleteGranule.restore();
-  DefaultProvider.decrypt.restore();
-  cmrjs.getMetadata.restore();
 });
 
 test.serial('remove a granule from CMR with launchpad authentication', async (t) => {
-  process.env.cmr_oauth_provider = 'launchpad';
-  const launchpadStub = sinon.stub(launchpad, 'getLaunchpadToken').callsFake(() => randomString());
+  try {
+    process.env.cmr_oauth_provider = 'launchpad';
 
-  sinon.stub(
-    DefaultProvider,
-    'decrypt'
-  ).callsFake(() => Promise.resolve('fakePassword'));
+    const granule = fakeGranuleFactoryV2({
+      published: true,
+      cmrLink: 'http://www.example.com/my-granule.json'
+    });
 
-  sinon.stub(
-    CMR.prototype,
-    'deleteGranule'
-  ).callsFake(() => Promise.resolve());
+    await granuleModel.create(granule);
 
-  sinon.stub(
-    cmrjs,
-    'getMetadata'
-  ).callsFake(() => Promise.resolve({ title: t.context.fakeGranules[0].granuleId }));
+    nock('http://www.example.com')
+      .get('/my-granule.json')
+      .reply(200, { feed: { entry: [{ title: 'my-granule-ur' }] } });
 
-  const response = await request(app)
-    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${accessToken}`)
-    .send({ action: 'removeFromCmr' })
-    .expect(200);
+    nock('https://cmr.sit.earthdata.nasa.gov')
+      .delete(`/ingest/providers/${process.env.cmr_provider}/granules/my-granule-ur`)
+      .reply(200, '<a />');
 
-  const body = response.body;
-  t.is(body.status, 'SUCCESS');
-  t.is(body.action, 'removeFromCmr');
+    const { body } = await request(app)
+      .put(`/granules/${granule.granuleId}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ action: 'removeFromCmr' })
+      .expect(200);
 
-  const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
-  t.is(updatedGranule.published, false);
-  t.is(updatedGranule.cmrLink, undefined);
+    t.is(body.status, 'SUCCESS');
+    t.is(body.action, 'removeFromCmr');
 
-  t.is(launchpadStub.calledOnce, true);
-
-  process.env.cmr_oauth_provider = 'earthdata';
-  launchpadStub.restore();
-  CMR.prototype.deleteGranule.restore();
-  DefaultProvider.decrypt.restore();
-  cmrjs.getMetadata.restore();
+    const updatedGranule = await granuleModel.get({ granuleId: granule.granuleId });
+    t.is(updatedGranule.published, false);
+    t.is(updatedGranule.cmrLink, undefined);
+  } finally {
+    process.env.cmr_oauth_provider = 'earthdata';
+  }
 });
 
 test.serial('DELETE deleting an existing granule that is published will fail', async (t) => {

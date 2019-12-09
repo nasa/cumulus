@@ -130,6 +130,7 @@ exports.cloudwatch = awsClient(AWS.CloudWatch, '2010-08-01');
 exports.dynamodb = awsClient(AWS.DynamoDB, '2012-08-10');
 exports.dynamodbstreams = awsClient(AWS.DynamoDBStreams, '2012-08-10');
 exports.dynamodbDocClient = awsClient(AWS.DynamoDB.DocumentClient, '2012-08-10');
+exports.secretsManager = awsClient(AWS.SecretsManager, '2017-10-17');
 exports.sfn = awsClient(AWS.StepFunctions, '2016-11-23');
 exports.cf = awsClient(AWS.CloudFormation, '2010-05-15');
 exports.sns = awsClient(AWS.SNS, '2010-03-31');
@@ -1079,3 +1080,7 @@ exports.getFileBucketAndKey = (pathParams) => {
 
   return [Bucket, Key];
 };
+
+exports.getSecretString = (params = {}) =>
+  exports.secretsManager().getSecretValue(params).promise()
+    .then((response) => response.SecretString);

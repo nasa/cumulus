@@ -1,10 +1,9 @@
 'use strict';
 
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
 const test = require('ava');
 const sinon = require('sinon');
-const { promisify } = require('util');
 
 const cmrClient = require('@cumulus/cmr-client');
 const aws = require('@cumulus/common/aws');
@@ -14,20 +13,32 @@ const launchpad = require('@cumulus/common/launchpad');
 
 const { postToCMR } = require('..');
 
-const readFile = promisify(fs.readFile);
-
 const result = {
   'concept-id': 'testingtesting'
 };
+
+test.before(async (t) => {
+  t.context.launchpadPassphraseSecretName = randomString();
+  await aws.secretsManager().createSecret({
+    Name: t.context.launchpadPassphraseSecretName,
+    SecretString: randomString()
+  }).promise();
+
+  t.context.cmrPasswordSecretName = randomString();
+  await aws.secretsManager().createSecret({
+    Name: t.context.cmrPasswordSecretName,
+    SecretString: randomString()
+  }).promise();
+});
 
 test.beforeEach(async (t) => {
   process.env.CMR_ENVIRONMENT = 'UAT';
   t.context.bucket = randomString();
 
-  const payloadPath = path.join(__dirname, 'data', 'payload.json');
-  const rawPayload = await readFile(payloadPath, 'utf8');
-  const payload = JSON.parse(rawPayload);
-  t.context.payload = payload;
+  const payload = await fs.readJson(path.join(__dirname, 'data', 'payload.json'));
+
+  payload.config.launchpad.passphraseSecretName = t.context.launchpadPassphraseSecretName;
+  payload.config.cmr.passwordSecretName = t.context.cmrPasswordSecretName;
 
   //update cmr file path
   const match = /^s3\:\/\/(.*)\/(.*)$/;
@@ -35,10 +46,26 @@ test.beforeEach(async (t) => {
   payload.input.granules[0].files[3].filename = `s3://${t.context.bucket}/${match.exec(cmrFile)[2]}`;
   payload.input.granules[0].files[3].bucket = t.context.bucket;
 
+  t.context.payload = payload;
+
   return aws.s3().createBucket({ Bucket: t.context.bucket }).promise();
 });
 
-test.afterEach.always((t) => aws.recursivelyDeleteS3Bucket(t.context.bucket));
+test.afterEach.always(async (t) => {
+  await aws.recursivelyDeleteS3Bucket(t.context.bucket);
+});
+
+test.after.always(async (t) => {
+  await aws.secretsManager().deleteSecret({
+    SecretId: t.context.launchpadPassphraseSecretName,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
+
+  await aws.secretsManager().deleteSecret({
+    SecretId: t.context.cmrPasswordSecretName,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
+});
 
 test.serial('postToCMR throws error if CMR correctly identifies the xml as invalid', async (t) => {
   sinon.stub(cmrClient.CMR.prototype, 'getToken');

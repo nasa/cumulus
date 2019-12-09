@@ -1,13 +1,34 @@
 'use strict';
 
 const router = require('express-promise-router')();
+const { CMR } = require('@cumulus/cmr-client');
 const aws = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
+const launchpad = require('@cumulus/common/launchpad');
 const Search = require('../es/search').Search;
 const indexer = require('../es/indexer');
 const models = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
+const { buildLaunchpadTokenConstructorParams } = require('../app/launchpadAuth');
+
+const buildCmrClient = async () => {
+  const params = {
+    provider: process.env.cmr_provider,
+    clientId: process.env.cmr_client_id
+  };
+
+  if (process.env.cmr_oauth_provider === 'launchpad') {
+    params.token = await launchpad.getLaunchpadToken(
+      await buildLaunchpadTokenConstructorParams()
+    );
+  } else {
+    params.username = process.env.cmr_username;
+    params.password = await aws.getSecretString(process.env.cmr_password_secret_name);
+  }
+
+  return new CMR(params);
+};
 
 /**
  * List all granules for a given collection.
@@ -75,7 +96,8 @@ async function put(req, res) {
   }
 
   if (action === 'removeFromCmr') {
-    await granuleModelClient.removeGranuleFromCmrByGranule(granule);
+    const cmrClient = await buildCmrClient();
+    await granuleModelClient.removeGranuleFromCmrByGranule(cmrClient, granule);
 
     return res.send({
       granuleId: granule.granuleId,
@@ -97,7 +119,12 @@ async function put(req, res) {
       return res.boom.conflict(message);
     }
 
-    await granuleModelClient.move(granule, body.destinations, process.env.DISTRIBUTION_ENDPOINT);
+    await granuleModelClient.move(
+      granule,
+      body.destinations,
+      process.env.DISTRIBUTION_ENDPOINT,
+      await buildCmrClient()
+    );
 
     return res.send({
       granuleId: granule.granuleId,

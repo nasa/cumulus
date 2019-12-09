@@ -5,12 +5,12 @@
       "provider": "xxxxxx",
       "clientId": "xxxxxx",
       "username": "xxxxxx",
-      "password": "xxxxx"
+      "passwordSecretName": "xxxxx"
     },
     "launchpad": {
       "api": "https://launchpad.com/api",
       "certificate": "launchpad-certificate",
-      "passphrase": "launchpad-passphrase"
+      "passphraseSecretName": "launchpad-passphrase"
     },
     "bucket": "cumulus-internal",
     "stack": "myStack"

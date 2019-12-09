@@ -1,10 +1,6 @@
 'use strict';
 
-const https = require('https');
-const path = require('path');
-const { URL } = require('url');
-const get = require('lodash.get');
-const { DefaultProvider } = require('./key-pair-provider');
+const got = require('got');
 const log = require('./log');
 const { getS3Object, s3ObjectExists } = require('./aws');
 
@@ -25,14 +21,12 @@ const { getS3Object, s3ObjectExists } = require('./aws');
 class LaunchpadToken {
   /**
   * @param {Object} params
-  * @param {string} params.encrypted - optional, default to true
   * @param {string} params.api - the Launchpad token service api endpoint
-  * @param {string} params.passphrase - the passphrase of the Launchpad PKI certificate
+  * @param {string} params.passphrase - the plaintext passphrase of the
+  *   Launchpad PKI certificate
   * @param {string} params.certificate - the name of the Launchpad PKI pfx certificate
   */
   constructor(params) {
-    // indicate passcode provided is encrypted
-    this.encrypted = get(params, 'encrypted', true);
     this.api = params.api;
     this.passphrase = params.passphrase;
     this.certificate = params.certificate;
@@ -66,9 +60,7 @@ class LaunchpadToken {
     log.debug(`Reading Key: ${this.certificate} bucket:${bucket},stack:${stackName}`);
     const pfx = (await getS3Object(bucket, `${stackName}/crypto/${this.certificate}`)).Body;
 
-    const passphrase = this.encrypted
-      ? await DefaultProvider.decrypt(this.passphrase) : this.passphrase;
-    return { pfx, passphrase };
+    return { pfx, passphrase: this.passphrase };
   }
 
   /**
@@ -79,19 +71,18 @@ class LaunchpadToken {
   async requestToken() {
     log.debug('LaunchpadToken.requestToken');
     const { pfx, passphrase } = await this._retrieveCertificate();
-    const launchpadUrl = new URL(this.api);
 
-    const options = {
-      hostname: launchpadUrl.hostname,
-      port: launchpadUrl.port || 443,
-      path: path.join(launchpadUrl.pathname, 'gettoken'),
-      method: 'GET',
-      pfx,
-      passphrase
-    };
+    const response = await got.get(
+      'gettoken',
+      {
+        baseUrl: this.api,
+        json: true,
+        passphrase,
+        pfx
+      }
+    );
 
-    const responseBody = await this._submitRequest(options);
-    return JSON.parse(responseBody);
+    return response.body;
   }
 
   /**
@@ -103,54 +94,19 @@ class LaunchpadToken {
   async validateToken(token) {
     log.debug('LaunchpadToken.validateToken');
     const { pfx, passphrase } = await this._retrieveCertificate();
-    const launchpadUrl = new URL(this.api);
 
-    const data = JSON.stringify({ token });
-    const options = {
-      hostname: launchpadUrl.hostname,
-      port: launchpadUrl.port || 443,
-      path: path.join(launchpadUrl.pathname, 'validate'),
-      method: 'POST',
-      pfx,
-      passphrase,
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': data.length
+    const response = await got.post(
+      'validate',
+      {
+        baseUrl: this.api,
+        json: true,
+        body: { token },
+        passphrase,
+        pfx
       }
-    };
+    );
 
-    const responseBody = await this._submitRequest(options, data);
-    return JSON.parse(responseBody);
-  }
-
-  /**
-   * submit https request
-   *
-   * @param {Object} options - the Launchpad token for validation
-   * @param {string} data - the request body
-   * @returns {Promise.<string>} - the response body
-   */
-  _submitRequest(options, data) {
-    return new Promise((resolve, reject) => {
-      let responseBody = '';
-
-      const req = https.request(options, (res) => {
-        if (res.statusCode !== 200) {
-          reject(new Error(`launchpad request failed with statusCode ${res.statusCode} ${res.statusMessage}`));
-        }
-
-        res.on('data', (d) => {
-          responseBody += d;
-        });
-
-        res.on('end', () => resolve(responseBody));
-      });
-
-      req.on('error', (e) => reject(e));
-
-      if (data) req.write(data);
-      req.end();
-    });
+    return response.body;
   }
 }
 

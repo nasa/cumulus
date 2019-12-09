@@ -7,10 +7,32 @@ const {
   metadataObjectFromCMRFile,
   publish2CMR
 } = require('@cumulus/cmrjs');
+const { CMR } = require('@cumulus/cmr-client');
 const log = require('@cumulus/common/log');
+const { getSecretString } = require('@cumulus/common/aws');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { CMRMetaFileNotFound } = require('@cumulus/common/errors');
 const launchpad = require('@cumulus/common/launchpad');
+
+const buildCmrClient = async (config) => {
+  const params = {
+    provider: config.cmr.provider,
+    clientId: config.cmr.clientId
+  };
+
+  if (config.cmr.oauthProvider === 'launchpad') {
+    params.token = await launchpad.getLaunchpadToken({
+      api: config.launchpad.api,
+      passphrase: await getSecretString(config.launchpad.passphraseSecretName),
+      certificate: config.launchpad.certificate
+    });
+  } else {
+    params.username = config.cmr.username;
+    params.password = await getSecretString(config.cmr.passwordSecretName);
+  }
+
+  return new CMR(params);
+};
 
 /**
  * Builds the output of the post-to-cmr task
@@ -103,40 +125,22 @@ async function postToCMR(event) {
 
   log.info(`Publishing ${updatedCMRFiles.length} CMR files.`);
 
-  const startTime = Date.now();
-
-  const cmrCreds = {
-    provider: event.config.cmr.provider,
-    clientId: event.config.cmr.clientId
-  };
-
-  if (event.config.cmr.oauthProvider === 'launchpad') {
-    const token = await launchpad.getLaunchpadToken(event.config.launchpad);
-    cmrCreds.token = token;
-  } else {
-    cmrCreds.username = event.config.cmr.username;
-    cmrCreds.password = event.config.cmr.password;
-  }
+  const cmrClient = await buildCmrClient(event.config);
 
   // post all meta files to CMR
+  const startTime = Date.now();
   const results = await Promise.all(
-    updatedCMRFiles.map(
-      (cmrFile) =>
-        publish2CMR(cmrFile, cmrCreds, event.config.bucket, event.config.stack)
-    )
+    updatedCMRFiles.map((cmrFile) => publish2CMR(cmrFile, cmrClient))
   );
-
-  const endTime = Date.now();
+  // eslint-disable-next-line camelcase
+  const post_to_cmr_duration = Date.now() - startTime;
 
   return {
     process: event.config.process,
     granules: buildOutput(
       results,
       event.input.granules
-    ).map((g) => ({
-      ...g,
-      post_to_cmr_duration: endTime - startTime
-    }))
+    ).map((g) => ({ ...g, post_to_cmr_duration }))
   };
 }
 exports.postToCMR = postToCMR;

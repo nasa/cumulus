@@ -6,16 +6,12 @@ const partial = require('lodash.partial');
 const path = require('path');
 
 const commonAws = require('@cumulus/common/aws');
-const { CMR } = require('@cumulus/cmr-client');
 const cmrjs = require('@cumulus/cmrjs');
-const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
-const launchpad = require('@cumulus/common/launchpad');
 const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage, getMessageExecutionArn } = require('@cumulus/common/message');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const {
-  deprecate,
   isNil,
   removeNilProperties,
   renameProperty
@@ -117,54 +113,21 @@ class Granule extends Manager {
     return scanResponse;
   }
 
-  async removeGranuleFromCmrByGranule(granule) {
-    log.info(`granules.removeGranuleFromCmrByGranule ${granule.granuleId}`);
-
+  async removeGranuleFromCmrByGranule(cmrClient, granule) {
     if (!granule.published || !granule.cmrLink) {
       throw new Error(`Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
     }
 
-    const params = {
-      provider: process.env.cmr_provider,
-      clientId: process.env.cmr_client_id
-    };
-
-    if (process.env.cmr_oauth_provider === 'launchpad') {
-      const config = {
-        api: process.env.launchpad_api,
-        passphrase: process.env.launchpad_passphrase,
-        certificate: process.env.launchpad_certificate
-      };
-      const token = await launchpad.getLaunchpadToken(config);
-      params.token = token;
-    } else {
-      const password = await DefaultProvider.decrypt(process.env.cmr_password);
-      params.username = process.env.cmr_username;
-      params.password = password;
-    }
-
-    const cmr = new CMR(params);
-    const metadata = await cmrjs.getMetadata(granule.cmrLink);
+    const { title } = await cmrjs.getMetadata(granule.cmrLink);
 
     // Use granule UR to delete from CMR
-    await cmr.deleteGranule(metadata.title, granule.collectionId);
-    await this.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']);
-  }
+    await cmrClient.deleteGranule(title, granule.collectionId);
 
-  /**
-   * Removes a given granule from CMR
-   *
-   * @param {string} granuleId - the granule ID
-   * @param {string} collectionId - the collection ID
-   * @returns {Promise<undefined>} - undefined
-   */
-  // eslint-disable-next-line no-unused-vars
-  async removeGranuleFromCmr(granuleId, collectionId) {
-    deprecate('@cumulus/api/Granule.removeGranuleFromCmr', '1.11.3', '@cumulus/api/Granule.removeGranuleFromCmrByGranule');
-
-    const granule = await this.get({ granuleId });
-
-    return this.removeGranuleFromCmrByGranule(granule);
+    return this.update(
+      { granuleId: granule.granuleId },
+      { published: false },
+      ['cmrLink']
+    );
   }
 
   /**
@@ -250,14 +213,16 @@ class Granule extends Manager {
    *    bucket - aws bucket of the destination
    *    filepath - file path/directory on the bucket for the destination
    * @param {string} distEndpoint - distribution endpoint URL
+   * @param {CMR} cmrClient - a CMR client instance
    * @returns {Promise<undefined>} undefined
    */
-  async move(g, destinations, distEndpoint) {
+  async move(g, destinations, distEndpoint, cmrClient) {
     log.info(`granules.move ${g.granuleId}`);
 
     const updatedFiles = await moveGranuleFiles(g.files, destinations);
 
     await cmrjs.reconcileCMRMetadata({
+      cmrClient,
       granuleId: g.granuleId,
       updatedFiles,
       distEndpoint,

@@ -968,23 +968,25 @@ function duplicateHandlingType(event) {
   return duplicateHandling;
 }
 
-module.exports.selector = selector;
-module.exports.Discover = Discover;
-module.exports.Granule = Granule;
-module.exports.FtpDiscoverGranules = FtpDiscoverGranules;
-module.exports.FtpGranule = FtpGranule;
-module.exports.HttpDiscoverGranules = HttpDiscoverGranules;
-module.exports.HttpGranule = HttpGranule;
-module.exports.S3Granule = S3Granule;
-module.exports.S3DiscoverGranules = S3DiscoverGranules;
-module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
-module.exports.SftpGranule = SftpGranule;
-module.exports.getRenamedS3File = getRenamedS3File;
-module.exports.handleDuplicateFile = handleDuplicateFile;
-module.exports.copyGranuleFile = copyGranuleFile;
-module.exports.unversionFilename = unversionFilename;
-module.exports.moveGranuleFile = moveGranuleFile;
-module.exports.moveGranuleFiles = moveGranuleFiles;
-module.exports.renameS3FileWithTimestamp = renameS3FileWithTimestamp;
-module.exports.generateMoveFileParams = generateMoveFileParams;
-module.exports.duplicateHandlingType = duplicateHandlingType;
+module.exports = {
+  selector,
+  Discover,
+  Granule,
+  FtpDiscoverGranules,
+  FtpGranule,
+  HttpDiscoverGranules,
+  HttpGranule,
+  S3Granule,
+  S3DiscoverGranules,
+  SftpDiscoverGranules,
+  SftpGranule,
+  getRenamedS3File,
+  handleDuplicateFile,
+  copyGranuleFile,
+  unversionFilename,
+  moveGranuleFile,
+  moveGranuleFiles,
+  renameS3FileWithTimestamp,
+  generateMoveFileParams,
+  duplicateHandlingType
+};

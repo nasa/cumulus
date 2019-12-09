@@ -1,8 +1,15 @@
 'use strict';
 
+const { getSecretString } = require('@cumulus/common/aws');
 const launchpad = require('@cumulus/common/launchpad');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const { AccessToken } = require('../models');
+
+const buildLaunchpadTokenConstructorParams = async () => ({
+  api: process.env.launchpad_api,
+  passphrase: await getSecretString(process.env.launchpad_passphrase_secret_name),
+  certificate: process.env.launchpad_certificate
+});
 
 const launchpadProtectedAuth = () => (process.env.OAUTH_PROVIDER === 'launchpad');
 
@@ -48,11 +55,7 @@ async function ensureLaunchpadAPIAuthorized(req, res, next) {
     }
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      const config = {
-        api: process.env.launchpad_api,
-        passphrase: process.env.launchpad_passphrase,
-        certificate: process.env.launchpad_certificate
-      };
+      const config = await buildLaunchpadTokenConstructorParams();
 
       const userGroup = process.env.oauth_user_group;
       const verifyResponse = await launchpad.validateLaunchpadToken(config, token, userGroup);
@@ -74,6 +77,7 @@ async function ensureLaunchpadAPIAuthorized(req, res, next) {
 }
 
 module.exports = {
+  buildLaunchpadTokenConstructorParams,
   ensureLaunchpadAPIAuthorized,
   launchpadProtectedAuth
 };

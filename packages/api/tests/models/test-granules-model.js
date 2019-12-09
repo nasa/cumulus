@@ -3,18 +3,16 @@
 const cloneDeep = require('lodash.clonedeep');
 const test = require('ava');
 const sinon = require('sinon');
+const nock = require('nock');
 
 const aws = require('@cumulus/common/aws');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const ingestAws = require('@cumulus/ingest/aws');
-const launchpad = require('@cumulus/common/launchpad');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const { randomString } = require('@cumulus/common/test-utils');
 const workflows = require('@cumulus/common/workflows');
 const { removeNilProperties } = require('@cumulus/common/util');
 const cmrjs = require('@cumulus/cmrjs');
-const { CMR } = require('@cumulus/cmr-client');
-const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 
 const { Granule } = require('../../models');
 const { filterDatabaseProperties } = require('../../lib/FileUtils');
@@ -49,8 +47,11 @@ const granuleFileToRecord = (granuleFile) => {
 };
 
 test.before(async () => {
+  nock.disableNetConnect();
+  nock.enableNetConnect('127.0.0.1');
+
   process.env.GranulesTable = randomString();
-  await new Granule().createTable();
+  await (new Granule()).createTable();
 
   testCumulusMessage = {
     cumulus_meta: {
@@ -99,14 +100,20 @@ test.before(async () => {
 });
 
 test.beforeEach((t) => {
+  nock.cleanAll();
+
   t.context.granuleModel = new Granule();
+
   t.context.cumulusMessage = testCumulusMessage;
 });
 
 test.after.always(async () => {
-  await new Granule().deleteTable();
+  await (new Granule()).deleteTable();
   stepFunctionsStub.restore();
   sinon.reset();
+
+  nock.cleanAll();
+  nock.enableNetConnect();
 });
 
 test('files existing at location returns empty array if no files exist', async (t) => {
@@ -509,124 +516,56 @@ test('getGranulesForCollection() filters by status', async (t) => {
   t.is(await granules.shift(), null);
 });
 
-test('removing a granule from CMR fails if the granule is not in CMR', async (t) => {
+test('removeGranuleFromCmrByGranule() throws an exception if the granule is not published', async (t) => {
+  const { granuleModel } = t.context;
+
+  const cmrClient = {};
   const granule = fakeGranuleFactoryV2({ published: false });
 
-  await aws.dynamodbDocClient().put({
-    TableName: process.env.GranulesTable,
-    Item: granule
-  }).promise();
-
-  const granuleModel = new Granule();
-
-  try {
-    await granuleModel.removeGranuleFromCmrByGranule(granule);
-  } catch (err) {
-    t.is(err.message, `Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
-  }
+  await t.throwsAsync(granuleModel.removeGranuleFromCmrByGranule(cmrClient, granule));
 });
 
-test.serial('removing a granule from CMR passes the granule UR to the cmr delete function', async (t) => {
-  sinon.stub(
-    DefaultProvider,
-    'decrypt'
-  ).callsFake(() => Promise.resolve('fakePassword'));
+test('removeGranuleFromCmrByGranule() throws an exception if the granule does not have a cmrLink', async (t) => {
+  const { granuleModel } = t.context;
 
-  sinon.stub(
-    CMR.prototype,
-    'deleteGranule'
-  ).callsFake((granuleUr) => Promise.resolve(t.is(granuleUr, 'granule-ur')));
+  const cmrClient = {};
+  const granule = fakeGranuleFactoryV2({ published: true });
+  delete granule.cmrLink;
 
-  sinon.stub(
-    cmrjs,
-    'getMetadata'
-  ).callsFake(() => Promise.resolve({ title: 'granule-ur' }));
-
-  const granule = fakeGranuleFactoryV2();
-
-  await aws.dynamodbDocClient().put({
-    TableName: process.env.GranulesTable,
-    Item: granule
-  }).promise();
-
-  const granuleModel = new Granule();
-
-  await granuleModel.removeGranuleFromCmrByGranule(granule);
-
-  CMR.prototype.deleteGranule.restore();
-  DefaultProvider.decrypt.restore();
-  cmrjs.getMetadata.restore();
+  await t.throwsAsync(granuleModel.removeGranuleFromCmrByGranule(cmrClient, granule));
 });
 
-test.serial('legacy remove granule from CMR fetches the granule and succeeds', async (t) => {
-  sinon.stub(
-    DefaultProvider,
-    'decrypt'
-  ).callsFake(() => Promise.resolve('fakePassword'));
+test.serial('removeGranuleFromCmrByGranule() removes the granule from CMR', async (t) => {
+  const { granuleModel } = t.context;
 
-  sinon.stub(
-    CMR.prototype,
-    'deleteGranule'
-  ).callsFake((granuleUr) => Promise.resolve(t.is(granuleUr, 'granule-ur')));
+  let granuleWasDeletedFromCmr = false;
 
-  sinon.stub(
-    cmrjs,
-    'getMetadata'
-  ).callsFake(() => Promise.resolve({ title: 'granule-ur' }));
+  const cmrClient = {
+    async deleteGranule(granuleUR) {
+      t.is(granuleUR, 'my-granule-ur');
+      granuleWasDeletedFromCmr = true;
+    }
+  };
 
-  const granule = fakeGranuleFactoryV2();
+  const granule = fakeGranuleFactoryV2({
+    published: true,
+    cmrLink: 'http://www.example.com/my-granule.json'
+  });
 
-  await aws.dynamodbDocClient().put({
-    TableName: process.env.GranulesTable,
-    Item: granule
-  }).promise();
+  await granuleModel.create(granule);
 
-  const granuleModel = new Granule();
+  nock('http://www.example.com')
+    .get('/my-granule.json')
+    .reply(200, { feed: { entry: [{ title: 'my-granule-ur' }] } });
 
-  await granuleModel.removeGranuleFromCmr(granule.granuleId, granule.collectionId);
 
-  CMR.prototype.deleteGranule.restore();
-  DefaultProvider.decrypt.restore();
-  cmrjs.getMetadata.restore();
-});
+  await granuleModel.removeGranuleFromCmrByGranule(cmrClient, granule);
 
-test.serial('removing a granule from CMR succeeds with Launchpad authentication', async (t) => {
-  process.env.cmr_oauth_provider = 'launchpad';
-  const launchpadStub = sinon.stub(launchpad, 'getLaunchpadToken').callsFake(() => randomString());
+  t.true(granuleWasDeletedFromCmr);
 
-  sinon.stub(
-    DefaultProvider,
-    'decrypt'
-  ).callsFake(() => Promise.resolve('fakePassword'));
-
-  sinon.stub(
-    CMR.prototype,
-    'deleteGranule'
-  ).callsFake((granuleUr) => Promise.resolve(t.is(granuleUr, 'granule-ur')));
-
-  sinon.stub(
-    cmrjs,
-    'getMetadata'
-  ).callsFake(() => Promise.resolve({ title: 'granule-ur' }));
-
-  const granule = fakeGranuleFactoryV2();
-
-  await aws.dynamodbDocClient().put({
-    TableName: process.env.GranulesTable,
-    Item: granule
-  }).promise();
-
-  const granuleModel = new Granule();
-
-  await granuleModel.removeGranuleFromCmrByGranule(granule);
-
-  t.is(launchpadStub.calledOnce, true);
-
-  process.env.cmr_oauth_provider = 'earthdata';
-  launchpadStub.restore();
-  CMR.prototype.deleteGranule.restore();
-  DefaultProvider.decrypt.restore();
-  cmrjs.getMetadata.restore();
+  const fetchedGranule = await granuleModel.get({ granuleId: granule.granuleId });
+  t.false(fetchedGranule.published);
+  t.is(fetchedGranule.cmrLink, undefined);
 });
 
 test(

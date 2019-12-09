@@ -26,7 +26,6 @@ process.env.stackName = stackName;
 
 const config = {
   api,
-  encrypted: false,
   certificate,
   passphrase: randomString()
 };

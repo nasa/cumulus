@@ -16,11 +16,8 @@ const {
   errors,
   log
 } = require('@cumulus/common');
-const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const { deprecate, omit } = require('@cumulus/common/util');
-const { getLaunchpadToken } = require('@cumulus/common/launchpad');
 
-const { CMR } = require('@cumulus/cmr-client');
 const {
   getUrl,
   xmlParseOptions,
@@ -84,68 +81,19 @@ function granulesToCmrFileObjects(granules) {
 }
 
 /**
- * Instantiates a CMR instance for ingest of metadata
- *
- * @param {Object} creds - credentials needed to post to the CMR
- * @param {string} creds.provider - the name of the Provider used on the CMR side
- * @param {string} creds.clientId - the clientId used to generate CMR token
- * @param {string} creds.username - the CMR username, not used if creds.token is provided
- * @param {string} creds.password - the encrypted CMR password, not used if creds.token is provided
- * @param {string} creds.token - the CMR or Launchpad token,
- * if not provided, CMR username and password are used to get a cmr token
- * @param {string} systemBucket - bucket containing crypto keys.
- * @param {string} stack - deployment stack name
- * @returns {CMR} CMR instance.
- */
-async function getCMRInstance(creds, systemBucket, stack) {
-  const params = {
-    provider: creds.provider,
-    clientId: creds.clientId
-  };
-
-  if (creds.token) {
-    params.token = creds.token;
-  } else {
-    let password;
-    try {
-      password = await DefaultProvider.decrypt(creds.password, undefined, systemBucket, stack);
-    } catch (error) {
-      const reason = error.message || error.code || error.name;
-      log.error('Decrypting password failed, using unencrypted password:', reason);
-      password = creds.password;
-    }
-
-    params.username = creds.username;
-    params.password = password;
-  }
-
-  return new CMR(params);
-}
-
-/**
  * function for posting cmr xml files from S3 to CMR
  *
  * @param {Object} cmrFile - an object representing the cmr file
  * @param {string} cmrFile.granuleId - the granuleId of the cmr xml File
  * @param {string} cmrFile.filename - the s3 uri to the cmr xml file
  * @param {string} cmrFile.metadata - granule xml document
- * @param {Object} creds - credentials needed to post to the CMR
- * @param {string} creds.provider - the name of the Provider used on the CMR side
- * @param {string} creds.clientId - the clientId used to generate CMR token
- * @param {string} creds.username - the CMR username, not used if creds.token is provided
- * @param {string} creds.password - the encrypted CMR password, not used if creds.token is provided
- * @param {string} creds.token - the CMR or Launchpad token,
- * if not provided, CMR username and password are used to get a cmr token
- * @param {string} systemBucket - the bucket name where public/private keys are stored
- * @param {string} stack - the deployment stack name
+ * @param {CMR} cmrClient - a CMR Client instance
  * @returns {Object} CMR's success response which includes the concept-id
  */
-async function publishECHO10XML2CMR(cmrFile, creds, systemBucket, stack) {
-  const cmr = await getCMRInstance(creds, systemBucket, stack);
-
+async function publishECHO10XML2CMR(cmrFile, cmrClient) {
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(cmrFile.metadataObject);
-  const res = await cmr.ingestGranule(xml);
+  const res = await cmrClient.ingestGranule(xml);
   const conceptId = res.result['concept-id'];
 
   log.info(`Published ${cmrFile.granuleId} to the CMR. conceptId: ${conceptId}`);
@@ -159,7 +107,6 @@ async function publishECHO10XML2CMR(cmrFile, creds, systemBucket, stack) {
   };
 }
 
-
 /**
  * function for posting cmr JSON files from S3 to CMR
  *
@@ -167,22 +114,12 @@ async function publishECHO10XML2CMR(cmrFile, creds, systemBucket, stack) {
  * @param {string} cmrPublishObject.filename - the cmr filename
  * @param {Object} cmrPublishObject.metadataObject - the UMMG JSON cmr metadata
  * @param {Object} cmrPublishObject.granuleId - the metadata's granuleId
- * @param {Object} creds - credentials needed to post to CMR service
- * @param {string} creds.provider - the name of the Provider used on the CMR side
- * @param {string} creds.clientId - the clientId used to generate CMR token
- * @param {string} creds.username - the CMR username, not used if creds.token is provided
- * @param {string} creds.password - the encrypted CMR password, not used if creds.token is provided
- * @param {string} creds.token - the CMR or Launchpad token,
- * if not provided, CMR username and password are used to get a cmr token
- * @param {string} systemBucket - bucket containing crypto keypair.
- * @param {string} stack - stack deployment name
+ * @param {CMR} cmrClient - a CMR Client instance
  */
-async function publishUMMGJSON2CMR(cmrPublishObject, creds, systemBucket, stack) {
-  const cmr = await getCMRInstance(creds, systemBucket, stack);
-
+async function publishUMMGJSON2CMR(cmrPublishObject, cmrClient) {
   const granuleId = cmrPublishObject.metadataObject.GranuleUR;
 
-  const res = await cmr.ingestUMMGranule(cmrPublishObject.metadataObject);
+  const res = await cmrClient.ingestUMMGranule(cmrPublishObject.metadataObject);
   const conceptId = res['concept-id'];
 
   log.info(`Published UMMG ${granuleId} to the CMR. conceptId: ${conceptId}`);
@@ -203,23 +140,16 @@ async function publishUMMGJSON2CMR(cmrPublishObject, creds, systemBucket, stack)
  * @param {string} cmrPublishObject.filename - the cmr filename
  * @param {Object} cmrPublishObject.metadataObject - the UMMG JSON cmr metadata
  * @param {Object} cmrPublishObject.granuleId - the metadata's granuleId
- * @param {Object} creds - credentials needed to post to CMR service
- * @param {string} creds.provider - the name of the Provider used on the CMR side
- * @param {string} creds.clientId - the clientId used to generate CMR token
- * @param {string} creds.username - the CMR username, not used if creds.token is provided
- * @param {string} creds.password - the encrypted CMR password, not used if creds.token is provided
- * @param {string} creds.token - the CMR or Launchpad token,
- * if not provided, CMR username and password are used to get a cmr token
- * @param {string} systemBucket - bucket containing crypto keypair.
- * @param {string} stack - stack deployment name
+ * @param {CMR} cmrClient - a CMR Client instance
+ * @returns {Object} the result of publishing
  */
-async function publish2CMR(cmrPublishObject, creds, systemBucket, stack) {
+function publish2CMR(cmrPublishObject, cmrClient) {
   // choose xml or json and do the things.
   if (isECHO10File(cmrPublishObject.filename)) {
-    return publishECHO10XML2CMR(cmrPublishObject, creds, systemBucket, stack);
+    return publishECHO10XML2CMR(cmrPublishObject, cmrClient);
   }
   if (isUMMGFile(cmrPublishObject.filename)) {
-    return publishUMMGJSON2CMR(cmrPublishObject, creds, systemBucket, stack);
+    return publishUMMGJSON2CMR(cmrPublishObject, cmrClient);
   }
   throw new Error(`invalid cmrPublishObject passed to publis2CMR ${JSON.stringify(cmrPublishObject)}`);
 }
@@ -587,34 +517,6 @@ async function updateUMMGMetadata({
   return metadataObject;
 }
 
-/** helper to build an CMR credential object
- * @returns {Object} object to create CMR instance.
-*/
-async function getCreds() {
-  if (process.env.cmr_oauth_provider === 'launchpad') {
-    const config = {
-      api: process.env.launchpad_api,
-      certificate: process.env.launchpad_certificate,
-      passphrase: process.env.launchpad_passphrase
-    };
-
-    log.debug('cmrjs.getCreds getLaunchpadToken');
-    const token = await getLaunchpadToken(config);
-    return {
-      provider: process.env.cmr_provider,
-      clientId: process.env.cmr_client_id,
-      token
-    };
-  }
-
-  return {
-    provider: process.env.cmr_provider,
-    clientId: process.env.cmr_client_id,
-    username: process.env.cmr_username,
-    password: process.env.cmr_password
-  };
-}
-
 function generateEcho10XMLString(granule) {
   const mapping = new Map([]);
   Object.keys(granule).forEach((key) => {
@@ -726,6 +628,7 @@ async function updateEcho10XMLMetadata({
  * Modifies cmr metadata file with file's URLs updated to their new locations.
  *
  * @param {Object} params - parameter object
+ * @param {CMR} params.cmrClient - a CMR client instance
  * @param {string} params.granuleId - granuleId
  * @param {Object} params.cmrFile - cmr xml file to be updated
  * @param {Array<Object>} params.files - array of file objects
@@ -738,6 +641,7 @@ async function updateEcho10XMLMetadata({
  *                    or resolved promise if published === false.
  */
 async function updateCMRMetadata({
+  cmrClient,
   granuleId,
   cmrFile,
   files,
@@ -753,8 +657,6 @@ async function updateCMRMetadata({
         || new BucketsConfig(
           await bucketsConfigJsonObject(process.env.system_bucket, process.env.stackName)
         );
-  const cmrCredentials = (published) ? await getCreds() : {};
-  let theMetadata;
 
   const params = {
     cmrFile,
@@ -764,6 +666,7 @@ async function updateCMRMetadata({
     cmrGranuleUrlType
   };
 
+  let theMetadata;
   if (isECHO10File(filename)) {
     theMetadata = await updateEcho10XMLMetadata(params);
   } else if (isUMMGFile(filename)) {
@@ -779,19 +682,16 @@ async function updateCMRMetadata({
       metadataObject: theMetadata,
       granuleId: granuleId
     };
-    return publish2CMR(
-      cmrPublishObject,
-      cmrCredentials,
-      process.env.system_bucket,
-      process.env.stackName
-    );
+    return publish2CMR(cmrPublishObject, cmrClient);
   }
-  return Promise.resolve();
+
+  return undefined;
 }
 
 /**
  * Update CMR Metadata record with the information contained in updatedFiles
  * @param {Object} params - parameter object
+ * @param {CMR} params.cmrClient - a CMR client instance
  * @param {string} params.granuleId - granuleId
  * @param {Object} params.updatedFiles - list of file objects that might have different
  *                  information from the cmr metadatafile and the CMR service.
@@ -800,6 +700,7 @@ async function updateCMRMetadata({
  *   the CMR service.
  */
 async function reconcileCMRMetadata({
+  cmrClient,
   granuleId,
   updatedFiles,
   distEndpoint,
@@ -808,6 +709,7 @@ async function reconcileCMRMetadata({
   const cmrMetadataFiles = getCmrFileObjs(updatedFiles);
   if (cmrMetadataFiles.length === 1) {
     return updateCMRMetadata({
+      cmrClient,
       granuleId,
       cmrFile: cmrMetadataFiles[0],
       files: updatedFiles,

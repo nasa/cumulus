@@ -1,5 +1,6 @@
 'use strict';
 
+const get = require('lodash.get');
 const got = require('got');
 const publicIp = require('public-ip');
 const Logger = require('@cumulus/logger');
@@ -43,8 +44,10 @@ async function updateToken(cmrProvider, clientId, username, password) {
   // for info on how to add collections to CMR: https://cmr.earthdata.nasa.gov/ingest/site/ingest_api_docs.html#validate-collection
   let response;
 
+  const cmrTokenUrl = getUrl('token');
+
   try {
-    response = await got.post(getUrl('token'), {
+    response = await got.post(cmrTokenUrl, {
       json: true,
       body: {
         token: {
@@ -57,11 +60,11 @@ async function updateToken(cmrProvider, clientId, username, password) {
       }
     });
   } catch (err) {
-    if (err.response.body.errors) throw new Error(`CMR Error: ${err.response.body.errors[0]}`);
+    if (get(err, 'response.body.errors')) throw new Error(`CMR Error: ${err.response.body.errors[0]}`);
     throw err;
   }
 
-  if (!response.body.token) throw new Error('Authentication with CMR failed');
+  if (!get(response, 'body.token')) throw new Error('Authentication with CMR failed');
 
   return response.body.token.id;
 }
