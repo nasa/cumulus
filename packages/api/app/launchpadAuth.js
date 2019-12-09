@@ -5,11 +5,17 @@ const launchpad = require('@cumulus/common/launchpad');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const { AccessToken } = require('../models');
 
-const buildLaunchpadTokenConstructorParams = async () => ({
-  api: process.env.launchpad_api,
-  passphrase: await getSecretString(process.env.launchpad_passphrase_secret_name),
-  certificate: process.env.launchpad_certificate
-});
+const buildLaunchpadTokenConstructorParams = async () => {
+  const passphrase = await getSecretString({
+    SecretId: process.env.launchpad_passphrase_secret_name
+  });
+
+  return {
+    api: process.env.launchpad_api,
+    passphrase,
+    certificate: process.env.launchpad_certificate
+  };
+};
 
 const launchpadProtectedAuth = () => (process.env.OAUTH_PROVIDER === 'launchpad');
 

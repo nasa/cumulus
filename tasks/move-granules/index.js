@@ -22,12 +22,16 @@ const {
   updateCMRMetadata
 } = require('@cumulus/cmrjs');
 
+const { CMR } = require('@cumulus/cmr-client');
+
 const {
   aws: {
     buildS3Uri,
+    getSecretString,
     s3ObjectExists
   },
-  BucketsConfig
+  BucketsConfig,
+  launchpad
 } = require('@cumulus/common');
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const log = require('@cumulus/common/log');
@@ -214,6 +218,32 @@ async function moveFilesForAllGranules(
   return granulesObject;
 }
 
+const buildCmrClient = async () => {
+  const params = {
+    provider: process.env.cmr_provider,
+    clientId: process.env.cmr_client_id
+  };
+
+  if (process.env.cmr_oauth_provider === 'launchpad') {
+    const passphrase = await getSecretString({
+      SecretId: process.env.launchpad_passphrase_secret_name
+    });
+
+    params.token = await launchpad.getLaunchpadToken({
+      api: process.env.launchpad_api,
+      passphrase,
+      certificate: process.env.launchpad_certificate
+    });
+  } else {
+    params.username = process.env.cmr_username;
+    params.password = await getSecretString({
+      SecretId: process.env.cmr_password_secret_name
+    });
+  }
+
+  return new CMR(params);
+};
+
 /**
  * Update each of the CMR files' OnlineAccessURL fields to represent the new
  * file locations.
@@ -232,12 +262,15 @@ async function updateEachCmrFileAccessURLs(
   distEndpoint,
   bucketsConfig
 ) {
-  return Promise.all(cmrFiles.map(async (cmrFile) => {
+  const cmrClient = await buildCmrClient();
+
+  return Promise.all(cmrFiles.map((cmrFile) => {
     const publish = false; // Do the publish in publish-to-cmr step
     const granuleId = cmrFile.granuleId;
     const granule = granulesObject[granuleId];
     const updatedCmrFile = granule.files.find(isCMRFile);
     return updateCMRMetadata({
+      cmrClient,
       granuleId,
       cmrFile: updatedCmrFile,
       files: granule.files,

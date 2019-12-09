@@ -4,14 +4,14 @@ const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
 const launchpad = require('@cumulus/common/launchpad');
-const { randomId } = require('@cumulus/common/test-utils');
+const { secretsManager } = require('@cumulus/common/aws');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 const EsCollection = require('../../es/collections');
 const models = require('../../models');
 const assertions = require('../../lib/assertions');
 process.env.oauth_user_group = 'GSFC-Cumulus';
 process.env.OAUTH_PROVIDER = 'launchpad';
 process.env.AccessTokensTable = randomId('AccessTokens');
-process.env.system_bucket = randomId('bucket');
 process.env.stackName = randomId('stack');
 const { app } = require('../../app');
 
@@ -26,24 +26,55 @@ let accessTokenModel;
 test.before(async () => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
+
+  process.env.system_bucket = randomString();
+
+  process.env.cmr_provider = randomString();
+  process.env.cmr_client_id = randomString();
+  process.env.cmr_username = randomString();
+  process.env.cmr_password_secret_name = randomString();
+  await secretsManager().createSecret({
+    Name: process.env.cmr_password_secret_name,
+    SecretString: randomString()
+  }).promise();
+
+  process.env.launchpad_api = randomString();
+  process.env.launchpad_passphrase_secret_name = randomString();
+  await secretsManager().createSecret({
+    Name: process.env.launchpad_passphrase_secret_name,
+    SecretString: randomString()
+  }).promise();
 });
 
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
+
+  await secretsManager().deleteSecret({
+    SecretId: process.env.cmr_password_secret_name,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
+
+  await secretsManager().deleteSecret({
+    SecretId: process.env.launchpad_passphrase_secret_name,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
 });
 
 test.serial('API request with an valid token stores the access token', async (t) => {
   const stub = sinon.stub(launchpad, 'validateLaunchpadToken').returns(validateTokenResponse);
   const collectionStub = sinon.stub(EsCollection.prototype, 'query').returns([]);
 
-  await request(app)
-    .get('/collections')
-    .set('Accept', 'application/json')
-    .set('Authorization', 'Bearer ValidAccessToken1')
-    .expect(200);
+  try {
+    await request(app)
+      .get('/collections')
+      .set('Accept', 'application/json')
+      .set('Authorization', 'Bearer ValidAccessToken1')
+      .expect(200);
+  } finally {
+    stub.restore();
+    collectionStub.restore();
+  }
 
-  stub.restore();
-  collectionStub.restore();
   const accessToken = await accessTokenModel.get({ accessToken: 'ValidAccessToken1' });
   t.is(accessToken.accessToken, 'ValidAccessToken1');
 });

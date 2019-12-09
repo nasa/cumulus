@@ -212,6 +212,11 @@ test.after.always(async () => {
     ForceDeleteWithoutRecovery: true
   }).promise();
 
+  await secretsManager().deleteSecret({
+    Name: process.env.launchpad_passphrase_secret_name,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
+
   await collectionModel.deleteTable();
   await granuleModel.deleteTable();
   await accessTokenModel.deleteTable();

@@ -11,6 +11,7 @@ const {
   s3,
   s3GetObjectTagging,
   s3PutObjectTagging,
+  secretsManager,
   promiseS3Upload,
   headObject,
   parseS3Uri
@@ -110,6 +111,30 @@ async function getFilesMetadata(files) {
   return Promise.all(getFileRequests);
 }
 
+test.before(async (t) => {
+  process.env.cmr_provider = randomString();
+  process.env.cmr_client_id = randomString();
+  process.env.cmr_username = randomString();
+  process.env.launchpad_api = randomString();
+  process.env.launchpad_certificate = randomString();
+
+  const launchpadPassphraseSecretName = randomString();
+  process.env.launchpad_passphrase_secret_name = launchpadPassphraseSecretName;
+  t.context.launchpadPassphraseSecretName = launchpadPassphraseSecretName;
+  await secretsManager().createSecret({
+    Name: launchpadPassphraseSecretName,
+    SecretString: randomString()
+  }).promise();
+
+  const cmrPasswordSecretName = randomString();
+  process.env.cmr_password_secret_name = cmrPasswordSecretName;
+  t.context.cmrPasswordSecretName = cmrPasswordSecretName;
+  await secretsManager().createSecret({
+    Name: cmrPasswordSecretName,
+    SecretString: randomString()
+  }).promise();
+});
+
 test.beforeEach(async (t) => {
   t.context.stagingBucket = randomId('staging');
   t.context.publicBucket = randomId('public');
@@ -133,6 +158,18 @@ test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.publicBucket);
   await recursivelyDeleteS3Bucket(t.context.stagingBucket);
   await recursivelyDeleteS3Bucket(t.context.protectedBucket);
+});
+
+test.after.always(async (t) => {
+  await secretsManager().deleteSecret({
+    SecretId: t.context.launchpadPassphraseSecretName,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
+
+  await secretsManager().deleteSecret({
+    SecretId: t.context.cmrPasswordSecretName,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
 });
 
 test.serial('Should move files to final location.', async (t) => {

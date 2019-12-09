@@ -24,7 +24,9 @@ const buildCmrClient = async () => {
     );
   } else {
     params.username = process.env.cmr_username;
-    params.password = await aws.getSecretString(process.env.cmr_password_secret_name);
+    params.password = await aws.getSecretString({
+      SecretId: process.env.cmr_password_secret_name
+    });
   }
 
   return new CMR(params);

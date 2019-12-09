@@ -21,14 +21,20 @@ const buildCmrClient = async (config) => {
   };
 
   if (config.cmr.oauthProvider === 'launchpad') {
+    const passphrase = await getSecretString({
+      SecretId: config.launchpad.passphraseSecretName
+    });
+
     params.token = await launchpad.getLaunchpadToken({
       api: config.launchpad.api,
-      passphrase: await getSecretString(config.launchpad.passphraseSecretName),
+      passphrase,
       certificate: config.launchpad.certificate
     });
   } else {
     params.username = config.cmr.username;
-    params.password = await getSecretString(config.cmr.passwordSecretName);
+    params.password = await getSecretString({
+      SecretId: config.cmr.passwordSecretName
+    });
   }
 
   return new CMR(params);

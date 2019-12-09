@@ -707,6 +707,7 @@ async function reconcileCMRMetadata({
   published
 }) {
   const cmrMetadataFiles = getCmrFileObjs(updatedFiles);
+
   if (cmrMetadataFiles.length === 1) {
     return updateCMRMetadata({
       cmrClient,
@@ -720,7 +721,8 @@ async function reconcileCMRMetadata({
   if (cmrMetadataFiles.length > 1) {
     log.error('More than one cmr metadata file found.');
   }
-  return Promise.resolve();
+
+  return undefined;
 }
 
 /**
