@@ -16,7 +16,7 @@ By "backwards-compatible", we mean that **any new required fields must be nullab
 
 Making new field(s) translatable means that they must be able to be populated from data contained in **any previous version of the database schema**.
 
-Enforcing backwards compatibility means that database operations can conform to the following rules:
+Enforcing backwards compatibility means that database operations must conform to the following rules:
 
 - Database writes must be able to accept **any schema version**
 - Database reads should be translated to always return responses matching the **latest schema version**
