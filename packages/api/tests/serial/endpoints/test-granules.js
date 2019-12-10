@@ -213,7 +213,7 @@ test.after.always(async () => {
   }).promise();
 
   await secretsManager().deleteSecret({
-    Name: process.env.launchpad_passphrase_secret_name,
+    SecretId: process.env.launchpad_passphrase_secret_name,
     ForceDeleteWithoutRecovery: true
   }).promise();
 
