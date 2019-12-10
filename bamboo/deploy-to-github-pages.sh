@@ -1,11 +1,7 @@
 #!/bin/bash
 set -ex
 . ./bamboo/set-bamboo-env-variables.sh
-
-if [[ $BRANCH != master && $PUBLISH_FLAG != true ]]; then
-  >&2 echo "******PUBLISH_FLAG or master branch not detected, skipping doc publish"
-  exit 0
-fi
+. ./bamboo/abort-if-not-publish.sh
 
 git clone --depth=50 --branch=gh-pages "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/nasa/cumulus.git" gh-pages
 (

@@ -39,26 +39,40 @@ The process involves:
 
 #### Install Terraform
 
-If you are using a Mac and [Homebrew](https://brew.sh), installing Terraform is
+It is recommended to keep a consistent version of Terraform as you deploy. Once your state files are migrated to a higher version, they are not always backwards compatible so integrators should pin their Terraform version. This is easily accomplished using the Terraform Version Manager [tfenv](https://github.com/tfutils/tfenv). If you have a CI environment (or any other machine) that you are using to deploy the same stack, **you should pin your version across those machines as well**, otherwise you will run into errors trying to re-deploy from your local machine.
+
+If you are using a Mac and [Homebrew](https://brew.sh), installing tfenv is
 as simple as:
 
 ```shell
 brew update
-brew install terraform
+brew install tfenv
 ```
 
 For other cases,
-[installation instructions](https://learn.hashicorp.com/terraform/getting-started/install.html)
+[installation instructions](https://github.com/tfutils/tfenv#installation)
 are available.
 
-⚠️ Cumulus Terraform modules are targeted at Terraform v0.12.0 and higher. To verify that the version of Terraform installed is at least v0.12.0, run:
+```shell
+ $ tfenv install 0.12.12
+[INFO] Installing Terraform v0.12.12
+...
+[INFO] Switching completed
+
+$ tfenv use 0.12.12
+[INFO] Switching to v0.12.12
+...
+[INFO] Switching completed
+```
+
+It is recommended to stay on the Cumulus Core TF version which can be found [here](https://github.com/nasa/cumulus/blob/master/example/.tfversion). Any changes to that will be noted in the release notes.
+
+To verify your Terraform version run:
 
 ```shell
 $ terraform --version
-Terraform v0.12.2
+Terraform v0.12.12
 ```
-
-**Note:** If you have a CI environment (or any other machine) that you are using to deploy, **make sure that your local Terraform version is at least equal to the version on CI**, otherwise you will run into errors trying to re-deploy from your local machine.
 
 ### Credentials
 
@@ -336,7 +350,7 @@ Copy the [`terraform.tf.example`](https://github.com/nasa/cumulus-template-deplo
 remote state.
 
 Copy the [`terraform.tfvars.example`](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/terraform.tfvars.example) file to `terraform.tfvars`, and fill in
-appropriate values. See the [Cumulus module variable definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf) for more detail on each variable.
+appropriate values. See the [Cumulus module variable definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf) for more detail on each variable. The `prefix` should be the same as the `prefix` from the data-persistence deployment.
 
 **Note:** The `token_secret` is a string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is **strongly recommended that this value be a 32-character string**.
 

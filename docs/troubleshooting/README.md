@@ -40,6 +40,10 @@ For Kinesis rules specifically, if an error occurs during the message consumer p
 
 More information on kinesis error handling is [here](data-cookbooks/cnm-workflow.md#kinesis-record-error-handling).
 
+## Operator API Errors
+
+All operator API calls are funneled through the `ApiEndpoints` lambda. Each API call is logged to the `ApiEndpoints` CloudWatch log for your deployment.
+
 ## Lambda Errors
 
 ### KMS Exception: AccessDeniedException
