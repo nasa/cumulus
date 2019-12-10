@@ -493,3 +493,13 @@ variable "archive_api_url" {
   default     = null
   description = "If not specified, the value of the Backend (Archive) API Gateway endpoint is used"
 }
+
+variable "ingest_logs_to_elk" {
+  type = bool
+  default = false
+}
+
+variable "additional_log_groups_to_elk" {
+  type = map(string)
+  default = {}
+}
