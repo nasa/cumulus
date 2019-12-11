@@ -6,7 +6,7 @@ The data models managed by Cumulus and their schema definitions can be found in 
 
 ## Documenting changes
 
-All changes to the database models must be noted in the [data model CHANGELOG](./DATA_CHANGELOG.md). Tracking backwards compatibility will otherwise be extremely difficult.
+All changes to the database models must be noted in the [data model CHANGELOG](./DATA_MODEL_CHANGELOG.md). Tracking backwards compatibility will otherwise be extremely difficult.
 
 ## Managing data schemas
 
