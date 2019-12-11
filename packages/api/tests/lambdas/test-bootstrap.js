@@ -5,7 +5,6 @@ const { randomString } = require('@cumulus/common/test-utils');
 
 const bootstrap = require('../../lambdas/bootstrap');
 const { Search } = require('../../es/search');
-const { bootstrapDynamoDbTables } = require('../../lambdas/bootstrap');
 const { deleteAliases } = require('../../lib/testUtils');
 const mappings = require('../../models/mappings.json');
 const testMappings = require('../data/testEsMappings.json');
@@ -14,23 +13,10 @@ const mappingsNoFields = require('../data/testEsMappingsNoFields.json');
 
 let esClient;
 
-// This is for a skipped test: bootstrap dynamoDb activates pointInTime on a given table
-const tableName = randomString();
-
 test.before(async () => {
   await deleteAliases();
 });
 
-// Skipping this test for because LocalStack version 0.8.6 does not support pointInTime
-// When this test is back in, make sure to delete the table
-test.serial.skip('bootstrap dynamoDb activates pointInTime on a given table', async (t) => {
-  const resp = await bootstrapDynamoDbTables([{ name: tableName, pointInTime: true }]);
-
-  t.is(
-    resp.ContinuousBackupsDescription.PointInTimeRecoveryDescription.PointInTimeRecoveryStatus,
-    'ENABLED'
-  );
-});
 
 test.serial('bootstrap creates index with alias', async (t) => {
   const indexName = randomString();
