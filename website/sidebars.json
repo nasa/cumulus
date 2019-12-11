@@ -84,7 +84,8 @@
     "Configuration": [
       "operator-docs/lifecycle-policies",
       "operator-docs/locating-access-logs",
-      "operator-docs/collection-storage-best-practices"
+      "operator-docs/collection-storage-best-practices",
+      "operator-docs/rerunning-workflow-executions"
     ]
   }
 }
