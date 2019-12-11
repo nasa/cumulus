@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 services:
   ftp:
     image: cumuluss/vsftpd:3
@@ -35,7 +35,7 @@ services:
     image: localstack/localstack:0.8.10
     network_mode: "service:build_env"
     environment:
-      SERVICES: 'kinesis,lambda,s3,sns,sqs,dynamodb,dynamodbstreams,cloudwatch,cloudwatchlogs'
+      SERVICES: "kinesis,lambda,s3,sns,sqs,dynamodb,cloudwatch,cloudwatchlogs"
   build_env:
     image: jlkovarik/cumulus_build_env:1
     volumes:
