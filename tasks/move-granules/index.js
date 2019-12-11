@@ -218,26 +218,26 @@ async function moveFilesForAllGranules(
   return granulesObject;
 }
 
-const buildCmrClient = async () => {
+const buildCmrClient = async (config) => {
   const params = {
-    provider: process.env.cmr_provider,
-    clientId: process.env.cmr_client_id
+    provider: config.cmr.provider,
+    clientId: config.cmr.clientId
   };
 
-  if (process.env.cmr_oauth_provider === 'launchpad') {
+  if (config.cmr.oauthProvider === 'launchpad') {
     const passphrase = await getSecretString({
-      SecretId: process.env.launchpad_passphrase_secret_name
+      SecretId: config.launchpad.passphraseSecretName
     });
 
     params.token = await launchpad.getLaunchpadToken({
-      api: process.env.launchpad_api,
+      api: config.launchpad.api,
       passphrase,
-      certificate: process.env.launchpad_certificate
+      certificate: config.launchpad.certificate
     });
   } else {
-    params.username = process.env.cmr_username;
+    params.username = config.cmr.username;
     params.password = await getSecretString({
-      SecretId: process.env.cmr_password_secret_name
+      SecretId: config.cmr.passwordSecretName
     });
   }
 
@@ -253,6 +253,7 @@ const buildCmrClient = async () => {
  * @param {string} cmrGranuleUrlType - type of granule CMR url
  * @param {string} distEndpoint - the api distribution endpoint
  * @param {BucketsConfig} bucketsConfig - BucketsConfig instance
+ * @param {CMR} cmrClient - a CMR client instance
  * @returns {Promise} promise resolves when all files have been updated
  **/
 async function updateEachCmrFileAccessURLs(
@@ -260,10 +261,9 @@ async function updateEachCmrFileAccessURLs(
   granulesObject,
   cmrGranuleUrlType,
   distEndpoint,
-  bucketsConfig
+  bucketsConfig,
+  cmrClient
 ) {
-  const cmrClient = await buildCmrClient();
-
   return Promise.all(cmrFiles.map((cmrFile) => {
     const publish = false; // Do the publish in publish-to-cmr step
     const granuleId = cmrFile.granuleId;
@@ -329,13 +329,17 @@ async function moveGranules(event) {
     movedGranules = await moveFilesForAllGranules(
       granulesToMove, config.bucket, duplicateHandling, bucketsConfig
     );
+
+    const cmrClient = await buildCmrClient(config);
+
     // update cmr metadata files with correct online access urls
     await updateEachCmrFileAccessURLs(
       cmrFiles,
       movedGranules,
       cmrGranuleUrlType,
       config.distribution_endpoint,
-      bucketsConfig
+      bucketsConfig,
+      cmrClient
     );
   } else {
     movedGranules = granulesByGranuleId;

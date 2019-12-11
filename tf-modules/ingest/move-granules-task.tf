@@ -6,7 +6,7 @@ resource "aws_lambda_function" "move_granules_task" {
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs8.10"
   timeout          = 300
-  memory_size      = 1024
+  memory_size      = 384
 
   layers = [var.cumulus_message_adapter_lambda_layer_arn]
 

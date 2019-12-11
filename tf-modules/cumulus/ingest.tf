@@ -24,7 +24,7 @@ module "ingest" {
   cmr_username       = var.cmr_username
   cmr_provider       = var.cmr_provider
   cmr_client_id      = var.cmr_client_id
-  cmr_password       = module.archive.encrypted_cmr_password
+  cmr_password       = var.cmr_password
   cmr_environment    = var.cmr_environment
   cmr_limit          = var.cmr_limit
   cmr_page_size      = var.cmr_page_size
@@ -32,7 +32,7 @@ module "ingest" {
   # Launchpad config
   launchpad_api         = var.launchpad_api
   launchpad_certificate = var.launchpad_certificate
-  launchpad_passphrase  = module.archive.encrypted_launchpad_passphrase
+  launchpad_passphrase  = var.launchpad_passphrase
 
   # DB config
   dynamo_tables = var.dynamo_tables

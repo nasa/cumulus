@@ -19,7 +19,6 @@ const log = require('@cumulus/common/log');
 const pLimit = require('p-limit');
 const { dynamodb } = require('@cumulus/common/aws');
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const { User } = require('../models');
 const { Search, defaultIndexAlias } = require('../es/search');
 const mappings = require('../models/mappings.json');
@@ -181,32 +180,6 @@ async function bootstrapUsers(table, records) {
 }
 
 /**
- * Encrypt CMR password
- *
- * @param {string} password - plain text cmr password
- * @returns {Promise.<string>} encrypted cmr password
- */
-async function bootstrapCmrProvider(password) {
-  if (!password) {
-    return new Promise((resolve) => resolve('nopassword'));
-  }
-  return DefaultProvider.encrypt(password);
-}
-
-/**
- * Encrypt Launchpad certificate passphrase
- *
- * @param {string} passphrase - plain text launchpad passphrase
- * @returns {Promise.<string>} encrypted launchpad passphrase
- */
-async function bootstrapLaunchpad(passphrase) {
-  if (!passphrase) {
-    return new Promise((resolve) => resolve('nopassphrase'));
-  }
-  return DefaultProvider.encrypt(passphrase);
-}
-
-/**
  * converts dynamoDB backup status to boolean
  *
  * @param {string} status - backup status of the table
@@ -290,8 +263,6 @@ async function sendResponse(event, status, data = {}) {
 function handler(event, context, cb) {
   const es = get(event, 'ResourceProperties.ElasticSearch');
   const users = get(event, 'ResourceProperties.Users');
-  const cmr = get(event, 'ResourceProperties.Cmr');
-  const launchpad = get(event, 'ResourceProperties.Launchpad');
   const dynamos = get(event, 'ResourceProperties.DynamoDBTables', []);
   const requestType = get(event, 'RequestType');
 
@@ -302,32 +273,14 @@ function handler(event, context, cb) {
   const actions = [
     bootstrapElasticSearch(get(es, 'host')),
     bootstrapUsers(get(users, 'table'), get(users, 'records')),
-    bootstrapCmrProvider(get(cmr, 'Password')),
-    bootstrapLaunchpad(get(launchpad, 'Passphrase')),
     bootstrapDynamoDbTables(dynamos)
   ];
 
   return Promise.all(actions)
-    .then((results) => {
-      const data = {
-        CmrPassword: results[2],
-        LaunchpadPassphrase: results[3]
-      };
-
-      // if invoked by Cloudformation ...
-      if (event.ResponseURL) return sendResponse(event, 'SUCCESS', data);
-
-      // if invoked by Terraform ...
-      return { Status: 'SUCCESS', Data: data };
-    })
+    .then(() => ({ Status: 'SUCCESS', Data: {} }))
     .then((r) => cb(null, r))
     .catch((e) => {
       log.error(e);
-
-      // if invoked by Cloudformation ...
-      if (event.ResponseURL) return sendResponse(event, 'FAILED', null);
-
-      // if invoked by Terraform ...
       return { Status: 'FAILED', Error: e };
     })
     .then((r) => cb(null, r));

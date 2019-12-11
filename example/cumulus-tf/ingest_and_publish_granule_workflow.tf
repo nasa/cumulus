@@ -179,7 +179,9 @@ module "ingest_and_publish_granule_workflow" {
             "buckets": "{$.meta.buckets}",
             "distribution_endpoint": "{$.meta.distribution_endpoint}",
             "collection": "{$.meta.collection}",
-            "duplicateHandling": "{$.meta.collection.duplicateHandling}"
+            "duplicateHandling": "{$.meta.collection.duplicateHandling}",
+            "cmr": "{$.meta.cmr}",
+            "launchpad": "{$.meta.launchpad}"
           }
         }
       },
