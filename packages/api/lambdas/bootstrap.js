@@ -277,8 +277,7 @@ function handler(event, context, cb) {
   ];
 
   return Promise.all(actions)
-    .then(() => ({ Status: 'SUCCESS', Data: {} }))
-    .then((r) => cb(null, r))
+    .then(() => cb(null, { Status: 'SUCCESS', Data: {} }))
     .catch((e) => {
       log.error(e);
       return { Status: 'FAILED', Error: e };
