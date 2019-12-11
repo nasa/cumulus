@@ -449,7 +449,11 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   const renamedHdfFileInfo = await headObject(
     parseS3Uri(renamedFile).Bucket, parseS3Uri(renamedFile).Key
   );
-  t.deepEqual(existingHdfFileInfo, renamedHdfFileInfo);
+
+  t.deepEqual(
+    renamedHdfFileInfo,
+    { ...existingHdfFileInfo, LastModified: renamedHdfFileInfo.LastModified }
+  );
 
   // new hdf file is moved to destination
   const newHdfFileInfo = await headObject(
