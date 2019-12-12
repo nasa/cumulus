@@ -12,7 +12,7 @@
         "uri": "s3://ignored-bucket/cumulus-test-data/pdrs/L2_HR_PIXC_product_0001-of-4154.h5",
         "name": "L2_HR_PIXC_product_0001-of-4154.h5",
         "checksum-type": "md5",
-        "checksum": "bb802eb3daf7d2c4e641b7551e89527f",
+        "checksum": "cd043418380acdf69b2fb80649357cda",
         "size": 50
       }
     ]
