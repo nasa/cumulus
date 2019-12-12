@@ -521,16 +521,16 @@ test.serial('parsePayload correctly parses AWS Linux 2 style console output', as
 
 test.serial('parsePayload correctly handles unparseable record', async (t) => {
   const parsePayload = indexer.__get__('parsePayload');
-  const payload = {
+  const testPayload = {
     message: 'INFO MESSAGE',
-    sender:  'AWS sender',
+    sender: 'AWS sender',
     executions: 'some execution value',
     timestamp: '2018-06-01T17:45:27.108Z',
     version: '1'
   };
   const expected = {
     message: 'INFO MESSAGE',
-    sender:  'AWS sender',
+    sender: 'AWS sender',
     executions: 'some execution value',
     timestamp: '2018-06-01T17:45:27.108Z',
     version: '1',
@@ -538,6 +538,6 @@ test.serial('parsePayload correctly handles unparseable record', async (t) => {
     pid: 1,
     name: 'cumulus'
   };
-  const actual = parsePayload(payload);
+  const actual = parsePayload(testPayload);
   t.deepEqual(actual, expected);
 });
