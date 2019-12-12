@@ -15,7 +15,7 @@ test.serial('configureTimestampEnvs throws error when invalid endTimestamp is pr
   };
   t.throws(
     () => manualConsumer.configureTimestampEnvs(event),
-    `${event.endTimestamp} is not a valid end date.`
+    `endTimestamp ${event.endTimestamp} is not a valid input for new Date().`
   );
   delete process.env.endTimestamp;
 });
@@ -26,7 +26,7 @@ test.serial('configureTimestampEnvs throws error when invalid startTimestamp is 
   };
   t.throws(
     () => manualConsumer.configureTimestampEnvs(event),
-    `${event.startTimestamp} is not a valid end date.`
+    `startTimestamp ${event.startTimestamp} is not a valid input for new Date().`
   );
   delete process.env.endTimestamp;
 });
@@ -130,16 +130,16 @@ test.serial('processRecordBatch logs errors for processRecord failures and does 
   t.is(result, 0);
 });
 
-test.serial('processShard catches and logs failure of getRecords', async (t) => {
+test.serial('iterateOverShardRecursively catches and logs failure of getRecords', async (t) => {
   const logError = sinon.spy(log, 'error');
-  await manualConsumer.processShard([], 'fakeIterator');
+  await manualConsumer.iterateOverShardRecursively([], 'fakeIterator');
 
   logError.restore();
 
   t.true(logError.calledOnce);
 });
 
-test.serial('processShard recurs until MillisBehindLatest reaches 0', async (t) => {
+test.serial('iterateOverShardRecursively recurs until MillisBehindLatest reaches 0', async (t) => {
   let recurred = false;
   const restoreKinesis = manualConsumer.__set__('Kinesis', {
     getRecords: () => ({
@@ -156,23 +156,23 @@ test.serial('processShard recurs until MillisBehindLatest reaches 0', async (t) 
   });
   const existingPromiseList = [Promise.resolve(2), Promise.resolve(0)];
   const processRecord = sinon.stub(messageConsumer, 'processRecord').returns(true);
-  const output = await manualConsumer.processShard(existingPromiseList, 'fakeIterator');
+  const output = await manualConsumer.iterateOverShardRecursively(existingPromiseList, 'fakeIterator');
   processRecord.restore();
   restoreKinesis();
   t.true(processRecord.calledTwice);
   t.deepEqual(await Promise.all(output), [2, 0, 1, 1]);
 });
 
-test.serial('handleShard catches and logs failure of getShardIterator', async (t) => {
+test.serial('processShard catches and logs failure of getShardIterator', async (t) => {
   const logError = sinon.spy(log, 'error');
   const processRecordBatch = sinon.spy(manualConsumer, 'processRecordBatch');
-  await manualConsumer.handleShard('nonexistentStream', 'nonexistentShard');
+  await manualConsumer.processShard('nonexistentStream', 'nonexistentShard');
   logError.restore();
   t.true(logError.calledOnce);
   t.false(processRecordBatch.called);
 });
 
-test.serial('handleShard returns number of records processed from shard', async (t) => {
+test.serial('processShard returns number of records processed from shard', async (t) => {
   const restoreKinesis = manualConsumer.__set__('Kinesis', {
     getShardIterator: () => ({
       promise: () => Promise.resolve({
@@ -181,8 +181,8 @@ test.serial('handleShard returns number of records processed from shard', async 
     })
   });
   const logError = sinon.spy(log, 'error');
-  const restoreProcessShard = manualConsumer.__set__('processShard', async () => [Promise.resolve(2), Promise.resolve(3)]);
-  const output = await manualConsumer.handleShard('fakestream', 'fakeshard');
+  const restoreProcessShard = manualConsumer.__set__('iterateOverShardRecursively', async () => [Promise.resolve(2), Promise.resolve(3)]);
+  const output = await manualConsumer.processShard('fakestream', 'fakeshard');
   logError.restore();
   restoreProcessShard();
   restoreKinesis();
@@ -190,15 +190,15 @@ test.serial('handleShard returns number of records processed from shard', async 
   t.false(logError.called);
 });
 
-test.serial('processStream catches and logs listShards failure, then exits', async (t) => {
+test.serial('iterateOverStreamRecursivelyToDispatchShards catches and logs listShards failure, then exits', async (t) => {
   const logError = sinon.spy(log, 'error');
   const inputList = [Promise.resolve(4)];
-  const output = await manualConsumer.processStream('fakeStream', inputList, 'badParams');
+  const output = await manualConsumer.iterateOverStreamRecursivelyToDispatchShards('fakeStream', inputList, 'badParams');
   t.deepEqual(output, inputList);
   t.true(logError.calledTwice);
 });
 
-test.serial('processStream recurs until listShards does not contain a NextToken', async (t) => {
+test.serial('iterateOverStreamRecursivelyToDispatchShards recurs until listShards does not contain a NextToken', async (t) => {
   let recurred = false;
   const restoreKinesis = manualConsumer.__set__('Kinesis', {
     listShards: () => ({
@@ -212,16 +212,16 @@ test.serial('processStream recurs until listShards does not contain a NextToken'
       }
     })
   });
-  const restoreHandleShard = manualConsumer.__set__('handleShard', async () => Promise.resolve(1));
-  const output = await manualConsumer.processStream('fakestream', [], {});
+  const restoreHandleShard = manualConsumer.__set__('processShard', async () => Promise.resolve(1));
+  const output = await manualConsumer.iterateOverStreamRecursivelyToDispatchShards('fakestream', [], {});
   restoreHandleShard();
   restoreKinesis();
   t.deepEqual(await Promise.all(output), [1, 1]);
 });
 
-test.serial('handleStream returns records processed', async (t) => {
-  const restoreProcessStream = manualConsumer.__set__('processStream', async () => [Promise.resolve(12), Promise.resolve(13)]);
-  const output = await manualConsumer.handleStream('fakestream', 'faketimestamp');
+test.serial('processStream returns records processed', async (t) => {
+  const restoreProcessStream = manualConsumer.__set__('iterateOverStreamRecursivelyToDispatchShards', async () => [Promise.resolve(12), Promise.resolve(13)]);
+  const output = await manualConsumer.processStream('fakestream', 'faketimestamp');
   restoreProcessStream();
   t.is(output, 'Processed 25 kinesis records from stream fakestream');
 });
@@ -267,16 +267,16 @@ test.serial('handler should not overwrite existing envs', async (t) => {
 });
 
 test('handler returns error string if no valid param is provided to determine intended operation', async (t) => {
-  t.is(await manualConsumer.handler({}), 'Manual consumer could not determine expected operation.');
+  t.is(await manualConsumer.handler({}), 'Manual consumer could not determine expected operation from event {}');
 });
 
-test.serial('handler calls handleStream if valid parameters are provided', async (t) => {
+test.serial('handler calls processStream if valid parameters are provided', async (t) => {
   const logInfo = sinon.spy(log, 'info');
   const expectedOutput = 'testing-output';
-  const restorehandleStream = manualConsumer.__set__('handleStream', () => Promise.resolve(expectedOutput));
+  const restoreprocessStream = manualConsumer.__set__('processStream', () => Promise.resolve(expectedOutput));
   const actualOutput = await manualConsumer.handler({ type: 'kinesis', kinesisStream: 'validstream' });
   logInfo.restore();
-  restorehandleStream();
+  restoreprocessStream();
   t.is(actualOutput, expectedOutput);
   t.true(logInfo.calledOnce);
 });

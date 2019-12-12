@@ -18,12 +18,16 @@ const tallyReducer = (acc, cur) => acc + cur;
 const configureTimestampEnvs = (event) => {
   if (!process.env.endTimestamp && event.endTimestamp) {
     const dateObj = new Date(event.endTimestamp);
-    if (Number.isNaN(dateObj.valueOf())) throw new Error(`${event.endTimestamp} is not a valid end date.`);
+    if (Number.isNaN(dateObj.valueOf())) {
+      throw new TypeError(`endTimestamp ${event.endTimestamp} is not a valid input for new Date().`);
+    }
     process.env.endTimestamp = dateObj.toISOString();
   }
   if (!process.env.startTimestamp && event.startTimestamp) {
     const dateObj = new Date(event.startTimestamp);
-    if (Number.isNaN(dateObj.valueOf())) throw new Error(`${event.startTimestamp} is not a valid end date.`);
+    if (Number.isNaN(dateObj.valueOf())) {
+      throw new TypeError(`startTimestamp ${event.startTimestamp} is not a valid input for new Date().`);
+    }
     process.env.startTimestamp = dateObj.toISOString();
   }
 };
@@ -92,7 +96,9 @@ async function processRecordBatch(records) {
     return acc;
   }, { skip: 0, err: 0, ok: 0 });
   if (skip > 0) {
-    log.info(`Skipped ${skip} of ${records.length} records in batch for arriving after endTimestamp`);
+    log.info(
+      `Skipped ${skip} of ${records.length} records in batch for arriving after endTimestamp`
+    );
   }
   if (err > 0) {
     log.warn(`Failed to process ${err} of ${records.length} records in batch`);
@@ -108,7 +114,7 @@ async function processRecordBatch(records) {
  * @param {string} shardIterator - ShardIterator Id
  * @returns {Array<Promise>} list of promises from calls to processRecordBatch
  */
-async function processShard(recordPromiseList, shardIterator) {
+async function iterateOverShardRecursively(recordPromiseList, shardIterator) {
   try {
     const response = await Kinesis.getRecords({
       ShardIterator: shardIterator
@@ -116,7 +122,7 @@ async function processShard(recordPromiseList, shardIterator) {
     recordPromiseList.push(processRecordBatch(response.Records));
     if (response.MillisBehindLatest === 0 || !response.NextShardIterator) return recordPromiseList;
     const nextShardIterator = response.NextShardIterator;
-    return processShard(recordPromiseList, nextShardIterator);
+    return iterateOverShardRecursively(recordPromiseList, nextShardIterator);
   } catch (error) {
     log.error(error);
     return recordPromiseList;
@@ -130,13 +136,13 @@ async function processShard(recordPromiseList, shardIterator) {
  * @param {string} shardId - shard ID
  * @returns {number} number of records successfully processed from shard
  */
-async function handleShard(stream, shardId) {
+async function processShard(stream, shardId) {
   const iteratorParams = setupIteratorParams(stream, shardId);
   try {
     const shardIterator = (
       await Kinesis.getShardIterator(iteratorParams).promise()
     ).ShardIterator;
-    const tallyList = await Promise.all(await processShard([], shardIterator));
+    const tallyList = await Promise.all(await iterateOverShardRecursively([], shardIterator));
     const shardTally = tallyList.reduce(tallyReducer, 0);
     return shardTally;
   } catch (err) {
@@ -154,7 +160,7 @@ async function handleShard(stream, shardId) {
  * @param {Object} params - listShards query params
  * @returns {Array<Promise>} list of promises from calls to processShard
  */
-async function processStream(stream, shardPromiseList, params) {
+async function iterateOverStreamRecursivelyToDispatchShards(stream, shardPromiseList, params) {
   const listShardsResponse = (await Kinesis.listShards(params).promise().catch(log.error));
   if (!listShardsResponse || !listShardsResponse.Shards || listShardsResponse.Shards.length === 0) {
     log.error(`No shards found for params ${JSON.stringify(params)}.`);
@@ -162,14 +168,14 @@ async function processStream(stream, shardPromiseList, params) {
   }
   log.info(`Processing records from ${listShardsResponse.Shards.length} shards..`);
   const shardCalls = listShardsResponse.Shards.map(
-    (shard) => handleShard(stream, shard.ShardId).catch(log.error)
+    (shard) => processShard(stream, shard.ShardId).catch(log.error)
   );
   shardPromiseList.push(...shardCalls);
   if (!listShardsResponse.NextToken) {
     return shardPromiseList;
   }
   const newParams = { NextToken: listShardsResponse.NextToken };
-  return processStream(stream, shardPromiseList, newParams);
+  return iterateOverStreamRecursivelyToDispatchShards(stream, shardPromiseList, newParams);
 }
 
 /**
@@ -181,9 +187,11 @@ async function processStream(stream, shardPromiseList, params) {
  * timestamp used to differentiate streams that have a name used by a previous stream.
  * @returns {number} number of records successfully processed from stream
  */
-async function handleStream(stream, streamCreationTimestamp) {
+async function processStream(stream, streamCreationTimestamp) {
   const initialParams = setupListShardParams(stream, streamCreationTimestamp);
-  const streamPromiseList = await processStream(stream, [], initialParams);
+  const streamPromiseList = await iterateOverStreamRecursivelyToDispatchShards(
+    stream, [], initialParams
+  );
   const streamResults = await Promise.all(streamPromiseList);
   const recordsProcessed = streamResults.reduce(tallyReducer, 0);
   const outMsg = `Processed ${recordsProcessed} kinesis records from stream ${stream}`;
@@ -210,10 +218,11 @@ async function handler(event) {
 
   if (event.type === 'kinesis' && event.kinesisStream !== undefined) {
     log.info(`Processing records from stream ${event.kinesisStream}`);
-    return handleStream(event.kinesisStream, event.kinesisStreamCreationTimestamp);
+    return processStream(event.kinesisStream, event.kinesisStreamCreationTimestamp);
   }
 
-  const errMsg = 'Manual consumer could not determine expected operation.';
+  const errMsg = 'Manual consumer could not determine expected operation'
+  + ` from event ${JSON.stringify(event)}`;
   log.fatal(errMsg);
   return errMsg;
 }
@@ -221,8 +230,8 @@ async function handler(event) {
 module.exports = {
   configureTimestampEnvs,
   handler,
-  handleShard,
-  handleStream,
+  iterateOverShardRecursively,
+  iterateOverStreamRecursivelyToDispatchShards,
   processRecordBatch,
   processShard,
   processStream,
