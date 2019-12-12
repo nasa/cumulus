@@ -228,7 +228,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     expect(await getStreamStatus(streamName)).toBe('ACTIVE');
   });
 
-  describe('Workflow executes successfully', () => {
+  xdescribe('Workflow executes successfully', () => {
     beforeAll(async () => {
       await tryCatchExit(cleanUp, async () => {
         console.log(`Dropping record onto  ${streamName}, recordIdentifier: ${recordIdentifier}`);
@@ -341,14 +341,15 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     });
   });
 
-  xdescribe('Workflow fails because TranslateMessage fails', () => {
-    const badRecord = { ...record };
-    const badRecordIdentifier = randomString();
-    badRecord.identifier = badRecordIdentifier;
-    delete badRecord.product;
+  describe('Workflow fails because TranslateMessage fails', () => {
     let failingWorkflowExecution;
 
     beforeAll(async () => {
+      const badRecord = { ...record };
+      const badRecordIdentifier = randomString();
+      badRecord.identifier = badRecordIdentifier;
+      delete badRecord.product;
+
       await tryCatchExit(cleanUp, async () => {
         console.log(`Dropping bad record onto ${streamName}, recordIdentifier: ${badRecordIdentifier}.`);
         await putRecordOnStream(streamName, badRecord);
