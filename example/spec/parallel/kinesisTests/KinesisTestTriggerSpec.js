@@ -53,7 +53,7 @@ const testWorkflow = 'KinesisTriggerTest';
 // configured to trigger workflows when new records arrive on a Kinesis
 // stream. When a record appears on the stream, the messageConsumer lambda
 // triggers workflows associated with the kinesis-type rules.
-xdescribe('The Cloud Notification Mechanism Kinesis workflow', () => {
+describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   const collectionsDir = './data/collections/L2_HR_PIXC-000/';
   const maxWaitForExecutionSecs = 60 * 5;
   const maxWaitForSFExistSecs = 60 * 4;
