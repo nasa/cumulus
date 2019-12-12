@@ -199,6 +199,7 @@ function processRecord(record, fromSNS) {
     } catch (err) {
       log.error('Caught error parsing JSON:');
       log.error(err);
+      // TODO (out of scope): does it make sense to attempt retrying bad JSON?
       return handleProcessRecordError(err, record, isKinesisRetry, fromSNS);
     }
   }

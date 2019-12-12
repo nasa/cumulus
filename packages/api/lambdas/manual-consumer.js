@@ -34,7 +34,7 @@ const configureTimestampEnvs = (event) => {
  *
  * @param {string} stream - stream name
  * @param {string} shardId - shard ID
- * @returns {Object} getShardIterator params
+ * @returns {Object} `getShardIterator` params object
  */
 const setupIteratorParams = (stream, shardId) => {
   const params = {
@@ -58,7 +58,7 @@ const setupIteratorParams = (stream, shardId) => {
  * @param {string} stream - kinesis stream name
  * @param {Date|string|number} [streamCreationTimestamp] - Stream creation timestamp
  * used to differentiate streams that have a name used by a previous stream.
- * @returns {Object} number of records successfully processed from stream
+ * @returns {Object} `listShards` params object
  */
 const setupListShardParams = (stream, streamCreationTimestamp) => {
   const params = {
