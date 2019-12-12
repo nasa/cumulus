@@ -44,7 +44,7 @@
     "@cumulus/checksum": "1.16.0",
     "@cumulus/logger": "1.16.0",
     "ajv": "^5.2.2",
-    "aws-sdk": "^2.250.1",
+    "aws-sdk": "^2.585.0",
     "follow-redirects": "^1.2.4",
     "fs-extra": "^5.0.0",
     "got": "^9.2.1",
@@ -72,7 +72,7 @@
     "p-retry": "^4.2.0",
     "pump": "^3.0.0",
     "randexp": "^0.4.9",
-    "ssh2": "^0.5.5",
+    "ssh2": "^0.8.7",
     "url-join": "^4.0.0",
     "uuid": "^3.2.1"
   },
