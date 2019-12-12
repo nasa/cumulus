@@ -17,6 +17,7 @@ module "kinesis_trigger_test_workflow" {
         "cma": {
           "event.$": "$",
           "task_config": {
+            "collection": "{$.meta.collection}",
             "cumulus_message": {
               "outputs": [
                 {
@@ -72,6 +73,7 @@ module "kinesis_trigger_test_workflow" {
             "downloadBucket": "{$.meta.buckets.private.name}",
             "stack": "{$.meta.stack}",
             "cumulus_message": {
+              "input": "{$.payload.output}",
               "outputs": [
                 {
                   "source": "{$.granules}",
