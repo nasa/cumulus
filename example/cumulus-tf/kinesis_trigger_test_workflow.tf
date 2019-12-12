@@ -25,7 +25,7 @@ module "kinesis_trigger_test_workflow" {
                   "destination": "{$.meta.cnm}"
                 },
                 {
-                  "source": "{$}",
+                  "source": "{$.output}",
                   "destination": "{$.payload}"
                 }
               ]
@@ -73,7 +73,6 @@ module "kinesis_trigger_test_workflow" {
             "downloadBucket": "{$.meta.buckets.private.name}",
             "stack": "{$.meta.stack}",
             "cumulus_message": {
-              "input": "{$.payload.output}",
               "outputs": [
                 {
                   "source": "{$.granules}",
@@ -126,7 +125,7 @@ module "kinesis_trigger_test_workflow" {
                   "destination": "{$.meta.cnmResponse}"
                 },
                 {
-                  "source": "{$}",
+                  "source": "{$.cnm}",
                   "destination": "{$.payload}"
                 }
               ]
