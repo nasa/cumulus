@@ -4,6 +4,7 @@ module "log_subscription_filter" {
   prefix                       = var.prefix
   log_destination_arn          = var.log_destination_arn
   additional_log_groups_to_elk = var.additional_log_groups_to_elk
+  log2elasticsearch_lambda_function_arn = module.archive.log2elasticsearch_lambda_function_arn
 
   # Ingest Log Groups
   ingest_logs_to_elk = var.ingest_logs_to_elk
