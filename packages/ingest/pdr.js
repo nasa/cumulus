@@ -60,7 +60,7 @@ class Discover {
    */
   async discover() {
     const files = await this.list();
-    const pdrs = files.filter((file) => file.name.endsWith('.PDR'));
+    const pdrs = files.filter((file) => file.name.toUpperCase().endsWith('.PDR'));
 
     if (this.force) {
       return pdrs;
