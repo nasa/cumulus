@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs');
+const path = require('path');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { putJsonS3Object, sqs } = require('@cumulus/common/aws');
 const { createJwtToken } = require('./token');
@@ -8,7 +9,7 @@ const { authorizedOAuthUsersKey } = require('../app/auth');
 
 const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
 
-const dataDir = 'app/data';
+const dataDir = path.join(__dirname, '../app/data');
 const getWorkflowList = () => fs.readdirSync(dataDir).map((f) => JSON.parse(fs.readFileSync(`${dataDir}/${f}`).toString()));
 
 /**
