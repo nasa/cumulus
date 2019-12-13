@@ -47,7 +47,7 @@
     "@cumulus/logger": "1.14.4",
     "ajv": "^5.2.2",
     "async": "^2.0.0",
-    "aws-sdk": "^2.250.1",
+    "aws-sdk": "^2.585.0",
     "expect.js": "^0.3.1",
     "follow-redirects": "^1.2.4",
     "formidable": "^1.2.1",
@@ -82,7 +82,7 @@
     "p-retry": "^2.0.0",
     "pump": "^3.0.0",
     "randexp": "^0.4.9",
-    "ssh2": "^0.5.5",
+    "ssh2": "^0.8.7",
     "url-join": "^4.0.0",
     "uuid": "^3.2.1"
   },

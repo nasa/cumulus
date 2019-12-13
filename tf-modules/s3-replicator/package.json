@@ -12,7 +12,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "aws-sdk": "^2.487.0"
+    "aws-sdk": "^2.585.0"
   },
   "devDependencies": {
     "ava": "^2.1.0"
