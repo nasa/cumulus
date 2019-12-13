@@ -16,8 +16,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- **CUMULUS-630**
+  - Added support for replaying Kinesis records on a stream into the Cumulus Kinesis workflow triggering mechanism, either all the records, or some time slice delimited by start and end timestamps.
+  - Added `/replays` endpoint for triggering replays to the operator API.
+  - Added `Replay Kinesis Messages` doc to Operator Docs.
+  - Added `manualConsumer` lambda function to consume a Kinesis stream. Used by the replay AsyncOperation.
+
 - **CUMULUS-1563**
   - Added `custom_domain_name` variable to `tf-modules/data-persistence` module
+
 - **CUMULUS-1654**
   - Added new helpers to `@cumulus/common/execution-history`:
     - `getStepExitedEvent()` returns the `TaskStateExited` event in a workflow execution history after the given step completion/failure event
