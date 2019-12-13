@@ -1,5 +1,11 @@
 {
   "config": {
+    "cmr": {
+      "provider": "cmr-provider",
+      "clientId": "cmr-client-id",
+      "username": "cmr-username",
+      "passwordSecretName": "cmr-password-secret-string"
+    },
     "bucket": "cumulus-internal",
     "buckets": {
       "internal": {

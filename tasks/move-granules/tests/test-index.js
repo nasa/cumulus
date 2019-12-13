@@ -112,20 +112,6 @@ async function getFilesMetadata(files) {
 }
 
 test.before(async (t) => {
-  process.env.cmr_provider = randomString();
-  process.env.cmr_client_id = randomString();
-  process.env.cmr_username = randomString();
-  process.env.launchpad_api = randomString();
-  process.env.launchpad_certificate = randomString();
-
-  const launchpadPassphraseSecretName = randomString();
-  process.env.launchpad_passphrase_secret_name = launchpadPassphraseSecretName;
-  t.context.launchpadPassphraseSecretName = launchpadPassphraseSecretName;
-  await secretsManager().createSecret({
-    Name: launchpadPassphraseSecretName,
-    SecretString: randomString()
-  }).promise();
-
   const cmrPasswordSecretName = randomString();
   process.env.cmr_password_secret_name = cmrPasswordSecretName;
   t.context.cmrPasswordSecretName = cmrPasswordSecretName;
@@ -152,6 +138,8 @@ test.beforeEach(async (t) => {
   t.context.filesToUpload = filesToUpload.map((file) =>
     buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
   process.env.REINGEST_GRANULE = false;
+
+  t.context.payload.config.cmr.passwordSecretName = t.context.cmrPasswordSecretName;
 });
 
 test.afterEach.always(async (t) => {
@@ -161,11 +149,6 @@ test.afterEach.always(async (t) => {
 });
 
 test.after.always(async (t) => {
-  await secretsManager().deleteSecret({
-    SecretId: t.context.launchpadPassphraseSecretName,
-    ForceDeleteWithoutRecovery: true
-  }).promise();
-
   await secretsManager().deleteSecret({
     SecretId: t.context.cmrPasswordSecretName,
     ForceDeleteWithoutRecovery: true
