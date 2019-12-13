@@ -5,7 +5,7 @@
   "description": "Store workflow execution information to database",
   "main": "index.js",
   "engines": {
-    "node": ">=8.10.0"
+    "node": ">=10.16.3"
   },
   "scripts": {
     "build": "rm -rf dist && mkdir dist",
