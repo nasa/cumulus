@@ -3,16 +3,8 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
-and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-
-**Please note**:
-
-- Your workflow tasks should use `cumulus-message-adapter-js` version 1.0.10+ to utilize new granule, parentArn, asyncOperationId, and stackName fields on the logs.
-- The `data-persistence` module no longer manages the creation of an Elasticsearch service-linked role for deploying Elasticsearch to a VPC. Follow the [deployment instructions on preparing your VPC](https://nasa.github.io/cumulus/docs/deployment/deployment-readme#vpc-subnets-and-security-group) for guidance on how to create the Elasticsearch service-linked role manually.
-- There is now a `distribution_api_gateway_stage` variable for the `tf-modules/cumulus` Terraform module that will be used as the API gateway stage name used for the distribution API (Thin Egress App)
-- Default value for the `urs_url` variable is now `https://uat.urs.earthdata.nasa.gov/` in the `tf-modules/cumulus` and `tf-modules/archive` Terraform modules. So deploying the `cumulus` module without a `urs_url` variable set will integrate your Cumulus deployment with the UAT URS environment.
 
 ### Added
 
@@ -22,6 +14,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added `Replay Kinesis Messages` doc to Operator Docs.
   - Added `manualConsumer` lambda function to consume a Kinesis stream. Used by the replay AsyncOperation.
 
+## [v1.16.1] - 2019-12-6
+
+**Please note**:
+
+- The `region` argument to the `cumulus` Terraform module has been removed. You may see a warning or error if you have that variable populated.
+- Your workflow tasks should use the following versions of the CMA libraries to utilize new granule, parentArn, asyncOperationId, and stackName fields on the logs:
+  - `cumulus-message-adapter-js` version 1.0.10+
+  - `cumulus-message-adapter-python` version 1.1.1+
+  - `cumulus-message-adapter-java` version 1.2.11+
+- The `data-persistence` module no longer manages the creation of an Elasticsearch service-linked role for deploying Elasticsearch to a VPC. Follow the [deployment instructions on preparing your VPC](https://nasa.github.io/cumulus/docs/deployment/deployment-readme#vpc-subnets-and-security-group) for guidance on how to create the Elasticsearch service-linked role manually.
+- There is now a `distribution_api_gateway_stage` variable for the `tf-modules/cumulus` Terraform module that will be used as the API gateway stage name used for the distribution API (Thin Egress App)
+- Default value for the `urs_url` variable is now `https://uat.urs.earthdata.nasa.gov/` in the `tf-modules/cumulus` and `tf-modules/archive` Terraform modules. So deploying the `cumulus` module without a `urs_url` variable set will integrate your Cumulus deployment with the UAT URS environment.
+
+### Added
+
 - **CUMULUS-1563**
   - Added `custom_domain_name` variable to `tf-modules/data-persistence` module
 
@@ -29,11 +36,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added new helpers to `@cumulus/common/execution-history`:
     - `getStepExitedEvent()` returns the `TaskStateExited` event in a workflow execution history after the given step completion/failure event
     - `getTaskExitedEventOutput()` returns the output message for a `TaskStateExited` event in a workflow execution history
-
-### BREAKING CHANGES
-
-- **CUMULUS-1321**
-  - The `region` argument to the `cumulus` Terraform module has been removed
 
 ### Changed
 
@@ -59,6 +61,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Removed
 
 - Removed `create_service_linked_role` variable from `tf-modules/data-persistence` module.
+
+- **CUMULUS-1321**
+  - The `region` argument to the `cumulus` Terraform module has been removed
 
 ### Fixed
 
@@ -1768,7 +1773,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.16.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.16.1...HEAD
+[v1.16.1]: https://github.com/nasa/cumulus/compare/v1.16.0...v1.16.1
 [v1.16.0]: https://github.com/nasa/cumulus/compare/v1.15.0...v1.16.0
 [v1.15.0]: https://github.com/nasa/cumulus/compare/v1.14.4...v1.15.0
 [v1.14.4]: https://github.com/nasa/cumulus/compare/v1.14.3...v1.14.4
