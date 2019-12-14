@@ -31,7 +31,7 @@ resource "aws_lambda_function" "myfunction" {
   source_code_hash = filebase64sha256("/path/to/zip/lambda.zip")
   handler          = "index.handler"
   role             = module.cumulus.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
 
   tags = { Deployment = var.prefix }
 

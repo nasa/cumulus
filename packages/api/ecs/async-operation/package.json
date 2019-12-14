@@ -1,10 +1,10 @@
 {
   "engines": {
-    "node": ">=8.10.0"
+    "node": ">=10.16.3"
   },
   "dependencies": {
     "@cumulus/logger": "^1.13.0",
-    "aws-sdk": "^2.279.1",
+    "aws-sdk": "^2.585.0",
     "got": "^9.2.2",
     "lodash.iserror": "^3.1.1",
     "p-retry": "^2.0.0"
