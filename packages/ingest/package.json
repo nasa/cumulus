@@ -44,7 +44,7 @@
     "fs-extra": "^5.0.0",
     "got": "^9.2.1",
     "is-ip": "^2.0.0",
-    "jsftp": "https://github.com/yjpa7145/jsftp.git#Fix-partial-file-issue",
+    "jsftp": "https://github.com/jkovarik/jsftp.git#add_288",
     "lodash.clonedeep": "^4.5.0",
     "lodash.flatten": "^4.4.0",
     "lodash.get": "^4.4.2",
