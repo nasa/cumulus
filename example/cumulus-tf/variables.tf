@@ -241,7 +241,7 @@ variable "metrics_es_username" {
   default = null
 }
 
-variable "ingest_logs_to_elk" {
+variable "logs_to_metrics" {
   type = bool
   default = false
 }

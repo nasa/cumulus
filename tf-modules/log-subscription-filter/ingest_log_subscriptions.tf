@@ -1,7 +1,3 @@
-locals {
-  destination_arn =  var.log_destination_arn != null && var.ingest_logs_to_elk ? var.log_destination_arn : var.log2elasticsearch_lambda_function_arn
-}
-
 resource "aws_cloudwatch_log_subscription_filter" "discover_pdrs_task_log_subscription_filter" {
   name            = "${var.prefix}-DiscoverPDRsTaskLogSubscriptionToSharedDestination"
   destination_arn = local.destination_arn

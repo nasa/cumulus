@@ -13,12 +13,12 @@ variable "log2elasticsearch_lambda_function_arn" {
   type = string
 }
 
-# Ingest log groups
-variable "ingest_logs_to_elk" {
+variable "logs_to_metrics" {
   type = bool
   default = false
 }
 
+# Ingest log groups
 variable "discover_pdrs_task" {
   type = string
   description = "Log group for the Discover PDRs Task Lambda"
@@ -42,6 +42,12 @@ variable "queue_pdrs_task" {
 variable "sync_granule_task" {
   type = string
   description = "Log group for the Sync Granules Task Lambda"
+}
+
+# Async Operation Log Group
+variable "async_operation_log_group" {
+  type = string
+  description = "Cloudwatch log group for Async Operations"
 }
 
 # Additional log groups

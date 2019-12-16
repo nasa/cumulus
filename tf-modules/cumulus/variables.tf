@@ -494,7 +494,7 @@ variable "archive_api_url" {
   description = "If not specified, the value of the Backend (Archive) API Gateway endpoint is used"
 }
 
-variable "ingest_logs_to_elk" {
+variable "logs_to_metrics" {
   type = bool
   default = false
 }

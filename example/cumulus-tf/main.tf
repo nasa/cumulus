@@ -131,8 +131,12 @@ module "cumulus" {
   api_gateway_stage             = var.api_gateway_stage
   log_api_gateway_to_cloudwatch = var.log_api_gateway_to_cloudwatch
   log_destination_arn           = var.log_destination_arn
+<<<<<<< HEAD
 
   ingest_logs_to_elk            = var.ingest_logs_to_elk
+=======
+  logs_to_metrics               = var.logs_to_metrics
+>>>>>>> [CUMULUS-1548] Update Async Operation logs to go to Metrics ELK if flag is set
   additional_log_groups_to_elk  = var.additional_log_groups_to_elk
 
 }
