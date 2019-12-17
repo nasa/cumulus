@@ -31,8 +31,9 @@ let accessTokenModel;
 let userModel;
 
 test.before(async () => {
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
-  process.env.esIndex = esIndex;
+  const esAlias = randomString();
+  process.env.ES_INDEX = esAlias;
+  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
   providerModel = new models.Provider();
   await providerModel.createTable();

@@ -16,9 +16,12 @@ const { addToLocalES, indexProvider } = require('../es/indexer');
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const search = new Search({
-    queryStringParameters: req.query
-  }, 'provider');
+  const search = new Search(
+    { queryStringParameters: req.query },
+    'provider',
+    process.env.ES_INDEX
+  );
+
   const response = await search.query();
   return res.send(response);
 }
@@ -116,11 +119,10 @@ async function del(req, res) {
 
     if (inTestMode()) {
       const esClient = await Search.es(process.env.ES_HOST);
-      const esIndex = process.env.esIndex;
       await esClient.delete({
         id: req.params.id,
         type: 'provider',
-        index: esIndex
+        index: process.env.ES_INDEX
       }, { ignore: [404] });
     }
     return res.send({ message: 'Record deleted' });

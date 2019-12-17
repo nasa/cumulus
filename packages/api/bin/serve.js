@@ -92,12 +92,12 @@ async function checkOrCreateTables(stackName) {
 
 function setLocalEsVariables(stackName) {
   process.env.ES_HOST = 'fakehost';
-  process.env.esIndex = `${stackName}-es`;
+  process.env.ES_INDEX = `${stackName}-es`;
 }
 
 async function prepareServices(stackName, bucket) {
   setLocalEsVariables(stackName);
-  await bootstrap.bootstrapElasticSearch(process.env.ES_HOST, process.env.esIndex);
+  await bootstrap.bootstrapElasticSearch(process.env.ES_HOST, process.env.ES_INDEX);
   await s3().createBucket({ Bucket: bucket }).promise();
 }
 
@@ -129,7 +129,7 @@ function checkEnvVariablesAreSet(moreRequiredEnvVars) {
 async function createDBRecords(stackName, user) {
   setLocalEsVariables(stackName);
   const esClient = await Search.es(process.env.ES_HOST);
-  const esIndex = process.env.esIndex;
+  const esIndex = process.env.ES_INDEX;
   // Resets the ES client
   await esClient.indices.delete({ index: esIndex })
     .then((response) => response.body);
