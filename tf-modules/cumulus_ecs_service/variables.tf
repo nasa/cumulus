@@ -86,3 +86,14 @@ variable "volumes" {
   type    = list(object({ name = string, host_path = string, container_path = string }))
   default = []
 }
+
+variable "log_destination_arn" {
+  type        = string
+  default     = null
+  description = "Shared AWS:Log:Destination value on where to send log groups in log_groups"
+}
+
+variable "logs_to_metrics" {
+  type = bool
+  default = false
+}

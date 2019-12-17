@@ -7,6 +7,7 @@ terraform {
 locals {
   cluster_name = reverse(split("/", var.cluster_arn))[0]
   full_name    = "${var.prefix}-${var.name}"
+  log_destination_arn = var.log_destination_arn != null && var.logs_to_metrics ? var.log_destination_arn : var.log2elasticsearch_lambda_function_arn
 }
 
 data "aws_region" "current" {}
@@ -55,7 +56,7 @@ resource "aws_ecs_task_definition" "default" {
 
 resource "aws_cloudwatch_log_subscription_filter" "default" {
   name            = "${local.full_name}-default"
-  destination_arn = var.log2elasticsearch_lambda_function_arn
+  destination_arn = local.log_destination_arn
   log_group_name  = aws_cloudwatch_log_group.default.name
   filter_pattern  = ""
 }
