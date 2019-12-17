@@ -4,7 +4,7 @@ resource "aws_lambda_function" "sync_granule_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/sync-granule/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 300
   memory_size      = 1024
 

@@ -30,7 +30,7 @@ is always used.
 
 * Currently only linear workflows are supported, e.g., no branching, but it should be pretty simple
 to add branching support later.
-* Because of the dynamic loading of tasks it is recommend to use node 8 without transpiling when
+* Because of the dynamic loading of tasks it is recommend to use node 10 without transpiling when
 debugging to avoid the need to generate and deal with source maps
 
 ## About Cumulus

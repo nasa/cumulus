@@ -28,7 +28,7 @@ For a step-by-step example of using the `cumulus_ecs_module`, please see the rel
 
 ### Cumulus Docker Image
 
-ECS activities require a docker image.  Cumulus provides a docker image ([source](https://github.com/nasa/cumulus-ecs-task) for node 8.10 lambdas on dockerhub: [cumuluss/cumulus-ecs-task](https://hub.docker.com/r/cumuluss/cumulus-ecs-task).
+ECS activities require a docker image.  Cumulus provides a docker image ([source](https://github.com/nasa/cumulus-ecs-task) for node 10x+ lambdas on dockerhub: [cumuluss/cumulus-ecs-task](https://hub.docker.com/r/cumuluss/cumulus-ecs-task).
 
 ### Alternate Docker Images
 

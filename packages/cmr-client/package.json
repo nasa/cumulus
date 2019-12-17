@@ -2,7 +2,7 @@
   "name": "@cumulus/cmr-client",
   "version": "1.16.0",
   "engines": {
-    "node": ">=8.10.0"
+    "node": ">=10.16.3"
   },
   "scripts": {
     "build-docs": "jsdoc2md --heading-depth 2 --template templates/API.hbs CMR.js CMRSearchConceptQueue.js > API.md",
