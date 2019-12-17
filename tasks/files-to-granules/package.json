@@ -22,7 +22,7 @@
     "prepare": "npm run build && (cd dist && zip -r lambda.zip index.js schemas)"
   },
   "engines": {
-    "node": ">=8.10.0"
+    "node": ">=10.16.3"
   },
   "nyc": {
     "exclude": [
@@ -32,7 +32,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cumulus-message-adapter-js": "^1.0.10",
+    "@cumulus/cumulus-message-adapter-js": "^1.1.0",
     "lodash.flatten": "^4.4.0",
     "lodash.get": "^4.4.2",
     "lodash.keyby": "^4.6.0"
