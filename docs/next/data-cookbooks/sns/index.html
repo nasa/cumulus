@@ -142,7 +142,7 @@ report_pdrs_sns_topic_arn = arn:aws:sns:us-east-1:xxxxxxxxx:&lt;prefix&gt;-repor
   source_code_hash = filebase64sha256(<span class="hljs-string">"./testLambda.zip"</span>)
   handler          = <span class="hljs-string">"index.handler"</span>
   role             = module.cumulus.lambda_processing_role_arn
-  runtime          = <span class="hljs-string">"nodejs8.10"</span>
+  runtime          = <span class="hljs-string">"nodejs10.x"</span>
 }
 <span class="hljs-built_in">
 resource </span><span class="hljs-string">"aws_sns_topic_subscription"</span> <span class="hljs-string">"test_lambda"</span> {

@@ -59,7 +59,7 @@
 <p>AWS provides great getting started guide for building Lambdas in the <a href="https://docs.aws.amazon.com/lambda/latest/dg/getting-started.html">developer guide</a>.</p>
 <p>Cumulus currently supports the following environments for Cumulus Message Adapter enabled functions:</p>
 <ul>
-<li><a href="https://docs.aws.amazon.com/lambda/latest/dg/programming-model.html">Node.js 8.10</a></li>
+<li><a href="https://docs.aws.amazon.com/lambda/latest/dg/programming-model.html">Node.js 10.16.3</a></li>
 <li><a href="https://docs.aws.amazon.com/lambda/latest/dg/java-programming-model.html">Java 8</a></li>
 <li><a href="https://docs.aws.amazon.com/lambda/latest/dg/python-programming-model.html">Python 2.7, 3.6</a></li>
 </ul>
@@ -73,7 +73,7 @@
   <span class="hljs-attr">source_code_hash</span> = filebase64sha256(<span class="hljs-string">"/path/to/zip/lambda.zip"</span>)
   <span class="hljs-attr">handler</span>          = <span class="hljs-string">"index.handler"</span>
   <span class="hljs-attr">role</span>             = module.cumulus.lambda_processing_role_arn
-  <span class="hljs-attr">runtime</span>          = <span class="hljs-string">"nodejs8.10"</span>
+  <span class="hljs-attr">runtime</span>          = <span class="hljs-string">"nodejs10.x"</span>
 
   <span class="hljs-attr">tags</span> = { <span class="hljs-attr">Deployment</span> = var.prefix }
 
