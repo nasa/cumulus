@@ -4,15 +4,15 @@ const test = require('ava');
 const request = require('supertest');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
-const models = require('../../../models');
-const bootstrap = require('../../../lambdas/bootstrap');
-const indexer = require('../../../es/indexer');
+const models = require('../../models');
+const bootstrap = require('../../lambdas/bootstrap');
+const indexer = require('../../es/indexer');
 const {
   createFakeJwtAuthToken,
   fakeExecutionFactory
-} = require('../../../lib/testUtils');
-const { Search } = require('../../../es/search');
-const assertions = require('../../../lib/assertions');
+} = require('../../lib/testUtils');
+const { Search } = require('../../es/search');
+const assertions = require('../../lib/assertions');
 
 // create all the variables needed across this test
 let esClient;
@@ -26,7 +26,7 @@ process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
-const { app } = require('../../../app');
+const { app } = require('../../app');
 
 let jwtAuthToken;
 let accessTokenModel;
@@ -38,8 +38,11 @@ test.before(async () => {
   // create esClient
   esClient = await Search.es('fakehost');
 
+  const esAlias = randomString();
+  process.env.ES_INDEX = esAlias;
+
   // add fake elasticsearch index
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
+  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
   // create a fake bucket
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
@@ -52,7 +55,7 @@ test.before(async () => {
   fakeExecutions.push(fakeExecutionFactory('completed'));
   fakeExecutions.push(fakeExecutionFactory('failed', 'workflow2'));
   await Promise.all(fakeExecutions.map((i) => executionModel.create(i)
-    .then((record) => indexer.indexExecution(esClient, record, esIndex))));
+    .then((record) => indexer.indexExecution(esClient, record, esAlias))));
 
   userModel = new models.User();
   await userModel.createTable();

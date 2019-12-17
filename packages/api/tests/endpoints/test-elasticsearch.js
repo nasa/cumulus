@@ -8,34 +8,31 @@ const aws = require('@cumulus/common/aws');
 
 const { randomString } = require('@cumulus/common/test-utils');
 
-const models = require('../../../models');
-const assertions = require('../../../lib/assertions');
+const models = require('../../models');
+const assertions = require('../../lib/assertions');
 const {
   createFakeJwtAuthToken
-} = require('../../../lib/testUtils');
-const { Search, defaultIndexAlias } = require('../../../es/search');
-const { bootstrapElasticSearch } = require('../../../lambdas/bootstrap');
-const mappings = require('../../../models/mappings.json');
+} = require('../../lib/testUtils');
+const { Search, defaultIndexAlias } = require('../../es/search');
+const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
+const mappings = require('../../models/mappings.json');
 
-const esIndex = 'cumulus-1';
+const esIndex = randomString();
 
 process.env.AccessTokensTable = randomString();
 process.env.UsersTable = randomString();
 process.env.AsyncOperationsTable = randomString();
 process.env.TOKEN_SECRET = randomString();
-process.env.ES_INDEX = esIndex;
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 
 // import the express app after setting the env variables
-const { app } = require('../../../app');
+const { app } = require('../../app');
 
 let jwtAuthToken;
 let accessTokenModel;
 let userModel;
 let asyncOperationsModel;
-
-const indexAlias = 'cumulus-1-alias';
 let esClient;
 
 /**
@@ -74,7 +71,7 @@ async function createIndex(indexName, aliasName) {
   esClient = await Search.es();
 }
 
-test.before(async () => {
+test.before(async (t) => {
   userModel = new models.User();
   await userModel.createTable();
 
@@ -92,8 +89,11 @@ test.before(async () => {
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 
+  t.context.esAlias = randomString();
+  process.env.ES_INDEX = t.context.esAlias;
+
   // create the elasticsearch index and add mapping
-  await createIndex(esIndex, indexAlias);
+  await createIndex(esIndex, t.context.esAlias);
 
   await indexData();
 });
@@ -166,9 +166,11 @@ test.serial('Reindex - multiple aliases found', async (t) => {
 });
 
 test.serial('Reindex - specify a source index that does not exist', async (t) => {
+  const { esAlias } = t.context;
+
   const response = await request(app)
     .post('/elasticsearch/reindex')
-    .send({ aliasName: indexAlias, sourceIndex: 'source-index' })
+    .send({ aliasName: esAlias, sourceIndex: 'source-index' })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
@@ -177,6 +179,7 @@ test.serial('Reindex - specify a source index that does not exist', async (t) =>
 });
 
 test.serial('Reindex - specify a source index that is not aliased', async (t) => {
+  const { esAlias } = t.context;
   const indexName = 'source-index';
 
   await esClient.indices.create({
@@ -186,23 +189,24 @@ test.serial('Reindex - specify a source index that is not aliased', async (t) =>
 
   const response = await request(app)
     .post('/elasticsearch/reindex')
-    .send({ aliasName: indexAlias, sourceIndex: indexName })
+    .send({ aliasName: esAlias, sourceIndex: indexName })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
 
-  t.is(response.body.message, 'Source index source-index is not aliased with alias cumulus-1-alias.');
+  t.is(response.body.message, `Source index source-index is not aliased with alias ${esAlias}.`);
 
   await esClient.indices.delete({ index: indexName });
 });
 
 test.serial('Reindex success', async (t) => {
+  const { esAlias } = t.context;
   const destIndex = randomString();
 
   const response = await request(app)
     .post('/elasticsearch/reindex')
     .send({
-      aliasName: indexAlias,
+      aliasName: esAlias,
       destIndex,
       sourceIndex: esIndex
     })
@@ -244,10 +248,12 @@ test.serial('Reindex success', async (t) => {
 });
 
 test.serial('Reindex - destination index exists', async (t) => {
+  const { esAlias } = t.context;
+
   const response = await request(app)
     .post('/elasticsearch/reindex')
     .send({
-      aliasName: indexAlias,
+      aliasName: esAlias,
       destIndex: esIndex,
       sourceIndex: esIndex
     })
@@ -268,10 +274,12 @@ test.serial('Reindex status, no task running', async (t) => {
 });
 
 test.serial('Change index - no current', async (t) => {
+  const { esAlias } = t.context;
+
   const response = await request(app)
     .post('/elasticsearch/change-index')
     .send({
-      aliasName: indexAlias,
+      aliasName: esAlias,
       newIndex: 'dest-index'
     })
     .set('Accept', 'application/json')
@@ -282,10 +290,12 @@ test.serial('Change index - no current', async (t) => {
 });
 
 test.serial('Change index - no new', async (t) => {
+  const { esAlias } = t.context;
+
   const response = await request(app)
     .post('/elasticsearch/change-index')
     .send({
-      aliasName: indexAlias,
+      aliasName: esAlias,
       currentIndex: 'source-index'
     })
     .set('Accept', 'application/json')
@@ -296,12 +306,14 @@ test.serial('Change index - no new', async (t) => {
 });
 
 test.serial('Change index - current index does not exist', async (t) => {
+  const { esAlias } = t.context;
+
   const currentIndex = 'source-index';
 
   const response = await request(app)
     .post('/elasticsearch/change-index')
     .send({
-      aliasName: indexAlias,
+      aliasName: esAlias,
       currentIndex,
       newIndex: 'dest-index'
     })
@@ -313,12 +325,14 @@ test.serial('Change index - current index does not exist', async (t) => {
 });
 
 test.serial('Change index - new index does not exist', async (t) => {
+  const { esAlias } = t.context;
+
   const newIndex = 'dest-index';
 
   const response = await request(app)
     .post('/elasticsearch/change-index')
     .send({
-      aliasName: indexAlias,
+      aliasName: esAlias,
       currentIndex: esIndex,
       newIndex
     })
@@ -330,10 +344,12 @@ test.serial('Change index - new index does not exist', async (t) => {
 });
 
 test.serial('Change index - current index same as new index', async (t) => {
+  const { esAlias } = t.context;
+
   const response = await request(app)
     .post('/elasticsearch/change-index')
     .send({
-      aliasName: indexAlias,
+      aliasName: esAlias,
       currentIndex: 'source',
       newIndex: 'source'
     })

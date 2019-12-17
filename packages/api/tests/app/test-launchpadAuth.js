@@ -24,6 +24,7 @@ const validateTokenResponse = {
 
 let accessTokenModel;
 test.before(async () => {
+  process.env.ES_INDEX = randomId();
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 });
