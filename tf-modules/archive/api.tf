@@ -16,7 +16,7 @@ resource "aws_lambda_function" "api" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/app/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.lambda_api_gateway.arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 100
   environment {
     variables = {
@@ -38,6 +38,7 @@ resource "aws_lambda_function" "api" {
       ExecutionsTable              = var.dynamo_tables.executions.name
       GranulesTable                = var.dynamo_tables.granules.name
       IndexFromDatabaseLambda      = aws_lambda_function.index_from_database.arn
+      KinesisFallbackTopicArn      = var.kinesis_fallback_topic_arn
       KinesisInboundEventLogger    = var.kinesis_inbound_event_logger_lambda_function_arn
       OAUTH_PROVIDER               = var.oauth_provider
       PdrsTable                    = var.dynamo_tables.pdrs.name
@@ -60,6 +61,7 @@ resource "aws_lambda_function" "api" {
       launchpad_api                = var.launchpad_api
       launchpad_certificate        = var.launchpad_certificate
       launchpad_passphrase         = jsondecode(data.aws_lambda_invocation.custom_bootstrap.result).Data.LaunchpadPassphrase
+      ManualConsumerLambda         = var.manual_consumer_function_arn
       messageConsumer              = var.message_consumer_function_arn
       stackName                    = var.prefix
       system_bucket                = var.system_bucket

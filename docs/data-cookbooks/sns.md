@@ -113,7 +113,7 @@ resource "aws_lambda_function" "test_lambda" {
   source_code_hash = filebase64sha256("./testLambda.zip")
   handler          = "index.handler"
   role             = module.cumulus.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
 }
 
 resource "aws_sns_topic_subscription" "test_lambda" {

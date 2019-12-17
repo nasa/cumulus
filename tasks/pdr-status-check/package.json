@@ -10,7 +10,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=8.10.0"
+    "node": ">=10.16.3"
   },
   "scripts": {
     "test": "ava",
@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@cumulus/common": "1.16.0",
-    "@cumulus/cumulus-message-adapter-js": "^1.0.10"
+    "@cumulus/cumulus-message-adapter-js": "^1.1.0"
   },
   "devDependencies": {
     "ava": "^2.1.0",

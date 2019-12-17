@@ -3,7 +3,7 @@
   "version": "1.16.0",
   "description": "A node SDK for CMR",
   "engines": {
-    "node": ">=8.10.0"
+    "node": ">=10.16.3"
   },
   "scripts": {
     "test": "ava",

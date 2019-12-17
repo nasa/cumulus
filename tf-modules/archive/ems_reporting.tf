@@ -6,7 +6,7 @@ resource "aws_lambda_function" "ems_distribution_report" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/emsDistributionReport/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 900
   memory_size      = 320
   environment {
@@ -61,7 +61,7 @@ resource "aws_lambda_function" "ems_product_metadata_report" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/emsProductMetadataReport/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 300
   memory_size      = 320
   environment {
@@ -124,7 +124,7 @@ resource "aws_lambda_function" "ems_ingest_report" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/emsIngestReport/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 300
   memory_size      = 320
   dead_letter_config {
