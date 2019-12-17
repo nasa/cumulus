@@ -99,7 +99,8 @@ test('CUMULUS-912 GET without pathParameters and an invalid access token returns
 
 test.todo('CUMULUS-912 GET without pathParameters and an unauthorized user returns an unauthorized response');
 
-test('GET logs returns all logs', async (t) => {
+// Disabled until CUMULUS-1674 is fixed
+test.skip('GET logs returns all logs', async (t) => {
   const response = await request(app)
     .get('/logs')
     .set('Accept', 'application/json')
@@ -109,7 +110,8 @@ test('GET logs returns all logs', async (t) => {
   t.is(response.body.meta.count, 5);
 });
 
-test('GET logs with filter returns the correct logs', async (t) => {
+// Disabled until CUMULUS-1674 is fixed
+test.skip('GET logs with filter returns the correct logs', async (t) => {
   const response = await request(app)
     .get('/logs?level=error&limit=10')
     .set('Accept', 'application/json')

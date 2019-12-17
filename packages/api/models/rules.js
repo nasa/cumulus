@@ -6,6 +6,7 @@ const merge = require('lodash.merge');
 const set = require('lodash.set');
 const { invoke, Events } = require('@cumulus/ingest/aws');
 const aws = require('@cumulus/common/aws');
+const log = require('@cumulus/common/log');
 const workflows = require('@cumulus/common/workflows');
 const Manager = require('./base');
 const { rule: ruleSchema } = require('./schemas');
@@ -256,7 +257,12 @@ class Rule extends Manager {
    */
   async addKinesisEventSources(item) {
     const sourceEventPromises = this.kinesisSourceEvents.map(
-      (lambda) => this.addKinesisEventSource(item, lambda)
+      (lambda) => this.addKinesisEventSource(item, lambda).catch(
+        (err) => {
+          log.error(`Error adding eventSourceMapping for ${item.name}: ${err}`);
+          if (err.code !== 'ResourceNotFoundException') throw err;
+        }
+      )
     );
     const eventAdd = await Promise.all(sourceEventPromises);
     const arn = eventAdd[0].UUID;
@@ -310,7 +316,12 @@ class Rule extends Manager {
    */
   async deleteKinesisEventSources(item) {
     const deleteEventPromises = this.kinesisSourceEvents.map(
-      (lambda) => this.deleteKinesisEventSource(item, lambda.eventType)
+      (lambda) => this.deleteKinesisEventSource(item, lambda.eventType).catch(
+        (err) => {
+          log.error(`Error deleting eventSourceMapping for ${item.name}: ${err}`);
+          if (err.code !== 'ResourceNotFoundException') throw err;
+        }
+      )
     );
     return Promise.all(deleteEventPromises);
   }

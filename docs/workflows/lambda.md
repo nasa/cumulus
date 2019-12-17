@@ -12,7 +12,7 @@ AWS provides great getting started guide for building Lambdas in the [developer 
 
 Cumulus currently supports the following environments for Cumulus Message Adapter enabled functions:
 
-* [Node.js 8.10](https://docs.aws.amazon.com/lambda/latest/dg/programming-model.html)
+* [Node.js 10.16.3](https://docs.aws.amazon.com/lambda/latest/dg/programming-model.html)
 * [Java 8](https://docs.aws.amazon.com/lambda/latest/dg/java-programming-model.html)
 * [Python 2.7, 3.6](https://docs.aws.amazon.com/lambda/latest/dg/python-programming-model.html)
 
@@ -31,7 +31,7 @@ resource "aws_lambda_function" "myfunction" {
   source_code_hash = filebase64sha256("/path/to/zip/lambda.zip")
   handler          = "index.handler"
   role             = module.cumulus.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
 
   tags = { Deployment = var.prefix }
 

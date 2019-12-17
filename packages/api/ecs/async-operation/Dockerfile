@@ -1,4 +1,4 @@
-FROM node:8.10
+FROM node:10.16.3
 
 USER root
 RUN sed -i -e '/jessie-updates/d' /etc/apt/sources.list

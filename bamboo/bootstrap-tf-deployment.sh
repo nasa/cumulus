@@ -69,7 +69,7 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -input=false \
   -var-file="../deployments/sandbox.tfvars" \
   -var-file="../deployments/$DEPLOYMENT.tfvars" \
-  -var "cumulus_message_adapter_lambda_layer_arn=arn:aws:lambda:us-east-1:$AWS_ACCOUNT_ID:layer:Cumulus_Message_Adapter:9" \
+  -var "cumulus_message_adapter_lambda_layer_arn=arn:aws:lambda:us-east-1:$AWS_ACCOUNT_ID:layer:Cumulus_Message_Adapter:10" \
   -var "cmr_username=$CMR_USERNAME" \
   -var "cmr_password=$CMR_PASSWORD" \
   -var "cmr_client_id=cumulus-core-$DEPLOYMENT" \

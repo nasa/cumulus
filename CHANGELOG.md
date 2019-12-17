@@ -2,10 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
-and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+
+### Added
+
+- **CUMULUS-630**
+  - Added support for replaying Kinesis records on a stream into the Cumulus Kinesis workflow triggering mechanism, either all the records, or some time slice delimited by start and end timestamps.
+  - Added `/replays` endpoint for triggering replays to the operator API.
+  - Added `Replay Kinesis Messages` doc to Operator Docs.
+  - Added `manualConsumer` lambda function to consume a Kinesis stream. Used by the replay AsyncOperation.
+
+### Changed
+
+- **CUMULUS-1626**
+  - Updates Cumulus to use node10/CMA 1.1.2 for all of it's internal lambdas in prep for AWS node 8 EOL
+
 
 ## [v1.16.1] - 2019-12-6
 
@@ -24,6 +37,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1563**
   - Added `custom_domain_name` variable to `tf-modules/data-persistence` module
+
 - **CUMULUS-1654**
   - Added new helpers to `@cumulus/common/execution-history`:
     - `getStepExitedEvent()` returns the `TaskStateExited` event in a workflow execution history after the given step completion/failure event
