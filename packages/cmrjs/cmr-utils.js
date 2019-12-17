@@ -607,11 +607,15 @@ async function getCreds() {
     };
   }
 
+  const secret = await aws.secretsManager().getSecretValue({
+    SecretId: process.env.cmr_password_secret_name
+  }).promise();
+
   return {
     provider: process.env.cmr_provider,
     clientId: process.env.cmr_client_id,
     username: process.env.cmr_username,
-    password: process.env.cmr_password
+    password: secret.SecretString
   };
 }
 

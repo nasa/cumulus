@@ -26,7 +26,9 @@ variable "cmr_page_size" {
 }
 
 variable "cmr_password" {
-  type = string
+  description = "The unencrypted CMR password"
+  type        = string
+  default     = ""
 }
 
 variable "cmr_provider" {

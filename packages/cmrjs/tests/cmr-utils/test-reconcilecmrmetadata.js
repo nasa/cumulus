@@ -5,29 +5,46 @@ const rewire = require('rewire');
 
 const cmrUtils = rewire('../../cmr-utils');
 
-const { BucketsConfig, log } = require('@cumulus/common');
+const { aws, BucketsConfig, log } = require('@cumulus/common');
 
 const { randomId } = require('@cumulus/common/test-utils');
 
 
-function setTestCredentials() {
-  process.env.cmr_provider = randomId('cmr_provider');
-  process.env.cmr_client_id = randomId('cmr_client_id');
-  process.env.cmr_username = randomId('cmr_username');
-  process.env.cmr_password = randomId('cmr_password');
-
+function getTestCredentials(cmrPassword) {
   return {
     provider: process.env.cmr_provider,
     clientId: process.env.cmr_client_id,
     username: process.env.cmr_username,
-    password: process.env.cmr_password
+    password: cmrPassword
   };
 }
+
+test.before(async (t) => {
+  // Store the CMR password
+  t.context.cmrPassword = randomId('cmr_password');
+  t.context.cmrPasswordSecretName = randomId('cmr_password_secret_name');
+  process.env.cmr_password_secret_name = t.context.cmrPasswordSecretName;
+  await aws.secretsManager().createSecret({
+    Name: t.context.cmrPasswordSecretName,
+    SecretString: t.context.cmrPassword
+  }).promise();
+
+  process.env.cmr_provider = randomId('cmr_provider');
+  process.env.cmr_client_id = randomId('cmr_client_id');
+  process.env.cmr_username = randomId('cmr_username');
+});
 
 test.beforeEach((t) => {
   t.context.granId = randomId('granuleId');
   t.context.distEndpoint = randomId('https://example.com/');
   t.context.published = true;
+});
+
+test.after.always(async (t) => {
+  await aws.secretsManager().deleteSecret({
+    SecretId: t.context.cmrPasswordSecretName,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
 });
 
 test('reconcileCMRMetadata does not call updateCMRMetadata if no metadatafile present', async (t) => {
@@ -187,7 +204,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
   const stackName = randomId('stack');
   process.env.system_bucket = bucket;
   process.env.stackName = stackName;
-  const testCreds = setTestCredentials();
+  const testCreds = getTestCredentials(t.context.cmrPassword);
   const expectedMetadata = {
     filename: 'cmrmeta.cmr.xml',
     metadataObject: fakeMetadataObject,
@@ -250,7 +267,7 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
   const stackName = randomId('stackname');
   process.env.system_bucket = systemBucket;
   process.env.stackName = stackName;
-  const testCreds = setTestCredentials();
+  const testCreds = getTestCredentials(t.context.cmrPassword);
 
   // act
   await cmrUtils.reconcileCMRMetadata({
@@ -314,7 +331,7 @@ test('publishUMMGJSON2CMR calls ingestUMMGranule with ummgMetadata via valid CMR
     metadataObject: { fake: 'metadata', GranuleUR: 'fakeGranuleID' },
     granuleId: 'fakeGranuleID'
   };
-  const creds = setTestCredentials();
+  const creds = getTestCredentials(t.context.cmrPassword);
   const systemBucket = process.env.system_bucket;
   const stackName = process.env.stackName;
   const publishUMMGJSON2CMR = cmrUtils.__get__('publishUMMGJSON2CMR');
