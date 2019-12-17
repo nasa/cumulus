@@ -10,7 +10,6 @@ const {
 const indexer = require('../../es/indexer');
 const { Search } = require('../../es/search');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
-const { deleteAliases } = require('../../lib/testUtils');
 
 const { AccessToken, User } = require('../../models');
 
@@ -22,7 +21,6 @@ process.env.TOKEN_SECRET = randomString();
 process.env.system_bucket = randomString();
 
 const esIndex = randomString();
-process.env.ES_INDEX = esIndex;
 let esClient;
 
 
@@ -34,18 +32,11 @@ let userModel;
 // import the express app after setting the env variables
 const { app } = require('../../app');
 
-test.after.always(async () => {
-  await accessTokenModel.deleteTable();
-  await userModel.deleteTable();
-  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await esClient.indices.delete({ index: esIndex });
-});
-
 test.before(async () => {
-  await deleteAliases();
+  const esAlias = randomString();
+  process.env.ES_INDEX = esAlias;
+  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
-  await bootstrapElasticSearch('fakehost', esIndex);
-  process.env.esIndex = esIndex;
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   // create fake Users table
@@ -72,11 +63,18 @@ test.before(async () => {
   ];
 
   const executionIndexPromises = executions
-    .map((execution) => indexer.indexExecution(esClient, execution));
+    .map((execution) => indexer.indexExecution(esClient, execution, esAlias));
 
   await Promise.all(executionIndexPromises);
 
   await esClient.indices.refresh();
+});
+
+test.after.always(async () => {
+  await accessTokenModel.deleteTable();
+  await userModel.deleteTable();
+  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await esClient.indices.delete({ index: esIndex });
 });
 
 test('GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {

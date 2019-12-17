@@ -17,9 +17,13 @@ const { deconstructCollectionId } = require('../lib/utils');
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const result = await (new Search({
-    queryStringParameters: req.query
-  }, 'granule')).query();
+  const es = new Search(
+    { queryStringParameters: req.query },
+    'granule',
+    process.env.ES_INDEX
+  );
+
+  const result = await es.query();
 
   return res.send(result);
 }
@@ -145,13 +149,12 @@ async function del(req, res) {
 
   if (inTestMode()) {
     const esClient = await Search.es(process.env.ES_HOST);
-    const esIndex = process.env.esIndex;
     await indexer.deleteRecord({
       esClient,
       id: granuleId,
       type: 'granule',
       parent: granule.collectionId,
-      index: esIndex,
+      index: process.env.ES_INDEX,
       ignore: [404]
     });
   }
