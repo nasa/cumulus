@@ -39,6 +39,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-1626**
+  - Updates Cumulus to use node10/CMA 1.1.2 for all of it's internal lambdas in prep for AWS node 8 EOL
+
 - **CUMULUS-1578**
   - Updates SAML launchpad configuration to authorize via configured userGroup.
    [See the NASA specific documentation (protected)](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+SAML+Launchpad+Integration)

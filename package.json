@@ -37,7 +37,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "engines": {
-    "node": ">=8.10.0"
+    "node": ">=10.16.3"
   },
   "bin": {
     "build-tasks-doc": "./bin/build-tasks-doc.js"
@@ -76,9 +76,10 @@
     "simple-git": "^1.96.0"
   },
   "dependencies": {
-    "aws-sdk": "^2.238.1",
+    "aws-sdk": "^2.585.0",
     "fs-extra": "^5.0.0",
     "latest-version": "^4.0.0",
-    "semver": "^5.5.0"
+    "semver": "^5.5.0",
+    "ssh2-streams": "^0.4.8"
   }
 }
