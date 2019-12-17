@@ -67,7 +67,7 @@ resource "aws_lambda_function" "cw_sf_execution_event_to_db" {
   function_name    = "${var.prefix}-cwSfExecutionEventToDb"
   role             = "${aws_iam_role.cw_sf_execution_event_to_db_lambda.arn}"
   handler          = "index.handler"
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
 
   dead_letter_config {
     target_arn = aws_sqs_queue.cw_sf_execution_event_to_db_dead_letter_queue.arn

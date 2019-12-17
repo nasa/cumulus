@@ -2,6 +2,7 @@
 
 const test = require('ava');
 const sinon = require('sinon');
+const rewire = require('rewire');
 const fs = require('fs');
 const path = require('path');
 const aws = require('@cumulus/common/aws');
@@ -11,7 +12,7 @@ const { constructCollectionId } = require('@cumulus/common/collection-config-sto
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const workflows = require('@cumulus/common/workflows');
 
-const indexer = require('../../es/indexer');
+const indexer = rewire('../../es/indexer');
 const { Search } = require('../../es/search');
 const models = require('../../models');
 const { fakeGranuleFactory, fakeCollectionFactory } = require('../../lib/testUtils');
@@ -510,4 +511,52 @@ test.serial('Create new index - index already exists', async (t) => {
   );
 
   await esClient.indices.delete({ index: newIndex });
+});
+
+test.serial('parsePayload correctly parses AWS Linux style console output', async (t) => {
+  const parsePayload = indexer.__get__('parsePayload');
+  const expected = {
+    some: 'key',
+    sender: 'some sender',
+    message: 'a messaage',
+    RequestId: 'a714a0ef-f141-4e52-9661-58ca2233959a'
+  };
+  const actual = parsePayload({ sender: 'fixture_sender', message: '2018-06-01T17:45:27.108Z\ta714a0ef-f141-4e52-9661-58ca2233959a\t{"some": "key", "sender": "some sender", "message": "a messaage"}' });
+  t.deepEqual(actual, expected);
+});
+
+test.serial('parsePayload correctly parses AWS Linux 2 style console output', async (t) => {
+  const parsePayload = indexer.__get__('parsePayload');
+  const expected = {
+    some: 'key',
+    sender: 'some sender',
+    message: 'a messaage',
+    RequestId: 'a714a0ef-f141-4e52-9661-58ca2233959a'
+  };
+  const actual = parsePayload({ sender: 'fixture_sender', message: '2018-06-01T17:45:27.108Z\ta714a0ef-f141-4e52-9661-58ca2233959a\tINFO\t{"some": "key", "sender": "some sender", "message": "a messaage"}' });
+  t.deepEqual(actual, expected);
+});
+
+
+test.serial('parsePayload correctly handles unparseable record', async (t) => {
+  const parsePayload = indexer.__get__('parsePayload');
+  const testPayload = {
+    message: 'INFO MESSAGE',
+    sender: 'AWS sender',
+    executions: 'some execution value',
+    timestamp: '2018-06-01T17:45:27.108Z',
+    version: '1'
+  };
+  const expected = {
+    message: 'INFO MESSAGE',
+    sender: 'AWS sender',
+    executions: 'some execution value',
+    timestamp: '2018-06-01T17:45:27.108Z',
+    version: '1',
+    level: 30,
+    pid: 1,
+    name: 'cumulus'
+  };
+  const actual = parsePayload(testPayload);
+  t.deepEqual(actual, expected);
 });

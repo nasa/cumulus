@@ -16,7 +16,7 @@ resource "aws_lambda_function" "api" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/app/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.lambda_api_gateway.arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 100
   environment {
     variables = {
