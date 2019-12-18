@@ -98,7 +98,7 @@ function getTablename(sourceArn, indexers) {
  * @returns {Promise<Object>} elasticsearch response
  */
 function performIndex(indexers, table, esClient, data) {
-  return indexers[table](esClient, data);
+  return indexers[table](esClient, data, process.env.ES_INDEX);
 }
 
 /**
@@ -130,7 +130,8 @@ function performDelete(esClient, tableIndex, fields, body) {
       esClient,
       id,
       type,
-      parent
+      parent,
+      index: process.env.ES_INDEX
     });
 }
 

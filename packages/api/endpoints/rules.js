@@ -15,9 +15,11 @@ const { addToLocalES, indexRule } = require('../es/indexer');
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const search = new Search({
-    queryStringParameters: req.query
-  }, 'rule');
+  const search = new Search(
+    { queryStringParameters: req.query },
+    'rule',
+    process.env.ES_INDEX
+  );
   const response = await search.query();
   return res.send(response);
 }
@@ -142,10 +144,9 @@ async function del(req, res) {
   await model.delete(record);
   if (inTestMode()) {
     const esClient = await Search.es(process.env.ES_HOST);
-    const esIndex = process.env.esIndex;
     await esClient.delete({
       id: name,
-      index: esIndex,
+      index: process.env.ES_INDEX,
       type: 'rule'
     }, { ignore: [404] });
   }

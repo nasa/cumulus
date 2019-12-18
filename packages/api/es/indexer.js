@@ -345,8 +345,7 @@ function logHandler(event, context, cb) {
  */
 async function addToLocalES(record, doIndex) {
   const esClient = await Search.es(process.env.ES_HOST);
-  const esIndex = process.env.esIndex;
-  return doIndex(esClient, record, esIndex);
+  return doIndex(esClient, record, process.env.ES_INDEX);
 }
 
 module.exports = {
