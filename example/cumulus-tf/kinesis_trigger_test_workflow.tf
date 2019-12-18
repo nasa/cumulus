@@ -115,8 +115,9 @@ module "kinesis_trigger_test_workflow" {
           "event.$": "$",
           "task_config": {
             "OriginalCNM": "{$.meta.cnm}",
-            "CNMResponseStream": "{$.meta.cnmResponseStream}",
+            "response-endpoint": "{$.meta.cnmResponseStream}",
             "region": "us-east-1",
+            "type": "kinesis",
             "WorkflowException": "{$.exception}",
             "cumulus_message": {
               "outputs": [
@@ -164,8 +165,9 @@ module "kinesis_trigger_test_workflow" {
           "event.$": "$",
           "task_config": {
             "OriginalCNM": "{$.meta.cnm}",
-            "CNMResponseStream": "{$.meta.cnmResponseStream}",
+            "response-endpoint": "{$.meta.cnmResponseStream}",
             "region": "us-east-1",
+            "type": "kinesis",
             "WorkflowException": "{$.exception}",
             "cumulus_message": {
               "outputs": [
