@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-1626**
-  - Updates Cumulus to use node10/CMA 1.1.2 for all of it's internal lambdas in prep for AWS node 8 EOL
+  - Updates Cumulus to use node10/CMA 1.1.2 for all of its internal lambdas in prep for AWS node 8 EOL
 
 
 ## [v1.16.1] - 2019-12-6
