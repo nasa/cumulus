@@ -125,10 +125,7 @@ async function postToCMR(event) {
 
   // post all meta files to CMR
   const results = await Promise.all(
-    updatedCMRFiles.map(
-      (cmrFile) =>
-        publish2CMR(cmrFile, cmrCreds, event.config.bucket, event.config.stack)
-    )
+    updatedCMRFiles.map((cmrFile) => publish2CMR(cmrFile, cmrCreds))
   );
 
   const endTime = Date.now();
