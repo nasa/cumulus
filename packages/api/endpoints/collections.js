@@ -18,9 +18,11 @@ const { AssociatedRulesError, BadRequestError } = require('../lib/errors');
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const collection = new Collection({
-    queryStringParameters: req.query
-  });
+  const collection = new Collection(
+    { queryStringParameters: req.query },
+    null,
+    process.env.ES_INDEX
+  );
   const result = await collection.query();
   return res.send(result);
 }
@@ -136,10 +138,9 @@ async function del(req, res) {
     if (inTestMode()) {
       const collectionId = constructCollectionId(name, version);
       const esClient = await Search.es(process.env.ES_HOST);
-      const esIndex = process.env.esIndex;
       await esClient.delete({
         id: collectionId,
-        index: esIndex,
+        index: process.env.ES_INDEX,
         type: 'collection'
       }, { ignore: [404] });
     }

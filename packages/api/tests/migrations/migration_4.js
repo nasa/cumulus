@@ -6,8 +6,8 @@ const {
   aws: { dynamodb, lambda, s3 },
   testUtils: { randomString }
 } = require('@cumulus/common');
-const { run } = require('../../../migrations/migration_4');
-const models = require('../../../models');
+const { run } = require('../../migrations/migration_4');
+const models = require('../../models');
 
 process.env.RulesTable = `RulesTable_${randomString()}`;
 process.env.stackName = 'my-stackName';

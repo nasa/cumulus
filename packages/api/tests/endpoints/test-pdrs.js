@@ -4,15 +4,15 @@ const test = require('ava');
 const request = require('supertest');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
-const models = require('../../../models');
-const bootstrap = require('../../../lambdas/bootstrap');
-const indexer = require('../../../es/indexer');
+const models = require('../../models');
+const bootstrap = require('../../lambdas/bootstrap');
+const indexer = require('../../es/indexer');
 const {
   createFakeJwtAuthToken,
   fakePdrFactory
-} = require('../../../lib/testUtils');
-const { Search } = require('../../../es/search');
-const assertions = require('../../../lib/assertions');
+} = require('../../lib/testUtils');
+const { Search } = require('../../es/search');
+const assertions = require('../../lib/assertions');
 
 process.env.AccessTokensTable = randomString();
 process.env.PdrsTable = randomString();
@@ -22,7 +22,7 @@ process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
-const { app } = require('../../../app');
+const { app } = require('../../app');
 
 const pdrS3Key = (stackName, bucket, pdrName) => `${process.env.stackName}/pdrs/${pdrName}`;
 
@@ -49,10 +49,12 @@ let userModel;
 test.before(async () => {
   // create esClient
   esClient = await Search.es('fakehost');
-  process.env.esIndex = esIndex;
+
+  const esAlias = randomString();
+  process.env.ES_INDEX = esAlias;
 
   // add fake elasticsearch index
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
+  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
   // create a fake bucket
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
@@ -73,7 +75,7 @@ test.before(async () => {
   await Promise.all(
     fakePdrs.map(
       (pdr) => pdrModel.create(pdr)
-        .then((record) => indexer.indexPdr(esClient, record, esIndex))
+        .then((record) => indexer.indexPdr(esClient, record, esAlias))
     )
   );
 });

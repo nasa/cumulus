@@ -7,17 +7,16 @@ const attr = require('dynamodb-data-types').AttributeValue;
 const { randomString } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 
-const models = require('../../../models');
-const { Search } = require('../../../es/search');
-const bootstrap = require('../../../lambdas/bootstrap');
-const dbIndexer = rewire('../../../lambdas/db-indexer');
+const models = require('../../models');
+const { Search } = require('../../es/search');
+const bootstrap = require('../../lambdas/bootstrap');
+const dbIndexer = rewire('../../lambdas/db-indexer');
 const {
   fakeCollectionFactory,
   fakeGranuleFactoryV2,
   fakeExecutionFactory,
-  fakeFileFactory,
-  deleteAliases
-} = require('../../../lib/testUtils');
+  fakeFileFactory
+} = require('../../lib/testUtils');
 
 const { handler } = dbIndexer;
 
@@ -112,8 +111,7 @@ let executionModel;
 let fileModel;
 let granuleModel;
 let ruleModel;
-test.before(async () => {
-  await deleteAliases();
+test.before(async (t) => {
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   // create tables
@@ -133,8 +131,11 @@ test.before(async () => {
 
   // bootstrap the esIndex
   esClient = await Search.es();
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
-  process.env.esIndex = esIndex;
+
+  t.context.esAlias = randomString();
+  process.env.ES_INDEX = t.context.esAlias;
+
+  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
 });
 
 test.after.always(async () => {
@@ -149,6 +150,8 @@ test.after.always(async () => {
 });
 
 test.serial('create, update and delete a collection in dynamodb and es', async (t) => {
+  const { esAlias } = t.context;
+
   const c = fakeCollectionFactory();
 
   const insertRecord = buildCollectionRecord({
@@ -159,7 +162,7 @@ test.serial('create, update and delete a collection in dynamodb and es', async (
   // fake the lambda trigger
   await handler({ Records: [insertRecord] });
 
-  const collectionIndex = new Search({}, 'collection');
+  const collectionIndex = new Search({}, 'collection', esAlias);
   let indexedRecord = await collectionIndex.get(constructCollectionId(c.name, c.version));
 
   t.is(indexedRecord.name, c.name);
@@ -191,6 +194,8 @@ test.serial('create, update and delete a collection in dynamodb and es', async (
 });
 
 test.serial('create, update and delete a granule in dynamodb and es', async (t) => {
+  const { esAlias } = t.context;
+
   const fakeFile = fakeFileFactory();
   const fakeGranule = fakeGranuleFactoryV2({ files: [fakeFile] });
 
@@ -202,7 +207,7 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
   // fake the lambda trigger
   await handler({ Records: [insertRecord] });
 
-  const granuleIndex = new Search({}, 'granule');
+  const granuleIndex = new Search({}, 'granule', esAlias);
   let indexedRecord = await granuleIndex.get(fakeGranule.granuleId);
 
   t.is(indexedRecord.granuleId, fakeGranule.granuleId);
@@ -244,12 +249,14 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
     /No record/
   );
 
-  const deletedGranIndex = new Search({}, 'deletedgranule');
+  const deletedGranIndex = new Search({}, 'deletedgranule', esAlias);
   const deletedGranRecord = await deletedGranIndex.get(fakeGranule.granuleId);
   t.is(deletedGranRecord.granuleId, fakeGranule.granuleId);
 });
 
 test.serial('create, update and delete an execution in dynamodb and es', async (t) => {
+  const { esAlias } = t.context;
+
   const fakeRecord = fakeExecutionFactory();
 
   const insertRecord = buildExecutionRecord({
@@ -260,7 +267,7 @@ test.serial('create, update and delete an execution in dynamodb and es', async (
   // fake the lambda trigger
   await handler({ Records: [insertRecord] });
 
-  const recordIndex = new Search({}, 'execution');
+  const recordIndex = new Search({}, 'execution', esAlias);
   let indexedRecord = await recordIndex.get(fakeRecord.arn);
 
   t.is(indexedRecord.arn, fakeRecord.arn);

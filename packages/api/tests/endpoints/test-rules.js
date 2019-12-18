@@ -6,12 +6,12 @@ const request = require('supertest');
 const cloneDeep = require('lodash.clonedeep');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
-const bootstrap = require('../../../lambdas/bootstrap');
-const models = require('../../../models');
-const { createFakeJwtAuthToken } = require('../../../lib/testUtils');
-const { Search } = require('../../../es/search');
-const indexer = require('../../../es/indexer');
-const assertions = require('../../../lib/assertions');
+const bootstrap = require('../../lambdas/bootstrap');
+const models = require('../../models');
+const { createFakeJwtAuthToken } = require('../../lib/testUtils');
+const { Search } = require('../../es/search');
+const indexer = require('../../es/indexer');
+const assertions = require('../../lib/assertions');
 
 [
   'AccessTokensTable',
@@ -24,7 +24,7 @@ const assertions = require('../../../lib/assertions');
 ].forEach((varName) => process.env[varName] = randomString());
 
 // import the express app after setting the env variables
-const { app } = require('../../../app');
+const { app } = require('../../app');
 
 const esIndex = randomString();
 const workflowName = randomString();
@@ -52,8 +52,10 @@ let ruleModel;
 let userModel;
 
 test.before(async () => {
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
-  process.env.esIndex = esIndex;
+  const esAlias = randomString();
+  process.env.ES_INDEX = esAlias;
+  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+
   esClient = await Search.es('fakehost');
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
   await Promise.all([
@@ -73,7 +75,7 @@ test.before(async () => {
   await ruleModel.createTable();
 
   const ruleRecord = await ruleModel.create(testRule);
-  await indexer.indexRule(esClient, ruleRecord, esIndex);
+  await indexer.indexRule(esClient, ruleRecord, esAlias);
 
   userModel = new models.User();
   await userModel.createTable();
