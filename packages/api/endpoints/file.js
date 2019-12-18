@@ -18,6 +18,10 @@ async function listAllTfStateFiles() {
   return Promise.all(bucketPromises);
 }
 
+async function listTfResources() {
+  const stateFiles = await listAllTfStateFiles();
+}
+
 module.exports = {
   listAllTfStateFiles
-}
+};
