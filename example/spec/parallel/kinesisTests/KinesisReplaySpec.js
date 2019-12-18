@@ -166,45 +166,45 @@ describe('The Kinesis Replay API', () => {
     });
 
     describe('processes messages within the specified time slice', () => {
-      it('to start workflows', async () => {
+      it('to start the expected workflows', async () => {
         console.log('Waiting for step functions to start...');
-        const workflowExecutions = await Promise.all(targetedRecords.map((record) => waitForAllTestSf(
+        const expectedWorkflows = targetedRecords.map((record) => waitForAllTestSf(
           record.identifier,
           rules[0].workflow,
           maxWaitForSFExistSecs,
           1,
           'HelloWorld'
-        ).catch((err) => fail(err.message))));
+        ).catch((err) => fail(err.message)));
+
+        const tooOldToExpectWorkflows = tooOldToFetchRecords
+          .map((r) => waitForAllTestSf(
+            r.identifier,
+            rules[0].workflow,
+            maxWaitForSFExistSecs,
+            1,
+            'HelloWorld'
+          ).then((ex) => fail(`should not find executions but found ${JSON.stringify(ex)}`))
+            .catch((err) => expect(err.message).toBe('Never found started workflow.')));
+
+        const tooNewToExpectWorkflows = newRecordsToSkip
+          .map((r) => waitForAllTestSf(
+            r.identifier,
+            rules[0].workflow,
+            maxWaitForSFExistSecs,
+            1,
+            'HelloWorld'
+          ).then((ex) => fail(`should not find executions but found ${JSON.stringify(ex)}`))
+            .catch((err) => expect(err.message).toBe('Never found started workflow.')));
+
+        const workflowExecutions = await Promise.all(expectedWorkflows);
         // if intermittent failures occur here, consider increasing maxWaitForSFExistSecs
         expect(workflowExecutions.length).toEqual(2);
         workflowExecutions.forEach((exArr) => expect(exArr.length).toEqual(1));
+
+        console.log('Waiting to ensure workflows expected not to start do not start...');
+        await Promise.all(tooOldToExpectWorkflows);
+        await Promise.all(tooNewToExpectWorkflows);
       });
-    });
-
-    it('does not fetch messages older than the time slice', async () => {
-      await Promise.all(tooOldToFetchRecords
-        .map((r) => waitForAllTestSf(
-          r.identifier,
-          rules[0].workflow,
-          maxWaitForSFExistSecs,
-          1,
-          'HelloWorld'
-        )
-          .then((ex) => fail(`should not find executions but found ${JSON.stringify(ex)}`))
-          .catch((err) => expect(err.message).toBe('Never found started workflow.'))));
-    });
-
-    it('skips processing of messages newer than the time slice', async () => {
-      await Promise.all(newRecordsToSkip
-        .map((r) => waitForAllTestSf(
-          r.identifier,
-          rules[0].workflow,
-          maxWaitForSFExistSecs,
-          1,
-          'HelloWorld'
-        )
-          .then((ex) => fail(`should not find executions but found ${JSON.stringify(ex)}`))
-          .catch((err) => expect(err.message).toBe('Never found started workflow.'))));
     });
   });
 });

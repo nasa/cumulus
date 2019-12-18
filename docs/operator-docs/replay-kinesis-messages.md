@@ -6,7 +6,9 @@ hide_title: true
 
 # How to replay Kinesis messages after an outage
 
-After a period of outage, it may be necessary for a DAAC to reprocess or 'replay' messages that arrived on an AWS Kinesis Data Stream but did not trigger an ingest. This document serves as an outline on how to start a replay operation, and how to perform status tracking.
+After a period of outage, it may be necessary for a Cumulus operator to reprocess or 'replay' messages that arrived on an AWS Kinesis Data Stream but did not trigger an ingest. This document serves as an outline on how to start a replay operation, and how to perform status tracking. Cumulus supports replay of all Kinesis messages on a stream (subject to the normal RetentionPeriod constraints), or all messages within a given time slice delimited by start and end timestamps.
+
+As Kinesis has no comparable field to e.g. the SQS ReceiveCount on its records, Cumulus cannot tell which messages within a given time slice have never been processed, and cannot guarantee only missed messages will be processed. Users will have to rely on duplicate handling or some other method of identifying messages that should not be processed within the time slice.
 
 NOTE: This operation flow effectively changes only the trigger mechanism for Kinesis ingest notifications. The existence of valid Kinesis-type rules and all other normal requirements for the triggering of ingest via Kinesis still apply.
 
@@ -19,6 +21,9 @@ Cumulus has added a new endpoint to its API, `/replays`. This endpoint will allo
 In order to start a replay, you must perform a `POST` request to the `replays` endpoint.
 
 The required and optional fields that should be part of the body of this request are documented below.
+
+NOTE: As the `endTimestamp` relies on a comparison with the Kinesis server-side `ApproximateArrivalTimestamp`, and given that there is no documented level of accuracy for the approximation, it is recommended that the `endTimestamp` include some amount of buffer to allow for slight discrepancies.
+If tolerable, the same is recommended for the `startTimestamp` although it is used differently and less vulnerable to discrepancies since a server-side arrival timestamp should never be earlier than the client-side request timestamp.
 
 | Field | Type | Required | Description |
 | ------ | ------ | ------ | ------ |
