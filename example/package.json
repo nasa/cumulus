@@ -56,7 +56,8 @@
     "@cumulus/sf-sns-report": "1.16.1",
     "@cumulus/sync-granule": "1.16.1",
     "@cumulus/test-processing": "1.16.1",
-    "aws-sdk": "^2.585.0"
+    "aws-sdk": "^2.585.0",
+    "ssh2-streams": "^0.4.8"
   },
   "devDependencies": {
     "@cumulus/test-data": "1.16.1",
