@@ -9,9 +9,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-630**
-  - Added support for replaying Kinesis records on a stream into the Cumulus Kinesis workflow triggering mechanism, either all the records, or some time slice delimited by start and end timestamps.
-  - Added `/replays` endpoint for triggering replays to the operator API.
-  - Added `Replay Kinesis Messages` doc to Operator Docs.
+  - Added support for replaying Kinesis records on a stream into the Cumulus Kinesis workflow triggering mechanism: either all the records, or some time slice delimited by start and end timestamps.
+  - Added `/replays` endpoint to the operator API for triggering replays.
+  - Added `Replay Kinesis Messages` documentation to Operator Docs.
   - Added `manualConsumer` lambda function to consume a Kinesis stream. Used by the replay AsyncOperation.
 
 ### Changed
