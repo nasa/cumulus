@@ -64,7 +64,7 @@ Given it has been discovered this task can no longer run in AWS Lambda, it can b
     services:
       QueueGranules:
         docker: true
-        image: cumuluss/cumulus-ecs-task:1.2.5
+        image: cumuluss/cumulus-ecs-task:1.4.0
         memory: 4000
         count: 1
         envs:

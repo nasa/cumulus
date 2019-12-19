@@ -32,7 +32,7 @@ ECS activities require a docker image. The docker image is defined as part of th
       registry: dockerhub
     services:
       EcsTaskHelloWorld:
-        image: cumuluss/cumulus-ecs-task:1.2.3
+        image: cumuluss/cumulus-ecs-task:1.4.0
         cpu: 800
         memory: 1500
         count: 1

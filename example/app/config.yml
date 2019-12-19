@@ -61,7 +61,7 @@ default:
   # test configuration ends
 
   cmaDir: '/opt/'
-  sandbox_cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:6
+  sandbox_cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:10
   sit_cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:2
   cma_layer: '{{sandbox_cma_layer}}'
   prefix: 'test-cumulus-integration'
@@ -103,7 +103,7 @@ default:
       username: cumulususer
     services:
       EcsTaskHelloWorld:
-        image: cumuluss/cumulus-ecs-task:1.3.0
+        image: cumuluss/cumulus-ecs-task:1.4.0
         cpu: 400
         memory: 700
         minTasks: 1

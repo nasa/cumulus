@@ -4,7 +4,7 @@
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
-    "node": ">=8.10.0"
+    "node": ">=10.16.3"
   },
   "bin": {
     "cumulus-api": "./bin/cli.js"
@@ -58,7 +58,7 @@
     "ajv": "^5.2.2",
     "archiver": "^2.1.1",
     "aws-elasticsearch-connector": "8.1.3",
-    "aws-sdk": "^2.238.1",
+    "aws-sdk": "^2.585.0",
     "aws-serverless-express": "^3.3.5",
     "basic-auth": "^1.1.0",
     "body-parser": "^1.18.3",

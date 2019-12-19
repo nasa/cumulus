@@ -15,7 +15,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=8.10.0"
+    "node": ">=10.16.3"
   },
   "scripts": {
     "test": "ava",
@@ -38,7 +38,7 @@
   "dependencies": {
     "@cumulus/cmrjs": "1.14.4",
     "@cumulus/common": "1.14.4",
-    "@cumulus/cumulus-message-adapter-js": "^1.0.8",
+    "@cumulus/cumulus-message-adapter-js": "^1.1.0",
     "lodash.keyby": "^4.6.0"
   },
   "devDependencies": {
