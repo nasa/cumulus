@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### BREAKING Changes
+### BREAKING CHANGES
 
 - **CUMULUS-1498**
   - The `@cumulus/cmrjs.publish2CMR` function expects that the value of its
