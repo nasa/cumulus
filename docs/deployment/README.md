@@ -35,7 +35,7 @@ The process involves:
 ### Linux/MacOS software requirements
 
 * git
-* [node 8.10](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
+* [node 10.16.3](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
 * [npm](https://www.npmjs.com/get-npm)
 * sha1sum or md5sha1sum
 * zip
