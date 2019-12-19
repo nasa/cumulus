@@ -41,7 +41,7 @@ async function createIndex(esClient, indexName) {
 
 
 /**
- * Parses a StepFunction log payload  and returns a es logsrecord object
+ * Parses a StepFunction log payload and returns an Elasticsearch log record object
  *
  * @param {Object} payload - Stepfunction log payload
  * @returns {Object} - ElasticSearch log record
