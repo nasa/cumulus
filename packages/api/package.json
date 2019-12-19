@@ -1,16 +1,16 @@
 {
   "name": "@cumulus/api",
-  "version": "1.16.0",
+  "version": "1.16.1",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
-    "node": ">=8.10.0"
+    "node": ">=10.16.3"
   },
   "bin": {
     "cumulus-api": "./bin/cli.js"
   },
   "scripts": {
-    "test": "ava && find ./tests/serial -name '*.js' | xargs ava --serial",
+    "test": "ava",
     "test-coverage": "nyc npm test",
     "build": "webpack",
     "watch": "webpack --progress -w",
@@ -48,17 +48,17 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cmr-client": "1.16.0",
-    "@cumulus/cmrjs": "1.16.0",
-    "@cumulus/common": "1.16.0",
-    "@cumulus/ingest": "1.16.0",
-    "@cumulus/logger": "1.16.0",
-    "@cumulus/pvl": "1.16.0",
+    "@cumulus/cmr-client": "1.16.1",
+    "@cumulus/cmrjs": "1.16.1",
+    "@cumulus/common": "1.16.1",
+    "@cumulus/ingest": "1.16.1",
+    "@cumulus/logger": "1.16.1",
+    "@cumulus/pvl": "1.16.1",
     "@elastic/elasticsearch": "^5.6.20",
     "@mapbox/dyno": "^1.4.2",
     "ajv": "^5.2.2",
     "aws-elasticsearch-connector": "^8.2.0",
-    "aws-sdk": "^2.238.1",
+    "aws-sdk": "^2.585.0",
     "aws-serverless-express": "^3.3.5",
     "body-parser": "^1.18.3",
     "boolean": "^0.1.3",

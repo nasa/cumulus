@@ -2,6 +2,7 @@
 
 const test = require('ava');
 const sinon = require('sinon');
+const rewire = require('rewire');
 const fs = require('fs');
 const path = require('path');
 const aws = require('@cumulus/common/aws');
@@ -11,14 +12,14 @@ const { constructCollectionId } = require('@cumulus/common/collection-config-sto
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const workflows = require('@cumulus/common/workflows');
 
-const indexer = require('../../../es/indexer');
-const { Search } = require('../../../es/search');
-const models = require('../../../models');
-const { fakeGranuleFactory, fakeCollectionFactory, deleteAliases } = require('../../../lib/testUtils');
-const { IndexExistsError } = require('../../../lib/errors');
-const { bootstrapElasticSearch } = require('../../../lambdas/bootstrap');
+const indexer = rewire('../../es/indexer');
+const { Search } = require('../../es/search');
+const models = require('../../models');
+const { fakeGranuleFactory, fakeCollectionFactory } = require('../../lib/testUtils');
+const { IndexExistsError } = require('../../lib/errors');
+const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 
-const granuleSuccess = require('../../data/granule_success.json');
+const granuleSuccess = require('../data/granule_success.json');
 
 const esIndex = randomString();
 const collectionTable = randomString();
@@ -28,7 +29,6 @@ const pdrsTable = randomString();
 
 process.env.system_bucket = randomString();
 process.env.stackName = randomString();
-process.env.ES_INDEX = esIndex;
 
 let esClient;
 let collectionModel;
@@ -44,9 +44,7 @@ let templateStub;
 const input = JSON.stringify(granuleSuccess);
 const payload = JSON.parse(input);
 
-test.before(async () => {
-  await deleteAliases();
-
+test.before(async (t) => {
   // create the tables
   process.env.CollectionsTable = collectionTable;
   collectionModel = new models.Collection();
@@ -64,9 +62,11 @@ test.before(async () => {
   pdrsModel = new models.Pdr();
   await pdrsModel.createTable();
 
+  t.context.esAlias = randomString();
+  process.env.ES_INDEX = t.context.esAlias;
+
   // create the elasticsearch index and add mapping
-  await bootstrapElasticSearch('fakehost', esIndex);
-  process.env.esIndex = esIndex;
+  await bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
   esClient = await Search.es();
 
   // create buckets
@@ -109,6 +109,8 @@ test.after.always(async () => {
 });
 
 test.serial('indexing a deletedgranule record', async (t) => {
+  const { esAlias } = t.context;
+
   const granuletype = 'granule';
   const granule = fakeGranuleFactory();
   const collection = fakeCollectionFactory();
@@ -116,7 +118,7 @@ test.serial('indexing a deletedgranule record', async (t) => {
   granule.collectionId = collectionId;
 
   // create granule record
-  let r = await indexer.indexGranule(esClient, granule, esIndex, granuletype);
+  let r = await indexer.indexGranule(esClient, granule, esAlias, granuletype);
   t.is(r.result, 'created');
 
   r = await indexer.deleteRecord({
@@ -124,13 +126,13 @@ test.serial('indexing a deletedgranule record', async (t) => {
     id: granule.granuleId,
     type: granuletype,
     parent: collectionId,
-    index: esIndex
+    index: esAlias
   });
   t.is(r.result, 'deleted');
 
   // the deletedgranule record is added
   const deletedGranParams = {
-    index: esIndex,
+    index: esAlias,
     type: 'deletedgranule',
     id: granule.granuleId,
     parent: collectionId
@@ -145,7 +147,7 @@ test.serial('indexing a deletedgranule record', async (t) => {
   t.truthy(record._source.deletedAt);
 
   // the deletedgranule record is removed if the granule is ingested again
-  r = await indexer.indexGranule(esClient, granule, esIndex, granuletype);
+  r = await indexer.indexGranule(esClient, granule, esAlias, granuletype);
   t.is(r.result, 'created');
   record = await esClient.get(deletedGranParams, { ignore: [404] })
     .then((response) => response.body);
@@ -153,6 +155,8 @@ test.serial('indexing a deletedgranule record', async (t) => {
 });
 
 test.serial('creating multiple deletedgranule records and retrieving them', async (t) => {
+  const { esAlias } = t.context;
+
   const granuleIds = [];
   const granules = [];
 
@@ -165,7 +169,7 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
   const collectionId = granules[0].collectionId;
 
   // add the records
-  let response = await Promise.all(granules.map((g) => indexer.indexGranule(esClient, g, esIndex)));
+  let response = await Promise.all(granules.map((g) => indexer.indexGranule(esClient, g, esAlias)));
   t.is(response.length, 11);
   await esClient.indices.refresh();
 
@@ -177,7 +181,7 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
         id: g.granuleId,
         type: 'granule',
         parent: g.collectionId,
-        index: esIndex
+        index: esAlias
       })));
   t.is(response.length, 11);
   response.forEach((r) => t.is(r.result, 'deleted'));
@@ -187,7 +191,7 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
   // retrieve deletedgranule records which are deleted within certain range
   // and are from a given collection
   const deletedGranParams = {
-    index: esIndex,
+    index: esAlias,
     type: 'deletedgranule',
     body: {
       query: {
@@ -222,18 +226,20 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
 });
 
 test.serial('indexing a rule record', async (t) => {
+  const { esAlias } = t.context;
+
   const testRecord = {
     name: randomString()
   };
 
-  const r = await indexer.indexRule(esClient, testRecord, esIndex);
+  const r = await indexer.indexRule(esClient, testRecord, esAlias);
 
   // make sure record is created
   t.is(r.result, 'created');
 
   // check the record exists
   const record = await esClient.get({
-    index: esIndex,
+    index: esAlias,
     type: 'rule',
     id: testRecord.name
   }).then((response) => response.body);
@@ -243,18 +249,20 @@ test.serial('indexing a rule record', async (t) => {
 });
 
 test.serial('indexing a provider record', async (t) => {
+  const { esAlias } = t.context;
+
   const testRecord = {
     id: randomString()
   };
 
-  const r = await indexer.indexProvider(esClient, testRecord, esIndex);
+  const r = await indexer.indexProvider(esClient, testRecord, esAlias);
 
   // make sure record is created
   t.is(r.result, 'created');
 
   // check the record exists
   const record = await esClient.get({
-    index: esIndex,
+    index: esAlias,
     type: 'provider',
     id: testRecord.id
   }).then((response) => response.body);
@@ -264,20 +272,22 @@ test.serial('indexing a provider record', async (t) => {
 });
 
 test.serial('indexing a collection record', async (t) => {
+  const { esAlias } = t.context;
+
   const collection = {
     name: randomString(),
     version: '001'
   };
 
   const collectionId = constructCollectionId(collection.name, collection.version);
-  const r = await indexer.indexCollection(esClient, collection, esIndex);
+  const r = await indexer.indexCollection(esClient, collection, esAlias);
 
   // make sure record is created
   t.is(r.result, 'created');
 
   // check the record exists
   const record = await esClient.get({
-    index: esIndex,
+    index: esAlias,
     type: 'collection',
     id: collectionId
   }).then((response) => response.body);
@@ -289,6 +299,8 @@ test.serial('indexing a collection record', async (t) => {
 });
 
 test.serial('indexing collection records with different versions', async (t) => {
+  const { esAlias } = t.context;
+
   const name = randomString();
   /* eslint-disable no-await-in-loop */
   for (let i = 1; i < 11; i += 1) {
@@ -301,7 +313,7 @@ test.serial('indexing collection records with different versions', async (t) => 
       [`${key}`]: value
     };
 
-    const r = await indexer.indexCollection(esClient, collection, esIndex);
+    const r = await indexer.indexCollection(esClient, collection, esAlias);
     // make sure record is created
     t.is(r.result, 'created');
   }
@@ -315,7 +327,7 @@ test.serial('indexing collection records with different versions', async (t) => 
     const value = `value${i}`;
     const collectionId = constructCollectionId(name, version);
     const record = await esClient.get({ // eslint-disable-line no-await-in-loop
-      index: esIndex,
+      index: esAlias,
       type: 'collection',
       id: collectionId
     }).then((response) => response.body);
@@ -329,6 +341,8 @@ test.serial('indexing collection records with different versions', async (t) => 
 });
 
 test.serial('updating a collection record', async (t) => {
+  const { esAlias } = t.context;
+
   const collection = {
     name: randomString(),
     version: '001',
@@ -350,18 +364,18 @@ test.serial('updating a collection record', async (t) => {
   };
 
   const collectionId = constructCollectionId(collection.name, collection.version);
-  let r = await indexer.indexCollection(esClient, collection, esIndex);
+  let r = await indexer.indexCollection(esClient, collection, esAlias);
 
   // make sure record is created
   t.is(r.result, 'created');
 
   // update the collection record
-  r = await indexer.indexCollection(esClient, updatedCollection, esIndex);
+  r = await indexer.indexCollection(esClient, updatedCollection, esAlias);
   t.is(r.result, 'updated');
 
   // check the record exists
   const record = await esClient.get({
-    index: esIndex,
+    index: esAlias,
     type: 'collection',
     id: collectionId
   }).then((response) => response.body);
@@ -375,12 +389,14 @@ test.serial('updating a collection record', async (t) => {
 });
 
 test.serial('delete a provider record', async (t) => {
+  const { esAlias } = t.context;
+
   const testRecord = {
     id: randomString()
   };
   const type = 'provider';
 
-  let r = await indexer.indexProvider(esClient, testRecord, esIndex, type);
+  let r = await indexer.indexProvider(esClient, testRecord, esAlias, type);
 
   // make sure record is created
   t.is(r.result, 'created');
@@ -390,13 +406,13 @@ test.serial('delete a provider record', async (t) => {
     esClient,
     id: testRecord.id,
     type,
-    index: esIndex
+    index: esAlias
   });
 
   t.is(r.result, 'deleted');
 
   await t.throwsAsync(
-    () => esClient.get({ index: esIndex, type, id: testRecord.id }),
+    () => esClient.get({ index: esAlias, type, id: testRecord.id }),
     'Response Error'
   );
 });
@@ -418,23 +434,25 @@ test.serial('reingest a granule', async (t) => {
 });
 
 test.serial('indexing a granule record', async (t) => {
-  const txt = fs.readFileSync(path.join(
-    __dirname,
-    '../../data/sns_message_granule.txt'
-  ), 'utf8');
+  const { esAlias } = t.context;
+
+  const txt = fs.readFileSync(
+    path.join(__dirname, '../data/sns_message_granule.txt'),
+    'utf8'
+  );
 
   const event = JSON.parse(JSON.parse(txt.toString()));
   const msg = JSON.parse(event.Records[0].Sns.Message);
 
   const [granule] = await granuleModel.createGranulesFromSns(msg);
-  await indexer.indexGranule(esClient, granule);
+  await indexer.indexGranule(esClient, granule, esAlias);
 
   const collection = msg.meta.collection;
   const collectionId = constructCollectionId(collection.name, collection.version);
 
   // test granule record is added
   const record = await esClient.get({
-    index: esIndex,
+    index: esAlias,
     type: 'granule',
     id: granule.granuleId,
     parent: collectionId
@@ -443,10 +461,12 @@ test.serial('indexing a granule record', async (t) => {
 });
 
 test.serial('indexing a PDR record', async (t) => {
-  const txt = fs.readFileSync(path.join(
-    __dirname,
-    '../../data/sns_message_parse_pdr.txt'
-  ), 'utf8');
+  const { esAlias } = t.context;
+
+  const txt = fs.readFileSync(
+    path.join(__dirname, '../data/sns_message_parse_pdr.txt'),
+    'utf8'
+  );
 
   const event = JSON.parse(JSON.parse(txt.toString()));
   const msg = JSON.parse(event.Records[0].Sns.Message);
@@ -454,11 +474,11 @@ test.serial('indexing a PDR record', async (t) => {
   const pdr = await pdrsModel.createPdrFromSns(msg);
 
   // fake pdr index to elasticsearch (this is done in a lambda function)
-  await indexer.indexPdr(esClient, pdr);
+  await indexer.indexPdr(esClient, pdr, esAlias);
 
   // test granule record is added
   const record = await esClient.get({
-    index: esIndex,
+    index: esAlias,
     type: 'pdr',
     id: pdr.pdrName
   }).then((response) => response.body);
@@ -491,4 +511,52 @@ test.serial('Create new index - index already exists', async (t) => {
   );
 
   await esClient.indices.delete({ index: newIndex });
+});
+
+test.serial('parsePayload correctly parses AWS Linux style console output', async (t) => {
+  const parsePayload = indexer.__get__('parsePayload');
+  const expected = {
+    some: 'key',
+    sender: 'some sender',
+    message: 'a messaage',
+    RequestId: 'a714a0ef-f141-4e52-9661-58ca2233959a'
+  };
+  const actual = parsePayload({ sender: 'fixture_sender', message: '2018-06-01T17:45:27.108Z\ta714a0ef-f141-4e52-9661-58ca2233959a\t{"some": "key", "sender": "some sender", "message": "a messaage"}' });
+  t.deepEqual(actual, expected);
+});
+
+test.serial('parsePayload correctly parses AWS Linux 2 style console output', async (t) => {
+  const parsePayload = indexer.__get__('parsePayload');
+  const expected = {
+    some: 'key',
+    sender: 'some sender',
+    message: 'a messaage',
+    RequestId: 'a714a0ef-f141-4e52-9661-58ca2233959a'
+  };
+  const actual = parsePayload({ sender: 'fixture_sender', message: '2018-06-01T17:45:27.108Z\ta714a0ef-f141-4e52-9661-58ca2233959a\tINFO\t{"some": "key", "sender": "some sender", "message": "a messaage"}' });
+  t.deepEqual(actual, expected);
+});
+
+
+test.serial('parsePayload correctly handles unparseable record', async (t) => {
+  const parsePayload = indexer.__get__('parsePayload');
+  const testPayload = {
+    message: 'INFO MESSAGE',
+    sender: 'AWS sender',
+    executions: 'some execution value',
+    timestamp: '2018-06-01T17:45:27.108Z',
+    version: '1'
+  };
+  const expected = {
+    message: 'INFO MESSAGE',
+    sender: 'AWS sender',
+    executions: 'some execution value',
+    timestamp: '2018-06-01T17:45:27.108Z',
+    version: '1',
+    level: 30,
+    pid: 1,
+    name: 'cumulus'
+  };
+  const actual = parsePayload(testPayload);
+  t.deepEqual(actual, expected);
 });

@@ -38,6 +38,50 @@ async function createIndex(esClient, indexName) {
   log.info(`Created esIndex ${indexName}`);
 }
 
+
+/**
+ * Parses a StepFunction log payload  and returns a es logsrecord object
+ *
+ * @param {Object} payload - Stepfunction log payload
+ * @returns {Object} - ElasticSearch log record
+ */
+function parsePayload(payload) {
+  let record;
+  try {
+    // cumulus log message has extra aws messages before the json message,
+    // only the json message should be logged to elasticsearch.
+    // example message:
+    // 2018-06-0 1T17:45:27.108Z a714a0ef-f141-4e52-9661-58ca2233959a
+    // {"level": "info", "timestamp": "2018-06-01T17:45:27.108Z",
+    // "message": "uploaded s3://bucket/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"}
+    const entryParts = payload.message.trim().split('\t');
+    // cumulus log message
+    const messageStartIndex = entryParts.findIndex((e) => e.startsWith('{'));
+    if (entryParts.length >= 3 && messageStartIndex
+    && entryParts[entryParts.length - 1].endsWith('}')) {
+      record = JSON.parse(entryParts.slice(messageStartIndex).join('\t'));
+      record.RequestId = entryParts[1];
+    } else { // other logs e.g. cumulus-ecs-task
+      record = JSON.parse(payload.message);
+    }
+    // level is number in elasticsearch
+    if (isString(record.level)) record.level = log.convertLogLevel(record.level);
+  } catch (e) {
+    record = {
+      message: payload.message.trim(),
+      sender: payload.sender,
+      executions: payload.executions,
+      timestamp: payload.timestamp,
+      version: payload.version,
+      level: 30,
+      pid: 1,
+      name: 'cumulus'
+    };
+  }
+  return record;
+}
+
+
 /**
  * Extracts info from a stepFunction message and indexes it to
  * an ElasticSearch
@@ -51,40 +95,10 @@ async function createIndex(esClient, indexName) {
 async function indexLog(esClient, payloads, index = defaultIndexAlias, type = 'logs') {
   const body = [];
 
-  payloads.forEach((p) => {
-    body.push({ index: { _index: index, _type: type, _id: p.id } });
-    let record;
-    try {
-      // cumulus log message has extra aws messages before the json message,
-      // only the json message should be logged to elasticsearch.
-      // example message:
-      // 2018-06-01T17:45:27.108Z a714a0ef-f141-4e52-9661-58ca2233959a
-      // {"level": "info", "timestamp": "2018-06-01T17:45:27.108Z",
-      // "message": "uploaded s3://bucket/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"}
-      const entryParts = p.message.trim().split('\t');
-      // cumulus log message
-      if (entryParts.length >= 3 && entryParts[2].startsWith('{')
-      && entryParts[entryParts.length - 1].endsWith('}')) {
-        record = JSON.parse(entryParts.slice(2).join('\t'));
-        record.RequestId = entryParts[1];
-      } else { // other logs e.g. cumulus-ecs-task
-        record = JSON.parse(p.message);
-      }
-      // level is number in elasticsearch
-      if (isString(record.level)) record.level = log.convertLogLevel(record.level);
-    } catch (e) {
-      record = {
-        message: p.message.trim(),
-        sender: p.sender,
-        executions: p.executions,
-        timestamp: p.timestamp,
-        version: p.version,
-        level: 30,
-        pid: 1,
-        name: 'cumulus'
-      };
-    }
-    body.push(record);
+  payloads.forEach((payload) => {
+    body.push({ index: { _index: index, _type: type, _id: payload.id } });
+    const parsedPayload = parsePayload(payload);
+    body.push(parsedPayload);
   });
 
   const actualEsClient = esClient || (await Search.es());
@@ -175,6 +189,7 @@ function indexProvider(esClient, payload, index = defaultIndexAlias, type = 'pro
  * @param  {string} type     - Elasticsearch type (default: rule)
  * @returns {Promise} Elasticsearch response
  */
+
 function indexRule(esClient, payload, index = defaultIndexAlias, type = 'rule') {
   return genericRecordUpdate(esClient, payload.name, payload, index, type);
 }
@@ -330,8 +345,7 @@ function logHandler(event, context, cb) {
  */
 async function addToLocalES(record, doIndex) {
   const esClient = await Search.es(process.env.ES_HOST);
-  const esIndex = process.env.esIndex;
-  return doIndex(esClient, record, esIndex);
+  return doIndex(esClient, record, process.env.ES_INDEX);
 }
 
 module.exports = {

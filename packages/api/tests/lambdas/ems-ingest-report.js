@@ -7,7 +7,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const aws = require('@cumulus/common/aws');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 const { Search } = require('../../es/search');
-const { deleteAliases, fakeCollectionFactory } = require('../../lib/testUtils');
+const { fakeCollectionFactory } = require('../../lib/testUtils');
 const {
   emsMappings, generateReports, generateReportsForEachDay
 } = require('../../lambdas/ems-ingest-report');
@@ -95,16 +95,15 @@ process.env.ES_SCROLL_SIZE = 3;
 const esIndex = randomString();
 process.env.system_bucket = 'test-bucket';
 process.env.stackName = 'test-stack';
-process.env.ES_INDEX = esIndex;
 process.env.ems_provider = 'testEmsProvider';
 
 let esClient;
 
 test.before(async () => {
-  await deleteAliases();
-
   // create the elasticsearch index and add mapping
-  await bootstrapElasticSearch('fakehost', esIndex);
+  const esAlias = randomString();
+  process.env.ES_INDEX = esAlias;
+  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
   esClient = await Search.es();
 
   // add 30 granules to es, 10 from 1 day ago, 10 from 2 day ago, 10 from today.
@@ -124,7 +123,7 @@ test.before(async () => {
   }
 
   const granjobs = granules.map((g) => esClient.update({
-    index: esIndex,
+    index: esAlias,
     type: 'granule',
     id: g.granuleId,
     parent: g.collectionId,
@@ -146,7 +145,7 @@ test.before(async () => {
     deletedgrans.push(newgran);
   }
   const deletedgranjobs = deletedgrans.map((g) => esClient.update({
-    index: esIndex,
+    index: esAlias,
     type: 'deletedgranule',
     id: g.granuleId,
     parent: g.collectionId,
@@ -160,10 +159,6 @@ test.before(async () => {
   return esClient.indices.refresh();
 });
 
-test.after.always(async () => {
-  await esClient.indices.delete({ index: esIndex });
-});
-
 test.beforeEach(async (t) => {
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
   process.env.CollectionsTable = randomString();
@@ -175,6 +170,10 @@ test.beforeEach(async (t) => {
 test.afterEach.always(async (t) => {
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
   await t.context.collectionModel.deleteTable();
+});
+
+test.after.always(async () => {
+  await esClient.indices.delete({ index: esIndex });
 });
 
 test.serial('generate reports for the previous day', async (t) => {

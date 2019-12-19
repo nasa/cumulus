@@ -10,7 +10,7 @@ const models = require('../../models');
 const migrations = require('../../migrations');
 const migration0 = require('../../migrations/migration_0');
 const migration1 = require('../../migrations/migration_1');
-const { fakeGranuleFactory, fakeExecutionFactory, deleteAliases } = require('../../lib/testUtils');
+const { fakeGranuleFactory, fakeExecutionFactory } = require('../../lib/testUtils');
 
 let esClient;
 const esIndex = randomString();
@@ -20,11 +20,10 @@ let executionModel;
 let executionsTable;
 let granuleModel;
 let granulesTable;
-test.before(async () => {
+test.before(async (t) => {
   process.env.system_bucket = randomString();
   process.env.stackName = randomString();
 
-  await deleteAliases();
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   granulesTable = `${process.env.stackName}-GranulesTable`;
@@ -38,7 +37,8 @@ test.before(async () => {
   await executionModel.createTable();
 
   esClient = await Search.es();
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
+  t.context.esAlias = randomString();
+  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
 });
 
 test.after.always(async () => {
@@ -75,6 +75,8 @@ test.serial('Run the migration again, it should not run', async (t) => {
 });
 
 test.serial('migrate records from ES to DynamoDB', async (t) => {
+  const { esAlias } = t.context;
+
   // add 15 granules records
   const granules = (new Array(...new Array(15))).map(() => fakeGranuleFactory());
 
@@ -82,8 +84,8 @@ test.serial('migrate records from ES to DynamoDB', async (t) => {
   const executions = (new Array(...new Array(15))).map(() => fakeExecutionFactory());
 
   // make sure tables and es indexes are empty
-  const granuleIndex = new Search({}, 'granule', esIndex);
-  const executionIndex = new Search({}, 'execution', esIndex);
+  const granuleIndex = new Search({}, 'granule', esAlias);
+  const executionIndex = new Search({}, 'execution', esAlias);
 
   let granuleCount = await granuleIndex.count();
   t.is(granuleCount.meta.found, 0);
@@ -92,8 +94,8 @@ test.serial('migrate records from ES to DynamoDB', async (t) => {
   t.is(executionCount.meta.found, 0);
 
   // adding records to elasticsearch
-  await Promise.all(granules.map((g) => indexer.indexGranule(esClient, g, esIndex)));
-  await Promise.all(executions.map((e) => indexer.indexExecution(esClient, e, esIndex)));
+  await Promise.all(granules.map((g) => indexer.indexGranule(esClient, g, esAlias)));
+  await Promise.all(executions.map((e) => indexer.indexExecution(esClient, e, esAlias)));
 
   granuleCount = await granuleIndex.count();
   t.is(granuleCount.meta.found, 15);
@@ -108,7 +110,7 @@ test.serial('migrate records from ES to DynamoDB', async (t) => {
       executionsTable
     ],
     elasticsearch_host: getLocalEsHost(),
-    elasticsearch_index: esIndex
+    elasticsearch_index: esAlias
   });
 
   // check records exists in dynamoDB

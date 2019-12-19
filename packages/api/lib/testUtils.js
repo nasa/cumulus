@@ -3,7 +3,6 @@
 const fs = require('fs');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { sqs } = require('@cumulus/common/aws');
-const { Search } = require('../es/search');
 const { createJwtToken } = require('./token');
 
 const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
@@ -30,24 +29,6 @@ function testEndpoint(endpoint, event, testCallback) {
       fail: (e) => reject(e)
     });
   });
-}
-
-/**
- * searches for all the existings aliases in ElasticSearch and delete
- * all of them
- *
- * @returns {Promise<Array>} a list of elasticsearch responses
- */
-async function deleteAliases() {
-  const client = await Search.es();
-  const aliasResponse = await client.cat.aliases({ format: 'json' });
-  const aliases = aliasResponse.body;
-
-  // delete all aliases
-  return Promise.all(aliases.map((alias) => client.indices.deleteAlias({
-    index: alias.index,
-    name: '_all'
-  }, { ignore: [404] })));
 }
 
 function fakeFileFactory(params = {}) {
@@ -358,7 +339,6 @@ async function getSqsQueueMessageCounts(queueUrl) {
 module.exports = {
   createFakeJwtAuthToken,
   createSqsQueues,
-  deleteAliases,
   fakeAccessTokenFactory,
   fakeGranuleFactory,
   fakeGranuleFactoryV2,

@@ -102,7 +102,7 @@ resource "aws_lambda_function" "publish_reports" {
   function_name    = "${var.prefix}-publishReports"
   role             = "${aws_iam_role.publish_reports_lambda_role.arn}"
   handler          = "index.handler"
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 30
   memory_size      = 512
 

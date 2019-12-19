@@ -85,6 +85,10 @@
       "operator-docs/lifecycle-policies",
       "operator-docs/locating-access-logs",
       "operator-docs/collection-storage-best-practices"
+    ],
+    "Operations": [
+      "operator-docs/rerunning-workflow-executions",
+      "operator-docs/replay-kinesis-messages"
     ]
   }
 }

@@ -6,7 +6,6 @@ const { randomString } = require('@cumulus/common/test-utils');
 const bootstrap = require('../../lambdas/bootstrap');
 const { Search } = require('../../es/search');
 const { bootstrapDynamoDbTables } = require('../../lambdas/bootstrap');
-const { deleteAliases } = require('../../lib/testUtils');
 const mappings = require('../../models/mappings.json');
 const testMappings = require('../data/testEsMappings.json');
 const mappingsSubset = require('../data/testEsMappingsSubset.json');
@@ -16,10 +15,6 @@ let esClient;
 
 // This is for a skipped test: bootstrap dynamoDb activates pointInTime on a given table
 const tableName = randomString();
-
-test.before(async () => {
-  await deleteAliases();
-});
 
 // Skipping this test for because LocalStack version 0.8.6 does not support pointInTime
 // When this test is back in, make sure to delete the table
@@ -32,7 +27,7 @@ test.serial.skip('bootstrap dynamoDb activates pointInTime on a given table', as
   );
 });
 
-test.serial('bootstrap creates index with alias', async (t) => {
+test('bootstrap creates index with alias', async (t) => {
   const indexName = randomString();
   const testAlias = randomString();
 
@@ -49,7 +44,7 @@ test.serial('bootstrap creates index with alias', async (t) => {
   await esClient.indices.delete({ index: indexName });
 });
 
-test.serial('bootstrap adds alias to existing index', async (t) => {
+test('bootstrap adds alias to existing index', async (t) => {
   const indexName = randomString();
   const testAlias = randomString();
 
@@ -71,7 +66,7 @@ test.serial('bootstrap adds alias to existing index', async (t) => {
   await esClient.indices.delete({ index: indexName });
 });
 
-test.serial('Missing types added to index', async (t) => {
+test('Missing types added to index', async (t) => {
   const indexName = randomString();
   const testAlias = randomString();
 
@@ -98,7 +93,7 @@ test.serial('Missing types added to index', async (t) => {
   await esClient.indices.delete({ index: indexName });
 });
 
-test.serial('Missing fields added to index', async (t) => {
+test('Missing fields added to index', async (t) => {
   const indexName = randomString();
   const testAlias = randomString();
 
@@ -125,7 +120,7 @@ test.serial('Missing fields added to index', async (t) => {
   await esClient.indices.delete({ index: indexName });
 });
 
-test.serial('If an index exists with the alias name, it is deleted on bootstrap', async (t) => {
+test('If an index exists with the alias name, it is deleted on bootstrap', async (t) => {
   const indexName = randomString();
   const testAlias = randomString();
 

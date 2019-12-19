@@ -37,11 +37,12 @@ test.before(async () => {
   providerModel = new models.Provider();
   userModel = new models.User();
 
-  process.env.esIndex = esIndex;
+  const esAlias = randomString();
+  process.env.ES_INDEX = esAlias;
 
   await Promise.all([
     accessTokenModel.createTable(),
-    bootstrap.bootstrapElasticSearch('fakehost', esIndex),
+    bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias),
     providerModel.createTable(),
     userModel.createTable()
   ]);

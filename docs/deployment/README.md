@@ -335,7 +335,6 @@ $ aws lambda publish-layer-version \
 
 {
   ... more output ...
-  "LayerArn": "arn:aws:lambda:us-east-1:1234567890:layer:prefix-CMA-layer",
   "LayerVersionArn": "arn:aws:lambda:us-east-1:1234567890:layer:prefix-CMA-layer:1",
   ... more output ...
 }
