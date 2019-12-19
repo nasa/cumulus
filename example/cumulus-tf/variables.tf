@@ -241,11 +241,6 @@ variable "metrics_es_username" {
   default = null
 }
 
-variable "logs_to_metrics" {
-  type = bool
-  default = false
-}
-
 variable "additional_log_groups_to_elk" {
   type = map(string)
   default = {}

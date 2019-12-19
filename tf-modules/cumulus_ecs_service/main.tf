@@ -7,7 +7,7 @@ terraform {
 locals {
   cluster_name = reverse(split("/", var.cluster_arn))[0]
   full_name    = "${var.prefix}-${var.name}"
-  log_destination_arn = var.log_destination_arn != null && var.logs_to_metrics ? var.log_destination_arn : var.log2elasticsearch_lambda_function_arn
+  log_destination_arn = var.log_destination_arn != null ? var.log_destination_arn : var.log2elasticsearch_lambda_function_arn
 }
 
 data "aws_region" "current" {}

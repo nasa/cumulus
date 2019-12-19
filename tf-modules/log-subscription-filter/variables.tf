@@ -13,11 +13,6 @@ variable "log2elasticsearch_lambda_function_arn" {
   type = string
 }
 
-variable "logs_to_metrics" {
-  type = bool
-  default = false
-}
-
 # Ingest log groups
 variable "discover_pdrs_task" {
   type = string

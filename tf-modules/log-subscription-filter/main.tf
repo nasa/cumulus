@@ -5,5 +5,5 @@ terraform {
 }
 
 locals {
-  destination_arn =  var.log_destination_arn != null && var.logs_to_metrics ? var.log_destination_arn : var.log2elasticsearch_lambda_function_arn
+  destination_arn =  var.log_destination_arn != null ? var.log_destination_arn : var.log2elasticsearch_lambda_function_arn
 }

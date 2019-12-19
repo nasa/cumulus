@@ -92,8 +92,3 @@ variable "log_destination_arn" {
   default     = null
   description = "Shared AWS:Log:Destination value on where to send log groups in log_groups"
 }
-
-variable "logs_to_metrics" {
-  type = bool
-  default = false
-}

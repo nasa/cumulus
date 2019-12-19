@@ -5,7 +5,6 @@ module "log_subscription_filter" {
   log_destination_arn                   = var.log_destination_arn
   additional_log_groups_to_elk          = var.additional_log_groups_to_elk
   log2elasticsearch_lambda_function_arn = module.archive.log2elasticsearch_lambda_function_arn
-  logs_to_metrics                       = var.logs_to_metrics
 
   # Ingest Log Groups
   discover_pdrs_task = module.ingest.discover_pdrs_task.task_log_group
