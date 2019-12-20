@@ -85,7 +85,7 @@ module "cnm_workflow" {
   source = "https://github.com/nasa/cumulus/releases/download/{version}/terraform-aws-cumulus-workflow.zip"
 
   prefix                                = var.prefix
-  name                                  = "CNM"
+  name                                  = "CNMExampleWorkflow"
   workflow_config                       = module.cumulus.workflow_config
   system_bucket                         = var.system_bucket
   tags                                  = local.default_tags
@@ -251,7 +251,7 @@ Lastly, this entry also makes use of the `SyncGranule` task from the [`cumulus` 
 
 Once the above configuration changes have been made, redeploy your stack.
 
-Please refer to `Updating Cumulus deployment` in the [deployment documentation](deployment/README.md) if you are unfamiliar with redeployment.
+Please refer to `Update Cumulus resources` in the [deployment documentation](../deployment/upgrade.md#update-cumulus-resources) if you are unfamiliar with redeployment.
 
 ### Rule Configuration
 
@@ -312,7 +312,7 @@ The following values (denoted by \${} in the sample below) should be replaced to
   "product": {
     "files": [
       {
-        "checksum-type": "md5",
+        "checksumType": "md5",
         "name": "${TEST_DATA_FILE_NAME}",
         "checksum": "bogus_checksum_value",
         "uri": "${TEST_DATA_URI}",
@@ -373,7 +373,7 @@ Example Input Payload:
   "product": {
     "files": [
       {
-        "checksum-type": "md5",
+        "checksumType": "md5",
         "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
         "checksum": "bogus_checksum_value",
         "uri": "s3://some_bucket/cumulus-test-data/pdrs/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
@@ -399,7 +399,7 @@ Example Output Payload:
       "product": {
         "files": [
           {
-            "checksum-type": "md5",
+            "checksumType": "md5",
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
             "checksum": "bogus_checksum_value",
             "uri": "s3://some-bucket/cumulus-test-data/data/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
