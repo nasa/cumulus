@@ -4,11 +4,8 @@ const test = require('ava');
 const request = require('supertest');
 const sinon = require('sinon');
 const { URL } = require('url');
-const {
-  testUtils: {
-    randomString
-  }
-} = require('@cumulus/common');
+const { randomString } = require('@cumulus/common/test-utils');
+const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 
 const { OAuth2AuthenticationFailure } = require('../../lib/OAuth2');
 const assertions = require('../../lib/assertions');
@@ -18,34 +15,34 @@ const {
 } = require('../../lib/token');
 const {
   fakeAccessTokenFactory,
-  fakeUserFactory
+  setAuthorizedOAuthUsers
 } = require('../../lib/testUtils');
-const { AccessToken, User } = require('../../models');
+const { AccessToken } = require('../../models');
 
 let accessTokenModel;
-let userModel;
 
 process.env.EARTHDATA_CLIENT_ID = randomString();
 process.env.EARTHDATA_CLIENT_PASSWORD = randomString();
 process.env.TOKEN_REDIRECT_ENDPOINT = 'http://example.com';
 process.env.TOKEN_SECRET = randomString();
 process.env.AccessTokensTable = randomString();
-process.env.UsersTable = randomString();
 
 // import the express app after setting the env variables
 const { app } = require('../../app');
 
 test.before(async () => {
+  process.env.stackName = randomString();
+
+  process.env.system_bucket = randomString();
+  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+
   accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
-
-  userModel = new User();
-  await userModel.createTable();
 });
 
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
-  await userModel.deleteTable();
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test.serial('A request for anything other that GET /token results in a 404', async (t) => {
@@ -225,10 +222,10 @@ test.serial('GET /refresh with an invalid token results in an authorization fail
 });
 
 test.serial('GET /refresh with an non-existent token results in an authorization failure response', async (t) => {
-  const userRecord = fakeUserFactory();
-  await userModel.create(userRecord);
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
-  const accessTokenRecord = fakeAccessTokenFactory({ username: userRecord.userName });
+  const accessTokenRecord = fakeAccessTokenFactory({ username });
   const jwtToken = createJwtToken(accessTokenRecord);
 
   const response = await request(app)
@@ -261,10 +258,10 @@ test.serial('GET /refresh returns 400 if refresh token request fails', async (t)
     throw new Error('Refresh token request failed');
   });
 
-  const userRecord = fakeUserFactory();
-  await userModel.create(userRecord);
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
-  const initialTokenRecord = fakeAccessTokenFactory({ username: userRecord.userName });
+  const initialTokenRecord = fakeAccessTokenFactory({ username });
   await accessTokenModel.create(initialTokenRecord);
 
   const requestJwtToken = createJwtToken(initialTokenRecord);
@@ -280,10 +277,10 @@ test.serial('GET /refresh returns 400 if refresh token request fails', async (t)
 });
 
 test.serial('GET /refresh with a valid token returns a refreshed token', async (t) => {
-  const userRecord = fakeUserFactory();
-  await userModel.create(userRecord);
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
-  const initialTokenRecord = fakeAccessTokenFactory({ username: userRecord.userName });
+  const initialTokenRecord = fakeAccessTokenFactory({ username });
   await accessTokenModel.create(initialTokenRecord);
 
   const requestJwtToken = createJwtToken(initialTokenRecord);
@@ -347,10 +344,10 @@ test.serial('DELETE /tokenDelete with an unauthorized user returns an unauthoriz
 });
 
 test.serial('DELETE /tokenDelete with a valid token results in a successful deletion response', async (t) => {
-  const userRecord = fakeUserFactory();
-  await userModel.create(userRecord);
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
-  const accessTokenRecord = fakeAccessTokenFactory({ username: userRecord.userName });
+  const accessTokenRecord = fakeAccessTokenFactory({ username });
   await accessTokenModel.create(accessTokenRecord);
 
   const jwtToken = createJwtToken(accessTokenRecord);

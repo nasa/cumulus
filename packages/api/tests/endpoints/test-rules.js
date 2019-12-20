@@ -8,7 +8,7 @@ const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const bootstrap = require('../../lambdas/bootstrap');
 const models = require('../../models');
-const { createFakeJwtAuthToken } = require('../../lib/testUtils');
+const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
 const indexer = require('../../es/indexer');
 const assertions = require('../../lib/assertions');
@@ -16,7 +16,6 @@ const assertions = require('../../lib/assertions');
 [
   'AccessTokensTable',
   'RulesTable',
-  'UsersTable',
   'stackName',
   'system_bucket',
   'TOKEN_SECRET'
@@ -49,7 +48,6 @@ let esClient;
 let jwtAuthToken;
 let accessTokenModel;
 let ruleModel;
-let userModel;
 
 test.before(async () => {
   const esAlias = randomString();
@@ -77,19 +75,18 @@ test.before(async () => {
   const ruleRecord = await ruleModel.create(testRule);
   await indexer.indexRule(esClient, ruleRecord, esAlias);
 
-  userModel = new models.User();
-  await userModel.createTable();
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 });
 
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await ruleModel.deleteTable();
-  await userModel.deleteTable();
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
 });

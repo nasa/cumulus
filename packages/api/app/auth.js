@@ -4,9 +4,20 @@ const {
   JsonWebTokenError,
   TokenExpiredError
 } = require('jsonwebtoken');
+const { getJsonS3Object } = require('@cumulus/common/aws');
 const { ensureLaunchpadAPIAuthorized, launchpadProtectedAuth } = require('./launchpadAuth');
-const { User, AccessToken } = require('../models');
+const { AccessToken } = require('../models');
 const { verifyJwtToken } = require('../lib/token');
+
+const authorizedOAuthUsersKey = () =>
+  `${process.env.stackName}/api/authorized_oauth_users.json`;
+
+const getAuthorizedOAuthUsers = () =>
+  getJsonS3Object(process.env.system_bucket, authorizedOAuthUsersKey());
+
+const isAuthorizedOAuthUser = (username) =>
+  getAuthorizedOAuthUsers()
+    .then((authorizedUsers) => authorizedUsers.includes(username));
 
 /**
  * An express middleware that checks if an incoming express
@@ -18,6 +29,10 @@ const { verifyJwtToken } = require('../lib/token');
  * @returns {Promise<Object>} - promise of an express response object
  */
 async function ensureAuthorized(req, res, next) {
+  if (launchpadProtectedAuth()) {
+    return ensureLaunchpadAPIAuthorized(req, res, next);
+  }
+
   // Verify that the Authorization header was set in the request
   const authorizationKey = req.headers.authorization;
   if (!authorizationKey) {
@@ -35,29 +50,24 @@ async function ensureAuthorized(req, res, next) {
     return res.boom.unauthorized('Missing token');
   }
 
-  let userName;
-  let accessToken;
+  if (launchpadProtectedAuth()) {
+    return ensureLaunchpadAPIAuthorized(req, res, next);
+  }
+
   try {
-    ({ username: userName, accessToken } = verifyJwtToken(jwtToken));
+    const { username, accessToken } = verifyJwtToken(jwtToken);
 
-    const userModel = new User();
-    const access = new AccessToken();
-
-    if (!launchpadProtectedAuth()) {
-      // Only verify user if we're not launchpad protected
-      await userModel.get({ userName });
+    if (!(await isAuthorizedOAuthUser(username))) {
+      return res.boom.unauthorized('User not authorized');
     }
+
+    const access = new AccessToken();
     await access.get({ accessToken });
     // Adds additional metadata that authorized endpoints can access.
-    req.authorizedMetadata = { userName };
+    req.authorizedMetadata = { userName: username };
+
     return next();
   } catch (error) {
-    if (launchpadProtectedAuth()
-        && error instanceof JsonWebTokenError
-        && error.message === 'jwt malformed') {
-      return ensureLaunchpadAPIAuthorized(req, res, next);
-    }
-
     if (error instanceof TokenExpiredError) {
       return res.boom.unauthorized('Access token has expired');
     }
@@ -71,5 +81,7 @@ async function ensureAuthorized(req, res, next) {
 }
 
 module.exports = {
-  ensureAuthorized
+  authorizedOAuthUsersKey,
+  ensureAuthorized,
+  isAuthorizedOAuthUser
 };

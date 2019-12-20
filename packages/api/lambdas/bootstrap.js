@@ -20,7 +20,6 @@ const pLimit = require('p-limit');
 const { dynamodb } = require('@cumulus/common/aws');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
-const { User } = require('../models');
 const { Search, defaultIndexAlias } = require('../es/search');
 const mappings = require('../models/mappings.json');
 const physicalId = 'cumulus-bootstraping-daac-ops-api-deployment';
@@ -156,31 +155,6 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
 }
 
 /**
- * Add users to the cumulus user table
- *
- * @param {string} table - dynamodb table name
- * @param {Array} records - array of user records
- * @returns {Promise.<Array>} array of aws dynamodb responses
- */
-async function bootstrapUsers(table, records) {
-  if (!table) return Promise.resolve();
-
-  const user = new User({ tableName: table });
-
-  // delete all user records
-  const existingUsers = await user.scan();
-  await Promise.all(existingUsers.Items.map((u) => user.delete(u.userName)));
-  // add new ones
-  const additions = records.map((record) => user.create({
-    userName: record.username,
-    password: record.password,
-    createdAt: Date.now()
-  }));
-
-  return Promise.all(additions);
-}
-
-/**
  * Encrypt Launchpad certificate passphrase
  *
  * @param {string} passphrase - plain text launchpad passphrase
@@ -276,7 +250,6 @@ async function sendResponse(event, status, data = {}) {
  */
 function handler(event, context, cb) {
   const es = get(event, 'ResourceProperties.ElasticSearch');
-  const users = get(event, 'ResourceProperties.Users');
   const launchpad = get(event, 'ResourceProperties.Launchpad');
   const dynamos = get(event, 'ResourceProperties.DynamoDBTables', []);
   const requestType = get(event, 'RequestType');
@@ -287,7 +260,6 @@ function handler(event, context, cb) {
 
   const actions = [
     bootstrapElasticSearch(get(es, 'host')),
-    bootstrapUsers(get(users, 'table'), get(users, 'records')),
     bootstrapLaunchpad(get(launchpad, 'Passphrase')),
     bootstrapDynamoDbTables(dynamos)
   ];
@@ -295,7 +267,7 @@ function handler(event, context, cb) {
   return Promise.all(actions)
     .then((results) => {
       const data = {
-        LaunchpadPassphrase: results[2]
+        LaunchpadPassphrase: results[1]
       };
 
       // if invoked by Cloudformation ...

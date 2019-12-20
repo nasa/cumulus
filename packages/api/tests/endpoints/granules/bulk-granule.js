@@ -2,8 +2,9 @@ const request = require('supertest');
 const sinon = require('sinon');
 const test = require('ava');
 
+const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
-const { createFakeJwtAuthToken } = require('../../../lib/testUtils');
+const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../../lib/testUtils');
 
 const models = require('../../../models');
 
@@ -16,7 +17,6 @@ process.env = {
   CollectionsTable: randomString(),
   GranulesTable: randomString(),
   TOKEN_SECRET: randomString(),
-  UsersTable: randomString(),
   stackName: randomString(),
   system_bucket: randomString(),
   AsyncOperationsTable: randomString(),
@@ -32,20 +32,21 @@ process.env = {
 
 let accessTokenModel;
 let jwtAuthToken;
-let userModel;
 
 test.before(async () => {
-  userModel = new models.User();
-  await userModel.createTable();
+  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 });
 
 test.after.always(async () => {
-  await userModel.deleteTable();
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await accessTokenModel.deleteTable();
 });
 
