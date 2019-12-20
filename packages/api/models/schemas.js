@@ -41,6 +41,7 @@ module.exports.asyncOperation = {
   properties: {
     createdAt: { type: 'integer' },
     id: { type: 'string' },
+    description: { type: 'string' },
     output: {
       description: 'The result of the operation, stored as JSON',
       type: 'string'

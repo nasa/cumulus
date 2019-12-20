@@ -59,9 +59,16 @@ class AsyncOperation extends Manager {
       payload
     } = params;
 
+    let description;
+
+    if (payload.query) {
+      description = `Bulk run on ${payload.query.size} granules`;
+    } else if (payload.ids) {
+      description = `Bulk run on ${payload.ids.length} granules`;
+    }
     // Create the record in the database
     const id = uuidv4();
-    await this.create({ id, status: 'RUNNING' });
+    await this.create({ id, status: 'RUNNING', description });
 
     // Store the payload to S3
     const payloadBucket = this.systemBucket;
