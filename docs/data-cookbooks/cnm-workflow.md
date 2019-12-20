@@ -77,15 +77,15 @@ The following [workflow definition](workflows/README.md) should be added to a ne
 
 Add the following to the new terraform file in your deployment directory, updating the following:
 
-- Set the `CNMResponseStream` key in the `CnmResponse` task in the workflow JSON to match the name of the Kinesis response stream you configured in the prerequisites section
+- Set the `response-endpoint` key in the `CnmResponse` task in the workflow JSON to match the name of the Kinesis response stream you configured in the prerequisites section
 - Update the `source` key to the workflow module to match the Cumulus release associated with your deployment.
 
 ```hcl
-module "parse_pdr_workflow" {
+module "cnm_workflow" {
   source = "https://github.com/nasa/cumulus/releases/download/{version}/terraform-aws-cumulus-workflow.zip"
 
   prefix                                = var.prefix
-  name                                  = "ParsePdr"
+  name                                  = "CNM"
   workflow_config                       = module.cumulus.workflow_config
   system_bucket                         = var.system_bucket
   tags                                  = local.default_tags
@@ -102,6 +102,7 @@ state_machine_definition = <<JSON
           "cma": {
             "event.$": "$",
             "task_config": {
+              "collection": "{$.meta.collection}",
               "cumulus_message": {
                 "outputs": [
                   {
@@ -181,8 +182,9 @@ state_machine_definition = <<JSON
             "event.$": "$",
             "task_config": {
               "OriginalCNM": "{$.meta.cnm}",
-              "CNMResponseStream": "ADD YOUR RESPONSE STREAM HERE",
+              "response-endpoint": "ADD YOUR RESPONSE STREAM HERE",
               "region": "us-east-1",
+              "type": "kinesis",
               "WorkflowException": "{$.exception}",
               "cumulus_message": {
                 "outputs": [
