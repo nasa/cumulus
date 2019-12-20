@@ -291,7 +291,8 @@ async function waitForTestSf(recordIdentifier, workflowName, maxWaitTimeSecs, fi
 function kinesisEventFromSqsMessage(message) {
   let kinesisEvent;
   try {
-    const originalKinesisMessage = JSON.parse(message.Body.Records[0].Sns.Message);
+    const parsedBody = JSON.parse(message.Body);
+    const originalKinesisMessage = JSON.parse(parsedBody.Records[0].Sns.Message);
     const dataString = Buffer.from(originalKinesisMessage.kinesis.data, 'base64').toString();
     kinesisEvent = JSON.parse(dataString);
   } catch (error) {
