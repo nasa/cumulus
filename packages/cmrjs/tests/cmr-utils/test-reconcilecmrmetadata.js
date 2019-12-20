@@ -1,23 +1,10 @@
 const test = require('ava');
 const sinon = require('sinon');
 const rewire = require('rewire');
-
-
-const cmrUtils = rewire('../../cmr-utils');
-
 const { aws, BucketsConfig, log } = require('@cumulus/common');
-
 const { randomId } = require('@cumulus/common/test-utils');
 
-
-function getTestCredentials(cmrPassword) {
-  return {
-    provider: process.env.cmr_provider,
-    clientId: process.env.cmr_client_id,
-    username: process.env.cmr_username,
-    password: cmrPassword
-  };
-}
+const cmrUtils = rewire('../../cmr-utils');
 
 test.before(async (t) => {
   // Store the CMR password
@@ -204,7 +191,6 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
   const stackName = randomId('stack');
   process.env.system_bucket = bucket;
   process.env.stackName = stackName;
-  const testCreds = getTestCredentials(t.context.cmrPassword);
   const expectedMetadata = {
     filename: 'cmrmeta.cmr.xml',
     metadataObject: fakeMetadataObject,
@@ -228,7 +214,13 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
 
   t.deepEqual(paramsIntoUpdateEcho10XML, fakeUpdateCMRMetadata.firstCall.args[0]);
   t.true(fakeUpdateCMRMetadata.calledOnce);
-  t.true(fakePublishECHO10XML2CMR.calledOnceWith(expectedMetadata, testCreds, bucket, stackName));
+  t.true(fakePublishECHO10XML2CMR.calledOnce);
+  t.true(
+    fakePublishECHO10XML2CMR.calledWithMatch(
+      sinon.match(expectedMetadata),
+      sinon.match.object
+    )
+  );
 
   sinon.restore();
   restoreUpdateEcho10XMLMetadata();
@@ -267,7 +259,6 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
   const stackName = randomId('stackname');
   process.env.system_bucket = systemBucket;
   process.env.stackName = stackName;
-  const testCreds = getTestCredentials(t.context.cmrPassword);
 
   // act
   await cmrUtils.reconcileCMRMetadata({
@@ -288,9 +279,8 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
   // assert
   t.deepEqual(paramsIntoUpdateUMMG, fakeUpdateUMMGMetadata.firstCall.args[0]);
   t.true(fakeUpdateUMMGMetadata.calledOnce);
-  t.true(
-    fakePublishUMMGJSON2CMR.calledOnceWithExactly(publishObject, testCreds, systemBucket, stackName)
-  );
+  t.true(fakePublishUMMGJSON2CMR.calledOnce);
+  t.true(fakePublishUMMGJSON2CMR.calledWithMatch(sinon.match(publishObject), sinon.match.object));
 
   // cleanup
   sinon.restore();
@@ -331,25 +321,16 @@ test('publishUMMGJSON2CMR calls ingestUMMGranule with ummgMetadata via valid CMR
     metadataObject: { fake: 'metadata', GranuleUR: 'fakeGranuleID' },
     granuleId: 'fakeGranuleID'
   };
-  const creds = getTestCredentials(t.context.cmrPassword);
-  const systemBucket = process.env.system_bucket;
-  const stackName = process.env.stackName;
   const publishUMMGJSON2CMR = cmrUtils.__get__('publishUMMGJSON2CMR');
   const ingestFake = sinon.fake.resolves({ result: { 'concept-id': 'fakeID' } });
-  const cmrFake = sinon.fake.returns({ ingestUMMGranule: ingestFake });
+  const CmrFake = sinon.fake.returns({ ingestUMMGranule: ingestFake });
 
-  const restoreCMR = cmrUtils.__set__('CMR', cmrFake);
+  const restoreCMR = cmrUtils.__set__('CMR', CmrFake);
 
   // Act
-  try {
-    await publishUMMGJSON2CMR(cmrPublishObject, creds, systemBucket, stackName);
-  } catch (error) {
-    console.log(error);
-  }
-
+  await publishUMMGJSON2CMR(cmrPublishObject, new CmrFake());
 
   // Assert
-  t.true(cmrFake.calledOnceWithExactly(creds));
   t.true(ingestFake.calledOnceWithExactly(cmrPublishObject.metadataObject));
 
   // Cleanup
