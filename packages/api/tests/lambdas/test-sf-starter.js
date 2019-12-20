@@ -12,7 +12,12 @@ const { noop } = require('@cumulus/common/util');
 const sfStarter = rewire('../../lambdas/sf-starter');
 const { Manager } = require('../../models');
 
-const { incrementAndDispatch, handleEvent, handleThrottledEvent } = sfStarter;
+const {
+  incrementAndDispatch,
+  handleEvent,
+  handleThrottledEvent,
+  handleSourceMappingEvent
+} = sfStarter;
 
 class stubConsumer {
   async consume() {
@@ -319,4 +324,22 @@ test('handleThrottledEvent respects maximum executions for multiple priority lev
   const expectedMedCount = (medMessageCount - expectedMedResult);
   const expectedMessageCount = expectedLowCount + expectedMedCount;
   t.is(messages.length, expectedMessageCount);
+});
+
+test('handleSourceMappingEvent calls dispatch on messages in an EventSource event', async (t) => {
+  // EventSourceMapping input uses 'body' instead of 'Body'
+  const event = {
+    Records: [
+      {
+        body: createWorkflowMessage('test')
+      },
+      {
+        body: createWorkflowMessage('test')
+      }
+    ]
+  };
+  const output = await handleSourceMappingEvent(event);
+
+  const dispatchReturn = stubSFN().startExecution().promise();
+  output.map((o) => t.deepEqual(o, dispatchReturn));
 });

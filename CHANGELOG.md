@@ -19,6 +19,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1626**
   - Updates Cumulus to use node10/CMA 1.1.2 for all of its internal lambdas in prep for AWS node 8 EOL
 
+- **CUMULUS-1688**
+  - Updated `@cumulus/aws.receiveSQSMessages` not to replace `message.Body` with a parsed object. This behavior was undocumented and confusing as received messages appeared to contradict AWS docs that state `message.Body` is always a string.
+  - Replaced `sf_watcher` CloudWatch rule from `cloudwatch-events.tf` with an EventSourceMapping on `sqs2sf` mapped to the `start_sf` SQS queue (in `event-sources.tf`).
+  - Updated `sqs2sf` with an EventSourceMapping handler and unit test.
 
 ## [v1.16.1] - 2019-12-6
 

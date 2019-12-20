@@ -22,7 +22,7 @@ const {
  * @returns {Promise} - AWS SF Start Execution response
  */
 function dispatch(message) {
-  const input = JSON.parse(message.Body);
+  const input = JSON.parse(get(message, 'Body', get(message, 'body')));
 
   if (!input.cumulus_meta.execution_name) {
     input.cumulus_meta.execution_name = uuidv4();
@@ -123,6 +123,11 @@ function handleThrottledEvent(event, visibilityTimeout) {
   return handleEvent(event, incrementAndDispatch, visibilityTimeout);
 }
 
+async function handleSourceMappingEvent(event) {
+  const sqsRecords = event.Records;
+  return Promise.all(sqsRecords.map(dispatch));
+}
+
 /**
  * Handler for messages from normal SQS queues.
  *
@@ -145,10 +150,23 @@ async function sqs2sfThrottleHandler(event) {
   return handleThrottledEvent(event);
 }
 
+/**
+ * Handler for messages from normal SQS queues read via Lambda EventSourceMapping.
+ *
+ * @param {Object} event - SQS input message from Lambda EventSourceMapping
+ * @returns {Promise} - A promise resolving to how many executions were started
+ * @throws {Error}
+ */
+async function sqs2sfEventSourceHandler(event) {
+  return handleSourceMappingEvent(event);
+}
+
 module.exports = {
   incrementAndDispatch,
+  sqs2sfEventSourceHandler,
   sqs2sfHandler,
   sqs2sfThrottleHandler,
   handleEvent,
-  handleThrottledEvent
+  handleThrottledEvent,
+  handleSourceMappingEvent
 };
