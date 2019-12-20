@@ -228,7 +228,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     expect(await getStreamStatus(streamName)).toBe('ACTIVE');
   });
 
-  xdescribe('Workflow executes successfully', () => {
+  describe('Workflow executes successfully', () => {
     beforeAll(async () => {
       await tryCatchExit(cleanUp, async () => {
         console.log(`Dropping record onto  ${streamName}, recordIdentifier: ${recordIdentifier}`);
@@ -378,17 +378,17 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       expect(executionStatus).toEqual('FAILED');
     });
 
+    it('outputs the record', async () => {
+      const lambdaOutput = await lambdaStep.getStepOutput(failingWorkflowExecution.executionArn, 'CNMToCMA', 'failure');
+      expect(lambdaOutput.error).toEqual('cumulus_message_adapter.message_parser.MessageAdapterException');
+      expect(lambdaOutput.cause).toMatch(/.+An error occurred in the Cumulus Message Adapter: .+/);
+      expect(lambdaOutput.cause).not.toMatch(/.+process hasn't exited.+/);
+    });
+
     it('sends the error to the CnmResponse task', async () => {
       const CnmResponseInput = await lambdaStep.getStepInput(failingWorkflowExecution.executionArn, 'CnmResponse');
       expect(CnmResponseInput.exception.Error).toEqual('cumulus_message_adapter.message_parser.MessageAdapterException');
       expect(JSON.parse(CnmResponseInput.exception.Cause).errorMessage).toMatch(/An error occurred in the Cumulus Message Adapter: .+/);
-    });
-
-    it('outputs the record', async () => {
-      const lambdaOutput = await lambdaStep.getStepOutput(failingWorkflowExecution.executionArn, 'CnmResponse', 'failure');
-      expect(lambdaOutput.error).toEqual('cumulus_message_adapter.message_parser.MessageAdapterException');
-      expect(lambdaOutput.cause).toMatch(/.+An error occurred in the Cumulus Message Adapter: .+/);
-      expect(lambdaOutput.cause).not.toMatch(/.+process hasn't exited.+/);
     });
 
     it('writes a failure message to the response stream', async () => {
