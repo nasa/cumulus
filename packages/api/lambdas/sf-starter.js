@@ -22,7 +22,7 @@ const {
  * @returns {Promise} - AWS SF Start Execution response
  */
 function dispatch(message) {
-  const input = JSON.parse(get(message, 'Body', get(message, 'body')));
+  const input = JSON.parse(get(message, 'Body', get(message, 'body', '{}')));
 
   if (!input.cumulus_meta.execution_name) {
     input.cumulus_meta.execution_name = uuidv4();
