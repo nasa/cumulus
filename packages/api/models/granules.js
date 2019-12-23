@@ -8,7 +8,6 @@ const path = require('path');
 const commonAws = require('@cumulus/common/aws');
 const { CMR } = require('@cumulus/cmr-client');
 const cmrjs = require('@cumulus/cmrjs');
-const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const launchpad = require('@cumulus/common/launchpad');
 const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage, getMessageExecutionArn } = require('@cumulus/common/message');
@@ -138,9 +137,12 @@ class Granule extends Manager {
       const token = await launchpad.getLaunchpadToken(config);
       params.token = token;
     } else {
-      const password = await DefaultProvider.decrypt(process.env.cmr_password);
+      const secret = await commonAws.secretsManager().getSecretValue({
+        SecretId: process.env.cmr_password_secret_name
+      }).promise();
+
       params.username = process.env.cmr_username;
-      params.password = password;
+      params.password = secret.SecretString;
     }
 
     const cmr = new CMR(params);
