@@ -146,6 +146,13 @@ test.before(async (t) => {
   await accessTokenModel.createTable();
 
   accessToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+
+  // Store the CMR password
+  process.env.cmr_password_secret_name = randomString();
+  await aws.secretsManager().createSecret({
+    Name: process.env.cmr_password_secret_name,
+    SecretString: randomString()
+  }).promise();
 });
 
 test.beforeEach(async (t) => {
@@ -177,6 +184,10 @@ test.after.always(async () => {
   await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await aws.secretsManager().deleteSecret({
+    SecretId: process.env.cmr_password_secret_name,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
 });
 
 test.serial('default returns list of granules', async (t) => {
@@ -433,11 +444,6 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
 
 test.serial('remove a granule from CMR', async (t) => {
   sinon.stub(
-    DefaultProvider,
-    'decrypt'
-  ).callsFake(() => Promise.resolve('fakePassword'));
-
-  sinon.stub(
     CMR.prototype,
     'deleteGranule'
   ).callsFake(() => Promise.resolve());
@@ -463,7 +469,6 @@ test.serial('remove a granule from CMR', async (t) => {
   t.is(updatedGranule.cmrLink, undefined);
 
   CMR.prototype.deleteGranule.restore();
-  DefaultProvider.decrypt.restore();
   cmrjs.getMetadata.restore();
 });
 
