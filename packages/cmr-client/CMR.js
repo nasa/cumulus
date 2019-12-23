@@ -1,5 +1,6 @@
 'use strict';
 
+const get = require('lodash.get');
 const got = require('got');
 const publicIp = require('public-ip');
 const Logger = require('@cumulus/logger');
@@ -57,7 +58,9 @@ async function updateToken(cmrProvider, clientId, username, password) {
       }
     });
   } catch (err) {
-    if (err.response.body.errors) throw new Error(`CMR Error: ${err.response.body.errors[0]}`);
+    if (get(err, 'response.body.errors')) {
+      throw new Error(`CMR Error: ${err.response.body.errors[0]}`);
+    }
     throw err;
   }
 

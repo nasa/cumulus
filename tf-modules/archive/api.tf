@@ -10,6 +10,18 @@ resource "aws_cloudwatch_log_group" "api" {
   tags              = local.default_tags
 }
 
+resource "aws_secretsmanager_secret" "api_cmr_password" {
+  name_prefix = "${var.prefix}-api-cmr-password"
+  description = "CMR password for the Cumulus API's ${var.prefix} deployment"
+  tags        = local.default_tags
+}
+
+resource "aws_secretsmanager_secret_version" "api_cmr_password" {
+  count         = length(var.cmr_password) == 0 ? 0 : 1
+  secret_id     = aws_secretsmanager_secret.api_cmr_password.id
+  secret_string = var.cmr_password
+}
+
 resource "aws_lambda_function" "api" {
   function_name    = "${var.prefix}-ApiEndpoints"
   filename         = "${path.module}/../../packages/api/dist/app/lambda.zip"
@@ -51,7 +63,7 @@ resource "aws_lambda_function" "api" {
       backgroundQueueName          = var.background_queue_name
       cmr_client_id                = var.cmr_client_id
       cmr_oauth_provider           = var.cmr_oauth_provider
-      cmr_password                 = jsondecode(data.aws_lambda_invocation.custom_bootstrap.result).Data.CmrPassword
+      cmr_password_secret_name     = length(var.cmr_password) == 0 ? null : aws_secretsmanager_secret.api_cmr_password.name
       cmr_provider                 = var.cmr_provider
       cmr_username                 = var.cmr_username
       distributionApiId            = var.distribution_api_id
@@ -76,7 +88,7 @@ resource "aws_lambda_function" "api" {
       METRICS_ES_PASS              = var.metrics_es_password
     }
   }
-  memory_size = 756
+  memory_size = 1024
   tags        = merge(local.default_tags, { Project = var.prefix })
 
   vpc_config {

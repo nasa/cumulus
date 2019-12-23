@@ -1,3 +1,27 @@
+resource "aws_secretsmanager_secret" "message_template_cmr_password" {
+  name_prefix = "${var.prefix}-message-template-cmr-password"
+  description = "CMR password for the Cumulus message template in the ${var.prefix} deployment"
+  tags        = local.default_tags
+}
+
+resource "aws_secretsmanager_secret_version" "message_template_cmr_password" {
+  count         = length(var.cmr_password) == 0 ? 0 : 1
+  secret_id     = aws_secretsmanager_secret.message_template_cmr_password.id
+  secret_string = var.cmr_password
+}
+
+data "aws_iam_policy_document" "lambda_processing_role_get_secrets" {
+  statement {
+    actions   = ["secretsmanager:GetSecretValue"]
+    resources = [aws_secretsmanager_secret.message_template_cmr_password.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "lambda_processing_role_get_secrets" {
+  role   = split("/", var.lambda_processing_role_arn)[1]
+  policy = data.aws_iam_policy_document.lambda_processing_role_get_secrets.json
+}
+
 locals {
   default_queues = {
     triggerLambdaFailure      = aws_sqs_queue.trigger_lambda_failure.id
@@ -30,14 +54,14 @@ locals {
       stack          = var.prefix
       buckets        = var.buckets
       cmr = {
-        oauthProvider  = var.cmr_oauth_provider
-        username       = var.cmr_username
-        provider       = var.cmr_provider
-        clientId       = var.cmr_client_id
-        password       = var.cmr_password
-        cmrEnvironment = var.cmr_environment
-        cmrLimit       = var.cmr_limit
-        cmrPageSize    = var.cmr_page_size
+        oauthProvider      = var.cmr_oauth_provider
+        username           = var.cmr_username
+        provider           = var.cmr_provider
+        clientId           = var.cmr_client_id
+        passwordSecretName = length(var.cmr_password) == 0 ? null : aws_secretsmanager_secret.message_template_cmr_password.name
+        cmrEnvironment     = var.cmr_environment
+        cmrLimit           = var.cmr_limit
+        cmrPageSize        = var.cmr_page_size
       }
       launchpad = {
         api         = var.launchpad_api

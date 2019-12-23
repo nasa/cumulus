@@ -20,6 +20,15 @@ const result = {
   'concept-id': 'testingtesting'
 };
 
+test.before(async (t) => {
+  // Store the CMR password
+  t.context.cmrPasswordSecretName = randomString();
+  await aws.secretsManager().createSecret({
+    Name: t.context.cmrPasswordSecretName,
+    SecretString: randomString()
+  }).promise();
+});
+
 test.beforeEach(async (t) => {
   process.env.CMR_ENVIRONMENT = 'UAT';
   t.context.bucket = randomString();
@@ -28,6 +37,8 @@ test.beforeEach(async (t) => {
   const rawPayload = await readFile(payloadPath, 'utf8');
   const payload = JSON.parse(rawPayload);
   t.context.payload = payload;
+
+  t.context.payload.config.cmr.passwordSecretName = t.context.cmrPasswordSecretName;
 
   //update cmr file path
   const match = /^s3\:\/\/(.*)\/(.*)$/;
@@ -39,6 +50,13 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always((t) => aws.recursivelyDeleteS3Bucket(t.context.bucket));
+
+test.after.always(async (t) => {
+  await aws.secretsManager().deleteSecret({
+    SecretId: t.context.cmrPasswordSecretName,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
+});
 
 test.serial('postToCMR throws error if CMR correctly identifies the xml as invalid', async (t) => {
   sinon.stub(cmrClient.CMR.prototype, 'getToken');
