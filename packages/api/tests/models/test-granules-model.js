@@ -96,6 +96,13 @@ test.before(async () => {
     stopDate: new Date(Date.UTC(2019, 6, 28, 1))
   };
   stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').callsFake(() => fakeExecution);
+
+  // Store the CMR password
+  process.env.cmr_password_secret_name = randomString();
+  await aws.secretsManager().createSecret({
+    Name: process.env.cmr_password_secret_name,
+    SecretString: randomString()
+  }).promise();
 });
 
 test.beforeEach((t) => {
@@ -104,6 +111,10 @@ test.beforeEach((t) => {
 });
 
 test.after.always(async () => {
+  await aws.secretsManager().deleteSecret({
+    SecretId: process.env.cmr_password_secret_name,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
   await new Granule().deleteTable();
   stepFunctionsStub.restore();
   sinon.reset();

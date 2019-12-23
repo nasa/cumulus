@@ -42,9 +42,6 @@ data "aws_lambda_invocation" "custom_bootstrap" {
     "ElasticSearch": {
       "host": "${var.elasticsearch_hostname}"
     },
-    "Cmr": {
-      "Password": "${var.cmr_password}"
-    },
     "Users": {
       "table": "${var.dynamo_tables.users.name}",
       "records": ${jsonencode([for x in var.users : { username : x, password : "OAuth" }])}
