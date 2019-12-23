@@ -68,7 +68,7 @@ test.serial('GET /asyncOperations returns a list of operations', async (t) => {
     status: 'RUNNING',
     taskArn: randomString(),
     description: 'Some async run',
-    operationType: 'Bulk Granule',
+    operationType: 'Bulk Granules',
     output: JSON.stringify({ age: 59 })
   };
   const asyncOperation2 = {
@@ -76,7 +76,7 @@ test.serial('GET /asyncOperations returns a list of operations', async (t) => {
     status: 'RUNNING',
     taskArn: randomString(),
     description: 'Some async run',
-    operationType: 'ES Reingest',
+    operationType: 'ES Index',
     output: JSON.stringify({ age: 37 })
   };
 
@@ -133,7 +133,7 @@ test.serial('GET /asyncOperations/{:id} returns the async operation if it does e
     status: 'RUNNING',
     taskArn: randomString(),
     description: 'Some async run',
-    operationType: 'ES Reingest',
+    operationType: 'ES Index',
     output: JSON.stringify({ age: 37 })
   };
 
