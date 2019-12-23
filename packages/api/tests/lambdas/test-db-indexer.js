@@ -18,16 +18,22 @@ const {
   fakeFileFactory
 } = require('../../lib/testUtils');
 
-const { handler } = dbIndexer;
+const {
+  getTableName,
+  isTableNameSupportedForIndex,
+  handler
+} = dbIndexer;
 
 let esClient;
 const esIndex = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
-process.env.CollectionsTable = `${process.env.stackName}-CollectionsTable`;
-process.env.GranulesTable = `${process.env.stackName}-GranulesTable`;
-process.env.FilesTable = `${process.env.stackName}-FilesTable`;
-process.env.ExecutionsTable = `${process.env.stackName}-ExecutionsTable`;
+process.env.CollectionsTable = randomString();
+process.env.ExecutionsTable = randomString();
+process.env.FilesTable = randomString();
+process.env.GranulesTable = randomString();
+process.env.PdrsTable = randomString();
+process.env.ProvidersTable = randomString();
 process.env.RulesTable = randomString();
 
 const buildDynamoStreamRecord = ({
@@ -147,6 +153,18 @@ test.after.always(async () => {
 
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
+});
+
+test('getTableName() returns undefined for invalid input', (t) => {
+  t.is(
+    getTableName('bad-input'),
+    undefined
+  );
+});
+
+test('isTableNameSupportedForIndex() returns false for unsupported table', (t) => {
+  t.false(isTableNameSupportedForIndex('fake-table-name'));
+  t.false(isTableNameSupportedForIndex(process.env.FilesTable));
 });
 
 test.serial('create, update and delete a collection in dynamodb and es', async (t) => {
