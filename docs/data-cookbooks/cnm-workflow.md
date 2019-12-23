@@ -182,7 +182,7 @@ state_machine_definition = <<JSON
             "event.$": "$",
             "task_config": {
               "OriginalCNM": "{$.meta.cnm}",
-              "response-endpoint": "ADD YOUR RESPONSE STREAM HERE",
+              "response-endpoint": "ADD YOUR RESPONSE STREAM NAME HERE",
               "region": "us-east-1",
               "type": "kinesis",
               "WorkflowException": "{$.exception}",
