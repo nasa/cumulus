@@ -70,7 +70,12 @@ test.serial('Request to granules bulk endpoint starts an async-operation with th
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
     .expect(200);
-  const { lambdaName, cluster, description, payload } = asyncOperationStartStub.args[0][0];
+  const {
+    lambdaName,
+    cluster,
+    description,
+    payload
+  } = asyncOperationStartStub.args[0][0];
   t.is(asyncOperationStartStub.calledOnce, true);
   t.is(lambdaName, process.env.BulkOperationLambda);
   t.is(cluster, process.env.EcsCluster);
@@ -114,7 +119,12 @@ test.serial('Request to granules bulk endpoint starts an async-operation with th
     .send(body)
     .expect(200);
 
-  const { lambdaName, cluster, description, payload } = asyncOperationStartStub.args[0][0];
+  const {
+    lambdaName,
+    cluster,
+    description,
+    payload
+  } = asyncOperationStartStub.args[0][0];
   t.is(asyncOperationStartStub.calledOnce, true);
   t.is(lambdaName, process.env.BulkOperationLambda);
   t.is(cluster, process.env.EcsCluster);
