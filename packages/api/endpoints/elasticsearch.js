@@ -213,8 +213,8 @@ async function indexFromDatabase(req, res) {
       asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
       cluster: process.env.EcsCluster,
       lambdaName: process.env.IndexFromDatabaseLambda,
-      description: 'Elasticsearch Reingest',
-      operationType: 'ES Reingest',
+      description: 'Elasticsearch Reindex',
+      operationType: 'ES Reindex',
       payload: {
         indexName,
         tables: {
