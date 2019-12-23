@@ -12,6 +12,16 @@ const unwrap = AttributeValue.unwrap;
 
 const acceptedTables = ['Collection', 'Provider', 'Rule', 'Granule', 'Pdr', 'Execution'];
 
+const acceptedTableNames = [
+  process.env.CollectionsTable,
+  process.env.ExecutionsTable,
+  process.env.GranulesTable,
+  // process.env.FilesTable,
+  process.env.PdrsTable,
+  process.env.ProvidersTable,
+  process.env.RulesTable
+];
+
 /**
  * Delete files associated with a given granule if the record belongs
  * to the granules table
@@ -51,6 +61,27 @@ async function performFilesAddition(table, data, oldData) {
   }
 }
 
+const indexTypesByTableName = {
+  CollectionsTable: 'collection',
+  ExecutionsTable: 'execution',
+  GranulesTable: 'granule',
+  // FilesTable: 'file',
+  PdrsTable: 'pdr',
+  ProvidersTable: 'provider',
+  RulesTable: 'rule'
+};
+const indexFunctionsByTableName = {
+  CollectionsTable: 'indexCollection',
+  ExecutionsTable: 'indexExecution',
+  GranulesTable: 'indexGranule',
+  // FilesTable: 'indexFile',
+  PdrsTable: 'indexPdr',
+  ProvidersTable: 'indexProvider',
+  RulesTable: 'indexRule'
+};
+const mapTableNameToIndexType = (tableName) => indexTypesByTableName[tableName];
+const mapTableNameToIndexFunction = (tableName) => indexFunctionsByTableName[tableName];
+
 /**
  * return an object with the supported DynamoDB table names as key
  * and the elasticsearch indexer function as value
@@ -58,12 +89,11 @@ async function performFilesAddition(table, data, oldData) {
  * @returns {Object} a dynamoDB to indexer map
  */
 function getIndexers() {
-  const stack = process.env.stackName;
-
   //determine whether the record should be indexed
   const indexers = {};
-  acceptedTables.forEach((a) => {
-    indexers[`${stack}-${a}sTable`] = indexer[`index${a}`];
+  acceptedTableNames.forEach((tableName) => {
+    const indexFunction = mapTableNameToIndexFunction(tableName);
+    indexers[tableName] = indexer[indexFunction];
   });
 
   return indexers;
@@ -75,14 +105,11 @@ function getIndexers() {
  * in the incoming message is not supported
  *
  * @param {string} sourceArn - the source arn included in the incoming message
- * @param {Object} indexers - A hash of table names and their indexers
  * @returns {string} name of the DynamoDB table
  */
-function getTablename(sourceArn, indexers) {
+function getTablename(sourceArn) {
   const tableName = sourceArn.match(/table\/(.[^\/]*)/);
-
-  const tableIndex = Object.keys(indexers).indexOf(tableName[1]);
-  if (!tableName || (tableName && tableIndex === -1)) {
+  if (!tableName || (!acceptedTableNames.includes(tableName))) {
     return undefined;
   }
   return tableName[1];
@@ -150,7 +177,7 @@ async function indexRecord(esClient, record) {
 
   // get list of indexers
   const indexers = getIndexers();
-  const table = getTablename(record.eventSourceARN, indexers);
+  const table = getTablename(record.eventSourceARN);
 
   if (!table) return {};
 
