@@ -59,7 +59,7 @@ describe('The AsyncOperation task runner', () => {
         cluster,
         lambdaName: 'does-not-exist',
         description: 'Some description',
-        operationType: 'Some Type',
+        operationType: 'ES Index',
         payload: {}
       }));
 
@@ -106,7 +106,7 @@ describe('The AsyncOperation task runner', () => {
         id: asyncOperationId,
         taskArn: randomString(),
         description: 'Some description',
-        operationType: 'Some Type',
+        operationType: 'ES Index',
         status: 'RUNNING'
       });
 
@@ -183,7 +183,7 @@ describe('The AsyncOperation task runner', () => {
         id: asyncOperationId,
         taskArn: randomString(),
         description: 'Some description',
-        operationType: 'Some Type',
+        operationType: 'ES Index',
         status: 'RUNNING'
       });
 
@@ -261,7 +261,7 @@ describe('The AsyncOperation task runner', () => {
         id: asyncOperationId,
         taskArn: randomString(),
         description: 'Some description',
-        operationType: 'Some Type',
+        operationType: 'ES Index',
         status: 'RUNNING'
       });
 
@@ -339,7 +339,7 @@ describe('The AsyncOperation task runner', () => {
         id: asyncOperationId,
         taskArn: randomString(),
         description: 'Some description',
-        operationType: 'Some Type',
+        operationType: 'ES Index',
         status: 'RUNNING'
       });
 

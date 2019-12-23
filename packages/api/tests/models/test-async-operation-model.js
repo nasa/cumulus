@@ -110,7 +110,7 @@ test.serial('The AsyncOperation.start() method uploads the payload to S3', async
     cluster: randomString(),
     lambdaName: randomString(),
     description: randomString(),
-    operationType: randomString(),
+    operationType: 'ES Index',
     payload
   });
 
@@ -139,7 +139,7 @@ test.serial('The AsyncOperation.start() method starts an ECS task with the corre
     cluster,
     lambdaName,
     description: randomString(),
-    operationType: randomString(),
+    operationType: 'ES Index',
     payload
   });
 
@@ -169,7 +169,7 @@ test('The AsyncAdapter.start() method sets the output if it is unable to create 
     cluster: randomString(),
     lambdaName: randomString(),
     description: randomString(),
-    operationType: randomString(),
+    operationType: 'ES Index',
     payload: {}
   });
 
@@ -189,7 +189,7 @@ test.serial('The AsyncOperation.start() method writes a new record to DynamoDB',
     cluster: randomString(),
     lambdaName: randomString(),
     description: randomString(),
-    operationType: randomString(),
+    operationType: 'ES Index',
     payload: {}
   });
 
@@ -208,7 +208,7 @@ test.serial('The AsyncOperation.start() method returns an item id', async (t) =>
     cluster: randomString(),
     lambdaName: randomString(),
     description: randomString(),
-    operationType: randomString(),
+    operationType: 'ES Index',
     payload: {}
   });
 
@@ -226,7 +226,7 @@ test.serial('The AsyncOperation.start() method sets the record status to "RUNNIN
     cluster: randomString(),
     lambdaName: randomString(),
     description: randomString(),
-    operationType: randomString(),
+    operationType: 'ES Index',
     payload: {}
   });
 
@@ -245,7 +245,7 @@ test.serial('The AsyncOperation.start() method returns the newly-generated recor
     cluster: randomString(),
     lambdaName: randomString(),
     description: randomString(),
-    operationType: randomString(),
+    operationType: 'ES Index',
     payload: {}
   });
 
