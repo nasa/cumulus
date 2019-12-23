@@ -5,22 +5,34 @@ const pMap = require('p-map');
 const { AttributeValue } = require('dynamodb-data-types');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const log = require('@cumulus/common/log');
-const { FileClass } = require('../models');
+const FileClass = require('../models/files');
 const indexer = require('../es/indexer');
 const { Search } = require('../es/search');
 const unwrap = AttributeValue.unwrap;
 
-const acceptedTables = ['Collection', 'Provider', 'Rule', 'Granule', 'Pdr', 'Execution'];
+const mapTableNameToIndexType = (tableName) => {
+  const indexTypesByTableName = {
+    [process.env.CollectionsTable]: 'collection',
+    [process.env.ExecutionsTable]: 'execution',
+    [process.env.GranulesTable]: 'granule',
+    [process.env.PdrsTable]: 'pdr',
+    [process.env.ProvidersTable]: 'provider',
+    [process.env.RulesTable]: 'rule'
+  };
+  return indexTypesByTableName[tableName];
+};
 
-const acceptedTableNames = [
-  process.env.CollectionsTable,
-  process.env.ExecutionsTable,
-  process.env.GranulesTable,
-  // process.env.FilesTable,
-  process.env.PdrsTable,
-  process.env.ProvidersTable,
-  process.env.RulesTable
-];
+const mapTableNameToIndexFunction = (tableName) => {
+  const indexFunctionsByTableName = {
+    [process.env.CollectionsTable]: 'indexCollection',
+    [process.env.ExecutionsTable]: 'indexExecution',
+    [process.env.GranulesTable]: 'indexGranule',
+    [process.env.PdrsTable]: 'indexPdr',
+    [process.env.ProvidersTable]: 'indexProvider',
+    [process.env.RulesTable]: 'indexRule'
+  };
+  return indexFunctionsByTableName[tableName];
+};
 
 /**
  * Delete files associated with a given granule if the record belongs
@@ -32,7 +44,7 @@ const acceptedTableNames = [
  */
 async function performFilesDelete(table, record) {
   const granuleTable = `${process.env.stackName}-GranulesTable`;
-  //make sure this is the granules table
+  // make sure this is the granules table
   if (table === granuleTable) {
     const model = new FileClass();
     await model.deleteFilesOfGranule(record);
@@ -61,44 +73,6 @@ async function performFilesAddition(table, data, oldData) {
   }
 }
 
-const indexTypesByTableName = {
-  CollectionsTable: 'collection',
-  ExecutionsTable: 'execution',
-  GranulesTable: 'granule',
-  // FilesTable: 'file',
-  PdrsTable: 'pdr',
-  ProvidersTable: 'provider',
-  RulesTable: 'rule'
-};
-const indexFunctionsByTableName = {
-  CollectionsTable: 'indexCollection',
-  ExecutionsTable: 'indexExecution',
-  GranulesTable: 'indexGranule',
-  // FilesTable: 'indexFile',
-  PdrsTable: 'indexPdr',
-  ProvidersTable: 'indexProvider',
-  RulesTable: 'indexRule'
-};
-const mapTableNameToIndexType = (tableName) => indexTypesByTableName[tableName];
-const mapTableNameToIndexFunction = (tableName) => indexFunctionsByTableName[tableName];
-
-/**
- * return an object with the supported DynamoDB table names as key
- * and the elasticsearch indexer function as value
- *
- * @returns {Object} a dynamoDB to indexer map
- */
-function getIndexers() {
-  //determine whether the record should be indexed
-  const indexers = {};
-  acceptedTableNames.forEach((tableName) => {
-    const indexFunction = mapTableNameToIndexFunction(tableName);
-    indexers[tableName] = indexer[indexFunction];
-  });
-
-  return indexers;
-}
-
 /**
  * return the full of name of the dynamoDB table associated with incoming
  * record. The function returns empty response if the table name included
@@ -107,9 +81,17 @@ function getIndexers() {
  * @param {string} sourceArn - the source arn included in the incoming message
  * @returns {string} name of the DynamoDB table
  */
-function getTablename(sourceArn) {
+function getTableName(sourceArn) {
   const tableName = sourceArn.match(/table\/(.[^\/]*)/);
-  if (!tableName || (!acceptedTableNames.includes(tableName))) {
+  const acceptedTableNames = [
+    process.env.CollectionsTable,
+    process.env.ExecutionsTable,
+    process.env.GranulesTable,
+    process.env.PdrsTable,
+    process.env.ProvidersTable,
+    process.env.RulesTable
+  ];
+  if (!tableName || (!acceptedTableNames.includes(tableName[1]))) {
     return undefined;
   }
   return tableName[1];
@@ -118,26 +100,25 @@ function getTablename(sourceArn) {
 /**
  * Perform the record indexing
  *
- * @param {Object} indexers - A hash of table names and their indexers
- * @param {string} table - the DynamoDB table name
+ * @param {string} indexFnName - Function name to index the record to Elasticsearch
  * @param {Object} esClient - ElasticSearch connection client
  * @param {Object} data - the record to be indexed
  * @returns {Promise<Object>} elasticsearch response
  */
-function performIndex(indexers, table, esClient, data) {
-  return indexers[table](esClient, data, process.env.ES_INDEX);
+function performIndex(indexFnName, esClient, data) {
+  return indexer[indexFnName](esClient, data, process.env.ES_INDEX);
 }
 
 /**
  * Perform the delete operation for the given record
  *
  * @param {Object} esClient - ElasticSearch connection client
- * @param {integer} tableIndex - the index number of table in the acceptable tables array
+ * @param {string} type - type of record to index
  * @param {Object} fields - a hash of table keys and hashes
  * @param {Object} body - the body of the record
  * @returns {Promise<Object>} elasticsearch response
  */
-function performDelete(esClient, tableIndex, fields, body) {
+function performDelete(esClient, type, fields, body) {
   let id;
   let parent;
   const idKeys = Object.keys(fields);
@@ -147,7 +128,6 @@ function performDelete(esClient, tableIndex, fields, body) {
     id = fields[idKeys[0]];
   }
 
-  const type = acceptedTables[tableIndex].toLowerCase();
   if (type === 'granule') {
     parent = body.collectionId;
   }
@@ -175,11 +155,11 @@ async function indexRecord(esClient, record) {
   // only process if the source is dynamoDB
   if (record.eventSource !== 'aws:dynamodb') return {};
 
-  // get list of indexers
-  const indexers = getIndexers();
-  const table = getTablename(record.eventSourceARN);
+  const tableName = getTableName(record.eventSourceARN);
+  if (!tableName) return {};
 
-  if (!table) return {};
+  const indexFnName = mapTableNameToIndexFunction(tableName);
+  const indexType = mapTableNameToIndexType(tableName);
 
   // get the hash and range (if any) and use them as id key for ES
   const fields = unwrap(get(record, 'dynamodb.Keys'));
@@ -191,15 +171,14 @@ async function indexRecord(esClient, record) {
 
   if (record.eventName === 'REMOVE') {
     // delete from files associated with a granule
-    await performFilesDelete(table, oldBody);
-
-    return performDelete(esClient, Object.keys(indexers).indexOf(table), fields, oldBody);
+    await performFilesDelete(tableName, oldBody);
+    return performDelete(esClient, indexType, fields, oldBody);
   }
 
   // add files associated with a granule
-  await performFilesAddition(table, data, oldData);
+  await performFilesAddition(tableName, data, oldData);
 
-  return performIndex(indexers, table, esClient, data);
+  return performIndex(indexFnName, esClient, data);
 }
 
 /**
