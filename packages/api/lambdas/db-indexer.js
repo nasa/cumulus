@@ -10,6 +10,13 @@ const indexer = require('../es/indexer');
 const { Search } = require('../es/search');
 const unwrap = AttributeValue.unwrap;
 
+/**
+ * Get the index type to use for indexing data from the given
+ * DynamoDB table.
+ *
+ * @param {string} tableName - DynamoDB table name
+ * @returns {string} Index type to use for indexing data
+ */
 const mapTableNameToIndexType = (tableName) => {
   const indexTypesByTableName = {
     [process.env.CollectionsTable]: 'collection',
@@ -22,6 +29,13 @@ const mapTableNameToIndexType = (tableName) => {
   return indexTypesByTableName[tableName];
 };
 
+/**
+ * Get the function name to use for indexing data from the given
+ * DynamoDB table.
+ *
+ * @param {string} tableName - DynamoDB table name
+ * @returns {string} Function name to use for indexing data
+ */
 const mapTableNameToIndexFunction = (tableName) => {
   const indexFunctionsByTableName = {
     [process.env.CollectionsTable]: 'indexCollection',
@@ -35,14 +49,31 @@ const mapTableNameToIndexFunction = (tableName) => {
 };
 
 /**
+ * Determine if data from DynamoDB is supported for indexing to
+ * Elasticsearch.
+ *
+ * @param {string} tableName - DynamoDB table name
+ * @returns {boolean} True if table is supported for indexing
+ */
+const isTableNameSupportedForIndex = (tableName) =>
+  [
+    process.env.CollectionsTable,
+    process.env.ExecutionsTable,
+    process.env.GranulesTable,
+    process.env.PdrsTable,
+    process.env.ProvidersTable,
+    process.env.RulesTable
+  ].includes(tableName);
+
+/**
  * Delete files associated with a given granule.
  *
  * @param {Object} record - the dynamoDB record
  * @returns {Promise<undefined>} undefined
  */
 async function performFilesDelete(record) {
-  const model = new FileClass();
-  await model.deleteFilesOfGranule(record);
+  const fileClass = new FileClass();
+  await fileClass.deleteFilesOfGranule(record);
 }
 
 /**
@@ -53,34 +84,25 @@ async function performFilesDelete(record) {
  * @returns {Promise<undefined>} undefined
  */
 async function performFilesAddition(data, oldData) {
-  const model = new FileClass();
+  const fileClass = new FileClass();
 
   // create files
-  await model.createFilesFromGranule(data);
+  await fileClass.createFilesFromGranule(data);
 
   // remove files that are no longer in the granule
-  await model.deleteFilesAfterCompare(data, oldData);
+  await fileClass.deleteFilesAfterCompare(data, oldData);
 }
 
 /**
- * return the full of name of the dynamoDB table associated with incoming
- * record. The function returns empty response if the table name included
- * in the incoming message is not supported
+ * Return the full of name of the DynamoDB table associated with incoming
+ * record.
  *
  * @param {string} sourceArn - the source arn included in the incoming message
- * @returns {string} name of the DynamoDB table
+ * @returns {undefined|string} name of the DynamoDB table
  */
 function getTableName(sourceArn) {
   const tableName = sourceArn.match(/table\/(.[^\/]*)/);
-  const acceptedTableNames = [
-    process.env.CollectionsTable,
-    process.env.ExecutionsTable,
-    process.env.GranulesTable,
-    process.env.PdrsTable,
-    process.env.ProvidersTable,
-    process.env.RulesTable
-  ];
-  if (!tableName || (!acceptedTableNames.includes(tableName[1]))) {
+  if (!tableName) {
     return undefined;
   }
   return tableName[1];
@@ -147,6 +169,9 @@ async function indexRecord(esClient, record) {
   const tableName = getTableName(record.eventSourceARN);
   if (!tableName) return {};
 
+  // Check if data from table name is suported for indexing.
+  if (!isTableNameSupportedForIndex(tableName)) return {};
+
   const indexFnName = mapTableNameToIndexFunction(tableName);
   const indexType = mapTableNameToIndexType(tableName);
 
@@ -193,4 +218,8 @@ async function indexRecords(records) {
 const handler = async ({ Records }) =>
   (Records ? indexRecords(Records) : 'No records found in event');
 
-module.exports = { handler };
+module.exports = {
+  getTableName,
+  isTableNameSupportedForIndex,
+  handler
+};
