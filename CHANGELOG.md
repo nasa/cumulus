@@ -19,6 +19,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `config.cmr.passwordSecretName` value, rather than `config.cmr.password`.
     The CMR password will be fetched from that secret in AWS Secrets Manager.
 
+**Please note**:
+
+- It should no longer be necessary for the `prefix` variable of the data-persistence and cumulus modules to match. See notes below on CUMULUS-1664 for further detail.
+
 ### Added
 
 - **CUMULUS-630**
@@ -32,6 +36,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1626**
   - Updates Cumulus to use node10/CMA 1.1.2 for all of its internal lambdas in prep for AWS node 8 EOL
 
+### Fixed
+
+- **CUMULUS-1664**
+  - Updated `dbIndexer` Lambda to remove hardcoded references to DynamoDB table names.
 
 ## [v1.16.1] - 2019-12-6
 
