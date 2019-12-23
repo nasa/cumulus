@@ -58,6 +58,8 @@ describe('The AsyncOperation task runner', () => {
         asyncOperationTaskDefinition,
         cluster,
         lambdaName: 'does-not-exist',
+        description: 'Some description',
+        operationType: 'Some Type',
         payload: {}
       }));
 
@@ -103,6 +105,8 @@ describe('The AsyncOperation task runner', () => {
       await asyncOperationModel.create({
         id: asyncOperationId,
         taskArn: randomString(),
+        description: 'Some description',
+        operationType: 'Some Type',
         status: 'RUNNING'
       });
 
@@ -178,6 +182,8 @@ describe('The AsyncOperation task runner', () => {
       await asyncOperationModel.create({
         id: asyncOperationId,
         taskArn: randomString(),
+        description: 'Some description',
+        operationType: 'Some Type',
         status: 'RUNNING'
       });
 
@@ -254,6 +260,8 @@ describe('The AsyncOperation task runner', () => {
       await asyncOperationModel.create({
         id: asyncOperationId,
         taskArn: randomString(),
+        description: 'Some description',
+        operationType: 'Some Type',
         status: 'RUNNING'
       });
 
@@ -330,6 +338,8 @@ describe('The AsyncOperation task runner', () => {
       await asyncOperationModel.create({
         id: asyncOperationId,
         taskArn: randomString(),
+        description: 'Some description',
+        operationType: 'Some Type',
         status: 'RUNNING'
       });
 

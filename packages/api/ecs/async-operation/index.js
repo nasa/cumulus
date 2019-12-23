@@ -171,17 +171,15 @@ function updateAsyncOperation(status, output) {
     Key: { id: { S: process.env.asyncOperationId } },
     ExpressionAttributeNames: {
       '#S': 'status',
-      '#D': 'description',
       '#O': 'output',
       '#U': 'updatedAt'
     },
     ExpressionAttributeValues: {
       ':s': { S: status },
-      ':d': 'Bulk Run for x granules',
       ':o': { S: actualOutput ? JSON.stringify(actualOutput) : 'none' },
       ':u': { N: (Number(Date.now())).toString() }
     },
-    UpdateExpression: 'SET #S = :s, #D = :d, #O = :o, #U = :u'
+    UpdateExpression: 'SET #S = :s, #O = :o, #U = :u'
   }).promise();
 }
 

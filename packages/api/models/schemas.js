@@ -36,12 +36,13 @@ module.exports.asyncOperation = {
   title: 'AsyncOperation Object',
   description: 'Cumulus API AsyncOperation Table schema',
   type: 'object',
-  required: ['createdAt', 'id', 'status', 'updatedAt'],
+  required: ['createdAt', 'id', 'status', 'updatedAt', 'description', 'operationType'],
   additionalProperties: false,
   properties: {
     createdAt: { type: 'integer' },
     id: { type: 'string' },
     description: { type: 'string' },
+    operationType: { type: 'string' },
     output: {
       description: 'The result of the operation, stored as JSON',
       type: 'string'

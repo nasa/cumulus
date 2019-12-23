@@ -38,7 +38,7 @@ async function getAsyncOperation(req, res) {
     throw err;
   }
 
-  return res.send(pick(asyncOperation, ['id', 'status', 'taskArn', 'description', 'output']));
+  return res.send(pick(asyncOperation, ['id', 'status', 'taskArn', 'description', 'operationType', 'output']));
 }
 
 router.get('/', list);
