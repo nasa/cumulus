@@ -255,6 +255,20 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       it('outputs the expectedTranslatePayload object', () => {
         expect(lambdaOutput.payload).toEqual(expectedTranslatePayload);
       });
+
+      it('maps the CNM object correctly', () => {
+        delete lambdaOutput.meta.cnm.receivedTime;
+
+        expect(lambdaOutput.meta.cnm).toEqual({
+          deliveryTime: record.deliveryTime,
+          ingestTime: record.ingestTime,
+          product: record.product,
+          identifier: recordIdentifier,
+          bucket: record.bucket,
+          provider: record.provider,
+          collection: record.collection
+        });
+      });
     });
 
     describe('the execution record', () => {
