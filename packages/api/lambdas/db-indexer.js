@@ -35,42 +35,31 @@ const mapTableNameToIndexFunction = (tableName) => {
 };
 
 /**
- * Delete files associated with a given granule if the record belongs
- * to the granules table
+ * Delete files associated with a given granule.
  *
- * @param {string} table - dynamoDB table name
  * @param {Object} record - the dynamoDB record
  * @returns {Promise<undefined>} undefined
  */
-async function performFilesDelete(table, record) {
-  const granuleTable = `${process.env.stackName}-GranulesTable`;
-  // make sure this is the granules table
-  if (table === granuleTable) {
-    const model = new FileClass();
-    await model.deleteFilesOfGranule(record);
-  }
+async function performFilesDelete(record) {
+  const model = new FileClass();
+  await model.deleteFilesOfGranule(record);
 }
 
 /**
- * Add files of a given granule if the record is coming from
- * a granule table
+ * Add files of a given granule.
  *
- * @param {string} table - dynamoDB table name
  * @param {Object} data - the new dynamoDB record
  * @param {Object} oldData - the old dynamoDB record
  * @returns {Promise<undefined>} undefined
  */
-async function performFilesAddition(table, data, oldData) {
-  const granuleTable = `${process.env.stackName}-GranulesTable`;
-  if (table === granuleTable) {
-    const model = new FileClass();
+async function performFilesAddition(data, oldData) {
+  const model = new FileClass();
 
-    // create files
-    await model.createFilesFromGranule(data);
+  // create files
+  await model.createFilesFromGranule(data);
 
-    // remove files that are no longer in the granule
-    await model.deleteFilesAfterCompare(data, oldData);
-  }
+  // remove files that are no longer in the granule
+  await model.deleteFilesAfterCompare(data, oldData);
 }
 
 /**
@@ -171,13 +160,12 @@ async function indexRecord(esClient, record) {
 
   if (record.eventName === 'REMOVE') {
     // delete from files associated with a granule
-    await performFilesDelete(tableName, oldBody);
+    if (indexType === 'granule') await performFilesDelete(oldBody);
     return performDelete(esClient, indexType, fields, oldBody);
   }
 
   // add files associated with a granule
-  await performFilesAddition(tableName, data, oldData);
-
+  if (indexType === 'granule') await performFilesAddition(data, oldData);
   return performIndex(indexFnName, esClient, data);
 }
 
