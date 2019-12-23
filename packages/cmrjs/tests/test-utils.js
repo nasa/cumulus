@@ -9,27 +9,26 @@ const {
   ummVersionToMetadataFormat
 } = require('../utils');
 
-let stub;
-
-test.afterEach(() => {
+test.afterEach((t) => {
+  const { stub } = t.context;
   if (stub !== undefined) stub.restore();
 });
 
-test('getIp returns public IP when available', async (t) => {
+test.serial('getIp returns public IP when available', async (t) => {
   const fakeIp = '192.0.2.3';
-  stub = sinon.stub(publicIp, 'v4').resolves(fakeIp);
+  t.context.stub = sinon.stub(publicIp, 'v4').resolves(fakeIp);
   t.is(await getIp(), fakeIp);
 });
 
-test('getIp returns fallback IP when no public IP is available', async (t) => {
+test.serial('getIp returns fallback IP when no public IP is available', async (t) => {
   const fallbackIp = '10.0.0.0';
-  stub = sinon.stub(publicIp, 'v4').rejects(new Error('Query timed out'));
+  t.context.stub = sinon.stub(publicIp, 'v4').rejects(new Error('Query timed out'));
   t.is(await getIp(), fallbackIp);
 });
 
-test('getIp throws an error when the error is unexpected', async (t) => {
+test.serial('getIp throws an error when the error is unexpected', async (t) => {
   const errorMessage = 'Server is experiencing an identity crisis';
-  stub = sinon.stub(publicIp, 'v4').rejects(new Error(errorMessage));
+  t.context.stub = sinon.stub(publicIp, 'v4').rejects(new Error(errorMessage));
   await getIp().catch((error) => {
     t.is(error.message, errorMessage);
   });
