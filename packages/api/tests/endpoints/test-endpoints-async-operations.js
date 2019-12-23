@@ -92,18 +92,18 @@ test.serial('GET /asyncOperations returns a list of operations', async (t) => {
   t.is(response.status, 200);
 
   response.body.Items.forEach((item) => {
-    if (item.id == asyncOperation1.id) {
-      t.is (item.description, asyncOperation1.description);
-      t.is (item.operationType, asyncOperation1.operationType);
-      t.is (item.status, asyncOperation1.status);
-      t.is (item.output, asyncOperation1.output);
-      t.is (item.taskArn, asyncOperation1.taskArn);
-    } else if (item.id == asyncOperation2.id) {
-      t.is (item.description, asyncOperation2.description);
-      t.is (item.operationType, asyncOperation2.operationType);
-      t.is (item.status, asyncOperation2.status);
-      t.is (item.output, asyncOperation2.output);
-      t.is (item.taskArn, asyncOperation2.taskArn);
+    if (item.id === asyncOperation1.id) {
+      t.is(item.description, asyncOperation1.description);
+      t.is(item.operationType, asyncOperation1.operationType);
+      t.is(item.status, asyncOperation1.status);
+      t.is(item.output, asyncOperation1.output);
+      t.is(item.taskArn, asyncOperation1.taskArn);
+    } else if (item.id === asyncOperation2.id) {
+      t.is(item.description, asyncOperation2.description);
+      t.is(item.operationType, asyncOperation2.operationType);
+      t.is(item.status, asyncOperation2.status);
+      t.is(item.output, asyncOperation2.output);
+      t.is(item.taskArn, asyncOperation2.taskArn);
     }
   });
 });

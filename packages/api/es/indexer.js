@@ -154,20 +154,6 @@ function indexExecution(esClient, payload, index = defaultIndexAlias, type = 'ex
 }
 
 /**
- * Indexes a step function message to Elastic Search. The message must
- * comply with the cumulus message protocol
- *
- * @param  {Object} esClient - ElasticSearch Connection object
- * @param  {Object} payload  - Cumulus Step Function message
- * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
- * @param  {string} type     - Elasticsearch type (default: asyncOperation)
- * @returns {Promise} elasticsearch update response
- */
-function indexOperation(esClient, payload, index = defaultIndexAlias, type = 'asyncOperation') {
-  return genericRecordUpdate(esClient, payload.arn, payload, index, type);
-}
-
-/**
  * Indexes the collection on ElasticSearch
  *
  * @param  {Object} esClient - ElasticSearch Connection object
@@ -373,7 +359,6 @@ module.exports = {
   indexGranule,
   indexPdr,
   indexExecution,
-  indexOperation,
   deleteRecord,
   reingest
 };

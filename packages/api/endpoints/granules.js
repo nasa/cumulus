@@ -219,7 +219,7 @@ async function bulk(req, res) {
   } else if (payload.ids) {
     description = `Bulk run ${payload.workflowName} on ${payload.ids.length} granules`;
   } else {
-    descritpion = `Bulk run on ${payload.workflowName}`;
+    description = `Bulk run on ${payload.workflowName}`;
   }
 
   try {
