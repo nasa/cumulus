@@ -244,7 +244,7 @@ You can also manipulate the data sent to downstream tasks using `task_config` fo
 
 The `CnmResponse` Lambda generates a CNM response message and puts it on the `response-endpoint` Kinesis stream.
 
-You can read more about the expected schema a `CnmResponse` record on the wiki page for [Cloud Notification Mechanism](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism#CloudNotificationMechanism-ResponseMessageFields).
+You can read more about the expected schema of a `CnmResponse` record on the wiki page for [Cloud Notification Mechanism](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism#CloudNotificationMechanism-ResponseMessageFields).
 
 ##### Additional Tasks
 
