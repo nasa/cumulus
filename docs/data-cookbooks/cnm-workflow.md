@@ -227,6 +227,11 @@ To execute this workflow, you're required to include several Lambda resources in
 
 **Please note:** To utilize these tasks you need to ensure you have a compatible CMA layer. See the [deployment instructions](../deployment/README.md#deploy-cumulus-message-adapter-layer) for more details on how to deploy a CMA layer.
 
+For NASA Bitbucket users, the source code for these tasks can be found in these repositories:
+
+- `CNMToCMA`: <https://git.earthdata.nasa.gov/projects/POCUMULUS/repos/cnmtogranule/browse>
+- `CnmResponse`: <https://git.earthdata.nasa.gov/projects/POCUMULUS/repos/cnmresponsetask/browse>
+
 Below is a description of each of these tasks:
 
 #### CNMToCMA
@@ -235,13 +240,9 @@ Below is a description of each of these tasks:
 
 You can also manipulate the data sent to downstream tasks using `task_config` for various states in your workflow resource configuration. Read more about how to configure data on the [Workflow Input & Output](https://nasa.github.io/cumulus/docs/workflows/input_output) page.
 
-Documentation for `CNMToCMA` Lambda package is provided in the [source repository](https://git.earthdata.nasa.gov/projects/POCUMULUS/repos/cnmtogranule/browse).
-
 ##### CnmResponse
 
 The `CnmResponse` Lambda generates a CNM response message and puts it on the `response-endpoint` Kinesis stream.
-
-Documentation for `CnmResponse` Lambda package is provided in the [source repository](https://git.earthdata.nasa.gov/projects/POCUMULUS/repos/cnmresponsetask/browse).
 
 You can read more about the expected schema a `CnmResponse` record on the wiki page for [Cloud Notification Mechanism](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism#CloudNotificationMechanism-ResponseMessageFields).
 
