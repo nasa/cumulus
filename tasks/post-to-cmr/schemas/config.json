@@ -24,23 +24,49 @@
     "cmr": {
       "type": "object",
       "description": "credentials needed to post metadata to CMR",
-      "required": ["oauthProvider", "provider", "clientId", "username", "password"],
+      "required": [
+        "oauthProvider",
+        "provider",
+        "clientId",
+        "username",
+        "passwordSecretName"
+      ],
       "properties": {
-        "oauthProvider": { "type": "string"},
-        "provider": { "type": "string" },
-        "clientId": { "type": "string" },
-        "username": { "type": "string" },
-        "password": { "type": "string" }
+        "oauthProvider": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "clientId": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "passwordSecretName": {
+          "type": "string"
+        }
       }
     },
     "launchpad": {
       "type": "object",
       "description": "credentials needed to get launchpad token",
-      "required": ["api", "passphrase", "certificate"],
+      "required": [
+        "api",
+        "passphrase",
+        "certificate"
+      ],
       "properties": {
-        "api": { "type": "string" },
-        "passphrase": { "type": "string" },
-        "certificate": { "type": "string" }
+        "api": {
+          "type": "string"
+        },
+        "passphrase": {
+          "type": "string"
+        },
+        "certificate": {
+          "type": "string"
+        }
       }
     },
     "skipMetaCheck": {

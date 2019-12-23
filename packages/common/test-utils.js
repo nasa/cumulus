@@ -135,6 +135,7 @@ const localStackPorts = {
   redshift: 4577,
   route53: 4580,
   s3: 4572,
+  secretsmanager: 4584,
   ses: 4579,
   sns: 4575,
   sqs: 4576,
