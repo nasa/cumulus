@@ -9,10 +9,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-630**
-  - Added support for replaying Kinesis records on a stream into the Cumulus Kinesis workflow triggering mechanism, either all the records, or some time slice delimited by start and end timestamps.
-  - Added `/replays` endpoint for triggering replays to the operator API.
-  - Added `Replay Kinesis Messages` doc to Operator Docs.
+  - Added support for replaying Kinesis records on a stream into the Cumulus Kinesis workflow triggering mechanism: either all the records, or some time slice delimited by start and end timestamps.
+  - Added `/replays` endpoint to the operator API for triggering replays.
+  - Added `Replay Kinesis Messages` documentation to Operator Docs.
   - Added `manualConsumer` lambda function to consume a Kinesis stream. Used by the replay AsyncOperation.
+
+### Changed
+
+- **CUMULUS-1626**
+  - Updates Cumulus to use node10/CMA 1.1.2 for all of its internal lambdas in prep for AWS node 8 EOL
+
 
 ## [v1.16.1] - 2019-12-6
 
@@ -38,9 +44,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `getTaskExitedEventOutput()` returns the output message for a `TaskStateExited` event in a workflow execution history
 
 ### Changed
-
-- **CUMULUS-1626**
-  - Updates Cumulus to use node10/CMA 1.1.2 for all of it's internal lambdas in prep for AWS node 8 EOL
 
 - **CUMULUS-1578**
   - Updates SAML launchpad configuration to authorize via configured userGroup.
