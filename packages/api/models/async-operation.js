@@ -63,7 +63,12 @@ class AsyncOperation extends Manager {
 
     // Create the record in the database
     const id = uuidv4();
-    await this.create({ id, status: 'RUNNING', description, operationType });
+    await this.create({
+      id,
+      status: 'RUNNING',
+      description,
+      operationType
+    });
 
     // Store the payload to S3
     const payloadBucket = this.systemBucket;
