@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- **CUMULUS-1498**
+  - The `@cumulus/cmrjs.publish2CMR` function expects that the value of its
+    `creds.password` parameter is a plaintext password.
+  - Rather than using an encrypted password from the `cmr_password` environment
+    variable, the `@cumulus/cmrjs.updateCMRMetadata` function now looks for an
+    environment variable called `cmr_password_secret_name` and fetches the CMR
+    password from that secret in AWS Secrets Manager.
+  - The `@cumulus/post-to-cmr` task now expects a
+    `config.cmr.passwordSecretName` value, rather than `config.cmr.password`.
+    The CMR password will be fetched from that secret in AWS Secrets Manager.
+
 ### Added
 
 - **CUMULUS-630**
