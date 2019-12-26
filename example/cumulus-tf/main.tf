@@ -38,6 +38,7 @@ module "cumulus" {
   source = "../../tf-modules/cumulus"
 
   cumulus_message_adapter_lambda_layer_arn = var.cumulus_message_adapter_lambda_layer_arn
+  enable_task_versioning                   = var.enable_task_versioning
 
   prefix = var.prefix
   region = var.region

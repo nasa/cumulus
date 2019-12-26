@@ -19,8 +19,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     tasks. That module contains an input variable called
     `enable_task_versioning`, which defaults to `false`. If that variable is set
     to `true`, then Lambda versioning will be enabled on the Cumulus Core tasks.
-    In addition, Lambda function aliases will be created for each of those
-    Lambda function versions.
+    Workflows will be pointed at a specific Lambda version.
+  - A new `tf-module`, `cumulus_lambda_function` has been released.
+    This is a thin wrapper around Terraform Lambda functions to support versioning.
+    Outputs include the function name and task ARN, which is the qualified ARN
+    for versioned Lambdas, or the base ARN otherwise. We suggest that you use this
+    module for your own Lambdas if you would like them to be versioned and referenced
+    appropriately in your Cumulus workflows.
+  - The required version of the Terraform AWS provider has been updated to v0.XX.XX, <!-- TODO: update when PR#11211 is merged and released -->
+    which includes a fix to the way Lambda versions are published on config updates.
 
 ### Changed
 
@@ -51,8 +58,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Removed
 
 - **CUMULUS-1559**
-  - `logToSharedDestination` has been migrated to the Terraform deployment as `log_api_gateway_to_cloudwatch` and will ONLY apply to egress lambdas.
-  Due to the differences in the Terraform deployment model, we cannot support a global log subscription toggle for a configurable subset of lambdas.
+  - `logToSharedDestination` has been migrated to the Terraform deployment as `log_api_gateway_to_cloudwatch` and will ONLY apply to egress Lambdas.
+  Due to the differences in the Terraform deployment model, we cannot support a global log subscription toggle for a configurable subset of Lambdas.
   However, setting up your own log forwarding for a Lambda with Terraform is fairly simple, as you will only need to add SubscriptionFilters to your Terraform configuration, one per log group.
   See [the Terraform documentation](https://www.terraform.io/docs/providers/aws/r/cloudwatch_log_subscription_filter.html) for details on how to do this.
   An empty FilterPattern ("") will capture all logs in a group.
