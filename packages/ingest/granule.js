@@ -45,6 +45,9 @@ class Discover {
     this.collection = event.config.collection;
     this.provider = event.config.provider;
     this.useList = event.config.useList;
+    this.ignoreFilesConfigForDiscovery = get(event.config,
+      'ignoreFilesConfigForDiscovery', get(event.config.collection,
+        'ignoreFilesConfigForDiscovery', false));
     this.event = event;
 
     this.port = this.provider.port;
@@ -73,23 +76,22 @@ class Discover {
   }
 
   /**
-   * Receives a file object and adds granule-specific properties to it
+   * Receives a file object and adds granule-specific properties to it.
    *
    * @param {Object} file - the file object
-   * @returns {Object} Updated file with granuleId, bucket,
-   *                   file type, and url_path information
+   * @returns {Object} Updated file with granuleId added, and with bucket, file
+   *    type, and url_path added, if the file has an associated configuration
    */
   setGranuleInfo(file) {
-    const granuleIdMatch = file.name.match(this.collection.granuleIdExtraction);
-    const granuleId = granuleIdMatch[1];
-
+    const [, granuleId] = file.name.match(this.collection.granuleIdExtraction);
     const fileTypeConfig = this.fileTypeConfigForFile(file);
 
-    // Return the file with granuleId, bucket, and url_path added
+    // Return the file with granuleId added, and with bucket, url_path, and
+    // type added if there is a config for the file.
     return Object.assign(
       cloneDeep(file),
-      {
-        granuleId,
+      { granuleId },
+      !fileTypeConfig ? {} : {
         bucket: this.buckets[fileTypeConfig.bucket].name,
         url_path: fileTypeConfig.url_path || this.collection.url_path || '',
         type: fileTypeConfig.type || ''
@@ -106,20 +108,34 @@ class Discover {
    * @private
    */
   fileTypeConfigForFile(file) {
-    return this.collection.files.find((fileTypeConfig) => file.name.match(fileTypeConfig.regex));
+    return this.collection.files.find((fileTypeConfig) =>
+      file.name.match(fileTypeConfig.regex));
   }
 
   /**
-   * Discover new granules
+   * Returns a possibly empty array of discovered granules.  Each granule will
+   * contain a possibly empty array of files, influenced by the `boolean`
+   * property `ignoreFilesConfigForDiscovery`.  By default, this property is
+   * `false`, meaning that this collection's `files` configuration is _not_
+   * ignored, and a granule's `files` array will contain _only_ files with names
+   * that match one of the regular expressions in the collection's `files`
+   * configuration.
    *
-   * @returns {Array<Object>} a list of discovered granules
+   * By setting `ignoreFilesConfigForDiscovery` to `true`, the collection's
+   * `files` configuration is ignored, such that no files are filtered out based
+   * on the regular expressions in the collection's `files` configuration.
+   * Instead, _all_ files for a granule are included in the granule's `files`
+   * array.
+   *
+   * The property may be set in the task configuration, in which case the
+   * specified value overrides the value set on all collections.
+   *
+   * @returns {Array<Object>} an array of discovered granules
    */
   async discover() {
     const discoveredFiles = (await this.list())
       // Make sure the file matches the granuleIdExtraction
       .filter((file) => file.name.match(this.collection.granuleIdExtraction))
-      // Make sure there is a config for this type of file
-      .filter((file) => this.fileTypeConfigForFile(file))
       // Add additional granule-related properties to the file
       .map((file) => this.setGranuleInfo(file));
 
@@ -132,8 +148,12 @@ class Discover {
       granuleId,
       dataType,
       version,
-      // Remove the granuleId property from each file
-      files: files.map((file) => omit(file, 'granuleId'))
+      // Unless ignoring the files config, retain only files matching a config
+      files: files
+        .filter((file) =>
+          this.ignoreFilesConfigForDiscovery
+          || this.fileTypeConfigForFile(file))
+        .map((file) => omit(file, 'granuleId'))
     }));
   }
 }

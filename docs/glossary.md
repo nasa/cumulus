@@ -32,7 +32,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
 ### AWS Access Keys
 
-  Access credentials that give you access to AWS to act as a IAM user programatically or from the command line.
+  Access credentials that give you access to AWS to act as a IAM user programmatically or from the command line.
   For more information, see the [AWS IAM Documentation](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html).
 
 ### Bucket

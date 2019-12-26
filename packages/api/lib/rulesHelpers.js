@@ -7,14 +7,15 @@ const Rule = require('../models/rules');
  *
  * @param {Object} rule - rule to queue the message for
  * @param {Object} eventObject - message passed to stream/queue
+ * @param {Object} eventSource - source information of the event
  * @returns {Promise} promise resolved when the message is queued
  */
-async function queueMessageForRule(rule, eventObject) {
+async function queueMessageForRule(rule, eventObject, eventSource) {
   const item = {
     workflow: rule.workflow,
     provider: rule.provider,
     collection: rule.collection,
-    meta: rule.meta,
+    meta: eventSource ? { ...rule.meta, eventSource } : rule.meta,
     payload: eventObject
   };
 

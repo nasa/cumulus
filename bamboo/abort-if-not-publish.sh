@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-if [[ ! $PUBLISH_FLAG == true ]]; then
-  >&2 echo "******Skipping publish step as PUBLISH_FLAG is not set"
+if [[ $BRANCH != master && $PUBLISH_FLAG != true ]]; then
+  >&2 echo "******PUBLISH_FLAG or master branch not detected, skipping doc publish"
   exit 0
 fi

@@ -24,7 +24,10 @@ process.env = {
   EcsCluster: randomString(),
   BulkOperationLambda: randomString(),
   invoke: randomString(),
-  ES_HOST: randomString()
+  ES_HOST: randomString(),
+  METRICS_ES_HOST: randomString(),
+  METRICS_ES_USER: randomString(),
+  METRICS_ES_PASS: randomString()
 };
 
 let accessTokenModel;
@@ -78,7 +81,10 @@ test.serial('Request to granules bulk endpoint starts an async-operation with th
     granulesTable: process.env.GranulesTable,
     system_bucket: process.env.system_bucket,
     stackName: process.env.stackName,
-    invoke: process.env.invoke
+    invoke: process.env.invoke,
+    esHost: process.env.METRICS_ES_HOST,
+    esUser: process.env.METRICS_ES_USER,
+    esPassword: process.env.METRICS_ES_PASS
   });
 
   asyncOperationStartStub.restore();
@@ -119,7 +125,122 @@ test.serial('Request to granules bulk endpoint starts an async-operation with th
     system_bucket: process.env.system_bucket,
     stackName: process.env.stackName,
     invoke: process.env.invoke,
+    esHost: process.env.METRICS_ES_HOST,
+    esUser: process.env.METRICS_ES_USER,
+    esPassword: process.env.METRICS_ES_PASS
   });
+
+  asyncOperationStartStub.restore();
+});
+
+test.serial('Request to granules bulk endpoint returns a 400 when a query is provided with no index', async (t) => {
+  const asyncOperationId = randomString();
+  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').returns(
+    new Promise((resolve) => resolve({ id: asyncOperationId }))
+  );
+  const expectedQueueName = 'backgroundProcessing';
+  const expectedWorkflowName = 'HelloWorldWorkflow';
+  const expectedQuery = { query: 'fake-query' };
+
+  const body = {
+    queueName: expectedQueueName,
+    workflowName: expectedWorkflowName,
+    query: expectedQuery
+  };
+
+  await request(app)
+    .post('/granules/bulk')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /Index is required if query is sent/);
+
+  t.is(asyncOperationStartStub.notCalled, true);
+
+  asyncOperationStartStub.restore();
+});
+
+test.serial('Request to granules bulk endpoint returns a 400 when no IDs or Query is provided', async (t) => {
+  const asyncOperationId = randomString();
+  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').returns(
+    new Promise((resolve) => resolve({ id: asyncOperationId }))
+  );
+  const expectedQueueName = 'backgroundProcessing';
+  const expectedWorkflowName = 'HelloWorldWorkflow';
+  const expectedIndex = 'my-index';
+
+  const body = {
+    queueName: expectedQueueName,
+    workflowName: expectedWorkflowName,
+    index: expectedIndex
+  };
+
+  await request(app)
+    .post('/granules/bulk')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /One of ids or query is required/);
+
+  t.is(asyncOperationStartStub.notCalled, true);
+
+  asyncOperationStartStub.restore();
+});
+
+test.serial('Request to granules bulk endpoint returns a 400 when no workflowName is provided', async (t) => {
+  const asyncOperationId = randomString();
+  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').returns(
+    new Promise((resolve) => resolve({ id: asyncOperationId }))
+  );
+  const expectedQueueName = 'backgroundProcessing';
+  const expectedIndex = 'my-index';
+  const expectedQuery = { query: 'fake-query' };
+
+  const body = {
+    queueName: expectedQueueName,
+    index: expectedIndex,
+    query: expectedQuery
+  };
+
+  await request(app)
+    .post('/granules/bulk')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /workflowName is required/);
+
+  t.is(asyncOperationStartStub.notCalled, true);
+
+  asyncOperationStartStub.restore();
+});
+
+test.serial('Request to granules bulk endpoint returns a 400 when the Metrics ELK stack is not configured', async (t) => {
+  const asyncOperationId = randomString();
+  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').returns(
+    new Promise((resolve) => resolve({ id: asyncOperationId }))
+  );
+  const expectedQueueName = 'backgroundProcessing';
+  const expectedWorkflowName = 'HelloWorldWorkflow';
+  const expectedIndex = 'my-index';
+  const expectedQuery = { query: 'fake-query' };
+
+  const body = {
+    queueName: expectedQueueName,
+    workflowName: expectedWorkflowName,
+    index: expectedIndex,
+    query: expectedQuery
+  };
+
+  process.env.METRICS_ES_USER = undefined;
+
+  await request(app)
+    .post('/granules/bulk')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /ELK Metrics stack not configured/);
+
+  t.is(asyncOperationStartStub.notCalled, true);
 
   asyncOperationStartStub.restore();
 });

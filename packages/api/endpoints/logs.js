@@ -20,9 +20,11 @@ function convertLogLevelForQuery(query) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const search = new Search({
-    queryStringParameters: convertLogLevelForQuery(req.query)
-  }, 'logs');
+  const search = new Search(
+    { queryStringParameters: convertLogLevelForQuery(req.query) },
+    'logs',
+    process.env.ES_INDEX
+  );
 
   const result = await search.query();
   return res.send(result);
@@ -38,12 +40,16 @@ async function list(req, res) {
 async function get(req, res) {
   const executionName = req.params.executionName;
 
-  const search = new Search({
-    queryStringParameters: {
-      limit: 50,
-      'executions.keyword': executionName
-    }
-  }, 'logs');
+  const search = new Search(
+    {
+      queryStringParameters: {
+        limit: 50,
+        'executions.keyword': executionName
+      }
+    },
+    'logs',
+    process.env.ES_INDEX
+  );
   const result = await search.query();
   return res.send(result);
 }

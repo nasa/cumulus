@@ -11,16 +11,21 @@ const path = require('path');
 const cloneDeep = require('lodash.clonedeep');
 
 /**
- * Adds updated url_path to a granule files object
+ * Adds updated url_path to a granule's files object.
  *
- * @param {Array<Object>} files - array of granule files
- * @param {string} testId - Test ID to insert into url_path per-granule
- * @param {string} collectionUrlPath - collection
- * @returns {Array<Object>} the files with updated url_path values
+ * @param  {Array<Object>} files - array of granule files
+ * @param  {string} testId - Test ID to insert into url_path per-granule
+ * @param  {string} collectionUrlPath - collection
+ * @returns {Array<Object>} deep copy of the specified files where each file's
+ *    `url_path` property (which, if undefined, defaults to the specified
+ *    collection URL path) is appended with a slash, the specified test ID, and
+ *    a trailing slash
  */
 const addUrlPathToGranuleFiles = (files, testId, collectionUrlPath) =>
   files.map((file) => {
-    const updatedUrlPath = file.url_path === undefined ? collectionUrlPath : `${file.url_path}/`;
+    const updatedUrlPath = file.url_path === undefined ?
+      collectionUrlPath :
+      `${file.url_path}/`;
 
     return {
       ...file,
@@ -29,29 +34,31 @@ const addUrlPathToGranuleFiles = (files, testId, collectionUrlPath) =>
   });
 
 /**
- * Add test-unique filepath to granule file filepath/filenames
+ * Add test-unique filepath to granule file filepath/filenames.
  *
  * @param  {Array<Object>} granules - Array of granules with files to be updated
  * @param  {string} filePath - Filepath to add
- * @returns {Array<Object>} Updates granules array
+ * @returns {Array<Object>} deep copy of the specified granules with the
+ *    specified file path inserted immediately preceding the last part of the
+ *    path of each file of each granule
  */
-function addUniqueGranuleFilePathToGranuleFiles(granules, filePath) {
-  const updatedGranules = granules.map((originalGranule) => {
+const addUniqueGranuleFilePathToGranuleFiles = (granules, filePath) =>
+  granules.map((originalGranule) => {
     const granule = cloneDeep(originalGranule);
-    granule.files = granule.files.map((originalFile) => {
-      const file = cloneDeep(originalFile);
+
+    granule.files.forEach((file) => {
       const { Bucket, Key } = parseS3Uri(file.filename);
-      const { base, dir } = path.parse(Key);
+      const { dir, base } = path.parse(Key);
       const updateKey = `${dir}/${filePath}/${base}`;
-      const filename = buildS3Uri(Bucket, updateKey);
-      file.filename = filename;
-      file.filepath = updateKey;
-      return file;
+
+      Object.assign(file, {
+        filename: buildS3Uri(Bucket, updateKey),
+        filepath: updateKey
+      });
     });
+
     return granule;
   });
-  return updatedGranules;
-}
 
 /**
  * Create test granule files by copying current granule files and renaming

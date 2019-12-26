@@ -26,7 +26,7 @@ variable "cmr_username" {
 }
 
 variable "cumulus_message_adapter_lambda_layer_arn" {
-  description = "ARN of the Lambda layer for the Cumulus Message Adapter"
+  description = "Layer version ARN of the Lambda layer for the Cumulus Message Adapter"
   type    = string
   default = null
 }
@@ -77,7 +77,8 @@ variable "prefix" {
 }
 
 variable "sts_credentials_lambda_function_arn" {
-  type = string
+  type    = string
+  default = null
 }
 
 variable "system_bucket" {
@@ -148,6 +149,18 @@ variable "custom_queues" {
   description = "Map of SQS queue identifiers to queue URLs"
   type    = list(object({ id = string, url = string }))
   default = []
+}
+
+variable "deploy_distribution_s3_credentials_endpoint" {
+  description = "Whether or not to include the S3 credentials endpoint in the Thin Egress App"
+  type = bool
+  default = true
+}
+
+variable "distribution_api_gateway_stage" {
+  description = "The distribution API Gateway stage to create"
+  type    = string
+  default = "DEV"
 }
 
 variable "distribution_url" {
@@ -371,11 +384,6 @@ variable "private_archive_api_gateway" {
   default = true
 }
 
-variable "region" {
-  description = "The AWS region to deploy to"
-  type    = string
-}
-
 variable "saml_entity_id" {
   description = "The endpoint EntityID from the Launchpad Integration Request"
   type    = string
@@ -409,7 +417,7 @@ variable "throttled_queues" {
 variable "urs_url" {
   description = "The URL of the Earthdata login (URS) site"
   type        = string
-  default     = "https://urs.earthdata.nasa.gov/"
+  default     = "https://uat.urs.earthdata.nasa.gov/"
 }
 
 variable "vpc_id" {

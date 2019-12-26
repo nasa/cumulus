@@ -135,7 +135,6 @@ variable "distribution_url" {
   default = null
 }
 
-
 variable "ems_datasource" {
   type        = string
   description = "the data source of EMS reports"

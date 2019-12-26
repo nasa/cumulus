@@ -1,0 +1,90 @@
+{
+  "version-v1.16.1-docs": {
+    "About Cumulus": [
+      "version-v1.16.1-cumulus-docs-readme",
+      "version-v1.16.1-architecture",
+      "version-v1.16.1-interfaces",
+      "version-v1.16.1-glossary",
+      "version-v1.16.1-team"
+    ],
+    "Cumulus Workflows": [
+      "version-v1.16.1-workflows/workflows-readme",
+      "version-v1.16.1-workflows/protocol",
+      "version-v1.16.1-workflows/input_output",
+      "version-v1.16.1-workflows/cumulus-task-message-flow",
+      "version-v1.16.1-workflows/developing-a-cumulus-workflow",
+      "version-v1.16.1-workflows/developing-workflow-tasks",
+      "version-v1.16.1-workflows/lambda",
+      "version-v1.16.1-workflows/docker",
+      "version-v1.16.1-workflows/workflow-configuration-how-to",
+      "version-v1.16.1-workflows/workflow-triggers"
+    ],
+    "Tasks": [
+      "version-v1.16.1-tasks",
+      "version-v1.16.1-workflow_tasks/discover_granules",
+      "version-v1.16.1-workflow_tasks/files_to_granules",
+      "version-v1.16.1-workflow_tasks/move_granules",
+      "version-v1.16.1-workflow_tasks/parse_pdr"
+    ],
+    "Deployment": [
+      "version-v1.16.1-deployment/deployment-readme",
+      "version-v1.16.1-deployment/upgrade-readme",
+      "version-v1.16.1-deployment/components",
+      "version-v1.16.1-deployment/create_bucket",
+      "version-v1.16.1-deployment/server_access_logging",
+      "version-v1.16.1-deployment/thin_egress_app"
+    ],
+    "Deployment Options": [
+      "version-v1.16.1-additional-deployment-options/api-gateway-logging",
+      "version-v1.16.1-additional-deployment-options/share-s3-access-logs",
+      "version-v1.16.1-additional-deployment-options/cmr_launchpad_authentication",
+      "version-v1.16.1-additional-deployment-options/cumulus_api_launchpad_authentication"
+    ],
+    "Additional Features": [
+      "version-v1.16.1-features/data_in_dynamodb",
+      "version-v1.16.1-features/dead_letter_queues",
+      "version-v1.16.1-features/ems_reporting",
+      "version-v1.16.1-features/execution_payload_retention",
+      "version-v1.16.1-features/lambda_versioning",
+      "version-v1.16.1-features/ancillary_metadata",
+      "version-v1.16.1-features/distribution-metrics"
+    ],
+    "Troubleshooting": [
+      "version-v1.16.1-troubleshooting/troubleshooting-readme",
+      "version-v1.16.1-troubleshooting/troubleshooting-deployment"
+    ],
+    "Cumulus Development": [
+      "version-v1.16.1-adding-a-task",
+      "version-v1.16.1-docs-how-to"
+    ]
+  },
+  "version-v1.16.1-Data Cookbooks": {
+    "About Cookbooks": [
+      "version-v1.16.1-data-cookbooks/about-cookbooks",
+      "version-v1.16.1-data-cookbooks/setup"
+    ],
+    "Cookbooks": [
+      "version-v1.16.1-data-cookbooks/hello-world",
+      "version-v1.16.1-data-cookbooks/sns",
+      "version-v1.16.1-data-cookbooks/sips-workflow",
+      "version-v1.16.1-data-cookbooks/cnm-workflow",
+      "version-v1.16.1-data-cookbooks/error-handling",
+      "version-v1.16.1-data-cookbooks/choice-states",
+      "version-v1.16.1-data-cookbooks/cloudwatch-retention",
+      "version-v1.16.1-data-cookbooks/browse-generation",
+      "version-v1.16.1-data-cookbooks/tracking-files",
+      "version-v1.16.1-data-cookbooks/run-tasks-in-lambda-or-docker",
+      "version-v1.16.1-data-cookbooks/throttling-queued-executions"
+    ]
+  },
+  "version-v1.16.1-Operator Docs": {
+    "About Operator Docs": [
+      "version-v1.16.1-operator-docs/about-operator-docs"
+    ],
+    "Configuration": [
+      "version-v1.16.1-operator-docs/lifecycle-policies",
+      "version-v1.16.1-operator-docs/locating-access-logs",
+      "version-v1.16.1-operator-docs/collection-storage-best-practices"
+    ]
+  }
+}

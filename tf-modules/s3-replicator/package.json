@@ -1,10 +1,10 @@
 {
   "name": "s3-replicator",
-  "version": "1.15.0",
+  "version": "1.16.1",
   "description": "Replicate S3 Events to alternate bucket. Solves same-region replication.",
   "main": "index.js",
   "engines": {
-    "node": ">=8.10.0"
+    "node": ">=10.16.3"
   },
   "scripts": {
     "test": "ava"
@@ -12,7 +12,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "aws-sdk": "^2.487.0"
+    "aws-sdk": "^2.585.0"
   },
   "devDependencies": {
     "ava": "^2.1.0"

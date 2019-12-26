@@ -4,7 +4,7 @@ resource "aws_lambda_function" "bulk_delete" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/bulkDelete/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   memory_size      = 1024
   timeout          = 300
   environment {

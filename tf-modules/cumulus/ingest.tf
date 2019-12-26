@@ -28,7 +28,7 @@ module "ingest" {
   cmr_username       = var.cmr_username
   cmr_provider       = var.cmr_provider
   cmr_client_id      = var.cmr_client_id
-  cmr_password       = module.archive.encrypted_cmr_password
+  cmr_password       = var.cmr_password
   cmr_environment    = var.cmr_environment
   cmr_limit          = var.cmr_limit
   cmr_page_size      = var.cmr_page_size

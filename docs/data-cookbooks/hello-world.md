@@ -87,7 +87,7 @@ _Executed workflow as seen in AWS Console_
 
 The `Executions` page presents a list of all executions, their status (running, failed, or completed), to which workflow the execution belongs, along with other information. The rule defined in the previous section should start an execution of its own accord, and the status of that execution can be tracked here.
 
-To get some deeper information on the execution, click on the value in the `Name` column of your execution of interest. This should bring up a visual representation of the worklfow similar to that shown above, execution details, and a list of events.
+To get some deeper information on the execution, click on the value in the `Name` column of your execution of interest. This should bring up a visual representation of the workflow similar to that shown above, execution details, and a list of events.
 
 ## Summary
 

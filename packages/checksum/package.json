@@ -1,9 +1,9 @@
 {
   "name": "@cumulus/checksum",
-  "version": "1.15.0",
+  "version": "1.16.1",
   "description": "Cumulus checksum utilities",
   "engines": {
-    "node": ">=8.10.0"
+    "node": ">=10.16.3"
   },
   "scripts": {
     "test": "ava",

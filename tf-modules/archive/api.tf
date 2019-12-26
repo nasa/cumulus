@@ -10,13 +10,25 @@ resource "aws_cloudwatch_log_group" "api" {
   tags              = local.default_tags
 }
 
+resource "aws_secretsmanager_secret" "api_cmr_password" {
+  name_prefix = "${var.prefix}-api-cmr-password"
+  description = "CMR password for the Cumulus API's ${var.prefix} deployment"
+  tags        = local.default_tags
+}
+
+resource "aws_secretsmanager_secret_version" "api_cmr_password" {
+  count         = length(var.cmr_password) == 0 ? 0 : 1
+  secret_id     = aws_secretsmanager_secret.api_cmr_password.id
+  secret_string = var.cmr_password
+}
+
 resource "aws_lambda_function" "api" {
   function_name    = "${var.prefix}-ApiEndpoints"
   filename         = "${path.module}/../../packages/api/dist/app/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/app/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.lambda_api_gateway.arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 100
   environment {
     variables = {
@@ -38,20 +50,20 @@ resource "aws_lambda_function" "api" {
       ExecutionsTable              = var.dynamo_tables.executions.name
       GranulesTable                = var.dynamo_tables.granules.name
       IndexFromDatabaseLambda      = aws_lambda_function.index_from_database.arn
+      KinesisFallbackTopicArn      = var.kinesis_fallback_topic_arn
       KinesisInboundEventLogger    = var.kinesis_inbound_event_logger_lambda_function_arn
       OAUTH_PROVIDER               = var.oauth_provider
       PdrsTable                    = var.dynamo_tables.pdrs.name
       ProvidersTable               = var.dynamo_tables.providers.name
       RulesTable                   = var.dynamo_tables.rules.name
       oauth_user_group             = var.oauth_user_group
-      STSCredentialsLambda         = var.sts_credentials_lambda
       TOKEN_REDIRECT_ENDPOINT      = local.api_redirect_uri
       TOKEN_SECRET                 = var.token_secret
       UsersTable                   = var.dynamo_tables.users.name
       backgroundQueueName          = var.background_queue_name
       cmr_client_id                = var.cmr_client_id
       cmr_oauth_provider           = var.cmr_oauth_provider
-      cmr_password                 = jsondecode(data.aws_lambda_invocation.custom_bootstrap.result).Data.CmrPassword
+      cmr_password_secret_name     = length(var.cmr_password) == 0 ? null : aws_secretsmanager_secret.api_cmr_password.name
       cmr_provider                 = var.cmr_provider
       cmr_username                 = var.cmr_username
       distributionApiId            = var.distribution_api_id
@@ -61,6 +73,7 @@ resource "aws_lambda_function" "api" {
       launchpad_api                = var.launchpad_api
       launchpad_certificate        = var.launchpad_certificate
       launchpad_passphrase         = jsondecode(data.aws_lambda_invocation.custom_bootstrap.result).Data.LaunchpadPassphrase
+      ManualConsumerLambda         = var.manual_consumer_function_arn
       messageConsumer              = var.message_consumer_function_arn
       stackName                    = var.prefix
       system_bucket                = var.system_bucket
@@ -70,9 +83,12 @@ resource "aws_lambda_function" "api" {
       ASSERT_ENDPOINT              = var.saml_assertion_consumer_service
       IDP_LOGIN                    = var.saml_idp_login
       LAUNCHPAD_METADATA_PATH      = var.saml_launchpad_metadata_path
+      METRICS_ES_HOST              = var.metrics_es_host
+      METRICS_ES_USER              = var.metrics_es_username
+      METRICS_ES_PASS              = var.metrics_es_password
     }
   }
-  memory_size = 756
+  memory_size = 1024
   tags        = merge(local.default_tags, { Project = var.prefix })
 
   vpc_config {

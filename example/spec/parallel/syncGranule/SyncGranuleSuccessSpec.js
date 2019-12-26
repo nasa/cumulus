@@ -253,7 +253,6 @@ describe('The Sync Granules workflow', () => {
     let oldExecution;
     let oldUpdatedAt;
     let reingestResponse;
-    let startTime;
     let granule;
 
     beforeAll(async () => {
@@ -263,7 +262,6 @@ describe('The Sync Granules workflow', () => {
       });
       granule = JSON.parse(granuleResponse.body);
 
-      startTime = new Date();
       oldUpdatedAt = granule.updatedAt;
       oldExecution = granule.execution;
       const reingestGranuleResponse = await granulesApiTestUtils.reingestGranule({
@@ -328,7 +326,7 @@ describe('The Sync Granules workflow', () => {
 
       const currentFiles = await getFilesMetadata(updatedGranule.files);
       currentFiles.forEach((cf) => {
-        expect(cf.LastModified).toBeGreaterThan(startTime);
+        expect(cf.LastModified).toBeGreaterThan(reingestGranuleExecution.startDate);
       });
     });
   });

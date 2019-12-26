@@ -4,7 +4,7 @@ resource "aws_lambda_function" "fallback_consumer" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/messageConsumer/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 100
   memory_size      = 256
   dead_letter_config {
@@ -34,7 +34,7 @@ resource "aws_lambda_function" "kinesis_inbound_event_logger" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/payloadLogger/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 300
   memory_size      = 128
   environment {
@@ -57,7 +57,7 @@ resource "aws_lambda_function" "kinesis_outbound_event_logger" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/payloadLogger/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 300
   memory_size      = 512
   environment {
@@ -74,13 +74,41 @@ resource "aws_lambda_function" "kinesis_outbound_event_logger" {
   }
 }
 
+resource "aws_lambda_function" "manual_consumer" {
+  function_name    = "${var.prefix}-manualConsumer"
+  filename         = "${path.module}/../../packages/api/dist/manualConsumer/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/manualConsumer/lambda.zip")
+  handler          = "index.handler"
+  role             = var.lambda_processing_role_arn
+  runtime          = "nodejs10.x"
+  timeout          = 100
+  memory_size      = 256
+  environment {
+    variables = {
+      CMR_ENVIRONMENT  = var.cmr_environment
+      stackName        = var.prefix
+      CollectionsTable = var.dynamo_tables.collections.name
+      ProvidersTable   = var.dynamo_tables.providers.name
+      RulesTable       = var.dynamo_tables.rules.name
+      system_bucket    = var.system_bucket
+      FallbackTopicArn = aws_sns_topic.kinesis_fallback.arn
+    }
+  }
+  tags = merge(local.default_tags, { Project = var.prefix })
+
+  vpc_config {
+    subnet_ids         = var.lambda_subnet_ids
+    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
+  }
+}
+
 resource "aws_lambda_function" "message_consumer" {
   function_name    = "${var.prefix}-messageConsumer"
   filename         = "${path.module}/../../packages/api/dist/messageConsumer/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/messageConsumer/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 100
   memory_size      = 256
   environment {
@@ -109,7 +137,7 @@ resource "aws_lambda_function" "schedule_sf" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/sfScheduler/lambda.zip")
   handler          = "index.schedule"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 100
   memory_size      = 192
   dead_letter_config {
@@ -137,7 +165,7 @@ resource "aws_lambda_function" "sf_semaphore_down" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/sfSemaphoreDown/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 100
   memory_size      = 512
   environment {
@@ -161,7 +189,7 @@ resource "aws_lambda_function" "sf_sns_report_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/sf-sns-report/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 300
   memory_size      = 1024
 
@@ -192,7 +220,7 @@ resource "aws_lambda_function" "sqs2sf" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/sfStarter/lambda.zip")
   handler          = "index.sqs2sfHandler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 200
   memory_size      = 128
   environment {
@@ -215,7 +243,7 @@ resource "aws_lambda_function" "sqs2sfThrottle" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/sfStarter/lambda.zip")
   handler          = "index.sqs2sfThrottleHandler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 200
   memory_size      = 128
   environment {
@@ -240,7 +268,7 @@ resource "aws_lambda_function" "sqs_message_consumer" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/sqsMessageConsumer/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 100
   memory_size      = 256
   environment {
@@ -260,3 +288,28 @@ resource "aws_lambda_function" "sqs_message_consumer" {
     security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
   }
 }
+
+resource "aws_lambda_function" "sqs_message_remover" {
+  function_name    = "${var.prefix}-sqsMessageRemover"
+  filename         = "${path.module}/../../packages/api/dist/sqsMessageRemover/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/sqsMessageRemover/lambda.zip")
+  handler          = "index.handler"
+  role             = var.lambda_processing_role_arn
+  runtime          = "nodejs10.x"
+  timeout          = 100
+  memory_size      = 256
+  environment {
+    variables = {
+      CMR_ENVIRONMENT  = var.cmr_environment
+      stackName        = var.prefix
+      system_bucket    = var.system_bucket
+    }
+  }
+  tags = merge(local.default_tags, { Project = var.prefix })
+
+  vpc_config {
+    subnet_ids         = var.lambda_subnet_ids
+    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
+  }
+}
+

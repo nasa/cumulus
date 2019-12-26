@@ -3,12 +3,12 @@
 const test = require('ava');
 const sinon = require('sinon');
 const cloneDeep = require('lodash.clonedeep');
-const range = require('lodash.range');
+const get = require('lodash.get');
 
 const aws = require('@cumulus/common/aws');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const models = require('../../models');
-const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
+const { createSqsQueues, fakeRuleFactoryV2 } = require('../../lib/testUtils');
 
 process.env.RulesTable = `RulesTable_${randomString()}`;
 process.env.stackName = randomString();
@@ -684,7 +684,7 @@ test('update preserves nested keys', async (t) => {
 });
 
 test('getRulesByTypeAndState returns list of rules', async (t) => {
-  const queueUrl = await aws.createQueue(randomString());
+  const queueUrls = await createSqsQueues(randomString());
   const rules = [
     fakeRuleFactoryV2({
       workflow,
@@ -697,7 +697,7 @@ test('getRulesByTypeAndState returns list of rules', async (t) => {
       workflow,
       rule: {
         type: 'sqs',
-        value: queueUrl
+        value: queueUrls.queueUrl
       },
       state: 'ENABLED'
     }),
@@ -713,7 +713,10 @@ test('getRulesByTypeAndState returns list of rules', async (t) => {
     rules.map((rule) => rulesModel.create(rule))
   );
 
-  aws.sqs().deleteQueue({ QueueUrl: queueUrl }).promise();
+  await Promise.all(
+    Object.values(queueUrls)
+      .map((queueUrl) => aws.sqs().deleteQueue({ QueueUrl: queueUrl }).promise())
+  );
 
   const result = await rulesModel.getRulesByTypeAndState('onetime', 'ENABLED');
   t.truthy(result.find((rule) => rule.name === createdRules[0].name));
@@ -722,19 +725,23 @@ test('getRulesByTypeAndState returns list of rules', async (t) => {
 });
 
 test('create, update and delete sqs type rule', async (t) => {
-  const queueUrls = await Promise.all(range(2).map(() => aws.createQueue(randomString())));
+  const queueUrls = await createSqsQueues(randomString());
+  const newQueueUrls = await createSqsQueues(randomString());
 
   const rule = fakeRuleFactoryV2({
     workflow,
     rule: {
       type: 'sqs',
-      value: queueUrls[0]
+      value: queueUrls.queueUrl
     },
     state: 'ENABLED'
   });
 
   const createdRule = await rulesModel.create(rule);
+
   t.deepEqual(createdRule.rule, rule.rule);
+  t.is(get(createdRule, 'meta.visibilityTimeout', 300), 300);
+  t.is(get(createdRule, 'meta.retries', 3), 3);
 
   const testObject = {
     key: randomString()
@@ -742,19 +749,26 @@ test('create, update and delete sqs type rule', async (t) => {
   const updates = {
     name: rule.name,
     meta: {
-      testObject: testObject
+      testObject: testObject,
+      visibilityTimeout: 60,
+      retries: 6
     },
     rule: {
-      value: queueUrls[1]
+      value: newQueueUrls.queueUrl
     }
   };
 
   const updatedRule = await rulesModel.update(createdRule, updates);
+
   t.deepEqual(updatedRule.meta.testObject, testObject);
-  t.is(updatedRule.rule.value, queueUrls[1]);
+  t.is(updatedRule.rule.value, newQueueUrls.queueUrl);
+  t.is(get(updatedRule, 'meta.visibilityTimeout'), updates.meta.visibilityTimeout);
+  t.is(get(updatedRule, 'meta.retries'), updates.meta.retries);
 
   await rulesModel.delete(updatedRule);
+
+  const queues = Object.values(queueUrls).concat(Object.values(newQueueUrls));
   await Promise.all(
-    queueUrls.map((queueUrl) => aws.sqs().deleteQueue({ QueueUrl: queueUrl }).promise())
+    queues.map((queueUrl) => aws.sqs().deleteQueue({ QueueUrl: queueUrl }).promise())
   );
 });

@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/common",
-  "version": "1.15.0",
+  "version": "1.16.1",
   "description": "Common utilities used across tasks",
   "keywords": [
     "GIBS",
@@ -8,7 +8,7 @@
     "NASA"
   ],
   "engines": {
-    "node": ">=8.10.0"
+    "node": ">=10.16.3"
   },
   "publishConfig": {
     "access": "public"
@@ -41,10 +41,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/checksum": "1.15.0",
-    "@cumulus/logger": "1.15.0",
+    "@cumulus/checksum": "1.16.1",
+    "@cumulus/logger": "1.16.1",
     "ajv": "^5.2.2",
-    "aws-sdk": "^2.250.1",
+    "aws-sdk": "^2.585.0",
     "follow-redirects": "^1.2.4",
     "fs-extra": "^5.0.0",
     "got": "^9.2.1",
@@ -72,7 +72,7 @@
     "p-retry": "^4.2.0",
     "pump": "^3.0.0",
     "randexp": "^0.4.9",
-    "ssh2": "^0.5.5",
+    "ssh2": "^0.8.7",
     "url-join": "^4.0.0",
     "uuid": "^3.2.1"
   },

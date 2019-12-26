@@ -5,7 +5,6 @@ const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const {
   getConfigurations,
   handleRedirectRequest,
-  handleCredentialRequest,
   handleFileRequest
 } = require('../endpoints/distribution');
 
@@ -101,7 +100,6 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
 }
 
 router.get('/redirect', handleRedirectRequest);
-router.get('/s3credentials', ensureAuthorizedOrRedirect, handleCredentialRequest);
 router.get('/*', ensureAuthorizedOrRedirect, handleFileRequest);
 
 module.exports = router;

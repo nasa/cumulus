@@ -18,8 +18,16 @@ output "hello_world_task" {
   value = module.hello_world_task
 }
 
+output "kinesis_fallback_topic_arn" {
+  value = aws_sns_topic.kinesis_fallback.arn
+}
+
 output "kinesis_inbound_event_logger_lambda_function_arn" {
   value = aws_lambda_function.kinesis_inbound_event_logger.arn
+}
+
+output "manual_consumer_lambda_function_arn" {
+  value = aws_lambda_function.manual_consumer.arn
 }
 
 output "message_consumer_lambda_function_arn" {
@@ -62,6 +70,10 @@ output "sf_sns_report_task" {
 
 output "sf_semaphore_down_lambda_function_arn" {
   value = aws_lambda_function.sf_semaphore_down.arn
+}
+
+output "sqs_message_remover_lambda_function_arn" {
+  value = aws_lambda_function.sqs_message_remover.arn
 }
 
 output "sqs2sfThrottle_lambda_function_arn" {

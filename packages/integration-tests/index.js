@@ -156,7 +156,6 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
 async function startWorkflowExecution(workflowArn, workflowMsg) {
   // Give this execution a unique name
   workflowMsg.cumulus_meta.execution_name = uuidv4();
-  workflowMsg.cumulus_meta.workflow_start_time = Date.now();
   workflowMsg.cumulus_meta.state_machine = workflowArn;
 
   const workflowParams = {

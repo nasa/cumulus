@@ -75,7 +75,7 @@ In this example, we're going to trigger a workflow by creating a Kinesis rule an
 
 The following [workflow definition](workflows/README.md) should be added to a new `.tf` workflow resource (e.g. `cnm_workflow.tf`) in your deployment directory.
 
-Add the folowing to the new terraform file in your deployment directory, updating the following:
+Add the following to the new terraform file in your deployment directory, updating the following:
 
 - Set the `CNMResponseStream` key in the `CnmResponse` task in the workflow JSON to match the name of the Kinesis response stream you configured in the prerequisites section
 - Update the `source` key to the workflow module to match the Cumulus release associated with your deployment.

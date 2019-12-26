@@ -21,3 +21,13 @@ mth-tf:
 
 lpf-tf:
   bucket: lf-internal
+
+mhs3:
+  bucket: mhs3-internal
+
+mhs2:
+  bucket: mhs2-internal
+
+bt-tf:
+  bucket: bt-internal
+

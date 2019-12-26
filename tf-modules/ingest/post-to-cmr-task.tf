@@ -10,7 +10,7 @@ module "post_to_cmr_task" {
 
   handler               = "index.handler"
   role                  = var.lambda_processing_role_arn
-  runtime               = "nodejs8.10"
+  runtime               = "nodejs10.x"
   timeout               = 300
   memory_size           = 256
   environment_variables = {

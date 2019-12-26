@@ -13,9 +13,11 @@ const models = require('../models');
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const search = new Search({
-    queryStringParameters: req.query
-  }, 'execution');
+  const search = new Search(
+    { queryStringParameters: req.query },
+    'execution',
+    process.env.ES_INDEX
+  );
   const response = await search.query();
   return res.send(response);
 }

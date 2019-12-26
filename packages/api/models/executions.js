@@ -2,38 +2,18 @@
 
 const get = require('lodash.get');
 const pLimit = require('p-limit');
-const pRetry = require('p-retry');
 
-const { getExecutionArn } = require('@cumulus/common/aws');
 const {
   getCollectionIdFromMessage,
-  getMessageExecutionName,
-  getMessageStateMachineArn
+  getMessageExecutionArn,
+  getMessageExecutionName
 } = require('@cumulus/common/message');
+const { isNil, removeNilProperties } = require('@cumulus/common/util');
 const aws = require('@cumulus/ingest/aws');
 
 const executionSchema = require('./schemas').execution;
 const Manager = require('./base');
 const { parseException } = require('../lib/utils');
-
-/**
- * Get an execution record.
- *
- * Use retry with exponential backoff to handle cases where record is still
- * in the process of being created.
- *
- * @param {Execution} executionModel - Instance of Execution model
- * @param {string} executionArn - A Step Function execution ARN
- * @returns {Promise} - Promise resolving to execution record or rejecting
- */
-const getExecutionRecord = (executionModel, executionArn) =>
-  pRetry(
-    async () => {
-      const record = await executionModel.get({ arn: executionArn });
-      return record;
-    },
-    { retries: 3 }
-  );
 
 class Execution extends Manager {
   constructor() {
@@ -45,51 +25,42 @@ class Execution extends Manager {
   }
 
   /**
-   * Generate an execution record from a workflow execution message.
+   * Generate an execution record from a Cumulus message.
    *
-   * @param {Object} message - A workflow execution message
+   * @param {Object} cumulusMessage - A Cumulus message
    * @returns {Object} An execution record
    */
-  static async generateRecord(message) {
-    const executionName = getMessageExecutionName(message);
-    const stateMachineArn = getMessageStateMachineArn(message);
-    const arn = getExecutionArn(
-      stateMachineArn,
-      executionName
-    );
-    const asyncOperationId = get(message, 'cumulus_meta.asyncOperationId');
+  static generateRecord(cumulusMessage) {
+    const arn = getMessageExecutionArn(cumulusMessage);
+    if (isNil(arn)) throw new Error('Unable to determine execution ARN from Cumulus message');
 
-    const execution = aws.getExecutionUrl(arn);
-    const collectionId = getCollectionIdFromMessage(message);
+    const status = get(cumulusMessage, 'meta.status');
+    if (!status) throw new Error('Unable to determine status from Cumulus message');
 
-    const status = get(message, 'meta.status', 'unknown');
+    const now = Date.now();
+    const workflowStartTime = get(cumulusMessage, 'cumulus_meta.workflow_start_time');
+    const workflowStopTime = get(cumulusMessage, 'cumulus_meta.workflow_stop_time');
 
     const record = {
-      name: executionName,
+      name: getMessageExecutionName(cumulusMessage),
       arn,
-      asyncOperationId,
-      parentArn: get(message, 'cumulus_meta.parentExecutionArn'),
-      execution,
-      tasks: get(message, 'meta.workflow_tasks'),
-      error: parseException(message.exception),
-      type: get(message, 'meta.workflow_name'),
-      collectionId,
+      asyncOperationId: get(cumulusMessage, 'cumulus_meta.asyncOperationId'),
+      parentArn: get(cumulusMessage, 'cumulus_meta.parentExecutionArn'),
+      execution: aws.getExecutionUrl(arn),
+      tasks: get(cumulusMessage, 'meta.workflow_tasks'),
+      error: parseException(cumulusMessage.exception),
+      type: get(cumulusMessage, 'meta.workflow_name'),
+      collectionId: getCollectionIdFromMessage(cumulusMessage),
       status,
-      createdAt: get(message, 'cumulus_meta.workflow_start_time'),
-      timestamp: Date.now()
+      createdAt: workflowStartTime,
+      timestamp: now,
+      updatedAt: now,
+      originalPayload: status === 'running' ? cumulusMessage.payload : undefined,
+      finalPayload: status === 'running' ? undefined : cumulusMessage.payload,
+      duration: isNil(workflowStopTime) ? 0 : (workflowStopTime - workflowStartTime) / 1000
     };
 
-    const currentPayload = get(message, 'payload');
-    if (['failed', 'completed'].includes(status)) {
-      const existingRecord = await getExecutionRecord(new Execution(), arn);
-      record.finalPayload = currentPayload;
-      record.originalPayload = existingRecord.originalPayload;
-    } else {
-      record.originalPayload = currentPayload;
-    }
-
-    record.duration = (record.timestamp - record.createdAt) / 1000;
-    return record;
+    return removeNilProperties(record);
   }
 
   /**
@@ -137,34 +108,52 @@ class Execution extends Manager {
   }
 
   /**
-   * Update an existing execution record, replacing all fields except originalPayload
-   * adding the existing payload to the finalPayload database field
-   *
-   * @param {Object} message - A workflow execution message
-   * @returns {Promise<Object>} An execution record
-   */
-  async updateExecutionFromSns(message) {
-    const record = await Execution.generateRecord(message);
-    return this.create(record);
-  }
-
-  /**
-   * Create a new execution record from incoming SNS messages
-   *
-   * @param {Object} message - A workflow execution message
-   * @returns {Promise<Object>} An execution record
-   */
-  async createExecutionFromSns(message) {
-    const record = await Execution.generateRecord(message);
-    return this.create(record);
-  }
-
-  /**
    * Only used for testing
    */
   async deleteExecutions() {
     const executions = await this.scan();
     return Promise.all(executions.Items.map((execution) => super.delete({ arn: execution.arn })));
+  }
+
+  buildDocClientUpdateParams(item) {
+    const ExpressionAttributeNames = {};
+    const ExpressionAttributeValues = {};
+    const setUpdateExpressions = [];
+
+    Object.entries(item).forEach(([key, value]) => {
+      if (key === 'arn') return;
+      if (value === undefined) return;
+
+      ExpressionAttributeNames[`#${key}`] = key;
+      ExpressionAttributeValues[`:${key}`] = value;
+
+      if (item.status === 'running') {
+        if (['createdAt', 'updatedAt', 'timestamp', 'originalPayload'].includes(key)) {
+          setUpdateExpressions.push(`#${key} = :${key}`);
+        } else {
+          setUpdateExpressions.push(`#${key} = if_not_exists(#${key}, :${key})`);
+        }
+      } else {
+        setUpdateExpressions.push(`#${key} = :${key}`);
+      }
+    });
+
+    if (setUpdateExpressions.length === 0) return null;
+
+    return {
+      TableName: this.tableName,
+      Key: { arn: item.arn },
+      ExpressionAttributeNames,
+      ExpressionAttributeValues,
+      UpdateExpression: `SET ${setUpdateExpressions.join(', ')}`
+    };
+  }
+
+  async storeExecutionFromCumulusMessage(cumulusMessage) {
+    const executionItem = Execution.generateRecord(cumulusMessage);
+    const updateParams = this.buildDocClientUpdateParams(executionItem);
+
+    await this.dynamodbDocClient.update(updateParams).promise();
   }
 }
 
