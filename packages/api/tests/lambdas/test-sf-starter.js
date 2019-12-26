@@ -341,5 +341,5 @@ test('handleSourceMappingEvent calls dispatch on messages in an EventSource even
   const output = await handleSourceMappingEvent(event);
 
   const dispatchReturn = stubSFN().startExecution().promise();
-  output.map((o) => t.deepEqual(o, dispatchReturn));
+  output.forEach((o) => t.deepEqual(o, dispatchReturn));
 });
