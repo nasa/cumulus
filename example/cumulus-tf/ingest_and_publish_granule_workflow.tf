@@ -220,7 +220,6 @@ module "ingest_and_publish_granule_workflow" {
             "stack": "{$.meta.stack}",
             "cmr": "{$.meta.cmr}",
             "launchpad": "{$.meta.launchpad}",
-            "process": "{$.meta.process}"
           }
         }
       },
