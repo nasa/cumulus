@@ -5,6 +5,17 @@ const pick = require('lodash.pick');
 
 const { AsyncOperation: AsyncOperationModel } = require('../models');
 
+async function list(req, res) {
+  const asyncOperationModel = new AsyncOperationModel({
+    stackName: process.env.stackName,
+    systemBucket: process.env.system_bucket,
+    tableName: process.env.AsyncOperationsTable
+  });
+
+  const asyncOperationList = await asyncOperationModel.scan();
+  res.send(asyncOperationList);
+}
+
 /**
  * Returns an express response containing the requested AsyncOperation
  *
@@ -27,9 +38,10 @@ async function getAsyncOperation(req, res) {
     throw err;
   }
 
-  return res.send(pick(asyncOperation, ['id', 'status', 'taskArn', 'output']));
+  return res.send(pick(asyncOperation, ['id', 'status', 'taskArn', 'description', 'operationType', 'output']));
 }
 
+router.get('/', list);
 router.get('/:id', getAsyncOperation);
 
 module.exports = router;
