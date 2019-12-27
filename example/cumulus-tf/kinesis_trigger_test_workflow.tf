@@ -133,7 +133,7 @@ module "kinesis_trigger_test_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${aws_lambda_function.cnm_response_task.task_arn}",
+      "Resource": "${aws_lambda_function.cnm_response_task.arn}",
       "Retry": [
         {
           "ErrorEquals": [
@@ -182,7 +182,7 @@ module "kinesis_trigger_test_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${aws_lambda_function.cnm_response_task.task_arn}",
+      "Resource": "${aws_lambda_function.cnm_response_task.arn}",
       "Retry": [
         {
           "ErrorEquals": [
