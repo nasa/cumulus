@@ -62,14 +62,50 @@ test.after.always(async () => {
   await accessTokenModel.deleteTable();
 });
 
-test.serial('GET /asyncOperations returns a 404 status code', async (t) => {
+test.serial('GET /asyncOperations returns a list of operations', async (t) => {
+  const asyncOperation1 = {
+    id: 'abc-789',
+    status: 'RUNNING',
+    taskArn: randomString(),
+    description: 'Some async run',
+    operationType: 'Bulk Granules',
+    output: JSON.stringify({ age: 59 })
+  };
+  const asyncOperation2 = {
+    id: 'abc-456',
+    status: 'RUNNING',
+    taskArn: randomString(),
+    description: 'Some async run',
+    operationType: 'ES Index',
+    output: JSON.stringify({ age: 37 })
+  };
+
+  await asyncOperationModel.create(asyncOperation1);
+  await asyncOperationModel.create(asyncOperation2);
+
   const response = await request(app)
     .get('/asyncOperations')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(404);
+    .expect(200);
 
-  t.is(response.status, 404);
+  t.is(response.status, 200);
+
+  response.body.Items.forEach((item) => {
+    if (item.id === asyncOperation1.id) {
+      t.is(item.description, asyncOperation1.description);
+      t.is(item.operationType, asyncOperation1.operationType);
+      t.is(item.status, asyncOperation1.status);
+      t.is(item.output, asyncOperation1.output);
+      t.is(item.taskArn, asyncOperation1.taskArn);
+    } else if (item.id === asyncOperation2.id) {
+      t.is(item.description, asyncOperation2.description);
+      t.is(item.operationType, asyncOperation2.operationType);
+      t.is(item.status, asyncOperation2.status);
+      t.is(item.output, asyncOperation2.output);
+      t.is(item.taskArn, asyncOperation2.taskArn);
+    }
+  });
 });
 
 test.serial('GET /asyncOperations/{:id} returns a 401 status code if valid authorization is not specified', async (t) => {
@@ -96,6 +132,8 @@ test.serial('GET /asyncOperations/{:id} returns the async operation if it does e
     id: 'abc-123',
     status: 'RUNNING',
     taskArn: randomString(),
+    description: 'Some async run',
+    operationType: 'ES Index',
     output: JSON.stringify({ age: 37 })
   };
 
@@ -113,6 +151,8 @@ test.serial('GET /asyncOperations/{:id} returns the async operation if it does e
     response.body,
     {
       id: asyncOperation.id,
+      description: asyncOperation.description,
+      operationType: asyncOperation.operationType,
       status: asyncOperation.status,
       output: asyncOperation.output,
       taskArn: asyncOperation.taskArn

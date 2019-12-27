@@ -27,11 +27,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `Replay Kinesis Messages` documentation to Operator Docs.
   - Added `manualConsumer` lambda function to consume a Kinesis stream. Used by the replay AsyncOperation.
 
+- **CUMULUS-1687**
+  - Added new API endpoint for listing async operations at `/asyncOperations`
+  - All asyncOperations now include the fields `description` and `operationType`. `operationType` can be one of the following. [`Bulk Delete`, `Bulk Granules`, `ES Index`, `Kinesis Replay`]
+
 ### Changed
 
 - **CUMULUS-1626**
   - Updates Cumulus to use node10/CMA 1.1.2 for all of its internal lambdas in prep for AWS node 8 EOL
-
 
 ## [v1.16.1] - 2019-12-6
 
