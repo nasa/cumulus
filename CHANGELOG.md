@@ -1495,7 +1495,7 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 [Unreleased]: https://github.com/nasa/cumulus/compare/v1.14.5...HEAD
-[v1.14.5]: https://github.com/nasa/cumulus/compare/v1.14.4...1.14.5
+[v1.14.5]: https://github.com/nasa/cumulus/compare/v1.14.4...v1.14.5
 [v1.14.4]: https://github.com/nasa/cumulus/compare/v1.14.3...v1.14.4
 [v1.14.3]: https://github.com/nasa/cumulus/compare/v1.14.2...v1.14.3
 [v1.14.2]: https://github.com/nasa/cumulus/compare/v1.14.1...v1.14.2
