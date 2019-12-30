@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/pdr-status-check",
-  "version": "1.16.1",
+  "version": "1.17.0",
   "description": "Checks execution status of granules in a PDR",
   "main": "index.js",
   "directories": {
@@ -35,7 +35,7 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "1.16.1",
+    "@cumulus/common": "1.17.0",
     "@cumulus/cumulus-message-adapter-js": "^1.1.0"
   },
   "devDependencies": {
