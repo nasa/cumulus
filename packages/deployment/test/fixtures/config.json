@@ -49,7 +49,7 @@
         "desiredInstances": 2,
         "tasks": {
             "AsyncOperation": {
-                "image": "cumuluss/async-operation:25",
+                "image": "cumuluss/async-operation:27",
                 "cpu": 400,
                 "memory": 700,
                 "count": 1,
