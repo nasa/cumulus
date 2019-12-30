@@ -15,7 +15,7 @@
     "test": "nyc lerna run --concurrency 1 --ignore cumulus-integration-tests test",
     "bootstrap": "lerna bootstrap --no-ci --force-local",
     "bootstrap-no-build": "lerna bootstrap --no-ci --force-local --ignore-scripts",
-    "bootstrap-quiet": "lerna bootstrap --loglevel=error --no-ci --force-local",
+    "bootstrap-no-build-quiet": "lerna bootstrap --loglevel=error --no-ci --force-local --ignore-scripts",
     "update": "lerna version --exact --force-publish --no-git-tag-version --no-push",
     "publish": "lerna publish --skip-git --yes --exact --repo-version $VERSION",
     "clean": "lerna clean && rm -rf ./node_modules",
