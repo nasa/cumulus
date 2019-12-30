@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v1.17.0]
+
 ### BREAKING CHANGES
 
 - **CUMULUS-1498**
@@ -1795,10 +1797,12 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.16.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.17.0...HEAD
+[v1.17.0]: https://github.com/nasa/cumulus/compare/v1.16.1...v1.17.0
 [v1.16.1]: https://github.com/nasa/cumulus/compare/v1.16.0...v1.16.1
 [v1.16.0]: https://github.com/nasa/cumulus/compare/v1.15.0...v1.16.0
-[v1.15.0]: https://github.com/nasa/cumulus/compare/v1.14.4...v1.15.0
+[v1.15.0]: https://github.com/nasa/cumulus/compare/v1.14.5...v1.15.0
+[v1.14.4]: https://github.com/nasa/cumulus/compare/v1.14.3...v1.14.5
 [v1.14.4]: https://github.com/nasa/cumulus/compare/v1.14.3...v1.14.4
 [v1.14.3]: https://github.com/nasa/cumulus/compare/v1.14.2...v1.14.3
 [v1.14.2]: https://github.com/nasa/cumulus/compare/v1.14.1...v1.14.2
