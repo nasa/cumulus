@@ -1,0 +1,213 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Collection Storage Best Practices · Cumulus Documentation</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="# Collection Cost Tracking and Storage Best Practices"/><meta name="docsearch:version" content="v1.16.1"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Collection Storage Best Practices · Cumulus Documentation"/><meta property="og:type" content="website"/><meta property="og:url" content="https://nasa.github.io/cumulus/"/><meta property="og:description" content="# Collection Cost Tracking and Storage Best Practices"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/cumulus/undefined"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="/cumulus/js/scrollSpy.js"></script><link rel="stylesheet" href="/cumulus/css/main.css"/><script src="/cumulus/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cumulus/"><h2 class="headerTitle">Cumulus Documentation</h2></a><a href="/cumulus/versions"><h3>v1.16.1</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="https://nasa.github.io/cumulus-api" target="_self">API Docs</a></li><li class=""><a href="/cumulus/docs/v1.16.1/cumulus-docs-readme" target="_self">Developer Docs</a></li><li class=""><a href="/cumulus/docs/v1.16.1/data-cookbooks/about-cookbooks" target="_self">Data-Cookbooks</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/v1.16.1/operator-docs/about-operator-docs" target="_self">Operator Docs</a></li><li class=""><a href="/cumulus/docs/v1.16.1/team" target="_self">Team</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Configuration</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">About Operator Docs<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.16.1/operator-docs/about-operator-docs">About Operator Docs</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Configuration<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.16.1/operator-docs/lifecycle-policies">Lifecycle Policies</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.16.1/operator-docs/locating-access-logs">Locating S3 Access Logs</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/cumulus/docs/v1.16.1/operator-docs/collection-storage-best-practices">Collection Storage Best Practices</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"></header><article><div><span><h1><a class="anchor" aria-hidden="true" id="collection-cost-tracking-and-storage-best-practices"></a><a href="#collection-cost-tracking-and-storage-best-practices" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Collection Cost Tracking and Storage Best Practices</h1>
+<p>Organizing your data is important for metrics you may want to collect. AWS S3 storage and cost metrics are calculated at the bucket level, so it is easy to get metrics by bucket. You can get storage metrics at the key prefix level, but that is done through the CLI, which can be very slow for large buckets. It is very difficult to estimate costs at the prefix level.</p>
+<h2><a class="anchor" aria-hidden="true" id="calculating-storage-by-collection"></a><a href="#calculating-storage-by-collection" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Calculating Storage By Collection</h2>
+<h3><a class="anchor" aria-hidden="true" id="by-bucket"></a><a href="#by-bucket" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>By bucket</h3>
+<p>Usage by bucket can be obtained in your <a href="https://console.aws.amazon.com/billing/home">AWS Billing Dashboard</a> via an <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/aws-usage-report.html">S3 Usage Report</a>. You can download your usage report for a period of time and review your storage and requests at the bucket level.</p>
+<p>Bucket metrics can also be found in the <a href="https://console.aws.amazon.com/cloudwatch/home#metricsV2:graph=~();namespace=~'AWS*2fS3">AWS CloudWatch Metrics Console</a> (also see <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/working_with_metrics.html">Using Amazon CloudWatch Metrics</a>).</p>
+<p>Navigate to <code>Storage Metrics</code> and select the <code>BucketName</code> for all buckets you are interested in. The available metrics are <code>BucketSizeInBytes</code> and <code>NumberOfObjects</code>.</p>
+<p>In the <code>Graphed metrics</code> tab, you can select the type of statistic (i.e. average, minimum, maximum) and the period for the stats. At the top, it's useful to select from the dropdown to view the metrics as a number. You can also select the time period for which you want to see stats.</p>
+<p>Alternatively you can query CloudWatch using the CLI.</p>
+<p>This command will return the average number of bytes in the bucket <code>test-bucket</code> for 7/31/2019:</p>
+<pre><code class="hljs css language-bash">aws cloudwatch get-metric-statistics --namespace AWS/S3 --start-time 2019-07-31T00:00:00 --end-time 2019-08-01T00:00:00 --period 86400 --statistics Average --region us-east-1 --metric-name BucketSizeBytes --dimensions Name=BucketName,Value=<span class="hljs-built_in">test</span>-bucket Name=StorageType,Value=StandardStorage
+</code></pre>
+<p>The result looks like:</p>
+<pre><code class="hljs css language-json">{
+    <span class="hljs-attr">"Datapoints"</span>: [
+        {
+            <span class="hljs-attr">"Timestamp"</span>: <span class="hljs-string">"2019-07-31T00:00:00Z"</span>,
+            <span class="hljs-attr">"Average"</span>: <span class="hljs-number">150996467959.0</span>,
+            <span class="hljs-attr">"Unit"</span>: <span class="hljs-string">"Bytes"</span>
+        }
+    ],
+    <span class="hljs-attr">"Label"</span>: <span class="hljs-string">"BucketSizeBytes"</span>
+}
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="by-key-prefix"></a><a href="#by-key-prefix" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>By key prefix</h3>
+<p>AWS does not offer storage and usage statistics at a key prefix level. Via the AWS CLI, you can get the total storage for a bucket or folder. The following command would get the storage for folder <code>example-folder</code> in bucket <code>sample-bucket</code>:</p>
+<p><code>aws s3 ls --summarize --human-readable --recursive s3://sample-bucket/example-folder | grep 'Total'</code></p>
+<p>Note that this can be a long-running operation for large buckets.</p>
+<h2><a class="anchor" aria-hidden="true" id="calculating-cost-by-collection"></a><a href="#calculating-cost-by-collection" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Calculating Cost By Collection</h2>
+<h3><a class="anchor" aria-hidden="true" id="nasa-ngap-environment"></a><a href="#nasa-ngap-environment" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>NASA NGAP Environment</h3>
+<p>If using an NGAP account, the cost per bucket can be found in your CloudTamer console, in the <code>Financials</code> section of your account information. This is calculated on a monthly basis.</p>
+<p>There is no easy way to get the cost by folder in the buckets. You could calculate an estimate using the storage per prefix vs. the storage of the bucket.</p>
+<h3><a class="anchor" aria-hidden="true" id="outside-of-ngap"></a><a href="#outside-of-ngap" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Outside of NGAP</h3>
+<p>You can enabled <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/CostAllocTagging.html">S3 Cost Allocation Tags</a> and tag your buckets. From there, you can view the cost breakdown in your <a href="https://console.aws.amazon.com/billing/home">AWS Billing Dashboard</a> via the Cost Explorer. Cost Allocation Tagging is available at the bucket level.</p>
+<p>There is no easy way to get the cost by folder in the buckets. You could calculate an estimate using the storage per prefix vs. the storage of the bucket.</p>
+<h2><a class="anchor" aria-hidden="true" id="storage-configuration"></a><a href="#storage-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Storage Configuration</h2>
+<p>Cumulus allows for the configuration of many buckets for your files. Buckets are created and added to your deployment as part of the <a href="../deployment/deployment-readme#create-s3-buckets">deployment process</a>.</p>
+<p>In your Cumulus <a href="../data-cookbooks/setup#collections">collection configuration</a>, you specify where you want the files to be stored post-processing. This is done by matching a regular expression on the file with the configured bucket.</p>
+<p>Note that in the collection configuration, the <code>bucket</code> field is the key to the <code>buckets</code> variable in the deployment's <code>.tfvars</code> file.</p>
+<h3><a class="anchor" aria-hidden="true" id="organizing-by-bucket"></a><a href="#organizing-by-bucket" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Organizing By Bucket</h3>
+<p>You can specify separate groups of buckets for each collection, which could look like the example below.</p>
+<pre><code class="hljs css language-json">{
+  <span class="hljs-attr">"name"</span>: <span class="hljs-string">"MOD09GQ"</span>,
+  <span class="hljs-attr">"version"</span>: <span class="hljs-string">"006"</span>,
+  <span class="hljs-attr">"granuleId"</span>: <span class="hljs-string">"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$"</span>,
+  <span class="hljs-attr">"sampleFileName"</span>: <span class="hljs-string">"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"</span>,
+  <span class="hljs-attr">"files"</span>: [
+    {
+      <span class="hljs-attr">"bucket"</span>: <span class="hljs-string">"MOD09GQ-006-protected"</span>,
+      <span class="hljs-attr">"regex"</span>: <span class="hljs-string">"^.*\\.hdf$"</span>,
+      <span class="hljs-attr">"sampleFileName"</span>: <span class="hljs-string">"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"</span>
+    },
+    {
+      <span class="hljs-attr">"bucket"</span>: <span class="hljs-string">"MOD09GQ-006-private"</span>,
+      <span class="hljs-attr">"regex"</span>: <span class="hljs-string">"^.*\\.hdf\\.met$"</span>,
+      <span class="hljs-attr">"sampleFileName"</span>: <span class="hljs-string">"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met"</span>
+    },
+    {
+      <span class="hljs-attr">"bucket"</span>: <span class="hljs-string">"MOD09GQ-006-protected"</span>,
+      <span class="hljs-attr">"regex"</span>: <span class="hljs-string">"^.*\\.cmr\\.xml$"</span>,
+      <span class="hljs-attr">"sampleFileName"</span>: <span class="hljs-string">"MOD09GQ.A2017025.h21v00.006.2017034065104.cmr.xml"</span>
+    },
+    {
+      <span class="hljs-attr">"bucket"</span>: <span class="hljs-string">"MOD09GQ-006-public"</span>,
+      <span class="hljs-attr">"regex"</span>: <span class="hljs-string">"^*\\.jpg$"</span>,
+      <span class="hljs-attr">"sampleFileName"</span>: <span class="hljs-string">"MOD09GQ.A2017025.h21v00.006.2017034065104_ndvi.jpg"</span>
+    }
+  ]
+}
+</code></pre>
+<p>Additional collections would go to different buckets.</p>
+<h3><a class="anchor" aria-hidden="true" id="organizing-by-key-prefix"></a><a href="#organizing-by-key-prefix" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Organizing by Key Prefix</h3>
+<p>Different collections can be organized into different folders in the same bucket, using the key prefix, which is specified as the <code>url_path</code> in the collection configuration. In this simplified collection configuration example, the <code>url_path</code> field is set at the top level so that all files go to a path prefixed with the collection name and version.</p>
+<pre><code class="hljs css language-json">{
+  <span class="hljs-attr">"name"</span>: <span class="hljs-string">"MOD09GQ"</span>,
+  <span class="hljs-attr">"version"</span>: <span class="hljs-string">"006"</span>,
+  <span class="hljs-attr">"granuleId"</span>: <span class="hljs-string">"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$"</span>,
+  <span class="hljs-attr">"url_path"</span>: <span class="hljs-string">"{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}"</span>,
+  <span class="hljs-attr">"sampleFileName"</span>: <span class="hljs-string">"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"</span>,
+  <span class="hljs-attr">"files"</span>: [
+    {
+      <span class="hljs-attr">"bucket"</span>: <span class="hljs-string">"protected"</span>,
+      <span class="hljs-attr">"regex"</span>: <span class="hljs-string">"^.*\\.hdf$"</span>,
+      <span class="hljs-attr">"sampleFileName"</span>: <span class="hljs-string">"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"</span>
+    },
+    {
+      <span class="hljs-attr">"bucket"</span>: <span class="hljs-string">"private"</span>,
+      <span class="hljs-attr">"regex"</span>: <span class="hljs-string">"^.*\\.hdf\\.met$"</span>,
+      <span class="hljs-attr">"sampleFileName"</span>: <span class="hljs-string">"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met"</span>
+    },
+    {
+      <span class="hljs-attr">"bucket"</span>: <span class="hljs-string">"protected"</span>,
+      <span class="hljs-attr">"regex"</span>: <span class="hljs-string">"^.*\\.cmr\\.xml$"</span>,
+      <span class="hljs-attr">"sampleFileName"</span>: <span class="hljs-string">"MOD09GQ.A2017025.h21v00.006.2017034065104.cmr.xml"</span>
+    },
+    {
+      <span class="hljs-attr">"bucket"</span>: <span class="hljs-string">"public"</span>,
+      <span class="hljs-attr">"regex"</span>: <span class="hljs-string">"^*\\.jpg$"</span>,
+      <span class="hljs-attr">"sampleFileName"</span>: <span class="hljs-string">"MOD09GQ.A2017025.h21v00.006.2017034065104_ndvi.jpg"</span>
+    }
+  ]
+}
+</code></pre>
+<p>In this case, the path to all the files would be: <code>MOD09GQ___006/&lt;filename&gt;</code> in their respective buckets.</p>
+<p>The <code>url_path</code> can be overidden directly on the file configuration. The example below produces the same result.</p>
+<pre><code class="hljs css language-json">{
+  <span class="hljs-attr">"name"</span>: <span class="hljs-string">"MOD09GQ"</span>,
+  <span class="hljs-attr">"version"</span>: <span class="hljs-string">"006"</span>,
+  <span class="hljs-attr">"granuleId"</span>: <span class="hljs-string">"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$"</span>,
+  <span class="hljs-attr">"sampleFileName"</span>: <span class="hljs-string">"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"</span>,
+  <span class="hljs-attr">"files"</span>: [
+    {
+      <span class="hljs-attr">"bucket"</span>: <span class="hljs-string">"protected"</span>,
+      <span class="hljs-attr">"regex"</span>: <span class="hljs-string">"^.*\\.hdf$"</span>,
+      <span class="hljs-attr">"sampleFileName"</span>: <span class="hljs-string">"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"</span>,
+      <span class="hljs-attr">"url_path"</span>: <span class="hljs-string">"{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}"</span>
+    },
+    {
+      <span class="hljs-attr">"bucket"</span>: <span class="hljs-string">"private"</span>,
+      <span class="hljs-attr">"regex"</span>: <span class="hljs-string">"^.*\\.hdf\\.met$"</span>,
+      <span class="hljs-attr">"sampleFileName"</span>: <span class="hljs-string">"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met"</span>,
+      <span class="hljs-attr">"url_path"</span>: <span class="hljs-string">"{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}"</span>
+    },
+    {
+      <span class="hljs-attr">"bucket"</span>: <span class="hljs-string">"protected-2"</span>,
+      <span class="hljs-attr">"regex"</span>: <span class="hljs-string">"^.*\\.cmr\\.xml$"</span>,
+      <span class="hljs-attr">"sampleFileName"</span>: <span class="hljs-string">"MOD09GQ.A2017025.h21v00.006.2017034065104.cmr.xml"</span>,
+      <span class="hljs-attr">"url_path"</span>: <span class="hljs-string">"{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}"</span>
+    },
+    {
+      <span class="hljs-attr">"bucket"</span>: <span class="hljs-string">"public"</span>,
+      <span class="hljs-attr">"regex"</span>: <span class="hljs-string">"^*\\.jpg$"</span>,
+      <span class="hljs-attr">"sampleFileName"</span>: <span class="hljs-string">"MOD09GQ.A2017025.h21v00.006.2017034065104_ndvi.jpg"</span>,
+      <span class="hljs-attr">"url_path"</span>: <span class="hljs-string">"{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}"</span>
+    }
+  ]
+}
+</code></pre>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cumulus/docs/v1.16.1/operator-docs/locating-access-logs"><span class="arrow-prev">← </span><span>Locating S3 Access Logs</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#calculating-storage-by-collection">Calculating Storage By Collection</a><ul class="toc-headings"><li><a href="#by-bucket">By bucket</a></li><li><a href="#by-key-prefix">By key prefix</a></li></ul></li><li><a href="#calculating-cost-by-collection">Calculating Cost By Collection</a><ul class="toc-headings"><li><a href="#nasa-ngap-environment">NASA NGAP Environment</a></li><li><a href="#outside-of-ngap">Outside of NGAP</a></li></ul></li><li><a href="#storage-configuration">Storage Configuration</a><ul class="toc-headings"><li><a href="#organizing-by-bucket">Organizing By Bucket</a></li><li><a href="#organizing-by-key-prefix">Organizing by Key Prefix</a></li></ul></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>
