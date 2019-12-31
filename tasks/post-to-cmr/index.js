@@ -131,7 +131,6 @@ async function postToCMR(event) {
   const endTime = Date.now();
 
   return {
-    process: event.config.process,
     granules: buildOutput(
       results,
       event.input.granules

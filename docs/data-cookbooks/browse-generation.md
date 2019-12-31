@@ -98,7 +98,6 @@ A few things to note about tasks in the workflow being added:
           "stack": "{$.meta.stack}",
           "cmr": "{$.meta.cmr}",
           "launchpad": "{$.meta.launchpad}",
-          "process": "{$.meta.process}",
           "input_granules": "{$.meta.input_granules}",
           "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}"
         }
