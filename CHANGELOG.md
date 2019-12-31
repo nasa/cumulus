@@ -36,7 +36,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1626**
   - Updates Cumulus to use node10/CMA 1.1.2 for all of its internal lambdas in prep for AWS node 8 EOL
 
-- **CUMULUS01686
+- **CUMULUS-1686**
   - Changed `ecs_cluster_instance_image_id` to be a required variable of the `cumulus` module. The default was not available across accounts and regions, nor outside of NGAP and has been removed.
 
 ## [v1.16.1] - 2019-12-6
