@@ -43,6 +43,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed `ecs_cluster_instance_image_id` to be a required variable of the `cumulus` module and removed the default value.
     The default was not available across accounts and regions, nor outside of NGAP and therefore not particularly useful.
 
+### Removed
+
+- **CUMULUS-1481**
+  - removed `process` config and output from PostToCmr as it was not required by the task nor downstream steps, and should still be in the output message's `meta` regardless.
+
 ## [v1.16.1] - 2019-12-6
 
 **Please note**:
