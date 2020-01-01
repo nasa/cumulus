@@ -21,5 +21,5 @@ export NPM_TAG=$(node ./bamboo/npm-tag.js);
 #  --force-publish=* \
 #  --dist-tag=${NPM_TAG} \
 #  --exact
-
+npx lerna prepare
 . ./bamboo/create-release.sh
