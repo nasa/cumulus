@@ -19,10 +19,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `config.cmr.passwordSecretName` value, rather than `config.cmr.password`.
     The CMR password will be fetched from that secret in AWS Secrets Manager.
 
-**Please note**:
-
-- It should no longer be necessary for the `prefix` variable of the data-persistence and cumulus modules to match. See notes below on CUMULUS-1664 for further detail.
-
 ### Added
 
 - **CUMULUS-630**
