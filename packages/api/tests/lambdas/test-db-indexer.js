@@ -22,7 +22,8 @@ const {
   getTableName,
   getTableIndexDetails,
   handler,
-  getParentId
+  getParentId,
+  getRecordId
 } = dbIndexer;
 
 let esClient;
@@ -118,6 +119,7 @@ let executionModel;
 let fileModel;
 let granuleModel;
 let ruleModel;
+
 test.before(async (t) => {
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
@@ -156,8 +158,26 @@ test.after.always(async () => {
   await esClient.indices.delete({ index: esIndex });
 });
 
-test.todo('getRecordId() returns correct ID for collection record');
-test.todo('getRecordId() returns correct ID for non-collection record');
+test('getRecordId() returns correct ID for collection record', (t) => {
+  const collection = {
+    name: randomString(),
+    version: '0.0.0'
+  };
+  t.is(
+    getRecordId('collection', collection),
+    constructCollectionId(collection.name, collection.version)
+  );
+});
+
+test('getRecordId() returns correct ID for non-collection record', (t) => {
+  const execution = {
+    arn: randomString()
+  };
+  t.is(
+    getRecordId('execution', execution),
+    execution.arn
+  );
+});
 
 test('getParentId() returns correct ID for granule record', (t) => {
   const granule = {

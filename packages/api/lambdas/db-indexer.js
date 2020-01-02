@@ -53,6 +53,23 @@ const getTableIndexDetails = (tableName) => {
 };
 
 /**
+ * Get the ID field name for a given record type.
+ *
+ * @param {string} type - type of record to index
+ * @returns {string} ID field name
+ */
+const mapIndexTypeToIdFieldName = (type) => {
+  const idFieldsByType = {
+    execution: 'arn',
+    granule: 'granuleId',
+    pdr: 'pdrName',
+    provider: 'id',
+    rule: 'name'
+  };
+  return idFieldsByType[type];
+};
+
+/**
  * Delete files associated with a given granule.
  *
  * @param {Object} record - the dynamoDB record
@@ -99,15 +116,15 @@ function getTableName(sourceArn) {
  * Get record ID.
  *
  * @param {string} type - type of record to index
- * @param {string} idField - name of field to use for record ID
  * @param {Object} record - the record to be indexed
  * @returns {string} record ID
  */
-function getRecordId(type, idField, record) {
+function getRecordId(type, record) {
   if (type === 'collection') {
     return constructCollectionId(record.name, record.version);
   }
-  return record[idField];
+  const idFieldName = mapIndexTypeToIdFieldName(type);
+  return record[idFieldName];
 }
 
 /**
@@ -177,13 +194,13 @@ async function indexRecord(esClient, record) {
   // Check if data from table name is suported for indexing.
   if (!tableIndexDetails) return {};
 
-  const { idField, indexFnName, indexType } = tableIndexDetails;
+  const { indexFnName, indexType } = tableIndexDetails;
 
   const keys = unwrap(get(record, 'dynamodb.Keys'));
   const data = unwrap(get(record, 'dynamodb.NewImage'));
   const oldData = unwrap(get(record, 'dynamodb.OldImage'));
 
-  const id = getRecordId(indexType, idField, keys);
+  const id = getRecordId(indexType, keys);
 
   if (record.eventName === 'REMOVE') {
     // delete from files associated with a granule
@@ -225,5 +242,6 @@ module.exports = {
   getTableName,
   getTableIndexDetails,
   getParentId,
+  getRecordId,
   handler
 };
