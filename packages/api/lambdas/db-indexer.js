@@ -25,23 +25,28 @@ const getTableIndexDetails = (tableName) => {
     },
     [process.env.ExecutionsTable]: {
       indexFnName: 'indexExecution',
-      indexType: 'execution'
+      indexType: 'execution',
+      idField: 'arn'
     },
     [process.env.GranulesTable]: {
       indexFnName: 'indexGranule',
-      indexType: 'granule'
+      indexType: 'granule',
+      idField: 'granuleId'
     },
     [process.env.PdrsTable]: {
       indexFnName: 'indexPdr',
-      indexType: 'pdr'
+      indexType: 'pdr',
+      idField: 'pdrName'
     },
     [process.env.ProvidersTable]: {
       indexFnName: 'indexProvider',
-      indexType: 'provider'
+      indexType: 'provider',
+      idField: 'id'
     },
     [process.env.RulesTable]: {
       indexFnName: 'indexRule',
-      indexType: 'rule'
+      indexType: 'rule',
+      idField: 'name'
     }
   };
   return indexTables[tableName];
@@ -107,18 +112,18 @@ function performIndex(indexFnName, esClient, data) {
  *
  * @param {Object} esClient - ElasticSearch connection client
  * @param {string} type - type of record to index
- * @param {Object} fields - a hash of table keys and hashes
+ * @param {string} idField - name of field to use for record ID
  * @param {Object} body - the body of the record
  * @returns {Promise<Object>} elasticsearch response
  */
-function performDelete(esClient, type, fields, body) {
+function performDelete(esClient, type, idField, body) {
   let id;
   let parent;
-  const idKeys = Object.keys(fields);
-  if (idKeys.length > 1) {
-    id = constructCollectionId(...Object.values(fields));
+
+  if (type === 'collection') {
+    id = constructCollectionId(body.name, body.version);
   } else {
-    id = fields[idKeys[0]];
+    id = body[idField];
   }
 
   if (type === 'granule') {
@@ -156,20 +161,15 @@ async function indexRecord(esClient, record) {
   // Check if data from table name is suported for indexing.
   if (!tableIndexDetails) return {};
 
-  const { indexFnName, indexType } = tableIndexDetails;
+  const { idField, indexFnName, indexType } = tableIndexDetails;
 
-  // get the hash and range (if any) and use them as id key for ES
-  const fields = unwrap(get(record, 'dynamodb.Keys'));
-  const body = unwrap(get(record, 'dynamodb.NewImage'));
-  const data = Object.assign({}, fields, body);
-
-  const oldBody = unwrap(get(record, 'dynamodb.OldImage'));
-  const oldData = Object.assign({}, fields, oldBody);
+  const data = unwrap(get(record, 'dynamodb.NewImage'));
+  const oldData = unwrap(get(record, 'dynamodb.OldImage'));
 
   if (record.eventName === 'REMOVE') {
     // delete from files associated with a granule
-    if (indexType === 'granule') await performFilesDelete(oldBody);
-    return performDelete(esClient, indexType, fields, oldBody);
+    if (indexType === 'granule') await performFilesDelete(oldData);
+    return performDelete(esClient, indexType, idField, oldData);
   }
 
   // add files associated with a granule
