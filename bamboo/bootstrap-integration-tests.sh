@@ -14,7 +14,6 @@ npm install
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-skip-integration-tests.sh
 
-export VERSION_FLAG=v1.17.0
 
 if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   echo "***Deploying stack with deployment packages"
