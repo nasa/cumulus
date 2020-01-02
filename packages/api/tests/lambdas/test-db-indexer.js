@@ -22,7 +22,7 @@ const {
   getTableName,
   getTableIndexDetails,
   handler,
-  performDelete
+  getParentId
 } = dbIndexer;
 
 let esClient;
@@ -154,6 +154,20 @@ test.after.always(async () => {
 
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
+});
+
+test.todo('getRecordId() returns correct ID for collection record');
+test.todo('getRecordId() returns correct ID for non-collection record');
+
+test('getParentId() returns correct ID for granule record', (t) => {
+  const granule = {
+    collectionId: randomString()
+  };
+  t.is(getParentId('granule', granule), granule.collectionId);
+});
+
+test('getParentId() returns null for non-granule record', (t) => {
+  t.is(getParentId('collection', {}), null);
 });
 
 test('getTableName() returns undefined for invalid input', (t) => {

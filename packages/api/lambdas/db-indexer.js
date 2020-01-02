@@ -224,5 +224,6 @@ const handler = async ({ Records }) =>
 module.exports = {
   getTableName,
   getTableIndexDetails,
+  getParentId,
   handler
 };
