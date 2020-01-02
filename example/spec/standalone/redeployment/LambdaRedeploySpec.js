@@ -5,7 +5,6 @@ const path = require('path');
 const { getExecutionHistory } = require('@cumulus/common/StepFunctions');
 const {
   buildAndStartWorkflow,
-  getLambdaAliases,
   getLambdaVersions,
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
@@ -45,11 +44,9 @@ const buildZip = () =>
 
 describe('When a workflow is running and a new version of a workflow lambda is deployed', () => {
   let beforeAllFailed = false;
-  let endAliasVersionNumbers;
   let endVersionNumbers;
   let executionArn;
   let lambdaName;
-  let startAliasVersionNumbers;
   let startVersionNumbers;
 
   const lambdaFile = './lambdas/versionUpTest/index.js';
@@ -69,19 +66,11 @@ describe('When a workflow is running and a new version of a workflow lambda is d
 
       lambdaName = `${config.stackName}-VersionUpTest`;
 
-      const [
-        startVersions,
-        startAliases
-      ] = await Promise.all([
-        getLambdaVersions(lambdaName),
-        getLambdaAliases(lambdaName)
-      ]);
+      const startVersions = await getLambdaVersions(lambdaName);
 
       startVersionNumbers = startVersions
         .map((x) => x.Version)
         .filter((x) => x !== '$LATEST');
-
-      startAliasVersionNumbers = startAliases.map((x) => x.FunctionVersion);
 
       executionArn = await buildAndStartWorkflow(
         config.stackName,
@@ -101,19 +90,11 @@ describe('When a workflow is running and a new version of a workflow lambda is d
       const workflowStatus = await waitForCompletedExecution(executionArn);
       if (workflowStatus !== 'SUCCEEDED') throw new Error(`Workflow failed: ${executionArn}`);
 
-      const [
-        endVersions,
-        endAliases
-      ] = await Promise.all([
-        getLambdaVersions(lambdaName),
-        getLambdaAliases(lambdaName)
-      ]);
+      const endVersions = await getLambdaVersions(lambdaName);
 
       endVersionNumbers = endVersions
         .map((x) => x.Version)
         .filter((x) => x !== '$LATEST');
-
-      endAliasVersionNumbers = endAliases.map((x) => x.FunctionVersion);
     } catch (err) {
       beforeAllFailed = true;
       console.log('Exception in beforeAll():', err);
@@ -144,20 +125,6 @@ describe('When a workflow is running and a new version of a workflow lambda is d
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
       expect(Math.max(...endVersionNumbers) - Math.max(...startVersionNumbers)).toEqual(1);
-    }
-  });
-
-  it('creates an updated Alias', () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
-    else {
-      expect(Math.max(...endAliasVersionNumbers) - Math.max(...startAliasVersionNumbers)).toEqual(1);
-    }
-  });
-
-  it('creates aliases for all deployed versions', () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
-    else {
-      expect(endAliasVersionNumbers.sort()).toEqual(endVersionNumbers.sort());
     }
   });
 });
