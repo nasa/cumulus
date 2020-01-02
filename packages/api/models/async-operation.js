@@ -56,12 +56,19 @@ class AsyncOperation extends Manager {
       asyncOperationTaskDefinition,
       cluster,
       lambdaName,
+      description,
+      operationType,
       payload
     } = params;
 
     // Create the record in the database
     const id = uuidv4();
-    await this.create({ id, status: 'RUNNING' });
+    await this.create({
+      id,
+      status: 'RUNNING',
+      description,
+      operationType
+    });
 
     // Store the payload to S3
     const payloadBucket = this.systemBucket;
@@ -99,6 +106,8 @@ class AsyncOperation extends Manager {
         { id },
         {
           status: 'RUNNER_FAILED',
+          description,
+          operationType,
           output: JSON.stringify({
             name: 'EcsStartTaskError',
             message: `Failed to start AsyncOperation: ${runTaskResponse.failures[0].reason}`,
@@ -113,7 +122,9 @@ class AsyncOperation extends Manager {
       { id },
       {
         status: 'RUNNING',
-        taskArn: runTaskResponse.tasks[0].taskArn
+        taskArn: runTaskResponse.tasks[0].taskArn,
+        description,
+        operationType
       }
     );
   }
