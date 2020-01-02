@@ -25,28 +25,23 @@ const getTableIndexDetails = (tableName) => {
     },
     [process.env.ExecutionsTable]: {
       indexFnName: 'indexExecution',
-      indexType: 'execution',
-      idField: 'arn'
+      indexType: 'execution'
     },
     [process.env.GranulesTable]: {
       indexFnName: 'indexGranule',
-      indexType: 'granule',
-      idField: 'granuleId'
+      indexType: 'granule'
     },
     [process.env.PdrsTable]: {
       indexFnName: 'indexPdr',
-      indexType: 'pdr',
-      idField: 'pdrName'
+      indexType: 'pdr'
     },
     [process.env.ProvidersTable]: {
       indexFnName: 'indexProvider',
-      indexType: 'provider',
-      idField: 'id'
+      indexType: 'provider'
     },
     [process.env.RulesTable]: {
       indexFnName: 'indexRule',
-      indexType: 'rule',
-      idField: 'name'
+      indexType: 'rule'
     }
   };
   return indexTables[tableName];
