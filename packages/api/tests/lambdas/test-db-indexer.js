@@ -21,7 +21,8 @@ const {
 const {
   getTableName,
   getTableIndexDetails,
-  handler
+  handler,
+  performDelete
 } = dbIndexer;
 
 let esClient;

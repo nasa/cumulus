@@ -96,6 +96,35 @@ function getTableName(sourceArn) {
 }
 
 /**
+ * Get record ID.
+ *
+ * @param {string} type - type of record to index
+ * @param {string} idField - name of field to use for record ID
+ * @param {Object} record - the record to be indexed
+ * @returns {string} record ID
+ */
+function getRecordId(type, idField, record) {
+  if (type === 'collection') {
+    return constructCollectionId(record.name, record.version);
+  }
+  return record[idField];
+}
+
+/**
+ * Get parent record ID.
+ *
+ * @param {string} type - type of record to index
+ * @param {Object} record - the record to be indexed
+ * @returns {string} record ID
+ */
+function getParentId(type, record) {
+  if (type === 'granule') {
+    return record.collectionId;
+  }
+  return null;
+}
+
+/**
  * Perform the record indexing
  *
  * @param {string} indexFnName - Function name to index the record to Elasticsearch
@@ -112,30 +141,17 @@ function performIndex(indexFnName, esClient, data) {
  *
  * @param {Object} esClient - ElasticSearch connection client
  * @param {string} type - type of record to index
- * @param {string} idField - name of field to use for record ID
- * @param {Object} body - the body of the record
+ * @param {string} id - record ID
+ * @param {string} parentId - ID of parent record
  * @returns {Promise<Object>} elasticsearch response
  */
-function performDelete(esClient, type, idField, body) {
-  let id;
-  let parent;
-
-  if (type === 'collection') {
-    id = constructCollectionId(body.name, body.version);
-  } else {
-    id = body[idField];
-  }
-
-  if (type === 'granule') {
-    parent = body.collectionId;
-  }
-
+function performDelete(esClient, type, id, parentId) {
   return indexer
     .deleteRecord({
       esClient,
       id,
       type,
-      parent,
+      parent: parentId,
       index: process.env.ES_INDEX
     });
 }
@@ -163,13 +179,17 @@ async function indexRecord(esClient, record) {
 
   const { idField, indexFnName, indexType } = tableIndexDetails;
 
+  const keys = unwrap(get(record, 'dynamodb.Keys'));
   const data = unwrap(get(record, 'dynamodb.NewImage'));
   const oldData = unwrap(get(record, 'dynamodb.OldImage'));
+
+  const id = getRecordId(indexType, idField, keys);
 
   if (record.eventName === 'REMOVE') {
     // delete from files associated with a granule
     if (indexType === 'granule') await performFilesDelete(oldData);
-    return performDelete(esClient, indexType, idField, oldData);
+    const parentId = getParentId(indexType, oldData);
+    return performDelete(esClient, indexType, id, parentId);
   }
 
   // add files associated with a granule
