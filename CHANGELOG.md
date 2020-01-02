@@ -27,6 +27,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `Replay Kinesis Messages` documentation to Operator Docs.
   - Added `manualConsumer` lambda function to consume a Kinesis stream. Used by the replay AsyncOperation.
 
+- **CUMULUS-1687**
+  - Added new API endpoint for listing async operations at `/asyncOperations`
+  - All asyncOperations now include the fields `description` and `operationType`. `operationType` can be one of the following. [`Bulk Delete`, `Bulk Granules`, `ES Index`, `Kinesis Replay`]
+
 ### Changed
 
 - **CUMULUS-1626**
@@ -36,6 +40,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1664**
   - Updated `dbIndexer` Lambda to remove hardcoded references to DynamoDB table names.
+
+### Removed
+
+- **CUMULUS-1481**
+  - removed `process` config and output from PostToCmr as it was not required by the task nor downstream steps, and should still be in the output message's `meta` regardless.
 
 ## [v1.16.1] - 2019-12-6
 
