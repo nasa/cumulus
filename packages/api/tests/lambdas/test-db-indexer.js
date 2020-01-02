@@ -167,6 +167,13 @@ test('getTableIndexDetails() returns undefined for unsupported table', (t) => {
   t.is(getTableIndexDetails(process.env.FilesTable), undefined);
 });
 
+test('getTableIndexDetails() returns the correct function name and index type', (t) => {
+  t.deepEqual(getTableIndexDetails(process.env.CollectionsTable), {
+    indexFnName: 'indexCollection',
+    indexType: 'collection'
+  });
+});
+
 test.serial('create, update and delete a collection in dynamodb and es', async (t) => {
   const { esAlias } = t.context;
 
