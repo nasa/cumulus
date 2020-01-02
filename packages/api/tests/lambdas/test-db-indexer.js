@@ -162,6 +162,12 @@ test('getTableName() returns undefined for invalid input', (t) => {
   );
 });
 
+test('getTableName() returns the full name of the DynamoDB table associated with the incoming record', (t) => {
+  const tableName = randomString();
+  const eventSourceARN = `arn:aws:dynamodb:us-east-1:account-id:table/${tableName}/stream/2015-06-27T00:48:05.899`;
+  t.is(getTableName(eventSourceARN), tableName);
+});
+
 test('getTableIndexDetails() returns undefined for unsupported table', (t) => {
   t.is(getTableIndexDetails('fake-table-name'), undefined);
   t.is(getTableIndexDetails(process.env.FilesTable), undefined);
@@ -173,6 +179,11 @@ test('getTableIndexDetails() returns the correct function name and index type', 
     indexType: 'collection'
   });
 });
+
+test.todo('performFilesDelete() deletes files associated with a given granule');
+test.todo('performFilesAddition() creates files');
+test.todo('performFilesAddition() remove files that are no longer in the granule');
+test.todo('performIndex() indexes a record');
 
 test.serial('create, update and delete a collection in dynamodb and es', async (t) => {
   const { esAlias } = t.context;
