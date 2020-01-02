@@ -86,7 +86,7 @@ test('CUMULUS-912 GET with pathParameters and with an invalid access token retur
 
 test.todo('CUMULUS-912 GET with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test.serial.only('GET returns an existing collection', async (t) => {
+test.serial('GET returns an existing collection', async (t) => {
   const stub = sinon.stub(EsCollection.prototype, 'getStats').returns([t.context.testCollection]);
   const response = await request(app)
     .get(`/collections/${t.context.testCollection.name}/${t.context.testCollection.version}`)

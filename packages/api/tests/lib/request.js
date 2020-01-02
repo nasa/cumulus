@@ -93,7 +93,7 @@ test('verifyJwtAuthorization() throws TokenExpiredError for expired token', asyn
   }
 });
 
-test.only('verifyJwtAuthorization() throws TokenUnauthorizedUserError for unauthorized user token', async (t) => {
+test('verifyJwtAuthorization() throws TokenUnauthorizedUserError for unauthorized user token', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory();
   const jwtToken = createJwtToken(accessTokenRecord);
 
