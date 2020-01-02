@@ -20,7 +20,7 @@ const {
 
 const {
   getTableName,
-  isTableNameSupportedForIndex,
+  getTableIndexDetails,
   handler
 } = dbIndexer;
 
@@ -162,9 +162,9 @@ test('getTableName() returns undefined for invalid input', (t) => {
   );
 });
 
-test('isTableNameSupportedForIndex() returns false for unsupported table', (t) => {
-  t.false(isTableNameSupportedForIndex('fake-table-name'));
-  t.false(isTableNameSupportedForIndex(process.env.FilesTable));
+test('getTableIndexDetails() returns undefined for unsupported table', (t) => {
+  t.is(getTableIndexDetails('fake-table-name'), undefined);
+  t.is(getTableIndexDetails(process.env.FilesTable), undefined);
 });
 
 test.serial('create, update and delete a collection in dynamodb and es', async (t) => {

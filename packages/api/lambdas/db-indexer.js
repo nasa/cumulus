@@ -11,59 +11,41 @@ const { Search } = require('../es/search');
 const unwrap = AttributeValue.unwrap;
 
 /**
- * Get the index type to use for indexing data from the given
+ * Get the index details to use for indexing data from the given
  * DynamoDB table.
  *
  * @param {string} tableName - DynamoDB table name
- * @returns {string} Index type to use for indexing data
+ * @returns {Object} Index details to use for the table
  */
-const mapTableNameToIndexType = (tableName) => {
-  const indexTypesByTableName = {
-    [process.env.CollectionsTable]: 'collection',
-    [process.env.ExecutionsTable]: 'execution',
-    [process.env.GranulesTable]: 'granule',
-    [process.env.PdrsTable]: 'pdr',
-    [process.env.ProvidersTable]: 'provider',
-    [process.env.RulesTable]: 'rule'
+const getTableIndexDetails = (tableName) => {
+  const indexTables = {
+    [process.env.CollectionsTable]: {
+      indexFnName: 'indexCollection',
+      indexType: 'collection'
+    },
+    [process.env.ExecutionsTable]: {
+      indexFnName: 'indexExecution',
+      indexType: 'execution'
+    },
+    [process.env.GranulesTable]: {
+      indexFnName: 'indexGranule',
+      indexType: 'granule'
+    },
+    [process.env.PdrsTable]: {
+      indexFnName: 'indexPdr',
+      indexType: 'pdr'
+    },
+    [process.env.ProvidersTable]: {
+      indexFnName: 'indexProvider',
+      indexType: 'provider'
+    },
+    [process.env.RulesTable]: {
+      indexFnName: 'indexRule',
+      indexType: 'rule'
+    }
   };
-  return indexTypesByTableName[tableName];
+  return indexTables[tableName];
 };
-
-/**
- * Get the function name to use for indexing data from the given
- * DynamoDB table.
- *
- * @param {string} tableName - DynamoDB table name
- * @returns {string} Function name to use for indexing data
- */
-const mapTableNameToIndexFunction = (tableName) => {
-  const indexFunctionsByTableName = {
-    [process.env.CollectionsTable]: 'indexCollection',
-    [process.env.ExecutionsTable]: 'indexExecution',
-    [process.env.GranulesTable]: 'indexGranule',
-    [process.env.PdrsTable]: 'indexPdr',
-    [process.env.ProvidersTable]: 'indexProvider',
-    [process.env.RulesTable]: 'indexRule'
-  };
-  return indexFunctionsByTableName[tableName];
-};
-
-/**
- * Determine if data from DynamoDB is supported for indexing to
- * Elasticsearch.
- *
- * @param {string} tableName - DynamoDB table name
- * @returns {boolean} True if table is supported for indexing
- */
-const isTableNameSupportedForIndex = (tableName) =>
-  [
-    process.env.CollectionsTable,
-    process.env.ExecutionsTable,
-    process.env.GranulesTable,
-    process.env.PdrsTable,
-    process.env.ProvidersTable,
-    process.env.RulesTable
-  ].includes(tableName);
 
 /**
  * Delete files associated with a given granule.
@@ -169,11 +151,12 @@ async function indexRecord(esClient, record) {
   const tableName = getTableName(record.eventSourceARN);
   if (!tableName) return {};
 
-  // Check if data from table name is suported for indexing.
-  if (!isTableNameSupportedForIndex(tableName)) return {};
+  const tableIndexDetails = getTableIndexDetails(tableName);
 
-  const indexFnName = mapTableNameToIndexFunction(tableName);
-  const indexType = mapTableNameToIndexType(tableName);
+  // Check if data from table name is suported for indexing.
+  if (!tableIndexDetails) return {};
+
+  const { indexFnName, indexType } = tableIndexDetails;
 
   // get the hash and range (if any) and use them as id key for ES
   const fields = unwrap(get(record, 'dynamodb.Keys'));
@@ -220,6 +203,6 @@ const handler = async ({ Records }) =>
 
 module.exports = {
   getTableName,
-  isTableNameSupportedForIndex,
+  getTableIndexDetails,
   handler
 };
