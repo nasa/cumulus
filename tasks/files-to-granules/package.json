@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/files-to-granules",
-  "version": "1.16.1",
+  "version": "1.17.0",
   "description": "Converts array-of-files input into a granules object by extracting granuleId from filename",
   "main": "index.js",
   "directories": {
@@ -38,7 +38,7 @@
     "lodash.keyby": "^4.6.0"
   },
   "devDependencies": {
-    "@cumulus/common": "1.16.1",
+    "@cumulus/common": "1.17.0",
     "ava": "^2.1.0",
     "babel-loader": "^8.0.6",
     "babel-plugin-source-map-support": "^2.1.1",
