@@ -28,6 +28,7 @@ const {
   getRecordId,
   performFilesAddition,
   performFilesDelete,
+  performDelete,
   performIndex
 } = dbIndexer;
 
@@ -273,7 +274,7 @@ test('performFilesAddition() remove files that are no longer in the granule', as
   );
 });
 
-test('performIndex() indexes a record', async (t) => {
+test('performIndex() indexes a record to ES', async (t) => {
   const { esAlias } = t.context;
   const providerIndex = new Search({}, 'provider', esAlias);
   const provider = fakeProviderFactory();
@@ -285,7 +286,21 @@ test('performIndex() indexes a record', async (t) => {
   t.deepEqual(indexedRecord, provider);
 });
 
-test.serial('create, update and delete a collection in dynamodb and es', async (t) => {
+test('performDelete() deletes a record from ES', async (t) => {
+  const { esAlias } = t.context;
+  const providerIndex = new Search({}, 'provider', esAlias);
+  const provider = fakeProviderFactory();
+
+  await performIndex('indexProvider', esClient, provider);
+  const indexedRecord = await providerIndex.get(provider.id);
+  t.is(indexedRecord.id, provider.id);
+
+  await performDelete(esClient, 'provider', provider.id);
+  const deletedRecord = await providerIndex.get(provider.id);
+  t.is(deletedRecord.detail, 'Record not found');
+});
+
+test.serial('create, update and delete a collection in DynamoDB and ES', async (t) => {
   const { esAlias } = t.context;
 
   const c = fakeCollectionFactory();
@@ -329,7 +344,7 @@ test.serial('create, update and delete a collection in dynamodb and es', async (
   t.is(response.detail, 'Record not found');
 });
 
-test.serial('create, update and delete a granule in dynamodb and es', async (t) => {
+test.serial('create, update and delete a granule in DynamoDB and ES', async (t) => {
   const { esAlias } = t.context;
 
   const fakeFile = fakeFileFactory();
@@ -390,7 +405,7 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
   t.is(deletedGranRecord.granuleId, fakeGranule.granuleId);
 });
 
-test.serial('create, update and delete an execution in dynamodb and es', async (t) => {
+test.serial('create, update and delete an execution in DynamoDB and es', async (t) => {
   const { esAlias } = t.context;
 
   const fakeRecord = fakeExecutionFactory();

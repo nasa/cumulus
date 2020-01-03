@@ -241,5 +241,6 @@ module.exports = {
   handler,
   performFilesAddition,
   performFilesDelete,
+  performDelete,
   performIndex
 };
