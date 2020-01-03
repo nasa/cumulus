@@ -240,5 +240,6 @@ module.exports = {
   getRecordId,
   handler,
   performFilesAddition,
-  performFilesDelete
+  performFilesDelete,
+  performIndex
 };

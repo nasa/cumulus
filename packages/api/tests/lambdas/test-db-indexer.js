@@ -16,7 +16,8 @@ const {
   fakeCollectionFactory,
   fakeGranuleFactoryV2,
   fakeExecutionFactory,
-  fakeFileFactory
+  fakeFileFactory,
+  fakeProviderFactory
 } = require('../../lib/testUtils');
 
 const {
@@ -26,7 +27,8 @@ const {
   getParentId,
   getRecordId,
   performFilesAddition,
-  performFilesDelete
+  performFilesDelete,
+  performIndex
 } = dbIndexer;
 
 let esClient;
@@ -271,7 +273,17 @@ test('performFilesAddition() remove files that are no longer in the granule', as
   );
 });
 
-test.todo('performIndex() indexes a record');
+test('performIndex() indexes a record', async (t) => {
+  const { esAlias } = t.context;
+  const providerIndex = new Search({}, 'provider', esAlias);
+  const provider = fakeProviderFactory();
+  await performIndex('indexProvider', esClient, provider);
+  const indexedRecord = await providerIndex.get(provider.id);
+  // delete dynamically generated values for comparisons
+  delete indexedRecord._id;
+  delete indexedRecord.timestamp;
+  t.deepEqual(indexedRecord, provider);
+});
 
 test.serial('create, update and delete a collection in dynamodb and es', async (t) => {
   const { esAlias } = t.context;
