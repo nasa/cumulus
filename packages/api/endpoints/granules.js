@@ -212,11 +212,23 @@ async function bulk(req, res) {
     tableName: process.env.AsyncOperationsTable
   });
 
+  let description;
+
+  if (payload.query) {
+    description = `Bulk run ${payload.workflowName} on ${payload.query.size} granules`;
+  } else if (payload.ids) {
+    description = `Bulk run ${payload.workflowName} on ${payload.ids.length} granules`;
+  } else {
+    description = `Bulk run on ${payload.workflowName}`;
+  }
+
   try {
     const asyncOperation = await asyncOperationModel.start({
       asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
       cluster: process.env.EcsCluster,
       lambdaName: process.env.BulkOperationLambda,
+      description,
+      operationType: 'Bulk Granules',
       payload: {
         payload,
         type: 'BULK_GRANULE',

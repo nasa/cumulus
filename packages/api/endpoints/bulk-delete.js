@@ -23,6 +23,8 @@ async function startBulkDeleteAsyncOperation(req, res) {
       asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
       cluster: process.env.EcsCluster,
       lambdaName: process.env.BulkDeleteLambda,
+      description: 'Bulk Delete',
+      operationType: 'Bulk Delete',
       payload: { granuleIds: req.body.granuleIds }
     });
   } catch (err) {
