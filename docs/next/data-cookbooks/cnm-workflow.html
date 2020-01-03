@@ -96,14 +96,14 @@ s are using, however your environment/security policies may require an approach 
 <p>The following <a href="/cumulus/docs/next/workflows/workflows-readme">workflow definition</a> should be added to a new <code>.tf</code> workflow resource (e.g. <code>cnm_workflow.tf</code>) in your deployment directory.</p>
 <p>Add the following to the new terraform file in your deployment directory, updating the following:</p>
 <ul>
-<li>Set the <code>CNMResponseStream</code> key in the <code>CnmResponse</code> task in the workflow JSON to match the name of the Kinesis response stream you configured in the prerequisites section</li>
+<li>Set the <code>response-endpoint</code> key in the <code>CnmResponse</code> task in the workflow JSON to match the name of the Kinesis response stream you configured in the prerequisites section</li>
 <li>Update the <code>source</code> key to the workflow module to match the Cumulus release associated with your deployment.</li>
 </ul>
-<pre><code class="hljs css language-hcl">module <span class="hljs-string">"parse_pdr_workflow"</span> {
+<pre><code class="hljs css language-hcl">module <span class="hljs-string">"cnm_workflow"</span> {
   source = <span class="hljs-string">"https://github.com/nasa/cumulus/releases/download/{version}/terraform-aws-cumulus-workflow.zip"</span>
 
   prefix                                = var.prefix
-  name                                  = <span class="hljs-string">"ParsePdr"</span>
+  name                                  = <span class="hljs-string">"CNMExampleWorkflow"</span>
   workflow_config                       = module.cumulus.workflow_config
   system_bucket                         = var.system_bucket
   tags                                  = local.default_tags
@@ -120,6 +120,7 @@ state_machine_definition = &lt;&lt;JSON
           <span class="hljs-string">"cma"</span>: {
             <span class="hljs-string">"event.<span class="hljs-variable">$</span>"</span>: <span class="hljs-string">"<span class="hljs-variable">$</span>"</span>,
             <span class="hljs-string">"task_config"</span>: {
+              <span class="hljs-string">"collection"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.meta.collection}"</span>,
               <span class="hljs-string">"cumulus_message"</span>: {
                 <span class="hljs-string">"outputs"</span>: [
                   {
@@ -199,8 +200,9 @@ state_machine_definition = &lt;&lt;JSON
             <span class="hljs-string">"event.<span class="hljs-variable">$</span>"</span>: <span class="hljs-string">"<span class="hljs-variable">$</span>"</span>,
             <span class="hljs-string">"task_config"</span>: {
               <span class="hljs-string">"OriginalCNM"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.meta.cnm}"</span>,
-              <span class="hljs-string">"CNMResponseStream"</span>: <span class="hljs-string">"ADD YOUR RESPONSE STREAM HERE"</span>,
+              <span class="hljs-string">"response-endpoint"</span>: <span class="hljs-string">"ADD YOUR RESPONSE STREAM NAME HERE"</span>,
               <span class="hljs-string">"region"</span>: <span class="hljs-string">"us-east-1"</span>,
+              <span class="hljs-string">"type"</span>: <span class="hljs-string">"kinesis"</span>,
               <span class="hljs-string">"WorkflowException"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.exception}"</span>,
               <span class="hljs-string">"cumulus_message"</span>: {
                 <span class="hljs-string">"outputs"</span>: [
@@ -231,7 +233,7 @@ state_machine_definition = &lt;&lt;JSON
 }
 JSON
 </code></pre>
-<p>Again, please make sure to modify the value CNMResponseStream to match the stream name (not ARN) for your Kinesis response stream.</p>
+<p>Again, please make sure to modify the value <code>response-endpoint</code> to match the stream name (not ARN) for your Kinesis response stream.</p>
 <h3><a class="anchor" aria-hidden="true" id="lambda-configuration"></a><a href="#lambda-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Lambda Configuration</h3>
 <p>To execute this workflow, you're required to include several Lambda resources in your deployment. To do this, add the following task (Lambda) definitions to your deployment along with the workflow you created above:</p>
 <ul>
@@ -239,22 +241,26 @@ JSON
 <li><a href="https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_response_task.tf">https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_response_task.tf</a></li>
 </ul>
 <p><strong>Please note:</strong> To utilize these tasks you need to ensure you have a compatible CMA layer. See the <a href="/cumulus/docs/next/deployment/deployment-readme#deploy-cumulus-message-adapter-layer">deployment instructions</a> for more details on how to deploy a CMA layer.</p>
+<p>For NASA Bitbucket users, the source code for these tasks can be found in these repositories:</p>
+<ul>
+<li><code>CNMToCMA</code>: <a href="https://git.earthdata.nasa.gov/projects/POCUMULUS/repos/cnmtogranule/browse">https://git.earthdata.nasa.gov/projects/POCUMULUS/repos/cnmtogranule/browse</a></li>
+<li><code>CnmResponse</code>: <a href="https://git.earthdata.nasa.gov/projects/POCUMULUS/repos/cnmresponsetask/browse">https://git.earthdata.nasa.gov/projects/POCUMULUS/repos/cnmresponsetask/browse</a></li>
+</ul>
 <p>Below is a description of each of these tasks:</p>
 <h4><a class="anchor" aria-hidden="true" id="cnmtocma"></a><a href="#cnmtocma" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>CNMToCMA</h4>
 <p><code>CNMToCMA</code> is meant for the beginning of a workflow: it maps CNM granule information to a payload for downstream tasks. For other CNM workflows, you would need to ensure that downstream tasks in your workflow either understand the CNM message <em>or</em> include a translation task like this one.</p>
 <p>You can also manipulate the data sent to downstream tasks using <code>task_config</code> for various states in your workflow resource configuration. Read more about how to configure data on the <a href="https://nasa.github.io/cumulus/docs/workflows/input_output">Workflow Input &amp; Output</a> page.</p>
 <h5><a class="anchor" aria-hidden="true" id="cnmresponse"></a><a href="#cnmresponse" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>CnmResponse</h5>
-<p>The <code>CnmResponse</code> Lambda generates a CNM response message and puts it on a the <code>CNMResponseStream</code> Kinesis stream.</p>
-<p>The <code>CnmResponse</code> Lambda package is provided (as of release 1.8) in the <code>cumulus-data-shared</code> bucket, with documentation provided in the <a href="https://git.earthdata.nasa.gov/projects/POCUMULUS/repos/cnmresponsetask/browse">source repository</a>.</p>
-<p>You can read more about the expected schema a <code>CnmResponse</code> record on the wiki page for <a href="https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism#CloudNotificationMechanism-ResponseMessageFields">Cloud Notification Mechanism</a>.</p>
+<p>The <code>CnmResponse</code> Lambda generates a CNM response message and puts it on the <code>response-endpoint</code> Kinesis stream.</p>
+<p>You can read more about the expected schema of a <code>CnmResponse</code> record on the wiki page for <a href="https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism#CloudNotificationMechanism-ResponseMessageFields">Cloud Notification Mechanism</a>.</p>
 <h5><a class="anchor" aria-hidden="true" id="additional-tasks"></a><a href="#additional-tasks" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Additional Tasks</h5>
 <p>Lastly, this entry also makes use of the <code>SyncGranule</code> task from the <a href="https://github.com/nasa/cumulus/releases"><code>cumulus</code> module</a>.</p>
 <h3><a class="anchor" aria-hidden="true" id="redeploy"></a><a href="#redeploy" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Redeploy</h3>
 <p>Once the above configuration changes have been made, redeploy your stack.</p>
-<p>Please refer to <code>Updating Cumulus deployment</code> in the <a href="/cumulus/docs/next/deployment/deployment-readme">deployment documentation</a> if you are unfamiliar with redeployment.</p>
+<p>Please refer to <code>Update Cumulus resources</code> in the <a href="/cumulus/docs/next/deployment/upgrade-readme#update-cumulus-resources">deployment documentation</a> if you are unfamiliar with redeployment.</p>
 <h3><a class="anchor" aria-hidden="true" id="rule-configuration"></a><a href="#rule-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Rule Configuration</h3>
 <p>Cumulus includes a <code>messageConsumer</code> Lambda function (<a href="https://github.com/nasa/cumulus/blob/master/packages/api/lambdas/message-consumer.js">message-consumer</a>). Cumulus kinesis-type rules create the <a href="https://docs.aws.amazon.com/lambda/latest/dg/API_CreateEventSourceMapping.html">event source mappings</a> between Kinesis streams and the <code>messageConsumer</code> Lambda. The <code>messageConsumer</code> Lambda consumes records from one or more Kinesis streams, as defined by enabled kinesis-type rules. When new records are pushed to one of these streams, the <code>messageConsumer</code> triggers workflows associated with the enabled kinesis-type rules.</p>
-<p>To add a rule via the dashboard (if you'd like to use the API, see the docs <a href="https://nasa.github.io/cumulus-api/#create-rule">here</a>), navigate to the <code>Rules</code> page and click <code>Add a rule</code>, then configure the new rule using the following template (substituting correct values for parameters denoted by <code>${}</code>:</p>
+<p>To add a rule via the dashboard (if you'd like to use the API, see the docs <a href="https://nasa.github.io/cumulus-api/#create-rule">here</a>), navigate to the <code>Rules</code> page and click <code>Add a rule</code>, then configure the new rule using the following template (substituting correct values for parameters denoted by <code>${}</code>):</p>
 <pre><code class="hljs css language-json">{
   <span class="hljs-attr">"collection"</span>: {
     <span class="hljs-attr">"name"</span>: <span class="hljs-string">"L2_HR_PIXC"</span>,
@@ -280,22 +286,22 @@ JSON
 <h2><a class="anchor" aria-hidden="true" id="execute-the-workflow"></a><a href="#execute-the-workflow" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Execute the Workflow</h2>
 <p>Once Cumulus has been redeployed and a rule has been added, we're ready to trigger the workflow and watch it execute.</p>
 <h3><a class="anchor" aria-hidden="true" id="how-to-trigger-the-workflow"></a><a href="#how-to-trigger-the-workflow" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>How to Trigger the Workflow</h3>
-<p>To trigger matching workflows, you will need to put a record on the Kinesis stream the <a href="https://github.com/nasa/cumulus/blob/master/packages/api/lambdas/message-consumer.js">message-consumer</a> Lambda will recognize as a matching event. Most importantly, it should include a <code>collection</code> key / value pair that matches a valid collection.</p>
+<p>To trigger matching workflows, you will need to put a record on the Kinesis stream that the <a href="https://github.com/nasa/cumulus/blob/master/packages/api/lambdas/message-consumer.js">message-consumer</a> Lambda will recognize as a matching event. Most importantly, it should include a <code>collection</code> name that matches a valid collection.</p>
 <p>For the purpose of this example, the easiest way to accomplish this is using the <a href="https://aws.amazon.com/cli/">AWS CLI</a>.</p>
 <h4><a class="anchor" aria-hidden="true" id="create-record-json"></a><a href="#create-record-json" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create Record JSON</h4>
 <p>Construct a JSON file containing an object that matches the values that have been previously setup. This JSON object should be a valid <a href="https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism">Cloud Notification Mechanism</a> message.</p>
 <p><strong>Please note</strong>: <em>this example is somewhat contrived, as the downstream tasks don't care about most of these fields. A 'real' data ingest workflow would.</em></p>
-<p>The following values (denoted by ${} in the sample below) should be replaced to match values we've previously configured:</p>
+<p>The following values (denoted by <code>${}</code> in the sample below) should be replaced to match values we've previously configured:</p>
 <ul>
 <li><code>TEST_DATA_FILE_NAME</code>: The filename of the test data that is available in the S3 (or other) provider we created earlier.</li>
 <li><code>TEST_DATA_URI</code>: The full S3 path to the test data (e.g. <a href="s3://bucket-name/path/granule">s3://bucket-name/path/granule</a>)</li>
-<li><code>COLLECTION</code>: The collection defined in the prerequisites for this product</li>
+<li><code>COLLECTION</code>: The collection name defined in the prerequisites for this product</li>
 </ul>
 <pre><code class="hljs css language-json">{
   <span class="hljs-attr">"product"</span>: {
     <span class="hljs-attr">"files"</span>: [
       {
-        <span class="hljs-attr">"checksum-type"</span>: <span class="hljs-string">"md5"</span>,
+        <span class="hljs-attr">"checksumType"</span>: <span class="hljs-string">"md5"</span>,
         <span class="hljs-attr">"name"</span>: <span class="hljs-string">"${TEST_DATA_FILE_NAME}"</span>,
         <span class="hljs-attr">"checksum"</span>: <span class="hljs-string">"bogus_checksum_value"</span>,
         <span class="hljs-attr">"uri"</span>: <span class="hljs-string">"${TEST_DATA_URI}"</span>,
@@ -328,7 +334,7 @@ JSON
 <h3><a class="anchor" aria-hidden="true" id="verify-workflow-execution"></a><a href="#verify-workflow-execution" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Verify Workflow Execution</h3>
 <p>As detailed above, once the record is added to the Kinesis data stream, the <code>messageConsumer</code> Lambda will trigger the <code>CNMExampleWorkflow</code> .</p>
 <h4><a class="anchor" aria-hidden="true" id="translatemessage"></a><a href="#translatemessage" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>TranslateMessage</h4>
-<p><code>TranslateMessage</code> (which corresponds to the <code>CNMToCMA</code> Lambda) will take the CNM object payload and add a granules object to the CMA payload that's consistent with other Cumulus ingest tasks, and add a key 'cnm' to 'meta' (as well as the payload) to store the original message.</p>
+<p><code>TranslateMessage</code> (which corresponds to the <code>CNMToCMA</code> Lambda) will take the CNM object payload and add a granules object to the CMA payload that's consistent with other Cumulus ingest tasks, and add a <code>meta.cnm</code> key (as well as the payload) to store the original message.</p>
 <p><em>For more on the Message Adapter, please see <a href="/cumulus/docs/next/workflows/cumulus-task-message-flow">the Message Flow documentation</a></em>.</p>
 <p>An example of what is happening in the <code>CNMToCMA</code> Lambda is as follows:</p>
 <p>Example Input Payload:</p>
@@ -337,7 +343,7 @@ JSON
   "product": {
     "files": [
       {
-        "checksum-type": "md5",
+        "checksumType": "md5",
         "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
         "checksum": "bogus_checksum_value",
         "uri": "s3://some_bucket/cumulus-test-data/pdrs/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
@@ -360,7 +366,7 @@ JSON
       "product": {
         "files": [
           {
-            "checksum-type": "md5",
+            "checksumType": "md5",
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
             "checksum": "bogus_checksum_value",
             "uri": "s3://some-bucket/cumulus-test-data/data/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
@@ -394,9 +400,9 @@ JSON
 <h4><a class="anchor" aria-hidden="true" id="syncgranules"></a><a href="#syncgranules" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>SyncGranules</h4>
 <p>This Lambda will take the files listed in the payload and move them to <code>s3://{deployment-private-bucket}/file-staging/{deployment-name}/{COLLECTION}/{file_name}</code>.</p>
 <h4><a class="anchor" aria-hidden="true" id="cnmresponse-1"></a><a href="#cnmresponse-1" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>CnmResponse</h4>
-<p>Assuming a successful execution of the workflow, this task will recover the 'cnm' key from the 'meta' portion of the CMA output, and add a &quot;SUCCESS&quot; record to the notification Kinesis stream.</p>
+<p>Assuming a successful execution of the workflow, this task will recover the <code>meta.cnm</code> key from the CMA output, and add a &quot;SUCCESS&quot; record to the notification Kinesis stream.</p>
 <p>If a prior step in the the workflow has failed, this will add a &quot;FAILURE&quot; record to the stream instead.</p>
-<p>The data written to the <code>CnmResponseStream</code> should adhere to the <a href="https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism#CloudNotificationMechanism-ResponseMessageFields">Response Message Fields</a> schema.</p>
+<p>The data written to the <code>response-endpoint</code> should adhere to the <a href="https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism#CloudNotificationMechanism-ResponseMessageFields">Response Message Fields</a> schema.</p>
 <p><strong>Example CNM Success Response</strong>:</p>
 <pre><code class="hljs css language-json">{
   <span class="hljs-attr">"provider"</span>: <span class="hljs-string">"PODAAC_SWOT"</span>,
@@ -420,13 +426,13 @@ JSON
   <span class="hljs-attr">"identifier"</span>: <span class="hljs-string">"1234-abcd-efg0-9876"</span>,
   <span class="hljs-attr">"response"</span>: {
     <span class="hljs-attr">"status"</span>: <span class="hljs-string">"FAILURE"</span>,
-    <span class="hljs-attr">"errorCode"</span>: <span class="hljs-string">"INGEST_ERROR"</span>,
+    <span class="hljs-attr">"errorCode"</span>: <span class="hljs-string">"PROCESSING_ERROR"</span>,
     <span class="hljs-attr">"errorMessage"</span>: <span class="hljs-string">"File [cumulus-dev-a4d38f59-5e57-590c-a2be-58640db02d91/prod_20170926T11:30:36/production_file.nc] did not match gve checksum value."</span>
   }
 }
 </code></pre>
 <p>Note the <code>CnmResponse</code> state defined in the <code>.tf</code> workflow definition above configures <code>$.exception</code> to be passed to the <code>CnmResponse</code> Lambda keyed under <code>config.WorkflowException</code>. This is required for the <code>CnmResponse</code> code to deliver a failure response.</p>
-<p>To test the failure scenario, send a record missing the <code>collection</code> key.</p>
+<p>To test the failure scenario, send a record missing the <code>product.name</code> key.</p>
 <hr>
 <h2><a class="anchor" aria-hidden="true" id="verify-results"></a><a href="#verify-results" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Verify results</h2>
 <h3><a class="anchor" aria-hidden="true" id="check-for-successful-execution-on-the-dashboard"></a><a href="#check-for-successful-execution-on-the-dashboard" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Check for successful execution on the dashboard</h3>
@@ -435,7 +441,7 @@ JSON
 <h3><a class="anchor" aria-hidden="true" id="check-the-test-granule-has-been-delivered-to-s3-staging"></a><a href="#check-the-test-granule-has-been-delivered-to-s3-staging" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Check the test granule has been delivered to S3 staging</h3>
 <p>The test granule identified in the Kinesis record should be moved to the deployment's private staging area.</p>
 <h3><a class="anchor" aria-hidden="true" id="check-for-kinesis-records"></a><a href="#check-for-kinesis-records" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Check for Kinesis records</h3>
-<p>A <code>SUCCESS</code> notification should be present on the <code>CNMResponseStream</code> Kinesis stream.</p>
+<p>A <code>SUCCESS</code> notification should be present on the <code>response-endpoint</code> Kinesis stream.</p>
 <p>You should be able to validate the notification and response streams have the expected records with the following steps (the AWS CLI Kinesis <a href="https://docs.aws.amazon.com/streams/latest/dev/fundamental-stream.html">Basic Stream Operations</a> is useful to review before proceeding):</p>
 <p>Get a shard iterator (substituting your stream name as appropriate):</p>
 <pre><code class="hljs css language-bash">aws kinesis get-shard-iterator \
@@ -507,9 +513,9 @@ Check the <a href="https://console.aws.amazon.com/sqs/home">Simple Queue Service
 <p>Cumulus includes two Lambdas (<code>KinesisInboundEventLogger</code> and <code>KinesisOutboundEventLogger</code>) that utilize the same code to take a Kinesis record event as input, deserialize the data field and output the modified event to the logs.</p>
 <p>When a <code>kinesis</code> rule is created, in addition to the <code>messageConsumer</code> event mapping, an event mapping is created to trigger <code>KinesisInboundEventLogger</code> to record a log of the inbound record, to allow for analysis in case of unexpected failure.</p>
 <h4><a class="anchor" aria-hidden="true" id="response-stream-messages"></a><a href="#response-stream-messages" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Response Stream messages</h4>
-<p>Cumulus also supports this feature for all outbound messages. To take advantage of this feature, you will need to set an event mapping on the <code>KinesisOutboundEventLogger</code> Lambda that targets your <code>cnmResponseStream</code>. You can do this in the Lambda management page for <code>KinesisOutboundEventLogger</code>. Add a Kinesis trigger, and configure it to target the cnmResponseStream for your workflow:</p>
+<p>Cumulus also supports this feature for all outbound messages. To take advantage of this feature, you will need to set an event mapping on the <code>KinesisOutboundEventLogger</code> Lambda that targets your <code>response-endpoint</code>. You can do this in the Lambda management page for <code>KinesisOutboundEventLogger</code>. Add a Kinesis trigger, and configure it to target the cnmResponseStream for your workflow:</p>
 <p><img src="/cumulus/docs/assets/KinesisLambdaTriggerConfiguration.png" alt="Screenshot of the AWS console showing configuration for Kinesis stream trigger on KinesisOutboundEventLogger Lambda"></p>
-<p>Once this is done, all records sent to the cnmResponseStream will also be logged in CloudWatch. For more on configuring Lambdas to trigger on Kinesis events, please see <a href="https://docs.aws.amazon.com/lambda/latest/dg/with-kinesis.html#services-kinesis-eventsourcemapping">creating an event source mapping</a>.</p>
+<p>Once this is done, all records sent to the <code>response-endpoint</code> will also be logged in CloudWatch. For more on configuring Lambdas to trigger on Kinesis events, please see <a href="https://docs.aws.amazon.com/lambda/latest/dg/with-kinesis.html#services-kinesis-eventsourcemapping">creating an event source mapping</a>.</p>
 </span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cumulus/docs/next/data-cookbooks/sips-workflow"><span class="arrow-prev">← </span><span>Science Investigator-led Processing Systems (SIPS)</span></a><a class="docs-next button" href="/cumulus/docs/next/data-cookbooks/error-handling"><span>Error Handling in Workflows</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#sections">Sections</a></li><li><a href="#prerequisites">Prerequisites</a><ul class="toc-headings"><li><a href="#cumulus">Cumulus</a></li><li><a href="#aws-cli">AWS CLI</a></li><li><a href="#kinesis">Kinesis</a></li><li><a href="#source-data">Source Data</a></li><li><a href="#collection-and-provider">Collection and Provider</a></li></ul></li><li><a href="#configure-the-workflow">Configure the Workflow</a><ul class="toc-headings"><li><a href="#example-cnm-workflow">Example CNM Workflow</a></li><li><a href="#lambda-configuration">Lambda Configuration</a></li><li><a href="#redeploy">Redeploy</a></li><li><a href="#rule-configuration">Rule Configuration</a></li></ul></li><li><a href="#execute-the-workflow">Execute the Workflow</a><ul class="toc-headings"><li><a href="#how-to-trigger-the-workflow">How to Trigger the Workflow</a></li><li><a href="#verify-workflow-execution">Verify Workflow Execution</a></li></ul></li><li><a href="#verify-results">Verify results</a><ul class="toc-headings"><li><a href="#check-for-successful-execution-on-the-dashboard">Check for successful execution on the dashboard</a></li><li><a href="#check-the-test-granule-has-been-delivered-to-s3-staging">Check the test granule has been delivered to S3 staging</a></li><li><a href="#check-for-kinesis-records">Check for Kinesis records</a></li></ul></li><li><a href="#kinesis-record-error-handling">Kinesis Record Error Handling</a><ul class="toc-headings"><li><a href="#messageconsumer">messageConsumer</a></li><li><a href="#kinesis-stream-logging">Kinesis Stream logging</a></li></ul></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
