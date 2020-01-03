@@ -2,10 +2,11 @@
 
 const test = require('ava');
 const rewire = require('rewire');
-const aws = require('@cumulus/common/aws');
 const attr = require('dynamodb-data-types').AttributeValue;
-const { randomString } = require('@cumulus/common/test-utils');
+const aws = require('@cumulus/common/aws');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { RecordDoesNotExist } = require('@cumulus/common/errors');
+const { randomString } = require('@cumulus/common/test-utils');
 
 const models = require('../../models');
 const { Search } = require('../../es/search');
@@ -23,7 +24,9 @@ const {
   getTableIndexDetails,
   handler,
   getParentId,
-  getRecordId
+  getRecordId,
+  performFilesAddition,
+  performFilesDelete
 } = dbIndexer;
 
 let esClient;
@@ -215,9 +218,59 @@ test('getTableIndexDetails() returns the correct function name and index type', 
   });
 });
 
-test.todo('performFilesDelete() deletes files associated with a given granule');
-test.todo('performFilesAddition() creates files');
-test.todo('performFilesAddition() remove files that are no longer in the granule');
+test('performFilesDelete() deletes files associated with a given granule', async (t) => {
+  const bucket = randomString();
+  const granule = fakeGranuleFactoryV2({
+    files: [fakeFileFactory({ bucket })]
+  });
+
+  await fileModel.createFilesFromGranule(granule);
+
+  await performFilesDelete(granule);
+
+  await t.throwsAsync(
+    () => fileModel.get({ bucket, key: granule.files[0].key }),
+    { instanceOf: RecordDoesNotExist }
+  );
+});
+
+test('performFilesAddition() creates files', async (t) => {
+  const bucket = randomString();
+  const granule = fakeGranuleFactoryV2({
+    files: [fakeFileFactory({ bucket })]
+  });
+
+  await performFilesAddition(granule, {});
+
+  await t.notThrowsAsync(
+    () => fileModel.get({ bucket, key: granule.files[0].key })
+  );
+});
+
+test('performFilesAddition() remove files that are no longer in the granule', async (t) => {
+  const bucket = randomString();
+  const granule = fakeGranuleFactoryV2({
+    files: [fakeFileFactory({ bucket })]
+  });
+
+  await performFilesAddition(granule, {});
+
+  const newGranule = {
+    ...granule,
+    files: [
+      ...granule.files
+    ]
+  };
+  const droppedFile = newGranule.files.pop();
+
+  await performFilesAddition(newGranule, granule);
+
+  await t.throwsAsync(
+    () => fileModel.get({ bucket, key: droppedFile.key }),
+    { instanceOf: RecordDoesNotExist }
+  );
+});
+
 test.todo('performIndex() indexes a record');
 
 test.serial('create, update and delete a collection in dynamodb and es', async (t) => {

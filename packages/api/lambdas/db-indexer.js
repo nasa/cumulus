@@ -238,5 +238,7 @@ module.exports = {
   getTableIndexDetails,
   getParentId,
   getRecordId,
-  handler
+  handler,
+  performFilesAddition,
+  performFilesDelete
 };
