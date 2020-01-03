@@ -1,5 +1,4 @@
 {
-  "process": "modis",
   "granules": [
     {
       "granuleId": "replace-me-granuleId",

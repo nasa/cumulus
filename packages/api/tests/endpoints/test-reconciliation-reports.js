@@ -6,19 +6,18 @@ const request = require('supertest');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   createFakeJwtAuthToken
-} = require('../../../lib/testUtils');
-const assertions = require('../../../lib/assertions');
-const models = require('../../../models');
+} = require('../../lib/testUtils');
+const assertions = require('../../lib/assertions');
+const models = require('../../models');
 
 process.env.invoke = 'granule-reconciliation-reports';
 process.env.stackName = 'test-stack';
-process.env.system_bucket = 'test_system_bucket';
 process.env.AccessTokensTable = randomString();
 process.env.UsersTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
-const { app } = require('../../../app');
+const { app } = require('../../app');
 
 const reportNames = [randomString(), randomString()];
 const reportDirectory = `${process.env.stackName}/reconciliation-reports`;
@@ -38,7 +37,9 @@ test.before(async () => {
 });
 
 test.beforeEach(async () => {
+  process.env.system_bucket = 'test_system_bucket';
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+
   await Promise.all(reportNames.map((reportName) =>
     aws.s3().putObject({
       Bucket: process.env.system_bucket,
@@ -56,7 +57,7 @@ test.after.always(async () => {
   await userModel.deleteTable();
 });
 
-test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+test.serial('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
     .get('/reconciliationReports')
     .set('Accept', 'application/json')
@@ -65,7 +66,7 @@ test('CUMULUS-911 GET without pathParameters and without an Authorization header
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
-test('CUMULUS-911 GET with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+test.serial('CUMULUS-911 GET with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
     .get('/reconciliationReports/asdf')
     .set('Accept', 'application/json')
@@ -74,7 +75,7 @@ test('CUMULUS-911 GET with pathParameters and without an Authorization header re
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
-test('CUMULUS-911 POST without an Authorization header returns an Authorization Missing response', async (t) => {
+test.serial('CUMULUS-911 POST without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
     .post('/reconciliationReports')
     .set('Accept', 'application/json')
@@ -83,7 +84,7 @@ test('CUMULUS-911 POST without an Authorization header returns an Authorization 
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
-test('CUMULUS-911 DELETE with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+test.serial('CUMULUS-911 DELETE with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
     .delete('/reconciliationReports/asdf')
     .set('Accept', 'application/json')
@@ -92,7 +93,7 @@ test('CUMULUS-911 DELETE with pathParameters and without an Authorization header
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
-test('CUMULUS-911 GET without pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
+test.serial('CUMULUS-911 GET without pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const response = await request(app)
     .get('/reconciliationReports')
     .set('Accept', 'application/json')
@@ -104,7 +105,7 @@ test('CUMULUS-911 GET without pathParameters and with an invalid access token re
 
 test.todo('CUMULUS-911 GET without pathParameters and with an unauthorized user returns an unauthorized response');
 
-test('CUMULUS-911 GET with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
+test.serial('CUMULUS-911 GET with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const response = await request(app)
     .get('/reconciliationReports/asdf')
     .set('Accept', 'application/json')
@@ -116,7 +117,7 @@ test('CUMULUS-911 GET with pathParameters and with an invalid access token retur
 
 test.todo('CUMULUS-911 GET with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test('CUMULUS-911 POST with an invalid access token returns an unauthorized response', async (t) => {
+test.serial('CUMULUS-911 POST with an invalid access token returns an unauthorized response', async (t) => {
   const response = await request(app)
     .post('/reconciliationReports')
     .set('Accept', 'application/json')
@@ -128,7 +129,7 @@ test('CUMULUS-911 POST with an invalid access token returns an unauthorized resp
 
 test.todo('CUMULUS-911 POST with an unauthorized user returns an unauthorized response');
 
-test('CUMULUS-911 DELETE with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
+test.serial('CUMULUS-911 DELETE with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const response = await request(app)
     .delete('/reconciliationReports/asdf')
     .set('Accept', 'application/json')

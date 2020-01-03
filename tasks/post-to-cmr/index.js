@@ -7,6 +7,7 @@ const {
   metadataObjectFromCMRFile,
   publish2CMR
 } = require('@cumulus/cmrjs');
+const { secretsManager } = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { CMRMetaFileNotFound } = require('@cumulus/common/errors');
@@ -114,22 +115,22 @@ async function postToCMR(event) {
     const token = await launchpad.getLaunchpadToken(event.config.launchpad);
     cmrCreds.token = token;
   } else {
+    const secret = await secretsManager().getSecretValue({
+      SecretId: event.config.cmr.passwordSecretName
+    }).promise();
+
     cmrCreds.username = event.config.cmr.username;
-    cmrCreds.password = event.config.cmr.password;
+    cmrCreds.password = secret.SecretString;
   }
 
   // post all meta files to CMR
   const results = await Promise.all(
-    updatedCMRFiles.map(
-      (cmrFile) =>
-        publish2CMR(cmrFile, cmrCreds, event.config.bucket, event.config.stack)
-    )
+    updatedCMRFiles.map((cmrFile) => publish2CMR(cmrFile, cmrCreds))
   );
 
   const endTime = Date.now();
 
   return {
-    process: event.config.process,
     granules: buildOutput(
       results,
       event.input.granules

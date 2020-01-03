@@ -13,7 +13,9 @@ variable "cmr_environment" {
 }
 
 variable "cmr_password" {
-  type = string
+  description = "The plaintext CMR password"
+  type        = string
+  default     = ""
 }
 
 variable "cmr_provider" {
@@ -60,7 +62,15 @@ variable "kinesis_inbound_event_logger_lambda_function_arn" {
   type = string
 }
 
+variable "kinesis_fallback_topic_arn" {
+  type = string
+}
+
 variable "lambda_processing_role_arn" {
+  type = string
+}
+
+variable "manual_consumer_function_arn" {
   type = string
 }
 

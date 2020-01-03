@@ -21,10 +21,8 @@ const bootstrap = require('../../lambdas/bootstrap');
 const { Search } = require('../../es/search');
 
 const workflowList = getWorkflowList();
-// create all the variables needed across this test
-let esClient;
-let esIndex;
 
+// create all the variables needed across this test
 process.env.system_bucket = randomString();
 process.env.stackName = randomString();
 
@@ -65,18 +63,19 @@ async function addFakeData(numItems, factory, model, factoryParams = {}) {
   return items;
 }
 
-function searchEs(type) {
-  const executionQuery = new Search({}, type, esIndex);
+function searchEs(type, index) {
+  const executionQuery = new Search({}, type, index);
   return executionQuery.query();
 }
 
-test.before(async () => {
-  esIndex = randomString();
-  // create esClient
-  esClient = await Search.es('fakehost');
+test.before(async (t) => {
+  t.context.esIndex = randomString();
+  t.context.esAlias = randomString();
+
+  t.context.esClient = await Search.es('fakehost');
 
   // add fake elasticsearch index
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
+  await bootstrap.bootstrapElasticSearch('fakehost', t.context.esIndex, t.context.esAlias);
 
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
@@ -103,7 +102,9 @@ test.before(async () => {
   ]);
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
+  const { esClient, esIndex } = t.context;
+
   await esClient.indices.delete({ index: esIndex });
 
   await executionModel.deleteTable();
@@ -117,10 +118,14 @@ test.after.always(async () => {
 });
 
 test('No error is thrown if nothing is in the database', async (t) => {
-  t.notThrows(async () => indexFromDatabase.indexFromDatabase(esIndex, tables));
+  const { esAlias } = t.context;
+
+  t.notThrows(async () => indexFromDatabase.indexFromDatabase(esAlias, tables));
 });
 
 test('index executions', async (t) => {
+  const { esAlias } = t.context;
+
   const numItems = 1;
 
   const fakeData = await Promise.all([
@@ -132,15 +137,15 @@ test('index executions', async (t) => {
     addFakeData(numItems, fakeRuleFactoryV2, rulesModel, { workflow: workflowList[0].name })
   ]);
 
-  await indexFromDatabase.indexFromDatabase(esIndex, tables);
+  await indexFromDatabase.indexFromDatabase(esAlias, tables);
 
   const searchResults = await Promise.all([
-    searchEs('collection'),
-    searchEs('execution'),
-    searchEs('granule'),
-    searchEs('pdr'),
-    searchEs('provider'),
-    searchEs('rule')
+    searchEs('collection', esAlias),
+    searchEs('execution', esAlias),
+    searchEs('granule', esAlias),
+    searchEs('pdr', esAlias),
+    searchEs('provider', esAlias),
+    searchEs('rule', esAlias)
   ]);
 
   searchResults.map((res) => t.is(res.meta.count, numItems));

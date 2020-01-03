@@ -6,19 +6,19 @@ const test = require('ava');
 const aws = require('@cumulus/common/aws');
 const { randomId } = require('@cumulus/common/test-utils');
 
-const { Search } = require('../../../es/search');
-const bootstrap = require('../../../lambdas/bootstrap');
-const models = require('../../../models');
-const indexer = require('../../../es/indexer');
-const assertions = require('../../../lib/assertions');
+const { Search } = require('../../es/search');
+const bootstrap = require('../../lambdas/bootstrap');
+const models = require('../../models');
+const indexer = require('../../es/indexer');
+const assertions = require('../../lib/assertions');
 
 const {
   fakeAccessTokenFactory,
   fakeGranuleFactoryV2,
   createFakeJwtAuthToken
-} = require('../../../lib/testUtils');
-const { createJwtToken } = require('../../../lib/token');
-const { app } = require('../../../app');
+} = require('../../lib/testUtils');
+const { createJwtToken } = require('../../lib/token');
+const { app } = require('../../app');
 
 
 process.env.AccessTokensTable = randomId('token');
@@ -41,13 +41,14 @@ let fakeGranules;
 
 test.before(async () => {
   esIndex = randomId('esindex');
-  process.env.esIndex = esIndex;
+  const esAlias = randomId('esAlias');
+  process.env.ES_HOST = esAlias;
 
   // create esClient
   esClient = await Search.es('fakehost');
 
   // add fake elasticsearch index
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
+  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
   // create a fake bucket
   await createBucket(process.env.system_bucket);

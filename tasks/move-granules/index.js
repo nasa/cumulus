@@ -233,7 +233,6 @@ async function updateEachCmrFileAccessURLs(
   bucketsConfig
 ) {
   return Promise.all(cmrFiles.map(async (cmrFile) => {
-    const publish = false; // Do the publish in publish-to-cmr step
     const granuleId = cmrFile.granuleId;
     const granule = granulesObject[granuleId];
     const updatedCmrFile = granule.files.find(isCMRFile);
@@ -242,7 +241,7 @@ async function updateEachCmrFileAccessURLs(
       cmrFile: updatedCmrFile,
       files: granule.files,
       distEndpoint,
-      publish,
+      published: false, // Do the publish in publish-to-cmr step
       inBuckets: bucketsConfig,
       cmrGranuleUrlType
     });

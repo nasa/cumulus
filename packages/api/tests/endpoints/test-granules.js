@@ -19,20 +19,20 @@ const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const launchpad = require('@cumulus/common/launchpad');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 
-const assertions = require('../../../lib/assertions');
-const models = require('../../../models');
-const bootstrap = require('../../../lambdas/bootstrap');
-const indexer = require('../../../es/indexer');
+const assertions = require('../../lib/assertions');
+const models = require('../../models');
+const bootstrap = require('../../lambdas/bootstrap');
+const indexer = require('../../es/indexer');
 const {
   fakeAccessTokenFactory,
   fakeCollectionFactory,
   fakeGranuleFactoryV2,
   createFakeJwtAuthToken
-} = require('../../../lib/testUtils');
+} = require('../../lib/testUtils');
 const {
   createJwtToken
-} = require('../../../lib/token');
-const { Search } = require('../../../es/search');
+} = require('../../lib/token');
+const { Search } = require('../../es/search');
 
 process.env.AccessTokensTable = randomId('token');
 process.env.CollectionsTable = randomId('collection');
@@ -43,7 +43,7 @@ process.env.system_bucket = randomId('system_bucket');
 process.env.TOKEN_SECRET = randomId('secret');
 
 // import the express app after setting the env variables
-const { app } = require('../../../app');
+const { app } = require('../../app');
 
 const createBucket = (Bucket) => aws.s3().createBucket({ Bucket }).promise();
 
@@ -112,20 +112,21 @@ let collectionModel;
 let accessToken;
 let userModel;
 
-test.before(async () => {
+test.before(async (t) => {
   esIndex = randomId('esindex');
-  process.env.esIndex = esIndex;
+  t.context.esAlias = randomId('esAlias');
+  process.env.ES_INDEX = t.context.esAlias;
 
   // create esClient
   esClient = await Search.es('fakehost');
 
   // add fake elasticsearch index
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
+  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
 
   // create a fake bucket
   await createBucket(process.env.system_bucket);
 
-  // create a workflow template fi;e
+  // create a workflow template file
   const tKey = `${process.env.stackName}/workflow_template.json`;
   await putObject({ Bucket: process.env.system_bucket, Key: tKey, Body: '{}' });
 
@@ -145,9 +146,18 @@ test.before(async () => {
   await accessTokenModel.createTable();
 
   accessToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+
+  // Store the CMR password
+  process.env.cmr_password_secret_name = randomString();
+  await aws.secretsManager().createSecret({
+    Name: process.env.cmr_password_secret_name,
+    SecretString: randomString()
+  }).promise();
 });
 
 test.beforeEach(async (t) => {
+  const { esAlias } = t.context;
+
   t.context.testCollection = fakeCollectionFactory({
     name: 'fakeCollection',
     dataType: 'fakeCollection',
@@ -164,7 +174,7 @@ test.beforeEach(async (t) => {
 
   await Promise.all(t.context.fakeGranules.map((granule) =>
     granuleModel.create(granule)
-      .then((record) => indexer.indexGranule(esClient, record, esIndex))));
+      .then((record) => indexer.indexGranule(esClient, record, esAlias))));
 });
 
 test.after.always(async () => {
@@ -174,6 +184,10 @@ test.after.always(async () => {
   await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await aws.secretsManager().deleteSecret({
+    SecretId: process.env.cmr_password_secret_name,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
 });
 
 test.serial('default returns list of granules', async (t) => {
@@ -430,11 +444,6 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
 
 test.serial('remove a granule from CMR', async (t) => {
   sinon.stub(
-    DefaultProvider,
-    'decrypt'
-  ).callsFake(() => Promise.resolve('fakePassword'));
-
-  sinon.stub(
     CMR.prototype,
     'deleteGranule'
   ).callsFake(() => Promise.resolve());
@@ -460,7 +469,6 @@ test.serial('remove a granule from CMR', async (t) => {
   t.is(updatedGranule.cmrLink, undefined);
 
   CMR.prototype.deleteGranule.restore();
-  DefaultProvider.decrypt.restore();
   cmrjs.getMetadata.restore();
 });
 
@@ -730,7 +738,7 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
   await putObject({
     Bucket: newGranule.files[1].bucket,
     Key: newGranule.files[1].key,
-    Body: fs.createReadStream(path.resolve(__dirname, '../../data/meta.xml'))
+    Body: fs.createReadStream(path.resolve(__dirname, '../data/meta.xml'))
   });
 
   const originalXML = await metadataObjectFromCMRFile(
@@ -803,7 +811,7 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
   const { internalBucket, publicBucket } = await setupBucketsConfig();
 
   const newGranule = fakeGranuleFactoryV2();
-  const ummgMetadataString = fs.readFileSync(path.resolve(__dirname, '../../data/ummg-meta.json'));
+  const ummgMetadataString = fs.readFileSync(path.resolve(__dirname, '../data/ummg-meta.json'));
   const originalUMMG = JSON.parse(ummgMetadataString);
 
   newGranule.files = [

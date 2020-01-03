@@ -17,6 +17,7 @@ const instanceMeta = require('../endpoints/instance-meta');
 const bulkDelete = require('../endpoints/bulk-delete');
 const logs = require('../endpoints/logs');
 const reconcilliationReports = require('../endpoints/reconciliation-reports');
+const replays = require('../endpoints/replays');
 const schemas = require('../endpoints/schemas');
 const stats = require('../endpoints/stats');
 const version = require('../endpoints/version');
@@ -70,6 +71,9 @@ router.use('/logs', ensureAuthorized, logs);
 
 // logs endpoint
 router.use('/reconciliationReports', ensureAuthorized, reconcilliationReports);
+
+// replays endpoint
+router.use('/replays', ensureAuthorized, replays);
 
 // schemas endpoint
 router.use('/schemas', ensureAuthorized, schemas);

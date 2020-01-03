@@ -70,11 +70,16 @@ test.serial('Request to granules bulk endpoint starts an async-operation with th
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
     .expect(200);
-  const { lambdaName, cluster, payload } = asyncOperationStartStub.args[0][0];
-
+  const {
+    lambdaName,
+    cluster,
+    description,
+    payload
+  } = asyncOperationStartStub.args[0][0];
   t.is(asyncOperationStartStub.calledOnce, true);
   t.is(lambdaName, process.env.BulkOperationLambda);
   t.is(cluster, process.env.EcsCluster);
+  t.is(description, `Bulk run ${expectedWorkflowName} on 1 granules`);
   t.deepEqual(payload, {
     payload: body,
     type: 'BULK_GRANULE',
@@ -98,7 +103,7 @@ test.serial('Request to granules bulk endpoint starts an async-operation with th
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
   const expectedIndex = 'my-index';
-  const expectedQuery = { query: 'fake-query' };
+  const expectedQuery = { query: 'fake-query', size: 2 };
 
   const body = {
     queueName: expectedQueueName,
@@ -114,10 +119,16 @@ test.serial('Request to granules bulk endpoint starts an async-operation with th
     .send(body)
     .expect(200);
 
-  const { lambdaName, cluster, payload } = asyncOperationStartStub.args[0][0];
+  const {
+    lambdaName,
+    cluster,
+    description,
+    payload
+  } = asyncOperationStartStub.args[0][0];
   t.is(asyncOperationStartStub.calledOnce, true);
   t.is(lambdaName, process.env.BulkOperationLambda);
   t.is(cluster, process.env.EcsCluster);
+  t.is(description, `Bulk run ${expectedWorkflowName} on 2 granules`);
   t.deepEqual(payload, {
     payload: body,
     type: 'BULK_GRANULE',

@@ -15,9 +15,11 @@ const models = require('../models');
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const search = new Search({
-    queryStringParameters: req.query
-  }, 'pdr');
+  const search = new Search(
+    { queryStringParameters: req.query },
+    'pdr',
+    process.env.ES_INDEX
+  );
   const result = await search.query();
   return res.send(result);
 }
@@ -68,10 +70,9 @@ async function del(req, res) {
 
     if (inTestMode()) {
       const esClient = await Search.es(process.env.ES_HOST);
-      const esIndex = process.env.esIndex;
       await esClient.delete({
         id: pdrName,
-        index: esIndex,
+        index: process.env.ES_INDEX,
         type: 'pdr'
       }, { ignore: [404] });
     }

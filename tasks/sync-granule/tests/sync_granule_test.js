@@ -622,7 +622,10 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     const renamedFileInfo = await headObject(
       parseS3Uri(filesRenamed[0].filename).Bucket, parseS3Uri(filesRenamed[0].filename).Key
     );
-    t.deepEqual(existingFileInfo, renamedFileInfo);
+    t.deepEqual(
+      renamedFileInfo,
+      { ...existingFileInfo, LastModified: renamedFileInfo.LastModified }
+    );
 
     const newerContent = randomString();
     // stage the file again with different content

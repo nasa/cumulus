@@ -12,7 +12,7 @@ resource "aws_lambda_function" "custom_bootstrap" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/bootstrap/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 300
   memory_size      = 320
   environment {
@@ -41,9 +41,6 @@ data "aws_lambda_invocation" "custom_bootstrap" {
   "ResourceProperties": {
     "ElasticSearch": {
       "host": "${var.elasticsearch_hostname}"
-    },
-    "Cmr": {
-      "Password": "${var.cmr_password}"
     },
     "Users": {
       "table": "${var.dynamo_tables.users.name}",

@@ -123,6 +123,7 @@ exports.apigateway = awsClient(AWS.APIGateway, '2015-07-09');
 exports.ecs = awsClient(AWS.ECS, '2014-11-13');
 exports.ec2 = awsClient(AWS.EC2, '2016-11-15');
 exports.s3 = awsClient(AWS.S3, '2006-03-01');
+exports.kinesis = awsClient(AWS.Kinesis, '2013-12-02');
 exports.lambda = awsClient(AWS.Lambda, '2015-03-31');
 exports.sqs = awsClient(AWS.SQS, '2012-11-05');
 exports.cloudwatchevents = awsClient(AWS.CloudWatchEvents, '2014-02-03');
@@ -134,6 +135,7 @@ exports.dynamodbDocClient = awsClient(AWS.DynamoDB.DocumentClient, '2012-08-10')
 exports.sfn = awsClient(AWS.StepFunctions, '2016-11-23');
 exports.cf = awsClient(AWS.CloudFormation, '2010-05-15');
 exports.sns = awsClient(AWS.SNS, '2010-03-31');
+exports.secretsManager = awsClient(AWS.SecretsManager, '2017-10-17');
 
 /**
  * Create a DynamoDB table and then wait for the table to exist

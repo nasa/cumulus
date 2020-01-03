@@ -36,8 +36,10 @@ let ruleModel;
 let userModel;
 
 test.before(async () => {
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
-  process.env.esIndex = esIndex;
+  const esAlias = randomString();
+  process.env.ES_INDEX = esAlias;
+  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
