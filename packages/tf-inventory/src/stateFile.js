@@ -95,6 +95,11 @@ async function listClusterEC2Intances(clusterArn) {
   return containerInstances.containerInstances.map((c) => c.ec2InstanceId);
 }
 
+/**
+ * Get a list of resources from the given state file
+ * @param {string} file - the file location as `bucket/key`
+ * @returns {Array<Object>} - list of resource objects
+ */
 async function getStateFileResources(file) {
   const { Bucket, Key } = aws.parseS3Uri(`s3://${file}`);
 

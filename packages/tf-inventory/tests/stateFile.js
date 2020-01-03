@@ -2,9 +2,12 @@
 
 const test = require('ava');
 const rewire = require('rewire');
+const fs = require('fs');
+const path = require('path');
 
 const stateFile = rewire('../src/stateFile');
 const getStateFilesFromTable = stateFile.__get__('getStateFilesFromTable');
+const getStateFileResources = stateFile.__get__('getStateFileResources');
 
 const {
   aws,
@@ -88,4 +91,26 @@ test('listTfStateFiles lists state files only', async (t) => {
 
   await aws.dynamodb().deleteTable({ TableName: stateFileTableName }).promise();
   await aws.dynamodb().deleteTable({ TableName: noStateFileTableName }).promise();
+});
+
+test('getStateFileResources lists resources', async (t) => {
+  const bucket = randomString();
+  const key = 'terraform.tfstate';
+  await aws.s3().createBucket({ Bucket: bucket }).promise();
+
+  const state = fs.readFileSync(path.join(__dirname, './resources/sampleTfState.tfstate'), 'utf8');
+
+  await aws.promiseS3Upload({
+    Bucket: bucket,
+    Key: key,
+    Body: state
+  });
+
+  const resources = await getStateFileResources(`${bucket}/${key}`);
+  t.deepEqual(
+    ['aws_caller_identity', 'aws_ecs_cluster'],
+    resources.map((r) => r.type)
+  );
+
+  await aws.recursivelyDeleteS3Bucket(bucket);
 });
