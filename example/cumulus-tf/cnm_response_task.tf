@@ -1,7 +1,7 @@
 resource "aws_lambda_function" "cnm_response_task" {
   function_name = "${var.prefix}-CnmResponse"
   s3_bucket     = "cumulus-data-shared"
-  s3_key        = "daacs/podaac/cnmResponse-1.2.1.zip"
+  s3_key        = "daacs/podaac/cnmResponse-1.0.6.zip"
   handler       = "gov.nasa.cumulus.CNMResponse::handleRequestStreams"
   role          = module.cumulus.lambda_processing_role_arn
   runtime       = "java8"
