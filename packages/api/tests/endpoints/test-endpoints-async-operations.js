@@ -2,17 +2,15 @@
 
 const test = require('ava');
 const request = require('supertest');
-const {
-  testUtils: { randomString }
-} = require('@cumulus/common');
+const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
+const { noop } = require('@cumulus/common/util');
+const { randomString } = require('@cumulus/common/test-utils');
 const {
   AccessToken,
-  AsyncOperation: AsyncOperationModel,
-  User
+  AsyncOperation: AsyncOperationModel
 } = require('../../models');
-const { createFakeJwtAuthToken } = require('../../lib/testUtils');
+const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../lib/testUtils');
 
-process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.AsyncOperationsTable = randomString();
@@ -25,9 +23,10 @@ const { app } = require('../../app');
 let jwtAuthToken;
 let asyncOperationModel;
 let accessTokenModel;
-let userModel;
 
 test.before(async () => {
+  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+
   // Create AsyncOperations table
   asyncOperationModel = new AsyncOperationModel({
     stackName: process.env.stackName,
@@ -36,30 +35,19 @@ test.before(async () => {
   });
   await asyncOperationModel.createTable();
 
-  // Create Users table
-  userModel = new User();
-  await userModel.createTable();
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
-  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 });
 
 test.after.always(async () => {
-  try {
-    await asyncOperationModel.deleteTable();
-  } catch (err) {
-    if (err.code !== 'ResourceNotFoundException') throw err;
-  }
-
-  try {
-    await userModel.deleteTable();
-  } catch (err) {
-    if (err.code !== 'ResourceNotFoundException') throw err;
-  }
-
-  await accessTokenModel.deleteTable();
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await asyncOperationModel.deleteTable().catch(noop);
+  await accessTokenModel.deleteTable().catch(noop);
 });
 
 test.serial('GET /asyncOperations returns a list of operations', async (t) => {

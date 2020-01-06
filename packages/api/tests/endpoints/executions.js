@@ -5,29 +5,26 @@ const request = require('supertest');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
-  createFakeJwtAuthToken
+  createFakeJwtAuthToken,
+  setAuthorizedOAuthUsers
 } = require('../../lib/testUtils');
 const indexer = require('../../es/indexer');
 const { Search } = require('../../es/search');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 
-const { AccessToken, User } = require('../../models');
+const { AccessToken } = require('../../models');
 
 const assertions = require('../../lib/assertions');
 
 process.env.AccessTokensTable = randomString();
-process.env.UsersTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 process.env.system_bucket = randomString();
 
 const esIndex = randomString();
 let esClient;
 
-
 let jwtAuthToken;
 let accessTokenModel;
-let userModel;
-
 
 // import the express app after setting the env variables
 const { app } = require('../../app');
@@ -39,14 +36,13 @@ test.before(async () => {
 
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
-  // create fake Users table
-  userModel = new User();
-  await userModel.createTable();
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
-  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
   esClient = await Search.es('fakehost');
 
@@ -72,7 +68,6 @@ test.before(async () => {
 
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
-  await userModel.deleteTable();
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
 });

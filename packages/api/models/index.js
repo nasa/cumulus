@@ -10,12 +10,10 @@ const Provider = require('./providers');
 const Rule = require('./rules');
 const Execution = require('./executions');
 const FileClass = require('./files');
-const User = require('./users');
 
 module.exports = {
   AccessToken,
   AsyncOperation,
-  User,
   Collection,
   Granule,
   Pdr,

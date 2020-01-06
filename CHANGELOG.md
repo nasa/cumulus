@@ -43,6 +43,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1626**
   - Updates Cumulus to use node10/CMA 1.1.2 for all of its internal lambdas in prep for AWS node 8 EOL
 
+- **CUMULUS-1498**
+  - Remove the DynamoDB Users table. The list of OAuth users who are allowed to
+    use the API is now stored in S3.
+
 ### Fixed
 
 - **CUMULUS-1664**

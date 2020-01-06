@@ -12,7 +12,7 @@ const aws = require('@cumulus/common/aws');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const { verifyJwtToken } = require('../../lib/token');
-const { AccessToken, User } = require('../../models');
+const { AccessToken } = require('../../models');
 const launchpadSaml = rewire('../../endpoints/launchpadSaml');
 const launchpadPublicCertificate = launchpadSaml.__get__(
   'launchpadPublicCertificate'
@@ -21,7 +21,6 @@ const authorizedUserGroup = launchpadSaml.__get__('authorizedUserGroup');
 const buildLaunchpadJwt = launchpadSaml.__get__('buildLaunchpadJwt');
 
 process.env.OAUTH_PROVIDER = 'launchpad';
-process.env.UsersTable = randomId('usersTable');
 process.env.AccessTokensTable = randomId('tokenTable');
 process.env.stackName = randomId('stackname');
 process.env.TOKEN_SECRET = randomId('token_secret');
@@ -55,12 +54,9 @@ const testFiles = [goodMetadataFile, badMetadataFile];
 const certificate = require('./fixtures/_certificateFixture');
 
 let accessTokenModel;
-let userModel;
 test.before(async () => {
   accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
-  userModel = new User();
-  await userModel.createTable();
 
   await Promise.all(testBucketNames.map(createBucket));
   await Promise.all(
@@ -129,7 +125,6 @@ test.afterEach(async () => {
 test.after.always(async () => {
   await Promise.all(testBucketNames.map(aws.recursivelyDeleteS3Bucket));
   await accessTokenModel.deleteTable();
-  await userModel.deleteTable();
 });
 
 test(
