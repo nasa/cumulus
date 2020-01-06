@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Removed
+
+- **CUMULUS-1481**
+  - removed `process` config and output from PostToCmr as it was not required by the task nor downstream steps, and should still be in the output message's `meta` regardless.
+
+## [v1.17.0] - 2019-12-31
+
 ### BREAKING CHANGES
 
 - **CUMULUS-1498**
@@ -35,6 +42,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1626**
   - Updates Cumulus to use node10/CMA 1.1.2 for all of its internal lambdas in prep for AWS node 8 EOL
+
+### Fixed
+
+- **CUMULUS-1664**
+  - Updated `dbIndexer` Lambda to remove hardcoded references to DynamoDB table names.
 
 ### Removed
 
@@ -304,6 +316,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1452**
   - Updated the EC2 initialization scripts to use full volume size for docker storage
   - Changed the default ECS docker storage drive to `devicemapper`
+
+## [v1.14.5] - 2019-12-30
+
+### Updated
+
+- **CUMULUS-1626**
+  - Updates Cumulus to use node10/CMA 1.1.2 for all of its internal lambdas in prep for AWS node 8 EOL
 
 ## [v1.14.4] - 2019-10-28
 
@@ -1800,10 +1819,12 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.16.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.17.0...HEAD
+[v1.17.0]: https://github.com/nasa/cumulus/compare/v1.16.1...v1.17.0
 [v1.16.1]: https://github.com/nasa/cumulus/compare/v1.16.0...v1.16.1
 [v1.16.0]: https://github.com/nasa/cumulus/compare/v1.15.0...v1.16.0
-[v1.15.0]: https://github.com/nasa/cumulus/compare/v1.14.4...v1.15.0
+[v1.15.0]: https://github.com/nasa/cumulus/compare/v1.14.5...v1.15.0
+[v1.14.5]: https://github.com/nasa/cumulus/compare/v1.14.4...v1.14.5
 [v1.14.4]: https://github.com/nasa/cumulus/compare/v1.14.3...v1.14.4
 [v1.14.3]: https://github.com/nasa/cumulus/compare/v1.14.2...v1.14.3
 [v1.14.2]: https://github.com/nasa/cumulus/compare/v1.14.1...v1.14.2
