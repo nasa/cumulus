@@ -10,7 +10,8 @@ const models = require('../../../models');
 const bootstrap = require('../../../lambdas/bootstrap');
 const {
   fakeCollectionFactory,
-  createFakeJwtAuthToken
+  createFakeJwtAuthToken,
+  setAuthorizedOAuthUsers
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
@@ -18,7 +19,6 @@ const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 
 process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
-process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
@@ -33,7 +33,6 @@ let jwtAuthToken;
 let accessTokenModel;
 let collectionModel;
 let ruleModel;
-let userModel;
 
 test.before(async () => {
   const esAlias = randomString();
@@ -45,24 +44,19 @@ test.before(async () => {
   collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
   await collectionModel.createTable();
 
-  // create fake Users table
-  userModel = new models.User();
-  await userModel.createTable();
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
   esClient = await Search.es('fakehost');
 
   process.env.RulesTable = randomString();
   ruleModel = new models.Rule();
   await ruleModel.createTable();
-
-  process.env.system_bucket = randomString();
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
-  process.env.stackName = randomString();
 
   await s3().putObject({
     Bucket: process.env.system_bucket,
@@ -79,7 +73,6 @@ test.beforeEach(async (t) => {
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await collectionModel.deleteTable();
-  await userModel.deleteTable();
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
   await ruleModel.deleteTable();

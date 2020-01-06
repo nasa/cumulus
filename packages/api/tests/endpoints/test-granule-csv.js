@@ -15,7 +15,8 @@ const assertions = require('../../lib/assertions');
 const {
   fakeAccessTokenFactory,
   fakeGranuleFactoryV2,
-  createFakeJwtAuthToken
+  createFakeJwtAuthToken,
+  setAuthorizedOAuthUsers
 } = require('../../lib/testUtils');
 const { createJwtToken } = require('../../lib/token');
 const { app } = require('../../app');
@@ -23,7 +24,6 @@ const { app } = require('../../app');
 
 process.env.AccessTokensTable = randomId('token');
 process.env.GranulesTable = randomId('granules');
-process.env.UsersTable = randomId('users');
 process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('system_bucket');
 process.env.TOKEN_SECRET = randomId('secret');
@@ -36,7 +36,6 @@ let esIndex;
 let accessTokenModel;
 let granuleModel;
 let accessToken;
-let userModel;
 let fakeGranules;
 
 test.before(async () => {
@@ -57,14 +56,13 @@ test.before(async () => {
   granuleModel = new models.Granule();
   await granuleModel.createTable();
 
-  // create fake Users table
-  userModel = new models.User();
-  await userModel.createTable();
+  const username = randomId();
+  await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  accessToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  accessToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
   // create fake granule records
   fakeGranules = [
@@ -80,7 +78,6 @@ test.before(async () => {
 test.after.always(async () => {
   await granuleModel.deleteTable();
   await accessTokenModel.deleteTable();
-  await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });

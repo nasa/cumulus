@@ -22,7 +22,16 @@ resource "aws_secretsmanager_secret_version" "api_cmr_password" {
   secret_string = var.cmr_password
 }
 
+resource "aws_s3_bucket_object" "authorized_oauth_users" {
+  bucket  = var.system_bucket
+  key     = "${var.prefix}/api/authorized_oauth_users.json"
+  content = jsonencode(var.users)
+  etag    = md5(jsonencode(var.users))
+}
+
 resource "aws_lambda_function" "api" {
+  depends_on       = [aws_s3_bucket_object.authorized_oauth_users]
+
   function_name    = "${var.prefix}-ApiEndpoints"
   filename         = "${path.module}/../../packages/api/dist/app/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/app/lambda.zip")
@@ -59,7 +68,6 @@ resource "aws_lambda_function" "api" {
       oauth_user_group             = var.oauth_user_group
       TOKEN_REDIRECT_ENDPOINT      = local.api_redirect_uri
       TOKEN_SECRET                 = var.token_secret
-      UsersTable                   = var.dynamo_tables.users.name
       backgroundQueueName          = var.background_queue_name
       cmr_client_id                = var.cmr_client_id
       cmr_oauth_provider           = var.cmr_oauth_provider
