@@ -36,7 +36,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "1.16.1"
+    "@cumulus/common": "1.16.1",
+    "lodash.difference": "^4.5.0",
+    "lodash.mergewith": "^4.6.2"
   },
   "devDependencies": {
     "ava": "^2.1.0",

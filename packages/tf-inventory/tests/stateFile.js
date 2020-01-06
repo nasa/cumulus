@@ -9,6 +9,11 @@ const stateFile = rewire('../src/stateFile');
 const getStateFilesFromTable = stateFile.__get__('getStateFilesFromTable');
 const getStateFileResources = stateFile.__get__('getStateFileResources');
 
+const revertListClusterEC2Intances = stateFile.__set__(
+  'listClusterEC2Intances',
+  () => ['i-1234', 'i-4321']
+);
+
 const {
   aws,
   testUtils: { randomString }
@@ -27,6 +32,10 @@ async function createTable(tableName, attributeDefs, keySchema) {
 
   return aws.dynamodb().waitFor('tableExists', { TableName: tableName }).promise();
 }
+
+test.after.always(() => {
+  revertListClusterEC2Intances();
+});
 
 test('getStateFilesFromTable returns empty array if it is not a table containing state files', async (t) => {
   const tableName = randomString();
@@ -113,4 +122,42 @@ test('getStateFileResources lists resources', async (t) => {
   );
 
   await aws.recursivelyDeleteS3Bucket(bucket);
+});
+
+test('listResourcesForFile lists resources', async (t) => {
+  const bucket = randomString();
+  const key = 'terraform.tfstate';
+  await aws.s3().createBucket({ Bucket: bucket }).promise();
+
+  const state = fs.readFileSync(path.join(__dirname, './resources/sampleTfState.tfstate'), 'utf8');
+
+  await aws.promiseS3Upload({
+    Bucket: bucket,
+    Key: key,
+    Body: state
+  });
+
+  const resources = await stateFile.listResourcesForFile(`${bucket}/${key}`);
+  t.deepEqual(
+    {
+      ecsClusters: ['arn:aws:ecs:us-east-1:12345:cluster/lpf-tf-CumulusECSCluster'],
+      ec2Instances: ['i-1234', 'i-4321']
+    },
+    resources
+  );
+
+  await aws.recursivelyDeleteS3Bucket(bucket);
+});
+
+test('listTfDeployments lists unique Tf deployments based on state file name', (t) => {
+  const stateFiles = [
+    'bucket/cumulus/data-persistence/terraform.tfstate',
+    'bucket/cumulus/cumulus/terraform.tfstate',
+    'bucket/tf/data-persistence-tf/terraform.tfstate',
+    'bucket/tf/cumulus-tf/terraform.tfstate'
+  ];
+
+  const deployments = stateFile.listTfDeployments(stateFiles);
+
+  t.deepEqual(deployments, ['cumulus', 'tf']);
 });

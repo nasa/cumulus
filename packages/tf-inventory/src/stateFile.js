@@ -137,7 +137,31 @@ async function listResourcesForFile(file) {
   return { };
 }
 
+/**
+ * List terraform deployments in the accounts based on the list
+ * of state files
+ * @param {Array<string>} stateFiles - state file paths
+ * @returns {Array<string>} list of deployments
+ */
+function listTfDeployments(stateFiles) {
+  let deployments = stateFiles.map((file) => {
+    const deployment = file.match(/(.*)\/(.*)\/(data-persistence.*|cumulus.*)\/terraform.tfstate/);
+    if (!deployment || deployment.length < 3) {
+      console.log(`Error : ${file}`);
+      return null;
+    }
+
+    return deployment[2];
+  });
+
+  deployments = deployments.filter((deployment) => deployment !== null);
+  deployments = Array.from(new Set(deployments));
+
+  return deployments;
+}
+
 module.exports = {
   listResourcesForFile,
+  listTfDeployments,
   listTfStateFiles
 };
