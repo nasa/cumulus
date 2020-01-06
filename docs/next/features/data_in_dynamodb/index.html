@@ -63,7 +63,6 @@
 <p>All configurations and system-generated metadata is stored in DynamoDB tables except the logs. System logs are stored in the AWS CloudWatch service.</p>
 <p><code>@cumulus/api</code> uses the following DynamoDB tables:</p>
 <ul>
-<li><strong>Users:</strong> api/dashboard users</li>
 <li><strong>Collections:</strong> collection records</li>
 <li><strong>Providers:</strong> provider records</li>
 <li><strong>Rules:</strong> rules for managing and running workflows</li>
@@ -79,7 +78,7 @@
 <p>PITR gives your DynamoDB tables continuous protection from accidental writes and deletes. With PITR, you do not have to worry about creating, maintaining, or scheduling backups. You enable PITR on your table and your backup is available for restore at any point in time from the moment you enable it, up to a maximum of the 35 preceding days. For example, imagine a test script writing accidentally to a production DynamoDB table. You could recover your table to any point in time within the last 35 days.</p>
 <p>On-demand backups help with long-term archival requirements for regulatory compliance. On-demand backups give you full-control of managing the lifecycle of your backups, from creating as many backups as you need to retaining these for as long as you need.</p>
 <h2><a class="anchor" aria-hidden="true" id="enabling-pitr-during-deployment"></a><a href="#enabling-pitr-during-deployment" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Enabling PITR during deployment</h2>
-<p>By default, the Cumulus <a href="https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence">data-persistence module</a> enables PITR on the default tables listed in the <a href="https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf">module's variable defaults</a> for <code>enable_point_in_time_tables</code>.  At the time of writing, that list includes:</p>
+<p>By default, the Cumulus <a href="https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence">data-persistence module</a> enables PITR on the default tables listed in the <a href="https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf">module's variable defaults</a> for <code>enable_point_in_time_tables</code>. At the time of writing, that list includes:</p>
 <ul>
 <li>CollectionsTable</li>
 <li>ExecutionsTable</li>
@@ -88,7 +87,6 @@
 <li>PdrsTable</li>
 <li>ProvidersTable</li>
 <li>RulesTable</li>
-<li>UsersTable</li>
 </ul>
 <p>If you wish to change this list, simply update your deployment's <code>data_persistence</code> module (<a href="https://github.com/nasa/cumulus-template-deploy/blob/master/data-persistence-tf/main.tf">here</a> in the <code>template-deploy</code> repository) to pass the correct list of tables.</p>
 <h2><a class="anchor" aria-hidden="true" id="backup-and-restore-with-cumulus-api-cli"></a><a href="#backup-and-restore-with-cumulus-api-cli" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Backup and Restore with cumulus-api CLI</h2>
