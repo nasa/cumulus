@@ -29,10 +29,6 @@ const isAuthorizedOAuthUser = (username) =>
  * @returns {Promise<Object>} - promise of an express response object
  */
 async function ensureAuthorized(req, res, next) {
-  if (launchpadProtectedAuth()) {
-    return ensureLaunchpadAPIAuthorized(req, res, next);
-  }
-
   // Verify that the Authorization header was set in the request
   const authorizationKey = req.headers.authorization;
   if (!authorizationKey) {
@@ -50,24 +46,30 @@ async function ensureAuthorized(req, res, next) {
     return res.boom.unauthorized('Missing token');
   }
 
-  if (launchpadProtectedAuth()) {
-    return ensureLaunchpadAPIAuthorized(req, res, next);
-  }
-
+  let userName;
+  let accessToken;
   try {
-    const { username, accessToken } = verifyJwtToken(jwtToken);
-
-    if (!(await isAuthorizedOAuthUser(username))) {
-      return res.boom.unauthorized('User not authorized');
-    }
+    ({ username: userName, accessToken } = verifyJwtToken(jwtToken));
 
     const access = new AccessToken();
+
+    if (!launchpadProtectedAuth()) {
+      // Only verify user if we're not launchpad protected
+      if (!(await isAuthorizedOAuthUser(userName))) {
+        return res.boom.unauthorized('User not authorized');
+      }
+    }
     await access.get({ accessToken });
     // Adds additional metadata that authorized endpoints can access.
-    req.authorizedMetadata = { userName: username };
-
+    req.authorizedMetadata = { userName };
     return next();
   } catch (error) {
+    if (launchpadProtectedAuth()
+        && error instanceof JsonWebTokenError
+        && error.message === 'jwt malformed') {
+      return ensureLaunchpadAPIAuthorized(req, res, next);
+    }
+
     if (error instanceof TokenExpiredError) {
       return res.boom.unauthorized('Access token has expired');
     }
