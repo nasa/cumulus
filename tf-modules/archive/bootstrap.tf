@@ -41,9 +41,6 @@ data "aws_lambda_invocation" "custom_bootstrap" {
   "ResourceProperties": {
     "ElasticSearch": {
       "host": "${var.elasticsearch_hostname}"
-    },
-    "Launchpad": {
-      "Passphrase": "${var.launchpad_passphrase}"
     }
   }
 }

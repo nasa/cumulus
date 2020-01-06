@@ -532,10 +532,14 @@ async function updateUMMGMetadata({
 */
 async function getCreds() {
   if (process.env.cmr_oauth_provider === 'launchpad') {
+    const passphrase = await aws.secretsManager().getSecretValue({
+      SecretId: process.env.launchpad_passphrase_secret_name
+    }).promise();
+
     const config = {
+      passphrase,
       api: process.env.launchpad_api,
-      certificate: process.env.launchpad_certificate,
-      passphrase: process.env.launchpad_passphrase
+      certificate: process.env.launchpad_certificate
     };
 
     log.debug('cmrjs.getCreds getLaunchpadToken');
