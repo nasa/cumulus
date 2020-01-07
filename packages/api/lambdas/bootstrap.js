@@ -181,19 +181,6 @@ async function bootstrapUsers(table, records) {
 }
 
 /**
- * Encrypt CMR password
- *
- * @param {string} password - plain text cmr password
- * @returns {Promise.<string>} encrypted cmr password
- */
-async function bootstrapCmrProvider(password) {
-  if (!password) {
-    return new Promise((resolve) => resolve('nopassword'));
-  }
-  return DefaultProvider.encrypt(password);
-}
-
-/**
  * Encrypt Launchpad certificate passphrase
  *
  * @param {string} passphrase - plain text launchpad passphrase
@@ -290,7 +277,6 @@ async function sendResponse(event, status, data = {}) {
 function handler(event, context, cb) {
   const es = get(event, 'ResourceProperties.ElasticSearch');
   const users = get(event, 'ResourceProperties.Users');
-  const cmr = get(event, 'ResourceProperties.Cmr');
   const launchpad = get(event, 'ResourceProperties.Launchpad');
   const dynamos = get(event, 'ResourceProperties.DynamoDBTables', []);
   const requestType = get(event, 'RequestType');
@@ -302,7 +288,6 @@ function handler(event, context, cb) {
   const actions = [
     bootstrapElasticSearch(get(es, 'host')),
     bootstrapUsers(get(users, 'table'), get(users, 'records')),
-    bootstrapCmrProvider(get(cmr, 'Password')),
     bootstrapLaunchpad(get(launchpad, 'Passphrase')),
     bootstrapDynamoDbTables(dynamos)
   ];
@@ -310,8 +295,7 @@ function handler(event, context, cb) {
   return Promise.all(actions)
     .then((results) => {
       const data = {
-        CmrPassword: results[2],
-        LaunchpadPassphrase: results[3]
+        LaunchpadPassphrase: results[2]
       };
 
       // if invoked by Cloudformation ...

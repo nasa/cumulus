@@ -13,7 +13,9 @@ variable "cmr_environment" {
 }
 
 variable "cmr_password" {
-  type = string
+  description = "The plaintext CMR password"
+  type        = string
+  default     = ""
 }
 
 variable "cmr_provider" {

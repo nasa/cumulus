@@ -13,6 +13,9 @@ jl-tf:
 kk-test-tf:
   bucket: kk-test-internal
 
+kk-tf:
+  bucket: kk-tf-internal
+
 lf-test-tf:
   bucket: lf-internal
 

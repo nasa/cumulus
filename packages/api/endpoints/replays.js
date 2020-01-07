@@ -43,6 +43,8 @@ async function startKinesisReplayAsyncOperation(req, res) {
       asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
       cluster: process.env.EcsCluster,
       lambdaName: process.env.ManualConsumerLambda,
+      description: 'Kinesis Replay',
+      operationType: 'Kinesis Replay',
       payload: input
     });
   } catch (err) {

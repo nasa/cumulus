@@ -6,13 +6,52 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Removed
+
+- **CUMULUS-1481**
+  - removed `process` config and output from PostToCmr as it was not required by the task nor downstream steps, and should still be in the output message's `meta` regardless.
+
+## [v1.17.0] - 2019-12-31
+
+### BREAKING CHANGES
+
+- **CUMULUS-1498**
+  - The `@cumulus/cmrjs.publish2CMR` function expects that the value of its
+    `creds.password` parameter is a plaintext password.
+  - Rather than using an encrypted password from the `cmr_password` environment
+    variable, the `@cumulus/cmrjs.updateCMRMetadata` function now looks for an
+    environment variable called `cmr_password_secret_name` and fetches the CMR
+    password from that secret in AWS Secrets Manager.
+  - The `@cumulus/post-to-cmr` task now expects a
+    `config.cmr.passwordSecretName` value, rather than `config.cmr.password`.
+    The CMR password will be fetched from that secret in AWS Secrets Manager.
+
 ### Added
 
 - **CUMULUS-630**
-  - Added support for replaying Kinesis records on a stream into the Cumulus Kinesis workflow triggering mechanism, either all the records, or some time slice delimited by start and end timestamps.
-  - Added `/replays` endpoint for triggering replays to the operator API.
-  - Added `Replay Kinesis Messages` doc to Operator Docs.
+  - Added support for replaying Kinesis records on a stream into the Cumulus Kinesis workflow triggering mechanism: either all the records, or some time slice delimited by start and end timestamps.
+  - Added `/replays` endpoint to the operator API for triggering replays.
+  - Added `Replay Kinesis Messages` documentation to Operator Docs.
   - Added `manualConsumer` lambda function to consume a Kinesis stream. Used by the replay AsyncOperation.
+
+- **CUMULUS-1687**
+  - Added new API endpoint for listing async operations at `/asyncOperations`
+  - All asyncOperations now include the fields `description` and `operationType`. `operationType` can be one of the following. [`Bulk Delete`, `Bulk Granules`, `ES Index`, `Kinesis Replay`]
+
+### Changed
+
+- **CUMULUS-1626**
+  - Updates Cumulus to use node10/CMA 1.1.2 for all of its internal lambdas in prep for AWS node 8 EOL
+
+### Fixed
+
+- **CUMULUS-1664**
+  - Updated `dbIndexer` Lambda to remove hardcoded references to DynamoDB table names.
+
+### Removed
+
+- **CUMULUS-1481**
+  - removed `process` config and output from PostToCmr as it was not required by the task nor downstream steps, and should still be in the output message's `meta` regardless.
 
 ## [v1.16.1] - 2019-12-6
 
@@ -38,9 +77,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `getTaskExitedEventOutput()` returns the output message for a `TaskStateExited` event in a workflow execution history
 
 ### Changed
-
-- **CUMULUS-1626**
-  - Updates Cumulus to use node10/CMA 1.1.2 for all of it's internal lambdas in prep for AWS node 8 EOL
 
 - **CUMULUS-1578**
   - Updates SAML launchpad configuration to authorize via configured userGroup.
@@ -280,6 +316,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1452**
   - Updated the EC2 initialization scripts to use full volume size for docker storage
   - Changed the default ECS docker storage drive to `devicemapper`
+
+## [v1.14.5] - 2019-12-30
+
+### Updated
+
+- **CUMULUS-1626**
+  - Updates Cumulus to use node10/CMA 1.1.2 for all of its internal lambdas in prep for AWS node 8 EOL
 
 ## [v1.14.4] - 2019-10-28
 
@@ -1776,10 +1819,12 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.16.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.17.0...HEAD
+[v1.17.0]: https://github.com/nasa/cumulus/compare/v1.16.1...v1.17.0
 [v1.16.1]: https://github.com/nasa/cumulus/compare/v1.16.0...v1.16.1
 [v1.16.0]: https://github.com/nasa/cumulus/compare/v1.15.0...v1.16.0
-[v1.15.0]: https://github.com/nasa/cumulus/compare/v1.14.4...v1.15.0
+[v1.15.0]: https://github.com/nasa/cumulus/compare/v1.14.5...v1.15.0
+[v1.14.5]: https://github.com/nasa/cumulus/compare/v1.14.4...v1.14.5
 [v1.14.4]: https://github.com/nasa/cumulus/compare/v1.14.3...v1.14.4
 [v1.14.3]: https://github.com/nasa/cumulus/compare/v1.14.2...v1.14.3
 [v1.14.2]: https://github.com/nasa/cumulus/compare/v1.14.1...v1.14.2
