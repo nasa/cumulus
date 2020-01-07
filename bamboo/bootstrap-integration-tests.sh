@@ -38,7 +38,8 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
 
 else
   echo "***Deploying stack with built source"
-  npm run bootstrap
+  npm run bootstrap-no-build && npm run bootstrap-no-build
+  npx lerna run prepare
 fi
 
 echo "Locking stack for deployment $DEPLOYMENT"
