@@ -1,5 +1,6 @@
 default:
   bucket: cumulus-test-sandbox-internal
+  apiUsername: jasmine
 
 mvd-tf:
   bucket: mvd-internal
@@ -33,4 +34,3 @@ mhs2:
 
 bt-tf:
   bucket: bt-internal
-

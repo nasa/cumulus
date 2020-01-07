@@ -9,7 +9,8 @@ const bootstrap = require('../../lambdas/bootstrap');
 const indexer = require('../../es/indexer');
 const {
   createFakeJwtAuthToken,
-  fakeExecutionFactory
+  fakeExecutionFactory,
+  setAuthorizedOAuthUsers
 } = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
 const assertions = require('../../lib/assertions');
@@ -20,7 +21,6 @@ let esIndex;
 const fakeExecutions = [];
 process.env.AccessTokensTable = randomString();
 process.env.ExecutionsTable = randomString();
-process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
@@ -31,7 +31,6 @@ const { app } = require('../../app');
 let jwtAuthToken;
 let accessTokenModel;
 let executionModel;
-let userModel;
 
 test.before(async () => {
   esIndex = randomString();
@@ -57,19 +56,18 @@ test.before(async () => {
   await Promise.all(fakeExecutions.map((i) => executionModel.create(i)
     .then((record) => indexer.indexExecution(esClient, record, esAlias))));
 
-  userModel = new models.User();
-  await userModel.createTable();
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 });
 
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await executionModel.deleteTable();
-  await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });

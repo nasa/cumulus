@@ -27,7 +27,8 @@ const {
   fakeAccessTokenFactory,
   fakeCollectionFactory,
   fakeGranuleFactoryV2,
-  createFakeJwtAuthToken
+  createFakeJwtAuthToken,
+  setAuthorizedOAuthUsers
 } = require('../../lib/testUtils');
 const {
   createJwtToken
@@ -37,7 +38,6 @@ const { Search } = require('../../es/search');
 process.env.AccessTokensTable = randomId('token');
 process.env.CollectionsTable = randomId('collection');
 process.env.GranulesTable = randomId('granules');
-process.env.UsersTable = randomId('users');
 process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('system_bucket');
 process.env.TOKEN_SECRET = randomId('secret');
@@ -64,15 +64,6 @@ async function runTestUsingBuckets(buckets, testFunction) {
   } finally {
     await Promise.all(buckets.map(aws.recursivelyDeleteS3Bucket));
   }
-}
-
-/**
- * helper for cleaning up after move files tests.
- * @param {string} publicBucket - public bucket created in setupBucketsConfig
- */
-async function teardownBuckets(publicBucket) {
-  await deleteBuckets([publicBucket, process.env.system_bucket]);
-  await createBucket(process.env.system_bucket);
 }
 
 /**
@@ -110,7 +101,6 @@ let accessTokenModel;
 let granuleModel;
 let collectionModel;
 let accessToken;
-let userModel;
 
 test.before(async (t) => {
   esIndex = randomId('esindex');
@@ -138,14 +128,13 @@ test.before(async (t) => {
   granuleModel = new models.Granule();
   await granuleModel.createTable();
 
-  // create fake Users table
-  userModel = new models.User();
-  await userModel.createTable();
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  accessToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  accessToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
   // Store the CMR password
   process.env.cmr_password_secret_name = randomString();
@@ -181,7 +170,6 @@ test.after.always(async () => {
   await collectionModel.deleteTable();
   await granuleModel.deleteTable();
   await accessTokenModel.deleteTable();
-  await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
   await aws.secretsManager().deleteSecret({
@@ -804,7 +792,7 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
   });
 
   CMR.prototype.ingestGranule.restore();
-  await teardownBuckets(publicBucket);
+  await aws.recursivelyDeleteS3Bucket(publicBucket);
 });
 
 test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
@@ -836,7 +824,7 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
     return putObject({ Bucket: file.bucket, Key: file.key, Body: ummgMetadataString });
   }));
 
-  const destinationFilepath = `${process.env.stackName}/moved_granules`;
+  const destinationFilepath = `${process.env.stackName}/moved_granules/${randomString()}`;
   const destinations = [
     {
       regex: '.*.txt$',
@@ -896,7 +884,7 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
   });
 
   CMR.prototype.ingestUMMGranule.restore();
-  await teardownBuckets(publicBucket);
+  await aws.recursivelyDeleteS3Bucket(publicBucket);
 });
 
 test.serial('PUT with action move returns failure if one granule file exists', async (t) => {
