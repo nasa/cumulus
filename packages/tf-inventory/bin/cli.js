@@ -1,0 +1,32 @@
+#!/usr/bin/env node
+
+'use strict';
+
+const program = require('commander');
+const pckg = require('../package.json');
+
+const stateFile = require('../src/stateFile');
+const inventory = require('../src/inventory');
+
+program.version(pckg.version);
+
+program
+  .usage('TYPE COMMAND [options]');
+
+program
+  .command('list-deployments')
+  .description('List Terraform deployments in the account')
+  .action(async () => {
+    const stateFiles = await stateFile.listTfStateFiles();
+    console.log(stateFile.listTfDeployments(stateFiles));
+  });
+
+program
+  .command('list-orphaned-resources')
+  .description('List resources not associated with a Terraform deployment')
+  .action(async () => {
+    console.log(await inventory.reconcileResources());
+  });
+
+program
+  .parse(process.argv);

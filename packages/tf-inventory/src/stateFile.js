@@ -110,7 +110,7 @@ async function getStateFileResources(file) {
 
     return resources.resources;
   } catch (e) {
-    console.log(`Error reading ${file}: ${e}`);
+    console.log(`Error reading ${file}: ${e.message}`);
   }
 
   return null;
@@ -147,7 +147,7 @@ function listTfDeployments(stateFiles) {
   let deployments = stateFiles.map((file) => {
     const deployment = file.match(/(.*)\/(.*)\/(data-persistence.*|cumulus.*)\/terraform.tfstate/);
     if (!deployment || deployment.length < 3) {
-      console.log(`Error : ${file}`);
+      console.log(`Error extracting deployment name from file ${file}`);
       return null;
     }
 

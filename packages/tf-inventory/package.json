@@ -7,7 +7,7 @@
     "node": ">=10.16.3"
   },
   "bin": {
-    "cumulus-api": "./bin/cli.js"
+    "tf-inventory": "./bin/cli.js"
   },
   "scripts": {
     "test": "ava",
@@ -37,6 +37,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/common": "1.16.1",
+    "commander": "^4.1.0",
     "lodash.difference": "^4.5.0",
     "lodash.mergewith": "^4.6.2"
   },
