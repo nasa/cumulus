@@ -35,6 +35,7 @@ declare -a param_list=(
   "bamboo_SECRET_TOKEN_SECRET"
   "bamboo_SECRET_VPC_CIDR_IP"
   "bamboo_SECRET_VPC_ID"
+  "bamboo_USE_CACHED_BOOTSTRAP"
   "bamboo_SHARED_LOG_DESTINATION_ARN"
   "bamboo_SKIP_AUDIT"
   "bamboo_SKIP_INTEGRATION_TESTS"

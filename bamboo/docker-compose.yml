@@ -37,7 +37,7 @@ services:
     environment:
       SERVICES: "kinesis,lambda,s3,secretsmanager,sns,sqs,dynamodb,cloudwatch,cloudwatchlogs"
   build_env:
-    image: jlkovarik/cumulus_build_env:test
+    image: jlkovarik/cumulus-build-env:test2
     volumes:
       - ../:/source/cumulus
     environment:
