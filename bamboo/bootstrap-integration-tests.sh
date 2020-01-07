@@ -10,12 +10,11 @@ set -ex
 . ./bamboo/abort-if-not-pr-or-redeployment.sh
 
 npm config set unsafe-perm true
-npm install
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-skip-integration-tests.sh
 
-
 if [[ $USE_TERRAFORM_ZIPS == true ]]; then
+  npm install
   echo "***Deploying stack with deployment packages"
 
   ## Update cumulus-tf
@@ -37,7 +36,14 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   cd ..
 
 else
+  if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus, pull down /cumulus ref and run there
+    echo "*** Using cached bootstrap"
+    cd /cumulus/
+    git fetch --all
+    git checkout "$GIT_SHA"
+  fi
   echo "***Deploying stack with built source"
+  npm install
   npm run bootstrap-no-build && npm run bootstrap-no-build
   npx lerna run prepare
 fi
@@ -48,7 +54,7 @@ cd example
 set +e
 
 # Wait for the stack to be available
-node ./scripts/lock-stack.js true $DEPLOYMENT
+node ./scripts/lock-stack.js true "$DEPLOYMENT"
 LOCK_EXISTS_STATUS=$?
 echo "Locking status $LOCK_EXISTS_STATUS"
 
@@ -61,10 +67,10 @@ while [[ $LOCK_EXISTS_STATUS == 100 ]]; do
   echo "Another build is using the ${DEPLOYMENT} stack."
   sleep 30
   ((COUNTER++))
-  node ./scripts/lock-stack.js true $DEPLOYMENT
+  node ./scripts/lock-stack.js true "$DEPLOYMENT"
   LOCK_EXISTS_STATUS=$?
 done
-if [[ $LOCK_EXIST_STATUS -gt 0 ]]; then
+if [[ $LOCK_EXISTS_STATUS -gt 0 ]]; then
   exit 1
 fi
 set -e
