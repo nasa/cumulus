@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### BREAKING CHANGES
 
 - **CUMULUS-1686**
-  - `ecs_cluster_instance_image_id` is now a *required*, rather than optional, variable of the `cumulus` module.
+  - `ecs_cluster_instance_image_id` is now a *required* variable of the `cumulus` module, instead of optional.
 
 ### Changed
 
