@@ -1,9 +1,13 @@
 'use strict';
 
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { createJwtToken } = require('../lib/token');
 const get = require('lodash.get');
 
-let token = randomString();
+let accessToken = randomId('oauthcode');
+const username = 'testUser';
+const expirationTime = new Date(Date.now() + 3600 * 24 * 1000);
+const jwt = createJwtToken({accessToken, username, expirationTime });
 
 /**
  * performs OAuth against an OAuth provider
@@ -15,18 +19,18 @@ let token = randomString();
 async function tokenEndpoint(req, res) {
   const code = get(req, 'query.code');
   const state = get(req, 'query.state');
-  if (token === '') token = randomString();
+  if (accessToken === '') accessToken = randomId('oauthcode');
 
   if (code) {
     if (state) {
       return res
         .status(307)
-        .set({ Location: `${decodeURIComponent(state)}?token=${token}` })
+        .set({ Location: `${decodeURIComponent(state)}?token=${jwt}` })
         .send('Redirecting');
     }
     return res.send({
       message: {
-        token
+        token: jwt
       }
     });
   }
@@ -52,7 +56,7 @@ async function tokenEndpoint(req, res) {
 async function refreshEndpoint(req, res) {
   return res.send({
     message: {
-      token
+      token: jwt
     }
   });
 }
@@ -65,7 +69,7 @@ async function refreshEndpoint(req, res) {
  * @returns {Promise<Object>} a promise of an express response
  */
 async function deleteTokenEndpoint(req, res) {
-  token = '';
+  accessToken = '';
   return res.send({ message: 'Token record was deleted' });
 }
 
@@ -86,8 +90,12 @@ async function ensureAuthorized(req, res, next) {
   }
   const jwtToken = req.headers.authorization.trim().split(/\s+/)[1];
 
-  if (jwtToken === token) {
-    req.authorizedMetadata = { userName: 'testUser' };
+  if (!jwtToken) {
+    return res.boom.unauthorized('Missing token');
+  }
+
+  if (jwtToken === jwt) {
+    req.authorizedMetadata = { userName: username };
     return next();
   }
   return res.boom.unauthorized('User not authorized');
@@ -97,6 +105,5 @@ module.exports = {
   tokenEndpoint,
   refreshEndpoint,
   deleteTokenEndpoint,
-  token,
   ensureAuthorized
 };
