@@ -28,6 +28,7 @@ data "aws_region" "current" {}
 data "terraform_remote_state" "data_persistence" {
   backend = "s3"
   config  = var.data_persistence_remote_state_config
+  workspace = "${terraform.workspace}"
 }
 
 data "aws_lambda_function" "sts_credentials" {
