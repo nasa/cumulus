@@ -4,10 +4,11 @@ const pLimit = require('p-limit');
 const { s3, promiseS3Upload } = require('@cumulus/common/aws');
 const { randomString, randomId, inTestMode } = require('@cumulus/common/test-utils');
 const bootstrap = require('../lambdas/bootstrap');
-const indexer = require('../es/indexer');
 const { Search } = require('../es/search');
 const models = require('../models');
 const testUtils = require('../lib/testUtils');
+const serveUtils = require('./serveUtils');
+
 
 const workflowList = testUtils.getWorkflowList();
 const defaultLocalStackName = 'localrun';
@@ -156,51 +157,36 @@ async function createDBRecords(stackName, user) {
   }
 
   // add collection records
-  const c = testUtils.fakeCollectionFactory();
-  c.name = `${stackName}-collection`;
-  const cm = new models.Collection();
-  const collection = await cm.create(c);
-  await indexer.indexCollection(esClient, collection, esIndex);
+  const c = testUtils.fakeCollectionFactory({ name: `${stackName}-collection` });
+  await serveUtils.addCollections([c], esClient, esIndex);
 
   // add granule records
-  const g = testUtils.fakeGranuleFactory();
-  g.granuleId = `${stackName}-granule`;
-  const gm = new models.Granule();
-  const granule = await gm.create(g);
-  await indexer.indexGranule(esClient, granule, esIndex);
+  const g = testUtils.fakeGranuleFactoryV2({ granuleId: `${stackName}-granule` });
+  await serveUtils.addGranules([g], esClient, esIndex);
 
   // add provider records
-  const p = testUtils.fakeProviderFactory();
-  p.id = `${stackName}-provider`;
-  const pm = new models.Provider();
-  const provider = await pm.create(p);
-  await indexer.indexProvider(esClient, provider, esIndex);
+  const p = testUtils.fakeProviderFactory({ id: `${stackName}-provider` });
+  await serveUtils.addProviders([p], esClient, esIndex);
 
   // add rule records
-  const r = testUtils.fakeRuleFactoryV2();
-  r.name = `${stackName}_rule`;
-  r.workflow = workflowList[0].name;
-  r.provider = `${stackName}-provider`;
-  r.collection = {
-    name: `${stackName}-collection`,
-    version: '0.0.0'
-  };
-  const rm = new models.Rule();
-  const rule = await rm.create(r);
-  await indexer.indexRule(esClient, rule, esIndex);
+  const r = testUtils.fakeRuleFactoryV2({
+    name: `${stackName}_rule`,
+    workflow: workflowList[0].name,
+    provider: `${stackName}-provider`,
+    collection: {
+      name: `${stackName}-collection`,
+      version: '0.0.0'
+    }
+  });
+  await serveUtils.addRules([r], esClient, esIndex);
 
   // add fake execution records
-  const e = testUtils.fakeExecutionFactory();
-  e.arn = `${stackName}-fake-arn`;
-  const em = new models.Execution();
-  const execution = await em.create(e);
-  await indexer.indexExecution(esClient, execution, esIndex);
+  const e = testUtils.fakeExecutionFactoryV2({ arn: `${stackName}-fake-arn` });
+  await serveUtils.addExecutions([e], esClient, esIndex);
 
   // add pdrs records
-  const pd = testUtils.fakePdrFactory();
-  pd.pdrName = `${stackName}-pdr`;
-  const pdm = new models.Pdr();
-  await pdm.create(pd);
+  const pd = testUtils.fakePdrFactoryV2({ pdrName: `${stackName}-pdr` });
+  await serveUtils.addPdrs([pd], esClient, esIndex);
 }
 
 /**

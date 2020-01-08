@@ -1,13 +1,13 @@
 'use strict';
 
-const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { createJwtToken } = require('../lib/token');
+const { randomId } = require('@cumulus/common/test-utils');
 const get = require('lodash.get');
+const { createJwtToken } = require('../lib/token');
 
 let accessToken = randomId('oauthcode');
 const username = 'testUser';
 const expirationTime = new Date(Date.now() + 3600 * 24 * 1000);
-const jwt = createJwtToken({accessToken, username, expirationTime });
+const jwt = createJwtToken({ accessToken, username, expirationTime });
 
 /**
  * performs OAuth against an OAuth provider
