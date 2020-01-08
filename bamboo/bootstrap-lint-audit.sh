@@ -12,7 +12,6 @@ set -e
     git checkout "$GIT_SHA"
   fi
 
-npm run bootstrap-no-build
 
 npm install -g npm
 ln -s /dev/stdout ./lerna-debug.log
