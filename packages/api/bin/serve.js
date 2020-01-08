@@ -143,7 +143,6 @@ async function eraseLocalElasticsearch(stackName) {
   return { esClient, esIndex };
 }
 
-
 /**
  * Fill dynamo and elastic with fake records for testing.
  * @param {string} stackName - The name of local stack. Used to prefix stack resources.
@@ -280,8 +279,8 @@ async function serveDistributionApi(stackName = defaultLocalStackName, done) {
 
 /**
  * erase all dynamoDB tables
- * @param {any} stackName
- * @param {any} systemBucket
+ * @param {string} stackName - defaults to local stack, localrun
+ * @param {string} systemBucket - defaults to 'localbucket', localrun
  */
 async function eraseDynamoTables(
   stackName = defaultLocalStackName,
@@ -316,15 +315,16 @@ async function eraseDynamoTables(
 
 /**
  * Erases DynamoDB tables and resets Elasticsearch
- * @param {any} stackName
- * @param {any} systemBucket
+ *
+ * @param {string} stackName - defaults to local stack, localrun
+ * @param {string} systemBucket - defaults to 'localbucket', localrun
  */
 async function eraseDataStack(
   stackName = defaultLocalStackName,
   systemBucket = 'localbucket',
 ) {
   await eraseDynamoTables(stackName, systemBucket);
-  await eraseLocalElasticsearch(stackName);
+  return eraseLocalElasticsearch(stackName);
 }
 
 /**
@@ -354,5 +354,11 @@ module.exports = {
   eraseDataStack,
   serveApi,
   serveDistributionApi,
-  resetTables
+  resetTables,
+  addCollections: serveUtils.addCollections,
+  addExecutions: serveUtils.addExecutions,
+  addGranules: serveUtils.addGranules,
+  addPdrs: serveUtils.addPdrs,
+  addProviders: serveUtils.addProviders,
+  addRules: serveUtils.addRules
 };
