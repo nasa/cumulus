@@ -72,7 +72,7 @@ function setTableEnvVariables(stackName) {
   };
 }
 
-// check if the tables and elasticsearch indices exist
+// check if the tables and Elasticsearch indices exist
 // if not create them
 async function checkOrCreateTables(stackName) {
   const tables = setTableEnvVariables(stackName);
@@ -126,14 +126,30 @@ function checkEnvVariablesAreSet(moreRequiredEnvVars) {
   });
 }
 
-async function createDBRecords(stackName, user) {
+/**
+ * resets ElasticSearch and returns the client and index.
+ *
+ * @param {string} stackName - The name of local stack. Used to prefix stack resources.
+ * @returns {Object} - Elasticsearch client and index
+ */
+async function eraseLocalElasticsearch(stackName) {
   setLocalEsVariables(stackName);
   const esClient = await Search.es(process.env.ES_HOST);
   const esIndex = process.env.ES_INDEX;
   // Resets the ES client
-  await esClient.indices.delete({ index: esIndex })
-    .then((response) => response.body);
+  await esClient.indices.delete({ index: esIndex });
   await bootstrap.bootstrapElasticSearch(process.env.ES_HOST, esIndex);
+  return { esClient, esIndex };
+}
+
+
+/**
+ * Fill dynamo and elastic with fake records for testing.
+ * @param {string} stackName - The name of local stack. Used to prefix stack resources.
+ * @param {string} user - username, defaults to local user, testUser
+ */
+async function createDBRecords(stackName, user) {
+  const { esClient, esIndex } = await eraseLocalElasticsearch(stackName);
 
   if (user) {
     await testUtils.setAuthorizedOAuthUsers([user]);
@@ -275,6 +291,56 @@ async function serveDistributionApi(stackName = defaultLocalStackName, done) {
   return distributionApp.listen(port, done);
 }
 
+
+/**
+ * erase all dynamoDB tables
+ * @param {any} stackName
+ * @param {any} systemBucket
+ */
+async function eraseDynamoTables(
+  stackName = defaultLocalStackName,
+  systemBucket = 'localbucket'
+) {
+  setTableEnvVariables(stackName);
+  process.env.system_bucket = systemBucket;
+  process.env.stackName = stackName;
+
+  // Remove all data from tables
+  const providerModel = new models.Provider();
+  const collectionModel = new models.Collection();
+  const rulesModel = new models.Rule();
+  const executionModel = new models.Execution();
+  const granulesModel = new models.Granule();
+  const pdrsModel = new models.Pdr();
+
+  try {
+    await rulesModel.deleteRules();
+    await Promise.all([
+      collectionModel.deleteCollections(),
+      providerModel.deleteProviders(),
+      executionModel.deleteExecutions(),
+      granulesModel.deleteGranules(),
+      pdrsModel.deletePdrs()
+    ]);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+
+/**
+ * Erases DynamoDB tables and resets Elasticsearch
+ * @param {any} stackName
+ * @param {any} systemBucket
+ */
+async function eraseDataStack(
+  stackName = defaultLocalStackName,
+  systemBucket = 'localbucket',
+) {
+  await eraseDynamoTables(stackName, systemBucket);
+  await eraseLocalElasticsearch(stackName);
+}
+
 /**
  * Removes all additional data from tables and repopulates with original data.
  *
@@ -290,31 +356,7 @@ async function resetTables(
   runIt = false
 ) {
   if (inTestMode() || runIt) {
-    setTableEnvVariables(stackName);
-    process.env.system_bucket = systemBucket;
-    process.env.stackName = stackName;
-
-    // Remove all data from tables
-    const providerModel = new models.Provider();
-    const collectionModel = new models.Collection();
-    const rulesModel = new models.Rule();
-    const executionModel = new models.Execution();
-    const granulesModel = new models.Granule();
-    const pdrsModel = new models.Pdr();
-
-    try {
-      await rulesModel.deleteRules();
-      await Promise.all([
-        collectionModel.deleteCollections(),
-        providerModel.deleteProviders(),
-        executionModel.deleteExecutions(),
-        granulesModel.deleteGranules(),
-        pdrsModel.deletePdrs()
-      ]);
-    } catch (error) {
-      console.log(error);
-    }
-
+    await eraseDynamoTables(stackName, systemBucket);
     // Populate tables with original test data (localstack)
     if (inTestMode()) {
       await createDBRecords(stackName, user);
@@ -323,6 +365,7 @@ async function resetTables(
 }
 
 module.exports = {
+  eraseDataStack,
   serveApi,
   serveDistributionApi,
   resetTables
