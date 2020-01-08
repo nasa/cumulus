@@ -15,10 +15,7 @@ if [[ $(git describe --exact-match HEAD 2>/dev/null |sed -n '1p') =~ ^v[0-9]+.* 
 fi
 
 if [[ $commit_message_contains_skip_audit_flag = false && $commit_matches_version_tag = false && $SKIP_AUDIT != true ]]; then
- if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus, pull down /cumulus ref and run there
-    echo "*** Using cached bootstrap"
-    cd /cumulus/
-  fi
+  npm install --no-audit
   npm run install-locks;
   npm run audit;
 else
