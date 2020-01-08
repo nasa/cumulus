@@ -27,51 +27,9 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   cd ..
   npm install && npm run prepare
   cd ..
-
 else
-  if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus, pull down /cumulus ref and run there
-    echo "*** Using cached bootstrap"
-    cd /cumulus/
-    git fetch --all
-    git checkout "$GIT_SHA"
-  fi
-  echo "***Deploying stack with built source"
-  npm install
-  npm run bootstrap-no-build && npm run bootstrap-no-build
-  npx lerna run prepare
+  exit 0
 fi
 
-echo "Locking stack for deployment $DEPLOYMENT"
+. ./bamboo/deploy-integration-stack.sh
 
-cd example
-set +e
-
-# Wait for the stack to be available
-node ./scripts/lock-stack.js true "$DEPLOYMENT"
-LOCK_EXISTS_STATUS=$?
-echo "Locking status $LOCK_EXISTS_STATUS"
-
-COUNTER=0
-while [[ $LOCK_EXISTS_STATUS == 100 ]]; do
-  if [[ $COUNTER -gt $TIMEOUT_PERIODS ]]; then
-    echo "Timed out waiting for stack to become available"
-    exit 1
-  fi
-  echo "Another build is using the ${DEPLOYMENT} stack."
-  sleep 30
-  ((COUNTER++))
-  node ./scripts/lock-stack.js true "$DEPLOYMENT"
-  LOCK_EXISTS_STATUS=$?
-done
-if [[ $LOCK_EXISTS_STATUS -gt 0 ]]; then
-  exit 1
-fi
-set -e
-
-if [[ $KES_DEPLOYMENT == true ]]; then
-  echo "Running Kes deployment $DEPLOYMENT"
-  . ../bamboo/bootstrap-kes-deployment.sh
-else
-  echo "Running Terraform deployment $DEPLOYMENT"
-  . ../bamboo/bootstrap-tf-deployment.sh
-fi
