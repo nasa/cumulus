@@ -170,8 +170,7 @@ async function reconciliationReportForGranuleFiles(granuleInDb, granuleInCmr, bu
   // check each URL entry against database records
   granuleInCmr.RelatedUrls.forEach((relatedUrl) => {
     // only check URL types for downloading granule files and related data (such as documents)
-    if (cmrGetDataTypes.includes(relatedUrl.Type)
-      || cmrRelatedDataTypes.includes(relatedUrl.Type)) {
+    if ([...cmrGetDataTypes, ...cmrRelatedDataTypes].includes(relatedUrl.Type)) {
       const urlFileName = relatedUrl.URL.split('/').pop();
 
       // filename in both cumulus and CMR

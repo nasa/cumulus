@@ -70,46 +70,6 @@ class Rule extends Manager {
   }
 
   /**
-   * Update the event source mappings for Kinesis type rules.
-   *
-   * Avoids object mutation by cloning the original rule item.
-   *
-   * @param {Object} ruleItem - A rule item
-   * @param {Object} ruleArns
-   * @param {string} ruleArns.arn
-   *   UUID for event source mapping from Kinesis stream for messageConsumer Lambda
-   * @param {string} ruleArns.logEventArn
-   *   UUID for event source mapping from Kinesis stream to KinesisInboundEventLogger Lambda
-   * @returns {Object} - Updated rule item
-   */
-  updateKinesisRuleArns(ruleItem, ruleArns) {
-    const updatedRuleItem = cloneDeep(ruleItem);
-    updatedRuleItem.rule.arn = ruleArns.arn;
-    updatedRuleItem.rule.logEventArn = ruleArns.logEventArn;
-    return updatedRuleItem;
-  }
-
-  /**
-   * Update the event source mapping for SNS type rules.
-   *
-   * Avoids object mutation by cloning the original rule item.
-   *
-   * @param {Object} ruleItem - A rule item
-   * @param {string} snsSubscriptionArn
-   *   UUID for event source mapping from SNS topic to messageConsumer Lambda
-   * @returns {Object} - Updated rule item
-   */
-  updateSnsRuleArn(ruleItem, snsSubscriptionArn) {
-    const updatedRuleItem = cloneDeep(ruleItem);
-    if (!snsSubscriptionArn) {
-      delete updatedRuleItem.rule.arn;
-    } else {
-      updatedRuleItem.rule.arn = snsSubscriptionArn;
-    }
-    return updatedRuleItem;
-  }
-
-  /**
    * Updates a rule item.
    *
    * @param {Object} original - the original rule
@@ -146,18 +106,7 @@ class Rule extends Manager {
       break;
     case 'sns': {
       if (valueUpdated || stateChanged) {
-        if (updatedRuleItem.state === 'ENABLED' && stateChanged && updatedRuleItem.rule.arn) {
-          throw new Error('Including rule.arn is not allowed when enabling a disabled rule');
-        }
-        let snsSubscriptionArn;
-        if (updatedRuleItem.rule.arn) {
-          await this.deleteSnsTrigger(updatedRuleItem);
-        }
-        if (updatedRuleItem.state === 'ENABLED') {
-          snsSubscriptionArn = await this.addSnsTrigger(updatedRuleItem);
-        }
-        updatedRuleItem = this.updateSnsRuleArn(updatedRuleItem,
-          snsSubscriptionArn);
+        updatedRuleItem = this.validateAndUpdateSnsRule(updatedRuleItem, stateChanged);
       }
       break;
     }
@@ -465,6 +414,68 @@ class Rule extends Manager {
 
     if (!get(rule, 'meta.retries')) set(rule, 'meta.retries', 3);
     return rule;
+  }
+
+  /**
+   * Update the event source mappings for Kinesis type rules.
+   *
+   * Avoids object mutation by cloning the original rule item.
+   *
+   * @param {Object} ruleItem - A rule item
+   * @param {Object} ruleArns
+   * @param {string} ruleArns.arn
+   *   UUID for event source mapping from Kinesis stream for messageConsumer Lambda
+   * @param {string} ruleArns.logEventArn
+   *   UUID for event source mapping from Kinesis stream to KinesisInboundEventLogger Lambda
+   * @returns {Object} - Updated rule item
+   */
+  updateKinesisRuleArns(ruleItem, ruleArns) {
+    const updatedRuleItem = cloneDeep(ruleItem);
+    updatedRuleItem.rule.arn = ruleArns.arn;
+    updatedRuleItem.rule.logEventArn = ruleArns.logEventArn;
+    return updatedRuleItem;
+  }
+
+  /**
+   * Update the event source mapping for SNS type rules.
+   *
+   * Avoids object mutation by cloning the original rule item.
+   *
+   * @param {Object} ruleItem - A rule item
+   * @param {string} snsSubscriptionArn
+   *   UUID for event source mapping from SNS topic to messageConsumer Lambda
+   * @returns {Object} - Updated rule item
+   */
+  updateSnsRuleArn(ruleItem, snsSubscriptionArn) {
+    const updatedRuleItem = cloneDeep(ruleItem);
+    if (!snsSubscriptionArn) {
+      delete updatedRuleItem.rule.arn;
+    } else {
+      updatedRuleItem.rule.arn = snsSubscriptionArn;
+    }
+    return updatedRuleItem;
+  }
+
+  /**
+   * Validate update request and perform updates, i.e. deleting and adding triggers.
+   *
+   * @param {Object} ruleItem - rule item with requested updates
+   * @param {boolean} stateChanged - whether this was a state change request
+   * @returns {Object} ruleItem with updates performed
+   */
+  async validateAndUpdateSnsRule(ruleItem, stateChanged) {
+    if (ruleItem.state === 'ENABLED' && stateChanged && ruleItem.rule.arn) {
+      throw new Error('Including rule.arn is not allowed when enabling a disabled rule');
+    }
+    let snsSubscriptionArn;
+    if (ruleItem.rule.arn) {
+      await this.deleteSnsTrigger(ruleItem);
+    }
+    if (ruleItem.state === 'ENABLED') {
+      snsSubscriptionArn = await this.addSnsTrigger(ruleItem);
+    }
+    return this.updateSnsRuleArn(ruleItem,
+      snsSubscriptionArn);
   }
 
   /**

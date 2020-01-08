@@ -11,6 +11,42 @@
 const aws = require('./aws');
 const { RecordDoesNotExist } = require('./errors');
 
+function createScanParams({
+  tableName,
+  query,
+  fields,
+  limit,
+  select,
+  startKey
+}) {
+  const params = {
+    TableName: tableName
+  };
+  if (query) {
+    if (query.filter && query.values) {
+      params.FilterExpression = query.filter;
+      params.ExpressionAttributeValues = query.values;
+    }
+
+    if (query.names) {
+      params.ExpressionAttributeNames = query.names;
+    }
+  }
+  if (fields) {
+    params.ProjectionExpression = fields;
+  }
+  if (limit) {
+    params.Limit = limit;
+  }
+  if (select) {
+    params.Select = select;
+  }
+  if (startKey) {
+    params.ExclusiveStartKey = startKey;
+  }
+  return params;
+}
+
 // Exported functions
 
 /**
@@ -76,36 +112,14 @@ const scan = aws.improveStackTrace(
     select,
     startKey
   }) => {
-    const params = {
-      TableName: tableName
-    };
-
-    if (query) {
-      if (query.filter && query.values) {
-        params.FilterExpression = query.filter;
-        params.ExpressionAttributeValues = query.values;
-      }
-
-      if (query.names) {
-        params.ExpressionAttributeNames = query.names;
-      }
-    }
-
-    if (fields) {
-      params.ProjectionExpression = fields;
-    }
-
-    if (limit) {
-      params.Limit = limit;
-    }
-
-    if (select) {
-      params.Select = select;
-    }
-
-    if (startKey) {
-      params.ExclusiveStartKey = startKey;
-    }
+    const params = createScanParams({
+      tableName,
+      query,
+      fields,
+      limit,
+      select,
+      startKey
+    });
 
     const response = await client.scan(params).promise();
 

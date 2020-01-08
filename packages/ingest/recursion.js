@@ -22,16 +22,14 @@ async function recursion(fn, originalPath, currentPath = null, position = 0) {
   const map = rules.map((r) => (r.match(regex) !== null));
 
   let files = [];
-  let path = currentPath;
-  if (!path) {
-    path = rules[position];
-  }
+  const path = currentPath || rules[position];
 
   log.info(`Listing ${path}`);
+  log.debug(`rules: ${JSON.stringify(rules)}`);
 
   // get list of current path
   const list = await fn(path);
-
+  log.debug(`list: ${JSON.stringify(list)}`);
   // loop try what is returned
   for (let ctr = 0; ctr < list.length; ctr += 1) {
     const item = list[ctr];
@@ -41,7 +39,7 @@ async function recursion(fn, originalPath, currentPath = null, position = 0) {
     let newPath;
 
     // if directory is found, apply recursion logic
-    if (item.type === 'd' || item.type === 1) {
+    if (['d', 1].includes(item.type)) {
       // first we check if the next segment of the provided path
       // is a regex rule
       const isRegex = map[position + 1];
@@ -72,7 +70,7 @@ async function recursion(fn, originalPath, currentPath = null, position = 0) {
       files = files.concat(tmp);
 
       if (textPath) break;
-    } else if (item.type === '-' || item.type === 0) {
+    } else if (['-', 0].includes(item.type)) {
       // add file to the list
       files = files.concat(item);
     }

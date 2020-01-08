@@ -22,7 +22,7 @@
     "node": true
   },
   "rules": {
-    "complexity": ["error", 15],
+    "complexity": ["error", 10],
     "indent": ["error", 2],
     "require-jsdoc": "off",
     "valid-jsdoc": [

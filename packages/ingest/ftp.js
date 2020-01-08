@@ -108,7 +108,7 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
             log.error(`Connection timed out while listing ${path}. Retrying...`);
             counter += 1;
             return this._list(path, counter).then((r) => {
-              log.info(`${counter} retry suceeded`);
+              log.info(`${counter} retry succeeded`);
               return resolve(r);
             }).catch((e) => reject(e));
           }

@@ -1,8 +1,20 @@
 'use strict';
 
+const get = require('lodash.get');
 const got = require('got');
 const getUrl = require('./getUrl');
 const { parseXMLString } = require('./Utils');
+
+function createSearchQuery({
+  searchParams,
+  cmrPageSize = (process.env.CMR_PAGE_SIZE || 50)
+}) {
+  const pageSize = get(searchParams, 'pageSize', cmrPageSize);
+  const pageNum = get(searchParams, 'page_num', 0) + 1;
+  const defaultParams = { page_size: pageSize };
+  // if requested, recursively retrieve all the search results for collections or granules
+  return Object.assign({}, defaultParams, searchParams, { page_num: pageNum });
+}
 
 /**
  *
@@ -26,20 +38,14 @@ async function searchConcept({
   headers = {},
   format = 'json',
   recursive = true,
-  cmrLimit = process.env.CMR_LIMIT,
-  cmrPageSize = process.env.CMR_PAGE_SIZE
+  cmrLimit = (process.env.CMR_LIMIT || 100),
+  cmrPageSize
 }) {
-  const recordsLimit = cmrLimit || 100;
-  const pageSize = searchParams.pageSize || cmrPageSize || 50;
-
-  const defaultParams = { page_size: pageSize };
-
   const url = `${getUrl('search')}${type}.${format.toLowerCase()}`;
-
-  const pageNum = (searchParams.page_num) ? searchParams.page_num + 1 : 1;
-
-  // if requested, recursively retrieve all the search results for collections or granules
-  const query = Object.assign({}, defaultParams, searchParams, { page_num: pageNum });
+  const query = createSearchQuery({
+    searchParams,
+    cmrPageSize
+  });
   const response = await got.get(url, { json: format.endsWith('json'), query, headers });
 
   const responseItems = (format === 'echo10')
@@ -50,7 +56,7 @@ async function searchConcept({
 
   const numRecordsCollected = fetchedResults.length;
   const CMRHasMoreResults = response.headers['cmr-hits'] > numRecordsCollected;
-  const recordsLimitReached = numRecordsCollected >= recordsLimit;
+  const recordsLimitReached = numRecordsCollected >= cmrLimit;
   if (recursive && CMRHasMoreResults && !recordsLimitReached) {
     return searchConcept({
       type,
@@ -61,7 +67,7 @@ async function searchConcept({
       recursive
     });
   }
-  return fetchedResults.slice(0, recordsLimit);
+  return fetchedResults.slice(0, cmrLimit);
 }
 
 module.exports = searchConcept;

@@ -184,26 +184,33 @@ async function get(req, res) {
   return res.send(result);
 }
 
-async function bulk(req, res) {
-  const payload = req.body;
-
+function validateBulkPayload(payload) {
   if (!payload.workflowName) {
-    return res.boom.badRequest('workflowName is required.');
+    throw new Error('workflowName is required.');
   }
 
   if (!payload.ids && !payload.query) {
-    return res.boom.badRequest('One of ids or query is required');
+    throw new Error('One of ids or query is required');
   }
 
   if (payload.query
     && !(process.env.METRICS_ES_HOST
     && process.env.METRICS_ES_USER
     && process.env.METRICS_ES_PASS)) {
-    return res.boom.badRequest('ELK Metrics stack not configured');
+    throw new Error('ELK Metrics stack not configured');
   }
 
   if (payload.query && !payload.index) {
-    return res.boom.badRequest('Index is required if query is sent');
+    throw new Error('Index is required if query is sent');
+  }
+}
+
+async function bulk(req, res) {
+  const payload = req.body;
+  try {
+    validateBulkPayload(payload);
+  } catch (e) {
+    return res.boom.badRequest(e.message);
   }
 
   const asyncOperationModel = new models.AsyncOperation({

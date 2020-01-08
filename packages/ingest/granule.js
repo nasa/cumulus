@@ -587,6 +587,38 @@ class HttpGranule extends httpMixin(baseProtocol(Granule)) {}
  */
 class S3Granule extends s3Mixin(baseProtocol(Granule)) {}
 
+function selectGranuleDiscoverer(protocol) {
+  switch (protocol) {
+  case 'sftp':
+    return SftpDiscoverGranules;
+  case 'ftp':
+    return FtpDiscoverGranules;
+  case 'http':
+  case 'https':
+    return HttpDiscoverGranules;
+  case 's3':
+    return S3DiscoverGranules;
+  default:
+    throw new Error(`Protocol ${protocol} is not supported.`);
+  }
+}
+
+function selectGranuleIngester(protocol) {
+  switch (protocol) {
+  case 'sftp':
+    return SftpGranule;
+  case 'ftp':
+    return FtpGranule;
+  case 'http':
+  case 'https':
+    return HttpGranule;
+  case 's3':
+    return S3Granule;
+  default:
+    throw new Error(`Protocol ${protocol} is not supported.`);
+  }
+}
+
 /**
 * Select a class for discovering or ingesting granules based on protocol
 *
@@ -596,35 +628,11 @@ class S3Granule extends s3Mixin(baseProtocol(Granule)) {}
 **/
 function selector(type, protocol) {
   if (type === 'discover') {
-    switch (protocol) {
-    case 'sftp':
-      return SftpDiscoverGranules;
-    case 'ftp':
-      return FtpDiscoverGranules;
-    case 'http':
-    case 'https':
-      return HttpDiscoverGranules;
-    case 's3':
-      return S3DiscoverGranules;
-    default:
-      throw new Error(`Protocol ${protocol} is not supported.`);
-    }
-  } else if (type === 'ingest') {
-    switch (protocol) {
-    case 'sftp':
-      return SftpGranule;
-    case 'ftp':
-      return FtpGranule;
-    case 'http':
-    case 'https':
-      return HttpGranule;
-    case 's3':
-      return S3Granule;
-    default:
-      throw new Error(`Protocol ${protocol} is not supported.`);
-    }
+    return selectGranuleDiscoverer(protocol);
   }
-
+  if (type === 'ingest') {
+    return selectGranuleIngester(protocol);
+  }
   throw new Error(`${type} is not supported`);
 }
 

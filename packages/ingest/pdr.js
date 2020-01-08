@@ -269,6 +269,38 @@ class HttpParse extends httpMixin(baseProtocol(Parse)) {}
  */
 class S3Parse extends s3Mixin(baseProtocol(Parse)) {}
 
+function selectPdrDiscoverer(protocol) {
+  switch (protocol) {
+  case 'http':
+  case 'https':
+    return HttpDiscover;
+  case 'ftp':
+    return FtpDiscover;
+  case 'sftp':
+    return SftpDiscover;
+  case 's3':
+    return S3Discover;
+  default:
+    throw new Error(`Protocol ${protocol} is not supported.`);
+  }
+}
+
+function selectPdrParser(protocol) {
+  switch (protocol) {
+  case 'http':
+  case 'https':
+    return HttpParse;
+  case 'ftp':
+    return FtpParse;
+  case 'sftp':
+    return SftpParse;
+  case 's3':
+    return S3Parse;
+  default:
+    throw new Error(`Protocol ${protocol} is not supported.`);
+  }
+}
+
 /**
  * Select a class for discovering PDRs based on protocol
  *
@@ -278,35 +310,11 @@ class S3Parse extends s3Mixin(baseProtocol(Parse)) {}
  */
 function selector(type, protocol) {
   if (type === 'discover') {
-    switch (protocol) {
-    case 'http':
-    case 'https':
-      return HttpDiscover;
-    case 'ftp':
-      return FtpDiscover;
-    case 'sftp':
-      return SftpDiscover;
-    case 's3':
-      return S3Discover;
-    default:
-      throw new Error(`Protocol ${protocol} is not supported.`);
-    }
-  } else if (type === 'parse') {
-    switch (protocol) {
-    case 'http':
-    case 'https':
-      return HttpParse;
-    case 'ftp':
-      return FtpParse;
-    case 'sftp':
-      return SftpParse;
-    case 's3':
-      return S3Parse;
-    default:
-      throw new Error(`Protocol ${protocol} is not supported.`);
-    }
+    return selectPdrDiscoverer(protocol);
   }
-
+  if (type === 'parse') {
+    return selectPdrParser(protocol);
+  }
   throw new Error(`${type} is not supported`);
 }
 

@@ -9,6 +9,31 @@ const { User, AccessToken } = require('../models');
 const { verifyJwtToken } = require('../lib/token');
 
 /**
+ * Verify that the Authorization header was set in the request
+ *
+ * @param {string} authorizationHeader - request authorization header
+ * @returns {string} jwtToken
+ * @throws {Error} header validation error (with appropriate message)
+ */
+function validateAuthHeader(authorizationHeader) {
+  if (!authorizationHeader) {
+    throw new Error('Authorization header missing');
+  }
+  // Parse the Authorization header
+  const [scheme, jwtToken] = authorizationHeader.trim().split(/\s+/);
+
+  // Verify that the Authorization type was "Bearer"
+  if (scheme !== 'Bearer') {
+    throw new Error('Authorization scheme must be Bearer');
+  }
+
+  if (!jwtToken) {
+    throw new Error('Missing token');
+  }
+  return jwtToken;
+}
+
+/**
  * An express middleware that checks if an incoming express
  * request is authenticated
  *
@@ -18,21 +43,11 @@ const { verifyJwtToken } = require('../lib/token');
  * @returns {Promise<Object>} - promise of an express response object
  */
 async function ensureAuthorized(req, res, next) {
-  // Verify that the Authorization header was set in the request
-  const authorizationKey = req.headers.authorization;
-  if (!authorizationKey) {
-    return res.boom.unauthorized('Authorization header missing');
-  }
-  // Parse the Authorization header
-  const [scheme, jwtToken] = req.headers.authorization.trim().split(/\s+/);
-
-  // Verify that the Authorization type was "Bearer"
-  if (scheme !== 'Bearer') {
-    return res.boom.unauthorized('Authorization scheme must be Bearer');
-  }
-
-  if (!jwtToken) {
-    return res.boom.unauthorized('Missing token');
+  let jwtToken;
+  try {
+    jwtToken = validateAuthHeader(req.headers.authorization);
+  } catch (e) {
+    return res.boom.unauthorized(e.message);
   }
 
   let userName;
@@ -57,15 +72,12 @@ async function ensureAuthorized(req, res, next) {
         && error.message === 'jwt malformed') {
       return ensureLaunchpadAPIAuthorized(req, res, next);
     }
-
     if (error instanceof TokenExpiredError) {
       return res.boom.unauthorized('Access token has expired');
     }
-
     if (error instanceof JsonWebTokenError) {
       return res.boom.forbidden('Invalid access token');
     }
-
     return res.boom.unauthorized('User not authorized');
   }
 }
