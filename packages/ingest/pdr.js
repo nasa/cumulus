@@ -4,10 +4,10 @@ const aws = require('@cumulus/common/aws');
 const fs = require('fs-extra');
 const get = require('lodash.get');
 const log = require('@cumulus/common/log');
+const os = require('os');
 const path = require('path');
 const { CollectionConfigStore } = require('@cumulus/common');
 
-const { baseProtocol } = require('./protocol');
 const { ftpMixin } = require('./ftp');
 const { httpMixin } = require('./http');
 const { parsePdr } = require('./parse-pdr');
@@ -15,6 +15,26 @@ const { s3Mixin } = require('./s3');
 const { sftpMixin } = require('./sftp');
 const { normalizeProviderPath } = require('./util');
 
+const upload = async (bucket, key, filename, tempFile) => {
+  let fullKey = path.join(key, filename);
+
+  // handle the edge case where leading / in key creates incorrect path
+  // by remove the first slash if it exists
+  if (fullKey[0] === '/') {
+    fullKey = fullKey.substr(1);
+  }
+
+  await aws.s3PutObject({
+    Bucket: bucket,
+    Key: fullKey,
+    Body: fs.createReadStream(tempFile)
+  });
+
+  const s3Uri = `s3://${bucket}/${fullKey}`;
+  log.info(`uploaded ${s3Uri}`);
+
+  return s3Uri;
+};
 
 /**
  * This is a base class for discovering PDRs
@@ -154,7 +174,7 @@ class Parse {
    */
   async ingest() {
     // download the PDR
-    const downloadDir = await this.createDownloadDirectory();
+    const downloadDir = await fs.mkdtemp(`${os.tmpdir()}${path.sep}`);
     const pdrLocalPath = path.join(downloadDir, this.pdr.name);
     const pdrRemotePath = path.join(this.pdr.path, this.pdr.name);
     await this.download(pdrRemotePath, pdrLocalPath);
@@ -165,7 +185,7 @@ class Parse {
       parsedPdr = await this.parse(pdrLocalPath);
 
       // upload only if the parse was successful
-      await this.upload(
+      await upload(
         this.bucket,
         path.join(this.stack, this.folder),
         this.pdr.name,
@@ -212,7 +232,7 @@ class Parse {
  * @class
  */
 
-class FtpDiscover extends ftpMixin(baseProtocol(Discover)) {}
+class FtpDiscover extends ftpMixin(Discover) {}
 
 /**
  * Discover PDRs from a HTTP endpoint.
@@ -220,7 +240,7 @@ class FtpDiscover extends ftpMixin(baseProtocol(Discover)) {}
  * @class
  */
 
-class HttpDiscover extends httpMixin(baseProtocol(Discover)) {}
+class HttpDiscover extends httpMixin(Discover) {}
 
 /**
  * Discover PDRs from a SFTP endpoint.
@@ -228,14 +248,14 @@ class HttpDiscover extends httpMixin(baseProtocol(Discover)) {}
  * @class
  */
 
-class SftpDiscover extends sftpMixin(baseProtocol(Discover)) {}
+class SftpDiscover extends sftpMixin(Discover) {}
 
 /**
  * Discover PDRs from a S3 endpoint.
  *
  * @class
  */
-class S3Discover extends s3Mixin(baseProtocol(Discover)) {}
+class S3Discover extends s3Mixin(Discover) {}
 
 /**
  * Parse PDRs downloaded from a SFTP endpoint.
@@ -243,7 +263,7 @@ class S3Discover extends s3Mixin(baseProtocol(Discover)) {}
  * @class
  */
 
-class SftpParse extends sftpMixin(baseProtocol(Parse)) {}
+class SftpParse extends sftpMixin(Parse) {}
 
 /**
  * Parse and Queue PDRs downloaded from a FTP endpoint.
@@ -251,7 +271,7 @@ class SftpParse extends sftpMixin(baseProtocol(Parse)) {}
  * @class
  */
 
-class FtpParse extends ftpMixin(baseProtocol(Parse)) {}
+class FtpParse extends ftpMixin(Parse) {}
 
 /**
  * Parse and Queue PDRs downloaded from a HTTP endpoint.
@@ -259,7 +279,7 @@ class FtpParse extends ftpMixin(baseProtocol(Parse)) {}
  * @class
  */
 
-class HttpParse extends httpMixin(baseProtocol(Parse)) {}
+class HttpParse extends httpMixin(Parse) {}
 
 
 /**
@@ -267,7 +287,7 @@ class HttpParse extends httpMixin(baseProtocol(Parse)) {}
  *
  * @class
  */
-class S3Parse extends s3Mixin(baseProtocol(Parse)) {}
+class S3Parse extends s3Mixin(Parse) {}
 
 /**
  * Select a class for discovering PDRs based on protocol

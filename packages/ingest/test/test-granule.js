@@ -34,7 +34,6 @@ const {
   unversionFilename
 } = require('../granule');
 
-const { baseProtocol } = require('../protocol');
 const { s3Mixin } = require('../s3');
 
 test.beforeEach(async (t) => {
@@ -580,7 +579,7 @@ test('renameS3FileWithTimestamp renames file', async (t) => {
   t.true(renamedFiles.map((f) => f.Key).includes(existingRenamedKey));
 });
 
-class TestS3Granule extends s3Mixin(baseProtocol(Granule)) {}
+class TestS3Granule extends s3Mixin(Granule) {}
 
 const collectionConfig = {
   dataType: 'testDataType',

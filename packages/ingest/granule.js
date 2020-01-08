@@ -24,7 +24,6 @@ const { sftpMixin } = require('./sftp');
 const { ftpMixin } = require('./ftp');
 const { httpMixin } = require('./http');
 const { s3Mixin } = require('./s3');
-const { baseProtocol } = require('./protocol');
 const { normalizeProviderPath } = require('./util');
 
 /**
@@ -550,42 +549,42 @@ exports.Granule = Granule; // exported to support testing
 /**
  * A class for discovering granules using HTTP or HTTPS.
  */
-class HttpDiscoverGranules extends httpMixin(baseProtocol(Discover)) {}
+class HttpDiscoverGranules extends httpMixin(Discover) {}
 
 /**
  * A class for discovering granules using SFTP.
  */
-class SftpDiscoverGranules extends sftpMixin(baseProtocol(Discover)) {}
+class SftpDiscoverGranules extends sftpMixin(Discover) {}
 
 /**
  * A class for discovering granules using FTP.
  */
-class FtpDiscoverGranules extends ftpMixin(baseProtocol(Discover)) {}
+class FtpDiscoverGranules extends ftpMixin(Discover) {}
 
 /**
  * A class for discovering granules using S3.
  */
-class S3DiscoverGranules extends s3Mixin(baseProtocol(Discover)) {}
+class S3DiscoverGranules extends s3Mixin(Discover) {}
 
 /**
  * Ingest Granule from an FTP endpoint.
  */
-class FtpGranule extends ftpMixin(baseProtocol(Granule)) {}
+class FtpGranule extends ftpMixin(Granule) {}
 
 /**
  * Ingest Granule from an SFTP endpoint.
  */
-class SftpGranule extends sftpMixin(baseProtocol(Granule)) {}
+class SftpGranule extends sftpMixin(Granule) {}
 
 /**
  * Ingest Granule from an HTTP endpoint.
  */
-class HttpGranule extends httpMixin(baseProtocol(Granule)) {}
+class HttpGranule extends httpMixin(Granule) {}
 
 /**
  * Ingest Granule from an s3 endpoint.
  */
-class S3Granule extends s3Mixin(baseProtocol(Granule)) {}
+class S3Granule extends s3Mixin(Granule) {}
 
 /**
 * Select a class for discovering or ingesting granules based on protocol
