@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { randomId } = require('@cumulus/common/test-utils');
 const { putJsonS3Object, sqs } = require('@cumulus/common/aws');
 const { createJwtToken } = require('./token');
 const { authorizedOAuthUsersKey } = require('../app/auth');
@@ -37,7 +37,7 @@ function fakeFileFactory(params = {}) {
   const fileName = randomId('name');
 
   return {
-    bucket: randomString(),
+    bucket: randomId('bucket'),
     fileName,
     key: fileName,
     ...params
@@ -57,7 +57,7 @@ function fakeGranuleFactory(status = 'completed') {
     version: randomId('vers'),
     collectionId: 'fakeCollection___v1',
     status,
-    execution: randomString(),
+    execution: randomId('execution'),
     createdAt: Date.now(),
     updatedAt: Date.now(),
     published: true,
@@ -87,11 +87,11 @@ function fakeGranuleFactoryV2(options = {}) {
  */
 function fakeRuleFactoryV2(params = {}) {
   const rule = {
-    name: randomString(),
-    workflow: randomString(),
-    provider: randomString(),
+    name: randomId('name'),
+    workflow: randomId('workflow'),
+    provider: randomId('provider'),
     collection: {
-      name: randomString(),
+      name: randomId('colName'),
       version: '0.0.0'
     },
     rule: {
@@ -155,11 +155,11 @@ function fakePdrFactoryV2(params = {}) {
  */
 function fakeExecutionFactoryV2(params = {}) {
   const execution = {
-    arn: randomString(),
+    arn: randomId('arn'),
     duration: 180.5,
-    name: randomString(),
-    execution: randomString(),
-    parentArn: randomString(),
+    name: randomId('name'),
+    execution: randomId('execution'),
+    parentArn: randomId('parentArn'),
     error: { test: 'error' },
     status: 'completed',
     createdAt: Date.now() - 180.5 * 1000,
@@ -194,8 +194,8 @@ function fakeExecutionFactory(status = 'completed', type = 'fakeWorkflow') {
 function fakeCollectionFactory(options = {}) {
   return Object.assign(
     {
-      name: randomString(),
-      dataType: randomString(),
+      name: randomId('collectionName'),
+      dataType: randomId('dataType'),
       version: '0.0.0',
       provider_path: '',
       duplicateHandling: 'replace',
@@ -217,10 +217,10 @@ function fakeCollectionFactory(options = {}) {
 function fakeProviderFactory(options = {}) {
   return Object.assign(
     {
-      id: randomString(),
+      id: randomId('id'),
       globalConnectionLimit: 1,
       protocol: 'http',
-      host: randomString(),
+      host: randomId('host'),
       port: 80
     },
     options
