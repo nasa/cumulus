@@ -1,0 +1,30 @@
+#!bin/bash
+set -ex
+echo "Locking stack for deployment $DEPLOYMENT"
+
+cd example
+set +e
+# Wait for the stack to be available
+node ./scripts/lock-stack.js true "$DEPLOYMENT"
+LOCK_EXISTS_STATUS=$?
+echo "Locking status $LOCK_EXISTS_STATUS"
+
+COUNTER=0
+while [[ $LOCK_EXISTS_STATUS == 100 ]]; do
+  if [[ $COUNTER -gt $TIMEOUT_PERIODS ]]; then
+    echo "Timed out waiting for stack to become available"
+    exit 1
+  fi
+  echo "Another build is using the ${DEPLOYMENT} stack."
+  sleep 30
+  ((COUNTER++))
+  node ./scripts/lock-stack.js true "$DEPLOYMENT"
+  LOCK_EXISTS_STATUS=$?
+done
+if [[ $LOCK_EXISTS_STATUS -gt 0 ]]; then
+  exit 1
+fi
+set -e
+echo "Running Terraform deployment $DEPLOYMENT"
+. ../bamboo/bootstrap-tf-deployment.sh
+
