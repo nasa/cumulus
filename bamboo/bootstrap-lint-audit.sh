@@ -4,11 +4,6 @@ set -e
 . ./bamboo/abort-if-not-pr.sh
 . ./bamboo/set-bamboo-env-variables.sh
 
-  # If flag is set, use container-cached bootstrap env
- if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
-    echo "*** Using cached bootstrap directory"
-    cd /cumulus/
- fi
 
  if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus, pull down /cumulus ref and run there
     echo "*** Using cached bootstrap"
