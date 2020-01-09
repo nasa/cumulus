@@ -8,6 +8,11 @@ const awsServices = require('./services');
 const { inTestMode, randomString } = require('./test-utils');
 const { improveStackTrace } = require('./utils');
 
+exports.getQueueUrl = (sourceArn, queueName) => {
+  const arnParts = sourceArn.split(':');
+  return `https://sqs.${arnParts[3]}.amazonaws.com/${arnParts[4]}/${queueName}`;
+};
+
 /**
  * Create an SQS Queue.  Properly handles localstack queue URLs
  *

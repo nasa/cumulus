@@ -89,11 +89,6 @@ exports.cf = awsClient(AWS.CloudFormation, '2010-05-15');
 exports.sns = awsClient(AWS.SNS, '2010-03-31');
 exports.secretsManager = awsClient(AWS.SecretsManager, '2017-10-17');
 
-exports.getQueueUrl = (sourceArn, queueName) => {
-  const arnParts = sourceArn.split(':');
-  return `https://sqs.${arnParts[3]}.amazonaws.com/${arnParts[4]}/${queueName}`;
-};
-
 /**
 * parse an s3 uri to get the bucket and key
 *
