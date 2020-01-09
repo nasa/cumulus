@@ -1,10 +1,12 @@
+const awsServices = require('./services');
+
 // Class to efficiently search all of the items in a DynamoDB table, without
 // loading them all into memory at once.  Handles paging.
 class DynamoDbSearchQueue {
   constructor(params, searchType = 'scan') {
     this.items = [];
     this.params = params;
-    this.dynamodbDocClient = exports.dynamodbDocClient();
+    this.dynamodbDocClient = awsServices.dynamodbDocClient();
     this.searchType = searchType;
   }
 
