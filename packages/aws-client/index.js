@@ -8,7 +8,6 @@ const string = require('@cumulus/common/string');
 const {
   noop
 } = require('@cumulus/common/util');
-const { UnparsableFileLocationError } = require('@cumulus/common/errors');
 
 const { inTestMode, testAwsClient } = require('./test-utils');
 
@@ -89,47 +88,6 @@ exports.sfn = awsClient(AWS.StepFunctions, '2016-11-23');
 exports.cf = awsClient(AWS.CloudFormation, '2010-05-15');
 exports.sns = awsClient(AWS.SNS, '2010-03-31');
 exports.secretsManager = awsClient(AWS.SecretsManager, '2017-10-17');
-
-exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
-  obj[fn](opts, (err, data) => {
-    if (err) {
-      callback(err, data);
-      return;
-    }
-
-    let arns = null;
-    Object.keys(data).forEach((prop) => {
-      if (prop.endsWith('Arns')) {
-        arns = data[prop];
-      }
-    });
-
-    if (!arns) {
-      callback(`Could not find an 'Arn' property in response from ${fn}`, data);
-      return;
-    }
-
-    const prefixRe = new RegExp(`^${prefix}-[A-Z0-9]`);
-    const baseNameOnly = `-${baseName}-`;
-    let matchingArn = null;
-
-    arns.forEach((arn) => {
-      const name = arn.split('/').pop();
-      if (name.match(prefixRe) && name.includes(baseNameOnly)) {
-        matchingArn = arn;
-      }
-    });
-
-    if (matchingArn) {
-      callback(null, matchingArn);
-    } else if (data.NextToken) {
-      const nextOpts = Object.assign({}, opts, { NextToken: data.NextToken });
-      exports.findResourceArn(obj, fn, prefix, baseName, nextOpts, callback);
-    } else {
-      callback(`Could not find resource ${baseName} in ${fn}`);
-    }
-  });
-};
 
 exports.getQueueUrl = (sourceArn, queueName) => {
   const arnParts = sourceArn.split(':');
@@ -258,24 +216,4 @@ exports.pullStepFunctionEvent = async (event) => {
     }
   }
   return returnEvent;
-};
-
-/**
- * Extract the S3 bucket and key from the URL path parameters
- *
- * @param {string} pathParams - path parameters from the URL
- * @returns {Object} - bucket/key in the form of
- * { Bucket: x, Key: y }
- */
-exports.getFileBucketAndKey = (pathParams) => {
-  const fields = pathParams.split('/');
-
-  const Bucket = fields.shift();
-  const Key = fields.join('/');
-
-  if (Bucket.length === 0 || Key.length === 0) {
-    throw new UnparsableFileLocationError(`File location "${pathParams}" could not be parsed`);
-  }
-
-  return [Bucket, Key];
 };
