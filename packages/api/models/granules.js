@@ -5,7 +5,9 @@ const get = require('lodash.get');
 const partial = require('lodash.partial');
 const path = require('path');
 
-const commonAws = require('@cumulus/common/aws');
+const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
+const awsServices = require('@cumulus/aws-client/services');
+const { fileExists } = require('@cumulus/aws-client/s3');
 const { CMR } = require('@cumulus/cmr-client');
 const cmrjs = require('@cumulus/cmrjs');
 const launchpad = require('@cumulus/common/launchpad');
@@ -47,7 +49,7 @@ const translateGranule = async (granule) => {
   };
 };
 
-class GranuleSearchQueue extends commonAws.DynamoDbSearchQueue {
+class GranuleSearchQueue extends DynamoDbSearchQueue {
   peek() {
     return super.peek().then((g) => (isNil(g) ? g : translateGranule(g)));
   }
@@ -137,7 +139,7 @@ class Granule extends Manager {
       const token = await launchpad.getLaunchpadToken(config);
       params.token = token;
     } else {
-      const secret = await commonAws.secretsManager().getSecretValue({
+      const secret = await awsServices.secretsManager().getSecretValue({
         SecretId: process.env.cmr_password_secret_name
       }).promise();
 
@@ -294,7 +296,7 @@ class Granule extends Manager {
     const fileExistsPromises = moveFileParams.map(async (moveFileParam) => {
       const { target, file } = moveFileParam;
       if (target) {
-        const exists = await commonAws.fileExists(target.Bucket, target.Key);
+        const exists = await fileExists(target.Bucket, target.Key);
 
         if (exists) {
           return Promise.resolve(file);
