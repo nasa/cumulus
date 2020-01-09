@@ -57,6 +57,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1498**
   - Remove the DynamoDB Users table. The list of OAuth users who are allowed to
     use the API is now stored in S3.
+  - The CMR password and Launchpad passphrase are now stored in Secrets Manager
 
 ### Fixed
 
