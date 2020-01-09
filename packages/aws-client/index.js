@@ -3,8 +3,6 @@
 const AWS = require('aws-sdk');
 const fs = require('fs');
 const { JSONPath } = require('jsonpath-plus');
-const isObject = require('lodash.isobject');
-const isString = require('lodash.isstring');
 const pMap = require('p-map');
 const pRetry = require('p-retry');
 const pump = require('pump');
@@ -21,39 +19,12 @@ const string = require('@cumulus/common/string');
 const concurrency = require('@cumulus/common/concurrency');
 const {
   deprecate,
-  isNil,
-  setErrorStack,
   noop
 } = require('@cumulus/common/util');
 const { UnparsableFileLocationError } = require('@cumulus/common/errors');
 
 const { inTestMode, randomString, testAwsClient } = require('./test-utils');
-
-/**
- * Wrap a function and provide a better stack trace
- *
- * If a call is made to the aws-sdk and it causes an exception, the stack trace
- * that is returned gives no indication of where the error actually occurred.
- *
- * This utility will wrap a function and, when it is called, update any raised
- * error with a better stack trace.
- *
- * @param {Function} fn - the function to wrap
- * @returns {Function} a wrapper function
- */
-const improveStackTrace = (fn) =>
-  async (...args) => {
-    const tracerError = {};
-    try {
-      Error.captureStackTrace(tracerError);
-      return await fn(...args);
-    } catch (err) {
-      setErrorStack(err, tracerError.stack);
-      err.message = `${err.message}; Function params: ${JSON.stringify(args, null, 2)}`;
-      throw err;
-    }
-  };
-exports.improveStackTrace = improveStackTrace;
+const { improveStackTrace } = require('./utils');
 
 /**
  * Join strings into an S3 key without a leading slash or double slashes
@@ -128,7 +99,6 @@ exports.ecs = awsClient(AWS.ECS, '2014-11-13');
 exports.s3 = awsClient(AWS.S3, '2006-03-01');
 exports.kinesis = awsClient(AWS.Kinesis, '2013-12-02');
 exports.lambda = awsClient(AWS.Lambda, '2015-03-31');
-exports.sqs = awsClient(AWS.SQS, '2012-11-05');
 exports.cloudwatchevents = awsClient(AWS.CloudWatchEvents, '2014-02-03');
 exports.cloudwatchlogs = awsClient(AWS.CloudWatchLogs, '2014-03-28');
 exports.cloudwatch = awsClient(AWS.CloudWatch, '2010-08-01');
@@ -851,90 +821,6 @@ exports.publishSnsMessage = async (
   );
 
 /**
-* Send a message to AWS SQS
-*
-* @param {string} queueUrl - url of the SQS queue
-* @param {string|Object} message - either string or object message. If an
-*   object it will be serialized into a JSON string.
-* @returns {Promise} - resolves when the messsage has been sent
-**/
-exports.sendSQSMessage = (queueUrl, message) => {
-  let messageBody;
-  if (isString(message)) messageBody = message;
-  else if (isObject(message)) messageBody = JSON.stringify(message);
-  else throw new Error('body type is not accepted');
-
-  return exports.sqs().sendMessage({
-    MessageBody: messageBody,
-    QueueUrl: queueUrl
-  }).promise();
-};
-
-/**
- * Receives SQS messages from a given queue. The number of messages received
- * can be set and the timeout is also adjustable.
- *
- * @param {string} queueUrl - url of the SQS queue
- * @param {Object} options - options object
- * @param {integer} [options.numOfMessages=1] - number of messages to read from the queue
- * @param {integer} [options.visibilityTimeout=30] - number of seconds a message is invisible
- *   after read
- * @param {integer} [options.waitTimeSeconds=0] - number of seconds to poll SQS queue (long polling)
- * @returns {Promise.<Array>} an array of messages
- */
-exports.receiveSQSMessages = async (queueUrl, options) => {
-  const params = {
-    QueueUrl: queueUrl,
-    AttributeNames: ['All'],
-    // 0 is a valid value for VisibilityTimeout
-    VisibilityTimeout: isNil(options.visibilityTimeout) ? 30 : options.visibilityTimeout,
-    WaitTimeSeconds: options.waitTimeSeconds || 0,
-    MaxNumberOfMessages: options.numOfMessages || 1
-  };
-
-  const messages = await exports.sqs().receiveMessage(params).promise();
-
-  // convert body from string to js object
-  if (Object.prototype.hasOwnProperty.call(messages, 'Messages')) {
-    messages.Messages.forEach((mes) => {
-      mes.Body = JSON.parse(mes.Body); // eslint-disable-line no-param-reassign
-    });
-
-    return messages.Messages;
-  }
-  return [];
-};
-
-/**
- * Delete a given SQS message from a given queue.
- *
- * @param {string} queueUrl - url of the SQS queue
- * @param {integer} receiptHandle - the unique identifier of the sQS message
- * @returns {Promise} an AWS SQS response
- */
-exports.deleteSQSMessage = improveStackTrace(
-  (QueueUrl, ReceiptHandle) =>
-    exports.sqs().deleteMessage({ QueueUrl, ReceiptHandle }).promise()
-);
-
-/**
- * Test if an SQS queue exists
- *
- * @param {Object} queue - queue name or url
- * @returns {Promise<boolean>} - a Promise that will resolve to a boolean indicating
- *                               if the queue exists
- */
-exports.sqsQueueExists = (queue) => {
-  const QueueName = queue.split('/').pop();
-  return exports.sqs().getQueueUrl({ QueueName }).promise()
-    .then(() => true)
-    .catch((e) => {
-      if (e.code === 'AWS.SimpleQueueService.NonExistentQueue') return false;
-      throw e;
-    });
-};
-
-/**
  * Returns execution ARN from a statement machine Arn and executionName
  *
  * @param {string} stateMachineArn - state machine ARN
@@ -999,28 +885,6 @@ exports.pullStepFunctionEvent = async (event) => {
   }
   return returnEvent;
 };
-
-const retryIfThrottlingException = (err) => {
-  if (exports.isThrottlingException(err)) throw err;
-  throw new pRetry.AbortError(err);
-};
-
-/**
- * Wrap a function so that it will retry when a ThrottlingException is encountered.
- *
- * @param {Function} fn - the function to retry.  This function must return a Promise.
- * @param {Object} options - retry options, documented here:
- *   - https://github.com/sindresorhus/p-retry#options
- *   - https://github.com/tim-kos/node-retry#retryoperationoptions
- *   - https://github.com/tim-kos/node-retry#retrytimeoutsoptions
- * @returns {Function} a function that will retry on a ThrottlingException
- */
-exports.retryOnThrottlingException = (fn, options) =>
-  (...args) =>
-    pRetry(
-      () => fn(...args).catch(retryIfThrottlingException),
-      { maxTimeout: 5000, ...options }
-    );
 
 /**
  * Extract the S3 bucket and key from the URL path parameters
