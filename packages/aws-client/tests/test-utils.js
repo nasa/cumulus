@@ -5,7 +5,6 @@ const { throttleOnce } = require('@cumulus/common/test-utils');
 const { retryOnThrottlingException } = require('../utils');
 const { getS3Object } = require('../s3');
 
-
 test('better stack traces', async (t) => {
   const f = () => getS3Object('asdf');
   const g = () => f();

@@ -4,11 +4,14 @@ const fs = require('fs');
 const path = require('path');
 const { tmpdir } = require('os');
 const test = require('ava');
+const pTimeout = require('p-timeout');
 
 const { UnparsableFileLocationError } = require('@cumulus/common/errors');
 const { randomString } = require('@cumulus/common/test-utils');
+const { sleep } = require('@cumulus/common/util');
 
 const {
+  getS3Object,
   downloadS3File,
   listS3ObjectsV2,
   recursivelyDeleteS3Bucket,
@@ -18,6 +21,64 @@ const {
   getFileBucketAndKey
 } = require('../s3');
 const awsServices = require('../services');
+
+test.before(async (t) => {
+  t.context.Bucket = randomString();
+
+  await awsServices.s3().createBucket({ Bucket: t.context.Bucket }).promise();
+});
+
+test.after.always(async (t) => {
+  await recursivelyDeleteS3Bucket(t.context.Bucket);
+});
+
+test('getS3Object() returns an existing S3 object', async (t) => {
+  const { Bucket } = t.context;
+  const Key = randomString();
+
+  await awsServices.s3().putObject({ Bucket, Key, Body: 'asdf' }).promise();
+
+  const response = await getS3Object(Bucket, Key);
+  t.is(response.Body.toString(), 'asdf');
+});
+
+test('getS3Object() immediately throws an exception if the requested bucket does not exist', async (t) => {
+  const promisedGetS3Object = getS3Object(randomString(), 'asdf');
+  const err = await t.throwsAsync(pTimeout(promisedGetS3Object, 5000));
+  t.is(err.code, 'NoSuchBucket');
+});
+
+test('getS3Object() throws an exception if the requested key does not exist', async (t) => {
+  const { Bucket } = t.context;
+
+  const err = await t.throwsAsync(
+    () => getS3Object(Bucket, 'does-not-exist', { retries: 1 })
+  );
+  t.is(err.code, 'NoSuchKey');
+});
+
+test('getS3Object() immediately throws an exception if the requested key does not exist', async (t) => {
+  const { Bucket } = t.context;
+
+  const promisedGetS3Object = getS3Object(Bucket, 'asdf');
+
+  const err = await t.throwsAsync(pTimeout(promisedGetS3Object, 5000));
+
+  t.is(err.code, 'NoSuchKey');
+});
+
+test('getS3Object() will retry if the requested key does not exist', async (t) => {
+  const { Bucket } = t.context;
+  const Key = randomString();
+
+  const promisedGetS3Object = getS3Object(Bucket, Key, { retries: 5 });
+  await sleep(3000)
+    .then(() => awsServices.s3().putObject({ Bucket, Key, Body: 'asdf' }).promise());
+
+  const response = await promisedGetS3Object;
+
+  t.is(response.Body.toString(), 'asdf');
+});
 
 test('s3Join behaves as expected', (t) => {
   // Handles an array argument
