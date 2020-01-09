@@ -2,6 +2,7 @@
 
 'use strict';
 
+const groupBy = require('lodash.groupby');
 const aws = require('@cumulus/common/aws');
 
 /**
@@ -96,19 +97,43 @@ async function listClusterEC2Intances(clusterArn) {
 }
 
 /**
+ * Extract the deployment name using a regular expression
+ * on the filename. Assumes state file name is
+ * bucket/deployment/cumulus|data-persistence/terraform.tfstate
+ *
+ * @param {string} filename - path to state file: bucket/key
+ * @returns {string} - deployment name
+ */
+function extractDeploymentName(filename) {
+  const deployment = filename
+    .match(/(.*)\/(.*)\/(data-persistence.*|cumulus.*)\/terraform.tfstate/);
+  if (!deployment || deployment.length < 3) {
+    console.log(`Error extracting deployment name from file ${filename}`);
+    return null;
+  }
+
+  return deployment[2];
+}
+
+/**
  * Get a list of resources from the given state file
  * @param {string} file - the file location as `bucket/key`
  * @returns {Array<Object>} - list of resource objects
  */
-async function getStateFileResources(file) {
+async function getStateFileDeploymentInfo(file) {
   const { Bucket, Key } = aws.parseS3Uri(`s3://${file}`);
 
   try {
     const stateFile = await aws.getS3Object(Bucket, Key);
 
-    const resources = JSON.parse(stateFile.Body);
+    const stateFileBody = JSON.parse(stateFile.Body);
 
-    return resources.resources;
+    return {
+      file,
+      deployment: extractDeploymentName(file),
+      lastModified: stateFile.LastModified,
+      resources: stateFileBody.resources
+    };
   } catch (e) {
     console.log(`Error reading ${file}: ${e.message}`);
   }
@@ -117,10 +142,10 @@ async function getStateFileResources(file) {
 }
 
 async function listResourcesForFile(file) {
-  const resources = await getStateFileResources(file);
+  const stateFile = await getStateFileDeploymentInfo(file);
 
-  if (resources) {
-    let ecsClusters = resources
+  if (stateFile.resources) {
+    let ecsClusters = stateFile.resources
       .filter((r) => r.type === 'aws_ecs_cluster')
       .map((c) => c.instances.map((i) => i.attributes.arn));
     ecsClusters = [].concat(...ecsClusters);
@@ -144,23 +169,35 @@ async function listResourcesForFile(file) {
  * @returns {Array<string>} list of deployments
  */
 function listTfDeployments(stateFiles) {
-  let deployments = stateFiles.map((file) => {
-    const deployment = file.match(/(.*)\/(.*)\/(data-persistence.*|cumulus.*)\/terraform.tfstate/);
-    if (!deployment || deployment.length < 3) {
-      console.log(`Error extracting deployment name from file ${file}`);
-      return null;
-    }
-
-    return deployment[2];
-  });
+  let deployments = stateFiles.map((file) => extractDeploymentName(file));
 
   deployments = deployments.filter((deployment) => deployment !== null);
   deployments = Array.from(new Set(deployments));
 
-  return deployments;
+  return deployments.sort();
+}
+
+async function deploymentReport() {
+  const stateFiles = await listTfStateFiles();
+
+  const resourcePromises = stateFiles.map((sf) => getStateFileDeploymentInfo(sf));
+  let resources = await Promise.all(resourcePromises);
+  resources = resources.filter((r) => r && r.deployment !== undefined);
+
+  const resourcesForReports = resources.map((r) => ({
+      ...r,
+      resources: r.resources ? r.resources.length : 0
+    })
+  );
+
+  const resourcesByDeployment = groupBy(resourcesForReports, (r) => r.deployment);
+
+  return resourcesByDeployment;
 }
 
 module.exports = {
+  deploymentReport,
+  getStateFileDeploymentInfo,
   listResourcesForFile,
   listTfDeployments,
   listTfStateFiles

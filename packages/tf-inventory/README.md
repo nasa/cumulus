@@ -26,7 +26,8 @@ Options:
   -h, --help               output usage information
 
 Commands:
-  list-deployments         List Terraform deployments in the AWS account
+  list-deployments         List Terraform deployments in the account
+  deployment-report        List each deployment with files, number of resources, and last update date
   list-orphaned-resources  List resources not associated with a Terraform deployment
 ```
 

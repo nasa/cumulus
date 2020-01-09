@@ -7,7 +7,7 @@ const path = require('path');
 
 const stateFile = rewire('../src/stateFile');
 const getStateFilesFromTable = stateFile.__get__('getStateFilesFromTable');
-const getStateFileResources = stateFile.__get__('getStateFileResources');
+const extractDeploymentName = stateFile.__get__('extractDeploymentName');
 
 const revertListClusterEC2Intances = stateFile.__set__(
   'listClusterEC2Intances',
@@ -115,10 +115,12 @@ test('getStateFileResources lists resources', async (t) => {
     Body: state
   });
 
-  const resources = await getStateFileResources(`${bucket}/${key}`);
+  const resources = await stateFile.getStateFileDeploymentInfo(`${bucket}/${key}`);
+  console.log(resources);
+
   t.deepEqual(
     ['aws_caller_identity', 'aws_ecs_cluster'],
-    resources.map((r) => r.type)
+    resources.resources.map((r) => r.type)
   );
 
   await aws.recursivelyDeleteS3Bucket(bucket);
@@ -149,6 +151,18 @@ test('listResourcesForFile lists resources', async (t) => {
   await aws.recursivelyDeleteS3Bucket(bucket);
 });
 
+test('extractDeploymentName extracts deployment name for cumulus deployment', (t) => {
+  t.is(extractDeploymentName('bucket/cumulus/cumulus/terraform.tfstate'), 'cumulus');
+});
+
+test('extractDeploymentName extracts deployment name for data persistence deployment', (t) => {
+  t.is(extractDeploymentName('bucket/cumulus/data-persistence/terraform.tfstate'), 'cumulus');
+});
+
+test('extractDeploymentName returns null if deployment name cannot be extracted', (t) => {
+  t.is(extractDeploymentName('tf-deployments/terraform.tfstate'), null);
+});
+
 test('listTfDeployments lists unique Tf deployments based on state file name', (t) => {
   const stateFiles = [
     'bucket/cumulus/data-persistence/terraform.tfstate',
@@ -160,4 +174,35 @@ test('listTfDeployments lists unique Tf deployments based on state file name', (
   const deployments = stateFile.listTfDeployments(stateFiles);
 
   t.deepEqual(deployments, ['cumulus', 'tf']);
+});
+
+test('deploymentReport returns information about the deployment', async (t) => {
+  const revertListFilesStub = stateFile.__set__(
+    'listTfStateFiles',
+    () => ['cumulus-1', 'cumulus-1', 'cumulus-2']
+  );
+
+  const revertGetDeploymentInfoStub = stateFile.__set__(
+    'getStateFileDeploymentInfo',
+    (file) => { return {
+              file,
+              deployment: file,
+              lastModified: new Date(2020, 1, 1),
+              resources: [1, 2]
+            }}
+  );
+
+  const report = await stateFile.deploymentReport();
+
+  t.is(Object.keys(report).length, 2);
+
+  t.is(report['cumulus-1'].length, 2);
+  t.is(report['cumulus-2'].length, 1);
+
+  t.is(report['cumulus-1'][0].resources, 2);
+
+  revertGetDeploymentInfoStub();
+  revertListFilesStub();
+
+  // deploymentInfoStub.restore();
 });

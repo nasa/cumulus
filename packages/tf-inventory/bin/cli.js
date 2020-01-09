@@ -22,6 +22,18 @@ program
   });
 
 program
+  .command('deployment-report')
+  .description('List each deployment with files, number of resources, and last update date')
+  .action(async () => {
+    const deployments = await stateFile.deploymentReport();
+    const sortedKeys = Object.keys(deployments).sort();
+    sortedKeys.forEach((k) => {
+      console.log(k);
+      console.log(deployments[k])
+    });
+  });
+
+program
   .command('list-orphaned-resources')
   .description('List resources not associated with a Terraform deployment')
   .action(async () => {
