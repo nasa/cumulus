@@ -3,6 +3,7 @@
 const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
+const { secretsManager } = require('@cumulus/common/aws');
 const launchpad = require('@cumulus/common/launchpad');
 const { randomId } = require('@cumulus/common/test-utils');
 const EsCollection = require('../../es/collections');
@@ -27,10 +28,22 @@ test.before(async () => {
   process.env.ES_INDEX = randomId();
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
+
+  // Store the launchpad passphrase
+  process.env.launchpad_passphrase_secret_name = randomId('launchpad-secret-name');
+  await secretsManager().createSecret({
+    Name: process.env.launchpad_passphrase_secret_name,
+    SecretString: randomId('launchpad-passphrase')
+  }).promise();
 });
 
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
+
+  await secretsManager().deleteSecret({
+    SecretId: process.env.launchpad_passphrase_secret_name,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
 });
 
 test.serial('API request with an valid token stores the access token', async (t) => {

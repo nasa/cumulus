@@ -6,8 +6,6 @@
  *
  * It helps:
  *  - adding ElasticSearch index mapping when a new index is created
- *  - creating API users
- *  - encrypting CMR user/pass and adding it to configuration files
  */
 
 'use strict';
@@ -19,7 +17,6 @@ const log = require('@cumulus/common/log');
 const pLimit = require('p-limit');
 const { dynamodb } = require('@cumulus/common/aws');
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const { Search, defaultIndexAlias } = require('../es/search');
 const mappings = require('../models/mappings.json');
 const physicalId = 'cumulus-bootstraping-daac-ops-api-deployment';
@@ -155,19 +152,6 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
 }
 
 /**
- * Encrypt Launchpad certificate passphrase
- *
- * @param {string} passphrase - plain text launchpad passphrase
- * @returns {Promise.<string>} encrypted launchpad passphrase
- */
-async function bootstrapLaunchpad(passphrase) {
-  if (!passphrase) {
-    return new Promise((resolve) => resolve('nopassphrase'));
-  }
-  return DefaultProvider.encrypt(passphrase);
-}
-
-/**
  * converts dynamoDB backup status to boolean
  *
  * @param {string} status - backup status of the table
@@ -250,7 +234,6 @@ async function sendResponse(event, status, data = {}) {
  */
 function handler(event, context, cb) {
   const es = get(event, 'ResourceProperties.ElasticSearch');
-  const launchpad = get(event, 'ResourceProperties.Launchpad');
   const dynamos = get(event, 'ResourceProperties.DynamoDBTables', []);
   const requestType = get(event, 'RequestType');
 
@@ -260,15 +243,12 @@ function handler(event, context, cb) {
 
   const actions = [
     bootstrapElasticSearch(get(es, 'host')),
-    bootstrapLaunchpad(get(launchpad, 'Passphrase')),
     bootstrapDynamoDbTables(dynamos)
   ];
 
   return Promise.all(actions)
-    .then((results) => {
-      const data = {
-        LaunchpadPassphrase: results[1]
-      };
+    .then(() => {
+      const data = {};
 
       // if invoked by Cloudformation ...
       if (event.ResponseURL) return sendResponse(event, 'SUCCESS', data);
