@@ -5,11 +5,11 @@
  * @module DynamoDb
  *
  * @example
- * const DynamoDb = require('@cumulus/common/DynamoDb');
+ * const DynamoDb = require('@cumulus/aws-client/DynamoDb');
  */
 
-const aws = require('./aws');
-const { RecordDoesNotExist } = require('./errors');
+const { RecordDoesNotExist } = require('@cumulus/common/errors');
+const { improveStackTrace } = require('./utils');
 
 // Exported functions
 
@@ -26,7 +26,7 @@ const { RecordDoesNotExist } = require('./errors');
  * @static
  * @kind function
  */
-const get = aws.improveStackTrace(
+const get = improveStackTrace(
   async ({
     tableName,
     item,
@@ -66,7 +66,7 @@ const get = aws.improveStackTrace(
  * @static
  * @kind function
  */
-const scan = aws.improveStackTrace(
+const scan = improveStackTrace(
   async ({
     tableName,
     client,
