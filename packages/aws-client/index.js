@@ -2,17 +2,15 @@
 
 const AWS = require('aws-sdk');
 const { JSONPath } = require('jsonpath-plus');
-const pRetry = require('p-retry');
 const url = require('url');
 
-const log = require('@cumulus/common/log');
 const string = require('@cumulus/common/string');
 const {
   noop
 } = require('@cumulus/common/util');
 const { UnparsableFileLocationError } = require('@cumulus/common/errors');
 
-const { inTestMode, randomString, testAwsClient } = require('./test-utils');
+const { inTestMode, testAwsClient } = require('./test-utils');
 
 /**
  * Join strings into an S3 key without a leading slash or double slashes
@@ -231,67 +229,6 @@ exports.fromSfnExecutionName = (str, delimiter = '__') =>
   str.split(delimiter)
     .map((s) => s.replace(/!/g, '\\').replace('"', '\\"'))
     .map((s) => JSON.parse(`"${s}"`));
-
-/**
- * Create an SQS Queue.  Properly handles localstack queue URLs
- *
- * @param {string} queueName - defaults to a random string
- * @returns {Promise.<string>} the Queue URL
- */
-async function createQueue(queueName) {
-  const actualQueueName = queueName || randomString();
-
-  const createQueueResponse = await exports.sqs().createQueue({
-    QueueName: actualQueueName
-  }).promise();
-
-  if (inTestMode()) {
-    // Properly set the Queue URL.  This is needed because LocalStack always
-    // returns the QueueUrl as "localhost", even if that is not where it should
-    // actually be found.  CI breaks without this.
-    const returnedQueueUrl = url.parse(createQueueResponse.QueueUrl);
-    returnedQueueUrl.host = undefined;
-    returnedQueueUrl.hostname = process.env.LOCALSTACK_HOST;
-
-    return url.format(returnedQueueUrl);
-  }
-
-  return createQueueResponse.QueueUrl;
-}
-exports.createQueue = createQueue;
-
-/**
- * Publish a message to an SNS topic. Does not catch
- * errors, to allow more specific handling by the caller.
- *
- * @param {string} snsTopicArn - SNS topic ARN
- * @param {Object} message - Message object
- * @param {Object} retryOptions - options to control retry behavior when publishing
- * a message fails. See https://github.com/tim-kos/node-retry#retryoperationoptions
- * @returns {Promise<undefined>}
- */
-exports.publishSnsMessage = async (
-  snsTopicArn,
-  message,
-  retryOptions = {}
-) =>
-  pRetry(
-    async () => {
-      if (!snsTopicArn) {
-        throw new pRetry.AbortError('Missing SNS topic ARN');
-      }
-
-      await exports.sns().publish({
-        TopicArn: snsTopicArn,
-        Message: JSON.stringify(message)
-      }).promise();
-    },
-    {
-      maxTimeout: 5000,
-      onFailedAttempt: (err) => log.debug(`publishSnsMessage('${snsTopicArn}', '${message}') failed with ${err.retriesLeft} retries left: ${err.message}`),
-      ...retryOptions
-    }
-  );
 
 /**
  * Returns execution ARN from a statement machine Arn and executionName

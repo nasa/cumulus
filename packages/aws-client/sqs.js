@@ -4,7 +4,36 @@ const isString = require('lodash.isstring');
 const { isNil } = require('@cumulus/common/util');
 
 const awsServices = require('./services');
+const { inTestMode, randomString } = require('./test-utils');
 const { improveStackTrace } = require('./utils');
+
+/**
+ * Create an SQS Queue.  Properly handles localstack queue URLs
+ *
+ * @param {string} queueName - defaults to a random string
+ * @returns {Promise.<string>} the Queue URL
+ */
+async function createQueue(queueName) {
+  const actualQueueName = queueName || randomString();
+
+  const createQueueResponse = await exports.sqs().createQueue({
+    QueueName: actualQueueName
+  }).promise();
+
+  if (inTestMode()) {
+    // Properly set the Queue URL.  This is needed because LocalStack always
+    // returns the QueueUrl as "localhost", even if that is not where it should
+    // actually be found.  CI breaks without this.
+    const returnedQueueUrl = url.parse(createQueueResponse.QueueUrl);
+    returnedQueueUrl.host = undefined;
+    returnedQueueUrl.hostname = process.env.LOCALSTACK_HOST;
+
+    return url.format(returnedQueueUrl);
+  }
+
+  return createQueueResponse.QueueUrl;
+}
+exports.createQueue = createQueue;
 
 /**
 * Send a message to AWS SQS
