@@ -26,8 +26,16 @@ const improveStackTrace = (fn) =>
     }
   };
 
+/**
+ * Test to see if a given exception is an AWS Throttling Exception
+ *
+ * @param {Error} err
+ * @returns {boolean}
+ */
+const isThrottlingException = (err) => err.code === 'ThrottlingException';
+
 const retryIfThrottlingException = (err) => {
-  if (exports.isThrottlingException(err)) throw err;
+  if (isThrottlingException(err)) throw err;
   throw new pRetry.AbortError(err);
 };
 
@@ -50,5 +58,6 @@ const retryOnThrottlingException = (fn, options) =>
 
 module.exports = {
   improveStackTrace,
+  isThrottlingException,
   retryOnThrottlingException
 };

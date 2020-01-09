@@ -225,14 +225,6 @@ exports.getStateMachineArn = (executionArn) => {
 };
 
 /**
- * Test to see if a given exception is an AWS Throttling Exception
- *
- * @param {Error} err
- * @returns {boolean}
- */
-exports.isThrottlingException = (err) => err.code === 'ThrottlingException';
-
-/**
  * Given a Cumulus step function event, if the message is on S3, pull the full message
  * from S3 and return, otherwise return the event.
  *
