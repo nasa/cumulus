@@ -90,19 +90,6 @@ exports.cf = awsClient(AWS.CloudFormation, '2010-05-15');
 exports.sns = awsClient(AWS.SNS, '2010-03-31');
 exports.secretsManager = awsClient(AWS.SecretsManager, '2017-10-17');
 
-/**
- * Describes the resources belonging to a given CloudFormation stack
- *
- * See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudFormation.html#describeStackResources-property
- *
- * @param {string} stackName -  The name of the CloudFormation stack to query
- * @returns {Array<Object>} The resources belonging to the stack
- */
-exports.describeCfStackResources = (stackName) =>
-  exports.cf().describeStackResources({ StackName: stackName })
-    .promise()
-    .then((response) => response.StackResources);
-
 exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
   obj[fn](opts, (err, data) => {
     if (err) {
