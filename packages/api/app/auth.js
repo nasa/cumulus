@@ -8,6 +8,9 @@ const { ensureLaunchpadAPIAuthorized, launchpadProtectedAuth } = require('./laun
 const { User, AccessToken } = require('../models');
 const { verifyJwtToken } = require('../lib/token');
 
+const log = require('@cumulus/common/log');
+
+
 /**
  * An express middleware that checks if an incoming express
  * request is authenticated
@@ -66,6 +69,7 @@ async function ensureAuthorized(req, res, next) {
       return res.boom.forbidden('Invalid access token');
     }
 
+    log.error('API Authorization Error', error);
     return res.boom.unauthorized('User not authorized');
   }
 }
