@@ -1,5 +1,6 @@
 #!/bin/bash
 set -ex
+. ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr.sh
 
   # If flag is set, use container-cached bootstrap env
