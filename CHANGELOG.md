@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- **CUMULUS-1686**
+  - `ecs_cluster_instance_image_id` is now a *required* variable of the `cumulus` module, instead of optional.
+
+### Changed
+
+- **CUMULUS-1686**
+  - Changed `ecs_cluster_instance_image_id` to be a required variable of the `cumulus` module and removed the default value.
+    The default was not available across accounts and regions, nor outside of NGAP and therefore not particularly useful.
+
 ### Removed
 
 - **CUMULUS-1481**
@@ -46,6 +57,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1498**
   - Remove the DynamoDB Users table. The list of OAuth users who are allowed to
     use the API is now stored in S3.
+  - The CMR password and Launchpad passphrase are now stored in Secrets Manager
 
 ### Fixed
 
