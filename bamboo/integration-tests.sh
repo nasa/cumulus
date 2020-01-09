@@ -9,4 +9,7 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus dir
   cd /cumulus/
 fi
 
+npm install
+npm run bootstrap-no-build && npm run bootstrap-no-build
+
 cd example && npm test
