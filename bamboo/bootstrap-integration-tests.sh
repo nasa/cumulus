@@ -28,6 +28,14 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   npm install && npm run prepare
   cd ..
 else
+  if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus dir
+    echo "*** Using cached bootstrap build dir"
+    cd /cumulus/
+    git fetch --all
+    git checkout "$GIT_SHA"
+  fi
+  npm install
+  npm run bootstrap-no-build && npm run bootstrap-no-build
   exit 0
 fi
 
