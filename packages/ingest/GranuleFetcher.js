@@ -40,7 +40,6 @@ class GranuleFetcher {
     this.checksumFiles = {};
     this.supportedChecksumFileTypes = ['md5', 'cksum', 'sha1', 'sha256'];
 
-
     if (fileStagingDir && fileStagingDir[0] === '/') this.fileStagingDir = fileStagingDir.substr(1);
     else this.fileStagingDir = fileStagingDir;
 
