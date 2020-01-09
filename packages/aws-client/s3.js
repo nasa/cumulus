@@ -4,6 +4,7 @@ const path = require('path');
 const pMap = require('p-map');
 const pRetry = require('p-retry');
 const pump = require('pump');
+const url = require('url');
 
 const {
   generateChecksumFromStream,
@@ -22,6 +23,58 @@ let S3_RATE_LIMIT = 20;
 if (inTestMode()) {
   S3_RATE_LIMIT = 1;
 }
+
+/**
+ * Join strings into an S3 key without a leading slash or double slashes
+ *
+ * @param {...string|Array<string>} args - the strings to join
+ * @returns {string} the full S3 key
+ */
+function s3Join(...args) {
+  const tokens = Array.isArray(args[0]) ? args[0] : args;
+
+  const removeLeadingSlash = (token) => token.replace(/^\//, '');
+  const removeTrailingSlash = (token) => token.replace(/\/$/, '');
+  const isNotEmptyString = (token) => token.length > 0;
+
+  const key = tokens
+    .map(removeLeadingSlash)
+    .map(removeTrailingSlash)
+    .filter(isNotEmptyString)
+    .join('/');
+
+  if (tokens[tokens.length - 1].endsWith('/')) return `${key}/`;
+  return key;
+}
+exports.s3Join = s3Join;
+
+/**
+* parse an s3 uri to get the bucket and key
+*
+* @param {string} uri - must be a uri with the `s3://` protocol
+* @returns {Object} Returns an object with `Bucket` and `Key` properties
+**/
+exports.parseS3Uri = (uri) => {
+  const parsedUri = url.parse(uri);
+
+  if (parsedUri.protocol !== 's3:') {
+    throw new Error('uri must be a S3 uri, e.g. s3://bucketname');
+  }
+
+  return {
+    Bucket: parsedUri.hostname,
+    Key: parsedUri.path.substring(1)
+  };
+};
+
+/**
+ * Given a bucket and key, return an S3 URI
+ *
+ * @param {string} bucket - an S3 bucket name
+ * @param {string} key - an S3 key
+ * @returns {string} - an S3 URI
+ */
+exports.buildS3Uri = (bucket, key) => `s3://${bucket}/${key.replace(/^\/+/, '')}`;
 
 /**
 * Convert S3 TagSet Object to query string

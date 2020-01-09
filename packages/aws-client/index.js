@@ -2,7 +2,6 @@
 
 const AWS = require('aws-sdk');
 const { JSONPath } = require('jsonpath-plus');
-const url = require('url');
 
 const string = require('@cumulus/common/string');
 const {
@@ -10,30 +9,6 @@ const {
 } = require('@cumulus/common/util');
 
 const { inTestMode, testAwsClient } = require('./test-utils');
-
-/**
- * Join strings into an S3 key without a leading slash or double slashes
- *
- * @param {...string|Array<string>} args - the strings to join
- * @returns {string} the full S3 key
- */
-function s3Join(...args) {
-  const tokens = Array.isArray(args[0]) ? args[0] : args;
-
-  const removeLeadingSlash = (token) => token.replace(/^\//, '');
-  const removeTrailingSlash = (token) => token.replace(/\/$/, '');
-  const isNotEmptyString = (token) => token.length > 0;
-
-  const key = tokens
-    .map(removeLeadingSlash)
-    .map(removeTrailingSlash)
-    .filter(isNotEmptyString)
-    .join('/');
-
-  if (tokens[tokens.length - 1].endsWith('/')) return `${key}/`;
-  return key;
-}
-exports.s3Join = s3Join;
 
 exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
 AWS.config.update({ region: exports.region });
@@ -88,34 +63,6 @@ exports.sfn = awsClient(AWS.StepFunctions, '2016-11-23');
 exports.cf = awsClient(AWS.CloudFormation, '2010-05-15');
 exports.sns = awsClient(AWS.SNS, '2010-03-31');
 exports.secretsManager = awsClient(AWS.SecretsManager, '2017-10-17');
-
-/**
-* parse an s3 uri to get the bucket and key
-*
-* @param {string} uri - must be a uri with the `s3://` protocol
-* @returns {Object} Returns an object with `Bucket` and `Key` properties
-**/
-exports.parseS3Uri = (uri) => {
-  const parsedUri = url.parse(uri);
-
-  if (parsedUri.protocol !== 's3:') {
-    throw new Error('uri must be a S3 uri, e.g. s3://bucketname');
-  }
-
-  return {
-    Bucket: parsedUri.hostname,
-    Key: parsedUri.path.substring(1)
-  };
-};
-
-/**
- * Given a bucket and key, return an S3 URI
- *
- * @param {string} bucket - an S3 bucket name
- * @param {string} key - an S3 key
- * @returns {string} - an S3 URI
- */
-exports.buildS3Uri = (bucket, key) => `s3://${bucket}/${key.replace(/^\/+/, '')}`;
 
 /**
  * Given an array of fields, returns that a new string that's safe for use as a StepFunction,
