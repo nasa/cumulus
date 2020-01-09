@@ -7,7 +7,6 @@ const aws = require('@cumulus/common/aws');
 const { ResourcesLockedError } = require('@cumulus/common/errors');
 const Semaphore = require('@cumulus/common/Semaphore');
 const { randomId } = require('@cumulus/common/test-utils');
-const { noop } = require('@cumulus/common/util');
 
 const sfStarter = rewire('../../lambdas/sf-starter');
 const { Manager } = require('../../models');
@@ -28,7 +27,7 @@ class stubConsumer {
 // Mock startExecution so nothing attempts to start executions.
 const stubSFN = () => ({
   startExecution: () => ({
-    promise: noop
+    promise: () => true
   })
 });
 sfStarter.__set__('sfn', stubSFN);
@@ -341,5 +340,5 @@ test('handleSourceMappingEvent calls dispatch on messages in an EventSource even
   const output = await handleSourceMappingEvent(event);
 
   const dispatchReturn = stubSFN().startExecution().promise();
-  output.forEach((o) => t.deepEqual(o, dispatchReturn));
+  output.forEach((o) => t.is(o, dispatchReturn));
 });
