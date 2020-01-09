@@ -1,5 +1,6 @@
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
+const url = require('url');
 
 const { isNil } = require('@cumulus/common/util');
 
