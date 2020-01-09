@@ -1,8 +1,8 @@
 'use strict';
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
-const granule = require('@cumulus/ingest/granule');
 const log = require('@cumulus/common/log');
+const GranuleDiscoverer = require('@cumulus/ingest/GranuleDiscoverer');
 
 /**
  * Discovers granules. See schemas/input.json and schemas/config.json for
@@ -13,9 +13,7 @@ const log = require('@cumulus/common/log');
  *    is passed to the next task in the workflow
  */
 async function discoverGranules(event) {
-  const protocol = event.config.provider.protocol;
-  const Discoverer = granule.selector('discover', protocol);
-  const discoverer = new Discoverer(event);
+  const discoverer = new GranuleDiscoverer(event);
 
   try {
     const granules = await discoverer.discover();

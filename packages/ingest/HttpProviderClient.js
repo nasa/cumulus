@@ -18,22 +18,36 @@ const validateHost = (host) => {
   throw new TypeError(`provider.host is not a valid hostname or IP: ${host}`);
 };
 
-module.exports.httpMixin = (superclass) => class extends superclass {
+class HttpProviderClient {
+  constructor(providerConfig) {
+    this.protocol = providerConfig.protocol;
+    this.host = providerConfig.host;
+    this.port = providerConfig.port;
+    this.path = providerConfig.path;
+
+    this.endpoint = buildURL({
+      protocol: this.protocol,
+      host: this.host,
+      port: this.port,
+      path: this.path
+    });
+  }
+
   /**
    * List all PDR files from a given endpoint
    *
    * @returns {Promise.<Array>} of a list of files
    */
   list() {
-    validateHost(this.provider.host);
+    validateHost(this.host);
 
     const pattern = /<a href="([^>]*)">[^<]+<\/a>/;
 
     const c = new Crawler(
       buildURL({
-        protocol: this.provider.protocol,
-        host: this.provider.host,
-        port: this.provider.port,
+        protocol: this.protocol,
+        host: this.host,
+        port: this.port,
         path: this.path
       })
     );
@@ -104,12 +118,12 @@ module.exports.httpMixin = (superclass) => class extends superclass {
    * @returns {Promise.<string>} - the path that the file was saved to
    */
   async download(remotePath, localPath) {
-    validateHost(this.provider.host);
+    validateHost(this.host);
 
     const remoteUrl = buildURL({
-      protocol: this.provider.protocol,
-      host: this.provider.host,
-      port: this.provider.port,
+      protocol: this.protocol,
+      host: this.host,
+      port: this.port,
       path: remotePath
     });
 
@@ -136,12 +150,12 @@ module.exports.httpMixin = (superclass) => class extends superclass {
    * @returns {Promise} s3 uri of destination file
    */
   async sync(remotePath, bucket, key) {
-    validateHost(this.provider.host);
+    validateHost(this.host);
 
     const remoteUrl = buildURL({
-      protocol: this.provider.protocol,
-      host: this.provider.host,
-      port: this.provider.port,
+      protocol: this.protocol,
+      host: this.host,
+      port: this.port,
       path: remotePath
     });
 
@@ -170,4 +184,6 @@ module.exports.httpMixin = (superclass) => class extends superclass {
     log.info('Uploading to s3 is complete (http)', s3uri);
     return s3uri;
   }
-};
+}
+
+module.exports = HttpProviderClient;

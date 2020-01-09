@@ -27,7 +27,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "ava": {
-    "serial": true
+    "serial": true,
+    "verbose": true
   },
   "nyc": {
     "exclude": [

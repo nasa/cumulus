@@ -5,10 +5,8 @@ const pMap = require('p-map');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const errors = require('@cumulus/common/errors');
 const lock = require('@cumulus/ingest/lock');
-const {
-  selector: granuleSelector,
-  duplicateHandlingType
-} = require('@cumulus/ingest/granule');
+const { duplicateHandlingType } = require('@cumulus/ingest/granule');
+const GranuleFetcher = require('@cumulus/ingest/GranuleFetcher');
 const log = require('@cumulus/common/log');
 
 /**
@@ -67,7 +65,6 @@ exports.syncGranule = function syncGranule(event) {
   const buckets = config.buckets;
   const provider = config.provider;
   const collection = config.collection;
-  const forceDownload = config.forceDownload || false;
   const downloadBucket = config.downloadBucket;
 
   const duplicateHandling = duplicateHandlingType(event);
@@ -84,19 +81,17 @@ exports.syncGranule = function syncGranule(event) {
     return Promise.reject(err);
   }
 
-  const IngestClass = granuleSelector('ingest', provider.protocol);
-  const ingest = new IngestClass(
+  const ingest = new GranuleFetcher(
     buckets,
     collection,
     provider,
     fileStagingDir,
-    forceDownload,
     duplicateHandling
   );
 
   return download(ingest, downloadBucket, provider, input.granules)
     .then((granules) => {
-      if (ingest.end) ingest.end();
+      ingest.end();
       const output = { granules };
       if (collection && collection.process) output.process = collection.process;
       if (config.pdr) output.pdr = config.pdr;
@@ -104,7 +99,7 @@ exports.syncGranule = function syncGranule(event) {
       return output;
     }).catch((e) => {
       log.debug('SyncGranule errored.');
-      if (ingest.end) ingest.end();
+      ingest.end();
 
       let errorToThrow = e;
       if (e.toString().includes('ECONNREFUSED')) {

@@ -2,7 +2,7 @@
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash.get');
-const pdr = require('@cumulus/ingest/pdr');
+const PdrDiscoverer = require('@cumulus/ingest/PdrDiscoverer');
 const errors = require('@cumulus/common/errors');
 const log = require('@cumulus/common/log');
 
@@ -26,8 +26,7 @@ function discoverPdrs(event) {
 
     log.info('Received the provider', { provider: get(provider, 'id') });
 
-    const Discover = pdr.selector('discover', provider.protocol);
-    const discover = new Discover(
+    const discover = new PdrDiscoverer(
       stack,
       bucket,
       providerPath,

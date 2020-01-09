@@ -5,7 +5,12 @@ const log = require('@cumulus/common/log');
 const path = require('path');
 const errors = require('@cumulus/common/errors');
 
-module.exports.s3Mixin = (superclass) => class extends superclass {
+class S3ProviderClient {
+  constructor(providerConfig) {
+    this.bucket = providerConfig.bucket;
+    this.path = providerConfig.path;
+  }
+
   /**
    * Download a remote file to disk
    *
@@ -14,11 +19,11 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
    * @returns {Promise.<string>} - the path that the file was saved to
    */
   async download(remotePath, localPath) {
-    const remoteUrl = `s3://${this.host}/${remotePath}`;
+    const remoteUrl = `s3://${this.bucket}/${remotePath}`;
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
 
     const s3Obj = {
-      Bucket: this.host,
+      Bucket: this.bucket,
       Key: remotePath
     };
 
@@ -59,7 +64,7 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
     // file.path should not be used anywhere outside of this file.
 
     const params = {
-      Bucket: this.host,
+      Bucket: this.bucket,
       FetchOwner: true,
       Prefix: this.path
     };
@@ -91,11 +96,11 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
    * @returns {Promise} s3 uri of destination file
    */
   async sync(remotePath, bucket, key) {
-    const remoteUrl = aws.buildS3Uri(this.host, remotePath);
+    const remoteUrl = aws.buildS3Uri(this.bucket, remotePath);
     const s3uri = aws.buildS3Uri(bucket, key);
     log.info(`Sync ${remoteUrl} to ${s3uri}`);
 
-    const exist = await aws.fileExists(this.host, remotePath.replace(/^\/+/, ''));
+    const exist = await aws.fileExists(this.bucket, remotePath.replace(/^\/+/, ''));
     if (!exist) {
       const message = `Source file not found ${remoteUrl}`;
       throw new errors.FileNotFound(message);
@@ -117,4 +122,6 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
     log.info(`synced ${syncedBytes} bytes`);
     return s3uri;
   }
-};
+}
+
+module.exports = S3ProviderClient;

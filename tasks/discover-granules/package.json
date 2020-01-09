@@ -28,7 +28,8 @@
   "ava": {
     "files": [
       "!tests/fixtures/**/*"
-    ]
+    ],
+    "verbose": true
   },
   "nyc": {
     "exclude": [

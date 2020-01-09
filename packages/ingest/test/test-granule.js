@@ -4,7 +4,6 @@ const path = require('path');
 
 const test = require('ava');
 
-const discoverPayload = require('@cumulus/test-data/payloads/new-message-schema/discover.json');
 const ingestPayload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const {
@@ -16,16 +15,6 @@ const {
 const errors = require('@cumulus/common/errors');
 
 const {
-  selector,
-  Granule,
-  FtpGranule,
-  SftpGranule,
-  HttpGranule,
-  S3Granule,
-  FtpDiscoverGranules,
-  HttpDiscoverGranules,
-  SftpDiscoverGranules,
-  S3DiscoverGranules,
   generateMoveFileParams,
   getRenamedS3File,
   moveGranuleFiles,
@@ -33,8 +22,7 @@ const {
   renameS3FileWithTimestamp,
   unversionFilename
 } = require('../granule');
-
-const { s3Mixin } = require('../s3');
+const GranuleFetcher = require('../GranuleFetcher');
 
 test.beforeEach(async (t) => {
   t.context.internalBucket = randomId('internal-bucket');
@@ -51,47 +39,6 @@ test.afterEach(async (t) => {
     recursivelyDeleteS3Bucket(t.context.destBucket)
   ]);
 });
-/**
-* test that granule.selector() returns the correct class
-**/
-
-const selectorDiscoverTypes = [
-  { cls: FtpDiscoverGranules, type: 'discover', protocol: 'ftp' },
-  { cls: HttpDiscoverGranules, type: 'discover', protocol: 'http' },
-  { cls: HttpDiscoverGranules, type: 'discover', protocol: 'https' },
-  { cls: SftpDiscoverGranules, type: 'discover', protocol: 'sftp' },
-  { cls: S3DiscoverGranules, type: 'discover', protocol: 's3' }
-];
-
-const selectorSyncTypes = [
-  { cls: HttpGranule, type: 'ingest', protocol: 'http' },
-  { cls: HttpGranule, type: 'ingest', protocol: 'https' },
-  { cls: FtpGranule, type: 'ingest', protocol: 'ftp' },
-  { cls: SftpGranule, type: 'ingest', protocol: 'sftp' },
-  { cls: S3Granule, type: 'ingest', protocol: 's3' }
-];
-
-selectorDiscoverTypes.forEach((item) => {
-  test(`test selector for discovery ${item.type}-${item.protocol}`, (t) => {
-    const payload = item.type === 'ingest' ? ingestPayload : discoverPayload;
-    const Cls = selector(item.type, item.protocol, item.queue);
-    const instance = new Cls(payload);
-    t.true(instance instanceof item.cls);
-  });
-});
-
-selectorSyncTypes.forEach((item) => {
-  test(`test selector for sync ${item.type}-${item.protocol}`, (t) => {
-    const payload = item.type === 'ingest' ? ingestPayload : discoverPayload;
-    const Cls = selector(item.type, item.protocol, item.queue);
-    const instance = new Cls(
-      payload.config.buckets,
-      payload.config.collection,
-      payload.config.provider
-    );
-    t.true(instance instanceof item.cls);
-  });
-});
 
 /**
 * test the granule.verifyFile() method
@@ -101,7 +48,7 @@ const sums = require('./fixtures/sums');
 
 Object.keys(sums).forEach((key) => {
   test(`granule.verifyFile ${key}`, async (t) => {
-    const granule = new HttpGranule(
+    const granule = new GranuleFetcher(
       ingestPayload.config.buckets,
       ingestPayload.config.collection,
       ingestPayload.config.provider
@@ -124,8 +71,6 @@ Object.keys(sums).forEach((key) => {
   });
 });
 
-class TestGranule extends Granule {}
-
 test('findCollectionFileConfigForFile returns the correct config', (t) => {
   const rightCollectionFileConfig = { regex: '^right-.*', bucket: 'right-bucket' };
   const wrongCollectionFileConfig = { regex: '^wrong-.*', bucket: 'wrong-bucket' };
@@ -133,7 +78,7 @@ test('findCollectionFileConfigForFile returns the correct config', (t) => {
     files: [rightCollectionFileConfig, wrongCollectionFileConfig]
   };
 
-  const testGranule = new TestGranule({}, collectionConfig, {});
+  const testGranule = new GranuleFetcher({}, collectionConfig, { protocol: 's3' });
 
   const file = { name: 'right-file' };
   const fileCollectionConfig = testGranule.findCollectionFileConfigForFile(file);
@@ -147,7 +92,7 @@ test('findCollectionFileConfigForFile returns undefined if no config matches', (
     files: [wrongCollectionFileConfig]
   };
 
-  const testGranule = new TestGranule({}, collectionConfig, {});
+  const testGranule = new GranuleFetcher({}, collectionConfig, { protocol: 's3' });
 
   const file = { name: 'right-file' };
   const fileCollectionConfig = testGranule.findCollectionFileConfigForFile(file);
@@ -168,7 +113,7 @@ test('addBucketToFile throws an exception if no config matches', (t) => {
     files: [wrongCollectionFileConfig]
   };
 
-  const testGranule = new TestGranule(buckets, collectionConfig, {});
+  const testGranule = new GranuleFetcher(buckets, collectionConfig, { protocol: 's3' });
 
   const file = { name: 'right-file' };
 
@@ -196,7 +141,7 @@ test('addBucketToFile adds the correct bucket when a config is found', (t) => {
     files: [rightCollectionFileConfig, wrongCollectionFileConfig]
   };
 
-  const testGranule = new TestGranule(buckets, collectionConfig, {});
+  const testGranule = new GranuleFetcher(buckets, collectionConfig, { protocol: 's3' });
 
   const file = { name: 'right-file' };
   const updatedFile = testGranule.addBucketToFile(file);
@@ -209,7 +154,7 @@ test('addUrlPathToFile adds an emptry string as the url_path if no config matche
     files: []
   };
 
-  const testGranule = new TestGranule({}, collectionConfig, {});
+  const testGranule = new GranuleFetcher({}, collectionConfig, { protocol: 's3' });
 
   const file = { name: 'right-file' };
   const updatedFile = testGranule.addUrlPathToFile(file);
@@ -223,7 +168,7 @@ test("addUrlPathToFile adds the collection config's url_path as the url_path if 
     files: []
   };
 
-  const testGranule = new TestGranule({}, collectionConfig, {});
+  const testGranule = new GranuleFetcher({}, collectionConfig, { protocol: 's3' });
 
   const file = { name: 'right-file' };
   const updatedFile = testGranule.addUrlPathToFile(file);
@@ -239,7 +184,7 @@ test("addUrlPathToFile adds the matching collection file config's url_path as th
     files: [rightCollectionFileConfig, wrongCollectionFileConfig]
   };
 
-  const testGranule = new TestGranule({}, collectionConfig, {});
+  const testGranule = new GranuleFetcher({}, collectionConfig, { protocol: 's3' });
 
   const file = { name: 'right-file' };
   const updatedFile = testGranule.addUrlPathToFile(file);
@@ -579,8 +524,6 @@ test('renameS3FileWithTimestamp renames file', async (t) => {
   t.true(renamedFiles.map((f) => f.Key).includes(existingRenamedKey));
 });
 
-class TestS3Granule extends s3Mixin(Granule) {}
-
 const collectionConfig = {
   dataType: 'testDataType',
   version: 'testVersion',
@@ -605,10 +548,11 @@ test('ingestFile keeps both new and old data when duplicateHandling is version',
   const duplicateHandling = 'version';
   // leading '/' should be trimmed
   const fileStagingDir = '/file-staging';
-  const testGranule = new TestS3Granule(
+  const testGranule = new GranuleFetcher(
     {},
     collectionConfig,
     {
+      protocol: 's3',
       host: sourceBucket
     },
     fileStagingDir,
@@ -643,10 +587,11 @@ test('ingestFile throws error when configured to handle duplicates with error', 
 
   const duplicateHandling = 'error';
   const fileStagingDir = 'file-staging';
-  const testGranule = new TestS3Granule(
+  const testGranule = new GranuleFetcher(
     {},
     collectionConfig,
     {
+      protocol: 's3',
       host: sourceBucket
     },
     fileStagingDir,
@@ -683,10 +628,11 @@ test('ingestFile skips ingest when duplicateHandling is skip', async (t) => {
 
   const duplicateHandling = 'skip';
   const fileStagingDir = 'file-staging';
-  const testGranule = new TestS3Granule(
+  const testGranule = new GranuleFetcher(
     {},
     collectionConfig,
     {
+      protocol: 's3',
       host: sourceBucket
     },
     fileStagingDir,
@@ -722,10 +668,11 @@ test('ingestFile replaces file when duplicateHandling is replace', async (t) => 
 
   const duplicateHandling = 'replace';
   const fileStagingDir = 'file-staging';
-  const testGranule = new TestS3Granule(
+  const testGranule = new GranuleFetcher(
     {},
     collectionConfig,
     {
+      protocol: 's3',
       host: sourceBucket
     },
     fileStagingDir,
@@ -765,10 +712,11 @@ test('ingestFile throws an error when invalid checksum is provided', async (t) =
 
   const duplicateHandling = 'replace';
   const fileStagingDir = 'file-staging';
-  const testGranule = new TestS3Granule(
+  const testGranule = new GranuleFetcher(
     {},
     collectionConfig,
     {
+      protocol: 's3',
       host: sourceBucket
     },
     fileStagingDir,
@@ -806,10 +754,11 @@ test('ingestFile throws an error when no checksum is provided and the size is no
 
   const duplicateHandling = 'replace';
   const fileStagingDir = 'file-staging';
-  const testGranule = new TestS3Granule(
+  const testGranule = new GranuleFetcher(
     {},
     collectionConfig,
     {
+      protocol: 's3',
       host: sourceBucket
     },
     fileStagingDir,
@@ -848,10 +797,11 @@ test('verifyFile returns type and value when file is verified', async (t) => {
 
   const duplicateHandling = 'replace';
   const fileStagingDir = 'file-staging';
-  const testGranule = new TestS3Granule(
+  const testGranule = new GranuleFetcher(
     {},
     collectionConfig,
     {
+      protocol: 's3',
       host: sourceBucket
     },
     fileStagingDir,
