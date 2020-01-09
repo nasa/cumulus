@@ -22,7 +22,7 @@ exports.getQueueUrl = (sourceArn, queueName) => {
 async function createQueue(queueName) {
   const actualQueueName = queueName || randomString();
 
-  const createQueueResponse = await exports.sqs().createQueue({
+  const createQueueResponse = await awsServices.sqs().createQueue({
     QueueName: actualQueueName
   }).promise();
 

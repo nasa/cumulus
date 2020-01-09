@@ -11,7 +11,10 @@ const {
   validateChecksumFromStream
 } = require('@cumulus/checksum');
 const concurrency = require('@cumulus/common/concurrency');
-const { InvalidChecksum } = require('@cumulus/common/errors');
+const {
+  InvalidChecksum,
+  UnparsableFileLocationError
+} = require('@cumulus/common/errors');
 const log = require('@cumulus/common/log');
 const { deprecate } = require('@cumulus/common/util');
 
@@ -528,4 +531,24 @@ exports.checksumS3Objects = (algorithm, bucket, key, options = {}) => {
     algorithm, bucket, key, options
   };
   return exports.calculateS3ObjectChecksum(params);
+};
+
+/**
+ * Extract the S3 bucket and key from the URL path parameters
+ *
+ * @param {string} pathParams - path parameters from the URL
+ * @returns {Object} - bucket/key in the form of
+ * { Bucket: x, Key: y }
+ */
+exports.getFileBucketAndKey = (pathParams) => {
+  const fields = pathParams.split('/');
+
+  const Bucket = fields.shift();
+  const Key = fields.join('/');
+
+  if (Bucket.length === 0 || Key.length === 0) {
+    throw new UnparsableFileLocationError(`File location "${pathParams}" could not be parsed`);
+  }
+
+  return [Bucket, Key];
 };

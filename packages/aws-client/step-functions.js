@@ -1,5 +1,6 @@
 const { JSONPath } = require('jsonpath-plus');
 const string = require('@cumulus/common/string');
+const s3Utils = require('./s3');
 
 /**
  * Given an array of fields, returns that a new string that's safe for use as a StepFunction,
@@ -71,7 +72,7 @@ exports.getStateMachineArn = (executionArn) => {
 exports.pullStepFunctionEvent = async (event) => {
   if (!event.replace) return event;
 
-  const remoteMsgS3Object = await exports.getS3Object(
+  const remoteMsgS3Object = await s3Utils.getS3Object(
     event.replace.Bucket,
     event.replace.Key,
     { retries: 0 }

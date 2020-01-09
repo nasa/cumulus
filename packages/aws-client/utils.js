@@ -1,5 +1,4 @@
 const pRetry = require('p-retry');
-const { UnparsableFileLocationError } = require('@cumulus/common/errors');
 const { setErrorStack } = require('@cumulus/common/util');
 
 exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
@@ -41,26 +40,6 @@ exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
       callback(`Could not find resource ${baseName} in ${fn}`);
     }
   });
-};
-
-/**
- * Extract the S3 bucket and key from the URL path parameters
- *
- * @param {string} pathParams - path parameters from the URL
- * @returns {Object} - bucket/key in the form of
- * { Bucket: x, Key: y }
- */
-exports.getFileBucketAndKey = (pathParams) => {
-  const fields = pathParams.split('/');
-
-  const Bucket = fields.shift();
-  const Key = fields.join('/');
-
-  if (Bucket.length === 0 || Key.length === 0) {
-    throw new UnparsableFileLocationError(`File location "${pathParams}" could not be parsed`);
-  }
-
-  return [Bucket, Key];
 };
 
 /**

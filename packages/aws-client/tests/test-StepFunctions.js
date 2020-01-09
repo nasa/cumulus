@@ -2,20 +2,20 @@
 
 const test = require('ava');
 const sinon = require('sinon');
-const aws = require('../aws');
+const { throttleOnce } = require('@cumulus/common/test-utils');
+const awsServices = require('../services');
 const StepFunctions = require('../StepFunctions');
-const { throttleOnce } = require('../test-utils');
 
 const runWithStubbedAndThrottledSfnOperation = async (operation, response, fn) => {
-  const operationBefore = aws.sfn()[operation];
+  const operationBefore = awsServices.sfn()[operation];
   try {
     const promise = throttleOnce(() => Promise.resolve(response));
 
-    aws.sfn()[operation] = () => ({ promise });
+    awsServices.sfn()[operation] = () => ({ promise });
 
     return await fn();
   } finally {
-    aws.sfn()[operation] = operationBefore;
+    awsServices.sfn()[operation] = operationBefore;
   }
 };
 
@@ -23,7 +23,7 @@ test.serial('getExecutionHistory() retries if a ThrottlingException occurs', asy
   const expectedResponse = { events: [{ test: 'test1' }] };
   const promise = throttleOnce(() => Promise.resolve(expectedResponse));
   const promiseSpy = sinon.spy();
-  const stub = sinon.stub(aws, 'sfn')
+  const stub = sinon.stub(awsServices, 'sfn')
     .returns({
       getExecutionHistory: () => ({
         promise: () => {
@@ -48,7 +48,7 @@ test.serial('getExecutionHistory() returns non-paginated list of events', async 
       name: 'event1'
     }]
   };
-  const stub = sinon.stub(aws, 'sfn')
+  const stub = sinon.stub(awsServices, 'sfn')
     .returns({
       getExecutionHistory: () => ({
         promise: () => Promise.resolve(firstResponse)
@@ -84,10 +84,10 @@ test.serial('getExecutionHistory() returns full, paginated list of events', asyn
     }]
   };
   // Throw a throttling exception for the first response from
-  // aws.sfn().getExecutionHistory().promise()to simulate
+  // awsServices.sfn().getExecutionHistory().promise()to simulate
   // real-world throttling exceptions.
   const firstResponsePromise = throttleOnce(() => Promise.resolve(firstResponse));
-  const stub = sinon.stub(aws, 'sfn')
+  const stub = sinon.stub(awsServices, 'sfn')
     .returns({
       getExecutionHistory: (params) => ({
         promise: () => {
