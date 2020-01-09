@@ -5,10 +5,14 @@
  * @module StepFunctions
  *
  * @example
- * const StepFunctions = require('@cumulus/common/StepFunctions');
+ * const StepFunctions = require('@cumulus/aws-client/StepFunctions');
  */
 
-const aws = require('./aws');
+const awsServices = require('./services');
+const {
+  improveStackTrace,
+  retryOnThrottlingException
+} = require('./utils');
 
 // Utility functions
 
@@ -37,9 +41,9 @@ const doesExecutionExist = (describeExecutionPromise) =>
  * @static
  * @kind function
  */
-const describeExecution = aws.improveStackTrace(
-  aws.retryOnThrottlingException(
-    (params) => aws.sfn().describeExecution(params).promise()
+const describeExecution = improveStackTrace(
+  retryOnThrottlingException(
+    (params) => awsServices.sfn().describeExecution(params).promise()
   )
 );
 
@@ -58,9 +62,9 @@ const describeExecution = aws.improveStackTrace(
  * @static
  * @kind function
  */
-const describeStateMachine = aws.improveStackTrace(
-  aws.retryOnThrottlingException(
-    (params) => aws.sfn().describeStateMachine(params).promise()
+const describeStateMachine = improveStackTrace(
+  retryOnThrottlingException(
+    (params) => awsServices.sfn().describeStateMachine(params).promise()
   )
 );
 
@@ -95,15 +99,15 @@ const executionExists = (executionArn) =>
  * @static
  * @kind function
  */
-const getExecutionHistory = aws.improveStackTrace(
-  aws.retryOnThrottlingException(
+const getExecutionHistory = improveStackTrace(
+  retryOnThrottlingException(
     async (
       params,
       previousResponse = {
         events: []
       }
     ) => {
-      const response = await aws.sfn().getExecutionHistory(params).promise();
+      const response = await awsServices.sfn().getExecutionHistory(params).promise();
       const events = [
         ...previousResponse.events,
         ...response.events
@@ -140,9 +144,9 @@ const getExecutionHistory = aws.improveStackTrace(
  * @static
  * @kind function
  */
-const listExecutions = aws.improveStackTrace(
-  aws.retryOnThrottlingException(
-    (params) => aws.sfn().listExecutions(params).promise()
+const listExecutions = improveStackTrace(
+  retryOnThrottlingException(
+    (params) => awsServices.sfn().listExecutions(params).promise()
   )
 );
 
