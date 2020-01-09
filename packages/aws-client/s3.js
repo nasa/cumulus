@@ -9,6 +9,7 @@ const {
   generateChecksumFromStream,
   validateChecksumFromStream
 } = require('@cumulus/checksum');
+const concurrency = require('@cumulus/common/concurrency');
 const { InvalidChecksum } = require('@cumulus/common/errors');
 const log = require('@cumulus/common/log');
 const { deprecate } = require('@cumulus/common/util');
@@ -95,6 +96,11 @@ exports.s3CopyObject = improveStackTrace(
 exports.promiseS3Upload = improveStackTrace(
   (params) => awsServices.s3().upload(params).promise()
 );
+
+exports.syncUrl = async (uri, bucket, destKey) => {
+  const response = await concurrency.promiseUrl(uri);
+  await exports.promiseS3Upload({ Bucket: bucket, Key: destKey, Body: response });
+};
 
 /**
  * Downloads the given s3Obj to the given filename in a streaming manner

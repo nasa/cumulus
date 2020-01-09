@@ -7,7 +7,6 @@ const url = require('url');
 
 const log = require('@cumulus/common/log');
 const string = require('@cumulus/common/string');
-const concurrency = require('@cumulus/common/concurrency');
 const {
   noop
 } = require('@cumulus/common/util');
@@ -160,11 +159,6 @@ exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
       callback(`Could not find resource ${baseName} in ${fn}`);
     }
   });
-};
-
-exports.syncUrl = async (uri, bucket, destKey) => {
-  const response = await concurrency.promiseUrl(uri);
-  await exports.promiseS3Upload({ Bucket: bucket, Key: destKey, Body: response });
 };
 
 exports.getQueueUrl = (sourceArn, queueName) => {
