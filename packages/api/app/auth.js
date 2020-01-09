@@ -4,12 +4,11 @@ const {
   JsonWebTokenError,
   TokenExpiredError
 } = require('jsonwebtoken');
+const log = require('@cumulus/common/log');
+
 const { ensureLaunchpadAPIAuthorized, launchpadProtectedAuth } = require('./launchpadAuth');
 const { User, AccessToken } = require('../models');
 const { verifyJwtToken } = require('../lib/token');
-
-const log = require('@cumulus/common/log');
-
 
 /**
  * An express middleware that checks if an incoming express
