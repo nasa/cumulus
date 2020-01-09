@@ -2,7 +2,7 @@
 
 const pick = require('lodash.pick');
 const router = require('express-promise-router')();
-const { lambda } = require('@cumulus/common/aws');
+const { lambda } = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
 
 /**
