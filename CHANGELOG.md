@@ -332,7 +332,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated the EC2 initialization scripts to use full volume size for docker storage
   - Changed the default ECS docker storage drive to `devicemapper`
 
-## [v1.14.5] - 2019-12-30
+## [v1.14.5] - 2019-12-30 - [BACKPORT]
 
 ### Updated
 
@@ -685,7 +685,7 @@ If you deploy with no distribution app your deployment will succeed but you may 
     - Removed `@cumulus/cmrjs/cmr` functions: `searchConcept`, `ingestConcept`, `deleteConcept`. Use the functions in `@cumulus/cmr-client` instead.
     - Removed `@cumulus/ingest/aws.getExecutionHistory`. Use `@cumulus/common/StepFunctions.getExecutionHistory` instead.
 
-## [v1.13.5] - 2019-08-29
+## [v1.13.5] - 2019-08-29 - [BACKPORT]
 
 ### Fixed
 
@@ -1488,7 +1488,7 @@ We may need to update the api documentation to reflect this.
 - **CUMULUS-746** - Move granule API correctly updates record in dynamo DB and cmr xml file
 - **CUMULUS-766** - Populate database fileSize field from S3 if value not present in Ingest payload
 
-## [v1.7.1] - 2018-07-27
+## [v1.7.1] - 2018-07-27 - [BACKPORT]
 
 ### Fixed
 - **CUMULUS-766** - Backport from 1.8.0 - Populate database fileSize field from S3 if value not present in Ingest payload
