@@ -7,7 +7,7 @@ const set = require('lodash.set');
 const { invoke, Events } = require('@cumulus/ingest/aws');
 const awsServices = require('@cumulus/aws-client/services');
 const { sqsQueueExists } = require('@cumulus/aws-client/sqs');
-const { fileExists } = require('@cumulus/aws-client/s3');
+const s3Utils = require('@cumulus/aws-client/s3');
 const log = require('@cumulus/common/log');
 const workflows = require('@cumulus/common/workflows');
 const Manager = require('./base');
@@ -179,7 +179,7 @@ class Rule extends Manager {
     const bucket = process.env.system_bucket;
     const stack = process.env.stackName;
     const key = `${stack}/workflows/${item.workflow}.json`;
-    const exists = await fileExists(bucket, key);
+    const exists = await s3Utils.fileExists(bucket, key);
 
     if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${key} for ${item.name}`);
 

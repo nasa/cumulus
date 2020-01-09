@@ -7,13 +7,13 @@ const path = require('path');
 
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const awsServices = require('@cumulus/aws-client/services');
-const { fileExists } = require('@cumulus/aws-client/s3');
+const s3Utils = require('@cumulus/aws-client/s3');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
 const cmrjs = require('@cumulus/cmrjs');
 const launchpad = require('@cumulus/common/launchpad');
 const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage, getMessageExecutionArn } = require('@cumulus/common/message');
-const StepFunctions = require('@cumulus/common/StepFunctions');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const {
   deprecate,
@@ -296,7 +296,7 @@ class Granule extends Manager {
     const fileExistsPromises = moveFileParams.map(async (moveFileParam) => {
       const { target, file } = moveFileParam;
       if (target) {
-        const exists = await fileExists(target.Bucket, target.Key);
+        const exists = await s3Utils.fileExists(target.Bucket, target.Key);
 
         if (exists) {
           return Promise.resolve(file);
