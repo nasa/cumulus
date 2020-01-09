@@ -1,7 +1,8 @@
 #!bin/bash
 set -ex
-echo "Locking stack for deployment $DEPLOYMENT"
+. ./bamboo/set-bamboo-env-variables.sh
 
+echo "Locking stack for deployment $DEPLOYMENT"
 cd example
 set +e
 # Wait for the stack to be available
