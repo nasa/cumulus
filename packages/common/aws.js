@@ -13,6 +13,7 @@ const s3Utils = require('@cumulus/aws-client/s3');
 const dynamoDbUtils = require('@cumulus/aws-client/dynamo');
 const DynamoDbSearchQueueCore = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const S3ListObjectsV2QueueCore = require('@cumulus/aws-client/S3ListObjectsV2Queue');
+const sqsUtils = require('@cumulus/aws-client/sqs');
 
 const log = require('./log');
 const string = require('./string');
@@ -562,9 +563,76 @@ class DynamoDbSearchQueue extends DynamoDbSearchQueueCore {
 }
 exports.DynamoDbSearchQueue = DynamoDbSearchQueue;
 
+/** SQS utils */
+
+/**
+ * Create an SQS Queue.  Properly handles localstack queue URLs
+ *
+ * @param {string} queueName - defaults to a random string
+ * @returns {Promise.<string>} the Queue URL
+ */
+exports.createQueue = (queueName) => {
+  deprecate('@cumulus/common/aws/createQueue', '1.17.1', '@cumulus/aws-client/sqs/createQueue');
+  return sqsUtils.createQueue(queueName);
+};
+
 exports.getQueueUrl = (sourceArn, queueName) => {
-  const arnParts = sourceArn.split(':');
-  return `https://sqs.${arnParts[3]}.amazonaws.com/${arnParts[4]}/${queueName}`;
+  deprecate('@cumulus/common/aws/getQueueUrl', '1.17.1', '@cumulus/aws-client/sqs/getQueueUrl');
+  return sqsUtils.getQueueUrl(sourceArn, queueName);
+};
+
+/**
+* Send a message to AWS SQS
+*
+* @param {string} queueUrl - url of the SQS queue
+* @param {string|Object} message - either string or object message. If an
+*   object it will be serialized into a JSON string.
+* @returns {Promise} - resolves when the messsage has been sent
+**/
+exports.sendSQSMessage = (queueUrl, message) => {
+  deprecate('@cumulus/common/aws/sendSQSMessage', '1.17.1', '@cumulus/aws-client/sqs/sendSQSMessage');
+  return sqsUtils.sendSQSMessage(queueUrl, message);
+};
+
+/**
+ * Receives SQS messages from a given queue. The number of messages received
+ * can be set and the timeout is also adjustable.
+ *
+ * @param {string} queueUrl - url of the SQS queue
+ * @param {Object} options - options object
+ * @param {integer} [options.numOfMessages=1] - number of messages to read from the queue
+ * @param {integer} [options.visibilityTimeout=30] - number of seconds a message is invisible
+ *   after read
+ * @param {integer} [options.waitTimeSeconds=0] - number of seconds to poll SQS queue (long polling)
+ * @returns {Promise.<Array>} an array of messages
+ */
+exports.receiveSQSMessages = async (queueUrl, options) => {
+  deprecate('@cumulus/common/aws/receiveSQSMessages', '1.17.1', '@cumulus/aws-client/sqs/receiveSQSMessages');
+  return sqsUtils.receiveSQSMessages(queueUrl, options);
+};
+
+/**
+ * Delete a given SQS message from a given queue.
+ *
+ * @param {string} queueUrl - url of the SQS queue
+ * @param {integer} receiptHandle - the unique identifier of the sQS message
+ * @returns {Promise} an AWS SQS response
+ */
+exports.deleteSQSMessage = (queueUrl, receiptHandle) => {
+  deprecate('@cumulus/common/aws/deleteSQSMessage', '1.17.1', '@cumulus/aws-client/sqs/deleteSQSMessage');
+  return sqsUtils.deleteSQSMessage(queueUrl, receiptHandle);
+};
+
+/**
+ * Test if an SQS queue exists
+ *
+ * @param {Object} queue - queue name or url
+ * @returns {Promise<boolean>} - a Promise that will resolve to a boolean indicating
+ *                               if the queue exists
+ */
+exports.sqsQueueExists = (queue) => {
+  deprecate('@cumulus/common/aws/sqsQueueExists', '1.17.1', '@cumulus/aws-client/sqs/sqsQueueExists');
+  return sqsUtils.sqsQueueExists(queue);
 };
 
 /**
@@ -606,34 +674,6 @@ exports.fromSfnExecutionName = (str, delimiter = '__') =>
     .map((s) => JSON.parse(`"${s}"`));
 
 /**
- * Create an SQS Queue.  Properly handles localstack queue URLs
- *
- * @param {string} queueName - defaults to a random string
- * @returns {Promise.<string>} the Queue URL
- */
-async function createQueue(queueName) {
-  const actualQueueName = queueName || randomString();
-
-  const createQueueResponse = await exports.sqs().createQueue({
-    QueueName: actualQueueName
-  }).promise();
-
-  if (inTestMode()) {
-    // Properly set the Queue URL.  This is needed because LocalStack always
-    // returns the QueueUrl as "localhost", even if that is not where it should
-    // actually be found.  CI breaks without this.
-    const returnedQueueUrl = url.parse(createQueueResponse.QueueUrl);
-    returnedQueueUrl.host = undefined;
-    returnedQueueUrl.hostname = process.env.LOCALSTACK_HOST;
-
-    return url.format(returnedQueueUrl);
-  }
-
-  return createQueueResponse.QueueUrl;
-}
-exports.createQueue = createQueue;
-
-/**
  * Publish a message to an SNS topic. Does not catch
  * errors, to allow more specific handling by the caller.
  *
@@ -665,82 +705,6 @@ exports.publishSnsMessage = async (
       ...retryOptions
     }
   );
-
-/**
-* Send a message to AWS SQS
-*
-* @param {string} queueUrl - url of the SQS queue
-* @param {string|Object} message - either string or object message. If an
-*   object it will be serialized into a JSON string.
-* @returns {Promise} - resolves when the messsage has been sent
-**/
-exports.sendSQSMessage = (queueUrl, message) => {
-  let messageBody;
-  if (isString(message)) messageBody = message;
-  else if (isObject(message)) messageBody = JSON.stringify(message);
-  else throw new Error('body type is not accepted');
-
-  return exports.sqs().sendMessage({
-    MessageBody: messageBody,
-    QueueUrl: queueUrl
-  }).promise();
-};
-
-/**
- * Receives SQS messages from a given queue. The number of messages received
- * can be set and the timeout is also adjustable.
- *
- * @param {string} queueUrl - url of the SQS queue
- * @param {Object} options - options object
- * @param {integer} [options.numOfMessages=1] - number of messages to read from the queue
- * @param {integer} [options.visibilityTimeout=30] - number of seconds a message is invisible
- *   after read
- * @param {integer} [options.waitTimeSeconds=0] - number of seconds to poll SQS queue (long polling)
- * @returns {Promise.<Array>} an array of messages
- */
-exports.receiveSQSMessages = async (queueUrl, options) => {
-  const params = {
-    QueueUrl: queueUrl,
-    AttributeNames: ['All'],
-    // 0 is a valid value for VisibilityTimeout
-    VisibilityTimeout: isNil(options.visibilityTimeout) ? 30 : options.visibilityTimeout,
-    WaitTimeSeconds: options.waitTimeSeconds || 0,
-    MaxNumberOfMessages: options.numOfMessages || 1
-  };
-
-  const messages = await exports.sqs().receiveMessage(params).promise();
-
-  return get(messages, 'Messages', []);
-};
-
-/**
- * Delete a given SQS message from a given queue.
- *
- * @param {string} queueUrl - url of the SQS queue
- * @param {integer} receiptHandle - the unique identifier of the sQS message
- * @returns {Promise} an AWS SQS response
- */
-exports.deleteSQSMessage = improveStackTrace(
-  (QueueUrl, ReceiptHandle) =>
-    exports.sqs().deleteMessage({ QueueUrl, ReceiptHandle }).promise()
-);
-
-/**
- * Test if an SQS queue exists
- *
- * @param {Object} queue - queue name or url
- * @returns {Promise<boolean>} - a Promise that will resolve to a boolean indicating
- *                               if the queue exists
- */
-exports.sqsQueueExists = (queue) => {
-  const QueueName = queue.split('/').pop();
-  return exports.sqs().getQueueUrl({ QueueName }).promise()
-    .then(() => true)
-    .catch((e) => {
-      if (e.code === 'AWS.SimpleQueueService.NonExistentQueue') return false;
-      throw e;
-    });
-};
 
 /**
  * Returns execution ARN from a statement machine Arn and executionName
