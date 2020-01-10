@@ -22,6 +22,18 @@ resource "aws_secretsmanager_secret_version" "api_cmr_password" {
   secret_string = var.cmr_password
 }
 
+resource "aws_secretsmanager_secret" "api_launchpad_passphrase" {
+  name_prefix = "${var.prefix}-api-launchpad-passphrase"
+  description = "Launchpad passphrase for the Cumulus API's ${var.prefix} deployment"
+  tags        = local.default_tags
+}
+
+resource "aws_secretsmanager_secret_version" "api_launchpad_passphrase" {
+  count         = length(var.launchpad_passphrase) == 0 ? 0 : 1
+  secret_id     = aws_secretsmanager_secret.api_launchpad_passphrase.id
+  secret_string = var.launchpad_passphrase
+}
+
 resource "aws_s3_bucket_object" "authorized_oauth_users" {
   bucket  = var.system_bucket
   key     = "${var.prefix}/api/authorized_oauth_users.json"
@@ -80,7 +92,7 @@ resource "aws_lambda_function" "api" {
       invokeReconcileLambda        = aws_lambda_function.create_reconciliation_report.arn
       launchpad_api                = var.launchpad_api
       launchpad_certificate        = var.launchpad_certificate
-      launchpad_passphrase         = jsondecode(data.aws_lambda_invocation.custom_bootstrap.result).Data.LaunchpadPassphrase
+      launchpad_passphrase_secret_name = length(var.launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.api_launchpad_passphrase.name
       ManualConsumerLambda         = var.manual_consumer_function_arn
       messageConsumer              = var.message_consumer_function_arn
       stackName                    = var.prefix

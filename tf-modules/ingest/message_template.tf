@@ -1,3 +1,5 @@
+# CMR password
+
 resource "aws_secretsmanager_secret" "message_template_cmr_password" {
   name_prefix = "${var.prefix}-message-template-cmr-password"
   description = "CMR password for the Cumulus message template in the ${var.prefix} deployment"
@@ -10,10 +12,27 @@ resource "aws_secretsmanager_secret_version" "message_template_cmr_password" {
   secret_string = var.cmr_password
 }
 
+# Launchpad passphrase
+
+resource "aws_secretsmanager_secret" "message_template_launchpad_passphrase" {
+  name_prefix = "${var.prefix}-message-template-launchpad-passphrase"
+  description = "Launchpad passphrase for the Cumulus message template in the ${var.prefix} deployment"
+  tags        = local.default_tags
+}
+
+resource "aws_secretsmanager_secret_version" "message_template_launchpad_passphrase" {
+  count         = length(var.launchpad_passphrase) == 0 ? 0 : 1
+  secret_id     = aws_secretsmanager_secret.message_template_launchpad_passphrase.id
+  secret_string = var.launchpad_passphrase
+}
+
 data "aws_iam_policy_document" "lambda_processing_role_get_secrets" {
   statement {
     actions   = ["secretsmanager:GetSecretValue"]
-    resources = [aws_secretsmanager_secret.message_template_cmr_password.arn]
+    resources = [
+      aws_secretsmanager_secret.message_template_cmr_password.arn,
+      aws_secretsmanager_secret.message_template_launchpad_passphrase.arn
+    ]
   }
 }
 
@@ -67,6 +86,7 @@ locals {
         api         = var.launchpad_api
         certificate = var.launchpad_certificate
         passphrase  = var.launchpad_passphrase
+        passphraseSecretName = length(var.launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.message_template_launchpad_passphrase.name
       }
       distribution_endpoint = var.distribution_url
       collection            = {}
