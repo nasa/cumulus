@@ -12,14 +12,13 @@ const S3ListObjectsV2QueueCore = require('@cumulus/aws-client/S3ListObjectsV2Que
 const snsUtils = require('@cumulus/aws-client/sns');
 const sqsUtils = require('@cumulus/aws-client/sqs');
 const stepFunctionUtils = require('@cumulus/aws-client/step-functions');
+const utils = require('@cumulus/aws-client/utils');
 
-const log = require('./log');
 const {
   deprecate,
   setErrorStack,
   noop
 } = require('./util');
-const { UnparsableFileLocationError } = require('./errors');
 
 /**
  * Wrap a function and provide a better stack trace
@@ -693,6 +692,18 @@ exports.getStateMachineArn = (executionArn) => {
   return stepFunctionUtils.getStateMachineArn(executionArn);
 };
 
+/**
+ * Given a Cumulus step function event, if the message is on S3, pull the full message
+ * from S3 and return, otherwise return the event.
+ *
+ * @param {Object} event - the Cumulus event
+ * @returns {Object} - the full Cumulus message
+ */
+exports.pullStepFunctionEvent = async (event) => {
+  deprecate('@cumulus/common/aws/pullStepFunctionEvent', '1.17.1', '@cumulus/aws-client/step-functions/pullStepFunctionEvent');
+  return stepFunctionUtils.pullStepFunctionEvent(event);
+};
+
 /** SNS utils */
 
 /**
@@ -711,12 +722,14 @@ exports.publishSnsMessage = async (
   retryOptions = {}
 ) => {
   deprecate('@cumulus/common/aws/publishSnsMessage', '1.17.1', '@cumulus/aws-client/sns/publishSnsMessage');
-  return stepFunctionUtils.publishSnsMessage(
+  return snsUtils.publishSnsMessage(
     snsTopicArn,
     message,
     retryOptions
   );
 };
+
+/** General utils */
 
 /**
  * Test to see if a given exception is an AWS Throttling Exception
@@ -724,47 +737,9 @@ exports.publishSnsMessage = async (
  * @param {Error} err
  * @returns {boolean}
  */
-exports.isThrottlingException = (err) => err.code === 'ThrottlingException';
-
-/**
- * Given a Cumulus step function event, if the message is on S3, pull the full message
- * from S3 and return, otherwise return the event.
- *
- * @param {Object} event - the Cumulus event
- * @returns {Object} - the full Cumulus message
- */
-exports.pullStepFunctionEvent = async (event) => {
-  if (!event.replace) return event;
-
-  const remoteMsgS3Object = await exports.getS3Object(
-    event.replace.Bucket,
-    event.replace.Key,
-    { retries: 0 }
-  );
-  const remoteMsg = JSON.parse(remoteMsgS3Object.Body.toString());
-
-  let returnEvent = remoteMsg;
-  if (event.replace.TargetPath) {
-    const replaceNodeSearch = JSONPath({
-      path: event.replace.TargetPath,
-      json: event,
-      resultType: 'all'
-    });
-    if (replaceNodeSearch.length !== 1) {
-      throw new Error(`Replacement TargetPath ${event.replace.TargetPath} invalid`);
-    }
-    if (replaceNodeSearch[0].parent) {
-      replaceNodeSearch[0].parent[replaceNodeSearch[0].parentProperty] = remoteMsg;
-      returnEvent = event;
-      delete returnEvent.replace;
-    }
-  }
-  return returnEvent;
-};
-
-const retryIfThrottlingException = (err) => {
-  if (exports.isThrottlingException(err)) throw err;
-  throw new pRetry.AbortError(err);
+exports.isThrottlingException = (err) => {
+  deprecate('@cumulus/common/aws/isThrottlingException', '1.17.1', '@cumulus/aws-client/utils/isThrottlingException');
+  return utils.isThrottlingException(err);
 };
 
 /**
@@ -777,9 +752,7 @@ const retryIfThrottlingException = (err) => {
  *   - https://github.com/tim-kos/node-retry#retrytimeoutsoptions
  * @returns {Function} a function that will retry on a ThrottlingException
  */
-exports.retryOnThrottlingException = (fn, options) =>
-  (...args) =>
-    pRetry(
-      () => fn(...args).catch(retryIfThrottlingException),
-      { maxTimeout: 5000, ...options }
-    );
+exports.retryOnThrottlingException = (fn, options) => {
+  deprecate('@cumulus/common/aws/retryOnThrottlingException', '1.17.1', '@cumulus/aws-client/utils/retryOnThrottlingException');
+  return utils.retryOnThrottlingException(fn, options);
+};
