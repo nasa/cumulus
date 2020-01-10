@@ -13,6 +13,7 @@ const path = require('path');
 const url = require('url');
 
 const awsServices = require('@cumulus/aws-client/services');
+const s3Utils = require('@cumulus/aws-client/s3');
 const { generateChecksumFromStream, validateChecksumFromStream } = require('@cumulus/checksum');
 
 const errors = require('./errors');
@@ -53,30 +54,6 @@ const improveStackTrace = (fn) =>
     }
   };
 exports.improveStackTrace = improveStackTrace;
-
-/**
- * Join strings into an S3 key without a leading slash or double slashes
- *
- * @param {...string|Array<string>} args - the strings to join
- * @returns {string} the full S3 key
- */
-function s3Join(...args) {
-  const tokens = Array.isArray(args[0]) ? args[0] : args;
-
-  const removeLeadingSlash = (token) => token.replace(/^\//, '');
-  const removeTrailingSlash = (token) => token.replace(/\/$/, '');
-  const isNotEmptyString = (token) => token.length > 0;
-
-  const key = tokens
-    .map(removeLeadingSlash)
-    .map(removeTrailingSlash)
-    .filter(isNotEmptyString)
-    .join('/');
-
-  if (tokens[tokens.length - 1].endsWith('/')) return `${key}/`;
-  return key;
-}
-exports.s3Join = s3Join;
 
 exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
 AWS.config.update({ region: exports.region });
@@ -225,6 +202,19 @@ exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
   });
 };
 
+/* S3 utils */
+
+/**
+ * Join strings into an S3 key without a leading slash or double slashes
+ *
+ * @param {...string|Array<string>} args - the strings to join
+ * @returns {string} the full S3 key
+ */
+exports.s3Join = (...args) => {
+  deprecate('@cumulus/common/aws/s3Join', '1.17.1', '@cumulus/aws-client/s3/s3Join');
+  return s3Utils.s3Join(...args);
+};
+
 /**
 * Convert S3 TagSet Object to query string
 * e.g. [{ Key: 'tag', Value: 'value }] to 'tag=value'
@@ -232,8 +222,10 @@ exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
 * @param {Array<Object>} tagset - S3 TagSet array
 * @returns {string} - tags query string
 */
-exports.s3TagSetToQueryString = (tagset) => tagset.reduce((acc, tag) => acc.concat(`&${tag.Key}=${tag.Value}`), '').substring(1);
-
+exports.s3TagSetToQueryString = (tagset) => {
+  deprecate('@cumulus/common/aws/s3TagSetToQueryString', '1.17.1', '@cumulus/aws-client/s3/s3TagSetToQueryString');
+  return s3Utils.s3TagSetToQueryString(tagset);
+};
 
 /**
  * Delete an object from S3
@@ -242,10 +234,10 @@ exports.s3TagSetToQueryString = (tagset) => tagset.reduce((acc, tag) => acc.conc
  * @param {string} key - key of the object to be deleted
  * @returns {Promise} - promise of the object being deleted
  */
-exports.deleteS3Object = improveStackTrace(
-  (bucket, key) =>
-    exports.s3().deleteObject({ Bucket: bucket, Key: key }).promise()
-);
+exports.deleteS3Object = (bucket, key) => {
+  deprecate('@cumulus/common/aws/deleteS3Object', '1.17.1', '@cumulus/aws-client/s3/deleteS3Object');
+  return s3Utils.deleteS3Object(bucket, key);
+};
 
 /**
  * Test if an object exists in S3
@@ -254,13 +246,10 @@ exports.deleteS3Object = improveStackTrace(
  * @returns {Promise<boolean>} - a Promise that will resolve to a boolean indicating
  *                               if the object exists
  */
-exports.s3ObjectExists = (params) =>
-  exports.headObject(params.Bucket, params.Key)
-    .then(() => true)
-    .catch((e) => {
-      if (e.code === 'NotFound') return false;
-      throw e;
-    });
+exports.s3ObjectExists = (params) => {
+  deprecate('@cumulus/common/aws/s3ObjectExists', '1.17.1', '@cumulus/aws-client/s3/s3ObjectExists');
+  return s3Utils.s3ObjectExists(params);
+};
 
 /**
 * Put an object on S3
@@ -268,12 +257,10 @@ exports.s3ObjectExists = (params) =>
 * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
 * @returns {Promise} - promise of the object being put
 **/
-exports.s3PutObject = improveStackTrace(
-  (params) => exports.s3().putObject({
-    ACL: 'private',
-    ...params
-  }).promise()
-);
+exports.s3PutObject = (params) => {
+  deprecate('@cumulus/common/aws/s3PutObject', '1.17.1', '@cumulus/aws-client/s3/s3PutObject');
+  return s3Utils.s3PutObject(params);
+};
 
 /**
 * Copy an object from one location on S3 to another
@@ -281,12 +268,10 @@ exports.s3PutObject = improveStackTrace(
 * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
 * @returns {Promise} - promise of the object being copied
 **/
-exports.s3CopyObject = improveStackTrace(
-  (params) => exports.s3().copyObject({
-    TaggingDirective: 'COPY',
-    ...params
-  }).promise()
-);
+exports.s3CopyObject = (params) => {
+  deprecate('@cumulus/common/aws/s3CopyObject', '1.17.1', '@cumulus/aws-client/s3/s3CopyObject');
+  return s3Utils.s3CopyObject(params);
+};
 
 /**
  * Upload data to S3
@@ -296,9 +281,10 @@ exports.s3CopyObject = improveStackTrace(
  * @param {Object} params - see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
  * @returns {Promise} see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
  */
-exports.promiseS3Upload = improveStackTrace(
-  (params) => exports.s3().upload(params).promise()
-);
+exports.promiseS3Upload = (params) => {
+  deprecate('@cumulus/common/aws/promiseS3Upload', '1.17.1', '@cumulus/aws-client/s3/promiseS3Upload');
+  return s3Utils.promiseS3Upload(params);
+};
 
 /**
  * Downloads the given s3Obj to the given filename in a streaming manner
@@ -308,19 +294,9 @@ exports.promiseS3Upload = improveStackTrace(
  * @returns {Promise<string>} - returns filename if successful
  */
 exports.downloadS3File = (s3Obj, filepath) => {
-  const s3 = exports.s3();
-  const fileWriteStream = fs.createWriteStream(filepath);
-
-  return new Promise((resolve, reject) => {
-    const objectReadStream = s3.getObject(s3Obj).createReadStream();
-
-    pump(objectReadStream, fileWriteStream, (err) => {
-      if (err) reject(err);
-      else resolve(filepath);
-    });
-  });
+  deprecate('@cumulus/common/aws/downloadS3File', '1.17.1', '@cumulus/aws-client/s3/downloadS3File');
+  return s3Utils.downloadS3File(s3Obj, filepath);
 };
-
 
 /**
 * Get an object header from S3
@@ -329,9 +305,10 @@ exports.downloadS3File = (s3Obj, filepath) => {
 * @param {string} Key - key for object (filepath + filename)
 * @returns {Promise} - returns response from `S3.headObject` as a promise
 **/
-exports.headObject = improveStackTrace(
-  (Bucket, Key) => exports.s3().headObject({ Bucket, Key }).promise()
-);
+exports.headObject = (Bucket, Key) => {
+  deprecate('@cumulus/common/aws/headObject', '1.17.1', '@cumulus/aws-client/s3/headObject');
+  return s3Utils.headObject(Bucket, Key);
+};
 
 /**
  * Get the size of an S3Object, in bytes
@@ -340,9 +317,10 @@ exports.headObject = improveStackTrace(
  * @param {string} key - S3 key
  * @returns {Promise<integer>} - object size, in bytes
  */
-exports.getObjectSize = (bucket, key) =>
-  exports.headObject(bucket, key)
-    .then((response) => response.ContentLength);
+exports.getObjectSize = (bucket, key) => {
+  deprecate('@cumulus/common/aws/getObjectSize', '1.17.1', '@cumulus/aws-client/s3/getObjectSize');
+  return s3Utils.getObjectSize(bucket, key);
+};
 
 /**
 * Get object Tagging from S3
@@ -351,10 +329,10 @@ exports.getObjectSize = (bucket, key) =>
 * @param {string} key - key for object (filepath + filename)
 * @returns {Promise} - returns response from `S3.getObjectTagging` as a promise
 **/
-exports.s3GetObjectTagging = improveStackTrace(
-  (bucket, key) =>
-    exports.s3().getObjectTagging({ Bucket: bucket, Key: key }).promise()
-);
+exports.s3GetObjectTagging = (bucket, key) => {
+  deprecate('@cumulus/common/aws/s3GetObjectTagging', '1.17.1', '@cumulus/aws-client/s3/s3GetObjectTagging');
+  return s3Utils.s3GetObjectTagging(bucket, key);
+};
 
 /**
 * Puts object Tagging in S3
@@ -365,14 +343,10 @@ exports.s3GetObjectTagging = improveStackTrace(
 * @param {Object} Tagging - tagging object
 * @returns {Promise} - returns response from `S3.getObjectTagging` as a promise
 **/
-exports.s3PutObjectTagging = improveStackTrace(
-  (Bucket, Key, Tagging) =>
-    exports.s3().putObjectTagging({
-      Bucket,
-      Key,
-      Tagging
-    }).promise()
-);
+exports.s3PutObjectTagging = (Bucket, Key, Tagging) => {
+  deprecate('@cumulus/common/aws/s3PutObjectTagging', '1.17.1', '@cumulus/aws-client/s3/s3PutObjectTagging');
+  return s3Utils.s3PutObjectTagging(Bucket, Key, Tagging);
+};
 
 /**
 * Get an object from S3
@@ -384,39 +358,25 @@ exports.s3PutObjectTagging = improveStackTrace(
 *   By default, retries will not be performed
 * @returns {Promise} - returns response from `S3.getObject` as a promise
 **/
-exports.getS3Object = improveStackTrace(
-  (Bucket, Key, retryOptions = { retries: 0 }) =>
-    pRetry(
-      async () => {
-        try {
-          return await exports.s3().getObject({ Bucket, Key }).promise();
-        } catch (err) {
-          if (err.code === 'NoSuchKey') throw err;
-          throw new pRetry.AbortError(err);
-        }
-      },
-      {
-        maxTimeout: 10000,
-        onFailedAttempt: (err) => log.debug(`getS3Object('${Bucket}', '${Key}') failed with ${err.retriesLeft} retries left: ${err.message}`),
-        ...retryOptions
-      }
-    )
-);
+exports.getS3Object = (Bucket, Key, retryOptions = { retries: 0 }) => {
+  deprecate('@cumulus/common/aws/getS3Object', '1.17.1', '@cumulus/aws-client/s3/getS3Object');
+  return s3Utils.getS3Object(Bucket, Key, retryOptions);
+};
 
-exports.getJsonS3Object = (bucket, key) =>
-  exports.getS3Object(bucket, key)
-    .then(({ Body }) => JSON.parse(Body.toString()));
+exports.getJsonS3Object = (bucket, key) => {
+  deprecate('@cumulus/common/aws/getJsonS3Object', '1.17.1', '@cumulus/aws-client/s3/getJsonS3Object');
+  return s3Utils.getJsonS3Object(bucket, key);
+};
 
-exports.putJsonS3Object = (bucket, key, data) =>
-  exports.s3PutObject({
-    Bucket: bucket,
-    Key: key,
-    Body: JSON.stringify(data)
-  });
+exports.putJsonS3Object = (bucket, key, data) => {
+  deprecate('@cumulus/common/aws/putJsonS3Object', '1.17.1', '@cumulus/aws-client/s3/putJsonS3Object');
+  return s3Utils.putJsonS3Object(bucket, key, data);
+};
 
-exports.getS3ObjectReadStream = (bucket, key) => exports.s3().getObject(
-  { Bucket: bucket, Key: key }
-).createReadStream();
+exports.getS3ObjectReadStream = (bucket, key) => {
+  deprecate('@cumulus/common/aws/getS3ObjectReadStream', '1.17.1', '@cumulus/aws-client/s3/getS3ObjectReadStream');
+  return s3Utils.getS3ObjectReadStream(bucket, key);
+};
 
 /**
 * Check if a file exists in an S3 object
@@ -427,49 +387,13 @@ exports.getS3ObjectReadStream = (bucket, key) => exports.s3().getObject(
 * @returns {Promise} returns the response from `S3.headObject` as a promise
 **/
 exports.fileExists = async (bucket, key) => {
-  const s3 = exports.s3();
-
-  try {
-    const r = await s3.headObject({ Key: key, Bucket: bucket }).promise();
-    return r;
-  } catch (e) {
-    // if file is not return false
-    if (e.stack.match(/(NotFound)/) || e.stack.match(/(NoSuchBucket)/)) {
-      return false;
-    }
-    throw e;
-  }
+  deprecate('@cumulus/common/aws/fileExists', '1.17.1', '@cumulus/aws-client/s3/fileExists');
+  return s3Utils.fileExists(bucket, key);
 };
 
-
 exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
-  // Scrub s3Ojbs to avoid errors from the AWS SDK
-  const scrubbedS3Objs = s3Objs.map((s3Obj) => ({
-    Bucket: s3Obj.Bucket,
-    Key: s3Obj.Key
-  }));
-  const s3 = exports.s3();
-  let i = 0;
-  const n = s3Objs.length;
-  log.info(`Starting download of ${n} keys to ${dir}`);
-  const promiseDownload = (s3Obj) => {
-    const filename = path.join(dir, path.basename(s3Obj.Key));
-    const file = fs.createWriteStream(filename);
-    const opts = Object.assign(s3Obj, s3opts);
-    return new Promise((resolve, reject) => {
-      s3.getObject(opts)
-        .createReadStream()
-        .pipe(file)
-        .on('finish', () => {
-          log.info(`Progress: [${i} of ${n}] s3://${s3Obj.Bucket}/${s3Obj.Key} -> ${filename}`);
-          i += 1;
-          return resolve(s3Obj.Key);
-        })
-        .on('error', reject);
-    });
-  };
-
-  return pMap(scrubbedS3Objs, promiseDownload, { concurrency: S3_RATE_LIMIT });
+  deprecate('@cumulus/common/aws/downloadS3Files', '1.17.1', '@cumulus/aws-client/s3/downloadS3Files');
+  return s3Utils.downloadS3Files(s3Objs, dir, s3opts);
 };
 
 /**
@@ -479,12 +403,10 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
  * @returns {Promise} A promise that resolves to an Array of the data returned
  *   from the deletion operations
  */
-exports.deleteS3Files = (s3Objs) => pMap(
-  s3Objs,
-  (s3Obj) => exports.s3().deleteObject(s3Obj).promise(),
-  { concurrency: S3_RATE_LIMIT }
-);
-
+exports.deleteS3Files = (s3Objs) => {
+  deprecate('@cumulus/common/aws/deleteS3Files', '1.17.1', '@cumulus/aws-client/s3/deleteS3Files');
+  return s3Utils.deleteS3Files(s3Objs);
+};
 
 /**
 * Delete a bucket and all of its objects from S3
@@ -492,50 +414,14 @@ exports.deleteS3Files = (s3Objs) => pMap(
 * @param {string} bucket - name of the bucket
 * @returns {Promise} - the promised result of `S3.deleteBucket`
 **/
-exports.recursivelyDeleteS3Bucket = improveStackTrace(
-  async (bucket) => {
-    const response = await exports.s3().listObjects({ Bucket: bucket }).promise();
-    const s3Objects = response.Contents.map((o) => ({
-      Bucket: bucket,
-      Key: o.Key
-    }));
-
-    await exports.deleteS3Files(s3Objects);
-    await exports.s3().deleteBucket({ Bucket: bucket }).promise();
-  }
-);
+exports.recursivelyDeleteS3Bucket = async (bucket) => {
+  deprecate('@cumulus/common/aws/recursivelyDeleteS3Bucket', '1.17.1', '@cumulus/aws-client/s3/recursivelyDeleteS3Bucket');
+  return s3Utils.recursivelyDeleteS3Bucket(bucket);
+};
 
 exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
-  let i = 0;
-  const n = files.length;
-  if (n > 1) {
-    log.info(`Starting upload of ${n} keys`);
-  }
-  const promiseUpload = (filenameOrInfo) => {
-    let fileInfo = filenameOrInfo;
-    if (isString(fileInfo)) {
-      const filename = fileInfo;
-      fileInfo = {
-        key: isString(keyPath)
-          ? path.join(keyPath, path.basename(filename))
-          : keyPath(filename),
-        filename: filename
-      };
-    }
-    const bucket = fileInfo.bucket || defaultBucket;
-    const filename = fileInfo.filename;
-    const key = fileInfo.key;
-    const body = fs.createReadStream(filename);
-    const opts = Object.assign({ Bucket: bucket, Key: key, Body: body }, s3opts);
-    return exports.promiseS3Upload(opts)
-      .then(() => {
-        i += 1;
-        log.info(`Progress: [${i} of ${n}] ${filename} -> s3://${bucket}/${key}`);
-        return { key: key, bucket: bucket };
-      });
-  };
-
-  return pMap(files, promiseUpload, { concurrency: S3_RATE_LIMIT });
+  deprecate('@cumulus/common/aws/uploadS3Files', '1.17.1', '@cumulus/aws-client/s3/uploadS3Files');
+  return s3Utils.uploadS3Files(files, defaultBucket, keyPath, s3opts);
 };
 
 /**
@@ -548,8 +434,8 @@ exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
  * @returns {Promise} A promise
  */
 exports.uploadS3FileStream = (fileStream, bucket, key, s3opts = {}) => {
-  const opts = Object.assign({ Bucket: bucket, Key: key, Body: fileStream }, s3opts);
-  return exports.promiseS3Upload(opts);
+  deprecate('@cumulus/common/aws/uploadS3FileStream', '1.17.1', '@cumulus/aws-client/s3/uploadS3FileStream');
+  return s3Utils.uploadS3FileStream(fileStream, bucket, key, s3opts);
 };
 
 /**
@@ -565,22 +451,8 @@ exports.uploadS3FileStream = (fileStream, bucket, key, s3opts = {}) => {
  * `ETag`, `LastModified`, `Owner`, `Size`, `StorageClass`.
  */
 exports.listS3Objects = (bucket, prefix = null, skipFolders = true) => {
-  log.info(`Listing objects in s3://${bucket}`);
-  const params = {
-    Bucket: bucket
-  };
-  if (prefix) params.Prefix = prefix;
-
-  return exports.s3().listObjects(params).promise()
-    .then((data) => {
-      let contents = data.Contents || [];
-      if (skipFolders) {
-        // Filter out any references to folders
-        contents = contents.filter((obj) => !obj.Key.endsWith('/'));
-      }
-
-      return contents;
-    });
+  deprecate('@cumulus/common/aws/listS3Objects', '1.17.1', '@cumulus/aws-client/s3/listS3Objects');
+  return s3Utils.listS3Objects(bucket, prefix, skipFolders);
 };
 
 /**
@@ -597,27 +469,10 @@ exports.listS3Objects = (bucket, prefix = null, skipFolders = true) => {
  * @returns {Promise<Array>} - resolves to an array of objects corresponding to
  *   the Contents property of the listObjectsV2 response
  */
-async function listS3ObjectsV2(params) {
-  // Fetch the first list of objects from S3
-  let listObjectsResponse = await exports.s3().listObjectsV2(params).promise();
-  let discoveredObjects = listObjectsResponse.Contents;
-
-  // Keep listing more objects from S3 until we have all of them
-  while (listObjectsResponse.IsTruncated) {
-    listObjectsResponse = await exports.s3().listObjectsV2( // eslint-disable-line no-await-in-loop, max-len
-      // Update the params with a Continuation Token
-      Object.assign(
-        {},
-        params,
-        { ContinuationToken: listObjectsResponse.NextContinuationToken }
-      )
-    ).promise();
-    discoveredObjects = discoveredObjects.concat(listObjectsResponse.Contents);
-  }
-
-  return discoveredObjects;
-}
-exports.listS3ObjectsV2 = listS3ObjectsV2;
+exports.listS3ObjectsV2 = (params) => {
+  deprecate('@cumulus/common/aws/listS3ObjectsV2', '1.17.1', '@cumulus/aws-client/s3/listS3ObjectsV2');
+  return s3Utils.listS3ObjectsV2(params);
+};
 
 // Class to efficiently list all of the objects in an S3 bucket, without loading
 // them all into memory at once.  Handles paging of listS3ObjectsV2 requests.
@@ -688,8 +543,13 @@ exports.calculateS3ObjectChecksum = async ({
   key,
   options
 }) => {
-  const fileStream = exports.getS3ObjectReadStream(bucket, key);
-  return generateChecksumFromStream(algorithm, fileStream, options);
+  deprecate('@cumulus/common/aws/calculateS3ObjectChecksum', '1.17.1', '@cumulus/aws-client/s3/calculateS3ObjectChecksum');
+  return s3Utils.calculateS3ObjectChecksum({
+    algorithm,
+    bucket,
+    key,
+    options
+  });
 };
 
 /**
@@ -712,21 +572,37 @@ exports.validateS3ObjectChecksum = async ({
   expectedSum,
   options
 }) => {
-  const fileStream = exports.getS3ObjectReadStream(bucket, key);
-  if (await validateChecksumFromStream(algorithm, fileStream, expectedSum, options)) {
-    return true;
-  }
-  const msg = `Invalid checksum for S3 object s3://${bucket}/${key} with type ${algorithm} and expected sum ${expectedSum}`;
-  throw new errors.InvalidChecksum(msg);
+  deprecate('@cumulus/common/aws/validateS3ObjectChecksum', '1.17.1', '@cumulus/aws-client/s3/validateS3ObjectChecksum');
+  return s3Utils.validateS3ObjectChecksum({
+    algorithm,
+    bucket,
+    key,
+    expectedSum,
+    options
+  });
 };
 
-// Maintained for backwards compatibility
-exports.checksumS3Objects = (algorithm, bucket, key, options = {}) => {
-  deprecate('@cumulus/common/aws.checksumS3Objects', '1.11.2', '@cumulus/common/aws.calculateS3ObjectChecksum');
-  const params = {
-    algorithm, bucket, key, options
-  };
-  return exports.calculateS3ObjectChecksum(params);
+/**
+* parse an s3 uri to get the bucket and key
+*
+* @param {string} uri - must be a uri with the `s3://` protocol
+* @returns {Object} Returns an object with `Bucket` and `Key` properties
+**/
+exports.parseS3Uri = (uri) => {
+  deprecate('@cumulus/common/aws/parseS3Uri', '1.17.1', '@cumulus/aws-client/s3/parseS3Uri');
+  return s3Utils.parseS3Uri(uri);
+};
+
+/**
+ * Given a bucket and key, return an S3 URI
+ *
+ * @param {string} bucket - an S3 bucket name
+ * @param {string} key - an S3 key
+ * @returns {string} - an S3 URI
+ */
+exports.buildS3Uri = (bucket, key) => {
+  deprecate('@cumulus/common/aws/buildS3Uri', '1.17.1', '@cumulus/aws-client/s3/buildS3Uri');
+  return s3Utils.buildS3Uri(bucket, key);
 };
 
 // Class to efficiently search all of the items in a DynamoDB table, without
@@ -784,43 +660,10 @@ class DynamoDbSearchQueue {
 }
 exports.DynamoDbSearchQueue = DynamoDbSearchQueue;
 
-exports.syncUrl = async (uri, bucket, destKey) => {
-  const response = await concurrency.promiseUrl(uri);
-  await exports.promiseS3Upload({ Bucket: bucket, Key: destKey, Body: response });
-};
-
 exports.getQueueUrl = (sourceArn, queueName) => {
   const arnParts = sourceArn.split(':');
   return `https://sqs.${arnParts[3]}.amazonaws.com/${arnParts[4]}/${queueName}`;
 };
-
-/**
-* parse an s3 uri to get the bucket and key
-*
-* @param {string} uri - must be a uri with the `s3://` protocol
-* @returns {Object} Returns an object with `Bucket` and `Key` properties
-**/
-exports.parseS3Uri = (uri) => {
-  const parsedUri = url.parse(uri);
-
-  if (parsedUri.protocol !== 's3:') {
-    throw new Error('uri must be a S3 uri, e.g. s3://bucketname');
-  }
-
-  return {
-    Bucket: parsedUri.hostname,
-    Key: parsedUri.path.substring(1)
-  };
-};
-
-/**
- * Given a bucket and key, return an S3 URI
- *
- * @param {string} bucket - an S3 bucket name
- * @param {string} key - an S3 key
- * @returns {string} - an S3 URI
- */
-exports.buildS3Uri = (bucket, key) => `s3://${bucket}/${key.replace(/^\/+/, '')}`;
 
 /**
  * Given an array of fields, returns that a new string that's safe for use as a StepFunction,
