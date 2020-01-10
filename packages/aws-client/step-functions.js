@@ -1,6 +1,28 @@
 const { JSONPath } = require('jsonpath-plus');
-const string = require('@cumulus/common/string');
 const s3Utils = require('./s3');
+
+/**
+ * Given a character, replaces the JS unicode-escape sequence for the character
+ *
+ * @param {char} char - The character to escape
+ * @returns {string} The unicode escape sequence for char
+ *
+ * @private
+ */
+const unicodeEscapeCharacter = (char) =>
+  ['\\u', `0000${char.charCodeAt().toString(16)}`.slice(-4)].join('');
+
+/**
+ * Given a string, replaces all characters matching the passed regex with their unicode
+ * escape sequences
+ *
+ * @param {string} str - The string to escape
+ * @param {string} regex - The regex matching characters to replace (default: all chars)
+ * @returns {string} The string with characters unicode-escaped
+ *
+ * @static
+ */
+const unicodeEscape = (str, regex = /[\s\S]/g) => str.replace(regex, unicodeEscapeCharacter);
 
 /**
  * Given an array of fields, returns that a new string that's safe for use as a StepFunction,
@@ -19,7 +41,7 @@ exports.toSfnExecutionName = (fields, delimiter = '__') => {
     sfnUnsafeChars = `(${delimiter}|${sfnUnsafeChars})`;
   }
   const regex = new RegExp(sfnUnsafeChars, 'g');
-  return fields.map((s) => s.replace(regex, string.unicodeEscape).replace(/\\/g, '!'))
+  return fields.map((s) => s.replace(regex, unicodeEscape).replace(/\\/g, '!'))
     .join(delimiter)
     .substring(0, 80);
 };
