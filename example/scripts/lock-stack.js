@@ -42,7 +42,6 @@ function updateLock(lockFile, deployment) {
 // node lock-stack.js (true|false) deployment-name
 // true to lock, false to unlock
 updateLock(process.argv[2], process.argv[3]).catch((e) => {
-  console.log(e);
   console.dir(e);
   process.exitCode = 100;
   if (!e.code === 'ConditionalCheckFailedException') {
