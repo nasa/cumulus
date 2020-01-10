@@ -29,8 +29,8 @@ done
 ## Setup the build env container once it's started
 $docker_command "npm install --error --no-progress -g nyc; cd $UNIT_TEST_BUILD_DIR; " \
 "git fetch --all; git checkout $GIT_SHA" \
-"chmod 600 $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key" \
-"npm install --error --no-progress; npm run bootstrap-no-build-quiet; npm run bootstrap-no-build-quiet"
+"npm install --error --no-progress; npm run bootstrap-no-build-quiet; npm run bootstrap-no-build-quiet" \
+"chmod 600 $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key"
 
 # Wait for the FTP server to be available
 while ! $docker_command  'curl --connect-timeout 5 -sS -o /dev/null ftp://testuser:testpass@127.0.0.1/README.md'; do
