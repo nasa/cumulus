@@ -27,7 +27,7 @@ while ! docker container inspect ${container_id}\_build_env_1; do
 done
 
 ## Setup the build env container once it's started
-$docker_command 'npm install --error --no-progress -g nyc; cd /source/cumulus; npm install --error  --no-progress; npm run bootstrap-no-build-quiet'
+$docker_command "npm install --error --no-progress -g nyc; cd $BUILD_DIR ; npm install --error  --no-progress; npm run bootstrap-no-build-quiet; npm run bootstrap-no-build-quiet"
 
 # Wait for the FTP server to be available
 while ! $docker_command  'curl --connect-timeout 5 -sS -o /dev/null ftp://testuser:testpass@127.0.0.1/README.md'; do

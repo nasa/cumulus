@@ -184,3 +184,9 @@ if [[ $KES_DEPLOYMENT == true ]]; then
     echo export RUN_REDEPLOYMENT="true" >> .bamboo_env_vars
   fi
 fi
+
+if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
+  export BUILD_DIR=/cumulus
+else
+  export BUILD_DIR=/source/cumulus
+fi
