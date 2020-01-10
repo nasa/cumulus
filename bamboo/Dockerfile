@@ -1,0 +1,4 @@
+## Dockerfile to create integration test runtime environment
+FROM node:10.16.3
+RUN apt update && npm config set unsafe-perm true && apt install -y netcat zip jq rsync zip python-pip && apt-get install -y python-pip && pip install awscli
+RUN git clone https://github.com/nasa/cumulus && cd cumulus && npm install --no-package-lock && npm run bootstrap-no-build
