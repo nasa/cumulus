@@ -172,7 +172,10 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
 
   statement {
     actions = ["secretsmanager:GetSecretValue"]
-    resources = [aws_secretsmanager_secret.api_cmr_password.arn]
+    resources = [
+      aws_secretsmanager_secret.api_cmr_password.arn,
+      aws_secretsmanager_secret.api_launchpad_passphrase.arn
+    ]
   }
 }
 
