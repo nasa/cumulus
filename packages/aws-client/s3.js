@@ -15,12 +15,14 @@ const {
   InvalidChecksum,
   UnparsableFileLocationError
 } = require('@cumulus/common/errors');
-const log = require('@cumulus/common/log');
 const { deprecate } = require('@cumulus/common/util');
+const Logger = require('@cumulus/logger');
 
 const awsServices = require('./services');
 const { inTestMode } = require('./test-utils');
 const { improveStackTrace } = require('./utils');
+
+const log = new Logger({ sender: 'aws-client/s3' });
 
 let S3_RATE_LIMIT = 20;
 if (inTestMode()) {
