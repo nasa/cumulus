@@ -14,7 +14,6 @@ const {
   InvalidChecksum,
   UnparsableFileLocationError
 } = require('@cumulus/common/errors');
-const { deprecate } = require('@cumulus/common/util');
 const Logger = require('@cumulus/logger');
 
 const awsServices = require('./services');
@@ -518,15 +517,6 @@ exports.validateS3ObjectChecksum = async ({
   }
   const msg = `Invalid checksum for S3 object s3://${bucket}/${key} with type ${algorithm} and expected sum ${expectedSum}`;
   throw new InvalidChecksum(msg);
-};
-
-// Maintained for backwards compatibility
-exports.checksumS3Objects = (algorithm, bucket, key, options = {}) => {
-  deprecate('@cumulus/common/aws.checksumS3Objects', '1.11.2', '@cumulus/common/aws.calculateS3ObjectChecksum');
-  const params = {
-    algorithm, bucket, key, options
-  };
-  return exports.calculateS3ObjectChecksum(params);
 };
 
 /**
