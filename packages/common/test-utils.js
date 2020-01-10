@@ -7,67 +7,6 @@ const crypto = require('crypto');
 const path = require('path');
 const RandExp = require('randexp');
 const fs = require('fs-extra');
-const { isNil } = require('./util');
-
-/**
- * Create a function which will allow methods of an AWS service interface object
- * to be wrapped.
- *
- * When invoked, this returned function will take two arguments:
- * - methodName - the name of the service interface object method to wrap
- * - dataHandler - a handler function which will be used to process the result
- *     of invoking `methodName`
- *
- * @param {Object} client - AWS Service interface object
- * @returns {Function} function taking a client method name and a dataHandler
- *   function to be called upon completion of the client method with return
- *   value of the client method and the original parameters passed into the
- *   client method
- *
- * @example
- * const s3 = new AWS.S3();
- *
- * // Initialize wrapper for AWS S3 service interface object
- * const s3Wrapper = awsServiceInterfaceMethodWrapper(s3);
- *
- * // Add a "RequestParams" property to the result, which shows what params were
- * // used in the `listObjects` request.  This is, obviously, a very contrived
- * // example.
- * s3Wrapper(
- *   'listObjects',
- *   (data, params) => ({ ...data, RequestParams: params })
- * );
- *
- * const result = await s3().listObjects({ Bucket: 'my-bucket' }).promise();
- *
- * assert(result.RequestParams.Bucket === 'my-bucket');
- */
-const awsServiceInterfaceMethodWrapper = (client) => {
-  const originalFunctions = {};
-
-  return (methodName, dataHandler) => {
-    originalFunctions[methodName] = client[methodName];
-
-    // eslint-disable-next-line no-param-reassign
-    client[methodName] = (params = {}, callback) => {
-      if (callback) {
-        return originalFunctions[methodName].call(
-          client,
-          params,
-          (err, data) => {
-            if (err) callback(err);
-            callback(null, dataHandler(data, params));
-          }
-        );
-      }
-
-      return {
-        promise: () => originalFunctions[methodName].call(client, params).promise()
-          .then((data) => dataHandler(data, params))
-      };
-    };
-  };
-};
 
 exports.inTestMode = () => process.env.NODE_ENV === 'test';
 
