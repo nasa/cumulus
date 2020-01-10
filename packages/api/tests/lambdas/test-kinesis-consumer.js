@@ -13,6 +13,7 @@ const Collection = require('../../models/collections');
 const Rule = require('../../models/rules');
 const Provider = require('../../models/providers');
 const testCollectionName = 'test-collection';
+
 const snsClient = sns();
 
 const eventData = JSON.stringify({
