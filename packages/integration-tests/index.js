@@ -779,11 +779,12 @@ async function waitForTestExecutionStart({
   maxWaitSeconds = maxWaitForStartedExecutionSecs
 }) {
   let timeWaitedSecs = 0;
+  const workflowArn = await getWorkflowArn(stackName, bucket, workflowName);
   /* eslint-disable no-await-in-loop */
   while (timeWaitedSecs < maxWaitSeconds) {
     await sleep(waitPeriodMs);
     timeWaitedSecs += (waitPeriodMs / 1000);
-    const executions = await getExecutions(workflowName, stackName, bucket);
+    const executions = await getExecutions(workflowArn);
 
     for (let executionCtr = 0; executionCtr < executions.length; executionCtr += 1) {
       const execution = executions[executionCtr];
