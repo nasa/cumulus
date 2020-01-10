@@ -9,6 +9,7 @@ const s3Utils = require('@cumulus/aws-client/s3');
 const dynamoDbUtils = require('@cumulus/aws-client/dynamo');
 const DynamoDbSearchQueueCore = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const S3ListObjectsV2QueueCore = require('@cumulus/aws-client/S3ListObjectsV2Queue');
+const snsUtils = require('@cumulus/aws-client/sns');
 const sqsUtils = require('@cumulus/aws-client/sqs');
 const stepFunctionUtils = require('@cumulus/aws-client/step-functions');
 
@@ -533,6 +534,18 @@ exports.buildS3Uri = (bucket, key) => {
   return s3Utils.buildS3Uri(bucket, key);
 };
 
+/**
+ * Extract the S3 bucket and key from the URL path parameters
+ *
+ * @param {string} pathParams - path parameters from the URL
+ * @returns {Object} - bucket/key in the form of
+ * { Bucket: x, Key: y }
+ */
+exports.getFileBucketAndKey = (pathParams) => {
+  deprecate('@cumulus/common/aws/getFileBucketAndKey', '1.17.1', '@cumulus/aws-client/s3/getFileBucketAndKey');
+  return s3Utils.getFileBucketAndKey(pathParams);
+};
+
 /** DynamoDB utils */
 
 /**
@@ -680,6 +693,8 @@ exports.getStateMachineArn = (executionArn) => {
   return stepFunctionUtils.getStateMachineArn(executionArn);
 };
 
+/** SNS utils */
+
 /**
  * Publish a message to an SNS topic. Does not catch
  * errors, to allow more specific handling by the caller.
@@ -694,24 +709,14 @@ exports.publishSnsMessage = async (
   snsTopicArn,
   message,
   retryOptions = {}
-) =>
-  pRetry(
-    async () => {
-      if (!snsTopicArn) {
-        throw new pRetry.AbortError('Missing SNS topic ARN');
-      }
-
-      await exports.sns().publish({
-        TopicArn: snsTopicArn,
-        Message: JSON.stringify(message)
-      }).promise();
-    },
-    {
-      maxTimeout: 5000,
-      onFailedAttempt: (err) => log.debug(`publishSnsMessage('${snsTopicArn}', '${message}') failed with ${err.retriesLeft} retries left: ${err.message}`),
-      ...retryOptions
-    }
+) => {
+  deprecate('@cumulus/common/aws/publishSnsMessage', '1.17.1', '@cumulus/aws-client/sns/publishSnsMessage');
+  return stepFunctionUtils.publishSnsMessage(
+    snsTopicArn,
+    message,
+    retryOptions
   );
+};
 
 /**
  * Test to see if a given exception is an AWS Throttling Exception
@@ -778,23 +783,3 @@ exports.retryOnThrottlingException = (fn, options) =>
       () => fn(...args).catch(retryIfThrottlingException),
       { maxTimeout: 5000, ...options }
     );
-
-/**
- * Extract the S3 bucket and key from the URL path parameters
- *
- * @param {string} pathParams - path parameters from the URL
- * @returns {Object} - bucket/key in the form of
- * { Bucket: x, Key: y }
- */
-exports.getFileBucketAndKey = (pathParams) => {
-  const fields = pathParams.split('/');
-
-  const Bucket = fields.shift();
-  const Key = fields.join('/');
-
-  if (Bucket.length === 0 || Key.length === 0) {
-    throw new UnparsableFileLocationError(`File location "${pathParams}" could not be parsed`);
-  }
-
-  return [Bucket, Key];
-};
