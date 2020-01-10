@@ -13,7 +13,7 @@ const {
 const {
   InvalidChecksum,
   UnparsableFileLocationError
-} = require('@cumulus/common/errors');
+} = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
 const awsServices = require('./services');

@@ -8,7 +8,7 @@
  * const DynamoDb = require('@cumulus/aws-client/DynamoDb');
  */
 
-const { RecordDoesNotExist } = require('@cumulus/common/errors');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 const { improveStackTrace } = require('./utils');
 
 // Exported functions

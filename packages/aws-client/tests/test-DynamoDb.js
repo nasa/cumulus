@@ -2,7 +2,7 @@
 
 const sinon = require('sinon');
 const test = require('ava');
-const { RecordDoesNotExist } = require('@cumulus/common/errors');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 const { randomId } = require('@cumulus/common/test-utils');
 const DynamoDb = require('../DynamoDb');
 const awsServices = require('../services');
