@@ -61,7 +61,6 @@
   },
   "devDependencies": {
     "@cumulus/test-data": "1.17.0",
-    "dotenv": "^8.2.0",
     "execa": "^1.0.0",
     "fs-extra": "7.0.0",
     "got": "^9.6.0",
@@ -69,7 +68,6 @@
     "jasmine-console-reporter": "^2.0.1",
     "jasmine-reporters": "^2.3.2",
     "js-yaml": "^3.13.1",
-    "kes": "^2.2.5",
     "lodash.assignin": "^4.2.0",
     "lodash.chunk": "^4.2.0",
     "lodash.clonedeep": "^4.5.0",

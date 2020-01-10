@@ -6,8 +6,8 @@ hide_title: true
 
 # Cumulus Metadata in DynamoDB
 
-* [DynamoDB Backup and Restore](#backup-and-restore-with-aws)
-* [DynamoDB Auto Scaling](#dynamodb-auto-scaling)
+- [DynamoDB Backup and Restore](#backup-and-restore-with-aws)
+- [DynamoDB Auto Scaling](#dynamodb-auto-scaling)
 
 [@cumulus/api](https://www.npmjs.com/package/@cumulus/api) uses a number of methods to preserve the metadata generated in a Cumulus instance.
 
@@ -15,13 +15,12 @@ All configurations and system-generated metadata is stored in DynamoDB tables ex
 
 `@cumulus/api` uses the following DynamoDB tables:
 
-* **Users:** api/dashboard users
-* **Collections:** collection records
-* **Providers:** provider records
-* **Rules:** rules for managing and running workflows
-* **Executions:** workflow executions (step function executions)
-* **Granules:** granules processed by the Cumulus instance
-* **PDRs:** PDRs processed in Cumulus
+- **Collections:** collection records
+- **Providers:** provider records
+- **Rules:** rules for managing and running workflows
+- **Executions:** workflow executions (step function executions)
+- **Granules:** granules processed by the Cumulus instance
+- **PDRs:** PDRs processed in Cumulus
 
 Amazon DynamoDB stores three geographically distributed replicas of each table to enable high availability and data durability. Amazon DynamoDB runs exclusively on solid-state drives (SSDs). SSDs help AWS achieve the design goals of predictable low-latency response times for storing and accessing data at any scale.
 
@@ -39,16 +38,15 @@ On-demand backups help with long-term archival requirements for regulatory compl
 
 ## Enabling PITR during deployment
 
-By default, the Cumulus [data-persistence module](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence) enables PITR on the default tables listed in the [module's variable defaults](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf) for `enable_point_in_time_tables`.  At the time of writing, that list includes:
+By default, the Cumulus [data-persistence module](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence) enables PITR on the default tables listed in the [module's variable defaults](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf) for `enable_point_in_time_tables`. At the time of writing, that list includes:
 
-* CollectionsTable
-* ExecutionsTable
-* FilesTable
-* GranulesTable
-* PdrsTable
-* ProvidersTable
-* RulesTable
-* UsersTable
+- CollectionsTable
+- ExecutionsTable
+- FilesTable
+- GranulesTable
+- PdrsTable
+- ProvidersTable
+- RulesTable
 
 If you wish to change this list, simply update your deployment's `data_persistence` module ([here](https://github.com/nasa/cumulus-template-deploy/blob/master/data-persistence-tf/main.tf) in the `template-deploy` repository) to pass the correct list of tables.
 

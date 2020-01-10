@@ -15,7 +15,6 @@ This module deploys data persistence resources, including DynamoDB tables and an
   - `ProvidersTable`
   - `RulesTable`
   - `SemaphoresTable`
-  - `UsersTable`
 - Elasticsearch domain (with optional VPC configuration)
 - Cloudwatch alarm for Elasticsearch node count
 

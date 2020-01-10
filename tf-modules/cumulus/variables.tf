@@ -41,6 +41,11 @@ variable "ecs_cluster_desired_size" {
   type = number
 }
 
+variable "ecs_cluster_instance_image_id" {
+  type        = string
+  description = "AMI ID of ECS instances"
+}
+
 variable "ecs_cluster_instance_subnet_ids" {
   description = "The Subnet IDs to use for your ECS cluster instances"
   type = list(string)
@@ -179,12 +184,6 @@ variable "ecs_cluster_instance_docker_volume_size" {
   type        = number
   description = "Size (in GB) of the volume that Docker uses for image and metadata storage"
   default     = 50
-}
-
-variable "ecs_cluster_instance_image_id" {
-  type        = string
-  description = "AMI ID of ECS instances"
-  default     = "ami-0fa9de75aa0a1f1b3"
 }
 
 variable "ecs_cluster_instance_type" {
