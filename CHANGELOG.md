@@ -22,6 +22,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Replaced `sf_watcher` CloudWatch rule from `cloudwatch-events.tf` with an EventSourceMapping on `sqs2sf` mapped to the `start_sf` SQS queue (in `event-sources.tf`).
   - Updated `sqs2sf` with an EventSourceMapping handler and unit test.
 
+### Fixed
+
+- **CUMULUS-1664**
+  - Updated `dbIndexer` Lambda to remove hardcoded references to DynamoDB table names.
+
 ### Removed
 
 - **CUMULUS-1481**
@@ -63,16 +68,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Remove the DynamoDB Users table. The list of OAuth users who are allowed to
     use the API is now stored in S3.
   - The CMR password and Launchpad passphrase are now stored in Secrets Manager
-
-### Fixed
-
-- **CUMULUS-1664**
-  - Updated `dbIndexer` Lambda to remove hardcoded references to DynamoDB table names.
-
-### Removed
-
-- **CUMULUS-1481**
-  - removed `process` config and output from PostToCmr as it was not required by the task nor downstream steps, and should still be in the output message's `meta` regardless.
 
 ## [v1.16.1] - 2019-12-6
 
