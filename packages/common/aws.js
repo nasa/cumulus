@@ -1,10 +1,7 @@
 'use strict';
 
-const AWS = require('aws-sdk');
-const { JSONPath } = require('jsonpath-plus');
-const pRetry = require('p-retry');
-
-const awsServices = require('@cumulus/aws-client/services');
+const awsClient = require('@cumulus/aws-client/client');
+const awsServices = require('@cumulus/aws-client/services')
 const s3Utils = require('@cumulus/aws-client/s3');
 const dynamoDbUtils = require('@cumulus/aws-client/dynamo');
 const DynamoDbSearchQueueCore = require('@cumulus/aws-client/DynamoDbSearchQueue');
@@ -14,44 +11,9 @@ const sqsUtils = require('@cumulus/aws-client/sqs');
 const stepFunctionUtils = require('@cumulus/aws-client/step-functions');
 const utils = require('@cumulus/aws-client/utils');
 
-const {
-  deprecate,
-  setErrorStack,
-  noop
-} = require('./util');
+const { deprecate } = require('./util');
 
-/**
- * Wrap a function and provide a better stack trace
- *
- * If a call is made to the aws-sdk and it causes an exception, the stack trace
- * that is returned gives no indication of where the error actually occurred.
- *
- * This utility will wrap a function and, when it is called, update any raised
- * error with a better stack trace.
- *
- * @param {Function} fn - the function to wrap
- * @returns {Function} a wrapper function
- */
-const improveStackTrace = (fn) =>
-  async (...args) => {
-    const tracerError = {};
-    try {
-      Error.captureStackTrace(tracerError);
-      return await fn(...args);
-    } catch (err) {
-      setErrorStack(err, tracerError.stack);
-      err.message = `${err.message}; Function params: ${JSON.stringify(args, null, 2)}`;
-      throw err;
-    }
-  };
-exports.improveStackTrace = improveStackTrace;
-
-exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-AWS.config.update({ region: exports.region });
-
-// Workaround upload hangs. See: https://github.com/andrewrk/node-s3-client/issues/74'
-AWS.util.update(AWS.S3.prototype, { addExpect100Continue: noop });
-AWS.config.setPromisesDependency(Promise);
+exports.region = awsClient.region;
 
 exports.apigateway = () => {
   deprecate('@cumulus/common/aws/apigateway', '1.17.1', '@cumulus/aws-client/aws/apigateway');
@@ -130,47 +92,6 @@ exports.describeCfStackResources = (stackName) =>
   exports.cf().describeStackResources({ StackName: stackName })
     .promise()
     .then((response) => response.StackResources);
-
-exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
-  obj[fn](opts, (err, data) => {
-    if (err) {
-      callback(err, data);
-      return;
-    }
-
-    let arns = null;
-    Object.keys(data).forEach((prop) => {
-      if (prop.endsWith('Arns')) {
-        arns = data[prop];
-      }
-    });
-
-    if (!arns) {
-      callback(`Could not find an 'Arn' property in response from ${fn}`, data);
-      return;
-    }
-
-    const prefixRe = new RegExp(`^${prefix}-[A-Z0-9]`);
-    const baseNameOnly = `-${baseName}-`;
-    let matchingArn = null;
-
-    arns.forEach((arn) => {
-      const name = arn.split('/').pop();
-      if (name.match(prefixRe) && name.includes(baseNameOnly)) {
-        matchingArn = arn;
-      }
-    });
-
-    if (matchingArn) {
-      callback(null, matchingArn);
-    } else if (data.NextToken) {
-      const nextOpts = Object.assign({}, opts, { NextToken: data.NextToken });
-      exports.findResourceArn(obj, fn, prefix, baseName, nextOpts, callback);
-    } else {
-      callback(`Could not find resource ${baseName} in ${fn}`);
-    }
-  });
-};
 
 /* S3 utils */
 
@@ -755,4 +676,27 @@ exports.isThrottlingException = (err) => {
 exports.retryOnThrottlingException = (fn, options) => {
   deprecate('@cumulus/common/aws/retryOnThrottlingException', '1.17.1', '@cumulus/aws-client/utils/retryOnThrottlingException');
   return utils.retryOnThrottlingException(fn, options);
+};
+
+
+/**
+ * Wrap a function and provide a better stack trace
+ *
+ * If a call is made to the aws-sdk and it causes an exception, the stack trace
+ * that is returned gives no indication of where the error actually occurred.
+ *
+ * This utility will wrap a function and, when it is called, update any raised
+ * error with a better stack trace.
+ *
+ * @param {Function} fn - the function to wrap
+ * @returns {Function} a wrapper function
+ */
+exports.improveStackTrace = (fn) => {
+  deprecate('@cumulus/common/aws/improveStackTrace', '1.17.1', '@cumulus/aws-client/utils/improveStackTrace');
+  return utils.improveStackTrace(fn);
+};
+
+exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
+  deprecate('@cumulus/common/aws/findResourceArn', '1.17.1', '@cumulus/aws-client/utils/findResourceArn');
+  return utils.findResourceArn(obj, fn, prefix, baseName, opts, callback);
 };
