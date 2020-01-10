@@ -66,7 +66,7 @@ function dispatch(message) {
     log.debug(`message ${message.MessageId} from queue ${queueUrl} is being processed ${messageReceiveCount} times`);
   }
 
-  const eventObject = Object.assign({}, message.Body);
+  const eventObject = Object.assign({}, JSON.parse(message.Body));
   const eventSource = {
     type: 'sqs',
     messageId: message.MessageId,
