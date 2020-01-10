@@ -3,14 +3,14 @@
 const test = require('ava');
 const rewire = require('rewire');
 
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
 const { noop } = require('@cumulus/common/util');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const publishReports = rewire('../../../lambdas/publish-reports');
 
 const testMessagesReceived = async (t, QueueUrl, granuleId, pdrName) => {
-  const { Messages } = await aws.sqs().receiveMessage({
+  const { Messages } = await awsServices.sqs().receiveMessage({
     QueueUrl,
     WaitTimeSeconds: 3,
     MaxNumberOfMessages: 2
@@ -55,7 +55,7 @@ test.beforeEach(async (t) => {
   t.context.pdrSnsTopicArnEnvVarBefore = process.env.pdr_sns_topic_arn;
 
   const topicName = randomString();
-  const { TopicArn } = await aws.sns().createTopic({
+  const { TopicArn } = await awsServices.sns().createTopic({
     Name: topicName
   }).promise();
   t.context.TopicArn = TopicArn;
@@ -63,22 +63,22 @@ test.beforeEach(async (t) => {
   process.env.pdr_sns_topic_arn = TopicArn;
 
   const QueueName = randomString();
-  const { QueueUrl } = await aws.sqs().createQueue({ QueueName }).promise();
+  const { QueueUrl } = await awsServices.sqs().createQueue({ QueueName }).promise();
   t.context.QueueUrl = QueueUrl;
 
-  const getQueueAttributesResponse = await aws.sqs().getQueueAttributes({
+  const getQueueAttributesResponse = await awsServices.sqs().getQueueAttributes({
     QueueUrl: QueueUrl,
     AttributeNames: ['QueueArn']
   }).promise();
   const queueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
-  const { SubscriptionArn } = await aws.sns().subscribe({
+  const { SubscriptionArn } = await awsServices.sns().subscribe({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: queueArn
   }).promise();
 
-  await aws.sns().confirmSubscription({
+  await awsServices.sns().confirmSubscription({
     TopicArn: TopicArn,
     Token: SubscriptionArn
   }).promise();
@@ -132,9 +132,9 @@ test.afterEach.always(async (t) => {
   process.env.granule_sns_topic_arn = granuleSnsTopicArnEnvVarBefore;
   process.env.pdr_sns_topic_arn = pdrSnsTopicArnEnvVarBefore;
 
-  await aws.sqs().deleteQueue({ QueueUrl }).promise()
+  await awsServices.sqs().deleteQueue({ QueueUrl }).promise()
     .catch(noop);
-  await aws.sns().deleteTopic({ TopicArn }).promise()
+  await awsServices.sns().deleteTopic({ TopicArn }).promise()
     .catch(noop);
 });
 

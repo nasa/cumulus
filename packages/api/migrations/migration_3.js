@@ -1,6 +1,6 @@
 'use strict';
 
-const { s3 } = require('@cumulus/common/aws');
+const { s3 } = require('@cumulus/aws-client/services');
 const { CollectionConfigStore, constructCollectionId } = require('@cumulus/common');
 
 /**

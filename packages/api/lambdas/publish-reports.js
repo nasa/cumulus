@@ -1,6 +1,6 @@
 'use strict';
 
-const { publishSnsMessage } = require('@cumulus/common/aws');
+const { publishSnsMessage } = require('@cumulus/aws-client/sns');
 const { getExecutionUrl } = require('@cumulus/ingest/aws');
 const log = require('@cumulus/common/log');
 const {

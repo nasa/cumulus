@@ -2,8 +2,8 @@
 
 const get = require('lodash.get');
 const Ajv = require('ajv');
-const aws = require('@cumulus/common/aws');
 const pWaitFor = require('p-wait-for');
+const awsServices = require('@cumulus/aws-client/services');
 const DynamoDb = require('@cumulus/common/DynamoDb');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const { inTestMode } = require('@cumulus/common/test-utils');
@@ -18,11 +18,11 @@ async function enableStream(tableName) {
     }
   };
 
-  await aws.dynamodb().updateTable(params).promise();
+  await awsServices.dynamodb().updateTable(params).promise();
 
   await pWaitFor(
     async () =>
-      aws.dynamodb().describeTable({ TableName: tableName }).promise()
+      awsServices.dynamodb().describeTable({ TableName: tableName }).promise()
         .then((response) => response.TableStatus !== 'UPDATING'),
     { interval: 5 * 1000 }
   );
@@ -67,8 +67,8 @@ async function createTable(tableName, hash, range = null, attributes = null, ind
     });
   }
 
-  const output = await aws.dynamodb().createTable(params).promise();
-  await aws.dynamodb().waitFor('tableExists', { TableName: tableName }).promise();
+  const output = await awsServices.dynamodb().createTable(params).promise();
+  await awsServices.dynamodb().waitFor('tableExists', { TableName: tableName }).promise();
 
   if (!inTestMode()) await enableStream(tableName);
 
@@ -76,11 +76,11 @@ async function createTable(tableName, hash, range = null, attributes = null, ind
 }
 
 async function deleteTable(tableName) {
-  const output = await aws.dynamodb().deleteTable({
+  const output = await awsServices.dynamodb().deleteTable({
     TableName: tableName
   }).promise();
 
-  await aws.dynamodb().waitFor('tableNotExists', { TableName: tableName }).promise();
+  await awsServices.dynamodb().waitFor('tableNotExists', { TableName: tableName }).promise();
   return output;
 }
 
@@ -160,7 +160,7 @@ class Manager {
     this.tableAttributes = params.tableAttributes;
     this.tableIndexes = params.tableIndexes;
     this.schema = params.schema;
-    this.dynamodbDocClient = aws.dynamodbDocClient({ convertEmptyValues: true });
+    this.dynamodbDocClient = awsServices.dynamodbDocClient({ convertEmptyValues: true });
     this.removeAdditional = false;
 
     this.validate = get(params, 'validate', true);

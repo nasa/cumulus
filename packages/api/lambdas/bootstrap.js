@@ -13,9 +13,9 @@
 const got = require('got');
 const get = require('lodash.get');
 const boolean = require('boolean');
-const log = require('@cumulus/common/log');
 const pLimit = require('p-limit');
-const { dynamodb } = require('@cumulus/common/aws');
+const { dynamodb } = require('@cumulus/aws-client/services');
+const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { Search, defaultIndexAlias } = require('../es/search');
 const mappings = require('../models/mappings.json');

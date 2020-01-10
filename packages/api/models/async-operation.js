@@ -1,6 +1,6 @@
 'use strict';
 
-const { ecs, s3 } = require('@cumulus/common/aws');
+const { ecs, s3 } = require('@cumulus/aws-client/services');
 const uuidv4 = require('uuid/v4');
 const Manager = require('./base');
 const { asyncOperation: asyncOperationSchema } = require('./schemas');
