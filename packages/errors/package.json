@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/errors",
-  "version": "1.17.0",
+  "version": "1.17.0-alpha",
   "description": "Provides error classes for Cumulus",
   "keywords": [
     "GIBS",
@@ -22,12 +22,6 @@
     "build": "true",
     "lint": "eslint .",
     "test-ci": "npm run lint"
-  },
-  "nyc": {
-    "exclude": [
-      "tests",
-      "test"
-    ]
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
