@@ -51,14 +51,14 @@ echo 'HTTP service is available'
 chmod 0400 ./packages/test-data/keys/ssh_client_rsa_key
 
 # Wait for the SFTP server to be available
-while ! $docker_command 'sftp\
-  -P 2222\
-  -i /source/cumulus/packages/test-data/keys/ssh_client_rsa_key\
-  -o "ConnectTimeout=5"\
-  -o "StrictHostKeyChecking=no"\
-  -o "UserKnownHostsFile=/dev/null"\
-  -o "PreferredAuthentications=publickey"\
-  user@127.0.0.1:/keys/ssh_client_rsa_key.pub /dev/null'; do
+while ! $docker_command 'sftp '\
+  '-P 2222'\
+  "-i $BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key"\
+  '-o "ConnectTimeout=5"'\
+  '-o "StrictHostKeyChecking=no"'\
+  '-o "UserKnownHostsFile=/dev/null"'\
+  '-o "PreferredAuthentications=publickey"'\
+  'user@127.0.0.1:/keys/ssh_client_rsa_key.pub /dev/null'; do
   echo 'Waiting for SFTP to start'
   docker ps -a
   sleep 2
@@ -80,7 +80,7 @@ done
 echo 'Elasticsearch status is green'
 
 # Update Elasticsearch config to stop complaining about running out of disk space
-$docker_command 'curl -XPUT "http://127.0.0.1:9200/_cluster/settings" -d @/source/cumulus/bamboo/elasticsearch.config'
+$docker_command "curl -XPUT 'http://127.0.0.1:9200/_cluster/settings' -d \@/$UNIT_TEST_BUILD_DIR/bamboo/elasticsearch.config"
 
 # Lambda seems to be the last service that's started up by Localstack
 while ! $docker_command 'nc -z 127.0.0.1 4574'; do
