@@ -19,6 +19,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-1040**
+  - `@cumulus/common/errors` is now deprecated. Please use `@cumulus/errors` instead.
+
 - **CUMULUS-1686**
   - Changed `ecs_cluster_instance_image_id` to be a required variable of the `cumulus` module and removed the default value.
     The default was not available across accounts and regions, nor outside of NGAP and therefore not particularly useful.
