@@ -10,6 +10,9 @@ const url = require('url');
 
 const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/s3');
+const dynamoDbUtils = require('@cumulus/aws-client/dynamo');
+const DynamoDbSearchQueueCore = require('@cumulus/aws-client/DynamoDbSearchQueue');
+const S3ListObjectsV2QueueCore = require('@cumulus/aws-client/S3ListObjectsV2Queue');
 
 const log = require('./log');
 const string = require('./string');
@@ -54,12 +57,6 @@ AWS.config.update({ region: exports.region });
 // Workaround upload hangs. See: https://github.com/andrewrk/node-s3-client/issues/74'
 AWS.util.update(AWS.S3.prototype, { addExpect100Continue: noop });
 AWS.config.setPromisesDependency(Promise);
-
-
-let S3_RATE_LIMIT = 20;
-if (inTestMode()) {
-  S3_RATE_LIMIT = 1;
-}
 
 exports.apigateway = () => {
   deprecate('@cumulus/common/aws/apigateway', '1.17.1', '@cumulus/aws-client/aws/apigateway');
@@ -125,21 +122,6 @@ exports.secretsManager = () => {
   deprecate('@cumulus/common/aws/secretsManager', '1.17.1', '@cumulus/aws-client/aws/secretsManager');
   return awsServices.secretsManager();
 };
-
-/**
- * Create a DynamoDB table and then wait for the table to exist
- *
- * @param {Object} params - the same params that you would pass to AWS.createTable
- *   See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#createTable-property
- * @returns {Promise<Object>} - the output of the createTable call
- */
-async function createAndWaitForDynamoDbTable(params) {
-  const createTableResult = await exports.dynamodb().createTable(params).promise();
-  await exports.dynamodb().waitFor('tableExists', { TableName: params.TableName }).promise();
-
-  return createTableResult;
-}
-exports.createAndWaitForDynamoDbTable = createAndWaitForDynamoDbTable;
 
 /**
  * Describes the resources belonging to a given CloudFormation stack
@@ -469,52 +451,10 @@ exports.listS3ObjectsV2 = (params) => {
 
 // Class to efficiently list all of the objects in an S3 bucket, without loading
 // them all into memory at once.  Handles paging of listS3ObjectsV2 requests.
-class S3ListObjectsV2Queue {
+class S3ListObjectsV2Queue extends S3ListObjectsV2QueueCore {
   constructor(params) {
-    this.items = [];
-    this.params = params;
-    this.s3 = exports.s3();
-  }
-
-  /**
-   * View the next item in the queue
-   *
-   * This does not remove the object from the queue.  When there are no more
-   * items in the queue, returns 'null'.
-   *
-   * @returns {Promise<Object>} - an S3 object description
-   */
-  async peek() {
-    if (this.items.length === 0) await this.fetchItems();
-    return this.items[0];
-  }
-
-  /**
-   * Remove the next item from the queue
-   *
-   * When there are no more items in the queue, returns 'null'.
-   *
-   * @returns {Promise<Object>} - an S3 object description
-   */
-  async shift() {
-    if (this.items.length === 0) await this.fetchItems();
-    return this.items.shift();
-  }
-
-  /**
-   * Query the S3 API to get the next 1,000 items
-   *
-   * @returns {Promise<undefined>} - resolves when the queue has been updated
-   * @private
-   */
-  async fetchItems() {
-    const response = await this.s3.listObjectsV2(this.params).promise();
-
-    this.items = response.Contents;
-
-    if (response.IsTruncated) {
-      this.params.ContinuationToken = response.NextContinuationToken;
-    } else this.items.push(null);
+    deprecate('@cumulus/common/aws/S3ListObjectsV2QueueCore', '1.17.1', '@cumulus/aws-client/S3ListObjectsV2QueueCore');
+    super(params);
   }
 }
 exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;
@@ -598,57 +538,26 @@ exports.buildS3Uri = (bucket, key) => {
   return s3Utils.buildS3Uri(bucket, key);
 };
 
+/** DynamoDB utils */
+
+/**
+ * Create a DynamoDB table and then wait for the table to exist
+ *
+ * @param {Object} params - the same params that you would pass to AWS.createTable
+ *   See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#createTable-property
+ * @returns {Promise<Object>} - the output of the createTable call
+ */
+exports.createAndWaitForDynamoDbTable = async (params) => {
+  deprecate('@cumulus/common/aws/createAndWaitForDynamoDbTable', '1.17.1', '@cumulus/aws-client/dynamo/createAndWaitForDynamoDbTable');
+  return dynamoDbUtils.createAndWaitForDynamoDbTable(params);
+};
+
 // Class to efficiently search all of the items in a DynamoDB table, without
 // loading them all into memory at once.  Handles paging.
-class DynamoDbSearchQueue {
+class DynamoDbSearchQueue extends DynamoDbSearchQueueCore {
   constructor(params, searchType = 'scan') {
-    this.items = [];
-    this.params = params;
-    this.dynamodbDocClient = exports.dynamodbDocClient();
-    this.searchType = searchType;
-  }
-
-  /**
-   * View the next item in the queue
-   *
-   * This does not remove the object from the queue.  When there are no more
-   * items in the queue, returns 'null'.
-   *
-   * @returns {Promise<Object>} - an item from the DynamoDB table
-   */
-  async peek() {
-    if (this.items.length === 0) await this.fetchItems();
-    return this.items[0];
-  }
-
-  /**
-   * Remove the next item from the queue
-   *
-   * When there are no more items in the queue, returns 'null'.
-   *
-   * @returns {Promise<Object>} - an item from the DynamoDB table
-   */
-  async shift() {
-    if (this.items.length === 0) await this.fetchItems();
-    return this.items.shift();
-  }
-
-  /**
-   * Query the DynamoDB API to get the next batch of items
-   *
-   * @returns {Promise<undefined>} - resolves when the queue has been updated
-   * @private
-   */
-  async fetchItems() {
-    let response;
-    do {
-      response = await this.dynamodbDocClient[this.searchType](this.params).promise(); // eslint-disable-line no-await-in-loop, max-len
-      if (response.LastEvaluatedKey) this.params.ExclusiveStartKey = response.LastEvaluatedKey;
-    } while (response.Items.length === 0 && response.LastEvaluatedKey);
-
-    this.items = response.Items;
-
-    if (!response.LastEvaluatedKey) this.items.push(null);
+    deprecate('@cumulus/common/aws/DynamoDbSearchQueue', '1.17.1', '@cumulus/aws-client/DynamoDbSearchQueue');
+    super(params, searchType);
   }
 }
 exports.DynamoDbSearchQueue = DynamoDbSearchQueue;
