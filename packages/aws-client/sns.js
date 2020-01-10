@@ -1,6 +1,8 @@
 const pRetry = require('p-retry');
-const log = require('@cumulus/common/log');
+const Logger = require('@cumulus/logger');
 const awsServices = require('./services');
+
+const log = new Logger({ sender: 'aws-client/sns' });
 
 /**
  * Publish a message to an SNS topic. Does not catch

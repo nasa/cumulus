@@ -2,9 +2,10 @@
 
 const pRetry = require('p-retry');
 
-const log = require('@cumulus/common/log');
+const Logger = require('@cumulus/logger');
 const { isThrottlingException } = require('./utils');
 
+const log = new Logger({ sender: 'aws-client/CloudFormationGateway' });
 const privates = new WeakMap();
 
 class CloudFormationGateway {

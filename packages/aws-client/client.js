@@ -1,7 +1,13 @@
 const AWS = require('aws-sdk');
-const { noop } = require('@cumulus/common/util');
 
 const { inTestMode, testAwsClient } = require('./test-utils');
+
+/**
+ * Does nothing.  Used where a callback is required but not used.
+ *
+ * @returns {undefined} undefined
+ */
+const noop = () => {}; // eslint-disable-line lodash/prefer-noop
 
 exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
 AWS.config.update({ region: exports.region });

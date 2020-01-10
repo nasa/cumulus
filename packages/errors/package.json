@@ -1,0 +1,34 @@
+{
+  "name": "@cumulus/errors",
+  "version": "1.17.0-alpha",
+  "description": "Provides error classes for Cumulus",
+  "keywords": [
+    "GIBS",
+    "CUMULUS",
+    "NASA"
+  ],
+  "engines": {
+    "node": ">=10.16.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/errors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus"
+  },
+  "scripts": {
+    "build": "true",
+    "lint": "eslint .",
+    "test-ci": "npm run lint"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "lodash.isfunction": "^3.0.9"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0"
+  }
+}
