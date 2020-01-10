@@ -26,8 +26,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `@cumulus/common/DynamoDb`
     - `@cumulus/common/StepFunctions`
     - All of the exported functions in `@cumulus/commmon/aws`
-    - `@cumulus/string/unicodeEscape`
-    - `@cumulus/test-utils/inTestMode`
+    - `@cumulus/common/string/unicodeEscape`
+    - `@cumulus/common/test-utils/inTestMode`
 
 - **CUMULUS-1686**
   - Changed `ecs_cluster_instance_image_id` to be a required variable of the `cumulus` module and removed the default value.
