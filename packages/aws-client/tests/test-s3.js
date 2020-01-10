@@ -6,7 +6,7 @@ const { tmpdir } = require('os');
 const test = require('ava');
 const pTimeout = require('p-timeout');
 
-const { UnparsableFileLocationError } = require('@cumulus/common/errors');
+const { UnparsableFileLocationError } = require('@cumulus/errors');
 const { randomString } = require('@cumulus/common/test-utils');
 const { sleep } = require('@cumulus/common/util');
 

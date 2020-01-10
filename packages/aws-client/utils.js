@@ -1,7 +1,6 @@
 const pRetry = require('p-retry');
-const { setErrorStack } = require('@cumulus/common/util');
 
-exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
+const findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
   obj[fn](opts, (err, data) => {
     if (err) {
       callback(err, data);
@@ -40,6 +39,22 @@ exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
       callback(`Could not find resource ${baseName} in ${fn}`);
     }
   });
+};
+
+/**
+ * Replace the stack of an error
+ *
+ * Note: This mutates the error that was passed in.
+ *
+ * @param {Error} error - an Error
+ * @param {string} newStack - a stack trace
+ */
+const setErrorStack = (error, newStack) => {
+  // eslint-disable-next-line no-param-reassign
+  error.stack = [
+    error.stack.split('\n')[0],
+    ...newStack.split('\n').slice(1)
+  ].join('\n');
 };
 
 /**
@@ -98,6 +113,8 @@ const retryOnThrottlingException = (fn, options) =>
     );
 
 module.exports = {
+  findResourceArn,
+  setErrorStack,
   improveStackTrace,
   isThrottlingException,
   retryOnThrottlingException
