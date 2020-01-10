@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - All of the exported functions in `@cumulus/commmon/aws`
     - `@cumulus/common/string/unicodeEscape`
     - `@cumulus/common/test-utils/inTestMode`
+    - `@cumulus/common/util/setErrorStack`
 
 - **CUMULUS-1686**
   - Changed `ecs_cluster_instance_image_id` to be a required variable of the `cumulus` module and removed the default value.
