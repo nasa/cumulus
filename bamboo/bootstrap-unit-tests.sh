@@ -30,7 +30,7 @@ done
 $docker_command "npm install --error --no-progress -g nyc; cd $UNIT_TEST_BUILD_DIR; " \
 "git fetch --all; git checkout $GIT_SHA" \
 "npm install --error --no-progress; npm run bootstrap-no-build-quiet; npm run bootstrap-no-build-quiet" \
-"chmod 0400 $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key"
+"chmod 0400 -R $UNIT_TEST_BUILD_DIR/packages/test-data/keys"
 
 # Wait for the FTP server to be available
 while ! $docker_command  'curl --connect-timeout 5 -sS -o /dev/null ftp://testuser:testpass@127.0.0.1/README.md'; do
