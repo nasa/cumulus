@@ -4,6 +4,7 @@ const {
   stringUtils: { globalReplace }
 } = require('@cumulus/common');
 const { LambdaStep } = require('@cumulus/common/sfnStep');
+const { getWorkflowArn } = require('@cumulus/common/workflows');
 const { Rule } = require('@cumulus/api/models');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 9 * 60 * 1000;
@@ -35,7 +36,7 @@ const {
   putRecordOnStream,
   tryCatchExit,
   waitForActiveStream,
-  waitForAllTestSf
+  waitForAllTestSfForRecord
 } = require('../../helpers/kinesisHelpers');
 
 const ruleDirectory = './spec/parallel/kinesisTests/data/lambdaEventSourceTestRules';
@@ -133,13 +134,13 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
         console.log(`Dropping record onto ${streamName}, recordIdentifier: ${recordIdentifier}.`);
         await putRecordOnStream(streamName, record);
 
+        const workflowArn = await getWorkflowArn(testConfig.stackName, testConfig.bucket, rules[1].workflow);
         console.log('Waiting for step function to start...');
-        workflowExecutions = await waitForAllTestSf(
+        workflowExecutions = await waitForAllTestSfForRecord(
           recordIdentifier,
-          rules[1].workflow,
+          workflowArn,
           maxWaitForSFExistSecs,
-          2,
-          'HelloWorld'
+          2
         );
       });
     });

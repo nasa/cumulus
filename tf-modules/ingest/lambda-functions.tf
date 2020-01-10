@@ -218,7 +218,7 @@ resource "aws_lambda_function" "sqs2sf" {
   function_name    = "${var.prefix}-sqs2sf"
   filename         = "${path.module}/../../packages/api/dist/sfStarter/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/sfStarter/lambda.zip")
-  handler          = "index.sqs2sfHandler"
+  handler          = "index.sqs2sfEventSourceHandler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs10.x"
   timeout          = 200
