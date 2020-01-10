@@ -3,6 +3,7 @@
 const { stringUtils: { globalReplace } } = require('@cumulus/common');
 const { randomString } = require('@cumulus/common/test-utils');
 const { sleep } = require('@cumulus/common/util');
+const { getWorkflowArn } = require('@cumulus/common/workflows');
 const { Rule } = require('@cumulus/api/models');
 
 const {
@@ -23,7 +24,7 @@ const {
   putRecordOnStream,
   tryCatchExit,
   waitForActiveStream,
-  waitForAllTestSf
+  waitForAllTestSfForRecord
 } = require('../../helpers/kinesisHelpers');
 
 const {
@@ -166,20 +167,25 @@ describe('The Kinesis Replay API', () => {
     });
 
     describe('processes messages within the specified time slice', () => {
+      let workflowArn;
+
+      beforeAll(async () => {
+        workflowArn = await getWorkflowArn(testConfig.stackName, testConfig.bucket, rules[0].workflow);
+      });
+
       it('to start the expected workflows', async () => {
         console.log('Waiting for step functions to start...');
-        const expectedWorkflows = targetedRecords.map((record) => waitForAllTestSf(
+        const expectedWorkflows = targetedRecords.map((record) => waitForAllTestSfForRecord(
           record.identifier,
-          rules[0].workflow,
+          workflowArn,
           maxWaitForSFExistSecs,
-          1,
-          'HelloWorld'
+          1
         ).catch((err) => fail(err.message)));
 
         const tooOldToExpectWorkflows = tooOldToFetchRecords
-          .map((r) => waitForAllTestSf(
+          .map((r) => waitForAllTestSfForRecord(
             r.identifier,
-            rules[0].workflow,
+            workflowArn,
             maxWaitForSFExistSecs,
             1,
             'HelloWorld'
@@ -187,12 +193,11 @@ describe('The Kinesis Replay API', () => {
             .catch((err) => expect(err.message).toBe('Never found started workflow.')));
 
         const tooNewToExpectWorkflows = newRecordsToSkip
-          .map((r) => waitForAllTestSf(
+          .map((r) => waitForAllTestSfForRecord(
             r.identifier,
-            rules[0].workflow,
+            workflowArn,
             maxWaitForSFExistSecs,
-            1,
-            'HelloWorld'
+            1
           ).then((ex) => fail(`should not find executions but found ${JSON.stringify(ex)}`))
             .catch((err) => expect(err.message).toBe('Never found started workflow.')));
 
