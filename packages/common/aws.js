@@ -1,26 +1,19 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const fs = require('fs');
 const get = require('lodash.get');
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
 const { JSONPath } = require('jsonpath-plus');
-const pMap = require('p-map');
 const pRetry = require('p-retry');
-const pump = require('pump');
-const path = require('path');
 const url = require('url');
 
 const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/s3');
-const { generateChecksumFromStream, validateChecksumFromStream } = require('@cumulus/checksum');
 
-const errors = require('./errors');
 const log = require('./log');
 const string = require('./string');
 const { inTestMode, randomString } = require('./test-utils');
-const concurrency = require('./concurrency');
 const {
   deprecate,
   isNil,
