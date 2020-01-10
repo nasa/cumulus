@@ -1,7 +1,8 @@
 'use strict';
 
 const awsClient = require('@cumulus/aws-client/client');
-const awsServices = require('@cumulus/aws-client/services')
+const cfUtils = require('@cumulus/aws-client/cloudformation');
+const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/s3');
 const dynamoDbUtils = require('@cumulus/aws-client/dynamo');
 const DynamoDbSearchQueueCore = require('@cumulus/aws-client/DynamoDbSearchQueue');
@@ -80,6 +81,8 @@ exports.secretsManager = () => {
   return awsServices.secretsManager();
 };
 
+/** Cloudformation utils */
+
 /**
  * Describes the resources belonging to a given CloudFormation stack
  *
@@ -88,10 +91,10 @@ exports.secretsManager = () => {
  * @param {string} stackName -  The name of the CloudFormation stack to query
  * @returns {Array<Object>} The resources belonging to the stack
  */
-exports.describeCfStackResources = (stackName) =>
-  exports.cf().describeStackResources({ StackName: stackName })
-    .promise()
-    .then((response) => response.StackResources);
+exports.describeCfStackResources = (stackName) => {
+  deprecate('@cumulus/common/aws/describeCfStackResources', '1.17.1', '@cumulus/aws-client/cloudformation/describeCfStackResources');
+  return cfUtils.describeCfStackResources(stackName);
+};
 
 /* S3 utils */
 
