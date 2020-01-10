@@ -1,22 +1,15 @@
 'use strict';
 
 const pRetry = require('p-retry');
-const moment = require('moment');
 
 const { Kinesis } = require('aws-sdk');
 const { receiveSQSMessages } = require('@cumulus/common/aws');
-const { LambdaStep } = require('@cumulus/common/sfnStep');
 const { sleep } = require('@cumulus/common/util');
 
 const {
-  getExecutions
+  waitForAllTestSf
 } = require('@cumulus/integration-tests');
 
-const { loadConfig } = require('../helpers/testUtils');
-
-const lambdaStep = new LambdaStep();
-
-const maxExecutionResults = 20;
 const waitPeriodMs = 1000;
 
 const getRegion = () => process.env.AWS_REGION;
@@ -227,57 +220,32 @@ async function putRecordOnStream(streamName, record) {
  * Wait for a certain number of test stepfunction executions to exist.
  *
  * @param {string} recordIdentifier - random string identifying correct execution for test
- * @param {string} workflowName - name of the workflow to wait for
+ * @param {string} workflowArn - name of the workflow to wait for
  * @param {integer} maxWaitTimeSecs - maximum time to wait for the correct execution in seconds
  * @param {integer} numExecutions - The number of executions to wait for
- * @param {string} firstStep - The name of the first step of the workflow, used to query if the workflow has started.
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  * @throws {Error} - any AWS error, re-thrown from AWS execution or 'Workflow Never Started'.
  */
-async function waitForAllTestSf(recordIdentifier, workflowName, maxWaitTimeSecs, numExecutions, firstStep) {
-  const config = await loadConfig();
-
-  let timeWaitedSecs = 0;
-  const workflowExecutions = [];
-  const startTime = moment();
-
-  /* eslint-disable no-await-in-loop */
-  while (timeWaitedSecs < maxWaitTimeSecs && workflowExecutions.length < numExecutions) {
-    await sleep(waitPeriodMs);
-    timeWaitedSecs = (moment.duration(moment().diff(startTime)).asSeconds());
-    const executions = await getExecutions(workflowName, config.stackName, config.bucket, maxExecutionResults);
-    // Search all recent executions for target recordIdentifier
-    for (let ctr = 0; ctr < executions.length; ctr += 1) {
-      const execution = executions[ctr];
-      if (!workflowExecutions.find((e) => e.executionArn === execution.executionArn)) {
-        const taskInput = await lambdaStep.getStepInput(execution.executionArn, firstStep);
-        if (taskInput !== null && taskInput.payload.identifier === recordIdentifier) {
-          workflowExecutions.push(execution);
-          if (workflowExecutions.length === numExecutions) {
-            break;
-          }
-        }
-      }
-    }
-  }
-  /* eslint-enable no-await-in-loop */
-
-  if (workflowExecutions.length > 0) return workflowExecutions;
-  throw new Error('Never found started workflow.');
+async function waitForAllTestSfForRecord(recordIdentifier, workflowArn, maxWaitTimeSecs, numExecutions) {
+  return waitForAllTestSf(
+    { identifier: recordIdentifier },
+    workflowArn,
+    maxWaitTimeSecs,
+    numExecutions
+  );
 }
 
 /**
  * Wait for test stepfunction execution to exist.
  *
  * @param {string} recordIdentifier - random string identifying correct execution for test
- * @param {string} workflowName - name of the workflow to wait for
+ * @param {string} workflowArn - name of the workflow to wait for
  * @param {integer} maxWaitTimeSecs - maximum time to wait for the correct execution in seconds
- * @param {string} firstStep - The name of the first step of the workflow, used to query if the workflow has started.
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  * @throws {Error} - any AWS error, re-thrown from AWS execution or 'Workflow Never Started'.
  */
-async function waitForTestSf(recordIdentifier, workflowName, maxWaitTimeSecs, firstStep) {
-  const workflowExecutions = await waitForAllTestSf(recordIdentifier, workflowName, maxWaitTimeSecs, 1, firstStep);
+async function waitForTestSfForRecord(recordIdentifier, workflowArn, maxWaitTimeSecs) {
+  const workflowExecutions = await waitForAllTestSfForRecord(recordIdentifier, workflowArn, maxWaitTimeSecs, 1);
 
   return workflowExecutions[0];
 }
@@ -291,7 +259,8 @@ async function waitForTestSf(recordIdentifier, workflowName, maxWaitTimeSecs, fi
 function kinesisEventFromSqsMessage(message) {
   let kinesisEvent;
   try {
-    const originalKinesisMessage = JSON.parse(message.Body.Records[0].Sns.Message);
+    const parsedBody = JSON.parse(message.Body);
+    const originalKinesisMessage = JSON.parse(parsedBody.Records[0].Sns.Message);
     const dataString = Buffer.from(originalKinesisMessage.kinesis.data, 'base64').toString();
     kinesisEvent = JSON.parse(dataString);
   } catch (error) {
@@ -376,7 +345,7 @@ module.exports = {
   putRecordOnStream,
   tryCatchExit,
   waitForActiveStream,
-  waitForAllTestSf,
+  waitForAllTestSfForRecord,
   waitForQueuedRecord,
-  waitForTestSf
+  waitForTestSfForRecord
 };
