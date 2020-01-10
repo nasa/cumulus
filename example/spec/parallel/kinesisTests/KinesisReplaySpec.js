@@ -200,7 +200,7 @@ describe('The Kinesis Replay API', () => {
         const workflowExecutions = await Promise.all(expectedWorkflows);
         // if intermittent failures occur here, consider increasing maxWaitForSFExistSecs
         expect(workflowExecutions.length).toEqual(2);
-        workflowExecutions.forEach((exArr) => expect(exArr.length).toEqual(1));
+        workflowExecutions.forEach((exec) => expect(exec).toBeDefined());
 
         console.log('Waiting to ensure workflows expected not to start do not start...');
         await Promise.all(tooOldToExpectWorkflows);
