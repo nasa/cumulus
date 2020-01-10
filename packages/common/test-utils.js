@@ -8,7 +8,13 @@ const path = require('path');
 const RandExp = require('randexp');
 const fs = require('fs-extra');
 
-exports.inTestMode = () => process.env.NODE_ENV === 'test';
+const testUtils = require('@cumulus/aws-client/test-utils');
+const { deprecate } = require('./util');
+
+exports.inTestMode = () => {
+  deprecate('@cumulus/common/test-utils/inTestMode', '1.17.1', '@cumulus/aws-client/test-utils/inTestMode');
+  return testUtils.inTestMode();
+};
 
 /**
  * Helper function to throw error for unit test exports
