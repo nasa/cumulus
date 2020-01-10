@@ -22,7 +22,7 @@ const unicodeEscapeCharacter = (char) =>
  *
  * @static
  */
-const unicodeEscape = (str, regex = /[\s\S]/g) => str.replace(regex, unicodeEscapeCharacter);
+exports.unicodeEscape = (str, regex = /[\s\S]/g) => str.replace(regex, unicodeEscapeCharacter);
 
 /**
  * Given an array of fields, returns that a new string that's safe for use as a StepFunction,
@@ -41,7 +41,7 @@ exports.toSfnExecutionName = (fields, delimiter = '__') => {
     sfnUnsafeChars = `(${delimiter}|${sfnUnsafeChars})`;
   }
   const regex = new RegExp(sfnUnsafeChars, 'g');
-  return fields.map((s) => s.replace(regex, unicodeEscape).replace(/\\/g, '!'))
+  return fields.map((s) => s.replace(regex, exports.unicodeEscape).replace(/\\/g, '!'))
     .join(delimiter)
     .substring(0, 80);
 };
