@@ -53,7 +53,7 @@ chmod 0400 ./packages/test-data/keys/ssh_client_rsa_key
 # Wait for the SFTP server to be available
 while ! $docker_command "sftp \
   -P 2222\
-  -i $BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key\
+  -i $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key\
   -o 'ConnectTimeout=5'\
   -o 'StrictHostKeyChecking=no'\
   -o 'UserKnownHostsFile=/dev/null'\
