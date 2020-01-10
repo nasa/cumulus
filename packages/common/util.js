@@ -17,9 +17,10 @@ const omitBy = require('lodash.omitby');
 const os = require('os');
 const path = require('path');
 const mime = require('mime-types');
-const log = require('./log');
 
 const utils = require('@cumulus/aws-client/utils');
+
+const log = require('./log');
 
 /**
  * Mark a piece of code as deprecated
