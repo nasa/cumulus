@@ -2,7 +2,7 @@
 
 'use strict';
 
-const { isNil } = require('@cumulus/common/util');
+const isNil = require('lodash.isnil');
 
 /**
  * Create a function which will allow methods of an AWS service interface object
