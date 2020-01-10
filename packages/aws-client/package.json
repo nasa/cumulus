@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/aws-client",
-  "version": "1.17.0",
+  "version": "1.17.0-alpha",
   "description": "Utilities for working with AWS",
   "keywords": [
     "GIBS",
