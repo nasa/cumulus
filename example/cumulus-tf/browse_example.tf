@@ -294,7 +294,6 @@ module "cookbook_browse_example_workflow" {
             "stack": "{$.meta.stack}",
             "cmr": "{$.meta.cmr}",
             "launchpad": "{$.meta.launchpad}",
-            "process": "{$.meta.process}",
             "input_granules": "{$.meta.input_granules}",
             "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}"
           }

@@ -11,7 +11,8 @@ const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../models');
 const assertions = require('../../lib/assertions');
 const {
-  createFakeJwtAuthToken
+  createFakeJwtAuthToken,
+  setAuthorizedOAuthUsers
 } = require('../../lib/testUtils');
 const { Search, defaultIndexAlias } = require('../../es/search');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
@@ -20,7 +21,6 @@ const mappings = require('../../models/mappings.json');
 const esIndex = randomString();
 
 process.env.AccessTokensTable = randomString();
-process.env.UsersTable = randomString();
 process.env.AsyncOperationsTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 process.env.stackName = randomString();
@@ -31,7 +31,6 @@ const { app } = require('../../app');
 
 let jwtAuthToken;
 let accessTokenModel;
-let userModel;
 let asyncOperationsModel;
 let esClient;
 
@@ -72,8 +71,10 @@ async function createIndex(indexName, aliasName) {
 }
 
 test.before(async (t) => {
-  userModel = new models.User();
-  await userModel.createTable();
+  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
@@ -85,9 +86,7 @@ test.before(async (t) => {
   });
   await asyncOperationsModel.createTable();
 
-  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
-
-  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
   t.context.esAlias = randomString();
   process.env.ES_INDEX = t.context.esAlias;
@@ -101,7 +100,6 @@ test.before(async (t) => {
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await asyncOperationsModel.deleteTable();
-  await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });

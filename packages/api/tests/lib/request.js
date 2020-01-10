@@ -11,30 +11,31 @@ const {
     randomString
   }
 } = require('@cumulus/common');
+const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
+const { noop } = require('@cumulus/common/util');
 
 const {
   TokenUnauthorizedUserError
 } = require('../../lib/errors');
 const { verifyJwtAuthorization } = require('../../lib/request');
 const {
-  fakeAccessTokenFactory
+  fakeAccessTokenFactory,
+  setAuthorizedOAuthUsers
 } = require('../../lib/testUtils');
 const { createJwtToken } = require('../../lib/token');
-const { User } = require('../../models');
-
-let userModel;
 
 test.before(async () => {
   process.env.TOKEN_SECRET = randomString();
   process.env.AccessTokensTable = randomString();
-  process.env.UsersTable = randomString();
 
-  userModel = new User();
-  await userModel.createTable();
+  process.env.stackName = randomString();
+  process.env.system_bucket = randomString();
+  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await setAuthorizedOAuthUsers([]);
 });
 
 test.after.always(async () => {
-  await userModel.deleteTable();
+  await recursivelyDeleteS3Bucket(process.env.system_bucket).catch(noop);
 });
 
 test('verifyJwtAuthorization() throws JsonWebTokenError for non-JWT token', async (t) => {

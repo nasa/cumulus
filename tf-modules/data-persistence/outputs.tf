@@ -40,10 +40,6 @@ output "dynamo_tables" {
       name = aws_dynamodb_table.semaphores_table.name
       arn  = aws_dynamodb_table.semaphores_table.arn
     }
-    users = {
-      name = aws_dynamodb_table.users_table.name
-      arn  = aws_dynamodb_table.users_table.arn
-    }
   }
 }
 

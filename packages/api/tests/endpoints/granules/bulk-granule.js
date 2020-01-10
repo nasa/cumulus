@@ -2,8 +2,9 @@ const request = require('supertest');
 const sinon = require('sinon');
 const test = require('ava');
 
+const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
-const { createFakeJwtAuthToken } = require('../../../lib/testUtils');
+const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../../lib/testUtils');
 
 const models = require('../../../models');
 
@@ -16,7 +17,6 @@ process.env = {
   CollectionsTable: randomString(),
   GranulesTable: randomString(),
   TOKEN_SECRET: randomString(),
-  UsersTable: randomString(),
   stackName: randomString(),
   system_bucket: randomString(),
   AsyncOperationsTable: randomString(),
@@ -32,20 +32,21 @@ process.env = {
 
 let accessTokenModel;
 let jwtAuthToken;
-let userModel;
 
 test.before(async () => {
-  userModel = new models.User();
-  await userModel.createTable();
+  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 });
 
 test.after.always(async () => {
-  await userModel.deleteTable();
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await accessTokenModel.deleteTable();
 });
 
@@ -70,11 +71,16 @@ test.serial('Request to granules bulk endpoint starts an async-operation with th
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
     .expect(200);
-  const { lambdaName, cluster, payload } = asyncOperationStartStub.args[0][0];
-
+  const {
+    lambdaName,
+    cluster,
+    description,
+    payload
+  } = asyncOperationStartStub.args[0][0];
   t.is(asyncOperationStartStub.calledOnce, true);
   t.is(lambdaName, process.env.BulkOperationLambda);
   t.is(cluster, process.env.EcsCluster);
+  t.is(description, `Bulk run ${expectedWorkflowName} on 1 granules`);
   t.deepEqual(payload, {
     payload: body,
     type: 'BULK_GRANULE',
@@ -98,7 +104,7 @@ test.serial('Request to granules bulk endpoint starts an async-operation with th
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
   const expectedIndex = 'my-index';
-  const expectedQuery = { query: 'fake-query' };
+  const expectedQuery = { query: 'fake-query', size: 2 };
 
   const body = {
     queueName: expectedQueueName,
@@ -114,10 +120,16 @@ test.serial('Request to granules bulk endpoint starts an async-operation with th
     .send(body)
     .expect(200);
 
-  const { lambdaName, cluster, payload } = asyncOperationStartStub.args[0][0];
+  const {
+    lambdaName,
+    cluster,
+    description,
+    payload
+  } = asyncOperationStartStub.args[0][0];
   t.is(asyncOperationStartStub.calledOnce, true);
   t.is(lambdaName, process.env.BulkOperationLambda);
   t.is(cluster, process.env.EcsCluster);
+  t.is(description, `Bulk run ${expectedWorkflowName} on 2 granules`);
   t.deepEqual(payload, {
     payload: body,
     type: 'BULK_GRANULE',

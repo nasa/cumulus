@@ -23,8 +23,7 @@ module "publish_granule_workflow" {
             "bucket": "{$.meta.buckets.internal.name}",
             "stack": "{$.meta.stack}",
             "cmr": "{$.meta.cmr}",
-            "launchpad": "{$.meta.launchpad}",
-            "process": "N/A"
+            "launchpad": "{$.meta.launchpad}"
           }
         }
       },

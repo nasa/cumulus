@@ -8,6 +8,29 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- **CUMULUS-1686**
+  - `ecs_cluster_instance_image_id` is now a *required* variable of the `cumulus` module, instead of optional.
+
+### Changed
+
+- **CUMULUS-1686**
+  - Changed `ecs_cluster_instance_image_id` to be a required variable of the `cumulus` module and removed the default value.
+    The default was not available across accounts and regions, nor outside of NGAP and therefore not particularly useful.
+
+- **CUMULUS-1688**
+  - Updated `@cumulus/aws.receiveSQSMessages` not to replace `message.Body` with a parsed object. This behavior was undocumented and confusing as received messages appeared to contradict AWS docs that state `message.Body` is always a string.
+  - Replaced `sf_watcher` CloudWatch rule from `cloudwatch-events.tf` with an EventSourceMapping on `sqs2sf` mapped to the `start_sf` SQS queue (in `event-sources.tf`).
+  - Updated `sqs2sf` with an EventSourceMapping handler and unit test.
+
+### Removed
+
+- **CUMULUS-1481**
+  - removed `process` config and output from PostToCmr as it was not required by the task nor downstream steps, and should still be in the output message's `meta` regardless.
+
+## [v1.17.0] - 2019-12-31
+
+### BREAKING CHANGES
+
 - **CUMULUS-1498**
   - The `@cumulus/cmrjs.publish2CMR` function expects that the value of its
     `creds.password` parameter is a plaintext password.
@@ -27,15 +50,29 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `Replay Kinesis Messages` documentation to Operator Docs.
   - Added `manualConsumer` lambda function to consume a Kinesis stream. Used by the replay AsyncOperation.
 
+- **CUMULUS-1687**
+  - Added new API endpoint for listing async operations at `/asyncOperations`
+  - All asyncOperations now include the fields `description` and `operationType`. `operationType` can be one of the following. [`Bulk Delete`, `Bulk Granules`, `ES Index`, `Kinesis Replay`]
+
 ### Changed
 
 - **CUMULUS-1626**
   - Updates Cumulus to use node10/CMA 1.1.2 for all of its internal lambdas in prep for AWS node 8 EOL
 
-- **CUMULUS-1688**
-  - Updated `@cumulus/aws.receiveSQSMessages` not to replace `message.Body` with a parsed object. This behavior was undocumented and confusing as received messages appeared to contradict AWS docs that state `message.Body` is always a string.
-  - Replaced `sf_watcher` CloudWatch rule from `cloudwatch-events.tf` with an EventSourceMapping on `sqs2sf` mapped to the `start_sf` SQS queue (in `event-sources.tf`).
-  - Updated `sqs2sf` with an EventSourceMapping handler and unit test.
+- **CUMULUS-1498**
+  - Remove the DynamoDB Users table. The list of OAuth users who are allowed to
+    use the API is now stored in S3.
+  - The CMR password and Launchpad passphrase are now stored in Secrets Manager
+
+### Fixed
+
+- **CUMULUS-1664**
+  - Updated `dbIndexer` Lambda to remove hardcoded references to DynamoDB table names.
+
+### Removed
+
+- **CUMULUS-1481**
+  - removed `process` config and output from PostToCmr as it was not required by the task nor downstream steps, and should still be in the output message's `meta` regardless.
 
 ## [v1.16.1] - 2019-12-6
 
@@ -300,6 +337,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1452**
   - Updated the EC2 initialization scripts to use full volume size for docker storage
   - Changed the default ECS docker storage drive to `devicemapper`
+
+## [v1.14.5] - 2019-12-30
+
+### Updated
+
+- **CUMULUS-1626**
+  - Updates Cumulus to use node10/CMA 1.1.2 for all of its internal lambdas in prep for AWS node 8 EOL
 
 ## [v1.14.4] - 2019-10-28
 
@@ -1796,10 +1840,12 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.16.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.17.0...HEAD
+[v1.17.0]: https://github.com/nasa/cumulus/compare/v1.16.1...v1.17.0
 [v1.16.1]: https://github.com/nasa/cumulus/compare/v1.16.0...v1.16.1
 [v1.16.0]: https://github.com/nasa/cumulus/compare/v1.15.0...v1.16.0
-[v1.15.0]: https://github.com/nasa/cumulus/compare/v1.14.4...v1.15.0
+[v1.15.0]: https://github.com/nasa/cumulus/compare/v1.14.5...v1.15.0
+[v1.14.5]: https://github.com/nasa/cumulus/compare/v1.14.4...v1.14.5
 [v1.14.4]: https://github.com/nasa/cumulus/compare/v1.14.3...v1.14.4
 [v1.14.3]: https://github.com/nasa/cumulus/compare/v1.14.2...v1.14.3
 [v1.14.2]: https://github.com/nasa/cumulus/compare/v1.14.1...v1.14.2

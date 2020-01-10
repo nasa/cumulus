@@ -3,8 +3,6 @@
 const https = require('https');
 const path = require('path');
 const { URL } = require('url');
-const get = require('lodash.get');
-const { DefaultProvider } = require('./key-pair-provider');
 const log = require('./log');
 const { getS3Object, s3ObjectExists } = require('./aws');
 
@@ -25,14 +23,11 @@ const { getS3Object, s3ObjectExists } = require('./aws');
 class LaunchpadToken {
   /**
   * @param {Object} params
-  * @param {string} params.encrypted - optional, default to true
   * @param {string} params.api - the Launchpad token service api endpoint
   * @param {string} params.passphrase - the passphrase of the Launchpad PKI certificate
   * @param {string} params.certificate - the name of the Launchpad PKI pfx certificate
   */
   constructor(params) {
-    // indicate passcode provided is encrypted
-    this.encrypted = get(params, 'encrypted', true);
     this.api = params.api;
     this.passphrase = params.passphrase;
     this.certificate = params.certificate;
@@ -41,7 +36,7 @@ class LaunchpadToken {
   /**
    * retrieve launchpad credentials
    *
-   * @returns {Promise.<Object.<Buffer, string>>} - an object with the pfx, passphrase
+   * @returns {Promise<Buffer>} - an object with the pfx
    */
   async _retrieveCertificate() {
     if (!(process.env.stackName || process.env.system_bucket)) {
@@ -66,9 +61,7 @@ class LaunchpadToken {
     log.debug(`Reading Key: ${this.certificate} bucket:${bucket},stack:${stackName}`);
     const pfx = (await getS3Object(bucket, `${stackName}/crypto/${this.certificate}`)).Body;
 
-    const passphrase = this.encrypted
-      ? await DefaultProvider.decrypt(this.passphrase) : this.passphrase;
-    return { pfx, passphrase };
+    return pfx;
   }
 
   /**
@@ -78,7 +71,7 @@ class LaunchpadToken {
    */
   async requestToken() {
     log.debug('LaunchpadToken.requestToken');
-    const { pfx, passphrase } = await this._retrieveCertificate();
+    const pfx = await this._retrieveCertificate();
     const launchpadUrl = new URL(this.api);
 
     const options = {
@@ -87,7 +80,7 @@ class LaunchpadToken {
       path: path.join(launchpadUrl.pathname, 'gettoken'),
       method: 'GET',
       pfx,
-      passphrase
+      passphrase: this.passphrase
     };
 
     const responseBody = await this._submitRequest(options);
@@ -102,7 +95,7 @@ class LaunchpadToken {
    */
   async validateToken(token) {
     log.debug('LaunchpadToken.validateToken');
-    const { pfx, passphrase } = await this._retrieveCertificate();
+    const pfx = await this._retrieveCertificate();
     const launchpadUrl = new URL(this.api);
 
     const data = JSON.stringify({ token });
@@ -112,7 +105,7 @@ class LaunchpadToken {
       path: path.join(launchpadUrl.pathname, 'validate'),
       method: 'POST',
       pfx,
-      passphrase,
+      passphrase: this.passphrase,
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': data.length

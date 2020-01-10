@@ -2,6 +2,8 @@
   "provider": "PODAAC_SWOT",
   "collection": "L2_HR_PIXC",
   "bucket": "ignored-bucket",
+  "ingestTime":"2017-09-30T03:45:29.791198",
+  "deliveryTime":"2017-09-30T03:42:29.791198",
   "identifier": "<<REPLACED with random string>>",
   "product": {
     "name": "L2_HR_PIXC_product_0001-of-4154",
@@ -11,8 +13,8 @@
         "type": "data",
         "uri": "s3://ignored-bucket/cumulus-test-data/pdrs/L2_HR_PIXC_product_0001-of-4154.h5",
         "name": "L2_HR_PIXC_product_0001-of-4154.h5",
-        "checksum-type": "md5",
-        "checksum": "bb802eb3daf7d2c4e641b7551e89527f",
+        "checksumType": "md5",
+        "checksum": "cd043418380acdf69b2fb80649357cda",
         "size": 50
       }
     ]

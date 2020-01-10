@@ -11,11 +11,11 @@ const models = require('../../models');
 const assertions = require('../../lib/assertions');
 const {
   createFakeJwtAuthToken,
-  fakeExecutionFactoryV2
+  fakeExecutionFactoryV2,
+  setAuthorizedOAuthUsers
 } = require('../../lib/testUtils');
 
 process.env.AccessTokensTable = randomString();
-process.env.UsersTable = randomString();
 process.env.ExecutionsTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 
@@ -31,15 +31,15 @@ const executionStatusCommon = {
   stopDate: 'date'
 };
 
-const cumulusMetaOutput = {
+const cumulusMetaOutput = () => ({
   cumulus_meta: {
     state_machine: 'arn:aws:states:us-east-1:xxx:stateMachine:discoverGranulesStateMachine',
     message_source: 'sfn',
     workflow_start_time: 1536279498569,
     execution_name: '3ea094d8',
-    system_bucket: 'test-sandbox-internal'
+    system_bucket: process.env.system_bucket
   }
-};
+});
 
 const expiredExecutionArn = 'fakeExpiredExecutionArn';
 const expiredMissingExecutionArn = 'fakeMissingExpiredExecutionArn';
@@ -47,68 +47,68 @@ const fakeExpiredExecution = fakeExecutionFactoryV2({ arn: expiredExecutionArn }
 
 const replaceObject = (lambdaEvent = true) => ({
   replace: {
-    Bucket: 'test-sandbox-internal',
+    Bucket: process.env.system_bucket,
     Key: lambdaEvent ? 'events/lambdaEventUUID' : 'events/executionEventUUID'
   }
 });
 
-const remoteExecutionOutput = {
-  ...cumulusMetaOutput,
+const remoteExecutionOutput = () => ({
+  ...cumulusMetaOutput(),
   ...replaceObject(false)
-};
+});
 
-const fullMessageOutput = {
-  ...cumulusMetaOutput,
+const fullMessageOutput = () => ({
+  ...cumulusMetaOutput(),
   meta: {},
   payload: {},
   exception: 'None',
   workflow_config: {}
-};
+});
 
-const lambdaCommonOutput = {
+const lambdaCommonOutput = () => ({
   cumulus_meta: {
     message_source: 'sfn',
     process: 'modis',
     execution_name: 'bae909c1',
     state_machine: 'arn:aws:states:us-east-1:xxx:stateMachine:testIngestGranuleStateMachine-222',
     workflow_start_time: 111,
-    system_bucket: 'test-sandbox-internal'
+    system_bucket: process.env.system_bucket
   },
   meta: {
     sync_granule_duration: 2872
   }
-};
+});
 
-const lambdaRemoteOutput = {
+const lambdaRemoteOutput = () => ({
   ...replaceObject(),
-  ...lambdaCommonOutput
-};
+  ...lambdaCommonOutput()
+});
 
-const lambdaCompleteOutput = {
-  ...lambdaCommonOutput,
+const lambdaCompleteOutput = () => ({
+  ...lambdaCommonOutput(),
   payload: {
     message: 'Big message'
   },
   exception: 'None'
-};
+});
 
-const lambdaEventOutput = {
+const lambdaEventOutput = () => ({
   type: 'TaskStateExited',
   id: 13,
   previousEventId: 12,
   name: 'SyncGranule',
-  output: JSON.stringify(lambdaCompleteOutput)
-};
+  output: JSON.stringify(lambdaCompleteOutput())
+});
 
-const lambdaFunctionEvent = {
+const lambdaFunctionEvent = () => ({
   type: 'TaskStateExited',
   id: 13,
   previousEventId: 12,
   stateExitedEventDetails: {
     name: 'SyncGranule',
-    output: JSON.stringify(lambdaRemoteOutput)
+    output: JSON.stringify(lambdaRemoteOutput())
   }
-};
+});
 
 const stepFunctionMock = {
   getExecutionStatus: (arn) =>
@@ -119,14 +119,14 @@ const stepFunctionMock = {
       } else {
         executionStatus = {
           ...executionStatusCommon,
-          output: arn === 'hasFullMessage' ? JSON.stringify(fullMessageOutput) : JSON.stringify(remoteExecutionOutput)
+          output: arn === 'hasFullMessage' ? JSON.stringify(fullMessageOutput()) : JSON.stringify(remoteExecutionOutput())
         };
       }
       resolve({
         execution: executionStatus,
         executionHistory: {
           events: [
-            lambdaFunctionEvent
+            lambdaFunctionEvent()
           ]
         },
         stateMachine: {}
@@ -150,46 +150,48 @@ const executionExistsMock = (arn) => {
   };
 };
 
-const s3Mock = (_, key) =>
-  new Promise((resolve) => {
-    const fullMessage = key === 'events/lambdaEventUUID' ? lambdaCompleteOutput : fullMessageOutput;
-    const s3Result = {
-      Body: Buffer.from(JSON.stringify(fullMessage))
-    };
-    resolve(s3Result);
-  });
-
 let jwtAuthToken;
 let accessTokenModel;
 let executionModel;
-let userModel;
-let mockedS3;
 let mockedSF;
 let mockedSFExecution;
 
 test.before(async () => {
-  mockedS3 = sinon.stub(commonAws, 'getS3Object').callsFake(s3Mock);
+  process.env.system_bucket = randomString();
+  await commonAws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+
+  await commonAws.putJsonS3Object(
+    process.env.system_bucket,
+    'events/lambdaEventUUID',
+    lambdaCompleteOutput()
+  );
+
+  await commonAws.putJsonS3Object(
+    process.env.system_bucket,
+    'events/executionEventUUID',
+    fullMessageOutput()
+  );
+
   mockedSF = sinon.stub(StepFunction, 'getExecutionStatus').callsFake(stepFunctionMock.getExecutionStatus);
   mockedSFExecution = sinon
     .stub(commonAws.sfn(), 'describeExecution')
     .callsFake(executionExistsMock);
 
-  userModel = new models.User();
-  await userModel.createTable();
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
   executionModel = new models.Execution();
   await executionModel.createTable();
   await executionModel.create(fakeExpiredExecution);
 });
 
 test.after.always(async () => {
+  await commonAws.recursivelyDeleteS3Bucket(process.env.system_bucket);
   await accessTokenModel.deleteTable();
-  await userModel.deleteTable();
-  mockedS3.restore();
   mockedSF.restore();
   mockedSFExecution.restore();
   await executionModel.deleteTable();
@@ -236,7 +238,7 @@ test('returns full message when it is already included in the output', async (t)
     .expect(200);
 
   const executionStatus = response.body;
-  t.deepEqual(fullMessageOutput, JSON.parse(executionStatus.execution.output));
+  t.deepEqual(fullMessageOutput(), JSON.parse(executionStatus.execution.output));
 });
 
 test('fetches messages from S3 when remote message (for both SF execution history and executions)', async (t) => {
@@ -250,11 +252,11 @@ test('fetches messages from S3 when remote message (for both SF execution histor
   const expectedResponse = {
     execution: {
       ...executionStatusCommon,
-      output: JSON.stringify(fullMessageOutput)
+      output: JSON.stringify(fullMessageOutput())
     },
     executionHistory: {
       events: [
-        lambdaEventOutput
+        lambdaEventOutput()
       ]
     },
     stateMachine: {}
@@ -274,7 +276,7 @@ test('when execution is still running, still returns status and fetches SF execu
     execution: executionStatusCommon,
     executionHistory: {
       events: [
-        lambdaEventOutput
+        lambdaEventOutput()
       ]
     },
     stateMachine: {}

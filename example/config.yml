@@ -1,5 +1,6 @@
 default:
   bucket: cumulus-test-sandbox-internal
+  apiUsername: jasmine
 
 mvd-tf:
   bucket: mvd-internal
@@ -12,6 +13,9 @@ jl-tf:
 
 kk-test-tf:
   bucket: kk-test-internal
+
+kk-tf:
+  bucket: kk-tf-internal
 
 lf-test-tf:
   bucket: lf-internal
@@ -30,4 +34,3 @@ mhs2:
 
 bt-tf:
   bucket: bt-internal
-
