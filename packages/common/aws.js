@@ -11,12 +11,14 @@ const pRetry = require('p-retry');
 const pump = require('pump');
 const path = require('path');
 const url = require('url');
+
+const awsServices = require('@cumulus/aws-client/services');
 const { generateChecksumFromStream, validateChecksumFromStream } = require('@cumulus/checksum');
 
 const errors = require('./errors');
 const log = require('./log');
 const string = require('./string');
-const { inTestMode, randomString, testAwsClient } = require('./test-utils');
+const { inTestMode, randomString } = require('./test-utils');
 const concurrency = require('./concurrency');
 const {
   deprecate,
@@ -89,53 +91,70 @@ if (inTestMode()) {
   S3_RATE_LIMIT = 1;
 }
 
-const memoize = (fn) => {
-  let memo = null;
-  return (options) => {
-    if (!memo) memo = fn(options);
-    return memo;
-  };
+exports.apigateway = () => {
+  deprecate('@cumulus/common/aws/apigateway', '1.17.1', '@cumulus/aws-client/aws/apigateway');
+  return awsServices.apigateway();
 };
-
-/**
- * Return a function which, when called, will return an AWS service object
- *
- * Note: The returned service objects are cached, so there will only be one
- *       instance of each service object per process.
- *
- * @param {Function} Service - an AWS service object constructor function
- * @param {string} version - the API version to use
- * @returns {Function} - a function which, when called, will return an AWS service object
- */
-const awsClient = (Service, version = null) => {
-  const options = {};
-  if (version) options.apiVersion = version;
-
-  if (inTestMode()) {
-    if (AWS.DynamoDB.DocumentClient.serviceIdentifier === undefined) {
-      AWS.DynamoDB.DocumentClient.serviceIdentifier = 'dynamodb';
-    }
-    return memoize((o) => testAwsClient(Service, Object.assign(options, o)));
-  }
-  return memoize((o) => new Service(Object.assign(options, o)));
+exports.ecs = () => {
+  deprecate('@cumulus/common/aws/ecs', '1.17.1', '@cumulus/aws-client/aws/ecs');
+  return awsServices.ecs();
 };
-
-exports.apigateway = awsClient(AWS.APIGateway, '2015-07-09');
-exports.ecs = awsClient(AWS.ECS, '2014-11-13');
-exports.s3 = awsClient(AWS.S3, '2006-03-01');
-exports.kinesis = awsClient(AWS.Kinesis, '2013-12-02');
-exports.lambda = awsClient(AWS.Lambda, '2015-03-31');
-exports.sqs = awsClient(AWS.SQS, '2012-11-05');
-exports.cloudwatchevents = awsClient(AWS.CloudWatchEvents, '2014-02-03');
-exports.cloudwatchlogs = awsClient(AWS.CloudWatchLogs, '2014-03-28');
-exports.cloudwatch = awsClient(AWS.CloudWatch, '2010-08-01');
-exports.dynamodb = awsClient(AWS.DynamoDB, '2012-08-10');
-exports.dynamodbstreams = awsClient(AWS.DynamoDBStreams, '2012-08-10');
-exports.dynamodbDocClient = awsClient(AWS.DynamoDB.DocumentClient, '2012-08-10');
-exports.sfn = awsClient(AWS.StepFunctions, '2016-11-23');
-exports.cf = awsClient(AWS.CloudFormation, '2010-05-15');
-exports.sns = awsClient(AWS.SNS, '2010-03-31');
-exports.secretsManager = awsClient(AWS.SecretsManager, '2017-10-17');
+exports.s3 = () => {
+  deprecate('@cumulus/common/aws/s3', '1.17.1', '@cumulus/aws-client/aws/s3');
+  return awsServices.s3();
+};
+exports.kinesis = () => {
+  deprecate('@cumulus/common/aws/kinesis', '1.17.1', '@cumulus/aws-client/aws/kinesis');
+  return awsServices.kinesis();
+};
+exports.lambda = () => {
+  deprecate('@cumulus/common/aws/lambda', '1.17.1', '@cumulus/aws-client/aws/lambda');
+  return awsServices.lambda();
+};
+exports.sqs = () => {
+  deprecate('@cumulus/common/aws/sqs', '1.17.1', '@cumulus/aws-client/aws/sqs');
+  return awsServices.sqs();
+};
+exports.cloudwatchevents = () => {
+  deprecate('@cumulus/common/aws/cloudwatchevents', '1.17.1', '@cumulus/aws-client/aws/cloudwatchevents');
+  return awsServices.cloudwatchevents();
+};
+exports.cloudwatchlogs = () => {
+  deprecate('@cumulus/common/aws/cloudwatchlogs', '1.17.1', '@cumulus/aws-client/aws/cloudwatchlogs');
+  return awsServices.cloudwatchlogs();
+};
+exports.cloudwatch = () => {
+  deprecate('@cumulus/common/aws/cloudwatch', '1.17.1', '@cumulus/aws-client/aws/cloudwatch');
+  return awsServices.cloudwatch();
+};
+exports.dynamodb = () => {
+  deprecate('@cumulus/common/aws/dynamodb', '1.17.1', '@cumulus/aws-client/aws/dynamodb');
+  return awsServices.dynamodb();
+};
+exports.dynamodbstreams = () => {
+  deprecate('@cumulus/common/aws/dynamodbstreams', '1.17.1', '@cumulus/aws-client/aws/dynamodbstreams');
+  return awsServices.dynamodbstreams();
+};
+exports.dynamodbDocClient = () => {
+  deprecate('@cumulus/common/aws/dynamodbDocClient', '1.17.1', '@cumulus/aws-client/aws/dynamodbDocClient');
+  return awsServices.dynamodbDocClient();
+};
+exports.sfn = () => {
+  deprecate('@cumulus/common/aws/sfn', '1.17.1', '@cumulus/aws-client/aws/sfn');
+  return awsServices.sfn();
+};
+exports.cf = () => {
+  deprecate('@cumulus/common/aws/cf', '1.17.1', '@cumulus/aws-client/aws/cf');
+  return awsServices.cf();
+};
+exports.sns = () => {
+  deprecate('@cumulus/common/aws/sns', '1.17.1', '@cumulus/aws-client/aws/sns');
+  return awsServices.sns();
+};
+exports.secretsManager = () => {
+  deprecate('@cumulus/common/aws/secretsManager', '1.17.1', '@cumulus/aws-client/aws/secretsManager');
+  return awsServices.secretsManager();
+};
 
 /**
  * Create a DynamoDB table and then wait for the table to exist

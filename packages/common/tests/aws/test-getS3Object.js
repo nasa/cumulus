@@ -8,7 +8,6 @@ const { sleep } = require('../../util');
 
 test.before(async (t) => {
   t.context.Bucket = randomString();
-
   await s3().createBucket({ Bucket: t.context.Bucket }).promise();
 });
 
