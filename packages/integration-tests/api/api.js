@@ -75,8 +75,7 @@ async function callCumulusApi({ prefix, payload: userPayload }) {
     authToken = await launchpad.getLaunchpadToken({
       passphrase: process.env.LAUNCHPAD_PASSPHRASE,
       api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1/gettoken',
-      certificate: 'launchpad.pfx',
-      encrypted: false
+      certificate: 'launchpad.pfx'
     });
   } else {
     const {

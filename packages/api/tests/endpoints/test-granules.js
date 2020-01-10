@@ -15,7 +15,6 @@ const { CMR } = require('@cumulus/cmr-client');
 const {
   metadataObjectFromCMRFile
 } = require('@cumulus/cmrjs/cmr-utils');
-const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const launchpad = require('@cumulus/common/launchpad');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 
@@ -142,6 +141,13 @@ test.before(async (t) => {
     Name: process.env.cmr_password_secret_name,
     SecretString: randomString()
   }).promise();
+
+  // Store the Launchpad passphrase
+  process.env.launchpad_passphrase_secret_name = randomString();
+  await aws.secretsManager().createSecret({
+    Name: process.env.launchpad_passphrase_secret_name,
+    SecretString: randomString()
+  }).promise();
 });
 
 test.beforeEach(async (t) => {
@@ -174,6 +180,10 @@ test.after.always(async () => {
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
   await aws.secretsManager().deleteSecret({
     SecretId: process.env.cmr_password_secret_name,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
+  await aws.secretsManager().deleteSecret({
+    SecretId: process.env.launchpad_passphrase_secret_name,
     ForceDeleteWithoutRecovery: true
   }).promise();
 });
@@ -465,11 +475,6 @@ test.serial('remove a granule from CMR with launchpad authentication', async (t)
   const launchpadStub = sinon.stub(launchpad, 'getLaunchpadToken').callsFake(() => randomString());
 
   sinon.stub(
-    DefaultProvider,
-    'decrypt'
-  ).callsFake(() => Promise.resolve('fakePassword'));
-
-  sinon.stub(
     CMR.prototype,
     'deleteGranule'
   ).callsFake(() => Promise.resolve());
@@ -499,7 +504,6 @@ test.serial('remove a granule from CMR with launchpad authentication', async (t)
   process.env.cmr_oauth_provider = 'earthdata';
   launchpadStub.restore();
   CMR.prototype.deleteGranule.restore();
-  DefaultProvider.decrypt.restore();
   cmrjs.getMetadata.restore();
 });
 
