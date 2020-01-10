@@ -1,12 +1,8 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const get = require('lodash.get');
-const isObject = require('lodash.isobject');
-const isString = require('lodash.isstring');
 const { JSONPath } = require('jsonpath-plus');
 const pRetry = require('p-retry');
-const url = require('url');
 
 const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/s3');
@@ -14,13 +10,11 @@ const dynamoDbUtils = require('@cumulus/aws-client/dynamo');
 const DynamoDbSearchQueueCore = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const S3ListObjectsV2QueueCore = require('@cumulus/aws-client/S3ListObjectsV2Queue');
 const sqsUtils = require('@cumulus/aws-client/sqs');
+const stepFunctionUtils = require('@cumulus/aws-client/step-functions');
 
 const log = require('./log');
-const string = require('./string');
-const { inTestMode, randomString } = require('./test-utils');
 const {
   deprecate,
-  isNil,
   setErrorStack,
   noop
 } = require('./util');
@@ -635,6 +629,8 @@ exports.sqsQueueExists = (queue) => {
   return sqsUtils.sqsQueueExists(queue);
 };
 
+/** Step Functions utils */
+
 /**
  * Given an array of fields, returns that a new string that's safe for use as a StepFunction,
  * execution name, where all fields are joined by a StepFunction-safe delimiter
@@ -647,14 +643,8 @@ exports.sqsQueueExists = (queue) => {
  * @returns {string} A string that's safe to use as a StepFunctions execution name
  */
 exports.toSfnExecutionName = (fields, delimiter = '__') => {
-  let sfnUnsafeChars = '[^\\w-=+_.]';
-  if (delimiter) {
-    sfnUnsafeChars = `(${delimiter}|${sfnUnsafeChars})`;
-  }
-  const regex = new RegExp(sfnUnsafeChars, 'g');
-  return fields.map((s) => s.replace(regex, string.unicodeEscape).replace(/\\/g, '!'))
-    .join(delimiter)
-    .substring(0, 80);
+  deprecate('@cumulus/common/aws/toSfnExecutionName', '1.17.1', '@cumulus/aws-client/step-functions/toSfnExecutionName');
+  return stepFunctionUtils.toSfnExecutionName(fields, delimiter);
 };
 
 /**
@@ -668,10 +658,27 @@ exports.toSfnExecutionName = (fields, delimiter = '__') => {
  *   no replacements
  * @returns {Array} An array of the original fields
  */
-exports.fromSfnExecutionName = (str, delimiter = '__') =>
-  str.split(delimiter)
-    .map((s) => s.replace(/!/g, '\\').replace('"', '\\"'))
-    .map((s) => JSON.parse(`"${s}"`));
+exports.fromSfnExecutionName = (str, delimiter = '__') => {
+  deprecate('@cumulus/common/aws/fromSfnExecutionName', '1.17.1', '@cumulus/aws-client/step-functions/fromSfnExecutionName');
+  return stepFunctionUtils.fromSfnExecutionName(str, delimiter);
+};
+
+/**
+ * Returns execution ARN from a statement machine Arn and executionName
+ *
+ * @param {string} stateMachineArn - state machine ARN
+ * @param {string} executionName - state machine's execution name
+ * @returns {string} - Step Function Execution Arn
+ */
+exports.getExecutionArn = (stateMachineArn, executionName) => {
+  deprecate('@cumulus/common/aws/getExecutionArn', '1.17.1', '@cumulus/aws-client/step-functions/getExecutionArn');
+  return stepFunctionUtils.getExecutionArn(stateMachineArn, executionName);
+};
+
+exports.getStateMachineArn = (executionArn) => {
+  deprecate('@cumulus/common/aws/getStateMachineArn', '1.17.1', '@cumulus/aws-client/step-functions/getStateMachineArn');
+  return stepFunctionUtils.getStateMachineArn(executionArn);
+};
 
 /**
  * Publish a message to an SNS topic. Does not catch
@@ -705,28 +712,6 @@ exports.publishSnsMessage = async (
       ...retryOptions
     }
   );
-
-/**
- * Returns execution ARN from a statement machine Arn and executionName
- *
- * @param {string} stateMachineArn - state machine ARN
- * @param {string} executionName - state machine's execution name
- * @returns {string} - Step Function Execution Arn
- */
-exports.getExecutionArn = (stateMachineArn, executionName) => {
-  if (stateMachineArn && executionName) {
-    const sfArn = stateMachineArn.replace('stateMachine', 'execution');
-    return `${sfArn}:${executionName}`;
-  }
-  return null;
-};
-
-exports.getStateMachineArn = (executionArn) => {
-  if (executionArn) {
-    return executionArn.replace('execution', 'stateMachine').split(':').slice(0, -1).join(':');
-  }
-  return null;
-};
 
 /**
  * Test to see if a given exception is an AWS Throttling Exception
