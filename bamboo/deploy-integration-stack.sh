@@ -25,7 +25,9 @@ done
 if [[ $LOCK_EXISTS_STATUS -gt 0 ]]; then
   exit 1
 fi
+
 set -e
 echo "Running Terraform deployment $DEPLOYMENT"
+
 . ../bamboo/bootstrap-tf-deployment.sh
 

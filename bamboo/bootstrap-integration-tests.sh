@@ -1,13 +1,13 @@
 #!/bin/bash
 set -ex
 . ./bamboo/abort-if-not-pr-or-redeployment.sh
+. ./bamboo/abort-if-skip-integration-tests.sh
+. ./bamboo/set-bamboo-env-variables.sh
 
 npm config set unsafe-perm true
-. ./bamboo/set-bamboo-env-variables.sh
-. ./bamboo/abort-if-skip-integration-tests.sh
 
 if [[ $USE_TERRAFORM_ZIPS == true ]]; then
-  npm install
+  ## Configure TF deployment to use deployed packages for the version being built
   echo "***Deploying stack with deployment packages"
 
   ## Update cumulus-tf
@@ -28,6 +28,10 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   npm install && npm run prepare
   cd ..
 else
+  echo "***Bootstrapping integration tests with source"
+  ## Deployment was done in the deploy-dev-integration-test-stack.sh script in a
+  ## prior job.    Run bootstrap only to cross link dependencies for the
+  ## int tests, then exit before deploying
   if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus dir
     echo "*** Using cached bootstrap build dir"
     cd /cumulus/
@@ -35,6 +39,9 @@ else
     git checkout "$GIT_SHA"
   fi
   npm install
+  ## Double bootstrapping required as workaround to
+  ## lerna re-bootstrapping issue in older releases
+  ## (similiar to  https://github.com/lerna/lerna/issues/1457)
   npm run bootstrap-no-build && npm run bootstrap-no-build
   exit 0
 fi
