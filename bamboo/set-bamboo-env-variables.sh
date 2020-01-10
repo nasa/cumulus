@@ -186,7 +186,7 @@ if [[ $KES_DEPLOYMENT == true ]]; then
 fi
 
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
-  export BUILD_DIR=/cumulus
+  export UNIT_TEST_BUILD_DIR=/cumulus
 else
-  export BUILD_DIR=/source/cumulus
+  export UNIT_TEST_BUILD_DIR=/source/cumulus
 fi
