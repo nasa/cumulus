@@ -99,7 +99,7 @@ test('Upload file from s3 to remote', async (t) => {
   const testSftpClient = new Sftp(sftpConfig);
   await testSftpClient.syncFromS3(s3object, `/granules/${s3object.Key}`);
   const s3sum = await calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket, key: s3object.Key });
-  const filesum = await generateChecksumFromStream('CKSUM', fs.createReadStream(`/tmp/cumulus_unit_test_data/${s3object.Key}`));
+  const filesum = await generateChecksumFromStream('CKSUM', fs.createReadStream(`/tmp/cumulus_unit_test_data/granules/${s3object.Key}`));
   t.is(s3sum, filesum);
   await testSftpClient.end();
   fs.unlinkSync(`../test-data/granules/${s3object.Key}`);
