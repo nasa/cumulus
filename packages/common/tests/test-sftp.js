@@ -102,7 +102,7 @@ test('Upload file from s3 to remote', async (t) => {
   const filesum = await generateChecksumFromStream('CKSUM', fs.createReadStream(`/tmp/cumulus_unit_test_data/granules/${s3object.Key}`));
   t.is(s3sum, filesum);
   await testSftpClient.end();
-  fs.unlinkSync(`../test-data/granules/${s3object.Key}`);
+  fs.unlinkSync(`/tmp/cumulus_unit_test_data/granules/${s3object.Key}`);
 });
 
 test('Upload data string to remote', async (t) => {
@@ -118,5 +118,5 @@ test('Upload data string to remote', async (t) => {
   const filesum = await generateChecksumFromStream('CKSUM', fs.createReadStream(`/tmp/cumulus_unit_test_data/granules/${fileName}`));
   t.is(expectedSum, filesum);
   await testSftpClient.end();
-  fs.unlinkSync(`../test-data/granules/${fileName}`);
+  fs.unlinkSync(`/tmp/cumulus_unit_test_data/granules/${fileName}`);
 });
