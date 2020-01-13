@@ -15,20 +15,11 @@ const { deprecate } = require('./util');
  * @returns {Promise.<Object>}
  * @throws {RecordDoesNotExist} if a record cannot be found
  *
- * @static
  * @kind function
  */
-const get = async ({
-  tableName,
-  item,
-  client
-}) => {
+const get = (params) => {
   deprecate('@cumulus/common/DynamoDb.get', '1.17.1', '@cumulus/aws-client/DynamoDb.get');
-  return DynamoDb.get({
-    tableName,
-    item,
-    client
-  });
+  return DynamoDb.get(params);
 };
 
 /**
@@ -40,28 +31,11 @@ const get = async ({
  * @param {Object} params
  * @returns {Promise.<Object>}
  *
- * @static
  * @kind function
  */
-const scan = async ({
-  tableName,
-  client,
-  query,
-  fields,
-  limit,
-  select,
-  startKey
-}) => {
+const scan = (params) => {
   deprecate('@cumulus/common/DynamoDb.scan', '1.17.1', '@cumulus/aws-client/DynamoDb.scan');
-  return DynamoDb.scan({
-    tableName,
-    client,
-    query,
-    fields,
-    limit,
-    select,
-    startKey
-  });
+  return DynamoDb.scan(params);
 };
 
 module.exports = {

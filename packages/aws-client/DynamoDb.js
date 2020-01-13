@@ -23,7 +23,6 @@ const { improveStackTrace } = require('./utils');
  * @returns {Promise.<Object>}
  * @throws {RecordDoesNotExist} if a record cannot be found
  *
- * @static
  * @kind function
  */
 const get = improveStackTrace(
@@ -63,7 +62,6 @@ const get = improveStackTrace(
  * @param {Object} params
  * @returns {Promise.<Object>}
  *
- * @static
  * @kind function
  */
 const scan = improveStackTrace(
