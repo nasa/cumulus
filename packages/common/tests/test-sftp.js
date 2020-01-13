@@ -27,6 +27,8 @@ const stackName = randomString();
 process.env.system_bucket = bucket;
 process.env.stackName = stackName;
 
+const localDataDir = process.env.DOCKER_TEST_RUN ? '/tmp/cumulus_unit_test_data' : '../test-data';
+
 const sftpConfig = {
   host: '127.0.0.1',
   port: '2222',
@@ -99,10 +101,10 @@ test('Upload file from s3 to remote', async (t) => {
   const testSftpClient = new Sftp(sftpConfig);
   await testSftpClient.syncFromS3(s3object, `/granules/${s3object.Key}`);
   const s3sum = await calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket, key: s3object.Key });
-  const filesum = await generateChecksumFromStream('CKSUM', fs.createReadStream(`/tmp/cumulus_unit_test_data/granules/${s3object.Key}`));
+  const filesum = await generateChecksumFromStream('CKSUM', fs.createReadStream(`${localDataDir}/granules/${s3object.Key}`));
   t.is(s3sum, filesum);
   await testSftpClient.end();
-  fs.unlinkSync(`/tmp/cumulus_unit_test_data/granules/${s3object.Key}`);
+  fs.unlinkSync(`${localDataDir}/granules/${s3object.Key}`);
 });
 
 test('Upload data string to remote', async (t) => {
@@ -115,8 +117,8 @@ test('Upload data string to remote', async (t) => {
   dataStream.push(data);
   dataStream.push(null);
   const expectedSum = await generateChecksumFromStream('CKSUM', dataStream);
-  const filesum = await generateChecksumFromStream('CKSUM', fs.createReadStream(`/tmp/cumulus_unit_test_data/granules/${fileName}`));
+  const filesum = await generateChecksumFromStream('CKSUM', fs.createReadStream(`${localDataDir}/granules/${fileName}`));
   t.is(expectedSum, filesum);
   await testSftpClient.end();
-  fs.unlinkSync(`/tmp/cumulus_unit_test_data/granules/${fileName}`);
+  fs.unlinkSync(`${localDataDir}/granules/${fileName}`);
 });
