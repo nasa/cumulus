@@ -12,6 +12,7 @@ const snsUtils = require('@cumulus/aws-client/sns');
 const sqsUtils = require('@cumulus/aws-client/sqs');
 const stepFunctionUtils = require('@cumulus/aws-client/step-functions');
 const utils = require('@cumulus/aws-client/utils');
+const errors = require('@cumulus/errors');
 
 const { deprecate } = require('./util');
 
@@ -670,8 +671,8 @@ exports.publishSnsMessage = async (
  * @returns {boolean}
  */
 exports.isThrottlingException = (err) => {
-  deprecate('@cumulus/common/aws/isThrottlingException', '1.17.1', '@cumulus/aws-client/utils/isThrottlingException');
-  return utils.isThrottlingException(err);
+  deprecate('@cumulus/common/aws/isThrottlingException', '1.17.1', '@cumulus/errors/isThrottlingException');
+  return errors.isThrottlingException(err);
 };
 
 /**
