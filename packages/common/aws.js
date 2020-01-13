@@ -398,19 +398,9 @@ exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;
  *
  * @returns {number|string} - calculated checksum
  */
-exports.calculateS3ObjectChecksum = async ({
-  algorithm,
-  bucket,
-  key,
-  options
-}) => {
+exports.calculateS3ObjectChecksum = async (params) => {
   deprecate('@cumulus/common/aws/calculateS3ObjectChecksum', '1.17.1', '@cumulus/aws-client/s3/calculateS3ObjectChecksum');
-  return s3Utils.calculateS3ObjectChecksum({
-    algorithm,
-    bucket,
-    key,
-    options
-  });
+  return s3Utils.calculateS3ObjectChecksum(params);
 };
 
 /**
@@ -426,21 +416,9 @@ exports.calculateS3ObjectChecksum = async ({
  * @throws {InvalidChecksum} - Throws error if validation fails
  * @returns {boolean} - returns true for success
  */
-exports.validateS3ObjectChecksum = async ({
-  algorithm,
-  bucket,
-  key,
-  expectedSum,
-  options
-}) => {
+exports.validateS3ObjectChecksum = async (params) => {
   deprecate('@cumulus/common/aws/validateS3ObjectChecksum', '1.17.1', '@cumulus/aws-client/s3/validateS3ObjectChecksum');
-  return s3Utils.validateS3ObjectChecksum({
-    algorithm,
-    bucket,
-    key,
-    expectedSum,
-    options
-  });
+  return s3Utils.validateS3ObjectChecksum(params);
 };
 
 /**
@@ -545,7 +523,7 @@ exports.sendSQSMessage = (queueUrl, message) => {
  * @param {integer} [options.waitTimeSeconds=0] - number of seconds to poll SQS queue (long polling)
  * @returns {Promise.<Array>} an array of messages
  */
-exports.receiveSQSMessages = async (queueUrl, options) => {
+exports.receiveSQSMessages = (queueUrl, options) => {
   deprecate('@cumulus/common/aws/receiveSQSMessages', '1.17.1', '@cumulus/aws-client/sqs/receiveSQSMessages');
   return sqsUtils.receiveSQSMessages(queueUrl, options);
 };
