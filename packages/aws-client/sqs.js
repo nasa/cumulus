@@ -1,8 +1,7 @@
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
+const isNil = require('lodash.isnil');
 const url = require('url');
-
-const { isNil } = require('@cumulus/common/util');
 
 const awsServices = require('./services');
 const { inTestMode, randomString } = require('./test-utils');

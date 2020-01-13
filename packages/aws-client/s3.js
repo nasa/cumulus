@@ -10,17 +10,17 @@ const {
   generateChecksumFromStream,
   validateChecksumFromStream
 } = require('@cumulus/checksum');
-const concurrency = require('@cumulus/common/concurrency');
 const {
   InvalidChecksum,
   UnparsableFileLocationError
-} = require('@cumulus/common/errors');
-const log = require('@cumulus/common/log');
-const { deprecate } = require('@cumulus/common/util');
+} = require('@cumulus/errors');
+const Logger = require('@cumulus/logger');
 
 const awsServices = require('./services');
 const { inTestMode } = require('./test-utils');
 const { improveStackTrace } = require('./utils');
+
+const log = new Logger({ sender: 'aws-client/s3' });
 
 let S3_RATE_LIMIT = 20;
 if (inTestMode()) {
@@ -152,11 +152,6 @@ exports.s3CopyObject = improveStackTrace(
 exports.promiseS3Upload = improveStackTrace(
   (params) => awsServices.s3().upload(params).promise()
 );
-
-exports.syncUrl = async (uri, bucket, destKey) => {
-  const response = await concurrency.promiseUrl(uri);
-  await exports.promiseS3Upload({ Bucket: bucket, Key: destKey, Body: response });
-};
 
 /**
  * Downloads the given s3Obj to the given filename in a streaming manner
@@ -522,15 +517,6 @@ exports.validateS3ObjectChecksum = async ({
   }
   const msg = `Invalid checksum for S3 object s3://${bucket}/${key} with type ${algorithm} and expected sum ${expectedSum}`;
   throw new InvalidChecksum(msg);
-};
-
-// Maintained for backwards compatibility
-exports.checksumS3Objects = (algorithm, bucket, key, options = {}) => {
-  deprecate('@cumulus/common/aws.checksumS3Objects', '1.11.2', '@cumulus/common/aws.calculateS3ObjectChecksum');
-  const params = {
-    algorithm, bucket, key, options
-  };
-  return exports.calculateS3ObjectChecksum(params);
 };
 
 /**
