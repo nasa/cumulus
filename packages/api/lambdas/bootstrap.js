@@ -155,7 +155,7 @@ const handler = async ({ elasticsearchHostname }) => {
     await bootstrapElasticSearch(elasticsearchHostname);
     return { Status: 'SUCCESS', Data: {} };
   } catch (err) {
-    return { Status: 'Failed', Error: err };
+    return { Status: 'FAILED', Error: err };
   }
 };
 
