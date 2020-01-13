@@ -71,9 +71,12 @@ program
 
 program
   .command('serve')
+  .option('--stackName <stackName>', 'stackname to serve', 'localrun')
+  .option('--no-reseed', 'do not reseed dynamoDB and Elasticsearch with new data on start.')
   .description('Serves the local version of the Cumulus API')
-  .action(() => {
-    serveApi(process.env.USERNAME).catch(console.error);
+  .action((cmd) => {
+    console.log(cmd.stackName, cmd.reseed);
+    serveApi(process.env.USERNAME, cmd.stackName, cmd.reseed).catch(console.error);
   });
 
 program

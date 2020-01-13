@@ -193,8 +193,9 @@ async function createDBRecords(stackName, user) {
  *
  * @param {string} user - A username to add as an authorized user for the API.
  * @param {string} stackName - The name of local stack. Used to prefix stack resources.
+ * @param {bool} reseed - boolean to control whether to load new data into dynamo and elastic search.
  */
-async function serveApi(user, stackName = defaultLocalStackName) {
+async function serveApi(user, stackName = defaultLocalStackName, reseed = true) {
   const port = process.env.PORT || 5001;
   const requiredEnvVars = [
     'stackName',
@@ -222,7 +223,9 @@ async function serveApi(user, stackName = defaultLocalStackName) {
 
     await prepareServices(stackName, process.env.system_bucket);
     await populateBucket(process.env.system_bucket, stackName);
-    await createDBRecords(stackName, user);
+    if (reseed) {
+      await createDBRecords(stackName, user);
+    }
   } else {
     checkEnvVariablesAreSet(requiredEnvVars);
     setTableEnvVariables(process.env.stackName);
@@ -327,6 +330,13 @@ async function eraseDataStack(
   return eraseLocalElasticsearch(stackName);
 }
 
+async function fetchElasticDefaults(stackName) {
+  setLocalEsVariables(stackName);
+  const esClient = await Search.es(process.env.ES_HOST);
+  const esIndex = process.env.ES_INDEX;
+  return {esClient, esIndex};
+};
+
 /**
  * Removes all additional data from tables and repopulates with original data.
  *
@@ -352,6 +362,7 @@ async function resetTables(
 
 module.exports = {
   eraseDataStack,
+  fetchElasticDefaults,
   serveApi,
   serveDistributionApi,
   resetTables,
