@@ -18,18 +18,18 @@ const {
 /**
  * Starts a new stepfunction with the given payload
  *
- * @param {Object} message - incoming queue message
+ * @param {Object} message - incoming SQS message object
  * @returns {Promise} - AWS SF Start Execution response
  */
 function dispatch(message) {
-  const input = Object.assign({}, message.Body);
+  const input = JSON.parse(get(message, 'Body', get(message, 'body', '{}')));
 
   if (!input.cumulus_meta.execution_name) {
     input.cumulus_meta.execution_name = uuidv4();
   }
 
   return sfn().startExecution({
-    stateMachineArn: message.Body.cumulus_meta.state_machine,
+    stateMachineArn: input.cumulus_meta.state_machine,
     input: JSON.stringify(input),
     name: input.cumulus_meta.execution_name
   }).promise();
@@ -46,7 +46,7 @@ function dispatch(message) {
  * @throws {Error}
  */
 async function incrementAndDispatch(queueMessage) {
-  const workflowMessage = get(queueMessage, 'Body', {});
+  const workflowMessage = JSON.parse(get(queueMessage, 'Body', '{}'));
 
   const queueName = getQueueName(workflowMessage);
   const maxExecutions = getMaximumExecutions(workflowMessage, queueName);
@@ -107,17 +107,6 @@ async function handleEvent(event, dispatchFn, visibilityTimeout) {
 }
 
 /**
- * Handler for messages from normal SQS queues.
- *
- * @param {Object} event - Lambda input message from SQS
- * @returns {Promise} - A promise resolving to how many executions were started
- * @throws {Error}
- */
-async function sqs2sfHandler(event) {
-  return handleEvent(event, dispatch);
-}
-
-/**
  * Wrapper for handler of priority SQS messages.
  *
  * Using a wrapper function allows injecting optional parameters
@@ -134,6 +123,22 @@ function handleThrottledEvent(event, visibilityTimeout) {
   return handleEvent(event, incrementAndDispatch, visibilityTimeout);
 }
 
+async function handleSourceMappingEvent(event) {
+  const sqsRecords = event.Records;
+  return Promise.all(sqsRecords.map(dispatch));
+}
+
+/**
+ * Handler for messages from normal SQS queues.
+ *
+ * @param {Object} event - Lambda input message from SQS
+ * @returns {Promise} - A promise resolving to how many executions were started
+ * @throws {Error}
+ */
+async function sqs2sfHandler(event) {
+  return handleEvent(event, dispatch);
+}
+
 /**
  * Handler for messages from priority SQS queues.
  *
@@ -145,10 +150,23 @@ async function sqs2sfThrottleHandler(event) {
   return handleThrottledEvent(event);
 }
 
+/**
+ * Handler for messages from normal SQS queues read via Lambda EventSourceMapping.
+ *
+ * @param {Object} event - SQS input message from Lambda EventSourceMapping
+ * @returns {Promise} - A promise resolving to how many executions were started
+ * @throws {Error}
+ */
+async function sqs2sfEventSourceHandler(event) {
+  return handleSourceMappingEvent(event);
+}
+
 module.exports = {
   incrementAndDispatch,
+  sqs2sfEventSourceHandler,
   sqs2sfHandler,
   sqs2sfThrottleHandler,
   handleEvent,
-  handleThrottledEvent
+  handleThrottledEvent,
+  handleSourceMappingEvent
 };

@@ -136,9 +136,7 @@ async function createDBRecords(stackName, user) {
   await bootstrap.bootstrapElasticSearch(process.env.ES_HOST, esIndex);
 
   if (user) {
-    // add authorized user to the user table
-    const u = new models.User();
-    await u.create({ userName: user });
+    await testUtils.setAuthorizedOAuthUsers([user]);
   }
 
   // add collection records

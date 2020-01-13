@@ -3,10 +3,7 @@
 const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
-const {
-  fakeAccessTokenFactory,
-  fakeUserFactory
-} = require('../../lib/testUtils');
+const { fakeAccessTokenFactory } = require('../../lib/testUtils');
 const { AccessToken } = require('../../models');
 
 let accessTokenModel;
@@ -38,13 +35,13 @@ test('AccessToken model sets the table name from the AccessTokensTable environme
 });
 
 test('create() creates a valid access token record', async (t) => {
-  const userRecord = fakeUserFactory();
-  const accessTokenData = fakeAccessTokenFactory({ username: userRecord.userName });
+  const username = randomString();
+  const accessTokenData = fakeAccessTokenFactory({ username });
   const accessTokenRecord = await accessTokenModel.create(accessTokenData);
 
   t.is(accessTokenRecord.accessToken, accessTokenData.accessToken);
   t.is(accessTokenRecord.refreshToken, accessTokenData.refreshToken);
-  t.is(accessTokenRecord.username, userRecord.userName);
+  t.is(accessTokenRecord.username, username);
   t.truthy(accessTokenRecord.expirationTime);
 });
 

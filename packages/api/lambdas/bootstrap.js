@@ -1,29 +1,18 @@
 /* this module is intended to be used for bootstraping
  * the cloudformation deployment of a DAAC.
  *
- * The module is invoked by CloudFormation as custom resource
- * more info: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html
- *
  * It helps:
  *  - adding ElasticSearch index mapping when a new index is created
- *  - creating API users
- *  - encrypting CMR user/pass and adding it to configuration files
  */
 
 'use strict';
 
-const got = require('got');
 const get = require('lodash.get');
-const boolean = require('boolean');
 const log = require('@cumulus/common/log');
 const pLimit = require('p-limit');
-const { dynamodb } = require('@cumulus/common/aws');
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
-const { User } = require('../models');
 const { Search, defaultIndexAlias } = require('../es/search');
 const mappings = require('../models/mappings.json');
-const physicalId = 'cumulus-bootstraping-daac-ops-api-deployment';
 
 /**
  * Check the index to see if mappings have been updated since the index was last updated.
@@ -156,171 +145,23 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
 }
 
 /**
- * Add users to the cumulus user table
- *
- * @param {string} table - dynamodb table name
- * @param {Array} records - array of user records
- * @returns {Promise.<Array>} array of aws dynamodb responses
- */
-async function bootstrapUsers(table, records) {
-  if (!table) return Promise.resolve();
-
-  const user = new User({ tableName: table });
-
-  // delete all user records
-  const existingUsers = await user.scan();
-  await Promise.all(existingUsers.Items.map((u) => user.delete(u.userName)));
-  // add new ones
-  const additions = records.map((record) => user.create({
-    userName: record.username,
-    password: record.password,
-    createdAt: Date.now()
-  }));
-
-  return Promise.all(additions);
-}
-
-/**
- * Encrypt Launchpad certificate passphrase
- *
- * @param {string} passphrase - plain text launchpad passphrase
- * @returns {Promise.<string>} encrypted launchpad passphrase
- */
-async function bootstrapLaunchpad(passphrase) {
-  if (!passphrase) {
-    return new Promise((resolve) => resolve('nopassphrase'));
-  }
-  return DefaultProvider.encrypt(passphrase);
-}
-
-/**
- * converts dynamoDB backup status to boolean
- *
- * @param {string} status - backup status of the table
- * @returns {boolean} the status in boolean
- */
-function backupStatus(status) {
-  if (status === 'ENABLED') {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Enable/Disable the point-in-time backup feature of given
- * DynamoDB tables
- *
- * @param {Array.<Object>} tables - a list of DynamoDB table names and their pointInTime status
- * @returns {Promise.<Array>} array of dynamoDB aws responses
- */
-function bootstrapDynamoDbTables(tables) {
-  return Promise.all(tables.map((table) =>
-    // check the status of continuous backup
-    dynamodb().describeContinuousBackups({ TableName: table.name }).promise()
-      .then((r) => {
-        const status = backupStatus(r.ContinuousBackupsDescription.ContinuousBackupsStatus);
-
-        // if the status has not changed, skip
-        if (status === boolean(table.pointInTime)) {
-          return Promise.resolve();
-        }
-        const params = {
-          PointInTimeRecoverySpecification: {
-            PointInTimeRecoveryEnabled: boolean(table.pointInTime)
-          },
-          TableName: table.name
-        };
-        return dynamodb().updateContinuousBackups(params).promise();
-      })));
-}
-
-/**
- * Sends response back to CloudFormation
- *
- * @param {Object} event - AWS lambda event object
- * @param {string} status - type of response e.g. success, failure
- * @param {Object} data - response data
- * @returns {Promise} - AWS CloudFormation response
- */
-async function sendResponse(event, status, data = {}) {
-  const body = JSON.stringify({
-    Status: status,
-    PhysicalResourceId: physicalId,
-    StackId: event.StackId,
-    RequestId: event.RequestId,
-    LogicalResourceId: event.LogicalResourceId,
-    Data: data
-  });
-
-  log.info('RESPONSE BODY:\n', body);
-  log.info('SENDING RESPONSE...\n');
-
-  const r = await got.put(event.ResponseURL, {
-    body,
-    headers: {
-      'content-type': '',
-      'content-length': body.length
-    }
-  });
-  log.info(r.body);
-}
-
-/**
- * CloudFormation custom resource handler
+ * Bootstrap Elasticsearch indexes
  *
  * @param {Object} event - AWS Lambda event input
- * @param {Object} context - AWS Lambda context object
- * @param {Function} cb - AWS Lambda callback
- * @returns {Promise} undefined
+ * @returns {Promise<Object>} a Terraform Lambda invocation response
  */
-function handler(event, context, cb) {
-  const es = get(event, 'ResourceProperties.ElasticSearch');
-  const users = get(event, 'ResourceProperties.Users');
-  const launchpad = get(event, 'ResourceProperties.Launchpad');
-  const dynamos = get(event, 'ResourceProperties.DynamoDBTables', []);
-  const requestType = get(event, 'RequestType');
-
-  if (requestType === 'Delete') {
-    return sendResponse(event, 'SUCCESS', null).then((r) => cb(null, r));
+const handler = async ({ elasticsearchHostname }) => {
+  try {
+    await bootstrapElasticSearch(elasticsearchHostname);
+    return { Status: 'SUCCESS', Data: {} };
+  } catch (err) {
+    return { Status: 'FAILED', Error: err };
   }
-
-  const actions = [
-    bootstrapElasticSearch(get(es, 'host')),
-    bootstrapUsers(get(users, 'table'), get(users, 'records')),
-    bootstrapLaunchpad(get(launchpad, 'Passphrase')),
-    bootstrapDynamoDbTables(dynamos)
-  ];
-
-  return Promise.all(actions)
-    .then((results) => {
-      const data = {
-        LaunchpadPassphrase: results[2]
-      };
-
-      // if invoked by Cloudformation ...
-      if (event.ResponseURL) return sendResponse(event, 'SUCCESS', data);
-
-      // if invoked by Terraform ...
-      return { Status: 'SUCCESS', Data: data };
-    })
-    .then((r) => cb(null, r))
-    .catch((e) => {
-      log.error(e);
-
-      // if invoked by Cloudformation ...
-      if (event.ResponseURL) return sendResponse(event, 'FAILED', null);
-
-      // if invoked by Terraform ...
-      return { Status: 'FAILED', Error: e };
-    })
-    .then((r) => cb(null, r));
-}
+};
 
 module.exports = {
   handler,
   bootstrapElasticSearch,
-  bootstrapDynamoDbTables,
   // for testing
   findMissingMappings
 };

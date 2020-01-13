@@ -9,14 +9,14 @@ const bootstrap = require('../../lambdas/bootstrap');
 const indexer = require('../../es/indexer');
 const {
   createFakeJwtAuthToken,
-  fakePdrFactory
+  fakePdrFactory,
+  setAuthorizedOAuthUsers
 } = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
 const assertions = require('../../lib/assertions');
 
 process.env.AccessTokensTable = randomString();
 process.env.PdrsTable = randomString();
-process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
@@ -24,17 +24,14 @@ process.env.TOKEN_SECRET = randomString();
 // import the express app after setting the env variables
 const { app } = require('../../app');
 
-const pdrS3Key = (stackName, bucket, pdrName) => `${process.env.stackName}/pdrs/${pdrName}`;
+const pdrS3Key = (pdrName) => `${process.env.stackName}/pdrs/${pdrName}`;
 
-function uploadPdrToS3(stackName, bucket, pdrName, pdrBody) {
-  const key = pdrS3Key(stackName, bucket, pdrName);
-
-  return aws.s3().putObject({
+const uploadPdrToS3 = (bucket, pdrName, pdrBody) =>
+  aws.s3().putObject({
     Bucket: bucket,
-    Key: key,
+    Key: pdrS3Key(pdrName),
     Body: pdrBody
   }).promise();
-}
 
 // create all the variables needed across this test
 let esClient;
@@ -44,7 +41,6 @@ const esIndex = randomString();
 let jwtAuthToken;
 let accessTokenModel;
 let pdrModel;
-let userModel;
 
 test.before(async () => {
   // create esClient
@@ -62,13 +58,13 @@ test.before(async () => {
   pdrModel = new models.Pdr();
   await pdrModel.createTable();
 
-  userModel = new models.User();
-  await userModel.createTable();
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
   // create fake PDR records
   fakePdrs = ['completed', 'failed'].map(fakePdrFactory);
@@ -83,7 +79,6 @@ test.before(async () => {
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await pdrModel.deleteTable();
-  await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
@@ -213,7 +208,6 @@ test('DELETE handles the case where the PDR exists in S3 but not in DynamoDb', a
   const pdrName = `${randomString()}.PDR`;
 
   await uploadPdrToS3(
-    process.env.stackName,
     process.env.system_bucket,
     pdrName,
     'This is the PDR body'

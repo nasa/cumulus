@@ -30,26 +30,8 @@ resource "aws_lambda_function" "custom_bootstrap" {
 }
 
 data "aws_lambda_invocation" "custom_bootstrap" {
-  depends_on = [
-    aws_lambda_function.custom_bootstrap,
-    null_resource.rsa_keys
-  ]
+  depends_on = [aws_lambda_function.custom_bootstrap]
   function_name = aws_lambda_function.custom_bootstrap.function_name
 
-  input = <<JSON
-{
-  "ResourceProperties": {
-    "ElasticSearch": {
-      "host": "${var.elasticsearch_hostname}"
-    },
-    "Users": {
-      "table": "${var.dynamo_tables.users.name}",
-      "records": ${jsonencode([for x in var.users : { username : x, password : "OAuth" }])}
-    },
-    "Launchpad": {
-      "Passphrase": "${var.launchpad_passphrase}"
-    }
-  }
-}
-JSON
+  input = jsonencode({ elasticsearchHostname = var.elasticsearch_hostname })
 }

@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- **CUMULUS-1686**
+  - `ecs_cluster_instance_image_id` is now a *required* variable of the `cumulus` module, instead of optional.
+
+### Added
+
+- **CUMULUS-1040**
+  - Added `@cumulus/aws-client` package to provide utilities for working with AWS services and the Node.js AWS SDK
+  - Added `@cumulus/errors` package which exports error classes for use in Cumulus workflow code
+
+### Changed
+
+- **CUMULUS-1686**
+  - Changed `ecs_cluster_instance_image_id` to be a required variable of the `cumulus` module and removed the default value.
+    The default was not available across accounts and regions, nor outside of NGAP and therefore not particularly useful.
+
+- **CUMULUS-1688**
+  - Updated `@cumulus/aws.receiveSQSMessages` not to replace `message.Body` with a parsed object. This behavior was undocumented and confusing as received messages appeared to contradict AWS docs that state `message.Body` is always a string.
+  - Replaced `sf_watcher` CloudWatch rule from `cloudwatch-events.tf` with an EventSourceMapping on `sqs2sf` mapped to the `start_sf` SQS queue (in `event-sources.tf`).
+  - Updated `sqs2sf` with an EventSourceMapping handler and unit test.
+
+### Fixed
+
+- **CUMULUS-1664**
+  - Updated `dbIndexer` Lambda to remove hardcoded references to DynamoDB table names.
+
 ### Removed
 
 - **CUMULUS-1481**
@@ -43,15 +70,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1626**
   - Updates Cumulus to use node10/CMA 1.1.2 for all of its internal lambdas in prep for AWS node 8 EOL
 
-### Fixed
-
-- **CUMULUS-1664**
-  - Updated `dbIndexer` Lambda to remove hardcoded references to DynamoDB table names.
-
-### Removed
-
-- **CUMULUS-1481**
-  - removed `process` config and output from PostToCmr as it was not required by the task nor downstream steps, and should still be in the output message's `meta` regardless.
+- **CUMULUS-1498**
+  - Remove the DynamoDB Users table. The list of OAuth users who are allowed to
+    use the API is now stored in S3.
+  - The CMR password and Launchpad passphrase are now stored in Secrets Manager
 
 ## [v1.16.1] - 2019-12-6
 
@@ -317,7 +339,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated the EC2 initialization scripts to use full volume size for docker storage
   - Changed the default ECS docker storage drive to `devicemapper`
 
-## [v1.14.5] - 2019-12-30
+## [v1.14.5] - 2019-12-30 - [BACKPORT]
 
 ### Updated
 
@@ -670,7 +692,7 @@ If you deploy with no distribution app your deployment will succeed but you may 
     - Removed `@cumulus/cmrjs/cmr` functions: `searchConcept`, `ingestConcept`, `deleteConcept`. Use the functions in `@cumulus/cmr-client` instead.
     - Removed `@cumulus/ingest/aws.getExecutionHistory`. Use `@cumulus/common/StepFunctions.getExecutionHistory` instead.
 
-## [v1.13.5] - 2019-08-29
+## [v1.13.5] - 2019-08-29 - [BACKPORT]
 
 ### Fixed
 
@@ -1473,7 +1495,7 @@ We may need to update the api documentation to reflect this.
 - **CUMULUS-746** - Move granule API correctly updates record in dynamo DB and cmr xml file
 - **CUMULUS-766** - Populate database fileSize field from S3 if value not present in Ingest payload
 
-## [v1.7.1] - 2018-07-27
+## [v1.7.1] - 2018-07-27 - [BACKPORT]
 
 ### Fixed
 - **CUMULUS-766** - Backport from 1.8.0 - Populate database fileSize field from S3 if value not present in Ingest payload

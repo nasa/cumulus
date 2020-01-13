@@ -5,7 +5,8 @@ const aws = require('@cumulus/common/aws');
 const request = require('supertest');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
-  createFakeJwtAuthToken
+  createFakeJwtAuthToken,
+  setAuthorizedOAuthUsers
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
 const models = require('../../models');
@@ -13,7 +14,6 @@ const models = require('../../models');
 process.env.invoke = 'granule-reconciliation-reports';
 process.env.stackName = 'test-stack';
 process.env.AccessTokensTable = randomString();
-process.env.UsersTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
@@ -23,22 +23,20 @@ const reportNames = [randomString(), randomString()];
 const reportDirectory = `${process.env.stackName}/reconciliation-reports`;
 
 let accessTokenModel;
-let jwtAuthToken;
-let userModel;
 
 test.before(async () => {
-  userModel = new models.User();
-  await userModel.createTable();
-
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
-
-  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 });
 
-test.beforeEach(async () => {
+test.beforeEach(async (t) => {
   process.env.system_bucket = 'test_system_bucket';
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
+
+  t.context.jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
   await Promise.all(reportNames.map((reportName) =>
     aws.s3().putObject({
@@ -54,7 +52,6 @@ test.afterEach.always(async () => {
 
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
-  await userModel.deleteTable();
 });
 
 test.serial('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -142,6 +139,8 @@ test.serial('CUMULUS-911 DELETE with pathParameters and with an invalid access t
 test.todo('CUMULUS-911 DELETE with pathParameters and with an unauthorized user returns an unauthorized response');
 
 test.serial('default returns list of reports', async (t) => {
+  const { jwtAuthToken } = t.context;
+
   const response = await request(app)
     .get('/reconciliationReports')
     .set('Accept', 'application/json')
@@ -154,6 +153,8 @@ test.serial('default returns list of reports', async (t) => {
 });
 
 test.serial('get a report', async (t) => {
+  const { jwtAuthToken } = t.context;
+
   await Promise.all(reportNames.map(async (reportName) => {
     const response = await request(app)
       .get(`/reconciliationReports/${reportName}`)
@@ -165,6 +166,8 @@ test.serial('get a report', async (t) => {
 });
 
 test.serial('get 404 if the report doesnt exist', async (t) => {
+  const { jwtAuthToken } = t.context;
+
   const response = await request(app)
     .get('/reconciliationReports/404file')
     .set('Accept', 'application/json')
@@ -175,6 +178,8 @@ test.serial('get 404 if the report doesnt exist', async (t) => {
 });
 
 test.serial('delete a report', async (t) => {
+  const { jwtAuthToken } = t.context;
+
   await Promise.all(reportNames.map(async (reportName) => {
     const response = await request(app)
       .delete(`/reconciliationReports/${reportName}`)
@@ -186,6 +191,8 @@ test.serial('delete a report', async (t) => {
 });
 
 test.serial('create a report', async (t) => {
+  const { jwtAuthToken } = t.context;
+
   const response = await request(app)
     .post('/reconciliationReports')
     .set('Accept', 'application/json')

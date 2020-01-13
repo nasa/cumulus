@@ -129,12 +129,16 @@ class Granule extends Manager {
     };
 
     if (process.env.cmr_oauth_provider === 'launchpad') {
-      const config = {
+      const passphrase = await commonAws.secretsManager().getSecretValue({
+        SecretId: process.env.launchpad_passphrase_secret_name
+      }).promise();
+
+      const token = await launchpad.getLaunchpadToken({
+        passphrase,
         api: process.env.launchpad_api,
-        passphrase: process.env.launchpad_passphrase,
         certificate: process.env.launchpad_certificate
-      };
-      const token = await launchpad.getLaunchpadToken(config);
+      });
+
       params.token = token;
     } else {
       const secret = await commonAws.secretsManager().getSecretValue({

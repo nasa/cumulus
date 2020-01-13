@@ -2,21 +2,16 @@
 
 const execa = require('execa');
 const fs = require('fs');
-const get = require('lodash.get');
-const { Config } = require('kes');
 const cloneDeep = require('lodash.clonedeep');
-const dotenv = require('dotenv');
 const mime = require('mime-types');
 const merge = require('lodash.merge');
 const path = require('path');
 const { promisify } = require('util');
 const pTimeout = require('p-timeout');
 const tempy = require('tempy');
-const yaml = require('js-yaml');
 
 const {
   aws: {
-    getS3Object,
     headObject,
     parseS3Uri,
     s3
@@ -24,12 +19,11 @@ const {
   stringUtils: { globalReplace },
   log
 } = require('@cumulus/common');
-const { isNil } = require('@cumulus/common/util');
+const { loadConfig, loadYmlFile } = require('@cumulus/integration-tests/config');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
 
 const promisedCopyFile = promisify(fs.copyFile);
-const promisedReadFile = promisify(fs.readFile);
 const promisedUnlink = promisify(fs.unlink);
 
 const timestampedName = (name) => `${name}_${(new Date().getTime())}`;
@@ -39,119 +33,6 @@ const createTestDataPath = (prefix) => `${prefix}-test-data/files`;
 const createTestSuffix = (prefix) => `_test-${prefix}`;
 
 const MILLISECONDS_IN_A_MINUTE = 60 * 1000;
-
-/**
- * Load a yml file
- *
- * @param {string} filePath - workflow yml filepath
- * @returns {Object} - JS Object representation of yml file
- */
-function loadYmlFile(filePath) {
-  return yaml.safeLoad(fs.readFileSync(filePath, 'utf8'));
-}
-
-function setConfig(config) {
-  const updatedConfig = cloneDeep(config);
-  if (!updatedConfig.test_configs) {
-    updatedConfig.test_configs = {};
-  }
-  if (updatedConfig.deployment === 'default') {
-    throw new Error('the default deployment cannot be used for integration tests');
-  }
-  updatedConfig.test_configs.buckets = updatedConfig.buckets;
-  updatedConfig.test_configs.deployment = updatedConfig.deployment;
-  updatedConfig.test_configs.cmr = updatedConfig.cmr;
-  updatedConfig.test_configs.ems = updatedConfig.ems;
-
-  return updatedConfig.test_configs;
-}
-
-function loadConfigFromKes(type) {
-  // make sure deployment env variable is set
-  if (!process.env.DEPLOYMENT) {
-    throw new Error(
-      'You MUST set DEPLOYMENT environment variable with the name' +
-      ' of your deployment before running tests.'
-    );
-  }
-
-  const params = {
-    app: {
-      deployment: process.env.DEPLOYMENT,
-      configFile: './app/config.yml',
-      kesFolder: './app'
-    },
-    iam: {
-      deployment: process.env.DEPLOYMENT,
-      configFile: './app/config.yml',
-      kesFolder: './iam',
-      stackName: '{{prefix}}}-iam'
-    }
-  };
-  const config = new Config(params[type]);
-  return setConfig(config);
-}
-
-const loadConfigYmlFile = (stackName) => {
-  const ymlConfigs = loadYmlFile('./config.yml');
-  const stackConfig = get(ymlConfigs, stackName, {});
-
-  return {
-    ...ymlConfigs.default,
-    ...stackConfig,
-    stackName
-  };
-};
-
-const loadEnvFile = async (filename) => {
-  try {
-    const envConfig = dotenv.parse(await promisedReadFile(filename));
-
-    Object.keys(envConfig).forEach((k) => {
-      if (isNil(process.env[k])) process.env[k] = envConfig[k];
-    });
-  } catch (err) {
-    if (err.code === 'ENOENT') return;
-    throw err;
-  }
-};
-
-const verifyRequiredEnvironmentVariables = () => {
-  [
-    'DEPLOYMENT',
-    'AWS_REGION',
-    'AWS_ACCOUNT_ID',
-    'EARTHDATA_CLIENT_ID',
-    'EARTHDATA_CLIENT_PASSWORD',
-    'EARTHDATA_PASSWORD',
-    'EARTHDATA_USERNAME',
-    'TOKEN_SECRET'
-  ].forEach((x) => {
-    if (isNil(process.env[x])) {
-      throw new Error(`Environment variable "${x}" is not set.`);
-    }
-  });
-};
-
-const loadConfig = async (type = 'app') => {
-  await loadEnvFile('./.env');
-  verifyRequiredEnvironmentVariables();
-
-  const configFromFile = process.env.KES_DEPLOYMENT === 'true' ?
-    loadConfigFromKes(type) :
-    loadConfigYmlFile(process.env.DEPLOYMENT);
-
-  const bucketsObject = await getS3Object(
-    configFromFile.bucket,
-    `${configFromFile.stackName}/workflows/buckets.json`
-  );
-  const buckets = JSON.parse(bucketsObject.Body.toString());
-
-  return {
-    ...configFromFile,
-    buckets
-  };
-};
 
 /**
  * Creates a new file using a template file and configuration object which

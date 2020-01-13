@@ -103,6 +103,13 @@ test.before(async () => {
     Name: process.env.cmr_password_secret_name,
     SecretString: randomString()
   }).promise();
+
+  // Store the launchpad passphrase
+  process.env.launchpad_passphrase_secret_name = randomString();
+  await aws.secretsManager().createSecret({
+    Name: process.env.launchpad_passphrase_secret_name,
+    SecretString: randomString()
+  }).promise();
 });
 
 test.beforeEach((t) => {
@@ -113,6 +120,10 @@ test.beforeEach((t) => {
 test.after.always(async () => {
   await aws.secretsManager().deleteSecret({
     SecretId: process.env.cmr_password_secret_name,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
+  await aws.secretsManager().deleteSecret({
+    SecretId: process.env.launchpad_passphrase_secret_name,
     ForceDeleteWithoutRecovery: true
   }).promise();
   await new Granule().deleteTable();
