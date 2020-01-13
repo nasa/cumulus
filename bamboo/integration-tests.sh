@@ -9,4 +9,14 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus dir
   cd /cumulus/
 fi
 
-cd example && npm test
+### confirmLock will fail if another stack has lock, *redeploy* if no lock, and continue if a lock is in place already
+node ./scripts/lock-stack.js confirmLock $GIT_SHA "$DEPLOYMENT"
+CHECK_STATUS = $?
+
+if [[ $CHECK_STATUS -eq 101 ]]; then
+echo "*** Stack is unlocked, reprovisioning"
+./deploy-dev-integration-test-stack.sh
+./bootstrap-integration-tests.sh
+fi
+
+cd example && node ./scripts/lock-stack.js confirmLock $GIT_SHA "$DEPLOYMENT" && npm test

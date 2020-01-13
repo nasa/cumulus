@@ -9,7 +9,14 @@
  * a string - 'key' and no sort key. The table name should be set in LOCK_TABLE_NAME
  */
 
-const { aws, log } = require('@cumulus/common');
+const { aws } = require('@cumulus/common');
+
+class CumulusLockError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = this.constructor.name;
+  }
+}
 
 class Mutex {
   constructor(docClient, tableName) {
@@ -17,30 +24,31 @@ class Mutex {
     this.tableName = tableName;
   }
 
-  async lock(key, timeoutMs, fn) {
-    log.info(`Attempting to obtain lock ${key}`);
-    // Note: this throws an exception if the lock fails, desirable for Tasks
-    await this.writeLock(key, timeoutMs);
-    log.info(`Obtained lock ${key}`);
-    let result = null;
-    try {
-      result = await fn();
-    } finally {
-      log.info(`Releasing lock ${key}`);
-      await this.unlock(key);
-      log.info(`Released lock ${key}`);
+  async checkMatchingSha(key, gitSHA) {
+    const params = {
+      TableName: this.tableName,
+      Key: {
+        key: key
+      }
+    };
+    debugger;
+    const record = await this.docClient.get(params).promise();
+    if (record.Item) {
+      debugger;
+      return (gitSHA === record.Item.sha ? 'true' : record.Item.sha);
     }
-    return result;
+    return 'noLock';
   }
 
-  writeLock(key, timeoutMs) {
-    const now = Date.now();
 
+  async writeLock(key, timeoutMs, gitSHA) {
+    const now = Date.now();
     const params = {
       TableName: this.tableName,
       Item: {
         key: key,
-        expire: now + timeoutMs
+        expire: now + timeoutMs,
+        sha: gitSHA
       },
       ConditionExpression: '#key <> :key OR (#key = :key AND #expire < :expire)',
       ExpressionAttributeNames: {
@@ -55,47 +63,75 @@ class Mutex {
     return this.docClient.put(params).promise();
   }
 
-  unlock(key) {
-    return this.docClient.delete({
+  async unlock(key, gitSHA) {
+    const params = {
       TableName: this.tableName,
-      Key: { key: key }
-    }).promise();
+      Key: { key: key },
+      ConditionExpression: '#sha = :sha OR attribute_not_exists(sha)',
+      ExpressionAttributeNames: {
+        '#sha': 'sha'
+      },
+      ExpressionAttributeValues: {
+        ':sha': gitSHA
+      }
+    };
+
+    let deleteResult;
+    try {
+      deleteResult = await this.docClient.delete(params).promise();
+    } catch (e) {
+      const shaCheck = await this.checkMatchingSha(key, gitSHA);
+      if (!['true', 'noLock'].includes(shaCheck)) {
+        throw new CumulusLockError(`Cannot unlock stack, lock already exists from another build with SHA ${shaCheck}, error: ${e}`);
+      }
+      throw e;
+    }
+    return deleteResult;
   }
 }
 
-
 const LOCK_TABLE_NAME = 'cumulus-int-test-lock';
-const STACK_EXPIRATION_MS = 120 * 60 * 1000; // 2 hours
+const STACK_EXPIRATION_MS = 120 * 60 * 1000; // 2 hourst
 
-function performLock(mutex, deployment) {
-  return mutex.writeLock(deployment, STACK_EXPIRATION_MS);
+function performLock(mutex, deployment, gitSHA) {
+  return mutex.writeLock(deployment, STACK_EXPIRATION_MS, gitSHA);
 }
 
-function removeLock(mutex, deployment) {
-  return mutex.unlock(deployment);
+async function removeLock(mutex, deployment, gitSHA) {
+  return mutex.unlock(deployment, gitSHA);
 }
 
-function updateLock(lockFile, deployment) {
+async function runLock(operation, gitSHA, deployment, lockFile) {
   const dynamodbDocClient = aws.dynamodbDocClient({
     convertEmptyValues: true
   });
   const mutex = new Mutex(dynamodbDocClient, LOCK_TABLE_NAME);
-
-  if (lockFile === 'true') {
-    return performLock(mutex, deployment);
+  if (operation === 'confirmLock') {
+    const lockSHA = await mutex.checkMatchingSha(deployment, gitSHA);
+    if (lockSHA === 'noLock') {
+      console.log(`No lockfile exists: ${deployment} - ${gitSHA}`);
+      process.exitCode = 101;
+    } else if (lockSHA !== 'true' ) {
+      throw new Error(`Build with SHA ${JSON.stringify(lockSHA)} has provisioned this stack - you must re-run the full build`);
+    }
+    return Promise.resolve();
   }
-  return removeLock(mutex, deployment);
+  if (operation === 'lock') {
+    if (lockFile === 'true') {
+      return performLock(mutex, deployment, gitSHA);
+    }
+    return removeLock(mutex, deployment, gitSHA);
+  }
+  throw new Error(`Invalid operation ${operation} selected.   Please choose 'lock' or 'confirmLock'`);
 }
 
 // Assuming this is run as:
-// node lock-stack.js (true|false) deployment-name
+// node lock-stack.js (true|false) deployment-name SHA
 // true to lock, false to unlock
-updateLock(process.argv[2], process.argv[3]).catch((e) => {
-  console.log(e);
+runLock(process.argv[2], process.argv[3], process.argv[4], process.argv[5]).catch((e) => {
   console.dir(e);
   process.exitCode = 100;
-  if (!e.code === 'ConditionalCheckFailedException') {
-    console.log(e);
+  if (!['ConditionalCheckFailedException', 'CumulusLockError'].includes(e.code)) {
     process.exitCode = 1;
   }
 });
