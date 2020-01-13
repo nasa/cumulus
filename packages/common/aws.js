@@ -1,7 +1,7 @@
 'use strict';
 
 const awsClient = require('@cumulus/aws-client/client');
-const cfUtils = require('@cumulus/aws-client/Cloudformation');
+const cfUtils = require('@cumulus/aws-client/CloudFormation');
 const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
 const dynamoDbUtils = require('@cumulus/aws-client/DynamoDb');
