@@ -5,12 +5,6 @@ const sinon = require('sinon');
 const { throttleOnce } = require('@cumulus/common/test-utils');
 const awsServices = require('../services');
 const StepFunctions = require('../StepFunctions');
-
-// const {
-//   fromSfnExecutionName,
-//   toSfnExecutionName,
-//   pullStepFunctionEvent
-// } = require('../step-functions');
 const s3Utils = require('../S3');
 
 const runWithStubbedAndThrottledSfnOperation = async (operation, response, fn) => {
