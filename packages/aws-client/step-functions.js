@@ -1,5 +1,5 @@
 const { JSONPath } = require('jsonpath-plus');
-const s3Utils = require('./s3');
+const s3Utils = require('./S3');
 
 /**
  * Given a character, replaces the JS unicode-escape sequence for the character
