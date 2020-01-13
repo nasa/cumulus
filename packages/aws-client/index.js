@@ -1,0 +1,14 @@
+exports.client = require('./client');
+exports.cloudformation = require('./cloudformation');
+exports.dynamo = require('./dynamo');
+exports.DynamoDb = require('./DynamoDb');
+exports.DynamoDbSearchQueue = require('./DynamoDbSearchQueue');
+exports.s3 = require('./s3');
+exports.S3ListObjectsV2Queue = require('./S3ListObjectsV2Queue');
+exports.services = require('./services');
+exports.sns = require('./sns');
+exports.sqs = require('./sqs');
+exports.stepFunctions = require('./step-functions');
+exports.StepFunctions = require('./StepFunctions');
+exports.testUtils = require('./test-utils');
+exports.utils = require('./utils');

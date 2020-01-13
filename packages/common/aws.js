@@ -2,9 +2,10 @@
 
 const AWS = require('aws-sdk');
 const fs = require('fs');
-const { JSONPath } = require('jsonpath-plus');
+const get = require('lodash.get');
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
+const { JSONPath } = require('jsonpath-plus');
 const pMap = require('p-map');
 const pRetry = require('p-retry');
 const pump = require('pump');
@@ -945,15 +946,7 @@ exports.receiveSQSMessages = async (queueUrl, options) => {
 
   const messages = await exports.sqs().receiveMessage(params).promise();
 
-  // convert body from string to js object
-  if (Object.prototype.hasOwnProperty.call(messages, 'Messages')) {
-    messages.Messages.forEach((mes) => {
-      mes.Body = JSON.parse(mes.Body); // eslint-disable-line no-param-reassign
-    });
-
-    return messages.Messages;
-  }
-  return [];
+  return get(messages, 'Messages', []);
 };
 
 /**

@@ -4,6 +4,7 @@
 
 const orderBy = require('lodash.orderby');
 const cloneDeep = require('lodash.clonedeep');
+const isEqual = require('lodash.isequal');
 const merge = require('lodash.merge');
 const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
@@ -11,6 +12,7 @@ const fs = require('fs-extra');
 const pLimit = require('p-limit');
 const pWaitFor = require('p-wait-for');
 const pMap = require('p-map');
+const moment = require('moment');
 
 const { getWorkflowTemplate, getWorkflowArn } = require('@cumulus/common/workflows');
 const { pullStepFunctionEvent } = require('@cumulus/common/aws');
@@ -100,6 +102,15 @@ async function getClusterArn(stackName) {
   }
 
   return matchingArns[0];
+}
+
+async function getExecutionInput(executionArn) {
+  const { input } = await StepFunctions.describeExecution({ executionArn });
+  return input;
+}
+
+async function getExecutionInputObject(executionArn) {
+  return JSON.parse(await getExecutionInput(executionArn));
 }
 
 /**
@@ -726,18 +737,15 @@ async function buildAndStartWorkflow(
 }
 
 /**
- * returns the most recently executed workflows for the workflow type.
+ * returns the most recently executed workflows for the specified state machine.
  *
- * @param {string} workflowName - name of the workflow to get executions for
- * @param {string} stackName - stack name
- * @param {string} bucket - S3 internal bucket name
+ * @param {string} workflowArn - name of the workflow to get executions for
  * @param {number} maxExecutionResults - max results to return
  * @returns {Array<Object>} array of state function executions.
  */
-async function getExecutions(workflowName, stackName, bucket, maxExecutionResults = 10) {
-  const kinesisTriggerTestStpFnArn = await getWorkflowArn(stackName, bucket, workflowName);
+async function getExecutions(workflowArn, maxExecutionResults = 10) {
   const data = await StepFunctions.listExecutions({
-    stateMachineArn: kinesisTriggerTestStpFnArn,
+    stateMachineArn: workflowArn,
     maxResults: maxExecutionResults
   });
   return (orderBy(data.executions, ['startDate'], ['desc']));
@@ -771,11 +779,12 @@ async function waitForTestExecutionStart({
   maxWaitSeconds = maxWaitForStartedExecutionSecs
 }) {
   let timeWaitedSecs = 0;
+  const workflowArn = await getWorkflowArn(stackName, bucket, workflowName);
   /* eslint-disable no-await-in-loop */
   while (timeWaitedSecs < maxWaitSeconds) {
     await sleep(waitPeriodMs);
     timeWaitedSecs += (waitPeriodMs / 1000);
-    const executions = await getExecutions(workflowName, stackName, bucket);
+    const executions = await getExecutions(workflowArn);
 
     for (let executionCtr = 0; executionCtr < executions.length; executionCtr += 1) {
       const execution = executions[executionCtr];
@@ -792,6 +801,71 @@ async function waitForTestExecutionStart({
   throw new Error('Never found started workflow.');
 }
 
+/**
+ * Deep compares two payloads to ensure payload contains all expected values
+ * Payload may or may not contain additional values that we don't care about.
+ *
+ * @param {Object} payload - actual payload
+ * @param {Object} expectedPayload - expected payload
+ * @returns {boolean} whether payloads are equal
+ */
+const payloadContainsExpected = (payload, expectedPayload) => {
+  let outcome = true;
+  Object.keys(expectedPayload).forEach((key) => {
+    if (!isEqual(payload[key], expectedPayload[key])) {
+      outcome = false;
+    }
+  });
+  return outcome;
+};
+
+/**
+ * Wait for a certain number of test stepfunction executions to exist.
+ *
+ * @param {Object} expectedPayload - expected payload for execution
+ * @param {string} workflowArn - name of the workflow to wait for
+ * @param {integer} maxWaitTimeSecs - maximum time to wait for the correct execution in seconds
+ * @param {integer} numExecutions - The number of executions to wait for
+ * used to query if the workflow has started.
+ * @returns {Array<Object>} [{executionArn: <arn>, status: <status>}]
+ * @throws {Error} any AWS error, re-thrown from AWS execution or 'Workflow Never Started'.
+ */
+async function waitForAllTestSf(
+  expectedPayload,
+  workflowArn,
+  maxWaitTimeSecs,
+  numExecutions
+) {
+  let timeWaitedSecs = 0;
+  const workflowExecutions = [];
+  const startTime = moment();
+
+  /* eslint-disable no-await-in-loop */
+  while (timeWaitedSecs < maxWaitTimeSecs && workflowExecutions.length < numExecutions) {
+    await sleep(waitPeriodMs);
+    timeWaitedSecs = (moment.duration(moment().diff(startTime)).asSeconds());
+    const executions = await getExecutions(workflowArn, 100);
+    // Search all recent executions for target payload
+    for (let ctr = 0; ctr < executions.length; ctr += 1) {
+      const execution = executions[ctr];
+      if (!workflowExecutions.find((e) => e.executionArn === execution.executionArn)) {
+        const executionInput = await getExecutionInputObject(execution.executionArn);
+        if (executionInput !== null
+          && payloadContainsExpected(executionInput.payload, expectedPayload)) {
+          workflowExecutions.push(execution);
+          if (workflowExecutions.length === numExecutions) {
+            break;
+          }
+        }
+      }
+    }
+  }
+  /* eslint-enable no-await-in-loop */
+
+  if (workflowExecutions.length > 0) return workflowExecutions;
+  throw new Error('Never found started workflow.');
+}
+
 module.exports = {
   api,
   rulesApi,
@@ -805,6 +879,7 @@ module.exports = {
   executeWorkflow,
   buildAndExecuteWorkflow,
   buildAndStartWorkflow,
+  waitForAllTestSf,
   waitForCompletedExecution,
   waitForTestExecutionStart,
   ActivityStep,

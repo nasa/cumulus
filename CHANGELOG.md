@@ -11,11 +11,27 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1686**
   - `ecs_cluster_instance_image_id` is now a *required* variable of the `cumulus` module, instead of optional.
 
+### Added
+
+- **CUMULUS-1040**
+  - Added `@cumulus/aws-client` package to provide utilities for working with AWS services and the Node.js AWS SDK
+  - Added `@cumulus/errors` package which exports error classes for use in Cumulus workflow code
+
 ### Changed
 
 - **CUMULUS-1686**
   - Changed `ecs_cluster_instance_image_id` to be a required variable of the `cumulus` module and removed the default value.
     The default was not available across accounts and regions, nor outside of NGAP and therefore not particularly useful.
+
+- **CUMULUS-1688**
+  - Updated `@cumulus/aws.receiveSQSMessages` not to replace `message.Body` with a parsed object. This behavior was undocumented and confusing as received messages appeared to contradict AWS docs that state `message.Body` is always a string.
+  - Replaced `sf_watcher` CloudWatch rule from `cloudwatch-events.tf` with an EventSourceMapping on `sqs2sf` mapped to the `start_sf` SQS queue (in `event-sources.tf`).
+  - Updated `sqs2sf` with an EventSourceMapping handler and unit test.
+
+### Fixed
+
+- **CUMULUS-1664**
+  - Updated `dbIndexer` Lambda to remove hardcoded references to DynamoDB table names.
 
 ### Removed
 
@@ -58,16 +74,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Remove the DynamoDB Users table. The list of OAuth users who are allowed to
     use the API is now stored in S3.
   - The CMR password and Launchpad passphrase are now stored in Secrets Manager
-
-### Fixed
-
-- **CUMULUS-1664**
-  - Updated `dbIndexer` Lambda to remove hardcoded references to DynamoDB table names.
-
-### Removed
-
-- **CUMULUS-1481**
-  - removed `process` config and output from PostToCmr as it was not required by the task nor downstream steps, and should still be in the output message's `meta` regardless.
 
 ## [v1.16.1] - 2019-12-6
 
