@@ -5,7 +5,7 @@ const range = require('lodash.range');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const awsServices = require('../services');
-const { recursivelyDeleteS3Bucket } = require('../s3');
+const { recursivelyDeleteS3Bucket } = require('../S3');
 const S3ListObjectsV2Queue = require('../S3ListObjectsV2Queue');
 
 test.beforeEach((t) => {

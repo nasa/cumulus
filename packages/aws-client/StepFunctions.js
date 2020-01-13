@@ -187,7 +187,7 @@ const toSfnExecutionName = (fields, delimiter = '__') => {
     sfnUnsafeChars = `(${delimiter}|${sfnUnsafeChars})`;
   }
   const regex = new RegExp(sfnUnsafeChars, 'g');
-  return fields.map((s) => s.replace(regex, exports.unicodeEscape).replace(/\\/g, '!'))
+  return fields.map((s) => s.replace(regex, unicodeEscape).replace(/\\/g, '!'))
     .join(delimiter)
     .substring(0, 80);
 };
