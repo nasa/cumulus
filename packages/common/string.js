@@ -28,7 +28,7 @@ const { deprecate, isNull, negate } = require('./util');
  * @static
  */
 const unicodeEscape = (str, regex = /[\s\S]/g) => {
-  deprecate('@cumulus/common/string/unicodeEscape', '1.17.1', '@cumulus/aws-client/step-functions/unicodeEscape');
+  deprecate('@cumulus/common/string/unicodeEscape', '1.17.0', '@cumulus/aws-client/step-functions/unicodeEscape');
   return stepFunctionUtils.unicodeEscape(str, regex);
 };
 

@@ -12,7 +12,7 @@ const testUtils = require('@cumulus/aws-client/test-utils');
 const { deprecate } = require('./util');
 
 exports.inTestMode = () => {
-  deprecate('@cumulus/common/test-utils/inTestMode', '1.17.1', '@cumulus/aws-client/test-utils/inTestMode');
+  deprecate('@cumulus/common/test-utils/inTestMode', '1.17.0', '@cumulus/aws-client/test-utils/inTestMode');
   return testUtils.inTestMode();
 };
 

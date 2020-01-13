@@ -20,7 +20,7 @@ const { deprecate } = require('./util');
  * @kind function
  */
 const describeExecution = (params) => {
-  deprecate('@cumulus/common/StepFunctions.describeExecution', '1.17.1', '@cumulus/aws-client/StepFunctions.describeExecution');
+  deprecate('@cumulus/common/StepFunctions.describeExecution', '1.17.0', '@cumulus/aws-client/StepFunctions.describeExecution');
   return StepFunctions.describeExecution(params);
 };
 
@@ -39,7 +39,7 @@ const describeExecution = (params) => {
  * @kind function
  */
 const describeStateMachine = (params) => {
-  deprecate('@cumulus/common/StepFunctions.describeStateMachine', '1.17.1', '@cumulus/aws-client/StepFunctions.describeStateMachine');
+  deprecate('@cumulus/common/StepFunctions.describeStateMachine', '1.17.0', '@cumulus/aws-client/StepFunctions.describeStateMachine');
   return StepFunctions.describeStateMachine(params);
 };
 
@@ -56,7 +56,7 @@ const describeStateMachine = (params) => {
  * @kind function
  */
 const executionExists = (executionArn) => {
-  deprecate('@cumulus/common/StepFunctions.executionExists', '1.17.1', '@cumulus/aws-client/StepFunctions.executionExists');
+  deprecate('@cumulus/common/StepFunctions.executionExists', '1.17.0', '@cumulus/aws-client/StepFunctions.executionExists');
   return StepFunctions.doesExecutionExist(StepFunctions.describeExecution({ executionArn }));
 };
 
@@ -75,7 +75,7 @@ const executionExists = (executionArn) => {
  * @kind function
  */
 const getExecutionHistory = (params) => {
-  deprecate('@cumulus/common/StepFunctions.getExecutionHistory', '1.17.1', '@cumulus/aws-client/StepFunctions.getExecutionHistory');
+  deprecate('@cumulus/common/StepFunctions.getExecutionHistory', '1.17.0', '@cumulus/aws-client/StepFunctions.getExecutionHistory');
   return StepFunctions.getExecutionHistory(params);
 };
 
@@ -94,7 +94,7 @@ const getExecutionHistory = (params) => {
  * @kind function
  */
 const listExecutions = (params) => {
-  deprecate('@cumulus/common/StepFunctions.listExecutions', '1.17.1', '@cumulus/aws-client/StepFunctions.listExecutions');
+  deprecate('@cumulus/common/StepFunctions.listExecutions', '1.17.0', '@cumulus/aws-client/StepFunctions.listExecutions');
   return StepFunctions.listExecutions(params);
 };
 

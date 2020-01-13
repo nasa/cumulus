@@ -19,74 +19,74 @@ const { deprecate } = require('./util');
 exports.region = awsClient.region;
 
 exports.apigateway = () => {
-  deprecate('@cumulus/common/aws/apigateway', '1.17.1', '@cumulus/aws-client/aws/apigateway');
+  deprecate('@cumulus/common/aws/apigateway', '1.17.0', '@cumulus/aws-client/aws/apigateway');
   return awsServices.apigateway();
 };
 exports.ecs = () => {
-  deprecate('@cumulus/common/aws/ecs', '1.17.1', '@cumulus/aws-client/aws/ecs');
+  deprecate('@cumulus/common/aws/ecs', '1.17.0', '@cumulus/aws-client/aws/ecs');
   return awsServices.ecs();
 };
 exports.s3 = () => {
-  deprecate('@cumulus/common/aws/s3', '1.17.1', '@cumulus/aws-client/aws/s3');
+  deprecate('@cumulus/common/aws/s3', '1.17.0', '@cumulus/aws-client/aws/s3');
   return awsServices.s3();
 };
 exports.kinesis = () => {
-  deprecate('@cumulus/common/aws/kinesis', '1.17.1', '@cumulus/aws-client/aws/kinesis');
+  deprecate('@cumulus/common/aws/kinesis', '1.17.0', '@cumulus/aws-client/aws/kinesis');
   return awsServices.kinesis();
 };
 exports.lambda = () => {
-  deprecate('@cumulus/common/aws/lambda', '1.17.1', '@cumulus/aws-client/aws/lambda');
+  deprecate('@cumulus/common/aws/lambda', '1.17.0', '@cumulus/aws-client/aws/lambda');
   return awsServices.lambda();
 };
 exports.sqs = () => {
-  deprecate('@cumulus/common/aws/sqs', '1.17.1', '@cumulus/aws-client/aws/sqs');
+  deprecate('@cumulus/common/aws/sqs', '1.17.0', '@cumulus/aws-client/aws/sqs');
   return awsServices.sqs();
 };
 exports.cloudwatchevents = () => {
-  deprecate('@cumulus/common/aws/cloudwatchevents', '1.17.1', '@cumulus/aws-client/aws/cloudwatchevents');
+  deprecate('@cumulus/common/aws/cloudwatchevents', '1.17.0', '@cumulus/aws-client/aws/cloudwatchevents');
   return awsServices.cloudwatchevents();
 };
 exports.cloudwatchlogs = () => {
-  deprecate('@cumulus/common/aws/cloudwatchlogs', '1.17.1', '@cumulus/aws-client/aws/cloudwatchlogs');
+  deprecate('@cumulus/common/aws/cloudwatchlogs', '1.17.0', '@cumulus/aws-client/aws/cloudwatchlogs');
   return awsServices.cloudwatchlogs();
 };
 exports.cloudwatch = () => {
-  deprecate('@cumulus/common/aws/cloudwatch', '1.17.1', '@cumulus/aws-client/aws/cloudwatch');
+  deprecate('@cumulus/common/aws/cloudwatch', '1.17.0', '@cumulus/aws-client/aws/cloudwatch');
   return awsServices.cloudwatch();
 };
 exports.dynamodb = () => {
-  deprecate('@cumulus/common/aws/dynamodb', '1.17.1', '@cumulus/aws-client/aws/dynamodb');
+  deprecate('@cumulus/common/aws/dynamodb', '1.17.0', '@cumulus/aws-client/aws/dynamodb');
   return awsServices.dynamodb();
 };
 exports.dynamodbstreams = () => {
-  deprecate('@cumulus/common/aws/dynamodbstreams', '1.17.1', '@cumulus/aws-client/aws/dynamodbstreams');
+  deprecate('@cumulus/common/aws/dynamodbstreams', '1.17.0', '@cumulus/aws-client/aws/dynamodbstreams');
   return awsServices.dynamodbstreams();
 };
 exports.dynamodbDocClient = () => {
-  deprecate('@cumulus/common/aws/dynamodbDocClient', '1.17.1', '@cumulus/aws-client/aws/dynamodbDocClient');
+  deprecate('@cumulus/common/aws/dynamodbDocClient', '1.17.0', '@cumulus/aws-client/aws/dynamodbDocClient');
   return awsServices.dynamodbDocClient();
 };
 exports.sfn = () => {
-  deprecate('@cumulus/common/aws/sfn', '1.17.1', '@cumulus/aws-client/aws/sfn');
+  deprecate('@cumulus/common/aws/sfn', '1.17.0', '@cumulus/aws-client/aws/sfn');
   return awsServices.sfn();
 };
 exports.cf = () => {
-  deprecate('@cumulus/common/aws/cf', '1.17.1', '@cumulus/aws-client/aws/cf');
+  deprecate('@cumulus/common/aws/cf', '1.17.0', '@cumulus/aws-client/aws/cf');
   return awsServices.cf();
 };
 exports.sns = () => {
-  deprecate('@cumulus/common/aws/sns', '1.17.1', '@cumulus/aws-client/aws/sns');
+  deprecate('@cumulus/common/aws/sns', '1.17.0', '@cumulus/aws-client/aws/sns');
   return awsServices.sns();
 };
 exports.secretsManager = () => {
-  deprecate('@cumulus/common/aws/secretsManager', '1.17.1', '@cumulus/aws-client/aws/secretsManager');
+  deprecate('@cumulus/common/aws/secretsManager', '1.17.0', '@cumulus/aws-client/aws/secretsManager');
   return awsServices.secretsManager();
 };
 
 /** Secrets Manager utils */
 
 exports.getSecretString = (SecretId) => {
-  deprecate('@cumulus/common/aws/getSecretString', '1.17.1', '@cumulus/aws-client/secrets-manager/getSecretString');
+  deprecate('@cumulus/common/aws/getSecretString', '1.17.0', '@cumulus/aws-client/secrets-manager/getSecretString');
   return secretsManagerUtils.getSecretString(SecretId);
 };
 
@@ -101,7 +101,7 @@ exports.getSecretString = (SecretId) => {
  * @returns {Array<Object>} The resources belonging to the stack
  */
 exports.describeCfStackResources = (stackName) => {
-  deprecate('@cumulus/common/aws/describeCfStackResources', '1.17.1', '@cumulus/aws-client/cloudformation/describeCfStackResources');
+  deprecate('@cumulus/common/aws/describeCfStackResources', '1.17.0', '@cumulus/aws-client/cloudformation/describeCfStackResources');
   return cfUtils.describeCfStackResources(stackName);
 };
 
@@ -114,7 +114,7 @@ exports.describeCfStackResources = (stackName) => {
  * @returns {string} the full S3 key
  */
 exports.s3Join = (...args) => {
-  deprecate('@cumulus/common/aws/s3Join', '1.17.1', '@cumulus/aws-client/s3/s3Join');
+  deprecate('@cumulus/common/aws/s3Join', '1.17.0', '@cumulus/aws-client/s3/s3Join');
   return s3Utils.s3Join(...args);
 };
 
@@ -126,7 +126,7 @@ exports.s3Join = (...args) => {
 * @returns {string} - tags query string
 */
 exports.s3TagSetToQueryString = (tagset) => {
-  deprecate('@cumulus/common/aws/s3TagSetToQueryString', '1.17.1', '@cumulus/aws-client/s3/s3TagSetToQueryString');
+  deprecate('@cumulus/common/aws/s3TagSetToQueryString', '1.17.0', '@cumulus/aws-client/s3/s3TagSetToQueryString');
   return s3Utils.s3TagSetToQueryString(tagset);
 };
 
@@ -138,7 +138,7 @@ exports.s3TagSetToQueryString = (tagset) => {
  * @returns {Promise} - promise of the object being deleted
  */
 exports.deleteS3Object = (bucket, key) => {
-  deprecate('@cumulus/common/aws/deleteS3Object', '1.17.1', '@cumulus/aws-client/s3/deleteS3Object');
+  deprecate('@cumulus/common/aws/deleteS3Object', '1.17.0', '@cumulus/aws-client/s3/deleteS3Object');
   return s3Utils.deleteS3Object(bucket, key);
 };
 
@@ -150,7 +150,7 @@ exports.deleteS3Object = (bucket, key) => {
  *                               if the object exists
  */
 exports.s3ObjectExists = (params) => {
-  deprecate('@cumulus/common/aws/s3ObjectExists', '1.17.1', '@cumulus/aws-client/s3/s3ObjectExists');
+  deprecate('@cumulus/common/aws/s3ObjectExists', '1.17.0', '@cumulus/aws-client/s3/s3ObjectExists');
   return s3Utils.s3ObjectExists(params);
 };
 
@@ -161,7 +161,7 @@ exports.s3ObjectExists = (params) => {
 * @returns {Promise} - promise of the object being put
 **/
 exports.s3PutObject = (params) => {
-  deprecate('@cumulus/common/aws/s3PutObject', '1.17.1', '@cumulus/aws-client/s3/s3PutObject');
+  deprecate('@cumulus/common/aws/s3PutObject', '1.17.0', '@cumulus/aws-client/s3/s3PutObject');
   return s3Utils.s3PutObject(params);
 };
 
@@ -172,7 +172,7 @@ exports.s3PutObject = (params) => {
 * @returns {Promise} - promise of the object being copied
 **/
 exports.s3CopyObject = (params) => {
-  deprecate('@cumulus/common/aws/s3CopyObject', '1.17.1', '@cumulus/aws-client/s3/s3CopyObject');
+  deprecate('@cumulus/common/aws/s3CopyObject', '1.17.0', '@cumulus/aws-client/s3/s3CopyObject');
   return s3Utils.s3CopyObject(params);
 };
 
@@ -185,7 +185,7 @@ exports.s3CopyObject = (params) => {
  * @returns {Promise} see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
  */
 exports.promiseS3Upload = (params) => {
-  deprecate('@cumulus/common/aws/promiseS3Upload', '1.17.1', '@cumulus/aws-client/s3/promiseS3Upload');
+  deprecate('@cumulus/common/aws/promiseS3Upload', '1.17.0', '@cumulus/aws-client/s3/promiseS3Upload');
   return s3Utils.promiseS3Upload(params);
 };
 
@@ -197,7 +197,7 @@ exports.promiseS3Upload = (params) => {
  * @returns {Promise<string>} - returns filename if successful
  */
 exports.downloadS3File = (s3Obj, filepath) => {
-  deprecate('@cumulus/common/aws/downloadS3File', '1.17.1', '@cumulus/aws-client/s3/downloadS3File');
+  deprecate('@cumulus/common/aws/downloadS3File', '1.17.0', '@cumulus/aws-client/s3/downloadS3File');
   return s3Utils.downloadS3File(s3Obj, filepath);
 };
 
@@ -209,7 +209,7 @@ exports.downloadS3File = (s3Obj, filepath) => {
 * @returns {Promise} - returns response from `S3.headObject` as a promise
 **/
 exports.headObject = (Bucket, Key) => {
-  deprecate('@cumulus/common/aws/headObject', '1.17.1', '@cumulus/aws-client/s3/headObject');
+  deprecate('@cumulus/common/aws/headObject', '1.17.0', '@cumulus/aws-client/s3/headObject');
   return s3Utils.headObject(Bucket, Key);
 };
 
@@ -221,7 +221,7 @@ exports.headObject = (Bucket, Key) => {
  * @returns {Promise<integer>} - object size, in bytes
  */
 exports.getObjectSize = (bucket, key) => {
-  deprecate('@cumulus/common/aws/getObjectSize', '1.17.1', '@cumulus/aws-client/s3/getObjectSize');
+  deprecate('@cumulus/common/aws/getObjectSize', '1.17.0', '@cumulus/aws-client/s3/getObjectSize');
   return s3Utils.getObjectSize(bucket, key);
 };
 
@@ -233,7 +233,7 @@ exports.getObjectSize = (bucket, key) => {
 * @returns {Promise} - returns response from `S3.getObjectTagging` as a promise
 **/
 exports.s3GetObjectTagging = (bucket, key) => {
-  deprecate('@cumulus/common/aws/s3GetObjectTagging', '1.17.1', '@cumulus/aws-client/s3/s3GetObjectTagging');
+  deprecate('@cumulus/common/aws/s3GetObjectTagging', '1.17.0', '@cumulus/aws-client/s3/s3GetObjectTagging');
   return s3Utils.s3GetObjectTagging(bucket, key);
 };
 
@@ -247,7 +247,7 @@ exports.s3GetObjectTagging = (bucket, key) => {
 * @returns {Promise} - returns response from `S3.getObjectTagging` as a promise
 **/
 exports.s3PutObjectTagging = (Bucket, Key, Tagging) => {
-  deprecate('@cumulus/common/aws/s3PutObjectTagging', '1.17.1', '@cumulus/aws-client/s3/s3PutObjectTagging');
+  deprecate('@cumulus/common/aws/s3PutObjectTagging', '1.17.0', '@cumulus/aws-client/s3/s3PutObjectTagging');
   return s3Utils.s3PutObjectTagging(Bucket, Key, Tagging);
 };
 
@@ -262,22 +262,22 @@ exports.s3PutObjectTagging = (Bucket, Key, Tagging) => {
 * @returns {Promise} - returns response from `S3.getObject` as a promise
 **/
 exports.getS3Object = (Bucket, Key, retryOptions = { retries: 0 }) => {
-  deprecate('@cumulus/common/aws/getS3Object', '1.17.1', '@cumulus/aws-client/s3/getS3Object');
+  deprecate('@cumulus/common/aws/getS3Object', '1.17.0', '@cumulus/aws-client/s3/getS3Object');
   return s3Utils.getS3Object(Bucket, Key, retryOptions);
 };
 
 exports.getJsonS3Object = (bucket, key) => {
-  deprecate('@cumulus/common/aws/getJsonS3Object', '1.17.1', '@cumulus/aws-client/s3/getJsonS3Object');
+  deprecate('@cumulus/common/aws/getJsonS3Object', '1.17.0', '@cumulus/aws-client/s3/getJsonS3Object');
   return s3Utils.getJsonS3Object(bucket, key);
 };
 
 exports.putJsonS3Object = (bucket, key, data) => {
-  deprecate('@cumulus/common/aws/putJsonS3Object', '1.17.1', '@cumulus/aws-client/s3/putJsonS3Object');
+  deprecate('@cumulus/common/aws/putJsonS3Object', '1.17.0', '@cumulus/aws-client/s3/putJsonS3Object');
   return s3Utils.putJsonS3Object(bucket, key, data);
 };
 
 exports.getS3ObjectReadStream = (bucket, key) => {
-  deprecate('@cumulus/common/aws/getS3ObjectReadStream', '1.17.1', '@cumulus/aws-client/s3/getS3ObjectReadStream');
+  deprecate('@cumulus/common/aws/getS3ObjectReadStream', '1.17.0', '@cumulus/aws-client/s3/getS3ObjectReadStream');
   return s3Utils.getS3ObjectReadStream(bucket, key);
 };
 
@@ -290,12 +290,12 @@ exports.getS3ObjectReadStream = (bucket, key) => {
 * @returns {Promise} returns the response from `S3.headObject` as a promise
 **/
 exports.fileExists = (bucket, key) => {
-  deprecate('@cumulus/common/aws/fileExists', '1.17.1', '@cumulus/aws-client/s3/fileExists');
+  deprecate('@cumulus/common/aws/fileExists', '1.17.0', '@cumulus/aws-client/s3/fileExists');
   return s3Utils.fileExists(bucket, key);
 };
 
 exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
-  deprecate('@cumulus/common/aws/downloadS3Files', '1.17.1', '@cumulus/aws-client/s3/downloadS3Files');
+  deprecate('@cumulus/common/aws/downloadS3Files', '1.17.0', '@cumulus/aws-client/s3/downloadS3Files');
   return s3Utils.downloadS3Files(s3Objs, dir, s3opts);
 };
 
@@ -307,7 +307,7 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
  *   from the deletion operations
  */
 exports.deleteS3Files = (s3Objs) => {
-  deprecate('@cumulus/common/aws/deleteS3Files', '1.17.1', '@cumulus/aws-client/s3/deleteS3Files');
+  deprecate('@cumulus/common/aws/deleteS3Files', '1.17.0', '@cumulus/aws-client/s3/deleteS3Files');
   return s3Utils.deleteS3Files(s3Objs);
 };
 
@@ -318,12 +318,12 @@ exports.deleteS3Files = (s3Objs) => {
 * @returns {Promise} - the promised result of `S3.deleteBucket`
 **/
 exports.recursivelyDeleteS3Bucket = (bucket) => {
-  deprecate('@cumulus/common/aws/recursivelyDeleteS3Bucket', '1.17.1', '@cumulus/aws-client/s3/recursivelyDeleteS3Bucket');
+  deprecate('@cumulus/common/aws/recursivelyDeleteS3Bucket', '1.17.0', '@cumulus/aws-client/s3/recursivelyDeleteS3Bucket');
   return s3Utils.recursivelyDeleteS3Bucket(bucket);
 };
 
 exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
-  deprecate('@cumulus/common/aws/uploadS3Files', '1.17.1', '@cumulus/aws-client/s3/uploadS3Files');
+  deprecate('@cumulus/common/aws/uploadS3Files', '1.17.0', '@cumulus/aws-client/s3/uploadS3Files');
   return s3Utils.uploadS3Files(files, defaultBucket, keyPath, s3opts);
 };
 
@@ -337,7 +337,7 @@ exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
  * @returns {Promise} A promise
  */
 exports.uploadS3FileStream = (fileStream, bucket, key, s3opts = {}) => {
-  deprecate('@cumulus/common/aws/uploadS3FileStream', '1.17.1', '@cumulus/aws-client/s3/uploadS3FileStream');
+  deprecate('@cumulus/common/aws/uploadS3FileStream', '1.17.0', '@cumulus/aws-client/s3/uploadS3FileStream');
   return s3Utils.uploadS3FileStream(fileStream, bucket, key, s3opts);
 };
 
@@ -354,7 +354,7 @@ exports.uploadS3FileStream = (fileStream, bucket, key, s3opts = {}) => {
  * `ETag`, `LastModified`, `Owner`, `Size`, `StorageClass`.
  */
 exports.listS3Objects = (bucket, prefix = null, skipFolders = true) => {
-  deprecate('@cumulus/common/aws/listS3Objects', '1.17.1', '@cumulus/aws-client/s3/listS3Objects');
+  deprecate('@cumulus/common/aws/listS3Objects', '1.17.0', '@cumulus/aws-client/s3/listS3Objects');
   return s3Utils.listS3Objects(bucket, prefix, skipFolders);
 };
 
@@ -373,7 +373,7 @@ exports.listS3Objects = (bucket, prefix = null, skipFolders = true) => {
  *   the Contents property of the listObjectsV2 response
  */
 exports.listS3ObjectsV2 = (params) => {
-  deprecate('@cumulus/common/aws/listS3ObjectsV2', '1.17.1', '@cumulus/aws-client/s3/listS3ObjectsV2');
+  deprecate('@cumulus/common/aws/listS3ObjectsV2', '1.17.0', '@cumulus/aws-client/s3/listS3ObjectsV2');
   return s3Utils.listS3ObjectsV2(params);
 };
 
@@ -381,7 +381,7 @@ exports.listS3ObjectsV2 = (params) => {
 // them all into memory at once.  Handles paging of listS3ObjectsV2 requests.
 class S3ListObjectsV2Queue extends S3ListObjectsV2QueueCore {
   constructor(params) {
-    deprecate('@cumulus/common/aws/S3ListObjectsV2QueueCore', '1.17.1', '@cumulus/aws-client/S3ListObjectsV2QueueCore');
+    deprecate('@cumulus/common/aws/S3ListObjectsV2QueueCore', '1.17.0', '@cumulus/aws-client/S3ListObjectsV2QueueCore');
     super(params);
   }
 }
@@ -399,7 +399,7 @@ exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;
  * @returns {number|string} - calculated checksum
  */
 exports.calculateS3ObjectChecksum = (params) => {
-  deprecate('@cumulus/common/aws/calculateS3ObjectChecksum', '1.17.1', '@cumulus/aws-client/s3/calculateS3ObjectChecksum');
+  deprecate('@cumulus/common/aws/calculateS3ObjectChecksum', '1.17.0', '@cumulus/aws-client/s3/calculateS3ObjectChecksum');
   return s3Utils.calculateS3ObjectChecksum(params);
 };
 
@@ -417,7 +417,7 @@ exports.calculateS3ObjectChecksum = (params) => {
  * @returns {boolean} - returns true for success
  */
 exports.validateS3ObjectChecksum = (params) => {
-  deprecate('@cumulus/common/aws/validateS3ObjectChecksum', '1.17.1', '@cumulus/aws-client/s3/validateS3ObjectChecksum');
+  deprecate('@cumulus/common/aws/validateS3ObjectChecksum', '1.17.0', '@cumulus/aws-client/s3/validateS3ObjectChecksum');
   return s3Utils.validateS3ObjectChecksum(params);
 };
 
@@ -428,7 +428,7 @@ exports.validateS3ObjectChecksum = (params) => {
 * @returns {Object} Returns an object with `Bucket` and `Key` properties
 **/
 exports.parseS3Uri = (uri) => {
-  deprecate('@cumulus/common/aws/parseS3Uri', '1.17.1', '@cumulus/aws-client/s3/parseS3Uri');
+  deprecate('@cumulus/common/aws/parseS3Uri', '1.17.0', '@cumulus/aws-client/s3/parseS3Uri');
   return s3Utils.parseS3Uri(uri);
 };
 
@@ -440,7 +440,7 @@ exports.parseS3Uri = (uri) => {
  * @returns {string} - an S3 URI
  */
 exports.buildS3Uri = (bucket, key) => {
-  deprecate('@cumulus/common/aws/buildS3Uri', '1.17.1', '@cumulus/aws-client/s3/buildS3Uri');
+  deprecate('@cumulus/common/aws/buildS3Uri', '1.17.0', '@cumulus/aws-client/s3/buildS3Uri');
   return s3Utils.buildS3Uri(bucket, key);
 };
 
@@ -452,7 +452,7 @@ exports.buildS3Uri = (bucket, key) => {
  * { Bucket: x, Key: y }
  */
 exports.getFileBucketAndKey = (pathParams) => {
-  deprecate('@cumulus/common/aws/getFileBucketAndKey', '1.17.1', '@cumulus/aws-client/s3/getFileBucketAndKey');
+  deprecate('@cumulus/common/aws/getFileBucketAndKey', '1.17.0', '@cumulus/aws-client/s3/getFileBucketAndKey');
   return s3Utils.getFileBucketAndKey(pathParams);
 };
 
@@ -466,7 +466,7 @@ exports.getFileBucketAndKey = (pathParams) => {
  * @returns {Promise<Object>} - the output of the createTable call
  */
 exports.createAndWaitForDynamoDbTable = (params) => {
-  deprecate('@cumulus/common/aws/createAndWaitForDynamoDbTable', '1.17.1', '@cumulus/aws-client/dynamo/createAndWaitForDynamoDbTable');
+  deprecate('@cumulus/common/aws/createAndWaitForDynamoDbTable', '1.17.0', '@cumulus/aws-client/dynamo/createAndWaitForDynamoDbTable');
   return dynamoDbUtils.createAndWaitForDynamoDbTable(params);
 };
 
@@ -474,7 +474,7 @@ exports.createAndWaitForDynamoDbTable = (params) => {
 // loading them all into memory at once.  Handles paging.
 class DynamoDbSearchQueue extends DynamoDbSearchQueueCore {
   constructor(params, searchType = 'scan') {
-    deprecate('@cumulus/common/aws/DynamoDbSearchQueue', '1.17.1', '@cumulus/aws-client/DynamoDbSearchQueue');
+    deprecate('@cumulus/common/aws/DynamoDbSearchQueue', '1.17.0', '@cumulus/aws-client/DynamoDbSearchQueue');
     super(params, searchType);
   }
 }
@@ -489,12 +489,12 @@ exports.DynamoDbSearchQueue = DynamoDbSearchQueue;
  * @returns {Promise.<string>} the Queue URL
  */
 exports.createQueue = (queueName) => {
-  deprecate('@cumulus/common/aws/createQueue', '1.17.1', '@cumulus/aws-client/sqs/createQueue');
+  deprecate('@cumulus/common/aws/createQueue', '1.17.0', '@cumulus/aws-client/sqs/createQueue');
   return sqsUtils.createQueue(queueName);
 };
 
 exports.getQueueUrl = (sourceArn, queueName) => {
-  deprecate('@cumulus/common/aws/getQueueUrl', '1.17.1', '@cumulus/aws-client/sqs/getQueueUrl');
+  deprecate('@cumulus/common/aws/getQueueUrl', '1.17.0', '@cumulus/aws-client/sqs/getQueueUrl');
   return sqsUtils.getQueueUrl(sourceArn, queueName);
 };
 
@@ -507,7 +507,7 @@ exports.getQueueUrl = (sourceArn, queueName) => {
 * @returns {Promise} - resolves when the messsage has been sent
 **/
 exports.sendSQSMessage = (queueUrl, message) => {
-  deprecate('@cumulus/common/aws/sendSQSMessage', '1.17.1', '@cumulus/aws-client/sqs/sendSQSMessage');
+  deprecate('@cumulus/common/aws/sendSQSMessage', '1.17.0', '@cumulus/aws-client/sqs/sendSQSMessage');
   return sqsUtils.sendSQSMessage(queueUrl, message);
 };
 
@@ -524,7 +524,7 @@ exports.sendSQSMessage = (queueUrl, message) => {
  * @returns {Promise.<Array>} an array of messages
  */
 exports.receiveSQSMessages = (queueUrl, options) => {
-  deprecate('@cumulus/common/aws/receiveSQSMessages', '1.17.1', '@cumulus/aws-client/sqs/receiveSQSMessages');
+  deprecate('@cumulus/common/aws/receiveSQSMessages', '1.17.0', '@cumulus/aws-client/sqs/receiveSQSMessages');
   return sqsUtils.receiveSQSMessages(queueUrl, options);
 };
 
@@ -536,7 +536,7 @@ exports.receiveSQSMessages = (queueUrl, options) => {
  * @returns {Promise} an AWS SQS response
  */
 exports.deleteSQSMessage = (queueUrl, receiptHandle) => {
-  deprecate('@cumulus/common/aws/deleteSQSMessage', '1.17.1', '@cumulus/aws-client/sqs/deleteSQSMessage');
+  deprecate('@cumulus/common/aws/deleteSQSMessage', '1.17.0', '@cumulus/aws-client/sqs/deleteSQSMessage');
   return sqsUtils.deleteSQSMessage(queueUrl, receiptHandle);
 };
 
@@ -548,7 +548,7 @@ exports.deleteSQSMessage = (queueUrl, receiptHandle) => {
  *                               if the queue exists
  */
 exports.sqsQueueExists = (queue) => {
-  deprecate('@cumulus/common/aws/sqsQueueExists', '1.17.1', '@cumulus/aws-client/sqs/sqsQueueExists');
+  deprecate('@cumulus/common/aws/sqsQueueExists', '1.17.0', '@cumulus/aws-client/sqs/sqsQueueExists');
   return sqsUtils.sqsQueueExists(queue);
 };
 
@@ -566,7 +566,7 @@ exports.sqsQueueExists = (queue) => {
  * @returns {string} A string that's safe to use as a StepFunctions execution name
  */
 exports.toSfnExecutionName = (fields, delimiter = '__') => {
-  deprecate('@cumulus/common/aws/toSfnExecutionName', '1.17.1', '@cumulus/aws-client/step-functions/toSfnExecutionName');
+  deprecate('@cumulus/common/aws/toSfnExecutionName', '1.17.0', '@cumulus/aws-client/step-functions/toSfnExecutionName');
   return stepFunctionUtils.toSfnExecutionName(fields, delimiter);
 };
 
@@ -582,7 +582,7 @@ exports.toSfnExecutionName = (fields, delimiter = '__') => {
  * @returns {Array} An array of the original fields
  */
 exports.fromSfnExecutionName = (str, delimiter = '__') => {
-  deprecate('@cumulus/common/aws/fromSfnExecutionName', '1.17.1', '@cumulus/aws-client/step-functions/fromSfnExecutionName');
+  deprecate('@cumulus/common/aws/fromSfnExecutionName', '1.17.0', '@cumulus/aws-client/step-functions/fromSfnExecutionName');
   return stepFunctionUtils.fromSfnExecutionName(str, delimiter);
 };
 
@@ -594,12 +594,12 @@ exports.fromSfnExecutionName = (str, delimiter = '__') => {
  * @returns {string} - Step Function Execution Arn
  */
 exports.getExecutionArn = (stateMachineArn, executionName) => {
-  deprecate('@cumulus/common/aws/getExecutionArn', '1.17.1', '@cumulus/aws-client/step-functions/getExecutionArn');
+  deprecate('@cumulus/common/aws/getExecutionArn', '1.17.0', '@cumulus/aws-client/step-functions/getExecutionArn');
   return stepFunctionUtils.getExecutionArn(stateMachineArn, executionName);
 };
 
 exports.getStateMachineArn = (executionArn) => {
-  deprecate('@cumulus/common/aws/getStateMachineArn', '1.17.1', '@cumulus/aws-client/step-functions/getStateMachineArn');
+  deprecate('@cumulus/common/aws/getStateMachineArn', '1.17.0', '@cumulus/aws-client/step-functions/getStateMachineArn');
   return stepFunctionUtils.getStateMachineArn(executionArn);
 };
 
@@ -611,7 +611,7 @@ exports.getStateMachineArn = (executionArn) => {
  * @returns {Object} - the full Cumulus message
  */
 exports.pullStepFunctionEvent = (event) => {
-  deprecate('@cumulus/common/aws/pullStepFunctionEvent', '1.17.1', '@cumulus/aws-client/step-functions/pullStepFunctionEvent');
+  deprecate('@cumulus/common/aws/pullStepFunctionEvent', '1.17.0', '@cumulus/aws-client/step-functions/pullStepFunctionEvent');
   return stepFunctionUtils.pullStepFunctionEvent(event);
 };
 
@@ -632,7 +632,7 @@ exports.publishSnsMessage = (
   message,
   retryOptions = {}
 ) => {
-  deprecate('@cumulus/common/aws/publishSnsMessage', '1.17.1', '@cumulus/aws-client/sns/publishSnsMessage');
+  deprecate('@cumulus/common/aws/publishSnsMessage', '1.17.0', '@cumulus/aws-client/sns/publishSnsMessage');
   return snsUtils.publishSnsMessage(
     snsTopicArn,
     message,
@@ -649,7 +649,7 @@ exports.publishSnsMessage = (
  * @returns {boolean}
  */
 exports.isThrottlingException = (err) => {
-  deprecate('@cumulus/common/aws/isThrottlingException', '1.17.1', '@cumulus/errors/isThrottlingException');
+  deprecate('@cumulus/common/aws/isThrottlingException', '1.17.0', '@cumulus/errors/isThrottlingException');
   return errors.isThrottlingException(err);
 };
 
@@ -664,7 +664,7 @@ exports.isThrottlingException = (err) => {
  * @returns {Function} a function that will retry on a ThrottlingException
  */
 exports.retryOnThrottlingException = (fn, options) => {
-  deprecate('@cumulus/common/aws/retryOnThrottlingException', '1.17.1', '@cumulus/aws-client/utils/retryOnThrottlingException');
+  deprecate('@cumulus/common/aws/retryOnThrottlingException', '1.17.0', '@cumulus/aws-client/utils/retryOnThrottlingException');
   return utils.retryOnThrottlingException(fn, options);
 };
 
@@ -682,11 +682,11 @@ exports.retryOnThrottlingException = (fn, options) => {
  * @returns {Function} a wrapper function
  */
 exports.improveStackTrace = (fn) => {
-  deprecate('@cumulus/common/aws/improveStackTrace', '1.17.1', '@cumulus/aws-client/utils/improveStackTrace');
+  deprecate('@cumulus/common/aws/improveStackTrace', '1.17.0', '@cumulus/aws-client/utils/improveStackTrace');
   return utils.improveStackTrace(fn);
 };
 
 exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
-  deprecate('@cumulus/common/aws/findResourceArn', '1.17.1', '@cumulus/aws-client/utils/findResourceArn');
+  deprecate('@cumulus/common/aws/findResourceArn', '1.17.0', '@cumulus/aws-client/utils/findResourceArn');
   return utils.findResourceArn(obj, fn, prefix, baseName, opts, callback);
 };

@@ -18,7 +18,7 @@ const { deprecate } = require('./util');
  * @kind function
  */
 const get = (params) => {
-  deprecate('@cumulus/common/DynamoDb.get', '1.17.1', '@cumulus/aws-client/DynamoDb.get');
+  deprecate('@cumulus/common/DynamoDb.get', '1.17.0', '@cumulus/aws-client/DynamoDb.get');
   return DynamoDb.get(params);
 };
 
@@ -34,7 +34,7 @@ const get = (params) => {
  * @kind function
  */
 const scan = (params) => {
-  deprecate('@cumulus/common/DynamoDb.scan', '1.17.1', '@cumulus/aws-client/DynamoDb.scan');
+  deprecate('@cumulus/common/DynamoDb.scan', '1.17.0', '@cumulus/aws-client/DynamoDb.scan');
   return DynamoDb.scan(params);
 };
 

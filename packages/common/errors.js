@@ -11,7 +11,7 @@ const { deprecate } = require('./util');
  */
 
 const createErrorType = (name, ParentType = Error) => {
-  deprecate('@cumulus/common/errors/createErrorType', '1.17.1', '@cumulus/errors/createErrorType');
+  deprecate('@cumulus/common/errors/createErrorType', '1.17.0', '@cumulus/errors/createErrorType');
   return errors.createErrorType(name, ParentType);
 };
 
@@ -22,7 +22,7 @@ const createErrorType = (name, ParentType = Error) => {
  * @returns {boolean}
  */
 const isWorkflowError = (error) => {
-  deprecate('@cumulus/common/errors/isWorkflowError', '1.17.1', '@cumulus/errors/isWorkflowError');
+  deprecate('@cumulus/common/errors/isWorkflowError', '1.17.0', '@cumulus/errors/isWorkflowError');
   return errors.isWorkflowError(error);
 };
 
@@ -33,7 +33,7 @@ const isWorkflowError = (error) => {
  * @returns {boolean}
  */
 const isConditionalCheckException = (error) => {
-  deprecate('@cumulus/common/errors/isConditionalCheckException', '1.17.1', '@cumulus/errors/isConditionalCheckException');
+  deprecate('@cumulus/common/errors/isConditionalCheckException', '1.17.0', '@cumulus/errors/isConditionalCheckException');
   return errors.isConditionalCheckException(error);
 };
 
