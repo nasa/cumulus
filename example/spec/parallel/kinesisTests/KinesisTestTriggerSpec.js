@@ -2,7 +2,8 @@
 
 const {
   aws: { s3 },
-  stringUtils: { globalReplace }
+  stringUtils: { globalReplace },
+  workflows: { getWorkflowArn }
 } = require('@cumulus/common');
 const { Execution } = require('@cumulus/api/models');
 const fs = require('fs');
@@ -44,7 +45,7 @@ const {
   putRecordOnStream,
   tryCatchExit,
   waitForActiveStream,
-  waitForTestSf
+  waitForTestSfForRecord
 } = require('../../helpers/kinesisHelpers');
 
 const testWorkflow = 'KinesisTriggerTest';
@@ -81,6 +82,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   let testConfig;
   let testDataFolder;
   let testSuffix;
+  let workflowArn;
   let workflowExecution;
 
   async function cleanUp() {
@@ -114,6 +116,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     testSuffix = createTestSuffix(testId);
     testDataFolder = createTestDataPath(testId);
     ruleSuffix = globalReplace(testSuffix, '-', '_');
+
+    workflowArn = await getWorkflowArn(testConfig.stackName, testConfig.bucket, testWorkflow);
 
     record = JSON.parse(fs.readFileSync(`${__dirname}/data/records/L2_HR_PIXC_product_0001-of-4154.json`));
 
@@ -235,7 +239,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         await putRecordOnStream(streamName, record);
 
         console.log('Waiting for step function to start...');
-        workflowExecution = await waitForTestSf(recordIdentifier, testWorkflow, maxWaitForSFExistSecs, 'CNMToCMA');
+        workflowExecution = await waitForTestSfForRecord(recordIdentifier, workflowArn, maxWaitForSFExistSecs);
 
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}`);
         executionStatus = await waitForCompletedExecution(workflowExecution.executionArn, maxWaitForExecutionSecs);
@@ -377,7 +381,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         await putRecordOnStream(streamName, badRecord);
 
         console.log('Waiting for step function to start...');
-        failingWorkflowExecution = await waitForTestSf(badRecordIdentifier, testWorkflow, maxWaitForSFExistSecs, 'CNMToCMA');
+        failingWorkflowExecution = await waitForTestSfForRecord(badRecordIdentifier, workflowArn, maxWaitForSFExistSecs);
 
         console.log(`Waiting for completed execution of ${failingWorkflowExecution.executionArn}.`);
         executionStatus = await waitForCompletedExecution(failingWorkflowExecution.executionArn, maxWaitForExecutionSecs);

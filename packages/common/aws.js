@@ -2,9 +2,10 @@
 
 const AWS = require('aws-sdk');
 const fs = require('fs');
-const { JSONPath } = require('jsonpath-plus');
+const get = require('lodash.get');
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
+const { JSONPath } = require('jsonpath-plus');
 const pMap = require('p-map');
 const pRetry = require('p-retry');
 const pump = require('pump');
@@ -135,6 +136,10 @@ exports.sfn = awsClient(AWS.StepFunctions, '2016-11-23');
 exports.cf = awsClient(AWS.CloudFormation, '2010-05-15');
 exports.sns = awsClient(AWS.SNS, '2010-03-31');
 exports.secretsManager = awsClient(AWS.SecretsManager, '2017-10-17');
+
+exports.getSecretString = (SecretId) =>
+  exports.secretsManager().getSecretValue({ SecretId }).promise()
+    .then((response) => response.SecretString);
 
 /**
  * Create a DynamoDB table and then wait for the table to exist
@@ -945,15 +950,7 @@ exports.receiveSQSMessages = async (queueUrl, options) => {
 
   const messages = await exports.sqs().receiveMessage(params).promise();
 
-  // convert body from string to js object
-  if (Object.prototype.hasOwnProperty.call(messages, 'Messages')) {
-    messages.Messages.forEach((mes) => {
-      mes.Body = JSON.parse(mes.Body); // eslint-disable-line no-param-reassign
-    });
-
-    return messages.Messages;
-  }
-  return [];
+  return get(messages, 'Messages', []);
 };
 
 /**

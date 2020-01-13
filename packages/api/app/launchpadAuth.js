@@ -1,6 +1,7 @@
 'use strict';
 
 const launchpad = require('@cumulus/common/launchpad');
+const { getSecretString } = require('@cumulus/common/aws');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const { AccessToken } = require('../models');
 
@@ -48,9 +49,13 @@ async function ensureLaunchpadAPIAuthorized(req, res, next) {
     }
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
+      const passphrase = await getSecretString(
+        process.env.launchpad_passphrase_secret_name
+      );
+
       const config = {
+        passphrase,
         api: process.env.launchpad_api,
-        passphrase: process.env.launchpad_passphrase,
         certificate: process.env.launchpad_certificate
       };
 

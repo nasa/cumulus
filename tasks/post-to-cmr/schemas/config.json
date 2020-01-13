@@ -49,14 +49,14 @@
       "description": "credentials needed to get launchpad token",
       "required": [
         "api",
-        "passphrase",
+        "passphraseSecretName",
         "certificate"
       ],
       "properties": {
         "api": {
           "type": "string"
         },
-        "passphrase": {
+        "passphraseSecretName": {
           "type": "string"
         },
         "certificate": {

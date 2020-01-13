@@ -532,10 +532,14 @@ async function updateUMMGMetadata({
 */
 async function getCreds() {
   if (process.env.cmr_oauth_provider === 'launchpad') {
+    const passphrase = await aws.getSecretString(
+      process.env.launchpad_passphrase_secret_name
+    );
+
     const config = {
+      passphrase,
       api: process.env.launchpad_api,
-      certificate: process.env.launchpad_certificate,
-      passphrase: process.env.launchpad_passphrase
+      certificate: process.env.launchpad_certificate
     };
 
     log.debug('cmrjs.getCreds getLaunchpadToken');
@@ -547,15 +551,15 @@ async function getCreds() {
     };
   }
 
-  const secret = await aws.secretsManager().getSecretValue({
-    SecretId: process.env.cmr_password_secret_name
-  }).promise();
+  const password = await aws.getSecretString(
+    process.env.cmr_password_secret_name
+  );
 
   return {
+    password,
     provider: process.env.cmr_provider,
     clientId: process.env.cmr_client_id,
-    username: process.env.cmr_username,
-    password: secret.SecretString
+    username: process.env.cmr_username
   };
 }
 

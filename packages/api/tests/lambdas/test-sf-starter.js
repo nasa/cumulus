@@ -7,12 +7,16 @@ const aws = require('@cumulus/common/aws');
 const { ResourcesLockedError } = require('@cumulus/common/errors');
 const Semaphore = require('@cumulus/common/Semaphore');
 const { randomId } = require('@cumulus/common/test-utils');
-const { noop } = require('@cumulus/common/util');
 
 const sfStarter = rewire('../../lambdas/sf-starter');
 const { Manager } = require('../../models');
 
-const { incrementAndDispatch, handleEvent, handleThrottledEvent } = sfStarter;
+const {
+  incrementAndDispatch,
+  handleEvent,
+  handleThrottledEvent,
+  handleSourceMappingEvent
+} = sfStarter;
 
 class stubConsumer {
   async consume() {
@@ -23,7 +27,7 @@ class stubConsumer {
 // Mock startExecution so nothing attempts to start executions.
 const stubSFN = () => ({
   startExecution: () => ({
-    promise: noop
+    promise: () => true
   })
 });
 sfStarter.__set__('sfn', stubSFN);
@@ -36,7 +40,7 @@ const createRuleInput = (queueUrl, timeLimit = 60) => ({
   timeLimit
 });
 
-const createWorkflowMessage = (queueName, maxExecutions) => ({
+const createWorkflowMessage = (queueName, maxExecutions) => JSON.stringify({
   cumulus_meta: {
     queueName
   },
@@ -319,4 +323,22 @@ test('handleThrottledEvent respects maximum executions for multiple priority lev
   const expectedMedCount = (medMessageCount - expectedMedResult);
   const expectedMessageCount = expectedLowCount + expectedMedCount;
   t.is(messages.length, expectedMessageCount);
+});
+
+test('handleSourceMappingEvent calls dispatch on messages in an EventSource event', async (t) => {
+  // EventSourceMapping input uses 'body' instead of 'Body'
+  const event = {
+    Records: [
+      {
+        body: createWorkflowMessage('test')
+      },
+      {
+        body: createWorkflowMessage('test')
+      }
+    ]
+  };
+  const output = await handleSourceMappingEvent(event);
+
+  const dispatchReturn = stubSFN().startExecution().promise();
+  output.forEach((o) => t.is(o, dispatchReturn));
 });
