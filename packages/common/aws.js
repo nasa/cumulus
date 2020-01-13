@@ -289,7 +289,7 @@ exports.getS3ObjectReadStream = (bucket, key) => {
 * @param {string} key - key of the file in the S3 bucket
 * @returns {Promise} returns the response from `S3.headObject` as a promise
 **/
-exports.fileExists = async (bucket, key) => {
+exports.fileExists = (bucket, key) => {
   deprecate('@cumulus/common/aws/fileExists', '1.17.1', '@cumulus/aws-client/s3/fileExists');
   return s3Utils.fileExists(bucket, key);
 };
@@ -317,7 +317,7 @@ exports.deleteS3Files = (s3Objs) => {
 * @param {string} bucket - name of the bucket
 * @returns {Promise} - the promised result of `S3.deleteBucket`
 **/
-exports.recursivelyDeleteS3Bucket = async (bucket) => {
+exports.recursivelyDeleteS3Bucket = (bucket) => {
   deprecate('@cumulus/common/aws/recursivelyDeleteS3Bucket', '1.17.1', '@cumulus/aws-client/s3/recursivelyDeleteS3Bucket');
   return s3Utils.recursivelyDeleteS3Bucket(bucket);
 };
@@ -398,7 +398,7 @@ exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;
  *
  * @returns {number|string} - calculated checksum
  */
-exports.calculateS3ObjectChecksum = async (params) => {
+exports.calculateS3ObjectChecksum = (params) => {
   deprecate('@cumulus/common/aws/calculateS3ObjectChecksum', '1.17.1', '@cumulus/aws-client/s3/calculateS3ObjectChecksum');
   return s3Utils.calculateS3ObjectChecksum(params);
 };
@@ -416,7 +416,7 @@ exports.calculateS3ObjectChecksum = async (params) => {
  * @throws {InvalidChecksum} - Throws error if validation fails
  * @returns {boolean} - returns true for success
  */
-exports.validateS3ObjectChecksum = async (params) => {
+exports.validateS3ObjectChecksum = (params) => {
   deprecate('@cumulus/common/aws/validateS3ObjectChecksum', '1.17.1', '@cumulus/aws-client/s3/validateS3ObjectChecksum');
   return s3Utils.validateS3ObjectChecksum(params);
 };
@@ -465,7 +465,7 @@ exports.getFileBucketAndKey = (pathParams) => {
  *   See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#createTable-property
  * @returns {Promise<Object>} - the output of the createTable call
  */
-exports.createAndWaitForDynamoDbTable = async (params) => {
+exports.createAndWaitForDynamoDbTable = (params) => {
   deprecate('@cumulus/common/aws/createAndWaitForDynamoDbTable', '1.17.1', '@cumulus/aws-client/dynamo/createAndWaitForDynamoDbTable');
   return dynamoDbUtils.createAndWaitForDynamoDbTable(params);
 };
@@ -610,7 +610,7 @@ exports.getStateMachineArn = (executionArn) => {
  * @param {Object} event - the Cumulus event
  * @returns {Object} - the full Cumulus message
  */
-exports.pullStepFunctionEvent = async (event) => {
+exports.pullStepFunctionEvent = (event) => {
   deprecate('@cumulus/common/aws/pullStepFunctionEvent', '1.17.1', '@cumulus/aws-client/step-functions/pullStepFunctionEvent');
   return stepFunctionUtils.pullStepFunctionEvent(event);
 };
@@ -627,7 +627,7 @@ exports.pullStepFunctionEvent = async (event) => {
  * a message fails. See https://github.com/tim-kos/node-retry#retryoperationoptions
  * @returns {Promise<undefined>}
  */
-exports.publishSnsMessage = async (
+exports.publishSnsMessage = (
   snsTopicArn,
   message,
   retryOptions = {}

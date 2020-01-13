@@ -17,7 +17,6 @@ const { deprecate } = require('./util');
  * @param {Object} params
  * @returns {Promise.<Object>}
  *
- * @static
  * @kind function
  */
 const describeExecution = (params) => {
@@ -37,7 +36,6 @@ const describeExecution = (params) => {
  * @param {Object} params
  * @returns {Promise.<Object>}
  *
- * @static
  * @kind function
  */
 const describeStateMachine = (params) => {
@@ -55,7 +53,6 @@ const describeStateMachine = (params) => {
  *   check for
  * @returns {Promise.<boolean>}
  *
- * @static
  * @kind function
  */
 const executionExists = (executionArn) => {
@@ -75,7 +72,6 @@ const executionExists = (executionArn) => {
  * @param {Object} params
  * @returns {Promise.<Object>}
  *
- * @static
  * @kind function
  */
 const getExecutionHistory = (params) => {
@@ -95,7 +91,6 @@ const getExecutionHistory = (params) => {
  * @param {Object} params
  * @returns {Promise.<Object>}
  *
- * @static
  * @kind function
  */
 const listExecutions = (params) => {

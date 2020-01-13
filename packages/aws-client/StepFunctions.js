@@ -38,7 +38,6 @@ const doesExecutionExist = (describeExecutionPromise) =>
  * @param {Object} params
  * @returns {Promise.<Object>}
  *
- * @static
  * @kind function
  */
 const describeExecution = improveStackTrace(
@@ -59,7 +58,6 @@ const describeExecution = improveStackTrace(
  * @param {Object} params
  * @returns {Promise.<Object>}
  *
- * @static
  * @kind function
  */
 const describeStateMachine = improveStackTrace(
@@ -78,7 +76,6 @@ const describeStateMachine = improveStackTrace(
  *   check for
  * @returns {Promise.<boolean>}
  *
- * @static
  * @kind function
  */
 const executionExists = (executionArn) =>
@@ -96,7 +93,6 @@ const executionExists = (executionArn) =>
  * @param {Object} params
  * @returns {Promise.<Object>}
  *
- * @static
  * @kind function
  */
 const getExecutionHistory = improveStackTrace(
@@ -141,7 +137,6 @@ const getExecutionHistory = improveStackTrace(
  * @param {Object} params
  * @returns {Promise.<Object>}
  *
- * @static
  * @kind function
  */
 const listExecutions = improveStackTrace(
