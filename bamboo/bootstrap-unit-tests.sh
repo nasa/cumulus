@@ -27,7 +27,7 @@ while ! docker container inspect ${container_id}\_build_env_1; do
 done
 
 ## Setup the build env container once it's started
-$docker_command 'npm install --error --no-progress -g nyc; cd /source/cumulus; npm install --error  --no-progress; npm run bootstrap-no-build-quiet'
+$docker_command "npm install --error --no-progress -g nyc; cd $UNIT_TEST_BUILD_DIR; git fetch --all; git checkout $GIT_SHA; npm install --error --no-progress; npm run bootstrap-no-build-quiet; npm run bootstrap-no-build-quiet; chmod 0400 -R $UNIT_TEST_BUILD_DIR/packages/test-data/keys"
 
 # Wait for the FTP server to be available
 while ! $docker_command  'curl --connect-timeout 5 -sS -o /dev/null ftp://testuser:testpass@127.0.0.1/README.md'; do
@@ -45,18 +45,15 @@ while ! $docker_command  'curl --connect-timeout 5 -sS -o /dev/null http://127.0
 done
 echo 'HTTP service is available'
 
-# Set permissions on sftp credentials
-chmod 0400 ./packages/test-data/keys/ssh_client_rsa_key
-
 # Wait for the SFTP server to be available
-while ! $docker_command 'sftp\
+while ! $docker_command "sftp \
   -P 2222\
-  -i /source/cumulus/packages/test-data/keys/ssh_client_rsa_key\
-  -o "ConnectTimeout=5"\
-  -o "StrictHostKeyChecking=no"\
-  -o "UserKnownHostsFile=/dev/null"\
-  -o "PreferredAuthentications=publickey"\
-  user@127.0.0.1:/keys/ssh_client_rsa_key.pub /dev/null'; do
+  -i $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key\
+  -o 'ConnectTimeout=5'\
+  -o 'StrictHostKeyChecking=no'\
+  -o 'UserKnownHostsFile=/dev/null'\
+  -o 'PreferredAuthentications=publickey'\
+  user@127.0.0.1:/keys/ssh_client_rsa_key.pub /dev/null"; do
   echo 'Waiting for SFTP to start'
   docker ps -a
   sleep 2
@@ -78,7 +75,7 @@ done
 echo 'Elasticsearch status is green'
 
 # Update Elasticsearch config to stop complaining about running out of disk space
-$docker_command 'curl -XPUT "http://127.0.0.1:9200/_cluster/settings" -d @/source/cumulus/bamboo/elasticsearch.config'
+$docker_command "curl -XPUT 'http://127.0.0.1:9200/_cluster/settings' -d \@/$UNIT_TEST_BUILD_DIR/bamboo/elasticsearch.config"
 
 # Lambda seems to be the last service that's started up by Localstack
 while ! $docker_command 'nc -z 127.0.0.1 4574'; do

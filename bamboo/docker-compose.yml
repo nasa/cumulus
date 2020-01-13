@@ -22,7 +22,8 @@ services:
     volumes:
       - ./bootstrap-sftp.sh:/bootstrap-sftp.sh
       - ../packages/test-data/keys/ssh_client_rsa_key.pub:/etc/authorized_keys/user
-      - ../packages/test-data:/data
+      - ../packages/test-data:/data_volume
+      - /tmp/cumulus_unit_test_data:/data
     environment:
       - SSH_USERS
       - SFTP_MODE=true
@@ -40,6 +41,7 @@ services:
     image: jlkovarik/cumulus-build-env:test2
     volumes:
       - ../:/source/cumulus
+      - /tmp/cumulus_unit_test_data:/tmp/cumulus_unit_test_data
     environment:
       - LOCALSTACK_HOST=127.0.0.1
       - LOCAL_ES_HOST=127.0.0.1

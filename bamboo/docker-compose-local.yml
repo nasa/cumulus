@@ -1,6 +1,14 @@
 version: '3'
 services:
+  sftp:
+    volumes:
+      - ./bootstrap-sftp.sh:/bootstrap-sftp.sh
+      - ../packages/test-data/keys/ssh_client_rsa_key.pub:/etc/authorized_keys/user
+      - ../packages/test-data:/data
   build_env:
+    volumes:
+      - ../:/source/cumulus
+      - ../test-data/:/tmp/cumulus_unit_test_data
     ports:
       - "20:20"
       - "21:21"
