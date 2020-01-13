@@ -129,14 +129,14 @@ describe('The SQS rule', () => {
 
   describe('When posting messages to the configured SQS queue', () => {
     let granuleId;
-    const invalidMessage = { foo: 'bar' };
+    const invalidMessage = JSON.stringify({ foo: 'bar' });
 
     beforeAll(async () => {
       // post a valid message for ingesting a granule
       granuleId = await ingestGranule(queues.queueUrl);
 
       // post a non-processable message
-      await sqs().sendMessage({ QueueUrl: queues.queueUrl, MessageBody: JSON.stringify(invalidMessage) }).promise();
+      await sqs().sendMessage({ QueueUrl: queues.queueUrl, MessageBody: invalidMessage }).promise();
     });
 
     afterAll(async () => {
