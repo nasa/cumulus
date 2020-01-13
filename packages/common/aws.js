@@ -7,6 +7,7 @@ const s3Utils = require('@cumulus/aws-client/s3');
 const dynamoDbUtils = require('@cumulus/aws-client/dynamo');
 const DynamoDbSearchQueueCore = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const S3ListObjectsV2QueueCore = require('@cumulus/aws-client/S3ListObjectsV2Queue');
+const secretsManagerUtils = require('@cumulus/aws-client/secrets-manager');
 const snsUtils = require('@cumulus/aws-client/sns');
 const sqsUtils = require('@cumulus/aws-client/sqs');
 const stepFunctionUtils = require('@cumulus/aws-client/step-functions');
@@ -79,6 +80,13 @@ exports.sns = () => {
 exports.secretsManager = () => {
   deprecate('@cumulus/common/aws/secretsManager', '1.17.1', '@cumulus/aws-client/aws/secretsManager');
   return awsServices.secretsManager();
+};
+
+/** Secrets Manager utils */
+
+exports.getSecretString = (SecretId) => {
+  deprecate('@cumulus/common/aws/getSecretString', '1.17.1', '@cumulus/aws-client/secrets-manager/getSecretString');
+  return secretsManagerUtils.getSecretString(SecretId);
 };
 
 /** Cloudformation utils */
