@@ -165,8 +165,6 @@ const listExecutions = improveStackTrace(
  * @param {string} str - The string to escape
  * @param {string} regex - The regex matching characters to replace (default: all chars)
  * @returns {string} The string with characters unicode-escaped
- *
- * @static
  */
 const unicodeEscape = (str, regex = /[\s\S]/g) => str.replace(regex, unicodeEscapeCharacter);
 
