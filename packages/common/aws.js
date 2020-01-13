@@ -4,7 +4,7 @@ const awsClient = require('@cumulus/aws-client/client');
 const cfUtils = require('@cumulus/aws-client/Cloudformation');
 const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/s3');
-const dynamoDbUtils = require('@cumulus/aws-client/dynamo');
+const dynamoDbUtils = require('@cumulus/aws-client/DynamoDb');
 const DynamoDbSearchQueueCore = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const S3ListObjectsV2QueueCore = require('@cumulus/aws-client/S3ListObjectsV2Queue');
 const secretsManagerUtils = require('@cumulus/aws-client/secrets-manager');
@@ -466,7 +466,7 @@ exports.getFileBucketAndKey = (pathParams) => {
  * @returns {Promise<Object>} - the output of the createTable call
  */
 exports.createAndWaitForDynamoDbTable = (params) => {
-  deprecate('@cumulus/common/aws/createAndWaitForDynamoDbTable', '1.17.0', '@cumulus/aws-client/dynamo/createAndWaitForDynamoDbTable');
+  deprecate('@cumulus/common/aws/createAndWaitForDynamoDbTable', '1.17.0', '@cumulus/aws-client/DynamoDb/createAndWaitForDynamoDbTable');
   return dynamoDbUtils.createAndWaitForDynamoDbTable(params);
 };
 
