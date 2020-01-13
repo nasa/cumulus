@@ -9,7 +9,7 @@
  * a string - 'key' and no sort key. The table name should be set in LOCK_TABLE_NAME
  */
 
-const { aws, log } = require('@cumulus/commmon');
+const { aws, log } = require('@cumulus/common');
 
 class Mutex {
   constructor(docClient, tableName) {
@@ -99,5 +99,3 @@ updateLock(process.argv[2], process.argv[3]).catch((e) => {
     process.exitCode = 1;
   }
 });
-
-
