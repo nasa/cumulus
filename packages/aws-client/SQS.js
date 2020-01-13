@@ -15,12 +15,12 @@ exports.getQueueUrl = (sourceArn, queueName) => {
 /**
  * Create an SQS Queue.  Properly handles localstack queue URLs
  *
- * @param {string} queueName - queue name
+ * @param {string} QueueName - queue name
  * @returns {Promise.<string>} the Queue URL
  */
-async function createQueue(queueName) {
+async function createQueue(QueueName) {
   const createQueueResponse = await awsServices.sqs().createQueue({
-    QueueName: queueName
+    QueueName
   }).promise();
 
   if (inTestMode()) {
