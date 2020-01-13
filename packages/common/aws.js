@@ -137,6 +137,10 @@ exports.cf = awsClient(AWS.CloudFormation, '2010-05-15');
 exports.sns = awsClient(AWS.SNS, '2010-03-31');
 exports.secretsManager = awsClient(AWS.SecretsManager, '2017-10-17');
 
+exports.getSecretString = (SecretId) =>
+  exports.secretsManager().getSecretValue({ SecretId }).promise()
+    .then((response) => response.SecretString);
+
 /**
  * Create a DynamoDB table and then wait for the table to exist
  *
