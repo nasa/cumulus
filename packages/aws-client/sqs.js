@@ -4,7 +4,7 @@ const isNil = require('lodash.isnil');
 const url = require('url');
 
 const awsServices = require('./services');
-const { inTestMode, randomString } = require('./test-utils');
+const { inTestMode } = require('./test-utils');
 const { improveStackTrace } = require('./utils');
 
 exports.getQueueUrl = (sourceArn, queueName) => {
@@ -15,14 +15,12 @@ exports.getQueueUrl = (sourceArn, queueName) => {
 /**
  * Create an SQS Queue.  Properly handles localstack queue URLs
  *
- * @param {string} queueName - defaults to a random string
+ * @param {string} queueName - queue name
  * @returns {Promise.<string>} the Queue URL
  */
 async function createQueue(queueName) {
-  const actualQueueName = queueName || randomString();
-
   const createQueueResponse = await awsServices.sqs().createQueue({
-    QueueName: actualQueueName
+    QueueName: queueName
   }).promise();
 
   if (inTestMode()) {
