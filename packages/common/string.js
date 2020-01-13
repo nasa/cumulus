@@ -13,7 +13,7 @@
 const compose = require('lodash.flowright');
 const curry = require('lodash.curry');
 
-const stepFunctionUtils = require('@cumulus/aws-client/step-functions');
+const stepFunctionUtils = require('@cumulus/aws-client/StepFunctions');
 
 const { deprecate, isNull, negate } = require('./util');
 
@@ -28,7 +28,7 @@ const { deprecate, isNull, negate } = require('./util');
  * @static
  */
 const unicodeEscape = (str, regex = /[\s\S]/g) => {
-  deprecate('@cumulus/common/string/unicodeEscape', '1.17.0', '@cumulus/aws-client/step-functions/unicodeEscape');
+  deprecate('@cumulus/common/string/unicodeEscape', '1.17.0', '@cumulus/aws-client/StepFunctions/unicodeEscape');
   return stepFunctionUtils.unicodeEscape(str, regex);
 };
 

@@ -10,7 +10,7 @@ const S3ListObjectsV2QueueCore = require('@cumulus/aws-client/S3ListObjectsV2Que
 const secretsManagerUtils = require('@cumulus/aws-client/SecretsManager');
 const snsUtils = require('@cumulus/aws-client/SNS');
 const sqsUtils = require('@cumulus/aws-client/SQS');
-const stepFunctionUtils = require('@cumulus/aws-client/step-functions');
+const stepFunctionUtils = require('@cumulus/aws-client/StepFunctions');
 const utils = require('@cumulus/aws-client/utils');
 const errors = require('@cumulus/errors');
 
@@ -566,7 +566,7 @@ exports.sqsQueueExists = (queue) => {
  * @returns {string} A string that's safe to use as a StepFunctions execution name
  */
 exports.toSfnExecutionName = (fields, delimiter = '__') => {
-  deprecate('@cumulus/common/aws/toSfnExecutionName', '1.17.0', '@cumulus/aws-client/step-functions/toSfnExecutionName');
+  deprecate('@cumulus/common/aws/toSfnExecutionName', '1.17.0', '@cumulus/aws-client/StepFunctions/toSfnExecutionName');
   return stepFunctionUtils.toSfnExecutionName(fields, delimiter);
 };
 
@@ -582,7 +582,7 @@ exports.toSfnExecutionName = (fields, delimiter = '__') => {
  * @returns {Array} An array of the original fields
  */
 exports.fromSfnExecutionName = (str, delimiter = '__') => {
-  deprecate('@cumulus/common/aws/fromSfnExecutionName', '1.17.0', '@cumulus/aws-client/step-functions/fromSfnExecutionName');
+  deprecate('@cumulus/common/aws/fromSfnExecutionName', '1.17.0', '@cumulus/aws-client/StepFunctions/fromSfnExecutionName');
   return stepFunctionUtils.fromSfnExecutionName(str, delimiter);
 };
 
@@ -594,12 +594,12 @@ exports.fromSfnExecutionName = (str, delimiter = '__') => {
  * @returns {string} - Step Function Execution Arn
  */
 exports.getExecutionArn = (stateMachineArn, executionName) => {
-  deprecate('@cumulus/common/aws/getExecutionArn', '1.17.0', '@cumulus/aws-client/step-functions/getExecutionArn');
+  deprecate('@cumulus/common/aws/getExecutionArn', '1.17.0', '@cumulus/aws-client/StepFunctions/getExecutionArn');
   return stepFunctionUtils.getExecutionArn(stateMachineArn, executionName);
 };
 
 exports.getStateMachineArn = (executionArn) => {
-  deprecate('@cumulus/common/aws/getStateMachineArn', '1.17.0', '@cumulus/aws-client/step-functions/getStateMachineArn');
+  deprecate('@cumulus/common/aws/getStateMachineArn', '1.17.0', '@cumulus/aws-client/StepFunctions/getStateMachineArn');
   return stepFunctionUtils.getStateMachineArn(executionArn);
 };
 
@@ -611,7 +611,7 @@ exports.getStateMachineArn = (executionArn) => {
  * @returns {Object} - the full Cumulus message
  */
 exports.pullStepFunctionEvent = (event) => {
-  deprecate('@cumulus/common/aws/pullStepFunctionEvent', '1.17.0', '@cumulus/aws-client/step-functions/pullStepFunctionEvent');
+  deprecate('@cumulus/common/aws/pullStepFunctionEvent', '1.17.0', '@cumulus/aws-client/StepFunctions/pullStepFunctionEvent');
   return stepFunctionUtils.pullStepFunctionEvent(event);
 };
 
