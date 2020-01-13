@@ -26,14 +26,16 @@ Options:
   -h, --help               output usage information
 
 Commands:
-  list-deployments         List Terraform deployments in the account
-  deployment-report        List each deployment with files, number of resources, and last update date
-  list-orphaned-resources  List resources not associated with a Terraform deployment
+  list-deployments         List Terraform Cumulus deployments in the account
+  deployment-report        List each Cumulus deployment with files, number of resources, and last update date
+  list-orphaned-resources  List resources not associated with a Terraform deployment, currently supports ECS and EC2
 ```
 
-This functionality assumes that your Terraform state files are configured for remote state storage in S3 using DynamoDB for locks. Follow the instructions in the [deployment documentation](https://nasa.github.io/cumulus/docs/deployment/deployment-readme#create-resources-for-terraform-state) for proper setup.
+## Assumptions
 
-Currently for listing orphaned resources, only ECS and EC2 are supported.
+- Terraform state files are configured for remote state storage in S3 using DynamoDB for locks. Follow the instructions in the [deployment documentation](https://nasa.github.io/cumulus/docs/deployment/deployment-readme#create-resources-for-terraform-state) for proper setup.
+
+- State files keys are in the format: `.*/data-persistence.*/terraform.tfstate` or `.*/cumulus.*/terraform.tfstate`
 
 ## Contributing
 
