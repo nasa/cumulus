@@ -9,7 +9,7 @@ const { normalizeProviderPath } = require('./util');
 
 class GranuleDiscoverer {
   /**
-  * Discover class constructor
+  * GranuleDiscoverer class constructor
   *
   * @param {Object} event - the cumulus event object
   **/
