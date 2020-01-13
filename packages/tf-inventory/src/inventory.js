@@ -15,7 +15,7 @@ const stateFile = require('./stateFile');
  * @param {Object} y - resource object
  * @returns {Objects} - resource object of x and y combined
  */
-function mergeResources(x, y) {
+function mergeResourceLists(x, y) {
   return mergeWith(x, y, (xVal, yVal) => {
     if (!xVal) {
       return yVal;
@@ -64,7 +64,7 @@ async function listTfResources(stateFiles) {
 
   const resources = await Promise.all(resourcePromises);
 
-  return resources.reduce(mergeResources);
+  return resources.reduce(mergeResourceLists);
 }
 
 async function listAwsResources() {

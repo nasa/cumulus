@@ -10,7 +10,7 @@ const getStateFilesFromTable = stateFile.__get__('getStateFilesFromTable');
 const extractDeploymentName = stateFile.__get__('extractDeploymentName');
 
 const revertListClusterEC2Intances = stateFile.__set__(
-  'listClusterEC2Intances',
+  'listClusterEC2Instances',
   () => ['i-1234', 'i-4321']
 );
 
@@ -116,7 +116,6 @@ test('getStateFileResources lists resources', async (t) => {
   });
 
   const resources = await stateFile.getStateFileDeploymentInfo(`${bucket}/${key}`);
-  console.log(resources);
 
   t.deepEqual(
     ['aws_caller_identity', 'aws_ecs_cluster'],

@@ -56,7 +56,7 @@ async function listTfStateFiles() {
 
   /* eslint-disable no-await-in-loop */
   while (!tablesComplete) {
-    const stateFilePromises = tables.TableNames.map((t) => getStateFilesFromTable(t));
+    const stateFilePromises = tables.TableNames.map(getStateFilesFromTable);
 
     const stateFileArrays = await Promise.all(stateFilePromises);
 
@@ -75,7 +75,7 @@ async function listTfStateFiles() {
   return stateFiles;
 }
 
-async function listClusterEC2Intances(clusterArn) {
+async function listClusterEC2Instances(clusterArn) {
   const clusterContainerInstances = await aws.ecs().listContainerInstances({
     cluster: clusterArn
   }).promise()
@@ -151,7 +151,7 @@ async function listResourcesForFile(file) {
     ecsClusters = [].concat(...ecsClusters);
 
     const ec2InstancePromises = ecsClusters.map((c) =>
-      listClusterEC2Intances(c));
+      listClusterEC2Instances(c));
 
     let ec2Instances = await Promise.all(ec2InstancePromises);
     ec2Instances = [].concat(...ec2Instances);

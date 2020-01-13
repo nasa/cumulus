@@ -6,7 +6,7 @@ const sinon = require('sinon');
 const aws = require('@cumulus/common/aws');
 
 const inventory = rewire('../src/inventory');
-const mergeResources = inventory.__get__('mergeResources');
+const mergeResourceLists = inventory.__get__('mergeResourceLists');
 const resourceDiff = inventory.__get__('resourceDiff');
 const listAwsResources = inventory.__get__('listAwsResources');
 
@@ -85,7 +85,7 @@ test.after.always(() => {
   ec2Stub.restore();
 });
 
-test('mergeResources merges resource object by key', (t) => {
+test('mergeResourceLists merges resource object by key', (t) => {
   const x = {
     ecsClusters: [
       {
@@ -111,7 +111,7 @@ test('mergeResources merges resource object by key', (t) => {
     ]
   };
 
-  const merged = mergeResources(x, y);
+  const merged = mergeResourceLists(x, y);
 
   t.deepEqual(merged, {
     ecsClusters: [
