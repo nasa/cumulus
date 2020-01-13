@@ -78,60 +78,7 @@ const promiseUrl = (urlstr) =>
     }).on('error', reject);
   });
 
-class Mutex {
-  constructor(docClient, tableName) {
-    this.docClient = docClient;
-    this.tableName = tableName;
-  }
-
-  async lock(key, timeoutMs, fn) {
-    log.info(`Attempting to obtain lock ${key}`);
-    // Note: this throws an exception if the lock fails, desirable for Tasks
-    await this.writeLock(key, timeoutMs);
-    log.info(`Obtained lock ${key}`);
-    let result = null;
-    try {
-      result = await fn();
-    } finally {
-      log.info(`Releasing lock ${key}`);
-      await this.unlock(key);
-      log.info(`Released lock ${key}`);
-    }
-    return result;
-  }
-
-  writeLock(key, timeoutMs) {
-    const now = Date.now();
-
-    const params = {
-      TableName: this.tableName,
-      Item: {
-        key: key,
-        expire: now + timeoutMs
-      },
-      ConditionExpression: '#key <> :key OR (#key = :key AND #expire < :expire)',
-      ExpressionAttributeNames: {
-        '#key': 'key',
-        '#expire': 'expire'
-      },
-      ExpressionAttributeValues: {
-        ':key': key,
-        ':expire': now
-      }
-    };
-    return this.docClient.put(params).promise();
-  }
-
-  unlock(key) {
-    return this.docClient.delete({
-      TableName: this.tableName,
-      Key: { key: key }
-    }).promise();
-  }
-}
-
 module.exports = {
-  Mutex: Mutex,
   limit: limit,
   mapTolerant: mapTolerant,
   promiseUrl: promiseUrl,
