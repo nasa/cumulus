@@ -12,12 +12,12 @@ fi
 ### confirmLock will fail if another stack has lock, *redeploy* if no lock, and continue if a lock is in place already
 set +e
 node ./example/scripts/lock-stack.js confirmLock $GIT_SHA "$DEPLOYMENT"
-CHECK_STATUS = $?
+CHECK_STATUS=$?
 set -e
 if [[ $CHECK_STATUS -eq 101 ]]; then
-echo "*** Stack is unlocked, reprovisioning"
-./deploy-dev-integration-test-stack.sh
-./bootstrap-integration-tests.sh
+  echo "*** Stack is unlocked, reprovisioning"
+  ./deploy-dev-integration-test-stack.sh
+  ./bootstrap-integration-tests.sh
 fi
 if [[ $LOCK_EXISTS_STATUS -gt 0 ]]; then
   exit 1
