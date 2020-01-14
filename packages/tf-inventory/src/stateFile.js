@@ -48,7 +48,12 @@ async function getStateFilesFromTable(tableName) {
   return [];
 }
 
-
+/**
+ * List all TF state files found in all Dynamo tables on the account
+ *
+ * @returns {Promise<Array<string>>} - list of tf state file paths in
+ * the form bucket/key
+ */
 async function listTfStateFiles() {
   let tables = await aws.dynamodb().listTables().promise();
   let tablesComplete = false;
@@ -75,6 +80,13 @@ async function listTfStateFiles() {
   return stateFiles;
 }
 
+/**
+ * List the EC2 instances in the AWS account that are associated
+ * with the ECS cluster
+ *
+ * @param {string} clusterArn
+ * @returns {Promise<Array<string>>} - ec2 instance ids
+ */
 async function listClusterEC2Instances(clusterArn) {
   const clusterContainerInstances = await aws.ecs().listContainerInstances({
     cluster: clusterArn
@@ -141,6 +153,12 @@ async function getStateFileDeploymentInfo(file) {
   return null;
 }
 
+/**
+ * List the ECS clusters and EC2 instances defined in the state file.
+ *
+ * @param {string} file - file path
+ * @returns {Promise<Object?}
+ */
 async function listResourcesForFile(file) {
   const stateFile = await getStateFileDeploymentInfo(file);
 
@@ -177,6 +195,21 @@ function listTfDeployments(stateFiles) {
   return deployments.sort();
 }
 
+/**
+ * Create a report containing all deployments identified that includes
+ * state file paths, time state file was updated and number of resources in the state file
+ *
+ * @returns {Promise<Object>} Object where key is deployment name. Looks like:
+ * cumulus-tf
+  [ { file: 'cumulus-sandbox-tfstate/cumulus-tf/cumulus/terraform.tfstate',
+      deployment: 'cumulus-tf',
+      lastModified: 2019-12-16T23:36:37.000Z,
+      resources: 433 },
+    { file: 'cumulus-sandbox-tfstate/cumulus-tf/data-persistence/terraform.tfstate',
+      deployment: 'cumulus-tf',
+      lastModified: 2019-12-10T23:22:39.000Z,
+      resources: 20 } ]
+ */
 async function deploymentReport() {
   const stateFiles = await listTfStateFiles();
 

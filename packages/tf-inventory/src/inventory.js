@@ -13,7 +13,7 @@ const stateFile = require('./stateFile');
  *
  * @param {Object} x - resource object
  * @param {Object} y - resource object
- * @returns {Objects} - resource object of x and y combined
+ * @returns {Object} - resource object of x and y combined
  */
 function mergeResourceLists(x, y) {
   return mergeWith(x, y, (xVal, yVal) => {
@@ -67,6 +67,12 @@ async function listTfResources(stateFiles) {
   return resources.reduce(mergeResourceLists);
 }
 
+/**
+ * List ecs clusters and ec2 instances in the AWS account
+ *
+ * @returns {Promise<Object>} - object containing lists of ecsClusters
+ * and ec2Instances
+ */
 async function listAwsResources() {
   const ecsClusters = await aws.ecs().listClusters().promise();
 
@@ -80,6 +86,13 @@ async function listAwsResources() {
   };
 }
 
+/**
+ * Gather resources from all state files and compare against what is on AWS
+ * Output an object containing lists of resources that are only present on AWS,
+ * thus not managed by a TF state file
+ *
+ * @returns {Promise<Object>} - resources not managed by TF state files
+ */
 async function reconcileResources() {
   const stateFiles = await stateFile.listTfStateFiles();
 
