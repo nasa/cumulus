@@ -52,6 +52,6 @@ RESULT=$?
 set -e
 
 echo Unlocking stack
-(cd example && node ./scripts/lock-stack.js $GIT_SHA $DEPLOYMENT false)
+(cd example && node ./scripts/lock-stack.js lock $GIT_SHA $DEPLOYMENT false)
 
 exit $RESULT
