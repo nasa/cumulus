@@ -3,7 +3,13 @@
 const get = require('lodash.get');
 const moment = require('moment');
 const path = require('path');
-const aws = require('@cumulus/common/aws');
+const {
+  s3Join,
+  listS3ObjectsV2,
+  parseS3Uri,
+  s3CopyObject,
+  buildS3Uri
+} = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const { constructCollectionId } = require('@cumulus/common');
 const { Sftp } = require('@cumulus/common/sftp');
@@ -58,14 +64,14 @@ function buildReportFileName(reportType, startTime) {
 async function determineReportKey(reportType, reportStartTime, reportsPrefix) {
   let reportName = buildReportFileName(reportType, reportStartTime);
 
-  const revisionNumber = (await aws.listS3ObjectsV2({
+  const revisionNumber = (await listS3ObjectsV2({
     Bucket: process.env.system_bucket,
-    Prefix: aws.s3Join([reportsPrefix, reportName])
+    Prefix: s3Join([reportsPrefix, reportName])
   })).length;
 
   if (revisionNumber > 0) reportName = `${reportName}.rev${revisionNumber}`;
 
-  return aws.s3Join([reportsPrefix, reportName]);
+  return s3Join([reportsPrefix, reportName]);
 }
 
 /**
@@ -89,7 +95,7 @@ async function getExpiredS3Objects(bucket, prefix, retentionInDays) {
   const retentionFilter = (s3Object) =>
     s3Object.LastModified.getTime() <= moment.utc().subtract(retentionInDays, 'days').toDate().getTime();
 
-  return (await aws.listS3ObjectsV2({ Bucket: bucket, Prefix: prefix }))
+  return (await listS3ObjectsV2({ Bucket: bucket, Prefix: prefix }))
     .filter(retentionFilter)
     .filter((s3Object) => !s3Object.Key.endsWith('/'))
     .map((s3Object) => ({ Bucket: bucket, Key: s3Object.Key }));
@@ -120,7 +126,7 @@ async function submitReports(reports) {
 
   // submit files one by one using the same connection
   for (let i = 0; i < reports.length; i += 1) {
-    const parsed = aws.parseS3Uri(reports[i].file);
+    const parsed = parseS3Uri(reports[i].file);
     const keyfields = parsed.Key.split('/');
     const fileName = keyfields.pop();
     // eslint-disable-next-line no-await-in-loop
@@ -135,7 +141,7 @@ async function submitReports(reports) {
     const newKey = path.join(keyfields.join('/'), 'sent', fileName);
 
     // eslint-disable-next-line no-await-in-loop
-    await aws.s3CopyObject({
+    await s3CopyObject({
       CopySource: `${parsed.Bucket}/${parsed.Key}`,
       Bucket: parsed.Bucket,
       Key: newKey
@@ -143,7 +149,7 @@ async function submitReports(reports) {
 
     reportsSent.push({
       reportType: reports[i].reportType,
-      file: aws.buildS3Uri(parsed.Bucket, newKey)
+      file: buildS3Uri(parsed.Bucket, newKey)
     });
   }
 

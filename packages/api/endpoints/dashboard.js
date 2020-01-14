@@ -1,10 +1,8 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const {
-  s3,
-  getFileBucketAndKey
-} = require('@cumulus/common/aws');
+const { getFileBucketAndKey } = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
 
 /**
  * Given a path in the form of bucket/key, get the item from

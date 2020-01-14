@@ -2,10 +2,8 @@
 
 const Ajv = require('ajv');
 const set = require('lodash.set');
-const {
-  aws: { sns },
-  log
-} = require('@cumulus/common');
+const { sns } = require('@cumulus/aws-client/services');
+const log = require('@cumulus/common/log');
 const Rule = require('../models/rules');
 const kinesisSchema = require('./kinesis-consumer-event-schema.json');
 const { queueMessageForRule } = require('../lib/rulesHelpers');
