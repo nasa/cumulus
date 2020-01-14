@@ -1,0 +1,63 @@
+{
+  "name": "@cumulus/aws-client",
+  "version": "1.17.0-alpha",
+  "description": "Utilities for working with AWS",
+  "keywords": [
+    "GIBS",
+    "CUMULUS",
+    "NASA"
+  ],
+  "engines": {
+    "node": ">=10.16.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/aws-client",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus"
+  },
+  "scripts": {
+    "build": "true",
+    "lint": "eslint .",
+    "test": "ava",
+    "test-coverage": "nyc ava",
+    "test-ci": "npm run lint"
+  },
+  "ava": {
+    "files": [
+      "tests/**"
+    ],
+    "verbose": true
+  },
+  "nyc": {
+    "exclude": [
+      "tests",
+      "test"
+    ]
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@cumulus/checksum": "1.17.0",
+    "@cumulus/errors": "1.17.0-alpha",
+    "@cumulus/logger": "1.17.0",
+    "aws-sdk": "^2.585.0",
+    "jsonpath-plus": "^1.0.0",
+    "lodash.isnil": "^4.0.0",
+    "lodash.isobject": "^3.0.2",
+    "lodash.isstring": "^4.0.1",
+    "p-map": "^1.2.0",
+    "p-retry": "^4.2.0",
+    "pump": "^3.0.0"
+  },
+  "devDependencies": {
+    "ava": "^2.1.0",
+    "@cumulus/common": "1.17.0",
+    "lodash.range": "^3.2.0",
+    "nyc": "^14.0.0",
+    "p-timeout": "^3.2.0",
+    "sinon": "^8.0.4"
+  }
+}
