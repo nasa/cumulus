@@ -33,6 +33,9 @@ launchpad_certificate = "launchpad.pfx"
 
 oauth_user_group = "GSFC-Cumulus-Dev"
 
+saml_idp_login                  = "https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso"
+saml_launchpad_metadata_url     = "https://auth.launchpad-sbx.nasa.gov/unauth/metadata/launchpad-sbx.idp.xml"
+
 ems_host              = "fs1.ems.eosdis.nasa.gov"
 ems_port              = 22
 ems_path              = "tmpNat"
