@@ -149,7 +149,7 @@ test.before(async (t) => {
 
   // Store the Launchpad passphrase
   process.env.launchpad_passphrase_secret_name = randomString();
-  await aws.secretsManager().createSecret({
+  await secretsManager().createSecret({
     Name: process.env.launchpad_passphrase_secret_name,
     SecretString: randomString()
   }).promise();
@@ -187,7 +187,7 @@ test.after.always(async () => {
     SecretId: process.env.cmr_password_secret_name,
     ForceDeleteWithoutRecovery: true
   }).promise();
-  await aws.secretsManager().deleteSecret({
+  await secretsManager().deleteSecret({
     SecretId: process.env.launchpad_passphrase_secret_name,
     ForceDeleteWithoutRecovery: true
   }).promise();
