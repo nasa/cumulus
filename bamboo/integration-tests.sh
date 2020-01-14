@@ -16,8 +16,8 @@ CHECK_STATUS=$?
 set -e
 if [[ $CHECK_STATUS -eq 101 ]]; then
   echo "*** Stack is unlocked, reprovisioning"
-  ./deploy-dev-integration-test-stack.sh
-  ./bootstrap-integration-tests.sh
+  ./bamboo/deploy-dev-integration-test-stack.sh
+  ./bamboo/bootstrap-integration-tests.sh
 fi
 if [[ $LOCK_EXISTS_STATUS -gt 0 ]]; then
   exit 1
