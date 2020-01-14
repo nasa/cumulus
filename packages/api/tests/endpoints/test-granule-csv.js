@@ -3,7 +3,10 @@
 const request = require('supertest');
 const test = require('ava');
 
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
+const {
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const { Search } = require('../../es/search');
@@ -28,7 +31,7 @@ process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('system_bucket');
 process.env.TOKEN_SECRET = randomId('secret');
 
-const createBucket = (Bucket) => aws.s3().createBucket({ Bucket }).promise();
+const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket }).promise();
 
 // create all the variables needed across this test
 let esClient;
@@ -79,7 +82,7 @@ test.after.always(async () => {
   await granuleModel.deleteTable();
   await accessTokenModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
-  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test.serial('GET without an Authorization header returns an Authorization Missing response', async (t) => {

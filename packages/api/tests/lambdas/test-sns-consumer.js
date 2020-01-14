@@ -4,9 +4,10 @@ const get = require('lodash.get');
 const sinon = require('sinon');
 const test = require('ava');
 
+const { s3 } = require('@cumulus/aws-client/services');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { SQS } = require('@cumulus/ingest/aws');
-const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
 const { getRules, handler } = require('../../lambdas/message-consumer');
 const Collection = require('../../models/collections');
 const Rule = require('../../models/rules');

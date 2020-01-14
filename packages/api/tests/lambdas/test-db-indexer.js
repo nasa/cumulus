@@ -3,7 +3,8 @@
 const test = require('ava');
 const rewire = require('rewire');
 const attr = require('dynamodb-data-types').AttributeValue;
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -127,7 +128,7 @@ let granuleModel;
 let ruleModel;
 
 test.before(async (t) => {
-  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   // create tables
   collectionModel = new models.Collection();
@@ -160,7 +161,7 @@ test.after.always(async () => {
   await fileModel.deleteTable();
   await ruleModel.deleteTable();
 
-  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
 });
 

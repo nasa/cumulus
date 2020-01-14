@@ -1,6 +1,6 @@
 'use strict';
 
-const { lambda } = require('@cumulus/common/aws');
+const { lambda } = require('@cumulus/aws-client/services');
 
 
 async function getEventSourceMapping(uuid) {

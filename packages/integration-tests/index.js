@@ -14,17 +14,17 @@ const pWaitFor = require('p-wait-for');
 const pMap = require('p-map');
 const moment = require('moment');
 
-const { getWorkflowTemplate, getWorkflowArn } = require('@cumulus/common/workflows');
-const { pullStepFunctionEvent } = require('@cumulus/common/aws');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
-const { ActivityStep, LambdaStep } = require('@cumulus/common/sfnStep');
-const { globalReplace } = require('@cumulus/common/string');
-
 const {
   dynamodb,
   ecs,
   sfn
-} = require('@cumulus/common/aws');
+} = require('@cumulus/aws-client/services');
+const { pullStepFunctionEvent } = require('@cumulus/aws-client/StepFunctions');
+const { getWorkflowTemplate, getWorkflowArn } = require('@cumulus/common/workflows');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { ActivityStep, LambdaStep } = require('@cumulus/common/sfnStep');
+const { globalReplace } = require('@cumulus/common/string');
+
 const StepFunctions = require('@cumulus/common/StepFunctions');
 
 const { sleep } = require('@cumulus/common/util');
