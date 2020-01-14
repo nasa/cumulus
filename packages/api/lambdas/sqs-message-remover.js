@@ -2,10 +2,8 @@
 
 const get = require('lodash.get');
 
-const {
-  deleteSQSMessage,
-  sqs
-} = require('@cumulus/common/aws');
+const { sqs } = require('@cumulus/aws-client/services');
+const { deleteSQSMessage } = require('@cumulus/aws-client/SQS');
 const {
   getSfEventMessageObject,
   getSfEventStatus,

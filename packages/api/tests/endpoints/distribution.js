@@ -5,7 +5,7 @@ const request = require('supertest');
 const sinon = require('sinon');
 const { Cookie } = require('tough-cookie');
 const { URL } = require('url');
-const { s3 } = require('@cumulus/common/aws');
+const { s3 } = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const { AccessToken } = require('../../models');

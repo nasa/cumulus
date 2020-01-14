@@ -3,14 +3,9 @@
 const isString = require('lodash.isstring');
 const test = require('ava');
 
-const {
-  aws: {
-    ecs,
-    recursivelyDeleteS3Bucket,
-    s3
-  },
-  testUtils: { randomString }
-} = require('@cumulus/common');
+const { ecs, s3 } = require('@cumulus/aws-client/services');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+const { randomString } = require('@cumulus/common/test-utils');
 
 const { AsyncOperation } = require('../../models');
 

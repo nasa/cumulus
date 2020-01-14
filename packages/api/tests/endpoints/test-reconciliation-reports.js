@@ -1,7 +1,8 @@
 'use strict';
 
 const test = require('ava');
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const request = require('supertest');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
@@ -31,7 +32,7 @@ test.before(async () => {
 
 test.beforeEach(async (t) => {
   process.env.system_bucket = 'test_system_bucket';
-  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -39,7 +40,7 @@ test.beforeEach(async (t) => {
   t.context.jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
   await Promise.all(reportNames.map((reportName) =>
-    aws.s3().putObject({
+    awsServices.s3().putObject({
       Bucket: process.env.system_bucket,
       Key: `${reportDirectory}/${reportName}`,
       Body: JSON.stringify({ test_key: `${reportName} test data` })
@@ -47,7 +48,7 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async () => {
-  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test.after.always(async () => {

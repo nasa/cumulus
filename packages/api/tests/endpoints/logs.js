@@ -4,7 +4,10 @@ const test = require('ava');
 const fs = require('fs');
 const path = require('path');
 const request = require('supertest');
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
+const {
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   createFakeJwtAuthToken,
@@ -36,7 +39,7 @@ test.before(async (t) => {
 
   await bootstrapElasticSearch('fakehost', t.context.esIndex, esAlias);
 
-  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -60,7 +63,7 @@ test.after.always(async (t) => {
   const { esClient, esIndex } = t.context;
 
   await accessTokenModel.deleteTable();
-  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
 });
 
