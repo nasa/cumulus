@@ -489,12 +489,12 @@ exports.DynamoDbSearchQueue = DynamoDbSearchQueue;
  * @returns {Promise.<string>} the Queue URL
  */
 exports.createQueue = (queueName) => {
-  deprecate('@cumulus/common/aws/createQueue', '1.17.0', '@cumulus/aws-client/sqs/createQueue');
+  deprecate('@cumulus/common/aws/createQueue', '1.17.0', '@cumulus/aws-client/SQS/createQueue');
   return sqsUtils.createQueue(queueName);
 };
 
 exports.getQueueUrl = (sourceArn, queueName) => {
-  deprecate('@cumulus/common/aws/getQueueUrl', '1.17.0', '@cumulus/aws-client/sqs/getQueueUrl');
+  deprecate('@cumulus/common/aws/getQueueUrl', '1.17.0', '@cumulus/aws-client/SQS/getQueueUrl');
   return sqsUtils.getQueueUrl(sourceArn, queueName);
 };
 
@@ -507,7 +507,7 @@ exports.getQueueUrl = (sourceArn, queueName) => {
 * @returns {Promise} - resolves when the messsage has been sent
 **/
 exports.sendSQSMessage = (queueUrl, message) => {
-  deprecate('@cumulus/common/aws/sendSQSMessage', '1.17.0', '@cumulus/aws-client/sqs/sendSQSMessage');
+  deprecate('@cumulus/common/aws/sendSQSMessage', '1.17.0', '@cumulus/aws-client/SQS/sendSQSMessage');
   return sqsUtils.sendSQSMessage(queueUrl, message);
 };
 
@@ -524,7 +524,7 @@ exports.sendSQSMessage = (queueUrl, message) => {
  * @returns {Promise.<Array>} an array of messages
  */
 exports.receiveSQSMessages = (queueUrl, options) => {
-  deprecate('@cumulus/common/aws/receiveSQSMessages', '1.17.0', '@cumulus/aws-client/sqs/receiveSQSMessages');
+  deprecate('@cumulus/common/aws/receiveSQSMessages', '1.17.0', '@cumulus/aws-client/SQS/receiveSQSMessages');
   return sqsUtils.receiveSQSMessages(queueUrl, options);
 };
 
@@ -536,7 +536,7 @@ exports.receiveSQSMessages = (queueUrl, options) => {
  * @returns {Promise} an AWS SQS response
  */
 exports.deleteSQSMessage = (queueUrl, receiptHandle) => {
-  deprecate('@cumulus/common/aws/deleteSQSMessage', '1.17.0', '@cumulus/aws-client/sqs/deleteSQSMessage');
+  deprecate('@cumulus/common/aws/deleteSQSMessage', '1.17.0', '@cumulus/aws-client/SQS/deleteSQSMessage');
   return sqsUtils.deleteSQSMessage(queueUrl, receiptHandle);
 };
 
@@ -548,7 +548,7 @@ exports.deleteSQSMessage = (queueUrl, receiptHandle) => {
  *                               if the queue exists
  */
 exports.sqsQueueExists = (queue) => {
-  deprecate('@cumulus/common/aws/sqsQueueExists', '1.17.0', '@cumulus/aws-client/sqs/sqsQueueExists');
+  deprecate('@cumulus/common/aws/sqsQueueExists', '1.17.0', '@cumulus/aws-client/SQS/sqsQueueExists');
   return sqsUtils.sqsQueueExists(queue);
 };
 
@@ -632,7 +632,7 @@ exports.publishSnsMessage = (
   message,
   retryOptions = {}
 ) => {
-  deprecate('@cumulus/common/aws/publishSnsMessage', '1.17.0', '@cumulus/aws-client/sns/publishSnsMessage');
+  deprecate('@cumulus/common/aws/publishSnsMessage', '1.17.0', '@cumulus/aws-client/SNS/publishSnsMessage');
   return snsUtils.publishSnsMessage(
     snsTopicArn,
     message,

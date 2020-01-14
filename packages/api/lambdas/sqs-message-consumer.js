@@ -2,7 +2,7 @@
 
 const get = require('lodash.get');
 const { sqs } = require('@cumulus/aws-client/services');
-const { sqsQueueExists } = require('@cumulus/aws-client/sqs');
+const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const log = require('@cumulus/common/log');
 const { Consumer } = require('@cumulus/ingest/consumer');
 const rulesHelpers = require('../lib/rulesHelpers');

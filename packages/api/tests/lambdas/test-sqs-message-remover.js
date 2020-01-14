@@ -5,7 +5,7 @@ const test = require('ava');
 const get = require('lodash.get');
 
 const awsServices = require('@cumulus/aws-client/services');
-const { receiveSQSMessages } = require('@cumulus/aws-client/sqs');
+const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
 const { sleep } = require('@cumulus/common/util');
 const { randomString } = require('@cumulus/common/test-utils');
 const { createSqsQueues, getSqsQueueMessageCounts } = require('../../lib/testUtils');
