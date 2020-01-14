@@ -26,6 +26,14 @@ const createErrorType = (name, ParentType = Error) => {
 const WorkflowError = createErrorType('WorkflowError');
 
 /**
+ * Test to see if a given exception is an AWS Throttling Exception
+ *
+ * @param {Error} err
+ * @returns {boolean}
+ */
+const isThrottlingException = (err) => err.code === 'ThrottlingException';
+
+/**
  * Returns true if the error is a resource error.
  *
  * @param {Error} error
@@ -46,6 +54,7 @@ module.exports = {
   createErrorType: createErrorType,
 
   isConditionalCheckException,
+  isThrottlingException,
   isWorkflowError,
 
   // WorkflowError should be bubbled out to the overall workflow in the 'exception'

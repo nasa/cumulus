@@ -4,6 +4,7 @@ const cloneDeep = require('lodash.clonedeep');
 const test = require('ava');
 const sinon = require('sinon');
 
+const s3Utils = require('@cumulus/aws-client/S3');
 const aws = require('@cumulus/common/aws');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const ingestAws = require('@cumulus/ingest/aws');
@@ -780,7 +781,7 @@ test.serial(
   async (t) => {
     // Stub out headobject S3 call used in api/models/granules.js,
     // so we don't have to create artifacts
-    sinon.stub(aws, 'headObject').resolves({ ContentLength: mockedFileSize });
+    sinon.stub(s3Utils, 'headObject').resolves({ ContentLength: mockedFileSize });
 
     const granule = granuleSuccess.payload.granules[0];
     const collection = granuleSuccess.meta.collection;

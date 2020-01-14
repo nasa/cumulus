@@ -19,7 +19,7 @@ const {
   calculateS3ObjectChecksum,
   validateS3ObjectChecksum,
   getFileBucketAndKey
-} = require('../s3');
+} = require('../S3');
 const awsServices = require('../services');
 
 test.before(async (t) => {

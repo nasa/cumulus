@@ -3,7 +3,7 @@ const test = require('ava');
 const { throttleOnce } = require('@cumulus/common/test-utils');
 
 const { retryOnThrottlingException } = require('../utils');
-const { getS3Object } = require('../s3');
+const { getS3Object } = require('../S3');
 
 test('better stack traces', async (t) => {
   const f = () => getS3Object('asdf');

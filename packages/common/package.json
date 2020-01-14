@@ -41,7 +41,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@cumulus/aws-client": "1.17.0-alpha4",
     "@cumulus/checksum": "1.17.0",
+    "@cumulus/errors": "1.17.0-alpha",
     "@cumulus/logger": "1.17.0",
     "ajv": "^5.2.2",
     "aws-sdk": "^2.585.0",

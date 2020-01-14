@@ -1,10 +1,11 @@
+const get = require('lodash.get');
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
 const isNil = require('lodash.isnil');
 const url = require('url');
 
 const awsServices = require('./services');
-const { inTestMode, randomString } = require('./test-utils');
+const { inTestMode } = require('./test-utils');
 const { improveStackTrace } = require('./utils');
 
 exports.getQueueUrl = (sourceArn, queueName) => {
@@ -15,14 +16,12 @@ exports.getQueueUrl = (sourceArn, queueName) => {
 /**
  * Create an SQS Queue.  Properly handles localstack queue URLs
  *
- * @param {string} queueName - defaults to a random string
+ * @param {string} QueueName - queue name
  * @returns {Promise.<string>} the Queue URL
  */
-async function createQueue(queueName) {
-  const actualQueueName = queueName || randomString();
-
+async function createQueue(QueueName) {
   const createQueueResponse = await awsServices.sqs().createQueue({
-    QueueName: actualQueueName
+    QueueName
   }).promise();
 
   if (inTestMode()) {
@@ -84,15 +83,7 @@ exports.receiveSQSMessages = async (queueUrl, options) => {
 
   const messages = await awsServices.sqs().receiveMessage(params).promise();
 
-  // convert body from string to js object
-  if (Object.prototype.hasOwnProperty.call(messages, 'Messages')) {
-    messages.Messages.forEach((mes) => {
-      mes.Body = JSON.parse(mes.Body); // eslint-disable-line no-param-reassign
-    });
-
-    return messages.Messages;
-  }
-  return [];
+  return get(messages, 'Messages', []);
 };
 
 /**
