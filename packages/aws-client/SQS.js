@@ -1,3 +1,4 @@
+const get = require('lodash.get');
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
 const isNil = require('lodash.isnil');
@@ -82,15 +83,7 @@ exports.receiveSQSMessages = async (queueUrl, options) => {
 
   const messages = await awsServices.sqs().receiveMessage(params).promise();
 
-  // convert body from string to js object
-  if (Object.prototype.hasOwnProperty.call(messages, 'Messages')) {
-    messages.Messages.forEach((mes) => {
-      mes.Body = JSON.parse(mes.Body); // eslint-disable-line no-param-reassign
-    });
-
-    return messages.Messages;
-  }
-  return [];
+  return get(messages, 'Messages', []);
 };
 
 /**
