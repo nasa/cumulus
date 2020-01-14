@@ -1,160 +1,96 @@
 'use strict';
 
-const AWS = require('aws-sdk');
-const fs = require('fs');
-const get = require('lodash.get');
-const isObject = require('lodash.isobject');
-const isString = require('lodash.isstring');
-const { JSONPath } = require('jsonpath-plus');
-const pMap = require('p-map');
-const pRetry = require('p-retry');
-const pump = require('pump');
-const path = require('path');
-const url = require('url');
-const { generateChecksumFromStream, validateChecksumFromStream } = require('@cumulus/checksum');
+const awsClient = require('@cumulus/aws-client/client');
+const cfUtils = require('@cumulus/aws-client/CloudFormation');
+const awsServices = require('@cumulus/aws-client/services');
+const s3Utils = require('@cumulus/aws-client/S3');
+const dynamoDbUtils = require('@cumulus/aws-client/DynamoDb');
+const DynamoDbSearchQueueCore = require('@cumulus/aws-client/DynamoDbSearchQueue');
+const S3ListObjectsV2QueueCore = require('@cumulus/aws-client/S3ListObjectsV2Queue');
+const secretsManagerUtils = require('@cumulus/aws-client/SecretsManager');
+const snsUtils = require('@cumulus/aws-client/SNS');
+const sqsUtils = require('@cumulus/aws-client/SQS');
+const stepFunctionUtils = require('@cumulus/aws-client/StepFunctions');
+const utils = require('@cumulus/aws-client/utils');
+const errors = require('@cumulus/errors');
 
-const errors = require('./errors');
-const log = require('./log');
-const string = require('./string');
-const { inTestMode, randomString, testAwsClient } = require('./test-utils');
-const concurrency = require('./concurrency');
-const {
-  deprecate,
-  isNil,
-  setErrorStack,
-  noop
-} = require('./util');
-const { UnparsableFileLocationError } = require('./errors');
+const { deprecate } = require('./util');
 
-/**
- * Wrap a function and provide a better stack trace
- *
- * If a call is made to the aws-sdk and it causes an exception, the stack trace
- * that is returned gives no indication of where the error actually occurred.
- *
- * This utility will wrap a function and, when it is called, update any raised
- * error with a better stack trace.
- *
- * @param {Function} fn - the function to wrap
- * @returns {Function} a wrapper function
- */
-const improveStackTrace = (fn) =>
-  async (...args) => {
-    const tracerError = {};
-    try {
-      Error.captureStackTrace(tracerError);
-      return await fn(...args);
-    } catch (err) {
-      setErrorStack(err, tracerError.stack);
-      err.message = `${err.message}; Function params: ${JSON.stringify(args, null, 2)}`;
-      throw err;
-    }
-  };
-exports.improveStackTrace = improveStackTrace;
+exports.region = awsClient.region;
 
-/**
- * Join strings into an S3 key without a leading slash or double slashes
- *
- * @param {...string|Array<string>} args - the strings to join
- * @returns {string} the full S3 key
- */
-function s3Join(...args) {
-  const tokens = Array.isArray(args[0]) ? args[0] : args;
-
-  const removeLeadingSlash = (token) => token.replace(/^\//, '');
-  const removeTrailingSlash = (token) => token.replace(/\/$/, '');
-  const isNotEmptyString = (token) => token.length > 0;
-
-  const key = tokens
-    .map(removeLeadingSlash)
-    .map(removeTrailingSlash)
-    .filter(isNotEmptyString)
-    .join('/');
-
-  if (tokens[tokens.length - 1].endsWith('/')) return `${key}/`;
-  return key;
-}
-exports.s3Join = s3Join;
-
-exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-AWS.config.update({ region: exports.region });
-
-// Workaround upload hangs. See: https://github.com/andrewrk/node-s3-client/issues/74'
-AWS.util.update(AWS.S3.prototype, { addExpect100Continue: noop });
-AWS.config.setPromisesDependency(Promise);
-
-
-let S3_RATE_LIMIT = 20;
-if (inTestMode()) {
-  S3_RATE_LIMIT = 1;
-}
-
-const memoize = (fn) => {
-  let memo = null;
-  return (options) => {
-    if (!memo) memo = fn(options);
-    return memo;
-  };
+exports.apigateway = (options) => {
+  deprecate('@cumulus/common/aws/apigateway', '1.17.0', '@cumulus/aws-client/services/apigateway');
+  return awsServices.apigateway(options);
+};
+exports.ecs = (options) => {
+  deprecate('@cumulus/common/aws/ecs', '1.17.0', '@cumulus/aws-client/services/ecs');
+  return awsServices.ecs(options);
+};
+exports.s3 = (options) => {
+  deprecate('@cumulus/common/aws/s3', '1.17.0', '@cumulus/aws-client/services/s3');
+  return awsServices.s3(options);
+};
+exports.kinesis = (options) => {
+  deprecate('@cumulus/common/aws/kinesis', '1.17.0', '@cumulus/aws-client/services/kinesis');
+  return awsServices.kinesis(options);
+};
+exports.lambda = (options) => {
+  deprecate('@cumulus/common/aws/lambda', '1.17.0', '@cumulus/aws-client/services/lambda');
+  return awsServices.lambda(options);
+};
+exports.sqs = (options) => {
+  deprecate('@cumulus/common/aws/sqs', '1.17.0', '@cumulus/aws-client/services/sqs');
+  return awsServices.sqs(options);
+};
+exports.cloudwatchevents = (options) => {
+  deprecate('@cumulus/common/aws/cloudwatchevents', '1.17.0', '@cumulus/aws-client/services/cloudwatchevents');
+  return awsServices.cloudwatchevents(options);
+};
+exports.cloudwatchlogs = (options) => {
+  deprecate('@cumulus/common/aws/cloudwatchlogs', '1.17.0', '@cumulus/aws-client/services/cloudwatchlogs');
+  return awsServices.cloudwatchlogs(options);
+};
+exports.cloudwatch = (options) => {
+  deprecate('@cumulus/common/aws/cloudwatch', '1.17.0', '@cumulus/aws-client/services/cloudwatch');
+  return awsServices.cloudwatch(options);
+};
+exports.dynamodb = (options) => {
+  deprecate('@cumulus/common/aws/dynamodb', '1.17.0', '@cumulus/aws-client/services/dynamodb');
+  return awsServices.dynamodb(options);
+};
+exports.dynamodbstreams = (options) => {
+  deprecate('@cumulus/common/aws/dynamodbstreams', '1.17.0', '@cumulus/aws-client/services/dynamodbstreams');
+  return awsServices.dynamodbstreams(options);
+};
+exports.dynamodbDocClient = (options) => {
+  deprecate('@cumulus/common/aws/dynamodbDocClient', '1.17.0', '@cumulus/aws-client/services/dynamodbDocClient');
+  return awsServices.dynamodbDocClient(options);
+};
+exports.sfn = (options) => {
+  deprecate('@cumulus/common/aws/sfn', '1.17.0', '@cumulus/aws-client/services/sfn');
+  return awsServices.sfn(options);
+};
+exports.cf = (options) => {
+  deprecate('@cumulus/common/aws/cf', '1.17.0', '@cumulus/aws-client/services/cf');
+  return awsServices.cf(options);
+};
+exports.sns = (options) => {
+  deprecate('@cumulus/common/aws/sns', '1.17.0', '@cumulus/aws-client/services/sns');
+  return awsServices.sns(options);
+};
+exports.secretsManager = (options) => {
+  deprecate('@cumulus/common/aws/secretsManager', '1.17.0', '@cumulus/aws-client/services/secretsManager');
+  return awsServices.secretsManager(options);
 };
 
-/**
- * Return a function which, when called, will return an AWS service object
- *
- * Note: The returned service objects are cached, so there will only be one
- *       instance of each service object per process.
- *
- * @param {Function} Service - an AWS service object constructor function
- * @param {string} version - the API version to use
- * @returns {Function} - a function which, when called, will return an AWS service object
- */
-const awsClient = (Service, version = null) => {
-  const options = {};
-  if (version) options.apiVersion = version;
+/** Secrets Manager utils */
 
-  if (inTestMode()) {
-    if (AWS.DynamoDB.DocumentClient.serviceIdentifier === undefined) {
-      AWS.DynamoDB.DocumentClient.serviceIdentifier = 'dynamodb';
-    }
-    return memoize((o) => testAwsClient(Service, Object.assign(options, o)));
-  }
-  return memoize((o) => new Service(Object.assign(options, o)));
+exports.getSecretString = (SecretId) => {
+  deprecate('@cumulus/common/aws/getSecretString', '1.17.0', '@cumulus/aws-client/SecretsManager/getSecretString');
+  return secretsManagerUtils.getSecretString(SecretId);
 };
 
-exports.apigateway = awsClient(AWS.APIGateway, '2015-07-09');
-exports.ecs = awsClient(AWS.ECS, '2014-11-13');
-exports.s3 = awsClient(AWS.S3, '2006-03-01');
-exports.kinesis = awsClient(AWS.Kinesis, '2013-12-02');
-exports.lambda = awsClient(AWS.Lambda, '2015-03-31');
-exports.sqs = awsClient(AWS.SQS, '2012-11-05');
-exports.cloudwatchevents = awsClient(AWS.CloudWatchEvents, '2014-02-03');
-exports.cloudwatchlogs = awsClient(AWS.CloudWatchLogs, '2014-03-28');
-exports.cloudwatch = awsClient(AWS.CloudWatch, '2010-08-01');
-exports.dynamodb = awsClient(AWS.DynamoDB, '2012-08-10');
-exports.dynamodbstreams = awsClient(AWS.DynamoDBStreams, '2012-08-10');
-exports.dynamodbDocClient = awsClient(AWS.DynamoDB.DocumentClient, '2012-08-10');
-exports.sfn = awsClient(AWS.StepFunctions, '2016-11-23');
-exports.cf = awsClient(AWS.CloudFormation, '2010-05-15');
-exports.sns = awsClient(AWS.SNS, '2010-03-31');
-exports.secretsManager = awsClient(AWS.SecretsManager, '2017-10-17');
-
-exports.getSecretString = (SecretId) =>
-  exports.secretsManager().getSecretValue({ SecretId }).promise()
-    .then((response) => response.SecretString);
-
-/**
- * Create a DynamoDB table and then wait for the table to exist
- *
- * @param {Object} params - the same params that you would pass to AWS.createTable
- *   See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#createTable-property
- * @returns {Promise<Object>} - the output of the createTable call
- */
-async function createAndWaitForDynamoDbTable(params) {
-  const createTableResult = await exports.dynamodb().createTable(params).promise();
-  await exports.dynamodb().waitFor('tableExists', { TableName: params.TableName }).promise();
-
-  return createTableResult;
-}
-exports.createAndWaitForDynamoDbTable = createAndWaitForDynamoDbTable;
+/** Cloudformation utils */
 
 /**
  * Describes the resources belonging to a given CloudFormation stack
@@ -164,50 +100,22 @@ exports.createAndWaitForDynamoDbTable = createAndWaitForDynamoDbTable;
  * @param {string} stackName -  The name of the CloudFormation stack to query
  * @returns {Array<Object>} The resources belonging to the stack
  */
-exports.describeCfStackResources = (stackName) =>
-  exports.cf().describeStackResources({ StackName: stackName })
-    .promise()
-    .then((response) => response.StackResources);
+exports.describeCfStackResources = (stackName) => {
+  deprecate('@cumulus/common/aws/describeCfStackResources', '1.17.0', '@cumulus/aws-client/cloudformation/describeCfStackResources');
+  return cfUtils.describeCfStackResources(stackName);
+};
 
-exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
-  obj[fn](opts, (err, data) => {
-    if (err) {
-      callback(err, data);
-      return;
-    }
+/* S3 utils */
 
-    let arns = null;
-    Object.keys(data).forEach((prop) => {
-      if (prop.endsWith('Arns')) {
-        arns = data[prop];
-      }
-    });
-
-    if (!arns) {
-      callback(`Could not find an 'Arn' property in response from ${fn}`, data);
-      return;
-    }
-
-    const prefixRe = new RegExp(`^${prefix}-[A-Z0-9]`);
-    const baseNameOnly = `-${baseName}-`;
-    let matchingArn = null;
-
-    arns.forEach((arn) => {
-      const name = arn.split('/').pop();
-      if (name.match(prefixRe) && name.includes(baseNameOnly)) {
-        matchingArn = arn;
-      }
-    });
-
-    if (matchingArn) {
-      callback(null, matchingArn);
-    } else if (data.NextToken) {
-      const nextOpts = Object.assign({}, opts, { NextToken: data.NextToken });
-      exports.findResourceArn(obj, fn, prefix, baseName, nextOpts, callback);
-    } else {
-      callback(`Could not find resource ${baseName} in ${fn}`);
-    }
-  });
+/**
+ * Join strings into an S3 key without a leading slash or double slashes
+ *
+ * @param {...string|Array<string>} args - the strings to join
+ * @returns {string} the full S3 key
+ */
+exports.s3Join = (...args) => {
+  deprecate('@cumulus/common/aws/s3Join', '1.17.0', '@cumulus/aws-client/s3/s3Join');
+  return s3Utils.s3Join(...args);
 };
 
 /**
@@ -217,8 +125,10 @@ exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
 * @param {Array<Object>} tagset - S3 TagSet array
 * @returns {string} - tags query string
 */
-exports.s3TagSetToQueryString = (tagset) => tagset.reduce((acc, tag) => acc.concat(`&${tag.Key}=${tag.Value}`), '').substring(1);
-
+exports.s3TagSetToQueryString = (tagset) => {
+  deprecate('@cumulus/common/aws/s3TagSetToQueryString', '1.17.0', '@cumulus/aws-client/s3/s3TagSetToQueryString');
+  return s3Utils.s3TagSetToQueryString(tagset);
+};
 
 /**
  * Delete an object from S3
@@ -227,10 +137,10 @@ exports.s3TagSetToQueryString = (tagset) => tagset.reduce((acc, tag) => acc.conc
  * @param {string} key - key of the object to be deleted
  * @returns {Promise} - promise of the object being deleted
  */
-exports.deleteS3Object = improveStackTrace(
-  (bucket, key) =>
-    exports.s3().deleteObject({ Bucket: bucket, Key: key }).promise()
-);
+exports.deleteS3Object = (bucket, key) => {
+  deprecate('@cumulus/common/aws/deleteS3Object', '1.17.0', '@cumulus/aws-client/s3/deleteS3Object');
+  return s3Utils.deleteS3Object(bucket, key);
+};
 
 /**
  * Test if an object exists in S3
@@ -239,13 +149,10 @@ exports.deleteS3Object = improveStackTrace(
  * @returns {Promise<boolean>} - a Promise that will resolve to a boolean indicating
  *                               if the object exists
  */
-exports.s3ObjectExists = (params) =>
-  exports.headObject(params.Bucket, params.Key)
-    .then(() => true)
-    .catch((e) => {
-      if (e.code === 'NotFound') return false;
-      throw e;
-    });
+exports.s3ObjectExists = (params) => {
+  deprecate('@cumulus/common/aws/s3ObjectExists', '1.17.0', '@cumulus/aws-client/s3/s3ObjectExists');
+  return s3Utils.s3ObjectExists(params);
+};
 
 /**
 * Put an object on S3
@@ -253,12 +160,10 @@ exports.s3ObjectExists = (params) =>
 * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
 * @returns {Promise} - promise of the object being put
 **/
-exports.s3PutObject = improveStackTrace(
-  (params) => exports.s3().putObject({
-    ACL: 'private',
-    ...params
-  }).promise()
-);
+exports.s3PutObject = (params) => {
+  deprecate('@cumulus/common/aws/s3PutObject', '1.17.0', '@cumulus/aws-client/s3/s3PutObject');
+  return s3Utils.s3PutObject(params);
+};
 
 /**
 * Copy an object from one location on S3 to another
@@ -266,12 +171,10 @@ exports.s3PutObject = improveStackTrace(
 * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
 * @returns {Promise} - promise of the object being copied
 **/
-exports.s3CopyObject = improveStackTrace(
-  (params) => exports.s3().copyObject({
-    TaggingDirective: 'COPY',
-    ...params
-  }).promise()
-);
+exports.s3CopyObject = (params) => {
+  deprecate('@cumulus/common/aws/s3CopyObject', '1.17.0', '@cumulus/aws-client/s3/s3CopyObject');
+  return s3Utils.s3CopyObject(params);
+};
 
 /**
  * Upload data to S3
@@ -281,9 +184,10 @@ exports.s3CopyObject = improveStackTrace(
  * @param {Object} params - see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
  * @returns {Promise} see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
  */
-exports.promiseS3Upload = improveStackTrace(
-  (params) => exports.s3().upload(params).promise()
-);
+exports.promiseS3Upload = (params) => {
+  deprecate('@cumulus/common/aws/promiseS3Upload', '1.17.0', '@cumulus/aws-client/s3/promiseS3Upload');
+  return s3Utils.promiseS3Upload(params);
+};
 
 /**
  * Downloads the given s3Obj to the given filename in a streaming manner
@@ -293,19 +197,9 @@ exports.promiseS3Upload = improveStackTrace(
  * @returns {Promise<string>} - returns filename if successful
  */
 exports.downloadS3File = (s3Obj, filepath) => {
-  const s3 = exports.s3();
-  const fileWriteStream = fs.createWriteStream(filepath);
-
-  return new Promise((resolve, reject) => {
-    const objectReadStream = s3.getObject(s3Obj).createReadStream();
-
-    pump(objectReadStream, fileWriteStream, (err) => {
-      if (err) reject(err);
-      else resolve(filepath);
-    });
-  });
+  deprecate('@cumulus/common/aws/downloadS3File', '1.17.0', '@cumulus/aws-client/s3/downloadS3File');
+  return s3Utils.downloadS3File(s3Obj, filepath);
 };
-
 
 /**
 * Get an object header from S3
@@ -314,9 +208,10 @@ exports.downloadS3File = (s3Obj, filepath) => {
 * @param {string} Key - key for object (filepath + filename)
 * @returns {Promise} - returns response from `S3.headObject` as a promise
 **/
-exports.headObject = improveStackTrace(
-  (Bucket, Key) => exports.s3().headObject({ Bucket, Key }).promise()
-);
+exports.headObject = (Bucket, Key) => {
+  deprecate('@cumulus/common/aws/headObject', '1.17.0', '@cumulus/aws-client/s3/headObject');
+  return s3Utils.headObject(Bucket, Key);
+};
 
 /**
  * Get the size of an S3Object, in bytes
@@ -325,9 +220,10 @@ exports.headObject = improveStackTrace(
  * @param {string} key - S3 key
  * @returns {Promise<integer>} - object size, in bytes
  */
-exports.getObjectSize = (bucket, key) =>
-  exports.headObject(bucket, key)
-    .then((response) => response.ContentLength);
+exports.getObjectSize = (bucket, key) => {
+  deprecate('@cumulus/common/aws/getObjectSize', '1.17.0', '@cumulus/aws-client/s3/getObjectSize');
+  return s3Utils.getObjectSize(bucket, key);
+};
 
 /**
 * Get object Tagging from S3
@@ -336,10 +232,10 @@ exports.getObjectSize = (bucket, key) =>
 * @param {string} key - key for object (filepath + filename)
 * @returns {Promise} - returns response from `S3.getObjectTagging` as a promise
 **/
-exports.s3GetObjectTagging = improveStackTrace(
-  (bucket, key) =>
-    exports.s3().getObjectTagging({ Bucket: bucket, Key: key }).promise()
-);
+exports.s3GetObjectTagging = (bucket, key) => {
+  deprecate('@cumulus/common/aws/s3GetObjectTagging', '1.17.0', '@cumulus/aws-client/s3/s3GetObjectTagging');
+  return s3Utils.s3GetObjectTagging(bucket, key);
+};
 
 /**
 * Puts object Tagging in S3
@@ -350,14 +246,10 @@ exports.s3GetObjectTagging = improveStackTrace(
 * @param {Object} Tagging - tagging object
 * @returns {Promise} - returns response from `S3.getObjectTagging` as a promise
 **/
-exports.s3PutObjectTagging = improveStackTrace(
-  (Bucket, Key, Tagging) =>
-    exports.s3().putObjectTagging({
-      Bucket,
-      Key,
-      Tagging
-    }).promise()
-);
+exports.s3PutObjectTagging = (Bucket, Key, Tagging) => {
+  deprecate('@cumulus/common/aws/s3PutObjectTagging', '1.17.0', '@cumulus/aws-client/s3/s3PutObjectTagging');
+  return s3Utils.s3PutObjectTagging(Bucket, Key, Tagging);
+};
 
 /**
 * Get an object from S3
@@ -369,39 +261,25 @@ exports.s3PutObjectTagging = improveStackTrace(
 *   By default, retries will not be performed
 * @returns {Promise} - returns response from `S3.getObject` as a promise
 **/
-exports.getS3Object = improveStackTrace(
-  (Bucket, Key, retryOptions = { retries: 0 }) =>
-    pRetry(
-      async () => {
-        try {
-          return await exports.s3().getObject({ Bucket, Key }).promise();
-        } catch (err) {
-          if (err.code === 'NoSuchKey') throw err;
-          throw new pRetry.AbortError(err);
-        }
-      },
-      {
-        maxTimeout: 10000,
-        onFailedAttempt: (err) => log.debug(`getS3Object('${Bucket}', '${Key}') failed with ${err.retriesLeft} retries left: ${err.message}`),
-        ...retryOptions
-      }
-    )
-);
+exports.getS3Object = (Bucket, Key, retryOptions = { retries: 0 }) => {
+  deprecate('@cumulus/common/aws/getS3Object', '1.17.0', '@cumulus/aws-client/s3/getS3Object');
+  return s3Utils.getS3Object(Bucket, Key, retryOptions);
+};
 
-exports.getJsonS3Object = (bucket, key) =>
-  exports.getS3Object(bucket, key)
-    .then(({ Body }) => JSON.parse(Body.toString()));
+exports.getJsonS3Object = (bucket, key) => {
+  deprecate('@cumulus/common/aws/getJsonS3Object', '1.17.0', '@cumulus/aws-client/s3/getJsonS3Object');
+  return s3Utils.getJsonS3Object(bucket, key);
+};
 
-exports.putJsonS3Object = (bucket, key, data) =>
-  exports.s3PutObject({
-    Bucket: bucket,
-    Key: key,
-    Body: JSON.stringify(data)
-  });
+exports.putJsonS3Object = (bucket, key, data) => {
+  deprecate('@cumulus/common/aws/putJsonS3Object', '1.17.0', '@cumulus/aws-client/s3/putJsonS3Object');
+  return s3Utils.putJsonS3Object(bucket, key, data);
+};
 
-exports.getS3ObjectReadStream = (bucket, key) => exports.s3().getObject(
-  { Bucket: bucket, Key: key }
-).createReadStream();
+exports.getS3ObjectReadStream = (bucket, key) => {
+  deprecate('@cumulus/common/aws/getS3ObjectReadStream', '1.17.0', '@cumulus/aws-client/s3/getS3ObjectReadStream');
+  return s3Utils.getS3ObjectReadStream(bucket, key);
+};
 
 /**
 * Check if a file exists in an S3 object
@@ -411,50 +289,14 @@ exports.getS3ObjectReadStream = (bucket, key) => exports.s3().getObject(
 * @param {string} key - key of the file in the S3 bucket
 * @returns {Promise} returns the response from `S3.headObject` as a promise
 **/
-exports.fileExists = async (bucket, key) => {
-  const s3 = exports.s3();
-
-  try {
-    const r = await s3.headObject({ Key: key, Bucket: bucket }).promise();
-    return r;
-  } catch (e) {
-    // if file is not return false
-    if (e.stack.match(/(NotFound)/) || e.stack.match(/(NoSuchBucket)/)) {
-      return false;
-    }
-    throw e;
-  }
+exports.fileExists = (bucket, key) => {
+  deprecate('@cumulus/common/aws/fileExists', '1.17.0', '@cumulus/aws-client/s3/fileExists');
+  return s3Utils.fileExists(bucket, key);
 };
 
-
 exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
-  // Scrub s3Ojbs to avoid errors from the AWS SDK
-  const scrubbedS3Objs = s3Objs.map((s3Obj) => ({
-    Bucket: s3Obj.Bucket,
-    Key: s3Obj.Key
-  }));
-  const s3 = exports.s3();
-  let i = 0;
-  const n = s3Objs.length;
-  log.info(`Starting download of ${n} keys to ${dir}`);
-  const promiseDownload = (s3Obj) => {
-    const filename = path.join(dir, path.basename(s3Obj.Key));
-    const file = fs.createWriteStream(filename);
-    const opts = Object.assign(s3Obj, s3opts);
-    return new Promise((resolve, reject) => {
-      s3.getObject(opts)
-        .createReadStream()
-        .pipe(file)
-        .on('finish', () => {
-          log.info(`Progress: [${i} of ${n}] s3://${s3Obj.Bucket}/${s3Obj.Key} -> ${filename}`);
-          i += 1;
-          return resolve(s3Obj.Key);
-        })
-        .on('error', reject);
-    });
-  };
-
-  return pMap(scrubbedS3Objs, promiseDownload, { concurrency: S3_RATE_LIMIT });
+  deprecate('@cumulus/common/aws/downloadS3Files', '1.17.0', '@cumulus/aws-client/s3/downloadS3Files');
+  return s3Utils.downloadS3Files(s3Objs, dir, s3opts);
 };
 
 /**
@@ -464,12 +306,10 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
  * @returns {Promise} A promise that resolves to an Array of the data returned
  *   from the deletion operations
  */
-exports.deleteS3Files = (s3Objs) => pMap(
-  s3Objs,
-  (s3Obj) => exports.s3().deleteObject(s3Obj).promise(),
-  { concurrency: S3_RATE_LIMIT }
-);
-
+exports.deleteS3Files = (s3Objs) => {
+  deprecate('@cumulus/common/aws/deleteS3Files', '1.17.0', '@cumulus/aws-client/s3/deleteS3Files');
+  return s3Utils.deleteS3Files(s3Objs);
+};
 
 /**
 * Delete a bucket and all of its objects from S3
@@ -477,50 +317,14 @@ exports.deleteS3Files = (s3Objs) => pMap(
 * @param {string} bucket - name of the bucket
 * @returns {Promise} - the promised result of `S3.deleteBucket`
 **/
-exports.recursivelyDeleteS3Bucket = improveStackTrace(
-  async (bucket) => {
-    const response = await exports.s3().listObjects({ Bucket: bucket }).promise();
-    const s3Objects = response.Contents.map((o) => ({
-      Bucket: bucket,
-      Key: o.Key
-    }));
-
-    await exports.deleteS3Files(s3Objects);
-    await exports.s3().deleteBucket({ Bucket: bucket }).promise();
-  }
-);
+exports.recursivelyDeleteS3Bucket = (bucket) => {
+  deprecate('@cumulus/common/aws/recursivelyDeleteS3Bucket', '1.17.0', '@cumulus/aws-client/s3/recursivelyDeleteS3Bucket');
+  return s3Utils.recursivelyDeleteS3Bucket(bucket);
+};
 
 exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
-  let i = 0;
-  const n = files.length;
-  if (n > 1) {
-    log.info(`Starting upload of ${n} keys`);
-  }
-  const promiseUpload = (filenameOrInfo) => {
-    let fileInfo = filenameOrInfo;
-    if (isString(fileInfo)) {
-      const filename = fileInfo;
-      fileInfo = {
-        key: isString(keyPath)
-          ? path.join(keyPath, path.basename(filename))
-          : keyPath(filename),
-        filename: filename
-      };
-    }
-    const bucket = fileInfo.bucket || defaultBucket;
-    const filename = fileInfo.filename;
-    const key = fileInfo.key;
-    const body = fs.createReadStream(filename);
-    const opts = Object.assign({ Bucket: bucket, Key: key, Body: body }, s3opts);
-    return exports.promiseS3Upload(opts)
-      .then(() => {
-        i += 1;
-        log.info(`Progress: [${i} of ${n}] ${filename} -> s3://${bucket}/${key}`);
-        return { key: key, bucket: bucket };
-      });
-  };
-
-  return pMap(files, promiseUpload, { concurrency: S3_RATE_LIMIT });
+  deprecate('@cumulus/common/aws/uploadS3Files', '1.17.0', '@cumulus/aws-client/s3/uploadS3Files');
+  return s3Utils.uploadS3Files(files, defaultBucket, keyPath, s3opts);
 };
 
 /**
@@ -533,8 +337,8 @@ exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
  * @returns {Promise} A promise
  */
 exports.uploadS3FileStream = (fileStream, bucket, key, s3opts = {}) => {
-  const opts = Object.assign({ Bucket: bucket, Key: key, Body: fileStream }, s3opts);
-  return exports.promiseS3Upload(opts);
+  deprecate('@cumulus/common/aws/uploadS3FileStream', '1.17.0', '@cumulus/aws-client/s3/uploadS3FileStream');
+  return s3Utils.uploadS3FileStream(fileStream, bucket, key, s3opts);
 };
 
 /**
@@ -550,22 +354,8 @@ exports.uploadS3FileStream = (fileStream, bucket, key, s3opts = {}) => {
  * `ETag`, `LastModified`, `Owner`, `Size`, `StorageClass`.
  */
 exports.listS3Objects = (bucket, prefix = null, skipFolders = true) => {
-  log.info(`Listing objects in s3://${bucket}`);
-  const params = {
-    Bucket: bucket
-  };
-  if (prefix) params.Prefix = prefix;
-
-  return exports.s3().listObjects(params).promise()
-    .then((data) => {
-      let contents = data.Contents || [];
-      if (skipFolders) {
-        // Filter out any references to folders
-        contents = contents.filter((obj) => !obj.Key.endsWith('/'));
-      }
-
-      return contents;
-    });
+  deprecate('@cumulus/common/aws/listS3Objects', '1.17.0', '@cumulus/aws-client/s3/listS3Objects');
+  return s3Utils.listS3Objects(bucket, prefix, skipFolders);
 };
 
 /**
@@ -582,76 +372,17 @@ exports.listS3Objects = (bucket, prefix = null, skipFolders = true) => {
  * @returns {Promise<Array>} - resolves to an array of objects corresponding to
  *   the Contents property of the listObjectsV2 response
  */
-async function listS3ObjectsV2(params) {
-  // Fetch the first list of objects from S3
-  let listObjectsResponse = await exports.s3().listObjectsV2(params).promise();
-  let discoveredObjects = listObjectsResponse.Contents;
-
-  // Keep listing more objects from S3 until we have all of them
-  while (listObjectsResponse.IsTruncated) {
-    listObjectsResponse = await exports.s3().listObjectsV2( // eslint-disable-line no-await-in-loop, max-len
-      // Update the params with a Continuation Token
-      Object.assign(
-        {},
-        params,
-        { ContinuationToken: listObjectsResponse.NextContinuationToken }
-      )
-    ).promise();
-    discoveredObjects = discoveredObjects.concat(listObjectsResponse.Contents);
-  }
-
-  return discoveredObjects;
-}
-exports.listS3ObjectsV2 = listS3ObjectsV2;
+exports.listS3ObjectsV2 = (params) => {
+  deprecate('@cumulus/common/aws/listS3ObjectsV2', '1.17.0', '@cumulus/aws-client/s3/listS3ObjectsV2');
+  return s3Utils.listS3ObjectsV2(params);
+};
 
 // Class to efficiently list all of the objects in an S3 bucket, without loading
 // them all into memory at once.  Handles paging of listS3ObjectsV2 requests.
-class S3ListObjectsV2Queue {
+class S3ListObjectsV2Queue extends S3ListObjectsV2QueueCore {
   constructor(params) {
-    this.items = [];
-    this.params = params;
-    this.s3 = exports.s3();
-  }
-
-  /**
-   * View the next item in the queue
-   *
-   * This does not remove the object from the queue.  When there are no more
-   * items in the queue, returns 'null'.
-   *
-   * @returns {Promise<Object>} - an S3 object description
-   */
-  async peek() {
-    if (this.items.length === 0) await this.fetchItems();
-    return this.items[0];
-  }
-
-  /**
-   * Remove the next item from the queue
-   *
-   * When there are no more items in the queue, returns 'null'.
-   *
-   * @returns {Promise<Object>} - an S3 object description
-   */
-  async shift() {
-    if (this.items.length === 0) await this.fetchItems();
-    return this.items.shift();
-  }
-
-  /**
-   * Query the S3 API to get the next 1,000 items
-   *
-   * @returns {Promise<undefined>} - resolves when the queue has been updated
-   * @private
-   */
-  async fetchItems() {
-    const response = await this.s3.listObjectsV2(this.params).promise();
-
-    this.items = response.Contents;
-
-    if (response.IsTruncated) {
-      this.params.ContinuationToken = response.NextContinuationToken;
-    } else this.items.push(null);
+    deprecate('@cumulus/common/aws/S3ListObjectsV2QueueCore', '1.17.0', '@cumulus/aws-client/S3ListObjectsV2QueueCore');
+    super(params);
   }
 }
 exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;
@@ -667,14 +398,9 @@ exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;
  *
  * @returns {number|string} - calculated checksum
  */
-exports.calculateS3ObjectChecksum = async ({
-  algorithm,
-  bucket,
-  key,
-  options
-}) => {
-  const fileStream = exports.getS3ObjectReadStream(bucket, key);
-  return generateChecksumFromStream(algorithm, fileStream, options);
+exports.calculateS3ObjectChecksum = (params) => {
+  deprecate('@cumulus/common/aws/calculateS3ObjectChecksum', '1.17.0', '@cumulus/aws-client/s3/calculateS3ObjectChecksum');
+  return s3Utils.calculateS3ObjectChecksum(params);
 };
 
 /**
@@ -690,93 +416,9 @@ exports.calculateS3ObjectChecksum = async ({
  * @throws {InvalidChecksum} - Throws error if validation fails
  * @returns {boolean} - returns true for success
  */
-exports.validateS3ObjectChecksum = async ({
-  algorithm,
-  bucket,
-  key,
-  expectedSum,
-  options
-}) => {
-  const fileStream = exports.getS3ObjectReadStream(bucket, key);
-  if (await validateChecksumFromStream(algorithm, fileStream, expectedSum, options)) {
-    return true;
-  }
-  const msg = `Invalid checksum for S3 object s3://${bucket}/${key} with type ${algorithm} and expected sum ${expectedSum}`;
-  throw new errors.InvalidChecksum(msg);
-};
-
-// Maintained for backwards compatibility
-exports.checksumS3Objects = (algorithm, bucket, key, options = {}) => {
-  deprecate('@cumulus/common/aws.checksumS3Objects', '1.11.2', '@cumulus/common/aws.calculateS3ObjectChecksum');
-  const params = {
-    algorithm, bucket, key, options
-  };
-  return exports.calculateS3ObjectChecksum(params);
-};
-
-// Class to efficiently search all of the items in a DynamoDB table, without
-// loading them all into memory at once.  Handles paging.
-class DynamoDbSearchQueue {
-  constructor(params, searchType = 'scan') {
-    this.items = [];
-    this.params = params;
-    this.dynamodbDocClient = exports.dynamodbDocClient();
-    this.searchType = searchType;
-  }
-
-  /**
-   * View the next item in the queue
-   *
-   * This does not remove the object from the queue.  When there are no more
-   * items in the queue, returns 'null'.
-   *
-   * @returns {Promise<Object>} - an item from the DynamoDB table
-   */
-  async peek() {
-    if (this.items.length === 0) await this.fetchItems();
-    return this.items[0];
-  }
-
-  /**
-   * Remove the next item from the queue
-   *
-   * When there are no more items in the queue, returns 'null'.
-   *
-   * @returns {Promise<Object>} - an item from the DynamoDB table
-   */
-  async shift() {
-    if (this.items.length === 0) await this.fetchItems();
-    return this.items.shift();
-  }
-
-  /**
-   * Query the DynamoDB API to get the next batch of items
-   *
-   * @returns {Promise<undefined>} - resolves when the queue has been updated
-   * @private
-   */
-  async fetchItems() {
-    let response;
-    do {
-      response = await this.dynamodbDocClient[this.searchType](this.params).promise(); // eslint-disable-line no-await-in-loop, max-len
-      if (response.LastEvaluatedKey) this.params.ExclusiveStartKey = response.LastEvaluatedKey;
-    } while (response.Items.length === 0 && response.LastEvaluatedKey);
-
-    this.items = response.Items;
-
-    if (!response.LastEvaluatedKey) this.items.push(null);
-  }
-}
-exports.DynamoDbSearchQueue = DynamoDbSearchQueue;
-
-exports.syncUrl = async (uri, bucket, destKey) => {
-  const response = await concurrency.promiseUrl(uri);
-  await exports.promiseS3Upload({ Bucket: bucket, Key: destKey, Body: response });
-};
-
-exports.getQueueUrl = (sourceArn, queueName) => {
-  const arnParts = sourceArn.split(':');
-  return `https://sqs.${arnParts[3]}.amazonaws.com/${arnParts[4]}/${queueName}`;
+exports.validateS3ObjectChecksum = (params) => {
+  deprecate('@cumulus/common/aws/validateS3ObjectChecksum', '1.17.0', '@cumulus/aws-client/s3/validateS3ObjectChecksum');
+  return s3Utils.validateS3ObjectChecksum(params);
 };
 
 /**
@@ -786,16 +428,8 @@ exports.getQueueUrl = (sourceArn, queueName) => {
 * @returns {Object} Returns an object with `Bucket` and `Key` properties
 **/
 exports.parseS3Uri = (uri) => {
-  const parsedUri = url.parse(uri);
-
-  if (parsedUri.protocol !== 's3:') {
-    throw new Error('uri must be a S3 uri, e.g. s3://bucketname');
-  }
-
-  return {
-    Bucket: parsedUri.hostname,
-    Key: parsedUri.path.substring(1)
-  };
+  deprecate('@cumulus/common/aws/parseS3Uri', '1.17.0', '@cumulus/aws-client/s3/parseS3Uri');
+  return s3Utils.parseS3Uri(uri);
 };
 
 /**
@@ -805,45 +439,48 @@ exports.parseS3Uri = (uri) => {
  * @param {string} key - an S3 key
  * @returns {string} - an S3 URI
  */
-exports.buildS3Uri = (bucket, key) => `s3://${bucket}/${key.replace(/^\/+/, '')}`;
-
-/**
- * Given an array of fields, returns that a new string that's safe for use as a StepFunction,
- * execution name, where all fields are joined by a StepFunction-safe delimiter
- * Important: This transformation isn't entirely two-way. Names longer than 80 characters
- *            will be truncated.
- *
- * @param {string} fields - The fields to be injected into an execution name
- * @param {string} delimiter - An optional delimiter string to replace, pass null to make
- *   no replacements
- * @returns {string} A string that's safe to use as a StepFunctions execution name
- */
-exports.toSfnExecutionName = (fields, delimiter = '__') => {
-  let sfnUnsafeChars = '[^\\w-=+_.]';
-  if (delimiter) {
-    sfnUnsafeChars = `(${delimiter}|${sfnUnsafeChars})`;
-  }
-  const regex = new RegExp(sfnUnsafeChars, 'g');
-  return fields.map((s) => s.replace(regex, string.unicodeEscape).replace(/\\/g, '!'))
-    .join(delimiter)
-    .substring(0, 80);
+exports.buildS3Uri = (bucket, key) => {
+  deprecate('@cumulus/common/aws/buildS3Uri', '1.17.0', '@cumulus/aws-client/s3/buildS3Uri');
+  return s3Utils.buildS3Uri(bucket, key);
 };
 
 /**
- * Opposite of toSfnExecutionName. Given a delimited StepFunction execution name, returns
- * an array of its original fields
- * Important: This value may be truncated from the original because of the 80-char limit on
- *            execution names
+ * Extract the S3 bucket and key from the URL path parameters
  *
- * @param {string} str - The string to make stepfunction safe
- * @param {string} [delimiter='__'] - An optional delimiter string to replace, pass null to make
- *   no replacements
- * @returns {Array} An array of the original fields
+ * @param {string} pathParams - path parameters from the URL
+ * @returns {Object} - bucket/key in the form of
+ * { Bucket: x, Key: y }
  */
-exports.fromSfnExecutionName = (str, delimiter = '__') =>
-  str.split(delimiter)
-    .map((s) => s.replace(/!/g, '\\').replace('"', '\\"'))
-    .map((s) => JSON.parse(`"${s}"`));
+exports.getFileBucketAndKey = (pathParams) => {
+  deprecate('@cumulus/common/aws/getFileBucketAndKey', '1.17.0', '@cumulus/aws-client/s3/getFileBucketAndKey');
+  return s3Utils.getFileBucketAndKey(pathParams);
+};
+
+/** DynamoDB utils */
+
+/**
+ * Create a DynamoDB table and then wait for the table to exist
+ *
+ * @param {Object} params - the same params that you would pass to AWS.createTable
+ *   See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#createTable-property
+ * @returns {Promise<Object>} - the output of the createTable call
+ */
+exports.createAndWaitForDynamoDbTable = (params) => {
+  deprecate('@cumulus/common/aws/createAndWaitForDynamoDbTable', '1.17.0', '@cumulus/aws-client/DynamoDb/createAndWaitForDynamoDbTable');
+  return dynamoDbUtils.createAndWaitForDynamoDbTable(params);
+};
+
+// Class to efficiently search all of the items in a DynamoDB table, without
+// loading them all into memory at once.  Handles paging.
+class DynamoDbSearchQueue extends DynamoDbSearchQueueCore {
+  constructor(params, searchType = 'scan') {
+    deprecate('@cumulus/common/aws/DynamoDbSearchQueue', '1.17.0', '@cumulus/aws-client/DynamoDbSearchQueue');
+    super(params, searchType);
+  }
+}
+exports.DynamoDbSearchQueue = DynamoDbSearchQueue;
+
+/** SQS utils */
 
 /**
  * Create an SQS Queue.  Properly handles localstack queue URLs
@@ -851,60 +488,15 @@ exports.fromSfnExecutionName = (str, delimiter = '__') =>
  * @param {string} queueName - defaults to a random string
  * @returns {Promise.<string>} the Queue URL
  */
-async function createQueue(queueName) {
-  const actualQueueName = queueName || randomString();
+exports.createQueue = (queueName) => {
+  deprecate('@cumulus/common/aws/createQueue', '1.17.0', '@cumulus/aws-client/sqs/createQueue');
+  return sqsUtils.createQueue(queueName);
+};
 
-  const createQueueResponse = await exports.sqs().createQueue({
-    QueueName: actualQueueName
-  }).promise();
-
-  if (inTestMode()) {
-    // Properly set the Queue URL.  This is needed because LocalStack always
-    // returns the QueueUrl as "localhost", even if that is not where it should
-    // actually be found.  CI breaks without this.
-    const returnedQueueUrl = url.parse(createQueueResponse.QueueUrl);
-    returnedQueueUrl.host = undefined;
-    returnedQueueUrl.hostname = process.env.LOCALSTACK_HOST;
-
-    return url.format(returnedQueueUrl);
-  }
-
-  return createQueueResponse.QueueUrl;
-}
-exports.createQueue = createQueue;
-
-/**
- * Publish a message to an SNS topic. Does not catch
- * errors, to allow more specific handling by the caller.
- *
- * @param {string} snsTopicArn - SNS topic ARN
- * @param {Object} message - Message object
- * @param {Object} retryOptions - options to control retry behavior when publishing
- * a message fails. See https://github.com/tim-kos/node-retry#retryoperationoptions
- * @returns {Promise<undefined>}
- */
-exports.publishSnsMessage = async (
-  snsTopicArn,
-  message,
-  retryOptions = {}
-) =>
-  pRetry(
-    async () => {
-      if (!snsTopicArn) {
-        throw new pRetry.AbortError('Missing SNS topic ARN');
-      }
-
-      await exports.sns().publish({
-        TopicArn: snsTopicArn,
-        Message: JSON.stringify(message)
-      }).promise();
-    },
-    {
-      maxTimeout: 5000,
-      onFailedAttempt: (err) => log.debug(`publishSnsMessage('${snsTopicArn}', '${message}') failed with ${err.retriesLeft} retries left: ${err.message}`),
-      ...retryOptions
-    }
-  );
+exports.getQueueUrl = (sourceArn, queueName) => {
+  deprecate('@cumulus/common/aws/getQueueUrl', '1.17.0', '@cumulus/aws-client/sqs/getQueueUrl');
+  return sqsUtils.getQueueUrl(sourceArn, queueName);
+};
 
 /**
 * Send a message to AWS SQS
@@ -915,15 +507,8 @@ exports.publishSnsMessage = async (
 * @returns {Promise} - resolves when the messsage has been sent
 **/
 exports.sendSQSMessage = (queueUrl, message) => {
-  let messageBody;
-  if (isString(message)) messageBody = message;
-  else if (isObject(message)) messageBody = JSON.stringify(message);
-  else throw new Error('body type is not accepted');
-
-  return exports.sqs().sendMessage({
-    MessageBody: messageBody,
-    QueueUrl: queueUrl
-  }).promise();
+  deprecate('@cumulus/common/aws/sendSQSMessage', '1.17.0', '@cumulus/aws-client/sqs/sendSQSMessage');
+  return sqsUtils.sendSQSMessage(queueUrl, message);
 };
 
 /**
@@ -938,19 +523,9 @@ exports.sendSQSMessage = (queueUrl, message) => {
  * @param {integer} [options.waitTimeSeconds=0] - number of seconds to poll SQS queue (long polling)
  * @returns {Promise.<Array>} an array of messages
  */
-exports.receiveSQSMessages = async (queueUrl, options) => {
-  const params = {
-    QueueUrl: queueUrl,
-    AttributeNames: ['All'],
-    // 0 is a valid value for VisibilityTimeout
-    VisibilityTimeout: isNil(options.visibilityTimeout) ? 30 : options.visibilityTimeout,
-    WaitTimeSeconds: options.waitTimeSeconds || 0,
-    MaxNumberOfMessages: options.numOfMessages || 1
-  };
-
-  const messages = await exports.sqs().receiveMessage(params).promise();
-
-  return get(messages, 'Messages', []);
+exports.receiveSQSMessages = (queueUrl, options) => {
+  deprecate('@cumulus/common/aws/receiveSQSMessages', '1.17.0', '@cumulus/aws-client/sqs/receiveSQSMessages');
+  return sqsUtils.receiveSQSMessages(queueUrl, options);
 };
 
 /**
@@ -960,10 +535,10 @@ exports.receiveSQSMessages = async (queueUrl, options) => {
  * @param {integer} receiptHandle - the unique identifier of the sQS message
  * @returns {Promise} an AWS SQS response
  */
-exports.deleteSQSMessage = improveStackTrace(
-  (QueueUrl, ReceiptHandle) =>
-    exports.sqs().deleteMessage({ QueueUrl, ReceiptHandle }).promise()
-);
+exports.deleteSQSMessage = (queueUrl, receiptHandle) => {
+  deprecate('@cumulus/common/aws/deleteSQSMessage', '1.17.0', '@cumulus/aws-client/sqs/deleteSQSMessage');
+  return sqsUtils.deleteSQSMessage(queueUrl, receiptHandle);
+};
 
 /**
  * Test if an SQS queue exists
@@ -973,13 +548,42 @@ exports.deleteSQSMessage = improveStackTrace(
  *                               if the queue exists
  */
 exports.sqsQueueExists = (queue) => {
-  const QueueName = queue.split('/').pop();
-  return exports.sqs().getQueueUrl({ QueueName }).promise()
-    .then(() => true)
-    .catch((e) => {
-      if (e.code === 'AWS.SimpleQueueService.NonExistentQueue') return false;
-      throw e;
-    });
+  deprecate('@cumulus/common/aws/sqsQueueExists', '1.17.0', '@cumulus/aws-client/sqs/sqsQueueExists');
+  return sqsUtils.sqsQueueExists(queue);
+};
+
+/** Step Functions utils */
+
+/**
+ * Given an array of fields, returns that a new string that's safe for use as a StepFunction,
+ * execution name, where all fields are joined by a StepFunction-safe delimiter
+ * Important: This transformation isn't entirely two-way. Names longer than 80 characters
+ *            will be truncated.
+ *
+ * @param {string} fields - The fields to be injected into an execution name
+ * @param {string} delimiter - An optional delimiter string to replace, pass null to make
+ *   no replacements
+ * @returns {string} A string that's safe to use as a StepFunctions execution name
+ */
+exports.toSfnExecutionName = (fields, delimiter = '__') => {
+  deprecate('@cumulus/common/aws/toSfnExecutionName', '1.17.0', '@cumulus/aws-client/StepFunctions/toSfnExecutionName');
+  return stepFunctionUtils.toSfnExecutionName(fields, delimiter);
+};
+
+/**
+ * Opposite of toSfnExecutionName. Given a delimited StepFunction execution name, returns
+ * an array of its original fields
+ * Important: This value may be truncated from the original because of the 80-char limit on
+ *            execution names
+ *
+ * @param {string} str - The string to make stepfunction safe
+ * @param {string} [delimiter='__'] - An optional delimiter string to replace, pass null to make
+ *   no replacements
+ * @returns {Array} An array of the original fields
+ */
+exports.fromSfnExecutionName = (str, delimiter = '__') => {
+  deprecate('@cumulus/common/aws/fromSfnExecutionName', '1.17.0', '@cumulus/aws-client/StepFunctions/fromSfnExecutionName');
+  return stepFunctionUtils.fromSfnExecutionName(str, delimiter);
 };
 
 /**
@@ -990,27 +594,14 @@ exports.sqsQueueExists = (queue) => {
  * @returns {string} - Step Function Execution Arn
  */
 exports.getExecutionArn = (stateMachineArn, executionName) => {
-  if (stateMachineArn && executionName) {
-    const sfArn = stateMachineArn.replace('stateMachine', 'execution');
-    return `${sfArn}:${executionName}`;
-  }
-  return null;
+  deprecate('@cumulus/common/aws/getExecutionArn', '1.17.0', '@cumulus/aws-client/StepFunctions/getExecutionArn');
+  return stepFunctionUtils.getExecutionArn(stateMachineArn, executionName);
 };
 
 exports.getStateMachineArn = (executionArn) => {
-  if (executionArn) {
-    return executionArn.replace('execution', 'stateMachine').split(':').slice(0, -1).join(':');
-  }
-  return null;
+  deprecate('@cumulus/common/aws/getStateMachineArn', '1.17.0', '@cumulus/aws-client/StepFunctions/getStateMachineArn');
+  return stepFunctionUtils.getStateMachineArn(executionArn);
 };
-
-/**
- * Test to see if a given exception is an AWS Throttling Exception
- *
- * @param {Error} err
- * @returns {boolean}
- */
-exports.isThrottlingException = (err) => err.code === 'ThrottlingException';
 
 /**
  * Given a Cumulus step function event, if the message is on S3, pull the full message
@@ -1019,38 +610,47 @@ exports.isThrottlingException = (err) => err.code === 'ThrottlingException';
  * @param {Object} event - the Cumulus event
  * @returns {Object} - the full Cumulus message
  */
-exports.pullStepFunctionEvent = async (event) => {
-  if (!event.replace) return event;
-
-  const remoteMsgS3Object = await exports.getS3Object(
-    event.replace.Bucket,
-    event.replace.Key,
-    { retries: 0 }
-  );
-  const remoteMsg = JSON.parse(remoteMsgS3Object.Body.toString());
-
-  let returnEvent = remoteMsg;
-  if (event.replace.TargetPath) {
-    const replaceNodeSearch = JSONPath({
-      path: event.replace.TargetPath,
-      json: event,
-      resultType: 'all'
-    });
-    if (replaceNodeSearch.length !== 1) {
-      throw new Error(`Replacement TargetPath ${event.replace.TargetPath} invalid`);
-    }
-    if (replaceNodeSearch[0].parent) {
-      replaceNodeSearch[0].parent[replaceNodeSearch[0].parentProperty] = remoteMsg;
-      returnEvent = event;
-      delete returnEvent.replace;
-    }
-  }
-  return returnEvent;
+exports.pullStepFunctionEvent = (event) => {
+  deprecate('@cumulus/common/aws/pullStepFunctionEvent', '1.17.0', '@cumulus/aws-client/StepFunctions/pullStepFunctionEvent');
+  return stepFunctionUtils.pullStepFunctionEvent(event);
 };
 
-const retryIfThrottlingException = (err) => {
-  if (exports.isThrottlingException(err)) throw err;
-  throw new pRetry.AbortError(err);
+/** SNS utils */
+
+/**
+ * Publish a message to an SNS topic. Does not catch
+ * errors, to allow more specific handling by the caller.
+ *
+ * @param {string} snsTopicArn - SNS topic ARN
+ * @param {Object} message - Message object
+ * @param {Object} retryOptions - options to control retry behavior when publishing
+ * a message fails. See https://github.com/tim-kos/node-retry#retryoperationoptions
+ * @returns {Promise<undefined>}
+ */
+exports.publishSnsMessage = (
+  snsTopicArn,
+  message,
+  retryOptions = {}
+) => {
+  deprecate('@cumulus/common/aws/publishSnsMessage', '1.17.0', '@cumulus/aws-client/sns/publishSnsMessage');
+  return snsUtils.publishSnsMessage(
+    snsTopicArn,
+    message,
+    retryOptions
+  );
+};
+
+/** General utils */
+
+/**
+ * Test to see if a given exception is an AWS Throttling Exception
+ *
+ * @param {Error} err
+ * @returns {boolean}
+ */
+exports.isThrottlingException = (err) => {
+  deprecate('@cumulus/common/aws/isThrottlingException', '1.17.0', '@cumulus/errors/isThrottlingException');
+  return errors.isThrottlingException(err);
 };
 
 /**
@@ -1063,29 +663,30 @@ const retryIfThrottlingException = (err) => {
  *   - https://github.com/tim-kos/node-retry#retrytimeoutsoptions
  * @returns {Function} a function that will retry on a ThrottlingException
  */
-exports.retryOnThrottlingException = (fn, options) =>
-  (...args) =>
-    pRetry(
-      () => fn(...args).catch(retryIfThrottlingException),
-      { maxTimeout: 5000, ...options }
-    );
+exports.retryOnThrottlingException = (fn, options) => {
+  deprecate('@cumulus/common/aws/retryOnThrottlingException', '1.17.0', '@cumulus/aws-client/utils/retryOnThrottlingException');
+  return utils.retryOnThrottlingException(fn, options);
+};
+
 
 /**
- * Extract the S3 bucket and key from the URL path parameters
+ * Wrap a function and provide a better stack trace
  *
- * @param {string} pathParams - path parameters from the URL
- * @returns {Object} - bucket/key in the form of
- * { Bucket: x, Key: y }
+ * If a call is made to the aws-sdk and it causes an exception, the stack trace
+ * that is returned gives no indication of where the error actually occurred.
+ *
+ * This utility will wrap a function and, when it is called, update any raised
+ * error with a better stack trace.
+ *
+ * @param {Function} fn - the function to wrap
+ * @returns {Function} a wrapper function
  */
-exports.getFileBucketAndKey = (pathParams) => {
-  const fields = pathParams.split('/');
+exports.improveStackTrace = (fn) => {
+  deprecate('@cumulus/common/aws/improveStackTrace', '1.17.0', '@cumulus/aws-client/utils/improveStackTrace');
+  return utils.improveStackTrace(fn);
+};
 
-  const Bucket = fields.shift();
-  const Key = fields.join('/');
-
-  if (Bucket.length === 0 || Key.length === 0) {
-    throw new UnparsableFileLocationError(`File location "${pathParams}" could not be parsed`);
-  }
-
-  return [Bucket, Key];
+exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
+  deprecate('@cumulus/common/aws/findResourceArn', '1.17.0', '@cumulus/aws-client/utils/findResourceArn');
+  return utils.findResourceArn(obj, fn, prefix, baseName, opts, callback);
 };

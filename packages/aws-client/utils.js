@@ -1,4 +1,5 @@
 const pRetry = require('p-retry');
+const { isThrottlingException } = require('@cumulus/errors');
 
 const findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
   obj[fn](opts, (err, data) => {
@@ -82,14 +83,6 @@ const improveStackTrace = (fn) =>
     }
   };
 
-/**
- * Test to see if a given exception is an AWS Throttling Exception
- *
- * @param {Error} err
- * @returns {boolean}
- */
-const isThrottlingException = (err) => err.code === 'ThrottlingException';
-
 const retryIfThrottlingException = (err) => {
   if (isThrottlingException(err)) throw err;
   throw new pRetry.AbortError(err);
@@ -116,6 +109,5 @@ module.exports = {
   findResourceArn,
   setErrorStack,
   improveStackTrace,
-  isThrottlingException,
   retryOnThrottlingException
 };
