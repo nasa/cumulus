@@ -19,5 +19,8 @@ echo "*** Stack is unlocked, reprovisioning"
 ./deploy-dev-integration-test-stack.sh
 ./bootstrap-integration-tests.sh
 fi
+if [[ $LOCK_EXISTS_STATUS -gt 0 ]]; then
+  exit 1
+fi
 
 cd example && npm test
