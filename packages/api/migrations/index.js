@@ -2,7 +2,7 @@
 
 const path = require('path');
 const { s3 } = require('@cumulus/aws-client/services');
-const { listS3ObjectsV2 } = require('@cumulus/aws-client/s3');
+const { listS3ObjectsV2 } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 
 /**

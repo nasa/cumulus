@@ -3,7 +3,7 @@
 const fs = require('fs');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { sqs } = require('@cumulus/aws-client/services');
-const { putJsonS3Object } = require('@cumulus/aws-client/s3');
+const { putJsonS3Object } = require('@cumulus/aws-client/S3');
 const { createJwtToken } = require('./token');
 const { authorizedOAuthUsersKey } = require('../app/auth');
 

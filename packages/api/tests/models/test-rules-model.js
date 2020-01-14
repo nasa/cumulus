@@ -6,7 +6,7 @@ const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
 
 const awsServices = require('@cumulus/aws-client/services');
-const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/s3');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const models = require('../../models');
 const { createSqsQueues, fakeRuleFactoryV2 } = require('../../lib/testUtils');

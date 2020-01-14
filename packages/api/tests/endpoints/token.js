@@ -6,7 +6,7 @@ const sinon = require('sinon');
 const { URL } = require('url');
 const { randomString } = require('@cumulus/common/test-utils');
 const { s3 } = require('@cumulus/aws-client/services');
-const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/s3');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 
 const { OAuth2AuthenticationFailure } = require('../../lib/OAuth2');
 const assertions = require('../../lib/assertions');

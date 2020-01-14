@@ -6,7 +6,7 @@ const sinon = require('sinon');
 const { promisify } = require('util');
 const {
   recursivelyDeleteS3Bucket, promiseS3Upload, getS3Object, s3GetObjectTagging
-} = require('@cumulus/aws-client/s3');
+} = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { readJsonFixture } = require('@cumulus/common/test-utils');
 const { BucketsConfig } = require('@cumulus/common');

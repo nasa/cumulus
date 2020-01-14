@@ -10,7 +10,7 @@ const {
   parseS3Uri,
   getS3Object,
   recursivelyDeleteS3Bucket
-} = require('@cumulus/aws-client/s3');
+} = require('@cumulus/aws-client/S3');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 const { Search } = require('../../es/search');
 const { fakeCollectionFactory } = require('../../lib/testUtils');

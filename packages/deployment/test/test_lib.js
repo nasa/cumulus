@@ -5,7 +5,7 @@ const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   fileExists, recursivelyDeleteS3Bucket, deleteS3Object
-} = require('@cumulus/aws-client/s3');
+} = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { crypto } = require('../lib/crypto');
 

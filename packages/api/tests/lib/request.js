@@ -7,7 +7,7 @@ const {
   TokenExpiredError
 } = require('jsonwebtoken');
 const { s3 } = require('@cumulus/aws-client/services');
-const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/s3');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const {
   testUtils: {
     randomString

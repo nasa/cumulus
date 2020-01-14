@@ -1,7 +1,7 @@
 'use strict';
 
 const { dynamodb, lambda, s3 } = require('@cumulus/aws-client/services');
-const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/s3');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
 const { run } = require('../../migrations/migration_4');

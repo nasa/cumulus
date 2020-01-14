@@ -7,7 +7,7 @@ const {
   buildS3Uri,
   deleteS3Files,
   listS3ObjectsV2
-} = require('@cumulus/aws-client/s3');
+} = require('@cumulus/aws-client/S3');
 const awsServices = require('@cumulus/aws-client/services');
 const { URL } = require('url');
 const { log } = require('@cumulus/common');

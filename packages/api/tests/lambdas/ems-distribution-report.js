@@ -8,7 +8,7 @@ const {
   parseS3Uri,
   recursivelyDeleteS3Bucket,
   s3Join
-} = require('@cumulus/aws-client/s3');
+} = require('@cumulus/aws-client/S3');
 const awsServices = require('@cumulus/aws-client/services');
 const { testUtils: { randomString } } = require('@cumulus/common');
 const {

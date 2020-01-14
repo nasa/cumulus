@@ -12,7 +12,7 @@ const {
   parseS3Uri,
   getS3Object,
   recursivelyDeleteS3Bucket
-} = require('@cumulus/aws-client/s3');
+} = require('@cumulus/aws-client/S3');
 const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmrjs');
 const { fakeCollectionFactory } = require('../../lib/testUtils');
 const { generateReport } = require('../../lambdas/ems-metadata-report');

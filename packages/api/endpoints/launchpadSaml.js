@@ -9,7 +9,7 @@ const flatten = require('lodash.flatten');
 const {
   getS3Object,
   parseS3Uri
-} = require('@cumulus/aws-client/s3');
+} = require('@cumulus/aws-client/S3');
 
 const { AccessToken } = require('../models');
 const { createJwtToken } = require('../lib/token');

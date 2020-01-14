@@ -9,7 +9,7 @@ const {
   buildS3Uri,
   fileExists,
   recursivelyDeleteS3Bucket
-} = require('@cumulus/aws-client/s3');
+} = require('@cumulus/aws-client/S3');
 const {
   s3,
   secretsManager,

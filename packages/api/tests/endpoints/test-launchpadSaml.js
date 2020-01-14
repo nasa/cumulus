@@ -12,7 +12,7 @@ const awsServices = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
   s3PutObject
-} = require('@cumulus/aws-client/s3');
+} = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const { verifyJwtToken } = require('../../lib/token');

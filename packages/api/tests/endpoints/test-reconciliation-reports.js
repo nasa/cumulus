@@ -2,7 +2,7 @@
 
 const test = require('ava');
 const awsServices = require('@cumulus/aws-client/services');
-const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/s3');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const request = require('supertest');
 const { randomString } = require('@cumulus/common/test-utils');
 const {

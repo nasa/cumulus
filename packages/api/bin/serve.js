@@ -1,7 +1,7 @@
 'use strict';
 
 const pLimit = require('p-limit');
-const { promiseS3Upload } = require('@cumulus/aws-client/s3');
+const { promiseS3Upload } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomString, randomId, inTestMode } = require('@cumulus/common/test-utils');
 const bootstrap = require('../lambdas/bootstrap');

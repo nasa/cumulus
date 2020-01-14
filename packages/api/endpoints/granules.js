@@ -4,7 +4,7 @@ const router = require('express-promise-router')();
 const {
   deleteS3Object,
   fileExists
-} = require('@cumulus/aws-client/s3');
+} = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const Search = require('../es/search').Search;

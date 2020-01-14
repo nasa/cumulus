@@ -5,7 +5,7 @@ const sinon = require('sinon');
 const test = require('ava');
 
 const { s3 } = require('@cumulus/aws-client/services');
-const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/s3');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { SQS } = require('@cumulus/ingest/aws');
 const { getRules, handler } = require('../../lambdas/message-consumer');

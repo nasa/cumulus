@@ -9,7 +9,7 @@ const {
   parseS3Uri,
   s3CopyObject,
   buildS3Uri
-} = require('@cumulus/aws-client/s3');
+} = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const { constructCollectionId } = require('@cumulus/common');
 const { Sftp } = require('@cumulus/common/sftp');

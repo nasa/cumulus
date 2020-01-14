@@ -9,7 +9,7 @@ const awsServices = require('@cumulus/aws-client/services');
 const {
   s3PutObject,
   recursivelyDeleteS3Bucket
-} = require('@cumulus/aws-client/s3');
+} = require('@cumulus/aws-client/S3');
 const { sleep } = require('@cumulus/common/util');
 const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../models');

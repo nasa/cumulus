@@ -7,7 +7,7 @@ const awsServices = require('@cumulus/aws-client/services');
 const {
   putJsonS3Object,
   recursivelyDeleteS3Bucket
-} = require('@cumulus/aws-client/s3');
+} = require('@cumulus/aws-client/S3');
 const { StepFunction } = require('@cumulus/ingest/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 

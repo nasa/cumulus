@@ -6,7 +6,7 @@ const awsServices = require('@cumulus/aws-client/services');
 const {
   promiseS3Upload,
   recursivelyDeleteS3Bucket
-} = require('@cumulus/aws-client/s3');
+} = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const indexFromDatabase = require('../../lambdas/index-from-database');

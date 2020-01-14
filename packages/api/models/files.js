@@ -2,7 +2,7 @@
 
 const chunk = require('lodash.chunk');
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
-const { parseS3Uri } = require('@cumulus/aws-client/s3');
+const { parseS3Uri } = require('@cumulus/aws-client/S3');
 const Granule = require('./granules');
 const Manager = require('./base');
 const schemas = require('./schemas');

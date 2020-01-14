@@ -6,7 +6,7 @@ const {
   deleteS3Object,
   getS3Object,
   listS3ObjectsV2
-} = require('@cumulus/aws-client/s3');
+} = require('@cumulus/aws-client/S3');
 const { invoke } = require('@cumulus/ingest/aws');
 
 /**
