@@ -10,7 +10,12 @@ const { authorizedOAuthUsersKey } = require('../app/auth');
 const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
 
 const dataDir = path.join(__dirname, '../app/data');
-const getWorkflowList = () => fs.readdirSync(dataDir).map((f) => JSON.parse(fs.readFileSync(`${dataDir}/${f}`).toString()));
+const workflowDir = path.join(dataDir, 'workflows');
+const getWorkflowList = () => fs.readdirSync(workflowDir).map((f) => JSON.parse(fs.readFileSync(`${workflowDir}/${f}`).toString()));
+
+const reconcileDir = path.join(dataDir, 'reconcile-reports');
+const getReconcileReportsList = () => fs.readdirSync(reconcileDir).map((f) => JSON.parse(fs.readFileSync(`${reconcileDir}/${f}`).toString()));
+
 
 /**
  * mocks the context object of the lambda function with
@@ -331,6 +336,7 @@ module.exports = {
   fakeRuleFactoryV2,
   fakeFileFactory,
   fakeProviderFactory,
+  getReconcileReportsList,
   getSqsQueueMessageCounts,
   getWorkflowList,
   isLocalApi,

@@ -11,6 +11,7 @@ const serveUtils = require('./serveUtils');
 
 
 const workflowList = testUtils.getWorkflowList();
+const reconcileList = testUtils.getReconcileReportsList();
 const defaultLocalStackName = 'localrun';
 
 async function createTable(Model, tableName) {
@@ -32,18 +33,29 @@ async function createTable(Model, tableName) {
 
 async function populateBucket(bucket, stackName) {
   // upload workflow files
-  await Promise.all(workflowList.map((obj) => promiseS3Upload({
+  const workflowPromises = workflowList.map((obj) => promiseS3Upload({
     Bucket: bucket,
     Key: `${stackName}/workflows/${obj.name}.json`,
     Body: JSON.stringify(obj)
-  })));
+  }));
+
+  const reconcilePromises = reconcileList.map((obj) => {
+    const filename = `report-${obj.reportStartTime}.json`;
+    return promiseS3Upload({
+      Bucket: bucket,
+      Key: `${stackName}/reconcile-reports/${filename}`,
+      Body: JSON.stringify(obj)
+    });
+  });
+
   // upload workflow template
   const workflow = `${stackName}/workflow_template.json`;
-  await promiseS3Upload({
+  const templatePromise = promiseS3Upload({
     Bucket: bucket,
     Key: workflow,
     Body: JSON.stringify({})
   });
+  await Promise.all([workflowPromises, reconcilePromises, templatePromise]);
 }
 
 function setTableEnvVariables(stackName) {
@@ -138,7 +150,11 @@ async function eraseLocalElasticsearch(stackName) {
   const esClient = await Search.es(process.env.ES_HOST);
   const esIndex = process.env.ES_INDEX;
   // Resets the ES client
-  await esClient.indices.delete({ index: esIndex });
+  try {
+    await esClient.indices.delete({ index: esIndex });
+  } catch (error) {
+    if (error.message !== 'index_not_found_exception') throw error;
+  }
   await bootstrap.bootstrapElasticSearch(process.env.ES_HOST, esIndex);
   return { esClient, esIndex };
 }
@@ -193,7 +209,8 @@ async function createDBRecords(stackName, user) {
  *
  * @param {string} user - A username to add as an authorized user for the API.
  * @param {string} stackName - The name of local stack. Used to prefix stack resources.
- * @param {bool} reseed - boolean to control whether to load new data into dynamo and elastic search.
+ * @param {bool} reseed - boolean to control whether to load new data into
+ *                        dynamo and elastic search.
  */
 async function serveApi(user, stackName = defaultLocalStackName, reseed = true) {
   const port = process.env.PORT || 5001;
@@ -334,8 +351,8 @@ async function fetchElasticDefaults(stackName) {
   setLocalEsVariables(stackName);
   const esClient = await Search.es(process.env.ES_HOST);
   const esIndex = process.env.ES_INDEX;
-  return {esClient, esIndex};
-};
+  return { esClient, esIndex };
+}
 
 /**
  * Removes all additional data from tables and repopulates with original data.
