@@ -19,4 +19,4 @@ echo "*** Stack is unlocked, reprovisioning"
 ./bootstrap-integration-tests.sh
 fi
 
-cd example && node ./scripts/lock-stack.js confirmLock $GIT_SHA "$DEPLOYMENT" && npm test
+node ./scripts/lock-stack.js confirmLock $GIT_SHA "$DEPLOYMENT" && cd example && npm test
