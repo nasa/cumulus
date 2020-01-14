@@ -31,10 +31,8 @@ class Mutex {
         key: key
       }
     };
-    debugger;
     const record = await this.docClient.get(params).promise();
     if (record.Item) {
-      debugger;
       return (gitSHA === record.Item.sha ? 'true' : record.Item.sha);
     }
     return 'noLock';
@@ -111,7 +109,7 @@ async function runLock(operation, gitSHA, deployment, lockFile) {
     if (lockSHA === 'noLock') {
       console.log(`No lockfile exists: ${deployment} - ${gitSHA}`);
       process.exitCode = 101;
-    } else if (lockSHA !== 'true' ) {
+    } else if (lockSHA !== 'true') {
       throw new Error(`Build with SHA ${JSON.stringify(lockSHA)} has provisioned this stack - you must re-run the full build`);
     }
     return Promise.resolve();
