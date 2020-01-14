@@ -144,7 +144,7 @@ async function getStateFileDeploymentInfo(file) {
 async function listResourcesForFile(file) {
   const stateFile = await getStateFileDeploymentInfo(file);
 
-  if (stateFile.resources) {
+  if (stateFile && stateFile.resources) {
     let ecsClusters = stateFile.resources
       .filter((r) => r.type === 'aws_ecs_cluster')
       .map((c) => c.instances.map((i) => i.attributes.arn));
@@ -156,7 +156,12 @@ async function listResourcesForFile(file) {
     let ec2Instances = await Promise.all(ec2InstancePromises);
     ec2Instances = [].concat(...ec2Instances);
 
-    return { ecsClusters, ec2Instances };
+    let esDomainNames = stateFile.resources
+      .filter((r) => r.type === 'aws_elasticsearch_domain')
+      .map((c) => c.instances.map((i) => i.attributes.domain_name));
+    esDomainNames = [].concat(...esDomainNames);
+
+    return { ecsClusters, ec2Instances, esDomainNames };
   }
 
   return { };

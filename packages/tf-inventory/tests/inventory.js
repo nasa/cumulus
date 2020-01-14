@@ -4,6 +4,7 @@ const test = require('ava');
 const rewire = require('rewire');
 const sinon = require('sinon');
 const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
 
 const inventory = rewire('../src/inventory');
 const mergeResourceLists = inventory.__get__('mergeResourceLists');
@@ -16,19 +17,22 @@ let listResourcesForFileStub;
 let listTfStateFilesStub;
 let ecsStub;
 let ec2Stub;
+let esStub;
 
 function resourcesForStateFile(sf) {
   if (sf === 'stateFile1') {
     return {
       ecsClusters: ['clusterArn1', 'clusterArn2'],
-      ec2Instances: ['i-000']
+      ec2Instances: ['i-000'],
+      esDomainNames: ['cumulus-1-es5vpc']
     };
   }
 
   if (sf === 'stateFile2') {
     return {
       ecsClusters: ['clusterArn3'],
-      ec2Instances: ['i-111', 'i-222']
+      ec2Instances: ['i-111', 'i-222'],
+      esDomainNames: ['cumulus-2-es5vpc']
     };
   }
 
@@ -76,6 +80,20 @@ test.before(() => {
           })
       })
     });
+
+  esStub = sinon.stub(awsServices, 'es')
+    .returns({
+      listDomainNames: () => ({
+        promise: () =>
+          Promise.resolve({
+            DomainNames: [
+              { DomainName: 'cumulus-es5vpc' },
+              { DomainName: 'cumulus-1-es5vpc' },
+              { DomainName: 'cumulus-2-es5vpc' }
+            ]
+          })
+      })
+    });
 });
 
 test.after.always(() => {
@@ -83,6 +101,7 @@ test.after.always(() => {
   listTfStateFilesStub.restore();
   ecsStub.restore();
   ec2Stub.restore();
+  esStub.restore();
 });
 
 test('mergeResourceLists merges resource object by key', (t) => {
@@ -171,7 +190,8 @@ test('listTfResources merges resources correctly', async (t) => {
 
   t.deepEqual(tfResources, {
     ecsClusters: ['clusterArn1', 'clusterArn2', 'clusterArn3'],
-    ec2Instances: ['i-000', 'i-111', 'i-222']
+    ec2Instances: ['i-000', 'i-111', 'i-222'],
+    esDomainNames: ['cumulus-1-es5vpc', 'cumulus-2-es5vpc']
   });
 });
 
@@ -181,7 +201,8 @@ test('listAwsResources properly combines ec2 intsances', async (t) => {
   t.deepEqual(awsResources,
     {
       ecsClusters: ['clusterArn1', 'clusterArn2', 'clusterArn3', 'clusterArn4'],
-      ec2Instances: ['i-000', 'i-111', 'i-222', 'i-333']
+      ec2Instances: ['i-000', 'i-111', 'i-222', 'i-333'],
+      esDomainNames: ['cumulus-es5vpc', 'cumulus-1-es5vpc', 'cumulus-2-es5vpc']
     });
 });
 
@@ -191,6 +212,7 @@ test('reconcileResources returns only resources not specified in TF files', asyn
   t.deepEqual(resources,
     {
       ecsClusters: ['clusterArn4'],
-      ec2Instances: ['i-333']
+      ec2Instances: ['i-333'],
+      esDomainNames: ['cumulus-es5vpc']
     });
 });

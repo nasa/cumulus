@@ -118,7 +118,7 @@ test('getStateFileResources lists resources', async (t) => {
   const resources = await stateFile.getStateFileDeploymentInfo(`${bucket}/${key}`);
 
   t.deepEqual(
-    ['aws_caller_identity', 'aws_ecs_cluster'],
+    ['aws_caller_identity', 'aws_ecs_cluster', 'aws_elasticsearch_domain'],
     resources.resources.map((r) => r.type)
   );
 
@@ -142,7 +142,8 @@ test('listResourcesForFile lists resources', async (t) => {
   t.deepEqual(
     {
       ecsClusters: ['arn:aws:ecs:us-east-1:12345:cluster/lpf-tf-CumulusECSCluster'],
-      ec2Instances: ['i-1234', 'i-4321']
+      ec2Instances: ['i-1234', 'i-4321'],
+      esDomainNames: ['cumulus-tf-es-vpc']
     },
     resources
   );
