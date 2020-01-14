@@ -16,6 +16,16 @@ exports.inTestMode = () => {
   return testUtils.inTestMode();
 };
 
+exports.getLocalstackEndpoint = (identifier) => {
+  deprecate('@cumulus/common/test-utils/getLocalstackEndpoint', '1.17.0', '@cumulus/aws-client/test-utils/getLocalstackEndpoint');
+  return testUtils.getLocalstackEndpoint(identifier);
+};
+
+exports.testAwsClient = (Service, options) => {
+  deprecate('@cumulus/common/test-utils/testAwsClient', '1.17.0', '@cumulus/aws-client/test-utils/testAwsClient');
+  return testUtils.getLocalstackEndpoint(Service, options);
+};
+
 /**
  * Helper function to throw error for unit test exports
  * @throws {Error}
