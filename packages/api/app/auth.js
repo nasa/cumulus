@@ -5,7 +5,6 @@ const {
   TokenExpiredError
 } = require('jsonwebtoken');
 
-const log = require('@cumulus/common/log');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { ensureLaunchpadAPIAuthorized, launchpadProtectedAuth } = require('./launchpadAuth');
 const { AccessToken } = require('../models');
@@ -80,7 +79,6 @@ async function ensureAuthorized(req, res, next) {
       return res.boom.forbidden('Invalid access token');
     }
 
-    log.error('API Authorization Error', error);
     return res.boom.unauthorized('User not authorized');
   }
 }
