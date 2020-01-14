@@ -1,11 +1,9 @@
 'use strict';
 
-const aws = require('@cumulus/common/aws');
+const { dynamodb, lambda, s3 } = require('@cumulus/aws-client/services');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const test = require('ava');
-const {
-  aws: { dynamodb, lambda, s3 },
-  testUtils: { randomString }
-} = require('@cumulus/common');
+const { randomString } = require('@cumulus/common/test-utils');
 const { run } = require('../../migrations/migration_4');
 const models = require('../../models');
 
@@ -40,7 +38,7 @@ async function getKinesisEventMappings() {
   const eventLambdas = [process.env.messageConsumer, process.env.KinesisInboundEventLogger];
   const mappingPromises = eventLambdas.map((eventLambda) => {
     const mappingParms = { FunctionName: eventLambda };
-    return aws.lambda().listEventSourceMappings(mappingParms).promise();
+    return lambda().listEventSourceMappings(mappingParms).promise();
   });
   return Promise.all(mappingPromises);
 }
@@ -51,12 +49,12 @@ test.before(async () => {
   await ruleModel.createTable();
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
   await Promise.all([
-    aws.s3().putObject({
+    s3().putObject({
       Bucket: process.env.system_bucket,
       Key: workflowfile,
       Body: '{}'
     }).promise(),
-    aws.s3().putObject({
+    s3().putObject({
       Bucket: process.env.system_bucket,
       Key: templateFile,
       Body: '{}'
@@ -78,7 +76,7 @@ test.before(async () => {
 test.after.always(async () => {
   // cleanup table
   await ruleModel.deleteTable();
-  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
   ruleModel.delete(kinesisRule);
 });
 

@@ -1,9 +1,12 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const aws = require('@cumulus/common/aws'); // important to import all to allow stubbing
+const {
+  getStateMachineArn,
+  pullStepFunctionEvent
+} = require('@cumulus/aws-client/StepFunctions');
+const { executionExists } = require('@cumulus/aws-client/StepFunctions');
 const { StepFunction } = require('@cumulus/ingest/aws');
-const { executionExists } = require('@cumulus/common/StepFunctions');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const models = require('../models');
 
@@ -14,7 +17,7 @@ const models = require('../models');
  * @returns {string}              Cumulus Message Adapter message in JSON string
  */
 async function fetchRemote(eventMessage) {
-  const updatedEventMessage = await aws.pullStepFunctionEvent(eventMessage);
+  const updatedEventMessage = await pullStepFunctionEvent(eventMessage);
   return JSON.stringify(updatedEventMessage);
 }
 
@@ -94,7 +97,7 @@ async function get(req, res) {
   const warning = 'Execution does not exist in Step Functions API';
   const execution = {
     executionArn: response.arn,
-    stateMachineArn: aws.getStateMachineArn(response.arn),
+    stateMachineArn: getStateMachineArn(response.arn),
     name: response.name,
     status: response.status === 'completed' ? 'SUCCEEDED' : response.status.toUpperCase(),
     startDate: new Date(response.createdAt),

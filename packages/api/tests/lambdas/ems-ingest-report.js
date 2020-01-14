@@ -4,7 +4,13 @@ const test = require('ava');
 const clone = require('lodash.clonedeep');
 const moment = require('moment');
 const { randomString } = require('@cumulus/common/test-utils');
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
+const {
+  fileExists,
+  parseS3Uri,
+  getS3Object,
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/aws-client/S3');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 const { Search } = require('../../es/search');
 const { fakeCollectionFactory } = require('../../lib/testUtils');
@@ -160,7 +166,7 @@ test.before(async () => {
 });
 
 test.beforeEach(async (t) => {
-  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
   process.env.CollectionsTable = randomString();
   t.context.collectionModel = new models.Collection();
   await t.context.collectionModel.createTable();
@@ -168,7 +174,7 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
-  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await t.context.collectionModel.deleteTable();
 });
 
@@ -182,13 +188,13 @@ test.serial('generate reports for the previous day', async (t) => {
   const startTime = moment.utc().subtract(1, 'days').startOf('day').format();
   const reports = await generateReports({ startTime, endTime });
   const requests = reports.map(async (report) => {
-    const parsed = aws.parseS3Uri(report.file);
+    const parsed = parseS3Uri(report.file);
     // file exists
-    const exists = await aws.fileExists(parsed.Bucket, parsed.Key);
+    const exists = await fileExists(parsed.Bucket, parsed.Key);
     t.truthy(exists);
 
     // check the number of records for each report
-    const s3Object = await aws.getS3Object(parsed.Bucket, parsed.Key);
+    const s3Object = await getS3Object(parsed.Bucket, parsed.Key);
     const content = s3Object.Body.toString();
     const records = content.split('\n');
     const expectedNumRecords = (report.reportType === 'delete') ? 4 : 8;
@@ -218,17 +224,17 @@ test.serial('generate reports for the one day, and run multiple times', async (t
   }
 
   const requests = reports.map(async (report) => {
-    const parsed = aws.parseS3Uri(report.file);
+    const parsed = parseS3Uri(report.file);
 
     // filenames from last run end with rev[1-n]
     t.true(report.file.endsWith('.flt.rev4'));
 
     // file exists
-    const exists = await aws.fileExists(parsed.Bucket, parsed.Key);
+    const exists = await fileExists(parsed.Bucket, parsed.Key);
     t.truthy(exists);
 
     // check the number of records for each report
-    const s3Object = await aws.getS3Object(parsed.Bucket, parsed.Key);
+    const s3Object = await getS3Object(parsed.Bucket, parsed.Key);
     const records = s3Object.Body.toString();
     const expectedNumRecords = (report.reportType === 'delete') ? 4 : 8;
     t.is(records.split('\n').length, expectedNumRecords);
@@ -245,14 +251,14 @@ test.serial('generate reports for the past two days', async (t) => {
   t.is(reports.length, 6);
 
   const requests = reports.map(async (report) => {
-    const parsed = aws.parseS3Uri(report.file);
+    const parsed = parseS3Uri(report.file);
 
     // file exists
-    const exists = await aws.fileExists(parsed.Bucket, parsed.Key);
+    const exists = await fileExists(parsed.Bucket, parsed.Key);
     t.truthy(exists);
 
     // check the number of records for each report
-    const s3Object = await aws.getS3Object(parsed.Bucket, parsed.Key);
+    const s3Object = await getS3Object(parsed.Bucket, parsed.Key);
     const records = s3Object.Body.toString();
     const expectedNumRecords = (report.reportType === 'delete') ? 4 : 8;
     t.is(records.split('\n').length, expectedNumRecords);
@@ -270,14 +276,14 @@ test.serial('generate reports for the past two days for a given collection', asy
   t.is(reports.length, 6);
 
   const requests = reports.map(async (report) => {
-    const parsed = aws.parseS3Uri(report.file);
+    const parsed = parseS3Uri(report.file);
 
     // file exists
-    const exists = await aws.fileExists(parsed.Bucket, parsed.Key);
+    const exists = await fileExists(parsed.Bucket, parsed.Key);
     t.truthy(exists);
 
     // check the number of records for each report
-    const s3Object = await aws.getS3Object(parsed.Bucket, parsed.Key);
+    const s3Object = await getS3Object(parsed.Bucket, parsed.Key);
     const records = s3Object.Body.toString();
     const expectedNumRecords = (report.reportType === 'delete') ? 3 : 7;
     t.is(records.split('\n').length, expectedNumRecords);

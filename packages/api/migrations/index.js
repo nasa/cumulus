@@ -1,8 +1,9 @@
 'use strict';
 
 const path = require('path');
+const { s3 } = require('@cumulus/aws-client/services');
+const { listS3ObjectsV2 } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
-const { listS3ObjectsV2, s3 } = require('@cumulus/common/aws');
 
 /**
  * This function compares a list of all migrations against the list of

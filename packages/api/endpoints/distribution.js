@@ -1,10 +1,8 @@
 'use strict';
 
 const urljoin = require('url-join');
-const {
-  s3,
-  getFileBucketAndKey
-} = require('@cumulus/common/aws');
+const { getFileBucketAndKey } = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
 const { UnparsableFileLocationError } = require('@cumulus/common/errors');
 const { URL } = require('url');
 const EarthdataLogin = require('../lib/EarthdataLogin');
