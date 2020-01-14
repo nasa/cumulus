@@ -43,7 +43,7 @@ async function populateBucket(bucket, stackName) {
     const filename = `report-${obj.reportStartTime}.json`;
     return promiseS3Upload({
       Bucket: bucket,
-      Key: `${stackName}/reconcile-reports/${filename}`,
+      Key: `${stackName}/reconciliation-reports/${filename}`,
       Body: JSON.stringify(obj)
     });
   });
