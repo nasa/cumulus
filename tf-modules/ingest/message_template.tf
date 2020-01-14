@@ -85,7 +85,6 @@ locals {
       launchpad = {
         api         = var.launchpad_api
         certificate = var.launchpad_certificate
-        passphrase  = var.launchpad_passphrase
         passphraseSecretName = length(var.launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.message_template_launchpad_passphrase.name
       }
       distribution_endpoint = var.distribution_url
