@@ -19,7 +19,7 @@ const {
   ecs,
   sfn
 } = require('@cumulus/aws-client/services');
-const { pullStepFunctionEvent } = require('@cumulus/aws-client/step-functions');
+const { pullStepFunctionEvent } = require('@cumulus/aws-client/StepFunctions');
 const { getWorkflowTemplate, getWorkflowArn } = require('@cumulus/common/workflows');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { ActivityStep, LambdaStep } = require('@cumulus/common/sfnStep');

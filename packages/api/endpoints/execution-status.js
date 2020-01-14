@@ -4,7 +4,7 @@ const router = require('express-promise-router')();
 const {
   getStateMachineArn,
   pullStepFunctionEvent
-} = require('@cumulus/aws-client/step-functions');
+} = require('@cumulus/aws-client/StepFunctions');
 const { executionExists } = require('@cumulus/aws-client/StepFunctions');
 const { StepFunction } = require('@cumulus/ingest/aws');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');

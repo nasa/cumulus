@@ -1,6 +1,6 @@
 'use strict';
 
-const stepFunctions = require('@cumulus/aws-client/step-functions');
+const stepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
   getSfEventMessageObject,
   getSfEventStatus,

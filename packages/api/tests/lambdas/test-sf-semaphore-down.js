@@ -1,7 +1,7 @@
 'use strict';
 
 const sinon = require('sinon');
-const stepFunctions = require('@cumulus/aws-client/step-functions');
+const stepFunctions = require('@cumulus/aws-client/StepFunctions');
 const proxyquire = require('proxyquire');
 const test = require('ava');
 const {
