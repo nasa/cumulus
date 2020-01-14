@@ -100,10 +100,10 @@ const STACK_EXPIRATION_MS = 120 * 60 * 1000; // 2 hourst
 
 /**
  * lockOperation
- * @param {String} operation  - confirmLock or lock
- * @param {String} gitSHA     - git SHA to add to sha lock column
- * @param {String} deployment - Deployment/stack name
- * @param {String} shouldLock - true/false flag to add or remove the lock when used with
+ * @param {string} operation  - confirmLock or lock
+ * @param {string} gitSHA     - git SHA to add to sha lock column
+ * @param {string} deployment - Deployment/stack name
+ * @param {string} shouldLock - true/false flag to add or remove the lock when used with
  *                              lock operation
  * @returns {Promise}         - On failure, exit code is
  */
@@ -138,22 +138,23 @@ async function lockOperation(operation, gitSHA, deployment, shouldLock) {
 /**
  * Usage
  * --------
- * node lock-stack.js lock SHA stackname/deployment true/false - Set stack lock status to
- * true/false with SHA
+ * node lock-stack.js lock SHA stackname/deployment true/false
+ *   Set stack lock status to true/false with SHA key.
  *   Returns exit code 1 if an unknown error occurs, error code 100 if a insert collision due to
- *   write constraints
+ *   write constraints.
  *
- * node lock-stack.js confirmLock SHA stackname/deployment - Check lock status for a stack.
- *   Returns exit code 1 if another stack/SHA has provisioned or another error, 101 if no lock exists
+ * node lock-stack.js confirmLock SHA stackname/deployment
+ *   Check lock status for a stack.
+ *   Returns exit code 1 if another stack/SHA has provisioned or
+ *   another error, 101 if no lock exists.
  */
 lockOperation(...process.argv.slice(2, 6)).catch((e) => {
   console.dir(e);
   process.exitCode = 100;
-  if (e.code === 'CumulusLockCollisionError'){
+  if (e.code === 'CumulusLockCollisionError') {
     process.exitCode = 101;
   }
   if (!['ConditionalCheckFailedException', 'CumulusLockError'].includes(e.code)) {
     process.exitCode = 1;
   }
-
 });
