@@ -129,9 +129,9 @@ class Granule extends Manager {
     };
 
     if (process.env.cmr_oauth_provider === 'launchpad') {
-      const passphrase = await commonAws.secretsManager().getSecretValue({
-        SecretId: process.env.launchpad_passphrase_secret_name
-      }).promise();
+      const passphrase = await commonAws.getSecretString(
+        process.env.launchpad_passphrase_secret_name
+      );
 
       const token = await launchpad.getLaunchpadToken({
         passphrase,
@@ -141,12 +141,10 @@ class Granule extends Manager {
 
       params.token = token;
     } else {
-      const secret = await commonAws.secretsManager().getSecretValue({
-        SecretId: process.env.cmr_password_secret_name
-      }).promise();
-
       params.username = process.env.cmr_username;
-      params.password = secret.SecretString;
+      params.password = await commonAws.getSecretString(
+        process.env.cmr_password_secret_name
+      );
     }
 
     const cmr = new CMR(params);
