@@ -5,7 +5,7 @@ const test = require('ava');
 const sinon = require('sinon');
 
 const awsServices = require('@cumulus/aws-client/services');
-const s3Utils = require('@cumulus/aws-client/s3');
+const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const ingestAws = require('@cumulus/ingest/aws');
@@ -107,7 +107,7 @@ test.before(async () => {
 
   // Store the launchpad passphrase
   process.env.launchpad_passphrase_secret_name = randomString();
-  await aws.secretsManager().createSecret({
+  await awsServices.secretsManager().createSecret({
     Name: process.env.launchpad_passphrase_secret_name,
     SecretString: randomString()
   }).promise();
@@ -123,7 +123,7 @@ test.after.always(async () => {
     SecretId: process.env.cmr_password_secret_name,
     ForceDeleteWithoutRecovery: true
   }).promise();
-  await aws.secretsManager().deleteSecret({
+  await awsServices.secretsManager().deleteSecret({
     SecretId: process.env.launchpad_passphrase_secret_name,
     ForceDeleteWithoutRecovery: true
   }).promise();

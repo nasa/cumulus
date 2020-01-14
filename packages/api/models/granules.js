@@ -6,8 +6,8 @@ const partial = require('lodash.partial');
 const path = require('path');
 
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
-const awsServices = require('@cumulus/aws-client/services');
-const s3Utils = require('@cumulus/aws-client/s3');
+const s3Utils = require('@cumulus/aws-client/S3');
+const secretsManagerUtils = require('@cumulus/aws-client/SecretsManager');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
 const cmrjs = require('@cumulus/cmrjs');
@@ -131,9 +131,9 @@ class Granule extends Manager {
     };
 
     if (process.env.cmr_oauth_provider === 'launchpad') {
-      const passphrase = await commonAws.secretsManager().getSecretValue({
-        SecretId: process.env.launchpad_passphrase_secret_name
-      }).promise();
+      const passphrase = await secretsManagerUtils.getSecretString(
+        process.env.launchpad_passphrase_secret_name
+      );
 
       const token = await launchpad.getLaunchpadToken({
         passphrase,
@@ -143,12 +143,10 @@ class Granule extends Manager {
 
       params.token = token;
     } else {
-      const secret = await awsServices.secretsManager().getSecretValue({
-        SecretId: process.env.cmr_password_secret_name
-      }).promise();
-
       params.username = process.env.cmr_username;
-      params.password = secret.SecretString;
+      params.password = await secretsManagerUtils.getSecretString(
+        process.env.cmr_password_secret_name
+      );
     }
 
     const cmr = new CMR(params);

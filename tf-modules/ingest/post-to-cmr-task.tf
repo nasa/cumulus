@@ -15,7 +15,7 @@ resource "aws_lambda_function" "post_to_cmr_task" {
       CMR_ENVIRONMENT             = var.cmr_environment
       stackName                   = var.prefix
       system_bucket               = var.system_bucket
-      CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
+      CUMULUS_MESSAGE_ADAPTER_DIR = "/opt"
     }
   }
 

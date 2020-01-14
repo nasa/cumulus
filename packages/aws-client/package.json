@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/aws-client",
-  "version": "1.17.0-alpha",
+  "version": "1.17.0-alpha4",
   "description": "Utilities for working with AWS",
   "keywords": [
     "GIBS",
@@ -45,6 +45,7 @@
     "@cumulus/logger": "1.17.0",
     "aws-sdk": "^2.585.0",
     "jsonpath-plus": "^1.0.0",
+    "lodash.get": "^4.4.2",
     "lodash.isnil": "^4.0.0",
     "lodash.isobject": "^3.0.2",
     "lodash.isstring": "^4.0.1",

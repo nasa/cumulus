@@ -17,6 +17,9 @@ const omitBy = require('lodash.omitby');
 const os = require('os');
 const path = require('path');
 const mime = require('mime-types');
+
+const utils = require('@cumulus/aws-client/utils');
+
 const log = require('./log');
 
 /**
@@ -141,11 +144,8 @@ exports.isNil = (x) => exports.isNull(x) || exports.isUndefined(x);
  * @param {string} newStack - a stack trace
  */
 exports.setErrorStack = (error, newStack) => {
-  // eslint-disable-next-line no-param-reassign
-  error.stack = [
-    error.stack.split('\n')[0],
-    ...newStack.split('\n').slice(1)
-  ].join('\n');
+  exports.deprecate('@cumulus/common/util/setErrorStack', '1.17.0', '@cumulus/aws-client/utils/setErrorStack');
+  utils.setErrorStack(error, newStack);
 };
 
 /**

@@ -27,6 +27,13 @@ test.before(async (t) => {
     Name: t.context.cmrPasswordSecretName,
     SecretString: randomString()
   }).promise();
+
+  // Store the Launchpadd passphrase
+  t.context.launchpadPassphraseSecretName = randomString();
+  await aws.secretsManager().createSecret({
+    Name: t.context.launchpadPassphraseSecretName,
+    SecretString: randomString()
+  }).promise();
 });
 
 test.beforeEach(async (t) => {
@@ -39,6 +46,7 @@ test.beforeEach(async (t) => {
   t.context.payload = payload;
 
   t.context.payload.config.cmr.passwordSecretName = t.context.cmrPasswordSecretName;
+  t.context.payload.config.launchpad.passphraseSecretName = t.context.launchpadPassphraseSecretName;
 
   //update cmr file path
   const match = /^s3\:\/\/(.*)\/(.*)$/;
@@ -54,6 +62,10 @@ test.afterEach.always((t) => aws.recursivelyDeleteS3Bucket(t.context.bucket));
 test.after.always(async (t) => {
   await aws.secretsManager().deleteSecret({
     SecretId: t.context.cmrPasswordSecretName,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
+  await aws.secretsManager().deleteSecret({
+    SecretId: t.context.launchpadPassphraseSecretName,
     ForceDeleteWithoutRecovery: true
   }).promise();
 });
