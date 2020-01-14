@@ -4,15 +4,16 @@ const test = require('ava');
 const path = require('path');
 const os = require('os');
 const fs = require('fs-extra');
-const { RemoteResourceError } = require('@cumulus/common/errors');
 
-
-const { recursivelyDeleteS3Bucket, s3, uploadS3Files } = require('@cumulus/common/aws');
+const { s3 } = require('@cumulus/aws-client/services');
+const { recursivelyDeleteS3Bucket, uploadS3Files } = require('@cumulus/aws-client/S3');
 const {
   randomString,
   validateConfig,
   validateOutput
 } = require('@cumulus/common/test-utils');
+const { RemoteResourceError } = require('@cumulus/errors');
+
 const { discoverPdrs } = require('..');
 
 test.beforeEach(async (t) => {
