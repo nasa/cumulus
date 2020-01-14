@@ -124,7 +124,7 @@ async function runLock(operation, gitSHA, deployment, lockFile) {
 }
 
 // Assuming this is run as:
-// node lock-stack.js (true|false) deployment-name SHA
+// node lock-stack.js operation SHA deployment (true|false)
 // true to lock, false to unlock
 runLock(process.argv[2], process.argv[3], process.argv[4], process.argv[5]).catch((e) => {
   console.dir(e);
