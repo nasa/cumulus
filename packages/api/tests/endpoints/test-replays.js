@@ -4,7 +4,8 @@ const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
 
-const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
+const { s3 } = require('@cumulus/aws-client/services');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const { app } = require('../../app');

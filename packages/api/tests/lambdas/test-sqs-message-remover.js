@@ -4,7 +4,8 @@ const rewire = require('rewire');
 const test = require('ava');
 const get = require('lodash.get');
 
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
+const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
 const { sleep } = require('@cumulus/common/util');
 const { randomString } = require('@cumulus/common/test-utils');
 const { createSqsQueues, getSqsQueueMessageCounts } = require('../../lib/testUtils');
@@ -108,12 +109,12 @@ test('sqsMessageRemover lambda does nothing for a workflow message when eventSou
 
 test('sqsMessageRemover lambda removes message from queue when workflow succeeded', async (t) => {
   const sqsQueues = await createSqsQueues(randomString());
-  await aws.sqs().sendMessage({
+  await awsServices.sqs().sendMessage({
     QueueUrl: sqsQueues.queueUrl, MessageBody: JSON.stringify({ testdata: randomString() })
   }).promise();
 
   const sqsOptions = { numOfMessages: 10, visibilityTimeout: 120, waitTimeSeconds: 20 };
-  const receiveMessageResponse = await aws.receiveSQSMessages(sqsQueues.queueUrl, sqsOptions);
+  const receiveMessageResponse = await receiveSQSMessages(sqsQueues.queueUrl, sqsOptions);
   const { MessageId: messageId, ReceiptHandle: receiptHandle } = receiveMessageResponse[0];
 
   const eventSource = createEventSource({ messageId, receiptHandle, queueUrl: sqsQueues.queueUrl });
@@ -128,17 +129,17 @@ test('sqsMessageRemover lambda removes message from queue when workflow succeede
   t.is(numberOfMessages.numberOfMessagesAvailable, 0);
   t.is(numberOfMessages.numberOfMessagesNotVisible, 0);
 
-  await aws.sqs().deleteQueue({ QueueUrl: sqsQueues.queueUrl }).promise();
+  await awsServices.sqs().deleteQueue({ QueueUrl: sqsQueues.queueUrl }).promise();
 });
 
 test('sqsMessageRemover lambda updates message visibilityTimeout when workflow failed', async (t) => {
   const sqsQueues = await createSqsQueues(randomString());
-  await aws.sqs().sendMessage({
+  await awsServices.sqs().sendMessage({
     QueueUrl: sqsQueues.queueUrl, MessageBody: JSON.stringify({ testdata: randomString() })
   }).promise();
 
   const sqsOptions = { numOfMessages: 10, visibilityTimeout: 120, waitTimeSeconds: 20 };
-  const receiveMessageResponse = await aws.receiveSQSMessages(sqsQueues.queueUrl, sqsOptions);
+  const receiveMessageResponse = await receiveSQSMessages(sqsQueues.queueUrl, sqsOptions);
   const { MessageId: messageId, ReceiptHandle: receiptHandle } = receiveMessageResponse[0];
 
   const eventSource = createEventSource({ messageId, receiptHandle, queueUrl: sqsQueues.queueUrl });
@@ -158,5 +159,5 @@ test('sqsMessageRemover lambda updates message visibilityTimeout when workflow f
   t.is(numberOfMessages.numberOfMessagesAvailable, 1);
   t.is(numberOfMessages.numberOfMessagesNotVisible, 0);
 
-  await aws.sqs().deleteQueue({ QueueUrl: sqsQueues.queueUrl }).promise();
+  await awsServices.sqs().deleteQueue({ QueueUrl: sqsQueues.queueUrl }).promise();
 });

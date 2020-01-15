@@ -1,11 +1,11 @@
 'use strict';
 
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
 
 const messageConsumer = require('./message-consumer');
 
-const Kinesis = aws.kinesis();
+const Kinesis = awsServices.kinesis();
 const tallyReducer = (acc, cur) => acc + cur;
 
 /**

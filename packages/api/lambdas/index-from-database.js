@@ -2,9 +2,7 @@
 
 const log = require('@cumulus/common/log');
 
-const {
-  DynamoDbSearchQueue
-} = require('@cumulus/common/aws');
+const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 
 const { Search } = require('../es/search');
 const indexer = require('../es/indexer');

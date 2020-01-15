@@ -1,8 +1,9 @@
 'use strict';
 
 const test = require('ava');
+const { s3 } = require('@cumulus/aws-client/services');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const {
   constructCollectionId
 } = require('@cumulus/common/collection-config-store');
