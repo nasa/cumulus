@@ -19,7 +19,7 @@ class CumulusLockError extends Error {
 }
 
 
-class CumulusLockCollisionError extends Error {
+class CumulusNoLockError extends Error {
   constructor(message) {
     super(message);
     this.name = this.constructor.name;
@@ -100,12 +100,14 @@ const STACK_EXPIRATION_MS = 120 * 60 * 1000; // 2 hourst
 
 /**
  * lockOperation
- * @param {string} operation  - confirmLock or lock
- * @param {string} gitSHA     - git SHA to add to sha lock column
- * @param {string} deployment - Deployment/stack name
- * @param {string} shouldLock - true/false flag to add or remove the lock when used with
- *                              lock operation
- * @returns {Promise}         - On failure, exit code is
+ * @param {string} operation           - confirmLock or lock
+ * @param {string} gitSHA              - git SHA to add to sha lock column
+ * @param {string} deployment          - Deployment/stack name
+ * @param {string} shouldLock          - true/false flag to add or remove the lock when used with
+ *                                       lock operation
+ * @returns {Promise}                  - On success, returns resolved promise
+ * @throws {CumulusLockCollisionError} - On 'confirmLock' missing a lock
+ * @throws {CumulusNoLockError}         -on 'lock' locking collision
  */
 async function lockOperation(operation, gitSHA, deployment, shouldLock) {
   const dynamodbDocClient = aws.dynamodbDocClient({
@@ -116,7 +118,7 @@ async function lockOperation(operation, gitSHA, deployment, shouldLock) {
   if (operation === 'confirmLock') {
     const lockSHA = await mutex.checkMatchingSha(deployment, gitSHA);
     if (lockSHA === 'noLock') {
-      throw new CumulusLockCollisionError(`No lock exists: ${deployment} - ${gitSHA}`);
+      throw new CumulusNoLockError(`No lock exists: ${deployment} - ${gitSHA}`);
     } else if (lockSHA !== 'match') {
       throw new Error(`Build with SHA ${JSON.stringify(lockSHA)} has provisioned this stack - you must re-run the full build`);
     }
@@ -151,7 +153,7 @@ async function lockOperation(operation, gitSHA, deployment, shouldLock) {
 lockOperation(...process.argv.slice(2, 6)).catch((e) => {
   console.dir(e);
   process.exitCode = 100;
-  if (e.code === 'CumulusLockCollisionError') {
+  if (e.code === 'CumulusNoLockError') {
     process.exitCode = 101;
   }
   if (!['ConditionalCheckFailedException', 'CumulusLockError'].includes(e.code)) {
