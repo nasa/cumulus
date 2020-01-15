@@ -10,7 +10,7 @@
     "docs-serve": "npm run docs-build && (cd website && npm run start)",
     "remove-locks": "lerna exec 'rm package-lock.json'",
     "install-locks": "lerna exec --no-sort -- npm i --package-lock-only --no-audit",
-    "lint": "eslint example packages/api packages/checksum packages/cmrjs packages/cmr-client packages/common packages/deployment packages/ingest tf-modules/s3-replicator tasks",
+    "lint": "eslint example packages/api packages/checksum packages/cmrjs packages/cmr-client packages/common packages/deployment packages/ingest tf-modules/s3-replicator tasks packages/tf-inventory",
     "lint-md": "markdownlint docs/**/*.md docs/*.md tf-modules/**/*.md tf-modules/*.md",
     "test": "nyc lerna run --concurrency 1 --ignore cumulus-integration-tests test",
     "bootstrap": "lerna bootstrap --no-ci --force-local",
