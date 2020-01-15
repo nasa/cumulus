@@ -390,7 +390,6 @@ async function duplicateHandlingErrorTest(t, duplicateHandling) {
 }
 
 test.serial('when duplicateHandling is not specified, throw an error on duplicate', async (t) => {
-  debugger;
   await duplicateHandlingErrorTest(t);
 });
 
