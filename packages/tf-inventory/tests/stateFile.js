@@ -97,7 +97,7 @@ test('listTfStateFiles lists state files only', async (t) => {
   await aws.dynamodb().deleteTable({ TableName: noStateFileTableName }).promise();
 });
 
-test('getStateFileResources lists resources', async (t) => {
+test('getStateFileDeploymentInfo lists correct resources', async (t) => {
   const bucket = randomString();
   const key = 'terraform.tfstate';
   await aws.s3().createBucket({ Bucket: bucket }).promise();
@@ -254,7 +254,7 @@ test.serial('listClusterEC2Instances returns empty list if no container instance
   ecsStub.restore();
 });
 
-test.serial('listClusterEC2Instances returns empty listContainerInstances returns null', async (t) => {
+test.serial('listClusterEC2Instances returns empty list if ContainerInstances returns null', async (t) => {
   const ecsStub = sinon.stub(aws, 'ecs')
     .returns({
       listContainerInstances: () => ({
