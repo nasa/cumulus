@@ -3,6 +3,7 @@ const awsClient = require('./client');
 
 exports.apigateway = awsClient(AWS.APIGateway, '2015-07-09');
 exports.ecs = awsClient(AWS.ECS, '2014-11-13');
+exports.ec2 = awsClient(AWS.EC2, '2016-11-15');
 exports.s3 = awsClient(AWS.S3, '2006-03-01');
 exports.kinesis = awsClient(AWS.Kinesis, '2013-12-02');
 exports.lambda = awsClient(AWS.Lambda, '2015-03-31');
