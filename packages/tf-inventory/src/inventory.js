@@ -4,7 +4,6 @@ const aws = require('@cumulus/aws-client/services');
 const mergeWith = require('lodash.mergewith');
 const difference = require('lodash.difference');
 const stateFile = require('./stateFile');
-const awsServices = require('@cumulus/aws-client/services');
 
 /**
  * Merge 2 resource objects by key
@@ -81,7 +80,7 @@ async function listAwsResources() {
   ec2Instances = [].concat(...ec2Instances.Reservations.map((e) => e.Instances));
   ec2Instances = ec2Instances.map((inst) => inst.InstanceId);
 
-  let esDomainNames = await awsServices.es().listDomainNames().promise();
+  let esDomainNames = await aws.es().listDomainNames().promise();
   esDomainNames = esDomainNames.DomainNames.map((e) => e.DomainName);
 
   return {
