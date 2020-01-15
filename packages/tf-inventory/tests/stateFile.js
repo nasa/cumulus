@@ -211,12 +211,13 @@ test.serial('listClusterEC2Instances returns lists of instance ids', async (t) =
         promise: () =>
           Promise.resolve({
             containerInstances: [
-            {
-              ec2InstanceId: 'i-12345'
-            },
-            {
-              ec2InstanceId: 'i-23456'
-            }]
+              {
+                ec2InstanceId: 'i-12345'
+              },
+              {
+                ec2InstanceId: 'i-23456'
+              }
+            ]
           })
       }),
       listContainerInstances: () => ({

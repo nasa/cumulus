@@ -8,6 +8,7 @@ const aws = require('@cumulus/common/aws');
 /**
  * Get list of state files paths `bucket/key` from a table if the table
  * contains state files
+ *
  * @param {string} tableName - table name
  * @returns {Promise<Array<string>>} - list of state file paths
  */
@@ -158,7 +159,7 @@ async function getStateFileDeploymentInfo(file) {
  * List the ECS clusters and EC2 instances defined in the state file.
  *
  * @param {string} file - file path
- * @returns {Promise<Object?}
+ * @returns {Promise<Object>}
  */
 async function listResourcesForFile(file) {
   const stateFile = await getStateFileDeploymentInfo(file);
