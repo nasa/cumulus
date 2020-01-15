@@ -97,7 +97,7 @@ test('listTfStateFiles lists state files only', async (t) => {
   await aws.dynamodb().deleteTable({ TableName: noStateFileTableName }).promise();
 });
 
-test('getStateFileResources lists resources', async (t) => {
+test('getStateFileDeploymentInfo lists correct resources', async (t) => {
   const bucket = randomString();
   const key = 'terraform.tfstate';
   await aws.s3().createBucket({ Bucket: bucket }).promise();
