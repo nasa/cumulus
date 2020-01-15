@@ -1,7 +1,7 @@
 'use strict';
 
 const sinon = require('sinon');
-const commonAws = require('@cumulus/common/aws');
+const stepFunctions = require('@cumulus/aws-client/StepFunctions');
 const proxyquire = require('proxyquire');
 const test = require('ava');
 const {
@@ -224,7 +224,7 @@ test('sfSemaphoreDown lambda decrements semaphore for s3-stored event message', 
   }).promise();
 
   const stubReturn = createExecutionMessage(queueName);
-  const pullStepFunctionStub = sinon.stub(commonAws, 'pullStepFunctionEvent');
+  const pullStepFunctionStub = sinon.stub(stepFunctions, 'pullStepFunctionEvent');
   try {
     const proxiedFunction = proxyquire('../../lambdas/sf-semaphore-down', { pullStepFunctionEvent: pullStepFunctionStub }).handleSemaphoreDecrementTask;
     pullStepFunctionStub.returns(stubReturn);

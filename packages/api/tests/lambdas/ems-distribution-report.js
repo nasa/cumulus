@@ -4,7 +4,12 @@ const fs = require('fs-extra');
 const moment = require('moment');
 const path = require('path');
 const test = require('ava');
-const { aws } = require('@cumulus/common');
+const {
+  parseS3Uri,
+  recursivelyDeleteS3Bucket,
+  s3Join
+} = require('@cumulus/aws-client/S3');
+const awsServices = require('@cumulus/aws-client/services');
 const { testUtils: { randomString } } = require('@cumulus/common');
 const {
   bucketsPrefixes, generateAndStoreDistributionReport, generateAndStoreReportsForEachDay
@@ -79,7 +84,7 @@ test.beforeEach(async (t) => {
   t.context.internalBucket = process.env.system_bucket;
   const { logsBucket, logsPrefix } = bucketsPrefixes();
 
-  await aws.s3().createBucket({ Bucket: t.context.internalBucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: t.context.internalBucket }).promise();
 
   t.context.collectionModel = new models.Collection();
   t.context.granuleModel = new models.Granule();
@@ -116,9 +121,9 @@ test.beforeEach(async (t) => {
 
   // Upload the S3 server logs to the internal bucket
   await Promise.all(serverLogs.map((serverLog) =>
-    aws.s3().putObject({
+    awsServices.s3().putObject({
       Bucket: logsBucket,
-      Key: aws.s3Join([logsPrefix, `${randomString()}.log`]),
+      Key: s3Join([logsPrefix, `${randomString()}.log`]),
       Body: serverLog
     }).promise()));
 });
@@ -129,7 +134,7 @@ test.afterEach.always(async (t) => {
     t.context.granuleModel.deleteTable(),
     t.context.collectionModel.deleteTable()
   ]);
-  await aws.recursivelyDeleteS3Bucket(t.context.internalBucket);
+  await recursivelyDeleteS3Bucket(t.context.internalBucket);
 });
 
 test.serial('emsDistributionReport writes a correct report out to S3 when no previous reports exist', async (t) => {
@@ -142,9 +147,9 @@ test.serial('emsDistributionReport writes a correct report out to S3 when no pre
   const report = await generateAndStoreDistributionReport({ startTime, endTime });
 
   // Fetch the distribution report from S3
-  const getObjectResponse = await aws.s3().getObject({
+  const getObjectResponse = await awsServices.s3().getObject({
     Bucket: reportsBucket,
-    Key: aws.parseS3Uri(report.file).Key
+    Key: parseS3Uri(report.file).Key
   }).promise();
   const logLines = getObjectResponse.Body.toString().split('\n');
 
@@ -159,9 +164,9 @@ test.serial('emsDistributionReport writes a correct report out to S3 when one re
   const reportName = `${moment.utc(startTime).format('YYYYMMDD')}_${process.env.ems_provider}_DistCustom_${process.env.stackName}.flt`;
 
   const { reportsBucket, reportsPrefix } = bucketsPrefixes();
-  await aws.s3().putObject({
+  await awsServices.s3().putObject({
     Bucket: reportsBucket,
-    Key: aws.s3Join([reportsPrefix, reportName]),
+    Key: s3Join([reportsPrefix, reportName]),
     Body: 'my report'
   }).promise();
 
@@ -169,9 +174,9 @@ test.serial('emsDistributionReport writes a correct report out to S3 when one re
   await generateAndStoreDistributionReport({ startTime, endTime });
 
   // Fetch the distribution report from S3
-  const getObjectResponse = await aws.s3().getObject({
+  const getObjectResponse = await awsServices.s3().getObject({
     Bucket: reportsBucket,
-    Key: aws.s3Join([reportsPrefix, `${reportName}.rev1`])
+    Key: s3Join([reportsPrefix, `${reportName}.rev1`])
   }).promise();
   const logLines = getObjectResponse.Body.toString().split('\n');
 
@@ -188,14 +193,14 @@ test.serial('emsDistributionReport writes a correct report out to S3 when two re
   const reportName = `${moment.utc(startTime).format('YYYYMMDD')}_${process.env.ems_provider}_DistCustom_${process.env.stackName}.flt`;
 
   await Promise.all([
-    aws.s3().putObject({
+    awsServices.s3().putObject({
       Bucket: reportsBucket,
-      Key: aws.s3Join([reportsPrefix, reportName]),
+      Key: s3Join([reportsPrefix, reportName]),
       Body: 'my report'
     }).promise(),
-    aws.s3().putObject({
+    awsServices.s3().putObject({
       Bucket: reportsBucket,
-      Key: aws.s3Join([reportsPrefix, `${reportName}.rev1`]),
+      Key: s3Join([reportsPrefix, `${reportName}.rev1`]),
       Body: 'my report'
     }).promise()
   ]);
@@ -204,9 +209,9 @@ test.serial('emsDistributionReport writes a correct report out to S3 when two re
   await generateAndStoreDistributionReport({ startTime, endTime });
 
   // Fetch the distribution report from S3
-  const getObjectResponse = await aws.s3().getObject({
+  const getObjectResponse = await awsServices.s3().getObject({
     Bucket: reportsBucket,
-    Key: aws.s3Join([reportsPrefix, `${reportName}.rev2`])
+    Key: s3Join([reportsPrefix, `${reportName}.rev2`])
   }).promise();
   const logLines = getObjectResponse.Body.toString().split('\n');
 
@@ -242,9 +247,9 @@ test.serial('emsDistributionReport writes multiple reports when report spans mul
   // Fetch the distribution reports from S3
   const reportContents = await Promise.all(
     reports.map(async (report) => {
-      const getObjectResponse = await aws.s3().getObject({
+      const getObjectResponse = await awsServices.s3().getObject({
         Bucket: reportsBucket,
-        Key: aws.parseS3Uri(report.file).Key
+        Key: parseS3Uri(report.file).Key
       }).promise();
       return getObjectResponse.Body.toString().split('\n');
     })

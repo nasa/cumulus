@@ -2,9 +2,9 @@
 
 const get = require('lodash.get');
 const set = require('lodash.set');
-const StepFunctions = require('@cumulus/common/StepFunctions');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
+const { pullStepFunctionEvent } = require('@cumulus/aws-client/StepFunctions');
 const log = require('@cumulus/common/log');
-const { pullStepFunctionEvent } = require('@cumulus/common/aws');
 const { getMessageExecutionArn } = require('@cumulus/common/message');
 const {
   getStepExitedEvent,

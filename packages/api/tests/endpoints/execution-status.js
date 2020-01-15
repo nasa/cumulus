@@ -3,7 +3,11 @@
 const request = require('supertest');
 const test = require('ava');
 const sinon = require('sinon');
-const commonAws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
+const {
+  putJsonS3Object,
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/aws-client/S3');
 const { StepFunction } = require('@cumulus/ingest/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -158,15 +162,15 @@ let mockedSFExecution;
 
 test.before(async () => {
   process.env.system_bucket = randomString();
-  await commonAws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
-  await commonAws.putJsonS3Object(
+  await putJsonS3Object(
     process.env.system_bucket,
     'events/lambdaEventUUID',
     lambdaCompleteOutput()
   );
 
-  await commonAws.putJsonS3Object(
+  await putJsonS3Object(
     process.env.system_bucket,
     'events/executionEventUUID',
     fullMessageOutput()
@@ -174,7 +178,7 @@ test.before(async () => {
 
   mockedSF = sinon.stub(StepFunction, 'getExecutionStatus').callsFake(stepFunctionMock.getExecutionStatus);
   mockedSFExecution = sinon
-    .stub(commonAws.sfn(), 'describeExecution')
+    .stub(awsServices.sfn(), 'describeExecution')
     .callsFake(executionExistsMock);
 
   const username = randomString();
@@ -190,7 +194,7 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  await commonAws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await accessTokenModel.deleteTable();
   mockedSF.restore();
   mockedSFExecution.restore();

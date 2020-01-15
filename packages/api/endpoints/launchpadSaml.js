@@ -6,7 +6,10 @@ const { parseString } = require('xml2js');
 const { promisify } = require('util');
 const flatten = require('lodash.flatten');
 
-const aws = require('@cumulus/common/aws');
+const {
+  getS3Object,
+  parseS3Uri
+} = require('@cumulus/aws-client/S3');
 
 const { AccessToken } = require('../models');
 const { createJwtToken } = require('../lib/token');
@@ -24,9 +27,9 @@ const parseXmlString = promisify(parseString);
  */
 const launchpadPublicCertificate = async (launchpadPublicMetadataPath) => {
   let launchpadMetatdataXML;
-  const { Bucket, Key } = aws.parseS3Uri(launchpadPublicMetadataPath);
+  const { Bucket, Key } = parseS3Uri(launchpadPublicMetadataPath);
   try {
-    const s3Object = await aws.getS3Object(Bucket, Key);
+    const s3Object = await getS3Object(Bucket, Key);
     launchpadMetatdataXML = s3Object.Body.toString();
   } catch (error) {
     if (error.code === 'NoSuchKey' || error.code === 'NoSuchBucket') {

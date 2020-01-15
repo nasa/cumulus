@@ -3,7 +3,7 @@
 const got = require('got');
 const pWaitFor = require('p-wait-for');
 const xml2js = require('xml2js');
-const { s3 } = require('@cumulus/common/aws');
+const { s3 } = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
 const { sleep } = require('@cumulus/common/util');
 const { getUrl } = require('@cumulus/cmrjs/utils');

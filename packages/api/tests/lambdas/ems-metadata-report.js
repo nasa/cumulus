@@ -6,7 +6,13 @@ const moment = require('moment');
 const path = require('path');
 const sinon = require('sinon');
 const { randomString } = require('@cumulus/common/test-utils');
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
+const {
+  fileExists,
+  parseS3Uri,
+  getS3Object,
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/aws-client/S3');
 const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmrjs');
 const { fakeCollectionFactory } = require('../../lib/testUtils');
 const { generateReport } = require('../../lambdas/ems-metadata-report');
@@ -60,7 +66,7 @@ test.beforeEach(async (t) => {
   process.env.ems_provider = 'testEmsProvider';
   process.env.CollectionsTable = randomString();
 
-  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
   t.context.collectionModel = new models.Collection();
   await t.context.collectionModel.createTable();
   sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => []);
@@ -72,7 +78,7 @@ test.beforeEach(async (t) => {
 
 test.afterEach.always((t) => {
   Promise.all([
-    aws.recursivelyDeleteS3Bucket(process.env.system_bucket),
+    recursivelyDeleteS3Bucket(process.env.system_bucket),
     t.context.collectionModel.deleteTable()]);
   CMR.prototype.searchCollections.restore();
   CMRSearchConceptQueue.prototype.peek.restore();
@@ -84,10 +90,10 @@ test.serial('generateReport creates flat file for collections in both CUMULUS an
   const startTime = moment.utc().startOf('day');
   const endTime = moment.utc().add(1, 'days').startOf('day');
   const report = await generateReport(startTime, endTime);
-  const parsed = aws.parseS3Uri(report.file);
+  const parsed = parseS3Uri(report.file);
 
   // file exists
-  const exists = await aws.fileExists(parsed.Bucket, parsed.Key);
+  const exists = await fileExists(parsed.Bucket, parsed.Key);
   t.truthy(exists);
 
   const expectedRecords = [
@@ -102,7 +108,7 @@ test.serial('generateReport creates flat file for collections in both CUMULUS an
     + '3|&|BIOSPHERE|&|NASA/GSFC/SED/ESD/HBSL/BISB/MODAPS|&|testEmsProvider|&|AQUA|&|MODIS|&|E|&|1'
   ];
   // check the number of records for each report
-  const s3Object = await aws.getS3Object(parsed.Bucket, parsed.Key);
+  const s3Object = await getS3Object(parsed.Bucket, parsed.Key);
   const content = s3Object.Body.toString();
   const records = content.split('\n');
   t.deepEqual(records, expectedRecords);
@@ -113,10 +119,10 @@ test.serial('generateReport creates flat file for one collection which is in bot
   const startTime = moment.utc().startOf('day');
   const endTime = moment.utc().add(1, 'days').startOf('day');
   const report = await generateReport(startTime, endTime, 'A2_SI25_NRT___0');
-  const parsed = aws.parseS3Uri(report.file);
+  const parsed = parseS3Uri(report.file);
 
   // file exists
-  const exists = await aws.fileExists(parsed.Bucket, parsed.Key);
+  const exists = await fileExists(parsed.Bucket, parsed.Key);
   t.truthy(exists);
 
   const expectedRecords = [
@@ -124,7 +130,7 @@ test.serial('generateReport creates flat file for one collection which is in bot
     + '3|&|SPECTRAL/ENGINEERING,CRYOSPHERE,OCEANS|&|NASA/MSFC/GHRC|&|testEmsProvider|&|GCOM-W1|&|AMSR2|&|E|&|1'
   ];
   // check the number of records for each report
-  const s3Object = await aws.getS3Object(parsed.Bucket, parsed.Key);
+  const s3Object = await getS3Object(parsed.Bucket, parsed.Key);
   const content = s3Object.Body.toString();
   const records = content.split('\n');
   t.deepEqual(records, expectedRecords);

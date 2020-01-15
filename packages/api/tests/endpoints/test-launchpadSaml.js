@@ -8,7 +8,11 @@ const request = require('supertest');
 const { URL } = require('url');
 const saml2 = require('saml2-js');
 
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
+const {
+  recursivelyDeleteS3Bucket,
+  s3PutObject
+} = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const { verifyJwtToken } = require('../../lib/token');
@@ -29,7 +33,7 @@ process.env.system_bucket = randomId('systembucket');
 const { app } = require('../../app');
 
 const testBucketName = randomId('testbucket');
-const createBucket = (Bucket) => aws.s3().createBucket({ Bucket }).promise();
+const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket }).promise();
 const testBucketNames = [process.env.system_bucket, testBucketName];
 process.env.LAUNCHPAD_METADATA_PATH = `s3://${testBucketName}/valid-metadata.xml`;
 
@@ -61,7 +65,7 @@ test.before(async () => {
   await Promise.all(testBucketNames.map(createBucket));
   await Promise.all(
     testFiles.map((f) =>
-      aws.s3PutObject({
+      s3PutObject({
         Bucket: testBucketName,
         Key: f.key,
         Body: f.content
@@ -123,7 +127,7 @@ test.afterEach(async () => {
 });
 
 test.after.always(async () => {
-  await Promise.all(testBucketNames.map(aws.recursivelyDeleteS3Bucket));
+  await Promise.all(testBucketNames.map(recursivelyDeleteS3Bucket));
   await accessTokenModel.deleteTable();
 });
 

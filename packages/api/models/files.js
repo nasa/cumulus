@@ -1,10 +1,8 @@
 'use strict';
 
 const chunk = require('lodash.chunk');
-const {
-  DynamoDbSearchQueue,
-  parseS3Uri
-} = require('@cumulus/common/aws');
+const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
+const { parseS3Uri } = require('@cumulus/aws-client/S3');
 const Granule = require('./granules');
 const Manager = require('./base');
 const schemas = require('./schemas');

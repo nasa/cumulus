@@ -4,7 +4,10 @@ const request = require('supertest');
 const test = require('ava');
 const get = require('lodash.get');
 const sinon = require('sinon');
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
+const {
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/aws-client/S3');
 
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -71,7 +74,7 @@ async function createIndex(indexName, aliasName) {
 }
 
 test.before(async (t) => {
-  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -101,7 +104,7 @@ test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await asyncOperationsModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
-  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test('PUT snapshot without an Authorization header returns an Authorization Missing response', async (t) => {
