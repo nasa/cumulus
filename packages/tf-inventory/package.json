@@ -17,7 +17,7 @@
   },
   "ava": {
     "files": [
-      "tests/**/*.js"
+      "tests/**"
     ],
     "fail-fast": true,
     "verbose": true
@@ -36,7 +36,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "1.16.1",
+    "@cumulus/common": "1.17.0",
     "commander": "^4.1.0",
     "lodash.difference": "^4.5.0",
     "lodash.groupby": "^4.6.0",

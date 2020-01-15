@@ -188,7 +188,8 @@ test('deploymentReport returns information about the deployment', async (t) => {
       deployment: file,
       lastModified: new Date(2020, 1, 1),
       resources: [1, 2]
-    }));
+    })
+  );
 
   const report = await stateFile.deploymentReport();
 
@@ -236,7 +237,7 @@ test.serial('listClusterEC2Instances returns empty list if no container instance
   const ecsStub = sinon.stub(aws, 'ecs')
     .returns({
       listContainerInstances: () => ({
-        promise: (clusterArn) =>
+        promise: () =>
           Promise.resolve({
             containerInstanceArns: null
           })
@@ -253,7 +254,7 @@ test.serial('listClusterEC2Instances returns empty listContainerInstances return
   const ecsStub = sinon.stub(aws, 'ecs')
     .returns({
       listContainerInstances: () => ({
-        promise: (clusterArn) =>
+        promise: () =>
           Promise.resolve(null)
       })
     });

@@ -129,6 +129,7 @@ function extractDeploymentName(filename) {
 
 /**
  * Get a list of resources from the given state file
+ *
  * @param {string} file - the file location as `bucket/key`
  * @returns {Array<Object>} - list of resource objects
  */
