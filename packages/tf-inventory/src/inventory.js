@@ -1,6 +1,6 @@
 'use strict';
 
-const aws = require('@cumulus/common/aws');
+const aws = require('@cumulus/aws-client/services');
 const mergeWith = require('lodash.mergewith');
 const difference = require('lodash.difference');
 const stateFile = require('./stateFile');

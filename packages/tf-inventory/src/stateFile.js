@@ -3,7 +3,9 @@
 'use strict';
 
 const groupBy = require('lodash.groupby');
-const aws = require('@cumulus/common/aws');
+const aws = require('@cumulus/aws-client/services');
+const { getS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
+const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 
 /**
  * Get list of state files paths `bucket/key` from a table if the table
@@ -20,7 +22,7 @@ async function getStateFilesFromTable(tableName) {
     if (tableInfo.Table.AttributeDefinitions[0].AttributeName === 'LockID'
         && tableInfo.Table.ItemCount > 0) {
       let stateFiles = [];
-      const scanQueue = new aws.DynamoDbSearchQueue({ TableName: tableName });
+      const scanQueue = new DynamoDbSearchQueue({ TableName: tableName });
 
       let itemsComplete = false;
 
@@ -135,10 +137,10 @@ function extractDeploymentName(filename) {
  * @returns {Array<Object>} - list of resource objects
  */
 async function getStateFileDeploymentInfo(file) {
-  const { Bucket, Key } = aws.parseS3Uri(`s3://${file}`);
+  const { Bucket, Key } = parseS3Uri(`s3://${file}`);
 
   try {
-    const stateFile = await aws.getS3Object(Bucket, Key);
+    const stateFile = await getS3Object(Bucket, Key);
 
     const stateFileBody = JSON.parse(stateFile.Body);
 
@@ -164,7 +166,7 @@ async function getStateFileDeploymentInfo(file) {
 async function listResourcesForFile(file) {
   const stateFile = await getStateFileDeploymentInfo(file);
 
-  if (stateFile.resources) {
+  if (stateFile && stateFile.resources) {
     let ecsClusters = stateFile.resources
       .filter((r) => r.type === 'aws_ecs_cluster')
       .map((c) => c.instances.map((i) => i.attributes.arn));

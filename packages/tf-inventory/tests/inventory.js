@@ -3,7 +3,7 @@
 const test = require('ava');
 const rewire = require('rewire');
 const sinon = require('sinon');
-const aws = require('@cumulus/common/aws');
+const aws = require('@cumulus/aws-client/services');
 
 const inventory = rewire('../src/inventory');
 const mergeResourceLists = inventory.__get__('mergeResourceLists');

@@ -11,8 +11,10 @@ const getStateFilesFromTable = stateFile.__get__('getStateFilesFromTable');
 const extractDeploymentName = stateFile.__get__('extractDeploymentName');
 const listClusterEC2Instances = stateFile.__get__('listClusterEC2Instances');
 
+const aws = require('@cumulus/aws-client/services');
+const { promiseS3Upload, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+
 const {
-  aws,
   testUtils: { randomString }
 } = require('@cumulus/common');
 
@@ -102,7 +104,7 @@ test('getStateFileResources lists resources', async (t) => {
 
   const state = fs.readFileSync(path.join(__dirname, './resources/sampleTfState.tfstate'), 'utf8');
 
-  await aws.promiseS3Upload({
+  await promiseS3Upload({
     Bucket: bucket,
     Key: key,
     Body: state
@@ -115,7 +117,7 @@ test('getStateFileResources lists resources', async (t) => {
     resources.resources.map((r) => r.type)
   );
 
-  await aws.recursivelyDeleteS3Bucket(bucket);
+  await recursivelyDeleteS3Bucket(bucket);
 });
 
 test('listResourcesForFile lists resources', async (t) => {
@@ -130,7 +132,7 @@ test('listResourcesForFile lists resources', async (t) => {
 
   const state = fs.readFileSync(path.join(__dirname, './resources/sampleTfState.tfstate'), 'utf8');
 
-  await aws.promiseS3Upload({
+  await promiseS3Upload({
     Bucket: bucket,
     Key: key,
     Body: state
@@ -145,7 +147,7 @@ test('listResourcesForFile lists resources', async (t) => {
     resources
   );
 
-  await aws.recursivelyDeleteS3Bucket(bucket);
+  await recursivelyDeleteS3Bucket(bucket);
 
   revertListClusterEC2Instances();
 });
