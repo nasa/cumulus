@@ -28,7 +28,7 @@ Options:
 Commands:
   list-deployments         List Terraform Cumulus deployments in the account
   deployment-report        List each Cumulus deployment with files, number of resources, and last update date
-  list-orphaned-resources  List resources not associated with a Terraform deployment, currently supports ECS and EC2
+  list-orphaned-resources  List resources not associated with a Terraform deployment, currently supports ECS, EC2, and Elasticsearch
 ```
 
 ## Assumptions

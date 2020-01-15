@@ -35,7 +35,7 @@ program
 
 program
   .command('list-orphaned-resources')
-  .description('List resources not associated with a Terraform deployment, currently supports ECS and EC2')
+  .description('List resources not associated with a Terraform deployment, currently supports ECS, EC2, and Elasticsearch')
   .action(async () => {
     console.log(await inventory.reconcileResources());
   });
