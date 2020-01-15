@@ -2272,8 +2272,20 @@
     ]
   },
   "filesInCumulusCmr": {
-    "okCount": 28,
-    "onlyInCumulus": [],
-    "onlyInCmr": []
+    "okCount": 4,
+    "onlyInCumulus": [
+      {
+        "fileName": "granule.001.1234.jpg",
+        "uri": "s3://some-bucket/granule__001/granule.001.1234.jpg",
+        "granuleId": "granule.001.1234"
+      }
+    ],
+    "onlyInCmr": [
+      {
+        "URL": "https://some-bucket.s3.amazonaws.com/granule__002/granule.002.5678.jpg",
+        "Type": "GET DATA",
+        "GranuleUR": "granule.002.5678"
+      }
+    ]
   }
 }
