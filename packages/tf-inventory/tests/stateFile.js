@@ -253,7 +253,7 @@ test.serial('listClusterEC2Instances returns empty list if no container instance
   ecsStub.restore();
 });
 
-test.serial('listClusterEC2Instances returns empty listContainerInstances returns null', async (t) => {
+test.serial('listClusterEC2Instances returns empty list if ContainerInstances returns null', async (t) => {
   const ecsStub = sinon.stub(aws, 'ecs')
     .returns({
       listContainerInstances: () => ({
