@@ -175,12 +175,10 @@ test('mergeResourceLists correctly merges different resources', (t) => {
     ]
   };
 
-  t.deepEqual(mergeResourceLists(ecs, ec2),
-    {
-      ec2Instances: ec2.ec2Instances,
-      ecsClusters: ecs.ecsClusters
-    }
-  );
+  t.deepEqual(mergeResourceLists(ecs, ec2), {
+    ec2Instances: ec2.ec2Instances,
+    ecsClusters: ecs.ecsClusters
+  });
 });
 
 test('resourceDiff lists items that are only in the first object', (t) => {

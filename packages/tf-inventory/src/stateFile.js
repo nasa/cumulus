@@ -183,6 +183,7 @@ async function listResourcesForFile(file) {
 /**
  * List terraform deployments in the accounts based on the list
  * of state files
+ *
  * @param {Array<string>} stateFiles - state file paths
  * @returns {Array<string>} list of deployments
  */
@@ -218,10 +219,9 @@ async function deploymentReport() {
   resources = resources.filter((r) => r && r.deployment !== undefined);
 
   const resourcesForReports = resources.map((r) => ({
-      ...r,
-      resources: r.resources ? r.resources.length : 0
-    })
-  );
+    ...r,
+    resources: r.resources ? r.resources.length : 0
+  }));
 
   const resourcesByDeployment = groupBy(resourcesForReports, (r) => r.deployment);
 

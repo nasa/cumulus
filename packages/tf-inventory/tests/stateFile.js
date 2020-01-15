@@ -16,8 +16,6 @@ const {
   testUtils: { randomString }
 } = require('@cumulus/common');
 
-let ecsStub;
-
 async function createTable(tableName, attributeDefs, keySchema) {
   await aws.dynamodb().createTable({
     TableName: tableName,
@@ -185,13 +183,12 @@ test('deploymentReport returns information about the deployment', async (t) => {
 
   const revertGetDeploymentInfoStub = stateFile.__set__(
     'getStateFileDeploymentInfo',
-    (file) => { return {
-              file,
-              deployment: file,
-              lastModified: new Date(2020, 1, 1),
-              resources: [1, 2]
-            }}
-  );
+    (file) => ({
+      file,
+      deployment: file,
+      lastModified: new Date(2020, 1, 1),
+      resources: [1, 2]
+    }));
 
   const report = await stateFile.deploymentReport();
 
@@ -222,17 +219,17 @@ test.serial('listClusterEC2Instances returns lists of instance ids', async (t) =
           })
       }),
       listContainerInstances: () => ({
-        promise: (clusterArn) =>
+        promise: () =>
           Promise.resolve({
             containerInstanceArns: ['arn1']
           })
       })
     });
 
-    const ec2Instances = await listClusterEC2Instances('clusterArn');
-    t.deepEqual(ec2Instances, ['i-12345', 'i-23456']);
+  const ec2Instances = await listClusterEC2Instances('clusterArn');
+  t.deepEqual(ec2Instances, ['i-12345', 'i-23456']);
 
-    ecsStub.restore();
+  ecsStub.restore();
 });
 
 test.serial('listClusterEC2Instances returns empty list if no container instances', async (t) => {
@@ -246,10 +243,10 @@ test.serial('listClusterEC2Instances returns empty list if no container instance
       })
     });
 
-    const ec2Instances = await listClusterEC2Instances('clusterArn');
-    t.deepEqual(ec2Instances, []);
+  const ec2Instances = await listClusterEC2Instances('clusterArn');
+  t.deepEqual(ec2Instances, []);
 
-    ecsStub.restore();
+  ecsStub.restore();
 });
 
 test.serial('listClusterEC2Instances returns empty listContainerInstances returns null', async (t) => {
@@ -261,8 +258,8 @@ test.serial('listClusterEC2Instances returns empty listContainerInstances return
       })
     });
 
-    const ec2Instances = await listClusterEC2Instances('clusterArn');
-    t.deepEqual(ec2Instances, []);
+  const ec2Instances = await listClusterEC2Instances('clusterArn');
+  t.deepEqual(ec2Instances, []);
 
-    ecsStub.restore();
+  ecsStub.restore();
 });
