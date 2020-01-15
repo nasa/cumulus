@@ -5,7 +5,8 @@ const sinon = require('sinon');
 const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
 
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const models = require('../../models');
 const { createSqsQueues, fakeRuleFactoryV2 } = require('../../lib/testUtils');
@@ -25,7 +26,7 @@ async function getKinesisEventMappings() {
 
   const mappingPromises = eventLambdas.map((lambda) => {
     const mappingParms = { FunctionName: lambda };
-    return aws.lambda().listEventSourceMappings(mappingParms).promise();
+    return awsServices.lambda().listEventSourceMappings(mappingParms).promise();
   });
   return Promise.all(mappingPromises);
 }
@@ -36,14 +37,14 @@ test.before(async () => {
   // create Rules table
   rulesModel = new models.Rule();
   await rulesModel.createTable();
-  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
   await Promise.all([
-    aws.s3().putObject({
+    awsServices.s3().putObject({
       Bucket: process.env.system_bucket,
       Key: workflowfile,
       Body: '{}'
     }).promise(),
-    aws.s3().putObject({
+    awsServices.s3().putObject({
       Bucket: process.env.system_bucket,
       Key: templateFile,
       Body: '{}'
@@ -85,7 +86,7 @@ test.beforeEach(async (t) => {
 test.after.always(async () => {
   // cleanup table
   await rulesModel.deleteTable();
-  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test('create defaults rule state to ENABLED', async (t) => {
@@ -322,7 +323,7 @@ test.serial('Creating a kinesis rule where an event source mapping already exist
     state: 'ENABLED'
   });
 
-  const lambdaStub = sinon.stub(aws, 'lambda')
+  const lambdaStub = sinon.stub(awsServices, 'lambda')
     .returns({
       createEventSourceMapping: () => ({
         promise: () => Promise.resolve({ UUID: randomString() })
@@ -392,7 +393,7 @@ test('creating a disabled SNS rule creates no event source mapping', async (t) =
 
 test.serial('disabling an SNS rule removes the event source mapping', async (t) => {
   const snsTopicArn = randomString();
-  const snsStub = sinon.stub(aws, 'sns')
+  const snsStub = sinon.stub(awsServices, 'sns')
     .returns({
       listSubscriptionsByTopic: () => ({
         promise: () => Promise.resolve({
@@ -406,7 +407,7 @@ test.serial('disabling an SNS rule removes the event source mapping', async (t) 
         promise: () => Promise.resolve()
       })
     });
-  const lambdaStub = sinon.stub(aws, 'lambda')
+  const lambdaStub = sinon.stub(awsServices, 'lambda')
     .returns({
       addPermission: () => ({
         promise: () => Promise.resolve()
@@ -447,7 +448,7 @@ test.serial('disabling an SNS rule removes the event source mapping', async (t) 
 
 test.serial('enabling a disabled SNS rule and passing rule.arn throws specific error', async (t) => {
   const snsTopicArn = randomString();
-  const snsStub = sinon.stub(aws, 'sns')
+  const snsStub = sinon.stub(awsServices, 'sns')
     .returns({
       listSubscriptionsByTopic: () => ({
         promise: () => Promise.resolve({
@@ -500,7 +501,7 @@ test.serial('updating an SNS rule updates the event source mapping', async (t) =
   const snsTopicArn = randomString();
   const newSnsTopicArn = randomString();
 
-  const snsStub = sinon.stub(aws, 'sns')
+  const snsStub = sinon.stub(awsServices, 'sns')
     .returns({
       listSubscriptionsByTopic: () => ({
         promise: () => Promise.resolve({
@@ -514,7 +515,7 @@ test.serial('updating an SNS rule updates the event source mapping', async (t) =
         promise: () => Promise.resolve()
       })
     });
-  const lambdaStub = sinon.stub(aws, 'lambda')
+  const lambdaStub = sinon.stub(awsServices, 'lambda')
     .returns({
       addPermission: () => ({
         promise: () => Promise.resolve()
@@ -553,7 +554,7 @@ test.serial('updating an SNS rule updates the event source mapping', async (t) =
 test.serial('deleting an SNS rule updates the event source mapping', async (t) => {
   const snsTopicArn = randomString();
 
-  const snsStub = sinon.stub(aws, 'sns')
+  const snsStub = sinon.stub(awsServices, 'sns')
     .returns({
       listSubscriptionsByTopic: () => ({
         promise: () => Promise.resolve({
@@ -567,7 +568,7 @@ test.serial('deleting an SNS rule updates the event source mapping', async (t) =
         promise: () => Promise.resolve()
       })
     });
-  const lambdaStub = sinon.stub(aws, 'lambda')
+  const lambdaStub = sinon.stub(awsServices, 'lambda')
     .returns({
       addPermission: () => ({
         promise: () => Promise.resolve()
@@ -576,7 +577,7 @@ test.serial('deleting an SNS rule updates the event source mapping', async (t) =
         promise: () => Promise.resolve()
       })
     });
-  const unsubscribeSpy = sinon.spy(aws.sns(), 'unsubscribe');
+  const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
 
   const item = fakeRuleFactoryV2({
     workflow,
@@ -715,7 +716,7 @@ test('getRulesByTypeAndState returns list of rules', async (t) => {
 
   await Promise.all(
     Object.values(queueUrls)
-      .map((queueUrl) => aws.sqs().deleteQueue({ QueueUrl: queueUrl }).promise())
+      .map((queueUrl) => awsServices.sqs().deleteQueue({ QueueUrl: queueUrl }).promise())
   );
 
   const result = await rulesModel.getRulesByTypeAndState('onetime', 'ENABLED');
@@ -769,6 +770,6 @@ test('create, update and delete sqs type rule', async (t) => {
 
   const queues = Object.values(queueUrls).concat(Object.values(newQueueUrls));
   await Promise.all(
-    queues.map((queueUrl) => aws.sqs().deleteQueue({ QueueUrl: queueUrl }).promise())
+    queues.map((queueUrl) => awsServices.sqs().deleteQueue({ QueueUrl: queueUrl }).promise())
   );
 });

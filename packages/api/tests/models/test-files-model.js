@@ -4,8 +4,8 @@ const test = require('ava');
 const drop = require('lodash.drop');
 const clone = require('lodash.clonedeep');
 const omit = require('lodash.omit');
+const { parseS3Uri } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { parseS3Uri } = require('@cumulus/common/aws');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 
 const models = require('../../models');

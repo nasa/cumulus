@@ -3,7 +3,12 @@
 const flatten = require('lodash.flatten');
 const pMap = require('p-map');
 const moment = require('moment');
-const { aws } = require('@cumulus/common');
+const {
+  buildS3Uri,
+  deleteS3Files,
+  listS3ObjectsV2
+} = require('@cumulus/aws-client/S3');
+const awsServices = require('@cumulus/aws-client/services');
 const { URL } = require('url');
 const { log } = require('@cumulus/common');
 const {
@@ -261,7 +266,7 @@ async function cleanup() {
       const expiredS3Objects = await getExpiredS3Objects(
         process.env.system_bucket, prefix, process.env.ems_retentionInDays
       );
-      return aws.deleteS3Files(expiredS3Objects);
+      return deleteS3Files(expiredS3Objects);
     });
   return Promise.all(jobs);
 }
@@ -282,7 +287,7 @@ async function getDistributionEventsFromS3Object(params) {
     Key
   } = params;
 
-  const logLines = await aws.s3().getObject({ Bucket, Key }).promise()
+  const logLines = await awsServices.s3().getObject({ Bucket, Key }).promise()
     .then((response) => response.Body.toString().split('\n'));
 
   const distributionEvents = logLines
@@ -320,7 +325,7 @@ async function generateDistributionReport(params) {
 
   const { logsBucket, logsPrefix } = bucketsPrefixes();
   // Get the list of S3 objects containing Server Access logs
-  const s3Objects = (await aws.listS3ObjectsV2({ Bucket: logsBucket, Prefix: logsPrefix }))
+  const s3Objects = (await listS3ObjectsV2({ Bucket: logsBucket, Prefix: logsPrefix }))
     .filter(s3ObjectTimeFilter)
     .map((s3Object) => ({ Bucket: logsBucket, Key: s3Object.Key }));
 
@@ -382,10 +387,10 @@ async function generateAndStoreDistributionReport(params) {
   const { reportsBucket, reportsPrefix } = bucketsPrefixes();
   const reportKey = await determineReportKey(DISTRIBUTION_REPORT, startTime, reportsPrefix);
 
-  const s3Uri = aws.buildS3Uri(reportsBucket, reportKey);
+  const s3Uri = buildS3Uri(reportsBucket, reportKey);
   log.info(`Uploading report to ${s3Uri}`);
 
-  return aws.s3().putObject({
+  return awsServices.s3().putObject({
     Bucket: reportsBucket,
     Key: reportKey,
     Body: distributionReport

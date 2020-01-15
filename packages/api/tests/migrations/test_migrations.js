@@ -1,8 +1,9 @@
 'use strict';
 
 const test = require('ava');
+const { s3 } = require('@cumulus/aws-client/services');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
 const { Search, getLocalEsHost } = require('../../es/search');
 const indexer = require('../../es/indexer');
 const bootstrap = require('../../lambdas/bootstrap');

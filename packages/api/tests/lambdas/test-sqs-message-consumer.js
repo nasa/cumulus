@@ -5,7 +5,11 @@ const sinon = require('sinon');
 const test = require('ava');
 const range = require('lodash.range');
 
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
+const {
+  s3PutObject,
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/aws-client/S3');
 const { sleep } = require('@cumulus/common/util');
 const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../models');
@@ -74,15 +78,15 @@ test.before(async () => {
   // create Rules table
   rulesModel = new models.Rule();
   await rulesModel.createTable();
-  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   await Promise.all([
-    aws.s3PutObject({
+    s3PutObject({
       Bucket: process.env.system_bucket,
       Key: messageTemplateKey,
       Body: JSON.stringify({ meta: 'testmeta' })
     }),
-    aws.s3PutObject({
+    s3PutObject({
       Bucket: process.env.system_bucket,
       Key: workflowfile,
       Body: JSON.stringify({ testworkflow: 'workflowconfig' })
@@ -93,7 +97,7 @@ test.before(async () => {
 test.after.always(async () => {
   // cleanup table
   await rulesModel.deleteTable();
-  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test.afterEach.always(async () => {
@@ -106,7 +110,7 @@ test.afterEach.always(async () => {
   );
 
   await Promise.all(
-    queueUrls.map((queueUrl) => aws.sqs().deleteQueue({ QueueUrl: queueUrl }).promise())
+    queueUrls.map((queueUrl) => awsServices.sqs().deleteQueue({ QueueUrl: queueUrl }).promise())
   );
 });
 
@@ -126,7 +130,7 @@ test.serial('processQueues processes messages from the ENABLED sqs rule', async 
   // send two messages to the queue of the ENABLED sqs rule
   await Promise.all(
     range(2).map(() =>
-      aws.sqs().sendMessage({
+      awsServices.sqs().sendMessage({
         QueueUrl: sqsQueues[0].queueUrl, MessageBody: JSON.stringify({ testdata: randomString() })
       }).promise())
   );
@@ -134,7 +138,7 @@ test.serial('processQueues processes messages from the ENABLED sqs rule', async 
   // send three messages to the queue of the DISABLED sqs rule
   await Promise.all(
     range(3).map(() =>
-      aws.sqs().sendMessage({
+      awsServices.sqs().sendMessage({
         QueueUrl: sqsQueues[1].queueUrl, MessageBody: JSON.stringify({ testdata: randomString() })
       }).promise())
   );
@@ -174,7 +178,7 @@ test.serial('messages failed to be processed are retried', async (t) => {
   // send two messages to the queue of the ENABLED sqs rule
   await Promise.all(
     range(2).map(() =>
-      aws.sqs().sendMessage({
+      awsServices.sqs().sendMessage({
         QueueUrl: sqsQueues[0].queueUrl, MessageBody: JSON.stringify({ testdata: randomString() })
       }).promise())
   );

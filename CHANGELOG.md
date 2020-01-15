@@ -19,6 +19,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-1040**
+  - `@cumulus/common/errors` is now deprecated. Please use `@cumulus/errors` instead.
+  - The AWS service classes and utilities in `@cumulus/common` have been deprecated and moved to `@cumulus/aws-client`, including:
+    - `@cumulus/common/CloudFormationGateway`
+    - `@cumulus/common/DynamoDb`
+    - `@cumulus/common/StepFunctions`
+    - All of the exported functions in `@cumulus/commmon/aws`
+    - `@cumulus/common/string/unicodeEscape`
+    - `@cumulus/common/test-utils/inTestMode`
+    - `@cumulus/common/util/setErrorStack`
+
 - **CUMULUS-1686**
   - Changed `ecs_cluster_instance_image_id` to be a required variable of the `cumulus` module and removed the default value.
     The default was not available across accounts and regions, nor outside of NGAP and therefore not particularly useful.
