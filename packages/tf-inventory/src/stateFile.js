@@ -3,11 +3,14 @@
 'use strict';
 
 const groupBy = require('lodash.groupby');
-const aws = require('@cumulus/common/aws');
+const aws = require('@cumulus/aws-client/services');
+const { getS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
+const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 
 /**
  * Get list of state files paths `bucket/key` from a table if the table
  * contains state files
+ *
  * @param {string} tableName - table name
  * @returns {Promise<Array<string>>} - list of state file paths
  */
@@ -19,7 +22,7 @@ async function getStateFilesFromTable(tableName) {
     if (tableInfo.Table.AttributeDefinitions[0].AttributeName === 'LockID'
         && tableInfo.Table.ItemCount > 0) {
       let stateFiles = [];
-      const scanQueue = new aws.DynamoDbSearchQueue({ TableName: tableName });
+      const scanQueue = new DynamoDbSearchQueue({ TableName: tableName });
 
       let itemsComplete = false;
 
@@ -48,7 +51,12 @@ async function getStateFilesFromTable(tableName) {
   return [];
 }
 
-
+/**
+ * List all TF state files found in all Dynamo tables on the account
+ *
+ * @returns {Promise<Array<string>>} - list of tf state file paths in
+ * the form bucket/key
+ */
 async function listTfStateFiles() {
   let tables = await aws.dynamodb().listTables().promise();
   let tablesComplete = false;
@@ -75,6 +83,13 @@ async function listTfStateFiles() {
   return stateFiles;
 }
 
+/**
+ * List the EC2 instances in the AWS account that are associated
+ * with the ECS cluster
+ *
+ * @param {string} clusterArn
+ * @returns {Promise<Array<string>>} - ec2 instance ids
+ */
 async function listClusterEC2Instances(clusterArn) {
   const clusterContainerInstances = await aws.ecs().listContainerInstances({
     cluster: clusterArn
@@ -117,14 +132,15 @@ function extractDeploymentName(filename) {
 
 /**
  * Get a list of resources from the given state file
+ *
  * @param {string} file - the file location as `bucket/key`
  * @returns {Array<Object>} - list of resource objects
  */
 async function getStateFileDeploymentInfo(file) {
-  const { Bucket, Key } = aws.parseS3Uri(`s3://${file}`);
+  const { Bucket, Key } = parseS3Uri(`s3://${file}`);
 
   try {
-    const stateFile = await aws.getS3Object(Bucket, Key);
+    const stateFile = await getS3Object(Bucket, Key);
 
     const stateFileBody = JSON.parse(stateFile.Body);
 
@@ -141,6 +157,12 @@ async function getStateFileDeploymentInfo(file) {
   return null;
 }
 
+/**
+ * List the ECS clusters and EC2 instances defined in the state file.
+ *
+ * @param {string} file - file path
+ * @returns {Promise<Object>}
+ */
 async function listResourcesForFile(file) {
   const stateFile = await getStateFileDeploymentInfo(file);
 
@@ -170,6 +192,7 @@ async function listResourcesForFile(file) {
 /**
  * List terraform deployments in the accounts based on the list
  * of state files
+ *
  * @param {Array<string>} stateFiles - state file paths
  * @returns {Array<string>} list of deployments
  */
@@ -182,6 +205,21 @@ function listTfDeployments(stateFiles) {
   return deployments.sort();
 }
 
+/**
+ * Create a report containing all deployments identified that includes
+ * state file paths, time state file was updated and number of resources in the state file
+ *
+ * @returns {Promise<Object>} Object where key is deployment name. Looks like:
+ * cumulus-tf
+  [ { file: 'cumulus-sandbox-tfstate/cumulus-tf/cumulus/terraform.tfstate',
+      deployment: 'cumulus-tf',
+      lastModified: 2019-12-16T23:36:37.000Z,
+      resources: 433 },
+    { file: 'cumulus-sandbox-tfstate/cumulus-tf/data-persistence/terraform.tfstate',
+      deployment: 'cumulus-tf',
+      lastModified: 2019-12-10T23:22:39.000Z,
+      resources: 20 } ]
+ */
 async function deploymentReport() {
   const stateFiles = await listTfStateFiles();
 
@@ -190,10 +228,9 @@ async function deploymentReport() {
   resources = resources.filter((r) => r && r.deployment !== undefined);
 
   const resourcesForReports = resources.map((r) => ({
-      ...r,
-      resources: r.resources ? r.resources.length : 0
-    })
-  );
+    ...r,
+    resources: r.resources ? r.resources.length : 0
+  }));
 
   const resourcesByDeployment = groupBy(resourcesForReports, (r) => r.deployment);
 

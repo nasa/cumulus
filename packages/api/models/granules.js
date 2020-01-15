@@ -5,13 +5,15 @@ const get = require('lodash.get');
 const partial = require('lodash.partial');
 const path = require('path');
 
-const commonAws = require('@cumulus/common/aws');
+const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
+const s3Utils = require('@cumulus/aws-client/S3');
+const secretsManagerUtils = require('@cumulus/aws-client/SecretsManager');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
 const cmrjs = require('@cumulus/cmrjs');
 const launchpad = require('@cumulus/common/launchpad');
 const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage, getMessageExecutionArn } = require('@cumulus/common/message');
-const StepFunctions = require('@cumulus/common/StepFunctions');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const {
   deprecate,
@@ -47,7 +49,7 @@ const translateGranule = async (granule) => {
   };
 };
 
-class GranuleSearchQueue extends commonAws.DynamoDbSearchQueue {
+class GranuleSearchQueue extends DynamoDbSearchQueue {
   peek() {
     return super.peek().then((g) => (isNil(g) ? g : translateGranule(g)));
   }
@@ -129,9 +131,9 @@ class Granule extends Manager {
     };
 
     if (process.env.cmr_oauth_provider === 'launchpad') {
-      const passphrase = await commonAws.secretsManager().getSecretValue({
-        SecretId: process.env.launchpad_passphrase_secret_name
-      }).promise();
+      const passphrase = await secretsManagerUtils.getSecretString(
+        process.env.launchpad_passphrase_secret_name
+      );
 
       const token = await launchpad.getLaunchpadToken({
         passphrase,
@@ -141,12 +143,10 @@ class Granule extends Manager {
 
       params.token = token;
     } else {
-      const secret = await commonAws.secretsManager().getSecretValue({
-        SecretId: process.env.cmr_password_secret_name
-      }).promise();
-
       params.username = process.env.cmr_username;
-      params.password = secret.SecretString;
+      params.password = await secretsManagerUtils.getSecretString(
+        process.env.cmr_password_secret_name
+      );
     }
 
     const cmr = new CMR(params);
@@ -298,7 +298,7 @@ class Granule extends Manager {
     const fileExistsPromises = moveFileParams.map(async (moveFileParam) => {
       const { target, file } = moveFileParam;
       if (target) {
-        const exists = await commonAws.fileExists(target.Bucket, target.Key);
+        const exists = await s3Utils.fileExists(target.Bucket, target.Key);
 
         if (exists) {
           return Promise.resolve(file);

@@ -3,8 +3,7 @@
 const test = require('ava');
 const rewire = require('rewire');
 const sinon = require('sinon');
-const aws = require('@cumulus/common/aws');
-const awsServices = require('@cumulus/aws-client/services');
+const aws = require('@cumulus/aws-client/services');
 
 const inventory = rewire('../src/inventory');
 const mergeResourceLists = inventory.__get__('mergeResourceLists');
@@ -150,6 +149,53 @@ test('mergeResourceLists merges resource object by key', (t) => {
     ec2Instances: [
       'i-12345'
     ]
+  });
+});
+
+test('mergeResourceLists correctly merges null or empty entries', (t) => {
+  const sampleResource = {
+    ecsClusters: [
+      {
+        arn: 'clusterArn1',
+        id: 'id1'
+      },
+      {
+        arn: 'clusterArn2',
+        id: 'id2'
+      }
+    ]
+  };
+
+  t.deepEqual(mergeResourceLists(null, sampleResource), sampleResource);
+
+  t.deepEqual(mergeResourceLists(sampleResource, null), sampleResource);
+
+  t.deepEqual(mergeResourceLists({}, sampleResource), sampleResource);
+});
+
+test('mergeResourceLists correctly merges different resources', (t) => {
+  const ecs = {
+    ecsClusters: [
+      {
+        arn: 'clusterArn1',
+        id: 'id1'
+      },
+      {
+        arn: 'clusterArn2',
+        id: 'id2'
+      }
+    ]
+  };
+
+  const ec2 = {
+    ec2Instances: [
+      'i-12345'
+    ]
+  };
+
+  t.deepEqual(mergeResourceLists(ecs, ec2), {
+    ec2Instances: ec2.ec2Instances,
+    ecsClusters: ecs.ecsClusters
   });
 });
 

@@ -4,7 +4,8 @@ const omit = require('lodash.omit');
 const test = require('ava');
 const request = require('supertest');
 const cloneDeep = require('lodash.clonedeep');
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const bootstrap = require('../../lambdas/bootstrap');
 const models = require('../../models');
@@ -55,14 +56,14 @@ test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
   esClient = await Search.es('fakehost');
-  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
   await Promise.all([
-    aws.s3().putObject({
+    awsServices.s3().putObject({
       Bucket: process.env.system_bucket,
       Key: workflowfile,
       Body: '{}'
     }).promise(),
-    aws.s3().putObject({
+    awsServices.s3().putObject({
       Bucket: process.env.system_bucket,
       Key: templateFile,
       Body: '{}'
@@ -87,7 +88,7 @@ test.before(async () => {
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await ruleModel.deleteTable();
-  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
 });
 

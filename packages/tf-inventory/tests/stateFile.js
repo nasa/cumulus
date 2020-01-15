@@ -4,18 +4,17 @@ const test = require('ava');
 const rewire = require('rewire');
 const fs = require('fs');
 const path = require('path');
+const sinon = require('sinon');
 
 const stateFile = rewire('../src/stateFile');
 const getStateFilesFromTable = stateFile.__get__('getStateFilesFromTable');
 const extractDeploymentName = stateFile.__get__('extractDeploymentName');
+const listClusterEC2Instances = stateFile.__get__('listClusterEC2Instances');
 
-const revertListClusterEC2Intances = stateFile.__set__(
-  'listClusterEC2Instances',
-  () => ['i-1234', 'i-4321']
-);
+const aws = require('@cumulus/aws-client/services');
+const { promiseS3Upload, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 
 const {
-  aws,
   testUtils: { randomString }
 } = require('@cumulus/common');
 
@@ -32,10 +31,6 @@ async function createTable(tableName, attributeDefs, keySchema) {
 
   return aws.dynamodb().waitFor('tableExists', { TableName: tableName }).promise();
 }
-
-test.after.always(() => {
-  revertListClusterEC2Intances();
-});
 
 test('getStateFilesFromTable returns empty array if it is not a table containing state files', async (t) => {
   const tableName = randomString();
@@ -109,7 +104,7 @@ test('getStateFileResources lists resources', async (t) => {
 
   const state = fs.readFileSync(path.join(__dirname, './resources/sampleTfState.tfstate'), 'utf8');
 
-  await aws.promiseS3Upload({
+  await promiseS3Upload({
     Bucket: bucket,
     Key: key,
     Body: state
@@ -122,17 +117,22 @@ test('getStateFileResources lists resources', async (t) => {
     resources.resources.map((r) => r.type)
   );
 
-  await aws.recursivelyDeleteS3Bucket(bucket);
+  await recursivelyDeleteS3Bucket(bucket);
 });
 
 test('listResourcesForFile lists resources', async (t) => {
+  const revertListClusterEC2Instances = stateFile.__set__(
+    'listClusterEC2Instances',
+    () => ['i-1234', 'i-4321']
+  );
+
   const bucket = randomString();
   const key = 'terraform.tfstate';
   await aws.s3().createBucket({ Bucket: bucket }).promise();
 
   const state = fs.readFileSync(path.join(__dirname, './resources/sampleTfState.tfstate'), 'utf8');
 
-  await aws.promiseS3Upload({
+  await promiseS3Upload({
     Bucket: bucket,
     Key: key,
     Body: state
@@ -148,7 +148,9 @@ test('listResourcesForFile lists resources', async (t) => {
     resources
   );
 
-  await aws.recursivelyDeleteS3Bucket(bucket);
+  await recursivelyDeleteS3Bucket(bucket);
+
+  revertListClusterEC2Instances();
 });
 
 test('extractDeploymentName extracts deployment name for cumulus deployment', (t) => {
@@ -184,12 +186,12 @@ test('deploymentReport returns information about the deployment', async (t) => {
 
   const revertGetDeploymentInfoStub = stateFile.__set__(
     'getStateFileDeploymentInfo',
-    (file) => { return {
-              file,
-              deployment: file,
-              lastModified: new Date(2020, 1, 1),
-              resources: [1, 2]
-            }}
+    (file) => ({
+      file,
+      deployment: file,
+      lastModified: new Date(2020, 1, 1),
+      resources: [1, 2]
+    })
   );
 
   const report = await stateFile.deploymentReport();
@@ -203,6 +205,66 @@ test('deploymentReport returns information about the deployment', async (t) => {
 
   revertGetDeploymentInfoStub();
   revertListFilesStub();
+});
 
-  // deploymentInfoStub.restore();
+test.serial('listClusterEC2Instances returns lists of instance ids', async (t) => {
+  const ecsStub = sinon.stub(aws, 'ecs')
+    .returns({
+      describeContainerInstances: () => ({
+        promise: () =>
+          Promise.resolve({
+            containerInstances: [
+              {
+                ec2InstanceId: 'i-12345'
+              },
+              {
+                ec2InstanceId: 'i-23456'
+              }
+            ]
+          })
+      }),
+      listContainerInstances: () => ({
+        promise: () =>
+          Promise.resolve({
+            containerInstanceArns: ['arn1']
+          })
+      })
+    });
+
+  const ec2Instances = await listClusterEC2Instances('clusterArn');
+  t.deepEqual(ec2Instances, ['i-12345', 'i-23456']);
+
+  ecsStub.restore();
+});
+
+test.serial('listClusterEC2Instances returns empty list if no container instances', async (t) => {
+  const ecsStub = sinon.stub(aws, 'ecs')
+    .returns({
+      listContainerInstances: () => ({
+        promise: () =>
+          Promise.resolve({
+            containerInstanceArns: null
+          })
+      })
+    });
+
+  const ec2Instances = await listClusterEC2Instances('clusterArn');
+  t.deepEqual(ec2Instances, []);
+
+  ecsStub.restore();
+});
+
+test.serial('listClusterEC2Instances returns empty listContainerInstances returns null', async (t) => {
+  const ecsStub = sinon.stub(aws, 'ecs')
+    .returns({
+      listContainerInstances: () => ({
+        promise: () =>
+          Promise.resolve(null)
+      })
+    });
+
+  const ec2Instances = await listClusterEC2Instances('clusterArn');
+  t.deepEqual(ec2Instances, []);
+
+  ecsStub.restore();
 });

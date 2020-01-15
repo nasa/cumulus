@@ -13,7 +13,7 @@ test.beforeEach(async (t) => {
 
   t.context.stackName = randomId('stack');
   t.context.queueName = randomId('queue');
-  t.context.queueUrl = await createQueue();
+  t.context.queueUrl = await createQueue(randomString());
   t.context.queueExecutionLimit = randomNumber();
 
   t.context.workflow = randomString();

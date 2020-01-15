@@ -3,7 +3,10 @@
 const omit = require('lodash.omit');
 const test = require('ava');
 const request = require('supertest');
-const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
+const { s3 } = require('@cumulus/aws-client/services');
+const {
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const bootstrap = require('../../../lambdas/bootstrap');

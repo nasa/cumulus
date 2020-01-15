@@ -4,10 +4,11 @@ const fs = require('fs-extra');
 const xml2js = require('xml2js');
 const sinon = require('sinon');
 const { promisify } = require('util');
-const { readJsonFixture } = require('@cumulus/common/test-utils');
 const {
-  recursivelyDeleteS3Bucket, s3, promiseS3Upload, getS3Object, s3GetObjectTagging
-} = require('@cumulus/common/aws');
+  recursivelyDeleteS3Bucket, promiseS3Upload, getS3Object, s3GetObjectTagging
+} = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
+const { readJsonFixture } = require('@cumulus/common/test-utils');
 const { BucketsConfig } = require('@cumulus/common');
 const { xmlParseOptions } = require('../../utils');
 

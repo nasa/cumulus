@@ -29,7 +29,7 @@ program
     const sortedKeys = Object.keys(deployments).sort();
     sortedKeys.forEach((k) => {
       console.log(k);
-      console.log(deployments[k])
+      console.log(deployments[k]);
     });
   });
 

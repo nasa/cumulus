@@ -4,7 +4,7 @@ const {
   JsonWebTokenError,
   TokenExpiredError
 } = require('jsonwebtoken');
-const { getJsonS3Object } = require('@cumulus/common/aws');
+const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { ensureLaunchpadAPIAuthorized, launchpadProtectedAuth } = require('./launchpadAuth');
 const { AccessToken } = require('../models');
 const { verifyJwtToken } = require('../lib/token');

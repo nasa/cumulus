@@ -4,7 +4,7 @@ const awsServices = require('../services');
 const {
   createQueue,
   sqsQueueExists
-} = require('../sqs');
+} = require('../SQS');
 
 test('sqsQueueExists detects if the queue does not exist or is not accessible', async (t) => {
   const queueUrl = await createQueue(randomString());

@@ -36,7 +36,7 @@ test.beforeEach(async (t) => {
 
   const queueName = randomId('queue');
   t.context.queueName = queueName;
-  const queueUrl = await createQueue();
+  const queueUrl = await createQueue(randomString());
 
   t.context.queues = {
     [queueName]: queueUrl
