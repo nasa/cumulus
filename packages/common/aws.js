@@ -2,6 +2,8 @@
 
 const AWS = require('aws-sdk');
 const fs = require('fs');
+const get = require('lodash.get');
+const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
 const path = require('path');
 const pMap = require('p-map');
@@ -9,11 +11,7 @@ const pump = require('pump');
 const pRetry = require('p-retry');
 const url = require('url');
 
-const s3Utils = require('@cumulus/aws-client/S3');
-const dynamoDbUtils = require('@cumulus/aws-client/DynamoDb');
-const DynamoDbSearchQueueCore = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const snsUtils = require('@cumulus/aws-client/SNS');
-const sqsUtils = require('@cumulus/aws-client/SQS');
 const stepFunctionUtils = require('@cumulus/aws-client/StepFunctions');
 const utils = require('@cumulus/aws-client/utils');
 const {
@@ -24,7 +22,7 @@ const errors = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
 const { inTestMode, testAwsClient } = require('./test-utils');
-const { deprecate } = require('./util');
+const { deprecate, isNil } = require('./util');
 
 const log = new Logger({ sender: 'common/aws' });
 const noop = () => {}; // eslint-disable-line lodash/prefer-noop
@@ -891,17 +889,33 @@ exports.DynamoDbSearchQueue = DynamoDbSearchQueue;
 /**
  * Create an SQS Queue.  Properly handles localstack queue URLs
  *
- * @param {string} queueName - defaults to a random string
+ * @param {string} QueueName - defaults to a random string
  * @returns {Promise.<string>} the Queue URL
  */
-exports.createQueue = (queueName) => {
+exports.createQueue = async (QueueName) => {
   deprecate('@cumulus/common/aws/createQueue', '1.17.0', '@cumulus/aws-client/SQS/createQueue');
-  return sqsUtils.createQueue(queueName);
+  const createQueueResponse = await exports.sqs().createQueue({
+    QueueName
+  }).promise();
+
+  if (inTestMode()) {
+    // Properly set the Queue URL.  This is needed because LocalStack always
+    // returns the QueueUrl as "localhost", even if that is not where it should
+    // actually be found.  CI breaks without this.
+    const returnedQueueUrl = url.parse(createQueueResponse.QueueUrl);
+    returnedQueueUrl.host = undefined;
+    returnedQueueUrl.hostname = process.env.LOCALSTACK_HOST;
+
+    return url.format(returnedQueueUrl);
+  }
+
+  return createQueueResponse.QueueUrl;
 };
 
 exports.getQueueUrl = (sourceArn, queueName) => {
   deprecate('@cumulus/common/aws/getQueueUrl', '1.17.0', '@cumulus/aws-client/SQS/getQueueUrl');
-  return sqsUtils.getQueueUrl(sourceArn, queueName);
+  const arnParts = sourceArn.split(':');
+  return `https://sqs.${arnParts[3]}.amazonaws.com/${arnParts[4]}/${queueName}`;
 };
 
 /**
@@ -914,7 +928,15 @@ exports.getQueueUrl = (sourceArn, queueName) => {
 **/
 exports.sendSQSMessage = (queueUrl, message) => {
   deprecate('@cumulus/common/aws/sendSQSMessage', '1.17.0', '@cumulus/aws-client/SQS/sendSQSMessage');
-  return sqsUtils.sendSQSMessage(queueUrl, message);
+  let messageBody;
+  if (isString(message)) messageBody = message;
+  else if (isObject(message)) messageBody = JSON.stringify(message);
+  else throw new Error('body type is not accepted');
+
+  return exports.sqs().sendMessage({
+    MessageBody: messageBody,
+    QueueUrl: queueUrl
+  }).promise();
 };
 
 /**
@@ -929,9 +951,20 @@ exports.sendSQSMessage = (queueUrl, message) => {
  * @param {integer} [options.waitTimeSeconds=0] - number of seconds to poll SQS queue (long polling)
  * @returns {Promise.<Array>} an array of messages
  */
-exports.receiveSQSMessages = (queueUrl, options) => {
+exports.receiveSQSMessages = async (queueUrl, options) => {
   deprecate('@cumulus/common/aws/receiveSQSMessages', '1.17.0', '@cumulus/aws-client/SQS/receiveSQSMessages');
-  return sqsUtils.receiveSQSMessages(queueUrl, options);
+  const params = {
+    QueueUrl: queueUrl,
+    AttributeNames: ['All'],
+    // 0 is a valid value for VisibilityTimeout
+    VisibilityTimeout: isNil(options.visibilityTimeout) ? 30 : options.visibilityTimeout,
+    WaitTimeSeconds: options.waitTimeSeconds || 0,
+    MaxNumberOfMessages: options.numOfMessages || 1
+  };
+
+  const messages = await exports.sqs().receiveMessage(params).promise();
+
+  return get(messages, 'Messages', []);
 };
 
 /**
@@ -941,10 +974,12 @@ exports.receiveSQSMessages = (queueUrl, options) => {
  * @param {integer} receiptHandle - the unique identifier of the sQS message
  * @returns {Promise} an AWS SQS response
  */
-exports.deleteSQSMessage = (queueUrl, receiptHandle) => {
-  deprecate('@cumulus/common/aws/deleteSQSMessage', '1.17.0', '@cumulus/aws-client/SQS/deleteSQSMessage');
-  return sqsUtils.deleteSQSMessage(queueUrl, receiptHandle);
-};
+exports.deleteSQSMessage = exports.improveStackTrace(
+  (QueueUrl, ReceiptHandle) => {
+    deprecate('@cumulus/common/aws/deleteSQSMessage', '1.17.0', '@cumulus/aws-client/SQS/deleteSQSMessage');
+    return exports.sqs().deleteMessage({ QueueUrl, ReceiptHandle }).promise();
+  }
+);
 
 /**
  * Test if an SQS queue exists
@@ -955,7 +990,13 @@ exports.deleteSQSMessage = (queueUrl, receiptHandle) => {
  */
 exports.sqsQueueExists = (queue) => {
   deprecate('@cumulus/common/aws/sqsQueueExists', '1.17.0', '@cumulus/aws-client/SQS/sqsQueueExists');
-  return sqsUtils.sqsQueueExists(queue);
+  const QueueName = queue.split('/').pop();
+  return exports.sqs().getQueueUrl({ QueueName }).promise()
+    .then(() => true)
+    .catch((e) => {
+      if (e.code === 'AWS.SimpleQueueService.NonExistentQueue') return false;
+      throw e;
+    });
 };
 
 /** Step Functions utils */

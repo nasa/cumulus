@@ -1,6 +1,5 @@
 'use strict';
 
-const DynamoDb = require('@cumulus/aws-client/DynamoDb');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { improveStackTrace } = require('./aws');
 const { deprecate } = require('./util');
