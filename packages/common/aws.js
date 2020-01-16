@@ -1,14 +1,13 @@
 'use strict';
 
 const AWS = require('aws-sdk');
+const fs = require('fs');
+const pump = require('pump');
 
-const cfUtils = require('@cumulus/aws-client/CloudFormation');
-const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
 const dynamoDbUtils = require('@cumulus/aws-client/DynamoDb');
 const DynamoDbSearchQueueCore = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const S3ListObjectsV2QueueCore = require('@cumulus/aws-client/S3ListObjectsV2Queue');
-const secretsManagerUtils = require('@cumulus/aws-client/SecretsManager');
 const snsUtils = require('@cumulus/aws-client/SNS');
 const sqsUtils = require('@cumulus/aws-client/SQS');
 const stepFunctionUtils = require('@cumulus/aws-client/StepFunctions');
@@ -127,11 +126,43 @@ exports.secretsManager = (options) => {
   return awsClient(AWS.SecretsManager, '2017-10-17')(options);
 };
 
+/**
+ * Wrap a function and provide a better stack trace
+ *
+ * If a call is made to the aws-sdk and it causes an exception, the stack trace
+ * that is returned gives no indication of where the error actually occurred.
+ *
+ * This utility will wrap a function and, when it is called, update any raised
+ * error with a better stack trace.
+ *
+ * @param {Function} fn - the function to wrap
+ * @returns {Function} a wrapper function
+ */
+exports.improveStackTrace = (fn) =>
+  async (...args) => {
+    deprecate('@cumulus/common/aws/improveStackTrace', '1.17.0', '@cumulus/aws-client/utils/improveStackTrace');
+    const tracerError = {};
+    try {
+      Error.captureStackTrace(tracerError);
+      return await fn(...args);
+    } catch (err) {
+      exports.setErrorStack(err, tracerError.stack);
+      err.message = `${err.message}; Function params: ${JSON.stringify(args, null, 2)}`;
+      throw err;
+    }
+  };
+
+exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
+  deprecate('@cumulus/common/aws/findResourceArn', '1.17.0', '@cumulus/aws-client/utils/findResourceArn');
+  return utils.findResourceArn(obj, fn, prefix, baseName, opts, callback);
+};
+
 /** Secrets Manager utils */
 
 exports.getSecretString = (SecretId) => {
   deprecate('@cumulus/common/aws/getSecretString', '1.17.0', '@cumulus/aws-client/SecretsManager/getSecretString');
-  return secretsManagerUtils.getSecretString(SecretId);
+  return exports.secretsManager().getSecretValue({ SecretId }).promise()
+    .then((response) => response.SecretString);
 };
 
 /** Cloudformation utils */
@@ -146,7 +177,9 @@ exports.getSecretString = (SecretId) => {
  */
 exports.describeCfStackResources = (stackName) => {
   deprecate('@cumulus/common/aws/describeCfStackResources', '1.17.0', '@cumulus/aws-client/cloudformation/describeCfStackResources');
-  return cfUtils.describeCfStackResources(stackName);
+  return exports.cf().describeStackResources({ StackName: stackName })
+    .promise()
+    .then((response) => response.StackResources);
 };
 
 /* S3 utils */
@@ -159,7 +192,20 @@ exports.describeCfStackResources = (stackName) => {
  */
 exports.s3Join = (...args) => {
   deprecate('@cumulus/common/aws/s3Join', '1.17.0', '@cumulus/aws-client/S3/s3Join');
-  return s3Utils.s3Join(...args);
+  const tokens = Array.isArray(args[0]) ? args[0] : args;
+
+  const removeLeadingSlash = (token) => token.replace(/^\//, '');
+  const removeTrailingSlash = (token) => token.replace(/\/$/, '');
+  const isNotEmptyString = (token) => token.length > 0;
+
+  const key = tokens
+    .map(removeLeadingSlash)
+    .map(removeTrailingSlash)
+    .filter(isNotEmptyString)
+    .join('/');
+
+  if (tokens[tokens.length - 1].endsWith('/')) return `${key}/`;
+  return key;
 };
 
 /**
@@ -171,7 +217,7 @@ exports.s3Join = (...args) => {
 */
 exports.s3TagSetToQueryString = (tagset) => {
   deprecate('@cumulus/common/aws/s3TagSetToQueryString', '1.17.0', '@cumulus/aws-client/S3/s3TagSetToQueryString');
-  return s3Utils.s3TagSetToQueryString(tagset);
+  return tagset.reduce((acc, tag) => acc.concat(`&${tag.Key}=${tag.Value}`), '').substring(1);
 };
 
 /**
@@ -181,10 +227,12 @@ exports.s3TagSetToQueryString = (tagset) => {
  * @param {string} key - key of the object to be deleted
  * @returns {Promise} - promise of the object being deleted
  */
-exports.deleteS3Object = (bucket, key) => {
-  deprecate('@cumulus/common/aws/deleteS3Object', '1.17.0', '@cumulus/aws-client/S3/deleteS3Object');
-  return s3Utils.deleteS3Object(bucket, key);
-};
+exports.deleteS3Object = exports.improveStackTrace(
+  (bucket, key) => {
+    deprecate('@cumulus/common/aws/deleteS3Object', '1.17.0', '@cumulus/aws-client/S3/deleteS3Object');
+    exports.s3().deleteObject({ Bucket: bucket, Key: key }).promise();
+  }
+);
 
 /**
  * Test if an object exists in S3
@@ -195,7 +243,12 @@ exports.deleteS3Object = (bucket, key) => {
  */
 exports.s3ObjectExists = (params) => {
   deprecate('@cumulus/common/aws/s3ObjectExists', '1.17.0', '@cumulus/aws-client/S3/s3ObjectExists');
-  return s3Utils.s3ObjectExists(params);
+  return exports.headObject(params.Bucket, params.Key)
+    .then(() => true)
+    .catch((e) => {
+      if (e.code === 'NotFound') return false;
+      throw e;
+    });
 };
 
 /**
@@ -204,10 +257,15 @@ exports.s3ObjectExists = (params) => {
 * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
 * @returns {Promise} - promise of the object being put
 **/
-exports.s3PutObject = (params) => {
-  deprecate('@cumulus/common/aws/s3PutObject', '1.17.0', '@cumulus/aws-client/S3/s3PutObject');
-  return s3Utils.s3PutObject(params);
-};
+exports.s3PutObject = exports.improveStackTrace(
+  (params) => {
+    deprecate('@cumulus/common/aws/s3PutObject', '1.17.0', '@cumulus/aws-client/S3/s3PutObject');
+    return exports.s3().putObject({
+      ACL: 'private',
+      ...params
+    }).promise();
+  }
+);
 
 /**
 * Copy an object from one location on S3 to another
@@ -215,10 +273,15 @@ exports.s3PutObject = (params) => {
 * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
 * @returns {Promise} - promise of the object being copied
 **/
-exports.s3CopyObject = (params) => {
-  deprecate('@cumulus/common/aws/s3CopyObject', '1.17.0', '@cumulus/aws-client/S3/s3CopyObject');
-  return s3Utils.s3CopyObject(params);
-};
+exports.s3CopyObject = exports.improveStackTrace(
+  (params) => {
+    deprecate('@cumulus/common/aws/s3CopyObject', '1.17.0', '@cumulus/aws-client/S3/s3CopyObject');
+    return exports.s3().copyObject({
+      TaggingDirective: 'COPY',
+      ...params
+    }).promise();
+  }
+);
 
 /**
  * Upload data to S3
@@ -228,10 +291,12 @@ exports.s3CopyObject = (params) => {
  * @param {Object} params - see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
  * @returns {Promise} see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
  */
-exports.promiseS3Upload = (params) => {
-  deprecate('@cumulus/common/aws/promiseS3Upload', '1.17.0', '@cumulus/aws-client/S3/promiseS3Upload');
-  return s3Utils.promiseS3Upload(params);
-};
+exports.promiseS3Upload = exports.improveStackTrace(
+  (params) => {
+    deprecate('@cumulus/common/aws/promiseS3Upload', '1.17.0', '@cumulus/aws-client/S3/promiseS3Upload');
+    return exports.s3().upload(params).promise();
+  }
+);
 
 /**
  * Downloads the given s3Obj to the given filename in a streaming manner
@@ -242,7 +307,17 @@ exports.promiseS3Upload = (params) => {
  */
 exports.downloadS3File = (s3Obj, filepath) => {
   deprecate('@cumulus/common/aws/downloadS3File', '1.17.0', '@cumulus/aws-client/S3/downloadS3File');
-  return s3Utils.downloadS3File(s3Obj, filepath);
+  const s3 = exports.s3();
+  const fileWriteStream = fs.createWriteStream(filepath);
+
+  return new Promise((resolve, reject) => {
+    const objectReadStream = s3.getObject(s3Obj).createReadStream();
+
+    pump(objectReadStream, fileWriteStream, (err) => {
+      if (err) reject(err);
+      else resolve(filepath);
+    });
+  });
 };
 
 /**
@@ -710,27 +785,4 @@ exports.isThrottlingException = (err) => {
 exports.retryOnThrottlingException = (fn, options) => {
   deprecate('@cumulus/common/aws/retryOnThrottlingException', '1.17.0', '@cumulus/aws-client/utils/retryOnThrottlingException');
   return utils.retryOnThrottlingException(fn, options);
-};
-
-
-/**
- * Wrap a function and provide a better stack trace
- *
- * If a call is made to the aws-sdk and it causes an exception, the stack trace
- * that is returned gives no indication of where the error actually occurred.
- *
- * This utility will wrap a function and, when it is called, update any raised
- * error with a better stack trace.
- *
- * @param {Function} fn - the function to wrap
- * @returns {Function} a wrapper function
- */
-exports.improveStackTrace = (fn) => {
-  deprecate('@cumulus/common/aws/improveStackTrace', '1.17.0', '@cumulus/aws-client/utils/improveStackTrace');
-  return utils.improveStackTrace(fn);
-};
-
-exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
-  deprecate('@cumulus/common/aws/findResourceArn', '1.17.0', '@cumulus/aws-client/utils/findResourceArn');
-  return utils.findResourceArn(obj, fn, prefix, baseName, opts, callback);
 };
