@@ -9,7 +9,9 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus dir
   cd /cumulus/
 fi
 
-### confirmLock will fail if another stack has lock, *redeploy* if no lock, and continue if a lock is in place already
+### confirmLock will fail if the stack is already locked with a different SHA,
+### *redeploy* if no lock, and continue if a lock is in place already with a matching
+### SHA
 set +e
 node ./example/scripts/lock-stack.js confirmLock $GIT_SHA "$DEPLOYMENT"
 CHECK_STATUS=$?
