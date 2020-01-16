@@ -9,7 +9,7 @@
  * a string - 'key' and no sort key. The table name should be set in LOCK_TABLE_NAME
  */
 
-const { aws } = require('@cumulus/common');
+const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 
 class CumulusLockError extends Error {
   constructor(message) {
@@ -110,10 +110,7 @@ const STACK_EXPIRATION_MS = 120 * 60 * 1000; // 2 hourst
  * @throws {CumulusNoLockError}         -on 'lock' locking collision
  */
 async function lockOperation(operation, gitSHA, deployment, shouldLock) {
-  const dynamodbDocClient = aws.dynamodbDocClient({
-    convertEmptyValues: true
-  });
-  const mutex = new Mutex(dynamodbDocClient, LOCK_TABLE_NAME);
+  const mutex = new Mutex(dynamodbDocClient({ convertEmptyValues: true }), LOCK_TABLE_NAME);
 
   if (operation === 'confirmLock') {
     const lockSHA = await mutex.checkMatchingSha(deployment, gitSHA);
