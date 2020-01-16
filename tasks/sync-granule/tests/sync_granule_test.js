@@ -2,22 +2,22 @@
 
 const path = require('path');
 const test = require('ava');
-const errors = require('@cumulus/common/errors');
-const set = require('lodash.set');
-const { constructCollectionId } = require('@cumulus/common');
+const { s3 } = require('@cumulus/aws-client/services');
 const {
   calculateS3ObjectChecksum,
-  headObject,
   listS3ObjectsV2,
-  parseS3Uri,
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
-  s3,
   s3GetObjectTagging,
-  s3PutObject,
   s3PutObjectTagging,
-  promiseS3Upload
-} = require('@cumulus/common/aws');
+  promiseS3Upload,
+  headObject,
+  parseS3Uri,
+  s3PutObject
+} = require('@cumulus/aws-client/S3');
+const errors = require('@cumulus/errors');
+const set = require('lodash.set');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { loadJSONTestData, streamTestData } = require('@cumulus/test-data');
 
 const {
