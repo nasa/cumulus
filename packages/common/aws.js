@@ -2,19 +2,24 @@
 
 const AWS = require('aws-sdk');
 const fs = require('fs');
+const isString = require('lodash.isstring');
 const path = require('path');
 const pMap = require('p-map');
 const pump = require('pump');
 const pRetry = require('p-retry');
+const url = require('url');
 
 const s3Utils = require('@cumulus/aws-client/S3');
 const dynamoDbUtils = require('@cumulus/aws-client/DynamoDb');
 const DynamoDbSearchQueueCore = require('@cumulus/aws-client/DynamoDbSearchQueue');
-const S3ListObjectsV2QueueCore = require('@cumulus/aws-client/S3ListObjectsV2Queue');
 const snsUtils = require('@cumulus/aws-client/SNS');
 const sqsUtils = require('@cumulus/aws-client/SQS');
 const stepFunctionUtils = require('@cumulus/aws-client/StepFunctions');
 const utils = require('@cumulus/aws-client/utils');
+const {
+  generateChecksumFromStream,
+  validateChecksumFromStream
+} = require('@cumulus/checksum');
 const errors = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
@@ -508,7 +513,11 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
  */
 exports.deleteS3Files = (s3Objs) => {
   deprecate('@cumulus/common/aws/deleteS3Files', '1.17.0', '@cumulus/aws-client/S3/deleteS3Files');
-  return s3Utils.deleteS3Files(s3Objs);
+  return pMap(
+    s3Objs,
+    (s3Obj) => exports.s3().deleteObject(s3Obj).promise(),
+    { concurrency: S3_RATE_LIMIT }
+  );
 };
 
 /**
@@ -517,14 +526,52 @@ exports.deleteS3Files = (s3Objs) => {
 * @param {string} bucket - name of the bucket
 * @returns {Promise} - the promised result of `S3.deleteBucket`
 **/
-exports.recursivelyDeleteS3Bucket = (bucket) => {
-  deprecate('@cumulus/common/aws/recursivelyDeleteS3Bucket', '1.17.0', '@cumulus/aws-client/S3/recursivelyDeleteS3Bucket');
-  return s3Utils.recursivelyDeleteS3Bucket(bucket);
-};
+exports.recursivelyDeleteS3Bucket = exports.improveStackTrace(
+  async (bucket) => {
+    deprecate('@cumulus/common/aws/recursivelyDeleteS3Bucket', '1.17.0', '@cumulus/aws-client/S3/recursivelyDeleteS3Bucket');
+    const response = await exports.s3().listObjects({ Bucket: bucket }).promise();
+    const s3Objects = response.Contents.map((o) => ({
+      Bucket: bucket,
+      Key: o.Key
+    }));
+
+    await exports.deleteS3Files(s3Objects);
+    await exports.s3().deleteBucket({ Bucket: bucket }).promise();
+  }
+);
 
 exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
   deprecate('@cumulus/common/aws/uploadS3Files', '1.17.0', '@cumulus/aws-client/S3/uploadS3Files');
-  return s3Utils.uploadS3Files(files, defaultBucket, keyPath, s3opts);
+  let i = 0;
+  const n = files.length;
+  if (n > 1) {
+    log.info(`Starting upload of ${n} keys`);
+  }
+  const promiseUpload = (filenameOrInfo) => {
+    let fileInfo = filenameOrInfo;
+    if (isString(fileInfo)) {
+      const filename = fileInfo;
+      fileInfo = {
+        key: isString(keyPath)
+          ? path.join(keyPath, path.basename(filename))
+          : keyPath(filename),
+        filename: filename
+      };
+    }
+    const bucket = fileInfo.bucket || defaultBucket;
+    const filename = fileInfo.filename;
+    const key = fileInfo.key;
+    const body = fs.createReadStream(filename);
+    const opts = Object.assign({ Bucket: bucket, Key: key, Body: body }, s3opts);
+    return exports.promiseS3Upload(opts)
+      .then(() => {
+        i += 1;
+        log.info(`Progress: [${i} of ${n}] ${filename} -> s3://${bucket}/${key}`);
+        return { key: key, bucket: bucket };
+      });
+  };
+
+  return pMap(files, promiseUpload, { concurrency: S3_RATE_LIMIT });
 };
 
 /**
@@ -538,7 +585,8 @@ exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
  */
 exports.uploadS3FileStream = (fileStream, bucket, key, s3opts = {}) => {
   deprecate('@cumulus/common/aws/uploadS3FileStream', '1.17.0', '@cumulus/aws-client/S3/uploadS3FileStream');
-  return s3Utils.uploadS3FileStream(fileStream, bucket, key, s3opts);
+  const opts = Object.assign({ Bucket: bucket, Key: key, Body: fileStream }, s3opts);
+  return exports.promiseS3Upload(opts);
 };
 
 /**
@@ -555,7 +603,22 @@ exports.uploadS3FileStream = (fileStream, bucket, key, s3opts = {}) => {
  */
 exports.listS3Objects = (bucket, prefix = null, skipFolders = true) => {
   deprecate('@cumulus/common/aws/listS3Objects', '1.17.0', '@cumulus/aws-client/S3/listS3Objects');
-  return s3Utils.listS3Objects(bucket, prefix, skipFolders);
+  log.info(`Listing objects in s3://${bucket}`);
+  const params = {
+    Bucket: bucket
+  };
+  if (prefix) params.Prefix = prefix;
+
+  return exports.s3().listObjects(params).promise()
+    .then((data) => {
+      let contents = data.Contents || [];
+      if (skipFolders) {
+        // Filter out any references to folders
+        contents = contents.filter((obj) => !obj.Key.endsWith('/'));
+      }
+
+      return contents;
+    });
 };
 
 /**
@@ -572,17 +635,77 @@ exports.listS3Objects = (bucket, prefix = null, skipFolders = true) => {
  * @returns {Promise<Array>} - resolves to an array of objects corresponding to
  *   the Contents property of the listObjectsV2 response
  */
-exports.listS3ObjectsV2 = (params) => {
+exports.listS3ObjectsV2 = async (params) => {
   deprecate('@cumulus/common/aws/listS3ObjectsV2', '1.17.0', '@cumulus/aws-client/S3/listS3ObjectsV2');
-  return s3Utils.listS3ObjectsV2(params);
+  // Fetch the first list of objects from S3
+  let listObjectsResponse = await exports.s3().listObjectsV2(params).promise();
+  let discoveredObjects = listObjectsResponse.Contents;
+
+  // Keep listing more objects from S3 until we have all of them
+  while (listObjectsResponse.IsTruncated) {
+    listObjectsResponse = await exports.s3().listObjectsV2( // eslint-disable-line no-await-in-loop, max-len
+      // Update the params with a Continuation Token
+      Object.assign(
+        {},
+        params,
+        { ContinuationToken: listObjectsResponse.NextContinuationToken }
+      )
+    ).promise();
+    discoveredObjects = discoveredObjects.concat(listObjectsResponse.Contents);
+  }
+
+  return discoveredObjects;
 };
 
 // Class to efficiently list all of the objects in an S3 bucket, without loading
 // them all into memory at once.  Handles paging of listS3ObjectsV2 requests.
-class S3ListObjectsV2Queue extends S3ListObjectsV2QueueCore {
+class S3ListObjectsV2Queue {
   constructor(params) {
     deprecate('@cumulus/common/aws/S3ListObjectsV2QueueCore', '1.17.0', '@cumulus/aws-client/S3ListObjectsV2QueueCore');
-    super(params);
+    this.items = [];
+    this.params = params;
+    this.s3 = exports.s3();
+  }
+
+  /**
+   * View the next item in the queue
+   *
+   * This does not remove the object from the queue.  When there are no more
+   * items in the queue, returns 'null'.
+   *
+   * @returns {Promise<Object>} - an S3 object description
+   */
+  async peek() {
+    if (this.items.length === 0) await this.fetchItems();
+    return this.items[0];
+  }
+
+  /**
+   * Remove the next item from the queue
+   *
+   * When there are no more items in the queue, returns 'null'.
+   *
+   * @returns {Promise<Object>} - an S3 object description
+   */
+  async shift() {
+    if (this.items.length === 0) await this.fetchItems();
+    return this.items.shift();
+  }
+
+  /**
+   * Query the S3 API to get the next 1,000 items
+   *
+   * @returns {Promise<undefined>} - resolves when the queue has been updated
+   * @private
+   */
+  async fetchItems() {
+    const response = await this.s3.listObjectsV2(this.params).promise();
+
+    this.items = response.Contents;
+
+    if (response.IsTruncated) {
+      this.params.ContinuationToken = response.NextContinuationToken;
+    } else this.items.push(null);
   }
 }
 exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;
@@ -598,9 +721,15 @@ exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;
  *
  * @returns {number|string} - calculated checksum
  */
-exports.calculateS3ObjectChecksum = (params) => {
+exports.calculateS3ObjectChecksum = ({
+  algorithm,
+  bucket,
+  key,
+  options
+}) => {
   deprecate('@cumulus/common/aws/calculateS3ObjectChecksum', '1.17.0', '@cumulus/aws-client/S3/calculateS3ObjectChecksum');
-  return s3Utils.calculateS3ObjectChecksum(params);
+  const fileStream = exports.getS3ObjectReadStream(bucket, key);
+  return generateChecksumFromStream(algorithm, fileStream, options);
 };
 
 /**
@@ -616,9 +745,20 @@ exports.calculateS3ObjectChecksum = (params) => {
  * @throws {InvalidChecksum} - Throws error if validation fails
  * @returns {boolean} - returns true for success
  */
-exports.validateS3ObjectChecksum = (params) => {
+exports.validateS3ObjectChecksum = async ({
+  algorithm,
+  bucket,
+  key,
+  expectedSum,
+  options
+}) => {
   deprecate('@cumulus/common/aws/validateS3ObjectChecksum', '1.17.0', '@cumulus/aws-client/S3/validateS3ObjectChecksum');
-  return s3Utils.validateS3ObjectChecksum(params);
+  const fileStream = exports.getS3ObjectReadStream(bucket, key);
+  if (await validateChecksumFromStream(algorithm, fileStream, expectedSum, options)) {
+    return true;
+  }
+  const msg = `Invalid checksum for S3 object s3://${bucket}/${key} with type ${algorithm} and expected sum ${expectedSum}`;
+  throw new errors.InvalidChecksum(msg);
 };
 
 /**
@@ -629,7 +769,16 @@ exports.validateS3ObjectChecksum = (params) => {
 **/
 exports.parseS3Uri = (uri) => {
   deprecate('@cumulus/common/aws/parseS3Uri', '1.17.0', '@cumulus/aws-client/S3/parseS3Uri');
-  return s3Utils.parseS3Uri(uri);
+  const parsedUri = url.parse(uri);
+
+  if (parsedUri.protocol !== 's3:') {
+    throw new Error('uri must be a S3 uri, e.g. s3://bucketname');
+  }
+
+  return {
+    Bucket: parsedUri.hostname,
+    Key: parsedUri.path.substring(1)
+  };
 };
 
 /**
@@ -641,7 +790,7 @@ exports.parseS3Uri = (uri) => {
  */
 exports.buildS3Uri = (bucket, key) => {
   deprecate('@cumulus/common/aws/buildS3Uri', '1.17.0', '@cumulus/aws-client/S3/buildS3Uri');
-  return s3Utils.buildS3Uri(bucket, key);
+  return `s3://${bucket}/${key.replace(/^\/+/, '')}`;
 };
 
 /**
@@ -653,7 +802,16 @@ exports.buildS3Uri = (bucket, key) => {
  */
 exports.getFileBucketAndKey = (pathParams) => {
   deprecate('@cumulus/common/aws/getFileBucketAndKey', '1.17.0', '@cumulus/aws-client/S3/getFileBucketAndKey');
-  return s3Utils.getFileBucketAndKey(pathParams);
+  const fields = pathParams.split('/');
+
+  const Bucket = fields.shift();
+  const Key = fields.join('/');
+
+  if (Bucket.length === 0 || Key.length === 0) {
+    throw new errors.UnparsableFileLocationError(`File location "${pathParams}" could not be parsed`);
+  }
+
+  return [Bucket, Key];
 };
 
 /** DynamoDB utils */
