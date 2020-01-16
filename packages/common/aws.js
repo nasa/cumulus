@@ -5,6 +5,7 @@ const fs = require('fs');
 const get = require('lodash.get');
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
+const { JSONPath } = require('jsonpath-plus');
 const path = require('path');
 const pMap = require('p-map');
 const pump = require('pump');
@@ -12,7 +13,6 @@ const pRetry = require('p-retry');
 const url = require('url');
 
 const snsUtils = require('@cumulus/aws-client/SNS');
-const stepFunctionUtils = require('@cumulus/aws-client/StepFunctions');
 const utils = require('@cumulus/aws-client/utils');
 const {
   generateChecksumFromStream,
@@ -21,6 +21,7 @@ const {
 const errors = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
+const { unicodeEscape } = require('./string');
 const { inTestMode, testAwsClient } = require('./test-utils');
 const { deprecate, isNil } = require('./util');
 
@@ -1014,7 +1015,14 @@ exports.sqsQueueExists = (queue) => {
  */
 exports.toSfnExecutionName = (fields, delimiter = '__') => {
   deprecate('@cumulus/common/aws/toSfnExecutionName', '1.17.0', '@cumulus/aws-client/StepFunctions/toSfnExecutionName');
-  return stepFunctionUtils.toSfnExecutionName(fields, delimiter);
+  let sfnUnsafeChars = '[^\\w-=+_.]';
+  if (delimiter) {
+    sfnUnsafeChars = `(${delimiter}|${sfnUnsafeChars})`;
+  }
+  const regex = new RegExp(sfnUnsafeChars, 'g');
+  return fields.map((s) => s.replace(regex, unicodeEscape).replace(/\\/g, '!'))
+    .join(delimiter)
+    .substring(0, 80);
 };
 
 /**
@@ -1030,7 +1038,9 @@ exports.toSfnExecutionName = (fields, delimiter = '__') => {
  */
 exports.fromSfnExecutionName = (str, delimiter = '__') => {
   deprecate('@cumulus/common/aws/fromSfnExecutionName', '1.17.0', '@cumulus/aws-client/StepFunctions/fromSfnExecutionName');
-  return stepFunctionUtils.fromSfnExecutionName(str, delimiter);
+  return str.split(delimiter)
+    .map((s) => s.replace(/!/g, '\\').replace('"', '\\"'))
+    .map((s) => JSON.parse(`"${s}"`));
 };
 
 /**
@@ -1042,12 +1052,19 @@ exports.fromSfnExecutionName = (str, delimiter = '__') => {
  */
 exports.getExecutionArn = (stateMachineArn, executionName) => {
   deprecate('@cumulus/common/aws/getExecutionArn', '1.17.0', '@cumulus/aws-client/StepFunctions/getExecutionArn');
-  return stepFunctionUtils.getExecutionArn(stateMachineArn, executionName);
+  if (stateMachineArn && executionName) {
+    const sfArn = stateMachineArn.replace('stateMachine', 'execution');
+    return `${sfArn}:${executionName}`;
+  }
+  return null;
 };
 
 exports.getStateMachineArn = (executionArn) => {
   deprecate('@cumulus/common/aws/getStateMachineArn', '1.17.0', '@cumulus/aws-client/StepFunctions/getStateMachineArn');
-  return stepFunctionUtils.getStateMachineArn(executionArn);
+  if (executionArn) {
+    return executionArn.replace('execution', 'stateMachine').split(':').slice(0, -1).join(':');
+  }
+  return null;
 };
 
 /**
@@ -1057,9 +1074,34 @@ exports.getStateMachineArn = (executionArn) => {
  * @param {Object} event - the Cumulus event
  * @returns {Object} - the full Cumulus message
  */
-exports.pullStepFunctionEvent = (event) => {
+exports.pullStepFunctionEvent = async (event) => {
   deprecate('@cumulus/common/aws/pullStepFunctionEvent', '1.17.0', '@cumulus/aws-client/StepFunctions/pullStepFunctionEvent');
-  return stepFunctionUtils.pullStepFunctionEvent(event);
+  if (!event.replace) return event;
+
+  const remoteMsgS3Object = await exports.getS3Object(
+    event.replace.Bucket,
+    event.replace.Key,
+    { retries: 0 }
+  );
+  const remoteMsg = JSON.parse(remoteMsgS3Object.Body.toString());
+
+  let returnEvent = remoteMsg;
+  if (event.replace.TargetPath) {
+    const replaceNodeSearch = JSONPath({
+      path: event.replace.TargetPath,
+      json: event,
+      resultType: 'all'
+    });
+    if (replaceNodeSearch.length !== 1) {
+      throw new Error(`Replacement TargetPath ${event.replace.TargetPath} invalid`);
+    }
+    if (replaceNodeSearch[0].parent) {
+      replaceNodeSearch[0].parent[replaceNodeSearch[0].parentProperty] = remoteMsg;
+      returnEvent = event;
+      delete returnEvent.replace;
+    }
+  }
+  return returnEvent;
 };
 
 /** SNS utils */
