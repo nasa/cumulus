@@ -1,6 +1,7 @@
 'use strict';
 
-const awsClient = require('@cumulus/aws-client/client');
+const AWS = require('aws-sdk');
+
 const cfUtils = require('@cumulus/aws-client/CloudFormation');
 const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
@@ -14,73 +15,116 @@ const stepFunctionUtils = require('@cumulus/aws-client/StepFunctions');
 const utils = require('@cumulus/aws-client/utils');
 const errors = require('@cumulus/errors');
 
+const { inTestMode, testAwsClient } = require('./test-utils');
 const { deprecate } = require('./util');
 
-exports.region = awsClient.region;
+const noop = () => {}; // eslint-disable-line lodash/prefer-noop
+
+exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
+AWS.config.update({ region: exports.region });
+
+// Workaround upload hangs. See: https://github.com/andrewrk/node-s3-client/issues/74'
+AWS.util.update(AWS.S3.prototype, { addExpect100Continue: noop });
+AWS.config.setPromisesDependency(Promise);
+
+const memoize = (fn) => {
+  let memo = null;
+  return (options) => {
+    if (!memo) memo = fn(options);
+    return memo;
+  };
+};
+
+/**
+ * Return a function which, when called, will return an AWS service object
+ *
+ * Note: The returned service objects are cached, so there will only be one
+ *       instance of each service object per process.
+ *
+ * @param {Function} Service - an AWS service object constructor function
+ * @param {string} version - the API version to use
+ * @returns {Function} - a function which, when called, will return an AWS service object
+ */
+const awsClient = (Service, version = null) => {
+  const options = {};
+  if (version) options.apiVersion = version;
+
+  if (inTestMode()) {
+    if (AWS.DynamoDB.DocumentClient.serviceIdentifier === undefined) {
+      AWS.DynamoDB.DocumentClient.serviceIdentifier = 'dynamodb';
+    }
+    return memoize((o) => testAwsClient(Service, Object.assign(options, o)));
+  }
+  return memoize((o) => new Service(Object.assign(options, o)));
+};
 
 exports.apigateway = (options) => {
   deprecate('@cumulus/common/aws/apigateway', '1.17.0', '@cumulus/aws-client/services/apigateway');
-  return awsServices.apigateway(options);
+  return awsClient(AWS.APIGateway, '2015-07-09')(options);
 };
 exports.ecs = (options) => {
   deprecate('@cumulus/common/aws/ecs', '1.17.0', '@cumulus/aws-client/services/ecs');
-  return awsServices.ecs(options);
+  return awsClient(AWS.ECS, '2014-11-13')(options);
+};
+exports.ec2 = (options) => {
+  deprecate('@cumulus/common/aws/ec2', '1.17.0', '@cumulus/aws-client/services/ec2');
+  return awsClient(AWS.EC2, '2016-11-15')(options);
 };
 exports.s3 = (options) => {
   deprecate('@cumulus/common/aws/s3', '1.17.0', '@cumulus/aws-client/services/s3');
-  return awsServices.s3(options);
+  return awsClient(AWS.S3, '2006-03-01')(options);
 };
 exports.kinesis = (options) => {
   deprecate('@cumulus/common/aws/kinesis', '1.17.0', '@cumulus/aws-client/services/kinesis');
-  return awsServices.kinesis(options);
+  return awsClient(AWS.Kinesis, '2013-12-02')(options);
 };
 exports.lambda = (options) => {
   deprecate('@cumulus/common/aws/lambda', '1.17.0', '@cumulus/aws-client/services/lambda');
-  return awsServices.lambda(options);
+  return awsClient(AWS.Lambda, '2015-03-31')(options);
 };
 exports.sqs = (options) => {
   deprecate('@cumulus/common/aws/sqs', '1.17.0', '@cumulus/aws-client/services/sqs');
-  return awsServices.sqs(options);
+  return awsClient(AWS.SQS, '2012-11-05')(options);
 };
 exports.cloudwatchevents = (options) => {
   deprecate('@cumulus/common/aws/cloudwatchevents', '1.17.0', '@cumulus/aws-client/services/cloudwatchevents');
-  return awsServices.cloudwatchevents(options);
+  return awsClient(AWS.CloudWatchEvents, '2014-02-03')(options);
 };
 exports.cloudwatchlogs = (options) => {
   deprecate('@cumulus/common/aws/cloudwatchlogs', '1.17.0', '@cumulus/aws-client/services/cloudwatchlogs');
-  return awsServices.cloudwatchlogs(options);
+  return awsClient(AWS.CloudWatchLogs, '2014-03-28')(options);
 };
 exports.cloudwatch = (options) => {
   deprecate('@cumulus/common/aws/cloudwatch', '1.17.0', '@cumulus/aws-client/services/cloudwatch');
-  return awsServices.cloudwatch(options);
+  return awsClient(AWS.CloudWatch, '2010-08-01')(options);
 };
 exports.dynamodb = (options) => {
   deprecate('@cumulus/common/aws/dynamodb', '1.17.0', '@cumulus/aws-client/services/dynamodb');
-  return awsServices.dynamodb(options);
+  return awsClient(AWS.DynamoDB, '2012-08-10')(options);
 };
 exports.dynamodbstreams = (options) => {
   deprecate('@cumulus/common/aws/dynamodbstreams', '1.17.0', '@cumulus/aws-client/services/dynamodbstreams');
-  return awsServices.dynamodbstreams(options);
+  return awsClient(AWS.DynamoDBStreams, '2012-08-10')(options);
 };
 exports.dynamodbDocClient = (options) => {
   deprecate('@cumulus/common/aws/dynamodbDocClient', '1.17.0', '@cumulus/aws-client/services/dynamodbDocClient');
-  return awsServices.dynamodbDocClient(options);
+  return awsClient(AWS.DynamoDB.DocumentClient, '2012-08-10')(options);
 };
 exports.sfn = (options) => {
   deprecate('@cumulus/common/aws/sfn', '1.17.0', '@cumulus/aws-client/services/sfn');
-  return awsServices.sfn(options);
+  return awsClient(AWS.StepFunctions, '2016-11-23')(options);
 };
 exports.cf = (options) => {
   deprecate('@cumulus/common/aws/cf', '1.17.0', '@cumulus/aws-client/services/cf');
-  return awsServices.cf(options);
+  return awsClient(AWS.CloudFormation, '2010-05-15')(options);
 };
 exports.sns = (options) => {
   deprecate('@cumulus/common/aws/sns', '1.17.0', '@cumulus/aws-client/services/sns');
-  return awsServices.sns(options);
+  return awsClient(AWS.SNS, '2010-03-31')(options);
 };
 exports.secretsManager = (options) => {
   deprecate('@cumulus/common/aws/secretsManager', '1.17.0', '@cumulus/aws-client/services/secretsManager');
-  return awsServices.secretsManager(options);
+  return awsClient(AWS.SecretsManager, '2017-10-17')(options);
 };
 
 /** Secrets Manager utils */
