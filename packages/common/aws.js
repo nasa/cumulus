@@ -12,8 +12,6 @@ const pump = require('pump');
 const pRetry = require('p-retry');
 const url = require('url');
 
-const snsUtils = require('@cumulus/aws-client/SNS');
-const utils = require('@cumulus/aws-client/utils');
 const {
   generateChecksumFromStream,
   validateChecksumFromStream
@@ -168,7 +166,44 @@ exports.improveStackTrace = (fn) =>
 
 exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
   deprecate('@cumulus/common/aws/findResourceArn', '1.17.0', '@cumulus/aws-client/utils/findResourceArn');
-  return utils.findResourceArn(obj, fn, prefix, baseName, opts, callback);
+  obj[fn](opts, (err, data) => {
+    if (err) {
+      callback(err, data);
+      return;
+    }
+
+    let arns = null;
+    Object.keys(data).forEach((prop) => {
+      if (prop.endsWith('Arns')) {
+        arns = data[prop];
+      }
+    });
+
+    if (!arns) {
+      callback(`Could not find an 'Arn' property in response from ${fn}`, data);
+      return;
+    }
+
+    const prefixRe = new RegExp(`^${prefix}-[A-Z0-9]`);
+    const baseNameOnly = `-${baseName}-`;
+    let matchingArn = null;
+
+    arns.forEach((arn) => {
+      const name = arn.split('/').pop();
+      if (name.match(prefixRe) && name.includes(baseNameOnly)) {
+        matchingArn = arn;
+      }
+    });
+
+    if (matchingArn) {
+      callback(null, matchingArn);
+    } else if (data.NextToken) {
+      const nextOpts = Object.assign({}, opts, { NextToken: data.NextToken });
+      exports.findResourceArn(obj, fn, prefix, baseName, nextOpts, callback);
+    } else {
+      callback(`Could not find resource ${baseName} in ${fn}`);
+    }
+  });
 };
 
 /** Secrets Manager utils */
@@ -1122,10 +1157,22 @@ exports.publishSnsMessage = (
   retryOptions = {}
 ) => {
   deprecate('@cumulus/common/aws/publishSnsMessage', '1.17.0', '@cumulus/aws-client/SNS/publishSnsMessage');
-  return snsUtils.publishSnsMessage(
-    snsTopicArn,
-    message,
-    retryOptions
+  return pRetry(
+    async () => {
+      if (!snsTopicArn) {
+        throw new pRetry.AbortError('Missing SNS topic ARN');
+      }
+
+      await exports.sns().publish({
+        TopicArn: snsTopicArn,
+        Message: JSON.stringify(message)
+      }).promise();
+    },
+    {
+      maxTimeout: 5000,
+      onFailedAttempt: (err) => log.debug(`publishSnsMessage('${snsTopicArn}', '${message}') failed with ${err.retriesLeft} retries left: ${err.message}`),
+      ...retryOptions
+    }
   );
 };
 
@@ -1142,6 +1189,11 @@ exports.isThrottlingException = (err) => {
   return errors.isThrottlingException(err);
 };
 
+const retryIfThrottlingException = (err) => {
+  if (errors.isThrottlingException(err)) throw err;
+  throw new pRetry.AbortError(err);
+};
+
 /**
  * Wrap a function so that it will retry when a ThrottlingException is encountered.
  *
@@ -1154,5 +1206,9 @@ exports.isThrottlingException = (err) => {
  */
 exports.retryOnThrottlingException = (fn, options) => {
   deprecate('@cumulus/common/aws/retryOnThrottlingException', '1.17.0', '@cumulus/aws-client/utils/retryOnThrottlingException');
-  return utils.retryOnThrottlingException(fn, options);
+  return (...args) =>
+    pRetry(
+      () => fn(...args).catch(retryIfThrottlingException),
+      { maxTimeout: 5000, ...options }
+    );
 };
