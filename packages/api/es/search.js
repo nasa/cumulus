@@ -67,19 +67,47 @@ const esProdConfig = async (host) => {
   };
 };
 
-const esConfig = (host) => (inTestMode() ? esTestConfig() : esProdConfig(host));
-
-class BaseSearch {
-  static async es(host) {
-    return new elasticsearch.Client(await esConfig(host));
+const esMetricsConfig = () => {
+  if (!process.env.METRICS_ES_HOST
+    || !process.env.METRICS_ES_USER
+    || !process.env.METRICS_ES_PASS) {
+    throw new Error('ELK Metrics stack not configured');
   }
 
-  constructor(event, type = null, index) {
+  const node = `https://${process.env.METRICS_ES_USER}:${
+    process.env.METRICS_ES_PASS}@${process.env.METRICS_ES_HOST}`;
+
+  return {
+    node,
+    requestTimeout: 50000
+  };
+};
+
+const esConfig = async (host, metrics = false) => {
+  let config;
+  if (inTestMode()) {
+    config = esTestConfig();
+  } else if (metrics) {
+    config = esMetricsConfig();
+  } else {
+    config = await esProdConfig(host);
+  }
+
+  return config;
+};
+
+class BaseSearch {
+  static async es(host, metrics) {
+    return new elasticsearch.Client(await esConfig(host, metrics));
+  }
+
+  constructor(event, type = null, index, metrics = false) {
     let params = {};
     const logLimit = 10;
 
     this.type = type;
     this.client = null;
+    this.metrics = metrics;
 
     // this will allow us to receive payload
     // from GET and POST requests
@@ -272,11 +300,12 @@ class BaseSearch {
 
   async query() {
     const searchParams = this._buildSearch();
+    console.log("SEARCH PARAMS: " + JSON.stringify(searchParams));
 
     try {
       // search ES with the generated parameters
       if (!this.client) {
-        this.client = await this.constructor.es();
+        this.client = await this.constructor.es(null, this.metrics);
       }
       const result = await this.client.search(searchParams);
 

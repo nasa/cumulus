@@ -12,6 +12,25 @@ function convertLogLevelForQuery(query) {
   return Object.assign({}, query, { level: log.convertLogLevel(query.level) });
 }
 
+function metricsConfig() {
+  return {
+    type: '_doc',
+    index: `${process.env.stackName}-*`,
+    queryParams: { sort_by: '@timestamp' },
+    metrics: true
+  };
+}
+
+function cumulusConfig() {
+  return {
+    type: 'logs',
+    index: process.env.ES_INDEX,
+    metrics: false
+  };
+}
+
+const esConfig = () => (process.env.log_destination_arn ? metricsConfig() : cumulusConfig());
+
 /**
  * list all the logs
  *
@@ -20,10 +39,18 @@ function convertLogLevelForQuery(query) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
+  const config = esConfig();
+
   const search = new Search(
-    { queryStringParameters: convertLogLevelForQuery(req.query) },
-    'logs',
-    process.env.ES_INDEX
+    {
+      queryStringParameters: {
+        ...config.queryParams,
+        ...convertLogLevelForQuery(req.query)
+      }
+    },
+    config.type,
+    config.index,
+    config.metrics
   );
 
   const result = await search.query();
@@ -39,16 +66,19 @@ async function list(req, res) {
  */
 async function get(req, res) {
   const executionName = req.params.executionName;
+  const config = esConfig();
 
   const search = new Search(
     {
       queryStringParameters: {
         limit: 50,
-        'executions.keyword': executionName
+        'executions.keyword': executionName,
+        ...config.queryParams
       }
     },
-    'logs',
-    process.env.ES_INDEX
+    config.type,
+    config.index,
+    config.metrics
   );
   const result = await search.query();
   return res.send(result);
