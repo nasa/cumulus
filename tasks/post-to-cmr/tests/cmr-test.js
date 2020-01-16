@@ -7,9 +7,10 @@ const sinon = require('sinon');
 const { promisify } = require('util');
 
 const cmrClient = require('@cumulus/cmr-client');
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
+const { promiseS3Upload, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { CMRMetaFileNotFound } = require('@cumulus/common/errors');
+const { CMRMetaFileNotFound } = require('@cumulus/errors');
 const launchpad = require('@cumulus/common/launchpad');
 
 const { postToCMR } = require('..');
@@ -23,14 +24,14 @@ const result = {
 test.before(async (t) => {
   // Store the CMR password
   t.context.cmrPasswordSecretName = randomString();
-  await aws.secretsManager().createSecret({
+  await awsServices.secretsManager().createSecret({
     Name: t.context.cmrPasswordSecretName,
     SecretString: randomString()
   }).promise();
 
   // Store the Launchpadd passphrase
   t.context.launchpadPassphraseSecretName = randomString();
-  await aws.secretsManager().createSecret({
+  await awsServices.secretsManager().createSecret({
     Name: t.context.launchpadPassphraseSecretName,
     SecretString: randomString()
   }).promise();
@@ -54,17 +55,17 @@ test.beforeEach(async (t) => {
   payload.input.granules[0].files[3].filename = `s3://${t.context.bucket}/${match.exec(cmrFile)[2]}`;
   payload.input.granules[0].files[3].bucket = t.context.bucket;
 
-  return aws.s3().createBucket({ Bucket: t.context.bucket }).promise();
+  return awsServices.s3().createBucket({ Bucket: t.context.bucket }).promise();
 });
 
-test.afterEach.always((t) => aws.recursivelyDeleteS3Bucket(t.context.bucket));
+test.afterEach.always((t) => recursivelyDeleteS3Bucket(t.context.bucket));
 
 test.after.always(async (t) => {
-  await aws.secretsManager().deleteSecret({
+  await awsServices.secretsManager().deleteSecret({
     SecretId: t.context.cmrPasswordSecretName,
     ForceDeleteWithoutRecovery: true
   }).promise();
-  await aws.secretsManager().deleteSecret({
+  await awsServices.secretsManager().deleteSecret({
     SecretId: t.context.launchpadPassphraseSecretName,
     ForceDeleteWithoutRecovery: true
   }).promise();
@@ -79,7 +80,7 @@ test.serial('postToCMR throws error if CMR correctly identifies the xml as inval
   const key = `${granuleId}.cmr.xml`;
 
   try {
-    await aws.promiseS3Upload({
+    await promiseS3Upload({
       Bucket: t.context.bucket,
       Key: key,
       Body: '<?xml version="1.0" encoding="UTF-8"?><results></results>'
@@ -103,7 +104,7 @@ test.serial('postToCMR succeeds with correct payload', async (t) => {
   const key = `${granuleId}.cmr.xml`;
 
   try {
-    await aws.promiseS3Upload({
+    await promiseS3Upload({
       Bucket: t.context.bucket,
       Key: key,
       Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml'))
@@ -139,7 +140,7 @@ test.serial('postToCMR returns SIT url when CMR_ENVIRONMENT=="SIT"', async (t) =
   const key = `${granuleId}.cmr.xml`;
 
   try {
-    await aws.promiseS3Upload({
+    await promiseS3Upload({
       Bucket: t.context.bucket,
       Key: key,
       Body: fs.createReadStream('tests/data/meta.xml')
@@ -224,7 +225,7 @@ test.serial('postToCMR continues with skipMetaCheck even if any granule is missi
     result
   }));
   try {
-    await aws.promiseS3Upload({
+    await promiseS3Upload({
       Bucket: t.context.bucket,
       Key: `${newPayload.input.granules[0].granuleId}.cmr.xml`,
       Body: fs.createReadStream('tests/data/meta.xml')
@@ -256,7 +257,7 @@ test.serial('postToCmr identifies files with the new file schema', async (t) => 
   }));
 
   try {
-    await aws.promiseS3Upload({
+    await promiseS3Upload({
       Bucket: t.context.bucket,
       Key: `path/${cmrFile.name}`,
       Body: fs.createReadStream('tests/data/meta.xml')
@@ -284,7 +285,7 @@ test.serial('postToCMR succeeds with launchpad authentication', async (t) => {
   const key = `${granuleId}.cmr.xml`;
 
   try {
-    await aws.promiseS3Upload({
+    await promiseS3Upload({
       Bucket: t.context.bucket,
       Key: key,
       Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml'))

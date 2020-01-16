@@ -5,9 +5,10 @@ const get = require('lodash.get');
 const keyBy = require('lodash.keyby');
 const path = require('path');
 
+const { parseS3Uri } = require('@cumulus/aws-client/S3');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 
-const { getGranuleId, parseS3Uri } = require('./utils');
+const { getGranuleId } = require('./utils');
 
 /**
  * Helper to turn an s3URI into a fileobject

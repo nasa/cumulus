@@ -2,7 +2,7 @@
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { generateCmrFilesForGranules } = require('@cumulus/integration-tests');
-const { promiseS3Upload } = require('@cumulus/common/aws');
+const { promiseS3Upload } = require('@cumulus/aws-client/S3');
 const cloneDeep = require('lodash.clonedeep');
 const path = require('path');
 const fs = require('fs');

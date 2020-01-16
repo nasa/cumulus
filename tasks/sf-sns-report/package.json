@@ -38,6 +38,7 @@
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {
+    "@cumulus/aws-client": "1.17.0-alpha4",
     "@cumulus/common": "1.17.0",
     "ava": "^2.1.0",
     "babel-loader": "^8.0.6",
