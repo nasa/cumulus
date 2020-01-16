@@ -823,17 +823,65 @@ exports.getFileBucketAndKey = (pathParams) => {
  *   See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#createTable-property
  * @returns {Promise<Object>} - the output of the createTable call
  */
-exports.createAndWaitForDynamoDbTable = (params) => {
+exports.createAndWaitForDynamoDbTable = async (params) => {
   deprecate('@cumulus/common/aws/createAndWaitForDynamoDbTable', '1.17.0', '@cumulus/aws-client/DynamoDb/createAndWaitForDynamoDbTable');
-  return dynamoDbUtils.createAndWaitForDynamoDbTable(params);
+  const createTableResult = await exports.dynamodb().createTable(params).promise();
+  await exports.dynamodb().waitFor('tableExists', { TableName: params.TableName }).promise();
+  return createTableResult;
 };
 
 // Class to efficiently search all of the items in a DynamoDB table, without
 // loading them all into memory at once.  Handles paging.
-class DynamoDbSearchQueue extends DynamoDbSearchQueueCore {
+class DynamoDbSearchQueue {
   constructor(params, searchType = 'scan') {
     deprecate('@cumulus/common/aws/DynamoDbSearchQueue', '1.17.0', '@cumulus/aws-client/DynamoDbSearchQueue');
-    super(params, searchType);
+    this.items = [];
+    this.params = params;
+    this.dynamodbDocClient = exports.dynamodbDocClient();
+    this.searchType = searchType;
+  }
+
+  /**
+   * View the next item in the queue
+   *
+   * This does not remove the object from the queue.  When there are no more
+   * items in the queue, returns 'null'.
+   *
+   * @returns {Promise<Object>} - an item from the DynamoDB table
+   */
+  async peek() {
+    if (this.items.length === 0) await this.fetchItems();
+    return this.items[0];
+  }
+
+  /**
+   * Remove the next item from the queue
+   *
+   * When there are no more items in the queue, returns 'null'.
+   *
+   * @returns {Promise<Object>} - an item from the DynamoDB table
+   */
+  async shift() {
+    if (this.items.length === 0) await this.fetchItems();
+    return this.items.shift();
+  }
+
+  /**
+   * Query the DynamoDB API to get the next batch of items
+   *
+   * @returns {Promise<undefined>} - resolves when the queue has been updated
+   * @private
+   */
+  async fetchItems() {
+    let response;
+    do {
+      response = await this.dynamodbDocClient[this.searchType](this.params).promise(); // eslint-disable-line no-await-in-loop, max-len
+      if (response.LastEvaluatedKey) this.params.ExclusiveStartKey = response.LastEvaluatedKey;
+    } while (response.Items.length === 0 && response.LastEvaluatedKey);
+
+    this.items = response.Items;
+
+    if (!response.LastEvaluatedKey) this.items.push(null);
   }
 }
 exports.DynamoDbSearchQueue = DynamoDbSearchQueue;
