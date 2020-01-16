@@ -3,22 +3,22 @@
 const fs = require('fs');
 const path = require('path');
 const test = require('ava');
+const { s3 } = require('@cumulus/aws-client/services');
 const {
   buildS3Uri,
   listS3ObjectsV2,
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
-  s3,
   s3GetObjectTagging,
   s3PutObjectTagging,
   promiseS3Upload,
   headObject,
   parseS3Uri
-} = require('@cumulus/common/aws');
+} = require('@cumulus/aws-client/S3');
 const { isCMRFile } = require('@cumulus/cmrjs');
 const clonedeep = require('lodash.clonedeep');
 const set = require('lodash.set');
-const errors = require('@cumulus/common/errors');
+const errors = require('@cumulus/errors');
 const {
   randomString, randomId, validateConfig, validateInput, validateOutput
 } = require('@cumulus/common/test-utils');

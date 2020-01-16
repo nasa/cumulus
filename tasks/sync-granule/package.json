@@ -37,10 +37,12 @@
   "dependencies": {
     "@cumulus/common": "1.17.0",
     "@cumulus/cumulus-message-adapter-js": "^1.1.0",
+    "@cumulus/errors": "1.17.0-alpha",
     "@cumulus/ingest": "1.17.0",
     "p-map": "^2.1.0"
   },
   "devDependencies": {
+    "@cumulus/aws-client": "1.17.0-alpha4",
     "@cumulus/test-data": "1.17.0",
     "ava": "^2.1.0",
     "babel-loader": "^8.0.6",
