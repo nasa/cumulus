@@ -55,7 +55,6 @@ function getExecutionUrl(executionArn) {
 
 async function invoke(name, payload, type = 'Event') {
   if (process.env.IS_LOCAL || inTestMode()) {
-    log.info(`Faking Lambda invocation for ${name}`);
     return false;
   }
 

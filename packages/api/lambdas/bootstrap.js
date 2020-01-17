@@ -106,9 +106,7 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
       name: alias
     });
 
-    log.info(`index ${index} created with alias ${alias} and mappings added.`);
   } else {
-    log.info(`index ${index} already exists`);
 
     let aliasedIndex = index;
 
