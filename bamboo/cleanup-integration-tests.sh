@@ -1,7 +1,6 @@
 #!/bin/bash
 set -ex
 . ./bamboo/abort-if-not-pr-or-redeployment.sh
-npm install
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-skip-integration-tests.sh
 
@@ -52,6 +51,6 @@ RESULT=$?
 set -e
 
 echo Unlocking stack
-(cd example && node ./scripts/lock-stack.js lock $GIT_SHA $DEPLOYMENT false)
+(npm run bootstrap-no-build && cd example && node ./scripts/lock-stack.js lock $GIT_SHA $DEPLOYMENT false)
 
 exit $RESULT
