@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `ecs_cluster_instance_image_id` is now a *required* variable of the `cumulus` module, instead of optional.
 
 - **CUMULUS-1622**
-  - Mutex is no longer an export of @cumulus/common/concurrency
+  - Mutex class has been removed from @cumulus/common concurrency
 
 ### Added
 

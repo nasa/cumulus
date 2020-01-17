@@ -14,7 +14,8 @@
     "verbose": true
   },
   "scripts": {
-    "test": "jasmine && npm run parallel-tests",
+    "test": "ava",
+    "int-test": "jasmine && npm run parallel-tests",
     "parallel-tests": "sh scripts/tests-parallel.sh",
     "redeploy-test": "jasmine spec/standalone/redeployment/*.js",
     "all-tests": "npm run parallel-tests && jasmine && npm run redeploy-test",

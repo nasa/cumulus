@@ -25,6 +25,8 @@ const privateKey = 'ssh_client_rsa_key';
 const bucket = randomString();
 const stackName = randomString();
 
+const localDataDir = process.env.DOCKER_TEST_RUN ? '/tmp/cumulus_unit_test_data' : '../test-data';
+
 process.env.system_bucket = bucket;
 process.env.stackName = stackName;
 
@@ -112,7 +114,7 @@ test('Write data to remote file', async (t) => {
   await myTestSftpDiscoveryClass.write(
     '/granules', 'delete-me-test-file', 'mytestdata'
   );
-  const remotePath = '/tmp/cumulus_unit_test_data/granules/delete-me-test-file';
+  const remotePath = `${localDataDir}/granules/delete-me-test-file`;
   t.true(fs.existsSync(remotePath));
   fs.unlinkSync(remotePath);
 });
