@@ -49,7 +49,7 @@ test('Mutex passes correct params to dynamo docClient on writeLock', async (t) =
   t.deepEqual(result, writeParams);
 });
 
-test('Mutex unlock passes corect params to dynamo docclient on unlock', async (t) => {
+test('Mutex unlock returns result from docClient', async (t) => {
   const key = t.context.key;
   const gitSHA = t.context.sha;
   const mutex = t.context.mutex;
