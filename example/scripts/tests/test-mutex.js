@@ -80,6 +80,28 @@ test('Mutex unlock throws a CumulusLockError if there is a SHA mismatch', async 
   t.is(result.name, 'CumulusLockError');
 });
 
+
+test('Mutex unlock re-throws docClientErrors', async (t) => {
+  const key = t.context.key;
+  const gitSha = t.context.sha;
+  const docClient = t.context.docClient;
+  docClient.delete = () => {
+    throw new Error('test error');
+  };
+  docClient.get = () => ({
+    promise: () => ({})
+  });
+  const mutex = new Mutex(docClient, 'sometable');
+  let result;
+  try {
+    await mutex.unlock(key, gitSha);
+  } catch (e) {
+    result = e;
+  }
+  t.is(result.name, 'Error');
+  t.is(result.message, 'test error');
+});
+
 test('Mutex returns match on matching sha', async (t) => {
   const mutex = t.context.mutex;
   const result = await mutex.checkMatchingSha(t.context.key, t.context.sha);
