@@ -9,89 +9,13 @@
  * a string - 'key' and no sort key. The table name should be set in LOCK_TABLE_NAME
  */
 
+
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
-
-class CumulusLockError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = this.constructor.name;
-  }
-}
-
-
+const Mutex = require('./lib/mutex');
 class CumulusNoLockError extends Error {
   constructor(message) {
     super(message);
     this.name = this.constructor.name;
-  }
-}
-
-class Mutex {
-  constructor(docClient, tableName) {
-    this.docClient = docClient;
-    this.tableName = tableName;
-  }
-
-  async checkMatchingSha(key, gitSHA) {
-    const params = {
-      TableName: this.tableName,
-      Key: {
-        key: key
-      }
-    };
-    const record = await this.docClient.get(params).promise();
-    if (record.Item) {
-      return (gitSHA === record.Item.sha ? 'match' : record.Item.sha);
-    }
-    return 'noLock';
-  }
-
-  async writeLock(key, timeoutMs, gitSHA) {
-    const now = Date.now();
-    const params = {
-      TableName: this.tableName,
-      Item: {
-        key: key,
-        expire: now + timeoutMs,
-        sha: gitSHA
-      },
-      ConditionExpression: '#key <> :key OR (#key = :key AND #expire < :expire)',
-      ExpressionAttributeNames: {
-        '#key': 'key',
-        '#expire': 'expire'
-      },
-      ExpressionAttributeValues: {
-        ':key': key,
-        ':expire': now
-      }
-    };
-    return this.docClient.put(params).promise();
-  }
-
-  async unlock(key, gitSHA) {
-    const params = {
-      TableName: this.tableName,
-      Key: { key: key },
-      ConditionExpression: '#sha = :sha OR attribute_not_exists(sha)',
-      ExpressionAttributeNames: {
-        '#sha': 'sha'
-      },
-      ExpressionAttributeValues: {
-        ':sha': gitSHA
-      }
-    };
-
-    let deleteResult;
-    try {
-      deleteResult = await this.docClient.delete(params).promise();
-    } catch (e) {
-      const shaCheck = await this.checkMatchingSha(key, gitSHA);
-      if (!['match', 'noLock'].includes(shaCheck)) {
-        throw new CumulusLockError(`Cannot unlock stack, lock already exists from another build with SHA ${shaCheck}, error: ${e}`);
-      }
-      throw e;
-    }
-    return deleteResult;
   }
 }
 

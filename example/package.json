@@ -5,7 +5,13 @@
   "private": true,
   "main": "index.js",
   "engines": {
-    "node": ">=8.10.0"
+    "node": ">=10.16.3"
+  },
+  "ava": {
+    "files": [
+      "./scripts/tests/**/*.js"
+    ],
+    "verbose": true
   },
   "scripts": {
     "test": "jasmine && npm run parallel-tests",
@@ -61,6 +67,8 @@
     "ssh2-streams": "^0.4.8"
   },
   "devDependencies": {
+    "ava": "^2.4.0",
+    "babel-preset-env": "^1.7.0",
     "@cumulus/test-data": "1.17.0",
     "execa": "^1.0.0",
     "fs-extra": "7.0.0",
@@ -86,6 +94,7 @@
     "p-retry": "^2.0.0",
     "p-timeout": "2.0.1",
     "parallel": "^1.2.0",
+    "rewire": "^4.0.1",
     "tempy": "^0.2.1",
     "uuid": "^3.2.1"
   }
