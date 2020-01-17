@@ -21,7 +21,7 @@ const Logger = require('@cumulus/logger');
 
 const { unicodeEscape } = require('./string');
 const { inTestMode, testAwsClient } = require('./test-utils');
-const { deprecate, isNil } = require('./util');
+const { deprecate, isNil, setErrorStack } = require('./util');
 
 const log = new Logger({ sender: 'common/aws' });
 const noop = () => {}; // eslint-disable-line lodash/prefer-noop
@@ -158,7 +158,7 @@ exports.improveStackTrace = (fn) =>
       Error.captureStackTrace(tracerError);
       return await fn(...args);
     } catch (err) {
-      exports.setErrorStack(err, tracerError.stack);
+      setErrorStack(err, tracerError.stack);
       err.message = `${err.message}; Function params: ${JSON.stringify(args, null, 2)}`;
       throw err;
     }
@@ -279,7 +279,7 @@ exports.s3TagSetToQueryString = (tagset) => {
 exports.deleteS3Object = exports.improveStackTrace(
   (bucket, key) => {
     deprecate('@cumulus/common/aws/deleteS3Object', '1.17.0', '@cumulus/aws-client/S3/deleteS3Object');
-    exports.s3().deleteObject({ Bucket: bucket, Key: key }).promise();
+    return exports.s3().deleteObject({ Bucket: bucket, Key: key }).promise();
   }
 );
 
@@ -379,7 +379,7 @@ exports.downloadS3File = (s3Obj, filepath) => {
 exports.headObject = exports.improveStackTrace(
   (Bucket, Key) => {
     deprecate('@cumulus/common/aws/headObject', '1.17.0', '@cumulus/aws-client/S3/headObject');
-    exports.s3().headObject({ Bucket, Key }).promise();
+    return exports.s3().headObject({ Bucket, Key }).promise();
   }
 );
 
@@ -422,7 +422,7 @@ exports.s3GetObjectTagging = exports.improveStackTrace(
 exports.s3PutObjectTagging = exports.improveStackTrace(
   (Bucket, Key, Tagging) => {
     deprecate('@cumulus/common/aws/s3PutObjectTagging', '1.17.0', '@cumulus/aws-client/S3/s3PutObjectTagging');
-    exports.s3().putObjectTagging({
+    return exports.s3().putObjectTagging({
       Bucket,
       Key,
       Tagging
