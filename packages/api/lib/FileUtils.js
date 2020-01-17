@@ -7,7 +7,7 @@ const isInteger = require('lodash.isinteger');
 const partial = require('lodash.partial');
 const pick = require('lodash.pick');
 const urljoin = require('url-join');
-const { getObjectSize, parseS3Uri } = require('@cumulus/common/aws');
+const { getObjectSize, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { removeNilProperties } = require('@cumulus/common/util');
 const schemas = require('../models/schemas');
 

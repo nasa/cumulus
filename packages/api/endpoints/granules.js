@@ -1,7 +1,10 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const aws = require('@cumulus/common/aws');
+const {
+  deleteS3Object,
+  fileExists
+} = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const Search = require('../es/search').Search;
@@ -138,8 +141,8 @@ async function del(req, res) {
   // remove files from s3
   if (granule.files) {
     await Promise.all(granule.files.map(async (file) => {
-      if (await aws.fileExists(file.bucket, file.key)) {
-        return aws.deleteS3Object(file.bucket, file.key);
+      if (await fileExists(file.bucket, file.key)) {
+        return deleteS3Object(file.bucket, file.key);
       }
       return {};
     }));

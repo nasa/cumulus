@@ -5,11 +5,12 @@ const sinon = require('sinon');
 const rewire = require('rewire');
 const fs = require('fs');
 const path = require('path');
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
+const s3Utils = require('@cumulus/aws-client/S3');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const cmrjs = require('@cumulus/cmrjs');
 const { randomString } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
-const StepFunctions = require('@cumulus/common/StepFunctions');
 const workflows = require('@cumulus/common/workflows');
 
 const indexer = rewire('../../es/indexer');
@@ -70,7 +71,7 @@ test.before(async (t) => {
   esClient = await Search.es();
 
   // create buckets
-  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   const fakeMetadata = {
     beginningDateTime: '2017-10-24T00:00:00.000Z',
@@ -87,7 +88,7 @@ test.before(async (t) => {
     stopDate: new Date(Date.UTC(2019, 6, 28, 1))
   });
 
-  existsStub = sinon.stub(aws, 'fileExists').returns(true);
+  existsStub = sinon.stub(s3Utils, 'fileExists').returns(true);
   templateStub = sinon.stub(workflows, 'getWorkflowTemplate').returns({});
   workflowStub = sinon.stub(workflows, 'getWorkflowFile').returns({});
 });
@@ -99,7 +100,7 @@ test.after.always(async () => {
   await pdrsModel.deleteTable();
 
   await esClient.indices.delete({ index: esIndex });
-  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await s3Utils.recursivelyDeleteS3Bucket(process.env.system_bucket);
 
   cmrStub.restore();
   stepFunctionsStub.restore();

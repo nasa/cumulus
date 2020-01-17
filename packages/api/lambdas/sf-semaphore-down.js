@@ -1,6 +1,6 @@
 'use strict';
 
-const { pullStepFunctionEvent } = require('@cumulus/common/aws');
+const stepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
   getSfEventMessageObject,
   getSfEventStatus,
@@ -40,7 +40,7 @@ const isDecrementEvent = (event, executionMessage) =>
 async function handleSemaphoreDecrementTask(event) {
   let eventMessage = getSfEventMessageObject(event, 'output');
   if (!eventMessage) eventMessage = getSfEventMessageObject(event, 'input', '{}');
-  const executionMessage = await pullStepFunctionEvent(eventMessage);
+  const executionMessage = await stepFunctions.pullStepFunctionEvent(eventMessage);
   if (isDecrementEvent(event, executionMessage)) {
     const queueName = getQueueName(eventMessage);
     return decrementQueueSemaphore(queueName);

@@ -3,7 +3,8 @@
 const get = require('lodash.get');
 const moment = require('moment');
 const encodeurl = require('encodeurl');
-const { aws, log, errors } = require('@cumulus/common');
+const { aws, log } = require('@cumulus/common');
+const errors = require('@cumulus/errors');
 
 /**
 * Copy granule file from one s3 bucket & keypath to another

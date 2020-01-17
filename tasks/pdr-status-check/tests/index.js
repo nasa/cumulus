@@ -3,7 +3,7 @@
 const isEqual = require('lodash.isequal');
 const some = require('lodash.some');
 const test = require('ava');
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
 const {
   validateInput,
   validateOutput
@@ -47,7 +47,7 @@ test.serial('error thrown when limit exceeded', async (t) => {
 
   await validateInput(t, event.input);
 
-  const sfn = aws.sfn();
+  const sfn = awsServices.sfn();
   try {
     sfn.describeExecution = () => ({
       promise: () => Promise.resolve({
@@ -87,7 +87,7 @@ test.serial('returns the correct results in the nominal case', async (t) => {
     'arn:7': null
   };
 
-  const sfn = aws.sfn();
+  const sfn = awsServices.sfn();
 
   let output;
   try {

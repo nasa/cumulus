@@ -1,0 +1,53 @@
+{
+  "name": "@cumulus/tf-inventory",
+  "version": "1.17.0",
+  "description": "Package to help keep track of what resources are managed by Terraform in the AWS account",
+  "main": "index.js",
+  "engines": {
+    "node": ">=10.16.3"
+  },
+  "bin": {
+    "tf-inventory": "./bin/cli.js"
+  },
+  "scripts": {
+    "test": "ava",
+    "test-coverage": "nyc npm test",
+    "build": "echo 'no build step'",
+    "watch": "echo 'no build step'"
+  },
+  "ava": {
+    "files": [
+      "tests/**"
+    ],
+    "fail-fast": true,
+    "verbose": true
+  },
+  "nyc": {
+    "exclude": [
+      "tests"
+    ]
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "Cumulus"
+  ],
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@cumulus/aws-client": "^1.17.0-alpha4",
+    "commander": "^4.1.0",
+    "lodash.difference": "^4.5.0",
+    "lodash.groupby": "^4.6.0",
+    "lodash.mergewith": "^4.6.2"
+  },
+  "devDependencies": {
+    "@cumulus/common": "^1.17.0",
+    "ava": "^2.1.0",
+    "fs": "0.0.1-security",
+    "nyc": "^14.0.0",
+    "rewire": "^4.0.1",
+    "sinon": "^8.0.2"
+  }
+}

@@ -4,8 +4,9 @@ const test = require('ava');
 
 const { randomString } = require('@cumulus/common/test-utils');
 const {
-  s3, fileExists, recursivelyDeleteS3Bucket, deleteS3Object
-} = require('@cumulus/common/aws');
+  fileExists, recursivelyDeleteS3Bucket, deleteS3Object
+} = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
 const { crypto } = require('../lib/crypto');
 
 const bucket = randomString();

@@ -1,6 +1,6 @@
 'use strict';
 
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
 const CloudFormationGateway = require('@cumulus/common/CloudFormationGateway');
 const log = require('@cumulus/common/log');
 const pRetry = require('p-retry');
@@ -49,7 +49,7 @@ exports.waitForDeployment = waitForDeployment;
  * @returns {Promise} - resolves when stack has reached terminal state
  */
 async function handler(event) {
-  const cloudFormation = new CloudFormationGateway(aws.cf());
+  const cloudFormation = new CloudFormationGateway(awsServices.cf());
 
   await waitForDeployment(cloudFormation, event.meta.stack);
 
