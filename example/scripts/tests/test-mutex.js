@@ -81,7 +81,7 @@ test('Mutex unlock throws a CumulusLockError if there is a SHA mismatch', async 
 });
 
 
-test('Mutex unlock re-throws docClientErrors if checkMatchinSha returns a match or lock', async (t) => {
+test('Mutex.unlock() re-throws error from DynamoDb document client if checkMatchingSha returns a match or no lock', async (t) => {
   const key = t.context.key;
   const gitSha = t.context.sha;
   const docClient = t.context.docClient;
