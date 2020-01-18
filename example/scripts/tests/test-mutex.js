@@ -111,7 +111,7 @@ test('Mutex returns match on matching sha', async (t) => {
 test('Mutex returns collision sha on wrong sha', async (t) => {
   const collisionSha = 'someOtherSha';
   const getResults = t.context.getResults;
-  getResults.promise = () => ({ Item: { sha: 'someOtherSha' } });
+  getResults.promise = () => ({ Item: { sha: collisionSha } });
   const docClient = t.context.docClient;
   docClient.get = () => getResults;
   const mutex = new Mutex(docClient, 'someTable');
