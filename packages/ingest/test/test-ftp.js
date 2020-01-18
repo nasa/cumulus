@@ -24,11 +24,10 @@ test('useList is present and true when assigned', async (t) => {
     host: '127.0.0.1',
     username: 'testuser',
     password: 'testpass',
-    path: '',
     useList: true
   });
 
-  await myFtpProviderClient.list();
+  await myFtpProviderClient.list('');
 
   t.is(jsftpSpy.callCount, 1);
   t.is(jsftpSpy.getCall(0).args[0].useList, true);
@@ -43,11 +42,10 @@ test('useList defaults to false when not assigned', async (t) => {
   const myFtpProviderClient = new ProxiedFtpProviderClient({
     host: '127.0.0.1',
     username: 'testuser',
-    password: 'testpass',
-    path: ''
+    password: 'testpass'
   });
 
-  await myFtpProviderClient.list();
+  await myFtpProviderClient.list('');
 
   t.is(jsftpSpy.callCount, 1);
   t.is(jsftpSpy.getCall(0).args[0].useList, false);

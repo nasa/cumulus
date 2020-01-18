@@ -2,7 +2,7 @@
 
 const aws = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
-const path = require('path');
+const { basename, dirname } = require('path');
 const errors = require('@cumulus/common/errors');
 
 class S3ProviderClient {
@@ -39,7 +39,7 @@ class S3ProviderClient {
    * @returns {Promise} file list of the endpoint
    * @private
    */
-  async list() {
+  async list(path) {
     // There are two different "path" variables being set here, which gets
     // confusing.  "this.path" originally comes from
     // "event.config.collection.provider_path".  In the case of S3, it refers
@@ -66,15 +66,15 @@ class S3ProviderClient {
     const params = {
       Bucket: this.bucket,
       FetchOwner: true,
-      Prefix: this.path
+      Prefix: path
     };
 
     const objects = await aws.listS3ObjectsV2(params);
 
     return objects.map((object) => {
       const file = {
-        name: path.basename(object.Key),
-        path: path.dirname(object.Key),
+        name: basename(object.Key),
+        path: dirname(object.Key),
         size: object.Size,
         time: (new Date(object.LastModified)).valueOf()
       };

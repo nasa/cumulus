@@ -9,7 +9,6 @@ class SftpProviderClient {
   constructor(providerConfig) {
     this.id = providerConfig.id;
     this.host = providerConfig.host;
-    this.path = providerConfig.path;
 
     this.sftpClient = new Sftp({
       host: this.host,
@@ -47,14 +46,21 @@ class SftpProviderClient {
    * @returns {Promise}
    * @private
    */
-  async list() {
-    const listFn = this.sftpClient.list.bind(this.sftpClient);
-    const files = await recursion(listFn, this.path);
-    log.info({ host: this.host }, `${files.length} files were found on ${this.host}`);
+  async list(path) {
+    await this.sftpClient.connect();
+    log.info(`SFTP Connected to ${this.host}`);
 
-    // Type 'type' field is required to support recursive file listing, but
-    // should not be part of the returned result.
-    return files.map((file) => omit(file, 'type'));
+    try {
+      const listFn = this.sftpClient.list.bind(this.sftpClient);
+      const files = await recursion(listFn, path);
+      log.info({ host: this.host }, `${files.length} files were found on ${this.host}`);
+
+      // Type 'type' field is required to support recursive file listing, but
+      // should not be part of the returned result.
+      return files.map((file) => omit(file, 'type'));
+    } finally {
+      this.sftpClient.end();
+    }
   }
 
   /**

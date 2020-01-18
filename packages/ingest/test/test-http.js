@@ -23,15 +23,14 @@ const testListWith = (discoverer, event, ...args) => {
 
   return HttpProviderClient.__with__({
     Crawler
-  })(() => discoverer.list());
+  })(() => discoverer.list(''));
 };
 
 test.before((t) => {
   t.context.httpProviderClient = new HttpProviderClient({
     protocol: 'http',
     host: 'localhost',
-    port: 3030,
-    path: ''
+    port: 3030
   });
 });
 

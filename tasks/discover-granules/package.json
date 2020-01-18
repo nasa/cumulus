@@ -28,8 +28,7 @@
   "ava": {
     "files": [
       "!tests/fixtures/**/*"
-    ],
-    "verbose": true
+    ]
   },
   "nyc": {
     "exclude": [
@@ -42,7 +41,13 @@
     "@cumulus/aws-client": "1.17.0-alpha4",
     "@cumulus/common": "1.17.0",
     "@cumulus/cumulus-message-adapter-js": "^1.1.0",
-    "@cumulus/ingest": "1.17.0"
+    "@cumulus/ingest": "1.17.0",
+    "lodash.curry": "^4.1.1",
+    "lodash.groupby": "^4.6.0",
+    "lodash.isarray": "^4.0.0",
+    "lodash.isboolean": "^3.0.3",
+    "lodash.map": "^4.6.0",
+    "lodash.omit": "^4.5.0"
   },
   "devDependencies": {
     "ava": "^2.1.0",

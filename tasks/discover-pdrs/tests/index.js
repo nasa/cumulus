@@ -6,7 +6,7 @@ const fs = require('fs-extra');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
-const { FTPError, RemoteResourceError } = require('@cumulus/errors');
+const { RemoteResourceError } = require('@cumulus/errors');
 
 const {
   findTestDataDirectory,
@@ -51,56 +51,6 @@ test('test pdr discovery with FTP assuming all PDRs are new', async (t) => {
   } finally {
     await recursivelyDeleteS3Bucket(event.config.bucket);
   }
-});
-
-test('test pdr discovery with FTP invalid user/pass', async (t) => {
-  const provider = {
-    id: 'MODAPS',
-    protocol: 'ftp',
-    host: '127.0.0.1',
-    username: 'testuser1',
-    password: 'testpass'
-  };
-
-  const newPayload = t.context.input;
-  newPayload.config.provider = provider;
-  newPayload.input = {};
-
-  await validateConfig(t, newPayload.config);
-
-  return discoverPdrs(newPayload, {})
-    .then(t.fail)
-    .catch((e) => {
-      if (e instanceof RemoteResourceError) {
-        t.pass('ignoring this test. Test server seems to be down');
-      } else {
-        t.true(e instanceof FTPError);
-        t.true(e.message.includes('Login incorrect'));
-      }
-    });
-});
-
-test('test pdr discovery with FTP connection refused', async (t) => {
-  const provider = {
-    id: 'MODAPS',
-    protocol: 'ftp',
-    host: '127.0.0.1',
-    port: 30, // using port that doesn't exist to nonresponsiveness
-    username: 'testuser1',
-    password: 'testpass'
-  };
-
-  const newPayload = t.context.input;
-  newPayload.config.provider = provider;
-  newPayload.input = {};
-
-  await validateConfig(t, newPayload.config);
-
-  return discoverPdrs(newPayload, {})
-    .then(t.fail)
-    .catch((e) => {
-      t.true(e instanceof RemoteResourceError);
-    });
 });
 
 test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {

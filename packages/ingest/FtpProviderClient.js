@@ -16,7 +16,6 @@ class FtpProviderClient {
   // setting the variable `useList` to true
   constructor(providerConfig) {
     this.host = providerConfig.host;
-    this.path = providerConfig.path;
     this.username = providerConfig.username;
     this.password = providerConfig.password;
     this.encrypted = providerConfig.encrypted;
@@ -114,11 +113,11 @@ class FtpProviderClient {
    * @private
    */
 
-  async list() {
+  async list(path) {
     if (!this.decrypted) await this.decrypt();
 
     const listFn = this._list.bind(this);
-    const files = await recursion(listFn, this.path);
+    const files = await recursion(listFn, path);
 
     log.info(`${files.length} files were found on ${this.host}`);
 

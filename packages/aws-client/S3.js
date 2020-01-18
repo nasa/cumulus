@@ -128,6 +128,13 @@ exports.s3PutObject = improveStackTrace(
   }).promise()
 );
 
+exports.putFile = (bucket, key, filename) =>
+  exports.s3PutObject({
+    Bucket: bucket,
+    Key: key,
+    Body: fs.createReadStream(filename)
+  });
+
 /**
 * Copy an object from one location on S3 to another
 *
@@ -538,3 +545,6 @@ exports.getFileBucketAndKey = (pathParams) => {
 
   return [Bucket, Key];
 };
+
+exports.createBucket = (Bucket) =>
+  awsServices.s3().createBucket({ Bucket }).promise();

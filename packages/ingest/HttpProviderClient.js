@@ -2,7 +2,7 @@
 
 const http = require('@cumulus/common/http');
 const isIp = require('is-ip');
-const path = require('path');
+const { basename } = require('path');
 const { PassThrough } = require('stream');
 const Crawler = require('simplecrawler');
 const got = require('got');
@@ -23,13 +23,13 @@ class HttpProviderClient {
     this.protocol = providerConfig.protocol;
     this.host = providerConfig.host;
     this.port = providerConfig.port;
-    this.path = providerConfig.path;
+    // this.path = providerConfig.path;
 
     this.endpoint = buildURL({
       protocol: this.protocol,
       host: this.host,
-      port: this.port,
-      path: this.path
+      port: this.port
+      // path: this.path
     });
   }
 
@@ -38,7 +38,7 @@ class HttpProviderClient {
    *
    * @returns {Promise.<Array>} of a list of files
    */
-  list() {
+  list(path) {
     validateHost(this.host);
 
     const pattern = /<a href="([^>]*)">[^<]+<\/a>/;
@@ -48,7 +48,7 @@ class HttpProviderClient {
         protocol: this.protocol,
         host: this.host,
         port: this.port,
-        path: this.path
+        path
       })
     );
 
@@ -69,10 +69,7 @@ class HttpProviderClient {
           // Some providers provide files with one number after the dot (".") ex (tmtdayacz8110_5.6)
             if (split[1].match(/^(.*\.[\w\d]{1,4})\s*$/) !== null) {
               const name = split[1].trimRight();
-              files.push({
-                name,
-                path: this.path
-              });
+              files.push({ name, path });
             }
           }
         });
@@ -132,7 +129,7 @@ class HttpProviderClient {
       await http.download(remoteUrl, localPath);
     } catch (e) {
       if (e.message && e.message.includes('Unexpected HTTP status code: 403')) {
-        const message = `${path.basename(remotePath)} was not found on the server with 403 status`;
+        const message = `${basename(remotePath)} was not found on the server with 403 status`;
         throw new errors.FileNotFound(message);
       } else throw e;
     }
