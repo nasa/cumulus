@@ -51,6 +51,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `@cumulus/common/string/unicodeEscape`
     - `@cumulus/common/test-utils/inTestMode`
     - `@cumulus/common/util/setErrorStack`
+  - The following service classes and utilities in `@cumulus/ingest/aws` have been deprecated and moved to `@cumulus/aws-client`:
+    - `@cumulus/ingest/StepFunction.getExecutionStatus`
+    - `@cumulus/ingest/invoke`
 
 - **CUMULUS-1686**
   - Changed `ecs_cluster_instance_image_id` to be a required variable of the `cumulus` module and removed the default value.
@@ -68,6 +71,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
+- **CUMULUS-1040**
+  - Removed from `@cumulus/ingest/aws`
 - **CUMULUS-1481**
   - removed `process` config and output from PostToCmr as it was not required by the task nor downstream steps, and should still be in the output message's `meta` regardless.
 
