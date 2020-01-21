@@ -95,9 +95,7 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
       index: index,
       name: alias
     });
-
   } else {
-
     let aliasedIndex = index;
 
     const aliasExists = await esClient.indices.existsAlias({
