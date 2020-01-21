@@ -52,8 +52,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `@cumulus/common/test-utils/inTestMode`
     - `@cumulus/common/util/setErrorStack`
   - The following service classes and utilities in `@cumulus/ingest/aws` have been deprecated and moved to `@cumulus/aws-client`:
-    - `@cumulus/ingest/StepFunction.getExecutionStatus`
     - `@cumulus/ingest/invoke`
+    - `@cumulus/ingest/StepFunction.getExecutionStatus`
+    - `@cumulus/ingest/StepFunction.getExecutionUrl`
 
 - **CUMULUS-1686**
   - Changed `ecs_cluster_instance_image_id` to be a required variable of the `cumulus` module and removed the default value.
