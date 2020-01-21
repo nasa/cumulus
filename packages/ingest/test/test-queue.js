@@ -2,8 +2,11 @@
 
 const test = require('ava');
 const {
-  createQueue, sqs, s3, s3PutObject, recursivelyDeleteS3Bucket
-} = require('@cumulus/common/aws');
+  s3PutObject,
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/aws-client/S3');
+const { s3, sqs } = require('@cumulus/aws-client/services');
+const { createQueue } = require('@cumulus/aws-client/SQS');
 const { randomString, randomId, randomNumber } = require('@cumulus/common/test-utils');
 const queue = require('../queue');
 
