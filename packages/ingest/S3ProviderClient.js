@@ -1,5 +1,8 @@
 'use strict';
 
+const isString = require('lodash.isstring');
+const { basename, dirname } = require('path');
+
 const {
   buildS3Uri,
   downloadS3File,
@@ -10,8 +13,6 @@ const {
 } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const errors = require('@cumulus/common/errors');
-const isString = require('lodash.isstring');
-const { basename, dirname } = require('path');
 
 class S3ProviderClient {
   constructor({ bucket }) {

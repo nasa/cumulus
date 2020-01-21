@@ -1,25 +1,15 @@
 'use strict';
 
-const S3 = require('@cumulus/aws-client/S3');
 const flatten = require('lodash.flatten');
 const path = require('path');
 const uuidv4 = require('uuid/v4');
+const S3 = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
-<<<<<<< HEAD
-=======
-  buildS3Uri,
-  getObjectSize,
-  s3ObjectExists,
-  validateS3ObjectChecksum
-} = require('@cumulus/aws-client/S3');
-const awsServices = require('@cumulus/aws-client/services');
-const {
->>>>>>> refactor ingest package to use new aws-client package
   CollectionConfigStore,
-  constructCollectionId,
-  log
-} = require('@cumulus/common');
+  constructCollectionId
+} = require('@cumulus/common/collection-config-store');
+const log = require('@cumulus/common/log');
 const errors = require('@cumulus/errors');
 const { buildProviderClient, fetchTextFile } = require('@cumulus/ingest/providerClientUtils');
 const { handleDuplicateFile } = require('@cumulus/ingest/granule');
@@ -225,11 +215,7 @@ class GranuleFetcher {
    */
   async verifyFile(file, bucket, key, options = {}) {
     if (file.checksumType && file.checksum) {
-<<<<<<< HEAD
       await S3.validateS3ObjectChecksum({
-=======
-      await validateS3ObjectChecksum({
->>>>>>> refactor ingest package to use new aws-client package
         algorithm: file.checksumType,
         bucket,
         key,
@@ -240,11 +226,7 @@ class GranuleFetcher {
       log.warn(`Could not verify ${file.name} expected checksum: ${file.checksum} of type ${file.checksumType}.`);
     }
     if (file.size || file.fileSize) { // file.fileSize to be removed after CnmToGranule update
-<<<<<<< HEAD
       const ingestedSize = await S3.getObjectSize(bucket, key);
-=======
-      const ingestedSize = await getObjectSize(bucket, key);
->>>>>>> refactor ingest package to use new aws-client package
       if (ingestedSize !== (file.size || file.fileSize)) { // file.fileSize to be removed
         throw new errors.UnexpectedFileSize(
           `verifyFile ${file.name} failed: Actual file size ${ingestedSize}`
@@ -268,19 +250,11 @@ class GranuleFetcher {
    */
   async enableBucketVersioning(bucket) {
     // check that the bucket has versioning enabled
-<<<<<<< HEAD
     const versioning = await s3().getBucketVersioning({ Bucket: bucket }).promise();
 
     // if not enabled, make it enabled
     if (versioning.Status !== 'Enabled') {
       s3().putBucketVersioning({
-=======
-    const versioning = await awsServices.s3().getBucketVersioning({ Bucket: bucket }).promise();
-
-    // if not enabled, make it enabled
-    if (versioning.Status !== 'Enabled') {
-      awsServices.s3().putBucketVersioning({
->>>>>>> refactor ingest package to use new aws-client package
         Bucket: bucket,
         VersioningConfiguration: { Status: 'Enabled' }
       }).promise();
@@ -310,11 +284,7 @@ class GranuleFetcher {
     // the staged file expected
     const stagedFile = {
       ...file,
-<<<<<<< HEAD
       filename: S3.buildS3Uri(destinationBucket, destinationKey),
-=======
-      filename: buildS3Uri(destinationBucket, destinationKey),
->>>>>>> refactor ingest package to use new aws-client package
       fileStagingDir: stagingPath,
       url_path: this.getUrlPath(file),
       bucket: destinationBucket
@@ -322,11 +292,7 @@ class GranuleFetcher {
     // bind arguments to sync function
     const syncFileFunction = this.providerClient.sync.bind(this.providerClient, fileRemotePath);
 
-<<<<<<< HEAD
     const s3ObjAlreadyExists = await S3.s3ObjectExists(
-=======
-    const s3ObjAlreadyExists = await s3ObjectExists(
->>>>>>> refactor ingest package to use new aws-client package
       { Bucket: destinationBucket, Key: destinationKey }
     );
     log.debug(`file ${destinationKey} exists in ${destinationBucket}: ${s3ObjAlreadyExists}`);
@@ -352,11 +318,7 @@ class GranuleFetcher {
     }
 
     // Set final file size
-<<<<<<< HEAD
     stagedFile.size = await S3.getObjectSize(destinationBucket, destinationKey);
-=======
-    stagedFile.size = await getObjectSize(destinationBucket, destinationKey);
->>>>>>> refactor ingest package to use new aws-client package
     delete stagedFile.fileSize; // CUMULUS-1269: delete obsolete field until CnmToGranule is patched
     // return all files, the renamed files don't have the same properties
     // (name, size, checksum) as input file
@@ -366,11 +328,7 @@ class GranuleFetcher {
         bucket: destinationBucket,
         name: path.basename(f.Key),
         path: file.path,
-<<<<<<< HEAD
         filename: S3.buildS3Uri(f.Bucket, f.Key),
-=======
-        filename: buildS3Uri(f.Bucket, f.Key),
->>>>>>> refactor ingest package to use new aws-client package
         size: f.size,
         fileStagingDir: stagingPath,
         url_path: this.getUrlPath(file)

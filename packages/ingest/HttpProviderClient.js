@@ -11,7 +11,7 @@ const { buildS3Uri, promiseS3Upload } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const { isValidHostname } = require('@cumulus/common/string');
 const { buildURL } = require('@cumulus/common/URLUtils');
-const errors = require('@cumulus/common/errors');
+const errors = require('@cumulus/errors');
 const { lookupMimeType } = require('./util');
 
 const validateHost = (host) => {
