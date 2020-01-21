@@ -6,9 +6,9 @@ const {
   sqs,
   dynamodbDocClient,
   cloudwatchevents
-} = require('@cumulus/common/aws');
+} = require('@cumulus/aws-client/services');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { waitForAllTestSf } = require('@cumulus/integration-tests');
-const StepFunctions = require('@cumulus/common/StepFunctions');
 
 const {
   loadConfig,

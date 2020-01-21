@@ -1,7 +1,7 @@
 'use strict';
 
+const { s3 } = require('@cumulus/aws-client/services');
 const {
-  aws: { s3 },
   stringUtils: { globalReplace },
   workflows: { getWorkflowArn }
 } = require('@cumulus/common');

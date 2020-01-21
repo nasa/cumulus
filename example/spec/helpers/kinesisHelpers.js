@@ -3,7 +3,7 @@
 const pRetry = require('p-retry');
 
 const { Kinesis } = require('aws-sdk');
-const { receiveSQSMessages } = require('@cumulus/common/aws');
+const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
 const { sleep } = require('@cumulus/common/util');
 
 const {
