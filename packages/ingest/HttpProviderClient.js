@@ -6,7 +6,9 @@ const { basename } = require('path');
 const { PassThrough } = require('stream');
 const Crawler = require('simplecrawler');
 const got = require('got');
-const { log, aws: { buildS3Uri, promiseS3Upload } } = require('@cumulus/common');
+
+const { buildS3Uri, promiseS3Upload } = require('@cumulus/aws-client/S3');
+const log = require('@cumulus/common/log');
 const { isValidHostname } = require('@cumulus/common/string');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const errors = require('@cumulus/common/errors');
