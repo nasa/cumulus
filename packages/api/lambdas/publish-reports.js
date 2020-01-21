@@ -1,13 +1,12 @@
 'use strict';
 
 const { publishSnsMessage } = require('@cumulus/aws-client/SNS');
-const { getExecutionUrl } = require('@cumulus/ingest/aws');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const log = require('@cumulus/common/log');
 const {
   getMessageExecutionArn,
   getMessageGranules
 } = require('@cumulus/common/message');
-const StepFunctions = require('@cumulus/common/StepFunctions');
 const { isNil } = require('@cumulus/common/util');
 
 const Granule = require('../models/granules');
@@ -64,7 +63,7 @@ const getGranuleRecordsFromCumulusMessage = async (cumulusMessage) => {
   }
 
   const executionArn = getMessageExecutionArn(cumulusMessage);
-  const executionUrl = getExecutionUrl(executionArn);
+  const executionUrl = StepFunctions.getExecutionUrl(executionArn);
 
   let executionDescription;
   try {

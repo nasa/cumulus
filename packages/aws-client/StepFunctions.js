@@ -234,6 +234,18 @@ const getExecutionArn = (stateMachineArn, executionName) => {
   return null;
 };
 
+/**
+ * Returns execution ARN from a statement machine Arn and executionName
+ *
+ * @param {string} executionArn - execution ARN
+ * @returns {string} return aws console url for the execution
+ */
+function getExecutionUrl(executionArn) {
+  const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
+  return `https://console.aws.amazon.com/states/home?region=${region}`
+         + `#/executions/details/${executionArn}`;
+}
+
 const getStateMachineArn = (executionArn) => {
   if (executionArn) {
     return executionArn.replace('execution', 'stateMachine').split(':').slice(0, -1).join(':');
@@ -288,6 +300,7 @@ module.exports = {
   toSfnExecutionName,
   fromSfnExecutionName,
   getExecutionArn,
+  getExecutionUrl,
   getStateMachineArn,
   pullStepFunctionEvent,
 

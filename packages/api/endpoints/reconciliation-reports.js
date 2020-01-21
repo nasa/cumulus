@@ -2,12 +2,12 @@
 
 const router = require('express-promise-router')();
 const path = require('path');
+const { invoke } = require('@cumulus/aws-client/Lambda');
 const {
   deleteS3Object,
   getS3Object,
   listS3ObjectsV2
 } = require('@cumulus/aws-client/S3');
-const { invoke } = require('@cumulus/aws-client/Lambda');
 
 /**
  * List all reconciliation reports

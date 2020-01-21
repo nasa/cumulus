@@ -8,9 +8,7 @@ const moment = require('moment');
 const Lambda = require('@cumulus/aws-client/Lambda');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const aws = require('@cumulus/common/aws');
-const log = require('@cumulus/common/log');
 const { deprecate } = require('@cumulus/common/util');
-const { inTestMode } = require('@cumulus/common/test-utils');
 
 /**
  * getEndpoint returns proper AWS arguments for various
@@ -50,9 +48,8 @@ function getEndpoint(local = false, port = 8000) {
  * @returns {string} return aws console url for the execution
  */
 function getExecutionUrl(executionArn) {
-  const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-  return `https://console.aws.amazon.com/states/home?region=${region}`
-         + `#/executions/details/${executionArn}`;
+  deprecate('@cumulus/ingest/aws/getExecutionUrl', '1.17.0', '@cumulus/aws-client/StepFunctions.getExecutionUrl');
+  return StepFunctions.getExecutionUrl(executionArn);
 }
 
 function invoke(name, payload, type = 'Event') {
