@@ -2,8 +2,8 @@
 
 const fs = require('fs');
 
+const { deleteSQSMessage } = require('@cumulus/aws-client/SQS');
 const {
-  aws: { deleteSQSMessage },
   testUtils: { randomString },
   stringUtils: { globalReplace }
 } = require('@cumulus/common');

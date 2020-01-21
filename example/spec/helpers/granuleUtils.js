@@ -1,8 +1,9 @@
 'use strict';
 
 const fs = require('fs-extra');
+const { buildS3Uri, parseS3Uri } = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
 const {
-  aws: { buildS3Uri, parseS3Uri, s3 },
   stringUtils: { replace },
   testUtils: { randomStringFromRegex }
 } = require('@cumulus/common');
