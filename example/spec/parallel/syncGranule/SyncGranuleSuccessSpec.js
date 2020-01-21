@@ -12,15 +12,13 @@ const {
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
 const { Collection, Execution, Granule } = require('@cumulus/api/models');
+const { s3 } = require('@cumulus/aws-client/services');
 const {
-  aws: {
-    s3,
-    s3GetObjectTagging,
-    s3ObjectExists,
-    parseS3Uri
-  },
-  constructCollectionId
-} = require('@cumulus/common');
+  s3GetObjectTagging,
+  s3ObjectExists,
+  parseS3Uri
+} = require('@cumulus/aws-client/S3');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { LambdaStep } = require('@cumulus/common/sfnStep');
 const {
   loadConfig,

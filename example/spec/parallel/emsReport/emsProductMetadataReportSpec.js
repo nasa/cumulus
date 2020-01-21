@@ -1,15 +1,9 @@
 const moment = require('moment');
 const AWS = require('aws-sdk');
 
-const {
-  aws: {
-    fileExists,
-    getS3Object,
-    parseS3Uri,
-    lambda
-  },
-  constructCollectionId
-} = require('@cumulus/common');
+const { fileExists, getS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
+const { lambda } = require('@cumulus/aws-client/services');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const {
   addCollections,
   cleanupCollections,

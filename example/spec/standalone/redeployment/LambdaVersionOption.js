@@ -3,8 +3,9 @@
 const fs = require('fs-extra');
 const jsyaml = require('js-yaml');
 
-const { aws: { cf }, workflows: { getWorkflowArn } } = require('@cumulus/common');
-const StepFunctions = require('@cumulus/common/StepFunctions');
+const { cf } = require('@cumulus/aws-client/services');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
+const { getWorkflowArn } = require('@cumulus/common/workflows');
 
 const {
   loadConfig,
