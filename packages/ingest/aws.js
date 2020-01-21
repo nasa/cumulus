@@ -5,6 +5,7 @@ const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
 const moment = require('moment');
 
+const Lambda = require('@cumulus/aws-client/Lambda');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const aws = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
@@ -54,24 +55,10 @@ function getExecutionUrl(executionArn) {
          + `#/executions/details/${executionArn}`;
 }
 
-async function invoke(name, payload, type = 'Event') {
-  if (process.env.IS_LOCAL || inTestMode()) {
-    log.info(`Faking Lambda invocation for ${name}`);
-    return false;
-  }
-
-  const lambda = new AWS.Lambda();
-
-  const params = {
-    FunctionName: name,
-    Payload: JSON.stringify(payload),
-    InvocationType: type
-  };
-
-  log.info(`invoked ${name}`);
-  return lambda.invoke(params).promise();
+function invoke(name, payload, type = 'Event') {
+  deprecate('@cumulus/ingest/aws/invoke', '1.17.0', '@cumulus/aws-client/Lambda.invoke');
+  return Lambda.invoke(name, payload, type);
 }
-
 
 /**
  * sqs class instance generator
