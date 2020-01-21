@@ -25,4 +25,4 @@ if [[ $LOCK_EXISTS_STATUS -gt 0 ]]; then
   exit 1
 fi
 
-cd example && npm int-test
+cd example && npm run int-test
