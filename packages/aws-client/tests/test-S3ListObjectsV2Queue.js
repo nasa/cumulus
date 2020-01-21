@@ -2,24 +2,22 @@
 
 const test = require('ava');
 const range = require('lodash.range');
+const { randomString } = require('@cumulus/common/test-utils');
 
-const {
-  recursivelyDeleteS3Bucket,
-  s3,
-  S3ListObjectsV2Queue
-} = require('../../aws');
-const { randomString } = require('../../test-utils');
+const awsServices = require('../services');
+const { recursivelyDeleteS3Bucket } = require('../S3');
+const S3ListObjectsV2Queue = require('../S3ListObjectsV2Queue');
 
 test.beforeEach((t) => {
   t.context.bucketName = randomString();
-  return s3().createBucket({ Bucket: t.context.bucketName }).promise();
+  return awsServices.s3().createBucket({ Bucket: t.context.bucketName }).promise();
 });
 
 test.afterEach.always((t) => recursivelyDeleteS3Bucket(t.context.bucketName));
 
 test.serial('S3ListObjectsV2Queue.peek() returns the next object but does not remove it from the queue', async (t) => {
   const key = randomString();
-  await s3().putObject({ Bucket: t.context.bucketName, Key: key, Body: 'body' }).promise();
+  await awsServices.s3().putObject({ Bucket: t.context.bucketName, Key: key, Body: 'body' }).promise();
 
   const queue = new S3ListObjectsV2Queue({ Bucket: t.context.bucketName });
 
@@ -29,7 +27,7 @@ test.serial('S3ListObjectsV2Queue.peek() returns the next object but does not re
 
 test.serial('S3ListObjectsV2Queue.shift() returns the next object and removes it from the queue', async (t) => {
   const key = randomString();
-  await s3().putObject({ Bucket: t.context.bucketName, Key: key, Body: 'body' }).promise();
+  await awsServices.s3().putObject({ Bucket: t.context.bucketName, Key: key, Body: 'body' }).promise();
 
   const queue = new S3ListObjectsV2Queue({ Bucket: t.context.bucketName });
 
@@ -40,7 +38,7 @@ test.serial('S3ListObjectsV2Queue.shift() returns the next object and removes it
 
 test.serial('S3ListObjectsV2Queue can handle paging', async (t) => {
   await Promise.all(range(11).map(() =>
-    s3().putObject({
+    awsServices.s3().putObject({
       Bucket: t.context.bucketName,
       Key: randomString(),
       Body: 'body'

@@ -2,17 +2,15 @@
 
 const test = require('ava');
 const range = require('lodash.range');
+const { randomString } = require('@cumulus/common/test-utils');
 
-const {
-  dynamodb,
-  DynamoDbSearchQueue
-} = require('../../aws');
-const { randomString } = require('../../test-utils');
+const awsServices = require('../services');
+const DynamoDbSearchQueue = require('../DynamoDbSearchQueue');
 
 test.beforeEach(async (t) => {
   t.context.tableName = randomString();
 
-  await dynamodb().createTable({
+  await awsServices.dynamodb().createTable({
     TableName: t.context.tableName,
     AttributeDefinitions: [
       { AttributeName: 'bucket', AttributeType: 'S' },
@@ -28,16 +26,21 @@ test.beforeEach(async (t) => {
     }
   }).promise();
 
-  return dynamodb().waitFor('tableExists', { TableName: t.context.tableName }).promise();
+  return awsServices.dynamodb().waitFor('tableExists', { TableName: t.context.tableName }).promise();
 });
 
-test.afterEach.always((t) => dynamodb().deleteTable({ TableName: t.context.tableName }).promise());
+test.afterEach.always(
+  (t) =>
+    awsServices.dynamodb()
+      .deleteTable({ TableName: t.context.tableName })
+      .promise()
+);
 
 test.serial('DynamoDbSearchQueue.peek() returns the next item but does not remove it from the queue', async (t) => {
   const bucket = randomString();
   const key = randomString();
 
-  await dynamodb().putItem({
+  await awsServices.dynamodb().putItem({
     TableName: t.context.tableName,
     Item: {
       bucket: { S: bucket },
@@ -55,7 +58,7 @@ test.serial('DynamoDbSearchQueue.shift() returns the next object and removes it 
   const bucket = randomString();
   const key = randomString();
 
-  await dynamodb().putItem({
+  await awsServices.dynamodb().putItem({
     TableName: t.context.tableName,
     Item: {
       bucket: { S: bucket },
@@ -72,7 +75,7 @@ test.serial('DynamoDbSearchQueue.shift() returns the next object and removes it 
 
 test.serial('DynamoDbSearchQueue can handle paging', async (t) => {
   await Promise.all(range(11).map(() =>
-    dynamodb().putItem({
+    awsServices.dynamodb().putItem({
       TableName: t.context.tableName,
       Item: {
         bucket: { S: randomString() },

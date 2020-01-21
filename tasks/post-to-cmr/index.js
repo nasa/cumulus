@@ -7,10 +7,10 @@ const {
   metadataObjectFromCMRFile,
   publish2CMR
 } = require('@cumulus/cmrjs');
-const { secretsManager } = require('@cumulus/common/aws');
+const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
-const { CMRMetaFileNotFound } = require('@cumulus/common/errors');
+const { CMRMetaFileNotFound } = require('@cumulus/errors');
 const launchpad = require('@cumulus/common/launchpad');
 
 /**
@@ -112,15 +112,20 @@ async function postToCMR(event) {
   };
 
   if (event.config.cmr.oauthProvider === 'launchpad') {
-    const token = await launchpad.getLaunchpadToken(event.config.launchpad);
+    const passphrase = await getSecretString(
+      event.config.launchpad.passphraseSecretName
+    );
+
+    const token = await launchpad.getLaunchpadToken({
+      ...event.config.launchpad,
+      passphrase
+    });
     cmrCreds.token = token;
   } else {
-    const secret = await secretsManager().getSecretValue({
-      SecretId: event.config.cmr.passwordSecretName
-    }).promise();
-
     cmrCreds.username = event.config.cmr.username;
-    cmrCreds.password = secret.SecretString;
+    cmrCreds.password = await getSecretString(
+      event.config.cmr.passwordSecretName
+    );
   }
 
   // post all meta files to CMR

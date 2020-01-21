@@ -3,10 +3,11 @@
 const test = require('ava');
 const path = require('path');
 const fs = require('fs-extra');
-const { FTPError, RemoteResourceError } = require('@cumulus/common/errors');
 
+const { s3 } = require('@cumulus/aws-client/services');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+const { FTPError, RemoteResourceError } = require('@cumulus/errors');
 
-const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const {
   findTestDataDirectory,
   randomString,

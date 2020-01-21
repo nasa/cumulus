@@ -2,15 +2,15 @@
 
 const sinon = require('sinon');
 const test = require('ava');
-const aws = require('../aws');
-const { randomId } = require('../test-utils');
+const { RecordDoesNotExist } = require('@cumulus/errors');
+const { randomId } = require('@cumulus/common/test-utils');
 const DynamoDb = require('../DynamoDb');
-const { RecordDoesNotExist } = require('../errors');
+const awsServices = require('../services');
 
 test.before(async () => {
   process.env.tableName = randomId('table');
 
-  await aws.dynamodb().createTable({
+  await awsServices.dynamodb().createTable({
     TableName: process.env.tableName,
     AttributeDefinitions: [
       { AttributeName: 'hash', AttributeType: 'S' }
@@ -26,11 +26,11 @@ test.before(async () => {
 });
 
 test.beforeEach(async (t) => {
-  t.context.client = aws.dynamodbDocClient();
+  t.context.client = awsServices.dynamodbDocClient();
 });
 
 test.after.always(
-  () => aws.dynamodb().deleteTable({ TableName: process.env.tableName }).promise()
+  () => awsServices.dynamodb().deleteTable({ TableName: process.env.tableName }).promise()
 );
 
 test('DynamoDb.get() returns an existing item', async (t) => {

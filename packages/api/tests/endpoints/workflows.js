@@ -3,11 +3,12 @@
 const test = require('ava');
 const request = require('supertest');
 const { randomString } = require('@cumulus/common/test-utils');
+
+const { s3 } = require('@cumulus/aws-client/services');
 const {
-  s3,
   promiseS3Upload,
   recursivelyDeleteS3Bucket
-} = require('@cumulus/common/aws');
+} = require('@cumulus/aws-client/S3');
 
 const models = require('../../models');
 const {

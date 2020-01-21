@@ -1,4 +1,4 @@
-const { dynamodbDocClient } = require('@cumulus/common/aws');
+const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const { ResourcesLockedError } = require('@cumulus/common/errors');
 const log = require('@cumulus/common/log');
 const Semaphore = require('@cumulus/common/Semaphore');

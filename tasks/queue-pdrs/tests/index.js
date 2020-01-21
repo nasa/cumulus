@@ -3,13 +3,12 @@
 const test = require('ava');
 
 const {
-  createQueue,
-  getExecutionArn,
   s3,
-  s3PutObject,
-  sqs,
-  recursivelyDeleteS3Bucket
-} = require('@cumulus/common/aws');
+  sqs
+} = require('@cumulus/aws-client/services');
+const { createQueue } = require('@cumulus/aws-client/SQS');
+const { recursivelyDeleteS3Bucket, s3PutObject } = require('@cumulus/aws-client/S3');
+const { getExecutionArn } = require('@cumulus/aws-client/StepFunctions');
 const {
   randomId,
   randomNumber,
@@ -31,7 +30,7 @@ test.beforeEach(async (t) => {
   t.context.stackName = randomString();
   const queueName = randomId('queue');
   t.context.queueName = queueName;
-  const queueUrl = await createQueue();
+  const queueUrl = await createQueue(randomString());
 
   t.context.queues = {
     [queueName]: queueUrl

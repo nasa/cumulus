@@ -1,7 +1,8 @@
 'use strict';
 
 const get = require('lodash.get');
-const { sqs, sqsQueueExists } = require('@cumulus/common/aws');
+const { sqs } = require('@cumulus/aws-client/services');
+const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const log = require('@cumulus/common/log');
 const { Consumer } = require('@cumulus/ingest/consumer');
 const rulesHelpers = require('../lib/rulesHelpers');
@@ -66,7 +67,7 @@ function dispatch(message) {
     log.debug(`message ${message.MessageId} from queue ${queueUrl} is being processed ${messageReceiveCount} times`);
   }
 
-  const eventObject = Object.assign({}, message.Body);
+  const eventObject = Object.assign({}, JSON.parse(message.Body));
   const eventSource = {
     type: 'sqs',
     messageId: message.MessageId,

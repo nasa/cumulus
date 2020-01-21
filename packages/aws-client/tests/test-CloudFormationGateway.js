@@ -3,7 +3,7 @@
 const sinon = require('sinon');
 const test = require('ava');
 
-const { cf } = require('../aws');
+const { cf } = require('../services');
 const CloudFormationGateway = require('../CloudFormationGateway');
 
 function buildDescribeStacksResponse(StackStatus) {

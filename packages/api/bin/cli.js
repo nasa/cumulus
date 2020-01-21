@@ -3,7 +3,7 @@
 'use strict';
 
 const program = require('commander');
-const { lambda } = require('@cumulus/common/aws');
+const { lambda } = require('@cumulus/aws-client/services');
 const pckg = require('../package.json');
 const backup = require('./backup');
 const restore = require('./restore');

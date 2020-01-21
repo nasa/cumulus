@@ -5,7 +5,8 @@ const request = require('supertest');
 const sinon = require('sinon');
 const { URL } = require('url');
 const { randomString } = require('@cumulus/common/test-utils');
-const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
+const { s3 } = require('@cumulus/aws-client/services');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 
 const { OAuth2AuthenticationFailure } = require('../../lib/OAuth2');
 const assertions = require('../../lib/assertions');

@@ -3,7 +3,7 @@
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash.get');
 const pdr = require('@cumulus/ingest/pdr');
-const errors = require('@cumulus/common/errors');
+const errors = require('@cumulus/errors');
 const log = require('@cumulus/common/log');
 
 /**

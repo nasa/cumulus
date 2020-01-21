@@ -3,6 +3,7 @@
 const { stringUtils: { globalReplace } } = require('@cumulus/common');
 const { randomString } = require('@cumulus/common/test-utils');
 const { sleep } = require('@cumulus/common/util');
+const { getWorkflowArn } = require('@cumulus/common/workflows');
 const { Rule } = require('@cumulus/api/models');
 
 const {
@@ -23,7 +24,7 @@ const {
   putRecordOnStream,
   tryCatchExit,
   waitForActiveStream,
-  waitForAllTestSf
+  waitForTestSfForRecord
 } = require('../../helpers/kinesisHelpers');
 
 const {
@@ -41,7 +42,7 @@ const {
 // records from a specified time period and triggers workflows associated
 // with the kinesis-type rules.
 describe('The Kinesis Replay API', () => {
-  const maxWaitForSFExistSecs = 60 * 3;
+  const maxWaitForSFExistSecs = 60 * 2;
 
   const ruleDir = './spec/parallel/kinesisTests/data/kinesisReplayRules';
   const providersDir = './data/providers/PODAAC_SWOT/';
@@ -166,40 +167,40 @@ describe('The Kinesis Replay API', () => {
     });
 
     describe('processes messages within the specified time slice', () => {
+      let workflowArn;
+
+      beforeAll(async () => {
+        workflowArn = await getWorkflowArn(testConfig.stackName, testConfig.bucket, rules[0].workflow);
+      });
+
       it('to start the expected workflows', async () => {
         console.log('Waiting for step functions to start...');
-        const expectedWorkflows = targetedRecords.map((record) => waitForAllTestSf(
+        const expectedWorkflows = targetedRecords.map((record) => waitForTestSfForRecord(
           record.identifier,
-          rules[0].workflow,
-          maxWaitForSFExistSecs,
-          1,
-          'HelloWorld'
+          workflowArn,
+          maxWaitForSFExistSecs
         ).catch((err) => fail(err.message)));
 
         const tooOldToExpectWorkflows = tooOldToFetchRecords
-          .map((r) => waitForAllTestSf(
+          .map((r) => waitForTestSfForRecord(
             r.identifier,
-            rules[0].workflow,
-            maxWaitForSFExistSecs,
-            1,
-            'HelloWorld'
+            workflowArn,
+            maxWaitForSFExistSecs
           ).then((ex) => fail(`should not find executions but found ${JSON.stringify(ex)}`))
             .catch((err) => expect(err.message).toBe('Never found started workflow.')));
 
         const tooNewToExpectWorkflows = newRecordsToSkip
-          .map((r) => waitForAllTestSf(
+          .map((r) => waitForTestSfForRecord(
             r.identifier,
-            rules[0].workflow,
-            maxWaitForSFExistSecs,
-            1,
-            'HelloWorld'
+            workflowArn,
+            maxWaitForSFExistSecs
           ).then((ex) => fail(`should not find executions but found ${JSON.stringify(ex)}`))
             .catch((err) => expect(err.message).toBe('Never found started workflow.')));
 
         const workflowExecutions = await Promise.all(expectedWorkflows);
         // if intermittent failures occur here, consider increasing maxWaitForSFExistSecs
         expect(workflowExecutions.length).toEqual(2);
-        workflowExecutions.forEach((exArr) => expect(exArr.length).toEqual(1));
+        workflowExecutions.forEach((exec) => expect(exec).toBeDefined());
 
         console.log('Waiting to ensure workflows expected not to start do not start...');
         await Promise.all(tooOldToExpectWorkflows);

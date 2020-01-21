@@ -15,10 +15,10 @@ const {
   aws,
   CollectionConfigStore,
   constructCollectionId,
-  log,
-  errors
+  log
 } = require('@cumulus/common');
 const { buildURL } = require('@cumulus/common/URLUtils');
+const errors = require('@cumulus/errors');
 
 const { sftpMixin } = require('./sftp');
 const { ftpMixin } = require('./ftp');
