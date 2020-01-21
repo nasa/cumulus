@@ -3,8 +3,9 @@
 const fs = require('fs-extra');
 const path = require('path');
 const { Collection, Granule } = require('@cumulus/api/models');
+const { parseS3Uri } = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
 const {
-  aws: { parseS3Uri, s3 },
   testUtils: { randomString }
 } = require('@cumulus/common');
 const { LambdaStep } = require('@cumulus/common/sfnStep');

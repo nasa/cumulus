@@ -18,18 +18,16 @@ const {
   Pdr,
   Provider
 } = require('@cumulus/api/models');
-const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
-  aws: {
-    deleteS3Object,
-    parseS3Uri,
-    s3,
-    s3CopyObject,
-    s3GetObjectTagging,
-    s3ObjectExists
-  },
-  constructCollectionId
-} = require('@cumulus/common');
+  deleteS3Object,
+  parseS3Uri,
+  s3CopyObject,
+  s3GetObjectTagging,
+  s3ObjectExists
+} = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
+const { generateChecksumFromStream } = require('@cumulus/checksum');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { LambdaStep } = require('@cumulus/common/sfnStep');
 const { getUrl } = require('@cumulus/cmrjs');
 const {

@@ -2,8 +2,8 @@
 
 const fs = require('fs');
 const path = require('path');
+const { s3 } = require('@cumulus/aws-client/services');
 const {
-  aws: { s3 },
   constructCollectionId,
   testUtils: {
     randomString
