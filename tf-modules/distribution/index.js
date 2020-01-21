@@ -15,10 +15,9 @@ const urljoin = require('url-join');
 
 const { AccessToken } = require('@cumulus/api/models');
 const { isLocalApi } = require('@cumulus/api/lib/testUtils');
-const { lambda } = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
-const { s3 } = require('@cumulus/common/aws');
 
 const log = new Logger({ sender: 's3credentials' });
 
@@ -41,7 +40,7 @@ async function requestTemporaryCredentialsFromNgap(username) {
     userid: username // <- used by NGAP
   });
 
-  return lambda().invoke({
+  return awsServices.lambda().invoke({
     FunctionName,
     Payload
   }).promise();
@@ -58,6 +57,7 @@ async function requestTemporaryCredentialsFromNgap(username) {
 async function s3credentials(req, res) {
   const username = req.authorizedMetadata.userName;
   const credentials = await requestTemporaryCredentialsFromNgap(username);
+  console.log(credentials);
   const creds = JSON.parse(credentials.Payload);
   if (Object.keys(creds).some((key) => ['errorMessage', 'errorType', 'stackTrace'].includes(key))) {
     log.error(credentials.Payload);
@@ -91,7 +91,7 @@ function getConfigurations() {
     accessTokenModel: new AccessToken(),
     authClient: earthdataLoginClient,
     distributionUrl: process.env.DISTRIBUTION_ENDPOINT,
-    s3Client: s3()
+    s3Client: awsServices.s3()
   };
 }
 
