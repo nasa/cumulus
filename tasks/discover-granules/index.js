@@ -3,11 +3,20 @@
 const curry = require('lodash.curry');
 const groupBy = require('lodash.groupby');
 const isBoolean = require('lodash.isboolean');
-const log = require('@cumulus/common/log');
+const Logger = require('@cumulus/logger');
 const map = require('lodash.map');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
 const { normalizeProviderPath } = require('@cumulus/ingest/util');
+
+const logger = () => new Logger({
+  executions: process.env.EXECUTIONS,
+  granules: process.env.GRANULES,
+  parentArn: process.env.PARENTARN,
+  sender: process.env.SENDER,
+  stackName: process.env.STACKNAME,
+  version: process.env.TASKVERSION
+});
 
 /**
  * Fetch a list of files from the provider
@@ -178,7 +187,7 @@ const discoverGranules = async ({ config }) => {
 
   const granules = map(filesByGranuleId, buildGranule(config));
 
-  log.info(`Discovered ${granules.length} granules.`);
+  logger().info(`Discovered ${granules.length} granules.`);
   return { granules };
 };
 
