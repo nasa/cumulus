@@ -15,7 +15,7 @@ const urljoin = require('url-join');
 
 const { AccessToken } = require('@cumulus/api/models');
 const { isLocalApi } = require('@cumulus/api/lib/testUtils');
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 
@@ -40,7 +40,7 @@ async function requestTemporaryCredentialsFromNgap(username) {
     userid: username // <- used by NGAP
   });
 
-  return aws.lambda().invoke({
+  return awsServices.lambda().invoke({
     FunctionName,
     Payload
   }).promise();
@@ -91,7 +91,7 @@ function getConfigurations() {
     accessTokenModel: new AccessToken(),
     authClient: earthdataLoginClient,
     distributionUrl: process.env.DISTRIBUTION_ENDPOINT,
-    s3Client: aws.s3()
+    s3Client: awsServices.s3()
   };
 }
 

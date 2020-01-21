@@ -4,11 +4,10 @@ const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
 
+const awsServices = require('@cumulus/aws-client/services');
 const {
   randomId
 } = require('@cumulus/common/test-utils');
-
-const aws = require('@cumulus/common/aws');
 
 const EarthdataLoginClient = require('@cumulus/api/lib/EarthdataLogin');
 
@@ -59,7 +58,7 @@ test('An authorized s3credential requeste invokes NGAPs request for credentials 
   const fakeCredential = { Payload: JSON.stringify({ fake: 'credential' }) };
 
   const spy = sinon.spy(() => Promise.resolve(fakeCredential));
-  sinon.stub(aws, 'lambda').callsFake(() => ({
+  sinon.stub(awsServices, 'lambda').callsFake(() => ({
     invoke: (params) => ({
       promise: () => spy(params)
     })
