@@ -23,7 +23,8 @@
 
 const { Collection, Execution, Pdr } = require('@cumulus/api/models');
 
-const { s3, deleteS3Object } = require('@cumulus/common/aws');
+const { deleteS3Object } = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/common/sfnStep');
 
 const {
