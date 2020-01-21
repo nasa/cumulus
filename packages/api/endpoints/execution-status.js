@@ -5,8 +5,7 @@ const {
   getStateMachineArn,
   pullStepFunctionEvent
 } = require('@cumulus/aws-client/StepFunctions');
-const { executionExists } = require('@cumulus/aws-client/StepFunctions');
-const { StepFunction } = require('@cumulus/ingest/aws');
+const { getExecutionStatus, executionExists } = require('@cumulus/aws-client/StepFunctions');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const models = require('../models');
 
@@ -66,7 +65,7 @@ async function get(req, res) {
 
   // if the execution exists in SFN API, retrieve its information, if not, get from database
   if (await executionExists(arn)) {
-    const status = await StepFunction.getExecutionStatus(arn);
+    const status = await getExecutionStatus(arn);
 
     // if execution output is stored remotely, fetch it from S3 and replace it
     const executionOutput = status.execution.output;

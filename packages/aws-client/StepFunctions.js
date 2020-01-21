@@ -138,6 +138,19 @@ const getExecutionHistory = improveStackTrace(
   )
 );
 
+const getExecutionStatus = async (executionArn) => {
+  const [execution, executionHistory] = await Promise.all([
+    describeExecution({ executionArn }),
+    getExecutionHistory({ executionArn })
+  ]);
+
+  const stateMachine = await describeStateMachine({
+    stateMachineArn: execution.stateMachineArn
+  });
+
+  return { execution, executionHistory, stateMachine };
+};
+
 /**
  * Call StepFunctions ListExecutions
  *
@@ -269,6 +282,7 @@ module.exports = {
   describeStateMachine,
   executionExists,
   getExecutionHistory,
+  getExecutionStatus,
   listExecutions,
   unicodeEscape,
   toSfnExecutionName,

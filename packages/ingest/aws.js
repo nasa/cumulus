@@ -1,11 +1,12 @@
 'use strict';
 
+const AWS = require('aws-sdk');
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
-const aws = require('@cumulus/common/aws');
-const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const AWS = require('aws-sdk');
 const moment = require('moment');
+
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
+const aws = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
 const { deprecate } = require('@cumulus/common/util');
 const { inTestMode } = require('@cumulus/common/test-utils');
@@ -323,16 +324,8 @@ class CloudWatch {
 
 class StepFunction {
   static async getExecutionStatus(executionArn) {
-    const [execution, executionHistory] = await Promise.all([
-      StepFunctions.describeExecution({ executionArn }),
-      StepFunctions.getExecutionHistory({ executionArn })
-    ]);
-
-    const stateMachine = await StepFunctions.describeStateMachine({
-      stateMachineArn: execution.stateMachineArn
-    });
-
-    return { execution, executionHistory, stateMachine };
+    deprecate('@cumulus/ingest/aws/StepFunction.getExecutionStatus', '1.17.0', '@cumulus/aws-client/StepFunction.getExecutionStatus');
+    return StepFunctions.getExecutionStatus(executionArn);
   }
 
   /**
