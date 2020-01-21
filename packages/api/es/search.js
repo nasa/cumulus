@@ -300,7 +300,6 @@ class BaseSearch {
 
   async query() {
     const searchParams = this._buildSearch();
-    console.log("SEARCH PARAMS: " + JSON.stringify(searchParams));
 
     try {
       // search ES with the generated parameters
