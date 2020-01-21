@@ -11,7 +11,7 @@
 
 
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
-const Mutex = require('./lib/mutex');
+const Mutex = require('./lib/Mutex');
 class CumulusNoLockError extends Error {
   constructor(message) {
     super(message);
