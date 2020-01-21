@@ -19,7 +19,7 @@ test.beforeEach((t) => {
   t.context.mutex = new Mutex(t.context.docClient, t.context.tableName);
 });
 
-test('Mutex passes correct params to dynamo docClient on writeLock', async (t) => {
+test('Mutex.wrieLock() passes correct params to dynamo docClient', async (t) => {
   const key = t.context.key;
   const timeout = t.context.timeout;
   const sha = t.context.sha;
@@ -49,7 +49,7 @@ test('Mutex passes correct params to dynamo docClient on writeLock', async (t) =
   t.deepEqual(result, writeParams);
 });
 
-test('Mutex unlock returns result from docClient', async (t) => {
+test('Mutex.unlock() returns result from docClient', async (t) => {
   const key = t.context.key;
   const gitSHA = t.context.sha;
   const mutex = t.context.mutex;
@@ -58,7 +58,7 @@ test('Mutex unlock returns result from docClient', async (t) => {
   t.is(result, true);
 });
 
-test('Mutex unlock throws a CumulusLockError if there is a SHA mismatch', async (t) => {
+test('Mutex.unlock() throws a CumulusLockError if there is a SHA mismatch', async (t) => {
   const key = t.context.key;
   const gitSha = t.context.sha;
   const docClient = t.context.docClient;
@@ -102,13 +102,13 @@ test('Mutex.unlock() re-throws error from DynamoDb document client if checkMatch
   t.is(result.message, 'test error');
 });
 
-test('Mutex returns match on matching sha', async (t) => {
+test('Mutex.checkMatchingSha() returns match on matching sha', async (t) => {
   const mutex = t.context.mutex;
   const result = await mutex.checkMatchingSha(t.context.key, t.context.sha);
   t.is(result, 'match');
 });
 
-test('Mutex returns collision sha on wrong sha', async (t) => {
+test('Mutex.checkMatchingSha() returns collision sha on wrong sha', async (t) => {
   const collisionSha = 'someOtherSha';
   const getResults = t.context.getResults;
   getResults.promise = () => ({ Item: { sha: collisionSha } });
@@ -120,7 +120,7 @@ test('Mutex returns collision sha on wrong sha', async (t) => {
   t.is(result, collisionSha);
 });
 
-test('Mutex returns noLock if no lock existss', async (t) => {
+test('Mutex.checkMatchingSha() returns noLock if no lock existss', async (t) => {
   const getResults = t.context.getResults;
   getResults.promise = () => ({});
   const docClient = t.context.docClient;
