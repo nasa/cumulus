@@ -14,6 +14,7 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus, pull
   rm package-lock.json || true
 fi
 
+npm config set unsafe-perm true
 npm install -g npm
 npm install --ignore-scripts --no-package-lock
 ln -s /dev/stdout ./lerna-debug.log

@@ -71,7 +71,7 @@
     "eslint-plugin-lodash": "^2.7.0",
     "eslint-plugin-node": "^7.0.1",
     "eslint-plugin-unicorn": "^4.0.3",
-    "lerna": "^3.17.0",
+    "lerna": "3.20.2",
     "markdownlint-cli": "^0.19.0",
     "nyc": "^14.0.0",
     "simple-git": "^1.96.0"
