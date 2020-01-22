@@ -15,6 +15,7 @@
     "test": "nyc lerna run --concurrency 1 test",
     "bootstrap": "lerna bootstrap --no-ci --force-local",
     "bootstrap-no-build": "lerna bootstrap --no-ci --force-local --ignore-scripts",
+    "bootstrap-no-build-no-concurrency": "lerna bootstrap --no-ci --force-local --ignore-scripts --concurrency 1",
     "bootstrap-no-build-quiet": "lerna bootstrap --loglevel=error --no-ci --force-local --ignore-scripts",
     "update": "lerna version --exact --force-publish --no-git-tag-version --no-push",
     "publish": "lerna publish --skip-git --yes --exact --repo-version $VERSION",

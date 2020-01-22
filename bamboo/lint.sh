@@ -7,7 +7,7 @@ set -ex
  if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
     echo "*** Using cached bootstrap"
     cd /cumulus/
-    npm run bootstrap-no-build --concurrency 1 && npm run bootstrap-no-build --concurrency 1
+    npm run bootstrap-no-build-no-concurrency && npm run bootstrap-no-build-no-concurrency
  else
     npm run bootstrap-no-build && npm run bootstrap-no-build
  fi
