@@ -33,6 +33,9 @@ class FtpProviderClient {
     this.client = null;
   }
 
+  /**
+   * If the provider username or password are encrypted, decrypt them
+   */
   async decrypt() {
     if (!this.decrypted && this.encrypted) {
       if (this.password) {
