@@ -44,7 +44,7 @@
     "@cumulus/errors": "1.17.0-alpha",
     "@cumulus/logger": "1.17.0",
     "aws-sdk": "^2.585.0",
-    "jsonpath-plus": "^1.0.0",
+    "jsonpath-plus": "^1.1.0",
     "lodash.get": "^4.4.2",
     "lodash.isnil": "^4.0.0",
     "lodash.isobject": "^3.0.2",
