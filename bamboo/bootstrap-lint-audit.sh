@@ -11,6 +11,7 @@ set -e
     cd /cumulus/
     git fetch --all
     git checkout "$GIT_SHA"
+    rm package-lock.json || true
   fi
 
 npm install -g npm
