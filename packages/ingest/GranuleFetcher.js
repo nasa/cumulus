@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs-extra');
-const get = require('lodash.get');
 const cloneDeep = require('lodash.clonedeep');
 const flatten = require('lodash.flatten');
 const os = require('os');
@@ -62,14 +61,6 @@ class GranuleFetcher {
       protocol: provider.protocol,
       username: provider.username
     });
-  }
-
-  connected() {
-    return get(this.providerClient, 'connected', false);
-  }
-
-  end() {
-    return this.providerClient.end ? this.providerClient.end() : undefined;
   }
 
   /**

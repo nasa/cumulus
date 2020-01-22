@@ -21,15 +21,6 @@ class SftpProviderClient {
     });
   }
 
-  connect() {
-    return this.sftpClient.connect()
-      .then(() => log.info({ provider: this.id }, `SFTP Connected to ${this.host}`));
-  }
-
-  end() {
-    return this.sftpClient.end();
-  }
-
   /**
    * Download a remote file to disk
    *
