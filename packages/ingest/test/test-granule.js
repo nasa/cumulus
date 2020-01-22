@@ -24,6 +24,18 @@ const {
 } = require('../granule');
 const GranuleFetcher = require('../GranuleFetcher');
 
+test.before((t) => {
+  t.context.collectionConfig = {
+    dataType: 'testDataType',
+    version: 'testVersion',
+    files: [
+      {
+        regex: '^[A-Z]|[a-z]+\.txt'
+      }
+    ]
+  };
+});
+
 test.beforeEach(async (t) => {
   t.context.internalBucket = randomId('internal-bucket');
   t.context.destBucket = randomId('dest-bucket');
@@ -524,25 +536,15 @@ test('renameS3FileWithTimestamp renames file', async (t) => {
   t.true(renamedFiles.map((f) => f.Key).includes(existingRenamedKey));
 });
 
-const collectionConfig = {
-  dataType: 'testDataType',
-  version: 'testVersion',
-  files: [
-    {
-      regex: '^[A-Z]|[a-z]+\.txt'
-    }
-  ]
-};
-
 test('ingestFile keeps both new and old data when duplicateHandling is version', async (t) => {
-  const sourceBucket = t.context.internalBucket;
-  const destBucket = t.context.destBucket;
+  const { collectionConfig, destBucket, internalBucket } = t.context;
+
   const file = {
     path: randomString(),
     name: 'test.txt'
   };
   const key = path.join(file.path, file.name);
-  const params = { Bucket: sourceBucket, Key: key, Body: randomString() };
+  const params = { Bucket: internalBucket, Key: key, Body: randomString() };
   await s3PutObject(params);
 
   const duplicateHandling = 'version';
@@ -553,7 +555,7 @@ test('ingestFile keeps both new and old data when duplicateHandling is version',
     collectionConfig,
     {
       protocol: 's3',
-      host: sourceBucket
+      host: internalBucket
     },
     fileStagingDir,
     false,
@@ -573,8 +575,7 @@ test('ingestFile keeps both new and old data when duplicateHandling is version',
 });
 
 test('ingestFile throws error when configured to handle duplicates with error', async (t) => {
-  const sourceBucket = t.context.internalBucket;
-  const destBucket = t.context.destBucket;
+  const { collectionConfig, destBucket, internalBucket } = t.context;
 
   const file = {
     path: '',
@@ -582,7 +583,7 @@ test('ingestFile throws error when configured to handle duplicates with error', 
   };
 
   const Key = path.join(file.path, file.name);
-  const params = { Bucket: sourceBucket, Key, Body: 'test' };
+  const params = { Bucket: internalBucket, Key, Body: 'test' };
   await s3PutObject(params);
 
   const duplicateHandling = 'error';
@@ -592,7 +593,7 @@ test('ingestFile throws error when configured to handle duplicates with error', 
     collectionConfig,
     {
       protocol: 's3',
-      host: sourceBucket
+      host: internalBucket
     },
     fileStagingDir,
     false,
@@ -616,14 +617,14 @@ test('ingestFile throws error when configured to handle duplicates with error', 
 });
 
 test('ingestFile skips ingest when duplicateHandling is skip', async (t) => {
-  const sourceBucket = t.context.internalBucket;
-  const destBucket = t.context.destBucket;
+  const { collectionConfig, destBucket, internalBucket } = t.context;
+
   const file = {
     path: randomString(),
     name: 'test.txt'
   };
   const key = path.join(file.path, file.name);
-  const params = { Bucket: sourceBucket, Key: key, Body: randomString(30) };
+  const params = { Bucket: internalBucket, Key: key, Body: randomString(30) };
   await s3PutObject(params);
 
   const duplicateHandling = 'skip';
@@ -633,7 +634,7 @@ test('ingestFile skips ingest when duplicateHandling is skip', async (t) => {
     collectionConfig,
     {
       protocol: 's3',
-      host: sourceBucket
+      host: internalBucket
     },
     fileStagingDir,
     false,
@@ -656,14 +657,14 @@ test('ingestFile skips ingest when duplicateHandling is skip', async (t) => {
 });
 
 test('ingestFile replaces file when duplicateHandling is replace', async (t) => {
-  const sourceBucket = t.context.internalBucket;
-  const destBucket = t.context.destBucket;
+  const { collectionConfig, destBucket, internalBucket } = t.context;
+
   const file = {
     path: randomString(),
     name: 'test.txt'
   };
   const key = path.join(file.path, file.name);
-  const params = { Bucket: sourceBucket, Key: key, Body: randomString(30) };
+  const params = { Bucket: internalBucket, Key: key, Body: randomString(30) };
   await s3PutObject(params);
 
   const duplicateHandling = 'replace';
@@ -673,7 +674,7 @@ test('ingestFile replaces file when duplicateHandling is replace', async (t) => 
     collectionConfig,
     {
       protocol: 's3',
-      host: sourceBucket
+      host: internalBucket
     },
     fileStagingDir,
     false,
@@ -696,8 +697,7 @@ test('ingestFile replaces file when duplicateHandling is replace', async (t) => 
 });
 
 test('ingestFile throws an error when invalid checksum is provided', async (t) => {
-  const sourceBucket = t.context.internalBucket;
-  const destBucket = t.context.destBucket;
+  const { collectionConfig, destBucket, internalBucket } = t.context;
 
   const file = {
     path: '',
@@ -707,7 +707,7 @@ test('ingestFile throws an error when invalid checksum is provided', async (t) =
   };
 
   const Key = path.join(file.path, file.name);
-  const params = { Bucket: sourceBucket, Key, Body: randomString(30) };
+  const params = { Bucket: internalBucket, Key, Body: randomString(30) };
   await s3PutObject(params);
 
   const duplicateHandling = 'replace';
@@ -717,7 +717,7 @@ test('ingestFile throws an error when invalid checksum is provided', async (t) =
     collectionConfig,
     {
       protocol: 's3',
-      host: sourceBucket
+      host: internalBucket
     },
     fileStagingDir,
     false,
@@ -739,8 +739,7 @@ test('ingestFile throws an error when invalid checksum is provided', async (t) =
 });
 
 test('ingestFile throws an error when no checksum is provided and the size is not as expected', async (t) => {
-  const sourceBucket = t.context.internalBucket;
-  const destBucket = t.context.destBucket;
+  const { collectionConfig, destBucket, internalBucket } = t.context;
 
   const file = {
     path: '',
@@ -749,7 +748,7 @@ test('ingestFile throws an error when no checksum is provided and the size is no
   };
 
   const Key = path.join(file.path, file.name);
-  const params = { Bucket: sourceBucket, Key, Body: randomString(30) };
+  const params = { Bucket: internalBucket, Key, Body: randomString(30) };
   await s3PutObject(params);
 
   const duplicateHandling = 'replace';
@@ -759,7 +758,7 @@ test('ingestFile throws an error when no checksum is provided and the size is no
     collectionConfig,
     {
       protocol: 's3',
-      host: sourceBucket
+      host: internalBucket
     },
     fileStagingDir,
     false,
@@ -779,7 +778,7 @@ test('ingestFile throws an error when no checksum is provided and the size is no
 });
 
 test('verifyFile returns type and value when file is verified', async (t) => {
-  const sourceBucket = t.context.internalBucket;
+  const { collectionConfig, internalBucket } = t.context;
 
   const content = 'test-string';
 
@@ -792,7 +791,7 @@ test('verifyFile returns type and value when file is verified', async (t) => {
   };
 
   const Key = path.join(file.path, file.name);
-  const params = { Bucket: sourceBucket, Key, Body: content };
+  const params = { Bucket: internalBucket, Key, Body: content };
   await s3PutObject(params);
 
   const duplicateHandling = 'replace';
@@ -802,14 +801,14 @@ test('verifyFile returns type and value when file is verified', async (t) => {
     collectionConfig,
     {
       protocol: 's3',
-      host: sourceBucket
+      host: internalBucket
     },
     fileStagingDir,
     false,
     duplicateHandling,
   );
 
-  const [type, value] = await testGranule.verifyFile(file, sourceBucket, Key);
+  const [type, value] = await testGranule.verifyFile(file, internalBucket, Key);
   t.is(type, file.checksumType);
   t.is(value, file.checksum);
 });
@@ -830,4 +829,54 @@ test('unversionFilename returns filename without version stamp if present', (t) 
   const actual = unversionFilename(timeStampedFilename);
 
   t.is(expected, actual);
+});
+
+test("getUrlPath() returns the collection's url_path if there are no matching collection file configs", (t) => {
+  const provider = { protocol: 's3' };
+
+  const collectionConfig = {
+    url_path: 'collection-url-path',
+    files: []
+  };
+
+  const granuleFetcher = new GranuleFetcher(null, collectionConfig, provider);
+
+  const file = { name: 'asdf' };
+
+  t.is(granuleFetcher.getUrlPath(file), 'collection-url-path');
+});
+
+test("getUrlPath() returns the collection file config's url_path if there is one", (t) => {
+  const provider = { protocol: 's3' };
+
+  const collectionConfig = {
+    url_path: 'collection-url-path',
+    files: [{
+      regex: /sd/,
+      url_path: 'file-url-path'
+    }]
+  };
+
+  const granuleFetcher = new GranuleFetcher(null, collectionConfig, provider);
+
+  const file = { name: 'asdf' };
+
+  t.is(granuleFetcher.getUrlPath(file), 'file-url-path');
+});
+
+test("getUrlPath() returns the collection's url_path if there is a matching collection file config that does not have a url_path", (t) => {
+  const provider = { protocol: 's3' };
+
+  const collectionConfig = {
+    url_path: 'collection-url-path',
+    files: [{
+      regex: /sd/
+    }]
+  };
+
+  const granuleFetcher = new GranuleFetcher(null, collectionConfig, provider);
+
+  const file = { name: 'asdf' };
+
+  t.is(granuleFetcher.getUrlPath(file), 'collection-url-path');
 });

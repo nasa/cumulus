@@ -122,22 +122,15 @@ class GranuleFetcher {
    * @returns {Object} file object updated with url+path tenplate
    */
   getUrlPath(file) {
-    let urlPath = '';
+    const collectionFileConfig = this.collection.files.find(
+      ({ regex }) => file.name.match(regex)
+    );
 
-    this.collection.files.forEach((fileDef) => {
-      const test = new RegExp(fileDef.regex);
-      const match = file.name.match(test);
-
-      if (match && fileDef.url_path) {
-        urlPath = fileDef.url_path;
-      }
-    });
-
-    if (!urlPath) {
-      urlPath = this.collection.url_path;
+    if (collectionFileConfig && collectionFileConfig.url_path) {
+      return collectionFileConfig.url_path;
     }
 
-    return urlPath;
+    return this.collection.url_path;
   }
 
   /**
