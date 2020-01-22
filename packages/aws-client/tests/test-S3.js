@@ -13,6 +13,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { sleep } = require('@cumulus/common/util');
 
 const {
+  createBucket,
   getS3Object,
   downloadS3File,
   listS3ObjectsV2,
@@ -38,6 +39,19 @@ test.before(async (t) => {
 
 test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.Bucket);
+});
+
+test('createBucket() creates a bucket', async (t) => {
+  const bucketName = randomString();
+  await createBucket(bucketName);
+
+  try {
+    await t.notThrowsAsync(
+      awsServices.s3().headBucket({ Bucket: bucketName }).promise()
+    );
+  } finally {
+    await awsServices.s3().deleteBucket({ Bucket: bucketName }).promise();
+  }
 });
 
 test('putFile() uploads a file to S3', async (t) => {
