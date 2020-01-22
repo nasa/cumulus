@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@cumulus/api": "1.17.0",
+    "@cumulus/aws-client": "1.17.0-alpha4",
     "@cumulus/common": "1.17.0",
     "@cumulus/logger": "1.17.0",
     "aws-serverless-express": "^3.3.6",
