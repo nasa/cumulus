@@ -13,16 +13,14 @@ const {
     AccessToken, Execution, Collection, Provider
   }
 } = require('@cumulus/api');
-const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
-  aws: {
-    getS3Object,
-    s3ObjectExists,
-    parseS3Uri,
-    headObject
-  },
-  constructCollectionId
-} = require('@cumulus/common');
+  getS3Object,
+  s3ObjectExists,
+  parseS3Uri,
+  headObject
+} = require('@cumulus/aws-client/S3');
+const { generateChecksumFromStream } = require('@cumulus/checksum');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { LambdaStep } = require('@cumulus/common/sfnStep');
 const { getUrl } = require('@cumulus/cmrjs');
 const {

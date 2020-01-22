@@ -13,9 +13,18 @@
 const compose = require('lodash.flowright');
 const curry = require('lodash.curry');
 
-const stepFunctionUtils = require('@cumulus/aws-client/StepFunctions');
-
 const { deprecate, isNull, negate } = require('./util');
+
+/**
+ * Given a character, replaces the JS unicode-escape sequence for the character
+ *
+ * @param {char} char - The character to escape
+ * @returns {string} The unicode escape sequence for char
+ *
+ * @private
+ */
+const unicodeEscapeCharacter = (char) =>
+  ['\\u', `0000${char.charCodeAt().toString(16)}`.slice(-4)].join('');
 
 /**
  * Given a string, replaces all characters matching the passed regex with their unicode
@@ -29,7 +38,7 @@ const { deprecate, isNull, negate } = require('./util');
  */
 const unicodeEscape = (str, regex = /[\s\S]/g) => {
   deprecate('@cumulus/common/string/unicodeEscape', '1.17.0', '@cumulus/aws-client/StepFunctions/unicodeEscape');
-  return stepFunctionUtils.unicodeEscape(str, regex);
+  return str.replace(regex, unicodeEscapeCharacter);
 };
 
 /**

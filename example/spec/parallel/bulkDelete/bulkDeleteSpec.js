@@ -1,6 +1,6 @@
 'use strict';
 
-const { ecs } = require('@cumulus/common/aws');
+const { ecs } = require('@cumulus/aws-client/services');
 const {
   api: apiTestUtils,
   getClusterArn

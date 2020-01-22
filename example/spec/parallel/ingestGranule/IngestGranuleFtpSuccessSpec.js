@@ -3,7 +3,7 @@
 const fs = require('fs-extra');
 
 const { models: { Granule } } = require('@cumulus/api');
-const { aws: { headObject } } = require('@cumulus/common');
+const { headObject } = require('@cumulus/aws-client/S3');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 const {
   addCollections,
