@@ -62,6 +62,8 @@ test('Mutex.unlock() throws a CumulusLockError if there is a SHA mismatch', asyn
   const key = t.context.key;
   const gitSha = t.context.sha;
   const docClient = t.context.docClient;
+  const errorMessage = 'Cannot unlock stack, lock already exists from another build '
+                       + 'with SHA someOtherSha, error: Error: test error';
   docClient.delete = () => {
     throw new Error('test error');
   };
@@ -71,13 +73,10 @@ test('Mutex.unlock() throws a CumulusLockError if there is a SHA mismatch', asyn
     })
   });
   const mutex = new Mutex(docClient, 'sometable');
-  let result;
-  try {
-    await mutex.unlock(key, gitSha);
-  } catch (e) {
-    result = e;
-  }
-  t.is(result.name, 'CumulusLockError');
+  await t.throwsAsync(
+    () => mutex.unlock(key, gitSha),
+    { name: 'CumulusLockError', message: errorMessage }
+  );
 });
 
 
@@ -92,14 +91,10 @@ test('Mutex.unlock() re-throws error from DynamoDb document client if checkMatch
     promise: () => ({})
   });
   const mutex = new Mutex(docClient, 'sometable');
-  let result;
-  try {
-    await mutex.unlock(key, gitSha);
-  } catch (e) {
-    result = e;
-  }
-  t.is(result.name, 'Error');
-  t.is(result.message, 'test error');
+  await t.throwsAsync(
+    () => mutex.unlock(key, gitSha),
+    { name: 'Error', message: 'test error' }
+  );
 });
 
 test('Mutex.checkMatchingSha() returns match on matching sha', async (t) => {
