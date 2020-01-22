@@ -15,4 +15,5 @@ set -e
   fi
 
 npm install -g npm
+npm install
 ln -s /dev/stdout ./lerna-debug.log
