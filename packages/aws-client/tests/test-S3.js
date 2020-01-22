@@ -1,11 +1,13 @@
 'use strict';
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { tmpdir } = require('os');
 const test = require('ava');
 const pTimeout = require('p-timeout');
 
+const { promisify } = require('util');
 const { UnparsableFileLocationError } = require('@cumulus/errors');
 const { randomString } = require('@cumulus/common/test-utils');
 const { sleep } = require('@cumulus/common/util');
@@ -18,9 +20,15 @@ const {
   s3Join,
   calculateS3ObjectChecksum,
   validateS3ObjectChecksum,
-  getFileBucketAndKey
+  getFileBucketAndKey,
+  putFile
 } = require('../S3');
 const awsServices = require('../services');
+
+const mkdtemp = promisify(fs.mkdtemp);
+const rmdir = promisify(fs.rmdir);
+const unlink = promisify(fs.unlink);
+const writeFile = promisify(fs.writeFile);
 
 test.before(async (t) => {
   t.context.Bucket = randomString();
@@ -30,6 +38,23 @@ test.before(async (t) => {
 
 test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.Bucket);
+});
+
+test('putFile() uploads a file to S3', async (t) => {
+  const tmpDir = await mkdtemp(`${os.tmpdir()}${path.sep}`);
+  const sourceFile = path.join(tmpDir, 'asdf');
+  const key = randomString();
+
+  try {
+    await writeFile(sourceFile, 'asdf');
+    await putFile(t.context.Bucket, key, sourceFile);
+  } finally {
+    await unlink(sourceFile);
+    await rmdir(tmpDir);
+  }
+
+  const fetchedFile = await getS3Object(t.context.Bucket, key);
+  t.is(fetchedFile.Body.toString(), 'asdf');
 });
 
 test('getS3Object() returns an existing S3 object', async (t) => {
