@@ -84,6 +84,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1040**
   - Removed from `@cumulus/ingest/aws`:
+    - `@cumulus/ingest/aws/Cloudwatch`
     - `@cumulus/ingest/aws/StepFunction.getExecutionUrl`
     - `@cumulus/ingest/aws/StepFunction.pushEvent`
 - **CUMULUS-1481**
