@@ -11,6 +11,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1686**
   - `ecs_cluster_instance_image_id` is now a *required* variable of the `cumulus` module, instead of optional.
 
+- **CUMULUS-1703**
+  - Remove the unused `forceDownload` option from the `sync-granule` tasks's config
+  - Remove the `@cumulus/ingest/granule.Discover` class
+  - Remove the `@cumulus/ingest/granule.Granule` class
+  - Remove the `@cumulus/ingest/pdr.Discover` class
+  - Remove the `@cumulus/ingest/pdr.Granule` class
+
 ### Added
 
 - **CUMULUS-1040**
@@ -21,9 +28,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added the `@cumulus/tf-inventory` package that provides command line utilities for managing Terraform resources in your AWS account
 
 ### Changed
-
-- **CUMULUS-1703**
-  - Remove the `forceDownload` option from the `sync-granule` tasks's config
 
 - **CUMULUS-1040**
   - `@cumulus/common/errors` is now deprecated. Please use `@cumulus/errors` instead.

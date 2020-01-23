@@ -37,7 +37,6 @@
     "@cumulus/errors": "1.17.0-alpha",
     "@cumulus/ingest": "1.17.0",
     "@cumulus/pvl": "1.17.0",
-    "fs-extra": "^8.1.0",
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {
