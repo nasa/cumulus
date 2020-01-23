@@ -1,6 +1,5 @@
 'use strict';
 
-const cloneDeep = require('lodash.clonedeep');
 const flatten = require('lodash.flatten');
 const path = require('path');
 const uuidv4 = require('uuid/v4');
@@ -11,8 +10,8 @@ const {
   log,
   errors
 } = require('@cumulus/common');
-const { buildProviderClient, fetchTextFile } = require('./providerClientUtils');
-const { handleDuplicateFile } = require('./granule');
+const { buildProviderClient, fetchTextFile } = require('@cumulus/ingest/providerClientUtils');
+const { handleDuplicateFile } = require('@cumulus/ingest/granule');
 
 const isChecksumFile = (file) =>
   ['.md5', '.cksum', '.sha1', '.sha256'].includes(path.extname(file.name));
@@ -283,13 +282,13 @@ class GranuleFetcher {
     const destinationKey = path.join(stagingPath, file.name);
 
     // the staged file expected
-    const stagedFile = Object.assign(cloneDeep(file),
-      {
-        filename: aws.buildS3Uri(destinationBucket, destinationKey),
-        fileStagingDir: stagingPath,
-        url_path: this.getUrlPath(file),
-        bucket: destinationBucket
-      });
+    const stagedFile = {
+      ...file,
+      filename: aws.buildS3Uri(destinationBucket, destinationKey),
+      fileStagingDir: stagingPath,
+      url_path: this.getUrlPath(file),
+      bucket: destinationBucket
+    };
     // bind arguments to sync function
     const syncFileFunction = this.providerClient.sync.bind(this.providerClient, fileRemotePath);
 

@@ -20,7 +20,7 @@ const {
   moveGranuleFile,
   renameS3FileWithTimestamp,
   unversionFilename
-} = require('../granule');
+} = require('@cumulus/ingest/granule');
 const GranuleFetcher = require('../GranuleFetcher');
 
 test.before((t) => {

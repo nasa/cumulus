@@ -6,8 +6,8 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const errors = require('@cumulus/errors');
 const lock = require('@cumulus/ingest/lock');
 const { duplicateHandlingType } = require('@cumulus/ingest/granule');
-const GranuleFetcher = require('@cumulus/ingest/GranuleFetcher');
 const log = require('@cumulus/common/log');
+const GranuleFetcher = require('./GranuleFetcher');
 
 /**
  * Ingest a list of granules
