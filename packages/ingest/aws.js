@@ -5,6 +5,7 @@ const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
 const moment = require('moment');
 
+const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
 const Lambda = require('@cumulus/aws-client/Lambda');
 const SQSUtils = require('@cumulus/aws-client/SQS');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
@@ -59,55 +60,24 @@ function invoke(name, payload, type = 'Event') {
 }
 
 class Events {
-  static async putEvent(name, schedule, state, description = null, role = null) {
-    const cwevents = new AWS.CloudWatchEvents();
-
-    const params = {
-      Name: name,
-      Description: description,
-      RoleArn: role,
-      ScheduleExpression: schedule,
-      State: state
-    };
-
-    return cwevents.putRule(params).promise();
+  static putEvent(name, schedule, state, description = null, role = null) {
+    deprecate('@cumulus/ingest/aws/Events.putEvent', '1.17.0', '@cumulus/aws-client/CloudwatchEvents.putEvent');
+    return CloudwatchEvents.putEvent(name, schedule, state, description, role);
   }
 
-  static async deleteEvent(name) {
-    const cwevents = new AWS.CloudWatchEvents();
-
-    const params = {
-      Name: name
-    };
-
-    return cwevents.deleteRule(params).promise();
+  static deleteEvent(name) {
+    deprecate('@cumulus/ingest/aws/Events.deleteEvent', '1.17.0', '@cumulus/aws-client/CloudwatchEvents.deleteEvent');
+    return CloudwatchEvents.deleteEvent(name);
   }
 
-  static async deleteTarget(id, rule) {
-    const cwevents = new AWS.CloudWatchEvents();
-    const params = {
-      Ids: [id],
-      Rule: rule
-    };
-
-    return cwevents.removeTargets(params).promise();
+  static deleteTarget(id, rule) {
+    deprecate('@cumulus/ingest/aws/Events.deleteTarget', '1.17.0', '@cumulus/aws-client/CloudwatchEvents.deleteTarget');
+    return CloudwatchEvents.deleteTarget(id, rule);
   }
 
-  static async putTarget(rule, id, arn, input) {
-    const cwevents = new AWS.CloudWatchEvents();
-
-    const params = {
-      Rule: rule,
-      Targets: [ /* required */
-        {
-          Arn: arn,
-          Id: id,
-          Input: input
-        }
-      ]
-    };
-
-    return cwevents.putTargets(params).promise();
+  static putTarget(rule, id, arn, input) {
+    deprecate('@cumulus/ingest/aws/Events.putTarget', '1.17.0', '@cumulus/aws-client/CloudwatchEvents.putTarget');
+    return CloudwatchEvents.putTarget(rule, id, arn, input);
   }
 }
 
