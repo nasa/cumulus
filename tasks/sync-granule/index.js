@@ -91,7 +91,6 @@ exports.syncGranule = function syncGranule(event) {
 
   return download(ingest, downloadBucket, provider, input.granules)
     .then((granules) => {
-      ingest.end();
       const output = { granules };
       if (collection && collection.process) output.process = collection.process;
       if (config.pdr) output.pdr = config.pdr;
@@ -99,7 +98,6 @@ exports.syncGranule = function syncGranule(event) {
       return output;
     }).catch((e) => {
       log.debug('SyncGranule errored.');
-      ingest.end();
 
       let errorToThrow = e;
       if (e.toString().includes('ECONNREFUSED')) {

@@ -1,9 +1,8 @@
-const fs = require('fs-extra');
 const moment = require('moment');
 const path = require('path');
 
 const test = require('ava');
-
+const S3 = require('@cumulus/aws-client/S3');
 const ingestPayload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const {
@@ -60,26 +59,22 @@ const sums = require('./fixtures/sums');
 
 Object.keys(sums).forEach((key) => {
   test(`granule.verifyFile ${key}`, async (t) => {
-    const granule = new GranuleFetcher(
+    const granuleFetcher = new GranuleFetcher(
       ingestPayload.config.buckets,
       ingestPayload.config.collection,
       ingestPayload.config.provider
     );
     const filepath = path.join(__dirname, 'fixtures', `${key}.txt`);
-    await s3PutObject({
-      Bucket: t.context.internalBucket,
-      Key: key,
-      Body: fs.createReadStream(filepath)
-    });
+    await S3.putFile(t.context.internalBucket, key, filepath);
 
-    try {
-      const file = { checksumType: key, checksum: sums[key] };
-      await granule.verifyFile(file, t.context.internalBucket, key);
-      await granule.verifyFile(key, t.context.internalBucket, key);
-      t.pass();
-    } catch (e) {
-      t.fail(e);
-    }
+    const file = { checksumType: key, checksum: sums[key] };
+
+    await t.notThrowsAsync(
+      async () => {
+        await granuleFetcher.verifyFile(file, t.context.internalBucket, key);
+        await granuleFetcher.verifyFile(key, t.context.internalBucket, key);
+      }
+    );
   });
 });
 
@@ -159,49 +154,6 @@ test('addBucketToFile adds the correct bucket when a config is found', (t) => {
   const updatedFile = testGranule.addBucketToFile(file);
 
   t.is(updatedFile.bucket, 'right-bucket');
-});
-
-test('addUrlPathToFile adds an emptry string as the url_path if no config matches and no collection url_path is configured', (t) => {
-  const collectionConfig = {
-    files: []
-  };
-
-  const testGranule = new GranuleFetcher({}, collectionConfig, { protocol: 's3' });
-
-  const file = { name: 'right-file' };
-  const updatedFile = testGranule.addUrlPathToFile(file);
-
-  t.is(updatedFile.url_path, '');
-});
-
-test("addUrlPathToFile adds the collection config's url_path as the url_path if no config matches and a collection url_path is configured", (t) => {
-  const collectionConfig = {
-    url_path: '/collection/url/path',
-    files: []
-  };
-
-  const testGranule = new GranuleFetcher({}, collectionConfig, { protocol: 's3' });
-
-  const file = { name: 'right-file' };
-  const updatedFile = testGranule.addUrlPathToFile(file);
-
-  t.is(updatedFile.url_path, collectionConfig.url_path);
-});
-
-test("addUrlPathToFile adds the matching collection file config's url_path as the url_path", (t) => {
-  const rightCollectionFileConfig = { regex: '^right-.*', url_path: '/right' };
-  const wrongCollectionFileConfig = { regex: '^wrong-.*', url_path: '/wrong' };
-  const collectionConfig = {
-    url_path: '/collection/url/path',
-    files: [rightCollectionFileConfig, wrongCollectionFileConfig]
-  };
-
-  const testGranule = new GranuleFetcher({}, collectionConfig, { protocol: 's3' });
-
-  const file = { name: 'right-file' };
-  const updatedFile = testGranule.addUrlPathToFile(file);
-
-  t.is(updatedFile.url_path, rightCollectionFileConfig.url_path);
 });
 
 test('moveGranuleFile moves a single file between s3 locations', async (t) => {

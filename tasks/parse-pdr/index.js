@@ -1,27 +1,13 @@
 'use strict';
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
-const fs = require('fs-extra');
 const get = require('lodash.get');
-const os = require('os');
 const path = require('path');
 const S3 = require('@cumulus/aws-client/S3');
-const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
+const { buildProviderClient, fetchTextFile } = require('@cumulus/ingest/providerClientUtils');
 const { CollectionConfigStore } = require('@cumulus/common');
 const { granuleFromFileGroup } = require('@cumulus/ingest/parse-pdr');
 const { pvlToJS } = require('@cumulus/pvl/t');
-
-const fetchRemotePdrFile = async (providerConfig, remotePath) => {
-  const providerClient = buildProviderClient(providerConfig);
-  const downloadDir = await fs.mkdtemp(`${os.tmpdir()}${path.sep}`);
-  const localPath = path.join(downloadDir, 'x');
-  try {
-    await providerClient.download(remotePath, localPath);
-    return await fs.readFile(localPath, 'utf8');
-  } finally {
-    await fs.remove(downloadDir);
-  }
-};
 
 const buildPdrDocument = (rawPdr) => {
   if (rawPdr.trim().length === 0) throw new Error('PDR file had no contents');
@@ -47,8 +33,10 @@ const buildPdrDocument = (rawPdr) => {
 * that is passed to the next task in the workflow
 **/
 const parsePdr = async ({ config, input }) => {
-  const rawPdr = await fetchRemotePdrFile(
-    config.provider,
+  const providerClient = buildProviderClient(config.provider);
+
+  const rawPdr = await fetchTextFile(
+    providerClient,
     path.join(input.pdr.path, input.pdr.name)
   );
 

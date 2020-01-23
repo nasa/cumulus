@@ -1,5 +1,9 @@
 'use strict';
 
+const fs = require('fs-extra');
+const os = require('os');
+const path = require('path');
+const { randomString } = require('@cumulus/common/test-utils');
 const FtpProviderClient = require('./FtpProviderClient');
 const HttpProviderClient = require('./HttpProviderClient');
 const S3ProviderClient = require('./S3ProviderClient');
@@ -24,4 +28,17 @@ const buildProviderClient = (providerConfig = {}) => {
   }
 };
 
-module.exports = { buildProviderClient };
+const fetchTextFile = async (providerClient, remotePath) => {
+  const localPath = path.join(os.tmpdir(), randomString());
+  try {
+    await providerClient.download(remotePath, localPath);
+    return await fs.readFile(localPath, 'utf8');
+  } finally {
+    await fs.unlink(localPath);
+  }
+};
+
+module.exports = {
+  buildProviderClient,
+  fetchTextFile
+};

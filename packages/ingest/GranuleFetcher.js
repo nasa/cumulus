@@ -1,9 +1,7 @@
 'use strict';
 
-const fs = require('fs-extra');
 const cloneDeep = require('lodash.clonedeep');
 const flatten = require('lodash.flatten');
-const os = require('os');
 const path = require('path');
 const uuidv4 = require('uuid/v4');
 const {
@@ -13,8 +11,43 @@ const {
   log,
   errors
 } = require('@cumulus/common');
-const { buildProviderClient } = require('./providerClientUtils');
+const { buildProviderClient, fetchTextFile } = require('./providerClientUtils');
 const { handleDuplicateFile } = require('./granule');
+
+const isChecksumFile = (file) =>
+  ['.md5', '.cksum', '.sha1', '.sha256'].includes(path.extname(file.name));
+
+const addChecksumToFile = async (providerClient, checksumFiles, dataFile) => {
+  if (dataFile.checksumType && dataFile.checksum) return dataFile;
+
+  const checksumFile = checksumFiles.find((cf) => {
+    const ext = path.extname(cf.name);
+    return cf.name === `${dataFile.name}${ext}`;
+  });
+
+  if (checksumFile === undefined) return dataFile;
+
+  const checksumType = checksumFile.name.split('.').pop();
+
+  const checksum = (await fetchTextFile(
+    providerClient,
+    path.join(checksumFile.path, checksumFile.name)
+  )).split(' ').shift();
+
+  return { ...dataFile, checksum, checksumType };
+};
+
+const addChecksumsToFiles = async (providerClient, files) => {
+  const checksumFiles = files.filter(isChecksumFile);
+  const dataFiles = files.filter((f) => !isChecksumFile(f));
+
+  const updatedDataFiles = await Promise.all(
+    dataFiles.map((dataFile) =>
+      addChecksumToFile(providerClient, checksumFiles, dataFile))
+  );
+
+  return [...checksumFiles, ...updatedDataFiles];
+};
 
 class GranuleFetcher {
   /**
@@ -36,8 +69,6 @@ class GranuleFetcher {
   ) {
     this.buckets = buckets;
     this.collection = collection;
-    this.checksumFiles = {};
-    this.supportedChecksumFileTypes = ['md5', 'cksum', 'sha1', 'sha256'];
 
     if (fileStagingDir && fileStagingDir[0] === '/') this.fileStagingDir = fileStagingDir.substr(1);
     else this.fileStagingDir = fileStagingDir;
@@ -98,8 +129,12 @@ class GranuleFetcher {
 
     this.collectionId = constructCollectionId(dataType, version);
 
-    const downloadFiles = granule.files
-      .filter((f) => this.filterChecksumFiles(f))
+    const filesWithChecksums = await addChecksumsToFiles(
+      this.providerClient, granule.files
+    );
+
+    const downloadFiles = filesWithChecksums
+      .filter((f) => !isChecksumFile(f))
       .map((f) => this.ingestFile(f, bucket, this.duplicateHandling));
 
     log.debug('awaiting all download.Files');
@@ -122,9 +157,7 @@ class GranuleFetcher {
    * @returns {Object} file object updated with url+path tenplate
    */
   getUrlPath(file) {
-    const collectionFileConfig = this.collection.files.find(
-      ({ regex }) => file.name.match(regex)
-    );
+    const collectionFileConfig = this.findCollectionFileConfigForFile(file);
 
     if (collectionFileConfig && collectionFileConfig.url_path) {
       return collectionFileConfig.url_path;
@@ -152,6 +185,8 @@ class GranuleFetcher {
    *
    * @param {Object} file - an object containing a "name" property
    * @returns {Object} the file with a bucket property set
+   * @throws {Error} throws an exception if the file didn't have a matching
+   *   config
    * @private
    */
   addBucketToFile(file) {
@@ -161,47 +196,7 @@ class GranuleFetcher {
     }
     const bucket = this.buckets[fileConfig.bucket].name;
 
-    return Object.assign(cloneDeep(file), { bucket });
-  }
-
-  /**
-   * Add a url_path property to the given file
-   *
-   * Note: This returns a copy of the file parameter, it does not modify it.
-   *
-   * @param {Object} file - an object containing a "name" property
-   * @returns {Object} the file with a url_path property set
-   * @private
-   */
-  addUrlPathToFile(file) {
-    let foundFileConfigUrlPath;
-
-    const fileConfig = this.findCollectionFileConfigForFile(file);
-    if (fileConfig) foundFileConfigUrlPath = fileConfig.url_path;
-
-    // eslint-disable-next-line camelcase
-    const url_path = foundFileConfigUrlPath || this.collection.url_path || '';
-    return Object.assign(cloneDeep(file), { url_path });
-  }
-
-  /**
-   * Filter out checksum files and put them in `this.checksumFiles` object.
-   * To be used with `Array.prototype.filter`.
-   *
-   * @param {Object} file - file object from granule.files
-   * @returns {boolean} - whether file was a supported checksum or not
-   */
-  filterChecksumFiles(file) {
-    let unsupported = true;
-    this.supportedChecksumFileTypes.forEach((type) => {
-      const ext = `.${type}`;
-      if (file.name.indexOf(ext) > 0) {
-        this.checksumFiles[file.name.replace(ext, '')] = file;
-        unsupported = false;
-      }
-    });
-
-    return unsupported;
+    return { ...file, bucket };
   }
 
   /**
@@ -219,20 +214,18 @@ class GranuleFetcher {
    * @memberof Granule
    */
   async verifyFile(file, bucket, key, options = {}) {
-    const [type, value] = await this.retrieveSuppliedFileChecksumInformation(file);
-    let output = [type, value];
-    if (type && value) {
+    if (file.checksumType && file.checksum) {
       await aws.validateS3ObjectChecksum({
-        algorithm: type,
+        algorithm: file.checksumType,
         bucket,
         key,
-        expectedSum: value,
+        expectedSum: file.checksum,
         options
       });
     } else {
-      log.warn(`Could not verify ${file.name} expected checksum: ${value} of type ${type}.`);
-      output = [null, null];
+      log.warn(`Could not verify ${file.name} expected checksum: ${file.checksum} of type ${file.checksumType}.`);
     }
+
     if (file.size || file.fileSize) { // file.fileSize to be removed after CnmToGranule update
       const ingestedSize = await aws.getObjectSize(bucket, key);
       if (ingestedSize !== (file.size || file.fileSize)) { // file.fileSize to be removed
@@ -244,7 +237,10 @@ class GranuleFetcher {
     } else {
       log.warn(`Could not verify ${file.name} expected file size: ${file.size}.`);
     }
-    return output;
+
+    return (file.checksumType || file.checksum)
+      ? [file.checksumType, file.checksum]
+      : [null, null];
   }
 
   /**
@@ -264,52 +260,6 @@ class GranuleFetcher {
         VersioningConfiguration: { Status: 'Enabled' }
       }).promise();
     }
-  }
-
-  /**
-   * Retrieve supplied checksum from a file's specification or an accompanying checksum file.
-   *
-   * @param {Object} file - file object
-   * @returns {Array} returns array where first item is the checksum algorithm,
-   * and the second item is the value of the checksum
-   */
-  async retrieveSuppliedFileChecksumInformation(file) {
-    // try to get filespec checksum data
-    if (file.checksumType && file.checksum) {
-      return [file.checksumType, file.checksum];
-    }
-    // read checksum from checksum file
-    if (this.checksumFiles[file.name]) {
-      const checksumInfo = this.checksumFiles[file.name];
-
-      const checksumRemotePath = path.join(checksumInfo.path, checksumInfo.name);
-
-      const downloadDir = await fs.mkdtemp(`${os.tmpdir()}${path.sep}`);
-      const checksumLocalPath = path.join(downloadDir, checksumInfo.name);
-
-      let checksumValue;
-      try {
-        await this.providerClient.download(checksumRemotePath, checksumLocalPath);
-        const checksumFile = await fs.readFile(checksumLocalPath, 'utf8');
-        [checksumValue] = checksumFile.split(' ');
-      } finally {
-        await fs.remove(downloadDir);
-      }
-
-      // default type to md5
-      let checksumType = 'md5';
-      // return type based on filename
-      this.supportedChecksumFileTypes.forEach((type) => {
-        if (checksumInfo.name.indexOf(type) > 0) {
-          checksumType = type;
-        }
-      });
-
-      return [checksumType, checksumValue];
-    }
-
-    // No checksum found
-    return [null, null];
   }
 
   /**
