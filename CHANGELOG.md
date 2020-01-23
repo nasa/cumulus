@@ -53,6 +53,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `@cumulus/common/util/setErrorStack`
   - The following service classes and utilities in `@cumulus/ingest/aws` have been deprecated and moved to `@cumulus/aws-client`:
     - `@cumulus/ingest/invoke`
+    - `@cumulus/ingest/SQS.attributes`
+    - `@cumulus/ingest/SQS.deleteMessage`
+    - `@cumulus/ingest/SQS.deleteQueue`
+    - `@cumulus/ingest/SQS.getUrl`
+    - `@cumulus/ingest/SQS.receiveMessage`
+    - `@cumulus/ingest/SQS.sendMessage`
     - `@cumulus/ingest/StepFunction.getExecutionStatus`
     - `@cumulus/ingest/StepFunction.getExecutionUrl`
 
@@ -73,7 +79,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - **CUMULUS-1040**
-  - Removed from `@cumulus/ingest/aws`
+  - Removed from `@cumulus/ingest/aws`:
+    - `@cumulus/ingest/aws/StepFunction.getExecutionUrl`
+    - `@cumulus/ingest/aws/StepFunction.pushEvent`
 - **CUMULUS-1481**
   - removed `process` config and output from PostToCmr as it was not required by the task nor downstream steps, and should still be in the output message's `meta` regardless.
 
