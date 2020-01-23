@@ -9,7 +9,6 @@ set -ex
     cd /cumulus/
  fi
 
-npm config set unsafe-perm true
 npm run bootstrap-no-build && npm run bootstrap-no-build
 npm run lint-md
 npm run lint
