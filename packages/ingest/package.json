@@ -49,7 +49,6 @@
     "lodash.get": "^4.4.2",
     "lodash.groupby": "^4.6.0",
     "lodash.isnumber": "^3.0.3",
-    "lodash.isobject": "^3.0.2",
     "lodash.isstring": "4.0.1",
     "lodash.omit": "^4.5.0",
     "mime-types": "^2.1.22",

@@ -1,15 +1,11 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const isObject = require('lodash.isobject');
-const isString = require('lodash.isstring');
-const moment = require('moment');
 
 const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
 const Lambda = require('@cumulus/aws-client/Lambda');
 const SQSUtils = require('@cumulus/aws-client/SQS');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const aws = require('@cumulus/common/aws');
 const { deprecate } = require('@cumulus/common/util');
 
 /**
