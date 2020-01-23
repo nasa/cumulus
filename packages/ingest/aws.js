@@ -6,6 +6,7 @@ const isString = require('lodash.isstring');
 const moment = require('moment');
 
 const Lambda = require('@cumulus/aws-client/Lambda');
+const SQSUtils = require('@cumulus/aws-client/SQS');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const aws = require('@cumulus/common/aws');
 const { deprecate } = require('@cumulus/common/util');
@@ -122,83 +123,37 @@ class Events {
 }
 
 class SQS {
-  static async getUrl(name) {
-    const queue = sqs();
-    const u = await queue.getQueueUrl({ QueueName: name }).promise();
-    return u.QueueUrl;
+  static getUrl(name) {
+    deprecate('@cumulus/ingest/aws/SQS.getUrl', '1.17.0', '@cumulus/aws-client/SQS.getQueueUrlByName');
+    return SQSUtils.getQueueUrlByName(name);
   }
 
-  static async deleteQueue(queueUrl) {
-    const queue = sqs();
-    const params = {
-      QueueUrl: queueUrl
-    };
-
-    return queue.deleteQueue(params).promise();
+  static deleteQueue(queueUrl) {
+    deprecate('@cumulus/ingest/aws/SQS.deleteQueue', '1.17.0', '@cumulus/aws-client/SQS.deleteQueue');
+    return SQSUtils.deleteQueue(queueUrl);
   }
 
-  static async receiveMessage(queueUrl, numOfMessages = 1, timeout = 30) {
-    const queue = sqs();
-    const params = {
-      QueueUrl: queueUrl,
-      AttributeNames: ['All'],
-      VisibilityTimeout: timeout,
-      MaxNumberOfMessages: numOfMessages
-    };
-
-    const messages = await queue.receiveMessage(params).promise();
-
-    // convert body from string to js object
-    if (Object.prototype.hasOwnProperty.call(messages, 'Messages')) {
-      messages.Messages.forEach((mes) => {
-        mes.Body = JSON.parse(mes.Body); // eslint-disable-line no-param-reassign
-      });
-
-      return messages.Messages;
-    }
-    return [];
+  static receiveMessage(queueUrl, numOfMessages = 1, timeout = 30) {
+    deprecate('@cumulus/ingest/aws/SQS.receiveMessage', '1.17.0', '@cumulus/aws-client/SQS.receiveSQSMessages');
+    return SQSUtils.sendSQSMessage(queueUrl, {
+      numOfMessages,
+      visibilityTimeout: timeout
+    });
   }
 
-  static async sendMessage(queueUrl, message) {
-    let messageBody;
-    if (isString(message)) {
-      messageBody = message;
-    } else if (isObject(message)) {
-      messageBody = JSON.stringify(message);
-    } else {
-      throw new TypeError('body type is not accepted');
-    }
-
-    const params = {
-      MessageBody: messageBody,
-      QueueUrl: queueUrl
-    };
-
-    const queue = sqs();
-    return queue.sendMessage(params).promise();
+  static sendMessage(queueUrl, message) {
+    deprecate('@cumulus/ingest/aws/SQS.sendMessage', '1.17.0', '@cumulus/aws-client/SQS.sendSQSMessage');
+    return SQSUtils.sendSQSMessage(queueUrl, message);
   }
 
-  static async deleteMessage(queueUrl, receiptHandle) {
-    const queue = sqs();
-    const params = {
-      QueueUrl: queueUrl,
-      ReceiptHandle: receiptHandle
-    };
-
-    return queue.deleteMessage(params).promise();
+  static deleteMessage(queueUrl, receiptHandle) {
+    deprecate('@cumulus/ingest/aws/SQS.deleteMessage', '1.17.0', '@cumulus/aws-client/SQS.deleteSQSMessage');
+    return SQSUtils.deleteSQSMessage(queueUrl, receiptHandle);
   }
 
-  static async attributes(name) {
-    const u = await this.getUrl(name);
-    const queue = sqs();
-    const params = {
-      AttributeNames: ['All'],
-      QueueUrl: u
-    };
-
-    const attr = await queue.getQueueAttributes(params).promise();
-    attr.Attributes.name = name;
-    return attr.Attributes;
+  static attributes(name) {
+    deprecate('@cumulus/ingest/aws/SQS.attributes', '1.17.0', '@cumulus/aws-client/SQS.getQueueAttributes');
+    return SQSUtils.getQueueAttributes(name);
   }
 }
 
