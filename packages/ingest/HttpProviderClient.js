@@ -23,20 +23,19 @@ class HttpProviderClient {
     this.protocol = providerConfig.protocol;
     this.host = providerConfig.host;
     this.port = providerConfig.port;
-    // this.path = providerConfig.path;
 
     this.endpoint = buildURL({
       protocol: this.protocol,
       host: this.host,
       port: this.port
-      // path: this.path
     });
   }
 
   /**
    * List all PDR files from a given endpoint
    *
-   * @returns {Promise.<Array>} of a list of files
+   * @param {string} path - the remote path to list
+   * @returns {Promise<Array>} a list of files
    */
   list(path) {
     validateHost(this.host);

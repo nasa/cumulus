@@ -34,6 +34,8 @@ class SftpProviderClient {
 
   /**
    * List all files from a given endpoint
+   *
+   * @param {string} path - the path to list
    * @returns {Promise}
    * @private
    */

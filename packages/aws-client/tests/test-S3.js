@@ -34,7 +34,7 @@ const writeFile = promisify(fs.writeFile);
 test.before(async (t) => {
   t.context.Bucket = randomString();
 
-  await awsServices.s3().createBucket({ Bucket: t.context.Bucket }).promise();
+  await createBucket({ Bucket: t.context.Bucket }).promise();
 });
 
 test.after.always(async (t) => {
@@ -139,7 +139,7 @@ test('s3Join behaves as expected', (t) => {
 
 test('listS3ObjectsV2 handles non-truncated case', async (t) => {
   const Bucket = randomString();
-  await awsServices.s3().createBucket({ Bucket }).promise();
+  await createBucket({ Bucket }).promise();
 
   await Promise.all(['a', 'b', 'c'].map((Key) => awsServices.s3().putObject({
     Bucket,
@@ -159,7 +159,7 @@ test('listS3ObjectsV2 handles non-truncated case', async (t) => {
 
 test('listS3ObjectsV2 handles truncated case', async (t) => {
   const Bucket = randomString();
-  await awsServices.s3().createBucket({ Bucket }).promise();
+  await createBucket({ Bucket }).promise();
 
   await Promise.all(['a', 'b', 'c'].map((Key) => awsServices.s3().putObject({
     Bucket,
@@ -179,7 +179,7 @@ test('listS3ObjectsV2 handles truncated case', async (t) => {
 
 test('downloadS3File rejects promise if key not found', async (t) => {
   const Bucket = randomString();
-  await awsServices.s3().createBucket({ Bucket }).promise();
+  await createBucket({ Bucket }).promise();
 
   try {
     await downloadS3File({ Bucket, Key: 'not-gonna-find-it' }, '/tmp/wut');
@@ -193,7 +193,7 @@ test('downloadS3File resolves filepath if key is found', async (t) => {
   const Key = 'example';
   const Body = 'example';
 
-  await awsServices.s3().createBucket({ Bucket }).promise();
+  await createBucket({ Bucket }).promise();
   await awsServices.s3().putObject({ Bucket, Key: Key, Body: Body }).promise();
 
   const params = { Bucket, Key: Key };
@@ -218,7 +218,7 @@ test('calculateS3ObjectChecksum returns correct checksum', async (t) => {
   const shasum = 'c3499c2729730a7f807efb8676a92dcb6f8a3f8f';
   const sha256sum = '50d858e0985ecc7f60418aaf0cc5ab587f42c2570a884095a9e8ccacd0f6545c';
 
-  await awsServices.s3().createBucket({ Bucket }).promise();
+  await createBucket({ Bucket }).promise();
   await awsServices.s3().putObject({ Bucket, Key, Body }).promise();
 
   const ck = await calculateS3ObjectChecksum({ algorithm: 'cksum', bucket: Bucket, key: Key });
@@ -237,7 +237,7 @@ test('validateS3ObjectChecksum returns true for good checksum', async (t) => {
   const Key = 'example';
   const Body = 'example';
 
-  await awsServices.s3().createBucket({ Bucket }).promise();
+  await createBucket({ Bucket }).promise();
   await awsServices.s3().putObject({ Bucket, Key, Body }).promise();
 
   const cksum = 148323542;
@@ -253,7 +253,7 @@ test('validateS3ObjectChecksum throws InvalidChecksum error on bad checksum', as
   const Key = 'example';
   const Body = 'example';
 
-  await awsServices.s3().createBucket({ Bucket }).promise();
+  await createBucket({ Bucket }).promise();
   await awsServices.s3().putObject({ Bucket, Key, Body }).promise();
 
   const cksum = 11111111111;

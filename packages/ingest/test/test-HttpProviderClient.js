@@ -1,8 +1,12 @@
 'use strict';
 
+const fs = require('fs');
 const rewire = require('rewire');
 const test = require('ava');
 const EventEmitter = require('events');
+const path = require('path');
+const { promisify } = require('util');
+const { tmpdir } = require('os');
 const { Readable } = require('stream');
 const {
   calculateS3ObjectChecksum,
@@ -64,6 +68,8 @@ test.serial('list() returns files with provider path', async (t) => {
     Buffer.from(responseBody),
     {}
   );
+
+  console.log('actualFiles:', JSON.stringify(actualFiles, null, 2));
 
   const expectedFiles = [{ name: 'file.txt', path: '' }];
 
@@ -147,4 +153,15 @@ test.serial('list() returns an exception if a fetch404 event occurs', async (t) 
 
   t.true(err.message.includes('Received a 404 error'));
   t.deepEqual(err.details, { foo: 'bar' });
+});
+
+test.serial('download() downloads a file', async (t) => {
+  const { httpProviderClient } = t.context;
+  const localPath = path.join(tmpdir(), randomString());
+  try {
+    await httpProviderClient.download('pdrs/PDN.ID1611071307.PDR', localPath);
+    t.is(await promisify(fs.access)(localPath), undefined);
+  } finally {
+    await promisify(fs.unlink)(localPath);
+  }
 });
