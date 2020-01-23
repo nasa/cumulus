@@ -57,7 +57,6 @@ async function requestTemporaryCredentialsFromNgap(username) {
 async function s3credentials(req, res) {
   const username = req.authorizedMetadata.userName;
   const credentials = await requestTemporaryCredentialsFromNgap(username);
-  console.log(credentials);
   const creds = JSON.parse(credentials.Payload);
   if (Object.keys(creds).some((key) => ['errorMessage', 'errorType', 'stackTrace'].includes(key))) {
     log.error(credentials.Payload);
