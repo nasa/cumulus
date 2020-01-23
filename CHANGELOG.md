@@ -47,6 +47,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1664**
   - Updated `dbIndexer` Lambda to remove hardcoded references to DynamoDB table names.
 
+- **CUMULUS-1733**
+  - fixed granule discovery recursion algorithm used in FTP protocol
+
 ### Removed
 
 - **CUMULUS-1481**
