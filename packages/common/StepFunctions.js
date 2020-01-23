@@ -1,7 +1,17 @@
 'use strict';
 
-const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { deprecate } = require('./util');
+const aws = require('./aws');
+
+// Utility functions
+
+const doesExecutionExist = (describeExecutionPromise) =>
+  describeExecutionPromise
+    .then(() => true)
+    .catch((err) => {
+      if (err.code === 'ExecutionDoesNotExist') return false;
+      throw err;
+    });
 
 // Exported functions
 
@@ -19,10 +29,14 @@ const { deprecate } = require('./util');
  *
  * @kind function
  */
-const describeExecution = (params) => {
-  deprecate('@cumulus/common/StepFunctions.describeExecution', '1.17.0', '@cumulus/aws-client/StepFunctions.describeExecution');
-  return StepFunctions.describeExecution(params);
-};
+const describeExecution = aws.improveStackTrace(
+  aws.retryOnThrottlingException(
+    (params) => {
+      deprecate('@cumulus/common/StepFunctions.describeExecution', '1.17.0', '@cumulus/aws-client/StepFunctions.describeExecution');
+      return aws.sfn().describeExecution(params).promise();
+    }
+  )
+);
 
 /**
  * Call StepFunctions DescribeStateMachine
@@ -38,10 +52,14 @@ const describeExecution = (params) => {
  *
  * @kind function
  */
-const describeStateMachine = (params) => {
-  deprecate('@cumulus/common/StepFunctions.describeStateMachine', '1.17.0', '@cumulus/aws-client/StepFunctions.describeStateMachine');
-  return StepFunctions.describeStateMachine(params);
-};
+const describeStateMachine = aws.improveStackTrace(
+  aws.retryOnThrottlingException(
+    (params) => {
+      deprecate('@cumulus/common/StepFunctions.describeStateMachine', '1.17.0', '@cumulus/aws-client/StepFunctions.describeStateMachine');
+      return aws.sfn().describeStateMachine(params).promise();
+    }
+  )
+);
 
 /**
  * Check if a Step Function Execution exists
@@ -57,7 +75,7 @@ const describeStateMachine = (params) => {
  */
 const executionExists = (executionArn) => {
   deprecate('@cumulus/common/StepFunctions.executionExists', '1.17.0', '@cumulus/aws-client/StepFunctions.executionExists');
-  return StepFunctions.doesExecutionExist(StepFunctions.describeExecution({ executionArn }));
+  return doesExecutionExist(describeExecution({ executionArn }));
 };
 
 /**
@@ -74,10 +92,36 @@ const executionExists = (executionArn) => {
  *
  * @kind function
  */
-const getExecutionHistory = (params) => {
-  deprecate('@cumulus/common/StepFunctions.getExecutionHistory', '1.17.0', '@cumulus/aws-client/StepFunctions.getExecutionHistory');
-  return StepFunctions.getExecutionHistory(params);
-};
+const getExecutionHistory = aws.improveStackTrace(
+  aws.retryOnThrottlingException(
+    async (
+      params,
+      previousResponse = {
+        events: []
+      }
+    ) => {
+      deprecate('@cumulus/common/StepFunctions.getExecutionHistory', '1.17.0', '@cumulus/aws-client/StepFunctions.getExecutionHistory');
+      const response = await aws.sfn().getExecutionHistory(params).promise();
+      const events = [
+        ...previousResponse.events,
+        ...response.events
+      ];
+      // If there is a nextToken, recursively call this function to get all events
+      // in the execution history.
+      if (response.nextToken) {
+        return getExecutionHistory({
+          ...params,
+          nextToken: response.nextToken
+        }, {
+          events
+        });
+      }
+      return {
+        events
+      };
+    }
+  )
+);
 
 /**
  * Call StepFunctions ListExecutions
@@ -93,10 +137,14 @@ const getExecutionHistory = (params) => {
  *
  * @kind function
  */
-const listExecutions = (params) => {
-  deprecate('@cumulus/common/StepFunctions.listExecutions', '1.17.0', '@cumulus/aws-client/StepFunctions.listExecutions');
-  return StepFunctions.listExecutions(params);
-};
+const listExecutions = aws.improveStackTrace(
+  aws.retryOnThrottlingException(
+    (params) => {
+      deprecate('@cumulus/common/StepFunctions.listExecutions', '1.17.0', '@cumulus/aws-client/StepFunctions.listExecutions');
+      return aws.sfn().listExecutions(params).promise();
+    }
+  )
+);
 
 module.exports = {
   describeExecution,
@@ -106,5 +154,5 @@ module.exports = {
   listExecutions,
 
   // Not part of the public API, exported for testing
-  doesExecutionExist: StepFunctions.doesExecutionExist
+  doesExecutionExist
 };
