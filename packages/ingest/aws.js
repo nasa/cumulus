@@ -58,17 +58,6 @@ function invoke(name, payload, type = 'Event') {
   return Lambda.invoke(name, payload, type);
 }
 
-/**
- * sqs class instance generator
- *
- * @param {boolean} local Whether this is a local call
- * @returns {object} Returns a instance of aws SQS class
- */
-
-function sqs(local) {
-  return new AWS.SQS(getEndpoint(local, 9324));
-}
-
 class Events {
   static async putEvent(name, schedule, state, description = null, role = null) {
     const cwevents = new AWS.CloudWatchEvents();
@@ -265,35 +254,6 @@ class StepFunction {
   static async getExecutionStatus(executionArn) {
     deprecate('@cumulus/ingest/aws/StepFunction.getExecutionStatus', '1.17.0', '@cumulus/aws-client/StepFunction.getExecutionStatus');
     return StepFunctions.getExecutionStatus(executionArn);
-  }
-
-  /**
-   * Push an event to S3 if the length of the event is greater than 32000 bytes
-   *
-   * The event must have the following properties:
-   * - resources.stack
-   * - ingest_meta.execution_name
-   *
-   * @param {Object} event - an event to be pushed to S3
-   * @returns {Promise.<Object>} - a Promise that resoles to an Object with an
-   *   s3_path property indicating where the event was pushed to
-   */
-  static pushEvent(event) {
-    const str = JSON.stringify(event);
-
-    if (str.length <= 32000) return Promise.resolve(event);
-
-    const stack = event.meta.stack;
-    const name = event.cumulus_meta.execution_name;
-    const key = `${stack}/payloads/${name}.json`;
-    const bucket = event.cumulus_meta.system_bucket;
-
-    return aws.s3().putObject({
-      Bucket: bucket,
-      Key: key,
-      Body: str
-    }).promise()
-      .then(() => ({ s3_path: `s3://${bucket}/${key}` }));
   }
 }
 
