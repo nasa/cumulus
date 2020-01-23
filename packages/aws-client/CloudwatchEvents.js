@@ -1,6 +1,6 @@
 const awsServices = require('./services');
 
-exports.putEvent = (name, schedule, state, description = null, role = null) {
+exports.putEvent = (name, schedule, state, description = null, role = null) => {
   const params = {
     Name: name,
     Description: description,
