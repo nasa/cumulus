@@ -158,68 +158,6 @@ class ECS {
   }
 }
 
-
-class CloudWatch {
-  static cw() {
-    return new AWS.CloudWatch();
-  }
-
-  /**
-   * Return the bucket size using information provided by the CloudWatch
-   *
-   * Example return object:
-   * ```
-   * {
-   *    Timestamp: 2017-04-23T17:39:00.000Z,
-   *    Sum: 4809568606909,
-   *    Unit: 'Bytes',
-   *    bucket: 'cumulus-internal'
-   * }
-   * ```
-   *
-   * @param {string} bucketName - Name of the bucket to get the size
-   * @returns {Object} Retuns total storage for a given bucket
-   */
-  static async bucketSize(bucketName) {
-    AWS.config.update({ region: process.env.AWS_DEFAULT_REGION });
-    const cw = this.cw();
-
-    const params = {
-      EndTime: moment().unix(),
-      MetricName: 'BucketSizeBytes',
-      Namespace: 'AWS/S3',
-      Period: 3600 * 24, // 24 hours
-      StartTime: moment().subtract(5, 'day').unix(),
-      Dimensions: [
-        {
-          Name: 'BucketName',
-          Value: bucketName
-        },
-        {
-          Name: 'StorageType',
-          Value: 'StandardStorage'
-        }
-      ],
-      Statistics: [
-        'Sum'
-      ]
-    };
-
-    const response = await cw.getMetricStatistics(params).promise();
-
-    // return the latest number
-    const sorted = response.Datapoints.sort((a, b) => {
-      const time1 = moment(a.Timestamp).unix();
-      const time2 = moment(b.Timestamp).unix();
-
-      return time1 > time2 ? -1 : 1;
-    });
-
-    sorted[0].bucket = bucketName;
-    return sorted[0];
-  }
-}
-
 class StepFunction {
   static async getExecutionStatus(executionArn) {
     deprecate('@cumulus/ingest/aws/StepFunction.getExecutionStatus', '1.17.0', '@cumulus/aws-client/StepFunction.getExecutionStatus');
@@ -228,7 +166,6 @@ class StepFunction {
 }
 
 module.exports = {
-  CloudWatch,
   SQS,
   ECS,
   invoke,
