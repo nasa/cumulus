@@ -3,13 +3,13 @@
 const get = require('lodash.get');
 const pLimit = require('p-limit');
 
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
   getCollectionIdFromMessage,
   getMessageExecutionArn,
   getMessageExecutionName
 } = require('@cumulus/common/message');
 const { isNil, removeNilProperties } = require('@cumulus/common/util');
-const aws = require('@cumulus/ingest/aws');
 
 const executionSchema = require('./schemas').execution;
 const Manager = require('./base');
@@ -46,7 +46,7 @@ class Execution extends Manager {
       arn,
       asyncOperationId: get(cumulusMessage, 'cumulus_meta.asyncOperationId'),
       parentArn: get(cumulusMessage, 'cumulus_meta.parentExecutionArn'),
-      execution: aws.getExecutionUrl(arn),
+      execution: StepFunctions.getExecutionUrl(arn),
       tasks: get(cumulusMessage, 'meta.workflow_tasks'),
       error: parseException(cumulusMessage.exception),
       type: get(cumulusMessage, 'meta.workflow_name'),
