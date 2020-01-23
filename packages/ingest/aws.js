@@ -1,43 +1,10 @@
 'use strict';
 
-const AWS = require('aws-sdk');
-
 const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
 const Lambda = require('@cumulus/aws-client/Lambda');
 const SQSUtils = require('@cumulus/aws-client/SQS');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { deprecate } = require('@cumulus/common/util');
-
-/**
- * getEndpoint returns proper AWS arguments for various
- * AWS classes to use. It is primarily intended for cases when
- * running an AWS service locally. For example, it sets the correct
- * endpoint for a dynamoDB table running locally and so on
- *
- * @param {boolean} [local] whether this is a local run
- * @param {number} [port=8000] port number defaults to 8000
- * @returns {object} the options for AWS service classes
- */
-
-function getEndpoint(local = false, port = 8000) {
-  const args = {};
-  if (process.env.IS_LOCAL === 'true' || local) {
-    // use dummy access info
-    AWS.config.update({
-      accessKeyId: 'myKeyId',
-      secretAccessKey: 'secretKey',
-      region: 'us-east-1'
-    });
-    args.endpoint = new AWS.Endpoint(`http://localhost:${port}`);
-    return args;
-  }
-
-  if (process.env.AWS_DEFAULT_REGION) {
-    AWS.config.update({ region: process.env.AWS_DEFAULT_REGION });
-  }
-
-  return args;
-}
 
 /**
  * Returns execution ARN from a statement machine Arn and executionName
@@ -112,48 +79,6 @@ class SQS {
   }
 }
 
-
-class ECS {
-  static ecs(local) {
-    return new AWS.ECS(getEndpoint(local, 9324));
-  }
-
-  constructor(cluster) {
-    this.cluster = cluster || process.env.ECS_CLUSTER;
-    this.ecs = this.constructor.ecs();
-  }
-
-  async describeCluster() {
-    const params = {
-      clusters: [this.cluster]
-    };
-
-    return this.ecs.describeClusters(params).promise();
-  }
-
-  async listServices() {
-    const params = { cluster: this.cluster };
-    return this.ecs.listServices(params).promise();
-  }
-
-  async describeServices(services) {
-    const params = { services, cluster: this.cluster };
-    return this.ecs.describeServices(params).promise();
-  }
-
-  async listInstances() {
-    return this.ecs.listContainerInstances({ cluster: this.cluster }).promise();
-  }
-
-  async describeInstances(instances) {
-    const params = {
-      cluster: this.cluster,
-      containerInstances: instances
-    };
-    return this.ecs.describeContainerInstances(params).promise();
-  }
-}
-
 class StepFunction {
   static async getExecutionStatus(executionArn) {
     deprecate('@cumulus/ingest/aws/StepFunction.getExecutionStatus', '1.17.0', '@cumulus/aws-client/StepFunction.getExecutionStatus');
@@ -163,9 +88,7 @@ class StepFunction {
 
 module.exports = {
   SQS,
-  ECS,
   invoke,
-  getEndpoint,
   Events,
   StepFunction,
   getExecutionUrl
