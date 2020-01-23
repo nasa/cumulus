@@ -16,7 +16,7 @@ const GranuleFetcher = require('./GranuleFetcher');
  * @param {string} bucket - the name of an S3 bucket, used for locking
  * @param {string} provider - the name of a provider, used for locking
  * @param {Object[]} granules - the granules to be ingested
- * @returns {Promise.<Array>} - the list of successfully ingested granules
+ * @returns {Promise<Array>} - the list of successfully ingested granules
  */
 async function download(ingest, bucket, provider, granules) {
   log.debug(`awaiting lock.proceed in download() bucket: ${bucket}, `

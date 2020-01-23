@@ -1,16 +1,12 @@
+'use strict';
+
 const moment = require('moment');
 const path = require('path');
-
 const test = require('ava');
 const S3 = require('@cumulus/aws-client/S3');
 const ingestPayload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
+const { s3 } = require('@cumulus/aws-client/services');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const {
-  buildS3Uri,
-  s3,
-  s3PutObject,
-  recursivelyDeleteS3Bucket
-} = require('@cumulus/common/aws');
 const errors = require('@cumulus/common/errors');
 
 const {
@@ -46,8 +42,8 @@ test.beforeEach(async (t) => {
 
 test.afterEach(async (t) => {
   await Promise.all([
-    recursivelyDeleteS3Bucket(t.context.internalBucket),
-    recursivelyDeleteS3Bucket(t.context.destBucket)
+    S3.recursivelyDeleteS3Bucket(t.context.internalBucket),
+    S3.recursivelyDeleteS3Bucket(t.context.destBucket)
   ]);
 });
 
@@ -85,7 +81,11 @@ test('findCollectionFileConfigForFile returns the correct config', (t) => {
     files: [rightCollectionFileConfig, wrongCollectionFileConfig]
   };
 
-  const testGranule = new GranuleFetcher({}, collectionConfig, { protocol: 's3' });
+  const testGranule = new GranuleFetcher(
+    {},
+    collectionConfig,
+    { protocol: 's3', host: 'some-bucket' }
+  );
 
   const file = { name: 'right-file' };
   const fileCollectionConfig = testGranule.findCollectionFileConfigForFile(file);
@@ -99,7 +99,11 @@ test('findCollectionFileConfigForFile returns undefined if no config matches', (
     files: [wrongCollectionFileConfig]
   };
 
-  const testGranule = new GranuleFetcher({}, collectionConfig, { protocol: 's3' });
+  const testGranule = new GranuleFetcher(
+    {},
+    collectionConfig,
+    { protocol: 's3', host: 'some-bucket' }
+  );
 
   const file = { name: 'right-file' };
   const fileCollectionConfig = testGranule.findCollectionFileConfigForFile(file);
@@ -120,7 +124,11 @@ test('addBucketToFile throws an exception if no config matches', (t) => {
     files: [wrongCollectionFileConfig]
   };
 
-  const testGranule = new GranuleFetcher(buckets, collectionConfig, { protocol: 's3' });
+  const testGranule = new GranuleFetcher(
+    buckets,
+    collectionConfig,
+    { protocol: 's3', host: 'some-bucket' }
+  );
 
   const file = { name: 'right-file' };
 
@@ -148,7 +156,11 @@ test('addBucketToFile adds the correct bucket when a config is found', (t) => {
     files: [rightCollectionFileConfig, wrongCollectionFileConfig]
   };
 
-  const testGranule = new GranuleFetcher(buckets, collectionConfig, { protocol: 's3' });
+  const testGranule = new GranuleFetcher(
+    buckets,
+    collectionConfig,
+    { protocol: 's3', host: 'some-bucket' }
+  );
 
   const file = { name: 'right-file' };
   const updatedFile = testGranule.addBucketToFile(file);
@@ -162,7 +174,7 @@ test('moveGranuleFile moves a single file between s3 locations', async (t) => {
   const name = 'test.txt';
   const Key = `origin/${name}`;
   const params = { Bucket, Key, Body: 'test' };
-  await s3PutObject(params);
+  await S3.s3PutObject(params);
 
   const source = { Bucket, Key };
   const target = { Bucket, Key: `moved/${name}` };
@@ -184,12 +196,12 @@ test('moveGranuleFile overwrites existing file by default', async (t) => {
   const Key = `origin/${name}`;
 
   // Pre-stage destination file
-  await s3PutObject({ Bucket: destBucket, Key, Body: 'initialBody' });
+  await S3.s3PutObject({ Bucket: destBucket, Key, Body: 'initialBody' });
 
   // Stage source file
   const updatedBody = randomId('updatedBody');
   const params = { Bucket: sourceBucket, Key, Body: updatedBody };
-  await s3PutObject(params);
+  await S3.s3PutObject(params);
 
   const source = { Bucket: sourceBucket, Key };
   const target = { Bucket: destBucket, Key };
@@ -222,9 +234,12 @@ test('moveGranuleFiles moves granule files between s3 locations', async (t) => {
   const sourceFilePromises = filenames.map(async (name) => {
     const sourcefilePath = `origin/${name}`;
     const params = { Bucket: bucket, Key: sourcefilePath, Body: name };
-    await s3PutObject(params);
+    await S3.s3PutObject(params);
     return {
-      name, bucket, key: sourcefilePath, filename: buildS3Uri(bucket, sourcefilePath)
+      name,
+      bucket,
+      key: sourcefilePath,
+      filename: S3.buildS3Uri(bucket, sourcefilePath)
     };
   });
 
@@ -283,9 +298,12 @@ test('moveGranuleFiles only moves granule files specified with regex', async (t)
   const sourceFilePromises = filenames.map(async (name) => {
     const sourcefilePath = `origin/${name}`;
     const params = { Bucket: bucket, Key: sourcefilePath, Body: name };
-    await s3PutObject(params);
+    await S3.s3PutObject(params);
     return {
-      name, bucket, key: sourcefilePath, filename: buildS3Uri(bucket, sourcefilePath)
+      name,
+      bucket,
+      key: sourcefilePath,
+      filename: S3.buildS3Uri(bucket, sourcefilePath)
     };
   });
 
@@ -327,9 +345,12 @@ test('moveGranuleFiles returns an updated list of files in their new locations.'
   const sourceFilePromises = filenames.map(async (name) => {
     const sourcefilePath = `origin/${name}`;
     const params = { Bucket: bucket, Key: sourcefilePath, Body: name };
-    await s3PutObject(params);
+    await S3.s3PutObject(params);
     return {
-      name, bucket, key: sourcefilePath, filename: buildS3Uri(bucket, sourcefilePath)
+      name,
+      bucket,
+      key: sourcefilePath,
+      filename: S3.buildS3Uri(bucket, sourcefilePath)
     };
   });
 
@@ -470,14 +491,14 @@ test('renameS3FileWithTimestamp renames file', async (t) => {
   const bucket = t.context.internalBucket;
   const key = `${randomString()}/test.hdf`;
   const params = { Bucket: bucket, Key: key, Body: randomString() };
-  await s3PutObject(params);
+  await S3.s3PutObject(params);
   // put an existing renamed file
   const formatString = 'YYYYMMDDTHHmmssSSS';
   const existingRenamedKey = `${key}.v${moment.utc().format(formatString)}`;
   const existingRenamedParams = {
     Bucket: bucket, Key: existingRenamedKey, Body: randomString()
   };
-  await s3PutObject(existingRenamedParams);
+  await S3.s3PutObject(existingRenamedParams);
   await renameS3FileWithTimestamp(bucket, key);
   const renamedFiles = await getRenamedS3File(bucket, key);
 
@@ -497,7 +518,7 @@ test('ingestFile keeps both new and old data when duplicateHandling is version',
   };
   const key = path.join(file.path, file.name);
   const params = { Bucket: internalBucket, Key: key, Body: randomString() };
-  await s3PutObject(params);
+  await S3.s3PutObject(params);
 
   const duplicateHandling = 'version';
   // leading '/' should be trimmed
@@ -520,7 +541,7 @@ test('ingestFile keeps both new and old data when duplicateHandling is version',
 
   // update the source file with different content and ingest again
   params.Body = randomString();
-  await s3PutObject(params);
+  await S3.s3PutObject(params);
   const newfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
   t.is(newfiles.length, 2);
   t.true(newfiles[0].duplicate_found);
@@ -536,7 +557,7 @@ test('ingestFile throws error when configured to handle duplicates with error', 
 
   const Key = path.join(file.path, file.name);
   const params = { Bucket: internalBucket, Key, Body: 'test' };
-  await s3PutObject(params);
+  await S3.s3PutObject(params);
 
   const duplicateHandling = 'error';
   const fileStagingDir = 'file-staging';
@@ -577,7 +598,7 @@ test('ingestFile skips ingest when duplicateHandling is skip', async (t) => {
   };
   const key = path.join(file.path, file.name);
   const params = { Bucket: internalBucket, Key: key, Body: randomString(30) };
-  await s3PutObject(params);
+  await S3.s3PutObject(params);
 
   const duplicateHandling = 'skip';
   const fileStagingDir = 'file-staging';
@@ -600,7 +621,7 @@ test('ingestFile skips ingest when duplicateHandling is skip', async (t) => {
 
   // update the source file with different content and ingest again
   params.Body = randomString(100);
-  await s3PutObject(params);
+  await S3.s3PutObject(params);
   const newfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
   t.is(newfiles.length, 1);
   t.true(newfiles[0].duplicate_found);
@@ -617,7 +638,7 @@ test('ingestFile replaces file when duplicateHandling is replace', async (t) => 
   };
   const key = path.join(file.path, file.name);
   const params = { Bucket: internalBucket, Key: key, Body: randomString(30) };
-  await s3PutObject(params);
+  await S3.s3PutObject(params);
 
   const duplicateHandling = 'replace';
   const fileStagingDir = 'file-staging';
@@ -640,7 +661,7 @@ test('ingestFile replaces file when duplicateHandling is replace', async (t) => 
 
   // update the source file with different content and ingest again
   params.Body = randomString(100);
-  await s3PutObject(params);
+  await S3.s3PutObject(params);
   const newfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
   t.is(newfiles.length, 1);
   t.true(newfiles[0].duplicate_found);
@@ -660,7 +681,7 @@ test('ingestFile throws an error when invalid checksum is provided', async (t) =
 
   const Key = path.join(file.path, file.name);
   const params = { Bucket: internalBucket, Key, Body: randomString(30) };
-  await s3PutObject(params);
+  await S3.s3PutObject(params);
 
   const duplicateHandling = 'replace';
   const fileStagingDir = 'file-staging';
@@ -701,7 +722,7 @@ test('ingestFile throws an error when no checksum is provided and the size is no
 
   const Key = path.join(file.path, file.name);
   const params = { Bucket: internalBucket, Key, Body: randomString(30) };
-  await s3PutObject(params);
+  await S3.s3PutObject(params);
 
   const duplicateHandling = 'replace';
   const fileStagingDir = 'file-staging';
@@ -744,7 +765,7 @@ test('verifyFile returns type and value when file is verified', async (t) => {
 
   const Key = path.join(file.path, file.name);
   const params = { Bucket: internalBucket, Key, Body: content };
-  await s3PutObject(params);
+  await S3.s3PutObject(params);
 
   const duplicateHandling = 'replace';
   const fileStagingDir = 'file-staging';
@@ -784,7 +805,7 @@ test('unversionFilename returns filename without version stamp if present', (t) 
 });
 
 test("getUrlPath() returns the collection's url_path if there are no matching collection file configs", (t) => {
-  const provider = { protocol: 's3' };
+  const provider = { protocol: 's3', host: 'some-bucket' };
 
   const collectionConfig = {
     url_path: 'collection-url-path',
@@ -799,7 +820,7 @@ test("getUrlPath() returns the collection's url_path if there are no matching co
 });
 
 test("getUrlPath() returns the collection file config's url_path if there is one", (t) => {
-  const provider = { protocol: 's3' };
+  const provider = { protocol: 's3', host: 'some-bucket' };
 
   const collectionConfig = {
     url_path: 'collection-url-path',
@@ -817,7 +838,7 @@ test("getUrlPath() returns the collection file config's url_path if there is one
 });
 
 test("getUrlPath() returns the collection's url_path if there is a matching collection file config that does not have a url_path", (t) => {
-  const provider = { protocol: 's3' };
+  const provider = { protocol: 's3', host: 'some-bucket' };
 
   const collectionConfig = {
     url_path: 'collection-url-path',

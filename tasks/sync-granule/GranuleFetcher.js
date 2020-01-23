@@ -1,10 +1,11 @@
 'use strict';
 
+const S3 = require('@cumulus/aws-client/S3');
 const flatten = require('lodash.flatten');
 const path = require('path');
 const uuidv4 = require('uuid/v4');
+const { s3 } = require('@cumulus/aws-client/services');
 const {
-  aws,
   CollectionConfigStore,
   constructCollectionId,
   log,
@@ -214,7 +215,7 @@ class GranuleFetcher {
    */
   async verifyFile(file, bucket, key, options = {}) {
     if (file.checksumType && file.checksum) {
-      await aws.validateS3ObjectChecksum({
+      await S3.validateS3ObjectChecksum({
         algorithm: file.checksumType,
         bucket,
         key,
@@ -226,7 +227,7 @@ class GranuleFetcher {
     }
 
     if (file.size || file.fileSize) { // file.fileSize to be removed after CnmToGranule update
-      const ingestedSize = await aws.getObjectSize(bucket, key);
+      const ingestedSize = await S3.getObjectSize(bucket, key);
       if (ingestedSize !== (file.size || file.fileSize)) { // file.fileSize to be removed
         throw new errors.UnexpectedFileSize(
           `verifyFile ${file.name} failed: Actual file size ${ingestedSize}`
@@ -250,11 +251,11 @@ class GranuleFetcher {
    */
   async enableBucketVersioning(bucket) {
     // check that the bucket has versioning enabled
-    const versioning = await aws.s3().getBucketVersioning({ Bucket: bucket }).promise();
+    const versioning = await s3().getBucketVersioning({ Bucket: bucket }).promise();
 
     // if not enabled, make it enabled
     if (versioning.Status !== 'Enabled') {
-      aws.s3().putBucketVersioning({
+      s3().putBucketVersioning({
         Bucket: bucket,
         VersioningConfiguration: { Status: 'Enabled' }
       }).promise();
@@ -284,7 +285,7 @@ class GranuleFetcher {
     // the staged file expected
     const stagedFile = {
       ...file,
-      filename: aws.buildS3Uri(destinationBucket, destinationKey),
+      filename: S3.buildS3Uri(destinationBucket, destinationKey),
       fileStagingDir: stagingPath,
       url_path: this.getUrlPath(file),
       bucket: destinationBucket
@@ -292,7 +293,7 @@ class GranuleFetcher {
     // bind arguments to sync function
     const syncFileFunction = this.providerClient.sync.bind(this.providerClient, fileRemotePath);
 
-    const s3ObjAlreadyExists = await aws.s3ObjectExists(
+    const s3ObjAlreadyExists = await S3.s3ObjectExists(
       { Bucket: destinationBucket, Key: destinationKey }
     );
     log.debug(`file ${destinationKey} exists in ${destinationBucket}: ${s3ObjAlreadyExists}`);
@@ -318,7 +319,7 @@ class GranuleFetcher {
     }
 
     // Set final file size
-    stagedFile.size = await aws.getObjectSize(destinationBucket, destinationKey);
+    stagedFile.size = await S3.getObjectSize(destinationBucket, destinationKey);
     delete stagedFile.fileSize; // CUMULUS-1269: delete obsolete field until CnmToGranule is patched
     // return all files, the renamed files don't have the same properties
     // (name, size, checksum) as input file
@@ -328,7 +329,7 @@ class GranuleFetcher {
         bucket: destinationBucket,
         name: path.basename(f.Key),
         path: file.path,
-        filename: aws.buildS3Uri(f.Bucket, f.Key),
+        filename: S3.buildS3Uri(f.Bucket, f.Key),
         size: f.size,
         fileStagingDir: stagingPath,
         url_path: this.getUrlPath(file)
