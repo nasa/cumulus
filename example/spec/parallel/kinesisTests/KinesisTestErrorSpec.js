@@ -3,10 +3,8 @@
 const fs = require('fs');
 
 const { deleteSQSMessage } = require('@cumulus/aws-client/SQS');
-const {
-  testUtils: { randomString },
-  stringUtils: { globalReplace }
-} = require('@cumulus/common');
+const { globalReplace } = require('@cumulus/common/string');
+const { randomString } = require('@cumulus/common/test-utils');
 
 const { sleep } = require('@cumulus/common/util');
 
