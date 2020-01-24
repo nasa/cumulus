@@ -1,8 +1,8 @@
 'use strict';
 
 const uuidv4 = require('uuid/v4');
+const { ecs, s3 } = require('@cumulus/aws-client/services');
 const {
-  aws: { ecs, s3 },
   testUtils: { randomString }
 } = require('@cumulus/common');
 const {

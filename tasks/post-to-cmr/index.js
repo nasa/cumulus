@@ -7,10 +7,10 @@ const {
   metadataObjectFromCMRFile,
   publish2CMR
 } = require('@cumulus/cmrjs');
-const { getSecretString } = require('@cumulus/common/aws');
+const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
-const { CMRMetaFileNotFound } = require('@cumulus/common/errors');
+const { CMRMetaFileNotFound } = require('@cumulus/errors');
 const launchpad = require('@cumulus/common/launchpad');
 
 /**

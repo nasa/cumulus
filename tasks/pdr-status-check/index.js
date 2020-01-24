@@ -1,9 +1,9 @@
 'use strict';
 
-const { IncompleteError } = require('@cumulus/common/errors');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
+const { IncompleteError } = require('@cumulus/errors');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const log = require('@cumulus/common/log');
-const StepFunctions = require('@cumulus/common/StepFunctions');
 
 // The default number of times to re-check for completion
 const defaultRetryLimit = 30;
