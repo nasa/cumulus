@@ -2,14 +2,9 @@
 
 const cloneDeep = require('lodash.clonedeep');
 const fs = require('fs-extra');
+const { buildS3Uri, deleteS3Files } = require('@cumulus/aws-client/S3');
+const { dynamodb, lambda, s3 } = require('@cumulus/aws-client/services');
 const {
-  aws: {
-    buildS3Uri,
-    deleteS3Files,
-    dynamodb,
-    lambda,
-    s3
-  },
   BucketsConfig,
   bucketsConfigJsonObject,
   constructCollectionId,

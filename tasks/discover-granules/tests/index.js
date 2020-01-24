@@ -3,7 +3,8 @@
 const fs = require('fs');
 const path = require('path');
 const test = require('ava');
-const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
+const { s3 } = require('@cumulus/aws-client/services');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const {
   randomString,
   validateConfig,

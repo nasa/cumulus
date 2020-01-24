@@ -4,13 +4,9 @@ const AWS = require('aws-sdk');
 const path = require('path');
 const os = require('os');
 
+const { fileExists, getS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
+const { lambda } = require('@cumulus/aws-client/services');
 const {
-  aws: {
-    fileExists,
-    getS3Object,
-    parseS3Uri,
-    lambda
-  },
   constructCollectionId,
   http: {
     download

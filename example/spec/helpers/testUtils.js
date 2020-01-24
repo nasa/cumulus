@@ -10,12 +10,9 @@ const { promisify } = require('util');
 const pTimeout = require('p-timeout');
 const tempy = require('tempy');
 
+const { headObject, parseS3Uri } = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
 const {
-  aws: {
-    headObject,
-    parseS3Uri,
-    s3
-  },
   stringUtils: { globalReplace },
   log
 } = require('@cumulus/common');
