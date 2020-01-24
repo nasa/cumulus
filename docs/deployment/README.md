@@ -34,6 +34,7 @@ The process involves:
 
 * git
 * zip
+* openssl
 * AWS CLI - [AWS command line interface](https://aws.amazon.com/cli/)
 * [Terraform](https://www.terraform.io)
 
