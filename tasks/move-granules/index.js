@@ -1,12 +1,19 @@
 'use strict';
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
-const { InvalidArgument } = require('@cumulus/common/errors');
+
 const get = require('lodash.get');
 const clonedeep = require('lodash.clonedeep');
 const flatten = require('lodash.flatten');
 const keyBy = require('lodash.keyby');
 const path = require('path');
+
+const {
+  buildS3Uri,
+  s3ObjectExists
+} = require('@cumulus/aws-client/S3');
+
+const { InvalidArgument } = require('@cumulus/errors');
 
 const {
   handleDuplicateFile,
@@ -22,13 +29,8 @@ const {
   updateCMRMetadata
 } = require('@cumulus/cmrjs');
 
-const {
-  aws: {
-    buildS3Uri,
-    s3ObjectExists
-  },
-  BucketsConfig
-} = require('@cumulus/common');
+const BucketsConfig = require('@cumulus/common/BucketsConfig');
+
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const log = require('@cumulus/common/log');
 
