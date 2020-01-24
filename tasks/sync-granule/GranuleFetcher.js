@@ -49,34 +49,6 @@ const addChecksumsToFiles = async (providerClient, files) => {
   return [...checksumFiles, ...updatedDataFiles];
 };
 
-const verifyFileChecksum = async (file, fileBucket, fileKey, createHashOptions) => {
-  if (file.checksumType && file.checksum) {
-    await S3.validateS3ObjectChecksum({
-      algorithm: file.checksumType,
-      bucket: fileBucket,
-      key: fileKey,
-      expectedSum: file.checksum,
-      options: createHashOptions
-    });
-  } else {
-    log.warn(`Could not verify ${file.name} expected checksum: ${file.checksum} of type ${file.checksumType}.`);
-  }
-};
-
-const verifyFileSize = async (file, fileBucket, fileKey) => {
-  if (file.size || file.fileSize) { // file.fileSize to be removed after CnmToGranule update
-    const ingestedSize = await S3.getObjectSize(fileBucket, fileKey);
-    if (ingestedSize !== (file.size || file.fileSize)) { // file.fileSize to be removed
-      throw new errors.UnexpectedFileSize(
-        `verifyFile ${file.name} failed: Actual file size ${ingestedSize}`
-        + ` did not match expected file size ${(file.size || file.fileSize)}`
-      );
-    }
-  } else {
-    log.warn(`Could not verify ${file.name} expected file size: ${file.size}.`);
-  }
-};
-
 class GranuleFetcher {
   /**
    * Constructor for GranuleFetcher class
@@ -242,8 +214,28 @@ class GranuleFetcher {
    * @memberof Granule
    */
   async verifyFile(file, bucket, key, options = {}) {
-    await verifyFileChecksum(file, bucket, key, options);
-    await verifyFileSize(file, bucket, key);
+    if (file.checksumType && file.checksum) {
+      await S3.validateS3ObjectChecksum({
+        algorithm: file.checksumType,
+        bucket,
+        key,
+        expectedSum: file.checksum,
+        options
+      });
+    } else {
+      log.warn(`Could not verify ${file.name} expected checksum: ${file.checksum} of type ${file.checksumType}.`);
+    }
+    if (file.size || file.fileSize) { // file.fileSize to be removed after CnmToGranule update
+      const ingestedSize = await S3.getObjectSize(bucket, key);
+      if (ingestedSize !== (file.size || file.fileSize)) { // file.fileSize to be removed
+        throw new errors.UnexpectedFileSize(
+          `verifyFile ${file.name} failed: Actual file size ${ingestedSize}`
+          + ` did not match expected file size ${(file.size || file.fileSize)}`
+        );
+      }
+    } else {
+      log.warn(`Could not verify ${file.name} expected file size: ${file.size}.`);
+    }
 
     return (file.checksumType || file.checksum)
       ? [file.checksumType, file.checksum]
