@@ -4,13 +4,12 @@ set -ex
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-skip-integration-tests.sh
 
-
+cp .bamboo_env_vars /cumulus/
 cd example
 echo Unlocking stack
 
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus, pull down /cumulus ref and run there
     echo "*** Using cached bootstrap"
-    cp .bamboo_env_vars /cumulus/
     cd /cumulus/
     git fetch --all
     git checkout "$GIT_SHA"
