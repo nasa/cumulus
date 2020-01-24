@@ -1,7 +1,10 @@
 'use strict';
 
 const { publishSnsMessage } = require('@cumulus/aws-client/SNS');
-const StepFunctions = require('@cumulus/aws-client/StepFunctions');
+const {
+  describeExecution,
+  getExecutionUrl
+} = require('@cumulus/aws-client/StepFunctions');
 const log = require('@cumulus/common/log');
 const {
   getMessageExecutionArn,
@@ -63,11 +66,11 @@ const getGranuleRecordsFromCumulusMessage = async (cumulusMessage) => {
   }
 
   const executionArn = getMessageExecutionArn(cumulusMessage);
-  const executionUrl = StepFunctions.getExecutionUrl(executionArn);
+  const executionUrl = getExecutionUrl(executionArn);
 
   let executionDescription;
   try {
-    executionDescription = await StepFunctions.describeExecution({ executionArn });
+    executionDescription = await describeExecution({ executionArn });
   } catch (err) {
     log.error(`Could not describe execution ${executionArn}`, err);
   }
