@@ -12,15 +12,13 @@ const {
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
 const { Collection, Execution, Granule } = require('@cumulus/api/models');
+const { s3 } = require('@cumulus/aws-client/services');
 const {
-  aws: {
-    s3,
-    s3GetObjectTagging,
-    s3ObjectExists,
-    parseS3Uri
-  },
-  constructCollectionId
-} = require('@cumulus/common');
+  s3GetObjectTagging,
+  s3ObjectExists,
+  parseS3Uri
+} = require('@cumulus/aws-client/S3');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { LambdaStep } = require('@cumulus/common/sfnStep');
 const {
   loadConfig,
@@ -253,7 +251,6 @@ describe('The Sync Granules workflow', () => {
     let oldExecution;
     let oldUpdatedAt;
     let reingestResponse;
-    let startTime;
     let granule;
 
     beforeAll(async () => {
@@ -263,7 +260,6 @@ describe('The Sync Granules workflow', () => {
       });
       granule = JSON.parse(granuleResponse.body);
 
-      startTime = new Date();
       oldUpdatedAt = granule.updatedAt;
       oldExecution = granule.execution;
       const reingestGranuleResponse = await granulesApiTestUtils.reingestGranule({
@@ -328,7 +324,7 @@ describe('The Sync Granules workflow', () => {
 
       const currentFiles = await getFilesMetadata(updatedGranule.files);
       currentFiles.forEach((cf) => {
-        expect(cf.LastModified).toBeGreaterThan(startTime);
+        expect(cf.LastModified).toBeGreaterThan(reingestGranuleExecution.startDate);
       });
     });
   });

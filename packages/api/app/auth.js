@@ -4,9 +4,20 @@ const {
   JsonWebTokenError,
   TokenExpiredError
 } = require('jsonwebtoken');
+const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { ensureLaunchpadAPIAuthorized, launchpadProtectedAuth } = require('./launchpadAuth');
-const { User, AccessToken } = require('../models');
+const { AccessToken } = require('../models');
 const { verifyJwtToken } = require('../lib/token');
+
+const authorizedOAuthUsersKey = () =>
+  `${process.env.stackName}/api/authorized_oauth_users.json`;
+
+const getAuthorizedOAuthUsers = () =>
+  getJsonS3Object(process.env.system_bucket, authorizedOAuthUsersKey());
+
+const isAuthorizedOAuthUser = (username) =>
+  getAuthorizedOAuthUsers()
+    .then((authorizedUsers) => authorizedUsers.includes(username));
 
 /**
  * An express middleware that checks if an incoming express
@@ -40,10 +51,14 @@ async function ensureAuthorized(req, res, next) {
   try {
     ({ username: userName, accessToken } = verifyJwtToken(jwtToken));
 
-    const userModel = new User();
     const access = new AccessToken();
 
-    await userModel.get({ userName });
+    if (!launchpadProtectedAuth()) {
+      // Only verify user if we're not launchpad protected
+      if (!(await isAuthorizedOAuthUser(userName))) {
+        return res.boom.unauthorized('User not authorized');
+      }
+    }
     await access.get({ accessToken });
     // Adds additional metadata that authorized endpoints can access.
     req.authorizedMetadata = { userName };
@@ -68,5 +83,7 @@ async function ensureAuthorized(req, res, next) {
 }
 
 module.exports = {
-  ensureAuthorized
+  authorizedOAuthUsersKey,
+  ensureAuthorized,
+  isAuthorizedOAuthUser
 };

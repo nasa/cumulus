@@ -4,11 +4,12 @@ const cloneDeep = require('lodash.clonedeep');
 const test = require('ava');
 const sinon = require('sinon');
 
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
+const s3Utils = require('@cumulus/aws-client/S3');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const ingestAws = require('@cumulus/ingest/aws');
 const launchpad = require('@cumulus/common/launchpad');
-const StepFunctions = require('@cumulus/common/StepFunctions');
 const { randomString } = require('@cumulus/common/test-utils');
 const workflows = require('@cumulus/common/workflows');
 const { removeNilProperties } = require('@cumulus/common/util');
@@ -34,7 +35,7 @@ const granuleFileToRecord = (granuleFile) => {
   const granuleRecord = {
     size: mockedFileSize,
     ...granuleFile,
-    key: aws.parseS3Uri(granuleFile.filename).Key,
+    key: s3Utils.parseS3Uri(granuleFile.filename).Key,
     fileName: granuleFile.name,
     checksum: granuleFile.checksum
   };
@@ -96,6 +97,20 @@ test.before(async () => {
     stopDate: new Date(Date.UTC(2019, 6, 28, 1))
   };
   stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').callsFake(() => fakeExecution);
+
+  // Store the CMR password
+  process.env.cmr_password_secret_name = randomString();
+  await awsServices.secretsManager().createSecret({
+    Name: process.env.cmr_password_secret_name,
+    SecretString: randomString()
+  }).promise();
+
+  // Store the launchpad passphrase
+  process.env.launchpad_passphrase_secret_name = randomString();
+  await awsServices.secretsManager().createSecret({
+    Name: process.env.launchpad_passphrase_secret_name,
+    SecretString: randomString()
+  }).promise();
 });
 
 test.beforeEach((t) => {
@@ -104,6 +119,14 @@ test.beforeEach((t) => {
 });
 
 test.after.always(async () => {
+  await awsServices.secretsManager().deleteSecret({
+    SecretId: process.env.cmr_password_secret_name,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
+  await awsServices.secretsManager().deleteSecret({
+    SecretId: process.env.launchpad_passphrase_secret_name,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
   await new Granule().deleteTable();
   stepFunctionsStub.restore();
   sinon.reset();
@@ -157,7 +180,7 @@ test('files existing at location returns both files if both exist', async (t) =>
   const sourceBucket = 'test-bucket';
   const destBucket = randomString();
 
-  await aws.s3().createBucket({ Bucket: destBucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: destBucket }).promise();
 
   const sourceFiles = filenames.map(
     (fileName) => fakeFileFactory({ fileName, bucket: sourceBucket })
@@ -176,7 +199,7 @@ test('files existing at location returns both files if both exist', async (t) =>
       Key: filename,
       Body: 'test'
     };
-    return aws.s3().putObject(params).promise();
+    return awsServices.s3().putObject(params).promise();
   });
 
   await Promise.all(dataSetupPromises);
@@ -191,7 +214,7 @@ test('files existing at location returns both files if both exist', async (t) =>
 
   t.deepEqual(filesExisting, sourceFiles);
 
-  await aws.recursivelyDeleteS3Bucket(destBucket);
+  await s3Utils.recursivelyDeleteS3Bucket(destBucket);
 });
 
 test('files existing at location returns only file that exists', async (t) => {
@@ -203,7 +226,7 @@ test('files existing at location returns only file that exists', async (t) => {
   const sourceBucket = 'test-bucket';
   const destBucket = randomString();
 
-  await aws.s3().createBucket({ Bucket: destBucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: destBucket }).promise();
 
   const sourceFiles = filenames.map(
     (fileName) => fakeFileFactory({ fileName, bucket: sourceBucket })
@@ -222,7 +245,7 @@ test('files existing at location returns only file that exists', async (t) => {
     Key: filenames[1],
     Body: 'test'
   };
-  await aws.s3().putObject(params).promise();
+  await awsServices.s3().putObject(params).promise();
 
   const granule = {
     files: sourceFiles
@@ -234,7 +257,7 @@ test('files existing at location returns only file that exists', async (t) => {
 
   t.deepEqual(filesExisting, [sourceFiles[1]]);
 
-  await aws.recursivelyDeleteS3Bucket(destBucket);
+  await s3Utils.recursivelyDeleteS3Bucket(destBucket);
 });
 
 test('files existing at location returns only file that exists with multiple destinations', async (t) => {
@@ -248,8 +271,8 @@ test('files existing at location returns only file that exists with multiple des
   const destBucket2 = randomString();
 
   await Promise.all([
-    aws.s3().createBucket({ Bucket: destBucket1 }).promise(),
-    aws.s3().createBucket({ Bucket: destBucket2 }).promise()
+    awsServices.s3().createBucket({ Bucket: destBucket1 }).promise(),
+    awsServices.s3().createBucket({ Bucket: destBucket2 }).promise()
   ]);
 
   const sourceFiles = filenames.map(
@@ -274,14 +297,14 @@ test('files existing at location returns only file that exists with multiple des
     Key: filenames[0],
     Body: 'test'
   };
-  await aws.s3().putObject(params).promise();
+  await awsServices.s3().putObject(params).promise();
 
   params = {
     Bucket: destBucket2,
     Key: filenames[1],
     Body: 'test'
   };
-  await aws.s3().putObject(params).promise();
+  await awsServices.s3().putObject(params).promise();
 
   const granule = {
     files: sourceFiles
@@ -294,8 +317,8 @@ test('files existing at location returns only file that exists with multiple des
   t.deepEqual(filesExisting, sourceFiles);
 
   await Promise.all([
-    aws.recursivelyDeleteS3Bucket(destBucket1),
-    aws.recursivelyDeleteS3Bucket(destBucket2)
+    s3Utils.recursivelyDeleteS3Bucket(destBucket1),
+    s3Utils.recursivelyDeleteS3Bucket(destBucket2)
   ]);
 });
 
@@ -314,7 +337,7 @@ test('get() will translate an old-style granule file into the new schema', async
 
   const granule = fakeGranuleFactoryV2({ files: [oldFile] });
 
-  await aws.dynamodbDocClient().put({
+  await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
     Item: granule
   }).promise();
@@ -347,7 +370,7 @@ test('get() will correctly return a granule file stored using the new schema', a
 
   const granule = fakeGranuleFactoryV2({ files: [newFile] });
 
-  await aws.dynamodbDocClient().put({
+  await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
     Item: granule
   }).promise();
@@ -383,7 +406,7 @@ test('batchGet() will translate old-style granule files into the new schema', as
 
   const granule = fakeGranuleFactoryV2({ files: [oldFile] });
 
-  await aws.dynamodbDocClient().put({
+  await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
     Item: granule
   }).promise();
@@ -423,7 +446,7 @@ test('scan() will translate old-style granule files into the new schema', async 
 
   const granule = fakeGranuleFactoryV2({ files: [oldFile] });
 
-  await aws.dynamodbDocClient().put({
+  await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
     Item: granule
   }).promise();
@@ -512,7 +535,7 @@ test('getGranulesForCollection() filters by status', async (t) => {
 test('removing a granule from CMR fails if the granule is not in CMR', async (t) => {
   const granule = fakeGranuleFactoryV2({ published: false });
 
-  await aws.dynamodbDocClient().put({
+  await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
     Item: granule
   }).promise();
@@ -544,7 +567,7 @@ test.serial('removing a granule from CMR passes the granule UR to the cmr delete
 
   const granule = fakeGranuleFactoryV2();
 
-  await aws.dynamodbDocClient().put({
+  await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
     Item: granule
   }).promise();
@@ -576,7 +599,7 @@ test.serial('legacy remove granule from CMR fetches the granule and succeeds', a
 
   const granule = fakeGranuleFactoryV2();
 
-  await aws.dynamodbDocClient().put({
+  await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
     Item: granule
   }).promise();
@@ -611,7 +634,7 @@ test.serial('removing a granule from CMR succeeds with Launchpad authentication'
 
   const granule = fakeGranuleFactoryV2();
 
-  await aws.dynamodbDocClient().put({
+  await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
     Item: granule
   }).promise();
@@ -758,7 +781,7 @@ test.serial(
   async (t) => {
     // Stub out headobject S3 call used in api/models/granules.js,
     // so we don't have to create artifacts
-    sinon.stub(aws, 'headObject').resolves({ ContentLength: mockedFileSize });
+    sinon.stub(s3Utils, 'headObject').resolves({ ContentLength: mockedFileSize });
 
     const granule = granuleSuccess.payload.granules[0];
     const collection = granuleSuccess.meta.collection;
@@ -979,7 +1002,7 @@ test.serial(
       queueName
     };
     const fileExists = async () => true;
-    const fileExistsStub = sinon.stub(aws, 'fileExists').callsFake(fileExists);
+    const fileExistsStub = sinon.stub(s3Utils, 'fileExists').callsFake(fileExists);
     const templateStub = sinon.stub(workflows, 'getWorkflowTemplate').callsFake(() => ({}));
     const wfStub = sinon.stub(workflows, 'getWorkflowFile').callsFake(() => ({}));
     const invokeStub = sinon.stub(ingestAws, 'invoke');

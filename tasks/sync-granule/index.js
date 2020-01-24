@@ -3,7 +3,7 @@
 const path = require('path');
 const pMap = require('p-map');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
-const errors = require('@cumulus/common/errors');
+const errors = require('@cumulus/errors');
 const lock = require('@cumulus/ingest/lock');
 const {
   selector: granuleSelector,

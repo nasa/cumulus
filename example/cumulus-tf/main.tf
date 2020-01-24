@@ -28,6 +28,7 @@ data "aws_region" "current" {}
 data "terraform_remote_state" "data_persistence" {
   backend = "s3"
   config  = var.data_persistence_remote_state_config
+  workspace = "${terraform.workspace}"
 }
 
 data "aws_lambda_function" "sts_credentials" {
@@ -40,11 +41,11 @@ module "cumulus" {
   cumulus_message_adapter_lambda_layer_arn = var.cumulus_message_adapter_lambda_layer_arn
 
   prefix = var.prefix
-  region = var.region
 
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.subnet_ids
 
+  ecs_cluster_instance_image_id   = "ami-0fa9de75aa0a1f1b3"
   ecs_cluster_instance_subnet_ids = var.subnet_ids
   ecs_cluster_min_size            = 1
   ecs_cluster_desired_size        = 1
@@ -64,6 +65,10 @@ module "cumulus" {
   ems_retention_in_days = var.ems_retention_in_days
   ems_submit_report     = var.ems_submit_report
   ems_username          = var.ems_username
+
+  metrics_es_host     = var.metrics_es_host
+  metrics_es_password = var.metrics_es_password
+  metrics_es_username = var.metrics_es_username
 
   cmr_client_id   = var.cmr_client_id
   cmr_environment = "UAT"
@@ -112,7 +117,9 @@ module "cumulus" {
     "mboyd",
     "menno.vandiermen",
     "mhuffnagle2",
-    "pquinn1"
+    "pquinn1",
+    "brian.tennity",
+    "jasmine"
   ]
 
   distribution_url = var.distribution_url

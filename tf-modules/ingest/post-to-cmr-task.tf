@@ -4,7 +4,7 @@ resource "aws_lambda_function" "post_to_cmr_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/post-to-cmr/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 300
   memory_size      = 256
 
@@ -15,7 +15,7 @@ resource "aws_lambda_function" "post_to_cmr_task" {
       CMR_ENVIRONMENT             = var.cmr_environment
       stackName                   = var.prefix
       system_bucket               = var.system_bucket
-      CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
+      CUMULUS_MESSAGE_ADAPTER_DIR = "/opt"
     }
   }
 

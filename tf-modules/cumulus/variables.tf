@@ -26,7 +26,7 @@ variable "cmr_username" {
 }
 
 variable "cumulus_message_adapter_lambda_layer_arn" {
-  description = "ARN of the Lambda layer for the Cumulus Message Adapter"
+  description = "Layer version ARN of the Lambda layer for the Cumulus Message Adapter"
   type    = string
   default = null
 }
@@ -39,6 +39,11 @@ variable "dynamo_tables" {
 variable "ecs_cluster_desired_size" {
   description = "The desired maximum number of instances for your ECS autoscaling group"
   type = number
+}
+
+variable "ecs_cluster_instance_image_id" {
+  type        = string
+  description = "AMI ID of ECS instances"
 }
 
 variable "ecs_cluster_instance_subnet_ids" {
@@ -77,7 +82,8 @@ variable "prefix" {
 }
 
 variable "sts_credentials_lambda_function_arn" {
-  type = string
+  type    = string
+  default = null
 }
 
 variable "system_bucket" {
@@ -150,6 +156,18 @@ variable "custom_queues" {
   default = []
 }
 
+variable "deploy_distribution_s3_credentials_endpoint" {
+  description = "Whether or not to include the S3 credentials endpoint in the Thin Egress App"
+  type = bool
+  default = true
+}
+
+variable "distribution_api_gateway_stage" {
+  description = "The distribution API Gateway stage to create"
+  type    = string
+  default = "DEV"
+}
+
 variable "distribution_url" {
   description = " URL for the distribution API"
   type    = string
@@ -166,12 +184,6 @@ variable "ecs_cluster_instance_docker_volume_size" {
   type        = number
   description = "Size (in GB) of the volume that Docker uses for image and metadata storage"
   default     = 50
-}
-
-variable "ecs_cluster_instance_image_id" {
-  type        = string
-  description = "AMI ID of ECS instances"
-  default     = "ami-0fa9de75aa0a1f1b3"
 }
 
 variable "ecs_cluster_instance_type" {
@@ -365,11 +377,6 @@ variable "private_archive_api_gateway" {
   default = true
 }
 
-variable "region" {
-  description = "The AWS region to deploy to"
-  type    = string
-}
-
 variable "saml_entity_id" {
   description = "The endpoint EntityID from the Launchpad Integration Request"
   type    = string
@@ -403,7 +410,7 @@ variable "throttled_queues" {
 variable "urs_url" {
   description = "The URL of the Earthdata login (URS) site"
   type        = string
-  default     = "https://urs.earthdata.nasa.gov/"
+  default     = "https://uat.urs.earthdata.nasa.gov/"
 }
 
 variable "vpc_id" {

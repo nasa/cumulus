@@ -2,10 +2,8 @@
 
 const Ajv = require('ajv');
 const set = require('lodash.set');
-const {
-  aws: { sns },
-  log
-} = require('@cumulus/common');
+const { sns } = require('@cumulus/aws-client/services');
+const log = require('@cumulus/common/log');
 const Rule = require('../models/rules');
 const kinesisSchema = require('./kinesis-consumer-event-schema.json');
 const { queueMessageForRule } = require('../lib/rulesHelpers');
@@ -199,9 +197,8 @@ function processRecord(record, fromSNS) {
     } catch (err) {
       log.error('Caught error parsing JSON:');
       log.error(err);
-      if (fromSNS) {
-        return handleProcessRecordError(err, record, isKinesisRetry, fromSNS);
-      }
+      // TODO (out of scope): does it make sense to attempt retrying bad JSON?
+      return handleProcessRecordError(err, record, isKinesisRetry, fromSNS);
     }
   }
 
@@ -242,5 +239,6 @@ function handler(event, context, cb) {
 
 module.exports = {
   getRules,
+  processRecord,
   handler
 };

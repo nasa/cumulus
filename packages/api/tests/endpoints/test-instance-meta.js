@@ -2,12 +2,17 @@
 
 const test = require('ava');
 const request = require('supertest');
+const { s3 } = require('@cumulus/aws-client/services');
+const {
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/aws-client/S3');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const assertions = require('../../lib/assertions');
 const models = require('../../models');
 const {
   createFakeJwtAuthToken,
-  fakeAccessTokenFactory
+  fakeAccessTokenFactory,
+  setAuthorizedOAuthUsers
 } = require('../../lib/testUtils');
 const {
   createJwtToken
@@ -21,26 +26,27 @@ process.env.cmr_provider = CMR_PROVIDER;
 process.env.TOKEN_SECRET = randomString();
 process.env.stackName = STACKNAME;
 let accessTokenModel;
-let userModel;
 let jwtAuthToken;
 
 // import the express app after setting the env variables
 const { app } = require('../../app');
 
 test.before(async () => {
-  process.env.UsersTable = randomString();
-  userModel = new models.User();
-  await userModel.createTable();
+  process.env.system_bucket = randomString();
+  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
   process.env.AccessTokensTable = randomString();
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 });
 
 test.after.always(async () => {
-  await userModel.deleteTable();
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await accessTokenModel.deleteTable();
 });
 

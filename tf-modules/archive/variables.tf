@@ -13,7 +13,9 @@ variable "cmr_environment" {
 }
 
 variable "cmr_password" {
-  type = string
+  description = "The plaintext CMR password"
+  type        = string
+  default     = ""
 }
 
 variable "cmr_provider" {
@@ -60,7 +62,15 @@ variable "kinesis_inbound_event_logger_lambda_function_arn" {
   type = string
 }
 
+variable "kinesis_fallback_topic_arn" {
+  type = string
+}
+
 variable "lambda_processing_role_arn" {
+  type = string
+}
+
+variable "manual_consumer_function_arn" {
   type = string
 }
 
@@ -257,14 +267,9 @@ variable "saml_launchpad_metadata_path" {
   default = "N/A"
 }
 
-variable "sts_credentials_lambda" {
-  type    = string
-  default = "gsfc-ngap-sh-s3-sts-get-keys"
-}
-
 variable "urs_url" {
   type        = string
-  default     = "https://urs.earthdata.nasa.gov/"
+  default     = "https://uat.urs.earthdata.nasa.gov/"
   description = "The URL of the Earthdata Login site"
 }
 
@@ -309,8 +314,4 @@ variable "non_complete_execution_payload_timeout" {
   description = "Number of days to retain 'non-complete' execution payload records in the database"
   type    = number
   default = 30
-}
-
-variable "region" {
-  type = string
 }

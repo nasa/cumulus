@@ -3,14 +3,9 @@
 const isString = require('lodash.isstring');
 const test = require('ava');
 
-const {
-  aws: {
-    ecs,
-    recursivelyDeleteS3Bucket,
-    s3
-  },
-  testUtils: { randomString }
-} = require('@cumulus/common');
+const { ecs, s3 } = require('@cumulus/aws-client/services');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+const { randomString } = require('@cumulus/common/test-utils');
 
 const { AsyncOperation } = require('../../models');
 
@@ -109,6 +104,8 @@ test.serial('The AsyncOperation.start() method uploads the payload to S3', async
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
     lambdaName: randomString(),
+    description: randomString(),
+    operationType: 'ES Index',
     payload
   });
 
@@ -136,6 +133,8 @@ test.serial('The AsyncOperation.start() method starts an ECS task with the corre
     asyncOperationTaskDefinition,
     cluster,
     lambdaName,
+    description: randomString(),
+    operationType: 'ES Index',
     payload
   });
 
@@ -164,6 +163,8 @@ test('The AsyncAdapter.start() method sets the output if it is unable to create 
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
     lambdaName: randomString(),
+    description: randomString(),
+    operationType: 'ES Index',
     payload: {}
   });
 
@@ -182,6 +183,8 @@ test.serial('The AsyncOperation.start() method writes a new record to DynamoDB',
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
     lambdaName: randomString(),
+    description: randomString(),
+    operationType: 'ES Index',
     payload: {}
   });
 
@@ -199,6 +202,8 @@ test.serial('The AsyncOperation.start() method returns an item id', async (t) =>
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
     lambdaName: randomString(),
+    description: randomString(),
+    operationType: 'ES Index',
     payload: {}
   });
 
@@ -215,6 +220,8 @@ test.serial('The AsyncOperation.start() method sets the record status to "RUNNIN
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
     lambdaName: randomString(),
+    description: randomString(),
+    operationType: 'ES Index',
     payload: {}
   });
 
@@ -232,6 +239,8 @@ test.serial('The AsyncOperation.start() method returns the newly-generated recor
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
     lambdaName: randomString(),
+    description: randomString(),
+    operationType: 'ES Index',
     payload: {}
   });
 

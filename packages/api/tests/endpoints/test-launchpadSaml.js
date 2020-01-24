@@ -1,26 +1,30 @@
 'use strict';
 
 const fs = require('fs');
-const test = require('ava');
+const test = require('ava').serial;
 const sinon = require('sinon');
 const rewire = require('rewire');
 const request = require('supertest');
 const { URL } = require('url');
 const saml2 = require('saml2-js');
 
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
+const {
+  recursivelyDeleteS3Bucket,
+  s3PutObject
+} = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const { verifyJwtToken } = require('../../lib/token');
-const { AccessToken, User } = require('../../models');
+const { AccessToken } = require('../../models');
 const launchpadSaml = rewire('../../endpoints/launchpadSaml');
 const launchpadPublicCertificate = launchpadSaml.__get__(
   'launchpadPublicCertificate'
 );
+const authorizedUserGroup = launchpadSaml.__get__('authorizedUserGroup');
 const buildLaunchpadJwt = launchpadSaml.__get__('buildLaunchpadJwt');
 
 process.env.OAUTH_PROVIDER = 'launchpad';
-process.env.UsersTable = randomId('usersTable');
 process.env.AccessTokensTable = randomId('tokenTable');
 process.env.stackName = randomId('stackname');
 process.env.TOKEN_SECRET = randomId('token_secret');
@@ -29,7 +33,7 @@ process.env.system_bucket = randomId('systembucket');
 const { app } = require('../../app');
 
 const testBucketName = randomId('testbucket');
-const createBucket = (Bucket) => aws.s3().createBucket({ Bucket }).promise();
+const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket }).promise();
 const testBucketNames = [process.env.system_bucket, testBucketName];
 process.env.LAUNCHPAD_METADATA_PATH = `s3://${testBucketName}/valid-metadata.xml`;
 
@@ -54,17 +58,14 @@ const testFiles = [goodMetadataFile, badMetadataFile];
 const certificate = require('./fixtures/_certificateFixture');
 
 let accessTokenModel;
-let userModel;
 test.before(async () => {
   accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
-  userModel = new User();
-  await userModel.createTable();
 
   await Promise.all(testBucketNames.map(createBucket));
   await Promise.all(
     testFiles.map((f) =>
-      aws.s3PutObject({
+      s3PutObject({
         Bucket: testBucketName,
         Key: f.key,
         Body: f.content
@@ -75,14 +76,50 @@ test.before(async () => {
 let sandbox;
 test.beforeEach(async (t) => {
   sandbox = sinon.createSandbox();
+  const validIndex = randomId('session_index');
+  const validUser = randomId('userId');
+  const unauthorizedIndex = randomId('session_index');
+  const unauthorizedUser = randomId('userId');
+  const userGroup = randomId('userGroup');
+  process.env.oauth_user_group = userGroup;
+
   const successfulSamlResponse = {
     user: {
-      name_id: randomId('name_id'),
-      session_index: randomId('session_index')
+      name_id: 'junk-dont-use-this-any-more',
+      session_index: validIndex,
+      attributes: {
+        UserId: [validUser],
+        userGroup: [
+          `cn=${userGroup},ou=254886,ou=ROLES,ou=Groups,dc=nasa,dc=gov^cn=AM-Application-Administrator,ou=ICAM,ou=Groups,dc=nasa,dc=gov`
+        ]
+      }
     }
   };
+
+  const unauthorizedSamlResponse = {
+    user: {
+      session_index: unauthorizedIndex,
+      attributes: {
+        UserId: [unauthorizedUser],
+        userGroup: [
+          'cn=WrongUserGroup,ou=254886,ou=ROLES,ou=Groups,dc=nasa,dc=gov'
+        ]
+      }
+    }
+  };
+
   const badSamlResponse = { user: {} };
-  t.context = { successfulSamlResponse, badSamlResponse };
+
+  t.context = {
+    validIndex,
+    validUser,
+    unauthorizedIndex,
+    unauthorizedUser,
+    successfulSamlResponse,
+    unauthorizedSamlResponse,
+    badSamlResponse,
+    userGroup
+  };
 });
 
 test.afterEach(async () => {
@@ -90,12 +127,11 @@ test.afterEach(async () => {
 });
 
 test.after.always(async () => {
-  await Promise.all(testBucketNames.map(aws.recursivelyDeleteS3Bucket));
+  await Promise.all(testBucketNames.map(recursivelyDeleteS3Bucket));
   await accessTokenModel.deleteTable();
-  await userModel.deleteTable();
 });
 
-test.serial(
+test(
   'launchpadPublicCertificate returns a certificate from valid file.',
   async (t) => {
     const parsedCertificate = await launchpadPublicCertificate(
@@ -106,7 +142,7 @@ test.serial(
   }
 );
 
-test.serial(
+test(
   'launchpadPublicCertificate throws error with invalid file.',
   async (t) => {
     await t.throwsAsync(
@@ -119,7 +155,7 @@ test.serial(
   }
 );
 
-test.serial(
+test(
   'launchpadPublicCertificate throws error with missing metadata file.',
   async (t) => {
     await t.throwsAsync(
@@ -132,7 +168,7 @@ test.serial(
   }
 );
 
-test.serial(
+test(
   'launchpadPublicCertificate throws error with missing bucket.',
   async (t) => {
     await t.throwsAsync(launchpadPublicCertificate('s3://badBucket/location'), {
@@ -142,28 +178,64 @@ test.serial(
   }
 );
 
+test(
+  'authorizedUserGroup returns true if samlUserGroup contains authorized group',
+  (t) => {
+    const samlUserGroup = 'cn=GSFC-Cumulus-Dev,ou=254886,ou=ROLES,ou=Groups,dc=nasa,dc=gov';
+    const authorizedGroup = 'GSFC-Cumulus-Dev';
+
+    t.true(authorizedUserGroup(samlUserGroup, authorizedGroup));
+  }
+);
+
+test(
+  'authorizedUserGroup returns false if samlUserGroup does not contain authorized group',
+  (t) => {
+    const samlUserGroup = 'cn=wrongUserGroup,ou=254886,ou=ROLES,ou=Groups,dc=nasa,dc=gov';
+    const authorizedGroup = 'GSFC-Cumulus-Dev';
+
+    t.false(authorizedUserGroup(samlUserGroup, authorizedGroup));
+  }
+);
+
+test(
+  'authorizedUserGroup returns false if authorizeGroup undefined (unconfigured)',
+  (t) => {
+    const samlUserGroup = 'cn=wrongUserGroup,ou=254886,ou=ROLES,ou=Groups,dc=nasa,dc=gov';
+    t.false(authorizedUserGroup(samlUserGroup));
+  }
+);
+
 test('buildLaunchpadJwt returns a valid JWT with correct SAML information.', async (t) => {
   const jwt = await buildLaunchpadJwt(t.context.successfulSamlResponse);
   const decodedToken = verifyJwtToken(jwt);
 
-  t.is(decodedToken.username, t.context.successfulSamlResponse.user.name_id);
-  t.is(decodedToken.accessToken, t.context.successfulSamlResponse.user.session_index);
+  t.is(decodedToken.username, t.context.validUser);
+  t.is(decodedToken.accessToken, t.context.validIndex);
 
   const modelToken = await accessTokenModel.get({
-    accessToken: t.context.successfulSamlResponse.user.session_index
+    accessToken: t.context.validIndex
   });
-  t.is(modelToken.accessToken, t.context.successfulSamlResponse.user.session_index);
-  t.is(modelToken.username, t.context.successfulSamlResponse.user.name_id);
+  t.is(modelToken.accessToken, t.context.validIndex);
+  t.is(modelToken.username, t.context.validUser);
 });
 
-test('buildLaunchpadJwt throws with bad SAML information.', async (t) => {
+test('buildLaunchpadJwt throws with bad SAML return value.', async (t) => {
   await t.throwsAsync(buildLaunchpadJwt(t.context.badSamlResponse), {
     instanceOf: Error,
     message: 'invalid SAML response received {"user":{}}'
   });
 });
 
-test.serial('/saml/auth with bad metadata returns Bad Request.', async (t) => {
+test('buildLaunchpadJwt throws with unauthorized user.', async (t) => {
+  await t.throwsAsync(buildLaunchpadJwt(t.context.unauthorizedSamlResponse), {
+    instanceOf: Error,
+    message: `User not authorized for this application ${t.context.unauthorizedUser} not a member of userGroup: ${t.context.userGroup}`
+  });
+});
+
+
+test('/saml/auth with bad metadata returns Bad Request.', async (t) => {
   const callback = sandbox.fake.yields('post_assert callsback with Error', null);
   const mockExample = sandbox.stub();
   mockExample.ServiceProvider = sandbox.stub().returns({ post_assert: callback });
@@ -178,7 +250,7 @@ test.serial('/saml/auth with bad metadata returns Bad Request.', async (t) => {
   t.is(redirect.body.error, 'Bad Request');
 });
 
-test.serial('/saml/auth with good metadata returns redirect.', async (t) => {
+test('/saml/auth with good metadata returns redirect.', async (t) => {
   const callback = sandbox.fake.yields(null, t.context.successfulSamlResponse);
   const mockExample = sandbox.stub();
   mockExample.ServiceProvider = sandbox.stub().returns({ post_assert: callback });
@@ -193,12 +265,12 @@ test.serial('/saml/auth with good metadata returns redirect.', async (t) => {
   const redirectUrl = new URL(redirect.header.location);
   const jwt = redirectUrl.searchParams.get('token');
   const decodedToken = verifyJwtToken(jwt);
-  t.is(decodedToken.username, t.context.successfulSamlResponse.user.name_id);
-  t.is(decodedToken.accessToken, t.context.successfulSamlResponse.user.session_index);
+  t.is(decodedToken.username, t.context.validUser);
+  t.is(decodedToken.accessToken, t.context.validIndex);
 });
 
 
-test.serial('/token endpoint with a token query parameter returns the parameter.', async (t) => {
+test('/token endpoint with a token query parameter returns the parameter.', async (t) => {
   const returnedToken = await request(app)
     .get('/token?token=SomeRandomJWToken')
     .set('x-apigateway-event', encodeURIComponent(JSON.stringify({ requestContext: { path: '/irrelevant/', stage: 'anything' } })))
@@ -209,7 +281,7 @@ test.serial('/token endpoint with a token query parameter returns the parameter.
   t.is(returnedToken.text, JSON.stringify({ message: { token: 'SomeRandomJWToken' } }));
 });
 
-test.serial('/token endpoint without a token query parameter redirects to saml/login.', async (t) => {
+test('/token endpoint without a token query parameter redirects to saml/login.', async (t) => {
   const redirect = await request(app)
     .get('/token')
     .set('x-apigateway-event', encodeURIComponent(JSON.stringify({ requestContext: { path: '/token', stage: 'stagename' } })))
@@ -220,7 +292,7 @@ test.serial('/token endpoint without a token query parameter redirects to saml/l
   t.regex(redirect.header.location, /\/stagename\/saml\/login\?RelayState=.*%2Ftoken/);
 });
 
-test.serial('/token endpoint without proper context headers returns expectation failed.', async (t) => {
+test('/token endpoint without proper context headers returns expectation failed.', async (t) => {
   const expectedError = {
     error: 'Expectation Failed',
     message: ('Could not retrieve necessary information from express request object. '

@@ -2,20 +2,23 @@
 
 const test = require('ava');
 const request = require('supertest');
+const { s3 } = require('@cumulus/aws-client/services');
+const {
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 
 const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
 const {
   createFakeJwtAuthToken,
-  fakeProviderFactory
+  fakeProviderFactory,
+  setAuthorizedOAuthUsers
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 
-process.env.UsersTable = randomString();
 process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
@@ -31,22 +34,28 @@ let providerModel;
 let jwtAuthToken;
 let accessTokenModel;
 let ruleModel;
-let userModel;
 
 test.before(async () => {
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
-  process.env.esIndex = esIndex;
+  process.env.stackName = randomString();
+
+  process.env.system_bucket = randomString();
+  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+
+  const esAlias = randomString();
+  process.env.ES_INDEX = esAlias;
+  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+
   providerModel = new models.Provider();
   await providerModel.createTable();
 
-  userModel = new models.User();
-  await userModel.createTable();
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
   process.env.AccessTokensTable = randomString();
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
   esClient = await Search.es('fakehost');
 
@@ -54,9 +63,6 @@ test.before(async () => {
   ruleModel = new models.Rule();
   await ruleModel.createTable();
 
-  process.env.system_bucket = randomString();
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
-  process.env.stackName = randomString();
   await s3().putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflow_template.json`,
@@ -71,7 +77,6 @@ test.beforeEach(async (t) => {
 
 test.after.always(async () => {
   await providerModel.deleteTable();
-  await userModel.deleteTable();
   await accessTokenModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await ruleModel.deleteTable();

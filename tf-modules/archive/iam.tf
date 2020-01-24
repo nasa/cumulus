@@ -169,6 +169,14 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
     ]
     resources = ["*"]
   }
+
+  statement {
+    actions = ["secretsmanager:GetSecretValue"]
+    resources = [
+      aws_secretsmanager_secret.api_cmr_password.arn,
+      aws_secretsmanager_secret.api_launchpad_passphrase.arn
+    ]
+  }
 }
 
 resource "aws_iam_role_policy" "lambda_api_gateway" {

@@ -7,10 +7,11 @@ const {
   launchpad
 } = require('@cumulus/common');
 const {
-  models: { AccessToken, User },
-  testUtils: { fakeAccessTokenFactory, fakeUserFactory },
+  models: { AccessToken },
+  testUtils: { fakeAccessTokenFactory },
   tokenUtils: { createJwtToken }
 } = require('@cumulus/api');
+const { loadConfig } = require('../config');
 
 function invokeApi(prefix, payload) {
   return pRetry(
@@ -58,17 +59,11 @@ async function getApiOauthProvider(prefix) {
  *   name.
  * @param {string} params.payload - the payload to send to the Lambda function.
  *   See https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
- * @param {Object} params.userParams - parameter object passed to fakeUserFactory
  * @returns {Promise<Object>} - the parsed payload of the response.  See
  *   https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format
  */
-async function callCumulusApi({ prefix, payload: userPayload, userParams = {} }) {
+async function callCumulusApi({ prefix, payload: userPayload }) {
   const payload = cloneDeep(userPayload);
-
-  process.env.UsersTable = `${prefix}-UsersTable`;
-  const userModel = new User();
-
-  const { userName } = await userModel.create(fakeUserFactory(userParams));
 
   process.env.AccessTokensTable = `${prefix}-AccessTokensTable`;
   const accessTokenModel = new AccessToken();
@@ -80,8 +75,7 @@ async function callCumulusApi({ prefix, payload: userPayload, userParams = {} })
     authToken = await launchpad.getLaunchpadToken({
       passphrase: process.env.LAUNCHPAD_PASSPHRASE,
       api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1/gettoken',
-      certificate: 'launchpad.pfx',
-      encrypted: false
+      certificate: 'launchpad.pfx'
     });
   } else {
     const {
@@ -90,7 +84,14 @@ async function callCumulusApi({ prefix, payload: userPayload, userParams = {} })
       expirationTime
     } = fakeAccessTokenFactory();
     await accessTokenModel.create({ accessToken, refreshToken });
-    authToken = createJwtToken({ accessToken, username: userName, expirationTime });
+
+    const { apiUsername } = await loadConfig();
+
+    authToken = createJwtToken({
+      accessToken,
+      expirationTime,
+      username: apiUsername
+    });
   }
   // Add authorization header to the request
   payload.headers = payload.headers || {};
@@ -101,8 +102,6 @@ async function callCumulusApi({ prefix, payload: userPayload, userParams = {} })
     apiOutput = await invokeApi(prefix, payload);
   } finally {
     if (provider !== 'launchpad') {
-      // Delete the user created for this request
-      await userModel.delete(userName);
       await accessTokenModel.delete({ accessToken: authToken });
     }
   }

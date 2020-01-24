@@ -1,7 +1,8 @@
 'use strict';
 
 const pLimit = require('p-limit');
-const { s3, promiseS3Upload } = require('@cumulus/common/aws');
+const { promiseS3Upload } = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
 const { randomString, randomId, inTestMode } = require('@cumulus/common/test-utils');
 const bootstrap = require('../lambdas/bootstrap');
 const indexer = require('../es/indexer');
@@ -33,7 +34,7 @@ async function populateBucket(bucket, stackName) {
   // upload workflow files
   await Promise.all(workflowList.map((obj) => promiseS3Upload({
     Bucket: bucket,
-    Key: `${obj.name}.json`,
+    Key: `${stackName}/workflows/${obj.name}.json`,
     Body: JSON.stringify(obj)
   })));
   // upload workflow template
@@ -92,12 +93,12 @@ async function checkOrCreateTables(stackName) {
 
 function setLocalEsVariables(stackName) {
   process.env.ES_HOST = 'fakehost';
-  process.env.esIndex = `${stackName}-es`;
+  process.env.ES_INDEX = `${stackName}-es`;
 }
 
 async function prepareServices(stackName, bucket) {
   setLocalEsVariables(stackName);
-  await bootstrap.bootstrapElasticSearch(process.env.ES_HOST, process.env.esIndex);
+  await bootstrap.bootstrapElasticSearch(process.env.ES_HOST, process.env.ES_INDEX);
   await s3().createBucket({ Bucket: bucket }).promise();
 }
 
@@ -129,16 +130,14 @@ function checkEnvVariablesAreSet(moreRequiredEnvVars) {
 async function createDBRecords(stackName, user) {
   setLocalEsVariables(stackName);
   const esClient = await Search.es(process.env.ES_HOST);
-  const esIndex = process.env.esIndex;
+  const esIndex = process.env.ES_INDEX;
   // Resets the ES client
   await esClient.indices.delete({ index: esIndex })
     .then((response) => response.body);
   await bootstrap.bootstrapElasticSearch(process.env.ES_HOST, esIndex);
 
   if (user) {
-    // add authorized user to the user table
-    const u = new models.User();
-    await u.create({ userName: user });
+    await testUtils.setAuthorizedOAuthUsers([user]);
   }
 
   // add collection records

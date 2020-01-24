@@ -2,8 +2,10 @@
 
 const fs = require('fs');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { Search } = require('../es/search');
+const { sqs } = require('@cumulus/aws-client/services');
+const { putJsonS3Object } = require('@cumulus/aws-client/S3');
 const { createJwtToken } = require('./token');
+const { authorizedOAuthUsersKey } = require('../app/auth');
 
 const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
 
@@ -29,24 +31,6 @@ function testEndpoint(endpoint, event, testCallback) {
       fail: (e) => reject(e)
     });
   });
-}
-
-/**
- * searches for all the existings aliases in ElasticSearch and delete
- * all of them
- *
- * @returns {Promise<Array>} a list of elasticsearch responses
- */
-async function deleteAliases() {
-  const client = await Search.es();
-  const aliasResponse = await client.cat.aliases({ format: 'json' });
-  const aliases = aliasResponse.body;
-
-  // delete all aliases
-  return Promise.all(aliases.map((alias) => client.indices.deleteAlias({
-    index: alias.index,
-    name: '_all'
-  }, { ignore: [404] })));
 }
 
 function fakeFileFactory(params = {}) {
@@ -202,28 +186,6 @@ function fakeExecutionFactory(status = 'completed', type = 'fakeWorkflow') {
 }
 
 /**
- * Build a user that can be authenticated against
- *
- * @param {Object} params - params
- * @param {string} params.userName - a username
- *   Defaults to a random string
- * @param {string} params.password - a password
- *   Defaults to a random string
- * @param {integer} params.expires - an expiration time for the token
- *   Defaults to one hour from now
- * @returns {Object} - a fake user
- */
-function fakeUserFactory(params = {}) {
-  const user = {
-    userName: randomId('userName'),
-    password: randomId('password'),
-    expires: Date.now() + (60 * 60 * 1000) // Default to 1 hour
-  };
-
-  return { ...user, ...params };
-}
-
-/**
  * creates fake collection records
  *
  * @param {Object} options - properties to set on the collection
@@ -275,10 +237,10 @@ function fakeAccessTokenFactory(params = {}) {
   };
 }
 
-async function createFakeJwtAuthToken({ accessTokenModel, userModel }) {
-  const userRecord = fakeUserFactory();
-  await userModel.create(userRecord);
+const setAuthorizedOAuthUsers = (users) =>
+  putJsonS3Object(process.env.system_bucket, authorizedOAuthUsersKey(), users);
 
+async function createFakeJwtAuthToken({ accessTokenModel, username }) {
   const {
     accessToken,
     refreshToken,
@@ -286,12 +248,77 @@ async function createFakeJwtAuthToken({ accessTokenModel, userModel }) {
   } = fakeAccessTokenFactory();
   await accessTokenModel.create({ accessToken, refreshToken });
 
-  return createJwtToken({ accessToken, expirationTime, username: userRecord.userName });
+  return createJwtToken({ accessToken, expirationTime, username });
+}
+
+/**
+ * create a dead-letter queue and a source queue
+ *
+ * @param {string} queueNamePrefix - prefix of the queue name
+ * @returns {Object} - {deadLetterQueueUrl: <url>, queueUrl: <url>} queues created
+ */
+async function createSqsQueues(queueNamePrefix) {
+  // dead letter queue
+  const deadLetterQueueName = `${queueNamePrefix}DeadLetterQueue`;
+  const deadLetterQueueParms = {
+    QueueName: deadLetterQueueName,
+    Attributes: {
+      VisibilityTimeout: '300'
+    }
+  };
+  const { QueueUrl: deadLetterQueueUrl } = await sqs()
+    .createQueue(deadLetterQueueParms).promise();
+  const qAttrParams = {
+    QueueUrl: deadLetterQueueUrl,
+    AttributeNames: ['QueueArn']
+  };
+  const { Attributes: { QueueArn: deadLetterQueueArn } } = await sqs()
+    .getQueueAttributes(qAttrParams).promise();
+
+  // source queue
+  const queueName = `${queueNamePrefix}Queue`;
+  const queueParms = {
+    QueueName: queueName,
+    Attributes: {
+      RedrivePolicy: JSON.stringify({
+        deadLetterTargetArn: deadLetterQueueArn,
+        maxReceiveCount: 3
+      }),
+      VisibilityTimeout: '300'
+    }
+  };
+
+  const { QueueUrl: queueUrl } = await sqs().createQueue(queueParms).promise();
+  return { deadLetterQueueUrl, queueUrl };
+}
+
+/**
+ * get message counts of the given SQS queue
+ *
+ * @param {string} queueUrl - SQS queue URL
+ * @returns {Object} - message counts
+ * {numberOfMessagesAvailable: <number>, numberOfMessagesNotVisible: <number>}
+ */
+async function getSqsQueueMessageCounts(queueUrl) {
+  const qAttrParams = {
+    QueueUrl: queueUrl,
+    AttributeNames: ['All']
+  };
+  const attributes = await sqs().getQueueAttributes(qAttrParams).promise();
+  const {
+    ApproximateNumberOfMessages: numberOfMessagesAvailable,
+    ApproximateNumberOfMessagesNotVisible: numberOfMessagesNotVisible
+  } = attributes.Attributes;
+
+  return {
+    numberOfMessagesAvailable: parseInt(numberOfMessagesAvailable, 10),
+    numberOfMessagesNotVisible: parseInt(numberOfMessagesNotVisible, 10)
+  };
 }
 
 module.exports = {
   createFakeJwtAuthToken,
-  deleteAliases,
+  createSqsQueues,
   fakeAccessTokenFactory,
   fakeGranuleFactory,
   fakeGranuleFactoryV2,
@@ -303,9 +330,10 @@ module.exports = {
   fakeRuleFactory,
   fakeRuleFactoryV2,
   fakeFileFactory,
-  fakeUserFactory,
   fakeProviderFactory,
+  getSqsQueueMessageCounts,
   getWorkflowList,
   isLocalApi,
-  testEndpoint
+  testEndpoint,
+  setAuthorizedOAuthUsers
 };

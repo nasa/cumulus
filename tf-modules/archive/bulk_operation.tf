@@ -4,7 +4,7 @@ resource "aws_lambda_function" "bulk_operation" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/bulkOperation/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 300
   memory_size      = 512
   environment {
@@ -14,7 +14,8 @@ resource "aws_lambda_function" "bulk_operation" {
       METRICS_ES_PASS  = var.metrics_es_password
       GranulesTable    = var.dynamo_tables.granules.name
       system_bucket    = var.system_bucket
-      invoke                   = var.schedule_sf_function_arn
+      invoke           = var.schedule_sf_function_arn
+      stackName        = var.prefix
     }
   }
   tags = merge(local.default_tags, { Project = var.prefix })

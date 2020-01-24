@@ -2,15 +2,18 @@
 
 const test = require('ava');
 const request = require('supertest');
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
+const {
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { s3 } = require('@cumulus/common/aws');
 
 const models = require('../../../models');
 const bootstrap = require('../../../lambdas/bootstrap');
 const {
   fakeCollectionFactory,
-  createFakeJwtAuthToken
+  createFakeJwtAuthToken,
+  setAuthorizedOAuthUsers
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
@@ -18,7 +21,6 @@ const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 
 process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
-process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
@@ -33,24 +35,24 @@ let jwtAuthToken;
 let accessTokenModel;
 let collectionModel;
 let ruleModel;
-let userModel;
 
 test.before(async () => {
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
-  process.env.esIndex = esIndex;
-  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  const esAlias = randomString();
+  process.env.ES_INDEX = esAlias;
+  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
   await collectionModel.createTable();
 
-  // create fake Users table
-  userModel = new models.User();
-  await userModel.createTable();
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
   esClient = await Search.es('fakehost');
 
@@ -58,11 +60,7 @@ test.before(async () => {
   ruleModel = new models.Rule();
   await ruleModel.createTable();
 
-  process.env.system_bucket = randomString();
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
-  process.env.stackName = randomString();
-
-  await s3().putObject({
+  await awsServices.s3().putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflow_template.json`,
     Body: JSON.stringify({})
@@ -77,8 +75,7 @@ test.beforeEach(async (t) => {
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await collectionModel.deleteTable();
-  await userModel.deleteTable();
-  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
   await ruleModel.deleteTable();
 });
@@ -145,7 +142,7 @@ test('Attempting to delete a collection with an associated rule returns a 409 re
   });
 
   // The workflow message template must exist in S3 before the rule can be created
-  await s3().putObject({
+  await awsServices.s3().putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
     Body: JSON.stringify({})
@@ -178,7 +175,7 @@ test('Attempting to delete a collection with an associated rule does not delete 
   });
 
   // The workflow message template must exist in S3 before the rule can be created
-  await s3().putObject({
+  await awsServices.s3().putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
     Body: JSON.stringify({})

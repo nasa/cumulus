@@ -40,6 +40,10 @@ For Kinesis rules specifically, if an error occurs during the message consumer p
 
 More information on kinesis error handling is [here](data-cookbooks/cnm-workflow.md#kinesis-record-error-handling).
 
+## Operator API Errors
+
+All operator API calls are funneled through the `ApiEndpoints` lambda. Each API call is logged to the `ApiEndpoints` CloudWatch log for your deployment.
+
 ## Lambda Errors
 
 ### KMS Exception: AccessDeniedException
@@ -59,8 +63,6 @@ The other resolution (that scales but takes some time) that was found is as foll
 
 If this problem occurs with Core lambdas and you are using the `terraform-aws-cumulus.zip` file source distributed in our release, we recommend using the non-scaling approach as the number of lambdas we distribute is in the low teens, which are likely to be easier and faster to reconfigure one-by-one compared to editing our configs.
 
-[Discussed in the Earthdata Wiki](https://wiki.earthdata.nasa.gov/display/CUMULUS/KMS+Exception%3A+AccessDeniedException).
-
 ### Error: Unable to import module 'index': Error
 
 This error is shown in the CloudWatch logs for a Lambda function.
@@ -76,5 +78,3 @@ resource "aws_lambda_function" "discover_granules_task" {
 ```
 
 If you are seeing this error when using the Lambda as a step in a Cumulus workflow, then inspect the output for this Lambda step in the AWS Step Function console. If you see the error `Cannot find module 'node_modules/@cumulus/cumulus-message-adapter-js'`, then you need to ensure the lambda's packaged dependencies include `cumulus-message-adapter-js`.
-
-[Discussed in the Earthdata Wiki](https://wiki.earthdata.nasa.gov/display/CUMULUS/Troubleshooting).

@@ -1,7 +1,10 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const aws = require('@cumulus/common/aws');
+const {
+  deleteS3Object,
+  fileExists
+} = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const Search = require('../es/search').Search;
@@ -17,9 +20,13 @@ const { deconstructCollectionId } = require('../lib/utils');
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const result = await (new Search({
-    queryStringParameters: req.query
-  }, 'granule')).query();
+  const es = new Search(
+    { queryStringParameters: req.query },
+    'granule',
+    process.env.ES_INDEX
+  );
+
+  const result = await es.query();
 
   return res.send(result);
 }
@@ -134,8 +141,8 @@ async function del(req, res) {
   // remove files from s3
   if (granule.files) {
     await Promise.all(granule.files.map(async (file) => {
-      if (await aws.fileExists(file.bucket, file.key)) {
-        return aws.deleteS3Object(file.bucket, file.key);
+      if (await fileExists(file.bucket, file.key)) {
+        return deleteS3Object(file.bucket, file.key);
       }
       return {};
     }));
@@ -145,13 +152,12 @@ async function del(req, res) {
 
   if (inTestMode()) {
     const esClient = await Search.es(process.env.ES_HOST);
-    const esIndex = process.env.esIndex;
     await indexer.deleteRecord({
       esClient,
       id: granuleId,
       type: 'granule',
       parent: granule.collectionId,
-      index: esIndex,
+      index: process.env.ES_INDEX,
       ignore: [404]
     });
   }
@@ -188,27 +194,58 @@ async function bulk(req, res) {
     return res.boom.badRequest('workflowName is required.');
   }
 
+  if (!payload.ids && !payload.query) {
+    return res.boom.badRequest('One of ids or query is required');
+  }
+
+  if (payload.query
+    && !(process.env.METRICS_ES_HOST
+    && process.env.METRICS_ES_USER
+    && process.env.METRICS_ES_PASS)) {
+    return res.boom.badRequest('ELK Metrics stack not configured');
+  }
+
+  if (payload.query && !payload.index) {
+    return res.boom.badRequest('Index is required if query is sent');
+  }
+
   const asyncOperationModel = new models.AsyncOperation({
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
     tableName: process.env.AsyncOperationsTable
   });
 
+  let description;
+
+  if (payload.query) {
+    description = `Bulk run ${payload.workflowName} on ${payload.query.size} granules`;
+  } else if (payload.ids) {
+    description = `Bulk run ${payload.workflowName} on ${payload.ids.length} granules`;
+  } else {
+    description = `Bulk run on ${payload.workflowName}`;
+  }
+
   try {
     const asyncOperation = await asyncOperationModel.start({
       asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
       cluster: process.env.EcsCluster,
       lambdaName: process.env.BulkOperationLambda,
+      description,
+      operationType: 'Bulk Granules',
       payload: {
         payload,
         type: 'BULK_GRANULE',
         granulesTable: process.env.GranulesTable,
         system_bucket: process.env.system_bucket,
         stackName: process.env.stackName,
-        invoke: process.env.invoke
+        invoke: process.env.invoke,
+        esHost: process.env.METRICS_ES_HOST,
+        esUser: process.env.METRICS_ES_USER,
+        esPassword: process.env.METRICS_ES_PASS
       },
       esHost: process.env.ES_HOST
     });
+
     return res.send(asyncOperation);
   } catch (err) {
     if (err.name !== 'EcsStartTaskError') throw err;

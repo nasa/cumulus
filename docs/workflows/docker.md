@@ -18,10 +18,10 @@ To run a command using docker-compose use:
 docker-compose run *command*
 ```
 
-where *commmand* is one of
+where *command* is one of
 
 * *build*: Build and tag the image using the Dockerfile
-* *bash*: Run the Dockerfile interatively (via a bash shell)
+* *bash*: Run the Dockerfile interactively (via a bash shell)
 * *test*: Processes data in the directory *data/input* and saves the output to the *data/test-output* directory. These directories must exist.
 
 ### The Docker Registry
@@ -58,7 +58,7 @@ The generation of the released tagged images are created and deployed automatica
 
 ### docker-base
 
-Docker images are built in layers, allowing common dependencies to be shared to child Docker images. A base docker image is provided that includes some dependencies shared among the current HS3 data processing codes. This includes NetCDF liraries, AWS Cli, Python, Git, as well as py-cumulus, a collection of Python utilities that are used in the processing scripts. The docker-base repository is used to generate new images that are then stored in AWS ECR.
+Docker images are built in layers, allowing common dependencies to be shared to child Docker images. A base docker image is provided that includes some dependencies shared among the current HS3 data processing codes. This includes NetCDF libraries, AWS Cli, Python, Git, as well as py-cumulus, a collection of Python utilities that are used in the processing scripts. The docker-base repository is used to generate new images that are then stored in AWS ECR.
 
 The docker-base image can be interacted with by running it in interactive mode (ie, `docker run -it docker-base`, since the default "entrypoint" to the image is a bash shell.
 
@@ -168,7 +168,7 @@ After setting up logging the code has a for-loop for processing any matching hdf
 
 ## Process Testing
 
-It is important to have tests for data processing, however in many cases datafiles can be large so it is not practical to store the test data in the repository. Instead, test data is currrently stored on AWS S3, and can be retrieved using the AWS CLI.
+It is important to have tests for data processing, however in many cases datafiles can be large so it is not practical to store the test data in the repository. Instead, test data is currently stored on AWS S3, and can be retrieved using the AWS CLI.
 
 ```bash
 aws s3 sync s3://cumulus-ghrc-logs/sample-data/collection-name data

@@ -15,11 +15,16 @@ When creating a protected bucket (a bucket containing data which will be served 
 Using the [AWS command line tool][cli] [create-bucket](https://docs.aws.amazon.com/cli/latest/reference/s3api/create-bucket.html) s3api subcommand:
 
 ```bash
-$ aws s3api create-bucket --bucket foobar-internal
+$ aws s3api create-bucket \
+    --bucket foobar-internal \
+    --region us-west-2 \
+    --create-bucket-configuration LocationConstraint=us-west-2
 {
     "Location": "/foobar-internal"
 }
 ```
+
+**Note:** The `region` and `create-bucket-configuration` arguments are only necessary if you are creating a bucket outside of the `us-east-1` region.
 
 Please note security settings and other bucket options can be set via the options listed in the s3api documentation.
 

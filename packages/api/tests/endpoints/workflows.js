@@ -3,22 +3,23 @@
 const test = require('ava');
 const request = require('supertest');
 const { randomString } = require('@cumulus/common/test-utils');
+
+const { s3 } = require('@cumulus/aws-client/services');
 const {
-  s3,
   promiseS3Upload,
   recursivelyDeleteS3Bucket
-} = require('@cumulus/common/aws');
+} = require('@cumulus/aws-client/S3');
 
 const models = require('../../models');
 const {
   createFakeJwtAuthToken,
-  getWorkflowList
+  getWorkflowList,
+  setAuthorizedOAuthUsers
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
 
 process.env.TOKEN_SECRET = randomString();
 process.env.AccessTokensTable = randomString();
-process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 
@@ -27,7 +28,6 @@ const { app } = require('../../app');
 
 const workflowList = getWorkflowList();
 let accessTokenModel;
-let userModel;
 let testBucketName;
 let jwtAuthToken;
 
@@ -44,20 +44,19 @@ test.before(async () => {
     });
   }));
 
-  userModel = new models.User();
-  await userModel.createTable();
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
   await s3().createBucket({ Bucket: testBucketName }).promise();
 });
 
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
-  await userModel.deleteTable();
   await recursivelyDeleteS3Bucket(testBucketName);
 });
 
@@ -121,21 +120,4 @@ test('GET with path parameters returns a 404 for a nonexistent workflow', async 
 
   t.is(response.status, 404);
   t.is(response.body.message, 'Workflow does not exist!');
-});
-
-test.serial('GET /good-workflow returns a 404 if the workflows list cannot be fetched from S3', async (t) => {
-  const realBucket = process.env.system_bucket;
-  try {
-    process.env.system_bucket = 'bucket-does-not-exist';
-
-    const response = await request(app)
-      .get('/workflows/HelloWorldWorkflow')
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .expect(404);
-
-    t.is(response.status, 404);
-  } finally {
-    process.env.system_bucket = realBucket;
-  }
 });

@@ -4,8 +4,12 @@ const request = require('supertest');
 const sinon = require('sinon');
 const test = require('ava');
 
+const { s3 } = require('@cumulus/aws-client/services');
+const {
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { createFakeJwtAuthToken } = require('../../../lib/testUtils');
+const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../../lib/testUtils');
 
 const models = require('../../../models');
 
@@ -16,27 +20,28 @@ process.env.backgroundQueueName = randomString();
 process.env.CollectionsTable = randomString();
 process.env.GranulesTable = randomString();
 process.env.TOKEN_SECRET = randomString();
-process.env.UsersTable = randomString();
 
 const fakeCollectionId = 'FakeCollection___006';
 const fakeCollection = { duplicateHandling: 'replace' };
 
 let accessTokenModel;
 let jwtAuthToken;
-let userModel;
 
 test.before(async () => {
-  userModel = new models.User();
-  await userModel.createTable();
+  process.env.system_bucket = randomString();
+  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 });
 
 test.after.always(async () => {
-  await userModel.deleteTable();
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await accessTokenModel.deleteTable();
 });
 

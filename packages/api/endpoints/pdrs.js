@@ -1,7 +1,9 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const aws = require('@cumulus/common/aws');
+const {
+  deleteS3Object
+} = require('@cumulus/aws-client/S3');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const Search = require('../es/search').Search;
@@ -15,9 +17,11 @@ const models = require('../models');
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const search = new Search({
-    queryStringParameters: req.query
-  }, 'pdr');
+  const search = new Search(
+    { queryStringParameters: req.query },
+    'pdr',
+    process.env.ES_INDEX
+  );
   const result = await search.query();
   return res.send(result);
 }
@@ -59,7 +63,7 @@ async function del(req, res) {
 
   const pdrS3Key = `${process.env.stackName}/pdrs/${pdrName}`;
 
-  await aws.deleteS3Object(process.env.system_bucket, pdrS3Key);
+  await deleteS3Object(process.env.system_bucket, pdrS3Key);
 
   const pdrModel = new models.Pdr();
 
@@ -68,10 +72,9 @@ async function del(req, res) {
 
     if (inTestMode()) {
       const esClient = await Search.es(process.env.ES_HOST);
-      const esIndex = process.env.esIndex;
       await esClient.delete({
         id: pdrName,
-        index: esIndex,
+        index: process.env.ES_INDEX,
         type: 'pdr'
       }, { ignore: [404] });
     }

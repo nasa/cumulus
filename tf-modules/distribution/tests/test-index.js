@@ -4,14 +4,10 @@ const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
 
+const awsServices = require('@cumulus/aws-client/services');
 const {
-  testUtils: {
-    randomId
-  },
-  aws: {
-    lambda
-  }
-} = require('@cumulus/common');
+  randomId
+} = require('@cumulus/common/test-utils');
 
 const EarthdataLoginClient = require('@cumulus/api/lib/EarthdataLogin');
 
@@ -59,11 +55,14 @@ test.after.always(async () => {
 
 test('An authorized s3credential requeste invokes NGAPs request for credentials with username from accessToken cookie', async (t) => {
   const username = randomId('username');
-  const lambdaInstance = lambda();
   const fakeCredential = { Payload: JSON.stringify({ fake: 'credential' }) };
-  const invokeFake = sinon.fake.returns({ promise: () => Promise.resolve(fakeCredential) });
-  const previousInvoke = lambdaInstance.invoke;
-  lambdaInstance.invoke = invokeFake;
+
+  const spy = sinon.spy(() => Promise.resolve(fakeCredential));
+  sinon.stub(awsServices, 'lambda').callsFake(() => ({
+    invoke: (params) => ({
+      promise: () => spy(params)
+    })
+  }));
 
   const accessTokenRecord = fakeAccessTokenFactory({ username });
   await accessTokenModel.create(accessTokenRecord);
@@ -84,12 +83,12 @@ test('An authorized s3credential requeste invokes NGAPs request for credentials 
     .set('Cookie', [`accessToken=${accessTokenRecord.accessToken}`])
     .expect(200);
 
-  t.true(invokeFake.calledOnceWithExactly({
+  console.log(spy.args);
+  t.true(spy.called);
+  t.deepEqual(spy.args[0][0], {
     FunctionName,
     Payload
-  }));
-
-  lambdaInstance.invoke = previousInvoke;
+  });
 });
 
 

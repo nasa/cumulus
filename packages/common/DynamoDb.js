@@ -1,15 +1,8 @@
 'use strict';
 
-/**
- * Utility functions for working with the AWS DynamoDb API
- * @module DynamoDb
- *
- * @example
- * const DynamoDb = require('@cumulus/common/DynamoDb');
- */
-
-const aws = require('./aws');
-const { RecordDoesNotExist } = require('./errors');
+const { RecordDoesNotExist } = require('@cumulus/errors');
+const { improveStackTrace } = require('./aws');
+const { deprecate } = require('./util');
 
 // Exported functions
 
@@ -23,15 +16,16 @@ const { RecordDoesNotExist } = require('./errors');
  * @returns {Promise.<Object>}
  * @throws {RecordDoesNotExist} if a record cannot be found
  *
- * @static
  * @kind function
  */
-const get = aws.improveStackTrace(
+const get = improveStackTrace(
   async ({
     tableName,
     item,
     client
   }) => {
+    deprecate('@cumulus/common/DynamoDb.get', '1.17.0', '@cumulus/aws-client/DynamoDb.get');
+
     const params = {
       TableName: tableName,
       Key: item
@@ -63,10 +57,9 @@ const get = aws.improveStackTrace(
  * @param {Object} params
  * @returns {Promise.<Object>}
  *
- * @static
  * @kind function
  */
-const scan = aws.improveStackTrace(
+const scan = improveStackTrace(
   async ({
     tableName,
     client,
@@ -76,6 +69,8 @@ const scan = aws.improveStackTrace(
     select,
     startKey
   }) => {
+    deprecate('@cumulus/common/DynamoDb.scan', '1.17.0', '@cumulus/aws-client/DynamoDb.scan');
+
     const params = {
       TableName: tableName
     };

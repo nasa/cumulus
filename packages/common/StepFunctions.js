@@ -1,13 +1,6 @@
 'use strict';
 
-/**
- * Utility functions for working with the AWS StepFunctions API
- * @module StepFunctions
- *
- * @example
- * const StepFunctions = require('@cumulus/common/StepFunctions');
- */
-
+const { deprecate } = require('./util');
 const aws = require('./aws');
 
 // Utility functions
@@ -34,12 +27,14 @@ const doesExecutionExist = (describeExecutionPromise) =>
  * @param {Object} params
  * @returns {Promise.<Object>}
  *
- * @static
  * @kind function
  */
 const describeExecution = aws.improveStackTrace(
   aws.retryOnThrottlingException(
-    (params) => aws.sfn().describeExecution(params).promise()
+    (params) => {
+      deprecate('@cumulus/common/StepFunctions.describeExecution', '1.17.0', '@cumulus/aws-client/StepFunctions.describeExecution');
+      return aws.sfn().describeExecution(params).promise();
+    }
   )
 );
 
@@ -55,12 +50,14 @@ const describeExecution = aws.improveStackTrace(
  * @param {Object} params
  * @returns {Promise.<Object>}
  *
- * @static
  * @kind function
  */
 const describeStateMachine = aws.improveStackTrace(
   aws.retryOnThrottlingException(
-    (params) => aws.sfn().describeStateMachine(params).promise()
+    (params) => {
+      deprecate('@cumulus/common/StepFunctions.describeStateMachine', '1.17.0', '@cumulus/aws-client/StepFunctions.describeStateMachine');
+      return aws.sfn().describeStateMachine(params).promise();
+    }
   )
 );
 
@@ -74,11 +71,12 @@ const describeStateMachine = aws.improveStackTrace(
  *   check for
  * @returns {Promise.<boolean>}
  *
- * @static
  * @kind function
  */
-const executionExists = (executionArn) =>
-  doesExecutionExist(describeExecution({ executionArn }));
+const executionExists = (executionArn) => {
+  deprecate('@cumulus/common/StepFunctions.executionExists', '1.17.0', '@cumulus/aws-client/StepFunctions.executionExists');
+  return doesExecutionExist(describeExecution({ executionArn }));
+};
 
 /**
  * Call StepFunctions GetExecutionHistory
@@ -92,7 +90,6 @@ const executionExists = (executionArn) =>
  * @param {Object} params
  * @returns {Promise.<Object>}
  *
- * @static
  * @kind function
  */
 const getExecutionHistory = aws.improveStackTrace(
@@ -103,6 +100,7 @@ const getExecutionHistory = aws.improveStackTrace(
         events: []
       }
     ) => {
+      deprecate('@cumulus/common/StepFunctions.getExecutionHistory', '1.17.0', '@cumulus/aws-client/StepFunctions.getExecutionHistory');
       const response = await aws.sfn().getExecutionHistory(params).promise();
       const events = [
         ...previousResponse.events,
@@ -137,12 +135,14 @@ const getExecutionHistory = aws.improveStackTrace(
  * @param {Object} params
  * @returns {Promise.<Object>}
  *
- * @static
  * @kind function
  */
 const listExecutions = aws.improveStackTrace(
   aws.retryOnThrottlingException(
-    (params) => aws.sfn().listExecutions(params).promise()
+    (params) => {
+      deprecate('@cumulus/common/StepFunctions.listExecutions', '1.17.0', '@cumulus/aws-client/StepFunctions.listExecutions');
+      return aws.sfn().listExecutions(params).promise();
+    }
   )
 );
 

@@ -2,15 +2,163 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
-and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-**Please note**:
-- Your workflow tasks should use `cumulus-message-adapter-js` version 1.0.10+ to utilize new granule, parentArn, asyncOperationId, and stackName fields on the logs.
+### BREAKING CHANGES
+
+- **CUMULUS-1686**
+  - `ecs_cluster_instance_image_id` is now a *required* variable of the `cumulus` module, instead of optional.
 
 ### Added
+
+- **CUMULUS-1040**
+  - Added `@cumulus/aws-client` package to provide utilities for working with AWS services and the Node.js AWS SDK
+  - Added `@cumulus/errors` package which exports error classes for use in Cumulus workflow code
+
+- **CUMULUS-1697**
+  - Added the `@cumulus/tf-inventory` package that provides command line utilities for managing Terraform resources in your AWS account
+
+### Changed
+
+- **CUMULUS-1040**
+  - `@cumulus/common/errors` is now deprecated. Please use `@cumulus/errors` instead.
+  - The AWS service classes and utilities in `@cumulus/common` have been deprecated and moved to `@cumulus/aws-client`, including:
+    - `@cumulus/common/CloudFormationGateway`
+    - `@cumulus/common/DynamoDb`
+    - `@cumulus/common/StepFunctions`
+    - All of the exported functions in `@cumulus/commmon/aws`
+    - `@cumulus/common/string/unicodeEscape`
+    - `@cumulus/common/test-utils/inTestMode`
+    - `@cumulus/common/util/setErrorStack`
+
+- **CUMULUS-1686**
+  - Changed `ecs_cluster_instance_image_id` to be a required variable of the `cumulus` module and removed the default value.
+    The default was not available across accounts and regions, nor outside of NGAP and therefore not particularly useful.
+
+- **CUMULUS-1688**
+  - Updated `@cumulus/aws.receiveSQSMessages` not to replace `message.Body` with a parsed object. This behavior was undocumented and confusing as received messages appeared to contradict AWS docs that state `message.Body` is always a string.
+  - Replaced `sf_watcher` CloudWatch rule from `cloudwatch-events.tf` with an EventSourceMapping on `sqs2sf` mapped to the `start_sf` SQS queue (in `event-sources.tf`).
+  - Updated `sqs2sf` with an EventSourceMapping handler and unit test.
+
+### Fixed
+
+- **CUMULUS-1664**
+  - Updated `dbIndexer` Lambda to remove hardcoded references to DynamoDB table names.
+
+### Removed
+
+- **CUMULUS-1481**
+  - removed `process` config and output from PostToCmr as it was not required by the task nor downstream steps, and should still be in the output message's `meta` regardless.
+
+## [v1.17.0] - 2019-12-31
+
+### BREAKING CHANGES
+
+- **CUMULUS-1498**
+  - The `@cumulus/cmrjs.publish2CMR` function expects that the value of its
+    `creds.password` parameter is a plaintext password.
+  - Rather than using an encrypted password from the `cmr_password` environment
+    variable, the `@cumulus/cmrjs.updateCMRMetadata` function now looks for an
+    environment variable called `cmr_password_secret_name` and fetches the CMR
+    password from that secret in AWS Secrets Manager.
+  - The `@cumulus/post-to-cmr` task now expects a
+    `config.cmr.passwordSecretName` value, rather than `config.cmr.password`.
+    The CMR password will be fetched from that secret in AWS Secrets Manager.
+
+### Added
+
+- **CUMULUS-630**
+  - Added support for replaying Kinesis records on a stream into the Cumulus Kinesis workflow triggering mechanism: either all the records, or some time slice delimited by start and end timestamps.
+  - Added `/replays` endpoint to the operator API for triggering replays.
+  - Added `Replay Kinesis Messages` documentation to Operator Docs.
+  - Added `manualConsumer` lambda function to consume a Kinesis stream. Used by the replay AsyncOperation.
+
+- **CUMULUS-1687**
+  - Added new API endpoint for listing async operations at `/asyncOperations`
+  - All asyncOperations now include the fields `description` and `operationType`. `operationType` can be one of the following. [`Bulk Delete`, `Bulk Granules`, `ES Index`, `Kinesis Replay`]
+
+### Changed
+
+- **CUMULUS-1626**
+  - Updates Cumulus to use node10/CMA 1.1.2 for all of its internal lambdas in prep for AWS node 8 EOL
+
+- **CUMULUS-1498**
+  - Remove the DynamoDB Users table. The list of OAuth users who are allowed to
+    use the API is now stored in S3.
+  - The CMR password and Launchpad passphrase are now stored in Secrets Manager
+
+## [v1.16.1] - 2019-12-6
+
+**Please note**:
+
+- The `region` argument to the `cumulus` Terraform module has been removed. You may see a warning or error if you have that variable populated.
+- Your workflow tasks should use the following versions of the CMA libraries to utilize new granule, parentArn, asyncOperationId, and stackName fields on the logs:
+  - `cumulus-message-adapter-js` version 1.0.10+
+  - `cumulus-message-adapter-python` version 1.1.1+
+  - `cumulus-message-adapter-java` version 1.2.11+
+- The `data-persistence` module no longer manages the creation of an Elasticsearch service-linked role for deploying Elasticsearch to a VPC. Follow the [deployment instructions on preparing your VPC](https://nasa.github.io/cumulus/docs/deployment/deployment-readme#vpc-subnets-and-security-group) for guidance on how to create the Elasticsearch service-linked role manually.
+- There is now a `distribution_api_gateway_stage` variable for the `tf-modules/cumulus` Terraform module that will be used as the API gateway stage name used for the distribution API (Thin Egress App)
+- Default value for the `urs_url` variable is now `https://uat.urs.earthdata.nasa.gov/` in the `tf-modules/cumulus` and `tf-modules/archive` Terraform modules. So deploying the `cumulus` module without a `urs_url` variable set will integrate your Cumulus deployment with the UAT URS environment.
+
+### Added
+
+- **CUMULUS-1563**
+  - Added `custom_domain_name` variable to `tf-modules/data-persistence` module
+
+- **CUMULUS-1654**
+  - Added new helpers to `@cumulus/common/execution-history`:
+    - `getStepExitedEvent()` returns the `TaskStateExited` event in a workflow execution history after the given step completion/failure event
+    - `getTaskExitedEventOutput()` returns the output message for a `TaskStateExited` event in a workflow execution history
+
+### Changed
+
+- **CUMULUS-1578**
+  - Updates SAML launchpad configuration to authorize via configured userGroup.
+   [See the NASA specific documentation (protected)](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+SAML+Launchpad+Integration)
+
+- **CUMULUS-1579**
+  - Elasticsearch list queries use `match` instead of `term`. `term` had been analyzing the terms and not supporting `-` in the field values.
+
+- **CUMULUS-1619**
+  - Adds 4 new keys to `@cumulus/logger` to display granules, parentArn, asyncOperationId, and stackName.
+  - Depends on `cumulus-message-adapter-js` version 1.0.10+. Cumulus tasks updated to use this version.
+
+- **CUMULUS-1654**
+  - Changed `@cumulus/common/SfnStep.parseStepMessage()` to a static class method
+
+- **CUMULUS-1641**
+  - Added `meta.retries` and `meta.visibilityTimeout` properties to sqs-type rule. To create sqs-type rule, you're required to configure a dead-letter queue on your queue.
+  - Added `sqsMessageRemover` lambda which removes the message from SQS queue upon successful workflow execution.
+  - Updated `sqsMessageConsumer` lambda to not delete message from SQS queue, and to retry the SQS message for configured number of times.
+
+### Removed
+
+- Removed `create_service_linked_role` variable from `tf-modules/data-persistence` module.
+
+- **CUMULUS-1321**
+  - The `region` argument to the `cumulus` Terraform module has been removed
+
+### Fixed
+
+- **CUMULUS-1668** - Fixed a race condition where executions may not have been
+  added to the database correctly
+- **CUMULUS-1654** - Fixed issue with `publishReports` Lambda not including workflow execution error information for failed workflows with a single step
+- Fixed `tf-modules/cumulus` module so that the `urs_url` variable is passed on to its invocation of the `tf-modules/archive` module
+
+## [v1.16.0] - 2019-11-15
+
+### Added
+
+- **CUMULUS-1321**
+  - A `deploy_distribution_s3_credentials_endpoint` variable has been added to
+    the `cumulus` Terraform module. If true, the NGAP-backed S3 credentials
+    endpoint will be added to the Thin Egress App's API. Default: true
+
+- **CUMULUS-1544**
+  - Updated the `/granules/bulk` endpoint to correctly query Elasticsearch when
+  granule ids are not provided.
 
 - **CUMULUS-1580**
   - Added `/granules/bulk` endpoint to `@cumulus/api` to perform bulk actions on granules given either a list of granule ids or an Elasticsearch query and the workflow to perform.
@@ -36,10 +184,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     enabled by passing a `retryOptions` object to that function. Supported
     values for that object can be found here:
     <https://github.com/tim-kos/node-retry#retryoperationoptions>
-
-- **CUMULUS-1619**
-  - Adds 4 new keys to `@cumulus/logger` to display granules, parentArn, asyncOperationId, and stackName.
-  - Depends on `cumulus-message-adapter-js` version 1.0.10+. Cumulus tasks updated to use this version.
 
 ### Removed
 
@@ -209,6 +353,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Updated the EC2 initialization scripts to use full volume size for docker storage
   - Changed the default ECS docker storage drive to `devicemapper`
 
+## [v1.14.5] - 2019-12-30 - [BACKPORT]
+
+### Updated
+
+- **CUMULUS-1626**
+  - Updates Cumulus to use node10/CMA 1.1.2 for all of its internal lambdas in prep for AWS node 8 EOL
+
 ## [v1.14.4] - 2019-10-28
 
 ### Fixed
@@ -220,6 +371,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - **CUMULUS-1620** - Fixed bug where `message_adapter_version` does not correctly inject the CMA
+
+- **CUMULUS-1572** - A granule is now included in discovery results even when
+none of its files has a matching file type in the associated collection
+configuration. Previously, if all files for a granule were unmatched by a file
+type configuration, the granule was excluded from the discovery results.
+Further, added support for a `boolean` property
+`ignoreFilesConfigForDiscovery`, which controls how a granule's files are
+filtered at discovery time.
 
 ## [v1.14.2] - 2019-10-08
 
@@ -547,7 +706,7 @@ If you deploy with no distribution app your deployment will succeed but you may 
     - Removed `@cumulus/cmrjs/cmr` functions: `searchConcept`, `ingestConcept`, `deleteConcept`. Use the functions in `@cumulus/cmr-client` instead.
     - Removed `@cumulus/ingest/aws.getExecutionHistory`. Use `@cumulus/common/StepFunctions.getExecutionHistory` instead.
 
-## [v1.13.5] - 2019-08-29
+## [v1.13.5] - 2019-08-29 - [BACKPORT]
 
 ### Fixed
 
@@ -1350,7 +1509,7 @@ We may need to update the api documentation to reflect this.
 - **CUMULUS-746** - Move granule API correctly updates record in dynamo DB and cmr xml file
 - **CUMULUS-766** - Populate database fileSize field from S3 if value not present in Ingest payload
 
-## [v1.7.1] - 2018-07-27
+## [v1.7.1] - 2018-07-27 - [BACKPORT]
 
 ### Fixed
 - **CUMULUS-766** - Backport from 1.8.0 - Populate database fileSize field from S3 if value not present in Ingest payload
@@ -1696,8 +1855,12 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.15.0...HEAD
-[v1.15.0]: https://github.com/nasa/cumulus/compare/v1.14.4...v1.15.0
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.17.0...HEAD
+[v1.17.0]: https://github.com/nasa/cumulus/compare/v1.16.1...v1.17.0
+[v1.16.1]: https://github.com/nasa/cumulus/compare/v1.16.0...v1.16.1
+[v1.16.0]: https://github.com/nasa/cumulus/compare/v1.15.0...v1.16.0
+[v1.15.0]: https://github.com/nasa/cumulus/compare/v1.14.5...v1.15.0
+[v1.14.5]: https://github.com/nasa/cumulus/compare/v1.14.4...v1.14.5
 [v1.14.4]: https://github.com/nasa/cumulus/compare/v1.14.3...v1.14.4
 [v1.14.3]: https://github.com/nasa/cumulus/compare/v1.14.2...v1.14.3
 [v1.14.2]: https://github.com/nasa/cumulus/compare/v1.14.1...v1.14.2

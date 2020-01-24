@@ -3,8 +3,12 @@
 const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
 const merge = require('lodash.merge');
+const set = require('lodash.set');
 const { invoke, Events } = require('@cumulus/ingest/aws');
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
+const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
+const s3Utils = require('@cumulus/aws-client/S3');
+const log = require('@cumulus/common/log');
 const workflows = require('@cumulus/common/workflows');
 const Manager = require('./base');
 const { rule: ruleSchema } = require('./schemas');
@@ -160,9 +164,7 @@ class Rule extends Manager {
       break;
     }
     case 'sqs':
-      if (valueUpdated && !(await aws.sqsQueueExists(updatedRuleItem.rule.value))) {
-        throw new Error(`SQS queue ${updatedRuleItem.rule.value} does not exist or your account does not have permissions to access it`);
-      }
+      updatedRuleItem = await this.validateAndUpdateSqsRule(updatedRuleItem);
       break;
     default:
       break;
@@ -177,7 +179,7 @@ class Rule extends Manager {
     const bucket = process.env.system_bucket;
     const stack = process.env.stackName;
     const key = `${stack}/workflows/${item.workflow}.json`;
-    const exists = await aws.fileExists(bucket, key);
+    const exists = await s3Utils.fileExists(bucket, key);
 
     if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${key} for ${item.name}`);
 
@@ -239,9 +241,7 @@ class Rule extends Manager {
       break;
     }
     case 'sqs':
-      if (!(await aws.sqsQueueExists(newRuleItem.rule.value))) {
-        throw new Error(`SQS queue ${newRuleItem.rule.value} does not exist or your account does not have permissions to access it`);
-      }
+      newRuleItem = await this.validateAndUpdateSqsRule(newRuleItem);
       break;
     default:
       throw new Error('Type not supported');
@@ -259,7 +259,12 @@ class Rule extends Manager {
    */
   async addKinesisEventSources(item) {
     const sourceEventPromises = this.kinesisSourceEvents.map(
-      (lambda) => this.addKinesisEventSource(item, lambda)
+      (lambda) => this.addKinesisEventSource(item, lambda).catch(
+        (err) => {
+          log.error(`Error adding eventSourceMapping for ${item.name}: ${err}`);
+          if (err.code !== 'ResourceNotFoundException') throw err;
+        }
+      )
     );
     const eventAdd = await Promise.all(sourceEventPromises);
     const arn = eventAdd[0].UUID;
@@ -282,7 +287,7 @@ class Rule extends Manager {
       FunctionName: lambda.name,
       EventSourceArn: item.rule.value
     };
-    const listData = await aws.lambda().listEventSourceMappings(listParams).promise();
+    const listData = await awsServices.lambda().listEventSourceMappings(listParams).promise();
     if (listData.EventSourceMappings && listData.EventSourceMappings.length > 0) {
       const currentMapping = listData.EventSourceMappings[0];
 
@@ -290,7 +295,7 @@ class Rule extends Manager {
       if (currentMapping.State === 'Enabled') {
         return currentMapping;
       }
-      return aws.lambda().updateEventSourceMapping({
+      return awsServices.lambda().updateEventSourceMapping({
         UUID: currentMapping.UUID,
         Enabled: true
       }).promise();
@@ -303,7 +308,7 @@ class Rule extends Manager {
       StartingPosition: 'TRIM_HORIZON',
       Enabled: true
     };
-    return aws.lambda().createEventSourceMapping(params).promise();
+    return awsServices.lambda().createEventSourceMapping(params).promise();
   }
 
   /**
@@ -313,7 +318,12 @@ class Rule extends Manager {
    */
   async deleteKinesisEventSources(item) {
     const deleteEventPromises = this.kinesisSourceEvents.map(
-      (lambda) => this.deleteKinesisEventSource(item, lambda.eventType)
+      (lambda) => this.deleteKinesisEventSource(item, lambda.eventType).catch(
+        (err) => {
+          log.error(`Error deleting eventSourceMapping for ${item.name}: ${err}`);
+          if (err.code !== 'ResourceNotFoundException') throw err;
+        }
+      )
     );
     return Promise.all(deleteEventPromises);
   }
@@ -332,7 +342,7 @@ class Rule extends Manager {
     const params = {
       UUID: item.rule[this.eventMapping[eventType]]
     };
-    return aws.lambda().deleteEventSourceMapping(params).promise();
+    return awsServices.lambda().deleteEventSourceMapping(params).promise();
   }
 
   /**
@@ -373,7 +383,7 @@ class Rule extends Manager {
     let subscriptionArn;
     /* eslint-disable no-await-in-loop */
     do {
-      const subsResponse = await aws.sns().listSubscriptionsByTopic({
+      const subsResponse = await awsServices.sns().listSubscriptionsByTopic({
         TopicArn: item.rule.value,
         NextToken: token
       }).promise();
@@ -400,7 +410,7 @@ class Rule extends Manager {
         Endpoint: process.env.messageConsumer,
         ReturnSubscriptionArn: true
       };
-      const r = await aws.sns().subscribe(subscriptionParams).promise();
+      const r = await awsServices.sns().subscribe(subscriptionParams).promise();
       subscriptionArn = r.SubscriptionArn;
     }
     // create permission to invoke lambda
@@ -411,7 +421,7 @@ class Rule extends Manager {
       SourceArn: item.rule.value,
       StatementId: `${item.name}Permission`
     };
-    await aws.lambda().addPermission(permissionParams).promise();
+    await awsServices.lambda().addPermission(permissionParams).promise();
     return subscriptionArn;
   }
 
@@ -421,12 +431,42 @@ class Rule extends Manager {
       FunctionName: process.env.messageConsumer,
       StatementId: `${item.name}Permission`
     };
-    await aws.lambda().removePermission(permissionParams).promise();
+    await awsServices.lambda().removePermission(permissionParams).promise();
     // delete sns subscription
     const subscriptionParams = {
       SubscriptionArn: item.rule.arn
     };
-    return aws.sns().unsubscribe(subscriptionParams).promise();
+    return awsServices.sns().unsubscribe(subscriptionParams).promise();
+  }
+
+  /**
+   * validate and update sqs rule with queue property
+   *
+   * @param {Object} rule the sqs rule
+   * @returns {Object} the updated sqs rule
+   */
+  async validateAndUpdateSqsRule(rule) {
+    const queueUrl = rule.rule.value;
+    if (!(await sqsQueueExists(queueUrl))) {
+      throw new Error(`SQS queue ${queueUrl} does not exist or your account does not have permissions to access it`);
+    }
+
+    const qAttrParams = {
+      QueueUrl: queueUrl,
+      AttributeNames: ['All']
+    };
+    const attributes = await awsServices.sqs().getQueueAttributes(qAttrParams).promise();
+    if (!attributes.Attributes.RedrivePolicy) {
+      throw new Error(`SQS queue ${rule} does not have a dead-letter queue configured`);
+    }
+
+    // update rule meta
+    if (!get(rule, 'meta.visibilityTimeout')) {
+      set(rule, 'meta.visibilityTimeout', parseInt(attributes.Attributes.VisibilityTimeout, 10));
+    }
+
+    if (!get(rule, 'meta.retries')) set(rule, 'meta.retries', 3);
+    return rule;
   }
 
   /**

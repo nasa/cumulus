@@ -2,15 +2,16 @@
 
 const test = require('ava');
 const request = require('supertest');
+const { s3 } = require('@cumulus/aws-client/services');
 const {
-  testUtils: { randomString }
-} = require('@cumulus/common');
-const { AccessToken, User } = require('../../models');
-const { createFakeJwtAuthToken } = require('../../lib/testUtils');
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/aws-client/S3');
+const { randomString } = require('@cumulus/common/test-utils');
+const { AccessToken } = require('../../models');
+const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../lib/testUtils');
 
 let accessTokenModel;
 let jwtAuthToken;
-let userModel;
 
 process.env.AsyncOperationsTable = randomString();
 process.env.AsyncOperationTaskDefinition = randomString();
@@ -18,7 +19,6 @@ process.env.BulkDeleteLambda = randomString();
 process.env.EcsCluster = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
-process.env.UsersTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 process.env.AccessTokensTable = randomString();
 
@@ -26,24 +26,19 @@ process.env.AccessTokensTable = randomString();
 const { app } = require('../../app');
 
 test.before(async () => {
-  // Create Users table
-  process.env.UsersTable = randomString();
-  userModel = new User();
-  await userModel.createTable();
+  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
-  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 });
 
 test.after.always(async () => {
-  try {
-    await userModel.deleteTable();
-  } catch (err) {
-    if (err.code !== 'ResourceNotFoundException') throw err;
-  }
-
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await accessTokenModel.deleteTable();
 });
 

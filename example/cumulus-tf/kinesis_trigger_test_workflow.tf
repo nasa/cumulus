@@ -17,6 +17,7 @@ module "kinesis_trigger_test_workflow" {
         "cma": {
           "event.$": "$",
           "task_config": {
+            "collection": "{$.meta.collection}",
             "cumulus_message": {
               "outputs": [
                 {
@@ -24,7 +25,7 @@ module "kinesis_trigger_test_workflow" {
                   "destination": "{$.meta.cnm}"
                 },
                 {
-                  "source": "{$}",
+                  "source": "{$.output}",
                   "destination": "{$.payload}"
                 }
               ]
@@ -52,7 +53,7 @@ module "kinesis_trigger_test_workflow" {
             "States.ALL"
           ],
           "ResultPath": "$.exception",
-          "Next": "CnmResponseFail"
+          "Next": "TranslateMessageResponseFail"
         }
       ],
       "Next": "SyncGranule"
@@ -114,8 +115,59 @@ module "kinesis_trigger_test_workflow" {
           "event.$": "$",
           "task_config": {
             "OriginalCNM": "{$.meta.cnm}",
-            "CNMResponseStream": "{$.meta.cnmResponseStream}",
+            "response-endpoint": "{$.meta.cnmResponseStream}",
             "region": "us-east-1",
+            "type": "kinesis",
+            "WorkflowException": "{$.exception}",
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$}",
+                  "destination": "{$.meta.cnmResponse}"
+                },
+                {
+                  "source": "{$.cnm}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${aws_lambda_function.cnm_response_task.arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "Next": "WorkflowSucceeded"
+    },
+    "TranslateMessageResponseFail": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "OriginalCNM": "{$.payload}",
+            "response-endpoint": "{$.meta.cnmResponseStream}",
+            "region": "us-east-1",
+            "type": "kinesis",
             "WorkflowException": "{$.exception}",
             "cumulus_message": {
               "outputs": [
@@ -155,7 +207,7 @@ module "kinesis_trigger_test_workflow" {
           "Next": "WorkflowFailed"
         }
       ],
-      "Next": "WorkflowSucceeded"
+      "Next": "WorkflowFailed"
     },
     "CnmResponseFail": {
       "Parameters": {
@@ -163,8 +215,9 @@ module "kinesis_trigger_test_workflow" {
           "event.$": "$",
           "task_config": {
             "OriginalCNM": "{$.meta.cnm}",
-            "CNMResponseStream": "{$.meta.cnmResponseStream}",
+            "response-endpoint": "{$.meta.cnmResponseStream}",
             "region": "us-east-1",
+            "type": "kinesis",
             "WorkflowException": "{$.exception}",
             "cumulus_message": {
               "outputs": [

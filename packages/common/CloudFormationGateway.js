@@ -1,14 +1,15 @@
 'use strict';
 
 const pRetry = require('p-retry');
-
+const { isThrottlingException } = require('@cumulus/errors');
+const { deprecate } = require('./util');
 const log = require('./log');
-const { isThrottlingException } = require('./aws');
 
 const privates = new WeakMap();
 
 class CloudFormationGateway {
   constructor(cloudFormationService) {
+    deprecate('@cumulus/common/CloudFormationGateway', '1.17.0', '@cumulus/aws-client/CloudFormationGateway');
     privates.set(this, { cloudFormationService });
   }
 
@@ -41,4 +42,5 @@ class CloudFormationGateway {
     );
   }
 }
+
 module.exports = CloudFormationGateway;

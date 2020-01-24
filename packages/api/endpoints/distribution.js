@@ -1,16 +1,13 @@
 'use strict';
 
 const urljoin = require('url-join');
-const {
-  s3,
-  getFileBucketAndKey
-} = require('@cumulus/common/aws');
+const { getFileBucketAndKey } = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
 const { UnparsableFileLocationError } = require('@cumulus/common/errors');
 const { URL } = require('url');
 const EarthdataLogin = require('../lib/EarthdataLogin');
 const { isLocalApi } = require('../lib/testUtils');
 const { AccessToken } = require('../models');
-const s3credentials = require('./s3credentials');
 
 // Running API locally will be on http, not https, so cookies
 // should not be set to secure for local runs of the API.
@@ -98,18 +95,6 @@ async function handleRedirectRequest(req, res) {
 }
 
 /**
- * Responds to a request for temporary s3 credentials.
- *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object containing
- * temporary credentials
- */
-async function handleCredentialRequest(req, res) {
-  return s3credentials(req, res);
-}
-
-/**
  * Responds to a file request
  *
  * @param {Object} req - express request object
@@ -146,6 +131,5 @@ async function handleFileRequest(req, res) {
 module.exports = {
   getConfigurations,
   handleRedirectRequest,
-  handleCredentialRequest,
   handleFileRequest
 };

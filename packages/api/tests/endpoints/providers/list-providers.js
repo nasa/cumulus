@@ -2,20 +2,24 @@
 
 const test = require('ava');
 const request = require('supertest');
+const { s3 } = require('@cumulus/aws-client/services');
+const {
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
 const {
   createFakeJwtAuthToken,
-  fakeProviderFactory
+  fakeProviderFactory,
+  setAuthorizedOAuthUsers
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const indexer = require('../../../es/indexer');
 const assertions = require('../../../lib/assertions');
 
 process.env.AccessTokensTable = randomString();
-process.env.UsersTable = randomString();
 process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
@@ -30,32 +34,35 @@ let esClient;
 
 let jwtAuthToken;
 let accessTokenModel;
-let userModel;
 
 test.before(async () => {
+  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+
   accessTokenModel = new models.AccessToken();
   providerModel = new models.Provider();
-  userModel = new models.User();
 
-  process.env.esIndex = esIndex;
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
+
+  const esAlias = randomString();
+  process.env.ES_INDEX = esAlias;
 
   await Promise.all([
     accessTokenModel.createTable(),
-    bootstrap.bootstrapElasticSearch('fakehost', esIndex),
-    providerModel.createTable(),
-    userModel.createTable()
+    bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias),
+    providerModel.createTable()
   ]);
 
-  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
   esClient = await Search.es('fakehost');
 });
 
 test.after.always(() => Promise.all([
+  recursivelyDeleteS3Bucket(process.env.system_bucket),
   accessTokenModel.deleteTable(),
   esClient.indices.delete({ index: esIndex }),
-  providerModel.deleteTable(),
-  userModel.deleteTable()
+  providerModel.deleteTable()
 ]));
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {

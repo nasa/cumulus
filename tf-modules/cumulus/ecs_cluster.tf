@@ -52,6 +52,22 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
 
   statement {
     actions = [
+      "kinesis:ListShards",
+      "kinesis:getShardIterator",
+      "kinesis:GetRecords"
+    ]
+    resources = ["arn:aws:kinesis:*:*:*"]
+  }
+
+  statement {
+    actions = [
+      "sqs:Send*"
+    ]
+    resources = ["arn:aws:sqs:*:*:*"]
+  }
+
+  statement {
+    actions = [
       "states:DescribeActivity",
       "states:GetActivityTask",
       "states:GetExecutionHistory",

@@ -3,20 +3,23 @@
 const omit = require('lodash.omit');
 const test = require('ava');
 const request = require('supertest');
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
+const {
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../../models');
 const bootstrap = require('../../../lambdas/bootstrap');
 const {
   createFakeJwtAuthToken,
-  fakeCollectionFactory
+  fakeCollectionFactory,
+  setAuthorizedOAuthUsers
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 
 process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
-process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
@@ -30,24 +33,24 @@ let esClient;
 let jwtAuthToken;
 let accessTokenModel;
 let collectionModel;
-let userModel;
 
 test.before(async () => {
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
-  process.env.esIndex = esIndex;
-  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  const esAlias = randomString();
+  process.env.ES_INDEX = esAlias;
+  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
   await collectionModel.createTable();
 
-  // create fake Users table
-  userModel = new models.User();
-  await userModel.createTable();
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
   esClient = await Search.es('fakehost');
 });
 
@@ -59,8 +62,7 @@ test.beforeEach(async (t) => {
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await collectionModel.deleteTable();
-  await userModel.deleteTable();
-  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
 });
 

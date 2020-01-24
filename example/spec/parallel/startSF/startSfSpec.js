@@ -6,8 +6,9 @@ const {
   sqs,
   dynamodbDocClient,
   cloudwatchevents
-} = require('@cumulus/common/aws');
-const StepFunctions = require('@cumulus/common/StepFunctions');
+} = require('@cumulus/aws-client/services');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
+const { waitForAllTestSf } = require('@cumulus/integration-tests');
 
 const {
   loadConfig,
@@ -20,7 +21,8 @@ async function sendStartSfMessages({
   queueMaxExecutions,
   queueName,
   queueUrl,
-  workflowArn
+  workflowArn,
+  payload = {}
 }) {
   const message = {
     cumulus_meta: {
@@ -31,7 +33,8 @@ async function sendStartSfMessages({
       queues: {
         [queueName]: queueUrl
       }
-    }
+    },
+    payload
   };
 
   if (queueMaxExecutions) {
@@ -181,31 +184,35 @@ describe('the sf-starter lambda function', () => {
     };
   });
 
-  describe('when provided a queue', () => {
+  describe('when linked to a queue', () => {
     const initialMessageCount = 30;
-    const testMessageLimit = 25;
 
-    let messagesConsumed;
     let passSfArn;
-    let qAttrParams;
     let queueName;
     let queueUrl;
+    let queueArn;
     let sfStarterName;
+    let executionPayload;
 
     beforeAll(async () => {
       sfStarterName = `${config.stackName}-sqs2sf`;
 
       queueName = `${testName}Queue`;
+      executionPayload = { test: testName };
 
       const { QueueUrl } = await sqs().createQueue({
-        QueueName: queueName
+        QueueName: queueName,
+        Attributes: {
+          VisibilityTimeout: '360'
+        }
       }).promise();
       queueUrl = QueueUrl;
 
-      qAttrParams = {
+      const { Attributes } = await sqs().getQueueAttributes({
         QueueUrl: queueUrl,
-        AttributeNames: ['ApproximateNumberOfMessages', 'ApproximateNumberOfMessagesNotVisible']
-      };
+        AttributeNames: ['QueueArn']
+      }).promise();
+      queueArn = Attributes.QueueArn;
 
       const { stateMachineArn } = await sfn().createStateMachine(passSfParams).promise();
       passSfArn = stateMachineArn;
@@ -214,7 +221,8 @@ describe('the sf-starter lambda function', () => {
         numOfMessages: initialMessageCount,
         queueName,
         queueUrl,
-        workflowArn: passSfArn
+        workflowArn: passSfArn,
+        payload: executionPayload
       });
     });
 
@@ -228,38 +236,40 @@ describe('the sf-starter lambda function', () => {
     });
 
     it('that has messages', async () => {
-      pending('until SQS provides a reliable getNumberOfMessages function');
-      const { Attributes } = await sqs().getQueueAttributes(qAttrParams).promise();
-      expect(Attributes.ApproximateNumberOfMessages).toBe(initialMessageCount.toString());
+      pending('until SQS provides a strongly consistent getNumberOfMessages function');
     });
 
-    it('consumes the messages', async () => {
-      const { Payload } = await lambda().invoke({
-        FunctionName: sfStarterName,
-        InvocationType: 'RequestResponse',
-        Payload: JSON.stringify({
-          queueUrl,
-          messageLimit: testMessageLimit
-        })
-      }).promise();
-      messagesConsumed = parseInt(Payload, 10);
-      expect(messagesConsumed).toBeGreaterThan(0);
-    });
+    describe('the messages on the queue', () => {
+      let mappingUUID;
 
-    it('up to its message limit', async () => {
-      pending('until SQS provides a way to confirm a given message/set of messages was deleted');
-      const { Attributes } = await sqs().getQueueAttributes(qAttrParams).promise();
-      const numOfMessages = parseInt(Attributes.ApproximateNumberOfMessages, 10); // sometimes returns 30 due to nature of SQS, failing test
-      expect(numOfMessages).toBe(initialMessageCount - messagesConsumed);
-    });
+      beforeAll(async () => {
+        const { UUID } = await lambda().createEventSourceMapping({
+          EventSourceArn: queueArn,
+          FunctionName: sfStarterName,
+          Enabled: true
+        }).promise();
+        mappingUUID = UUID;
+      });
 
-    /**
-   * Failing intermittently
-   * Filed CUMULUS-1367 to address
-   */
-    xit('to trigger workflows', async () => {
-      const { executions } = await StepFunctions.listExecutions({ stateMachineArn: passSfArn });
-      expect(executions.length).toBe(messagesConsumed);
+      afterAll(async () => {
+        await lambda().deleteEventSourceMapping({
+          UUID: mappingUUID
+        });
+      });
+
+      it('are used to trigger workflows', async () => {
+        const executions = await waitForAllTestSf(
+          executionPayload,
+          passSfArn,
+          60 * 2,
+          initialMessageCount
+        );
+        expect(executions.length).toEqual(initialMessageCount);
+      });
+
+      it('and then deleted from the queue', async () => {
+        pending('until SQS provides a strongly consistent getNumberOfMessages function');
+      });
     });
   });
 

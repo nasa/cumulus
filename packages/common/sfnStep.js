@@ -10,9 +10,31 @@ const StepFunctions = require('./StepFunctions');
  * Step Function for a specific execution.
 */
 class SfnStep {
-  constructor() {
-    this.taskExitedEvent = 'TaskStateExited';
-    this.taskExitedDetailsKey = 'stateExitedEventDetails';
+  /**
+   * Parse the step message.
+   *
+   * Merge possible keys from the CMA in the input and handle remote message
+   * retrieval if necessary.
+   *
+   * @param {Object} stepMessage - Details for the step
+   * @param {Object} stepMessage.input - Object containing input to the step
+   * @param {string} [stepName] - Name for the step being parsed. Optional.
+   * @returns {Object} - Parsed step input object
+   */
+  static async parseStepMessage(stepMessage, stepName) {
+    let parsedStepMessage = stepMessage;
+    if (stepMessage.cma) {
+      parsedStepMessage = { ...stepMessage, ...stepMessage.cma, ...stepMessage.cma.event };
+      delete parsedStepMessage.cma;
+      delete parsedStepMessage.event;
+    }
+
+    if (parsedStepMessage.replace) {
+      // Message was too large and output was written to S3
+      log.info(`Retrieving ${stepName} output from ${JSON.stringify(parsedStepMessage.replace)}`);
+      parsedStepMessage = await pullStepFunctionEvent(parsedStepMessage);
+    }
+    return parsedStepMessage;
   }
 
   /**
@@ -67,44 +89,6 @@ class SfnStep {
       }
     }
     return null;
-  }
-
-  /**
-   * Get the input to the first failed step in a Step function execution.
-   *
-   * @param {string} executionArn - Step function execution ARN
-   * @returns {Promise|undefined} - Input to the first failed step in the execution
-   */
-  async getFirstFailedStepMessage(executionArn) {
-    try {
-      // TODO: store execution history in memory to avoid multiple API requests on same
-      // class instance?
-      const { events } = await StepFunctions.getExecutionHistory({ executionArn });
-
-      // There may be multiple failed events in a retry scenario. Reverse the events
-      // list to more quickly find the last failed event in the history.
-      events.reverse();
-
-      const failedStepEvent = events
-        .find((event) => event.type === this.failureEvent);
-      if (!failedStepEvent) {
-        log.info(`Could not find failed step event for execution ${executionArn}`);
-        return Promise.resolve();
-      }
-
-      const failedStepExitedEvent = events.find((event) => {
-        const taskExitedEvent = event.type === this.taskExitedEvent;
-        const isStepFailed = event.previousEventId === failedStepEvent.id;
-        return taskExitedEvent && isStepFailed;
-      });
-      const failedEventDetails = failedStepExitedEvent[this.taskExitedDetailsKey];
-      const failedStepMessage = JSON.parse(failedEventDetails.output);
-
-      return this.parseStepMessage(failedStepMessage, failedEventDetails.resource);
-    } catch (err) {
-      log.error(err);
-      return Promise.resolve();
-    }
   }
 
   /**
@@ -170,34 +154,7 @@ class SfnStep {
 
     const subStepExecutionDetails = scheduleEvent[this.eventDetailsKeys.scheduled];
     const stepInput = JSON.parse(subStepExecutionDetails.input);
-    return this.parseStepMessage(stepInput, stepName);
-  }
-
-  /**
-   * Parse the step message.
-   *
-   * Merge possible keys from the CMA in the input and handle remote message
-   * retrieval if necessary.
-   *
-   * @param {Object} stepMessage - Details for the step
-   * @param {Object} stepMessage.input - Object containing input to the step
-   * @param {string} [stepName] - Name for the step being parsed. Optional.
-   * @returns {Object} - Parsed step input object
-   */
-  parseStepMessage(stepMessage, stepName) {
-    let parsedStepMessage = stepMessage;
-    if (stepMessage.cma) {
-      parsedStepMessage = { ...stepMessage, ...stepMessage.cma, ...stepMessage.cma.event };
-      delete parsedStepMessage.cma;
-      delete parsedStepMessage.event;
-    }
-
-    if (stepMessage.replace) {
-      // Message was too large and output was written to S3
-      log.info(`Retrieving ${stepName} output from ${JSON.stringify(stepMessage.replace)}`);
-      parsedStepMessage = pullStepFunctionEvent(stepMessage);
-    }
-    return parsedStepMessage;
+    return SfnStep.parseStepMessage(stepInput, stepName);
   }
 
   /**
@@ -351,6 +308,7 @@ class ActivityStep extends SfnStep {
 }
 
 module.exports = {
+  SfnStep,
   ActivityStep,
   LambdaStep
 };

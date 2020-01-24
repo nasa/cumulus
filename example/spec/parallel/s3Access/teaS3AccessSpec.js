@@ -5,8 +5,8 @@ const { URL } = require('url');
 const { Lambda, STS } = require('aws-sdk');
 
 const { models: { AccessToken } } = require('@cumulus/api');
+const { s3 } = require('@cumulus/aws-client/services');
 const {
-  aws: { s3 },
   testUtils: { randomId },
   BucketsConfig
 } = require('@cumulus/common');

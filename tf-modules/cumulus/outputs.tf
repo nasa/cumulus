@@ -27,7 +27,7 @@ output "report_executions_sns_topic_arn" {
 }
 
 output "report_granules_sns_topic_arn" {
-  value = module.archive.report_executions_sns_topic_arn
+  value = module.archive.report_granules_sns_topic_arn
 }
 
 output "report_pdrs_sns_topic_arn" {
@@ -88,9 +88,11 @@ output "sync_granule_task" {
 
 output "workflow_config" {
   value = {
-    publish_reports_lambda_function_arn   = module.archive.publish_reports_lambda_function_arn
-    sf_semaphore_down_lambda_function_arn = module.ingest.sf_semaphore_down_lambda_function_arn
-    state_machine_role_arn                = module.ingest.step_role_arn
+    cw_sf_execution_event_to_db_lambda_function_arn = module.archive.cw_sf_execution_event_to_db_lambda_function_arn
+    publish_reports_lambda_function_arn             = module.archive.publish_reports_lambda_function_arn
+    sf_semaphore_down_lambda_function_arn           = module.ingest.sf_semaphore_down_lambda_function_arn
+    state_machine_role_arn                          = module.ingest.step_role_arn
+    sqs_message_remover_lambda_function_arn         = module.ingest.sqs_message_remover_lambda_function_arn
   }
 }
 

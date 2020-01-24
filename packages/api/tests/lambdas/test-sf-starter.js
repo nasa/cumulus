@@ -3,16 +3,25 @@
 const rewire = require('rewire');
 const test = require('ava');
 
-const aws = require('@cumulus/common/aws');
+const awsServices = require('@cumulus/aws-client/services');
+const {
+  createQueue,
+  receiveSQSMessages,
+  sendSQSMessage
+} = require('@cumulus/aws-client/SQS');
 const { ResourcesLockedError } = require('@cumulus/common/errors');
 const Semaphore = require('@cumulus/common/Semaphore');
 const { randomId } = require('@cumulus/common/test-utils');
-const { noop } = require('@cumulus/common/util');
 
 const sfStarter = rewire('../../lambdas/sf-starter');
 const { Manager } = require('../../models');
 
-const { incrementAndDispatch, handleEvent, handleThrottledEvent } = sfStarter;
+const {
+  incrementAndDispatch,
+  handleEvent,
+  handleThrottledEvent,
+  handleSourceMappingEvent
+} = sfStarter;
 
 class stubConsumer {
   async consume() {
@@ -23,7 +32,7 @@ class stubConsumer {
 // Mock startExecution so nothing attempts to start executions.
 const stubSFN = () => ({
   startExecution: () => ({
-    promise: noop
+    promise: () => true
   })
 });
 sfStarter.__set__('sfn', stubSFN);
@@ -36,7 +45,7 @@ const createRuleInput = (queueUrl, timeLimit = 60) => ({
   timeLimit
 });
 
-const createWorkflowMessage = (queueName, maxExecutions) => ({
+const createWorkflowMessage = (queueName, maxExecutions) => JSON.stringify({
   cumulus_meta: {
     queueName
   },
@@ -51,7 +60,7 @@ const createSendMessageTasks = (queueUrl, message, total) => {
   let count = 0;
   const tasks = [];
   while (count < total) {
-    tasks.push(aws.sendSQSMessage(
+    tasks.push(sendSQSMessage(
       queueUrl,
       message
     ));
@@ -71,14 +80,17 @@ test.before(async () => {
 
 test.beforeEach(async (t) => {
   t.context.semaphore = new Semaphore(
-    aws.dynamodbDocClient(),
+    awsServices.dynamodbDocClient(),
     process.env.SemaphoresTable
   );
-  t.context.client = aws.dynamodbDocClient();
-  t.context.queueUrl = await aws.createQueue(randomId('queue'));
+  t.context.client = awsServices.dynamodbDocClient();
+  t.context.queueUrl = await createQueue(randomId('queue'));
 });
 
-test.afterEach.always((t) => aws.sqs().deleteQueue({ QueueUrl: t.context.queueUrl }).promise());
+test.afterEach.always(
+  (t) =>
+    awsServices.sqs().deleteQueue({ QueueUrl: t.context.queueUrl }).promise()
+);
 
 test.after.always(() => manager.deleteTable());
 
@@ -206,7 +218,7 @@ test('handleThrottledEvent starts 0 executions when priority semaphore is at max
 
   const message = createWorkflowMessage(queueName, maxExecutions);
 
-  await aws.sendSQSMessage(
+  await sendSQSMessage(
     queueUrl,
     message
   );
@@ -249,7 +261,7 @@ test('handleThrottledEvent starts MAX - N executions for messages with priority'
 
   // There should be 1 message left in the queue.
   //   4 initial messages - 3 messages read/deleted = 1 message
-  const messages = await aws.receiveSQSMessages(queueUrl, {
+  const messages = await receiveSQSMessages(queueUrl, {
     numOfMessages: messageLimit
   });
   t.is(messages.length, numOfMessages - result);
@@ -310,7 +322,7 @@ test('handleThrottledEvent respects maximum executions for multiple priority lev
   const expectedResult = expectedLowResult + expectedMedResult;
   t.is(result, expectedResult);
 
-  const messages = await aws.receiveSQSMessages(queueUrl, {
+  const messages = await receiveSQSMessages(queueUrl, {
     numOfMessages: messageLimit
   });
 
@@ -319,4 +331,22 @@ test('handleThrottledEvent respects maximum executions for multiple priority lev
   const expectedMedCount = (medMessageCount - expectedMedResult);
   const expectedMessageCount = expectedLowCount + expectedMedCount;
   t.is(messages.length, expectedMessageCount);
+});
+
+test('handleSourceMappingEvent calls dispatch on messages in an EventSource event', async (t) => {
+  // EventSourceMapping input uses 'body' instead of 'Body'
+  const event = {
+    Records: [
+      {
+        body: createWorkflowMessage('test')
+      },
+      {
+        body: createWorkflowMessage('test')
+      }
+    ]
+  };
+  const output = await handleSourceMappingEvent(event);
+
+  const dispatchReturn = stubSFN().startExecution().promise();
+  output.forEach((o) => t.is(o, dispatchReturn));
 });

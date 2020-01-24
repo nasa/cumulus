@@ -12,7 +12,7 @@ resource "aws_lambda_function" "db_indexer" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/dbIndexer/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = 300
   memory_size      = 320
   dead_letter_config {
@@ -20,11 +20,17 @@ resource "aws_lambda_function" "db_indexer" {
   }
   environment {
     variables = {
-      CMR_ENVIRONMENT = var.cmr_environment
-      FilesTable      = var.dynamo_tables.files.name
-      ES_HOST         = var.elasticsearch_hostname
-      stackName       = var.prefix
-      system_bucket   = var.system_bucket
+      CMR_ENVIRONMENT  = var.cmr_environment
+      CollectionsTable = var.dynamo_tables.collections.name
+      ExecutionsTable  = var.dynamo_tables.executions.name
+      FilesTable       = var.dynamo_tables.files.name
+      GranulesTable    = var.dynamo_tables.granules.name
+      PdrsTable        = var.dynamo_tables.pdrs.name
+      ProvidersTable   = var.dynamo_tables.providers.name
+      RulesTable       = var.dynamo_tables.rules.name
+      ES_HOST          = var.elasticsearch_hostname
+      stackName        = var.prefix
+      system_bucket    = var.system_bucket
     }
   }
   tags = merge(local.default_tags, { Project = var.prefix })
