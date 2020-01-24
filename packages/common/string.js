@@ -12,6 +12,7 @@
 
 const compose = require('lodash.flowright');
 const curry = require('lodash.curry');
+const isString = require('lodash.isstring');
 
 const { deprecate, isNull, negate } = require('./util');
 
@@ -154,8 +155,20 @@ const hostnameRegex = /^[a-z0-9][a-z0-9\.\-]*$/;
  */
 const isValidHostname = compose(matches(hostnameRegex), toLower);
 
+/**
+ * Test if a value is a string with a length greater than zero
+ *
+ * @param {string} x - the string to test
+ * @returns {boolean}
+ *
+ * @static
+ * @kind function
+ */
+const isNonEmptyString = (x) => isString(x) && x.length > 0;
+
 module.exports = {
   globalReplace,
+  isNonEmptyString,
   isValidHostname,
   match,
   matches,

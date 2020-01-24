@@ -5,11 +5,9 @@ const pMap = require('p-map');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const errors = require('@cumulus/errors');
 const lock = require('@cumulus/ingest/lock');
-const {
-  selector: granuleSelector,
-  duplicateHandlingType
-} = require('@cumulus/ingest/granule');
+const { duplicateHandlingType } = require('@cumulus/ingest/granule');
 const log = require('@cumulus/common/log');
+const GranuleFetcher = require('./GranuleFetcher');
 
 /**
  * Ingest a list of granules
@@ -18,7 +16,7 @@ const log = require('@cumulus/common/log');
  * @param {string} bucket - the name of an S3 bucket, used for locking
  * @param {string} provider - the name of a provider, used for locking
  * @param {Object[]} granules - the granules to be ingested
- * @returns {Promise.<Array>} - the list of successfully ingested granules
+ * @returns {Promise<Array>} - the list of successfully ingested granules
  */
 async function download(ingest, bucket, provider, granules) {
   log.debug(`awaiting lock.proceed in download() bucket: ${bucket}, `
@@ -67,7 +65,6 @@ exports.syncGranule = function syncGranule(event) {
   const buckets = config.buckets;
   const provider = config.provider;
   const collection = config.collection;
-  const forceDownload = config.forceDownload || false;
   const downloadBucket = config.downloadBucket;
 
   const duplicateHandling = duplicateHandlingType(event);
@@ -84,19 +81,16 @@ exports.syncGranule = function syncGranule(event) {
     return Promise.reject(err);
   }
 
-  const IngestClass = granuleSelector('ingest', provider.protocol);
-  const ingest = new IngestClass(
+  const ingest = new GranuleFetcher(
     buckets,
     collection,
     provider,
     fileStagingDir,
-    forceDownload,
     duplicateHandling
   );
 
   return download(ingest, downloadBucket, provider, input.granules)
     .then((granules) => {
-      if (ingest.end) ingest.end();
       const output = { granules };
       if (collection && collection.process) output.process = collection.process;
       if (config.pdr) output.pdr = config.pdr;
@@ -104,7 +98,6 @@ exports.syncGranule = function syncGranule(event) {
       return output;
     }).catch((e) => {
       log.debug('SyncGranule errored.');
-      if (ingest.end) ingest.end();
 
       let errorToThrow = e;
       if (e.toString().includes('ECONNREFUSED')) {
