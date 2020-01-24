@@ -17,8 +17,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Remove the `@cumulus/ingest/granule.Granule` class
   - Remove the `@cumulus/ingest/pdr.Discover` class
   - Remove the `@cumulus/ingest/pdr.Granule` class
+  - Remove the `@cumulus/ingest/parse-pdr.parsePdr` function
 
 ### Added
+
+- **CUMULUS-1703**
+  - Add `@cumulus/aws-client/S3.createBucket` function
+  - Add `@cumulus/aws-client/S3.putFile` function
+  - Add `@cumulus/common/string.isNonEmptyString` function
+  - Add `@cumulus/ingest/FtpProviderClient` class
+  - Add `@cumulus/ingest/HttpProviderClient` class
+  - Add `@cumulus/ingest/S3ProviderClient` class
+  - Add `@cumulus/ingest/SftpProviderClient` class
+  - Add `@cumulus/ingest/providerClientUtils.buildProviderClient` function
+  - Add `@cumulus/ingest/providerClientUtils.fetchTextFile` function
 
 - **CUMULUS-1040**
   - Added `@cumulus/aws-client` package to provide utilities for working with AWS services and the Node.js AWS SDK
