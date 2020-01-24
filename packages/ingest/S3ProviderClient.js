@@ -1,18 +1,10 @@
 'use strict';
 
-const isString = require('lodash.isstring');
-const { basename, dirname } = require('path');
-
-const {
-  buildS3Uri,
-  downloadS3File,
-  fileExists,
-  getObjectSize,
-  listS3ObjectsV2,
-  s3CopyObject
-} = require('@cumulus/aws-client/S3');
+const aws = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
 const errors = require('@cumulus/common/errors');
+const isString = require('lodash.isstring');
+const { basename, dirname } = require('path');
 
 class S3ProviderClient {
   constructor({ bucket }) {
@@ -36,7 +28,7 @@ class S3ProviderClient {
       Key: remotePath
     };
 
-    const retval = await downloadS3File(s3Obj, localPath);
+    const retval = await aws.downloadS3File(s3Obj, localPath);
     log.info(`Finishing downloading ${remoteUrl}`);
 
     return retval;
@@ -50,7 +42,7 @@ class S3ProviderClient {
    * @private
    */
   async list(path) {
-    const objects = await listS3ObjectsV2({
+    const objects = await aws.listS3ObjectsV2({
       Bucket: this.bucket,
       FetchOwner: true,
       Prefix: path
@@ -75,11 +67,11 @@ class S3ProviderClient {
    * @returns {Promise} s3 uri of destination file
    */
   async sync(remotePath, bucket, key) {
-    const remoteUrl = buildS3Uri(this.bucket, remotePath);
-    const s3uri = buildS3Uri(bucket, key);
+    const remoteUrl = aws.buildS3Uri(this.bucket, remotePath);
+    const s3uri = aws.buildS3Uri(bucket, key);
     log.info(`Sync ${remoteUrl} to ${s3uri}`);
 
-    const exist = await fileExists(this.bucket, remotePath.replace(/^\/+/, ''));
+    const exist = await aws.fileExists(this.bucket, remotePath.replace(/^\/+/, ''));
     if (!exist) {
       const message = `Source file not found ${remoteUrl}`;
       throw new errors.FileNotFound(message);
@@ -93,11 +85,11 @@ class S3ProviderClient {
     log.info('sync params:', params);
     const startTime = new Date();
 
-    await s3CopyObject(params);
+    await aws.s3CopyObject(params);
 
     const syncTimeSecs = (new Date() - startTime) / 1000.0;
     log.info(`s3 Upload completed in ${syncTimeSecs} secs`, s3uri);
-    const syncedBytes = await getObjectSize(params.Bucket, params.Key);
+    const syncedBytes = await aws.getObjectSize(params.Bucket, params.Key);
     log.info(`synced ${syncedBytes} bytes`);
     return s3uri;
   }
