@@ -128,6 +128,14 @@ exports.s3PutObject = improveStackTrace(
   }).promise()
 );
 
+/**
+ * Upload a file to S3
+ *
+ * @param {string} bucket - the destination S3 bucket
+ * @param {string} key - the destination S3 key
+ * @param {filename} filename - the local file to be uploaded
+ * @returns {Promise}
+ */
 exports.putFile = (bucket, key, filename) =>
   exports.s3PutObject({
     Bucket: bucket,
