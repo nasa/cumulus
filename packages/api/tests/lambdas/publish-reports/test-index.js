@@ -36,15 +36,13 @@ const testMessagesReceived = async (t, QueueUrl, granuleId, pdrName) => {
   }
 };
 
-let revertPublishReports;
+let describeExecutionMock;
 
 test.before(async () => {
   // Not necessary for the tests to pass, but reduces error log output
-  revertPublishReports = publishReports.__set__(
-    'StepFunctions',
-    {
-      describeExecution: () => Promise.resolve({})
-    }
+  describeExecutionMock = publishReports.__set__(
+    'describeExecution',
+    () => Promise.resolve({})
   );
 });
 
@@ -138,7 +136,7 @@ test.afterEach.always(async (t) => {
     .catch(noop);
 });
 
-test.after.always(() => revertPublishReports());
+test.after.always(() => describeExecutionMock());
 
 test.serial('handler() publishes a PDR and a granule to SNS', async (t) => {
   const {
