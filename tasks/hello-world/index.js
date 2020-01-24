@@ -6,7 +6,7 @@ const {
   s3ObjectExists,
   s3PutObject
 } = require('@cumulus/aws-client/S3');
-const { log } = require('@cumulus/common');
+const log = require('@cumulus/common/log');
 
 /**
  * Throw an error if hello world is configured to throw an error for
