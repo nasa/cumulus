@@ -554,5 +554,11 @@ exports.getFileBucketAndKey = (pathParams) => {
   return [Bucket, Key];
 };
 
+/**
+ * Create an S3 bucket
+ *
+ * @param {string} Bucket - the name of the S3 bucket to create
+ * @returns {Promise}
+ */
 exports.createBucket = (Bucket) =>
   awsServices.s3().createBucket({ Bucket }).promise();
