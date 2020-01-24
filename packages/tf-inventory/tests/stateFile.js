@@ -165,6 +165,11 @@ test('extractDeploymentName returns null if deployment name cannot be extracted'
   t.is(extractDeploymentName('tf-deployments/terraform.tfstate'), null);
 });
 
+test('extractDeploymentName works with specified regex', (t) => {
+  t.is(extractDeploymentName('bucket/cumulus/terraform.tfstate', /.*\/(.*)\/terraform.tfstate/),
+    'cumulus');
+});
+
 test('listTfDeployments lists unique Tf deployments based on state file name', (t) => {
   const stateFiles = [
     'bucket/cumulus/data-persistence/terraform.tfstate',
@@ -174,6 +179,19 @@ test('listTfDeployments lists unique Tf deployments based on state file name', (
   ];
 
   const deployments = stateFile.listTfDeployments(stateFiles);
+
+  t.deepEqual(deployments, ['cumulus', 'tf']);
+});
+
+test('listTfDeployments lists unique Tf deployments based on state file name with specified regex', (t) => {
+  const stateFiles = [
+    'bucket/cumulus/terraform.tfstate',
+    'bucket/cumulus/terraform.tfstate',
+    'bucket/tf/terraform.tfstate',
+    'bucket/tf/terraform.tfstate'
+  ];
+
+  const deployments = stateFile.listTfDeployments(stateFiles, /.*\/(.*)\/terraform.tfstate/);
 
   t.deepEqual(deployments, ['cumulus', 'tf']);
 });

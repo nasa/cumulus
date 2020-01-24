@@ -80,7 +80,7 @@ test.before(() => {
       })
     });
 
-  esStub = sinon.stub(awsServices, 'es')
+  esStub = sinon.stub(aws, 'es')
     .returns({
       listDomainNames: () => ({
         promise: () =>
