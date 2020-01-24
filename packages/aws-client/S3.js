@@ -129,6 +129,21 @@ exports.s3PutObject = improveStackTrace(
 );
 
 /**
+ * Upload a file to S3
+ *
+ * @param {string} bucket - the destination S3 bucket
+ * @param {string} key - the destination S3 key
+ * @param {filename} filename - the local file to be uploaded
+ * @returns {Promise}
+ */
+exports.putFile = (bucket, key, filename) =>
+  exports.s3PutObject({
+    Bucket: bucket,
+    Key: key,
+    Body: fs.createReadStream(filename)
+  });
+
+/**
 * Copy an object from one location on S3 to another
 *
 * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
@@ -538,3 +553,12 @@ exports.getFileBucketAndKey = (pathParams) => {
 
   return [Bucket, Key];
 };
+
+/**
+ * Create an S3 bucket
+ *
+ * @param {string} Bucket - the name of the S3 bucket to create
+ * @returns {Promise}
+ */
+exports.createBucket = (Bucket) =>
+  awsServices.s3().createBucket({ Bucket }).promise();
