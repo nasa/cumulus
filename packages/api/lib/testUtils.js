@@ -13,7 +13,7 @@ const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
 
 // const dataDir = 'app/data';
 // const workflowDir = path.join(dataDir, 'workflows');
-const workflowDir = 'app/data/workflows';
+const workflowDir = 'app/data/workflow';
 const getWorkflowList = () => fs.readdirSync(workflowDir).map((f) => JSON.parse(fs.readFileSync(`${workflowDir}/${f}`).toString()));
 
 // const reconcileDir = path.join(dataDir, 'reconciliation-reports');
