@@ -1,7 +1,7 @@
 'use strict';
 
 const fs = require('fs');
-// const path = require('path');
+const path = require('path');
 const { randomId } = require('@cumulus/common/test-utils');
 const { sqs } = require('@cumulus/aws-client/services');
 const { putJsonS3Object } = require('@cumulus/aws-client/S3');
