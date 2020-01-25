@@ -9,6 +9,7 @@ const { authorizedOAuthUsersKey } = require('../app/auth');
 
 const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
 
+console.log(`cwd: ${process.cwd()}`);
 const dataDir = 'app/data/workflow';
 const getWorkflowList = () => fs.readdirSync(dataDir).map((f) => JSON.parse(fs.readFileSync(`${dataDir}/${f}`).toString()));
 
