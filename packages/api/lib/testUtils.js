@@ -334,6 +334,7 @@ module.exports = {
   fakeRuleFactoryV2,
   fakeFileFactory,
   fakeProviderFactory,
+  getReconcileReportsList,
   getSqsQueueMessageCounts,
   getWorkflowList,
   isLocalApi,
