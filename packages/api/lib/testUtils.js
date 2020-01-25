@@ -9,13 +9,16 @@ const { authorizedOAuthUsersKey } = require('../app/auth');
 
 const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
 
+// eslint-disable-next-line no-console
 console.log(`cwd: ${process.cwd()}`);
 const dataDir = 'app/data/workflow';
 const getWorkflowList = () => fs.readdirSync(dataDir).map(
   (f) => {
+    // eslint-disable-next-line no-console
     console.log(`found: ${dataDir}/${f}`);
     return JSON.parse(fs.readFileSync(`${dataDir}/${f}`).toString());
-  });
+  }
+);
 
 const reconcileDir = 'app/data/reconciliation-reports';
 const getReconcileReportsList = () => fs.readdirSync(reconcileDir).map((f) => JSON.parse(fs.readFileSync(`${reconcileDir}/${f}`).toString()));
