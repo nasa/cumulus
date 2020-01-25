@@ -12,6 +12,9 @@ const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
 const dataDir = 'app/data/workflow';
 const getWorkflowList = () => fs.readdirSync(dataDir).map((f) => JSON.parse(fs.readFileSync(`${dataDir}/${f}`).toString()));
 
+const reconcileDir = 'app/data/reconciliation-reports';
+const getReconcileReportsList = () => fs.readdirSync(reconcileDir).map((f) => JSON.parse(fs.readFileSync(`${reconcileDir}/${f}`).toString()));
+
 /**
  * mocks the context object of the lambda function with
  * succeed and fail functions to facilitate testing of
