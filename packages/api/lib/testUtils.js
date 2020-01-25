@@ -11,13 +11,11 @@ const { authorizedOAuthUsersKey } = require('../app/auth');
 
 const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
 
-// const dataDir = 'app/data';
-// const workflowDir = path.join(dataDir, 'workflows');
-const workflowDir = 'app/data/workflow';
+const dataDir = path.join(__dirname, '../app/data');
+const workflowDir = path.join(dataDir, 'workflows');
 const getWorkflowList = () => fs.readdirSync(workflowDir).map((f) => JSON.parse(fs.readFileSync(`${workflowDir}/${f}`).toString()));
 
-// const reconcileDir = path.join(dataDir, 'reconciliation-reports');
-const reconcileDir = 'app/data/reconciliation-reports';
+const reconcileDir = path.join(dataDir, 'reconciliation-reports');
 const getReconcileReportsList = () => fs.readdirSync(reconcileDir).map((f) => JSON.parse(fs.readFileSync(`${reconcileDir}/${f}`).toString()));
 
 
