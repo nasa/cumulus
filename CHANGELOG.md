@@ -92,13 +92,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- **CUMULUS-1040**
-  - Removed from `@cumulus/ingest/aws`:
-    - `@cumulus/ingest/aws/Cloudwatch`
-    - `@cumulus/ingest/aws/ECS`
-    - `@cumulus/ingest/aws/getEndpoint`
-    - `@cumulus/ingest/aws/StepFunction.getExecutionUrl`
-    - `@cumulus/ingest/aws/StepFunction.pushEvent`
 - **CUMULUS-1481**
   - removed `process` config and output from PostToCmr as it was not required by the task nor downstream steps, and should still be in the output message's `meta` regardless.
 
