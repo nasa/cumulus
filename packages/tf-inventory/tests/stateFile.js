@@ -186,8 +186,6 @@ test('listTfDeployments lists unique Tf deployments based on state file name', (
 test('listTfDeployments lists unique Tf deployments based on state file name with specified regex', (t) => {
   const stateFiles = [
     'bucket/cumulus/terraform.tfstate',
-    'bucket/cumulus/terraform.tfstate',
-    'bucket/tf/terraform.tfstate',
     'bucket/tf/terraform.tfstate'
   ];
 
