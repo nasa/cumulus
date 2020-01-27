@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+### BREAKING CHANGES
+
+- **CUMULUS-1698**
+  - - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
+
+### Fixed
+
+- **CUMULUS-1698**
+  - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
+  - Updated `@cumulus/api/launchpadSaml` to download launchpad IDP metadata from configured location when the metadata in s3 is not valid, and to work with updated IDP metadata and SAML response.
 
 ### BREAKING CHANGES
 
@@ -13,8 +23,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1622**
   - Mutex class has been removed from `@cumulus/common/concurrency`
+- **CUMULUS-1703**
+  - Remove the unused `forceDownload` option from the `sync-granule` tasks's config
+  - Remove the `@cumulus/ingest/granule.Discover` class
+  - Remove the `@cumulus/ingest/granule.Granule` class
+  - Remove the `@cumulus/ingest/pdr.Discover` class
+  - Remove the `@cumulus/ingest/pdr.Granule` class
+  - Remove the `@cumulus/ingest/parse-pdr.parsePdr` function
 
 ### Added
+
+- **CUMULUS-1703**
+  - Add `@cumulus/aws-client/S3.createBucket` function
+  - Add `@cumulus/aws-client/S3.putFile` function
+  - Add `@cumulus/common/string.isNonEmptyString` function
+  - Add `@cumulus/ingest/FtpProviderClient` class
+  - Add `@cumulus/ingest/HttpProviderClient` class
+  - Add `@cumulus/ingest/S3ProviderClient` class
+  - Add `@cumulus/ingest/SftpProviderClient` class
+  - Add `@cumulus/ingest/providerClientUtils.buildProviderClient` function
+  - Add `@cumulus/ingest/providerClientUtils.fetchTextFile` function
 
 - **CUMULUS-1040**
   - Added `@cumulus/aws-client` package to provide utilities for working with AWS services and the Node.js AWS SDK

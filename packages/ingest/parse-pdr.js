@@ -5,10 +5,8 @@
 
 'use strict';
 
-const fs = require('fs-extra');
 const isNumber = require('lodash.isnumber');
 const isString = require('lodash.isstring');
-const pvl = require('@cumulus/pvl/t');
 const { PDRParsingError } = require('@cumulus/common/errors');
 
 // If updating this mapping, please update the related documentation
@@ -118,36 +116,6 @@ function extractGranuleId(fileName, regex) {
   return fileName;
 }
 
-/**
- * Load a PDR file from disk and parse the PVL document
- *
- * @param {string} pdrFilePath - the file to be loaded
- * @returns {Object} a parsed PVL document
- */
-async function loadPdrFile(pdrFilePath) {
-  const pdrFile = await fs.readFile(pdrFilePath, 'utf8');
-
-  // Investigating CUMULUS-423
-  if (pdrFile.trim().length === 0) throw new Error(`PDR file had no contents: ${pdrFilePath}`);
-
-  // because MODAPS PDRs do not follow the standard ODL spec
-  // we have to make sure there are spaces before and after every
-  // question mark
-  let pdrString = pdrFile.replace(/((\w*)=(\w*))/g, '$2 = $3');
-
-  // temporary fix for PVL not recognizing quoted strings as symbols
-  pdrString = pdrString.replace(/"/g, '');
-
-  let parsed;
-  try {
-    parsed = pvl.pvlToJS(pdrString);
-  } catch (e) {
-    throw new PDRParsingError(e.message);
-  }
-
-  return parsed;
-}
-
 // FIXME Figure out what this function does and document it
 async function granuleFromFileGroup(fileGroup, pdrName, collectionConfigStore) {
   if (!fileGroup.get('DATA_TYPE')) throw new PDRParsingError('DATA_TYPE is missing');
@@ -175,43 +143,4 @@ async function granuleFromFileGroup(fileGroup, pdrName, collectionConfigStore) {
     granuleSize: files.reduce((total, file) => total + file.size, 0)
   };
 }
-
-/**
- * Parse a PDR file
- *
- * @param {string} pdrFilePath - the file to be parsed
- * @param {Object} collectionConfigStore - a CollectionConfigStore object used
- *   for fetching collection configurations
- * @param {string} pdrName - the name of the PDR
- * @returns {Promise<Object>} an object representing the PDR
- */
-exports.parsePdr = async function parsePdr(pdrFilePath, collectionConfigStore, pdrName) {
-  let pdrDocument = await loadPdrFile(pdrFilePath);
-
-  // check if the PDR has groups
-  // if so, get the objects inside the first group
-  // FIXME handle cases where there are more than one group
-  const groups = pdrDocument.groups();
-  if (groups.length > 0) pdrDocument = groups[0];
-
-  // Get all the file groups
-  const fileGroups = pdrDocument.objects('FILE_GROUP');
-
-  const promisedGranules = fileGroups.map((fileGroup) =>
-    granuleFromFileGroup(fileGroup, pdrName, collectionConfigStore));
-  const granules = await Promise.all(promisedGranules);
-
-  // check file count
-  const filesCount = granules.reduce((total, granule) => total + granule.files.length, 0);
-  const expectedFileCount = pdrDocument.get('TOTAL_FILE_COUNT').value;
-  if (filesCount !== expectedFileCount) {
-    throw new PDRParsingError("FILE COUNT doesn't match expected file count");
-  }
-
-  return {
-    filesCount,
-    granules,
-    granulesCount: granules.length,
-    totalSize: granules.reduce((total, granule) => total + granule.granuleSize, 0)
-  };
-};
+exports.granuleFromFileGroup = granuleFromFileGroup;

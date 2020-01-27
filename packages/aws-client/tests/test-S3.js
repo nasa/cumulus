@@ -1,16 +1,19 @@
 'use strict';
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { tmpdir } = require('os');
 const test = require('ava');
 const pTimeout = require('p-timeout');
 
+const { promisify } = require('util');
 const { UnparsableFileLocationError } = require('@cumulus/errors');
 const { randomString } = require('@cumulus/common/test-utils');
 const { sleep } = require('@cumulus/common/util');
 
 const {
+  createBucket,
   getS3Object,
   downloadS3File,
   listS3ObjectsV2,
@@ -18,18 +21,54 @@ const {
   s3Join,
   calculateS3ObjectChecksum,
   validateS3ObjectChecksum,
-  getFileBucketAndKey
+  getFileBucketAndKey,
+  putFile
 } = require('../S3');
 const awsServices = require('../services');
+
+const mkdtemp = promisify(fs.mkdtemp);
+const rmdir = promisify(fs.rmdir);
+const unlink = promisify(fs.unlink);
+const writeFile = promisify(fs.writeFile);
 
 test.before(async (t) => {
   t.context.Bucket = randomString();
 
-  await awsServices.s3().createBucket({ Bucket: t.context.Bucket }).promise();
+  await createBucket(t.context.Bucket);
 });
 
 test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.Bucket);
+});
+
+test('createBucket() creates a bucket', async (t) => {
+  const bucketName = randomString();
+  await createBucket(bucketName);
+
+  try {
+    await t.notThrowsAsync(
+      awsServices.s3().headBucket({ Bucket: bucketName }).promise()
+    );
+  } finally {
+    await awsServices.s3().deleteBucket({ Bucket: bucketName }).promise();
+  }
+});
+
+test('putFile() uploads a file to S3', async (t) => {
+  const tmpDir = await mkdtemp(`${os.tmpdir()}${path.sep}`);
+  const sourceFile = path.join(tmpDir, 'asdf');
+  const key = randomString();
+
+  try {
+    await writeFile(sourceFile, 'asdf');
+    await putFile(t.context.Bucket, key, sourceFile);
+  } finally {
+    await unlink(sourceFile);
+    await rmdir(tmpDir);
+  }
+
+  const fetchedFile = await getS3Object(t.context.Bucket, key);
+  t.is(fetchedFile.Body.toString(), 'asdf');
 });
 
 test('getS3Object() returns an existing S3 object', async (t) => {
@@ -100,7 +139,7 @@ test('s3Join behaves as expected', (t) => {
 
 test('listS3ObjectsV2 handles non-truncated case', async (t) => {
   const Bucket = randomString();
-  await awsServices.s3().createBucket({ Bucket }).promise();
+  await createBucket(Bucket);
 
   await Promise.all(['a', 'b', 'c'].map((Key) => awsServices.s3().putObject({
     Bucket,
@@ -120,7 +159,7 @@ test('listS3ObjectsV2 handles non-truncated case', async (t) => {
 
 test('listS3ObjectsV2 handles truncated case', async (t) => {
   const Bucket = randomString();
-  await awsServices.s3().createBucket({ Bucket }).promise();
+  await createBucket(Bucket);
 
   await Promise.all(['a', 'b', 'c'].map((Key) => awsServices.s3().putObject({
     Bucket,
@@ -140,7 +179,7 @@ test('listS3ObjectsV2 handles truncated case', async (t) => {
 
 test('downloadS3File rejects promise if key not found', async (t) => {
   const Bucket = randomString();
-  await awsServices.s3().createBucket({ Bucket }).promise();
+  await createBucket(Bucket);
 
   try {
     await downloadS3File({ Bucket, Key: 'not-gonna-find-it' }, '/tmp/wut');
@@ -154,7 +193,7 @@ test('downloadS3File resolves filepath if key is found', async (t) => {
   const Key = 'example';
   const Body = 'example';
 
-  await awsServices.s3().createBucket({ Bucket }).promise();
+  await createBucket(Bucket);
   await awsServices.s3().putObject({ Bucket, Key: Key, Body: Body }).promise();
 
   const params = { Bucket, Key: Key };
@@ -179,7 +218,7 @@ test('calculateS3ObjectChecksum returns correct checksum', async (t) => {
   const shasum = 'c3499c2729730a7f807efb8676a92dcb6f8a3f8f';
   const sha256sum = '50d858e0985ecc7f60418aaf0cc5ab587f42c2570a884095a9e8ccacd0f6545c';
 
-  await awsServices.s3().createBucket({ Bucket }).promise();
+  await createBucket(Bucket);
   await awsServices.s3().putObject({ Bucket, Key, Body }).promise();
 
   const ck = await calculateS3ObjectChecksum({ algorithm: 'cksum', bucket: Bucket, key: Key });
@@ -198,7 +237,7 @@ test('validateS3ObjectChecksum returns true for good checksum', async (t) => {
   const Key = 'example';
   const Body = 'example';
 
-  await awsServices.s3().createBucket({ Bucket }).promise();
+  await createBucket(Bucket);
   await awsServices.s3().putObject({ Bucket, Key, Body }).promise();
 
   const cksum = 148323542;
@@ -214,7 +253,7 @@ test('validateS3ObjectChecksum throws InvalidChecksum error on bad checksum', as
   const Key = 'example';
   const Body = 'example';
 
-  await awsServices.s3().createBucket({ Bucket }).promise();
+  await createBucket(Bucket);
   await awsServices.s3().putObject({ Bucket, Key, Body }).promise();
 
   const cksum = 11111111111;

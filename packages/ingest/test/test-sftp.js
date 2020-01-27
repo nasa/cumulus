@@ -1,25 +1,20 @@
 'use strict';
 
 const fs = require('fs');
-const sinon = require('sinon');
 const os = require('os');
 const path = require('path');
-const proxyquire = require('proxyquire');
+const S3 = require('@cumulus/aws-client/S3');
 const test = require('ava');
-const JSFtp = require('jsftp');
 const {
   calculateS3ObjectChecksum,
   fileExists,
   recursivelyDeleteS3Bucket,
   s3,
-  s3PutObject,
   headObject
 } = require('@cumulus/common/aws');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
-const {
-  randomString
-} = require('@cumulus/common/test-utils');
-const { sftpMixin: TestSftpMixin } = require('../sftp');
+const { randomString } = require('@cumulus/common/test-utils');
+const SftpProviderClient = require('../SftpProviderClient');
 
 const privateKey = 'ssh_client_rsa_key';
 const bucket = randomString();
@@ -30,31 +25,24 @@ const localDataDir = process.env.DOCKER_TEST_RUN ? '/tmp/cumulus_unit_test_data'
 process.env.system_bucket = bucket;
 process.env.stackName = stackName;
 
-class MyTestDiscoveryClass {
-  constructor(useList) {
-    this.decrypted = true;
-    this.host = '127.0.0.1';
-    this.port = '2222';
-    this.username = 'user';
-    this.path = '';
-    this.provider = {
-      encrypted: false,
-      privateKey: privateKey
-    };
-    this.useList = useList;
-  }
-}
-
 test.before(async () => {
   // let's copy the key to s3
   await s3().createBucket({ Bucket: bucket }).promise();
 
-  const privKey = fs.readFileSync(`../test-data/keys/${privateKey}`, 'utf-8');
+  await S3.putFile(
+    bucket,
+    `${stackName}/crypto/${privateKey}`,
+    `../test-data/keys/${privateKey}`
+  );
+});
 
-  await s3PutObject({
-    Bucket: bucket,
-    Key: `${stackName}/crypto/${privateKey}`,
-    Body: privKey
+test.beforeEach((t) => {
+  t.context.mySftpProviderClient = new SftpProviderClient({
+    host: '127.0.0.1',
+    port: 2222,
+    username: 'user',
+    encrypted: false,
+    privateKey
   });
 });
 
@@ -65,24 +53,19 @@ test.after.always(async () => {
 });
 
 test('connect and retrieve list of pdrs', async (t) => {
-  const jsftpSpy = sinon.spy(JSFtp);
-  const { sftpMixin } = proxyquire('../sftp', {
-    jsftp: jsftpSpy
-  });
+  const { mySftpProviderClient } = t.context;
 
-  class MyTestSftpDiscoveryClass extends sftpMixin(MyTestDiscoveryClass) {}
-  const myTestSftpDiscoveryClass = new MyTestSftpDiscoveryClass(true);
-  const list = await myTestSftpDiscoveryClass.list();
+  const list = await mySftpProviderClient.list('');
   t.is(list.length > 0, true);
 });
 
 test('Download remote file to s3 with correct content-type', async (t) => {
-  class MyTestSftpDiscoveryClass extends TestSftpMixin(MyTestDiscoveryClass) {}
-  const myTestSftpDiscoveryClass = new MyTestSftpDiscoveryClass(true);
+  const { mySftpProviderClient } = t.context;
+
   const expectedContentType = 'application/x-hdf';
 
   const key = `${randomString()}.hdf`;
-  await myTestSftpDiscoveryClass.sync(
+  await mySftpProviderClient.sync(
     '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf', bucket, key
   );
   t.truthy(fileExists(bucket, key));
@@ -94,11 +77,10 @@ test('Download remote file to s3 with correct content-type', async (t) => {
 });
 
 test('Download remote file to local disk', async (t) => {
-  class MyTestSftpDiscoveryClass extends TestSftpMixin(MyTestDiscoveryClass) {}
-  const myTestSftpDiscoveryClass = new MyTestSftpDiscoveryClass(true);
+  const { mySftpProviderClient } = t.context;
 
   const localPath = path.join(os.tmpdir(), `delete-me-${randomString()}.txt`);
-  await myTestSftpDiscoveryClass.download(
+  await mySftpProviderClient.download(
     '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf', localPath
   );
 

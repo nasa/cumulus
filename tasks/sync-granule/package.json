@@ -27,7 +27,11 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "ava": {
-    "serial": true
+    "serial": true,
+    "verbose": true,
+    "files": [
+      "!tests/fixtures/**/*"
+    ]
   },
   "nyc": {
     "exclude": [
@@ -35,11 +39,14 @@
     ]
   },
   "dependencies": {
+    "@cumulus/aws-client": "1.17.0-alpha4",
     "@cumulus/common": "1.17.0",
     "@cumulus/cumulus-message-adapter-js": "^1.1.0",
     "@cumulus/errors": "1.17.0-alpha",
     "@cumulus/ingest": "1.17.0",
-    "p-map": "^2.1.0"
+    "lodash.flatten": "^4.4.0",
+    "p-map": "^2.1.0",
+    "uuid": "^3.4.0"
   },
   "devDependencies": {
     "@cumulus/aws-client": "1.17.0-alpha4",
@@ -49,6 +56,7 @@
     "babel-plugin-source-map-support": "^2.1.1",
     "babel-preset-env": "^1.7.0",
     "lodash.set": "^4.3.2",
+    "moment": "^2.24.0",
     "nyc": "^14.0.0",
     "webpack": "~4.5.0",
     "webpack-cli": "~2.0.14"
