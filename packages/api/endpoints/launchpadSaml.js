@@ -1,14 +1,19 @@
 'use strict';
 
 const saml2 = require('saml2-js');
+const got = require('got');
 const { JSONPath } = require('jsonpath-plus');
 const { parseString } = require('xml2js');
 const { promisify } = require('util');
 const flatten = require('lodash.flatten');
+const get = require('lodash.get');
+const log = require('@cumulus/common/log');
 
 const {
   getS3Object,
-  parseS3Uri
+  parseS3Uri,
+  s3ObjectExists,
+  s3PutObject
 } = require('@cumulus/aws-client/S3');
 
 const { AccessToken } = require('../models');
@@ -17,18 +22,50 @@ const { createJwtToken } = require('../lib/token');
 const parseXmlString = promisify(parseString);
 
 /**
+ * launchpad idp metadata s3 uri
+ * @returns {string} - s3 location of launchpad idp metadata
+ */
+const launchpadMetadataS3Uri = () => (
+  `s3://${process.env.system_bucket}/${process.env.stackName}/crypto/launchpadMetadata.xml`
+);
+
+/**
+ * download launchpad's idp metadata to s3
+ *
+ * @param {string} launchpadPublicMetadataPath - launchpad metadata s3 uri
+ * @returns {Promise<undefined>} resolves when the file has been downloaded
+ */
+const downloadLaunchpadPublicMetadata = async (launchpadPublicMetadataPath) => {
+  const launchpadMetadataUrl = process.env.LAUNCHPAD_METADATA_URL;
+  const { Bucket, Key } = parseS3Uri(launchpadPublicMetadataPath);
+  try {
+    const urlResponse = await got.get(launchpadMetadataUrl);
+    const launchpadMetadataFromUrl = urlResponse.body;
+    const params = { Bucket, Key, Body: launchpadMetadataFromUrl };
+    await s3PutObject(params);
+    log.debug('Downloaded the launchpad metadata to s3');
+  } catch (error) {
+    error.message = `Unable to download the launchpad metadata to s3 ${error}`;
+    throw error;
+  }
+};
+
+/**
  * reads public metadata file from S3 path and returns the X509Certificate value
  *
  * The XML file is a copy of the launchpad's idp metadata found here for the sandbox
  * https://auth.launchpad-sbx.nasa.gov/unauth/metadata/launchpad-sbx.idp.xml
  *
- * @param {string} launchpadPublicMetadataPath
+ * @param {string} launchpadPublicMetadataPath - launchpad metadata s3 uri
  * @returns {Promise<Array>} Array containing the X509Certificate from the input metadata file.
  */
 const launchpadPublicCertificate = async (launchpadPublicMetadataPath) => {
   let launchpadMetatdataXML;
   const { Bucket, Key } = parseS3Uri(launchpadPublicMetadataPath);
   try {
+    if (!(await s3ObjectExists({ Bucket, Key }))) {
+      await downloadLaunchpadPublicMetadata(launchpadPublicMetadataPath);
+    }
     const s3Object = await getS3Object(Bucket, Key);
     launchpadMetatdataXML = s3Object.Body.toString();
   } catch (error) {
@@ -38,7 +75,7 @@ const launchpadPublicCertificate = async (launchpadPublicMetadataPath) => {
     throw error;
   }
   const metadata = await parseXmlString(launchpadMetatdataXML);
-  const certificate = JSONPath({ wrap: false }, '$..ds:X509Certificate', metadata);
+  const certificate = JSONPath({ wrap: false }, '$..ns1:X509Certificate', metadata);
   if (certificate) return flatten(certificate);
   throw new Error(
     `Failed to retrieve Launchpad metadata X509 Certificate from ${launchpadPublicMetadataPath}`
@@ -69,7 +106,8 @@ const parseSamlResponse = (samlResponse) => {
   let accessToken;
   let userGroup;
   try {
-    username = samlResponse.user.attributes.UserId[0];
+    const attributes = samlResponse.user.attributes;
+    username = get(attributes, 'UserId', get(attributes, 'UserID'))[0];
     accessToken = samlResponse.user.session_index;
     userGroup = samlResponse.user.attributes.userGroup[0];
   } catch (error) {
@@ -107,9 +145,7 @@ const buildLaunchpadJwt = async (samlResponse) => {
  * convenience function to set up SAML Identity and Service Providers
  */
 const prepareSamlProviders = async () => {
-  const LaunchpadX509Certificate = await launchpadPublicCertificate(
-    process.env.LAUNCHPAD_METADATA_PATH
-  );
+  const LaunchpadX509Certificate = await launchpadPublicCertificate(launchpadMetadataS3Uri());
 
   const spOptions = {
     entity_id: process.env.ENTITY_ID,
@@ -172,15 +208,21 @@ const auth = async (req, res) => {
   const { idp, sp } = await prepareSamlProviders();
   sp.post_assert(idp, { request_body: req.body }, (err, samlResponse) => {
     if (err != null) {
-      return res.boom.badRequest('SAML post assert error', err);
+      log.debug(`launchpadSaml.auth post assert error ${err}`);
+      if (err.message && err.message.startsWith('SAML Assertion signature check failed!')) {
+        return downloadLaunchpadPublicMetadata(launchpadMetadataS3Uri())
+          .then(() => res.redirect(`${req.body.RelayState}`));
+      }
+      return res.boom.badRequest(`SAML post assert error ${err}`, err);
     }
+
     return buildLaunchpadJwt(samlResponse)
       .then((LaunchpadJwtToken) => {
         const Location = `${req.body.RelayState}/?token=${LaunchpadJwtToken}`;
         return res.redirect(Location);
       })
       .catch((error) =>
-        res.boom.badRequest('Could not build JWT from SAML response', error));
+        res.boom.badRequest(`Could not build JWT from SAML response ${error}`, error));
   });
 };
 

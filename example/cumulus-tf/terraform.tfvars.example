@@ -66,8 +66,14 @@ oauth_user_group = "usergroup"
 # see Wiki: https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+SAML+Launchpad+Integration
 saml_entity_id                  = "Configured SAML entity-id"
 saml_assertion_consumer_service = "<Cumulus API endpoint>/saml/auth, e.g. https://example.com/saml/auth"
+
+# Sandbox Launchpad saml2sso: https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso
+# Production Launchpad saml2sso: https://auth.launchpad.nasa.gov/affwebservices/public/saml2sso
 saml_idp_login                  = "nasa's saml2sso endpoint, e.g. https://example.gov/affwebservices/public/saml2sso"
-saml_launchpad_metadata_path    = "s3 url to identity provider public metadata xml file, e.g. s3://system_bucket/PREFIX/launchpad/launchpad-sbx-metadata.xml"
+
+# Sandbox Launchpad IDP metadata: https://auth.launchpad-sbx.nasa.gov/unauth/metadata/launchpad-sbx.idp.xml
+# Production Launchpad IDP Metadata: https://auth.launchpad.nasa.gov/unauth/metadata/launchpad.idp.xml
+saml_launchpad_metadata_url     = "url of the identity provider public metadata xml file"
 
 # Optional
 key_name      = "MY-KEY"
