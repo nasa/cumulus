@@ -395,8 +395,8 @@ variable "saml_idp_login" {
   default = "N/A"
 }
 
-variable "saml_launchpad_metadata_path" {
-  description = "The S3 url of the Identity Provider public metadata xml file"
+variable "saml_launchpad_metadata_url" {
+  description = "The url of the Identity Provider public metadata xml file"
   type    = string
   default = "N/A"
 }

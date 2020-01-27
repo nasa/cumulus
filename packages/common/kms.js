@@ -1,10 +1,9 @@
 'use strict';
 
 const AWS = require('aws-sdk');
+const { createErrorType } = require('@cumulus/errors');
 
-const errors = require('./errors');
-
-const KMSDecryptionFailed = errors.createErrorType('KMSDecryptionFailed');
+const KMSDecryptionFailed = createErrorType('KMSDecryptionFailed');
 
 class KMS {
   static async encrypt(text, kmsId) {

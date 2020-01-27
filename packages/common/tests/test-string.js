@@ -3,6 +3,18 @@
 const test = require('ava');
 const stringUtils = require('../string');
 
+test('isNonEmptyString() returns true for a non-empty string', (t) => {
+  t.true(stringUtils.isNonEmptyString('asdf'));
+});
+
+test('isNonEmptyString() returns false for a non-string', (t) => {
+  t.false(stringUtils.isNonEmptyString(123));
+});
+
+test('isNonEmptyString() returns false for an empty string', (t) => {
+  t.false(stringUtils.isNonEmptyString(''));
+});
+
 test('toLower() converts a string to lower case', (t) => {
   t.is(stringUtils.toLower('asDF'), 'asdf');
 });
