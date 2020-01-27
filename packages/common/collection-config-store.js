@@ -2,7 +2,6 @@
 
 const { s3 } = require('./aws');
 
-
 /**
  * Returns the collectionId used in elasticsearch
  * which is a combination of collection name and version

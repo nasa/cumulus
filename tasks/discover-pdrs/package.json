@@ -37,14 +37,15 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "1.17.0",
+    "@cumulus/aws-client": "1.17.0-alpha4",
     "@cumulus/cumulus-message-adapter-js": "^1.1.0",
-    "@cumulus/errors": "1.17.0-alpha",
     "@cumulus/ingest": "1.17.0",
-    "lodash.get": "^4.4.2"
+    "lodash.get": "^4.4.2",
+    "p-filter": "^2.1.0"
   },
   "devDependencies": {
-    "@cumulus/aws-client": "1.17.0-alpha4",
+    "@cumulus/common": "1.17.0",
+    "@cumulus/errors": "1.17.0-alpha",
     "ava": "^2.1.0",
     "babel-loader": "^8.0.6",
     "babel-plugin-source-map-support": "^2.1.1",

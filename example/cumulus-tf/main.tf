@@ -88,7 +88,7 @@ module "cumulus" {
   saml_entity_id                  = var.saml_entity_id
   saml_assertion_consumer_service = var.saml_assertion_consumer_service
   saml_idp_login                  = var.saml_idp_login
-  saml_launchpad_metadata_path    = var.saml_launchpad_metadata_path
+  saml_launchpad_metadata_url     = var.saml_launchpad_metadata_url
 
   permissions_boundary_arn = var.permissions_boundary_arn
 

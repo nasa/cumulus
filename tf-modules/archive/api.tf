@@ -102,7 +102,7 @@ resource "aws_lambda_function" "api" {
       ENTITY_ID                    = var.saml_entity_id
       ASSERT_ENDPOINT              = var.saml_assertion_consumer_service
       IDP_LOGIN                    = var.saml_idp_login
-      LAUNCHPAD_METADATA_PATH      = var.saml_launchpad_metadata_path
+      LAUNCHPAD_METADATA_URL       = var.saml_launchpad_metadata_url
       METRICS_ES_HOST              = var.metrics_es_host
       METRICS_ES_USER              = var.metrics_es_username
       METRICS_ES_PASS              = var.metrics_es_password
