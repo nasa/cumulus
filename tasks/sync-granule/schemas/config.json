@@ -2,12 +2,12 @@
   "title": "SyncGranuleConfig",
   "description": "Describes the config used by the sync-granule task",
   "type": "object",
-  "required": ["buckets", "provider", "downloadBucket"],
+  "required": [
+    "buckets",
+    "provider",
+    "downloadBucket"
+  ],
   "properties": {
-    "forceDownload": {
-      "type": "boolean",
-      "default": false
-    },
     "stack": {
       "type": "string",
       "description": "The name of the deployment stack"
@@ -18,17 +18,38 @@
     },
     "provider": {
       "type": "object",
-      "required": ["host", "protocol"],
+      "required": [
+        "host",
+        "protocol"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "username": { "type": "string" },
-        "password": { "type": "string" },
-        "host": { "type": "string" },
-        "port": { "type": "integer" },
-        "globalConnectionLimit": { "type": "integer" },
+        "id": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "globalConnectionLimit": {
+          "type": "integer"
+        },
         "protocol": {
           "type": "string",
-          "enum": ["ftp", "sftp", "http", "https", "s3"]
+          "enum": [
+            "ftp",
+            "sftp",
+            "http",
+            "https",
+            "s3"
+          ]
         }
       }
     },
@@ -63,35 +84,64 @@
         "name"
       ],
       "properties": {
-        "name": { "type": "string" },
-        "process": { "type": "string" },
-        "url_path": { "type": "string" },
-        "duplicateHandling": { "type": "string" },
+        "name": {
+          "type": "string"
+        },
+        "process": {
+          "type": "string"
+        },
+        "url_path": {
+          "type": "string"
+        },
+        "duplicateHandling": {
+          "type": "string"
+        },
         "files": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["regex", "bucket"],
+            "required": [
+              "regex",
+              "bucket"
+            ],
             "properties": {
-              "regex": { "type": "string" },
-              "bucket": { "type": "string" },
-              "url_path": { "type": "string" }
+              "regex": {
+                "type": "string"
+              },
+              "bucket": {
+                "type": "string"
+              },
+              "url_path": {
+                "type": "string"
+              }
             }
           }
         }
       }
     },
     "pdr": {
-      "required": ["name", "path"],
+      "required": [
+        "name",
+        "path"
+      ],
       "properties": {
-        "name": { "type": "string" },
-        "path": { "type": "string" }
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
       }
     },
     "duplicateHandling": {
       "type": "string",
       "description": "Specifies how duplicate filenames should be handled. `error` will throw an error that, if not caught, will fail the task/workflow execution. `version` will add a suffix to the existing filename to avoid a clash.",
-      "enum": ["replace", "version", "skip", "error"],
+      "enum": [
+        "replace",
+        "version",
+        "skip",
+        "error"
+      ],
       "default": "error"
     }
   }

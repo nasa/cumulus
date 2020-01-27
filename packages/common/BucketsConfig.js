@@ -1,6 +1,6 @@
 'use strict';
 
-const { createErrorType } = require('./errors');
+const { createErrorType } = require('@cumulus/errors');
 
 const BucketsConfigError = createErrorType('BucketsConfigError');
 

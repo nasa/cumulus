@@ -2,7 +2,7 @@
 
 const http = require('@cumulus/common/http');
 const isIp = require('is-ip');
-const path = require('path');
+const { basename } = require('path');
 const { PassThrough } = require('stream');
 const Crawler = require('simplecrawler');
 const got = require('got');
@@ -18,23 +18,36 @@ const validateHost = (host) => {
   throw new TypeError(`provider.host is not a valid hostname or IP: ${host}`);
 };
 
-module.exports.httpMixin = (superclass) => class extends superclass {
+class HttpProviderClient {
+  constructor(providerConfig) {
+    this.protocol = providerConfig.protocol;
+    this.host = providerConfig.host;
+    this.port = providerConfig.port;
+
+    this.endpoint = buildURL({
+      protocol: this.protocol,
+      host: this.host,
+      port: this.port
+    });
+  }
+
   /**
    * List all PDR files from a given endpoint
    *
-   * @returns {Promise.<Array>} of a list of files
+   * @param {string} path - the remote path to list
+   * @returns {Promise<Array>} a list of files
    */
-  list() {
-    validateHost(this.provider.host);
+  list(path) {
+    validateHost(this.host);
 
     const pattern = /<a href="([^>]*)">[^<]+<\/a>/;
 
     const c = new Crawler(
       buildURL({
-        protocol: this.provider.protocol,
-        host: this.provider.host,
-        port: this.provider.port,
-        path: this.path
+        protocol: this.protocol,
+        host: this.host,
+        port: this.port,
+        path
       })
     );
 
@@ -55,10 +68,7 @@ module.exports.httpMixin = (superclass) => class extends superclass {
           // Some providers provide files with one number after the dot (".") ex (tmtdayacz8110_5.6)
             if (split[1].match(/^(.*\.[\w\d]{1,4})\s*$/) !== null) {
               const name = split[1].trimRight();
-              files.push({
-                name,
-                path: this.path
-              });
+              files.push({ name, path });
             }
           }
         });
@@ -104,12 +114,12 @@ module.exports.httpMixin = (superclass) => class extends superclass {
    * @returns {Promise.<string>} - the path that the file was saved to
    */
   async download(remotePath, localPath) {
-    validateHost(this.provider.host);
+    validateHost(this.host);
 
     const remoteUrl = buildURL({
-      protocol: this.provider.protocol,
-      host: this.provider.host,
-      port: this.provider.port,
+      protocol: this.protocol,
+      host: this.host,
+      port: this.port,
       path: remotePath
     });
 
@@ -118,7 +128,7 @@ module.exports.httpMixin = (superclass) => class extends superclass {
       await http.download(remoteUrl, localPath);
     } catch (e) {
       if (e.message && e.message.includes('Unexpected HTTP status code: 403')) {
-        const message = `${path.basename(remotePath)} was not found on the server with 403 status`;
+        const message = `${basename(remotePath)} was not found on the server with 403 status`;
         throw new errors.FileNotFound(message);
       } else throw e;
     }
@@ -136,12 +146,12 @@ module.exports.httpMixin = (superclass) => class extends superclass {
    * @returns {Promise} s3 uri of destination file
    */
   async sync(remotePath, bucket, key) {
-    validateHost(this.provider.host);
+    validateHost(this.host);
 
     const remoteUrl = buildURL({
-      protocol: this.provider.protocol,
-      host: this.provider.host,
-      port: this.provider.port,
+      protocol: this.protocol,
+      host: this.host,
+      port: this.port,
       path: remotePath
     });
 
@@ -170,4 +180,6 @@ module.exports.httpMixin = (superclass) => class extends superclass {
     log.info('Uploading to s3 is complete (http)', s3uri);
     return s3uri;
   }
-};
+}
+
+module.exports = HttpProviderClient;

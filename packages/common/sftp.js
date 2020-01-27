@@ -80,7 +80,7 @@ class Sftp {
           return resolve();
         });
       });
-      this.client.on('error', (e) => reject(e));
+      this.client.on('error', reject);
       this.client.connect(this.options);
     });
   }
