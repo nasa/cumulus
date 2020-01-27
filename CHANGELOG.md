@@ -22,13 +22,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1102**
   - Adds functionality to the @cumulus/api package for better local testing.
-  - Adds seeding of @cumulus/api's localAPI in testing mode (conditionally exported when running testing mode)
-    - seed functions allow adding collections, executions, granules, pdrs, providers, and rules to a Localstack Elasticsearch and DynamoDB via `addCollections`,  `addExecutions`, `addGranules`, `addPdrs`, `addProviders`, and `addRules`.
-  - Updates testAuth to use JWT instead of random tokens.
-  - Updates the default AMI for the ecs\_cluster\_instance\_image\_id.
-  - Refactors local API server code to allow for full erasing of local datastack (ES and DynamoDB).
-  - Adds optional parameters to the @cumulus/api bin serve to allow for launching the api without destroying the current data.
-  - Removes some log statements.
+      - Adds seeding of @cumulus/api's localAPI in testing mode (conditionally exported when running testing mode)
+        - seed functions allow adding collections, executions, granules, pdrs, providers, and rules to a Localstack Elasticsearch and DynamoDB via `addCollections`,  `addExecutions`, `addGranules`, `addPdrs`, `addProviders`, and `addRules`.
+      - Refactors local API server code to allow for full erasing of local datastack (ES and DynamoDB).
+      - Adds optional parameters to the @cumulus/api bin serve to allow for launching the api without destroying the current data.
+   - Removes some log statements.
+   - Updates testAuth to use JWT instead of random tokens.
+   - Updates the default AMI for the ecs\_cluster\_instance\_image\_id.
 
 ### Changed
 
