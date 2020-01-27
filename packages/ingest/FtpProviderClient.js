@@ -1,7 +1,6 @@
 'use strict';
 
 const JSFtp = require('jsftp');
-const join = require('path').join;
 const { PassThrough } = require('stream');
 const { log, aws: { buildS3Uri, promiseS3Upload } } = require('@cumulus/common');
 const omit = require('lodash.omit');
@@ -10,28 +9,35 @@ const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const { lookupMimeType } = require('./util');
 const recursion = require('./recursion');
 
-module.exports.ftpMixin = (superclass) => class extends superclass {
+class FtpProviderClient {
   // jsftp.ls is called in _list and uses 'STAT' as a default. Some FTP
   // servers return inconsistent results when using
   // 'STAT' command. We can use 'LIST' in those cases by
   // setting the variable `useList` to true
-  constructor(...args) {
-    super(...args);
-    this.decrypted = false;
+  constructor(providerConfig) {
+    this.host = providerConfig.host;
+    this.username = providerConfig.username;
+    this.password = providerConfig.password;
+    this.encrypted = providerConfig.encrypted;
+
     this.ftpClientOptions = {
       host: this.host,
-      port: this.port || 21,
-      user: this.username || 'anonymous',
-      pass: this.password || 'password',
-      useList: this.useList || false
+      port: providerConfig.port || 21,
+      user: providerConfig.username || 'anonymous',
+      pass: providerConfig.password || 'password',
+      useList: providerConfig.useList || false
     };
 
+    this.decrypted = false;
     this.connected = false;
     this.client = null;
   }
 
+  /**
+   * If the provider username or password are encrypted, decrypt them
+   */
   async decrypt() {
-    if (!this.decrypted && this.provider.encrypted) {
+    if (!this.decrypted && this.encrypted) {
       if (this.password) {
         this.ftpClientOptions.pass = await DefaultProvider.decrypt(this.password);
         this.decrypted = true;
@@ -73,28 +79,6 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
     });
   }
 
-  /**
-   * Downloads the file to disk, difference with sync is that
-   * this method involves no uploading to S3
-   * @return {Promise}
-   * @private
-   */
-
-  async write(path, filename, body) {
-    if (!this.decrypted) await this.decrypt();
-
-    const client = new JSFtp(this.ftpClientOptions);
-    return new Promise((resolve, reject) => {
-      client.on('error', reject);
-      const input = Buffer.from(body);
-      client.put(input, join(path, filename), (err) => {
-        client.destroy();
-        if (err) return reject(err);
-        return resolve();
-      });
-    });
-  }
-
   async _list(path, _counter = 0) {
     if (!this.decrypted) await this.decrypt();
     let counter = _counter;
@@ -132,11 +116,11 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
    * @private
    */
 
-  async list() {
+  async list(path) {
     if (!this.decrypted) await this.decrypt();
 
     const listFn = this._list.bind(this);
-    const files = await recursion(listFn, this.path);
+    const files = await recursion(listFn, path);
 
     log.info(`${files.length} files were found on ${this.host}`);
 
@@ -188,4 +172,6 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
 
     return s3uri;
   }
-};
+}
+
+module.exports = FtpProviderClient;

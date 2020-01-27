@@ -1,632 +1,11 @@
 'use strict';
 
-const fs = require('fs-extra');
-const cloneDeep = require('lodash.clonedeep');
-const flatten = require('lodash.flatten');
-const groupBy = require('lodash.groupby');
+const encodeurl = require('encodeurl');
+const errors = require('@cumulus/errors');
 const get = require('lodash.get');
 const moment = require('moment');
-const omit = require('lodash.omit');
-const os = require('os');
-const path = require('path');
-const uuidv4 = require('uuid/v4');
-const encodeurl = require('encodeurl');
-const {
-  aws,
-  CollectionConfigStore,
-  constructCollectionId,
-  log
-} = require('@cumulus/common');
-const { buildURL } = require('@cumulus/common/URLUtils');
-const errors = require('@cumulus/errors');
-
-const { sftpMixin } = require('./sftp');
-const { ftpMixin } = require('./ftp');
-const { httpMixin } = require('./http');
-const { s3Mixin } = require('./s3');
-const { baseProtocol } = require('./protocol');
-const { normalizeProviderPath } = require('./util');
-
-/**
-* The abstract Discover class
-**/
-class Discover {
-  /**
-  * Discover class constructor
-  *
-  * @param {Object} event - the cumulus event object
-  **/
-  constructor(event) {
-    if (this.constructor === Discover) {
-      throw new TypeError('Can not construct abstract class.');
-    }
-
-    this.buckets = event.config.buckets;
-    this.collection = event.config.collection;
-    this.provider = event.config.provider;
-    this.useList = event.config.useList;
-    this.ignoreFilesConfigForDiscovery = get(event.config,
-      'ignoreFilesConfigForDiscovery', get(event.config.collection,
-        'ignoreFilesConfigForDiscovery', false));
-    this.event = event;
-
-    this.port = this.provider.port;
-    this.host = this.provider.host;
-    this.path = normalizeProviderPath(this.collection.provider_path);
-
-    this.endpoint = buildURL({
-      protocol: this.provider.protocol,
-      host: this.host,
-      port: this.port,
-      path: this.path
-    });
-
-    this.username = this.provider.username;
-    this.password = this.provider.password;
-
-    // create hash with file regex as key
-    this.regexes = {};
-    this.collection.files.forEach((f) => {
-      this.regexes[f.regex] = {
-        collection: this.collection.name,
-        bucket: this.buckets[f.bucket].name,
-        type: f.type
-      };
-    });
-  }
-
-  /**
-   * Receives a file object and adds granule-specific properties to it.
-   *
-   * @param {Object} file - the file object
-   * @returns {Object} Updated file with granuleId added, and with bucket, file
-   *    type, and url_path added, if the file has an associated configuration
-   */
-  setGranuleInfo(file) {
-    const [, granuleId] = file.name.match(this.collection.granuleIdExtraction);
-    const fileTypeConfig = this.fileTypeConfigForFile(file);
-
-    // Return the file with granuleId added, and with bucket, url_path, and
-    // type added if there is a config for the file.
-    return Object.assign(
-      cloneDeep(file),
-      { granuleId },
-      !fileTypeConfig ? {} : {
-        bucket: this.buckets[fileTypeConfig.bucket].name,
-        url_path: fileTypeConfig.url_path || this.collection.url_path || '',
-        type: fileTypeConfig.type || ''
-      }
-    );
-  }
-
-  /**
-   * Search for a file type config in the collection config
-   *
-   * @param {Object} file - a file object
-   * @returns {Object|undefined} a file type config object or undefined if none
-   *   was found
-   * @private
-   */
-  fileTypeConfigForFile(file) {
-    return this.collection.files.find((fileTypeConfig) =>
-      file.name.match(fileTypeConfig.regex));
-  }
-
-  /**
-   * Returns a possibly empty array of discovered granules.  Each granule will
-   * contain a possibly empty array of files, influenced by the `boolean`
-   * property `ignoreFilesConfigForDiscovery`.  By default, this property is
-   * `false`, meaning that this collection's `files` configuration is _not_
-   * ignored, and a granule's `files` array will contain _only_ files with names
-   * that match one of the regular expressions in the collection's `files`
-   * configuration.
-   *
-   * By setting `ignoreFilesConfigForDiscovery` to `true`, the collection's
-   * `files` configuration is ignored, such that no files are filtered out based
-   * on the regular expressions in the collection's `files` configuration.
-   * Instead, _all_ files for a granule are included in the granule's `files`
-   * array.
-   *
-   * The property may be set in the task configuration, in which case the
-   * specified value overrides the value set on all collections.
-   *
-   * @returns {Array<Object>} an array of discovered granules
-   */
-  async discover() {
-    const discoveredFiles = (await this.list())
-      // Make sure the file matches the granuleIdExtraction
-      .filter((file) => file.name.match(this.collection.granuleIdExtraction))
-      // Add additional granule-related properties to the file
-      .map((file) => this.setGranuleInfo(file));
-
-    // Group the files by granuleId
-    const filesByGranuleId = groupBy(discoveredFiles, (file) => file.granuleId);
-    const { dataType, version } = this.collection;
-
-    // Build and return the granules
-    return Object.entries(filesByGranuleId).map(([granuleId, files]) => ({
-      granuleId,
-      dataType,
-      version,
-      // Unless ignoring the files config, retain only files matching a config
-      files: files
-        .filter((file) =>
-          this.ignoreFilesConfigForDiscovery
-          || this.fileTypeConfigForFile(file))
-        .map((file) => omit(file, 'granuleId'))
-    }));
-  }
-}
-
-/**
- * This is a base class for ingesting and parsing a single PDR
- * It must be mixed with a FTP or HTTP mixing to work
- *
- * @class
- * @abstract
- */
-class Granule {
-  /**
-   * Constructor for abstract Granule class
-   *
-   * @param {Object} buckets - s3 buckets available from config
-   * @param {Object} collection - collection configuration object
-   * @param {Object} provider - provider configuration object
-   * @param {string} fileStagingDir - staging directory on bucket,
-   * files will be placed in collectionId subdirectory
-   * @param {boolean} forceDownload - force download of a file
-   * @param {boolean} duplicateHandling - duplicateHandling of a file
-   */
-  constructor(
-    buckets,
-    collection,
-    provider,
-    fileStagingDir = 'file-staging',
-    forceDownload = false,
-    duplicateHandling = 'error'
-  ) {
-    if (this.constructor === Granule) {
-      throw new TypeError('Can not construct abstract class.');
-    }
-
-    this.buckets = buckets;
-    this.collection = collection;
-    this.provider = provider;
-
-    this.port = this.provider.port;
-    this.host = this.provider.host;
-    this.username = this.provider.username;
-    this.password = this.provider.password;
-    this.checksumFiles = {};
-    this.supportedChecksumFileTypes = ['md5', 'cksum', 'sha1', 'sha256'];
-
-    this.forceDownload = forceDownload;
-
-    if (fileStagingDir && fileStagingDir[0] === '/') this.fileStagingDir = fileStagingDir.substr(1);
-    else this.fileStagingDir = fileStagingDir;
-
-    this.duplicateHandling = duplicateHandling;
-
-    // default collectionId, could be overwritten by granule's collection information
-    if (this.collection) {
-      this.collectionId = constructCollectionId(
-        this.collection.dataType || this.collection.name, this.collection.version
-      );
-    }
-  }
-
-  /**
-   * Ingest all files in a granule
-   *
-   * @param {Object} granule - granule object
-   * @param {string} bucket - s3 bucket to use for files
-   * @returns {Promise<Object>} return granule object
-   */
-  async ingest(granule, bucket) {
-    // for each granule file
-    // download / verify integrity / upload
-
-    const stackName = process.env.stackName;
-    let dataType = granule.dataType;
-    let version = granule.version;
-
-    // if no collection is passed then retrieve the right collection
-    if (!this.collection) {
-      if (!granule.dataType || !granule.version) {
-        throw new Error(
-          'Downloading the collection failed because dataType or version was missing!'
-        );
-      }
-      const collectionConfigStore = new CollectionConfigStore(bucket, stackName);
-      this.collection = await collectionConfigStore.get(granule.dataType, granule.version);
-    } else {
-      // Collection is passed in, but granule does not define the dataType and version
-      if (!dataType) dataType = this.collection.dataType || this.collection.name;
-      if (!version) version = this.collection.version;
-    }
-
-    // make sure there is a url_path
-    this.collection.url_path = this.collection.url_path || '';
-
-    this.collectionId = constructCollectionId(dataType, version);
-
-    const downloadFiles = granule.files
-      .filter((f) => this.filterChecksumFiles(f))
-      .map((f) => this.ingestFile(f, bucket, this.duplicateHandling));
-
-    log.debug('awaiting all download.Files');
-    const files = flatten(await Promise.all(downloadFiles));
-    log.debug('finished ingest()');
-    return {
-      granuleId: granule.granuleId,
-      dataType: dataType,
-      version: version,
-      files
-    };
-  }
-
-  /**
-   * set the url_path of a file based on collection config.
-   * Give a url_path set on a file definition higher priority
-   * than a url_path set on the min collection object.
-   *
-   * @param {Object} file - object representing a file of a granule
-   * @returns {Object} file object updated with url+path tenplate
-   */
-  getUrlPath(file) {
-    let urlPath = '';
-
-    this.collection.files.forEach((fileDef) => {
-      const test = new RegExp(fileDef.regex);
-      const match = file.name.match(test);
-
-      if (match && fileDef.url_path) {
-        urlPath = fileDef.url_path;
-      }
-    });
-
-    if (!urlPath) {
-      urlPath = this.collection.url_path;
-    }
-
-    return urlPath;
-  }
-
-  /**
-   * Find the collection file config that applies to the given file
-   *
-   * @param {Object} file - an object containing a "name" property
-   * @returns {Object|undefined} a collection file config or undefined
-   * @private
-   */
-  findCollectionFileConfigForFile(file) {
-    return this.collection.files.find((fileConfig) =>
-      file.name.match(fileConfig.regex));
-  }
-
-  /**
-   * Add a bucket property to the given file
-   *
-   * Note: This returns a copy of the file parameter, it does not modify it.
-   *
-   * @param {Object} file - an object containing a "name" property
-   * @returns {Object} the file with a bucket property set
-   * @private
-   */
-  addBucketToFile(file) {
-    const fileConfig = this.findCollectionFileConfigForFile(file);
-    if (!fileConfig) {
-      throw new Error(`Unable to update file. Cannot find file config for file ${file.name}`);
-    }
-    const bucket = this.buckets[fileConfig.bucket].name;
-
-    return Object.assign(cloneDeep(file), { bucket });
-  }
-
-  /**
-   * Add a url_path property to the given file
-   *
-   * Note: This returns a copy of the file parameter, it does not modify it.
-   *
-   * @param {Object} file - an object containing a "name" property
-   * @returns {Object} the file with a url_path property set
-   * @private
-   */
-  addUrlPathToFile(file) {
-    let foundFileConfigUrlPath;
-
-    const fileConfig = this.findCollectionFileConfigForFile(file);
-    if (fileConfig) foundFileConfigUrlPath = fileConfig.url_path;
-
-    // eslint-disable-next-line camelcase
-    const url_path = foundFileConfigUrlPath || this.collection.url_path || '';
-    return Object.assign(cloneDeep(file), { url_path });
-  }
-
-  /**
-   * Filter out checksum files and put them in `this.checksumFiles` object.
-   * To be used with `Array.prototype.filter`.
-   *
-   * @param {Object} file - file object from granule.files
-   * @returns {boolean} - whether file was a supported checksum or not
-   */
-  filterChecksumFiles(file) {
-    let unsupported = true;
-    this.supportedChecksumFileTypes.forEach((type) => {
-      const ext = `.${type}`;
-      if (file.name.indexOf(ext) > 0) {
-        this.checksumFiles[file.name.replace(ext, '')] = file;
-        unsupported = false;
-      }
-    });
-
-    return unsupported;
-  }
-
-  /**
-   * Verify a file's integrity using its checksum and throw an exception if it's invalid.
-   * Verify file's size if checksum type or value is not available.
-   * Logs warning if neither check is possible.
-   *
-   * @param {Object} file - the file object to be checked
-   * @param {string} bucket - s3 bucket name of the file
-   * @param {string} key - s3 key of the file
-   * @param {Object} [options={}] - options for the this._hash method
-   * @returns {Array<string>} returns array where first item is the checksum algorithm,
-   * and the second item is the value of the checksum.
-   * Throws an error if the checksum is invalid.
-   * @memberof Granule
-   */
-  async verifyFile(file, bucket, key, options = {}) {
-    const [type, value] = await this.retrieveSuppliedFileChecksumInformation(file);
-    let output = [type, value];
-    if (type && value) {
-      await aws.validateS3ObjectChecksum({
-        algorithm: type,
-        bucket,
-        key,
-        expectedSum: value,
-        options
-      });
-    } else {
-      log.warn(`Could not verify ${file.name} expected checksum: ${value} of type ${type}.`);
-      output = [null, null];
-    }
-    if (file.size || file.fileSize) { // file.fileSize to be removed after CnmToGranule update
-      const ingestedSize = await aws.getObjectSize(bucket, key);
-      if (ingestedSize !== (file.size || file.fileSize)) { // file.fileSize to be removed
-        throw new errors.UnexpectedFileSize(
-          `verifyFile ${file.name} failed: Actual file size ${ingestedSize}`
-          + ` did not match expected file size ${(file.size || file.fileSize)}`
-        );
-      }
-    } else {
-      log.warn(`Could not verify ${file.name} expected file size: ${file.size}.`);
-    }
-    return output;
-  }
-
-  /**
-   * Enable versioning on an s3 bucket
-   *
-   * @param {string} bucket - s3 bucket name
-   * @returns {Promise} promise that resolves when bucket versioning is enabled
-   */
-  async enableBucketVersioning(bucket) {
-    // check that the bucket has versioning enabled
-    const versioning = await aws.s3().getBucketVersioning({ Bucket: bucket }).promise();
-
-    // if not enabled, make it enabled
-    if (versioning.Status !== 'Enabled') {
-      aws.s3().putBucketVersioning({
-        Bucket: bucket,
-        VersioningConfiguration: { Status: 'Enabled' }
-      }).promise();
-    }
-  }
-
-  /**
-   * Retrieve supplied checksum from a file's specification or an accompanying checksum file.
-   *
-   * @param {Object} file - file object
-   * @returns {Array} returns array where first item is the checksum algorithm,
-   * and the second item is the value of the checksum
-   */
-  async retrieveSuppliedFileChecksumInformation(file) {
-    // try to get filespec checksum data
-    if (file.checksumType && file.checksum) {
-      return [file.checksumType, file.checksum];
-    }
-    // read checksum from checksum file
-    if (this.checksumFiles[file.name]) {
-      const checksumInfo = this.checksumFiles[file.name];
-
-      const checksumRemotePath = path.join(checksumInfo.path, checksumInfo.name);
-
-      const downloadDir = await fs.mkdtemp(`${os.tmpdir()}${path.sep}`);
-      const checksumLocalPath = path.join(downloadDir, checksumInfo.name);
-
-      let checksumValue;
-      try {
-        await this.download(checksumRemotePath, checksumLocalPath);
-        const checksumFile = await fs.readFile(checksumLocalPath, 'utf8');
-        [checksumValue] = checksumFile.split(' ');
-      } finally {
-        await fs.remove(downloadDir);
-      }
-
-      // default type to md5
-      let checksumType = 'md5';
-      // return type based on filename
-      this.supportedChecksumFileTypes.forEach((type) => {
-        if (checksumInfo.name.indexOf(type) > 0) {
-          checksumType = type;
-        }
-      });
-
-      return [checksumType, checksumValue];
-    }
-
-    // No checksum found
-    return [null, null];
-  }
-
-  /**
-   * Ingest individual files
-   *
-   * @private
-   * @param {Object} file - file to download
-   * @param {string} destinationBucket - bucket to put file in
-   * @param {string} duplicateHandling - how to handle duplicate files
-   * value can be
-   * 'error' to throw an error,
-   * 'replace' to replace the duplicate,
-   * 'skip' to skip duplicate,
-   * 'version' to keep both files if they have different checksums
-   * @returns {Array<Object>} returns the staged file and the renamed existing duplicates if any
-   */
-  async ingestFile(file, destinationBucket, duplicateHandling) {
-    const fileRemotePath = path.join(file.path, file.name);
-    // place files in the <collectionId> subdirectory
-    const stagingPath = path.join(this.fileStagingDir, this.collectionId);
-    const destinationKey = path.join(stagingPath, file.name);
-
-    // the staged file expected
-    const stagedFile = Object.assign(cloneDeep(file),
-      {
-        filename: aws.buildS3Uri(destinationBucket, destinationKey),
-        fileStagingDir: stagingPath,
-        url_path: this.getUrlPath(file),
-        bucket: destinationBucket
-      });
-    // bind arguments to sync function
-    const syncFileFunction = this.sync.bind(this, fileRemotePath);
-
-    const s3ObjAlreadyExists = await aws.s3ObjectExists(
-      { Bucket: destinationBucket, Key: destinationKey }
-    );
-    log.debug(`file ${destinationKey} exists in ${destinationBucket}: ${s3ObjAlreadyExists}`);
-
-    let versionedFiles = [];
-    if (s3ObjAlreadyExists) {
-      stagedFile.duplicate_found = true;
-      const stagedFileKey = `${destinationKey}.${uuidv4()}`;
-      // returns renamed files for 'version', otherwise empty array
-      versionedFiles = await exports.handleDuplicateFile({
-        source: { Bucket: destinationBucket, Key: stagedFileKey },
-        target: { Bucket: destinationBucket, Key: destinationKey },
-        duplicateHandling,
-        checksumFunction: this.verifyFile.bind(this, file),
-        syncFileFunction
-      });
-    } else {
-      log.debug(`await sync file ${fileRemotePath} to s3://${destinationBucket}/${destinationKey}`);
-      await syncFileFunction(destinationBucket, destinationKey);
-      // Verify file integrity
-      log.debug(`await verifyFile ${JSON.stringify(file)}, s3://${destinationBucket}/${destinationKey}`);
-      await this.verifyFile(file, destinationBucket, destinationKey);
-    }
-
-    // Set final file size
-    stagedFile.size = await aws.getObjectSize(destinationBucket, destinationKey);
-    delete stagedFile.fileSize; // CUMULUS-1269: delete obsolete field until CnmToGranule is patched
-    // return all files, the renamed files don't have the same properties
-    // (name, size, checksum) as input file
-    log.debug(`returning ${JSON.stringify(stagedFile)}`);
-    return [stagedFile].concat(versionedFiles.map((f) => (
-      {
-        bucket: destinationBucket,
-        name: path.basename(f.Key),
-        path: file.path,
-        filename: aws.buildS3Uri(f.Bucket, f.Key),
-        size: f.size,
-        fileStagingDir: stagingPath,
-        url_path: this.getUrlPath(file)
-      })));
-  }
-}
-exports.Granule = Granule; // exported to support testing
-
-/**
- * A class for discovering granules using HTTP or HTTPS.
- */
-class HttpDiscoverGranules extends httpMixin(baseProtocol(Discover)) {}
-
-/**
- * A class for discovering granules using SFTP.
- */
-class SftpDiscoverGranules extends sftpMixin(baseProtocol(Discover)) {}
-
-/**
- * A class for discovering granules using FTP.
- */
-class FtpDiscoverGranules extends ftpMixin(baseProtocol(Discover)) {}
-
-/**
- * A class for discovering granules using S3.
- */
-class S3DiscoverGranules extends s3Mixin(baseProtocol(Discover)) {}
-
-/**
- * Ingest Granule from an FTP endpoint.
- */
-class FtpGranule extends ftpMixin(baseProtocol(Granule)) {}
-
-/**
- * Ingest Granule from an SFTP endpoint.
- */
-class SftpGranule extends sftpMixin(baseProtocol(Granule)) {}
-
-/**
- * Ingest Granule from an HTTP endpoint.
- */
-class HttpGranule extends httpMixin(baseProtocol(Granule)) {}
-
-/**
- * Ingest Granule from an s3 endpoint.
- */
-class S3Granule extends s3Mixin(baseProtocol(Granule)) {}
-
-/**
-* Select a class for discovering or ingesting granules based on protocol
-*
-* @param {string} type -`discover` or `ingest`
-* @param {string} protocol -`sftp`, `ftp`, `http`, `https` or `s3`
-* @returns {function} - a constructor to create a granule discovery object
-**/
-function selector(type, protocol) {
-  if (type === 'discover') {
-    switch (protocol) {
-    case 'sftp':
-      return SftpDiscoverGranules;
-    case 'ftp':
-      return FtpDiscoverGranules;
-    case 'http':
-    case 'https':
-      return HttpDiscoverGranules;
-    case 's3':
-      return S3DiscoverGranules;
-    default:
-      throw new Error(`Protocol ${protocol} is not supported.`);
-    }
-  } else if (type === 'ingest') {
-    switch (protocol) {
-    case 'sftp':
-      return SftpGranule;
-    case 'ftp':
-      return FtpGranule;
-    case 'http':
-    case 'https':
-      return HttpGranule;
-    case 's3':
-      return S3Granule;
-    default:
-      throw new Error(`Protocol ${protocol} is not supported.`);
-    }
-  }
-
-  throw new Error(`${type} is not supported`);
-}
+const S3 = require('@cumulus/aws-client/S3');
+const { log } = require('@cumulus/common');
 
 /**
 * Copy granule file from one s3 bucket & keypath to another
@@ -650,7 +29,7 @@ function copyGranuleFile(source, target, options) {
     Key: target.Key
   }, (options || {}));
 
-  return aws.s3CopyObject(params)
+  return S3.s3CopyObject(params)
     .catch((error) => {
       log.error(`Failed to copy s3://${CopySource} to s3://${target.Bucket}/${target.Key}: ${error.message}`);
       throw error;
@@ -672,7 +51,7 @@ function copyGranuleFile(source, target, options) {
 **/
 async function moveGranuleFile(source, target, options) {
   await copyGranuleFile(source, target, options);
-  return aws.deleteS3Object(source.Bucket, source.Key);
+  return S3.deleteS3Object(source.Bucket, source.Key);
 }
 
 /**
@@ -696,17 +75,17 @@ async function moveGranuleFile(source, target, options) {
 async function moveGranuleFileWithVersioning(source, target, sourceChecksumObject, copyOptions) {
   const { checksumType, checksum } = sourceChecksumObject;
   // compare the checksum of the existing file and new file, and handle them accordingly
-  const targetFileSum = await aws.calculateS3ObjectChecksum(
+  const targetFileSum = await S3.calculateS3ObjectChecksum(
     { algorithm: (checksumType || 'CKSUM'), bucket: target.Bucket, key: target.Key }
   );
-  const sourceFileSum = checksum || await aws.calculateS3ObjectChecksum(
+  const sourceFileSum = checksum || await S3.calculateS3ObjectChecksum(
     { algorithm: 'CKSUM', bucket: source.Bucket, key: source.Key }
   );
 
   // if the checksum of the existing file is the same as the new one, keep the existing file,
   // else rename the existing file, and both files are part of the granule.
   if (targetFileSum === sourceFileSum) {
-    await aws.deleteS3Object(source.Bucket, source.Key);
+    await S3.deleteS3Object(source.Bucket, source.Key);
   } else {
     log.debug(`Renaming ${target.Key}...`);
     await exports.renameS3FileWithTimestamp(target.Bucket, target.Key);
@@ -810,7 +189,7 @@ function generateMoveFileParams(sourceFiles, destinations) {
         Key: file.key
       };
     } else if (file.filename) {
-      source = aws.parseS3Uri(file.filename);
+      source = S3.parseS3Uri(file.filename);
     } else {
       throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
     }
@@ -868,7 +247,7 @@ async function moveGranuleFiles(sourceFiles, destinations) {
       fileBucket = file.bucket;
       fileKey = file.key;
     } else if (file.filename) {
-      const parsed = aws.parseS3Uri(file.filename);
+      const parsed = S3.parseS3Uri(file.filename);
       fileBucket = parsed.Bucket;
       fileKey = parsed.Key;
     } else {
@@ -896,12 +275,12 @@ async function moveGranuleFiles(sourceFiles, destinations) {
   */
 async function renameS3FileWithTimestamp(bucket, key) {
   const formatString = 'YYYYMMDDTHHmmssSSS';
-  const timestamp = (await aws.headObject(bucket, key)).LastModified;
+  const timestamp = (await S3.headObject(bucket, key)).LastModified;
   let renamedKey = `${key}.v${moment.utc(timestamp).format(formatString)}`;
 
   // if the renamed file already exists, get a new name
   // eslint-disable-next-line no-await-in-loop
-  while (await aws.s3ObjectExists({ Bucket: bucket, Key: renamedKey })) {
+  while (await S3.s3ObjectExists({ Bucket: bucket, Key: renamedKey })) {
     renamedKey = `${key}.v${moment.utc(timestamp).add(1, 'milliseconds').format(formatString)}`;
   }
 
@@ -919,7 +298,7 @@ async function renameS3FileWithTimestamp(bucket, key) {
   * @returns {Array<Object>} returns renamed files
   */
 async function getRenamedS3File(bucket, key) {
-  const s3list = await aws.listS3ObjectsV2({ Bucket: bucket, Prefix: `${key}.v` });
+  const s3list = await S3.listS3ObjectsV2({ Bucket: bucket, Prefix: `${key}.v` });
   return s3list.map((c) => ({ Bucket: bucket, Key: c.Key, size: c.Size }));
 }
 
@@ -968,17 +347,6 @@ function duplicateHandlingType(event) {
   return duplicateHandling;
 }
 
-module.exports.selector = selector;
-module.exports.Discover = Discover;
-module.exports.Granule = Granule;
-module.exports.FtpDiscoverGranules = FtpDiscoverGranules;
-module.exports.FtpGranule = FtpGranule;
-module.exports.HttpDiscoverGranules = HttpDiscoverGranules;
-module.exports.HttpGranule = HttpGranule;
-module.exports.S3Granule = S3Granule;
-module.exports.S3DiscoverGranules = S3DiscoverGranules;
-module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
-module.exports.SftpGranule = SftpGranule;
 module.exports.getRenamedS3File = getRenamedS3File;
 module.exports.handleDuplicateFile = handleDuplicateFile;
 module.exports.copyGranuleFile = copyGranuleFile;
