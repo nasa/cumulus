@@ -9,68 +9,65 @@ const log = require('@cumulus/common/log');
 const { sleep } = require('@cumulus/common/util');
 const lockPrefix = 'lock';
 
-
 /**
-* Check Old Locks
-* Checks all locks and removes those older than five minutes
+* Checks all locks and removes those older than five minutes. Returns a count
+* of locks that are not older than five minutes.
 *
 * @param {Object} bucket - The AWS S3 bucket with the locks to check
-* @param {string} list - The list of locks in the bucket
-* @returns {boolean} - Number of locks remaining in bucket
+* @param {Array} list - The list of locks in the bucket
+* @returns {integer} - Number of locks remaining in bucket
 **/
 async function checkOldLocks(bucket, list) {
-  if (list) {
-    let count = list.length;
-
-    list.forEach(async (item) => {
-      const date = list[item].LastModified;
+  if (list.length > 0) {
+    const countResults = await Promise.all(list.map(async (item) => {
+      const date = item.LastModified;
       const diff = new Date() - date;
       const fiveMinutes = 300000; // 5 * 60 seconds * 1000 milliseconds
       if (diff > fiveMinutes) {
-        await deleteS3Object(bucket, list[item].Key);
-        count -= 1;
+        await deleteS3Object(bucket, item.Key);
+        return 0;
       }
-    });
+      return 1;
+    }));
 
+    const count = countResults.reduce((total, result) => total + result);
     return count;
   }
   return 0;
 }
 
 /**
-* Count Lock
-* Counts the number of locks in a bucket
+* Counts the number of locks in a bucket.
 *
 * @param {Object} bucket - The AWS S3 bucket to check
-* @param {string} pName - The provider name
+* @param {string} providerName - The provider name
 * @returns {integer} - Number of current locks in the bucket
 **/
-async function countLock(bucket, pName) {
-  const list = await listS3ObjectsV2({
+async function countLock(bucket, providerName) {
+  const s3Objects = await listS3ObjectsV2({
     Bucket: bucket,
-    Prefix: `${lockPrefix}/${pName}`
+    Prefix: `${lockPrefix}/${providerName}`
   });
-  const count = checkOldLocks(bucket, list.Contents);
-  return count;
+  return checkOldLocks(bucket, s3Objects);
 }
 
-function addLock(bucket, pName, filename) {
+function addLock(bucket, providerName, filename) {
   return s3PutObject({
     Bucket: bucket,
-    Key: `${lockPrefix}/${pName}/${filename}`,
+    Key: `${lockPrefix}/${providerName}/${filename}`,
     Body: ''
   });
 }
 
-function removeLock(bucket, pName, filename) {
+function removeLock(bucket, providerName, filename) {
   return deleteS3Object(
     bucket,
-    `${lockPrefix}/${pName}/${filename}`
+    `${lockPrefix}/${providerName}/${filename}`
   );
 }
 
 async function proceed(bucket, provider, filename, counter = 0) {
-  // try to proceed for 270 seconds
+  // Fail if lock is not removed after 270 tries.
   if (counter > 270) {
     return false;
   }
@@ -91,5 +88,9 @@ async function proceed(bucket, provider, filename, counter = 0) {
   return true;
 }
 
-module.exports.removeLock = removeLock;
-module.exports.proceed = proceed;
+module.exports = {
+  checkOldLocks,
+  countLock,
+  proceed,
+  removeLock
+};
