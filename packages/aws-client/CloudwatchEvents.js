@@ -42,4 +42,4 @@ exports.putTarget = (rule, id, arn, input) => {
   };
 
   return awsServices.cloudwatchevents().putTargets(params).promise();
-}
+};
