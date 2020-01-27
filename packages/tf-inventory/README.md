@@ -47,7 +47,7 @@ An `Error extracting deployment name` will be printed to the console if a Terraf
 
 ### `Error reading <filename>: The specified key does not exist.`
 
-This indicates that there is a Terraform state entry in your DynamoDb table pointing to a file that does not exist. `terraform destroy` empties your state file of resources, but does not remove the file from S3 nor the entry from Dynamo. It's possible that the state file was manually deleted, but not the Dynamo entry.
+This indicates that there is a Terraform state entry in your DynamoDB locks table pointing to a state file that does not exist. `terraform destroy` empties your state file of resources, but does not remove the file from S3 nor the entry from DynamoDB. It's possible that the state file was manually deleted, but not the DynamoDB entry.
 
 ## Contributing
 
