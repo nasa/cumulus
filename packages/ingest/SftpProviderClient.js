@@ -1,8 +1,9 @@
 'use strict';
 
-const { log, sftp: { Sftp } } = require('@cumulus/common');
+const log = require('@cumulus/common/log');
 const get = require('lodash.get');
 const omit = require('lodash.omit');
+const SftpClient = require('@cumulus/sftp-client');
 const recursion = require('./recursion');
 
 class SftpProviderClient {
@@ -10,7 +11,7 @@ class SftpProviderClient {
     this.id = providerConfig.id;
     this.host = providerConfig.host;
 
-    this.sftpClient = new Sftp({
+    this.sftpClient = new SftpClient({
       host: this.host,
       port: providerConfig.port || 22,
       username: providerConfig.username,

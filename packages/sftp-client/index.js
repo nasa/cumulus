@@ -1,75 +1,76 @@
 'use strict';
 
-const { Client } = require('ssh2');
-const { PassThrough, Readable } = require('stream');
+const get = require('lodash.get');
+const KMS = require('@cumulus/aws-client/KMS');
+const log = require('@cumulus/common/log');
 const path = require('path');
-const { lookupMimeType } = require('./util');
-const log = require('./log');
-const {
-  buildS3Uri, getS3Object, getS3ObjectReadStream, promiseS3Upload, s3ObjectExists
-} = require('./aws');
-const { deprecate } = require('./util');
+const S3 = require('@cumulus/aws-client/S3');
+const { Client } = require('ssh2');
+const { lookupMimeType } = require('@cumulus/common/util');
+const { PassThrough, Readable } = require('stream');
+const { S3KeyPairProvider } = require('@cumulus/common/key-pair-provider');
 
-const { KMSProvider: KMS, DefaultProvider } = require('./key-pair-provider');
+const decrypt = async (ciphertext) => {
+  try {
+    return await KMS.decryptBase64String(ciphertext);
+  } catch (_) {
+    return S3KeyPairProvider.decrypt(ciphertext);
+  }
+};
 
-class Sftp {
+class SftpClient {
   constructor(config) {
-    deprecate('@cumulus/common/sftp.Sftp', '1.17.0', '@cumulus/sftp-client');
-
-    // use to indicate an active connection exists
+    this.config = config;
     this.connected = false;
-    // indicate username and password have been decrypted in options
-    this.decrypted = false;
-    // indicate username and password provided are encrypted
-    this.encrypted = config.encrypted || false;
-    this.username = config.username;
-    this.password = config.password;
-    this.options = {
-      host: config.host,
-      port: config.port || 22,
-      username: config.username,
-      password: config.password,
-      privateKey: config.privateKey,
-      cmKeyId: config.cmKeyId
-    };
 
-    this.client = null;
-    this.sftp = null;
+    if (get(config, 'encrypted', false) === false) {
+      this.plaintextUsername = config.username;
+      this.plaintextPassword = config.password;
+    }
+  }
+
+  async getUsername() {
+    if (!this.plaintextUsername) {
+      this.plaintextUsername = await decrypt(this.config.username);
+    }
+
+    return this.plaintextUsername;
+  }
+
+  async getPassword() {
+    if (!this.plaintextPassword) {
+      this.plaintextPassword = await decrypt(this.config.password);
+    }
+
+    return this.plaintextPassword;
+  }
+
+  async getPrivateKey() {
+    // we are assuming that the specified private key is in the S3 crypto
+    // directory
+    const privateKey = await S3.getTextObject(
+      process.env.system_bucket,
+      `${process.env.stackName}/crypto/${this.config.privateKey}`
+    );
+
+    if (this.config.cmKeyId) {
+      // we are using AWS KMS and the privateKey is encrypted
+      return KMS.decryptBase64String(privateKey);
+    }
+
+    return privateKey;
   }
 
   async connect() {
-    if (!this.decrypted && this.encrypted) {
-      if (this.password) {
-        this.options.password = await DefaultProvider.decrypt(this.password);
-      }
+    const clientOptions = {
+      host: this.config.host,
+      port: get(this.config, 'port', 22)
+    };
 
-      if (this.username) {
-        this.options.username = await DefaultProvider.decrypt(this.username);
-      }
-      this.decrypted = true;
-    }
-
-    if (this.options.privateKey) {
-      const bucket = process.env.system_bucket;
-      const stackName = process.env.stackName;
-      // we are assuming that the specified private key is in the S3 crypto directory
-      const keyExists = await s3ObjectExists(
-        { Bucket: bucket, Key: `${stackName}/crypto/${this.options.privateKey}` }
-      );
-      if (!keyExists) {
-        return Promise.reject(new Error(`${this.options.privateKey} does not exist in S3 crypto directory`));
-      }
-
-      log.debug(`Reading Key: ${this.options.privateKey} bucket:${bucket},stack:${stackName}`);
-      const priv = await getS3Object(bucket, `${stackName}/crypto/${this.options.privateKey}`);
-
-      if (this.options.cmKeyId) {
-        // we are using AWS KMS and the privateKey is encrypted
-        this.options.privateKey = await KMS.decrypt(priv.Body.toString());
-      } else {
-        // private key is not encrypted...
-        this.options.privateKey = priv.Body.toString();
-      }
+    if (this.config.username) clientOptions.username = await this.getUsername();
+    if (this.config.password) clientOptions.password = await this.getPassword();
+    if (this.config.privateKey) {
+      clientOptions.privateKey = await this.getPrivateKey();
     }
 
     return new Promise((resolve, reject) => {
@@ -79,12 +80,11 @@ class Sftp {
           if (err) return reject(err);
           this.sftp = sftp;
           this.connected = true;
-          log.info(`SFTP Connected to ${this.options.host}`);
           return resolve();
         });
       });
       this.client.on('error', reject);
-      this.client.connect(this.options);
+      this.client.connect(clientOptions);
     });
   }
 
@@ -100,7 +100,7 @@ class Sftp {
    * @returns {string} - remote url
    */
   buildRemoteUrl(remotePath) {
-    return `sftp://${path.join(this.options.host, '/', remotePath)}`;
+    return `sftp://${path.join(this.config.host, '/', remotePath)}`;
   }
 
   /**
@@ -137,7 +137,7 @@ class Sftp {
    */
   async syncToS3(remotePath, bucket, key) {
     const remoteUrl = this.buildRemoteUrl(remotePath);
-    const s3uri = buildS3Uri(bucket, key);
+    const s3uri = S3.buildS3Uri(bucket, key);
     log.info(`Sync ${remoteUrl} to ${s3uri}`);
 
     const readable = await this.getReadableStream(remotePath);
@@ -151,7 +151,7 @@ class Sftp {
       ContentType: lookupMimeType(key)
     };
 
-    const result = await promiseS3Upload(params);
+    const result = await S3.promiseS3Upload(params);
     log.info('Downloading to s3 is complete(sftp)', result);
     return s3uri;
   }
@@ -212,15 +212,15 @@ class Sftp {
   async syncFromS3(s3object, remotePath) {
     if (!this.connected) await this.connect();
 
-    const s3uri = buildS3Uri(s3object.Bucket, s3object.Key);
-    if (!(await s3ObjectExists(s3object))) {
+    const s3uri = S3.buildS3Uri(s3object.Bucket, s3object.Key);
+    if (!(await S3.s3ObjectExists(s3object))) {
       return Promise.reject(new Error(`Sftp.syncFromS3 ${s3uri} does not exist`));
     }
 
     const remoteUrl = this.buildRemoteUrl(remotePath);
     log.info(`Uploading ${s3uri} to ${remoteUrl}`);
 
-    const readStream = await getS3ObjectReadStream(s3object.Bucket, s3object.Key);
+    const readStream = await S3.getS3ObjectReadStream(s3object.Bucket, s3object.Key);
     return this.uploadFromStream(readStream, remotePath);
   }
 
@@ -264,4 +264,4 @@ class Sftp {
   }
 }
 
-exports.Sftp = Sftp;
+module.exports = SftpClient;

@@ -79,6 +79,7 @@ const localStackPorts = {
   firehose: 4573,
   iam: 4593,
   kinesis: 4568,
+  kms: 4599,
   lambda: 4574,
   redshift: 4577,
   route53: 4580,
