@@ -31,7 +31,7 @@ Commands:
   list-orphaned-resources      List resources not associated with a Terraform deployment, currently supports ECS, EC2, and Elasticsearch
 ```
 
-`list-deployments` and `deployment-report` take an optional `regex` parameter to specify the regulat expression used to extract the deployment name. For example, if state files are stored in the format `bucket/deployment-name/terraform.tfstate`, the regular expression `'.*\/(.*)\/terraform.tfstate'` could be specifed to extract the deployment name. Or specify `'(.*)'` to view all state files as their own deployment.
+`list-deployments` and `deployment-report` take an optional `regex` parameter to specify the regular expression used to extract the deployment name. For example, if state files are stored in the format `bucket/deployment-name/terraform.tfstate`, the regular expression `'.*\/(.*)\/terraform.tfstate'` could be specified to extract the deployment name. Or the regular expression `'(.*)'` could be specified to view all state files as their own deployment.
 
 ## Assumptions
 
