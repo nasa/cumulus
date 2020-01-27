@@ -29,5 +29,5 @@ Steps for setting up the Cumulus API to use Launchpad authentication can be foun
 
 3. Configure the `oauth_provider` and `oauth_user_group` configuration parameters in `terraform.tfvars` for your [Cumulus deployment](../deployment/README.md#configure-and-deploy-the-cumulus-tf-root-module)
 
-   - `oauth_provider` in `terraform.tfvars` **must be set to `launchpad` to use Launchpad authentication**.
-   - _Example configuration of the `oauth_user_group` variable and other variables necessary for Launchpad integration can be found in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/deployment/sandbox.tfvars)_
+    - `oauth_provider` in `terraform.tfvars` **must be set to `launchpad` to use Launchpad authentication**.
+    - _Example configuration of the `oauth_user_group` variable and other variables necessary for Launchpad integration can be found in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/deployments/sandbox.tfvars)_

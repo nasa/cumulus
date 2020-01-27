@@ -262,7 +262,7 @@ variable "saml_idp_login" {
   default = "N/A"
 }
 
-variable "saml_launchpad_metadata_path" {
+variable "saml_launchpad_metadata_url" {
   type    = string
   default = "N/A"
 }
