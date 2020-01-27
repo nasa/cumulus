@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+<<<<<<< HEAD
+=======
+
+### Added
+
+- **CUMULUS-1548**
+  - Add ability to put default Cumulus logs in Metrics' ELK stack
+  - Add ability to add custom logs to Metrics' ELK Stack
+
+- **CUMULUS-1702**
+  - When logs are sent to Metrics' ELK stack, the logs endpoints will return results from there
+
+### BREAKING CHANGES
+
+- **CUMULUS-1698**
+  - - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
+>>>>>>> [CUMULUS-1548][CUMULUS-1702] Update changelog
 
 ### Added
 
