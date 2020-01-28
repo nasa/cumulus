@@ -26,6 +26,7 @@ module.exports = {
     manualConsumer: './lambdas/manual-consumer.js',
     messageConsumer: './lambdas/message-consumer.js',
     payloadLogger: './lambdas/payload-logger.js',
+    providerSecretsMigration: './lambdas/providerSecretsMigration.js',
     publishExecutions: './lambdas/publish-executions.js',
     publishReports: './lambdas/publish-reports.js',
     reportGranules: './lambdas/report-granules.js',

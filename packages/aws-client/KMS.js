@@ -11,7 +11,7 @@ const { kms } = require('./services');
  * @param {Object} params
  * @returns {Promise<Object>}
  */
-const createKey = (params) => kms().createKey(params).promise();
+const createKey = (params = {}) => kms().createKey(params).promise();
 
 /**
  * Encrypt a string using KMS
