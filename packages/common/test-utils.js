@@ -12,7 +12,7 @@ const { deprecate, isNil } = require('./util');
 
 // From https://github.com/localstack/localstack/blob/master/README.md
 const localStackPorts = {
-  stepfunctions: 4585, // add a fake port to support test overrides
+  stepfunctions: 4585,
   apigateway: 4567,
   cloudformation: 4581,
   cloudwatch: 4582,
