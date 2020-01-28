@@ -43,7 +43,7 @@ process.env.AccessTokensTable = randomId('token');
 process.env.CollectionsTable = randomId('collection');
 process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
-process.env.system_bucket = randomId('system_bucket');
+process.env.system_bucket = randomId('systemBucket');
 process.env.TOKEN_SECRET = randomId('secret');
 
 // import the express app after setting the env variables
