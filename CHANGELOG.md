@@ -5,8 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
-<<<<<<< HEAD
-=======
 
 ### Added
 
@@ -21,7 +19,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1698**
   - - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
->>>>>>> [CUMULUS-1548][CUMULUS-1702] Update changelog
 
 ### Added
 
