@@ -102,7 +102,6 @@ test('recursion lists all files in a complex regex path', async (t) => {
   };
   const fn = (path) => dirs[path];
   const files = await recursion(fn, '/(dir.*)/(good.*)/(goodfile.*)');
-  console.log('\n\nfiles:', JSON.stringify(files), '\n\n');
   t.deepEqual(files, [
     { type: '-', name: 'goodfile1' },
     { type: '-', name: 'goodfile2' }
