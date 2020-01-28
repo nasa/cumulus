@@ -3,10 +3,10 @@
 const get = require('lodash.get');
 const JSFtp = require('jsftp');
 const KMS = require('@cumulus/aws-client/KMS');
+const { PassThrough } = require('stream');
 const log = require('@cumulus/common/log');
 const omit = require('lodash.omit');
 const S3 = require('@cumulus/aws-client/S3');
-const { PassThrough } = require('stream');
 const { S3KeyPairProvider } = require('@cumulus/common/key-pair-provider');
 const recursion = require('./recursion');
 const { lookupMimeType } = require('./util');

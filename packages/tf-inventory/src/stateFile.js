@@ -7,6 +7,8 @@ const aws = require('@cumulus/aws-client/services');
 const { getS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 
+const DEFAULT_DEPLOYMENT_REGEX = /.*\/(.*)\/(data-persistence.*|cumulus.*)\/terraform.tfstate/;
+
 /**
  * Get list of state files paths `bucket/key` from a table if the table
  * contains state files
@@ -119,15 +121,15 @@ async function listClusterEC2Instances(clusterArn) {
  * @param {string} filename - path to state file: bucket/key
  * @returns {string} - deployment name
  */
-function extractDeploymentName(filename) {
-  const deployment = filename
-    .match(/(.*)\/(.*)\/(data-persistence.*|cumulus.*)\/terraform.tfstate/);
-  if (!deployment || deployment.length < 3) {
+function extractDeploymentName(filename, regex = DEFAULT_DEPLOYMENT_REGEX) {
+  const deployment = filename.match(regex);
+
+  if (!deployment || deployment.length < 2) {
     console.log(`Error extracting deployment name from file ${filename}`);
     return null;
   }
 
-  return deployment[2];
+  return deployment[1];
 }
 
 /**
@@ -136,7 +138,7 @@ function extractDeploymentName(filename) {
  * @param {string} file - the file location as `bucket/key`
  * @returns {Array<Object>} - list of resource objects
  */
-async function getStateFileDeploymentInfo(file) {
+async function getStateFileDeploymentInfo(file, regex = DEFAULT_DEPLOYMENT_REGEX) {
   const { Bucket, Key } = parseS3Uri(`s3://${file}`);
 
   try {
@@ -146,7 +148,7 @@ async function getStateFileDeploymentInfo(file) {
 
     return {
       file,
-      deployment: extractDeploymentName(file),
+      deployment: extractDeploymentName(file, regex),
       lastModified: stateFile.LastModified,
       resources: stateFileBody.resources
     };
@@ -163,8 +165,8 @@ async function getStateFileDeploymentInfo(file) {
  * @param {string} file - file path
  * @returns {Promise<Object>}
  */
-async function listResourcesForFile(file) {
-  const stateFile = await getStateFileDeploymentInfo(file);
+async function listResourcesForFile(file, regex = DEFAULT_DEPLOYMENT_REGEX) {
+  const stateFile = await getStateFileDeploymentInfo(file, regex);
 
   if (stateFile && stateFile.resources) {
     let ecsClusters = stateFile.resources
@@ -178,7 +180,12 @@ async function listResourcesForFile(file) {
     let ec2Instances = await Promise.all(ec2InstancePromises);
     ec2Instances = [].concat(...ec2Instances);
 
-    return { ecsClusters, ec2Instances };
+    let esDomainNames = stateFile.resources
+      .filter((r) => r.type === 'aws_elasticsearch_domain')
+      .map((c) => c.instances.map((i) => i.attributes.domain_name));
+    esDomainNames = [].concat(...esDomainNames);
+
+    return { ecsClusters, ec2Instances, esDomainNames };
   }
 
   return { };
@@ -191,8 +198,8 @@ async function listResourcesForFile(file) {
  * @param {Array<string>} stateFiles - state file paths
  * @returns {Array<string>} list of deployments
  */
-function listTfDeployments(stateFiles) {
-  let deployments = stateFiles.map((file) => extractDeploymentName(file));
+function listTfDeployments(stateFiles, regex = DEFAULT_DEPLOYMENT_REGEX) {
+  let deployments = stateFiles.map((file) => extractDeploymentName(file, regex));
 
   deployments = deployments.filter((deployment) => deployment !== null);
   deployments = Array.from(new Set(deployments));
@@ -215,10 +222,10 @@ function listTfDeployments(stateFiles) {
       lastModified: 2019-12-10T23:22:39.000Z,
       resources: 20 } ]
  */
-async function deploymentReport() {
+async function deploymentReport(regex = DEFAULT_DEPLOYMENT_REGEX) {
   const stateFiles = await listTfStateFiles();
 
-  const resourcePromises = stateFiles.map((sf) => getStateFileDeploymentInfo(sf));
+  const resourcePromises = stateFiles.map((sf) => getStateFileDeploymentInfo(sf, regex));
   let resources = await Promise.all(resourcePromises);
   resources = resources.filter((r) => r && r.deployment !== undefined);
 
