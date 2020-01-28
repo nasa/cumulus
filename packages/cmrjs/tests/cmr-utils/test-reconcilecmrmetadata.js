@@ -1,7 +1,10 @@
 const test = require('ava');
 const sinon = require('sinon');
 const rewire = require('rewire');
-const { aws, BucketsConfig, log } = require('@cumulus/common');
+
+const awsServices = require('@cumulus/aws-client/services');
+const BucketsConfig = require('@cumulus/common/BucketsConfig');
+const log = require('@cumulus/common/log');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const cmrUtils = rewire('../../cmr-utils');
@@ -11,7 +14,7 @@ test.before(async (t) => {
   t.context.cmrPassword = randomId('cmr_password');
   t.context.cmrPasswordSecretName = randomId('cmr_password_secret_name');
   process.env.cmr_password_secret_name = t.context.cmrPasswordSecretName;
-  await aws.secretsManager().createSecret({
+  await awsServices.secretsManager().createSecret({
     Name: t.context.cmrPasswordSecretName,
     SecretString: t.context.cmrPassword
   }).promise();
@@ -28,7 +31,7 @@ test.beforeEach((t) => {
 });
 
 test.after.always(async (t) => {
-  await aws.secretsManager().deleteSecret({
+  await awsServices.secretsManager().deleteSecret({
     SecretId: t.context.cmrPasswordSecretName,
     ForceDeleteWithoutRecovery: true
   }).promise();

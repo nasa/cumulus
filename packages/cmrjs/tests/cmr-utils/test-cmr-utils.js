@@ -8,8 +8,8 @@ const {
   recursivelyDeleteS3Bucket, promiseS3Upload, getS3Object, s3GetObjectTagging
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
+const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { readJsonFixture } = require('@cumulus/common/test-utils');
-const { BucketsConfig } = require('@cumulus/common');
 const { xmlParseOptions } = require('../../utils');
 
 const cmrUtil = rewire('../../cmr-utils');

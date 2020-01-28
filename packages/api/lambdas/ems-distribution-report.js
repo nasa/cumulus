@@ -10,7 +10,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const awsServices = require('@cumulus/aws-client/services');
 const { URL } = require('url');
-const { log } = require('@cumulus/common');
+const log = require('@cumulus/common/log');
 const {
   buildStartEndTimes,
   determineReportKey,
