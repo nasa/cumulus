@@ -20,8 +20,6 @@ const privateKey = 'ssh_client_rsa_key';
 const bucket = randomString();
 const stackName = randomString();
 
-const localDataDir = process.env.DOCKER_TEST_RUN ? '/tmp/cumulus_unit_test_data' : '../test-data';
-
 process.env.system_bucket = bucket;
 process.env.stackName = stackName;
 
@@ -87,16 +85,4 @@ test('Download remote file to local disk', async (t) => {
   const sum = await generateChecksumFromStream('CKSUM', fs.createReadStream(localPath));
   t.is(sum, 1435712144);
   fs.unlinkSync(localPath);
-});
-
-test('Write data to remote file', async (t) => {
-  class MyTestSftpDiscoveryClass extends TestSftpMixin(MyTestDiscoveryClass) {}
-  const myTestSftpDiscoveryClass = new MyTestSftpDiscoveryClass(true);
-
-  await myTestSftpDiscoveryClass.write(
-    '/granules', 'delete-me-test-file', 'mytestdata'
-  );
-  const remotePath = `${localDataDir}/granules/delete-me-test-file`;
-  t.true(fs.existsSync(remotePath));
-  fs.unlinkSync(remotePath);
 });
