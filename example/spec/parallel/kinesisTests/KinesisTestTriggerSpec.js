@@ -8,7 +8,7 @@ const fs = require('fs');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 9 * 60 * 1000;
 
-const { LambdaStep } = require('@cumulus/common/sfnStep');
+const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
   getEventSourceMapping,
   addRules,
