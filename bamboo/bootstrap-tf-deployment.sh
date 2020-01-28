@@ -41,12 +41,6 @@ echo "Deploying Cumulus data-persistence module to $DEPLOYMENT"
   -var "aws_region=$AWS_REGION" \
   -var "subnet_ids=[\"$AWS_SUBNET\"]"
 
-# Test that deployment succeeded by failing on bad exit code.
-EXIT_CODE=$?
-if [ $EXIT_CODE -ne  0 ]; then
-  exit $EXIT_CODE
-fi
-
 cd ../cumulus-tf
 # Ensure remote state is configured for the deployment
 echo "terraform {
@@ -84,9 +78,3 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var "urs_client_password=$EARTHDATA_CLIENT_PASSWORD" \
   -var "token_secret=$TOKEN_SECRET" \
   -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/NGAPShRoleBoundary"
-
-# Test that deployment succeeded by failing on bad exit code.
-EXIT_CODE=$?
-if [ $EXIT_CODE -ne  0 ]; then
-  exit $EXIT_CODE
-fi
