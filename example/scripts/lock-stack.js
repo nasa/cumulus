@@ -12,6 +12,7 @@
 
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const Mutex = require('./lib/Mutex');
+const usage = 'lock-stack.js lock SHA stackname/deployment true/false \n lock-stack.js confirmLock SHA stackname/deployment\n\n';
 class CumulusNoLockError extends Error {
   constructor(message) {
     super(message);
@@ -55,7 +56,7 @@ async function lockOperation(operation, gitSHA, deployment, shouldLock) {
     }
     throw new Error(`Invalid lock status ${shouldLock}, it must be true or false`);
   }
-  throw new Error(`Invalid operation ${operation} selected.   Please choose 'lock' or 'confirmLock'`);
+  throw new Error(`Invalid operation ${operation} selected.   Please choose 'lock' or 'confirmLock'. \n Usage:\n\n ${usage}`);
 }
 
 /**
