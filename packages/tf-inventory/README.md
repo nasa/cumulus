@@ -18,10 +18,17 @@ npm install @cumulus/tf-inventory
 
 The following utilities are provided via the CLI. For help run `tf-inventory --help`
 
-```
-  list-deployments [options]            List Terraform Cumulus deployments in the account
-  deployment-report [options]           List each Cumulus deployment with files, number of resources, and last update date
-  list-orphaned-resources [options]     List resources not associated with a Terraform deployment, currently supports ECS, EC2, and Elasticsearch
+```bash
+Usage: tf-inventory TYPE COMMAND [options]
+
+Options:
+  -V, --version                output the version number
+  -h, --help                   output usage information
+
+Commands:
+  list-deployments [options]   List Terraform Cumulus deployments in the account
+  deployment-report [options]  List each Cumulus deployment with files, number of resources, and last update date
+  list-orphaned-resources      List resources not associated with a Terraform deployment, currently supports ECS, EC2, and Elasticsearch
 ```
 
 `list-deployments` and `deployment-report` take an optional `--regex` parameter to specify the regular expression used to extract the deployment name. For example, if state files are stored in the format `bucket/deployment-name/terraform.tfstate`, the regular expression `'.*\/(.*)\/terraform.tfstate'` could be specified to extract the deployment name. Or the regular expression `'(.*)'` could be specified to view all state files as their own deployment.
