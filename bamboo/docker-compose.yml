@@ -38,7 +38,7 @@ services:
     environment:
       SERVICES: "kinesis,lambda,s3,secretsmanager,sns,sqs,dynamodb,cloudwatch,cloudwatchlogs"
   build_env:
-    image: maven.earthdata.nasa.gov/cumulus:latest
+    image: maven.earthdata.nasa.gov/cumulus:test
     volumes:
       - ../:/source/cumulus
       - /tmp/cumulus_unit_test_data:/tmp/cumulus_unit_test_data
