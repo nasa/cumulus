@@ -1,6 +1,6 @@
 'use strict';
 
-const REGEX_CAPTURE_GROUP = /(\([^\)]*\))/g;
+const REGEX_CAPTURE_GROUP = /(\([^\)]*\))/;
 
 /**
  * check if segment is a regex segment
@@ -8,7 +8,7 @@ const REGEX_CAPTURE_GROUP = /(\([^\)]*\))/g;
  * @param {string} segment - path segment
  * @returns {boolean}
  */
-const isRegexSegment = (segment) => segment.match(REGEX_CAPTURE_GROUP) !== null;
+const isRegexSegment = (segment) => REGEX_CAPTURE_GROUP.test(segment);
 
 /**
  * Check whether filterExpr is a valid regex, and if so,
@@ -16,12 +16,12 @@ const isRegexSegment = (segment) => segment.match(REGEX_CAPTURE_GROUP) !== null;
  *
  * @param {string} filterExpr - filter expression
  * @param {string} itemName - item name
- * @returns {boolean} filterExpr is regex && itemName matches
+ * @returns {boolean} filterExpr is not regex OR itemName matches filterExpr
  */
 const itemPassesFiltering = (
   filterExpr,
   itemName
-) => (!isRegexSegment(filterExpr) || (itemName.match(new RegExp(filterExpr)) !== null));
+) => (!isRegexSegment(filterExpr) || (new RegExp(filterExpr).test(itemName)));
 
 /**
  * Insert leading and terminating slashes into the path string if not present
@@ -39,14 +39,12 @@ const normalizeWithSlashes = (path) => {
 /**
  * Recur on directory, list all files, and recur into any further directories,
  * as specified regex segments allow.
- * Note that the list function will be called with a path argument that includes
- * both leading and terminating slashes. List functions will need to be able to handle
- * or remove leading and terminating slashes accordingly.
  *
  * @param {Function} fn - list function
  * @param {string} currentPath - current path to list
  * @param {Array<string>} segments - path segments
  * @param {number} position - current position in the segment list
+ * @returns {Array<Object>} - filtered contents of directory
  */
 async function recurOnDirectory(fn, currentPath, segments, position) {
   // check if we have a filter regex segment (e.g. '(dir.*)')
@@ -75,33 +73,27 @@ async function recurOnDirectory(fn, currentPath, segments, position) {
 }
 
 /**
- * Recursively list contents of a directory, filtering on provided regex segments.
+ * Handles recursion of a FTP/SFTP list operation
+ * It requests a promisified list function that returns contents of
+ * a directory on a server, filtering on provided regex segments.
  *
- * @param {Function} fn - list function
- * @param {string} path - path string which may contain regexes for filtering
+ * Note that the list function will be called with a path argument that includes
+ * both leading and terminating slashes. List functions will need to be able to handle
+ * or remove leading and terminating slashes accordingly.
+ *
+ * @param {function} fn - the promisified function for listing a directory
+ * @param {string} originalPath - path string which may contain regexes for filtering
+ * @returns {Promise} the promise of an object that has the path is the key and
+ *   list of files as values
  */
-async function recursiveListWithFiltering(fn, path) {
+async function recursion(fn, originalPath) {
   const dynamicRegex = REGEX_CAPTURE_GROUP;
-  const normalizedPath = normalizeWithSlashes(path);
+  const normalizedPath = normalizeWithSlashes(originalPath);
   const segments = normalizedPath
     .split(dynamicRegex) // split into text path and regex segments
     .filter((i) => i.trim() !== ''); // filter out empty segments from split
 
   return recurOnDirectory(fn, segments[0], segments, 0);
-}
-
-/**
- * Handles recursion of a FTP/SFTP list operation
- * It requests a promisified list function that returns contents of
- * a directory on a server
- *
- * @param {function} fn The promisified function for listing a directory
- * @param {string} originalPath the full path to use for recursively listing the directory
- * @returns {Promise} the promise of an object that has the path is the key and
- *   list of files as values
- */
-async function recursion(fn, originalPath) {
-  return recursiveListWithFiltering(fn, originalPath);
 }
 
 module.exports = recursion;
