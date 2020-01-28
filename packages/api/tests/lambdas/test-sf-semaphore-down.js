@@ -4,14 +4,9 @@ const sinon = require('sinon');
 const stepFunctions = require('@cumulus/aws-client/StepFunctions');
 const proxyquire = require('proxyquire');
 const test = require('ava');
-const {
-  aws,
-  Semaphore,
-  testUtils: {
-    randomId,
-    randomString
-  }
-} = require('@cumulus/common');
+const awsServices = require('@cumulus/aws-client/services');
+const Semaphore = require('@cumulus/common/Semaphore');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { Manager } = require('../../models');
 const {
   handleSemaphoreDecrementTask
@@ -117,10 +112,10 @@ test.before(async () => {
 
 test.beforeEach(async (t) => {
   t.context.semaphore = new Semaphore(
-    aws.dynamodbDocClient(),
+    awsServices.dynamodbDocClient(),
     process.env.SemaphoresTable
   );
-  t.context.client = aws.dynamodbDocClient();
+  t.context.client = awsServices.dynamodbDocClient();
 });
 
 test.after.always(() => manager.deleteTable());

@@ -1,6 +1,6 @@
 'use strict';
 
-const { CollectionConfigStore } = require('@cumulus/common');
+const { CollectionConfigStore } = require('@cumulus/common/collection-config-store');
 const Manager = require('./base');
 const { collection: collectionSchema } = require('./schemas');
 const Rule = require('./rules');

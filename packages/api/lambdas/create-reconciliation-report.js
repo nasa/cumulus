@@ -3,16 +3,12 @@
 const clonedeep = require('lodash.clonedeep');
 const keyBy = require('lodash.keyby');
 const moment = require('moment');
-const {
-  aws: {
-    buildS3Uri,
-    S3ListObjectsV2Queue,
-    s3
-  },
-  bucketsConfigJsonObject,
-  BucketsConfig,
-  constructCollectionId
-} = require('@cumulus/common');
+const { buildS3Uri } = require('@cumulus/aws-client/S3');
+const S3ListObjectsV2Queue = require('@cumulus/aws-client/S3ListObjectsV2Queue');
+const { s3 } = require('@cumulus/aws-client/services');
+const BucketsConfig = require('@cumulus/common/BucketsConfig');
+const bucketsConfigJsonObject = require('@cumulus/common/bucketsConfigJsonObject');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 
 const { CMR, CMRSearchConceptQueue, constructOnlineAccessUrl } = require('@cumulus/cmrjs');
 const { Collection, Granule, FileClass } = require('../models');

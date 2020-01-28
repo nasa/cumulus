@@ -1,7 +1,7 @@
 const test = require('ava');
 const rewire = require('rewire');
 
-const { BucketsConfig } = require('@cumulus/common');
+const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const cmrUtils = rewire('../../cmr-utils');

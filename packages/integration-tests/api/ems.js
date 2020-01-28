@@ -1,8 +1,6 @@
 'use strict';
 
-const {
-  aws: { lambda }
-} = require('@cumulus/common');
+const { lambda } = require('@cumulus/aws-client/services');
 const { callCumulusApi } = require('./api');
 
 /**

@@ -5,7 +5,9 @@ const flatten = require('lodash.flatten');
 const moment = require('moment');
 const os = require('os');
 const path = require('path');
-const { aws, log } = require('@cumulus/common');
+const { buildS3Uri, deleteS3Files } = require('@cumulus/aws-client/S3');
+const awsServices = require('@cumulus/aws-client/services');
+const log = require('@cumulus/common/log');
 const {
   buildReportFileName,
   buildStartEndTimes,
@@ -141,14 +143,14 @@ function buildSearchQuery(esIndex, type, startTime, endTime) {
  * @returns {string} - uploaded file in s3
  */
 async function uploadReportToS3(filename, reportBucket, reportKey) {
-  await aws.s3().putObject({
+  await awsServices.s3().putObject({
     Bucket: reportBucket,
     Key: reportKey,
     Body: fs.createReadStream(filename)
   }).promise();
 
   fs.unlinkSync(filename);
-  const s3Uri = aws.buildS3Uri(reportBucket, reportKey);
+  const s3Uri = buildS3Uri(reportBucket, reportKey);
   log.info(`uploaded ${s3Uri}`);
   return s3Uri;
 }
@@ -356,7 +358,7 @@ async function cleanup() {
     .map((prefix) =>
       getExpiredS3Objects(reportsBucket, prefix, process.env.ems_retentionInDays)
         .then((s3objects) => s3objects.filter((s3object) => s3object.Key.match(`(${matches})`)))
-        .then((s3objects) => aws.deleteS3Files(s3objects)));
+        .then((s3objects) => deleteS3Files(s3objects)));
   return Promise.all(jobs);
 }
 

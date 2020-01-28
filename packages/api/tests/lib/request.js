@@ -8,11 +8,7 @@ const {
 } = require('jsonwebtoken');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
-const {
-  testUtils: {
-    randomString
-  }
-} = require('@cumulus/common');
+const { randomString } = require('@cumulus/common/test-utils');
 const { noop } = require('@cumulus/common/util');
 
 const {
