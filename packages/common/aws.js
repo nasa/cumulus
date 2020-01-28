@@ -152,7 +152,6 @@ exports.secretsManager = (options) => {
  */
 exports.improveStackTrace = (fn) =>
   async (...args) => {
-    deprecate('@cumulus/common/aws/improveStackTrace', '1.17.0', '@cumulus/aws-client/utils/improveStackTrace');
     const tracerError = {};
     try {
       Error.captureStackTrace(tracerError);
@@ -1205,7 +1204,6 @@ const retryIfThrottlingException = (err) => {
  * @returns {Function} a function that will retry on a ThrottlingException
  */
 exports.retryOnThrottlingException = (fn, options) => {
-  deprecate('@cumulus/common/aws/retryOnThrottlingException', '1.17.0', '@cumulus/aws-client/utils/retryOnThrottlingException');
   return (...args) =>
     pRetry(
       () => fn(...args).catch(retryIfThrottlingException),
