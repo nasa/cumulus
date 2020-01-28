@@ -14,26 +14,14 @@ const lockPrefix = 'lock';
 * of locks that are not older than five minutes.
 *
 * @param {Object} bucket - The AWS S3 bucket with the locks to check
-* @param {Array} list - The list of locks in the bucket
+* @param {Array} locks - The list of locks in the bucket
 * @returns {integer} - Number of locks remaining in bucket
 **/
-async function checkOldLocks(bucket, list) {
-  if (list.length > 0) {
-    const countResults = await Promise.all(list.map(async (item) => {
-      const date = item.LastModified;
-      const diff = new Date() - date;
-      const fiveMinutes = 300000; // 5 * 60 seconds * 1000 milliseconds
-      if (diff > fiveMinutes) {
-        await deleteS3Object(bucket, item.Key);
-        return 0;
-      }
-      return 1;
-    }));
-
-    const count = countResults.reduce((total, result) => total + result);
-    return count;
-  }
-  return 0;
+async function checkOldLocks(bucket, locks = []) {
+  const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+  const expiredLocks = locks.filter((lock) => lock.LastModified < fiveMinutesAgo);
+  await Promise.all(expiredLocks.map((lock) => deleteS3Object(bucket, lock.Key)));
+  return locks.length - expiredLocks.length;
 }
 
 /**
