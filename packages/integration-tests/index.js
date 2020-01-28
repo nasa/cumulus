@@ -19,13 +19,12 @@ const {
   ecs,
   sfn
 } = require('@cumulus/aws-client/services');
-const { pullStepFunctionEvent } = require('@cumulus/aws-client/StepFunctions');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { getWorkflowTemplate, getWorkflowArn } = require('@cumulus/common/workflows');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { ActivityStep, LambdaStep } = require('@cumulus/common/sfnStep');
 const { globalReplace } = require('@cumulus/common/string');
 
-const StepFunctions = require('@cumulus/common/StepFunctions');
 
 const { sleep } = require('@cumulus/common/util');
 
@@ -790,7 +789,7 @@ async function waitForTestExecutionStart({
       const execution = executions[executionCtr];
       let taskInput = await lambdaStep.getStepInput(execution.executionArn, startTask);
       if (taskInput) {
-        taskInput = await pullStepFunctionEvent(taskInput);
+        taskInput = await StepFunctions.pullStepFunctionEvent(taskInput);
       }
       if (taskInput && findExecutionFn(taskInput, findExecutionFnParams)) {
         return execution;
