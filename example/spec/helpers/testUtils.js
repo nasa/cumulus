@@ -12,10 +12,8 @@ const tempy = require('tempy');
 
 const { headObject, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
-const {
-  stringUtils: { globalReplace },
-  log
-} = require('@cumulus/common');
+const log = require('@cumulus/common/log');
+const { globalReplace } = require('@cumulus/common/string');
 const { loadConfig, loadYmlFile } = require('@cumulus/integration-tests/config');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;

@@ -13,9 +13,9 @@
 const cloneDeep = require('lodash.clonedeep');
 const isString = require('lodash.isstring');
 const zlib = require('zlib');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { constructCollectionId } = require('@cumulus/common');
 
 const { Search, defaultIndexAlias } = require('./search');
 const { Granule } = require('../models');

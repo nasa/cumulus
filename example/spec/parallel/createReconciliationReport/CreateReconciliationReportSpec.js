@@ -4,14 +4,10 @@ const cloneDeep = require('lodash.clonedeep');
 const fs = require('fs-extra');
 const { buildS3Uri, deleteS3Files } = require('@cumulus/aws-client/S3');
 const { dynamodb, lambda, s3 } = require('@cumulus/aws-client/services');
-const {
-  BucketsConfig,
-  bucketsConfigJsonObject,
-  constructCollectionId,
-  testUtils: {
-    randomString
-  }
-} = require('@cumulus/common');
+const BucketsConfig = require('@cumulus/common/BucketsConfig');
+const bucketsConfigJsonObject = require('@cumulus/common/bucketsConfigJsonObject');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { randomString } = require('@cumulus/common/test-utils');
 
 const { Granule } = require('@cumulus/api/models');
 const {

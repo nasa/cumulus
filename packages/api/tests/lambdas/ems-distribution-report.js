@@ -10,7 +10,7 @@ const {
   s3Join
 } = require('@cumulus/aws-client/S3');
 const awsServices = require('@cumulus/aws-client/services');
-const { testUtils: { randomString } } = require('@cumulus/common');
+const { randomString } = require('@cumulus/common/test-utils');
 const {
   bucketsPrefixes, generateAndStoreDistributionReport, generateAndStoreReportsForEachDay
 } = require('../../lambdas/ems-distribution-report');
