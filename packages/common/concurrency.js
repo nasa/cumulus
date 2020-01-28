@@ -6,6 +6,8 @@ const https = require('follow-redirects').https;
 const url = require('url');
 const pLimit = require('p-limit');
 const log = require('./log');
+const { deprecate } = require('./util');
+
 
 /**
  * Wrap a function to limit how many instances can be run in parallel
@@ -80,11 +82,13 @@ const promiseUrl = (urlstr) =>
 
 class Mutex {
   constructor(docClient, tableName) {
+    deprecate('@cumulus/common/concurrency/Mutex', '1.18.0');
     this.docClient = docClient;
     this.tableName = tableName;
   }
 
   async lock(key, timeoutMs, fn) {
+    deprecate('@cumulus/common/concurrency/Mutex', '1.18.0');
     log.info(`Attempting to obtain lock ${key}`);
     // Note: this throws an exception if the lock fails, desirable for Tasks
     await this.writeLock(key, timeoutMs);
@@ -101,6 +105,7 @@ class Mutex {
   }
 
   writeLock(key, timeoutMs) {
+    deprecate('@cumulus/common/concurrency/Mutex', '1.18.0');
     const now = Date.now();
 
     const params = {
@@ -123,6 +128,7 @@ class Mutex {
   }
 
   unlock(key) {
+    deprecate('@cumulus/common/concurrency/Mutex', '1.18.0');
     return this.docClient.delete({
       TableName: this.tableName,
       Key: { key: key }

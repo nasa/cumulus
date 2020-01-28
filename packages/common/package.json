@@ -50,7 +50,7 @@
     "fs-extra": "^5.0.0",
     "got": "^9.2.1",
     "js-yaml": "^3.11.0",
-    "jsonpath-plus": "^1.0.0",
+    "jsonpath-plus": "^1.1.0",
     "lodash.clonedeep": "^4.5.0",
     "lodash.compact": "^3.0.1",
     "lodash.curry": "^4.1.1",

@@ -4,7 +4,6 @@ set -e
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-publish.sh
 
-npm install -g npm
 npm install
 rm -rf website/build
 npm run docs-install
