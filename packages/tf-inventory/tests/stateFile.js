@@ -111,7 +111,7 @@ test('getStateFileDeploymentInfo lists correct resources', async (t) => {
   const resources = await stateFile.getStateFileDeploymentInfo(`${bucket}/${key}`);
 
   t.deepEqual(
-    ['aws_caller_identity', 'aws_ecs_cluster'],
+    ['aws_caller_identity', 'aws_ecs_cluster', 'aws_elasticsearch_domain'],
     resources.resources.map((r) => r.type)
   );
 
@@ -140,7 +140,8 @@ test('listResourcesForFile lists resources', async (t) => {
   t.deepEqual(
     {
       ecsClusters: ['arn:aws:ecs:us-east-1:12345:cluster/lpf-tf-CumulusECSCluster'],
-      ec2Instances: ['i-1234', 'i-4321']
+      ec2Instances: ['i-1234', 'i-4321'],
+      esDomainNames: ['cumulus-tf-es-vpc']
     },
     resources
   );
@@ -162,6 +163,11 @@ test('extractDeploymentName returns null if deployment name cannot be extracted'
   t.is(extractDeploymentName('tf-deployments/terraform.tfstate'), null);
 });
 
+test('extractDeploymentName works with specified regex', (t) => {
+  t.is(extractDeploymentName('bucket/cumulus/terraform.tfstate', /.*\/(.*)\/terraform.tfstate/),
+    'cumulus');
+});
+
 test('listTfDeployments lists unique Tf deployments based on state file name', (t) => {
   const stateFiles = [
     'bucket/cumulus/data-persistence/terraform.tfstate',
@@ -171,6 +177,17 @@ test('listTfDeployments lists unique Tf deployments based on state file name', (
   ];
 
   const deployments = stateFile.listTfDeployments(stateFiles);
+
+  t.deepEqual(deployments, ['cumulus', 'tf']);
+});
+
+test('listTfDeployments lists unique Tf deployments based on state file name with specified regex', (t) => {
+  const stateFiles = [
+    'bucket/cumulus/terraform.tfstate',
+    'bucket/tf/terraform.tfstate'
+  ];
+
+  const deployments = stateFile.listTfDeployments(stateFiles, /.*\/(.*)\/terraform.tfstate/);
 
   t.deepEqual(deployments, ['cumulus', 'tf']);
 });
