@@ -2,9 +2,7 @@
 
 const uuidv4 = require('uuid/v4');
 const { ecs, s3 } = require('@cumulus/aws-client/services');
-const {
-  testUtils: { randomString }
-} = require('@cumulus/common');
+const { randomString } = require('@cumulus/common/test-utils');
 const {
   getClusterArn,
   waitForAsyncOperationStatus

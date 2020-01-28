@@ -14,9 +14,7 @@ const listClusterEC2Instances = stateFile.__get__('listClusterEC2Instances');
 const aws = require('@cumulus/aws-client/services');
 const { promiseS3Upload, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 
-const {
-  testUtils: { randomString }
-} = require('@cumulus/common');
+const { randomString } = require('@cumulus/common/test-utils');
 
 async function createTable(tableName, attributeDefs, keySchema) {
   await aws.dynamodb().createTable({
