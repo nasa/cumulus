@@ -22,10 +22,7 @@ const {
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { getWorkflowTemplate, getWorkflowArn } = require('@cumulus/common/workflows');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
-const { ActivityStep, LambdaStep } = require('@cumulus/common/sfnStep');
 const { globalReplace } = require('@cumulus/common/string');
-
-
 const { sleep } = require('@cumulus/common/util');
 
 const {
@@ -42,6 +39,7 @@ const distributionApi = require('./api/distribution');
 const cmr = require('./cmr.js');
 const lambda = require('./lambda');
 const waitForDeployment = require('./lambdas/waitForDeployment');
+const { ActivityStep, LambdaStep } = require('./sfnStep');
 
 const waitPeriodMs = 1000;
 
