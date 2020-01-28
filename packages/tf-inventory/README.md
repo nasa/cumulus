@@ -36,7 +36,7 @@ The following utilities are provided via the CLI. For help run `tf-inventory --h
 
 ### `Error extracting deployment name from file ...`
 
-An `Error extracting deployment name` will be printed to the console if a Terraform state file is detected that does not match the deployment regular expression specified, or the default if none is specified.
+An `Error extracting deployment name` will be printed to the console if a Terraform state file is detected that does not match the specified deployment regular expression, or the default regular expression if none is specified.
 
 ### `Error reading <filename>: The specified key does not exist.`
 
