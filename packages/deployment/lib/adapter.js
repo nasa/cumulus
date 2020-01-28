@@ -1,7 +1,7 @@
 'use strict';
 
 const fs = require('fs-extra');
-const { http } = require('@cumulus/common');
+const http = require('@cumulus/common/http');
 const got = require('got');
 const extract = require('extract-zip');
 

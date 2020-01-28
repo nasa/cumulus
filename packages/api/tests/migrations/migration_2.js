@@ -1,10 +1,8 @@
 'use strict';
 
 const test = require('ava');
-const {
-  aws: { dynamodb },
-  testUtils: { randomString }
-} = require('@cumulus/common');
+const { dynamodb } = require('@cumulus/aws-client/services');
+const { randomString } = require('@cumulus/common/test-utils');
 const { run } = require('../../migrations/migration_2');
 const models = require('../../models');
 

@@ -2,7 +2,8 @@
 
 const JSFtp = require('jsftp');
 const { PassThrough } = require('stream');
-const { log, aws: { buildS3Uri, promiseS3Upload } } = require('@cumulus/common');
+const { buildS3Uri, promiseS3Upload } = require('@cumulus/aws-client/S3');
+const log = require('@cumulus/common/log');
 const omit = require('lodash.omit');
 
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');

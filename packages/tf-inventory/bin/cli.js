@@ -16,16 +16,18 @@ program
 program
   .command('list-deployments')
   .description('List Terraform Cumulus deployments in the account')
-  .action(async () => {
+  .option('--regex <regex>', 'Regular expression string to use for extracting deployment name from bucket/key. Defaults to \'.*\/(.*)\/(data-persistence.*|cumulus.*)\/terraform.tfstate/\'')
+  .action(async (cmd) => {
     const stateFiles = await stateFile.listTfStateFiles();
-    console.log(stateFile.listTfDeployments(stateFiles));
+    console.log(stateFile.listTfDeployments(stateFiles, cmd.regex));
   });
 
 program
   .command('deployment-report')
   .description('List each Cumulus deployment with files, number of resources, and last update date')
-  .action(async () => {
-    const deployments = await stateFile.deploymentReport();
+  .option('--regex <regex>', 'Regular expression string to use for extracting deployment name from bucket/key. Defaults to \'.*\/(.*)\/(data-persistence.*|cumulus.*)\/terraform.tfstate/\'')
+  .action(async (cmd) => {
+    const deployments = await stateFile.deploymentReport(cmd.regex);
     const sortedKeys = Object.keys(deployments).sort();
     sortedKeys.forEach((k) => {
       console.log(k);
@@ -35,7 +37,7 @@ program
 
 program
   .command('list-orphaned-resources')
-  .description('List resources not associated with a Terraform deployment, currently supports ECS and EC2')
+  .description('List resources not associated with a Terraform deployment, currently supports ECS, EC2, and Elasticsearch')
   .action(async () => {
     console.log(await inventory.reconcileResources());
   });
