@@ -6,6 +6,8 @@ const https = require('follow-redirects').https;
 const url = require('url');
 const pLimit = require('p-limit');
 const log = require('./log');
+const { deprecate } = require('./util');
+
 
 /**
  * Wrap a function to limit how many instances can be run in parallel
@@ -78,7 +80,64 @@ const promiseUrl = (urlstr) =>
     }).on('error', reject);
   });
 
+class Mutex {
+  constructor(docClient, tableName) {
+    deprecate('@cumulus/common/concurrency/Mutex', '1.18.0');
+    this.docClient = docClient;
+    this.tableName = tableName;
+  }
+
+  async lock(key, timeoutMs, fn) {
+    deprecate('@cumulus/common/concurrency/Mutex', '1.18.0');
+    log.info(`Attempting to obtain lock ${key}`);
+    // Note: this throws an exception if the lock fails, desirable for Tasks
+    await this.writeLock(key, timeoutMs);
+    log.info(`Obtained lock ${key}`);
+    let result = null;
+    try {
+      result = await fn();
+    } finally {
+      log.info(`Releasing lock ${key}`);
+      await this.unlock(key);
+      log.info(`Released lock ${key}`);
+    }
+    return result;
+  }
+
+  writeLock(key, timeoutMs) {
+    deprecate('@cumulus/common/concurrency/Mutex', '1.18.0');
+    const now = Date.now();
+
+    const params = {
+      TableName: this.tableName,
+      Item: {
+        key: key,
+        expire: now + timeoutMs
+      },
+      ConditionExpression: '#key <> :key OR (#key = :key AND #expire < :expire)',
+      ExpressionAttributeNames: {
+        '#key': 'key',
+        '#expire': 'expire'
+      },
+      ExpressionAttributeValues: {
+        ':key': key,
+        ':expire': now
+      }
+    };
+    return this.docClient.put(params).promise();
+  }
+
+  unlock(key) {
+    deprecate('@cumulus/common/concurrency/Mutex', '1.18.0');
+    return this.docClient.delete({
+      TableName: this.tableName,
+      Key: { key: key }
+    }).promise();
+  }
+}
+
 module.exports = {
+  Mutex: Mutex,
   limit: limit,
   mapTolerant: mapTolerant,
   promiseUrl: promiseUrl,
