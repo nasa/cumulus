@@ -5,10 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
-### BREAKING CHANGES
-
-- **CUMULUS-1698**
-  - - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
 
 ### Fixed
 
@@ -17,6 +13,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `@cumulus/api/launchpadSaml` to download launchpad IDP metadata from configured location when the metadata in s3 is not valid, and to work with updated IDP metadata and SAML response.
 
 ### BREAKING CHANGES
+
+- **CUMULUS-1698**
+  - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
 
 - **CUMULUS-1686**
   - `ecs_cluster_instance_image_id` is now a *required* variable of the `cumulus` module, instead of optional.
@@ -60,6 +59,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
    - Updates the default AMI for the ecs\_cluster\_instance\_image\_id.
 
 ### Changed
+
+- **CUMULUS-1622**
+  - Mutex class has been deprecated in `@cumulus/common/concurrency` and will be removed in a future release.
 
 - **CUMULUS-1040**
   - `@cumulus/common/errors` is now deprecated. Please use `@cumulus/errors` instead.
