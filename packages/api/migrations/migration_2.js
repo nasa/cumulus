@@ -1,13 +1,9 @@
 'use strict';
 
 const drop = require('lodash.drop');
-const {
-  aws: {
-    dynamodb,
-    DynamoDbSearchQueue,
-    parseS3Uri
-  }
-} = require('@cumulus/common');
+const { parseS3Uri } = require('@cumulus/aws-client/S3');
+const { dynamodb } = require('@cumulus/aws-client/services');
+const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 
 /**
  * Given a granule, create a DynamoDB PutRequest for each of the granule's files
