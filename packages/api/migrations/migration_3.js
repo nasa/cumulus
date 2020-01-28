@@ -1,7 +1,10 @@
 'use strict';
 
 const { s3 } = require('@cumulus/aws-client/services');
-const { CollectionConfigStore, constructCollectionId } = require('@cumulus/common');
+const {
+  CollectionConfigStore,
+  constructCollectionId
+} = require('@cumulus/common/collection-config-store');
 
 /**
  * Create correct file in s3 using version number

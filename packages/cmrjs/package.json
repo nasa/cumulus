@@ -31,8 +31,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@cumulus/aws-client": "1.17.0-alpha4",
     "@cumulus/cmr-client": "1.17.0",
     "@cumulus/common": "1.17.0",
+    "@cumulus/errors": "1.17.0-alpha",
     "got": "^8.3.0",
     "js2xmlparser": "^4.0.0",
     "lodash.flatten": "^4.4.0",
@@ -44,7 +46,6 @@
   },
   "devDependencies": {
     "ava": "^2.1.0",
-    "@cumulus/aws-client": "1.17.0-alpha",
     "fs-extra": "7.0.0",
     "nyc": "^14.0.0",
     "rewire": "^4.0.1",

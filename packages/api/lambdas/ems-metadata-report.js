@@ -5,15 +5,10 @@ const get = require('lodash.get');
 const isFunction = require('lodash.isfunction');
 const sortBy = require('lodash.sortby');
 
-const {
-  aws: {
-    buildS3Uri,
-    deleteS3Files,
-    s3
-  },
-  constructCollectionId
-} = require('@cumulus/common');
-const { log } = require('@cumulus/common');
+const { buildS3Uri, deleteS3Files } = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const log = require('@cumulus/common/log');
 const { CMRSearchConceptQueue } = require('@cumulus/cmrjs');
 const {
   determineReportKey, getExpiredS3Objects, submitReports

@@ -12,7 +12,13 @@ const sample = require('lodash.sample');
 const sortBy = require('lodash.sortby');
 const sinon = require('sinon');
 const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmrjs');
-const { aws, BucketsConfig, constructCollectionId } = require('@cumulus/common');
+const {
+  buildS3Uri,
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/aws-client/S3');
+const awsServices = require('@cumulus/aws-client/services');
+const BucketsConfig = require('@cumulus/common/BucketsConfig');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { randomString } = require('@cumulus/common/test-utils');
 const { sleep } = require('@cumulus/common/util');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
@@ -23,7 +29,7 @@ const {
 
 const models = require('../../models');
 
-const createBucket = (Bucket) => aws.s3().createBucket({ Bucket }).promise();
+const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket }).promise();
 const promisifiedHandler = promisify(handler);
 
 function storeBucketsConfigToS3(buckets, systemBucket, stackName) {
@@ -34,7 +40,7 @@ function storeBucketsConfigToS3(buckets, systemBucket, stackName) {
       type: 'protected'
     };
   });
-  return aws.s3().putObject({
+  return awsServices.s3().putObject({
     Bucket: systemBucket,
     Key: `${stackName}/workflows/buckets.json`,
     Body: JSON.stringify(bucketsConfig)
@@ -51,7 +57,7 @@ function storeFilesToS3(files) {
 
   return pMap(
     putObjectParams,
-    (params) => aws.s3().putObject(params).promise(),
+    (params) => awsServices.s3().putObject(params).promise(),
     { concurrency: 10 }
   );
 }
@@ -75,7 +81,7 @@ function storeToDynamoDb(tableName, putRequests) {
 
   return pMap(
     putRequestParams,
-    (params) => aws.dynamodb().batchWriteItem(params).promise(),
+    (params) => awsServices.dynamodb().batchWriteItem(params).promise(),
     { concurrency: 1 }
   );
 }
@@ -111,9 +117,9 @@ function storeCollectionsToDynamoDb(tableName, collections) {
 async function fetchCompletedReport(Bucket, stackName) {
   const Prefix = `${stackName}/reconciliation-reports/`;
 
-  const report = await aws.s3().listObjectsV2({ Bucket, Prefix }).promise()
+  const report = await awsServices.s3().listObjectsV2({ Bucket, Prefix }).promise()
     .then((response) => response.Contents[0].Key)
-    .then((Key) => aws.s3().getObject({ Bucket, Key }).promise())
+    .then((Key) => awsServices.s3().getObject({ Bucket, Key }).promise())
     .then((response) => response.Body.toString())
     .then(JSON.parse);
 
@@ -134,7 +140,7 @@ test.beforeEach(async (t) => {
   t.context.stackName = randomString();
   t.context.systemBucket = randomString();
 
-  await aws.s3().createBucket({ Bucket: t.context.systemBucket }).promise()
+  await awsServices.s3().createBucket({ Bucket: t.context.systemBucket }).promise()
     .then(() => t.context.bucketsToCleanup.push(t.context.systemBucket));
 
   await new models.Collection().createTable();
@@ -148,7 +154,7 @@ test.beforeEach(async (t) => {
 
 test.afterEach.always((t) => {
   Promise.all(flatten([
-    t.context.bucketsToCleanup.map(aws.recursivelyDeleteS3Bucket),
+    t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket),
     new models.Collection().deleteTable(),
     new models.Granule().deleteTable(),
     new models.FileClass().deleteTable()
@@ -297,8 +303,8 @@ test.serial('A valid reconciliation report is generated when there are extra S3 
   t.is(filesInCumulus.okCount, matchingFiles.length);
 
   t.is(filesInCumulus.onlyInS3.length, 2);
-  t.true(filesInCumulus.onlyInS3.includes(aws.buildS3Uri(extraS3File1.bucket, extraS3File1.key)));
-  t.true(filesInCumulus.onlyInS3.includes(aws.buildS3Uri(extraS3File2.bucket, extraS3File2.key)));
+  t.true(filesInCumulus.onlyInS3.includes(buildS3Uri(extraS3File1.bucket, extraS3File1.key)));
+  t.true(filesInCumulus.onlyInS3.includes(buildS3Uri(extraS3File2.bucket, extraS3File2.key)));
 
   t.is(filesInCumulus.onlyInDynamoDb.length, 0);
 
@@ -362,10 +368,10 @@ test.serial('A valid reconciliation report is generated when there are extra Dyn
 
   t.is(filesInCumulus.onlyInDynamoDb.length, 2);
   t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
-    f.uri === aws.buildS3Uri(extraDbFile1.bucket, extraDbFile1.key)
+    f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key)
     && f.granuleId === extraDbFile1.granuleId));
   t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
-    f.uri === aws.buildS3Uri(extraDbFile2.bucket, extraDbFile2.key)
+    f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key)
     && f.granuleId === extraDbFile2.granuleId));
 
   const reportStartTime = moment(report.reportStartTime);
@@ -428,15 +434,15 @@ test.serial('A valid reconciliation report is generated when there are both extr
   t.is(filesInCumulus.okCount, matchingFiles.length);
 
   t.is(filesInCumulus.onlyInS3.length, 2);
-  t.true(filesInCumulus.onlyInS3.includes(aws.buildS3Uri(extraS3File1.bucket, extraS3File1.key)));
-  t.true(filesInCumulus.onlyInS3.includes(aws.buildS3Uri(extraS3File2.bucket, extraS3File2.key)));
+  t.true(filesInCumulus.onlyInS3.includes(buildS3Uri(extraS3File1.bucket, extraS3File1.key)));
+  t.true(filesInCumulus.onlyInS3.includes(buildS3Uri(extraS3File2.bucket, extraS3File2.key)));
 
   t.is(filesInCumulus.onlyInDynamoDb.length, 2);
   t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
-    f.uri === aws.buildS3Uri(extraDbFile1.bucket, extraDbFile1.key)
+    f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key)
     && f.granuleId === extraDbFile1.granuleId));
   t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
-    f.uri === aws.buildS3Uri(extraDbFile2.bucket, extraDbFile2.key)
+    f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key)
     && f.granuleId === extraDbFile2.granuleId));
 
   const reportStartTime = moment(report.reportStartTime);
