@@ -5,10 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
-### BREAKING CHANGES
-
-- **CUMULUS-1698**
-  - - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
 
 ### Fixed
 
@@ -18,11 +14,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- **CUMULUS-1698**
+  - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
+
 - **CUMULUS-1686**
   - `ecs_cluster_instance_image_id` is now a *required* variable of the `cumulus` module, instead of optional.
 
-- **CUMULUS-1622**
-  - Mutex class has been removed from `@cumulus/common/concurrency`
 - **CUMULUS-1703**
   - Remove the unused `forceDownload` option from the `sync-granule` tasks's config
   - Remove the `@cumulus/ingest/granule.Discover` class
@@ -52,6 +49,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added the `@cumulus/tf-inventory` package that provides command line utilities for managing Terraform resources in your AWS account
 
 ### Changed
+
+- **CUMULUS-1622**
+  - Mutex class has been deprecated in `@cumulus/common/concurrency` and will be removed in a future release.
 
 - **CUMULUS-1040**
   - `@cumulus/common/errors` is now deprecated. Please use `@cumulus/errors` instead.
