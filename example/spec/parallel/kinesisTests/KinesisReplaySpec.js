@@ -1,6 +1,6 @@
 'use strict';
 
-const { stringUtils: { globalReplace } } = require('@cumulus/common');
+const { globalReplace } = require('@cumulus/common/string');
 const { randomString } = require('@cumulus/common/test-utils');
 const { sleep } = require('@cumulus/common/util');
 const { getWorkflowArn } = require('@cumulus/common/workflows');

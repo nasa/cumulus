@@ -1,6 +1,4 @@
-const {
-  testUtils: { randomId }
-} = require('@cumulus/common');
+const { randomId } = require('@cumulus/common/test-utils');
 
 /** Typical resonse from cloudwatch.getMetrics()  */
 const getMetricDatasResult = {

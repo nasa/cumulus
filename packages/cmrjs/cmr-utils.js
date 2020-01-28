@@ -10,14 +10,20 @@ const xml2js = require('xml2js');
 const js2xmlParser = require('js2xmlparser');
 
 const {
-  aws,
-  BucketsConfig,
-  bucketsConfigJsonObject,
-  errors,
-  log
-} = require('@cumulus/common');
+  buildS3Uri,
+  getS3Object,
+  parseS3Uri,
+  promiseS3Upload,
+  s3GetObjectTagging,
+  s3TagSetToQueryString
+} = require('@cumulus/aws-client/S3');
+const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const { deprecate, omit } = require('@cumulus/common/util');
+const BucketsConfig = require('@cumulus/common/BucketsConfig');
+const bucketsConfigJsonObject = require('@cumulus/common/bucketsConfigJsonObject');
 const { getLaunchpadToken } = require('@cumulus/common/launchpad');
+const log = require('@cumulus/common/log');
+const errors = require('@cumulus/errors');
 
 const { CMR } = require('@cumulus/cmr-client');
 const {
@@ -28,7 +34,7 @@ const {
 } = require('./utils');
 
 function getS3KeyOfFile(file) {
-  if (file.filename) return aws.parseS3Uri(file.filename).Key;
+  if (file.filename) return parseS3Uri(file.filename).Key;
   if (file.filepath) return file.filepath;
   if (file.key) return file.key;
   throw new Error(`Unable to determine s3 key of file: ${JSON.stringify(file)}`);
@@ -36,8 +42,8 @@ function getS3KeyOfFile(file) {
 
 function getS3UrlOfFile(file) {
   if (file.filename) return file.filename;
-  if (file.bucket && file.filepath) return aws.buildS3Uri(file.bucket, file.filepath);
-  if (file.bucket && file.key) return aws.buildS3Uri(file.bucket, file.key);
+  if (file.bucket && file.filepath) return buildS3Uri(file.bucket, file.filepath);
+  if (file.bucket && file.key) return buildS3Uri(file.bucket, file.key);
   throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
 }
 
@@ -67,7 +73,7 @@ function granuleToCmrFileObject(granule) {
   return granule.files
     .filter(isCMRFile)
     .map((f) => ({ // handle both new-style and old-style files model
-      filename: f.key ? aws.buildS3Uri(f.bucket, f.key) : f.filename, granuleId: granule.granuleId
+      filename: f.key ? buildS3Uri(f.bucket, f.key) : f.filename, granuleId: granule.granuleId
     }));
 }
 
@@ -191,8 +197,8 @@ async function getXMLMetadataAsString(xmlFilePath) {
   if (!xmlFilePath) {
     throw new errors.XmlMetaFileNotFound('XML Metadata file not provided');
   }
-  const { Bucket, Key } = aws.parseS3Uri(xmlFilePath);
-  const obj = await aws.getS3Object(Bucket, Key, { retries: 5 });
+  const { Bucket, Key } = parseS3Uri(xmlFilePath);
+  const obj = await getS3Object(Bucket, Key, { retries: 5 });
   return obj.Body.toString();
 }
 
@@ -212,8 +218,8 @@ async function parseXmlString(xml) {
  * @returns {Promise<Object>} CMR UMMG metadata object
  */
 async function metadataObjectFromCMRJSONFile(cmrFilename) {
-  const { Bucket, Key } = aws.parseS3Uri(cmrFilename);
-  const obj = await aws.getS3Object(Bucket, Key, { retries: 5 });
+  const { Bucket, Key } = parseS3Uri(cmrFilename);
+  const obj = await getS3Object(Bucket, Key, { retries: 5 });
   return JSON.parse(obj.Body.toString());
 }
 
@@ -316,7 +322,7 @@ function generateFileUrl(file, distEndpoint, cmrGranuleUrlType = 'distribution')
       return file.filename;
     }
 
-    return aws.buildS3Uri(file.bucket, file.key);
+    return buildS3Uri(file.bucket, file.key);
   }
 
   return null;
@@ -477,12 +483,12 @@ function mergeURLs(original, updated = [], removed = []) {
  *
  * @param {Object} metadataObject - JSON Object to stringify
  * @param {Object} cmrFile - cmr file object to write body to
- * @returns {Promise} returns promised aws.promiseS3Upload response
+ * @returns {Promise} returns promised promiseS3Upload response
  */
 async function uploadUMMGJSONCMRFile(metadataObject, cmrFile) {
-  const tags = await aws.s3GetObjectTagging(cmrFile.bucket, getS3KeyOfFile(cmrFile));
-  const tagsQueryString = aws.s3TagSetToQueryString(tags.TagSet);
-  return aws.promiseS3Upload({
+  const tags = await s3GetObjectTagging(cmrFile.bucket, getS3KeyOfFile(cmrFile));
+  const tagsQueryString = s3TagSetToQueryString(tags.TagSet);
+  return promiseS3Upload({
     Bucket: cmrFile.bucket,
     Key: getS3KeyOfFile(cmrFile),
     Body: JSON.stringify(metadataObject),
@@ -532,7 +538,7 @@ async function updateUMMGMetadata({
 */
 async function getCreds() {
   if (process.env.cmr_oauth_provider === 'launchpad') {
-    const passphrase = await aws.getSecretString(
+    const passphrase = await getSecretString(
       process.env.launchpad_passphrase_secret_name
     );
 
@@ -551,7 +557,7 @@ async function getCreds() {
     };
   }
 
-  const password = await aws.getSecretString(
+  const password = await getSecretString(
     process.env.cmr_password_secret_name
   );
 
@@ -581,12 +587,12 @@ function generateEcho10XMLString(granule) {
  *
  * @param  {string} xml - XML to write to cmrFile
  * @param  {Object} cmrFile - cmr file object to write xml to
- * @returns {Promise} returns promised aws.promiseS3Upload response
+ * @returns {Promise} returns promised promiseS3Upload response
  */
 async function uploadEcho10CMRFile(xml, cmrFile) {
-  const tags = await aws.s3GetObjectTagging(cmrFile.bucket, getS3KeyOfFile(cmrFile));
-  const tagsQueryString = aws.s3TagSetToQueryString(tags.TagSet);
-  return aws.promiseS3Upload({
+  const tags = await s3GetObjectTagging(cmrFile.bucket, getS3KeyOfFile(cmrFile));
+  const tagsQueryString = s3TagSetToQueryString(tags.TagSet);
+  return promiseS3Upload({
     Bucket: cmrFile.bucket,
     Key: getS3KeyOfFile(cmrFile),
     Body: xml,
