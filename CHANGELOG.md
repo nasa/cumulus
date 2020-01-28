@@ -59,7 +59,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `@cumulus/common/CloudFormationGateway`
     - `@cumulus/common/DynamoDb`
     - `@cumulus/common/StepFunctions`
-    - All of the exported functions in `@cumulus/commmon/aws`
+    - All of the exported functions in `@cumulus/commmon/aws`, except:
+      - `@cumulus/common/aws/improveStackTrace`
+      - `@cumulus/common/aws/retryOnThrottlingException`
     - `@cumulus/common/string/unicodeEscape`
     - `@cumulus/common/test-utils/inTestMode`
     - `@cumulus/common/util/setErrorStack`
