@@ -12,30 +12,22 @@ const {
   headObject
 } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
-const { ftpMixin: TestFtpMixin } = require('../ftp');
-
-class MyTestDiscoveryClass {
-  constructor(useList) {
-    this.decrypted = true;
-    this.host = '127.0.0.1';
-    this.password = 'testpass';
-    this.path = '';
-    this.provider = { encrypted: false };
-    this.useList = useList;
-    this.username = 'testuser';
-  }
-}
+const FtpProviderClient = require('../FtpProviderClient');
 
 test('useList is present and true when assigned', async (t) => {
   const jsftpSpy = sinon.spy(JSFtp);
-  const { ftpMixin } = proxyquire('../ftp', {
+  const ProxiedFtpProviderClient = proxyquire('../FtpProviderClient', {
     jsftp: jsftpSpy
   });
 
-  class MyTestFtpDiscoveryClass extends ftpMixin(MyTestDiscoveryClass) {}
-  const myTestFtpDiscoveryClass = new MyTestFtpDiscoveryClass(true);
+  const myFtpProviderClient = new ProxiedFtpProviderClient({
+    host: '127.0.0.1',
+    username: 'testuser',
+    password: 'testpass',
+    useList: true
+  });
 
-  await myTestFtpDiscoveryClass.list();
+  await myFtpProviderClient.list('');
 
   t.is(jsftpSpy.callCount, 1);
   t.is(jsftpSpy.getCall(0).args[0].useList, true);
@@ -43,28 +35,37 @@ test('useList is present and true when assigned', async (t) => {
 
 test('useList defaults to false when not assigned', async (t) => {
   const jsftpSpy = sinon.spy(JSFtp);
-  const { ftpMixin } = proxyquire('../ftp', {
+  const ProxiedFtpProviderClient = proxyquire('../FtpProviderClient', {
     jsftp: jsftpSpy
   });
 
-  class MyTestFtpDiscoveryClass extends ftpMixin(MyTestDiscoveryClass) {}
-  const myTestFtpDiscoveryClass = new MyTestFtpDiscoveryClass();
+  const myFtpProviderClient = new ProxiedFtpProviderClient({
+    host: '127.0.0.1',
+    username: 'testuser',
+    password: 'testpass'
+  });
 
-  await myTestFtpDiscoveryClass.list();
+  await myFtpProviderClient.list('');
 
   t.is(jsftpSpy.callCount, 1);
   t.is(jsftpSpy.getCall(0).args[0].useList, false);
 });
 
 test('Download remote file to s3 with correct content-type', async (t) => {
-  class MyTestFtpDiscoveryClass extends TestFtpMixin(MyTestDiscoveryClass) {}
-  const myTestFtpDiscoveryClass = new MyTestFtpDiscoveryClass();
+  const myFtpProviderClient = new FtpProviderClient({
+    host: '127.0.0.1',
+    username: 'testuser',
+    password: 'testpass',
+    path: '',
+    useList: true
+  });
+
   const bucket = randomString();
   const key = `${randomString()}.hdf`;
   const expectedContentType = 'application/x-hdf';
   try {
     await s3().createBucket({ Bucket: bucket }).promise();
-    await myTestFtpDiscoveryClass.sync(
+    await myFtpProviderClient.sync(
       '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf', bucket, key
     );
     t.truthy(fileExists(bucket, key));

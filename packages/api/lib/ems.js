@@ -10,8 +10,8 @@ const {
   s3CopyObject,
   buildS3Uri
 } = require('@cumulus/aws-client/S3');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const log = require('@cumulus/common/log');
-const { constructCollectionId } = require('@cumulus/common');
 const { Sftp } = require('@cumulus/common/sftp');
 const { Collection } = require('../models');
 

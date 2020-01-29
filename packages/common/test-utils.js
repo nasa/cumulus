@@ -35,10 +35,7 @@ const localStackPorts = {
   sts: 4592
 };
 
-exports.inTestMode = () => {
-  deprecate('@cumulus/common/test-utils/inTestMode', '1.17.0', '@cumulus/aws-client/test-utils/inTestMode');
-  return process.env.NODE_ENV === 'test';
-};
+exports.inTestMode = () => process.env.NODE_ENV === 'test';
 
 exports.getLocalstackEndpoint = (identifier) => {
   deprecate('@cumulus/common/test-utils/getLocalstackEndpoint', '1.17.0', '@cumulus/aws-client/test-utils/getLocalstackEndpoint');
