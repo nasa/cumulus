@@ -56,7 +56,7 @@ async function populateBucket(bucket, stackName) {
     Key: workflow,
     Body: JSON.stringify({})
   });
-  await Promise.all([...workflowPromises, ...reconcilePromises, ...templatePromise]);
+  await Promise.all([...workflowPromises, ...reconcilePromises, templatePromise]);
 }
 
 function setTableEnvVariables(stackName) {
@@ -223,7 +223,7 @@ async function createDBRecords(stackName, user) {
  * @param {bool} reseed - boolean to control whether to load new data into
  *                        dynamo and elastic search.
  */
-async function serveApi(user, stackName = defaultLocalStackName, reseed = true) {
+async function serveApi(user, stackName, reseed = true) {
   const port = process.env.PORT || 5001;
   const requiredEnvVars = [
     'stackName',
@@ -313,10 +313,7 @@ async function serveDistributionApi(stackName = defaultLocalStackName, done) {
  * @param {string} stackName - defaults to local stack, localrun
  * @param {string} systemBucket - defaults to 'localbucket', localrun
  */
-async function eraseDynamoTables(
-  stackName = defaultLocalStackName,
-  systemBucket = 'localbucket'
-) {
+async function eraseDynamoTables(stackName, systemBucket) {
   setTableEnvVariables(stackName);
   process.env.system_bucket = systemBucket;
   process.env.stackName = stackName;
@@ -358,13 +355,6 @@ async function eraseDataStack(
   return initializeLocalElasticsearch(stackName);
 }
 
-async function fetchElasticDefaults(stackName) {
-  setLocalEsVariables(stackName);
-  const esClient = await Search.es(process.env.ES_HOST);
-  const esIndex = process.env.ES_INDEX;
-  return { esClient, esIndex };
-}
-
 /**
  * Removes all additional data from tables and repopulates with original data.
  *
@@ -390,7 +380,6 @@ async function resetTables(
 
 module.exports = {
   eraseDataStack,
-  fetchElasticDefaults,
   serveApi,
   serveDistributionApi,
   resetTables
