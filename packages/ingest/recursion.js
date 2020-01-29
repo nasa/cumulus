@@ -1,38 +1,15 @@
 'use strict';
 
-const REGEX_CAPTURE_GROUP = /(\([^\)]*\))/;
-
 /**
- * check if segment is a regex segment
- *
- * @param {string} segment - path segment
- * @returns {boolean}
- */
-const isRegexSegment = (segment) => REGEX_CAPTURE_GROUP.test(segment);
-
-/**
- * Check whether filterExpr is a valid regex, and if so,
- * test itemName for a match.
- *
- * @param {string} filterExpr - filter expression
- * @param {string} itemName - item name
- * @returns {boolean} filterExpr is not regex OR itemName matches filterExpr
- */
-const itemPassesFiltering = (
-  filterExpr,
-  itemName
-) => (!isRegexSegment(filterExpr) || (new RegExp(filterExpr).test(itemName)));
-
-/**
- * Insert leading and terminating slashes into the path string if not present
+ * Insert leading and remove terminating slashes into/from the path string
  *
  * @param {string} path - path string
  * @returns {string} normalized path
  */
-const normalizeWithSlashes = (path) => {
-  let output = path;
+const normalizeSlashes = (path) => {
+  let output = path.replace(/[\/]{2,}/g, '/');
   if (!path.startsWith('/')) output = `/${output}`;
-  if (!path.endsWith('/')) output = `${output}/`;
+  if (path.endsWith('/')) output = output.slice(0, -1);
   return output;
 };
 
@@ -47,25 +24,24 @@ const normalizeWithSlashes = (path) => {
  * @returns {Array<Object>} - filtered contents of directory
  */
 async function recurOnDirectory(fn, currentPath, segments, position) {
-  // check if we have a filter regex segment (e.g. '(dir.*)')
-  const filterExpr = segments[position + 1] || '';
-
-  const path = currentPath.replace(/[\/]{2,}/g, '/');
-  const contents = fn(path);
+  // interpret the next path segment as a regex for filtering, and
+  // recursively list everything when we've run out of segments
+  const filterExpr = segments[position + 1] || '.*';
+  const filterRegex = new RegExp(filterExpr);
+  console.log(`\n\nlisting path ${currentPath}\n\n`);
+  const contents = fn(currentPath);
   let files = [];
 
   for (let ctr = 0; ctr < contents.length; ctr += 1) {
     const item = contents[ctr];
-    if (['-', 0].includes(item.type)) {
-      if (itemPassesFiltering(filterExpr, item.name)) {
-        // add file to the list if it matches rule
+    if (filterRegex.test(item.name)) {
+      if (['-', 0].includes(item.type)) {
         files.push(item);
-      }
-    } else if (['d', 1].includes(item.type)) {
-      // check if dir matches rule
-      if (itemPassesFiltering(filterExpr, item.name)) {
+      } else if (['d', 1].includes(item.type)) {
+        // check if dir matches rule
+        const nextDir = (currentPath === '' ? item.name : `${currentPath}/${item.name}`);
         // eslint-disable-next-line no-await-in-loop
-        files = files.concat(await recurOnDirectory(fn, `${path}/${item.name}/`, segments, position + 1));
+        files = files.concat(await recurOnDirectory(fn, nextDir, segments, position + 1));
       }
     }
   }
@@ -87,11 +63,8 @@ async function recurOnDirectory(fn, currentPath, segments, position) {
  *   list of files as values
  */
 async function recursion(fn, originalPath) {
-  const dynamicRegex = REGEX_CAPTURE_GROUP;
-  const normalizedPath = normalizeWithSlashes(originalPath);
-  const segments = normalizedPath
-    .split(dynamicRegex) // split into text path and regex segments
-    .filter((i) => i.trim() !== ''); // filter out empty segments from split
+  const normalizedPath = normalizeSlashes(originalPath);
+  const segments = normalizedPath.split('/'); // split on divider
 
   return recurOnDirectory(fn, segments[0], segments, 0);
 }
