@@ -2,9 +2,9 @@
 
 const get = require('lodash.get');
 
+const SQS = require('@cumulus/aws-client/SQS');
 const { buildQueueMessageFromTemplate } = require('@cumulus/common/message');
 const { isNil } = require('@cumulus/common/util');
-const { SQS } = require('@cumulus/ingest/aws');
 const Collection = require('../models/collections');
 const Provider = require('../models/providers');
 
@@ -55,7 +55,7 @@ async function handleScheduleEvent(event) {
     workflow
   });
 
-  return SQS.sendMessage(message.meta.queues[queueName], message);
+  return SQS.sendSQSMessage(message.meta.queues[queueName], message);
 }
 
 module.exports = {

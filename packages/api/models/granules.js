@@ -6,6 +6,7 @@ const partial = require('lodash.partial');
 const path = require('path');
 
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
+const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
 const secretsManagerUtils = require('@cumulus/aws-client/SecretsManager');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
@@ -21,8 +22,6 @@ const {
   removeNilProperties,
   renameProperty
 } = require('@cumulus/common/util');
-
-const aws = require('@cumulus/ingest/aws');
 const {
   generateMoveFileParams,
   moveGranuleFiles
@@ -207,7 +206,7 @@ class Granule extends Manager {
 
     await this.updateStatus({ granuleId: granule.granuleId }, 'running');
 
-    return aws.invoke(process.env.invoke, lambdaPayload);
+    return Lambda.invoke(process.env.invoke, lambdaPayload);
   }
 
   /**
@@ -243,7 +242,7 @@ class Granule extends Manager {
 
     await this.updateStatus({ granuleId: g.granuleId }, 'running');
 
-    await aws.invoke(process.env.invoke, lambdaPayload);
+    await Lambda.invoke(process.env.invoke, lambdaPayload);
   }
 
   /**
@@ -392,7 +391,7 @@ class Granule extends Manager {
 
     const executionArn = getMessageExecutionArn(cumulusMessage);
     if (!executionArn) return null;
-    const executionUrl = aws.getExecutionUrl(executionArn);
+    const executionUrl = StepFunctions.getExecutionUrl(executionArn);
     const executionDescription = await StepFunctions.describeExecution({ executionArn });
 
     return Promise.all(

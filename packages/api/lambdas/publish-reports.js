@@ -1,13 +1,15 @@
 'use strict';
 
 const { publishSnsMessage } = require('@cumulus/aws-client/SNS');
-const { getExecutionUrl } = require('@cumulus/ingest/aws');
+const {
+  describeExecution,
+  getExecutionUrl
+} = require('@cumulus/aws-client/StepFunctions');
 const log = require('@cumulus/common/log');
 const {
   getMessageExecutionArn,
   getMessageGranules
 } = require('@cumulus/common/message');
-const StepFunctions = require('@cumulus/common/StepFunctions');
 const { isNil } = require('@cumulus/common/util');
 
 const Granule = require('../models/granules');
@@ -68,7 +70,7 @@ const getGranuleRecordsFromCumulusMessage = async (cumulusMessage) => {
 
   let executionDescription;
   try {
-    executionDescription = await StepFunctions.describeExecution({ executionArn });
+    executionDescription = await describeExecution({ executionArn });
   } catch (err) {
     log.error(`Could not describe execution ${executionArn}`, err);
   }

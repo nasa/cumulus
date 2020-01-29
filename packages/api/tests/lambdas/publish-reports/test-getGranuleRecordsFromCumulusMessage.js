@@ -13,10 +13,8 @@ const {
 test.before((t) => {
   // Not necessary for the tests to pass, but reduces error log output
   t.context.revertPublishReports = publishReports.__set__(
-    'StepFunctions',
-    {
-      describeExecution: () => Promise.resolve({})
-    }
+    'describeExecution',
+    () => Promise.resolve({})
   );
 });
 
@@ -120,9 +118,7 @@ test('getGranuleRecordsFromCumulusMessage() returns a granule record even if the
   const { cumulusMessage } = t.context;
 
   const granuleRecords = await publishReports.__with__({
-    StepFunctions: {
-      describeExecution: () => Promise.reject(new Error('nope'))
-    }
+    describeExecution: () => Promise.reject(new Error('nope'))
   })(() => getGranuleRecordsFromCumulusMessage(cumulusMessage));
 
   t.is(granuleRecords.length, 1);
