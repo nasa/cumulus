@@ -14,11 +14,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
-- **CUMULUS-1698**
-  - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
-
 - **CUMULUS-1686**
   - `ecs_cluster_instance_image_id` is now a *required* variable of the `cumulus` module, instead of optional.
+
+- **CUMULUS-1698**
+  - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
 
 - **CUMULUS-1703**
   - Remove the unused `forceDownload` option from the `sync-granule` tasks's config
@@ -30,6 +30,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-1040**
+  - Added `@cumulus/aws-client` package to provide utilities for working with AWS services and the Node.js AWS SDK
+  - Added `@cumulus/errors` package which exports error classes for use in Cumulus workflow code
+
+- **CUMULUS-1102**
+  - Adds functionality to the @cumulus/api package for better local testing.
+      - Adds seeding of @cumulus/api's localAPI in testing mode (conditionally exported when running testing mode)
+        - seed functions allow adding collections, executions, granules, pdrs, providers, and rules to a Localstack Elasticsearch and DynamoDB via `addCollections`,  `addExecutions`, `addGranules`, `addPdrs`, `addProviders`, and `addRules`.
+   - Adds `eraseDataStack` function to local API server code allowing resetting of local datastack for testing (ES and DynamoDB).
+   - Adds optional parameters to the @cumulus/api bin serve to allow for launching the api without destroying the current data.
+
+- **CUMULUS-1697**
+  - Added the `@cumulus/tf-inventory` package that provides command line utilities for managing Terraform resources in your AWS account
+
 - **CUMULUS-1703**
   - Add `@cumulus/aws-client/S3.createBucket` function
   - Add `@cumulus/aws-client/S3.putFile` function
@@ -40,18 +54,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add `@cumulus/ingest/SftpProviderClient` class
   - Add `@cumulus/ingest/providerClientUtils.buildProviderClient` function
   - Add `@cumulus/ingest/providerClientUtils.fetchTextFile` function
-
-- **CUMULUS-1040**
-  - Added `@cumulus/aws-client` package to provide utilities for working with AWS services and the Node.js AWS SDK
-  - Added `@cumulus/errors` package which exports error classes for use in Cumulus workflow code
-
-- **CUMULUS-1102**
-  - Adds functionality to the @cumulus/api package for better local testing.
-      - Adds seeding of @cumulus/api's localAPI in testing mode (conditionally exported when running testing mode)
-        - seed functions allow adding collections, executions, granules, pdrs, providers, and rules to a Localstack Elasticsearch and DynamoDB via `addCollections`,  `addExecutions`, `addGranules`, `addPdrs`, `addProviders`, and `addRules`.
-
-- **CUMULUS-1697**
-  - Added the `@cumulus/tf-inventory` package that provides command line utilities for managing Terraform resources in your AWS account
 
 ### Changed
 
@@ -67,9 +69,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `@cumulus/common/util/setErrorStack`
 
 - **CUMULUS-1102**
-
-   - Refactors local API server code to allow for full erasing of local datastack (ES and DynamoDB).
-   - Adds optional parameters to the @cumulus/api bin serve to allow for launching the api without destroying the current data.
    - Updates testAuth to use JWT instead of random tokens.
    - Updates the default AMI for the ecs\_cluster\_instance\_image\_id.
 

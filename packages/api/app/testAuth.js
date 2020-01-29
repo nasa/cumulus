@@ -4,15 +4,15 @@ const { randomId } = require('@cumulus/common/test-utils');
 const get = require('lodash.get');
 const { createJwtToken } = require('../lib/token');
 
+const username = 'testUser';
 
 const newToken = () => {
-  let accessToken = randomId('oauthcode');
-  const username = 'testUser';
+  const accessToken = randomId('oauthcode');
   const expirationTime = new Date(Date.now() + 3600 * 24 * 1000);
   return createJwtToken({ accessToken, username, expirationTime });
 };
 
-const jwt = newToken();
+let jwt = newToken();
 
 /**
  * performs OAuth against an OAuth provider
