@@ -1203,10 +1203,9 @@ const retryIfThrottlingException = (err) => {
  *   - https://github.com/tim-kos/node-retry#retrytimeoutsoptions
  * @returns {Function} a function that will retry on a ThrottlingException
  */
-exports.retryOnThrottlingException = (fn, options) => {
-  return (...args) =>
+exports.retryOnThrottlingException = (fn, options) =>
+  (...args) =>
     pRetry(
       () => fn(...args).catch(retryIfThrottlingException),
       { maxTimeout: 5000, ...options }
     );
-};
