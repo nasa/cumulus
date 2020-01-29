@@ -4,10 +4,15 @@ const { randomId } = require('@cumulus/common/test-utils');
 const get = require('lodash.get');
 const { createJwtToken } = require('../lib/token');
 
-let accessToken = randomId('oauthcode');
-const username = 'testUser';
-const expirationTime = new Date(Date.now() + 3600 * 24 * 1000);
-const jwt = createJwtToken({ accessToken, username, expirationTime });
+
+const newToken = () => {
+  let accessToken = randomId('oauthcode');
+  const username = 'testUser';
+  const expirationTime = new Date(Date.now() + 3600 * 24 * 1000);
+  return createJwtToken({ accessToken, username, expirationTime });
+};
+
+const jwt = newToken();
 
 /**
  * performs OAuth against an OAuth provider
@@ -19,7 +24,7 @@ const jwt = createJwtToken({ accessToken, username, expirationTime });
 async function tokenEndpoint(req, res) {
   const code = get(req, 'query.code');
   const state = get(req, 'query.state');
-  if (accessToken === '') accessToken = randomId('oauthcode');
+  if (jwt === '') jwt = newToken();
 
   if (code) {
     if (state) {
@@ -56,7 +61,7 @@ async function tokenEndpoint(req, res) {
 async function refreshEndpoint(req, res) {
   return res.send({
     message: {
-      token: jwt
+      token: newToken()
     }
   });
 }
@@ -69,7 +74,7 @@ async function refreshEndpoint(req, res) {
  * @returns {Promise<Object>} a promise of an express response
  */
 async function deleteTokenEndpoint(req, res) {
-  accessToken = '';
+  jwt = '';
   return res.send({ message: 'Token record was deleted' });
 }
 
