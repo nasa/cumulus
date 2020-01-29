@@ -1,14 +1,13 @@
 'use strict';
 
-const isObject = require('lodash.isobject');
-const isString = require('lodash.isstring');
-const aws = require('@cumulus/common/aws');
-const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const AWS = require('aws-sdk');
 const moment = require('moment');
-const log = require('@cumulus/common/log');
+const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
+const Lambda = require('@cumulus/aws-client/Lambda');
+const awsServices = require('@cumulus/aws-client/services');
+const SQSUtils = require('@cumulus/aws-client/SQS');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { deprecate } = require('@cumulus/common/util');
-const { inTestMode } = require('@cumulus/common/test-utils');
 
 /**
  * getEndpoint returns proper AWS arguments for various
@@ -22,6 +21,8 @@ const { inTestMode } = require('@cumulus/common/test-utils');
  */
 
 function getEndpoint(local = false, port = 8000) {
+  deprecate('@cumulus/ingest/aws/getEndpoint', '1.17.0');
+
   const args = {};
   if (process.env.IS_LOCAL === 'true' || local) {
     // use dummy access info
@@ -48,219 +49,18 @@ function getEndpoint(local = false, port = 8000) {
  * @returns {string} return aws console url for the execution
  */
 function getExecutionUrl(executionArn) {
-  const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-  return `https://console.aws.amazon.com/states/home?region=${region}`
-         + `#/executions/details/${executionArn}`;
+  deprecate('@cumulus/ingest/aws/getExecutionUrl', '1.17.0', '@cumulus/aws-client/StepFunctions.getExecutionUrl');
+  return StepFunctions.getExecutionUrl(executionArn);
 }
 
-async function invoke(name, payload, type = 'Event') {
-  if (process.env.IS_LOCAL || inTestMode()) {
-    return false;
-  }
-
-  const lambda = new AWS.Lambda();
-
-  const params = {
-    FunctionName: name,
-    Payload: JSON.stringify(payload),
-    InvocationType: type
-  };
-
-  log.info(`invoked ${name}`);
-  return lambda.invoke(params).promise();
+function invoke(name, payload, type = 'Event') {
+  deprecate('@cumulus/ingest/aws/invoke', '1.17.0', '@cumulus/aws-client/Lambda.invoke');
+  return Lambda.invoke(name, payload, type);
 }
-
-
-/**
- * sqs class instance generator
- *
- * @param {boolean} local Whether this is a local call
- * @returns {object} Returns a instance of aws SQS class
- */
-
-function sqs(local) {
-  return new AWS.SQS(getEndpoint(local, 9324));
-}
-
-class Events {
-  static async putEvent(name, schedule, state, description = null, role = null) {
-    const cwevents = new AWS.CloudWatchEvents();
-
-    const params = {
-      Name: name,
-      Description: description,
-      RoleArn: role,
-      ScheduleExpression: schedule,
-      State: state
-    };
-
-    return cwevents.putRule(params).promise();
-  }
-
-  static async deleteEvent(name) {
-    const cwevents = new AWS.CloudWatchEvents();
-
-    const params = {
-      Name: name
-    };
-
-    return cwevents.deleteRule(params).promise();
-  }
-
-  static async deleteTarget(id, rule) {
-    const cwevents = new AWS.CloudWatchEvents();
-    const params = {
-      Ids: [id],
-      Rule: rule
-    };
-
-    return cwevents.removeTargets(params).promise();
-  }
-
-  static async putTarget(rule, id, arn, input) {
-    const cwevents = new AWS.CloudWatchEvents();
-
-    const params = {
-      Rule: rule,
-      Targets: [ /* required */
-        {
-          Arn: arn,
-          Id: id,
-          Input: input
-        }
-      ]
-    };
-
-    return cwevents.putTargets(params).promise();
-  }
-}
-
-class SQS {
-  static async getUrl(name) {
-    const queue = sqs();
-    const u = await queue.getQueueUrl({ QueueName: name }).promise();
-    return u.QueueUrl;
-  }
-
-  static async deleteQueue(queueUrl) {
-    const queue = sqs();
-    const params = {
-      QueueUrl: queueUrl
-    };
-
-    return queue.deleteQueue(params).promise();
-  }
-
-  static async receiveMessage(queueUrl, numOfMessages = 1, timeout = 30) {
-    const queue = sqs();
-    const params = {
-      QueueUrl: queueUrl,
-      AttributeNames: ['All'],
-      VisibilityTimeout: timeout,
-      MaxNumberOfMessages: numOfMessages
-    };
-
-    const messages = await queue.receiveMessage(params).promise();
-
-    // convert body from string to js object
-    if (Object.prototype.hasOwnProperty.call(messages, 'Messages')) {
-      messages.Messages.forEach((mes) => {
-        mes.Body = JSON.parse(mes.Body); // eslint-disable-line no-param-reassign
-      });
-
-      return messages.Messages;
-    }
-    return [];
-  }
-
-  static async sendMessage(queueUrl, message) {
-    let messageBody;
-    if (isString(message)) {
-      messageBody = message;
-    } else if (isObject(message)) {
-      messageBody = JSON.stringify(message);
-    } else {
-      throw new TypeError('body type is not accepted');
-    }
-
-    const params = {
-      MessageBody: messageBody,
-      QueueUrl: queueUrl
-    };
-
-    const queue = sqs();
-    return queue.sendMessage(params).promise();
-  }
-
-  static async deleteMessage(queueUrl, receiptHandle) {
-    const queue = sqs();
-    const params = {
-      QueueUrl: queueUrl,
-      ReceiptHandle: receiptHandle
-    };
-
-    return queue.deleteMessage(params).promise();
-  }
-
-  static async attributes(name) {
-    const u = await this.getUrl(name);
-    const queue = sqs();
-    const params = {
-      AttributeNames: ['All'],
-      QueueUrl: u
-    };
-
-    const attr = await queue.getQueueAttributes(params).promise();
-    attr.Attributes.name = name;
-    return attr.Attributes;
-  }
-}
-
-
-class ECS {
-  static ecs(local) {
-    return new AWS.ECS(getEndpoint(local, 9324));
-  }
-
-  constructor(cluster) {
-    this.cluster = cluster || process.env.ECS_CLUSTER;
-    this.ecs = this.constructor.ecs();
-  }
-
-  async describeCluster() {
-    const params = {
-      clusters: [this.cluster]
-    };
-
-    return this.ecs.describeClusters(params).promise();
-  }
-
-  async listServices() {
-    const params = { cluster: this.cluster };
-    return this.ecs.listServices(params).promise();
-  }
-
-  async describeServices(services) {
-    const params = { services, cluster: this.cluster };
-    return this.ecs.describeServices(params).promise();
-  }
-
-  async listInstances() {
-    return this.ecs.listContainerInstances({ cluster: this.cluster }).promise();
-  }
-
-  async describeInstances(instances) {
-    const params = {
-      cluster: this.cluster,
-      containerInstances: instances
-    };
-    return this.ecs.describeContainerInstances(params).promise();
-  }
-}
-
 
 class CloudWatch {
   static cw() {
+    deprecate('@cumulus/ingest/aws/CloudWatch.cw', '1.17.0');
     return new AWS.CloudWatch();
   }
 
@@ -281,6 +81,7 @@ class CloudWatch {
    * @returns {Object} Retuns total storage for a given bucket
    */
   static async bucketSize(bucketName) {
+    deprecate('@cumulus/ingest/aws/CloudWatch.bucketSize', '1.17.0');
     AWS.config.update({ region: process.env.AWS_DEFAULT_REGION });
     const cw = this.cw();
 
@@ -320,18 +121,110 @@ class CloudWatch {
   }
 }
 
+class ECS {
+  static ecs(local) {
+    deprecate('@cumulus/ingest/aws/ECS.ecs', '1.17.0');
+    return new AWS.ECS(getEndpoint(local, 9324));
+  }
+
+  constructor(cluster) {
+    deprecate('@cumulus/ingest/aws/ECS', '1.17.0');
+    this.cluster = cluster || process.env.ECS_CLUSTER;
+    this.ecs = this.constructor.ecs();
+  }
+
+  async describeCluster() {
+    const params = {
+      clusters: [this.cluster]
+    };
+
+    return this.ecs.describeClusters(params).promise();
+  }
+
+  async listServices() {
+    const params = { cluster: this.cluster };
+    return this.ecs.listServices(params).promise();
+  }
+
+  async describeServices(services) {
+    const params = { services, cluster: this.cluster };
+    return this.ecs.describeServices(params).promise();
+  }
+
+  async listInstances() {
+    return this.ecs.listContainerInstances({ cluster: this.cluster }).promise();
+  }
+
+  async describeInstances(instances) {
+    const params = {
+      cluster: this.cluster,
+      containerInstances: instances
+    };
+    return this.ecs.describeContainerInstances(params).promise();
+  }
+}
+
+class Events {
+  static putEvent(name, schedule, state, description = null, role = null) {
+    deprecate('@cumulus/ingest/aws/Events.putEvent', '1.17.0', '@cumulus/aws-client/CloudwatchEvents.putEvent');
+    return CloudwatchEvents.putEvent(name, schedule, state, description, role);
+  }
+
+  static deleteEvent(name) {
+    deprecate('@cumulus/ingest/aws/Events.deleteEvent', '1.17.0', '@cumulus/aws-client/CloudwatchEvents.deleteEvent');
+    return CloudwatchEvents.deleteEvent(name);
+  }
+
+  static deleteTarget(id, rule) {
+    deprecate('@cumulus/ingest/aws/Events.deleteTarget', '1.17.0', '@cumulus/aws-client/CloudwatchEvents.deleteTarget');
+    return CloudwatchEvents.deleteTarget(id, rule);
+  }
+
+  static putTarget(rule, id, arn, input) {
+    deprecate('@cumulus/ingest/aws/Events.putTarget', '1.17.0', '@cumulus/aws-client/CloudwatchEvents.putTarget');
+    return CloudwatchEvents.putTarget(rule, id, arn, input);
+  }
+}
+
+class SQS {
+  static getUrl(name) {
+    deprecate('@cumulus/ingest/aws/SQS.getUrl', '1.17.0', '@cumulus/aws-client/SQS.getQueueUrlByName');
+    return SQSUtils.getQueueUrlByName(name);
+  }
+
+  static deleteQueue(queueUrl) {
+    deprecate('@cumulus/ingest/aws/SQS.deleteQueue', '1.17.0', '@cumulus/aws-client/SQS.deleteQueue');
+    return SQSUtils.deleteQueue(queueUrl);
+  }
+
+  static receiveMessage(queueUrl, numOfMessages = 1, timeout = 30) {
+    deprecate('@cumulus/ingest/aws/SQS.receiveMessage', '1.17.0', '@cumulus/aws-client/SQS.receiveSQSMessages');
+    return SQSUtils.sendSQSMessage(queueUrl, {
+      numOfMessages,
+      visibilityTimeout: timeout
+    });
+  }
+
+  static sendMessage(queueUrl, message) {
+    deprecate('@cumulus/ingest/aws/SQS.sendMessage', '1.17.0', '@cumulus/aws-client/SQS.sendSQSMessage');
+    return SQSUtils.sendSQSMessage(queueUrl, message);
+  }
+
+  static deleteMessage(queueUrl, receiptHandle) {
+    deprecate('@cumulus/ingest/aws/SQS.deleteMessage', '1.17.0', '@cumulus/aws-client/SQS.deleteSQSMessage');
+    return SQSUtils.deleteSQSMessage(queueUrl, receiptHandle);
+  }
+
+  static attributes(name) {
+    deprecate('@cumulus/ingest/aws/SQS.attributes', '1.17.0', '@cumulus/aws-client/SQS.getQueueAttributes');
+    return SQSUtils.getQueueAttributes(name);
+  }
+}
+
 class StepFunction {
   static async getExecutionStatus(executionArn) {
-    const [execution, executionHistory] = await Promise.all([
-      StepFunctions.describeExecution({ executionArn }),
-      StepFunctions.getExecutionHistory({ executionArn })
-    ]);
-
-    const stateMachine = await StepFunctions.describeStateMachine({
-      stateMachineArn: execution.stateMachineArn
-    });
-
-    return { execution, executionHistory, stateMachine };
+    deprecate('@cumulus/ingest/aws/StepFunction.getExecutionStatus', '1.17.0', '@cumulus/aws-client/StepFunction.getExecutionStatus');
+    return StepFunctions.getExecutionStatus(executionArn);
   }
 
   /**
@@ -346,6 +239,7 @@ class StepFunction {
    *   s3_path property indicating where the event was pushed to
    */
   static pushEvent(event) {
+    deprecate('@cumulus/ingest/aws/StepFunctions.pushEvent', '1.17.0');
     const str = JSON.stringify(event);
 
     if (str.length <= 32000) return Promise.resolve(event);
@@ -355,33 +249,22 @@ class StepFunction {
     const key = `${stack}/payloads/${name}.json`;
     const bucket = event.cumulus_meta.system_bucket;
 
-    return aws.s3().putObject({
+    return awsServices.s3().putObject({
       Bucket: bucket,
       Key: key,
       Body: str
     }).promise()
       .then(() => ({ s3_path: `s3://${bucket}/${key}` }));
   }
-
-  static async stop(arn, cause, error) {
-    deprecate('@cumulus/ingest/aws StepFunction.stop', '1.13.0');
-
-    const stepfunctions = new AWS.StepFunctions();
-    return stepfunctions.stopExecution({
-      executionArn: arn,
-      cause: cause,
-      error: error
-    }).promise();
-  }
 }
 
 module.exports = {
   CloudWatch,
-  SQS,
   ECS,
+  SQS,
   invoke,
-  getEndpoint,
   Events,
   StepFunction,
+  getEndpoint,
   getExecutionUrl
 };

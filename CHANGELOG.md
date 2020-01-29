@@ -67,6 +67,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `@cumulus/common/string/unicodeEscape`
     - `@cumulus/common/test-utils/inTestMode`
     - `@cumulus/common/util/setErrorStack`
+  - The following service classes and utilities in `@cumulus/ingest/aws` have been deprecated and moved to `@cumulus/aws-client`:
+    - `@cumulus/ingest/invoke`
+    - `@cumulus/ingest/Events.putEvent`
+    - `@cumulus/ingest/Events.deleteEvent`
+    - `@cumulus/ingest/Events.deleteTarget`
+    - `@cumulus/ingest/Events.putTarget`
+    - `@cumulus/ingest/SQS.attributes`
+    - `@cumulus/ingest/SQS.deleteMessage`
+    - `@cumulus/ingest/SQS.deleteQueue`
+    - `@cumulus/ingest/SQS.getUrl`
+    - `@cumulus/ingest/SQS.receiveMessage`
+    - `@cumulus/ingest/SQS.sendMessage`
+    - `@cumulus/ingest/StepFunction.getExecutionStatus`
+    - `@cumulus/ingest/StepFunction.getExecutionUrl`
 
 - **CUMULUS-1102**
    - Updates testAuth to use JWT instead of random tokens.

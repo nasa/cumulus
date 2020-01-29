@@ -1,9 +1,7 @@
 'use strict';
 
-const {
-  sendSQSMessage,
-  getExecutionArn
-} = require('@cumulus/common/aws');
+const { sendSQSMessage } = require('@cumulus/aws-client/SQS');
+const { getExecutionArn } = require('@cumulus/aws-client/StepFunctions');
 
 const {
   buildQueueMessageFromTemplate,
