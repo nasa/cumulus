@@ -55,10 +55,11 @@ const rule1Params = {
 };
 
 // if the state is not provided, it will be set to default value 'ENABLED'
-const rule2Params = Object.assign({}, commonRuleParams, {
+const rule2Params = {
+  ...commonRuleParams,
   name: 'testRule2',
   workflow: 'test-workflow-2'
-});
+};
 
 const disabledRuleParams = {
   name: 'disabledRule',
@@ -76,7 +77,7 @@ const stubQueueUrl = 'stubQueueUrl';
 
 allRuleTypesParams.forEach((ruleTypeParams) => {
   allOtherRulesParams.forEach((otherRulesParams) => {
-    const ruleParams = Object.assign({}, commonRuleParams, ruleTypeParams, otherRulesParams);
+    const ruleParams = { ...commonRuleParams, ...ruleTypeParams, ...otherRulesParams };
     rulesToCreate.push(ruleParams);
   });
 });
