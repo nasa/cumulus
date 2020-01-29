@@ -383,11 +383,5 @@ module.exports = {
   fetchElasticDefaults,
   serveApi,
   serveDistributionApi,
-  resetTables,
-  addCollections: serveUtils.addCollections,
-  addExecutions: serveUtils.addExecutions,
-  addGranules: serveUtils.addGranules,
-  addPdrs: serveUtils.addPdrs,
-  addProviders: serveUtils.addProviders,
-  addRules: serveUtils.addRules
+  resetTables
 };
