@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@cumulus/common": "1.17.0",
-    "@cumulus/errors": "1.17.0-alpha",
+    "@cumulus/errors": "1.17.0-alpha2",
     "ava": "^2.1.0",
     "babel-loader": "^8.0.6",
     "babel-plugin-source-map-support": "^2.1.1",

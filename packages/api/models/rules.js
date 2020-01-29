@@ -4,7 +4,8 @@ const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
 const merge = require('lodash.merge');
 const set = require('lodash.set');
-const { invoke, Events } = require('@cumulus/ingest/aws');
+const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
+const { invoke } = require('@cumulus/aws-client/Lambda');
 const awsServices = require('@cumulus/aws-client/services');
 const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const s3Utils = require('@cumulus/aws-client/S3');
@@ -29,14 +30,19 @@ class Rule extends Manager {
 
   async addRule(item, payload) {
     const name = `${process.env.stackName}-custom-${item.name}`;
-    const r = await Events.putEvent(
+    const r = await CloudwatchEvents.putEvent(
       name,
       item.rule.value,
       item.state,
       'Rule created by cumulus-api'
     );
 
-    await Events.putTarget(name, this.targetId, process.env.invokeArn, JSON.stringify(payload));
+    await CloudwatchEvents.putTarget(
+      name,
+      this.targetId,
+      process.env.invokeArn,
+      JSON.stringify(payload)
+    );
     return r.RuleArn;
   }
 
@@ -50,8 +56,8 @@ class Rule extends Manager {
     switch (item.rule.type) {
     case 'scheduled': {
       const name = `${process.env.stackName}-custom-${item.name}`;
-      await Events.deleteTarget(this.targetId, name);
-      await Events.deleteEvent(name);
+      await CloudwatchEvents.deleteTarget(this.targetId, name);
+      await CloudwatchEvents.deleteEvent(name);
       break;
     }
     case 'kinesis': {
