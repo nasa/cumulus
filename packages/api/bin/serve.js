@@ -23,11 +23,11 @@ async function createTable(Model, tableName) {
       systemBucket: process.env.system_bucket
     });
     await model.createTable();
-  } catch (e) {
-    if (e && e.message && e.message === 'Cannot create preexisting table') {
+  } catch (error) {
+    if (error && error.message && error.message === 'Cannot create preexisting table') {
       console.log(`${tableName} is already created`);
     } else {
-      throw e;
+      throw error;
     }
   }
 }
@@ -56,28 +56,28 @@ async function populateBucket(bucket, stackName) {
     Key: workflow,
     Body: JSON.stringify({})
   });
-  await Promise.all([workflowPromises, reconcilePromises, templatePromise]);
+  await Promise.all([...workflowPromises, ...reconcilePromises, ...templatePromise]);
 }
 
 function setTableEnvVariables(stackName) {
   const tableModels = Object
     .keys(models)
-    .filter((t) => t !== 'Manager');
+    .filter((tableModel) => tableModel !== 'Manager');
 
   // generate table names
   let tableNames = tableModels
-    .map((t) => {
-      let table = t;
-      if (t === 'FileClass') {
+    .map((tableModel) => {
+      let table = tableModel;
+      if (tableModel === 'FileClass') {
         table = 'File';
       }
       return `${table}sTable`;
     });
 
   // set table env variables
-  tableNames = tableNames.map((t) => {
-    process.env[t] = `${stackName}-${t}`;
-    return process.env[t];
+  tableNames = tableNames.map((tableName) => {
+    process.env[tableName] = `${stackName}-${tableName}`;
+    return process.env[tableName];
   });
 
   return {
@@ -140,22 +140,32 @@ function checkEnvVariablesAreSet(moreRequiredEnvVars) {
   });
 }
 
+
 /**
- * resets ElasticSearch and returns the client and index.
- *
- * @param {string} stackName - The name of local stack. Used to prefix stack resources.
- * @returns {Object} - Elasticsearch client and index
+ * erases Elasticsearch index
+ * @param {any} esClient - Elasticsearch client
+ * @param {any} esIndex - index to delete
  */
-async function eraseLocalElasticsearch(stackName) {
-  setLocalEsVariables(stackName);
-  const esClient = await Search.es(process.env.ES_HOST);
-  const esIndex = process.env.ES_INDEX;
-  // Resets the ES client
+async function eraseElasticsearchIndices(esClient, esIndex) {
   try {
     await esClient.indices.delete({ index: esIndex });
   } catch (error) {
     if (error.message !== 'index_not_found_exception') throw error;
   }
+}
+
+/**
+ * resets Elasticsearch and returns the client and index.
+ *
+ * @param {string} stackName - The name of local stack. Used to prefix stack resources.
+ * @returns {Object} - Elasticsearch client and index
+ */
+async function initializeLocalElasticsearch(stackName) {
+  setLocalEsVariables(stackName);
+  const esClient = await Search.es(process.env.ES_HOST);
+  const esIndex = process.env.ES_INDEX;
+
+  await eraseElasticsearchIndices(esClient, esIndex);
   await bootstrap.bootstrapElasticSearch(process.env.ES_HOST, esIndex);
   return { esClient, esIndex };
 }
@@ -166,26 +176,26 @@ async function eraseLocalElasticsearch(stackName) {
  * @param {string} user - username, defaults to local user, testUser
  */
 async function createDBRecords(stackName, user) {
-  const { esClient, esIndex } = await eraseLocalElasticsearch(stackName);
+  const { esClient, esIndex } = await initializeLocalElasticsearch(stackName);
 
   if (user) {
     await testUtils.setAuthorizedOAuthUsers([user]);
   }
 
   // add collection records
-  const c = testUtils.fakeCollectionFactory({ name: `${stackName}-collection` });
-  await serveUtils.addCollections([c], esClient, esIndex);
+  const collection = testUtils.fakeCollectionFactory({ name: `${stackName}-collection` });
+  await serveUtils.addCollections([collection], esClient, esIndex);
 
   // add granule records
-  const g = testUtils.fakeGranuleFactoryV2({ granuleId: `${stackName}-granule` });
-  await serveUtils.addGranules([g], esClient, esIndex);
+  const granule = testUtils.fakeGranuleFactoryV2({ granuleId: `${stackName}-granule` });
+  await serveUtils.addGranules([granule], esClient, esIndex);
 
   // add provider records
-  const p = testUtils.fakeProviderFactory({ id: `${stackName}-provider` });
-  await serveUtils.addProviders([p], esClient, esIndex);
+  const provider = testUtils.fakeProviderFactory({ id: `${stackName}-provider` });
+  await serveUtils.addProviders([provider], esClient, esIndex);
 
   // add rule records
-  const r = testUtils.fakeRuleFactoryV2({
+  const rule = testUtils.fakeRuleFactoryV2({
     name: `${stackName}_rule`,
     workflow: workflowList[0].name,
     provider: `${stackName}-provider`,
@@ -194,15 +204,15 @@ async function createDBRecords(stackName, user) {
       version: '0.0.0'
     }
   });
-  await serveUtils.addRules([r], esClient, esIndex);
+  await serveUtils.addRules([rule], esClient, esIndex);
 
   // add fake execution records
-  const e = testUtils.fakeExecutionFactoryV2({ arn: `${stackName}-fake-arn` });
-  await serveUtils.addExecutions([e], esClient, esIndex);
+  const execution = testUtils.fakeExecutionFactoryV2({ arn: `${stackName}-fake-arn` });
+  await serveUtils.addExecutions([execution], esClient, esIndex);
 
   // add pdrs records
-  const pd = testUtils.fakePdrFactoryV2({ pdrName: `${stackName}-pdr` });
-  await serveUtils.addPdrs([pd], esClient, esIndex);
+  const pdr = testUtils.fakePdrFactoryV2({ pdrName: `${stackName}-pdr` });
+  await serveUtils.addPdrs([pdr], esClient, esIndex);
 }
 
 /**
@@ -345,7 +355,7 @@ async function eraseDataStack(
   systemBucket = 'localbucket',
 ) {
   await eraseDynamoTables(stackName, systemBucket);
-  return eraseLocalElasticsearch(stackName);
+  return initializeLocalElasticsearch(stackName);
 }
 
 async function fetchElasticDefaults(stackName) {
