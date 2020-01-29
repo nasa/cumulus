@@ -158,7 +158,7 @@ const buildGranule = curry(
 
     return {
       granuleId,
-      dataType: config.collection.dataType,
+      dataType: config.collection.dataType || config.collection.name,
       version: config.collection.version,
       files: filesToReturn
     };
