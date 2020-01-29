@@ -19,7 +19,8 @@
   },
   "dependencies": {
     "@cumulus/common": "1.17.0",
-    "commander": "^2.15.0"
+    "commander": "^2.15.0",
+    "p-whilst": "^2.1.0"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
