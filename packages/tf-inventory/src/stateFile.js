@@ -136,6 +136,8 @@ function extractDeploymentName(filename, regex = DEFAULT_DEPLOYMENT_REGEX) {
  * Get a list of resources from the given state file
  *
  * @param {string} file - the file location as `bucket/key`
+ * @param {string} regex
+ *   regular expression for parsing the deployment name from the state file name
  * @returns {Array<Object>} - list of resource objects
  */
 async function getStateFileDeploymentInfo(file, regex = DEFAULT_DEPLOYMENT_REGEX) {
@@ -163,6 +165,8 @@ async function getStateFileDeploymentInfo(file, regex = DEFAULT_DEPLOYMENT_REGEX
  * List the ECS clusters and EC2 instances defined in the state file.
  *
  * @param {string} file - file path
+ * @param {string} regex
+ *   regular expression for parsing the deployment name from the state file name
  * @returns {Promise<Object>}
  */
 async function listResourcesForFile(file, regex = DEFAULT_DEPLOYMENT_REGEX) {
@@ -196,6 +200,8 @@ async function listResourcesForFile(file, regex = DEFAULT_DEPLOYMENT_REGEX) {
  * of state files
  *
  * @param {Array<string>} stateFiles - state file paths
+ * @param {string} regex
+ *   regular expression for parsing the deployment name from the state file name
  * @returns {Array<string>} list of deployments
  */
 function listTfDeployments(stateFiles, regex = DEFAULT_DEPLOYMENT_REGEX) {
@@ -211,6 +217,8 @@ function listTfDeployments(stateFiles, regex = DEFAULT_DEPLOYMENT_REGEX) {
  * Create a report containing all deployments identified that includes
  * state file paths, time state file was updated and number of resources in the state file
  *
+ * @param {string} regex
+ *   regular expression for parsing the deployment name from the state file name
  * @returns {Promise<Object>} Object where key is deployment name. Looks like:
  * cumulus-tf
   [ { file: 'cumulus-sandbox-tfstate/cumulus-tf/cumulus/terraform.tfstate',

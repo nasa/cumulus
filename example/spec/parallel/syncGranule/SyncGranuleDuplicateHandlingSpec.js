@@ -5,7 +5,7 @@ const path = require('path');
 const { s3 } = require('@cumulus/aws-client/services');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { randomString } = require('@cumulus/common/test-utils');
-const { LambdaStep } = require('@cumulus/common/sfnStep');
+const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { models: { Granule, Pdr } } = require('@cumulus/api');
 const {
   addCollections,

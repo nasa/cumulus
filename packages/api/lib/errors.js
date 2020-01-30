@@ -1,6 +1,6 @@
 'use strict';
 
-const { createErrorType } = require('@cumulus/common/errors');
+const { createErrorType } = require('@cumulus/errors');
 
 module.exports.TokenUnauthorizedUserError = createErrorType('TokenUnauthorizedUserError');
 module.exports.IndexExistsError = createErrorType('IndexExistsError');
