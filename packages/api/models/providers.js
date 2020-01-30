@@ -10,7 +10,8 @@ const Rule = require('./rules');
 const schemas = require('./schemas');
 const { AssociatedRulesError } = require('../lib/errors');
 
-const encrypt = (x) => KMS.encrypt(process.env.provider_kms_key_id, x);
+const encryptValueWithKMS = (value) =>
+  KMS.encrypt(process.env.provider_kms_key_id, value);
 
 const buildValidationError = ({ detail }) => {
   const err = new Error('The record has validation errors');
@@ -62,8 +63,12 @@ class Provider extends Manager {
 
     if (item.username || item.password) record.encrypted = true;
 
-    if (item.username) record.username = await encrypt(item.username);
-    if (item.password) record.password = await encrypt(item.password);
+    if (item.username) {
+      record.username = await encryptValueWithKMS(item.username);
+    }
+    if (item.password) {
+      record.password = await encryptValueWithKMS(item.password);
+    }
 
     return super.update(key, record, keysToDelete);
   }
@@ -73,8 +78,12 @@ class Provider extends Manager {
 
     if (item.username || item.password) record.encrypted = true;
 
-    if (item.username) record.username = await encrypt(item.username);
-    if (item.password) record.password = await encrypt(item.password);
+    if (item.username) {
+      record.username = await encryptValueWithKMS(item.username);
+    }
+    if (item.password) {
+      record.password = await encryptValueWithKMS(item.password);
+    }
 
     return super.create(record);
   }
