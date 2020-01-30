@@ -1,4 +1,3 @@
-/* eslint-disable node/no-unpublished-require */
 /* eslint-disable no-console */
 
 'use strict';
@@ -39,7 +38,11 @@ async function getPrsForRef(headRefName, baseRefName) {
     }
   });
   const edges = queryResponse.repository.ref.target.history.nodes[0].associatedPullRequests.edges;
-  const nodes = edges.map((x) => x.node).filter((node) => node.headRefName === headRefName && node.baseRefName === baseRefName);
+  const nodes = edges
+    .map((x) => x.node)
+    .filter(
+      (node) => node.headRefName === headRefName && node.baseRefName === baseRefName
+    );
 
   if (nodes.length > 0) {
     console.log(`Current commit is associated with a PR to ${baseRefName}: ${JSON.stringify(nodes)}`);
