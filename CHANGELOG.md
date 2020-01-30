@@ -6,12 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Fixed
-
-- **CUMULUS-1698**
-  - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
-  - Updated `@cumulus/api/launchpadSaml` to download launchpad IDP metadata from configured location when the metadata in s3 is not valid, and to work with updated IDP metadata and SAML response.
-
 ### BREAKING CHANGES
 
 - **CUMULUS-1698**
@@ -91,6 +85,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1664**
   - Updated `dbIndexer` Lambda to remove hardcoded references to DynamoDB table names.
+
+- **CUMULUS-1698**
+  - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
+  - Updated `@cumulus/api/launchpadSaml` to download launchpad IDP metadata from configured location when the metadata in s3 is not valid, and to work with updated IDP metadata and SAML response.
 
 ### Removed
 
