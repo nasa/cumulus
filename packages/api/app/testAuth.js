@@ -4,12 +4,12 @@ const { randomId } = require('@cumulus/common/test-utils');
 const get = require('lodash.get');
 const { createJwtToken } = require('../lib/token');
 
-const username = 'testUser';
+const { localUserName: userName } = require('../bin/local-test-defaults');
 
 const newToken = () => {
   const accessToken = randomId('oauthcode');
   const expirationTime = new Date(Date.now() + 3600 * 24 * 1000);
-  return createJwtToken({ accessToken, username, expirationTime });
+  return createJwtToken({ accessToken, userName, expirationTime });
 };
 
 let jwt = newToken();
@@ -100,7 +100,7 @@ async function ensureAuthorized(req, res, next) {
   }
 
   if (jwtToken === jwt) {
-    req.authorizedMetadata = { userName: username };
+    req.authorizedMetadata = { userName };
     return next();
   }
   return res.boom.unauthorized('User not authorized');

@@ -37,7 +37,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1102**
   - Adds functionality to the @cumulus/api package for better local testing.
-      - Adds seeding of @cumulus/api's localAPI in testing mode (conditionally exported when running testing mode)
+      - Adds data seeding for @cumulus/api's localAPI.
         - seed functions allow adding collections, executions, granules, pdrs, providers, and rules to a Localstack Elasticsearch and DynamoDB via `addCollections`,  `addExecutions`, `addGranules`, `addPdrs`, `addProviders`, and `addRules`.
    - Adds `eraseDataStack` function to local API server code allowing resetting of local datastack for testing (ES and DynamoDB).
    - Adds optional parameters to the @cumulus/api bin serve to allow for launching the api without destroying the current data.

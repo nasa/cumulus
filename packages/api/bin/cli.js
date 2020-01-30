@@ -71,7 +71,7 @@ program
 
 program
   .command('serve')
-  .option('--stackName <stackName>', 'stackname to serve', 'localrun')
+  .option('--stackName <stackName>', 'stackname to serve (defaults to "localrun")', undefined)
   .option('--no-reseed', 'do not reseed dynamoDB and Elasticsearch with new data on start.')
   .description('Serves the local version of the Cumulus API')
   .action((cmd) => {

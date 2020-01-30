@@ -5,15 +5,19 @@ const { promiseS3Upload } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomString, randomId, inTestMode } = require('@cumulus/common/test-utils');
 const bootstrap = require('../lambdas/bootstrap');
-const { Search } = require('../es/search');
 const models = require('../models');
 const testUtils = require('../lib/testUtils');
 const serveUtils = require('./serveUtils');
-
+const {
+  setLocalEsVariables,
+  localStackName,
+  localSystemBucket,
+  localUserName,
+  getESClientAndIndex
+} = require('./local-test-defaults');
 
 const workflowList = testUtils.getWorkflowList();
 const reconcileList = testUtils.getReconcileReportsList();
-const defaultLocalStackName = 'localrun';
 
 async function createTable(Model, tableName) {
   try {
@@ -104,10 +108,6 @@ async function checkOrCreateTables(stackName) {
   await Promise.all(promises);
 }
 
-function setLocalEsVariables(stackName) {
-  process.env.ES_HOST = 'fakehost';
-  process.env.ES_INDEX = `${stackName}-es`;
-}
 
 async function prepareServices(stackName, bucket) {
   setLocalEsVariables(stackName);
@@ -140,7 +140,6 @@ function checkEnvVariablesAreSet(moreRequiredEnvVars) {
   });
 }
 
-
 /**
  * erases Elasticsearch index
  * @param {any} esClient - Elasticsearch client
@@ -162,21 +161,19 @@ async function eraseElasticsearchIndices(esClient, esIndex) {
  */
 async function initializeLocalElasticsearch(stackName) {
   setLocalEsVariables(stackName);
-  const esClient = await Search.es(process.env.ES_HOST);
-  const esIndex = process.env.ES_INDEX;
+  const { esClient, esIndex } = getESClientAndIndex();
 
   await eraseElasticsearchIndices(esClient, esIndex);
-  await bootstrap.bootstrapElasticSearch(process.env.ES_HOST, esIndex);
-  return { esClient, esIndex };
+  return bootstrap.bootstrapElasticSearch(process.env.ES_HOST, esIndex);
 }
 
 /**
  * Fill dynamo and elastic with fake records for testing.
  * @param {string} stackName - The name of local stack. Used to prefix stack resources.
- * @param {string} user - username, defaults to local user, testUser
+ * @param {string} user - username
  */
 async function createDBRecords(stackName, user) {
-  const { esClient, esIndex } = await initializeLocalElasticsearch(stackName);
+  await initializeLocalElasticsearch(stackName);
 
   if (user) {
     await testUtils.setAuthorizedOAuthUsers([user]);
@@ -184,15 +181,15 @@ async function createDBRecords(stackName, user) {
 
   // add collection records
   const collection = testUtils.fakeCollectionFactory({ name: `${stackName}-collection` });
-  await serveUtils.addCollections([collection], esClient, esIndex);
+  await serveUtils.addCollections([collection]);
 
   // add granule records
   const granule = testUtils.fakeGranuleFactoryV2({ granuleId: `${stackName}-granule` });
-  await serveUtils.addGranules([granule], esClient, esIndex);
+  await serveUtils.addGranules([granule]);
 
   // add provider records
   const provider = testUtils.fakeProviderFactory({ id: `${stackName}-provider` });
-  await serveUtils.addProviders([provider], esClient, esIndex);
+  await serveUtils.addProviders([provider]);
 
   // add rule records
   const rule = testUtils.fakeRuleFactoryV2({
@@ -204,15 +201,15 @@ async function createDBRecords(stackName, user) {
       version: '0.0.0'
     }
   });
-  await serveUtils.addRules([rule], esClient, esIndex);
+  await serveUtils.addRules([rule]);
 
   // add fake execution records
   const execution = testUtils.fakeExecutionFactoryV2({ arn: `${stackName}-fake-arn` });
-  await serveUtils.addExecutions([execution], esClient, esIndex);
+  await serveUtils.addExecutions([execution]);
 
   // add pdrs records
   const pdr = testUtils.fakePdrFactoryV2({ pdrName: `${stackName}-pdr` });
-  await serveUtils.addPdrs([pdr], esClient, esIndex);
+  await serveUtils.addPdrs([pdr]);
 }
 
 /**
@@ -223,7 +220,7 @@ async function createDBRecords(stackName, user) {
  * @param {bool} reseed - boolean to control whether to load new data into
  *                        dynamo and elastic search.
  */
-async function serveApi(user, stackName, reseed = true) {
+async function serveApi(user, stackName = localStackName, reseed = true) {
   const port = process.env.PORT || 5001;
   const requiredEnvVars = [
     'stackName',
@@ -241,7 +238,7 @@ async function serveApi(user, stackName, reseed = true) {
   if (inTestMode()) {
     // set env variables
     setAuthEnvVariables();
-    process.env.system_bucket = 'localbucket';
+    process.env.system_bucket = localSystemBucket;
     process.env.stackName = stackName;
 
     checkEnvVariablesAreSet(requiredEnvVars);
@@ -270,7 +267,7 @@ async function serveApi(user, stackName, reseed = true) {
  * @param {string} stackName - The name of local stack. Used to prefix stack resources.
  * @param {function} done - Optional callback to fire when app has started listening.
  */
-async function serveDistributionApi(stackName = defaultLocalStackName, done) {
+async function serveDistributionApi(stackName = localStackName, done) {
   const port = process.env.PORT || 5002;
   const requiredEnvVars = [
     'DISTRIBUTION_REDIRECT_ENDPOINT',
@@ -287,7 +284,7 @@ async function serveDistributionApi(stackName = defaultLocalStackName, done) {
   if (inTestMode()) {
     // set env variables
     setAuthEnvVariables();
-    process.env.system_bucket = 'localbucket';
+    process.env.system_bucket = localSystemBucket;
 
     checkEnvVariablesAreSet(requiredEnvVars);
 
@@ -307,11 +304,10 @@ async function serveDistributionApi(stackName = defaultLocalStackName, done) {
   return distributionApp.listen(port, done);
 }
 
-
 /**
  * erase all dynamoDB tables
- * @param {string} stackName - defaults to local stack, localrun
- * @param {string} systemBucket - defaults to 'localbucket', localrun
+ * @param {string} stackName - stack name (generally 'localrun')
+ * @param {string} systemBucket - stystem bucket (generally 'localbucket' )
  */
 async function eraseDynamoTables(stackName, systemBucket) {
   setTableEnvVariables(stackName);
@@ -340,16 +336,15 @@ async function eraseDynamoTables(stackName, systemBucket) {
   }
 }
 
-
 /**
  * Erases DynamoDB tables and resets Elasticsearch
  *
- * @param {string} stackName - defaults to local stack, localrun
- * @param {string} systemBucket - defaults to 'localbucket', localrun
+ * @param {string} stackName - defaults to local stack, 'localrun'
+ * @param {string} systemBucket - defaults to 'localbucket'
  */
 async function eraseDataStack(
-  stackName = defaultLocalStackName,
-  systemBucket = 'localbucket',
+  stackName = localStackName,
+  systemBucket = localSystemBucket,
 ) {
   await eraseDynamoTables(stackName, systemBucket);
   return initializeLocalElasticsearch(stackName);
@@ -364,9 +359,9 @@ async function eraseDataStack(
  * @param {bool} runIt - Override check to prevent accidental AWS run.  default: 'false'.
  */
 async function resetTables(
-  user = 'testUser',
-  stackName = defaultLocalStackName,
-  systemBucket = 'localbucket',
+  user = localUserName,
+  stackName = localStackName,
+  systemBucket = localSystemBucket,
   runIt = false
 ) {
   if (inTestMode() || runIt) {
