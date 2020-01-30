@@ -4,16 +4,25 @@ const test = require('ava');
 
 const recursion = require('../recursion');
 
-test('recursion lists all files in root when originalPath is empty', async (t) => {
+test('recursion lists all files in root and subdirectories when originalPath is empty', async (t) => {
   const dirs = {
     '': [
+      { type: 'd', name: 'dir' },
       { type: '-', name: 'file1' },
       { type: '-', name: 'file2' }
+    ],
+    dir: [
+      { type: '-', name: 'file3' }
     ]
   };
   const fn = (path) => dirs[path];
   const files = await recursion(fn, '');
-  t.deepEqual(files, dirs['']);
+  console.log(`\n\ngot files ${JSON.stringify(files)}\n\n`);
+  t.deepEqual(files, [
+    { type: '-', name: 'file3' },
+    { type: '-', name: 'file1' },
+    { type: '-', name: 'file2' }
+  ]);
 });
 
 test('recursion lists all files in a simple directory structure with text path', async (t) => {

@@ -27,18 +27,20 @@ async function recurOnDirectory(fn, currentPath, segments, position) {
   // interpret the next path segment as a regex for filtering, and
   // recursively list everything when we've run out of segments
   const filterExpr = segments[position + 1] || '.*';
+  console.log(`\nfilterExpr ${filterExpr}\n`);
   const filterRegex = new RegExp(filterExpr);
-  console.log(`\n\nlisting path ${currentPath}\n\n`);
-  const contents = fn(currentPath);
+  console.log(`\nRecurOnDirectory ${currentPath}\n`);
+  const contents = await fn(currentPath);
+  console.log(`contents ${JSON.stringify(contents)}\n\n`);
   let files = [];
 
   for (let ctr = 0; ctr < contents.length; ctr += 1) {
     const item = contents[ctr];
+    // check if item passes filter
     if (filterRegex.test(item.name)) {
       if (['-', 0].includes(item.type)) {
         files.push(item);
       } else if (['d', 1].includes(item.type)) {
-        // check if dir matches rule
         const nextDir = (currentPath === '' ? item.name : `${currentPath}/${item.name}`);
         // eslint-disable-next-line no-await-in-loop
         files = files.concat(await recurOnDirectory(fn, nextDir, segments, position + 1));
@@ -53,9 +55,12 @@ async function recurOnDirectory(fn, currentPath, segments, position) {
  * It requests a promisified list function that returns contents of
  * a directory on a server, filtering on provided regex segments.
  *
- * Note that the list function will be called with a path argument that includes
- * both leading and terminating slashes. List functions will need to be able to handle
- * or remove leading and terminating slashes accordingly.
+ * Note that the list function will initially be called with a path argument that is an empty
+ * string to list the root. Following calls based on items discovered will be of the format 
+ * `fn('path/to/files')`, with no leading or terminating slashes.
+ *
+ * List functions will need to be able to normalize or correct these paths as appropriate for their
+ * protocol.
  *
  * @param {function} fn - the promisified function for listing a directory
  * @param {string} originalPath - path string which may contain regexes for filtering
