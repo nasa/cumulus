@@ -42,6 +42,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1697**
   - Added the `@cumulus/tf-inventory` package that provides command line utilities for managing Terraform resources in your AWS account
 
+- **CUMULUS-1737**
+  - Added the `cumulus-test-cleanup` module to run a nightly cleanup on resources left over from the integration tests run from the `example/spec` directory.
+
 ### Changed
 
 - **CUMULUS-1622**
