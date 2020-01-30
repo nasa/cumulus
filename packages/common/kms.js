@@ -8,7 +8,7 @@ const { deprecate } = require('./util');
 
 class KMS {
   static async encrypt(text, kmsId) {
-    deprecate('@cumulus/common/key-pair-provider', '1.17.0', '@cumulus/aws-client/KMS');
+    deprecate('@cumulus/common/key-pair-provider', '1.17.0', '@cumulus/aws-client/KMS.encrypt');
 
     const params = {
       KeyId: kmsId,
@@ -21,7 +21,7 @@ class KMS {
   }
 
   static async decrypt(text) {
-    deprecate('@cumulus/common/key-pair-provider', '1.17.0', '@cumulus/aws-client/KMS');
+    deprecate('@cumulus/common/key-pair-provider', '1.17.0', '@cumulus/aws-client/KMS.decryptBase64String');
 
     const params = {
       CiphertextBlob: Buffer.from(text, 'base64')

@@ -67,8 +67,8 @@ test.serial('A provider without a username or password is properly updated', asy
 
   const fetchedProvider = await providerModel.get({ id: provider.id });
   t.is(fetchedProvider.encrypted, false);
-  t.is(await fetchedProvider.username, undefined);
-  t.is(await fetchedProvider.password, undefined);
+  t.is(fetchedProvider.username, undefined);
+  t.is(fetchedProvider.password, undefined);
 });
 
 test.serial('Unencrypted provider credentials are encrypted using KMS', async (t) => {
