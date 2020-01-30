@@ -30,6 +30,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-1040**
+  - Added `@cumulus/aws-client` package to provide utilities for working with AWS services and the Node.js AWS SDK
+  - Added `@cumulus/errors` package which exports error classes for use in Cumulus workflow code
+  - Added `@cumulus/integration-tests/sfnStep` to provide utilities for parsing step function execution histories
+
 - **CUMULUS-1703**
   - Add `@cumulus/aws-client/S3.createBucket` function
   - Add `@cumulus/aws-client/S3.putFile` function
@@ -41,10 +46,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add `@cumulus/ingest/providerClientUtils.buildProviderClient` function
   - Add `@cumulus/ingest/providerClientUtils.fetchTextFile` function
 
-- **CUMULUS-1040**
-  - Added `@cumulus/aws-client` package to provide utilities for working with AWS services and the Node.js AWS SDK
-  - Added `@cumulus/errors` package which exports error classes for use in Cumulus workflow code
-
 - **CUMULUS-1697**
   - Added the `@cumulus/tf-inventory` package that provides command line utilities for managing Terraform resources in your AWS account
 
@@ -54,15 +55,36 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Mutex class has been deprecated in `@cumulus/common/concurrency` and will be removed in a future release.
 
 - **CUMULUS-1040**
-  - `@cumulus/common/errors` is now deprecated. Please use `@cumulus/errors` instead.
-  - The AWS service classes and utilities in `@cumulus/common` have been deprecated and moved to `@cumulus/aws-client`, including:
-    - `@cumulus/common/CloudFormationGateway`
-    - `@cumulus/common/DynamoDb`
-    - `@cumulus/common/StepFunctions`
-    - All of the exported functions in `@cumulus/commmon/aws`
-    - `@cumulus/common/string/unicodeEscape`
-    - `@cumulus/common/test-utils/inTestMode`
-    - `@cumulus/common/util/setErrorStack`
+  - Deprecated the following code. For cases where the code was moved into another package, the new code location is noted:
+    - `@cumulus/common/CloudFormationGateway` -> `@cumulus/aws-client/CloudFormationGateway`
+    - `@cumulus/common/DynamoDb` -> `@cumulus/aws-client/DynamoDb`
+    - `@cumulus/common/errors` -> `@cumulus/errors`
+    - `@cumulus/common/StepFunctions` -> `@cumulus/aws-client/StepFunctions`
+    - All of the exported functions in `@cumulus/commmon/aws` (moved into `@cumulus/aws-client`), except:
+      - `@cumulus/common/aws/improveStackTrace`
+      - `@cumulus/common/aws/retryOnThrottlingException`
+    - `@cumulus/common/sfnStep/SfnStep.parseStepMessage` -> `@cumulus/integration-tests/sfnStep/SfnStep.parseStepMessage`
+    - `@cumulus/common/sfnStep/ActivityStep` -> `@cumulus/integration-tests/sfnStep/ActivityStep`
+    - `@cumulus/common/sfnStep/LambdaStep` -> `@cumulus/integration-tests/sfnStep/LambdaStep`
+    - `@cumulus/common/string/unicodeEscape` -> `@cumulus/aws-client/StepFunctions.unicodeEscape`
+    - `@cumulus/common/util/setErrorStack` -> `@cumulus/aws-client/util/setErrorStack`
+    - `@cumulus/ingest/aws/invoke` -> `@cumulus/aws-client/Lambda/invoke`
+    - `@cumulus/ingest/aws/CloudWatch.bucketSize`
+    - `@cumulus/ingest/aws/CloudWatch.cw`
+    - `@cumulus/ingest/aws/ECS.ecs`
+    - `@cumulus/ingest/aws/ECS`
+    - `@cumulus/ingest/aws/Events.putEvent` -> `@cumulus/aws-client/CloudwatchEvents.putEvent`
+    - `@cumulus/ingest/aws/Events.deleteEvent` -> `@cumulus/aws-client/CloudwatchEvents.deleteEvent`
+    - `@cumulus/ingest/aws/Events.deleteTarget` -> `@cumulus/aws-client/CloudwatchEvents.deleteTarget`
+    - `@cumulus/ingest/aws/Events.putTarget` -> `@cumulus/aws-client/CloudwatchEvents.putTarget`
+    - `@cumulus/ingest/aws/SQS.attributes` -> `@cumulus/aws-client/SQS.getQueueAttributes`
+    - `@cumulus/ingest/aws/SQS.deleteMessage` -> `@cumulus/aws-client/SQS.deleteSQSMessage`
+    - `@cumulus/ingest/aws/SQS.deleteQueue` -> `@cumulus/aws-client/SQS.deleteQueue`
+    - `@cumulus/ingest/aws/SQS.getUrl` -> `@cumulus/aws-client/SQS.getQueueUrlByName`
+    - `@cumulus/ingest/aws/SQS.receiveMessage` -> `@cumulus/aws-client/SQS.receiveSQSMessages`
+    - `@cumulus/ingest/aws/SQS.sendMessage` -> `@cumulus/aws-client/SQS.sendSQSMessage`
+    - `@cumulus/ingest/aws/StepFunction.getExecutionStatus` -> `@cumulus/aws-client/StepFunction.getExecutionStatus`
+    - `@cumulus/ingest/aws/StepFunction.getExecutionUrl`  -> `@cumulus/aws-client/StepFunction.getExecutionUrl`
 
 - **CUMULUS-1686**
   - Changed `ecs_cluster_instance_image_id` to be a required variable of the `cumulus` module and removed the default value.

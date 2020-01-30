@@ -13,6 +13,11 @@ exports.getQueueUrl = (sourceArn, queueName) => {
   return `https://sqs.${arnParts[3]}.amazonaws.com/${arnParts[4]}/${queueName}`;
 };
 
+exports.getQueueUrlByName = async (queueName) => {
+  const response = await awsServices.sqs().getQueueUrl({ QueueName: queueName }).promise();
+  return response.QueueUrl;
+};
+
 /**
  * Create an SQS Queue.  Properly handles localstack queue URLs
  *
@@ -38,6 +43,21 @@ async function createQueue(QueueName) {
   return createQueueResponse.QueueUrl;
 }
 exports.createQueue = createQueue;
+
+exports.deleteQueue = (queueUrl) =>
+  awsServices.sqs().deleteQueue({
+    QueueUrl: queueUrl
+  }).promise();
+
+exports.getQueueAttributes = async (queueName) => {
+  const queueUrl = await exports.getQueueUrlByName(queueName);
+  const response = await awsServices.sqs().getQueueAttributes({
+    AttributeNames: ['All'],
+    QueueUrl: queueUrl
+  }).promise();
+  response.Attributes.name = queueName;
+  return response.Attributes;
+};
 
 /**
 * Send a message to AWS SQS
