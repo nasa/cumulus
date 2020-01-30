@@ -83,7 +83,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `@cumulus/ingest/StepFunction.getExecutionUrl`
 
 - **CUMULUS-1102**
-   - Updates testAuth to use JWT instead of random tokens.
+   - Updates `@cumulus/api/auth/testAuth` to use JWT instead of random tokens.
    - Updates the default AMI for the ecs\_cluster\_instance\_image\_id.
 
 - **CUMULUS-1622**
