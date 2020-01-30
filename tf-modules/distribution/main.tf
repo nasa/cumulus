@@ -32,14 +32,6 @@ resource "aws_secretsmanager_secret_version" "thin_egress_urs_creds" {
   })
 }
 
-resource "aws_secretsmanager_secret_version" "thin_egress_jwt_key" {
-  secret_id     = aws_secretsmanager_secret.thin_egress_urs_creds.id
-  secret_string = jsonencode({
-    rsa_priv_key   = var.urs_client_id
-    rsa_pub_key = base64encode("${var.urs_client_id}:${var.urs_client_password}")
-  })
-}
-
 module "thin_egress_app" {
   source = "https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.45.zip"
 
