@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/integration-tests",
-  "version": "1.17.0",
+  "version": "1.17.0-alpha",
   "description": "Integration tests",
   "bin": {
     "cumulus-test": "./bin/cli.js"

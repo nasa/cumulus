@@ -2,8 +2,8 @@
 
 'use strict';
 
-const pckg = require('../package.json');
 const program = require('commander');
+const pckg = require('../package.json');
 const testRunner = require('..');
 
 program.version(pckg.version);

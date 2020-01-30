@@ -25,7 +25,7 @@ const { Collection, Execution, Pdr } = require('@cumulus/api/models');
 
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
-const { LambdaStep } = require('@cumulus/common/sfnStep');
+const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
 const {
   addCollections,

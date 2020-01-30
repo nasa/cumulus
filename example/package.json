@@ -54,7 +54,7 @@
     "@cumulus/discover-pdrs": "1.17.0",
     "@cumulus/files-to-granules": "1.17.0",
     "@cumulus/hello-world": "1.17.0",
-    "@cumulus/integration-tests": "1.17.0",
+    "@cumulus/integration-tests": "1.17.0-alpha",
     "@cumulus/move-granules": "1.17.0",
     "@cumulus/parse-pdr": "1.17.0",
     "@cumulus/pdr-status-check": "1.17.0",

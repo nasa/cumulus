@@ -1,6 +1,6 @@
 'use strict';
 
-const { LambdaStep } = require('@cumulus/common/sfnStep');
+const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { globalReplace } = require('@cumulus/common/string');
 const { getWorkflowArn } = require('@cumulus/common/workflows');
 const { Rule } = require('@cumulus/api/models');
