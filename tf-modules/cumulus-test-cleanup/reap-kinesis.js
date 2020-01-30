@@ -46,4 +46,6 @@ const runReaper = () => {
     .then(nukeStreams);
 };
 
-runReaper();
+module.exports = {
+  runReaper
+}
