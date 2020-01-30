@@ -160,9 +160,7 @@ async function eraseElasticsearchIndices(esClient, esIndex) {
  * @returns {Object} - Elasticsearch client and index
  */
 async function initializeLocalElasticsearch(stackName) {
-  setLocalEsVariables(stackName);
-  const es = getESClientAndIndex();
-
+  const es = await getESClientAndIndex(stackName);
   await eraseElasticsearchIndices(es.client, es.index);
   return bootstrap.bootstrapElasticSearch(process.env.ES_HOST, es.index);
 }

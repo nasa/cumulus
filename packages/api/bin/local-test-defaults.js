@@ -13,9 +13,11 @@ const setLocalEsVariables = (stackName) => {
 
 /**
  *  Retrieves Elasticsearch's Client and Index.
- * @returns {Promise<Object>} -
+ * @param {string} stackName - local stack name
+ * @returns {Promise<Object>} - Elasticsearch test client and index.
  */
-const getESClientAndIndex = async () => {
+const getESClientAndIndex = async (stackName = localStackName) => {
+  setLocalEsVariables(stackName);
   const client = await Search.es(process.env.ES_HOST);
   const index = process.env.ES_INDEX;
   return { client, index };
