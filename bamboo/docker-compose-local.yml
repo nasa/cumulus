@@ -6,6 +6,7 @@ services:
       - ../packages/test-data/keys/ssh_client_rsa_key.pub:/etc/authorized_keys/user
       - ../packages/test-data:/data
   build_env:
+    image: cumuluss/cumulus-build-env:latest
     volumes:
       - ../:/source/cumulus
       - ../packages/test-data:/tmp/cumulus_unit_test_data

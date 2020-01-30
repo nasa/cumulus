@@ -3,7 +3,7 @@
 const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
-const { secretsManager } = require('@cumulus/common/aws');
+const { secretsManager } = require('@cumulus/aws-client/services');
 const launchpad = require('@cumulus/common/launchpad');
 const { randomId } = require('@cumulus/common/test-utils');
 const EsCollection = require('../../es/collections');
