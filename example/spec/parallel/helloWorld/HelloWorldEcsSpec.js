@@ -1,6 +1,6 @@
 const { Execution } = require('@cumulus/api/models');
 const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
-const { ActivityStep } = require('@cumulus/common/sfnStep');
+const { ActivityStep } = require('@cumulus/integration-tests/sfnStep');
 const { loadConfig } = require('../../helpers/testUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 
