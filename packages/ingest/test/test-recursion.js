@@ -17,7 +17,6 @@ test('recursion lists all files in root and subdirectories when originalPath is 
   };
   const fn = (path) => dirs[path];
   const files = await recursion(fn, '');
-  console.log(`\n\ngot files ${JSON.stringify(files)}\n\n`);
   t.deepEqual(files, [
     { type: '-', name: 'file3' },
     { type: '-', name: 'file1' },
