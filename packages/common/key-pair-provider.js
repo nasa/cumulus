@@ -26,7 +26,7 @@ class S3KeyPairProvider {
    * @returns {Promise} the encrypted string
    */
   static async encrypt(str, keyId = 'public.pub', bucket = null, stack = null) {
-    deprecate('@cumulus/common/key-pair-provider', '1.17.0', '@cumulus/aws-client/KMS');
+    deprecate('@cumulus/common/key-pair-provider', '1.17.0', '@cumulus/aws-client/KMS.encrypt');
 
     // Download the publickey
     const pki = forge.pki;
