@@ -5,11 +5,9 @@ const { URL } = require('url');
 const { Lambda, STS } = require('aws-sdk');
 
 const { models: { AccessToken } } = require('@cumulus/api');
-const {
-  aws: { s3 },
-  testUtils: { randomId },
-  BucketsConfig
-} = require('@cumulus/common');
+const { s3 } = require('@cumulus/aws-client/services');
+const BucketsConfig = require('@cumulus/common/BucketsConfig');
+const { randomId } = require('@cumulus/common/test-utils');
 
 const {
   EarthdataLogin: { getEarthdataAccessToken },

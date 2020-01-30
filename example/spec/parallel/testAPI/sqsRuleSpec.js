@@ -1,10 +1,11 @@
 'use strict';
 
 const fs = require('fs-extra');
-const { stringUtils: { globalReplace } } = require('@cumulus/common');
-const { sqs, receiveSQSMessages } = require('@cumulus/common/aws');
+const { sqs } = require('@cumulus/aws-client/services');
+const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
 const { createSqsQueues, getSqsQueueMessageCounts } = require('@cumulus/api/lib/testUtils');
 const { Granule } = require('@cumulus/api/models');
+const { globalReplace } = require('@cumulus/common/string');
 const { sleep } = require('@cumulus/common/util');
 const {
   addCollections,

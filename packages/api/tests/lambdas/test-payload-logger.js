@@ -1,7 +1,7 @@
 'use strict';
 
 const cloneDeep = require('lodash.clonedeep');
-const { log } = require('@cumulus/common');
+const log = require('@cumulus/common/log');
 const sinon = require('sinon');
 const test = require('ava');
 const payloadLogger = require('../../lambdas/payload-logger');

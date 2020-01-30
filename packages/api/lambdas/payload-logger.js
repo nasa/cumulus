@@ -1,6 +1,6 @@
 'use strict';
 
-const { log } = require('@cumulus/common');
+const log = require('@cumulus/common/log');
 const { inTestMode, throwTestError } = require('@cumulus/common/test-utils');
 
 /**

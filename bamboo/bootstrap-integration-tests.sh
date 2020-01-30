@@ -1,21 +1,13 @@
 #!/bin/bash
-# Required to allow distribution module to build.
-# Temporary fix, will be replaced with permanent solution in CUMULUS-1408.
-set +e;
-apt-get update;
-set -e;
-apt-get install -y zip
-# End temp fix
 set -ex
 . ./bamboo/abort-if-not-pr-or-redeployment.sh
+. ./bamboo/abort-if-skip-integration-tests.sh
+. ./bamboo/set-bamboo-env-variables.sh
 
 npm config set unsafe-perm true
-npm install
-. ./bamboo/set-bamboo-env-variables.sh
-. ./bamboo/abort-if-skip-integration-tests.sh
-
 
 if [[ $USE_TERRAFORM_ZIPS == true ]]; then
+  ## Configure TF deployment to use deployed packages for the version being built
   echo "***Deploying stack with deployment packages"
 
   ## Update cumulus-tf
@@ -35,43 +27,24 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   cd ..
   npm install && npm run prepare
   cd ..
-
 else
-  echo "***Deploying stack with built source"
-  npm run bootstrap
-fi
-
-echo "Locking stack for deployment $DEPLOYMENT"
-
-cd example
-set +e
-
-# Wait for the stack to be available
-node ./scripts/lock-stack.js true $DEPLOYMENT
-LOCK_EXISTS_STATUS=$?
-echo "Locking status $LOCK_EXISTS_STATUS"
-
-COUNTER=0
-while [[ $LOCK_EXISTS_STATUS == 100 ]]; do
-  if [[ $COUNTER -gt $TIMEOUT_PERIODS ]]; then
-    echo "Timed out waiting for stack to become available"
-    exit 1
+  echo "***Bootstrapping integration tests with source"
+  ## Deployment was done in the deploy-dev-integration-test-stack.sh script in a
+  ## prior job.    Run bootstrap only to cross link dependencies for the
+  ## int tests, then exit before deploying
+  if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus dir
+    echo "*** Using cached bootstrap build dir"
+    cd /cumulus/
+    git fetch --all
+    git checkout "$GIT_SHA"
   fi
-  echo "Another build is using the ${DEPLOYMENT} stack."
-  sleep 30
-  ((COUNTER++))
-  node ./scripts/lock-stack.js true $DEPLOYMENT
-  LOCK_EXISTS_STATUS=$?
-done
-if [[ $LOCK_EXIST_STATUS -gt 0 ]]; then
-  exit 1
+  npm install
+  ## Double bootstrapping required as workaround to
+  ## lerna re-bootstrapping issue in older releases
+  ## (similiar to  https://github.com/lerna/lerna/issues/1457)
+  (npm run bootstrap-no-build || true) && npm run bootstrap-no-build
+  exit 0
 fi
-set -e
 
-if [[ $KES_DEPLOYMENT == true ]]; then
-  echo "Running Kes deployment $DEPLOYMENT"
-  . ../bamboo/bootstrap-kes-deployment.sh
-else
-  echo "Running Terraform deployment $DEPLOYMENT"
-  . ../bamboo/bootstrap-tf-deployment.sh
-fi
+. ./bamboo/deploy-integration-stack.sh
+

@@ -35,6 +35,7 @@ declare -a param_list=(
   "bamboo_SECRET_TOKEN_SECRET"
   "bamboo_SECRET_VPC_CIDR_IP"
   "bamboo_SECRET_VPC_ID"
+  "bamboo_USE_CACHED_BOOTSTRAP"
   "bamboo_SHARED_LOG_DESTINATION_ARN"
   "bamboo_SKIP_AUDIT"
   "bamboo_SKIP_INTEGRATION_TESTS"
@@ -182,4 +183,10 @@ if [[ $KES_DEPLOYMENT == true ]]; then
     echo "Setting RUN_REDEPLOYMENT to true"
     echo export RUN_REDEPLOYMENT="true" >> .bamboo_env_vars
   fi
+fi
+
+if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
+  export UNIT_TEST_BUILD_DIR=/cumulus
+else
+  export UNIT_TEST_BUILD_DIR=/source/cumulus
 fi

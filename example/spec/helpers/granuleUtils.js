@@ -1,11 +1,10 @@
 'use strict';
 
 const fs = require('fs-extra');
-const {
-  aws: { buildS3Uri, parseS3Uri, s3 },
-  stringUtils: { replace },
-  testUtils: { randomStringFromRegex }
-} = require('@cumulus/common');
+const { buildS3Uri, parseS3Uri } = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
+const { replace } = require('@cumulus/common/string');
+const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 const { thread } = require('@cumulus/common/util');
 const path = require('path');
 const cloneDeep = require('lodash.clonedeep');

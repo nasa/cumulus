@@ -6,18 +6,52 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **CUMULUS-1698**
+  - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
+  - Updated `@cumulus/api/launchpadSaml` to download launchpad IDP metadata from configured location when the metadata in s3 is not valid, and to work with updated IDP metadata and SAML response.
+
 ### BREAKING CHANGES
+
+- **CUMULUS-1698**
+  - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
 
 - **CUMULUS-1686**
   - `ecs_cluster_instance_image_id` is now a *required* variable of the `cumulus` module, instead of optional.
 
+- **CUMULUS-1703**
+  - Remove the unused `forceDownload` option from the `sync-granule` tasks's config
+  - Remove the `@cumulus/ingest/granule.Discover` class
+  - Remove the `@cumulus/ingest/granule.Granule` class
+  - Remove the `@cumulus/ingest/pdr.Discover` class
+  - Remove the `@cumulus/ingest/pdr.Granule` class
+  - Remove the `@cumulus/ingest/parse-pdr.parsePdr` function
+
 ### Added
+
+- **CUMULUS-1703**
+  - Add `@cumulus/aws-client/S3.createBucket` function
+  - Add `@cumulus/aws-client/S3.putFile` function
+  - Add `@cumulus/common/string.isNonEmptyString` function
+  - Add `@cumulus/ingest/FtpProviderClient` class
+  - Add `@cumulus/ingest/HttpProviderClient` class
+  - Add `@cumulus/ingest/S3ProviderClient` class
+  - Add `@cumulus/ingest/SftpProviderClient` class
+  - Add `@cumulus/ingest/providerClientUtils.buildProviderClient` function
+  - Add `@cumulus/ingest/providerClientUtils.fetchTextFile` function
 
 - **CUMULUS-1040**
   - Added `@cumulus/aws-client` package to provide utilities for working with AWS services and the Node.js AWS SDK
   - Added `@cumulus/errors` package which exports error classes for use in Cumulus workflow code
 
+- **CUMULUS-1697**
+  - Added the `@cumulus/tf-inventory` package that provides command line utilities for managing Terraform resources in your AWS account
+
 ### Changed
+
+- **CUMULUS-1622**
+  - Mutex class has been deprecated in `@cumulus/common/concurrency` and will be removed in a future release.
 
 - **CUMULUS-1040**
   - `@cumulus/common/errors` is now deprecated. Please use `@cumulus/errors` instead.
@@ -29,6 +63,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `@cumulus/common/string/unicodeEscape`
     - `@cumulus/common/test-utils/inTestMode`
     - `@cumulus/common/util/setErrorStack`
+  - The following service classes and utilities in `@cumulus/ingest/aws` have been deprecated and moved to `@cumulus/aws-client`:
+    - `@cumulus/ingest/invoke`
+    - `@cumulus/ingest/Events.putEvent`
+    - `@cumulus/ingest/Events.deleteEvent`
+    - `@cumulus/ingest/Events.deleteTarget`
+    - `@cumulus/ingest/Events.putTarget`
+    - `@cumulus/ingest/SQS.attributes`
+    - `@cumulus/ingest/SQS.deleteMessage`
+    - `@cumulus/ingest/SQS.deleteQueue`
+    - `@cumulus/ingest/SQS.getUrl`
+    - `@cumulus/ingest/SQS.receiveMessage`
+    - `@cumulus/ingest/SQS.sendMessage`
+    - `@cumulus/ingest/StepFunction.getExecutionStatus`
+    - `@cumulus/ingest/StepFunction.getExecutionUrl`
 
 - **CUMULUS-1686**
   - Changed `ecs_cluster_instance_image_id` to be a required variable of the `cumulus` module and removed the default value.
@@ -350,7 +398,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated the EC2 initialization scripts to use full volume size for docker storage
   - Changed the default ECS docker storage drive to `devicemapper`
 
-## [v1.14.5] - 2019-12-30
+## [v1.14.5] - 2019-12-30 - [BACKPORT]
 
 ### Updated
 
@@ -703,7 +751,7 @@ If you deploy with no distribution app your deployment will succeed but you may 
     - Removed `@cumulus/cmrjs/cmr` functions: `searchConcept`, `ingestConcept`, `deleteConcept`. Use the functions in `@cumulus/cmr-client` instead.
     - Removed `@cumulus/ingest/aws.getExecutionHistory`. Use `@cumulus/common/StepFunctions.getExecutionHistory` instead.
 
-## [v1.13.5] - 2019-08-29
+## [v1.13.5] - 2019-08-29 - [BACKPORT]
 
 ### Fixed
 
@@ -1506,7 +1554,7 @@ We may need to update the api documentation to reflect this.
 - **CUMULUS-746** - Move granule API correctly updates record in dynamo DB and cmr xml file
 - **CUMULUS-766** - Populate database fileSize field from S3 if value not present in Ingest payload
 
-## [v1.7.1] - 2018-07-27
+## [v1.7.1] - 2018-07-27 - [BACKPORT]
 
 ### Fixed
 - **CUMULUS-766** - Backport from 1.8.0 - Populate database fileSize field from S3 if value not present in Ingest payload

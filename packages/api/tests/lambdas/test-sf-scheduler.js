@@ -4,7 +4,7 @@ const rewire = require('rewire');
 const sinon = require('sinon');
 const test = require('ava');
 
-const { SQS } = require('@cumulus/ingest/aws');
+const SQS = require('@cumulus/aws-client/SQS');
 const schedule = rewire('../../lambdas/sf-scheduler');
 
 const defaultQueueName = 'startSF';
@@ -39,7 +39,7 @@ const fakeProvider = {
   host: 'fakeHost'
 };
 
-const sqsStub = sinon.stub(SQS, 'sendMessage');
+const sqsStub = sinon.stub(SQS, 'sendSQSMessage');
 
 class FakeCollection {
   async get(item) {

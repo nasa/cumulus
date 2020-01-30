@@ -12,10 +12,20 @@
 
 const compose = require('lodash.flowright');
 const curry = require('lodash.curry');
-
-const stepFunctionUtils = require('@cumulus/aws-client/StepFunctions');
+const isString = require('lodash.isstring');
 
 const { deprecate, isNull, negate } = require('./util');
+
+/**
+ * Given a character, replaces the JS unicode-escape sequence for the character
+ *
+ * @param {char} char - The character to escape
+ * @returns {string} The unicode escape sequence for char
+ *
+ * @private
+ */
+const unicodeEscapeCharacter = (char) =>
+  ['\\u', `0000${char.charCodeAt().toString(16)}`.slice(-4)].join('');
 
 /**
  * Given a string, replaces all characters matching the passed regex with their unicode
@@ -29,7 +39,7 @@ const { deprecate, isNull, negate } = require('./util');
  */
 const unicodeEscape = (str, regex = /[\s\S]/g) => {
   deprecate('@cumulus/common/string/unicodeEscape', '1.17.0', '@cumulus/aws-client/StepFunctions/unicodeEscape');
-  return stepFunctionUtils.unicodeEscape(str, regex);
+  return str.replace(regex, unicodeEscapeCharacter);
 };
 
 /**
@@ -145,8 +155,20 @@ const hostnameRegex = /^[a-z0-9][a-z0-9\.\-]*$/;
  */
 const isValidHostname = compose(matches(hostnameRegex), toLower);
 
+/**
+ * Test if a value is a string with a length greater than zero
+ *
+ * @param {string} x - the string to test
+ * @returns {boolean}
+ *
+ * @static
+ * @kind function
+ */
+const isNonEmptyString = (x) => isString(x) && x.length > 0;
+
 module.exports = {
   globalReplace,
+  isNonEmptyString,
   isValidHostname,
   match,
   matches,

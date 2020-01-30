@@ -1,12 +1,12 @@
 'use strict';
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
-const { log } = require('@cumulus/common');
 const {
   deleteS3Object,
   s3ObjectExists,
   s3PutObject
-} = require('@cumulus/common/aws');
+} = require('@cumulus/aws-client/S3');
+const log = require('@cumulus/common/log');
 
 /**
  * Throw an error if hello world is configured to throw an error for

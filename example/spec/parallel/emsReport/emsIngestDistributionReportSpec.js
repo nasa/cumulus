@@ -4,18 +4,10 @@ const AWS = require('aws-sdk');
 const path = require('path');
 const os = require('os');
 
-const {
-  aws: {
-    fileExists,
-    getS3Object,
-    parseS3Uri,
-    lambda
-  },
-  constructCollectionId,
-  http: {
-    download
-  }
-} = require('@cumulus/common');
+const { fileExists, getS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
+const { lambda } = require('@cumulus/aws-client/services');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { download } = require('@cumulus/common/http');
 const { sleep } = require('@cumulus/common/util');
 const { Granule, AccessToken } = require('@cumulus/api/models');
 const {

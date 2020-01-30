@@ -19,7 +19,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "1.17.0",
+    "@cumulus/aws-client": "1.17.0-alpha4",
     "@cumulus/cumulus-message-adapter-js": "^1.1.0",
     "@cumulus/integration-tests": "1.17.0",
     "lodash.clonedeep": "^4.5.0"

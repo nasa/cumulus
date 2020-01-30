@@ -1,11 +1,23 @@
 'use strict';
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
-const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
-const errors = require('@cumulus/common/errors');
-const pdr = require('@cumulus/ingest/pdr');
-const log = require('@cumulus/common/log');
+const path = require('path');
+const S3 = require('@cumulus/aws-client/S3');
+const { buildProviderClient, fetchTextFile } = require('@cumulus/ingest/providerClientUtils');
+const { CollectionConfigStore } = require('@cumulus/common');
+const { granuleFromFileGroup } = require('@cumulus/ingest/parse-pdr');
+const { pvlToJS } = require('@cumulus/pvl/t');
+
+const buildPdrDocument = (rawPdr) => {
+  if (rawPdr.trim().length === 0) throw new Error('PDR file had no contents');
+
+  const cleanedPdr = rawPdr
+    .replace(/((\w*)=(\w*))/g, '$2 = $3')
+    .replace(/"/g, '');
+
+  return pvlToJS(cleanedPdr);
+};
 
 /**
 * Parse a PDR
@@ -17,60 +29,44 @@ const log = require('@cumulus/common/log');
 * @param {string} event.config.pdrFolder - folder for the PDRs
 * @param {Object} event.config.provider - provider information
 * @param {Object} event.config.bucket - the internal S3 bucket
-* @returns {Promise.<Object>} - see schemas/output.json for detailed output schema
+* @returns {Promise<Object>} - see schemas/output.json for detailed output schema
 * that is passed to the next task in the workflow
 **/
-function parsePdr(event) {
-  const config = get(event, 'config');
-  const input = get(event, 'input');
-  const provider = get(config, 'provider', null);
+const parsePdr = async ({ config, input }) => {
+  const providerClient = buildProviderClient(config.provider);
 
-  const Parse = pdr.selector('parse', provider.protocol);
-  const parse = new Parse(
-    input.pdr,
-    config.stack,
-    config.bucket,
-    provider,
-    config.useList
+  const rawPdr = await fetchTextFile(
+    providerClient,
+    path.join(input.pdr.path, input.pdr.name)
   );
 
-  return parse.ingest()
-    .then((payload) => {
-      if (parse.connected) parse.end();
+  const pdrDocument = buildPdrDocument(rawPdr);
 
-      // Filter based on the granuleIdFilter, default to match all granules
-      const granuleIdFilter = config.granuleIdFilter || '.';
-      const granules = payload.granules.filter((g) => g.files[0].name.match(granuleIdFilter));
-      const granulesCount = granules.length;
-      const filesCount = granules.reduce((total, granule) => total + granule.files.length, 0);
-      const totalSize = granules.reduce((total, granule) => total + granule.granuleSize, 0);
+  const collectionConfigStore = new CollectionConfigStore(config.bucket, config.stack);
 
-      return Object.assign(
-        cloneDeep(event.input),
-        {
-          granules,
-          granulesCount,
-          filesCount,
-          totalSize
-        }
-      );
-    })
-    .catch((e) => {
-      if (e.toString().includes('ECONNREFUSED')) {
-        const err = new errors.RemoteResourceError('Connection Refused');
-        log.error(err);
-        throw err;
-      } else if (e.details && e.details.status === 'timeout') {
-        const err = new errors.ConnectionTimeout('connection Timed out');
-        log.error(err);
-        throw err;
-      }
+  const allPdrGranules = await Promise.all(
+    pdrDocument.objects('FILE_GROUP').map((fileGroup) =>
+      granuleFromFileGroup(fileGroup, input.pdr.name, collectionConfigStore))
+  );
 
-      log.error(e);
-      throw e;
-    });
-}
-exports.parsePdr = parsePdr; // exported to support testing
+  await S3.s3PutObject({
+    Bucket: config.bucket,
+    Key: path.join(config.stack, 'pdrs', input.pdr.name),
+    Body: rawPdr
+  });
+
+  // Filter based on the granuleIdFilter, default to match all granules
+  const granuleIdFilter = get(config, 'granuleIdFilter', '.');
+  const granules = allPdrGranules.filter((g) => g.files[0].name.match(granuleIdFilter));
+
+  return {
+    ...input,
+    granules,
+    granulesCount: granules.length,
+    filesCount: granules.reduce((sum, { files }) => sum + files.length, 0),
+    totalSize: granules.reduce((sum, { granuleSize }) => sum + granuleSize, 0)
+  };
+};
 
 /**
  * Lambda handler
@@ -83,4 +79,5 @@ exports.parsePdr = parsePdr; // exported to support testing
 function handler(event, context, callback) {
   cumulusMessageAdapter.runCumulusTask(parsePdr, event, context, callback);
 }
-exports.handler = handler;
+
+module.exports = { handler, parsePdr };
