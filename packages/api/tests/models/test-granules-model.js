@@ -4,11 +4,11 @@ const cloneDeep = require('lodash.clonedeep');
 const test = require('ava');
 const sinon = require('sinon');
 
+const Lambda = require('@cumulus/aws-client/Lambda');
 const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
-const ingestAws = require('@cumulus/ingest/aws');
 const launchpad = require('@cumulus/common/launchpad');
 const { randomString } = require('@cumulus/common/test-utils');
 const workflows = require('@cumulus/common/workflows');
@@ -1005,7 +1005,7 @@ test.serial(
     const fileExistsStub = sinon.stub(s3Utils, 'fileExists').callsFake(fileExists);
     const templateStub = sinon.stub(workflows, 'getWorkflowTemplate').callsFake(() => ({}));
     const wfStub = sinon.stub(workflows, 'getWorkflowFile').callsFake(() => ({}));
-    const invokeStub = sinon.stub(ingestAws, 'invoke');
+    const invokeStub = sinon.stub(Lambda, 'invoke');
 
     try {
       await granuleModel.reingest(granule);

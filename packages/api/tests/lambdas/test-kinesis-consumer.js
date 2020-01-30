@@ -5,7 +5,7 @@ const sinon = require('sinon');
 const test = require('ava');
 
 const { randomString } = require('@cumulus/common/test-utils');
-const { SQS } = require('@cumulus/ingest/aws');
+const SQS = require('@cumulus/aws-client/SQS');
 const { s3, sns } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { getRules, handler } = require('../../lambdas/message-consumer');
@@ -123,7 +123,7 @@ test.before(async () => {
 });
 
 test.beforeEach(async (t) => {
-  sfSchedulerSpy = sinon.stub(SQS, 'sendMessage').returns(true);
+  sfSchedulerSpy = sinon.stub(SQS, 'sendSQSMessage').returns(true);
   t.context.publishResponse = {
     ResponseMetadata: { RequestId: randomString() },
     MessageId: randomString()

@@ -1,7 +1,7 @@
 'use strict';
 
 const launchpad = require('@cumulus/common/launchpad');
-const { getSecretString } = require('@cumulus/common/aws');
+const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const { AccessToken } = require('../models');
 
