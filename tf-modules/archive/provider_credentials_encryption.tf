@@ -3,6 +3,21 @@ resource "aws_kms_key" "provider_kms_key" {
   tags        = local.default_tags
 }
 
+data "aws_iam_policy_document" "provider_secrets_encryption" {
+  statement {
+    actions   = [
+      "kms:Encrypt",
+      "kms:Decrypt"
+    ]
+    resources = [aws_kms_key.provider_kms_key.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "provider_secrets_encryption" {
+  role   = aws_iam_role.lambda_api_gateway.id
+  policy = data.aws_iam_policy_document.provider_secrets_encryption.json
+}
+
 resource "aws_lambda_function" "provider_secrets_migration" {
   function_name    = "${var.prefix}-ProviderSecretsMigration"
   filename         = "${path.module}/../../packages/api/dist/providerSecretsMigration/lambda.zip"
@@ -16,9 +31,10 @@ resource "aws_lambda_function" "provider_secrets_migration" {
       stackName           = var.prefix
       system_bucket       = var.system_bucket
       provider_kms_key_id = aws_kms_key.provider_kms_key.key_id
+      ProvidersTable      = var.dynamo_tables.providers.name
     }
   }
-  memory_size = 1024 // TODO Does this really need 1024?
+  memory_size = 256
   tags        = merge(local.default_tags, { Project = var.prefix })
 
   vpc_config {
@@ -38,9 +54,10 @@ resource "aws_lambda_function" "verify_provider_secrets_migration" {
   environment {
     variables = {
       provider_kms_key_id = aws_kms_key.provider_kms_key.key_id
+      ProvidersTable      = var.dynamo_tables.providers.name
     }
   }
-  memory_size = 1024 // TODO Does this really need 1024?
+  memory_size = 256
   tags        = merge(local.default_tags, { Project = var.prefix })
 
   vpc_config {
