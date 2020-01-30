@@ -19,7 +19,7 @@ const {
   parseS3Uri
 } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
-const { LambdaStep } = require('@cumulus/common/sfnStep');
+const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
   loadConfig,
   templateFile,
