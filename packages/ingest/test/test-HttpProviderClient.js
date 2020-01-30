@@ -12,9 +12,9 @@ const {
   calculateS3ObjectChecksum,
   fileExists,
   recursivelyDeleteS3Bucket,
-  s3,
   headObject
-} = require('@cumulus/common/aws');
+} = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const HttpProviderClient = rewire('../HttpProviderClient');
 
