@@ -31,7 +31,7 @@ test.before(async () => {
 });
 
 test.beforeEach(async (t) => {
-  process.env.system_bucket = 'test-system-bucket';
+  process.env.system_bucket = 'testsystembucket';
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   const username = randomString();

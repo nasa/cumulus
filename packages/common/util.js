@@ -32,8 +32,9 @@ const log = require('./log');
 exports.deprecate = (name, version, alternative) => {
   let message = `${name} is deprecated after version ${version} and will be removed in a future release.`;
   if (alternative) message += ` Use ${alternative} instead.`;
-
-  log.warn(message);
+  if (!('NO_DEPRECATION_WARNINGS' in process.env)) {
+    log.warn(message);
+  }
 };
 
 /**
