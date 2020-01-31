@@ -1,9 +1,18 @@
 'use strict';
 
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomId } = require('@cumulus/common/test-utils');
 const get = require('lodash.get');
+const { createJwtToken } = require('../lib/token');
 
-let token = randomString();
+const { localUserName: userName } = require('../bin/local-test-defaults');
+
+const newToken = () => {
+  const accessToken = randomId('oauthcode');
+  const expirationTime = new Date(Date.now() + 3600 * 24 * 1000);
+  return createJwtToken({ accessToken, userName, expirationTime });
+};
+
+let jwt = newToken();
 
 /**
  * performs OAuth against an OAuth provider
@@ -15,18 +24,18 @@ let token = randomString();
 async function tokenEndpoint(req, res) {
   const code = get(req, 'query.code');
   const state = get(req, 'query.state');
-  if (token === '') token = randomString();
+  if (jwt === '') jwt = newToken();
 
   if (code) {
     if (state) {
       return res
         .status(307)
-        .set({ Location: `${decodeURIComponent(state)}?token=${token}` })
+        .set({ Location: `${decodeURIComponent(state)}?token=${jwt}` })
         .send('Redirecting');
     }
     return res.send({
       message: {
-        token
+        token: jwt
       }
     });
   }
@@ -52,7 +61,7 @@ async function tokenEndpoint(req, res) {
 async function refreshEndpoint(req, res) {
   return res.send({
     message: {
-      token
+      token: newToken()
     }
   });
 }
@@ -65,7 +74,7 @@ async function refreshEndpoint(req, res) {
  * @returns {Promise<Object>} a promise of an express response
  */
 async function deleteTokenEndpoint(req, res) {
-  token = '';
+  jwt = '';
   return res.send({ message: 'Token record was deleted' });
 }
 
@@ -86,8 +95,12 @@ async function ensureAuthorized(req, res, next) {
   }
   const jwtToken = req.headers.authorization.trim().split(/\s+/)[1];
 
-  if (jwtToken === token) {
-    req.authorizedMetadata = { userName: 'testUser' };
+  if (!jwtToken) {
+    return res.boom.unauthorized('Missing token');
+  }
+
+  if (jwtToken === jwt) {
+    req.authorizedMetadata = { userName };
     return next();
   }
   return res.boom.unauthorized('User not authorized');
@@ -97,6 +110,5 @@ module.exports = {
   tokenEndpoint,
   refreshEndpoint,
   deleteTokenEndpoint,
-  token,
   ensureAuthorized
 };
