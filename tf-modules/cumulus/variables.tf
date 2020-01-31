@@ -434,7 +434,7 @@ variable "thin_egress_jwt_secret_name" {
 variable "thin_egress_lambda_code_dependency_archive_key" {
   type        = string
   default     = null
-  description = "Thin Egress App - S3 Key of packaged python modules for lambda dependency layer."
+  description = "Thin Egress App - S3 Key of packaged python modules for lambda dependency layer"
 }
 
 variable "throttled_queues" {

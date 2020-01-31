@@ -30,6 +30,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-1731**
+  - Upgrade the version of the Thin Egress App deployed by Cumulus to v47
+  - Add new optional input variables to the Cumulus Terraform module
+    - `thin_egress_cookie_domain` - Valid domain for Thin Egress App cookie
+    - `thin_egress_domain_cert_arn` - Certificate Manager SSL Cert ARN for Thin
+      Egress App if deployed outside NGAP/CloudFront
+    - `thin_egress_download_role_in_region_arn` - ARN for reading of Thin Egress
+      App data buckets for in-region requests
+    - `thin_egress_jwt_algo` - Algorithm with which to encode the Thin Egress
+      App JWT cookie
+    - `thin_egress_jwt_secret_name` - Name of AWS secret where keys for the Thin
+      Egress App JWT encode/decode are stored
+    - `thin_egress_lambda_code_dependency_archive_key` - Thin Egress App - S3
+      Key of packaged python modules for lambda dependency layer
+
 - **CUMULUS-1040**
   - Added `@cumulus/aws-client` package to provide utilities for working with AWS services and the Node.js AWS SDK
   - Added `@cumulus/errors` package which exports error classes for use in Cumulus workflow code
