@@ -25,7 +25,7 @@ An item that passes the filter is handled depending on its type:
 - *Directories* that pass the filter are entered for recursive listing
 - *Files* that pass the filter are added to the listed contents returned by the discovery.
 
-Two examples are provided below to help explain the recursive filtering algorithm:
+Two example values for `collection.provider_path` are provided below to help explain the recursive filtering algorithm:
 
 ```json
 {
