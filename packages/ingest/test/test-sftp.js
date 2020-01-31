@@ -3,15 +3,15 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const S3 = require('@cumulus/aws-client/S3');
 const test = require('ava');
 const {
   calculateS3ObjectChecksum,
   fileExists,
   recursivelyDeleteS3Bucket,
-  s3,
-  headObject
-} = require('@cumulus/common/aws');
+  headObject,
+  putFile
+} = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const { randomString } = require('@cumulus/common/test-utils');
 const SftpProviderClient = require('../SftpProviderClient');
@@ -27,7 +27,7 @@ test.before(async () => {
   // let's copy the key to s3
   await s3().createBucket({ Bucket: bucket }).promise();
 
-  await S3.putFile(
+  await putFile(
     bucket,
     `${stackName}/crypto/${privateKey}`,
     `../test-data/keys/${privateKey}`

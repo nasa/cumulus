@@ -45,7 +45,7 @@
     "@cumulus/cmrjs": "1.17.0",
     "@cumulus/common": "1.17.0",
     "@cumulus/cumulus-message-adapter-js": "^1.1.0",
-    "@cumulus/errors": "1.17.0-alpha",
+    "@cumulus/errors": "1.17.0-alpha2",
     "@cumulus/ingest": "1.17.0",
     "lodash.clonedeep": "^4.5.0",
     "lodash.flatten": "^4.4.0",

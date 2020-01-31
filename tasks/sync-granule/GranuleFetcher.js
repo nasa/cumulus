@@ -1,16 +1,16 @@
 'use strict';
 
-const S3 = require('@cumulus/aws-client/S3');
 const flatten = require('lodash.flatten');
 const path = require('path');
 const uuidv4 = require('uuid/v4');
+const S3 = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   CollectionConfigStore,
-  constructCollectionId,
-  log,
-  errors
-} = require('@cumulus/common');
+  constructCollectionId
+} = require('@cumulus/common/collection-config-store');
+const log = require('@cumulus/common/log');
+const errors = require('@cumulus/errors');
 const { buildProviderClient, fetchTextFile } = require('@cumulus/ingest/providerClientUtils');
 const { handleDuplicateFile } = require('@cumulus/ingest/granule');
 

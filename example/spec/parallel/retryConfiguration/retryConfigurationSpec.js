@@ -1,4 +1,4 @@
-const { LambdaStep } = require('@cumulus/common/sfnStep');
+const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
 const { loadConfig } = require('../../helpers/testUtils');
 

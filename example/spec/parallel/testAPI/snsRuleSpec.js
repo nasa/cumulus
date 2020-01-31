@@ -12,7 +12,7 @@ const {
 } = require('@cumulus/integration-tests');
 
 const { sns, lambda } = require('@cumulus/aws-client/services');
-const { LambdaStep } = require('@cumulus/common/sfnStep');
+const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
 const {
   createTestSuffix,
