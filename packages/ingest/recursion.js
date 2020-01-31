@@ -1,5 +1,7 @@
 'use strict';
 
+const log = require('@cumulus/common/log');
+
 /**
  * Insert leading and remove terminating slashes into/from the path string
  *
@@ -8,8 +10,8 @@
  */
 const normalizeSlashes = (path) => {
   let output = path.replace(/[\/]{2,}/g, '/');
-  if (!path.startsWith('/')) output = `/${output}`;
-  if (path.endsWith('/')) output = output.slice(0, -1);
+  if (!output.startsWith('/')) output = `/${output}`;
+  if (output.endsWith('/')) output = output.slice(0, -1);
   return output;
 };
 
@@ -52,9 +54,10 @@ async function recurOnDirectory(fn, currentPath, segments, position) {
  * It requests a promisified list function that returns contents of
  * a directory on a server, filtering on provided regex segments.
  *
- * Note that the list function will initially be called with a path argument that is an empty
- * string to list the root. Following calls based on items discovered will be of the format 
- * `fn('path/to/files')`, with no leading or terminating slashes.
+ * Note that calls to the list function will not have leading or terminating slashes.
+ * Initially an empty string is passed as the path to list the default directory. Following calls
+ * based on items discovered will be of the format `fn('path/to/files')`, again with no leading or
+ * terminating slashes.
  *
  * List functions will need to be able to normalize or correct these paths as appropriate for their
  * protocol.
@@ -66,9 +69,14 @@ async function recurOnDirectory(fn, currentPath, segments, position) {
  */
 async function recursion(fn, originalPath) {
   const normalizedPath = normalizeSlashes(originalPath);
-  const segments = normalizedPath.split('/'); // split on divider
-
-  return recurOnDirectory(fn, segments[0], segments, 0);
+  try {
+    const segments = normalizedPath.split('/'); // split on divider
+    return await recurOnDirectory(fn, segments[0], segments, 0);
+  } catch (e) {
+    log.error(`Encountered error during recursive list filtering: ${e}`);
+    log.info('Falling back to unfiltered directory listing...');
+    return recurOnDirectory(fn, normalizedPath.slice(1), [], 0);
+  }
 }
 
 module.exports = recursion;

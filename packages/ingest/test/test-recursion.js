@@ -262,8 +262,30 @@ test('recursion replaces duplicated slashes with a single slash', async (t) => {
     ]
   };
   const fn = (path) => dirs[path];
-  const files = await recursion(fn, 'file/////dir');
+  const files = await recursion(fn, '///file/////dir///');
   t.deepEqual(files, dirs['file/dir']);
+});
+
+test('recursion falls back to directly listing the path and subdirectores when filtering'
+ + 'encounters an error', async (t) => {
+  const dirs = {
+    '': () => {
+      throw new Error('Permission Denied');
+    },
+    'path/to/files': () => [
+      { type: 'd', name: 'dir' },
+      { type: '-', name: 'file2' }
+    ],
+    'path/to/files/dir': () => [
+      { type: '-', name: 'file1' }
+    ]
+  };
+  const fn = (path) => dirs[path]();
+  const files = await recursion(fn, 'path/to/files');
+  t.deepEqual(files, [
+    { type: '-', name: 'file1' },
+    { type: '-', name: 'file2' }
+  ]);
 });
 
 

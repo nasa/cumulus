@@ -160,7 +160,7 @@ class Sftp {
    * @returns {Promise.<Object>} - list of file object
    */
   async list(remotePath) {
-    const normalizedPath = (remotePath === '' ? '/' : remotePath);
+    const normalizedPath = (remotePath.trim() === '' ? '/' : remotePath);
     if (!this.connected) await this.connect();
     return new Promise((resolve, reject) => {
       this.sftp.readdir(normalizedPath, (err, list) => {
