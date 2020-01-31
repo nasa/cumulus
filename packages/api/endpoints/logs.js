@@ -21,7 +21,7 @@ function metricsConfig() {
   };
 }
 
-function cumulusConfig() {
+function cumulusDefaultConfig() {
   return {
     type: 'logs',
     index: process.env.ES_INDEX,
@@ -29,7 +29,7 @@ function cumulusConfig() {
   };
 }
 
-const esConfig = () => (process.env.log_destination_arn ? metricsConfig() : cumulusConfig());
+const esConfig = () => (process.env.log_destination_arn ? metricsConfig() : cumulusDefaultConfig());
 
 /**
  * list all the logs
