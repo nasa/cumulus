@@ -2,7 +2,7 @@
 
 const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
-const { RecordDoesNotExist } = require('@cumulus/common/errors');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
 const { AccessToken } = require('../../models');
 
