@@ -119,6 +119,7 @@ async function listClusterEC2Instances(clusterArn) {
  * bucket/deployment/cumulus|data-persistence/terraform.tfstate
  *
  * @param {string} filename - path to state file: bucket/key
+ * @param {RegExp|string} regex - the regex used to find the deployment
  * @returns {string} - deployment name
  */
 function extractDeploymentName(filename, regex = DEFAULT_DEPLOYMENT_REGEX) {
@@ -136,6 +137,7 @@ function extractDeploymentName(filename, regex = DEFAULT_DEPLOYMENT_REGEX) {
  * Get a list of resources from the given state file
  *
  * @param {string} file - the file location as `bucket/key`
+ * @param {RegExp|string} regex - the regex used to find the deployment
  * @returns {Array<Object>} - list of resource objects
  */
 async function getStateFileDeploymentInfo(file, regex = DEFAULT_DEPLOYMENT_REGEX) {
@@ -163,6 +165,7 @@ async function getStateFileDeploymentInfo(file, regex = DEFAULT_DEPLOYMENT_REGEX
  * List the ECS clusters and EC2 instances defined in the state file.
  *
  * @param {string} file - file path
+ * @param {RegExp|string} regex - the regex used to find the deployment
  * @returns {Promise<Object>}
  */
 async function listResourcesForFile(file, regex = DEFAULT_DEPLOYMENT_REGEX) {
@@ -196,6 +199,7 @@ async function listResourcesForFile(file, regex = DEFAULT_DEPLOYMENT_REGEX) {
  * of state files
  *
  * @param {Array<string>} stateFiles - state file paths
+ * @param {RegExp|string} regex - the regex used to find the deployment
  * @returns {Array<string>} list of deployments
  */
 function listTfDeployments(stateFiles, regex = DEFAULT_DEPLOYMENT_REGEX) {
@@ -211,6 +215,7 @@ function listTfDeployments(stateFiles, regex = DEFAULT_DEPLOYMENT_REGEX) {
  * Create a report containing all deployments identified that includes
  * state file paths, time state file was updated and number of resources in the state file
  *
+ * @param {RegExp|string} regex - the regex used to find the deployment
  * @returns {Promise<Object>} Object where key is deployment name. Looks like:
  * cumulus-tf
   [ { file: 'cumulus-sandbox-tfstate/cumulus-tf/cumulus/terraform.tfstate',

@@ -129,11 +129,11 @@ module.exports.collection = {
     ignoreFilesConfigForDiscovery: {
       title: 'Ignore Files Configuration During Discovery',
       description: "When true, ignore this collection's files config list for"
-        + " determining which files to ingest for a granule, and ingest all of"
-        + " them.  When false, ingest only files that match a regex in one of"
+        + ' determining which files to ingest for a granule, and ingest all of'
+        + ' them.  When false, ingest only files that match a regex in one of'
         + " this collection's files config list.  When this property is"
-        + " specified on a task, it overrides the value set on a collection."
-        + " Defaults to false.",
+        + ' specified on a task, it overrides the value set on a collection.'
+        + ' Defaults to false.',
       type: 'boolean'
     },
     files: {
@@ -620,7 +620,7 @@ module.exports.execution = {
     error: {
       title: 'The error details in case of a failed execution',
       type: 'object',
-      additionalProperties: true,
+      additionalProperties: true
     },
     tasks: {
       type: 'object',
