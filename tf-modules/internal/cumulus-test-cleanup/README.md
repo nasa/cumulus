@@ -15,6 +15,8 @@ Run `npm install` to install packages then `npm run prepare` to prepare lambda z
 
 Copy the `terraform.tfvars.sample` file to `terraform.tfvars`. Populate the sample file with values that apply to your AWS environment.
 
+As this should be deployed once per AWS account, the remote state should be configured in the `terraform.tf` file, so updates can be made later.
+
 Run `terraform init`.
 
 Run `terraform apply`.
