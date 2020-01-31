@@ -26,9 +26,9 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 data "terraform_remote_state" "data_persistence" {
-  backend = "s3"
-  config  = var.data_persistence_remote_state_config
-  workspace = "${terraform.workspace}"
+  backend   = "s3"
+  config    = var.data_persistence_remote_state_config
+  workspace = terraform.workspace
 }
 
 data "aws_lambda_function" "sts_credentials" {
@@ -126,11 +126,11 @@ module "cumulus" {
 
   sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
 
-  archive_api_port            = var.archive_api_port
-  private_archive_api_gateway = var.private_archive_api_gateway
-  api_gateway_stage = var.api_gateway_stage
+  archive_api_port              = var.archive_api_port
+  private_archive_api_gateway   = var.private_archive_api_gateway
+  api_gateway_stage             = var.api_gateway_stage
   log_api_gateway_to_cloudwatch = var.log_api_gateway_to_cloudwatch
-  log_destination_arn = var.log_destination_arn
+  log_destination_arn           = var.log_destination_arn
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {
