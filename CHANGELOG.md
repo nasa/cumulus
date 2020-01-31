@@ -46,6 +46,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add `@cumulus/ingest/providerClientUtils.buildProviderClient` function
   - Add `@cumulus/ingest/providerClientUtils.fetchTextFile` function
 
+- **CUMULUS-1733**
+  - Add `discovery-filtering` operator doc to document previously undocumented functionality.
+
 - **CUMULUS-1697**
   - Added the `@cumulus/tf-inventory` package that provides command line utilities for managing Terraform resources in your AWS account
 
@@ -101,7 +104,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `dbIndexer` Lambda to remove hardcoded references to DynamoDB table names.
 
 - **CUMULUS-1733**
-  - fixed granule discovery recursion algorithm used in FTP protocol
+  - Fixed granule discovery recursion algorithm used in S/FTP protocols.
 
 ### Removed
 
