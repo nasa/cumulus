@@ -6,7 +6,7 @@ hide_title: true
 
 # Discovery Filtering
 
-Discovery filtering is an advanced feature of the discover-* tasks.
+Discovery filtering is an advanced feature of the `discover-granules` and `discover-pdrs` tasks.
 It is a configurable option for discovery that allows an operator to manipulate which parts of a
 remote file system Cumulus will attempt discovery in.
 
@@ -20,10 +20,11 @@ to filter which paths on a remote file system are explored by interpreting each 
 collection's `provider_path` as a regular expression to filter contents listed recursively,
 starting from the default directory.
 
+Items that fail the filter are ignored.
 An item that passes the filter is handled depending on its type:
 
-- *Directories* that pass the filter are entered for recursive listing
-- *Files* that pass the filter are added to the listed contents returned by the discovery.
+- *Directories* that pass the filter are **recurred into** for further recursive listing.
+- *Files* that pass the filter are **appended** to the final output returned by the discovery.
 
 Two example values for `collection.provider_path` are provided below to help explain the recursive filtering algorithm:
 
@@ -33,9 +34,12 @@ Two example values for `collection.provider_path` are provided below to help exp
 }
 ```
 
-The path shown above will list the default directory, list or recur on any item matching `MOD0.*`,
-e.g. `MOD09GQ`, and in each directory list or recur on any item named `PDR`. After entering a `PDR`
-directory, it will list and recur on everything as there is no further filtering to apply.
+The path shown above will:
+
+- list contents of the default directory,
+- append or recur into any item matching `MOD0.*`, e.g. `MOD09GQ`,
+- append or recur into any item in directories from the previous step named `PDR`,
+- append and recur into everything in `PDR` without filtering anything out.
 
 ```json
 {
@@ -43,10 +47,14 @@ directory, it will list and recur on everything as there is no further filtering
 }
 ```
 
-The path shown above will list the default directory, list or recur on any item named `daily`,
-then list or recur on any item that matches `199.`, e.g. '1997', then list or recur on any item
-named `data`, and finally list or recur on all items that end in `.nc` without filtering in any
-subdirectories.
+The path shown above will:
+
+- list contents of the default directory,
+- append or recur into any item named `daily`,
+- append or recur into any item in `daily` that matches `199.`, e.g. '1997',
+- append or recur into any item in directories from the previous step named `data`,
+- append or recur into all items that end in `.nc`,
+- append or recur into everything in any directories that ended in `.nc` without filtering anything out.
 
 **Note**: each discovery task performs its own post-discovery filtering on some relevant
 value, e.g. `granuleIdExtraction` for discover-granules, so discovery filtering is intended to
