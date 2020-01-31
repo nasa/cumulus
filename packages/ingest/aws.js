@@ -199,7 +199,7 @@ class SQS {
 
   static receiveMessage(queueUrl, numOfMessages = 1, timeout = 30) {
     deprecate('@cumulus/ingest/aws/SQS.receiveMessage', '1.17.0', '@cumulus/aws-client/SQS.receiveSQSMessages');
-    return SQSUtils.sendSQSMessage(queueUrl, {
+    return SQSUtils.receiveSQSMessages(queueUrl, {
       numOfMessages,
       visibilityTimeout: timeout
     });
