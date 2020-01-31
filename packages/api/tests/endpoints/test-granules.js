@@ -7,6 +7,7 @@ const sinon = require('sinon');
 const test = require('ava');
 const {
   buildS3Uri,
+  createBucket,
   fileExists,
   recursivelyDeleteS3Bucket
 } = require('@cumulus/aws-client/S3');
@@ -48,8 +49,6 @@ process.env.TOKEN_SECRET = randomId('secret');
 
 // import the express app after setting the env variables
 const { app } = require('../../app');
-
-const createBucket = (Bucket) => s3().createBucket({ Bucket }).promise();
 
 function createBuckets(buckets) {
   return Promise.all(buckets.map(createBucket));
@@ -96,7 +95,6 @@ async function setupBucketsConfig() {
   await createBucket(buckets.public.name);
   return { internalBucket: systemBucket, publicBucket: buckets.public.name };
 }
-
 
 // create all the variables needed across this test
 let esClient;
