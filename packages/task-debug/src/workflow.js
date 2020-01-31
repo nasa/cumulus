@@ -1,4 +1,8 @@
+'use strict';
+
+const pWhilst = require('p-whilst');
 const local = require('@cumulus/common/local-helpers');
+const { isNil } = require('@cumulus/common/util');
 
 const taskMap = {
   DiscoverPdr: 'discover-pdr',
@@ -60,16 +64,19 @@ exports.runWorkflow = async (collectionId, workflow, resources = {}, configFile 
   let result = null;
 
   // Execute the workflow
-  while (taskName) {
-    const task = workflow.States[taskName];
-    const taskClass = require(requirePathForTask(taskName)); // eslint-disable-line global-require, import/no-dynamic-require, max-len
-    result = await exports.runTask(
-      taskClass.handler,
-      exports.genMessage(collectionId, taskName, resources, result, configFile)
-    );
+  await pWhilst(
+    () => !isNil(taskName),
+    async () => {
+      const task = workflow.States[taskName];
+      const taskClass = require(requirePathForTask(taskName)); // eslint-disable-line global-require, import/no-dynamic-require, max-len
+      result = await exports.runTask(
+        taskClass.handler,
+        exports.genMessage(collectionId, taskName, resources, result, configFile)
+      );
 
-    taskName = task.Next;
-  }
+      taskName = task.Next;
+    }
+  );
 
   return result;
 };
