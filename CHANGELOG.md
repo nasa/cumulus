@@ -14,11 +14,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
-- **CUMULUS-1698**
-  - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
-
 - **CUMULUS-1686**
   - `ecs_cluster_instance_image_id` is now a *required* variable of the `cumulus` module, instead of optional.
+
+- **CUMULUS-1698**
+  - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
 
 - **CUMULUS-1703**
   - Remove the unused `forceDownload` option from the `sync-granule` tasks's config
@@ -35,6 +35,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/errors` package which exports error classes for use in Cumulus workflow code
   - Added `@cumulus/integration-tests/sfnStep` to provide utilities for parsing step function execution histories
 
+- **CUMULUS-1102**
+  - Adds functionality to the @cumulus/api package for better local testing.
+      - Adds data seeding for @cumulus/api's localAPI.
+        - seed functions allow adding collections, executions, granules, pdrs, providers, and rules to a Localstack Elasticsearch and DynamoDB via `addCollections`,  `addExecutions`, `addGranules`, `addPdrs`, `addProviders`, and `addRules`.
+   - Adds `eraseDataStack` function to local API server code allowing resetting of local datastack for testing (ES and DynamoDB).
+   - Adds optional parameters to the @cumulus/api bin serve to allow for launching the api without destroying the current data.
+
+- **CUMULUS-1697**
+  - Added the `@cumulus/tf-inventory` package that provides command line utilities for managing Terraform resources in your AWS account
+
 - **CUMULUS-1703**
   - Add `@cumulus/aws-client/S3.createBucket` function
   - Add `@cumulus/aws-client/S3.putFile` function
@@ -50,9 +60,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added the `@cumulus/tf-inventory` package that provides command line utilities for managing Terraform resources in your AWS account
 
 ### Changed
-
-- **CUMULUS-1622**
-  - Mutex class has been deprecated in `@cumulus/common/concurrency` and will be removed in a future release.
 
 - **CUMULUS-1040**
   - Deprecated the following code. For cases where the code was moved into another package, the new code location is noted:
@@ -85,6 +92,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `@cumulus/ingest/aws/SQS.sendMessage` -> `@cumulus/aws-client/SQS.sendSQSMessage`
     - `@cumulus/ingest/aws/StepFunction.getExecutionStatus` -> `@cumulus/aws-client/StepFunction.getExecutionStatus`
     - `@cumulus/ingest/aws/StepFunction.getExecutionUrl`  -> `@cumulus/aws-client/StepFunction.getExecutionUrl`
+
+- **CUMULUS-1102**
+   - Updates `@cumulus/api/auth/testAuth` to use JWT instead of random tokens.
+   - Updates the default AMI for the ecs\_cluster\_instance\_image\_id.
+
+- **CUMULUS-1622**
+  - Mutex class has been deprecated in `@cumulus/common/concurrency` and will be removed in a future release.
 
 - **CUMULUS-1686**
   - Changed `ecs_cluster_instance_image_id` to be a required variable of the `cumulus` module and removed the default value.
