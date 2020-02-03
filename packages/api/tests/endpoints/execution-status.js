@@ -8,7 +8,7 @@ const {
   putJsonS3Object,
   recursivelyDeleteS3Bucket
 } = require('@cumulus/aws-client/S3');
-const { StepFunction } = require('@cumulus/ingest/aws');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const models = require('../../models');
@@ -176,7 +176,7 @@ test.before(async () => {
     fullMessageOutput()
   );
 
-  mockedSF = sinon.stub(StepFunction, 'getExecutionStatus').callsFake(stepFunctionMock.getExecutionStatus);
+  mockedSF = sinon.stub(StepFunctions, 'getExecutionStatus').callsFake(stepFunctionMock.getExecutionStatus);
   mockedSFExecution = sinon
     .stub(awsServices.sfn(), 'describeExecution')
     .callsFake(executionExistsMock);

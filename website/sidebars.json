@@ -88,6 +88,7 @@
       "operator-docs/collection-storage-best-practices"
     ],
     "Operations": [
+      "operator-docs/discovery-filtering",
       "operator-docs/rerunning-workflow-executions",
       "operator-docs/replay-kinesis-messages"
     ]

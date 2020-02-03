@@ -1,6 +1,6 @@
 'use strict';
 
-const { LambdaStep } = require('@cumulus/common/sfnStep');
+const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
   buildAndStartWorkflow,
   getLambdaAliases,

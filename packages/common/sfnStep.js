@@ -4,6 +4,7 @@ const { isNil } = require('./util');
 const { pullStepFunctionEvent } = require('./aws');
 const log = require('./log');
 const StepFunctions = require('./StepFunctions');
+const { deprecate } = require('./util');
 
 /**
  * `SfnStep` provides methods for getting the output of a step within an AWS
@@ -22,6 +23,7 @@ class SfnStep {
    * @returns {Object} - Parsed step input object
    */
   static async parseStepMessage(stepMessage, stepName) {
+    deprecate('@cumulus/common/sfnStep/SfnStep.parseStepMessage', '1.17.0', '@cumulus/integration-tests/sfnStep/SfnStep.parseStepMessage');
     let parsedStepMessage = stepMessage;
     if (stepMessage.cma) {
       parsedStepMessage = { ...stepMessage, ...stepMessage.cma, ...stepMessage.cma.event };
@@ -250,6 +252,7 @@ class SfnStep {
 class LambdaStep extends SfnStep {
   constructor() {
     super();
+    deprecate('@cumulus/common/sfnStep/LambdaStep', '1.17.0', '@cumulus/integration-tests/sfnStep/LambdaStep');
     this.scheduleFailedEvent = 'LambdaFunctionScheduleFailed';
     this.scheduleSuccessfulEvent = 'LambdaFunctionScheduled';
     this.scheduleEvents = [
@@ -284,6 +287,7 @@ class LambdaStep extends SfnStep {
 class ActivityStep extends SfnStep {
   constructor() {
     super();
+    deprecate('@cumulus/common/sfnStep/ActivityStep', '1.17.0', '@cumulus/integration-tests/sfnStep/ActivityStep');
     this.scheduleFailedEvent = 'ActivityScheduleFailed';
     this.scheduleEvents = [
       'ActivityScheduled',
