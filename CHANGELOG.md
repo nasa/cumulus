@@ -31,7 +31,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-1731**
-  - Upgrade the version of the Thin Egress App deployed by Cumulus to v47
+  - Upgrade the version of the Thin Egress App deployed by Cumulus to v48
   - Add new optional input variables to the Cumulus Terraform module
     - `thin_egress_cookie_domain` - Valid domain for Thin Egress App cookie
     - `thin_egress_domain_cert_arn` - Certificate Manager SSL Cert ARN for Thin
