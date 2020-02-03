@@ -6,7 +6,7 @@ jobs:
     docker:
       - image: cumuluss/circleci:node-8.11
       - name: localstack
-        image: localstack/localstack:0.8.6
+        image: localstack/localstack:0.10.7
     working_directory: ~/project
     steps:
       - checkout
