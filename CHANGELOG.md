@@ -6,11 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Fixed
-
-- **CUMULUS-1698**
-  - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
-  - Updated `@cumulus/api/launchpadSaml` to download launchpad IDP metadata from configured location when the metadata in s3 is not valid, and to work with updated IDP metadata and SAML response.
+## [v1.18.0] 2020-02-03
 
 ### BREAKING CHANGES
 
@@ -30,21 +26,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- **CUMULUS-1731**
-  - Upgrade the version of the Thin Egress App deployed by Cumulus to v48
-  - Add new optional input variables to the Cumulus Terraform module
-    - `thin_egress_cookie_domain` - Valid domain for Thin Egress App cookie
-    - `thin_egress_domain_cert_arn` - Certificate Manager SSL Cert ARN for Thin
-      Egress App if deployed outside NGAP/CloudFront
-    - `thin_egress_download_role_in_region_arn` - ARN for reading of Thin Egress
-      App data buckets for in-region requests
-    - `thin_egress_jwt_algo` - Algorithm with which to encode the Thin Egress
-      App JWT cookie
-    - `thin_egress_jwt_secret_name` - Name of AWS secret where keys for the Thin
-      Egress App JWT encode/decode are stored
-    - `thin_egress_lambda_code_dependency_archive_key` - Thin Egress App - S3
-      Key of packaged python modules for lambda dependency layer
-
 - **CUMULUS-1040**
   - Added `@cumulus/aws-client` package to provide utilities for working with AWS services and the Node.js AWS SDK
   - Added `@cumulus/errors` package which exports error classes for use in Cumulus workflow code
@@ -52,10 +33,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1102**
   - Adds functionality to the @cumulus/api package for better local testing.
-      - Adds data seeding for @cumulus/api's localAPI.
-        - seed functions allow adding collections, executions, granules, pdrs, providers, and rules to a Localstack Elasticsearch and DynamoDB via `addCollections`,  `addExecutions`, `addGranules`, `addPdrs`, `addProviders`, and `addRules`.
-   - Adds `eraseDataStack` function to local API server code allowing resetting of local datastack for testing (ES and DynamoDB).
-   - Adds optional parameters to the @cumulus/api bin serve to allow for launching the api without destroying the current data.
+    - Adds data seeding for @cumulus/api's localAPI.
+      - seed functions allow adding collections, executions, granules, pdrs, providers, and rules to a Localstack Elasticsearch and DynamoDB via `addCollections`,  `addExecutions`, `addGranules`, `addPdrs`, `addProviders`, and `addRules`.
+    - Adds `eraseDataStack` function to local API server code allowing resetting of local datastack for testing (ES and DynamoDB).
+    - Adds optional parameters to the @cumulus/api bin serve to allow for launching the api without destroying the current data.
 
 - **CUMULUS-1697**
   - Added the `@cumulus/tf-inventory` package that provides command line utilities for managing Terraform resources in your AWS account
@@ -71,11 +52,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add `@cumulus/ingest/providerClientUtils.buildProviderClient` function
   - Add `@cumulus/ingest/providerClientUtils.fetchTextFile` function
 
+- **CUMULUS-1731**
+  - Upgrade the version of the Thin Egress App deployed by Cumulus to v48
+  - Add new optional input variables to the Cumulus Terraform module
+    - `thin_egress_cookie_domain` - Valid domain for Thin Egress App cookie
+    - `thin_egress_domain_cert_arn` - Certificate Manager SSL Cert ARN for Thin
+      Egress App if deployed outside NGAP/CloudFront
+    - `thin_egress_download_role_in_region_arn` - ARN for reading of Thin Egress
+      App data buckets for in-region requests
+    - `thin_egress_jwt_algo` - Algorithm with which to encode the Thin Egress
+      App JWT cookie
+    - `thin_egress_jwt_secret_name` - Name of AWS secret where keys for the Thin
+      Egress App JWT encode/decode are stored
+    - `thin_egress_lambda_code_dependency_archive_key` - Thin Egress App - S3
+      Key of packaged python modules for lambda dependency layer
+
 - **CUMULUS-1733**
   - Add `discovery-filtering` operator doc to document previously undocumented functionality.
-
-- **CUMULUS-1697**
-  - Added the `@cumulus/tf-inventory` package that provides command line utilities for managing Terraform resources in your AWS account
 
 ### Changed
 
@@ -112,8 +105,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `@cumulus/ingest/aws/StepFunction.getExecutionUrl`  -> `@cumulus/aws-client/StepFunction.getExecutionUrl`
 
 - **CUMULUS-1102**
-   - Updates `@cumulus/api/auth/testAuth` to use JWT instead of random tokens.
-   - Updates the default AMI for the ecs\_cluster\_instance\_image\_id.
+  - Updates `@cumulus/api/auth/testAuth` to use JWT instead of random tokens.
+  - Updates the default AMI for the ecs\_cluster\_instance\_image\_id.
 
 - **CUMULUS-1622**
   - Mutex class has been deprecated in `@cumulus/common/concurrency` and will be removed in a future release.
@@ -126,6 +119,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `@cumulus/aws.receiveSQSMessages` not to replace `message.Body` with a parsed object. This behavior was undocumented and confusing as received messages appeared to contradict AWS docs that state `message.Body` is always a string.
   - Replaced `sf_watcher` CloudWatch rule from `cloudwatch-events.tf` with an EventSourceMapping on `sqs2sf` mapped to the `start_sf` SQS queue (in `event-sources.tf`).
   - Updated `sqs2sf` with an EventSourceMapping handler and unit test.
+
+- **CUMULUS-1698**
+  - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
+  - Updated `@cumulus/api/launchpadSaml` to download launchpad IDP metadata from configured location when the metadata in s3 is not valid, and to work with updated IDP metadata and SAML response.
 
 ### Fixed
 
@@ -1943,7 +1940,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.17.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.18.0...HEAD
+[v1.18.0]: https://github.com/nasa/cumulus/compare/v1.17.0...v1.18.0
 [v1.17.0]: https://github.com/nasa/cumulus/compare/v1.16.1...v1.17.0
 [v1.16.1]: https://github.com/nasa/cumulus/compare/v1.16.0...v1.16.1
 [v1.16.0]: https://github.com/nasa/cumulus/compare/v1.15.0...v1.16.0
