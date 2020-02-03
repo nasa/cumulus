@@ -54,7 +54,7 @@ module.exports = {
     libraryTarget: 'commonjs2',
     filename: '[name]/index.js',
     devtoolModuleFilenameTemplate: (info) => {
-      const relativePath = path.relative(root, info.absoluteResourcePath)
+      const relativePath = path.relative(root, info.absoluteResourcePath);
       return `webpack://${relativePath}`;
     }
   },

@@ -19,7 +19,7 @@ test('write multiple attributes', (t) => {
     .add('FOO', new PVLTextString('BAR'))
     .add('BAZ', new PVLTextString('QUX'))
     .add('BAZ', new PVLTextString('FIZZ'));
-  const expected =    'FOO = "BAR";\n'
+  const expected = 'FOO = "BAR";\n'
     + 'BAZ = "QUX";\n'
     + 'BAZ = "FIZZ";\n';
   t.deepEqual(jsToPVL(input), expected);
@@ -29,7 +29,7 @@ test('write one group', (t) => {
   const input = new PVLRoot()
     .addAggregate(new PVLGroup('FOO')
       .add('BAR', new PVLTextString('BAZ')));
-  const expected =    'GROUP = FOO;\n'
+  const expected = 'GROUP = FOO;\n'
     + '  BAR = "BAZ";\n'
     + 'END_GROUP = FOO;\n';
   t.deepEqual(jsToPVL(input), expected);
@@ -41,7 +41,7 @@ test('write multiple groups', (t) => {
       .add('BAR', new PVLTextString('BAZ')))
     .addAggregate(new PVLGroup('QUX')
       .add('BAR', new PVLTextString('FIZZ')));
-  const expected =    'GROUP = FOO;\n'
+  const expected = 'GROUP = FOO;\n'
     + '  BAR = "BAZ";\n'
     + 'END_GROUP = FOO;\n'
     + 'GROUP = QUX;\n'
@@ -55,7 +55,7 @@ test('write nested groups', (t) => {
     .addAggregate(new PVLGroup('FOO')
       .addAggregate(new PVLObject('QUX')
         .add('BAR', new PVLTextString('BAZ'))));
-  const expected =    'GROUP = FOO;\n'
+  const expected = 'GROUP = FOO;\n'
     + '  OBJECT = QUX;\n'
     + '    BAR = "BAZ";\n'
     + '  END_OBJECT = QUX;\n'

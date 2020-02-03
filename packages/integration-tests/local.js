@@ -109,7 +109,7 @@ async function runStep(lambdaPath, lambdaHandler, message, stepName) {
     const moduleFn = lambdaHandler.split('.');
     const moduleFileName = moduleFn[0];
     const moduleFunctionName = moduleFn[1];
-    const task = require(`${taskFullPath}/${moduleFileName}`); // eslint-disable-line global-require, import/no-dynamic-require, max-len
+    const task = require(`${taskFullPath}/${moduleFileName}`); // eslint-disable-line global-require, import/no-dynamic-require
 
     console.log(`Started execution of ${stepName}`);
 
@@ -131,7 +131,7 @@ async function runStep(lambdaPath, lambdaHandler, message, stepName) {
  *
  * @param {Object} workflow - a test workflow object
  * @param {Object} message - input message to the workflow
- * @returns {Promise.<Object>} an object that includes the workflow input/output
+ * @returns {Promise<Object>} an object that includes the workflow input/output
  *  plus the output of every step
  */
 async function runWorkflow(workflow, message) {
@@ -143,7 +143,9 @@ async function runWorkflow(workflow, message) {
 
   let stepInput = clone(message);
 
+  // eslint-disable-next-line no-restricted-syntax
   for (const step of workflow.steps) {
+    // eslint-disable-next-line no-await-in-loop
     stepInput = await runStep(step.lambda, step.handler, stepInput, step.name);
     trail.stepOutputs[step.name] = clone(stepInput);
   }

@@ -5,7 +5,7 @@ const Ajv = require('ajv');
 const pWaitFor = require('p-wait-for');
 const awsServices = require('@cumulus/aws-client/services');
 const DynamoDb = require('@cumulus/aws-client/DynamoDb');
-const { RecordDoesNotExist } = require('@cumulus/common/errors');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { errorify } = require('../lib/utils');
 
