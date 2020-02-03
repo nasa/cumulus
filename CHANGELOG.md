@@ -72,38 +72,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **CUMULUS-1040**
-  - Deprecated the following code. For cases where the code was moved into another package, the new code location is noted:
-    - `@cumulus/common/CloudFormationGateway` -> `@cumulus/aws-client/CloudFormationGateway`
-    - `@cumulus/common/DynamoDb` -> `@cumulus/aws-client/DynamoDb`
-    - `@cumulus/common/errors` -> `@cumulus/errors`
-    - `@cumulus/common/StepFunctions` -> `@cumulus/aws-client/StepFunctions`
-    - All of the exported functions in `@cumulus/commmon/aws` (moved into `@cumulus/aws-client`), except:
-      - `@cumulus/common/aws/improveStackTrace`
-      - `@cumulus/common/aws/retryOnThrottlingException`
-    - `@cumulus/common/sfnStep/SfnStep.parseStepMessage` -> `@cumulus/integration-tests/sfnStep/SfnStep.parseStepMessage`
-    - `@cumulus/common/sfnStep/ActivityStep` -> `@cumulus/integration-tests/sfnStep/ActivityStep`
-    - `@cumulus/common/sfnStep/LambdaStep` -> `@cumulus/integration-tests/sfnStep/LambdaStep`
-    - `@cumulus/common/string/unicodeEscape` -> `@cumulus/aws-client/StepFunctions.unicodeEscape`
-    - `@cumulus/common/util/setErrorStack` -> `@cumulus/aws-client/util/setErrorStack`
-    - `@cumulus/ingest/aws/invoke` -> `@cumulus/aws-client/Lambda/invoke`
-    - `@cumulus/ingest/aws/CloudWatch.bucketSize`
-    - `@cumulus/ingest/aws/CloudWatch.cw`
-    - `@cumulus/ingest/aws/ECS.ecs`
-    - `@cumulus/ingest/aws/ECS`
-    - `@cumulus/ingest/aws/Events.putEvent` -> `@cumulus/aws-client/CloudwatchEvents.putEvent`
-    - `@cumulus/ingest/aws/Events.deleteEvent` -> `@cumulus/aws-client/CloudwatchEvents.deleteEvent`
-    - `@cumulus/ingest/aws/Events.deleteTarget` -> `@cumulus/aws-client/CloudwatchEvents.deleteTarget`
-    - `@cumulus/ingest/aws/Events.putTarget` -> `@cumulus/aws-client/CloudwatchEvents.putTarget`
-    - `@cumulus/ingest/aws/SQS.attributes` -> `@cumulus/aws-client/SQS.getQueueAttributes`
-    - `@cumulus/ingest/aws/SQS.deleteMessage` -> `@cumulus/aws-client/SQS.deleteSQSMessage`
-    - `@cumulus/ingest/aws/SQS.deleteQueue` -> `@cumulus/aws-client/SQS.deleteQueue`
-    - `@cumulus/ingest/aws/SQS.getUrl` -> `@cumulus/aws-client/SQS.getQueueUrlByName`
-    - `@cumulus/ingest/aws/SQS.receiveMessage` -> `@cumulus/aws-client/SQS.receiveSQSMessages`
-    - `@cumulus/ingest/aws/SQS.sendMessage` -> `@cumulus/aws-client/SQS.sendSQSMessage`
-    - `@cumulus/ingest/aws/StepFunction.getExecutionStatus` -> `@cumulus/aws-client/StepFunction.getExecutionStatus`
-    - `@cumulus/ingest/aws/StepFunction.getExecutionUrl`  -> `@cumulus/aws-client/StepFunction.getExecutionUrl`
-
 - **CUMULUS-1102**
   - Updates `@cumulus/api/auth/testAuth` to use JWT instead of random tokens.
   - Updates the default AMI for the ecs\_cluster\_instance\_image\_id.
@@ -136,6 +104,41 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1481**
   - removed `process` config and output from PostToCmr as it was not required by the task nor downstream steps, and should still be in the output message's `meta` regardless.
+
+### Deprecated
+
+- **CUMULUS-1040**
+  - Deprecated the following code. For cases where the code was moved into another package, the new code location is noted:
+    - `@cumulus/common/CloudFormationGateway` -> `@cumulus/aws-client/CloudFormationGateway`
+    - `@cumulus/common/DynamoDb` -> `@cumulus/aws-client/DynamoDb`
+    - `@cumulus/common/errors` -> `@cumulus/errors`
+    - `@cumulus/common/StepFunctions` -> `@cumulus/aws-client/StepFunctions`
+    - All of the exported functions in `@cumulus/commmon/aws` (moved into `@cumulus/aws-client`), except:
+      - `@cumulus/common/aws/isThrottlingException` -> `@cumulus/errors/isThrottlingException`
+      - `@cumulus/common/aws/improveStackTrace` (not deprecated)
+      - `@cumulus/common/aws/retryOnThrottlingException` (not deprecated)
+    - `@cumulus/common/sfnStep/SfnStep.parseStepMessage` -> `@cumulus/integration-tests/sfnStep/SfnStep.parseStepMessage`
+    - `@cumulus/common/sfnStep/ActivityStep` -> `@cumulus/integration-tests/sfnStep/ActivityStep`
+    - `@cumulus/common/sfnStep/LambdaStep` -> `@cumulus/integration-tests/sfnStep/LambdaStep`
+    - `@cumulus/common/string/unicodeEscape` -> `@cumulus/aws-client/StepFunctions.unicodeEscape`
+    - `@cumulus/common/util/setErrorStack` -> `@cumulus/aws-client/util/setErrorStack`
+    - `@cumulus/ingest/aws/invoke` -> `@cumulus/aws-client/Lambda/invoke`
+    - `@cumulus/ingest/aws/CloudWatch.bucketSize`
+    - `@cumulus/ingest/aws/CloudWatch.cw`
+    - `@cumulus/ingest/aws/ECS.ecs`
+    - `@cumulus/ingest/aws/ECS`
+    - `@cumulus/ingest/aws/Events.putEvent` -> `@cumulus/aws-client/CloudwatchEvents.putEvent`
+    - `@cumulus/ingest/aws/Events.deleteEvent` -> `@cumulus/aws-client/CloudwatchEvents.deleteEvent`
+    - `@cumulus/ingest/aws/Events.deleteTarget` -> `@cumulus/aws-client/CloudwatchEvents.deleteTarget`
+    - `@cumulus/ingest/aws/Events.putTarget` -> `@cumulus/aws-client/CloudwatchEvents.putTarget`
+    - `@cumulus/ingest/aws/SQS.attributes` -> `@cumulus/aws-client/SQS.getQueueAttributes`
+    - `@cumulus/ingest/aws/SQS.deleteMessage` -> `@cumulus/aws-client/SQS.deleteSQSMessage`
+    - `@cumulus/ingest/aws/SQS.deleteQueue` -> `@cumulus/aws-client/SQS.deleteQueue`
+    - `@cumulus/ingest/aws/SQS.getUrl` -> `@cumulus/aws-client/SQS.getQueueUrlByName`
+    - `@cumulus/ingest/aws/SQS.receiveMessage` -> `@cumulus/aws-client/SQS.receiveSQSMessages`
+    - `@cumulus/ingest/aws/SQS.sendMessage` -> `@cumulus/aws-client/SQS.sendSQSMessage`
+    - `@cumulus/ingest/aws/StepFunction.getExecutionStatus` -> `@cumulus/aws-client/StepFunction.getExecutionStatus`
+    - `@cumulus/ingest/aws/StepFunction.getExecutionUrl`  -> `@cumulus/aws-client/StepFunction.getExecutionUrl`
 
 ## [v1.17.0] - 2019-12-31
 
