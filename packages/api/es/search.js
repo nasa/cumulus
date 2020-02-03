@@ -83,9 +83,9 @@ const esMetricsConfig = () => {
   };
 };
 
-const esConfig = async (host, metrics = false) => {
+const esConfig = async (host, metrics = false, testMode = inTestMode()) => {
   let config;
-  if (inTestMode()) {
+  if (testMode) {
     config = esTestConfig();
   } else if (metrics) {
     config = esMetricsConfig();
@@ -97,8 +97,8 @@ const esConfig = async (host, metrics = false) => {
 };
 
 class BaseSearch {
-  static async es(host, metrics) {
-    return new elasticsearch.Client(await esConfig(host, metrics));
+  static async es(host, metrics, testMode) {
+    return new elasticsearch.Client(await esConfig(host, metrics, testMode));
   }
 
   constructor(event, type = null, index, metrics = false) {
