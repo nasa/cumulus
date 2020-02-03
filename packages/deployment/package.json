@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/deployment",
-  "version": "1.17.0",
+  "version": "1.18.0",
   "description": "Deployment templates for cumulus",
   "bin": {
     "delete-stage": "bin/delete-stage-cli.js"
@@ -42,7 +42,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "1.17.0",
+    "@cumulus/common": "1.18.0",
     "aws-sdk": "^2.585.0",
     "commander": "^2.20.0",
     "extract-zip": "^1.6.6",
@@ -60,13 +60,13 @@
     "yauzl": "^2.10.0"
   },
   "devDependencies": {
+    "@cumulus/aws-client": "1.18.0",
     "ava": "^0.25.0",
     "babel-cli": "^6.26.0",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
     "babel-polyfill": "^6.23.0",
     "babel-preset-es2017": "^6.24.1",
-    "@cumulus/aws-client": "1.17.0-alpha",
     "nock": "10.0.1",
     "nyc": "^14.0.0",
     "sinon": "^7.1.1"
