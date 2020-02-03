@@ -1,0 +1,2323 @@
+{
+  "reportStartTime": "2020-01-14T20:25:29.026Z",
+  "reportEndTime": "2020-01-14T20:25:35.573Z",
+  "status": "SUCCESS",
+  "error": null,
+  "filesInCumulus": {
+    "okCount": 129,
+    "onlyInS3": [
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1573838955288/MOD09GQ.A3119781.haeynr.006.4074740546315.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574358566826/MOD09GQ.A8013695.K4N0ey.006.3127282204118.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574359092072/MOD09GQ.A8702100.fZBWNI.006.3775135520157.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574359380076/MOD09GQ.A9699053.vVDeTY.006.4873356130094.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574377023900/MOD09GQ.A4940969.yRnTIO.006.6074235721878.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574381176138/MOD09GQ.A5336057.nAG4KK.006.3221004503457.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574712390341/MOD09GQ.A3493490.Xo2qAN.006.9380282039899.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574716254780/MOD09GQ.A5754494.1nimTh.006.5626987564096.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574717133091/MOD09GQ.A7767142.CYxJFA.006.2633356778897.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575912896952/MOD09GQ.A7399114.BmDCbe.006.9892042967204.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575923953772/MOD09GQ.A4805149.9oDhyh.006.9022510397676.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575925438077/MOD09GQ.A5542657.kyhjj1.006.5537130666716.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575926279043/MOD09GQ.A9109322.4iOCj1.006.8298263671181.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575927241619/MOD09GQ.A6015560.1qb9nY.006.2220280411055.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575992158393/MOD09GQ.A3341699.cCjc1D.006.4406545864663.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575992637033/MOD09GQ.A1138952.gpR2e1.006.4518044814416.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575993430080/MOD09GQ.A9946950.mAlY72.006.1085172309558.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575993900166/MOD09GQ.A3810090.EW85di.006.3466133695305.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575994615809/MOD09GQ.A7333345.RckwyJ.006.0332555268735.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575995102177/MOD09GQ.A9133222.xSOAC_.006.7143442454933.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575996898914/MOD09GQ.A4671964.mcRJii.006.3575074548289.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575999558578/MOD09GQ.A5908420.1mVEOo.006.0961024812410.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576000334935/MOD09GQ.A5395888.IfjqmW.006.6212087429175.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576005735223/MOD09GQ.A5675548.0G4ccz.006.6657554508083.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576006501720/MOD09GQ.A5778024.foNw7Q.006.6574105768023.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576007039732/MOD09GQ.A0573928.tG823W.006.8959114868194.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576007578106/MOD09GQ.A8200321.wvugBk.006.2104901543407.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576012842378/MOD09GQ.A0087634.eCMzPL.006.7194649784728.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576015468515/MOD09GQ.A1775543.QmnKWZ.006.6004195429297.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576088588648/MOD09GQ.A5486655.lMAgW3.006.1459975841058.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576102296412/MOD09GQ.A5622767.jVW893.006.2184575670628.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576105218713/MOD09GQ.A4452652.1ykqZ3.006.2451039858926.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576109440469/MOD09GQ.A2592006.XKcNf_.006.1485654940189.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576182120916/MOD09GQ.A5826214.xtwugO.006.6261686801168.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576249014314/MOD09GQ.A6210996.nHGu8O.006.3174297550568.hdf.met",
+      "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576249970860/MOD09GQ.A8421402.t6nFKh.006.3037894989051.hdf.met",
+      "s3://mhs3-protected/495c7321334171d867b0dcdf3ad5cc21e9cef365",
+      "s3://mhs3-protected/DEMO/sample-data-a.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1573838955288/MOD09GQ.A3119781.haeynr.006.4074740546315.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1573838955288/MOD09GQ.A3119781.haeynr.006.4074740546315.hdf.v20191115T173114000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1573838955288/MOD09GQ.A3119781.haeynr.006.4074740546315.hdf.v20191115T173129000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574358566826/MOD09GQ.A8013695.K4N0ey.006.3127282204118.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574358566826/MOD09GQ.A8013695.K4N0ey.006.3127282204118.hdf.v20191121T175043000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574359092072/MOD09GQ.A8702100.fZBWNI.006.3775135520157.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574359092072/MOD09GQ.A8702100.fZBWNI.006.3775135520157.hdf.v20191121T175828000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574359092072/MOD09GQ.A8702100.fZBWNI.006.3775135520157.hdf.v20191121T175845000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574359380076/MOD09GQ.A9699053.vVDeTY.006.4873356130094.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574359380076/MOD09GQ.A9699053.vVDeTY.006.4873356130094.hdf.v20191121T180329000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574359380076/MOD09GQ.A9699053.vVDeTY.006.4873356130094.hdf.v20191121T180346000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574377023900/MOD09GQ.A4940969.yRnTIO.006.6074235721878.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574377023900/MOD09GQ.A4940969.yRnTIO.006.6074235721878.hdf.v20191121T225740000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574377023900/MOD09GQ.A4940969.yRnTIO.006.6074235721878.hdf.v20191121T225757000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574381176138/MOD09GQ.A5336057.nAG4KK.006.3221004503457.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574381176138/MOD09GQ.A5336057.nAG4KK.006.3221004503457.hdf.v20191122T000648000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574381176138/MOD09GQ.A5336057.nAG4KK.006.3221004503457.hdf.v20191122T000705000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574712390341/MOD09GQ.A3493490.Xo2qAN.006.9380282039899.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574712390341/MOD09GQ.A3493490.Xo2qAN.006.9380282039899.hdf.v20191125T200714000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574712390341/MOD09GQ.A3493490.Xo2qAN.006.9380282039899.hdf.v20191125T200732000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574716254780/MOD09GQ.A5754494.1nimTh.006.5626987564096.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574716254780/MOD09GQ.A5754494.1nimTh.006.5626987564096.hdf.v20191125T211128000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574716254780/MOD09GQ.A5754494.1nimTh.006.5626987564096.hdf.v20191125T211146000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574717133091/MOD09GQ.A7767142.CYxJFA.006.2633356778897.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574717133091/MOD09GQ.A7767142.CYxJFA.006.2633356778897.hdf.v20191125T212558000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1574717133091/MOD09GQ.A7767142.CYxJFA.006.2633356778897.hdf.v20191125T212615000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575912896952/MOD09GQ.A7399114.BmDCbe.006.9892042967204.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575912896952/MOD09GQ.A7399114.BmDCbe.006.9892042967204.hdf.v20191209T173526000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575912896952/MOD09GQ.A7399114.BmDCbe.006.9892042967204.hdf.v20191209T173547000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575923953772/MOD09GQ.A4805149.9oDhyh.006.9022510397676.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575923953772/MOD09GQ.A4805149.9oDhyh.006.9022510397676.hdf.v20191209T203947000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575923953772/MOD09GQ.A4805149.9oDhyh.006.9022510397676.hdf.v20191209T204003000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575925438077/MOD09GQ.A5542657.kyhjj1.006.5537130666716.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575925438077/MOD09GQ.A5542657.kyhjj1.006.5537130666716.hdf.v20191209T210419000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575925438077/MOD09GQ.A5542657.kyhjj1.006.5537130666716.hdf.v20191209T210448000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575926279043/MOD09GQ.A9109322.4iOCj1.006.8298263671181.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575926279043/MOD09GQ.A9109322.4iOCj1.006.8298263671181.hdf.v20191209T211818000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575926279043/MOD09GQ.A9109322.4iOCj1.006.8298263671181.hdf.v20191209T211833000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575927241619/MOD09GQ.A6015560.1qb9nY.006.2220280411055.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575927241619/MOD09GQ.A6015560.1qb9nY.006.2220280411055.hdf.v20191209T213423000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575927241619/MOD09GQ.A6015560.1qb9nY.006.2220280411055.hdf.v20191209T213438000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575992158393/MOD09GQ.A3341699.cCjc1D.006.4406545864663.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575992158393/MOD09GQ.A3341699.cCjc1D.006.4406545864663.hdf.v20191210T153630000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575992158393/MOD09GQ.A3341699.cCjc1D.006.4406545864663.hdf.v20191210T153645000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575992637033/MOD09GQ.A1138952.gpR2e1.006.4518044814416.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575992637033/MOD09GQ.A1138952.gpR2e1.006.4518044814416.hdf.v20191210T154417000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575992637033/MOD09GQ.A1138952.gpR2e1.006.4518044814416.hdf.v20191210T154432000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575993430080/MOD09GQ.A9946950.mAlY72.006.1085172309558.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575993430080/MOD09GQ.A9946950.mAlY72.006.1085172309558.hdf.v20191210T155738000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575993430080/MOD09GQ.A9946950.mAlY72.006.1085172309558.hdf.v20191210T155751000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575993900166/MOD09GQ.A3810090.EW85di.006.3466133695305.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575993900166/MOD09GQ.A3810090.EW85di.006.3466133695305.hdf.v20191210T160519000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575993900166/MOD09GQ.A3810090.EW85di.006.3466133695305.hdf.v20191210T160533000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575994615809/MOD09GQ.A7333345.RckwyJ.006.0332555268735.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575994615809/MOD09GQ.A7333345.RckwyJ.006.0332555268735.hdf.v20191210T161727000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575994615809/MOD09GQ.A7333345.RckwyJ.006.0332555268735.hdf.v20191210T161743000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575995102177/MOD09GQ.A9133222.xSOAC_.006.7143442454933.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575995102177/MOD09GQ.A9133222.xSOAC_.006.7143442454933.hdf.v20191210T162527000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575995102177/MOD09GQ.A9133222.xSOAC_.006.7143442454933.hdf.v20191210T162603000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575996898914/MOD09GQ.A4671964.mcRJii.006.3575074548289.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575996898914/MOD09GQ.A4671964.mcRJii.006.3575074548289.hdf.v20191210T165533000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575996898914/MOD09GQ.A4671964.mcRJii.006.3575074548289.hdf.v20191210T165547000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575999558578/MOD09GQ.A5908420.1mVEOo.006.0961024812410.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575999558578/MOD09GQ.A5908420.1mVEOo.006.0961024812410.hdf.v20191210T173949000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1575999558578/MOD09GQ.A5908420.1mVEOo.006.0961024812410.hdf.v20191210T174003000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576000334935/MOD09GQ.A5395888.IfjqmW.006.6212087429175.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576000334935/MOD09GQ.A5395888.IfjqmW.006.6212087429175.hdf.v20191210T175241000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576000334935/MOD09GQ.A5395888.IfjqmW.006.6212087429175.hdf.v20191210T175257000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576005735223/MOD09GQ.A5675548.0G4ccz.006.6657554508083.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576005735223/MOD09GQ.A5675548.0G4ccz.006.6657554508083.hdf.v20191210T192240000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576005735223/MOD09GQ.A5675548.0G4ccz.006.6657554508083.hdf.v20191210T192305000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576006501720/MOD09GQ.A5778024.foNw7Q.006.6574105768023.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576006501720/MOD09GQ.A5778024.foNw7Q.006.6574105768023.hdf.v20191210T193523000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576006501720/MOD09GQ.A5778024.foNw7Q.006.6574105768023.hdf.v20191210T193540000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576007039732/MOD09GQ.A0573928.tG823W.006.8959114868194.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576007039732/MOD09GQ.A0573928.tG823W.006.8959114868194.hdf.v20191210T194447000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576007039732/MOD09GQ.A0573928.tG823W.006.8959114868194.hdf.v20191210T194502000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576007578106/MOD09GQ.A8200321.wvugBk.006.2104901543407.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576007578106/MOD09GQ.A8200321.wvugBk.006.2104901543407.hdf.v20191210T195328000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576007578106/MOD09GQ.A8200321.wvugBk.006.2104901543407.hdf.v20191210T195343000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576012842378/MOD09GQ.A0087634.eCMzPL.006.7194649784728.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576012842378/MOD09GQ.A0087634.eCMzPL.006.7194649784728.hdf.v20191210T212114000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576012842378/MOD09GQ.A0087634.eCMzPL.006.7194649784728.hdf.v20191210T212129000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576015468515/MOD09GQ.A1775543.QmnKWZ.006.6004195429297.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576015468515/MOD09GQ.A1775543.QmnKWZ.006.6004195429297.hdf.v20191210T220459000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576015468515/MOD09GQ.A1775543.QmnKWZ.006.6004195429297.hdf.v20191210T220515000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576088588648/MOD09GQ.A5486655.lMAgW3.006.1459975841058.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576088588648/MOD09GQ.A5486655.lMAgW3.006.1459975841058.hdf.v20191211T182348000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576088588648/MOD09GQ.A5486655.lMAgW3.006.1459975841058.hdf.v20191211T182404000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576102296412/MOD09GQ.A5622767.jVW893.006.2184575670628.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576102296412/MOD09GQ.A5622767.jVW893.006.2184575670628.hdf.v20191211T221208000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576102296412/MOD09GQ.A5622767.jVW893.006.2184575670628.hdf.v20191211T221224000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576105218713/MOD09GQ.A4452652.1ykqZ3.006.2451039858926.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576105218713/MOD09GQ.A4452652.1ykqZ3.006.2451039858926.hdf.v20191211T230050000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576105218713/MOD09GQ.A4452652.1ykqZ3.006.2451039858926.hdf.v20191211T230108000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576109440469/MOD09GQ.A2592006.XKcNf_.006.1485654940189.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576109440469/MOD09GQ.A2592006.XKcNf_.006.1485654940189.hdf.v20191212T001124000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576182120916/MOD09GQ.A5826214.xtwugO.006.6261686801168.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576182120916/MOD09GQ.A5826214.xtwugO.006.6261686801168.hdf.v20191212T202225000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576182120916/MOD09GQ.A5826214.xtwugO.006.6261686801168.hdf.v20191212T202239000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576249014314/MOD09GQ.A6210996.nHGu8O.006.3174297550568.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576249014314/MOD09GQ.A6210996.nHGu8O.006.3174297550568.hdf.v20191213T145726000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576249014314/MOD09GQ.A6210996.nHGu8O.006.3174297550568.hdf.v20191213T145740000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576249970860/MOD09GQ.A8421402.t6nFKh.006.3037894989051.hdf",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576249970860/MOD09GQ.A8421402.t6nFKh.006.3037894989051.hdf.v20191213T151312000",
+      "s3://mhs3-protected/MOD09GQ___006/2017/MOD/mhs3-IngestGranuleDuplicateHandling-1576249970860/MOD09GQ.A8421402.t6nFKh.006.3037894989051.hdf.v20191213T151327000",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1573838955288/MOD09GQ.A3119781.haeynr.006.4074740546315.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574358566826/MOD09GQ.A8013695.K4N0ey.006.3127282204118.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574359092072/MOD09GQ.A8702100.fZBWNI.006.3775135520157.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574359380076/MOD09GQ.A9699053.vVDeTY.006.4873356130094.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574377023900/MOD09GQ.A4940969.yRnTIO.006.6074235721878.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574381176138/MOD09GQ.A5336057.nAG4KK.006.3221004503457.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574712390341/MOD09GQ.A3493490.Xo2qAN.006.9380282039899.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574716254780/MOD09GQ.A5754494.1nimTh.006.5626987564096.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574717133091/MOD09GQ.A7767142.CYxJFA.006.2633356778897.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575912896952/MOD09GQ.A7399114.BmDCbe.006.9892042967204.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575923953772/MOD09GQ.A4805149.9oDhyh.006.9022510397676.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575925438077/MOD09GQ.A5542657.kyhjj1.006.5537130666716.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575926279043/MOD09GQ.A9109322.4iOCj1.006.8298263671181.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575927241619/MOD09GQ.A6015560.1qb9nY.006.2220280411055.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575992158393/MOD09GQ.A3341699.cCjc1D.006.4406545864663.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575992637033/MOD09GQ.A1138952.gpR2e1.006.4518044814416.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575993430080/MOD09GQ.A9946950.mAlY72.006.1085172309558.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575993900166/MOD09GQ.A3810090.EW85di.006.3466133695305.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575994615809/MOD09GQ.A7333345.RckwyJ.006.0332555268735.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575995102177/MOD09GQ.A9133222.xSOAC_.006.7143442454933.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575996898914/MOD09GQ.A4671964.mcRJii.006.3575074548289.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575999558578/MOD09GQ.A5908420.1mVEOo.006.0961024812410.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576000334935/MOD09GQ.A5395888.IfjqmW.006.6212087429175.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576005735223/MOD09GQ.A5675548.0G4ccz.006.6657554508083.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576006501720/MOD09GQ.A5778024.foNw7Q.006.6574105768023.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576007039732/MOD09GQ.A0573928.tG823W.006.8959114868194.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576007578106/MOD09GQ.A8200321.wvugBk.006.2104901543407.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576012842378/MOD09GQ.A0087634.eCMzPL.006.7194649784728.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576015468515/MOD09GQ.A1775543.QmnKWZ.006.6004195429297.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576088588648/MOD09GQ.A5486655.lMAgW3.006.1459975841058.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576102296412/MOD09GQ.A5622767.jVW893.006.2184575670628.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576105218713/MOD09GQ.A4452652.1ykqZ3.006.2451039858926.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576109440469/MOD09GQ.A2592006.XKcNf_.006.1485654940189.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576182120916/MOD09GQ.A5826214.xtwugO.006.6261686801168.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576249014314/MOD09GQ.A6210996.nHGu8O.006.3174297550568.cmr.xml",
+      "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576249970860/MOD09GQ.A8421402.t6nFKh.006.3037894989051.cmr.xml",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1573838955288/MOD09GQ.A3119781.haeynr.006.4074740546315_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574358566826/MOD09GQ.A8013695.K4N0ey.006.3127282204118_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574359092072/MOD09GQ.A8702100.fZBWNI.006.3775135520157_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574359380076/MOD09GQ.A9699053.vVDeTY.006.4873356130094_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574377023900/MOD09GQ.A4940969.yRnTIO.006.6074235721878_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574381176138/MOD09GQ.A5336057.nAG4KK.006.3221004503457_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574712390341/MOD09GQ.A3493490.Xo2qAN.006.9380282039899_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574716254780/MOD09GQ.A5754494.1nimTh.006.5626987564096_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1574717133091/MOD09GQ.A7767142.CYxJFA.006.2633356778897_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575912896952/MOD09GQ.A7399114.BmDCbe.006.9892042967204_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575923953772/MOD09GQ.A4805149.9oDhyh.006.9022510397676_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575925438077/MOD09GQ.A5542657.kyhjj1.006.5537130666716_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575926279043/MOD09GQ.A9109322.4iOCj1.006.8298263671181_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575927241619/MOD09GQ.A6015560.1qb9nY.006.2220280411055_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575992158393/MOD09GQ.A3341699.cCjc1D.006.4406545864663_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575992637033/MOD09GQ.A1138952.gpR2e1.006.4518044814416_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575993430080/MOD09GQ.A9946950.mAlY72.006.1085172309558_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575993900166/MOD09GQ.A3810090.EW85di.006.3466133695305_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575994615809/MOD09GQ.A7333345.RckwyJ.006.0332555268735_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575995102177/MOD09GQ.A9133222.xSOAC_.006.7143442454933_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575996898914/MOD09GQ.A4671964.mcRJii.006.3575074548289_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1575999558578/MOD09GQ.A5908420.1mVEOo.006.0961024812410_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576000334935/MOD09GQ.A5395888.IfjqmW.006.6212087429175_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576005735223/MOD09GQ.A5675548.0G4ccz.006.6657554508083_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576006501720/MOD09GQ.A5778024.foNw7Q.006.6574105768023_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576007039732/MOD09GQ.A0573928.tG823W.006.8959114868194_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576007578106/MOD09GQ.A8200321.wvugBk.006.2104901543407_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576012842378/MOD09GQ.A0087634.eCMzPL.006.7194649784728_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576015468515/MOD09GQ.A1775543.QmnKWZ.006.6004195429297_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576088588648/MOD09GQ.A5486655.lMAgW3.006.1459975841058_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576102296412/MOD09GQ.A5622767.jVW893.006.2184575670628_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576105218713/MOD09GQ.A4452652.1ykqZ3.006.2451039858926_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576109440469/MOD09GQ.A2592006.XKcNf_.006.1485654940189_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576182120916/MOD09GQ.A5826214.xtwugO.006.6261686801168_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576249014314/MOD09GQ.A6210996.nHGu8O.006.3174297550568_ndvi.jpg",
+      "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestGranuleDuplicateHandling-1576249970860/MOD09GQ.A8421402.t6nFKh.006.3037894989051_ndvi.jpg"
+    ],
+    "onlyInDynamoDb": [
+      {
+        "uri": "s3://mhs3-private/MOD09GQ___006/MOD/MOD09GQ.A9218123.TJbx_C.006.7667598863143.hdf.met",
+        "granuleId": "MOD09GQ.A9218123.TJbx_C.006.7667598863143"
+      },
+      {
+        "uri": "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestUMMGSuccess-1575927241338/MOD09GQ.A9544845.jLg7sy.006.6264785375800.hdf.met",
+        "granuleId": "MOD09GQ.A9544845.jLg7sy.006.6264785375800"
+      },
+      {
+        "uri": "s3://mhs3-private/MOD09GQ___006/MOD/mhs3-IngestUMMGSuccess-1575993900243/MOD09GQ.A8473991.0Vg1BF.006.7743328283296.hdf.met",
+        "granuleId": "MOD09GQ.A8473991.0Vg1BF.006.7743328283296"
+      },
+      {
+        "uri": "s3://mhs3-private/MOD14A1___006/MOD/MOD14A1.A6229684.liNodB.006.7559017774430.hdf.met",
+        "granuleId": "MOD14A1.A6229684.liNodB.006.7559017774430"
+      },
+      {
+        "uri": "s3://mhs3-private/MOD14A1___006/MOD/MOD14A1.A7489357.WuQwlB.006.1633383724781.hdf.met",
+        "granuleId": "MOD14A1.A7489357.WuQwlB.006.1633383724781"
+      },
+      {
+        "uri": "s3://mhs3-private/MOD14A1___006/MOD/MOD14A1.A9471544.8iLnaC.006.7851658874405.hdf.met",
+        "granuleId": "MOD14A1.A9471544.8iLnaC.006.7851658874405"
+      },
+      {
+        "uri": "s3://mhs3-private/MYD13Q1___006/BRO/BROWSE.MYD13Q1.A8039859.cm_J1d.006.4049670693348.hdf",
+        "granuleId": "MYD13Q1.A8039859.cm_J1d.006.4049670693348"
+      },
+      {
+        "uri": "s3://mhs3-private/MYD13Q1___006/BRO/BROWSE.MYD13Q1.A9323228.btdDqi.006.2091522185393.hdf",
+        "granuleId": "MYD13Q1.A9323228.btdDqi.006.2091522185393"
+      },
+      {
+        "uri": "s3://mhs3-private/MYD13Q1___006/MYD/MYD13Q1.A8039859.cm_J1d.006.4049670693348.hdf.met",
+        "granuleId": "MYD13Q1.A8039859.cm_J1d.006.4049670693348"
+      },
+      {
+        "uri": "s3://mhs3-private/MYD13Q1___006/MYD/MYD13Q1.A9323228.btdDqi.006.2091522185393.hdf.met",
+        "granuleId": "MYD13Q1.A9323228.btdDqi.006.2091522185393"
+      },
+      {
+        "uri": "s3://mhs3-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A9218123.TJbx_C.006.7667598863143.hdf",
+        "granuleId": "MOD09GQ.A9218123.TJbx_C.006.7667598863143"
+      },
+      {
+        "uri": "s3://mhs3-protected/MOD14A1___006/2017/MOD/MOD14A1.A6229684.liNodB.006.7559017774430.hdf",
+        "granuleId": "MOD14A1.A6229684.liNodB.006.7559017774430"
+      },
+      {
+        "uri": "s3://mhs3-protected/MOD14A1___006/2017/MOD/MOD14A1.A7489357.WuQwlB.006.1633383724781.hdf",
+        "granuleId": "MOD14A1.A7489357.WuQwlB.006.1633383724781"
+      },
+      {
+        "uri": "s3://mhs3-protected/MOD14A1___006/2017/MOD/MOD14A1.A9471544.8iLnaC.006.7851658874405.hdf",
+        "granuleId": "MOD14A1.A9471544.8iLnaC.006.7851658874405"
+      },
+      {
+        "uri": "s3://mhs3-protected/MYD13Q1___006/2017/MYD/MYD13Q1.A8039859.cm_J1d.006.4049670693348.hdf",
+        "granuleId": "MYD13Q1.A8039859.cm_J1d.006.4049670693348"
+      },
+      {
+        "uri": "s3://mhs3-protected/MYD13Q1___006/2017/MYD/MYD13Q1.A9323228.btdDqi.006.2091522185393.hdf",
+        "granuleId": "MYD13Q1.A9323228.btdDqi.006.2091522185393"
+      },
+      {
+        "uri": "s3://mhs3-protected/b793ea149845295b794101bd50fea09a24c8be28",
+        "granuleId": "6d949f7514da513414c5021ef194268589b65182"
+      },
+      {
+        "uri": "s3://mhs3-protected/mhs3-IngestUMMGSuccess-1575927241338-test-data/files/MOD09GQ___006/2016/MOD/mhs3-IngestUMMGSuccess-1575927241338/MOD09GQ.A9544845.jLg7sy.006.6264785375800.hdf",
+        "granuleId": "MOD09GQ.A9544845.jLg7sy.006.6264785375800"
+      },
+      {
+        "uri": "s3://mhs3-protected/mhs3-IngestUMMGSuccess-1575993900243-test-data/files/MOD09GQ___006/2016/MOD/mhs3-IngestUMMGSuccess-1575993900243/MOD09GQ.A8473991.0Vg1BF.006.7743328283296.hdf",
+        "granuleId": "MOD09GQ.A8473991.0Vg1BF.006.7743328283296"
+      },
+      {
+        "uri": "s3://mhs3-protected-2/MOD09GQ___006/MOD/MOD09GQ.A9218123.TJbx_C.006.7667598863143.cmr.xml",
+        "granuleId": "MOD09GQ.A9218123.TJbx_C.006.7667598863143"
+      },
+      {
+        "uri": "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestUMMGSuccess-1575927241338/MOD09GQ.A9544845.jLg7sy.006.6264785375800.cmr.json",
+        "granuleId": "MOD09GQ.A9544845.jLg7sy.006.6264785375800"
+      },
+      {
+        "uri": "s3://mhs3-protected-2/MOD09GQ___006/MOD/mhs3-IngestUMMGSuccess-1575993900243/MOD09GQ.A8473991.0Vg1BF.006.7743328283296.cmr.json",
+        "granuleId": "MOD09GQ.A8473991.0Vg1BF.006.7743328283296"
+      },
+      {
+        "uri": "s3://mhs3-protected-2/MOD14A1___006/MOD/MOD14A1.A6229684.liNodB.006.7559017774430.cmr.xml",
+        "granuleId": "MOD14A1.A6229684.liNodB.006.7559017774430"
+      },
+      {
+        "uri": "s3://mhs3-protected-2/MOD14A1___006/MOD/MOD14A1.A7489357.WuQwlB.006.1633383724781.cmr.xml",
+        "granuleId": "MOD14A1.A7489357.WuQwlB.006.1633383724781"
+      },
+      {
+        "uri": "s3://mhs3-protected-2/MOD14A1___006/MOD/MOD14A1.A9471544.8iLnaC.006.7851658874405.cmr.xml",
+        "granuleId": "MOD14A1.A9471544.8iLnaC.006.7851658874405"
+      },
+      {
+        "uri": "s3://mhs3-protected-2/MYD13Q1___006/MYD/MYD13Q1.A8039859.cm_J1d.006.4049670693348.cmr.xml",
+        "granuleId": "MYD13Q1.A8039859.cm_J1d.006.4049670693348"
+      },
+      {
+        "uri": "s3://mhs3-protected-2/MYD13Q1___006/MYD/MYD13Q1.A9323228.btdDqi.006.2091522185393.cmr.xml",
+        "granuleId": "MYD13Q1.A9323228.btdDqi.006.2091522185393"
+      },
+      {
+        "uri": "s3://mhs3-public/MOD09GQ___006/MOD/MOD09GQ.A9218123.TJbx_C.006.7667598863143_ndvi.jpg",
+        "granuleId": "MOD09GQ.A9218123.TJbx_C.006.7667598863143"
+      },
+      {
+        "uri": "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestUMMGSuccess-1575927241338/MOD09GQ.A9544845.jLg7sy.006.6264785375800_ndvi.jpg",
+        "granuleId": "MOD09GQ.A9544845.jLg7sy.006.6264785375800"
+      },
+      {
+        "uri": "s3://mhs3-public/MOD09GQ___006/MOD/mhs3-IngestUMMGSuccess-1575993900243/MOD09GQ.A8473991.0Vg1BF.006.7743328283296_ndvi.jpg",
+        "granuleId": "MOD09GQ.A8473991.0Vg1BF.006.7743328283296"
+      },
+      {
+        "uri": "s3://mhs3-public/MOD14A1___006/BRO/BROWSE.MOD14A1.A6229684.liNodB.006.7559017774430.1.jpg",
+        "granuleId": "MOD14A1.A6229684.liNodB.006.7559017774430"
+      },
+      {
+        "uri": "s3://mhs3-public/MOD14A1___006/BRO/BROWSE.MOD14A1.A7489357.WuQwlB.006.1633383724781.1.jpg",
+        "granuleId": "MOD14A1.A7489357.WuQwlB.006.1633383724781"
+      },
+      {
+        "uri": "s3://mhs3-public/MOD14A1___006/BRO/BROWSE.MOD14A1.A9471544.8iLnaC.006.7851658874405.1.jpg",
+        "granuleId": "MOD14A1.A9471544.8iLnaC.006.7851658874405"
+      },
+      {
+        "uri": "s3://mhs3-public/MYD13Q1___006/BRO/BROWSE.MYD13Q1.A8039859.cm_J1d.006.4049670693348.1.jpg",
+        "granuleId": "MYD13Q1.A8039859.cm_J1d.006.4049670693348"
+      },
+      {
+        "uri": "s3://mhs3-public/MYD13Q1___006/BRO/BROWSE.MYD13Q1.A9323228.btdDqi.006.2091522185393.1.jpg",
+        "granuleId": "MYD13Q1.A9323228.btdDqi.006.2091522185393"
+      }
+    ]
+  },
+  "collectionsInCumulusCmr": {
+    "okCount": 1,
+    "onlyInCumulus": [
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1573767582442___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1573771398711___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1573838955147___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1574358566311___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1574359379551___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1574377023979___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1574381175998___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1574712390523___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1574716254980___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1574717133091___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1575912896780___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1575922912270___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1575923953715___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1575925438162___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1575926279085___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1575927241491___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1575992158042___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1575992637028___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1575993430247___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1575993900229___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1575994615798___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1575995101984___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1575996898917___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1575999558588___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1576000334594___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1576005735112___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1576006501741___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1576007039306___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1576007578006___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1576012842312___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1576015468425___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1576088588601___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1576102296392___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1576105218731___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1576109440367___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1576182121139___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1576249014350___000",
+      "L2_HR_PIXC_test-mhs3-KinesisTestError-1576249970768___000",
+      "L2_HR_PIXC_test-mhs3-LambdaEventSourceTest-1575912897241___000",
+      "L2_HR_PIXC_test-mhs3-LambdaEventSourceTest-1576007578110___000",
+      "MOD09GQ_test-mhs3-IngestGranuleDuplicateHandling-1573771398863___006",
+      "MOD09GQ_test-mhs3-IngestGranuleSuccess-1573767582932___006",
+      "MOD09GQ_test-mhs3-IngestGranuleSuccess-1573771398734___006",
+      "MOD09GQ_test-mhs3-IngestGranuleSuccess-1573777725229___006",
+      "MOD09GQ_test-mhs3-IngestGranuleSuccess-1573831122562___006",
+      "MOD09GQ_test-mhs3-IngestGranuleSuccess-1574183135222___006",
+      "MOD09GQ_test-mhs3-IngestGranuleSuccess-1574377024207___006",
+      "MOD09GQ_test-mhs3-IngestGranuleSuccess-1574381176165___006",
+      "MOD09GQ_test-mhs3-IngestGranuleSuccess-1576012842508___006",
+      "MOD09GQ_test-mhs3-IngestGranuleSuccess-1576108764706___006",
+      "MOD09GQ_test-mhs3-IngestGranuleSuccess-1576109066903___006",
+      "MOD09GQ_test-mhs3-IngestGranuleSuccess-1576109175453___006",
+      "MOD09GQ_test-mhs3-IngestUMMGSuccess-1573767582815___006",
+      "MOD09GQ_test-mhs3-IngestUMMGSuccess-1573771398848___006",
+      "MOD09GQ_test-mhs3-LambdaEventSourceTest-1575912897241___006",
+      "MOD09GQ_test-mhs3-LambdaEventSourceTest-1576007578110___006",
+      "MOD09GQ_test-mhs3-sqsRule-1573833523483___006",
+      "MOD09GQ_test-mhs3-sqsRule-1573834389690___006",
+      "f3c03a599cffafe65f73099b52742aa1b95628a4___b3abc31920fbca4d2762c5d6e917f5dda432a41a",
+      "http_testcollection_test-mhs3-DiscoverGranules-1574352719684___001",
+      "http_testcollection_test-mhs3-DiscoverGranules-1574710649779___001",
+      "http_testcollection_test-mhs3-DiscoverGranules-1575929640094___001"
+    ],
+    "onlyInCmr": [
+      "A2_RainOcn_NRT___0",
+      "A2_SI12_NRT___0",
+      "A2_SI25_NRT___0",
+      "A2_SI6_NRT___0",
+      "AST_L1A___003",
+      "L2_HR_PIXC___000",
+      "L2_HR_PIXC___1",
+      "MCD43A1___006",
+      "MOD09GQ___006",
+      "MOD11A1___006",
+      "MUR-JPL-L4-GLOB-v4.1___1",
+      "MYD09A1___006",
+      "MYD13A1___006",
+      "MYD13Q1___006",
+      "hs3avaps___1",
+      "hs3cpl___1",
+      "hs3hamsr___1",
+      "hs3hirad___1",
+      "hs3hiwrap2___2",
+      "hs3hiwrap3___3",
+      "hs3hiwrap4___4",
+      "hs3hiwrap5___5",
+      "hs3hiwrap___1",
+      "hs3wwlln___1",
+      "tmt_test___001"
+    ]
+  },
+  "granulesInCumulusCmr": {
+    "okCount": 7,
+    "onlyInCumulus": [
+      {
+        "granuleId": "MOD14A1.A4135026.ekHe8x.006.3355759967228",
+        "collectionId": "MOD14A1___006"
+      },
+      {
+        "granuleId": "MOD14A1.A4526233.492TT9.006.7426276787300",
+        "collectionId": "MOD14A1___006"
+      },
+      {
+        "granuleId": "MOD14A1.A4562488.2ppgk0.006.3054981124199",
+        "collectionId": "MOD14A1___006"
+      },
+      {
+        "granuleId": "MOD14A1.A5124023.qCpo9T.006.5379922199867",
+        "collectionId": "MOD14A1___006"
+      },
+      {
+        "granuleId": "MOD14A1.A8512234.0CE5a0.006.8217730108870",
+        "collectionId": "MOD14A1___006"
+      },
+      {
+        "granuleId": "MOD14A1.A8859169.oyt3ZQ.006.6651148631629",
+        "collectionId": "MOD14A1___006"
+      },
+      {
+        "granuleId": "MOD14A1.A8959582.q932t8.006.4564896025574",
+        "collectionId": "MOD14A1___006"
+      }
+    ],
+    "onlyInCmr": [
+      {
+        "GranuleUR": "MOD14A1.A0031922.9lenyG.006.4681412227733",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0161520.Icg3Hd.006.2590173029614",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0181238.I2lQMR.006.5213076331746",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0241275.PP6Bru.006.6690267738935",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0268709.XzCq6U.006.2062396767458",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0303340.ZOAcic.006.3126112323008",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0367178.OZLnKJ.006.1553933304160",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0385810.sfCLoU.006.4410204411125",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0408148.aVHJRj.006.6581128707331",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0426428.O6puS3.006.4037434378100",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0435030.F4TfO6.006.5475131012423",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0438468.A4UnhQ.006.0916618386198",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0439787.yYkYoF.006.9258816292523",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0469562.6buMGA.006.6641209270503",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0477077.ZwnsyD.006.2155034172666",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0477862.m5RyzJ.006.7749345641502",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0478724.X0E3aO.006.2167329718097",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0493385.ncUbST.006.8724510800351",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0496800.o1BZif.006.7997570788246",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0499025.Bl5XRj.006.7345541650084",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0530215.QTb6o8.006.3728095241030",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0543357.DeSiuz.006.9248161352838",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0559967.WaTfcs.006.7692038273164",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0573198.lNm8ej.006.4937226253472",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0579654.EfC7b5.006.8547135416723",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0594210.INgzWo.006.9610785542200",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0605025.sNQ6Xj.006.8017396449666",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0686414.KR4Yj9.006.1657242945365",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0708604.EOI65z.006.5281139092272",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0731080.kPnCI3.006.9645252704886",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0743873.dTU1LJ.006.2850872371107",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0829889.4LBq3W.006.5205877566239",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0830785.BzRLhh.006.2098466050997",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0851511.fpq1t8.006.8813309643418",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0854437.MAY0Q8.006.9959874308730",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0858047.xzmmnz.006.1278403771091",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0919553.8RKHu9.006.9149860071026",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0970863.XLNxT5.006.2798234861119",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A0989760.1rAfoU.006.1423241066769",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1034119.yAxS0C.006.1060775566122",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1081653.E8hdrc.006.4410360914417",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1115000.4bDb_o.006.2278326105128",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1135111.j6ltZS.006.6490601038632",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1148386.BTNJja.006.1703429501514",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1178631.xM5T76.006.0022032029423",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1181278.bQPeTW.006.1783680708565",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1189394.88OTN4.006.7906263730471",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1218342.lSwbHi.006.9300255035117",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1320673.fbqmSu.006.2496971059489",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1324671.g1zQ18.006.6645018100409",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1331363.iuSTbG.006.8466737452095",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1386278.PER5I0.006.3128037156396",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1394645.jvLNB4.006.7932563501595",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1398327.OoEhNp.006.6140710403958",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1414599.Ir8MaJ.006.3472304331616",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1425794.dGVwQt.006.9221129681517",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1469997.3eC9_v.006.9974796300625",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1487775.Xh_YYy.006.3907075335867",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1540212.i4bO61.006.3792997119574",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1555091.ArCGtd.006.7836090584762",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1627106.yXnxzc.006.5122291281725",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1637985.L2C7jj.006.4081838044955",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1689913.IhNjOC.006.0805594965670",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1699875.I7fCuo.006.5825142358071",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1740324.k9dRfR.006.5120684081887",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1756305.44qrI7.006.6544298445142",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1773221.vL2xGp.006.1502509955110",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1792533._ROTa6.006.7574259958264",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1804251.OYGvNk.006.3189308757490",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1828394.mSRFgP.006.0394762493146",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1839190.6bZY0R.006.1308585329472",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1869818.paiptw.006.4469275989446",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1871604.ws5lvU.006.3880569542726",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1884556.YljVmJ.006.7073152912015",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1903936.gdxhTt.006.8859200024953",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1926989.sWkBkt.006.4161390607995",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1930398.32K2n6.006.3858864868017",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1960074.lVDIHZ.006.0029599573994",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1982683.VRNZ9e.006.8232263994655",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A1988586.g5hg52.006.0093634085750",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2015525.gSlbDC.006.6162623767400",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2023218.gKxjhE.006.0679016601696",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2045155.IldGaW.006.5587732568060",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2047465.DIVVCq.006.3300117538068",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2082913.k2AH9d.006.2063774562440",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2107169.4Hx5QW.006.4489290579513",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2199026.BW6m07.006.7360388694859",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2249549.MIX7bE.006.4598121918597",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2326990.tOsSli.006.7888038073008",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2406099.Sqm_ya.006.3870376151154",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2434928.qQSDWp.006.0111410832633",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2436662.fEDb_J.006.9857059507872",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2467775.iFASnu.006.9373140163082",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2503671.SJJAxR.006.6004529904364",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2508345.rH7Jmx.006.9155872079831",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2530773.vZzH3t.006.3247672973972",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2543004.CN_Urw.006.9383083242890",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2579574.IPJ0_h.006.4470297178564",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2607276.kAHAKI.006.9719289832615",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2620427.S0GPId.006.6556845431909",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2640677.tJZhUP.006.3275708023016",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2659229.tFUmqE.006.2699754508939",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2768377.b65yZa.006.2465291425471",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2811951.KfhzNs.006.1071136264564",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2813635.PmJSgS.006.6559229596528",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2823097.rwEG6d.006.9559616817462",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2867966.O1iEvW.006.8400528388272",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2874085.m9ZBCj.006.6926008557571",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2935897.gCcyF0.006.2120404779982",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2980296.9bMG3X.006.1850666675406",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A2981534.Qr3jFk.006.9466954357415",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3015108.zJBsS8.006.8064551695149",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3065415.tRf2a4.006.5375458618864",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3094861.BxVNFv.006.1428320778400",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3103291.oqjLLY.006.9681234364077",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3181089.c84dOC.006.6849102364166",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3192158.EXtdRS.006.5241419287772",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3221972.5LrA4V.006.6741514442929",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3236084.0KyoMb.006.6325930374418",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3237911.2wiWBj.006.3788637026706",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3242735.B590Id.006.0789662245995",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3243788.FaigZr.006.5070669011170",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3253459.Wg2qVw.006.8645624871878",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3261333.kmf3Da.006.5494327939194",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3384866.pnYPpq.006.3422769889410",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3393327.TLAHdj.006.7025810345883",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3474712.qiCipo.006.3574120304485",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3538628.1u8ie7.006.0861387413780",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3568827.aI6SVu.006.7927924616119",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3587507.oJpXUl.006.0050227223409",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3639028.D7TRcU.006.3524076198815",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3659941.U9_JFB.006.9640903408294",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3706999.olpdUX.006.9985944506720",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3730274._FMaX5.006.1488458332851",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3745297.7yqN7N.006.6203206230519",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3777110.2nI_z1.006.4458932161560",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3836139.rEwbJj.006.5244797579248",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3883637.Em4acn.006.7492507042664",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3899227.54rhqw.006.9198542516974",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A3899600.C6Ahqo.006.2951490717460",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4036255.LSIcy8.006.4004574608122",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4054288.8xvHDB.006.6199273392157",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4068488.NS6rb0.006.9525121033929",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4083098.iB_17X.006.8170576880727",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4092129.ICW8_c.006.2835778900249",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4165221.i0AGqZ.006.0000114393839",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4211671.EzOor8.006.9264465388568",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4215712.IiJiBs.006.3078636075675",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4219006.Ok_npC.006.8717060833704",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4220400.faCGhR.006.8939271143193",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4250172.4KUesf.006.9271102774552",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4297834.DNrDFd.006.1911684462762",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4321780.obqoQT.006.2924612998174",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4346691._LlduX.006.5638546826700",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4352997.cycHF8.006.0390693353762",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4374447.3efcem.006.2904967410566",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4380588.pH6Fdy.006.4273334058926",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4439788.wiesOZ.006.5924892079401",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4450652.hScD6j.006.6991048602566",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4467658.RV0m12.006.4618584382673",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4493406.XGGHRX.006.3941985703164",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4510771.cYFwb3.006.6093583601899",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4540721.GWlZyE.006.3216801552592",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4600227.K2FpI2.006.0348804402510",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4601203.Mtnovz.006.1758782609202",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4632703.VZRyrL.006.1868762621072",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4666224.gbIm_n.006.3153915963290",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4742629.w1Q8sE.006.8413755571036",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4743195.XXuFep.006.9650249440254",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4743973.Ptu4QH.006.2859569760830",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4753915.XfIvAK.006.2647520684202",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4819663.hceLMY.006.4888474957881",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4848233.if6V2s.006.5228249902400",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4894103.gNQSfb.006.0498231218639",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4908086.VCZ_lp.006.2403345043184",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4910518.JVmHGD.006.6285896487087",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4978437.opBZwR.006.0038826280988",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4986395.CCcRHU.006.2754654735559",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A4998771.mlwd2W.006.3091218809916",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5071312.QoQBhY.006.6641136667881",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5083285.2xdBAq.006.5528806886139",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5134375.IFJxMc.006.9089019094156",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5210697.Zj1X60.006.1671443614005",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5255259.6QB4P5.006.5861378094572",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5259810.IHt7wm.006.2042821443503",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5333141.ej2_dh.006.2075553701768",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5388005.PDcM2l.006.7499759541761",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5446137.R5VQju.006.0496023742915",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5470474.PYLkXK.006.2486305145959",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5536132.Sh9I1Q.006.7321416452215",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5578210.vYkHrP.006.3097372279359",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5581046.QznotV.006.2199781681621",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5613054.DSp_0v.006.7488042302935",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5613577.kr3VyR.006.5957040298705",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5615374.kqK1gv.006.9862819253374",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5645384.pwoYe4.006.1647551931437",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5674760.wwUR1r.006.1161313538574",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5779783.iAoyn9.006.0753207782283",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5794321.zBygQV.006.0606713843927",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5843576.ftYID0.006.3852722614544",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5879650.xvPlJj.006.0164200189000",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5895367.uNnp4k.006.6870373694725",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5906713.GCZmcq.006.0996141592045",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5915652.IFBD5L.006.8209803787553",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5916225.iHZvvk.006.1256889269179",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5924160.8v7G3a.006.8071081859957",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5957211.uwomBD.006.1874059172147",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A5959582.Alz3YH.006.9784966634734",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6140781.dwVHRM.006.9795613581334",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6154811._K9e2H.006.0554685839175",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6166519.2Zezz5.006.7680191797368",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6169478.oVibQR.006.5307651972872",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6182322.vuyWZV.006.2878435205612",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6193133.00WOva.006.2742381792467",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6220907.ffSLhU.006.8444268919429",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6221592.0AvUpm.006.4972115341840",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6240892.J_ihzm.006.8232514440182",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6242594.PD8_UC.006.7945609781836",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6294412.iWI3ep.006.6795977534561",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6314532.78zfxS.006.6223531035200",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6321424._ZyOBe.006.5762837656120",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6345909.bstkMx.006.5525239283796",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6346827.RucmvD.006.0338928454861",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6350821.yoZG65.006.3318590275783",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6377697._KygO1.006.6790931369124",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6433508.Cn9VA_.006.4956661543835",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6470016.qcoFaa.006.5498889293816",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6498944.7N8pXl.006.1521246263458",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6504617.OhkNgA.006.8477604720347",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6546816.VEO92z.006.5480489177490",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6575512.mW2bSV.006.6185576608888",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6657595.psbb42.006.8233981132204",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6682927.EoMMj_.006.1855665560268",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6706112.TF1qq9.006.1771098824289",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6780016.8PSUed.006.6143912609815",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6780662.GFErXb.006.0683838822328",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6787983.6uEcJQ.006.0491441481084",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6801171.BhjLbF.006.9713529333826",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6813543.4KPfCP.006.0879840866356",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6829604.KjI8cW.006.9117191472337",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6854369.0mUX3W.006.6320693878688",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6876510.MUAcHG.006.7692816445490",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6879561.g2xHzm.006.5729596282955",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6885606.ZpeFgD.006.6814469969755",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6904037.33OVN7.006.3977486435483",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6954524.9_88bg.006.2010411596751",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6969850.Y9k4Oq.006.9751563750493",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A6988892.FR1RiB.006.5977637509747",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7000581.IWRvrw.006.9637649469071",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7040298.wALe2l.006.8076432241643",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7079341.AFFouJ.006.4177191558605",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7116232.YPJAyy.006.9634780456925",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7121539.rRlj84.006.8568841150181",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7228927.7QRGz7.006.5737505467736",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7235010.9PdjHH.006.1891432762889",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7243264.Vt36ib.006.1578864318653",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7254030.b_TPqs.006.3035275090373",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7272337.DyV01y.006.4585183067998",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7357306.fu6Lfh.006.6722367866085",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7384707.0CQnZb.006.4490242707292",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7391492.pj93zG.006.7762172202424",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7442669.V6hzlo.006.8727283948669",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7511554.eOXCq5.006.1269728944670",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7571652.EXH_Bf.006.1980305546683",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7589953.mQ_rr6.006.5761289422251",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7662314.Q3HPTA.006.2925884807202",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7675910.VVEdpg.006.9881036819285",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7710418.8Y6DPu.006.1050339994866",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7717473.vdce9J.006.4764634793209",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7774307.1xfV3Q.006.2135217284739",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7774534.ospCfh.006.1382047512532",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7792926.uxBDKg.006.8459817991128",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7797808.bMQSOj.006.6390170359956",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7809989.0L9HHU.006.6459538384869",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7859847.8969jr.006.4573035209852",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7892638.q2HPu7.006.9408643265275",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7900349.UvVafB.006.5028127642428",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7910742.Mn5yt1.006.2396134919724",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7918975.P4XLCu.006.1743355786218",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A7977416.pWD5iP.006.7074134724949",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8010774.dA2YUh.006.4342162115952",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8011056.BeHzAb.006.4490265608575",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8015009.E4P0ug.006.5741781701080",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8049294.vkawoy.006.0937382245643",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8052708.iCaVer.006.7787777713005",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8060469.ZPahDZ.006.8982046108230",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8073097.j6jSWQ.006.4083585468997",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8093883.QxXolH.006.4493515582587",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8106903.MZq9eP.006.5382401845931",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8124629.hY1dN5.006.3064417321277",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8161961.Kw_Zre.006.5456643911149",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8177133.oZYaja.006.0364568139575",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8195501.KU8yll.006.3296667507482",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8216766.7T40z1.006.4947562988284",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8221290.PIL5Hb.006.9130547287716",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8248086.elRIsi.006.0567672305391",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8250434.CAqXH9.006.5676147389429",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8261494.iS8TuO.006.2282913340704",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8269413.pKogkh.006.4412309077024",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8279197.hToD9P.006.6175739867970",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8281719.gum1ab.006.1459398984505",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8288987.uo_gYS.006.0250896887040",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8295706.kPc8E4.006.7759769767754",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8303794.PMYy_l.006.9511602329121",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8343082.ezfBlw.006.2682603002957",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8385273.QxjKuc.006.6198021802383",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8478053.KaIGMi.006.3840199854152",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8488534.6J0MbI.006.1265985239675",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8499672.ecbNK3.006.5953840974188",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8529721.9lhoO0.006.6507378736299",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8572944.gippDi.006.4878766702019",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8583690.eGuOFF.006.3178725084313",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8586334.HLzyH2.006.4849383317064",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8606985.so7CF1.006.9688821597814",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8641020.MeZI6O.006.9373642031107",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8647926.ihXCFx.006.4788920531385",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8685478.azlSgB.006.2688103987158",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8702349.ZWlsXG.006.4957379951587",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8770143.OGIqeK.006.5547498198971",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8789273.0XW8dF.006.7316776957736",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8802522.sFaJEM.006.2026321336527",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8837879.Bki1Yv.006.9338509978014",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8859597.OS7v_B.006.2492497371139",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8859711.11wb3X.006.7995412937159",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8881987.Vtk46X.006.2569820256169",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8882746.Lekpxo.006.9257961202638",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8895901.bOhVvA.006.7046394153913",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8909863.eydtSS.006.1149409844354",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8932526.XjjHVI.006.3394128582613",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8958133.2PbhKY.006.7237752355433",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8963220.DSYj8h.006.0512930156059",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A8987608.lF3pIc.006.2893793704999",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9041180.MCpHp9.006.8191502640460",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9053660.qjpXaq.006.0165283377258",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9149355.aaHA7v.006.5099150808083",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9164803.RUftmG.006.1807010132692",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9166659.O9jTZH.006.4902641669957",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9211448.ILglHo.006.1801978246969",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9226530.v31XjU.006.2733149852665",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9309522.IdHGiP.006.1511064985561",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9311127.e928Zx.006.9503691370855",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9317680.A72Rxm.006.9227785953020",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9330328.YSRF8v.006.1819704284610",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9355035.W1gKQO.006.6409047050587",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9365735.GCMy2Y.006.2875216040398",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9391469.9XYoae.006.3013397272445",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9414005.cb12cM.006.7479280228146",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9513175._mfpmw.006.1963912704522",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9539025.XQy0KQ.006.3923459802201",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9541790.gDH7wC.006.9947767843106",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9567824.AkANSV.006.8470786106077",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9591289.FvUfbk.006.2520719079816",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9597426.D_ag6a.006.9140139663225",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9645467.OE9YwX.006.7200895500926",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9664423.aIUz39.006.3652981858375",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9677433.OeeR2S.006.9290490472475",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9684065.ecsNmm.006.9181724505840",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9814119.trqgNT.006.7636352907992",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9834656.SLmX8g.006.3493493596874",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9839020.nik1MP.006.2145484187039",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9845048.PcmJ_y.006.6013670131610",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9867427.9ciRAK.006.9977199496795",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9890507.RU4JUk.006.4082866676019",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      },
+      {
+        "GranuleUR": "MOD14A1.A9990408.N4T1Mn.006.9738328377056",
+        "ShortName": "MOD14A1",
+        "Version": "006"
+      }
+    ]
+  },
+  "filesInCumulusCmr": {
+    "okCount": 28,
+    "onlyInCumulus": [],
+    "onlyInCmr": []
+  }
+}
