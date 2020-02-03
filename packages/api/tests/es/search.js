@@ -3,7 +3,7 @@
 const test = require('ava');
 const { Search } = require('../../es/search');
 
-test.serial('Configured with Metrics host when metrics propety is set', async (t) => {
+test('Configured with Metrics host when metrics propety is set', async (t) => {
   process.env.METRICS_ES_HOST = 'example.com';
   process.env.METRICS_ES_USER = 'test';
   process.env.METRICS_ES_PASS = 'password';
