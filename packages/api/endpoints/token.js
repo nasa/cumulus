@@ -2,7 +2,7 @@
 
 const get = require('lodash.get');
 const log = require('@cumulus/common/log');
-const { RecordDoesNotExist } = require('@cumulus/common/errors');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 const { google } = require('googleapis');
 const {
   JsonWebTokenError,

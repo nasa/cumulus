@@ -56,6 +56,8 @@ test.serial('CMR.searchCollection handles paging correctly.', async (t) => {
 
   t.is(expected.length, results.length);
 
+  delete process.env.CMR_ENVIRONMENT;
+
   expected.forEach((expectedItem) => t.true(some(results, expectedItem)));
 });
 
@@ -87,7 +89,7 @@ test('getHeaders returns correct Content-type for xml metadata by default', (t) 
   t.is(headers.Accept, undefined);
 });
 
-test.only('ingestUMMGranule() throws an exception if the input fails validation', async (t) => {
+test.serial('ingestUMMGranule() throws an exception if the input fails validation', async (t) => {
   const cmrSearch = new CMR({ provider: 'my-provider', token: 'abc' });
 
   const ummgMetadata = { GranuleUR: 'asdf' };
@@ -101,9 +103,13 @@ test.only('ingestUMMGranule() throws an exception if the input fails validation'
     ]
   };
 
+  process.env.CMR_ENVIRONMENT = 'SIT';
+
   nock('https://cmr.sit.earthdata.nasa.gov')
     .post(`/ingest/providers/${cmrSearch.provider}/validate/granule/${ummgMetadata.GranuleUR}`)
     .reply(422, ummValidationError);
+
+  delete process.env.CMR_ENVIRONMENT;
 
   await t.throwsAsync(
     () => cmrSearch.ingestUMMGranule(ummgMetadata),

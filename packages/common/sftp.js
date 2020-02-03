@@ -160,9 +160,10 @@ class Sftp {
    * @returns {Promise.<Object>} - list of file object
    */
   async list(remotePath) {
+    const normalizedPath = (remotePath.trim() === '' ? '/' : remotePath);
     if (!this.connected) await this.connect();
     return new Promise((resolve, reject) => {
-      this.sftp.readdir(remotePath, (err, list) => {
+      this.sftp.readdir(normalizedPath, (err, list) => {
         if (err) {
           if (err.message.includes('No such file')) {
             return resolve([]);
@@ -171,7 +172,7 @@ class Sftp {
         }
         return resolve(list.map((i) => ({
           name: i.filename,
-          path: remotePath,
+          path: normalizedPath,
           type: i.longname.substr(0, 1),
           size: i.attrs.size,
           time: i.attrs.mtime * 1000

@@ -1,0 +1,20 @@
+{
+  "name": "SecondTestWorkflow",
+  "template": "s3://bucket/cumulus/workflows/SecondTestWorkflow.json",
+  "definition": {
+    "Comment": "Just here to exist.",
+    "StartAt": "StartStatus",
+    "States": {
+      "StartStatus": {
+        "Type": "Task",
+        "Resource": "${SfSnsReportLambdaAliasOutput}",
+        "Next": "StopStatus"
+      },
+      "StopStatus": {
+        "Type": "Task",
+        "Resource": "${SfSnsReportLambdaAliasOutput}",
+        "End": true
+      }
+    }
+  }
+}
