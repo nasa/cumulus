@@ -93,6 +93,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1731**
   - Upgrade the version of the Thin Egress App deployed by Cumulus to v48
+    - Note: New variables available, see the 'Added' section of this changelog.
 
 ### Fixed
 
