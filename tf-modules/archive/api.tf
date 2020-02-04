@@ -109,7 +109,7 @@ resource "aws_lambda_function" "api" {
       provider_kms_key_id          = aws_kms_key.provider_kms_key.key_id
     }
   }
-  memory_size = 1024 // TODO Does this really need 1024?
+  memory_size = 960
   tags        = merge(local.default_tags, { Project = var.prefix })
 
   vpc_config {
