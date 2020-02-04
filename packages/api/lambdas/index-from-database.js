@@ -34,7 +34,7 @@ async function indexModel(esClient, tableName, esIndex, indexFn) {
   /* eslint-enable no-await-in-loop */
 }
 
-async function indexFromDatabase(esIndex, indexTable, tables, esHost) {
+async function indexFromDatabase(esIndex, tables, esHost) {
   const esClient = await Search.es(esHost);
 
   await Promise.all([
@@ -51,7 +51,7 @@ async function indexFromDatabase(esIndex, indexTable, tables, esHost) {
 async function handler(event) {
   log.info(`Starting index from database for index ${event.indexName}`);
 
-  await indexFromDatabase(event.indexName, event.indexTable, event.tables, event.esHost || process.env.ES_HOST);
+  await indexFromDatabase(event.indexName, event.tables, event.esHost || process.env.ES_HOST);
 
   log.info('Index from database complete');
 

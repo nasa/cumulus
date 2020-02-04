@@ -122,6 +122,7 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
 
   const body = cloneDeep(doc);
   body.timestamp = Date.now();
+
   const params = {
     body,
     id,
@@ -134,7 +135,6 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
 
   // adding or replacing record to ES
   const actualEsClient = esClient || (await Search.es());
-  
   const indexResponse = await actualEsClient.index(params);
   return indexResponse.body;
 }
