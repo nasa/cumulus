@@ -193,6 +193,7 @@ async function indicesStatus(req, res) {
 
 async function indexFromDatabase(req, res) {
   const esClient = await Search.es();
+
   const indexName = req.body.indexName || timestampedIndexName();
 
   await createIndex(esClient, indexName)
