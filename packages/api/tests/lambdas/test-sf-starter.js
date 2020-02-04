@@ -1,5 +1,6 @@
 'use strict';
 
+const isNumber = require('lodash.isnumber');
 const rewire = require('rewire');
 const test = require('ava');
 
@@ -32,7 +33,7 @@ class stubConsumer {
 // Mock startExecution so nothing attempts to start executions.
 const stubSFN = () => ({
   startExecution: () => ({
-    promise: () => true
+    promise: () => Promise.resolve({})
   })
 });
 sfStarter.__set__('sfn', stubSFN);
@@ -93,6 +94,37 @@ test.afterEach.always(
 );
 
 test.after.always(() => manager.deleteTable());
+
+test('dispatch() sets the workflow_start_time', async (t) => {
+  const cumulusMessage = {
+    cumulus_meta: {
+      state_machine: 'my-state-machine',
+      execution_name: 'my-execution-name'
+    }
+  };
+
+  const sqsMessage = {
+    Body: JSON.stringify(cumulusMessage)
+  };
+
+  let startExecutionParams;
+
+  await sfStarter.__with__({
+    sfn: () => ({
+      startExecution: (params) => {
+        startExecutionParams = params;
+        return ({
+          promise: () => Promise.resolve({})
+        });
+      }
+    })
+  })(() => sfStarter.__get__('dispatch')(sqsMessage));
+
+  const executionInput = JSON.parse(startExecutionParams.input);
+
+  t.true(isNumber(executionInput.cumulus_meta.workflow_start_time));
+  t.true(executionInput.cumulus_meta.workflow_start_time <= Date.now());
+});
 
 test(
   'handleEvent throws error when queueUrl is undefined',
@@ -347,6 +379,6 @@ test('handleSourceMappingEvent calls dispatch on messages in an EventSource even
   };
   const output = await handleSourceMappingEvent(event);
 
-  const dispatchReturn = stubSFN().startExecution().promise();
-  output.forEach((o) => t.is(o, dispatchReturn));
+  const dispatchReturn = await stubSFN().startExecution().promise();
+  output.forEach((o) => t.deepEqual(o, dispatchReturn));
 });

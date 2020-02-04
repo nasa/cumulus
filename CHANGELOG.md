@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **CUMULUS-1740** - `cumulus_meta.workflow_start_time` is now set in Cumulus
+  messages
+
 ## [v1.18.0] 2020-02-03
 
 ### BREAKING CHANGES
