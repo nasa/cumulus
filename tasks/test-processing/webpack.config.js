@@ -10,7 +10,7 @@ module.exports = {
     filename: 'index.js',
     path: path.resolve(__dirname, 'dist'),
     devtoolModuleFilenameTemplate: (info) => {
-      const relativePath = path.relative(root, info.absoluteResourcePath)
+      const relativePath = path.relative(root, info.absoluteResourcePath);
       return `webpack://${relativePath}`;
     }
   },

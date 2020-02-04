@@ -21,7 +21,7 @@ const bucketsConfigJsonObject = require('../bucketsConfigJsonObject');
 const context = {};
 
 test.before(async () => {
-  context.systemBucket = randomId('systemBucket');
+  context.systemBucket = randomId('systembucket');
   context.stackName = randomId('stackName');
   await s3().createBucket({ Bucket: context.systemBucket }).promise();
   await s3().putObject({

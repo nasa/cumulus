@@ -47,6 +47,31 @@ test.before(async (t) => {
 
 test.after.always(() => S3.recursivelyDeleteS3Bucket(process.env.system_bucket));
 
+test('FtpProviderClient.list lists objects', async (t) => {
+  const myFtpProviderClient = new FtpProviderClient({
+    host: '127.0.0.1',
+    username: 'testuser',
+    password: 'testpass',
+    useList: true
+  });
+
+  const list = await myFtpProviderClient.list('');
+  t.true(list.length > 0);
+});
+
+test('FtpProviderClient.list filters listed objects with path', async (t) => {
+  const myFtpProviderClient = new FtpProviderClient({
+    host: '127.0.0.1',
+    username: 'testuser',
+    password: 'testpass',
+    useList: true
+  });
+
+  const list = await myFtpProviderClient.list('pdrs/MOD09GQ_1granule_v3.PDR');
+  t.true(list.length === 1);
+  t.is(list[0].name, 'MOD09GQ_1granule_v3.PDR');
+});
+
 test('FtpProviderClient supports plaintext usernames and passwords', async (t) => {
   const ftpClient = new FtpProviderClient({
     host: '127.0.0.1',
@@ -111,7 +136,7 @@ test('useList is present and true when assigned', async (t) => {
 
   await myFtpProviderClient.list('');
 
-  t.is(jsftpSpy.callCount, 1);
+  t.true(jsftpSpy.callCount > 1);
   t.is(jsftpSpy.getCall(0).args[0].useList, true);
 });
 
@@ -129,6 +154,7 @@ test('useList defaults to false when not assigned', async (t) => {
 
   await myFtpProviderClient.list('');
 
+  // TODO figure out why STAT does not list any results on our local FTP server
   t.is(jsftpSpy.callCount, 1);
   t.is(jsftpSpy.getCall(0).args[0].useList, false);
 });

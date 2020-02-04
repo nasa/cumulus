@@ -7,7 +7,7 @@ const {
   recursivelyDeleteS3Bucket
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { RecordDoesNotExist } = require('@cumulus/common/errors');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');

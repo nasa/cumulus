@@ -50,11 +50,19 @@ test.after.always(async () => {
   ]);
 });
 
-test('connect and retrieve list of pdrs', async (t) => {
+test('SftpProviderClient.list lists objects', async (t) => {
   const { mySftpProviderClient } = t.context;
 
   const list = await mySftpProviderClient.list('');
-  t.is(list.length > 0, true);
+  t.true(list.length > 0);
+});
+
+test('SftpProviderClient.list filters listed objects with path', async (t) => {
+  const { mySftpProviderClient } = t.context;
+
+  const list = await mySftpProviderClient.list('pdrs/MOD09GQ_1granule_v3.PDR');
+  t.true(list.length === 1);
+  t.is(list[0].name, 'MOD09GQ_1granule_v3.PDR');
 });
 
 test('Download remote file to s3 with correct content-type', async (t) => {
