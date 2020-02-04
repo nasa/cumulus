@@ -167,7 +167,11 @@ test('getCumulusMessageFromExecutionEvent() returns the event input for a RUNNIN
   const event = {
     detail: {
       status: 'RUNNING',
-      input: JSON.stringify({ a: 1 }),
+      input: JSON.stringify({
+        cumulus_meta: {
+          workflow_start_time: 122
+        }
+      }),
       startDate: 123,
       stopDate: null
     }
@@ -177,13 +181,12 @@ test('getCumulusMessageFromExecutionEvent() returns the event input for a RUNNIN
 
   const expectedMessage = {
     cumulus_meta: {
-      workflow_start_time: 123,
+      workflow_start_time: 122,
       workflow_stop_time: null
     },
     meta: {
       status: 'running'
-    },
-    a: 1
+    }
   };
 
   t.deepEqual(message, expectedMessage);
@@ -193,7 +196,11 @@ test('getCumulusMessageFromExecutionEvent() returns the event output for a SUCCE
   const event = {
     detail: {
       status: 'SUCCEEDED',
-      output: JSON.stringify({ a: 1 }),
+      output: JSON.stringify({
+        cumulus_meta: {
+          workflow_start_time: 122
+        }
+      }),
       startDate: 123,
       stopDate: 124
     }
@@ -203,13 +210,12 @@ test('getCumulusMessageFromExecutionEvent() returns the event output for a SUCCE
 
   const expectedMessage = {
     cumulus_meta: {
-      workflow_start_time: 123,
+      workflow_start_time: 122,
       workflow_stop_time: 124
     },
     meta: {
       status: 'completed'
-    },
-    a: 1
+    }
   };
 
   t.deepEqual(message, expectedMessage);
@@ -219,7 +225,8 @@ test('getCumulusMessageFromExecutionEvent() returns the failed execution message
   const input = {
     cumulus_meta: {
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
-      execution_name: 'my-execution-name'
+      execution_name: 'my-execution-name',
+      workflow_start_time: 122
     }
   };
 
@@ -232,7 +239,7 @@ test('getCumulusMessageFromExecutionEvent() returns the failed execution message
     }
   };
 
-  const failedTaskOutput = { a: 1 };
+  const failedTaskOutput = input;
 
   const message = await cwSfExecutionEventUtils.__with__({
     StepFunctions: {
@@ -264,13 +271,14 @@ test('getCumulusMessageFromExecutionEvent() returns the failed execution message
 
   const expectedMessage = {
     cumulus_meta: {
-      workflow_start_time: 123,
+      state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
+      execution_name: 'my-execution-name',
+      workflow_start_time: 122,
       workflow_stop_time: 124
     },
     meta: {
       status: 'failed'
-    },
-    a: 1
+    }
   };
 
   t.deepEqual(message, expectedMessage);
