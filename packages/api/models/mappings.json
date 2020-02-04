@@ -65,7 +65,7 @@
       }
     }
   },
-  "async_operation": {
+  "asyncOperation": {
     "dynamic_templates": [
       {
         "all_date_fileds": {
