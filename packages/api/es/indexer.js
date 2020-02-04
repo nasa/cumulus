@@ -122,7 +122,7 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
 
   const body = cloneDeep(doc);
   body.timestamp = Date.now();
-
+  // console.log(body);
   const params = {
     body,
     id,
@@ -132,10 +132,16 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
   };
 
   if (parent) params.parent = parent;
-
+  console.log('id', id);
+  console.log('index', index);
+  console.log('type', type);
+  // console.log('es?', esClient);
   // adding or replacing record to ES
   const actualEsClient = esClient || (await Search.es());
+  console.log('after gettign the client??');
+  // console.log(actualEsClient);
   const indexResponse = await actualEsClient.index(params);
+  console.log('after index', indexResponse);
   return indexResponse.body;
 }
 
@@ -164,6 +170,7 @@ function indexExecution(esClient, payload, index = defaultIndexAlias, type = 'ex
  * @returns {Promise} elasticsearch update response
  */
 function indexAsyncOperation(esClient, payload, index = defaultIndexAlias, type = 'asyncOperation') {
+  console.log('in the indexer,', payload.id);
   return genericRecordUpdate(esClient, payload.id, payload, index, type);
 }
 
@@ -191,6 +198,7 @@ function indexCollection(esClient, meta, index = defaultIndexAlias, type = 'coll
  * @returns {Promise} Elasticsearch response
  */
 function indexProvider(esClient, payload, index = defaultIndexAlias, type = 'provider') {
+  console.log('in indexer provider');
   return genericRecordUpdate(esClient, payload.id, payload, index, type);
 }
 
@@ -220,6 +228,7 @@ function indexRule(esClient, payload, index = defaultIndexAlias, type = 'rule') 
 async function indexGranule(esClient, payload, index = defaultIndexAlias, type = 'granule') {
   // If the granule exists in 'deletedgranule', delete it first before inserting the granule
   // into ES.  Ignore 404 error, so the deletion still succeeds if the record doesn't exist.
+  console.log('in indexer for granules');
   const delGranParams = {
     index,
     type: 'deletedgranule',
