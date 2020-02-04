@@ -68,7 +68,7 @@ data "aws_dynamodb_table" "async_operations" {
   name = var.dynamo_tables.async_operations.name
 }
 
-resource "aws_lambda_event_source_mapping" "asyncOperations_table_db_indexer" {
+resource "aws_lambda_event_source_mapping" "async_operations_table_db_indexer" {
   event_source_arn  = data.aws_dynamodb_table.async_operations.stream_arn
   function_name     = aws_lambda_function.db_indexer.arn
   starting_position = "TRIM_HORIZON"
