@@ -8,12 +8,19 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { noop } = require('@cumulus/common/util');
 const { randomString } = require('@cumulus/common/test-utils');
+const bootstrap = require('../../lambdas/bootstrap');
+const { Search } = require('../../es/search');
+const indexer = require('../../es/indexer');
 const {
   AccessToken,
   AsyncOperation: AsyncOperationModel
 } = require('../../models');
 const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../lib/testUtils');
 
+
+let esClient;
+let esIndex;
+let esAlias;
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.AsyncOperationsTable = randomString();
@@ -28,6 +35,12 @@ let asyncOperationModel;
 let accessTokenModel;
 
 test.before(async () => {
+  esIndex = randomString();
+  esAlias = randomString();
+  process.env.ES_INDEX = esAlias;
+  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  // create esClient
+  esClient = await Search.es('fakehost');
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   // Create AsyncOperations table
@@ -51,6 +64,7 @@ test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await asyncOperationModel.deleteTable().catch(noop);
   await accessTokenModel.deleteTable().catch(noop);
+  await esClient.indices.delete({ index: esIndex });
 });
 
 test.serial('GET /asyncOperations returns a list of operations', async (t) => {
@@ -72,7 +86,9 @@ test.serial('GET /asyncOperations returns a list of operations', async (t) => {
   };
 
   await asyncOperationModel.create(asyncOperation1);
+  await indexer.indexAsyncOperation(esClient, asyncOperation1, esAlias);
   await asyncOperationModel.create(asyncOperation2);
+  await indexer.indexAsyncOperation(esClient, asyncOperation2, esAlias);
 
   const response = await request(app)
     .get('/asyncOperations')
@@ -82,7 +98,7 @@ test.serial('GET /asyncOperations returns a list of operations', async (t) => {
 
   t.is(response.status, 200);
 
-  response.body.Items.forEach((item) => {
+  response.body.results.forEach((item) => {
     if (item.id === asyncOperation1.id) {
       t.is(item.description, asyncOperation1.description);
       t.is(item.operationType, asyncOperation1.operationType);
