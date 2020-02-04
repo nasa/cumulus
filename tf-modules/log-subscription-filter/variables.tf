@@ -6,7 +6,7 @@ variable "prefix" {
 variable "log_destination_arn" {
   type        = string
   default     = null
-  description = "Shared AWS:Log:Destination value on where to send log groups in log_groups"
+  description = "A shared AWS:Log:Destination that receives logs from log_groups"
 }
 
 variable "log2elasticsearch_lambda_function_arn" {
