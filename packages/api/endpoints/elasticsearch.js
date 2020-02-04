@@ -193,19 +193,6 @@ async function indicesStatus(req, res) {
 
 async function indexFromDatabase(req, res) {
   const esClient = await Search.es();
-  const indexTable = req.params.indexTable;
-  const tables = {
-    collectionsTable: process.env.CollectionsTable,
-    executionsTable: process.env.ExecutionsTable,
-    granulesTable: process.env.GranulesTable,
-    pdrsTable: process.env.PdrsTable,
-    providersTable: process.env.ProvidersTable,
-    rulesTable: process.env.RulesTable,
-    asyncOperationsTable: process.env.AsyncOperationsTable
-  };
-
-  console.log('Got a table name to index: ', indexTable);
-
   const indexName = req.body.indexName || timestampedIndexName();
 
   await createIndex(esClient, indexName)
@@ -229,8 +216,15 @@ async function indexFromDatabase(req, res) {
       operationType: 'ES Index',
       payload: {
         indexName,
-        indexTable,
-        tables,
+        tables: {
+          collectionsTable: process.env.CollectionsTable,
+          executionsTable: process.env.ExecutionsTable,
+          granulesTable: process.env.GranulesTable,
+          pdrsTable: process.env.PdrsTable,
+          providersTable: process.env.ProvidersTable,
+          rulesTable: process.env.RulesTable,
+          asyncOperationsTable: process.env.AsyncOperationsTable
+        },
         esHost: process.env.ES_HOST
       }
     });
@@ -259,7 +253,6 @@ router.post('/reindex', reindex);
 router.get('/reindex-status', reindexStatus);
 router.post('/change-index', changeIndex);
 router.post('/index-from-database', indexFromDatabase);
-router.post('/index-from-database/:indexTable', indexFromDatabase);
 router.get('/indices-status', indicesStatus);
 router.get('/current-index/:alias', getCurrentIndex);
 router.get('/current-index', getCurrentIndex);
