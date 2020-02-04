@@ -164,7 +164,7 @@ function indexExecution(esClient, payload, index = defaultIndexAlias, type = 'ex
  * @returns {Promise} elasticsearch update response
  */
 function indexAsyncOperation(esClient, payload, index = defaultIndexAlias, type = 'asyncOperation') {
-  return genericRecordUpdate(esClient, payload.arn, payload, index, type);
+  return genericRecordUpdate(esClient, payload.id, payload, index, type);
 }
 
 /**
