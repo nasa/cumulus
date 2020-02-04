@@ -97,7 +97,7 @@ test.serial('verifyProviderSecretsMigration fails if plaintext credentials are f
   );
 });
 
-test.serial('verifyProviderSecretsMigration fails if S3 keypair credentials are found', async (t) => {
+test.serial.only('verifyProviderSecretsMigration fails if S3 keypair credentials are found', async (t) => {
   const provider = fakeProviderFactory({
     protocol: 'ftp',
     encrypted: true,
@@ -110,12 +110,7 @@ test.serial('verifyProviderSecretsMigration fails if S3 keypair credentials are 
     Item: { ...provider, createdAt: Date.now() }
   }).promise();
 
-  const err = await t.throwsAsync(handler());
-
-  t.is(
-    err.message,
-    `Provider ${provider.id} credentials could not be decrypted using KMS. Must invoke the providerSecretsMigration Lambda function.`
-  );
+  await t.throwsAsync(handler());
 });
 
 test.serial('verifyProviderSecretsMigration verifies all providers', async (t) => {
