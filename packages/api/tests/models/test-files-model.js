@@ -6,7 +6,7 @@ const clone = require('lodash.clonedeep');
 const omit = require('lodash.omit');
 const { parseS3Uri } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { RecordDoesNotExist } = require('@cumulus/common/errors');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const models = require('../../models');
 const { fakeGranuleFactory, fakeFileFactory } = require('../../lib/testUtils');

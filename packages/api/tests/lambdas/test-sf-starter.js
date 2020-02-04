@@ -9,7 +9,7 @@ const {
   receiveSQSMessages,
   sendSQSMessage
 } = require('@cumulus/aws-client/SQS');
-const { ResourcesLockedError } = require('@cumulus/common/errors');
+const { ResourcesLockedError } = require('@cumulus/errors');
 const Semaphore = require('@cumulus/common/Semaphore');
 const { randomId } = require('@cumulus/common/test-utils');
 
