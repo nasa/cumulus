@@ -495,6 +495,7 @@ variable "archive_api_url" {
 }
 
 variable "additional_log_groups_to_elk" {
+  description = "Map of Cloudwatch Log Groups. The key is a descriptor and the value is the log group"
   type = map(string)
   default = {}
 }

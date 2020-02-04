@@ -319,5 +319,5 @@ variable "non_complete_execution_payload_timeout" {
 variable "log_destination_arn" {
   type = string
   default = "N/A"
-  description = "Flag indicating whether logs are sent to Metrics ELK stack"
+  description = "A shared AWS:Log:Destination that receives logs from log_groups"
 }

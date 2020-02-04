@@ -98,5 +98,5 @@ ems_username          = "user"
 log_api_gateway_to_cloudwatch = false
 log_destination_arn = "arn:aws:logs:us-east-1:1234567890:destination:LogsDestination"
 additional_log_groups_to_elk = {
-  "MyExtraLogs" = "my_extra_logs"
+  "LogDescriptor" = "log_group_name"
 }
