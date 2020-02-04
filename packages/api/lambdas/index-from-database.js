@@ -34,24 +34,45 @@ async function indexModel(esClient, tableName, esIndex, indexFn) {
   /* eslint-enable no-await-in-loop */
 }
 
-async function indexFromDatabase(esIndex, tables, esHost) {
+async function indexFromDatabase(esIndex, indexTable, tables, esHost) {
   const esClient = await Search.es(esHost);
 
-  await Promise.all([
-    indexModel(esClient, tables.collectionsTable, esIndex, indexer.indexCollection),
-    indexModel(esClient, tables.executionsTable, esIndex, indexer.indexExecution),
-    indexModel(esClient, tables.asyncOperationsTable, esIndex, indexer.indexAsyncOperation),
-    indexModel(esClient, tables.granulesTable, esIndex, indexer.indexGranule),
-    indexModel(esClient, tables.pdrsTable, esIndex, indexer.indexPdr),
-    indexModel(esClient, tables.providersTable, esIndex, indexer.indexProvider),
-    indexModel(esClient, tables.rulesTable, esIndex, indexer.indexRule)
-  ]);
+  if (indexTable) {
+   switch (indexTable) {
+     case 'asyncOperation': {
+       console.log('going to index async ops');
+       await indexModel(esClient, tables.asyncOperationsTable, esIndex, indexer.indexAsyncOperation);
+       console.log('after indexing async ops');
+     }
+     case 'granule': {
+        console.log('going to index granules');
+        await indexModel(esClient, tables.granulesTable, esIndex, indexer.indexGranule);
+        console.log('indexed grnaules DONE');
+     }
+     case 'provider': {
+       console.log('going to index provder');
+       await indexModel(esClient, tables.providersTable, esIndex, indexer.indexProvider);
+     }
+     default:
+      break;
+   }
+  } else {
+    await Promise.all([
+      indexModel(esClient, tables.collectionsTable, esIndex, indexer.indexCollection),
+      indexModel(esClient, tables.executionsTable, esIndex, indexer.indexExecution),
+      indexModel(esClient, tables.asyncOperationsTable, esIndex, indexer.indexAsyncOperation),
+      indexModel(esClient, tables.granulesTable, esIndex, indexer.indexGranule),
+      indexModel(esClient, tables.pdrsTable, esIndex, indexer.indexPdr),
+      indexModel(esClient, tables.providersTable, esIndex, indexer.indexProvider),
+      indexModel(esClient, tables.rulesTable, esIndex, indexer.indexRule)
+    ]);
+  }
 }
 
 async function handler(event) {
   log.info(`Starting index from database for index ${event.indexName}`);
 
-  await indexFromDatabase(event.indexName, event.tables, event.esHost || process.env.ES_HOST);
+  await indexFromDatabase(event.indexName, event.indexTable, event.tables, event.esHost || process.env.ES_HOST);
 
   log.info('Index from database complete');
 
