@@ -2,43 +2,43 @@
 
 variable "cmr_client_id" {
   description = "Client ID that you want to use for requests to CMR (https://cmr.earthdata.nasa.gov/search/site/docs/search/api.html)"
-  type = string
+  type        = string
 }
 
 variable "cmr_environment" {
   description = "Environment that should be used for CMR requests (e.g. 'UAT', 'SIT')"
-  type = string
+  type        = string
 }
 
 variable "cmr_password" {
   description = "Password to use (in combination with `cmr_username`) for authorizing CMR requests"
-  type = string
+  type        = string
 }
 
 variable "cmr_provider" {
   description = "The provider name should be used when storing metadata in CMR"
-  type = string
+  type        = string
 }
 
 variable "cmr_username" {
   description = "Username to use (in combination with `cmr_password`) for authorizing CMR requests"
-  type = string
+  type        = string
 }
 
 variable "cumulus_message_adapter_lambda_layer_arn" {
   description = "Layer version ARN of the Lambda layer for the Cumulus Message Adapter"
-  type    = string
-  default = null
+  type        = string
+  default     = null
 }
 
 variable "dynamo_tables" {
   description = "A map of objects with the `arn` and `name` of every DynamoDB table for your Cumulus deployment."
-  type = map(object({ name = string, arn = string }))
+  type        = map(object({ name = string, arn = string }))
 }
 
 variable "ecs_cluster_desired_size" {
   description = "The desired maximum number of instances for your ECS autoscaling group"
-  type = number
+  type        = number
 }
 
 variable "ecs_cluster_instance_image_id" {
@@ -48,37 +48,37 @@ variable "ecs_cluster_instance_image_id" {
 
 variable "ecs_cluster_instance_subnet_ids" {
   description = "The Subnet IDs to use for your ECS cluster instances"
-  type = list(string)
+  type        = list(string)
 }
 
 variable "ecs_cluster_max_size" {
   description = "The maximum number of instances for your ECS cluster"
-  type = number
+  type        = number
 }
 
 variable "ecs_cluster_min_size" {
   description = "The minimum number of instances for your ECS cluster"
-  type = number
+  type        = number
 }
 
 variable "elasticsearch_domain_arn" {
   description = "The ARN of an Elasticsearch domain to use for storing data"
-  type = string
+  type        = string
 }
 
 variable "elasticsearch_hostname" {
   description = "The hostname of an Elasticsearch domain to use for storing data"
-  type = string
+  type        = string
 }
 
 variable "elasticsearch_security_group_id" {
   description = "The ID of the security group for the Elasticsearch domain specified by `elasticsearch_domain_arn`"
-  type = string
+  type        = string
 }
 
 variable "prefix" {
   description = "The unique prefix for your deployment resources"
-  type = string
+  type        = string
 }
 
 variable "sts_credentials_lambda_function_arn" {
@@ -88,12 +88,12 @@ variable "sts_credentials_lambda_function_arn" {
 
 variable "system_bucket" {
   description = "The name of the S3 bucket to be used for staging deployment files"
-  type = string
+  type        = string
 }
 
 variable "token_secret" {
   description = "A string value used for signing and verifying JSON Web Tokens (JWTs) issued by the archive API. Should be a 32-character string for security"
-  type = string
+  type        = string
 }
 
 variable "urs_client_id" {
@@ -116,68 +116,68 @@ variable "api_gateway_stage" {
 
 variable "archive_api_port" {
   description = "Port number that should be used for archive API requests"
-  type    = number
-  default = null
+  type        = number
+  default     = null
 }
 
 variable "archive_api_users" {
   description = "Earthdata (URS) usernames that should be allowed to access the archive API"
-  type    = list(string)
-  default = []
+  type        = list(string)
+  default     = []
 }
 
 variable "buckets" {
   description = "Map identifying the buckets for the deployment"
-  type    = map(object({ name = string, type = string }))
-  default = {}
+  type        = map(object({ name = string, type = string }))
+  default     = {}
 }
 
 variable "cmr_limit" {
   description = "Limit of the number of results to return from CMR"
-  type    = number
-  default = 100
+  type        = number
+  default     = 100
 }
 
 variable "cmr_oauth_provider" {
   description = "Oauth provider to use for authorizing requests to CMR"
-  type    = string
-  default = "earthdata"
+  type        = string
+  default     = "earthdata"
 }
 
 variable "cmr_page_size" {
   description = "Default number of results to return per page when searching CMR for collections/granules"
-  type    = number
-  default = 50
+  type        = number
+  default     = 50
 }
 
 variable "custom_queues" {
   description = "Map of SQS queue identifiers to queue URLs"
-  type    = list(object({ id = string, url = string }))
-  default = []
+  type        = list(object({ id = string, url = string }))
+  default     = []
 }
 
 variable "deploy_distribution_s3_credentials_endpoint" {
   description = "Whether or not to include the S3 credentials endpoint in the Thin Egress App"
-  type = bool
-  default = true
+  type        = bool
+  default     = true
 }
 
 variable "distribution_api_gateway_stage" {
   description = "The distribution API Gateway stage to create"
-  type    = string
-  default = "DEV"
+  type        = string
+  default     = "DEV"
 }
 
 variable "distribution_url" {
   description = " URL for the distribution API"
-  type    = string
-  default = null
+  type        = string
+  default     = null
 }
 
 variable "ecs_container_stop_timeout" {
   description = "Time duration to wait from when a task is stopped before its containers are forcefully killed if they do not exit normally on their own"
-  type    = string
-  default = "2m"
+  type        = string
+  default     = "2m"
 }
 
 variable "ecs_cluster_instance_docker_volume_size" {
@@ -214,32 +214,32 @@ variable "ecs_cluster_scale_out_threshold_percent" {
 
 variable "ecs_docker_hub_config" {
   description = "Credentials for integrating ECS with containers hosted on Docker Hu"
-  type    = object({ username = string, password = string, email = string })
-  default = null
+  type        = object({ username = string, password = string, email = string })
+  default     = null
 }
 
 variable "ecs_docker_storage_driver" {
   description = "Storage driver for ECS tasks"
-  type    = string
-  default = "devicemapper"
+  type        = string
+  default     = "devicemapper"
 }
 
 variable "ecs_efs_config" {
   description = "Config for using EFS with ECS instances"
-  type    = object({ mount_target_id = string, mount_point = string })
-  default = null
+  type        = object({ mount_target_id = string, mount_point = string })
+  default     = null
 }
 
 variable "ecs_service_alarms" {
   description = "List of Cloudwatch alarms monitoring ECS instances"
-  type = list(object({ name = string, arn = string }))
-  default = []
+  type        = list(object({ name = string, arn = string }))
+  default     = []
 }
 
 variable "elasticsearch_alarms" {
   description = "List of Cloudwatch alarms monitoring Elasticsearch domain"
-  type = list(object({ name = string, arn = string }))
-  default = []
+  type        = list(object({ name = string, arn = string }))
+  default     = []
 }
 
 variable "ems_datasource" {
@@ -298,32 +298,32 @@ variable "ems_username" {
 
 variable "key_name" {
   description = "Name of EC2 key pair for accessing EC2 instances"
-  type    = string
-  default = null
+  type        = string
+  default     = null
 }
 
 variable "lambda_subnet_ids" {
   description = "Subnet IDs for Lambdas"
-  type    = list(string)
-  default = null
+  type        = list(string)
+  default     = null
 }
 
 variable "launchpad_api" {
   description = "URL of Launchpad API. Required if using `cmr_oauth_provider = 'launchpad'`."
-  type    = string
-  default = "launchpadApi"
+  type        = string
+  default     = "launchpadApi"
 }
 
 variable "launchpad_certificate" {
   description = "Name of the Launchpad certificate uploaded to the 'crypto' directory of the `system_bucket`. Required if using `cmr_oauth_provider = 'launchpad'`"
-  type    = string
-  default = "launchpad.pfx"
+  type        = string
+  default     = "launchpad.pfx"
 }
 
 variable "launchpad_passphrase" {
   description = "Passphrase of Launchpad certificate. Required if using `cmr_oauth_provider = 'launchpad'`."
-  type    = string
-  default = ""
+  type        = string
+  default     = ""
 }
 
 variable "log_api_gateway_to_cloudwatch" {
@@ -339,72 +339,108 @@ variable "log_destination_arn" {
 }
 
 variable "metrics_es_host" {
-  type = string
+  type    = string
   default = null
 }
 
 variable "metrics_es_password" {
-  type = string
+  type    = string
   default = null
 }
 
 variable "metrics_es_username" {
-  type = string
+  type    = string
   default = null
 }
 
 variable "oauth_provider" {
   description = "Oauth provider to use for authorizing requests to the archive API. Also accepts 'launchhpad'"
-  type    = string
-  default = "earthdata"
+  type        = string
+  default     = "earthdata"
 }
 
 variable "oauth_user_group" {
   description = "Oauth user group to validate the user against when using `oauth_provider = 'launchpad'`."
-  type    = string
-  default = "N/A"
+  type        = string
+  default     = "N/A"
 }
 
 variable "permissions_boundary_arn" {
   description = "The ARN of an IAM permissions boundary to use when creating IAM policies"
-  type    = string
-  default = null
+  type        = string
+  default     = null
 }
 
 variable "private_archive_api_gateway" {
   description = "Whether to deploy the archive API as a private API gateway"
-  type = bool
-  default = true
+  type        = bool
+  default     = true
 }
 
 variable "saml_entity_id" {
   description = "The endpoint EntityID from the Launchpad Integration Request"
-  type    = string
-  default = "N/A"
+  type        = string
+  default     = "N/A"
 }
 
 variable "saml_assertion_consumer_service" {
   description = "The URL Bindings Assertion Point from the Launchpad Integration Request"
-  type    = string
-  default = "N/A"
+  type        = string
+  default     = "N/A"
 }
 
 variable "saml_idp_login" {
   description = "The SAML Identity Provider's saml2sso endpoint"
-  type    = string
-  default = "N/A"
+  type        = string
+  default     = "N/A"
 }
 
 variable "saml_launchpad_metadata_url" {
   description = "The url of the Identity Provider public metadata xml file"
-  type    = string
-  default = "N/A"
+  type        = string
+  default     = "N/A"
+}
+
+variable "thin_egress_cookie_domain" {
+  type        = string
+  default     = null
+  description = "Valid domain for Thin Egress App cookie"
+}
+
+variable "thin_egress_domain_cert_arn" {
+  type        = string
+  default     = null
+  description = "Certificate Manager SSL Cert ARN for Thin Egress App if deployed outside NGAP/CloudFront"
+}
+
+variable "thin_egress_download_role_in_region_arn" {
+  type        = string
+  default     = null
+  description = "ARN for reading of Thin Egress App data buckets for in-region requests"
+}
+
+variable "thin_egress_jwt_algo" {
+  type        = string
+  default     = null
+  description = "Algorithm with which to encode the Thin Egress App JWT cookie"
+}
+
+variable "thin_egress_jwt_secret_name" {
+  type        = string
+  default     = null
+  description = "Name of AWS secret where keys for the Thin Egress App JWT encode/decode are stored"
+}
+
+variable "thin_egress_lambda_code_dependency_archive_key" {
+  type        = string
+  default     = null
+  description = "Thin Egress App - S3 Key of packaged python modules for lambda dependency layer"
 }
 
 variable "throttled_queues" {
   description = "Array of configuration for custom queues with execution limits"
-  type    = list(object({ id = string, url = string, execution_limit = number }))
-  default = []
+  type        = list(object({ id = string, url = string, execution_limit = number }))
+  default     = []
 }
 
 variable "urs_url" {
@@ -415,39 +451,39 @@ variable "urs_url" {
 
 variable "vpc_id" {
   description = "VPC used by Lambda functions"
-  type    = string
-  default = null
+  type        = string
+  default     = null
 }
 
 # archive module clean_executions lambda configuration
 
 variable "daily_execution_payload_cleanup_schedule_expression" {
-  type    = string
-  default = "cron(0 4 * * ? *)"
+  type        = string
+  default     = "cron(0 4 * * ? *)"
   description = "Cloud Watch cron schedule for the execution payload cleanup lambda"
 }
 
 variable "complete_execution_payload_timeout_disable" {
-  type    = bool
-  default = false
+  type        = bool
+  default     = false
   description = "Boolean flag that when set to true will disable 'complete' execution cleanup"
 }
 
 variable "complete_execution_payload_timeout" {
-  type    = number
-  default = 10
+  type        = number
+  default     = 10
   description = "Number of days to retain 'complete' execution payload records in the database"
 }
 
 variable "non_complete_execution_payload_timeout_disable" {
-  type    = bool
-  default = false
+  type        = bool
+  default     = false
   description = "Boolean flag that when set to true will disable 'complete' execution cleanup"
 
 }
 
 variable "non_complete_execution_payload_timeout" {
   description = "Number of days to retain 'non-complete' execution payload records in the database"
-  type    = number
-  default = 30
+  type        = number
+  default     = 30
 }

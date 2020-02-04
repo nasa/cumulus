@@ -6,7 +6,7 @@ const {
   pullStepFunctionEvent
 } = require('@cumulus/aws-client/StepFunctions');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const { RecordDoesNotExist } = require('@cumulus/common/errors');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 const models = require('../models');
 
 /**
