@@ -160,7 +160,7 @@ test('Manager.buildDocClientUpdateParams() does not try to update the key fields
   t.false(actualParams.UpdateExpression.includes('key2'));
 });
 
-test('buildDocClientUpdateParams() does not try to update a value to `undefined`', (t) => {
+test('Manager.buildDocClientUpdateParams() does not try to update a value to `undefined`', (t) => {
   const { manager } = t.context;
 
   const itemKey = { id: 'value' };
@@ -180,4 +180,30 @@ test('buildDocClientUpdateParams() does not try to update a value to `undefined`
   t.false(Object.keys(actualParams.ExpressionAttributeNames).includes('#wrong'));
   t.false(Object.keys(actualParams.ExpressionAttributeValues).includes(':wrong'));
   t.false(actualParams.UpdateExpression.includes('wrong'));
+});
+
+test('Manager.buildDocClientUpdateParams() only updates specified fields', (t) => {
+  const { manager } = t.context;
+
+  const itemKey = { id: 'value' };
+  const item = {
+    ...itemKey,
+    foo: 'bar',
+    prop1: 'value1',
+    prop2: 'value2',
+    prop3: 'value3'
+  };
+
+  const actualParams = manager.buildDocClientUpdateParams({
+    item,
+    itemKeyFields: ['id'],
+    itemKey,
+    alwaysUpdateFields: ['foo', 'prop1']
+  });
+
+  t.true(actualParams.UpdateExpression.includes('#foo = :foo'));
+  t.true(actualParams.UpdateExpression.includes('#prop1 = :prop1'));
+
+  t.true(actualParams.UpdateExpression.includes('#prop2 = if_not_exists(#prop2, :prop2)'));
+  t.true(actualParams.UpdateExpression.includes('#prop3 = if_not_exists(#prop3, :prop3)'));;
 });
