@@ -8,17 +8,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- **CUMULUS-1698**
-  - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
-  - Updated `@cumulus/api/launchpadSaml` to download launchpad IDP metadata from configured location when the metadata in s3 is not valid, and to work with updated IDP metadata and SAML response.
+- **CUMULUS-1740** - `cumulus_meta.workflow_start_time` is now set in Cumulus
+  messages
+
+## [v1.18.0] 2020-02-03
 
 ### BREAKING CHANGES
 
-- **CUMULUS-1698**
-  - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
-
 - **CUMULUS-1686**
   - `ecs_cluster_instance_image_id` is now a *required* variable of the `cumulus` module, instead of optional.
+
+- **CUMULUS-1698**
+  - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
 
 - **CUMULUS-1703**
   - Remove the unused `forceDownload` option from the `sync-granule` tasks's config
@@ -29,6 +30,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Remove the `@cumulus/ingest/parse-pdr.parsePdr` function
 
 ### Added
+
+- **CUMULUS-1040**
+  - Added `@cumulus/aws-client` package to provide utilities for working with AWS services and the Node.js AWS SDK
+  - Added `@cumulus/errors` package which exports error classes for use in Cumulus workflow code
+  - Added `@cumulus/integration-tests/sfnStep` to provide utilities for parsing step function execution histories
+
+- **CUMULUS-1102**
+  - Adds functionality to the @cumulus/api package for better local testing.
+    - Adds data seeding for @cumulus/api's localAPI.
+      - seed functions allow adding collections, executions, granules, pdrs, providers, and rules to a Localstack Elasticsearch and DynamoDB via `addCollections`,  `addExecutions`, `addGranules`, `addPdrs`, `addProviders`, and `addRules`.
+    - Adds `eraseDataStack` function to local API server code allowing resetting of local datastack for testing (ES and DynamoDB).
+    - Adds optional parameters to the @cumulus/api bin serve to allow for launching the api without destroying the current data.
+
+- **CUMULUS-1697**
+  - Added the `@cumulus/tf-inventory` package that provides command line utilities for managing Terraform resources in your AWS account
 
 - **CUMULUS-1703**
   - Add `@cumulus/aws-client/S3.createBucket` function
@@ -41,28 +57,31 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add `@cumulus/ingest/providerClientUtils.buildProviderClient` function
   - Add `@cumulus/ingest/providerClientUtils.fetchTextFile` function
 
-- **CUMULUS-1040**
-  - Added `@cumulus/aws-client` package to provide utilities for working with AWS services and the Node.js AWS SDK
-  - Added `@cumulus/errors` package which exports error classes for use in Cumulus workflow code
+- **CUMULUS-1731**
+  - Add new optional input variables to the Cumulus Terraform module to support TEA upgrade:
+    - `thin_egress_cookie_domain` - Valid domain for Thin Egress App cookie
+    - `thin_egress_domain_cert_arn` - Certificate Manager SSL Cert ARN for Thin
+      Egress App if deployed outside NGAP/CloudFront
+    - `thin_egress_download_role_in_region_arn` - ARN for reading of Thin Egress
+      App data buckets for in-region requests
+    - `thin_egress_jwt_algo` - Algorithm with which to encode the Thin Egress
+      App JWT cookie
+    - `thin_egress_jwt_secret_name` - Name of AWS secret where keys for the Thin
+      Egress App JWT encode/decode are stored
+    - `thin_egress_lambda_code_dependency_archive_key` - Thin Egress App - S3
+      Key of packaged python modules for lambda dependency layer
 
-- **CUMULUS-1697**
-  - Added the `@cumulus/tf-inventory` package that provides command line utilities for managing Terraform resources in your AWS account
+- **CUMULUS-1733**
+  - Add `discovery-filtering` operator doc to document previously undocumented functionality.
 
 ### Changed
 
+- **CUMULUS-1102**
+  - Updates `@cumulus/api/auth/testAuth` to use JWT instead of random tokens.
+  - Updates the default AMI for the ecs\_cluster\_instance\_image\_id.
+
 - **CUMULUS-1622**
   - Mutex class has been deprecated in `@cumulus/common/concurrency` and will be removed in a future release.
-
-- **CUMULUS-1040**
-  - `@cumulus/common/errors` is now deprecated. Please use `@cumulus/errors` instead.
-  - The AWS service classes and utilities in `@cumulus/common` have been deprecated and moved to `@cumulus/aws-client`, including:
-    - `@cumulus/common/CloudFormationGateway`
-    - `@cumulus/common/DynamoDb`
-    - `@cumulus/common/StepFunctions`
-    - All of the exported functions in `@cumulus/commmon/aws`
-    - `@cumulus/common/string/unicodeEscape`
-    - `@cumulus/common/test-utils/inTestMode`
-    - `@cumulus/common/util/setErrorStack`
 
 - **CUMULUS-1686**
   - Changed `ecs_cluster_instance_image_id` to be a required variable of the `cumulus` module and removed the default value.
@@ -73,15 +92,61 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Replaced `sf_watcher` CloudWatch rule from `cloudwatch-events.tf` with an EventSourceMapping on `sqs2sf` mapped to the `start_sf` SQS queue (in `event-sources.tf`).
   - Updated `sqs2sf` with an EventSourceMapping handler and unit test.
 
+- **CUMULUS-1698**
+  - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
+  - Updated `@cumulus/api/launchpadSaml` to download launchpad IDP metadata from configured location when the metadata in s3 is not valid, and to work with updated IDP metadata and SAML response.
+
+- **CUMULUS-1731**
+  - Upgrade the version of the Thin Egress App deployed by Cumulus to v48
+    - Note: New variables available, see the 'Added' section of this changelog.
+
 ### Fixed
 
 - **CUMULUS-1664**
   - Updated `dbIndexer` Lambda to remove hardcoded references to DynamoDB table names.
 
+- **CUMULUS-1733**
+  - Fixed granule discovery recursion algorithm used in S/FTP protocols.
+
 ### Removed
 
 - **CUMULUS-1481**
   - removed `process` config and output from PostToCmr as it was not required by the task nor downstream steps, and should still be in the output message's `meta` regardless.
+
+### Deprecated
+
+- **CUMULUS-1040**
+  - Deprecated the following code. For cases where the code was moved into another package, the new code location is noted:
+    - `@cumulus/common/CloudFormationGateway` -> `@cumulus/aws-client/CloudFormationGateway`
+    - `@cumulus/common/DynamoDb` -> `@cumulus/aws-client/DynamoDb`
+    - `@cumulus/common/errors` -> `@cumulus/errors`
+    - `@cumulus/common/StepFunctions` -> `@cumulus/aws-client/StepFunctions`
+    - All of the exported functions in `@cumulus/commmon/aws` (moved into `@cumulus/aws-client`), except:
+      - `@cumulus/common/aws/isThrottlingException` -> `@cumulus/errors/isThrottlingException`
+      - `@cumulus/common/aws/improveStackTrace` (not deprecated)
+      - `@cumulus/common/aws/retryOnThrottlingException` (not deprecated)
+    - `@cumulus/common/sfnStep/SfnStep.parseStepMessage` -> `@cumulus/integration-tests/sfnStep/SfnStep.parseStepMessage`
+    - `@cumulus/common/sfnStep/ActivityStep` -> `@cumulus/integration-tests/sfnStep/ActivityStep`
+    - `@cumulus/common/sfnStep/LambdaStep` -> `@cumulus/integration-tests/sfnStep/LambdaStep`
+    - `@cumulus/common/string/unicodeEscape` -> `@cumulus/aws-client/StepFunctions.unicodeEscape`
+    - `@cumulus/common/util/setErrorStack` -> `@cumulus/aws-client/util/setErrorStack`
+    - `@cumulus/ingest/aws/invoke` -> `@cumulus/aws-client/Lambda/invoke`
+    - `@cumulus/ingest/aws/CloudWatch.bucketSize`
+    - `@cumulus/ingest/aws/CloudWatch.cw`
+    - `@cumulus/ingest/aws/ECS.ecs`
+    - `@cumulus/ingest/aws/ECS`
+    - `@cumulus/ingest/aws/Events.putEvent` -> `@cumulus/aws-client/CloudwatchEvents.putEvent`
+    - `@cumulus/ingest/aws/Events.deleteEvent` -> `@cumulus/aws-client/CloudwatchEvents.deleteEvent`
+    - `@cumulus/ingest/aws/Events.deleteTarget` -> `@cumulus/aws-client/CloudwatchEvents.deleteTarget`
+    - `@cumulus/ingest/aws/Events.putTarget` -> `@cumulus/aws-client/CloudwatchEvents.putTarget`
+    - `@cumulus/ingest/aws/SQS.attributes` -> `@cumulus/aws-client/SQS.getQueueAttributes`
+    - `@cumulus/ingest/aws/SQS.deleteMessage` -> `@cumulus/aws-client/SQS.deleteSQSMessage`
+    - `@cumulus/ingest/aws/SQS.deleteQueue` -> `@cumulus/aws-client/SQS.deleteQueue`
+    - `@cumulus/ingest/aws/SQS.getUrl` -> `@cumulus/aws-client/SQS.getQueueUrlByName`
+    - `@cumulus/ingest/aws/SQS.receiveMessage` -> `@cumulus/aws-client/SQS.receiveSQSMessages`
+    - `@cumulus/ingest/aws/SQS.sendMessage` -> `@cumulus/aws-client/SQS.sendSQSMessage`
+    - `@cumulus/ingest/aws/StepFunction.getExecutionStatus` -> `@cumulus/aws-client/StepFunction.getExecutionStatus`
+    - `@cumulus/ingest/aws/StepFunction.getExecutionUrl`  -> `@cumulus/aws-client/StepFunction.getExecutionUrl`
 
 ## [v1.17.0] - 2019-12-31
 
@@ -1886,7 +1951,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.17.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.18.0...HEAD
+[v1.18.0]: https://github.com/nasa/cumulus/compare/v1.17.0...v1.18.0
 [v1.17.0]: https://github.com/nasa/cumulus/compare/v1.16.1...v1.17.0
 [v1.16.1]: https://github.com/nasa/cumulus/compare/v1.16.0...v1.16.1
 [v1.16.0]: https://github.com/nasa/cumulus/compare/v1.15.0...v1.16.0

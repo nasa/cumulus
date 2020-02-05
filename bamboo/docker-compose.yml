@@ -33,12 +33,12 @@ services:
     environment:
       ES_JAVA_OPTS: "-Xms750m -Xmx750m"
   localstack:
-    image: localstack/localstack:0.10.5
+    image: localstack/localstack:0.10.7
     network_mode: "service:build_env"
     environment:
-      SERVICES: "kinesis,lambda,s3,secretsmanager,sns,sqs,dynamodb,cloudwatch,cloudwatchlogs"
+      SERVICES: "kinesis,lambda,s3,secretsmanager,sns,sqs,dynamodb,cloudwatch,cloudwatchlogs,stepfunctions"
   build_env:
-    image: jlkovarik/cumulus-build-env:test4
+    image: maven.earthdata.nasa.gov/cumulus:latest
     volumes:
       - ../:/source/cumulus
       - /tmp/cumulus_unit_test_data:/tmp/cumulus_unit_test_data

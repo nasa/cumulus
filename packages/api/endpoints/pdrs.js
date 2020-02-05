@@ -5,7 +5,7 @@ const {
   deleteS3Object
 } = require('@cumulus/aws-client/S3');
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { RecordDoesNotExist } = require('@cumulus/common/errors');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 const Search = require('../es/search').Search;
 const models = require('../models');
 

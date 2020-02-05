@@ -19,14 +19,10 @@ const {
   ecs,
   sfn
 } = require('@cumulus/aws-client/services');
-const { pullStepFunctionEvent } = require('@cumulus/aws-client/StepFunctions');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { getWorkflowTemplate, getWorkflowArn } = require('@cumulus/common/workflows');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
-const { ActivityStep, LambdaStep } = require('@cumulus/common/sfnStep');
 const { globalReplace } = require('@cumulus/common/string');
-
-const StepFunctions = require('@cumulus/common/StepFunctions');
-
 const { sleep } = require('@cumulus/common/util');
 
 const {
@@ -43,6 +39,7 @@ const distributionApi = require('./api/distribution');
 const cmr = require('./cmr.js');
 const lambda = require('./lambda');
 const waitForDeployment = require('./lambdas/waitForDeployment');
+const { ActivityStep, LambdaStep } = require('./sfnStep');
 
 const waitPeriodMs = 1000;
 
@@ -167,6 +164,7 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
 async function startWorkflowExecution(workflowArn, workflowMsg) {
   // Give this execution a unique name
   workflowMsg.cumulus_meta.execution_name = uuidv4();
+  workflowMsg.cumulus_meta.workflow_start_time = Date.now();
   workflowMsg.cumulus_meta.state_machine = workflowArn;
 
   const workflowParams = {
@@ -790,7 +788,7 @@ async function waitForTestExecutionStart({
       const execution = executions[executionCtr];
       let taskInput = await lambdaStep.getStepInput(execution.executionArn, startTask);
       if (taskInput) {
-        taskInput = await pullStepFunctionEvent(taskInput);
+        taskInput = await StepFunctions.pullStepFunctionEvent(taskInput);
       }
       if (taskInput && findExecutionFn(taskInput, findExecutionFnParams)) {
         return execution;

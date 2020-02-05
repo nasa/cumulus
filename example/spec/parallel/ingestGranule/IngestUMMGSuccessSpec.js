@@ -21,7 +21,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
-const { LambdaStep } = require('@cumulus/common/sfnStep');
+const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getUrl } = require('@cumulus/cmrjs');
 const {
   addCollections,
