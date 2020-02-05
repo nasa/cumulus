@@ -24,6 +24,8 @@ const {
 function dispatch(message) {
   const input = JSON.parse(get(message, 'Body', get(message, 'body', '{}')));
 
+  input.cumulus_meta.workflow_start_time = Date.now();
+
   if (!input.cumulus_meta.execution_name) {
     input.cumulus_meta.execution_name = uuidv4();
   }
