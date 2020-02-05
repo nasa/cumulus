@@ -28,7 +28,7 @@ Amazon DynamoDB stores three geographically distributed replicas of each table t
 
 You can enable point-in-time recovery (PITR) as well as create an on-demand backup for your Amazon DynamoDB tables.
 
-PITR provides continuous backups of your DynamoDB table data. You can enable PITR with a single click from the AWS Management Console or a single API call. When enabled, DynamoDB maintains continuous backups of your table up to the last 35 days. You can recover a copy of that table to a previous state at any point in time from the moment you enable PITR, up to a maximum of the 35 preceding days. PITR provides continuous backups until you explicitly disable it.
+PITR provides continuous backups of your DynamoDB table data. PITR can be enabled through your Terraform deployment, the AWS console, or the AWS API. When enabled, DynamoDB maintains continuous backups of your table up to the last 35 days. You can recover a copy of that table to a previous state at any point in time from the moment you enable PITR, up to a maximum of the 35 preceding days. PITR provides continuous backups until you explicitly disable it.
 
 On-demand backups allow you to create backups of DynamoDB table data and its settings. You can initiate an on-demand backup at any time with a single click from the AWS Management Console or a single API call. You can restore the backups to a new DynamoDB table in the same AWS Region at any time.
 
@@ -49,6 +49,31 @@ By default, the Cumulus [data-persistence module](https://github.com/nasa/cumulu
 - RulesTable
 
 If you wish to change this list, simply update your deployment's `data_persistence` module ([here](https://github.com/nasa/cumulus-template-deploy/blob/master/data-persistence-tf/main.tf) in the `template-deploy` repository) to pass the correct list of tables.
+
+## Restoring with PITR
+
+### Restoring a full deployment
+
+If your deployment has been deleted all of your tables with PITR enabled will have had backups created automatically. You can locate these backups in the AWS console in the [DynamoDb Backups Page](https://console.aws.amazon.com/dynamodb/home#backups:) or through the CLI by running:
+
+```sh
+aws dynamodb list-backups --backup-type SYSTEM
+```
+
+You can restore your tables to your AWS account using the following command:
+
+```sh
+aws dynamodb restore-table-from-backup --target-table-name <prefix>-CollectionsTable --backup-arn <backup-arn>
+```
+
+Where `prefix` matches the `prefix` from your data-persistence stack deployment. `backup-arn` can be found in the AWS console or by listing the backups using the command above.
+
+This will restore your tables to AWS. They will need to be linked to your Terraform deployment. After `terraform init` and _before_ `terraform apply`, run the following command for each table:
+
+```sh
+```
+
+### Restoring an individual table
 
 ## Backup and Restore with cumulus-api CLI
 
