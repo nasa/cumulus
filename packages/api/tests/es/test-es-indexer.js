@@ -16,7 +16,7 @@ const workflows = require('@cumulus/common/workflows');
 const indexer = rewire('../../es/indexer');
 const { Search } = require('../../es/search');
 const models = require('../../models');
-const { fakeGranuleFactory, fakeCollectionFactory } = require('../../lib/testUtils');
+const { fakeGranuleFactory, fakeGranuleFactoryV2, fakeCollectionFactory } = require('../../lib/testUtils');
 const { IndexExistsError } = require('../../lib/errors');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 
@@ -420,9 +420,11 @@ test.serial('delete a provider record', async (t) => {
 
 // This needs to be serial because it is stubbing aws.sfn's responses
 test.serial('reingest a granule', async (t) => {
-  payload.payload.granules[0].granuleId = randomString();
-  const records = await granuleModel.createGranulesFromSns(payload);
-  const record = records[0];
+  const record = fakeGranuleFactoryV2({
+    status: 'completed'
+  });
+
+  await granuleModel.create(record);
 
   t.is(record.status, 'completed');
 
@@ -437,26 +439,16 @@ test.serial('reingest a granule', async (t) => {
 test.serial('indexing a granule record', async (t) => {
   const { esAlias } = t.context;
 
-  const txt = fs.readFileSync(
-    path.join(__dirname, '../data/sns_message_granule.txt'),
-    'utf8'
-  );
+  const granule = fakeGranuleFactoryV2();
 
-  const event = JSON.parse(JSON.parse(txt.toString()));
-  const msg = JSON.parse(event.Records[0].Sns.Message);
-
-  const [granule] = await granuleModel.createGranulesFromSns(msg);
   await indexer.indexGranule(esClient, granule, esAlias);
-
-  const collection = msg.meta.collection;
-  const collectionId = constructCollectionId(collection.name, collection.version);
 
   // test granule record is added
   const record = await esClient.get({
     index: esAlias,
     type: 'granule',
     id: granule.granuleId,
-    parent: collectionId
+    parent: granule.collectionId
   }).then((response) => response.body);
   t.is(record._id, granule.granuleId);
 });
