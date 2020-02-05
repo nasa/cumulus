@@ -431,6 +431,41 @@ class Manager {
       { status: 'failed', error: errorify(err), isActive: false }
     );
   }
+
+  buildDocClientUpdateParams({
+    item,
+    itemKey,
+    itemKeyFields = [],
+    alwaysUpdateFields = []
+  }) {
+    const ExpressionAttributeNames = {};
+    const ExpressionAttributeValues = {};
+    const setUpdateExpressions = [];
+
+    Object.entries(item).forEach(([key, value]) => {
+      if (itemKeyFields.includes(key)) return;
+      if (value === undefined) return;
+
+      ExpressionAttributeNames[`#${key}`] = key;
+      ExpressionAttributeValues[`:${key}`] = value;
+
+      if (alwaysUpdateFields.includes(key)) {
+        setUpdateExpressions.push(`#${key} = :${key}`);
+      } else {
+        setUpdateExpressions.push(`#${key} = if_not_exists(#${key}, :${key})`);
+      }
+    });
+
+    if (setUpdateExpressions.length === 0) return null;
+
+    return {
+      TableName: this.tableName,
+      Key: itemKey,
+      ExpressionAttributeNames,
+      ExpressionAttributeValues,
+      UpdateExpression: `SET ${setUpdateExpressions.join(', ')}`
+    };
+  }
 }
 
 module.exports = Manager;

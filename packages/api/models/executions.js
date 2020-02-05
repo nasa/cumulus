@@ -115,43 +115,24 @@ class Execution extends Manager {
     return Promise.all(executions.Items.map((execution) => super.delete({ arn: execution.arn })));
   }
 
-  buildDocClientUpdateParams(item) {
-    const ExpressionAttributeNames = {};
-    const ExpressionAttributeValues = {};
-    const setUpdateExpressions = [];
+  getUpdateFields(item) {
+    if (item.status === 'running') {
+      return ['createdAt', 'updatedAt', 'timestamp', 'originalPayload'];
+    }
 
-    Object.entries(item).forEach(([key, value]) => {
-      if (key === 'arn') return;
-      if (value === undefined) return;
-
-      ExpressionAttributeNames[`#${key}`] = key;
-      ExpressionAttributeValues[`:${key}`] = value;
-
-      if (item.status === 'running') {
-        if (['createdAt', 'updatedAt', 'timestamp', 'originalPayload'].includes(key)) {
-          setUpdateExpressions.push(`#${key} = :${key}`);
-        } else {
-          setUpdateExpressions.push(`#${key} = if_not_exists(#${key}, :${key})`);
-        }
-      } else {
-        setUpdateExpressions.push(`#${key} = :${key}`);
-      }
-    });
-
-    if (setUpdateExpressions.length === 0) return null;
-
-    return {
-      TableName: this.tableName,
-      Key: { arn: item.arn },
-      ExpressionAttributeNames,
-      ExpressionAttributeValues,
-      UpdateExpression: `SET ${setUpdateExpressions.join(', ')}`
-    };
+    return Object.keys(item);
   }
 
   async storeExecutionFromCumulusMessage(cumulusMessage) {
     const executionItem = Execution.generateRecord(cumulusMessage);
-    const updateParams = this.buildDocClientUpdateParams(executionItem);
+
+    const alwaysUpdateFields = this.getUpdateFields(executionItem);
+    const updateParams = this.buildDocClientUpdateParams({
+      item: executionItem,
+      itemKeyFields: ['arn'],
+      itemKey: { arn: executionItem.arn },
+      alwaysUpdateFields
+    });
 
     await this.dynamodbDocClient.update(updateParams).promise();
   }
