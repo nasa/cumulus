@@ -8,22 +8,33 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
-- **CUMULUS-1684**
+- **CUMULUS-1684 Migration Instructions**
   - In previous releases, a provider's username and password were encrypted
     using a custom encryption library. That has now been updated to use KMS.
     This release includes a Lambda function named
     `<prefix>-ProviderSecretsMigration`, which will re-encrypt existing
     provider credentials to use KMS. After this release has been deployed, you
     will need to manually invoke that Lambda function using either the AWS CLI
-    or AWS Console. It should only need to be run once.
+    or AWS Console. It should only need to be successfully run once.
   - Future releases of Cumulus will invoke a
     `<prefix>-VerifyProviderSecretsMigration` Lambda function as part of the
     deployment, which will cause the deployment to fail if the migration
     Lambda has not been run.
-  - Update the API package to encrypt provider credentials using KMS instead of
-    using RSA keys stored in S3
+
+### Added
+
+- **CUMULUS-1684**
   - Add a `@cumulus/aws-client/KMS` library of KMS-related functions
   - Add `@cumulus/aws-client/S3.getTextObject()`
+  - Add `@cumulus/sftp-client` package
+  - Create `ProviderSecretsMigration` Lambda function
+  - Create `VerifyProviderSecretsMigration` Lambda function
+
+### Changed
+
+- **CUMULUS-1684**
+  - Update the API package to encrypt provider credentials using KMS instead of
+    using RSA keys stored in S3
   - Deprecate `@cumulus/common/key-pair-provider/S3KeyPairProvider`
   - Deprecate `@cumulus/common/key-pair-provider/S3KeyPairProvider.encrypt()`
   - Deprecate `@cumulus/common/key-pair-provider/S3KeyPairProvider.decrypt()`
@@ -31,16 +42,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Deprecate `@cumulus/common/kms/KMS.encrypt()`
   - Deprecate `@cumulus/common/kms/KMS.decrypt()`
   - Deprecate `@cumulus/common/sftp.Sftp`
-  - Add `@cumulus/sftp-client` package
-  - Remove the deployment script that creates encryption keys and stores them to
-    S3
-  - Create `ProviderSecretsMigration` Lambda function
-  - Create `VerifyProviderSecretsMigration` Lambda function
 
 ### Fixed
 
 - **CUMULUS-1740** - `cumulus_meta.workflow_start_time` is now set in Cumulus
   messages
+
+### Removed
+
+- **CUMULUS-1684**
+  - Remove the deployment script that creates encryption keys and stores them to
+    S3
 
 ## [v1.18.0] 2020-02-03
 

@@ -97,7 +97,7 @@ test.serial('verifyProviderSecretsMigration fails if plaintext credentials are f
   );
 });
 
-test.serial.only('verifyProviderSecretsMigration fails if S3 keypair credentials are found', async (t) => {
+test.serial('verifyProviderSecretsMigration fails if S3 keypair credentials are found', async (t) => {
   const provider = fakeProviderFactory({
     protocol: 'ftp',
     encrypted: true,
