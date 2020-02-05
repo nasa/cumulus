@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1740** - `cumulus_meta.workflow_start_time` is now set in Cumulus
   messages
 
+### Deprecated
+
+- **CUMULUS-1717** - Deprecated `@cumulus/api/models/Granule.createGranulesFromSns`
+
 ## [v1.18.0] 2020-02-03
 
 ### BREAKING CHANGES
