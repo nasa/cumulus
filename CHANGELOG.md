@@ -6,10 +6,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-1741** - Added an optional `security_group` variable to the `data-persistence` stack to allow the Elasticsearch security group id to be specified instead of creating one
+
 ### Fixed
 
 - **CUMULUS-1740** - `cumulus_meta.workflow_start_time` is now set in Cumulus
   messages
+
+- **CUMULUS-1610** - Add the Elasticsearch security group to the EC2 security groups
 
 ## [v1.18.0] 2020-02-03
 
