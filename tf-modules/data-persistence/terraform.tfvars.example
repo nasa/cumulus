@@ -19,4 +19,4 @@ enable_point_in_time_tables = [
 ]
 include_elasticsearch  = true
 subnet_ids             = ["subnet-123456"]
-security_groups        = ["sg-123456"]
+security_group         = "sg-123456"
