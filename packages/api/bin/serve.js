@@ -342,7 +342,7 @@ async function eraseDynamoTables(stackName, systemBucket) {
  */
 async function eraseDataStack(
   stackName = localStackName,
-  systemBucket = localSystemBucket,
+  systemBucket = localSystemBucket
 ) {
   await eraseDynamoTables(stackName, systemBucket);
   return initializeLocalElasticsearch(stackName);
