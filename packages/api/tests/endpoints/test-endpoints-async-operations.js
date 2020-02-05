@@ -115,6 +115,52 @@ test.serial('GET /asyncOperations returns a list of operations', async (t) => {
   });
 });
 
+test.serial('GET /asyncOperations with a timestamp parameter returns a list of filtered results', async (t) => {
+  const firstDate = Date.now();
+  const asyncOperation1 = {
+    id: 'abc-6295',
+    status: 'RUNNING',
+    taskArn: randomString(),
+    description: 'Some async run',
+    operationType: 'Bulk Granules',
+    output: JSON.stringify({ age: 59 })
+  };
+  const asyncOperation2 = {
+    id: 'abc-294',
+    status: 'RUNNING',
+    taskArn: randomString(),
+    description: 'Some async run',
+    operationType: 'ES Index',
+    output: JSON.stringify({ age: 37 })
+  };
+
+  await asyncOperationModel.create(asyncOperation1);
+  await indexer.indexAsyncOperation(esClient, asyncOperation1, esAlias);
+
+  const secondDate = Date.now();
+
+  await asyncOperationModel.create(asyncOperation2);
+  await indexer.indexAsyncOperation(esClient, asyncOperation2, esAlias);
+
+  const response1 = await request(app)
+    .get(`/asyncOperations?timestamp__from=${firstDate}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response1.status, 200);
+  t.is(response1.body.results.length, 2);
+
+  const response2 = await request(app)
+    .get(`/asyncOperations?timestamp__from=${secondDate}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response2.body.results.length, 1);
+  t.is(response2.body.results[0].id, asyncOperation2.id);
+});
+
 test.serial('GET /asyncOperations/{:id} returns a 401 status code if valid authorization is not specified', async (t) => {
   const response = await request(app)
     .get('/asyncOperations/abc-123')

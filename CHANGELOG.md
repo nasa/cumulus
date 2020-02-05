@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1459**
   - Async Operations are indexed in Elasticsearch
+  - Included Async Operations in list to be indexed in API endpoint `elasticsearch/index-from-database`
 
 ### Fixed
 
