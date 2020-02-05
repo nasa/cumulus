@@ -48,7 +48,8 @@ test('The cw-cf-execution-event-to-db Lambda function takes a Cloudwatch Step Fu
   const cumulusMessage = {
     cumulus_meta: {
       state_machine: stateMachineArn,
-      execution_name: executionName
+      execution_name: executionName,
+      workflow_start_time: 122
     },
     meta: {
       status: 'running',
@@ -71,7 +72,7 @@ test('The cw-cf-execution-event-to-db Lambda function takes a Cloudwatch Step Fu
     t.is(fetchedExecution.execution, `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`);
     t.is(fetchedExecution.collectionId, 'my-collection___5');
     t.is(fetchedExecution.status, 'running');
-    t.is(fetchedExecution.createdAt, event.detail.startDate);
+    t.is(fetchedExecution.createdAt, 122);
     t.is(fetchedExecution.originalPayload, 'my-payload');
   } catch (err) {
     t.fail('Failed to fetch execution');
