@@ -28,7 +28,9 @@ test.beforeEach(async (t) => {
         version: 'my-version'
       }
     },
-    payload: 'my-payload'
+    payload: {
+      value: 'my-payload'
+    }
   };
 
   t.context.executionArn = `arn:aws:states:us-east-1:111122223333:execution:HelloWorld-StateMachine:${t.context.executionName}`;
@@ -53,7 +55,9 @@ test('generateRecord() returns the correct record in the basic case', (t) => {
     createdAt: 123,
     timestamp: actualRecord.timestamp,
     updatedAt: actualRecord.updatedAt,
-    originalPayload: 'my-payload',
+    originalPayload: {
+      value: 'my-payload'
+    },
     duration: 0
   };
 
@@ -182,28 +186,21 @@ test.serial('storeExecutionFromCumulusMessage() can be used to create a new runn
   t.is(fetchedItem.status, 'running');
 });
 
-test.skip('storeExecutionFromCumulusMessage() can be used to update a running execution', async (t) => {
+test.serial('storeExecutionFromCumulusMessage() can be used to update a running execution', async (t) => {
   const {
     cumulusMessage,
     executionArn,
-    executionModel,
-    executionName
+    executionModel
   } = t.context;
 
   const originalItem = {
     arn: executionArn,
     status: 'running',
-    updatedAt: 123,
+    originalPayload: {},
     name: 'frank'
   };
 
   await executionModel.create(originalItem);
-
-  const updatedItem = {
-    ...originalItem,
-    updatedAt: 321,
-    name: 'joe'
-  };
 
   cumulusMessage.meta.status = 'running';
   await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
@@ -211,11 +208,11 @@ test.skip('storeExecutionFromCumulusMessage() can be used to update a running ex
   const fetchedItem = await executionModel.get({ arn: originalItem.arn });
 
   t.is(fetchedItem.status, 'running');
-  t.is(fetchedItem.updatedAt, 321);
+  t.deepEqual(fetchedItem.originalPayload, { value: 'my-payload' });
   t.is(fetchedItem.name, 'frank');
 });
 
-test('storeExecutionFromCumulusMessage() can be used to create a new completed execution', async (t) => {
+test.serial('storeExecutionFromCumulusMessage() can be used to create a new completed execution', async (t) => {
   const { executionArn, executionModel, cumulusMessage } = t.context;
 
   cumulusMessage.meta.status = 'completed';
@@ -226,7 +223,7 @@ test('storeExecutionFromCumulusMessage() can be used to create a new completed e
   t.is(fetchedItem.status, 'completed');
 });
 
-test('storeExecutionFromCumulusMessage() can be used to update a completed execution', async (t) => {
+test.serial('storeExecutionFromCumulusMessage() can be used to update a completed execution', async (t) => {
   const {
     cumulusMessage,
     executionArn,

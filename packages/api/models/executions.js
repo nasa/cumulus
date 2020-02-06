@@ -126,6 +126,8 @@ class Execution extends Manager {
   async storeExecutionFromCumulusMessage(cumulusMessage) {
     const executionItem = Execution.generateRecord(cumulusMessage);
 
+    await Execution.recordIsValid(executionItem, this.schema, this.removeAdditional);
+
     const alwaysUpdateFields = this.getUpdateFields(executionItem);
     const updateParams = this.buildDocClientUpdateParams({
       item: executionItem,
