@@ -492,6 +492,12 @@ class Granule extends Manager {
     return Object.keys(record);
   }
 
+  /**
+   * Parse a Cumulus message and build granule records for the embedded granules.
+   *
+   * @param {Object} cumulusMessage - A Cumulus message
+   * @returns {Promise<Array<Object>>} - An array of granule records
+   */
   static async _getGranuleRecordsFromCumulusMessage(cumulusMessage) {
     const granules = getMessageGranules(cumulusMessage);
     if (!granules) {
