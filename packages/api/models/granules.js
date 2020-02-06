@@ -492,7 +492,7 @@ class Granule extends Manager {
     return Object.keys(record);
   }
 
-  async _getGranuleRecordsFromCumulusMessage(cumulusMessage) {
+  static async _getGranuleRecordsFromCumulusMessage(cumulusMessage) {
     const granules = getMessageGranules(cumulusMessage);
     if (!granules) {
       log.info(`No granules to process in the payload: ${JSON.stringify(cumulusMessage.payload)}`);
@@ -512,7 +512,7 @@ class Granule extends Manager {
     const promisedGranuleRecords = granules
       .map(async (granule) => {
         try {
-          return await this.constructor.generateGranuleRecord(
+          return await Granule.generateGranuleRecord(
             granule,
             cumulusMessage,
             executionUrl,
