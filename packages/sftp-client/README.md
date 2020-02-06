@@ -27,7 +27,9 @@ const SftpClient = require("@cumulus/sftp-client");
 
 ## API
 
-### constructor(config = {})
+---
+
+### constructor(config)
 
 #### config
 
@@ -64,6 +66,8 @@ Type: `string`
 
 A private key to use when connecting to the SFTP server.
 
+---
+
 ### sftpClient.download(remotePath, localPath)
 
 Download a remote file to disk. Returns a `Promise` that resolves to a `string`
@@ -81,6 +85,8 @@ Type: `string`
 
 The full local destination file path
 
+---
+
 ### sftpClient.end()
 
 Close the connect to the SFTP server.
@@ -96,6 +102,8 @@ The returned file `object`s will each contain `name`, `path`, `type`, `size`, an
 Type: `string`
 
 The remote path to be listed.
+
+---
 
 ### sftpClient.syncFromS3(s3Object, remotePath)
 
@@ -123,6 +131,8 @@ Type: `string`
 
 The full remote destination file path.
 
+---
+
 ### sftpClient.syncToS3(remotePath, bucket, key)
 
 Returns a `Promise` that resolves to a `string` containing the S3 URI of the destination file
@@ -144,6 +154,8 @@ Destination S3 bucket of the file
 Type: `string`
 
 Destination S3 key of the file
+
+---
 
 ### sftpClient.unlink(remotePath)
 
