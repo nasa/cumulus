@@ -7,7 +7,7 @@ const { Search } = require('../es/search');
 const metrics = () => ('log_destination_arn' in process.env);
 
 function convertLogLevelForQuery(query) {
-  if (!query.level || metrics) {
+  if (!query.level || metrics()) {
     return query;
   }
 
