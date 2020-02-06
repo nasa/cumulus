@@ -491,5 +491,5 @@ variable "non_complete_execution_payload_timeout" {
 variable "archive_api_url" {
   type        = string
   default     = null
-  description = "If not specified, the value of the API Gateway endpoint is used"
+  description = "If not specified, the value of the Backend (Archive) API Gateway endpoint is used"
 }
