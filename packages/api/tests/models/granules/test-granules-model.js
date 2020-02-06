@@ -777,6 +777,25 @@ test(
   }
 );
 
+test(
+  'generateGranuleRecord() uses granule.status if meta.status does not exist',
+  async (t) => {
+    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
+    delete cumulusMessage.meta.status;
+
+    const [granule] = cumulusMessage.payload.granules;
+    granule.status = 'running';
+
+    const record = await Granule.generateGranuleRecord(
+      granule,
+      cumulusMessage,
+      randomString()
+    );
+
+    t.is(record.status, 'running');
+  }
+);
+
 test.serial(
   'generateGranuleRecord() builds successful granule record',
   async (t) => {
