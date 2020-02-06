@@ -1,80 +1,36 @@
 'use strict';
 
 const get = require('lodash.get');
-const KMS = require('@cumulus/aws-client/KMS');
 const log = require('@cumulus/common/log');
 const path = require('path');
 const S3 = require('@cumulus/aws-client/S3');
 const { Client } = require('ssh2');
 const { lookupMimeType } = require('@cumulus/common/util');
-const { PassThrough, Readable } = require('stream');
-const { S3KeyPairProvider } = require('@cumulus/common/key-pair-provider');
-
-const decrypt = async (ciphertext) => {
-  try {
-    return await KMS.decryptBase64String(ciphertext);
-  } catch (_) {
-    return S3KeyPairProvider.decrypt(ciphertext);
-  }
-};
+const { PassThrough } = require('stream');
 
 class SftpClient {
   constructor(config) {
-    this.config = config;
     this.connected = false;
 
-    if (get(config, 'encrypted', false) === false) {
-      this.plaintextUsername = config.username;
-      this.plaintextPassword = config.password;
-    }
-  }
-
-  async getUsername() {
-    if (!this.plaintextUsername) {
-      this.plaintextUsername = await decrypt(this.config.username);
-    }
-
-    return this.plaintextUsername;
-  }
-
-  async getPassword() {
-    if (!this.plaintextPassword) {
-      this.plaintextPassword = await decrypt(this.config.password);
-    }
-
-    return this.plaintextPassword;
-  }
-
-  async getPrivateKey() {
-    // we are assuming that the specified private key is in the S3 crypto
-    // directory
-    const privateKey = await S3.getTextObject(
-      process.env.system_bucket,
-      `${process.env.stackName}/crypto/${this.config.privateKey}`
-    );
-
-    if (this.config.cmKeyId) {
-      // we are using AWS KMS and the privateKey is encrypted
-      return KMS.decryptBase64String(privateKey);
-    }
-
-    return privateKey;
-  }
-
-  async connect() {
-    const clientOptions = {
-      host: this.config.host,
-      port: get(this.config, 'port', 22)
+    this.clientOptions = {
+      host: config.host,
+      port: get(config, 'port', 22)
     };
 
-    if (this.config.username) clientOptions.username = await this.getUsername();
-    if (this.config.password) clientOptions.password = await this.getPassword();
-    if (this.config.privateKey) {
-      clientOptions.privateKey = await this.getPrivateKey();
-    }
+    if (config.username) this.clientOptions.username = config.username;
+    if (config.password) this.clientOptions.password = config.password;
+    if (config.privateKey) this.clientOptions.privateKey = config.privateKey;
+  }
 
-    return new Promise((resolve, reject) => {
+  /**
+   * @private
+   */
+  async connect() {
+    if (this.connected) return;
+
+    await new Promise((resolve, reject) => {
       this.client = new Client();
+
       this.client.on('ready', () => {
         this.client.sftp((err, sftp) => {
           if (err) return reject(err);
@@ -83,8 +39,10 @@ class SftpClient {
           return resolve();
         });
       });
+
       this.client.on('error', reject);
-      this.client.connect(clientOptions);
+
+      this.client.connect(this.clientOptions);
     });
   }
 
@@ -98,9 +56,10 @@ class SftpClient {
    *
    * @param {string} remotePath - the full path to the remote file to be fetched
    * @returns {string} - remote url
+   * @private
    */
   buildRemoteUrl(remotePath) {
-    return `sftp://${path.join(this.config.host, '/', remotePath)}`;
+    return `sftp://${path.join(this.clientOptions.host, '/', remotePath)}`;
   }
 
   /**
@@ -108,10 +67,10 @@ class SftpClient {
    *
    * @param {string} remotePath - the full path to the remote file to be fetched
    * @param {string} localPath - the full local destination file path
-   * @returns {Promise.<string>} - the local path that the file was saved to
+   * @returns {Promise<string>} - the local path that the file was saved to
    */
   async download(remotePath, localPath) {
-    if (!this.connected) await this.connect();
+    await this.connect();
 
     const remoteUrl = this.buildRemoteUrl(remotePath);
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
@@ -123,7 +82,19 @@ class SftpClient {
         log.info(`Finishing downloading ${remoteUrl}`);
         return resolve(localPath);
       });
-      this.client.on('error', (e) => reject(e));
+
+      this.client.on('error', reject);
+    });
+  }
+
+  async unlink(remotePath) {
+    await this.connect();
+
+    return new Promise((resolve, reject) => {
+      this.sftp.unlink(remotePath, (error) => {
+        if (error) reject(error);
+        else resolve();
+      });
     });
   }
 
@@ -160,10 +131,11 @@ class SftpClient {
    * List file in remote path
    *
    * @param {string} remotePath - the remote path to be listed
-   * @returns {Promise.<Object>} - list of file object
+   * @returns {Promise<Array<Object>>} list of file objects
    */
   async list(remotePath) {
-    if (!this.connected) await this.connect();
+    await this.connect();
+
     return new Promise((resolve, reject) => {
       this.sftp.readdir(remotePath, (err, list) => {
         if (err) {
@@ -180,7 +152,7 @@ class SftpClient {
           time: i.attrs.mtime * 1000
         })));
       });
-      this.client.on('error', (e) => reject(e));
+      this.client.on('error', reject);
     });
   }
 
@@ -189,13 +161,15 @@ class SftpClient {
    *
    * @param {string} remotePath - the full path to the remote file to be fetched
    * @returns {Promise} readable stream of the remote file
+   * @private
    */
   async getReadableStream(remotePath) {
-    if (!this.connected) await this.connect();
+    await this.connect();
+
     return new Promise((resolve, reject) => {
       const readStream = this.sftp.createReadStream(remotePath);
       readStream.on('error', reject);
-      this.client.on('error', (e) => reject(e));
+      this.client.on('error', reject);
       return resolve(readStream);
     });
   }
@@ -210,7 +184,7 @@ class SftpClient {
    * @returns {Promise}
    */
   async syncFromS3(s3object, remotePath) {
-    if (!this.connected) await this.connect();
+    await this.connect();
 
     const s3uri = S3.buildS3Uri(s3object.Bucket, s3object.Key);
     if (!(await S3.s3ObjectExists(s3object))) {
@@ -225,41 +199,23 @@ class SftpClient {
   }
 
   /**
-   * Upload a data string to remote path
-   *
-   * @param {Object} data - data string
-   * @param {string} remotePath - the full remote destination file path
-   * @returns {Promise}
-   */
-  async uploadFromString(data, remotePath) {
-    if (!this.connected) await this.connect();
-
-    const readStream = new Readable();
-    readStream.push(data);
-    readStream.push(null);
-
-    const remoteUrl = this.buildRemoteUrl(remotePath);
-    log.info(`Uploading string to ${remoteUrl}`);
-    return this.uploadFromStream(readStream, remotePath);
-  }
-
-  /**
    * Upload data from stream to a remote file
    *
    * @param {string} readStream - the stream content to be written to the file
    * @param {string} remotePath - the full remote destination file path
    * @returns {Promise}
+   * @private
    */
   async uploadFromStream(readStream, remotePath) {
-    if (!this.connected) await this.connect();
+    await this.connect();
 
     return new Promise((resolve, reject) => {
       const writeStream = this.sftp.createWriteStream(remotePath);
-      writeStream.on('error', (e) => reject(e));
-      readStream.on('error', (e) => reject(e));
+      writeStream.on('error', reject);
+      readStream.on('error', reject);
       readStream.pipe(writeStream);
       writeStream.on('close', resolve);
-      this.client.on('error', (e) => reject(e));
+      this.client.on('error', reject);
     });
   }
 }

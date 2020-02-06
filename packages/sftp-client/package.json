@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/sftp-client",
-  "version": "1.18.0",
-  "description": "Cumulus SFTP client",
+  "version": "1.18.0-alpha.0",
+  "description": "A Promise-based SFTP client",
   "keywords": [
     "GIBS",
     "CUMULUS",
@@ -20,13 +20,9 @@
   },
   "scripts": {
     "build": "true",
-    "lint": "eslint .",
-    "test": "ava",
-    "test-coverage": "nyc ava",
-    "test-ci": "npm run lint"
+    "test": "ava"
   },
   "ava": {
-    "serial": true,
     "verbose": true
   },
   "nyc": {
