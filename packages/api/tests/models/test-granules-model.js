@@ -1023,14 +1023,14 @@ test.serial(
 );
 
 test('_getMutableFieldNames() returns correct fields for running status', async (t) => {
-  const { executionModel } = t.context;
+  const { granuleModel } = t.context;
 
   const updatedItem = {
     granuleId: randomString(),
     status: 'running'
   };
 
-  const updateFields = executionModel._getMutableFieldNames(updatedItem);
+  const updateFields = granuleModel._getMutableFieldNames(updatedItem);
 
   t.deepEqual(updateFields, [
     'createdAt', 'updatedAt', 'timestamp'
@@ -1038,7 +1038,7 @@ test('_getMutableFieldNames() returns correct fields for running status', async 
 });
 
 test('_getMutableFieldNames() returns correct fields for completed status', async (t) => {
-  const { executionModel } = t.context;
+  const { granuleModel } = t.context;
 
   const item = {
     granuleId: randomString(),
@@ -1047,7 +1047,7 @@ test('_getMutableFieldNames() returns correct fields for completed status', asyn
     files: []
   };
 
-  const updateFields = executionModel._getMutableFieldNames(item);
+  const updateFields = granuleModel._getMutableFieldNames(item);
 
   t.deepEqual(updateFields, Object.keys(item));
 });
