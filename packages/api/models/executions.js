@@ -115,14 +115,25 @@ class Execution extends Manager {
     return Promise.all(executions.Items.map((execution) => super.delete({ arn: execution.arn })));
   }
 
-  getUpdateFields(item) {
-    if (item.status === 'running') {
+  /**
+   * Get the set of fields which are mutable based on the execution status.
+   *
+   * @param {Object} record - An execution record
+   * @returns {Array} - The array of mutable field names
+   */
+  getMutableFieldNames(record) {
+    if (record.status === 'running') {
       return ['createdAt', 'updatedAt', 'timestamp', 'originalPayload'];
     }
-
-    return Object.keys(item);
+    return Object.keys(record);
   }
 
+  /**
+   * Generate and store an execution record from a Cumulus message.
+   *
+   * @param {Object} cumulusMessage - Cumulus workflow message
+   * @returns {Promise}
+   */
   async storeExecutionFromCumulusMessage(cumulusMessage) {
     const executionItem = Execution.generateRecord(cumulusMessage);
 
@@ -130,11 +141,11 @@ class Execution extends Manager {
     // schema validation and the actual client.update() method.
     await this.constructor.recordIsValid(executionItem, this.schema, this.removeAdditional);
 
-    const alwaysUpdateFields = this.getUpdateFields(executionItem);
+    const mutableFieldNames = this.getMutableFieldNames(executionItem);
     const updateParams = this._buildDocClientUpdateParams({
       item: executionItem,
       itemKey: { arn: executionItem.arn },
-      alwaysUpdateFields
+      mutableFieldNames
     });
 
     await this.dynamodbDocClient.update(updateParams).promise();

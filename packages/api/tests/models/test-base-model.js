@@ -160,7 +160,7 @@ test('Manager._buildDocClientUpdateParams() does not try to update a value to `u
   const actualParams = manager._buildDocClientUpdateParams({
     item,
     itemKey,
-    alwaysUpdateFields: ['foo']
+    mutableFieldNames: ['foo']
   });
 
   t.false(Object.keys(actualParams.ExpressionAttributeNames).includes('#wrong'));
@@ -183,7 +183,7 @@ test('Manager._buildDocClientUpdateParams() only updates specified fields', (t) 
   const actualParams = manager._buildDocClientUpdateParams({
     item,
     itemKey,
-    alwaysUpdateFields: ['foo', 'prop1']
+    mutableFieldNames: ['foo', 'prop1']
   });
 
   t.true(actualParams.UpdateExpression.startsWith('SET '));
