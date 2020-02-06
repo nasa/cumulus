@@ -432,15 +432,16 @@ class Manager {
     );
   }
 
-  buildDocClientUpdateParams({
+  _buildDocClientUpdateParams({
     item,
     itemKey,
-    itemKeyFields = [],
     alwaysUpdateFields = []
   }) {
     const ExpressionAttributeNames = {};
     const ExpressionAttributeValues = {};
     const setUpdateExpressions = [];
+
+    const itemKeyFields = Object.keys(itemKey);
 
     Object.entries(item).forEach(([key, value]) => {
       if (itemKeyFields.includes(key)) return;

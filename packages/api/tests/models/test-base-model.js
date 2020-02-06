@@ -132,7 +132,7 @@ test('Manager.buildDocClientUpdateParams() returns null for an empty item', (t) 
   const { manager } = t.context;
   t.is(manager.buildDocClientUpdateParams({
     item: {},
-    itemKey: null
+    itemKey: {}
   }), null);
 });
 
@@ -147,7 +147,6 @@ test('Manager.buildDocClientUpdateParams() does not try to update the key fields
 
   const actualParams = manager.buildDocClientUpdateParams({
     item,
-    itemKeyFields: ['id', 'key'],
     itemKey: { id: item.id, key: item.key }
   });
 
@@ -172,7 +171,6 @@ test('Manager.buildDocClientUpdateParams() does not try to update a value to `un
 
   const actualParams = manager.buildDocClientUpdateParams({
     item,
-    itemKeyFields: ['id'],
     itemKey,
     alwaysUpdateFields: ['foo']
   });
@@ -196,7 +194,6 @@ test('Manager.buildDocClientUpdateParams() only updates specified fields', (t) =
 
   const actualParams = manager.buildDocClientUpdateParams({
     item,
-    itemKeyFields: ['id'],
     itemKey,
     alwaysUpdateFields: ['foo', 'prop1']
   });
