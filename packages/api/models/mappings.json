@@ -65,6 +65,42 @@
       }
     }
   },
+  "asyncOperation": {
+    "dynamic_templates": [
+      {
+        "all_date_fileds": {
+          "match": "*At",
+          "match_mapping_type": "long",
+          "mapping": {
+            "type": "date"
+          }
+        }
+      }
+    ],
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "status": {
+        "type": "keyword"
+      },
+      "description": {
+        "type": "text"
+      },
+      "operationType": {
+        "type": "keyword"
+      },
+      "taskArn": {
+        "type": "keyword"
+      },
+      "output": {
+        "type": "text"
+      },
+      "timestamp": {
+        "type": "date"
+      }
+    }
+  },
   "pdr": {
     "dynamic_templates": [
       {
