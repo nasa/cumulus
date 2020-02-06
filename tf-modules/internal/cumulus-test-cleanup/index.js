@@ -1,8 +1,8 @@
 'use strict';
 
-const { runReaper } = require('./reap-kinesis')
+const { runReaper } = require('./reap-kinesis');
 
-async function handler(event) {
+async function handler() {
   await runReaper();
 }
 
