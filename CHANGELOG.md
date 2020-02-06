@@ -16,6 +16,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1740** - `cumulus_meta.workflow_start_time` is now set in Cumulus
   messages
+- **Fix default values for urs_url in variables.tf files**
+  - Remove trailing `/` from default `urs_url` values.
+
+### Added
+
+- **Ability to set custom backend API url in the archive module**
+  - Add `api_url` definition in `tf-modules/cumulus/archive.tf`
+  - Add `archive_api_url` variable in `tf-modules/cumulus/variables.tf`
+
 
 ## [v1.18.0] 2020-02-03
 
