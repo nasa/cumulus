@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-1717**
+  - Added `@cumulus/aws-client/deleteAndWaitForDynamoDbTableNotExists`, which deletes a DynamoDB table and waits to ensure the table no longer exists
+
 ### Fixed
 
 - **CUMULUS-1740** - `cumulus_meta.workflow_start_time` is now set in Cumulus

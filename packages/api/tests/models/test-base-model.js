@@ -2,13 +2,22 @@
 
 const test = require('ava');
 const { dynamodb } = require('@cumulus/aws-client/services');
+const DynamoDb = require('@cumulus/aws-client/DynamoDb');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const Manager = require('../../models/base');
 
-async function createTable({ tableName, tableHash }) {
-  const params = {
-    TableName: tableName,
+test.beforeEach(async (t) => {
+  t.context.tableName = randomString();
+
+  const tableHash = { name: 'id', type: 'S' };
+  t.context.manager = new Manager({
+    tableName: t.context.tableName,
+    tableHash
+  });
+
+  await DynamoDb.createAndWaitForDynamoDbTable({
+    TableName: t.context.tableName,
     AttributeDefinitions: [{
       AttributeName: tableHash.name,
       AttributeType: tableHash.type
@@ -21,34 +30,13 @@ async function createTable({ tableName, tableHash }) {
       ReadCapacityUnits: 5,
       WriteCapacityUnits: 5
     }
-  };
-
-  await dynamodb().createTable(params).promise();
-  return dynamodb().waitFor('tableExists', { TableName: tableName }).promise();
-}
-
-const deleteTable = (TableName) =>
-  dynamodb().deleteTable({ TableName }).promise()
-    .then(() => dynamodb().waitFor('tableNotExists', { TableName }).promise());
-
-test.beforeEach(async (t) => {
-  t.context.tableName = randomString();
-
-  const tableHash = { name: 'id', type: 'S' };
-  t.context.manager = new Manager({
-    tableName: t.context.tableName,
-    tableHash
-  });
-
-  await createTable({
-    tableName: t.context.tableName,
-    tableHash
   });
 });
 
-test.afterEach.always(async (t) => {
-  await deleteTable(t.context.tableName);
-});
+test.afterEach.always(
+  (t) =>
+    DynamoDb.deleteAndWaitForDynamoDbTableNotExists({ TableName: t.context.tableName })
+);
 
 test('The Manager constructor throws an exception if the tableName property is not set', (t) => {
   t.throws(
@@ -79,7 +67,7 @@ test('Manager.createTable() creates the correct table', async (t) => {
 
     t.is(describeTableResponse.Table.TableStatus, 'ACTIVE');
   } finally {
-    await deleteTable(tableName);
+    await DynamoDb.deleteAndWaitForDynamoDbTableNotExists({ TableName: tableName });
   }
 });
 
@@ -128,15 +116,15 @@ test('Manager.exists() returns false when a record does not exist', async (t) =>
   t.false(await manager.exists({ id: 'does-not-exist' }));
 });
 
-test('Manager.buildDocClientUpdateParams() returns null for an empty item', (t) => {
+test('Manager._buildDocClientUpdateParams() returns null for an empty item', (t) => {
   const { manager } = t.context;
-  t.is(manager.buildDocClientUpdateParams({
+  t.is(manager._buildDocClientUpdateParams({
     item: {},
     itemKey: {}
   }), null);
 });
 
-test('Manager.buildDocClientUpdateParams() does not try to update the key fields', (t) => {
+test('Manager._buildDocClientUpdateParams() does not try to update the key fields', (t) => {
   const { manager } = t.context;
 
   const item = {
@@ -145,7 +133,7 @@ test('Manager.buildDocClientUpdateParams() does not try to update the key fields
     foo: 'bar'
   };
 
-  const actualParams = manager.buildDocClientUpdateParams({
+  const actualParams = manager._buildDocClientUpdateParams({
     item,
     itemKey: { id: item.id, key: item.key }
   });
@@ -159,7 +147,7 @@ test('Manager.buildDocClientUpdateParams() does not try to update the key fields
   t.false(actualParams.UpdateExpression.includes('key2'));
 });
 
-test('Manager.buildDocClientUpdateParams() does not try to update a value to `undefined`', (t) => {
+test('Manager._buildDocClientUpdateParams() does not try to update a value to `undefined`', (t) => {
   const { manager } = t.context;
 
   const itemKey = { id: 'value' };
@@ -169,7 +157,7 @@ test('Manager.buildDocClientUpdateParams() does not try to update a value to `un
     wrong: undefined
   };
 
-  const actualParams = manager.buildDocClientUpdateParams({
+  const actualParams = manager._buildDocClientUpdateParams({
     item,
     itemKey,
     alwaysUpdateFields: ['foo']
@@ -180,7 +168,7 @@ test('Manager.buildDocClientUpdateParams() does not try to update a value to `un
   t.false(actualParams.UpdateExpression.includes('wrong'));
 });
 
-test('Manager.buildDocClientUpdateParams() only updates specified fields', (t) => {
+test('Manager._buildDocClientUpdateParams() only updates specified fields', (t) => {
   const { manager } = t.context;
 
   const itemKey = { id: 'value' };
@@ -192,7 +180,7 @@ test('Manager.buildDocClientUpdateParams() only updates specified fields', (t) =
     prop3: 'value3'
   };
 
-  const actualParams = manager.buildDocClientUpdateParams({
+  const actualParams = manager._buildDocClientUpdateParams({
     item,
     itemKey,
     alwaysUpdateFields: ['foo', 'prop1']

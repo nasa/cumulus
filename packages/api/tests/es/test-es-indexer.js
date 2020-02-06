@@ -16,7 +16,7 @@ const workflows = require('@cumulus/common/workflows');
 const indexer = rewire('../../es/indexer');
 const { Search } = require('../../es/search');
 const models = require('../../models');
-const { fakeGranuleFactory, fakeGranuleFactoryV2, fakeCollectionFactory } = require('../../lib/testUtils');
+const { fakeGranuleFactory, fakeCollectionFactory } = require('../../lib/testUtils');
 const { IndexExistsError } = require('../../lib/errors');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 
@@ -43,7 +43,6 @@ let workflowStub;
 let templateStub;
 
 const input = JSON.stringify(granuleSuccess);
-const payload = JSON.parse(input);
 
 test.before(async (t) => {
   // create the tables
@@ -420,9 +419,7 @@ test.serial('delete a provider record', async (t) => {
 
 // This needs to be serial because it is stubbing aws.sfn's responses
 test.serial('reingest a granule', async (t) => {
-  const record = fakeGranuleFactoryV2({
-    status: 'completed'
-  });
+  const record = fakeGranuleFactory();
 
   await granuleModel.create(record);
 
@@ -439,7 +436,7 @@ test.serial('reingest a granule', async (t) => {
 test.serial('indexing a granule record', async (t) => {
   const { esAlias } = t.context;
 
-  const granule = fakeGranuleFactoryV2();
+  const granule = fakeGranuleFactory();
 
   await indexer.indexGranule(esClient, granule, esAlias);
 
