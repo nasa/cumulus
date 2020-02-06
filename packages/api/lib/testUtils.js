@@ -193,6 +193,27 @@ function fakeExecutionFactory(status = 'completed', type = 'fakeWorkflow') {
 }
 
 /**
+ * creates fake async operation records
+ *
+ * @param {Object} params - overrides
+ * @returns {Object} fake async operation object
+ */
+function fakeAsyncOperationFactory(params = {}) {
+  const asyncOperation = {
+    taskArn: randomId('arn'),
+    id: randomId('id'),
+    description: randomId('description'),
+    operationType: 'ES Index',
+    status: 'SUCCEEDED',
+    createdAt: Date.now() - 180.5 * 1000,
+    updatedAt: Date.now(),
+    output: randomId('output')
+  };
+
+  return { ...asyncOperation, ...params };
+}
+
+/**
  * creates fake collection records
  *
  * @param {Object} options - properties to set on the collection
@@ -334,6 +355,7 @@ module.exports = {
   fakeCollectionFactory,
   fakeExecutionFactory,
   fakeExecutionFactoryV2,
+  fakeAsyncOperationFactory,
   fakeRuleFactory,
   fakeRuleFactoryV2,
   fakeFileFactory,

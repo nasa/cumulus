@@ -19,6 +19,10 @@ const unwrap = AttributeValue.unwrap;
  */
 const getTableIndexDetails = (tableName) => {
   const indexTables = {
+    [process.env.AsyncOperationsTable]: {
+      indexFnName: 'indexAsyncOperation',
+      indexType: 'asyncOperation'
+    },
     [process.env.CollectionsTable]: {
       indexFnName: 'indexCollection',
       indexType: 'collection'
