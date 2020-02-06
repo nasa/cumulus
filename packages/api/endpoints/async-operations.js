@@ -3,17 +3,18 @@
 const router = require('express-promise-router')();
 const pick = require('lodash.pick');
 
+const { Search } = require('../es/search');
 const { AsyncOperation: AsyncOperationModel } = require('../models');
 
 async function list(req, res) {
-  const asyncOperationModel = new AsyncOperationModel({
-    stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable
-  });
+  const search = new Search(
+    { queryStringParameters: req.query },
+    'asyncOperation',
+    process.env.ES_INDEX
+  );
 
-  const asyncOperationList = await asyncOperationModel.scan();
-  res.send(asyncOperationList);
+  const response = await search.query();
+  return res.send(response);
 }
 
 /**
