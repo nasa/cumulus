@@ -190,7 +190,7 @@ test('Manager.buildDocClientUpdateParams() only updates specified fields', (t) =
     ...itemKey,
     foo: 'bar',
     prop1: 'value1',
-    prop2: 'value2',
+    prop2: 123,
     prop3: 'value3'
   };
 
@@ -201,9 +201,24 @@ test('Manager.buildDocClientUpdateParams() only updates specified fields', (t) =
     alwaysUpdateFields: ['foo', 'prop1']
   });
 
+  t.true(actualParams.UpdateExpression.startsWith('SET '));
+  t.false(actualParams.UpdateExpression.includes('REMOVE '));
+  t.false(actualParams.UpdateExpression.includes('ADD '));
+  t.false(actualParams.UpdateExpression.includes('DELETE '));
+
+  t.is(actualParams.ExpressionAttributeNames['#foo'], 'foo');
+  t.is(actualParams.ExpressionAttributeValues[':foo'], 'bar');
   t.true(actualParams.UpdateExpression.includes('#foo = :foo'));
+
+  t.is(actualParams.ExpressionAttributeNames['#prop1'], 'prop1');
+  t.is(actualParams.ExpressionAttributeValues[':prop1'], 'value1');
   t.true(actualParams.UpdateExpression.includes('#prop1 = :prop1'));
 
+  t.is(actualParams.ExpressionAttributeNames['#prop2'], 'prop2');
+  t.is(actualParams.ExpressionAttributeValues[':prop2'], 123);
   t.true(actualParams.UpdateExpression.includes('#prop2 = if_not_exists(#prop2, :prop2)'));
-  t.true(actualParams.UpdateExpression.includes('#prop3 = if_not_exists(#prop3, :prop3)'));;
+
+  t.is(actualParams.ExpressionAttributeNames['#prop3'], 'prop3');
+  t.is(actualParams.ExpressionAttributeValues[':prop3'], 'value3');
+  t.true(actualParams.UpdateExpression.includes('#prop3 = if_not_exists(#prop3, :prop3)'));
 });
