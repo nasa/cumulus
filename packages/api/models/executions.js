@@ -126,6 +126,8 @@ class Execution extends Manager {
   async storeExecutionFromCumulusMessage(cumulusMessage) {
     const executionItem = Execution.generateRecord(cumulusMessage);
 
+    // TODO: Refactor this all to use model.update() to avoid having to manually call
+    // schema validation and the actual client.update() method.
     await this.constructor.recordIsValid(executionItem, this.schema, this.removeAdditional);
 
     const alwaysUpdateFields = this.getUpdateFields(executionItem);

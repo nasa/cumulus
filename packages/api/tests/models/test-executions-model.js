@@ -173,7 +173,7 @@ test.serial('getUpdateFields() returns correct fields for completed status', asy
 
   const updateFields = executionModel.getUpdateFields(item);
 
-  t.deepEqual(updateFields, ['arn', 'status', 'name', 'finalPayload']);
+  t.deepEqual(updateFields, Object.keys(item));
 });
 
 test.serial('storeExecutionFromCumulusMessage() can be used to create a new running execution', async (t) => {
@@ -193,23 +193,22 @@ test.serial('storeExecutionFromCumulusMessage() can be used to update a running 
     executionModel
   } = t.context;
 
-  const originalItem = {
-    arn: executionArn,
-    status: 'running',
-    originalPayload: {},
-    name: 'frank'
-  };
-
-  await executionModel.create(originalItem);
-
-  cumulusMessage.meta.status = 'running';
+  cumulusMessage.cumulus_meta.asyncOperationId = '1';
   await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
 
-  const fetchedItem = await executionModel.get({ arn: originalItem.arn });
+  cumulusMessage.meta.status = 'running';
+  const newPayload = { foo: 'bar' };
+  cumulusMessage.payload = newPayload;
+  cumulusMessage.cumulus_meta.asyncOperationId = '2';
+  await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
+
+  const fetchedItem = await executionModel.get({ arn: executionArn });
 
   t.is(fetchedItem.status, 'running');
-  t.deepEqual(fetchedItem.originalPayload, { value: 'my-payload' });
-  t.is(fetchedItem.name, 'frank');
+  // should have been updated
+  t.deepEqual(fetchedItem.originalPayload, newPayload);
+  // should not have been updated
+  t.is(fetchedItem.asyncOperationId, '1');
 });
 
 test.serial('storeExecutionFromCumulusMessage() can be used to create a new completed execution', async (t) => {
@@ -227,41 +226,29 @@ test.serial('storeExecutionFromCumulusMessage() can be used to update a complete
   const {
     cumulusMessage,
     executionArn,
-    executionModel,
-    executionName
+    executionModel
   } = t.context;
 
-  const originalItem = {
-    arn: executionArn,
-    status: 'completed',
-    createdAt: 456,
-    name: 'frank'
-  };
+  await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
 
-  await executionModel.create(originalItem);
-
+  const newFinalPayload = { foo2: 'bar' };
   cumulusMessage.meta.status = 'completed';
+  cumulusMessage.payload = newFinalPayload;
+
   await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
 
   const fetchedItem = await executionModel.get({ arn: executionArn });
 
   t.is(fetchedItem.status, 'completed');
-  t.is(fetchedItem.createdAt, 123);
-  t.is(fetchedItem.name, executionName);
+  t.deepEqual(fetchedItem.finalPayload, newFinalPayload);
 });
 
 test.serial('storeExecutionFromCumulusMessage() will not allow a running status to replace a completed status', async (t) => {
   const { executionArn, cumulusMessage, executionModel } = t.context;
 
-  const item = {
-    arn: executionArn,
-    status: 'completed',
-    name: cumulusMessage.cumulus_meta.execution_name
-  };
+  cumulusMessage.meta.status = 'completed';
+  await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
 
-  await executionModel.create(item);
-
-  // ensure test message has a "running" status
   cumulusMessage.meta.status = 'running';
   await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
 
