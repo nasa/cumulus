@@ -145,7 +145,7 @@ test('generateRecord() returns a record with correct duration for non-running me
   t.is(record.duration, 1);
 });
 
-test.serial('getMutableFieldNames() returns correct fields for running status', async (t) => {
+test.serial('_getMutableFieldNames() returns correct fields for running status', async (t) => {
   const { executionModel } = t.context;
 
   const updatedItem = {
@@ -153,7 +153,7 @@ test.serial('getMutableFieldNames() returns correct fields for running status', 
     status: 'running'
   };
 
-  const updateFields = executionModel.getMutableFieldNames(updatedItem);
+  const updateFields = executionModel._getMutableFieldNames(updatedItem);
 
   // Fields are included even if not present in the item.
   t.deepEqual(updateFields, [
@@ -161,7 +161,7 @@ test.serial('getMutableFieldNames() returns correct fields for running status', 
   ]);
 });
 
-test.serial('getMutableFieldNames() returns correct fields for completed status', async (t) => {
+test.serial('_getMutableFieldNames() returns correct fields for completed status', async (t) => {
   const { executionModel } = t.context;
 
   const item = {
@@ -171,7 +171,7 @@ test.serial('getMutableFieldNames() returns correct fields for completed status'
     finalPayload: { foo: 'bar' }
   };
 
-  const updateFields = executionModel.getMutableFieldNames(item);
+  const updateFields = executionModel._getMutableFieldNames(item);
 
   t.deepEqual(updateFields, Object.keys(item));
 });

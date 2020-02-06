@@ -121,7 +121,7 @@ class Execution extends Manager {
    * @param {Object} record - An execution record
    * @returns {Array} - The array of mutable field names
    */
-  getMutableFieldNames(record) {
+  _getMutableFieldNames(record) {
     if (record.status === 'running') {
       return ['createdAt', 'updatedAt', 'timestamp', 'originalPayload'];
     }
@@ -141,7 +141,7 @@ class Execution extends Manager {
     // schema validation and the actual client.update() method.
     await this.constructor.recordIsValid(executionItem, this.schema, this.removeAdditional);
 
-    const mutableFieldNames = this.getMutableFieldNames(executionItem);
+    const mutableFieldNames = this._getMutableFieldNames(executionItem);
     const updateParams = this._buildDocClientUpdateParams({
       item: executionItem,
       itemKey: { arn: executionItem.arn },
