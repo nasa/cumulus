@@ -29,6 +29,7 @@ module.exports = {
     publishExecutions: './lambdas/publish-executions.js',
     publishReports: './lambdas/publish-reports.js',
     reportGranules: './lambdas/report-granules.js',
+    reportCollections: './lambdas/report-collections.js',
     reportPdrs: './lambdas/report-pdrs.js',
     sfScheduler: './lambdas/sf-scheduler.js',
     sfSemaphoreDown: './lambdas/sf-semaphore-down.js',
