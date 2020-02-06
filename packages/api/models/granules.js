@@ -471,6 +471,42 @@ class Granule extends Manager {
     return Promise.all(granules.Items.map((granule) =>
       super.delete({ granuleId: granule.granuleId })));
   }
+
+  /**
+   * Get the set of fields which are mutable based on the granule status.
+   *
+   * @param {Object} record - A granule record
+   * @returns {Array} - The array of mutable field names
+   */
+  getMutableFieldNames(record) {
+    if (record.status === 'running') {
+      return ['createdAt', 'updatedAt', 'timestamp'];
+    }
+    return Object.keys(record);
+  }
+
+  /**
+   * Generate and store an granule record from a Cumulus message.
+   *
+   * @param {Object} cumulusMessage - Cumulus workflow message
+   * @returns {Promise}
+   */
+  async storeGranuleFromCumulusMessage(cumulusMessage) {
+    const granuleRecord = this.constructor.generateRecord(cumulusMessage);
+
+    // TODO: Refactor this all to use model.update() to avoid having to manually call
+    // schema validation and the actual client.update() method.
+    await this.constructor.recordIsValid(granuleRecord, this.schema, this.removeAdditional);
+
+    const mutableFieldNames = this.getMutableFieldNames(granuleRecord);
+    const updateParams = this._buildDocClientUpdateParams({
+      item: granuleRecord,
+      itemKey: { granuleId: granuleRecord.granuleId },
+      mutableFieldNames
+    });
+
+    await this.dynamodbDocClient.update(updateParams).promise();
+  }
 }
 
 module.exports = Granule;
