@@ -115,6 +115,7 @@ test.before(async () => {
 
 test.beforeEach((t) => {
   t.context.granuleModel = new Granule();
+  t.context.granuleId = testCumulusMessage.payload.granules[0].granuleId;
   t.context.cumulusMessage = testCumulusMessage;
 });
 
@@ -1050,4 +1051,15 @@ test('_getMutableFieldNames() returns correct fields for completed status', asyn
   const updateFields = granuleModel._getMutableFieldNames(item);
 
   t.deepEqual(updateFields, Object.keys(item));
+});
+
+test('storeGranulesFromCumulusMessage() can be used to create a new running granule', async (t) => {
+  const { granuleId, cumulusMessage, granuleModel } = t.context;
+
+  cumulusMessage.meta.status = 'running';
+  await granuleModel.storeGranulesFromCumulusMessage(cumulusMessage);
+
+  const fetchedItem = await granuleModel.get({ granuleId });
+
+  t.is(fetchedItem.status, 'running');
 });

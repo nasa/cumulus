@@ -14,7 +14,11 @@ const { CMR } = require('@cumulus/cmr-client');
 const cmrjs = require('@cumulus/cmrjs');
 const launchpad = require('@cumulus/common/launchpad');
 const log = require('@cumulus/common/log');
-const { getCollectionIdFromMessage, getMessageExecutionArn } = require('@cumulus/common/message');
+const {
+  getCollectionIdFromMessage,
+  getMessageExecutionArn,
+  getMessageGranules
+} = require('@cumulus/common/message');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const {
   deprecate,
@@ -352,6 +356,8 @@ class Granule extends Manager {
         : new Date().toISOString();
     }
 
+    const now = Date.now();
+
     const record = {
       granuleId: granule.granuleId,
       pdrName: get(message, 'meta.pdr.name'),
@@ -363,7 +369,8 @@ class Granule extends Manager {
       files: granuleFiles,
       error: parseException(message.exception),
       createdAt: get(message, 'cumulus_meta.workflow_start_time'),
-      timestamp: Date.now(),
+      timestamp: now,
+      updatedAt: now,
       productVolume: getGranuleProductVolume(granuleFiles),
       timeToPreprocess: get(granule, 'sync_granule_duration', 0) / 1000,
       timeToArchive: get(granule, 'post_to_cmr_duration', 0) / 1000,
@@ -485,15 +492,53 @@ class Granule extends Manager {
     return Object.keys(record);
   }
 
+  async _getGranuleRecordsFromCumulusMessage(cumulusMessage) {
+    const granules = getMessageGranules(cumulusMessage);
+    if (!granules) {
+      log.info(`No granules to process in the payload: ${JSON.stringify(cumulusMessage.payload)}`);
+      return [];
+    }
+
+    const executionArn = getMessageExecutionArn(cumulusMessage);
+    const executionUrl = StepFunctions.getExecutionUrl(executionArn);
+
+    let executionDescription;
+    try {
+      executionDescription = await StepFunctions.describeExecution({ executionArn });
+    } catch (err) {
+      log.error(`Could not describe execution ${executionArn}`, err);
+    }
+
+    const promisedGranuleRecords = granules
+      .map(async (granule) => {
+        try {
+          return await this.constructor.generateGranuleRecord(
+            granule,
+            cumulusMessage,
+            executionUrl,
+            executionDescription
+          );
+        } catch (err) {
+          log.error(
+            'Error handling granule records: ', err,
+            'Execution message: ', cumulusMessage
+          );
+          return null;
+        }
+      });
+
+    const granuleRecords = await Promise.all(promisedGranuleRecords);
+
+    return granuleRecords.filter((r) => !isNil(r));
+  }
+
   /**
-   * Generate and store an granule record from a Cumulus message.
+   * Validate and store a granule record.
    *
-   * @param {Object} cumulusMessage - Cumulus workflow message
+   * @param {Object} granuleRecord - A granule record.
    * @returns {Promise}
    */
-  async storeGranuleFromCumulusMessage(cumulusMessage) {
-    const granuleRecord = this.constructor.generateRecord(cumulusMessage);
-
+  async _validateAndStoreGranuleRecord(granuleRecord) {
     // TODO: Refactor this all to use model.update() to avoid having to manually call
     // schema validation and the actual client.update() method.
     await this.constructor.recordIsValid(granuleRecord, this.schema, this.removeAdditional);
@@ -506,6 +551,17 @@ class Granule extends Manager {
     });
 
     await this.dynamodbDocClient.update(updateParams).promise();
+  }
+
+  /**
+   * Generate and store granule records from a Cumulus message.
+   *
+   * @param {Object} cumulusMessage - Cumulus workflow message
+   * @returns {Promise}
+   */
+  async storeGranulesFromCumulusMessage(cumulusMessage) {
+    const granuleRecords = await this._getGranuleRecordsFromCumulusMessage(cumulusMessage);
+    return Promise.all(granuleRecords.map(this._validateAndStoreGranuleRecord, this));
   }
 }
 
