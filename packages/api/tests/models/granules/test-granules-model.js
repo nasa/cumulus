@@ -17,13 +17,13 @@ const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmr-client');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 
-const { Granule } = require('../../models');
-const { filterDatabaseProperties } = require('../../lib/FileUtils');
-const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
-const { deconstructCollectionId } = require('../../lib/utils');
+const Granule = require('../../../models/granules');
+const { filterDatabaseProperties } = require('../../../lib/FileUtils');
+const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
+const { deconstructCollectionId } = require('../../../lib/utils');
 
-const granuleSuccess = require('../data/granule_success.json');
-const granuleFailure = require('../data/granule_failed.json');
+const granuleSuccess = require('../../data/granule_success.json');
+const granuleFailure = require('../../data/granule_failed.json');
 
 let fakeExecution;
 let stepFunctionsStub;
@@ -1051,15 +1051,4 @@ test('_getMutableFieldNames() returns correct fields for completed status', asyn
   const updateFields = granuleModel._getMutableFieldNames(item);
 
   t.deepEqual(updateFields, Object.keys(item));
-});
-
-test('storeGranulesFromCumulusMessage() can be used to create a new running granule', async (t) => {
-  const { granuleId, cumulusMessage, granuleModel } = t.context;
-
-  cumulusMessage.meta.status = 'running';
-  await granuleModel.storeGranulesFromCumulusMessage(cumulusMessage);
-
-  const fetchedItem = await granuleModel.get({ granuleId });
-
-  t.is(fetchedItem.status, 'running');
 });
