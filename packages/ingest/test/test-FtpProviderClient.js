@@ -88,14 +88,12 @@ test('FtpProviderClient supports plaintext usernames and passwords', async (t) =
 });
 
 test('FtpProviderClient supports S3-keypair-encrypted usernames and passwords', async (t) => {
-  const username = await S3KeyPairProvider.encrypt('testuser');
-  const password = await S3KeyPairProvider.encrypt('testpass');
-
   const ftpClient = new FtpProviderClient({
     host: '127.0.0.1',
     encrypted: true,
-    username,
-    password
+    username: await S3KeyPairProvider.encrypt('testuser'),
+    password: await S3KeyPairProvider.encrypt('testpass'),
+    useList: true
   });
 
   const files = await ftpClient.list('/');
@@ -105,14 +103,12 @@ test('FtpProviderClient supports S3-keypair-encrypted usernames and passwords', 
 });
 
 test('FtpProviderClient supports KMS-encrypted usernames and passwords', async (t) => {
-  const username = await KMS.encrypt(t.context.kmsKeyId, 'testuser');
-  const password = await KMS.encrypt(t.context.kmsKeyId, 'testpass');
-
   const ftpClient = new FtpProviderClient({
     host: '127.0.0.1',
     encrypted: true,
-    username,
-    password
+    username: await KMS.encrypt(t.context.kmsKeyId, 'testuser'),
+    password: await KMS.encrypt(t.context.kmsKeyId, 'testpass'),
+    useList: true
   });
 
   const files = await ftpClient.list('/');
