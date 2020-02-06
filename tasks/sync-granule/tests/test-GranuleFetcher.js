@@ -532,7 +532,7 @@ test('ingestFile keeps both new and old data when duplicateHandling is version',
     },
     fileStagingDir,
     false,
-    duplicateHandling,
+    duplicateHandling
   );
 
   const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
@@ -570,7 +570,7 @@ test('ingestFile throws error when configured to handle duplicates with error', 
     },
     fileStagingDir,
     false,
-    duplicateHandling,
+    duplicateHandling
   );
 
   // This test needs to use a unique bucket for each test (or remove the object
@@ -611,7 +611,7 @@ test('ingestFile skips ingest when duplicateHandling is skip', async (t) => {
     },
     fileStagingDir,
     false,
-    duplicateHandling,
+    duplicateHandling
   );
 
   const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
@@ -651,7 +651,7 @@ test('ingestFile replaces file when duplicateHandling is replace', async (t) => 
     },
     fileStagingDir,
     false,
-    duplicateHandling,
+    duplicateHandling
   );
 
   const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
@@ -694,7 +694,7 @@ test('ingestFile throws an error when invalid checksum is provided', async (t) =
     },
     fileStagingDir,
     false,
-    duplicateHandling,
+    duplicateHandling
   );
 
   const stagingPath = path.join(testGranule.fileStagingDir, testGranule.collectionId);
@@ -735,7 +735,7 @@ test('ingestFile throws an error when no checksum is provided and the size is no
     },
     fileStagingDir,
     false,
-    duplicateHandling,
+    duplicateHandling
   );
 
   // This test needs to use a unique bucket for each test (or remove the object
@@ -778,7 +778,7 @@ test('verifyFile returns type and value when file is verified', async (t) => {
     },
     fileStagingDir,
     false,
-    duplicateHandling,
+    duplicateHandling
   );
 
   const [type, value] = await testGranule.verifyFile(file, internalBucket, Key);
