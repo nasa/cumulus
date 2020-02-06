@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-1459**
+  - Async Operations are indexed in Elasticsearch
+  - To index any existing async operations you'll need to perform an index from database function.
+
 ### Fixed
 
 - **CUMULUS-1740** - `cumulus_meta.workflow_start_time` is now set in Cumulus
