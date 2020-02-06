@@ -14,6 +14,7 @@ const indexFromDatabase = require('../../lambdas/index-from-database');
 const models = require('../../models');
 const {
   fakeCollectionFactory,
+  fakeAsyncOperationFactory,
   fakeExecutionFactoryV2,
   fakeGranuleFactoryV2,
   fakePdrFactoryV2,
@@ -31,6 +32,7 @@ process.env.system_bucket = randomString();
 process.env.stackName = randomString();
 
 process.env.ExecutionsTable = randomString();
+process.env.AsyncOperationsTable = randomString();
 process.env.CollectionsTable = randomString();
 process.env.GranulesTable = randomString();
 process.env.PdrsTable = randomString();
@@ -40,6 +42,7 @@ process.env.RulesTable = randomString();
 const tables = {
   collectionsTable: process.env.CollectionsTable,
   executionsTable: process.env.ExecutionsTable,
+  asyncOperationsTable: process.env.AsyncOperationsTable,
   granulesTable: process.env.GranulesTable,
   pdrsTable: process.env.PdrsTable,
   providersTable: process.env.ProvidersTable,
@@ -47,6 +50,11 @@ const tables = {
 };
 
 const executionModel = new models.Execution();
+const asyncOperationModel = new models.AsyncOperation({
+  systemBucket: process.env.system_bucket,
+  stackName: process.env.stackName,
+  tableName: process.env.AsyncOperationsTable
+});
 const collectionModel = new models.Collection();
 const granuleModel = new models.Granule();
 const pdrModel = new models.Pdr();
@@ -84,6 +92,7 @@ test.before(async (t) => {
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   await executionModel.createTable();
+  await asyncOperationModel.createTable();
   await collectionModel.createTable();
   await granuleModel.createTable();
   await pdrModel.createTable();
@@ -112,6 +121,7 @@ test.after.always(async (t) => {
   await esClient.indices.delete({ index: esIndex });
 
   await executionModel.deleteTable();
+  await asyncOperationModel.deleteTable();
   await collectionModel.deleteTable();
   await granuleModel.deleteTable();
   await pdrModel.deleteTable();
@@ -135,6 +145,7 @@ test('index executions', async (t) => {
   const fakeData = await Promise.all([
     addFakeData(numItems, fakeCollectionFactory, collectionModel),
     addFakeData(numItems, fakeExecutionFactoryV2, executionModel),
+    addFakeData(numItems, fakeAsyncOperationFactory, asyncOperationModel),
     addFakeData(numItems, fakeGranuleFactoryV2, granuleModel),
     addFakeData(numItems, fakePdrFactoryV2, pdrModel),
     addFakeData(numItems, fakeProviderFactory, providersModel),
