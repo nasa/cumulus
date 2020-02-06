@@ -560,7 +560,8 @@ class Granule extends Manager {
    * @returns {Promise}
    */
   async storeGranulesFromCumulusMessage(cumulusMessage) {
-    const granuleRecords = await this._getGranuleRecordsFromCumulusMessage(cumulusMessage);
+    const granuleRecords = await this.constructor
+      ._getGranuleRecordsFromCumulusMessage(cumulusMessage);
     return Promise.all(granuleRecords.map(this._validateAndStoreGranuleRecord, this));
   }
 }

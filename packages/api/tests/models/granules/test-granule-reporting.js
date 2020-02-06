@@ -1,8 +1,11 @@
 const test = require('ava');
+const sinon = require('sinon');
 
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
+const cmrjs = require('@cumulus/cmrjs');
 const { randomId } = require('@cumulus/common/test-utils');
 
-const { fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
+const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 const Granule = require('../../../models/granules');
 
 test.before(async (t) => {
@@ -11,9 +14,15 @@ test.before(async (t) => {
   const granuleModel = new Granule();
   t.context.granuleModel = granuleModel;
   await granuleModel.createTable();
+
+  sinon.stub(StepFunctions, 'describeExecution')
+    .callsFake(() => Promise.resolve({}));
+
+  sinon.stub(cmrjs, 'getGranuleTemporalInfo')
+    .callsFake(() => Promise.resolve({}));
 });
 
-test.serial('_validateAndStoreGranuleRecord() can be used to create a new running granule', async (t) => {
+test('_validateAndStoreGranuleRecord() can be used to create a new running granule', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({
@@ -27,7 +36,7 @@ test.serial('_validateAndStoreGranuleRecord() can be used to create a new runnin
   t.is(fetchedItem.status, 'running');
 });
 
-test.serial('_validateAndStoreGranuleRecord() can be used to update a running execution', async (t) => {
+test('_validateAndStoreGranuleRecord() can be used to update a running execution', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({
@@ -58,7 +67,7 @@ test.serial('_validateAndStoreGranuleRecord() can be used to update a running ex
   t.is(fetchedItem.cmrLink, granule.cmrLink);
 });
 
-test.serial('_validateAndStoreGranuleRecord() can be used to create a new completed execution', async (t) => {
+test('_validateAndStoreGranuleRecord() can be used to create a new completed execution', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2();
@@ -70,7 +79,7 @@ test.serial('_validateAndStoreGranuleRecord() can be used to create a new comple
   t.is(fetchedItem.status, 'completed');
 });
 
-test.serial('_validateAndStoreGranuleRecord() can be used to update a completed execution', async (t) => {
+test('_validateAndStoreGranuleRecord() can be used to update a completed execution', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2();
@@ -90,7 +99,7 @@ test.serial('_validateAndStoreGranuleRecord() can be used to update a completed 
   t.deepEqual(fetchedItem.productVolume, 500);
 });
 
-test.serial('_validateAndStoreGranuleRecord() will not allow a running status to replace a completed status', async (t) => {
+test('_validateAndStoreGranuleRecord() will not allow a running status to replace a completed status', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2();
@@ -107,4 +116,45 @@ test.serial('_validateAndStoreGranuleRecord() will not allow a running status to
   const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
 
   t.is(fetchedItem.status, 'completed');
+});
+
+test('storeGranulesFromCumulusMessage() stores multiple granules from Cumulus message', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule1 = fakeGranuleFactoryV2({
+    files: [fakeFileFactory()]
+  });
+  const granule2 = fakeGranuleFactoryV2({
+    files: [fakeFileFactory()]
+  });
+
+  const cumulusMessage = {
+    cumulus_meta: {
+      execution_name: randomId('execution'),
+      state_machine: 'state-machine',
+      workflow_start_time: Date.now()
+    },
+    meta: {
+      collection: {
+        name: 'name',
+        version: '001'
+      },
+      provider: {
+        host: 'example.com',
+        protocol: 's3'
+      },
+      status: 'completed'
+    },
+    payload: {
+      granules: [
+        granule1,
+        granule2
+      ]
+    }
+  };
+
+  await granuleModel.storeGranulesFromCumulusMessage(cumulusMessage);
+
+  t.true(await granuleModel.exists({ granuleId: granule1.granuleId }));
+  t.true(await granuleModel.exists({ granuleId: granule2.granuleId }));
 });
