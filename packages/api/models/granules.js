@@ -478,7 +478,7 @@ class Granule extends Manager {
    * @param {Object} record - A granule record
    * @returns {Array} - The array of mutable field names
    */
-  getMutableFieldNames(record) {
+  _getMutableFieldNames(record) {
     if (record.status === 'running') {
       return ['createdAt', 'updatedAt', 'timestamp'];
     }
@@ -498,7 +498,7 @@ class Granule extends Manager {
     // schema validation and the actual client.update() method.
     await this.constructor.recordIsValid(granuleRecord, this.schema, this.removeAdditional);
 
-    const mutableFieldNames = this.getMutableFieldNames(granuleRecord);
+    const mutableFieldNames = this._getMutableFieldNames(granuleRecord);
     const updateParams = this._buildDocClientUpdateParams({
       item: granuleRecord,
       itemKey: { granuleId: granuleRecord.granuleId },

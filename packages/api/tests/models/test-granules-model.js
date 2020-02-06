@@ -1021,3 +1021,33 @@ test.serial(
     }
   }
 );
+
+test('_getMutableFieldNames() returns correct fields for running status', async (t) => {
+  const { executionModel } = t.context;
+
+  const updatedItem = {
+    granuleId: randomString(),
+    status: 'running'
+  };
+
+  const updateFields = executionModel._getMutableFieldNames(updatedItem);
+
+  t.deepEqual(updateFields, [
+    'createdAt', 'updatedAt', 'timestamp'
+  ]);
+});
+
+test('_getMutableFieldNames() returns correct fields for completed status', async (t) => {
+  const { executionModel } = t.context;
+
+  const item = {
+    granuleId: randomString(),
+    status: 'completed',
+    pdrName: 'pdr',
+    files: []
+  };
+
+  const updateFields = executionModel._getMutableFieldNames(item);
+
+  t.deepEqual(updateFields, Object.keys(item));
+});
