@@ -1,3 +1,5 @@
+/* eslint-disable no-unresolved */
+
 'use strict';
 
 // handy script to delete any old test kinesis streams that are created but not
