@@ -8,6 +8,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-1548**
+  - Add ability to put default Cumulus logs in Metrics' ELK stack
+  - Add ability to add custom logs to Metrics' ELK Stack
+
+- **CUMULUS-1702**
+  - When logs are sent to Metrics' ELK stack, the logs endpoints will return results from there
+
+### BREAKING CHANGES
+
+- **CUMULUS-1698**
+  - - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
+
+### Added
+
 - **CUMULUS-1459**
   - Async Operations are indexed in Elasticsearch
   - To index any existing async operations you'll need to perform an index from database function.

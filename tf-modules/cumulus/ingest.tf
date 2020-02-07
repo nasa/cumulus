@@ -37,8 +37,6 @@ module "ingest" {
   # DB config
   dynamo_tables = var.dynamo_tables
 
-  log2elasticsearch_lambda_function_arn = module.archive.log2elasticsearch_lambda_function_arn
-
   custom_queues = var.custom_queues
   throttled_queues = var.throttled_queues
 
