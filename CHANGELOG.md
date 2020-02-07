@@ -20,6 +20,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `<prefix>-VerifyProviderSecretsMigration` Lambda function as part of the
     deployment, which will cause the deployment to fail if the migration
     Lambda has not been run.
+- **CUMULUS-1698**
+  - Change variable `saml_launchpad_metadata_path` to
+    `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
 
 ### Added
 
@@ -29,6 +32,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add `@cumulus/sftp-client` package
   - Create `ProviderSecretsMigration` Lambda function
   - Create `VerifyProviderSecretsMigration` Lambda function
+- **CUMULUS-1548**
+  - Add ability to put default Cumulus logs in Metrics' ELK stack
+  - Add ability to add custom logs to Metrics' ELK Stack
+- **CUMULUS-1702**
+  - When logs are sent to Metrics' ELK stack, the logs endpoints will return results from there
 - **CUMULUS-1459**
   - Async Operations are indexed in Elasticsearch
   - To index any existing async operations you'll need to perform an index from
