@@ -19,6 +19,7 @@ const loadFixture = (filename) =>
 
 test.before(async (t) => {
   process.env.ExecutionsTable = randomString();
+  process.env.GranulesTable = randomString();
   const executionModel = new Execution();
   await executionModel.createTable();
   t.context = { executionModel };
