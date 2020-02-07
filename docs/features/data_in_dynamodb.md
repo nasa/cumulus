@@ -71,9 +71,33 @@ Where `prefix` matches the `prefix` from your data-persistence stack deployment.
 This will restore your tables to AWS. They will need to be linked to your Terraform deployment. After `terraform init` and _before_ `terraform apply`, run the following command for each table:
 
 ```sh
+terraform import module.data_persistence.aws_dynamodb_table.collections_table <prefix>-CollectionsTable
 ```
+replacing `collections_table` with the table identifier in the [DynamoDB Terraform table definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/dynamo.tf).
+
+Terraform will now manage these tables as part of the Terraform state. Run `terrform apply` to generate the rest of the `data-persistence` stack and then follow the instructions to deploy the `cumulus` stack as normal.
+
+At this point the data will be in DynamoDB, but not in Elasticsearch, so nothing will be returned on the Operator dashboard or through Operator API calls. To get the data into Elasticsearch, run an [`index-from-database` operation](https://nasa.github.io/cumulus-api/#index-from-database) via the Operator API. The status of this operation can be viewed on the dashboard. When Elasticsearch is switched to the recovery index the data will be visible on the dashboard and available via the Operator API.
 
 ### Restoring an individual table
+
+A table can be restored to a previous state using PITR. This is easily achievable via the AWS Console by visiting the `Backups` tab for the table.
+
+A table can only be recovered to a new table name. Following the restoration of the table, the new table must be imported into Terraform.
+
+First, remove the old table by peforming
+```sh
+terraform state rm module.data_persistence.aws_dynamodb_table.collections_table
+```
+replacing `collections_table` with the table identifier in the [DynamoDB Terraform table definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/dynamo.tf).
+
+Then import the new table into Terraform using
+```sh
+terraform import module.data_persistence.aws_dynamodb_table.collections_table <new-table-name>
+```
+replacing `collections_table` with the table identifier in the [DynamoDB Terraform table definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/dynamo.tf).
+
+Your `data-persistence` and `cumulus` deployments should be redeployed so that your instance of Cumulus uses this new table. After the deployment, your Elasticsearch instance will be out of sync with your new table if there is any change in data. To resync your Elasticsearch with your database run an [`index-from-database` operation](https://nasa.github.io/cumulus-api/#index-from-database) via the Operator API. The status of this operation can be viewed on the dashboard. When Elasticsearch is switched to the new index the DynamoDB tables and Elasticsearch instance will be in sync and the correct data will be reflected on the dashboard.
 
 ## Backup and Restore with cumulus-api CLI
 
