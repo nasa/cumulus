@@ -5,6 +5,7 @@
 
 const forge = require('node-forge');
 
+const { deprecate } = require('./util');
 const { getS3Object } = require('./aws');
 const { KMS } = require('./kms');
 const log = require('./log');
@@ -25,6 +26,8 @@ class S3KeyPairProvider {
    * @returns {Promise} the encrypted string
    */
   static async encrypt(str, keyId = 'public.pub', bucket = null, stack = null) {
+    deprecate('@cumulus/common/key-pair-provider', '1.17.0', '@cumulus/aws-client/KMS.encrypt');
+
     // Download the publickey
     const pki = forge.pki;
     const pub = await this.retrieveKey(keyId, bucket, stack);
@@ -45,6 +48,8 @@ class S3KeyPairProvider {
    * @returns {Promise.<string>} the decrypted string
    */
   static async decrypt(str, keyId = 'private.pem', bucket = null, stack = null) {
+    deprecate('@cumulus/common/key-pair-provider', '1.17.0', '@cumulus/aws-client/KMS.decryptBase64String');
+
     const pki = forge.pki;
     const priv = await this.retrieveKey(keyId, bucket, stack);
 

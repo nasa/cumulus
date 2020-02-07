@@ -137,6 +137,11 @@ data "aws_iam_policy_document" "lambda_processing_policy" {
     ]
     resources = ["arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"]
   }
+
+  statement {
+    actions   = ["kms:Decrypt"]
+    resources = [module.archive.provider_kms_key_arn]
+  }
 }
 
 resource "aws_iam_role_policy" "lambda_processing" {
