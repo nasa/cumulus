@@ -4,6 +4,8 @@ const test = require('ava');
 const fs = require('fs');
 const path = require('path');
 const request = require('supertest');
+const rewire = require('rewire');
+const logApi = rewire('../../endpoints/logs');
 const awsServices = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket
@@ -61,10 +63,13 @@ test.before(async (t) => {
 
 test.after.always(async (t) => {
   const { esClient, esIndex } = t.context;
-
   await accessTokenModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
+});
+
+test.afterEach(async () => {
+  delete process.env.log_destination_arn;
 });
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -115,4 +120,23 @@ test('GET logs with filter returns the correct logs', async (t) => {
     .expect(200);
 
   t.is(response.body.meta.count, 1);
+});
+
+test.serial('esConfig with no arn set returns default configuration', async (t) => {
+  const esConfig = logApi.__get__('esConfig');
+  const result = esConfig();
+
+  t.is(result.type, 'logs');
+  t.is(result.index, process.env.ES_INDEX);
+  t.false(result.metrics);
+});
+
+test.serial('esConfig with a log destination arn set returns configuration for Metrics ELK Stack', async (t) => {
+  process.env.log_destination_arn = 'testArn';
+  const esConfig = logApi.__get__('esConfig');
+  const result = esConfig();
+
+  t.is(result.type, '_doc');
+  t.is(result.index, `${process.env.stackName}-*`);
+  t.true(result.metrics);
 });

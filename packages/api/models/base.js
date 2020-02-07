@@ -431,6 +431,56 @@ class Manager {
       { status: 'failed', error: errorify(err), isActive: false }
     );
   }
+
+  /**
+   * Build the parameters for dynamodbDocClient.update(). Allows conditional
+   * updating of fields based on specification of which fields should be
+   * mutable. Fields not specified as mutable will be set to only update if
+   * there is not already an existing value.
+   *
+   * @param {Object} params
+   * @param {Object} params.item - The data item to be updated
+   * @param {Object} params.itemKey
+   *   Object containing the unique key(s) identifying the item
+   * @param {Array} params.mutableFieldNames
+   *   Array of field names which should be mutable (updated even if there is an existing value)
+   * @returns {Object} - Parameters for dynamodbDocClient.update() operation
+   */
+  _buildDocClientUpdateParams({
+    item,
+    itemKey,
+    mutableFieldNames = []
+  }) {
+    const ExpressionAttributeNames = {};
+    const ExpressionAttributeValues = {};
+    const setUpdateExpressions = [];
+
+    const itemKeyFieldNames = Object.keys(itemKey);
+
+    Object.entries(item).forEach(([fieldName, value]) => {
+      if (itemKeyFieldNames.includes(fieldName)) return;
+      if (value === undefined) return;
+
+      ExpressionAttributeNames[`#${fieldName}`] = fieldName;
+      ExpressionAttributeValues[`:${fieldName}`] = value;
+
+      if (mutableFieldNames.includes(fieldName)) {
+        setUpdateExpressions.push(`#${fieldName} = :${fieldName}`);
+      } else {
+        setUpdateExpressions.push(`#${fieldName} = if_not_exists(#${fieldName}, :${fieldName})`);
+      }
+    });
+
+    if (setUpdateExpressions.length === 0) return null;
+
+    return {
+      TableName: this.tableName,
+      Key: itemKey,
+      ExpressionAttributeNames,
+      ExpressionAttributeValues,
+      UpdateExpression: `SET ${setUpdateExpressions.join(', ')}`
+    };
+  }
 }
 
 module.exports = Manager;
