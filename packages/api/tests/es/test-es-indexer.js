@@ -43,7 +43,6 @@ let workflowStub;
 let templateStub;
 
 const input = JSON.stringify(granuleSuccess);
-const payload = JSON.parse(input);
 
 test.before(async (t) => {
   // create the tables
@@ -420,9 +419,9 @@ test.serial('delete a provider record', async (t) => {
 
 // This needs to be serial because it is stubbing aws.sfn's responses
 test.serial('reingest a granule', async (t) => {
-  payload.payload.granules[0].granuleId = randomString();
-  const records = await granuleModel.createGranulesFromSns(payload);
-  const record = records[0];
+  const record = fakeGranuleFactory();
+
+  await granuleModel.create(record);
 
   t.is(record.status, 'completed');
 
@@ -437,26 +436,16 @@ test.serial('reingest a granule', async (t) => {
 test.serial('indexing a granule record', async (t) => {
   const { esAlias } = t.context;
 
-  const txt = fs.readFileSync(
-    path.join(__dirname, '../data/sns_message_granule.txt'),
-    'utf8'
-  );
+  const granule = fakeGranuleFactory();
 
-  const event = JSON.parse(JSON.parse(txt.toString()));
-  const msg = JSON.parse(event.Records[0].Sns.Message);
-
-  const [granule] = await granuleModel.createGranulesFromSns(msg);
   await indexer.indexGranule(esClient, granule, esAlias);
-
-  const collection = msg.meta.collection;
-  const collectionId = constructCollectionId(collection.name, collection.version);
 
   // test granule record is added
   const record = await esClient.get({
     index: esAlias,
     type: 'granule',
     id: granule.granuleId,
-    parent: collectionId
+    parent: granule.collectionId
   }).then((response) => response.body);
   t.is(record._id, granule.granuleId);
 });
