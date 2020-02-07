@@ -29,3 +29,7 @@ output "report_granules_sns_topic_arn" {
 output "report_pdrs_sns_topic_arn" {
   value = aws_sns_topic.report_pdrs_topic.arn
 }
+
+output "async_operation_log_group" {
+  value = aws_cloudwatch_log_group.async_operation.name
+}

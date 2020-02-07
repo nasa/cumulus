@@ -106,6 +106,7 @@ resource "aws_lambda_function" "api" {
       METRICS_ES_HOST              = var.metrics_es_host
       METRICS_ES_USER              = var.metrics_es_username
       METRICS_ES_PASS              = var.metrics_es_password
+      log_destination_arn          = var.log_destination_arn
     }
   }
   memory_size = 1024

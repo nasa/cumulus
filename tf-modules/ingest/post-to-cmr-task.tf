@@ -32,11 +32,3 @@ resource "aws_cloudwatch_log_group" "post_to_cmr_task" {
   retention_in_days = 30
   tags = local.default_tags
 }
-
-resource "aws_cloudwatch_log_subscription_filter" "post_to_cmr_task" {
-  name            = "${var.prefix}-PostToCmrSubscription"
-  destination_arn = var.log2elasticsearch_lambda_function_arn
-  filter_pattern  = ""
-  log_group_name  = aws_cloudwatch_log_group.post_to_cmr_task.name
-  distribution    = "ByLogStream"
-}

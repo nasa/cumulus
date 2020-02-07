@@ -240,3 +240,8 @@ variable "metrics_es_username" {
   type = string
   default = null
 }
+
+variable "additional_log_groups_to_elk" {
+  type = map(string)
+  default = {}
+}
