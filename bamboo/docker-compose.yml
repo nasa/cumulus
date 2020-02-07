@@ -36,7 +36,7 @@ services:
     image: localstack/localstack:0.10.7
     network_mode: "service:build_env"
     environment:
-      SERVICES: "kinesis,lambda,s3,secretsmanager,sns,sqs,dynamodb,cloudwatch,cloudwatchlogs,stepfunctions"
+      SERVICES: "cloudwatch,cloudwatchlogs,dynamodb,kinesis,kms,lambda,s3,secretsmanager,sns,sqs,stepfunctions"
   build_env:
     image: maven.earthdata.nasa.gov/cumulus:latest
     volumes:

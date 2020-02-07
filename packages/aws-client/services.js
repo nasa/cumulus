@@ -18,4 +18,5 @@ exports.sfn = awsClient(AWS.StepFunctions, '2016-11-23');
 exports.cf = awsClient(AWS.CloudFormation, '2010-05-15');
 exports.sns = awsClient(AWS.SNS, '2010-03-31');
 exports.secretsManager = awsClient(AWS.SecretsManager, '2017-10-17');
+exports.kms = awsClient(AWS.KMS, '2014-11-01');
 exports.es = awsClient(AWS.ES, '2015-01-01');

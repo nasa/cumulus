@@ -1,14 +1,23 @@
 'use strict';
 
+const get = require('lodash.get');
 const JSFtp = require('jsftp');
+const KMS = require('@cumulus/aws-client/KMS');
 const { PassThrough } = require('stream');
-const { buildS3Uri, promiseS3Upload } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const omit = require('lodash.omit');
-
-const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
-const { lookupMimeType } = require('./util');
+const S3 = require('@cumulus/aws-client/S3');
+const { S3KeyPairProvider } = require('@cumulus/common/key-pair-provider');
 const recursion = require('./recursion');
+const { lookupMimeType } = require('./util');
+
+const decrypt = async (ciphertext) => {
+  try {
+    return await KMS.decryptBase64String(ciphertext);
+  } catch (_) {
+    return S3KeyPairProvider.decrypt(ciphertext);
+  }
+};
 
 class FtpProviderClient {
   // jsftp.ls is called in _list and uses 'STAT' as a default. Some FTP
@@ -16,39 +25,39 @@ class FtpProviderClient {
   // 'STAT' command. We can use 'LIST' in those cases by
   // setting the variable `useList` to true
   constructor(providerConfig) {
+    this.providerConfig = providerConfig;
     this.host = providerConfig.host;
-    this.username = providerConfig.username;
-    this.password = providerConfig.password;
-    this.encrypted = providerConfig.encrypted;
 
-    this.ftpClientOptions = {
-      host: this.host,
-      port: providerConfig.port || 21,
-      user: providerConfig.username || 'anonymous',
-      pass: providerConfig.password || 'password',
-      useList: providerConfig.useList || false
-    };
-
-    this.decrypted = false;
-    this.connected = false;
-    this.client = null;
+    if (get(providerConfig, 'encrypted', false) === false) {
+      this.plaintextUsername = get(providerConfig, 'username', 'anonymous');
+      this.plaintextPassword = get(providerConfig, 'password', 'password');
+    }
   }
 
-  /**
-   * If the provider username or password are encrypted, decrypt them
-   */
-  async decrypt() {
-    if (!this.decrypted && this.encrypted) {
-      if (this.password) {
-        this.ftpClientOptions.pass = await DefaultProvider.decrypt(this.password);
-        this.decrypted = true;
-      }
-
-      if (this.username) {
-        this.ftpClientOptions.user = await DefaultProvider.decrypt(this.username);
-        this.decrypted = true;
-      }
+  async getUsername() {
+    if (!this.plaintextUsername) {
+      this.plaintextUsername = await decrypt(this.providerConfig.username);
     }
+
+    return this.plaintextUsername;
+  }
+
+  async getPassword() {
+    if (!this.plaintextPassword) {
+      this.plaintextPassword = await decrypt(this.providerConfig.password);
+    }
+
+    return this.plaintextPassword;
+  }
+
+  async buildFtpClient() {
+    return new JSFtp({
+      host: this.host,
+      port: get(this.providerConfig, 'port', 21),
+      user: await this.getUsername(),
+      pass: await this.getPassword(),
+      useList: get(this.providerConfig, 'useList', false)
+    });
   }
 
   /**
@@ -62,9 +71,7 @@ class FtpProviderClient {
     const remoteUrl = `ftp://${this.host}/${remotePath}`;
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
 
-    if (!this.decrypted) await this.decrypt();
-
-    const client = new JSFtp(this.ftpClientOptions);
+    const client = await this.buildFtpClient();
 
     return new Promise((resolve, reject) => {
       client.on('error', reject);
@@ -81,9 +88,8 @@ class FtpProviderClient {
   }
 
   async _list(path, _counter = 0) {
-    if (!this.decrypted) await this.decrypt();
     let counter = _counter;
-    const client = new JSFtp(this.ftpClientOptions);
+    const client = await this.buildFtpClient();
     return new Promise((resolve, reject) => {
       client.on('error', reject);
       client.ls(path, (err, data) => {
@@ -118,8 +124,6 @@ class FtpProviderClient {
    */
 
   async list(path) {
-    if (!this.decrypted) await this.decrypt();
-
     const listFn = this._list.bind(this);
     const files = await recursion(listFn, path);
 
@@ -140,11 +144,10 @@ class FtpProviderClient {
    */
   async sync(remotePath, bucket, key) {
     const remoteUrl = `ftp://${this.host}/${remotePath}`;
-    const s3uri = buildS3Uri(bucket, key);
+    const s3uri = S3.buildS3Uri(bucket, key);
     log.info(`Sync ${remoteUrl} to ${s3uri}`);
 
-    if (!this.decrypted) await this.decrypt();
-    const client = new JSFtp(this.ftpClientOptions);
+    const client = await this.buildFtpClient();
 
     // get readable stream for remote file
     const readable = await new Promise((resolve, reject) => {
@@ -166,7 +169,7 @@ class FtpProviderClient {
       Body: pass,
       ContentType: lookupMimeType(key)
     };
-    await promiseS3Upload(params);
+    await S3.promiseS3Upload(params);
     log.info('Uploading to s3 is complete(ftp)', s3uri);
 
     client.destroy();

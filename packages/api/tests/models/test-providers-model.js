@@ -1,8 +1,8 @@
 'use strict';
 
 const test = require('ava');
-const { s3 } = require('@cumulus/aws-client/services');
-const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+const KMS = require('@cumulus/aws-client/KMS');
+const S3 = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const schemas = require('../../models/schemas');
@@ -16,6 +16,14 @@ const { AssociatedRulesError } = require('../../lib/errors');
 let manager;
 let ruleModel;
 test.before(async () => {
+  process.env.stackName = randomString();
+
+  process.env.system_bucket = randomString();
+  await S3.createBucket(process.env.system_bucket);
+
+  const createKeyResponse = await KMS.createKey();
+  process.env.provider_kms_key_id = createKeyResponse.KeyMetadata.KeyId;
+
   process.env.ProvidersTable = randomString();
 
   manager = new Manager({
@@ -29,17 +37,12 @@ test.before(async () => {
   process.env.RulesTable = randomString();
   ruleModel = new Rule();
   await ruleModel.createTable();
-
-  process.env.system_bucket = randomString();
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
-
-  process.env.stackName = randomString();
 });
 
 test.after.always(async () => {
   await manager.deleteTable();
   await ruleModel.deleteTable();
-  await recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await S3.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test('Providers.exists() returns true when a record exists', async (t) => {
@@ -73,16 +76,16 @@ test('Providers.delete() throws an exception if the provider has associated rule
 
   // The workflow message template must exist in S3 before the rule can be created
   await Promise.all([
-    s3().putObject({
-      Bucket: process.env.system_bucket,
-      Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
-      Body: JSON.stringify({})
-    }).promise(),
-    s3().putObject({
-      Bucket: process.env.system_bucket,
-      Key: `${process.env.stackName}/workflow_template.json`,
-      Body: JSON.stringify({})
-    }).promise()
+    S3.putJsonS3Object(
+      process.env.system_bucket,
+      `${process.env.stackName}/workflows/${rule.workflow}.json`,
+      {}
+    ),
+    S3.putJsonS3Object(
+      process.env.system_bucket,
+      `${process.env.stackName}/workflow_template.json`,
+      {}
+    )
   ]);
 
   await ruleModel.create(rule);
@@ -122,6 +125,31 @@ test('Providers.create() throws a ValidationError if an invalid host is used', a
   }
 });
 
+test('Providers.create() encrypts the credentials using KMS', async (t) => {
+  const providersModel = new Provider();
+
+  const provider = fakeProviderFactory({
+    username: 'my-username',
+    password: 'my-password'
+  });
+
+  await providersModel.create(provider);
+
+  const fetchedProvider = await providersModel.get({ id: provider.id });
+
+  t.true(fetchedProvider.encrypted);
+
+  t.is(
+    await KMS.decryptBase64String(fetchedProvider.username),
+    'my-username'
+  );
+
+  t.is(
+    await KMS.decryptBase64String(fetchedProvider.password),
+    'my-password'
+  );
+});
+
 test('Providers.update() throws a ValidationError if an invalid host is used', async (t) => {
   const providersModel = new Provider();
 
@@ -138,4 +166,37 @@ test('Providers.update() throws a ValidationError if an invalid host is used', a
   } catch (err) {
     t.is(err.name, 'ValidationError');
   }
+});
+
+test('Providers.update() encrypts the credentials using KMS', async (t) => {
+  const providersModel = new Provider();
+
+  const provider = fakeProviderFactory({
+    username: 'my-username-1',
+    password: 'my-password-1'
+  });
+
+  await providersModel.create(provider);
+
+  await providersModel.update(
+    { id: provider.id },
+    {
+      username: 'my-username-2',
+      password: 'my-password-2'
+    }
+  );
+
+  const fetchedProvider = await providersModel.get({ id: provider.id });
+
+  t.true(fetchedProvider.encrypted);
+
+  t.is(
+    await KMS.decryptBase64String(fetchedProvider.username),
+    'my-username-2'
+  );
+
+  t.is(
+    await KMS.decryptBase64String(fetchedProvider.password),
+    'my-password-2'
+  );
 });

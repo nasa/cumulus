@@ -385,6 +385,8 @@ class Granule extends Manager {
    * @returns {Promise<Array>} granule records
    */
   async createGranulesFromSns(cumulusMessage) {
+    deprecate('@cumulus/api/models/Granule.createGranulesFromSns', '1.18.0');
+
     const granules = get(cumulusMessage, 'payload.granules');
 
     if (!granules) return null;

@@ -14,7 +14,9 @@ const { sleep } = require('@cumulus/common/util');
 
 const {
   createBucket,
+  getJsonS3Object,
   getS3Object,
+  getTextObject,
   downloadS3File,
   listS3ObjectsV2,
   recursivelyDeleteS3Bucket,
@@ -39,6 +41,28 @@ test.before(async (t) => {
 
 test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.Bucket);
+});
+
+test('getTextObject() returns the contents of an S3 object', async (t) => {
+  const { Bucket } = t.context;
+  const Key = randomString();
+
+  await awsServices.s3().putObject({ Bucket, Key, Body: 'asdf' }).promise();
+
+  t.is(await getTextObject(Bucket, Key), 'asdf');
+});
+
+test('getJsonS3Object() returns the JSON-parsed contents of an S3 object', async (t) => {
+  const { Bucket } = t.context;
+  const Key = randomString();
+
+  await awsServices.s3().putObject({
+    Bucket,
+    Key,
+    Body: JSON.stringify({ a: 1 })
+  }).promise();
+
+  t.deepEqual(await getJsonS3Object(Bucket, Key), { a: 1 });
 });
 
 test('createBucket() creates a bucket', async (t) => {
