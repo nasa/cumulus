@@ -14,6 +14,10 @@ output "log2elasticsearch_lambda_function_arn" {
   value = aws_lambda_function.log2elasticsearch.arn
 }
 
+output "provider_kms_key_arn" {
+  value = aws_kms_key.provider_kms_key.arn
+}
+
 output "publish_reports_lambda_function_arn" {
   value = aws_lambda_function.publish_reports.arn
 }

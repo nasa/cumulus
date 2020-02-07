@@ -136,10 +136,5 @@ test.serial('verifyProviderSecretsMigration verifies all providers', async (t) =
     Item: { ...s3Provider, createdAt: Date.now() }
   }).promise();
 
-  const err = await t.throwsAsync(handler());
-
-  t.is(
-    err.message,
-    `Provider ${s3Provider.id} credentials could not be decrypted using KMS. Must invoke the providerSecretsMigration Lambda function.`
-  );
+  await t.throwsAsync(handler());
 });
