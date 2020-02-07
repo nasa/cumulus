@@ -4,6 +4,9 @@ const sinon = require('sinon');
 const proxyquire = require('proxyquire');
 const test = require('ava');
 const JSFtp = require('jsftp');
+const KMS = require('@cumulus/aws-client/KMS');
+const S3 = require('@cumulus/aws-client/S3');
+const { S3KeyPairProvider } = require('@cumulus/common/key-pair-provider');
 const {
   calculateS3ObjectChecksum,
   fileExists,
@@ -13,6 +16,36 @@ const {
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const FtpProviderClient = require('../FtpProviderClient');
+
+test.before(async (t) => {
+  process.env.system_bucket = randomString();
+  process.env.stackName = randomString();
+
+  await S3.createBucket(process.env.system_bucket);
+
+  await S3.putFile(
+    process.env.system_bucket,
+    `${process.env.stackName}/crypto/ssh_client_rsa_key`,
+    require.resolve('@cumulus/test-data/keys/ssh_client_rsa_key')
+  );
+
+  await S3.putFile(
+    process.env.system_bucket,
+    `${process.env.stackName}/crypto/private.pem`,
+    require.resolve('@cumulus/test-data/keys/s3_key_pair_provider_private.pem')
+  );
+
+  await S3.putFile(
+    process.env.system_bucket,
+    `${process.env.stackName}/crypto/public.pub`,
+    require.resolve('@cumulus/test-data/keys/s3_key_pair_provider_public.pub')
+  );
+
+  const createKeyResponse = await KMS.createKey();
+  t.context.kmsKeyId = createKeyResponse.KeyMetadata.KeyId;
+});
+
+test.after.always(() => S3.recursivelyDeleteS3Bucket(process.env.system_bucket));
 
 test('FtpProviderClient.list lists objects', async (t) => {
   const myFtpProviderClient = new FtpProviderClient({
@@ -37,6 +70,51 @@ test('FtpProviderClient.list filters listed objects with path', async (t) => {
   const list = await myFtpProviderClient.list('pdrs/MOD09GQ_1granule_v3.PDR');
   t.true(list.length === 1);
   t.is(list[0].name, 'MOD09GQ_1granule_v3.PDR');
+});
+
+test('FtpProviderClient supports plaintext usernames and passwords', async (t) => {
+  const ftpClient = new FtpProviderClient({
+    host: '127.0.0.1',
+    encrypted: false,
+    username: 'testuser',
+    password: 'testpass',
+    useList: true
+  });
+
+  const files = await ftpClient.list('/');
+  const fileNames = files.map((f) => f.name);
+
+  t.true(fileNames.includes('index.html'));
+});
+
+test('FtpProviderClient supports S3-keypair-encrypted usernames and passwords', async (t) => {
+  const ftpClient = new FtpProviderClient({
+    host: '127.0.0.1',
+    encrypted: true,
+    username: await S3KeyPairProvider.encrypt('testuser'),
+    password: await S3KeyPairProvider.encrypt('testpass'),
+    useList: true
+  });
+
+  const files = await ftpClient.list('/');
+  const fileNames = files.map((f) => f.name);
+
+  t.true(fileNames.includes('index.html'));
+});
+
+test('FtpProviderClient supports KMS-encrypted usernames and passwords', async (t) => {
+  const ftpClient = new FtpProviderClient({
+    host: '127.0.0.1',
+    encrypted: true,
+    username: await KMS.encrypt(t.context.kmsKeyId, 'testuser'),
+    password: await KMS.encrypt(t.context.kmsKeyId, 'testpass'),
+    useList: true
+  });
+
+  const files = await ftpClient.list('/');
+  const fileNames = files.map((f) => f.name);
+
+  t.true(fileNames.includes('index.html'));
 });
 
 test('useList is present and true when assigned', async (t) => {
