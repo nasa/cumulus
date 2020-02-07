@@ -30,6 +30,7 @@ resource "aws_dynamodb_table" "access_tokens_table" {
 
   lifecycle {
     prevent_destroy = true
+    ignore_changes = [ name ]
   }
 
   tags = local.default_tags
@@ -51,6 +52,7 @@ resource "aws_dynamodb_table" "async_operations_table" {
 
   lifecycle {
     prevent_destroy = true
+    ignore_changes = [ name ]
   }
 
   tags = local.default_tags
@@ -80,6 +82,7 @@ resource "aws_dynamodb_table" "collections_table" {
 
   lifecycle {
     prevent_destroy = true
+    ignore_changes = [ name ]
   }
 
   tags = local.default_tags
@@ -103,6 +106,7 @@ resource "aws_dynamodb_table" "executions_table" {
 
   lifecycle {
     prevent_destroy = true
+    ignore_changes = [ name ]
   }
 
   tags = local.default_tags
@@ -132,6 +136,7 @@ resource "aws_dynamodb_table" "files_table" {
 
   lifecycle {
     prevent_destroy = true
+    ignore_changes = [ name ]
   }
 
   tags = local.default_tags
@@ -167,6 +172,7 @@ resource "aws_dynamodb_table" "granules_table" {
 
   lifecycle {
     prevent_destroy = true
+    ignore_changes = [ name ]
   }
 
   tags = local.default_tags
@@ -190,6 +196,7 @@ resource "aws_dynamodb_table" "pdrs_table" {
 
   lifecycle {
     prevent_destroy = true
+    ignore_changes = [ name ]
   }
 
   tags = local.default_tags
@@ -213,6 +220,7 @@ resource "aws_dynamodb_table" "providers_table" {
 
   lifecycle {
     prevent_destroy = true
+    ignore_changes = [ name ]
   }
 
   tags = local.default_tags
@@ -236,6 +244,7 @@ resource "aws_dynamodb_table" "rules_table" {
 
   lifecycle {
     prevent_destroy = true
+    ignore_changes = [ name ]
   }
 
   tags = local.default_tags
@@ -257,6 +266,7 @@ resource "aws_dynamodb_table" "semaphores_table" {
 
   lifecycle {
     prevent_destroy = true
+    ignore_changes = [ name ]
   }
 
   tags = local.default_tags
