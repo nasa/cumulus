@@ -47,8 +47,8 @@ test.after.always(async () => {
   await gModel.deleteTable();
 });
 
-test.serial('backup records from DynamoDB', async (t) => {
-  const limit = 12;
+test('backup and restore Granules table', async (t) => {
+  const limit = 30;
   const tempBackupFile = path.join(tempFolder, `${tableName}.json`);
 
   const granuleIds = await populateDynamoDB(gModel, limit);
@@ -61,27 +61,10 @@ test.serial('backup records from DynamoDB', async (t) => {
   const stats = fs.statSync(tempBackupFile);
   t.truthy(stats);
 
-  // delete records
-  await gModel.batchWrite(granuleIds.map((id) => ({ granuleId: id })));
-});
+  await restore(tempBackupFile, tableName, 1);
 
-test.serial('restore records to DynamoDB', async (t) => {
-  const limit = 25;
-  const granuleIds = [];
-  const tempRestoreFile = path.join(tempFolder, `restore_${tableName}.json`);
-
-  // create a backup file with 200 records
-  let fileContent = '';
-  for (let i = 0; i < limit; i += 1) {
-    const granule = fakeGranuleFactory();
-    fileContent += `${JSON.stringify(granule)}\n`;
-    granuleIds.push(granule.granuleId);
-  }
-  fs.writeFileSync(tempRestoreFile, fileContent);
-
-  await restore(tempRestoreFile, tableName, 1);
-
-  // count the records
-  const resp = await gModel.scan(null, null, 0, 'COUNT');
-  t.is(resp.Count, limit);
+  // verify records are the same
+  const scanResponse = await gModel.scan(null, 'granuleId', 0, 'SPECIFIC_ATTRIBUTES');
+  t.is(scanResponse.Count, limit);
+  t.deepEqual(scanResponse.Items.map((i) => i.granuleId).sort(), granuleIds.sort());
 });
