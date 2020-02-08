@@ -398,12 +398,11 @@ Please see our [troubleshooting documentation for any issues with your deploymen
 
 ### Dashboard Requirements
 
-Please note that the requirements are similar to the [Cumulus stack deployment requirements](deployment-readme#requirements), however the node version may vary slightly and the dashboard requires yarn. The installation instructions below include a step that will install/use the required node version referenced in the `.nvmrc` file in the dashboard repository.
+Please note that the requirements are similar to the [Cumulus stack deployment requirements](deployment-readme#requirements). The installation instructions below include a step that will install/use the required node version referenced in the `.nvmrc` file in the dashboard repository.
 
 - git
-- [node 8.11.4](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
+- [node 10.16.3](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
 - [npm](https://www.npmjs.com/get-npm)
-- [yarn](https://yarnpkg.com/en/docs/install#mac-stable)
 - zip
 - AWS CLI - [AWS command line interface](https://aws.amazon.com/cli/)
 - python
@@ -421,13 +420,13 @@ Please note that the requirements are similar to the [Cumulus stack deployment r
 
 ### Install dashboard
 
-To install the dashboard clone the Cumulus-dashboard repository into the root deploy directory and install dependencies with `yarn install`:
+To install the dashboard, clone the [Cumulus dashboard](https://github.com/nasa/cumulus-dashboard) repository into the root deploy directory and install dependencies with `npm install`:
 
 ```bash
   git clone https://github.com/nasa/cumulus-dashboard
   cd cumulus-dashboard
   nvm use
-  yarn install
+  npm install
 ```
 
 If you do not have the correct version of node installed, replace `nvm use` with `nvm install $(cat .nvmrc)` in the above example.
@@ -446,7 +445,7 @@ To checkout and install a specific version of the dashboard:
   git fetch --tags
   git checkout <version-number> # e.g. v1.2.0
   nvm use
-  yarn install
+  npm install
 ```
 
 If you do not have the correct version of node installed, replace `nvm use` with `nvm install $(cat .nvmrc)` in the above example.
