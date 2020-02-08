@@ -324,12 +324,11 @@ Also add the Distribution url <code>https://&lt;kido2r7kji&gt;.execute-api.us-ea
 <hr>
 <h2><a class="anchor" aria-hidden="true" id="deploy-cumulus-dashboard"></a><a href="#deploy-cumulus-dashboard" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Deploy Cumulus dashboard</h2>
 <h3><a class="anchor" aria-hidden="true" id="dashboard-requirements"></a><a href="#dashboard-requirements" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Dashboard Requirements</h3>
-<p>Please note that the requirements are similar to the <a href="deployment-readme#requirements">Cumulus stack deployment requirements</a>, however the node version may vary slightly and the dashboard requires yarn. The installation instructions below include a step that will install/use the required node version referenced in the <code>.nvmrc</code> file in the dashboard repository.</p>
+<p>Please note that the requirements are similar to the <a href="deployment-readme#requirements">Cumulus stack deployment requirements</a>. The installation instructions below include a step that will install/use the required node version referenced in the <code>.nvmrc</code> file in the dashboard repository.</p>
 <ul>
 <li>git</li>
-<li><a href="https://nodejs.org/en/">node 8.11.4</a> (use <a href="https://github.com/creationix/nvm">nvm</a> to upgrade/downgrade)</li>
+<li><a href="https://nodejs.org/en/">node 10.16.3</a> (use <a href="https://github.com/creationix/nvm">nvm</a> to upgrade/downgrade)</li>
 <li><a href="https://www.npmjs.com/get-npm">npm</a></li>
-<li><a href="https://yarnpkg.com/en/docs/install#mac-stable">yarn</a></li>
 <li>zip</li>
 <li>AWS CLI - <a href="https://aws.amazon.com/cli/">AWS command line interface</a></li>
 <li>python</li>
@@ -347,11 +346,11 @@ Also add the Distribution url <code>https://&lt;kido2r7kji&gt;.execute-api.us-ea
 <li>Ensure the bucket's access permissions allow your deployment user access to write to the bucket</li>
 </ul>
 <h3><a class="anchor" aria-hidden="true" id="install-dashboard"></a><a href="#install-dashboard" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Install dashboard</h3>
-<p>To install the dashboard clone the Cumulus-dashboard repository into the root deploy directory and install dependencies with <code>yarn install</code>:</p>
+<p>To install the dashboard, clone the <a href="https://github.com/nasa/cumulus-dashboard">Cumulus dashboard</a> repository into the root deploy directory and install dependencies with <code>npm install</code>:</p>
 <pre><code class="hljs css language-bash">  git <span class="hljs-built_in">clone</span> https://github.com/nasa/cumulus-dashboard
   <span class="hljs-built_in">cd</span> cumulus-dashboard
   nvm use
-  yarn install
+  npm install
 </code></pre>
 <p>If you do not have the correct version of node installed, replace <code>nvm use</code> with <code>nvm install $(cat .nvmrc)</code> in the above example.</p>
 <h4><a class="anchor" aria-hidden="true" id="dashboard-versioning"></a><a href="#dashboard-versioning" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Dashboard versioning</h4>
@@ -362,7 +361,7 @@ Also add the Distribution url <code>https://&lt;kido2r7kji&gt;.execute-api.us-ea
 <pre><code class="hljs css language-bash">  git fetch --tags
   git checkout &lt;version-number&gt; <span class="hljs-comment"># e.g. v1.2.0</span>
   nvm use
-  yarn install
+  npm install
 </code></pre>
 <p>If you do not have the correct version of node installed, replace <code>nvm use</code> with <code>nvm install $(cat .nvmrc)</code> in the above example.</p>
 <h3><a class="anchor" aria-hidden="true" id="building-the-dashboard"></a><a href="#building-the-dashboard" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Building the dashboard</h3>
