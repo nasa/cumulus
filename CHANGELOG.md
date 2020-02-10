@@ -57,7 +57,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1741**
   - Added an optional `elasticsearch_security_group_id` variable to the
     `data-persistence` Terraform module to allow the Elasticsearch security
-    group id to be specified instead of creating one
+    group id to be specified instead of creating one.
 
 ### Changed
 
