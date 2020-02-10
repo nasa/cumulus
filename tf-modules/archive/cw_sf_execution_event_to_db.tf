@@ -68,6 +68,7 @@ resource "aws_lambda_function" "cw_sf_event_to_db_records" {
   role             = "${aws_iam_role.cw_sf_event_to_db_records_lambda.arn}"
   handler          = "index.handler"
   runtime          = "nodejs10.x"
+  memory_size      = 256
 
   dead_letter_config {
     target_arn = aws_sqs_queue.cw_sf_event_to_db_records_dead_letter_queue.arn
