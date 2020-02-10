@@ -113,4 +113,4 @@ To restore data from a json file run the following command:
 
 # Data Backup and Restore
 
-Cumulus provides no core functionality to backup data stored in S3.
+Cumulus provides no core functionality to backup data stored in S3. Data disaster recovery is being developed in a separate effort [here](https://github.com/podaac/cumulus-disaster-recovery).
