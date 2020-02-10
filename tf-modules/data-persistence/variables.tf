@@ -64,8 +64,8 @@ variable "subnet_ids" {
   default     = []
 }
 
-variable "security_group" {
-  description = "Security Group Ids for Elasticsearch"
+variable "elasticsearch_security_group_id" {
+  description = "Security Group Id for Elasticsearch"
   type        = string
   default     = null
 }
