@@ -111,6 +111,47 @@ test('saveExecutionToDb() does not throw an exception if storeExecutionFromCumul
   }
 });
 
+test('saveGranulesToDb() saves a granule record to the database', async (t) => {
+  const { cumulusMessage, granuleModel } = t.context;
+
+  const stateMachineName = randomString();
+  const stateMachineArn = `arn:aws:states:us-east-1:1234:stateMachine:${stateMachineName}`;
+  cumulusMessage.cumulus_meta.state_machine = stateMachineArn;
+
+  const executionName = randomString();
+  cumulusMessage.cumulus_meta.execution_name = executionName;
+  const executionArn = `arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
+
+  const granuleId = randomString();
+  const files = [fakeFileFactory({ size: 250 })];
+  const granule = fakeGranuleFactoryV2({
+    files,
+    granuleId
+  });
+  delete granule.version;
+  delete granule.dataType;
+  cumulusMessage.payload.granules = [granule];
+
+  await saveGranulesToDb(cumulusMessage);
+
+  const fetchedGranule = await granuleModel.get({ granuleId });
+  const expectedGranule = {
+    ...granule,
+    collectionId: 'my-collection___5',
+    execution: `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`,
+    productVolume: 250,
+    status: 'running',
+    createdAt: 122,
+    error: {},
+    timeToArchive: 0,
+    timeToPreprocess: 0,
+    duration: fetchedGranule.duration,
+    timestamp: fetchedGranule.timestamp,
+    updatedAt: fetchedGranule.updatedAt
+  };
+  t.deepEqual(fetchedGranule, expectedGranule);
+});
+
 test.serial('saveGranulesToDb() does not throw an exception if storeGranulesFromCumulusMessage() throws an exception', async (t) => {
   const { cumulusMessage } = t.context;
 
