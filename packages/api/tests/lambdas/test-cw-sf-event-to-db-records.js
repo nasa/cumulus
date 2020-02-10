@@ -13,7 +13,7 @@ const {
   handler,
   saveExecutionToDb,
   saveGranulesToDb
-} = require('../../lambdas/cw-sf-execution-event-to-db');
+} = require('../../lambdas/cw-sf-event-to-db-records');
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 
 const loadFixture = (filename) =>
@@ -21,7 +21,7 @@ const loadFixture = (filename) =>
     path.join(
       __dirname,
       'fixtures',
-      'cw-sf-execution-event-to-db',
+      'cw-sf-event-to-db-records',
       filename
     )
   );
@@ -170,7 +170,7 @@ test.serial('saveGranulesToDb() does not throw an exception if storeGranulesFrom
   }
 });
 
-test('The cw-sf-execution-event-to-db Lambda function creates execution, granule, and PDR records', async (t) => {
+test('The cw-sf-event-to-db-records Lambda function creates execution, granule, and PDR records', async (t) => {
   const { cumulusMessage, executionModel, granuleModel } = t.context;
 
   const event = await loadFixture('execution-running-event.json');
