@@ -3,6 +3,12 @@
 const attr = require('dynamodb-data-types').AttributeValue;
 const { publishSnsMessage } = require('@cumulus/aws-client/SNS');
 
+/**
+ * Publish SNS messages for granule reporting.
+ *
+ * @param {Object} event - A DynamoDB event
+ * @returns {Promise}
+ */
 const handler = async (event) => {
   const topicArn = process.env.granule_sns_topic_arn;
 
