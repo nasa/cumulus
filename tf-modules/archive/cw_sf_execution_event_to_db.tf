@@ -8,11 +8,17 @@ resource "aws_iam_role" "cw_sf_event_to_db_records_lambda" {
 data "aws_iam_policy_document" "cw_sf_event_to_db_records_lambda" {
   statement {
     actions   = ["dynamodb:UpdateItem"]
-    resources = [var.dynamo_tables.executions.arn]
+    resources = [
+      var.dynamo_tables.executions.arn,
+      var.dynamo_tables.granules.arn
+    ]
   }
 
   statement {
-    actions = ["states:GetExecutionHistory"]
+    actions = [
+      "states:DescribeExecution",
+      "states:GetExecutionHistory"
+    ]
     resources = ["*"]
   }
 
@@ -38,6 +44,13 @@ data "aws_iam_policy_document" "cw_sf_event_to_db_records_lambda" {
       "logs:PutLogEvents"
     ]
     resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "s3:GetObject*",
+    ]
+    resources = [for b in flatten([var.public_buckets, var.protected_buckets, var.private_buckets, var.system_bucket]) : "arn:aws:s3:::${b}/*"]
   }
 
   # Required for DLQ
@@ -68,6 +81,7 @@ resource "aws_lambda_function" "cw_sf_event_to_db_records" {
   role             = "${aws_iam_role.cw_sf_event_to_db_records_lambda.arn}"
   handler          = "index.handler"
   runtime          = "nodejs10.x"
+  timeout          = 30
   memory_size      = 256
 
   dead_letter_config {
@@ -77,6 +91,7 @@ resource "aws_lambda_function" "cw_sf_event_to_db_records" {
   environment {
     variables = {
       ExecutionsTable = var.dynamo_tables.executions.name
+      GranulesTable   = var.dynamo_tables.granules.name
     }
   }
 
