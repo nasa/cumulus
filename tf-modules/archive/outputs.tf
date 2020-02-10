@@ -14,6 +14,10 @@ output "log2elasticsearch_lambda_function_arn" {
   value = aws_lambda_function.log2elasticsearch.arn
 }
 
+output "provider_kms_key_arn" {
+  value = aws_kms_key.provider_kms_key.arn
+}
+
 output "publish_reports_lambda_function_arn" {
   value = aws_lambda_function.publish_reports.arn
 }
@@ -28,4 +32,8 @@ output "report_granules_sns_topic_arn" {
 
 output "report_pdrs_sns_topic_arn" {
   value = aws_sns_topic.report_pdrs_topic.arn
+}
+
+output "async_operation_log_group" {
+  value = aws_cloudwatch_log_group.async_operation.name
 }

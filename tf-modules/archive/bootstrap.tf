@@ -1,12 +1,4 @@
-resource "null_resource" "rsa_keys" {
-  triggers = { x = uuid() }
-  provisioner "local-exec" {
-    command = "${path.module}/fetch_or_create_rsa_keys.sh ${var.system_bucket} ${var.prefix}"
-  }
-}
-
 resource "aws_lambda_function" "custom_bootstrap" {
-  depends_on       = [null_resource.rsa_keys]
   function_name    = "${var.prefix}-CustomBootstrap"
   filename         = "${path.module}/../../packages/api/dist/bootstrap/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/bootstrap/lambda.zip")
