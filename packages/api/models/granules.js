@@ -560,7 +560,7 @@ class Granule extends Manager {
       // Only allow "running" granule to replace completed/failed
       // granule if the execution has changed
       if (granuleRecord.status === 'running') {
-        updateParams.ConditionExpression = 'execution <> :execution';
+        updateParams.ConditionExpression = '#execution <> :execution';
       }
 
       await this.dynamodbDocClient.update(updateParams).promise();

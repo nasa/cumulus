@@ -36,7 +36,7 @@ test('_validateAndStoreGranuleRecord() can be used to create a new running granu
   t.is(fetchedItem.status, 'running');
 });
 
-test.only('_validateAndStoreGranuleRecord() can be used to update a running execution', async (t) => {
+test('_validateAndStoreGranuleRecord() can be used to update a running execution', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({
