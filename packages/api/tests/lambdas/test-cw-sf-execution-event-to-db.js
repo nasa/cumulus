@@ -11,7 +11,8 @@ const Execution = require('../../models/executions');
 const Granule = require('../../models/granules');
 const {
   handler,
-  saveExecutionToDb
+  saveExecutionToDb,
+  saveGranulesToDb
 } = require('../../lambdas/cw-sf-execution-event-to-db');
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 
@@ -41,26 +42,9 @@ test.before(async (t) => {
     .callsFake(() => Promise.resolve({}));
 });
 
-test.after.always(async (t) => {
-  const { executionModel } = t.context;
-  await executionModel.deleteTable();
-});
-
-test('saveExecutionToDb() creates an execution item in Dynamo', async (t) => {
-  const { executionModel } = t.context;
-
-  const event = await loadFixture('execution-running-event.json');
-
-  const stateMachineName = randomString();
-  const stateMachineArn = `arn:aws:states:${event.region}:${event.account}:stateMachine:${stateMachineName}`;
-
-  const executionName = randomString();
-  const executionArn = `arn:aws:states:${event.region}:${event.account}:execution:${stateMachineName}:${executionName}`;
-
-  const cumulusMessage = {
+test.beforeEach(async (t) => {
+  t.context.cumulusMessage = {
     cumulus_meta: {
-      state_machine: stateMachineArn,
-      execution_name: executionName,
       workflow_start_time: 122
     },
     meta: {
@@ -68,12 +52,33 @@ test('saveExecutionToDb() creates an execution item in Dynamo', async (t) => {
       collection: {
         name: 'my-collection',
         version: 5
+      },
+      provider: {
+        host: 'test-bucket',
+        protocol: 's3'
       }
     },
     payload: {
       key: 'my-payload'
     }
   };
+});
+
+test.after.always(async (t) => {
+  const { executionModel } = t.context;
+  await executionModel.deleteTable();
+});
+
+test('saveExecutionToDb() creates an execution item in Dynamo', async (t) => {
+  const { cumulusMessage, executionModel } = t.context;
+
+  const stateMachineName = randomString();
+  const stateMachineArn = `arn:aws:states:us-east-1:1234:stateMachine:${stateMachineName}`;
+  cumulusMessage.cumulus_meta.state_machine = stateMachineArn;
+
+  const executionName = randomString();
+  cumulusMessage.cumulus_meta.execution_name = executionName;
+  const executionArn = `arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
 
   await saveExecutionToDb(cumulusMessage);
 
@@ -93,21 +98,10 @@ test('saveExecutionToDb() creates an execution item in Dynamo', async (t) => {
 });
 
 test('saveExecutionToDb() does not throw an exception if storeExecutionFromCumulusMessage() throws an exception', async (t) => {
-  const cumulusMessage = {
-    cumulus_meta: {
-      // Because state_machine is missing, generating this execution record will fail
-      execution_name: randomString(),
-      workflow_start_time: Date.now()
-    },
-    meta: {
-      status: 'running',
-      collection: {
-        name: 'my-collection',
-        version: 5
-      }
-    },
-    payload: 'my-payload'
-  };
+  const { cumulusMessage } = t.context;
+
+  // Because state_machine is missing, generating this execution record will fail
+  delete cumulusMessage.cumulus_meta.state_machine;
 
   try {
     await saveExecutionToDb(cumulusMessage);
@@ -117,15 +111,35 @@ test('saveExecutionToDb() does not throw an exception if storeExecutionFromCumul
   }
 });
 
+test.serial('saveGranulesToDb() does not throw an exception if storeGranulesFromCumulusMessage() throws an exception', async (t) => {
+  const { cumulusMessage } = t.context;
+
+  const storeGranuleStub = sinon.stub(Granule.prototype, 'storeGranulesFromCumulusMessage')
+    .callsFake(() => {
+      throw new Error('error');
+    });
+
+  try {
+    await saveGranulesToDb(cumulusMessage);
+    t.pass();
+  } catch (err) {
+    t.fail(`Exception should not have been thrown, but caught: ${err}`);
+  } finally {
+    storeGranuleStub.restore();
+  }
+});
+
 test('The cw-sf-execution-event-to-db Lambda function creates execution, granule, and PDR records', async (t) => {
-  const { executionModel, granuleModel } = t.context;
+  const { cumulusMessage, executionModel, granuleModel } = t.context;
 
   const event = await loadFixture('execution-running-event.json');
 
   const stateMachineName = randomString();
   const stateMachineArn = `arn:aws:states:${event.region}:${event.account}:stateMachine:${stateMachineName}`;
+  cumulusMessage.cumulus_meta.state_machine = stateMachineArn;
 
   const executionName = randomString();
+  cumulusMessage.cumulus_meta.execution_name = executionName;
   const executionArn = `arn:aws:states:${event.region}:${event.account}:execution:${stateMachineName}:${executionName}`;
 
   event.resources = [executionArn];
@@ -136,29 +150,8 @@ test('The cw-sf-execution-event-to-db Lambda function creates execution, granule
   const granuleId = randomString();
   const files = [fakeFileFactory()];
   const granule = fakeGranuleFactoryV2({ files, granuleId });
+  cumulusMessage.payload.granules = [granule];
 
-  const cumulusMessage = {
-    cumulus_meta: {
-      state_machine: stateMachineArn,
-      execution_name: executionName,
-      workflow_start_time: 122
-    },
-    meta: {
-      status: 'running',
-      collection: {
-        name: 'my-collection',
-        version: 5
-      },
-      provider: {
-        host: 'test-bucket',
-        protocol: 's3'
-      }
-    },
-    payload: {
-      key: 'my-payload',
-      granules: [granule]
-    }
-  };
   event.detail.input = JSON.stringify(cumulusMessage);
 
   await handler(event);
