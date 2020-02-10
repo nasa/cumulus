@@ -487,7 +487,7 @@ class Granule extends Manager {
    */
   _getMutableFieldNames(record) {
     if (record.status === 'running') {
-      return ['createdAt', 'updatedAt', 'timestamp'];
+      return ['createdAt', 'updatedAt', 'timestamp', 'status', 'execution'];
     }
     return Object.keys(record);
   }
@@ -556,6 +556,12 @@ class Granule extends Manager {
         itemKey: { granuleId: granuleRecord.granuleId },
         mutableFieldNames
       });
+
+      // Only allow "running" granule to replace completed/failed
+      // granule if the execution has changed
+      if (granuleRecord.status === 'running') {
+        updateParams.ConditionExpression = 'execution <> :execution';
+      }
 
       await this.dynamodbDocClient.update(updateParams).promise();
     } catch (err) {

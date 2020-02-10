@@ -36,7 +36,7 @@ test('_validateAndStoreGranuleRecord() can be used to create a new running granu
   t.is(fetchedItem.status, 'running');
 });
 
-test('_validateAndStoreGranuleRecord() can be used to update a running execution', async (t) => {
+test.only('_validateAndStoreGranuleRecord() can be used to update a running execution', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({
@@ -99,7 +99,26 @@ test('_validateAndStoreGranuleRecord() can be used to update a completed executi
   t.deepEqual(fetchedItem.productVolume, 500);
 });
 
-test('_validateAndStoreGranuleRecord() will not allow a running status to replace a completed status', async (t) => {
+test('_validateAndStoreGranuleRecord() will allow a completed status to replace a running status for same execution', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'running' });
+
+  await granuleModel._validateAndStoreGranuleRecord(granule);
+
+  const updatedGranule = {
+    ...granule,
+    status: 'completed'
+  };
+
+  await granuleModel._validateAndStoreGranuleRecord(updatedGranule);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.is(fetchedItem.status, 'completed');
+});
+
+test('_validateAndStoreGranuleRecord() will not allow a running status to replace a completed status for same execution', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2();
@@ -116,6 +135,26 @@ test('_validateAndStoreGranuleRecord() will not allow a running status to replac
   const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
 
   t.is(fetchedItem.status, 'completed');
+});
+
+test('_validateAndStoreGranuleRecord() will allow a running status to replace a completed status for a new execution', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2();
+
+  await granuleModel._validateAndStoreGranuleRecord(granule);
+
+  const updatedGranule = {
+    ...granule,
+    execution: 'new-execution-url',
+    status: 'running'
+  };
+
+  await granuleModel._validateAndStoreGranuleRecord(updatedGranule);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.is(fetchedItem.status, 'running');
 });
 
 test('_validateAndStoreGranuleRecord() does not throw an error for a failing record', async (t) => {
