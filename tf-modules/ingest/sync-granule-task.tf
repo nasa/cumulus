@@ -32,11 +32,3 @@ resource "aws_cloudwatch_log_group" "sync_granule_task" {
   retention_in_days = 30
   tags = local.default_tags
 }
-
-resource "aws_cloudwatch_log_subscription_filter" "sync_granule_task" {
-  name            = "${var.prefix}-SyncGranuleSubscription"
-  destination_arn = var.log2elasticsearch_lambda_function_arn
-  filter_pattern  = ""
-  log_group_name  = aws_cloudwatch_log_group.sync_granule_task.name
-  distribution    = "ByLogStream"
-}

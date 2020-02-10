@@ -20,17 +20,18 @@ resource "aws_lambda_function" "db_indexer" {
   }
   environment {
     variables = {
-      CMR_ENVIRONMENT  = var.cmr_environment
-      CollectionsTable = var.dynamo_tables.collections.name
-      ExecutionsTable  = var.dynamo_tables.executions.name
-      FilesTable       = var.dynamo_tables.files.name
-      GranulesTable    = var.dynamo_tables.granules.name
-      PdrsTable        = var.dynamo_tables.pdrs.name
-      ProvidersTable   = var.dynamo_tables.providers.name
-      RulesTable       = var.dynamo_tables.rules.name
-      ES_HOST          = var.elasticsearch_hostname
-      stackName        = var.prefix
-      system_bucket    = var.system_bucket
+      CMR_ENVIRONMENT       = var.cmr_environment
+      CollectionsTable      = var.dynamo_tables.collections.name
+      ExecutionsTable       = var.dynamo_tables.executions.name
+      AsyncOperationsTable  = var.dynamo_tables.async_operations.name
+      FilesTable            = var.dynamo_tables.files.name
+      GranulesTable         = var.dynamo_tables.granules.name
+      PdrsTable             = var.dynamo_tables.pdrs.name
+      ProvidersTable        = var.dynamo_tables.providers.name
+      RulesTable            = var.dynamo_tables.rules.name
+      ES_HOST               = var.elasticsearch_hostname
+      stackName             = var.prefix
+      system_bucket         = var.system_bucket
     }
   }
   tags = merge(local.default_tags, { Project = var.prefix })
@@ -58,6 +59,17 @@ data "aws_dynamodb_table" "executions" {
 
 resource "aws_lambda_event_source_mapping" "executions_table_db_indexer" {
   event_source_arn  = data.aws_dynamodb_table.executions.stream_arn
+  function_name     = aws_lambda_function.db_indexer.arn
+  starting_position = "TRIM_HORIZON"
+  batch_size        = 10
+}
+
+data "aws_dynamodb_table" "async_operations" {
+  name = var.dynamo_tables.async_operations.name
+}
+
+resource "aws_lambda_event_source_mapping" "async_operations_table_db_indexer" {
+  event_source_arn  = data.aws_dynamodb_table.async_operations.stream_arn
   function_name     = aws_lambda_function.db_indexer.arn
   starting_position = "TRIM_HORIZON"
   batch_size        = 10

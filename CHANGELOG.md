@@ -6,14 +6,87 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- **CUMULUS-1684 Migration Instructions**
+  - In previous releases, a provider's username and password were encrypted
+    using a custom encryption library. That has now been updated to use KMS.
+    This release includes a Lambda function named
+    `<prefix>-ProviderSecretsMigration`, which will re-encrypt existing
+    provider credentials to use KMS. After this release has been deployed, you
+    will need to manually invoke that Lambda function using either the AWS CLI
+    or AWS Console. It should only need to be successfully run once.
+  - Future releases of Cumulus will invoke a
+    `<prefix>-VerifyProviderSecretsMigration` Lambda function as part of the
+    deployment, which will cause the deployment to fail if the migration
+    Lambda has not been run.
+
+- **CUMULUS-1698**
+  - Change variable `saml_launchpad_metadata_path` to
+    `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
+
 ### Added
 
+- **CUMULUS-1684**
+  - Add a `@cumulus/aws-client/KMS` library of KMS-related functions
+  - Add `@cumulus/aws-client/S3.getTextObject()`
+  - Add `@cumulus/sftp-client` package
+  - Create `ProviderSecretsMigration` Lambda function
+  - Create `VerifyProviderSecretsMigration` Lambda function
+
+- **CUMULUS-1548**
+  - Add ability to put default Cumulus logs in Metrics' ELK stack
+  - Add ability to add custom logs to Metrics' ELK Stack
+
+- **CUMULUS-1702**
+  - When logs are sent to Metrics' ELK stack, the logs endpoints will return results from there
+
+- **CUMULUS-1459**
+  - Async Operations are indexed in Elasticsearch
+  - To index any existing async operations you'll need to perform an index from
+    database function.
+
+- **CUMULUS-1717**
+  - Add `@cumulus/aws-client/deleteAndWaitForDynamoDbTableNotExists`, which
+    deletes a DynamoDB table and waits to ensure the table no longer exists
+
+- **Ability to set custom backend API url in the archive module**
+  - Add `api_url` definition in `tf-modules/cumulus/archive.tf`
+  - Add `archive_api_url` variable in `tf-modules/cumulus/variables.tf`
+
 - **CUMULUS-1741** - Added an optional `security_group` variable to the `data-persistence` stack to allow the Elasticsearch security group id to be specified instead of creating one
+
+### Changed
+
+- **CUMULUS-1684**
+  - Update the API package to encrypt provider credentials using KMS instead of
+    using RSA keys stored in S3
+
+### Deprecated
+
+- **CUMULUS-1684**
+  - Deprecate `@cumulus/common/key-pair-provider/S3KeyPairProvider`
+  - Deprecate `@cumulus/common/key-pair-provider/S3KeyPairProvider.encrypt()`
+  - Deprecate `@cumulus/common/key-pair-provider/S3KeyPairProvider.decrypt()`
+  - Deprecate `@cumulus/common/kms/KMS`
+  - Deprecate `@cumulus/common/kms/KMS.encrypt()`
+  - Deprecate `@cumulus/common/kms/KMS.decrypt()`
+  - Deprecate `@cumulus/common/sftp.Sftp`
+- **CUMULUS-1717**
+  - Deprecate `@cumulus/api/models/Granule.createGranulesFromSns`
+
+### Removed
+
+- **CUMULUS-1684**
+  - Remove the deployment script that creates encryption keys and stores them to
+    S3
 
 ### Fixed
 
 - **CUMULUS-1740** - `cumulus_meta.workflow_start_time` is now set in Cumulus
   messages
+- **Fix default values for urs_url in variables.tf files**
+  - Remove trailing `/` from default `urs_url` values.
 
 - **CUMULUS-1610** - Add the Elasticsearch security group to the EC2 security groups
 
@@ -22,9 +95,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### BREAKING CHANGES
 
 - **CUMULUS-1686**
-  - `ecs_cluster_instance_image_id` is now a *required* variable of the `cumulus` module, instead of optional.
+
+  - `ecs_cluster_instance_image_id` is now a _required_ variable of the `cumulus` module, instead of optional.
 
 - **CUMULUS-1698**
+
   - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
 
 - **CUMULUS-1703**
@@ -38,21 +113,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-1040**
+
   - Added `@cumulus/aws-client` package to provide utilities for working with AWS services and the Node.js AWS SDK
   - Added `@cumulus/errors` package which exports error classes for use in Cumulus workflow code
   - Added `@cumulus/integration-tests/sfnStep` to provide utilities for parsing step function execution histories
 
 - **CUMULUS-1102**
+
   - Adds functionality to the @cumulus/api package for better local testing.
     - Adds data seeding for @cumulus/api's localAPI.
-      - seed functions allow adding collections, executions, granules, pdrs, providers, and rules to a Localstack Elasticsearch and DynamoDB via `addCollections`,  `addExecutions`, `addGranules`, `addPdrs`, `addProviders`, and `addRules`.
+      - seed functions allow adding collections, executions, granules, pdrs, providers, and rules to a Localstack Elasticsearch and DynamoDB via `addCollections`, `addExecutions`, `addGranules`, `addPdrs`, `addProviders`, and `addRules`.
     - Adds `eraseDataStack` function to local API server code allowing resetting of local datastack for testing (ES and DynamoDB).
     - Adds optional parameters to the @cumulus/api bin serve to allow for launching the api without destroying the current data.
 
 - **CUMULUS-1697**
+
   - Added the `@cumulus/tf-inventory` package that provides command line utilities for managing Terraform resources in your AWS account
 
 - **CUMULUS-1703**
+
   - Add `@cumulus/aws-client/S3.createBucket` function
   - Add `@cumulus/aws-client/S3.putFile` function
   - Add `@cumulus/common/string.isNonEmptyString` function
@@ -64,6 +143,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add `@cumulus/ingest/providerClientUtils.fetchTextFile` function
 
 - **CUMULUS-1731**
+
   - Add new optional input variables to the Cumulus Terraform module to support TEA upgrade:
     - `thin_egress_cookie_domain` - Valid domain for Thin Egress App cookie
     - `thin_egress_domain_cert_arn` - Certificate Manager SSL Cert ARN for Thin
@@ -83,22 +163,27 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-1102**
+
   - Updates `@cumulus/api/auth/testAuth` to use JWT instead of random tokens.
-  - Updates the default AMI for the ecs\_cluster\_instance\_image\_id.
+  - Updates the default AMI for the ecs_cluster_instance_image_id.
 
 - **CUMULUS-1622**
+
   - Mutex class has been deprecated in `@cumulus/common/concurrency` and will be removed in a future release.
 
 - **CUMULUS-1686**
+
   - Changed `ecs_cluster_instance_image_id` to be a required variable of the `cumulus` module and removed the default value.
     The default was not available across accounts and regions, nor outside of NGAP and therefore not particularly useful.
 
 - **CUMULUS-1688**
+
   - Updated `@cumulus/aws.receiveSQSMessages` not to replace `message.Body` with a parsed object. This behavior was undocumented and confusing as received messages appeared to contradict AWS docs that state `message.Body` is always a string.
   - Replaced `sf_watcher` CloudWatch rule from `cloudwatch-events.tf` with an EventSourceMapping on `sqs2sf` mapped to the `start_sf` SQS queue (in `event-sources.tf`).
   - Updated `sqs2sf` with an EventSourceMapping handler and unit test.
 
 - **CUMULUS-1698**
+
   - Change variable `saml_launchpad_metadata_path` to `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
   - Updated `@cumulus/api/launchpadSaml` to download launchpad IDP metadata from configured location when the metadata in s3 is not valid, and to work with updated IDP metadata and SAML response.
 
@@ -109,6 +194,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - **CUMULUS-1664**
+
   - Updated `dbIndexer` Lambda to remove hardcoded references to DynamoDB table names.
 
 - **CUMULUS-1733**
@@ -152,7 +238,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `@cumulus/ingest/aws/SQS.receiveMessage` -> `@cumulus/aws-client/SQS.receiveSQSMessages`
     - `@cumulus/ingest/aws/SQS.sendMessage` -> `@cumulus/aws-client/SQS.sendSQSMessage`
     - `@cumulus/ingest/aws/StepFunction.getExecutionStatus` -> `@cumulus/aws-client/StepFunction.getExecutionStatus`
-    - `@cumulus/ingest/aws/StepFunction.getExecutionUrl`  -> `@cumulus/aws-client/StepFunction.getExecutionUrl`
+    - `@cumulus/ingest/aws/StepFunction.getExecutionUrl` -> `@cumulus/aws-client/StepFunction.getExecutionUrl`
 
 ## [v1.17.0] - 2019-12-31
 
@@ -172,6 +258,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-630**
+
   - Added support for replaying Kinesis records on a stream into the Cumulus Kinesis workflow triggering mechanism: either all the records, or some time slice delimited by start and end timestamps.
   - Added `/replays` endpoint to the operator API for triggering replays.
   - Added `Replay Kinesis Messages` documentation to Operator Docs.
@@ -184,6 +271,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-1626**
+
   - Updates Cumulus to use node10/CMA 1.1.2 for all of its internal lambdas in prep for AWS node 8 EOL
 
 - **CUMULUS-1498**
@@ -207,6 +295,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-1563**
+
   - Added `custom_domain_name` variable to `tf-modules/data-persistence` module
 
 - **CUMULUS-1654**
@@ -217,17 +306,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-1578**
+
   - Updates SAML launchpad configuration to authorize via configured userGroup.
-   [See the NASA specific documentation (protected)](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+SAML+Launchpad+Integration)
+    [See the NASA specific documentation (protected)](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+SAML+Launchpad+Integration)
 
 - **CUMULUS-1579**
+
   - Elasticsearch list queries use `match` instead of `term`. `term` had been analyzing the terms and not supporting `-` in the field values.
 
 - **CUMULUS-1619**
+
   - Adds 4 new keys to `@cumulus/logger` to display granules, parentArn, asyncOperationId, and stackName.
   - Depends on `cumulus-message-adapter-js` version 1.0.10+. Cumulus tasks updated to use this version.
 
 - **CUMULUS-1654**
+
   - Changed `@cumulus/common/SfnStep.parseStepMessage()` to a static class method
 
 - **CUMULUS-1641**
@@ -254,13 +347,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-1321**
+
   - A `deploy_distribution_s3_credentials_endpoint` variable has been added to
     the `cumulus` Terraform module. If true, the NGAP-backed S3 credentials
     endpoint will be added to the Thin Egress App's API. Default: true
 
 - **CUMULUS-1544**
+
   - Updated the `/granules/bulk` endpoint to correctly query Elasticsearch when
-  granule ids are not provided.
+    granule ids are not provided.
 
 - **CUMULUS-1580**
   - Added `/granules/bulk` endpoint to `@cumulus/api` to perform bulk actions on granules given either a list of granule ids or an Elasticsearch query and the workflow to perform.
@@ -268,6 +363,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-1561**
+
   - Fix the way that we are handling Terraform provider version requirements
   - Pass provider configs into child modules using the method that the
     [Terraform documentation](https://www.terraform.io/docs/configuration/modules.html#providers-within-modules)
@@ -291,10 +387,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1559**
   - `logToSharedDestination` has been migrated to the Terraform deployment as `log_api_gateway_to_cloudwatch` and will ONLY apply to egress lambdas.
-  Due to the differences in the Terraform deployment model, we cannot support a global log subscription toggle for a configurable subset of lambdas.
-  However, setting up your own log forwarding for a Lambda with Terraform is fairly simple, as you will only need to add SubscriptionFilters to your Terraform configuration, one per log group.
-  See [the Terraform documentation](https://www.terraform.io/docs/providers/aws/r/cloudwatch_log_subscription_filter.html) for details on how to do this.
-  An empty FilterPattern ("") will capture all logs in a group.
+    Due to the differences in the Terraform deployment model, we cannot support a global log subscription toggle for a configurable subset of lambdas.
+    However, setting up your own log forwarding for a Lambda with Terraform is fairly simple, as you will only need to add SubscriptionFilters to your Terraform configuration, one per log group.
+    See [the Terraform documentation](https://www.terraform.io/docs/providers/aws/r/cloudwatch_log_subscription_filter.html) for details on how to do this.
+    An empty FilterPattern ("") will capture all logs in a group.
 
 ## [v1.15.0] - 2019-11-04
 
@@ -328,9 +424,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   ```yaml
   ParsePdr:
     CumulusConfig:
-      provider: '{$.meta.provider}'
-      bucket: '{$.meta.buckets.internal.name}'
-      stack: '{$.meta.stack}'
+      provider: "{$.meta.provider}"
+      bucket: "{$.meta.buckets.internal.name}"
+      stack: "{$.meta.stack}"
   ```
 
   Instead, use AWS Parameters to pass `task_config` for the task directly into
@@ -340,11 +436,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   ParsePdr:
     Parameters:
       cma:
-        event.$: '$'
+        event.$: "$"
         task_config:
-          provider: '{$.meta.provider}'
-          bucket: '{$.meta.buckets.internal.name}'
-          stack: '{$.meta.stack}'
+          provider: "{$.meta.provider}"
+          bucket: "{$.meta.buckets.internal.name}"
+          stack: "{$.meta.stack}"
   ```
 
   In this example, the `cma` key is used to pass parameters to the message
@@ -355,6 +451,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
   Additionally, workflow configurations for the `QueueGranules` and `QueuePdrs`
   tasks need to be updated:
+
   - `queue-pdrs` config changes:
     - `parsePdrMessageTemplateUri` replaced with `parsePdrWorkflow`, which is
       the workflow name (i.e. top-level name in `config.yml`, e.g. 'ParsePdr').
@@ -396,18 +493,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-1100**
+
   - Added 30-day retention properties to all log groups that were missing those policies.
 
 - **CUMULUS-1396**
+
   - Added `@cumulus/common/sfnStep`:
     - `LambdaStep` - A class for retrieving and parsing input and output to Lambda steps in AWS Step Functions
     - `ActivityStep` - A class for retrieving and parsing input and output to ECS activity steps in AWS Step Functions
 
 - **CUMULUS-1574**
+
   - Added `GET /token` endpoint for SAML authorization when cumulus is protected by Launchpad.
     This lets a user retieve a token by hand that can be presented to the API.
 
 - **CUMULUS-1625**
+
   - Added `sf_start_rate` variable to the `ingest` Terraform module, equivalent to `sqs_consumer_rate` in the old model, but will not be automatically applied to custom queues as that was.
 
 - **CUMULUS-1513**
@@ -417,6 +518,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-1639**
+
   - Because of
     [S3's Data Consistency Model](https://docs.aws.amazon.com/AmazonS3/latest/dev/Introduction.html#BasicsObjects),
     there may be situations where a GET operation for an object can temporarily
@@ -426,11 +528,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     overridden by passing `{ retries: 0 }` as the `retryOptions` argument.
 
 - **CUMULUS-1449**
+
   - `queue-pdrs` & `queue-granules` config changes. Details in breaking changes section.
   - Cumulus now uses a universal workflow template when starting workflow that contains general information specific to the deployment, but not specific to the workflow.
   - Changed the way workflow configs are defined, from `CumulusConfig` to a `task_config` AWS Parameter.
 
 - **CUMULUS-1452**
+
   - Changed the default ECS docker storage drive to `devicemapper`
 
 - **CUMULUS-1453**
@@ -475,12 +579,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1620** - Fixed bug where `message_adapter_version` does not correctly inject the CMA
 
 - **CUMULUS-1572** - A granule is now included in discovery results even when
-none of its files has a matching file type in the associated collection
-configuration. Previously, if all files for a granule were unmatched by a file
-type configuration, the granule was excluded from the discovery results.
-Further, added support for a `boolean` property
-`ignoreFilesConfigForDiscovery`, which controls how a granule's files are
-filtered at discovery time.
+  none of its files has a matching file type in the associated collection
+  configuration. Previously, if all files for a granule were unmatched by a file
+  type configuration, the granule was excluded from the discovery results.
+  Further, added support for a `boolean` property
+  `ignoreFilesConfigForDiscovery`, which controls how a granule's files are
+  filtered at discovery time.
 
 ## [v1.14.2] - 2019-10-08
 
@@ -488,7 +592,7 @@ filtered at discovery time.
 
 Your Cumulus Message Adapter version should be pinned to `v1.0.13` or lower in your `app/config.yml` using `message_adapter_version: v1.0.13` OR you should use the workflow migration steps below to work with CMA v1.1.1+.
 
-- **CUMULUS-1394** - The implementation of the `SfSnsReport` Lambda requires additional environment variables for integration with the new ingest notification SNS topics. Therefore,  **you must update the definition of `SfSnsReport` in your `lambdas.yml` like so**:
+- **CUMULUS-1394** - The implementation of the `SfSnsReport` Lambda requires additional environment variables for integration with the new ingest notification SNS topics. Therefore, **you must update the definition of `SfSnsReport` in your `lambdas.yml` like so**:
 
 ```yaml
 SfSnsReport:
@@ -519,7 +623,7 @@ SfSnsReport:
   ParsePdr:
     Parameters:
       cma:
-        event.$: '$'
+        event.$: "$"
         ReplaceConfig:
           FullMessage: true
   ```
@@ -540,16 +644,17 @@ SfSnsReport:
 ### Added
 
 - **CUMULUS-639**
+
   - Adds SAML JWT and launchpad token authentication to Cumulus API (configurable)
     - **NOTE** to authenticate with Launchpad ensure your launchpad user_id is in the `<prefix>-UsersTable`
     - when Cumulus configured to protect API via Launchpad:
       - New endpoints
         - `GET /saml/login` - starting point for SAML SSO creates the login request url and redirects to the SAML Identity Provider Service (IDP)
-        - `POST /saml/auth` - SAML Assertion Consumer Service.  POST receiver from SAML IDP.  Validates response, logs the user in, and returnes a SAML-based JWT.
+        - `POST /saml/auth` - SAML Assertion Consumer Service. POST receiver from SAML IDP. Validates response, logs the user in, and returnes a SAML-based JWT.
     - Disabled endpoints
       - `POST /refresh`
       - Changes authorization worklow:
-      - `ensureAuthorized` now presumes the bearer token is a JWT and tries to validate.  If the token is malformed, it attempts to validate the token against Launchpad.  This allows users to bring their own token as described here https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication.  But it also allows dashboard users to manually authenticate via Launchpad SAML to receive a Launchpad-based JWT.
+      - `ensureAuthorized` now presumes the bearer token is a JWT and tries to validate. If the token is malformed, it attempts to validate the token against Launchpad. This allows users to bring their own token as described here https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication. But it also allows dashboard users to manually authenticate via Launchpad SAML to receive a Launchpad-based JWT.
 
 - **CUMULUS-1394**
   - Added `Granule.generateGranuleRecord()` method to granules model to generate a granule database record from a Cumulus execution message
@@ -564,26 +669,31 @@ SfSnsReport:
 ### Changed
 
 - **CUMULUS-1308**
+
   - HTTP PUT of a Collection, Provider, or Rule via the Cumulus API now
     performs full replacement of the existing object with the object supplied
-    in the request payload.  Previous behavior was to perform a modification
+    in the request payload. Previous behavior was to perform a modification
     (partial update) by merging the existing object with the (possibly partial)
     object in the payload, but this did not conform to the HTTP standard, which
     specifies PATCH as the means for modifications rather than replacements.
 
 - **CUMULUS-1375**
+
   - Migrate Cumulus from deprecated Elasticsearch JS client to new, supported one in `@cumulus/api`
 
 - **CUMULUS-1485** Update `@cumulus/cmr-client` to return error message from CMR for validation failures.
 
 - **CUMULUS-1394**
+
   - Renamed `Execution.generateDocFromPayload()` to `Execution.generateRecord()` on executions model. The method generates an execution database record from a Cumulus execution message.
 
 - **CUMULUS-1432**
+
   - `logs` endpoint takes the level parameter as a string and not a number
   - Elasticsearch term query generation no longer converts numbers to boolean
 
 - **CUMULUS-1447**
+
   - Consolidated all remote message handling code into @common/aws
   - Update remote message code to handle updated CMA remote message flags
   - Update example SIPS workflows to utilize Parameterized CMA configuration
@@ -591,6 +701,7 @@ SfSnsReport:
 - **CUMULUS-1448** Refactor workflows that are mutating cumulus_meta to utilize meta field
 
 - **CUMULUS-1451**
+
   - Elasticsearch cluster setting `auto_create_index` will be set to false. This had been causing issues in the bootstrap lambda on deploy.
 
 - **CUMULUS-1456**
@@ -599,7 +710,7 @@ SfSnsReport:
 ### Fixed
 
 - **CUMULUS-1432** `logs` endpoint filter correctly filters logs by level
-- **CUMULUS-1484**  `useMessageAdapter` now does not set CUMULUS_MESSAGE_ADAPTER_DIR when `true`
+- **CUMULUS-1484** `useMessageAdapter` now does not set CUMULUS_MESSAGE_ADAPTER_DIR when `true`
 
 ### Removed
 
@@ -614,6 +725,7 @@ SfSnsReport:
 ### Fixed
 
 - **CUMULUS-1455**
+
   - CMR token links updated to point to CMR legacy services rather than echo
 
 - **CUMULUS-1211**
@@ -631,17 +743,17 @@ SfSnsReport:
 
 - **CUMULUS-800** Several items:
 
-  - **Delete existing API Gateway stages**: To allow enabling of API Gateway logging, Cumulus now creates and manages a Stage resource during deployment. Before upgrading Cumulus, it is necessary to delete the API Gateway stages on both the Backend API and the Distribution API.  Instructions are included in the documenation under [Delete API Gateway Stages](https://nasa.github.io/cumulus/docs/additional-deployment-options/delete-api-gateway-stages).
+  - **Delete existing API Gateway stages**: To allow enabling of API Gateway logging, Cumulus now creates and manages a Stage resource during deployment. Before upgrading Cumulus, it is necessary to delete the API Gateway stages on both the Backend API and the Distribution API. Instructions are included in the documenation under [Delete API Gateway Stages](https://nasa.github.io/cumulus/docs/additional-deployment-options/delete-api-gateway-stages).
 
   - **Set up account permissions for API Gateway to write to CloudWatch**: In a one time operation for your AWS account, to enable CloudWatch Logs for API Gateway, you must first grant the API Gateway permission to read and write logs to CloudWatch for your account. The `AmazonAPIGatewayPushToCloudWatchLogs` managed policy (with an ARN of `arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs`) has all the required permissions. You can find a simple how to in the documentation under [Enable API Gateway Logging.](https://nasa.github.io/cumulus/docs/additional-deployment-options/enable-gateway-logging-permissions)
 
-  - **Configure API Gateway to write logs to CloudWatch** To enable execution logging for the distribution API set `config.yaml` `apiConfigs.distribution.logApigatewayToCloudwatch` value to `true`.  More information [Enable API Gateway Logs](https://nasa.github.io/cumulus/docs/additional-deployment-options/enable-api-logs)
+  - **Configure API Gateway to write logs to CloudWatch** To enable execution logging for the distribution API set `config.yaml` `apiConfigs.distribution.logApigatewayToCloudwatch` value to `true`. More information [Enable API Gateway Logs](https://nasa.github.io/cumulus/docs/additional-deployment-options/enable-api-logs)
 
-  - **Configure CloudWatch log delivery**: It is possible to deliver CloudWatch API execution and access logs to a cross-account shared AWS::Logs::Destination. An operator does this by adding the key `logToSharedDestination` to the `config.yml` at the default level with a value of a writable log destination.  More information in the documenation under [Configure CloudWatch Logs Delivery.](https://nasa.github.io/cumulus/docs/additional-deployment-options/configure-cloudwatch-logs-delivery)
+  - **Configure CloudWatch log delivery**: It is possible to deliver CloudWatch API execution and access logs to a cross-account shared AWS::Logs::Destination. An operator does this by adding the key `logToSharedDestination` to the `config.yml` at the default level with a value of a writable log destination. More information in the documenation under [Configure CloudWatch Logs Delivery.](https://nasa.github.io/cumulus/docs/additional-deployment-options/configure-cloudwatch-logs-delivery)
 
-  - **Additional Lambda Logging**: It is now possible to configure any lambda to deliver logs to a shared subscriptions by setting  `logToSharedDestination` to the ARN of a writable location (either an AWS::Logs::Destination or a Kinesis Stream) on any lambda config. Documentation for [Lambda Log Subscriptions](https://nasa.github.io/cumulus/docs/additional-deployment-options/additional-lambda-logging)
+  - **Additional Lambda Logging**: It is now possible to configure any lambda to deliver logs to a shared subscriptions by setting `logToSharedDestination` to the ARN of a writable location (either an AWS::Logs::Destination or a Kinesis Stream) on any lambda config. Documentation for [Lambda Log Subscriptions](https://nasa.github.io/cumulus/docs/additional-deployment-options/additional-lambda-logging)
 
-  - **Configure S3 Server Access Logs**:  If you are running Cumulus in an NGAP environment you may [configure S3 Server Access Logs](https://nasa.github.io/cumulus/docs/next/deployment/server_access_logging) to be delivered to a shared bucket where the Metrics Team will ingest the logs into their ELK stack.  Contact the Metrics team for permission and location.
+  - **Configure S3 Server Access Logs**: If you are running Cumulus in an NGAP environment you may [configure S3 Server Access Logs](https://nasa.github.io/cumulus/docs/next/deployment/server_access_logging) to be delivered to a shared bucket where the Metrics Team will ingest the logs into their ELK stack. Contact the Metrics team for permission and location.
 
 - **CUMULUS-1368** The Cumulus distribution API has been deprecated and is being replaced by ASF's Thin Egress App. By default, the distribution API will not deploy. Please follow [the instructions for deploying and configuring Thin Egress](https://nasa.github.io/cumulus/docs/deployment/thin_egress_app).
 
@@ -653,7 +765,7 @@ deployDistributionApi: true
 
 If you deploy with no distribution app your deployment will succeed but you may encounter errors in your workflows, particularly in the `MoveGranule` task.
 
-- **CUMULUS-1418** Users who are packaging the CMA in their Lambdas outside of Cumulus may need to update their Lambda configuration.    Please see `BREAKING CHANGES` below for details.
+- **CUMULUS-1418** Users who are packaging the CMA in their Lambdas outside of Cumulus may need to update their Lambda configuration. Please see `BREAKING CHANGES` below for details.
 
 ### Added
 
@@ -682,17 +794,21 @@ If you deploy with no distribution app your deployment will succeed but you may 
 - **CUMULUS-1311**
   - Added `@cumulus/common/message` with various message parsing/preparation helpers
 - **CUMULUS-812**
+
   - Added support for limiting the number of concurrent executions started from a queue. [See the data cookbook](https://nasa.github.io/cumulus/docs/data-cookbooks/throttling-queued-executions) for more information.
 
 - **CUMULUS-1337**
+
   - Adds `cumulus.stackName` value to the `instanceMetadata` endpoint.
 
 - **CUMULUS-1368**
+
   - Added `cmrGranuleUrlType` to the `@cumulus/move-granules` task. This determines what kind of links go in the CMR files. The options are `distribution`, `s3`, or `none`, with the default being distribution. If there is no distribution API being used with Cumulus, you must set the value to `s3` or `none`.
 
 - Added `packages/s3-replicator` Terraform module to allow same-region s3 replication to metrics bucket.
 
 - **CUMULUS-1392**
+
   - Added `tf-modules/report-granules` Terraform module which processes granule ingest notifications received via SNS and stores granule data to a database. The module includes:
     - SNS topic for publishing granule ingest notifications
     - Lambda to process granule notifications and store data
@@ -700,6 +816,7 @@ If you deploy with no distribution app your deployment will succeed but you may 
     - Subscription for the Lambda to the SNS topic
 
 - **CUMULUS-1393**
+
   - Added `tf-modules/report-pdrs` Terraform module which processes PDR ingest notifications received via SNS and stores PDR data to a database. The module includes:
     - SNS topic for publishing PDR ingest notifications
     - Lambda to process PDR notifications and store data
@@ -708,6 +825,7 @@ If you deploy with no distribution app your deployment will succeed but you may 
   - Added unit tests for `@cumulus/api/models/pdrs.createPdrFromSns()`
 
 - **CUMULUS-1400**
+
   - Added `tf-modules/report-executions` Terraform module which processes workflow execution information received via SNS and stores it to a database. The module includes:
     - SNS topic for publishing execution data
     - Lambda to process and store execution data
@@ -725,6 +843,7 @@ If you deploy with no distribution app your deployment will succeed but you may 
     - `getSfEventMessageObject()` extracts and parses Step Function detail object from a Cloudwatch event
 
 - **CUMULUS-1429**
+
   - Added `tf-modules/data-persistence` Terraform module which includes resources for data persistence in Cumulus:
     - DynamoDB tables
     - Elasticsearch with optional support for VPC
@@ -734,18 +853,21 @@ If you deploy with no distribution app your deployment will succeed but you may 
   - Added `launchpad` configuration to `@cumulus/deployment/app/config.yml`, and cloudformation templates, workflow message, lambda configuration, api endpoint configuration
   - Added `@cumulus/common/LaunchpadToken` and `@cumulus/common/launchpad` to provide methods to get token and validate token
   - Updated lambdas to use Launchpad token for CMR actions (ingest and delete granules)
-  - Updated deployment documentation and added [instructions to setup CMR client for Launchpad authentication] (https://wiki.earthdata.nasa.gov/display/CUMULUS/CMR+Launchpad+Authentication)
+  - Updated deployment documentation and added [instructions to setup CMR client for Launchpad authentication](https://wiki.earthdata.nasa.gov/display/CUMULUS/CMR+Launchpad+Authentication)
 
 ## Changed
 
 - **CUMULUS-1232**
+
   - Added retries to update `@cumulus/cmr-client` `updateToken()`
 
 - **CUMULUS-1245 CUMULUS-795**
+
   - Added additional `ems` configuration parameters for sending the ingest reports to EMS
   - Added functionality to send daily ingest reports to EMS
 
 - **CUMULUS-1241**
+
   - Removed the concept of "priority levels" and added ability to define a number of maximum concurrent executions per SQS queue
   - Changed mapping of Cumulus message properties for the `sqs2sfThrottle` lambda:
     - Queue name is read from `cumulus_meta.queueName`
@@ -756,14 +878,17 @@ If you deploy with no distribution app your deployment will succeed but you may 
     - An entry for the queue name (`cumulus_meta.queueName`) exists in the the object `meta.queueExecutionLimits` on the Cumulus message
 
 - **CUMULUS-1338**
+
   - Updated `sfSemaphoreDown` lambda to be triggered via AWS Step Function Cloudwatch events instead of subscription to `sfTracker` SNS topic
 
 - **CUMULUS-1311**
+
   - Updated `@cumulus/queue-granules` to set `cumulus_meta.queueName` for queued execution messages
   - Updated `@cumulus/queue-pdrs` to set `cumulus_meta.queueName` for queued execution messages
   - Updated `sqs2sfThrottle` lambda to immediately decrement queue semaphore value if dispatching Step Function execution throws an error
 
 - **CUMULUS-1362**
+
   - Granule `processingStartTime` and `processingEndTime` will be set to the execution start time and end time respectively when there is no sync granule or post to cmr task present in the workflow
 
 - **CUMULUS-1400**
@@ -772,16 +897,20 @@ If you deploy with no distribution app your deployment will succeed but you may 
 ### Fixed
 
 - **CUMULUS-1439**
+
   - Fix bug with rule.logEventArn deletion on Kinesis rule update and fix unit test to verify
 
 - **CUMULUS-796**
+
   - Added production information (collection ShortName and Version, granuleId) to EMS distribution report
   - Added functionality to send daily distribution reports to EMS
 
 - **CUMULUS-1319**
+
   - Fixed a bug where granule ingest times were not being stored to the database
 
 - **CUMULUS-1356**
+
   - The `Collection` model's `delete` method now _removes_ the specified item
     from the collection config store that was inserted by the `create` method.
     Previously, this behavior was missing.
@@ -794,11 +923,12 @@ If you deploy with no distribution app your deployment will succeed but you may 
 ### Changed
 
 - **CUMULUS-1418**
-  - Adding a default `cmaDir` key to configuration will cause `CUMULUS_MESSAGE_ADAPTER_DIR` to be set by default to `/opt` for any Lambda not setting `useCma` to true, or explicitly setting the CMA environment variable.  In lambdas that package the CMA independently of the Cumulus packaging.    Lambdas manually packaging the CMA should have their  Lambda configuration updated to set the CMA path, or alternately if not using the CMA as a Lambda layer in this deployment set `cmaDir` to `./cumulus-message-adapter`.
+  - Adding a default `cmaDir` key to configuration will cause `CUMULUS_MESSAGE_ADAPTER_DIR` to be set by default to `/opt` for any Lambda not setting `useCma` to true, or explicitly setting the CMA environment variable. In lambdas that package the CMA independently of the Cumulus packaging. Lambdas manually packaging the CMA should have their Lambda configuration updated to set the CMA path, or alternately if not using the CMA as a Lambda layer in this deployment set `cmaDir` to `./cumulus-message-adapter`.
 
 ### Removed
 
 - **CUMULUS-1337**
+
   - Removes the S3 Access Metrics package added in CUMULUS-799
 
 - **PR1130**
@@ -820,10 +950,9 @@ If you deploy with no distribution app your deployment will succeed but you may 
 
 ## [v1.13.3] - 2019-07-26
 
-- **CUMULUS-1345** Full backport of CUMULUS-1345 features
-	  - Adds new variables to the app deployment under `cmr`.
-    - `cmrEnvironment` values are `SIT`, `UAT`, or `OPS` with `UAT` as the default.
-    - `cmrLimit` and `cmrPageSize` have been added as configurable options.
+- **CUMULUS-1345** Full backport of CUMULUS-1345 features - Adds new variables to the app deployment under `cmr`.
+  - `cmrEnvironment` values are `SIT`, `UAT`, or `OPS` with `UAT` as the default.
+  - `cmrLimit` and `cmrPageSize` have been added as configurable options.
 
 ## [v1.13.2] - 2019-07-25
 
@@ -833,7 +962,7 @@ If you deploy with no distribution app your deployment will succeed but you may 
 
 - **CUMULUS-1374** - Resolve audit compliance with lodash version for api package subdependency
 - **CUMULUS-1412** - Resolve audit compliance with googleapi package
-- **CUMULUS-1345** - Backported CMR environment setting in getUrl to address immediate user need.   CMR_ENVIRONMENT can now be used to set the CMR environment to OPS/SIT
+- **CUMULUS-1345** - Backported CMR environment setting in getUrl to address immediate user need. CMR_ENVIRONMENT can now be used to set the CMR environment to OPS/SIT
 
 ## [v1.13.0] - 2019-5-20
 
@@ -846,6 +975,7 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
 ### BREAKING CHANGES
 
 - **CUMULUS-1228**
+
   - The default AMI used by ECS instances is now an NGAP-compliant AMI. This
     will be a breaking change for non-NGAP deployments. If you do not deploy to
     NGAP, you will need to find the AMI ID of the
@@ -855,6 +985,7 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
     [these instructions](https://wiki.earthdata.nasa.gov/display/ESKB/Select+an+NGAP+Created+AMI).
 
 - **CUMULUS-1310**
+
   - Database resources (DynamoDB, ElasticSearch) have been moved to an independent `db` stack.
     Migrations for this version will need to be user-managed. (e.g. [elasticsearch](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-version-migration.html#snapshot-based-migration) and [dynamoDB](https://docs.aws.amazon.com/datapipeline/latest/DeveloperGuide/dp-template-exports3toddb.html)).
     Order of stack deployment is `iam` -> `db` -> `app`.
@@ -864,15 +995,17 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
   - `params` have been moved: Nest `params` fields under `app`, `db` or `iam` to override all Parameters for a particular stack's cloudformation template. Backwards-compatible with multi-config setups.
   - `stackName` and `stackNameNoDash` have been retired. Use `prefix` and `prefixNoDash` instead.
   - The `iams` section in `app/config.yml` IAM roles has been deprecated as a user-facing parameter,
-    *unless* your IAM role ARNs do not match the convention shown in `@cumulus/deployment/app/config.yml`
+    _unless_ your IAM role ARNs do not match the convention shown in `@cumulus/deployment/app/config.yml`
   - The `vpc.securityGroup` will need to be set with a pre-existing security group ID to use Cumulus in a VPC. Must allow inbound HTTP(S) (Port 443).
 
 - **CUMULUS-1212**
+
   - `@cumulus/post-to-cmr` will now fail if any granules being processed are missing a metadata file. You can set the new config option `skipMetaCheck` to `true` to pass post-to-cmr without a metadata file.
 
 - **CUMULUS-1232**
+
   - `@cumulus/sync-granule` will no longer silently pass if no checksum data is provided. It will use input
-  from the granule object to:
+    from the granule object to:
     - Verify checksum if `checksumType` and `checksumValue` are in the file record OR a checksum file is provided
       (throws `InvalidChecksum` on fail), else log warning that no checksum is available.
     - Then, verify synced S3 file size if `file.size` is in the file record (throws `UnexpectedFileSize` on fail),
@@ -880,6 +1013,7 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
     - Pass the step.
 
 - **CUMULUS-1264**
+
   - The Cloudformation templating and deployment configuration has been substantially refactored.
     - `CumulusApiDefault` nested stack resource has been renamed to `CumulusApiDistribution`
     - `CumulusApiV1` nested stack resource has been renamed to `CumulusApiBackend`
@@ -888,10 +1022,12 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
     - `urs_redirect: 'distribution'`: This will expose a `DISTRIBUTION_REDIRECT_ENDPOINT` environment variable to your lambda that references the `/redirect` endpoint on the Cumulus distribution API
 
 - **CUMULUS-1193**
+
   - The elasticsearch instance is moved behind the VPC.
   - Your account will need an Elasticsearch Service Linked role. This is a one-time setup for the account. You can follow the instructions to use the AWS console or AWS CLI [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/using-service-linked-roles.html) or use the following AWS CLI command: `aws iam create-service-linked-role --aws-service-name es.amazonaws.com`
 
 - **CUMULUS-802**
+
   - ECS `maxInstances` must be greater than `minInstances`. If you use defaults, no change is required.
 
 - **CUMULUS-1269**
@@ -904,18 +1040,21 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
 ### Added
 
 - **CUMULUS-799**
+
   - Added an S3 Access Metrics package which will take S3 Server Access Logs and
     write access metrics to CloudWatch
 
 - **CUMULUS-1242** - Added `sqs2sfThrottle` lambda. The lambda reads SQS messages for queued executions and uses semaphores to only start new executions if the maximum number of executions defined for the priority key (`cumulus_meta.priorityKey`) has not been reached. Any SQS messages that are read but not used to start executions remain in the queue.
 
 - **CUMULUS-1240**
+
   - Added `sfSemaphoreDown` lambda. This lambda receives SNS messages and for each message it decrements the semaphore used to track the number of running executions if:
     - the message is for a completed/failed workflow AND
     - the message contains a level of priority (`cumulus_meta.priorityKey`)
   - Added `sfSemaphoreDown` lambda as a subscriber to the `sfTracker` SNS topic
 
 - **CUMULUS-1265**
+
   - Added `apiConfigs` configuration option to configure API Gateway to be private
   - All internal lambdas configured to run inside the VPC by default
   - Removed references to `NoVpc` lambdas from documentation and `example` folder.
@@ -929,6 +1068,7 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
 - Updated `@cumulus/ingest/http/httpMixin.list()` to trim trailing spaces on discovered filenames
 
 - **CUMULUS-1310**
+
   - Database resources (DynamoDB, ElasticSearch) have been moved to an independent `db` stack.
     This will enable future updates to avoid affecting database resources or requiring migrations.
     Migrations for this version will need to be user-managed.
@@ -938,7 +1078,7 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
     Backwards-compatible. Please re-run `npm run bootstrap` to build new `kes` overrides.
     Deployment docs have been updated to show how to deploy a single-config Cumulus instance.
   - `params` fields should now be nested under the stack key (i.e. `app`, `db` or `iam`) to provide Parameters for a particular stack's cloudformation template,
-    for use with single-config instances. Keys *must* match the name of the deployment package folder (`app`, `db`, or `iam`).
+    for use with single-config instances. Keys _must_ match the name of the deployment package folder (`app`, `db`, or `iam`).
     Backwards-compatible with multi-config setups.
   - `stackName` and `stackNameNoDash` have been retired as user-facing config parameters. Use `prefix` and `prefixNoDash` instead.
     This will be used to create stack names for all stacks in a single-config use case.
@@ -946,7 +1086,7 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
     Warning: overriding the `db` stack's `stackName` will require you to set `dbStackName` in your `app/config.yml`.
     This parameter is required to fetch outputs from the `db` stack to reference in the `app` stack.
   - The `iams` section in `app/config.yml` IAM roles has been retired as a user-facing parameter,
-    *unless* your IAM role ARNs do not match the convention shown in `@cumulus/deployment/app/config.yml`
+    _unless_ your IAM role ARNs do not match the convention shown in `@cumulus/deployment/app/config.yml`
     In that case, overriding `iams` in your own config is recommended.
   - `iam` and `db` `cloudformation.yml` file names will have respective prefixes (e.g `iam.cloudformation.yml`).
   - Cumulus will now only attempt to create reconciliation reports for buckets of the `private`, `public` and `protected` types.
@@ -956,12 +1096,15 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
   - Deployment docs have been updated with examples for the new deployment model.
 
 - **CUMULUS-1236**
-  - Moves access to public files behind the distribution endpoint.  Authentication is not required, but direct http access has been disallowed.
+
+  - Moves access to public files behind the distribution endpoint. Authentication is not required, but direct http access has been disallowed.
 
 - **CUMULUS-1223**
-  - Adds unauthenticated access for public bucket files to the Distribution API.  Public files should be requested the same way as protected files, but for public files a redirect to a self-signed S3 URL will happen without requiring authentication with Earthdata login.
+
+  - Adds unauthenticated access for public bucket files to the Distribution API. Public files should be requested the same way as protected files, but for public files a redirect to a self-signed S3 URL will happen without requiring authentication with Earthdata login.
 
 - **CUMULUS-1232**
+
   - Unifies duplicate handling in `ingest/granule.handleDuplicateFile` for maintainability.
   - Changed `ingest/granule.ingestFile` and `move-granules/index.moveFileRequest` to use new function.
   - Moved file versioning code to `ingest/granule.moveGranuleFileWithVersioning`
@@ -970,6 +1113,7 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
   - `ingest/granule.verifyFile` logs warnings if checksum and/or file size are not available.
 
 - **CUMULUS-1193**
+
   - Moved reindex CLI functionality to an API endpoint. See [API docs](https://nasa.github.io/cumulus-api/#elasticsearch-1)
 
 - **CUMULUS-1207**
@@ -980,6 +1124,7 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
 - Updated Lerna publish script so that published Cumulus packages will pin their dependencies on other Cumulus packages to exact versions (e.g. `1.12.1` instead of `^1.12.1`)
 
 - **CUMULUS-1203**
+
   - Fixes IAM template's use of intrinsic functions such that IAM template overrides now work with kes
 
 - **CUMULUS-1268**
@@ -994,9 +1139,11 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ### BREAKING CHANGES
 
 - **CUMULUS-1139**
-  - `granule.applyWorkflow`  uses the new-style granule record as input to workflows.
+
+  - `granule.applyWorkflow` uses the new-style granule record as input to workflows.
 
 - **CUMULUS-1171**
+
   - Fixed provider handling in the API to make it consistent between protocols.
     NOTE: This is a breaking change. When applying this upgrade, users will need to:
     1. Disable all workflow rules
@@ -1007,11 +1154,13 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
     4. Re-enable workflow rules
 
 - **CUMULUS-1176**:
+
   - `@cumulus/move-granules` input expectations have changed. `@cumulus/files-to-granules` is a new intermediate task to perform input translation in the old style.
     See the Added and Changed sections of this release changelog for more information.
 
 - **CUMULUS-670**
-  - The behavior of ParsePDR and related code has changed in this release.  PDRs with FILE_TYPEs that do not conform to the PDR ICD (+ TGZ) (https://cdn.earthdata.nasa.gov/conduit/upload/6376/ESDS-RFC-030v1.0.pdf) will fail to parse.
+
+  - The behavior of ParsePDR and related code has changed in this release. PDRs with FILE_TYPEs that do not conform to the PDR ICD (+ TGZ) (https://cdn.earthdata.nasa.gov/conduit/upload/6376/ESDS-RFC-030v1.0.pdf) will fail to parse.
 
 - **CUMULUS-1208**
   - The granule object input to `@cumulus/queue-granules` will now be added to ingest workflow messages **as is**. In practice, this means that if you are using `@cumulus/queue-granules` to trigger ingest workflows and your granule objects input have invalid properties, then your ingest workflows will fail due to schema validation errors.
@@ -1024,6 +1173,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
   - Kes overrides will now abort with a warning if a workflow step is configured without a corresponding
     lambda configuration
 - **CUMULUS-1223**
+
   - Adds convenience function `@cumulus/common/bucketsConfigJsonObject` for fetching stack's bucket configuration as an object.
 
 - **CUMULUS-853**
@@ -1052,10 +1202,12 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 - **CUMULUS-1185** `@cumulus/api/models/Granule.removeGranuleFromCmrByGranule` to replace `@cumulus/api/models/Granule.removeGranuleFromCmr` and use the Granule UR from the CMR metadata to remove the granule from CMR
 
 - **CUMULUS-1101**
+
   - Added new `@cumulus/checksum` package. This package provides functions to calculate and validate checksums.
   - Added new checksumming functions to `@cumulus/common/aws`: `calculateS3ObjectChecksum` and `validateS3ObjectChecksum`, which depend on the `checksum` package.
 
 - CUMULUS-1171
+
   - Added `@cumulus/common` API documentation to `packages/common/docs/API.md`
   - Added an `npm run build-docs` task to `@cumulus/common`
   - Added `@cumulus/common/string#isValidHostname()`
@@ -1070,6 +1222,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
   - Added `@cumulus/common/util#negate()`
 
 - **CUMULUS-1176**
+
   - Added new `@cumulus/files-to-granules` task to handle converting file array output from `cumulus-process` tasks into granule objects.
     Allows simplification of `@cumulus/move-granules` and `@cumulus/post-to-cmr`, see Changed section for more details.
 
@@ -1110,10 +1263,12 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
   - `@cumulus/ingest/granule.moveGranuleFiles()` no longer includes a `filename` field in its
     output. The `bucket` and `key` fields should be used instead.
 - **CUMULUS-672**
+
   - Changed `@cumulus/integration-tests/api/EarthdataLogin.getEarthdataLoginRedirectResponse` to `@cumulus/integration-tests/api/EarthdataLogin.getEarthdataAccessToken`. The new function returns an access response from Earthdata login, if successful.
   - `@cumulus/integration-tests/cmr/getOnlineResources` now accepts an object of options, including `cmrMetadataFormat`. Based on the `cmrMetadataFormat`, the function will correctly retrieve the online resources for each metadata format (ECHO10, UMM-G)
 
 - **CUMULUS-1101**
+
   - Moved `@cumulus/common/file/getFileChecksumFromStream` into `@cumulus/checksum`, and renamed it to `generateChecksumFromStream`.
     This is a breaking change for users relying on `@cumulus/common/file/getFileChecksumFromStream`.
   - Refactored `@cumulus/ingest/Granule` to depend on new `common/aws` checksum functions and remove significantly present checksumming code.
@@ -1122,6 +1277,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
   - Deprecated `@cumulus/common/aws.checksumS3Objects`. Use `@cumulus/common/aws.calculateS3ObjectChecksum` instead.
 
 - CUMULUS-1171
+
   - Fixed provider handling in the API to make it consistent between protocols.
     Before this change, FTP providers were configured using the `host` and
     `port` properties. HTTP providers ignored `port` and `protocol`, and stored
@@ -1133,11 +1289,12 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
     being used. Removed that default.
 
 - **CUMULUS-1176**
+
   - `@cumulus/move-granules` breaking change:
     Input to `move-granules` is now expected to be in the form of a granules object (i.e. `{ granules: [ { ... }, { ... } ] }`);
     For backwards compatibility with array-of-files outputs from processing steps, use the new `@cumulus/files-to-granules` task as an intermediate step.
     This task will perform the input translation. This change allows `move-granules` to be simpler and behave more predictably.
-     `config.granuleIdExtraction` and `config.input_granules` are no longer needed/used by `move-granules`.
+    `config.granuleIdExtraction` and `config.input_granules` are no longer needed/used by `move-granules`.
   - `@cumulus/post-to-cmr`: `config.granuleIdExtraction` is no longer needed/used by `post-to-cmr`.
 
 - CUMULUS-1174
@@ -1180,20 +1337,15 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
     ThrottlingException the first time it is called, then return its normal result after that.
 - CUMULUS-1103 Compare the collection holdings in CMR with Cumulus' internal data store
 - CUMULUS-1099 Add support for UMMG JSON metadata versions > 1.4.
-    - If a version is found in the metadata object, that version is used for processing and publishing to CMR otherwise, version 1.4 is assumed.
+  - If a version is found in the metadata object, that version is used for processing and publishing to CMR otherwise, version 1.4 is assumed.
 - CUMULUS-678
-    - Added support for UMMG json v1.4 metadata files.
-  `reconcileCMRMetadata` added to `@cumulus/cmrjs` to update metadata record with new file locations.
-  `@cumulus/common/errors` adds two new error types `CMRMetaFileNotFound` and `InvalidArgument`.
-  `@cumulus/common/test-utils` adds new function `randomId` to create a random string with id to help in debugging.
-  `@cumulus/common/BucketsConfig` adds a new helper class `BucketsConfig` for working with bucket stack configuration and bucket names.
-  `@cumulus/common/aws` adds new function `s3PutObjectTagging` as a convenience for the aws  [s3().putObjectTagging](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging-property) function.
-  `@cumulus/cmrjs` Adds:
-        - `isCMRFile` - Identify an echo10(xml) or UMMG(json) metadata file.
-        - `metadataObjectFromCMRFile` Read and parse CMR XML file from s3.
-        - `updateCMRMetadata` Modify a cmr metadata (xml/json) file with updated information.
-        - `publish2CMR` Posts XML or UMMG CMR data to CMR service.
-        - `reconcileCMRMetadata` Reconciles cmr metadata file after a file moves.
+  - Added support for UMMG json v1.4 metadata files.
+    `reconcileCMRMetadata` added to `@cumulus/cmrjs` to update metadata record with new file locations.
+    `@cumulus/common/errors` adds two new error types `CMRMetaFileNotFound` and `InvalidArgument`.
+    `@cumulus/common/test-utils` adds new function `randomId` to create a random string with id to help in debugging.
+    `@cumulus/common/BucketsConfig` adds a new helper class `BucketsConfig` for working with bucket stack configuration and bucket names.
+    `@cumulus/common/aws` adds new function `s3PutObjectTagging` as a convenience for the aws [s3().putObjectTagging](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging-property) function.
+    `@cumulus/cmrjs` Adds: - `isCMRFile` - Identify an echo10(xml) or UMMG(json) metadata file. - `metadataObjectFromCMRFile` Read and parse CMR XML file from s3. - `updateCMRMetadata` Modify a cmr metadata (xml/json) file with updated information. - `publish2CMR` Posts XML or UMMG CMR data to CMR service. - `reconcileCMRMetadata` Reconciles cmr metadata file after a file moves.
 - Adds some ECS and other permissions to StepRole to enable running ECS tasks from a workflow
 - Added Apache logs to cumulus api and distribution lambdas
 - **CUMULUS-1119** - Added `@cumulus/integration-tests/api/EarthdataLogin.getEarthdataLoginRedirectResponse` helper for integration tests to handle login with Earthdata and to return response from redirect to Cumulus API
@@ -1221,6 +1373,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
   `@cumulus/test-processing` - test processing task updated to generate UMM-G metadata
 
 - CUMULUS-1043
+
   - `@cumulus/api` now uses [express](http://expressjs.com/) as the API engine.
   - All `@cumulus/api` endpoints on ApiGateway are consolidated to a single endpoint the uses `{proxy+}` definition.
   - All files under `packages/api/endpoints` along with associated tests are updated to support express's request and response objects.
@@ -1255,6 +1408,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.11.1] - 2018-12-18
 
 **Please Note**
+
 - Ensure your `app/config.yml` has a `clientId` specified in the `cmr` section. This will allow CMR to identify your requests for better support and metrics.
   - For an example, please see [the example config](https://github.com/nasa/cumulus/blob/1c7e2bf41b75da9f87004c4e40fbcf0f39f56794/example/app/config.yml#L128).
 
@@ -1265,12 +1419,12 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ### Changed
 
 - CUMULUS-678
-`@cumulus/ingest/crypto` moved and renamed to `@cumulus/common/key-pair-provider`
-`@cumulus/ingest/aws` function:  `KMSDecryptionFailed` and class: `KMS` extracted and moved to `@cumulus/common` and `KMS` is exported as `KMSProvider` from `@cumulus/common/key-pair-provider`
-`@cumulus/ingest/granule` functions: `publish`, `getGranuleId`, `getXMLMetadataAsString`, `getMetadataBodyAndTags`, `parseXmlString`, `getCmrXMLFiles`, `postS3Object`, `contructOnlineAccessUrls`, `updateMetadata`, extracted and moved to `@cumulus/cmrjs`
-`getGranuleId`, `getCmrXMLFiles`, `publish`, `updateMetadata` removed from `@cumulus/ingest/granule` and added to `@cumulus/cmrjs`;
-`updateMetadata` renamed `updateCMRMetadata`.
-`@cumulus/ingest` test files renamed.
+  `@cumulus/ingest/crypto` moved and renamed to `@cumulus/common/key-pair-provider`
+  `@cumulus/ingest/aws` function: `KMSDecryptionFailed` and class: `KMS` extracted and moved to `@cumulus/common` and `KMS` is exported as `KMSProvider` from `@cumulus/common/key-pair-provider`
+  `@cumulus/ingest/granule` functions: `publish`, `getGranuleId`, `getXMLMetadataAsString`, `getMetadataBodyAndTags`, `parseXmlString`, `getCmrXMLFiles`, `postS3Object`, `contructOnlineAccessUrls`, `updateMetadata`, extracted and moved to `@cumulus/cmrjs`
+  `getGranuleId`, `getCmrXMLFiles`, `publish`, `updateMetadata` removed from `@cumulus/ingest/granule` and added to `@cumulus/cmrjs`;
+  `updateMetadata` renamed `updateCMRMetadata`.
+  `@cumulus/ingest` test files renamed.
 - **CUMULUS-1070**
   - Add `'Client-Id'` header to all `@cumulus/cmrjs` requests (made via `searchConcept`, `ingestConcept`, and `deleteConcept`).
   - Updated `cumulus/example/app/config.yml` entry for `cmr.clientId` to use stackName for easier CMR-side identification.
@@ -1278,10 +1432,11 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.11.0] - 2018-11-30
 
 **Please Note**
+
 - Redeploy IAM roles:
-  - CUMULUS-817 includes a migration that requires reconfiguration/redeployment of IAM roles.  Please see the [upgrade instructions](https://nasa.github.io/cumulus/docs/upgrade/1.11.0) for more information.
+  - CUMULUS-817 includes a migration that requires reconfiguration/redeployment of IAM roles. Please see the [upgrade instructions](https://nasa.github.io/cumulus/docs/upgrade/1.11.0) for more information.
   - CUMULUS-977 includes a few new SNS-related permissions added to the IAM roles that will require redeployment of IAM roles.
-- `cumulus-message-adapter` v1.0.13+ is required for `@cumulus/api` granule reingest API to work properly.  The latest version should be downloaded automatically by kes.
+- `cumulus-message-adapter` v1.0.13+ is required for `@cumulus/api` granule reingest API to work properly. The latest version should be downloaded automatically by kes.
 - A `TOKEN_SECRET` value (preferably 256-bit for security) must be added to `.env` to securely sign JWTs used for authorization in `@cumulus/api`
 
 ### Changed
@@ -1305,6 +1460,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
   - Added `refreshAccessToken` to `@cumulus/api/lib/EarthdataLogin` to manage refresh token requests with the Earthdata OAuth provider
 
 ### Added
+
 - **CUMULUS-1050**
   - Separated configuration flags for originalPayload/finalPayload cleanup such that they can be set to different retention times
 - **CUMULUS-798**
@@ -1322,13 +1478,13 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
     its entirety to the workflow in the `payload` field of the Cumulus message. For more information on sns-type rules,
     see the [documentation](https://nasa.github.io/cumulus/docs/data-cookbooks/setup#rules).
 - **CUMULUS-975**
-  - Add `KinesisInboundEventLogger` and `KinesisOutboundEventLogger` API lambdas.  These lambdas
+  - Add `KinesisInboundEventLogger` and `KinesisOutboundEventLogger` API lambdas. These lambdas
     are utilized to dump incoming and outgoing ingest workflow kinesis streams
     to cloudwatch for analytics in case of AWS/stream failure.
   - Update rules model to allow tracking of log_event ARNs related to
-    Rule event logging.    Kinesis rule types will now automatically log
+    Rule event logging. Kinesis rule types will now automatically log
     incoming events via a Kinesis event triggered lambda.
- CUMULUS-975-migration-4
+    CUMULUS-975-migration-4
   - Update migration code to require explicit migration names per run
   - Added migration_4 to migrate/update exisitng Kinesis rules to have a log event mapping
   - Added new IAM policy for migration lambda
@@ -1351,6 +1507,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
   - In `@cumulus/deployment`, added support for NGAP permissions boundaries for IAM roles with `useNgapPermissionBoundary` flag in `iam/config.yml`. Defaults to false.
 
 ### Fixed
+
 - Fixed a bug where FTP sockets were not closed after an error, keeping the Lambda function active until it timed out [CUMULUS-972]
 - **CUMULUS-656**
   - The API will no longer allow the deletion of a provider if that provider is
@@ -1360,28 +1517,33 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 - Fixed a bug where `@cumulus/sf-sns-report` was not pulling large messages from S3 correctly.
 
 ### Deprecated
+
 - `@cumulus/ingest/aws/StepFunction.pullEvent()`. Use `@cumulus/common/aws.pullStepFunctionEvent()`.
 - `@cumulus/ingest/consumer.Consume` due to unpredictable implementation. Use `@cumulus/ingest/consumer.Consumer`.
-Call `Consumer.consume()` instead of `Consume.read()`.
+  Call `Consumer.consume()` instead of `Consume.read()`.
 
 ## [v1.10.4] - 2018-11-28
 
 ### Added
+
 - **CUMULUS-1008**
   - New `config.yml` parameter for SQS consumers: `sqs_consumer_rate: (default 500)`, which is the maximum number of
-  messages the consumer will attempt to process per execution. Currently this is only used by the sf-starter consumer,
-  which runs every minute by default, making this a messages-per-minute upper bound. SQS does not guarantee the number
-  of messages returned per call, so this is not a fixed rate of consumption, only attempted number of messages received.
+    messages the consumer will attempt to process per execution. Currently this is only used by the sf-starter consumer,
+    which runs every minute by default, making this a messages-per-minute upper bound. SQS does not guarantee the number
+    of messages returned per call, so this is not a fixed rate of consumption, only attempted number of messages received.
 
 ### Deprecated
+
 - `@cumulus/ingest/consumer.Consume` due to unpredictable implementation. Use `@cumulus/ingest/consumer.Consumer`.
 
 ### Changed
+
 - Backported update of `packages/api` dependency `@mapbox/dyno` to `1.4.2` to mitigate `event-stream` vulnerability.
 
 ## [v1.10.3] - 2018-10-31
 
 ### Added
+
 - **CUMULUS-817**
   - Added AWS Dead Letter Queues for lambdas that are scheduled asynchronously/such that failures show up only in cloudwatch logs.
 - **CUMULUS-956**
@@ -1399,6 +1561,7 @@ Call `Consumer.consume()` instead of `Consume.read()`.
   - `@/cumulus/common/aws.s3CopyObject` defaults to an explicit `TaggingDirective` of 'COPY' if not overridden.
 
 ### Deprecated
+
 - **CUMULUS-811**
   - Deprecated `@cumulus/ingest/aws.S3`. Member functions of this class will now
     log warnings pointing to similar functionality in `@cumulus/common/aws`.
@@ -1406,6 +1569,7 @@ Call `Consumer.consume()` instead of `Consume.read()`.
 ## [v1.10.2] - 2018-10-24
 
 ### Added
+
 - **CUMULUS-965**
   - Added a `@cumulus/logger` package
 - **CUMULUS-885**
@@ -1423,10 +1587,11 @@ Call `Consumer.consume()` instead of `Consume.read()`.
     fetch an Lambda function, run it in ECS, and then store the result to the
     AsyncOperations table in DynamoDB.
 - **CUMULUS-851** - Added workflow lambda versioning feature to allow in-flight workflows to use lambda versions that were in place when a workflow was initiated
-    - Updated Kes custom code to remove logic that used the CMA file key to determine template compilation logic.  Instead, utilize a `customCompilation` template configuration flag to indicate a template should use Cumulus's kes customized methods instead of 'core'.
-    - Added `useWorkflowLambdaVersions` configuration option to enable the lambdaVersioning feature set.   **This option is set to true by default** and should be set to false to disable the feature.
-    - Added uniqueIdentifier configuration key to S3 sourced lambdas to optionally support S3 lambda resource versioning within this scheme. This key must be unique for each modified version of the lambda package and must be updated in configuration each time the source changes.
-    - Added a new nested stack template that will create a `LambdaVersions` stack that will take lambda parameters from the base template, generate lambda versions/aliases and return outputs with references to the most 'current' lambda alias reference, and updated 'core' template to utilize these outputs (if `useWorkflowLambdaVersions` is enabled).
+
+  - Updated Kes custom code to remove logic that used the CMA file key to determine template compilation logic. Instead, utilize a `customCompilation` template configuration flag to indicate a template should use Cumulus's kes customized methods instead of 'core'.
+  - Added `useWorkflowLambdaVersions` configuration option to enable the lambdaVersioning feature set. **This option is set to true by default** and should be set to false to disable the feature.
+  - Added uniqueIdentifier configuration key to S3 sourced lambdas to optionally support S3 lambda resource versioning within this scheme. This key must be unique for each modified version of the lambda package and must be updated in configuration each time the source changes.
+  - Added a new nested stack template that will create a `LambdaVersions` stack that will take lambda parameters from the base template, generate lambda versions/aliases and return outputs with references to the most 'current' lambda alias reference, and updated 'core' template to utilize these outputs (if `useWorkflowLambdaVersions` is enabled).
 
 - Created a `@cumulus/api/lib/OAuth2` interface, which is implemented by the
   `@cumulus/api/lib/EarthdataLogin` and `@cumulus/api/lib/GoogleOAuth2` classes.
@@ -1446,7 +1611,7 @@ Call `Consumer.consume()` instead of `Consume.read()`.
   - `rules` API functionality for posting and deleting a rule and listing all rules
   - `wait-for-deploy` lambda for use in the redeployment tests
 - `@cumulus/ingest/granule.js`: `ingestFile` inserts new `duplicate_found: true` field in the file's record if a duplicate file already exists on S3.
-- `@cumulus/api`: `/execution-status` endpoint requests and returns complete execution output if  execution output is stored in S3 due to size.
+- `@cumulus/api`: `/execution-status` endpoint requests and returns complete execution output if execution output is stored in S3 due to size.
 - Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
 - **CUMULUS-781** - Added integration tests for `@cumulus/sync-granule` when `duplicateHandling` is set to `replace` or `skip`
 - **CUMULUS-791** - `@cumulus/move-granules`: `moveFileRequest` inserts new `duplicate_found: true` field in the file's record if a duplicate file already exists on S3. Updated output schema to document new `duplicate_found` field.
@@ -1459,7 +1624,7 @@ Call `Consumer.consume()` instead of `Consume.read()`.
 
 ### Changed
 
-- **CUMULUS-940** - modified `@cumulus/common/aws` `receiveSQSMessages` to take a parameter object instead of positional parameters.  All defaults remain the same, but now access to long polling is available through `options.waitTimeSeconds`.
+- **CUMULUS-940** - modified `@cumulus/common/aws` `receiveSQSMessages` to take a parameter object instead of positional parameters. All defaults remain the same, but now access to long polling is available through `options.waitTimeSeconds`.
 - **CUMULUS-948** - Update lambda functions `CNMToCMA` and `CnmResponse` in the `cumulus-data-shared` bucket and point the default stack to them.
 - **CUMULUS-782** - Updated `@cumulus/sync-granule` task and `Granule.ingestFile` in `@cumulus/ingest` to keep both old and new data when a destination file with different checksum already exists and `duplicateHandling` is `version`
 - Updated the config schema in `@cumulus/move-granules` to include the `moveStagedFiles` param.
@@ -1510,10 +1675,10 @@ Call `Consumer.consume()` instead of `Consume.read()`.
   - **Fix:** `@cumulus/ingest/consumer#processMessages` now processes messages until `timeLimit` has passed _OR_ once it receives up to `messageLimit` messages. `sqs2sf` is deployed with a [default `messageLimit` of 10](https://github.com/nasa/cumulus/blob/670000c8a821ff37ae162385f921c40956e293f7/packages/deployment/app/config.yml#L147).
   - **IMPORTANT NOTE:** `consumer` will actually process up to `messageLimit * 2 - 1` messages. This is because sometimes `receiveSQSMessages` will return less than `messageLimit` messages and thus the consumer will continue to make calls to `receiveSQSMessages`. For example, given a `messageLimit` of 10 and subsequent calls to `receiveSQSMessages` returns up to 9 messages, the loop will continue and a final call could return up to 10 messages.
 
-
 ## [v1.9.1] - 2018-08-22
 
 **Please Note** To take advantage of the added granule tracking API functionality, updates are required for the message adapter and its libraries. You should be on the following versions:
+
 - `cumulus-message-adapter` 1.0.9+
 - `cumulus-message-adapter-js` 1.0.4+
 - `cumulus-message-adapter-java` 1.2.7+
@@ -1527,6 +1692,7 @@ Call `Consumer.consume()` instead of `Consume.read()`.
 - **CUMULUS-836** - `@cumulus/api` added IAM roles required by the NGAP 2.0 AMI. The NGAP 2.0 AMI runs a script `register_instances_with_ssm.py` which requires the ECS IAM role to include `ec2:DescribeInstances` and `ssm:GetParameter` permissions.
 
 ### Fixed
+
 - **CUMULUS-836** - `@cumulus/deployment` uses `overlay2` driver by default and does not attempt to write `--storage-opt dm.basesize` to fix [this error](https://github.com/moby/moby/issues/37039).
 - **CUMULUS-413** Kinesis processing now captures all errrors.
   - Added kinesis fallback mechanism when errors occur during record processing.
@@ -1554,10 +1720,12 @@ Call `Consumer.consume()` instead of `Consume.read()`.
 **Please note** additional information and upgrade instructions [here](https://nasa.github.io/cumulus/docs/upgrade/1.9.0)
 
 ### Added
+
 - **CUMULUS-712** - Added integration tests verifying expected behavior in workflows
 - **GITC-776-2** - Add support for versioned collections
 
 ### Fixed
+
 - **CUMULUS-832**
   - Fixed indentation in example config.yml in `@cumulus/deployment`
   - Fixed issue with new deployment using the default distribution endpoint in `@cumulus/deployment` and `@cumulus/api`
@@ -1582,6 +1750,7 @@ Call `Consumer.consume()` instead of `Consume.read()`.
 ### Removed
 
 - **Cumulus-726**
+
   - Configuration change to `@cumulus/deployment`: Removed default auto scaling configuration for Granules and Files DynamoDB tables.
 
 - **CUMULUS-688**
@@ -1594,26 +1763,30 @@ Call `Consumer.consume()` instead of `Consume.read()`.
 
 - **CUMULUS-718** Adds integration test for Kinesis triggering a workflow.
 
-- **GITC-776-3** Added more flexibility for rules.  You can now edit all fields on the rule's record
-We may need to update the api documentation to reflect this.
+- **GITC-776-3** Added more flexibility for rules. You can now edit all fields on the rule's record
+  We may need to update the api documentation to reflect this.
 
 - **CUMULUS-681** - Add ingest-in-place action to granules endpoint
-    - new applyWorkflow action at PUT /granules/{granuleid} Applying a workflow starts an execution of the provided workflow and passes the granule record as payload.
-      Parameter(s):
-        - workflow - the workflow name
+
+  - new applyWorkflow action at PUT /granules/{granuleid} Applying a workflow starts an execution of the provided workflow and passes the granule record as payload.
+    Parameter(s):
+    - workflow - the workflow name
 
 - **CUMULUS-685** - Add parent exeuction arn to the execution which is triggered from a parent step function
 
 ### Changed
+
 - **CUMULUS-768** - Integration tests get S3 provider data from shared data folder
 
 ### Fixed
+
 - **CUMULUS-746** - Move granule API correctly updates record in dynamo DB and cmr xml file
 - **CUMULUS-766** - Populate database fileSize field from S3 if value not present in Ingest payload
 
 ## [v1.7.1] - 2018-07-27 - [BACKPORT]
 
 ### Fixed
+
 - **CUMULUS-766** - Backport from 1.8.0 - Populate database fileSize field from S3 if value not present in Ingest payload
 
 ## [v1.7.0] - 2018-07-02
@@ -1621,6 +1794,7 @@ We may need to update the api documentation to reflect this.
 ### Please note: [Upgrade Instructions](https://nasa.github.io/cumulus/docs/upgrade/1.7.0)
 
 ### Added
+
 - **GITC-776-2** - Add support for versioned collectons
 - **CUMULUS-491** - Add granule reconciliation API endpoints.
 - **CUMULUS-480** Add suport for backup and recovery:
@@ -1632,20 +1806,22 @@ We may need to update the api documentation to reflect this.
   - Add IAM support for batchWrite on dynamoDB
 -
 - **CUMULUS-508** - `@cumulus/deployment` cloudformation template allows for lambdas and ECS clusters to have multiple AZ availability.
-    - `@cumulus/deployment` also ensures docker uses `devicemapper` storage driver.
+  - `@cumulus/deployment` also ensures docker uses `devicemapper` storage driver.
 - **CUMULUS-755** - `@cumulus/deployment` Add DynamoDB autoscaling support.
-    - Application developers can add autoscaling and override default values in their deployment's `app/config.yml` file using a `{TableName}Table:` key.
+  - Application developers can add autoscaling and override default values in their deployment's `app/config.yml` file using a `{TableName}Table:` key.
 
 ### Fixed
+
 - **CUMULUS-747** - Delete granule API doesn't delete granule files in s3 and granule in elasticsearch
-    - update the StreamSpecification DynamoDB tables to have StreamViewType: "NEW_AND_OLD_IMAGES"
-    - delete granule files in s3
+  - update the StreamSpecification DynamoDB tables to have StreamViewType: "NEW_AND_OLD_IMAGES"
+  - delete granule files in s3
 - **CUMULUS-398** - Fix not able to filter executions by workflow
 - **CUMULUS-748** - Fix invalid lambda .zip files being validated/uploaded to AWS
 - **CUMULUS-544** - Post to CMR task has UAT URL hard-coded
   - Made configurable: PostToCmr now requires CMR_ENVIRONMENT env to be set to 'SIT' or 'OPS' for those CMR environments. Default is UAT.
 
 ### Changed
+
 - **GITC-776-4** - Changed Discover-pdrs to not rely on collection but use provider_path in config. It also has an optional filterPdrs regex configuration parameter
 
 - **CUMULUS-710** - In the integration test suite, `getStepOutput` returns the output of the first successful step execution or last failed, if none exists
@@ -1655,19 +1831,22 @@ We may need to update the api documentation to reflect this.
 ### Please note: [Upgrade Instructions](https://nasa.github.io/cumulus/docs/upgrade/1.6.0)
 
 ### Fixed
+
 - **CUMULUS-602** - Format all logs sent to Elastic Search.
   - Extract cumulus log message and index it to Elastic Search.
 
 ### Added
+
 - **CUMULUS-556** - add a mechanism for creating and running migration scripts on deployment.
 - **CUMULUS-461** Support use of metadata date and other components in `url_path` property
 
 ### Changed
+
 - **CUMULUS-477** Update bucket configuration to support multiple buckets of the same type:
-  - Change the structure of the buckets to allow for  more than one bucket of each type. The bucket structure is now:
+  - Change the structure of the buckets to allow for more than one bucket of each type. The bucket structure is now:
     bucket-key:
-      name: <bucket-name>
-      type: <type> i.e. internal, public, etc.
+    name: <bucket-name>
+    type: <type> i.e. internal, public, etc.
   - Change IAM and app deployment configuration to support new bucket structure
   - Update tasks and workflows to support new bucket structure
   - Replace instances where buckets.internal is relied upon to either use the system bucket or a configured bucket
@@ -1677,6 +1856,7 @@ We may need to update the api documentation to reflect this.
 ## [v1.5.5] - 2018-05-30
 
 ### Added
+
 - **CUMULUS-530** - PDR tracking through Queue-granules
   - Add optional `pdr` property to the sync-granule task's input config and output payload.
 - **CUMULUS-548** - Create a Lambda task that generates EMS distribution reports
@@ -1688,6 +1868,7 @@ We may need to update the api documentation to reflect this.
     is replaced with the name of your Cumulus stack.
 
 ### Fixed
+
 - **CUMULUS-546 - Kinesis Consumer should catch and log invalid JSON**
   - Kinesis Consumer lambda catches and logs errors so that consumer doesn't get stuck in a loop re-processing bad json records.
 - EMS report filenames are now based on their start time instead of the time
@@ -1696,11 +1877,13 @@ We may need to update the api documentation to reflect this.
   - The collection, provider and rule records in elasticsearch are now replaced with records from dynamo db when the dynamo db records are updated.
 
 ### Added
+
 - `@cumulus/deployment`'s default cloudformation template now configures storage for Docker to match the configured ECS Volume. The template defines Docker's devicemapper basesize (`dm.basesize`) using `ecs.volumeSize`. This addresses ECS default of limiting Docker containers to 10GB of storage ([Read more](https://aws.amazon.com/premiumsupport/knowledge-center/increase-default-ecs-docker-limit/)).
 
 ## [v1.5.4] - 2018-05-21
 
 ### Added
+
 - **CUMULUS-535** - EMS Ingest, Archive, Archive Delete reports
   - Add lambda EmsReport to create daily EMS Ingest, Archive, Archive Delete reports
   - ems.provider property added to `@cumulus/deployment/app/config.yml`.
@@ -1714,6 +1897,7 @@ We may need to update the api documentation to reflect this.
 ## [v1.5.3] - 2018-05-18
 
 ### Fixed
+
 - **CUMULUS-557 - "Add dataType to DiscoverGranules output"**
   - Granules discovered by the DiscoverGranules task now include dataType
   - dataType is now a required property for granules used as input to the
@@ -1723,11 +1907,13 @@ We may need to update the api documentation to reflect this.
 ## [v1.5.2] - 2018-05-15
 
 ### Fixed
+
 - **CUMULUS-514 - "Unable to Delete the Granules"**
   - updated cmrjs.deleteConcept to return success if the record is not found
     in CMR.
 
 ### Added
+
 - **CUMULUS-547** - The distribution API now includes an
   "earthdataLoginUsername" query parameter when it returns a signed S3 URL
 - **CUMULUS-527 - "parse-pdr queues up all granules and ignores regex"**
@@ -1756,16 +1942,21 @@ We may need to update the api documentation to reflect this.
   public IP address is available.
 
 ### Changed
+
 - **CUMULUS-550** Custom bootstrap automatically adds new types to index on
   deployment
 
 ## [v1.5.1] - 2018-04-23
+
 ### Fixed
+
 - add the missing dist folder to the hello-world task
 - disable uglifyjs on the built version of the pdr-status-check (read: https://github.com/webpack-contrib/uglifyjs-webpack-plugin/issues/264)
 
 ## [v1.5.0] - 2018-04-23
+
 ### Changed
+
 - Removed babel from all tasks and packages and increased minimum node requirements to version 8.10
 - Lambda functions created by @cumulus/deployment will use node8.10 by default
 - Moved [cumulus-integration-tests](https://github.com/nasa/cumulus-integration-tests) to the `example` folder CUMULUS-512
@@ -1779,6 +1970,7 @@ We may need to update the api documentation to reflect this.
   - `provider_path` is no longer a property
 
 ### Fixed
+
 - **CUMULUS-455 "Kes deployments using only an updated message adapter do not get automatically deployed"**
   - prepended the hash value of cumulus-message-adapter.zip file to the zip file name of lambda which uses message adapter.
   - the lambda function will be redeployed when message adapter or lambda function are updated
@@ -1786,22 +1978,25 @@ We may need to update the api documentation to reflect this.
 - Fixed a bug where the sf-sns-report task did not return the payload of the incoming message as the output of the task [CUMULUS-441]
 
 ### Added
+
 - **CUMULUS-352:** Add reindex CLI to the API package.
 - **CUMULUS-465:** Added mock http/ftp/sftp servers to the integration tests
 - Added a `delete` method to the `@common/CollectionConfigStore` class
 - **CUMULUS-467 "@cumulus/integration-tests or cumulus-integration-tests should seed provider and collection in deployed DynamoDB"**
   - `example` integration-tests populates providers and collections to database
-  - `example` workflow messages are populated from workflow templates in s3, provider and collection information in database, and input payloads.  Input templates are removed.
+  - `example` workflow messages are populated from workflow templates in s3, provider and collection information in database, and input payloads. Input templates are removed.
   - added `https` protocol to provider schema
 
 ## [v1.4.1] - 2018-04-11
 
 ### Fixed
+
 - Sync-granule install
 
 ## [v1.4.0] - 2018-04-09
 
 ### Fixed
+
 - **CUMULUS-392 "queue-granules not returning the sfn-execution-arns queued"**
   - updated queue-granules to return the sfn-execution-arns queued and pdr if exists.
   - added pdr to ingest message meta.pdr instead of payload, so the pdr information doesn't get lost in the ingest workflow, and ingested granule in elasticsearch has pdr name.
@@ -1810,9 +2005,11 @@ We may need to update the api documentation to reflect this.
 - **CUMULUS-206** make sure homepage and repository urls exist in package.json files of tasks and packages
 
 ### Added
+
 - Example folder with a cumulus deployment example
 
 ### Changed
+
 - [CUMULUS-450](https://bugs.earthdata.nasa.gov/browse/CUMULUS-450) - Updated
   the config schema of the **queue-granules** task
   - The config no longer takes a "collection" property
@@ -1826,10 +2023,12 @@ We may need to update the api documentation to reflect this.
 - **CUMULUS-469** Added a lambda to the API package to prototype creating an S3 bucket policy for direct, in-region S3 access for the prototype bucket
 
 ### Removed
+
 - Removed the `findTmpTestDataDirectory()` function from
   `@cumulus/common/test-utils`
 
 ### Fixed
+
 - [CUMULUS-450](https://bugs.earthdata.nasa.gov/browse/CUMULUS-450)
   - The **queue-granules** task now enqueues a **sync-granule** task with the
     correct collection config for that granule based on the granule's
@@ -1841,16 +2040,20 @@ We may need to update the api documentation to reflect this.
     each granule.
 
 ### Added
+
 - **CUMULUS-448** Add code coverage checking using [nyc](https://github.com/istanbuljs/nyc).
 
 ## [v1.3.0] - 2018-03-29
 
 ### Deprecated
+
 - discover-s3-granules is deprecated. The functionality is provided by the discover-granules task
+
 ### Fixed
+
 - **CUMULUS-331:** Fix aws.downloadS3File to handle non-existent key
 - Using test ftp provider for discover-granules testing [CUMULUS-427]
-- **CUMULUS-304: "Add AWS API throttling to pdr-status-check task"** Added concurrency limit on SFN API calls.  The default concurrency is 10 and is configurable through Lambda environment variable CONCURRENCY.
+- **CUMULUS-304: "Add AWS API throttling to pdr-status-check task"** Added concurrency limit on SFN API calls. The default concurrency is 10 and is configurable through Lambda environment variable CONCURRENCY.
 - **CUMULUS-414: "Schema validation not being performed on many tasks"** revised npm build scripts of tasks that use cumulus-message-adapter to place schema directories into dist directories.
 - **CUMULUS-301:** Update all tests to use test-data package for testing data.
 - **CUMULUS-271: "Empty response body from rules PUT endpoint"** Added the updated rule to response body.
@@ -1862,20 +2065,21 @@ We may need to update the api documentation to reflect this.
   - updated paths where necessary
 
 ### Added
+
 - `@cumulus/integration-tests` - Added support for testing the output of an ECS activity as well as a Lambda function.
 
 ## [v1.2.0] - 2018-03-20
 
 ### Fixed
+
 - Update vulnerable npm packages [CUMULUS-425]
 - `@cumulus/api`: `kinesis-consumer.js` uses `sf-scheduler.js#schedule` instead of placing a message directly on the `startSF` SQS queue. This is a fix for [CUMULUS-359](https://bugs.earthdata.nasa.gov/browse/CUMULUS-359) because `sf-scheduler.js#schedule` looks up the provider and collection data in DynamoDB and adds it to the `meta` object of the enqueued message payload.
 - `@cumulus/api`: `kinesis-consumer.js` catches and logs errors instead of doing an error callback. Before this change, `kinesis-consumer` was failing to process new records when an existing record caused an error because it would call back with an error and stop processing additional records. It keeps trying to process the record causing the error because it's "position" in the stream is unchanged. Catching and logging the errors is part 1 of the fix. Proposed part 2 is to enqueue the error and the message on a "dead-letter" queue so it can be processed later ([CUMULUS-413](https://bugs.earthdata.nasa.gov/browse/CUMULUS-413)).
-- **CUMULUS-260: "PDR page on dashboard only shows zeros."** The PDR stats in LPDAAC are all 0s, even if the dashboard has been fixed to retrieve the correct fields.  The current version of pdr-status-check has a few issues.
-  - pdr is not included in the input/output schema.  It's available from the input event.  So the pdr status and stats are not updated when the ParsePdr workflow is complete.  Adding the pdr to the input/output of the task will fix this.
-  - pdr-status-check doesn't update pdr stats which prevent the real time pdr progress from showing up in the dashboard. To solve this, added lambda function sf-sns-report which is copied from @cumulus/api/lambdas/sf-sns-broadcast with modification, sf-sns-report can be used to report step function status anywhere inside a step function.  So add step sf-sns-report after each pdr-status-check, we will get the PDR status progress at real time.
-  - It's possible an execution is still in the queue and doesn't exist in sfn yet.  Added code to handle 'ExecutionDoesNotExist' error when checking the execution status.
+- **CUMULUS-260: "PDR page on dashboard only shows zeros."** The PDR stats in LPDAAC are all 0s, even if the dashboard has been fixed to retrieve the correct fields. The current version of pdr-status-check has a few issues.
+  - pdr is not included in the input/output schema. It's available from the input event. So the pdr status and stats are not updated when the ParsePdr workflow is complete. Adding the pdr to the input/output of the task will fix this.
+  - pdr-status-check doesn't update pdr stats which prevent the real time pdr progress from showing up in the dashboard. To solve this, added lambda function sf-sns-report which is copied from @cumulus/api/lambdas/sf-sns-broadcast with modification, sf-sns-report can be used to report step function status anywhere inside a step function. So add step sf-sns-report after each pdr-status-check, we will get the PDR status progress at real time.
+  - It's possible an execution is still in the queue and doesn't exist in sfn yet. Added code to handle 'ExecutionDoesNotExist' error when checking the execution status.
 - Fixed `aws.cloudwatchevents()` typo in `packages/ingest/aws.js`. This typo was the root cause of the error: `Error: Could not process scheduled_ingest, Error: : aws.cloudwatchevents is not a constructor` seen when trying to update a rule.
-
 
 ### Removed
 
@@ -1884,23 +2088,27 @@ We may need to update the api documentation to reflect this.
 ## [v1.1.4] - 2018-03-15
 
 ### Added
+
 - added flag `useList` to parse-pdr [CUMULUS-404]
 
 ### Fixed
 
 - Pass encrypted password to the ApiGranule Lambda function [CUMULUS-424]
 
-
 ## [v1.1.3] - 2018-03-14
+
 ### Fixed
+
 - Changed @cumulus/deployment package install behavior. The build process will happen after installation
 
 ## [v1.1.2] - 2018-03-14
 
 ### Added
+
 - added tools to @cumulus/integration-tests for local integration testing
 - added end to end testing for discovering and parsing of PDRs
 - `yarn e2e` command is available for end to end testing
+
 ### Fixed
 
 - **CUMULUS-326: "Occasionally encounter "Too Many Requests" on deployment"** The api gateway calls will handle throttling errors
@@ -1909,6 +2117,7 @@ We may need to update the api documentation to reflect this.
   - The `@cumulus/api` endpoints for collections, providers and rules _only_ query DynamoDB, with the exception of LIST endpoints and the collections' GET endpoint.
 
 ### Updated
+
 - Broke up `kes.override.js` of @cumulus/deployment to multiple modules and moved to a new location
 - Expanded @cumulus/deployment test coverage
 - all tasks were updated to use cumulus-message-adapter-js 1.0.1
@@ -1918,9 +2127,11 @@ We may need to update the api documentation to reflect this.
 ## [v1.1.1] - 2018-03-08
 
 ### Removed
+
 - Unused queue lambda in api/lambdas [CUMULUS-359]
 
 ### Fixed
+
 - Kinesis message content is passed to the triggered workflow [CUMULUS-359]
 - Kinesis message queues a workflow message and does not write to rules table [CUMULUS-359]
 
@@ -1933,6 +2144,7 @@ We may need to update the api documentation to reflect this.
 - Test for FTP `useList` flag [CUMULUS-334] by @kkelly51
 
 ### Updated
+
 - The `queue-pdrs` task now uses the [cumulus-message-adapter-js](https://github.com/nasa/cumulus-message-adapter-js)
   library
 - Updated the `queue-pdrs` JSON schemas
@@ -1943,21 +2155,24 @@ We may need to update the api documentation to reflect this.
 - Updated the `queue-granules` JSON schemas
 
 ### Removed
+
 - Removed the `getSfnExecutionByName` function from `common/aws`
 - Removed the `getGranuleStatus` function from `common/aws`
 
 ## [v1.0.1] - 2018-02-27
 
 ### Added
+
 - More tests for discover-pdrs, dicover-granules by @yjpa7145
 - Schema validation utility for tests by @yjpa7145
 
 ### Changed
+
 - Fix an FTP listing bug for servers that do not support STAT [CUMULUS-334] by @kkelly51
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.18.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v1.18.0...HEAD
 [v1.18.0]: https://github.com/nasa/cumulus/compare/v1.17.0...v1.18.0
 [v1.17.0]: https://github.com/nasa/cumulus/compare/v1.16.1...v1.17.0
 [v1.16.1]: https://github.com/nasa/cumulus/compare/v1.16.0...v1.16.1
