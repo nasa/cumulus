@@ -4,7 +4,6 @@ prefix               = "myprefix"
 
 # Optional
 
-create_service_linked_role = true
 es_trusted_role_arns = ["arn:aws:iam::12345678:role/role-name"]
 elasticsearch_config = {
   domain_name    = "es"
@@ -19,4 +18,5 @@ enable_point_in_time_tables = [
 ]
 include_elasticsearch  = true
 subnet_ids             = ["subnet-123456"]
-security_groups        = ["sg-123456"]
+security_group         = "sg-123456"
+custom_domain_name     = "es-domain-name"
