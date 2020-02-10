@@ -37,6 +37,7 @@
     "Deployment Options":[
       "additional-deployment-options/api-gateway-logging",
       "additional-deployment-options/share-s3-access-logs",
+      "additional-deployment-options/cloudwatch-logs-delivery",
       "additional-deployment-options/cmr_launchpad_authentication",
       "additional-deployment-options/cumulus_api_launchpad_authentication",
       "additional-deployment-options/cumulus_saml_launchpad_integration"

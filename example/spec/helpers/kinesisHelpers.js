@@ -21,9 +21,9 @@ const getRegion = () => process.env.AWS_REGION;
  * @param {function} cleanupCallback - Function to execute if passed in function fails
  * @param {Function} wrappedFunction - async function to execute
  * @param {iterable} args - arguments to pass to the function.
- * @returns {Promise} - returns Promise returned by wrappedFunction if no exceptions are thrown.
+ * @returns {Promise} returns Promise returned by wrappedFunction if no exceptions are thrown.
  */
-async function tryCatchExit(cleanupCallback, wrappedFunction, ...args) {
+async function tryCatchExit(cleanupCallback, wrappedFunction, ...args) { // eslint-disable-line consistent-return
   try {
     return await wrappedFunction.apply(this, args);
   } catch (error) {

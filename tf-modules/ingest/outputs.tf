@@ -7,6 +7,7 @@ output "discover_granules_task" {
 output "discover_pdrs_task" {
   value = {
     task_arn = aws_lambda_function.discover_pdrs_task.arn
+    task_log_group = aws_cloudwatch_log_group.discover_pdrs_task.name
   }
 }
 
@@ -53,6 +54,7 @@ output "move_granules_task" {
 output "parse_pdr_task" {
   value = {
     task_arn = aws_lambda_function.parse_pdr_task.arn
+    task_log_group = aws_cloudwatch_log_group.parse_pdr_task.name
   }
 }
 
@@ -65,6 +67,7 @@ output "pdr_status_check_task" {
 output "post_to_cmr_task" {
   value = {
     task_arn = aws_lambda_function.post_to_cmr_task.arn
+    task_log_group = aws_cloudwatch_log_group.post_to_cmr_task.name
   }
 }
 
@@ -77,6 +80,7 @@ output "queue_granules_task" {
 output "queue_pdrs_task" {
   value = {
     task_arn = aws_lambda_function.queue_pdrs_task.arn
+    task_log_group = aws_cloudwatch_log_group.queue_pdrs_task.name
   }
 }
 
@@ -105,6 +109,7 @@ output "sqs2sfThrottle_lambda_function_arn" {
 output "sync_granule_task" {
   value = {
     task_arn = aws_lambda_function.sync_granule_task.arn
+    task_log_group = aws_cloudwatch_log_group.sync_granule_task.name
   }
 }
 

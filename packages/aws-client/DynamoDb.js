@@ -143,8 +143,21 @@ async function createAndWaitForDynamoDbTable(params) {
   return createTableResult;
 }
 
+/**
+ * Delete a DynamoDB table and then wait for the table to not exist
+ *
+ * @param {Object} params - the same params that you would pass to AWS.deleteTable
+ *   See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#deleteTable-property
+ * @returns {Promise}
+ */
+async function deleteAndWaitForDynamoDbTableNotExists(params) {
+  await awsServices.dynamodb().deleteTable(params).promise();
+  return awsServices.dynamodb().waitFor('tableNotExists', { TableName: params.TableName }).promise();
+}
+
 module.exports = {
   createAndWaitForDynamoDbTable,
+  deleteAndWaitForDynamoDbTableNotExists,
   get,
   scan
 };

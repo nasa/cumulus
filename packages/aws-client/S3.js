@@ -271,9 +271,26 @@ exports.getS3Object = improveStackTrace(
     )
 );
 
-exports.getJsonS3Object = (bucket, key) =>
+/**
+ * Fetch the contents of an S3 object
+ *
+ * @param {string} bucket - the S3 object's bucket
+ * @param {string} key - the S3 object's key
+ * @returns {Promise<string>} the contents of the S3 object
+ */
+exports.getTextObject = (bucket, key) =>
   exports.getS3Object(bucket, key)
-    .then(({ Body }) => JSON.parse(Body.toString()));
+    .then(({ Body }) => Body.toString());
+
+/**
+ * Fetch JSON stored in an S3 object
+ * @param {string} bucket - the S3 object's bucket
+ * @param {string} key - the S3 object's key
+ * @returns {Promise<*>} the contents of the S3 object, parsed as JSON
+ */
+exports.getJsonS3Object = (bucket, key) =>
+  exports.getTextObject(bucket, key)
+    .then(JSON.parse);
 
 exports.putJsonS3Object = (bucket, key, data) =>
   exports.s3PutObject({

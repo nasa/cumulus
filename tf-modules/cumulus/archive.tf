@@ -3,6 +3,8 @@ module "archive" {
 
   prefix = var.prefix
 
+  api_url = var.archive_api_url
+
   permissions_boundary_arn = var.permissions_boundary_arn
 
   lambda_processing_role_arn = aws_iam_role.lambda_processing.arn
@@ -100,4 +102,6 @@ module "archive" {
 
   oauth_provider   = var.oauth_provider
   oauth_user_group = var.oauth_user_group
+
+  log_destination_arn = var.log_destination_arn
 }

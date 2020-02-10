@@ -58,7 +58,9 @@ test('The cw-cf-execution-event-to-db Lambda function takes a Cloudwatch Step Fu
         version: 5
       }
     },
-    payload: 'my-payload'
+    payload: {
+      key: 'my-payload'
+    }
   };
   event.detail.input = JSON.stringify(cumulusMessage);
 
@@ -73,7 +75,7 @@ test('The cw-cf-execution-event-to-db Lambda function takes a Cloudwatch Step Fu
     t.is(fetchedExecution.collectionId, 'my-collection___5');
     t.is(fetchedExecution.status, 'running');
     t.is(fetchedExecution.createdAt, 122);
-    t.is(fetchedExecution.originalPayload, 'my-payload');
+    t.deepEqual(fetchedExecution.originalPayload, { key: 'my-payload' });
   } catch (err) {
     t.fail('Failed to fetch execution');
   }
