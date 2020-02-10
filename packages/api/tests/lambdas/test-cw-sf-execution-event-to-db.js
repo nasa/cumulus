@@ -3,12 +3,17 @@
 const fs = require('fs-extra');
 const path = require('path');
 const test = require('ava');
+const sinon = require('sinon');
+
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { randomString } = require('@cumulus/common/test-utils');
 const Execution = require('../../models/executions');
+const Granule = require('../../models/granules');
 const {
   handler,
   saveExecutionToDb
 } = require('../../lambdas/cw-sf-execution-event-to-db');
+const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 
 const loadFixture = (filename) =>
   fs.readJson(
@@ -23,9 +28,17 @@ const loadFixture = (filename) =>
 test.before(async (t) => {
   process.env.ExecutionsTable = randomString();
   process.env.GranulesTable = randomString();
+
   const executionModel = new Execution();
   await executionModel.createTable();
-  t.context = { executionModel };
+  t.context.executionModel = executionModel;
+
+  const granuleModel = new Granule();
+  await granuleModel.createTable();
+  t.context.granuleModel = granuleModel;
+
+  sinon.stub(StepFunctions, 'describeExecution')
+    .callsFake(() => Promise.resolve({}));
 });
 
 test.after.always(async (t) => {
@@ -105,7 +118,7 @@ test('saveExecutionToDb() does not throw an exception if storeExecutionFromCumul
 });
 
 test('The cw-sf-execution-event-to-db Lambda function creates execution, granule, and PDR records', async (t) => {
-  const { executionModel } = t.context;
+  const { executionModel, granuleModel } = t.context;
 
   const event = await loadFixture('execution-running-event.json');
 
@@ -120,6 +133,10 @@ test('The cw-sf-execution-event-to-db Lambda function creates execution, granule
   event.detail.stateMachineArn = stateMachineArn;
   event.detail.name = executionName;
 
+  const granuleId = randomString();
+  const files = [fakeFileFactory()];
+  const granule = fakeGranuleFactoryV2({ files, granuleId });
+
   const cumulusMessage = {
     cumulus_meta: {
       state_machine: stateMachineArn,
@@ -131,10 +148,15 @@ test('The cw-sf-execution-event-to-db Lambda function creates execution, granule
       collection: {
         name: 'my-collection',
         version: 5
+      },
+      provider: {
+        host: 'test-bucket',
+        protocol: 's3'
       }
     },
     payload: {
-      key: 'my-payload'
+      key: 'my-payload',
+      granules: [granule]
     }
   };
   event.detail.input = JSON.stringify(cumulusMessage);
@@ -142,4 +164,5 @@ test('The cw-sf-execution-event-to-db Lambda function creates execution, granule
   await handler(event);
 
   t.true(await executionModel.exists({ arn: executionArn }));
+  t.true(await granuleModel.exists({ granuleId }));
 });
