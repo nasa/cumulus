@@ -545,18 +545,25 @@ class Granule extends Manager {
    * @returns {Promise}
    */
   async _validateAndStoreGranuleRecord(granuleRecord) {
-    // TODO: Refactor this all to use model.update() to avoid having to manually call
-    // schema validation and the actual client.update() method.
-    await this.constructor.recordIsValid(granuleRecord, this.schema, this.removeAdditional);
+    try {
+      // TODO: Refactor this all to use model.update() to avoid having to manually call
+      // schema validation and the actual client.update() method.
+      await this.constructor.recordIsValid(granuleRecord, this.schema, this.removeAdditional);
 
-    const mutableFieldNames = this._getMutableFieldNames(granuleRecord);
-    const updateParams = this._buildDocClientUpdateParams({
-      item: granuleRecord,
-      itemKey: { granuleId: granuleRecord.granuleId },
-      mutableFieldNames
-    });
+      const mutableFieldNames = this._getMutableFieldNames(granuleRecord);
+      const updateParams = this._buildDocClientUpdateParams({
+        item: granuleRecord,
+        itemKey: { granuleId: granuleRecord.granuleId },
+        mutableFieldNames
+      });
 
-    await this.dynamodbDocClient.update(updateParams).promise();
+      await this.dynamodbDocClient.update(updateParams).promise();
+    } catch (err) {
+      log.error(
+        'Could not store granule record: ', granuleRecord,
+        err
+      );
+    }
   }
 
   /**

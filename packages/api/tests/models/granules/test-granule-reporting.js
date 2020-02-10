@@ -118,6 +118,21 @@ test('_validateAndStoreGranuleRecord() will not allow a running status to replac
   t.is(fetchedItem.status, 'completed');
 });
 
+test('_validateAndStoreGranuleRecord() does not throw an error for a failing record', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2();
+  // granule without granuleId should fail validation
+  delete granule.granuleId;
+
+  try {
+    await granuleModel._validateAndStoreGranuleRecord(granule);
+    t.pass();
+  } catch (err) {
+    t.fail(`Expected error not to be thrown, caught: ${err}`);
+  }
+});
+
 test('storeGranulesFromCumulusMessage() stores multiple granules from Cumulus message', async (t) => {
   const { granuleModel } = t.context;
 
@@ -140,7 +155,7 @@ test('storeGranulesFromCumulusMessage() stores multiple granules from Cumulus me
         version: '001'
       },
       provider: {
-        host: 'example.com',
+        host: 'example-bucket',
         protocol: 's3'
       },
       status: 'completed'
