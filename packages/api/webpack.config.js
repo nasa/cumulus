@@ -28,6 +28,7 @@ module.exports = {
     payloadLogger: './lambdas/payload-logger.js',
     providerSecretsMigration: './lambdas/providerSecretsMigration.js',
     publishExecutions: './lambdas/publish-executions.js',
+    publishGranules: './lambdas/publish-granules.js',
     publishReports: './lambdas/publish-reports.js',
     reportGranules: './lambdas/report-granules.js',
     reportPdrs: './lambdas/report-pdrs.js',
