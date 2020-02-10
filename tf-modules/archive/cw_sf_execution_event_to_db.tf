@@ -1,11 +1,11 @@
-resource "aws_iam_role" "cw_sf_execution_event_to_db_lambda" {
-  name                 = "${var.prefix}_cw_sf_execution_event_to_db_lambda_role"
+resource "aws_iam_role" "cw_sf_event_to_db_records_lambda" {
+  name                 = "${var.prefix}_cw_sf_event_to_db_records_lambda_role"
   assume_role_policy   = data.aws_iam_policy_document.assume_lambda_role.json
   permissions_boundary = var.permissions_boundary_arn
   tags                 = local.default_tags
 }
 
-data "aws_iam_policy_document" "cw_sf_execution_event_to_db_lambda" {
+data "aws_iam_policy_document" "cw_sf_event_to_db_records_lambda" {
   statement {
     actions   = ["dynamodb:UpdateItem"]
     resources = [var.dynamo_tables.executions.arn]
@@ -43,17 +43,17 @@ data "aws_iam_policy_document" "cw_sf_execution_event_to_db_lambda" {
   # Required for DLQ
   statement {
     actions = ["sqs:SendMessage"]
-    resources = [aws_sqs_queue.cw_sf_execution_event_to_db_dead_letter_queue.arn]
+    resources = [aws_sqs_queue.cw_sf_event_to_db_records_dead_letter_queue.arn]
   }
 }
 
-resource "aws_iam_role_policy" "cw_sf_execution_event_to_db_lambda_role_policy" {
-  name   = "${var.prefix}_cw_sf_execution_event_to_db_lambda_role_policy"
-  role   = aws_iam_role.cw_sf_execution_event_to_db_lambda.id
-  policy = data.aws_iam_policy_document.cw_sf_execution_event_to_db_lambda.json
+resource "aws_iam_role_policy" "cw_sf_event_to_db_records_lambda_role_policy" {
+  name   = "${var.prefix}_cw_sf_event_to_db_records_lambda_role_policy"
+  role   = aws_iam_role.cw_sf_event_to_db_records_lambda.id
+  policy = data.aws_iam_policy_document.cw_sf_event_to_db_records_lambda.json
 }
 
-resource "aws_sqs_queue" "cw_sf_execution_event_to_db_dead_letter_queue" {
+resource "aws_sqs_queue" "cw_sf_event_to_db_records_dead_letter_queue" {
   name                       = "${var.prefix}-cwSfExecutionEventToDbDeadLetterQueue"
   receive_wait_time_seconds  = 20
   message_retention_seconds  = 1209600
@@ -61,16 +61,16 @@ resource "aws_sqs_queue" "cw_sf_execution_event_to_db_dead_letter_queue" {
   tags                       = local.default_tags
 }
 
-resource "aws_lambda_function" "cw_sf_execution_event_to_db" {
-  filename         = "${path.module}/../../packages/api/dist/cwSfExecutionEventToDb/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/cwSfExecutionEventToDb/lambda.zip")
-  function_name    = "${var.prefix}-cwSfExecutionEventToDb"
-  role             = "${aws_iam_role.cw_sf_execution_event_to_db_lambda.arn}"
+resource "aws_lambda_function" "cw_sf_event_to_db_records" {
+  filename         = "${path.module}/../../packages/api/dist/cwSfEventToDbRecords/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/cwSfEventToDbRecords/lambda.zip")
+  function_name    = "${var.prefix}-cwSfEventToDbRecords"
+  role             = "${aws_iam_role.cw_sf_event_to_db_records_lambda.arn}"
   handler          = "index.handler"
   runtime          = "nodejs10.x"
 
   dead_letter_config {
-    target_arn = aws_sqs_queue.cw_sf_execution_event_to_db_dead_letter_queue.arn
+    target_arn = aws_sqs_queue.cw_sf_event_to_db_records_dead_letter_queue.arn
   }
 
   environment {
