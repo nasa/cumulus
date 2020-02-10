@@ -88,7 +88,7 @@ output "sync_granule_task" {
 
 output "workflow_config" {
   value = {
-    cw_sf_execution_event_to_db_lambda_function_arn = module.archive.cw_sf_execution_event_to_db_lambda_function_arn
+    cw_sf_event_to_db_records_lambda_function_arn   = module.archive.cw_sf_event_to_db_records_lambda_function_arn
     publish_reports_lambda_function_arn             = module.archive.publish_reports_lambda_function_arn
     sf_semaphore_down_lambda_function_arn           = module.ingest.sf_semaphore_down_lambda_function_arn
     state_machine_role_arn                          = module.ingest.step_role_arn

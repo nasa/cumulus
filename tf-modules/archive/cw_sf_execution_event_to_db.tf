@@ -54,7 +54,7 @@ resource "aws_iam_role_policy" "cw_sf_event_to_db_records_lambda_role_policy" {
 }
 
 resource "aws_sqs_queue" "cw_sf_event_to_db_records_dead_letter_queue" {
-  name                       = "${var.prefix}-cwSfExecutionEventToDbDeadLetterQueue"
+  name                       = "${var.prefix}-cwSfEventToDbRecordsDeadLetterQueue"
   receive_wait_time_seconds  = 20
   message_retention_seconds  = 1209600
   visibility_timeout_seconds = 60
