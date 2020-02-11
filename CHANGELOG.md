@@ -49,6 +49,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1717**
   - Add `@cumulus/aws-client/deleteAndWaitForDynamoDbTableNotExists`, which
     deletes a DynamoDB table and waits to ensure the table no longer exists
+  - Added `publishGranules` Lambda to handle publishing granule messages to SNS when granule records are written to DynamoDB
+  - Added `@cumulus/api/models/Granule.storeGranulesFromCumulusMessage` to store granules from a Cumulus message to DynamoDB
 
 - **Ability to set custom backend API url in the archive module**
   - Add `api_url` definition in `tf-modules/cumulus/archive.tf`
@@ -62,6 +64,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update the API package to encrypt provider credentials using KMS instead of
     using RSA keys stored in S3
 
+- **CUMULUS-1717**
+  - Changed name of `cwSfExecutionEventToDb` Lamda to `cwSfEventToDbRecords`
+  - Updated `cwSfEventToDbRecords` to write granule records to DynamoDB from the incoming Cumulus message
+
 ### Deprecated
 
 - **CUMULUS-1684**
@@ -72,6 +78,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Deprecate `@cumulus/common/kms/KMS.encrypt()`
   - Deprecate `@cumulus/common/kms/KMS.decrypt()`
   - Deprecate `@cumulus/common/sftp.Sftp`
+
 - **CUMULUS-1717**
   - Deprecate `@cumulus/api/models/Granule.createGranulesFromSns`
 
