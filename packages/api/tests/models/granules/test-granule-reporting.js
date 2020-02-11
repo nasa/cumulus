@@ -36,7 +36,7 @@ test('_validateAndStoreGranuleRecord() can be used to create a new running granu
   t.is(fetchedItem.status, 'running');
 });
 
-test('_validateAndStoreGranuleRecord() can be used to update a running execution', async (t) => {
+test('_validateAndStoreGranuleRecord() can be used to update a running granule', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({
@@ -67,7 +67,7 @@ test('_validateAndStoreGranuleRecord() can be used to update a running execution
   t.is(fetchedItem.cmrLink, granule.cmrLink);
 });
 
-test('_validateAndStoreGranuleRecord() can be used to create a new completed execution', async (t) => {
+test('_validateAndStoreGranuleRecord() can be used to create a new completed granule', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2();
@@ -79,7 +79,7 @@ test('_validateAndStoreGranuleRecord() can be used to create a new completed exe
   t.is(fetchedItem.status, 'completed');
 });
 
-test('_validateAndStoreGranuleRecord() can be used to update a completed execution', async (t) => {
+test('_validateAndStoreGranuleRecord() can be used to update a completed granule', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2();
