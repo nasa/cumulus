@@ -48,6 +48,18 @@ test('_validateAndStoreGranuleRecord() can be used to create a new completed gra
   t.is(fetchedItem.status, 'completed');
 });
 
+test('_validateAndStoreGranuleRecord() can be used to create a new failed granule', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'failed' });
+
+  await granuleModel._validateAndStoreGranuleRecord(granule);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.is(fetchedItem.status, 'failed');
+});
+
 test('_validateAndStoreGranuleRecord() can be used to update a completed granule', async (t) => {
   const { granuleModel } = t.context;
 
@@ -66,6 +78,27 @@ test('_validateAndStoreGranuleRecord() can be used to update a completed granule
 
   t.is(fetchedItem.status, 'completed');
   t.is(fetchedItem.productVolume, 500);
+});
+
+test('_validateAndStoreGranuleRecord() can be used to update a failed granule', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'failed' });
+
+  await granuleModel._validateAndStoreGranuleRecord(granule);
+
+  const newError = { cause: 'fail' };
+  const updatedGranule = {
+    ...granule,
+    error: newError
+  };
+
+  await granuleModel._validateAndStoreGranuleRecord(updatedGranule);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.is(fetchedItem.status, 'failed');
+  t.deepEqual(fetchedItem.error, newError);
 });
 
 test('_validateAndStoreGranuleRecord() will allow a completed status to replace a running status for same execution', async (t) => {
@@ -87,6 +120,25 @@ test('_validateAndStoreGranuleRecord() will allow a completed status to replace 
   t.is(fetchedItem.status, 'completed');
 });
 
+test('_validateAndStoreGranuleRecord() will allow a failed status to replace a running status for same execution', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'running' });
+
+  await granuleModel._validateAndStoreGranuleRecord(granule);
+
+  const updatedGranule = {
+    ...granule,
+    status: 'failed'
+  };
+
+  await granuleModel._validateAndStoreGranuleRecord(updatedGranule);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.is(fetchedItem.status, 'failed');
+});
+
 test('_validateAndStoreGranuleRecord() will not allow a running status to replace a completed status for same execution', async (t) => {
   const { granuleModel } = t.context;
 
@@ -106,10 +158,49 @@ test('_validateAndStoreGranuleRecord() will not allow a running status to replac
   t.is(fetchedItem.status, 'completed');
 });
 
+test('_validateAndStoreGranuleRecord() will not allow a running status to replace a failed status for same execution', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'failed' });
+
+  await granuleModel._validateAndStoreGranuleRecord(granule);
+
+  const updatedGranule = {
+    ...granule,
+    status: 'running'
+  };
+
+  await granuleModel._validateAndStoreGranuleRecord(updatedGranule);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.is(fetchedItem.status, 'failed');
+});
+
 test('_validateAndStoreGranuleRecord() will allow a running status to replace a completed status for a new execution', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2();
+
+  await granuleModel._validateAndStoreGranuleRecord(granule);
+
+  const updatedGranule = {
+    ...granule,
+    execution: 'new-execution-url',
+    status: 'running'
+  };
+
+  await granuleModel._validateAndStoreGranuleRecord(updatedGranule);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.is(fetchedItem.status, 'running');
+});
+
+test('_validateAndStoreGranuleRecord() will allow a running status to replace a failed status for a new execution', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'failed' });
 
   await granuleModel._validateAndStoreGranuleRecord(granule);
 
