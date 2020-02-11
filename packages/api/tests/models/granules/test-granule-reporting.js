@@ -36,37 +36,6 @@ test('_validateAndStoreGranuleRecord() can be used to create a new running granu
   t.is(fetchedItem.status, 'running');
 });
 
-test('_validateAndStoreGranuleRecord() can be used to update a running granule', async (t) => {
-  const { granuleModel } = t.context;
-
-  const granule = fakeGranuleFactoryV2({
-    status: 'running',
-    createdAt: 123,
-    updatedAt: 123,
-    timestamp: 123
-  });
-
-  await granuleModel._validateAndStoreGranuleRecord(granule);
-
-  const updatedGranule = {
-    ...granule,
-    createdAt: 456,
-    updatedAt: 456,
-    timestamp: 456,
-    cmrLink: 'new-cmr-link'
-  };
-  await granuleModel._validateAndStoreGranuleRecord(updatedGranule);
-
-  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
-
-  t.is(fetchedItem.status, 'running');
-  t.is(fetchedItem.createdAt, 456);
-  t.is(fetchedItem.updatedAt, 456);
-  t.is(fetchedItem.timestamp, 456);
-  // should not have been updated
-  t.is(fetchedItem.cmrLink, granule.cmrLink);
-});
-
 test('_validateAndStoreGranuleRecord() can be used to create a new completed granule', async (t) => {
   const { granuleModel } = t.context;
 
@@ -96,7 +65,7 @@ test('_validateAndStoreGranuleRecord() can be used to update a completed granule
   const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
 
   t.is(fetchedItem.status, 'completed');
-  t.deepEqual(fetchedItem.productVolume, 500);
+  t.is(fetchedItem.productVolume, 500);
 });
 
 test('_validateAndStoreGranuleRecord() will allow a completed status to replace a running status for same execution', async (t) => {
