@@ -115,6 +115,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let providerModel;
   let testDataFolder;
   let workflowExecutionArn;
+  let failingWorkflowExecution;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -556,12 +557,7 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  describe('an SNS message', () => {
-    let executionName;
-    let failedExecutionArn;
-    let failedExecutionName;
-    let failingWorkflowExecution;
-
+  describe('A Cloudwatch event', () => {
     beforeAll(async () => {
       console.log('Start FailingExecution');
 
@@ -573,31 +569,6 @@ describe('The S3 Ingest Granules workflow', () => {
         provider,
         {}
       );
-
-      failedExecutionArn = failingWorkflowExecution.executionArn;
-      failedExecutionName = failedExecutionArn.split(':').pop();
-
-      executionName = postToCmrOutput.cumulus_meta.execution_name;
-    });
-
-    afterAll(() => executionModel.delete({ arn: failedExecutionArn }));
-
-    it('is published on a successful workflow completion', async () => {
-      const executionExists = await s3ObjectExists({
-        Bucket: config.bucket,
-        Key: `${config.stackName}/test-output/${executionName}.output`
-      });
-
-      expect(executionExists).toEqual(true);
-    });
-
-    it('is published on workflow failure', async () => {
-      const executionExists = await s3ObjectExists({
-        Bucket: config.bucket,
-        Key: `${config.stackName}/test-output/${failedExecutionName}.output`
-      });
-
-      expect(executionExists).toEqual(true);
     });
 
     it('triggers the granule record being added to DynamoDB', async () => {
@@ -626,6 +597,37 @@ describe('The S3 Ingest Granules workflow', () => {
       );
       expect(record.status).toEqual('failed');
       expect(isObject(record.error)).toBe(true);
+    });
+  });
+
+  describe('an SNS message', () => {
+    let executionName;
+    let failedExecutionArn;
+    let failedExecutionName;
+
+    beforeAll(async () => {
+      failedExecutionArn = failingWorkflowExecution.executionArn;
+      failedExecutionName = failedExecutionArn.split(':').pop();
+    });
+
+    afterAll(() => executionModel.delete({ arn: failedExecutionArn }));
+
+    it('is published on a successful workflow completion', async () => {
+      const executionExists = await s3ObjectExists({
+        Bucket: config.bucket,
+        Key: `${config.stackName}/test-output/${executionName}.output`
+      });
+
+      expect(executionExists).toEqual(true);
+    });
+
+    it('is published on workflow failure', async () => {
+      const executionExists = await s3ObjectExists({
+        Bucket: config.bucket,
+        Key: `${config.stackName}/test-output/${failedExecutionName}.output`
+      });
+
+      expect(executionExists).toEqual(true);
     });
   });
 
