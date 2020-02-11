@@ -63,10 +63,10 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
   t.is(Messages.length, 1);
 
   const snsMessage = JSON.parse(Messages[0].Body);
-  const executionRecord = JSON.parse(snsMessage.Message);
+  const granuleRecord = JSON.parse(snsMessage.Message);
 
-  t.is(executionRecord.granuleId, granuleId);
-  t.is(executionRecord.status, 'running');
+  t.is(granuleRecord.granuleId, granuleId);
+  t.is(granuleRecord.status, 'running');
 });
 
 test.serial('The publish-granules Lambda function takes a DynamoDB stream event with a multiple records and publishes their granules to SNS', async (t) => {
