@@ -160,6 +160,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1733**
   - Add `discovery-filtering` operator doc to document previously undocumented functionality.
 
+- **CUMULUS-1737**
+  - Added the `cumulus-test-cleanup` module to run a nightly cleanup on resources left over from the integration tests run from the `example/spec` directory.
+
 ### Changed
 
 - **CUMULUS-1102**
