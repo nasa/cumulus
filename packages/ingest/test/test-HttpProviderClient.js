@@ -76,6 +76,24 @@ test.serial('list() returns files with provider path', async (t) => {
   t.deepEqual(actualFiles, expectedFiles);
 });
 
+test.serial.only('list() returns files for provider with different source formatting', async (t) => {
+  const responseBody = `
+  <html><body>
+
+<pre><A HREF="/parent/dir/">[To Parent Directory]</A><br><br>  1/2/2020  2:21 PM      1891826 <A HREF="test.txt">test.txt</A></body></html>
+  `;
+
+  const actualFiles = await testListWith(
+    t.context.httpProviderClient,
+    'fetchcomplete',
+    {},
+    Buffer.from(responseBody),
+    {}
+  );
+
+  t.true(actualFiles.length > 0);
+});
+
 test.serial('list() strips trailing spaces from name', async (t) => {
   const responseBody = '<html><body><a href="file.txt ">asdf</a></body></html>';
 

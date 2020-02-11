@@ -42,7 +42,7 @@ class HttpProviderClient {
   list(path) {
     validateHost(this.host);
 
-    const pattern = /<a href="([^>]*)">[^<]+<\/a>/;
+    const pattern = /<a href="([^>]*)">[^<]+<\/a>/ig;
 
     const c = new Crawler(
       buildURL({
@@ -64,10 +64,14 @@ class HttpProviderClient {
     return new Promise((resolve, reject) => {
       c.on('fetchcomplete', (_, responseBuffer) => {
         const lines = responseBuffer.toString().trim().split('\n');
+        console.log(lines.length);
+        // console.log(lines);
         lines.forEach((line) => {
           const split = line.trim().split(pattern);
+          console.log(split);
           if (split.length === 3) {
-          // Some providers provide files with one number after the dot (".") ex (tmtdayacz8110_5.6)
+            console.log(split[1]);
+            // Some providers provide files with one number after the dot (".") ex (tmtdayacz8110_5.6)
             if (split[1].match(/^(.*\.[\w\d]{1,4})\s*$/) !== null) {
               const name = split[1].trimRight();
               files.push({ name, path });
@@ -78,8 +82,17 @@ class HttpProviderClient {
         return resolve(files);
       });
 
-      c.on('fetchtimeout', () =>
-        reject(new errors.RemoteResourceError('Connection timed out')));
+      c.on('fetchtimeout', () => {
+        reject(new errors.RemoteResourceError('Connection timed out'));
+      });
+
+      // c.on('fetchstart', (queueItem) => {
+      //   console.log('fetch start', queueItem);
+      // });
+
+      // c.on('discoverycomplete', (queueItem) => {
+      //   console.log('discovered', queueItem);
+      // });
 
       c.on('fetcherror', (queueItem, response) => {
         let responseBody = '';
@@ -96,7 +109,10 @@ class HttpProviderClient {
         });
       });
 
-      c.on('fetchclienterror', () => reject(new errors.RemoteResourceError('Connection Refused')));
+      c.on('fetchclienterror', (_, error) => {
+        console.log(error);
+        reject(new errors.RemoteResourceError('Connection Refused'));
+      });
 
       c.on('fetch404', (queueItem, _) => {
         const errorToThrow = new Error(`Received a 404 error from ${this.endpoint}. Check your endpoint!`);
