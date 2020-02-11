@@ -77,7 +77,7 @@ locals {
         username           = var.cmr_username
         provider           = var.cmr_provider
         clientId           = var.cmr_client_id
-        passwordSecretName = length(var.cmr_password) == 0 ? null : aws_secretsmanager_secret.message_template_cmr_password.name
+        passwordSecretName = length(var.cmr_password) == 0 ? "" : aws_secretsmanager_secret.message_template_cmr_password.name
         cmrEnvironment     = var.cmr_environment
         cmrLimit           = var.cmr_limit
         cmrPageSize        = var.cmr_page_size
@@ -85,7 +85,7 @@ locals {
       launchpad = {
         api         = var.launchpad_api
         certificate = var.launchpad_certificate
-        passphraseSecretName = length(var.launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.message_template_launchpad_passphrase.name
+        passphraseSecretName = length(var.launchpad_passphrase) == 0 ? "" : aws_secretsmanager_secret.message_template_launchpad_passphrase.name
       }
       distribution_endpoint = var.distribution_url
       collection            = {}
