@@ -82,7 +82,7 @@ exports.collectionMessageInput = (id, taskName, payload = (o) => o, configFile =
 
   const taskConfig = {};
   Object.keys(collection.workflow_config_template).forEach((key) => {
-    const localTaskConfig = Object.assign({}, collection.workflow_config_template[key]);
+    const localTaskConfig = { ...collection.workflow_config_template[key] };
     if (localTaskConfig.connections) {
       log.info(`Removing connection limit for local run of ${key}`);
       delete localTaskConfig.connections;
