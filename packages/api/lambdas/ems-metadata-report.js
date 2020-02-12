@@ -180,9 +180,11 @@ async function getCollectionsForEms(startTime, endTime) {
   // get all collections from CMR and sort them, since CMR query doesn't support
   // 'version' as sort_key
   const cmrCollections = sortBy((await getCmrCollections()), ['collectionId']);
+  console.log(`collections for cmr: ${JSON.stringify(cmrCollections.map((c) => c.collectionId))}`);
 
   // get all collections from database and sort them, since the scan result is not ordered
   const dbCollections = sortBy((await getDbCollections()), ['collectionId']);
+  console.log(`collections for db: ${JSON.stringify(dbCollections.map((c) => c.collectionId))}`);
 
   // collections exist in both CMR and Cumulus
   const emsCollections = [];
@@ -210,6 +212,8 @@ async function getCollectionsForEms(startTime, endTime) {
     nextCmrCollectionId = (cmrCollections.length !== 0) ? cmrCollections[0].collectionId : null;
   }
 
+  console.log(`collections for ems: ${JSON.stringify(emsCollections)}`);
+
   // only the collections updated in CMR or CUMULUS within the time range are included
   const lastUpdateFilter = (collection) =>
     (moment.utc(collection.lastUpdate).isBetween(startTime, endTime, null, '[)')
@@ -230,11 +234,16 @@ async function generateReport(startTime, endTime, collectionId) {
   log.debug(`ems-metadata-report.generateReport startTime: ${startTime} endTime: ${endTime}`);
   const reportType = 'metadata';
 
+  console.log(`collectionid: ${collectionId}`);
+
   let emsCollections = await getCollectionsForEms(startTime, endTime);
+  console.log(`collections for ems 2: ${JSON.stringify(emsCollections)}`);
   if (collectionId) {
     emsCollections = emsCollections
       .filter((collection) => collection.collectionId === collectionId);
   }
+
+  console.log(`collections in report: ${emsCollections}`);
 
   const report = emsCollections
     .map((collection) => Object.values(collection.emsRecord).join('|&|'))
