@@ -12,7 +12,6 @@ const {
 } = require('@cumulus/common/message');
 const { isNil } = require('@cumulus/common/util');
 
-const Collection = require('../models/collections');
 const Granule = require('../models/granules');
 const Pdr = require('../models/pdrs');
 const { getCumulusMessageFromExecutionEvent } = require('../lib/cwSfExecutionEventUtils');
