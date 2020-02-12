@@ -69,18 +69,33 @@ test.serial('list() returns files with provider path', async (t) => {
     {}
   );
 
-  console.log('actualFiles:', JSON.stringify(actualFiles, null, 2));
-
   const expectedFiles = [{ name: 'file.txt', path: '' }];
 
   t.deepEqual(actualFiles, expectedFiles);
 });
 
-test.serial.only('list() returns files for provider with different source formatting', async (t) => {
+test.serial('list() returns files for provider with link tags in uppercase', async (t) => {
+  const responseBody = '<html><body><A HREF="test.txt">test.txt</A></body></html>';
+
+  const actualFiles = await testListWith(
+    t.context.httpProviderClient,
+    'fetchcomplete',
+    {},
+    Buffer.from(responseBody),
+    {}
+  );
+
+  const expectedFiles = [{ name: 'test.txt', path: '' }];
+
+  t.deepEqual(actualFiles, expectedFiles);
+});
+
+test.serial('list() returns files for provider with multiple links on a single source line', async (t) => {
   const responseBody = `
   <html><body>
-
-<pre><A HREF="/parent/dir/">[To Parent Directory]</A><br><br>  1/2/2020  2:21 PM      1891826 <A HREF="test.txt">test.txt</A></body></html>
+  <A HREF="/parent/dir/">[To Parent Directory]</A><A HREF="test.txt">test.txt</A>
+  <A HREF="test2.txt">test2.txt</A>
+  </body></html>
   `;
 
   const actualFiles = await testListWith(
@@ -91,7 +106,12 @@ test.serial.only('list() returns files for provider with different source format
     {}
   );
 
-  t.true(actualFiles.length > 0);
+  const expectedFiles = [
+    { name: 'test.txt', path: '' },
+    { name: 'test2.txt', path: '' }
+  ];
+
+  t.deepEqual(actualFiles, expectedFiles);
 });
 
 test.serial('list() strips trailing spaces from name', async (t) => {
