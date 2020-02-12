@@ -43,5 +43,5 @@ ems_datasource        = "UAT"
 ems_private_key       = "ems-private.pem"
 ems_provider          = "CUMULUS"
 ems_retention_in_days = 30
-ems_submit_report     = false
+ems_submit_report     = true
 ems_username          = "cumulus"
