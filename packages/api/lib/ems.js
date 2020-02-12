@@ -8,7 +8,9 @@ const {
   listS3ObjectsV2,
   parseS3Uri,
   s3CopyObject,
-  buildS3Uri
+  buildS3Uri,
+  s3ObjectExists,
+  getS3Object
 } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const log = require('@cumulus/common/log');
@@ -101,6 +103,22 @@ async function getExpiredS3Objects(bucket, prefix, retentionInDays) {
     .map((s3Object) => ({ Bucket: bucket, Key: s3Object.Key }));
 }
 
+async function retrievePrivateKey() {
+  const privateKeyFile = process.env.ems_privateKey || 'ems-private.pem';
+
+  const keyExists = await s3ObjectExists(
+    { Bucket: process.env.system_bucket, Key: `${process.env.stackName}/crypto/${privateKeyFile}` }
+  );
+  if (!keyExists) {
+    return Promise.reject(new Error(`${privateKeyFile} does not exist in S3 crypto directory`));
+  }
+
+  log.debug(`Reading Key: ${privateKeyFile} bucket:${process.env.system_bucket}, stack:${process.env.stackName}`);
+  const privateKey = await getS3Object(process.env.system_bucket, `${process.env.stackName}/crypto/${privateKeyFile}`);
+
+  return privateKey.Body.toString();
+}
+
 /**
  * submit reports to ems
  *
@@ -113,15 +131,17 @@ async function submitReports(reports) {
     return reports;
   }
 
-  const emsConfig = {
+  const privateKey = await retrievePrivateKey();
+
+  const sshConfig = {
     username: process.env.ems_username,
     host: process.env.ems_host,
     port: process.env.ems_port,
-    privateKey: process.env.ems_privateKey || 'ems-private.pem'
+    privateKey
   };
 
   const reportsSent = [];
-  const sftpClient = new SftpClient(emsConfig);
+  const sftpClient = new SftpClient(sshConfig);
 
   // submit files one by one using the same connection
   for (let i = 0; i < reports.length; i += 1) {
