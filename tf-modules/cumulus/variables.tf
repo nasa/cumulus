@@ -446,7 +446,7 @@ variable "throttled_queues" {
 variable "urs_url" {
   description = "The URL of the Earthdata login (URS) site"
   type        = string
-  default     = "https://uat.urs.earthdata.nasa.gov/"
+  default     = "https://uat.urs.earthdata.nasa.gov"
 }
 
 variable "vpc_id" {
@@ -486,4 +486,16 @@ variable "non_complete_execution_payload_timeout" {
   description = "Number of days to retain 'non-complete' execution payload records in the database"
   type        = number
   default     = 30
+}
+
+variable "archive_api_url" {
+  type        = string
+  default     = null
+  description = "If not specified, the value of the Backend (Archive) API Gateway endpoint is used"
+}
+
+variable "additional_log_groups_to_elk" {
+  description = "Map of Cloudwatch Log Groups. The key is a descriptor and the value is the log group"
+  type = map(string)
+  default = {}
 }

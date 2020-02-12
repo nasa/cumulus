@@ -106,9 +106,11 @@ resource "aws_lambda_function" "api" {
       METRICS_ES_HOST              = var.metrics_es_host
       METRICS_ES_USER              = var.metrics_es_username
       METRICS_ES_PASS              = var.metrics_es_password
+      provider_kms_key_id          = aws_kms_key.provider_kms_key.key_id
+      log_destination_arn          = var.log_destination_arn
     }
   }
-  memory_size = 1024
+  memory_size = 960
   tags        = merge(local.default_tags, { Project = var.prefix })
 
   vpc_config {

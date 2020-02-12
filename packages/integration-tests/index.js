@@ -30,6 +30,7 @@ const {
 } = require('@cumulus/api');
 
 const api = require('./api/api');
+const providersApi = require('./api/providers');
 const rulesApi = require('./api/rules');
 const emsApi = require('./api/ems');
 const executionsApi = require('./api/executions');
@@ -420,29 +421,32 @@ function getProviderPort({ protocol, port }) {
  * S3 providers. This will override the host from the seed data. Defaults to null,
  * meaning no override.
  * @param {string} [postfix] - string to append to provider id
- * @returns {Promise.<number>} number of providers added
+ * @returns {Promise<number>} number of providers added
  */
 async function addProviders(stackName, bucketName, dataDirectory, s3Host, postfix) {
   const providers = await setupSeedData(stackName, bucketName, dataDirectory);
 
-  const promises = providers.map((provider) => limit(() => {
-    if (postfix) {
-      provider.id += postfix;
-    }
-    const p = new Provider();
+  const completeProviders = providers.map((provider) => {
+    let host;
+    if (s3Host && provider.protocol === 's3') host = s3Host;
+    else host = getProviderHost(provider);
 
-    if (s3Host && provider.protocol === 's3') {
-      provider.host = s3Host;
-    } else {
-      provider.host = getProviderHost(provider);
-    }
+    return {
+      ...provider,
+      id: postfix ? `${provider.id}${postfix}` : provider.id,
+      port: getProviderPort(provider),
+      host
+    };
+  });
 
-    provider.port = getProviderPort(provider);
+  await Promise.all(
+    completeProviders.map(async (provider) => {
+      await providersApi.deleteProvider(stackName, provider.id);
+      await providersApi.createProvider(stackName, provider);
+    })
+  );
 
-    console.log(`adding provider ${provider.id}`);
-    return p.delete(provider).then(() => p.create(provider)).catch(console.log);
-  }));
-  return Promise.all(promises).then((ps) => ps.length);
+  return completeProviders.length;
 }
 
 /**

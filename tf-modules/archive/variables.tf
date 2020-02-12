@@ -269,7 +269,7 @@ variable "saml_launchpad_metadata_url" {
 
 variable "urs_url" {
   type        = string
-  default     = "https://uat.urs.earthdata.nasa.gov/"
+  default     = "https://uat.urs.earthdata.nasa.gov"
   description = "The URL of the Earthdata Login site"
 }
 
@@ -314,4 +314,10 @@ variable "non_complete_execution_payload_timeout" {
   description = "Number of days to retain 'non-complete' execution payload records in the database"
   type    = number
   default = 30
+}
+
+variable "log_destination_arn" {
+  type = string
+  default = "N/A"
+  description = "A shared AWS:Log:Destination that receives logs from log_groups"
 }

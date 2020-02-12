@@ -63,3 +63,9 @@ variable "subnet_ids" {
   type        = list(string)
   default     = []
 }
+
+variable "security_group" {
+  description = "Security Group Ids for Elasticsearch"
+  type        = string
+  default     = null
+}

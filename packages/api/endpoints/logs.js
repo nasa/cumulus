@@ -4,13 +4,33 @@ const router = require('express-promise-router')();
 const log = require('@cumulus/common/log');
 const { Search } = require('../es/search');
 
+const metrics = () => ('log_destination_arn' in process.env);
+
 function convertLogLevelForQuery(query) {
-  if (!query.level) {
+  if (!query.level || metrics()) {
     return query;
   }
 
   return { ...query, level: log.convertLogLevel(query.level) };
 }
+
+function metricsConfig() {
+  return {
+    type: '_doc',
+    index: `${process.env.stackName}-*`,
+    metrics: true
+  };
+}
+
+function cumulusDefaultConfig() {
+  return {
+    type: 'logs',
+    index: process.env.ES_INDEX,
+    metrics: false
+  };
+}
+
+const esConfig = () => (metrics() ? metricsConfig() : cumulusDefaultConfig());
 
 /**
  * list all the logs
@@ -20,10 +40,13 @@ function convertLogLevelForQuery(query) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
+  const config = esConfig();
+
   const search = new Search(
     { queryStringParameters: convertLogLevelForQuery(req.query) },
-    'logs',
-    process.env.ES_INDEX
+    config.type,
+    config.index,
+    config.metrics
   );
 
   const result = await search.query();
@@ -39,6 +62,7 @@ async function list(req, res) {
  */
 async function get(req, res) {
   const executionName = req.params.executionName;
+  const config = esConfig();
 
   const search = new Search(
     {
@@ -47,8 +71,9 @@ async function get(req, res) {
         'executions.keyword': executionName
       }
     },
-    'logs',
-    process.env.ES_INDEX
+    config.type,
+    config.index,
+    config.metrics
   );
   const result = await search.query();
   return res.send(result);
