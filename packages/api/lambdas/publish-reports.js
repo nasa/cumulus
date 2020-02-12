@@ -12,6 +12,7 @@ const {
 } = require('@cumulus/common/message');
 const { isNil } = require('@cumulus/common/util');
 
+const Collection = require('../models/collections');
 const Granule = require('../models/granules');
 const Pdr = require('../models/pdrs');
 const { getCumulusMessageFromExecutionEvent } = require('../lib/cwSfExecutionEventUtils');
@@ -45,6 +46,33 @@ function publishPdrSnsMessage(
 ) {
   return publishSnsMessage(pdrSnsTopicArn, pdrRecord);
 }
+
+/**
+ * Publish SNS message for Collection reporting.
+ *
+ * @param {Object} collectionRecord - A Collection record.
+ * @param {string} [collectionSnsTopicArn]
+ *   SNS topic ARN for reporting Collections. Defaults to `process.env.collection_sns_topic_arn`.
+ * @returns {Promise<undefined>}
+ */
+function publishCollectionSnsMessage(
+  collectionRecord,
+  collectionSnsTopicArn = process.env.collection_sns_topic_arn
+) {
+  return publishSnsMessage(collectionSnsTopicArn, collectionRecord);
+}
+
+const publishCollectionRecord = async (collectionRecord) => {
+  try {
+    await publishCollectionSnsMessage(collectionRecord);
+  } catch (err) {
+    log.fatal(
+      `Failed to create database record for collection ${collectionRecord.name} ${collectionRecord.version}: ${err.message}`,
+      'Cause: ', err,
+      'Collection record: ', collectionRecord
+    );
+  }
+};
 
 const publishGranuleRecord = async (granuleRecord) => {
   try {
@@ -109,6 +137,20 @@ async function handleGranuleMessages(eventMessage) {
   await Promise.all(granuleRecords.map(publishGranuleRecord));
 }
 
+// /**
+//  * Publish individual collection messages to SNS topic.
+//  *
+//  * @param {Object} eventMessage - Workflow execution message
+//  * @returns {Promise}
+//  */
+// async function handleCollectionMessages(eventMessage) {
+//   // const collectionName = get(message, 'meta.collection.name');
+//   // const collectionVersion = get(message, 'meta.collection.version');
+//   //getCollectionIdFromMessage(eventMessage);
+//   const collectionRecord = Collection.generateCollectionRecord(eventMessage);
+//   if (collectionRecord) await publishCollectionRecord(collectionRecord);
+// }
+
 /**
  * Publish PDR record to SNS topic.
  *
@@ -137,6 +179,7 @@ async function handlePdrMessage(eventMessage) {
 function publishReportSnsMessages(eventMessage) {
   return Promise.all([
     handleGranuleMessages(eventMessage),
+    // handleCollectionMessage(eventMessage),
     handlePdrMessage(eventMessage)
   ]);
 }
@@ -156,7 +199,9 @@ module.exports = {
   getGranuleRecordsFromCumulusMessage,
   handler,
   handleGranuleMessages,
+  // handleCollectionMessages,
   handlePdrMessage,
+  publishCollectionRecord,
   publishGranuleRecord,
   publishReportSnsMessages
 };
