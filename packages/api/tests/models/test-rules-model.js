@@ -638,9 +638,7 @@ test('updates a deeply nested key', async (t) => {
 
   t.deepEqual(rule.meta.testObject, testObject);
 
-  const newTestObject = Object.assign({}, testObject, {
-    key: randomString()
-  });
+  const newTestObject = { ...testObject, key: randomString() };
   const updates = {
     name: rule.name,
     meta: {
@@ -669,9 +667,7 @@ test('update preserves nested keys', async (t) => {
   t.is(rule.meta.foo, 'bar');
   t.deepEqual(rule.meta.testObject, testObject);
 
-  const newTestObject = Object.assign({}, testObject, {
-    key: randomString()
-  });
+  const newTestObject = { ...testObject, key: randomString() };
   const updates = {
     name: rule.name,
     meta: {

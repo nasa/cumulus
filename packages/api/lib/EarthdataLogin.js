@@ -3,11 +3,9 @@
 const got = require('got');
 const { URL } = require('url');
 
-const {
-  OAuth2AuthenticationError,
-  OAuth2AuthenticationFailure,
-  OAuth2
-} = require('./OAuth2');
+const OAuth2 = require('./OAuth2');
+const OAuth2AuthenticationError = require('./OAuth2AuthenticationError');
+const OAuth2AuthenticationFailure = require('./OAuth2AuthenticationFailure');
 
 const isBadRequestError = ({ name, statusCode }) =>
   name === 'HTTPError' && statusCode === 400;
