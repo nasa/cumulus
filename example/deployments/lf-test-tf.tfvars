@@ -1,5 +1,6 @@
 prefix            = "lf-test-tf"
 system_bucket     = "lf-internal"
+oauth_provider    = "launchpad"
 buckets = {
   internal = {
     name = "lf-internal"
