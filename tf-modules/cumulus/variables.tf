@@ -487,3 +487,15 @@ variable "non_complete_execution_payload_timeout" {
   type        = number
   default     = 30
 }
+
+variable "archive_api_url" {
+  type        = string
+  default     = null
+  description = "If not specified, the value of the Backend (Archive) API Gateway endpoint is used"
+}
+
+variable "additional_log_groups_to_elk" {
+  description = "Map of Cloudwatch Log Groups. The key is a descriptor and the value is the log group"
+  type = map(string)
+  default = {}
+}

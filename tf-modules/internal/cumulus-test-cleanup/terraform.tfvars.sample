@@ -1,0 +1,5 @@
+aws_region               = "us-east-1"
+permissions_boundary_arn = "arn:aws:iam::1234567890:policy/YourRoleBoundary"
+vpc_id                   = "vpc-123456"
+subnet_ids               = ["subnet-123456"]
+security_groups          = ["sg-123456"]

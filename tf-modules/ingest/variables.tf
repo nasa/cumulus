@@ -80,10 +80,6 @@ variable "launchpad_passphrase" {
   default = ""
 }
 
-variable "log2elasticsearch_lambda_function_arn" {
-  type = string
-}
-
 variable "permissions_boundary_arn" {
   type = string
 }

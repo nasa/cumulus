@@ -1,14 +1,17 @@
 'use strict';
 
 const isIp = require('is-ip');
-const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
+const KMS = require('@cumulus/aws-client/KMS');
 const { isNil } = require('@cumulus/common/util');
 const { isValidHostname } = require('@cumulus/common/string');
 
 const Manager = require('./base');
-const providerSchema = require('./schemas').provider;
 const Rule = require('./rules');
+const schemas = require('./schemas');
 const { AssociatedRulesError } = require('../lib/errors');
+
+const encryptValueWithKMS = (value) =>
+  KMS.encrypt(process.env.provider_kms_key_id, value);
 
 const buildValidationError = ({ detail }) => {
   const err = new Error('The record has validation errors');
@@ -39,7 +42,7 @@ class Provider extends Manager {
     super({
       tableName: process.env.ProvidersTable,
       tableHash: { name: 'id', type: 'S' },
-      schema: providerSchema
+      schema: schemas.provider
     });
 
     this.removeAdditional = 'all';
@@ -51,50 +54,38 @@ class Provider extends Manager {
    * @param {string} id - provider id
    * @returns {boolean}
    */
-  async exists(id) {
+  exists(id) {
     return super.exists({ id });
   }
 
-  encrypt(value) {
-    return DefaultProvider.encrypt(value);
-  }
+  async update(key, item, keysToDelete = []) {
+    const record = { ...item };
 
-  decrypt(value) {
-    return DefaultProvider.decrypt(value);
-  }
-
-  async update(key, _item, keysToDelete = []) {
-    const item = _item;
-    // encrypt the password
-    if (item.password) {
-      item.password = await this.encrypt(item.password);
-      item.encrypted = true;
-    }
+    if (item.username || item.password) record.encrypted = true;
 
     if (item.username) {
-      item.username = await this.encrypt(item.username);
-      item.encrypted = true;
+      record.username = await encryptValueWithKMS(item.username);
+    }
+    if (item.password) {
+      record.password = await encryptValueWithKMS(item.password);
     }
 
-
-    return super.update(key, item, keysToDelete);
+    return super.update(key, record, keysToDelete);
   }
 
-  async create(_item) {
-    const item = _item;
+  async create(item) {
+    const record = { ...item };
 
-    // encrypt the password
-    if (item.password) {
-      item.password = await this.encrypt(item.password);
-      item.encrypted = true;
-    }
+    if (item.username || item.password) record.encrypted = true;
 
     if (item.username) {
-      item.username = await this.encrypt(item.username);
-      item.encrypted = true;
+      record.username = await encryptValueWithKMS(item.username);
+    }
+    if (item.password) {
+      record.password = await encryptValueWithKMS(item.password);
     }
 
-    return super.create(item);
+    return super.create(record);
   }
 
   /**

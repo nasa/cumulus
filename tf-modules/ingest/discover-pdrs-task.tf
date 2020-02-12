@@ -31,11 +31,3 @@ resource "aws_cloudwatch_log_group" "discover_pdrs_task" {
   retention_in_days = 30
   tags              = local.default_tags
 }
-
-resource "aws_cloudwatch_log_subscription_filter" "discover_pdrs_task" {
-  name            = "${var.prefix}-DiscoverPdrsLogSubscription"
-  destination_arn = var.log2elasticsearch_lambda_function_arn
-  log_group_name  = aws_cloudwatch_log_group.discover_pdrs_task.name
-  filter_pattern  = ""
-  distribution    = "ByLogStream"
-}
