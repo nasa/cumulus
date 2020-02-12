@@ -22,10 +22,10 @@ async function createCollectionRecord(collection) {
 }
 
 /**
- * Return valid Cumulus SNS messages containing granule ingest notifications.
+ * Return valid Cumulus SNS messages containing collection creation notifications.
  *
  * @param {Object} event - SNS Notification Event
- * @returns {Array<Object>} granule ingest notification Cumulus messages
+ * @returns {Array<Object>} collection creation notification Cumulus messages
  */
 function getReportCollectionMessages(event) {
   const records = get(event, 'Records', []);
@@ -38,7 +38,7 @@ function getReportCollectionMessages(event) {
  * Lambda handler for report-collections Lambda.
  *
  * @param {Object} event - SNS Notification Event
- * @returns {Promise<Array>} granule records
+ * @returns {Promise<Array>} collection records
  */
 async function handler(event) {
   const messages = getReportCollectionMessages(event);

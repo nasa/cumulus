@@ -4,6 +4,7 @@ const { CollectionConfigStore } = require('@cumulus/common/collection-config-sto
 const Manager = require('./base');
 const { collection: collectionSchema } = require('./schemas');
 const Rule = require('./rules');
+const { publishCollectionRecord } = require('../lambdas/publish-reports');
 const { AssociatedRulesError, BadRequestError } = require('../lib/errors');
 
 function checkRegex(regex, sampleFileName) {
@@ -95,7 +96,10 @@ class Collection extends Manager {
     const { dataType, name, version } = item;
     await this.collectionConfigStore.put(dataType || name, version, item);
 
-    return super.create(item);
+    const collectionRecord = super.create(item);
+    await publishCollectionRecord(collectionRecord);
+
+    return collectionRecord
   }
 
   /**
