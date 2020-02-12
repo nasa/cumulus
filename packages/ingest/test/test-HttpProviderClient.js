@@ -58,7 +58,7 @@ test('sync() downloads remote file to s3 with correct content-type', async (t) =
   }
 });
 
-test.serial('list() returns files with provider path', async (t) => {
+test.serial('list() returns expected files', async (t) => {
   const responseBody = '<html><body><a href="file.txt">asdf</a></body></html>';
 
   const actualFiles = await testListWith(
@@ -93,7 +93,30 @@ test.serial('list() returns files for provider with link tags in uppercase', asy
 test.serial('list() returns files for provider with multiple links on a single source line', async (t) => {
   const responseBody = `
   <html><body>
-  <A HREF="/parent/dir/">[To Parent Directory]</A><A HREF="test.txt">test.txt</A>
+  <A HREF="test.txt">test.txt</A><A HREF="test2.txt">test2.txt</A>
+  </body></html>
+  `;
+
+  const actualFiles = await testListWith(
+    t.context.httpProviderClient,
+    'fetchcomplete',
+    {},
+    Buffer.from(responseBody),
+    {}
+  );
+
+  const expectedFiles = [
+    { name: 'test.txt', path: '' },
+    { name: 'test2.txt', path: '' }
+  ];
+
+  t.deepEqual(actualFiles, expectedFiles);
+});
+
+test.serial('list() returns all files for provider from multiple source lines', async (t) => {
+  const responseBody = `
+  <html><body>
+  <A HREF="test.txt">test.txt</A>
   <A HREF="test2.txt">test2.txt</A>
   </body></html>
   `;
@@ -110,6 +133,27 @@ test.serial('list() returns files for provider with multiple links on a single s
     { name: 'test.txt', path: '' },
     { name: 'test2.txt', path: '' }
   ];
+
+  t.deepEqual(actualFiles, expectedFiles);
+});
+
+test.serial('list() excludes files for provider with non-valid file extension', async (t) => {
+  const responseBody = `
+  <html><body>
+  <A HREF="/parent/dir/">[To Parent Directory]</A>
+  <A HREF="test.txt">test.txt</A>
+  </body></html>
+  `;
+
+  const actualFiles = await testListWith(
+    t.context.httpProviderClient,
+    'fetchcomplete',
+    {},
+    Buffer.from(responseBody),
+    {}
+  );
+
+  const expectedFiles = [{ name: 'test.txt', path: '' }];
 
   t.deepEqual(actualFiles, expectedFiles);
 });
