@@ -120,6 +120,8 @@ async function submitReports(reports) {
     privateKey: process.env.ems_privateKey || 'ems-private.pem'
   };
 
+  console.log(JSON.stringify(emsConfig));
+
   const reportsSent = [];
   const sftpClient = new SftpClient(emsConfig);
 
