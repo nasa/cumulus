@@ -421,17 +421,6 @@ async function addCollections(stackName, bucketName, dataDirectory, postfix,
 }
 
 /**
- * Return a list of collections
- *
- * @param {string} _stackName - CloudFormation stack name
- * @param {string} _bucketName - S3 internal bucket name
- * @param {string} dataDirectory - the directory of collection json files
- * @returns {Promise.<Array>} list of collections
- */
-const listCollections = (_stackName, _bucketName, dataDirectory) =>
-  readJsonFilesFromDir(dataDirectory);
-
-/**
  * Delete collections from database
  *
  * @param {string} stackName - CloudFormation stack name
@@ -463,7 +452,7 @@ async function deleteCollections(stackName, bucketName, collections, postfix) {
  * @returns {Promise<number>} - number of deleted collections
  */
 async function cleanupCollections(stackName, bucket, collectionsDirectory, postfix) {
-  const collections = await listCollections(stackName, bucket, collectionsDirectory);
+  const collections = await readJsonFilesFromDir(collectionsDirectory);
   return deleteCollections(stackName, bucket, collections, postfix);
 }
 
@@ -569,18 +558,6 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host, postfi
 }
 
 /**
- * Return a list of providers
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @param {string} dataDirectory - the directory of provider json files
- * @returns {Promise.<Array>} list of providers
- */
-async function listProviders(stackName, bucketName, dataDirectory) {
-  return setupSeedData(stackName, bucketName, dataDirectory);
-}
-
-/**
  * Delete providers from database
  *
  * @param {string} stackName - CloudFormation stack name
@@ -614,7 +591,7 @@ async function deleteProviders(stackName, bucketName, providers, postfix) {
  * @returns {number} - number of deleted collections
  */
 async function cleanupProviders(stackName, bucket, providersDirectory, postfix) {
-  const providers = await listProviders(stackName, bucket, providersDirectory);
+  const providers = await readJsonFilesFromDir(providersDirectory);
   return deleteProviders(stackName, bucket, providers, postfix);
 }
 
@@ -712,18 +689,6 @@ function removeRuleAddedParams(rule) {
  */
 function isWorkflowTriggeredByRule(taskInput, params) {
   return taskInput.meta.triggerRule && taskInput.meta.triggerRule === params.rule;
-}
-
-/**
- * returns a list of rule objects
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @param {string} rulesDirectory - The directory continaing rules json files
- * @returns {list} - list of rules found in rulesDirectory
- */
-async function rulesList(stackName, bucketName, rulesDirectory) {
-  return setupSeedData(stackName, bucketName, rulesDirectory);
 }
 
 /**
@@ -1014,11 +979,9 @@ module.exports = {
   LambdaStep,
   addCollections,
   addCustomUrlPathToCollectionFiles,
-  listCollections,
   deleteCollections,
   cleanupCollections,
   addProviders,
-  listProviders,
   deleteProviders,
   cleanupProviders,
   conceptExists: cmr.conceptExists,
@@ -1031,7 +994,6 @@ module.exports = {
   removeRuleAddedParams,
   isWorkflowTriggeredByRule,
   getClusterArn,
-  rulesList,
   waitForAsyncOperationStatus,
   getLambdaVersions: lambda.getLambdaVersions,
   getLambdaAliases: lambda.getLambdaAliases,

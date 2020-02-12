@@ -14,7 +14,7 @@ const {
   granulesApi: granulesApiTestUtils,
   cleanupProviders,
   cleanupCollections,
-  rulesList,
+  readJsonFilesFromDir,
   deleteRules
 } = require('@cumulus/integration-tests');
 
@@ -64,7 +64,7 @@ async function setupCollectionAndTestData() {
 
 async function cleanUp() {
   console.log(`\nDeleting rule ${ruleOverride.name}`);
-  const rules = await rulesList(config.stackName, config.bucket, ruleDirectory);
+  const rules = await readJsonFilesFromDir(ruleDirectory);
   await deleteRules(config.stackName, config.bucket, rules, ruleSuffix);
   await Promise.all([
     deleteFolder(config.bucket, testDataFolder),

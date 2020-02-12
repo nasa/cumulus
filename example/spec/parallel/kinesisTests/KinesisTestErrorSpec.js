@@ -15,7 +15,7 @@ const {
   cleanupProviders,
   addCollections,
   cleanupCollections,
-  rulesList
+  readJsonFilesFromDir
 } = require('@cumulus/integration-tests');
 
 const {
@@ -62,7 +62,7 @@ describe('The messageConsumer receives a bad record.\n', () => {
       await deleteSQSMessage(failureSqsUrl, this.ReceiptHandle);
     }
     console.log(`\nDeleting ${ruleOverride.name}`);
-    const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
+    const rules = await readJsonFilesFromDir(ruleDirectory);
     // clean up stack state added by test
     console.log(`\nDeleting testStream '${streamName}'`);
     await Promise.all([
