@@ -137,20 +137,6 @@ async function handleGranuleMessages(eventMessage) {
   await Promise.all(granuleRecords.map(publishGranuleRecord));
 }
 
-// /**
-//  * Publish individual collection messages to SNS topic.
-//  *
-//  * @param {Object} eventMessage - Workflow execution message
-//  * @returns {Promise}
-//  */
-// async function handleCollectionMessages(eventMessage) {
-//   // const collectionName = get(message, 'meta.collection.name');
-//   // const collectionVersion = get(message, 'meta.collection.version');
-//   //getCollectionIdFromMessage(eventMessage);
-//   const collectionRecord = Collection.generateCollectionRecord(eventMessage);
-//   if (collectionRecord) await publishCollectionRecord(collectionRecord);
-// }
-
 /**
  * Publish PDR record to SNS topic.
  *
@@ -179,7 +165,6 @@ async function handlePdrMessage(eventMessage) {
 function publishReportSnsMessages(eventMessage) {
   return Promise.all([
     handleGranuleMessages(eventMessage),
-    // handleCollectionMessage(eventMessage),
     handlePdrMessage(eventMessage)
   ]);
 }
@@ -199,7 +184,6 @@ module.exports = {
   getGranuleRecordsFromCumulusMessage,
   handler,
   handleGranuleMessages,
-  // handleCollectionMessages,
   handlePdrMessage,
   publishCollectionRecord,
   publishGranuleRecord,
