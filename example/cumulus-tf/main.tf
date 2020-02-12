@@ -45,7 +45,7 @@ module "cumulus" {
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.subnet_ids
 
-  ecs_cluster_instance_image_id   = "ami-02741ffa8265e9ac1"
+  ecs_cluster_instance_image_id   = "ami-0905e80a0a5c5bf71"
   ecs_cluster_instance_subnet_ids = var.subnet_ids
   ecs_cluster_min_size            = 1
   ecs_cluster_desired_size        = 1
@@ -131,6 +131,7 @@ module "cumulus" {
   api_gateway_stage             = var.api_gateway_stage
   log_api_gateway_to_cloudwatch = var.log_api_gateway_to_cloudwatch
   log_destination_arn           = var.log_destination_arn
+  additional_log_groups_to_elk  = var.additional_log_groups_to_elk
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {

@@ -13,30 +13,29 @@ This is a guide for deploying a new instance of Cumulus.
 This document assumes familiarity with Terraform. If you are not comfortable
 working with Terraform, the following links should bring you up to speed:
 
-* [Introduction to Terraform](https://www.terraform.io/intro/index.html)
-* [Getting Started with Terraform and AWS](https://learn.hashicorp.com/terraform/?track=getting-started#getting-started)
-* [Terraform Configuration Language](https://www.terraform.io/docs/configuration/index.html)
+- [Introduction to Terraform](https://www.terraform.io/intro/index.html)
+- [Getting Started with Terraform and AWS](https://learn.hashicorp.com/terraform/?track=getting-started#getting-started)
+- [Terraform Configuration Language](https://www.terraform.io/docs/configuration/index.html)
 
 The process involves:
 
-* Creating [AWS S3 Buckets](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html)
-* Configuring a VPC, if necessary
-* Configuring an Earthdata application, if necessary
-* Creating a Lambda layer for the [Cumulus Message Adapter](./../workflows/input_output.md#cumulus-message-adapter)
-* Creating resources for your Terraform backend
-* Using [Terraform](https://www.terraform.io) to deploy resources to AWS
+- Creating [AWS S3 Buckets](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html)
+- Configuring a VPC, if necessary
+- Configuring an Earthdata application, if necessary
+- Creating a Lambda layer for the [Cumulus Message Adapter](./../workflows/input_output.md#cumulus-message-adapter)
+- Creating resources for your Terraform backend
+- Using [Terraform](https://www.terraform.io) to deploy resources to AWS
 
---------------
+---
 
 ## Requirements
 
 ### Linux/MacOS software requirements
 
-* git
-* zip
-* openssl
-* AWS CLI - [AWS command line interface](https://aws.amazon.com/cli/)
-* [Terraform](https://www.terraform.io)
+- git
+- zip
+- AWS CLI - [AWS command line interface](https://aws.amazon.com/cli/)
+- [Terraform](https://www.terraform.io)
 
 #### Install Terraform
 
@@ -77,14 +76,14 @@ Terraform v0.12.12
 
 ### Credentials
 
-* [CMR](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/common-metadata-repository) username and password.  CMR credentials must be provided if you are exporting metadata to CMR with EarthData Client Login authentication. More information about CMR configuration can be found [here](./config_descriptions#cmr).
-* [Launchpad](https://launchpad.nasa.gov). Launchpad credentials must be provided if you are using Launchpad authentication to export metadata to CMR or to authenticate with the Cumulus API. More information about CMR and Cumulus Launchpad authentication and configuration can be found [here](./config_descriptions#launchpad).
-* [EarthData client login](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/earthdata-login) username and password. User must have the ability to administer and/or create applications in URS. It's recommended to obtain an account in the test environment (UAT).
+- [CMR](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/common-metadata-repository) username and password. CMR credentials must be provided if you are exporting metadata to CMR with EarthData Client Login authentication. More information about CMR configuration can be found [here](./config_descriptions#cmr).
+- [Launchpad](https://launchpad.nasa.gov). Launchpad credentials must be provided if you are using Launchpad authentication to export metadata to CMR or to authenticate with the Cumulus API. More information about CMR and Cumulus Launchpad authentication and configuration can be found [here](./config_descriptions#launchpad).
+- [EarthData client login](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/earthdata-login) username and password. User must have the ability to administer and/or create applications in URS. It's recommended to obtain an account in the test environment (UAT).
 
 ### Needed Git Repositories
 
-* [Deployment Template](https://github.com/nasa/cumulus-template-deploy)
-* [Cumulus Dashboard](https://github.com/nasa/cumulus-dashboard)
+- [Deployment Template](https://github.com/nasa/cumulus-template-deploy)
+- [Cumulus Dashboard](https://github.com/nasa/cumulus-dashboard)
 
 ## Installation
 
@@ -131,7 +130,7 @@ See [creating s3 buckets](deployment/create_bucket.md) for more information on h
 
 The following s3 bucket should be created (replacing `<prefix>` with whatever you'd like, generally your organization/DAAC's name):
 
-* `<prefix>-internal`
+- `<prefix>-internal`
 
 You can create additional s3 buckets based on the needs of your workflows.
 
@@ -143,10 +142,10 @@ These buckets do not need any non-default permissions to function with Cumulus, 
 
 Cumulus supports operation within a VPC, but you will need to separately create:
 
-* VPC
-* Subnet
-* Security group
-* VPC endpoints for the various services used by Cumulus if you wish to route traffic through the VPC
+- VPC
+- Subnet
+- Security group
+- VPC endpoints for the various services used by Cumulus if you wish to route traffic through the VPC
 
 These resources only need to be created once per account.
 
@@ -156,7 +155,7 @@ If you are deploying to an NGAP environment (a NASA managed AWS environment), th
 
 To configure Cumulus with these settings, populate your `terraform.tfvars` file with the relevant values, as shown below, before deploying Cumulus. If these values are omitted Cumulus resources that require a VPC will be created in the default VPC and security group.
 
---------------
+---
 
 ## Earthdata Application
 
@@ -164,7 +163,7 @@ To configure Cumulus with these settings, populate your `terraform.tfvars` file 
 
 The Cumulus stack can authenticate with [Earthdata Login](https://urs.earthdata.nasa.gov/documentation). If you want to use this functionality, you must create and register a new Earthdata application. Use the [User Acceptance Tools (UAT) site](https://uat.urs.earthdata.nasa.gov) unless you intend use a different URS environment (which will require updating the `urs_url` value shown below). Follow the directions on [how to register an application.](https://wiki.earthdata.nasa.gov/display/EL/How+To+Register+An+Application). Use any url for the `Redirect URL`, it will be deleted in a later step. Also note the password in step 3 and client ID in step 4 use these to replace `urs_client_id` and `urs_client_password` in the `terraform.tfvars` for the `cumulus-tf` module shown below.
 
---------------
+---
 
 ## Configuring the Cumulus deployment
 
@@ -214,7 +213,7 @@ $ aws dynamodb create-table \
     --region us-east-1
 ```
 
---------------
+---
 
 ## Deploy the Cumulus instance
 
@@ -248,9 +247,9 @@ appropriate values. See the [data-persistence module variable definitions](https
 
 Run `terraform init` if:
 
-* This is the first time deploying the module
-* You have added any additional child modules, including [Cumulus components](./components.md#available-cumulus-components)
-* You have updated the `source` for any of the child modules
+- This is the first time deploying the module
+- You have added any additional child modules, including [Cumulus components](./components.md#available-cumulus-components)
+- You have updated the `source` for any of the child modules
 
 You should see output like:
 
@@ -379,56 +378,55 @@ distribution_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com/D
 distribution_url = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/
 ```
 
-__Note:__ Be sure to copy the redirect URLs, as you will use them to update your Earthdata application.
+**Note:** Be sure to copy the redirect URLs, as you will use them to update your Earthdata application.
 
 ### Update Earthdata Application
 
 You will need to add two redirect URLs to your EarthData login application.
-Login to URS (UAT), and under My Applications -> Application Administration -> use the edit icon of your application.  Then under Manage -> redirect URIs, add the Backend API url returned from the stack deployment, e.g. `https://<czbbkscuy6>.execute-api.us-east-1.amazonaws.com/dev/token`.
+Login to URS (UAT), and under My Applications -> Application Administration -> use the edit icon of your application. Then under Manage -> redirect URIs, add the Backend API url returned from the stack deployment, e.g. `https://<czbbkscuy6>.execute-api.us-east-1.amazonaws.com/dev/token`.
 Also add the Distribution url `https://<kido2r7kji>.execute-api.us-east-1.amazonaws.com/dev/login`[^1]. You may also delete the placeholder url you used to create the application.
 
-If you've lost track of the needed redirect URIs, they can be located on the [API Gateway](https://console.aws.amazon.com/apigateway).  Once there, select `<prefix>-archive` and/or `<prefix>-thin-egress-app-EgressGateway`, `Dashboard` and utilizing the base URL at the top of the page that is accompanied by the text `Invoke this API at:`.  Make sure to append `/token` for the archive URL and `/login` to the thin egress app URL.
+If you've lost track of the needed redirect URIs, they can be located on the [API Gateway](https://console.aws.amazon.com/apigateway). Once there, select `<prefix>-archive` and/or `<prefix>-thin-egress-app-EgressGateway`, `Dashboard` and utilizing the base URL at the top of the page that is accompanied by the text `Invoke this API at:`. Make sure to append `/token` for the archive URL and `/login` to the thin egress app URL.
 
 ### Troubleshooting
 
 Please see our [troubleshooting documentation for any issues with your deployment](../troubleshooting/troubleshooting-deployment).
 
---------------
+---
 
 ## Deploy Cumulus dashboard
 
 ### Dashboard Requirements
 
-Please note that the requirements are similar to the [Cumulus stack deployment requirements](deployment-readme#requirements), however the node version may vary slightly and the dashboard requires yarn. The installation instructions below include a step that will install/use the required node version referenced in the `.nvmrc` file in the dashboard repository.
+Please note that the requirements are similar to the [Cumulus stack deployment requirements](deployment-readme#requirements). The installation instructions below include a step that will install/use the required node version referenced in the `.nvmrc` file in the dashboard repository.
 
-* git
-* [node 8.11.4](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
-* [npm](https://www.npmjs.com/get-npm)
-* [yarn](https://yarnpkg.com/en/docs/install#mac-stable)
-* zip
-* AWS CLI - [AWS command line interface](https://aws.amazon.com/cli/)
-* python
+- git
+- [node 10.16.3](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
+- [npm](https://www.npmjs.com/get-npm)
+- zip
+- AWS CLI - [AWS command line interface](https://aws.amazon.com/cli/)
+- python
 
 ### Prepare AWS
 
 **Create S3 bucket for dashboard:**
 
-* Create it, e.g. `<prefix>-dashboard`. Use the command line or console as you did when [preparing AWS configuration](deployment-readme#prepare-aws-configuration).
-* Configure the bucket to host a website:
-  * AWS S3 console: Select `<prefix>-dashboard` bucket then, "Properties" -> "Static Website Hosting", point to `index.html`
-  * CLI: `aws s3 website s3://<prefix>-dashboard --index-document index.html`
-* The bucket's url will be `http://<prefix>-dashboard.s3-website-<region>.amazonaws.com` or you can find it on the AWS console via "Properties" -> "Static website hosting" -> "Endpoint"
-* Ensure the bucket's access permissions allow your deployment user access to write to the bucket
+- Create it, e.g. `<prefix>-dashboard`. Use the command line or console as you did when [preparing AWS configuration](deployment-readme#prepare-aws-configuration).
+- Configure the bucket to host a website:
+  - AWS S3 console: Select `<prefix>-dashboard` bucket then, "Properties" -> "Static Website Hosting", point to `index.html`
+  - CLI: `aws s3 website s3://<prefix>-dashboard --index-document index.html`
+- The bucket's url will be `http://<prefix>-dashboard.s3-website-<region>.amazonaws.com` or you can find it on the AWS console via "Properties" -> "Static website hosting" -> "Endpoint"
+- Ensure the bucket's access permissions allow your deployment user access to write to the bucket
 
 ### Install dashboard
 
-To install the dashboard clone the Cumulus-dashboard repository into the root deploy directory and install dependencies with `yarn install`:
+To install the dashboard, clone the [Cumulus dashboard](https://github.com/nasa/cumulus-dashboard) repository into the root deploy directory and install dependencies with `npm install`:
 
 ```bash
   git clone https://github.com/nasa/cumulus-dashboard
   cd cumulus-dashboard
   nvm use
-  yarn install
+  npm install
 ```
 
 If you do not have the correct version of node installed, replace `nvm use` with `nvm install $(cat .nvmrc)` in the above example.
@@ -447,7 +445,7 @@ To checkout and install a specific version of the dashboard:
   git fetch --tags
   git checkout <version-number> # e.g. v1.2.0
   nvm use
-  yarn install
+  npm install
 ```
 
 If you do not have the correct version of node installed, replace `nvm use` with `nvm install $(cat .nvmrc)` in the above example.
@@ -476,15 +474,14 @@ Using AWS CLI:
 
 From the S3 Console:
 
-* Open the `<prefix>-dashboard` bucket, click 'upload'. Add the contents of the 'dist' subdirectory to the upload. Then select 'Next'. On the permissions window allow the public to view. Select 'Upload'.
+- Open the `<prefix>-dashboard` bucket, click 'upload'. Add the contents of the 'dist' subdirectory to the upload. Then select 'Next'. On the permissions window allow the public to view. Select 'Upload'.
 
 You should be able to visit the dashboard website at `http://<prefix>-dashboard.s3-website-<region>.amazonaws.com` or find the url
 `<prefix>-dashboard` -> "Properties" -> "Static website hosting" -> "Endpoint" and login with a user that you configured for access in the [Configure and Deploy the Cumulus Stack](deployment-readme#configure-and-deploy-the-cumulus-stack) step.
 
---------------
+---
 
 ## Footnotes
 
 [^1]: To add another redirect URIs to your application. On Earthdata home page, select "My Applications". Scroll down to "Application Administration" and use the edit icon for your application. Then Manage -> Redirect URIs.
-
 [^2]: The API root can be found a number of ways. The easiest is to note it in the output of the app deployment step. But you can also find it from the `AWS console -> Amazon API Gateway -> APIs -> <prefix>-archive -> Dashboard`, and reading the URL at the top after "Invoke this API at"

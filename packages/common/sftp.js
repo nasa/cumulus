@@ -8,11 +8,14 @@ const log = require('./log');
 const {
   buildS3Uri, getS3Object, getS3ObjectReadStream, promiseS3Upload, s3ObjectExists
 } = require('./aws');
+const { deprecate } = require('./util');
 
 const { KMSProvider: KMS, DefaultProvider } = require('./key-pair-provider');
 
 class Sftp {
   constructor(config) {
+    deprecate('@cumulus/common/sftp.Sftp', '1.17.0', '@cumulus/sftp-client');
+
     // use to indicate an active connection exists
     this.connected = false;
     // indicate username and password have been decrypted in options
