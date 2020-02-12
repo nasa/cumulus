@@ -378,7 +378,6 @@ const addCollection = async (stackName, collection) => {
     collection.name,
     collection.version
   );
-  console.log('collection:', JSON.stringify(collection, null, 2));
   await collectionsApi.createCollection(stackName, collection);
 };
 
