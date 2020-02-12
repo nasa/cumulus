@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint max-classes-per-file: ["error", 2] */
+
 const fs = require('fs');
 const rewire = require('rewire');
 const test = require('ava');
