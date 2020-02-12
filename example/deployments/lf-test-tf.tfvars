@@ -1,6 +1,6 @@
 prefix            = "lf-test-tf"
 system_bucket     = "lf-internal"
-oauth_provider    = "launchpad"
+ems_submit_report     = true
 buckets = {
   internal = {
     name = "lf-internal"
