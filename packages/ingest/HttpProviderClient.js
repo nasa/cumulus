@@ -42,8 +42,15 @@ class HttpProviderClient {
   list(path) {
     validateHost(this.host);
 
-    // Make pattern case-insensitive and return all matches instead of just first one
-    const pattern = /<a href="([^>]*)">[^<]+<\/a>/ig;
+    // Make pattern case-insensitive and return all matches
+    // instead of just first one
+    const matchLinksPattern = /<a href="([^>]*)">[^<]+<\/a>/ig;
+    const matchLeadingSlashesPattern = /^\/+/;
+
+    // Some providers provide files with one number after the dot (".")
+    // (e.g. tmtdayacz8110_5.6)
+    // TODO: Why are we assuming a file extension between 1 and 4 characters long?
+    const matchAcceptedFilesPattern = /^(.*\.[\w\d]{1,4})\s*$/;
 
     const c = new Crawler(
       buildURL({
@@ -67,33 +74,27 @@ class HttpProviderClient {
         const lines = responseBuffer.toString().trim().split('\n');
         lines.forEach((line) => {
           const trimmedLine = line.trim();
-          let match = pattern.exec(trimmedLine);
+          let match = matchLinksPattern.exec(trimmedLine);
+
           while (match != null) {
             const linkTarget = match[1];
-            // Some providers provide files with one number after the dot (".")
-            // (e.g. tmtdayacz8110_5.6)
-            if (linkTarget.match(/^(.*\.[\w\d]{1,4})\s*$/) !== null) {
-              const name = linkTarget.trimRight();
+            if (linkTarget.match(matchAcceptedFilesPattern) !== null) {
+              // Remove the path and leading slashes from the filename.
+              const name = linkTarget
+                .replace(path, '')
+                .replace(matchLeadingSlashesPattern, '')
+                .trimRight();
               files.push({ name, path });
             }
-            match = pattern.exec(trimmedLine);
+            match = matchLinksPattern.exec(trimmedLine);
           }
         });
 
         return resolve(files);
       });
 
-      c.on('fetchtimeout', () => {
-        reject(new errors.RemoteResourceError('Connection timed out'));
-      });
-
-      // c.on('fetchstart', (queueItem) => {
-      //   console.log('fetch start', queueItem);
-      // });
-
-      // c.on('discoverycomplete', (queueItem) => {
-      //   console.log('discovered', queueItem);
-      // });
+      c.on('fetchtimeout', () =>
+        reject(new errors.RemoteResourceError('Connection timed out')));
 
       c.on('fetcherror', (queueItem, response) => {
         let responseBody = '';
@@ -110,10 +111,8 @@ class HttpProviderClient {
         });
       });
 
-      c.on('fetchclienterror', (_, error) => {
-        console.log(error);
-        reject(new errors.RemoteResourceError('Connection Refused'));
-      });
+      c.on('fetchclienterror', () =>
+        reject(new errors.RemoteResourceError('Connection Refused')));
 
       c.on('fetch404', (queueItem, _) => {
         const errorToThrow = new Error(`Received a 404 error from ${this.endpoint}. Check your endpoint!`);

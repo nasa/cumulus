@@ -114,6 +114,24 @@ test.serial('list() returns files for provider with multiple links on a single s
   t.deepEqual(actualFiles, expectedFiles);
 });
 
+test.serial('list() strips path from file names', async (t) => {
+  const responseBody = '<html><body><A HREF="/path/to/file/test.txt">test.txt</A></body></html>';
+
+  class Crawler extends EventEmitter {
+    start() {
+      this.emit('fetchcomplete', {}, Buffer.from(responseBody));
+    }
+  }
+
+  const actualFiles = await HttpProviderClient.__with__({
+    Crawler
+  })(() => t.context.httpProviderClient.list('/path/to/file/'));
+
+  const expectedFiles = [{ name: 'test.txt', path: '/path/to/file/' }];
+
+  t.deepEqual(actualFiles, expectedFiles);
+});
+
 test.serial('list() strips trailing spaces from name', async (t) => {
   const responseBody = '<html><body><a href="file.txt ">asdf</a></body></html>';
 
