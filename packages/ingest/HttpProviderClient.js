@@ -42,6 +42,7 @@ class HttpProviderClient {
   list(path) {
     validateHost(this.host);
 
+    // Make pattern case-insensitive and return all matches instead of just first one
     const pattern = /<a href="([^>]*)">[^<]+<\/a>/ig;
 
     const c = new Crawler(
@@ -64,18 +65,18 @@ class HttpProviderClient {
     return new Promise((resolve, reject) => {
       c.on('fetchcomplete', (_, responseBuffer) => {
         const lines = responseBuffer.toString().trim().split('\n');
-        console.log(lines.length);
-        // console.log(lines);
         lines.forEach((line) => {
-          const split = line.trim().split(pattern);
-          console.log(split);
-          if (split.length === 3) {
-            console.log(split[1]);
-            // Some providers provide files with one number after the dot (".") ex (tmtdayacz8110_5.6)
-            if (split[1].match(/^(.*\.[\w\d]{1,4})\s*$/) !== null) {
-              const name = split[1].trimRight();
+          const trimmedLine = line.trim();
+          let match = pattern.exec(trimmedLine);
+          while (match != null) {
+            const linkTarget = match[1];
+            // Some providers provide files with one number after the dot (".")
+            // (e.g. tmtdayacz8110_5.6)
+            if (linkTarget.match(/^(.*\.[\w\d]{1,4})\s*$/) !== null) {
+              const name = linkTarget.trimRight();
               files.push({ name, path });
             }
+            match = pattern.exec(trimmedLine);
           }
         });
 
