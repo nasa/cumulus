@@ -131,7 +131,7 @@ async function submitReports(reports) {
     username: process.env.ems_username,
     host: process.env.ems_host,
     port: process.env.ems_port,
-    privateKey
+    privateKey: privateKey.Body.toString()
   };
 
   const reportsSent = [];
