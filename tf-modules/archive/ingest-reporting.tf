@@ -123,7 +123,7 @@ resource "aws_lambda_event_source_mapping" "publish_executions" {
 # Report granules
 
 resource "aws_iam_role" "publish_granules_lambda_role" {
-  name                 = "${var.prefix}-ReportGranulesLambda"
+  name                 = "${var.prefix}-PublishGranulesLambda"
   assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
   # TODO Re-enable once IAM permissions have been fixed
