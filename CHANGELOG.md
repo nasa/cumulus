@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1446**
   - `@cumulus/integration-tests/index.rulesList()` updated to only take
     `rulesDirectory` parameter
+  - Remove unused `@cumulus/integration-tests/api.addCollectionApi()` function
   - Remove unused `@cumulus/integration-tests/index.listCollections()` function
   - Remove unused `@cumulus/integration-tests/index.listProviders()` function
   - Remove unused `@cumulus/integration-tests/index.rulesList()` function
@@ -40,9 +41,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add `@cumulus/integration-tests/api/collections.createCollection()` function
   - Add `@cumulus/integration-tests/api/collections.deleteCollection()` function
   - Add `@cumulus/integration-tests/api/collections.getCollection()` function
+  - Add `@cumulus/integration-tests/api/providers.getProvider()` function
   - Add `@cumulus/integration-tests/index.getExecutionOutput()` function
   - Add `@cumulus/integration-tests/index.loadCollection()` function
   - Add `@cumulus/integration-tests/index.loadProvider()` function
+  - Add `@cumulus/integration-tests/index.readJsonFilesFromDir()` function
 
 - **CUMULUS-1684**
   - Add a `@cumulus/aws-client/KMS` library of KMS-related functions

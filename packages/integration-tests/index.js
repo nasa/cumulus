@@ -25,10 +25,7 @@ const { getWorkflowTemplate, getWorkflowArn } = require('@cumulus/common/workflo
 const { readJsonFile } = require('@cumulus/common/FileUtils');
 const { globalReplace } = require('@cumulus/common/string');
 const { sleep } = require('@cumulus/common/util');
-
-const {
-  models: { Provider, Rule }
-} = require('@cumulus/api');
+const RulesModel = require('@cumulus/api/models/rules');
 
 const api = require('./api/api');
 const collectionsApi = require('./api/collections');
@@ -267,7 +264,6 @@ function setProcessEnvironment(stackName, bucketName) {
   process.env.stackName = stackName;
   process.env.messageConsumer = `${stackName}-messageConsumer`;
   process.env.KinesisInboundEventLogger = `${stackName}-KinesisInboundEventLogger`;
-  process.env.ProvidersTable = `${stackName}-ProvidersTable`;
   process.env.RulesTable = `${stackName}-RulesTable`;
 }
 
@@ -275,7 +271,7 @@ function setProcessEnvironment(stackName, bucketName) {
  * Load and parse all of the JSON files from a directory
  *
  * @param {string} sourceDir - the directory containing the JSON files to load
- * @returns {Promise<*>} the parsed JSON files
+ * @returns {Promise<Array<*>>} the parsed JSON files
  */
 const readJsonFilesFromDir = async (sourceDir) => {
   const allFiles = await fs.readdir(sourceDir);
@@ -561,38 +557,35 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host, postfi
  * Delete providers from database
  *
  * @param {string} stackName - CloudFormation stack name
- * @param {string} bucketName - S3 internal bucket name
  * @param {Array} providers - List of providers to delete
  * @param {string} postfix - string that was appended to provider id
- * @returns {Promise.<number>} number of deleted providers
+ * @returns {Promise<number>} number of deleted providers
  */
-async function deleteProviders(stackName, bucketName, providers, postfix) {
-  setProcessEnvironment(stackName, bucketName);
+async function deleteProviders(stackName, providers, postfix) {
+  await Promise.all(
+    providers.map(
+      ({ id }) => {
+        const readId = postfix ? `${id}${postfix}` : id;
+        return providersApi.deleteProvider(stackName, readId);
+      }
+    )
+  );
 
-  const promises = providers.map((provider) => {
-    if (postfix) {
-      provider.id += postfix;
-    }
-    const p = new Provider();
-    console.log(`Deleting provider ${provider.id}`);
-    return p.delete(provider);
-  });
-
-  return Promise.all(promises).then((ps) => ps.length);
+  return providers.length;
 }
 
 /**
  * Delete all collections listed from a collections directory
  *
  * @param {string} stackName - CloudFormation stack name
- * @param {string} bucket - S3 internal bucket name
+ * @param {string} _bucket - S3 internal bucket name
  * @param {string} providersDirectory - the directory of collection json files
  * @param {string} postfix - string that was appended to provider id
  * @returns {number} - number of deleted collections
  */
-async function cleanupProviders(stackName, bucket, providersDirectory, postfix) {
+async function cleanupProviders(stackName, _bucket, providersDirectory, postfix) {
   const providers = await readJsonFilesFromDir(providersDirectory);
-  return deleteProviders(stackName, bucket, providers, postfix);
+  return deleteProviders(stackName, providers, postfix);
 }
 
 /**
@@ -632,7 +625,7 @@ async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
       },
       config)));
 
-      const r = new Rule();
+      const r = new RulesModel();
       console.log(`adding rule ${JSON.stringify(templatedRule)}`);
       return r.create(templatedRule);
     },
@@ -659,7 +652,7 @@ function addRules(config, dataDirectory, overrides) {
  * @returns {Promise.<dynamodbDocClient.delete>} - superclass delete promise
  */
 async function _deleteOneRule(name) {
-  const r = new Rule();
+  const r = new RulesModel();
   return r.get({ name }).then((item) => r.delete(item));
 }
 
@@ -749,11 +742,15 @@ async function buildWorkflow(
     template.meta.collection = {};
   }
 
-  const providerInfo = provider
-    ? await new Provider().get({ id: provider.id })
-    : {};
+  if (provider) {
+    template.meta.provider = await providersApi.getProvider(
+      stackName,
+      provider.id
+    );
+  } else {
+    template.meta.provider = {};
+  }
 
-  template.meta.provider = providerInfo;
   template.meta.workflow_name = workflowName;
   template.meta = merge(template.meta, meta);
   template.payload = payload || {};
@@ -1005,5 +1002,6 @@ module.exports = {
   getProviderPort,
   loadCollection,
   loadProvider,
-  getExecutionOutput
+  getExecutionOutput,
+  readJsonFilesFromDir
 };
