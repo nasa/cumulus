@@ -218,7 +218,7 @@ test('GET gets a rule', async (t) => {
 });
 
 test('When calling the API endpoint to delete an existing rule it does not return the deleted rule', async (t) => {
-  const newRule = Object.assign({}, testRule, { name: 'pop_culture_reference' });
+  const newRule = { ...testRule, name: 'pop_culture_reference' };
 
   let response = await request(app)
     .post('/rules')
@@ -241,7 +241,7 @@ test('When calling the API endpoint to delete an existing rule it does not retur
 });
 
 test('403 error when calling the API endpoint to delete an existing rule without an valid access token', async (t) => {
-  const newRule = Object.assign({}, testRule, { name: 'side_step_left' });
+  const newRule = { ...testRule, name: 'side_step_left' };
 
   let response = await request(app)
     .post('/rules')
@@ -291,7 +291,7 @@ test('POST creates a rule', async (t) => {
 });
 
 test('POST returns a record exists when one exists', async (t) => {
-  const newRule = Object.assign({}, testRule);
+  const newRule = { ...testRule };
 
   const response = await request(app)
     .post('/rules')
@@ -365,9 +365,7 @@ test('PUT returns 400 for name mismatch between params and payload',
   });
 
 test('DELETE deletes a rule', async (t) => {
-  const newRule = Object.assign({}, testRule, {
-    name: randomString()
-  });
+  const newRule = { ...testRule, name: randomString() };
 
   await request(app)
     .post('/rules')

@@ -34,7 +34,7 @@ const findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
     if (matchingArn) {
       callback(null, matchingArn);
     } else if (data.NextToken) {
-      const nextOpts = Object.assign({}, opts, { NextToken: data.NextToken });
+      const nextOpts = { ...opts, NextToken: data.NextToken };
       exports.findResourceArn(obj, fn, prefix, baseName, nextOpts, callback);
     } else {
       callback(`Could not find resource ${baseName} in ${fn}`);
