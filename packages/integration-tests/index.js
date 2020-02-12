@@ -298,19 +298,6 @@ function setupSeedData(stackName, bucketName, dataDirectory) {
 }
 
 /**
- * Given a collection config and a filetype config, return a `url_path`
- *
- * @param {Object} collection - a Cumulus collection
- * @param {Object} filetypeConfig - a Cumulus collection filetype config
- * @returns {string} the `url_path` appropriate for that filetype
- */
-const getUrlPath = (collection, filetypeConfig) => {
-  if (isString(filetypeConfig.url_path)) return `${filetypeConfig.url_path}/`;
-  if (isString(collection.url_path)) return `${collection.url_path}/`;
-  return '';
-};
-
-/**
  * Given a Cumulus collection configuration, return a list of the filetype
  * configs with their `url_path`s updated.
  *
@@ -320,7 +307,14 @@ const getUrlPath = (collection, filetypeConfig) => {
  */
 const addCustomUrlPathToCollectionFiles = (collection, customFilePath) =>
   collection.files.map((file) => {
-    const urlPath = getUrlPath(collection, file);
+    let urlPath;
+    if (isString(file.url_path)) {
+      urlPath = `${file.url_path}/`;
+    } else if (isString(collection.url_path)) {
+      urlPath = `${collection.url_path}/`;
+    } else {
+      urlPath = '';
+    }
 
     return {
       ...file,
@@ -745,10 +739,7 @@ async function deleteRules(stackName, bucketName, rules, postfix) {
 
   await pMap(
     rules,
-    (rule) => {
-      const name = postfix ? `${rule.name}${postfix}` : rule.name;
-      return _deleteOneRule(name);
-    },
+    (rule) => _deleteOneRule(postfix ? `${rule.name}${postfix}` : rule.name),
     { concurrency: process.env.CONCURRENCY || 3 }
   );
 

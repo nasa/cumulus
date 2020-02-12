@@ -27,6 +27,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-1446**
+  - Add `@cumulus/common/FileUtils.readJsonFile()` function
+  - Add `@cumulus/common/FileUtils.readTextFile()` function
+  - Add `@cumulus/integration-tests/api/collections.createCollection()` function
+  - Add `@cumulus/integration-tests/api/collections.deleteCollection()` function
+  - Add `@cumulus/integration-tests/api/collections.getCollection()` function
+  - Add `@cumulus/integration-tests/index.getExecutionOutput()` function
+  - Add `@cumulus/integration-tests/index.loadCollection()` function
+  - Add `@cumulus/integration-tests/index.loadProvider()` function
+
 - **CUMULUS-1684**
   - Add a `@cumulus/aws-client/KMS` library of KMS-related functions
   - Add `@cumulus/aws-client/S3.getTextObject()`
@@ -57,6 +67,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1741** - Added an optional `security_group` variable to the `data-persistence` stack to allow the Elasticsearch security group id to be specified instead of creating one
 
 ### Changed
+
+- **CUMULUS-1446**
+  - Update the `@cumulus/integration-tests/api/executions.getExecution()`
+    function to parse the response and return the execution, rather than return
+    the full API response.
 
 - **CUMULUS-1684**
   - Update the API package to encrypt provider credentials using KMS instead of
