@@ -1,0 +1,25 @@
+{
+  "name": "cumulus-test-cleanup",
+  "version": "1.17.0",
+  "description": "Nightly cron job for cleaning up integration test artifacts",
+  "main": "index.js",
+  "engines": {
+    "node": ">=10.16.3"
+  },
+  "scripts": {
+    "build": "rm -rf dist && mkdir dist && webpack",
+    "watch": "rm -rf dist && mkdir dist && webpack --progress -w",
+    "prepare": "npm run build && (cd dist && zip -r lambda.zip index.js)"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "aws-sdk": "^2.585.0",
+    "moment": "^2.24.0"
+  },
+  "devDependencies": {
+    "babel-loader": "^8.0.6",
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10"
+  }
+}
