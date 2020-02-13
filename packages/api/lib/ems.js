@@ -9,7 +9,6 @@ const {
   parseS3Uri,
   s3CopyObject,
   buildS3Uri,
-  s3ObjectExists,
   getTextObject
 } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
