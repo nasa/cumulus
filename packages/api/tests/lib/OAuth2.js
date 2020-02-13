@@ -2,7 +2,7 @@
 
 const test = require('ava');
 
-const { OAuth2 } = require('../../lib/OAuth2');
+const OAuth2 = require('../../lib/OAuth2');
 
 test('OAuth2.getAuthorizationUrl() throws a "Not implemented" error', async (t) => {
   const oAuth2 = new OAuth2();

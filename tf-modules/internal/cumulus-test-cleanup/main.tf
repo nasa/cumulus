@@ -1,0 +1,61 @@
+terraform {
+  required_providers {
+    aws = ">= 2.31.0"
+  }
+}
+
+provider "aws" {
+  region = var.aws_region
+}
+
+locals {
+  default_tags           = { Deployment = "cumulus-test-cleanup" }
+  security_group_ids_set = var.security_group_ids != null
+}
+
+resource "aws_security_group" "test_cleanup_lambda" {
+  count  = local.security_group_ids_set ? 0 : 1
+  vpc_id = var.vpc_id
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  tags = local.default_tags
+}
+
+resource "aws_lambda_function" "cumulus_test_cleanup" {
+  filename      = "${path.module}/dist/lambda.zip"
+  function_name = "cumulus-test-cleanup"
+  role          = "${aws_iam_role.test_cleanup_lambda_role.arn}"
+  handler       = "index.handler"
+  runtime       = "nodejs10.x"
+  timeout       = 300
+
+  source_code_hash = filebase64sha256("${path.module}/dist/lambda.zip")
+
+  vpc_config {
+    subnet_ids         = var.subnet_ids
+    security_group_ids = local.security_group_ids_set ? var.security_group_ids : [aws_security_group.test_cleanup_lambda[0].id]
+  }
+
+  tags = local.default_tags
+}
+
+resource "aws_cloudwatch_event_rule" "cumulus_test_cleanup" {
+  schedule_expression = "cron(0 1 * * ? *)"
+  tags                = local.default_tags
+}
+
+resource "aws_cloudwatch_event_target" "cumulus_test_cleanup" {
+  rule = aws_cloudwatch_event_rule.cumulus_test_cleanup.name
+  arn  = aws_lambda_function.cumulus_test_cleanup.arn
+}
+
+resource "aws_lambda_permission" "cumulus_test_cleanup" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.cumulus_test_cleanup.arn
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.cumulus_test_cleanup.arn
+}

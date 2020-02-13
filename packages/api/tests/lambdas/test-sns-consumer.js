@@ -51,21 +51,24 @@ const commonRuleParams = {
   state: 'ENABLED'
 };
 
-const rule1Params = Object.assign({}, commonRuleParams, {
+const rule1Params = {
+  ...commonRuleParams,
   name: 'testRule1',
   workflow: 'test-workflow-1'
-});
+};
 
-const rule2Params = Object.assign({}, commonRuleParams, {
+const rule2Params = {
+  ...commonRuleParams,
   name: 'testRule2',
   workflow: 'test-workflow-2'
-});
+};
 
-const disabledRuleParams = Object.assign({}, commonRuleParams, {
+const disabledRuleParams = {
+  ...commonRuleParams,
   name: 'disabledRule',
   workflow: 'test-workflow-1',
   state: 'DISABLED'
-});
+};
 
 /**
  * Callback used for testing

@@ -39,7 +39,7 @@ async function searchConcept({
   const pageNum = (searchParams.page_num) ? searchParams.page_num + 1 : 1;
 
   // if requested, recursively retrieve all the search results for collections or granules
-  const query = Object.assign({}, defaultParams, searchParams, { page_num: pageNum });
+  const query = { ...defaultParams, ...searchParams, page_num: pageNum };
   const response = await got.get(url, { json: format.endsWith('json'), query, headers });
 
   const responseItems = (format === 'echo10')

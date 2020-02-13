@@ -1,11 +1,6 @@
 'use strict';
 
-class CumulusLockError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = this.constructor.name;
-  }
-}
+const CumulusLockError = require('./CumulusLockError');
 
 class Mutex {
   constructor(docClient, tableName) {
