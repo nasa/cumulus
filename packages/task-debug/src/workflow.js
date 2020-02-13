@@ -43,11 +43,7 @@ exports.genMessage = (collectionId, taskName, resources = {}, payload = null, co
   local.collectionMessageInput(
     collectionId,
     taskName,
-    (o) =>
-      Object.assign({}, o, {
-        resources: resources,
-        payload: payload
-      }),
+    (o) => ({ ...o, resources, payload }),
     configFile
   );
 

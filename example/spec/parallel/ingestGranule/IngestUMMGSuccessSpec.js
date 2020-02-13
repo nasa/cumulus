@@ -123,10 +123,11 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     const collectionUrlPath = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
     const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
-    const providerData = Object.assign({}, providerJson, {
+    const providerData = {
+      ...providerJson,
       id: provider.id,
       host: config.bucket
-    });
+    };
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
@@ -241,10 +242,11 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       existCheck = await Promise.all(movedFiles.map((fileObject) =>
         s3ObjectExists({ Bucket: fileObject.bucket, Key: fileObject.filepath })));
       headObjects = await Promise.all(movedFiles.map(async (fileObject) =>
-        Object.assign({},
-          fileObject,
-          await headObject(fileObject.bucket, fileObject.filepath),
-          { expectedMime: mime.lookup(fileObject.filepath) || 'application/octet-stream' })));
+        ({
+          ...fileObject,
+          ...await headObject(fileObject.bucket, fileObject.filepath),
+          expectedMime: mime.lookup(fileObject.filepath) || 'application/octet-stream'
+        })));
     });
 
     it('has a payload with correct buckets, filenames, sizes', () => {
