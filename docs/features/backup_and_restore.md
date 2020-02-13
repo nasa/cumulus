@@ -73,7 +73,7 @@ A table can be restored to a previous state using PITR. This is easily achievabl
 
 A table can only be recovered to a new table name. Following the restoration of the table, the new table must be imported into Terraform.
 
-First, remove the old table by peforming
+First, remove the old table from the Terraform state:
 
 ```sh
 terraform state rm module.data_persistence.aws_dynamodb_table.collections_table
