@@ -429,9 +429,10 @@ test.serial('validate file properties', async (t) => {
   t.context.event.input.granules[0].files[0].path = '/granules';
   const [file] = t.context.event.input.granules[0].files;
 
-  t.context.event.input.granules[0].files[1] = Object.assign({}, file, {
+  t.context.event.input.granules[0].files[1] = {
+    ...file,
     name: 'MOD09GQ.A2017224.h27v08.006.2017227165029_1.jpg'
-  });
+  };
 
   t.context.event.config.collection.files[0].url_path = 'file-example/';
   t.context.event.config.collection.url_path = 'collection-example/';

@@ -409,7 +409,9 @@ exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
     const filename = fileInfo.filename;
     const key = fileInfo.key;
     const body = fs.createReadStream(filename);
-    const opts = Object.assign({ Bucket: bucket, Key: key, Body: body }, s3opts);
+    const opts = {
+      Bucket: bucket, Key: key, Body: body, ...s3opts
+    };
     return exports.promiseS3Upload(opts)
       .then(() => {
         i += 1;
@@ -431,7 +433,9 @@ exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
  * @returns {Promise} A promise
  */
 exports.uploadS3FileStream = (fileStream, bucket, key, s3opts = {}) => {
-  const opts = Object.assign({ Bucket: bucket, Key: key, Body: fileStream }, s3opts);
+  const opts = {
+    Bucket: bucket, Key: key, Body: fileStream, ...s3opts
+  };
   return exports.promiseS3Upload(opts);
 };
 
@@ -489,11 +493,11 @@ async function listS3ObjectsV2(params) {
   while (listObjectsResponse.IsTruncated) {
     listObjectsResponse = await awsServices.s3().listObjectsV2( // eslint-disable-line no-await-in-loop, max-len
       // Update the params with a Continuation Token
-      Object.assign(
-        {},
-        params,
-        { ContinuationToken: listObjectsResponse.NextContinuationToken }
-      )
+      {
+
+        ...params,
+        ContinuationToken: listObjectsResponse.NextContinuationToken
+      }
     ).promise();
     discoveredObjects = discoveredObjects.concat(listObjectsResponse.Contents);
   }

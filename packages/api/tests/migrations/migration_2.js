@@ -101,47 +101,53 @@ test('build-files-table handler properly populates the files table', async (t) =
     Select: 'COUNT'
   };
 
-  t.is((await dynamodb().query(Object.assign({}, defaultQueryParams, {
+  t.is((await dynamodb().query({
+    ...defaultQueryParams,
     ExpressionAttributeValues: {
       ':b': { S: 'bucket-1-public' },
       ':k': { S: 'granule-1-file-1.hdf' }
     }
-  })).promise()).Count, 1);
+  }).promise()).Count, 1);
 
-  t.is((await dynamodb().query(Object.assign({}, defaultQueryParams, {
+  t.is((await dynamodb().query({
+    ...defaultQueryParams,
     ExpressionAttributeValues: {
       ':b': { S: 'bucket-1-protected' },
       ':k': { S: 'granule-1-file-2.hdf' }
     }
-  })).promise()).Count, 1);
+  }).promise()).Count, 1);
 
-  t.is((await dynamodb().query(Object.assign({}, defaultQueryParams, {
+  t.is((await dynamodb().query({
+    ...defaultQueryParams,
     ExpressionAttributeValues: {
       ':b': { S: 'bucket-1-protected' },
       ':k': { S: 'granule-1-file-3.hdf' }
     }
-  })).promise()).Count, 1);
+  }).promise()).Count, 1);
 
-  t.is((await dynamodb().query(Object.assign({}, defaultQueryParams, {
+  t.is((await dynamodb().query({
+    ...defaultQueryParams,
     ExpressionAttributeValues: {
       ':b': { S: 'bucket-2-public' },
       ':k': { S: 'granule-2-file-1.hdf' }
     }
-  })).promise()).Count, 1);
+  }).promise()).Count, 1);
 
-  t.is((await dynamodb().query(Object.assign({}, defaultQueryParams, {
+  t.is((await dynamodb().query({
+    ...defaultQueryParams,
     ExpressionAttributeValues: {
       ':b': { S: 'bucket-2-protected' },
       ':k': { S: 'granule-2-file-2.hdf' }
     }
-  })).promise()).Count, 1);
+  }).promise()).Count, 1);
 
-  t.is((await dynamodb().query(Object.assign({}, defaultQueryParams, {
+  t.is((await dynamodb().query({
+    ...defaultQueryParams,
     ExpressionAttributeValues: {
       ':b': { S: 'bucket-2-protected' },
       ':k': { S: 'granule-2-file-3.hdf' }
     }
-  })).promise()).Count, 1);
+  }).promise()).Count, 1);
 });
 
 test.afterEach.always(async (t) => {

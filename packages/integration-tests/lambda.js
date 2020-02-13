@@ -17,15 +17,18 @@ async function getEventSourceMapping(uuid) {
  *                             returned from this page and every page following.
  */
 async function getAllPages(config, key, listFunction) {
-  const lambdaConfig = Object.assign({}, config);
-  const page = await listFunction(lambdaConfig).promise();
-  if (!page.NextMarker) {
-    return page[key];
-  }
-  const pages = page[key];
-  lambdaConfig.Marker = page.NextMarker;
+  const page = await listFunction(config).promise();
+  if (!page.NextMarker) return page[key];
 
-  return pages.concat(await getAllPages(lambdaConfig, key, listFunction.promise()));
+  const pages = page[key];
+
+  return pages.concat(
+    await getAllPages(
+      { ...config, Marker: page.NextMarker },
+      key,
+      listFunction.promise()
+    )
+  );
 }
 
 /**
