@@ -1,19 +1,7 @@
 'use strict';
 
+const path = require('path');
 const log = require('@cumulus/common/log');
-
-/**
- * Insert leading and remove terminating slashes into/from the path string
- *
- * @param {string} path - path string
- * @returns {string} normalized path
- */
-const normalizeSlashes = (path) => {
-  let output = path.replace(/[\/]{2,}/g, '/');
-  if (!output.startsWith('/')) output = `/${output}`;
-  if (output.endsWith('/')) output = output.slice(0, -1);
-  return output;
-};
 
 /**
  * Recur on directory, list all files, and recur into any further directories,
@@ -40,7 +28,7 @@ async function recurOnDirectory(fn, currentPath, segments, position) {
       if (['-', 0].includes(item.type)) {
         files.push(item);
       } else if (['d', 1].includes(item.type)) {
-        const nextDir = (currentPath === '' ? item.name : `${currentPath}/${item.name}`);
+        const nextDir = (currentPath === '/' ? `/${item.name}` : `${currentPath}/${item.name}`);
         // eslint-disable-next-line no-await-in-loop
         files = files.concat(await recurOnDirectory(fn, nextDir, segments, position + 1));
       }
@@ -63,19 +51,24 @@ async function recurOnDirectory(fn, currentPath, segments, position) {
  * protocol.
  *
  * @param {function} fn - the promisified function for listing a directory
- * @param {string} originalPath - path string which may contain regexes for filtering
+ * @param {string} configuredPath - path string configured by operator, which may contain
+ *                                  regexes for filtering
  * @returns {Promise} the promise of an object that has the path is the key and
  *   list of files as values
  */
-async function recursion(fn, originalPath) {
-  const normalizedPath = normalizeSlashes(originalPath);
+async function recursion(fn, configuredPath) {
+  const normalizedPath = path.normalize(configuredPath);
+  const isAbsolutePath = path.isAbsolute(normalizedPath);
   try {
-    const segments = normalizedPath.split('/'); // split on divider
-    return await recurOnDirectory(fn, segments[0], segments, 0);
+    const segments = normalizedPath
+      .split('/') // split on divider
+      .filter((segment) => segment.trim() !== ''); // filter out empty strings from split
+    const startingPath = isAbsolutePath ? '/' : '.';
+    return await recurOnDirectory(fn, startingPath, segments, -1);
   } catch (e) {
     log.error(`Encountered error during recursive list filtering: ${e}`);
     log.info('Falling back to unfiltered directory listing...');
-    return recurOnDirectory(fn, normalizedPath.slice(1), [], 0);
+    return recurOnDirectory(fn, normalizedPath, [], 0);
   }
 }
 
