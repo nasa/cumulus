@@ -4,11 +4,13 @@ title: Cumulus Backup and Restore
 hide_title: true
 ---
 
-# Deployment Backup and Restore
+# Cumulus Backup and Restore
+
+## Deployment Backup and Restore
 
 Most of your Cumulus deployment can be recovered by redeploying via Terraform. The Cumulus metadata including providers, collections, granules, rules, and executions are stored in [DynamoDB](./data_in_dynamodb) and can be setup to be backed up and restored. If a deployment is lost, logs and Step Function executions in the AWS console will be irrecoverable.
 
-## Backup and Restore with AWS
+### Backup and Restore with AWS
 
 You can enable [point-in-time recovery (PITR)](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/PointInTimeRecovery.html) as well as create an [on-demand backup](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/BackupRestore.html) for your Amazon DynamoDB tables.
 
@@ -20,7 +22,7 @@ PITR gives your DynamoDB tables continuous protection from accidental writes and
 
 On-demand backups help with long-term archival requirements for regulatory compliance. On-demand backups give you full-control of managing the lifecycle of your backups, from creating as many backups as you need to retaining these for as long as you need.
 
-## Enabling PITR during deployment
+### Enabling PITR during deployment
 
 By default, the Cumulus [data-persistence module](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence) enables PITR on the default tables listed in the [module's variable defaults](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf) for `enable_point_in_time_tables`. At the time of writing, that list includes:
 
@@ -35,9 +37,9 @@ By default, the Cumulus [data-persistence module](https://github.com/nasa/cumulu
 
 If you wish to change this list, simply update your deployment's `data_persistence` module ([here](https://github.com/nasa/cumulus-template-deploy/blob/master/data-persistence-tf/main.tf) in the `template-deploy` repository) to pass the correct list of tables.
 
-## Restoring with PITR
+### Restoring with PITR
 
-### Restoring a full deployment
+#### Restoring a full deployment
 
 If your deployment has been deleted all of your tables with PITR enabled will have had backups created automatically. You can locate these backups in the AWS console in the [DynamoDb Backups Page](https://console.aws.amazon.com/dynamodb/home#backups:) or through the CLI by running:
 
@@ -58,37 +60,41 @@ This will restore your tables to AWS. They will need to be linked to your Terraf
 ```sh
 terraform import module.data_persistence.aws_dynamodb_table.collections_table <prefix>-CollectionsTable
 ```
+
 replacing `collections_table` with the table identifier in the [DynamoDB Terraform table definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/dynamo.tf).
 
 Terraform will now manage these tables as part of the Terraform state. Run `terrform apply` to generate the rest of the `data-persistence` deployment and then follow the instructions to deploy the `cumulus` deployment as normal.
 
 At this point the data will be in DynamoDB, but not in Elasticsearch, so nothing will be returned on the Operator dashboard or through Operator API calls. To get the data into Elasticsearch, run an [`index-from-database` operation](https://nasa.github.io/cumulus-api/#index-from-database) via the Operator API. The status of this operation can be viewed on the dashboard. When Elasticsearch is switched to the recovery index the data will be visible on the dashboard and available via the Operator API.
 
-### Restoring an individual table
+#### Restoring an individual table
 
 A table can be restored to a previous state using PITR. This is easily achievable via the AWS Console by visiting the `Backups` tab for the table.
 
 A table can only be recovered to a new table name. Following the restoration of the table, the new table must be imported into Terraform.
 
 First, remove the old table by peforming
+
 ```sh
 terraform state rm module.data_persistence.aws_dynamodb_table.collections_table
 ```
 replacing `collections_table` with the table identifier in the [DynamoDB Terraform table definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/dynamo.tf).
 
 Then import the new table into Terraform using
+
 ```sh
 terraform import module.data_persistence.aws_dynamodb_table.collections_table <new-table-name>
 ```
+
 replacing `collections_table` with the table identifier in the [DynamoDB Terraform table definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/dynamo.tf).
 
 Your `data-persistence` and `cumulus` deployments should be redeployed so that your instance of Cumulus uses this new table. After the deployment, your Elasticsearch instance will be out of sync with your new table if there is any change in data. To resync your Elasticsearch with your database run an [`index-from-database` operation](https://nasa.github.io/cumulus-api/#index-from-database) via the Operator API. The status of this operation can be viewed on the dashboard. When Elasticsearch is switched to the new index the DynamoDB tables and Elasticsearch instance will be in sync and the correct data will be reflected on the dashboard.
 
-## Backup and Restore with cumulus-api CLI
+### Backup and Restore with cumulus-api CLI
 
 cumulus-api CLI also includes a backup and restore command. The CLI backup command downloads the content of any of your DynamoDB tables to `.json` files. You can also use these `.json` files to restore the records to another DynamoDB table.
 
-### Backup with the CLI
+#### Backup with the CLI
 
 To backup a table with the CLI, install the `@cumulus/api` package using [npm](https://www.npmjs.com/), making sure to install the same version as your Cumulus deployment:
 
@@ -104,7 +110,7 @@ cumulus-api backup --table <table-name>
 
 the backup will be stored at `backups/<table-name>.json`
 
-### Restore with the CLI
+#### Restore with the CLI
 
 To restore data from a json file run the following command:
 
@@ -112,6 +118,6 @@ To restore data from a json file run the following command:
      ./node_modules/.bin/cumulus-api restore backups/<table-name>.json --table <new-table-name>
 ```
 
-# Data Backup and Restore
+## Data Backup and Restore
 
 Cumulus provides no core functionality to backup data stored in S3. Data disaster recovery is being developed in a separate effort [here](https://github.com/podaac/cumulus-disaster-recovery).
