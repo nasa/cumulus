@@ -31,7 +31,7 @@ async function fetchRemote(eventMessage) {
  *                        and message stored on S3, respectively.
  */
 async function getEventDetails(event) {
-  let result = Object.assign({}, event);
+  let result = { ...event };
   let prop;
 
   if (event.type.endsWith('StateEntered')) {

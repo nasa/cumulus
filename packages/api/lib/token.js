@@ -14,9 +14,7 @@ const createJwtToken = ({ accessToken, expirationTime, username }) => {
 };
 
 const verifyJwtToken = (jwtToken, params = {}) => {
-  const options = Object.assign({
-    algorithms: ['HS256']
-  }, params);
+  const options = { algorithms: ['HS256'], ...params };
   return jwtVerify(jwtToken, process.env.TOKEN_SECRET, options);
 };
 

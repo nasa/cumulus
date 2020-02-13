@@ -5,10 +5,8 @@ const test = require('ava');
 const { URL, URLSearchParams } = require('url');
 
 const EarthdataLogin = require('../../lib/EarthdataLogin');
-const {
-  OAuth2AuthenticationError,
-  OAuth2AuthenticationFailure
-} = require('../../lib/OAuth2');
+const OAuth2AuthenticationError = require('../../lib/OAuth2AuthenticationError');
+const OAuth2AuthenticationFailure = require('../../lib/OAuth2AuthenticationFailure');
 
 test.beforeEach(() => {
   nock.cleanAll();
