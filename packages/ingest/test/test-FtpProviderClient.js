@@ -47,7 +47,7 @@ test.before(async (t) => {
 
 test.after.always(() => S3.recursivelyDeleteS3Bucket(process.env.system_bucket));
 
-test('FtpProviderClient.list lists objects', async (t) => {
+test.serial('FtpProviderClient.list lists objects', async (t) => {
   const myFtpProviderClient = new FtpProviderClient({
     host: '127.0.0.1',
     username: 'testuser',
@@ -59,7 +59,7 @@ test('FtpProviderClient.list lists objects', async (t) => {
   t.true(list.length > 0);
 });
 
-test('FtpProviderClient.list filters listed objects with path', async (t) => {
+test.serial('FtpProviderClient.list filters listed objects with path', async (t) => {
   const myFtpProviderClient = new FtpProviderClient({
     host: '127.0.0.1',
     username: 'testuser',
@@ -72,7 +72,7 @@ test('FtpProviderClient.list filters listed objects with path', async (t) => {
   t.is(list[0].name, 'MOD09GQ_1granule_v3.PDR');
 });
 
-test('FtpProviderClient supports plaintext usernames and passwords', async (t) => {
+test.serial('FtpProviderClient supports plaintext usernames and passwords', async (t) => {
   const ftpClient = new FtpProviderClient({
     host: '127.0.0.1',
     encrypted: false,
@@ -87,7 +87,7 @@ test('FtpProviderClient supports plaintext usernames and passwords', async (t) =
   t.true(fileNames.includes('index.html'));
 });
 
-test('FtpProviderClient supports S3-keypair-encrypted usernames and passwords', async (t) => {
+test.serial('FtpProviderClient supports S3-keypair-encrypted usernames and passwords', async (t) => {
   const ftpClient = new FtpProviderClient({
     host: '127.0.0.1',
     encrypted: true,
@@ -102,7 +102,7 @@ test('FtpProviderClient supports S3-keypair-encrypted usernames and passwords', 
   t.true(fileNames.includes('index.html'));
 });
 
-test('FtpProviderClient supports KMS-encrypted usernames and passwords', async (t) => {
+test.serial('FtpProviderClient supports KMS-encrypted usernames and passwords', async (t) => {
   const ftpClient = new FtpProviderClient({
     host: '127.0.0.1',
     encrypted: true,
@@ -117,7 +117,7 @@ test('FtpProviderClient supports KMS-encrypted usernames and passwords', async (
   t.true(fileNames.includes('index.html'));
 });
 
-test('useList is present and true when assigned', async (t) => {
+test.serial('useList is present and true when assigned', async (t) => {
   const jsftpSpy = sinon.spy(JSFtp);
   const ProxiedFtpProviderClient = proxyquire('../FtpProviderClient', {
     jsftp: jsftpSpy
@@ -136,7 +136,7 @@ test('useList is present and true when assigned', async (t) => {
   t.is(jsftpSpy.getCall(0).args[0].useList, true);
 });
 
-test('useList defaults to false when not assigned', async (t) => {
+test.serial('useList defaults to false when not assigned', async (t) => {
   const jsftpSpy = sinon.spy(JSFtp);
   const ProxiedFtpProviderClient = proxyquire('../FtpProviderClient', {
     jsftp: jsftpSpy
@@ -150,12 +150,11 @@ test('useList defaults to false when not assigned', async (t) => {
 
   await myFtpProviderClient.list('');
 
-  // TODO figure out why STAT does not list any results on our local FTP server
-  t.is(jsftpSpy.callCount, 1);
+  t.true(jsftpSpy.callCount > 1);
   t.is(jsftpSpy.getCall(0).args[0].useList, false);
 });
 
-test('Download remote file to s3 with correct content-type', async (t) => {
+test.serial('Download remote file to s3 with correct content-type', async (t) => {
   const myFtpProviderClient = new FtpProviderClient({
     host: '127.0.0.1',
     username: 'testuser',
