@@ -136,12 +136,13 @@ function localStackAwsClient(Service, options) {
 
   const serviceIdentifier = Service.serviceIdentifier;
 
-  const localStackOptions = Object.assign({}, options, {
+  const localStackOptions = {
+    ...options,
     accessKeyId: 'my-access-key-id',
     secretAccessKey: 'my-secret-access-key',
     region: 'us-east-1',
     endpoint: getLocalstackEndpoint(serviceIdentifier)
-  });
+  };
 
   if (serviceIdentifier === 's3') localStackOptions.s3ForcePathStyle = true;
 
