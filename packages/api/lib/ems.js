@@ -110,7 +110,9 @@ async function retrievePrivateKey() {
     privateKey = await getTextObject(process.env.system_bucket, `${process.env.stackName}/crypto/${privateKeyFile}`);
   } catch (e) {
     if (e.code === 'NoSuchKey') {
-      throw new Error(`${privateKeyFile} does not exist in S3 crypto directory`);
+      throw new Error(
+        `${privateKeyFile} does not exist in S3 crypto directory: s3://${process.env.system_bucket}/${process.env.stackName}/crypto/${privateKeyFile}`
+      );
     }
     throw e;
   }

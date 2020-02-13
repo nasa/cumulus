@@ -25,7 +25,7 @@ test.after.always(async () => {
 test.serial('retrievePrivateKey throws an error if they key does not exist', async (t) => {
   await t.throwsAsync(retrievePrivateKey(), {
     instanceOf: Error,
-    message: 'ems-private.pem does not exist in S3 crypto directory'
+    message: `ems-private.pem does not exist in S3 crypto directory: s3://${process.env.system_bucket}/${process.env.stackName}/crypto/ems-private.pem`
   });
 });
 
