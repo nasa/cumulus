@@ -78,15 +78,12 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
       try {
         await pWaitFor(
           async () => {
-            console.log('Fetching execution', workflowExecution.executionArn);
-            const execution = await getExecution({
+            const { status } = await getExecution({
               prefix: stackName,
               arn: workflowExecution.executionArn
             });
 
-            console.log('execution:', JSON.stringify(execution, null, 2));
-
-            return execution.status === 'failed';
+            return status === 'failed';
           },
           { interval: 2000, timeout: 60000 }
         );
