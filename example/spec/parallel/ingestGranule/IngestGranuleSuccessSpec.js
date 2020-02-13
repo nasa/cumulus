@@ -142,10 +142,11 @@ describe('The S3 Ingest Granules workflow', () => {
     pdrModel = new Pdr();
 
     const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
-    const providerData = Object.assign({}, providerJson, {
+    const providerData = {
+      ...providerJson,
       id: provider.id,
       host: config.bucket
-    });
+    };
 
     // populate collections, providers and test data
     await Promise.all([

@@ -1,6 +1,6 @@
 'use strict';
 
-const { OAuth2 } = require('./OAuth2');
+const OAuth2 = require('./OAuth2');
 
 class GoogleOAuth2 extends OAuth2 {
   /**

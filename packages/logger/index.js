@@ -152,11 +152,11 @@ class Logger {
       version
     };
 
-    const logEvent = Object.assign(
-      {},
-      additionalKeys,
-      standardLogEvent
-    );
+    const logEvent = {
+
+      ...additionalKeys,
+      ...standardLogEvent
+    };
 
     const logEventString = pretty
       ? JSON.stringify(logEvent, null, 2)

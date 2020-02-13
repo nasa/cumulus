@@ -110,10 +110,11 @@ describe('The FTP Ingest Granules workflow', () => {
       console.log(`File object on intermittently failing test: ${JSON.stringify(granule.files)}`);
       console.log(`Granule object on intermittently failing test: ${JSON.stringify(granule)}`);
       const headObjects = await Promise.all(granule.files.map(async (fileObject) =>
-        Object.assign({},
-          fileObject,
-          await headObject(fileObject.bucket, fileObject.key),
-          { expectedMime: mime.lookup(fileObject.key) || 'application/octet-stream' })));
+        ({
+          ...fileObject,
+          ...await headObject(fileObject.bucket, fileObject.key),
+          expectedMime: mime.lookup(fileObject.key) || 'application/octet-stream'
+        })));
       headObjects.forEach((headObj) => expect(headObj.expectedMime).toEqual(headObj.ContentType));
     });
   });
