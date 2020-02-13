@@ -9,7 +9,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 
 const publishReports = rewire('../../../lambdas/publish-reports');
 
-const testMessagesReceived = async (t, QueueUrl, granuleId, pdrName, collectionId) => {
+const testMessagesReceived = async (t, QueueUrl, granuleId, pdrName) => {
   const { Messages } = await awsServices.sqs().receiveMessage({
     QueueUrl,
     WaitTimeSeconds: 3,
@@ -18,10 +18,9 @@ const testMessagesReceived = async (t, QueueUrl, granuleId, pdrName, collectionI
 
   if (granuleId && pdrName) t.is(Messages.length, 2);
   else if (granuleId || pdrName) t.is(Messages.length, 1);
-  else if (collectionId) t.is(Messages.length, 1);
   else t.is(Messages, undefined);
 
-  if (granuleId || pdrName || collectionId) {
+  if (granuleId || pdrName) {
     const snsMessages = Messages.map((message) => JSON.parse(message.Body));
     const dbRecords = snsMessages.map((message) => JSON.parse(message.Message));
 
@@ -33,12 +32,6 @@ const testMessagesReceived = async (t, QueueUrl, granuleId, pdrName, collectionI
     if (pdrName) {
       const pdrRecord = dbRecords.find((r) => r.pdrName);
       t.is(pdrRecord.pdrName, pdrName);
-    }
-
-    if (collectionId) {
-      const collectionRecord = dbRecords.find((r) => r.name);
-      t.is(collectionId.name, collectionRecord.name);
-      t.is(collectionId.version, collectionRecord.version);
     }
   }
 };
@@ -205,18 +198,6 @@ test.serial('publishGranuleRecord() does not throw an exception if publishing th
       publishSnsMessage: () => Promise.reject(new Error('nope'))
     })(() => publishReports.publishGranuleRecord({ granuleId }))
   );
-});
-
-test.serial('publishCollectionRecord() publishes a collection record to SNS', async (t) => {
-  const { QueueUrl } = t.context;
-  const collectionId = {
-    name: randomString(),
-    version: '006'
-  };
-
-  await publishReports.publishGranuleRecord(collectionId);
-
-  await testMessagesReceived(t, QueueUrl, null, null, collectionId);
 });
 
 test.serial('handleGranuleMessages() publishes a granule record to SNS', async (t) => {

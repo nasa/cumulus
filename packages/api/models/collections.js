@@ -1,10 +1,10 @@
 'use strict';
 
 const { CollectionConfigStore } = require('@cumulus/common/collection-config-store');
+const { publishSnsMessage } = require('@cumulus/aws-client/SNS');
 const Manager = require('./base');
 const { collection: collectionSchema } = require('./schemas');
 const Rule = require('./rules');
-const { publishCollectionRecord } = require('../lambdas/publish-reports');
 const { AssociatedRulesError, BadRequestError } = require('../lib/errors');
 
 function checkRegex(regex, sampleFileName) {
@@ -12,6 +12,25 @@ function checkRegex(regex, sampleFileName) {
   const match = validation.test(sampleFileName);
 
   if (!match) throw new BadRequestError(`regex ${regex} cannot validate ${sampleFileName}`);
+}
+
+/**
+ * Publish SNS message for Collection reporting.
+ *
+ * @param {Object} collectionRecord - A Collection record with event type
+ * @returns {Promise<undefined>}
+ */
+async function publishCollectionSnsMessage(collectionRecord) {
+  try {
+    const collectionSnsTopicArn = process.env.collection_sns_topic_arn;
+    await publishSnsMessage(collectionSnsTopicArn, collectionRecord);
+  } catch (err) {
+    log.fatal(
+      `Failed to create database record for collection ${collectionRecord.record.name} ${collectionRecord.record.version}: ${err.message}`,
+      'Cause: ', err,
+      'Collection record: ', collectionRecord
+    );
+  }
 }
 
 class Collection extends Manager {
@@ -96,8 +115,12 @@ class Collection extends Manager {
     const { dataType, name, version } = item;
     await this.collectionConfigStore.put(dataType || name, version, item);
 
-    const collectionRecord = super.create(item);
-    await publishCollectionRecord(collectionRecord);
+    const collectionRecord = await super.create(item);
+    const publishRecord = {
+      event: 'Create',
+      record: collectionRecord
+    };
+    await publishCollectionSnsMessage(publishRecord);
 
     return collectionRecord
   }
@@ -144,6 +167,15 @@ class Collection extends Manager {
     const { dataType } = item.dataType
       ? item : await this.get(item).catch(() => item);
     await this.collectionConfigStore.delete(dataType || name, version);
+
+    const record = {
+      event: 'Delete',
+      record: {
+        name,
+        version
+      }
+    };
+    await publishCollectionSnsMessage(record);
 
     return super.delete({ name, version });
   }
