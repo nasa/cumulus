@@ -36,5 +36,5 @@ target_bucket        = "target-bucket-name"                               # Targ
 target_prefix        = "target-prefix"                                    # Target object prefix path
 
 # Optional
-security_groups      = ["sg-123456"]                                      # Security Group IDs (for Lambda)
+security_group_ids   = ["sg-123456"]                                      # Security Group IDs (for Lambda)
 ```
