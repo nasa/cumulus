@@ -10,7 +10,7 @@ const {
   s3CopyObject,
   buildS3Uri,
   s3ObjectExists,
-  getS3Object
+  getTextObject
 } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const log = require('@cumulus/common/log');
@@ -106,17 +106,17 @@ async function getExpiredS3Objects(bucket, prefix, retentionInDays) {
 async function retrievePrivateKey() {
   const privateKeyFile = process.env.ems_privateKey || 'ems-private.pem';
 
-  const keyExists = await s3ObjectExists(
-    { Bucket: process.env.system_bucket, Key: `${process.env.stackName}/crypto/${privateKeyFile}` }
-  );
-  if (!keyExists) {
-    return Promise.reject(new Error(`${privateKeyFile} does not exist in S3 crypto directory`));
+  let privateKey;
+  try {
+    privateKey = await getTextObject(process.env.system_bucket, `${process.env.stackName}/crypto/${privateKeyFile}`);
+  } catch (e) {
+    if (e.code === 'NoSuchKey') {
+      throw new Error(`${privateKeyFile} does not exist in S3 crypto directory`);
+    }
+    throw e;
   }
 
-  log.debug(`Reading Key: ${privateKeyFile} bucket:${process.env.system_bucket}, stack:${process.env.stackName}`);
-  const privateKey = await getS3Object(process.env.system_bucket, `${process.env.stackName}/crypto/${privateKeyFile}`);
-
-  return privateKey.Body.toString();
+  return privateKey;
 }
 
 /**
