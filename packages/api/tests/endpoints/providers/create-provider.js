@@ -119,7 +119,7 @@ test('POST with invalid authorization scheme returns an invalid authorization re
 
 test('POST creates a new provider', async (t) => {
   const newProviderId = 'AQUA';
-  const newProvider = Object.assign({}, t.context.testProvider, { id: newProviderId });
+  const newProvider = { ...t.context.testProvider, id: newProviderId };
 
   const response = await request(app)
     .post('/providers')

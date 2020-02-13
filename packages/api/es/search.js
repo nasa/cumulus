@@ -176,7 +176,7 @@ class BaseSearch {
 
     return {
       index: this.index,
-      body: Object.assign({}, aggrs, queries(this.params)),
+      body: { ...aggrs, ...queries(this.params) },
       type: this.type,
       size: 0
     };
@@ -191,41 +191,36 @@ class BaseSearch {
   }
 
   async get(id) {
-    try {
-      const body = {
-        query: {
-          term: {
-            _id: id
-          }
+    const body = {
+      query: {
+        term: {
+          _id: id
         }
-      };
-
-      logDetails.granuleId = id;
-
-      if (!this.client) {
-        this.client = await this.constructor.es();
       }
+    };
 
-      const result = await this.client.search({
-        index: this.index,
-        type: this.type,
-        body: body
-      }).then((response) => response.body);
+    logDetails.granuleId = id;
 
-      if (result.hits.total > 1) {
-        return { detail: 'More than one record was found!' };
-      }
-      if (result.hits.total === 0) {
-        return { detail: 'Record not found' };
-      }
-
-      const resp = result.hits.hits[0]._source;
-      resp._id = result.hits.hits[0]._id;
-      return resp;
-    } catch (e) {
-      //log.error(e, logDetails);
-      throw e;
+    if (!this.client) {
+      this.client = await this.constructor.es();
     }
+
+    const result = await this.client.search({
+      index: this.index,
+      type: this.type,
+      body: body
+    }).then((response) => response.body);
+
+    if (result.hits.total > 1) {
+      return { detail: 'More than one record was found!' };
+    }
+    if (result.hits.total === 0) {
+      return { detail: 'Record not found' };
+    }
+
+    const resp = result.hits.hits[0]._source;
+    resp._id = result.hits.hits[0]._id;
+    return resp;
   }
 
   async granulesStats(key, value) {
@@ -275,7 +270,7 @@ class BaseSearch {
     const newObj = {
       averageDuration: item.averageDuration.value,
       granules: item.granulesCount.value,
-      granulesStatus: Object.assign({}, status)
+      granulesStatus: { ...status }
     };
 
     item.statusCount.buckets.forEach((b) => {
