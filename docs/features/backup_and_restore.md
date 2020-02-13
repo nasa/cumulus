@@ -8,7 +8,7 @@ hide_title: true
 
 ## Deployment Backup and Restore
 
-Most of your Cumulus deployment can be recovered by redeploying via Terraform. The Cumulus metadata including providers, collections, granules, rules, and executions are stored in [DynamoDB](./data_in_dynamodb) and can be setup to be backed up and restored. If a deployment is lost, logs and Step Function executions in the AWS console will be irrecoverable.
+Most of your Cumulus deployment can be recovered by redeploying via Terraform. However, the Cumulus metadata including providers, collections, granules, rules, and executions that is stored in [DynamoDB](./data_in_dynamodb) can only be restored if backup was configured or enabled. If a deployment is lost, logs and Step Function executions in the AWS console will be irrecoverable.
 
 ### Backup and Restore with AWS
 
