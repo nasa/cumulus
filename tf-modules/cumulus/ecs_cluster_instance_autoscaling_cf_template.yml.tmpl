@@ -76,8 +76,9 @@ Resources:
 
           aws s3 cp s3://${task_reaper_object.bucket}/${task_reaper_object.key} /usr/local/bin/task-reaper.sh
           chmod +x /usr/local/bin/task-reaper.sh
-          echo "$(echo '0,30 * * * * logrotate -v /etc/logrotate.conf' ; crontab -l)" | crontab -
+          echo "$(echo '0,30 * * * * /usr/sbin/logrotate -v /etc/logrotate.conf' ; crontab -l)" | crontab -
           sed -i 's/size.*/size 250M\n    dateformat -%Y%m%d%s\n/' /etc/logrotate.d/awslogs
+          sed -i 's/rotate.*/rotate 2/' /etc/logrotate.d/awslogs
           cat <<'EOF' >> /etc/cron.d/task-reaper
           PATH=/bin:/usr/local/bin
           AWS_DEFAULT_REGION=${region}
