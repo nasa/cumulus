@@ -171,6 +171,7 @@ class Collection extends Manager {
 
     const record = {
       event: 'Delete',
+      deletedAt: Date.now(),
       record: {
         name,
         version
