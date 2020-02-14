@@ -46,7 +46,7 @@ test.before(async (t) => {
 });
 
 test.after.always(() => S3.recursivelyDeleteS3Bucket(process.env.system_bucket));
-/*
+
 test.serial('FtpProviderClient.list lists objects', async (t) => {
   const myFtpProviderClient = new FtpProviderClient({
     host: '127.0.0.1',
@@ -117,7 +117,7 @@ test.serial('FtpProviderClient supports KMS-encrypted usernames and passwords', 
 
   t.true(fileNames.includes('index.html'));
 });
-*/
+
 test.serial('useList is present and true when assigned', async (t) => {
   const jsftpSpy = sinon.spy(JSFtp);
   const ProxiedFtpProviderClient = proxyquire('../FtpProviderClient', {
