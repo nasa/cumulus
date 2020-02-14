@@ -6,7 +6,6 @@ hide_title: true
 
 # Cumulus Metadata in DynamoDB
 
-- [DynamoDB Backup and Restore](#backup-and-restore-with-aws)
 - [DynamoDB Auto Scaling](#dynamodb-auto-scaling)
 
 [@cumulus/api](https://www.npmjs.com/package/@cumulus/api) uses a number of methods to preserve the metadata generated in a Cumulus instance.
