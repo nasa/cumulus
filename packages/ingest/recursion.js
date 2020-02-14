@@ -1,7 +1,6 @@
 'use strict';
 
 const path = require('path');
-const { sleep } = require('@cumulus/common/util');
 const log = require('@cumulus/common/log');
 
 /**
@@ -30,10 +29,8 @@ async function recurOnDirectory(fn, currentPath, segments, position) {
         files.push(item);
       } else if (['d', 1].includes(item.type)) {
         const nextDir = (currentPath === '/' ? `/${item.name}` : `${currentPath}/${item.name}`);
-        /* eslint-disable no-await-in-loop */
-        await sleep(100);
+        // eslint-disable-next-line no-await-in-loop
         files = files.concat(await recurOnDirectory(fn, nextDir, segments, position + 1));
-        /* eslint-enable no-await-in-loop */
       }
     }
   }
