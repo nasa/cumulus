@@ -19,6 +19,8 @@ async function recurOnDirectory(fn, currentPath, segments, position) {
   const filterExpr = segments[position + 1] || '.*';
   const filterRegex = new RegExp(filterExpr);
   log.debug('recurOnDirectory attempting to list ', currentPath);
+  const mu = process.memoryUsage();
+  log.debug('current memory usage: ', mu.heapUsed, ' / ', mu.heapTotal);
   const contents = await fn(currentPath);
   let files = [];
 
