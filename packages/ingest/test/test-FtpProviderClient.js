@@ -133,7 +133,7 @@ test.serial('useList is present and true when assigned', async (t) => {
 
   await myFtpProviderClient.list('');
 
-  t.true(jsftpSpy.callCount > 1);
+  t.true(jsftpSpy.callCount > 0);
   t.is(jsftpSpy.getCall(0).args[0].useList, true);
 });
 
@@ -151,7 +151,7 @@ test.serial('useList defaults to false when not assigned', async (t) => {
 
   await myFtpProviderClient.list('');
 
-  t.true(jsftpSpy.callCount > 1);
+  t.true(jsftpSpy.callCount > 0);
   t.is(jsftpSpy.getCall(0).args[0].useList, false);
 });
 
