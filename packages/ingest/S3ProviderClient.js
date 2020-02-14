@@ -4,7 +4,12 @@ const aws = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
 const errors = require('@cumulus/common/errors');
 const isString = require('lodash.isstring');
-const { basename, dirname } = require('path');
+const {
+  basename,
+  dirname,
+  isAbsolute,
+  normalize
+} = require('path');
 
 class S3ProviderClient {
   constructor({ bucket }) {
@@ -42,10 +47,12 @@ class S3ProviderClient {
    * @private
    */
   async list(path) {
+    // absolute paths are not valid S3 prefixes
+    const prefix = isAbsolute(path) ? normalize(path.slice(1)) : normalize(path);
     const objects = await aws.listS3ObjectsV2({
       Bucket: this.bucket,
       FetchOwner: true,
-      Prefix: path
+      Prefix: prefix
     });
 
     return objects.map(({ Key, Size, LastModified }) => ({
