@@ -46,3 +46,31 @@ test('CMRSearchConceptQueue handles paging correctly.', async (t) => {
     await cmrSearchQueue.shift(); // eslint-disable-line no-await-in-loop
   }
 });
+
+test('CMRSearchConceptQueue uses cmrEnvironment from parameter over environment variable.', async (t) => {
+  const headers = { 'cmr-hits': 2 };
+  const body = '{"hits":2,"items":[{"cmrEntry1":"data1"}, {"cmrEntry2":"data2"}]}';
+
+  nock('https://cmr.sit.earthdata.nasa.gov')
+    .get('/search/granules.umm_json')
+    .query((q) => q.page_num === '1')
+    .reply(200, body, headers);
+
+  const expected = [
+    { cmrEntry1: 'data1' },
+    { cmrEntry2: 'data2' }
+  ];
+  process.env.CMR_ENVIRONMENT = 'UAT';
+  const cmrSearchQueue = new CMRSearchConceptQueue({
+    provider: 'CUMULUS',
+    clientId: 'fakeClient',
+    type: 'granules',
+    cmrEnvironment: 'SIT',
+    searchParams: {},
+    format: 'umm_json'
+  });
+  for (let i = 0; i < 2; i += 1) {
+    t.deepEqual(await cmrSearchQueue.peek(), expected[i]); // eslint-disable-line no-await-in-loop
+    await cmrSearchQueue.shift(); // eslint-disable-line no-await-in-loop
+  }
+});

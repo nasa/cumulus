@@ -87,6 +87,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update the API package to encrypt provider credentials using KMS instead of
     using RSA keys stored in S3
 
+- **CUMULUS-1757**
+  - Update @cumulus/cmr-client CMRSearchConceptQueue to take optional cmrEnvironment parameter
+
 ### Deprecated
 
 - **CUMULUS-1684**
