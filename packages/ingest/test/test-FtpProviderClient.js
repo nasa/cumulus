@@ -46,7 +46,7 @@ test.before(async (t) => {
 });
 
 test.after.always(() => S3.recursivelyDeleteS3Bucket(process.env.system_bucket));
-
+/*
 test.serial('FtpProviderClient.list lists objects', async (t) => {
   const myFtpProviderClient = new FtpProviderClient({
     host: '127.0.0.1',
@@ -58,7 +58,7 @@ test.serial('FtpProviderClient.list lists objects', async (t) => {
   const list = await myFtpProviderClient.list('');
   t.true(list.length > 0);
 });
-/*
+
 test.serial('FtpProviderClient.list filters listed objects with path', async (t) => {
   const myFtpProviderClient = new FtpProviderClient({
     host: '127.0.0.1',
@@ -71,7 +71,7 @@ test.serial('FtpProviderClient.list filters listed objects with path', async (t)
   t.true(list.length === 1);
   t.is(list[0].name, 'MOD09GQ_1granule_v3.PDR');
 });
-*/
+
 test.serial('FtpProviderClient supports plaintext usernames and passwords', async (t) => {
   const ftpClient = new FtpProviderClient({
     host: '127.0.0.1',
@@ -87,20 +87,21 @@ test.serial('FtpProviderClient supports plaintext usernames and passwords', asyn
   t.true(fileNames.includes('index.html'));
 });
 
-test.serial('FtpProviderClient supports S3-keypair-encrypted usernames and passwords', async (t) => {
-  const ftpClient = new FtpProviderClient({
-    host: '127.0.0.1',
-    encrypted: true,
-    username: await S3KeyPairProvider.encrypt('testuser'),
-    password: await S3KeyPairProvider.encrypt('testpass'),
-    useList: true
+test.serial('FtpProviderClient supports S3-keypair-encrypted usernames and passwords',
+  async (t) => {
+    const ftpClient = new FtpProviderClient({
+      host: '127.0.0.1',
+      encrypted: true,
+      username: await S3KeyPairProvider.encrypt('testuser'),
+      password: await S3KeyPairProvider.encrypt('testpass'),
+      useList: true
+    });
+
+    const files = await ftpClient.list('/');
+    const fileNames = files.map((f) => f.name);
+
+    t.true(fileNames.includes('index.html'));
   });
-
-  const files = await ftpClient.list('/');
-  const fileNames = files.map((f) => f.name);
-
-  t.true(fileNames.includes('index.html'));
-});
 
 test.serial('FtpProviderClient supports KMS-encrypted usernames and passwords', async (t) => {
   const ftpClient = new FtpProviderClient({
@@ -116,7 +117,7 @@ test.serial('FtpProviderClient supports KMS-encrypted usernames and passwords', 
 
   t.true(fileNames.includes('index.html'));
 });
-
+*/
 test.serial('useList is present and true when assigned', async (t) => {
   const jsftpSpy = sinon.spy(JSFtp);
   const ProxiedFtpProviderClient = proxyquire('../FtpProviderClient', {
