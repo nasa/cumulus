@@ -8,6 +8,7 @@ const log = require('@cumulus/common/log');
 const omit = require('lodash.omit');
 const S3 = require('@cumulus/aws-client/S3');
 const { S3KeyPairProvider } = require('@cumulus/common/key-pair-provider');
+const { isNil } = require('@cumulus/common/util');
 const recursion = require('./recursion');
 const { lookupMimeType } = require('./util');
 
@@ -51,13 +52,16 @@ class FtpProviderClient {
   }
 
   async buildFtpClient() {
-    return new JSFtp({
-      host: this.host,
-      port: get(this.providerConfig, 'port', 21),
-      user: await this.getUsername(),
-      pass: await this.getPassword(),
-      useList: get(this.providerConfig, 'useList', false)
-    });
+    if (isNil(this.ftpClient)) {
+      this.ftpClient = new JSFtp({
+        host: this.host,
+        port: get(this.providerConfig, 'port', 21),
+        user: await this.getUsername(),
+        pass: await this.getPassword(),
+        useList: get(this.providerConfig, 'useList', false)
+      });
+    }
+    return this.ftpClient;
   }
 
   /**
