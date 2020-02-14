@@ -58,14 +58,17 @@ async function put(req, res) {
 
     await granuleModelClient.reingest({ ...granule, queueName: process.env.backgroundQueueName });
 
-    const warning = 'The granule files may be overwritten';
-
-    return res.send(Object.assign({
-      granuleId: granule.granuleId,
+    const response = {
       action,
+      granuleId: granule.granuleId,
       status: 'SUCCESS'
-    },
-    (collection.duplicateHandling !== 'replace') ? { warning } : {}));
+    };
+
+    if (collection.duplicateHandling !== 'replace') {
+      response.warning = 'The granule files may be overwritten';
+    }
+
+    return res.send(response);
   }
 
   if (action === 'applyWorkflow') {
