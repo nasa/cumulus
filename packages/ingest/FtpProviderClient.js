@@ -80,10 +80,10 @@ class FtpProviderClient {
     return new Promise((resolve, reject) => {
       client.on('error', reject);
       client.get(remotePath, localPath, (err) => {
-        client.destroy();
-
-        if (err) reject(err);
-        else {
+        if (err) {
+          client.destroy();
+          reject(err);
+        } else {
           log.info(`Finishing downloading ${remoteUrl}`);
           resolve(localPath);
         }
@@ -95,9 +95,12 @@ class FtpProviderClient {
     let counter = _counter;
     const client = await this.buildFtpClient();
     return new Promise((resolve, reject) => {
-      client.on('error', reject);
-      client.ls(path, (err, data) => {
+      const errorHandler = (e) => {
         client.destroy();
+        return reject(e);
+      };
+      client.on('error', errorHandler);
+      client.ls(path, (err, data) => {
         if (err) {
           if (err.message.includes('Timed out') && counter < 3) {
             log.error(`Connection timed out while listing ${path}. Retrying...`);
@@ -105,9 +108,9 @@ class FtpProviderClient {
             return this._list(path, counter).then((r) => {
               log.info(`${counter} retry suceeded`);
               return resolve(r);
-            }).catch((e) => reject(e));
+            }).catch(errorHandler);
           }
-          return reject(err);
+          return errorHandler(err);
         }
 
         return resolve(data.map((d) => ({
@@ -175,8 +178,6 @@ class FtpProviderClient {
     };
     await S3.promiseS3Upload(params);
     log.info('Uploading to s3 is complete(ftp)', s3uri);
-
-    client.destroy();
 
     return s3uri;
   }

@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -evx
 
 source .bamboo_env_vars || true
 if [[ $COMMIT_MESSAGE =~ skip-integration-tests || $SKIP_INTEGRATION_TESTS == true ]]; then
