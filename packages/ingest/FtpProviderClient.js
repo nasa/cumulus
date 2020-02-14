@@ -67,7 +67,6 @@ class FtpProviderClient {
   errorHandler(rejectFn, e) {
     if (!isNil(this.ftpClient)) {
       this.ftpClient.destroy();
-      delete this.ftpClient;
     }
     log.debug('FtpProviderClient encountered error: ', e);
     return rejectFn(e);
