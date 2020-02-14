@@ -1053,7 +1053,7 @@ test('_getMutableFieldNames() returns correct fields for running status', async 
   const updateFields = granuleModel._getMutableFieldNames(updatedItem);
 
   t.deepEqual(updateFields, [
-    'createdAt', 'updatedAt', 'timestamp'
+    'updatedAt', 'timestamp', 'status', 'execution'
   ]);
 });
 
