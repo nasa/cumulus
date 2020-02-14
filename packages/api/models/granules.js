@@ -5,7 +5,6 @@ const get = require('lodash.get');
 const partial = require('lodash.partial');
 const path = require('path');
 
-const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
 const secretsManagerUtils = require('@cumulus/aws-client/SecretsManager');
@@ -34,6 +33,7 @@ const {
 const Manager = require('./base');
 
 const { buildDatabaseFiles } = require('../lib/FileUtils');
+const GranuleSearchQueue = require('../lib/GranuleSearchQueue');
 
 const {
   parseException,
@@ -42,25 +42,6 @@ const {
 } = require('../lib/utils');
 const Rule = require('./rules');
 const granuleSchema = require('./schemas').granule;
-
-const translateGranule = async (granule) => {
-  if (isNil(granule.files)) return granule;
-
-  return {
-    ...granule,
-    files: await buildDatabaseFiles({ files: granule.files })
-  };
-};
-
-class GranuleSearchQueue extends DynamoDbSearchQueue {
-  peek() {
-    return super.peek().then((g) => (isNil(g) ? g : translateGranule(g)));
-  }
-
-  shift() {
-    return super.shift().then((g) => (isNil(g) ? g : translateGranule(g)));
-  }
-}
 
 class Granule extends Manager {
   constructor() {
