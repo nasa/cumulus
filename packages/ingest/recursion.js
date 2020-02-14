@@ -42,13 +42,17 @@ async function recurOnDirectory(fn, currentPath, segments, position) {
  * It requests a promisified list function that returns contents of
  * a directory on a server, filtering on provided regex segments.
  *
- * Note that calls to the list function will not have leading or terminating slashes.
- * Initially an empty string is passed as the path to list the default directory. Following calls
- * based on items discovered will be of the format `fn('path/to/files')`, again with no leading or
- * terminating slashes.
+ * Note that calls to the list function will use either a relative or absolute path, corresponding
+ * to the `configuredPath` passed into this function. The list function will initially be called
+ * with '.' for a relative path or '/' for an absolute path. List functions will need to be able to
+ * normalize or correct these paths as appropriate for their protocol.
  *
- * List functions will need to be able to normalize or correct these paths as appropriate for their
- * protocol.
+ * Further calls to the list functions will append the current path to that starting path, such
+ * that all calls will start with either '.' or '/', regardless of additional characters, e.g.
+ * `fn('./path')` vs. `fn('path')`.
+ *
+ * In the case of failure during the recursive list, this function will only apply `path.normalize`
+ * to the `configuredPath` and then call the list function with the entire normalizedPath.
  *
  * @param {function} fn - the promisified function for listing a directory
  * @param {string} configuredPath - path string configured by operator, which may contain

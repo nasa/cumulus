@@ -78,15 +78,17 @@ class FtpProviderClient {
     const client = await this.buildFtpClient();
 
     return new Promise((resolve, reject) => {
-      client.on('error', reject);
+      const errorHandler = (e) => {
+        client.destroy();
+        return reject(e);
+      };
+      client.on('error', errorHandler);
       client.get(remotePath, localPath, (err) => {
         if (err) {
-          client.destroy();
-          reject(err);
-        } else {
-          log.info(`Finishing downloading ${remoteUrl}`);
-          resolve(localPath);
+          return errorHandler(err);
         }
+        log.info(`Finishing downloading ${remoteUrl}`);
+        return resolve(localPath);
       });
     });
   }
