@@ -8,7 +8,7 @@ hide_title: true
 
 ## Deployment Backup and Restore
 
-Most of your Cumulus deployment can be recovered by redeploying via Terraform. The Cumulus metadata including providers, collections, granules, rules, and executions are stored in [DynamoDB](./data_in_dynamodb) and can be setup to be backed up and restored. If a deployment is lost, logs and Step Function executions in the AWS console will be irrecoverable.
+Most of your Cumulus deployment can be recovered by redeploying via Terraform. However, the Cumulus metadata including providers, collections, granules, rules, and executions that is stored in [DynamoDB](./data_in_dynamodb) can only be restored if backup was configured or enabled. If a deployment is lost, logs and Step Function executions in the AWS console will be irrecoverable.
 
 ### Backup and Restore with AWS
 
@@ -73,14 +73,14 @@ A table can be restored to a previous state using PITR. This is easily achievabl
 
 A table can only be recovered to a new table name. Following the restoration of the table, the new table must be imported into Terraform.
 
-First, remove the old table by peforming
+First, remove the old table from the Terraform state:
 
 ```sh
 terraform state rm module.data_persistence.aws_dynamodb_table.collections_table
 ```
 replacing `collections_table` with the table identifier in the [DynamoDB Terraform table definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/dynamo.tf).
 
-Then import the new table into Terraform using
+Then import the new table into the Terraform state:
 
 ```sh
 terraform import module.data_persistence.aws_dynamodb_table.collections_table <new-table-name>
