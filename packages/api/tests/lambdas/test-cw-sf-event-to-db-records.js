@@ -170,7 +170,7 @@ test.serial('saveGranulesToDb() does not throw an exception if storeGranulesFrom
   }
 });
 
-test('The cw-sf-event-to-db-records Lambda function creates execution, granule, and PDR records', async (t) => {
+test('The cw-sf-event-to-db-records Lambda function creates execution and granule records', async (t) => {
   const { cumulusMessage, executionModel, granuleModel } = t.context;
 
   const event = await loadFixture('execution-running-event.json');
