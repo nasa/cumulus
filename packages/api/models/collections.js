@@ -2,6 +2,7 @@
 
 const { CollectionConfigStore } = require('@cumulus/common/collection-config-store');
 const { publishSnsMessage } = require('@cumulus/aws-client/SNS');
+const log = require('@cumulus/common/log');
 const Manager = require('./base');
 const { collection: collectionSchema } = require('./schemas');
 const Rule = require('./rules');
@@ -122,7 +123,7 @@ class Collection extends Manager {
     };
     await publishCollectionSnsMessage(publishRecord);
 
-    return collectionRecord
+    return collectionRecord;
   }
 
   /**

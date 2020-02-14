@@ -32,10 +32,12 @@ const testMessagesReceived = async (t, QueueUrl, eventType, collection) => {
     t.is(dbRecords[0].event, eventType);
     t.is(dbRecords[0].record.name, collection.name);
     t.is(dbRecords[0].record.version, collection.version);
-  }
-  else {
+  } else {
     t.is(dbRecords.length, 2);
-    const deleteRecord = dbRecords.find((r) => (r.event = eventType));
+    const deleteRecord = dbRecords.find((r) => (r.event === eventType));
+    // {
+    //   if(r.event = eventType) return r;
+    // });
     t.is(deleteRecord.event, eventType);
     t.is(deleteRecord.record.name, collection.name);
     t.is(deleteRecord.record.version, collection.version);
@@ -86,7 +88,6 @@ test.beforeEach(async (t) => {
     TopicArn: TopicArn,
     Token: SubscriptionArn
   }).promise();
-
 });
 
 test.afterEach.always(async (t) => {
@@ -117,7 +118,7 @@ test.serial('Collection.create() sends a creation record to SNS', async (t) => {
 
   await collectionsModel.create(fakeCollectionFactory({ name, version }));
 
-  await testMessagesReceived(t, QueueUrl, 'Create', {name, version});
+  await testMessagesReceived(t, QueueUrl, 'Create', { name, version });
 });
 
 test.serial('Collection.delete() sends a deletion record to SNS', async (t) => {
@@ -127,9 +128,9 @@ test.serial('Collection.delete() sends a deletion record to SNS', async (t) => {
 
   await collectionsModel.create(fakeCollectionFactory({ name, version }));
 
-  await collectionsModel.delete({ name, version });  
+  await collectionsModel.delete({ name, version });
 
-  await testMessagesReceived(t, QueueUrl, 'Delete', {name, version});
+  await testMessagesReceived(t, QueueUrl, 'Delete', { name, version });
 });
 
 test.serial('Collection.exists() returns true when a record exists', async (t) => {
