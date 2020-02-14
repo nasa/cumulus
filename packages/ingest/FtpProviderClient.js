@@ -64,6 +64,15 @@ class FtpProviderClient {
     return this.ftpClient;
   }
 
+  errorHandler(rejectFn, e) {
+    if (!isNil(this.ftpClient)) {
+      this.ftpClient.destroy();
+      delete this.ftpClient;
+    }
+    log.debug('FtpProviderClient encountered error: ', e);
+    return rejectFn(e);
+  }
+
   /**
    * Download a remote file to disk
    *
@@ -78,14 +87,10 @@ class FtpProviderClient {
     const client = await this.buildFtpClient();
 
     return new Promise((resolve, reject) => {
-      const errorHandler = (e) => {
-        client.destroy();
-        return reject(e);
-      };
-      client.on('error', errorHandler);
+      client.on('error', this.errorHandler.bind(this, reject));
       client.get(remotePath, localPath, (err) => {
         if (err) {
-          return errorHandler(err);
+          return this.errorHandler(reject, err);
         }
         log.info(`Finishing downloading ${remoteUrl}`);
         return resolve(localPath);
@@ -97,11 +102,7 @@ class FtpProviderClient {
     let counter = _counter;
     const client = await this.buildFtpClient();
     return new Promise((resolve, reject) => {
-      const errorHandler = (e) => {
-        client.destroy();
-        return reject(e);
-      };
-      client.on('error', errorHandler);
+      client.on('error', this.errorHandler.bind(this, reject));
       client.ls(path, (err, data) => {
         if (err) {
           if (err.message.includes('Timed out') && counter < 3) {
@@ -110,9 +111,9 @@ class FtpProviderClient {
             return this._list(path, counter).then((r) => {
               log.info(`${counter} retry suceeded`);
               return resolve(r);
-            }).catch(errorHandler);
+            }).catch(this.errorHandler.bind(this, reject));
           }
-          return errorHandler(err);
+          return this.errorHandler(reject, err);
         }
 
         return resolve(data.map((d) => ({
@@ -162,8 +163,7 @@ class FtpProviderClient {
     const readable = await new Promise((resolve, reject) => {
       client.get(remotePath, (err, socket) => {
         if (err) {
-          client.destroy();
-          return reject(err);
+          return this.errorHandler(reject, err);
         }
         return resolve(socket);
       });
