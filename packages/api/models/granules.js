@@ -33,6 +33,7 @@ const {
 const Manager = require('./base');
 
 const { buildDatabaseFiles } = require('../lib/FileUtils');
+const { translateGranule } = require('../lib/granules');
 const GranuleSearchQueue = require('../lib/GranuleSearchQueue');
 
 const {
