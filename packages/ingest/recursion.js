@@ -18,6 +18,7 @@ async function recurOnDirectory(fn, currentPath, segments, position) {
   // recursively list everything when we've run out of segments
   const filterExpr = segments[position + 1] || '.*';
   const filterRegex = new RegExp(filterExpr);
+  log.debug('recurOnDirectory attempting to list ', currentPath);
   const contents = await fn(currentPath);
   let files = [];
 
