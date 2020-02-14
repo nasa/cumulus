@@ -46,7 +46,7 @@ test.before(async (t) => {
 });
 
 test.after.always(() => S3.recursivelyDeleteS3Bucket(process.env.system_bucket));
-
+/*
 test.serial('FtpProviderClient.list lists objects', async (t) => {
   const myFtpProviderClient = new FtpProviderClient({
     host: '127.0.0.1',
@@ -58,7 +58,7 @@ test.serial('FtpProviderClient.list lists objects', async (t) => {
   const list = await myFtpProviderClient.list('');
   t.true(list.length > 0);
 });
-
+*/
 test.serial('FtpProviderClient.list filters listed objects with path', async (t) => {
   const myFtpProviderClient = new FtpProviderClient({
     host: '127.0.0.1',
