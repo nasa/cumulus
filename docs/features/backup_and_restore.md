@@ -115,8 +115,10 @@ the backup will be stored at `backups/<table-name>.json`
 To restore data from a json file run the following command:
 
 ```bash
-     ./node_modules/.bin/cumulus-api restore backups/<table-name>.json --table <new-table-name>
+cumulus-api restore backups/<table-name>.json --table <new-table-name>
 ```
+
+The restore can go to the in-use table and will update Elasticsearch. If an existing record exists in the table it will not be duplicated but will be updated with the record from the restore file.
 
 ## Data Backup and Restore
 
