@@ -15,4 +15,6 @@ module "log_subscription_filter" {
 
   # Async Operation Log Group
   async_operation_log_group = module.archive.async_operation_log_group
+
+  tags = local.tags
 }

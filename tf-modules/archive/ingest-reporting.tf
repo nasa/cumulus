@@ -4,7 +4,7 @@ resource "aws_iam_role" "publish_executions_lambda_role" {
   name                 = "${var.prefix}-PublishExecutionsLambda"
   assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
-  tags                 = local.default_tags
+  tags                 = var.tags
 }
 
 data "aws_iam_policy_document" "publish_executions_policy_document" {
@@ -59,7 +59,7 @@ resource "aws_sqs_queue" "publish_executions_dead_letter_queue" {
   receive_wait_time_seconds  = 20
   message_retention_seconds  = 1209600
   visibility_timeout_seconds = 60
-  tags                       = local.default_tags
+  tags                       = var.tags
 }
 
 resource "aws_lambda_function" "publish_executions" {
@@ -92,18 +92,18 @@ resource "aws_lambda_function" "publish_executions" {
     }
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_cloudwatch_log_group" "publish_executions_logs" {
   name              = "/aws/lambda/${var.prefix}-publishExecutions"
   retention_in_days = 14
-  tags              = local.default_tags
+  tags              = var.tags
 }
 
 resource "aws_sns_topic" "report_executions_topic" {
   name = "${var.prefix}-report-executions-topic"
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_lambda_permission" "publish_executions_permission" {
@@ -126,8 +126,8 @@ resource "aws_iam_role" "report_granules_lambda_role" {
   name                 = "${var.prefix}-ReportGranulesLambda"
   assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
-  # TODO Re-enable once IAM permissions have been fixed
-  # tags                 = local.default_tags
+
+  tags = var.tags
 }
 
 data "aws_iam_policy_document" "report_granules_policy_document" {
@@ -184,7 +184,7 @@ resource "aws_sqs_queue" "report_granules_dead_letter_queue" {
   receive_wait_time_seconds  = 20
   message_retention_seconds  = 1209600
   visibility_timeout_seconds = 60
-  tags                       = local.default_tags
+  tags                       = var.tags
 }
 
 resource "aws_lambda_function" "report_granules" {
@@ -196,7 +196,6 @@ resource "aws_lambda_function" "report_granules" {
   runtime          = "nodejs10.x"
   timeout          = 30
   memory_size      = 256
-
 
   dead_letter_config {
     target_arn = aws_sqs_queue.report_granules_dead_letter_queue.arn
@@ -215,18 +214,18 @@ resource "aws_lambda_function" "report_granules" {
     }
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_cloudwatch_log_group" "report_granules_logs" {
   name              = "/aws/lambda/${aws_lambda_function.report_granules.function_name}"
   retention_in_days = 14
-  tags              = local.default_tags
+  tags              = var.tags
 }
 
 resource "aws_sns_topic" "report_granules_topic" {
   name = "${var.prefix}-report-granules-topic"
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_sns_topic_subscription" "report_granules_trigger" {
@@ -248,8 +247,8 @@ resource "aws_iam_role" "report_pdrs_lambda_role" {
   name                 = "${var.prefix}-ReportPdrsLambda"
   assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
-  # TODO Re-enable once IAM permissions have been fixed
-  # tags                 = local.default_tags
+
+  tags = var.tags
 }
 
 data "aws_iam_policy_document" "report_pdrs_policy_document" {
@@ -298,7 +297,7 @@ resource "aws_sqs_queue" "report_pdrs_dead_letter_queue" {
   receive_wait_time_seconds  = 20
   message_retention_seconds  = 1209600
   visibility_timeout_seconds = 60
-  tags                       = local.default_tags
+  tags                       = var.tags
 }
 
 resource "aws_lambda_function" "report_pdrs" {
@@ -327,6 +326,8 @@ resource "aws_lambda_function" "report_pdrs" {
       PdrsTable = var.dynamo_tables.pdrs.name
     }
   }
+
+  tags = var.tags
 }
 
 resource "aws_cloudwatch_log_group" "report_pdrs_logs" {
@@ -336,7 +337,7 @@ resource "aws_cloudwatch_log_group" "report_pdrs_logs" {
 
 resource "aws_sns_topic" "report_pdrs_topic" {
   name = "${var.prefix}-report-pdrs-topic"
-  # tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_sns_topic_subscription" "report_pdrs_trigger" {

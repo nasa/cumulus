@@ -10,7 +10,7 @@ locals {
   protected_bucket_names = [for k, v in var.buckets : v.name if v.type == "protected"]
   public_bucket_names    = [for k, v in var.buckets : v.name if v.type == "public"]
 
-  default_tags = { Deployment = var.prefix }
+  tags = merge(var.tags, { Deployment = var.prefix })
 }
 
 resource "aws_s3_bucket_object" "buckets_json" {
