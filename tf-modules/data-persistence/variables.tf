@@ -69,3 +69,9 @@ variable "security_group" {
   type        = string
   default     = null
 }
+
+variable "tags" {
+  description = "Tags to be applied to managed resources"
+  type        = map(string)
+  default     = {}
+}

@@ -105,5 +105,5 @@ module "archive" {
 
   log_destination_arn = var.log_destination_arn
 
-  tags = local.tags
+  tags = var.tags
 }

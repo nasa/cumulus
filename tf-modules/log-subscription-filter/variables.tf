@@ -40,12 +40,6 @@ variable "sync_granule_task" {
   description = "Log group for the Sync Granules Task Lambda"
 }
 
-variable "tags" {
-  description = "Tags to be applied to managed resources"
-  type        = map(string)
-  default     = {}
-}
-
 # Async Operation Log Group
 variable "async_operation_log_group" {
   type = string

@@ -402,7 +402,7 @@ variable "saml_launchpad_metadata_url" {
 }
 
 variable "tags" {
-  description = "Tags to be applied to Cumulus resources"
+  description = "Tags to be applied to Cumulus resources that support tags"
   type        = map(string)
   default     = {}
 }

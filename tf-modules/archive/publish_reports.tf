@@ -14,8 +14,7 @@ resource "aws_iam_role" "publish_reports_lambda_role" {
   name                 = "${var.prefix}_publish_reports_lambda_role"
   assume_role_policy   = data.aws_iam_policy_document.assume_lambda_role.json
   permissions_boundary = var.permissions_boundary_arn
-  # TODO Re-enable once IAM permissions have been fixed
-  # tags                 = local.tags
+  tags                 = var.tags
 }
 
 data "aws_iam_policy_document" "publish_reports_policy_document" {

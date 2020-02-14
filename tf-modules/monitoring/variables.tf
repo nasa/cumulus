@@ -16,8 +16,3 @@ variable "ecs_service_alarms" {
   default = []
 }
 
-variable "tags" {
-  description = "Tags to be applied to managed resources"
-  type        = map(string)
-  default     = {}
-}

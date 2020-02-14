@@ -35,6 +35,7 @@ subnet_ids           = ["subnet-123456"]                                  # Subn
 security_groups      = ["sg-123456"]                                      # Security Group IDs (for Lambda)
 source_bucket        = "source-bucket-name"                               # Source S3 bucket
 source_prefix        = "source-prefix"                                    # Source object prefix e.g. 'path/to/filedir'
+tags                 = { Deployment = "myprefix" }                        # Tags to be assigned to all managed resources
 target_bucket        = "target-bucket-name"                               # Target S3 bucket e.g. 'mybucket'
 target_prefix        = "target-prefix"                                    # Target object prefix path
 ```
