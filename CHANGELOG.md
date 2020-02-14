@@ -68,6 +68,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed name of `cwSfExecutionEventToDb` Lamda to `cwSfEventToDbRecords`
   - Updated `cwSfEventToDbRecords` to write granule records to DynamoDB from the incoming Cumulus message
 
+- **CUMULUS-1757**
+  - Update @cumulus/cmr-client CMRSearchConceptQueue to take optional cmrEnvironment parameter
+
 ### Deprecated
 
 - **CUMULUS-1684**
