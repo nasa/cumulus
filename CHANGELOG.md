@@ -62,6 +62,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update the API package to encrypt provider credentials using KMS instead of
     using RSA keys stored in S3
 
+- **CUMULUS-1753** - Changes to `@cumulus/ingest/HttpProviderClient.js`:
+  - Removed regex filter in `HttpProviderClient.list()` that was used to return only files with an extension between 1 and 4 characters long. `HttpProviderClient.list()` will now return all files linked from the HTTP provider host.
+
 ### Deprecated
 
 - **CUMULUS-1684**
