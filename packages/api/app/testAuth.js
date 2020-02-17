@@ -8,11 +8,9 @@ const {
 } = require('jsonwebtoken');
 
 const { createJwtToken, verifyJwtToken } = require('../lib/token');
-const { localUserName } = require('../bin/local-test-defaults');
+const { localUserName: username } = require('../bin/local-test-defaults');
 
-let username = localUserName;
 let accessToken;
-
 const newToken = () => {
   accessToken = randomId('oauthcode');
   const expirationTime = new Date(Date.now() + 3600 * 24 * 1000);
