@@ -27,6 +27,8 @@ class CMRSearchConceptQueue {
    * @param {string} params.provider - the CMR provider id
    * @param {string} params.clientId - the CMR clientId
    * @param {string} params.type - the type of search 'granule' or 'collection'
+   * @param {string} params.cmrEnvironment - optional, CMR environment to
+   *              use valid arguments are ['OPS', 'SIT', 'UAT']
    * @param {string} [params.searchParams={}] - the search parameters
    * @param {string} params.format - the result format
    */
@@ -34,6 +36,7 @@ class CMRSearchConceptQueue {
     this.clientId = params.clientId;
     this.provider = params.provider;
     this.type = params.type;
+    this.cmrEnvironment = params.cmrEnvironment;
     this.params = { provider_short_name: this.provider, ...params.searchParams };
     this.format = params.format;
     this.items = [];
@@ -73,6 +76,7 @@ class CMRSearchConceptQueue {
   async fetchItems() {
     const results = await searchConcept({
       type: this.type,
+      cmrEnvironment: this.cmrEnvironment,
       searchParams: this.params,
       previousResults: [],
       headers: { 'Client-Id': this.clientId },

@@ -4,6 +4,7 @@ Resources:
     Properties:
       SecurityGroups:
         - ${security_group_id}
+        - ${es_security_group_id}
       ImageId: ${image_id}
       InstanceType: ${instance_type}
       IamInstanceProfile: ${instance_profile}

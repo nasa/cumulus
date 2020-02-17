@@ -197,7 +197,7 @@ exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
     if (matchingArn) {
       callback(null, matchingArn);
     } else if (data.NextToken) {
-      const nextOpts = Object.assign({}, opts, { NextToken: data.NextToken });
+      const nextOpts = { ...opts, NextToken: data.NextToken };
       exports.findResourceArn(obj, fn, prefix, baseName, nextOpts, callback);
     } else {
       callback(`Could not find resource ${baseName} in ${fn}`);
@@ -595,7 +595,9 @@ exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
     const filename = fileInfo.filename;
     const key = fileInfo.key;
     const body = fs.createReadStream(filename);
-    const opts = Object.assign({ Bucket: bucket, Key: key, Body: body }, s3opts);
+    const opts = {
+      Bucket: bucket, Key: key, Body: body, ...s3opts
+    };
     return exports.promiseS3Upload(opts)
       .then(() => {
         i += 1;
@@ -618,7 +620,9 @@ exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
  */
 exports.uploadS3FileStream = (fileStream, bucket, key, s3opts = {}) => {
   deprecate('@cumulus/common/aws/uploadS3FileStream', '1.17.0', '@cumulus/aws-client/S3/uploadS3FileStream');
-  const opts = Object.assign({ Bucket: bucket, Key: key, Body: fileStream }, s3opts);
+  const opts = {
+    Bucket: bucket, Key: key, Body: fileStream, ...s3opts
+  };
   return exports.promiseS3Upload(opts);
 };
 
@@ -678,11 +682,11 @@ exports.listS3ObjectsV2 = async (params) => {
   while (listObjectsResponse.IsTruncated) {
     listObjectsResponse = await exports.s3().listObjectsV2( // eslint-disable-line no-await-in-loop, max-len
       // Update the params with a Continuation Token
-      Object.assign(
-        {},
-        params,
-        { ContinuationToken: listObjectsResponse.NextContinuationToken }
-      )
+      {
+
+        ...params,
+        ContinuationToken: listObjectsResponse.NextContinuationToken
+      }
     ).promise();
     discoveredObjects = discoveredObjects.concat(listObjectsResponse.Contents);
   }

@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `<prefix>-VerifyProviderSecretsMigration` Lambda function as part of the
     deployment, which will cause the deployment to fail if the migration
     Lambda has not been run.
+
 - **CUMULUS-1698**
   - Change variable `saml_launchpad_metadata_path` to
     `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
@@ -32,29 +33,45 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add `@cumulus/sftp-client` package
   - Create `ProviderSecretsMigration` Lambda function
   - Create `VerifyProviderSecretsMigration` Lambda function
+
 - **CUMULUS-1548**
   - Add ability to put default Cumulus logs in Metrics' ELK stack
   - Add ability to add custom logs to Metrics' ELK Stack
+
 - **CUMULUS-1702**
   - When logs are sent to Metrics' ELK stack, the logs endpoints will return results from there
+
 - **CUMULUS-1459**
   - Async Operations are indexed in Elasticsearch
   - To index any existing async operations you'll need to perform an index from
     database function.
+
 - **CUMULUS-1717**
   - Add `@cumulus/aws-client/deleteAndWaitForDynamoDbTableNotExists`, which
     deletes a DynamoDB table and waits to ensure the table no longer exists
+  - Added `publishGranules` Lambda to handle publishing granule messages to SNS when granule records are written to DynamoDB
+  - Added `@cumulus/api/models/Granule.storeGranulesFromCumulusMessage` to store granules from a Cumulus message to DynamoDB
+
 - **Ability to set custom backend API url in the archive module**
   - Add `api_url` definition in `tf-modules/cumulus/archive.tf`
   - Add `archive_api_url` variable in `tf-modules/cumulus/variables.tf`
 - **CUMULUS-1729**
   - Updates testAuth (testing authorization) to allow the localAPI to be started with a pre-determined TOKEN_SECRET.  This allows the dashboard to create valid tokens.
 
+- **CUMULUS-1741** - Added an optional `security_group` variable to the `data-persistence` stack to allow the Elasticsearch security group id to be specified instead of creating one
+
 ### Changed
 
 - **CUMULUS-1684**
   - Update the API package to encrypt provider credentials using KMS instead of
     using RSA keys stored in S3
+
+- **CUMULUS-1717**
+  - Changed name of `cwSfExecutionEventToDb` Lamda to `cwSfEventToDbRecords`
+  - Updated `cwSfEventToDbRecords` to write granule records to DynamoDB from the incoming Cumulus message
+
+- **CUMULUS-1757**
+  - Update @cumulus/cmr-client CMRSearchConceptQueue to take optional cmrEnvironment parameter
 
 ### Deprecated
 
@@ -66,6 +83,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Deprecate `@cumulus/common/kms/KMS.encrypt()`
   - Deprecate `@cumulus/common/kms/KMS.decrypt()`
   - Deprecate `@cumulus/common/sftp.Sftp`
+
 - **CUMULUS-1717**
   - Deprecate `@cumulus/api/models/Granule.createGranulesFromSns`
 
@@ -81,6 +99,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   messages
 - **Fix default values for urs_url in variables.tf files**
   - Remove trailing `/` from default `urs_url` values.
+
+- **CUMULUS-1610** - Add the Elasticsearch security group to the EC2 security groups
 
 ## [v1.18.0] 2020-02-03
 
@@ -151,6 +171,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1733**
   - Add `discovery-filtering` operator doc to document previously undocumented functionality.
+
+- **CUMULUS-1737**
+  - Added the `cumulus-test-cleanup` module to run a nightly cleanup on resources left over from the integration tests run from the `example/spec` directory.
 
 ### Changed
 

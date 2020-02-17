@@ -20,14 +20,15 @@ const { log } = require('@cumulus/common');
 * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-property
 * @returns {Promise} returms a promise that is resolved when the file is copied
 **/
-function copyGranuleFile(source, target, options) {
+function copyGranuleFile(source, target, options = {}) {
   const CopySource = encodeurl(`${source.Bucket}/${source.Key}`);
 
-  const params = Object.assign({
+  const params = {
     CopySource,
     Bucket: target.Bucket,
-    Key: target.Key
-  }, (options || {}));
+    Key: target.Key,
+    ...options
+  };
 
   return S3.s3CopyObject(params)
     .catch((error) => {

@@ -122,32 +122,29 @@ resource "aws_lambda_event_source_mapping" "publish_executions" {
 
 # Report granules
 
-resource "aws_iam_role" "report_granules_lambda_role" {
-  name                 = "${var.prefix}-ReportGranulesLambda"
+resource "aws_iam_role" "publish_granules_lambda_role" {
+  name                 = "${var.prefix}-PublishGranulesLambda"
   assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
   # TODO Re-enable once IAM permissions have been fixed
   # tags                 = local.default_tags
 }
 
-data "aws_iam_policy_document" "report_granules_policy_document" {
+data "aws_iam_policy_document" "publish_granules_policy_document" {
   statement {
-    actions = [
-      "dynamoDb:getItem",
-      "dynamoDb:putItem"
-    ]
-    resources = [var.dynamo_tables.granules.arn]
+    actions   = ["sns:Publish"]
+    resources = [aws_sns_topic.report_granules_topic.arn]
   }
+
   statement {
     actions = [
       "ec2:CreateNetworkInterface",
       "ec2:DescribeNetworkInterfaces",
       "ec2:DeleteNetworkInterface"
     ]
-    resources = [
-      "*"
-    ]
+    resources = ["*"]
   }
+
   statement {
     actions = [
       "logs:CreateLogGroup",
@@ -157,49 +154,49 @@ data "aws_iam_policy_document" "report_granules_policy_document" {
     ]
     resources = ["*"]
   }
+
   statement {
-    actions = [
-      "states:DescribeExecution"
-    ]
-    resources = ["*"]
+    actions = ["sqs:SendMessage"]
+    resources = [aws_sqs_queue.publish_granules_dead_letter_queue.arn]
   }
+
   statement {
     actions = [
-      "sqs:SendMessage"
+      "dynamodb:GetRecords",
+      "dynamodb:GetShardIterator",
+      "dynamodb:DescribeStream",
+      "dynamodb:ListStreams"
     ]
-    resources = [
-      aws_sqs_queue.report_granules_dead_letter_queue.arn
-    ]
+    resources = ["${var.dynamo_tables.granules.arn}/stream/*"]
   }
 }
 
-resource "aws_iam_role_policy" "report_granules_lambda_role_policy" {
-  name   = "${var.prefix}_report_granules_lambda_role_policy"
-  role   = aws_iam_role.report_granules_lambda_role.id
-  policy = data.aws_iam_policy_document.report_granules_policy_document.json
+resource "aws_iam_role_policy" "publish_granules_lambda_role_policy" {
+  name   = "${var.prefix}_publish_granules_lambda_role_policy"
+  role   = aws_iam_role.publish_granules_lambda_role.id
+  policy = data.aws_iam_policy_document.publish_granules_policy_document.json
 }
 
-resource "aws_sqs_queue" "report_granules_dead_letter_queue" {
-  name                       = "${var.prefix}-reportGranulesDeadLetterQueue"
+resource "aws_sqs_queue" "publish_granules_dead_letter_queue" {
+  name                       = "${var.prefix}-publishGranulesDeadLetterQueue"
   receive_wait_time_seconds  = 20
   message_retention_seconds  = 1209600
   visibility_timeout_seconds = 60
   tags                       = local.default_tags
 }
 
-resource "aws_lambda_function" "report_granules" {
-  filename         = "${path.module}/../../packages/api/dist/reportGranules/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/reportGranules/lambda.zip")
-  function_name    = "${var.prefix}-reportGranules"
-  role             = aws_iam_role.report_granules_lambda_role.arn
+resource "aws_lambda_function" "publish_granules" {
+  filename         = "${path.module}/../../packages/api/dist/publishGranules/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/publishGranules/lambda.zip")
+  function_name    = "${var.prefix}-publishGranules"
+  role             = aws_iam_role.publish_granules_lambda_role.arn
   handler          = "index.handler"
   runtime          = "nodejs10.x"
   timeout          = 30
-  memory_size      = 256
-
+  memory_size      = 128
 
   dead_letter_config {
-    target_arn = aws_sqs_queue.report_granules_dead_letter_queue.arn
+    target_arn = aws_sqs_queue.publish_granules_dead_letter_queue.arn
   }
 
   vpc_config {
@@ -211,15 +208,15 @@ resource "aws_lambda_function" "report_granules" {
 
   environment {
     variables = {
-      GranulesTable = var.dynamo_tables.granules.name
+      granule_sns_topic_arn = aws_sns_topic.report_granules_topic.arn
     }
   }
 
   tags = local.default_tags
 }
 
-resource "aws_cloudwatch_log_group" "report_granules_logs" {
-  name              = "/aws/lambda/${aws_lambda_function.report_granules.function_name}"
+resource "aws_cloudwatch_log_group" "publish_granules_logs" {
+  name              = "/aws/lambda/${aws_lambda_function.publish_granules.function_name}"
   retention_in_days = 14
   tags              = local.default_tags
 }
@@ -229,17 +226,11 @@ resource "aws_sns_topic" "report_granules_topic" {
   tags = local.default_tags
 }
 
-resource "aws_sns_topic_subscription" "report_granules_trigger" {
-  topic_arn = aws_sns_topic.report_granules_topic.arn
-  protocol  = "lambda"
-  endpoint  = aws_lambda_function.report_granules.arn
-}
-
-resource "aws_lambda_permission" "report_granules_permission" {
-  action        = "lambda:InvokeFunction"
-  function_name = "${aws_lambda_function.report_granules.function_name}"
-  principal     = "sns.amazonaws.com"
-  source_arn    = "${aws_sns_topic.report_granules_topic.arn}"
+resource "aws_lambda_event_source_mapping" "publish_granules" {
+  event_source_arn  = data.aws_dynamodb_table.granules.stream_arn
+  function_name     = aws_lambda_function.publish_granules.arn
+  starting_position = "TRIM_HORIZON"
+  batch_size        = 10
 }
 
 # Report PDRs

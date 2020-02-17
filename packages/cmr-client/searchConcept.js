@@ -8,6 +8,8 @@ const { parseXMLString } = require('./Utils');
  *
  * @param {Object} params
  * @param {string} params.type - Concept type to search, choices: ['collections', 'granules']
+ * @param {string} params.cmrEnvironment - optional, CMR environment to
+ *              use valid arguments are ['OPS', 'SIT', 'UAT']
  * @param {Object} params.searchParams - CMR search parameters
  * Note initial searchParams.page_num should only be set if recursive is false
  * @param {Array} [params.previousResults=[]] - array of results returned in previous recursive
@@ -21,6 +23,7 @@ const { parseXMLString } = require('./Utils');
  */
 async function searchConcept({
   type,
+  cmrEnvironment,
   searchParams,
   previousResults = [],
   headers = {},
@@ -34,12 +37,12 @@ async function searchConcept({
 
   const defaultParams = { page_size: pageSize };
 
-  const url = `${getUrl('search')}${type}.${format.toLowerCase()}`;
+  const url = `${getUrl('search', null, cmrEnvironment)}${type}.${format.toLowerCase()}`;
 
   const pageNum = (searchParams.page_num) ? searchParams.page_num + 1 : 1;
 
   // if requested, recursively retrieve all the search results for collections or granules
-  const query = Object.assign({}, defaultParams, searchParams, { page_num: pageNum });
+  const query = { ...defaultParams, ...searchParams, page_num: pageNum };
   const response = await got.get(url, { json: format.endsWith('json'), query, headers });
 
   const responseItems = (format === 'echo10')

@@ -48,7 +48,7 @@ async function addMetadataObjects(cmrFiles) {
   const updatedCMRFiles = [];
   const objectPromises = cmrFiles.map(async (cmrFile) => {
     const metadataObject = await metadataObjectFromCMRFile(cmrFile.filename);
-    const updatedFile = Object.assign({}, { ...cmrFile }, { metadataObject: metadataObject });
+    const updatedFile = { ...cmrFile, metadataObject };
     updatedCMRFiles.push(updatedFile);
   });
   await Promise.all(objectPromises);
