@@ -115,6 +115,9 @@ describe('The S3 Ingest Granules workflow', () => {
   let providerModel;
   let testDataFolder;
   let workflowExecutionArn;
+  let failingWorkflowExecution;
+  let granuleCompletedMessageKey;
+  let granuleRunningMessageKey;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -258,7 +261,9 @@ describe('The S3 Ingest Granules workflow', () => {
       }),
       pdrModel.delete({
         pdrName: inputPayload.pdr.name
-      })
+      }),
+      deleteS3Object(config.bucket, granuleCompletedMessageKey),
+      deleteS3Object(config.bucket, granuleRunningMessageKey)
     ]);
   });
 
@@ -557,12 +562,7 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  describe('an SNS message', () => {
-    let executionName;
-    let failedExecutionArn;
-    let failedExecutionName;
-    let failingWorkflowExecution;
-
+  describe('A Cloudwatch event', () => {
     beforeAll(async () => {
       console.log('Start FailingExecution');
 
@@ -574,31 +574,6 @@ describe('The S3 Ingest Granules workflow', () => {
         provider,
         {}
       );
-
-      failedExecutionArn = failingWorkflowExecution.executionArn;
-      failedExecutionName = failedExecutionArn.split(':').pop();
-
-      executionName = postToCmrOutput.cumulus_meta.execution_name;
-    });
-
-    afterAll(() => executionModel.delete({ arn: failedExecutionArn }));
-
-    it('is published on a successful workflow completion', async () => {
-      const executionExists = await s3ObjectExists({
-        Bucket: config.bucket,
-        Key: `${config.stackName}/test-output/${executionName}.output`
-      });
-
-      expect(executionExists).toEqual(true);
-    });
-
-    it('is published on workflow failure', async () => {
-      const executionExists = await s3ObjectExists({
-        Bucket: config.bucket,
-        Key: `${config.stackName}/test-output/${failedExecutionName}.output`
-      });
-
-      expect(executionExists).toEqual(true);
     });
 
     it('triggers the granule record being added to DynamoDB', async () => {
@@ -630,6 +605,67 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
+  describe('an SNS message', () => {
+    let executionName;
+    let executionCompletedKey;
+    let executionFailedKey;
+    let failedExecutionArn;
+    let failedExecutionName;
+
+    beforeAll(async () => {
+      failedExecutionArn = failingWorkflowExecution.executionArn;
+      failedExecutionName = failedExecutionArn.split(':').pop();
+      executionName = postToCmrOutput.cumulus_meta.execution_name;
+
+      executionFailedKey = `${config.stackName}/test-output/${failedExecutionName}.output`;
+      executionCompletedKey = `${config.stackName}/test-output/${executionName}.output`;
+
+      granuleCompletedMessageKey = `${config.stackName}/test-output/${inputPayload.granules[0].granuleId}-completed.output`;
+      granuleRunningMessageKey = `${config.stackName}/test-output/${inputPayload.granules[0].granuleId}-running.output`;
+    });
+
+    afterAll(async () => {
+      await Promise.all([
+        executionModel.delete({ arn: failedExecutionArn }),
+        deleteS3Object(config.bucket, executionCompletedKey),
+        deleteS3Object(config.bucket, executionFailedKey)
+      ]);
+    });
+
+    it('is published for a running granule', async () => {
+      const granuleExists = await s3ObjectExists({
+        Bucket: config.bucket,
+        Key: granuleRunningMessageKey
+      });
+      expect(granuleExists).toEqual(true);
+    });
+
+    it('is published for an execution on a successful workflow completion', async () => {
+      const executionExists = await s3ObjectExists({
+        Bucket: config.bucket,
+        Key: executionCompletedKey
+      });
+      expect(executionExists).toEqual(true);
+    });
+
+    it('is published for a granule on a successful workflow completion', async () => {
+      const granuleExists = await s3ObjectExists({
+        Bucket: config.bucket,
+        Key: granuleCompletedMessageKey
+      });
+      expect(granuleExists).toEqual(true);
+    });
+
+    it('is published for an execution on workflow failure', async () => {
+      const executionExists = await s3ObjectExists({
+        Bucket: config.bucket,
+        Key: executionFailedKey
+      });
+
+      expect(executionExists).toEqual(true);
+    });
+  });
+
   describe('The Cumulus API', () => {
     let workflowConfig;
     beforeAll(() => {
@@ -639,6 +675,7 @@ describe('The S3 Ingest Granules workflow', () => {
     describe('granule endpoint', () => {
       let granule;
       let cmrLink;
+      let publishGranuleExecution;
 
       beforeAll(async () => {
         const granuleResponse = await granulesApiTestUtils.getGranule({
@@ -647,6 +684,11 @@ describe('The S3 Ingest Granules workflow', () => {
         });
         granule = JSON.parse(granuleResponse.body);
         cmrLink = granule.cmrLink;
+      });
+
+      afterAll(async () => {
+        const publishExecutionName = publishGranuleExecution.executionArn.split(':').pop();
+        await deleteS3Object(config.bucket, `${config.stackName}/test-output/${publishExecutionName}.output`);
       });
 
       it('makes the granule available through the Cumulus API', async () => {
@@ -778,7 +820,7 @@ describe('The S3 Ingest Granules workflow', () => {
           workflow: 'PublishGranule'
         });
 
-        const publishGranuleExecution = await waitForTestExecutionStart({
+        publishGranuleExecution = await waitForTestExecutionStart({
           workflowName: 'PublishGranule',
           stackName: config.stackName,
           bucket: config.bucket,
