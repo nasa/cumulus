@@ -137,27 +137,6 @@ test.serial('list() returns all files for provider from multiple source lines', 
   t.deepEqual(actualFiles, expectedFiles);
 });
 
-test.serial('list() excludes files for provider with non-valid file extension', async (t) => {
-  const responseBody = `
-  <html><body>
-  <A HREF="/parent/dir/">[To Parent Directory]</A>
-  <A HREF="test.txt">test.txt</A>
-  </body></html>
-  `;
-
-  const actualFiles = await testListWith(
-    t.context.httpProviderClient,
-    'fetchcomplete',
-    {},
-    Buffer.from(responseBody),
-    {}
-  );
-
-  const expectedFiles = [{ name: 'test.txt', path: '' }];
-
-  t.deepEqual(actualFiles, expectedFiles);
-});
-
 test.serial('list() strips path from file names', async (t) => {
   const responseBody = '<html><body><A HREF="/path/to/file/test.txt">test.txt</A></body></html>';
 

@@ -47,11 +47,6 @@ class HttpProviderClient {
     const matchLinksPattern = /<a href="([^>]*)">[^<]+<\/a>/ig;
     const matchLeadingSlashesPattern = /^\/+/;
 
-    // Some providers provide files with one number after the dot (".")
-    // (e.g. tmtdayacz8110_5.6)
-    // TODO: Why are we assuming a file extension between 1 and 4 characters long?
-    const matchAcceptedFilesPattern = /^(.*\.[\w\d]{1,4})\s*$/;
-
     const c = new Crawler(
       buildURL({
         protocol: this.protocol,
@@ -78,14 +73,12 @@ class HttpProviderClient {
 
           while (match != null) {
             const linkTarget = match[1];
-            if (linkTarget.match(matchAcceptedFilesPattern) !== null) {
-              // Remove the path and leading slashes from the filename.
-              const name = linkTarget
-                .replace(path, '')
-                .replace(matchLeadingSlashesPattern, '')
-                .trimRight();
-              files.push({ name, path });
-            }
+            // Remove the path and leading slashes from the filename.
+            const name = linkTarget
+              .replace(path, '')
+              .replace(matchLeadingSlashesPattern, '')
+              .trimRight();
+            files.push({ name, path });
             match = matchLinksPattern.exec(trimmedLine);
           }
         });
