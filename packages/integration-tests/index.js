@@ -247,8 +247,9 @@ async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
  *
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
+ * @param {string} collectionSnsTopic - Collections SNS Topic ARN
  */
-function setProcessEnvironment(stackName, bucketName) {
+function setProcessEnvironment(stackName, bucketName, collectionSnsTopic) {
   process.env.system_bucket = bucketName;
   process.env.stackName = stackName;
   process.env.messageConsumer = `${stackName}-messageConsumer`;
@@ -256,6 +257,7 @@ function setProcessEnvironment(stackName, bucketName) {
   process.env.CollectionsTable = `${stackName}-CollectionsTable`;
   process.env.ProvidersTable = `${stackName}-ProvidersTable`;
   process.env.RulesTable = `${stackName}-RulesTable`;
+  if (collectionSnsTopic) process.env.collection_sns_topic_arn = collectionSnsTopic;
 }
 
 const concurrencyLimit = process.env.CONCURRENCY || 3;
@@ -267,10 +269,13 @@ const limit = pLimit(concurrencyLimit);
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} dataDirectory - the directory of collection json files
+ * @param {string} collectionSnsTopic - collection SNS Topic ARN
  * @returns {Array} List of objects to seed in the database
  */
-async function setupSeedData(stackName, bucketName, dataDirectory) {
-  setProcessEnvironment(stackName, bucketName);
+async function setupSeedData(stackName, bucketName, dataDirectory, collectionSnsTopic) {
+  if (collectionSnsTopic) {
+    setProcessEnvironment(stackName, bucketName, collectionSnsTopic);
+  } else setProcessEnvironment(stackName, bucketName);
   const filenames = await fs.readdir(dataDirectory);
   const seedItems = [];
   filenames.forEach((filename) => {
@@ -308,11 +313,12 @@ function addCustomUrlPathToCollectionFiles(collection, customFilePath) {
  * @param {string} [postfix] - string to append to collection name
  * @param {string} [customFilePath]
  * @param {string} [duplicateHandling]
+ * @param {string} [snsTopicArn] - arn for the collections SNS Topic
  * @returns {Promise.<number>} number of collections added
  */
 async function addCollections(stackName, bucketName, dataDirectory, postfix,
-  customFilePath, duplicateHandling) {
-  const collections = await setupSeedData(stackName, bucketName, dataDirectory);
+  customFilePath, duplicateHandling, snsTopicArn) {
+  const collections = await setupSeedData(stackName, bucketName, dataDirectory, snsTopicArn);
   const promises = collections.map((collection) => limit(() => {
     if (postfix) {
       collection.name += postfix;

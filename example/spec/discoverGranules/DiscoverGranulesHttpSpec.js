@@ -49,10 +49,10 @@ describe('The Discover Granules workflow with http Protocol', () => {
     testSuffix = createTestSuffix(testId);
     collection = { name: `http_testcollection${testSuffix}`, version: '001' };
     provider = { id: `http_provider${testSuffix}` };
-
+    console.log('sns topic in the before: ', process.env.collection_sns_topic_arn);
     // populate collections and providers
     await Promise.all([
-      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, null, null, process.env.collection_sns_topic_arn),
       addProviders(config.stackName, config.bucket, providersDir, null, testSuffix)
     ]);
 
