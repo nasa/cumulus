@@ -231,7 +231,7 @@ async function serveApi(user, stackName = localStackName, reseed = true) {
   process.env.CUMULUS_ENV = 'local';
 
   process.env.TOKEN_REDIRECT_ENDPOINT = `http://localhost:${port}/token`;
-  process.env.TOKEN_SECRET = process.env.TOKEN_SECRET || randomId('tokensecret');
+  process.env.TOKEN_SECRET = randomId('tokensecret');
 
   if (inTestMode()) {
     // set env variables
