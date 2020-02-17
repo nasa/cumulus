@@ -8,7 +8,7 @@ Cumulus has multiple interfaces that allow interaction with discrete components 
 
 The diagram below illustrates the workflow process in detail and the various interfaces that allow starting of workflows, reporting of workflow information, and database create operations that occur when a workflow reporting message is processed. For interfaces with expected input or output schemas, details are provided below.
 
-**Note:** This diagram is current of v1.15.0.
+**Note:** This diagram is current of v1.18.0.
 
 ![Architecture diagram showing the interfaces for triggering and reporting of Cumulus workflow executions](assets/interfaces.svg)
 
