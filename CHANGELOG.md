@@ -47,6 +47,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **Ability to set custom backend API url in the archive module**
   - Add `api_url` definition in `tf-modules/cumulus/archive.tf`
   - Add `archive_api_url` variable in `tf-modules/cumulus/variables.tf`
+- **CUMULUS-1729**
+  - Updates testAuth (testing authorization) to allow the localAPI to be started with a pre-determined TOKEN_SECRET.  This allows the dashboard to create valid tokens.
 
 ### Changed
 
