@@ -68,6 +68,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed name of `cwSfExecutionEventToDb` Lamda to `cwSfEventToDbRecords`
   - Updated `cwSfEventToDbRecords` to write granule records to DynamoDB from the incoming Cumulus message
 
+- **CUMULUS-1753** - Changes to `@cumulus/ingest/HttpProviderClient.js`:
+  - Removed regex filter in `HttpProviderClient.list()` that was used to return only files with an extension between 1 and 4 characters long. `HttpProviderClient.list()` will now return all files linked from the HTTP provider host.
+
 - **CUMULUS-1757**
   - Update @cumulus/cmr-client CMRSearchConceptQueue to take optional cmrEnvironment parameter
 
@@ -93,12 +96,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- **CUMULUS-1740** - `cumulus_meta.workflow_start_time` is now set in Cumulus
-  messages
 - **Fix default values for urs_url in variables.tf files**
   - Remove trailing `/` from default `urs_url` values.
 
 - **CUMULUS-1610** - Add the Elasticsearch security group to the EC2 security groups
+
+- **CUMULUS-1740** - `cumulus_meta.workflow_start_time` is now set in Cumulus
+  messages
+
+- **CUMULUS-1753** - Fixed `@cumulus/ingest/HttpProviderClient.js` to properly handle HTTP providers with:
+  - Multiple link tags (e.g. `<a>`) per line of source code
+  - Link tags in uppercase or lowercase (e.g. `<A>`)
+  - Links with filepaths in the link target (e.g. `<a href="/path/to/file.txt">`). These files will be returned from HTTP file discovery **as the file name only** (e.g. `file.txt`).
 
 ## [v1.18.0] 2020-02-03
 
