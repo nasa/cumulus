@@ -58,7 +58,7 @@ test('sync() downloads remote file to s3 with correct content-type', async (t) =
   }
 });
 
-test.serial('list() returns files with provider path', async (t) => {
+test.serial('list() returns expected files', async (t) => {
   const responseBody = '<html><body><a href="file.txt">asdf</a></body></html>';
 
   const actualFiles = await testListWith(
@@ -69,9 +69,88 @@ test.serial('list() returns files with provider path', async (t) => {
     {}
   );
 
-  console.log('actualFiles:', JSON.stringify(actualFiles, null, 2));
-
   const expectedFiles = [{ name: 'file.txt', path: '' }];
+
+  t.deepEqual(actualFiles, expectedFiles);
+});
+
+test.serial('list() returns files for provider with link tags in uppercase', async (t) => {
+  const responseBody = '<html><body><A HREF="test.txt">test.txt</A></body></html>';
+
+  const actualFiles = await testListWith(
+    t.context.httpProviderClient,
+    'fetchcomplete',
+    {},
+    Buffer.from(responseBody),
+    {}
+  );
+
+  const expectedFiles = [{ name: 'test.txt', path: '' }];
+
+  t.deepEqual(actualFiles, expectedFiles);
+});
+
+test.serial('list() returns files for provider with multiple links on a single source line', async (t) => {
+  const responseBody = `
+  <html><body>
+  <A HREF="test.txt">test.txt</A><A HREF="test2.txt">test2.txt</A>
+  </body></html>
+  `;
+
+  const actualFiles = await testListWith(
+    t.context.httpProviderClient,
+    'fetchcomplete',
+    {},
+    Buffer.from(responseBody),
+    {}
+  );
+
+  const expectedFiles = [
+    { name: 'test.txt', path: '' },
+    { name: 'test2.txt', path: '' }
+  ];
+
+  t.deepEqual(actualFiles, expectedFiles);
+});
+
+test.serial('list() returns all files for provider from multiple source lines', async (t) => {
+  const responseBody = `
+  <html><body>
+  <A HREF="test.txt">test.txt</A>
+  <A HREF="test2.txt">test2.txt</A>
+  </body></html>
+  `;
+
+  const actualFiles = await testListWith(
+    t.context.httpProviderClient,
+    'fetchcomplete',
+    {},
+    Buffer.from(responseBody),
+    {}
+  );
+
+  const expectedFiles = [
+    { name: 'test.txt', path: '' },
+    { name: 'test2.txt', path: '' }
+  ];
+
+  t.deepEqual(actualFiles, expectedFiles);
+});
+
+test.serial('list() strips path from file names', async (t) => {
+  const responseBody = '<html><body><A HREF="/path/to/file/test.txt">test.txt</A></body></html>';
+
+  class Crawler extends EventEmitter {
+    start() {
+      this.emit('fetchcomplete', {}, Buffer.from(responseBody));
+    }
+  }
+
+  const actualFiles = await HttpProviderClient.__with__({
+    Crawler
+  })(() => t.context.httpProviderClient.list('/path/to/file/'));
+
+  const expectedFiles = [{ name: 'test.txt', path: '/path/to/file/' }];
 
   t.deepEqual(actualFiles, expectedFiles);
 });

@@ -1,27 +1,21 @@
 'use strict';
 
 const test = require('ava');
-const rewire = require('rewire');
+const sinon = require('sinon');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { randomString } = require('@cumulus/common/test-utils');
 
-const publishReports = rewire('../../../lambdas/publish-reports');
-
-const {
-  getGranuleRecordsFromCumulusMessage
-} = publishReports;
+const Granule = require('../../../models/granules');
 
 test.before((t) => {
-  // Not necessary for the tests to pass, but reduces error log output
-  t.context.revertPublishReports = publishReports.__set__(
-    'describeExecution',
-    () => Promise.resolve({})
-  );
+  t.context.describeExecutionStub = sinon.stub(StepFunctions, 'describeExecution')
+    .callsFake(() => Promise.resolve({}));
 });
 
 test.beforeEach((t) => {
-  const executionName = randomString();
+  t.context.executionName = randomString();
 
-  const cumulusMessage = {
+  t.context.cumulusMessage = {
     meta: {
       collection: {
         name: 'c',
@@ -34,7 +28,7 @@ test.beforeEach((t) => {
       }
     },
     cumulus_meta: {
-      execution_name: executionName,
+      execution_name: t.context.executionName,
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
       workflow_start_time: 123
     },
@@ -47,16 +41,14 @@ test.beforeEach((t) => {
       ]
     }
   };
-
-  t.context = { executionName, cumulusMessage };
 });
 
-test.after.always((t) => t.context.revertPublishReports());
+test.after.always((t) => t.context.describeExecutionStub.restore());
 
-test('getGranuleRecordsFromCumulusMessage() returns the correct granule record for a Cumulus message with one granule', async (t) => {
+test('Granule._getGranuleRecordsFromCumulusMessage() returns the correct granule record for a Cumulus message with one granule', async (t) => {
   const { executionName, cumulusMessage } = t.context;
 
-  const granuleRecords = await getGranuleRecordsFromCumulusMessage(cumulusMessage);
+  const granuleRecords = await Granule._getGranuleRecordsFromCumulusMessage(cumulusMessage);
 
   const expectedGranule = {
     collectionId: 'c___v',
@@ -70,13 +62,14 @@ test('getGranuleRecordsFromCumulusMessage() returns the correct granule record f
     published: false,
     timeToArchive: 0,
     timeToPreprocess: 0,
-    timestamp: granuleRecords[0].timestamp
+    timestamp: granuleRecords[0].timestamp,
+    updatedAt: granuleRecords[0].updatedAt
   };
 
   t.deepEqual(granuleRecords, [expectedGranule]);
 });
 
-test('getGranuleRecordsFromCumulusMessage() returns the correct granule records for a Cumulus message with multiple granules', async (t) => {
+test('Granule._getGranuleRecordsFromCumulusMessage() returns the correct granule records for a Cumulus message with multiple granules', async (t) => {
   const { cumulusMessage } = t.context;
 
   cumulusMessage.payload.granules = [
@@ -84,7 +77,7 @@ test('getGranuleRecordsFromCumulusMessage() returns the correct granule records 
     { granuleId: 'granule-2', files: [] }
   ];
 
-  const granuleRecords = await getGranuleRecordsFromCumulusMessage(cumulusMessage);
+  const granuleRecords = await Granule._getGranuleRecordsFromCumulusMessage(cumulusMessage);
 
   t.is(granuleRecords.length, 2);
 
@@ -94,38 +87,39 @@ test('getGranuleRecordsFromCumulusMessage() returns the correct granule records 
   t.true(granuleIds.includes('granule-2'));
 });
 
-test('getGranuleRecordsFromCumulusMessage() returns an empty array if the Cumulus message does not contain a granules property in the payload', async (t) => {
+test('Granule._getGranuleRecordsFromCumulusMessage() returns an empty array if the Cumulus message does not contain a granules property in the payload', async (t) => {
   const { cumulusMessage } = t.context;
 
   delete cumulusMessage.payload.granules;
 
-  const granuleRecords = await getGranuleRecordsFromCumulusMessage(cumulusMessage);
+  const granuleRecords = await Granule._getGranuleRecordsFromCumulusMessage(cumulusMessage);
 
   t.is(granuleRecords.length, 0);
 });
 
-test('getGranuleRecordsFromCumulusMessage() returns an empty array if the Cumulus message contains an empty list of granules in the payload', async (t) => {
+test('Granule._getGranuleRecordsFromCumulusMessage() returns an empty array if the Cumulus message contains an empty list of granules in the payload', async (t) => {
   const { cumulusMessage } = t.context;
 
   cumulusMessage.payload.granules = [];
 
-  const granuleRecords = await getGranuleRecordsFromCumulusMessage(cumulusMessage);
+  const granuleRecords = await Granule._getGranuleRecordsFromCumulusMessage(cumulusMessage);
 
   t.is(granuleRecords.length, 0);
 });
 
-test('getGranuleRecordsFromCumulusMessage() returns a granule record even if the execution history could not be retrieved', async (t) => {
+test.serial('Granule._getGranuleRecordsFromCumulusMessage() returns a granule record even if the execution history could not be retrieved', async (t) => {
   const { cumulusMessage } = t.context;
 
-  const granuleRecords = await publishReports.__with__({
-    describeExecution: () => Promise.reject(new Error('nope'))
-  })(() => getGranuleRecordsFromCumulusMessage(cumulusMessage));
+  t.context.describeExecutionStub.restore();
+  t.context.describeExecutionStub = sinon.stub(StepFunctions, 'describeExecution')
+    .callsFake(() => Promise.reject(new Error('nope')));
+  const granuleRecords = await Granule._getGranuleRecordsFromCumulusMessage(cumulusMessage);
 
   t.is(granuleRecords.length, 1);
   t.is(granuleRecords[0].granuleId, 'granule-1');
 });
 
-test('getGranuleRecordsFromCumulusMessage() returns the list of valid granules if one of the granules failed to be generated', async (t) => {
+test('Granule._getGranuleRecordsFromCumulusMessage() returns the list of valid granules if one of the granules failed to be generated', async (t) => {
   const { cumulusMessage } = t.context;
 
   // Add a valid granule
@@ -137,7 +131,7 @@ test('getGranuleRecordsFromCumulusMessage() returns the list of valid granules i
   // Delete the granuleId of the first granule, so that it will fail to be generated
   delete cumulusMessage.payload.granules[0].granuleId;
 
-  const granuleRecords = await getGranuleRecordsFromCumulusMessage(cumulusMessage);
+  const granuleRecords = await Granule._getGranuleRecordsFromCumulusMessage(cumulusMessage);
 
   t.is(granuleRecords.length, 1);
   t.is(granuleRecords[0].granuleId, 'granule-x');

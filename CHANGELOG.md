@@ -52,6 +52,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1717**
   - Add `@cumulus/aws-client/deleteAndWaitForDynamoDbTableNotExists`, which
     deletes a DynamoDB table and waits to ensure the table no longer exists
+  - Added `publishGranules` Lambda to handle publishing granule messages to SNS when granule records are written to DynamoDB
+  - Added `@cumulus/api/models/Granule.storeGranulesFromCumulusMessage` to store granules from a Cumulus message to DynamoDB
 
 - **Ability to set custom backend API url in the archive module**
   - Add `api_url` definition in `tf-modules/cumulus/archive.tf`
@@ -65,6 +67,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update the API package to encrypt provider credentials using KMS instead of
     using RSA keys stored in S3
 
+- **CUMULUS-1717**
+  - Changed name of `cwSfExecutionEventToDb` Lamda to `cwSfEventToDbRecords`
+  - Updated `cwSfEventToDbRecords` to write granule records to DynamoDB from the incoming Cumulus message
+
+- **CUMULUS-1753** - Changes to `@cumulus/ingest/HttpProviderClient.js`:
+  - Removed regex filter in `HttpProviderClient.list()` that was used to return only files with an extension between 1 and 4 characters long. `HttpProviderClient.list()` will now return all files linked from the HTTP provider host.
+
+- **CUMULUS-1757**
+  - Update @cumulus/cmr-client CMRSearchConceptQueue to take optional cmrEnvironment parameter
+
 ### Deprecated
 
 - **CUMULUS-1684**
@@ -75,6 +87,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Deprecate `@cumulus/common/kms/KMS.encrypt()`
   - Deprecate `@cumulus/common/kms/KMS.decrypt()`
   - Deprecate `@cumulus/common/sftp.Sftp`
+
 - **CUMULUS-1717**
   - Deprecate `@cumulus/api/models/Granule.createGranulesFromSns`
 
@@ -86,12 +99,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- **CUMULUS-1740** - `cumulus_meta.workflow_start_time` is now set in Cumulus
-  messages
 - **Fix default values for urs_url in variables.tf files**
   - Remove trailing `/` from default `urs_url` values.
 
 - **CUMULUS-1610** - Add the Elasticsearch security group to the EC2 security groups
+
+- **CUMULUS-1740** - `cumulus_meta.workflow_start_time` is now set in Cumulus
+  messages
+
+- **CUMULUS-1753** - Fixed `@cumulus/ingest/HttpProviderClient.js` to properly handle HTTP providers with:
+  - Multiple link tags (e.g. `<a>`) per line of source code
+  - Link tags in uppercase or lowercase (e.g. `<A>`)
+  - Links with filepaths in the link target (e.g. `<a href="/path/to/file.txt">`). These files will be returned from HTTP file discovery **as the file name only** (e.g. `file.txt`).
 
 ## [v1.18.0] 2020-02-03
 
