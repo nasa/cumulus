@@ -96,6 +96,11 @@ variable "system_bucket" {
   type = string
 }
 
+variable "thin_egress_jwt_secret_name" {
+  type        = string
+  description = "Name of AWS secret where keys for the Thin Egress App JWT encode/decode are stored"
+}
+
 variable "token_secret" {
   type = string
 }

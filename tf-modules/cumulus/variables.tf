@@ -427,7 +427,6 @@ variable "thin_egress_jwt_algo" {
 
 variable "thin_egress_jwt_secret_name" {
   type        = string
-  default     = null
   description = "Name of AWS secret where keys for the Thin Egress App JWT encode/decode are stored"
 }
 
