@@ -27,6 +27,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-1707**
+  - Enable logrotate on ECS cluster
+
 - **CUMULUS-1684**
   - Add a `@cumulus/aws-client/KMS` library of KMS-related functions
   - Add `@cumulus/aws-client/S3.getTextObject()`
