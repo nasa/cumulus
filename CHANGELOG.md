@@ -26,12 +26,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
 
 - **CUMULUS-1446**
-  - `@cumulus/integration-tests/index.rulesList()` updated to only take
-    `rulesDirectory` parameter
   - Remove unused `@cumulus/integration-tests/api.addCollectionApi()` function
   - Remove unused `@cumulus/integration-tests/index.listCollections()` function
   - Remove unused `@cumulus/integration-tests/index.listProviders()` function
-  - Remove unused `@cumulus/integration-tests/index.rulesList()` function
 
 ### Added
 
