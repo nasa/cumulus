@@ -1,12 +1,5 @@
 'use strict';
 
-console.log('\n==========');
-console.log('Listing JSFTP version and dependencies...');
-const jsftpPkg = require('jsftp/package.json');
-console.log('jsftp: ', jsftpPkg.version);
-Object.keys(jsftpPkg.dependencies).forEach((k) => console.log(`${k}: `, require(`${k}/package.json`).version));
-console.log('==========\n');
-
 const get = require('lodash.get');
 const JSFtp = require('jsftp');
 const KMS = require('@cumulus/aws-client/KMS');
