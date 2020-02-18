@@ -75,8 +75,8 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
   it('can be fetched from the API', async () => {
     if (!beforeAllCompleted) fail('beforeAll() failed');
     else {
-      try {
-        await pWaitFor(
+      await expectAsync(
+        pWaitFor(
           async () => {
             const { status } = await getExecution({
               prefix: stackName,
@@ -86,11 +86,8 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
             return status === 'failed';
           },
           { interval: 2000, timeout: 60000 }
-        );
-        expect().nothing();
-      } catch (error) {
-        fail();
-      }
+        )
+      ).toBeResolved();
     }
   });
 });

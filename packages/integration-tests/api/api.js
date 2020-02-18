@@ -4,6 +4,7 @@ const cloneDeep = require('lodash.clonedeep');
 const pRetry = require('p-retry');
 const { lambda } = require('@cumulus/aws-client/services');
 const launchpad = require('@cumulus/common/launchpad');
+const { deprecate } = require('@cumulus/common/util');
 const {
   models: { AccessToken },
   testUtils: { fakeAccessTokenFactory },
@@ -232,6 +233,31 @@ async function getExecutionLogs({ prefix, executionName }) {
 }
 
 /**
+ * Add a collection to Cumulus via the API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {Object} params.collection - a collection object
+ * @returns {Promise<Object>} - the POST confirmation from the API
+ */
+async function addCollectionApi({ prefix, collection }) {
+  deprecate('@cumulus/integration-tests/api/api.addCollectionApi', '1.18.0', '@cumulus/integration-tests/api/collections.createCollection');
+  const response = await callCumulusApi({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      path: '/collections',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(collection)
+    }
+  });
+  return verifyCumulusApiResponse(response);
+}
+
+/**
  * Add a provider to Cumulus via the API
  *
  * @param {Object} params - params
@@ -441,6 +467,7 @@ module.exports = {
   getAsyncOperation,
   deletePdr,
   getExecutionLogs,
+  addCollectionApi,
   addProviderApi,
   getProviders,
   getCollections,

@@ -25,11 +25,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Change variable `saml_launchpad_metadata_path` to
     `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
 
-- **CUMULUS-1446**
-  - Remove unused `@cumulus/integration-tests/api.addCollectionApi()` function
-  - Remove unused `@cumulus/integration-tests/index.listCollections()` function
-  - Remove unused `@cumulus/integration-tests/index.listProviders()` function
-
 ### Added
 
 - **CUMULUS-1446**
@@ -84,6 +79,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update the `@cumulus/integration-tests/api/executions.getExecution()`
     function to parse the response and return the execution, rather than return
     the full API response.
+  - Mark the `@cumulus/integration-tests/api.addCollectionApi()` function as
+    deprecated
+  - Mark the `@cumulus/integration-tests/index.listCollections()` function as
+    deprecated
+  - Mark the `@cumulus/integration-tests/index.listProviders()` function as
+    deprecated
+  - Mark the `@cumulus/integration-tests/index.rulesList()` function as
+    deprecated
 
 - **CUMULUS-1684**
   - Update the API package to encrypt provider credentials using KMS instead of

@@ -254,20 +254,6 @@ async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
 }
 
 /**
- * set process environment necessary for database transactions
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- */
-function setProcessEnvironment(stackName, bucketName) {
-  process.env.system_bucket = bucketName;
-  process.env.stackName = stackName;
-  process.env.messageConsumer = `${stackName}-messageConsumer`;
-  process.env.KinesisInboundEventLogger = `${stackName}-KinesisInboundEventLogger`;
-  process.env.RulesTable = `${stackName}-RulesTable`;
-}
-
-/**
  * Load and parse all of the JSON files from a directory
  *
  * @param {string} sourceDir - the directory containing the JSON files to load
@@ -289,7 +275,6 @@ const readJsonFilesFromDir = async (sourceDir) => {
  * @returns {Promise<Array>} List of objects to seed in the database
  */
 function setupSeedData(stackName, bucketName, dataDirectory) {
-  setProcessEnvironment(stackName, bucketName);
   return readJsonFilesFromDir(dataDirectory);
 }
 
@@ -323,10 +308,12 @@ const addCustomUrlPathToCollectionFiles = (collection, customFilePath) =>
  * dataType updated with the postfix.
  *
  * @param {Object} params
- * @param {Object} params.collection
- * @param {string} params.customFilePath
- * @param {string} params.duplicateHandling
- * @param {string} params.postfix
+ * @param {Object} params.collection - a collection configuration
+ * @param {string} params.customFilePath - path to be added to the end of the
+ *   url_path
+ * @param {string} params.duplicateHandling - duplicate handling setting
+ * @param {string} params.postfix - a string to be appended to the end of the
+ *   name and datatype
  * @returns {Object} an updated collection
  */
 const buildCollection = (params = {}) => {
@@ -414,6 +401,23 @@ async function addCollections(stackName, bucketName, dataDirectory, postfix,
   );
 
   return rawCollections.length;
+}
+
+/**
+ * Return a list of collections
+ *
+ * @param {string} stackName - CloudFormation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {string} dataDirectory - the directory of collection json files
+ * @returns {Promise.<Array>} list of collections
+ */
+async function listCollections(stackName, bucketName, dataDirectory) {
+  deprecate(
+    '@cumulus/integration-tests/index.listCollections',
+    '1.18.0',
+    '@cumulus/integration-tests/index.readJsonFilesFromDir'
+  );
+  return setupSeedData(stackName, bucketName, dataDirectory);
 }
 
 /**
@@ -554,6 +558,23 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host, postfi
 }
 
 /**
+ * Return a list of providers
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {string} dataDirectory - the directory of provider json files
+ * @returns {Promise.<Array>} list of providers
+ */
+async function listProviders(stackName, bucketName, dataDirectory) {
+  deprecate(
+    '@cumulus/integration-tests/index.rulesList',
+    '1.18.0',
+    '@cumulus/integration-tests/index.readJsonFilesFromDir'
+  );
+  return setupSeedData(stackName, bucketName, dataDirectory);
+}
+
+/**
  * Delete providers from database
  *
  * @param {string} stackName - CloudFormation stack name
@@ -625,9 +646,9 @@ async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
         ...config
       }));
 
-      const r = new RulesModel();
+      const rulesmodel = new RulesModel();
       console.log(`adding rule ${JSON.stringify(templatedRule)}`);
-      return r.create(templatedRule);
+      return rulesmodel.create(templatedRule);
     },
     { concurrency: 1 }
   );
@@ -652,8 +673,8 @@ function addRules(config, dataDirectory, overrides) {
  * @returns {Promise.<dynamodbDocClient.delete>} - superclass delete promise
  */
 async function _deleteOneRule(name) {
-  const r = new RulesModel();
-  return r.get({ name }).then((item) => r.delete(item));
+  const rulesModel = new RulesModel();
+  return rulesModel.get({ name }).then((item) => rulesModel.delete(item));
 }
 
 /**
@@ -700,13 +721,13 @@ async function rulesList(stackName, bucketName, rulesDirectory) {
 /**
  *
  * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
+ * @param {string} _bucketName - S3 internal bucket name
  * @param {Array} rules - List of rules objects to delete
  * @param {string} postfix - string that was appended to provider id
  * @returns {Promise.<number>} - Number of rules deleted
  */
-async function deleteRules(stackName, bucketName, rules, postfix) {
-  setProcessEnvironment(stackName, bucketName);
+async function deleteRules(stackName, _bucketName, rules, postfix) {
+  process.env.RulesTable = `${stackName}-RulesTable`;
 
   await pMap(
     rules,
@@ -741,8 +762,6 @@ async function buildWorkflow(
   payload,
   meta
 ) {
-  setProcessEnvironment(stackName, bucketName);
-
   const template = await getWorkflowTemplate(stackName, bucketName);
 
   if (collection) {
@@ -989,9 +1008,11 @@ module.exports = {
   LambdaStep,
   addCollections,
   addCustomUrlPathToCollectionFiles,
+  listCollections,
   deleteCollections,
   cleanupCollections,
   addProviders,
+  listProviders,
   deleteProviders,
   cleanupProviders,
   conceptExists: cmr.conceptExists,
