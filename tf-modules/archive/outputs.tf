@@ -6,8 +6,8 @@ output "api_redirect_uri" {
   value = local.api_redirect_uri
 }
 
-output "cw_sf_execution_event_to_db_lambda_function_arn" {
-  value = aws_lambda_function.cw_sf_execution_event_to_db.arn
+output "cw_sf_event_to_db_records_lambda_function_arn" {
+  value = aws_lambda_function.cw_sf_event_to_db_records.arn
 }
 
 output "log2elasticsearch_lambda_function_arn" {
