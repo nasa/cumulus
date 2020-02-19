@@ -19,15 +19,17 @@ const executeRawFtpCommand = async (cmd) => {
     });
   });
 };
-/*
+
 test.before(async () => {
-  await executeRawFtpCommand('chmod 400 -R forbidden/file.txt');
+  // await when fixed
+  executeRawFtpCommand('chmod 400 -R forbidden/file.txt');
 });
 
 test.after.always(async () => {
-  await executeRawFtpCommand('chmod 644 -R forbidden/file.txt');
+  // await when fixed
+  executeRawFtpCommand('chmod 644 -R forbidden/file.txt');
 });
-*/
+
 test.skip('FtpProviderClient throws an error when listing a non-permitted directory', async (t) => {
   // TODO: update cumuluss/vsftpd to allow `chmod` to work in the setup for this test.
   const myFtpProviderClient = new FtpProviderClient({
