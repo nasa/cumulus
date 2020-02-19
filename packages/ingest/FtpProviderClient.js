@@ -65,11 +65,18 @@ class FtpProviderClient {
   }
 
   errorHandler(rejectFn, e) {
+    let err;
+    if (!e.message && e.text) {
+      const message = (e.code
+      ? `FTP Code ${e.code}: ${e.text}`
+      : `FTP error: ${e.text}`) + ' This may be caused by user permissions disallowing the listing.';
+      err = new Error(message);
+    }
     if (!isNil(this.ftpClient)) {
       this.ftpClient.destroy();
     }
-    log.debug('FtpProviderClient encountered error: ', e);
-    return rejectFn(e);
+    log.debug('FtpProviderClient encountered error: ', err);
+    return rejectFn(err);
   }
 
   /**
@@ -104,11 +111,12 @@ class FtpProviderClient {
       client.on('error', this.errorHandler.bind(this, reject));
       client.ls(path, (err, data) => {
         if (err) {
-          if (err.message.includes('Timed out') && counter < 3) {
+          const message = err.message || err.text;
+          if (message && message.includes('Timed out') && counter < 3) {
             log.error(`Connection timed out while listing ${path}. Retrying...`);
             counter += 1;
             return this._list(path, counter).then((r) => {
-              log.info(`${counter} retry suceeded`);
+              log.info(`${counter} retry succeeded`);
               return resolve(r);
             }).catch(this.errorHandler.bind(this, reject));
           }
