@@ -45,13 +45,11 @@ class S3ProviderClient {
    * @returns {Promise<Array>} a list of files
    * @private
    */
-  async list(path = '') {
-    // absolute paths are not valid S3 prefixes
-    const prefix = isAbsolute(path) ? path.slice(1) : path;
+  async list(path) {
     const objects = await aws.listS3ObjectsV2({
       Bucket: this.bucket,
       FetchOwner: true,
-      Prefix: prefix
+      Prefix: path
     });
 
     return objects.map(({ Key, Size, LastModified }) => ({
