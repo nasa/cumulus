@@ -71,6 +71,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed name of `cwSfExecutionEventToDb` Lamda to `cwSfEventToDbRecords`
   - Updated `cwSfEventToDbRecords` to write granule records to DynamoDB from the incoming Cumulus message
 
+- **CUMULUS-1748**
+  - (S)FTP discovery tasks now use the provider-path as-is instead of normalizing to an absoluate path.
+  - Improved error handling to catch permission denied FTP error betters.
+
 - **CUMULUS-1753** - Changes to `@cumulus/ingest/HttpProviderClient.js`:
   - Removed regex filter in `HttpProviderClient.list()` that was used to return only files with an extension between 1 and 4 characters long. `HttpProviderClient.list()` will now return all files linked from the HTTP provider host.
 
