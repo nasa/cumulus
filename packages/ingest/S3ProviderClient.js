@@ -4,11 +4,7 @@ const aws = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
 const errors = require('@cumulus/common/errors');
 const isString = require('lodash.isstring');
-const {
-  basename,
-  dirname,
-  isAbsolute
-} = require('path');
+const { basename, dirname } = require('path');
 
 class S3ProviderClient {
   constructor({ bucket }) {
