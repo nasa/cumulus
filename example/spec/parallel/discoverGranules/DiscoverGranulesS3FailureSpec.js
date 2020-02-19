@@ -27,6 +27,8 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
   beforeAll(async () => {
     ({ stackName, bucket } = await loadConfig());
 
+    process.env.ProvidersTable = `${stackName}-ProvidersTable`;
+
     const testId = randomString();
 
     // Create the provider

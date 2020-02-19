@@ -25,6 +25,7 @@ const { getWorkflowTemplate, getWorkflowArn } = require('@cumulus/common/workflo
 const { readJsonFile } = require('@cumulus/common/FileUtils');
 const { globalReplace } = require('@cumulus/common/string');
 const { deprecate, sleep } = require('@cumulus/common/util');
+const ProvidersModel = require('@cumulus/api/models/providers');
 const RulesModel = require('@cumulus/api/models/rules');
 
 const api = require('./api/api');
@@ -815,10 +816,8 @@ async function buildWorkflow(
   }
 
   if (provider) {
-    template.meta.provider = await providersApi.getProvider(
-      stackName,
-      provider.id
-    );
+    const providersModel = new ProvidersModel();
+    template.meta.provider = await providersModel.get({ id: provider.id });
   } else {
     template.meta.provider = {};
   }
