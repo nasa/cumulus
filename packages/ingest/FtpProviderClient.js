@@ -104,6 +104,12 @@ class FtpProviderClient {
     });
   }
 
+  /**
+   * List all files from a given endpoint
+   * @param {string} path - path to list
+   * @return {Promise}
+   * @private
+   */
   async _list(path, _counter = 0) {
     let counter = _counter;
     const client = await this.buildFtpClient();
@@ -135,11 +141,10 @@ class FtpProviderClient {
   }
 
   /**
-   * List all PDR files from a given endpoint
+   * List all files from a given endpoint
+   * @param {string} path - path to list
    * @return {Promise}
-   * @private
    */
-
   async list(path) {
     const listFn = this._list.bind(this);
     const files = await recursion(listFn, path);
