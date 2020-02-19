@@ -511,7 +511,7 @@ function getProviderPort({ protocol, port }) {
 }
 
 /**
- * Update a provider with a custom s3Host,a nd update the id to use a postfix.
+ * Update a provider with a custom s3Host, and update the id to use a postfix.
  *
  * @param {Object} params
  * @param {Object} params.provider
@@ -1078,5 +1078,6 @@ module.exports = {
   loadCollection,
   loadProvider,
   getExecutionOutput,
-  readJsonFilesFromDir
+  readJsonFilesFromDir,
+  setProcessEnvironment
 };

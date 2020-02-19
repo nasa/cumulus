@@ -15,7 +15,8 @@ const {
   cleanupProviders,
   cleanupCollections,
   readJsonFilesFromDir,
-  deleteRules
+  deleteRules,
+  setProcessEnvironment
 } = require('@cumulus/integration-tests');
 
 const { waitForModelStatus } = require('../../helpers/apiUtils');
@@ -63,6 +64,7 @@ async function setupCollectionAndTestData() {
 }
 
 async function cleanUp() {
+  setProcessEnvironment(testConfig.stackName, testConfig.bucket);
   console.log(`\nDeleting rule ${ruleOverride.name}`);
   const rules = await readJsonFilesFromDir(ruleDirectory);
   await deleteRules(config.stackName, config.bucket, rules, ruleSuffix);

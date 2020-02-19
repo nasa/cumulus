@@ -14,7 +14,8 @@ const {
   cleanupCollections,
   cleanupProviders,
   deleteRules,
-  readJsonFilesFromDir
+  readJsonFilesFromDir,
+  setProcessEnvironment
 } = require('@cumulus/integration-tests');
 
 const {
@@ -61,6 +62,7 @@ describe('The Kinesis Replay API', () => {
   let newRecordsToSkip;
 
   async function cleanUp() {
+    setProcessEnvironment(testConfig.stackName, testConfig.bucket);
     // delete rules
     const rulesToDelete = await readJsonFilesFromDir(ruleDir);
     // clean up stack state added by test
