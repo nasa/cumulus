@@ -67,9 +67,9 @@ class FtpProviderClient {
   errorHandler(rejectFn, e) {
     let err = e;
     if (!e.message && e.text) {
-      const message = (e.code
-      ? `FTP Code ${e.code}: ${e.text}`
-      : `FTP error: ${e.text}`) + ' This may be caused by user permissions disallowing the listing.';
+      const message = `${e.code
+        ? `FTP Code ${e.code}: ${e.text}`
+        : `FTP error: ${e.text}`} This may be caused by user permissions disallowing the listing.`;
       err = new Error(message);
     }
     if (!isNil(this.ftpClient)) {
