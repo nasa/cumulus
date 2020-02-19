@@ -7,8 +7,7 @@ const isString = require('lodash.isstring');
 const {
   basename,
   dirname,
-  isAbsolute,
-  normalize
+  isAbsolute
 } = require('path');
 
 class S3ProviderClient {
@@ -48,7 +47,7 @@ class S3ProviderClient {
    */
   async list(path = '') {
     // absolute paths are not valid S3 prefixes
-    const prefix = isAbsolute(path) ? normalize(path.slice(1)) : normalize(path);
+    const prefix = isAbsolute(path) ? path.slice(1) : path;
     const objects = await aws.listS3ObjectsV2({
       Bucket: this.bucket,
       FetchOwner: true,

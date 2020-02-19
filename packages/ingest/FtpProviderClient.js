@@ -65,7 +65,7 @@ class FtpProviderClient {
   }
 
   errorHandler(rejectFn, e) {
-    let err;
+    let err = e;
     if (!e.message && e.text) {
       const message = (e.code
       ? `FTP Code ${e.code}: ${e.text}`
