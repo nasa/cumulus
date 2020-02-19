@@ -402,6 +402,10 @@ const loadCollection = async (params = {}) =>
  */
 async function addCollections(stackName, bucketName, dataDirectory, postfix,
   customFilePath, duplicateHandling) {
+  // setProcessEnvironment is not needed by this function, but other code
+  // depends on this undocumented side effect
+  setProcessEnvironment(stackName, bucketName);
+
   const rawCollections = await readJsonFilesFromDir(dataDirectory);
 
   const collections = rawCollections.map(
@@ -447,6 +451,10 @@ async function listCollections(stackName, bucketName, dataDirectory) {
  * @returns {Promise.<number>} number of deleted collections
  */
 async function deleteCollections(stackName, bucketName, collections, postfix) {
+  // setProcessEnvironment is not needed by this function, but other code
+  // depends on this undocumented side effect
+  setProcessEnvironment(stackName, bucketName);
+
   await Promise.all(
     collections.map(
       ({ name, version }) => {
@@ -469,6 +477,9 @@ async function deleteCollections(stackName, bucketName, collections, postfix) {
  * @returns {Promise<number>} - number of deleted collections
  */
 async function cleanupCollections(stackName, bucket, collectionsDirectory, postfix) {
+  // setProcessEnvironment is not needed by this function, but other code
+  // depends on this undocumented side effect
+  setProcessEnvironment(stackName, bucket);
   const collections = await readJsonFilesFromDir(collectionsDirectory);
   return deleteCollections(stackName, bucket, collections, postfix);
 }
@@ -595,11 +606,16 @@ async function listProviders(stackName, bucketName, dataDirectory) {
  * Delete providers from database
  *
  * @param {string} stackName - CloudFormation stack name
+ * @param {string} bucketName - S3 internal bucket name
  * @param {Array} providers - List of providers to delete
  * @param {string} postfix - string that was appended to provider id
  * @returns {Promise<number>} number of deleted providers
  */
-async function deleteProviders(stackName, providers, postfix) {
+async function deleteProviders(stackName, bucketName, providers, postfix) {
+  // setProcessEnvironment is not needed by this function, but other code
+  // depends on this undocumented side effect
+  setProcessEnvironment(stackName, bucketName);
+
   await Promise.all(
     providers.map(
       ({ id }) => {
@@ -616,14 +632,17 @@ async function deleteProviders(stackName, providers, postfix) {
  * Delete all collections listed from a collections directory
  *
  * @param {string} stackName - CloudFormation stack name
- * @param {string} _bucket - S3 internal bucket name
+ * @param {string} bucket - S3 internal bucket name
  * @param {string} providersDirectory - the directory of collection json files
  * @param {string} postfix - string that was appended to provider id
  * @returns {number} - number of deleted collections
  */
-async function cleanupProviders(stackName, _bucket, providersDirectory, postfix) {
+async function cleanupProviders(stackName, bucket, providersDirectory, postfix) {
+  // setProcessEnvironment is not needed by this function, but other code
+  // depends on this undocumented side effect
+  setProcessEnvironment(stackName, bucket);
   const providers = await readJsonFilesFromDir(providersDirectory);
-  return deleteProviders(stackName, providers, postfix);
+  return deleteProviders(stackName, bucket, providers, postfix);
 }
 
 /**
@@ -738,12 +757,16 @@ async function rulesList(stackName, bucketName, rulesDirectory) {
 /**
  *
  * @param {string} stackName - Cloud formation stack name
- * @param {string} _bucketName - S3 internal bucket name
+ * @param {string} bucketName - S3 internal bucket name
  * @param {Array} rules - List of rules objects to delete
  * @param {string} postfix - string that was appended to provider id
  * @returns {Promise.<number>} - Number of rules deleted
  */
-async function deleteRules(stackName, _bucketName, rules, postfix) {
+async function deleteRules(stackName, bucketName, rules, postfix) {
+  // setProcessEnvironment is not needed by this function, but other code
+  // depends on this undocumented side effect
+  setProcessEnvironment(stackName, bucketName);
+
   process.env.RulesTable = `${stackName}-RulesTable`;
 
   await pMap(

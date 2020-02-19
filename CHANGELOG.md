@@ -25,6 +25,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Change variable `saml_launchpad_metadata_path` to
     `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
 
+- **CUMULUS-1446**
+  - Update the `@cumulus/integration-tests/api/executions.getExecution()`
+    function to parse the response and return the execution, rather than return
+    the full API response.
+
 ### Added
 
 - **CUMULUS-1446**
@@ -76,9 +81,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-1446**
-  - Update the `@cumulus/integration-tests/api/executions.getExecution()`
-    function to parse the response and return the execution, rather than return
-    the full API response.
   - Mark the `@cumulus/integration-tests/api.addCollectionApi()` function as
     deprecated
   - Mark the `@cumulus/integration-tests/index.listCollections()` function as
