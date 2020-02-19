@@ -1,11 +1,10 @@
 'use strict';
 
-/*const test = require('ava');
+const test = require('ava');
 const JSFtp = require('jsftp');
 
 const FtpProviderClient = require('../FtpProviderClient');
 
-// TODO: update cumuluss/vsftpd to allow `chmod` to work.
 const executeRawFtpCommand = async (cmd) => {
   const jsftp = new JSFtp({
     host: '127.0.0.1',
@@ -20,7 +19,7 @@ const executeRawFtpCommand = async (cmd) => {
     });
   });
 };
-
+/*
 test.before(async () => {
   await executeRawFtpCommand('chmod 400 -R forbidden/file.txt');
 });
@@ -28,8 +27,9 @@ test.before(async () => {
 test.after.always(async () => {
   await executeRawFtpCommand('chmod 644 -R forbidden/file.txt');
 });
-
+*/
 test.skip('FtpProviderClient throws an error when listing a non-permitted directory', async (t) => {
+  // TODO: update cumuluss/vsftpd to allow `chmod` to work in the setup for this test.
   const myFtpProviderClient = new FtpProviderClient({
     host: '127.0.0.1',
     username: 'testuser',
@@ -40,4 +40,4 @@ test.skip('FtpProviderClient throws an error when listing a non-permitted direct
   await t.throwsAsync(myFtpProviderClient.list('forbidden/file.txt'),
     'FTP Code 451: Could not retrieve a file listing for forbidden/file.txt.'
     + ' This may be caused by user permissions disallowing the listing.');
-});*/
+});
