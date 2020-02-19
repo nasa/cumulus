@@ -78,6 +78,7 @@ First, remove the old table from the Terraform state:
 ```sh
 terraform state rm module.data_persistence.aws_dynamodb_table.collections_table
 ```
+
 replacing `collections_table` with the table identifier in the [DynamoDB Terraform table definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/dynamo.tf).
 
 Then import the new table into the Terraform state:
