@@ -254,6 +254,22 @@ async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
 }
 
 /**
+ * set process environment necessary for database transactions
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ */
+function setProcessEnvironment(stackName, bucketName) {
+  process.env.system_bucket = bucketName;
+  process.env.stackName = stackName;
+  process.env.messageConsumer = `${stackName}-messageConsumer`;
+  process.env.KinesisInboundEventLogger = `${stackName}-KinesisInboundEventLogger`;
+  process.env.CollectionsTable = `${stackName}-CollectionsTable`;
+  process.env.ProvidersTable = `${stackName}-ProvidersTable`;
+  process.env.RulesTable = `${stackName}-RulesTable`;
+}
+
+/**
  * Load and parse all of the JSON files from a directory
  *
  * @param {string} sourceDir - the directory containing the JSON files to load
@@ -275,6 +291,7 @@ const readJsonFilesFromDir = async (sourceDir) => {
  * @returns {Promise<Array>} List of objects to seed in the database
  */
 function setupSeedData(stackName, bucketName, dataDirectory) {
+  setProcessEnvironment(stackName, bucketName);
   return readJsonFilesFromDir(dataDirectory);
 }
 
