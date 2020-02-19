@@ -114,7 +114,12 @@ async function ensureAuthorized(req, res, next) {
 
   let userName;
   try {
-    ({ username: userName, accessToken } = verifyJwtToken(jwtToken));
+    ({ username: userName } = verifyJwtToken(jwtToken));
+
+    if (userName !== username) {
+      return res.boom.unauthorized('User not authorized');
+    }
+
     req.authorizedMetadata = { userName };
     return next();
   } catch (error) {
@@ -126,7 +131,7 @@ async function ensureAuthorized(req, res, next) {
       return res.boom.forbidden('Invalid access token');
     }
 
-    return res.boom.unauthorized('User not authorized');
+    return res.boom.badImplementation(error.message);
   }
 }
 
