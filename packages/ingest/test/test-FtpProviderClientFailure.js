@@ -7,7 +7,7 @@ const FtpProviderClient = require('../FtpProviderClient');
 
 // TODO: update cumuluss/vsftpd to allow `chmod` to work.
 const executeRawFtpCommand = async (cmd) => {
-  const jsftp = new JSFtp({
+/*  const jsftp = new JSFtp({
     host: '127.0.0.1',
     port: 21,
     user: 'testuser',
@@ -18,7 +18,7 @@ const executeRawFtpCommand = async (cmd) => {
       if (err) reject(err);
       resolve(data);
     });
-  });
+  });*/
 };
 
 test.before(async () => {
