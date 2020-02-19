@@ -25,6 +25,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Change variable `saml_launchpad_metadata_path` to
     `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
 
+- **CUMULUS-1755**
+  - The `thin_egress_jwt_secret_name` variable for the `tf-modules/cumulus` Terraform module is now **required**. This variable is passed on to the Thin Egress App in `tf-modules/distribution/main.tf`, which uses the keys stored in the secret to sign JWTs. See the [Thin Egress App documentation on how to create a value for this secret](https://github.com/asfadmin/thin-egress-app#setting-up-the-jwt-cookie-secrets).
+
 ### Added
 
 - **CUMULUS-1684**
@@ -70,6 +73,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1753** - Changes to `@cumulus/ingest/HttpProviderClient.js`:
   - Removed regex filter in `HttpProviderClient.list()` that was used to return only files with an extension between 1 and 4 characters long. `HttpProviderClient.list()` will now return all files linked from the HTTP provider host.
+
+- **CUMULUS-1755**
+  - Updated the Thin Egress App module used in `tf-modules/distribution/main.tf` to build 61. [See the release notes](https://github.com/asfadmin/thin-egress-app/releases/tag/tea-build.61).
 
 - **CUMULUS-1757**
   - Update @cumulus/cmr-client CMRSearchConceptQueue to take optional cmrEnvironment parameter
