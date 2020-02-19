@@ -229,7 +229,7 @@ variable "private_archive_api_gateway" {
 variable "thin_egress_jwt_secret_name" {
   type        = string
   description = "Name of AWS secret where keys for the Thin Egress App JWT encode/decode are stored"
-  default     = null
+  default     = "cumulus_sandbox_jwt_tea_secret"
 }
 
 variable "metrics_es_host" {
