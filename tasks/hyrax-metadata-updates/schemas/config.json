@@ -1,0 +1,82 @@
+{
+  "title": "HyraxMetadataUpdateConfig",
+  "description": "Describes the config used by the hyrax-metadata-update task",
+  "type": "object",
+  "required": [
+    "bucket",
+    "buckets",
+    "collection",
+    "entry_title" 
+  ],
+  "properties": {
+    "bucket": {
+      "type": "string",
+      "description": "the bucket the has the private/public key needed for decrypting cmr password"
+    },
+    "buckets": {
+      "type": "object",
+      "description": "aws s3 buckets used by this task",
+      "patternProperties": {
+        "\\S*": {
+          "description": "bucket configuration for the key'd bucket",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "name of the S3 bucket"
+            },
+            "type": {
+              "type": "string",
+              "description": "the type of bucket - i.e. internal, public, private, protected"
+            }
+          }
+        }
+      }
+    },
+    "collection": {
+      "type": "object",
+      "required": [
+        "files",
+        "name"
+      ],
+      "properties": {
+        "name": { "type": "string" },
+        "process": { "type": "string" },
+        "url_path": { "type": "string" },
+        "duplicateHandling": { "type": "string" },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["regex", "bucket"],
+            "properties": {
+              "regex": { "type": "string" },
+              "bucket": { "type": "string" },
+              "url_path": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "duplicateHandling": {
+      "type": "string",
+      "description": "Specifies how duplicate filenames should be handled. `error` will throw an error that, if not caught, will fail the task/workflow execution. `version` will add a suffix to the existing filename to avoid a clash.",
+      "enum": ["replace", "version", "skip", "error"],
+      "default": "error"
+    },
+    "environment": {
+      "type": "string",
+      "description": "The Hyrax environment you wish to interact with. If not present, then `prod` is assumed",
+      "enum": ["prod", "uat", "sit"],
+      "default": "prod"
+    },
+    "entryTitle": {
+      "type": "string",
+      "description": "The CMR entry title for this collection"
+    },
+    "provider": {
+      "type": "string",
+      "description": "The CMR provider ID associated with this archive"
+    },
+  }
+}
