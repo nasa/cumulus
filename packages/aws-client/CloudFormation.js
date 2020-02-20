@@ -1,4 +1,4 @@
-const awsServices = require('./services');
+const { cf } = require('./services');
 
 /**
  * Describes a given CloudFormation stack
@@ -9,7 +9,7 @@ const awsServices = require('./services');
  * @returns {Array<Object>} The resources belonging to the stack
  */
 exports.describeCfStack = (stackName) =>
-  awsServices.cf().describeStacks({ StackName: stackName })
+  cf().describeStacks({ StackName: stackName })
     .promise()
     .then((response) => response.Stacks[0]);
 
@@ -22,7 +22,7 @@ exports.describeCfStack = (stackName) =>
  * @returns {Array<Object>} The resources belonging to the stack
  */
 exports.describeCfStackResources = (stackName) =>
-  awsServices.cf().describeStackResources({ StackName: stackName })
+  cf().describeStackResources({ StackName: stackName })
     .promise()
     .then((response) => response.StackResources);
 
@@ -39,10 +39,13 @@ exports.getCfStackParameterValues = (stackName, parameterKeys = []) =>
   exports.describeCfStack(stackName)
     .then((response) => {
       const parameters = {};
+      if (!response) return parameters;
       parameterKeys.forEach((parameterKey) => {
-        const { ParameterValue } = response.Parameters
+        const foundParamter = response.Parameters
           .find((element) => element.ParameterKey === parameterKey);
-        parameters[parameterKey] = ParameterValue;
+        if (foundParamter) {
+          parameters[parameterKey] = foundParamter.ParameterValue;
+        }
       });
       return parameters;
     });
