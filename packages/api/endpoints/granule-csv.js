@@ -36,13 +36,8 @@ async function list(req, res) {
   }
 
   const fields = ['granuleUr', 'collectionId', 'createdAt', 'startDateTime', 'endDateTime'];
-  let csv;
-  try {
-    const parser = new Parser({ fields });
-    csv = parser.parse(granulesArray);
-  } catch (error) {
-    throw error;
-  }
+  const parser = new Parser({ fields });
+  const csv = parser.parse(granulesArray);
 
   return res.send(csv);
 }

@@ -11,7 +11,7 @@ function convertLogLevelForQuery(query) {
     return query;
   }
 
-  return Object.assign({}, query, { level: log.convertLogLevel(query.level) });
+  return { ...query, level: log.convertLogLevel(query.level) };
 }
 
 function metricsConfig() {

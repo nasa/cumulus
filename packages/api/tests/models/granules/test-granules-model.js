@@ -17,13 +17,13 @@ const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmr-client');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 
-const { Granule } = require('../../models');
-const { filterDatabaseProperties } = require('../../lib/FileUtils');
-const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
-const { deconstructCollectionId } = require('../../lib/utils');
+const Granule = require('../../../models/granules');
+const { filterDatabaseProperties } = require('../../../lib/FileUtils');
+const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
+const { deconstructCollectionId } = require('../../../lib/utils');
 
-const granuleSuccess = require('../data/granule_success.json');
-const granuleFailure = require('../data/granule_failed.json');
+const granuleSuccess = require('../../data/granule_success.json');
+const granuleFailure = require('../../data/granule_failed.json');
 
 let fakeExecution;
 let stepFunctionsStub;
@@ -115,6 +115,7 @@ test.before(async () => {
 
 test.beforeEach((t) => {
   t.context.granuleModel = new Granule();
+  t.context.granuleId = testCumulusMessage.payload.granules[0].granuleId;
   t.context.cumulusMessage = testCumulusMessage;
 });
 
@@ -776,6 +777,25 @@ test(
   }
 );
 
+test(
+  'generateGranuleRecord() uses granule.status if meta.status does not exist',
+  async (t) => {
+    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
+    delete cumulusMessage.meta.status;
+
+    const [granule] = cumulusMessage.payload.granules;
+    granule.status = 'running';
+
+    const record = await Granule.generateGranuleRecord(
+      granule,
+      cumulusMessage,
+      randomString()
+    );
+
+    t.is(record.status, 'running');
+  }
+);
+
 test.serial(
   'generateGranuleRecord() builds successful granule record',
   async (t) => {
@@ -1021,3 +1041,33 @@ test.serial(
     }
   }
 );
+
+test('_getMutableFieldNames() returns correct fields for running status', async (t) => {
+  const { granuleModel } = t.context;
+
+  const updatedItem = {
+    granuleId: randomString(),
+    status: 'running'
+  };
+
+  const updateFields = granuleModel._getMutableFieldNames(updatedItem);
+
+  t.deepEqual(updateFields, [
+    'updatedAt', 'timestamp', 'status', 'execution'
+  ]);
+});
+
+test('_getMutableFieldNames() returns correct fields for completed status', async (t) => {
+  const { granuleModel } = t.context;
+
+  const item = {
+    granuleId: randomString(),
+    status: 'completed',
+    pdrName: 'pdr',
+    files: []
+  };
+
+  const updateFields = granuleModel._getMutableFieldNames(item);
+
+  t.deepEqual(updateFields, Object.keys(item));
+});

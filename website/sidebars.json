@@ -43,6 +43,7 @@
       "additional-deployment-options/cumulus_saml_launchpad_integration"
     ],
     "Additional Features": [
+      "features/backup_and_restore",
       "features/data_in_dynamodb",
       "features/dead_letter_queues",
       "features/ems_reporting",

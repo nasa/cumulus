@@ -27,14 +27,14 @@ Configuration variables are shown in `terraform.tfvars.sample`, and are explaine
 
 ```bash
 prefix               = "myprefix"                                         # prefix to name created replicator resources
-aws_profile          = "myawscliprofile"                                  # AWS profile used for deployment (default: null)
-aws_region           = "us-east-1"                                        # AWS region in which to deploy resources (default: 'us-east-1')
 permissions_boundary = "arn:aws:iam::1234567890:policy/YourRoleBoundary"  # IAM permissions boundary ARN
-vpc_id               = "vpc-123456"                                       # VPC ID (for Lambda)
-subnet_ids           = ["subnet-123456"]                                  # Subnet IDs (for Lambda)
-security_groups      = ["sg-123456"]                                      # Security Group IDs (for Lambda)
 source_bucket        = "source-bucket-name"                               # Source S3 bucket
 source_prefix        = "source-prefix"                                    # Source object prefix e.g. 'path/to/filedir'
 target_bucket        = "target-bucket-name"                               # Target S3 bucket e.g. 'mybucket'
 target_prefix        = "target-prefix"                                    # Target object prefix path
+
+# Optional
+security_group_ids   = ["sg-123456"]                                      # Security Group IDs (for Lambda)
+vpc_id               = "vpc-123456"                                       # VPC ID (for Lambda)
+subnet_ids           = ["subnet-123456"]                                  # Subnet IDs (for Lambda)
 ```

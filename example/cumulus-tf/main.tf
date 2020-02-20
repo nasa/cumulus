@@ -148,17 +148,30 @@ resource "aws_security_group" "no_ingress_all_egress" {
   tags = local.default_tags
 }
 
-resource "aws_sns_topic_subscription" "sns_s3_test" {
+resource "aws_sns_topic_subscription" "sns_s3_executions_test" {
   topic_arn = module.cumulus.report_executions_sns_topic_arn
   protocol  = "lambda"
-  endpoint  = aws_lambda_function.sns_s3_test.arn
+  endpoint  = aws_lambda_function.sns_s3_executions_test.arn
 }
 
-resource "aws_lambda_permission" "sns_s3_test" {
+resource "aws_lambda_permission" "sns_s3_executions_test" {
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.sns_s3_test.arn
+  function_name = aws_lambda_function.sns_s3_executions_test.arn
   principal     = "sns.amazonaws.com"
   source_arn    = module.cumulus.report_executions_sns_topic_arn
+}
+
+resource "aws_sns_topic_subscription" "sns_s3_granules_test" {
+  topic_arn = module.cumulus.report_granules_sns_topic_arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.sns_s3_granules_test.arn
+}
+
+resource "aws_lambda_permission" "sns_s3_granules_test" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.sns_s3_granules_test.arn
+  principal     = "sns.amazonaws.com"
+  source_arn    = module.cumulus.report_granules_sns_topic_arn
 }
 
 module "s3_access_test_lambda" {

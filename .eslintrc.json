@@ -88,6 +88,7 @@
       }
     ],
     "brace-style": [2, "1tbs"],
+    "max-classes-per-file": "warn",
     "max-len": [
       2,
       {
@@ -140,6 +141,7 @@
     {
       "files": ["**/test/**/*.js", "**/tests/**/*.js"],
       "rules": {
+        "max-classes-per-file": "off",
         "no-console": "off",
         "no-new": "off",
         "no-param-reassign": "off"
