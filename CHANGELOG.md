@@ -21,10 +21,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     deployment, which will cause the deployment to fail if the migration
     Lambda has not been run.
 
-- **CUMULUS-1698**
-  - Change variable `saml_launchpad_metadata_path` to
-    `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
-
 - **CUMULUS-1755**
   - The `thin_egress_jwt_secret_name` variable for the `tf-modules/cumulus` Terraform module is now **required**. This variable is passed on to the Thin Egress App in `tf-modules/distribution/main.tf`, which uses the keys stored in the secret to sign JWTs. See the [Thin Egress App documentation on how to create a value for this secret](https://github.com/asfadmin/thin-egress-app#setting-up-the-jwt-cookie-secrets).
 
@@ -65,7 +61,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1741** - Added an optional `security_group` variable to the `data-persistence` stack to allow the Elasticsearch security group id to be specified instead of creating one
 
 - **CUMULUS-1755**
-  - Added `@cumulus/aws-client/CloudFormation.describeCfStacks()` to describe a Cloudformation stack
+  - Added `@cumulus/aws-client/CloudFormation.describeCfStack()` to describe a Cloudformation stack
   - Added `@cumulus/aws-client/CloudFormation.getCfStackParameterValues()` to get multiple parameter values for a Cloudformation stack
 
 ### Changed
