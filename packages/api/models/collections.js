@@ -26,8 +26,8 @@ async function publishCollectionSnsMessage(collectionRecord) {
     const collectionSnsTopicArn = process.env.collection_sns_topic_arn;
     await publishSnsMessage(collectionSnsTopicArn, collectionRecord);
   } catch (err) {
-    log.fatal(
-      `Failed to create database record for collection ${collectionRecord.record.name} ${collectionRecord.record.version}: ${err.message}`,
+    log.warn(
+      `Failed to create record for collection ${collectionRecord.record.name} ${collectionRecord.record.version}: ${err.message}`,
       'Cause: ', err,
       'Collection record: ', collectionRecord
     );
