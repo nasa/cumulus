@@ -183,4 +183,6 @@ module "s3_access_test_lambda" {
   providers = {
     aws = "aws.usw2"
   }
+
+  tags = local.tags
 }
