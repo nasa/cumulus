@@ -41,6 +41,11 @@ resource "aws_s3_bucket_object" "authorized_oauth_users" {
   etag    = md5(jsonencode(var.users))
 }
 
+resource "aws_sns_topic" "report_collections_topic" {
+  name = "${var.prefix}-report-collections-topic"
+  tags = local.default_tags
+}
+
 resource "aws_lambda_function" "api" {
   depends_on       = [aws_s3_bucket_object.authorized_oauth_users]
 
@@ -109,6 +114,7 @@ resource "aws_lambda_function" "api" {
       provider_kms_key_id          = aws_kms_key.provider_kms_key.key_id
       log_destination_arn          = var.log_destination_arn
       granule_sns_topic_arn        = var.report_granules_sns_topic_arn
+      collection_sns_topic_arn     = aws_sns_topic.report_collections_topic.arn
     }
   }
   memory_size = 960
