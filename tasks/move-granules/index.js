@@ -37,19 +37,20 @@ const log = require('@cumulus/common/log');
 /**
  * validates the file matched only one collection.file and has a valid bucket
  * config.
- * @param {Array<Object>} match - list of matched collection.file
+ * @param {Array<Object>} match - list of matched collection.file.
  * @param {BucketsConfig} bucketsConfig - instance describing stack configuration.
- * @param {Object} file - the fileObject tested.
- * @throws {InvalidArgument} - If match is invalid, throws and error.
+ * @param {Object} fileName - the file name tested.
+ * @param {Array<Object>} fileSpecs - fileSpecs object.
+ * @throws {InvalidArgument} - If match is invalid, throws an error.
  */
-function validateMatch(match, bucketsConfig, file) {
+function validateMatch(match, bucketsConfig, fileName, fileSpecs) {
+  const collectionRegexes = fileSpecs.map((spec) => spec.regex);
   if (match.length > 1) {
-    throw new InvalidArgument(`File (${file}) matched more than one collection.regexp.`);
+    throw new InvalidArgument(`File (${fileName}) matched more than one of ${JSON.stringify(collectionRegexes)}.`);
   }
   if (match.length === 0) {
-    throw new InvalidArgument(`File (${file}) did not match any collection.regexp.`);
+    throw new InvalidArgument(`File (${fileName}) did not match any of ${JSON.stringify(collectionRegexes)}`);
   }
-
   if (!bucketsConfig.keyExists(match[0].bucket)) {
     throw new InvalidArgument(`Collection config specifies a bucket key of ${match[0].bucket}, `
                               + `but the configured bucket keys are: ${Object.keys(bucketsConfig).join(', ')}`);
@@ -88,7 +89,7 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
       }
 
       const match = fileSpecs.filter((cf) => unversionFilename(file.name).match(cf.regex));
-      validateMatch(match, bucketsConfig, file);
+      validateMatch(match, bucketsConfig, file.name, fileSpecs);
 
       const URLPathTemplate = file.url_path || match[0].url_path || collection.url_path || '';
       const urlPath = urlPathTemplate(URLPathTemplate, {

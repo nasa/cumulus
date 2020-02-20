@@ -1,5 +1,21 @@
+'use strict';
+
+const isObject = require('lodash.isobject');
+
 const { schedule } = require('../lambdas/sf-scheduler');
 const Rule = require('../models/rules');
+
+function lookupCollectionInEvent(eventObject) {
+  const { name, version, dataType } = isObject(eventObject.collection)
+    ? eventObject.collection
+    : eventObject;
+  let collectionObject = null;
+  if (name && version) {
+    collectionObject = { name, version };
+    if (dataType) collectionObject.dataType = dataType;
+  }
+  return collectionObject;
+}
 
 /**
  * Queue a workflow message for the kinesis/sqs rule with the message passed
@@ -13,8 +29,8 @@ const Rule = require('../models/rules');
 async function queueMessageForRule(rule, eventObject, eventSource) {
   const item = {
     workflow: rule.workflow,
-    provider: rule.provider,
-    collection: rule.collection,
+    provider: eventObject.provider || rule.provider,
+    collection: lookupCollectionInEvent(eventObject) || rule.collection,
     meta: eventSource ? { ...rule.meta, eventSource } : rule.meta,
     payload: eventObject
   };
