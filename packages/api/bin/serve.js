@@ -3,7 +3,7 @@
 const pLimit = require('p-limit');
 const { promiseS3Upload } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
-const { randomString, randomId, inTestMode } = require('@cumulus/common/test-utils');
+const { randomId, inTestMode } = require('@cumulus/common/test-utils');
 const bootstrap = require('../lambdas/bootstrap');
 const models = require('../models');
 const testUtils = require('../lib/testUtils');
@@ -231,7 +231,7 @@ async function serveApi(user, stackName = localStackName, reseed = true) {
   process.env.CUMULUS_ENV = 'local';
 
   process.env.TOKEN_REDIRECT_ENDPOINT = `http://localhost:${port}/token`;
-  process.env.TOKEN_SECRET = randomString();
+  process.env.TOKEN_SECRET = randomId('tokensecret');
 
   if (inTestMode()) {
     // set env variables
