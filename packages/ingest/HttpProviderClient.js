@@ -42,7 +42,10 @@ class HttpProviderClient {
   list(path) {
     validateHost(this.host);
 
-    const pattern = /<a href="([^>]*)">[^<]+<\/a>/;
+    // Make pattern case-insensitive and return all matches
+    // instead of just first one
+    const matchLinksPattern = /<a href="([^>]*)">[^<]+<\/a>/ig;
+    const matchLeadingSlashesPattern = /^\/+/;
 
     const c = new Crawler(
       buildURL({
@@ -65,13 +68,18 @@ class HttpProviderClient {
       c.on('fetchcomplete', (_, responseBuffer) => {
         const lines = responseBuffer.toString().trim().split('\n');
         lines.forEach((line) => {
-          const split = line.trim().split(pattern);
-          if (split.length === 3) {
-          // Some providers provide files with one number after the dot (".") ex (tmtdayacz8110_5.6)
-            if (split[1].match(/^(.*\.[\w\d]{1,4})\s*$/) !== null) {
-              const name = split[1].trimRight();
-              files.push({ name, path });
-            }
+          const trimmedLine = line.trim();
+          let match = matchLinksPattern.exec(trimmedLine);
+
+          while (match != null) {
+            const linkTarget = match[1];
+            // Remove the path and leading slashes from the filename.
+            const name = linkTarget
+              .replace(path, '')
+              .replace(matchLeadingSlashesPattern, '')
+              .trimRight();
+            files.push({ name, path });
+            match = matchLinksPattern.exec(trimmedLine);
           }
         });
 
@@ -96,7 +104,8 @@ class HttpProviderClient {
         });
       });
 
-      c.on('fetchclienterror', () => reject(new errors.RemoteResourceError('Connection Refused')));
+      c.on('fetchclienterror', () =>
+        reject(new errors.RemoteResourceError('Connection Refused')));
 
       c.on('fetch404', (queueItem, _) => {
         const errorToThrow = new Error(`Received a 404 error from ${this.endpoint}. Check your endpoint!`);

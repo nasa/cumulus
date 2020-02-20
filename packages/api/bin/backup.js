@@ -33,7 +33,7 @@ async function backup(table, region = 'us-east-1', folder = 'backups') {
   const dyno = Dyno(dynoParams);
   const stringify = new stream.Transform({ objectMode: true });
   stringify._transform = function _transform(record, enc, callback) {
-    const line = Dyno.serialize(record);
+    const line = JSON.stringify(record);
 
     setImmediate(() => {
       stringify.push(`${line}\n`);
