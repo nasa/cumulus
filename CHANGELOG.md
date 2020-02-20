@@ -60,9 +60,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add `archive_api_url` variable in `tf-modules/cumulus/variables.tf`
 
 - **CUMULUS-1741**
-  - Added an optional `elasticsearch_security_group_id` variable to the
-    `data-persistence` Terraform module to allow the Elasticsearch security
-    group id to be specified instead of creating one.
+  - Added an optional `elasticsearch_security_group_ids` variable to the
+    `data-persistence` Terraform module to allow additional security groups to
+    be assigned to the Elasticsearch Domain.
 
 ### Changed
 
