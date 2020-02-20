@@ -16,7 +16,7 @@ enable_point_in_time_tables = [
   "CollectionsTable",
   "ExecutionsTable"
 ]
-include_elasticsearch  = true
-subnet_ids             = ["subnet-123456"]
-security_group         = "sg-123456"
-custom_domain_name     = "es-domain-name"
+include_elasticsearch            = true
+subnet_ids                       = ["subnet-123456"]
+elasticsearch_security_group_ids = ["sg-123456"]
+custom_domain_name               = "es-domain-name"
