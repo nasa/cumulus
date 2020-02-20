@@ -63,6 +63,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-1672**
+  - Add a `retryOptions` parameter to the `@cumulus/aws-client/S3.headObject`
+     function, which will retry if the object being queried does not exist.
+
 - **CUMULUS-1684**
   - Update the API package to encrypt provider credentials using KMS instead of
     using RSA keys stored in S3

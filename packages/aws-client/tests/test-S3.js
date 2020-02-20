@@ -17,6 +17,7 @@ const {
   getJsonS3Object,
   getS3Object,
   getTextObject,
+  headObject,
   downloadS3File,
   listS3ObjectsV2,
   recursivelyDeleteS3Bucket,
@@ -308,4 +309,15 @@ test('getFileBucketAndKey throws UnparsableFileLocationError if location cannot 
     () => getFileBucketAndKey(pathParams),
     UnparsableFileLocationError
   );
+});
+
+test('headObject() will retry if the requested key does not exist', async (t) => {
+  const { Bucket } = t.context;
+  const Key = randomString();
+
+  const promisedHeadObject = headObject(Bucket, Key, { retries: 5 });
+  await sleep(3000)
+    .then(() => awsServices.s3().putObject({ Bucket, Key, Body: 'asdf' }).promise());
+
+  await t.notThrowsAsync(promisedHeadObject);
 });
