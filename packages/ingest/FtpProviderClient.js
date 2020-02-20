@@ -64,19 +64,22 @@ class FtpProviderClient {
     return this.ftpClient;
   }
 
-  errorHandler(rejectFn, e) {
-    let err = e;
-    if (!e.message && e.text) {
-      const message = `${e.code
-        ? `FTP Code ${e.code}: ${e.text}`
-        : `FTP error: ${e.text}`} This may be caused by user permissions disallowing the listing.`;
-      err = new Error(message);
+  errorHandler(rejectFn, error) {
+    let normalizedError = error;
+    // error.text is a product of jsftp returning an object with a `text` field to the callback's
+    // `err` param, but normally javascript errors have a `message` field. We want to normalize
+    // this before throwing it out of the `FtpProviderClient` because it is a quirk of jsftp.
+    if (!error.message && error.text) {
+      const message = `${error.code
+        ? `FTP Code ${error.code}: ${error.text}`
+        : `FTP error: ${error.text}`} This may be caused by user permissions disallowing the listing.`;
+      normalizedError = new Error(message);
     }
     if (!isNil(this.ftpClient)) {
       this.ftpClient.destroy();
     }
-    log.error('FtpProviderClient encountered error: ', err);
-    return rejectFn(err);
+    log.error('FtpProviderClient encountered error: ', normalizedError);
+    return rejectFn(normalizedError);
   }
 
   /**
