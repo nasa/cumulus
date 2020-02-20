@@ -8,7 +8,7 @@ const awsServices = require('./services');
  * @param {string} stackName -  The name of the CloudFormation stack to query
  * @returns {Array<Object>} The resources belonging to the stack
  */
-exports.describeCfStacks = (stackName) =>
+exports.describeCfStack = (stackName) =>
   awsServices.cf().describeStacks({ StackName: stackName })
     .promise()
     .then((response) => response.Stacks[0]);
@@ -36,7 +36,7 @@ exports.describeCfStackResources = (stackName) =>
  * @returns {Object} Object keyed by parameter names
  */
 exports.getCfStackParameterValues = (stackName, parameterKeys = []) =>
-  exports.describeCfStacks(stackName)
+  exports.describeCfStack(stackName)
     .then((response) => {
       const parameters = {};
       parameterKeys.forEach((parameterKey) => {
