@@ -11,9 +11,6 @@ mvd-dev-tf:
 jl-tf:
   bucket: jl-test-integration-internal
 
-kk-int-tf:
-  bucket: kk-tf-internal
-
 kk-tf:
   bucket: kk-tf-internal
 
