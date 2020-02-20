@@ -99,6 +99,7 @@ class FtpProviderClient {
           return this.errorHandler(reject, err);
         }
         log.info(`Finishing downloading ${remoteUrl}`);
+        client.destroy();
         return resolve(localPath);
       });
     });
@@ -129,7 +130,7 @@ class FtpProviderClient {
           return this.errorHandler(reject, err);
         }
 
-        this.ftpClient.destroy();
+        client.destroy();
         return resolve(data.map((d) => ({
           name: d.name,
           path: path,
@@ -194,7 +195,7 @@ class FtpProviderClient {
     await S3.promiseS3Upload(params);
     log.info('Uploading to s3 is complete(ftp)', s3uri);
 
-    this.ftpClient.destroy();
+    client.destroy();
     return s3uri;
   }
 }
