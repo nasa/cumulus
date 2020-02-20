@@ -43,7 +43,7 @@ resource "aws_s3_bucket_object" "authorized_oauth_users" {
 
 resource "aws_sns_topic" "report_collections_topic" {
   name = "${var.prefix}-report-collections-topic"
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_lambda_function" "api" {

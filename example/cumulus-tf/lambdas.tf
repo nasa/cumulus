@@ -45,7 +45,7 @@ resource "aws_lambda_function" "sns_s3_executions_test" {
     }
   }
 
-  tags = local.default_tags
+  tags = local.tags
 
   vpc_config {
     subnet_ids         = var.subnet_ids
