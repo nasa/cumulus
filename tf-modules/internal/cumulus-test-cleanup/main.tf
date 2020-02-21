@@ -8,8 +8,13 @@ provider "aws" {
   region = var.aws_region
 }
 
+variable "tags" {
+  description = "Tags to be applied to managed resources"
+  type        = map(string)
+  default     = {}
+}
+
 locals {
-  default_tags           = { Deployment = "cumulus-test-cleanup" }
   security_group_ids_set = var.security_group_ids != null
 }
 
@@ -22,7 +27,7 @@ resource "aws_security_group" "test_cleanup_lambda" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_lambda_function" "cumulus_test_cleanup" {
@@ -40,12 +45,12 @@ resource "aws_lambda_function" "cumulus_test_cleanup" {
     security_group_ids = local.security_group_ids_set ? var.security_group_ids : [aws_security_group.test_cleanup_lambda[0].id]
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_cloudwatch_event_rule" "cumulus_test_cleanup" {
   schedule_expression = "cron(0 1 * * ? *)"
-  tags                = local.default_tags
+  tags                = var.tags
 }
 
 resource "aws_cloudwatch_event_target" "cumulus_test_cleanup" {

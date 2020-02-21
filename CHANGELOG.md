@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- **CUMULUS-1672**
+  - The `cumulus` Terraform module in previous releases set a
+    `Deployment = var.prefix` tag on all resources that it managed. In this
+    release, a `tags` input variable has been added to the `cumulus` Terraform
+    module to allow resource tagging to be customized. No default tags will be
+    applied to Cumulus-managed resources. To replicate the previous behavior,
+    set `tags = { Deployment: var.prefix }` as an input variable for the
+    `cumulus` Terraform module.
+
 - **CUMULUS-1684 Migration Instructions**
   - In previous releases, a provider's username and password were encrypted
     using a custom encryption library. That has now been updated to use KMS.
@@ -21,11 +30,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     deployment, which will cause the deployment to fail if the migration
     Lambda has not been run.
 
-- **CUMULUS-1698**
-  - Change variable `saml_launchpad_metadata_path` to
-    `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
+- **CUMULUS-1755**
+  - The `thin_egress_jwt_secret_name` variable for the `tf-modules/cumulus` Terraform module is now **required**. This variable is passed on to the Thin Egress App in `tf-modules/distribution/main.tf`, which uses the keys stored in the secret to sign JWTs. See the [Thin Egress App documentation on how to create a value for this secret](https://github.com/asfadmin/thin-egress-app#setting-up-the-jwt-cookie-secrets).
 
 ### Added
+
+- **CUMULUS-1672**
+  - Add a `tags` input variable to the `archive` Terraform module
+  - Add a `tags` input variable to the `cumulus` Terraform module
+  - Add a `tags` input variable to the `cumulus_ecs_service` Terraform module
+  - Add a `tags` input variable to the `data-persistence` Terraform module
+  - Add a `tags` input variable to the `distribution` Terraform module
+  - Add a `tags` input variable to the `ingest` Terraform module
+  - Add a `tags` input variable to the `s3-replicator` Terraform module
 
 - **CUMULUS-1707**
   - Enable logrotate on ECS cluster
@@ -64,7 +81,34 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `data-persistence` Terraform module to allow additional security groups to
     be assigned to the Elasticsearch Domain.
 
+- **CUMULUS-1755**
+  - Added `@cumulus/aws-client/CloudFormation.describeCfStack()` to describe a Cloudformation stack
+  - Added `@cumulus/aws-client/CloudFormation.getCfStackParameterValues()` to get multiple parameter values for a Cloudformation stack
+
 ### Changed
+
+- **CUMULUS-1672**
+  - Previously, the `cumulus` module defaulted to setting a
+    `Deployment = var.prefix` tag on all resources that it managed. In this
+    release, the `cumulus` module will now accept a `tags` input variable that
+    defines the tags to be assigned to all resources that it manages.
+  - Previously, the `data-persistence` module defaulted to setting a
+    `Deployment = var.prefix` tag on all resources that it managed. In this
+    release, the `data-persistence` module will now accept a `tags` input
+    variable that defines the tags to be assigned to all resources that it
+    manages.
+  - Previously, the `distribution` module defaulted to setting a
+    `Deployment = var.prefix` tag on all resources that it managed. In this
+    release, the `distribution` module will now accept a `tags` input variable
+    that defines the tags to be assigned to all resources that it manages.
+  - Previously, the `ingest` module defaulted to setting a
+    `Deployment = var.prefix` tag on all resources that it managed. In this
+    release, the `ingest` module will now accept a `tags` input variable that
+    defines the tags to be assigned to all resources that it manages.
+  - Previously, the `s3-replicator` module defaulted to setting a
+    `Deployment = var.prefix` tag on all resources that it managed. In this
+    release, the `s3-replicator` module will now accept a `tags` input variable
+    that defines the tags to be assigned to all resources that it manages.
 
 - **CUMULUS-1684**
   - Update the API package to encrypt provider credentials using KMS instead of
@@ -80,6 +124,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1753** - Changes to `@cumulus/ingest/HttpProviderClient.js`:
   - Removed regex filter in `HttpProviderClient.list()` that was used to return only files with an extension between 1 and 4 characters long. `HttpProviderClient.list()` will now return all files linked from the HTTP provider host.
+
+- **CUMULUS-1755**
+  - Updated the Thin Egress App module used in `tf-modules/distribution/main.tf` to build 61. [See the release notes](https://github.com/asfadmin/thin-egress-app/releases/tag/tea-build.61).
+  - Updated `@cumulus/integration-tests/api/distribution.invokeApiDistributionLambda()` to invoke the Thin Egress App Lambda for testing
 
 - **CUMULUS-1757**
   - Update @cumulus/cmr-client CMRSearchConceptQueue to take optional cmrEnvironment parameter

@@ -36,5 +36,5 @@ variable "workflow_config" {
 variable "tags" {
   description = "Tags that should be set for the deployed resources"
   type    = map(string)
-  default = null
+  default = {}
 }

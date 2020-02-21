@@ -69,3 +69,9 @@ variable "elasticsearch_security_group_ids" {
   type        = list(string)
   default     = []
 }
+
+variable "tags" {
+  description = "Tags to be applied to managed resources"
+  type        = map(string)
+  default     = {}
+}

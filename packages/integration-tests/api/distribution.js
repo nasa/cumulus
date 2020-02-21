@@ -11,23 +11,55 @@ const got = require('got');
  *
  * @param {string} path
  *   path to file requested.  This is just "/bucket/keytofile"
- * @param {string} accessToken
- *   Access token from OAuth provider or nothing.
+ * @param {string} accessTokenCookie
+ *   Access token from OAuth provider to use as cookie for TEA request
+ * @param {string} jwtTeaCookie
+ *   JWT token to use as cookie for TEA request
  * @returns {string}
  *   signed s3 URL for the requested file.
  */
-async function invokeApiDistributionLambda(path, accessToken = '') {
+async function invokeApiDistributionLambda(
+  path,
+  accessTokenCookie,
+  jwtTeaCookie
+) {
   const lambda = new Lambda();
-  const FunctionName = `${process.env.stackName}-ApiDistribution`; // TODO How was this supposed to work now that we're using TEA?
+  const FunctionName = `${process.env.stackName}-thin-egress-app-EgressLambda`;
 
   const event = {
-    method: 'GET',
-    path
+    httpMethod: 'GET',
+    resource: '/{proxy+}',
+    path,
+    // All of these properties are necessary for the TEA request to succeed
+    requestContext: {
+      resourcePath: '/{proxy+}',
+      operationName: 'proxy',
+      httpMethod: 'GET',
+      path: '/{proxy+}',
+      identity: {
+        sourceIp: '127.0.0.1'
+      }
+    },
+    multiValueQueryStringParameters: null,
+    pathParameters: {
+      proxy: path.replace(/\/+/, '')
+    },
+    body: null,
+    stageVariables: null
   };
 
-  if (accessToken) {
-    event.headers = { cookie: [`accessToken=${accessToken}`] };
+  const cookies = [];
+
+  if (accessTokenCookie) {
+    cookies.push(`urs-access-token=${accessTokenCookie}`);
   }
+
+  if (jwtTeaCookie) {
+    // TODO: No great way to get cookie names dynamically?
+    cookies.push(`asf-urs=${jwtTeaCookie}`);
+  }
+
+  event.headers = { cookie: cookies.join(';') };
 
   const data = await lambda.invoke({
     FunctionName,
@@ -78,10 +110,16 @@ async function invokeS3CredentialsLambda(path, accessToken = '') {
  * Invoke the ApiDistributionLambda and return the headers location
  * @param {filepath} filepath - request.path parameter
  * @param {string} accessToken - authenticiation cookie (can be undefined).
+ * @param {string} jwtTeaCookie - JWT token to use as cookie for TEA
+ * @returns {string} - Redirect header location
  */
-async function getDistributionApiRedirect(filepath, accessToken) {
-  const payload = await invokeApiDistributionLambda(filepath, accessToken);
-  return payload.headers.location;
+async function getDistributionApiRedirect(filepath, accessToken, jwtTeaCookie) {
+  const payload = await invokeApiDistributionLambda(
+    filepath,
+    accessToken,
+    jwtTeaCookie
+  );
+  return payload.headers.Location;
 }
 
 /**

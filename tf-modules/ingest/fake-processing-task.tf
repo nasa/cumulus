@@ -23,5 +23,5 @@ resource "aws_lambda_function" "fake_processing_task" {
     security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
   }
 
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 }

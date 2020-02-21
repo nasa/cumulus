@@ -15,3 +15,4 @@ variable "ecs_service_alarms" {
   type = list(object({ name = string, arn = string }))
   default = []
 }
+

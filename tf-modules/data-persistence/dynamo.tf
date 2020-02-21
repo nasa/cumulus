@@ -33,7 +33,7 @@ resource "aws_dynamodb_table" "access_tokens_table" {
     ignore_changes = [ name ]
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_dynamodb_table" "async_operations_table" {
@@ -57,7 +57,7 @@ resource "aws_dynamodb_table" "async_operations_table" {
     ignore_changes = [ name ]
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_dynamodb_table" "collections_table" {
@@ -87,7 +87,7 @@ resource "aws_dynamodb_table" "collections_table" {
     ignore_changes = [ name ]
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_dynamodb_table" "executions_table" {
@@ -111,7 +111,7 @@ resource "aws_dynamodb_table" "executions_table" {
     ignore_changes = [ name ]
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_dynamodb_table" "files_table" {
@@ -141,7 +141,7 @@ resource "aws_dynamodb_table" "files_table" {
     ignore_changes = [ name ]
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_dynamodb_table" "granules_table" {
@@ -177,7 +177,7 @@ resource "aws_dynamodb_table" "granules_table" {
     ignore_changes = [ name ]
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_dynamodb_table" "pdrs_table" {
@@ -201,7 +201,7 @@ resource "aws_dynamodb_table" "pdrs_table" {
     ignore_changes = [ name ]
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_dynamodb_table" "providers_table" {
@@ -225,7 +225,7 @@ resource "aws_dynamodb_table" "providers_table" {
     ignore_changes = [ name ]
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_dynamodb_table" "rules_table" {
@@ -249,7 +249,7 @@ resource "aws_dynamodb_table" "rules_table" {
     ignore_changes = [ name ]
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_dynamodb_table" "semaphores_table" {
@@ -271,5 +271,5 @@ resource "aws_dynamodb_table" "semaphores_table" {
     ignore_changes = [ name ]
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
