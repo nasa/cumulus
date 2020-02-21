@@ -401,6 +401,12 @@ variable "saml_launchpad_metadata_url" {
   default     = "N/A"
 }
 
+variable "tags" {
+  description = "Tags to be applied to Cumulus resources that support tags"
+  type        = map(string)
+  default     = {}
+}
+
 variable "thin_egress_cookie_domain" {
   type        = string
   default     = null

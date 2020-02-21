@@ -24,7 +24,7 @@ resource "aws_lambda_function" "create_reconciliation_report" {
       CMR_PAGE_SIZE         = var.cmr_page_size
     }
   }
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids

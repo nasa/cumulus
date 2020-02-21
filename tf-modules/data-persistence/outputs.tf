@@ -52,7 +52,7 @@ output "elasticsearch_hostname" {
 }
 
 output "elasticsearch_security_group_id" {
-  value = local.deploy_inside_vpc ? (var.security_group == null ? aws_security_group.es_vpc[0].id : var.security_group) : null
+  value = local.deploy_inside_vpc ? aws_security_group.es_vpc[0].id : null
 }
 
 output "elasticsearch_alarms" {

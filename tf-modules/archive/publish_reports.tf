@@ -14,8 +14,7 @@ resource "aws_iam_role" "publish_reports_lambda_role" {
   name                 = "${var.prefix}_publish_reports_lambda_role"
   assume_role_policy   = data.aws_iam_policy_document.assume_lambda_role.json
   permissions_boundary = var.permissions_boundary_arn
-  # TODO Re-enable once IAM permissions have been fixed
-  # tags                 = local.default_tags
+  tags                 = var.tags
 }
 
 data "aws_iam_policy_document" "publish_reports_policy_document" {
@@ -92,7 +91,7 @@ resource "aws_sqs_queue" "publish_reports_dead_letter_queue" {
   receive_wait_time_seconds  = 20
   message_retention_seconds  = 1209600
   visibility_timeout_seconds = 60
-  tags                       = local.default_tags
+  tags                       = var.tags
 }
 
 resource "aws_lambda_function" "publish_reports" {
@@ -120,11 +119,11 @@ resource "aws_lambda_function" "publish_reports" {
     security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
   }
 
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 }
 
 resource "aws_cloudwatch_log_group" "publish_reports_logs" {
   name              = "/aws/lambda/${aws_lambda_function.publish_reports.function_name}"
   retention_in_days = 14
-  tags              = local.default_tags
+  tags              = var.tags
 }

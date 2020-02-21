@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- **CUMULUS-1672**
+  - The `cumulus` Terraform module in previous releases set a
+    `Deployment = var.prefix` tag on all resources that it managed. In this
+    release, a `tags` input variable has been added to the `cumulus` Terraform
+    module to allow resource tagging to be customized. No default tags will be
+    applied to Cumulus-managed resources. To replicate the previous behavior,
+    set `tags = { Deployment: var.prefix }` as an input variable for the
+    `cumulus` Terraform module.
+
 - **CUMULUS-1684 Migration Instructions**
   - In previous releases, a provider's username and password were encrypted
     using a custom encryption library. That has now been updated to use KMS.
@@ -26,6 +35,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
 
 ### Added
+
+- **CUMULUS-1672**
+  - Add a `tags` input variable to the `archive` Terraform module
+  - Add a `tags` input variable to the `cumulus` Terraform module
+  - Add a `tags` input variable to the `cumulus_ecs_service` Terraform module
+  - Add a `tags` input variable to the `data-persistence` Terraform module
+  - Add a `tags` input variable to the `distribution` Terraform module
+  - Add a `tags` input variable to the `ingest` Terraform module
+  - Add a `tags` input variable to the `s3-replicator` Terraform module
 
 - **CUMULUS-1707**
   - Enable logrotate on ECS cluster
@@ -59,9 +77,35 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add `api_url` definition in `tf-modules/cumulus/archive.tf`
   - Add `archive_api_url` variable in `tf-modules/cumulus/variables.tf`
 
-- **CUMULUS-1741** - Added an optional `security_group` variable to the `data-persistence` stack to allow the Elasticsearch security group id to be specified instead of creating one
+- **CUMULUS-1741**
+  - Added an optional `elasticsearch_security_group_ids` variable to the
+    `data-persistence` Terraform module to allow additional security groups to
+    be assigned to the Elasticsearch Domain.
 
 ### Changed
+
+- **CUMULUS-1672**
+  - Previously, the `cumulus` module defaulted to setting a
+    `Deployment = var.prefix` tag on all resources that it managed. In this
+    release, the `cumulus` module will now accept a `tags` input variable that
+    defines the tags to be assigned to all resources that it manages.
+  - Previously, the `data-persistence` module defaulted to setting a
+    `Deployment = var.prefix` tag on all resources that it managed. In this
+    release, the `data-persistence` module will now accept a `tags` input
+    variable that defines the tags to be assigned to all resources that it
+    manages.
+  - Previously, the `distribution` module defaulted to setting a
+    `Deployment = var.prefix` tag on all resources that it managed. In this
+    release, the `distribution` module will now accept a `tags` input variable
+    that defines the tags to be assigned to all resources that it manages.
+  - Previously, the `ingest` module defaulted to setting a
+    `Deployment = var.prefix` tag on all resources that it managed. In this
+    release, the `ingest` module will now accept a `tags` input variable that
+    defines the tags to be assigned to all resources that it manages.
+  - Previously, the `s3-replicator` module defaulted to setting a
+    `Deployment = var.prefix` tag on all resources that it managed. In this
+    release, the `s3-replicator` module will now accept a `tags` input variable
+    that defines the tags to be assigned to all resources that it manages.
 
 - **CUMULUS-1684**
   - Update the API package to encrypt provider credentials using KMS instead of
