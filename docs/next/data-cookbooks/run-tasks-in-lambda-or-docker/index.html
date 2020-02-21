@@ -126,7 +126,6 @@
 </ul>
 <pre><code class="hljs css language-hcl"><span class="hljs-attribute">resource</span> <span class="hljs-string">"aws_sfn_activity"</span> <span class="hljs-string">"queue_granules"</span> {
   <span class="hljs-attribute">name</span> = <span class="hljs-string">"<span class="hljs-variable">${var.prefix}</span>-QueueGranules"</span>
-  tags = local.default_tags
 }
 </code></pre>
 <ul>
@@ -138,7 +137,6 @@ module <span class="hljs-string">"queue_granules_service"</span> {
 
   <span class="hljs-attr">prefix</span> = var.prefix
   <span class="hljs-attr">name</span>   = <span class="hljs-string">"QueueGranules"</span>
-  <span class="hljs-attr">tags</span>   = local.default_tags
 
   <span class="hljs-attr">cluster_arn</span>                           = module.cumulus.ecs_cluster_arn
   <span class="hljs-attr">desired_count</span>                         = <span class="hljs-number">1</span>
@@ -183,7 +181,6 @@ module <span class="hljs-string">"queue_granules_service"</span> {
   name                                  = <span class="hljs-string">"CookbookDiscoverGranules"</span>
   workflow_config                       = module.cumulus.workflow_config
   system_bucket                         = var.system_bucket
-  tags                                  = local.default_tags
 
   state_machine_definition = &lt;&lt;JSON
 {
