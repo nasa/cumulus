@@ -39,7 +39,6 @@ test.skip('FtpProviderClient throws an error when listing a non-permitted direct
     useList: true
   });
 
-  await t.throwsAsync(myFtpProviderClient.list('forbidden/file.txt'),
-    'FTP Code 451: Could not retrieve a file listing for forbidden/file.txt.'
-    + ' This may be caused by user permissions disallowing the listing.');
+  const error = await t.throwsAsync(myFtpProviderClient.list('forbidden/file.txt'));
+  t.true(/^.*451.*forbidden\/file\.txt.*/.test(error.message));
 });
