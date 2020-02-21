@@ -121,6 +121,7 @@ module "cumulus" {
   ]
 
   distribution_url = var.distribution_url
+  thin_egress_jwt_secret_name = var.thin_egress_jwt_secret_name
 
   sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
 
