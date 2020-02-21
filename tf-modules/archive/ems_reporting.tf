@@ -28,7 +28,7 @@ resource "aws_lambda_function" "ems_distribution_report" {
       system_bucket       = var.system_bucket
     }
   }
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
@@ -38,7 +38,7 @@ resource "aws_lambda_function" "ems_distribution_report" {
 
 resource "aws_cloudwatch_event_rule" "daily_ems_distribution_report" {
   schedule_expression = "cron(0 8 * * ? *)"
-  tags                = local.default_tags
+  tags                = var.tags
 }
 
 resource "aws_cloudwatch_event_target" "daily_ems_distribution_report" {
@@ -83,7 +83,7 @@ resource "aws_lambda_function" "ems_product_metadata_report" {
       system_bucket       = var.system_bucket
     }
   }
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
@@ -93,7 +93,7 @@ resource "aws_lambda_function" "ems_product_metadata_report" {
 
 resource "aws_cloudwatch_event_rule" "daily_ems_product_metadata_report" {
   schedule_expression = "cron(0 4 * * ? *)"
-  tags                = local.default_tags
+  tags                = var.tags
 }
 
 resource "aws_cloudwatch_event_target" "daily_ems_product_metadata_report" {
@@ -115,7 +115,7 @@ resource "aws_sqs_queue" "ems_ingest_report_dead_letter_queue" {
   receive_wait_time_seconds  = 20
   message_retention_seconds  = 1209600
   visibility_timeout_seconds = 60
-  tags                       = local.default_tags
+  tags                       = var.tags
 }
 
 resource "aws_lambda_function" "ems_ingest_report" {
@@ -148,7 +148,7 @@ resource "aws_lambda_function" "ems_ingest_report" {
       system_bucket       = var.system_bucket
     }
   }
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
@@ -158,7 +158,7 @@ resource "aws_lambda_function" "ems_ingest_report" {
 
 resource "aws_cloudwatch_event_rule" "daily_ems_ingest_report" {
   schedule_expression = "cron(0 5 * * ? *)"
-  tags                = local.default_tags
+  tags                = var.tags
 }
 
 resource "aws_cloudwatch_event_target" "daily_ems_ingest_report" {

@@ -90,7 +90,6 @@ Given it has been discovered this task can no longer run in AWS Lambda, you can 
 ```hcl
 resource "aws_sfn_activity" "queue_granules" {
   name = "${var.prefix}-QueueGranules"
-  tags = local.default_tags
 }
 ```
 
@@ -103,7 +102,6 @@ module "queue_granules_service" {
 
   prefix = var.prefix
   name   = "QueueGranules"
-  tags   = local.default_tags
 
   cluster_arn                           = module.cumulus.ecs_cluster_arn
   desired_count                         = 1
@@ -149,7 +147,6 @@ module "cookbook_discover_granules_workflow" {
   name                                  = "CookbookDiscoverGranules"
   workflow_config                       = module.cumulus.workflow_config
   system_bucket                         = var.system_bucket
-  tags                                  = local.default_tags
 
   state_machine_definition = <<JSON
 {

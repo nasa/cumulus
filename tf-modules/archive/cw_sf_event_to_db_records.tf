@@ -2,7 +2,7 @@ resource "aws_iam_role" "cw_sf_event_to_db_records_lambda" {
   name                 = "${var.prefix}_cw_sf_event_to_db_records_lambda_role"
   assume_role_policy   = data.aws_iam_policy_document.assume_lambda_role.json
   permissions_boundary = var.permissions_boundary_arn
-  tags                 = local.default_tags
+  tags                 = var.tags
 }
 
 data "aws_iam_policy_document" "cw_sf_event_to_db_records_lambda" {
@@ -71,7 +71,7 @@ resource "aws_sqs_queue" "cw_sf_event_to_db_records_dead_letter_queue" {
   receive_wait_time_seconds  = 20
   message_retention_seconds  = 1209600
   visibility_timeout_seconds = 60
-  tags                       = local.default_tags
+  tags                       = var.tags
 }
 
 resource "aws_lambda_function" "cw_sf_event_to_db_records" {
@@ -100,5 +100,5 @@ resource "aws_lambda_function" "cw_sf_event_to_db_records" {
     security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
   }
 
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 }

@@ -4,12 +4,6 @@ terraform {
   }
 }
 
-locals {
-  default_tags = {
-    Deployment = var.prefix
-  }
-}
-
 resource "aws_lambda_function" "s3_acccess_test" {
   function_name    = "${var.prefix}-s3AccessTest"
   description      = "Lambda for integration testing direct S3 access"
@@ -19,5 +13,5 @@ resource "aws_lambda_function" "s3_acccess_test" {
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs10.x"
 
-  tags = local.default_tags
+  tags = var.tags
 }
