@@ -75,7 +75,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `cwSfEventToDbRecords` to write granule records to DynamoDB from the incoming Cumulus message
 
 - **CUMULUS-1748**
-  - (S)FTP discovery tasks now use the provider-path as-is instead of normalizing to an absolute path.
+  - (S)FTP discovery tasks now use the provider-path as-is instead of forcing it to a relative path.
   - Improved error handling to catch permission denied FTP errors better and log them properly. Workflows will still fail encountering this error and we intend to consider that approach in a future ticket.
 
 - **CUMULUS-1753** - Changes to `@cumulus/ingest/HttpProviderClient.js`:
@@ -97,6 +97,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1717**
   - Deprecate `@cumulus/api/models/Granule.createGranulesFromSns`
+
+- **CUMULUS-1748**
+  - Deprecate `@cumulus/ingest/util.normalizeProviderPath`
 
 ### Removed
 
