@@ -7,6 +7,7 @@ const path = require('path');
 
 const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
+const { publishSnsMessage } = require('@cumulus/aws-client/SNS');
 const secretsManagerUtils = require('@cumulus/aws-client/SecretsManager');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
@@ -163,7 +164,7 @@ class Granule extends Manager {
       const snsRecord = {
         event: 'Update',
         record: updateResponse
-      }
+      };
       await publishGranuleSnsMessage(snsRecord);
     }
   }
@@ -292,7 +293,7 @@ class Granule extends Manager {
       const snsRecord = {
         event: 'Update',
         record: updateResponse
-      }
+      };
       await publishGranuleSnsMessage(snsRecord);
     }
 
@@ -414,7 +415,7 @@ class Granule extends Manager {
       const snsRecord = {
         event: 'Create',
         record: granuleRecord
-      }
+      };
       await publishGranuleSnsMessage(snsRecord);
     }
 
@@ -435,7 +436,7 @@ class Granule extends Manager {
           granuleId: granuleRecord.granuleId,
           deletedAt: Date.now()
         }
-      }
+      };
       await publishGranuleSnsMessage(snsRecord);
     }
 
