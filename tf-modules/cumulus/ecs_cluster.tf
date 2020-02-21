@@ -1,8 +1,8 @@
 resource "aws_iam_role" "ecs_cluster_instance" {
   assume_role_policy   = data.aws_iam_policy_document.ec2_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
-  # TODO Re-enable once IAM permissions have been fixed
-  # tags                 = local.default_tags
+
+  tags = var.tags
 }
 
 data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
@@ -137,7 +137,7 @@ resource "aws_iam_instance_profile" "ecs_cluster_instance" {
 
 resource "aws_security_group" "ecs_cluster_instance" {
   vpc_id = var.vpc_id
-  tags   = local.default_tags
+  tags   = var.tags
 }
 
 resource "aws_security_group_rule" "ecs_cluster_instance_allow_ssh" {
@@ -163,12 +163,12 @@ resource "aws_s3_bucket_object" "task_reaper" {
   key    = "${var.prefix}/task-reaper.sh"
   source = "${path.module}/task-reaper.sh"
   etag   = filemd5("${path.module}/task-reaper.sh")
-  tags   = local.default_tags
+  tags   = var.tags
 }
 
 resource "aws_ecs_cluster" "default" {
   name = "${var.prefix}-CumulusECSCluster"
-  tags = local.default_tags
+  tags = var.tags
 }
 
 data "aws_efs_mount_target" "ecs_cluster_instance" {
@@ -203,7 +203,7 @@ locals {
 resource "aws_cloudformation_stack" "ecs_instance_autoscaling_group" {
   name          = "${aws_ecs_cluster.default.name}-autoscaling-group"
   template_body = templatefile("${path.module}/ecs_cluster_instance_autoscaling_cf_template.yml.tmpl", local.ecs_instance_autoscaling_cf_template_config)
-  tags          = local.default_tags
+  tags          = var.tags
 }
 
 resource "aws_autoscaling_lifecycle_hook" "ecs_instance_termination_hook" {
@@ -242,7 +242,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_instance_autoscaling_group_memory_sc
   threshold           = var.ecs_cluster_scale_in_threshold_percent
   unit                = "Percent"
   dimensions          = { ClusterName = aws_ecs_cluster.default.name }
-  tags                = local.default_tags
+  tags                = var.tags
 }
 
 resource "aws_cloudwatch_metric_alarm" "ecs_instance_autoscaling_group_cpu_scale_in_alarm" {
@@ -258,7 +258,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_instance_autoscaling_group_cpu_scale
   threshold           = var.ecs_cluster_scale_in_threshold_percent
   unit                = "Percent"
   dimensions          = { ClusterName = aws_ecs_cluster.default.name }
-  tags                = local.default_tags
+  tags                = var.tags
 }
 
 # Scale out config
@@ -289,7 +289,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_instance_autoscaling_group_memory_sc
   threshold           = var.ecs_cluster_scale_out_threshold_percent
   unit                = "Percent"
   dimensions          = { ClusterName = aws_ecs_cluster.default.name }
-  tags                = local.default_tags
+  tags                = var.tags
 }
 
 resource "aws_cloudwatch_metric_alarm" "ecs_instance_autoscaling_group_cpu_scale_out_alarm" {
@@ -305,5 +305,5 @@ resource "aws_cloudwatch_metric_alarm" "ecs_instance_autoscaling_group_cpu_scale
   threshold           = var.ecs_cluster_scale_out_threshold_percent
   unit                = "Percent"
   dimensions          = { ClusterName = aws_ecs_cluster.default.name }
-  tags                = local.default_tags
+  tags                = var.tags
 }

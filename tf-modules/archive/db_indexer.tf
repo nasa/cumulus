@@ -3,7 +3,7 @@ resource "aws_sqs_queue" "db_indexer_dead_letter_queue" {
   receive_wait_time_seconds  = 20
   message_retention_seconds  = 1209600
   visibility_timeout_seconds = 60
-  tags                       = local.default_tags
+  tags                       = var.tags
 }
 
 resource "aws_lambda_function" "db_indexer" {
@@ -34,7 +34,7 @@ resource "aws_lambda_function" "db_indexer" {
       system_bucket         = var.system_bucket
     }
   }
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids

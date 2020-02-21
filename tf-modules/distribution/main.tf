@@ -5,7 +5,6 @@ terraform {
 }
 
 locals {
-  default_tags           = { Deployment = var.prefix }
   thin_egress_stack_name = "${var.prefix}-thin-egress-app"
   lambda_log_group_name  = "/aws/lambda/${local.thin_egress_stack_name}-EgressLambda"
 }
@@ -15,13 +14,13 @@ resource "aws_s3_bucket_object" "bucket_map_yaml" {
   key     = "${var.prefix}/thin-egress-app/bucket_map.yaml"
   content = templatefile("${path.module}/bucket_map.yaml.tmpl", { protected_buckets = var.protected_buckets, public_buckets = var.public_buckets })
   etag    = md5(templatefile("${path.module}/bucket_map.yaml.tmpl", { protected_buckets = var.protected_buckets, public_buckets = var.public_buckets }))
-  tags    = local.default_tags
+  tags    = var.tags
 }
 
 resource "aws_secretsmanager_secret" "thin_egress_urs_creds" {
   name_prefix = "${var.prefix}-tea-urs-creds-"
   description = "URS credentials for the ${var.prefix} Thin Egress App"
-  tags        = local.default_tags
+  tags        = var.tags
 }
 
 resource "aws_secretsmanager_secret_version" "thin_egress_urs_creds" {
@@ -69,7 +68,7 @@ resource "aws_dynamodb_table" "access_tokens" {
     type = "S"
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 data "aws_iam_policy_document" "assume_lambda_role" {
@@ -90,8 +89,7 @@ resource "aws_iam_role" "s3_credentials_lambda" {
   name                 = "${var.prefix}-S3CredentialsLambda"
   assume_role_policy   = data.aws_iam_policy_document.assume_lambda_role[0].json
   permissions_boundary = var.permissions_boundary_arn
-  # TODO Re-enable once IAM permissions have been fixed
-  # tags                 = local.default_tags
+  tags                 = var.tags
 }
 
 data "aws_iam_policy_document" "s3_credentials_lambda" {
@@ -146,7 +144,7 @@ resource "aws_security_group" "s3_credentials_lambda" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_lambda_function" "s3_credentials" {
@@ -178,7 +176,7 @@ resource "aws_lambda_function" "s3_credentials" {
       STSCredentialsLambda           = var.sts_credentials_lambda_function_arn
     }
   }
-  tags = local.default_tags
+  tags = var.tags
 }
 
 data "aws_region" "current" {}
@@ -281,7 +279,7 @@ resource "aws_cloudwatch_log_group" "egress_lambda_log_group" {
   count             = var.log_destination_arn == null ? 0 : 1
   name              = local.lambda_log_group_name
   retention_in_days = 30
-  tags              = local.default_tags
+  tags              = var.tags
 }
 
 # Egress Lambda Log Group Filter

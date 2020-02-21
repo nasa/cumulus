@@ -6,7 +6,7 @@ resource "aws_lambda_function" "async_operation_fail" {
   role             = module.cumulus.lambda_processing_role_arn
   runtime          = "nodejs10.x"
 
-  tags = local.default_tags
+  tags = local.tags
 
   vpc_config {
     subnet_ids         = var.subnet_ids
@@ -22,7 +22,7 @@ resource "aws_lambda_function" "async_operation_success" {
   role             = module.cumulus.lambda_processing_role_arn
   runtime          = "nodejs10.x"
 
-  tags = local.default_tags
+  tags = local.tags
 
   vpc_config {
     subnet_ids         = var.subnet_ids
@@ -45,7 +45,7 @@ resource "aws_lambda_function" "sns_s3_executions_test" {
     }
   }
 
-  tags = local.default_tags
+  tags = local.tags
 
   vpc_config {
     subnet_ids         = var.subnet_ids
@@ -68,7 +68,7 @@ resource "aws_lambda_function" "sns_s3_granules_test" {
     }
   }
 
-  tags = local.default_tags
+  tags = local.tags
 
   vpc_config {
     subnet_ids         = var.subnet_ids

@@ -24,8 +24,7 @@ resource "aws_iam_role" "scaling" {
   name                 = "${var.prefix}-scaling-role"
   assume_role_policy   = data.aws_iam_policy_document.application_autoscaling_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
-  # TODO Re-enable once IAM permissions have been fixed
-  # tags                 = local.default_tags
+  tags                 = var.tags
 }
 
 data "aws_iam_policy_document" "scaling_policy" {
@@ -57,8 +56,7 @@ resource "aws_iam_role" "step" {
   name                 = "${var.prefix}-steprole"
   assume_role_policy   = data.aws_iam_policy_document.states_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
-  # TODO Re-enable once IAM permissions have been fixed
-  # tags                 = local.default_tags
+  tags                 = var.tags
 }
 
 data "aws_iam_policy_document" "step_policy" {

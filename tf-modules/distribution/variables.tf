@@ -80,6 +80,12 @@ variable "subnet_ids" {
   default     = null
 }
 
+variable "tags" {
+  description = "Tags to be applied to managed resources"
+  type        = map(string)
+  default     = {}
+}
+
 variable "thin_egress_cookie_domain" {
   type        = string
   default     = null

@@ -35,7 +35,7 @@ resource "aws_elasticsearch_domain" "es" {
     prevent_destroy = true
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 data "aws_iam_policy_document" "es_access_policy" {
@@ -84,7 +84,7 @@ resource "aws_security_group" "es_vpc" {
     self      = true
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_elasticsearch_domain" "es_vpc" {
@@ -120,7 +120,7 @@ resource "aws_elasticsearch_domain" "es_vpc" {
     automated_snapshot_start_hour = 0
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_elasticsearch_domain_policy" "es_vpc_domain_policy" {
@@ -154,7 +154,8 @@ resource "aws_cloudwatch_metric_alarm" "es_nodes_low" {
   statistic           = "Average"
   threshold           = var.elasticsearch_config.instance_count
   alarm_description   = "There are less instances running than the desired"
-  tags                = local.default_tags
+
+  tags = var.tags
 }
 
 resource "aws_cloudwatch_metric_alarm" "es_nodes_high" {
@@ -167,4 +168,6 @@ resource "aws_cloudwatch_metric_alarm" "es_nodes_high" {
   statistic           = "Average"
   threshold           = var.elasticsearch_config.instance_count
   alarm_description   = "There are less instances running than the desired"
+
+  tags = var.tags
 }
