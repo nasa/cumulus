@@ -12,7 +12,7 @@ test('recursion lists all files in default directory and subdirectories when ori
         { type: '-', name: 'file1' },
         { type: '-', name: 'file2' }
       ],
-      'dir': [
+      dir: [
         { type: '-', name: 'file3' }
       ]
     };
@@ -38,7 +38,7 @@ test('recursion does not pick up files along the way when listing a specific pat
     ],
     '/path/to': [
       { type: 'd', name: 'files' },
-      { type: '-', name: 'file4'}
+      { type: '-', name: 'file4' }
     ],
     '/path/to/files': [
       { type: '-', name: 'targetedfile' }
@@ -54,7 +54,7 @@ test('recursion lists all files in a simple relative text path', async (t) => {
     '.': [
       { type: 'd', name: 'path' }
     ],
-    'path': [
+    path: [
       { type: '-', name: 'file1' },
       { type: '-', name: 'file2' },
       { type: '-', name: 'file3' }
@@ -62,7 +62,7 @@ test('recursion lists all files in a simple relative text path', async (t) => {
   };
   const fn = (path) => dirs[path];
   const files = await recursion(fn, 'path');
-  t.deepEqual(files, dirs['path']);
+  t.deepEqual(files, dirs.path);
 });
 
 test('recursion lists all files in a simple absolute text path', async (t) => {
@@ -87,12 +87,12 @@ test('recursion lists all files in a simple relative regex path', async (t) => {
       { type: 'd', name: 'dir1' },
       { type: 'd', name: 'dir2' }
     ],
-    'dir1': [
+    dir1: [
       { type: '-', name: 'file1' },
       { type: '-', name: 'file2' },
       { type: '-', name: 'file3' }
     ],
-    'dir2': [
+    dir2: [
       { type: '-', name: 'file4' },
       { type: '-', name: 'file5' },
       { type: '-', name: 'file6' }
@@ -100,7 +100,7 @@ test('recursion lists all files in a simple relative regex path', async (t) => {
   };
   const fn = (path) => dirs[path];
   const files = await recursion(fn, '(dir.*)');
-  t.deepEqual(files, [...dirs['dir1'], ...dirs['dir2']]);
+  t.deepEqual(files, [...dirs.dir1, ...dirs.dir2]);
 });
 
 test('recursion lists all files in a simple absolute regex path', async (t) => {
@@ -130,7 +130,7 @@ test('recursion lists all files in a complex relative text path', async (t) => {
     '.': [
       { type: 'd', name: 'path' }
     ],
-    'path': [
+    path: [
       { type: 'd', name: 'to' }
     ],
     'path/to': [
@@ -177,7 +177,7 @@ test('recursion lists all files in a complex relative regex path', async (t) => 
       { type: 'd', name: 'dir1' },
       { type: 'd', name: 'dir2' }
     ],
-    'dir1': [
+    dir1: [
       { type: 'd', name: 'good1' },
       { type: 'd', name: 'bad1' }
     ],
@@ -188,7 +188,7 @@ test('recursion lists all files in a complex relative regex path', async (t) => 
     'dir1/bad1': [
       { type: '-', name: 'badfile2' }
     ],
-    'dir2': [
+    dir2: [
       { type: 'd', name: 'good2' },
       { type: 'd', name: 'bad2' }
     ],
@@ -251,7 +251,7 @@ test('recursion lists all files in a simple composite relative text/regex path',
       { type: 'd', name: 'dir' },
       { type: '-', name: 'notlisted' }
     ],
-    'dir': [
+    dir: [
       { type: 'd', name: 'files1' },
       { type: 'd', name: 'files2' }
     ],
@@ -299,7 +299,7 @@ test('recursion lists all files in a complex composite relative text/regex path'
       { type: 'd', name: 'dir1' },
       { type: 'd', name: 'dir2' }
     ],
-    'dir1': [
+    dir1: [
       { type: 'd', name: 'good' },
       { type: 'd', name: 'bad' }
     ],
@@ -310,7 +310,7 @@ test('recursion lists all files in a complex composite relative text/regex path'
     'dir1/bad': [
       { type: '-', name: 'badfile2' }
     ],
-    'dir2': [
+    dir2: [
       { type: 'd', name: 'good' },
       { type: 'd', name: 'bad' }
     ],
@@ -372,7 +372,7 @@ test('recursion can handle text paths with terminating slash', async (t) => {
     '.': [
       { type: 'd', name: 'path' }
     ],
-    'path': [
+    path: [
       { type: 'd', name: 'files' }
     ],
     'path/files': [
@@ -390,14 +390,14 @@ test('recursion can handle regex paths with terminating slash', async (t) => {
     '.': [
       { type: 'd', name: 'dir1' }
     ],
-    'dir1': [
+    dir1: [
       { type: '-', name: 'file1' },
       { type: '-', name: 'file2' }
     ]
   };
   const fn = (path) => dirs[path];
   const files = await recursion(fn, '(dir.*)/');
-  t.deepEqual(files, dirs['dir1']);
+  t.deepEqual(files, dirs.dir1);
 });
 
 test('recursion can handle text paths with leading slash', async (t) => {

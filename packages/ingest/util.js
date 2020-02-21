@@ -2,7 +2,7 @@
 
 const mime = require('mime-types');
 
-const { deprecate } = require('@cumulus/common/util')
+const { deprecate } = require('@cumulus/common/util');
 
 /**
  * Ensure provider path conforms to expectations.

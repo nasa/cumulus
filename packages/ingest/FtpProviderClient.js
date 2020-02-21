@@ -111,7 +111,8 @@ class FtpProviderClient {
   /**
    * List all files from a given endpoint
    * @param {string} path - path to list
-   * @return {Promise}
+   * @param {number} _counter - recursive attempt counter
+   * @returns {Promise} promise of contents
    * @private
    */
   async _list(path, _counter = 0) {
@@ -148,7 +149,7 @@ class FtpProviderClient {
   /**
    * List all files from a given endpoint
    * @param {string} path - path to list
-   * @return {Promise}
+   * @returns {Promise}
    */
   async list(path) {
     const listFn = this._list.bind(this);

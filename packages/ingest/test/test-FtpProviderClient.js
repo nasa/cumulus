@@ -183,3 +183,22 @@ test('Download remote file to s3 with correct content-type', async (t) => {
     await recursivelyDeleteS3Bucket(bucket);
   }
 });
+
+test.serial('FtpProviderClient throws an error when listing a non-permitted directory', async (t) => {
+  const jsftpStubbed = sinon.stub(JSFtp.prototype, 'list').callsFake((path, callback) => callback({
+    code: 451,
+    text: `Could not retrieve a file listing for ${path}.`,
+    isMark: false,
+    isError: true
+  }));
+
+  const myFtpProviderClient = new FtpProviderClient({
+    host: '127.0.0.1',
+    username: 'testuser',
+    password: 'testpass',
+    useList: true
+  });
+  const error = await t.throwsAsync(myFtpProviderClient.list('/forbidden/file.txt'));
+  jsftpStubbed.restore();
+  t.true(/^.*451.*forbidden\/file\.txt.*/.test(error.message));
+});
