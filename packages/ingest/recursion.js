@@ -28,7 +28,7 @@ async function recurOnDirectory(fn, currentPath, segments, position) {
       if (['-', 0].includes(item.type)) {
         files.push(item);
       } else if (['d', 1].includes(item.type)) {
-        const nextDir = (currentPath === '/' ? `/${item.name}` : `${currentPath}/${item.name}`);
+        const nextDir = path.normalize(`${currentPath}/${item.name}`);
         // eslint-disable-next-line no-await-in-loop
         files = files.concat(await recurOnDirectory(fn, nextDir, segments, position + 1));
       }
