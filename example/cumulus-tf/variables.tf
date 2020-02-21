@@ -251,3 +251,9 @@ variable "additional_log_groups_to_elk" {
   type = map(string)
   default = {}
 }
+
+variable "tags" {
+  description = "Tags to be applied to Cumulus resources that support tags"
+  type        = map(string)
+  default     = {}
+}

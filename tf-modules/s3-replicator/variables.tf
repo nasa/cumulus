@@ -22,6 +22,12 @@ variable "subnet_ids" {
   default = []
 }
 
+variable "tags" {
+  description = "Tags to be applied to managed resources"
+  type        = map(string)
+  default     = {}
+}
+
 variable "target_bucket" {
   type = string
 }

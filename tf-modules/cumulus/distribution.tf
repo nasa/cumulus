@@ -23,4 +23,6 @@ module "distribution" {
   urs_client_password                            = var.urs_client_password
   urs_url                                        = var.urs_url
   vpc_id                                         = var.vpc_id
+
+  tags = var.tags
 }

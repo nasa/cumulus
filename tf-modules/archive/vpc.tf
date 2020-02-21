@@ -11,5 +11,5 @@ resource "aws_security_group" "no_ingress_all_egress" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
