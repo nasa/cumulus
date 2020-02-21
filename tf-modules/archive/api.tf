@@ -48,7 +48,7 @@ resource "aws_sns_topic" "report_collections_topic" {
 
 resource "aws_sns_topic" "granule_information_topic" {
   name = "${var.prefix}-granule-information-topic"
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_lambda_function" "api" {

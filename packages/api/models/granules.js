@@ -56,7 +56,7 @@ async function publishGranuleSnsMessage(granuleRecord) {
     await publishSnsMessage(granuleInfoSnsTopicArn, granuleRecord);
   } catch (err) {
     log.warn(
-      `Failed to create record for granule ${granuleRecord.record.granuleId}: ${err.message}`,
+      `Failed to create granule record: ${err.message}`,
       'Cause: ', err,
       'Collection record: ', granuleRecord
     );
@@ -158,7 +158,14 @@ class Granule extends Manager {
 
     // Use granule UR to delete from CMR
     await cmr.deleteGranule(metadata.title, granule.collectionId);
-    await this.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']);
+    const updateResponse = await this.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']);
+    if (!process.env.noSNS) {
+      const snsRecord = {
+        event: 'Update',
+        record: updateResponse
+      }
+      await publishGranuleSnsMessage(snsRecord);
+    }
   }
 
   /**
@@ -274,12 +281,22 @@ class Granule extends Manager {
       published: g.published
     });
 
-    return this.update(
+    const updateResponse = await this.update(
       { granuleId: g.granuleId },
       {
         files: updatedFiles.map(partial(renameProperty, 'name', 'fileName'))
       }
     );
+
+    if (!process.env.noSNS) {
+      const snsRecord = {
+        event: 'Update',
+        record: updateResponse
+      }
+      await publishGranuleSnsMessage(snsRecord);
+    }
+
+    return updateResponse;
   }
 
   /**
@@ -384,6 +401,45 @@ class Granule extends Manager {
     record.duration = (record.timestamp - record.createdAt) / 1000;
 
     return removeNilProperties(record);
+  }
+
+  /**
+   * Create new granule records
+   *
+   * @param {Object} granuleRecord - a granule record to create
+   * @returns {Promise<Array>} created granule record
+   */
+  async create(granuleRecord) {
+    if (!process.env.noSNS) {
+      const snsRecord = {
+        event: 'Create',
+        record: granuleRecord
+      }
+      await publishGranuleSnsMessage(snsRecord);
+    }
+
+    return super.create(granuleRecord);
+  }
+
+  /**
+   * Deletes a granule
+   *
+   * @param {Object} record - a record with granuleId
+   * @returns {Promise<Array>} granule deletion
+   */
+  async delete(granuleRecord) {
+    if (!process.env.noSNS) {
+      const snsRecord = {
+        event: 'Delete',
+        record: {
+          granuleId: granuleRecord.granuleId,
+          deletedAt: Date.now()
+        }
+      }
+      await publishGranuleSnsMessage(snsRecord);
+    }
+
+    return super.delete(granuleRecord);
   }
 
   /**

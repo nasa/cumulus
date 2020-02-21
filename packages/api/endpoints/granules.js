@@ -153,14 +153,6 @@ async function del(req, res) {
 
   await granuleModelClient.delete({ granuleId });
 
-  granule.deletedAt = Date.now();
-
-  // const snsMessage = {
-  //   event: 'Delete',
-  //   record: granule
-  // };
-  // await publishGranuleSnsMessage(snsMessage);
-
   if (inTestMode()) {
     const esClient = await Search.es(process.env.ES_HOST);
     await indexer.deleteRecord({
