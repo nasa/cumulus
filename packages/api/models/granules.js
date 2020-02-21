@@ -44,6 +44,25 @@ const {
 const Rule = require('./rules');
 const granuleSchema = require('./schemas').granule;
 
+/**
+ * Publish SNS message for Granule reporting.
+ *
+ * @param {Object} granuleRecord - A Granule record with event type
+ * @returns {Promise<undefined>}
+ */
+async function publishGranuleSnsMessage(granuleRecord) {
+  try {
+    const granuleInfoSnsTopicArn = process.env.granule_info_sns_topic_arn;
+    await publishSnsMessage(granuleInfoSnsTopicArn, granuleRecord);
+  } catch (err) {
+    log.warn(
+      `Failed to create record for granule ${granuleRecord.record.granuleId}: ${err.message}`,
+      'Cause: ', err,
+      'Collection record: ', granuleRecord
+    );
+  }
+}
+
 class Granule extends Manager {
   constructor() {
     const globalSecondaryIndexes = [{

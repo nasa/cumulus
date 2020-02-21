@@ -117,11 +117,13 @@ class Collection extends Manager {
     await this.collectionConfigStore.put(dataType || name, version, item);
 
     const collectionRecord = await super.create(item);
-    const publishRecord = {
-      event: 'Create',
-      record: collectionRecord
-    };
-    await publishCollectionSnsMessage(publishRecord);
+    if (!process.env.noSNS) {
+      const publishRecord = {
+        event: 'Create',
+        record: collectionRecord
+      };
+      await publishCollectionSnsMessage(publishRecord);
+    }
 
     return collectionRecord;
   }
@@ -169,15 +171,17 @@ class Collection extends Manager {
       ? item : await this.get(item).catch(() => item);
     await this.collectionConfigStore.delete(dataType || name, version);
 
-    const record = {
-      event: 'Delete',
-      deletedAt: Date.now(),
-      record: {
-        name,
-        version
-      }
-    };
-    await publishCollectionSnsMessage(record);
+    if (!process.env.noSNS) {
+      const record = {
+        event: 'Delete',
+        deletedAt: Date.now(),
+        record: {
+          name,
+          version
+        }
+      };
+      await publishCollectionSnsMessage(record);
+    }
 
     return super.delete({ name, version });
   }

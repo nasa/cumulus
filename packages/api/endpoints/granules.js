@@ -5,7 +5,6 @@ const {
   deleteS3Object,
   fileExists
 } = require('@cumulus/aws-client/S3');
-const { publishSnsMessage } = require('@cumulus/aws-client/SNS');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const Search = require('../es/search').Search;
@@ -121,25 +120,6 @@ async function put(req, res) {
 }
 
 /**
- * Publish SNS message for Granule reporting.
- *
- * @param {Object} granuleRecord - A Granule record with event type
- * @returns {Promise<undefined>}
- */
-async function publishGranuleSnsMessage(granuleRecord) {
-  try {
-    const granuleSnsTopicArn = process.env.granule_sns_topic_arn;
-    await publishSnsMessage(granuleSnsTopicArn, granuleRecord);
-  } catch (err) {
-    log.warn(
-      `Failed to create database record for collection ${granuleRecord.record.granuleId}: ${err.message}`,
-      'Cause: ', err,
-      'Collection record: ', granuleRecord
-    );
-  }
-}
-
-/**
  * Delete a granule
  *
  * @param {Object} req - express request object
@@ -175,11 +155,11 @@ async function del(req, res) {
 
   granule.deletedAt = Date.now();
 
-  const snsMessage = {
-    event: 'Delete',
-    record: granule
-  };
-  await publishGranuleSnsMessage(snsMessage);
+  // const snsMessage = {
+  //   event: 'Delete',
+  //   record: granule
+  // };
+  // await publishGranuleSnsMessage(snsMessage);
 
   if (inTestMode()) {
     const esClient = await Search.es(process.env.ES_HOST);
