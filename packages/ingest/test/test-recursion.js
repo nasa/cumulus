@@ -25,6 +25,30 @@ test('recursion lists all files in default directory and subdirectories when ori
     ]);
   });
 
+test('recursion does not pick up files along the way when listing a specific path.', async (t) => {
+  const dirs = {
+    '/': [
+      { type: 'd', name: 'path' },
+      { type: '-', name: 'file1' },
+      { type: '-', name: 'file2' }
+    ],
+    '/path': [
+      { type: 'd', name: 'to' },
+      { type: '-', name: 'file3' }
+    ],
+    '/path/to': [
+      { type: 'd', name: 'files' },
+      { type: '-', name: 'file4'}
+    ],
+    '/path/to/files': [
+      { type: '-', name: 'targetedfile' }
+    ]
+  };
+  const fn = (path) => dirs[path];
+  const files = await recursion(fn, '/path/to/files');
+  t.deepEqual(files, [{ type: '-', name: 'targetedfile' }]);
+});
+
 test('recursion lists all files in a simple relative text path', async (t) => {
   const dirs = {
     '.': [
