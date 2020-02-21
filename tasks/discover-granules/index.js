@@ -7,6 +7,7 @@ const Logger = require('@cumulus/logger');
 const map = require('lodash.map');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
+const { normalizeProviderPath } = require('@cumulus/ingest/util');
 
 const logger = () => new Logger({
   executions: process.env.EXECUTIONS,
@@ -176,7 +177,7 @@ const discoverGranules = async ({ config }) => {
   const discoveredFiles = await listFiles(
     config.provider,
     config.useList,
-    config.collection.provider_path
+    normalizeProviderPath(config.collection.provider_path)
   );
 
   const filesByGranuleId = groupFilesByGranuleId(
