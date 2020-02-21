@@ -85,50 +85,6 @@ function generateAddress(env) {
 }
 
 /**
- * generatePath
- *
- * @param {Object} event - the event
- * @throws {Object} invalidArgumentException - if the env is not valid
- * @returns {string} - the OPeNDAP path
- */
-function generatePath(event) {
-  const config = event.config;
-  const providerId = get(config, 'provider');
-  // Check if providerId is defined
-  if (_.isUndefined(providerId)) {
-    throw new InvalidArgument('Provider not supplied in configuration. Unable to construct path');
-  }
-  const entryTitle = get(config, 'entryTitle');
-  // Check if entryTitle is defined
-  if (_.isUndefined(entryTitle)) {
-    throw new InvalidArgument('Entry Title not supplied in configuration. Unable to construct path');
-  }
-  // TODO retrieve source metadata file from event
-  const metadata = ''
-  const nativeId = 'GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4';
-  const path = `providers/${providerId}/collections/${entryTitle}/granules/${nativeId}`;
-
-  return path;
-}
-/**
- * Do the work
- *
- * @param {Object} event - input from the message adapter
- * @returns {Object} sample JSON object
- */
-async function updateMetadata(event) {
-  await throwErrorIfConfigured(event);
-
-  const address = generateAddress(get(event.config, 'environment', 'prod'));
-  const path = generatePath(event);
-  const q = new URL(`${address}/${path}`);
-
-  return {
-    result: q.href
-  };
-}
-
-/**
  * generateNativeId
  *
  * @param {string} metadata - the metadata
@@ -153,6 +109,34 @@ function getNativeId(metadata) {
     });
     return nativeId;
   }
+}
+
+
+/**
+ * generatePath
+ *
+ * @param {Object} event - the event
+ * @throws {Object} invalidArgumentException - if the env is not valid
+ * @returns {string} - the OPeNDAP path
+ */
+function generatePath(event) {
+  const config = event.config;
+  const providerId = get(config, 'provider');
+  // Check if providerId is defined
+  if (_.isUndefined(providerId)) {
+    throw new InvalidArgument('Provider not supplied in configuration. Unable to construct path');
+  }
+  const entryTitle = get(config, 'entryTitle');
+  // Check if entryTitle is defined
+  if (_.isUndefined(entryTitle)) {
+    throw new InvalidArgument('Entry Title not supplied in configuration. Unable to construct path');
+  }
+  // TODO retrieve source metadata file from event
+  const metadata = ''
+  const nativeId = 'GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4';
+  const path = `providers/${providerId}/collections/${entryTitle}/granules/${nativeId}`;
+
+  return path;
 }
 
 /**
@@ -181,6 +165,24 @@ function addHyraxUrl(metadata, hyraxUrl) {
     metadataObject.umm.RelatedUrls.push(url);
   } catch (e) {}
   return JSON.stringify(metadataObject, null, 2);
+}
+
+/**
+ * Do the work
+ *
+ * @param {Object} event - input from the message adapter
+ * @returns {Object} sample JSON object
+ */
+async function updateMetadata(event) {
+  await throwErrorIfConfigured(event);
+
+  const address = generateAddress(get(event.config, 'environment', 'prod'));
+  const path = generatePath(event);
+  const q = new URL(`${address}/${path}`);
+
+  return {
+    result: q.href
+  };
 }
 
 /**
