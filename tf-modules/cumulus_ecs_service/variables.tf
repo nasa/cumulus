@@ -78,7 +78,7 @@ variable "privileged" {
 variable "tags" {
   description = "Tags to apply to deployed resources"
   type    = map(string)
-  default = null
+  default = {}
 }
 
 variable "volumes" {

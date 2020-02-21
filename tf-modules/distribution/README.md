@@ -27,6 +27,8 @@ Credentials Endpoint with a configuration targeted at Cumulus and NGAP.
 - **sts_credentials_lambda_function_arn** (string) - The ARN of the Lambda
   function for the S3 credentials endpoint to invoke, which whill return AWS API
   keys.
+- **tags** (list(string)) - AWS tags to be assigned to resources managed by this
+  module
 - **thin_egress_cookie_domain** (string) - Valid domain for Thin Egress App
   cookie
 - **thin_egress_domain_cert_arn** (string) - Certificate Manager SSL Cert

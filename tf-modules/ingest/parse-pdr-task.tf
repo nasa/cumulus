@@ -23,11 +23,11 @@ resource "aws_lambda_function" "parse_pdr_task" {
     security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
   }
 
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 }
 
 resource "aws_cloudwatch_log_group" "parse_pdr_task" {
   name              = "/aws/lambda/${aws_lambda_function.parse_pdr_task.function_name}"
   retention_in_days = 30
-  tags              = local.default_tags
+  tags              = var.tags
 }

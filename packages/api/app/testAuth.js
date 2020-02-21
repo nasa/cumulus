@@ -2,14 +2,19 @@
 
 const { randomId } = require('@cumulus/common/test-utils');
 const get = require('lodash.get');
-const { createJwtToken } = require('../lib/token');
+const {
+  JsonWebTokenError,
+  TokenExpiredError
+} = require('jsonwebtoken');
 
-const { localUserName: userName } = require('../bin/local-test-defaults');
+const { createJwtToken, verifyJwtToken } = require('../lib/token');
+const { localUserName: username } = require('../bin/local-test-defaults');
 
+let accessToken;
 const newToken = () => {
-  const accessToken = randomId('oauthcode');
+  accessToken = randomId('oauthcode');
   const expirationTime = new Date(Date.now() + 3600 * 24 * 1000);
-  return createJwtToken({ accessToken, userName, expirationTime });
+  return createJwtToken({ accessToken, username, expirationTime });
 };
 
 let jwt = newToken();
@@ -52,16 +57,18 @@ async function tokenEndpoint(req, res) {
 }
 
 /**
- * refreshes an OAuth token
+ * refreshes an OAuth token completely, without any check that the initial
+ * token was valid. Used in testing only.
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
 async function refreshEndpoint(req, res) {
+  jwt = newToken();
   return res.send({
     message: {
-      token: newToken()
+      token: jwt
     }
   });
 }
@@ -93,17 +100,39 @@ async function ensureAuthorized(req, res, next) {
   if (!authorizationKey) {
     return res.boom.unauthorized('Authorization header missing');
   }
-  const jwtToken = req.headers.authorization.trim().split(/\s+/)[1];
+  // Parse the Authorization header
+  const [scheme, jwtToken] = req.headers.authorization.trim().split(/\s+/);
+
+  // Verify that the Authorization type was "Bearer"
+  if (scheme !== 'Bearer') {
+    return res.boom.unauthorized('Authorization scheme must be Bearer');
+  }
 
   if (!jwtToken) {
     return res.boom.unauthorized('Missing token');
   }
 
-  if (jwtToken === jwt) {
+  let userName;
+  try {
+    ({ username: userName } = verifyJwtToken(jwtToken));
+
+    if (userName !== username) {
+      return res.boom.unauthorized('User not authorized');
+    }
+
     req.authorizedMetadata = { userName };
     return next();
+  } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      return res.boom.unauthorized('Access token has expired');
+    }
+
+    if (error instanceof JsonWebTokenError) {
+      return res.boom.forbidden('Invalid access token');
+    }
+
+    return res.boom.badImplementation(error.message);
   }
-  return res.boom.unauthorized('User not authorized');
 }
 
 module.exports = {

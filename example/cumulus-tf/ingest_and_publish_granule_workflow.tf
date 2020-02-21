@@ -5,7 +5,7 @@ module "ingest_and_publish_granule_workflow" {
   name            = "IngestAndPublishGranule"
   workflow_config = module.cumulus.workflow_config
   system_bucket   = var.system_bucket
-  tags            = local.default_tags
+  tags            = local.tags
 
   state_machine_definition = <<JSON
 {

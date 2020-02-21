@@ -5,7 +5,7 @@ module "discover_granules_browse_example_workflow" {
   name            = "DiscoverGranulesBrowseExample"
   workflow_config = module.cumulus.workflow_config
   system_bucket   = var.system_bucket
-  tags            = local.default_tags
+  tags            = local.tags
 
   state_machine_definition = <<JSON
 {
@@ -105,7 +105,7 @@ module "cookbook_browse_example_workflow" {
   name            = "CookbookBrowseExample"
   workflow_config = module.cumulus.workflow_config
   system_bucket   = var.system_bucket
-  tags            = local.default_tags
+  tags            = local.tags
 
   state_machine_definition = <<JSON
 {

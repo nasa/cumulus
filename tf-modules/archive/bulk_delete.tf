@@ -13,7 +13,8 @@ resource "aws_lambda_function" "bulk_delete" {
       stackName       = var.prefix
     }
   }
-  tags = merge(local.default_tags, { Project = var.prefix })
+
+  tags = var.tags
 
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids

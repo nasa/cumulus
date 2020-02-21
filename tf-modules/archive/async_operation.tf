@@ -1,12 +1,12 @@
 resource "aws_cloudwatch_log_group" "async_operation" {
   name = "${var.prefix}-AsyncOperationEcsLogs"
   retention_in_days = 30
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_ecs_task_definition" "async_operation" {
   family                = "${var.prefix}-AsyncOperationTaskDefinition"
-  tags                  = local.default_tags
+  tags                  = var.tags
   container_definitions = <<EOS
 [
   {
