@@ -1,19 +1,7 @@
 'use strict';
 
+const path = require('path');
 const log = require('@cumulus/common/log');
-
-/**
- * Insert leading and remove terminating slashes into/from the path string
- *
- * @param {string} path - path string
- * @returns {string} normalized path
- */
-const normalizeSlashes = (path) => {
-  let output = path.replace(/[\/]{2,}/g, '/');
-  if (!output.startsWith('/')) output = `/${output}`;
-  if (output.endsWith('/')) output = output.slice(0, -1);
-  return output;
-};
 
 /**
  * Recur on directory, list all files, and recur into any further directories,
@@ -40,7 +28,7 @@ async function recurOnDirectory(fn, currentPath, segments, position) {
       if (['-', 0].includes(item.type)) {
         files.push(item);
       } else if (['d', 1].includes(item.type)) {
-        const nextDir = (currentPath === '' ? item.name : `${currentPath}/${item.name}`);
+        const nextDir = path.normalize(`${currentPath}/${item.name}`);
         // eslint-disable-next-line no-await-in-loop
         files = files.concat(await recurOnDirectory(fn, nextDir, segments, position + 1));
       }
@@ -54,28 +42,37 @@ async function recurOnDirectory(fn, currentPath, segments, position) {
  * It requests a promisified list function that returns contents of
  * a directory on a server, filtering on provided regex segments.
  *
- * Note that calls to the list function will not have leading or terminating slashes.
- * Initially an empty string is passed as the path to list the default directory. Following calls
- * based on items discovered will be of the format `fn('path/to/files')`, again with no leading or
- * terminating slashes.
+ * Note that calls to the list function will use either a relative or absolute path, corresponding
+ * to the `configuredPath` passed into this function. The list function will initially be called
+ * with '.' for a relative path or '/' for an absolute path. List functions will need to be able to
+ * normalize or correct these paths as appropriate for their protocol.
  *
- * List functions will need to be able to normalize or correct these paths as appropriate for their
- * protocol.
+ * Further calls to the list functions will append the current path to that starting path, such
+ * that all calls will start with either '.' or '/', regardless of additional characters, e.g.
+ * `fn('./path')` vs. `fn('path')`.
+ *
+ * In the case of failure during the recursive list, this function will only apply `path.normalize`
+ * to the `configuredPath` and then call the list function with the entire normalizedPath.
  *
  * @param {function} fn - the promisified function for listing a directory
- * @param {string} originalPath - path string which may contain regexes for filtering
+ * @param {string} configuredPath - path string configured by operator, which may contain
+ *                                  regexes for filtering
  * @returns {Promise} the promise of an object that has the path is the key and
  *   list of files as values
  */
-async function recursion(fn, originalPath) {
-  const normalizedPath = normalizeSlashes(originalPath);
+async function recursion(fn, configuredPath) {
+  const normalizedPath = path.normalize(configuredPath);
+  const isAbsolutePath = path.isAbsolute(normalizedPath);
   try {
-    const segments = normalizedPath.split('/'); // split on divider
-    return await recurOnDirectory(fn, segments[0], segments, 0);
+    const segments = normalizedPath
+      .split('/') // split on divider
+      .filter((segment) => segment.trim() !== ''); // filter out empty strings from split
+    const startingPath = isAbsolutePath ? '/' : '.';
+    return await recurOnDirectory(fn, startingPath, segments, -1);
   } catch (e) {
     log.error(`Encountered error during recursive list filtering: ${e}`);
     log.info('Falling back to unfiltered directory listing...');
-    return recurOnDirectory(fn, normalizedPath.slice(1), [], 0);
+    return recurOnDirectory(fn, normalizedPath, [], 0);
   }
 }
 
