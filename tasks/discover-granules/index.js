@@ -6,6 +6,8 @@ const isBoolean = require('lodash.isboolean');
 const pick = require('lodash.pick');
 const Logger = require('@cumulus/logger');
 const map = require('lodash.map');
+const got = require('got');
+const { getAuthToken } = require('@cumulus/common');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
 const { normalizeProviderPath } = require('@cumulus/ingest/util');
@@ -19,6 +21,7 @@ const logger = () => new Logger({
   stackName: process.env.STACKNAME,
   version: process.env.TASKVERSION
 });
+
 
 /**
  * Fetch a list of files from the provider
@@ -167,23 +170,55 @@ const buildGranule = curry(
   }
 );
 
-const noDuplicateExists = async (granuleId, duplicateHandling) => {
-  return true;
-}
+const checkDuplicate = async (granuleId, dupeConfig, baseUrl) => {
+  // Hit the API and check for granule status
+  const headers = { authorization: `Bearer ${dupeConfig.token}` };
+  try {
+    await got.get(`${baseUrl}/dev/granules/${granuleId}`, { headers });
+  } catch (error) {
+    if (error.statusCode === 404 && error.statusMessage === 'Not Found') {
+      return granuleId;
+    }
+    throw error;
+  }
+  if (dupeConfig.duplicateHandling === 'error') {
+    throw new Error(`Duplicate granule found for ${granuleId} with duplicate configuration set to error`);
+  }
+  return '';
+};
+
+const filterDuplicates = async (filesKeys, duplicateHandling) => {
+  const tokenConfig = {
+    passphrase: process.env.launchpad_passphrase,
+    baseUrl: process.env.urs_url,
+    username: process.env.urs_client_id,
+    password: process.env.urs_client_password
+  };
+  const authToken = await getAuthToken(tokenConfig);
+  const dupeConfig = {
+    duplicateHandling: duplicateHandling,
+    token: authToken
+  };
+
+  const keysPromises = filesKeys.map((key) => checkDuplicate(key, dupeConfig, tokenConfig.baseUrl));
+  const filteredKeys = await Promise.all(keysPromises);
+  return filteredKeys.filter(Boolean);
+};
+
 
 const filterDuplicateGranules = async (filesByGranuleId, duplicateHandling = 'error') => {
-  logger().debug(`Running with duplicateHandling set to ${duplicateHandling}`);
+  logger().info(`Running discoverGranules with duplicateHandling set to ${duplicateHandling}`);
   if (['skip', 'error'].includes(duplicateHandling)) {
     // Iterate over granules, remove if exists in dynamo
     // Is this going to be *expensive*
-    const filesKeys = Object.keys(filesByGranuleId);
-    return pick(filesByGranuleId, filesKeys.filter((granuleId) => noDuplicateExists(granuleId, duplicateHandling)));
+    const filteredKeys = await filterDuplicates(Object.keys(filesByGranuleId), duplicateHandling);
+    return pick(filesByGranuleId, filteredKeys);
   }
   if (['replace', 'version'].includes(duplicateHandling)) {
     return filesByGranuleId;
   }
-  throw new Error(`Invalid duplicate handling configuration encountered: ${duplicateHandling}`);
-}
+  throw new Error(`Invalid duplicate handling configuration encountered: ${JSON.stringify(duplicateHandling)}`);
+};
 
 /**
  * Discovers granules. See schemas/input.json and schemas/config.json for

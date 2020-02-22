@@ -42,6 +42,8 @@
     "@cumulus/ingest": "1.18.0",
     "@cumulus/logger": "1.18.0",
     "@cumulus/api": "1.18.0",
+    "@cumulus/common": "1.18.0",
+    "got": "^9.2.1",
     "lodash.curry": "^4.1.1",
     "lodash.groupby": "^4.6.0",
     "lodash.isboolean": "^3.0.3",

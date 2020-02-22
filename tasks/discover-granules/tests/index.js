@@ -18,14 +18,15 @@ const discoverGranules = discoverGranulesRewire.discoverGranules;
 
 const readFile = promisify(fs.readFile);
 
-const noDuplicateExistsRewire = (granuleId, duplicateHandling) => {
+// rewire used for filterDuplicateGranules tests
+const checkDuplicateRewire = (granuleId, dupeConfig, _) => {
   if (granuleId === 'duplicate') {
-    if (duplicateHandling === 'error') {
+    if (dupeConfig.duplicateHandling === 'error') {
       throw new Error(`Duplicate GranuleID ${granuleId} encountered in DiscoverGranules with duplicateHandling set to 'error'`);
     }
-    return false;
+    return '';
   }
-  return true;
+  return granuleId;
 };
 
 async function assertDiscoveredGranules(t, output) {
@@ -287,10 +288,14 @@ test('discover granules using S3 throws error when discovery fails',
 test('filterDuplicateGranules filters on duplicateHandling set to "skip"',
   async (t) => {
     const filterDuplicateGranules = discoverGranulesRewire.__get__('filterDuplicateGranules');
-    const noDuplicateExistsRestore = discoverGranulesRewire.__set__('noDuplicateExists', noDuplicateExistsRewire);
-    const actual = await filterDuplicateGranules(t.context.filesByGranuleId, 'skip');
+    const checkDuplicateRestore = discoverGranulesRewire.__set__('checkDuplicate', checkDuplicateRewire);
+    const getAuthTokenRestore = discoverGranulesRewire.__set__('getAuthToken', async () => 'dummyToken');
+    const actual = await filterDuplicateGranules(t.context.filesByGranuleId, 'skip', {});
     delete t.context.filesByGranuleId.duplicate;
-    discoverGranulesRewire.__set__('noDuplicateExists', noDuplicateExistsRestore);
+
+    checkDuplicateRestore();
+    getAuthTokenRestore();
+
     t.deepEqual(actual, t.context.filesByGranuleId);
   });
 
@@ -302,21 +307,92 @@ test('filterDuplicateGranules throws Error on duplicateHandling set to "error"',
       someOtherGranule: {}
     };
     const filterDuplicateGranules = discoverGranulesRewire.__get__('filterDuplicateGranules');
-    const noDuplicateExistsRestore = discoverGranulesRewire.__set__('noDuplicateExists', noDuplicateExistsRewire);
+    const checkDuplicateRestore = discoverGranulesRewire.__set__('checkDuplicate', checkDuplicateRewire);
+    const getAuthTokenRestore = discoverGranulesRewire.__set__('getAuthToken', async () => 'dummyToken');
 
     await t.throwsAsync(
-      () => filterDuplicateGranules(filesByGranuleId, 'error')
+      () => filterDuplicateGranules(filesByGranuleId, 'error', {})
     );
-    discoverGranulesRewire.__set__('noDuplicateExists', noDuplicateExistsRestore);
+
+    checkDuplicateRestore();
+    getAuthTokenRestore();
   });
 
 test('filterDuplicateGranules does not filter when duplicateHandling is set to "replace"',
   async (t) => {
     const filterDuplicateGranules = discoverGranulesRewire.__get__('filterDuplicateGranules');
-    const noDuplicateExistsRestore = discoverGranulesRewire.__set__('noDuplicateExists', noDuplicateExistsRewire);
-    const replaceActual = await filterDuplicateGranules(t.context.filesByGranuleId, 'replace');
-    const versionActual = await filterDuplicateGranules(t.context.filesByGranuleId, 'version');
-    discoverGranulesRewire.__set__('noDuplicateExists', noDuplicateExistsRestore);
+    const checkDuplicateRestore = discoverGranulesRewire.__set__('checkDuplicate', checkDuplicateRewire);
+    const getAuthTokenRestore = discoverGranulesRewire.__set__('getAuthToken', async () => 'dummyToken');
+
+    const replaceActual = await filterDuplicateGranules(t.context.filesByGranuleId, 'replace', {});
+    const versionActual = await filterDuplicateGranules(t.context.filesByGranuleId, 'version', {});
+
+    checkDuplicateRestore();
+    getAuthTokenRestore();
+
     t.deepEqual(replaceActual, t.context.filesByGranuleId);
     t.deepEqual(versionActual, t.context.filesByGranuleId);
+  });
+
+
+test('filterDuplicates returns a set of filtered keys',
+  async (t) => {
+    const filterDuplicates = discoverGranulesRewire.__get__('filterDuplicates');
+    const getAuthTokenRestore = discoverGranulesRewire.__set__('getAuthToken', async () => 'dummyToken');
+    const checkDuplicateRestore = discoverGranulesRewire.__set__('checkDuplicate', async (key) => {
+      if (key === 'duplicate') {
+        return '';
+      }
+      return key;
+    });
+
+    const actual = await filterDuplicates(['duplicate', 'key1', 'key2'], 'bogusHandlingValue');
+
+    getAuthTokenRestore();
+    checkDuplicateRestore();
+
+    t.deepEqual(actual, ['key1', 'key2']);
+  });
+
+test('checkDuplicate returns an empty string when API returns a granule',
+  async (t) => {
+    const checkDuplicate = discoverGranulesRewire.__get__('checkDuplicate');
+    // TODO better naming convention than restore
+    const gotRestore = discoverGranulesRewire.__set__('got', { get: () => 'dummy value' });
+    const actual = await checkDuplicate('granuleId', { token: 'dummyToken' }, 'baseUrl');
+
+    gotRestore();
+
+    t.is(actual, '');
+  });
+
+
+test('checkDuplicate returns a granuleId string when the API returns a 404/Not Found error',
+  async (t) => {
+    const checkDuplicate = discoverGranulesRewire.__get__('checkDuplicate');
+
+    const error = new Error();
+    error.statusCode = 404;
+    error.statusMessage = 'Not Found';
+    const gotRestore = discoverGranulesRewire.__set__('got', { get: () => { throw error } });
+
+    const actual = await checkDuplicate('granuleId', { token: 'dummyToken' }, 'baseUrl');
+
+    gotRestore();
+
+    t.is(actual, 'granuleId');
+  });
+
+test('checkDuplicate throws an error if the API throws an error other than 404/Not Found',
+  async (t) => {
+    const checkDuplicate = discoverGranulesRewire.__get__('checkDuplicate');
+
+    const error = new Error();
+    error.statusCode = 500;
+    error.statusMessage = 'Internal Server Error';
+    const gotRestore = discoverGranulesRewire.__set__('got', { get: () => { throw error } });
+
+    await t.throwsAsync(() => checkDuplicate('granuleId', { token: 'dummyToken' }, 'baseUrl'));
+
+    gotRestore();
   });
