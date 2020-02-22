@@ -44,7 +44,7 @@
     "lodash.keyby": "^4.6.0"
   },
   "devDependencies": {
-    "@cumulus/cmr-client": "1.18.0",
+    "@cumulus/cmr-client": "1.18.0-alpha.1",
     "ava": "^2.1.0",
     "babel-loader": "^8.0.6",
     "babel-plugin-source-map-support": "^2.1.1",
