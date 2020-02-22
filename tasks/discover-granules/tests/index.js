@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const test = require('ava');
+const rewire = require('rewire');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const {
@@ -12,9 +13,20 @@ const {
 } = require('@cumulus/common/test-utils');
 const { promisify } = require('util');
 
-const { discoverGranules } = require('..');
+const discoverGranulesRewire = rewire('..')
+const discoverGranules = discoverGranulesRewire.discoverGranules;
 
 const readFile = promisify(fs.readFile);
+
+const noDuplicateExistsRewire = (granuleId, duplicateHandling) => {
+  if (granuleId === 'duplicate') {
+    if (duplicateHandling === 'error') {
+      throw new Error(`Duplicate GranuleID ${granuleId} encountered in DiscoverGranules with duplicateHandling set to 'error'`);
+    }
+    return false;
+  }
+  return true;
+};
 
 async function assertDiscoveredGranules(t, output) {
   await validateOutput(t, output);
@@ -27,6 +39,11 @@ test.beforeEach(async (t) => {
   const eventPath = path.join(__dirname, 'fixtures', 'mur.json');
   const rawEvent = await readFile(eventPath, 'utf8');
   t.context.event = JSON.parse(rawEvent);
+  t.context.filesByGranuleId = {
+    duplicate: {},
+    notDuplicate: {},
+    someOtherGranule: {}
+  };
 });
 
 test('discover granules sets the correct dataType for granules', async (t) => {
@@ -265,4 +282,41 @@ test('discover granules using S3 throws error when discovery fails',
       };
     });
     await t.throwsAsync(() => assert(t), { code: 'NoSuchBucket' });
+  });
+
+test('filterDuplicateGranules filters on duplicateHandling set to "skip"',
+  async (t) => {
+    const filterDuplicateGranules = discoverGranulesRewire.__get__('filterDuplicateGranules');
+    const noDuplicateExistsRestore = discoverGranulesRewire.__set__('noDuplicateExists', noDuplicateExistsRewire);
+    const actual = await filterDuplicateGranules(t.context.filesByGranuleId, 'skip');
+    delete t.context.filesByGranuleId.duplicate;
+    discoverGranulesRewire.__set__('noDuplicateExists', noDuplicateExistsRestore);
+    t.deepEqual(actual, t.context.filesByGranuleId);
+  });
+
+test('filterDuplicateGranules throws Error on duplicateHandling set to "error"',
+  async (t) => {
+    const filesByGranuleId = {
+      duplicate: {},
+      notDuplicate: {},
+      someOtherGranule: {}
+    };
+    const filterDuplicateGranules = discoverGranulesRewire.__get__('filterDuplicateGranules');
+    const noDuplicateExistsRestore = discoverGranulesRewire.__set__('noDuplicateExists', noDuplicateExistsRewire);
+
+    await t.throwsAsync(
+      () => filterDuplicateGranules(filesByGranuleId, 'error')
+    );
+    discoverGranulesRewire.__set__('noDuplicateExists', noDuplicateExistsRestore);
+  });
+
+test('filterDuplicateGranules does not filter when duplicateHandling is set to "replace"',
+  async (t) => {
+    const filterDuplicateGranules = discoverGranulesRewire.__get__('filterDuplicateGranules');
+    const noDuplicateExistsRestore = discoverGranulesRewire.__set__('noDuplicateExists', noDuplicateExistsRewire);
+    const replaceActual = await filterDuplicateGranules(t.context.filesByGranuleId, 'replace');
+    const versionActual = await filterDuplicateGranules(t.context.filesByGranuleId, 'version');
+    discoverGranulesRewire.__set__('noDuplicateExists', noDuplicateExistsRestore);
+    t.deepEqual(replaceActual, t.context.filesByGranuleId);
+    t.deepEqual(versionActual, t.context.filesByGranuleId);
   });

@@ -3,11 +3,13 @@
 const curry = require('lodash.curry');
 const groupBy = require('lodash.groupby');
 const isBoolean = require('lodash.isboolean');
+const pick = require('lodash.pick');
 const Logger = require('@cumulus/logger');
 const map = require('lodash.map');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
 const { normalizeProviderPath } = require('@cumulus/ingest/util');
+const { duplicateHandlingType } = require('@cumulus/ingest/granule');
 
 const logger = () => new Logger({
   executions: process.env.EXECUTIONS,
@@ -165,6 +167,24 @@ const buildGranule = curry(
   }
 );
 
+const noDuplicateExists = async (granuleId, duplicateHandling) => {
+  return true;
+}
+
+const filterDuplicateGranules = async (filesByGranuleId, duplicateHandling = 'error') => {
+  logger().debug(`Running with duplicateHandling set to ${duplicateHandling}`);
+  if (['skip', 'error'].includes(duplicateHandling)) {
+    // Iterate over granules, remove if exists in dynamo
+    // Is this going to be *expensive*
+    const filesKeys = Object.keys(filesByGranuleId);
+    return pick(filesByGranuleId, filesKeys.filter((granuleId) => noDuplicateExists(granuleId, duplicateHandling)));
+  }
+  if (['replace', 'version'].includes(duplicateHandling)) {
+    return filesByGranuleId;
+  }
+  throw new Error(`Invalid duplicate handling configuration encountered: ${duplicateHandling}`);
+}
+
 /**
  * Discovers granules. See schemas/input.json and schemas/config.json for
  * detailed event description.
@@ -180,10 +200,13 @@ const discoverGranules = async ({ config }) => {
     normalizeProviderPath(config.collection.provider_path)
   );
 
-  const filesByGranuleId = groupFilesByGranuleId(
+  let filesByGranuleId = groupFilesByGranuleId(
     config.collection.granuleIdExtraction,
     discoveredFiles
   );
+
+  const duplicateHandling = duplicateHandlingType({ config });
+  filesByGranuleId = await filterDuplicateGranules(filesByGranuleId, duplicateHandling);
 
   const granules = map(filesByGranuleId, buildGranule(config));
 
