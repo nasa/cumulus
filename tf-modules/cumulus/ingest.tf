@@ -8,6 +8,14 @@ module "ingest" {
   distribution_url                         = module.distribution.distribution_url
   cumulus_message_adapter_lambda_layer_arn = var.cumulus_message_adapter_lambda_layer_arn
 
+  # API config
+
+  oauth_provider       = var.oauth_provider
+  launchpad_passphrase = var.launchpad_passphrase
+  urs_client_id        = var.urs_client_id
+  urs_client_password  = var.urs_client_password
+  urs_url              = var.urs_url
+
   # Buckets config
   system_bucket = var.system_bucket
 

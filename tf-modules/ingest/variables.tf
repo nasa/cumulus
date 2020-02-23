@@ -80,6 +80,10 @@ variable "launchpad_passphrase" {
   default = ""
 }
 
+variable "oauth_provider" {
+  type = string
+}
+
 variable "permissions_boundary_arn" {
   type = string
 }
@@ -113,6 +117,22 @@ variable "throttled_queues" {
   description = "Array of configuration for custom queues with execution limits"
   type    = list(object({ id = string, url = string, execution_limit = number }))
   default = []
+}
+
+variable "urs_client_id" {
+  type        = string
+  description = "The client ID for your Earthdata login (URS) application"
+}
+
+variable "urs_client_password" {
+  type        = string
+  description = "The client password for your Earthdata login (URS) application"
+}
+
+variable "urs_url" {
+  description = "The URL of the Earthdata login (URS) site"
+  type        = string
+  default     = "https://uat.urs.earthdata.nasa.gov"
 }
 
 variable "vpc_id" {

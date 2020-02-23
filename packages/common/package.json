@@ -1,90 +1,83 @@
 {
-  "name": "@cumulus/common",
-  "version": "1.18.0",
-  "description": "Common utilities used across tasks",
-  "keywords": [
-    "GIBS",
-    "CUMULUS",
-    "NASA"
-  ],
-  "engines": {
-    "node": ">=10.16.3"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/common",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/nasa/cumulus"
-  },
-  "scripts": {
-    "build": "true",
-    "build-docs": "jsdoc2md --template templates/docs-API.hbs StepFunctions.js string.js URLUtils.js util.js > docs/API.md",
-    "lint": "eslint .",
-    "test": "ava",
-    "test-coverage": "nyc ava",
-    "test-ci": "npm run lint"
-  },
-  "ava": {
-    "files": [
-      "tests/**"
-    ],
-    "verbose": true
-  },
-  "nyc": {
-    "exclude": [
-      "tests",
-      "test"
-    ]
-  },
-  "author": "Cumulus Authors",
-  "license": "Apache-2.0",
-  "dependencies": {
-    "@cumulus/checksum": "1.18.0",
-    "@cumulus/errors": "1.18.0",
-    "@cumulus/logger": "1.18.0",
-    "ajv": "^5.2.2",
-    "aws-sdk": "^2.585.0",
-    "follow-redirects": "^1.2.4",
-    "fs-extra": "^5.0.0",
-    "got": "^9.2.1",
-    "js-yaml": "^3.11.0",
-    "jsonpath-plus": "^1.1.0",
-    "lodash.clonedeep": "^4.5.0",
-    "lodash.compact": "^3.0.1",
-    "lodash.curry": "^4.1.1",
-    "lodash.findkey": "^4.6.0",
-    "lodash.flow": "^3.5.0",
-    "lodash.flowright": "^3.5.0",
-    "lodash.get": "^4.4.2",
-    "lodash.isfunction": "^3.0.9",
-    "lodash.isnumber": "^3.0.3",
-    "lodash.isobject": "^3.0.2",
-    "lodash.isstring": "^4.0.1",
-    "lodash.kebabcase": "^4.1.1",
-    "lodash.merge": "^4.6.2",
-    "lodash.omitby": "^4.6.0",
-    "lodash.pick": "^4.4.0",
-    "mime-types": "^2.1.22",
-    "node-forge": "^0.7.1",
-    "p-limit": "^2.0.0",
-    "p-map": "^1.2.0",
-    "p-retry": "^4.2.0",
-    "pump": "^3.0.0",
-    "randexp": "^0.4.9",
-    "ssh2": "^0.8.7",
-    "url-join": "^4.0.0",
-    "uuid": "^3.2.1"
-  },
-  "devDependencies": {
-    "ava": "^2.1.0",
-    "jsdoc-to-markdown": "^4.0.1",
-    "lodash.range": "^3.2.0",
-    "nock": "^10.0.0",
-    "nyc": "^14.0.0",
-    "p-timeout": "^3.2.0",
-    "rewire": "^4.0.1",
-    "sinon": "^7.1.1"
-  }
+	"name": "@cumulus/common",
+	"version": "1.18.0",
+	"description": "Common utilities used across tasks",
+	"keywords": [
+		"GIBS",
+		"CUMULUS",
+		"NASA"
+	],
+	"engines": {
+		"node": ">=10.16.3"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"homepage": "https://github.com/nasa/cumulus/tree/master/packages/common",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/nasa/cumulus"
+	},
+	"ava": {
+		"files": [
+			"tests/**"
+		],
+		"verbose": true
+	},
+	"nyc": {
+		"exclude": [
+			"tests",
+			"test"
+		]
+	},
+	"author": "Cumulus Authors",
+	"license": "Apache-2.0",
+	"dependencies": {
+		"ajv": "^5.2.2",
+		"aws-sdk": "^2.585.0",
+		"base-64": "0.1.0",
+		"follow-redirects": "^1.2.4",
+		"form-data": "^3.0.0",
+		"fs-extra": "^5.0.0",
+		"got": "^9.2.1",
+		"js-yaml": "^3.11.0",
+		"jsonpath-plus": "^1.1.0",
+		"lodash.clonedeep": "^4.5.0",
+		"lodash.compact": "^3.0.1",
+		"lodash.curry": "^4.1.1",
+		"lodash.findkey": "^4.6.0",
+		"lodash.flow": "^3.5.0",
+		"lodash.flowright": "^3.5.0",
+		"lodash.get": "^4.4.2",
+		"lodash.isfunction": "^3.0.9",
+		"lodash.isnumber": "^3.0.3",
+		"lodash.isobject": "^3.0.2",
+		"lodash.isstring": "^4.0.1",
+		"lodash.kebabcase": "^4.1.1",
+		"lodash.merge": "^4.6.2",
+		"lodash.omitby": "^4.6.0",
+		"lodash.pick": "^4.4.0",
+		"mime-types": "^2.1.22",
+		"node-forge": "^0.7.1",
+		"p-limit": "^2.0.0",
+		"p-map": "^1.2.0",
+		"p-retry": "^4.2.0",
+		"parseurl": "^1.3.3",
+		"pump": "^3.0.0",
+		"randexp": "^0.4.9",
+		"ssh2": "^0.8.7",
+		"url-join": "^4.0.0",
+		"uuid": "^3.2.1"
+	},
+	"devDependencies": {
+		"ava": "^2.1.0",
+		"jsdoc-to-markdown": "^4.0.1",
+		"lodash.range": "^3.2.0",
+		"lodash.ismatch": "^4.4.0",
+		"nock": "^10.0.0",
+  	"nyc": "^14.0.0",
+		"p-timeout": "^3.2.0",
+		"rewire": "^4.0.1",
+		"sinon": "^7.1.1"
+	}
 }

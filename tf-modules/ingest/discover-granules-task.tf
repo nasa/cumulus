@@ -14,6 +14,13 @@ resource "aws_lambda_function" "discover_granules_task" {
     variables = {
       CMR_ENVIRONMENT             = var.cmr_environment
       stackName                   = var.prefix
+      GranulesTable               = var.dynamo_tables.granules.name
+      oauth_provider              = var.oauth_provider
+      launchpad_passphrase        = var.launchpad_passphrase
+      urs_client_id               = var.urs_client_id
+      urs_client_password         = var.urs_client_password
+      urs_url                     = var.urs_url
+
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
     }
   }
