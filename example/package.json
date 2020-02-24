@@ -65,6 +65,7 @@
     "@cumulus/sync-granule": "1.18.0",
     "@cumulus/test-processing": "1.18.0",
     "aws-sdk": "^2.585.0",
+    "jsonwebtoken": "^8.5.1",
     "ssh2-streams": "^0.4.8"
   },
   "devDependencies": {
@@ -95,6 +96,7 @@
     "p-map": "^3.0.0",
     "p-retry": "^2.0.0",
     "p-timeout": "2.0.1",
+    "p-wait-for": "^3.1.0",
     "parallel": "^1.2.0",
     "rewire": "^4.0.1",
     "tempy": "^0.2.1",

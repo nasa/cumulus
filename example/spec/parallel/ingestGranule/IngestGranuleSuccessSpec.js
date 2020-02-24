@@ -934,11 +934,10 @@ describe('The S3 Ingest Granules workflow', () => {
           prefix: config.stackName
         });
         executions = JSON.parse(executionsApiResponse.body);
-        const executionApiResponse = await executionsApiTestUtils.getExecution({
+        executionResponse = await executionsApiTestUtils.getExecution({
           prefix: config.stackName,
           arn: workflowExecutionArn
         });
-        executionResponse = JSON.parse(executionApiResponse.body);
       });
 
       it('returns a list of exeuctions', async () => {

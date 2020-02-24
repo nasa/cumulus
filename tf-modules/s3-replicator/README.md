@@ -30,6 +30,7 @@ prefix               = "myprefix"                                         # pref
 permissions_boundary = "arn:aws:iam::1234567890:policy/YourRoleBoundary"  # IAM permissions boundary ARN
 source_bucket        = "source-bucket-name"                               # Source S3 bucket
 source_prefix        = "source-prefix"                                    # Source object prefix e.g. 'path/to/filedir'
+tags                 = { Deployment = "myprefix" }                        # Tags to be assigned to all managed resources
 target_bucket        = "target-bucket-name"                               # Target S3 bucket e.g. 'mybucket'
 target_prefix        = "target-prefix"                                    # Target object prefix path
 

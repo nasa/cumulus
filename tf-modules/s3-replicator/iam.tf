@@ -12,8 +12,7 @@ resource "aws_iam_role" "replicator_lambda_role" {
   name                 = "${var.prefix}_replicator_lambda_role"
   assume_role_policy   = data.aws_iam_policy_document.assume_lambda_role.json
   permissions_boundary = var.permissions_boundary
-  # TODO Re-enable once IAM permissions have been fixed
-  # tags                 = local.default_tags
+  tags                 = var.tags
 }
 
 data "aws_iam_policy_document" "replicator_policy_document" {

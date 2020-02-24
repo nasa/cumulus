@@ -64,8 +64,14 @@ variable "subnet_ids" {
   default     = []
 }
 
-variable "security_group" {
-  description = "Security Group Ids for Elasticsearch"
-  type        = string
-  default     = null
+variable "elasticsearch_security_group_ids" {
+  description = "Security Group IDs to assign to the Elasticsearch domain"
+  type        = list(string)
+  default     = []
+}
+
+variable "tags" {
+  description = "Tags to be applied to managed resources"
+  type        = map(string)
+  default     = {}
 }

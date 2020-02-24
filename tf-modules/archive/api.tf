@@ -7,13 +7,13 @@ locals {
 resource "aws_cloudwatch_log_group" "api" {
   name              = "/aws/lambda/${aws_lambda_function.api.function_name}"
   retention_in_days = 30
-  tags              = local.default_tags
+  tags              = var.tags
 }
 
 resource "aws_secretsmanager_secret" "api_cmr_password" {
   name_prefix = "${var.prefix}-api-cmr-password"
   description = "CMR password for the Cumulus API's ${var.prefix} deployment"
-  tags        = local.default_tags
+  tags        = var.tags
 }
 
 resource "aws_secretsmanager_secret_version" "api_cmr_password" {
@@ -25,7 +25,7 @@ resource "aws_secretsmanager_secret_version" "api_cmr_password" {
 resource "aws_secretsmanager_secret" "api_launchpad_passphrase" {
   name_prefix = "${var.prefix}-api-launchpad-passphrase"
   description = "Launchpad passphrase for the Cumulus API's ${var.prefix} deployment"
-  tags        = local.default_tags
+  tags        = var.tags
 }
 
 resource "aws_secretsmanager_secret_version" "api_launchpad_passphrase" {
@@ -39,6 +39,11 @@ resource "aws_s3_bucket_object" "authorized_oauth_users" {
   key     = "${var.prefix}/api/authorized_oauth_users.json"
   content = jsonencode(var.users)
   etag    = md5(jsonencode(var.users))
+}
+
+resource "aws_sns_topic" "report_collections_topic" {
+  name = "${var.prefix}-report-collections-topic"
+  tags = var.tags
 }
 
 resource "aws_lambda_function" "api" {
@@ -108,10 +113,11 @@ resource "aws_lambda_function" "api" {
       METRICS_ES_PASS              = var.metrics_es_password
       provider_kms_key_id          = aws_kms_key.provider_kms_key.key_id
       log_destination_arn          = var.log_destination_arn
+      collection_sns_topic_arn     = aws_sns_topic.report_collections_topic.arn
     }
   }
   memory_size = 960
-  tags        = merge(local.default_tags, { Project = var.prefix })
+  tags        = var.tags
 
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids

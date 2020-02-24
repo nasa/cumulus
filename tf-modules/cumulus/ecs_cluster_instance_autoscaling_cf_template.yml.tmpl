@@ -3,8 +3,9 @@ Resources:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
       SecurityGroups:
-        - ${security_group_id}
-        - ${es_security_group_id}
+%{ for s in security_group_ids ~}
+        - ${s}
+%{ endfor ~}
       ImageId: ${image_id}
       InstanceType: ${instance_type}
       IamInstanceProfile: ${instance_profile}

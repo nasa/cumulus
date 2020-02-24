@@ -88,7 +88,7 @@ module "cnm_workflow" {
   name                                  = "CNMExampleWorkflow"
   workflow_config                       = module.cumulus.workflow_config
   system_bucket                         = var.system_bucket
-  tags                                  = local.default_tags
+
 {
 state_machine_definition = <<JSON
   "CNMExampleWorkflow": {
