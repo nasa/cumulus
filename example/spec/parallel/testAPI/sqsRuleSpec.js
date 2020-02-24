@@ -64,7 +64,7 @@ async function setupCollectionAndTestData() {
 }
 
 async function cleanUp() {
-  setProcessEnvironment(testConfig.stackName, testConfig.bucket);
+  setProcessEnvironment(config.stackName, config.bucket);
   console.log(`\nDeleting rule ${ruleOverride.name}`);
   const rules = await readJsonFilesFromDir(ruleDirectory);
   await deleteRules(config.stackName, config.bucket, rules, ruleSuffix);
