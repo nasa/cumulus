@@ -33,7 +33,24 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1755**
   - The `thin_egress_jwt_secret_name` variable for the `tf-modules/cumulus` Terraform module is now **required**. This variable is passed on to the Thin Egress App in `tf-modules/distribution/main.tf`, which uses the keys stored in the secret to sign JWTs. See the [Thin Egress App documentation on how to create a value for this secret](https://github.com/asfadmin/thin-egress-app#setting-up-the-jwt-cookie-secrets).
 
+- **CUMULUS-1446**
+  - Update the `@cumulus/integration-tests/api/executions.getExecution()`
+    function to parse the response and return the execution, rather than return
+    the full API response.
+
 ### Added
+
+- **CUMULUS-1446**
+  - Add `@cumulus/common/FileUtils.readJsonFile()` function
+  - Add `@cumulus/common/FileUtils.readTextFile()` function
+  - Add `@cumulus/integration-tests/api/collections.createCollection()` function
+  - Add `@cumulus/integration-tests/api/collections.deleteCollection()` function
+  - Add `@cumulus/integration-tests/api/collections.getCollection()` function
+  - Add `@cumulus/integration-tests/api/providers.getProvider()` function
+  - Add `@cumulus/integration-tests/index.getExecutionOutput()` function
+  - Add `@cumulus/integration-tests/index.loadCollection()` function
+  - Add `@cumulus/integration-tests/index.loadProvider()` function
+  - Add `@cumulus/integration-tests/index.readJsonFilesFromDir()` function
 
 - **CUMULUS-1672**
   - Add a `tags` input variable to the `archive` Terraform module
@@ -86,6 +103,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/aws-client/CloudFormation.getCfStackParameterValues()` to get multiple parameter values for a Cloudformation stack
 
 ### Changed
+
+- **CUMULUS-1446**
+  - Mark the `@cumulus/integration-tests/api.addCollectionApi()` function as
+    deprecated
+  - Mark the `@cumulus/integration-tests/index.listCollections()` function as
+    deprecated
+  - Mark the `@cumulus/integration-tests/index.listProviders()` function as
+    deprecated
+  - Mark the `@cumulus/integration-tests/index.rulesList()` function as
+    deprecated
 
 - **CUMULUS-1672**
   - Previously, the `cumulus` module defaulted to setting a

@@ -10,16 +10,15 @@ const { callCumulusApi } = require('./api');
  * @param {string} params.arn - an execution arn
  * @returns {Promise<Object>} - the execution fetched by the API
  */
-async function getExecution({ prefix, arn }) {
-  return callCumulusApi({
+const getExecution = ({ prefix, arn }) =>
+  callCumulusApi({
     prefix: prefix,
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: `/executions/${arn}`
     }
-  });
-}
+  }).then(({ body }) => JSON.parse(body));
 
 /**
  * Fetch a list of executions from the Cumulus API
