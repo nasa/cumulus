@@ -30,9 +30,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     deployment, which will cause the deployment to fail if the migration
     Lambda has not been run.
 
-- **CUMULUS-1698**
-  - Change variable `saml_launchpad_metadata_path` to
-    `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
+- **CUMULUS-1755**
+  - The `thin_egress_jwt_secret_name` variable for the `tf-modules/cumulus` Terraform module is now **required**. This variable is passed on to the Thin Egress App in `tf-modules/distribution/main.tf`, which uses the keys stored in the secret to sign JWTs. See the [Thin Egress App documentation on how to create a value for this secret](https://github.com/asfadmin/thin-egress-app#setting-up-the-jwt-cookie-secrets).
 
 - **CUMULUS-1446**
   - Update the `@cumulus/integration-tests/api/executions.getExecution()`
@@ -99,6 +98,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `data-persistence` Terraform module to allow additional security groups to
     be assigned to the Elasticsearch Domain.
 
+- **CUMULUS-1755**
+  - Added `@cumulus/aws-client/CloudFormation.describeCfStack()` to describe a Cloudformation stack
+  - Added `@cumulus/aws-client/CloudFormation.getCfStackParameterValues()` to get multiple parameter values for a Cloudformation stack
+
 ### Changed
 
 - **CUMULUS-1446**
@@ -142,8 +145,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed name of `cwSfExecutionEventToDb` Lamda to `cwSfEventToDbRecords`
   - Updated `cwSfEventToDbRecords` to write granule records to DynamoDB from the incoming Cumulus message
 
+- **CUMULUS-1748**
+  - (S)FTP discovery tasks now use the provider-path as-is instead of forcing it to a relative path.
+  - Improved error handling to catch permission denied FTP errors better and log them properly. Workflows will still fail encountering this error and we intend to consider that approach in a future ticket.
+
 - **CUMULUS-1753** - Changes to `@cumulus/ingest/HttpProviderClient.js`:
   - Removed regex filter in `HttpProviderClient.list()` that was used to return only files with an extension between 1 and 4 characters long. `HttpProviderClient.list()` will now return all files linked from the HTTP provider host.
+
+- **CUMULUS-1755**
+  - Updated the Thin Egress App module used in `tf-modules/distribution/main.tf` to build 61. [See the release notes](https://github.com/asfadmin/thin-egress-app/releases/tag/tea-build.61).
+  - Updated `@cumulus/integration-tests/api/distribution.invokeApiDistributionLambda()` to invoke the Thin Egress App Lambda for testing
 
 - **CUMULUS-1757**
   - Update @cumulus/cmr-client CMRSearchConceptQueue to take optional cmrEnvironment parameter
@@ -161,6 +172,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1717**
   - Deprecate `@cumulus/api/models/Granule.createGranulesFromSns`
+
+- **CUMULUS-1748**
+  - Deprecate `@cumulus/ingest/util.normalizeProviderPath`
 
 ### Removed
 

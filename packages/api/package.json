@@ -49,7 +49,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/aws-client": "1.18.0",
-    "@cumulus/cmr-client": "1.18.0",
+    "@cumulus/cmr-client": "1.18.0-alpha.1",
     "@cumulus/cmrjs": "1.18.0",
     "@cumulus/common": "1.18.0",
     "@cumulus/errors": "1.18.0",
