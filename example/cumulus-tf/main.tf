@@ -108,6 +108,7 @@ module "cumulus" {
 
   archive_api_users = [
     "chuckwondo",
+    "cumuluscore",
     "jennyhliu",
     "jmcampbell",
     "jnorton1",
