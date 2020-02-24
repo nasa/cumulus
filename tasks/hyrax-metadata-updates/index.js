@@ -24,7 +24,7 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
 
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 
-const libxmljs = require("libxmljs");
+const libxmljs = require('libxmljs');
 
 const isECHO10File = (filename) => filename.endsWith('cmr.xml');
 const isUMMGFile = (filename) => filename.endsWith('cmr.json');
@@ -96,13 +96,12 @@ function generateAddress(env) {
  * @returns {string} - the native id
  */
 function getNativeId(metadata) {
-
   let metadataObject = null;
   try {
     // Is this UMM-G or ECHO10?
     metadataObject = JSON.parse(metadata);
     // UMM-G: meta/native-id
-    const nativeId = metadataObject.meta['native-id']
+    const nativeId = metadataObject.meta['native-id'];
     return nativeId;
   } catch (e) {
     // ECHO10: Granule/DataGranule/ProducerGranuleId
@@ -118,10 +117,11 @@ function getNativeId(metadata) {
  * generatePath
  *
  * @param {Object} event - the event
+ * @param {Object} metadata - the metadata
  * @throws {Object} invalidArgumentException - if the env is not valid
  * @returns {string} - the OPeNDAP path
  */
-function generatePath(event) {
+function generatePath(event, metadata) {
   const providerId = get(event.config, 'provider');
   // Check if providerId is defined
   if (_.isUndefined(providerId)) {
@@ -132,9 +132,7 @@ function generatePath(event) {
   if (_.isUndefined(entryTitle)) {
     throw new InvalidArgument('Entry Title not supplied in configuration. Unable to construct path');
   }
-  // TODO retrieve source metadata file from event
-  const metadata = ''
-  const nativeId = 'GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4';
+  const nativeId = getNativeId(metadata);
   const path = `providers/${providerId}/collections/${entryTitle}/granules/${nativeId}`;
 
   return path;
@@ -167,34 +165,67 @@ function addHyraxUrl(metadata, hyraxUrl) {
   } catch (e) {
     const xmlDoc = libxmljs.parseXmlString(metadata);
 
-    var urlsNode = xmlDoc.get('/Granule/OnlineResources');
+    let urlsNode = xmlDoc.get('/Granule/OnlineResources');
     if (_.isUndefined(urlsNode)) {
       const onlineAccessURLs = xmlDoc.get('/Granule/OnlineAccessURLs');
-      urlsNode = new libxmljs.Element(xmlDoc, `OnlineResources`);
+      urlsNode = new libxmljs.Element(xmlDoc, 'OnlineResources');
       onlineAccessURLs.addNextSibling(urlsNode);
     }
-    urlsNode.node(`OnlineResource`).node('url', hyraxUrl).node('Description', 'OPeNDAP request URL').node('Type', 'GET DATA : OPENDAP DATA');
+    urlsNode.node('OnlineResource').node('url', hyraxUrl).node('Description', 'OPeNDAP request URL').node('Type', 'GET DATA : OPENDAP DATA');
     console.log(xmlDoc.toString());
-    
+
     return xmlDoc.toString();
   }
+}
+
+/**
+ * Update each of the CMR files' OnlineAccessURL fields to represent the new
+ * file locations.
+ *
+ * @param {Array<Object>} cmrFiles - array of objects that include CMR xmls uris and granuleIds
+ * @param {Object} granulesObject - an object of the granules where the key is the granuleId
+ * @param {string} cmrGranuleUrlType - type of granule CMR url
+ * @param {string} distEndpoint - the api distribution endpoint
+ * @param {BucketsConfig} bucketsConfig - BucketsConfig instance
+ * @returns {Promise} promise resolves when all files have been updated
+ **/
+async function updateEachCmrFileAccessURLs(
+  cmrFiles,
+  granulesObject,
+  cmrGranuleUrlType,
+  distEndpoint,
+  bucketsConfig
+) {
+  return Promise.all(cmrFiles.map(async (cmrFile) => {
+    const granuleId = cmrFile.granuleId;
+    const granule = granulesObject[granuleId];
+    const updatedCmrFile = granule.files.find(isCMRFile);
+    return updateCMRMetadata({
+      granuleId,
+      cmrFile: updatedCmrFile,
+      files: granule.files,
+      distEndpoint,
+      published: false, // Do the publish in publish-to-cmr step
+      inBuckets: bucketsConfig,
+      cmrGranuleUrlType
+    });
+  }));
 }
 
 /**
  * Do the work
  *
  * @param {Object} event - input from the message adapter
- * @returns {Object} sample JSON object
+ * @returns {Object} the granules
  */
-async function updateMetadata(event) {
-  await throwErrorIfConfigured(event);
-
-  const address = generateAddress(get(event.config, 'environment', 'prod'));
-  const path = generatePath(event);
-  const q = new URL(`${address}/${path}`);
+async function hyraxMetadataUpdate(event) {
+  const granulesInput = event.input.granules;
+  const cmrFiles = granulesToCmrFileObjects(granulesInput);
+  
+  // Update each metadata file with OPeNDAP url and write it back out to S3 in the same location.
 
   return {
-    result: q.href
+    granules: granulesInput
   };
 }
 
@@ -211,7 +242,7 @@ function handler(event, context, callback) {
 }
 
 exports.handler = handler;
-exports.updateMetadata = updateMetadata; // exported to support testing
+exports.hyraxMetadataUpdate = hyraxMetadataUpdate; // exported to support testing
 exports.generateAddress = generateAddress; // exported to support testing
 exports.generatePath = generatePath; // exported to support testing
 exports.getNativeId = getNativeId; // exported to support testing
