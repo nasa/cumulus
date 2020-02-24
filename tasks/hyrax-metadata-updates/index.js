@@ -139,14 +139,24 @@ function generatePath(event, metadata) {
 }
 
 /**
+ * generateHyraxUrl
+ *
+ * @param {Object} event - the event
+ * @param {Object} metadata - the metadata
+ * @returns {string} - the hyrax url
+ */
+function generateHyraxUrl(event, metadata) {
+  return (`${generateAddress(event)}/${generatePath(event, metadata)}`);
+}
+
+/**
  * addHyraxUrl
  *
- * @param {String} metadata - the orginal metadata
+ * @param {string} metadata - the orginal metadata
  * @param {URL} hyraxUrl - the hyrax url
- * @returns {String} - the updated metadata containing a Hyrax URL
+ * @returns {string} - the updated metadata containing a Hyrax URL
  */
 function addHyraxUrl(metadata, hyraxUrl) {
-
   let metadataObject = null;
   try {
     // Is this UMM-G or ECHO10?
@@ -172,7 +182,6 @@ function addHyraxUrl(metadata, hyraxUrl) {
       onlineAccessURLs.addNextSibling(urlsNode);
     }
     urlsNode.node('OnlineResource').node('url', hyraxUrl).node('Description', 'OPeNDAP request URL').node('Type', 'GET DATA : OPENDAP DATA');
-    console.log(xmlDoc.toString());
 
     return xmlDoc.toString();
   }
