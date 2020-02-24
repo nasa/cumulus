@@ -1,3 +1,7 @@
+variable "archive_api_uri" {
+  type = string
+}
+
 variable "buckets" {
   type    = map(object({ name = string, type = string }))
   default = {}
@@ -119,14 +123,13 @@ variable "throttled_queues" {
   default = []
 }
 
-variable "urs_client_id" {
+variable "urs_id" {
   type        = string
   description = "The client ID for your Earthdata login (URS) application"
 }
 
-variable "urs_client_password" {
+variable "urs_password" {
   type        = string
-  description = "The client password for your Earthdata login (URS) application"
 }
 
 variable "urs_url" {

@@ -171,10 +171,9 @@ const buildGranule = curry(
 );
 
 const checkDuplicate = async (granuleId, dupeConfig, baseUrl) => {
-  // Hit the API and check for granule status
   const headers = { authorization: `Bearer ${dupeConfig.token}` };
   try {
-    await got.get(`${baseUrl}/dev/granules/${granuleId}`, { headers });
+    await got.get(`${baseUrl}/granules/${granuleId}`, { headers });
   } catch (error) {
     if (error.statusCode === 404 && error.statusMessage === 'Not Found') {
       return granuleId;
@@ -188,13 +187,14 @@ const checkDuplicate = async (granuleId, dupeConfig, baseUrl) => {
 };
 
 const filterDuplicates = async (filesKeys, duplicateHandling) => {
+  const provider = process.env.oauth_provider;
   const tokenConfig = {
     passphrase: process.env.launchpad_passphrase,
-    baseUrl: process.env.urs_url,
-    username: process.env.urs_client_id,
-    password: process.env.urs_client_password
+    baseUrl: process.env.archive_api_uri,
+    username: process.env.urs_id,
+    password: process.env.urs_password
   };
-  const authToken = await getAuthToken(tokenConfig);
+  const authToken = await getAuthToken(provider, tokenConfig);
   const dupeConfig = {
     duplicateHandling: duplicateHandling,
     token: authToken

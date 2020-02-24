@@ -100,6 +100,15 @@ variable "token_secret" {
   type = string
 }
 
+variable "urs_id" {
+  type = string
+}
+
+variable "urs_password" {
+  type = string
+}
+
+
 variable "urs_client_id" {
   type = string
 }

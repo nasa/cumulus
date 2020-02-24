@@ -32,7 +32,7 @@ const getAuthToken = async (provider, config) => {
   }
 
   if (provider === 'earthdata') {
-    const tokenOutput = await got.get(`${config.baseUrl}/dev/token`, { followRedirect: false });
+    const tokenOutput = await got.get(`${config.baseUrl}token`, { followRedirect: false });
     const urlObj = parseurl({ url: tokenOutput.headers.location });
     const auth = base64.encode(`${config.username}:${config.password}`);
 
@@ -49,7 +49,7 @@ const getAuthToken = async (provider, config) => {
     return JSON.parse(edlOutput.body).message.token;
   }
 
-  throw new Error(`Invalid provider ${provider} specified`);// We need to call token endpoint similar to api example token
+  throw new Error(`Invalid provider ${JSON.stringify(provider)} specified`);// We need to call token endpoint similar to api example token
 };
 
 

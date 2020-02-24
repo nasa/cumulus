@@ -482,6 +482,14 @@ variable "non_complete_execution_payload_timeout_disable" {
 
 }
 
+variable "urs_id" {
+  type        = string
+}
+
+variable "urs_password" {
+  type        = string
+}
+
 variable "non_complete_execution_payload_timeout" {
   description = "Number of days to retain 'non-complete' execution payload records in the database"
   type        = number
