@@ -24,6 +24,12 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
 
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 
+var xpath = require('xpath')
+  , dom = require('xmldom').DOMParser
+
+const isECHO10File = (filename) => filename.endsWith('cmr.xml');
+const isUMMGFile = (filename) => filename.endsWith('cmr.json');
+
 /**
  * Throw an error if hyrax-metadata-updates is configured to throw an error for
  * testing/example purposes. Set the pass on retry value to simulate
@@ -101,13 +107,10 @@ function getNativeId(metadata) {
     return nativeId;
   } catch (e) {
     // ECHO10: Granule/DataGranule/ProducerGranuleId
-    const parseString = require('xml2js').parseString;
+    const doc = new dom().parseFromString(metadata);
+    const nativeIdNode = xpath.select("/Granule/GranuleUR", doc);
 
-    let nativeId = null;
-    parseString(metadata, (_err, result) => {
-      nativeId = result.Granule.GranuleUR[0];
-    });
-    return nativeId;
+    return nativeIdNode[0].firstChild.data;
   }
 }
 
@@ -120,13 +123,12 @@ function getNativeId(metadata) {
  * @returns {string} - the OPeNDAP path
  */
 function generatePath(event) {
-  const config = event.config;
-  const providerId = get(config, 'provider');
+  const providerId = get(event.config, 'provider');
   // Check if providerId is defined
   if (_.isUndefined(providerId)) {
     throw new InvalidArgument('Provider not supplied in configuration. Unable to construct path');
   }
-  const entryTitle = get(config, 'entryTitle');
+  const entryTitle = get(event.config, 'entryTitle');
   // Check if entryTitle is defined
   if (_.isUndefined(entryTitle)) {
     throw new InvalidArgument('Entry Title not supplied in configuration. Unable to construct path');

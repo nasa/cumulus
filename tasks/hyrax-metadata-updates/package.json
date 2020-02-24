@@ -51,7 +51,8 @@
     "lodash.flatten": "^4.4.0",
     "lodash.get": "^4.4.2",
     "lodash.keyby": "^4.6.0",
-    "xml2js": "^0.4.23"
+    "xmldom": "^0.2.1",
+    "xpath": "0.0.27"
   },
   "devDependencies": {
     "ava": "^2.1.0",
