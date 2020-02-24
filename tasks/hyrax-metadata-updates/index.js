@@ -24,8 +24,7 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
 
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 
-var xpath = require('xpath')
-  , dom = require('xmldom').DOMParser
+const libxmljs = require("libxmljs");
 
 const isECHO10File = (filename) => filename.endsWith('cmr.xml');
 const isUMMGFile = (filename) => filename.endsWith('cmr.json');
@@ -107,10 +106,10 @@ function getNativeId(metadata) {
     return nativeId;
   } catch (e) {
     // ECHO10: Granule/DataGranule/ProducerGranuleId
-    const doc = new dom().parseFromString(metadata);
-    const nativeIdNode = xpath.select("/Granule/GranuleUR", doc);
+    const xmlDoc = libxmljs.parseXml(metadata);
+    const nativeIdNode = xmlDoc.get('/Granule/GranuleUR');
 
-    return nativeIdNode[0].firstChild.data;
+    return nativeIdNode.text();
   }
 }
 
@@ -154,7 +153,6 @@ function addHyraxUrl(metadata, hyraxUrl) {
   try {
     // Is this UMM-G or ECHO10?
     metadataObject = JSON.parse(metadata);
-    // UMM-G: meta/native-id
     if (_.isUndefined(metadataObject.umm.RelatedUrls)) {
       metadataObject.umm.RelatedUrls = [];
     }
@@ -165,8 +163,21 @@ function addHyraxUrl(metadata, hyraxUrl) {
       Description: 'OPeNDAP request URL'
     };
     metadataObject.umm.RelatedUrls.push(url);
-  } catch (e) {}
-  return JSON.stringify(metadataObject, null, 2);
+    return JSON.stringify(metadataObject, null, 2);
+  } catch (e) {
+    const xmlDoc = libxmljs.parseXmlString(metadata);
+
+    var urlsNode = xmlDoc.get('/Granule/OnlineResources');
+    if (_.isUndefined(urlsNode)) {
+      const onlineAccessURLs = xmlDoc.get('/Granule/OnlineAccessURLs');
+      urlsNode = new libxmljs.Element(xmlDoc, `OnlineResources`);
+      onlineAccessURLs.addNextSibling(urlsNode);
+    }
+    urlsNode.node(`OnlineResource`).node('url', hyraxUrl).node('Description', 'OPeNDAP request URL').node('Type', 'GET DATA : OPENDAP DATA');
+    console.log(xmlDoc.toString());
+    
+    return xmlDoc.toString();
+  }
 }
 
 /**
