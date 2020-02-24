@@ -256,6 +256,7 @@ function setProcessEnvironment(stackName, bucketName) {
   process.env.CollectionsTable = `${stackName}-CollectionsTable`;
   process.env.ProvidersTable = `${stackName}-ProvidersTable`;
   process.env.RulesTable = `${stackName}-RulesTable`;
+  process.env.noSNS = true;
 }
 
 const concurrencyLimit = process.env.CONCURRENCY || 3;
