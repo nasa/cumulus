@@ -1,3 +1,4 @@
+
 resource "aws_lambda_function" "discover_granules_task" {
   function_name    = "${var.prefix}-DiscoverGranules"
   filename         = "${path.module}/../../tasks/discover-granules/dist/lambda.zip"
@@ -18,7 +19,7 @@ resource "aws_lambda_function" "discover_granules_task" {
       oauth_provider              = var.oauth_provider
       launchpad_passphrase        = var.launchpad_passphrase
       urs_id                      = var.urs_id
-      urs_password                = var.urs_password
+      urs_password_secret_name    = length(var.urs_password) == 0 ? null : aws_secretsmanager_secret.ingest_urs_password.name
       urs_url                     = var.urs_url
       archive_api_uri             = var.archive_api_uri
 

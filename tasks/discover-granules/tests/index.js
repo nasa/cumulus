@@ -37,6 +37,7 @@ async function assertDiscoveredGranules(t, output) {
 }
 
 test.beforeEach(async (t) => {
+  discoverGranulesRewire.__set__('getSecretString', async () => 'mockPassword');
   const eventPath = path.join(__dirname, 'fixtures', 'mur.json');
   const rawEvent = await readFile(eventPath, 'utf8');
   t.context.event = JSON.parse(rawEvent);

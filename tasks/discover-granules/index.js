@@ -12,6 +12,8 @@ const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
 const { normalizeProviderPath } = require('@cumulus/ingest/util');
 const { duplicateHandlingType } = require('@cumulus/ingest/granule');
+const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
+
 
 const logger = () => new Logger({
   executions: process.env.EXECUTIONS,
@@ -188,11 +190,16 @@ const checkDuplicate = async (granuleId, dupeConfig, baseUrl) => {
 
 const filterDuplicates = async (filesKeys, duplicateHandling) => {
   const provider = process.env.oauth_provider;
+  const ursPassword = await getSecretString(
+    process.env.urs_password_secret_name
+  );
+
   const tokenConfig = {
+    // TODO launchpad key?
     passphrase: process.env.launchpad_passphrase,
     baseUrl: process.env.archive_api_uri,
     username: process.env.urs_id,
-    password: process.env.urs_password
+    password: ursPassword
   };
   const authToken = await getAuthToken(provider, tokenConfig);
   const dupeConfig = {
