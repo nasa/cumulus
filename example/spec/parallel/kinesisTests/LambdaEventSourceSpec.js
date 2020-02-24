@@ -13,8 +13,9 @@ const {
   cleanupProviders,
   addCollections,
   cleanupCollections,
-  rulesList,
-  deleteRules
+  readJsonFilesFromDir,
+  deleteRules,
+  setProcessEnvironment
 } = require('@cumulus/integration-tests');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -60,8 +61,9 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
   let testSuffix;
 
   async function cleanUp() {
+    setProcessEnvironment(testConfig.stackName, testConfig.bucket);
     // delete rules
-    const rulesToDelete = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
+    const rulesToDelete = await readJsonFilesFromDir(ruleDirectory);
     // clean up stack state added by test
     console.log(`\nCleaning up stack & deleting test stream '${streamName}'`);
     await deleteRules(testConfig.stackName, testConfig.bucket, rulesToDelete, ruleSuffix);

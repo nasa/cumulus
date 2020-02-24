@@ -17,9 +17,10 @@ const {
   cleanupProviders,
   addCollections,
   cleanupCollections,
-  rulesList,
+  readJsonFilesFromDir,
   deleteRules,
-  granulesApi: granulesApiTestUtils
+  granulesApi: granulesApiTestUtils,
+  setProcessEnvironment
 } = require('@cumulus/integration-tests');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -84,9 +85,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   let workflowExecution;
 
   async function cleanUp() {
+    setProcessEnvironment(testConfig.stackName, testConfig.bucket);
     // delete rule
     console.log(`\nDeleting ${ruleOverride.name}`);
-    const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
+    const rules = await readJsonFilesFromDir(ruleDirectory);
     // clean up stack state added by test
     console.log(`\nCleaning up stack & deleting test streams '${streamName}' and '${cnmResponseStreamName}'`);
     await deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix);

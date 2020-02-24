@@ -129,11 +129,10 @@ describe('The Ingest Granule failure workflow', () => {
         { arn: executionArn },
         'failed'
       );
-      const executionResponse = await executionsApiTestUtils.getExecution({
+      execution = await executionsApiTestUtils.getExecution({
         prefix: config.stackName,
         arn: executionArn
       });
-      execution = JSON.parse(executionResponse.body);
     });
 
     it('branches appropriately according to the CMA output', async () => {
