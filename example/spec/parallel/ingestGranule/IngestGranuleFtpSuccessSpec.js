@@ -55,7 +55,10 @@ describe('The FTP Ingest Granules workflow', () => {
     console.log(`Granule id is ${inputPayload.granules[0].granuleId}`);
 
     // delete the granule record from DynamoDB if exists
-    await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
+    await granulesApiTestUtils.deleteGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId
+    });
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload

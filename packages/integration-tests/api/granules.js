@@ -162,7 +162,20 @@ async function removePublishedGranule({ prefix, granuleId }) {
   return deleteGranule({ prefix, granuleId });
 }
 
+const createGranule = (prefix, granule) =>
+  callCumulusApi({
+    prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: { 'Content-Type': 'application/json' },
+      path: '/granules',
+      body: JSON.stringify(granule)
+    }
+  });
+
 module.exports = {
+  createGranule,
   getGranule,
   reingestGranule,
   removeFromCMR,

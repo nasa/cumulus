@@ -123,7 +123,10 @@ async function ingestGranuleToCMR(config, testSuffix, testDataFolder) {
   });
   const granule = JSON.parse(response.body);
 
-  await (new Granule()).delete({ granuleId });
+  await granulesApiTestUtils.deleteGranule({
+    prefix: config.stackName,
+    granuleId
+  });
   console.log(`\ningestGranuleToCMR granule id: ${granuleId}`);
   return granule;
 }
@@ -342,7 +345,7 @@ describe('When there are granule differences and granule reconciliation is run',
     ]);
 
     // need to add the cmr granule back to the table, so the granule can be removed from api
-    await granuleModel.create(cmrGranule);
+    await granulesApiTestUtils.createGranule({ prefix: config.stackName, granule: cmrGranule });
     await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: cmrGranule.granuleId });
     await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: cmrGranule.granuleId });
 
