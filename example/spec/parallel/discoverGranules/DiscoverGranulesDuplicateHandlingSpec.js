@@ -19,21 +19,38 @@ const {
   createTestSuffix
 } = require('../../helpers/testUtils');
 
-
 const workflowName = 'DiscoverGranules';
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 2000000;
+
+const updateCollectionDuplicateFlag = async (flag, collection, config) => {
+  await apiTestUtils.updateCollection({
+    prefix: config.stackName,
+    collection,
+    updateParams: {
+      duplicateHandling: flag
+    }
+  });
+};
+
+const awaitIngestExecutions = async (workflowExecution, lambdaStep) => {
+  const lambdaOutput = await lambdaStep.getStepOutput(
+    workflowExecution.executionArn, 'QueueGranules'
+  );
+  const ingestExecutions = lambdaOutput.payload.running.map((e) => waitForCompletedExecution(e));
+  return Promise.all(ingestExecutions);
+};
 
 describe('The Discover Granules workflow with http Protocol', () => {
   const providersDir = './data/providers/http/';
   const collectionsDir = './data/collections/http_testcollection_001/';
 
+  let collection;
   let config;
   let lambdaStep;
+  let provider;
   let testId;
   let testSuffix;
-  let collection;
-  let provider;
 
   beforeAll(async () => {
     lambdaStep = new LambdaStep();
@@ -45,7 +62,6 @@ describe('The Discover Granules workflow with http Protocol', () => {
     collection = { name: `http_testcollection${testSuffix}`, version: '001' };
     provider = { id: `http_provider${testSuffix}` };
 
-    // populate collections and providers
     await Promise.all([
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       addProviders(config.stackName, config.bucket, providersDir, null, testSuffix)
@@ -59,7 +75,6 @@ describe('The Discover Granules workflow with http Protocol', () => {
   });
 
   afterAll(async () => {
-    // clean up stack state added by test
     await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
@@ -67,37 +82,21 @@ describe('The Discover Granules workflow with http Protocol', () => {
   });
 
 
-  describe('when the collection configured with duplicateHandling set to "skip"', () => {
+  describe('when the collection configured with duplicateHandling set to "skip" it:', () => {
     let ingestStatues;
     let httpWorkflowExecution;
     let originalHttpWorkflowExecution;
     beforeAll(async () => {
-      await apiTestUtils.updateCollection({
-        prefix: config.stackName,
-        collection,
-        updateParams: {
-          duplicateHandling: 'replace'
-        }
-      });
+      await updateCollectionDuplicateFlag('replace', collection, config);
+
       originalHttpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
         config.bucket, workflowName, collection, provider);
 
-      const lambdaOutput = await lambdaStep.getStepOutput(
-        originalHttpWorkflowExecution.executionArn, 'QueueGranules'
-      );
-
-      const ingestExecutions = lambdaOutput.payload.running.map((e) => waitForCompletedExecution(e));
-      ingestStatues = await Promise.all(ingestExecutions);
+      ingestStatues = await awaitIngestExecutions(originalHttpWorkflowExecution, lambdaStep);
 
       deleteGranule({ prefix: config.stackName, granuleId: 'granule-1' });
 
-      await apiTestUtils.updateCollection({
-        prefix: config.stackName,
-        collection,
-        updateParams: {
-          duplicateHandling: 'skip'
-        }
-      });
+      await updateCollectionDuplicateFlag('skip', collection, config);
 
       httpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
         config.bucket, workflowName, collection, provider);
@@ -135,34 +134,19 @@ describe('The Discover Granules workflow with http Protocol', () => {
     });
   });
 
-  describe('when the collection configured with duplicateHandling set to "error"', () => {
+  describe('when the collection configured with duplicateHandling set to "error" it:', () => {
     let ingestStatues;
     let httpWorkflowExecution;
     let originalHttpWorkflowExecution;
     beforeAll(async () => {
-      await apiTestUtils.updateCollection({
-        prefix: config.stackName,
-        collection,
-        updateParams: {
-          duplicateHandling: 'replace'
-        }
-      });
+      await updateCollectionDuplicateFlag('replace', collection, config);
+
       originalHttpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
         config.bucket, workflowName, collection, provider);
 
-      const lambdaOutput = await lambdaStep.getStepOutput(
-        originalHttpWorkflowExecution.executionArn, 'QueueGranules'
-      );
-      const ingestExecutions = lambdaOutput.payload.running.map((e) => waitForCompletedExecution(e));
-      ingestStatues = await Promise.all(ingestExecutions);
+      ingestStatues = await awaitIngestExecutions(originalHttpWorkflowExecution, lambdaStep);
 
-      await apiTestUtils.updateCollection({
-        prefix: config.stackName,
-        collection,
-        updateParams: {
-          duplicateHandling: 'error'
-        }
-      });
+      await updateCollectionDuplicateFlag('error', collection, config);
 
       httpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
         config.bucket, workflowName, collection, provider);
