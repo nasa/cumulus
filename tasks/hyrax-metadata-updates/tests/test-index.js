@@ -47,7 +47,13 @@ test('Test return error when invalid environment supplied for host generation', 
 test('Test generate path from UMM-G', async (t) => {
   const event = {
     config: {
-      provider: 'GES_DISC',
+      cmr: {
+        oauthProvider: 'earthdata',
+        provider: 'GES_DISC',
+        clientId: 'xxxxxx',
+        username: 'xxxxxx',
+        password: 'xxxxx'
+      },
       entryTitle: 'GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC'
     },
     input: {}
@@ -60,7 +66,13 @@ test('Test generate path from UMM-G', async (t) => {
 test('Test generate path from ECHO-10', async (t) => {
   const event = {
     config: {
-      provider: 'GES_DISC',
+      cmr: {
+        oauthProvider: 'earthdata',
+        provider: 'GES_DISC',
+        clientId: 'xxxxxx',
+        username: 'xxxxxx',
+        password: 'xxxxx'
+      },
       entryTitle: 'GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC'
     },
     input: {}
@@ -72,7 +84,15 @@ test('Test generate path from ECHO-10', async (t) => {
 
 test('Test return error when invalid provider supplied for path generation', async (t) => {
   const event = {
-    config: { entryTitle: 'GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC' },
+    config: {
+      cmr: {
+        oauthProvider: 'earthdata',
+        clientId: 'xxxxxx',
+        username: 'xxxxxx',
+        password: 'xxxxx'
+      },
+      entryTitle: 'GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC'
+    },
     input: {}
   };
   const error = await t.throws(
@@ -84,7 +104,15 @@ test('Test return error when invalid provider supplied for path generation', asy
 
 test('Test return error when invalid entry title supplied for path generation', async (t) => {
   const event = {
-    config: { provider: 'GES_DISC' },
+    config: {
+      cmr: {
+        oauthProvider: 'earthdata',
+        provider: 'GES_DISC',
+        clientId: 'xxxxxx',
+        username: 'xxxxxx',
+        password: 'xxxxx'
+      }
+    },
     input: {}
   };
   const error = await t.throws(
@@ -143,7 +171,13 @@ test('Test adding OPeNDAP URL to ECHO10 file with no OnlineResources', async (t)
 test('Test generating OPeNDAP URL from ECHO10 file ', async (t) => {
   const event = {
     config: {
-      provider: 'GES_DISC',
+      cmr: {
+        oauthProvider: 'earthdata',
+        provider: 'GES_DISC',
+        clientId: 'xxxxxx',
+        username: 'xxxxxx',
+        password: 'xxxxx'
+      },
       entryTitle: 'GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC'
     },
     input: {}
@@ -157,7 +191,13 @@ test('Test generating OPeNDAP URL from ECHO10 file ', async (t) => {
 test('Test generating OPeNDAP URL from UMM-G file ', async (t) => {
   const event = {
     config: {
-      provider: 'GES_DISC',
+      cmr: {
+        oauthProvider: 'earthdata',
+        provider: 'GES_DISC',
+        clientId: 'xxxxxx',
+        username: 'xxxxxx',
+        password: 'xxxxx'
+      },
       entryTitle: 'GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC'
     },
     input: {}
@@ -171,7 +211,13 @@ test('Test generating OPeNDAP URL from UMM-G file ', async (t) => {
 test('Test generating OPeNDAP URL from ECHO10 file with no environment set', async (t) => {
   const event = {
     config: {
-      provider: 'GES_DISC',
+      cmr: {
+        oauthProvider: 'earthdata',
+        provider: 'GES_DISC',
+        clientId: 'xxxxxx',
+        username: 'xxxxxx',
+        password: 'xxxxx'
+      },
       entryTitle: 'GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC'
     },
     input: {}

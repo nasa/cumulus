@@ -78,7 +78,7 @@ function getNativeId(metadata, isUmmG) {
  * @returns {string} - the OPeNDAP path
  */
 function generatePath(event, metadata, isUmmG) {
-  const providerId = get(event.config, 'provider');
+  const providerId = get(event.config.cmr, 'provider');
   // Check if providerId is defined
   if (_.isUndefined(providerId)) {
     throw new InvalidArgument('Provider not supplied in configuration. Unable to construct path');
