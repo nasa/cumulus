@@ -6,8 +6,7 @@ const { InvalidArgument } = require('@cumulus/errors');
 
 const {
   s3ObjectExists,
-  s3PutObject,
-  deleteS3Object
+  s3PutObject
 } = require('@cumulus/aws-client/S3');
 
 const get = require('lodash.get');
@@ -49,36 +48,36 @@ function generateAddress(env) {
  * generateNativeId
  *
  * @param {string} metadata - the metadata
+ * @param {boolean} isUmmG - UMM-G or ECHO10
  * @returns {string} - the native id
  */
-function getNativeId(metadata) {
-  // TODO switch on file type
-  let metadataObject = null;
-  try {
-    // Is this UMM-G or ECHO10?
-    metadataObject = JSON.parse(metadata);
-    // UMM-G: meta/native-id
-    const nativeId = metadataObject.meta['native-id'];
-    return nativeId;
-  } catch (e) {
-    // ECHO10: Granule/DataGranule/ProducerGranuleId
+function getNativeId(metadata, isUmmG) {
+  let nativeId = null;
+  if (isUmmG === true) {
+    try {
+      const metadataObject = JSON.parse(metadata);
+      nativeId = metadataObject.meta['native-id'];
+    } catch (e) {
+      throw new InvalidArgument('UMM-G metadata record is not a valid JSON document');
+    }
+  } else {
     const xmlDoc = libxmljs.parseXml(metadata);
     const nativeIdNode = xmlDoc.get('/Granule/GranuleUR');
-
-    return nativeIdNode.text();
+    nativeId = nativeIdNode.text();
   }
+  return nativeId;
 }
-
 
 /**
  * generatePath
  *
  * @param {Object} event - the event
  * @param {string} metadata - the metadata
+ * @param {boolean} isUmmG - UMM-G or ECHO10
  * @throws {Object} invalidArgumentException - if the env is not valid
  * @returns {string} - the OPeNDAP path
  */
-function generatePath(event, metadata) {
+function generatePath(event, metadata, isUmmG) {
   const providerId = get(event.config, 'provider');
   // Check if providerId is defined
   if (_.isUndefined(providerId)) {
@@ -89,7 +88,7 @@ function generatePath(event, metadata) {
   if (_.isUndefined(entryTitle)) {
     throw new InvalidArgument('Entry Title not supplied in configuration. Unable to construct path');
   }
-  const nativeId = getNativeId(metadata);
+  const nativeId = getNativeId(metadata, isUmmG);
 
   return `providers/${providerId}/collections/${entryTitle}/granules/${nativeId}`;
 }
@@ -99,11 +98,12 @@ function generatePath(event, metadata) {
  *
  * @param {Object} event - the event
  * @param {string} metadata - the metadata
+ * @param {boolean} isUmmG - UMM-G or ECHO10
  * @returns {string} - the hyrax url
  */
-function generateHyraxUrl(event, metadata) {
+function generateHyraxUrl(event, metadata, isUmmG) {
   const environment = get(event.config, 'environment', 'prod');
-  const url = new URL(`${generateAddress(environment)}/${generatePath(event, metadata)}`);
+  const url = new URL(`${generateAddress(environment)}/${generatePath(event, metadata, isUmmG)}`);
   return (url.href);
 }
 
