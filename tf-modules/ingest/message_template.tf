@@ -3,7 +3,7 @@
 resource "aws_secretsmanager_secret" "message_template_cmr_password" {
   name_prefix = "${var.prefix}-message-template-cmr-password"
   description = "CMR password for the Cumulus message template in the ${var.prefix} deployment"
-  tags        = local.default_tags
+  tags        = var.tags
 }
 
 resource "aws_secretsmanager_secret_version" "message_template_cmr_password" {
@@ -17,7 +17,7 @@ resource "aws_secretsmanager_secret_version" "message_template_cmr_password" {
 resource "aws_secretsmanager_secret" "message_template_launchpad_passphrase" {
   name_prefix = "${var.prefix}-message-template-launchpad-passphrase"
   description = "Launchpad passphrase for the Cumulus message template in the ${var.prefix} deployment"
-  tags        = local.default_tags
+  tags        = var.tags
 }
 
 resource "aws_secretsmanager_secret_version" "message_template_launchpad_passphrase" {

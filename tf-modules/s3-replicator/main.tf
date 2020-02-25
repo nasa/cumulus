@@ -5,7 +5,6 @@ terraform {
 }
 
 locals {
-  default_tags           = { Deployment = var.prefix }
   security_group_ids_set = var.security_group_ids != null
 }
 
@@ -24,7 +23,7 @@ resource "aws_security_group" "s3_replicator_lambda" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_lambda_function" "s3_replicator" {
@@ -49,7 +48,7 @@ resource "aws_lambda_function" "s3_replicator" {
     }
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_lambda_permission" "s3_replicator_permission" {

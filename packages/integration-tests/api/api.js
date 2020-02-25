@@ -4,6 +4,7 @@ const cloneDeep = require('lodash.clonedeep');
 const pRetry = require('p-retry');
 const { lambda } = require('@cumulus/aws-client/services');
 const launchpad = require('@cumulus/common/launchpad');
+const { deprecate } = require('@cumulus/common/util');
 const {
   models: { AccessToken },
   testUtils: { fakeAccessTokenFactory },
@@ -240,6 +241,7 @@ async function getExecutionLogs({ prefix, executionName }) {
  * @returns {Promise<Object>} - the POST confirmation from the API
  */
 async function addCollectionApi({ prefix, collection }) {
+  deprecate('@cumulus/integration-tests/api/api.addCollectionApi', '1.18.0', '@cumulus/integration-tests/api/collections.createCollection');
   const response = await callCumulusApi({
     prefix: prefix,
     payload: {

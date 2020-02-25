@@ -85,7 +85,6 @@ class SftpProviderClient {
         privateKey: await this.getPrivateKey()
       });
     }
-
     return this.sftpClientInstance;
   }
 

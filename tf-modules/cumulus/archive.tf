@@ -104,4 +104,6 @@ module "archive" {
   oauth_user_group = var.oauth_user_group
 
   log_destination_arn = var.log_destination_arn
+
+  tags = var.tags
 }

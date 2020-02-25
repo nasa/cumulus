@@ -23,5 +23,5 @@ resource "aws_lambda_function" "cnm_response_task" {
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
   }
 
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = local.tags
 }

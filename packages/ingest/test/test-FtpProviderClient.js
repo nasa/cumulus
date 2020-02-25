@@ -87,20 +87,21 @@ test('FtpProviderClient supports plaintext usernames and passwords', async (t) =
   t.true(fileNames.includes('index.html'));
 });
 
-test('FtpProviderClient supports S3-keypair-encrypted usernames and passwords', async (t) => {
-  const ftpClient = new FtpProviderClient({
-    host: '127.0.0.1',
-    encrypted: true,
-    username: await S3KeyPairProvider.encrypt('testuser'),
-    password: await S3KeyPairProvider.encrypt('testpass'),
-    useList: true
+test('FtpProviderClient supports S3-keypair-encrypted usernames and passwords',
+  async (t) => {
+    const ftpClient = new FtpProviderClient({
+      host: '127.0.0.1',
+      encrypted: true,
+      username: await S3KeyPairProvider.encrypt('testuser'),
+      password: await S3KeyPairProvider.encrypt('testpass'),
+      useList: true
+    });
+
+    const files = await ftpClient.list('/');
+    const fileNames = files.map((f) => f.name);
+
+    t.true(fileNames.includes('index.html'));
   });
-
-  const files = await ftpClient.list('/');
-  const fileNames = files.map((f) => f.name);
-
-  t.true(fileNames.includes('index.html'));
-});
 
 test('FtpProviderClient supports KMS-encrypted usernames and passwords', async (t) => {
   const ftpClient = new FtpProviderClient({
@@ -132,7 +133,7 @@ test('useList is present and true when assigned', async (t) => {
 
   await myFtpProviderClient.list('');
 
-  t.true(jsftpSpy.callCount > 1);
+  t.true(jsftpSpy.callCount > 0);
   t.is(jsftpSpy.getCall(0).args[0].useList, true);
 });
 
@@ -150,10 +151,10 @@ test('useList defaults to false when not assigned', async (t) => {
 
   await myFtpProviderClient.list('');
 
-  // TODO figure out why STAT does not list any results on our local FTP server
-  t.is(jsftpSpy.callCount, 1);
+  t.true(jsftpSpy.callCount > 0);
   t.is(jsftpSpy.getCall(0).args[0].useList, false);
 });
+
 
 test('Download remote file to s3 with correct content-type', async (t) => {
   const myFtpProviderClient = new FtpProviderClient({
@@ -181,4 +182,23 @@ test('Download remote file to s3 with correct content-type', async (t) => {
   } finally {
     await recursivelyDeleteS3Bucket(bucket);
   }
+});
+
+test.serial('FtpProviderClient throws an error when listing a non-permitted directory', async (t) => {
+  const jsftpStubbed = sinon.stub(JSFtp.prototype, 'list').callsFake((path, callback) => callback({
+    code: 451,
+    text: `Could not retrieve a file listing for ${path}.`,
+    isMark: false,
+    isError: true
+  }));
+
+  const myFtpProviderClient = new FtpProviderClient({
+    host: '127.0.0.1',
+    username: 'testuser',
+    password: 'testpass',
+    useList: true
+  });
+  const error = await t.throwsAsync(myFtpProviderClient.list('/forbidden/file.txt'));
+  jsftpStubbed.restore();
+  t.true(/^.*451.*forbidden\/file\.txt.*/.test(error.message));
 });

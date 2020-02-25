@@ -20,7 +20,7 @@ resource "aws_lambda_function" "fallback_consumer" {
       system_bucket    = var.system_bucket
     }
   }
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
@@ -43,7 +43,7 @@ resource "aws_lambda_function" "kinesis_inbound_event_logger" {
       stackName       = var.prefix
     }
   }
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
@@ -66,7 +66,7 @@ resource "aws_lambda_function" "kinesis_outbound_event_logger" {
       stackName       = var.prefix
     }
   }
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
@@ -94,7 +94,7 @@ resource "aws_lambda_function" "manual_consumer" {
       FallbackTopicArn = aws_sns_topic.kinesis_fallback.arn
     }
   }
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
@@ -122,7 +122,7 @@ resource "aws_lambda_function" "message_consumer" {
       FallbackTopicArn = aws_sns_topic.kinesis_fallback.arn
     }
   }
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
@@ -151,7 +151,7 @@ resource "aws_lambda_function" "schedule_sf" {
       stackName        = var.prefix
     }
   }
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
@@ -175,7 +175,7 @@ resource "aws_lambda_function" "sf_semaphore_down" {
       SemaphoresTable = var.dynamo_tables.semaphores.name
     }
   }
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
@@ -206,7 +206,7 @@ resource "aws_lambda_function" "sf_sns_report_task" {
       pdr_sns_topic_arn           = var.report_pdrs_sns_topic_arn
     }
   }
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
@@ -229,7 +229,7 @@ resource "aws_lambda_function" "sqs2sf" {
       stackName       = var.prefix
     }
   }
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
@@ -259,7 +259,7 @@ resource "aws_lambda_function" "sqs2sfThrottle" {
     security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
   }
 
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 }
 
 resource "aws_lambda_function" "sqs_message_consumer" {
@@ -281,7 +281,7 @@ resource "aws_lambda_function" "sqs_message_consumer" {
       system_bucket    = var.system_bucket
     }
   }
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
@@ -305,7 +305,7 @@ resource "aws_lambda_function" "sqs_message_remover" {
       system_bucket    = var.system_bucket
     }
   }
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids

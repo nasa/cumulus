@@ -17,9 +17,7 @@ provider "aws" {
 }
 
 locals {
-  default_tags = {
-    Deployment = var.prefix
-  }
+  tags = merge(var.tags, { Deployment = var.prefix })
 }
 
 data "aws_caller_identity" "current" {}
@@ -123,6 +121,7 @@ module "cumulus" {
   ]
 
   distribution_url = var.distribution_url
+  thin_egress_jwt_secret_name = var.thin_egress_jwt_secret_name
 
   sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
 
@@ -132,6 +131,8 @@ module "cumulus" {
   log_api_gateway_to_cloudwatch = var.log_api_gateway_to_cloudwatch
   log_destination_arn           = var.log_destination_arn
   additional_log_groups_to_elk  = var.additional_log_groups_to_elk
+
+  tags = local.tags
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {
@@ -145,7 +146,7 @@ resource "aws_security_group" "no_ingress_all_egress" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = local.default_tags
+  tags = local.tags
 }
 
 resource "aws_sns_topic_subscription" "sns_s3_executions_test" {
@@ -183,4 +184,6 @@ module "s3_access_test_lambda" {
   providers = {
     aws = "aws.usw2"
   }
+
+  tags = local.tags
 }
