@@ -20,59 +20,15 @@ const {
   updateCMRMetadata
 } = require('@cumulus/cmrjs');
 
-const BucketsConfig = require('@cumulus/common/BucketsConfig');
-
-const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
-
 const libxmljs = require('libxmljs');
 
 const isECHO10File = (filename) => filename.endsWith('cmr.xml');
 const isUMMGFile = (filename) => filename.endsWith('cmr.json');
 
 /**
- * Throw an error if hyrax-metadata-updates is configured to throw an error for
- * testing/example purposes. Set the pass on retry value to simulate
- * a task passing on a retry.
- *
- * @param {Object} event - input from the message adapter
- * @returns {undefined} none
- */
-async function throwErrorIfConfigured(event) {
-  const execution = event.config.execution;
-  const retryFilename = `${execution}_retry.txt`;
-  const bucket = event.config.bucket;
-
-  let isRetry = false;
-
-  if (event.config.passOnRetry) {
-    isRetry = await s3ObjectExists({
-      Bucket: bucket,
-      Key: retryFilename
-    });
-  }
-
-  if (event.config.passOnRetry && isRetry) {
-    log.debug('Detected retry');
-
-    // Delete file
-    await deleteS3Object(bucket, retryFilename);
-  } else if (event.config.fail) {
-    if (event.config.passOnRetry) {
-      await s3PutObject({
-        Bucket: bucket,
-        Key: retryFilename,
-        Body: ''
-      });
-    }
-
-    throw new Error('Step configured to force fail');
-  }
-}
-
-/**
  * generateAddress
  *
- * @param {Object} env - the environment retrieved from configuration
+ * @param {string} env - the environment retrieved from configuration
  * @throws {InvalidArgument} if the env is not valid
  * @returns {string} - the corresponding OPeNDAP address
  */
@@ -96,6 +52,7 @@ function generateAddress(env) {
  * @returns {string} - the native id
  */
 function getNativeId(metadata) {
+  // TODO switch on file type
   let metadataObject = null;
   try {
     // Is this UMM-G or ECHO10?
@@ -117,7 +74,7 @@ function getNativeId(metadata) {
  * generatePath
  *
  * @param {Object} event - the event
- * @param {Object} metadata - the metadata
+ * @param {string} metadata - the metadata
  * @throws {Object} invalidArgumentException - if the env is not valid
  * @returns {string} - the OPeNDAP path
  */
@@ -133,16 +90,15 @@ function generatePath(event, metadata) {
     throw new InvalidArgument('Entry Title not supplied in configuration. Unable to construct path');
   }
   const nativeId = getNativeId(metadata);
-  const path = `providers/${providerId}/collections/${entryTitle}/granules/${nativeId}`;
 
-  return path;
+  return `providers/${providerId}/collections/${entryTitle}/granules/${nativeId}`;
 }
 
 /**
  * generateHyraxUrl
  *
  * @param {Object} event - the event
- * @param {Object} metadata - the metadata
+ * @param {string} metadata - the metadata
  * @returns {string} - the hyrax url
  */
 function generateHyraxUrl(event, metadata) {
@@ -152,13 +108,13 @@ function generateHyraxUrl(event, metadata) {
 }
 
 /**
- * addHyraxUrl
+ * addHyraxUrlToUmmG
  *
  * @param {string} metadata - the orginal metadata
- * @param {URL} hyraxUrl - the hyrax url
+ * @param {string} hyraxUrl - the hyrax url
  * @returns {string} - the updated metadata containing a Hyrax URL
  */
-function addHyraxUrl(metadata, hyraxUrl) {
+function addHyraxUrlToUmmG(metadata, hyraxUrl) {
   let metadataObject = null;
   try {
     // Is this UMM-G or ECHO10?
@@ -173,20 +129,49 @@ function addHyraxUrl(metadata, hyraxUrl) {
       Description: 'OPeNDAP request URL'
     };
     metadataObject.umm.RelatedUrls.push(url);
-    return JSON.stringify(metadataObject, null, 2);
   } catch (e) {
-    const xmlDoc = libxmljs.parseXmlString(metadata);
-
-    let urlsNode = xmlDoc.get('/Granule/OnlineResources');
-    if (_.isUndefined(urlsNode)) {
-      const onlineAccessURLs = xmlDoc.get('/Granule/OnlineAccessURLs');
-      urlsNode = new libxmljs.Element(xmlDoc, 'OnlineResources');
-      onlineAccessURLs.addNextSibling(urlsNode);
-    }
-    urlsNode.node('OnlineResource').node('url', hyraxUrl).node('Description', 'OPeNDAP request URL').node('Type', 'GET DATA : OPENDAP DATA');
-
-    return xmlDoc.toString();
+    throw new InvalidArgument('UMM-G metadata record is not a valid JSON document');
   }
+  return JSON.stringify(metadataObject, null, 2);
+}
+
+/**
+ * addHyraxUrlToEcho10
+ *
+ * @param {string} metadata - the orginal metadata
+ * @param {string} hyraxUrl - the hyrax url
+ * @returns {string} - the updated metadata containing a Hyrax URL
+ */
+function addHyraxUrlToEcho10(metadata, hyraxUrl) {
+  const xmlDoc = libxmljs.parseXmlString(metadata);
+
+  let urlsNode = xmlDoc.get('/Granule/OnlineResources');
+  if (_.isUndefined(urlsNode)) {
+    const onlineAccessURLs = xmlDoc.get('/Granule/OnlineAccessURLs');
+    urlsNode = new libxmljs.Element(xmlDoc, 'OnlineResources');
+    onlineAccessURLs.addNextSibling(urlsNode);
+  }
+  urlsNode.node('OnlineResource').node('url', hyraxUrl).node('Description', 'OPeNDAP request URL').node('Type', 'GET DATA : OPENDAP DATA');
+
+  return xmlDoc.toString();
+}
+
+/**
+ * addHyraxUrl
+ *
+ * @param {string} metadata - the orginal metadata
+ * @param {boolean} isUmmG - UMM-G or ECHO10 metadata
+ * @param {string} hyraxUrl - the hyrax url
+ * @returns {string} - the updated metadata containing a Hyrax URL
+ */
+function addHyraxUrl(metadata, isUmmG, hyraxUrl) {
+  let updatedMetadata = null;
+  if (isUmmG === true) {
+    updatedMetadata = addHyraxUrlToUmmG(metadata, hyraxUrl);
+  } else {
+    updatedMetadata = addHyraxUrlToEcho10(metadata, hyraxUrl);
+  }
+  return updatedMetadata;
 }
 
 /**
@@ -232,8 +217,11 @@ function addHyraxUrl(metadata, hyraxUrl) {
 async function hyraxMetadataUpdate(event) {
   const granulesInput = event.input.granules;
   const cmrFiles = granulesToCmrFileObjects(granulesInput);
-  
-  // Update each metadata file with OPeNDAP url and write it back out to S3 in the same location.
+
+  // Read in each metadata file - metadataObjectFromCMRFile 
+  // Add OPeNDAP url
+  // Validate via CMR
+  // Write back out to S3 in the same location
 
   return {
     granules: granulesInput

@@ -103,7 +103,7 @@ test('Test adding OPeNDAP URL to UMM-G file', async (t) => {
   const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const expected = fs.readFileSync('tests/data/umm-gout.json', 'utf8');
   const expectedObject = JSON.parse(expected);
-  const result = await HyraxMetadataUpdate.addHyraxUrl(data, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
+  const result = await HyraxMetadataUpdate.addHyraxUrl(data, true, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
   t.is(result, JSON.stringify(expectedObject, null, 2));
 });
 
@@ -111,21 +111,21 @@ test('Test adding OPeNDAP URL to UMM-G file with no related urls', async (t) => 
   const data = fs.readFileSync('tests/data/umm-gin-no-related-urls.json', 'utf8');
   const expected = fs.readFileSync('tests/data/umm-gout-no-related-urls.json', 'utf8');
   const expectedObject = JSON.parse(expected);
-  const result = await HyraxMetadataUpdate.addHyraxUrl(data, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
+  const result = await HyraxMetadataUpdate.addHyraxUrl(data, true, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
   t.is(result, JSON.stringify(expectedObject, null, 2));
 });
 
 test('Test adding OPeNDAP URL to ECHO10 file', async (t) => {
   const data = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
   const expected = fs.readFileSync('tests/data/echo10out.xml', 'utf8');
-  const result = await HyraxMetadataUpdate.addHyraxUrl(data, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
+  const result = await HyraxMetadataUpdate.addHyraxUrl(data, false, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
   t.is(result, expected);
 });
 
 test('Test adding OPeNDAP URL to ECHO10 file with no OnlineResources', async (t) => {
   const data = fs.readFileSync('tests/data/echo10in-no-online-resource-urls.xml', 'utf8');
   const expected = fs.readFileSync('tests/data/echo10out-no-online-resource-urls.xml', 'utf8');
-  const result = await HyraxMetadataUpdate.addHyraxUrl(data, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
+  const result = await HyraxMetadataUpdate.addHyraxUrl(data, false, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
   t.is(result, expected);
 });
 
