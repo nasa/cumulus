@@ -6,28 +6,39 @@ const HyraxMetadataUpdate = require('..');
 
 // Unit tests
 test('Test return prod OPeNDAP host when no environment value supplied', async (t) => {
+  const data = await HyraxMetadataUpdate.generateAddress();
+  t.is(data, 'https://opendap.earthdata.nasa.gov');
+});
 
-  const data = await HyraxMetadataUpdate.generateAddress('prod');
+test('Test return prod OPeNDAP host when prod environment value supplied', async (t) => {
+  process.env.CMR_ENVIRONMENT = 'PROD';
+  const data = await HyraxMetadataUpdate.generateAddress();
+  t.is(data, 'https://opendap.earthdata.nasa.gov');
+});
+
+test('Test return prod OPeNDAP host when ops environment value supplied', async (t) => {
+  process.env.CMR_ENVIRONMENT = 'OPS';
+  const data = await HyraxMetadataUpdate.generateAddress();
 
   t.is(data, 'https://opendap.earthdata.nasa.gov');
 });
 
 test('Test return sit OPeNDAP host when sit environment value supplied', async (t) => {
-  const data = await HyraxMetadataUpdate.generateAddress('sit');
-
+  process.env.CMR_ENVIRONMENT = 'SIT';
+  const data = await HyraxMetadataUpdate.generateAddress();
   t.is(data, 'https://opendap.sit.earthdata.nasa.gov');
 });
 
 test('Test return uat OPeNDAP host when uat environment value supplied', async (t) => {
-  const data = await HyraxMetadataUpdate.generateAddress('uat');
-
+  process.env.CMR_ENVIRONMENT = 'UAT';
+  const data = await HyraxMetadataUpdate.generateAddress();
   t.is(data, 'https://opendap.uat.earthdata.nasa.gov');
 });
 
 test('Test return error when invalid environment supplied for host generation', async (t) => {
-
+  process.env.CMR_ENVIRONMENT = 'FOO';
   const error = await t.throws(
-    () => HyraxMetadataUpdate.generateAddress('foo')
+    () => HyraxMetadataUpdate.generateAddress()
   );
 
   t.is(error.message, 'Environment foo is not a valid environment.');
@@ -132,12 +143,12 @@ test('Test adding OPeNDAP URL to ECHO10 file with no OnlineResources', async (t)
 test('Test generating OPeNDAP URL from ECHO10 file ', async (t) => {
   const event = {
     config: {
-      environment: 'sit',
       provider: 'GES_DISC',
       entryTitle: 'GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC'
     },
     input: {}
   };
+  process.env.CMR_ENVIRONMENT = 'SIT';
   const data = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
   const result = await HyraxMetadataUpdate.generateHyraxUrl(event, data, false);
   t.is(result, 'https://opendap.sit.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
@@ -146,12 +157,12 @@ test('Test generating OPeNDAP URL from ECHO10 file ', async (t) => {
 test('Test generating OPeNDAP URL from UMM-G file ', async (t) => {
   const event = {
     config: {
-      environment: 'sit',
       provider: 'GES_DISC',
       entryTitle: 'GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC'
     },
     input: {}
   };
+  process.env.CMR_ENVIRONMENT = 'SIT';
   const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const result = await HyraxMetadataUpdate.generateHyraxUrl(event, data, true);
   t.is(result, 'https://opendap.sit.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
@@ -165,6 +176,7 @@ test('Test generating OPeNDAP URL from ECHO10 file with no environment set', asy
     },
     input: {}
   };
+  process.env.CMR_ENVIRONMENT = 'PROD';
   const data = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
   const result = await HyraxMetadataUpdate.generateHyraxUrl(event, data, false);
   t.is(result, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');

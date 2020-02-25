@@ -77,6 +77,6 @@
     "provider": {
       "type": "string",
       "description": "The CMR provider ID associated with this archive"
-    },
+    }
   }
 }

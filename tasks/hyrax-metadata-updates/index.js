@@ -4,11 +4,6 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const log = require('@cumulus/common/log');
 const { InvalidArgument } = require('@cumulus/errors');
 
-const {
-  s3ObjectExists,
-  s3PutObject
-} = require('@cumulus/aws-client/S3');
-
 const get = require('lodash.get');
 const _ = require('lodash/core');
 
@@ -27,17 +22,22 @@ const isUMMGFile = (filename) => filename.endsWith('cmr.json');
 /**
  * generateAddress
  *
- * @param {string} env - the environment retrieved from configuration
  * @throws {InvalidArgument} if the env is not valid
  * @returns {string} - the corresponding OPeNDAP address
  */
-function generateAddress(env) {
-  const validEnvs = ['prod', 'uat', 'sit'];
+function generateAddress() {
+  let env = process.env.CMR_ENVIRONMENT;
+
+  if (_.isUndefined(env)) {
+    env = 'prod';
+  } else {
+    env = env.toLowerCase();
+  }
+  const validEnvs = ['prod', 'ops', 'uat', 'sit'];
   let envSubstition = env;
   if (validEnvs.includes(env)) {
-    envSubstition = (env === 'prod' ? '' : `${env}.`);
-  }
-  else {
+    envSubstition = ((env === 'prod' || env === 'ops') ? '' : `${env}.`);
+  } else {
     // Throw an exception if it is not a valid environment
     throw new InvalidArgument(`Environment ${env} is not a valid environment.`);
   }
@@ -151,9 +151,14 @@ function addHyraxUrlToEcho10(metadata, hyraxUrl) {
     urlsNode = new libxmljs.Element(xmlDoc, 'OnlineResources');
     onlineAccessURLs.addNextSibling(urlsNode);
   }
-  urlsNode.node('OnlineResource').node('url', hyraxUrl).node('Description', 'OPeNDAP request URL').node('Type', 'GET DATA : OPENDAP DATA');
+  urlsNode.node('OnlineResource')
+    .node('url', hyraxUrl)
+    .parent()
+    .node('Description', 'OPeNDAP request URL')
+    .parent()
+    .node('Type', 'GET DATA : OPENDAP DATA');
 
-  return xmlDoc.toString();
+  return xmlDoc.toString({ format: true });
 }
 
 /**
@@ -175,40 +180,6 @@ function addHyraxUrl(metadata, isUmmG, hyraxUrl) {
 }
 
 /**
- * Update each of the CMR files' OnlineAccessURL fields to represent the new
- * file locations.
- *
- * @param {Array<Object>} cmrFiles - array of objects that include CMR xmls uris and granuleIds
- * @param {Object} granulesObject - an object of the granules where the key is the granuleId
- * @param {string} cmrGranuleUrlType - type of granule CMR url
- * @param {string} distEndpoint - the api distribution endpoint
- * @param {BucketsConfig} bucketsConfig - BucketsConfig instance
- * @returns {Promise} promise resolves when all files have been updated
- **/
-/* async function updateEachCmrFileAccessURLs(
-  cmrFiles,
-  granulesObject,
-  cmrGranuleUrlType,
-  distEndpoint,
-  bucketsConfig
-) {
-  return Promise.all(cmrFiles.map(async (cmrFile) => {
-    const granuleId = cmrFile.granuleId;
-    const granule = granulesObject[granuleId];
-    const updatedCmrFile = granule.files.find(isCMRFile);
-    return updateCMRMetadata({
-      granuleId,
-      cmrFile: updatedCmrFile,
-      files: granule.files,
-      distEndpoint,
-      published: false, // Do the publish in publish-to-cmr step
-      inBuckets: bucketsConfig,
-      cmrGranuleUrlType
-    });
-  }));
-} */
-
-/**
  * Do the work
  *
  * @param {Object} event - input from the message adapter
@@ -216,9 +187,8 @@ function addHyraxUrl(metadata, isUmmG, hyraxUrl) {
  */
 async function hyraxMetadataUpdate(event) {
   const granulesInput = event.input.granules;
-  const cmrFiles = granulesToCmrFileObjects(granulesInput);
 
-  // Read in each metadata file - metadataObjectFromCMRFile 
+  // Read in each metadata file
   // Add OPeNDAP url
   // Validate via CMR
   // Write back out to S3 in the same location
