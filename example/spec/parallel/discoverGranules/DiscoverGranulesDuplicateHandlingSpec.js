@@ -20,7 +20,6 @@ const {
 } = require('../../helpers/testUtils');
 
 const workflowName = 'DiscoverGranules';
-
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 2000000;
 
 const updateCollectionDuplicateFlag = async (flag, collection, config) => {

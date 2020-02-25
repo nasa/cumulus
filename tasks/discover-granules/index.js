@@ -190,16 +190,13 @@ const checkDuplicate = async (granuleId, dupeConfig, baseUrl) => {
 
 const filterDuplicates = async (filesKeys, duplicateHandling) => {
   const provider = process.env.oauth_provider;
-  const ursPassword = await getSecretString(
-    process.env.urs_password_secret_name
-  );
-
   const tokenConfig = {
-    // TODO launchpad key?
     passphrase: process.env.launchpad_passphrase,
     baseUrl: process.env.archive_api_uri,
     username: process.env.urs_id,
-    password: ursPassword
+    password: await getSecretString(
+      process.env.urs_password_secret_name
+    )
   };
   const authToken = await getAuthToken(provider, tokenConfig);
   const dupeConfig = {
@@ -213,7 +210,7 @@ const filterDuplicates = async (filesKeys, duplicateHandling) => {
 };
 
 
-const filterDuplicateGranules = async (filesByGranuleId, duplicateHandling = 'error') => {
+const handleDuplicates = async (filesByGranuleId, duplicateHandling = 'error') => {
   logger().info(`Running discoverGranules with duplicateHandling set to ${duplicateHandling}`);
   if (['skip', 'error'].includes(duplicateHandling)) {
     // Iterate over granules, remove if exists in dynamo
@@ -248,7 +245,7 @@ const discoverGranules = async ({ config }) => {
   );
 
   const duplicateHandling = duplicateHandlingType({ config });
-  filesByGranuleId = await filterDuplicateGranules(filesByGranuleId, duplicateHandling);
+  filesByGranuleId = await handleDuplicates(filesByGranuleId, duplicateHandling);
 
   const granules = map(filesByGranuleId, buildGranule(config));
 
