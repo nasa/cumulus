@@ -146,7 +146,9 @@ function generatePath(event, metadata) {
  * @returns {string} - the hyrax url
  */
 function generateHyraxUrl(event, metadata) {
-  return (`${generateAddress(event)}/${generatePath(event, metadata)}`);
+  const environment = get(event.config, 'environment', 'prod');
+  const url = new URL(`${generateAddress(environment)}/${generatePath(event, metadata)}`);
+  return (url.href);
 }
 
 /**
@@ -198,7 +200,7 @@ function addHyraxUrl(metadata, hyraxUrl) {
  * @param {BucketsConfig} bucketsConfig - BucketsConfig instance
  * @returns {Promise} promise resolves when all files have been updated
  **/
-async function updateEachCmrFileAccessURLs(
+/* async function updateEachCmrFileAccessURLs(
   cmrFiles,
   granulesObject,
   cmrGranuleUrlType,
@@ -219,7 +221,7 @@ async function updateEachCmrFileAccessURLs(
       cmrGranuleUrlType
     });
   }));
-}
+} */
 
 /**
  * Do the work
@@ -256,3 +258,4 @@ exports.generateAddress = generateAddress; // exported to support testing
 exports.generatePath = generatePath; // exported to support testing
 exports.getNativeId = getNativeId; // exported to support testing
 exports.addHyraxUrl = addHyraxUrl; // exported to support testing
+exports.generateHyraxUrl = generateHyraxUrl; // exported to support testing
