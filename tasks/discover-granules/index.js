@@ -172,6 +172,18 @@ const buildGranule = curry(
   }
 );
 
+
+/**
+ * checks a granuleId against the Granules API to determine if
+ * there is a duplicate granule
+ *
+ * @param {string} granuleId - granuleId to evaluate
+ * @param {Object} dupeConfig - configuration object
+ * @param {string} baseUrl - archive base URL
+ * @returns {string} returns granuleId string if no duplicate found, '' if
+ *                   a duplicate is found.  Throws an error on duplicate if
+ *                   dupeConfig.duplicateHandling is set to 'error'
+ */
 const checkDuplicate = async (granuleId, dupeConfig, baseUrl) => {
   const headers = { authorization: `Bearer ${dupeConfig.token}` };
   try {
@@ -188,7 +200,20 @@ const checkDuplicate = async (granuleId, dupeConfig, baseUrl) => {
   return '';
 };
 
-const filterDuplicates = async (filesKeys, duplicateHandling) => {
+/**
+ * Filters granule duplicates from a list of granuleIds according to the
+ * configuration in duplicateHandling:
+ *
+ * skip:               Duplicates will be filtered from the list
+ * error:              Duplicates encountered will result in a thrown error
+ * replace, version:   Duplicates will be ignored
+ *
+ * @param {Array.string} granuleIds - Array of granuleIds to filter
+ * @param {string} duplicateHandling - flag that defines this function's behavior (see description)
+ *
+ * @returns {Array.string} returns granuleIds parameter with applicable duplciates removed
+ */
+const filterDuplicates = async (granuleIds, duplicateHandling) => {
   const provider = process.env.oauth_provider;
   const tokenConfig = {
     passphrase: process.env.launchpad_passphrase,
@@ -204,12 +229,27 @@ const filterDuplicates = async (filesKeys, duplicateHandling) => {
     token: authToken
   };
 
-  const keysPromises = filesKeys.map((key) => checkDuplicate(key, dupeConfig, tokenConfig.baseUrl));
+  const keysPromises = granuleIds.map((key) =>
+    checkDuplicate(key, dupeConfig, tokenConfig.baseUrl));
+
   const filteredKeys = await Promise.all(keysPromises);
   return filteredKeys.filter(Boolean);
 };
 
-
+/**
+ * Handles duplicates in the filelist according to the duplicateHandling flag:
+ *
+ * skip:               Duplicates will be filtered from the list
+ * error:              Duplicates encountered will result in a thrown error
+ * replace, version:   Duplicates will be ignored
+ *
+ * @param {Object} filesByGranuleId - Object with granuleId for keys with an array of
+ *                                    matching files for each
+ *
+ * @param {string} duplicateHandling - flag that defines this function's behavior (see description)
+ *
+ * @returns {Object} returns filesByGranuleId with applicable duplciates removed
+ */
 const handleDuplicates = async (filesByGranuleId, duplicateHandling = 'error') => {
   logger().info(`Running discoverGranules with duplicateHandling set to ${duplicateHandling}`);
   if (['skip', 'error'].includes(duplicateHandling)) {
