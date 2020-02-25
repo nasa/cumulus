@@ -10,12 +10,11 @@ module "ingest" {
 
   # API config
 
-  archive_api_uri      = module.archive.api_uri
-  oauth_provider       = var.oauth_provider
-  launchpad_passphrase = var.launchpad_passphrase
-  urs_id               = var.urs_id
-  urs_password         = var.urs_password
-  urs_url              = var.urs_url
+  archive_api_uri       = module.archive.api_uri
+  oauth_provider        = var.oauth_provider
+  urs_id                = var.urs_id
+  urs_password          = var.urs_password
+  urs_url               = var.urs_url
 
   # Buckets config
   system_bucket = var.system_bucket
@@ -40,6 +39,7 @@ module "ingest" {
 
   # Launchpad config
   launchpad_api         = var.launchpad_api
+  launchpad_passphrase  = var.launchpad_passphrase
   launchpad_certificate = var.launchpad_certificate
 
   # DB config

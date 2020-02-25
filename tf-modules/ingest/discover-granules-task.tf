@@ -15,9 +15,12 @@ resource "aws_lambda_function" "discover_granules_task" {
     variables = {
       CMR_ENVIRONMENT             = var.cmr_environment
       stackName                   = var.prefix
+      system_bucket               = var.system_bucket
       GranulesTable               = var.dynamo_tables.granules.name
       oauth_provider              = var.oauth_provider
-      launchpad_passphrase        = var.launchpad_passphrase
+      launchpad_api               = var.launchpad_api
+      launchpad_certificate       = var.launchpad_certificate
+      passphraseSecretName        = length(var.launchpad_passphrase) == 0 ? "" : aws_secretsmanager_secret.message_template_launchpad_passphrase.name
       urs_id                      = var.urs_id
       urs_password_secret_name    = length(var.urs_password) == 0 ? null : aws_secretsmanager_secret.ingest_urs_password.name
       urs_url                     = var.urs_url

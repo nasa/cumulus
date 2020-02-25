@@ -21,12 +21,12 @@ const getEdlToken = async (urlObj, form) => {
 };
 
 const getAuthToken = async (provider, config) => {
-  // Needs internal bucket and stack env vars configured
   if (provider === 'launchpad') {
+    console.log(`${JSON.stringify(config)}`);
     const launchpadToken = await launchpad.getLaunchpadToken({
-      passphrase: config.passphrase,
-      api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1/gettoken',
-      certificate: 'launchpad.pfx' // TODO add cert env variable
+      passphrase: config.launchpadPassphrase,
+      api: config.launchpadApi,
+      certificate: config.launchpadCertificate
     });
     return launchpadToken;
   }
@@ -42,9 +42,6 @@ const getAuthToken = async (provider, config) => {
     const edlReturn = await getEdlToken(urlObj, form);
     const location = edlReturn.headers.location;
 
-    // Shim due to local port 8000 testing, TODO remove for testing, or... use testing env var, or .... :thinking face:
-    // TODO: we should remove it as this isn't intended to run locally and we can rewire for tests.
-    // location = location.replace('.com', '.com:8000');
     const edlOutput = await got.get(location);
     return JSON.parse(edlOutput.body).message.token;
   }

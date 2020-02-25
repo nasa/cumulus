@@ -216,12 +216,17 @@ const checkDuplicate = async (granuleId, dupeConfig, baseUrl) => {
 const filterDuplicates = async (granuleIds, duplicateHandling) => {
   const provider = process.env.oauth_provider;
   const tokenConfig = {
-    passphrase: process.env.launchpad_passphrase,
     baseUrl: process.env.archive_api_uri,
     username: process.env.urs_id,
     password: await getSecretString(
       process.env.urs_password_secret_name
-    )
+    ),
+    launchpadPassphrase: await getSecretString(
+      process.env.passphraseSecretName
+    ),
+    launchpadApi: process.env.launchpad_api,
+    launchpadCertificate: process.env.launchpad_certificate
+
   };
   const authToken = await getAuthToken(provider, tokenConfig);
   const dupeConfig = {
