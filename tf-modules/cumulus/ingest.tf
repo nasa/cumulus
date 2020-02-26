@@ -10,7 +10,7 @@ module "ingest" {
 
   # API config
 
-  archive_api_uri       = module.archive.api_uri
+  archive_api_uri       = module.archive.internal_api_uri
   oauth_provider        = var.oauth_provider
   urs_id                = var.urs_id
   urs_password          = var.urs_password

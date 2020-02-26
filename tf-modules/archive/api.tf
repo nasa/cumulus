@@ -1,7 +1,9 @@
 locals {
-  api_port_substring = var.api_port == null ? "" : ":${var.api_port}"
-  api_uri            = var.api_url == null ? "https://${aws_api_gateway_rest_api.api.id}.execute-api.${data.aws_region.current.name}.amazonaws.com${local.api_port_substring}/${var.api_gateway_stage}/" : var.api_url
-  api_redirect_uri   = "${local.api_uri}token"
+  internal_api_uri          = var.api_url == null ? "https://${aws_api_gateway_rest_api.api.id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${var.api_gateway_stage}/" : var.api_url
+  internal_api_redirect_uri = "${internal_api_uri}token"
+  api_port_substring        = var.api_port == null ? "" : ":${var.api_port}"
+  api_uri                   = var.api_url == null ? "https://${aws_api_gateway_rest_api.api.id}.execute-api.${data.aws_region.current.name}.amazonaws.com${local.api_port_substring}/${var.api_gateway_stage}/" : var.api_url
+  api_redirect_uri          = "${local.api_uri}token"
 }
 
 resource "aws_cloudwatch_log_group" "api" {

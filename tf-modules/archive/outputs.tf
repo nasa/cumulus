@@ -10,6 +10,14 @@ output "cw_sf_event_to_db_records_lambda_function_arn" {
   value = aws_lambda_function.cw_sf_event_to_db_records.arn
 }
 
+output "internal_api_uri" {
+  value = local.internal_api_uri
+}
+
+output "internal_api_redirect_uri" {
+  value = local.internal_api_redirect_uri
+}
+
 output "log2elasticsearch_lambda_function_arn" {
   value = aws_lambda_function.log2elasticsearch.arn
 }
