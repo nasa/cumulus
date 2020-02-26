@@ -195,10 +195,24 @@ exports.downloadS3File = (s3Obj, filepath) => {
 *
 * @param {string} Bucket - name of bucket
 * @param {string} Key - key for object (filepath + filename)
+* @param {Object} retryOptions - options to control retry behavior when an
+*   object does not exist. See https://github.com/tim-kos/node-retry#retryoperationoptions
+*   By default, retries will not be performed
 * @returns {Promise} - returns response from `S3.headObject` as a promise
 **/
 exports.headObject = improveStackTrace(
-  (Bucket, Key) => awsServices.s3().headObject({ Bucket, Key }).promise()
+  (Bucket, Key, retryOptions = { retries: 0 }) =>
+    pRetry(
+      async () => {
+        try {
+          return await awsServices.s3().headObject({ Bucket, Key }).promise();
+        } catch (err) {
+          if (err.code === 'NotFound') throw err;
+          throw new pRetry.AbortError(err);
+        }
+      },
+      { maxTimeout: 10000, ...retryOptions }
+    )
 );
 
 /**

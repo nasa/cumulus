@@ -10,6 +10,7 @@ declare -a param_list=(
   "bamboo_KES_DEPLOYMENT"
   "bamboo_METRICS_ES_HOST"
   "bamboo_METRICS_ES_USER"
+  "bamboo_NGAP_ENV"
   "bamboo_PUBLISH_FLAG"
   "bamboo_REPORT_BUILD_STATUS"
   "bamboo_SECRET_AWS_ACCESS_KEY_ID"
