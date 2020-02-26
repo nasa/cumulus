@@ -19,7 +19,7 @@ test.serial('getEdlAuthorization returns the error if error is a "successful" 30
       throw expected;
     }
   });
-  const actual = await getEdlAuthorization({}, '');
+  const actual = await getEdlAuthorization({}, '', 'location');
   t.is(actual, expected);
   gotRestore();
 });

@@ -13,12 +13,12 @@ class AuthTokenError extends Error {
   }
 }
 
-const getEdlAuthorization = async (urlObj, form) => {
+const getEdlAuthorization = async (urlObj, form, baseUrl) => {
   let edlReturn;
   try {
     edlReturn = await got.post(`${urlObj.href}`, { body: form, headers: { origin: `${urlObj.protocol}//${urlObj.host}` } });
   } catch (error) {
-    if (error.statusCode === 302 && error.headers.location) {
+    if (error.statusCode === 302 && error.headers.location.includes(baseUrl)) {
       return error;
     }
     throw error;
@@ -34,7 +34,7 @@ const getEdlToken = async (config) => {
   const form = new FormData();
   form.append('credentials', auth);
 
-  const edlAuthReturn = await getEdlAuthorization(urlObj, form);
+  const edlAuthReturn = await getEdlAuthorization(urlObj, form, config.baseUrl);
   const location = edlAuthReturn.headers.location;
 
   const edlOutput = await got.get(location);
