@@ -46,9 +46,7 @@ test.serial('getEdlAuthorization throws error if no error thrown on post', async
   const messageRegexp = new RegExp(/Invalid endpoint configuration/);
   const getEdlAuthorization = authTokenRewire.__get__('getEdlAuthorization');
   const gotRestore = authTokenRewire.__set__('got', {
-    post: async () => {
-      return true;
-    }
+    post: async () => true
   });
   await t.throwsAsync(getEdlAuthorization({}, '', { message: messageRegexp }));
   gotRestore();

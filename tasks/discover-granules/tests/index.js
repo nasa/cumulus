@@ -13,7 +13,7 @@ const {
 } = require('@cumulus/common/test-utils');
 const { promisify } = require('util');
 
-const discoverGranulesRewire = rewire('..')
+const discoverGranulesRewire = rewire('..');
 const discoverGranules = discoverGranulesRewire.discoverGranules;
 
 const readFile = promisify(fs.readFile);
@@ -376,7 +376,7 @@ test.serial('checkDuplicate returns a granuleId string when the API returns a 40
     error.statusMessage = 'Not Found';
     const gotRestore = discoverGranulesRewire.__set__('got', {
       get: () => {
-        throw error
+        throw error;
       }
     });
 

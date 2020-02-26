@@ -132,4 +132,3 @@ xdescribe('The Discover Granules workflow with https Protocol', () => {
     });
   });
 });
-``
