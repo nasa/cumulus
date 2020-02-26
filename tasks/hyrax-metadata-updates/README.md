@@ -41,7 +41,7 @@ The four properties we need to construct this url are as follows,
 | Property | Source | Notes
 | -------- | ------ | -----
 | Provider ID | Configuration `config.cmr.provider` | 
-| Entry Title | Derived from retrieval of parent collection from CMR |
+| Entry Title | Derived from retrieval of parent collection from CMR | This requires a call to the CMR search API
 | Granule UR   | Granule metadata:  <br>UMM-G `umm->GranuleUR`  <br>ECHO10 `Granule->DataGranule->GranuleUR`
 | Environment | `process.env.CMR_ENVIRONMENT` | Do we wish to use the SIT, UAT or PROD version of Hyrax?
 
@@ -52,13 +52,11 @@ For more information on configuring a Cumulus Message Adapter task, see [the Cum
 
 Config object fields:
 
-| field name            | type    | default    | values         | description
-| --------------------- | ------- | ---------- | -------------- | -----------
-| bucket                | string  | (required) |                | Bucket with public/private key for decrypting CMR password
-| buckets               | object  | (required) |                | Object specifying AWS S3 buckets used by this task
-| collection            | object  | (required) |                | The cumulus-api collection object
-| entry_title           | string  | (required) |                | The CMR entry title for this collection
-| provider              | string  | (required) |                | The CMR provider ID associated with this archive
+| field name            | type    | default    | values | description
+| --------------------- | ------- | ---------- | -------| -----------
+| collection            | object  | (required) |        | 
+| cmr
+
 
 ### Input
 
@@ -74,7 +72,7 @@ Output object fields:
 
 | field name | type            | default  | description
 | ---------- | ----            | -------  | -----------
-| granules   | array\<object\> | N/A      | List of granule objects with updated S3 location information
+| granules   | array\<object\> | N/A      | List of granule objects 
 
 ## About Cumulus
 

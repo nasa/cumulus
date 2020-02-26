@@ -1,11 +1,10 @@
 {
-  "title": "MoveGranulesOutput",
-  "description": "Describes the output produced by the move-granules task",
+  "title": "HyraxMetadataUpdatesOutput",
+  "description": "Describes the output produced by the hyrax-metadata-updates task",
   "type": "object",
   "properties": {
     "granules": {
       "type": "array",
-      "description": "Array of all granules",
       "items": {
         "type": "object",
         "required": ["granuleId", "files"],
@@ -17,7 +16,6 @@
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["name"],
               "properties": {
                 "name": {
                   "type": "string"
@@ -30,10 +28,6 @@
                 },
                 "bucket": {
                   "type": "string"
-                },
-                "duplicate_found": {
-                  "description": "whether a duplicate for this file was found",
-                  "type": "boolean"
                 }
               }
             }

@@ -1,6 +1,6 @@
 {
-  "title": "MoveGranulesInput",
-  "description": "Describes the input expected by the move-granules task",
+  "title": "HyraxMetadataUpdatesInput",
+  "description": "Describes the input expected by the hyrax-metadata-updates task",
   "type": "object",
   "required": [
     "granules"
@@ -20,15 +20,8 @@
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["name"],
               "properties": {
-                "name": {
-                  "type": "string"
-                },
                 "filename": {
-                  "type": "string"
-                },
-                "type": {
                   "type": "string"
                 },
                 "bucket": {

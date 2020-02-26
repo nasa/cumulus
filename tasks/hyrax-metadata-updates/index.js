@@ -1,13 +1,13 @@
 'use strict';
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
-const log = require('@cumulus/common/log');
 const { InvalidArgument } = require('@cumulus/errors');
 
 const get = require('lodash.get');
 const _ = require('lodash/core');
 
 const { CMR } = require('@cumulus/cmr-client');
+//const { CMRUtil } = require('@cumulus/cmr-util');
 
 const libxmljs = require('libxmljs');
 
@@ -73,16 +73,14 @@ async function getEntryTitle(config, metadata, isUmmG) {
   let version = null;
   if (isUmmG === true) {
     try {
-      const metadataObject = JSON.parse(metadata);
-      shortName = metadataObject.umm.CollectionReference.ShortName;
-      version = metadataObject.umm.CollectionReference.Version;
+      shortName = metadata.umm.CollectionReference.ShortName;
+      version = metadata.umm.CollectionReference.Version;
     } catch (e) {
       throw new InvalidArgument('UMM-G metadata record is not a valid JSON document');
     }
   } else {
-    const xmlDoc = libxmljs.parseXml(metadata);
-    shortName = xmlDoc.get('/Granule/Collection/ShortName').text();
-    version = xmlDoc.get('/Granule/Collection/VersionId').text();
+    shortName = metadata.get('/Granule/Collection/ShortName').text();
+    version = metadata.get('/Granule/Collection/VersionId').text();
   }
   // Query CMR for collection and retrieve entry title
   const cmrInstance = new CMR({
@@ -103,19 +101,19 @@ async function getEntryTitle(config, metadata, isUmmG) {
 /**
  * generatePath
  *
- * @param {Object} event - the event
+ * @param {Object} config - the config
  * @param {string} metadata - the metadata
  * @param {boolean} isUmmG - UMM-G or ECHO10
  * @throws {Object} invalidArgumentException - if the env is not valid
  * @returns {string} - the OPeNDAP path
  */
-function generatePath(event, metadata, isUmmG) {
-  const providerId = get(event.config.cmr, 'provider');
+function generatePath(config, metadata, isUmmG) {
+  const providerId = get(config.cmr, 'provider');
   // Check if providerId is defined
   if (_.isUndefined(providerId)) {
     throw new InvalidArgument('Provider not supplied in configuration. Unable to construct path');
   }
-  const entryTitle = get(event.config, 'entryTitle');
+  const entryTitle = get(config, 'entryTitle');
   // Check if entryTitle is defined
   if (_.isUndefined(entryTitle)) {
     throw new InvalidArgument('Entry Title not supplied in configuration. Unable to construct path');
@@ -128,14 +126,13 @@ function generatePath(event, metadata, isUmmG) {
 /**
  * generateHyraxUrl
  *
- * @param {Object} event - the event
+ * @param {Object} config - the config
  * @param {string} metadata - the metadata
  * @param {boolean} isUmmG - UMM-G or ECHO10
  * @returns {string} - the hyrax url
  */
-function generateHyraxUrl(event, metadata, isUmmG) {
-  const environment = get(event.config, 'environment', 'prod');
-  const url = new URL(`${generateAddress(environment)}/${generatePath(event, metadata, isUmmG)}`);
+function generateHyraxUrl(config, metadata, isUmmG) {
+  const url = new URL(`${generateAddress()}/${generatePath(config, metadata, isUmmG)}`);
   return (url.href);
 }
 
@@ -212,6 +209,33 @@ function addHyraxUrl(metadata, isUmmG, hyraxUrl) {
 }
 
 /**
+ * updateSingleGranule
+ *
+ * @param {Object} config
+ * @param {Object} granuleMetadataFile - input granule
+ */
+/* async function updateSingleGranule(config, granuleMetadataFile) {
+  const cmrfilename = granuleMetadataFile.key || granuleMetadataFile.name || granuleMetadataFile.filename || '';
+  // Read in the metadata file
+  const metadata = null;
+  let isUmmG = false;
+  // Parse into DOM based on file extension
+  let dom = null;
+  if (CMRUtil.isUMMGFile(cmrfilename)) {
+    dom = libxmljs.parseXml(metadata);
+    isUmmG = true;
+  } else if (CMRUtil.isECHO10File(cmrfilename)) {
+    dom = JSON.parse(metadata);
+  }
+
+  // Add OPeNDAP url
+  const hyraxUrl = generateHyraxUrl(event, dom, isUmmG);
+  const updatedMetadata = addHyraxUrl(dom, isUmmG, hyraxUrl);
+  // Validate via CMR
+  // Write back out to S3 in the same location
+} */
+
+/**
  * Do the work
  *
  * @param {Object} event - input from the message adapter
@@ -219,12 +243,7 @@ function addHyraxUrl(metadata, isUmmG, hyraxUrl) {
  */
 async function hyraxMetadataUpdate(event) {
   const granulesInput = event.input.granules;
-
-  // Read in each metadata file
-  // Add OPeNDAP url
-  // Validate via CMR
-  // Write back out to S3 in the same location
-
+  // isCMRFilename
   return {
     granules: granulesInput
   };
