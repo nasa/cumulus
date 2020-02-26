@@ -42,7 +42,7 @@ The four properties we need to construct this url are as follows,
 | -------- | ------ | -----
 | Provider ID | Configuration `config.cmr.provider` | 
 | Entry Title | Derived from retrieval of parent collection from CMR |
-| Granule UR   | Granule metadata:  <br>UMM-G `umm->granule-ur`  <br>ECHO10 `Granule->DataGranule->GranuleUR`
+| Granule UR   | Granule metadata:  <br>UMM-G `umm->GranuleUR`  <br>ECHO10 `Granule->DataGranule->GranuleUR`
 | Environment | `process.env.CMR_ENVIRONMENT` | Do we wish to use the SIT, UAT or PROD version of Hyrax?
 
 

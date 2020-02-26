@@ -7,18 +7,7 @@ const { InvalidArgument } = require('@cumulus/errors');
 const get = require('lodash.get');
 const _ = require('lodash/core');
 
-const {
-  isCMRFile,
-  metadataObjectFromCMRFile,
-  granulesToCmrFileObjects,
-  updateCMRMetadata,
-  validate,
-  validateUMMG,
-  parseXMLString,
-  isECHO10File,
-  isUMMGFile
-} = require('@cumulus/cmrjs');
-
+const { CMR } = require('@cumulus/cmr-client');
 
 const libxmljs = require('libxmljs');
 
@@ -69,6 +58,46 @@ function getGranuleUr(metadata, isUmmG) {
     nativeId = nativeIdNode.text();
   }
   return nativeId;
+}
+
+/**
+ * getEntryTitle
+ *
+ * @param {Object} config - comnfiguration
+ * @param {string} metadata - the granule metadata
+ * @param {boolean} isUmmG - whether this is UMM-G or ECHO10 metadata
+ * @returns {string} the entry title of the collection this granule belongs to
+ */
+async function getEntryTitle(config, metadata, isUmmG) {
+  let shortName = null;
+  let version = null;
+  if (isUmmG === true) {
+    try {
+      const metadataObject = JSON.parse(metadata);
+      shortName = metadataObject.umm.CollectionReference.ShortName;
+      version = metadataObject.umm.CollectionReference.Version;
+    } catch (e) {
+      throw new InvalidArgument('UMM-G metadata record is not a valid JSON document');
+    }
+  } else {
+    const xmlDoc = libxmljs.parseXml(metadata);
+    shortName = xmlDoc.get('/Granule/Collection/ShortName').text();
+    version = xmlDoc.get('/Granule/Collection/VersionId').text();
+  }
+  // Query CMR for collection and retrieve entry title
+  const cmrInstance = new CMR({
+    provider: config.cmr.provider,
+    username: config.cmr.username,
+    password: config.cmr.passwordSecretName
+  });
+
+  const searchParams = {
+    short_name: shortName,
+    version: version
+  };
+
+  const result = await cmrInstance.searchCollections(searchParams);
+  return result[0].dataset_id;
 }
 
 /**
@@ -220,3 +249,4 @@ exports.generatePath = generatePath; // exported to support testing
 exports.getNativeId = getGranuleUr; // exported to support testing
 exports.addHyraxUrl = addHyraxUrl; // exported to support testing
 exports.generateHyraxUrl = generateHyraxUrl; // exported to support testing
+exports.getEntryTitle = getEntryTitle; // exported to support testing
