@@ -25,9 +25,8 @@ function generateAddress() {
   } else {
     env = env.toLowerCase();
   }
-  const validEnvs = ['prod', 'ops', 'uat', 'sit'];
   let envSubstition = env;
-  if (validEnvs.includes(env)) {
+  if (['prod', 'ops', 'uat', 'sit'].includes(env)) {
     envSubstition = ((env === 'prod' || env === 'ops') ? '' : `${env}.`);
   } else {
     // Throw an exception if it is not a valid environment
@@ -46,11 +45,7 @@ function generateAddress() {
 function getGranuleUr(metadata, isUmmG) {
   let nativeId = null;
   if (isUmmG === true) {
-    try {
-      nativeId = metadata.umm.GranuleUR;
-    } catch (e) {
-      throw new InvalidArgument('UMM-G metadata record is not a valid JSON document');
-    }
+    nativeId = metadata.umm.GranuleUR;
   } else {
     const nativeIdNode = metadata.get('/Granule/GranuleUR');
     nativeId = nativeIdNode.text();
@@ -70,12 +65,8 @@ async function getEntryTitle(config, metadata, isUmmG) {
   let shortName = null;
   let version = null;
   if (isUmmG === true) {
-    try {
-      shortName = metadata.umm.CollectionReference.ShortName;
-      version = metadata.umm.CollectionReference.Version;
-    } catch (e) {
-      throw new InvalidArgument('UMM-G metadata record is not a valid JSON document');
-    }
+    shortName = metadata.umm.CollectionReference.ShortName;
+    version = metadata.umm.CollectionReference.Version;
   } else {
     shortName = metadata.get('/Granule/Collection/ShortName').text();
     version = metadata.get('/Granule/Collection/VersionId').text();
@@ -111,6 +102,7 @@ function generatePath(config, metadata, isUmmG) {
   if (_.isUndefined(providerId)) {
     throw new InvalidArgument('Provider not supplied in configuration. Unable to construct path');
   }
+  //TODO use getEntryTitle here
   const entryTitle = get(config, 'entryTitle');
   // Check if entryTitle is defined
   if (_.isUndefined(entryTitle)) {
@@ -118,14 +110,14 @@ function generatePath(config, metadata, isUmmG) {
   }
   const nativeId = getGranuleUr(metadata, isUmmG);
 
-  return `providers/${providerId}/collections/${entryTitle}/granules/${nativeId}`;
+  return `providers/${providerId}/collections/${entryTitle}/granules/${getGranuleUr(metadata, isUmmG)}`;
 }
 
 /**
  * generateHyraxUrl
  *
  * @param {Object} config - the config
- * @param {string} metadata - the metadata
+ * @param {string} metadata - the dom
  * @param {boolean} isUmmG - UMM-G or ECHO10
  * @returns {string} - the hyrax url
  */
@@ -137,45 +129,37 @@ function generateHyraxUrl(config, metadata, isUmmG) {
 /**
  * addHyraxUrlToUmmG
  *
- * @param {string} metadata - the orginal metadata
+ * @param {string} metadata - the metadata dom
  * @param {string} hyraxUrl - the hyrax url
  * @returns {string} - the updated metadata containing a Hyrax URL
  */
 function addHyraxUrlToUmmG(metadata, hyraxUrl) {
-  let metadataObject = null;
-  try {
-    // Is this UMM-G or ECHO10?
-    metadataObject = JSON.parse(metadata);
-    if (_.isUndefined(metadataObject.umm.RelatedUrls)) {
-      metadataObject.umm.RelatedUrls = [];
-    }
-    const url = {
-      URL: hyraxUrl,
-      Type: 'GET DATA',
-      Subtype: 'OPENDAP DATA',
-      Description: 'OPeNDAP request URL'
-    };
-    metadataObject.umm.RelatedUrls.push(url);
-  } catch (e) {
-    throw new InvalidArgument('UMM-G metadata record is not a valid JSON document');
+  if (_.isUndefined(metadata.umm.RelatedUrls)) {
+    metadata.umm.RelatedUrls = [];
   }
-  return JSON.stringify(metadataObject, null, 2);
+  const url = {
+    URL: hyraxUrl,
+    Type: 'GET DATA',
+    Subtype: 'OPENDAP DATA',
+    Description: 'OPeNDAP request URL'
+  };
+  metadata.umm.RelatedUrls.push(url);
+
+  return JSON.stringify(metadata, null, 2);
 }
 
 /**
  * addHyraxUrlToEcho10
  *
- * @param {string} metadata - the orginal metadata
+ * @param {string} metadata - the metadata dom
  * @param {string} hyraxUrl - the hyrax url
  * @returns {string} - the updated metadata containing a Hyrax URL
  */
 function addHyraxUrlToEcho10(metadata, hyraxUrl) {
-  const xmlDoc = libxmljs.parseXml(metadata);
-
-  let urlsNode = xmlDoc.get('/Granule/OnlineResources');
+  let urlsNode = metadata.get('/Granule/OnlineResources');
   if (_.isUndefined(urlsNode)) {
-    const onlineAccessURLs = xmlDoc.get('/Granule/OnlineAccessURLs');
-    urlsNode = new libxmljs.Element(xmlDoc, 'OnlineResources');
+    const onlineAccessURLs = metadata.get('/Granule/OnlineAccessURLs');
+    urlsNode = new libxmljs.Element(metadata, 'OnlineResources');
     onlineAccessURLs.addNextSibling(urlsNode);
   }
   urlsNode.node('OnlineResource')
@@ -185,13 +169,13 @@ function addHyraxUrlToEcho10(metadata, hyraxUrl) {
     .parent()
     .node('Type', 'GET DATA : OPENDAP DATA');
 
-  return xmlDoc.toString({ format: true });
+  return metadata.toString({ format: true });
 }
 
 /**
  * addHyraxUrl
  *
- * @param {string} metadata - the orginal metadata
+ * @param {string} metadata - the original metadata dom
  * @param {boolean} isUmmG - UMM-G or ECHO10 metadata
  * @param {string} hyraxUrl - the hyrax url
  * @returns {string} - the updated metadata containing a Hyrax URL
