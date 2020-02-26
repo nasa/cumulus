@@ -18,7 +18,6 @@ const discoverGranules = discoverGranulesRewire.discoverGranules;
 
 const readFile = promisify(fs.readFile);
 
-// rewire used for handleDuplicates tests
 const checkDuplicateRewire = (granuleId, dupeConfig, _) => {
   if (granuleId === 'duplicate') {
     if (dupeConfig.duplicateHandling === 'error') {
@@ -48,7 +47,7 @@ test.beforeEach(async (t) => {
   };
 });
 
-test('discover granules sets the correct dataType for granules', async (t) => {
+test.serial('discover granules sets the correct dataType for granules', async (t) => {
   const { event } = t.context;
 
   event.config.collection.provider_path = '/granules/fake_granules';
@@ -76,7 +75,7 @@ test('discover granules sets the correct dataType for granules', async (t) => {
   }
 });
 
-test('discover granules using FTP', async (t) => {
+test.serial('discover granules using FTP', async (t) => {
   const { event } = t.context;
 
   event.config.collection.provider_path = '/granules/fake_granules';
@@ -100,7 +99,7 @@ test('discover granules using FTP', async (t) => {
   }
 });
 
-test('discover granules using SFTP', async (t) => {
+test.serial('discover granules using SFTP', async (t) => {
   const { event } = t.context;
 
   event.config.collection.provider_path = 'granules/fake_granules';
@@ -124,7 +123,7 @@ test('discover granules using SFTP', async (t) => {
   }
 });
 
-test('discover granules using HTTP', async (t) => {
+test.serial('discover granules using HTTP', async (t) => {
   const { event } = t.context;
 
   event.config.collection.provider_path = '/granules/fake_granules';
@@ -178,7 +177,7 @@ const discoverGranulesUsingS3 = (configure, assert = assertDiscoveredGranules) =
     }
   };
 
-test('discover granules using S3',
+test.serial('discover granules using S3',
   discoverGranulesUsingS3(({ context: { event: { config } } }) => {
     config.provider = {
       id: 'MODAPS',
@@ -187,7 +186,7 @@ test('discover granules using S3',
     };
   }));
 
-test('discover granules without collection files config using S3',
+test.serial('discover granules without collection files config using S3',
   discoverGranulesUsingS3(({ context: { event: { config } } }) => {
     // Without files config we should still discover granules, but the
     // discovered granules will have empty files arrays.
@@ -203,7 +202,7 @@ test('discover granules without collection files config using S3',
     output.granules.forEach(({ files }) => t.is(files.length, 0));
   }));
 
-test('discover granules without collection files config, but configuring collection to ignore it, using S3',
+test.serial('discover granules without collection files config, but configuring collection to ignore it, using S3',
   discoverGranulesUsingS3(({ context: { event: { config } } }) => {
     // Without files config we should still discover granules, and the
     // discovered granules' files arrays will include all files because we're
@@ -221,7 +220,7 @@ test('discover granules without collection files config, but configuring collect
     output.granules.forEach(({ files }) => t.is(files.length, 2));
   }));
 
-test('discover granules without collection files config, but configuring task to ignore it, using S3',
+test.serial('discover granules without collection files config, but configuring task to ignore it, using S3',
   discoverGranulesUsingS3(({ context: { event: { config } } }) => {
     // Without file configs we should still discover granules, and the
     // discovered granules files arrays will include all files because we're
@@ -239,7 +238,7 @@ test('discover granules without collection files config, but configuring task to
     output.granules.forEach(({ files }) => t.is(files.length, 2));
   }));
 
-test('discover granules without collection files config, but configuring task to ignore it and overriding collection config not to ignore it, using S3',
+test.serial('discover granules without collection files config, but configuring task to ignore it and overriding collection config not to ignore it, using S3',
   discoverGranulesUsingS3(({ context: { event: { config } } }) => {
     config.collection.files = [];
     config.ignoreFilesConfigForDiscovery = false;
@@ -255,7 +254,7 @@ test('discover granules without collection files config, but configuring task to
     output.granules.forEach(({ files }) => t.is(files.length, 0));
   }));
 
-test('discover granules without collection files config for .nc files using S3',
+test.serial('discover granules without collection files config for .nc files using S3',
   discoverGranulesUsingS3(({ context: { event: { config } } }) => {
     // With a collection files config that does not have a matching config for
     // all granule files, only matching files should end up in a granule's
@@ -272,7 +271,7 @@ test('discover granules without collection files config for .nc files using S3',
     output.granules.forEach(({ files }) => t.is(files.length, 1));
   }));
 
-test('discover granules using S3 throws error when discovery fails',
+test.serial('discover granules using S3 throws error when discovery fails',
   async (t) => {
     const assert = discoverGranulesUsingS3(({ context: { event: { config } } }) => {
       config.provider = {
@@ -286,7 +285,7 @@ test('discover granules using S3 throws error when discovery fails',
     await t.throwsAsync(() => assert(t), { code: 'NoSuchBucket' });
   });
 
-test('handleDuplicates filters on duplicateHandling set to "skip"',
+test.serial('handleDuplicates filters on duplicateHandling set to "skip"',
   async (t) => {
     const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
     const checkDuplicateRestore = discoverGranulesRewire.__set__('checkDuplicate', checkDuplicateRewire);
@@ -300,7 +299,7 @@ test('handleDuplicates filters on duplicateHandling set to "skip"',
     t.deepEqual(actual, t.context.filesByGranuleId);
   });
 
-test('handleDuplicates throws Error on duplicateHandling set to "error"',
+test.serial('handleDuplicates throws Error on duplicateHandling set to "error"',
   async (t) => {
     const filesByGranuleId = {
       duplicate: {},
@@ -319,7 +318,7 @@ test('handleDuplicates throws Error on duplicateHandling set to "error"',
     getAuthTokenRestore();
   });
 
-test('handleDuplicates does not filter when duplicateHandling is set to "replace"',
+test.serial('handleDuplicates does not filter when duplicateHandling is set to "replace"',
   async (t) => {
     const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
     const checkDuplicateRestore = discoverGranulesRewire.__set__('checkDuplicate', checkDuplicateRewire);
@@ -336,7 +335,7 @@ test('handleDuplicates does not filter when duplicateHandling is set to "replace
   });
 
 
-test('filterDuplicates returns a set of filtered keys',
+test.serial('filterDuplicates returns a set of filtered keys',
   async (t) => {
     const filterDuplicates = discoverGranulesRewire.__get__('filterDuplicates');
     const getAuthTokenRestore = discoverGranulesRewire.__set__('getAuthToken', async () => 'dummyToken');
@@ -355,7 +354,7 @@ test('filterDuplicates returns a set of filtered keys',
     t.deepEqual(actual, ['key1', 'key2']);
   });
 
-test('checkDuplicate returns an empty string when API returns a granule',
+test.serial('checkDuplicate returns an empty string when API returns a granule',
   async (t) => {
     const checkDuplicate = discoverGranulesRewire.__get__('checkDuplicate');
     // TODO better naming convention than restore
@@ -368,7 +367,7 @@ test('checkDuplicate returns an empty string when API returns a granule',
   });
 
 
-test('checkDuplicate returns a granuleId string when the API returns a 404/Not Found error',
+test.serial('checkDuplicate returns a granuleId string when the API returns a 404/Not Found error',
   async (t) => {
     const checkDuplicate = discoverGranulesRewire.__get__('checkDuplicate');
 
@@ -388,7 +387,7 @@ test('checkDuplicate returns a granuleId string when the API returns a 404/Not F
     t.is(actual, 'granuleId');
   });
 
-test('checkDuplicate throws an error if the API throws an error other than 404/Not Found',
+test.serial('checkDuplicate throws an error if the API throws an error other than 404/Not Found',
   async (t) => {
     const checkDuplicate = discoverGranulesRewire.__get__('checkDuplicate');
 
