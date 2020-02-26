@@ -8,10 +8,10 @@ const base64 = require('base-64');
 
 const authTokenRewire = rewire('../auth-token');
 
-test.serial('getEdlAuthorization returns the error if error is a "successful" 302', async (t) => {
+test.serial('getEdlAuthorization returns the location if error is a "successful" 302', async (t) => {
   const expected = new Error();
   expected.statusCode = 302;
-  expected.headers = { location: 'location' };
+  expected.headers = { location: 'redirect' };
 
   const getEdlAuthorization = authTokenRewire.__get__('getEdlAuthorization');
   const gotRestore = authTokenRewire.__set__('got', {
@@ -19,8 +19,8 @@ test.serial('getEdlAuthorization returns the error if error is a "successful" 30
       throw expected;
     }
   });
-  const actual = await getEdlAuthorization({}, '', 'location');
-  t.is(actual, expected);
+  const actual = await getEdlAuthorization('url', '', 'redirect');
+  t.is(actual, 'redirect');
   gotRestore();
 });
 
@@ -92,16 +92,16 @@ test.serial('getEdlToken returns expected token given expected API returns', asy
       if (url === 'token-redirect') {
         return { body: `{ "message": { "token": "${token}" }}` };
       }
-      throw new Error(`Test failing as ${url} was not matched`);
+      throw new Error(`Test failing as ${JSON.stringify(url)} was not matched`);
     }
   });
 
-  const getEdlAuthorizationRestore = authTokenRewire.__set__('getEdlAuthorization', async (urlObj, form) => {
+  const getEdlAuthorizationRestore = authTokenRewire.__set__('getEdlAuthorization', async (url, form, _base) => {
     const formCheck = new FormData();
     formCheck.append('credentials', base64.encode(`${username}:${password}`));
-    if (urlObj.pathname === 'location') {
+    if (url === 'location') {
       t.is(form._streams[1], formCheck._streams[1]);
-      return { headers: { location: 'token-redirect' } };
+      return 'token-redirect';
     }
     return 'fail';
   });
