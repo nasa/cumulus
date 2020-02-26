@@ -40,10 +40,10 @@ This url will be added to the Urls portion of the granule metadata as follows,
 The four properties we need to construct this url are as follows,
 | Property | Source | Notes
 | -------- | ------ | -----
-| Provider ID | Granule metadata:  <br>UMM-G `meta->provider-id`  <br>ECHO10 ? | Should we get this by querying CMR?
-| Entry Title | Configuration | Should we get this by querying CMR?
-| Native ID   | Granule metadata:  <br>UMM-G `meta->native-id`  <br>ECHO10 `Granule->DataGranule->ProducerGranuleId`
-| Environment | Configuration | Do we wish to use the SIT, UAT or PROD version of Hyrax?
+| Provider ID | Configuration `config.cmr.provider` | 
+| Entry Title | Derived from retrieval of parent collection from CMR |
+| Granule UR   | Granule metadata:  <br>UMM-G `umm->granule-ur`  <br>ECHO10 `Granule->DataGranule->GranuleUR`
+| Environment | `process.env.CMR_ENVIRONMENT` | Do we wish to use the SIT, UAT or PROD version of Hyrax?
 
 
 For more information on configuring a Cumulus Message Adapter task, see [the Cumulus workflow input/output documentation](https://nasa.github.io/cumulus/docs/workflows/input_output).
@@ -59,8 +59,6 @@ Config object fields:
 | collection            | object  | (required) |                | The cumulus-api collection object
 | entry_title           | string  | (required) |                | The CMR entry title for this collection
 | provider              | string  | (required) |                | The CMR provider ID associated with this archive
-| environment           | string  |            | `sit|uat|prod` | The Hyrax environment you wish to interact with. If not present, then `prod` is assumed
-| duplicateHandling     | string  | `error`    | <ul><li>`error` - Throws an error on duplicates</li><li>`replace` - Replaces the existing file</li><li>`skip` - Skips the duplicate file</li><li>`version` - Adds a suffix to the existing filename to avoid a clash</li></ul> | Specifies how duplicate filenames should be handled
 
 ### Input
 

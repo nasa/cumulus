@@ -11,13 +11,16 @@ const {
   isCMRFile,
   metadataObjectFromCMRFile,
   granulesToCmrFileObjects,
-  updateCMRMetadata
+  updateCMRMetadata,
+  validate,
+  validateUMMG,
+  parseXMLString,
+  isECHO10File,
+  isUMMGFile
 } = require('@cumulus/cmrjs');
 
-const libxmljs = require('libxmljs');
 
-const isECHO10File = (filename) => filename.endsWith('cmr.xml');
-const isUMMGFile = (filename) => filename.endsWith('cmr.json');
+const libxmljs = require('libxmljs');
 
 /**
  * generateAddress
@@ -56,7 +59,7 @@ function getNativeId(metadata, isUmmG) {
   if (isUmmG === true) {
     try {
       const metadataObject = JSON.parse(metadata);
-      nativeId = metadataObject.meta['native-id'];
+      nativeId = metadataObject.umm.GranuleUR;
     } catch (e) {
       throw new InvalidArgument('UMM-G metadata record is not a valid JSON document');
     }
@@ -143,7 +146,7 @@ function addHyraxUrlToUmmG(metadata, hyraxUrl) {
  * @returns {string} - the updated metadata containing a Hyrax URL
  */
 function addHyraxUrlToEcho10(metadata, hyraxUrl) {
-  const xmlDoc = libxmljs.parseXmlString(metadata);
+  const xmlDoc = libxmljs.parseXml(metadata);
 
   let urlsNode = xmlDoc.get('/Granule/OnlineResources');
   if (_.isUndefined(urlsNode)) {
