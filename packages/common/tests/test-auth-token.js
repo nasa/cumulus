@@ -8,29 +8,29 @@ const base64 = require('base-64');
 
 const authTokenRewire = rewire('../auth-token');
 
-test.serial('getEdlToken returns the error if error is a "successful" 302', async (t) => {
+test.serial('getEdlAuthorization returns the error if error is a "successful" 302', async (t) => {
   const expected = new Error();
   expected.statusCode = 302;
   expected.headers = { location: 'location' };
 
-  const getEdlToken = authTokenRewire.__get__('getEdlToken');
+  const getEdlAuthorization = authTokenRewire.__get__('getEdlAuthorization');
   const gotRestore = authTokenRewire.__set__('got', {
     post: async () => {
       throw expected;
     }
   });
-  const actual = await getEdlToken({}, '');
+  const actual = await getEdlAuthorization({}, '');
   t.is(actual, expected);
   gotRestore();
 });
 
 
-test.serial('getEdlToken throws error if error is not a "successful" 302', async (t) => {
+test.serial('getEdlAuthorization throws error if error is not a "successful" 302', async (t) => {
   const expected = new Error();
   expected.statusCode = 500;
   expected.headers = { location: 'Internal Server Error' };
 
-  const getEdlToken = authTokenRewire.__get__('getEdlToken');
+  const getEdlAuthorization = authTokenRewire.__get__('getEdlAuthorization');
 
 
   const gotRestore = authTokenRewire.__set__('got', {
@@ -38,29 +38,28 @@ test.serial('getEdlToken throws error if error is not a "successful" 302', async
       throw expected;
     }
   });
-  await t.throwsAsync(getEdlToken({}, '', { is: expected }));
+  await t.throwsAsync(getEdlAuthorization({}, '', { is: expected }));
   gotRestore();
 });
 
-test.serial('getEdlToken throws error if no error thrown on post', async (t) => {
+test.serial('getEdlAuthorization throws error if no error thrown on post', async (t) => {
   const messageRegexp = new RegExp(/Invalid endpoint configuration/);
-  const getEdlToken = authTokenRewire.__get__('getEdlToken');
+  const getEdlAuthorization = authTokenRewire.__get__('getEdlAuthorization');
   const gotRestore = authTokenRewire.__set__('got', {
     post: async () => {
       return true;
     }
   });
-  await t.throwsAsync(getEdlToken({}, '', { message: messageRegexp }));
+  await t.throwsAsync(getEdlAuthorization({}, '', { message: messageRegexp }));
   gotRestore();
 });
 
 
-test.serial('getAuthToken calls getLaunchPadToken with configured values', async (t) => {
+test.serial('getLaunchpadToken calls launchpad.getLaunchPadToken with configured values', async (t) => {
   const passphrase = 'passphrase';
   const token = 'launchpad token';
-  const api = 'https://api.launchpad.nasa.gov/icam/api/sm/v1/gettoken'
+  const api = 'https://api.launchpad.nasa.gov/icam/api/sm/v1/gettoken';
   const certificate = 'launchpad.pfx';
-  const getAuthToken = authTokenRewire.__get__('getAuthToken');
   const launchpadRestore = authTokenRewire.__set__('launchpad', {
     getLaunchpadToken: async (config) => {
       if (isMatch(config, { passphrase, api, certificate })) {
@@ -70,18 +69,21 @@ test.serial('getAuthToken calls getLaunchPadToken with configured values', async
     }
   });
 
-  const actual = await getAuthToken('launchpad', { passphrase });
+  const actual = await authTokenRewire.getLaunchpadToken({
+    launchpadPassphrase: passphrase,
+    launchpadApi: api,
+    launchpadCertificate: certificate
+  });
   launchpadRestore();
   t.is(actual, token);
 });
 
 
-test.serial('getAuthToken returns expected token given expected API returns', async (t) => {
+test.serial('getEdlToken returns expected token given expected API returns', async (t) => {
   const username = 'user';
   const password = 'password';
-  const token = 'token'
-  const baseUrl = 'https://foo.bar';
-  const getAuthToken = authTokenRewire.__get__('getAuthToken');
+  const token = 'token';
+  const baseUrl = 'https://foo.bar/dev/';
   const gotRestore = authTokenRewire.__set__('got', {
     get: async (url, _) => {
       if (url === 'https://foo.bar/dev/token') {
@@ -90,10 +92,11 @@ test.serial('getAuthToken returns expected token given expected API returns', as
       if (url === 'token-redirect') {
         return { body: `{ "message": { "token": "${token}" }}` };
       }
+      throw new Error(`Test failing as ${url} was not matched`);
     }
   });
 
-  const getEdlTokenRestore = authTokenRewire.__set__('getEdlToken', async (urlObj, form) => {
+  const getEdlAuthorizationRestore = authTokenRewire.__set__('getEdlAuthorization', async (urlObj, form) => {
     const formCheck = new FormData();
     formCheck.append('credentials', base64.encode(`${username}:${password}`));
     if (urlObj.pathname === 'location') {
@@ -103,10 +106,42 @@ test.serial('getAuthToken returns expected token given expected API returns', as
     return 'fail';
   });
 
-  const actual = await getAuthToken('earthdata', { baseUrl, username, password });
+  const actual = await authTokenRewire.getEdlToken({ baseUrl, username, password });
 
-  getEdlTokenRestore();
+  getEdlAuthorizationRestore();
   gotRestore();
 
   t.is(actual, token);
+});
+
+
+test.serial('getAuthToken calls getLaunchpadToken with passed configuration values', async (t) => {
+  const config = 'dummy config object';
+  const getLaunchpadTokenRestore = authTokenRewire.__set__('getLaunchpadToken', async (param) => param);
+  const actual = await authTokenRewire.getAuthToken('launchpad', config);
+
+  getLaunchpadTokenRestore();
+  t.is(actual, config);
+});
+
+test.serial('getAuthToken calls getEdlToken with passed configuration values', async (t) => {
+  const config = 'dummy config object';
+  const getEdlTokenRestore = authTokenRewire.__set__('getEdlToken', async (param) => param);
+  const actual = await authTokenRewire.getAuthToken('earthdata', config);
+
+  getEdlTokenRestore();
+  t.is(actual, config);
+});
+
+test.serial('getAuthToken throws error when called with google auth provider', async (t) => {
+  const config = 'dummy config object';
+  const expected = authTokenRewire.__get__('AuthTokenError');
+  await t.throwsAsync(authTokenRewire.getAuthToken('google', config, { instanceOf: expected }));
+});
+
+
+test.serial('getAuthToken throws error when called with unknown auth provider', async (t) => {
+  const config = 'dummy config object';
+  const expected = authTokenRewire.__get__('AuthTokenError');
+  await t.throwsAsync(authTokenRewire.getAuthToken('foobar', config, { instanceOf: expected }));
 });
