@@ -33,6 +33,10 @@ data "aws_lambda_function" "sts_credentials" {
   function_name = "gsfc-ngap-sh-s3-sts-get-keys"
 }
 
+data "aws_ssm_parameter" "ecs_image_id" {
+  name = "image_id_ecs"
+}
+
 module "cumulus" {
   source = "../../tf-modules/cumulus"
 
@@ -43,7 +47,7 @@ module "cumulus" {
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.subnet_ids
 
-  ecs_cluster_instance_image_id   = "ami-0905e80a0a5c5bf71"
+  ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
   ecs_cluster_instance_subnet_ids = var.subnet_ids
   ecs_cluster_min_size            = 1
   ecs_cluster_desired_size        = 1
