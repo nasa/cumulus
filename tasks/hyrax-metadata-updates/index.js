@@ -48,13 +48,13 @@ function generateAddress() {
 }
 
 /**
- * generateNativeId
+ * getGranuleUr
  *
  * @param {string} metadata - the metadata
  * @param {boolean} isUmmG - UMM-G or ECHO10
  * @returns {string} - the native id
  */
-function getNativeId(metadata, isUmmG) {
+function getGranuleUr(metadata, isUmmG) {
   let nativeId = null;
   if (isUmmG === true) {
     try {
@@ -91,7 +91,7 @@ function generatePath(event, metadata, isUmmG) {
   if (_.isUndefined(entryTitle)) {
     throw new InvalidArgument('Entry Title not supplied in configuration. Unable to construct path');
   }
-  const nativeId = getNativeId(metadata, isUmmG);
+  const nativeId = getGranuleUr(metadata, isUmmG);
 
   return `providers/${providerId}/collections/${entryTitle}/granules/${nativeId}`;
 }
@@ -217,6 +217,6 @@ exports.handler = handler;
 exports.hyraxMetadataUpdate = hyraxMetadataUpdate; // exported to support testing
 exports.generateAddress = generateAddress; // exported to support testing
 exports.generatePath = generatePath; // exported to support testing
-exports.getNativeId = getNativeId; // exported to support testing
+exports.getNativeId = getGranuleUr; // exported to support testing
 exports.addHyraxUrl = addHyraxUrl; // exported to support testing
 exports.generateHyraxUrl = generateHyraxUrl; // exported to support testing
