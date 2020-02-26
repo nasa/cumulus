@@ -39,7 +39,7 @@ function generateAddress() {
 /**
  * getGranuleUr
  *
- * @param {string} metadata - the metadata
+ * @param {string} metadata - the dom
  * @param {boolean} isUmmG - UMM-G or ECHO10
  * @returns {string} - the native id
  */
@@ -47,14 +47,12 @@ function getGranuleUr(metadata, isUmmG) {
   let nativeId = null;
   if (isUmmG === true) {
     try {
-      const metadataObject = JSON.parse(metadata);
-      nativeId = metadataObject.umm.GranuleUR;
+      nativeId = metadata.umm.GranuleUR;
     } catch (e) {
       throw new InvalidArgument('UMM-G metadata record is not a valid JSON document');
     }
   } else {
-    const xmlDoc = libxmljs.parseXml(metadata);
-    const nativeIdNode = xmlDoc.get('/Granule/GranuleUR');
+    const nativeIdNode = metadata.get('/Granule/GranuleUR');
     nativeId = nativeIdNode.text();
   }
   return nativeId;
@@ -102,7 +100,7 @@ async function getEntryTitle(config, metadata, isUmmG) {
  * generatePath
  *
  * @param {Object} config - the config
- * @param {string} metadata - the metadata
+ * @param {string} metadata - the dom
  * @param {boolean} isUmmG - UMM-G or ECHO10
  * @throws {Object} invalidArgumentException - if the env is not valid
  * @returns {string} - the OPeNDAP path

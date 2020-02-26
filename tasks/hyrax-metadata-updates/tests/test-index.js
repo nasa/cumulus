@@ -65,7 +65,9 @@ test('Test generate path from UMM-G', async (t) => {
     },
     input: {}
   };
-  const data = await HyraxMetadataUpdate.generatePath(event.config, fs.readFileSync('tests/data/umm-gin.json', 'utf8'), true);
+  const metadata = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
+  const metadataObject = JSON.parse(metadata);
+  const data = await HyraxMetadataUpdate.generatePath(event.config, metadataObject, true);
 
   t.is(data, 'providers/GES_DISC/collections/GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
 });
@@ -84,7 +86,11 @@ test('Test generate path from ECHO-10', async (t) => {
     },
     input: {}
   };
-  const data = await HyraxMetadataUpdate.generatePath(event.config, fs.readFileSync('tests/data/echo10in.xml', 'utf8'), false);
+
+  const metadata = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
+  const metadataObject = libxmljs.parseXml(metadata);
+
+  const data = await HyraxMetadataUpdate.generatePath(event.config, metadataObject, false);
 
   t.is(data, 'providers/GES_DISC/collections/GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
 });
@@ -102,8 +108,12 @@ test('Test return error when invalid provider supplied for path generation', asy
     },
     input: {}
   };
+
+  const metadata = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
+  const metadataObject = libxmljs.parseXml(metadata);
+
   const error = await t.throws(
-    () => HyraxMetadataUpdate.generatePath(event.config, fs.readFileSync('tests/data/umm-gin.json', 'utf8'), true)
+    () => HyraxMetadataUpdate.generatePath(event.config, metadataObject, true)
   );
 
   t.is(error.message, 'Provider not supplied in configuration. Unable to construct path');
@@ -131,16 +141,16 @@ test('Test return error when invalid entry title supplied for path generation', 
 
 test('Test native id extraction from UMM-G', async (t) => {
   const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
-
-  const result = await HyraxMetadataUpdate.getNativeId(data, true);
+  const metadata = JSON.parse(data);
+  const result = await HyraxMetadataUpdate.getNativeId(metadata, true);
 
   t.is(result, 'GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
 });
 
 test('Test native id extraction from ECHO10', async (t) => {
   const data = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
-
-  const result = await HyraxMetadataUpdate.getNativeId(data, false);
+  const metadata = libxmljs.parseXml(data);
+  const result = await HyraxMetadataUpdate.getNativeId(metadata, false);
 
   t.is(result, 'GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
 });
@@ -191,7 +201,8 @@ test('Test generating OPeNDAP URL from ECHO10 file ', async (t) => {
   };
   process.env.CMR_ENVIRONMENT = 'SIT';
   const data = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
-  const result = await HyraxMetadataUpdate.generateHyraxUrl(event.config, data, false);
+  const metadata = libxmljs.parseXml(data);
+  const result = await HyraxMetadataUpdate.generateHyraxUrl(event.config, metadata, false);
   t.is(result, 'https://opendap.sit.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
   delete process.env.CMR_ENVIRONMENT;
 });
@@ -212,7 +223,8 @@ test('Test generating OPeNDAP URL from UMM-G file ', async (t) => {
   };
   process.env.CMR_ENVIRONMENT = 'SIT';
   const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
-  const result = await HyraxMetadataUpdate.generateHyraxUrl(event.config, data, true);
+  const metadataObject = JSON.parse(data);
+  const result = await HyraxMetadataUpdate.generateHyraxUrl(event.config, metadataObject, true);
   t.is(result, 'https://opendap.sit.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
   delete process.env.CMR_ENVIRONMENT;
 });
@@ -233,7 +245,8 @@ test('Test generating OPeNDAP URL from ECHO10 file with no environment set', asy
   };
   process.env.CMR_ENVIRONMENT = 'PROD';
   const data = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
-  const result = await HyraxMetadataUpdate.generateHyraxUrl(event.config, data, false);
+  const metadata = libxmljs.parseXml(data);
+  const result = await HyraxMetadataUpdate.generateHyraxUrl(event.config, metadata, false);
   t.is(result, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
   delete process.env.CMR_ENVIRONMENT;
 });
