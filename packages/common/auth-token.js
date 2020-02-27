@@ -1,12 +1,25 @@
+/* eslint-disable max-classes-per-file */
 'use strict';
 
 const got = require('got');
 const base64 = require('base-64');
 const parseurl = require('parseurl');
+const { decryptBase64String, encrypt } = require('@cumulus/aws-client/KMS');
 const FormData = require('form-data');
+const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const launchpad = require('./launchpad');
+const { decode } = require('jsonwebtoken');
+
+
 
 class AuthTokenError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = this.constructor.name;
+  }
+}
+
+class TokenCacheError extends Error {
   constructor(message) {
     super(message);
     this.name = this.constructor.name;
@@ -49,14 +62,14 @@ const getEdlToken = async (config) => {
   const form = new FormData();
   form.append('credentials', auth);
 
-  const location = await getEdlAuthorization(tokenOutput.headers.location, form, config.baseUrl);
-
+  let location = await getEdlAuthorization(tokenOutput.headers.location, form, config.baseUrl);
+  location = location.replace('.com', '.com:8000');
   const edlOutput = await got.get(location);
   return JSON.parse(edlOutput.body).message.token;
 };
 
 /**
- * Get a bearer token from launchpad auth for use with the Cumulus API
+ * Get a bearer token from launchpad atuh for use with the Cumulus API
  * @param {Object} config - config object
  * @param {string} config.launchpadPassphrase - Launchpad passphrase to use for auth
  * @param {string} config.launchpadApi - URL of launchpad api to use for authorization
@@ -84,6 +97,7 @@ const getAuthToken = async (provider, config) => {
   }
 
   if (provider === 'earthdata') {
+    console.log('getting EDL token');
     return getEdlToken(config);
   }
 
@@ -92,7 +106,88 @@ const getAuthToken = async (provider, config) => {
   }
   throw new AuthTokenError(`Invalid provider ${JSON.stringify(provider)} specified`);
 };
+
+
+const getAuthTokenRecord = async (tokenAlias, authTokenTable) => {
+  const params = {
+    TableName: authTokenTable,
+    Key: {
+      tokenAlias: tokenAlias
+    }
+  };
+
+  const tokenResponse = await dynamodbDocClient().get(params).promise();
+  if (!tokenResponse.Item) {
+    throw new TokenCacheError(`No bearer token with alias '${tokenAlias}' found in ${authTokenTable}`);
+  }
+  return decryptBase64String(tokenResponse.Item.bearerToken);
+};
+
+const updateAuthTokenRecord = async (tokenAlias, token, authTokenTable, kmsId) => {
+  const encryptedToken = await encrypt(kmsId, token);
+  const params = {
+    TableName: authTokenTable,
+    Key: {
+      tokenAlias: tokenAlias
+    },
+    UpdateExpression: 'set bearerToken = :t',
+    ExpressionAttributeValues: {
+      ':t': encryptedToken
+    }
+  };
+  return dynamodbDocClient().update(params).promise();
+};
+
+const refreshAuthToken = async (config, token) => {
+  const tokenResponse = await got.post(`${config.baseUrl}refresh`, {
+    json: true,
+    form: true,
+    body: { token }
+  });
+  return tokenResponse.body.token;
+};
+
+/**
+ * Attempts to retrieve an active auth token from <data store>
+ * If no token exists, attempt a token refresh.  If the token refresh fails
+ * request a new token from the auth provider.
+ * @param {*} token
+ * @param {*} provider
+ * @param {*} config
+ */
+const getCachedAuthToken = async (tokenSecretName, authTokenTable, config, provider) => {
+  // get token
+  let token;
+  try {
+    token = await getAuthTokenRecord(tokenSecretName, authTokenTable);
+    const tokenMinutesRemaining = (Date.now() / 1000) / 60;
+    if (tokenMinutesRemaining <= 0) {
+      throw new TokenCacheError('Token expired, obtraining new token');
+    }
+    if (tokenMinutesRemaining <= 15 && tokenMinutesRemaining > 0) { // TODO make configurable
+      return refreshAuthToken(config, token);
+    }
+    return token;
+  } catch (error) {
+    console.log('here');
+    console.log(`Error Will Robinson ${JSON.stringify(error)}`);
+    console.log(error.message);
+    if (error.name === 'TokenCacheError') {
+      console.log('getting new token');
+
+      const updateToken = await getAuthToken(provider, config);
+      console.log(updateToken);
+      return updateAuthTokenRecord(tokenSecretName, updateToken, authTokenTable, 'af21403c-1f04-4a6e-a3e2-3b605fb7912d'); // If all else fails, re-auth
+    }
+    throw Error;
+  }
+  return Promise.reject(new AuthTokenError('Failed to retreive token'));
+};
+
 module.exports = {
+  getCachedAuthToken,
+  updateAuthTokenRecord,
+  getAuthTokenRecord,
   getAuthToken,
   getEdlToken,
   getLaunchpadToken

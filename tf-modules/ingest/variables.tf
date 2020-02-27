@@ -66,6 +66,10 @@ variable "lambda_processing_role_arn" {
   type = string
 }
 
+variable "lambda_processing_role_id" {
+  type = string
+}
+
 variable "lambda_subnet_ids" {
   type    = list(string)
   default = null

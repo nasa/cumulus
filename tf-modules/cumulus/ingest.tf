@@ -26,6 +26,7 @@ module "ingest" {
   # IAM config
   permissions_boundary_arn   = var.permissions_boundary_arn
   lambda_processing_role_arn = aws_iam_role.lambda_processing.arn
+  lambda_processing_role_id = aws_iam_role.lambda_processing.id
 
   # CMR config
   cmr_oauth_provider = var.cmr_oauth_provider
