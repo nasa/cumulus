@@ -98,6 +98,19 @@ test.afterEach.always(async (t) => {
   delete process.env.CMR_ENVIRONMENT;
 });
 
+const event = {
+  config: {
+    cmr: {
+      oauthProvider: 'earthdata',
+      provider: 'GES_DISC',
+      clientId: 'xxxxxx',
+      username: 'xxxxxx',
+      passwordSecretName: 'xxxxx'
+    }
+  },
+  input: {}
+};
+
 test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
   // Set up S3
   t.context.stagingBucket = randomId('staging');
@@ -113,18 +126,11 @@ test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
 
   buildPayload(t);
   await uploadFilesXml(filesToUpload, t.context.stagingBucket);
-  const event = {
-    config: {
-      cmr: {
-        provider: 'GES_DISC',
-        clientId: 'xxxxxx',
-        username: 'xxxxxx',
-        passwordSecretName: 'xxxxx'
-      }
-    },
+  const e = {
+    config: event.config,
     input: t.context.payload.input
   };
-  await HyraxMetadataUpdate.hyraxMetadataUpdate(event);
+  await HyraxMetadataUpdate.hyraxMetadataUpdate(e);
   // Verify the metadata has been updated at the S3 location
   const metadataFile = t.context.payload.input.granules[0].files.find((f) => f.type === 'metadata');
   const actual = await getS3Object(`${metadataFile.bucket}/${metadataFile.fileStagingDir}`, metadataFile.name);
@@ -149,22 +155,16 @@ test.serial('Test updating UMM-G metadata file in S3', async (t) => {
 
   buildPayload(t);
   await uploadFilesJson(filesToUpload, t.context.stagingBucket);
-  const event = {
-    config: {
-      cmr: {
-        provider: 'GES_DISC',
-        clientId: 'xxxxxx',
-        username: 'xxxxxx',
-        passwordSecretName: 'xxxxx'
-      }
-    },
+  const e = {
+    config: event.config,
     input: t.context.payload.input
   };
-  await HyraxMetadataUpdate.hyraxMetadataUpdate(event);
+  await HyraxMetadataUpdate.hyraxMetadataUpdate(e);
   // Verify the metadata has been updated at the S3 location
   const metadataFile = t.context.payload.input.granules[0].files.find((f) => f.type === 'metadata');
   const actual = await getS3Object(`${metadataFile.bucket}/${metadataFile.fileStagingDir}`, metadataFile.name);
   const expected = fs.readFileSync('tests/data/umm-gout.json', 'utf8');
+  // We do this dance because formatting.
   const expectedString = JSON.stringify(JSON.parse(expected), null, 2);
   const actualString = JSON.stringify(JSON.parse(actual.Body.toString()), null, 2);
   t.is(actualString, expectedString);
@@ -173,118 +173,46 @@ test.serial('Test updating UMM-G metadata file in S3', async (t) => {
 });
 
 test.serial('Test retrieving entry title from CMR using UMM-G', async (t) => {
-  const event = {
-    config: {
-      cmr: {
-        provider: 'GES_DISC',
-        clientId: 'foo',
-        username: 'bar',
-        passwordSecretName: 'moo'
-      }
-    },
-    input: {}
-  };
   const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const metadataObject = JSON.parse(data);
-  const result = await HyraxMetadataUpdate.getEntryTitle(event.config, metadataObject, true);
-  t.is(result, 'GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC');
+  const actual = await HyraxMetadataUpdate.getEntryTitle(event.config, metadataObject, true);
+  t.is(actual, 'GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC');
 });
 
 test.serial('Test retrieving entry title from CMR using ECHO10', async (t) => {
-  const event = {
-    config: {
-      cmr: {
-        provider: 'GES_DISC',
-        clientId: 'foo',
-        username: 'bar',
-        passwordSecretName: 'moo'
-      }
-    },
-    input: {}
-  };
   const data = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
   const metadata = libxmljs.parseXml(data);
-  const result = await HyraxMetadataUpdate.getEntryTitle(event.config, metadata, false);
-  t.is(result, 'GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC');
+  const actual = await HyraxMetadataUpdate.getEntryTitle(event.config, metadata, false);
+  t.is(actual, 'GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC');
 });
 
 test('Test generate path from UMM-G', async (t) => {
-  const event = {
-    config: {
-      cmr: {
-        oauthProvider: 'earthdata',
-        provider: 'GES_DISC',
-        clientId: 'xxxxxx',
-        username: 'xxxxxx',
-        passwordSecretName: 'xxxxx'
-      }
-    },
-    input: {}
-  };
   const metadata = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const metadataObject = JSON.parse(metadata);
-  const data = await HyraxMetadataUpdate.generatePath(event.config, metadataObject, true);
+  const actual = await HyraxMetadataUpdate.generatePath(event.config, metadataObject, true);
 
-  t.is(data, 'providers/GES_DISC/collections/GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
+  t.is(actual, 'providers/GES_DISC/collections/GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
 });
 
 test('Test generate path from ECHO-10', async (t) => {
-  const event = {
-    config: {
-      cmr: {
-        oauthProvider: 'earthdata',
-        provider: 'GES_DISC',
-        clientId: 'xxxxxx',
-        username: 'xxxxxx',
-        passwordSecretName: 'xxxxx'
-      }
-    },
-    input: {}
-  };
   const metadata = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
   const metadataObject = libxmljs.parseXml(metadata);
 
-  const data = await HyraxMetadataUpdate.generatePath(event.config, metadataObject, false);
+  const actual = await HyraxMetadataUpdate.generatePath(event.config, metadataObject, false);
 
-  t.is(data, 'providers/GES_DISC/collections/GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
+  t.is(actual, 'providers/GES_DISC/collections/GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
 });
 
 test('Test generating OPeNDAP URL from ECHO10 file ', async (t) => {
-  const event = {
-    config: {
-      cmr: {
-        oauthProvider: 'earthdata',
-        provider: 'GES_DISC',
-        clientId: 'xxxxxx',
-        username: 'xxxxxx',
-        passwordSecretName: 'xxxxx'
-      },
-      entryTitle: 'GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC'
-    },
-    input: {}
-  };
   const data = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
   const metadata = libxmljs.parseXml(data);
-  const result = await HyraxMetadataUpdate.generateHyraxUrl(event.config, metadata, false);
-  t.is(result, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
+  const actual = await HyraxMetadataUpdate.generateHyraxUrl(event.config, metadata, false);
+  t.is(actual, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
 });
 
 test('Test generating OPeNDAP URL from UMM-G file ', async (t) => {
-  const event = {
-    config: {
-      cmr: {
-        oauthProvider: 'earthdata',
-        provider: 'GES_DISC',
-        clientId: 'xxxxxx',
-        username: 'xxxxxx',
-        passwordSecretName: 'xxxxx'
-      },
-      entryTitle: 'GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC'
-    },
-    input: {}
-  };
   const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const metadataObject = JSON.parse(data);
-  const result = await HyraxMetadataUpdate.generateHyraxUrl(event.config, metadataObject, true);
-  t.is(result, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
+  const actual = await HyraxMetadataUpdate.generateHyraxUrl(event.config, metadataObject, true);
+  t.is(actual, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
 });
