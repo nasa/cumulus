@@ -238,7 +238,6 @@ async function updateSingleGranule(config, granuleObject) {
   const metadataResult = await getS3Object(bucket, metadataFile.name);
   // Extract the metadata file object
   const metadata = metadataResult.Body.toString();
-
   const { dom, isUmmG } = createDom(metadataFile, metadata);
   // Add OPeNDAP url
   const hyraxUrl = await generateHyraxUrl(config, dom, isUmmG);

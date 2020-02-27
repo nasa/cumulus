@@ -35,12 +35,21 @@ test.after.always(() => {
   nock.enableNetConnect();
 });
 
-async function uploadFiles(files, bucket) {
+async function uploadFilesXml(files, bucket) {
   await Promise.all(files.map((file) => promiseS3Upload({
     Bucket: bucket,
     Key: parseS3Uri(file).Key,
     Body: file.endsWith('.cmr.xml')
       ? fs.createReadStream('tests/data/echo10in.xml') : parseS3Uri(file).Key
+  })));
+}
+
+async function uploadFilesJson(files, bucket) {
+  await Promise.all(files.map((file) => promiseS3Upload({
+    Bucket: bucket,
+    Key: parseS3Uri(file).Key,
+    Body: file.endsWith('.cmr.json')
+      ? fs.createReadStream('tests/data/umm-gin.json') : parseS3Uri(file).Key
   })));
 }
 
@@ -66,18 +75,6 @@ function buildPayload(t) {
 }
 
 test.beforeEach(async (t) => {
-  // Set up S3
-  t.context.stagingBucket = randomId('staging');
-  await Promise.all([
-    s3().createBucket({ Bucket: t.context.stagingBucket }).promise()
-  ]);
-  const payloadPath = path.join(__dirname, 'data', 'payload.json');
-  const rawPayload = await readFile(payloadPath, 'utf8');
-  t.context.payload = JSON.parse(rawPayload);
-  const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
-  t.context.filesToUpload = filesToUpload.map((file) =>
-    buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
-
   // Mock out retrieval of entryTitle from CMR
   const headers = { 'cmr-hits': 1, 'Content-Type': 'application/json;charset=utf-8' };
   nock('https://cmr.earthdata.nasa.gov', {
@@ -98,14 +95,24 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
-  await recursivelyDeleteS3Bucket(t.context.stagingBucket);
   delete process.env.CMR_ENVIRONMENT;
 });
 
 test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
+  // Set up S3
+  t.context.stagingBucket = randomId('staging');
+  await Promise.all([
+    s3().createBucket({ Bucket: t.context.stagingBucket }).promise()
+  ]);
+  const payloadPath = path.join(__dirname, 'data', 'payload-xml.json');
+  const rawPayload = await readFile(payloadPath, 'utf8');
+  t.context.payload = JSON.parse(rawPayload);
+  const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
+  t.context.filesToUpload = filesToUpload.map((file) =>
+    buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
+
   buildPayload(t);
-  const filesToUpload = clonedeep(t.context.filesToUpload);
-  await uploadFiles(filesToUpload, t.context.stagingBucket);
+  await uploadFilesXml(filesToUpload, t.context.stagingBucket);
   const event = {
     config: {
       cmr: {
@@ -115,18 +122,54 @@ test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
         passwordSecretName: 'xxxxx'
       }
     },
-    input: {}
+    input: t.context.payload.input
   };
-  await HyraxMetadataUpdate.updateSingleGranule(event.config, t.context.payload.input.granules[0]);
+  await HyraxMetadataUpdate.hyraxMetadataUpdate(event);
   // Verify the metadata has been updated at the S3 location
   const metadataFile = t.context.payload.input.granules[0].files.find((f) => f.type === 'metadata');
   const actual = await getS3Object(`${metadataFile.bucket}/${metadataFile.fileStagingDir}`, metadataFile.name);
   const expected = fs.readFileSync('tests/data/echo10out.xml', 'utf8');
   t.is(actual.Body.toString(), expected);
+
+  await recursivelyDeleteS3Bucket(t.context.stagingBucket);
 });
 
 test.serial('Test updating UMM-G metadata file in S3', async (t) => {
-  t.pass();
+  // Set up S3
+  t.context.stagingBucket = randomId('staging');
+  await Promise.all([
+    s3().createBucket({ Bucket: t.context.stagingBucket }).promise()
+  ]);
+  const payloadPath = path.join(__dirname, 'data', 'payload-json.json');
+  const rawPayload = await readFile(payloadPath, 'utf8');
+  t.context.payload = JSON.parse(rawPayload);
+  const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
+  t.context.filesToUpload = filesToUpload.map((file) =>
+    buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
+
+  buildPayload(t);
+  await uploadFilesJson(filesToUpload, t.context.stagingBucket);
+  const event = {
+    config: {
+      cmr: {
+        provider: 'GES_DISC',
+        clientId: 'xxxxxx',
+        username: 'xxxxxx',
+        passwordSecretName: 'xxxxx'
+      }
+    },
+    input: t.context.payload.input
+  };
+  await HyraxMetadataUpdate.hyraxMetadataUpdate(event);
+  // Verify the metadata has been updated at the S3 location
+  const metadataFile = t.context.payload.input.granules[0].files.find((f) => f.type === 'metadata');
+  const actual = await getS3Object(`${metadataFile.bucket}/${metadataFile.fileStagingDir}`, metadataFile.name);
+  const expected = fs.readFileSync('tests/data/umm-gout.json', 'utf8');
+  const expectedString = JSON.stringify(JSON.parse(expected), null, 2);
+  const actualString = JSON.stringify(JSON.parse(actual.Body.toString()), null, 2);
+  t.is(actualString, expectedString);
+
+  await recursivelyDeleteS3Bucket(t.context.stagingBucket);
 });
 
 test.serial('Test retrieving entry title from CMR using UMM-G', async (t) => {
