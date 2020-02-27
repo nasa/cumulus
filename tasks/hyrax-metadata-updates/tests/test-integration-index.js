@@ -71,7 +71,6 @@ test.beforeEach(async (t) => {
   await Promise.all([
     s3().createBucket({ Bucket: t.context.stagingBucket }).promise()
   ]);
-
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
   const rawPayload = await readFile(payloadPath, 'utf8');
   t.context.payload = JSON.parse(rawPayload);
@@ -95,7 +94,7 @@ test.beforeEach(async (t) => {
       provider_short_name: 'GES_DISC'
     })
     .replyWithFile(200, 'tests/data/cmr-results.json', headers);
-    process.env.CMR_ENVIRONMENT = 'OPS';
+  process.env.CMR_ENVIRONMENT = 'OPS';
 });
 
 test.afterEach.always(async (t) => {
@@ -124,6 +123,10 @@ test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
   const actual = await getS3Object(`${metadataFile.bucket}/${metadataFile.fileStagingDir}`, metadataFile.name);
   const expected = fs.readFileSync('tests/data/echo10out.xml', 'utf8');
   t.is(actual.Body.toString(), expected);
+});
+
+test.serial('Test updating UMM-G metadata file in S3', async (t) => {
+  t.pass();
 });
 
 test.serial('Test retrieving entry title from CMR using UMM-G', async (t) => {

@@ -6,8 +6,11 @@ const { InvalidArgument } = require('@cumulus/errors');
 const get = require('lodash.get');
 const _ = require('lodash/core');
 
-const { CMR } = require('@cumulus/cmr-client');
-//const CMRUtils = require(@cumulus/validate);
+const {
+  CMR,
+  validate,
+  validateUMMG
+} = require('@cumulus/cmr-client');
 
 const {
   getS3Object,
@@ -243,15 +246,15 @@ async function updateSingleGranule(config, granuleObject) {
   // Validate updated metadata via CMR
   /* try {
     if (isUmmG) {
-      CMR.validateUMMG(updatedMetadata, granuleObject.granuleId, config.cmr.provider);
+      await validateUMMG(updatedMetadata, granuleObject.granuleId, config.cmr.provider);
     } else {
-      result = CMRUtils.validate('collection', updatedMetadata, granuleObject.granuleId, config.cmr.provider);
+      const result = await validate('collection', updatedMetadata, granuleObject.granuleId, config.cmr.provider);
       if (!result) {
         throw new Error(`Validation of ${granuleObject.granuleId} failed`);
       }
     }
-    
   } catch (e) {
+    console.log(e);
     throw new Error(`Validation of ${granuleObject.granuleId} failed`);
   } */
 
@@ -264,16 +267,20 @@ async function updateSingleGranule(config, granuleObject) {
 }
 
 /**
- * Do the work
+ * Update the metadata of each granule with an OPeNDAP data acquisition URL.
  *
  * @param {Object} event - input from the message adapter
  * @returns {Object} the granules
  */
 async function hyraxMetadataUpdate(event) {
   const granulesInput = event.input.granules;
-  // isCMRFilename
+
+  await Promise.all(
+    granulesInput.map((granuleObject) => updateSingleGranule(event.config, granuleObject))
+  );
+  // We don't create anything, we just update existing metadata. So we return what we got.
   return {
-    granules: granulesInput
+    granules: event.input.granules
   };
 }
 
