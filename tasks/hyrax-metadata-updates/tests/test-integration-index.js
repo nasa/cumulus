@@ -95,10 +95,12 @@ test.beforeEach(async (t) => {
       provider_short_name: 'GES_DISC'
     })
     .replyWithFile(200, 'tests/data/cmr-results.json', headers);
+    process.env.CMR_ENVIRONMENT = 'OPS';
 });
 
 test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  delete process.env.CMR_ENVIRONMENT;
 });
 
 test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
@@ -116,15 +118,12 @@ test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
     },
     input: {}
   };
-  process.env.CMR_ENVIRONMENT = 'OPS';
-
   await HyraxMetadataUpdate.updateSingleGranule(event.config, t.context.payload.input.granules[0]);
   // Verify the metadata has been updated at the S3 location
   const metadataFile = t.context.payload.input.granules[0].files.find((f) => f.type === 'metadata');
   const actual = await getS3Object(`${metadataFile.bucket}/${metadataFile.fileStagingDir}`, metadataFile.name);
   const expected = fs.readFileSync('tests/data/echo10out.xml', 'utf8');
   t.is(actual.Body.toString(), expected);
-  delete process.env.CMR_ENVIRONMENT;
 });
 
 test.serial('Test retrieving entry title from CMR using UMM-G', async (t) => {
@@ -139,12 +138,10 @@ test.serial('Test retrieving entry title from CMR using UMM-G', async (t) => {
     },
     input: {}
   };
-  process.env.CMR_ENVIRONMENT = 'OPS';
   const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const metadataObject = JSON.parse(data);
   const result = await HyraxMetadataUpdate.getEntryTitle(event.config, metadataObject, true);
   t.is(result, 'GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC');
-  delete process.env.CMR_ENVIRONMENT;
 });
 
 test.serial('Test retrieving entry title from CMR using ECHO10', async (t) => {
@@ -159,12 +156,10 @@ test.serial('Test retrieving entry title from CMR using ECHO10', async (t) => {
     },
     input: {}
   };
-  process.env.CMR_ENVIRONMENT = 'OPS';
   const data = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
   const metadata = libxmljs.parseXml(data);
   const result = await HyraxMetadataUpdate.getEntryTitle(event.config, metadata, false);
   t.is(result, 'GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC');
-  delete process.env.CMR_ENVIRONMENT;
 });
 
 test('Test generate path from UMM-G', async (t) => {
@@ -180,13 +175,11 @@ test('Test generate path from UMM-G', async (t) => {
     },
     input: {}
   };
-  process.env.CMR_ENVIRONMENT = 'OPS';
   const metadata = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const metadataObject = JSON.parse(metadata);
   const data = await HyraxMetadataUpdate.generatePath(event.config, metadataObject, true);
 
   t.is(data, 'providers/GES_DISC/collections/GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
-  delete process.env.CMR_ENVIRONMENT;
 });
 
 test('Test generate path from ECHO-10', async (t) => {
@@ -202,14 +195,12 @@ test('Test generate path from ECHO-10', async (t) => {
     },
     input: {}
   };
-  process.env.CMR_ENVIRONMENT = 'OPS';
   const metadata = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
   const metadataObject = libxmljs.parseXml(metadata);
 
   const data = await HyraxMetadataUpdate.generatePath(event.config, metadataObject, false);
 
   t.is(data, 'providers/GES_DISC/collections/GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
-  delete process.env.CMR_ENVIRONMENT;
 });
 
 test('Test generating OPeNDAP URL from ECHO10 file ', async (t) => {
@@ -226,12 +217,10 @@ test('Test generating OPeNDAP URL from ECHO10 file ', async (t) => {
     },
     input: {}
   };
-  process.env.CMR_ENVIRONMENT = 'OPS';
   const data = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
   const metadata = libxmljs.parseXml(data);
   const result = await HyraxMetadataUpdate.generateHyraxUrl(event.config, metadata, false);
   t.is(result, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
-  delete process.env.CMR_ENVIRONMENT;
 });
 
 test('Test generating OPeNDAP URL from UMM-G file ', async (t) => {
@@ -248,10 +237,8 @@ test('Test generating OPeNDAP URL from UMM-G file ', async (t) => {
     },
     input: {}
   };
-  process.env.CMR_ENVIRONMENT = 'OPS';
   const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const metadataObject = JSON.parse(data);
   const result = await HyraxMetadataUpdate.generateHyraxUrl(event.config, metadataObject, true);
   t.is(result, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
-  delete process.env.CMR_ENVIRONMENT;
 });
