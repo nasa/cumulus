@@ -7,7 +7,11 @@ const get = require('lodash.get');
 const _ = require('lodash/core');
 
 const { CMR } = require('@cumulus/cmr-client');
-//const { CMRUtil } = require('@cumulus/cmr-util');
+
+const {
+  getS3Object,
+  s3PutObject
+} = require('@cumulus/aws-client/S3');
 
 const libxmljs = require('libxmljs');
 
@@ -102,13 +106,12 @@ function generatePath(config, metadata, isUmmG) {
   if (_.isUndefined(providerId)) {
     throw new InvalidArgument('Provider not supplied in configuration. Unable to construct path');
   }
-  //TODO use getEntryTitle here
+  // TODO use getEntryTitle here
   const entryTitle = get(config, 'entryTitle');
   // Check if entryTitle is defined
   if (_.isUndefined(entryTitle)) {
     throw new InvalidArgument('Entry Title not supplied in configuration. Unable to construct path');
   }
-  const nativeId = getGranuleUr(metadata, isUmmG);
 
   return `providers/${providerId}/collections/${entryTitle}/granules/${getGranuleUr(metadata, isUmmG)}`;
 }
@@ -190,32 +193,46 @@ function addHyraxUrl(metadata, isUmmG, hyraxUrl) {
   return updatedMetadata;
 }
 
+// TODO: these are not exported from cmr-utils.js yet
+const isECHO10File = (filename) => filename.endsWith('cmr.xml');
+const isUMMGFile = (filename) => filename.endsWith('cmr.json');
+
 /**
  * updateSingleGranule
  *
  * @param {Object} config
- * @param {Object} granuleMetadataFile - input granule
+ * @param {Object} granuleObject - granule files object
+ * @returns {Object} metadata
  */
-/* async function updateSingleGranule(config, granuleMetadataFile) {
-  const cmrfilename = granuleMetadataFile.key || granuleMetadataFile.name || granuleMetadataFile.filename || '';
+async function updateSingleGranule(config, granuleObject) {
   // Read in the metadata file
-  const metadata = null;
+  const metadataFile = granuleObject.files.find((f) => f.type === 'metadata');
+  const metadataResult = await getS3Object(`${metadataFile.bucket}/${metadataFile.fileStagingDir}`, metadataFile.name);
+  // Extract the metadata file object
+  const metadata = metadataResult.Body.toString();
+
   let isUmmG = false;
   // Parse into DOM based on file extension
   let dom = null;
-  if (CMRUtil.isUMMGFile(cmrfilename)) {
-    dom = libxmljs.parseXml(metadata);
-    isUmmG = true;
-  } else if (CMRUtil.isECHO10File(cmrfilename)) {
+  if (isUMMGFile(metadataFile.name)) {
     dom = JSON.parse(metadata);
+    isUmmG = true;
+  } else if (isECHO10File(metadataFile.name)) {
+    dom = libxmljs.parseXml(metadata);
+  } else {
+    throw new InvalidArgument('Metadata file is in unknown format');
   }
-
   // Add OPeNDAP url
-  const hyraxUrl = generateHyraxUrl(event, dom, isUmmG);
+  const hyraxUrl = generateHyraxUrl(config, dom, isUmmG);
   const updatedMetadata = addHyraxUrl(dom, isUmmG, hyraxUrl);
   // Validate via CMR
   // Write back out to S3 in the same location
-} */
+  await s3PutObject({
+    Bucket: `${metadataFile.bucket}/${metadataFile.fileStagingDir}`,
+    Key: metadataFile.name,
+    Body: updatedMetadata
+  });
+}
 
 /**
  * Do the work
@@ -251,3 +268,4 @@ exports.getNativeId = getGranuleUr; // exported to support testing
 exports.addHyraxUrl = addHyraxUrl; // exported to support testing
 exports.generateHyraxUrl = generateHyraxUrl; // exported to support testing
 exports.getEntryTitle = getEntryTitle; // exported to support testing
+exports.updateSingleGranule = updateSingleGranule; // export to support testing
