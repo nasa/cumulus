@@ -107,6 +107,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-1714**
+  - Changed the format of the message sent to the granule SNS Topic. Message includes the granule record under `record`, the type of event under `event` and a `deletedAt` timestamp if the granule was deleted. Options for `event` are `INSERT | MODIFY | REMOVE`
+
 - **CUMULUS-1672**
   - Add a `retryOptions` parameter to the `@cumulus/aws-client/S3.headObject`
      function, which will retry if the object being queried does not exist.
