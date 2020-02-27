@@ -12,11 +12,15 @@ Read more about the semantic versioning [here](https://docs.npmjs.com/getting-st
 
 #### From Master
 
-If creating a new minor version release from master, create a branch titled `release-MAJOR.MINOR.x` (e.g. release-1.14.x) as a minor version branch from master to allow us to easily backport patches to that version.  Then create a release branch from the minor version branch.
+If creating a new minor version release from master, create a branch titled `release-MAJOR.MINOR.x` (e.g. release-1.14.x) as a minor version base branch from master to allow us to easily backport patches to that version. Push the `release-MAJOR.MINOR.x` branch to GitHub if it was created locally. (Commits should be even with master at this point.)
+
+If creating a patch release, you can check out the existing base branch.
+Then create the release branch (e.g. release-1.14.0) from the minor version base branch.
 
 #### Backporting
 
-Checkout the minor version branch created in the `From Master` step above, then create a release branch from it.
+When creating a backport, a minor version base branch should already exist on GitHub.
+Check out the existing minor version base branch then create a release branch from it.
 
 ### 2. Update the Cumulus version number
 
@@ -33,6 +37,9 @@ To update Cumulus's version number run:
 ![Screenshot of terminal showing interactive prompt from Lerna for selecting the new release version](https://static.notion-static.com/13acbe0a-c59d-4c42-90eb-23d4ec65c9db/Screen_Shot_2018-03-15_at_12.21.16_PM.png)
 
 Lerna will handle updating the packages and all of the dependent package version numbers. If a dependency has not been changed with the update, however, lerna will not update the version of the dependency.
+
+**Note:** Lerna will struggle to correctly update the versions on any non-standard/alpha versions (e.g. 1.17.0-alpha0).
+Please be sure to check any packages that are new or have been manually published since the previous release and any packages that list it as a dependency to ensure the listed versions are correct.
 
 ### 3. Check Cumulus Dashboard PRs for Version Bump
 
@@ -51,6 +58,8 @@ Add a link reference for the github "compare" view at the bottom of the CHANGELO
 
 ### 5. Cut new version of Cumulus Documentation
 
+If this is a backport, do not version documentation. For various reasons, we do not merge backports back to master, other than changelog notes. Doc changes will not be published to our documentation website.
+
 ```shell
 cd website
 npm run version ${release_version}
@@ -63,9 +72,15 @@ Note: This is for 1.10.3 or later.
 
 ### 6. Create a pull request against the minor version branch
 
-Create a PR against the minor version branch. Verify that the Bamboo build for the PR succeeds and then merge to the minor version branch.
+Push the release branch to GitHub.
+Create a PR against the minor version base branch.
+Verify that the Bamboo build for the PR succeeds and then merge to the minor version base branch.
+You may delete your release branch after merging to the base branch.
 
 ### 7. Create a git tag for the release
+
+Check out the minor version base branch now that your changes are merged in.
+Ensure you are on the latest commit.
 
 Create and push a new git tag:
 
@@ -82,19 +97,30 @@ If you created a new release plan in step one, you will need to create a new bam
 
 #### Creating a Bamboo Deployment plan
 
-* In the Cumulus Core project (<https://ci.earthdata.nasa.gov/browse/CUM-CBA>), click Actions -> Configure Plan
+* In the Cumulus Core project (<https://ci.earthdata.nasa.gov/browse/CUM-CBA>), click `Actions -> Configure Plan` in the top right.
 
-* Scroll to the bottom of the branch list and click `Create Plan Branch`
+* Scroll to the bottom of the branch list in the bottom left and click `Create Plan Branch`.
 
-* Click `Create plan branch manually`
+* Click `Create plan branch manually`.
 
-* Add the values in that list.   Choose a display name that makes it *very* clear this is a deployment branch plan.    `Release (branch name)` seems to work well.    *Make sure* you select the correct branch
+* Add the values in that list. Choose a display name that makes it *very* clear this is a deployment branch plan. `Release (branch name)` seems to work well. *Make sure* you enter the correct branch name.
 
-* **Important** Deselect Enable Branch - if you do not do this, it will immediately fire off a build
+* **Important** Deselect Enable Branch - if you do not do this, it will immediately fire off a build.
 
-* **Immediately** go to plan configuration on the `Branch Details` tab, and enable `Change trigger`.  Set the `Trigger type` to manual, this will prevent commits to the branch from triggering the build plan
+* **Do Immediately** On the `Branch Details` page, enable `Change trigger`.  Set the `Trigger type` to manual, this will prevent commits to the branch from triggering the build plan.
+You should have been redirected to the `Branch Details` tab after creating the plan. If not, navigate to the branch from the list where you clicked `Create Plan Branch` in the previous step.
 
-* Go to the branch plan and set GIT_PR, USE_NPM_PACKAGES, SKIP_AUDIT and PUBLISH_FLAG to true.  Select a DEPLOYMENT appropriate for the release (defaults to last committer). This should be `cumulus-from-npm` *except* in special cases such as incompatible backport branches.
+* Go to the `Variables` tab. Ensure that you are on your branch plan and not the `master` plan: You should not see a large list of configured variables, but instead a dropdown allowing you to select variables to override, and the tab title will be `Branch Variables`. Set a DEPLOYMENT variable appropriate for the release (defaults to last committer). This should be `cumulus-from-npm-tf` *except* in special cases such as incompatible backport branches. Then set:
+
+* `USE_CACHED_BOOTSTRAP`: `false`,
+* `USE_TERRAFORM_ZIPS`: `true`, (**IMPORTANT**: MUST be set in order to run integration tests vs. the zips published during the build and actually test our released files)
+* `GIT_PR`: `true`,
+* `SKIP_AUDIT`: `true`,
+* `PUBLISH_FLAG`: `true`
+
+* Enable the branch from the `Branch Details` page.
+
+* Run the branch using the `Run` button in the top right.
 
 Bamboo will build and run lint, audit and unit tests against that tagged release, publish the new packages to NPM, and then run the integration tests using those newly released packages.
 
@@ -109,6 +135,17 @@ The CI release scripts will automatically create a release based on the release 
 * An ECS service module
 
 Just make sure to verify the appropriate .zip files are present on Github after the release process is complete.
+
+### 10. Merge base branch back to master
+
+Finally, you need to reproduce the version update changes back to master.
+
+If this is the latest version, you can simply create a PR to merge the minor version base branch back to master.
+**Note:** Do not squash this merge. Doing so will make the "compare" view from step 4 show an incorrect diff, because the tag is linked to a specific commit on the base branch.
+
+If this is a backport, you will need to create a PR that ports the changelog updates back to master.
+It is important in this changelog note to call it out as a backport.
+For example, fixes in backport version 1.14.5 may not be available in 1.15.0 because the fix was introduced in 1.15.3.
 
 ## Troubleshooting
 
