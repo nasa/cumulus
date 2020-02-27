@@ -51,7 +51,8 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
             granuleId: { S: granuleId },
             status: { S: 'running' }
           }
-        }
+        },
+        eventName: 'INSERT'
       }
     ]
   };
@@ -63,7 +64,7 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
   t.is(Messages.length, 1);
 
   const snsMessage = JSON.parse(Messages[0].Body);
-  const granuleRecord = JSON.parse(snsMessage.Message);
+  const granuleRecord = JSON.parse(snsMessage.Message.record);
 
   t.is(granuleRecord.granuleId, granuleId);
   t.is(granuleRecord.status, 'running');
@@ -80,7 +81,8 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
             granuleId: { S: randomString() },
             status: { S: 'running' }
           }
-        }
+        },
+        eventName: 'INSERT'
       },
       {
         dynamodb: {
@@ -88,7 +90,8 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
             granuleId: { S: randomString() },
             status: { S: 'running' }
           }
-        }
+        },
+        eventName: 'MODIFY'
       }
     ]
   };
@@ -102,4 +105,37 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
   }).promise();
 
   t.is(Messages.length, 2);
+});
+
+test.serial('The publish-granules Lambda function takes a DynamoDB stream event with a REMOVE record and adds a deletedAt to the SNS message', async (t) => {
+  const { QueueUrl } = t.context;
+
+  const granuleId = randomString();
+
+  const event = {
+    Records: [
+      {
+        dynamodb: {
+          NewImage: {
+            granuleId: { S: granuleId },
+            status: { S: 'running' }
+          }
+        },
+        eventName: 'REMOVE'
+      }
+    ]
+  };
+
+  await handler(event);
+
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+
+  t.is(Messages.length, 1);
+
+  const snsMessage = JSON.parse(Messages[0].Body);
+  const message = JSON.parse(snsMessage.Message);
+  const granuleRecord = JSON.parse(message.record);
+
+  t.is(granuleRecord.granuleId, granuleId);
+  t.exists(message.deletedAt);
 });

@@ -7,7 +7,6 @@ const path = require('path');
 
 const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
-const { publishSnsMessage } = require('@cumulus/aws-client/SNS');
 const secretsManagerUtils = require('@cumulus/aws-client/SecretsManager');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
@@ -405,40 +404,22 @@ class Granule extends Manager {
   }
 
   /**
-   * Create new granule records
-   *
-   * @param {Object} granuleRecord - a granule record to create
-   * @returns {Promise<Array>} created granule record
-   */
-  async create(granuleRecord) {
-    if (!process.env.noSNS) {
-      const snsRecord = {
-        event: 'Create',
-        record: granuleRecord
-      };
-      await publishGranuleSnsMessage(snsRecord);
-    }
-
-    return super.create(granuleRecord);
-  }
-
-  /**
    * Deletes a granule
    *
    * @param {Object} record - a record with granuleId
    * @returns {Promise<Array>} granule deletion
    */
   async delete(granuleRecord) {
-    if (!process.env.noSNS) {
-      const snsRecord = {
-        event: 'Delete',
-        record: {
-          granuleId: granuleRecord.granuleId,
-          deletedAt: Date.now()
-        }
-      };
-      await publishGranuleSnsMessage(snsRecord);
-    }
+    // if (!process.env.noSNS) {
+    //   const snsRecord = {
+    //     event: 'Delete',
+    //     record: {
+    //       granuleId: granuleRecord.granuleId,
+    //       deletedAt: Date.now()
+    //     }
+    //   };
+    //   await publishGranuleSnsMessage(snsRecord);
+    // }
 
     return super.delete(granuleRecord);
   }

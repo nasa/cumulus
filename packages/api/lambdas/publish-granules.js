@@ -14,8 +14,14 @@ const handler = async (event) => {
 
   const promisedPublishEvents = event.Records.map(
     (record) => {
-      const granule = attr.unwrap(record.dynamodb.NewImage);
-      return publishSnsMessage(topicArn, granule);
+      const eventType = attr.unwrap(record.eventName);
+      const message = { event: eventType };
+      if (eventType === 'REMOVE') {
+        message.deletedAt = Date.now();
+      }
+      message.record = attr.unwrap(record.dynamodb.NewImage);
+
+      return publishSnsMessage(topicArn, message);
     }
   );
 
