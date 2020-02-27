@@ -37,6 +37,7 @@
     "got": "^8.3.0",
     "handlebars": "^4.0.11",
     "js-yaml": "^3.13.1",
+    "jsonwebtoken": "^8.5.1",
     "lodash.clonedeep": "^4.5.0",
     "lodash.get": "^4.4.2",
     "lodash.isequal": "^4.5.0",
