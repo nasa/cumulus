@@ -7,6 +7,7 @@ const get = require('lodash.get');
 const _ = require('lodash/core');
 
 const { CMR } = require('@cumulus/cmr-client');
+//const CMRUtils = require(@cumulus/validate);
 
 const {
   getS3Object,
@@ -100,19 +101,19 @@ async function getEntryTitle(config, metadata, isUmmG) {
  * @throws {Object} invalidArgumentException - if the env is not valid
  * @returns {string} - the OPeNDAP path
  */
-function generatePath(config, metadata, isUmmG) {
+async function generatePath(config, metadata, isUmmG) {
   const providerId = get(config.cmr, 'provider');
   // Check if providerId is defined
   if (_.isUndefined(providerId)) {
     throw new InvalidArgument('Provider not supplied in configuration. Unable to construct path');
   }
   // TODO use getEntryTitle here
-  const entryTitle = get(config, 'entryTitle');
+  //const entryTitle = get(config, 'entryTitle');
+  const entryTitle = await getEntryTitle(config, metadata, isUmmG);
   // Check if entryTitle is defined
   if (_.isUndefined(entryTitle)) {
     throw new InvalidArgument('Entry Title not supplied in configuration. Unable to construct path');
   }
-
   return `providers/${providerId}/collections/${entryTitle}/granules/${getGranuleUr(metadata, isUmmG)}`;
 }
 
@@ -124,8 +125,9 @@ function generatePath(config, metadata, isUmmG) {
  * @param {boolean} isUmmG - UMM-G or ECHO10
  * @returns {string} - the hyrax url
  */
-function generateHyraxUrl(config, metadata, isUmmG) {
-  const url = new URL(`${generateAddress()}/${generatePath(config, metadata, isUmmG)}`);
+async function generateHyraxUrl(config, metadata, isUmmG) {
+  const path = await generatePath(config, metadata, isUmmG);
+  const url = new URL(`${generateAddress()}/${path}`);
   return (url.href);
 }
 
@@ -198,19 +200,13 @@ const isECHO10File = (filename) => filename.endsWith('cmr.xml');
 const isUMMGFile = (filename) => filename.endsWith('cmr.json');
 
 /**
- * updateSingleGranule
+ * createDom
  *
- * @param {Object} config
- * @param {Object} granuleObject - granule files object
- * @returns {Object} metadata
+ * @param {Object} metadataFile file object
+ * @param {Object} metadata - raw metadata
+ * @returns {Object} document object model and whether it is UMM-G
  */
-async function updateSingleGranule(config, granuleObject) {
-  // Read in the metadata file
-  const metadataFile = granuleObject.files.find((f) => f.type === 'metadata');
-  const metadataResult = await getS3Object(`${metadataFile.bucket}/${metadataFile.fileStagingDir}`, metadataFile.name);
-  // Extract the metadata file object
-  const metadata = metadataResult.Body.toString();
-
+function createDom(metadataFile, metadata) {
   let isUmmG = false;
   // Parse into DOM based on file extension
   let dom = null;
@@ -222,13 +218,46 @@ async function updateSingleGranule(config, granuleObject) {
   } else {
     throw new InvalidArgument('Metadata file is in unknown format');
   }
+  return { dom, isUmmG };
+}
+
+/**
+ * updateSingleGranule
+ *
+ * @param {Object} config
+ * @param {Object} granuleObject - granule files object
+ * @returns {Object} metadata
+ */
+async function updateSingleGranule(config, granuleObject) {
+  // Read in the metadata file
+  const metadataFile = granuleObject.files.find((f) => f.type === 'metadata');
+  const bucket = `${metadataFile.bucket}/${metadataFile.fileStagingDir}`;
+  const metadataResult = await getS3Object(bucket, metadataFile.name);
+  // Extract the metadata file object
+  const metadata = metadataResult.Body.toString();
+
+  const { dom, isUmmG } = createDom(metadataFile, metadata);
   // Add OPeNDAP url
-  const hyraxUrl = generateHyraxUrl(config, dom, isUmmG);
+  const hyraxUrl = await generateHyraxUrl(config, dom, isUmmG);
   const updatedMetadata = addHyraxUrl(dom, isUmmG, hyraxUrl);
-  // Validate via CMR
+  // Validate updated metadata via CMR
+  /* try {
+    if (isUmmG) {
+      CMR.validateUMMG(updatedMetadata, granuleObject.granuleId, config.cmr.provider);
+    } else {
+      result = CMRUtils.validate('collection', updatedMetadata, granuleObject.granuleId, config.cmr.provider);
+      if (!result) {
+        throw new Error(`Validation of ${granuleObject.granuleId} failed`);
+      }
+    }
+    
+  } catch (e) {
+    throw new Error(`Validation of ${granuleObject.granuleId} failed`);
+  } */
+
   // Write back out to S3 in the same location
   await s3PutObject({
-    Bucket: `${metadataFile.bucket}/${metadataFile.fileStagingDir}`,
+    Bucket: bucket,
     Key: metadataFile.name,
     Body: updatedMetadata
   });
