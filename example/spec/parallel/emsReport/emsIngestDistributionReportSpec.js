@@ -4,25 +4,25 @@ const AWS = require('aws-sdk');
 const path = require('path');
 const os = require('os');
 
+const emsApi = require('@cumulus/integration-tests/api/ems');
+const Granule = require('@cumulus/api/models/granules');
 const { fileExists, getS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { lambda } = require('@cumulus/aws-client/services');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { download } = require('@cumulus/common/http');
 const { sleep } = require('@cumulus/common/util');
-const { Granule, AccessToken } = require('@cumulus/api/models');
 const {
   addCollections,
   addProviders,
   buildAndExecuteWorkflow,
-  cleanupProviders,
-  distributionApi: {
-    getDistributionApiRedirect
-  },
-  EarthdataLogin: { getEarthdataAccessToken },
-  emsApi,
-  getOnlineResources,
-  granulesApi: granulesApiTestUtils
+  cleanupProviders
 } = require('@cumulus/integration-tests');
+const {
+  getDistributionApiRedirect,
+  getTEARequestHeaders
+} = require('@cumulus/integration-tests/api/distribution');
+const granulesApiTestUtils = require('@cumulus/integration-tests/api/granules');
+const { getOnlineResources } = require('@cumulus/integration-tests/cmr');
 
 const {
   loadConfig,
@@ -313,30 +313,23 @@ describe('The EMS report', () => {
   });
 
   describe('When there are distribution requests', () => {
-    let accessToken;
+    let headers;
 
     beforeAll(async () => {
       setDistributionApiEnvVars();
-      const accessTokenResponse = await getEarthdataAccessToken({
-        redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
-        requestOrigin: process.env.DISTRIBUTION_ENDPOINT
-      });
-      accessToken = accessTokenResponse.accessToken;
+      headers = await getTEARequestHeaders(config.stackName);
     });
-
-    afterAll(() => (new AccessToken()).delete({ accessToken }));
 
     // the s3 server access log records are delivered within a few hours of the time that they are recorded,
     // so we are not able to generate the distribution report immediately after submitting distribution requests,
     // the distribution requests submitted here are for nightly distribution report.
-    // TODO Update this to work with the Thin Egress App
-    xit('downloads the files of the published granule for generating nightly distribution report', async () => {
+    it('downloads the files of the published granule for generating nightly distribution report', async () => {
       const files = await getGranuleFilesForDownload(config.stackName, ingestedGranuleIds[0]);
       for (let i = 0; i < files.length; i += 1) {
         const filePath = `/${files[i].bucket}/${files[i].key}`;
         const downloadedFile = path.join(os.tmpdir(), files[i].fileName);
         // eslint-disable-next-line no-await-in-loop
-        const s3SignedUrl = await getDistributionApiRedirect(filePath, accessToken);
+        const s3SignedUrl = await getDistributionApiRedirect(filePath, headers);
         // eslint-disable-next-line no-await-in-loop
         await download(s3SignedUrl, downloadedFile);
         fs.unlinkSync(downloadedFile);

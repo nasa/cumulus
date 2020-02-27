@@ -65,7 +65,6 @@
     "@cumulus/sync-granule": "1.18.0",
     "@cumulus/test-processing": "1.18.0",
     "aws-sdk": "^2.585.0",
-    "jsonwebtoken": "^8.5.1",
     "ssh2-streams": "^0.4.8"
   },
   "devDependencies": {
