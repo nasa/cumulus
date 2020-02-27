@@ -208,6 +208,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Link tags in uppercase or lowercase (e.g. `<A>`)
   - Links with filepaths in the link target (e.g. `<a href="/path/to/file.txt">`). These files will be returned from HTTP file discovery **as the file name only** (e.g. `file.txt`).
 
+- **CUMULUS-1768**
+  - Fix an issue in the stats endpoint in `@cumulus/api` to send back stats for the correct type
+
 ## [v1.18.0] 2020-02-03
 
 ### BREAKING CHANGES

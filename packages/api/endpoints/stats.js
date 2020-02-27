@@ -23,7 +23,7 @@ function getType(req) {
     executions: 'execution'
   };
 
-  const typeRequested = get(req, 'params.type', null);
+  const typeRequested = get(req, 'params.type', null) || get(req, 'query.type', null);
   const type = get(supportedTypes, typeRequested);
 
   return { type, index };
