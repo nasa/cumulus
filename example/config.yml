@@ -21,7 +21,10 @@ kk-tf:
 lf-test-tf:
   bucket: lf-internal
 
-mth-tf:
+mth-ci-tf:
+  bucket: mth-internal
+
+mth-dev-tf:
   bucket: mth-internal
 
 lpf-tf:

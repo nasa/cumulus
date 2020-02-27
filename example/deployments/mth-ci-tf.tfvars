@@ -1,4 +1,4 @@
-prefix        = "mth-tf"
+prefix        = "mth-ci-tf"
 system_bucket = "mth-internal"
 buckets = {
   internal = {
