@@ -63,8 +63,9 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
 
   t.is(Messages.length, 1);
 
-  const snsMessage = JSON.parse(Messages[0].Body);
-  const granuleRecord = JSON.parse(snsMessage.Message.record);
+  const snsResponse = JSON.parse(Messages[0].Body);
+  const snsMessage = JSON.parse(snsResponse.Message);
+  const granuleRecord = snsMessage.record;
 
   t.is(granuleRecord.granuleId, granuleId);
   t.is(granuleRecord.status, 'running');
@@ -134,8 +135,8 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
 
   const snsMessage = JSON.parse(Messages[0].Body);
   const message = JSON.parse(snsMessage.Message);
-  const granuleRecord = JSON.parse(message.record);
+  const granuleRecord = message.record;
 
   t.is(granuleRecord.granuleId, granuleId);
-  t.exists(message.deletedAt);
+  t.is(!!message.deletedAt, true);
 });

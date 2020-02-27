@@ -14,7 +14,7 @@ const handler = async (event) => {
 
   const promisedPublishEvents = event.Records.map(
     (record) => {
-      const eventType = attr.unwrap(record.eventName);
+      const eventType = record.eventName;
       const message = { event: eventType };
       if (eventType === 'REMOVE') {
         message.deletedAt = Date.now();
