@@ -4,7 +4,6 @@ const get = require('lodash.get');
 const pFilter = require('p-filter');
 const { s3ObjectExists } = require('@cumulus/aws-client/S3');
 const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
-const { normalizeProviderPath } = require('@cumulus/ingest/util');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 
 /**
@@ -36,7 +35,7 @@ const discoverPdrs = async ({ config }) => {
   const discoveredFiles = await listFiles(
     config.provider,
     config.useList,
-    normalizeProviderPath(config.collection.provider_path)
+    config.collection.provider_path
   );
 
   const discoveredPdrs = discoveredFiles.filter(isPdrFile);

@@ -32,7 +32,7 @@ resource "aws_secretsmanager_secret_version" "thin_egress_urs_creds" {
 }
 
 module "thin_egress_app" {
-  source = "https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.48.zip"
+  source = "https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.61.zip"
 
   auth_base_url                      = var.urs_url
   bucket_map_file                    = aws_s3_bucket_object.bucket_map_yaml.key

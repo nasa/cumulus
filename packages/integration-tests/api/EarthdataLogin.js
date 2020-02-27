@@ -15,11 +15,18 @@ const EarthdataLogin = require('@cumulus/api/lib/EarthdataLogin');
  *   The URL to use as the "origin" for the request Earthdata login
  * @param {Object} params.userParams
  *   optional object to overide the getAccessToken response with predetermined values.
+ * @param {boolean} params.storeAccessToken
+ *   Whether to store the access token received from Earthdata login
  *
  * @returns {Object}
  *   Access token object returned by Earthdata client
  */
-async function getEarthdataAccessToken({ redirectUri, requestOrigin, userParams = {} }) {
+async function getEarthdataAccessToken({
+  redirectUri,
+  requestOrigin,
+  userParams = {},
+  storeAccessToken = true
+}) {
   if (!process.env.EARTHDATA_USERNAME) {
     throw new Error('EARTHDATA_USERNAME environment variable is required');
   } else if (!process.env.EARTHDATA_PASSWORD) {
@@ -73,10 +80,11 @@ async function getEarthdataAccessToken({ redirectUri, requestOrigin, userParams 
   let accessTokenResponse = await earthdataLoginClient.getAccessToken(authorizationCode);
 
   accessTokenResponse = { ...accessTokenResponse, ...userParams };
-  // Store access token. All API endpoints using access tokens check that the
-  // access token exists in the database.
-  const accessTokenModel = new AccessToken();
-  await accessTokenModel.create(accessTokenResponse);
+
+  if (storeAccessToken) {
+    const accessTokenModel = new AccessToken();
+    await accessTokenModel.create(accessTokenResponse);
+  }
 
   return accessTokenResponse;
 }

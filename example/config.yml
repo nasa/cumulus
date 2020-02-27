@@ -2,6 +2,10 @@ default:
   bucket: cumulus-test-sandbox-internal
   apiUsername: jasmine
 
+cumulus-sit:
+  bucket: cumulus-sit-internal
+  apiUsername: jasmine
+
 mvd-tf:
   bucket: mvd-internal
 

@@ -597,6 +597,28 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
   ]);
 });
 
+test('DELETE for a granule with a file not present in S3 succeeds', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({ status: 'failed' });
+  newGranule.published = false;
+  newGranule.files = [
+    {
+      bucket: process.env.system_bucket,
+      fileName: `${newGranule.granuleId}.hdf`,
+      key: randomString()
+    }
+  ];
+
+  // create a new unpublished granule
+  await granuleModel.create(newGranule);
+
+  const response = await request(app)
+    .delete(`/granules/${newGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${accessToken}`);
+
+  t.is(response.status, 200);
+});
+
 test.serial('move a granule with no .cmr.xml file', async (t) => {
   const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');

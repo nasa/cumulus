@@ -1,22 +1,22 @@
 buckets = {
   internal = {
-    name = "cumulus-test-sandbox-internal"
+    name = "cumulus-sit-internal"
     type = "internal"
   }
   private = {
-    name = "cumulus-test-sandbox-private"
+    name = "cumulus-sit-private"
     type = "private"
   },
   protected = {
-    name = "cumulus-test-sandbox-protected"
+    name = "cumulus-sit-protected"
     type = "protected"
   },
   protected-2 = {
-    name = "cumulus-test-sandbox-protected-2"
+    name = "cumulus-sit-protected-2"
     type = "protected"
   },
   public = {
-    name = "cumulus-test-sandbox-public"
+    name = "cumulus-sit-public"
     type = "public"
   }
 }
@@ -26,7 +26,7 @@ s3_replicator_config = {
   target_bucket = ""
   target_prefix = ""
 }
-system_bucket="cumulus-test-sandbox-internal"
+system_bucket="cumulus-sit-internal"
 
 launchpad_api = "https://api.launchpad.nasa.gov/icam/api/sm/v1"
 launchpad_certificate = "launchpad.pfx"
@@ -46,4 +46,4 @@ ems_retention_in_days = 30
 ems_submit_report     = true
 ems_username          = "cumulus"
 
-thin_egress_jwt_secret_name = "cumulus_sandbox_jwt_tea_secret"
+thin_egress_jwt_secret_name = "cumulus_sit_jwt_tea_secret"
