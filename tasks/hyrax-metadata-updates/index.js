@@ -8,14 +8,22 @@ const _ = require('lodash/core');
 const cloneDeep = require('lodash.clonedeep');
 
 const {
-  CMR,
-  validate,
-  validateUMMG
+  CMR
 } = require('@cumulus/cmr-client');
+
+const { validateUMMG } = require('@cumulus/cmr-client/UmmUtils');
+const {
+  validate
+} = require('@cumulus/cmr-client/validate');
+const {
+  ValidationError
+} = require('@cumulus/cmr-client/ValidationError');
 
 const {
   getS3Object,
-  s3PutObject
+  s3PutObject,
+  buildS3Uri,
+  parseS3Uri
 } = require('@cumulus/aws-client/S3');
 
 const libxmljs = require('libxmljs');
@@ -27,13 +35,8 @@ const libxmljs = require('libxmljs');
  * @returns {string} - the corresponding OPeNDAP address
  */
 function generateAddress() {
-  let env = process.env.CMR_ENVIRONMENT;
+  const env = process.env.CMR_ENVIRONMENT ? process.env.CMR_ENVIRONMENT.toLowerCase() : 'prod';
 
-  if (_.isUndefined(env)) {
-    env = 'prod';
-  } else {
-    env = env.toLowerCase();
-  }
   let envSubstition = env;
   if (['prod', 'ops', 'uat', 'sit'].includes(env)) {
     envSubstition = ((env === 'prod' || env === 'ops') ? '' : `${env}.`);
@@ -54,7 +57,7 @@ function generateAddress() {
 function getGranuleUr(metadata, isUmmG) {
   let nativeId = null;
   if (isUmmG === true) {
-    nativeId = metadata.umm.GranuleUR;
+    nativeId = metadata.GranuleUR;
   } else {
     const nativeIdNode = metadata.get('/Granule/GranuleUR');
     nativeId = nativeIdNode.text();
@@ -74,8 +77,8 @@ async function getEntryTitle(config, metadata, isUmmG) {
   let shortName = null;
   let version = null;
   if (isUmmG === true) {
-    shortName = metadata.umm.CollectionReference.ShortName;
-    version = metadata.umm.CollectionReference.Version;
+    shortName = metadata.CollectionReference.ShortName;
+    version = metadata.CollectionReference.Version;
   } else {
     shortName = metadata.get('/Granule/Collection/ShortName').text();
     version = metadata.get('/Granule/Collection/VersionId').text();
@@ -139,8 +142,8 @@ async function generateHyraxUrl(config, metadata, isUmmG) {
 function addHyraxUrlToUmmG(metadata, hyraxUrl) {
   const metadataCopy = cloneDeep(metadata);
 
-  if (_.isUndefined(metadata.umm.RelatedUrls)) {
-    metadataCopy.umm.RelatedUrls = [];
+  if (_.isUndefined(metadataCopy.RelatedUrls)) {
+    metadataCopy.RelatedUrls = [];
   }
   const url = {
     URL: hyraxUrl,
@@ -148,7 +151,7 @@ function addHyraxUrlToUmmG(metadata, hyraxUrl) {
     Subtype: 'OPENDAP DATA',
     Description: 'OPeNDAP request URL'
   };
-  metadataCopy.umm.RelatedUrls.push(url);
+  metadataCopy.RelatedUrls.push(url);
 
   return JSON.stringify(metadataCopy, null, 2);
 }
@@ -168,7 +171,7 @@ function addHyraxUrlToEcho10(metadata, hyraxUrl) {
     onlineAccessURLs.addNextSibling(urlsNode);
   }
   urlsNode.node('OnlineResource')
-    .node('url', hyraxUrl)
+    .node('URL', hyraxUrl)
     .parent()
     .node('Description', 'OPeNDAP request URL')
     .parent()
@@ -202,21 +205,21 @@ const isUMMGFile = (filename) => filename.endsWith('cmr.json');
 /**
  * createDom
  *
- * @param {Object} metadataFile file object
+ * @param {Object} metadataFileName file name
  * @param {Object} metadata - raw metadata
  * @returns {Object} document object model and whether it is UMM-G
  */
-function createDom(metadataFile, metadata) {
+function createDom(metadataFileName, metadata) {
   let isUmmG = false;
   // Parse into DOM based on file extension
   let dom = null;
-  if (isUMMGFile(metadataFile.name)) {
+  if (isUMMGFile(metadataFileName)) {
     dom = JSON.parse(metadata);
     isUmmG = true;
-  } else if (isECHO10File(metadataFile.name)) {
+  } else if (isECHO10File(metadataFileName)) {
     dom = libxmljs.parseXml(metadata);
   } else {
-    throw new InvalidArgument('Metadata file is in unknown format');
+    throw new InvalidArgument(`Metadata file ${metadataFileName} is in unknown format`);
   }
   return { dom, isUmmG };
 }
@@ -235,24 +238,25 @@ async function updateSingleGranule(config, granuleObject) {
   const metadataResult = await getS3Object(bucket, metadataFile.name);
   // Extract the metadata file object
   const metadata = metadataResult.Body.toString();
-  const { dom, isUmmG } = createDom(metadataFile, metadata);
+  const { dom, isUmmG } = createDom(metadataFile.name, metadata);
   // Add OPeNDAP url
   const hyraxUrl = await generateHyraxUrl(config, dom, isUmmG);
   const updatedMetadata = addHyraxUrl(dom, isUmmG, hyraxUrl);
   // Validate updated metadata via CMR
-  /* try {
+  try {
     if (isUmmG) {
-      await validateUMMG(updatedMetadata, granuleObject.granuleId, config.cmr.provider);
+      await validateUMMG(JSON.parse(updatedMetadata), metadataFile.name, config.cmr.provider);
     } else {
-      const result = await validate('collection', updatedMetadata, granuleObject.granuleId, config.cmr.provider);
+      const result = await validate('collection', updatedMetadata, metadataFile.name, config.cmr.provider);
       if (!result) {
-        throw new Error(`Validation of ${granuleObject.granuleId} failed`);
+        // ValidationError not being found.
+        throw new Error(`Validation of metadata for ${metadataFile.name} failed`);
       }
     }
   } catch (e) {
-    console.log(e);
-    throw new Error(`Validation of ${granuleObject.granuleId} failed`);
-  } */
+    // ValidationError not being found.
+    throw new Error(`Validation of metadata for ${metadataFile.name} failed`);
+  }
 
   // Write back out to S3 in the same location
   await s3PutObject({

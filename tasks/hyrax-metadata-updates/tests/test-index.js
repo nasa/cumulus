@@ -3,6 +3,7 @@
 const test = require('ava');
 const fs = require('fs');
 const libxmljs = require('libxmljs');
+const { InvalidArgument } = require('@cumulus/errors');
 const HyraxMetadataUpdate = require('..');
 
 test.afterEach.always(async (t) => {
@@ -41,11 +42,14 @@ test('Test return uat OPeNDAP host when uat environment value supplied', async (
 
 test('Test return error when invalid environment supplied for host generation', async (t) => {
   process.env.CMR_ENVIRONMENT = 'FOO';
-  const error = await t.throws(
-    () => HyraxMetadataUpdate.generateAddress()
-  );
 
-  t.is(error.message, 'Environment foo is not a valid environment.');
+  t.throws(
+    () => HyraxMetadataUpdate.generateAddress(),
+    {
+      message: 'Environment foo is not a valid environment.',
+      instanceOf: InvalidArgument
+    }
+  );
 });
 
 test('Test native id extraction from UMM-G', async (t) => {
