@@ -2,7 +2,7 @@
 
 const fs = require('fs-extra');
 const path = require('path');
-const { Collection, Granule } = require('@cumulus/api/models');
+const { Granule } = require('@cumulus/api/models');
 const { parseS3Uri } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
@@ -15,6 +15,7 @@ const {
   cleanupProviders,
   granulesApi: granulesApiTestUtils
 } = require('@cumulus/integration-tests');
+const { updateCollection } = require('@cumulus/integration-tests/api/api');
 const {
   loadConfig,
   uploadTestDataToBucket,
@@ -45,7 +46,6 @@ describe('When the Ingest Granules workflow is configured\n', () => {
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
   let collection;
-  let collectionModel;
   let config;
   let granuleModel;
   let granulesIngested;
@@ -64,9 +64,6 @@ describe('When the Ingest Granules workflow is configured\n', () => {
 
     collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
     provider = { id: `s3_provider${testSuffix}` };
-
-    process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
-    collectionModel = new Collection();
 
     process.env.GranulesTable = `${config.stackName}-GranulesTable`;
     granuleModel = new Granule();
@@ -105,7 +102,11 @@ describe('When the Ingest Granules workflow is configured\n', () => {
   describe('to keep both files when encountering duplicate filenames', () => {
     beforeAll(async () => {
       // set collection duplicate handling to 'version'
-      await collectionModel.update(collection, { duplicateHandling: 'version' });
+      await updateCollection({
+        prefix: config.stackName,
+        collection,
+        updateParams: { duplicateHandling: 'version' }
+      });
     });
 
     it('the initial workflow completes execution with success status', async () => {
@@ -241,7 +242,11 @@ describe('When the Ingest Granules workflow is configured\n', () => {
 
   describe('to handle duplicates as "error" and it encounters data with a duplicated filename, and it is configured to catch the duplicate error', () => {
     beforeAll(async () => {
-      await collectionModel.update(collection, { duplicateHandling: 'error' });
+      await updateCollection({
+        prefix: config.stackName,
+        collection,
+        updateParams: { duplicateHandling: 'error' }
+      });
 
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName, config.bucket, workflowName, collection, provider, inputPayload
