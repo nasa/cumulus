@@ -75,6 +75,25 @@ function buildPayload(t) {
   return newPayload;
 }
 
+async function setupS3(t, isUmmG) {
+  t.context.stagingBucket = randomId('staging');
+  await Promise.all([
+    s3().createBucket({ Bucket: t.context.stagingBucket }).promise()
+  ]);
+  const filename = isUmmG ? 'payload-json.json' : 'payload-xml.json';
+  const payloadPath = path.join(__dirname, 'data', filename);
+  const rawPayload = await readFile(payloadPath, 'utf8');
+  t.context.payload = JSON.parse(rawPayload);
+  const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
+  t.context.filesToUpload = filesToUpload.map((file) => buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
+  buildPayload(t);
+  if (isUmmG) {
+    await uploadFilesJson(filesToUpload, t.context.stagingBucket);
+  } else {
+    await uploadFilesXml(filesToUpload, t.context.stagingBucket);
+  }
+}
+
 test.beforeEach(async (t) => {
   // Mock out retrieval of entryTitle from CMR
   const headers = { 'cmr-hits': 1, 'Content-Type': 'application/json;charset=utf-8' };
@@ -111,25 +130,12 @@ test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
   // Set up mock Validation call to CMR
   nock('https://cmr.earthdata.nasa.gov').post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml')
     .reply(200);
-
-  // Set up S3
-  t.context.stagingBucket = randomId('staging');
-  await Promise.all([
-    s3().createBucket({ Bucket: t.context.stagingBucket }).promise()
-  ]);
-  const payloadPath = path.join(__dirname, 'data', 'payload-xml.json');
-  const rawPayload = await readFile(payloadPath, 'utf8');
-  t.context.payload = JSON.parse(rawPayload);
-  const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
-  t.context.filesToUpload = filesToUpload.map((file) =>
-    buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
-
-  buildPayload(t);
-  await uploadFilesXml(filesToUpload, t.context.stagingBucket);
+  await setupS3(t, false);
   const e = {
     config: event.config,
     input: t.context.payload.input
   };
+
   await HyraxMetadataUpdate.hyraxMetadataUpdate(e);
   // Verify the metadata has been updated at the S3 location
   const metadataFile = t.context.payload.input.granules[0].files.find((f) => f.type === 'metadata');
@@ -144,24 +150,12 @@ test.serial('Test updating UMM-G metadata file in S3', async (t) => {
   // Set up mock Validation call to CMR
   nock('https://cmr.earthdata.nasa.gov').post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json')
     .reply(200);
-  // Set up S3
-  t.context.stagingBucket = randomId('staging');
-  await Promise.all([
-    s3().createBucket({ Bucket: t.context.stagingBucket }).promise()
-  ]);
-  const payloadPath = path.join(__dirname, 'data', 'payload-json.json');
-  const rawPayload = await readFile(payloadPath, 'utf8');
-  t.context.payload = JSON.parse(rawPayload);
-  const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
-  t.context.filesToUpload = filesToUpload.map((file) =>
-    buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
-
-  buildPayload(t);
-  await uploadFilesJson(filesToUpload, t.context.stagingBucket);
+  await setupS3(t, true);
   const e = {
     config: event.config,
     input: t.context.payload.input
   };
+
   await HyraxMetadataUpdate.hyraxMetadataUpdate(e);
   // Verify the metadata has been updated at the S3 location
   const metadataFile = t.context.payload.input.granules[0].files.find((f) => f.type === 'metadata');
@@ -179,21 +173,7 @@ test.serial('Test validation error when updating UMM-G metadata file in S3', asy
   // Set up mock Validation call to CMR
   nock('https://cmr.earthdata.nasa.gov').post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json')
     .reply(400);
-
-  // Set up S3
-  t.context.stagingBucket = randomId('staging');
-  await Promise.all([
-    s3().createBucket({ Bucket: t.context.stagingBucket }).promise()
-  ]);
-  const payloadPath = path.join(__dirname, 'data', 'payload-json.json');
-  const rawPayload = await readFile(payloadPath, 'utf8');
-  t.context.payload = JSON.parse(rawPayload);
-  const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
-  t.context.filesToUpload = filesToUpload.map((file) =>
-    buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
-
-  buildPayload(t);
-  await uploadFilesJson(filesToUpload, t.context.stagingBucket);
+  await setupS3(t, true);
   const e = {
     config: event.config,
     input: t.context.payload.input
@@ -211,21 +191,8 @@ test.serial('Test validation error when updating ECHO10 metadata file in S3', as
   // Set up mock Validation call to CMR
   nock('https://cmr.earthdata.nasa.gov').post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml')
     .reply(400);
+  await setupS3(t, false);
 
-  // Set up S3
-  t.context.stagingBucket = randomId('staging');
-  await Promise.all([
-    s3().createBucket({ Bucket: t.context.stagingBucket }).promise()
-  ]);
-  const payloadPath = path.join(__dirname, 'data', 'payload-xml.json');
-  const rawPayload = await readFile(payloadPath, 'utf8');
-  t.context.payload = JSON.parse(rawPayload);
-  const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
-  t.context.filesToUpload = filesToUpload.map((file) =>
-    buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
-
-  buildPayload(t);
-  await uploadFilesXml(filesToUpload, t.context.stagingBucket);
   const e = {
     config: event.config,
     input: t.context.payload.input
