@@ -12,12 +12,8 @@ const {
 } = require('@cumulus/cmr-client');
 
 const { validateUMMG } = require('@cumulus/cmr-client/UmmUtils');
-const {
-  validate
-} = require('@cumulus/cmr-client/validate');
-const {
-  ValidationError
-} = require('@cumulus/cmr-client/ValidationError');
+const validate = require('@cumulus/cmr-client/validate');
+const ValidationError = require('@cumulus/cmr-client/ValidationError');
 
 const {
   getS3Object,
@@ -247,15 +243,13 @@ async function updateSingleGranule(config, granuleObject) {
     if (isUmmG) {
       await validateUMMG(JSON.parse(updatedMetadata), metadataFile.name, config.cmr.provider);
     } else {
-      const result = await validate('collection', updatedMetadata, metadataFile.name, config.cmr.provider);
+      const result = await validate('granule', updatedMetadata, metadataFile.name, config.cmr.provider);
       if (!result) {
-        // ValidationError not being found.
-        throw new Error(`Validation of metadata for ${metadataFile.name} failed`);
+        throw new ValidationError(`Validation of metadata for ${metadataFile.name} failed`);
       }
     }
   } catch (e) {
-    // ValidationError not being found.
-    throw new Error(`Validation of metadata for ${metadataFile.name} failed`);
+    throw new ValidationError(`Validation of metadata for ${metadataFile.name} failed`);
   }
 
   // Write back out to S3 in the same location

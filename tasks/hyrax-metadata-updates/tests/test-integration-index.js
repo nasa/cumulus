@@ -19,6 +19,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const readFile = promisify(fs.readFile);
 const { InvalidArgument } = require('@cumulus/errors');
+const ValidationError = require('@cumulus/cmr-client/ValidationError');
 
 const HyraxMetadataUpdate = require('..');
 
@@ -77,12 +78,7 @@ function buildPayload(t) {
 test.beforeEach(async (t) => {
   // Mock out retrieval of entryTitle from CMR
   const headers = { 'cmr-hits': 1, 'Content-Type': 'application/json;charset=utf-8' };
-  nock('https://cmr.earthdata.nasa.gov', {
-    reqheaders: {
-      'user-agent': 'got/9.6.0 (https://github.com/sindresorhus/got)',
-      'accept-encoding': 'gzip, deflate'
-    }
-  }).get('/search/collections.json')
+  nock('https://cmr.earthdata.nasa.gov').get('/search/collections.json')
     .query({
       short_name: 'GLDAS_CLSM025_D',
       version: '2.0',
@@ -111,16 +107,9 @@ const event = {
   input: {}
 };
 
-/* test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
+test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
   // Set up mock Validation call to CMR
-  nock('https://cmr.earthdata.nasa.gov', {
-    reqheaders: {
-      'user-agent': 'got/9.6.0 (https://github.com/sindresorhus/got)',
-      accept: 'application/json',
-      'content-type': 'application/vnd.nasa.cmr.umm+json;version=1.4',
-      'accept-encoding': 'gzip, deflate'
-    }
-  }).post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml')
+  nock('https://cmr.earthdata.nasa.gov').post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml')
     .reply(200);
 
   // Set up S3
@@ -149,20 +138,12 @@ const event = {
   t.is(actual.Body.toString(), expected);
 
   await recursivelyDeleteS3Bucket(t.context.stagingBucket);
-}); */
+});
 
 test.serial('Test updating UMM-G metadata file in S3', async (t) => {
   // Set up mock Validation call to CMR
-  nock('https://cmr.earthdata.nasa.gov', {
-    reqheaders: {
-      'user-agent': 'got/9.6.0 (https://github.com/sindresorhus/got)',
-      accept: 'application/json',
-      'content-type': 'application/vnd.nasa.cmr.umm+json;version=1.4',
-      'accept-encoding': 'gzip, deflate'
-    }
-  }).post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json')
+  nock('https://cmr.earthdata.nasa.gov').post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json')
     .reply(200);
-
   // Set up S3
   t.context.stagingBucket = randomId('staging');
   await Promise.all([
@@ -226,7 +207,7 @@ test.serial('Test valition error when updating UMM-G metadata file in S3', async
   };
 
   await t.throwsAsync(HyraxMetadataUpdate.hyraxMetadataUpdate(e), {
-    instanceOf: Error,
+    instanceOf: ValidationError,
     message: 'Validation of metadata for MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json failed'
   });
 
