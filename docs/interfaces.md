@@ -37,7 +37,7 @@ For granule and PDR reporting, the topics will only receive data if the [Cumulus
 
 The messages published to the SNS reporting topics (executions, granules, PDRs) should conform to the [model schema](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) for each data type.
 
-Further detail on workflow SNS reporting and how to interact with these interfaces can be found in the [SNS workflow notifications data cookbook](data-cookbooks/sns.md).
+Further detail on workflow reporting and how to interact with these interfaces can be found in the [workflow notifications data cookbook](data-cookbooks/ingest-notifications.md).
 
 ### Cumulus API
 

@@ -43,11 +43,12 @@ resource "aws_iam_role_policy" "lambda_processing_role_get_secrets" {
 
 locals {
   default_queues = {
-    triggerLambdaFailure      = aws_sqs_queue.trigger_lambda_failure.id
-    startSF                   = aws_sqs_queue.start_sf.id
     backgroundProcessing      = aws_sqs_queue.background_processing.id
     kinesisFailure            = aws_sqs_queue.kinesis_failure.id
+    reporting                 = var.sf_event_sqs_to_db_records_sqs_queue_url
+    startSF                   = aws_sqs_queue.start_sf.id
     ScheduleSFDeadLetterQueue = aws_sqs_queue.schedule_sf_dead_letter_queue.id
+    triggerLambdaFailure      = aws_sqs_queue.trigger_lambda_failure.id
   }
   custom_queues = { for queue in var.custom_queues: queue.id => queue.url }
   custom_throttled_queues = { for queue in var.throttled_queues: queue.id => queue.url }

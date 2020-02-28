@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- **CUMULUS-1446**
+  - Update the `@cumulus/integration-tests/api/executions.getExecution()`
+    function to parse the response and return the execution, rather than return
+    the full API response.
+
 - **CUMULUS-1672**
   - The `cumulus` Terraform module in previous releases set a
     `Deployment = var.prefix` tag on all resources that it managed. In this
@@ -30,13 +35,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     deployment, which will cause the deployment to fail if the migration
     Lambda has not been run.
 
+- **CUMULUS-1718**
+  - The `@cumulus/sf-sns-report` task for reporting mid-workflow updates has been retired.
+  This task was used as the `PdrStatusReport` task in our ParsePdr example workflow.
+  If you have a ParsePdr or other workflow using this task, use `@cumulus/sf-sqs-report` instead.
+  Trying to deploy the old task will result in an error as the cumulus module no longer exports `sf_sns_report_task`.
+  - Migration instruction: In your workflow definition, for each step using the old task change:
+  `"Resource": "${module.cumulus.sf_sns_report_task.task_arn}"`
+  to
+  `"Resource": "${module.cumulus.sf_sqs_report_task.task_arn}"`
+
 - **CUMULUS-1755**
   - The `thin_egress_jwt_secret_name` variable for the `tf-modules/cumulus` Terraform module is now **required**. This variable is passed on to the Thin Egress App in `tf-modules/distribution/main.tf`, which uses the keys stored in the secret to sign JWTs. See the [Thin Egress App documentation on how to create a value for this secret](https://github.com/asfadmin/thin-egress-app#setting-up-the-jwt-cookie-secrets).
-
-- **CUMULUS-1446**
-  - Update the `@cumulus/integration-tests/api/executions.getExecution()`
-    function to parse the response and return the execution, rather than return
-    the full API response.
 
 ### Added
 
@@ -88,6 +98,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     deletes a DynamoDB table and waits to ensure the table no longer exists
   - Added `publishGranules` Lambda to handle publishing granule messages to SNS when granule records are written to DynamoDB
   - Added `@cumulus/api/models/Granule.storeGranulesFromCumulusMessage` to store granules from a Cumulus message to DynamoDB
+
+- **CUMULUS-1718**
+  - Added `@cumulus/sf-sqs-report` task to allow mid-workflow reporting updates.
+  - Added `stepfunction_event_reporter_queue_url` and `sf_sqs_report_task` outputs to the `cumulus` module.
+  - Added `publishPdrs` Lambda to handle publishing PDR messages to SNS when PDR records are written to DynamoDB.
+  - Added `@cumulus/api/models/Pdr.storePdrFromCumulusMessage` to store PDRs from a Cumulus message to DynamoDB.
+  - Added `@cumulus/aws-client/parseSQSMessageBody` to parse an SQS message body string into an object.
 
 - **Ability to set custom backend API url in the archive module**
   - Add `api_url` definition in `tf-modules/cumulus/archive.tf`
@@ -149,8 +166,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     using RSA keys stored in S3
 
 - **CUMULUS-1717**
-  - Changed name of `cwSfExecutionEventToDb` Lamda to `cwSfEventToDbRecords`
+  - Changed name of `cwSfExecutionEventToDb` Lambda to `cwSfEventToDbRecords`
   - Updated `cwSfEventToDbRecords` to write granule records to DynamoDB from the incoming Cumulus message
+
+- **CUMULUS-1718**
+  - Renamed `cwSfEventToDbRecords` to `sfEventSqsToDbRecords` due to architecture change to being a consumer of an SQS queue of Step Function Cloudwatch events.
+  - Updated `sfEventSqsToDbRecords` to write PDR records to DynamoDB from the incoming Cumulus message
+  - Moved `data-cookbooks/sns.md` to `data-cookbooks/ingest-notifications.md` and updated it to reflect recent changes.
 
 - **CUMULUS-1748**
   - (S)FTP discovery tasks now use the provider-path as-is instead of forcing it to a relative path.
@@ -184,6 +206,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1717**
   - Deprecate `@cumulus/api/models/Granule.createGranulesFromSns`
 
+- **CUMULUS-1718**
+  - Deprecate `@cumulus/sf-sns-report`.
+    - This task has been updated to always throw an error directing the user to use `@cumulus/sf-sqs-report` instead. This was done because there is no longer an SNS topic to which to publish, and no consumers to listen to it.
+
 - **CUMULUS-1748**
   - Deprecate `@cumulus/ingest/util.normalizeProviderPath`
 
@@ -192,6 +218,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1684**
   - Remove the deployment script that creates encryption keys and stores them to
     S3
+
+- **CUMULUS-1718**
+  - Removed the `publishReports` lambda, which was replaced by `cwSfEventToDbRecords`, due to a refactor in the way we process step function events.
+  - Removed the `sf_sns_report_task` output from the `cumulus` module.
 
 ### Fixed
 

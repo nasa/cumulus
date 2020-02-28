@@ -461,7 +461,7 @@ test.serial('indexing a PDR record', async (t) => {
   const event = JSON.parse(JSON.parse(txt.toString()));
   const msg = JSON.parse(event.Records[0].Sns.Message);
 
-  const pdr = await pdrsModel.createPdrFromSns(msg);
+  const pdr = await pdrsModel.generatePdrRecord(msg);
 
   // fake pdr index to elasticsearch (this is done in a lambda function)
   await indexer.indexPdr(esClient, pdr, esAlias);

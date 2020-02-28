@@ -54,7 +54,7 @@ class Pdr extends Manager {
    * @returns {Object|null} - A PDR record, or null if `message.payload.pdr` is
    *   not set
    */
-  static generatePdrRecord(message) {
+  generatePdrRecord(message) {
     const pdr = get(message, 'payload.pdr');
 
     if (!pdr) { // We got a message with no PDR (OK)
@@ -100,24 +100,50 @@ class Pdr extends Manager {
     };
 
     record.duration = (record.timestamp - record.createdAt) / 1000;
+    this.constructor.recordIsValid(record, this.schema);
     return record;
   }
 
   /**
-   * Create a new PDR record from incoming SNS messages
+   * Try to update a PDR record from a cloudwatch event.
+   * If the record already exists, only update if the execution is different (re-run case).
    *
-   * @param {Object} payload - SNS message containing the output of a Cumulus Step Function
-   * @returns {Promise<Object>} a PDR record
+   * @param {Object} cumulusMessage - cumulus message object
    */
-  createPdrFromSns(payload) {
-    const pdrObj = get(payload, 'payload.pdr', get(payload, 'meta.pdr'));
-    const pdrName = get(pdrObj, 'name');
+  async storePdrFromCumulusMessage(cumulusMessage) {
+    const pdrRecord = this.generatePdrRecord(cumulusMessage);
+    if (!pdrRecord) return null;
+    const updateParams = await this.generatePdrUpdateParamsFromRecord(pdrRecord);
+    if (pdrRecord.status === 'running') {
+      updateParams.ConditionExpression = 'execution <> :execution OR progress < :progress';
+      try {
+        return await this.dynamodbDocClient.update(updateParams).promise();
+      } catch (err) {
+        if (err.name && err.name.includes('ConditionalCheckFailedException')) {
+          const executionArn = getMessageExecutionArn(cumulusMessage);
+          log.info(`Did not process delayed 'running' event for PDR: ${pdrRecord.pdrName} (execution: ${executionArn})`);
+          return null;
+        }
+        throw err;
+      }
+    }
+    return this.dynamodbDocClient.update(updateParams).promise();
+  }
 
-    if (!pdrName) return Promise.resolve();
-
-    const pdrRecord = Pdr.generatePdrRecord(payload);
-
-    return this.create(pdrRecord);
+  /**
+   * Generate DynamoDB update parameters.
+   *
+   * @param {Object} pdrRecord - the PDR record
+   * @returns {Object} DynamoDB update parameters
+   */
+  async generatePdrUpdateParamsFromRecord(pdrRecord) {
+    const mutableFieldNames = Object.keys(pdrRecord);
+    const updateParams = this._buildDocClientUpdateParams({
+      item: pdrRecord,
+      itemKey: { pdrName: pdrRecord.pdrName },
+      mutableFieldNames
+    });
+    return updateParams;
   }
 
   /**

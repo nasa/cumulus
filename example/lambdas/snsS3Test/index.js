@@ -42,7 +42,28 @@ async function handleGranules(event) {
   }).promise();
 }
 
+/**
+ * Put PDR messages from SNS topic onto S3.
+ *
+ * @param {Object} event - from SNS
+ * @returns {Promise} confirmation of added message
+ */
+async function handlePdrs(event) {
+  const s3 = new S3();
+  const messageString = event.Records[0].Sns.Message;
+  const pdr = JSON.parse(messageString);
+  if (!pdr.pdrName) {
+    return Promise.resolve();
+  }
+  return s3.putObject({
+    Bucket: process.env.system_bucket,
+    Key: `${process.env.stackName}/test-output/${pdr.pdrName}-${pdr.status}.output`,
+    Body: JSON.stringify(event, null, 2)
+  }).promise();
+}
+
 module.exports = {
   handleExecutions,
-  handleGranules
+  handleGranules,
+  handlePdrs
 };

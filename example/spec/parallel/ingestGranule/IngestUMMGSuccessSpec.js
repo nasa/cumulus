@@ -10,7 +10,7 @@ const mime = require('mime-types');
 
 const {
   models: {
-    AccessToken, Execution, Collection, Provider
+    AccessToken, Execution, Provider
   }
 } = require('@cumulus/api');
 const {
@@ -37,6 +37,7 @@ const {
     getDistributionFileUrl
   }
 } = require('@cumulus/integration-tests');
+const { deleteCollection } = require('@cumulus/integration-tests/api/collections');
 
 const {
   loadConfig,
@@ -90,7 +91,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   let expectedPayload;
   let postToCmrOutput;
   let granule;
-  let collectionModel;
   let executionModel;
   let config;
   let accessTokensModel;
@@ -115,9 +115,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     process.env.GranulesTable = `${config.stackName}-GranulesTable`;
     process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
     executionModel = new Execution();
-    process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
     process.env.system_bucket = config.bucket;
-    collectionModel = new Collection();
     process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
     providerModel = new Provider();
 
@@ -195,7 +193,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     // clean up stack state added by test
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
-      collectionModel.delete(collection),
+      deleteCollection(config.stackName, collection.name, collection.version),
       providerModel.delete(provider),
       executionModel.delete({ arn: workflowExecution.executionArn }),
       granulesApiTestUtils.removePublishedGranule({
