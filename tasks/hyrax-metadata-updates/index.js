@@ -18,7 +18,6 @@ const ValidationError = require('@cumulus/cmr-client/ValidationError');
 const {
   getS3Object,
   s3PutObject,
-  buildS3Uri,
   parseS3Uri
 } = require('@cumulus/aws-client/S3');
 
@@ -230,8 +229,8 @@ function createDom(metadataFileName, metadata) {
 async function updateSingleGranule(config, granuleObject) {
   // Read in the metadata file
   const metadataFile = granuleObject.files.find((f) => f.type === 'metadata');
-  const bucket = `${metadataFile.bucket}/${metadataFile.fileStagingDir}`;
-  const metadataResult = await getS3Object(bucket, metadataFile.name);
+  const s3Object = parseS3Uri(metadataFile.filename);
+  const metadataResult = await getS3Object(s3Object.Bucket, s3Object.Key);
   // Extract the metadata file object
   const metadata = metadataResult.Body.toString();
   const { dom, isUmmG } = createDom(metadataFile.name, metadata);
@@ -254,8 +253,8 @@ async function updateSingleGranule(config, granuleObject) {
 
   // Write back out to S3 in the same location
   await s3PutObject({
-    Bucket: bucket,
-    Key: metadataFile.name,
+    Bucket: s3Object.Bucket,
+    Key: s3Object.Key,
     Body: updatedMetadata
   });
 }
