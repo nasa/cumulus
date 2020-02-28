@@ -18,22 +18,25 @@ const handler = async (event) => {
       const newImage = attr.unwrap(record.dynamodb.NewImage);
       const oldImage = attr.unwrap(record.dynamodb.OldImage);
       switch (record.eventName) {
-        case 'INSERT': {
-          message.event = 'Create';
-          message.record = newImage;
-          break;
-        }
-        case 'MODIFY': {
-          message.event = 'Update';
-          message.record = newImage;
-          break;
-        }
-        case 'REMOVE': {
-          message.event = 'Delete';
-          message.record = oldImage;
-          message.record.deletedAt = Date.now();
-          break;
-        }
+      case 'INSERT': {
+        message.event = 'Create';
+        message.record = newImage;
+        break;
+      }
+      case 'MODIFY': {
+        message.event = 'Update';
+        message.record = newImage;
+        break;
+      }
+      case 'REMOVE': {
+        message.event = 'Delete';
+        message.record = oldImage;
+        message.record.deletedAt = Date.now();
+        break;
+      }
+      default: {
+        break;
+      }
       }
       return publishSnsMessage(topicArn, message);
     }
