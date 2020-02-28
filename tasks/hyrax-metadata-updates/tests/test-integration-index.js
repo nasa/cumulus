@@ -175,16 +175,9 @@ test.serial('Test updating UMM-G metadata file in S3', async (t) => {
   await recursivelyDeleteS3Bucket(t.context.stagingBucket);
 });
 
-test.serial('Test valition error when updating UMM-G metadata file in S3', async (t) => {
+test.serial('Test validation error when updating UMM-G metadata file in S3', async (t) => {
   // Set up mock Validation call to CMR
-  nock('https://cmr.earthdata.nasa.gov', {
-    reqheaders: {
-      'user-agent': 'got/9.6.0 (https://github.com/sindresorhus/got)',
-      accept: 'application/json',
-      'content-type': 'application/vnd.nasa.cmr.umm+json;version=1.4',
-      'accept-encoding': 'gzip, deflate'
-    }
-  }).post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json')
+  nock('https://cmr.earthdata.nasa.gov').post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json')
     .reply(400);
 
   // Set up S3
@@ -209,6 +202,38 @@ test.serial('Test valition error when updating UMM-G metadata file in S3', async
   await t.throwsAsync(HyraxMetadataUpdate.hyraxMetadataUpdate(e), {
     instanceOf: ValidationError,
     message: 'Validation of metadata for MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json failed'
+  });
+
+  await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+});
+
+test.serial('Test validation error when updating ECHO10 metadata file in S3', async (t) => {
+  // Set up mock Validation call to CMR
+  nock('https://cmr.earthdata.nasa.gov').post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml')
+    .reply(400);
+
+  // Set up S3
+  t.context.stagingBucket = randomId('staging');
+  await Promise.all([
+    s3().createBucket({ Bucket: t.context.stagingBucket }).promise()
+  ]);
+  const payloadPath = path.join(__dirname, 'data', 'payload-xml.json');
+  const rawPayload = await readFile(payloadPath, 'utf8');
+  t.context.payload = JSON.parse(rawPayload);
+  const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
+  t.context.filesToUpload = filesToUpload.map((file) =>
+    buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
+
+  buildPayload(t);
+  await uploadFilesXml(filesToUpload, t.context.stagingBucket);
+  const e = {
+    config: event.config,
+    input: t.context.payload.input
+  };
+
+  await t.throwsAsync(HyraxMetadataUpdate.hyraxMetadataUpdate(e), {
+    instanceOf: ValidationError,
+    message: 'Validation of metadata for MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml failed'
   });
 
   await recursivelyDeleteS3Bucket(t.context.stagingBucket);
