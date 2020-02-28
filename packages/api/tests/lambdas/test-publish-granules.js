@@ -139,6 +139,6 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
   const granuleRecord = message.record;
 
   t.is(granuleRecord.granuleId, granuleId);
-  t.is(!!granuleRecord.deletedAt, true);
+  t.is(typeof granuleRecord.deletedAt, 'number')
   t.is(message.event, 'Delete');
 });
