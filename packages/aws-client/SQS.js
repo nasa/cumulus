@@ -106,6 +106,8 @@ exports.receiveSQSMessages = async (queueUrl, options) => {
   return get(messages, 'Messages', []);
 };
 
+exports.parseSQSMessageBody = (message) => JSON.parse(get(message, 'Body', get(message, 'body', '{}')));
+
 /**
  * Delete a given SQS message from a given queue.
  *

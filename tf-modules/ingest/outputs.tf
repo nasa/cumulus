@@ -88,9 +88,9 @@ output "schedule_sf_lambda_function_arn" {
   value = aws_lambda_function.schedule_sf.arn
 }
 
-output "sf_sns_report_task" {
+output "sf_sqs_report_task" {
   value = {
-    task_arn = aws_lambda_function.sf_sns_report_task.arn
+    task_arn = aws_lambda_function.sf_sqs_report_task.arn
   }
 }
 

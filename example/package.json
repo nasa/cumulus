@@ -61,7 +61,7 @@
     "@cumulus/post-to-cmr": "1.18.0",
     "@cumulus/queue-granules": "1.18.0",
     "@cumulus/queue-pdrs": "1.18.0",
-    "@cumulus/sf-sns-report": "1.18.0",
+    "@cumulus/sf-sqs-report": "1.18.0",
     "@cumulus/sync-granule": "1.18.0",
     "@cumulus/test-processing": "1.18.0",
     "aws-sdk": "^2.585.0",

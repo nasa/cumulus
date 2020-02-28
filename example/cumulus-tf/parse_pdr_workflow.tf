@@ -173,7 +173,7 @@ module "parse_pdr_workflow" {
       },
       "ResultPath": null,
       "Type": "Task",
-      "Resource": "${module.cumulus.sf_sns_report_task.task_arn}",
+      "Resource": "${module.cumulus.sf_sqs_report_task.task_arn}",
       "Retry": [
         {
           "ErrorEquals": [
