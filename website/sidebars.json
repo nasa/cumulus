@@ -68,7 +68,7 @@
     ],
     "Cookbooks": [
       "data-cookbooks/hello-world",
-      "data-cookbooks/sns",
+      "data-cookbooks/ingest-notifications",
       "data-cookbooks/sips-workflow",
       "data-cookbooks/cnm-workflow",
       "data-cookbooks/error-handling",

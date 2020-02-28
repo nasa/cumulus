@@ -23,7 +23,7 @@
 
 const { Execution, Pdr } = require('@cumulus/api/models');
 
-const { deleteS3Object } = require('@cumulus/aws-client/S3');
+const { deleteS3Object, s3ObjectExists } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
@@ -59,7 +59,6 @@ const { waitForModelStatus } = require('../../helpers/apiUtils');
 const lambdaStep = new LambdaStep();
 const taskName = 'DiscoverAndQueuePdrs';
 const origPdrFilename = 'MOD09GQ_1granule_v3.PDR';
-let pdrFilename;
 
 const s3data = [
   '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR'
@@ -78,6 +77,7 @@ describe('Ingesting from PDR', () => {
   let config;
   let executionModel;
   let parsePdrExecutionArn;
+  let pdrFilename;
   let provider;
   let testDataFolder;
   let testSuffix;
@@ -292,11 +292,10 @@ describe('Ingesting from PDR', () => {
       describe('PdrStatusReport lambda function', () => {
         let lambdaOutput;
         beforeAll(async () => {
-          lambdaOutput = await lambdaStep.getStepOutput(parsePdrExecutionArn, 'SfSnsReport');
+          lambdaOutput = await lambdaStep.getStepOutput(parsePdrExecutionArn, 'SfSqsReport');
         });
 
         // SfSnsReport lambda is used in the workflow multiple times, apparantly, only the first output
-        // is retrieved which is the first step (StatusReport)
         it('has expected output message', () => {
           // Sometimes PDR ingestion completes before this step is reached, so it is never invoked
           // and there is no Lambda output to check.
@@ -449,7 +448,7 @@ describe('Ingesting from PDR', () => {
       });
     });
 
-    describe('the reporting lambda has published a sns message and', () => {
+    describe('the reporting lambda has received the cloudwatch stepfunction event and', () => {
       it('the execution record is added to DynamoDB', async () => {
         const record = await waitForModelStatus(
           executionModel,
@@ -491,6 +490,54 @@ describe('Ingesting from PDR', () => {
         });
 
         expect(queuePdrsExecution.parentArn).toBeUndefined();
+      });
+    });
+
+    describe('An SNS message', () => {
+      let executionCompletedKey;
+      let pdrRunningMessageKey;
+      let pdrCompletedMessageKey;
+
+
+      beforeAll(async () => {
+        const parsePdrExecutionName = parsePdrExecutionArn.split(':').pop();
+
+        executionCompletedKey = `${config.stackName}/test-output/${parsePdrExecutionName}.output`;
+
+        pdrRunningMessageKey = `${config.stackName}/test-output/${pdrFilename}-running.output`;
+        pdrCompletedMessageKey = `${config.stackName}/test-output/${pdrFilename}-completed.output`;
+      });
+
+      afterAll(async () => {
+        await Promise.all([
+          deleteS3Object(config.bucket, executionCompletedKey),
+          deleteS3Object(config.bucket, pdrRunningMessageKey),
+          deleteS3Object(config.bucket, pdrCompletedMessageKey)
+        ]);
+      });
+
+      it('is published for a running PDR', async () => {
+        const pdrExists = await s3ObjectExists({
+          Bucket: config.bucket,
+          Key: pdrRunningMessageKey
+        });
+        expect(pdrExists).toEqual(true);
+      });
+
+      it('is published for an execution on a successful workflow completion', async () => {
+        const executionExists = await s3ObjectExists({
+          Bucket: config.bucket,
+          Key: executionCompletedKey
+        });
+        expect(executionExists).toEqual(true);
+      });
+
+      it('is published for a PDR on a successful workflow completion', async () => {
+        const pdrExists = await s3ObjectExists({
+          Bucket: config.bucket,
+          Key: pdrCompletedMessageKey
+        });
+        expect(pdrExists).toEqual(true);
       });
     });
   });

@@ -33,7 +33,7 @@ resource "aws_security_group" "test_cleanup_lambda" {
 resource "aws_lambda_function" "cumulus_test_cleanup" {
   filename      = "${path.module}/dist/lambda.zip"
   function_name = "cumulus-test-cleanup"
-  role          = "${aws_iam_role.test_cleanup_lambda_role.arn}"
+  role          = aws_iam_role.test_cleanup_lambda_role.arn
   handler       = "index.handler"
   runtime       = "nodejs10.x"
   timeout       = 300

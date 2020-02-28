@@ -1,3 +1,9 @@
+locals {
+  # Pulled out into a local to prevent cyclic dependencies if/when
+  # we move to a more restrictive IAM policy.
+  sqs2sf_timeout = 200
+}
+
 resource "aws_lambda_function" "fallback_consumer" {
   function_name    = "${var.prefix}-fallbackConsumer"
   filename         = "${path.module}/../../packages/api/dist/messageConsumer/lambda.zip"
@@ -183,10 +189,10 @@ resource "aws_lambda_function" "sf_semaphore_down" {
   }
 }
 
-resource "aws_lambda_function" "sf_sns_report_task" {
-  function_name    = "${var.prefix}-SfSnsReport"
-  filename         = "${path.module}/../../tasks/sf-sns-report/dist/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../tasks/sf-sns-report/dist/lambda.zip")
+resource "aws_lambda_function" "sf_sqs_report_task" {
+  function_name    = "${var.prefix}-SfSqsReport"
+  filename         = "${path.module}/../../tasks/sf-sqs-report/dist/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../tasks/sf-sqs-report/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs10.x"
@@ -201,9 +207,7 @@ resource "aws_lambda_function" "sf_sns_report_task" {
       CMR_ENVIRONMENT             = var.cmr_environment
       stackName                   = var.prefix
       ExecutionsTable             = var.dynamo_tables.executions.name
-      execution_sns_topic_arn     = var.report_executions_sns_topic_arn
-      granule_sns_topic_arn       = var.report_granules_sns_topic_arn
-      pdr_sns_topic_arn           = var.report_pdrs_sns_topic_arn
+      reporting_queue_url         = var.sf_event_sqs_to_db_records_sqs_queue_url
     }
   }
   tags = var.tags
@@ -221,7 +225,7 @@ resource "aws_lambda_function" "sqs2sf" {
   handler          = "index.sqs2sfEventSourceHandler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs10.x"
-  timeout          = 200
+  timeout          = local.sqs2sf_timeout
   memory_size      = 128
   environment {
     variables = {
