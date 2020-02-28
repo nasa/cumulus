@@ -5,8 +5,6 @@ const fs = require('fs');
 const libxmljs = require('libxmljs');
 const HyraxMetadataUpdate = require('..');
 
-// Unit tests
-
 test.afterEach.always(async (t) => {
   delete process.env.CMR_ENVIRONMENT;
 });

@@ -1,9 +1,10 @@
 'use strict';
 
+const nock = require('nock');
+const { promisify } = require('util');
 const test = require('ava');
 const fs = require('fs');
 const libxmljs = require('libxmljs');
-const HyraxMetadataUpdate = require('..');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   randomId
@@ -16,11 +17,9 @@ const {
   parseS3Uri,
   getS3Object
 } = require('@cumulus/aws-client/S3');
-const { promisify } = require('util');
 const readFile = promisify(fs.readFile);
-const clonedeep = require('lodash.clonedeep');
 
-const nock = require('nock');
+const HyraxMetadataUpdate = require('..');
 
 test.before(() => {
   nock.disableNetConnect();

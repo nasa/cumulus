@@ -5,6 +5,7 @@ const { InvalidArgument } = require('@cumulus/errors');
 
 const get = require('lodash.get');
 const _ = require('lodash/core');
+const cloneDeep = require('lodash.clonedeep');
 
 const {
   CMR,
@@ -110,13 +111,7 @@ async function generatePath(config, metadata, isUmmG) {
   if (_.isUndefined(providerId)) {
     throw new InvalidArgument('Provider not supplied in configuration. Unable to construct path');
   }
-  // TODO use getEntryTitle here
-  //const entryTitle = get(config, 'entryTitle');
   const entryTitle = await getEntryTitle(config, metadata, isUmmG);
-  // Check if entryTitle is defined
-  if (_.isUndefined(entryTitle)) {
-    throw new InvalidArgument('Entry Title not supplied in configuration. Unable to construct path');
-  }
   return `providers/${providerId}/collections/${entryTitle}/granules/${getGranuleUr(metadata, isUmmG)}`;
 }
 
@@ -142,8 +137,10 @@ async function generateHyraxUrl(config, metadata, isUmmG) {
  * @returns {string} - the updated metadata containing a Hyrax URL
  */
 function addHyraxUrlToUmmG(metadata, hyraxUrl) {
+  const metadataCopy = cloneDeep(metadata);
+
   if (_.isUndefined(metadata.umm.RelatedUrls)) {
-    metadata.umm.RelatedUrls = [];
+    metadataCopy.umm.RelatedUrls = [];
   }
   const url = {
     URL: hyraxUrl,
@@ -151,9 +148,9 @@ function addHyraxUrlToUmmG(metadata, hyraxUrl) {
     Subtype: 'OPENDAP DATA',
     Description: 'OPeNDAP request URL'
   };
-  metadata.umm.RelatedUrls.push(url);
+  metadataCopy.umm.RelatedUrls.push(url);
 
-  return JSON.stringify(metadata, null, 2);
+  return JSON.stringify(metadataCopy, null, 2);
 }
 
 /**
