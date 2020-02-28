@@ -33,7 +33,7 @@ resource "aws_sqs_queue" "schedule_sf_dead_letter_queue" {
 resource "aws_sqs_queue" "start_sf" {
   name                       = "${var.prefix}-startSF"
   receive_wait_time_seconds  = 20
-  visibility_timeout_seconds = (aws_lambda_function.sqs2sf.timeout * 6)
+  visibility_timeout_seconds = (local.sqs2sf_timeout * 6)
   redrive_policy = jsonencode(
     {
       deadLetterTargetArn = aws_sqs_queue.start_sf_failed.arn

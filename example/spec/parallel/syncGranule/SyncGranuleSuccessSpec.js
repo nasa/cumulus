@@ -239,7 +239,7 @@ describe('The Sync Granules workflow', () => {
     });
   });
 
-  describe('the sf-sns-report task has published a sns message and', () => {
+  describe('the reporting lambda has received the cloudwatch stepfunction event and', () => {
     it('the execution record is added to DynamoDB', async () => {
       const record = await waitForModelStatus(
         executionModel,

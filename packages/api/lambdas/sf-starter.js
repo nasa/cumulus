@@ -4,6 +4,7 @@ const uuidv4 = require('uuid/v4');
 const get = require('lodash.get');
 
 const { sfn } = require('@cumulus/aws-client/services');
+const { parseSQSMessageBody } = require('@cumulus/aws-client/SQS');
 const {
   getQueueName,
   getMaximumExecutions
@@ -22,7 +23,7 @@ const {
  * @returns {Promise} - AWS SF Start Execution response
  */
 function dispatch(message) {
-  const input = JSON.parse(get(message, 'Body', get(message, 'body', '{}')));
+  const input = parseSQSMessageBody(message);
 
   input.cumulus_meta.workflow_start_time = Date.now();
 

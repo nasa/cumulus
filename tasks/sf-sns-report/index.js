@@ -1,33 +1,14 @@
 'use strict';
 
-const get = require('lodash.get');
-const { publishReportSnsMessages } = require('@cumulus/api/lambdas/publish-reports');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 
-/**
- * Publishes ingest notifications based on the Cumulus execution message.
- *
- * @param  {Object} event - a Cumulus execution message that has been sent through the
- * Cumulus Message Adapter.
- * @returns {Promise<Object>} - Payload object from the Cumulus message
- */
-async function publishSnsMessage(event) {
-  const meta = get(event, 'input.meta', {});
-
-  const message = {
-    ...event.input,
-    meta: {
-      ...meta,
-      status: 'running'
-    }
-  };
-
-  await publishReportSnsMessages(message);
-
-  return get(message, 'payload', {});
-}
-
-exports.publishSnsMessage = publishSnsMessage;
+const throwDisabledError = () => {
+  throw new Error(
+    '@cumulus/sf-sns-report has been deprecated due to a change in reporting architecture. As the '
+    + 'reporting SNS topic has become read-only and all consumers of it have been removed, this '
+    + 'task has been disabled. Use @cumulus/sf-sqs-report for mid-workflow updates instead.'
+  );
+};
 
 /**
  * Lambda handler.
@@ -38,7 +19,7 @@ exports.publishSnsMessage = publishSnsMessage;
  * @returns {undefined} - does not return a value
  */
 function handler(event, context, callback) {
-  cumulusMessageAdapter.runCumulusTask(publishSnsMessage, event, context, callback);
+  cumulusMessageAdapter.runCumulusTask(throwDisabledError, event, context, callback);
 }
 
 exports.handler = handler;
