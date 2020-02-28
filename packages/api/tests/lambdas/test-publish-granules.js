@@ -52,7 +52,7 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
             status: { S: 'running' }
           }
         },
-        eventName: 'INSERT'
+        eventName: 'MODIFY'
       }
     ]
   };
@@ -69,6 +69,7 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
 
   t.is(granuleRecord.granuleId, granuleId);
   t.is(granuleRecord.status, 'running');
+  t.is(snsMessage.event, 'Update');
 });
 
 test.serial('The publish-granules Lambda function takes a DynamoDB stream event with a multiple records and publishes their granules to SNS', async (t) => {
@@ -117,7 +118,7 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
     Records: [
       {
         dynamodb: {
-          NewImage: {
+          OldImage: {
             granuleId: { S: granuleId },
             status: { S: 'running' }
           }
@@ -138,5 +139,6 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
   const granuleRecord = message.record;
 
   t.is(granuleRecord.granuleId, granuleId);
-  t.is(!!message.deletedAt, true);
+  t.is(!!granuleRecord.deletedAt, true);
+  t.is(message.event, 'Delete');
 });

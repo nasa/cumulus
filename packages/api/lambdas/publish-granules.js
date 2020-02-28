@@ -14,13 +14,27 @@ const handler = async (event) => {
 
   const promisedPublishEvents = event.Records.map(
     (record) => {
-      const eventType = record.eventName;
-      const message = { event: eventType };
-      if (eventType === 'REMOVE') {
-        message.deletedAt = Date.now();
+      const message = {};
+      const newImage = attr.unwrap(record.dynamodb.NewImage);
+      const oldImage = attr.unwrap(record.dynamodb.OldImage);
+      switch (record.eventName) {
+        case 'INSERT': {
+          message.event = 'Create';
+          message.record = newImage;
+          break;
+        }
+        case 'MODIFY': {
+          message.event = 'Update';
+          message.record = newImage;
+          break;
+        }
+        case 'REMOVE': {
+          message.event = 'Delete';
+          message.record = oldImage;
+          message.record.deletedAt = Date.now();
+          break;
+        }
       }
-      message.record = attr.unwrap(record.dynamodb.NewImage);
-
       return publishSnsMessage(topicArn, message);
     }
   );
