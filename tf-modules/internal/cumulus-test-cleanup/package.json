@@ -1,6 +1,6 @@
 {
   "name": "cumulus-test-cleanup",
-  "version": "1.17.0",
+  "version": "1.19.0",
   "description": "Nightly cron job for cleaning up integration test artifacts",
   "main": "index.js",
   "engines": {
