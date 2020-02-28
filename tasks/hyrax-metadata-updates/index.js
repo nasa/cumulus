@@ -11,6 +11,8 @@ const {
   CMR
 } = require('@cumulus/cmr-client');
 
+const { isECHO10File, isUMMGFile } = require('@cumulus/cmrjs/cmr-utils');
+
 const { validateUMMG } = require('@cumulus/cmr-client/UmmUtils');
 const validate = require('@cumulus/cmr-client/validate');
 const ValidationError = require('@cumulus/cmr-client/ValidationError');
@@ -192,10 +194,6 @@ function addHyraxUrl(metadata, isUmmG, hyraxUrl) {
   }
   return updatedMetadata;
 }
-
-// TODO: these are not exported from cmr-utils.js yet
-const isECHO10File = (filename) => filename.endsWith('cmr.xml');
-const isUMMGFile = (filename) => filename.endsWith('cmr.json');
 
 /**
  * createDom

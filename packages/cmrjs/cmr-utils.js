@@ -815,6 +815,8 @@ module.exports = {
   getGranuleId,
   getGranuleTemporalInfo,
   isCMRFile,
+  isUMMGFile,
+  isECHO10File,
   metadataObjectFromCMRFile,
   publish2CMR,
   reconcileCMRMetadata,

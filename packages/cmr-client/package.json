@@ -26,7 +26,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/nasa/cumulus"
+    "url": "git+https://github.com/nasa/cumulus.git"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
@@ -44,5 +44,14 @@
     "lodash.some": "^4.6.0",
     "nock": "^10.0.6",
     "sinon": "^7.1.1"
+  },
+  "description": "A Node.js client to read from, write to, and delete from NASA's Common Metadata Repository (CMR) API.",
+  "bugs": {
+    "url": "https://github.com/nasa/cumulus/issues"
+  },
+  "homepage": "https://github.com/nasa/cumulus#readme",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
   }
 }
