@@ -5,7 +5,7 @@
 This lambda function is responsible for augmenting granule metadata files with the correct Hyrax (OPeNDAP) URL to provide subsetting and reformatting services on your granules. The URL will convey enough information to Hyrax to discover the granule using CMR. It will then determine the archive location within Cumulus from the granule's metadata.
 For example,
 
-Hyrax URL for a granule from provider 'GHRC_CLOUD' and collection entry title 'ACES CONTINUOUS DATA V1' with native id 'aces1cont_2002.191_v2.50.nc':
+Hyrax URL for a granule from provider 'GHRC_CLOUD' and collection entry title 'ACES CONTINUOUS DATA V1' with granule UR 'aces1cont_2002.191_v2.50.nc':
 
 h<span>ttps://opendap.earthdata.nasa.gov/providers/**GHRC_CLOUD**/datasets/**ACES CONTINUOUS DATA V1**/granules/**aces1cont_2002.191_v2.50.nc**
 
@@ -52,11 +52,11 @@ For more information on configuring a Cumulus Message Adapter task, see [the Cum
 
 Config object fields:
 
-| field name            | type    | default    | values | description
-| --------------------- | ------- | ---------- | -------| -----------
-| collection            | object  | (required) |        | 
-| cmr
-
+| field name            | type    | default    | description
+| --------------------- | ------- | ---------- | -----------
+| bucket                | string  | (required) | Name of S3 bucket containing public/private key pair to decrypt CMR credentials
+| stack                 | string  | (required) | Name of deployment stack
+| cmr                   | object  | (required) | CMR credentials object
 
 ### Input
 
