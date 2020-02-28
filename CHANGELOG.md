@@ -27,6 +27,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **HYRAX-70**
+  - Add the hyrax-metadata-update task
+
 - **CUMULUS-1707**
   - Enable logrotate on ECS cluster
 
