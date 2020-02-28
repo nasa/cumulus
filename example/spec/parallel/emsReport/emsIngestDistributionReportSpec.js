@@ -147,7 +147,6 @@ describe('The EMS report', () => {
     submitReport = emsTestConfig.submitReport === 'true' || false;
     dataSource = emsTestConfig.dataSource || config.stackName;
 
-    process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
     process.env.GranulesTable = `${config.stackName}-GranulesTable`;
     process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
 

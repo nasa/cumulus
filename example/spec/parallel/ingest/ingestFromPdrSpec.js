@@ -21,7 +21,7 @@
  * Does not post to CMR (that is in a separate test)
  */
 
-const { Collection, Execution, Pdr } = require('@cumulus/api/models');
+const { Execution, Pdr } = require('@cumulus/api/models');
 
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -87,11 +87,9 @@ describe('Ingesting from PDR', () => {
     config = await loadConfig();
 
     process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-    process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
     process.env.PdrsTable = `${config.stackName}-PdrsTable`;
 
     executionModel = new Execution();
-    const collectionModel = new Collection();
 
     const testId = createTimestampedTestId(config.stackName, 'IngestFromPdr');
     testSuffix = createTestSuffix(testId);
@@ -123,7 +121,11 @@ describe('Ingesting from PDR', () => {
     ]);
 
     // update provider path
-    await collectionModel.update(collection, { provider_path: testDataFolder });
+    await apiTestUtils.updateCollection({
+      prefix: config.stackName,
+      collection,
+      updateParams: { provider_path: testDataFolder }
+    });
 
     // Rename the PDR to avoid race conditions
     await s3().copyObject({

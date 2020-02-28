@@ -11,7 +11,8 @@ const {
   waitForTestExecutionStart,
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
-const { Collection, Execution, Granule } = require('@cumulus/api/models');
+const { updateCollection } = require('@cumulus/integration-tests/api/api');
+const { Execution, Granule } = require('@cumulus/api/models');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   s3GetObjectTagging,
@@ -75,7 +76,6 @@ describe('The Sync Granules workflow', () => {
 
     const inputPayloadFilename = './spec/parallel/syncGranule/SyncGranule.input.payload.json';
 
-
     collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
     provider = { id: `s3_provider${testSuffix}` };
     const newCollectionId = constructCollectionId(collection.name, collection.version);
@@ -83,7 +83,6 @@ describe('The Sync Granules workflow', () => {
     process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
     executionModel = new Execution();
     process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
-    const collectionModel = new Collection();
 
     // populate collections, providers and test data
     await Promise.all([
@@ -91,7 +90,11 @@ describe('The Sync Granules workflow', () => {
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
-    await collectionModel.update(collection, { duplicateHandling: 'replace' });
+    await updateCollection({
+      prefix: config.stackName,
+      collection,
+      updateParams: { duplicateHandling: 'replace' }
+    });
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
