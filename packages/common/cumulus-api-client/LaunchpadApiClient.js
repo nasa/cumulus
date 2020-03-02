@@ -52,7 +52,7 @@ class LaunchpadApiClient extends CumulusApiClient {
   }
 
   /**
-  * Get a bearer token from launchpad atuh for use with the Cumulus API
+  * Get a bearer token from launchpad auth for use with the Cumulus API
   *   * @returns {string} - Bearer token used to authenticate with the Cumulus API
   */
   async createNewAuthToken() {
