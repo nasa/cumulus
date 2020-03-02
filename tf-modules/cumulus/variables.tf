@@ -401,6 +401,12 @@ variable "saml_launchpad_metadata_url" {
   default     = "N/A"
 }
 
+variable "tags" {
+  description = "Tags to be applied to Cumulus resources that support tags"
+  type        = map(string)
+  default     = {}
+}
+
 variable "thin_egress_cookie_domain" {
   type        = string
   default     = null
@@ -427,7 +433,6 @@ variable "thin_egress_jwt_algo" {
 
 variable "thin_egress_jwt_secret_name" {
   type        = string
-  default     = null
   description = "Name of AWS secret where keys for the Thin Egress App JWT encode/decode are stored"
 }
 

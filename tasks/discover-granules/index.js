@@ -287,7 +287,7 @@ const discoverGranules = async ({ config }) => {
   const discoveredFiles = await listFiles(
     config.provider,
     config.useList,
-    normalizeProviderPath(config.collection.provider_path)
+    config.collection.provider_path
   );
 
   let filesByGranuleId = groupFilesByGranuleId(

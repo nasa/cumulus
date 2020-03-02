@@ -35,7 +35,7 @@ resource "aws_elasticsearch_domain" "es" {
     prevent_destroy = true
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 data "aws_iam_policy_document" "es_access_policy" {
@@ -67,7 +67,7 @@ data "aws_subnet" "first_es_domain_subnet" {
 }
 
 resource "aws_security_group" "es_vpc" {
-  count  = local.deploy_inside_vpc && var.security_group == null ? 1 : 0
+  count  = local.deploy_inside_vpc ? 1 : 0
   vpc_id = data.aws_subnet.first_es_domain_subnet[0].vpc_id
 
   egress {
@@ -84,7 +84,7 @@ resource "aws_security_group" "es_vpc" {
     self      = true
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_elasticsearch_domain" "es_vpc" {
@@ -110,14 +110,17 @@ resource "aws_elasticsearch_domain" "es_vpc" {
 
   vpc_options {
     subnet_ids         = var.subnet_ids
-    security_group_ids = var.security_group == null ? [aws_security_group.es_vpc[0].id] : [var.security_group]
+    security_group_ids = flatten([
+      aws_security_group.es_vpc[0].id,
+      var.elasticsearch_security_group_ids,
+    ])
   }
 
   snapshot_options {
     automated_snapshot_start_hour = 0
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_elasticsearch_domain_policy" "es_vpc_domain_policy" {
@@ -151,7 +154,8 @@ resource "aws_cloudwatch_metric_alarm" "es_nodes_low" {
   statistic           = "Average"
   threshold           = var.elasticsearch_config.instance_count
   alarm_description   = "There are less instances running than the desired"
-  tags                = local.default_tags
+
+  tags = var.tags
 }
 
 resource "aws_cloudwatch_metric_alarm" "es_nodes_high" {
@@ -164,4 +168,6 @@ resource "aws_cloudwatch_metric_alarm" "es_nodes_high" {
   statistic           = "Average"
   threshold           = var.elasticsearch_config.instance_count
   alarm_description   = "There are less instances running than the desired"
+
+  tags = var.tags
 }

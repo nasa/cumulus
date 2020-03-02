@@ -19,7 +19,7 @@ function stopDistributionApi(server, done) {
 /**
  * Check a record for a particular status and retry until the record gets that status
  * This is to mitigate issues where a workflow completes, but there is a lag between
- * the workflow end, sns topic notification, and dynamo update
+ * the workflow end, cloudwatch event sqs message, and dynamo update
  *
  * @param {Object} model - model from api/models
  * @param {Object} params - params to pass to model.get
@@ -35,6 +35,9 @@ async function waitForModelStatus(model, params, status) {
       }
 
       return record;
+    },
+    {
+      maxTimeout: 60 * 1000
     }
   );
 }

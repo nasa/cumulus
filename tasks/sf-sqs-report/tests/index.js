@@ -1,21 +1,22 @@
 'use strict';
 
 const test = require('ava');
-const { s3 } = require('@cumulus/aws-client/services');
-const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+const { sqs } = require('@cumulus/aws-client/services');
 const cloneDeep = require('lodash.clonedeep');
 const { randomString } = require('@cumulus/common/test-utils');
-const { publishSnsMessage } = require('..');
+const { reportSQSMessage } = require('..');
 
 let bucket;
 
 test.before(async () => {
   bucket = randomString();
-  await s3().createBucket({ Bucket: bucket }).promise();
+  const queueName = randomString();
+  const { QueueUrl } = await sqs().createQueue({ QueueName: queueName }).promise();
+  process.env.reporting_queue_url = QueueUrl;
 });
 
 test.after.always(async () => {
-  await recursivelyDeleteS3Bucket(bucket);
+  delete process.env.reporting_queue_arn;
 });
 
 test('task returns payload as output', async (t) => {
@@ -27,7 +28,7 @@ test('task returns payload as output', async (t) => {
     }
   };
 
-  const output = await publishSnsMessage(cloneDeep(event));
+  const output = await reportSQSMessage(cloneDeep(event));
   t.deepEqual(output, event.input.payload);
 });
 
@@ -48,6 +49,6 @@ test('task returns empty object when no payload is present on input to the task'
   event.config.stateMachine = 'arn:aws:states:us-east-1:000000000000:stateMachine:TestCumulusParsePdrStateMach-K5Qk90fc8w4U';
   event.config.executionName = '7c543392-1da9-47f0-9c34-f43f6519412a';
 
-  const output = await publishSnsMessage(cloneDeep(event));
+  const output = await reportSQSMessage(cloneDeep(event));
   t.deepEqual(output, {});
 });

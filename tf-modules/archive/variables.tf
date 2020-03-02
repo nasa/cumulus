@@ -267,6 +267,12 @@ variable "saml_launchpad_metadata_url" {
   default = "N/A"
 }
 
+variable "tags" {
+  description = "Tags to be applied to managed resources"
+  type        = map(string)
+  default     = {}
+}
+
 variable "urs_url" {
   type        = string
   default     = "https://uat.urs.earthdata.nasa.gov"

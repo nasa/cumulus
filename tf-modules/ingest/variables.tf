@@ -104,15 +104,7 @@ variable "prefix" {
   type = string
 }
 
-variable "report_executions_sns_topic_arn" {
-  type = string
-}
-
-variable "report_granules_sns_topic_arn" {
-  type = string
-}
-
-variable "report_pdrs_sns_topic_arn" {
+variable "sf_event_sqs_to_db_records_sqs_queue_url" {
   type = string
 }
 
@@ -123,6 +115,12 @@ variable "sf_start_rate" {
 
 variable "system_bucket" {
   type = string
+}
+
+variable "tags" {
+  description = "Tags to be applied to managed resources"
+  type        = map(string)
+  default     = {}
 }
 
 variable "throttled_queues" {

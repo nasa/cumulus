@@ -8,6 +8,7 @@ const log = require('@cumulus/common/log');
 const omit = require('lodash.omit');
 const S3 = require('@cumulus/aws-client/S3');
 const { S3KeyPairProvider } = require('@cumulus/common/key-pair-provider');
+const { isNil } = require('@cumulus/common/util');
 const recursion = require('./recursion');
 const { lookupMimeType } = require('./util');
 
@@ -51,13 +52,34 @@ class FtpProviderClient {
   }
 
   async buildFtpClient() {
-    return new JSFtp({
-      host: this.host,
-      port: get(this.providerConfig, 'port', 21),
-      user: await this.getUsername(),
-      pass: await this.getPassword(),
-      useList: get(this.providerConfig, 'useList', false)
-    });
+    if (isNil(this.ftpClient)) {
+      this.ftpClient = new JSFtp({
+        host: this.host,
+        port: get(this.providerConfig, 'port', 21),
+        user: await this.getUsername(),
+        pass: await this.getPassword(),
+        useList: get(this.providerConfig, 'useList', false)
+      });
+    }
+    return this.ftpClient;
+  }
+
+  errorHandler(rejectFn, error) {
+    let normalizedError = error;
+    // error.text is a product of jsftp returning an object with a `text` field to the callback's
+    // `err` param, but normally javascript errors have a `message` field. We want to normalize
+    // this before throwing it out of the `FtpProviderClient` because it is a quirk of jsftp.
+    if (!error.message && error.text) {
+      const message = `${error.code
+        ? `FTP Code ${error.code}: ${error.text}`
+        : `FTP error: ${error.text}`} This may be caused by user permissions disallowing the listing.`;
+      normalizedError = new Error(message);
+    }
+    if (!isNil(this.ftpClient)) {
+      this.ftpClient.destroy();
+    }
+    log.error('FtpProviderClient encountered error: ', normalizedError);
+    return rejectFn(normalizedError);
   }
 
   /**
@@ -74,38 +96,45 @@ class FtpProviderClient {
     const client = await this.buildFtpClient();
 
     return new Promise((resolve, reject) => {
-      client.on('error', reject);
+      client.on('error', this.errorHandler.bind(this, reject));
       client.get(remotePath, localPath, (err) => {
-        client.destroy();
-
-        if (err) reject(err);
-        else {
-          log.info(`Finishing downloading ${remoteUrl}`);
-          resolve(localPath);
+        if (err) {
+          return this.errorHandler(reject, err);
         }
+        log.info(`Finishing downloading ${remoteUrl}`);
+        client.destroy();
+        return resolve(localPath);
       });
     });
   }
 
+  /**
+   * List all files from a given endpoint
+   * @param {string} path - path to list
+   * @param {number} _counter - recursive attempt counter
+   * @returns {Promise} promise of contents
+   * @private
+   */
   async _list(path, _counter = 0) {
     let counter = _counter;
     const client = await this.buildFtpClient();
     return new Promise((resolve, reject) => {
-      client.on('error', reject);
+      client.on('error', this.errorHandler.bind(this, reject));
       client.ls(path, (err, data) => {
-        client.destroy();
         if (err) {
-          if (err.message.includes('Timed out') && counter < 3) {
+          const message = err.message || err.text;
+          if (message && message.includes('Timed out') && counter < 3) {
             log.error(`Connection timed out while listing ${path}. Retrying...`);
             counter += 1;
             return this._list(path, counter).then((r) => {
-              log.info(`${counter} retry suceeded`);
+              log.info(`${counter} retry succeeded`);
               return resolve(r);
-            }).catch((e) => reject(e));
+            }).catch(this.errorHandler.bind(this, reject));
           }
-          return reject(err);
+          return this.errorHandler(reject, err);
         }
 
+        client.destroy();
         return resolve(data.map((d) => ({
           name: d.name,
           path: path,
@@ -118,11 +147,10 @@ class FtpProviderClient {
   }
 
   /**
-   * List all PDR files from a given endpoint
-   * @return {Promise}
-   * @private
+   * List all files from a given endpoint
+   * @param {string} path - path to list
+   * @returns {Promise}
    */
-
   async list(path) {
     const listFn = this._list.bind(this);
     const files = await recursion(listFn, path);
@@ -153,8 +181,7 @@ class FtpProviderClient {
     const readable = await new Promise((resolve, reject) => {
       client.get(remotePath, (err, socket) => {
         if (err) {
-          client.destroy();
-          return reject(err);
+          return this.errorHandler(reject, err);
         }
         return resolve(socket);
       });
@@ -173,7 +200,6 @@ class FtpProviderClient {
     log.info('Uploading to s3 is complete(ftp)', s3uri);
 
     client.destroy();
-
     return s3uri;
   }
 }

@@ -6,8 +6,12 @@ output "api_redirect_uri" {
   value = local.api_redirect_uri
 }
 
-output "cw_sf_event_to_db_records_lambda_function_arn" {
-  value = aws_lambda_function.cw_sf_event_to_db_records.arn
+output "sf_event_sqs_to_db_records_sqs_queue_url" {
+  value = aws_sqs_queue.sf_event_sqs_to_db_records_input_queue.id
+}
+
+output "sf_event_sqs_to_db_records_sqs_queue_arn" {
+  value = aws_sqs_queue.sf_event_sqs_to_db_records_input_queue.arn
 }
 
 output "internal_api_uri" {
@@ -24,10 +28,6 @@ output "log2elasticsearch_lambda_function_arn" {
 
 output "provider_kms_key_arn" {
   value = aws_kms_key.provider_kms_key.arn
-}
-
-output "publish_reports_lambda_function_arn" {
-  value = aws_lambda_function.publish_reports.arn
 }
 
 output "report_executions_sns_topic_arn" {

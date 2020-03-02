@@ -56,14 +56,21 @@ echo "terraform {
 ../terraform init \
   -input=false
 
+if [[ $NGAP_ENV = "SIT" ]]; then
+  BASE_VAR_FILE="sit.tfvars"
+  CMA_LAYER_VERSION=7
+else
+  BASE_VAR_FILE="sandbox.tfvars"
+  CMA_LAYER_VERSION=11
+fi
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
 ../terraform apply \
   -auto-approve \
   -input=false \
-  -var-file="../deployments/sandbox.tfvars" \
+  -var-file="../deployments/$BASE_VAR_FILE" \
   -var-file="../deployments/$DEPLOYMENT.tfvars" \
-  -var "cumulus_message_adapter_lambda_layer_arn=arn:aws:lambda:us-east-1:$AWS_ACCOUNT_ID:layer:Cumulus_Message_Adapter:11" \
+  -var "cumulus_message_adapter_lambda_layer_arn=arn:aws:lambda:us-east-1:$AWS_ACCOUNT_ID:layer:Cumulus_Message_Adapter:$CMA_LAYER_VERSION" \
   -var "cmr_username=$CMR_USERNAME" \
   -var "cmr_password=$CMR_PASSWORD" \
   -var "cmr_client_id=cumulus-core-$DEPLOYMENT" \
