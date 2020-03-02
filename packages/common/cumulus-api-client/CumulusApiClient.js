@@ -5,11 +5,10 @@ const normalizeUrl = require('normalize-url');
 const { decryptBase64String, encrypt } = require('@cumulus/aws-client/KMS');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const { decode } = require('jsonwebtoken');
-
+const Logger = require('@cumulus/logger');
 const CumulusApiClientError = require('./CumulusApiClientError');
 const CumulusAuthTokenError = require('./CumulusAuthTokenError');
 
-const Logger = require('@cumulus/logger');
 const logger = new Logger({});
 
 class CumulusApiClient {
