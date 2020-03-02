@@ -52,7 +52,6 @@ class EdlApiClient extends CumulusApiClient {
   */
   async createNewAuthToken() {
     const tokenOutput = await got.get(`${this.config.baseUrl}/token`, { followRedirect: false });
-    console.log(`tokenOutput: ${tokenOutput}`);
     const auth = base64.encode(`${this.config.username}:${this.config.password}`);
 
     const form = new FormData();
