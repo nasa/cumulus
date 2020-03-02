@@ -35,7 +35,7 @@ For granule and PDR reporting, the topics will only receive data if the [Cumulus
 - Granules - workflow message contains granule data in `payload.granules`
 - PDRs - workflow message contains PDR data in `payload.pdr`
 
-The messages published to the SNS reporting topics for executions and PDRs and the `record` property in the messages published to the graules SNS topic should conform to the [model schema](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) for each data type.
+The messages published to the SNS reporting topics for executions and PDRs and the `record` property in the messages published to the granules SNS topic should conform to the [model schema](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) for each data type.
 
 Further detail on workflow reporting and how to interact with these interfaces can be found in the [workflow notifications data cookbook](data-cookbooks/ingest-notifications.md).
 
