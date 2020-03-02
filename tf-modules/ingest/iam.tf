@@ -24,7 +24,7 @@ data "aws_iam_policy_document" "states_assume_role_policy" {
 resource "aws_secretsmanager_secret" "ingest_urs_password" {
   name_prefix = "${var.prefix}-ingest_urs_password"
   description = "URS user pasword for use by ingest lambdas in the ${var.prefix} deployment"
-  tags        = local.default_tags
+  tags        = var.tags
 }
 
 resource "aws_secretsmanager_secret_version" "ingest_urs_password" {
