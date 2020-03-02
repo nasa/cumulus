@@ -9,7 +9,6 @@ const map = require('lodash.map');
 const { EdlApiClient, LaunchpadApiClient } = require('@cumulus/common/cumulus-api-client');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
-const { normalizeProviderPath } = require('@cumulus/ingest/util');
 const { duplicateHandlingType } = require('@cumulus/ingest/granule');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 
@@ -177,8 +176,8 @@ const buildGranule = curry(
  * there is a duplicate granule
  *
  * @param {string} granuleId - granuleId to evaluate
- * @param {Object} dupeConfig - configuration object
- * @param {string} baseUrl - archive base URL
+ * @param {string} duplicateHandling - collection duplicate handling configuration value
+ * @param {string} apiClient - configured instance of CumulusApiClient
  * @returns {string} returns granuleId string if no duplicate found, '' if
  *                   a duplicate is found.  Throws an error on duplicate if
  *                   dupeConfig.duplicateHandling is set to 'error'
