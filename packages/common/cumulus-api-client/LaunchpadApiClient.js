@@ -37,7 +37,7 @@ class LaunchpadApiClient extends CumulusApiClient {
    *
    * @returns {boolean} true
    */
-  async validateTokenExpiry() {
+  async _validateTokenExpiry() {
     return true;
   }
 

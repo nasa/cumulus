@@ -39,7 +39,7 @@ test.serial('refreshAuthToken throws an error', async (t) => {
   await t.throwsAsync(t.context.client.refreshAuthToken());
 });
 
-test.serial('validateTokenExpiry returns true', async (t) => {
-  const actual = await t.context.client.validateTokenExpiry();
+test.serial('_validateTokenExpiry returns true', async (t) => {
+  const actual = await t.context.client._validateTokenExpiry();
   t.is(actual, true);
 });
