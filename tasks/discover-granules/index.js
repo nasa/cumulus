@@ -7,7 +7,7 @@ const pick = require('lodash.pick');
 const Logger = require('@cumulus/logger');
 const map = require('lodash.map');
 const got = require('got');
-const { getAuthToken } = require('@cumulus/common/auth-token');
+const { EdlApiClient, LaunchpadApiClient } = require('@cumulus/common/cumulus-api-client');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
 const { normalizeProviderPath } = require('@cumulus/ingest/util');
@@ -184,17 +184,16 @@ const buildGranule = curry(
  *                   a duplicate is found.  Throws an error on duplicate if
  *                   dupeConfig.duplicateHandling is set to 'error'
  */
-const checkDuplicate = async (granuleId, dupeConfig, baseUrl) => {
-  const headers = { authorization: `Bearer ${dupeConfig.token}` };
+const checkDuplicate = async (granuleId, duplicateHandling, apiClient) => {
   try {
-    await got.get(`${baseUrl}/granules/${granuleId}`, { headers });
+    await apiClient.get(`granules/${granuleId}`);
   } catch (error) {
     if (error.statusCode === 404 && error.statusMessage === 'Not Found') {
       return granuleId;
     }
     throw error;
   }
-  if (dupeConfig.duplicateHandling === 'error') {
+  if (duplicateHandling === 'error') {
     throw new Error(`Duplicate granule found for ${granuleId} with duplicate configuration set to error`);
   }
   return '';
@@ -214,28 +213,37 @@ const checkDuplicate = async (granuleId, dupeConfig, baseUrl) => {
  * @returns {Array.string} returns granuleIds parameter with applicable duplciates removed
  */
 const filterDuplicates = async (granuleIds, duplicateHandling) => {
-  const provider = process.env.oauth_provider;
-  const tokenConfig = {
-    baseUrl: process.env.archive_api_uri,
-    username: process.env.urs_id,
-    password: await getSecretString(
-      process.env.urs_password_secret_name
-    ),
-    launchpadPassphrase: await getSecretString(
-      process.env.passphraseSecretName
-    ),
-    launchpadApi: process.env.launchpad_api,
-    launchpadCertificate: process.env.launchpad_certificate
-
-  };
-  const authToken = await getAuthToken(provider, tokenConfig);
-  const dupeConfig = {
-    duplicateHandling: duplicateHandling,
-    token: authToken
-  };
+  const secretName = 'discoverGranulesToken';
+  let apiClient;
+  if (process.env.oauth_provider === 'earthdata') {
+    apiClient = new EdlApiClient({
+      kmsId: process.env.auth_kms_key_id,
+      baseUrl: process.env.archive_api_uri,
+      username: process.env.urs_id,
+      password: await getSecretString(
+        process.env.urs_password_secret_name
+      ),
+      tokenSecretName: secretName,
+      authTokenTable: process.env.AuthTokensTable
+    });
+  }
+  if (process.env.oauth_provider === 'launchpad') {
+    apiClient = new LaunchpadApiClient({
+      kmsId: process.env.auth_kms_key_id,
+      baseUrl: process.env.archive_api_uri,
+      userGroup: process.env.oauth_user_group,
+      launchpadPassphrase: await getSecretString(
+        process.env.launchpadPassphraseSecretName
+      ),
+      launchpadApi: process.env.launchpad_api,
+      launchpadCertificate: process.env.launchpad_certificate,
+      tokenSecretName: secretName,
+      authTokenTable: process.env.AuthTokensTable
+    });
+  }
 
   const keysPromises = granuleIds.map((key) =>
-    checkDuplicate(key, dupeConfig, tokenConfig.baseUrl));
+    checkDuplicate(key, duplicateHandling, apiClient));
 
   const filteredKeys = await Promise.all(keysPromises);
   return filteredKeys.filter(Boolean);
@@ -259,7 +267,6 @@ const handleDuplicates = async (filesByGranuleId, duplicateHandling = 'error') =
   logger().info(`Running discoverGranules with duplicateHandling set to ${duplicateHandling}`);
   if (['skip', 'error'].includes(duplicateHandling)) {
     // Iterate over granules, remove if exists in dynamo
-    // Is this going to be *expensive*
     const filteredKeys = await filterDuplicates(Object.keys(filesByGranuleId), duplicateHandling);
     return pick(filesByGranuleId, filteredKeys);
   }

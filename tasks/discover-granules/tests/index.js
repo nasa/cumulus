@@ -18,9 +18,9 @@ const discoverGranules = discoverGranulesRewire.discoverGranules;
 
 const readFile = promisify(fs.readFile);
 
-const checkDuplicateRewire = (granuleId, dupeConfig, _) => {
+const checkDuplicateRewire = (granuleId, duplicateHandling, _) => {
   if (granuleId === 'duplicate') {
-    if (dupeConfig.duplicateHandling === 'error') {
+    if (duplicateHandling === 'error') {
       throw new Error(`Duplicate GranuleID ${granuleId} encountered in DiscoverGranules with duplicateHandling set to 'error'`);
     }
     return '';
@@ -36,6 +36,8 @@ async function assertDiscoveredGranules(t, output) {
 }
 
 test.beforeEach(async (t) => {
+  process.env.oauth_provider = 'earthdata';
+  process.env.archive_api_uri = 'http://fakeUrl.fake/';
   discoverGranulesRewire.__set__('getSecretString', async () => 'mockPassword');
   const eventPath = path.join(__dirname, 'fixtures', 'mur.json');
   const rawEvent = await readFile(eventPath, 'utf8');
@@ -289,13 +291,10 @@ test.serial('handleDuplicates filters on duplicateHandling set to "skip"',
   async (t) => {
     const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
     const checkDuplicateRestore = discoverGranulesRewire.__set__('checkDuplicate', checkDuplicateRewire);
-    const getAuthTokenRestore = discoverGranulesRewire.__set__('getAuthToken', async () => 'dummyToken');
     const actual = await handleDuplicates(t.context.filesByGranuleId, 'skip', {});
     delete t.context.filesByGranuleId.duplicate;
 
     checkDuplicateRestore();
-    getAuthTokenRestore();
-
     t.deepEqual(actual, t.context.filesByGranuleId);
   });
 
@@ -308,27 +307,23 @@ test.serial('handleDuplicates throws Error on duplicateHandling set to "error"',
     };
     const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
     const checkDuplicateRestore = discoverGranulesRewire.__set__('checkDuplicate', checkDuplicateRewire);
-    const getAuthTokenRestore = discoverGranulesRewire.__set__('getAuthToken', async () => 'dummyToken');
 
     await t.throwsAsync(
       () => handleDuplicates(filesByGranuleId, 'error', {})
     );
 
     checkDuplicateRestore();
-    getAuthTokenRestore();
   });
 
 test.serial('handleDuplicates does not filter when duplicateHandling is set to "replace"',
   async (t) => {
     const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
     const checkDuplicateRestore = discoverGranulesRewire.__set__('checkDuplicate', checkDuplicateRewire);
-    const getAuthTokenRestore = discoverGranulesRewire.__set__('getAuthToken', async () => 'dummyToken');
 
     const replaceActual = await handleDuplicates(t.context.filesByGranuleId, 'replace', {});
     const versionActual = await handleDuplicates(t.context.filesByGranuleId, 'version', {});
 
     checkDuplicateRestore();
-    getAuthTokenRestore();
 
     t.deepEqual(replaceActual, t.context.filesByGranuleId);
     t.deepEqual(versionActual, t.context.filesByGranuleId);
@@ -338,7 +333,6 @@ test.serial('handleDuplicates does not filter when duplicateHandling is set to "
 test.serial('filterDuplicates returns a set of filtered keys',
   async (t) => {
     const filterDuplicates = discoverGranulesRewire.__get__('filterDuplicates');
-    const getAuthTokenRestore = discoverGranulesRewire.__set__('getAuthToken', async () => 'dummyToken');
     const checkDuplicateRestore = discoverGranulesRewire.__set__('checkDuplicate', async (key) => {
       if (key === 'duplicate') {
         return '';
@@ -348,7 +342,6 @@ test.serial('filterDuplicates returns a set of filtered keys',
 
     const actual = await filterDuplicates(['duplicate', 'key1', 'key2'], 'bogusHandlingValue');
 
-    getAuthTokenRestore();
     checkDuplicateRestore();
 
     t.deepEqual(actual, ['key1', 'key2']);
@@ -357,14 +350,16 @@ test.serial('filterDuplicates returns a set of filtered keys',
 test.serial('checkDuplicate returns an empty string when API returns a granule',
   async (t) => {
     const checkDuplicate = discoverGranulesRewire.__get__('checkDuplicate');
-    // TODO better naming convention than restore
-    const gotRestore = discoverGranulesRewire.__set__('got', { get: () => 'dummy value' });
-    const actual = await checkDuplicate('granuleId', { token: 'dummyToken' }, 'baseUrl');
-
-    gotRestore();
-
+    const actual = await checkDuplicate('granuleId', '', { get: async () => 'dummy value' });
     t.is(actual, '');
   });
+
+test.serial('checkDuplicate throws an error when API returns a granule and duplicateHandling is set to "error"',
+  async (t) => {
+    const checkDuplicate = discoverGranulesRewire.__get__('checkDuplicate');
+    await t.throwsAsync(checkDuplicate('granuleId', 'error', { get: async () => 'dummy value' }));
+  });
+
 
 
 test.serial('checkDuplicate returns a granuleId string when the API returns a 404/Not Found error',
@@ -374,15 +369,11 @@ test.serial('checkDuplicate returns a granuleId string when the API returns a 40
     const error = new Error();
     error.statusCode = 404;
     error.statusMessage = 'Not Found';
-    const gotRestore = discoverGranulesRewire.__set__('got', {
-      get: () => {
+    const actual = await checkDuplicate('granuleId', '', {
+      get: async () => {
         throw error;
       }
     });
-
-    const actual = await checkDuplicate('granuleId', { token: 'dummyToken' }, 'baseUrl');
-
-    gotRestore();
 
     t.is(actual, 'granuleId');
   });
@@ -390,16 +381,12 @@ test.serial('checkDuplicate returns a granuleId string when the API returns a 40
 test.serial('checkDuplicate throws an error if the API throws an error other than 404/Not Found',
   async (t) => {
     const checkDuplicate = discoverGranulesRewire.__get__('checkDuplicate');
-
     const error = new Error();
     error.statusCode = 500;
     error.statusMessage = 'Internal Server Error';
-    const gotRestore = discoverGranulesRewire.__set__('got', {
-      get: () => {
+    await t.throwsAsync(() => checkDuplicate('granuleId', '', {
+      get: async () => {
         throw error;
       }
-    });
-    await t.throwsAsync(() => checkDuplicate('granuleId', { token: 'dummyToken' }, 'baseUrl'));
-
-    gotRestore();
+    }));
   });

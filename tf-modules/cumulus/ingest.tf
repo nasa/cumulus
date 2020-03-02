@@ -42,6 +42,7 @@ module "ingest" {
   launchpad_api         = var.launchpad_api
   launchpad_passphrase  = var.launchpad_passphrase
   launchpad_certificate = var.launchpad_certificate
+  oauth_user_group      = var.oauth_user_group
 
   # DB config
   dynamo_tables = var.dynamo_tables

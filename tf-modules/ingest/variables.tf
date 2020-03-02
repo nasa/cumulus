@@ -92,6 +92,10 @@ variable "oauth_provider" {
   type = string
 }
 
+variable "oauth_user_group" {
+  type = string
+}
+
 variable "permissions_boundary_arn" {
   type = string
 }
