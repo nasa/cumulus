@@ -9,6 +9,9 @@ const { decode } = require('jsonwebtoken');
 const CumulusApiClientError = require('./CumulusApiClientError');
 const CumulusAuthTokenError = require('./CumulusAuthTokenError');
 
+const Logger = require('@cumulus/logger');
+const logger = new Logger({});
+
 class CumulusApiClient {
   constructor(config = {}, requiredKeys = ['kmsId', 'baseUrl', 'authTokenTable', 'tokenSecretName']) {
     if (!requiredKeys.every((key) => Object.keys(config).includes(key))) {
@@ -43,8 +46,8 @@ class CumulusApiClient {
         throw error;
       }
       if (error.message === 'Access token has expired') {
-        const newToken = await this.createNewAuthToken(); // TODO make sure this updates the 'cache'
-        await this._updateAuthTokenRecord(newToken);
+        logger.info('API Client access token expired, generating new token');
+        await this.getCacheAuthToken();
         return this.get(url, authRetry - 1);
       }
       throw error;
@@ -67,8 +70,6 @@ class CumulusApiClient {
         tokenAlias: this.config.tokenSecretName
       }
     };
-
-    console.log(params);
     const tokenResponse = await dynamodbDocClient().get(params).promise();
     if (!tokenResponse.Item) {
       throw new CumulusAuthTokenError(`No bearer token with alias '${this.config.tokenSecretName}'
@@ -134,22 +135,19 @@ class CumulusApiClient {
    * @returns {string} - returns active valid bearer token
    */
   async getCacheAuthToken() {
-    console.log('Getting cache token');
     let token;
     try {
       token = await this._getAuthTokenRecord();
       await this._validateTokenExpiry(token);
       return token;
     } catch (error) {
-      console.log(`Caught token error ${JSON.stringify(error)}`);
       if (error.name === 'CumulusAuthTokenError') {
-      // We're not refreshing as refreshing invalidates what could be
-      // an active key.
+        logger.info('API Client access token expired, generating new token');
+        // We're not refreshing as refreshing invalidates what could be
+        // an active key.
         const updateToken = await this.createNewAuthToken();
-        console.log(`New auth token created: ${updateToken}`);
         await this._updateAuthTokenRecord(
           updateToken
-          // TODO this should be a class parameter and moved into createNewAuthToken
         );
         return updateToken;
       }
