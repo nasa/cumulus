@@ -360,8 +360,6 @@ test.serial('checkDuplicate throws an error when API returns a granule and dupli
     await t.throwsAsync(checkDuplicate('granuleId', 'error', { get: async () => 'dummy value' }));
   });
 
-
-
 test.serial('checkDuplicate returns a granuleId string when the API returns a 404/Not Found error',
   async (t) => {
     const checkDuplicate = discoverGranulesRewire.__get__('checkDuplicate');

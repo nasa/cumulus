@@ -2,7 +2,6 @@
 
 const test = require('ava');
 const rewire = require('rewire');
-const isMatch = require('lodash.ismatch');
 
 const LaunchpadApiRewire = rewire('../cumulus-api-client/LaunchpadApiClient.js');
 

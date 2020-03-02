@@ -8,4 +8,3 @@ class CumulusAuthTokenError extends Error {
 }
 
 module.exports = CumulusAuthTokenError;
-
