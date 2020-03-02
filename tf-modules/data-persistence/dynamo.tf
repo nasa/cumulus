@@ -32,7 +32,7 @@ resource "aws_dynamodb_table" "auth_tokens_table" {
   lifecycle {
     ignore_changes = [ name ]
   }
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_dynamodb_table" "access_tokens_table" {
