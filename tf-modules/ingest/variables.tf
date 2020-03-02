@@ -72,7 +72,7 @@ variable "lambda_processing_role_id" {
 
 variable "lambda_subnet_ids" {
   type    = list(string)
-  default = null
+  default = []
 }
 
 variable "launchpad_api" {
