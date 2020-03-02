@@ -19,7 +19,7 @@ const CONFIG = {
 
 test.beforeEach((t) => {
   t.context.client = new LaunchpadApiRewire(CONFIG);
-})
+});
 test.serial('createNewAuthToken calls launchpad.requestToken ', async (t) => {
   t.context.client.launchpadToken.requestToken = async () => ({ sm_token: 'launchpad response' });
   const actual = await t.context.client.createNewAuthToken();
