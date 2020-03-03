@@ -29,22 +29,22 @@ class CumulusApiClient {
 
   /**
    * Calls the cumulus api (with 'get') with optional token authentication retries
-   * @param {string} url - Cumulus API endpoint to call
+   * @param {string} requestPath - Cumulus API endpoint to call
    * @param {integer} authRetry - number of times to retry on auth expiry failure.
    *                              Should be set to 1 for launchpad oauth to account
    *                              for ouath expiration failures
    * @returns {Promise<Object>} - Returns response object from got.get
    */
-  async get(url, authRetry = 1) {
+  async get(requestPath, authRetry = 1) {
     const headers = { Authorization: `Bearer ${await this.getCacheAuthToken()}` };
     try {
-      const gotReturn = await got.get(`${this.config.baseUrl}/${url}`, { headers });
+      const gotReturn = await got.get(`${this.config.baseUrl}/${requestPath}`, { headers });
       return gotReturn;
     } catch (error) {
       if (authRetry !== 0 && error.message === 'Access token has expired') {
         logger.info('API Client access token expired, generating new token');
         await this.getCacheAuthToken();
-        return this.get(url, authRetry - 1);
+        return this.get(requestPath, authRetry - 1);
       }
       throw error;
     }
