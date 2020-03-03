@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1629**
   - Adds several optional API accessor classes to @cumulus/common/cumulus-api-client (EdlApiClient, LaunchpadApiClient) to
-    handle workflow processes utilizing API calls with authentication.
+    - handle workflow processes utilizing API calls with authentication.
   - Added new dynamo table "{prefix}-AuthTokensTable" to data persistence to allow for caching of authentication tokens utilizing this client
 
 ### BREAKING CHANGES
