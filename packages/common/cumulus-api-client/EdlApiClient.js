@@ -59,7 +59,6 @@ class EdlApiClient extends CumulusApiClient {
 
     const location = await this.getEdlAuthorization(tokenOutput.headers.location,
       form, this.config.baseUrl);
-    // location = location.replace('.com', '.com:8000');
     const edlOutput = await got.get(location);
     return JSON.parse(edlOutput.body).message.token;
   }
