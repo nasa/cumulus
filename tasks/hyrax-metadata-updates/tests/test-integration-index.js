@@ -21,7 +21,14 @@ const readFile = promisify(fs.readFile);
 const { InvalidArgument } = require('@cumulus/errors');
 const ValidationError = require('@cumulus/cmr-client/ValidationError');
 
-const HyraxMetadataUpdate = require('..');
+const rewire = require('rewire');
+
+const HyraxMetadataUpdate = rewire('../index');
+
+const hyraxMetadataUpdate = HyraxMetadataUpdate.__get__('hyraxMetadataUpdate');
+const generateHyraxUrl = HyraxMetadataUpdate.__get__('generateHyraxUrl');
+const generatePath = HyraxMetadataUpdate.__get__('generatePath');
+const getEntryTitle = HyraxMetadataUpdate.__get__('getEntryTitle');
 
 test.before(() => {
   nock.disableNetConnect();
@@ -136,7 +143,7 @@ test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
     input: t.context.payload.input
   };
 
-  await HyraxMetadataUpdate.hyraxMetadataUpdate(e);
+  await hyraxMetadataUpdate(e);
   // Verify the metadata has been updated at the S3 location
   const metadataFile = t.context.payload.input.granules[0].files.find((f) => f.type === 'metadata');
   const actual = await getS3Object(`${metadataFile.bucket}/${metadataFile.fileStagingDir}`, metadataFile.name);
@@ -156,7 +163,7 @@ test.serial('Test updating UMM-G metadata file in S3', async (t) => {
     input: t.context.payload.input
   };
 
-  await HyraxMetadataUpdate.hyraxMetadataUpdate(e);
+  await hyraxMetadataUpdate(e);
   // Verify the metadata has been updated at the S3 location
   const metadataFile = t.context.payload.input.granules[0].files.find((f) => f.type === 'metadata');
   const actual = await getS3Object(`${metadataFile.bucket}/${metadataFile.fileStagingDir}`, metadataFile.name);
@@ -179,9 +186,9 @@ test.serial('Test validation error when updating UMM-G metadata file in S3', asy
     input: t.context.payload.input
   };
 
-  await t.throwsAsync(HyraxMetadataUpdate.hyraxMetadataUpdate(e), {
+  await t.throwsAsync(hyraxMetadataUpdate(e), {
     instanceOf: ValidationError,
-    message: 'Validation of metadata for MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json failed'
+    message: 'Validation was not successful, CMR error message: undefined'
   });
 
   await recursivelyDeleteS3Bucket(t.context.stagingBucket);
@@ -190,7 +197,7 @@ test.serial('Test validation error when updating UMM-G metadata file in S3', asy
 test.serial('Test validation error when updating ECHO10 metadata file in S3', async (t) => {
   // Set up mock Validation call to CMR
   nock('https://cmr.earthdata.nasa.gov').post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml')
-    .reply(400);
+    .reply(400, '<?xml version="1.0" encoding="UTF-8"?><errors><error>foo</error></errors>');
   await setupS3(t, false);
 
   const e = {
@@ -198,9 +205,9 @@ test.serial('Test validation error when updating ECHO10 metadata file in S3', as
     input: t.context.payload.input
   };
 
-  await t.throwsAsync(HyraxMetadataUpdate.hyraxMetadataUpdate(e), {
+  await t.throwsAsync(hyraxMetadataUpdate(e), {
     instanceOf: ValidationError,
-    message: 'Validation of metadata for MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml failed'
+    message: 'Validation was not successful, CMR error message: "foo"'
   });
 
   await recursivelyDeleteS3Bucket(t.context.stagingBucket);
@@ -209,21 +216,21 @@ test.serial('Test validation error when updating ECHO10 metadata file in S3', as
 test.serial('Test retrieving entry title from CMR using UMM-G', async (t) => {
   const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const metadataObject = JSON.parse(data);
-  const actual = await HyraxMetadataUpdate.getEntryTitle(event.config, metadataObject, true);
+  const actual = await getEntryTitle(event.config, metadataObject, true);
   t.is(actual, 'GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC');
 });
 
 test.serial('Test retrieving entry title from CMR using ECHO10', async (t) => {
   const data = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
   const metadata = libxmljs.parseXml(data);
-  const actual = await HyraxMetadataUpdate.getEntryTitle(event.config, metadata, false);
+  const actual = await getEntryTitle(event.config, metadata, false);
   t.is(actual, 'GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC');
 });
 
 test('Test generate path from UMM-G', async (t) => {
   const metadata = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const metadataObject = JSON.parse(metadata);
-  const actual = await HyraxMetadataUpdate.generatePath(event.config, metadataObject, true);
+  const actual = await generatePath(event.config, metadataObject, true);
 
   t.is(actual, 'providers/GES_DISC/collections/GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
 });
@@ -232,7 +239,7 @@ test('Test generate path from ECHO-10', async (t) => {
   const metadata = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
   const metadataObject = libxmljs.parseXml(metadata);
 
-  const actual = await HyraxMetadataUpdate.generatePath(event.config, metadataObject, false);
+  const actual = await generatePath(event.config, metadataObject, false);
 
   t.is(actual, 'providers/GES_DISC/collections/GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
 });
@@ -240,14 +247,14 @@ test('Test generate path from ECHO-10', async (t) => {
 test('Test generating OPeNDAP URL from ECHO10 file ', async (t) => {
   const data = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
   const metadata = libxmljs.parseXml(data);
-  const actual = await HyraxMetadataUpdate.generateHyraxUrl(event.config, metadata, false);
+  const actual = await generateHyraxUrl(event.config, metadata, false);
   t.is(actual, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
 });
 
 test('Test generating OPeNDAP URL from UMM-G file ', async (t) => {
   const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const metadataObject = JSON.parse(data);
-  const actual = await HyraxMetadataUpdate.generateHyraxUrl(event.config, metadataObject, true);
+  const actual = await generateHyraxUrl(event.config, metadataObject, true);
   t.is(actual, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
 });
 
@@ -266,37 +273,8 @@ test('Test generate path from ECHO-10 throws exception with broken config', asyn
   const metadata = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
   const metadataObject = libxmljs.parseXml(metadata);
 
-  await t.throwsAsync(HyraxMetadataUpdate.generatePath(badEvent.config, metadataObject, false), {
+  await t.throwsAsync(generatePath(badEvent.config, metadataObject, false), {
     instanceOf: InvalidArgument,
     message: 'Provider not supplied in configuration. Unable to construct path'
   });
-});
-
-// Invalid metadata format throw createDom
-test('Test generate path from throws exception with broken config', async (t) => {
-  // Set up S3
-  t.context.stagingBucket = randomId('staging');
-  await Promise.all([
-    s3().createBucket({ Bucket: t.context.stagingBucket }).promise()
-  ]);
-  const payloadPath = path.join(__dirname, 'data', 'payload-json-broken.json');
-  const rawPayload = await readFile(payloadPath, 'utf8');
-  t.context.payload = JSON.parse(rawPayload);
-  const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
-  t.context.filesToUpload = filesToUpload.map((file) =>
-    buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
-
-  buildPayload(t);
-  await uploadFilesJson(filesToUpload, t.context.stagingBucket);
-  const e = {
-    config: event.config,
-    input: t.context.payload.input
-  };
-
-  await t.throwsAsync(HyraxMetadataUpdate.hyraxMetadataUpdate(e), {
-    instanceOf: InvalidArgument,
-    message: 'Metadata file MOD11A1.A2017200.h19v04.006.2017201090724.cmr.foo is in unknown format'
-  });
-
-  await recursivelyDeleteS3Bucket(t.context.stagingBucket);
 });

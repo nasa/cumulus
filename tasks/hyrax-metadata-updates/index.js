@@ -11,11 +11,11 @@ const {
   CMR
 } = require('@cumulus/cmr-client');
 
-const { isECHO10File, isUMMGFile } = require('@cumulus/cmrjs/cmr-utils');
+const { isECHO10File, isUMMGFile, isCMRFilename } = require('@cumulus/cmrjs/cmr-utils');
+
 
 const { validateUMMG } = require('@cumulus/cmr-client/UmmUtils');
 const validate = require('@cumulus/cmr-client/validate');
-const ValidationError = require('@cumulus/cmr-client/ValidationError');
 
 const {
   getS3Object,
@@ -222,13 +222,12 @@ function createDom(metadataFileName, metadata) {
  *
  * @param {Object} config
  * @param {Object} granuleObject - granule files object
- * @returns {Object} metadata
  */
 async function updateSingleGranule(config, granuleObject) {
   // Read in the metadata file
   const metadataFile = granuleObject.files.find((f) => f.type === 'metadata');
-  const s3Object = parseS3Uri(metadataFile.filename);
-  const metadataResult = await getS3Object(s3Object.Bucket, s3Object.Key);
+  const { Bucket, Key } = parseS3Uri(metadataFile.filename);
+  const metadataResult = await getS3Object(Bucket, Key);
   // Extract the metadata file object
   const metadata = metadataResult.Body.toString();
   const { dom, isUmmG } = createDom(metadataFile.name, metadata);
@@ -236,23 +235,15 @@ async function updateSingleGranule(config, granuleObject) {
   const hyraxUrl = await generateHyraxUrl(config, dom, isUmmG);
   const updatedMetadata = addHyraxUrl(dom, isUmmG, hyraxUrl);
   // Validate updated metadata via CMR
-  try {
-    if (isUmmG) {
-      await validateUMMG(JSON.parse(updatedMetadata), metadataFile.name, config.cmr.provider);
-    } else {
-      const result = await validate('granule', updatedMetadata, metadataFile.name, config.cmr.provider);
-      if (!result) {
-        throw new ValidationError(`Validation of metadata for ${metadataFile.name} failed`);
-      }
-    }
-  } catch (e) {
-    throw new ValidationError(`Validation of metadata for ${metadataFile.name} failed`);
+  if (isUmmG) {
+    await validateUMMG(JSON.parse(updatedMetadata), metadataFile.name, config.cmr.provider);
+  } else {
+    await validate('granule', updatedMetadata, metadataFile.name, config.cmr.provider);
   }
-
   // Write back out to S3 in the same location
   await s3PutObject({
-    Bucket: s3Object.Bucket,
-    Key: s3Object.Key,
+    Bucket: Bucket,
+    Key: Key,
     Body: updatedMetadata
   });
 }
@@ -288,11 +279,4 @@ function handler(event, context, callback) {
 }
 
 exports.handler = handler;
-exports.hyraxMetadataUpdate = hyraxMetadataUpdate; // exported to support testing
-exports.generateAddress = generateAddress; // exported to support testing
-exports.generatePath = generatePath; // exported to support testing
-exports.getNativeId = getGranuleUr; // exported to support testing
-exports.addHyraxUrl = addHyraxUrl; // exported to support testing
-exports.generateHyraxUrl = generateHyraxUrl; // exported to support testing
-exports.getEntryTitle = getEntryTitle; // exported to support testing
-exports.updateSingleGranule = updateSingleGranule; // export to support testing
+exports.hyraxMetadataUpdate = hyraxMetadataUpdate;
