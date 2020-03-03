@@ -300,16 +300,11 @@ test.serial('handleDuplicates filters on duplicateHandling set to "skip"',
 
 test.serial('handleDuplicates throws Error on duplicateHandling set to "error"',
   async (t) => {
-    const filesByGranuleId = {
-      duplicate: {},
-      notDuplicate: {},
-      someOtherGranule: {}
-    };
     const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
     const checkDuplicateRestore = discoverGranulesRewire.__set__('checkDuplicate', checkDuplicateRewire);
 
     await t.throwsAsync(
-      () => handleDuplicates(filesByGranuleId, 'error', {})
+      () => handleDuplicates(t.context.filesByGranuleId, 'error', {})
     );
 
     checkDuplicateRestore();
