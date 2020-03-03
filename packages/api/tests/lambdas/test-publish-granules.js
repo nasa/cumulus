@@ -74,13 +74,14 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
 
 test.serial('The publish-granules Lambda function takes a DynamoDB stream event with a multiple records and publishes their granules to SNS', async (t) => {
   const { QueueUrl } = t.context;
+  const firstGranuleId = randomString();
 
   const event = {
     Records: [
       {
         dynamodb: {
           NewImage: {
-            granuleId: { S: randomString() },
+            granuleId: { S: firstGranuleId },
             status: { S: 'running' }
           }
         },
@@ -107,6 +108,15 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
   }).promise();
 
   t.is(Messages.length, 2);
+  const firstMessage = JSON.parse(JSON.parse(Messages[0].Body).Message);
+  const secondMessage = JSON.parse(JSON.parse(Messages[1].Body).Message);
+  if (firstMessage.record.granuleId === firstGranuleId) {
+    t.is(firstMessage.event, 'Create');
+    t.is(secondMessage.event, 'Update');
+  } else {
+    t.is(secondMessage.event, 'Create');
+    t.is(firstMessage.event, 'Update');
+  }
 });
 
 test.serial('The publish-granules Lambda function takes a DynamoDB stream event with a REMOVE record and adds a deletedAt to the SNS message', async (t) => {
