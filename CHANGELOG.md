@@ -48,6 +48,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1755**
   - The `thin_egress_jwt_secret_name` variable for the `tf-modules/cumulus` Terraform module is now **required**. This variable is passed on to the Thin Egress App in `tf-modules/distribution/main.tf`, which uses the keys stored in the secret to sign JWTs. See the [Thin Egress App documentation on how to create a value for this secret](https://github.com/asfadmin/thin-egress-app#setting-up-the-jwt-cookie-secrets).
 
+- **CUMULUS-1714**
+  - Changed the format of the message sent to the granule SNS Topic. Message includes the granule record under `record` and the type of event under `event`. Messages with `deleted` events will have the record that was deleted with a `deletedAt` timestamp. Options for `event` are `Create | Update | Delete`
+
 ### Added
 
 - **CUMULUS-1446**
@@ -123,9 +126,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/aws-client/CloudFormation.getCfStackParameterValues()` to get multiple parameter values for a Cloudformation stack
 
 ### Changed
-
-- **CUMULUS-1714**
-  - Changed the format of the message sent to the granule SNS Topic. Message includes the granule record under `record` and the type of event under `event`. Messages with `deleted` events will have the record that was deleted with a `deletedAt` timestamp. Options for `event` are `Create | Update | Delete`
 
 - **CUMULUS-1672**
   - Add a `retryOptions` parameter to the `@cumulus/aws-client/S3.headObject`
