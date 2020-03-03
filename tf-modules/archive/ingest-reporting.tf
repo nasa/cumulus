@@ -79,11 +79,14 @@ resource "aws_lambda_function" "publish_executions" {
     target_arn = aws_sqs_queue.publish_executions_dead_letter_queue.arn
   }
 
-  vpc_config {
-    subnet_ids = var.lambda_subnet_ids
-    security_group_ids = [
-      aws_security_group.no_ingress_all_egress[0].id
-    ]
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = [
+        aws_security_group.no_ingress_all_egress[0].id
+      ]
+    }
   }
 
   environment {
@@ -192,11 +195,14 @@ resource "aws_lambda_function" "publish_granules" {
     target_arn = aws_sqs_queue.publish_granules_dead_letter_queue.arn
   }
 
-  vpc_config {
-    subnet_ids = var.lambda_subnet_ids
-    security_group_ids = [
-      aws_security_group.no_ingress_all_egress[0].id
-    ]
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = [
+        aws_security_group.no_ingress_all_egress[0].id
+      ]
+    }
   }
 
   environment {
@@ -301,11 +307,14 @@ resource "aws_lambda_function" "publish_pdrs" {
     target_arn = aws_sqs_queue.publish_pdrs_dead_letter_queue.arn
   }
 
-  vpc_config {
-    subnet_ids = var.lambda_subnet_ids
-    security_group_ids = [
-      aws_security_group.no_ingress_all_egress[0].id
-    ]
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = [
+        aws_security_group.no_ingress_all_egress[0].id
+      ]
+    }
   }
 
   environment {

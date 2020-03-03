@@ -112,6 +112,7 @@ if [[ $bamboo_NGAP_ENV = "SIT" ]]; then
   export TFSTATE_BUCKET=$bamboo_SIT_TFSTATE_BUCKET
   export TFSTATE_LOCK_TABLE=$bamboo_SIT_TFSTATE_LOCK_TABLE
   export SHARED_LOG_DESTINATION_ARN=$bamboo_SIT_SHARED_LOG_DESTINATION_ARN
+  export TF_VAR_distribution_url=$bamboo_SIT_TEA_CLOUDFRONT_URL
   DEPLOYMENT=$bamboo_SIT_DEPLOYMENT
 fi
 

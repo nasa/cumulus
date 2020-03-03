@@ -51,7 +51,8 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
             granuleId: { S: granuleId },
             status: { S: 'running' }
           }
-        }
+        },
+        eventName: 'MODIFY'
       }
     ]
   };
@@ -62,25 +63,29 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
 
   t.is(Messages.length, 1);
 
-  const snsMessage = JSON.parse(Messages[0].Body);
-  const granuleRecord = JSON.parse(snsMessage.Message);
+  const snsResponse = JSON.parse(Messages[0].Body);
+  const snsMessage = JSON.parse(snsResponse.Message);
+  const granuleRecord = snsMessage.record;
 
   t.is(granuleRecord.granuleId, granuleId);
   t.is(granuleRecord.status, 'running');
+  t.is(snsMessage.event, 'Update');
 });
 
 test.serial('The publish-granules Lambda function takes a DynamoDB stream event with a multiple records and publishes their granules to SNS', async (t) => {
   const { QueueUrl } = t.context;
+  const firstGranuleId = randomString();
 
   const event = {
     Records: [
       {
         dynamodb: {
           NewImage: {
-            granuleId: { S: randomString() },
+            granuleId: { S: firstGranuleId },
             status: { S: 'running' }
           }
-        }
+        },
+        eventName: 'INSERT'
       },
       {
         dynamodb: {
@@ -88,7 +93,8 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
             granuleId: { S: randomString() },
             status: { S: 'running' }
           }
-        }
+        },
+        eventName: 'MODIFY'
       }
     ]
   };
@@ -102,4 +108,47 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
   }).promise();
 
   t.is(Messages.length, 2);
+  const firstMessage = JSON.parse(JSON.parse(Messages[0].Body).Message);
+  const secondMessage = JSON.parse(JSON.parse(Messages[1].Body).Message);
+  if (firstMessage.record.granuleId === firstGranuleId) {
+    t.is(firstMessage.event, 'Create');
+    t.is(secondMessage.event, 'Update');
+  } else {
+    t.is(secondMessage.event, 'Create');
+    t.is(firstMessage.event, 'Update');
+  }
+});
+
+test.serial('The publish-granules Lambda function takes a DynamoDB stream event with a REMOVE record and adds a deletedAt to the SNS message', async (t) => {
+  const { QueueUrl } = t.context;
+
+  const granuleId = randomString();
+
+  const event = {
+    Records: [
+      {
+        dynamodb: {
+          OldImage: {
+            granuleId: { S: granuleId },
+            status: { S: 'running' }
+          }
+        },
+        eventName: 'REMOVE'
+      }
+    ]
+  };
+
+  await handler(event);
+
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+
+  t.is(Messages.length, 1);
+
+  const snsMessage = JSON.parse(Messages[0].Body);
+  const message = JSON.parse(snsMessage.Message);
+  const granuleRecord = message.record;
+
+  t.is(granuleRecord.granuleId, granuleId);
+  t.is(typeof granuleRecord.deletedAt, 'number');
+  t.is(message.event, 'Delete');
 });
