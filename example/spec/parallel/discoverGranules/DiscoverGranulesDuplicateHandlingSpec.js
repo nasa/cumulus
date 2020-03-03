@@ -82,7 +82,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
 
   describe('when the collection configured with duplicateHandling set to "skip" it:', () => {
-    let ingestStatues;
+    let ingestStatus;
     let httpWorkflowExecution;
     let originalHttpWorkflowExecution;
     beforeAll(async () => {
@@ -91,7 +91,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
       originalHttpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
         config.bucket, workflowName, collection, provider);
 
-      ingestStatues = await awaitIngestExecutions(originalHttpWorkflowExecution, lambdaStep);
+      ingestStatus = await awaitIngestExecutions(originalHttpWorkflowExecution, lambdaStep);
 
       deleteGranule({ prefix: config.stackName, granuleId: 'granule-1' });
 
@@ -103,7 +103,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     it('executes initial ingest successfully', () => {
       expect(originalHttpWorkflowExecution.status).toEqual('SUCCEEDED');
-      expect(ingestStatues.every((e) => e === 'SUCCEEDED')).toEqual(true);
+      expect(ingestStatus.every((e) => e === 'SUCCEEDED')).toEqual(true);
     });
 
     it('recieves an event with duplicateHandling set to skip', async () => {
@@ -134,7 +134,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
   });
 
   describe('when the collection configured with duplicateHandling set to "error" it:', () => {
-    let ingestStatues;
+    let ingestStatus;
     let httpWorkflowExecution;
     let originalHttpWorkflowExecution;
     beforeAll(async () => {
@@ -143,7 +143,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
       originalHttpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
         config.bucket, workflowName, collection, provider);
 
-      ingestStatues = await awaitIngestExecutions(originalHttpWorkflowExecution, lambdaStep);
+      ingestStatus = await awaitIngestExecutions(originalHttpWorkflowExecution, lambdaStep);
 
       await updateCollectionDuplicateFlag('error', collection, config);
 
@@ -153,7 +153,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     it('executes initial ingest successfully', () => {
       expect(originalHttpWorkflowExecution.status).toEqual('SUCCEEDED');
-      expect(ingestStatues.every((e) => e === 'SUCCEEDED')).toEqual(true);
+      expect(ingestStatus.every((e) => e === 'SUCCEEDED')).toEqual(true);
     });
 
     it('recieves an event with duplicateHandling set to error', async () => {
