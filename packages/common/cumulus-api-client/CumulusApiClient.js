@@ -32,7 +32,7 @@ class CumulusApiClient {
    * @param {string} requestPath - Cumulus API endpoint to call
    * @param {integer} authRetry - number of times to retry on auth expiry failure.
    *                              Should be set to 1 for launchpad oauth to account
-   *                              for ouath expiration failures
+   *                              for Oauth expiration failures
    * @returns {Promise<Object>} - Returns response object from got.get
    */
   async get(requestPath, authRetry = 1) {
