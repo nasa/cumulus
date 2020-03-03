@@ -41,7 +41,7 @@ class CumulusApiClient {
       const gotReturn = await got.get(`${this.config.baseUrl}/${requestPath}`, { headers });
       return gotReturn;
     } catch (error) {
-      if (authRetry !== 0 && error.message === 'Access token has expired') {
+      if (authRetry > 0 && error.message === 'Access token has expired') {
         logger.info('API Client access token expired, generating new token');
         await this.getCacheAuthToken();
         return this.get(requestPath, authRetry - 1);
