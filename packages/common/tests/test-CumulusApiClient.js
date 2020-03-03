@@ -128,13 +128,15 @@ test.serial('_validateTokenExipry returns if token is valid', async (t) => {
 });
 
 test.serial('_getTokenTimeLeft returns time left', async (t) => {
-  const mockToken = 'some token value';
-  const decodeRevert = CumulusApiClientRewire.__set__('decode', (token) => {
-    t.is(token, mockToken);
-    return { exp: 1752955173 };
-  });
-  const dateRevert = CumulusApiClientRewire.__set__('Date', { now: () => 1652955173156 });
+  let decodeRevert;
+  let dateRevert;
   try {
+    const mockToken = 'some token value';
+    decodeRevert = CumulusApiClientRewire.__set__('decode', (token) => {
+      t.is(token, mockToken);
+      return { exp: 1752955173 };
+    });
+    dateRevert = CumulusApiClientRewire.__set__('Date', { now: () => 1652955173156 });
     const testApiClient = new CumulusApiClientRewire(t.context.config);
     testApiClient._getTokenTimeLeft = async () => 50000;
     const actual = await testApiClient._getTokenTimeLeft(mockToken);
