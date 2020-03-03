@@ -10,10 +10,13 @@ class LaunchpadApiClient extends CumulusApiClient {
    * @param {string} config.launchpadPassphrase  - Launchpad passphrase to use for auth
    * @param {string} config.launchpadApi         - URL of launchpad api to use for authorization
    * @param {string} config.launchpadCertificate - key of certificate object stores in the
-   *                                          internal crypto bucket
+   *                                               internal crypto bucket
    * @param {string} config.userGroup            - User group for use with launchpad oauth
+   * @param {string} config.tokenSecretName      - 'Cached bearer token name alias to utilize
    * @param {string} config.kmsId                - ID of the AWS KMS key used for
    *                                               cryption/decryption
+   * @param {string} config.authTokenTable       - Dynamodb table to use for token caching
+   * @param {string} config.baseUrl              - Cumulus API baseUrl
    */
   constructor(config) {
     const requiredKeys = ['kmsId', 'userGroup', 'launchpadPassphrase', 'launchpadApi',
