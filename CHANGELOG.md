@@ -6,8 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-## [v1.19.0] 2020-02-28
-
 ### BREAKING CHANGES
 
 - **CUMULUS-1629**
@@ -16,6 +14,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - error:              Duplicates encountered will result in step failure
     - replace, version:   Duplicates will be ignored
 
+### Added
+
+- **CUMULUS-1629**
+  - Adds several optional API accessor classes to @cumulus/common/cumulus-api-client (EdlApiClient, LaunchpadApiClient) to
+    handle workflow processes utilizing API calls with authentication.
+  - Added new dynamo table "{prefix}-AuthTokensTable" to data persistence to allow for caching of authentication tokens utilizing this client
+
+## [v1.19.0] 2020-02-28
+
+### BREAKING CHANGES
 
 - **CUMULUS-1446**
   - Update the `@cumulus/integration-tests/api/executions.getExecution()`

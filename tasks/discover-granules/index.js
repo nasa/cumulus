@@ -9,7 +9,6 @@ const map = require('lodash.map');
 const { EdlApiClient, LaunchpadApiClient } = require('@cumulus/common/cumulus-api-client');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
-const { duplicateHandlingType } = require('@cumulus/ingest/granule');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 
 
@@ -21,7 +20,6 @@ const logger = () => new Logger({
   stackName: process.env.STACKNAME,
   version: process.env.TASKVERSION
 });
-
 
 /**
  * Fetch a list of files from the provider
@@ -294,7 +292,7 @@ const discoverGranules = async ({ config }) => {
     discoveredFiles
   );
 
-  const duplicateHandling = duplicateHandlingType({ config });
+  const duplicateHandling = config.duplicateGranuleHandling || 'replace';
   filesByGranuleId = await handleDuplicates(filesByGranuleId, duplicateHandling);
 
   const granules = map(filesByGranuleId, buildGranule(config));
