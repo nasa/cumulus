@@ -51,7 +51,7 @@ test.serial('createNewAuthToken return token given expected API returns', async 
   t.is(actual, token);
 });
 
-test.serial('getEdlAuthorization throws error if error is not a "successful" 302', async (t) => {
+test.serial('getEdlAuthorization throws endpoint response error if error is not a "successful" 302', async (t) => {
   const expected = new Error();
   expected.statusCode = 500;
   expected.headers = { location: 'Internal Server Error' };
