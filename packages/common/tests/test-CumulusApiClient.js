@@ -43,7 +43,7 @@ test.after.always(
   () => dynamodb().deleteTable({ TableName: process.env.tableName }).promise()
 );
 
-test.serial('getCacheAuthToken updates and retreives expired token from the database', async (t) => {
+test.serial('getCacheAuthToken updates and retrieves expired token from the database', async (t) => {
   const token = 'expiredToken';
   const updatedToken = 'updatedToken';
   const testApiClient = new CumulusApiClientRewire(t.context.config);
