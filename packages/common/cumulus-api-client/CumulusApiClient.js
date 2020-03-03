@@ -97,7 +97,7 @@ class CumulusApiClient {
 
   /**
    * Helper function to check how much time the JWT token has left before expiration
-   * @param {*} token - bearer token
+   * @param {string} token - bearer JWT
    *
    * @returns {number} - the number of seconds left before the token expires
    */
