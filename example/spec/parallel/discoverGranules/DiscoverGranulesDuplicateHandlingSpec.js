@@ -118,7 +118,6 @@ describe('The Discover Granules workflow with http Protocol', () => {
     });
 
     it('discovers granules, but skips the granules as duplicates', async () => {
-      // race condition, check for queued granules first.
       const lambdaOutput = await lambdaStep.getStepOutput(
         httpWorkflowExecution.executionArn, 'DiscoverGranules'
       );
@@ -168,8 +167,8 @@ describe('The Discover Granules workflow with http Protocol', () => {
     });
 
     it('has the expected error', async () => {
-      const lambdaOutput = await lambdaStep.getStepOutput(
-        httpWorkflowExecution.executionArn, 'DiscoverGranules', 'failure'
+      const lambdaOutput = await lambdaStep.getFailureOutput(
+        httpWorkflowExecution.executionArn, 'DiscoverGranules'
       );
       const expectedSubString = 'Duplicate granule found';
       expect(JSON.parse(lambdaOutput.cause).errorMessage).toContain(expectedSubString);
