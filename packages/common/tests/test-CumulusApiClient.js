@@ -1,7 +1,5 @@
 'use strict';
 
-// Things to mock: _getAuthTokenRecord, _updateAuthTokenRecord
-
 const { createKey, decryptBase64String } = require('@cumulus/aws-client/KMS');
 const test = require('ava');
 const rewire = require('rewire');
@@ -131,18 +129,20 @@ test.serial('_validateTokenExipry returns if token is valid', async (t) => {
 
 test.serial('_getTokenTimeLeft returns time left', async (t) => {
   const mockToken = 'some token value';
-  const decodeRestore = CumulusApiClientRewire.__set__('decode', (token) => {
+  const decodeRevert = CumulusApiClientRewire.__set__('decode', (token) => {
     t.is(token, mockToken);
     return { exp: 1752955173 };
   });
-  const dateRestore = CumulusApiClientRewire.__set__('Date', { now: () => 1652955173156 });
-
-  const testApiClient = new CumulusApiClientRewire(t.context.config);
-  testApiClient._getTokenTimeLeft = async () => 50000;
-  const actual = await testApiClient._getTokenTimeLeft(mockToken);
-  decodeRestore();
-  dateRestore();
-  t.is(50000, actual);
+  const dateRevert = CumulusApiClientRewire.__set__('Date', { now: () => 1652955173156 });
+  try {
+    const testApiClient = new CumulusApiClientRewire(t.context.config);
+    testApiClient._getTokenTimeLeft = async () => 50000;
+    const actual = await testApiClient._getTokenTimeLeft(mockToken);
+    t.is(50000, actual);
+  } finally {
+    decodeRevert();
+    dateRevert();
+  }
 });
 
 test.serial('_updateAuthTokenRecord writes an encrypted token', async (t) => {
@@ -174,34 +174,42 @@ test.serial('createNewAuthToken is not implemented in the base class', async (t)
 });
 
 test.serial('get attempts to call the url with a previous stored auth token', async (t) => {
-  const authToken = 'someAuthToken';
-  const gotRestore = CumulusApiClientRewire.__set__('got', {
-    get: async (url, headers) => {
-      t.is(`${t.context.config.baseUrl}/endpoint`, url);
-      t.deepEqual({ headers: { Authorization: `Bearer ${authToken}` } }, headers);
-      return 'got return value';
-    }
-  });
-  const testApiClient = new CumulusApiClientRewire(t.context.config);
-  testApiClient.getCacheAuthToken = async () => authToken;
-  t.is('got return value', await testApiClient.get('endpoint'));
-  gotRestore();
+  let gotRevert;
+  try {
+    const authToken = 'someAuthToken';
+    gotRevert = CumulusApiClientRewire.__set__('got', {
+      get: async (url, headers) => {
+        t.is(`${t.context.config.baseUrl}/endpoint`, url);
+        t.deepEqual({ headers: { Authorization: `Bearer ${authToken}` } }, headers);
+        return 'got return value';
+      }
+    });
+    const testApiClient = new CumulusApiClientRewire(t.context.config);
+    testApiClient.getCacheAuthToken = async () => authToken;
+    t.is('got return value', await testApiClient.get('endpoint'));
+  } finally {
+    gotRevert();
+  }
 });
 
 test.serial('get retries/creates a token the expected number of times, then throws an error', async (t) => {
-  t.context.get_retries_counter = 0;
-  const getUrl = 'http://foo.bar';
-  const authToken = 'someAuthToken';
-  const gotRestore = CumulusApiClientRewire.__set__('got', {
-    get: async (_url, _headers) => {
-      t.context.get_retries_counter += 1;
-      throw new Error('Access token has expired');
-    }
-  });
-  const testApiClient = new CumulusApiClientRewire(t.context.config);
-  testApiClient.createNewAuthToken = async () => 'mockToken';
-  testApiClient.getCacheAuthToken = async () => authToken;
-  await t.throwsAsync(testApiClient.get(getUrl, 4));
-  t.is(t.context.get_retries_counter, 5);
-  gotRestore();
+  let gotRevert;
+  try {
+    t.context.get_retries_counter = 0;
+    const getUrl = 'http://foo.bar';
+    const authToken = 'someAuthToken';
+    gotRevert = CumulusApiClientRewire.__set__('got', {
+      get: async (_url, _headers) => {
+        t.context.get_retries_counter += 1;
+        throw new Error('Access token has expired');
+      }
+    });
+    const testApiClient = new CumulusApiClientRewire(t.context.config);
+    testApiClient.createNewAuthToken = async () => 'mockToken';
+    testApiClient.getCacheAuthToken = async () => authToken;
+    await t.throwsAsync(testApiClient.get(getUrl, 4));
+    t.is(t.context.get_retries_counter, 5);
+  } finally {
+    gotRevert();
+  }
 });
