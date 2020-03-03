@@ -16,6 +16,7 @@ const { isECHO10File, isUMMGFile, isCMRFilename } = require('@cumulus/cmrjs/cmr-
 
 const { validateUMMG } = require('@cumulus/cmr-client/UmmUtils');
 const validate = require('@cumulus/cmr-client/validate');
+const ValidationError = require('@cumulus/cmr-client/ValidationError');
 
 const {
   getS3Object,
@@ -93,6 +94,13 @@ async function getEntryTitle(config, metadata, isUmmG) {
   };
 
   const result = await cmrInstance.searchCollections(searchParams);
+  // Verify that we have a valid result. If we don't then something is badly wrong
+  // and we should halt.
+  // Either the code is faulty or the provider is trying to ingest granules
+  // into a collection that doesn't exist
+  if (result.length === 0 || _.isUndefined(result[0].dataset_id)) {
+    throw new ValidationError(`Unable to query parent collection entry title using short name ${shortName} and version ${version}`);
+  }
   return result[0].dataset_id;
 }
 
