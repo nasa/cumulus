@@ -188,7 +188,7 @@ test.serial('get attempts to call the url with a previous stored auth token', as
   gotRestore();
 });
 
-test.serial('get retries/createes a token the expected number of times, then throws an error', async (t) => {
+test.serial('get retries/creates a token the expected number of times, then throws an error', async (t) => {
   t.context.get_retries_counter = 0;
   const getUrl = 'http://foo.bar';
   const authToken = 'someAuthToken';
