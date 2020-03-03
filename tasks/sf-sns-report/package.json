@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sf-sns-report",
-  "version": "1.18.0",
+  "version": "1.19.0",
   "description": "[DEPRECATED] Broadcasts an incoming Cumulus message to SNS",
   "main": "index.js",
   "directories": {

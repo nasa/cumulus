@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/queue-granules",
-  "version": "1.18.0",
+  "version": "1.19.0",
   "description": "Add discovered granules to the queue",
   "main": "index.js",
   "directories": {
@@ -32,10 +32,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "1.18.0",
-    "@cumulus/common": "1.18.0",
+    "@cumulus/aws-client": "1.19.0",
+    "@cumulus/common": "1.19.0",
     "@cumulus/cumulus-message-adapter-js": "^1.1.0",
-    "@cumulus/ingest": "1.18.0",
+    "@cumulus/ingest": "1.19.0",
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {

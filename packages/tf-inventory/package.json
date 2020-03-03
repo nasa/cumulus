@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/tf-inventory",
-  "version": "1.18.0",
+  "version": "1.19.0",
   "description": "Package to help keep track of what resources are managed by Terraform in the AWS account",
   "main": "index.js",
   "engines": {
@@ -36,14 +36,14 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "1.18.0",
+    "@cumulus/aws-client": "1.19.0",
     "commander": "^4.1.0",
     "lodash.difference": "^4.5.0",
     "lodash.groupby": "^4.6.0",
     "lodash.mergewith": "^4.6.2"
   },
   "devDependencies": {
-    "@cumulus/common": "1.18.0",
+    "@cumulus/common": "1.19.0",
     "ava": "^2.1.0",
     "fs": "0.0.1-security",
     "nyc": "^14.0.0",
