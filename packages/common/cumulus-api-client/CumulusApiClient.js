@@ -75,7 +75,7 @@ class CumulusApiClient {
   }
 
   /**
-   *
+   * Updates the auth token table record
    * @param {string} token - Updates the row at config.tokenSecretName with
    *                         a kms encrypted token record
    * @returns {Promise<Object>} - dynamodbDocClient response
@@ -107,7 +107,7 @@ class CumulusApiClient {
 
   /**
    * Validates if a token is close to expiration, and throws an error if so
-   * @param {*} token
+   * @param {string} token
    *
    * @throws (CumulusAuthTokenError)
    */
