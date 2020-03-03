@@ -12,8 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Adds several optional API accessor classes to @cumulus/common/cumulus-api-client (EdlApiClient, LaunchpadApiClient) to
     handle workflow processes utilizing API calls with authentication.
   - Added new dynamo table "{prefix}-AuthTokensTable" to data persistence to allow for caching of authentication tokens utilizing this client
-  
-### BREAKING CHNAGES
+
+### BREAKING CHANGES
 
 - **CUMULUS-1629**
   - Updates discover granules to respect/utilize collection duplicateHandling configuration such that
@@ -69,11 +69,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - The `thin_egress_jwt_secret_name` variable for the `tf-modules/cumulus` Terraform module is now **required**. This variable is passed on to the Thin Egress App in `tf-modules/distribution/main.tf`, which uses the keys stored in the secret to sign JWTs. See the [Thin Egress App documentation on how to create a value for this secret](https://github.com/asfadmin/thin-egress-app#setting-up-the-jwt-cookie-secrets).
 
 ### Added
-
-- **CUMULUS-1629**
-  - Adds several optional API accessor classes to @cumulus/common/cumulus-api-client (EdlApiClient, LaunchpadApiClient) to
-    handle workflow processes utilizing API calls with authentication.
-  - Added new dynamo table "{prefix}-AuthTokensTable" to data persistence to allow for caching of authentication tokens utilizing this client
 
 - **CUMULUS-1446**
   - Add `@cumulus/common/FileUtils.readJsonFile()` function
