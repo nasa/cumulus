@@ -6,7 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### BREAKING CHANGES
+### Added
+
+- **CUMULUS-1629**
+  - Adds several optional API accessor classes to @cumulus/common/cumulus-api-client (EdlApiClient, LaunchpadApiClient) to
+    handle workflow processes utilizing API calls with authentication.
+  - Added new dynamo table "{prefix}-AuthTokensTable" to data persistence to allow for caching of authentication tokens utilizing this client
+  
+### BREAKING CHNAGES
 
 - **CUMULUS-1629**
   - Updates discover granules to respect/utilize collection duplicateHandling configuration such that
@@ -14,12 +21,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - error:              Duplicates encountered will result in step failure
     - replace, version:   Duplicates will be ignored
 
-### Added
-
-- **CUMULUS-1629**
-  - Adds several optional API accessor classes to @cumulus/common/cumulus-api-client (EdlApiClient, LaunchpadApiClient) to
-    handle workflow processes utilizing API calls with authentication.
-  - Added new dynamo table "{prefix}-AuthTokensTable" to data persistence to allow for caching of authentication tokens utilizing this client
+- **CUMULUS-1714**
+  - Changed the format of the message sent to the granule SNS Topic. Message includes the granule record under `record` and the type of event under `event`. Messages with `deleted` events will have the record that was deleted with a `deletedAt` timestamp. Options for `event` are `Create | Update | Delete`
 
 ## [v1.19.0] 2020-02-28
 
