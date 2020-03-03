@@ -99,7 +99,7 @@ class CumulusApiClient {
    * Helper function to check how much time the JWT token has left before expiration
    * @param {*} token - bearer token
    *
-   * @returns{number} - the number of seconds left before the token expires
+   * @returns {number} - the number of seconds left before the token expires
    */
   async _getTokenTimeLeft(token) {
     return (((decode(token).exp) - (Date.now() / 1000)));
@@ -109,7 +109,7 @@ class CumulusApiClient {
    * Validates if a token is close to expiration, and throws an error if so
    * @param {*} token
    *
-   * @throws(CumulusAuthTokenError)
+   * @throws (CumulusAuthTokenError)
    */
   async _validateTokenExpiry(token) {
     const tokenSecondsRemaining = await this._getTokenTimeLeft(token);
