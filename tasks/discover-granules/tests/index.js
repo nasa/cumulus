@@ -310,7 +310,7 @@ test.serial('handleDuplicates throws Error on duplicateHandling set to "error"',
     checkDuplicateRestore();
   });
 
-test.serial('handleDuplicates does not filter when duplicateHandling is set to "replace"',
+test.serial('handleDuplicates does not filter when duplicateHandling is set to "replace" or "version"',
   async (t) => {
     const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
     const checkDuplicateRestore = discoverGranulesRewire.__set__('checkDuplicate', checkDuplicateRewire);
