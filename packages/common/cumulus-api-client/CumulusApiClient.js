@@ -28,7 +28,7 @@ class CumulusApiClient {
   }
 
   /**
-   * Calls the cumulus api (with 'get') with optional token authentication retries
+   * Do an HTTP GET request to a Cumulus API endpoint with optional token authentication retries
    * @param {string} url - Cumulus API endpoint to call
    * @param {integer} authRetry - number of times to retry on auth expiry failure.
    *                              Should be set to 1 for launchpad oauth to account
