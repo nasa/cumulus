@@ -76,7 +76,7 @@ test.serial('getEdlAuthorization throws error if no error thrown on post', async
   gotRestore();
 });
 
-test.serial('getEdlAuthorization returns the location if error is a "successful" 302', async (t) => {
+test.serial('getEdlAuthorization returns the location if endpoint response is a "successful" 302', async (t) => {
   const expected = new Error();
   expected.statusCode = 302;
   expected.headers = { location: 'https://foo.bar/path' };
