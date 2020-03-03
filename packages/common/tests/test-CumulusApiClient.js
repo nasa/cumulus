@@ -82,7 +82,7 @@ test.serial('getCacheAuthToken gets a new token and updates the record if token 
   t.is(updatedToken, actual);
 });
 
-test.serial('getCacheAuthToken returns token from getAuthToken if getAuthTokenRecord throws a CumulusAuthTokenError', async (t) => {
+test.serial('getCacheAuthToken returns updated token from getAuthToken if getAuthTokenRecord throws a CumulusAuthTokenError', async (t) => {
   const updateToken = 'updatedToken';
   const testApiClient = new CumulusApiClientRewire(t.context.config);
   testApiClient._getAuthTokenRecord = async () => {
