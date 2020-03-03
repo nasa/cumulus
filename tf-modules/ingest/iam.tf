@@ -43,13 +43,6 @@ data "aws_iam_policy_document" "lambda_processing_role_ingest_urs_password" {
   }
 }
 
-resource "aws_iam_role_policy" "lambda_processing_role_ingest_urs_password" {
-  role   = split("/", var.lambda_processing_role_arn)[1]
-  policy = data.aws_iam_policy_document.lambda_processing_role_ingest_urs_password.json
-}
-
-
-
 # Scaling role
 
 resource "aws_iam_role" "scaling" {
