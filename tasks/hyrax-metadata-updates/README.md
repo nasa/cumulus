@@ -2,7 +2,8 @@
 
 ## Description
 
-This lambda function is responsible for augmenting granule metadata files with the correct Hyrax (OPeNDAP) URL to provide subsetting and reformatting services on your granules. The URL will convey enough information to Hyrax to discover the granule using CMR. It will then determine the archive location within Cumulus from the granule's metadata.
+This lambda function is responsible for augmenting granule metadata files with the correct Hyrax (OPeNDAP) URL to provide subsetting and reformatting services on your granules. The URL will convey enough information to Hyrax to discover the granule using CMR. Hyrax will then determine the archive location within Cumulus from the granule's metadata.
+
 For example,
 
 Hyrax URL for a granule from provider 'GHRC_CLOUD' and collection entry title 'ACES CONTINUOUS DATA V1' with granule UR 'aces1cont_2002.191_v2.50.nc':
@@ -42,7 +43,7 @@ The four properties we need to construct this url are as follows,
 | -------- | ------ | -----
 | Provider ID | Configuration `config.cmr.provider` | 
 | Entry Title | Derived from retrieval of parent collection from CMR | This requires a call to the CMR search API
-| Granule UR   | Granule metadata:  <br>UMM-G `umm->GranuleUR`  <br>ECHO10 `Granule->DataGranule->GranuleUR`
+| Granule UR   | Granule metadata:  <br>UMM-G `GranuleUR`  <br>ECHO10 `Granule->GranuleUR`
 | Environment | `process.env.CMR_ENVIRONMENT` | Do we wish to use the SIT, UAT or PROD version of Hyrax?
 
 
