@@ -33,14 +33,20 @@ resource "aws_secretsmanager_secret_version" "ingest_urs_password" {
   secret_string = var.urs_password
 }
 
-data "aws_iam_policy_document" "lambda_processing_role_ingest_urs_password" {
+# Roles for programatic API launchpad auth access
+
+data "aws_iam_policy_document" "lambda_processing_role_urs_auth_passwords" {
   statement {
     actions   = ["secretsmanager:GetSecretValue"]
     resources = [
-      aws_secretsmanager_secret.ingest_urs_password.arn
-
+      aws_secretsmanager_secret.ingest_urs_password.arn,
     ]
   }
+}
+
+resource "aws_iam_role_policy" "lambda_processing_role_urs_auth_get_secrets" {
+  role   = split("/", var.lambda_processing_role_arn)[1]
+  policy = data.aws_iam_policy_document.lambda_processing_role_urs_auth_passwords.json
 }
 
 # Scaling role

@@ -32,8 +32,6 @@ data "aws_iam_policy_document" "lambda_processing_role_get_secrets" {
     resources = [
       aws_secretsmanager_secret.message_template_cmr_password.arn,
       aws_secretsmanager_secret.message_template_launchpad_passphrase.arn,
-      aws_secretsmanager_secret.ingest_urs_password.arn
-
     ]
   }
 }
