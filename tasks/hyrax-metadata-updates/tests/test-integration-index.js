@@ -102,7 +102,7 @@ async function setupS3(t, isUmmG) {
   }
 }
 
-test.beforeEach(async (t) => {
+test.beforeEach(async () => {
   // Mock out retrieval of entryTitle from CMR
   const headers = { 'cmr-hits': 1, 'Content-Type': 'application/json;charset=utf-8' };
   nock('https://cmr.earthdata.nasa.gov').get('/search/collections.json')
@@ -117,7 +117,7 @@ test.beforeEach(async (t) => {
   process.env.CMR_ENVIRONMENT = 'OPS';
 });
 
-test.afterEach.always(async (t) => {
+test.afterEach.always(async () => {
   delete process.env.CMR_ENVIRONMENT;
 });
 
@@ -221,14 +221,14 @@ test.serial('Test record does not exist error when granule object has no recogni
     input: {
       granules: [
         {
-          granuleId: "MOD11A1.A2017200.h19v04.006.2017201090724",
+          granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090724',
           files: [
             {
-              name: "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
-              bucket: "cumulus-internal",
-              filename: "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
-              type: "data",
-              fileStagingDir: "file-staging/subdir"
+              name: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+              bucket: 'cumulus-internal',
+              filename: 's3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+              type: 'data',
+              fileStagingDir: 'file-staging/subdir'
             }
           ]
         }

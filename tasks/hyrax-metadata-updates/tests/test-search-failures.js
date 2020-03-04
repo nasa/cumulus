@@ -22,11 +22,11 @@ const event = {
   input: {}
 };
 
-test.beforeEach(async (t) => {
+test.beforeEach(async () => {
   process.env.CMR_ENVIRONMENT = 'OPS';
 });
 
-test.afterEach.always(async (t) => {
+test.afterEach.always(async () => {
   delete process.env.CMR_ENVIRONMENT;
 });
 

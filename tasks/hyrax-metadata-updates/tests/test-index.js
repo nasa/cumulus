@@ -11,7 +11,7 @@ const generateAddress = HyraxMetadataUpdate.__get__('generateAddress');
 const getGranuleUr = HyraxMetadataUpdate.__get__('getGranuleUr');
 const addHyraxUrl = HyraxMetadataUpdate.__get__('addHyraxUrl');
 
-test.afterEach.always(async (t) => {
+test.afterEach.always(async () => {
   delete process.env.CMR_ENVIRONMENT;
 });
 
@@ -47,7 +47,6 @@ test('Test return uat OPeNDAP host when uat environment value supplied', async (
 
 test('Test return error when invalid environment supplied for host generation', async (t) => {
   process.env.CMR_ENVIRONMENT = 'FOO';
-  
   t.throws(
     () => generateAddress(),
     {
