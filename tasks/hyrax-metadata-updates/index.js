@@ -235,7 +235,7 @@ async function updateSingleGranule(config, granuleObject) {
   const metadataFile = granuleObject.files.find((f) => isCMRFilename(f.filename));
   // If there is no metadata file, error out.
   if (_.isUndefined(metadataFile)) {
-    throw new RecordDoesNotExist(`There is no recogizable metadata file in this granule object (*.cmr.xml or *.cmr.json)`);
+    throw new RecordDoesNotExist(`There is no recogizable CMR metadata file in this granule object (*.cmr.xml or *.cmr.json)`);
   }
   const { Bucket, Key } = parseS3Uri(metadataFile.filename);
   const metadataResult = await getS3Object(Bucket, Key);

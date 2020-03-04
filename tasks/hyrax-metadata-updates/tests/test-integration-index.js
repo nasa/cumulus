@@ -238,7 +238,7 @@ test.serial('Test record does not exist error when granule object has no recogni
 
   await t.throwsAsync(hyraxMetadataUpdate(e), {
     instanceOf: RecordDoesNotExist,
-    message: 'There is no recogizable metadata file in this granule object (*.cmr.xml or *.cmr.json)'
+    message: 'There is no recogizable CMR metadata file in this granule object (*.cmr.xml or *.cmr.json)'
   });
 
   await recursivelyDeleteS3Bucket(t.context.stagingBucket);
