@@ -133,47 +133,56 @@ describe('The EMS report', () => {
   let submitReport;
   let testDataFolder;
   let testSuffix;
+  let beforeAllError;
 
   beforeAll(async () => {
-    config = await loadConfig();
+    try {
+      config = await loadConfig();
 
-    process.env.stackName = config.stackName;
+      process.env.stackName = config.stackName;
 
-    emsIngestReportLambda = `${config.stackName}-EmsIngestReport`;
-    emsDistributionReportLambda = `${config.stackName}-EmsDistributionReport`;
-    bucket = config.bucket;
-    const emsTestConfig = await emsApi.getLambdaEmsSettings(emsDistributionReportLambda);
-    emsProvider = emsTestConfig.provider;
-    submitReport = emsTestConfig.submitReport === 'true' || false;
-    dataSource = emsTestConfig.dataSource || config.stackName;
+      emsIngestReportLambda = `${config.stackName}-EmsIngestReport`;
+      emsDistributionReportLambda = `${config.stackName}-EmsDistributionReport`;
+      bucket = config.bucket;
+      const emsTestConfig = await emsApi.getLambdaEmsSettings(emsDistributionReportLambda);
+      emsProvider = emsTestConfig.provider;
+      submitReport = emsTestConfig.submitReport === 'true' || false;
+      dataSource = emsTestConfig.dataSource || config.stackName;
 
-    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-    process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
+      process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+      process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
 
-    // in order to generate the ingest reports here and by daily cron, we need to ingest granules
-    // as well as delete granules
+      // in order to generate the ingest reports here and by daily cron, we need to ingest granules
+      // as well as delete granules
 
-    const testId = createTimestampedTestId(config.stackName, 'emsIngestReport');
-    testSuffix = createTestSuffix(testId);
-    testDataFolder = createTestDataPath(testId);
+      const testId = createTimestampedTestId(config.stackName, 'emsIngestReport');
+      testSuffix = createTestSuffix(testId);
+      testDataFolder = createTestDataPath(testId);
 
-    await setupCollectionAndTestData(config, testSuffix, testDataFolder);
-    // ingest one granule, this will be deleted later
-    deletedGranuleId = await ingestAndPublishGranule(config, testSuffix, testDataFolder);
+      await setupCollectionAndTestData(config, testSuffix, testDataFolder);
+      // ingest one granule, this will be deleted later
+      deletedGranuleId = await ingestAndPublishGranule(config, testSuffix, testDataFolder);
 
-    // delete granules ingested for this collection, so that ArchDel report can be generated.
-    // leave some granules for distribution report since the granule and collection information
-    // is needed for distributed files.
-    await deleteOldGranules(config.stackName, 2, [deletedGranuleId]);
+      // delete granules ingested for this collection, so that ArchDel report can be generated.
+      // leave some granules for distribution report since the granule and collection information
+      // is needed for distributed files.
+      await deleteOldGranules(config.stackName, 2, [deletedGranuleId]);
 
-    // ingest two new granules, so that Archive and Ingest reports can be generated
-    ingestedGranuleIds = await Promise.all([
-      // ingest a granule and publish it to CMR
-      ingestAndPublishGranule(config, testSuffix, testDataFolder),
+      // ingest two new granules, so that Archive and Ingest reports can be generated
+      ingestedGranuleIds = await Promise.all([
+        // ingest a granule and publish it to CMR
+        ingestAndPublishGranule(config, testSuffix, testDataFolder),
 
-      // ingest a granule but not publish it to CMR
-      ingestAndPublishGranule(config, testSuffix, testDataFolder, false)
-    ]);
+        // ingest a granule but not publish it to CMR
+        ingestAndPublishGranule(config, testSuffix, testDataFolder, false)
+      ]);
+    } catch (e) {
+      beforeAllError = e;
+    }
+  });
+
+  beforeEach(() => {
+    if (beforeAllError) fail(beforeAllError);
   });
 
   afterAll(async () => {

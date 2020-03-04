@@ -6,6 +6,8 @@ const {
 } = require('jsonwebtoken');
 
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
+const log = require('@cumulus/common/log');
+
 const { ensureLaunchpadAPIAuthorized, launchpadProtectedAuth } = require('./launchpadAuth');
 const { AccessToken } = require('../models');
 const { verifyJwtToken } = require('../lib/token');
@@ -79,6 +81,7 @@ async function ensureAuthorized(req, res, next) {
       return res.boom.forbidden('Invalid access token');
     }
 
+    log.error('Authorization error:', error);
     return res.boom.unauthorized('User not authorized');
   }
 }

@@ -7,7 +7,7 @@ const got = require('got');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
-  getDistributionApiRedirect,
+  getTEADistributionApiRedirect,
   getTEARequestHeaders
 } = require('@cumulus/integration-tests/api/distribution');
 
@@ -82,7 +82,7 @@ describe('Distribution API', () => {
 
     describe('an authorized user', () => {
       it('downloads the protected science file for authorized requests', async () => {
-        const s3SignedUrl = await getDistributionApiRedirect(
+        const s3SignedUrl = await getTEADistributionApiRedirect(
           protectedFilePath,
           headers
         );
@@ -96,7 +96,7 @@ describe('Distribution API', () => {
       });
 
       it('downloads a public science file', async () => {
-        const s3SignedUrl = await getDistributionApiRedirect(
+        const s3SignedUrl = await getTEADistributionApiRedirect(
           publicFilePath,
           headers
         );
