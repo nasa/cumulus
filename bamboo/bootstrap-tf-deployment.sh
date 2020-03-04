@@ -82,8 +82,8 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var "vpc_id=$VPC_ID" \
   -var "subnet_ids=[\"$AWS_SUBNET\"]" \
   -var "urs_client_id=$EARTHDATA_CLIENT_ID" \
-  -var "urs_id=$URS_ID" \
-  -var "urs_password=$URS_PASSWORD" \
+  -var "urs_id=$EARTHDATA_USERNAME" \
+  -var "urs_password=$EARTHDATA_PASSWORD" \
   -var "urs_client_password=$EARTHDATA_CLIENT_PASSWORD" \
   -var "token_secret=$TOKEN_SECRET" \
   -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/NGAPShRoleBoundary"
