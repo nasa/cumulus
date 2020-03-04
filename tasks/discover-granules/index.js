@@ -179,6 +179,10 @@ const buildGranule = curry(
  * @returns {string} returns granuleId string if no duplicate found, '' if
  *                   a duplicate is found.  Throws an error on duplicate if
  *                   dupeConfig.duplicateHandling is set to 'error'
+ * @throws {Error} - Will throw an error if no granule is returned from the api.
+ *                   Also will throw an error from the .get method if the error
+ *                   is not {statusCode: 404, message: Not Found}
+ *
  */
 const checkDuplicate = async (granuleId, duplicateHandling, apiClient) => {
   try {

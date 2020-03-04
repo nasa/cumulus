@@ -289,57 +289,66 @@ test.serial('discover granules using S3 throws error when discovery fails',
 
 test.serial('handleDuplicates filters on duplicateHandling set to "skip"',
   async (t) => {
-    const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
-    const checkDuplicateRestore = discoverGranulesRewire.__set__('checkDuplicate', checkDuplicateRewire);
-    const actual = await handleDuplicates(t.context.filesByGranuleId, 'skip', {});
-    delete t.context.filesByGranuleId.duplicate;
-
-    checkDuplicateRestore();
-    t.deepEqual(actual, t.context.filesByGranuleId);
+    let checkDuplicateRevert;
+    try {
+      const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
+      checkDuplicateRevert = discoverGranulesRewire.__set__('checkDuplicate', checkDuplicateRewire);
+      const actual = await handleDuplicates(t.context.filesByGranuleId, 'skip', {});
+      delete t.context.filesByGranuleId.duplicate;
+      t.deepEqual(actual, t.context.filesByGranuleId);
+    } finally {
+      checkDuplicateRevert();
+    }
   });
 
 test.serial('handleDuplicates throws Error on duplicateHandling set to "error"',
   async (t) => {
-    const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
-    const checkDuplicateRestore = discoverGranulesRewire.__set__('checkDuplicate', checkDuplicateRewire);
-
-    await t.throwsAsync(
-      () => handleDuplicates(t.context.filesByGranuleId, 'error', {})
-    );
-
-    checkDuplicateRestore();
+    let checkDuplicateRevert;
+    try {
+      const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
+      checkDuplicateRevert = discoverGranulesRewire.__set__('checkDuplicate', checkDuplicateRewire);
+      await t.throwsAsync(
+        () => handleDuplicates(t.context.filesByGranuleId, 'error', {})
+      );
+    } finally {
+      checkDuplicateRevert();
+    }
   });
 
 test.serial('handleDuplicates does not filter when duplicateHandling is set to "replace" or "version"',
   async (t) => {
-    const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
-    const checkDuplicateRestore = discoverGranulesRewire.__set__('checkDuplicate', checkDuplicateRewire);
+    let checkDuplicateRevert;
+    try {
+      const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
+      checkDuplicateRevert = discoverGranulesRewire.__set__('checkDuplicate', checkDuplicateRewire);
+      const replaceActual = await handleDuplicates(t.context.filesByGranuleId, 'replace', {});
+      const versionActual = await handleDuplicates(t.context.filesByGranuleId, 'version', {});
+      t.deepEqual(replaceActual, t.context.filesByGranuleId);
+      t.deepEqual(versionActual, t.context.filesByGranuleId);
+    } finally {
+      checkDuplicateRevert();
+    }
 
-    const replaceActual = await handleDuplicates(t.context.filesByGranuleId, 'replace', {});
-    const versionActual = await handleDuplicates(t.context.filesByGranuleId, 'version', {});
-
-    checkDuplicateRestore();
-
-    t.deepEqual(replaceActual, t.context.filesByGranuleId);
-    t.deepEqual(versionActual, t.context.filesByGranuleId);
   });
 
 
 test.serial('filterDuplicates returns a set of filtered keys',
   async (t) => {
-    const filterDuplicates = discoverGranulesRewire.__get__('filterDuplicates');
-    const checkDuplicateRestore = discoverGranulesRewire.__set__('checkDuplicate', async (key) => {
-      if (key === 'duplicate') {
-        return '';
-      }
-      return key;
-    });
+    let checkDuplicateRevert;
+    try {
+      const filterDuplicates = discoverGranulesRewire.__get__('filterDuplicates');
+      checkDuplicateRevert = discoverGranulesRewire.__set__('checkDuplicate', async (key) => {
+        if (key === 'duplicate') {
+          return '';
+        }
+        return key;
+      });
 
-    const actual = await filterDuplicates(['duplicate', 'key1', 'key2'], 'bogusHandlingValue');
-
-    checkDuplicateRestore();
-
-    t.deepEqual(actual, ['key1', 'key2']);
+      const actual = await filterDuplicates(['duplicate', 'key1', 'key2'], 'bogusHandlingValue');
+      t.deepEqual(actual, ['key1', 'key2']);
+    } finally {
+      checkDuplicateRevert();
+    }
   });
 
 test.serial('checkDuplicate returns an empty string when API returns a granule',

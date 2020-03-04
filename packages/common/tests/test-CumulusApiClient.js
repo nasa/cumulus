@@ -112,13 +112,13 @@ test.serial('getCacheAuthToken throws an error if _validateTokenExpiry throws an
 test.serial('_validateTokenExipry throws CumulusAuthTokenError if time is expired', async (t) => {
   const testApiClient = new CumulusApiClientRewire(t.context.config);
   testApiClient._getTokenTimeLeft = async () => 0;
-  await t.throwsAsync(testApiClient._validateTokenExpiry());
+  await t.throwsAsync(testApiClient._validateTokenExpiry(), { name: 'CumulusAuthTokenError' });
 });
 
 test.serial('_validateTokenExipry throws CumulusAuthTokenError is near expiration', async (t) => {
   const testApiClient = new CumulusApiClientRewire(t.context.config);
   testApiClient._getTokenTimeLeft = async () => 5;
-  await t.throwsAsync(testApiClient._validateTokenExpiry());
+  await t.throwsAsync(testApiClient._validateTokenExpiry(), { name: 'CumulusAuthTokenError' });
 });
 
 test.serial('_validateTokenExipry returns if token is valid', async (t) => {
@@ -168,6 +168,23 @@ test.serial('_getAuthTokenRecord retrieves a previously stored record', async (t
   await testApiClient._updateAuthTokenRecord(token);
   const actual = await testApiClient._getAuthTokenRecord();
   t.is(token, actual);
+});
+
+test.serial('_getAuthTokenRecord throws a CumulusAuthTokenError if decryption throws a AccessDeniedException', async (t) => {
+  let decryptRevert;
+  try {
+    const token = `updateAndRetrieveTokenTestToken${randomId()}`;
+    const testApiClient = new CumulusApiClientRewire(t.context.config);
+    decryptRevert = CumulusApiClientRewire.__set__('decryptBase64String', async () => {
+      const testError = new Error();
+      testError.name = 'AccessDeniedException';
+      throw testError;
+    });
+    await testApiClient._updateAuthTokenRecord(token);
+    await t.throwsAsync(testApiClient._getAuthTokenRecord(), { name: 'CumulusAuthTokenError' });
+  } finally {
+    decryptRevert();
+  }
 });
 
 test.serial('createNewAuthToken is not implemented in the base class', async (t) => {
