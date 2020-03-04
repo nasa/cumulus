@@ -3,7 +3,8 @@
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { InvalidArgument } = require('@cumulus/errors');
 
-const _ = require('lodash');
+const get = require('lodash.get');
+const isUndefined = require('lodash.isundefined');
 const cloneDeep = require('lodash.clonedeep');
 
 const {
@@ -97,7 +98,7 @@ async function getEntryTitle(config, metadata, isUmmG) {
   // and we should halt.
   // Either the code is faulty or the provider is trying to ingest granules
   // into a collection that doesn't exist
-  if (result.length === 0 || _.isUndefined(result[0].dataset_id)) {
+  if (result.length === 0 || isUndefined(result[0].dataset_id)) {
     throw new RecordDoesNotExist(`Unable to query parent collection entry title using short name ${shortName} and version ${version}`);
   }
   return result[0].dataset_id;
@@ -113,9 +114,9 @@ async function getEntryTitle(config, metadata, isUmmG) {
  * @returns {string} - the OPeNDAP path
  */
 async function generatePath(config, metadata, isUmmG) {
-  const providerId = _.get(config.cmr, 'provider');
+  const providerId = get(config.cmr, 'provider');
   // Check if providerId is defined
-  if (_.isUndefined(providerId)) {
+  if (isUndefined(providerId)) {
     throw new InvalidArgument('Provider not supplied in configuration. Unable to construct path');
   }
   const entryTitle = await getEntryTitle(config, metadata, isUmmG);
@@ -146,7 +147,7 @@ async function generateHyraxUrl(config, metadata, isUmmG) {
 function addHyraxUrlToUmmG(metadata, hyraxUrl) {
   const metadataCopy = cloneDeep(metadata);
 
-  if (_.isUndefined(metadataCopy.RelatedUrls)) {
+  if (isUndefined(metadataCopy.RelatedUrls)) {
     metadataCopy.RelatedUrls = [];
   }
   const url = {
@@ -169,7 +170,7 @@ function addHyraxUrlToUmmG(metadata, hyraxUrl) {
  */
 function addHyraxUrlToEcho10(metadata, hyraxUrl) {
   let urlsNode = metadata.get('/Granule/OnlineResources');
-  if (_.isUndefined(urlsNode)) {
+  if (isUndefined(urlsNode)) {
     const onlineAccessURLs = metadata.get('/Granule/OnlineAccessURLs');
     urlsNode = new libxmljs.Element(metadata, 'OnlineResources');
     onlineAccessURLs.addNextSibling(urlsNode);
@@ -234,8 +235,8 @@ async function updateSingleGranule(config, granuleObject) {
   // Read in the metadata file
   const metadataFile = granuleObject.files.find((f) => isCMRFilename(f.filename));
   // If there is no metadata file, error out.
-  if (_.isUndefined(metadataFile)) {
-    throw new RecordDoesNotExist(`There is no recogizable CMR metadata file in this granule object (*.cmr.xml or *.cmr.json)`);
+  if (isUndefined(metadataFile)) {
+    throw new RecordDoesNotExist('There is no recogizable CMR metadata file in this granule object (*.cmr.xml or *.cmr.json)');
   }
   const { Bucket, Key } = parseS3Uri(metadataFile.filename);
   const metadataResult = await getS3Object(Bucket, Key);
