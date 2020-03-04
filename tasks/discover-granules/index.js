@@ -6,11 +6,9 @@ const isBoolean = require('lodash.isboolean');
 const pick = require('lodash.pick');
 const Logger = require('@cumulus/logger');
 const map = require('lodash.map');
-const { EdlApiClient, LaunchpadApiClient } = require('@cumulus/common/cumulus-api-client');
+const { cumulusApiClientFactory } = require('@cumulus/common/cumulus-api-client');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
-const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
-
 
 const logger = () => new Logger({
   executions: process.env.EXECUTIONS,
@@ -176,7 +174,7 @@ const buildGranule = curry(
  * @param {string} granuleId - granuleId to evaluate
  * @param {string} duplicateHandling - collection duplicate handling configuration value
  * @param {string} apiClient - configured instance of CumulusApiClient
- * @returns {string} returns granuleId string if no duplicate found, '' if
+ * @returns {*}     - returns granuleId string if no duplicate found, false if
  *                   a duplicate is found.  Throws an error on duplicate if
  *                   dupeConfig.duplicateHandling is set to 'error'
  * @throws {Error} - Will throw an error if no granule is returned from the api.
@@ -196,7 +194,7 @@ const checkDuplicate = async (granuleId, duplicateHandling, apiClient) => {
   if (duplicateHandling === 'error') {
     throw new Error(`Duplicate granule found for ${granuleId} with duplicate configuration set to error`);
   }
-  return '';
+  return false;
 };
 
 /**
@@ -213,35 +211,8 @@ const checkDuplicate = async (granuleId, duplicateHandling, apiClient) => {
  * @returns {Array.string} returns granuleIds parameter with applicable duplciates removed
  */
 const filterDuplicates = async (granuleIds, duplicateHandling) => {
-  const secretName = 'discoverGranulesToken';
-  let apiClient;
-  if (process.env.oauth_provider === 'earthdata') {
-    apiClient = new EdlApiClient({
-      kmsId: process.env.auth_kms_key_id,
-      baseUrl: process.env.archive_api_uri,
-      username: process.env.urs_id,
-      password: await getSecretString(
-        process.env.urs_password_secret_name
-      ),
-      tokenSecretName: secretName,
-      authTokenTable: process.env.AuthTokensTable
-    });
-  }
-  if (process.env.oauth_provider === 'launchpad') {
-    apiClient = new LaunchpadApiClient({
-      kmsId: process.env.auth_kms_key_id,
-      baseUrl: process.env.archive_api_uri,
-      userGroup: process.env.oauth_user_group,
-      launchpadPassphrase: await getSecretString(
-        process.env.launchpadPassphraseSecretName
-      ),
-      launchpadApi: process.env.launchpad_api,
-      launchpadCertificate: process.env.launchpad_certificate,
-      tokenSecretName: secretName,
-      authTokenTable: process.env.AuthTokensTable
-    });
-  }
-
+  const tokenCacheKey = 'DuplicateGranulesTokenCache';
+  const apiClient = await cumulusApiClientFactory(tokenCacheKey, process.env.oauth_provider);
   const keysPromises = granuleIds.map((key) =>
     checkDuplicate(key, duplicateHandling, apiClient));
 

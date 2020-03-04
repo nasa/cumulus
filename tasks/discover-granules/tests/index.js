@@ -23,7 +23,7 @@ const checkDuplicateRewire = (granuleId, duplicateHandling, _) => {
     if (duplicateHandling === 'error') {
       throw new Error(`Duplicate GranuleID ${granuleId} encountered in DiscoverGranules with duplicateHandling set to 'error'`);
     }
-    return '';
+    return false;
   }
   return granuleId;
 };
@@ -38,7 +38,6 @@ async function assertDiscoveredGranules(t, output) {
 test.beforeEach(async (t) => {
   process.env.oauth_provider = 'earthdata';
   process.env.archive_api_uri = 'http://fakeUrl.fake/';
-  discoverGranulesRewire.__set__('getSecretString', async () => 'mockPassword');
   const eventPath = path.join(__dirname, 'fixtures', 'mur.json');
   const rawEvent = await readFile(eventPath, 'utf8');
   t.context.event = JSON.parse(rawEvent);
@@ -290,53 +289,63 @@ test.serial('discover granules using S3 throws error when discovery fails',
 test.serial('handleDuplicates filters on duplicateHandling set to "skip"',
   async (t) => {
     let checkDuplicateRevert;
+    let apiClientRevert;
     try {
       const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
       checkDuplicateRevert = discoverGranulesRewire.__set__('checkDuplicate', checkDuplicateRewire);
+      apiClientRevert = discoverGranulesRewire.__set__('cumulusApiClientFactory', async () => true);
       const actual = await handleDuplicates(t.context.filesByGranuleId, 'skip', {});
       delete t.context.filesByGranuleId.duplicate;
       t.deepEqual(actual, t.context.filesByGranuleId);
     } finally {
       checkDuplicateRevert();
+      apiClientRevert();
     }
   });
 
 test.serial('handleDuplicates throws Error on duplicateHandling set to "error"',
   async (t) => {
     let checkDuplicateRevert;
+    let apiClientRevert;
     try {
       const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
       checkDuplicateRevert = discoverGranulesRewire.__set__('checkDuplicate', checkDuplicateRewire);
+      apiClientRevert = discoverGranulesRewire.__set__('cumulusApiClientFactory', async () => true);
       await t.throwsAsync(
         () => handleDuplicates(t.context.filesByGranuleId, 'error', {})
       );
     } finally {
       checkDuplicateRevert();
+      apiClientRevert();
     }
   });
 
 test.serial('handleDuplicates does not filter when duplicateHandling is set to "replace" or "version"',
   async (t) => {
+    let apiClientRevert;
     let checkDuplicateRevert;
     try {
       const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
       checkDuplicateRevert = discoverGranulesRewire.__set__('checkDuplicate', checkDuplicateRewire);
+      apiClientRevert = discoverGranulesRewire.__set__('cumulusApiClientFactory', async () => true);
       const replaceActual = await handleDuplicates(t.context.filesByGranuleId, 'replace', {});
       const versionActual = await handleDuplicates(t.context.filesByGranuleId, 'version', {});
       t.deepEqual(replaceActual, t.context.filesByGranuleId);
       t.deepEqual(versionActual, t.context.filesByGranuleId);
     } finally {
       checkDuplicateRevert();
+      apiClientRevert();
     }
-
   });
 
 
 test.serial('filterDuplicates returns a set of filtered keys',
   async (t) => {
+    let apiClientRevert;
     let checkDuplicateRevert;
     try {
       const filterDuplicates = discoverGranulesRewire.__get__('filterDuplicates');
+      apiClientRevert = discoverGranulesRewire.__set__('cumulusApiClientFactory', async () => true);
       checkDuplicateRevert = discoverGranulesRewire.__set__('checkDuplicate', async (key) => {
         if (key === 'duplicate') {
           return '';
@@ -348,14 +357,15 @@ test.serial('filterDuplicates returns a set of filtered keys',
       t.deepEqual(actual, ['key1', 'key2']);
     } finally {
       checkDuplicateRevert();
+      apiClientRevert();
     }
   });
 
-test.serial('checkDuplicate returns an empty string when API returns a granule',
+test.serial('checkDuplicate returns false when API returns a granule',
   async (t) => {
     const checkDuplicate = discoverGranulesRewire.__get__('checkDuplicate');
     const actual = await checkDuplicate('granuleId', '', { get: async () => 'dummy value' });
-    t.is(actual, '');
+    t.is(actual, false);
   });
 
 test.serial('checkDuplicate throws an error when API returns a granule and duplicateHandling is set to "error"',

@@ -25,6 +25,7 @@ class CumulusApiClient {
     this.config = { ...defaultConfig, ...config };
     this.config.baseUrl = normalizeUrl(config.baseUrl);
     this.Error = CumulusApiClientError;
+    this.createNewAuthToken();
   }
 
   /**
@@ -51,7 +52,7 @@ class CumulusApiClient {
   }
 
   async createNewAuthToken() {
-    throw new CumulusApiClientError('Not implemented in the base class');
+    throw new CumulusApiClientError('createNewAuthToken not implemented in the base class');
   }
 
   /**
@@ -149,8 +150,8 @@ class CumulusApiClient {
     } catch (error) {
       if (error.name === 'CumulusAuthTokenError') {
         logger.info('API Client access token expired, generating new token');
-        // We're not refreshing as refreshing invalidates what could be
-        // an active key.
+        // We're not refreshing as /refresh invalidates what could be
+        // an active key
         const updateToken = await this.createNewAuthToken();
         await this._updateAuthTokenRecord(
           updateToken
