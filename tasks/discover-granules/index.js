@@ -234,7 +234,7 @@ const filterDuplicates = async (granuleIds, duplicateHandling) => {
  *
  * @returns {Object} returns filesByGranuleId with applicable duplciates removed
  */
-const handleDuplicates = async (filesByGranuleId, duplicateHandling = 'error') => {
+const handleDuplicates = async (filesByGranuleId, duplicateHandling) => {
   logger().info(`Running discoverGranules with duplicateHandling set to ${duplicateHandling}`);
   if (['skip', 'error'].includes(duplicateHandling)) {
     // Iterate over granules, remove if exists in dynamo
