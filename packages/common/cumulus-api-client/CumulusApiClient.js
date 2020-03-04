@@ -58,6 +58,8 @@ class CumulusApiClient {
    * gets an auth token back from the dynamo cache table
    *
    * @returns {Promise<Object>} - decrypted auth token from the auth token table
+   *
+   * @throws {CumulusAuthTokenError} - throws on new error conditions
    */
   async _getAuthTokenRecord() {
     const params = {
@@ -71,7 +73,15 @@ class CumulusApiClient {
       throw new CumulusAuthTokenError(`No bearer token with alias '${this.config.tokenSecretName}'
       found in ${this.config.authTokenTable}`);
     }
-    return decryptBase64String(tokenResponse.Item.bearerToken);
+    try {
+      const key = await decryptBase64String(tokenResponse.Item.bearerToken);
+      return key;
+    } catch (error) {
+      if (error.name === 'AccessDeniedException') {
+        throw new CumulusAuthTokenError(`Existing cached token invalid for ${this.config.tokenSecretName}`);
+      }
+      throw error;
+    }
   }
 
   /**
