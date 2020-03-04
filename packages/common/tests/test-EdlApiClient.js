@@ -31,7 +31,7 @@ test.serial('createNewAuthToken return token given expected API returns', async 
         if (url === 'token-redirect') {
           return { body: `{ "message": { "token": "${token}" }}` };
         }
-        throw new Error(`Test failing as ${JSON.stringify(url)} was not matched`);
+        throw new Error(`Test failing as `${$url}` was not matched`);
       }
     });
     const testEdlClient = new EdlApiClientRewire(CONFIG);
