@@ -3,8 +3,7 @@
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { InvalidArgument } = require('@cumulus/errors');
 
-const get = require('lodash.get');
-const _ = require('lodash/core');
+const _ = require('lodash');
 const cloneDeep = require('lodash.clonedeep');
 
 const {
@@ -16,7 +15,7 @@ const { isECHO10File, isUMMGFile, isCMRFilename } = require('@cumulus/cmrjs/cmr-
 
 const { validateUMMG } = require('@cumulus/cmr-client/UmmUtils');
 const validate = require('@cumulus/cmr-client/validate');
-const ValidationError = require('@cumulus/cmr-client/ValidationError');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const {
   getS3Object,
@@ -99,7 +98,7 @@ async function getEntryTitle(config, metadata, isUmmG) {
   // Either the code is faulty or the provider is trying to ingest granules
   // into a collection that doesn't exist
   if (result.length === 0 || _.isUndefined(result[0].dataset_id)) {
-    throw new ValidationError(`Unable to query parent collection entry title using short name ${shortName} and version ${version}`);
+    throw new RecordDoesNotExist(`Unable to query parent collection entry title using short name ${shortName} and version ${version}`);
   }
   return result[0].dataset_id;
 }
@@ -114,7 +113,7 @@ async function getEntryTitle(config, metadata, isUmmG) {
  * @returns {string} - the OPeNDAP path
  */
 async function generatePath(config, metadata, isUmmG) {
-  const providerId = get(config.cmr, 'provider');
+  const providerId = _.get(config.cmr, 'provider');
   // Check if providerId is defined
   if (_.isUndefined(providerId)) {
     throw new InvalidArgument('Provider not supplied in configuration. Unable to construct path');
@@ -233,7 +232,11 @@ function createDom(metadataFileName, metadata) {
  */
 async function updateSingleGranule(config, granuleObject) {
   // Read in the metadata file
-  const metadataFile = granuleObject.files.find((f) => f.type === 'metadata');
+  const metadataFile = granuleObject.files.find((f) => isCMRFilename(f.filename));
+  // If there is no metadata file, error out.
+  if (_.isUndefined(metadataFile)) {
+    throw new RecordDoesNotExist(`There is no recogizable metadata file in this granule object (*.cmr.xml or *.cmr.json)`);
+  }
   const { Bucket, Key } = parseS3Uri(metadataFile.filename);
   const metadataResult = await getS3Object(Bucket, Key);
   // Extract the metadata file object

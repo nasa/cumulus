@@ -3,7 +3,7 @@
 const test = require('ava');
 const fs = require('fs');
 const nock = require('nock');
-const ValidationError = require('@cumulus/cmr-client/ValidationError');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 const rewire = require('rewire');
 const HyraxMetadataUpdate = rewire('../index');
 
@@ -47,7 +47,7 @@ test.serial('Test retrieving entry title with invalid result', async (t) => {
   const metadataObject = JSON.parse(data);
 
   await t.throwsAsync(getEntryTitle(event.config, metadataObject, true), {
-    instanceOf: ValidationError,
+    instanceOf: RecordDoesNotExist,
     message: 'Unable to query parent collection entry title using short name GLDAS_CLSM025_D and version 2.0'
   });
 });
@@ -69,7 +69,7 @@ test.serial('Test retrieving entry title with no results', async (t) => {
   const metadataObject = JSON.parse(data);
 
   await t.throwsAsync(getEntryTitle(event.config, metadataObject, true), {
-    instanceOf: ValidationError,
+    instanceOf: RecordDoesNotExist,
     message: 'Unable to query parent collection entry title using short name GLDAS_CLSM025_D and version 2.0'
   });
 });

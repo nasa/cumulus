@@ -817,6 +817,7 @@ module.exports = {
   isCMRFile,
   isUMMGFile,
   isECHO10File,
+  isCMRFilename,
   metadataObjectFromCMRFile,
   publish2CMR,
   reconcileCMRMetadata,

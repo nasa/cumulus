@@ -20,6 +20,7 @@ const {
 const readFile = promisify(fs.readFile);
 const { InvalidArgument } = require('@cumulus/errors');
 const ValidationError = require('@cumulus/cmr-client/ValidationError');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const rewire = require('rewire');
 
@@ -208,6 +209,36 @@ test.serial('Test validation error when updating ECHO10 metadata file in S3', as
   await t.throwsAsync(hyraxMetadataUpdate(e), {
     instanceOf: ValidationError,
     message: 'Validation was not successful, CMR error message: "foo"'
+  });
+
+  await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+});
+
+test.serial('Test record does not exist error when granule object has no recognizable metadata files in it', async (t) => {
+  await setupS3(t, true);
+  const e = {
+    config: event.config,
+    input: {
+      granules: [
+        {
+          granuleId: "MOD11A1.A2017200.h19v04.006.2017201090724",
+          files: [
+            {
+              name: "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+              bucket: "cumulus-internal",
+              filename: "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+              type: "data",
+              fileStagingDir: "file-staging/subdir"
+            }
+          ]
+        }
+      ]
+    }
+  };
+
+  await t.throwsAsync(hyraxMetadataUpdate(e), {
+    instanceOf: RecordDoesNotExist,
+    message: 'There is no recogizable metadata file in this granule object (*.cmr.xml or *.cmr.json)'
   });
 
   await recursivelyDeleteS3Bucket(t.context.stagingBucket);
