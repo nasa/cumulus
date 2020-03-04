@@ -203,7 +203,7 @@ const checkDuplicate = async (granuleId, duplicateHandling, apiClient) => {
  * error:              Duplicates encountered will result in a thrown error
  * replace, version:   Duplicates will be ignored
  *
- * @param {Array.string} granuleIds - Array of granuleIds to filter
+ * @param {string[]} granuleIds - Array of granuleIds to filter
  * @param {string} duplicateHandling - flag that defines this function's behavior (see description)
  *
  * @returns {Array.string} returns granuleIds parameter with applicable duplciates removed
