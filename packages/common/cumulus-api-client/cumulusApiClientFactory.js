@@ -33,7 +33,7 @@ const cumulusApiClientFactory = async (tokenCacheKey = 'defaulttokenCacheKey',
   // default configuration object
   const defaultConfigurations = {
     kmsId: process.env.auth_kms_key_id,
-    baseUrl: process.env.archive_api_uri,
+    baseUrl: process.env.internal_archive_api_uri,
     userGroup: process.env.oauth_user_group,
     launchpadPassphrase: await getSecretString(
       process.env.launchpadPassphraseSecretName

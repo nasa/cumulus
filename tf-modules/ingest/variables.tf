@@ -1,4 +1,4 @@
-variable "archive_api_uri" {
+variable "internal_archive_api_uri" {
   type = string
 }
 

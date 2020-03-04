@@ -26,7 +26,7 @@ resource "aws_lambda_function" "discover_granules_task" {
       urs_id                        = var.urs_id
       urs_password_secret_name      = length(var.urs_password) == 0 ? null : aws_secretsmanager_secret.ingest_urs_password.name
       urs_url                       = var.urs_url
-      archive_api_uri               = var.archive_api_uri
+      internal_archive_api_uri      = var.internal_archive_api_uri
       auth_kms_key_id               = aws_kms_key.lambda_processing_authentication_key.key_id
 
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"

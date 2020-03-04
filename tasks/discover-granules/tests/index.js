@@ -37,7 +37,7 @@ async function assertDiscoveredGranules(t, output) {
 
 test.beforeEach(async (t) => {
   process.env.oauth_provider = 'earthdata';
-  process.env.archive_api_uri = 'http://fakeUrl.fake/';
+  process.env.internal_archive_api_uri = 'http://fakeUrl.fake/';
   const eventPath = path.join(__dirname, 'fixtures', 'mur.json');
   const rawEvent = await readFile(eventPath, 'utf8');
   t.context.event = JSON.parse(rawEvent);
