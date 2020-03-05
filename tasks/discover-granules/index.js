@@ -6,7 +6,7 @@ const isBoolean = require('lodash.isboolean');
 const pick = require('lodash.pick');
 const Logger = require('@cumulus/logger');
 const map = require('lodash.map');
-const { cumulusApiClientFactory } = require('@cumulus/common/cumulus-api-client');
+const { cumulusApiClientFactory } = require('@cumulus/api-client');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
 
