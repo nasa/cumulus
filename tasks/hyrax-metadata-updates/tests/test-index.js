@@ -113,3 +113,11 @@ test('Test adding OPeNDAP URL to ECHO10 file with no OnlineResources', async (t)
   const actual = await addHyraxUrl(metadata, false, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
   t.is(actual, expected);
 });
+
+test('Test adding OPeNDAP URL to ECHO10 file with two OnlineResources', async (t) => {
+  const data = fs.readFileSync('tests/data/echo10in-2-online-resource-urls.xml', 'utf8');
+  const metadata = await (promisify(xml2js.parseString))(data, xmlParseOptions);
+  const expected = fs.readFileSync('tests/data/echo10out-2-online-resource-urls.xml', 'utf8');
+  const actual = await addHyraxUrl(metadata, false, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
+  t.is(actual, expected);
+});
