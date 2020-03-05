@@ -45,7 +45,7 @@ data "aws_iam_policy_document" "lambda_processing_role_urs_auth_passwords" {
 }
 
 resource "aws_iam_role_policy" "lambda_processing_role_urs_auth_get_secrets" {
-  role   = split("/", var.lambda_processing_role_arn)[1]
+  role   = lambda_processing_role_id
   policy = data.aws_iam_policy_document.lambda_processing_role_urs_auth_passwords.json
 }
 
