@@ -2,6 +2,7 @@
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { InvalidArgument } = require('@cumulus/errors');
+const { promisify } = require('util');
 
 const get = require('lodash.get');
 const isUndefined = require('lodash.isundefined');
@@ -24,7 +25,14 @@ const {
   parseS3Uri
 } = require('@cumulus/aws-client/S3');
 
-const libxmljs = require('libxmljs');
+const xml2js = require('xml2js');
+
+const xmlParseOptions = {
+  ignoreAttrs: true,
+  mergeAttrs: true,
+  explicitArray: false,
+  preserveChildrenOrder: true
+};
 
 /**
  * generateAddress
@@ -57,8 +65,7 @@ function getGranuleUr(metadata, isUmmG) {
   if (isUmmG === true) {
     nativeId = metadata.GranuleUR;
   } else {
-    const nativeIdNode = metadata.get('/Granule/GranuleUR');
-    nativeId = nativeIdNode.text();
+    nativeId = metadata.Granule.GranuleUR;
   }
   return nativeId;
 }
@@ -78,8 +85,8 @@ async function getEntryTitle(config, metadata, isUmmG) {
     shortName = metadata.CollectionReference.ShortName;
     version = metadata.CollectionReference.Version;
   } else {
-    shortName = metadata.get('/Granule/Collection/ShortName').text();
-    version = metadata.get('/Granule/Collection/VersionId').text();
+    shortName = metadata.Granule.Collection.ShortName;
+    version = metadata.Granule.Collection.VersionId;
   }
   // Query CMR for collection and retrieve entry title
   const cmrInstance = new CMR({
@@ -168,21 +175,40 @@ function addHyraxUrlToUmmG(metadata, hyraxUrl) {
  * @param {string} hyraxUrl - the hyrax url
  * @returns {string} - the updated metadata containing a Hyrax URL
  */
-function addHyraxUrlToEcho10(metadata, hyraxUrl) {
-  let urlsNode = metadata.get('/Granule/OnlineResources');
-  if (isUndefined(urlsNode)) {
-    const onlineAccessURLs = metadata.get('/Granule/OnlineAccessURLs');
-    urlsNode = new libxmljs.Element(metadata, 'OnlineResources');
-    onlineAccessURLs.addNextSibling(urlsNode);
+async function addHyraxUrlToEcho10(metadata, hyraxUrl) {
+  const metadataCopy = cloneDeep(metadata);
+  if (isUndefined(metadataCopy.Granule.OnlineResources)) {
+    // Since we have marshalled this xml into a JSON object and we can't insert a child
+    // in between siblings so we need to remove everything that needs to come after
+    // OnlineResources as defined by the ECHO10 Schema
+    // We will add it back after the insertion.
+    delete metadataCopy.Granule.Orderable;
+    metadataCopy.Granule.OnlineResources = {};
   }
-  urlsNode.node('OnlineResource')
-    .node('URL', hyraxUrl)
-    .parent()
-    .node('Description', 'OPeNDAP request URL')
-    .parent()
-    .node('Type', 'GET DATA : OPENDAP DATA');
+  metadataCopy.Granule.OnlineResources = {
+    OnlineResource: {
+      URL: hyraxUrl,
+      Description: 'OPeNDAP request URL',
+      Type: 'GET DATA : OPENDAP DATA'
+    }
+  };
+  // We need to add back everything that needs to come after OnlineResources
+  // as defined by the ECHO10 Schema
+  if (!isUndefined(metadata.Granule.Orderable)) {
+    metadataCopy.Granule.Orderable = cloneDeep(metadata.Granule.Orderable);
+  }
 
-  return metadata.toString({ format: true });
+  // DataFormat
+  // Visible
+  // CloudCover
+  // MetadataStandardName
+  // MetadataStandardVersion
+  // AssociatedBrowseImages
+  // AssociatedBrowseImageUrls
+  // And what if others are added?
+  const options = { renderOpts: { pretty: true, indent: '    ', newline: '\n' }, xmldec: { version: '1.0', encoding: 'UTF-8' } };
+  const xml = await new xml2js.Builder(options).buildObject(metadataCopy);
+  return xml;
 }
 
 /**
@@ -210,7 +236,7 @@ function addHyraxUrl(metadata, isUmmG, hyraxUrl) {
  * @param {Object} metadata - raw metadata
  * @returns {Object} document object model and whether it is UMM-G
  */
-function createDom(metadataFileName, metadata) {
+async function createDom(metadataFileName, metadata) {
   let isUmmG = false;
   // Parse into DOM based on file extension
   let dom = null;
@@ -218,7 +244,7 @@ function createDom(metadataFileName, metadata) {
     dom = JSON.parse(metadata);
     isUmmG = true;
   } else if (isECHO10File(metadataFileName)) {
-    dom = libxmljs.parseXml(metadata);
+    dom = await (promisify(xml2js.parseString))(metadata, xmlParseOptions);
   } else {
     throw new InvalidArgument(`Metadata file ${metadataFileName} is in unknown format`);
   }
@@ -242,10 +268,10 @@ async function updateSingleGranule(config, granuleObject) {
   const metadataResult = await getS3Object(Bucket, Key);
   // Extract the metadata file object
   const metadata = metadataResult.Body.toString();
-  const { dom, isUmmG } = createDom(metadataFile.name, metadata);
+  const { dom, isUmmG } = await createDom(metadataFile.name, metadata);
   // Add OPeNDAP url
   const hyraxUrl = await generateHyraxUrl(config, dom, isUmmG);
-  const updatedMetadata = addHyraxUrl(dom, isUmmG, hyraxUrl);
+  const updatedMetadata = await addHyraxUrl(dom, isUmmG, hyraxUrl);
   // Validate updated metadata via CMR
   if (isUmmG) {
     await validateUMMG(JSON.parse(updatedMetadata), metadataFile.name, config.cmr.provider);
