@@ -23,6 +23,7 @@ class EdlApiClient extends CumulusApiClient {
     const requiredKeys = ['kmsId', 'baseUrl', 'username', 'password', 'tokenSecretName', 'authTokenTable'];
     super(config, requiredKeys);
     if (!config.disableInitialize) {
+      this.logger.info('Creating new token on class creation');
       this.createNewAuthToken();
     }
   }
@@ -55,6 +56,7 @@ class EdlApiClient extends CumulusApiClient {
   * @returns {string} - Bearer token used to authenticate with the Cumulus API
   */
   async createNewAuthToken() {
+    this.logger.info('Creating new token');
     const tokenOutput = await got.get(`${this.config.baseUrl}/token`, { followRedirect: false });
     const auth = base64.encode(`${this.config.username}:${this.config.password}`);
 

@@ -9,7 +9,6 @@ const Logger = require('@cumulus/logger');
 const CumulusApiClientError = require('./CumulusApiClientError');
 const CumulusAuthTokenError = require('./CumulusAuthTokenError');
 
-const logger = new Logger({});
 
 class CumulusApiClient {
   constructor(config = {}, requiredKeys = ['kmsId', 'baseUrl', 'authTokenTable', 'tokenSecretName']) {
@@ -25,6 +24,7 @@ class CumulusApiClient {
     this.config = { ...defaultConfig, ...config };
     this.config.baseUrl = normalizeUrl(config.baseUrl);
     this.Error = CumulusApiClientError;
+    this.logger = new Logger({});
   }
 
   /**
@@ -42,7 +42,7 @@ class CumulusApiClient {
       return response;
     } catch (error) {
       if (authRetry > 0 && error.message === 'Access token has expired') {
-        logger.info('API Client access token expired, generating new token');
+        this.logger.info('API Client access token expired on get, generating new token');
         await this.getCacheAuthToken();
         return this.get(requestPath, authRetry - 1);
       }
@@ -148,7 +148,7 @@ class CumulusApiClient {
       return token;
     } catch (error) {
       if (error.name === 'CumulusAuthTokenError') {
-        logger.info('API Client access token expired, generating new token');
+        this.logger.info('GetCacheAuthToken failed retrieval validation, generating new token');
         // We're not refreshing as /refresh invalidates what could be
         // an active key
         const updateToken = await this.createNewAuthToken();
