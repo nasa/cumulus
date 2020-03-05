@@ -1,5 +1,6 @@
 'use strict';
 
+const pRetry = require('p-retry');
 const { callCumulusApi } = require('./api');
 
 /**
@@ -19,6 +20,28 @@ async function getGranule({ prefix, granuleId }) {
       path: `/granules/${granuleId}`
     }
   });
+}
+
+
+async function waitForGranule({ prefix, granuleId, retries = 10 }) {
+  await pRetry(
+    async () => {
+      const apiResult = await getGranule({ prefix, granuleId });
+      if (apiResult.statusCode === 500) {
+        throw new pRetry.AbortError('API misconfigured/down/etc, failing test');
+      }
+      if (apiResult.statusCode !== 200) {
+        throw new Error(`granule ${granuleId} not in database yet, status ${apiResult.statusCode} retrying....`);
+      }
+      console.log(`Granule ${granuleId} in database, proceeding...`);
+    },
+    {
+      retries,
+      onFailedAttempt: async (e) => {
+        console.log(e.message);
+      }
+    }
+  );
 }
 
 /**
@@ -169,5 +192,6 @@ module.exports = {
   applyWorkflow,
   deleteGranule,
   moveGranule,
+  waitForGranule,
   removePublishedGranule
 };

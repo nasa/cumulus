@@ -1,7 +1,7 @@
 'use strict';
 
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { deleteGranule } = require('@cumulus/integration-tests/api/granules');
+const { deleteGranule, waitForGranule } = require('@cumulus/integration-tests/api/granules');
 
 const {
   api: apiTestUtils,
@@ -81,6 +81,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
 
   describe('when the collection configured with duplicateHandling set to "skip" it:', () => {
+    const expectedGranules = ['granule-1', 'granule-2', 'granule-3'];
     let ingestStatus;
     let httpWorkflowExecution;
     let originalHttpWorkflowExecution;
@@ -92,8 +93,12 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
       ingestStatus = await awaitIngestExecutions(originalHttpWorkflowExecution, lambdaStep);
 
-      deleteGranule({ prefix: config.stackName, granuleId: 'granule-1' });
+      const granuleStatusPromises = expectedGranules.map((g) => {
+        return waitForGranule({ prefix: config.stackName, granuleId: g });
+      });
+      await Promise.all(granuleStatusPromises);
 
+      await deleteGranule({ prefix: config.stackName, granuleId: 'granule-1' });
       await updateCollectionDuplicateFlag('skip', collection, config);
 
       httpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
@@ -136,12 +141,18 @@ describe('The Discover Granules workflow with http Protocol', () => {
     let httpWorkflowExecution;
     let originalHttpWorkflowExecution;
     beforeAll(async () => {
+      const expectedGranules = ['granule-1', 'granule-2', 'granule-3'];
       await updateCollectionDuplicateFlag('replace', collection, config);
 
       originalHttpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
         config.bucket, workflowName, collection, provider);
 
       ingestStatus = await awaitIngestExecutions(originalHttpWorkflowExecution, lambdaStep);
+      const granuleStatusPromises = expectedGranules.map((g) =>
+        waitForGranule({
+          prefix: config.stackName, granuleId: g
+        }));
+      await Promise.all(granuleStatusPromises);
 
       await updateCollectionDuplicateFlag('error', collection, config);
 
