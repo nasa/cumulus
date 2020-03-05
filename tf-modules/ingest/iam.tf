@@ -39,7 +39,7 @@ data "aws_iam_policy_document" "lambda_processing_role_urs_auth_passwords" {
   statement {
     actions   = ["secretsmanager:GetSecretValue"]
     resources = [
-      aws_secretsmanager_secret.ingest_urs_password.arn,
+      aws_secretsmanager_secret.ingest_urs_password.arn
     ]
   }
 }
