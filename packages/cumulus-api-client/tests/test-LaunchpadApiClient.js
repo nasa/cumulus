@@ -3,7 +3,7 @@
 const test = require('ava');
 const rewire = require('rewire');
 
-const LaunchpadApiRewire = rewire('../cumulus-api-client/LaunchpadApiClient.js');
+const LaunchpadApiRewire = rewire('../LaunchpadApiClient.js');
 
 const CONFIG = {
   launchpadPassphrase: 'passphrase',

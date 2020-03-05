@@ -1,6 +1,6 @@
 'use strict';
 
-const LaunchpadToken = require('../LaunchpadToken.js');
+const LaunchpadToken = require('@cumulus/common/LaunchpadToken.js');
 const CumulusApiClient = require('./CumulusApiClient');
 
 class LaunchpadApiClient extends CumulusApiClient {

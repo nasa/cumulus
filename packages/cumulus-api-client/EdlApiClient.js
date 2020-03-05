@@ -35,7 +35,7 @@ class EdlApiClient extends CumulusApiClient {
   *                           redirecting to the right api
   * @returns {Object<Error>} - Returns the redirect 302 error from EDL
   */
-  async getEdlAuthorization(url, form, baseUrl) {
+  async _getEdlAuthorization(url, form, baseUrl) {
     const urlObj = parseurl({ url });
     let edlReturn;
     try {
@@ -61,7 +61,7 @@ class EdlApiClient extends CumulusApiClient {
     const form = new FormData();
     form.append('credentials', auth);
 
-    const location = await this.getEdlAuthorization(tokenOutput.headers.location,
+    const location = await this._getEdlAuthorization(tokenOutput.headers.location,
       form, this.config.baseUrl);
     const edlOutput = await got.get(location);
     return JSON.parse(edlOutput.body).message.token;

@@ -5,10 +5,10 @@ const test = require('ava');
 const rewire = require('rewire');
 const { dynamodb, dynamodbDocClient } = require('@cumulus/aws-client/services');
 
-const { randomId } = require('../test-utils');
+const { randomId } = require('@cumulus/common/test-utils');
 
-const CumulusApiClientRewire = rewire('../cumulus-api-client/CumulusApiClient.js');
-const CumulusAuthTokenError = require('../cumulus-api-client/CumulusAuthTokenError');
+const CumulusApiClientRewire = rewire('../CumulusApiClient.js');
+const CumulusAuthTokenError = require('../CumulusAuthTokenError');
 
 test.before(async (t) => {
   process.env.tableName = randomId('table');

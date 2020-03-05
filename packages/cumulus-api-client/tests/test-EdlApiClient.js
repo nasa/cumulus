@@ -6,7 +6,7 @@ const base64 = require('base-64');
 const rewire = require('rewire');
 
 
-const EdlApiClientRewire = rewire('../cumulus-api-client/EdlApiClient.js');
+const EdlApiClientRewire = rewire('../EdlApiClient.js');
 
 const CONFIG = {
   kmsId: 'fakeKmsId',
@@ -35,7 +35,7 @@ test.serial('createNewAuthToken return token given expected API returns', async 
       }
     });
     const testEdlClient = new EdlApiClientRewire(CONFIG);
-    testEdlClient.getEdlAuthorization = async (url, form, _base) => {
+    testEdlClient._getEdlAuthorization = async (url, form, _base) => {
       const formCheck = new FormData();
       formCheck.append('credentials', base64.encode(`${CONFIG.username}:${CONFIG.password}`));
       if (url === 'location') {
@@ -51,7 +51,7 @@ test.serial('createNewAuthToken return token given expected API returns', async 
   }
 });
 
-test.serial('getEdlAuthorization throws endpoint response error if error is not a "successful" 302', async (t) => {
+test.serial('_getEdlAuthorization throws endpoint response error if error is not a "successful" 302', async (t) => {
   let gotRevert;
   try {
     const expected = new Error();
@@ -63,13 +63,13 @@ test.serial('getEdlAuthorization throws endpoint response error if error is not 
       }
     });
     const testEdlClient = new EdlApiClientRewire({ ...CONFIG, ...{ disableInitialize: true } });
-    await t.throwsAsync(testEdlClient.getEdlAuthorization({}, '', { is: expected }));
+    await t.throwsAsync(testEdlClient._getEdlAuthorization({}, '', { is: expected }));
   } finally {
     gotRevert();
   }
 });
 
-test.serial('getEdlAuthorization throws error if no error thrown on post', async (t) => {
+test.serial('_getEdlAuthorization throws error if no error thrown on post', async (t) => {
   let gotRevert;
   try {
     const messageRegexp = new RegExp(/Invalid endpoint configuration/);
@@ -77,13 +77,13 @@ test.serial('getEdlAuthorization throws error if no error thrown on post', async
       post: async () => true
     });
     const testEdlClient = new EdlApiClientRewire({ ...CONFIG, ...{ disableInitialize: true } });
-    await t.throwsAsync(testEdlClient.getEdlAuthorization({}, '', { message: messageRegexp }));
+    await t.throwsAsync(testEdlClient._getEdlAuthorization({}, '', { message: messageRegexp }));
   } finally {
     gotRevert();
   }
 });
 
-test.serial('getEdlAuthorization returns the location if endpoint response is a "successful" 302', async (t) => {
+test.serial('_getEdlAuthorization returns the location if endpoint response is a "successful" 302', async (t) => {
   let gotRevert;
   try {
     const expected = new Error();
@@ -104,7 +104,7 @@ test.serial('getEdlAuthorization returns the location if endpoint response is a 
     });
 
     const testEdlClient = new EdlApiClientRewire({ ...CONFIG, ...{ disableInitialize: true } });
-    const actual = await testEdlClient.getEdlAuthorization('https://some_oauth_url', 'someformmock', 'https://foo.bar/path');
+    const actual = await testEdlClient._getEdlAuthorization('https://some_oauth_url', 'someformmock', 'https://foo.bar/path');
 
     t.is(actual, 'https://foo.bar/path');
   } finally {
