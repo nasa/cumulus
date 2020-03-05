@@ -11,7 +11,6 @@ const includes = require('lodash.includes');
 const intersection = require('lodash.intersection');
 
 const {
-  AccessToken,
   Execution,
   Granule,
   Pdr,
@@ -27,28 +26,28 @@ const {
 const { s3 } = require('@cumulus/aws-client/services');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
-const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getUrl } = require('@cumulus/cmrjs');
 const {
   addCollections,
-  api: apiTestUtils,
-  executionsApi: executionsApiTestUtils,
   buildAndExecuteWorkflow,
   buildAndStartWorkflow,
   conceptExists,
   getOnlineResources,
-  granulesApi: granulesApiTestUtils,
   waitForConceptExistsOutcome,
   waitForTestExecutionStart,
-  waitForCompletedExecution,
-  EarthdataLogin: { getEarthdataAccessToken },
-  distributionApi: {
-    getDistributionApiRedirect,
-    getDistributionApiFileStream,
-    getDistributionFileUrl
-  }
+  waitForCompletedExecution
 } = require('@cumulus/integration-tests');
+const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const { deleteCollection } = require('@cumulus/integration-tests/api/collections');
+const executionsApiTestUtils = require('@cumulus/integration-tests/api/executions');
+const granulesApiTestUtils = require('@cumulus/integration-tests/api/granules');
+const {
+  getDistributionFileUrl,
+  getTEADistributionApiRedirect,
+  getTEADistributionApiFileStream,
+  getTEARequestHeaders
+} = require('@cumulus/integration-tests/api/distribution');
+const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
 const {
   loadConfig,
@@ -99,7 +98,6 @@ describe('The S3 Ingest Granules workflow', () => {
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
   const collectionDupeHandling = 'error';
 
-  let accessTokensModel;
   let collection;
   let config;
   let executionModel;
@@ -129,8 +127,6 @@ describe('The S3 Ingest Granules workflow', () => {
     const newCollectionId = constructCollectionId(collection.name, collection.version);
     provider = { id: `s3_provider${testSuffix}` };
 
-    process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
-    accessTokensModel = new AccessToken();
     process.env.GranulesTable = `${config.stackName}-GranulesTable`;
     granuleModel = new Granule();
     process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
@@ -413,8 +409,8 @@ describe('The S3 Ingest Granules workflow', () => {
     let files;
     let granule;
     let resourceURLs;
-    let accessToken;
     let beforeAllError;
+    let teaRequestHeaders;
 
     beforeAll(async () => {
       process.env.CMR_ENVIRONMENT = 'UAT';
@@ -433,17 +429,13 @@ describe('The S3 Ingest Granules workflow', () => {
         const result = await Promise.all([
           getOnlineResources(granule),
           getOnlineResources(ummGranule),
-          // Login with Earthdata and get access token.
-          getEarthdataAccessToken({
-            redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
-            requestOrigin: process.env.DISTRIBUTION_ENDPOINT
-          })
+          getTEARequestHeaders(config.stackName)
         ]);
 
         cmrResource = result[0];
         ummCmrResource = result[1];
         resourceURLs = cmrResource.map((resource) => resource.href);
-        accessToken = result[2].accessToken;
+        teaRequestHeaders = result[2];
       } catch (e) {
         beforeAllError = e;
       }
@@ -451,10 +443,6 @@ describe('The S3 Ingest Granules workflow', () => {
 
     beforeEach(() => {
       if (beforeAllError) fail(beforeAllError);
-    });
-
-    afterAll(async () => {
-      await accessTokensModel.delete({ accessToken });
     });
 
     it('has expected payload', () => {
@@ -517,16 +505,14 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(expectedTypes).toEqual(resource.map((r) => r.Type));
     });
 
-    // TODO Re-enable when CUMULUS-1458 has been completed
-    xit('includes the Earthdata login ID for requests to protected science files', async () => {
+    it('includes the Earthdata login ID for requests to protected science files', async () => {
       const filepath = `/${files[0].bucket}/${files[0].filepath}`;
-      const s3SignedUrl = await getDistributionApiRedirect(filepath, accessToken);
-      const earthdataLoginParam = new URL(s3SignedUrl).searchParams.get('x-EarthdataLoginUsername');
+      const s3SignedUrl = await getTEADistributionApiRedirect(filepath, teaRequestHeaders);
+      const earthdataLoginParam = new URL(s3SignedUrl).searchParams.get('A-userid');
       expect(earthdataLoginParam).toEqual(process.env.EARTHDATA_USERNAME);
     });
 
-    // TODO Re-enable when CUMULUS-1458 has been completed
-    xit('downloads the requested science file for authorized requests', async () => {
+    it('downloads the requested science file for authorized requests', async () => {
       const scienceFileUrls = resourceURLs
         .filter((url) =>
           (url.startsWith(process.env.DISTRIBUTION_ENDPOINT) ||
@@ -546,7 +532,7 @@ describe('The S3 Ingest Granules workflow', () => {
             const file = files.find((f) => f.name.endsWith(extension));
 
             const filepath = `/${file.bucket}/${file.filepath}`;
-            const fileStream = await getDistributionApiFileStream(filepath, accessToken);
+            const fileStream = await getTEADistributionApiFileStream(filepath, teaRequestHeaders);
             // Compare checksum of downloaded file with expected checksum.
             const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
             return downloadChecksum === sourceChecksum;
