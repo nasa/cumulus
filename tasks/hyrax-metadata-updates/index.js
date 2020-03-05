@@ -60,7 +60,7 @@ function generateAddress() {
 /**
  * getGranuleUr
  *
- * @param {string} metadata - the dom
+ * @param {Object} metadata - the dom
  * @param {boolean} isUmmG - UMM-G or ECHO10
  * @returns {string} - the native id
  */
@@ -78,7 +78,7 @@ function getGranuleUr(metadata, isUmmG) {
  * getEntryTitle
  *
  * @param {Object} config - comnfiguration
- * @param {string} metadata - the granule metadata
+ * @param {Object} metadata - the granule metadata
  * @param {boolean} isUmmG - whether this is UMM-G or ECHO10 metadata
  * @returns {string} the entry title of the collection this granule belongs to
  */
@@ -119,7 +119,7 @@ async function getEntryTitle(config, metadata, isUmmG) {
  * generatePath
  *
  * @param {Object} config - the config
- * @param {string} metadata - the dom
+ * @param {Object} metadata - the dom
  * @param {boolean} isUmmG - UMM-G or ECHO10
  * @throws {Object} invalidArgumentException - if the env is not valid
  * @returns {string} - the OPeNDAP path
@@ -138,7 +138,7 @@ async function generatePath(config, metadata, isUmmG) {
  * generateHyraxUrl
  *
  * @param {Object} config - the config
- * @param {string} metadata - the dom
+ * @param {Object} metadata - the dom
  * @param {boolean} isUmmG - UMM-G or ECHO10
  * @returns {string} - the hyrax url
  */
@@ -151,7 +151,7 @@ async function generateHyraxUrl(config, metadata, isUmmG) {
 /**
  * addHyraxUrlToUmmG
  *
- * @param {string} metadata - the metadata dom
+ * @param {Object} metadata - the metadata dom
  * @param {string} hyraxUrl - the hyrax url
  * @returns {string} - the updated metadata containing a Hyrax URL
  */
@@ -175,7 +175,7 @@ function addHyraxUrlToUmmG(metadata, hyraxUrl) {
 /**
  * addHyraxUrlToEcho10
  *
- * @param {string} metadata - the metadata dom
+ * @param {Object} metadata - the metadata dom
  * @param {string} hyraxUrl - the hyrax url
  * @returns {string} - the updated metadata containing a Hyrax URL
  */
@@ -205,7 +205,7 @@ async function addHyraxUrlToEcho10(metadata, hyraxUrl) {
 /**
  * addHyraxUrl
  *
- * @param {string} metadata - the original metadata dom
+ * @param {Object} metadata - the original metadata dom
  * @param {boolean} isUmmG - UMM-G or ECHO10 metadata
  * @param {string} hyraxUrl - the hyrax url
  * @returns {string} - the updated metadata containing a Hyrax URL
@@ -224,7 +224,7 @@ function addHyraxUrl(metadata, isUmmG, hyraxUrl) {
  * createDom
  *
  * @param {Object} metadataFileName file name
- * @param {Object} metadata - raw metadata
+ * @param {string} metadata - raw metadata
  * @returns {Object} document object model and whether it is UMM-G
  */
 async function createDom(metadataFileName, metadata) {
