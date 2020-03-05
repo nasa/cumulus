@@ -93,9 +93,8 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
       ingestStatus = await awaitIngestExecutions(originalHttpWorkflowExecution, lambdaStep);
 
-      const granuleStatusPromises = expectedGranules.map((g) => {
-        return waitForGranule({ prefix: config.stackName, granuleId: g });
-      });
+      const granuleStatusPromises = expectedGranules.map((g) =>
+        waitForGranule({ prefix: config.stackName, granuleId: g }));
       await Promise.all(granuleStatusPromises);
 
       await deleteGranule({ prefix: config.stackName, granuleId: 'granule-1' });
