@@ -182,16 +182,14 @@ function addHyraxUrlToUmmG(metadata, hyraxUrl) {
 async function addHyraxUrlToEcho10(metadata, hyraxUrl) {
   const metadataCopy = cloneDeep(metadata);
 
-  if (isUndefined(metadataCopy.Granule.OnlineResources)) {
-    metadataCopy.Granule.OnlineResources = {};
-    metadataCopy.Granule.OnlineResources.OnlineResource = [];
-  } else {
-    // xml2js will model a single child as an element rather than a list so
-    // we have to defend against that by reconstructing OnlineResources as
-    // a list from scratch
-    delete metadataCopy.Granule.OnlineResources;
-    metadataCopy.Granule.OnlineResources = {};
-    metadataCopy.Granule.OnlineResources.OnlineResource = [];
+  // xml2js will model a single child as an element rather than a list so
+  // we have to defend against that by reconstructing OnlineResources as
+  // a list from scratch
+  delete metadataCopy.Granule.OnlineResources;
+  metadataCopy.Granule.OnlineResources = {};
+  metadataCopy.Granule.OnlineResources.OnlineResource = [];
+
+  if (!isUndefined(metadata.Granule.OnlineResources)) {
     const urls = metadata.Granule.OnlineResources.OnlineResource;
     metadataCopy.Granule.OnlineResources.OnlineResource.push(urls);
   }
