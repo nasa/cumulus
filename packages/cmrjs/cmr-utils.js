@@ -822,5 +822,6 @@ module.exports = {
   publish2CMR,
   reconcileCMRMetadata,
   granulesToCmrFileObjects,
-  updateCMRMetadata
+  updateCMRMetadata,
+  generateEcho10XMLString
 };

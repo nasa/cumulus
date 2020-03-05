@@ -12,7 +12,12 @@ const {
   CMR
 } = require('@cumulus/cmr-client');
 
-const { isECHO10File, isUMMGFile, isCMRFilename } = require('@cumulus/cmrjs/cmr-utils');
+const {
+  isECHO10File,
+  isUMMGFile,
+  isCMRFilename,
+  generateEcho10XMLString
+} = require('@cumulus/cmrjs/cmr-utils');
 
 
 const { validateUMMG } = require('@cumulus/cmr-client/UmmUtils');
@@ -177,14 +182,11 @@ function addHyraxUrlToUmmG(metadata, hyraxUrl) {
  */
 async function addHyraxUrlToEcho10(metadata, hyraxUrl) {
   const metadataCopy = cloneDeep(metadata);
+
   if (isUndefined(metadataCopy.Granule.OnlineResources)) {
-    // Since we have marshalled this xml into a JSON object and we can't insert a child
-    // in between siblings so we need to remove everything that needs to come after
-    // OnlineResources as defined by the ECHO10 Schema
-    // We will add it back after the insertion.
-    delete metadataCopy.Granule.Orderable;
     metadataCopy.Granule.OnlineResources = {};
   }
+
   metadataCopy.Granule.OnlineResources = {
     OnlineResource: {
       URL: hyraxUrl,
@@ -192,23 +194,7 @@ async function addHyraxUrlToEcho10(metadata, hyraxUrl) {
       Type: 'GET DATA : OPENDAP DATA'
     }
   };
-  // We need to add back everything that needs to come after OnlineResources
-  // as defined by the ECHO10 Schema
-  if (!isUndefined(metadata.Granule.Orderable)) {
-    metadataCopy.Granule.Orderable = cloneDeep(metadata.Granule.Orderable);
-  }
-
-  // DataFormat
-  // Visible
-  // CloudCover
-  // MetadataStandardName
-  // MetadataStandardVersion
-  // AssociatedBrowseImages
-  // AssociatedBrowseImageUrls
-  // And what if others are added?
-  const options = { renderOpts: { pretty: true, indent: '    ', newline: '\n' }, xmldec: { version: '1.0', encoding: 'UTF-8' } };
-  const xml = await new xml2js.Builder(options).buildObject(metadataCopy);
-  return xml;
+  return generateEcho10XMLString(metadataCopy.Granule);
 }
 
 /**
