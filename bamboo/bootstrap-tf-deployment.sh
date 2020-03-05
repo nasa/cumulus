@@ -61,7 +61,7 @@ if [[ $NGAP_ENV = "SIT" ]]; then
   CMA_LAYER_VERSION=7
 else
   BASE_VAR_FILE="sandbox.tfvars"
-  CMA_LAYER_VERSION=11
+  CMA_LAYER_VERSION=12
 fi
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
