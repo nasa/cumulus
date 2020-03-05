@@ -1,7 +1,7 @@
 resource "aws_lambda_function" "cnm_to_cma_task" {
   function_name = "${var.prefix}-CNMToCMA"
-  s3_bucket     = "cumulus-data-shared"
-  s3_key        = "daacs/podaac/cnmToGranule-1.3.1.zip"
+  s3_bucket     = "cumulus-test-sandbox-internal"
+  s3_key        = "cnmPreReleases/cnmToGranule-1.3.1-cma1.3.0-b.zip"
   handler       = "gov.nasa.cumulus.CnmToGranuleHandler::handleRequestStreams"
   role          = module.cumulus.lambda_processing_role_arn
   runtime       = "java8"
