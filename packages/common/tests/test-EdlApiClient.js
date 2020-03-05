@@ -62,7 +62,7 @@ test.serial('getEdlAuthorization throws endpoint response error if error is not 
         throw expected;
       }
     });
-    const testEdlClient = new EdlApiClientRewire(CONFIG);
+    const testEdlClient = new EdlApiClientRewire({ ...CONFIG, ...{ disableInitialize: true } });
     await t.throwsAsync(testEdlClient.getEdlAuthorization({}, '', { is: expected }));
   } finally {
     gotRevert();
@@ -76,7 +76,7 @@ test.serial('getEdlAuthorization throws error if no error thrown on post', async
     gotRevert = EdlApiClientRewire.__set__('got', {
       post: async () => true
     });
-    const testEdlClient = new EdlApiClientRewire(CONFIG);
+    const testEdlClient = new EdlApiClientRewire({ ...CONFIG, ...{ disableInitialize: true } });
     await t.throwsAsync(testEdlClient.getEdlAuthorization({}, '', { message: messageRegexp }));
   } finally {
     gotRevert();
@@ -103,7 +103,7 @@ test.serial('getEdlAuthorization returns the location if endpoint response is a 
       }
     });
 
-    const testEdlClient = new EdlApiClientRewire(CONFIG);
+    const testEdlClient = new EdlApiClientRewire({ ...CONFIG, ...{ disableInitialize: true } });
     const actual = await testEdlClient.getEdlAuthorization('https://some_oauth_url', 'someformmock', 'https://foo.bar/path');
 
     t.is(actual, 'https://foo.bar/path');

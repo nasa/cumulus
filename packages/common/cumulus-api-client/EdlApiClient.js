@@ -17,10 +17,14 @@ class EdlApiClient extends CumulusApiClient {
   * @param {string} config.kmsId - ID of the AWS KMS key used for encryption/decryption
   * @param {string} config.tokenSecretName - 'Cached bearer token name alias to utilize
   * @param {string} config.authTokenTable - Dynamodb table to use for token caching
+  * @param {boolean} config.disableInitialize - boolean flag to skip token initialization
   */
   constructor(config) {
     const requiredKeys = ['kmsId', 'baseUrl', 'username', 'password', 'tokenSecretName', 'authTokenTable'];
     super(config, requiredKeys);
+    if (!config.disableInitialize) {
+      this.createNewAuthToken();
+    }
   }
 
   /**

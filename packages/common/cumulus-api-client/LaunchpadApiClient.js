@@ -17,6 +17,7 @@ class LaunchpadApiClient extends CumulusApiClient {
    *                                               cryption/decryption
    * @param {string} config.authTokenTable       - Dynamodb table to use for token caching
    * @param {string} config.baseUrl              - Cumulus API baseUrl
+   * @param {boolean} config.disableTokenInitialize - boolean flag to skip token initialization
    */
   constructor(config) {
     const requiredKeys = ['kmsId', 'userGroup', 'launchpadPassphrase', 'launchpadApi',
@@ -27,6 +28,9 @@ class LaunchpadApiClient extends CumulusApiClient {
       api: this.config.launchpadApi,
       certificate: this.config.launchpadCertificate
     });
+    if (!config.disableInitialize) {
+      this.createNewAuthToken();
+    }
   }
 
   /**

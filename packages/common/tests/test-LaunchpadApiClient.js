@@ -17,6 +17,16 @@ const CONFIG = {
   baseUrl: 'http://fakeurl'
 };
 
+test.before((t) => {
+  LaunchpadApiRewire.__set__('LaunchpadToken', class RewiredLaunchpadToken {
+    constuctor() { }
+
+    async requestToken() {
+      return 'fake token';
+    }
+  });
+});
+
 test.beforeEach((t) => {
   t.context.client = new LaunchpadApiRewire(CONFIG);
 });

@@ -25,7 +25,6 @@ class CumulusApiClient {
     this.config = { ...defaultConfig, ...config };
     this.config.baseUrl = normalizeUrl(config.baseUrl);
     this.Error = CumulusApiClientError;
-    this.createNewAuthToken();
   }
 
   /**
