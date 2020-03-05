@@ -42,6 +42,7 @@
   "dependencies": {
     "@cumulus/aws-client": "1.19.0",
     "@cumulus/common": "1.19.0",
+    "@cumulus/logger": "1.19.0",
     "base-64": "0.1.0",
     "form-data": "^3.0.0",
     "jsonwebtoken": "^8.4.0",
