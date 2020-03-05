@@ -63,6 +63,7 @@ class LaunchpadApiClient extends CumulusApiClient {
   *   * @returns {string} - Bearer token used to authenticate with the Cumulus API
   */
   async createNewAuthToken() {
+    this.logger.info('Creating new token');
     const tokenResponse = await this.launchpadToken.requestToken();
     return tokenResponse.sm_token;
   }
