@@ -35,8 +35,7 @@ const xml2js = require('xml2js');
 const xmlParseOptions = {
   ignoreAttrs: true,
   mergeAttrs: true,
-  explicitArray: false,
-  preserveChildrenOrder: true
+  explicitArray: false
 };
 
 /**
@@ -185,15 +184,23 @@ async function addHyraxUrlToEcho10(metadata, hyraxUrl) {
 
   if (isUndefined(metadataCopy.Granule.OnlineResources)) {
     metadataCopy.Granule.OnlineResources = {};
+    metadataCopy.Granule.OnlineResources.OnlineResource = [];
+  } else {
+    // xml2js will model a single child as an element rather than a list so
+    // we have to defend against that by reconstructing OnlineResources as
+    // a list from scratch
+    delete metadataCopy.Granule.OnlineResources;
+    metadataCopy.Granule.OnlineResources = {};
+    metadataCopy.Granule.OnlineResources.OnlineResource = [];
+    const urls = metadata.Granule.OnlineResources.OnlineResource;
+    metadataCopy.Granule.OnlineResources.OnlineResource.push(urls);
   }
-
-  metadataCopy.Granule.OnlineResources = {
-    OnlineResource: {
-      URL: hyraxUrl,
-      Description: 'OPeNDAP request URL',
-      Type: 'GET DATA : OPENDAP DATA'
-    }
+  const url = {
+    URL: hyraxUrl,
+    Description: 'OPeNDAP request URL',
+    Type: 'GET DATA : OPENDAP DATA'
   };
+  metadataCopy.Granule.OnlineResources.OnlineResource.push(url);
   return generateEcho10XMLString(metadataCopy.Granule);
 }
 

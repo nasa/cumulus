@@ -36,6 +36,12 @@
             <URL>https://hydro1.gesdisc.eosdis.nasa.gov/data/GLDAS/GLDAS_CLSM025_D.2.0/2014/12/GLDAS_CLSM025_D.A20141230.020.nc4</URL>
         </OnlineAccessURL>
     </OnlineAccessURLs>
-    <OnlineResources/>
+    <OnlineResources>
+        <OnlineResource>
+            <URL>https://hydro1.gesdisc.eosdis.nasa.gov/data/GLDAS/GLDAS_CLSM025_D.2.0/2014/12/GLDAS_CLSM025_D.A20141230.020.nc4</URL>
+            <Description>Foo</Description>
+            <Type>Bar</Type>
+        </OnlineResource>
+    </OnlineResources>
     <Orderable>false</Orderable>
 </Granule>
