@@ -17,7 +17,7 @@ const CONFIG = {
   baseUrl: 'http://fakeurl'
 };
 
-test.before((t) => {
+test.before(() => {
   LaunchpadApiRewire.__set__('LaunchpadToken', class RewiredLaunchpadToken {
     constuctor() { }
 

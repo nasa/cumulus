@@ -45,6 +45,7 @@
     "@cumulus/logger": "1.19.0",
     "base-64": "0.1.0",
     "form-data": "^3.0.0",
+    "got": "^9.2.2",
     "jsonwebtoken": "^8.4.0",
     "normalize-url": "5.0.0",
     "p-limit": "^2.0.0",
