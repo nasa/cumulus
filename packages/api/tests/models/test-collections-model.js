@@ -188,35 +188,28 @@ test.serial('Collection.delete() throws an exception if the collection has assoc
   }
 });
 
-async function testCollectionDelete(t, dataType) {
-  const name = randomString();
-  const version = randomString();
-  const item = fakeCollectionFactory({ name, version, dataType });
-  const { collectionConfigStore } = collectionsModel;
-  const collectionId = constructCollectionId(dataType || name, version);
-
-  await collectionsModel.create(item);
-  t.true(await collectionsModel.exists(name, version));
-  t.truthy(await collectionConfigStore.get(dataType || name, version));
-
-  await collectionsModel.delete({ name, version, dataType });
-  t.false(await collectionsModel.exists(name, version));
-  // If the collection was successfully deleted from the config store, we
-  // expect attempting to get it from the config store to throw an exception.
-  await t.throwsAsync(
-    async () => collectionConfigStore.get(dataType || name, version),
-    { message: new RegExp(`${collectionId}`) }
-  );
-}
-
 test.serial(
   'Collection.delete() deletes a collection and removes its configuration store via name',
-  async (t) => testCollectionDelete(t)
-);
+  async (t) => {
+    const name = randomString();
+    const version = randomString();
+    const item = fakeCollectionFactory({ name, version });
+    const { collectionConfigStore } = collectionsModel;
+    const collectionId = constructCollectionId(name, version);
 
-test.serial(
-  'Collection.delete() deletes a collection and removes its configuration store via dataType',
-  async (t) => testCollectionDelete(t, randomString())
+    await collectionsModel.create(item);
+    t.true(await collectionsModel.exists(name, version));
+    t.truthy(await collectionConfigStore.get(name, version));
+
+    await collectionsModel.delete({ name, version });
+    t.false(await collectionsModel.exists(name, version));
+    // If the collection was successfully deleted from the config store, we
+    // expect attempting to get it from the config store to throw an exception.
+    await t.throwsAsync(
+      async () => collectionConfigStore.get(name, version),
+      { message: new RegExp(`${collectionId}`) }
+    );
+  }
 );
 
 test.serial('Collection.delete() does not throw exception when attempting to delete'

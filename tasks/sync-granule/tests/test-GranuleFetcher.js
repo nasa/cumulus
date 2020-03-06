@@ -21,7 +21,7 @@ const GranuleFetcher = require('../GranuleFetcher');
 
 test.before((t) => {
   t.context.collectionConfig = {
-    dataType: 'testDataType',
+    name: 'testDataType',
     version: 'testVersion',
     files: [
       {

@@ -61,19 +61,12 @@ test.serial('discover granules sets the correct dataType for granules', async (t
 
   await validateConfig(t, event.config);
 
-  try {
-    const output = await discoverGranules(event);
-    await assertDiscoveredGranules(t, output);
+  const output = await discoverGranules(event);
+  await assertDiscoveredGranules(t, output);
 
-    // Make sure we support datatype and collection name
-    output.granules.forEach((granule) => {
-      t.not(granule.dataType, event.config.collection.name);
-    });
-  } catch (e) {
-    if (e.message === 'Connection Refused') {
-      t.pass('Ignoring this test. Remote host seems to be down.');
-    } else throw e;
-  }
+  output.granules.forEach((granule) => {
+    t.is(granule.dataType, event.config.collection.name);
+  });
 });
 
 test.serial('discover granules using FTP', async (t) => {

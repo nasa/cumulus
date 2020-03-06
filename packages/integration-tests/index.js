@@ -322,8 +322,8 @@ const addCustomUrlPathToCollectionFiles = (collection, customFilePath) =>
   });
 
 /**
- * Update a collection with a custom file path, duplicate handling, and name and
- * dataType updated with the postfix.
+ * Update a collection with a custom file path, duplicate handling, and name
+ * updated with the postfix.
  *
  * @param {Object} params
  * @param {Object} params.collection - a collection configuration
@@ -331,7 +331,7 @@ const addCustomUrlPathToCollectionFiles = (collection, customFilePath) =>
  *   url_path
  * @param {string} params.duplicateHandling - duplicate handling setting
  * @param {string} params.postfix - a string to be appended to the end of the
- *   name and datatype
+ *   name
  * @returns {Object} an updated collection
  */
 const buildCollection = (params = {}) => {
@@ -343,7 +343,6 @@ const buildCollection = (params = {}) => {
 
   if (postfix) {
     updatedCollection.name += postfix;
-    updatedCollection.dataType += postfix;
   }
 
   if (customFilePath) {
