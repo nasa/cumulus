@@ -29,7 +29,6 @@ We need to build a collection. Details on collections can be found [here](data-c
   "version": "006",
   "process": "modis",
   "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
-  "dataType": "MOD09GQ",
   "granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg)",
   "createdAt": 1531324194001,
   "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",

@@ -42,7 +42,7 @@
     },
     "collection": {
       "type": "object",
-      "required": ["name", "files"],
+      "required": ["name", "version", "files"],
       "properties": {
         "name": { "type": "string" },
         "version": { "type": "string" },

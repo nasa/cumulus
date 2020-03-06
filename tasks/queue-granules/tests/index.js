@@ -102,10 +102,10 @@ test.serial('The correct output is returned when granules are queued without a P
   const { event } = t.context;
   event.input.granules = [
     {
-      dataType: dataType, version: version, granuleId: randomString(), files: []
+      dataType, version, granuleId: randomString(), files: []
     },
     {
-      dataType: dataType, version: version, granuleId: randomString(), files: []
+      dataType, version, granuleId: randomString(), files: []
     }
   ];
 
@@ -128,10 +128,10 @@ test.serial('The correct output is returned when granules are queued with a PDR'
   const { event } = t.context;
   event.input.granules = [
     {
-      dataType: dataType, version: version, granuleId: randomString(), files: []
+      dataType, version, granuleId: randomString(), files: []
     },
     {
-      dataType: dataType, version: version, granuleId: randomString(), files: []
+      dataType, version, granuleId: randomString(), files: []
     }
   ];
   event.input.pdr = { name: randomString(), path: randomString() };
@@ -173,10 +173,10 @@ test.serial('Granules are added to the queue', async (t) => {
   const { event } = t.context;
   event.input.granules = [
     {
-      dataType: dataType, version: version, granuleId: randomString(), files: []
+      dataType, version, granuleId: randomString(), files: []
     },
     {
-      dataType: dataType, version: version, granuleId: randomString(), files: []
+      dataType, version, granuleId: randomString(), files: []
     }
   ];
 

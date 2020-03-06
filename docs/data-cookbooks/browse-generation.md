@@ -281,7 +281,6 @@ Navigate to the 'Collection' tab on the interface and add a collection. Note tha
 {
   "name": "MOD09GQ",
   "version": "006",
-  "dataType": "MOD09GQ",
   "process": "modis",
   "provider_path": "{{path_to_data}}",
   "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",

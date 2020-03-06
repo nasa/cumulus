@@ -33,12 +33,12 @@ class CollectionConfigStore {
   /**
    * Fetch a collection config from S3 (or cache if available)
    *
-   * @param {string} dataType - the name of the collection config to fetch
-   * @param {string} dataVersion - the version of the collection config to fetch
+   * @param {string} name - the name of the collection config to fetch
+   * @param {string} version - the version of the collection config to fetch
    * @returns {Object} the fetched collection config
    */
-  async get(dataType, dataVersion) {
-    const collectionId = constructCollectionId(dataType, dataVersion);
+  async get(name, version) {
+    const collectionId = constructCollectionId(name, version);
 
     // Check to see if the collection config has already been cached
     if (!this.cache[collectionId]) {
@@ -71,14 +71,14 @@ class CollectionConfigStore {
   /**
    * Store a collection config to S3
    *
-   * @param {string} dataType - the name of the collection config to store
-   * @param {string} dataVersion - version of Collection
+   * @param {string} name - the name of the collection config to store
+   * @param {string} version - version of Collection
    * @param {Object} config - the collection config to store
    * @returns {Promise<null>} resolves when the collection config has been written
    *   to S3
    */
-  async put(dataType, dataVersion, config) {
-    const collectionId = constructCollectionId(dataType, dataVersion);
+  async put(name, version, config) {
+    const collectionId = constructCollectionId(name, version);
 
     this.cache[collectionId] = config;
 
@@ -92,13 +92,13 @@ class CollectionConfigStore {
   /**
    * Delete a collection config from S3
    *
-   * @param {string} dataType - the name of the collection config to delete
-   * @param {string} dataVersion - version of Collection
+   * @param {string} name - the name of the collection config to delete
+   * @param {string} version - version of Collection
    * @returns {Promise<null>} resolves when the collection config has been deleted
    *   to S3
    */
-  async delete(dataType, dataVersion) {
-    const collectionId = constructCollectionId(dataType, dataVersion);
+  async delete(name, version) {
+    const collectionId = constructCollectionId(name, version);
 
     await s3().deleteObject({
       Bucket: this.bucket,
@@ -111,7 +111,7 @@ class CollectionConfigStore {
   /**
    * Return the S3 key pointing to the collection config
    *
-   * @param {string} collectionId - the datatype and version
+   * @param {string} collectionId - the name and version
    * @returns {string} the S3 key where the collection config is located
    *
    * @private
