@@ -6,6 +6,8 @@ const CumulusApiClient = require('./CumulusApiClient');
 class LaunchpadApiClient extends CumulusApiClient {
   /**
    * Sets required keys, calls superclass constructor
+   * @memberof LaunchpadApiClient
+   *
    * @param {Object} config - config object
    * @param {string} config.launchpadPassphrase  - Launchpad passphrase to use for auth
    * @param {string} config.launchpadApi         - URL of launchpad api to use for authorization
@@ -28,9 +30,6 @@ class LaunchpadApiClient extends CumulusApiClient {
       api: this.config.launchpadApi,
       certificate: this.config.launchpadCertificate
     });
-    if (!config.disableInitialize) {
-      this.createNewAuthToken();
-    }
   }
 
   /**
@@ -39,7 +38,6 @@ class LaunchpadApiClient extends CumulusApiClient {
    * checking here results in potential duplicate calls.
    *
    * Rely on authRetry in the get method instead.
-   *
    * @memberof LaunchpadApiClient
    *
    * @returns {boolean} true
@@ -52,6 +50,13 @@ class LaunchpadApiClient extends CumulusApiClient {
     throw new this.Error('Token refresh is not supported for Launchpad auth');
   }
 
+  /**
+   * Helper function to check via the Launchpad api how much time the token has left.
+   * @memberof LaunchpadApiClient
+   *
+   * @param {string} token - Launchpad bearer token
+   * @returns {number} - the number of seconds left before the token expires
+   */
   async getTokenTimeLeft(token) {
     const validationResponse = await this.launchpadToken.validateToken(token);
     return Math.max(validationResponse.session_idleremaining,
@@ -60,7 +65,9 @@ class LaunchpadApiClient extends CumulusApiClient {
 
   /**
   * Get a bearer token from launchpad auth for use with the Cumulus API
-  *   * @returns {string} - Bearer token used to authenticate with the Cumulus API
+  * @memberof LaunchpadApiClient
+  *
+  * @returns {string} - Bearer token used to authenticate with the Cumulus API
   */
   async createNewAuthToken() {
     this.logger.info('Creating new token');

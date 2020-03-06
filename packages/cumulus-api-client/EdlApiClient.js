@@ -9,7 +9,9 @@ const CumulusApiClient = require('./CumulusApiClient');
 
 class EdlApiClient extends CumulusApiClient {
   /**
-   * Sets required keys, calls superclass constructor
+  * Sets required keys, calls superclass constructor
+  * @memberof EdlApiClient
+  *
   * @param {Object} config - config object
   * @param {string} config.baseUrl - Cumulus API baseUrl
   * @param {string} config.username - EDL username to use for auth
@@ -22,14 +24,12 @@ class EdlApiClient extends CumulusApiClient {
   constructor(config) {
     const requiredKeys = ['kmsId', 'baseUrl', 'username', 'password', 'tokenSecretName', 'authTokenTable'];
     super(config, requiredKeys);
-    if (!config.disableInitialize) {
-      this.logger.info('Creating new token on class creation');
-      this.createNewAuthToken();
-    }
   }
 
   /**
   * Gets EDL authorization URL
+  * @memberof EdlApiClient
+  *
   * @param {string} url - oauth2 provider url to get authorization from
   * @param {Object<FormData>} form - login/password FormData object to submit
   * @param {string} baseUrl - API base url used to validate auth code redirect is
@@ -50,8 +50,9 @@ class EdlApiClient extends CumulusApiClient {
     throw new this.Error(`Invalid endpoint configuration on Earthdata Login token request ${JSON.stringify(edlReturn)}`);
   }
 
-  /**x
+  /**
   * Get a bearer token from EDL Oauth for use with the Cumulus API
+  * @memberof EdlApiClient
   *
   * @returns {string} - Bearer token used to authenticate with the Cumulus API
   */

@@ -25,10 +25,12 @@ class CumulusApiClient {
     this.config.baseUrl = normalizeUrl(config.baseUrl);
     this.Error = CumulusApiClientError;
     this.logger = new Logger({});
+    this.cacheInitialized = false;
   }
 
   /**
    * Do an HTTP GET request to a Cumulus API endpoint with optional token authentication retries
+   * @memberof CumulusApiClient
    * @param {string} requestPath - Cumulus API endpoint to call
    * @param {integer} authRetry - number of times to retry on auth expiry failure.
    *                              Should be set to 1 for launchpad oauth to account
@@ -55,6 +57,7 @@ class CumulusApiClient {
   }
 
   /**
+   * @memberof CumulusApiClient
    * gets an auth token back from the dynamo cache table
    *
    * @returns {Promise<Object>} - decrypted auth token from the auth token table
@@ -86,6 +89,7 @@ class CumulusApiClient {
 
   /**
    * Updates the auth token table record
+   * @memberof CumulusApiClient
    * @param {string} token - Updates the row at config.tokenSecretName with
    *                         a kms encrypted token record
    * @returns {Promise<Object>} - dynamodbDocClient response
@@ -106,7 +110,8 @@ class CumulusApiClient {
   }
 
   /**
-   * Helper function to check how much time the JWT token has left before expiration
+   * Helper function to check how much time the JWT has left before expiration
+   * @memberof CumulusApiClient
    * @param {string} token - bearer JWT
    *
    * @returns {number} - the number of seconds left before the token expires
@@ -116,7 +121,8 @@ class CumulusApiClient {
   }
 
   /**
-   * Validates if a token is close to expiration, and throws an error if so
+   * Validates if a JWT is close to expiration, and throws an error if so
+   * @memberof CumulusApiClient
    * @param {string} token
    *
    * @throws (CumulusAuthTokenError)
@@ -132,18 +138,56 @@ class CumulusApiClient {
   }
 
   /**
+   * Calls create token, then updates the cache with the new record
+   * @memberof CumulusApiClient
+   *
+   * @throws {CumulusAuthTokenError} - throws on any error
+   * @returns {string} - returns active valid bearer token
+   */
+  async _createAndUpdateNewAuthToken() {
+    try {
+      const updateToken = await this.createNewAuthToken();
+      await this._updateAuthTokenRecord(
+        updateToken
+      );
+      return updateToken;
+    } catch (error) {
+      throw new CumulusAuthTokenError(error);
+    }
+  }
+
+  /**
+   * Updates the cached bearer token and sets cacheInitialized to true
+   * @memberof CumulusApiClient
+   *
+   * @returns {string} -
+   */
+  async _initializeCache() {
+    this.logger.info('Creating new token on class creation');
+    const token = await this._createAndUpdateNewAuthToken();
+    this.cacheInitialized = true;
+    return token;
+  }
+
+  /**
    * Gets a token using the CumulusApiClient caching scheme:
-   *  1) Attempts to get a valid token from the cache table
+   *  1) If the class hasn't been initialized, cretes a new token *else*
+   *     attempts to get a valid token from the cache table.
    *  2) If it is successful, check (if possible) if the token is about to expire
    *  3) If the token does not exist, or is about to expire, generate a new token
    *     and store it inthe cache
+   * @memberof CumulusApiClient
    *
    * @returns {string} - returns active valid bearer token
    */
   async getCacheAuthToken() {
-    let token;
     try {
-      token = await this._getAuthTokenRecord();
+      let token;
+      if (this.cacheInitialized) {
+        token = await this._getAuthTokenRecord();
+      } else {
+        token = await this._initializeCache();
+      }
       await this._validateTokenExpiry(token);
       return token;
     } catch (error) {
@@ -151,10 +195,7 @@ class CumulusApiClient {
         this.logger.info('GetCacheAuthToken failed retrieval validation, generating new token');
         // We're not refreshing as /refresh invalidates what could be
         // an active key
-        const updateToken = await this.createNewAuthToken();
-        await this._updateAuthTokenRecord(
-          updateToken
-        );
+        const updateToken = await this._createAndUpdateNewAuthToken();
         return updateToken;
       }
       throw error;
