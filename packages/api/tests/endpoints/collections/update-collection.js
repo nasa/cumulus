@@ -1,6 +1,5 @@
 'use strict';
 
-const omit = require('lodash.omit');
 const test = require('ava');
 const request = require('supertest');
 const awsServices = require('@cumulus/aws-client/services');
@@ -88,38 +87,32 @@ test('CUMULUS-912 PUT with pathParameters and with an invalid access token retur
 test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('PUT replaces an existing collection', async (t) => {
-  const { testCollection, testCollection: { name, version } } = t.context;
-  const expectedCollection = {
-    ...omit(testCollection, ['dataType', 'duplicateHandling']),
-    provider_path: 'test_path'
+  const originalCollection = fakeCollectionFactory({ process: randomString() });
+  await collectionModel.create(originalCollection);
+
+  const updatedCollection = {
+    ...originalCollection,
+    provider_path: randomString()
   };
 
-  // Make sure testCollection contains values for the properties we omitted from
-  // expectedCollection to confirm that after we replace (PUT) the collection
-  // those properties are dropped from the stored collection.
-  t.truthy(testCollection.dataType);
-  t.truthy(testCollection.duplicateHandling);
+  delete updatedCollection.process;
 
   await request(app)
-    .put(`/collections/${name}/${version}`)
+    .put(`/collections/${originalCollection.name}/${originalCollection.version}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(expectedCollection)
+    .send(updatedCollection)
     .expect(200);
 
-  const { body: actualCollection } = await request(app)
-    .get(`/collections/${name}/${version}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  t.deepEqual(actualCollection, {
-    ...expectedCollection,
-    duplicateHandling: 'error', // Default value
-    reportToEms: true, // Default value
-    createdAt: actualCollection.createdAt,
-    updatedAt: actualCollection.updatedAt
+  const fetchedCollection = await collectionModel.get({
+    name: originalCollection.name,
+    version: originalCollection.version
   });
+
+  t.is(fetchedCollection.name, originalCollection.name);
+  t.is(fetchedCollection.version, originalCollection.version);
+  t.is(fetchedCollection.provider_path, updatedCollection.provider_path);
+  t.is(fetchedCollection.process, undefined);
 });
 
 test('PUT returns 404 for non-existent collection', async (t) => {

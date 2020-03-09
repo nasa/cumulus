@@ -158,7 +158,6 @@ test.beforeEach(async (t) => {
 
   t.context.testCollection = fakeCollectionFactory({
     name: 'fakeCollection',
-    dataType: 'fakeCollection',
     version: 'v1',
     duplicateHandling: 'error'
   });

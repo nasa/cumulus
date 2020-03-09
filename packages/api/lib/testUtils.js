@@ -222,7 +222,6 @@ function fakeAsyncOperationFactory(params = {}) {
 function fakeCollectionFactory(options = {}) {
   return {
     name: randomId('collectionName'),
-    dataType: randomId('dataType'),
     version: '0.0.0',
     provider_path: '',
     duplicateHandling: 'replace',
