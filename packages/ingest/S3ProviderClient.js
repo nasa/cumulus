@@ -1,6 +1,6 @@
 'use strict';
 
-const aws = require('@cumulus/common/aws');
+const S3 = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const errors = require('@cumulus/common/errors');
 const isString = require('lodash.isstring');
@@ -28,7 +28,7 @@ class S3ProviderClient {
       Key: remotePath
     };
 
-    const retval = await aws.downloadS3File(s3Obj, localPath);
+    const retval = await S3.downloadS3File(s3Obj, localPath);
     log.info(`Finishing downloading ${remoteUrl}`);
 
     return retval;
@@ -42,7 +42,7 @@ class S3ProviderClient {
    * @private
    */
   async list(path) {
-    const objects = await aws.listS3ObjectsV2({
+    const objects = await S3.listS3ObjectsV2({
       Bucket: this.bucket,
       FetchOwner: true,
       Prefix: path
@@ -67,11 +67,11 @@ class S3ProviderClient {
    * @returns {Promise} s3 uri of destination file
    */
   async sync(remotePath, bucket, key) {
-    const remoteUrl = aws.buildS3Uri(this.bucket, remotePath);
-    const s3uri = aws.buildS3Uri(bucket, key);
+    const remoteUrl = S3.buildS3Uri(this.bucket, remotePath);
+    const s3uri = S3.buildS3Uri(bucket, key);
     log.info(`Sync ${remoteUrl} to ${s3uri}`);
 
-    const exist = await aws.fileExists(this.bucket, remotePath.replace(/^\/+/, ''));
+    const exist = await S3.fileExists(this.bucket, remotePath.replace(/^\/+/, ''));
     if (!exist) {
       const message = `Source file not found ${remoteUrl}`;
       throw new errors.FileNotFound(message);
@@ -85,11 +85,11 @@ class S3ProviderClient {
     log.info('sync params:', params);
     const startTime = new Date();
 
-    await aws.s3CopyObject(params);
+    await S3.s3CopyObject(params);
 
     const syncTimeSecs = (new Date() - startTime) / 1000.0;
     log.info(`s3 Upload completed in ${syncTimeSecs} secs`, s3uri);
-    const syncedBytes = await aws.getObjectSize(params.Bucket, params.Key);
+    const syncedBytes = await S3.getObjectSize(params.Bucket, params.Key);
     log.info(`synced ${syncedBytes} bytes`);
     return s3uri;
   }

@@ -11,20 +11,28 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1714**
   - Changed the format of the message sent to the granule SNS Topic. Message includes the granule record under `record` and the type of event under `event`. Messages with `deleted` events will have the record that was deleted with a `deletedAt` timestamp. Options for `event` are `Create | Update | Delete`
 
+### Notable chanegs
 
-  
+- **CUMULUS-1739** - You can now exclude Elasticsearch from your `tf-modules/data-persistence` deployment (via `include_elasticsearch = false`) and your `tf-modules/cumulus` module will still deploy successfully.
+
 ### Changed
 
+- **CUMULUS-1739**
+  - Updated `tf-modules/data-persistence` to make Elasticsearch alarm resources and outputs conditional on the `include_elasticsearch` variable
+  - Updated `@cumulus/aws-client/S3.getObjectSize` to include automatic retries for any failures from `S3.headObject`
 - **CUMULUS-1768**
   - The `stats/summary` endpoint reports the distinct collections for the number of granules reported
-  
+
 ### Fixed
 
+- **CUMULUS-1739** - Fixed the `tf-modules/cumulus` and `tf-modules/archive` modules to make these Elasticsearch variables truly optional:
+  - `elasticsearch_domain_arn`
+  - `elasticsearch_hostname`
+  - `elasticsearch_security_group_id`
+- **CUMULUS-1768**
+  - Fixed the `stats/` endpoint so that data is correctly filtered by timestamp and `processingTime` is calculated correctly.
 - **CUMULUS-1775**
   - Fix/update api endpoint to use updated google auth endpoints such that it will work with new accounts
-  
-- **CUMULUS-1768**
-  - Fixed the `stats/` endpoint so that data is correctly filtered by timestamp and `processingTime` is calculated correctly.  
 
 ### Removed
 

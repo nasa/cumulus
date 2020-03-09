@@ -43,15 +43,18 @@ variable "ecs_cluster_name" {
 }
 
 variable "elasticsearch_domain_arn" {
-  type = string
+  type    = string
+  default = null
 }
 
 variable "elasticsearch_hostname" {
-  type = string
+  type    = string
+  default = null
 }
 
 variable "elasticsearch_security_group_id" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "ems_host" {

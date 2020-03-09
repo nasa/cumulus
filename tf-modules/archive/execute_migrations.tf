@@ -156,10 +156,7 @@ resource "aws_lambda_function" "execute_migrations" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.lambda_subnet_ids
-      security_group_ids = [
-        aws_security_group.no_ingress_all_egress[0].id,
-        var.elasticsearch_security_group_id
-      ]
+      security_group_ids = local.lambda_security_group_ids
     }
   }
 }

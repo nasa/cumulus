@@ -223,7 +223,7 @@ exports.headObject = improveStackTrace(
  * @returns {Promise<integer>} - object size, in bytes
  */
 exports.getObjectSize = (bucket, key) =>
-  exports.headObject(bucket, key)
+  exports.headObject(bucket, key, { retries: 3 })
     .then((response) => response.ContentLength);
 
 /**

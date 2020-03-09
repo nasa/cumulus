@@ -67,11 +67,6 @@ module "cumulus" {
     # ... more buckets ...
   }
 
-  elasticsearch_alarms = ["arn:aws:cloudwatch:us-east-1:12345:alarm:prefix-es-NodesLowAlarm"]
-  elasticsearch_domain_arn = "arn:aws:es:us-east-1:12345:domain/prefix-es"
-  elasticsearch_hostname = "prefix-es-abcdef.us-east-1.es.amazonaws.com"
-  elasticsearch_security_group_id = ["sg-12345"]
-
   dynamo_tables = {
     "access_tokens" = {
       "arn" = "arn:aws:dynamodb:us-east-1:12345:table/prefix-AccessTokensTable"
@@ -87,5 +82,11 @@ module "cumulus" {
   distribution_url = "https://abc123.execute-api.us-east-1.amazonaws.com/dev"
 
   sts_credentials_lambda_function_arn = "arn:aws:lambda:us-east-1:1234567890:function:sts-lambda"
+
+  # Optional
+  elasticsearch_alarms = ["arn:aws:cloudwatch:us-east-1:12345:alarm:prefix-es-NodesLowAlarm"]
+  elasticsearch_domain_arn = "arn:aws:es:us-east-1:12345:domain/prefix-es"
+  elasticsearch_hostname = "prefix-es-abcdef.us-east-1.es.amazonaws.com"
+  elasticsearch_security_group_id = ["sg-12345"]
 }
 ```
