@@ -60,14 +60,14 @@ test.after.always(async () => {
   await s3.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
-test.serial('Stats returns one collection when a collecion is indexed', async (t) => {
+test.serial('Stats does not return a collection if the collection has no active granules', async (t) => {
   const collection = fakeCollectionFactory();
   await indexer.indexCollection(esClient, collection, t.context.esAlias);
 
   const stats = new Stats({}, null, process.env.ES_INDEX);
   const queryResult = await stats.query();
 
-  t.is(queryResult.collections.value, 1);
+  t.is(queryResult.collections.value, 0);
 });
 
 test.serial('Stats returns one granule when a granule is indexed', async (t) => {
@@ -124,4 +124,81 @@ test.serial('Count returns correct granule and collection count', async (t) => {
   const collectionCountResult = await collectionStats.count();
 
   t.is(collectionCountResult.meta.count, 1);
+});
+
+test.serial('Count returns correct count for date range', async (t) => {
+  await Promise.all([
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2({
+      updatedAt: new Date(2020, 0, 27)
+    }), t.context.esAlias),
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2(), t.context.esAlias),
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed' }), t.context.esAlias),
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed', updatedAt: new Date(2020, 0, 29) }), t.context.esAlias)
+  ]);
+
+  let stats = new Stats(
+    { queryStringParameters: { updatedAt__to: (new Date(2020, 0, 30)).getTime() } },
+    'granule',
+    process.env.ES_INDEX
+  );
+  let countResult = await stats.count();
+
+  t.is(countResult.meta.count, 2);
+  t.deepEqual(countResult.count, [
+    { key: 'completed', count: 1 },
+    { key: 'failed', count: 1 }
+  ]);
+
+  stats = new Stats(
+    { queryStringParameters: { updatedAt__from: (new Date(2020, 0, 30)).getTime() } },
+    'granule',
+    process.env.ES_INDEX
+  );
+  countResult = await stats.count();
+
+  t.is(countResult.meta.count, 2);
+  t.deepEqual(countResult.count, [
+    { key: 'completed', count: 1 },
+    { key: 'failed', count: 1 }
+  ]);
+
+  stats = new Stats(
+    {
+      queryStringParameters: {
+        updatedAt__from: (new Date(2020, 0, 25)).getTime(),
+        updatedAt__to: (new Date(2020, 0, 28)).getTime()
+      }
+    },
+    'granule',
+    process.env.ES_INDEX
+  );
+  countResult = await stats.count();
+
+  t.is(countResult.meta.count, 1);
+  t.deepEqual(countResult.count, [
+    { key: 'completed', count: 1 }
+  ]);
+});
+
+test.serial('Count returns correct count for with custom field specified', async (t) => {
+  await Promise.all([
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'collection1' }), t.context.esAlias),
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'collection2' }), t.context.esAlias),
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'collection3', status: 'failed' }), t.context.esAlias),
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'collection1', status: 'failed', updatedAt: new Date(2020, 0, 29) }), t.context.esAlias)
+  ]);
+
+  const stats = new Stats(
+    { queryStringParameters: { field: 'collectionId' } },
+    'granule',
+    process.env.ES_INDEX
+  );
+  const countResult = await stats.count();
+
+  t.is(countResult.meta.count, 4);
+  t.deepEqual(countResult.count, [
+    { key: 'collection1', count: 2 },
+    { key: 'collection2', count: 1 },
+    { key: 'collection3', count: 1 }
+  ]);
 });
