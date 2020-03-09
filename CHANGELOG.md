@@ -6,20 +6,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### BREAKING CHNAGES
+### BREAKING CHANGES
 
 - **CUMULUS-1714**
   - Changed the format of the message sent to the granule SNS Topic. Message includes the granule record under `record` and the type of event under `event`. Messages with `deleted` events will have the record that was deleted with a `deletedAt` timestamp. Options for `event` are `Create | Update | Delete`
 
+
+  
 ### Changed
 
 - **CUMULUS-1768**
   - The `stats/summary` endpoint reports the distinct collections for the number of granules reported
-
+  
 ### Fixed
 
+- **CUMULUS-1775**
+  - Fix/update api endpoint to use updated google auth endpoints such that it will work with new accounts
+  
 - **CUMULUS-1768**
-  - Fixed the `stats/` endpoint so that data is correctly filtered by timestamp and `processingTime` is calculated correctly.
+  - Fixed the `stats/` endpoint so that data is correctly filtered by timestamp and `processingTime` is calculated correctly.  
 
 ### Removed
 

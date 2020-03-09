@@ -26,14 +26,22 @@ test('GoogleOAuth2.getAuthorizationUrl() properly reqeusts an authorization URL 
   const mockGoogleOAuth2Client = {
     generateAuthUrl: (params) => {
       t.is(params.access_type, 'offline');
-      t.is(params.scope, 'https://www.googleapis.com/auth/userinfo.email');
+      t.deepEqual(params.scope, ['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile']);
       t.is(params.state, 'my-state');
 
       return 'http://www.example.com';
     }
   };
 
-  const mockGooglePlusPeopleClient = {};
+  const mockGooglePlusPeopleClient = {
+    people: {
+      get: async () => ({
+        data: {
+          emailAddresses: ['fakeEmail@fake.com']
+        }
+      })
+    }
+  };
 
   const googleOAuth2 = new GoogleOAuth2(mockGoogleOAuth2Client, mockGooglePlusPeopleClient);
   googleOAuth2.getAuthorizationUrl('my-state');
@@ -44,7 +52,15 @@ test('GoogleOAuth2.getAuthorizationUrl() returns the correct authorization URL',
     generateAuthUrl: () => 'http://www.example.com'
   };
 
-  const mockGooglePlusPeopleClient = {};
+  const mockGooglePlusPeopleClient = {
+    people: {
+      get: async () => ({
+        data: {
+          emailAddresses: ['fakeEmail@fake.com']
+        }
+      })
+    }
+  };
 
   const googleOAuth2 = new GoogleOAuth2(mockGoogleOAuth2Client, mockGooglePlusPeopleClient);
   const authorizationUrl = googleOAuth2.getAuthorizationUrl();
@@ -55,8 +71,17 @@ test('GoogleOAuth2.getAuthorizationUrl() returns the correct authorization URL',
 test('GoogleOAuth2.getAccessToken() throws a TypeError if authorizationCode is not set', async (t) => {
   const mockGoogleOAuth2Client = {};
 
-  const mockGooglePlusPeopleClient = {};
-
+  const mockGooglePlusPeopleClient = {
+    people: {
+      get: async () => ({
+        data: {
+          emailAddresses: [
+            { value: 'fakeEmail@fake.com' }
+          ]
+        }
+      })
+    }
+  };
   const googleOAuth2 = new GoogleOAuth2(mockGoogleOAuth2Client, mockGooglePlusPeopleClient);
 
   try {
@@ -84,13 +109,15 @@ test('GoogleOAuth2.getAccessToken() properly reqeusts a token from the googleOAu
   };
 
   const mockGooglePlusPeopleClient = {
-    get: async () => ({
-      data: {
-        emails: [
-          { value: 'sidney@example.com' }
-        ]
-      }
-    })
+    people: {
+      get: async () => ({
+        data: {
+          emailAddresses: [
+            { value: 'sidney@example.com' }
+          ]
+        }
+      })
+    }
   };
 
   const googleOAuth2 = new GoogleOAuth2(mockGoogleOAuth2Client, mockGooglePlusPeopleClient);
@@ -111,13 +138,15 @@ test('GoogleOAuth2.getAccessToken() properly sets credentials on the googleOAuth
   };
 
   const mockGooglePlusPeopleClient = {
-    get: async () => ({
-      data: {
-        emails: [
-          { value: 'sidney@example.com' }
-        ]
-      }
-    })
+    people: {
+      get: async () => ({
+        data: {
+          emailAddresses: [
+            { value: 'sidney@example.com' }
+          ]
+        }
+      })
+    }
   };
 
   const googleOAuth2 = new GoogleOAuth2(mockGoogleOAuth2Client, mockGooglePlusPeopleClient);
@@ -135,17 +164,19 @@ test('GoogleOAuth2.getAccessToken() properly requests user info from the googleP
   };
 
   const mockGooglePlusPeopleClient = {
-    get: async (params) => {
-      t.is(params.userId, 'me');
-      t.is(params.auth, mockGoogleOAuth2Client);
-
-      return {
-        data: {
-          emails: [
-            { value: 'sidney@example.com' }
-          ]
-        }
-      };
+    people: {
+      get: async (params) => {
+        t.is(params.resourceName, 'people/me');
+        t.is(params.access_token, getTokenResponse.tokens.access_token);
+        t.is(params.personFields, 'emailAddresses');
+        return {
+          data: {
+            emailAddresses: [
+              { value: 'sidney@example.com' }
+            ]
+          }
+        };
+      }
     }
   };
 
@@ -168,17 +199,19 @@ test('GoogleOAuth2.getAccessToken() returns token information for a valid author
   };
 
   const mockGooglePlusPeopleClient = {
-    get: async (params) => {
-      t.is(params.userId, 'me');
-      t.is(params.auth, mockGoogleOAuth2Client);
-
-      return {
-        data: {
-          emails: [
-            { value: 'sidney@example.com' }
-          ]
-        }
-      };
+    people: {
+      get: async (params) => {
+        t.is(params.resourceName, 'people/me');
+        t.is(params.access_token, getTokenResponse.tokens.access_token);
+        t.is(params.personFields, 'emailAddresses');
+        return {
+          data: {
+            emailAddresses: [
+              { value: 'sidney@example.com' }
+            ]
+          }
+        };
+      }
     }
   };
 
