@@ -72,7 +72,7 @@
     "express": "^4.16.4",
     "express-boom": "^3.0.0",
     "express-promise-router": "^3.0.3",
-    "googleapis": "^39.1.0",
+    "googleapis": "^47.0.0",
     "got": "^8.3.0",
     "hsts": "^2.1.0",
     "is-ip": "^2.0.0",

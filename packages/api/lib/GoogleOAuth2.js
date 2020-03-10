@@ -38,7 +38,7 @@ class GoogleOAuth2 extends OAuth2 {
   getAuthorizationUrl(state) {
     return this.googleOAuth2Client.generateAuthUrl({
       access_type: 'offline',
-      scope: 'https://www.googleapis.com/auth/userinfo.email',
+      scope: ['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'],
       state: state
     });
   }
@@ -64,16 +64,16 @@ class GoogleOAuth2 extends OAuth2 {
 
     this.googleOAuth2Client.setCredentials(tokens);
 
-    const userDataResponse = await this.googlePlusPeopleClient.get({
-      userId: 'me',
-      auth: this.googleOAuth2Client
+    const userDataResponse = await this.googlePlusPeopleClient.people.get({
+      resourceName: 'people/me',
+      access_token: tokens.access_token,
+      personFields: 'emailAddresses'
     });
-
     return {
       accessToken: tokens.access_token,
       expirationTime: tokens.expiry_date,
       refreshToken: tokens.refresh_token,
-      username: userDataResponse.data.emails[0].value
+      username: userDataResponse.data.emailAddresses[0].value
     };
   }
 

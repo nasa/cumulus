@@ -218,7 +218,7 @@ function buildGoogleOAuth2ProviderFromEnv() {
     process.env.TOKEN_REDIRECT_ENDPOINT
   );
 
-  const googlePlusPeopleClient = google.plus('v1').people;
+  const googlePlusPeopleClient = google.people('v1');
 
   return new GoogleOAuth2(googleOAuth2Client, googlePlusPeopleClient);
 }

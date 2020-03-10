@@ -68,4 +68,4 @@ Improve contributing docs and consolidate them in the standard location https://
 
 Changes should be documented in CHANGELOG.md. Update the changelog with a description of the changes, including the JIRA issue number. The format should follow [this standard](http://keepachangelog.com/en/1.0.0/).
 
-### For more information on Cumulus governance, see the [Cumulus Code Contribution Guidelines](https://docs.google.com/document/d/14J_DS6nyQ32BpeVjdR-YKfzHAzFB299tKghPGshXUTU/edit) and [the Cumulus Wiki](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus).
+### For more information on Cumulus governance, see the [EOSDIS General Open Source Software Collaboration and Contribution Process](https://docs.google.com/document/d/1PfyONpRX3_lk2VqOF_yXQ-LKlPGFbJwfXOtuQWdc2BI/edit) and [the Cumulus Wiki](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus).
