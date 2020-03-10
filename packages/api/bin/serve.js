@@ -64,19 +64,15 @@ async function populateBucket(bucket, stackName) {
 }
 
 function setTableEnvVariables(stackName) {
+  process.env.FilesTable = `${stackName}-FilesTable`;
+
   const tableModels = Object
     .keys(models)
     .filter((tableModel) => tableModel !== 'Manager');
 
   // generate table names
   let tableNames = tableModels
-    .map((tableModel) => {
-      let table = tableModel;
-      if (tableModel === 'FileClass') {
-        table = 'File';
-      }
-      return `${table}sTable`;
-    });
+    .map((tableModel) => `${tableModel}sTable`);
 
   // set table env variables
   tableNames = tableNames.map((tableName) => {

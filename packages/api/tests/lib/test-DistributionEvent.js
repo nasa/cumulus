@@ -1,17 +1,34 @@
+'ust strict';
+
 const test = require('ava');
-const sinon = require('sinon');
+const pMap = require('p-map');
 
 const { randomString } = require('@cumulus/common/test-utils');
 
+const Granule = require('../../models/granules');
 const DistributionEvent = require('../../lib/DistributionEvent');
 const {
   fakeGranuleFactoryV2,
   fakeFileFactory
 } = require('../../lib/testUtils');
-const FileClass = require('../../models/files');
+const GranuleFilesCache = require('../../lib/GranuleFilesCache');
 
-test.before(() => {
+const createGranule = async (granule) => {
+  await (new Granule()).create(granule);
+
+  await pMap(
+    granule.files,
+    ({ bucket, key }) =>
+      GranuleFilesCache.put({ bucket, key, granuleId: granule.granuleId })
+  );
+};
+
+test.before(async () => {
   process.env.FilesTable = randomString();
+  await GranuleFilesCache.createCacheTable();
+
+  process.env.GranulesTable = randomString();
+  await (new Granule()).createTable();
 });
 
 test.beforeEach(async (t) => {
@@ -40,6 +57,11 @@ test.beforeEach(async (t) => {
     + 'SigV4 ECDHE-RSA-AES128-GCM-SHA256 QueryString public-bucket.s3.amazonaws.com TLSv1.2';
 });
 
+test.after.always(async () => {
+  await GranuleFilesCache.deleteCacheTable();
+  await (new Granule()).deleteTable();
+});
+
 test('DistributionEvent.isDistributionEvent() returns false for non distribution event', (t) => {
   t.false(DistributionEvent.isDistributionEvent('testing'));
   t.false(DistributionEvent.isDistributionEvent('REST.GET.OBJECT'));
@@ -52,7 +74,7 @@ test('DistributionEvent.isDistributionEvent() returns true for distribution even
   t.true(DistributionEvent.isDistributionEvent(t.context.noAuthDownloadLogLine));
 });
 
-test.serial('DistributionEvent.toString() returns correct output for authenticated download', async (t) => {
+test('DistributionEvent.toString() returns correct output for authenticated download', async (t) => {
   const granule = fakeGranuleFactoryV2({
     collectionId: 'MOD09GQ___001',
     files: [
@@ -64,31 +86,26 @@ test.serial('DistributionEvent.toString() returns correct output for authenticat
     ]
   });
 
-  const stub = sinon.stub(FileClass.prototype, 'getGranuleForFile')
-    .callsFake(() => Promise.resolve(granule));
+  await createGranule(granule);
 
-  try {
-    const distributionEvent = new DistributionEvent(t.context.authDownloadLogLine);
-    const output = await distributionEvent.toString();
-    t.is(
-      output,
-      [
-        '24-FEB-20 03:05:51 PM',
-        t.context.username,
-        '192.0.2.3',
-        's3://protected-bucket/files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
-        '21708',
-        'S',
-        'MOD09GQ',
-        '001',
-        granule.granuleId,
-        'METADATA',
-        'HTTPS'
-      ].join('|&|')
-    );
-  } finally {
-    stub.restore();
-  }
+  const distributionEvent = new DistributionEvent(t.context.authDownloadLogLine);
+  const output = await distributionEvent.toString();
+  t.is(
+    output,
+    [
+      '24-FEB-20 03:05:51 PM',
+      t.context.username,
+      '192.0.2.3',
+      's3://protected-bucket/files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
+      '21708',
+      'S',
+      'MOD09GQ',
+      '001',
+      granule.granuleId,
+      'METADATA',
+      'HTTPS'
+    ].join('|&|')
+  );
 });
 
 test.serial('DistributionEvent.toString() returns correct output for un-authenticated download', async (t) => {
@@ -103,29 +120,24 @@ test.serial('DistributionEvent.toString() returns correct output for un-authenti
     ]
   });
 
-  const stub = sinon.stub(FileClass.prototype, 'getGranuleForFile')
-    .callsFake(() => Promise.resolve(granule));
+  await createGranule(granule);
 
-  try {
-    const distributionEvent = new DistributionEvent(t.context.noAuthDownloadLogLine);
-    const output = await distributionEvent.toString();
-    t.is(
-      output,
-      [
-        '24-FEB-20 09:45:37 PM',
-        '-',
-        '192.0.2.3',
-        's3://public-bucket/files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
-        '21708',
-        'S',
-        'MOD09GQ',
-        '001',
-        granule.granuleId,
-        'SCIENCE',
-        'HTTPS'
-      ].join('|&|')
-    );
-  } finally {
-    stub.restore();
-  }
+  const distributionEvent = new DistributionEvent(t.context.noAuthDownloadLogLine);
+  const output = await distributionEvent.toString();
+  t.is(
+    output,
+    [
+      '24-FEB-20 09:45:37 PM',
+      '-',
+      '192.0.2.3',
+      's3://public-bucket/files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
+      '21708',
+      'S',
+      'MOD09GQ',
+      '001',
+      granule.granuleId,
+      'SCIENCE',
+      'HTTPS'
+    ].join('|&|')
+  );
 });

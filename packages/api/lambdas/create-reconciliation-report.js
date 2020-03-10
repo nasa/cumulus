@@ -3,6 +3,7 @@
 const clonedeep = require('lodash.clonedeep');
 const keyBy = require('lodash.keyby');
 const moment = require('moment');
+const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const { buildS3Uri } = require('@cumulus/aws-client/S3');
 const S3ListObjectsV2Queue = require('@cumulus/aws-client/S3ListObjectsV2Queue');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -11,10 +12,29 @@ const bucketsConfigJsonObject = require('@cumulus/common/bucketsConfigJsonObject
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 
 const { CMR, CMRSearchConceptQueue, constructOnlineAccessUrl } = require('@cumulus/cmrjs');
-const { Collection, Granule, FileClass } = require('../models');
+
+const GranuleFilesCache = require('../lib/GranuleFilesCache');
+const { Collection, Granule } = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
 
 const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includes(bucketConfig.type);
+
+/**
+ * return the queue of the files for a given bucket,
+ * the items should be ordered by the range key which is the bucket 'key' attribute
+ *
+ * @param {string} bucket - bucket name
+ * @returns {Array<Object>} the files' queue for a given bucket
+ */
+const createSearchQueueForBucket = (bucket) => new DynamoDbSearchQueue(
+  {
+    TableName: GranuleFilesCache.cacheTableName(),
+    ExpressionAttributeNames: { '#b': 'bucket' },
+    ExpressionAttributeValues: { ':bucket': bucket },
+    FilterExpression: '#b = :bucket'
+  },
+  'scan'
+);
 
 /**
  * Verify that all objects in an S3 bucket contain corresponding entries in
@@ -25,7 +45,7 @@ const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includ
  */
 async function createReconciliationReportForBucket(Bucket) {
   const s3ObjectsQueue = new S3ListObjectsV2Queue({ Bucket });
-  const dynamoDbFilesLister = new FileClass().getFilesForBucket(Bucket);
+  const dynamoDbFilesLister = createSearchQueueForBucket(Bucket);
 
   let okCount = 0;
   const onlyInS3 = [];

@@ -147,6 +147,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-1725**
+  - Moved the logic that updates the granule files cache Dyanmo table into its
+    own Lambda function called `granuleFilesCacheUpdater`.
+
 - **CUMULUS-1736**
   - The `collections` model in the API package now determines the name of a
     collection based on the `name` property, rather than using `dataType` and
