@@ -112,7 +112,16 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
     ]
     resources = [for k, v in var.dynamo_tables : v.arn]
   }
+}
 
+resource "aws_iam_role_policy" "ecs_cluster_instance" {
+  role   = aws_iam_role.ecs_cluster_instance.id
+  policy = data.aws_iam_policy_document.ecs_cluster_instance_policy.json
+}
+
+# Give ECS permission to access ES, if necessary
+data "aws_iam_policy_document" "ecs_cluster_access_es_document" {
+  count = var.elasticsearch_domain_arn != null ? 1 : 0
   statement {
     actions = [
       "es:ESHttpDelete",
@@ -125,9 +134,10 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
   }
 }
 
-resource "aws_iam_role_policy" "ecs_cluster_instance" {
+resource "aws_iam_role_policy" "ecs_cluster_access_es_policy" {
+  count = var.elasticsearch_domain_arn != null ? 1 : 0
   role   = aws_iam_role.ecs_cluster_instance.id
-  policy = data.aws_iam_policy_document.ecs_cluster_instance_policy.json
+  policy = data.aws_iam_policy_document.ecs_cluster_access_es_document[0].json
 }
 
 resource "aws_iam_instance_profile" "ecs_cluster_instance" {

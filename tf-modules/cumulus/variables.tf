@@ -64,16 +64,19 @@ variable "ecs_cluster_min_size" {
 variable "elasticsearch_domain_arn" {
   description = "The ARN of an Elasticsearch domain to use for storing data"
   type        = string
+  default     = null
 }
 
 variable "elasticsearch_hostname" {
   description = "The hostname of an Elasticsearch domain to use for storing data"
   type        = string
+  default     = null
 }
 
 variable "elasticsearch_security_group_id" {
   description = "The ID of the security group for the Elasticsearch domain specified by `elasticsearch_domain_arn`"
   type        = string
+  default     = ""
 }
 
 variable "prefix" {

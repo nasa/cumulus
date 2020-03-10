@@ -6,10 +6,38 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### BREAKING CHNAGES
+### BREAKING CHANGES
 
 - **CUMULUS-1714**
   - Changed the format of the message sent to the granule SNS Topic. Message includes the granule record under `record` and the type of event under `event`. Messages with `deleted` events will have the record that was deleted with a `deletedAt` timestamp. Options for `event` are `Create | Update | Delete`
+
+### Notable chanegs
+
+- **CUMULUS-1739** - You can now exclude Elasticsearch from your `tf-modules/data-persistence` deployment (via `include_elasticsearch = false`) and your `tf-modules/cumulus` module will still deploy successfully.
+
+### Changed
+
+- **CUMULUS-1739**
+  - Updated `tf-modules/data-persistence` to make Elasticsearch alarm resources and outputs conditional on the `include_elasticsearch` variable
+  - Updated `@cumulus/aws-client/S3.getObjectSize` to include automatic retries for any failures from `S3.headObject`
+- **CUMULUS-1768**
+  - The `stats/summary` endpoint reports the distinct collections for the number of granules reported
+
+### Fixed
+
+- **CUMULUS-1739** - Fixed the `tf-modules/cumulus` and `tf-modules/archive` modules to make these Elasticsearch variables truly optional:
+  - `elasticsearch_domain_arn`
+  - `elasticsearch_hostname`
+  - `elasticsearch_security_group_id`
+- **CUMULUS-1768**
+  - Fixed the `stats/` endpoint so that data is correctly filtered by timestamp and `processingTime` is calculated correctly.
+- **CUMULUS-1775**
+  - Fix/update api endpoint to use updated google auth endpoints such that it will work with new accounts
+
+### Removed
+
+- **CUMULUS-1768**
+  - Removed API endpoints `stats/histogram` and `stats/average`. All advanced stats needs should be acquired from Cloud Metrics or similarly configured ELK stack.
 
 ## [v1.19.0] 2020-02-28
 
@@ -255,9 +283,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Remove the deployment script that creates encryption keys and stores them to
     S3
 
-- **CUMULUS-1718**
-  - Removed the `publishReports` lambda, which was replaced by `cwSfEventToDbRecords`, due to a refactor in the way we process step function events.
-  - Removed the `sf_sns_report_task` output from the `cumulus` module.
+- **CUMULUS-1768**
+  - Removed API endpoints `stats/histogram` and `stats/average`. All advanced stats needs should be acquired from Cloud Metrics or similarly configured ELK stack.
 
 ### Fixed
 
@@ -275,7 +302,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Links with filepaths in the link target (e.g. `<a href="/path/to/file.txt">`). These files will be returned from HTTP file discovery **as the file name only** (e.g. `file.txt`).
 
 - **CUMULUS-1768**
-  - Fix an issue in the stats endpoint in `@cumulus/api` to send back stats for the correct type
+  - Fix an issue in the stats endpoints in `@cumulus/api` to send back stats for the correct type
 
 ## [v1.18.0] 2020-02-03
 
