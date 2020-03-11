@@ -1,4 +1,3 @@
-from cumulus_process.handlers import activity
 from cumulus_process import Process
 
 

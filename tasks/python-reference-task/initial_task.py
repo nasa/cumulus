@@ -1,12 +1,14 @@
 from run_cumulus_task import run_cumulus_task
 
+
 def task(event, context):
-    return {"example": {"output": "payload"}}
+    return {"inputData": event['input']['initialData'],
+            "configInputData": event['config']['configData'],
+            "newData": {"newKey1": "newData1"}}
 
 
 def handler(event, context):
     return run_cumulus_task(task, event, context)
-
 
 if __name__ == "__main__":
     result = handler({
