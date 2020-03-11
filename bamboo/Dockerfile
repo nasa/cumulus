@@ -1,6 +1,6 @@
 ## Dockerfile to create integration/unit test environment
 FROM node:10.16.3
-ADD ./install_pyenv.sh /install_pyenv.sh
+ADD ./bamboo/install_pyenv.sh /install_pyenv.sh
 RUN apt update && npm config set unsafe-perm true &&\
     apt install -y netcat zip jq rsync zip
 RUN apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev \
