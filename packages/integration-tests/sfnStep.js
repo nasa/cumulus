@@ -1,4 +1,5 @@
 /* eslint-disable max-classes-per-file */
+
 'use strict';
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
