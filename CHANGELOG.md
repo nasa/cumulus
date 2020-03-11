@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- [`AccessToken.get()`](https://github.com/nasa/cumulus/blob/master/packages/api/models/access-tokens.js) now enforces [strongly consistent reads from DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html)
 - **CUMULUS-1739**
   - Updated `tf-modules/data-persistence` to make Elasticsearch alarm resources and outputs conditional on the `include_elasticsearch` variable
   - Updated `@cumulus/aws-client/S3.getObjectSize` to include automatic retries for any failures from `S3.headObject`
