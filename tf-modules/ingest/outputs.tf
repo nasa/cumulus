@@ -64,6 +64,12 @@ output "pdr_status_check_task" {
   }
 }
 
+output "python_reference_task" {
+  value = {
+    task_arn = aws_lambda_function.python_reference_task.arn
+  }
+}
+
 output "post_to_cmr_task" {
   value = {
     task_arn = aws_lambda_function.post_to_cmr_task.arn
