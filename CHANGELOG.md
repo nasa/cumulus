@@ -10,10 +10,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1714**
   - Changed the format of the message sent to the granule SNS Topic. Message includes the granule record under `record` and the type of event under `event`. Messages with `deleted` events will have the record that was deleted with a `deletedAt` timestamp. Options for `event` are `Create | Update | Delete`
+- **CUMULUS-1769** - `deploy_to_ngap` is now a **required** variable for the `tf-modules/cumulus` module. **For those deploying to NGAP environments, this variable should always be set to `true`.**
 
 ### Notable chanegs
 
 - **CUMULUS-1739** - You can now exclude Elasticsearch from your `tf-modules/data-persistence` deployment (via `include_elasticsearch = false`) and your `tf-modules/cumulus` module will still deploy successfully.
+- **CUMULUS-1769** - If you set `deploy_to_ngap = true` for the `tf-modules/archive` Terraform module, **you can only deploy your archive API gateway as `PRIVATE`**, not `EDGE`.
+
+### Added
+
+- **CUMULUS-1769**
+  - Added `deploy_to_ngap` boolean variable for the `tf-modules/cumulus` and `tf-modules/archive` Terraform modules. This variable is required. **For those deploying to NGAP environments, this variable should always be set to `true`.**
 
 ### Changed
 
@@ -32,6 +39,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `elasticsearch_security_group_id`
 - **CUMULUS-1768**
   - Fixed the `stats/` endpoint so that data is correctly filtered by timestamp and `processingTime` is calculated correctly.
+- **CUMULUS-1769**
+  - In the `tf-modules/archive` Terraform module, the `lifecycle` block ignoring changes to the `policy` of the archive API gateway is now only enforced if `deploy_to_ngap = true`. This fixes a bug where users deploying outside of NGAP could not update their API gateway's resource policy when going from `PRIVATE` to `EDGE`, preventing their API from being accessed publicly.
 - **CUMULUS-1775**
   - Fix/update api endpoint to use updated google auth endpoints such that it will work with new accounts
 

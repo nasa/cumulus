@@ -1,6 +1,7 @@
 locals {
   api_port_substring = var.api_port == null ? "" : ":${var.api_port}"
-  api_uri            = var.api_url == null ? "https://${aws_api_gateway_rest_api.api.id}.execute-api.${data.aws_region.current.name}.amazonaws.com${local.api_port_substring}/${var.api_gateway_stage}/" : var.api_url
+  api_id             = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
+  api_uri            = var.api_url == null ? "https://${local.api_id}.execute-api.${data.aws_region.current.name}.amazonaws.com${local.api_port_substring}/${var.api_gateway_stage}/" : var.api_url
   api_redirect_uri   = "${local.api_uri}token"
 }
 
@@ -129,6 +130,7 @@ resource "aws_lambda_function" "api" {
 }
 
 data "aws_iam_policy_document" "private_api_policy_document" {
+  count = var.deploy_to_ngap || var.private_archive_api_gateway ? 1 : 0
   statement {
     principals {
       type        = "*"
@@ -145,13 +147,25 @@ data "aws_iam_policy_document" "private_api_policy_document" {
 }
 
 resource "aws_api_gateway_rest_api" "api" {
+  count = var.deploy_to_ngap ? 1 : 0
   name = "${var.prefix}-archive"
 
   lifecycle {
     ignore_changes = [policy]
   }
 
-  policy = var.private_archive_api_gateway ? data.aws_iam_policy_document.private_api_policy_document.json : null
+  policy = data.aws_iam_policy_document.private_api_policy_document[0].json
+
+  endpoint_configuration {
+    types = ["PRIVATE"]
+  }
+}
+
+resource "aws_api_gateway_rest_api" "api_outside_ngap" {
+  count = var.deploy_to_ngap ? 0 : 1
+  name = "${var.prefix}-archive"
+
+  policy = var.private_archive_api_gateway ? data.aws_iam_policy_document.private_api_policy_document[0].json : null
 
   endpoint_configuration {
     types = var.private_archive_api_gateway ? ["PRIVATE"] : ["EDGE"]
@@ -165,20 +179,20 @@ resource "aws_lambda_permission" "api_endpoints_lambda_permission" {
 }
 
 resource "aws_api_gateway_resource" "proxy" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  parent_id   = aws_api_gateway_rest_api.api.root_resource_id
+  rest_api_id = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id: aws_api_gateway_rest_api.api_outside_ngap[0].id
+  parent_id   = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].root_resource_id : aws_api_gateway_rest_api.api_outside_ngap[0].root_resource_id
   path_part   = "{proxy+}"
 }
 
 resource "aws_api_gateway_method" "any_proxy" {
-  rest_api_id   = aws_api_gateway_rest_api.api.id
+  rest_api_id   = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
   resource_id   = aws_api_gateway_resource.proxy.id
   http_method   = "ANY"
   authorization = "NONE"
 }
 
 resource "aws_api_gateway_integration" "any_proxy" {
-  rest_api_id             = aws_api_gateway_rest_api.api.id
+  rest_api_id             = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
   resource_id             = aws_api_gateway_resource.proxy.id
   http_method             = aws_api_gateway_method.any_proxy.http_method
   type                    = "AWS_PROXY"
@@ -189,6 +203,6 @@ resource "aws_api_gateway_integration" "any_proxy" {
 resource "aws_api_gateway_deployment" "api" {
   depends_on = ["aws_api_gateway_integration.any_proxy"]
 
-  rest_api_id = aws_api_gateway_rest_api.api.id
+  rest_api_id = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
   stage_name  = var.api_gateway_stage
 }

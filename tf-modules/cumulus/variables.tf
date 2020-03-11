@@ -31,6 +31,11 @@ variable "cumulus_message_adapter_lambda_layer_arn" {
   default     = null
 }
 
+variable "deploy_to_ngap" {
+  description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
+  type        = bool
+}
+
 variable "dynamo_tables" {
   description = "A map of objects with the `arn` and `name` of every DynamoDB table for your Cumulus deployment."
   type        = map(object({ name = string, arn = string }))
