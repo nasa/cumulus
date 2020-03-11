@@ -300,6 +300,7 @@ remote state.</p>
 appropriate values. See the <a href="https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf">Cumulus module variable definitions</a> for more detail on each variable.</p>
 <p>Notes on specific variables:</p>
 <ul>
+<li><strong><code>deploy_to_ngap</code></strong>: This variable controls the provisioning of certain resources and policies that are specific to an NGAP environment. <strong>If you are deploying to NGAP, you must set this variable to <code>true</code>.</strong></li>
 <li><strong><code>prefix</code></strong>: The value should be the same as the <code>prefix</code> from the data-persistence deployment.</li>
 <li><strong><code>thin_egress_jwt_secret_name</code></strong>: Use the value created during the previous <a href="#create-a-secret-for-signing-thin-egress-app-jwts"><code>Create a secret for signing Thin Egress App JWTs</code></a> step</li>
 <li><strong><code>token_secret</code></strong>: A string value used for signing and verifying <a href="https://jwt.io/">JSON Web Tokens (JWTs)</a> issued by the API. For security purposes, it is <strong>strongly recommended that this value be a 32-character string</strong>.</li>
