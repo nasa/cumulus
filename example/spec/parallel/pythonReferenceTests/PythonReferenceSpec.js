@@ -2,36 +2,15 @@
 
 const workflowName = 'PythonReferenceWorkflow';
 
-const { Execution } = require('@cumulus/api/models');
 const { ActivityStep, LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const {
-  api: apiTestUtils,
-  addCollections,
-  addProviders,
-  buildAndExecuteWorkflow,
-  cleanupCollections,
-  cleanupProviders,
-  waitForCompletedExecution
-} = require('@cumulus/integration-tests');
+const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
 
-const {
-  loadConfig,
-  createTimestampedTestId,
-  createTestSuffix,
-  isCumulusLogEntry
-} = require('../../helpers/testUtils');
-
-
-
+const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The Python Reference workflow', () => {
-  let collection;
   let config;
   let lambdaStep;
   let activityStep;
-  let provider;
-  let testId;
-  let testSuffix;
   let workflowExecution;
 
   const initialPayload = {
@@ -44,8 +23,6 @@ describe('The Python Reference workflow', () => {
   beforeAll(async () => {
     config = await loadConfig();
     process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-    testId = createTimestampedTestId(config.stackName, 'PythonReferenceSpec');
-    testSuffix = createTestSuffix(testId);
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
