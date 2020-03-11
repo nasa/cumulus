@@ -30,4 +30,3 @@ Then update [`python_reference_workflow.tf`](https://github.com/nasa/cumulus/blo
 ## Updates
 
 Updates should generally consist of updates to the included `requirements.txt`, as the purpose of this task is to ensure compatibility with updates to the [cumulus-message-adapter-python](https://github.com/nasa/cumulus-message-adapter-python) client library via [cumulus-process-py](https://github.com/nasa/cumulus-process-py) dependencies.
-

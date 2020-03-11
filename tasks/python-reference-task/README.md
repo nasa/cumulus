@@ -26,7 +26,4 @@ pip install -r requirements.txt
 npm run prepare
 ```
 
-will build the lambda and put a .zip for deployment in ./dist
-
-### Test
-
+The above command will build the lambda and put a .zip for deployment in ./dist
