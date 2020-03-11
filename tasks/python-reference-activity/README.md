@@ -8,7 +8,7 @@ Developmental use of this lambda is intended to be simple - the processing activ
 
 ### Requirements
 
-To develop against this task, you should be using python 3.6 or 3.7 (CMA compatibility is through python 3.6), however any python > 3.6 should work.    Once you have a python env enabled:
+To develop against this task, you should be using python > 3.6 (CMA compatibility is baselined at 3.6).    Once you have a python env enabled:
 
 ```bash
 pip install -r requirements.txt
