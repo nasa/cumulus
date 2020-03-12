@@ -48,6 +48,8 @@ module "cumulus" {
 
   prefix = var.prefix
 
+  deploy_to_ngap = true
+
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.subnet_ids
 

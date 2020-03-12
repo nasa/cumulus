@@ -6,8 +6,11 @@ const { s3 } = require('@cumulus/aws-client/services');
 const { replace } = require('@cumulus/common/string');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 const { thread } = require('@cumulus/common/util');
+const { listGranules } = require('@cumulus/integration-tests/api/granules');
 const path = require('path');
 const cloneDeep = require('lodash.clonedeep');
+const pWaitFor = require('p-wait-for');
+
 
 /**
  * Adds updated url_path to a granule's files object.
@@ -160,9 +163,33 @@ const loadFileWithUpdatedGranuleIdPathAndCollection = (
   JSON.parse
 );
 
+const waitForGranuleRecordInList = async (stackName, granuleId) => pWaitFor(
+  async () => {
+    const resp = await listGranules({
+      prefix: stackName,
+      query: {
+        fields: 'granuleId',
+        granuleId
+      }
+    });
+    const ids = JSON.parse(resp.body).results.map((g) => g.granuleId);
+    return ids.includes(granuleId);
+  },
+  {
+    interval: 3000,
+    timeout: 60 * 1000
+  }
+);
+
+const waitForGranuleRecordsInList = async (stackName, granuleIds) => Promise.all(
+  granuleIds.map((id) => waitForGranuleRecordInList(stackName, id))
+);
+
 module.exports = {
   addUniqueGranuleFilePathToGranuleFiles,
   addUrlPathToGranuleFiles,
   loadFileWithUpdatedGranuleIdPathAndCollection,
-  setupTestGranuleForIngest
+  setupTestGranuleForIngest,
+  waitForGranuleRecordInList,
+  waitForGranuleRecordsInList
 };

@@ -26,6 +26,11 @@ variable "cmr_username" {
   type = string
 }
 
+variable "deploy_to_ngap" {
+  description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
+  type        = bool
+}
+
 variable "distribution_api_id" {
   type = string
 }
