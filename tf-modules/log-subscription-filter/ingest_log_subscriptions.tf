@@ -37,3 +37,11 @@ resource "aws_cloudwatch_log_subscription_filter" "sync_granule_task_log_subscri
   filter_pattern  = ""
   log_group_name  = var.sync_granule_task
 }
+
+resource "aws_cloudwatch_log_subscription_filter" "hyrax_metadata_updates_task_log_subscription_filter" {
+  name            = "${var.prefix}-HyraxMetadataUpdatesTaskLogSubscriptionToSharedDestination"
+  destination_arn = local.destination_arn
+  distribution    = "ByLogStream"
+  filter_pattern  = ""
+  log_group_name  = var.hyrax_metadata_updates_task
+}

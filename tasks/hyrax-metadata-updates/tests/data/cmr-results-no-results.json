@@ -1,0 +1,8 @@
+{
+    "feed": {
+        "updated": "2020-02-26T20:23:02.274Z",
+        "id": "https://cmr.earthdata.nasa.gov:443/search/collections.json?page_size=50&provider_short_name=GES_DISC&short_name=GLDAS_CLSM025_D&version=2.0&page_num=1",
+        "title": "ECHO dataset metadata",
+        "entry": []
+    }
+}

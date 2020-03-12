@@ -115,6 +115,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let failingWorkflowExecution;
   let granuleCompletedMessageKey;
   let granuleRunningMessageKey;
+  let opendapFilePath;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -150,6 +151,7 @@ describe('The S3 Ingest Granules workflow', () => {
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId, collectionDupeHandling),
       apiTestUtils.addProviderApi({ prefix: config.stackName, provider: providerData })
     ]);
+
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
@@ -239,6 +241,8 @@ describe('The S3 Ingest Granules workflow', () => {
         distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT
       }
     );
+
+    opendapFilePath = `https://opendap.uat.earthdata.nasa.gov/providers/CUMULUS/collections/MODIS/Terra%20Surface%20Reflectance%20Daily%20L2G%20Global%20250m%20SIN%20Grid%20V006/granules/${granuleId}`;
   });
 
   afterAll(async () => {
@@ -481,6 +485,7 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(resourceURLs.includes(scienceFileUrl)).toBe(true);
       expect(resourceURLs.includes(s3BrowseImageUrl)).toBe(true);
       expect(resourceURLs.includes(s3CredsUrl)).toBe(true);
+      expect(resourceURLs.includes(opendapFilePath)).toBe(true);
     });
 
     it('updates the CMR metadata "online resources" with the proper types and urls', () => {
@@ -495,6 +500,7 @@ describe('The S3 Ingest Granules workflow', () => {
         'GET DATA',
         'VIEW RELATED INFORMATION',
         'VIEW RELATED INFORMATION',
+        'VIEW RELATED INFORMATION',
         'GET RELATED VISUALIZATION'
       ];
       const cmrUrls = resource.map((r) => r.URL);
@@ -502,6 +508,7 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(cmrUrls.includes(distributionUrl)).toBe(true);
       expect(cmrUrls.includes(s3BrowseImageUrl)).toBe(true);
       expect(cmrUrls.includes(s3CredsUrl)).toBe(true);
+      expect(cmrUrls.includes(opendapFilePath)).toBe(true);
       expect(expectedTypes).toEqual(resource.map((r) => r.Type));
     });
 
@@ -1038,7 +1045,8 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(workflows.length).toBeGreaterThan(0);
       });
 
-      it('returns the expected workflow', async () => {
+      // This test needs to be updated to work with Terraform
+      xit('returns the expected workflow', async () => {
         const workflowResponse = await apiTestUtils.getWorkflow({
           workflowName,
           prefix: config.stackName
