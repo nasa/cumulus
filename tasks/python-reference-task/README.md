@@ -1,10 +1,10 @@
 # @cumulus/python-reference-task
 
-This 'task' is a reference task that is included with core to allow integration testing of the `cumulus message adapter` with a build python lambda.
+This 'task' is a reference task that is included with Cumulus to allow integration testing of the `cumulus message adapter` with a built python lambda.
 
 ## Use
 
-Developmental use of this lambda is intended to be simple - the task returns a static processing output, integration tests can be then built against the `Refernce Task` step in the `PythonProcess` workflow.
+Developmental use of this lambda is intended to be simple - the task returns a static processing output, integration tests can be then built against the `Reference Task` step in the `PythonProcess` workflow.
 
 ## Development
 
