@@ -23,7 +23,8 @@ const promisedUnlink = promisify(fs.unlink);
 
 const timestampedName = (name) => `${name}_${(new Date().getTime())}`;
 
-const createTimestampedTestId = (stackName, testName) => `${stackName}-${testName}-${(new Date().getTime())}`;
+const createTimestampedTestId = (stackName, testName) =>
+  `${stackName}-${testName}-${Date.now()}`;
 const createTestDataPath = (prefix) => `${prefix}-test-data/files`;
 const createTestSuffix = (prefix) => `_test-${prefix}`;
 

@@ -1,6 +1,6 @@
 resource "aws_kms_key" "provider_kms_key" {
   description = "${var.prefix} Provider credentials encryption"
-  tags        = local.default_tags
+  tags        = var.tags
 }
 
 data "aws_iam_policy_document" "provider_secrets_encryption" {
@@ -35,11 +35,14 @@ resource "aws_lambda_function" "provider_secrets_migration" {
     }
   }
   memory_size = 256
-  tags        = merge(local.default_tags, { Project = var.prefix })
+  tags        = var.tags
 
-  vpc_config {
-    subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id, var.elasticsearch_security_group_id]
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = local.lambda_security_group_ids
+    }
   }
 }
 
@@ -58,10 +61,13 @@ resource "aws_lambda_function" "verify_provider_secrets_migration" {
     }
   }
   memory_size = 256
-  tags        = merge(local.default_tags, { Project = var.prefix })
+  tags        = var.tags
 
-  vpc_config {
-    subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id, var.elasticsearch_security_group_id]
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = local.lambda_security_group_ids
+    }
   }
 }

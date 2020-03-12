@@ -33,8 +33,6 @@ resource "aws_lambda_function" "myfunction" {
   role             = module.cumulus.lambda_processing_role_arn
   runtime          = "nodejs10.x"
 
-  tags = { Deployment = var.prefix }
-
   vpc_config {
     subnet_ids         = var.subnet_ids
     security_group_ids = var.security_group_ids
@@ -45,10 +43,6 @@ resource "aws_lambda_function" "myfunction" {
 **Please note**: This example contains the minimum set of required configuration.
 
 Make sure to include a `vpc_config` that matches the information you've provided the `cumulus` module if intending to integrate the lambda with a Cumulus deployment.
-
-Also note that for this example to work, you will need to have `default_tags` defined as in the [example](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf), or in the [template-deploy-repo](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/main.tf).
-
-**Please note**: Cumulus follows the convention of tagging resources with the `prefix` variable `{ Deployment = var.prefix }` that you pass to the `cumulus` module.   For resources defined outside of Core, it's recommended that you adopt this convention as it makes resources and/or deployment recovery scenarios much easier to manage.
 
 ### Java Lambda
 

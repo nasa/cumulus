@@ -1,8 +1,7 @@
 #!/bin/bash
 set -ex
-
-. ./bamboo/abort-if-not-pr.sh
 . ./bamboo/set-bamboo-env-variables.sh
+. ./bamboo/abort-if-not-pr.sh
 
 # Export user information for sshd container
 export SSH_USERS=user:$(id -u):$(id -u)
@@ -27,7 +26,7 @@ while ! docker container inspect ${container_id}\_build_env_1; do
 done
 
 ## Setup the build env container once it's started
-$docker_command "npm install --error --no-progress -g nyc; cd $UNIT_TEST_BUILD_DIR; git fetch --all; git checkout $GIT_SHA; npm install --error --no-progress; npm run bootstrap-no-build-quiet || true; npm run bootstrap-no-build-quiet; chmod 0400 -R $UNIT_TEST_BUILD_DIR/packages/test-data/keys"
+$docker_command "npm install --error --no-progress -g nyc; cd $UNIT_TEST_BUILD_DIR; git fetch --all; git checkout $GIT_SHA; npm install --error --no-progress; npm run bootstrap-no-build-quiet || true; npm run bootstrap-no-build-quiet"
 
 # Wait for the FTP server to be available
 while ! $docker_command  'curl --connect-timeout 5 -sS -o /dev/null ftp://testuser:testpass@127.0.0.1/README.md'; do
@@ -45,10 +44,11 @@ while ! $docker_command  'curl --connect-timeout 5 -sS -o /dev/null http://127.0
 done
 echo 'HTTP service is available'
 
+$docker_command "mkdir /keys;cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 400 /keys"
 # Wait for the SFTP server to be available
 while ! $docker_command "sftp \
   -P 2222\
-  -i $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key\
+  -i /keys/ssh_client_rsa_key\
   -o 'ConnectTimeout=5'\
   -o 'StrictHostKeyChecking=no'\
   -o 'UserKnownHostsFile=/dev/null'\

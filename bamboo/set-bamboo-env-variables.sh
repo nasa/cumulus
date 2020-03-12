@@ -10,6 +10,7 @@ declare -a param_list=(
   "bamboo_KES_DEPLOYMENT"
   "bamboo_METRICS_ES_HOST"
   "bamboo_METRICS_ES_USER"
+  "bamboo_NGAP_ENV"
   "bamboo_PUBLISH_FLAG"
   "bamboo_REPORT_BUILD_STATUS"
   "bamboo_SECRET_AWS_ACCESS_KEY_ID"
@@ -111,6 +112,7 @@ if [[ $bamboo_NGAP_ENV = "SIT" ]]; then
   export TFSTATE_BUCKET=$bamboo_SIT_TFSTATE_BUCKET
   export TFSTATE_LOCK_TABLE=$bamboo_SIT_TFSTATE_LOCK_TABLE
   export SHARED_LOG_DESTINATION_ARN=$bamboo_SIT_SHARED_LOG_DESTINATION_ARN
+  export TF_VAR_distribution_url=$bamboo_SIT_TEA_CLOUDFRONT_URL
   DEPLOYMENT=$bamboo_SIT_DEPLOYMENT
 fi
 

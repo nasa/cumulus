@@ -12,6 +12,7 @@ resource "aws_iam_role" "test_cleanup_lambda_role" {
   name                 = "test_cleanup_lambda_role"
   assume_role_policy   = data.aws_iam_policy_document.assume_lambda_role.json
   permissions_boundary = var.permissions_boundary_arn
+  tags                 = var.tags
 }
 
 data "aws_iam_policy_document" "test_cleanup_policy_document" {

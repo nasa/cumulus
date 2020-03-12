@@ -45,3 +45,5 @@ ems_provider          = "CUMULUS"
 ems_retention_in_days = 30
 ems_submit_report     = true
 ems_username          = "cumulus"
+
+thin_egress_jwt_secret_name = "cumulus_sandbox_jwt_tea_secret"

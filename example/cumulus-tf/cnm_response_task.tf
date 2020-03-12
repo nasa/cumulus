@@ -1,7 +1,7 @@
 resource "aws_lambda_function" "cnm_response_task" {
   function_name = "${var.prefix}-CnmResponse"
-  s3_bucket     = "cumulus-data-shared"
-  s3_key        = "daacs/podaac/cnmResponse-1.0.6.zip"
+  s3_bucket     = "cumulus-test-sandbox-internal"
+  s3_key        = "cnmPreReleases/cnmResponse-1.0.6-cma1.3.0-c.zip"
   handler       = "gov.nasa.cumulus.CNMResponse::handleRequestStreams"
   role          = module.cumulus.lambda_processing_role_arn
   runtime       = "java8"
@@ -23,5 +23,5 @@ resource "aws_lambda_function" "cnm_response_task" {
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
   }
 
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = local.tags
 }

@@ -3,7 +3,7 @@
 resource "aws_secretsmanager_secret" "message_template_cmr_password" {
   name_prefix = "${var.prefix}-message-template-cmr-password"
   description = "CMR password for the Cumulus message template in the ${var.prefix} deployment"
-  tags        = local.default_tags
+  tags        = var.tags
 }
 
 resource "aws_secretsmanager_secret_version" "message_template_cmr_password" {
@@ -17,7 +17,7 @@ resource "aws_secretsmanager_secret_version" "message_template_cmr_password" {
 resource "aws_secretsmanager_secret" "message_template_launchpad_passphrase" {
   name_prefix = "${var.prefix}-message-template-launchpad-passphrase"
   description = "Launchpad passphrase for the Cumulus message template in the ${var.prefix} deployment"
-  tags        = local.default_tags
+  tags        = var.tags
 }
 
 resource "aws_secretsmanager_secret_version" "message_template_launchpad_passphrase" {
@@ -43,11 +43,12 @@ resource "aws_iam_role_policy" "lambda_processing_role_get_secrets" {
 
 locals {
   default_queues = {
-    triggerLambdaFailure      = aws_sqs_queue.trigger_lambda_failure.id
-    startSF                   = aws_sqs_queue.start_sf.id
     backgroundProcessing      = aws_sqs_queue.background_processing.id
     kinesisFailure            = aws_sqs_queue.kinesis_failure.id
+    reporting                 = var.sf_event_sqs_to_db_records_sqs_queue_url
+    startSF                   = aws_sqs_queue.start_sf.id
     ScheduleSFDeadLetterQueue = aws_sqs_queue.schedule_sf_dead_letter_queue.id
+    triggerLambdaFailure      = aws_sqs_queue.trigger_lambda_failure.id
   }
   custom_queues = { for queue in var.custom_queues: queue.id => queue.url }
   custom_throttled_queues = { for queue in var.throttled_queues: queue.id => queue.url }

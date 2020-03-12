@@ -4,25 +4,24 @@ const AWS = require('aws-sdk');
 const path = require('path');
 const os = require('os');
 
+const emsApi = require('@cumulus/integration-tests/api/ems');
+const Granule = require('@cumulus/api/models/granules');
 const { fileExists, getS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { lambda } = require('@cumulus/aws-client/services');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { download } = require('@cumulus/common/http');
-const { sleep } = require('@cumulus/common/util');
-const { Granule, AccessToken } = require('@cumulus/api/models');
 const {
   addCollections,
   addProviders,
   buildAndExecuteWorkflow,
-  cleanupProviders,
-  distributionApi: {
-    getDistributionApiRedirect
-  },
-  EarthdataLogin: { getEarthdataAccessToken },
-  emsApi,
-  getOnlineResources,
-  granulesApi: granulesApiTestUtils
+  cleanupProviders
 } = require('@cumulus/integration-tests');
+const {
+  getDistributionApiRedirect,
+  getTEARequestHeaders
+} = require('@cumulus/integration-tests/api/distribution');
+const granulesApiTestUtils = require('@cumulus/integration-tests/api/granules');
+const { getOnlineResources } = require('@cumulus/integration-tests/cmr');
 
 const {
   loadConfig,
@@ -37,7 +36,10 @@ const {
   waitForModelStatus
 } = require('../../helpers/apiUtils');
 
-const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
+const {
+  setupTestGranuleForIngest,
+  waitForGranuleRecordsInList
+} = require('../../helpers/granuleUtils');
 
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MOD14A1_006';
@@ -133,48 +135,56 @@ describe('The EMS report', () => {
   let submitReport;
   let testDataFolder;
   let testSuffix;
+  let beforeAllError;
 
   beforeAll(async () => {
-    config = await loadConfig();
+    try {
+      config = await loadConfig();
 
-    process.env.stackName = config.stackName;
+      process.env.stackName = config.stackName;
 
-    emsIngestReportLambda = `${config.stackName}-EmsIngestReport`;
-    emsDistributionReportLambda = `${config.stackName}-EmsDistributionReport`;
-    bucket = config.bucket;
-    const emsTestConfig = await emsApi.getLambdaEmsSettings(emsDistributionReportLambda);
-    emsProvider = emsTestConfig.provider;
-    submitReport = emsTestConfig.submitReport === 'true' || false;
-    dataSource = emsTestConfig.dataSource || config.stackName;
+      emsIngestReportLambda = `${config.stackName}-EmsIngestReport`;
+      emsDistributionReportLambda = `${config.stackName}-EmsDistributionReport`;
+      bucket = config.bucket;
+      const emsTestConfig = await emsApi.getLambdaEmsSettings(emsDistributionReportLambda);
+      emsProvider = emsTestConfig.provider;
+      submitReport = emsTestConfig.submitReport === 'true' || false;
+      dataSource = emsTestConfig.dataSource || config.stackName;
 
-    process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
-    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-    process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
+      process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+      process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
 
-    // in order to generate the ingest reports here and by daily cron, we need to ingest granules
-    // as well as delete granules
+      // in order to generate the ingest reports here and by daily cron, we need to ingest granules
+      // as well as delete granules
 
-    const testId = createTimestampedTestId(config.stackName, 'emsIngestReport');
-    testSuffix = createTestSuffix(testId);
-    testDataFolder = createTestDataPath(testId);
+      const testId = createTimestampedTestId(config.stackName, 'emsIngestReport');
+      testSuffix = createTestSuffix(testId);
+      testDataFolder = createTestDataPath(testId);
 
-    await setupCollectionAndTestData(config, testSuffix, testDataFolder);
-    // ingest one granule, this will be deleted later
-    deletedGranuleId = await ingestAndPublishGranule(config, testSuffix, testDataFolder);
+      await setupCollectionAndTestData(config, testSuffix, testDataFolder);
+      // ingest one granule, this will be deleted later
+      deletedGranuleId = await ingestAndPublishGranule(config, testSuffix, testDataFolder);
 
-    // delete granules ingested for this collection, so that ArchDel report can be generated.
-    // leave some granules for distribution report since the granule and collection information
-    // is needed for distributed files.
-    await deleteOldGranules(config.stackName, 2, [deletedGranuleId]);
+      // delete granules ingested for this collection, so that ArchDel report can be generated.
+      // leave some granules for distribution report since the granule and collection information
+      // is needed for distributed files.
+      await deleteOldGranules(config.stackName, 2, [deletedGranuleId]);
 
-    // ingest two new granules, so that Archive and Ingest reports can be generated
-    ingestedGranuleIds = await Promise.all([
-      // ingest a granule and publish it to CMR
-      ingestAndPublishGranule(config, testSuffix, testDataFolder),
+      // ingest two new granules, so that Archive and Ingest reports can be generated
+      ingestedGranuleIds = await Promise.all([
+        // ingest a granule and publish it to CMR
+        ingestAndPublishGranule(config, testSuffix, testDataFolder),
 
-      // ingest a granule but not publish it to CMR
-      ingestAndPublishGranule(config, testSuffix, testDataFolder, false)
-    ]);
+        // ingest a granule but not publish it to CMR
+        ingestAndPublishGranule(config, testSuffix, testDataFolder, false)
+      ]);
+    } catch (e) {
+      beforeAllError = e;
+    }
+  });
+
+  beforeEach(() => {
+    if (beforeAllError) fail(beforeAllError);
   });
 
   afterAll(async () => {
@@ -226,8 +236,8 @@ describe('The EMS report', () => {
       const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
       AWS.config.update({ region: region });
 
-      // add a few seconds to allow records searchable in elasticsearch
-      await sleep(5 * 1000);
+      // wait until records searchable in elasticsearch
+      await waitForGranuleRecordsInList(config.stackName, ingestedGranuleIds);
       const endTime = moment.utc().add(1, 'days').startOf('day').format();
       const startTime = moment.utc().startOf('day').format();
 
@@ -313,30 +323,23 @@ describe('The EMS report', () => {
   });
 
   describe('When there are distribution requests', () => {
-    let accessToken;
+    let headers;
 
     beforeAll(async () => {
       setDistributionApiEnvVars();
-      const accessTokenResponse = await getEarthdataAccessToken({
-        redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
-        requestOrigin: process.env.DISTRIBUTION_ENDPOINT
-      });
-      accessToken = accessTokenResponse.accessToken;
+      headers = await getTEARequestHeaders(config.stackName);
     });
-
-    afterAll(() => (new AccessToken()).delete({ accessToken }));
 
     // the s3 server access log records are delivered within a few hours of the time that they are recorded,
     // so we are not able to generate the distribution report immediately after submitting distribution requests,
     // the distribution requests submitted here are for nightly distribution report.
-    // TODO Update this to work with the Thin Egress App
-    xit('downloads the files of the published granule for generating nightly distribution report', async () => {
+    it('downloads the files of the published granule for generating nightly distribution report', async () => {
       const files = await getGranuleFilesForDownload(config.stackName, ingestedGranuleIds[0]);
       for (let i = 0; i < files.length; i += 1) {
         const filePath = `/${files[i].bucket}/${files[i].key}`;
         const downloadedFile = path.join(os.tmpdir(), files[i].fileName);
         // eslint-disable-next-line no-await-in-loop
-        const s3SignedUrl = await getDistributionApiRedirect(filePath, accessToken);
+        const s3SignedUrl = await getDistributionApiRedirect(filePath, headers);
         // eslint-disable-next-line no-await-in-loop
         await download(s3SignedUrl, downloadedFile);
         fs.unlinkSync(downloadedFile);
@@ -367,7 +370,7 @@ describe('The EMS report', () => {
       it('generates an EMS distribution report', async () => {
         // verify report is generated, but can't verify the content since the s3 server access log
         // won't have recent access records until hours or minutes later
-        expect(lambdaOutput.length).toEqual(1);
+        expect(lambdaOutput.length).toEqual(1); // TODO: why would this fail intermittently?
         const jobs = lambdaOutput.map(async (report) => {
           const parsed = parseS3Uri(report.file);
           expect(await fileExists(parsed.Bucket, parsed.Key)).not.toBe(false);

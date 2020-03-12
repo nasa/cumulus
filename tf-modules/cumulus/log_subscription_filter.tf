@@ -12,6 +12,7 @@ module "log_subscription_filter" {
   post_to_cmr_task   = module.ingest.post_to_cmr_task.task_log_group
   queue_pdrs_task    = module.ingest.queue_pdrs_task.task_log_group
   sync_granule_task  = module.ingest.sync_granule_task.task_log_group
+  hyrax_metadata_updates_task = module.ingest.hyrax_metadata_updates_task.task_log_group
 
   # Async Operation Log Group
   async_operation_log_group = module.archive.async_operation_log_group

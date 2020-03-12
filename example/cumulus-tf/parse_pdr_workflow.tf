@@ -5,7 +5,7 @@ module "parse_pdr_workflow" {
   name            = "ParsePdr"
   workflow_config = module.cumulus.workflow_config
   system_bucket   = var.system_bucket
-  tags            = local.default_tags
+  tags            = local.tags
 
   state_machine_definition = <<JSON
 {
@@ -173,7 +173,7 @@ module "parse_pdr_workflow" {
       },
       "ResultPath": null,
       "Type": "Task",
-      "Resource": "${module.cumulus.sf_sns_report_task.task_arn}",
+      "Resource": "${module.cumulus.sf_sqs_report_task.task_arn}",
       "Retry": [
         {
           "ErrorEquals": [

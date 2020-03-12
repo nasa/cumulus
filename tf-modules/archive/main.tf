@@ -5,7 +5,8 @@ terraform {
 }
 
 locals {
-  default_tags = {
-    Deployment = var.prefix
-  }
+  lambda_security_group_ids = compact([
+    aws_security_group.no_ingress_all_egress[0].id,
+    var.elasticsearch_security_group_id
+  ])
 }

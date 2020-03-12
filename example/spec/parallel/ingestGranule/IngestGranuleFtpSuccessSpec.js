@@ -1,7 +1,7 @@
 'use strict';
 
 const fs = require('fs-extra');
-
+const pMap = require('p-map');
 const { models: { Granule } } = require('@cumulus/api');
 const { headObject } = require('@cumulus/aws-client/S3');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
@@ -107,15 +107,23 @@ describe('The FTP Ingest Granules workflow', () => {
     });
 
     it('uploaded the granules with correct ContentType', async () => {
-      console.log(`File object on intermittently failing test: ${JSON.stringify(granule.files)}`);
-      console.log(`Granule object on intermittently failing test: ${JSON.stringify(granule)}`);
-      const headObjects = await Promise.all(granule.files.map(async (fileObject) =>
-        ({
-          ...fileObject,
-          ...await headObject(fileObject.bucket, fileObject.key),
-          expectedMime: mime.lookup(fileObject.key) || 'application/octet-stream'
-        })));
-      headObjects.forEach((headObj) => expect(headObj.expectedMime).toEqual(headObj.ContentType));
+      const objectTests = await pMap(
+        granule.files,
+        async ({ bucket, key }) => {
+          const headObjectResponse = await headObject(
+            bucket, key, { retries: 5 }
+          );
+
+          return [
+            headObjectResponse.ContentType,
+            mime.lookup(key) || 'application/octet-stream'
+          ];
+        }
+      );
+
+      objectTests.forEach(
+        ([actual, expected]) => expect(actual).toEqual(expected)
+      );
     });
   });
 });

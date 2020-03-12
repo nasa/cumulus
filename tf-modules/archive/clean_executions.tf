@@ -3,7 +3,8 @@ resource "aws_sqs_queue" "clean_executions_dead_letter_queue" {
   receive_wait_time_seconds  = 20
   message_retention_seconds  = 1209600
   visibility_timeout_seconds = 60
-  tags                       = local.default_tags
+
+  tags = var.tags
 }
 
 resource "aws_lambda_function" "clean_executions" {
@@ -31,17 +32,23 @@ resource "aws_lambda_function" "clean_executions" {
       nonCompleteExecutionPayloadTimeout        = var.non_complete_execution_payload_timeout
     }
   }
-  tags = merge(local.default_tags, { Project = var.prefix })
 
-  vpc_config {
-    subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
+  tags = var.tags
+
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = [
+        aws_security_group.no_ingress_all_egress[0].id
+      ]
+    }
   }
 }
 
 resource "aws_cloudwatch_event_rule" "daily_execution_payload_cleanup" {
   schedule_expression = var.daily_execution_payload_cleanup_schedule_expression
-  tags                = local.default_tags
+  tags                = var.tags
 }
 
 resource "aws_cloudwatch_event_target" "daily_execution_payload_cleanup" {

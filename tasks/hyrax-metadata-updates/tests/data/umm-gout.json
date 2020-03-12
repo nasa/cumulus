@@ -1,0 +1,66 @@
+{
+    "RelatedUrls": [
+        {
+            "URL": "https://hydro1.gesdisc.eosdis.nasa.gov/data/GLDAS/GLDAS_CLSM025_D.2.0/2014/12/GLDAS_CLSM025_D.A20141230.020.nc4",
+            "Type": "GET DATA"
+        },
+        {
+            "URL": "https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4",
+            "Type": "GET DATA",
+            "Subtype": "OPENDAP DATA",
+            "Description": "OPeNDAP request URL"
+        }
+    ],
+    "SpatialExtent": {
+        "HorizontalSpatialDomain": {
+            "Geometry": {
+                "BoundingRectangles": [
+                    {
+                        "WestBoundingCoordinate": -180.0,
+                        "EastBoundingCoordinate": 180.0,
+                        "NorthBoundingCoordinate": 90.0,
+                        "SouthBoundingCoordinate": -60.0
+                    }
+                ]
+            }
+        }
+    },
+    "ProviderDates": [
+        {
+            "Date": "2018-02-09T11:01:38.000Z",
+            "Type": "Insert"
+        },
+        {
+            "Date": "2018-02-09T11:01:38.000Z",
+            "Type": "Update"
+        }
+    ],
+    "CollectionReference": {
+        "ShortName": "GLDAS_CLSM025_D",
+        "Version": "2.0"
+    },
+    "DataGranule": {
+        "DayNightFlag": "Unspecified",
+        "Identifiers": [
+            {
+                "Identifier": "GLDAS_CLSM025_D.A20141230.020.nc4",
+                "IdentifierType": "ProducerGranuleId"
+            }
+        ],
+        "ProductionDateTime": "2018-02-09T11:01:38.000Z",
+        "ArchiveAndDistributionInformation": [
+            {
+                "Name": "Not provided",
+                "Size": 24.5028533935547,
+                "SizeUnit": "MB"
+            }
+        ]
+    },
+    "TemporalExtent": {
+        "RangeDateTime": {
+            "BeginningDateTime": "2014-12-30T00:00:00.000Z",
+            "EndingDateTime": "2014-12-30T23:59:59.000Z"
+        }
+    },
+    "GranuleUR": "GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4"
+}

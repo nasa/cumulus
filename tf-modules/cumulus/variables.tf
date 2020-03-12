@@ -31,6 +31,11 @@ variable "cumulus_message_adapter_lambda_layer_arn" {
   default     = null
 }
 
+variable "deploy_to_ngap" {
+  description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
+  type        = bool
+}
+
 variable "dynamo_tables" {
   description = "A map of objects with the `arn` and `name` of every DynamoDB table for your Cumulus deployment."
   type        = map(object({ name = string, arn = string }))
@@ -64,16 +69,19 @@ variable "ecs_cluster_min_size" {
 variable "elasticsearch_domain_arn" {
   description = "The ARN of an Elasticsearch domain to use for storing data"
   type        = string
+  default     = null
 }
 
 variable "elasticsearch_hostname" {
   description = "The hostname of an Elasticsearch domain to use for storing data"
   type        = string
+  default     = null
 }
 
 variable "elasticsearch_security_group_id" {
   description = "The ID of the security group for the Elasticsearch domain specified by `elasticsearch_domain_arn`"
   type        = string
+  default     = ""
 }
 
 variable "prefix" {
@@ -401,6 +409,12 @@ variable "saml_launchpad_metadata_url" {
   default     = "N/A"
 }
 
+variable "tags" {
+  description = "Tags to be applied to Cumulus resources that support tags"
+  type        = map(string)
+  default     = {}
+}
+
 variable "thin_egress_cookie_domain" {
   type        = string
   default     = null
@@ -427,7 +441,6 @@ variable "thin_egress_jwt_algo" {
 
 variable "thin_egress_jwt_secret_name" {
   type        = string
-  default     = null
   description = "Name of AWS secret where keys for the Thin Egress App JWT encode/decode are stored"
 }
 

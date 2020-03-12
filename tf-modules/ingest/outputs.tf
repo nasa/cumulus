@@ -88,9 +88,9 @@ output "schedule_sf_lambda_function_arn" {
   value = aws_lambda_function.schedule_sf.arn
 }
 
-output "sf_sns_report_task" {
+output "sf_sqs_report_task" {
   value = {
-    task_arn = aws_lambda_function.sf_sns_report_task.arn
+    task_arn = aws_lambda_function.sf_sqs_report_task.arn
   }
 }
 
@@ -110,6 +110,13 @@ output "sync_granule_task" {
   value = {
     task_arn = aws_lambda_function.sync_granule_task.arn
     task_log_group = aws_cloudwatch_log_group.sync_granule_task.name
+  }
+}
+
+output "hyrax_metadata_updates_task" {
+  value = {
+    task_arn = aws_lambda_function.hyrax_metadata_updates_task.arn
+    task_log_group = aws_cloudwatch_log_group.hyrax_metadata_updates_task.name
   }
 }
 

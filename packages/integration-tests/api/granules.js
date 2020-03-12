@@ -162,12 +162,25 @@ async function removePublishedGranule({ prefix, granuleId }) {
   return deleteGranule({ prefix, granuleId });
 }
 
+async function listGranules({ prefix, query = null }) {
+  return callCumulusApi({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: '/granules',
+      body: query ? JSON.stringify({ query }) : undefined
+    }
+  });
+}
+
 module.exports = {
   getGranule,
   reingestGranule,
   removeFromCMR,
   applyWorkflow,
   deleteGranule,
+  listGranules,
   moveGranule,
   removePublishedGranule
 };

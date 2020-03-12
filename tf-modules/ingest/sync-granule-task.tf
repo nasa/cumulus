@@ -19,16 +19,21 @@ resource "aws_lambda_function" "sync_granule_task" {
     }
   }
 
-  vpc_config {
-    subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = [
+        aws_security_group.no_ingress_all_egress[0].id
+      ]
+    }
   }
 
-  tags = merge(local.default_tags, { Project = var.prefix })
+  tags = var.tags
 }
 
 resource "aws_cloudwatch_log_group" "sync_granule_task" {
   name = "/aws/lambda/${aws_lambda_function.sync_granule_task.function_name}"
   retention_in_days = 30
-  tags = local.default_tags
+  tags = var.tags
 }

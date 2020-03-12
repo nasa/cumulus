@@ -37,26 +37,27 @@ class Stats extends BaseSearch {
     searchParams.type = 'granule';
 
     // add aggregation
+    // For collections we are getting the distinct collection ids
     searchParams.body.aggs = {
       averageDuration: {
         avg: {
-          field: 'totalDuration'
+          field: 'duration'
         }
       },
       granulesStatus: {
         terms: {
           field: 'status'
         }
+      },
+      collections: {
+        cardinality: {
+          field: 'collectionId'
+        }
       }
     };
 
     const granules = await this.client.search(searchParams)
       .then((response) => response.body);
-
-    const collections = await this.client.count({
-      index: this.index,
-      type: 'collection'
-    }).then((response) => response.body);
 
     const dateFormat = 'YYYY-MM-DDThh:mm:ssZ';
     const dateFrom = moment(this.params.timestamp__from).format(dateFormat);
@@ -78,9 +79,9 @@ class Stats extends BaseSearch {
         unit: 'error'
       },
       collections: {
-        dateFrom: moment('1970-01-01').format(dateFormat),
+        dateFrom,
         dateTo,
-        value: collections.count,
+        value: granules.aggregations.collections.value,
         aggregation: 'count',
         unit: 'collection'
       },
@@ -101,41 +102,6 @@ class Stats extends BaseSearch {
     };
   }
 
-  async histogram() {
-    if (!this.client) {
-      this.client = await this.constructor.es();
-    }
-
-    const searchParams = this._buildSearch();
-    const criteria = {
-      field: this.params.field || 'timestamp',
-      interval: this.params.interval || 'day',
-      format: this.params.format || 'yyyy-MM-dd'
-    };
-
-    searchParams.size = 0;
-    searchParams.body.aggs = {
-      histogram: {
-        date_histogram: criteria
-      }
-    };
-
-    const hist = await this.client.search(searchParams)
-      .then((response) => response.body);
-
-    return {
-      meta: {
-        name: 'cumulus-api',
-        count: hist.hits.total,
-        criteria
-      },
-      histogram: hist.aggregations.histogram.buckets.map((b) => ({
-        date: b.key_as_string,
-        count: b.doc_count
-      }))
-    };
-  }
-
   async count() {
     if (!this.client) {
       this.client = await this.constructor.es();
@@ -144,6 +110,7 @@ class Stats extends BaseSearch {
     const field = this.params.field || 'status';
 
     const searchParams = this._buildSearch();
+    searchParams.type = this.type;
     searchParams.size = 0;
     searchParams.body.aggs = {
       count: {
@@ -164,37 +131,6 @@ class Stats extends BaseSearch {
         key: b.key,
         count: b.doc_count
       }))
-    };
-  }
-
-  async avg() {
-    if (!this.client) {
-      this.client = await this.constructor.es();
-    }
-
-    const field = this.params.field;
-    if (!field) {
-      throw new Error('field parameter must be provided');
-    }
-
-    const searchParams = this._buildSearch();
-    searchParams.size = 0;
-    searchParams.body.aggs = {
-      stats: {
-        extended_stats: { field }
-      }
-    };
-
-    const stats = await this.client.search(searchParams)
-      .then((response) => response.body);
-
-    return {
-      meta: {
-        name: 'cumulus-api',
-        count: stats.hits.total,
-        field: field
-      },
-      stats: stats.aggregations.stats
     };
   }
 }

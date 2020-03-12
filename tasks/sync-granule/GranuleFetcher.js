@@ -78,7 +78,7 @@ class GranuleFetcher {
     // default collectionId, could be overwritten by granule's collection information
     if (this.collection) {
       this.collectionId = constructCollectionId(
-        this.collection.dataType || this.collection.name, this.collection.version
+        this.collection.name, this.collection.version
       );
     }
 
@@ -120,7 +120,7 @@ class GranuleFetcher {
       this.collection = await collectionConfigStore.get(granule.dataType, granule.version);
     } else {
       // Collection is passed in, but granule does not define the dataType and version
-      if (!dataType) dataType = this.collection.dataType || this.collection.name;
+      if (!dataType) dataType = this.collection.name;
       if (!version) version = this.collection.version;
     }
 
@@ -142,8 +142,8 @@ class GranuleFetcher {
     log.debug('finished ingest()');
     return {
       granuleId: granule.granuleId,
-      dataType: dataType,
-      version: version,
+      dataType,
+      version,
       files
     };
   }

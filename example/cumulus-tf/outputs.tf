@@ -18,8 +18,12 @@ output "distribution_redirect_uri" {
   value = module.cumulus.distribution_redirect_uri
 }
 
-# Reporting SNS topics
+# Reporting SQS queue and SNS topics
 
+output "stepfunction_event_reporter_queue_url" {
+  value = module.cumulus.stepfunction_event_reporter_queue_url
+}
+  
 output "report_collections_sns_topic_arn" {
   value = module.cumulus.report_collections_sns_topic_arn
 }

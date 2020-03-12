@@ -5,7 +5,7 @@ module "ingest_and_publish_granule_workflow" {
   name            = "IngestAndPublishGranule"
   workflow_config = module.cumulus.workflow_config
   system_bucket   = var.system_bucket
-  tags            = local.default_tags
+  tags            = local.tags
 
   state_machine_definition = <<JSON
 {
@@ -185,6 +185,45 @@ module "ingest_and_publish_granule_workflow" {
       },
       "Type": "Task",
       "Resource": "${module.cumulus.move_granules_task.task_arn}",
+      "Next": "HyraxMetadataUpdatesTask",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "WorkflowFailed",
+          "ResultPath": "$.exception"
+        }
+      ],
+      "Retry": [
+        {
+          "BackoffRate": 2,
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6
+        }
+      ]
+    },
+    "HyraxMetadataUpdatesTask": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "bucket": "{$.meta.buckets.internal.name}",
+            "stack": "{$.meta.stack}",
+            "cmr": "{$.meta.cmr}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${module.cumulus.hyrax_metadata_updates_task.task_arn}",
       "Next": "CmrStep",
       "Catch": [
         {

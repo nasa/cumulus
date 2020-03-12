@@ -69,7 +69,8 @@ function fakeGranuleFactory(status = 'completed') {
     updatedAt: Date.now(),
     published: true,
     cmrLink: 'example.com',
-    productVolume: 100
+    productVolume: 100,
+    duration: 0
   };
 }
 
@@ -222,7 +223,6 @@ function fakeAsyncOperationFactory(params = {}) {
 function fakeCollectionFactory(options = {}) {
   return {
     name: randomId('collectionName'),
-    dataType: randomId('dataType'),
     version: '0.0.0',
     provider_path: '',
     duplicateHandling: 'replace',

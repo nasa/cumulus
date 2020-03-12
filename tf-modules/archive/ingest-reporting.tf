@@ -4,7 +4,7 @@ resource "aws_iam_role" "publish_executions_lambda_role" {
   name                 = "${var.prefix}-PublishExecutionsLambda"
   assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
-  tags                 = local.default_tags
+  tags                 = var.tags
 }
 
 data "aws_iam_policy_document" "publish_executions_policy_document" {
@@ -59,7 +59,7 @@ resource "aws_sqs_queue" "publish_executions_dead_letter_queue" {
   receive_wait_time_seconds  = 20
   message_retention_seconds  = 1209600
   visibility_timeout_seconds = 60
-  tags                       = local.default_tags
+  tags                       = var.tags
 }
 
 resource "aws_lambda_function" "publish_executions" {
@@ -79,11 +79,14 @@ resource "aws_lambda_function" "publish_executions" {
     target_arn = aws_sqs_queue.publish_executions_dead_letter_queue.arn
   }
 
-  vpc_config {
-    subnet_ids = var.lambda_subnet_ids
-    security_group_ids = [
-      aws_security_group.no_ingress_all_egress[0].id
-    ]
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = [
+        aws_security_group.no_ingress_all_egress[0].id
+      ]
+    }
   }
 
   environment {
@@ -92,25 +95,18 @@ resource "aws_lambda_function" "publish_executions" {
     }
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_cloudwatch_log_group" "publish_executions_logs" {
   name              = "/aws/lambda/${var.prefix}-publishExecutions"
   retention_in_days = 14
-  tags              = local.default_tags
+  tags              = var.tags
 }
 
 resource "aws_sns_topic" "report_executions_topic" {
   name = "${var.prefix}-report-executions-topic"
-  tags = local.default_tags
-}
-
-resource "aws_lambda_permission" "publish_executions_permission" {
-  action        = "lambda:InvokeFunction"
-  function_name = "${aws_lambda_function.publish_executions.function_name}"
-  principal     = "sns.amazonaws.com"
-  source_arn    = "${aws_sns_topic.report_executions_topic.arn}"
+  tags = var.tags
 }
 
 resource "aws_lambda_event_source_mapping" "publish_executions" {
@@ -126,8 +122,8 @@ resource "aws_iam_role" "publish_granules_lambda_role" {
   name                 = "${var.prefix}-PublishGranulesLambda"
   assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
-  # TODO Re-enable once IAM permissions have been fixed
-  # tags                 = local.default_tags
+
+  tags = var.tags
 }
 
 data "aws_iam_policy_document" "publish_granules_policy_document" {
@@ -182,7 +178,7 @@ resource "aws_sqs_queue" "publish_granules_dead_letter_queue" {
   receive_wait_time_seconds  = 20
   message_retention_seconds  = 1209600
   visibility_timeout_seconds = 60
-  tags                       = local.default_tags
+  tags                       = var.tags
 }
 
 resource "aws_lambda_function" "publish_granules" {
@@ -199,11 +195,14 @@ resource "aws_lambda_function" "publish_granules" {
     target_arn = aws_sqs_queue.publish_granules_dead_letter_queue.arn
   }
 
-  vpc_config {
-    subnet_ids = var.lambda_subnet_ids
-    security_group_ids = [
-      aws_security_group.no_ingress_all_egress[0].id
-    ]
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = [
+        aws_security_group.no_ingress_all_egress[0].id
+      ]
+    }
   }
 
   environment {
@@ -212,18 +211,18 @@ resource "aws_lambda_function" "publish_granules" {
     }
   }
 
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_cloudwatch_log_group" "publish_granules_logs" {
   name              = "/aws/lambda/${aws_lambda_function.publish_granules.function_name}"
   retention_in_days = 14
-  tags              = local.default_tags
+  tags              = var.tags
 }
 
 resource "aws_sns_topic" "report_granules_topic" {
   name = "${var.prefix}-report-granules-topic"
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_lambda_event_source_mapping" "publish_granules" {
@@ -235,21 +234,18 @@ resource "aws_lambda_event_source_mapping" "publish_granules" {
 
 # Report PDRs
 
-resource "aws_iam_role" "report_pdrs_lambda_role" {
-  name                 = "${var.prefix}-ReportPdrsLambda"
+resource "aws_iam_role" "publish_pdrs_lambda_role" {
+  name                 = "${var.prefix}-PublishPdrsLambda"
   assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
-  # TODO Re-enable once IAM permissions have been fixed
-  # tags                 = local.default_tags
+
+  tags = var.tags
 }
 
-data "aws_iam_policy_document" "report_pdrs_policy_document" {
+data "aws_iam_policy_document" "publish_pdrs_policy_document" {
   statement {
-    actions = [
-      "dynamoDb:getItem",
-      "dynamoDb:putItem"
-    ]
-    resources = [var.dynamo_tables.pdrs.arn]
+    actions   = ["sns:Publish"]
+    resources = [aws_sns_topic.report_pdrs_topic.arn]
   }
   statement {
     actions = [
@@ -269,76 +265,81 @@ data "aws_iam_policy_document" "report_pdrs_policy_document" {
     resources = ["*"]
   }
   statement {
+    actions = ["sqs:SendMessage"]
+    resources = [aws_sqs_queue.publish_pdrs_dead_letter_queue.arn]
+  }
+  statement {
     actions = [
-      "sqs:SendMessage"
+      "dynamodb:GetRecords",
+      "dynamodb:GetShardIterator",
+      "dynamodb:DescribeStream",
+      "dynamodb:ListStreams"
     ]
-    resources = [
-      aws_sqs_queue.report_pdrs_dead_letter_queue.arn
-    ]
+    resources = ["${var.dynamo_tables.pdrs.arn}/stream/*"]
   }
 }
 
-resource "aws_iam_role_policy" "report_pdrs_lambda_role_policy" {
-  name   = "${var.prefix}_report_pdrs_lambda_role_policy"
-  role   = aws_iam_role.report_pdrs_lambda_role.id
-  policy = data.aws_iam_policy_document.report_pdrs_policy_document.json
+resource "aws_iam_role_policy" "publish_pdrs_lambda_role_policy" {
+  name   = "${var.prefix}_publish_pdrs_lambda_role_policy"
+  role   = aws_iam_role.publish_pdrs_lambda_role.id
+  policy = data.aws_iam_policy_document.publish_pdrs_policy_document.json
 }
 
-resource "aws_sqs_queue" "report_pdrs_dead_letter_queue" {
-  name                       = "${var.prefix}-reportPdrsDeadLetterQueue"
+resource "aws_sqs_queue" "publish_pdrs_dead_letter_queue" {
+  name                       = "${var.prefix}-publishPdrsDeadLetterQueue"
   receive_wait_time_seconds  = 20
   message_retention_seconds  = 1209600
   visibility_timeout_seconds = 60
-  tags                       = local.default_tags
+  tags                       = var.tags
 }
 
-resource "aws_lambda_function" "report_pdrs" {
-  filename         = "${path.module}/../../packages/api/dist/reportPdrs/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/reportPdrs/lambda.zip")
-  function_name    = "${var.prefix}-reportPdrs"
-  role             = "${aws_iam_role.report_pdrs_lambda_role.arn}"
+resource "aws_lambda_function" "publish_pdrs" {
+  filename         = "${path.module}/../../packages/api/dist/publishPdrs/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/publishPdrs/lambda.zip")
+  function_name    = "${var.prefix}-publishPdrs"
+  role             = aws_iam_role.publish_pdrs_lambda_role.arn
   handler          = "index.handler"
   runtime          = "nodejs10.x"
   timeout          = 30
   memory_size      = 128
 
   dead_letter_config {
-    target_arn = aws_sqs_queue.report_pdrs_dead_letter_queue.arn
+    target_arn = aws_sqs_queue.publish_pdrs_dead_letter_queue.arn
   }
 
-  vpc_config {
-    subnet_ids = var.lambda_subnet_ids
-    security_group_ids = [
-      aws_security_group.no_ingress_all_egress[0].id
-    ]
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = [
+        aws_security_group.no_ingress_all_egress[0].id
+      ]
+    }
   }
 
   environment {
     variables = {
-      PdrsTable = var.dynamo_tables.pdrs.name
+      pdr_sns_topic_arn = aws_sns_topic.report_pdrs_topic.arn
     }
   }
+
+  tags = var.tags
 }
 
-resource "aws_cloudwatch_log_group" "report_pdrs_logs" {
-  name              = "/aws/lambda/${aws_lambda_function.report_pdrs.function_name}"
+resource "aws_cloudwatch_log_group" "publish_pdrs_logs" {
+  name              = "/aws/lambda/${aws_lambda_function.publish_pdrs.function_name}"
   retention_in_days = 14
+  tags              = var.tags
 }
 
 resource "aws_sns_topic" "report_pdrs_topic" {
   name = "${var.prefix}-report-pdrs-topic"
-  # tags = local.default_tags
+  tags = var.tags
 }
 
-resource "aws_sns_topic_subscription" "report_pdrs_trigger" {
-  topic_arn = aws_sns_topic.report_pdrs_topic.arn
-  protocol  = "lambda"
-  endpoint  = aws_lambda_function.report_pdrs.arn
-}
-
-resource "aws_lambda_permission" "report_pdrs_permission" {
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.report_pdrs.function_name
-  principal     = "sns.amazonaws.com"
-  source_arn    = aws_sns_topic.report_pdrs_topic.arn
+resource "aws_lambda_event_source_mapping" "publish_pdrs" {
+  event_source_arn  = data.aws_dynamodb_table.pdrs.stream_arn
+  function_name     = aws_lambda_function.publish_pdrs.arn
+  starting_position = "TRIM_HORIZON"
+  batch_size        = 10
 }

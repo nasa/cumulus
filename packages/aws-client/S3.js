@@ -195,10 +195,24 @@ exports.downloadS3File = (s3Obj, filepath) => {
 *
 * @param {string} Bucket - name of bucket
 * @param {string} Key - key for object (filepath + filename)
+* @param {Object} retryOptions - options to control retry behavior when an
+*   object does not exist. See https://github.com/tim-kos/node-retry#retryoperationoptions
+*   By default, retries will not be performed
 * @returns {Promise} - returns response from `S3.headObject` as a promise
 **/
 exports.headObject = improveStackTrace(
-  (Bucket, Key) => awsServices.s3().headObject({ Bucket, Key }).promise()
+  (Bucket, Key, retryOptions = { retries: 0 }) =>
+    pRetry(
+      async () => {
+        try {
+          return await awsServices.s3().headObject({ Bucket, Key }).promise();
+        } catch (err) {
+          if (err.code === 'NotFound') throw err;
+          throw new pRetry.AbortError(err);
+        }
+      },
+      { maxTimeout: 10000, ...retryOptions }
+    )
 );
 
 /**
@@ -209,7 +223,7 @@ exports.headObject = improveStackTrace(
  * @returns {Promise<integer>} - object size, in bytes
  */
 exports.getObjectSize = (bucket, key) =>
-  exports.headObject(bucket, key)
+  exports.headObject(bucket, key, { retries: 3 })
     .then((response) => response.ContentLength);
 
 /**
@@ -299,9 +313,33 @@ exports.putJsonS3Object = (bucket, key, data) =>
     Body: JSON.stringify(data)
   });
 
+/**
+ * Get a readable stream for an S3 object.
+ *
+ * @param {string} bucket - the S3 object's bucket
+ * @param {string} key - the S3 object's key
+ * @returns {ReadableStream}
+ * @throws {Error} if S3 object cannot be found
+ */
 exports.getS3ObjectReadStream = (bucket, key) => awsServices.s3().getObject(
   { Bucket: bucket, Key: key }
 ).createReadStream();
+
+/**
+ * Get a readable stream for an S3 object.
+ *
+ * Use `getS3Object()` before fetching stream to deal
+ * with eventual consistency issues by checking for object
+ * with retries.
+ *
+ * @param {string} bucket - the S3 object's bucket
+ * @param {string} key - the S3 object's key
+ * @returns {ReadableStream}
+ * @throws {Error} if S3 object cannot be found
+ */
+exports.getS3ObjectReadStreamAsync = (bucket, key) =>
+  exports.getS3Object(bucket, key, { retries: 3 })
+    .then(() => exports.getS3ObjectReadStream(bucket, key));
 
 /**
 * Check if a file exists in an S3 object
@@ -523,7 +561,7 @@ exports.calculateS3ObjectChecksum = async ({
   key,
   options
 }) => {
-  const fileStream = exports.getS3ObjectReadStream(bucket, key);
+  const fileStream = await exports.getS3ObjectReadStreamAsync(bucket, key);
   return generateChecksumFromStream(algorithm, fileStream, options);
 };
 
@@ -547,7 +585,7 @@ exports.validateS3ObjectChecksum = async ({
   expectedSum,
   options
 }) => {
-  const fileStream = exports.getS3ObjectReadStream(bucket, key);
+  const fileStream = await exports.getS3ObjectReadStreamAsync(bucket, key);
   if (await validateChecksumFromStream(algorithm, fileStream, expectedSum, options)) {
     return true;
   }

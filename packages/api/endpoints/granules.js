@@ -1,10 +1,9 @@
 'use strict';
 
+const lodashGet = require('lodash.get');
+const pMap = require('p-map');
 const router = require('express-promise-router')();
-const {
-  deleteS3Object,
-  fileExists
-} = require('@cumulus/aws-client/S3');
+const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const Search = require('../es/search').Search;
@@ -142,14 +141,10 @@ async function del(req, res) {
   }
 
   // remove files from s3
-  if (granule.files) {
-    await Promise.all(granule.files.map(async (file) => {
-      if (await fileExists(file.bucket, file.key)) {
-        return deleteS3Object(file.bucket, file.key);
-      }
-      return {};
-    }));
-  }
+  await pMap(
+    lodashGet(granule, 'files', []),
+    ({ bucket, key }) => deleteS3Object(bucket, key)
+  );
 
   await granuleModelClient.delete({ granuleId });
 

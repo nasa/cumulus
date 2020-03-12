@@ -101,7 +101,7 @@ test.beforeEach(async (t) => {
 
   const collection = t.context.event.config.collection;
   // save collection in internal/stackName/collections/collectionId
-  const key = `${process.env.stackName}/collections/${collection.dataType}___${parseInt(collection.version, 10)}.json`;
+  const key = `${process.env.stackName}/collections/${collection.name}___${parseInt(collection.version, 10)}.json`;
   await promiseS3Upload({
     Bucket: t.context.internalBucketName,
     Key: key,
@@ -181,7 +181,7 @@ test.serial('download Granule from FTP endpoint', async (t) => {
   t.is(output.granules.length, 1);
   t.is(output.granules[0].files.length, 1);
   const config = t.context.event.config;
-  const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
+  const keypath = `file-staging/${config.stack}/${config.collection.name}___${parseInt(config.collection.version, 10)}`;
   t.is(
     output.granules[0].files[0].filename,
     `s3://${t.context.internalBucketName}/${keypath}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`
@@ -210,7 +210,7 @@ test.serial('download Granule from HTTP endpoint', async (t) => {
   t.is(output.granules.length, 1);
   t.is(output.granules[0].files.length, 1);
   const config = t.context.event.config;
-  const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
+  const keypath = `file-staging/${config.stack}/${config.collection.name}___${parseInt(config.collection.version, 10)}`;
   t.is(
     output.granules[0].files[0].filename,
     `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
@@ -265,7 +265,7 @@ test.serial('download Granule from SFTP endpoint', async (t) => {
   t.is(output.granules.length, 1);
   t.is(output.granules[0].files.length, 1);
   const config = t.context.event.config;
-  const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
+  const keypath = `file-staging/${config.stack}/${config.collection.name}___${parseInt(config.collection.version, 10)}`;
   t.is(
     output.granules[0].files[0].filename,
     `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
@@ -318,7 +318,7 @@ test.serial('download granule from S3 provider', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
+    const keypath = `file-staging/${config.stack}/${config.collection.name}___${parseInt(config.collection.version, 10)}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFileName}`
@@ -377,7 +377,7 @@ test.serial('download granule with checksum in file from an HTTP endpoint', asyn
   t.is(output.granules.length, 1);
   t.is(output.granules[0].files.length, 1);
   const config = t.context.event.config;
-  const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
+  const keypath = `file-staging/${config.stack}/${config.collection.name}___${parseInt(config.collection.version, 10)}`;
   t.is(
     output.granules[0].files[0].filename,
     `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
@@ -410,7 +410,7 @@ test.serial('download granule with bad checksum in file from HTTP endpoint throw
   const granuleFilename = t.context.event.input.granules[0].files[0].name;
   const granuleChecksumType = t.context.event.input.granules[0].files[0].checksumType;
   const config = t.context.event.config;
-  const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
+  const keypath = `file-staging/${config.stack}/${config.collection.name}___${parseInt(config.collection.version, 10)}`;
   const errorMessage = `Invalid checksum for S3 object s3://${t.context.internalBucketName}/${keypath}/${granuleFilename} with type ${granuleChecksumType} and expected sum ${granuleChecksumValue}`;
 
   await t.throwsAsync(
@@ -447,7 +447,7 @@ test.serial('validate file properties', async (t) => {
   t.is(output.granules.length, 1);
   t.is(output.granules[0].files.length, 2);
   const config = t.context.event.config;
-  const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
+  const keypath = `file-staging/${config.stack}/${config.collection.name}___${parseInt(config.collection.version, 10)}`;
   t.is(
     output.granules[0].files[0].filename,
     `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`

@@ -1,6 +1,6 @@
 resource "aws_sfn_activity" "ecs_task_hello_world" {
   name = "${var.prefix}-EcsTaskHelloWorld"
-  tags = local.default_tags
+  tags = local.tags
 }
 
 module "hello_world_service" {
@@ -8,7 +8,7 @@ module "hello_world_service" {
 
   prefix = var.prefix
   name   = "HelloWorld"
-  tags   = local.default_tags
+  tags   = local.tags
 
   cluster_arn                           = module.cumulus.ecs_cluster_arn
   desired_count                         = 1
@@ -46,7 +46,7 @@ module "ecs_hello_world_workflow" {
   name            = "EcsHelloWorldWorkflow"
   workflow_config = module.cumulus.workflow_config
   system_bucket   = var.system_bucket
-  tags            = local.default_tags
+  tags            = local.tags
 
   state_machine_definition = <<JSON
 {

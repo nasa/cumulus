@@ -8,11 +8,8 @@ const {
 } = require('url');
 const mime = require('mime-types');
 
-const {
-  models: {
-    AccessToken, Execution, Collection, Provider
-  }
-} = require('@cumulus/api');
+const Execution = require('@cumulus/api/models/executions');
+const Provider = require('@cumulus/api/models/providers');
 const {
   getS3Object,
   s3ObjectExists,
@@ -21,22 +18,23 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
-const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getUrl } = require('@cumulus/cmrjs');
 const {
   addCollections,
-  api: apiTestUtils,
   buildAndExecuteWorkflow,
   conceptExists,
-  getOnlineResources,
-  granulesApi: granulesApiTestUtils,
-  EarthdataLogin: { getEarthdataAccessToken },
-  distributionApi: {
-    getDistributionApiRedirect,
-    getDistributionApiFileStream,
-    getDistributionFileUrl
-  }
+  getOnlineResources
 } = require('@cumulus/integration-tests');
+const apiTestUtils = require('@cumulus/integration-tests/api/api');
+const { deleteCollection } = require('@cumulus/integration-tests/api/collections');
+const granulesApiTestUtils = require('@cumulus/integration-tests/api/granules');
+const {
+  getDistributionFileUrl,
+  getTEADistributionApiRedirect,
+  getTEADistributionApiFileStream,
+  getTEARequestHeaders
+} = require('@cumulus/integration-tests/api/distribution');
+const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
 const {
   loadConfig,
@@ -78,7 +76,8 @@ async function getUmmObject(fileLocation) {
 const cumulusDocUrl = 'https://nasa.github.io/cumulus/docs/cumulus-docs-readme';
 const isUMMGScienceUrl = (url) => url !== cumulusDocUrl &&
   !url.endsWith('.cmr.json') &&
-  !url.includes('s3credentials');
+  !url.includes('s3credentials') &&
+  !url.includes('opendap.uat.earthdata.nasa.gov');
 
 describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
@@ -90,10 +89,8 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   let expectedPayload;
   let postToCmrOutput;
   let granule;
-  let collectionModel;
   let executionModel;
   let config;
-  let accessTokensModel;
   let testDataFolder;
   let collection;
   let provider;
@@ -110,14 +107,10 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     provider = { id: `s3_provider${testSuffix}` };
     const newCollectionId = constructCollectionId(collection.name, collection.version);
 
-    process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
-    accessTokensModel = new AccessToken();
     process.env.GranulesTable = `${config.stackName}-GranulesTable`;
     process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
     executionModel = new Execution();
-    process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
     process.env.system_bucket = config.bucket;
-    collectionModel = new Collection();
     process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
     providerModel = new Provider();
 
@@ -195,7 +188,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     // clean up stack state added by test
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
-      collectionModel.delete(collection),
+      deleteCollection(config.stackName, collection.name, collection.version),
       providerModel.delete(provider),
       executionModel.delete({ arn: workflowExecution.executionArn }),
       granulesApiTestUtils.removePublishedGranule({
@@ -275,8 +268,8 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     let onlineResources;
     let files;
     let resourceURLs;
-    let accessToken;
     let beforeAllError;
+    let teaRequestHeaders;
 
     beforeAll(async () => {
       postToCmrOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
@@ -291,18 +284,13 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         process.env.CMR_ENVIRONMENT = 'UAT';
         const result = await Promise.all([
           getOnlineResources(granule),
-          // Login with Earthdata and get access token.
-          getEarthdataAccessToken({
-            redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
-            requestOrigin: process.env.DISTRIBUTION_ENDPOINT
-          })
+          getTEARequestHeaders(config.stackName)
         ]);
 
         onlineResources = result[0];
         resourceURLs = onlineResources.map((resource) => resource.URL);
 
-        const accessTokenResponse = result[1];
-        accessToken = accessTokenResponse.accessToken;
+        teaRequestHeaders = result[1];
       } catch (e) {
         beforeAllError = e;
       }
@@ -310,10 +298,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     beforeEach(() => {
       if (beforeAllError) fail(beforeAllError);
-    });
-
-    afterAll(async () => {
-      await accessTokensModel.delete({ accessToken });
     });
 
     it('has expected payload', () => {
@@ -358,11 +342,16 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       expect(resourceURLs.includes(s3BrowseImageUrl)).toBe(true);
     });
 
+    it('adds the opendap URL to the CMR metadata', () => {
+      const opendapFilePath = `https://opendap.uat.earthdata.nasa.gov/providers/CUMULUS/collections/MODIS/Terra%20Surface%20Reflectance%20Daily%20L2G%20Global%20250m%20SIN%20Grid%20V006/granules/${inputPayload.granules[0].granuleId}`;
+      expect(resourceURLs.includes(opendapFilePath)).toBe(true);
+    });
+
     it('publishes CMR metadata online resources with the correct type', () => {
       const viewRelatedInfoResource = onlineResources.filter((resource) => resource.Type === 'VIEW RELATED INFORMATION');
       const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
 
-      const ExpectedResources = ['GET DATA', 'GET DATA', 'GET RELATED VISUALIZATION',
+      const ExpectedResources = ['GET DATA', 'GET DATA', 'GET DATA', 'GET RELATED VISUALIZATION',
         'EXTENDED METADATA', 'VIEW RELATED INFORMATION'].sort();
       expect(viewRelatedInfoResource.map((urlObj) => urlObj.URL).includes(s3CredsUrl)).toBe(true);
       expect(onlineResources.map((x) => x.Type).sort()).toEqual(ExpectedResources);
@@ -377,16 +366,14 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       expect(resourceURLs.includes(cumulusDocUrl)).toBe(true);
     });
 
-    // TODO Update this to use TEA
-    xit('includes the Earthdata login ID for requests to protected science files', async () => {
+    it('includes the Earthdata login ID for requests to protected science files', async () => {
       const filepath = `/${files[0].bucket}/${files[0].filepath}`;
-      const s3SignedUrl = await getDistributionApiRedirect(filepath, accessToken);
-      const earthdataLoginParam = new URL(s3SignedUrl).searchParams.get('x-EarthdataLoginUsername');
+      const s3SignedUrl = await getTEADistributionApiRedirect(filepath, teaRequestHeaders);
+      const earthdataLoginParam = new URL(s3SignedUrl).searchParams.get('A-userid');
       expect(earthdataLoginParam).toEqual(process.env.EARTHDATA_USERNAME);
     });
 
-    // TODO Update this to use TEA
-    xit('downloads the requested science file for authorized requests', async () => {
+    it('downloads the requested science file for authorized requests', async () => {
       const scienceFileUrls = resourceURLs.filter(isUMMGScienceUrl);
       console.log('scienceFileUrls: ', scienceFileUrls);
 
@@ -402,7 +389,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
             const file = files.find((f) => f.name.endsWith(extension));
 
             const filepath = `/${file.bucket}/${file.filepath}`;
-            const fileStream = await getDistributionApiFileStream(filepath, accessToken);
+            const fileStream = await getTEADistributionApiFileStream(filepath, teaRequestHeaders);
 
             // Compare checksum of downloaded file with expected checksum.
             const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);

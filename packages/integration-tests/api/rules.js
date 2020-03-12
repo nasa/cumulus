@@ -75,13 +75,15 @@ async function updateRule({ prefix, ruleName, updateParams }) {
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.query - query params to use for listing rules
  * @returns {Promise<Object>} - promise that resolves to the output of the API lambda
  */
-async function listRules({ prefix }) {
+async function listRules({ prefix, query = {} }) {
   const payload = {
     httpMethod: 'GET',
     resource: '/{proxy+}',
-    path: '/rules'
+    path: '/rules',
+    queryStringParameters: query
   };
 
   return callRuleApiFunction(prefix, payload);

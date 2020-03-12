@@ -8,6 +8,85 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- **CUMULUS-1714**
+  - Changed the format of the message sent to the granule SNS Topic. Message includes the granule record under `record` and the type of event under `event`. Messages with `deleted` events will have the record that was deleted with a `deletedAt` timestamp. Options for `event` are `Create | Update | Delete`
+- **CUMULUS-1769** - `deploy_to_ngap` is now a **required** variable for the `tf-modules/cumulus` module. **For those deploying to NGAP environments, this variable should always be set to `true`.**
+
+### Notable chanegs
+
+- **CUMULUS-1739** - You can now exclude Elasticsearch from your `tf-modules/data-persistence` deployment (via `include_elasticsearch = false`) and your `tf-modules/cumulus` module will still deploy successfully.
+- **CUMULUS-1769** - If you set `deploy_to_ngap = true` for the `tf-modules/archive` Terraform module, **you can only deploy your archive API gateway as `PRIVATE`**, not `EDGE`.
+
+### Added
+
+- **CUMULUS-1769**
+  - Added `deploy_to_ngap` boolean variable for the `tf-modules/cumulus` and `tf-modules/archive` Terraform modules. This variable is required. **For those deploying to NGAP environments, this variable should always be set to `true`.**
+
+### Added
+
+- **HYRAX-70**
+  - Add the hyrax-metadata-update task
+
+- Added `@cumulus/aws-client/S3.getS3ObjectReadStreamAsync()` to deal with S3 eventual consistency issues by checking for the existence an S3 object with retries before getting a readable stream for that object.
+
+### Changed
+
+- [`AccessToken.get()`](https://github.com/nasa/cumulus/blob/master/packages/api/models/access-tokens.js) now enforces [strongly consistent reads from DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html)
+- **CUMULUS-1739**
+  - Updated `tf-modules/data-persistence` to make Elasticsearch alarm resources and outputs conditional on the `include_elasticsearch` variable
+  - Updated `@cumulus/aws-client/S3.getObjectSize` to include automatic retries for any failures from `S3.headObject`
+- **CUMULUS-1768**
+  - The `stats/summary` endpoint reports the distinct collections for the number of granules reported
+
+### Fixed
+
+- **CUMULUS-1739** - Fixed the `tf-modules/cumulus` and `tf-modules/archive` modules to make these Elasticsearch variables truly optional:
+  - `elasticsearch_domain_arn`
+  - `elasticsearch_hostname`
+  - `elasticsearch_security_group_id`
+- **CUMULUS-1768**
+  - Fixed the `stats/` endpoint so that data is correctly filtered by timestamp and `processingTime` is calculated correctly.
+- **CUMULUS-1769**
+  - In the `tf-modules/archive` Terraform module, the `lifecycle` block ignoring changes to the `policy` of the archive API gateway is now only enforced if `deploy_to_ngap = true`. This fixes a bug where users deploying outside of NGAP could not update their API gateway's resource policy when going from `PRIVATE` to `EDGE`, preventing their API from being accessed publicly.
+- **CUMULUS-1775**
+  - Fix/update api endpoint to use updated google auth endpoints such that it will work with new accounts
+
+### Removed
+
+- **CUMULUS-1768**
+  - Removed API endpoints `stats/histogram` and `stats/average`. All advanced stats needs should be acquired from Cloud Metrics or similarly configured ELK stack.
+
+## [v1.19.0] 2020-02-28
+
+### BREAKING CHANGES
+
+- **CUMULUS-1736**
+  - The `@cumulus/discover-granules` task now sets the `dataType` of discovered
+    granules based on the `name` of the configured collection, not the
+    `dataType`.
+  - The config schema of the `@cumulus/discover-granules` task now requires that
+    collections contain a `version`.
+  - The `@cumulus/sync-granule` task will set the `dataType` and `version` of a
+    granule based on the configured collection if those fields are not already
+    set on the granule. Previously it was using the `dataType` field of the
+    configured collection, then falling back to the `name` field of the
+    collection. This update will just use the `name` field of the collection to
+    set the `dataType` field of the granule.
+
+- **CUMULUS-1446**
+  - Update the `@cumulus/integration-tests/api/executions.getExecution()`
+    function to parse the response and return the execution, rather than return
+    the full API response.
+
+- **CUMULUS-1672**
+  - The `cumulus` Terraform module in previous releases set a
+    `Deployment = var.prefix` tag on all resources that it managed. In this
+    release, a `tags` input variable has been added to the `cumulus` Terraform
+    module to allow resource tagging to be customized. No default tags will be
+    applied to Cumulus-managed resources. To replicate the previous behavior,
+    set `tags = { Deployment: var.prefix }` as an input variable for the
+    `cumulus` Terraform module.
+
 - **CUMULUS-1684 Migration Instructions**
   - In previous releases, a provider's username and password were encrypted
     using a custom encryption library. That has now been updated to use KMS.
@@ -21,11 +100,41 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     deployment, which will cause the deployment to fail if the migration
     Lambda has not been run.
 
-- **CUMULUS-1698**
-  - Change variable `saml_launchpad_metadata_path` to
-    `saml_launchpad_metadata_url` in the `tf-modules/cumulus` Terraform module.
+- **CUMULUS-1718**
+  - The `@cumulus/sf-sns-report` task for reporting mid-workflow updates has been retired.
+  This task was used as the `PdrStatusReport` task in our ParsePdr example workflow.
+  If you have a ParsePdr or other workflow using this task, use `@cumulus/sf-sqs-report` instead.
+  Trying to deploy the old task will result in an error as the cumulus module no longer exports `sf_sns_report_task`.
+  - Migration instruction: In your workflow definition, for each step using the old task change:
+  `"Resource": "${module.cumulus.sf_sns_report_task.task_arn}"`
+  to
+  `"Resource": "${module.cumulus.sf_sqs_report_task.task_arn}"`
+
+- **CUMULUS-1755**
+  - The `thin_egress_jwt_secret_name` variable for the `tf-modules/cumulus` Terraform module is now **required**. This variable is passed on to the Thin Egress App in `tf-modules/distribution/main.tf`, which uses the keys stored in the secret to sign JWTs. See the [Thin Egress App documentation on how to create a value for this secret](https://github.com/asfadmin/thin-egress-app#setting-up-the-jwt-cookie-secrets).
 
 ### Added
+
+- **CUMULUS-1446**
+  - Add `@cumulus/common/FileUtils.readJsonFile()` function
+  - Add `@cumulus/common/FileUtils.readTextFile()` function
+  - Add `@cumulus/integration-tests/api/collections.createCollection()` function
+  - Add `@cumulus/integration-tests/api/collections.deleteCollection()` function
+  - Add `@cumulus/integration-tests/api/collections.getCollection()` function
+  - Add `@cumulus/integration-tests/api/providers.getProvider()` function
+  - Add `@cumulus/integration-tests/index.getExecutionOutput()` function
+  - Add `@cumulus/integration-tests/index.loadCollection()` function
+  - Add `@cumulus/integration-tests/index.loadProvider()` function
+  - Add `@cumulus/integration-tests/index.readJsonFilesFromDir()` function
+
+- **CUMULUS-1672**
+  - Add a `tags` input variable to the `archive` Terraform module
+  - Add a `tags` input variable to the `cumulus` Terraform module
+  - Add a `tags` input variable to the `cumulus_ecs_service` Terraform module
+  - Add a `tags` input variable to the `data-persistence` Terraform module
+  - Add a `tags` input variable to the `distribution` Terraform module
+  - Add a `tags` input variable to the `ingest` Terraform module
+  - Add a `tags` input variable to the `s3-replicator` Terraform module
 
 - **CUMULUS-1707**
   - Enable logrotate on ECS cluster
@@ -55,6 +164,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `publishGranules` Lambda to handle publishing granule messages to SNS when granule records are written to DynamoDB
   - Added `@cumulus/api/models/Granule.storeGranulesFromCumulusMessage` to store granules from a Cumulus message to DynamoDB
 
+- **CUMULUS-1718**
+  - Added `@cumulus/sf-sqs-report` task to allow mid-workflow reporting updates.
+  - Added `stepfunction_event_reporter_queue_url` and `sf_sqs_report_task` outputs to the `cumulus` module.
+  - Added `publishPdrs` Lambda to handle publishing PDR messages to SNS when PDR records are written to DynamoDB.
+  - Added `@cumulus/api/models/Pdr.storePdrFromCumulusMessage` to store PDRs from a Cumulus message to DynamoDB.
+  - Added `@cumulus/aws-client/parseSQSMessageBody` to parse an SQS message body string into an object.
+
 - **Ability to set custom backend API url in the archive module**
   - Add `api_url` definition in `tf-modules/cumulus/archive.tf`
   - Add `archive_api_url` variable in `tf-modules/cumulus/variables.tf`
@@ -64,18 +180,90 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `data-persistence` Terraform module to allow additional security groups to
     be assigned to the Elasticsearch Domain.
 
+- **CUMULUS-1752**
+  - Added `@cumulus/integration-tests/api/distribution.invokeTEADistributionLambda` to simulate a request to the [Thin Egress App](https://github.com/asfadmin/thin-egress-app) by invoking the Lambda and getting a response payload.
+  - Added `@cumulus/integration-tests/api/distribution.getTEARequestHeaders` to generate necessary request headers for a request to the Thin Egress App
+  - Added `@cumulus/integration-tests/api/distribution.getTEADistributionApiFileStream` to get a response stream for a file served by Thin Egress App
+  - Added `@cumulus/integration-tests/api/distribution.getTEADistributionApiRedirect` to get a redirect response from the Thin Egress App
+
+- **CUMULUS-1755**
+  - Added `@cumulus/aws-client/CloudFormation.describeCfStack()` to describe a Cloudformation stack
+  - Added `@cumulus/aws-client/CloudFormation.getCfStackParameterValues()` to get multiple parameter values for a Cloudformation stack
+
 ### Changed
+
+- **CUMULUS-1736**
+  - The `collections` model in the API package now determines the name of a
+    collection based on the `name` property, rather than using `dataType` and
+    then falling back to `name`.
+  - The `@cumulus/integration-tests.loadCollection()` function no longer appends
+    the postfix to the end of the collection's `dataType`.
+  - The `@cumulus/integration-tests.addCollections()` function no longer appends
+    the postfix to the end of the collection's `dataType`.
+
+- **CUMULUS-1672**
+  - Add a `retryOptions` parameter to the `@cumulus/aws-client/S3.headObject`
+     function, which will retry if the object being queried does not exist.
+
+- **CUMULUS-1446**
+  - Mark the `@cumulus/integration-tests/api.addCollectionApi()` function as
+    deprecated
+  - Mark the `@cumulus/integration-tests/index.listCollections()` function as
+    deprecated
+  - Mark the `@cumulus/integration-tests/index.listProviders()` function as
+    deprecated
+  - Mark the `@cumulus/integration-tests/index.rulesList()` function as
+    deprecated
+
+- **CUMULUS-1672**
+  - Previously, the `cumulus` module defaulted to setting a
+    `Deployment = var.prefix` tag on all resources that it managed. In this
+    release, the `cumulus` module will now accept a `tags` input variable that
+    defines the tags to be assigned to all resources that it manages.
+  - Previously, the `data-persistence` module defaulted to setting a
+    `Deployment = var.prefix` tag on all resources that it managed. In this
+    release, the `data-persistence` module will now accept a `tags` input
+    variable that defines the tags to be assigned to all resources that it
+    manages.
+  - Previously, the `distribution` module defaulted to setting a
+    `Deployment = var.prefix` tag on all resources that it managed. In this
+    release, the `distribution` module will now accept a `tags` input variable
+    that defines the tags to be assigned to all resources that it manages.
+  - Previously, the `ingest` module defaulted to setting a
+    `Deployment = var.prefix` tag on all resources that it managed. In this
+    release, the `ingest` module will now accept a `tags` input variable that
+    defines the tags to be assigned to all resources that it manages.
+  - Previously, the `s3-replicator` module defaulted to setting a
+    `Deployment = var.prefix` tag on all resources that it managed. In this
+    release, the `s3-replicator` module will now accept a `tags` input variable
+    that defines the tags to be assigned to all resources that it manages.
 
 - **CUMULUS-1684**
   - Update the API package to encrypt provider credentials using KMS instead of
     using RSA keys stored in S3
 
 - **CUMULUS-1717**
-  - Changed name of `cwSfExecutionEventToDb` Lamda to `cwSfEventToDbRecords`
+  - Changed name of `cwSfExecutionEventToDb` Lambda to `cwSfEventToDbRecords`
   - Updated `cwSfEventToDbRecords` to write granule records to DynamoDB from the incoming Cumulus message
+
+- **CUMULUS-1718**
+  - Renamed `cwSfEventToDbRecords` to `sfEventSqsToDbRecords` due to architecture change to being a consumer of an SQS queue of Step Function Cloudwatch events.
+  - Updated `sfEventSqsToDbRecords` to write PDR records to DynamoDB from the incoming Cumulus message
+  - Moved `data-cookbooks/sns.md` to `data-cookbooks/ingest-notifications.md` and updated it to reflect recent changes.
+
+- **CUMULUS-1748**
+  - (S)FTP discovery tasks now use the provider-path as-is instead of forcing it to a relative path.
+  - Improved error handling to catch permission denied FTP errors better and log them properly. Workflows will still fail encountering this error and we intend to consider that approach in a future ticket.
+
+- **CUMULUS-1752**
+  - Moved class for parsing distribution events to its own file: `@cumulus/api/lib/DistributionEvent.js`
+    - Updated `DistributionEvent` to properly parse S3 access logs generated by requests from the [Thin Egress App](https://github.com/asfadmin/thin-egress-app)
 
 - **CUMULUS-1753** - Changes to `@cumulus/ingest/HttpProviderClient.js`:
   - Removed regex filter in `HttpProviderClient.list()` that was used to return only files with an extension between 1 and 4 characters long. `HttpProviderClient.list()` will now return all files linked from the HTTP provider host.
+
+- **CUMULUS-1755**
+  - Updated the Thin Egress App module used in `tf-modules/distribution/main.tf` to build 61. [See the release notes](https://github.com/asfadmin/thin-egress-app/releases/tag/tea-build.61).
 
 - **CUMULUS-1757**
   - Update @cumulus/cmr-client CMRSearchConceptQueue to take optional cmrEnvironment parameter
@@ -94,11 +282,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1717**
   - Deprecate `@cumulus/api/models/Granule.createGranulesFromSns`
 
+- **CUMULUS-1718**
+  - Deprecate `@cumulus/sf-sns-report`.
+    - This task has been updated to always throw an error directing the user to use `@cumulus/sf-sqs-report` instead. This was done because there is no longer an SNS topic to which to publish, and no consumers to listen to it.
+
+- **CUMULUS-1748**
+  - Deprecate `@cumulus/ingest/util.normalizeProviderPath`
+
+- **CUMULUS-1752**
+  - Deprecate `@cumulus/integration-tests/api/distribution.getDistributionApiFileStream`
+  - Deprecate `@cumulus/integration-tests/api/distribution.getDistributionApiRedirect`
+  - Deprecate `@cumulus/integration-tests/api/distribution.invokeApiDistributionLambda`
+
 ### Removed
 
 - **CUMULUS-1684**
   - Remove the deployment script that creates encryption keys and stores them to
     S3
+
+- **CUMULUS-1768**
+  - Removed API endpoints `stats/histogram` and `stats/average`. All advanced stats needs should be acquired from Cloud Metrics or similarly configured ELK stack.
 
 ### Fixed
 
@@ -114,6 +317,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Multiple link tags (e.g. `<a>`) per line of source code
   - Link tags in uppercase or lowercase (e.g. `<A>`)
   - Links with filepaths in the link target (e.g. `<a href="/path/to/file.txt">`). These files will be returned from HTTP file discovery **as the file name only** (e.g. `file.txt`).
+
+- **CUMULUS-1768**
+  - Fix an issue in the stats endpoints in `@cumulus/api` to send back stats for the correct type
 
 ## [v1.18.0] 2020-02-03
 
@@ -2200,7 +2406,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v1.18.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v1.19.0...HEAD
+[v1.19.0]: https://github.com/nasa/cumulus/compare/v1.18.0...v1.19.0
 [v1.18.0]: https://github.com/nasa/cumulus/compare/v1.17.0...v1.18.0
 [v1.17.0]: https://github.com/nasa/cumulus/compare/v1.16.1...v1.17.0
 [v1.16.1]: https://github.com/nasa/cumulus/compare/v1.16.0...v1.16.1

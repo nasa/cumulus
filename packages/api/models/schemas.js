@@ -77,7 +77,7 @@ module.exports.collection = {
     },
     dataType: {
       title: 'DataType',
-      description: 'This is used to identify a granule in a PDR',
+      description: 'This field is deprecated and unused',
       type: 'string'
     },
     process: {

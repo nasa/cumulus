@@ -2,7 +2,7 @@
 
 resource "aws_sns_topic" "kinesis_fallback" {
   name = "${var.prefix}-kinesisFallback"
-  tags = local.default_tags
+  tags = var.tags
 }
 
 resource "aws_sns_topic_subscription" "kinesis_fallback" {

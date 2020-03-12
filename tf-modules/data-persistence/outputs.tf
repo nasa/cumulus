@@ -56,14 +56,18 @@ output "elasticsearch_security_group_id" {
 }
 
 output "elasticsearch_alarms" {
-  value = [
-    {
-      name = aws_cloudwatch_metric_alarm.es_nodes_low.alarm_name
-      arn  = aws_cloudwatch_metric_alarm.es_nodes_low.arn
-    },
-    {
-      name = aws_cloudwatch_metric_alarm.es_nodes_high.alarm_name
-      arn  = aws_cloudwatch_metric_alarm.es_nodes_high.arn
-    }
-  ]
+  value = (var.include_elasticsearch ?
+    [
+      {
+        name = aws_cloudwatch_metric_alarm.es_nodes_low[0].alarm_name
+        arn  = aws_cloudwatch_metric_alarm.es_nodes_low[0].arn
+      },
+      {
+        name = aws_cloudwatch_metric_alarm.es_nodes_high[0].alarm_name
+        arn  = aws_cloudwatch_metric_alarm.es_nodes_high[0].arn
+      }
+    ]
+    :
+    []
+  )
 }
