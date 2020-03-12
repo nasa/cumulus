@@ -1,0 +1,139 @@
+{
+    "feed": {
+        "updated": "2020-02-26T20:23:02.274Z",
+        "id": "https://cmr.earthdata.nasa.gov:443/search/collections.json?page_size=50&provider_short_name=GES_DISC&short_name=GLDAS_CLSM025_D&version=2.0&page_num=1",
+        "title": "ECHO dataset metadata",
+        "entry": [
+            {
+                "processing_level_id": "4",
+                "boxes": [
+                    "-60 -180 90 180"
+                ],
+                "time_start": "1948-01-01T00:00:00.000Z",
+                "dif_ids": [
+                    "GLDAS_CLSM025_D_2.0"
+                ],
+                "version_id": "2.0",
+                "updated": "2017-12-01T00:00:00.000Z",
+                "dataset_id": "GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC",
+                "has_spatial_subsetting": true,
+                "has_transforms": false,
+                "associations": {
+                    "variables": [
+                        "V1634371573-GES_DISC",
+                        "V1634371552-GES_DISC",
+                        "V1634371527-GES_DISC",
+                        "V1634364414-GES_DISC",
+                        "V1634371535-GES_DISC",
+                        "V1634371522-GES_DISC",
+                        "V1634371572-GES_DISC",
+                        "V1634371543-GES_DISC",
+                        "V1634371584-GES_DISC",
+                        "V1634371537-GES_DISC",
+                        "V1634371529-GES_DISC",
+                        "V1634371582-GES_DISC",
+                        "V1634371560-GES_DISC",
+                        "V1634371548-GES_DISC",
+                        "V1634364411-GES_DISC",
+                        "V1634371551-GES_DISC",
+                        "V1634371577-GES_DISC",
+                        "V1634371530-GES_DISC",
+                        "V1634371579-GES_DISC",
+                        "V1634371575-GES_DISC",
+                        "V1634371521-GES_DISC",
+                        "V1634371541-GES_DISC",
+                        "V1634371554-GES_DISC",
+                        "V1634371565-GES_DISC",
+                        "V1634371532-GES_DISC",
+                        "V1634371556-GES_DISC",
+                        "V1634371568-GES_DISC",
+                        "V1634364410-GES_DISC",
+                        "V1634371524-GES_DISC",
+                        "V1634371544-GES_DISC",
+                        "V1634371546-GES_DISC",
+                        "V1634371558-GES_DISC",
+                        "V1634371562-GES_DISC"
+                    ],
+                    "services": [
+                        "S1634375588-GES_DISC"
+                    ]
+                },
+                "has_variables": true,
+                "data_center": "GES_DISC",
+                "short_name": "GLDAS_CLSM025_D",
+                "organizations": [
+                    "NASA/GSFC/SED/ESD/GCDC/GESDISC"
+                ],
+                "title": "GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC",
+                "coordinate_system": "CARTESIAN",
+                "summary": "Global Land Data Assimilation System Version 2 (hereafter, GLDAS-2) has two components: one forced entirely with the Princeton meteorological forcing data (hereafter, GLDAS-2.0), and the other forced with a combination of model and observation based forcing data sets (hereafter, GLDAS-2.1).\n\nThis data set, GLDAS-2.0 0.25 degree daily, contains a series of land surface parameters simulated from the Catchment Land Surface Model 3.3, and currently covers from January 1948 to December 2014.\n\nThe GLDAS-2.0 model simulations were initialized on January 1, 1948, using soil moisture and other state fields from the LSM climatology for that day of the year. The simulations were forced by the global meteorological forcing data set from Princeton University (Sheffield et al., 2006). Each simulation uses the common GLDAS data sets for land water mask (MOD44W: Carroll et al., 2009) and elevation (GTOPO30) along with the model default land cover and soils datasets. Catchment model uses the Mosaic land cover classification and soils, topographic, and other model-specific parameters were derived in a consistent manner as in the NASA/GMAO&#8217;s GEOS-5 climate modeling system. The MODIS based land surface parameters are used in the current GLDAS-2.0 and GLDAS-2.1 products. For more information, please see the README Document.",
+                "time_end": "2014-12-30T23:59:59.000Z",
+                "orbit_parameters": {},
+                "id": "C1453188197-GES_DISC",
+                "has_formats": true,
+                "original_format": "DIF10",
+                "archive_center": "NASA/GSFC/SED/ESD/GCDC/GESDISC",
+                "has_temporal_subsetting": false,
+                "browse_flag": true,
+                "online_access_flag": true,
+                "links": [
+                    {
+                        "rel": "http://esipfed.org/ns/fedsearch/1.1/browse#",
+                        "hreflang": "en-US",
+                        "href": "https://docserver.gesdisc.eosdis.nasa.gov/public/project/Images/GLDAS_CLSM025_D_2.0.png"
+                    },
+                    {
+                        "rel": "http://esipfed.org/ns/fedsearch/1.1/metadata#",
+                        "hreflang": "en-US",
+                        "href": "https://disc.gsfc.nasa.gov/datacollection/GLDAS_CLSM025_D_2.0.html"
+                    },
+                    {
+                        "rel": "http://esipfed.org/ns/fedsearch/1.1/data#",
+                        "hreflang": "en-US",
+                        "href": "https://hydro1.gesdisc.eosdis.nasa.gov/data/GLDAS/GLDAS_CLSM025_D.2.0/"
+                    },
+                    {
+                        "rel": "http://esipfed.org/ns/fedsearch/1.1/data#",
+                        "hreflang": "en-US",
+                        "href": "https://search.earthdata.nasa.gov/search?q=GLDAS_CLSM025_D_2.0"
+                    },
+                    {
+                        "rel": "http://esipfed.org/ns/fedsearch/1.1/browse#",
+                        "hreflang": "en-US",
+                        "href": "https://giovanni.gsfc.nasa.gov/giovanni/#dataKeyword=GLDAS_CLSM025_D_2_0"
+                    },
+                    {
+                        "rel": "http://esipfed.org/ns/fedsearch/1.1/metadata#",
+                        "hreflang": "en-US",
+                        "href": "https://hydro1.gesdisc.eosdis.nasa.gov/opendap/hyrax/GLDAS/GLDAS_CLSM025_D.2.0/"
+                    },
+                    {
+                        "rel": "http://esipfed.org/ns/fedsearch/1.1/metadata#",
+                        "hreflang": "en-US",
+                        "href": "https://hydro1.gesdisc.eosdis.nasa.gov/dods/GLDAS_CLSM025_D.2.0/"
+                    },
+                    {
+                        "rel": "http://esipfed.org/ns/fedsearch/1.1/documentation#",
+                        "hreflang": "en-US",
+                        "href": "https://hydro1.gesdisc.eosdis.nasa.gov/data/GLDAS/GLDAS_CLSM025_D.2.0/doc/README_GLDAS2.pdf"
+                    },
+                    {
+                        "rel": "http://esipfed.org/ns/fedsearch/1.1/metadata#",
+                        "hreflang": "en-US",
+                        "href": "https://ldas.gsfc.nasa.gov/gldas/"
+                    },
+                    {
+                        "rel": "http://esipfed.org/ns/fedsearch/1.1/documentation#",
+                        "hreflang": "en-US",
+                        "href": "https://disc.gsfc.nasa.gov/information/howto?tags=hydrology"
+                    },
+                    {
+                        "rel": "http://esipfed.org/ns/fedsearch/1.1/documentation#",
+                        "hreflang": "en-US",
+                        "href": "https://disc.gsfc.nasa.gov/information/documents?title=Hydrology%20Documentation"
+                    }
+                ]
+            }
+        ]
+    }
+}
