@@ -360,6 +360,7 @@ appropriate values. See the [Cumulus module variable definitions](https://github
 
 Notes on specific variables:
 
+- **`deploy_to_ngap`**: This variable controls the provisioning of certain resources and policies that are specific to an NGAP environment. **If you are deploying to NGAP, you must set this variable to `true`.**
 - **`prefix`**: The value should be the same as the `prefix` from the data-persistence deployment.
 - **`thin_egress_jwt_secret_name`**: Use the value created during the previous [`Create a secret for signing Thin Egress App JWTs`](#create-a-secret-for-signing-thin-egress-app-jwts) step
 - **`token_secret`**: A string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is **strongly recommended that this value be a 32-character string**.
