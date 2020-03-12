@@ -23,7 +23,7 @@ output "publish_reports_lambda_function_arn" {
 }
 
 output "report_collections_sns_topic_arn" {
-  value = aws_sns_topic_report_collections_topic.arn
+  value = aws_sns_topic.report_collections_topic.arn
 }
 
 output "report_executions_sns_topic_arn" {
