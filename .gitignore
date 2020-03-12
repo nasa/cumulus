@@ -12,6 +12,7 @@ cache-invalidation/config/runtime_config.json
 artifacts
 packaged-*
 .vscode
+*.code-workspace
 *-debug.log
 profiles.clj
 *.map
