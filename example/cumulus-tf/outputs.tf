@@ -18,7 +18,7 @@ output "distribution_redirect_uri" {
   value = module.cumulus.distribution_redirect_uri
 }
 
-# Workflow reporting SNS topics
+# Reporting SNS topics
 
 output "report_collections_sns_topic_arn" {
   value = module.cumulus.report_collections_sns_topic_arn
