@@ -18,6 +18,10 @@ provider "aws" {
 
 locals {
   tags = merge(var.tags, { Deployment = var.prefix })
+  elasticsearch_alarms            = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_alarms", [])
+  elasticsearch_domain_arn        = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_domain_arn", null)
+  elasticsearch_hostname          = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_hostname", null)
+  elasticsearch_security_group_id = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_security_group_id", "")
 }
 
 data "aws_caller_identity" "current" {}
@@ -43,6 +47,8 @@ module "cumulus" {
   cumulus_message_adapter_lambda_layer_arn = var.cumulus_message_adapter_lambda_layer_arn
 
   prefix = var.prefix
+
+  deploy_to_ngap = true
 
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.subnet_ids
@@ -99,10 +105,10 @@ module "cumulus" {
   system_bucket = var.system_bucket
   buckets       = var.buckets
 
-  elasticsearch_alarms            = data.terraform_remote_state.data_persistence.outputs.elasticsearch_alarms
-  elasticsearch_domain_arn        = data.terraform_remote_state.data_persistence.outputs.elasticsearch_domain_arn
-  elasticsearch_hostname          = data.terraform_remote_state.data_persistence.outputs.elasticsearch_hostname
-  elasticsearch_security_group_id = data.terraform_remote_state.data_persistence.outputs.elasticsearch_security_group_id
+  elasticsearch_alarms            = local.elasticsearch_alarms
+  elasticsearch_domain_arn        = local.elasticsearch_domain_arn
+  elasticsearch_hostname          = local.elasticsearch_hostname
+  elasticsearch_security_group_id = local.elasticsearch_security_group_id
 
   dynamo_tables = data.terraform_remote_state.data_persistence.outputs.dynamo_tables
 

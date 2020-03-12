@@ -26,6 +26,11 @@ variable "cmr_username" {
   type = string
 }
 
+variable "deploy_to_ngap" {
+  description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
+  type        = bool
+}
+
 variable "distribution_api_id" {
   type = string
 }
@@ -43,15 +48,18 @@ variable "ecs_cluster_name" {
 }
 
 variable "elasticsearch_domain_arn" {
-  type = string
+  type    = string
+  default = null
 }
 
 variable "elasticsearch_hostname" {
-  type = string
+  type    = string
+  default = null
 }
 
 variable "elasticsearch_security_group_id" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "ems_host" {

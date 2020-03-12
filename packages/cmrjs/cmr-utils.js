@@ -815,9 +815,13 @@ module.exports = {
   getGranuleId,
   getGranuleTemporalInfo,
   isCMRFile,
+  isUMMGFile,
+  isECHO10File,
+  isCMRFilename,
   metadataObjectFromCMRFile,
   publish2CMR,
   reconcileCMRMetadata,
   granulesToCmrFileObjects,
-  updateCMRMetadata
+  updateCMRMetadata,
+  generateEcho10XMLString
 };

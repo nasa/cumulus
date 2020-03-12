@@ -1,0 +1,106 @@
+{
+  "config": {
+    "bucket": "cumulus-internal",
+    "buckets": {
+      "internal": {
+        "name": "cumulus-internal",
+        "type": "internal"
+      },
+      "private": {
+        "name": "cumulus-private",
+        "type": "private"
+      },
+      "protected": {
+        "name": "cumulus-protected",
+        "type": "protected"
+      },
+      "public": {
+        "name": "cumulus-public",
+        "type": "public"
+      }
+    },
+    "provider": "GES_DISC",
+    "entryTitle": "GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC",
+    "collection": {
+      "files": [
+        {
+          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
+          "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+          "bucket": "protected"
+        },
+        {
+          "regex": "^BROWSE\\.MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
+          "sampleFileName": "BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+          "bucket": "private"
+        },
+        {
+          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf\\.met$",
+          "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met",
+          "bucket": "private"
+        },
+        {
+          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.cmr\\.foo$",
+          "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.foo",
+          "bucket": "public"
+        },
+        {
+          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_2\\.jpg$",
+          "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+          "bucket": "public"
+        },
+        {
+          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_1\\.jpg$",
+          "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+          "bucket": "public",
+          "url_path": "jpg/example/"
+        }
+      ],
+      "url_path": "example/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/",
+      "name": "MOD11A1",
+      "granuleId": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
+      "dataType": "MOD11A1",
+      "process": "modis",
+      "provider_path": "TEST_B/Cumulus/MODIS/PDR/",
+      "version": "006",
+      "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+      "id": "MOD11A1"
+    }
+  },
+  "input": {
+    "granules": [
+      {
+        "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",
+        "files": [
+          {
+            "name": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+            "bucket": "cumulus-internal",
+            "filename": "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+            "type": "data",
+            "fileStagingDir": "file-staging/subdir"
+          },
+          {
+            "name": "MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+            "bucket": "cumulus-internal",
+            "filename": "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+            "type": "browse",
+            "fileStagingDir": "file-staging/subdir"
+          },
+          {
+            "name": "MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+            "bucket": "cumulus-internal",
+            "filename": "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+            "type": "browse",
+            "fileStagingDir": "file-staging/subdir"
+          },
+          {
+            "name": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.foo",
+            "bucket": "cumulus-internal",
+            "filename": "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.foo",
+            "type": "metadata",
+            "fileStagingDir": "file-staging/subdir"
+          }
+        ]
+      }
+    ]
+  }
+}

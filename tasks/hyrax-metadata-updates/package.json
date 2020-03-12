@@ -1,0 +1,79 @@
+{
+  "name": "@cumulus/hyrax-metadata-updates",
+  "version": "1.19.0",
+  "description": "Update granule metadata with hooks to OPeNDAP URL",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/hyrax-metadata-updates",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nasa/cumulus.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=10.16.3"
+  },
+  "scripts": {
+    "test": "ava",
+    "test-coverage": "nyc ava",
+    "debug": "NODE_ENV=test node --inspect-brk node_modules/ava/profile.js --serial tests/*.js",
+    "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack",
+    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
+    "prepare": "npm run build && (cd dist && zip -r lambda.zip index.js schemas)"
+  },
+  "ava": {
+    "files": [
+      "tests/*.js"
+    ],
+    "fail-fast": true,
+    "serial": true,
+    "verbose": true
+  },
+  "nyc": {
+    "exclude": [
+      "tests"
+    ]
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@cumulus/aws-client": "1.19.0",
+    "@cumulus/cmr-client": "1.19.0",
+    "@cumulus/cmrjs": "1.19.0",
+    "@cumulus/common": "1.19.0",
+    "@cumulus/cumulus-message-adapter-js": "^1.1.0",
+    "@cumulus/errors": "1.19.0",
+    "libxmljs": "^0.19.7",
+    "lodash.clonedeep": "^4.5.0",
+    "lodash.flatten": "^4.4.0",
+    "lodash.get": "^4.4.2",
+    "lodash.isundefined": "^3.0.1",
+    "lodash.keyby": "^4.6.0",
+    "nock": "^12.0.1",
+    "rewire": "^4.0.1",
+    "xml2js": "^0.4.23"
+  },
+  "devDependencies": {
+    "ava": "^2.1.0",
+    "babel-loader": "^8.0.6",
+    "babel-plugin-source-map-support": "^2.1.1",
+    "babel-preset-env": "^1.7.0",
+    "lodash.set": "^4.3.2",
+    "nyc": "^14.0.0",
+    "webpack": "~4.5.0",
+    "webpack-cli": "~2.0.14"
+  },
+  "bugs": {
+    "url": "https://github.com/nasa/cumulus/issues"
+  },
+  "keywords": [
+    "hyrax",
+    "OPeNDAP",
+    "metadata",
+    "update"
+  ]
+}

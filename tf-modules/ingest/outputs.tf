@@ -113,6 +113,13 @@ output "sync_granule_task" {
   }
 }
 
+output "hyrax_metadata_updates_task" {
+  value = {
+    task_arn = aws_lambda_function.hyrax_metadata_updates_task.arn
+    task_log_group = aws_cloudwatch_log_group.hyrax_metadata_updates_task.name
+  }
+}
+
 output "step_role_arn" {
   value = aws_iam_role.step.arn
 }

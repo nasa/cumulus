@@ -145,6 +145,7 @@ JSON
 }
 
 resource "aws_cloudwatch_metric_alarm" "es_nodes_low" {
+  count               = var.include_elasticsearch ? 1 : 0
   alarm_name          = "${local.es_domain_name}-NodesLowAlarm"
   comparison_operator = "LessThanThreshold"
   namespace           = "AWS/ES"
@@ -159,6 +160,7 @@ resource "aws_cloudwatch_metric_alarm" "es_nodes_low" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "es_nodes_high" {
+  count               = var.include_elasticsearch ? 1 : 0
   alarm_name          = "${local.es_domain_name}-NodesHighAlarm"
   comparison_operator = "GreaterThanThreshold"
   namespace           = "AWS/ES"
