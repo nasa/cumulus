@@ -21,6 +21,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1769**
   - Added `deploy_to_ngap` boolean variable for the `tf-modules/cumulus` and `tf-modules/archive` Terraform modules. This variable is required. **For those deploying to NGAP environments, this variable should always be set to `true`.**
+- **CUMULUS-1732**
+  - Added python task/activity workflow and integration test (`PythonReferenceSpec`) to test `cumulus-message-adapter-py`and `cumulus-process-py` integration.
 
 ### Changed
 
