@@ -10,7 +10,7 @@
     "docs-serve": "npm run docs-build && (cd website && npm run start)",
     "remove-locks": "lerna exec 'rm package-lock.json'",
     "install-locks": "lerna exec --no-sort -- npm i --package-lock-only --no-audit",
-    "lint": "eslint . && pylint ./tasks/python-reference-task/*.py && pylint ./tasks/python-reference-activity/*.py",
+    "lint": "bash -c 'eslint . && pylint ./tasks/python-reference-task/*.py && pylint ./tasks/python-reference-activity/*.py'",
     "lint-md": "markdownlint docs/**/*.md docs/*.md tf-modules/**/*.md tf-modules/*.md",
     "test": "nyc lerna run --concurrency 1 test",
     "bootstrap": "lerna bootstrap --no-ci --force-local",
