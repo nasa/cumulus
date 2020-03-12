@@ -12,7 +12,7 @@
     "test": "true",
     "lint": "pylint *.py",
     "build": "true",
-    "prepare": "pip install -r requirements-dev.txt && pip install -r requirements.txt"
+    "prepare": "true"
   },
   "publishConfig": {
     "access": "private"
