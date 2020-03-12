@@ -80,9 +80,9 @@ module "python_reference_workflow" {
           "BackoffRate": 2
         }
       ],
-      "Next": "Process Task"
+      "Next": "Reference Activity"
     },
-    "Process Task": {
+    "Reference Activity": {
       "Parameters": {
         "cma": {
           "event.$": "$",
