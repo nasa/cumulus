@@ -76,7 +76,8 @@ async function getUmmObject(fileLocation) {
 const cumulusDocUrl = 'https://nasa.github.io/cumulus/docs/cumulus-docs-readme';
 const isUMMGScienceUrl = (url) => url !== cumulusDocUrl &&
   !url.endsWith('.cmr.json') &&
-  !url.includes('s3credentials');
+  !url.includes('s3credentials') &&
+  !url.includes('opendap.uat.earthdata.nasa.gov');
 
 describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
@@ -341,11 +342,16 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       expect(resourceURLs.includes(s3BrowseImageUrl)).toBe(true);
     });
 
+    it('adds the opendap URL to the CMR metadata', () => {
+      const opendapFilePath = `https://opendap.uat.earthdata.nasa.gov/providers/CUMULUS/collections/MODIS/Terra%20Surface%20Reflectance%20Daily%20L2G%20Global%20250m%20SIN%20Grid%20V006/granules/${inputPayload.granules[0].granuleId}`;
+      expect(resourceURLs.includes(opendapFilePath)).toBe(true);
+    });
+
     it('publishes CMR metadata online resources with the correct type', () => {
       const viewRelatedInfoResource = onlineResources.filter((resource) => resource.Type === 'VIEW RELATED INFORMATION');
       const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
 
-      const ExpectedResources = ['GET DATA', 'GET DATA', 'GET RELATED VISUALIZATION',
+      const ExpectedResources = ['GET DATA', 'GET DATA', 'GET DATA', 'GET RELATED VISUALIZATION',
         'EXTENDED METADATA', 'VIEW RELATED INFORMATION'].sort();
       expect(viewRelatedInfoResource.map((urlObj) => urlObj.URL).includes(s3CredsUrl)).toBe(true);
       expect(onlineResources.map((x) => x.Type).sort()).toEqual(ExpectedResources);

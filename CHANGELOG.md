@@ -24,6 +24,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1732**
   - Added python task/activity workflow and integration test (`PythonReferenceSpec`) to test `cumulus-message-adapter-py`and `cumulus-process-py` integration.
 
+### Added
+
+- **HYRAX-70**
+  - Add the hyrax-metadata-update task
+
+- Added `@cumulus/aws-client/S3.getS3ObjectReadStreamAsync()` to deal with S3 eventual consistency issues by checking for the existence an S3 object with retries before getting a readable stream for that object.
+
 ### Changed
 
 - [`AccessToken.get()`](https://github.com/nasa/cumulus/blob/master/packages/api/models/access-tokens.js) now enforces [strongly consistent reads from DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html)
