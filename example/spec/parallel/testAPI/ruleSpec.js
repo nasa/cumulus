@@ -10,6 +10,7 @@ const {
   waitForTestExecutionStart
 } = require('@cumulus/integration-tests');
 
+const { waitForRuleInList } = require('../../helpers/ruleUtils');
 const {
   createTestSuffix,
   createTimestampedTestId,
@@ -235,24 +236,11 @@ describe('When I create a one-time rule via the Cumulus API', () => {
   });
 
   describe('When listing the rules via the API', () => {
-    let listRules = '';
-
-    beforeAll(async () => {
-      const listRulesResponse = await rulesApiTestUtils.listRules({
-        prefix: config.stackName
-      });
-
-      listRules = JSON.parse(listRulesResponse.body);
-    });
-
-    it('the rule is returned with the listed rules', () => {
-      const rule = listRules.results.find((result) => result.name === helloWorldRule.name);
-      expect(rule).toBeDefined();
-      const updatedOriginal = helloWorldRule;
-      updatedOriginal.meta.triggerRule = updatedCheck;
-
-      const ruleCopy = removeRuleAddedParams(rule);
-      expect(ruleCopy).toEqual(updatedOriginal);
+    it('the rule is returned with the listed rules', async () => {
+      await expectAsync(waitForRuleInList(config.stackName, {
+        name: helloWorldRule.name,
+        'meta.triggerRule': updatedCheck
+      })).toBeResolved();
     });
   });
 });
