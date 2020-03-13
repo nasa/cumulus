@@ -244,6 +244,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1799**
   - Removed deprecated method `@cumulus/api/models/Granule.createGranulesFromSns()`
   - Removed deprecated method `@cumulus/api/models/Granule.removeGranuleFromCmr()`
+  - Removed `@cumulus/common/sfnStep`
   - Removed `@cumulus/cmrjs/cmr-utils/getGranuleId()`
   - Removed `@cumulus/cmrjs/cmr-utils/getCmrFiles()`
   - Removed `@cumulus/cmrjs/cmr/CMR` class
