@@ -246,6 +246,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed deprecated method `@cumulus/api/models/Granule.removeGranuleFromCmr()`
   - Removed `@cumulus/cmrjs/cmr-utils/getGranuleId()`
   - Removed `@cumulus/cmrjs/cmr-utils/getCmrFiles()`
+  - Removed `@cumulus/cmrjs/cmr/CMR`
+  - Removed `@cumulus/cmrjs/cmr/CMRSearchConceptQueue`
 
 ## [v1.19.0] 2020-02-28
 
