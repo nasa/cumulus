@@ -28,7 +28,7 @@ module "python_processing_service" {
     "process_activity.py"
   ]
   alarms = {
-    TaskCountHight = {
+    TaskCountHigh = {
       comparison_operator = "GreaterThanThreshold"
       evaluation_periods  = 1
       metric_name         = "MemoryUtilization"
