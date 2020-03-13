@@ -11,7 +11,6 @@ exports.http = require('./http');
 exports.launchpad = require('./launchpad');
 exports.LaunchpadToken = require('./LaunchpadToken');
 exports.log = require('./log');
-exports.sftp = require('./sftp');
 exports.stringUtils = require('./string');
 exports.testUtils = require('./test-utils');
 exports.util = require('./util');
