@@ -182,6 +182,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed `@cumulus/cmrjs/utils/hostId()`
   - Removed `@cumulus/cmrjs/utils/updateToken()`
   - Removed `@cumulus/cmrjs/utils/validateUMMG()`
+  - Removed `@cumulus/ingest/aws/getEndpoint()`
+  - Removed `@cumulus/ingest/aws/getExecutionUrl()`
+  - Removed `@cumulus/ingest/aws/invoke()`
+  - Removed `@cumulus/ingest/aws/CloudWatch` class
+  - Removed `@cumulus/ingest/aws/ECS` class
+  - Removed `@cumulus/ingest/aws/Events` class
+  - Removed `@cumulus/ingest/aws/SQS` class
+  - Removed `@cumulus/ingest/aws/StepFunction` class
 
 ## [v1.19.0] 2020-02-28
 
