@@ -170,6 +170,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1768**
   - Removed API endpoints `stats/histogram` and `stats/average`. All advanced stats needs should be acquired from Cloud Metrics or similarly configured ELK stack.
+- **CUMULUS-1799**
+  - Removed deprecated method `@cumulus/api/models/Granule.removeGranuleFromCmr()`
 
 ## [v1.19.0] 2020-02-28
 
