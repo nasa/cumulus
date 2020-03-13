@@ -28,21 +28,6 @@ const unicodeEscapeCharacter = (char) =>
   ['\\u', `0000${char.charCodeAt().toString(16)}`.slice(-4)].join('');
 
 /**
- * Given a string, replaces all characters matching the passed regex with their unicode
- * escape sequences
- *
- * @param {string} str - The string to escape
- * @param {string} regex - The regex matching characters to replace (default: all chars)
- * @returns {string} The string with characters unicode-escaped
- *
- * @static
- */
-const unicodeEscape = (str, regex = /[\s\S]/g) => {
-  deprecate('@cumulus/common/string/unicodeEscape', '1.17.0', '@cumulus/aws-client/StepFunctions/unicodeEscape');
-  return str.replace(regex, unicodeEscapeCharacter);
-};
-
-/**
  * Return a new string with some or all matches of a pattern replaced by a
  * replacement.
  *
@@ -174,6 +159,5 @@ module.exports = {
   matches,
   replace,
   toLower,
-  toUpper,
-  unicodeEscape
+  toUpper
 };
