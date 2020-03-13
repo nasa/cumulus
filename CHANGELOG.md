@@ -247,17 +247,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed `@cumulus/common/sfnStep`
   - Removed `@cumulus/common/sftp`
   - Removed `@cumulus/common/StepFunctions`
-  - Removed `@cumulus/cmrjs/cmr-utils/getGranuleId()`
-  - Removed `@cumulus/cmrjs/cmr-utils/getCmrFiles()`
+  - Removed `@cumulus/common/string.unicodeEscape`
+  - Removed `@cumulus/cmrjs/cmr-utils.getGranuleId()`
+  - Removed `@cumulus/cmrjs/cmr-utils.getCmrFiles()`
   - Removed `@cumulus/cmrjs/cmr/CMR` class
   - Removed `@cumulus/cmrjs/cmr/CMRSearchConceptQueue` class
-  - Removed `@cumulus/cmrjs/utils/getHost()`
-  - Removed `@cumulus/cmrjs/utils/getIp()`
-  - Removed `@cumulus/cmrjs/utils/hostId()`
-  - Removed `@cumulus/cmrjs/utils/updateToken()`
-  - Removed `@cumulus/cmrjs/utils/validateUMMG()`
-  - Removed `@cumulus/ingest/aws/getEndpoint()`
-  - Removed `@cumulus/ingest/aws/getExecutionUrl()`
+  - Removed `@cumulus/cmrjs/utils.getHost()`
+  - Removed `@cumulus/cmrjs/utils.getIp()`
+  - Removed `@cumulus/cmrjs/utils.hostId()`
+  - Removed `@cumulus/cmrjs/utils.updateToken()`
+  - Removed `@cumulus/cmrjs/utils.validateUMMG()`
+  - Removed `@cumulus/ingest/aws.getEndpoint()`
+  - Removed `@cumulus/ingest/aws.getExecutionUrl()`
   - Removed `@cumulus/ingest/aws/invoke()`
   - Removed `@cumulus/ingest/aws/CloudWatch` class
   - Removed `@cumulus/ingest/aws/ECS` class
