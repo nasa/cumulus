@@ -2,7 +2,7 @@ const log = require('@cumulus/common/log');
 
 const {
   TokenUnauthorizedUserError
-} = require('../lib/errors');
+} = require('./errors');
 const { verifyJwtToken } = require('./token');
 const { isAuthorizedOAuthUser } = require('../app/auth');
 
