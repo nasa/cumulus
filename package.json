@@ -21,6 +21,7 @@
     "clean": "lerna clean && rm -rf ./node_modules",
     "build": "lerna run --ignore cumulus-integration-tests build",
     "watch": "lerna run --parallel --no-sort watch",
+    "prepare": "lerna run prepare",
     "serve": "lerna run --stream serve --scope @cumulus/api",
     "serve-oauth": "lerna run --stream serve-oauth --scope @cumulus/api",
     "serve-remote": "lerna run --stream serve-remote --scope @cumulus/api",
