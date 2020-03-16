@@ -22,4 +22,6 @@ export NPM_TAG=$(node ./bamboo/npm-tag.js);
 #   --dist-tag=${NPM_TAG} \
 #   --exact
 
+npm install && npm run prepare
+
 . ./bamboo/create-release.sh
