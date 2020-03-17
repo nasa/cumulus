@@ -10,7 +10,7 @@ const { getS3Object, s3ObjectExists } = require('./aws');
  * A class for sending requests to Launchpad token service endpoints
  *
  * @example
- * const { LaunchpadToken } = require('@cumulus/common');
+ * const LaunchpadToken = require('@cumulus/common/LaunchpadToken');
  *
  * const LaunchpadToken = new LaunchpadToken({
  *  api: 'launchpad-token-api-endpoint',

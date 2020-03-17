@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Removed
+
+- **CUMULUS-1799**
+  - Removed deprecated method `@cumulus/api/models/Granule.createGranulesFromSns()`
+  - Removed deprecated method `@cumulus/api/models/Granule.removeGranuleFromCmr()`
+  - Removed `@cumulus/cmrjs/cmr-utils/getGranuleId()`
+  - Removed `@cumulus/cmrjs/cmr-utils/getCmrFiles()`
+  - Removed `@cumulus/cmrjs/cmr/CMR` class
+  - Removed `@cumulus/cmrjs/cmr/CMRSearchConceptQueue` class
+  - Removed `@cumulus/cmrjs/utils/getHost()`
+  - Removed `@cumulus/cmrjs/utils/getIp()`
+  - Removed `@cumulus/cmrjs/utils/hostId()`
+  - Removed `@cumulus/cmrjs/utils/updateToken()`
+  - Removed `@cumulus/cmrjs/utils/ummVersion()`
+  - Removed `@cumulus/cmrjs/utils/validateUMMG()`
+  - Removed `@cumulus/ingest/aws/getEndpoint()`
+  - Removed `@cumulus/ingest/aws/getExecutionUrl()`
+  - Removed `@cumulus/ingest/aws/invoke()`
+  - Removed `@cumulus/ingest/aws/CloudWatch` class
+  - Removed `@cumulus/ingest/aws/ECS` class
+  - Removed `@cumulus/ingest/aws/Events` class
+  - Removed `@cumulus/ingest/aws/SQS` class
+  - Removed `@cumulus/ingest/aws/StepFunction` class
+
 ## [v1.20.0] 2020-03-12
 
 ### BREAKING CHANGES
