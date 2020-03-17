@@ -3,7 +3,7 @@
 const { invokeApi } = require('./cumulusApiClient');
 
 // TODO convert calls to async
-const createCollection = async (prefix, collection, callback = invokeApi) =>
+async function createCollection(prefix, collection, callback = invokeApi) {
   callback({
     prefix,
     payload: {
@@ -14,7 +14,7 @@ const createCollection = async (prefix, collection, callback = invokeApi) =>
       body: JSON.stringify(collection)
     }
   });
-
+}
 // TODO convert calls to async
 const deleteCollection = async (prefix, collectionName, collectionVersion, callback = invokeApi) =>
   callback({
@@ -28,14 +28,15 @@ const deleteCollection = async (prefix, collectionName, collectionVersion, callb
 
 // TODO convert calls to async
 const getCollection = async (prefix, collectionName, collectionVersion, callback = invokeApi) => {
-  return callback({
+  const returnedCollection = await callback({
     prefix,
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: `/collections/${collectionName}/${collectionVersion}`
     }
-  }).then(({ body }) => JSON.parse(body));
+  });
+  return JSON.parse(returnedCollection.body);
 };
 
 module.exports = {

@@ -8,6 +8,7 @@ const executionsRewire = rewire('../executions');
 test.before(async (t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.arn = 'testArn';
+  t.context.testExecutionReturn = { body: '{"some": "object"}' };
 });
 
 test('getExecution calls the callback with the expected object', async (t) => {
@@ -21,13 +22,18 @@ test('getExecution calls the callback with the expected object', async (t) => {
   };
   const callback = async (configObject) => {
     t.deepEqual(expected, configObject);
+    return (t.context.testExecutionReturn);
   };
-
-  await t.notThrowsAsync(executionsRewire.getExecution(
-    t.context.testPrefix,
-    t.context.arn,
-    callback
-  ));
+  let revertCallback;
+  try {
+    revertCallback = executionsRewire.__set__('invokeApi', callback);
+    await t.notThrowsAsync(executionsRewire.getExecution({
+      prefix: t.context.testPrefix,
+      arn: t.context.arn
+    }));
+  } finally {
+    revertCallback();
+  }
 });
 
 test('getExecutions calls the callback with the expected object', async (t) => {
@@ -44,10 +50,15 @@ test('getExecutions calls the callback with the expected object', async (t) => {
     t.deepEqual(expected, configObject);
   };
 
-  await t.notThrowsAsync(executionsRewire.getExecutions({
-    prefix: t.context.testPrefix,
-    callback
-  }));
+  let revertCallback;
+  try {
+    revertCallback = executionsRewire.__set__('invokeApi', callback);
+    await t.notThrowsAsync(executionsRewire.getExecutions({
+      prefix: t.context.testPrefix,
+    }));
+  } finally {
+    revertCallback();
+  }
 });
 
 test('getExecutionStatus calls the callback with the expected object', async (t) => {
@@ -63,10 +74,14 @@ test('getExecutionStatus calls the callback with the expected object', async (t)
   const callback = async (configObject) => {
     t.deepEqual(expected, configObject);
   };
-
-  await t.notThrowsAsync(executionsRewire.getExecutionStatus({
-    prefix: t.context.testPrefix,
-    arn: t.context.arn,
-    callback
-  }));
+  let revertCallback;
+  try {
+    revertCallback = executionsRewire.__set__('invokeApi', callback);
+    await t.notThrowsAsync(executionsRewire.getExecutionStatus({
+      prefix: t.context.testPrefix,
+      arn: t.context.arn,
+    }));
+  } finally {
+    revertCallback();
+  }
 });

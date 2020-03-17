@@ -22,12 +22,16 @@ test('getGranule calls the callback with the expected object', async (t) => {
   const callback = (configObject) => {
     t.deepEqual(expected, configObject);
   };
-
-  await t.notThrowsAsync(granulesRewire.getGranule({
-    prefix: t.context.testPrefix,
-    granuleId: t.context.granule,
-    callback
-  }));
+  let revertCallback;
+  try {
+    revertCallback = granulesRewire.__set__('invokeApi', callback);
+    await t.notThrowsAsync(granulesRewire.getGranule({
+      prefix: t.context.testPrefix,
+      granuleId: t.context.granule,
+    }));
+  } finally {
+    revertCallback();
+  }
 });
 
 
@@ -38,26 +42,27 @@ test.serial('waitForGranules calls getGranules with the expected payload', async
     t.is(t.context.testPrefix, prefix);
     return callback();
   });
+  let revertCallback;
   try {
     const callback = () => ({ statusCode: 200 });
-
+    revertCallback = granulesRewire.__set__('invokeApi', callback);
     await granulesRewire.waitForGranule({
       prefix: t.context.testPrefix,
       granuleId: t.context.granule,
-      callback
     });
   } finally {
     getGranuleRevert();
+    revertCallback();
   }
 });
 
 
 test.serial('waitForGranules fails on 500 statusCode', async (t) => {
   const getGranuleRevert = granulesRewire.__set__('getGranule', async ({ callback }) => callback());
-
+  let revertCallback;
   try {
     const callback = () => ({ statusCode: 500 });
-
+    revertCallback = granulesRewire.__set__('invokeApi', callback);
     await t.throwsAsync(granulesRewire.waitForGranule({
       prefix: t.context.testPrefix,
       granuleId: t.context.granule,
@@ -65,6 +70,7 @@ test.serial('waitForGranules fails on 500 statusCode', async (t) => {
     }));
   } finally {
     getGranuleRevert();
+    revertCallback();
   }
 });
 
@@ -75,9 +81,10 @@ test.serial('waitForGranules retries on status codes other than 500, 200, then t
     retryCount += 1;
     return callback();
   });
-
+  let revertCallback;
   try {
     const callback = () => ({ statusCode: 404 });
+    revertCallback = granulesRewire.__set__('invokeApi', callback);
     await t.throwsAsync(granulesRewire.waitForGranule({
       prefix: t.context.testPrefix,
       granuleId: t.context.granule,
@@ -87,6 +94,7 @@ test.serial('waitForGranules retries on status codes other than 500, 200, then t
     t.is(retries + 1, retryCount)
   } finally {
     getGranuleRevert();
+    revertCallback();
   }
 });
 
@@ -109,11 +117,16 @@ test('reingestGranule calls the callback with the expected object', async (t) =>
     t.deepEqual(expected, configObject);
   };
 
-  await t.notThrowsAsync(granulesRewire.reingestGranule({
-    prefix: t.context.testPrefix,
-    granuleId: t.context.granule,
-    callback
-  }));
+  let revertCallback;
+  try {
+    revertCallback = granulesRewire.__set__('invokeApi', callback);
+    await t.notThrowsAsync(granulesRewire.reingestGranule({
+      prefix: t.context.testPrefix,
+      granuleId: t.context.granule
+    }));
+  } finally {
+    revertCallback();
+  }
 });
 
 test('removeFromCmr calls the callback with the expected object', async (t) => {
@@ -134,11 +147,16 @@ test('removeFromCmr calls the callback with the expected object', async (t) => {
     t.deepEqual(expected, configObject);
   };
 
-  await t.notThrowsAsync(granulesRewire.removeFromCMR({
-    prefix: t.context.testPrefix,
-    granuleId: t.context.granule,
-    callback
-  }));
+  let revertCallback;
+  try {
+    revertCallback = granulesRewire.__set__('invokeApi', callback);
+    await t.notThrowsAsync(granulesRewire.removeFromCMR({
+      prefix: t.context.testPrefix,
+      granuleId: t.context.granule
+    }));
+  } finally {
+    revertCallback();
+  }
 });
 
 test('applyWorkflow calls the callback with the expected object', async (t) => {
@@ -159,13 +177,17 @@ test('applyWorkflow calls the callback with the expected object', async (t) => {
   const callback = (configObject) => {
     t.deepEqual(expected, configObject);
   };
-
-  await t.notThrowsAsync(granulesRewire.applyWorkflow({
-    prefix: t.context.testPrefix,
-    granuleId: t.context.granule,
-    workflow,
-    callback
-  }));
+  let revertCallback;
+  try {
+    revertCallback = granulesRewire.__set__('invokeApi', callback);
+    await t.notThrowsAsync(granulesRewire.applyWorkflow({
+      prefix: t.context.testPrefix,
+      granuleId: t.context.granule,
+      workflow
+    }));
+  } finally {
+    revertCallback();
+  }
 });
 
 test('deleteGranule calls the callback with the expected object', async (t) => {
@@ -181,12 +203,16 @@ test('deleteGranule calls the callback with the expected object', async (t) => {
   const callback = (configObject) => {
     t.deepEqual(expected, configObject);
   };
-
-  await t.notThrowsAsync(granulesRewire.deleteGranule({
-    prefix: t.context.testPrefix,
-    granuleId: t.context.granule,
-    callback
-  }));
+  let revertCallback;
+  try {
+    revertCallback = granulesRewire.__set__('invokeApi', callback);
+    await t.notThrowsAsync(granulesRewire.deleteGranule({
+      prefix: t.context.testPrefix,
+      granuleId: t.context.granule
+    }));
+  } finally {
+    revertCallback();
+  }
 });
 
 
@@ -208,13 +234,17 @@ test('moveGranule calls the callback with the expected object', async (t) => {
   const callback = (configObject) => {
     t.deepEqual(expected, configObject);
   };
-
-  await t.notThrowsAsync(granulesRewire.moveGranule({
-    prefix: t.context.testPrefix,
-    granuleId: t.context.granule,
-    destinations,
-    callback
-  }));
+  let revertCallback;
+  try {
+    revertCallback = granulesRewire.__set__('invokeApi', callback);
+    await t.notThrowsAsync(granulesRewire.moveGranule({
+      prefix: t.context.testPrefix,
+      granuleId: t.context.granule,
+      destinations
+    }));
+  } finally {
+    revertCallback();
+  }
 });
 
 test('listGranules calls the callback with the expected object', async (t) => {
@@ -233,39 +263,76 @@ test('listGranules calls the callback with the expected object', async (t) => {
     t.deepEqual(expected, configObject);
   };
 
-  await t.notThrowsAsync(granulesRewire.listGranules({
+  let revertCallback;
+  try {
+    revertCallback = granulesRewire.__set__('invokeApi', callback);
+    await t.notThrowsAsync(granulesRewire.listGranules({
+      prefix: t.context.testPrefix,
+      query
+    }));
+  } finally {
+    revertCallback();
+  }
+});
+
+
+test('listGranules calls the callback with the expected object if there is no query param', async (t) => {
+  const query = undefined;
+  const expected = {
     prefix: t.context.testPrefix,
-    query,
-    callback
-  }));
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: '/granules',
+      body: query ? JSON.stringify({ query }) : undefined
+    }
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(expected, configObject);
+  };
+
+  let revertCallback;
+  try {
+    revertCallback = granulesRewire.__set__('invokeApi', callback);
+    await t.notThrowsAsync(granulesRewire.listGranules({
+      prefix: t.context.testPrefix,
+      query
+    }));
+  } finally {
+    revertCallback();
+  }
 });
 
 test.serial('removePublishedGranule calls removeFromCmr and deleteGranule', async (t) => {
   let removeFromCmrRevert;
   let deleteGranuleRevert;
+  let callbackRevert;
   try {
     const mockCallback = () => true;
+    callbackRevert = granulesRewire.__set__('invokeApi', mockCallback);
+
     removeFromCmrRevert = granulesRewire.__set__('removeFromCMR',
       async ({ prefix, granuleId, callback }) => {
         t.is(t.context.testPrefix, prefix);
         t.is(t.context.granule, granuleId);
-        t.is(mockCallback, callback);
+        t.is(callback, mockCallback);
       });
 
     deleteGranuleRevert = granulesRewire.__set__('deleteGranule',
       async ({ prefix, granuleId, callback }) => {
-        t.is(t.context.prefix, prefix);
+        t.is(t.context.testPrefix, prefix);
         t.is(t.context.granule, granuleId);
-        t.is(mockCallback, callback);
+        t.is(callback, mockCallback);
       });
 
-    granulesRewire.removePublishedGranule({
+    await granulesRewire.removePublishedGranule({
       prefix: t.context.testPrefix,
       granuleId: t.context.granule,
-      callback: mockCallback
     });
   } finally {
     removeFromCmrRevert();
     deleteGranuleRevert();
+    callbackRevert();
   }
 });

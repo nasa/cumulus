@@ -26,7 +26,9 @@ async function getGranule({ prefix, granuleId, callback = invokeApi }) {
 }
 
 
-async function waitForGranule({ prefix, granuleId, retries = 10, callback = invokeApi }) {
+async function waitForGranule({
+  prefix, granuleId, retries = 10, callback = invokeApi
+}) {
   await pRetry(
     async () => {
       const apiResult = await getGranule({ prefix, granuleId, callback });
@@ -186,7 +188,7 @@ async function removePublishedGranule({ prefix, granuleId, callback = invokeApi 
   return deleteGranule({ prefix, granuleId, callback });
 }
 
-async function listGranules({ prefix, query = null, callback }) {
+async function listGranules({ prefix, query = null, callback = invokeApi }) {
   return callback({
     prefix: prefix,
     payload: {

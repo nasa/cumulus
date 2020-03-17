@@ -2,7 +2,6 @@
 
 const { invokeApi } = require('./cumulusApiClient');
 
-
 /**
  * Fetch an execution from the Cumulus API
  *
@@ -13,7 +12,6 @@ const { invokeApi } = require('./cumulusApiClient');
  *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - the execution fetched by the API
  */
-// TODO - fix async calls
 const getExecution = async ({ prefix, arn, callback = invokeApi }) => {
   callback({
     prefix,
@@ -23,7 +21,8 @@ const getExecution = async ({ prefix, arn, callback = invokeApi }) => {
       path: `/executions/${arn}`
     }
   }).then(({ body }) => JSON.parse(body));
-}
+  // TODO - fix async calls
+};
 
 /**
  * Fetch a list of executions from the Cumulus API
@@ -34,8 +33,8 @@ const getExecution = async ({ prefix, arn, callback = invokeApi }) => {
  *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - the execution list fetched by the API
  */
-async function getExecutions({ prefix, callback = invokeApi }) {
-  return callback({
+const getExecutions = async ({ prefix, callback = invokeApi }) => {
+  callback({
     prefix,
     payload: {
       httpMethod: 'GET',
@@ -43,7 +42,7 @@ async function getExecutions({ prefix, callback = invokeApi }) {
       path: '/executions'
     }
   });
-}
+};
 
 
 /**

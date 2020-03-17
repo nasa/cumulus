@@ -16,15 +16,15 @@ const { invokeApi } = require('./cumulusApiClient');
  */
 // Todo make this a module-wide thing
 async function callRuleApiFunction(prefix, requestPayload, callback = invokeApi) {
-  const payload = await callback({
-    prefix,
-    payload: requestPayload
-  });
-
+  let payload;
   try {
+    payload = await callback({
+      prefix,
+      payload: requestPayload
+    });
     return payload;
   } catch (error) {
-    console.log(`Error parsing JSON response for rule ${payload.httpMethod}: ${payload}`);
+    console.log(`Error parsing JSON response for rule ${requestPayload.httpMethod}: ${requestPayload}`);
     throw error;
   }
 }
@@ -155,7 +155,9 @@ async function deleteRule({ prefix, ruleName, callback = invokeApi }) {
  * @returns {Promise<Object>} - promise that resolves to the output of the API
  *    lambda
  */
-async function rerunRule({ prefix, ruleName, updateParams = {}, callback = invokeApi }) {
+async function rerunRule({
+  prefix, ruleName, updateParams = {}, callback = invokeApi
+}) {
   return updateRule({
     prefix,
     ruleName,

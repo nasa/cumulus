@@ -10,7 +10,7 @@ test.before(async (t) => {
   t.context.collectionVersion = 1;
 });
 
-test('deleteCollection calls the callback with the expected object', async (t) => {
+test.serial('deleteCollection calls the callback with the expected object', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -23,16 +23,20 @@ test('deleteCollection calls the callback with the expected object', async (t) =
   const callback = async (configObject) => {
     t.deepEqual(expected, configObject);
   };
-
-  await t.notThrowsAsync(collectionsRewire.deleteCollection(
-    t.context.testPrefix,
-    t.context.collection,
-    t.context.collectionVersion,
-    callback
-  ));
+  let revertCallback;
+  try {
+    revertCallback = collectionsRewire.__set__('invokeApi', callback);
+    await t.notThrowsAsync(collectionsRewire.deleteCollection(
+      t.context.testPrefix,
+      t.context.collection,
+      t.context.collectionVersion,
+    ));
+  } finally {
+    revertCallback();
+  }
 });
 
-test('createCollection calls the callback with the expected object', async (t) => {
+test.serial('createCollection calls the callback with the expected object', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -47,15 +51,19 @@ test('createCollection calls the callback with the expected object', async (t) =
   const callback = async (configObject) => {
     t.deepEqual(expected, configObject);
   };
-
-  await t.notThrowsAsync(collectionsRewire.createCollection(
-    t.context.testPrefix,
-    t.context.collection,
-    callback
-  ));
+  let revertCallback;
+  try {
+    revertCallback = collectionsRewire.__set__('invokeApi', callback);
+    await t.notThrowsAsync(collectionsRewire.createCollection(
+      t.context.testPrefix,
+      t.context.collection,
+    ));
+  } finally {
+    revertCallback();
+  }
 });
 
-test('getCollection calls the callback with the expected object and returns the parsed response', async (t) => {
+test.serial('getCollection calls the callback with the expected object and returns the parsed response', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -70,12 +78,16 @@ test('getCollection calls the callback with the expected object and returns the 
     return { body: '{ "foo": "bar" }' };
   };
 
-  const result = await collectionsRewire.getCollection(
-    t.context.testPrefix,
-    t.context.collection,
-    t.context.collectionVersion,
-    callback
-  );
-
-  t.deepEqual(result, {foo: 'bar'});
+  let revertCallback;
+  try {
+    revertCallback = collectionsRewire.__set__('invokeApi', callback);
+    const result = await collectionsRewire.getCollection(
+      t.context.testPrefix,
+      t.context.collection,
+      t.context.collectionVersion,
+    );
+    t.deepEqual(result, { foo: 'bar' });
+  } finally {
+    revertCallback();
+  }
 });

@@ -27,12 +27,16 @@ test('createEmsReports calls the callback with the expected object', async (t) =
   const callback = async (configObject) => {
     t.deepEqual(expected, configObject);
   };
-
-  await t.notThrowsAsync(emsRewire.createEmsReports({
-    prefix: t.context.testPrefix,
-    request: t.context.request,
-    callback
-  }));
+  let revertCallback;
+  try {
+    revertCallback = emsRewire.__set__('invokeApi', callback);
+    await t.notThrowsAsync(emsRewire.createEmsReports({
+      prefix: t.context.testPrefix,
+      request: t.context.request,
+    }));
+  } finally {
+    revertCallback();
+  }
 });
 
 test.serial('getLambdaEmsSettings returns the expected environment variables', async (t) => {
