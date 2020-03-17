@@ -1,9 +1,7 @@
 'use strict';
 
-const CumulusApiClient = require('./CumulusApiClient');
-const LaunchpadApiClient = require('./LaunchpadApiClient');
-const EdlApiClient = require('./EdlApiClient');
-const { cumulusApiClientFactory } = require('./cumulusApiClientFactory');
+const cumulusApiClient = require('./cumulusApiClient');
+
 module.exports = {
-  cumulusApiClientFactory, CumulusApiClient, LaunchpadApiClient, EdlApiClient
+  cumulusApiClient
 };

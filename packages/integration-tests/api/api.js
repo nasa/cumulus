@@ -12,7 +12,7 @@ const {
 } = require('@cumulus/api');
 const { loadConfig } = require('../config');
 
-function invokeApi(prefix, payload) {
+function oldInvokeApi(prefix, payload) {
   return pRetry(
     async () => {
       const apiOutput = await lambda().invoke({

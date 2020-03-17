@@ -1,6 +1,7 @@
 'use strict';
 
-const { callCumulusApi } = require('./api');
+const { invokeApi } = require('./cumulusApiClient');
+
 
 /**
  * Fetch an execution from the Cumulus API
@@ -8,28 +9,34 @@ const { callCumulusApi } = require('./api');
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
  * @param {string} params.arn - an execution arn
+ * @param {Object} params.callback - function to invoke the api lambda
+ *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - the execution fetched by the API
  */
-const getExecution = ({ prefix, arn }) =>
-  callCumulusApi({
-    prefix: prefix,
+// TODO - fix async calls
+const getExecution = async ({ prefix, arn, callback = invokeApi }) => {
+  callback({
+    prefix,
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: `/executions/${arn}`
     }
   }).then(({ body }) => JSON.parse(body));
+}
 
 /**
  * Fetch a list of executions from the Cumulus API
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
+ * @param {Object} params.callback - function to invoke the api lambda
+ *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - the execution list fetched by the API
  */
-async function getExecutions({ prefix }) {
-  return callCumulusApi({
-    prefix: prefix,
+async function getExecutions({ prefix, callback = invokeApi }) {
+  return callback({
+    prefix,
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
@@ -45,10 +52,12 @@ async function getExecutions({ prefix }) {
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
  * @param {string} params.arn - an execution arn
+ * @param {Object} params.callback - function to invoke the api lambda
+ *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - the execution status fetched by the API
  */
-async function getExecutionStatus({ prefix, arn }) {
-  return callCumulusApi({
+async function getExecutionStatus({ prefix, arn, callback = invokeApi }) {
+  return callback({
     prefix: prefix,
     payload: {
       httpMethod: 'GET',

@@ -1,9 +1,10 @@
 'use strict';
 
-const { callCumulusApi } = require('./api');
+const { invokeApi } = require('./cumulusApiClient');
 
-const createCollection = (prefix, collection) =>
-  callCumulusApi({
+// TODO convert calls to async
+const createCollection = async (prefix, collection, callback = invokeApi) =>
+  callback({
     prefix,
     payload: {
       httpMethod: 'POST',
@@ -14,8 +15,9 @@ const createCollection = (prefix, collection) =>
     }
   });
 
-const deleteCollection = (prefix, collectionName, collectionVersion) =>
-  callCumulusApi({
+// TODO convert calls to async
+const deleteCollection = async (prefix, collectionName, collectionVersion, callback = invokeApi) =>
+  callback({
     prefix,
     payload: {
       httpMethod: 'DELETE',
@@ -24,8 +26,9 @@ const deleteCollection = (prefix, collectionName, collectionVersion) =>
     }
   });
 
-const getCollection = (prefix, collectionName, collectionVersion) =>
-  callCumulusApi({
+// TODO convert calls to async
+const getCollection = async (prefix, collectionName, collectionVersion, callback = invokeApi) => {
+  return callback({
     prefix,
     payload: {
       httpMethod: 'GET',
@@ -33,6 +36,7 @@ const getCollection = (prefix, collectionName, collectionVersion) =>
       path: `/collections/${collectionName}/${collectionVersion}`
     }
   }).then(({ body }) => JSON.parse(body));
+};
 
 module.exports = {
   createCollection,

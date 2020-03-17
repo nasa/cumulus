@@ -1,7 +1,8 @@
 'use strict';
 
 const { lambda } = require('@cumulus/aws-client/services');
-const { callCumulusApi } = require('./api');
+const { invokeApi } = require('./cumulusApiClient');
+
 
 /**
  * Fetch deployment's `ems_*` environment variables.
@@ -25,10 +26,12 @@ async function getLambdaEmsSettings(lambdaName) {
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
  * @param {Object} params.request - request body to post
+ * @param {Object} params.callback - function to invoke the api lambda
+ *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - promise that resolves to the output of the API lambda
  */
-async function createEmsReports({ prefix, request }) {
-  return callCumulusApi({
+async function createEmsReports({ prefix, request, callback = invokeApi }) {
+  return callback({
     prefix: prefix,
     payload: {
       httpMethod: 'POST',
