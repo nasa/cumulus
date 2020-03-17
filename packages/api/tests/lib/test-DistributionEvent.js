@@ -15,29 +15,35 @@ test.before(() => {
 });
 
 test.beforeEach(async (t) => {
+  t.context.fakeIP = '192.0.2.5';
   t.context.username = randomString();
   t.context.authDownloadLogLine = 'fe3f16719bb293e218f6e5fea86e345b0a696560d784177395715b24041da90e '
     + 'protected-bucket [24/Feb/2020:15:05:51 +0000] '
-    + '192.0.2.3 arn:aws:sts::XXXXXXXX:assumed-role/DownloadRoleLocal '
+    + '1192.0.2.3 arn:aws:sts::XXXXXXXX:assumed-role/DownloadRoleLocal '
     + '30E6BC41DB11A8CE REST.GET.OBJECT '
     + 'files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met '
-    + `"GET /files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met?A-userid=${t.context.username}`
-    + '&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=XXXXX&X-Amz-Date=20200224T150551Z&X-Amz-Expires=86400&'
-    + 'X-Amz-Security-Token=XXXXX&X-Amz-SignedHeaders=host&X-Amz-Signature=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX HTTP/1.1" '
-    + '200 - 21708 21708 28 27 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:73.0) '
+    + `"GET /files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met?A-userid=${t.context.username} `
+    + 'HTTP/1.1" 200 - 21708 21708 28 27 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:73.0) '
     + 'Gecko/20100101 Firefox/73.0" - k0f1eqG9dkjCcPtRsuZRXNFyNAqpXANK/GFJz9C+fKUiH2V4+O6HcUCdKZlL3XOhH5BZ/UJMqEU='
     + 'SigV4 ECDHE-RSA-AES128-GCM-SHA256 QueryString protected-bucket.s3.amazonaws.com TLSv1.2';
   t.context.noAuthDownloadLogLine = 'fe3f16719bb293e218f6e5fea86e345b0a696560d784177395715b24041da90e '
     + 'public-bucket [24/Feb/2020:21:45:37 +0000] '
-    + '192.0.2.3 arn:aws:sts::XXXXXXXX:assumed-role/DownloadRoleLocal '
+    + '1192.0.2.3 arn:aws:sts::XXXXXXXX:assumed-role/DownloadRoleLocal '
     + '30E6BC41DB11A8CE REST.GET.OBJECT '
     + 'files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf '
-    + '"GET /files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf?A-userid=None'
-    + '&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=XXXXX&X-Amz-Date=20200224T150551Z&X-Amz-Expires=86400&'
-    + 'X-Amz-Security-Token=XXXXX&X-Amz-SignedHeaders=host&X-Amz-Signature=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX HTTP/1.1" '
-    + '200 - 21708 21708 28 27 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:73.0) '
+    + '"GET /files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf?A-userid=None '
+    + 'HTTP/1.1" 200 - 21708 21708 28 27 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:73.0) '
     + 'Gecko/20100101 Firefox/73.0" - k0f1eqG9dkjCcPtRsuZRXNFyNAqpXANK/GFJz9C+fKUiH2V4+O6HcUCdKZlL3XOhH5BZ/UJMqEU='
     + 'SigV4 ECDHE-RSA-AES128-GCM-SHA256 QueryString public-bucket.s3.amazonaws.com TLSv1.2';
+  t.context.proxyDownloadLogLine = 'fe3f16719bb293e218f6e5fea86e345b0a696560d784177395715b24041da90e '
+    + 'protected-bucket [24/Feb/2020:15:05:51 +0000] '
+    + '192.0.2.3 arn:aws:sts::XXXXXXXX:assumed-role/DownloadRoleLocal '
+    + '30E6BC41DB11A8CE REST.GET.OBJECT '
+    + 'files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met '
+    + `"GET /files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met?A-userid=${t.context.username}&A-sourceip=${t.context.fakeIP} `
+    + 'HTTP/1.1" 200 - 21708 21708 28 27 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:73.0) '
+    + 'Gecko/20100101 Firefox/73.0" - k0f1eqG9dkjCcPtRsuZRXNFyNAqpXANK/GFJz9C+fKUiH2V4+O6HcUCdKZlL3XOhH5BZ/UJMqEU='
+    + 'SigV4 ECDHE-RSA-AES128-GCM-SHA256 QueryString protected-bucket.s3.amazonaws.com TLSv1.2';
 });
 
 test('DistributionEvent.isDistributionEvent() returns false for non distribution event', (t) => {
@@ -50,6 +56,41 @@ test('DistributionEvent.isDistributionEvent() returns true for distribution even
   t.true(DistributionEvent.isDistributionEvent('REST.GET.OBJECT A-userid=test'));
   t.true(DistributionEvent.isDistributionEvent(t.context.authDownloadLogLine));
   t.true(DistributionEvent.isDistributionEvent(t.context.noAuthDownloadLogLine));
+  t.true(DistributionEvent.isDistributionEvent(t.context.proxyDownloadLogLine));
+});
+
+test('DistributionEvent.getRequestUrlObject() returns correct parsed URL', async (t) => {
+  const distributionEvent = new DistributionEvent(
+    'REST.GET.OBJECT "GET /path/to/a/file.hdf?A-userid=test"'
+  );
+  const urlObject = distributionEvent.getRequestUrlObject();
+  t.is(
+    urlObject.toString(),
+    'http://localhost/path/to/a/file.hdf?A-userid=test'
+  );
+});
+
+test('DistributionEvent.getRequestQueryParamValue() returns correct value', async (t) => {
+  const distributionEvent = new DistributionEvent(
+    'REST.GET.OBJECT "GET /test?A-userid=test&foo=bar"'
+  );
+  const queryParam = distributionEvent.getRequestQueryParamValue('foo');
+  t.is(queryParam, 'bar');
+});
+
+test('DistributionEvent.username returns correct username', async (t) => {
+  const distributionEvent = new DistributionEvent(t.context.authDownloadLogLine);
+  t.is(distributionEvent.username, t.context.username);
+});
+
+test('DistributionEvent.remoteIP returns correct IP for regular download', async (t) => {
+  const distributionEvent = new DistributionEvent(t.context.authDownloadLogLine);
+  t.is(distributionEvent.remoteIP, '1192.0.2.3');
+});
+
+test('DistributionEvent.remoteIP returns correct IP for download via proxy', async (t) => {
+  const distributionEvent = new DistributionEvent(t.context.proxyDownloadLogLine);
+  t.is(distributionEvent.remoteIP, t.context.fakeIP);
 });
 
 test.serial('DistributionEvent.toString() returns correct output for authenticated download', async (t) => {
@@ -75,7 +116,7 @@ test.serial('DistributionEvent.toString() returns correct output for authenticat
       [
         '24-FEB-20 03:05:51 PM',
         t.context.username,
-        '192.0.2.3',
+        '1192.0.2.3',
         's3://protected-bucket/files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
         '21708',
         'S',
@@ -114,7 +155,7 @@ test.serial('DistributionEvent.toString() returns correct output for un-authenti
       [
         '24-FEB-20 09:45:37 PM',
         '-',
-        '192.0.2.3',
+        '1192.0.2.3',
         's3://public-bucket/files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
         '21708',
         'S',
@@ -122,6 +163,45 @@ test.serial('DistributionEvent.toString() returns correct output for un-authenti
         '001',
         granule.granuleId,
         'SCIENCE',
+        'HTTPS'
+      ].join('|&|')
+    );
+  } finally {
+    stub.restore();
+  }
+});
+
+test.serial('DistributionEvent.toString() returns correct IP for download via proxy', async (t) => {
+  const granule = fakeGranuleFactoryV2({
+    collectionId: 'MOD09GQ___001',
+    files: [
+      fakeFileFactory({
+        bucket: 'protected-bucket',
+        key: 'files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
+        type: 'metadata'
+      })
+    ]
+  });
+
+  const stub = sinon.stub(FileClass.prototype, 'getGranuleForFile')
+    .callsFake(() => Promise.resolve(granule));
+
+  try {
+    const distributionEvent = new DistributionEvent(t.context.proxyDownloadLogLine);
+    const output = await distributionEvent.toString();
+    t.is(
+      output,
+      [
+        '24-FEB-20 03:05:51 PM',
+        t.context.username,
+        t.context.fakeIP,
+        's3://protected-bucket/files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
+        '21708',
+        'S',
+        'MOD09GQ',
+        '001',
+        granule.granuleId,
+        'METADATA',
         'HTTPS'
       ].join('|&|')
     );

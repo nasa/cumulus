@@ -105,6 +105,7 @@ test.beforeEach(async (t) => {
   expectedReportContentByTime = [
     `01-JUN-81 01:01:13 AM|&|cbrown|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|SCIENCE|&|HTTPS`,
     `01-JUN-81 01:02:13 AM|&|amalkin|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.cmr.xml|&|807|&|F|&|MYD13Q1|&|006|&|${myd13GranId}|&|METADATA|&|HTTPS`,
+    `01-JUN-81 01:35:13 PM|&|fake|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|SCIENCE|&|HTTPS`,
     `01-JUN-81 02:03:13 PM|&|-|&|192.0.2.3|&|s3://my-public-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.jpg|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|OTHER|&|HTTPS`
   ];
 
@@ -236,6 +237,7 @@ test.serial('emsDistributionReport writes multiple reports when report spans mul
       `01-JUN-81 12:02:13 AM|&|scrosby|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|SCIENCE|&|HTTPS`,
       `01-JUN-81 01:01:13 AM|&|cbrown|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|SCIENCE|&|HTTPS`,
       `01-JUN-81 01:02:13 AM|&|amalkin|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.cmr.xml|&|807|&|F|&|MYD13Q1|&|006|&|${myd13GranId}|&|METADATA|&|HTTPS`,
+      `01-JUN-81 01:35:13 PM|&|fake|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|SCIENCE|&|HTTPS`,
       `01-JUN-81 02:03:13 PM|&|-|&|192.0.2.3|&|s3://my-public-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.jpg|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|OTHER|&|HTTPS`,
       `01-JUN-81 04:02:13 PM|&|amurray|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|SCIENCE|&|HTTPS`
     ],
