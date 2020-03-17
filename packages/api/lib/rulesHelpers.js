@@ -9,7 +9,7 @@ function lookupCollectionInEvent(eventObject) {
   const { name, version, dataType } = isObject(eventObject.collection)
     ? eventObject.collection
     : eventObject;
-  let collectionObject = null;
+  let collectionObject;
   if (name && version) {
     collectionObject = { name, version };
     if (dataType) collectionObject.dataType = dataType;
