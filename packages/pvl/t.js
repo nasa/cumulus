@@ -1,6 +1,6 @@
 'use strict';
 
-const PVLRoot = require('./lib//models').PVLRoot;
+const PVLRoot = require('./lib/models').PVLRoot;
 const PVLObject = require('./lib/models').PVLObject;
 const PVLGroup = require('./lib/models').PVLGroup;
 const PVLNumeric = require('./lib/models').PVLNumeric;
