@@ -6,29 +6,44 @@
     "cmr"
   ],
   "properties": {
-    "cmr": {
+    "hyrax": {
       "type": "object",
-      "description": "Credentials needed to perform CMR searches and metadata validation",
-      "required": [
-        "provider",
-        "clientId",
-        "username",
-        "passwordSecretName"
-      ],
+      "description": "Hyrax specific configuration",
+      "required": [],
       "properties": {
-        "provider": {
-          "type": "string"
-        },
-        "clientId": {
-          "type": "string"
-        },
-        "username": {
-          "type": "string"
-        },
-        "passwordSecretName": {
-          "type": "string"
+        "formats": {
+          "type": "array",
+          "description": "A list of granule format types that are appropriate for hyrax. HDF-5 for example.",
+          "items": {
+            "type": "string"
+          }
         }
       }
     }
+  },
+  "cmr": {
+    "type": "object",
+    "description": "Credentials needed to perform CMR searches and metadata validation",
+    "required": [
+      "provider",
+      "clientId",
+      "username",
+      "passwordSecretName"
+    ],
+    "properties": {
+      "provider": {
+        "type": "string"
+      },
+      "clientId": {
+        "type": "string"
+      },
+      "username": {
+        "type": "string"
+      },
+      "passwordSecretName": {
+        "type": "string"
+      }
+    }
   }
+}
 }

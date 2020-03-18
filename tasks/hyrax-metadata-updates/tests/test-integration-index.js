@@ -28,6 +28,7 @@ const readFile = promisify(fs.readFile);
 const { InvalidArgument } = require('@cumulus/errors');
 const ValidationError = require('@cumulus/cmr-client/ValidationError');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const cloneDeep = require('lodash.clonedeep');
 
 const rewire = require('rewire');
 
@@ -67,21 +68,21 @@ test.after.always(() => {
   nock.enableNetConnect();
 });
 
-async function uploadFilesXml(files, bucket) {
+async function uploadFilesXml(files, bucket, metadata) {
   await Promise.all(files.map((file) => promiseS3Upload({
     Bucket: bucket,
     Key: parseS3Uri(file).Key,
     Body: file.endsWith('.cmr.xml')
-      ? fs.createReadStream('tests/data/echo10in.xml') : parseS3Uri(file).Key
+      ? fs.createReadStream(metadata) : parseS3Uri(file).Key
   })));
 }
 
-async function uploadFilesJson(files, bucket) {
+async function uploadFilesJson(files, bucket, metadata) {
   await Promise.all(files.map((file) => promiseS3Upload({
     Bucket: bucket,
     Key: parseS3Uri(file).Key,
     Body: file.endsWith('.cmr.json')
-      ? fs.createReadStream('tests/data/umm-gin.json') : parseS3Uri(file).Key
+      ? fs.createReadStream(metadata) : parseS3Uri(file).Key
   })));
 }
 
@@ -106,7 +107,7 @@ function buildPayload(t) {
   return newPayload;
 }
 
-async function setupS3(t, isUmmG) {
+async function setupS3(t, isUmmG, metadata) {
   t.context.stagingBucket = randomId('staging');
   await Promise.all([
     s3().createBucket({ Bucket: t.context.stagingBucket }).promise()
@@ -119,9 +120,9 @@ async function setupS3(t, isUmmG) {
   t.context.filesToUpload = filesToUpload.map((file) => buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
   buildPayload(t);
   if (isUmmG) {
-    await uploadFilesJson(filesToUpload, t.context.stagingBucket);
+    await uploadFilesJson(filesToUpload, t.context.stagingBucket, metadata);
   } else {
-    await uploadFilesXml(filesToUpload, t.context.stagingBucket);
+    await uploadFilesXml(filesToUpload, t.context.stagingBucket, metadata);
   }
 }
 
@@ -142,84 +143,89 @@ test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
   // Set up mock Validation call to CMR
   nock('https://cmr.earthdata.nasa.gov').post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml')
     .reply(200);
-  await setupS3(t, false);
+  await setupS3(t, false, 'tests/data/echo10in.xml');
   const e = {
     config: event.config,
     input: t.context.payload.input
   };
 
-  await hyraxMetadataUpdate(e);
-  // Verify the metadata has been updated at the S3 location
-  const metadataFile = t.context.payload.input.granules[0].files.find((f) => f.type === 'metadata');
-  const actual = await getS3Object(`${metadataFile.bucket}/${metadataFile.fileStagingDir}`, metadataFile.name);
-  const expected = fs.readFileSync('tests/data/echo10out.xml', 'utf8');
-  t.is(actual.Body.toString(), expected);
-
-  await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  try {
+    await hyraxMetadataUpdate(e);
+    // Verify the metadata has been updated at the S3 location
+    const metadataFile = t.context.payload.input.granules[0].files.find((f) => f.type === 'metadata');
+    const actual = await getS3Object(`${metadataFile.bucket}/${metadataFile.fileStagingDir}`, metadataFile.name);
+    const expected = fs.readFileSync('tests/data/echo10out.xml', 'utf8');
+    t.is(actual.Body.toString(), expected);
+  } finally {
+    await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  }
 });
 
 test.serial('Test updating UMM-G metadata file in S3', async (t) => {
   // Set up mock Validation call to CMR
   nock('https://cmr.earthdata.nasa.gov').post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json')
     .reply(200);
-  await setupS3(t, true);
+  await setupS3(t, true, 'tests/data/umm-gin.json');
   const e = {
     config: event.config,
     input: t.context.payload.input
   };
-
-  await hyraxMetadataUpdate(e);
-  // Verify the metadata has been updated at the S3 location
-  const metadataFile = t.context.payload.input.granules[0].files.find((f) => f.type === 'metadata');
-  const actual = await getS3Object(`${metadataFile.bucket}/${metadataFile.fileStagingDir}`, metadataFile.name);
-  const expected = fs.readFileSync('tests/data/umm-gout.json', 'utf8');
-  // We do this dance because formatting.
-  const expectedString = JSON.stringify(JSON.parse(expected), null, 2);
-  const actualString = JSON.stringify(JSON.parse(actual.Body.toString()), null, 2);
-  t.is(actualString, expectedString);
-
-  await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  try {
+    await hyraxMetadataUpdate(e);
+    // Verify the metadata has been updated at the S3 location
+    const metadataFile = t.context.payload.input.granules[0].files.find((f) => f.type === 'metadata');
+    const actual = await getS3Object(`${metadataFile.bucket}/${metadataFile.fileStagingDir}`, metadataFile.name);
+    const expected = fs.readFileSync('tests/data/umm-gout.json', 'utf8');
+    // We do this dance because formatting.
+    const expectedString = JSON.stringify(JSON.parse(expected), null, 2);
+    const actualString = JSON.stringify(JSON.parse(actual.Body.toString()), null, 2);
+    t.is(actualString, expectedString);
+  } finally {
+    await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  }
 });
 
 test.serial('Test validation error when updating UMM-G metadata file in S3', async (t) => {
   // Set up mock Validation call to CMR
   nock('https://cmr.earthdata.nasa.gov').post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json')
     .reply(400);
-  await setupS3(t, true);
+  await setupS3(t, true, 'tests/data/umm-gin.json');
   const e = {
     config: event.config,
     input: t.context.payload.input
   };
-
-  await t.throwsAsync(hyraxMetadataUpdate(e), {
-    instanceOf: ValidationError,
-    message: 'Validation was not successful, CMR error message: undefined'
-  });
-
-  await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  try {
+    await t.throwsAsync(hyraxMetadataUpdate(e), {
+      instanceOf: ValidationError,
+      message: 'Validation was not successful, CMR error message: undefined'
+    });
+  } finally {
+    await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  }
 });
 
 test.serial('Test validation error when updating ECHO10 metadata file in S3', async (t) => {
   // Set up mock Validation call to CMR
   nock('https://cmr.earthdata.nasa.gov').post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml')
     .reply(400, '<?xml version="1.0" encoding="UTF-8"?><errors><error>foo</error></errors>');
-  await setupS3(t, false);
+  await setupS3(t, false, 'tests/data/echo10in.xml');
 
   const e = {
     config: event.config,
     input: t.context.payload.input
   };
-
-  await t.throwsAsync(hyraxMetadataUpdate(e), {
-    instanceOf: ValidationError,
-    message: 'Validation was not successful, CMR error message: "foo"'
-  });
-
-  await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  try {
+    await t.throwsAsync(hyraxMetadataUpdate(e), {
+      instanceOf: ValidationError,
+      message: 'Validation was not successful, CMR error message: "foo"'
+    });
+  } finally {
+    await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  }
 });
 
 test.serial('Test record does not exist error when granule object has no recognizable metadata files in it', async (t) => {
-  await setupS3(t, true);
+  await setupS3(t, true, 'tests/data/umm-gin.json');
   const e = {
     config: event.config,
     input: {
@@ -312,3 +318,112 @@ test('Test generate path from ECHO-10 throws exception with broken config', asyn
     message: 'Provider not supplied in configuration. Unable to construct path'
   });
 });
+
+test.serial('Test updating ECHO10 metadata file in S3 when formats are present and correct', async (t) => {
+  // Set up mock Validation call to CMR
+  nock('https://cmr.earthdata.nasa.gov').post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml')
+    .reply(200);
+  await setupS3(t, false, 'tests/data/echo10inWithFormat.xml');
+  const config = cloneDeep(event.config);
+  config.hyrax = {
+    formats: [
+      'HDF-5'
+    ]
+  };
+  const e = {
+    config: config,
+    input: t.context.payload.input
+  };
+  try {
+    await hyraxMetadataUpdate(e);
+    // Verify the metadata has been updated at the S3 location
+    const metadataFile = t.context.payload.input.granules[0].files.find((f) => f.type === 'metadata');
+    const actual = await getS3Object(`${metadataFile.bucket}/${metadataFile.fileStagingDir}`, metadataFile.name);
+    const expected = fs.readFileSync('tests/data/echo10outWithFormat.xml', 'utf8');
+    t.is(actual.Body.toString(), expected);
+  } finally {
+    await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  }
+});
+
+test.serial('Test updating ECHO10 metadata file in S3 when formats are present and not matching', async (t) => {
+  await setupS3(t, false, 'tests/data/echo10inWithFormat.xml');
+  const config = cloneDeep(event.config);
+  config.hyrax = {
+    formats: [
+      'NETCDF-4'
+    ]
+  };
+  const e = {
+    config: config,
+    input: t.context.payload.input
+  };
+  try {
+    await hyraxMetadataUpdate(e);
+    // Verify the metadata has not been updated at the S3 location
+    const metadataFile = t.context.payload.input.granules[0].files.find((f) => f.type === 'metadata');
+    const actual = await getS3Object(`${metadataFile.bucket}/${metadataFile.fileStagingDir}`, metadataFile.name);
+    const expected = fs.readFileSync('tests/data/echo10inWithFormat.xml', 'utf8');
+    t.is(actual.Body.toString(), expected);
+  } finally {
+    await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  }
+});
+
+test.serial('Test updating UMM-G metadata file in S3 when formats are present and correct', async (t) => {
+  // Set up mock Validation call to CMR
+  nock('https://cmr.earthdata.nasa.gov').post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json')
+    .reply(200);
+  await setupS3(t, true, 'tests/data/umm-ginWithFormat.json');
+  const config = cloneDeep(event.config);
+  config.hyrax = {
+    formats: [
+      'HDF5'
+    ]
+  };
+  const e = {
+    config: config,
+    input: t.context.payload.input
+  };
+  try {
+    await hyraxMetadataUpdate(e);
+    // Verify the metadata has been updated at the S3 location
+    const metadataFile = t.context.payload.input.granules[0].files.find((f) => f.type === 'metadata');
+    const actual = await getS3Object(`${metadataFile.bucket}/${metadataFile.fileStagingDir}`, metadataFile.name);
+    const expected = fs.readFileSync('tests/data/umm-goutWithFormat.json', 'utf8');
+    // We do this dance because formatting.
+    const expectedString = JSON.stringify(JSON.parse(expected), null, 2);
+    const actualString = JSON.stringify(JSON.parse(actual.Body.toString()), null, 2);
+    t.is(actualString, expectedString);
+  } finally {
+    await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  }
+});
+
+test.serial('Test updating UMM-G metadata file in S3 when formats are present and not matching', async (t) => {
+  await setupS3(t, true, 'tests/data/umm-ginWithFormat.json');
+  const config = cloneDeep(event.config);
+  config.hyrax = {
+    formats: [
+      'NETCDF-4'
+    ]
+  };
+  const e = {
+    config: config,
+    input: t.context.payload.input
+  };
+  try {
+    await hyraxMetadataUpdate(e);
+    // Verify the metadata has not been updated at the S3 location
+    const metadataFile = t.context.payload.input.granules[0].files.find((f) => f.type === 'metadata');
+    const actual = await getS3Object(`${metadataFile.bucket}/${metadataFile.fileStagingDir}`, metadataFile.name);
+    const expected = fs.readFileSync('tests/data/umm-ginWithFormat.json', 'utf8');
+    // We do this dance because formatting.
+    const expectedString = JSON.stringify(JSON.parse(expected), null, 2);
+    const actualString = JSON.stringify(JSON.parse(actual.Body.toString()), null, 2);
+    t.is(actualString, expectedString);
+  } finally {
+    await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  }
+});
+

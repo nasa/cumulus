@@ -237,6 +237,34 @@ async function getMetadataObject(metadataFileName, metadata) {
 }
 
 /**
+ * isAppropriateForHyrax
+ * Find the suitable formats in config.
+ * If the config doesn't exist, assume that any granule in this collection
+ * is for Hyrax and return true.
+ * If the config exists and the granule doesn't define a format then
+ * return false.
+ * If the config exists and the format of the granule does not match on of the
+ * configured formats then return false.
+ *
+ * @param {Object} config - comnfiguration
+ * @param {Object} metadata - the granule metadata
+ * @param {boolean} isUmmG - whether this is UMM-G or ECHO10 metadata
+ * @returns {boolean} whether the granule metadata needs a Hyrax URL added to it or not
+ */
+function isAppropriateForHyrax(config, metadata, isUmmG) {
+  const formats = get(config, 'hyrax.formats');
+  if (isUndefined(formats)) {
+    return true;
+  }
+
+  const format = isUmmG
+    ? get(metadata, 'DataGranule.ArchiveAndDistributionInformation[0].Format')
+    : get(metadata, 'Granule.DataFormat');
+
+  return formats.includes(format);
+}
+
+/**
  * updateSingleGranule
  *
  * @param {Object} config
@@ -258,22 +286,24 @@ async function updateSingleGranule(config, granuleObject) {
   const metadata = metadataResult.Body.toString();
   const { metadataObject, isUmmG } = await getMetadataObject(metadataFile.name, metadata);
   // Add OPeNDAP url
-  const hyraxUrl = await generateHyraxUrl(config, metadataObject, isUmmG);
-  const updatedMetadata = addHyraxUrl(metadataObject, isUmmG, hyraxUrl);
-  // Validate updated metadata via CMR
-  if (isUmmG) {
-    await validateUMMG(JSON.parse(updatedMetadata), metadataFile.name, config.cmr.provider);
-  } else {
-    await validate('granule', updatedMetadata, metadataFile.name, config.cmr.provider);
+  if (isAppropriateForHyrax(config, metadataObject, isUmmG)) {
+    const hyraxUrl = await generateHyraxUrl(config, metadataObject, isUmmG);
+    const updatedMetadata = addHyraxUrl(metadataObject, isUmmG, hyraxUrl);
+    // Validate updated metadata via CMR
+    if (isUmmG) {
+      await validateUMMG(JSON.parse(updatedMetadata), metadataFile.name, config.cmr.provider);
+    } else {
+      await validate('granule', updatedMetadata, metadataFile.name, config.cmr.provider);
+    }
+    // Write back out to S3 in the same location
+    await s3PutObject({
+      Bucket: Bucket,
+      Key: Key,
+      Body: updatedMetadata,
+      ContentType: metadataResult.ContentType,
+      Tagging: s3TagSetToQueryString(tags.TagSet)
+    });
   }
-  // Write back out to S3 in the same location
-  await s3PutObject({
-    Bucket: Bucket,
-    Key: Key,
-    Body: updatedMetadata,
-    ContentType: metadataResult.ContentType,
-    Tagging: s3TagSetToQueryString(tags.TagSet)
-  });
 }
 
 /**

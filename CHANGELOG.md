@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+- **HYRAX-82**
+  - Added functionality to hyrax-metadata-update task to allow operator to configure which granule file formats are appropriate for Hyrax processing. This solves the use case where a collection has multiple granule formats.
+
+### Removed
+
+- **CUMULUS-1799**
+  - Removed deprecated method `@cumulus/api/models/Granule.createGranulesFromSns()`
+  - Removed deprecated method `@cumulus/api/models/Granule.removeGranuleFromCmr()`
+  - Removed `@cumulus/cmrjs/cmr-utils/getGranuleId()`
+  - Removed `@cumulus/cmrjs/cmr-utils/getCmrFiles()`
+  - Removed `@cumulus/cmrjs/cmr/CMR` class
+  - Removed `@cumulus/cmrjs/cmr/CMRSearchConceptQueue` class
+  - Removed `@cumulus/cmrjs/utils/getHost()`
+  - Removed `@cumulus/cmrjs/utils/getIp()`
+  - Removed `@cumulus/cmrjs/utils/hostId()`
+  - Removed `@cumulus/cmrjs/utils/updateToken()`
+  - Removed `@cumulus/cmrjs/utils/ummVersion()`
+  - Removed `@cumulus/cmrjs/utils/validateUMMG()`
+  - Removed `@cumulus/ingest/aws/getEndpoint()`
+  - Removed `@cumulus/ingest/aws/getExecutionUrl()`
+  - Removed `@cumulus/ingest/aws/invoke()`
+  - Removed `@cumulus/ingest/aws/CloudWatch` class
+  - Removed `@cumulus/ingest/aws/ECS` class
+  - Removed `@cumulus/ingest/aws/Events` class
+  - Removed `@cumulus/ingest/aws/SQS` class
+  - Removed `@cumulus/ingest/aws/StepFunction` class
 
 ### Removed
 
@@ -38,7 +64,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed the format of the message sent to the granule SNS Topic. Message includes the granule record under `record` and the type of event under `event`. Messages with `deleted` events will have the record that was deleted with a `deletedAt` timestamp. Options for `event` are `Create | Update | Delete`
 - **CUMULUS-1769** - `deploy_to_ngap` is now a **required** variable for the `tf-modules/cumulus` module. **For those deploying to NGAP environments, this variable should always be set to `true`.**
 
-### Notable chanegs
+### Notable changes
 
 - **CUMULUS-1739** - You can now exclude Elasticsearch from your `tf-modules/data-persistence` deployment (via `include_elasticsearch = false`) and your `tf-modules/cumulus` module will still deploy successfully.
 
@@ -47,6 +73,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added `@cumulus/aws-client/S3.getS3ObjectReadStreamAsync()` to deal with S3 eventual consistency issues by checking for the existence an S3 object with retries before getting a readable stream for that object.
+
 - **CUMULUS-1769**
   - Added `deploy_to_ngap` boolean variable for the `tf-modules/cumulus` and `tf-modules/archive` Terraform modules. This variable is required. **For those deploying to NGAP environments, this variable should always be set to `true`.**
 - **HYRAX-70**

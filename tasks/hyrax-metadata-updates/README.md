@@ -56,6 +56,24 @@ Config object fields:
 | bucket                | string  | (required) | Name of S3 bucket containing public/private key pair to decrypt CMR credentials
 | stack                 | string  | (required) | Name of deployment stack
 | cmr                   | object  | (required) | CMR credentials object
+| hyrax                 | object  |            | Hyrax-specific configuration
+| hyrax.formats         | array\<string\>   |            | An array of formats that are suitable for hyrax processing
+
+#### Formats
+
+This feature allows the provider to add Hyrax urls to collections containing granules of more than one format.
+
+For example, if your collection contains HDF-5 and ASCII granules you would only be able to use the HDF-5 granules with OPeNDAP.
+
+If you do not specify a list of formats in your configuration, this task will add a hyrax URL to all granules.
+If you do specify a list of formats in your configuration, this task will only add a hyrax URL to granule that have a format that matches one of the formats in the supplied list.
+
+This task determines the format of the granule using the following CMR metadata fields:
+
+ECHO10: `Granule.DataFormat`
+UMM-G: `DataGranule.ArchiveAndDistributionInformation[0].Format`
+
+:warning: If you specify a list of formats and your metadata does not specify a format as above the task will not add a Hyrax URL to your metadata.
 
 ### Input
 
