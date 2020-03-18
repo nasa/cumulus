@@ -1,7 +1,7 @@
 'use strict';
 
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { deleteGranule, waitForGranule } = require('@cumulus/integration-tests/api/granules');
+const { deleteGranule, waitForGranule } = require('@cumulus/api-client/granules');
 
 const {
   api: apiTestUtils,

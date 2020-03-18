@@ -6,7 +6,7 @@ const collectionsRewire = rewire('../collections');
 
 test.before(async (t) => {
   t.context.testPrefix = 'unitTestStack';
-  t.context.collection = 'collection';
+  t.context.collectionName = 'testCollection';
   t.context.collectionVersion = 1;
 });
 
@@ -16,7 +16,7 @@ test.serial('deleteCollection calls the callback with the expected object', asyn
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
-      path: `/collections/${t.context.collection }/${t.context.collectionVersion}`
+      path: `/collections/${t.context.collectionName}/${t.context.collectionVersion}`
     }
   };
 
@@ -26,11 +26,11 @@ test.serial('deleteCollection calls the callback with the expected object', asyn
   let revertCallback;
   try {
     revertCallback = collectionsRewire.__set__('invokeApi', callback);
-    await t.notThrowsAsync(collectionsRewire.deleteCollection(
-      t.context.testPrefix,
-      t.context.collection,
-      t.context.collectionVersion,
-    ));
+    await t.notThrowsAsync(collectionsRewire.deleteCollection({
+      prefix: t.context.testPrefix,
+      collectionName: t.context.collectionName,
+      collectionVersion: t.context.collectionVersion
+    }));
   } finally {
     revertCallback();
   }
@@ -54,10 +54,10 @@ test.serial('createCollection calls the callback with the expected object', asyn
   let revertCallback;
   try {
     revertCallback = collectionsRewire.__set__('invokeApi', callback);
-    await t.notThrowsAsync(collectionsRewire.createCollection(
-      t.context.testPrefix,
-      t.context.collection,
-    ));
+    await t.notThrowsAsync(collectionsRewire.createCollection({
+      prefix: t.context.testPrefix,
+      collectionName: t.context.collectionName
+    }));
   } finally {
     revertCallback();
   }
@@ -69,7 +69,7 @@ test.serial('getCollection calls the callback with the expected object and retur
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/collections/${t.context.collection}/${t.context.collectionVersion}`
+      path: `/collections/${t.context.collectionName}/${t.context.collectionVersion}`
     }
   };
 
@@ -81,11 +81,11 @@ test.serial('getCollection calls the callback with the expected object and retur
   let revertCallback;
   try {
     revertCallback = collectionsRewire.__set__('invokeApi', callback);
-    const result = await collectionsRewire.getCollection(
-      t.context.testPrefix,
-      t.context.collection,
-      t.context.collectionVersion,
-    );
+    const result = await collectionsRewire.getCollection({
+      prefix: t.context.testPrefix,
+      collectionName: t.context.collectionName,
+      collectionVersion: t.context.collectionVersion
+    });
     t.deepEqual(result, { foo: 'bar' });
   } finally {
     revertCallback();

@@ -9,11 +9,11 @@ const {
 } = require('@cumulus/integration-tests');
 const {
   createCollection, deleteCollection
-} = require('@cumulus/integration-tests/api/collections');
-const { getExecution } = require('@cumulus/integration-tests/api/executions');
+} = require('@cumulus/api-client/collections');
+const { getExecution } = require('@cumulus/api-client/executions');
 const {
   createProvider, deleteProvider
-} = require('@cumulus/integration-tests/api/providers');
+} = require('@cumulus/api-client/providers');
 const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The DiscoverGranules workflow with a non-existent bucket', () => {

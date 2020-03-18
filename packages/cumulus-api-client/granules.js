@@ -2,7 +2,8 @@
 
 const pRetry = require('p-retry');
 const { invokeApi } = require('./cumulusApiClient');
-
+const Logger = require('@cumulus/logger');
+const logger = new Logger({ sender: '@cumulus/api-client' });
 
 /**
  * GET /granules/{granuleName}
@@ -38,12 +39,12 @@ async function waitForGranule({
       if (apiResult.statusCode !== 200) {
         throw new Error(`granule ${granuleId} not in database yet, status ${apiResult.statusCode} retrying....`);
       }
-      console.log(`Granule ${granuleId} in database, proceeding...`); // TODO fix logging
+      logger.info(`Granule ${granuleId} in database, proceeding...`); // TODO fix logging
     },
     {
       retries,
       onFailedAttempt: async (e) => {
-        console.log(e.message);
+        logger.error(e.message);
       }
     }
   );
@@ -157,7 +158,9 @@ async function deleteGranule({ prefix, granuleId, callback = invokeApi }) {
  *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - the move response from the API
  */
-async function moveGranule({ prefix, granuleId, destinations, callback = invokeApi }) {
+async function moveGranule({
+  prefix, granuleId, destinations, callback = invokeApi
+}) {
   return callback({
     prefix: prefix,
     payload: {

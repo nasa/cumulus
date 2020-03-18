@@ -1,6 +1,9 @@
 'use strict';
 
+const Logger = require('@cumulus/logger');
 const { invokeApi } = require('./cumulusApiClient');
+const logger = new Logger({ sender: '@cumulus/api-client' });
+
 
 /**
  * Call function in rules API with payload
@@ -24,7 +27,7 @@ async function callRuleApiFunction(prefix, requestPayload, callback = invokeApi)
     });
     return payload;
   } catch (error) {
-    console.log(`Error parsing JSON response for rule ${requestPayload.httpMethod}: ${requestPayload}`);
+    logger.error(`Error parsing JSON response for rule ${requestPayload.httpMethod}: ${requestPayload}`);
     throw error;
   }
 }

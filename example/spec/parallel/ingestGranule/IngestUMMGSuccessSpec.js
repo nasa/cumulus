@@ -26,8 +26,8 @@ const {
   getOnlineResources
 } = require('@cumulus/integration-tests');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
-const { deleteCollection } = require('@cumulus/integration-tests/api/collections');
-const granulesApiTestUtils = require('@cumulus/integration-tests/api/granules');
+const { deleteCollection } = require('@cumulus/api-client/collections');
+const granulesApiTestUtils = require('@cumulus/api-client/granules');
 const {
   getDistributionFileUrl,
   getTEADistributionApiRedirect,

@@ -14,18 +14,16 @@ const { invokeApi } = require('./cumulusApiClient');
  *                                   that takes a prefix / user payload
  * @returns {Promise<Object>}      - promise that resolves to the output of the callback
  */
-const createProvider = ({ prefix, provider, callback = invokeApi }) =>
-  callback({
-    prefix,
-    payload: {
-      httpMethod: 'POST',
-      resource: '/{proxy+}',
-      headers: { 'Content-Type': 'application/json' },
-      path: '/providers',
-      body: JSON.stringify(provider)
-    }
-  });
-
+const createProvider = ({ prefix, provider, callback = invokeApi }) => callback({
+  prefix,
+  payload: {
+    httpMethod: 'POST',
+    resource: '/{proxy+}',
+    headers: { 'Content-Type': 'application/json' },
+    path: '/providers',
+    body: JSON.stringify(provider)
+  }
+});
 
 /**
  * Delete a provider from the Cumulus API
@@ -38,15 +36,14 @@ const createProvider = ({ prefix, provider, callback = invokeApi }) =>
  * @returns {Promise<Object>}        - promise that resolves to the output
  *                                     of the callback
  */
-const deleteProvider = ({ prefix, providerId, callback = invokeApi }) =>
-  callback({
-    prefix,
-    payload: {
-      httpMethod: 'DELETE',
-      resource: '/{proxy+}',
-      path: `/providers/${providerId}`
-    }
-  });
+const deleteProvider = ({ prefix, providerId, callback = invokeApi }) => callback({
+  prefix,
+  payload: {
+    httpMethod: 'DELETE',
+    resource: '/{proxy+}',
+    path: `/providers/${providerId}`
+  }
+});
 
 /**
  * Fetch a provider from the Cumulus API
@@ -59,15 +56,14 @@ const deleteProvider = ({ prefix, providerId, callback = invokeApi }) =>
  * @returns {Promise<Object>}        - promise that resolves to the output
  *                                     of the API lambda
  */
-const getProvider = ({ prefix, providerId, callback = invokeApi }) =>
-  callback({
-    prefix,
-    payload: {
-      httpMethod: 'GET',
-      resource: '/{proxy+}',
-      path: `/providers/${providerId}`
-    }
-  }); //todo why .then(({ body }) => JSON.parse(body)); ?
+const getProvider = ({ prefix, providerId, callback = invokeApi }) => callback({
+  prefix,
+  payload: {
+    httpMethod: 'GET',
+    resource: '/{proxy+}',
+    path: `/providers/${providerId}`
+  }
+}); //TODO  why .then(({ body }) => JSON.parse(body)); ?
 
 module.exports = {
   createProvider,

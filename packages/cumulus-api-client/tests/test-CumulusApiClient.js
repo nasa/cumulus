@@ -7,12 +7,15 @@ const rewireApiClient = rewire('../cumulusApiClient');
 test.before(async (t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.testPayload = { payload: 'payloadValue' };
+  // eslint-disable-next-line quotes
+  t.context.testLambdaReturn = { statusCode: 200, body: `{\\\"Key\\\": false}` };
+
 });
 
 test.serial('invokeApi invokes the lambda with the expected Payload and FunctionName', async (t) => {
   let revertApiClient;
   try {
-    const expected = {
+    const Payload = {
       FunctionName: `${t.context.testPrefix}-PrivateApiLambda`,
       Payload: JSON.stringify(t.context.testPayload)
     };
@@ -21,16 +24,20 @@ test.serial('invokeApi invokes the lambda with the expected Payload and Function
         const passedPayload = payloadObject;
         return {
           promise: async () => {
-            t.deepEqual(expected, passedPayload);
-            return { Payload: JSON.stringify(t.context.testPayload) };
+            t.deepEqual(Payload, passedPayload);
+            return { Payload: JSON.stringify(t.context.testLambdaReturn) };
           }
         };
       }
     }));
-    await t.notThrowsAsync(rewireApiClient.invokeApi({
+
+    const expected = { statusCode: 200, body: '{"Key": false}' };
+
+    const actual = await rewireApiClient.invokeApi({
       prefix: t.context.testPrefix,
       payload: t.context.testPayload
-    }));
+    });
+    t.deepEqual(expected, actual);
   } finally {
     revertApiClient();
   }

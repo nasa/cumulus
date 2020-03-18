@@ -13,7 +13,7 @@ const { invokeApi } = require('./cumulusApiClient');
  * @returns {Promise<Object>} - the execution fetched by the API
  */
 const getExecution = async ({ prefix, arn, callback = invokeApi }) => {
-  callback({
+  const result = await callback({
     prefix,
     payload: {
       httpMethod: 'GET',
@@ -21,7 +21,7 @@ const getExecution = async ({ prefix, arn, callback = invokeApi }) => {
       path: `/executions/${arn}`
     }
   }).then(({ body }) => JSON.parse(body));
-  // TODO - fix async calls
+  return result;
 };
 
 /**
@@ -33,17 +33,14 @@ const getExecution = async ({ prefix, arn, callback = invokeApi }) => {
  *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - the execution list fetched by the API
  */
-const getExecutions = async ({ prefix, callback = invokeApi }) => {
-  callback({
-    prefix,
-    payload: {
-      httpMethod: 'GET',
-      resource: '/{proxy+}',
-      path: '/executions'
-    }
-  });
-};
-
+const getExecutions = async ({ prefix, callback = invokeApi }) => callback({
+  prefix,
+  payload: {
+    httpMethod: 'GET',
+    resource: '/{proxy+}',
+    path: '/executions'
+  }
+});
 
 /**
  * get execution status from the Cumulus API
@@ -55,16 +52,14 @@ const getExecutions = async ({ prefix, callback = invokeApi }) => {
  *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - the execution status fetched by the API
  */
-async function getExecutionStatus({ prefix, arn, callback = invokeApi }) {
-  return callback({
-    prefix: prefix,
-    payload: {
-      httpMethod: 'GET',
-      resource: '/{proxy+}',
-      path: `/executions/status/${arn}`
-    }
-  });
-}
+const getExecutionStatus = async ({ prefix, arn, callback = invokeApi }) => callback({
+  prefix: prefix,
+  payload: {
+    httpMethod: 'GET',
+    resource: '/{proxy+}',
+    path: `/executions/status/${arn}`
+  }
+});
 
 module.exports = {
   getExecution,

@@ -1,18 +1,21 @@
 'use strict';
 
+const cloneDeep = require('lodash.clonedeep');
 const pRetry = require('p-retry');
 const { lambda } = require('@cumulus/aws-client/services');
 const CumulusApiClientError = require('./CumulusApiClientError');
-// TODO update integration-tests api/ to use new signature
-function invokeApi({ prefix, payload }) {
+
+function invokeApi(params) {
+  const { prefix, payload } = cloneDeep(params);
   return pRetry(
     async () => {
       const apiOutput = await lambda().invoke({
         Payload: JSON.stringify(payload),
         FunctionName: `${prefix}-PrivateApiLambda`
       }).promise();
-
-      const outputPayload = JSON.parse(apiOutput.Payload);
+      const apiPayload = apiOutput.Payload.replace(/\\\\"/g, '"');
+      debugger;
+      const outputPayload = JSON.parse(apiPayload);
       if (outputPayload.errorMessage
         && outputPayload.errorMessage.includes('Task timed out')) {
         throw new CumulusApiClientError(`Error calling ${payload.path}: ${outputPayload.errorMessage}`);
