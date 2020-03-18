@@ -15,6 +15,8 @@ const pWaitFor = require('p-wait-for');
 const pMap = require('p-map');
 const moment = require('moment');
 
+/* const deprecatedApiIncludes = { emsApi, executionsApi, granulesApi, rulesApi };
+ */
 const {
   dynamodb,
   ecs,
@@ -27,14 +29,14 @@ const { globalReplace } = require('@cumulus/common/string');
 const { deprecate, sleep } = require('@cumulus/common/util');
 const ProvidersModel = require('@cumulus/api/models/providers');
 const RulesModel = require('@cumulus/api/models/rules');
-
+const collectionsApi = require('@cumulus/api-client/collections');
+const providersApi = require('@cumulus/api-client/providers');
+const rulesApi = require('./api/rulesApi');
+const emsApi = require('./api/emsApi');
+const executionsApi = require('./api/executionsApi');
+const granulesApi = require('./api/granulesApi');
 const api = require('./api/api');
-const collectionsApi = require('./api/collections');
-const providersApi = require('./api/providers');
-const rulesApi = require('./api/rules');
-const emsApi = require('./api/ems');
-const executionsApi = require('./api/executions');
-const granulesApi = require('./api/granules');
+
 const EarthdataLogin = require('./api/EarthdataLogin');
 const distributionApi = require('./api/distribution');
 const cmr = require('./cmr.js');
