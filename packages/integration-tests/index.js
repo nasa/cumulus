@@ -742,19 +742,6 @@ function isWorkflowTriggeredByRule(taskInput, params) {
 }
 
 /**
- * returns a list of rule objects
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @param {string} rulesDirectory - The directory continaing rules json files
- * @returns {list} - list of rules found in rulesDirectory
- */
-async function rulesList(stackName, bucketName, rulesDirectory) {
-  deprecate('@cumulus/integration-tests/index.rulesList', '1.18.0', '@cumulus/integration-tests/index.readJsonFilesFromDir');
-  return setupSeedData(stackName, bucketName, rulesDirectory);
-}
-
-/**
  *
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
@@ -1063,7 +1050,6 @@ module.exports = {
   removeRuleAddedParams,
   isWorkflowTriggeredByRule,
   getClusterArn,
-  rulesList,
   waitForAsyncOperationStatus,
   getLambdaVersions: lambda.getLambdaVersions,
   getLambdaAliases: lambda.getLambdaAliases,
