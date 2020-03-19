@@ -569,23 +569,6 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host, postfi
 }
 
 /**
- * Return a list of providers
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @param {string} dataDirectory - the directory of provider json files
- * @returns {Promise.<Array>} list of providers
- */
-async function listProviders(stackName, bucketName, dataDirectory) {
-  deprecate(
-    '@cumulus/integration-tests/index.rulesList',
-    '1.18.0',
-    '@cumulus/integration-tests/index.readJsonFilesFromDir'
-  );
-  return setupSeedData(stackName, bucketName, dataDirectory);
-}
-
-/**
  * Delete providers from database
  *
  * @param {string} stackName - CloudFormation stack name
@@ -1019,7 +1002,6 @@ module.exports = {
   deleteCollections,
   cleanupCollections,
   addProviders,
-  listProviders,
   deleteProviders,
   cleanupProviders,
   conceptExists: cmr.conceptExists,
