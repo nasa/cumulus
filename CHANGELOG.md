@@ -72,6 +72,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `publishSnsMessage()`
     - `putJsonS3Object()`
     - `receiveSQSMessages()`
+    - `retryOnThrottlingException()`
     - `s3CopyObject()`
     - `s3GetObjectTagging()`
     - `s3Join()`
