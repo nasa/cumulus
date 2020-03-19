@@ -29,7 +29,7 @@ function lookupCollectionInEvent(eventObject) {
 async function queueMessageForRule(rule, eventObject, eventSource) {
   const item = {
     workflow: rule.workflow,
-    provider: eventObject.provider || rule.provider,
+    provider: rule.provider,
     collection: lookupCollectionInEvent(eventObject) || rule.collection,
     meta: eventSource ? { ...rule.meta, eventSource } : rule.meta,
     payload: eventObject
