@@ -163,124 +163,7 @@ exports.improveStackTrace = (fn) =>
     }
   };
 
-exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
-  deprecate('@cumulus/common/aws/findResourceArn', '1.17.0', '@cumulus/aws-client/utils/findResourceArn');
-  obj[fn](opts, (err, data) => {
-    if (err) {
-      callback(err, data);
-      return;
-    }
-
-    let arns = null;
-    Object.keys(data).forEach((prop) => {
-      if (prop.endsWith('Arns')) {
-        arns = data[prop];
-      }
-    });
-
-    if (!arns) {
-      callback(`Could not find an 'Arn' property in response from ${fn}`, data);
-      return;
-    }
-
-    const prefixRe = new RegExp(`^${prefix}-[A-Z0-9]`);
-    const baseNameOnly = `-${baseName}-`;
-    let matchingArn = null;
-
-    arns.forEach((arn) => {
-      const name = arn.split('/').pop();
-      if (name.match(prefixRe) && name.includes(baseNameOnly)) {
-        matchingArn = arn;
-      }
-    });
-
-    if (matchingArn) {
-      callback(null, matchingArn);
-    } else if (data.NextToken) {
-      const nextOpts = { ...opts, NextToken: data.NextToken };
-      exports.findResourceArn(obj, fn, prefix, baseName, nextOpts, callback);
-    } else {
-      callback(`Could not find resource ${baseName} in ${fn}`);
-    }
-  });
-};
-
-/** Secrets Manager utils */
-
-exports.getSecretString = (SecretId) => {
-  deprecate('@cumulus/common/aws/getSecretString', '1.17.0', '@cumulus/aws-client/SecretsManager/getSecretString');
-  return exports.secretsManager().getSecretValue({ SecretId }).promise()
-    .then((response) => response.SecretString);
-};
-
-/** Cloudformation utils */
-
-/**
- * Describes the resources belonging to a given CloudFormation stack
- *
- * See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudFormation.html#describeStackResources-property
- *
- * @param {string} stackName -  The name of the CloudFormation stack to query
- * @returns {Array<Object>} The resources belonging to the stack
- */
-exports.describeCfStackResources = (stackName) => {
-  deprecate('@cumulus/common/aws/describeCfStackResources', '1.17.0', '@cumulus/aws-client/cloudformation/describeCfStackResources');
-  return exports.cf().describeStackResources({ StackName: stackName })
-    .promise()
-    .then((response) => response.StackResources);
-};
-
 /* S3 utils */
-
-/**
- * Join strings into an S3 key without a leading slash or double slashes
- *
- * @param {...string|Array<string>} args - the strings to join
- * @returns {string} the full S3 key
- */
-exports.s3Join = (...args) => {
-  deprecate('@cumulus/common/aws/s3Join', '1.17.0', '@cumulus/aws-client/S3/s3Join');
-  const tokens = Array.isArray(args[0]) ? args[0] : args;
-
-  const removeLeadingSlash = (token) => token.replace(/^\//, '');
-  const removeTrailingSlash = (token) => token.replace(/\/$/, '');
-  const isNotEmptyString = (token) => token.length > 0;
-
-  const key = tokens
-    .map(removeLeadingSlash)
-    .map(removeTrailingSlash)
-    .filter(isNotEmptyString)
-    .join('/');
-
-  if (tokens[tokens.length - 1].endsWith('/')) return `${key}/`;
-  return key;
-};
-
-/**
-* Convert S3 TagSet Object to query string
-* e.g. [{ Key: 'tag', Value: 'value }] to 'tag=value'
-*
-* @param {Array<Object>} tagset - S3 TagSet array
-* @returns {string} - tags query string
-*/
-exports.s3TagSetToQueryString = (tagset) => {
-  deprecate('@cumulus/common/aws/s3TagSetToQueryString', '1.17.0', '@cumulus/aws-client/S3/s3TagSetToQueryString');
-  return tagset.reduce((acc, tag) => acc.concat(`&${tag.Key}=${tag.Value}`), '').substring(1);
-};
-
-/**
- * Delete an object from S3
- *
- * @param {string} bucket - bucket where the object exists
- * @param {string} key - key of the object to be deleted
- * @returns {Promise} - promise of the object being deleted
- */
-exports.deleteS3Object = exports.improveStackTrace(
-  (bucket, key) => {
-    deprecate('@cumulus/common/aws/deleteS3Object', '1.17.0', '@cumulus/aws-client/S3/deleteS3Object');
-    return exports.s3().deleteObject({ Bucket: bucket, Key: key }).promise();
-  }
-);
 
 /**
  * Test if an object exists in S3
@@ -314,59 +197,6 @@ exports.s3PutObject = exports.improveStackTrace(
     }).promise();
   }
 );
-
-/**
-* Copy an object from one location on S3 to another
-*
-* @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
-* @returns {Promise} - promise of the object being copied
-**/
-exports.s3CopyObject = exports.improveStackTrace(
-  (params) => {
-    deprecate('@cumulus/common/aws/s3CopyObject', '1.17.0', '@cumulus/aws-client/S3/s3CopyObject');
-    return exports.s3().copyObject({
-      TaggingDirective: 'COPY',
-      ...params
-    }).promise();
-  }
-);
-
-/**
- * Upload data to S3
- *
- * Note: This is equivalent to calling `aws.s3().upload(params).promise()`
- *
- * @param {Object} params - see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
- * @returns {Promise} see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
- */
-exports.promiseS3Upload = exports.improveStackTrace(
-  (params) => {
-    deprecate('@cumulus/common/aws/promiseS3Upload', '1.17.0', '@cumulus/aws-client/S3/promiseS3Upload');
-    return exports.s3().upload(params).promise();
-  }
-);
-
-/**
- * Downloads the given s3Obj to the given filename in a streaming manner
- *
- * @param {Object} s3Obj - The parameters to send to S3 getObject call
- * @param {string} filepath - The filepath of the file that is downloaded
- * @returns {Promise<string>} - returns filename if successful
- */
-exports.downloadS3File = (s3Obj, filepath) => {
-  deprecate('@cumulus/common/aws/downloadS3File', '1.17.0', '@cumulus/aws-client/S3/downloadS3File');
-  const s3 = exports.s3();
-  const fileWriteStream = fs.createWriteStream(filepath);
-
-  return new Promise((resolve, reject) => {
-    const objectReadStream = s3.getObject(s3Obj).createReadStream();
-
-    pump(objectReadStream, fileWriteStream, (err) => {
-      if (err) reject(err);
-      else resolve(filepath);
-    });
-  });
-};
 
 /**
 * Get an object from S3
@@ -409,6 +239,20 @@ exports.headObject = exports.improveStackTrace(
   (Bucket, Key) => {
     deprecate('@cumulus/common/aws/headObject', '1.17.0', '@cumulus/aws-client/S3/headObject');
     return exports.s3().headObject({ Bucket, Key }).promise();
+  }
+);
+
+/**
+ * Delete an object from S3
+ *
+ * @param {string} bucket - bucket where the object exists
+ * @param {string} key - key of the object to be deleted
+ * @returns {Promise} - promise of the object being deleted
+ */
+exports.deleteS3Object = exports.improveStackTrace(
+  (bucket, key) => {
+    deprecate('@cumulus/common/aws/deleteS3Object', '1.17.0', '@cumulus/aws-client/S3/deleteS3Object');
+    return exports.s3().deleteObject({ Bucket: bucket, Key: key }).promise();
   }
 );
 

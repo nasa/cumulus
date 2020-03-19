@@ -17,25 +17,32 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `createAndWaitForDynamoDbTable()`
     - `createQueue()`
     - `deleteSQSMessage()`
+    - `describeCfStackResources()`
     - `downloadS3File()`
     - `downloadS3Files()`
     - `DynamoDbSearchQueue` class
     - `fileExists()`
+    - `findResourceArn()`
     - `fromSfnExecutionName()`
     - `getFileBucketAndKey()`
     - `getJsonS3Object()`
     - `getQueueUrl()`
     - `getObjectSize()`
     - `getS3ObjectReadStream()`
+    - `getSecretString()`
     - `getStateMachineArn()`
     - `headObject()`
     - `listS3Objects()`
+    - `promiseS3Upload()`
     - `publishSnsMessage()`
     - `pullStepFunctionEvent()`
     - `putJsonS3Object()`
     - `receiveSQSMessages()`
+    - `s3CopyObject()`
     - `s3GetObjectTagging()`
+    - `s3Join()`
     - `S3ListObjectsV2Queue` class
+    - `s3TagSetToQueryString()`
     - `s3PutObjectTagging()`
     - `sendSQSMessage()`
     - `sqsQueueExists()`
