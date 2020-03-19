@@ -12,8 +12,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed deprecated method `@cumulus/api/models/Granule.createGranulesFromSns()`
   - Removed deprecated method `@cumulus/api/models/Granule.removeGranuleFromCmr()`
   - Removed from `@cumulus/common/aws`:
+    - `apigateway()`
     - `buildS3Uri()`
     - `calculateS3ObjectChecksum()`
+    - `cf()`
+    - `cloudwatch()`
+    - `cloudwatchevents()`
+    - `cloudwatchlogs()`
     - `createAndWaitForDynamoDbTable()`
     - `createQueue()`
     - `deleteSQSMessage()`
@@ -21,6 +26,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `downloadS3File()`
     - `downloadS3Files()`
     - `DynamoDbSearchQueue` class
+    - `dynamodbstreams()`
+    - `ec2()`
+    - `ecs()`
     - `fileExists()`
     - `findResourceArn()`
     - `fromSfnExecutionName()`
@@ -32,6 +40,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `getSecretString()`
     - `getStateMachineArn()`
     - `headObject()`
+    - `kinesis()`
+    - `lambda()`
     - `listS3Objects()`
     - `promiseS3Upload()`
     - `publishSnsMessage()`
@@ -44,7 +54,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `S3ListObjectsV2Queue` class
     - `s3TagSetToQueryString()`
     - `s3PutObjectTagging()`
+    - `secretsManager()`
     - `sendSQSMessage()`
+    - `sfn()`
+    - `sns()`
+    - `sqs()`
     - `sqsQueueExists()`
     - `toSfnExecutionName()`
     - `uploadS3FileStream()`
