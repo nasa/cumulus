@@ -14,18 +14,7 @@ const compose = require('lodash.flowright');
 const curry = require('lodash.curry');
 const isString = require('lodash.isstring');
 
-const { deprecate, isNull, negate } = require('./util');
-
-/**
- * Given a character, replaces the JS unicode-escape sequence for the character
- *
- * @param {char} char - The character to escape
- * @returns {string} The unicode escape sequence for char
- *
- * @private
- */
-const unicodeEscapeCharacter = (char) =>
-  ['\\u', `0000${char.charCodeAt().toString(16)}`.slice(-4)].join('');
+const { isNull, negate } = require('./util');
 
 /**
  * Return a new string with some or all matches of a pattern replaced by a

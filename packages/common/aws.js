@@ -1,27 +1,15 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const fs = require('fs');
-const get = require('lodash.get');
-const isObject = require('lodash.isobject');
-const isString = require('lodash.isstring');
-const { JSONPath } = require('jsonpath-plus');
-const path = require('path');
 const pMap = require('p-map');
-const pump = require('pump');
 const pRetry = require('p-retry');
 const url = require('url');
 
-const {
-  generateChecksumFromStream,
-  validateChecksumFromStream
-} = require('@cumulus/checksum');
 const errors = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
-const { unicodeEscape } = require('./string');
 const { inTestMode, testAwsClient } = require('./test-utils');
-const { deprecate, isNil, setErrorStack } = require('./util');
+const { deprecate, setErrorStack } = require('./util');
 
 const log = new Logger({ sender: 'common/aws' });
 const noop = () => {}; // eslint-disable-line lodash/prefer-noop

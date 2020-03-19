@@ -41,7 +41,6 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/checksum": "1.20.0",
     "@cumulus/errors": "1.20.0",
     "@cumulus/logger": "1.20.0",
     "ajv": "^5.2.2",
@@ -50,7 +49,6 @@
     "fs-extra": "^5.0.0",
     "got": "^9.2.1",
     "js-yaml": "^3.11.0",
-    "jsonpath-plus": "^1.1.0",
     "lodash.clonedeep": "^4.5.0",
     "lodash.compact": "^3.0.1",
     "lodash.curry": "^4.1.1",
@@ -71,7 +69,6 @@
     "p-limit": "^2.0.0",
     "p-map": "^1.2.0",
     "p-retry": "^4.2.0",
-    "pump": "^3.0.0",
     "randexp": "^0.4.9",
     "ssh2": "^0.8.7",
     "url-join": "^4.0.0",
