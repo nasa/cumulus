@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `getSecretString()`
     - `getStateMachineArn()`
     - `headObject()`
+    - `isThrottlingException()`
     - `kinesis()`
     - `lambda()`
     - `listS3Objects()`
@@ -48,6 +49,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `pullStepFunctionEvent()`
     - `putJsonS3Object()`
     - `receiveSQSMessages()`
+    - `retryOnThrottlingException()`
     - `s3CopyObject()`
     - `s3GetObjectTagging()`
     - `s3Join()`

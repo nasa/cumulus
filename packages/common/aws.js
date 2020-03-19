@@ -295,38 +295,3 @@ exports.getExecutionArn = (stateMachineArn, executionName) => {
   }
   return null;
 };
-
-/** General utils */
-
-/**
- * Test to see if a given exception is an AWS Throttling Exception
- *
- * @param {Error} err
- * @returns {boolean}
- */
-exports.isThrottlingException = (err) => {
-  deprecate('@cumulus/common/aws/isThrottlingException', '1.17.0', '@cumulus/errors/isThrottlingException');
-  return errors.isThrottlingException(err);
-};
-
-const retryIfThrottlingException = (err) => {
-  if (errors.isThrottlingException(err)) throw err;
-  throw new pRetry.AbortError(err);
-};
-
-/**
- * Wrap a function so that it will retry when a ThrottlingException is encountered.
- *
- * @param {Function} fn - the function to retry.  This function must return a Promise.
- * @param {Object} options - retry options, documented here:
- *   - https://github.com/sindresorhus/p-retry#options
- *   - https://github.com/tim-kos/node-retry#retryoperationoptions
- *   - https://github.com/tim-kos/node-retry#retrytimeoutsoptions
- * @returns {Function} a function that will retry on a ThrottlingException
- */
-exports.retryOnThrottlingException = (fn, options) =>
-  (...args) =>
-    pRetry(
-      () => fn(...args).catch(retryIfThrottlingException),
-      { maxTimeout: 5000, ...options }
-    );
