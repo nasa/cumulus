@@ -132,6 +132,62 @@ exports.s3PutObject = exports.improveStackTrace(
 );
 
 /**
+<<<<<<< HEAD
+=======
+* Copy an object from one location on S3 to another
+*
+* @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
+* @returns {Promise} - promise of the object being copied
+**/
+exports.s3CopyObject = exports.improveStackTrace(
+  (params) => {
+    deprecate('@cumulus/common/aws/s3CopyObject', '1.17.0', '@cumulus/aws-client/S3/s3CopyObject');
+    return exports.s3().copyObject({
+      TaggingDirective: 'COPY',
+      ...params
+    }).promise();
+  }
+);
+
+/**
+ * Upload data to S3
+ *
+ * Note: This is equivalent to calling `aws.s3().upload(params).promise()`
+ *
+ * @param {Object} params - see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
+ * @returns {Promise} see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
+ */
+exports.promiseS3Upload = exports.improveStackTrace(
+  (params) => {
+    deprecate('@cumulus/common/aws/promiseS3Upload', '1.17.0', '@cumulus/aws-client/S3/promiseS3Upload');
+    return exports.s3().upload(params).promise();
+  }
+);
+
+/**
+ * Downloads the given s3Obj to the given filename in a streaming manner
+ *
+ * @param {Object} s3Obj - The parameters to send to S3 getObject call
+ * @param {string} filepath - The filepath of the file that is downloaded
+ * @returns {Promise<string>} - returns filename if successful
+ */
+exports.downloadS3File = (s3Obj, filepath) => {
+  deprecate('@cumulus/common/aws/downloadS3File', '1.17.0', '@cumulus/aws-client/S3/downloadS3File');
+  const s3 = exports.s3();
+  const fileWriteStream = fs.createWriteStream(filepath);
+
+  return new Promise((resolve, reject) => {
+    const objectReadStream = s3.getObject(s3Obj).createReadStream();
+
+    pump(objectReadStream, fileWriteStream, (err) => {
+      if (err) reject(err);
+      else resolve(filepath);
+    });
+  });
+};
+
+/**
+>>>>>>> remove deprecated helpers from common/aws
 * Get an object from S3
 *
 * @param {string} Bucket - name of bucket
@@ -174,6 +230,7 @@ exports.headObject = exports.improveStackTrace(
     return exports.s3().headObject({ Bucket, Key }).promise();
   }
 );
+<<<<<<< HEAD
 
 /**
  * Delete an object from S3
@@ -188,6 +245,8 @@ exports.deleteS3Object = exports.improveStackTrace(
     return exports.s3().deleteObject({ Bucket: bucket, Key: key }).promise();
   }
 );
+=======
+>>>>>>> remove deprecated helpers from common/aws
 
 /**
  * Delete files from S3
