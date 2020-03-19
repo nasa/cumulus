@@ -4,7 +4,6 @@ exports.aws = require('./aws');
 exports.BucketsConfig = require('./BucketsConfig');
 exports.bucketsConfigJsonObject = require('./bucketsConfigJsonObject');
 exports.cliUtils = require('./cli-utils');
-exports.CloudFormationGateway = require('./CloudFormationGateway');
 exports.CollectionConfigStore = require('./collection-config-store').CollectionConfigStore;
 exports.constructCollectionId = require('./collection-config-store').constructCollectionId;
 exports.http = require('./http');

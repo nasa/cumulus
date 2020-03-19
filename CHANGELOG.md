@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1799**
   - Removed deprecated method `@cumulus/api/models/Granule.createGranulesFromSns()`
   - Removed deprecated method `@cumulus/api/models/Granule.removeGranuleFromCmr()`
+  - Removed `@cumulus/common/CloudFormationGateway` class
   - Removed `@cumulus/common/key-pair-provider/DefaultProvider` class
   - Removed `@cumulus/common/key-pair-provider/KMSProvider` class
   - Removed `@cumulus/common/key-pair-provider/S3KeyPairProvider` class
