@@ -7,7 +7,7 @@ const S3 = require('@cumulus/aws-client/S3');
 const ingestPayload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const errors = require('@cumulus/common/errors');
+const errors = require('@cumulus/errors');
 
 const {
   generateMoveFileParams,
