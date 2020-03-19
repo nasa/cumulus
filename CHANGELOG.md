@@ -12,20 +12,37 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed deprecated method `@cumulus/api/models/Granule.createGranulesFromSns()`
   - Removed deprecated method `@cumulus/api/models/Granule.removeGranuleFromCmr()`
   - Removed from `@cumulus/common/aws`:
+    - `buildS3Uri()`
+    - `calculateS3ObjectChecksum()`
     - `createAndWaitForDynamoDbTable()`
     - `createQueue()`
     - `deleteSQSMessage()`
+    - `downloadS3File()`
+    - `downloadS3Files()`
     - `DynamoDbSearchQueue` class
+    - `fileExists()`
     - `fromSfnExecutionName()`
-    - `getExecutionArn()`
+    - `getFileBucketAndKey()`
+    - `getJsonS3Object()`
     - `getQueueUrl()`
+    - `getObjectSize()`
+    - `getS3ObjectReadStream()`
     - `getStateMachineArn()`
+    - `headObject()`
+    - `listS3Objects()`
     - `publishSnsMessage()`
     - `pullStepFunctionEvent()`
+    - `putJsonS3Object()`
     - `receiveSQSMessages()`
+    - `s3GetObjectTagging()`
+    - `S3ListObjectsV2Queue` class
+    - `s3PutObjectTagging()`
     - `sendSQSMessage()`
     - `sqsQueueExists()`
     - `toSfnExecutionName()`
+    - `uploadS3FileStream()`
+    - `uploadS3Files()`
+    - `validateS3ObjectChecksum()`
   - Removed `@cumulus/common/CloudFormationGateway` class
   - Removed `@cumulus/common/concurrency/Mutex` class
   - Removed `@cumulus/common/errors`
