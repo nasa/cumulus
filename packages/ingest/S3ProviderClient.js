@@ -6,6 +6,8 @@ const errors = require('@cumulus/common/errors');
 const isString = require('lodash.isstring');
 const { basename, dirname } = require('path');
 
+const sanitizeS3Key = (key) => key.replace(/^\/*/, '');
+
 class S3ProviderClient {
   constructor({ bucket }) {
     if (!isString(bucket)) throw new TypeError('bucket is required');
@@ -20,12 +22,13 @@ class S3ProviderClient {
    * @returns {Promise<string>} - the path that the file was saved to
    */
   async download(remotePath, localPath) {
-    const remoteUrl = `s3://${this.bucket}/${remotePath}`;
+    const sanitizedRemotePath = sanitizeS3Key(remotePath);
+    const remoteUrl = `s3://${this.bucket}/${sanitizedRemotePath}`;
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
 
     const s3Obj = {
       Bucket: this.bucket,
-      Key: remotePath
+      Key: sanitizedRemotePath
     };
 
     const retval = await S3.downloadS3File(s3Obj, localPath);
@@ -45,7 +48,7 @@ class S3ProviderClient {
     const objects = await S3.listS3ObjectsV2({
       Bucket: this.bucket,
       FetchOwner: true,
-      Prefix: path
+      Prefix: sanitizeS3Key(path)
     });
 
     return objects.map(({ Key, Size, LastModified }) => ({

@@ -275,7 +275,7 @@ Now that Cumulus has been updated updated with the new workflows and code, we wi
 
 ### Add Collection
 
-Navigate to the 'Collection' tab on the interface and add a collection. Note that you need to set the "provider_path" to the path on your bucket (e.g. "/data") that you've staged your mock/test data.
+Navigate to the 'Collection' tab on the interface and add a collection. Note that you need to set the "provider_path" to the path on your bucket (e.g. "data") that you've staged your mock/test data.
 
 ```json
 {
