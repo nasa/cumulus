@@ -19,7 +19,7 @@ test.beforeEach(async (t) => {
   t.context.username = randomString();
   t.context.authDownloadLogLine = 'fe3f16719bb293e218f6e5fea86e345b0a696560d784177395715b24041da90e '
     + 'protected-bucket [24/Feb/2020:15:05:51 +0000] '
-    + '1192.0.2.3 arn:aws:sts::XXXXXXXX:assumed-role/DownloadRoleLocal '
+    + '192.0.2.3 arn:aws:sts::XXXXXXXX:assumed-role/DownloadRoleLocal '
     + '30E6BC41DB11A8CE REST.GET.OBJECT '
     + 'files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met '
     + `"GET /files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met?A-userid=${t.context.username} `
@@ -28,7 +28,7 @@ test.beforeEach(async (t) => {
     + 'SigV4 ECDHE-RSA-AES128-GCM-SHA256 QueryString protected-bucket.s3.amazonaws.com TLSv1.2';
   t.context.noAuthDownloadLogLine = 'fe3f16719bb293e218f6e5fea86e345b0a696560d784177395715b24041da90e '
     + 'public-bucket [24/Feb/2020:21:45:37 +0000] '
-    + '1192.0.2.3 arn:aws:sts::XXXXXXXX:assumed-role/DownloadRoleLocal '
+    + '192.0.2.3 arn:aws:sts::XXXXXXXX:assumed-role/DownloadRoleLocal '
     + '30E6BC41DB11A8CE REST.GET.OBJECT '
     + 'files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf '
     + '"GET /files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf?A-userid=None '
@@ -85,7 +85,7 @@ test('DistributionEvent.username returns correct username', async (t) => {
 
 test('DistributionEvent.remoteIP returns correct IP for regular download', async (t) => {
   const distributionEvent = new DistributionEvent(t.context.authDownloadLogLine);
-  t.is(distributionEvent.remoteIP, '1192.0.2.3');
+  t.is(distributionEvent.remoteIP, '192.0.2.3');
 });
 
 test('DistributionEvent.remoteIP returns correct IP for download via proxy', async (t) => {
@@ -116,7 +116,7 @@ test.serial('DistributionEvent.toString() returns correct output for authenticat
       [
         '24-FEB-20 03:05:51 PM',
         t.context.username,
-        '1192.0.2.3',
+        '192.0.2.3',
         's3://protected-bucket/files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
         '21708',
         'S',
@@ -155,7 +155,7 @@ test.serial('DistributionEvent.toString() returns correct output for un-authenti
       [
         '24-FEB-20 09:45:37 PM',
         '-',
-        '1192.0.2.3',
+        '192.0.2.3',
         's3://public-bucket/files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
         '21708',
         'S',
