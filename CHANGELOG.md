@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed `@cumulus/ingest/aws/Events` class
   - Removed `@cumulus/ingest/aws/SQS` class
   - Removed `@cumulus/ingest/aws/StepFunction` class
+  - Removed `@cumulus/ingest/util.normalizeProviderPath()`
 
 ## [v1.20.0] 2020-03-12
 
