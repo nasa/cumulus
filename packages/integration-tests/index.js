@@ -425,23 +425,6 @@ async function addCollections(stackName, bucketName, dataDirectory, postfix,
 }
 
 /**
- * Return a list of collections
- *
- * @param {string} stackName - CloudFormation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @param {string} dataDirectory - the directory of collection json files
- * @returns {Promise.<Array>} list of collections
- */
-async function listCollections(stackName, bucketName, dataDirectory) {
-  deprecate(
-    '@cumulus/integration-tests/index.listCollections',
-    '1.18.0',
-    '@cumulus/integration-tests/index.readJsonFilesFromDir'
-  );
-  return setupSeedData(stackName, bucketName, dataDirectory);
-}
-
-/**
  * Delete collections from database
  *
  * @param {string} stackName - CloudFormation stack name
@@ -1033,7 +1016,6 @@ module.exports = {
   LambdaStep,
   addCollections,
   addCustomUrlPathToCollectionFiles,
-  listCollections,
   deleteCollections,
   cleanupCollections,
   addProviders,

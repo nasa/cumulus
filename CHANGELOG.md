@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed `@cumulus/ingest/aws/SQS` class
   - Removed `@cumulus/ingest/aws/StepFunction` class
   - Removed `@cumulus/ingest/util.normalizeProviderPath()`
+  - Removed `@cumulus/integration-tests/index.listCollections()`
   - Removed `@cumulus/integration-tests/index.rulesList()`
   - Removed `@cumulus/integration-tests/api/api.addCollectionApi()`
 
