@@ -11,6 +11,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1799**
   - Removed deprecated method `@cumulus/api/models/Granule.createGranulesFromSns()`
   - Removed deprecated method `@cumulus/api/models/Granule.removeGranuleFromCmr()`
+  - Removed from `@cumulus/common/aws`:
+    - `createAndWaitForDynamoDbTable()`
+    - `createQueue()`
+    - `deleteSQSMessage()`
+    - `DynamoDbSearchQueue` class
+    - `fromSfnExecutionName()`
+    - `getExecutionArn()`
+    - `getQueueUrl()`
+    - `getStateMachineArn()`
+    - `publishSnsMessage()`
+    - `pullStepFunctionEvent()`
+    - `receiveSQSMessages()`
+    - `sendSQSMessage()`
+    - `sqsQueueExists()`
+    - `toSfnExecutionName()`
   - Removed `@cumulus/common/CloudFormationGateway` class
   - Removed `@cumulus/common/concurrency/Mutex` class
   - Removed `@cumulus/common/errors`
