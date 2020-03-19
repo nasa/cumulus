@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed `@cumulus/cmrjs/utils.getHost()`
   - Removed `@cumulus/cmrjs/utils.getIp()`
   - Removed `@cumulus/cmrjs/utils.hostId()`
+  - Removed `@cumulus/cmrjs/utils/ummVersion()`
   - Removed `@cumulus/cmrjs/utils.updateToken()`
   - Removed `@cumulus/cmrjs/utils.validateUMMG()`
   - Removed `@cumulus/ingest/aws.getEndpoint()`
