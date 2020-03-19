@@ -132,8 +132,6 @@ exports.s3PutObject = exports.improveStackTrace(
 );
 
 /**
-<<<<<<< HEAD
-=======
 * Copy an object from one location on S3 to another
 *
 * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
@@ -187,7 +185,6 @@ exports.downloadS3File = (s3Obj, filepath) => {
 };
 
 /**
->>>>>>> remove deprecated helpers from common/aws
 * Get an object from S3
 *
 * @param {string} Bucket - name of bucket
@@ -230,7 +227,7 @@ exports.headObject = exports.improveStackTrace(
     return exports.s3().headObject({ Bucket, Key }).promise();
   }
 );
-<<<<<<< HEAD
+
 
 /**
  * Delete an object from S3
@@ -245,8 +242,6 @@ exports.deleteS3Object = exports.improveStackTrace(
     return exports.s3().deleteObject({ Bucket: bucket, Key: key }).promise();
   }
 );
-=======
->>>>>>> remove deprecated helpers from common/aws
 
 /**
  * Delete files from S3
