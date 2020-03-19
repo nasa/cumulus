@@ -64,23 +64,11 @@ test('queueMessageForRule respects eventObject with nested collection', async (t
   t.deepEqual(payload.collection, event.collection);
 });
 
-test('queueMessageForRule respects eventObject with provider', async (t) => {
-  const rule = fakeRuleFactoryV2({ workflow });
-  const event = {
-    provider: {
-      name: randomString()
-    }
-  };
-  const payload = await rulesHelpers.queueMessageForRule(rule, event);
-  t.deepEqual(payload.provider, event.provider);
-});
-
-test('queueMessageForRule falls back to rule collection and provider', async (t) => {
+test('queueMessageForRule falls back to rule collection', async (t) => {
   const rule = fakeRuleFactoryV2({ workflow });
   const event = {
     payload: 'whatever'
   };
   const payload = await rulesHelpers.queueMessageForRule(rule, event);
   t.deepEqual(payload.collection, rule.collection);
-  t.deepEqual(payload.provider, rule.provider);
 });
