@@ -70,7 +70,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed `@cumulus/common/concurrency/Mutex` class
   - Removed `@cumulus/common/errors`
   - Removed `@cumulus/common/sftp`
-  - Removed `@cumulus/common/StepFunctions`
   - Removed `@cumulus/common/string.unicodeEscape`
   - Removed `@cumulus/cmrjs/cmr-utils.getGranuleId()`
   - Removed `@cumulus/cmrjs/cmr-utils.getCmrFiles()`
