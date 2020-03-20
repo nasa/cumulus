@@ -6,7 +6,7 @@ const errors = require('@cumulus/common/errors');
 const isString = require('lodash.isstring');
 const { basename, dirname } = require('path');
 
-const sanitizeS3Key = (key) => key.replace(/^\/*/, '');
+const sanitizeS3Key = (key) => key.replace(/^\/+/, '');
 
 class S3ProviderClient {
   constructor({ bucket }) {
