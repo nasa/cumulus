@@ -24,7 +24,7 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { getWorkflowTemplate, getWorkflowArn } = require('@cumulus/common/workflows');
 const { readJsonFile } = require('@cumulus/common/FileUtils');
 const { globalReplace } = require('@cumulus/common/string');
-const { deprecate, sleep } = require('@cumulus/common/util');
+const { sleep } = require('@cumulus/common/util');
 const ProvidersModel = require('@cumulus/api/models/providers');
 const RulesModel = require('@cumulus/api/models/rules');
 
