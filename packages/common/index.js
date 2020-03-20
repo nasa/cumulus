@@ -7,6 +7,7 @@ exports.cliUtils = require('./cli-utils');
 exports.CollectionConfigStore = require('./collection-config-store').CollectionConfigStore;
 exports.constructCollectionId = require('./collection-config-store').constructCollectionId;
 exports.http = require('./http');
+exports.keyPairProvider = require('./key-pair-provider');
 exports.launchpad = require('./launchpad');
 exports.LaunchpadToken = require('./LaunchpadToken');
 exports.log = require('./log');
