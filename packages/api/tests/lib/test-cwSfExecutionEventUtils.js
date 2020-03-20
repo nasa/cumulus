@@ -3,12 +3,11 @@
 const test = require('ava');
 const rewire = require('rewire');
 const cwSfExecutionEventUtils = rewire('../../lib/cwSfExecutionEventUtils');
-const {
-  getCumulusMessageFromExecutionEvent,
-  getFailedExecutionMessage
-} = cwSfExecutionEventUtils;
 
-test('getFailedExecutionMessage() returns the Cumulus message from the output of the last failed step', async (t) => {
+const getFailedExecutionMessage = cwSfExecutionEventUtils.__get__('getFailedExecutionMessage');
+const getCumulusMessageFromExecutionEvent = cwSfExecutionEventUtils.__get__('getCumulusMessageFromExecutionEvent');
+
+test.serial('getFailedExecutionMessage() returns the Cumulus message from the output of the last failed step', async (t) => {
   const inputMessage = {
     cumulus_meta: {
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
@@ -49,7 +48,7 @@ test('getFailedExecutionMessage() returns the Cumulus message from the output of
   t.deepEqual(result, failedTaskOutput);
 });
 
-test('getFailedExecutionMessage() returns the input message if there is an error fetching the output of the last failed step', async (t) => {
+test.serial('getFailedExecutionMessage() returns the input message if there is an error fetching the output of the last failed step', async (t) => {
   // This invalid message will cause getFailedExecutionMessage to fail because
   // it does not contain cumulus_meta.state_machine or cumulus_meta.execution_name
   const inputMessage = { a: 1 };
@@ -59,7 +58,7 @@ test('getFailedExecutionMessage() returns the input message if there is an error
   t.deepEqual(actualResult, inputMessage);
 });
 
-test('getFailedExecutionMessage() returns the input message when no ActivityFailed or LambdaFunctionFailed events are found in the execution history', async (t) => {
+test.serial('getFailedExecutionMessage() returns the input message when no ActivityFailed or LambdaFunctionFailed events are found in the execution history', async (t) => {
   const inputMessage = {
     cumulus_meta: {
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
@@ -83,7 +82,7 @@ test('getFailedExecutionMessage() returns the input message when no ActivityFail
   t.deepEqual(actualResult, inputMessage);
 });
 
-test('getFailedExecutionMessage() returns the input message with the details from the last failed lambda step event in the exception field if the failed step exited event cannot be found', async (t) => {
+test.serial('getFailedExecutionMessage() returns the input message with the details from the last failed lambda step event in the exception field if the failed step exited event cannot be found', async (t) => {
   const inputMessage = {
     cumulus_meta: {
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
@@ -123,7 +122,7 @@ test('getFailedExecutionMessage() returns the input message with the details fro
   t.deepEqual(actualResult, expectedResult);
 });
 
-test('getFailedExecutionMessage() returns the input message with the details from the last failed activity step event in the exception field if the failed step exited event cannot be found', async (t) => {
+test.serial('getFailedExecutionMessage() returns the input message with the details from the last failed activity step event in the exception field if the failed step exited event cannot be found', async (t) => {
   const inputMessage = {
     cumulus_meta: {
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
@@ -164,6 +163,7 @@ test('getFailedExecutionMessage() returns the input message with the details fro
 });
 
 test('getCumulusMessageFromExecutionEvent() returns the event input for a RUNNING event', async (t) => {
+  debugger;
   const event = {
     detail: {
       status: 'RUNNING',
@@ -221,7 +221,7 @@ test('getCumulusMessageFromExecutionEvent() returns the event output for a SUCCE
   t.deepEqual(message, expectedMessage);
 });
 
-test('getCumulusMessageFromExecutionEvent() returns the failed execution message for a failed event', async (t) => {
+test.serial('getCumulusMessageFromExecutionEvent() returns the failed execution message for a failed event', async (t) => {
   const input = {
     cumulus_meta: {
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
@@ -265,7 +265,8 @@ test('getCumulusMessageFromExecutionEvent() returns the failed execution message
             }
           ]
         };
-      }
+      },
+      pullStepFunctionEvent: async () => input
     }
   })(() => getCumulusMessageFromExecutionEvent(event));
 
