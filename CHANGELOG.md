@@ -69,7 +69,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed `@cumulus/common/CloudFormationGateway` class
   - Removed `@cumulus/common/concurrency/Mutex` class
   - Removed `@cumulus/common/errors`
-  - Removed `@cumulus/common/sfnStep`
   - Removed `@cumulus/common/sftp`
   - Removed `@cumulus/common/StepFunctions`
   - Removed `@cumulus/common/string.unicodeEscape`
