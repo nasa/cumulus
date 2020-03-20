@@ -40,18 +40,7 @@ test.after(async () => {
   delete process.env.stackName;
 });
 
-test('queueMessageForRule respects eventObject with collection at top level', async (t) => {
-  const rule = fakeRuleFactoryV2({ workflow });
-  const event = {
-    name: randomString(),
-    version: randomString(),
-    dataType: randomString()
-  };
-  const payload = await rulesHelpers.queueMessageForRule(rule, event);
-  t.deepEqual(payload.collection, event);
-});
-
-test('queueMessageForRule respects eventObject with nested collection', async (t) => {
+test('queueMessageForRule respects eventObject with collection object', async (t) => {
   const rule = fakeRuleFactoryV2({ workflow });
   const event = {
     collection: {
@@ -64,6 +53,21 @@ test('queueMessageForRule respects eventObject with nested collection', async (t
   t.deepEqual(payload.collection, event.collection);
 });
 
+test('queueMessageForRule respects eventObject with CNM-style collection', async (t) => {
+  const rule = fakeRuleFactoryV2({ workflow });
+  const event = {
+    collection: 'test',
+    product: {
+      dataVersion: 'v1'
+    }
+  };
+  const payload = await rulesHelpers.queueMessageForRule(rule, event);
+  t.deepEqual(payload.collection, {
+    name: 'test',
+    version: 'v1'
+  });
+});
+
 test('queueMessageForRule falls back to rule collection', async (t) => {
   const rule = fakeRuleFactoryV2({ workflow });
   const event = {
@@ -71,4 +75,34 @@ test('queueMessageForRule falls back to rule collection', async (t) => {
   };
   const payload = await rulesHelpers.queueMessageForRule(rule, event);
   t.deepEqual(payload.collection, rule.collection);
+});
+
+test('rulesHelpers.lookupCollectionInEvent returns collection for standard case', (t) => {
+  const event = {
+    collection: {
+      name: 'test',
+      version: 'v1'
+    }
+  };
+  t.deepEqual(rulesHelpers.lookupCollectionInEvent(event), {
+    name: 'test',
+    version: 'v1'
+  });
+});
+
+test('rulesHelpers.lookupCollectionInEvent returns collection for CNM case', (t) => {
+  const event = {
+    collection: 'test',
+    product: {
+      dataVersion: 'v1'
+    }
+  };
+  t.deepEqual(rulesHelpers.lookupCollectionInEvent(event), {
+    name: 'test',
+    version: 'v1'
+  });
+});
+
+test('rulesHelpers.lookupCollectionInEvent returns empty object for empty case', (t) => {
+  t.deepEqual(rulesHelpers.lookupCollectionInEvent({}), {});
 });

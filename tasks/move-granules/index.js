@@ -40,7 +40,7 @@ const log = require('@cumulus/common/log');
  * @param {Array<Object>} match - list of matched collection.file.
  * @param {BucketsConfig} bucketsConfig - instance describing stack configuration.
  * @param {Object} fileName - the file name tested.
- * @param {Array<Object>} fileSpecs - fileSpecs object.
+ * @param {Array<Object>} fileSpecs - collection file specifications object.
  * @throws {InvalidArgument} - If match is invalid, throws an error.
  */
 function validateMatch(match, bucketsConfig, fileName, fileSpecs) {

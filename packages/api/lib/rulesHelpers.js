@@ -1,20 +1,18 @@
 'use strict';
 
-const isObject = require('lodash.isobject');
+const get = require('lodash.get');
 
+const { removeNilProperties } = require('@cumulus/common/util');
 const { schedule } = require('../lambdas/sf-scheduler');
 const Rule = require('../models/rules');
 
 function lookupCollectionInEvent(eventObject) {
-  const { name, version, dataType } = isObject(eventObject.collection)
-    ? eventObject.collection
-    : eventObject;
-  let collectionObject;
-  if (name && version) {
-    collectionObject = { name, version };
-    if (dataType) collectionObject.dataType = dataType;
-  }
-  return collectionObject;
+  // standard case (collection object), or CNM case
+  return removeNilProperties({
+    name: get(eventObject, 'collection.name', get(eventObject, 'collection')),
+    version: get(eventObject, 'collection.version', get(eventObject, 'product.dataVersion')),
+    dataType: get(eventObject, 'collection.dataType')
+  });
 }
 
 /**
@@ -27,10 +25,14 @@ function lookupCollectionInEvent(eventObject) {
  * @returns {Promise} promise resolved when the message is queued
  */
 async function queueMessageForRule(rule, eventObject, eventSource) {
+  const collectionInNotification = lookupCollectionInEvent(eventObject);
+  const collection = (collectionInNotification.name && collectionInNotification.version) ?
+    collectionInNotification :
+    rule.collection;
   const item = {
     workflow: rule.workflow,
     provider: rule.provider,
-    collection: lookupCollectionInEvent(eventObject) || rule.collection,
+    collection,
     meta: eventSource ? { ...rule.meta, eventSource } : rule.meta,
     payload: eventObject
   };
@@ -41,5 +43,6 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
 }
 
 module.exports = {
+  lookupCollectionInEvent,
   queueMessageForRule
 };

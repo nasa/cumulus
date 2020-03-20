@@ -7,7 +7,7 @@ const { sns } = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
 const Rule = require('../models/rules');
 const kinesisSchema = require('./kinesis-consumer-event-schema.json');
-const { queueMessageForRule } = require('../lib/rulesHelpers');
+const { lookupCollectionInEvent, queueMessageForRule } = require('../lib/rulesHelpers');
 
 /**
  * `getKinesisRules` scans and returns DynamoDB rules table for enabled,
@@ -214,8 +214,7 @@ function processRecord(record, fromSNS) {
     eventObject = parsed;
     originalMessageSource = 'sns';
     ruleParam = {
-      collectionName: get(eventObject, 'collection.name', get(eventObject, 'collection')),
-      collectionVersion: get(eventObject, 'collection.version', get(eventObject, 'product.dataVersion')),
+      ...lookupCollectionInEvent(eventObject),
       sourceArn: get(record, 'Sns.TopicArn')
     };
   } else {
@@ -232,8 +231,7 @@ function processRecord(record, fromSNS) {
       eventObject = JSON.parse(dataString);
       // standard case (collection object), or CNM case
       ruleParam = {
-        collectionName: get(eventObject, 'collection.name', get(eventObject, 'collection')),
-        collectionVersion: get(eventObject, 'collection.version', get(eventObject, 'product.dataVersion')),
+        ...lookupCollectionInEvent(eventObject),
         sourceArn: get(parsed, 'eventSourceARN')
       };
     } catch (err) {
@@ -248,7 +246,7 @@ function processRecord(record, fromSNS) {
     .then(() => getRules(ruleParam, originalMessageSource))
     .then((rules) => (
       Promise.all(rules.map((rule) => {
-        if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', record.Sns.TopicArn);
+        if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParam.sourceArn);
         return queueMessageForRule(rule, eventObject);
       }))))
     .catch((err) => {
