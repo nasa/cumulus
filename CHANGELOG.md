@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **CUMULUS-1804**
+  - S3 providers were failing in cases where the `provider_path` contained a
+    leading slash. S3 discovery and ingest code has been updated to remove
+    leading slashes from provider paths.
+
 ### Removed
 
 - **CUMULUS-1799**
