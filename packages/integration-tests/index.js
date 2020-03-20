@@ -365,7 +365,7 @@ const buildCollection = (params = {}) => {
  * Add a collection to Cumulus
  *
  * @param {string} stackName - the prefix of the Cumulus stack
- * @param {Object} collectionName - a Cumulus collection
+ * @param {Object} collection - a Cumulus collection
  * @returns {Promise<undefined>}
  */
 const addCollection = async (stackName, collection) => {

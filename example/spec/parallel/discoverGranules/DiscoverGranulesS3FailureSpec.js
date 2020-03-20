@@ -52,7 +52,7 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
       ...loadedCollection,
       provider_path: `cumulus-test-data/${testId}`
     };
-    await createCollection(stackName, collection);
+    await createCollection({ prefix: stackName, collection });
 
     // Execute the DiscoverGranules workflow
     workflowExecution = await buildAndExecuteWorkflow(
@@ -68,7 +68,11 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
 
   afterAll(() =>
     Promise.all([
-      deleteCollection(stackName, collection.name, collection.version),
+      deleteCollection({
+        prefix: stackName,
+        collectionName: collection.name,
+        collectionVersion: collection.version
+      }),
       deleteProvider(stackName, provider.id)
     ]));
 

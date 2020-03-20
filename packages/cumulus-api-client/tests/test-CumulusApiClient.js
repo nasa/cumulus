@@ -8,8 +8,7 @@ test.before(async (t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.testPayload = { payload: 'payloadValue' };
   // eslint-disable-next-line quotes
-  t.context.testLambdaReturn = { statusCode: 200, body: `{\\\"Key\\\": false}` };
-
+  t.context.testLambdaReturn = { statusCode: 200, body: `{"Key": false}` };
 });
 
 test.serial('invokeApi invokes the lambda with the expected Payload and FunctionName', async (t) => {

@@ -6,7 +6,7 @@ const isBoolean = require('lodash.isboolean');
 const pick = require('lodash.pick');
 const Logger = require('@cumulus/logger');
 const map = require('lodash.map');
-const { cumulusApiClientFactory } = require('@cumulus/api-client');
+const { granules } = require('@cumulus/api-client');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
 
@@ -173,28 +173,29 @@ const buildGranule = curry(
  *
  * @param {string} granuleId - granuleId to evaluate
  * @param {string} duplicateHandling - collection duplicate handling configuration value
- * @param {string} apiClient - configured instance of CumulusApiClient
  * @returns {*}     - returns granuleId string if no duplicate found, false if
- *                   a duplicate is found.  Throws an error on duplicate if
- *                   dupeConfig.duplicateHandling is set to 'error'
- * @throws {Error} - Will throw an error if no granule is returned from the api.
- *                   Also will throw an error from the .get method if the error
- *                   is not {statusCode: 404, message: Not Found}
+ *                    a duplicate is found.
+ * @throws {Error}  - Throws an error on duplicate if
+ *                    dupeConfig.duplicateHandling is set to 'error'
  *
  */
-const checkDuplicate = async (granuleId, duplicateHandling, apiClient) => {
-  try {
-    await apiClient.get(`granules/${granuleId}`);
-  } catch (error) {
-    if (error.statusCode === 404 && error.statusMessage === 'Not Found') {
-      return granuleId;
+const checkDuplicate = async (granuleId, duplicateHandling) => {
+  const response = await granules.getGranule({
+    prefix: process.env.STACKNAME,
+    granuleId
+  });
+  const responseBody = JSON.parse(response.body);
+  if (response.statusCode === 404 && responseBody.error === 'Not Found') {
+    return granuleId;
+  }
+
+  if (response.statusCode === 200) {
+    if (duplicateHandling === 'error') {
+      throw new Error(`Duplicate granule found for ${granuleId} with duplicate configuration set to error`);
     }
-    throw error;
+    return false;
   }
-  if (duplicateHandling === 'error') {
-    throw new Error(`Duplicate granule found for ${granuleId} with duplicate configuration set to error`);
-  }
-  return false;
+  throw new Error(`Unexpected return from Private API lambda ${JSON.stringify(response)}`);
 };
 
 /**
@@ -211,10 +212,8 @@ const checkDuplicate = async (granuleId, duplicateHandling, apiClient) => {
  * @returns {Array.string} returns granuleIds parameter with applicable duplciates removed
  */
 const filterDuplicates = async (granuleIds, duplicateHandling) => {
-  const tokenCacheKey = 'DuplicateGranulesTokenCache';
-  const apiClient = await cumulusApiClientFactory(tokenCacheKey, process.env.oauth_provider);
   const keysPromises = granuleIds.map((key) =>
-    checkDuplicate(key, duplicateHandling, apiClient));
+    checkDuplicate(key, duplicateHandling));
 
   const filteredKeys = await Promise.all(keysPromises);
   return filteredKeys.filter(Boolean);
@@ -270,10 +269,10 @@ const discoverGranules = async ({ config }) => {
   const duplicateHandling = config.duplicateGranuleHandling || 'replace';
   filesByGranuleId = await handleDuplicates(filesByGranuleId, duplicateHandling);
 
-  const granules = map(filesByGranuleId, buildGranule(config));
+  const discoveredGranules = map(filesByGranuleId, buildGranule(config));
 
-  logger().info(`Discovered ${granules.length} granules.`);
-  return { granules };
+  logger().info(`Discovered ${discoveredGranules.length} granules.`);
+  return { granules: discoveredGranules };
 };
 
 /**
