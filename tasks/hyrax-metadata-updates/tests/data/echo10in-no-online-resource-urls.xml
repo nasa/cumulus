@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Granule>
+    <GranuleUR>GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4</GranuleUR>
+    <InsertTime>2018-02-09T11:01:38Z</InsertTime>
+    <LastUpdate>2018-02-09T11:01:38Z</LastUpdate>
+    <Collection>
+        <ShortName>GLDAS_CLSM025_D</ShortName>
+        <VersionId>2.0</VersionId>
+    </Collection>
+    <DataGranule>
+        <SizeMBDataGranule>24.5028533935547</SizeMBDataGranule>
+        <ProducerGranuleId>GLDAS_CLSM025_D.A20141230.020.nc4</ProducerGranuleId>
+        <DayNightFlag>UNSPECIFIED</DayNightFlag>
+        <ProductionDateTime>2018-02-09T11:01:38Z</ProductionDateTime>
+    </DataGranule>
+    <Temporal>
+        <RangeDateTime>
+            <BeginningDateTime>2014-12-30T00:00:00Z</BeginningDateTime>
+            <EndingDateTime>2014-12-30T23:59:59Z</EndingDateTime>
+        </RangeDateTime>
+    </Temporal>
+    <Spatial>
+        <HorizontalSpatialDomain>
+            <Geometry>
+                <BoundingRectangle>
+                    <WestBoundingCoordinate>-180.0</WestBoundingCoordinate>
+                    <NorthBoundingCoordinate>90.0</NorthBoundingCoordinate>
+                    <EastBoundingCoordinate>180.0</EastBoundingCoordinate>
+                    <SouthBoundingCoordinate>-60.0</SouthBoundingCoordinate>
+                </BoundingRectangle>
+            </Geometry>
+        </HorizontalSpatialDomain>
+    </Spatial>
+    <OnlineAccessURLs>
+        <OnlineAccessURL>
+            <URL>https://hydro1.gesdisc.eosdis.nasa.gov/data/GLDAS/GLDAS_CLSM025_D.2.0/2014/12/GLDAS_CLSM025_D.A20141230.020.nc4</URL>
+        </OnlineAccessURL>
+    </OnlineAccessURLs>
+    <Orderable>false</Orderable>
+</Granule>

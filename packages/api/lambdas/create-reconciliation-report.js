@@ -114,7 +114,10 @@ async function reconciliationReportForCollections() {
 
   // get all collections from CMR and sort them, since CMR query doesn't support
   // 'Version' as sort_key
-  const cmr = new CMR(process.env.cmr_provider, process.env.cmr_client_id);
+  const cmr = new CMR({
+    provider: process.env.cmr_provider,
+    clientId: process.env.cmr_client_id
+  });
   const cmrCollectionItems = await cmr.searchCollections({}, 'umm_json');
   const cmrCollectionIds = cmrCollectionItems.map((item) =>
     constructCollectionId(item.umm.ShortName, item.umm.Version)).sort();
@@ -267,10 +270,13 @@ async function reconciliationReportForGranules(collectionId, bucketsConfig) {
   //   Report granules only in CMR
   //   Report granules only in CUMULUS
   const { name, version } = deconstructCollectionId(collectionId);
-  const cmrGranulesIterator = new CMRSearchConceptQueue(
-    process.env.cmr_provider, process.env.cmr_client_id, 'granules',
-    { short_name: name, version: version, sort_key: ['granule_ur'] }, 'umm_json'
-  );
+  const cmrGranulesIterator = new CMRSearchConceptQueue({
+    provider: process.env.cmr_provider,
+    clientId: process.env.cmr_client_id,
+    type: 'granules',
+    searchParams: { short_name: name, version: version, sort_key: ['granule_ur'] },
+    format: 'umm_json'
+  });
 
   const dbGranulesIterator = new Granule().getGranulesForCollection(collectionId, 'completed');
 

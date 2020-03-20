@@ -5,7 +5,7 @@ const errors = require('@cumulus/errors');
 const get = require('lodash.get');
 const moment = require('moment');
 const S3 = require('@cumulus/aws-client/S3');
-const { log } = require('@cumulus/common');
+const log = require('@cumulus/common/log');
 
 /**
 * Copy granule file from one s3 bucket & keypath to another

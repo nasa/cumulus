@@ -88,6 +88,10 @@ output "sync_granule_task" {
   value = module.ingest.sync_granule_task
 }
 
+output "hyrax_metadata_updates_task" {
+  value = module.ingest.hyrax_metadata_updates_task
+}
+
 # Workflow config outputs
 
 output "workflow_config" {

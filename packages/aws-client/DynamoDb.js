@@ -21,6 +21,10 @@ const { improveStackTrace } = require('./utils');
  * for descriptions of `params` and the return data.
  *
  * @param {Object} params
+ * @param {string} params.tableName - Table name to read
+ * @param {any} params.item - Key identifying object to get
+ * @param {object} params.client - Instance of a DynamoDb DocumentClient
+ * @param {Object} params.getParams - Additional parameters for DocumentClient.get()
  * @returns {Promise.<Object>}
  * @throws {RecordDoesNotExist} if a record cannot be found
  *
@@ -30,9 +34,11 @@ const get = improveStackTrace(
   async ({
     tableName,
     item,
-    client
+    client,
+    getParams = {}
   }) => {
     const params = {
+      ...getParams,
       TableName: tableName,
       Key: item
     };

@@ -11,7 +11,8 @@ const range = require('lodash.range');
 const sample = require('lodash.sample');
 const sortBy = require('lodash.sortby');
 const sinon = require('sinon');
-const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmrjs');
+const CMR = require('@cumulus/cmr-client/CMR');
+const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue');
 const {
   buildS3Uri,
   recursivelyDeleteS3Bucket

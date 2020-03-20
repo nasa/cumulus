@@ -10,7 +10,6 @@ const { fileExists, getS3Object, parseS3Uri } = require('@cumulus/aws-client/S3'
 const { lambda } = require('@cumulus/aws-client/services');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { download } = require('@cumulus/common/http');
-const { sleep } = require('@cumulus/common/util');
 const {
   addCollections,
   addProviders,
@@ -37,7 +36,10 @@ const {
   waitForModelStatus
 } = require('../../helpers/apiUtils');
 
-const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
+const {
+  setupTestGranuleForIngest,
+  waitForGranuleRecordsInList
+} = require('../../helpers/granuleUtils');
 
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MOD14A1_006';
@@ -234,8 +236,8 @@ describe('The EMS report', () => {
       const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
       AWS.config.update({ region: region });
 
-      // add a few seconds to allow records searchable in elasticsearch
-      await sleep(5 * 1000);
+      // wait until records searchable in elasticsearch
+      await waitForGranuleRecordsInList(config.stackName, ingestedGranuleIds);
       const endTime = moment.utc().add(1, 'days').startOf('day').format();
       const startTime = moment.utc().startOf('day').format();
 
@@ -368,7 +370,7 @@ describe('The EMS report', () => {
       it('generates an EMS distribution report', async () => {
         // verify report is generated, but can't verify the content since the s3 server access log
         // won't have recent access records until hours or minutes later
-        expect(lambdaOutput.length).toEqual(1);
+        expect(lambdaOutput.length).toEqual(1); // TODO: why would this fail intermittently?
         const jobs = lambdaOutput.map(async (report) => {
           const parsed = parseS3Uri(report.file);
           expect(await fileExists(parsed.Bucket, parsed.Key)).not.toBe(false);

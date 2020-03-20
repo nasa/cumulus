@@ -84,7 +84,9 @@ class DistributionEvent {
    * @returns {string} an IP address
    */
   get remoteIP() {
-    return this.rawLine.split(']')[1].trim().split(' ')[0];
+    return this.rawLine.includes('A-sourceip')
+      ? this.getRequestQueryParamValue('A-sourceip')
+      : this.rawLine.split(']')[1].trim().split(' ')[0];
   }
 
   /**
@@ -123,10 +125,34 @@ class DistributionEvent {
    * @returns {string} a username
    */
   get username() {
-    const requestUri = this.rawLine.split('"')[1].split(' ')[1];
-    const parsedUri = (new URL(requestUri, 'http://localhost'));
-    const username = parsedUri.searchParams.get('A-userid');
+    const username = this.getRequestQueryParamValue('A-userid');
     return username && username !== 'None' ? username : '-';
+  }
+
+  /**
+   * Parse and return request URL in distribution event.
+   *
+   * Sets `this.requestUrlObject` to a [URL](https://nodejs.org/api/url.html) object.
+   *
+   * @returns {URL} - parsed request URL
+   */
+  getRequestUrlObject() {
+    if (!this.requestUrlObject) {
+      const requestUri = this.rawLine.split('"')[1].split(' ')[1];
+      this.requestUrlObject = (new URL(requestUri, 'http://localhost'));
+    }
+    return this.requestUrlObject;
+  }
+
+  /**
+   * Get a query parameter value from the request URI in the distribution event.
+   *
+   * @param {string} queryParam - name of query parameter value to get
+   * @returns {string} - value of query parameter
+   */
+  getRequestQueryParamValue(queryParam) {
+    const requestUrl = this.getRequestUrlObject();
+    return requestUrl.searchParams.get(queryParam);
   }
 
   /**

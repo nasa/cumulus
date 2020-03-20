@@ -1,0 +1,38 @@
+{
+  "title": "HyraxMetadataUpdatesInput",
+  "description": "Describes the input expected by the hyrax-metadata-updates task",
+  "type": "object",
+  "required": [
+    "granules"
+  ],
+  "properties": {
+    "granules": {
+      "type": "array",
+      "description": "Array of all granules",
+      "items": {
+        "type": "object",
+        "required": ["granuleId", "files"],
+        "properties": {
+          "granuleId": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["filename"],
+              "properties": {
+                "filename": {
+                  "type": "string"
+                },
+                "bucket": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

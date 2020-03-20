@@ -5,6 +5,8 @@ module "archive" {
 
   api_url = var.archive_api_url
 
+  deploy_to_ngap = var.deploy_to_ngap
+
   permissions_boundary_arn = var.permissions_boundary_arn
 
   lambda_processing_role_arn = aws_iam_role.lambda_processing.arn

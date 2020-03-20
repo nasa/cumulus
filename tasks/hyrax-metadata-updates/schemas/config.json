@@ -1,0 +1,34 @@
+{
+  "title": "HyraxMetadataUpdatesConfig",
+  "description": "Describes the config used by the hyrax-metadata-updates task",
+  "type": "object",
+  "required": [
+    "cmr"
+  ],
+  "properties": {
+    "cmr": {
+      "type": "object",
+      "description": "Credentials needed to perform CMR searches and metadata validation",
+      "required": [
+        "provider",
+        "clientId",
+        "username",
+        "passwordSecretName"
+      ],
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "clientId": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "passwordSecretName": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

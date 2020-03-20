@@ -313,9 +313,33 @@ exports.putJsonS3Object = (bucket, key, data) =>
     Body: JSON.stringify(data)
   });
 
+/**
+ * Get a readable stream for an S3 object.
+ *
+ * @param {string} bucket - the S3 object's bucket
+ * @param {string} key - the S3 object's key
+ * @returns {ReadableStream}
+ * @throws {Error} if S3 object cannot be found
+ */
 exports.getS3ObjectReadStream = (bucket, key) => awsServices.s3().getObject(
   { Bucket: bucket, Key: key }
 ).createReadStream();
+
+/**
+ * Get a readable stream for an S3 object.
+ *
+ * Use `getS3Object()` before fetching stream to deal
+ * with eventual consistency issues by checking for object
+ * with retries.
+ *
+ * @param {string} bucket - the S3 object's bucket
+ * @param {string} key - the S3 object's key
+ * @returns {ReadableStream}
+ * @throws {Error} if S3 object cannot be found
+ */
+exports.getS3ObjectReadStreamAsync = (bucket, key) =>
+  exports.getS3Object(bucket, key, { retries: 3 })
+    .then(() => exports.getS3ObjectReadStream(bucket, key));
 
 /**
 * Check if a file exists in an S3 object
@@ -537,7 +561,7 @@ exports.calculateS3ObjectChecksum = async ({
   key,
   options
 }) => {
-  const fileStream = exports.getS3ObjectReadStream(bucket, key);
+  const fileStream = await exports.getS3ObjectReadStreamAsync(bucket, key);
   return generateChecksumFromStream(algorithm, fileStream, options);
 };
 
@@ -561,7 +585,7 @@ exports.validateS3ObjectChecksum = async ({
   expectedSum,
   options
 }) => {
-  const fileStream = exports.getS3ObjectReadStream(bucket, key);
+  const fileStream = await exports.getS3ObjectReadStreamAsync(bucket, key);
   if (await validateChecksumFromStream(algorithm, fileStream, expectedSum, options)) {
     return true;
   }
