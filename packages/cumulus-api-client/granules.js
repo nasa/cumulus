@@ -1,9 +1,11 @@
 'use strict';
 
 const pRetry = require('p-retry');
-const { invokeApi } = require('./cumulusApiClient');
 const Logger = require('@cumulus/logger');
+const { invokeApi } = require('./cumulusApiClient');
+
 const logger = new Logger({ sender: '@cumulus/api-client' });
+
 
 /**
  * GET /granules/{granuleName}

@@ -40,8 +40,7 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
       postfix: testId,
       s3Host: randomString()
     });
-    await createProvider(stackName, provider);
-
+    await createProvider({ prefix: stackName, provider });
     // Create the collection
     const loadedCollection = await loadCollection({
       filename: './data/collections/s3_MOD09GQ_006/s3_MOD09GQ_006.json',
@@ -73,7 +72,7 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
         collectionName: collection.name,
         collectionVersion: collection.version
       }),
-      deleteProvider(stackName, provider.id)
+      deleteProvider({ prefix: stackName, providerId: provider.id })
     ]));
 
   it('fails', () => {

@@ -1,6 +1,8 @@
 'use strict';
+
 const cumulusApiClient = require('./cumulusApiClient');
 const granules = require('./granules');
+const { invokeApi } = require('./cumulusApiClient');
 const rules = require('./rules');
 const collections = require('./collections');
 const ems = require('./ems');
@@ -13,6 +15,7 @@ module.exports = {
   ems,
   executions,
   granules,
+  invokeApi,
   providers,
   rules
 };

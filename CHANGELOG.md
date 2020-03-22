@@ -8,10 +8,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-1629**`
+  - Adds a new copy of the API lambda `PrivateApiLambda() configured to not require auth, without an API front end
+  - Adds @cumulus/api-client with functions for use by workflow lambdas to call the API when needed
+
+### Deprecated
+
 - **CUMULUS-1629**
-  - Adds several optional API accessor classes to @cumulus/common/cumulus-api-client (EdlApiClient, LaunchpadApiClient) to
-    - handle workflow processes utilizing API calls with authentication.
-  - Added new dynamo table "{prefix}-AuthTokensTable" to data persistence to allow for caching of authentication tokens utilizing this client
+  - Deprecate `granulesApi`, `rulesApi`, `emsApi`, `executionsAPI` from `@cumulus/integration-test` in favor code moved to `@cumulus/api-client`
 
 ### BREAKING CHANGES
 
@@ -25,7 +29,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed the format of the message sent to the granule SNS Topic. Message includes the granule record under `record` and the type of event under `event`. Messages with `deleted` events will have the record that was deleted with a `deletedAt` timestamp. Options for `event` are `Create | Update | Delete`
 - **CUMULUS-1769** - `deploy_to_ngap` is now a **required** variable for the `tf-modules/cumulus` module. **For those deploying to NGAP environments, this variable should always be set to `true`.**
 
-### Notable chanegs
+### Notable changes
 
 - **CUMULUS-1739** - You can now exclude Elasticsearch from your `tf-modules/data-persistence` deployment (via `include_elasticsearch = false`) and your `tf-modules/cumulus` module will still deploy successfully.
 - **CUMULUS-1769** - If you set `deploy_to_ngap = true` for the `tf-modules/archive` Terraform module, **you can only deploy your archive API gateway as `PRIVATE`**, not `EDGE`.

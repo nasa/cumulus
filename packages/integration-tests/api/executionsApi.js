@@ -46,7 +46,7 @@ const getExecutions = async (params) => {
  */
 async function getExecutionStatus(params) {
   deprecate('@cumulus/integration-tests/exeuctionsApi.getExecutionStatus', '1.20.0', '@cumulus/cumulus-api-client/executions.getExecutionStatus');
-  return executionsApi.getExecutions(params);
+  return executionsApi.getExecutionStatus(params);
 }
 
 module.exports = {
