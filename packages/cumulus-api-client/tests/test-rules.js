@@ -174,24 +174,3 @@ test.serial('rerunRule calls the updateRule with the expected object', async (t)
     revertCallback();
   }
 });
-
-
-test('callRuleApiFunction throws an error if callback throws an error', async (t) => {
-  const callback = async () => {
-    throw new Error('test error');
-  };
-  await t.throwsAsync(rulesRewire.__get__('callRuleApiFunction')(t.context.testPrefix, {}, callback), Error, 'test error');
-});
-
-test('callRuleApiFunction returns the payload if the callback returns', async (t) => {
-  const expected = { some: 'payload' };
-  const callback = async () => expected;
-  let revertCallback;
-  try {
-    revertCallback = rulesRewire.__set__('invokeApi', callback);
-    const actual = await rulesRewire.__get__('callRuleApiFunction')(t.context.testPrefix, {});
-    t.deepEqual(expected, actual);
-  } finally {
-    revertCallback();
-  }
-});
