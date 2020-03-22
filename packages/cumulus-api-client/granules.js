@@ -4,7 +4,7 @@ const pRetry = require('p-retry');
 const Logger = require('@cumulus/logger');
 const { invokeApi } = require('./cumulusApiClient');
 
-const logger = new Logger({ sender: '@cumulus/api-client' });
+const logger = new Logger({ sender: '@api-client/granules' });
 
 
 /**
@@ -113,7 +113,12 @@ async function removeFromCMR({ prefix, granuleId, callback = invokeApi }) {
  *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - the granule fetched by the API
  */
-async function applyWorkflow({ prefix, granuleId, workflow, callback = invokeApi }) {
+async function applyWorkflow({
+  prefix,
+  granuleId,
+  workflow,
+  callback = invokeApi
+}) {
   return callback({
     prefix: prefix,
     payload: {

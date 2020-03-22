@@ -8,7 +8,7 @@ const rulesRewire = rewire('../rules');
 test.before(async (t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.testName = 'testRule';
-  t.context.testRule = { some: "ruleObject" };
+  t.context.testRule = { some: 'ruleObject' };
   t.context.updateParams = '{ "Param1": "value 1" }';
   t.context.arn = 'testArn';
   t.context.testQuery = { testQueryKey: 'test query value' };
@@ -185,9 +185,7 @@ test('callRuleApiFunction throws an error if callback throws an error', async (t
 
 test('callRuleApiFunction returns the payload if the callback returns', async (t) => {
   const expected = { some: 'payload' };
-  const callback = async () => {
-    return expected;
-  };
+  const callback = async () => expected;
   let revertCallback;
   try {
     revertCallback = rulesRewire.__set__('invokeApi', callback);

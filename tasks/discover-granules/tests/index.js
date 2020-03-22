@@ -282,7 +282,6 @@ test.serial('discover granules using S3 throws error when discovery fails',
 test.serial('handleDuplicates filters on duplicateHandling set to "skip"',
   async (t) => {
     let checkDuplicateRevert;
-    let apiClientRevert;
     try {
       const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
       checkDuplicateRevert = discoverGranulesRewire.__set__('checkDuplicate', checkDuplicateRewire);
@@ -308,8 +307,7 @@ test.serial('handleDuplicates throws Error on duplicateHandling set to "error"',
     }
   });
 
-
-  test.serial('handleDuplicates throws Error on an invalid duplicateHandling configuration',
+test.serial('handleDuplicates throws Error on an invalid duplicateHandling configuration',
   async (t) => {
     const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
     await t.throwsAsync(

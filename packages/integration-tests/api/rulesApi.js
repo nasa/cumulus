@@ -4,7 +4,6 @@ const { deprecate } = require('@cumulus/common/util');
 const rulesApi = require('@cumulus/api-client/rules');
 
 
-
 /**
  * Post a rule to the rules API
  *

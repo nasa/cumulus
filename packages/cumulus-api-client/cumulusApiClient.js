@@ -2,8 +2,11 @@
 
 const cloneDeep = require('lodash.clonedeep');
 const pRetry = require('p-retry');
+const Logger = require('@cumulus/logger');
 const { lambda } = require('@cumulus/aws-client/services');
 const CumulusApiClientError = require('./CumulusApiClientError');
+
+const logger = new Logger({ sender: '@api-client/cumulusApiClient' });
 
 function invokeApi(params) {
   const { prefix, payload } = cloneDeep(params);
@@ -23,7 +26,7 @@ function invokeApi(params) {
     {
       retries: 3,
       maxTimeout: 10000,
-      onFailedAttempt: (error) => console.log(`API invoke error: ${error.message}. Retrying.`) // TODO - Logger
+      onFailedAttempt: (error) => logger.error(`API invoke error: ${error.message}. Retrying.`)
     }
   );
 }

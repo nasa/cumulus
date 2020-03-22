@@ -2,7 +2,7 @@
 
 const Logger = require('@cumulus/logger');
 const { invokeApi } = require('./cumulusApiClient');
-const logger = new Logger({ sender: '@cumulus/api-client' });
+const logger = new Logger({ sender: '@api-client/rules' });
 
 
 /**

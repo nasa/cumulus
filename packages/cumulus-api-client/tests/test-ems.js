@@ -59,7 +59,7 @@ test.serial('getLambdaEmsSettings returns the expected environment variables', a
     const expected = {
       var1: 'value 1',
       var2: 'value 2'
-    }
+    };
 
     const actual = await emsRewire.getLambdaEmsSettings('mockLambdaName');
     t.deepEqual(expected, actual);

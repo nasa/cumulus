@@ -91,7 +91,7 @@ test.serial('waitForGranules retries on status codes other than 500, 200, then t
       retries,
       callback
     }));
-    t.is(retries + 1, retryCount)
+    t.is(retries + 1, retryCount);
   } finally {
     getGranuleRevert();
     revertCallback();

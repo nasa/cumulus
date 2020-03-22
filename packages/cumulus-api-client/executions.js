@@ -52,16 +52,14 @@ const getExecutions = async ({ prefix, callback = invokeApi }) => callback({
  *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - the execution status fetched by the API
  */
-const getExecutionStatus = async ({ prefix, arn, callback = invokeApi }) => {
-  return callback({
-    prefix: prefix,
-    payload: {
-      httpMethod: 'GET',
-      resource: '/{proxy+}',
-      path: `/executions/status/${arn}`
-    }
-  });
-};
+const getExecutionStatus = async ({ prefix, arn, callback = invokeApi }) => callback({
+  prefix: prefix,
+  payload: {
+    httpMethod: 'GET',
+    resource: '/{proxy+}',
+    path: `/executions/status/${arn}`
+  }
+});
 
 module.exports = {
   getExecution,

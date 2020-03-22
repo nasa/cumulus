@@ -4,7 +4,6 @@ const { deprecate } = require('@cumulus/common/util');
 const granulesApi = require('@cumulus/api-client/granules');
 
 
-
 /**
  * GET /granules/{granuleName}
  *
