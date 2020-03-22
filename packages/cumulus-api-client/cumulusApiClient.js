@@ -8,6 +8,17 @@ const CumulusApiClientError = require('./CumulusApiClientError');
 
 const logger = new Logger({ sender: '@api-client/cumulusApiClient' });
 
+/**
+ * Invoke the Cumulus private API lambda (using pRetry)
+ *
+ * @param {Object} params
+ * @param {string} params.prefix     - the prefix configured for the stack
+ * @param {string} params.payload .  - the payload object (e.g. httpMethod, resource,
+ *                                     headers, path, body) containing params the lambda expects
+ *                                     in the payload
+ * @returns {Promise<Object>}        - Returns promise that resolves to the output payload from the
+ *                                     API lambda
+ */
 function invokeApi(params) {
   const { prefix, payload } = cloneDeep(params);
   return pRetry(

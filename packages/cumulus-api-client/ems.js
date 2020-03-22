@@ -22,13 +22,15 @@ async function getLambdaEmsSettings(lambdaName) {
 
 /**
  * Post a request to the ems API
+ * POST /ems
  *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {Object} params.request - request body to post
- * @param {Object} params.callback - function to invoke the api lambda
- *                                   that takes a prefix / user payload
- * @returns {Promise<Object>} - promise that resolves to the output of the API lambda
+ * @param {Object} params            - params
+ * @param {string} params.prefix     - the prefix configured for the stack
+ * @param {Object} params.request    - request body to post
+ * @param {Function} params.callback - async function to invoke the api lambda
+ *                                   that takes a prefix / user payload.  Defaults
+ *                                   to cumulusApiClient.invokeApifunction to invoke the api lambda
+ * @returns {Promise<Object>}        - promise that resolves to the output of the API lambda
  */
 async function createEmsReports({ prefix, request, callback = invokeApi }) {
   return callback({

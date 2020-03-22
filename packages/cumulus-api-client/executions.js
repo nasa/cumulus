@@ -5,12 +5,13 @@ const { invokeApi } = require('./cumulusApiClient');
 /**
  * Fetch an execution from the Cumulus API
  *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.arn - an execution arn
- * @param {Object} params.callback - function to invoke the api lambda
- *                                   that takes a prefix / user payload
- * @returns {Promise<Object>} - the execution fetched by the API
+ * @param {Object} params            - params
+ * @param {string} params.prefix     - the prefix configured for the stack
+ * @param {string} params.arn        - an execution arn
+ * @param {Function} params.callback - async function to invoke the api lambda
+ *                                     that takes a prefix / user payload.  Defaults
+ *                                     to cumulusApiClient.invokeApi
+ * @returns {Promise<Object>}        - the execution fetched by the API
  */
 const getExecution = async ({ prefix, arn, callback = invokeApi }) => {
   const result = await callback({
@@ -27,11 +28,12 @@ const getExecution = async ({ prefix, arn, callback = invokeApi }) => {
 /**
  * Fetch a list of executions from the Cumulus API
  *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {Object} params.callback - function to invoke the api lambda
- *                                   that takes a prefix / user payload
- * @returns {Promise<Object>} - the execution list fetched by the API
+ * @param {Object} params            - params
+ * @param {string} params.prefix     - the prefix configured for the stack
+ * @param {Function} params.callback - async function to invoke the api lambda
+ *                                     that takes a prefix / user payload.  Defaults
+ *                                     to cumulusApiClient.invokeApi
+ * @returns {Promise<Object>}        - the execution list fetched by the API
  */
 const getExecutions = async ({ prefix, callback = invokeApi }) => callback({
   prefix,
@@ -45,12 +47,13 @@ const getExecutions = async ({ prefix, callback = invokeApi }) => callback({
 /**
  * get execution status from the Cumulus API
  *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.arn - an execution arn
- * @param {Object} params.callback - function to invoke the api lambda
- *                                   that takes a prefix / user payload
- * @returns {Promise<Object>} - the execution status fetched by the API
+ * @param {Object} params            - params
+ * @param {string} params.prefix     - the prefix configured for the stack
+ * @param {string} params.arn        - an execution arn
+ * @param {Function} params.callback - async function to invoke the api lambda
+ *                                     that takes a prefix / user payload.  Defaults
+ *                                     to cumulusApiClient.invokeApi
+ * @returns {Promise<Object>}        - the execution status fetched by the API
  */
 const getExecutionStatus = async ({ prefix, arn, callback = invokeApi }) => callback({
   prefix: prefix,

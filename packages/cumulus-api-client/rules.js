@@ -8,13 +8,14 @@ const logger = new Logger({ sender: '@api-client/rules' });
 /**
  * Call function in rules API with payload
  *
- * @param {string} prefix             - the prefix configured for the stack
- * @param {Object} requestPayload     - payload to be sent to the API lambda
- *                                      containing the httpMethod, path,  b
- *                                      path params, and body
- * @param {Object} callback           - function to invoke the api lambda
- *                                      that takes a prefix / user payload
- * @returns {Object}                  - response from API lambda
+ * @param {string} prefix               - the prefix configured for the stack
+ * @param {Object} requestPayload       - payload to be sent to the API lambda
+ *                                        containing the httpMethod, path,  b
+ *                                        path params, and body
+ * @param {Function} callback           - async function to invoke the api lambda
+ *                                        that takes a prefix / user payload.  Defaults
+ *                                        to cumulusApiClient.invokeApi
+ * @returns {Object}                    - response from API lambda
  * @throws error if response cannot be parsed
  */
 // Todo make this a module-wide thing
@@ -35,13 +36,14 @@ async function callRuleApiFunction(prefix, requestPayload, callback = invokeApi)
 /**
  * Post a rule to the rules API
  *
- * @param {Object} params            - params
- * @param {string} params.prefix     - the prefix configured for the stack
- * @param {Object} params.rule       - rule body to post
- * @param {Object} params.callback   - function to invoke the api lambda
- *                                     that takes a prefix / user payload
- * @returns {Promise<Object>}        - promise that resolves to the output
- *                                     of the API lambda
+ * @param {Object} params              - params
+ * @param {string} params.prefix       - the prefix configured for the stack
+ * @param {Object} params.rule         - rule body to post
+ * @param {Function} params.callback   - async function to invoke the api lambda
+ *                                       that takes a prefix / user payload.  Defaults
+ *                                       to cumulusApiClient.invokeApi
+ * @returns {Promise<Object>}          - promise that resolves to the output
+ *                                       of the API lambda
  */
 async function postRule({ prefix, rule, callback = invokeApi }) {
   const payload = {
@@ -60,13 +62,14 @@ async function postRule({ prefix, rule, callback = invokeApi }) {
 /**
  * Update a rule in the rules API
  *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {Object} params.ruleName - the rule to update
+ * @param {Object} params              - params
+ * @param {string} params.prefix       - the prefix configured for the stack
+ * @param {Object} params.ruleName     - the rule to update
  * @param {Object} params.updateParams - key/value to update on the rule
- * @param {Object} params.callback - function to invoke the api lambda
- *                            that takes a prefix / user payload
- * @returns {Promise<Object>} - promise that resolves to the output of the API lambda
+ * @param {Function} params.callback   - async function to invoke the api lambda
+ *                                       that takes a prefix / user payload.  Defaults
+ *                                       to cumulusApiClient.invokeApi
+ * @returns {Promise<Object>}          - promise that resolves to the output of the API lambda
  */
 async function updateRule({
   prefix, ruleName, updateParams, callback = invokeApi

@@ -6,12 +6,12 @@ const { invokeApi } = require('./cumulusApiClient');
 /**
  * Create a provider via the API
  *
- * @param {Object} params          - params
- * @param {string} params.prefix   - the prefix configured for the stack
- * @param {string} params.provider - provider object
- * @param {Object} params.callback - function to invoke the api lambda
- *                                   that takes a prefix / user payload
- * @returns {Promise<Object>}      - promise that resolves to the output of the callback
+ * @param {Object} params            - params
+ * @param {string} params.prefix     - the prefix configured for the stack
+ * @param {string} params.provider   - provider object
+ * @param {Function} params.callback - function to invoke the api lambda
+ *                                     that takes a prefix / user payload
+ * @returns {Promise<Object>}        - promise that resolves to the output of the callback
  */
 const createProvider = ({ prefix, provider, callback = invokeApi }) => callback({
   prefix,
@@ -27,13 +27,14 @@ const createProvider = ({ prefix, provider, callback = invokeApi }) => callback(
 /**
  * Delete a provider from the Cumulus API
  *
- * @param {Object} params            - params
- * @param {string} params.prefix     - the prefix configured for the stack
- * @param {string} params.providerId - a provider id
- * @param {Object} params.callback   - function to invoke the api lambda
- *                                     that takes a prefix / user payload
- * @returns {Promise<Object>}        - promise that resolves to the output
- *                                     of the callback
+ * @param {Object} params              - params
+ * @param {string} params.prefix       - the prefix configured for the stack
+ * @param {string} params.providerId   - a provider id
+ * @param {Function} params.callback   - async function to invoke the api lambda
+ *                                       that takes a prefix / user payload.  Defaults
+ *                                       to cumulusApiClient.invokeApi
+ * @returns {Promise<Object>}          - promise that resolves to the output
+ *                                       of the callback
  */
 const deleteProvider = ({ prefix, providerId, callback = invokeApi }) => callback({
   prefix,
@@ -47,13 +48,14 @@ const deleteProvider = ({ prefix, providerId, callback = invokeApi }) => callbac
 /**
  * Fetch a provider from the Cumulus API
  *
- * @param {Object} params            - params
- * @param {string} params.prefix     - the prefix configured for the stack
- * @param {string} params.providerId - a provider id
- * @param {Object} params.callback   - function to invoke the api lambda
- *                                     that takes a prefix / user payload
- * @returns {Promise<Object>}        - promise that resolves to the output
- *                                     of the API lambda
+ * @param {Object} params              - params
+ * @param {string} params.prefix       - the prefix configured for the stack
+ * @param {string} params.providerId   - a provider id
+ * @param {Function} params.callback   - async function to invoke the api lambda
+ *                                       that takes a prefix / user payload.  Defaults
+ *                                       to cumulusApiClient.invokeApi
+ * @returns {Promise<Object>}          - promise that resolves to the output
+ *                                       of the API lambda
  */
 const getProvider = ({ prefix, providerId, callback = invokeApi }) => callback({
   prefix,
