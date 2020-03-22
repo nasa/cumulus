@@ -129,31 +129,6 @@ async function getExecutionLogs({ prefix, executionName }) {
 }
 
 /**
- * Add a collection to Cumulus via the API
- *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {Object} params.collection - a collection object
- * @returns {Promise<Object>} - the POST confirmation from the API
- */
-async function addCollectionApi({ prefix, collection }) {
-  deprecate('@cumulus/integration-tests/api/api.addCollectionApi', '1.18.0', '@cumulus/integration-tests/api/collections.createCollection');
-  const response = await invokeApi({
-    prefix: prefix,
-    payload: {
-      httpMethod: 'POST',
-      resource: '/{proxy+}',
-      path: '/collections',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(collection)
-    }
-  });
-  return verifyCumulusApiResponse(response);
-}
-
-/**
  * Add a provider to Cumulus via the API
  *
  * @param {Object} params - params
@@ -162,6 +137,8 @@ async function addCollectionApi({ prefix, collection }) {
  * @returns {Promise<Object>} - the POST confirmation from the API
  */
 async function addProviderApi({ prefix, provider }) {
+  deprecate('@cumulus/integration-tests/addProviderApi',
+    '1.20.0', '@cumulus/api-client/providers.createProvider');
   const response = await invokeApi({
     prefix: prefix,
     payload: {
@@ -185,6 +162,8 @@ async function addProviderApi({ prefix, provider }) {
  * @returns {Promise<Object>} - the list of providers fetched by the API
  */
 async function getProviders({ prefix }) {
+  deprecate('@cumulus/integration-tests/getProviders',
+    '1.20.0', '@cumulus/api-client/providers.getProviders');
   const response = await invokeApi({
     prefix: prefix,
     payload: {
@@ -205,6 +184,8 @@ async function getProviders({ prefix }) {
  * @returns {Promise<Object>} - the provider fetched by the API
  */
 async function getProvider({ prefix, providerId }) {
+  deprecate('@cumulus/integration-tests/getProvider',
+    '1.20.0', '@cumulus/api-client/providers.getProvider');
   const response = await invokeApi({
     prefix: prefix,
     payload: {
@@ -224,6 +205,8 @@ async function getProvider({ prefix, providerId }) {
  * @returns {Promise<Object>} - the list of collections fetched by the API
  */
 async function getCollections({ prefix }) {
+  deprecate('@cumulus/integration-tests/getCollections',
+    '1.20.0', '@cumulus/api-client/collections.getCollections');
   const response = await invokeApi({
     prefix: prefix,
     payload: {
@@ -245,6 +228,8 @@ async function getCollections({ prefix }) {
  * @returns {Promise<Object>} - the collection fetched by the API
  */
 async function getCollection({ prefix, collectionName, collectionVersion }) {
+  deprecate('@cumulus/integration-tests/getCollection',
+    '1.20.0', '@cumulus/api-client/collections.getCollection');
   const response = await invokeApi({
     prefix: prefix,
     payload: {
@@ -363,7 +348,6 @@ module.exports = {
   getAsyncOperation,
   deletePdr,
   getExecutionLogs,
-  addCollectionApi,
   addProviderApi,
   getProviders,
   getCollections,

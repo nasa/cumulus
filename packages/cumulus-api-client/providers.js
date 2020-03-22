@@ -66,8 +66,26 @@ const getProvider = ({ prefix, providerId, callback = invokeApi }) => callback({
   }
 });
 
+
+/**
+ * Fetch a list of providers from the Cumulus API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @returns {Promise<Object>} - the list of providers fetched by the API
+ */
+const getProviders = async ({ prefix, callback = invokeApi }) => callback({
+  prefix: prefix,
+  payload: {
+    httpMethod: 'GET',
+    resource: '/{proxy+}',
+    path: '/providers'
+  }
+});
+
 module.exports = {
   createProvider,
   deleteProvider,
-  getProvider
+  getProvider,
+  getProviders
 };

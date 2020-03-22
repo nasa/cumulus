@@ -91,3 +91,30 @@ test.serial('getCollection calls the callback with the expected object and retur
     revertCallback();
   }
 });
+
+test.serial('getCollections calls the callback with the expected object and returns the parsed response', async (t) => {
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: '/collections/'
+    }
+  };
+
+  const callback = async (configObject) => {
+    t.deepEqual(expected, configObject);
+    return { foo: 'bar' };
+  };
+
+  let revertCallback;
+  try {
+    revertCallback = collectionsRewire.__set__('invokeApi', callback);
+    const result = await collectionsRewire.getCollections({
+      prefix: t.context.testPrefix
+    });
+    t.deepEqual(result, { foo: 'bar' });
+  } finally {
+    revertCallback();
+  }
+});

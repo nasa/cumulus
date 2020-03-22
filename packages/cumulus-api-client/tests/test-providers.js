@@ -89,3 +89,27 @@ test('getProvider calls the callback with the expected object', async (t) => {
     revertCallback();
   }
 });
+
+test('getProviders calls the callback with the expected object', async (t) => {
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: '/providers'
+    }
+  };
+  const callback = async (configObject) => {
+    t.deepEqual(expected, configObject);
+  };
+
+  let revertCallback;
+  try {
+    revertCallback = providerRewire.__set__('invokeApi', callback);
+    await t.notThrowsAsync(providerRewire.getProviders({
+      prefix: t.context.testPrefix,
+    }));
+  } finally {
+    revertCallback();
+  }
+});
