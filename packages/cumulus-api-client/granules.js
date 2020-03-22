@@ -19,17 +19,14 @@ const logger = new Logger({ sender: '@api-client/granules' });
  *                                      api lambda
  * @returns {Promise<Object>}         - the granule fetched by the API
  */
-async function getGranule({ prefix, granuleId, callback = invokeApi }) {
-  return callback({
-    prefix: prefix,
-    payload: {
-      httpMethod: 'GET',
-      resource: '/{proxy+}',
-      path: `/granules/${granuleId}`
-    }
-  });
-}
-
+const getGranule = async ({ prefix, granuleId, callback = invokeApi }) => callback({
+  prefix: prefix,
+  payload: {
+    httpMethod: 'GET',
+    resource: '/{proxy+}',
+    path: `/granules/${granuleId}`
+  }
+});
 
 /**
  * Wait for a granule to be present in the database (using pRetry)
@@ -42,9 +39,9 @@ async function getGranule({ prefix, granuleId, callback = invokeApi }) {
  *                                      to cumulusApiClient.invokeApifunction to invoke the
  *                                      api lambda
  */
-async function waitForGranule({
+const waitForGranule = async ({
   prefix, granuleId, retries = 10, callback = invokeApi
-}) {
+}) => {
   await pRetry(
     async () => {
       const apiResult = await getGranule({ prefix, granuleId, callback });
@@ -63,7 +60,7 @@ async function waitForGranule({
       }
     }
   );
-}
+};
 
 /**
  * Reingest a granule from the Cumulus API
@@ -78,20 +75,19 @@ async function waitForGranule({
  *                                      api lambda
  * @returns {Promise<Object>}         - the granule fetched by the API
  */
-async function reingestGranule({ prefix, granuleId, callback = invokeApi }) {
-  return callback({
-    prefix: prefix,
-    payload: {
-      httpMethod: 'PUT',
-      resource: '/{proxy+}',
-      path: `/granules/${granuleId}`,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ action: 'reingest' })
-    }
-  });
-}
+const reingestGranule = async ({ prefix, granuleId, callback = invokeApi }) => callback({
+  prefix: prefix,
+  payload: {
+    httpMethod: 'PUT',
+    resource: '/{proxy+}',
+    path: `/granules/${granuleId}`,
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ action: 'reingest' })
+  }
+});
+
 
 /**
  * Removes a granule from CMR via the Cumulus API
@@ -106,20 +102,18 @@ async function reingestGranule({ prefix, granuleId, callback = invokeApi }) {
  *                                      api lambda
  * @returns {Promise<Object>}         - the granule fetched by the API
  */
-async function removeFromCMR({ prefix, granuleId, callback = invokeApi }) {
-  return callback({
-    prefix: prefix,
-    payload: {
-      httpMethod: 'PUT',
-      resource: '/{proxy+}',
-      path: `/granules/${granuleId}`,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ action: 'removeFromCmr' })
-    }
-  });
-}
+const removeFromCMR = async ({ prefix, granuleId, callback = invokeApi }) => callback({
+  prefix: prefix,
+  payload: {
+    httpMethod: 'PUT',
+    resource: '/{proxy+}',
+    path: `/granules/${granuleId}`,
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ action: 'removeFromCmr' })
+  }
+});
 
 /**
  * Run a workflow with the given granule as the payload
@@ -135,25 +129,23 @@ async function removeFromCMR({ prefix, granuleId, callback = invokeApi }) {
  *                                      api lambda
  * @returns {Promise<Object>}         - the granule fetched by the API
  */
-async function applyWorkflow({
+const applyWorkflow = async ({
   prefix,
   granuleId,
   workflow,
   callback = invokeApi
-}) {
-  return callback({
-    prefix: prefix,
-    payload: {
-      httpMethod: 'PUT',
-      resource: '/{proxy+}',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      path: `/granules/${granuleId}`,
-      body: JSON.stringify({ action: 'applyWorkflow', workflow })
-    }
-  });
-}
+}) => callback({
+  prefix: prefix,
+  payload: {
+    httpMethod: 'PUT',
+    resource: '/{proxy+}',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    path: `/granules/${granuleId}`,
+    body: JSON.stringify({ action: 'applyWorkflow', workflow })
+  }
+});
 
 /**
  * Delete a granule from Cumulus via the API lambda
@@ -168,16 +160,15 @@ async function applyWorkflow({
  *                                      api lambda
  * @returns {Promise<Object>}         - the delete confirmation from the API
  */
-async function deleteGranule({ prefix, granuleId, callback = invokeApi }) {
-  return callback({
-    prefix: prefix,
-    payload: {
-      httpMethod: 'DELETE',
-      resource: '/{proxy+}',
-      path: `/granules/${granuleId}`
-    }
-  });
-}
+const deleteGranule = async ({ prefix, granuleId, callback = invokeApi }) => callback({
+  prefix: prefix,
+  payload: {
+    httpMethod: 'DELETE',
+    resource: '/{proxy+}',
+    path: `/granules/${granuleId}`
+  }
+});
+
 
 /**
  * Move a granule via the API
@@ -193,22 +184,21 @@ async function deleteGranule({ prefix, granuleId, callback = invokeApi }) {
  *                                                the api lambda
  * @returns {Promise<Object>}                   - the move response from the API
  */
-async function moveGranule({
+const moveGranule = async ({
   prefix, granuleId, destinations, callback = invokeApi
-}) {
-  return callback({
-    prefix: prefix,
-    payload: {
-      httpMethod: 'PUT',
-      resource: '/{proxy+}',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      path: `/granules/${granuleId}`,
-      body: JSON.stringify({ action: 'move', destinations })
-    }
-  });
-}
+}) => callback({
+  prefix: prefix,
+  payload: {
+    httpMethod: 'PUT',
+    resource: '/{proxy+}',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    path: `/granules/${granuleId}`,
+    body: JSON.stringify({ action: 'move', destinations })
+  }
+});
+
 
 /**
  * Removed a granule from CMR and delete from Cumulus via the API
@@ -222,23 +212,33 @@ async function moveGranule({
  *                                      api lambda
  * @returns {Promise<Object>}         - the delete confirmation from the API
  */
-async function removePublishedGranule({ prefix, granuleId, callback = invokeApi }) {
+const removePublishedGranule = async ({ prefix, granuleId, callback = invokeApi }) => {
   // pre-delete: Remove the granule from CMR
   await removeFromCMR({ prefix, granuleId, callback });
   return deleteGranule({ prefix, granuleId, callback });
-}
+};
 
-async function listGranules({ prefix, query = null, callback = invokeApi }) {
-  return callback({
-    prefix: prefix,
-    payload: {
-      httpMethod: 'GET',
-      resource: '/{proxy+}',
-      path: '/granules',
-      body: query ? JSON.stringify({ query }) : undefined
-    }
-  });
-}
+/**
+ * Query  granules stored in cumulus
+ * GET /granules
+ * @param {Object} params             - params
+ * @param {string} params.query       - query to pass the API lambda
+ * @param {Function} params.callback  - async function to invoke the api lambda
+ *                                      that takes a prefix / user payload.  Defaults
+ *                                      to cumulusApiClient.invokeApifunction to invoke the
+ *                                      api lambda
+ * @returns {Promise<Object>}         - the response from the callback
+ */
+const listGranules = async ({ prefix, query = null, callback = invokeApi }) => callback({
+  prefix: prefix,
+  payload: {
+    httpMethod: 'GET',
+    resource: '/{proxy+}',
+    path: '/granules',
+    body: query ? JSON.stringify({ query }) : undefined
+  }
+});
+
 
 module.exports = {
   getGranule,
