@@ -14,14 +14,6 @@ output "sf_event_sqs_to_db_records_sqs_queue_arn" {
   value = aws_sqs_queue.sf_event_sqs_to_db_records_input_queue.arn
 }
 
-output "internal_api_uri" {
-  value = local.internal_api_uri
-}
-
-output "internal_api_redirect_uri" {
-  value = local.internal_api_redirect_uri
-}
-
 output "log2elasticsearch_lambda_function_arn" {
   value = aws_lambda_function.log2elasticsearch.arn
 }

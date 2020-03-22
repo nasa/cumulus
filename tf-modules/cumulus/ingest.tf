@@ -8,14 +8,6 @@ module "ingest" {
   distribution_url                         = module.distribution.distribution_url
   cumulus_message_adapter_lambda_layer_arn = var.cumulus_message_adapter_lambda_layer_arn
 
-  # API config
-
-  internal_archive_api_uri= module.archive.internal_api_uri
-  oauth_provider          = var.oauth_provider
-  urs_id                  = var.urs_id
-  urs_password            = var.urs_password
-  urs_url                 = var.urs_url
-
   # Buckets config
   system_bucket = var.system_bucket
 
@@ -42,7 +34,6 @@ module "ingest" {
   launchpad_api         = var.launchpad_api
   launchpad_passphrase  = var.launchpad_passphrase
   launchpad_certificate = var.launchpad_certificate
-  oauth_user_group      = var.oauth_user_group
 
   # DB config
   dynamo_tables = var.dynamo_tables

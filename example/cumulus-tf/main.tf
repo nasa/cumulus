@@ -60,8 +60,6 @@ module "cumulus" {
   ecs_cluster_max_size            = 2
   key_name                        = var.key_name
 
-  urs_id              = var.urs_id
-  urs_password        = var.urs_password
   urs_url             = "https://uat.urs.earthdata.nasa.gov"
   urs_client_id       = var.urs_client_id
   urs_client_password = var.urs_client_password
@@ -116,7 +114,6 @@ module "cumulus" {
 
   archive_api_users = [
     "chuckwondo",
-    "cumuluscore",
     "jennyhliu",
     "jmcampbell",
     "kbaynes",

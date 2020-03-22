@@ -6,7 +6,6 @@ This module deploys data persistence resources, including DynamoDB tables and an
 
 - DynamoDB tables:
   - `AccessTokensTable`
-  - `AuthTokensTable`
   - `AsyncOperationsTable`
   - `CollectionsTable`
   - `ExecutionsTable`

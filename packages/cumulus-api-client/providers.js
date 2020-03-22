@@ -3,7 +3,6 @@
 const { invokeApi } = require('./cumulusApiClient');
 
 
-// TODO: Make all of these paramaterized in code
 /**
  * Create a provider via the API
  *
@@ -63,7 +62,7 @@ const getProvider = ({ prefix, providerId, callback = invokeApi }) => callback({
     resource: '/{proxy+}',
     path: `/providers/${providerId}`
   }
-}); //TODO  why .then(({ body }) => JSON.parse(body)); ?
+});
 
 module.exports = {
   createProvider,
