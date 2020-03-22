@@ -32,7 +32,7 @@ test('createProvider calls the callback with the expected object', async (t) => 
     revertCallback = providerRewire.__set__('invokeApi', callback);
     await t.notThrowsAsync(providerRewire.createProvider({
       prefix: t.context.testPrefix,
-      provider: t.context.testProvider,
+      provider: t.context.testProvider
     }));
   } finally {
     revertCallback();
@@ -58,7 +58,7 @@ test('deleteProvider calls the callback with the expected object', async (t) => 
     revertCallback = providerRewire.__set__('invokeApi', callback);
     await t.notThrowsAsync(providerRewire.deleteProvider({
       prefix: t.context.testPrefix,
-      providerId: t.context.testProviderId,
+      providerId: t.context.testProviderId
     }));
   } finally {
     revertCallback();
@@ -83,7 +83,7 @@ test('getProvider calls the callback with the expected object', async (t) => {
     revertCallback = providerRewire.__set__('invokeApi', callback);
     await t.notThrowsAsync(providerRewire.getProvider({
       prefix: t.context.testPrefix,
-      providerId: t.context.testProviderId,
+      providerId: t.context.testProviderId
     }));
   } finally {
     revertCallback();

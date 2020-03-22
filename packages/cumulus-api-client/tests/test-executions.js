@@ -54,7 +54,7 @@ test('getExecutions calls the callback with the expected object', async (t) => {
   try {
     revertCallback = executionsRewire.__set__('invokeApi', callback);
     await t.notThrowsAsync(executionsRewire.getExecutions({
-      prefix: t.context.testPrefix,
+      prefix: t.context.testPrefix
     }));
   } finally {
     revertCallback();
@@ -79,7 +79,7 @@ test('getExecutionStatus calls the callback with the expected object', async (t)
     revertCallback = executionsRewire.__set__('invokeApi', callback);
     await t.notThrowsAsync(executionsRewire.getExecutionStatus({
       prefix: t.context.testPrefix,
-      arn: t.context.arn,
+      arn: t.context.arn
     }));
   } finally {
     revertCallback();

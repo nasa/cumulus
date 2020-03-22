@@ -27,7 +27,7 @@ test('getGranule calls the callback with the expected object', async (t) => {
     revertCallback = granulesRewire.__set__('invokeApi', callback);
     await t.notThrowsAsync(granulesRewire.getGranule({
       prefix: t.context.testPrefix,
-      granuleId: t.context.granule,
+      granuleId: t.context.granule
     }));
   } finally {
     revertCallback();
@@ -48,7 +48,7 @@ test.serial('waitForGranules calls getGranules with the expected payload', async
     revertCallback = granulesRewire.__set__('invokeApi', callback);
     await granulesRewire.waitForGranule({
       prefix: t.context.testPrefix,
-      granuleId: t.context.granule,
+      granuleId: t.context.granule
     });
   } finally {
     getGranuleRevert();
@@ -328,7 +328,7 @@ test.serial('removePublishedGranule calls removeFromCmr and deleteGranule', asyn
 
     await granulesRewire.removePublishedGranule({
       prefix: t.context.testPrefix,
-      granuleId: t.context.granule,
+      granuleId: t.context.granule
     });
   } finally {
     removeFromCmrRevert();

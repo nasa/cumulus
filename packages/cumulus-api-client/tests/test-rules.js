@@ -154,7 +154,7 @@ test.serial('rerunRule calls the updateRule with the expected object', async (t)
     const expected = {
       prefix: t.context.testPrefix,
       ruleName: t.context.testName,
-      updateParams: { action: 'rerun' },
+      updateParams: { action: 'rerun' }
     };
 
     const callback = async (configObject) => {
@@ -167,7 +167,7 @@ test.serial('rerunRule calls the updateRule with the expected object', async (t)
     });
     await t.notThrowsAsync(rulesRewire.rerunRule({
       prefix: t.context.testPrefix,
-      ruleName: t.context.testName,
+      ruleName: t.context.testName
     }));
   } finally {
     revertUpdateRule();

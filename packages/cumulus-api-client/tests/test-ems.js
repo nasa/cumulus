@@ -32,7 +32,7 @@ test('createEmsReports calls the callback with the expected object', async (t) =
     revertCallback = emsRewire.__set__('invokeApi', callback);
     await t.notThrowsAsync(emsRewire.createEmsReports({
       prefix: t.context.testPrefix,
-      request: t.context.request,
+      request: t.context.request
     }));
   } finally {
     revertCallback();
