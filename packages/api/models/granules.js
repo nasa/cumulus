@@ -20,7 +20,6 @@ const {
 } = require('@cumulus/common/message');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const {
-  deprecate,
   isNil,
   removeNilProperties,
   renameProperty
@@ -140,22 +139,6 @@ class Granule extends Manager {
     // Use granule UR to delete from CMR
     await cmr.deleteGranule(metadata.title, granule.collectionId);
     await this.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']);
-  }
-
-  /**
-   * Removes a given granule from CMR
-   *
-   * @param {string} granuleId - the granule ID
-   * @param {string} collectionId - the collection ID
-   * @returns {Promise<undefined>} - undefined
-   */
-  // eslint-disable-next-line no-unused-vars
-  async removeGranuleFromCmr(granuleId, collectionId) {
-    deprecate('@cumulus/api/Granule.removeGranuleFromCmr', '1.11.3', '@cumulus/api/Granule.removeGranuleFromCmrByGranule');
-
-    const granule = await this.get({ granuleId });
-
-    return this.removeGranuleFromCmrByGranule(granule);
   }
 
   /**
@@ -365,40 +348,6 @@ class Granule extends Manager {
     record.duration = (record.timestamp - record.createdAt) / 1000;
 
     return removeNilProperties(record);
-  }
-
-  /**
-   * Create new granule records from incoming sns messages
-   *
-   * @param {Object} cumulusMessage - a Cumulus Message
-   * @returns {Promise<Array>} granule records
-   */
-  async createGranulesFromSns(cumulusMessage) {
-    deprecate('@cumulus/api/models/Granule.createGranulesFromSns', '1.18.0');
-
-    const granules = get(cumulusMessage, 'payload.granules');
-
-    if (!granules) return null;
-
-    const executionArn = getMessageExecutionArn(cumulusMessage);
-    if (!executionArn) return null;
-    const executionUrl = StepFunctions.getExecutionUrl(executionArn);
-    const executionDescription = await StepFunctions.describeExecution({ executionArn });
-
-    return Promise.all(
-      granules
-        .filter((g) => g.granuleId)
-        .map(async (granule) => {
-          const granuleRecord = await Granule.generateGranuleRecord(
-            granule,
-            cumulusMessage,
-            executionUrl,
-            executionDescription
-          );
-
-          return this.create(granuleRecord);
-        })
-    );
   }
 
   /**

@@ -18,18 +18,18 @@ const {
   s3TagSetToQueryString
 } = require('@cumulus/aws-client/S3');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
-const { deprecate, omit } = require('@cumulus/common/util');
+const { omit } = require('@cumulus/common/util');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const bucketsConfigJsonObject = require('@cumulus/common/bucketsConfigJsonObject');
 const { getLaunchpadToken } = require('@cumulus/common/launchpad');
 const log = require('@cumulus/common/log');
 const errors = require('@cumulus/errors');
 
-const { CMR } = require('@cumulus/cmr-client');
+const CMR = require('@cumulus/cmr-client/CMR');
+const { ummVersion } = require('@cumulus/cmr-client/UmmUtils');
 const {
   getUrl,
   xmlParseOptions,
-  ummVersion,
   ummVersionToMetadataFormat
 } = require('./utils');
 
@@ -170,23 +170,6 @@ async function publish2CMR(cmrPublishObject, creds) {
   throw new Error(`invalid cmrPublishObject passed to publis2CMR ${JSON.stringify(cmrPublishObject)}`);
 }
 
-
-// 2018-12-12 This doesn't belong in cmrjs, but should be resolved by
-// https://bugs.earthdata.nasa.gov/browse/CUMULUS-1086
-/**
- * Extract the granule ID from the a given s3 uri
- *
- * @param {string} uri - the s3 uri of the file
- * @param {string} regex - the regex for extracting the ID
- * @returns {string} the granule
- */
-function getGranuleId(uri, regex) {
-  deprecate('@cumulus/cmrjs.getGranuleId', '1.11.3');
-  const match = path.basename(uri).match(regex);
-  if (match) return match[1];
-  throw new Error(`Could not determine granule id of ${uri} using ${regex}`);
-}
-
 /**
  * Gets metadata for a cmr xml file from s3
  *
@@ -247,31 +230,6 @@ async function metadataObjectFromCMRFile(cmrFilename) {
     return metadataObjectFromCMRJSONFile(cmrFilename);
   }
   throw new Error(`cannot return metdata from invalid cmrFilename: ${cmrFilename}`);
-}
-
-/**
- * Returns a list of CMR ECHO10 xml or UMMG JSON file objects.
- *
- * @param {Array} input - an Array of S3 uris
- * @param {string} granuleIdExtraction - a regex for extracting granule IDs
- * @returns {Array} array of objects
- * that includes CMR xml/json URIs and granuleIds
- */
-function getCmrFiles(input, granuleIdExtraction) {
-  deprecate('@cumulus/cmrjs.getCmrFiles', '1.11.3');
-  const files = [];
-
-  input.forEach((filename) => {
-    if (isCMRFilename(filename)) {
-      const cmrFileObject = {
-        filename,
-        granuleId: getGranuleId(filename, granuleIdExtraction)
-      };
-      files.push(cmrFileObject);
-    }
-  });
-
-  return files;
 }
 
 /**
@@ -811,8 +769,6 @@ async function getGranuleTemporalInfo(granule) {
 
 module.exports = {
   constructOnlineAccessUrl,
-  getCmrFiles,
-  getGranuleId,
   getGranuleTemporalInfo,
   isCMRFile,
   isUMMGFile,
