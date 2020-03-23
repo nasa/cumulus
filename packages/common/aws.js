@@ -6,6 +6,7 @@ const pMap = require('p-map');
 const pRetry = require('p-retry');
 const url = require('url');
 
+const errors = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
 const { inTestMode, testAwsClient } = require('./test-utils');
