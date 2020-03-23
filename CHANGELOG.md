@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Deprecated
 
 - **CUMULUS-1799**
+  - Deprecate `@cumulus/common/CloudWatchLogger`
   - Deprecate `@cumulus/common/Semaphore`
 
 ### Removed

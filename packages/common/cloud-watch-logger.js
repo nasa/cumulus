@@ -40,6 +40,7 @@ module.exports = class CloudWatchLogger {
    *                          and logStreamName
    */
   constructor(config) {
+    deprecate('@cumulus/common/CloudWatchLogger', '1.20.0');
     this.group = config.logGroupName;
     this.stream = config.logStreamName;
     this.token = null;

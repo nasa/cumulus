@@ -62,6 +62,10 @@ exports.s3 = (options) => {
   deprecate('@cumulus/common/aws/s3', '1.17.0', '@cumulus/aws-client/services/s3');
   return awsClient(AWS.S3, '2006-03-01')(options);
 };
+exports.cloudwatchlogs = (options) => {
+  deprecate('@cumulus/common/aws/cloudwatchlogs', '1.17.0', '@cumulus/aws-client/services/cloudwatchlogs');
+  return awsClient(AWS.CloudWatchLogs, '2014-03-28')(options);
+};
 exports.dynamodb = (options) => {
   deprecate('@cumulus/common/aws/dynamodb', '1.17.0', '@cumulus/aws-client/services/dynamodb');
   return awsClient(AWS.DynamoDB, '2012-08-10')(options);
