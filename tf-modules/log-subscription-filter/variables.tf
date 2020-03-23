@@ -40,6 +40,11 @@ variable "sync_granule_task" {
   description = "Log group for the Sync Granules Task Lambda"
 }
 
+variable "hyrax_metadata_updates_task" {
+  type = string
+  description = "Log group for the Hyrax Metadata Updates Task Lambda"
+}
+
 # Async Operation Log Group
 variable "async_operation_log_group" {
   type = string
