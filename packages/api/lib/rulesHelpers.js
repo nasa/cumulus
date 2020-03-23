@@ -26,9 +26,9 @@ function lookupCollectionInEvent(eventObject) {
  */
 async function queueMessageForRule(rule, eventObject, eventSource) {
   const collectionInNotification = lookupCollectionInEvent(eventObject);
-  const collection = (collectionInNotification.name && collectionInNotification.version) ?
-    collectionInNotification :
-    rule.collection;
+  const collection = (collectionInNotification.name && collectionInNotification.version)
+    ? collectionInNotification
+    : rule.collection;
   const item = {
     workflow: rule.workflow,
     provider: rule.provider,
