@@ -43,6 +43,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Deprecate `@cumulus/common/config.parseConfig`
   - Deprecate `@cumulus/common/config.resolveResource`
   - Deprecate `@cumulus/common/config.resourceToArn`
+  - Deprecate `@cumulus/common/FieldPattern`
   - Deprecate `@cumulus/common/Semaphore`
 
 ### Removed

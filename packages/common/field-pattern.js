@@ -10,6 +10,7 @@ const log = require('./log');
  */
 module.exports = class FieldPattern {
   static formatAll(obj, fields) {
+    deprecate('@cumulus/common/FieldPattern.formatAll', '1.20.0');
     if (isString(obj)) {
       return new FieldPattern(obj).format(fields);
     }
@@ -27,6 +28,7 @@ module.exports = class FieldPattern {
   }
 
   constructor(pattern, initialValues = null) {
+    deprecate('@cumulus/common/FieldPattern', '1.20.0');
     this.fieldRegex = /{[\w\.\-]+}/g;
     this.pattern = pattern;
     if (initialValues) {
