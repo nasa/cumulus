@@ -16,7 +16,7 @@ const rulesApi = require('@cumulus/api-client/rules');
  *                                     of the API lambda
  */
 async function postRule(params) {
-  deprecate('@cumulus/integration-tests/rulesApi.getExecution', '1.20.0', '@cumulus/cumulus-api-client/rules.getExecution');
+  deprecate('@cumulus/integration-tests/rules.getExecution', '1.20.0', '@cumulus/cumulus-api-client/rules.getExecution');
   return rulesApi.postRule(params);
 }
 
@@ -32,7 +32,7 @@ async function postRule(params) {
  * @returns {Promise<Object>} - promise that resolves to the output of the API lambda
  */
 async function updateRule(params) {
-  deprecate('@cumulus/integration-tests/rulesApi.updateRule', '1.20.0', '@cumulus/cumulus-api-client/rules.updateRule');
+  deprecate('@cumulus/integration-tests/rules.updateRule', '1.20.0', '@cumulus/cumulus-api-client/rules.updateRule');
   return rulesApi.updateRule(params);
 }
 
@@ -47,7 +47,7 @@ async function updateRule(params) {
  * @returns {Promise<Object>} - promise that resolves to the output of the API lambda
  */
 async function listRules(params) {
-  deprecate('@cumulus/integration-tests/rulesApi.listRules', '1.20.0', '@cumulus/cumulus-api-client/rules.listRules');
+  deprecate('@cumulus/integration-tests/rules.listRules', '1.20.0', '@cumulus/cumulus-api-client/rules.listRules');
   return rulesApi.listRules(params);
 }
 
@@ -63,7 +63,7 @@ async function listRules(params) {
  *                                   API lambda
  */
 async function getRule(params) {
-  deprecate('@cumulus/integration-tests/rulesApi.getRule', '1.20.0', '@cumulus/cumulus-api-client/rules.getRule');
+  deprecate('@cumulus/integration-tests/rules.getRule', '1.20.0', '@cumulus/cumulus-api-client/rules.getRule');
   return rulesApi.getRule(params);
 }
 
@@ -78,7 +78,7 @@ async function getRule(params) {
  * @returns {Promise<Object>} - promise that resolves to the output of the API lambda
  */
 async function deleteRule(params) {
-  deprecate('@cumulus/integration-tests/rulesApi.deleteRule', '1.20.0', '@cumulus/cumulus-api-client/rules.deleteRule');
+  deprecate('@cumulus/integration-tests/rules.deleteRule', '1.20.0', '@cumulus/cumulus-api-client/rules.deleteRule');
   return rulesApi.deleteRule(params);
 }
 
@@ -95,7 +95,7 @@ async function deleteRule(params) {
  *    lambda
  */
 async function rerunRule(params) {
-  deprecate('@cumulus/integration-tests/rulesApi.rerunRule', '1.20.0', '@cumulus/cumulus-api-client/rules.rerunRule');
+  deprecate('@cumulus/integration-tests/rules.rerunRule', '1.20.0', '@cumulus/cumulus-api-client/rules.rerunRule');
   return rulesApi.rerunRule(params);
 }
 
