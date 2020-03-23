@@ -1,10 +1,12 @@
 'use strict';
 
 const AWS = require('aws-sdk');
+const { JSONPath } = require('jsonpath-plus');
 const pMap = require('p-map');
 const pRetry = require('p-retry');
 const url = require('url');
 
+const errors = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
 const { inTestMode, testAwsClient } = require('./test-utils');
@@ -354,4 +356,4 @@ exports.retryOnThrottlingException = (fn, options) =>
     pRetry(
       () => fn(...args).catch(retryIfThrottlingException),
       { maxTimeout: 5000, ...options }
-    )
+    );
