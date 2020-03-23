@@ -163,7 +163,6 @@ test.serial('getFailedExecutionMessage() returns the input message with the deta
 });
 
 test('getCumulusMessageFromExecutionEvent() returns the event input for a RUNNING event', async (t) => {
-  debugger;
   const event = {
     detail: {
       status: 'RUNNING',
