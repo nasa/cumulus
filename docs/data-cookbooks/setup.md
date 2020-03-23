@@ -74,7 +74,7 @@ Rules are used by to start processing workflows and the transformation process. 
 
 The Cumulus Core repository has an example of a Kinesis rule [here](https://github.com/nasa/cumulus/blob/master/example/data/rules/L2_HR_PIXC_kinesisRule.json).
 An example of an SNS rule configuration is [here](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/snsRuleDef.json).
-An example of an SQS rule configuration is [here](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/data/rules/sqs/MOD09GQ_006_sqsRule.json)
+An example of an SQS rule configuration is [here](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/data/rules/sqs/MOD09GQ_006_sqsRule.json).
 
 |Key  |Value  |Required|Description|
 |:---:|:-----:|:------:|-----------|

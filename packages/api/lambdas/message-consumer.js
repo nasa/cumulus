@@ -10,13 +10,14 @@ const kinesisSchema = require('./kinesis-consumer-event-schema.json');
 const { lookupCollectionInEvent, queueMessageForRule } = require('../lib/rulesHelpers');
 
 /**
- * `getKinesisRules` scans and returns DynamoDB rules table for enabled,
- * 'kinesis'-type rules associated with the * collection declared in the event
+ * `getKinesisRules` scans and returns DynamoDB rules table for enabled rules with the sourceArn in
+ * the `rule.value` field, then filters based on any collection name and version in the queryParams.
  *
- * @param {Object} queryParams - lambda event
+ * @param {Object} queryParams - any/all query params extracted from event object
  * @returns {Array} List of zero or more rules found from table scan
  */
-async function getKinesisRules(queryParams) {
+async function getRules(queryParams, originalMessageSource) {
+  if (!['kinesis', 'sns'].includes(originalMessageSource)) throw new Error('Unrecognized event source');
   const names = {
     '#st': 'state',
     '#rl': 'rule',
@@ -25,7 +26,7 @@ async function getKinesisRules(queryParams) {
   let filter = '#st = :enabledState AND #rl.#tp = :ruleType';
   const values = {
     ':enabledState': 'ENABLED',
-    ':ruleType': 'kinesis'
+    ':ruleType': originalMessageSource
   };
   if (queryParams.collectionName) {
     values[':collectionName'] = queryParams.collectionName;
@@ -45,68 +46,20 @@ async function getKinesisRules(queryParams) {
     filter += ' AND #rl.#vl = :ruleValue';
   }
   const model = new Rule();
-  const kinesisRules = await model.scan({
+  const rulesQueryResultsForSourceArn = await model.scan({
     names,
     filter,
     values
   });
 
-  return kinesisRules.Items;
-}
-
-/**
- * `getSnsRules` scans and returns DynamoDB rules table for enabled,
- * 'sns'-type rules associated with the * collection declared in the event
- *
- * @param {Object} queryParams - sns topic arn
- * @returns {Array} List of zero or more rules found from table scan
- */
-async function getSnsRules(queryParams) {
-  const names = {
-    '#st': 'state',
-    '#rl': 'rule',
-    '#tp': 'type'
-  };
-  let filter = '#st = :enabledState AND #rl.#tp = :ruleType';
-  const values = {
-    ':enabledState': 'ENABLED',
-    ':ruleType': 'sns'
-  };
-  if (queryParams.collectionName) {
-    values[':collectionName'] = queryParams.collectionName;
-    names['#col'] = 'collection';
-    names['#nm'] = 'name';
-    filter += ' AND #col.#nm = :collectionName';
+  const rules = rulesQueryResultsForSourceArn.Items || [];
+  if (rules.length === 0) {
+    throw new Error(
+      `No rules found that matched any/all of source ARN ${ruleParam.sourceArn} and `
+      + `collection { name: ${ruleParam.name}, version: ${ruleParam.version} }`
+    );
   }
-  if (queryParams.collectionVersion) {
-    values[':collectionVersion'] = queryParams.collectionVersion;
-    names['#col'] = 'collection';
-    names['#vr'] = 'version';
-    filter += ' AND #col.#vr = :collectionVersion';
-  }
-  if (queryParams.sourceArn) {
-    values[':ruleValue'] = queryParams.sourceArn;
-    names['#vl'] = 'value';
-    filter += ' AND #rl.#vl = :ruleValue';
-  }
-  const model = new Rule();
-  const snsRules = await model.scan({
-    names,
-    filter,
-    values
-  });
-
-  return snsRules.Items;
-}
-
-async function getRules(param, originalMessageSource) {
-  if (originalMessageSource === 'kinesis') {
-    return getKinesisRules(param);
-  }
-  if (originalMessageSource === 'sns') {
-    return getSnsRules(param);
-  }
-  throw new Error('Unrecognized event source');
+  return rules;
 }
 
 /**
