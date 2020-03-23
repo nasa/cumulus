@@ -30,6 +30,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - the `messageConsumer` for `sns` and `kinesis`-type rules now fetches the collection
     information from the message.
 
+### Deprecated
+
+- **CUMULUS-1799**
+  - Deprecate `@cumulus/common/Semaphore`
+
 ### Removed
 
 - **CUMULUS-1799**: Deprecated code removals
