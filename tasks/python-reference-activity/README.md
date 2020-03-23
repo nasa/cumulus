@@ -1,10 +1,10 @@
 # @cumulus/python-reference-activity
 
-This 'task' is a reference activity implementation that is included with Cumulus to allow integration testing of the `cumulus message adapter` and `cumulus-process-py` with a deployed activity.
+This 'task' is a reference activity implementation that is included with Cumulus to allow integration testing of the `Cumulus message adapter` and [`cumulus-process-py`](https://github.com/nasa/cumulus-process-py) with a deployed activity.
 
 ## Development
 
-Developmental use of this lambda is intended to be simple - the processing activity runs an activity through the CMA and returns a static processing output, integration tests can be then built against the `Reference Activity` step in the `PythonProcess` workflow in combination with the `Reference Task` step.
+Developmental use of this lambda is intended to be simple - the processing activity runs an activity through the CMA and returns a static processing output, integration tests can be then built against the `Reference Activity` step in the `PythonProcess` workflow.
 
 ### Requirements
 

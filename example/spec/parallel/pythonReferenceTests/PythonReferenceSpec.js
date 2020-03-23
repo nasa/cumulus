@@ -1,11 +1,12 @@
 'use strict';
 
-const workflowName = 'PythonReferenceWorkflow';
 
 const { ActivityStep, LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
 
 const { loadConfig } = require('../../helpers/testUtils');
+
+const workflowName = 'PythonReferenceWorkflow';
 
 describe('The Python Reference workflow', () => {
   let config;
