@@ -12,7 +12,7 @@ const {
   hasQueueAndExecutionLimit
 } = require('@cumulus/common/message');
 
-const { decrementQueueSemaphore } = require('../lib/semaphore');
+const { decrementQueueSemaphore } = require('../lib/semaphoreUtils');
 
 /**
  * Determine if workflow needs a semaphore decrement.
