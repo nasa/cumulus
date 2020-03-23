@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-1795**
+  - Added an IAM policy on the Cumulus EC2 creation to enable SSM when the `deploy_to_ngap` flag is true
+
+### Removed
+
+- **CUMULUS-1799**
+  - Removed deprecated method `@cumulus/api/models/Granule.createGranulesFromSns()`
+  - Removed deprecated method `@cumulus/api/models/Granule.removeGranuleFromCmr()`
+  - Removed `@cumulus/cmrjs/cmr-utils/getGranuleId()`
+  - Removed `@cumulus/cmrjs/cmr-utils/getCmrFiles()`
+  - Removed `@cumulus/cmrjs/cmr/CMR` class
+  - Removed `@cumulus/cmrjs/cmr/CMRSearchConceptQueue` class
+  - Removed `@cumulus/cmrjs/utils/getHost()`
+  - Removed `@cumulus/cmrjs/utils/getIp()`
+  - Removed `@cumulus/cmrjs/utils/hostId()`
+  - Removed `@cumulus/cmrjs/utils/updateToken()`
+  - Removed `@cumulus/cmrjs/utils/ummVersion()`
+  - Removed `@cumulus/cmrjs/utils/validateUMMG()`
+  - Removed `@cumulus/ingest/aws/getEndpoint()`
+  - Removed `@cumulus/ingest/aws/getExecutionUrl()`
+  - Removed `@cumulus/ingest/aws/invoke()`
+  - Removed `@cumulus/ingest/aws/CloudWatch` class
+  - Removed `@cumulus/ingest/aws/ECS` class
+  - Removed `@cumulus/ingest/aws/Events` class
+  - Removed `@cumulus/ingest/aws/SQS` class
+  - Removed `@cumulus/ingest/aws/StepFunction` class
+
+## [v1.20.0] 2020-03-12
+
 ### BREAKING CHANGES
 
 - **CUMULUS-1714**
@@ -15,22 +46,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Notable chanegs
 
 - **CUMULUS-1739** - You can now exclude Elasticsearch from your `tf-modules/data-persistence` deployment (via `include_elasticsearch = false`) and your `tf-modules/cumulus` module will still deploy successfully.
+
 - **CUMULUS-1769** - If you set `deploy_to_ngap = true` for the `tf-modules/archive` Terraform module, **you can only deploy your archive API gateway as `PRIVATE`**, not `EDGE`.
 
 ### Added
 
+- Added `@cumulus/aws-client/S3.getS3ObjectReadStreamAsync()` to deal with S3 eventual consistency issues by checking for the existence an S3 object with retries before getting a readable stream for that object.
 - **CUMULUS-1769**
   - Added `deploy_to_ngap` boolean variable for the `tf-modules/cumulus` and `tf-modules/archive` Terraform modules. This variable is required. **For those deploying to NGAP environments, this variable should always be set to `true`.**
-
-### Added
-
 - **HYRAX-70**
   - Add the hyrax-metadata-update task
-
-- Added `@cumulus/aws-client/S3.getS3ObjectReadStreamAsync()` to deal with S3 eventual consistency issues by checking for the existence an S3 object with retries before getting a readable stream for that object.
-
-- **CUMULUS-1795**
-  - Added an IAM policy on the Cumulus EC2 creation to enable SSM when the `deploy_to_ngap` flag is true
 
 ### Changed
 
@@ -38,6 +63,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1739**
   - Updated `tf-modules/data-persistence` to make Elasticsearch alarm resources and outputs conditional on the `include_elasticsearch` variable
   - Updated `@cumulus/aws-client/S3.getObjectSize` to include automatic retries for any failures from `S3.headObject`
+- **CUMULUS-1784**
+  - Updated `@cumulus/api/lib/DistributionEvent.remoteIP()` to parse the IP address in an S3 access log from the `A-sourceip` query parameter if present, otherwise fallback to the original parsing behavior.
 - **CUMULUS-1768**
   - The `stats/summary` endpoint reports the distinct collections for the number of granules reported
 
@@ -47,10 +74,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `elasticsearch_domain_arn`
   - `elasticsearch_hostname`
   - `elasticsearch_security_group_id`
+
 - **CUMULUS-1768**
   - Fixed the `stats/` endpoint so that data is correctly filtered by timestamp and `processingTime` is calculated correctly.
+
 - **CUMULUS-1769**
   - In the `tf-modules/archive` Terraform module, the `lifecycle` block ignoring changes to the `policy` of the archive API gateway is now only enforced if `deploy_to_ngap = true`. This fixes a bug where users deploying outside of NGAP could not update their API gateway's resource policy when going from `PRIVATE` to `EDGE`, preventing their API from being accessed publicly.
+
 - **CUMULUS-1775**
   - Fix/update api endpoint to use updated google auth endpoints such that it will work with new accounts
 
@@ -2409,7 +2439,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v1.19.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v1.20.0...HEAD
+[v1.20.0]: https://github.com/nasa/cumulus/compare/v1.19.0...v1.20.0
 [v1.19.0]: https://github.com/nasa/cumulus/compare/v1.18.0...v1.19.0
 [v1.18.0]: https://github.com/nasa/cumulus/compare/v1.17.0...v1.18.0
 [v1.17.0]: https://github.com/nasa/cumulus/compare/v1.16.1...v1.17.0

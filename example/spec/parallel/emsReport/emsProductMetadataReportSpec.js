@@ -43,6 +43,8 @@ describe('The EMS product metadata report', () => {
 
   describe('After execution of EmsProductMetadataReport lambda', () => {
     let lambdaOutput;
+    let beforeAllError;
+
     beforeAll(async () => {
       const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
       AWS.config.update({ region: region });
@@ -50,16 +52,24 @@ describe('The EMS product metadata report', () => {
       const endTime = moment.utc().add(1, 'days').startOf('day').format();
       const startTime = moment.utc().startOf('day').format();
 
-      const response = await lambda().invoke({
-        FunctionName: emsProductMetadataReportLambda,
-        Payload: JSON.stringify({
-          startTime,
-          endTime
-        })
-      }).promise()
-        .catch((err) => console.log('invoke err', err));
+      try {
+        const response = await lambda().invoke({
+          FunctionName: emsProductMetadataReportLambda,
+          Payload: JSON.stringify({
+            startTime,
+            endTime
+          })
+        }).promise();
+        lambdaOutput = JSON.parse(response.Payload);
+      } catch (err) {
+        beforeAllError = err;
+      }
+    });
 
-      lambdaOutput = JSON.parse(response.Payload);
+    beforeEach(() => {
+      if (beforeAllError) {
+        fail(beforeAllError);
+      }
     });
 
     it('generates an EMS product metadata report', async () => {

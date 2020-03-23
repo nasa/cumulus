@@ -3,10 +3,6 @@
 const got = require('got');
 const { parseString } = require('xml2js');
 const {
-  CMR,
-  CMRSearchConceptQueue
-} = require('./cmr');
-const {
   ValidationError,
   updateToken,
   getUrl,
@@ -16,9 +12,7 @@ const {
 } = require('./utils');
 const {
   constructOnlineAccessUrl,
-  getGranuleId,
   getGranuleTemporalInfo,
-  getCmrFiles,
   isCMRFile,
   metadataObjectFromCMRFile,
   publish2CMR,
@@ -75,14 +69,10 @@ async function getFullMetadata(cmrLink) {
 }
 
 module.exports = {
-  CMR,
-  CMRSearchConceptQueue,
   constructOnlineAccessUrl,
   ValidationError,
-  getCmrFiles,
   getFullMetadata,
   getGranuleTemporalInfo,
-  getGranuleId,
   getHost,
   getMetadata,
   getUrl,
