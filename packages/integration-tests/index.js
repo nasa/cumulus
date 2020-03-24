@@ -31,10 +31,10 @@ const ProvidersModel = require('@cumulus/api/models/providers');
 const RulesModel = require('@cumulus/api/models/rules');
 const collectionsApi = require('@cumulus/api-client/collections');
 const providersApi = require('@cumulus/api-client/providers');
-const rulesApi = require('./api/rulesApi');
-const emsApi = require('./api/emsApi');
-const executionsApi = require('./api/executionsApi');
-const granulesApi = require('./api/granulesApi');
+const rulesApi = require('./api/rules');
+const emsApi = require('./api/ems');
+const executionsApi = require('./api/executions');
+const granulesApi = require('./api/granules');
 const api = require('./api/api');
 
 const EarthdataLogin = require('./api/EarthdataLogin');
