@@ -3,7 +3,7 @@ resource "aws_lambda_function" "python_reference_task" {
   filename         = "${path.module}/../../tasks/python-reference-task/dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../tasks/python-reference-task/dist/lambda.zip")
   handler          = "initial_task.handler"
-  role             = var.lambda_processing_role_arn
+  role             = module.cumulus.lambda_processing_role_arn
   runtime          = "python3.7"
   timeout          = 300
   memory_size      = 256
@@ -12,18 +12,17 @@ resource "aws_lambda_function" "python_reference_task" {
 
   environment {
     variables = {
-      CMR_ENVIRONMENT             = var.cmr_environment
       stackName                   = var.prefix
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
     }
   }
 
   dynamic "vpc_config" {
-    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    for_each = length(var.subnet_ids) == 0 ? [] : [1]
     content {
-      subnet_ids = var.lambda_subnet_ids
+      subnet_ids = var.subnet_ids
       security_group_ids = [
-        aws_security_group.no_ingress_all_egress[0].id
+        aws_security_group.no_ingress_all_egress.id
       ]
     }
   }

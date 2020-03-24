@@ -72,10 +72,6 @@ output "pdr_status_check_task" {
   value = module.ingest.pdr_status_check_task
 }
 
-output "python_reference_task" {
-  value = module.ingest.python_reference_task
-}
-
 output "queue_granules_task" {
   value = module.ingest.queue_granules_task
 }

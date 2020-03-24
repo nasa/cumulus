@@ -67,7 +67,7 @@ module "python_reference_workflow" {
         }
       },
       "Type": "Task",
-      "Resource": "${module.cumulus.python_reference_task.task_arn}",
+      "Resource": "${aws_lambda_function.python_reference_task.arn}",
       "Retry": [
         {
           "ErrorEquals": [
