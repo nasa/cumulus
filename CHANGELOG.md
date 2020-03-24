@@ -34,17 +34,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1799**
   - Deprecate `@cumulus/common/CloudWatchLogger`
-  - Deprecate `@cumulus/common/concurrency.limit`
-  - Deprecate `@cumulus/common/concurrency.mapTolerant`
-  - Deprecate `@cumulus/common/concurrency.promiseUrl`
-  - Deprecate `@cumulus/common/concurrency.toPromise`
-  - Deprecate `@cumulus/common/concurrency.unless`
-  - Deprecate `@cumulus/common/config.buildSchema`
-  - Deprecate `@cumulus/common/config.parseConfig`
-  - Deprecate `@cumulus/common/config.resolveResource`
-  - Deprecate `@cumulus/common/config.resourceToArn`
+  - Deprecate `@cumulus/common/concurrency.limit()`
+  - Deprecate `@cumulus/common/concurrency.mapTolerant()`
+  - Deprecate `@cumulus/common/concurrency.promiseUrl()`
+  - Deprecate `@cumulus/common/concurrency.toPromise()`
+  - Deprecate `@cumulus/common/concurrency.unless()`
+  - Deprecate `@cumulus/common/config.buildSchema()`
+  - Deprecate `@cumulus/common/config.parseConfig()`
+  - Deprecate `@cumulus/common/config.resolveResource()`
+  - Deprecate `@cumulus/common/config.resourceToArn()`
   - Deprecate `@cumulus/common/FieldPattern`
   - Deprecate `@cumulus/common/Semaphore`
+  - Deprecate `@cumulus/common/test-utils.throttleOnce()`
 
 ### Removed
 
