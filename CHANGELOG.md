@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- **CUMULUS-1799**
+- **CUMULUS-1799**: Deprecated code removals
   - Removed deprecated method `@cumulus/api/models/Granule.createGranulesFromSns()`
   - Removed deprecated method `@cumulus/api/models/Granule.removeGranuleFromCmr()`
   - Removed from `@cumulus/common/aws`:
