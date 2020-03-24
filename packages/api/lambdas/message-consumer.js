@@ -28,36 +28,28 @@ async function getRules(queryParams, originalMessageSource) {
     ':enabledState': 'ENABLED',
     ':ruleType': originalMessageSource
   };
-  if (queryParams.collectionName) {
-    values[':collectionName'] = queryParams.collectionName;
-    names['#col'] = 'collection';
-    names['#nm'] = 'name';
-    filter += ' AND #col.#nm = :collectionName';
-  }
-  if (queryParams.collectionVersion) {
-    values[':collectionVersion'] = queryParams.collectionVersion;
-    names['#col'] = 'collection';
-    names['#vr'] = 'version';
-    filter += ' AND #col.#vr = :collectionVersion';
-  }
   if (queryParams.sourceArn) {
     values[':ruleValue'] = queryParams.sourceArn;
     names['#vl'] = 'value';
     filter += ' AND #rl.#vl = :ruleValue';
   }
   const model = new Rule();
-  const rulesQueryResultsForSourceArn = await model.scan({
+  const rulesQueryResultsForSourceArn = (await model.scan({
     names,
     filter,
     values
-  });
+  })).Items;
+  const rules = rulesQueryResultsForSourceArn
+    .filter((r) => r.collection.name === queryParams.name)
+    .filter((r) => r.collection.version === queryParams.version)
 
-  const rules = rulesQueryResultsForSourceArn.Items || [];
   if (rules.length === 0) {
-    throw new Error(
-      `No rules found that matched any/all of source ARN ${ruleParam.sourceArn} and `
-      + `collection { name: ${ruleParam.name}, version: ${ruleParam.version} }`
+    log.warn(
+      `No rules found that matched all of source ARN ${ruleParam.sourceArn} and `
+      + `collection { name: ${ruleParam.name}, version: ${ruleParam.version} }, `
+      + 'falling back to all rules for the source ARN'
     );
+    return rulesQueryResultsForSourceArn;
   }
   return rules;
 }
