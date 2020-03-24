@@ -2,13 +2,13 @@
 
 const sinon = require('sinon');
 const test = require('ava');
+const cryptoRandomString = require('crypto-random-string');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { randomId } = require('@cumulus/common/test-utils');
 const DynamoDb = require('../DynamoDb');
 const awsServices = require('../services');
 
 test.before(async () => {
-  process.env.tableName = randomId('table');
+  process.env.tableName = `table${cryptoRandomString({ length: 10 })}`;
 
   await awsServices.dynamodb().createTable({
     TableName: process.env.tableName,
@@ -35,7 +35,7 @@ test.after.always(
 
 test('DynamoDb.get() returns an existing item', async (t) => {
   const { client } = t.context;
-  const hash = randomId('hash');
+  const hash = `hash${cryptoRandomString({ length: 10 })}`;
   const item = {
     hash,
     foo: 'bar'
@@ -65,7 +65,7 @@ test('DynamoDb.get() throws RecordDoesNotExist when item does not exist', async 
       tableName: process.env.tableName,
       client,
       item: {
-        hash: randomId('hash')
+        hash: `hash${cryptoRandomString({ length: 10 })}`
       }
     }),
     RecordDoesNotExist
@@ -88,7 +88,7 @@ test.serial('DynamoDb.get() throws general error from failure on client.get', as
         tableName: process.env.tableName,
         client,
         item: {
-          hash: randomId('hash')
+          hash: `hash${cryptoRandomString({ length: 10 })}`
         }
       }),
       { message: /fail/ }
@@ -108,7 +108,7 @@ test.serial('DynamoDb.scan() properly returns all paginated results', async (t) 
     await client.put({
       TableName: process.env.tableName,
       Item: {
-        hash: randomId('hash'),
+        hash: `hash${cryptoRandomString({ length: 10 })}`,
         foo: 'bar'
       }
     }).promise();
