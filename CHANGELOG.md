@@ -9,9 +9,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### PLEASE NOTE
 
 - **CUMULUS-1762**: the `messageConsumer` for `sns` and `kinesis`-type rules now fetches
-  the collection information from the message. You should ensure that your collection name
-  and version line up with what is in the notification for these ingest notifications to
-  process. If no matching rule is found, an error will be thrown and logged in the
+  the collection information from the message. You should ensure that your rule's collection
+  name and version match what is in the message for these ingest messages to be processed.
+  If no matching rule is found, an error will be thrown and logged in the
   `messageConsumer` Lambda function's log group.
 
 ### Changed

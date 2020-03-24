@@ -17,7 +17,9 @@ const { lookupCollectionInEvent, queueMessageForRule } = require('../lib/rulesHe
  * @returns {Array} List of zero or more rules found from table scan
  */
 async function getRules(queryParams, originalMessageSource) {
-  if (!['kinesis', 'sns'].includes(originalMessageSource)) throw new Error('Unrecognized event source');
+  if (!['kinesis', 'sns'].includes(originalMessageSource)) {
+    throw new Error(`Unrecognized event source: ${originalMessageSource}. Expected "kinesis" or "sns"`);
+  }
   const names = {
     '#st': 'state',
     '#rl': 'rule',
