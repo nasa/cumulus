@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### PLEASE NOTE
+
+- **CUMULUS-1762**: the `messageConsumer` for `sns` and `kinesis`-type rules now fetches
+  the collection information from the message. You should ensure that your collection name
+  and version line up with what is in the notification for these ingest notifications to
+  process. If no matching rule is found, it will schedule executions for all rules matching the
+  topic or stream's ARN.
+
+### Changed
+
+- **CUMULUS-1762**
+  - the `messageConsumer` for `sns` and `kinesis`-type rules now fetches the collection
+    information from the message.
+
 ### Removed
 
 - **CUMULUS-1799**
