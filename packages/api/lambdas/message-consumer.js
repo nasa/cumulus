@@ -41,13 +41,13 @@ async function getRules(queryParams, originalMessageSource) {
   })).Items;
   const rules = rulesQueryResultsForSourceArn
     .filter((r) => r.collection.name === queryParams.name)
-    .filter((r) => r.collection.version === queryParams.version)
+    .filter((r) => r.collection.version === queryParams.version);
 
   if (rules.length === 0) {
     log.warn(
-      `No rules found that matched all of source ARN ${ruleParam.sourceArn} and `
-      + `collection { name: ${ruleParam.name}, version: ${ruleParam.version} }, `
-      + 'falling back to all rules for the source ARN'
+      `No rules found that matched all of source ARN ${queryParams.sourceArn} and `
+      + `collection { name: ${queryParams.name}, version: ${queryParams.version} }`
+      + ', falling back to all rules for the source ARN'
     );
     return rulesQueryResultsForSourceArn;
   }
