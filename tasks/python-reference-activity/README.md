@@ -1,6 +1,6 @@
 # @cumulus/python-reference-activity
 
-This 'task' is a reference activity implementation that is included with Cumulus to allow integration testing of the `Cumulus message adapter` and [`cumulus-process-py`](https://github.com/nasa/cumulus-process-py) with a deployed activity.
+This 'task' is a reference activity implementation that is included with Cumulus to allow integration testing of the [`cumulus-message-adapter`](https://github.com/nasa/cumulus-message-adapter) and [`cumulus-process-py`](https://github.com/nasa/cumulus-process-py) with a deployed activity.
 
 ## Development
 
