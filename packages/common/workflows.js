@@ -17,6 +17,7 @@ const getWorkflowFileKey = (stackName, workflowName) =>
  * @returns {Promise.<Object>} template as a JSON object
  */
 async function getWorkflowTemplate(stackName, bucketName) {
+  deprecate('@cumulus/common/workflows.getWorkflowTemplate()', '1.20.0');
   const key = templateKey(stackName);
   const templateJson = await getS3Object(bucketName, key);
   return JSON.parse(templateJson.Body.toString());
