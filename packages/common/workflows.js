@@ -33,7 +33,6 @@ async function getWorkflowFile(stackName, bucketName, workflowName) {
   return JSON.parse(wfJson.Body.toString());
 }
 
-
 /**
  * Get the workflow ARN for the given workflow from the
  * template stored on S3
