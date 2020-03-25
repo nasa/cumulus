@@ -20,8 +20,12 @@ const {
   ecs,
   sfn
 } = require('@cumulus/aws-client/services');
+const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const { getWorkflowTemplate, getWorkflowArn } = require('@cumulus/common/workflows');
+const {
+  templateKey,
+  getWorkflowArn
+} = require('@cumulus/common/workflows');
 const { readJsonFile } = require('@cumulus/common/FileUtils');
 const { globalReplace } = require('@cumulus/common/string');
 const { sleep } = require('@cumulus/common/util');
@@ -755,7 +759,7 @@ async function buildWorkflow(
   payload,
   meta
 ) {
-  const template = await getWorkflowTemplate(stackName, bucketName);
+  const template = await getJsonS3Object(bucketName, templateKey(stackName));
 
   if (collection) {
     template.meta.collection = await collectionsApi.getCollection(

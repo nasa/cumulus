@@ -1,5 +1,6 @@
 'use strict';
 
+const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { sendSQSMessage } = require('@cumulus/aws-client/SQS');
 const { getExecutionArn } = require('@cumulus/aws-client/StepFunctions');
 
@@ -10,8 +11,9 @@ const {
 
 const {
   getWorkflowArn,
-  getWorkflowTemplate
+  templateKey
 } = require('@cumulus/common/workflows');
+
 
 /**
  * Enqueue a PDR to be parsed
@@ -37,7 +39,7 @@ async function enqueueParsePdrMessage({
   systemBucket,
   queueUrl
 }) {
-  const messageTemplate = await getWorkflowTemplate(stack, systemBucket);
+  const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
   const parsePdrArn = await getWorkflowArn(stack, systemBucket, parsePdrWorkflow);
   const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
   const payload = { pdr };
@@ -93,7 +95,7 @@ async function enqueueGranuleIngestMessage({
   systemBucket,
   queueUrl
 }) {
-  const messageTemplate = await getWorkflowTemplate(stack, systemBucket);
+  const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
   const ingestGranuleArn = await getWorkflowArn(stack, systemBucket, granuleIngestWorkflow);
   const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
 

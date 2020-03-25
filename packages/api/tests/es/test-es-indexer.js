@@ -11,11 +11,14 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const cmrjs = require('@cumulus/cmrjs');
 const { randomString } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
-const workflows = require('@cumulus/common/workflows');
 
 const indexer = rewire('../../es/indexer');
 const { Search } = require('../../es/search');
-const models = require('../../models');
+const Collection = require('../../models/collections');
+const Execution = require('../../models/executions');
+const Granule = require('../../models/granules');
+const Pdr = require('../../models/pdrs');
+const Rule = require('../../models/rules');
 const { fakeGranuleFactory, fakeCollectionFactory } = require('../../lib/testUtils');
 const { IndexExistsError } = require('../../lib/errors');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
@@ -47,19 +50,19 @@ const input = JSON.stringify(granuleSuccess);
 test.before(async (t) => {
   // create the tables
   process.env.CollectionsTable = collectionTable;
-  collectionModel = new models.Collection();
+  collectionModel = new Collection();
   await collectionModel.createTable();
 
   process.env.ExecutionsTable = executionTable;
-  executionModel = new models.Execution();
+  executionModel = new Execution();
   await executionModel.createTable();
 
   process.env.GranulesTable = granuleTable;
-  granuleModel = new models.Granule();
+  granuleModel = new Granule();
   await granuleModel.createTable();
 
   process.env.PdrsTable = pdrsTable;
-  pdrsModel = new models.Pdr();
+  pdrsModel = new Pdr();
   await pdrsModel.createTable();
 
   t.context.esAlias = randomString();
@@ -68,7 +71,6 @@ test.before(async (t) => {
   // create the elasticsearch index and add mapping
   await bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
   esClient = await Search.es();
-
   // create buckets
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
@@ -78,7 +80,6 @@ test.before(async (t) => {
     lastUpdateDateTime: '2018-04-20T21:45:45.524Z',
     productionDateTime: '2018-04-25T21:45:45.524Z'
   };
-
   cmrStub = sinon.stub(cmrjs, 'getGranuleTemporalInfo').callsFake(() => fakeMetadata);
 
   stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').returns({
@@ -86,10 +87,9 @@ test.before(async (t) => {
     startDate: new Date(Date.UTC(2019, 6, 28)),
     stopDate: new Date(Date.UTC(2019, 6, 28, 1))
   });
-
   existsStub = sinon.stub(s3Utils, 'fileExists').returns(true);
-  templateStub = sinon.stub(workflows, 'getWorkflowTemplate').returns({});
-  workflowStub = sinon.stub(workflows, 'getWorkflowFile').returns({});
+  templateStub = sinon.stub(Rule, 'buildPayload')
+    .callsFake(() => ({}));
 });
 
 test.after.always(async () => {
@@ -105,7 +105,6 @@ test.after.always(async () => {
   stepFunctionsStub.restore();
   existsStub.restore();
   templateStub.restore();
-  workflowStub.restore();
 });
 
 test.serial('indexing a deletedgranule record', async (t) => {
@@ -427,7 +426,7 @@ test.serial('reingest a granule', async (t) => {
 
   await indexer.reingest(record);
 
-  const g = new models.Granule();
+  const g = new Granule();
   const newRecord = await g.get({ granuleId: record.granuleId });
 
   t.is(newRecord.status, 'running');
