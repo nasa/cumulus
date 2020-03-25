@@ -8,6 +8,7 @@ This 'task' is a reference activity implementation that is included with Cumulus
 ## Development
 
 Developmental use of this lambda is intended to be simple - the processing activity runs an activity through the CMA and returns a static processing output, integration tests can be then built against the `Reference Activity` step in the [`python_reference_workflow`].
+
 ### Requirements
 
 To develop against this task, you should be using python > 3.6 (CMA compatibility is baselined at 3.6).    Once you have a python env enabled:
