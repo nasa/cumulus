@@ -1,0 +1,183 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Fake http and ftp providers for use with Cumulus integration tests
+Parameters:
+  Bucket:
+    Type: String
+  FtpPassword:
+    Type: String
+  LatestAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+  NGAPProtAppInstanceMinimalPolicyName:
+    Type: String
+  PermissionsBoundary:
+    Type: String
+  Subnet:
+    Type: AWS::EC2::Subnet::Id
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+Resources:
+
+  Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${NGAPProtAppInstanceMinimalPolicyName}"
+      PermissionsBoundary: !Sub "arn:aws:iam::${AWS::AccountId}:policy/${PermissionsBoundary}"
+      Policies:
+        - PolicyName: default
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: "S3:PutObject"
+                Resource: !Sub "arn:aws:s3:::${Bucket}/fake-provider-ip"
+              - Effect: Allow
+                Action: "autoscaling:SetInstanceHealth"
+                Resource: "*"
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref Role
+
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Fake provider security group
+      SecurityGroupIngress:
+        - IpProtocol: "-1"
+          CidrIp: "0.0.0.0/0"
+          FromPort: 0
+          ToPort: 0
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: "0.0.0.0/0"
+          FromPort: 0
+          ToPort: 0
+      VpcId: !Ref VpcId
+
+  LaunchConfiguration:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      AssociatePublicIpAddress: false
+      IamInstanceProfile: !Ref InstanceProfile
+      ImageId: !Ref LatestAmiId
+      InstanceMonitoring: false
+      InstanceType: t3.micro
+      SecurityGroups:
+        - !Ref SecurityGroup
+      UserData:
+        Fn::Base64:
+          Fn::Sub: |
+            #!/bin/bash -ex
+
+            # Fetch the test data
+            (cd /tmp && git clone https://github.com/nasa/cumulus.git)
+
+            # Configure http
+            yum install -y httpd
+            sed -i 's/^Listen.*/Listen 3030/' /etc/httpd/conf/httpd.conf
+            service httpd start
+
+            # Stage http test data
+            cp /tmp/cumulus/packages/test-data/index.html /var/www/html/
+            rsync -a /tmp/cumulus/packages/test-data/pdrs /var/www/html/
+            rsync -a /tmp/cumulus/packages/test-data/granules /var/www/html/
+
+            chown -R root:root /var/www/html
+            find /var/www/html -type d -exec chmod 0755 {} \;
+            find /var/www/html -type f -exec chmod 0644 {} \;
+
+            # Configure ftp
+            yum install -y vsftpd
+
+            cat > /etc/vsftpd/vsftpd.conf <<EOS
+            anonymous_enable=NO
+            chroot_list_enable=NO
+            chroot_local_user=YES
+            connect_from_port_20=YES
+            dirmessage_enable=YES
+            listen=YES
+            local_enable=YES
+            local_umask=022
+            pam_service_name=vsftpd
+            tcp_wrappers=YES
+            userlist_deny=NO
+            userlist_enable=YES
+            write_enable=YES
+            xferlog_enable=YES
+            xferlog_std_format=YES
+            EOS
+
+            echo 'testuser' > /etc/vsftpd/chroot_list
+            echo 'testuser' > /etc/vsftpd/user_list
+
+            service vsftpd restart
+
+            mkdir /home/testuser
+            useradd -M --shell /sbin/nologin testuser
+            echo '${FtpPassword}' | passwd --stdin testuser
+
+            # Stage ftp test data
+            rsync -a /tmp/cumulus/packages/test-data/pdrs /home/testuser/
+            rsync -a /tmp/cumulus/packages/test-data/granules /home/testuser/
+
+            chown -R testuser:testuser /home/testuser
+            find /home/testuser -type d -exec chmod 0700 {} \;
+            find /home/testuser -type f -exec chmod 0600 {} \;
+
+            # Cleanup
+            rm -rf /tmp/cumulus
+
+            # Write the fake provider IP to S3
+            chmod 0755 /usr/local/bin/aws
+            curl -s http://169.254.169.254/latest/meta-data/local-ipv4 |\
+              /usr/local/bin/aws s3 cp - s3://${Bucket}/fake-provider-ip
+
+            # Configure health checks
+            cat > /usr/local/bin/healthcheck <<EOS
+            #!/bin/sh
+
+            curl -s -o /dev/null http://localhost:3030 \
+              && curl -s -o /dev/null ftp://testuser:${FtpPassword}@localhost/granules/checksums.csv \
+              || aws --region ${AWS::Region} \
+                   autoscaling set-instance-health \
+                   --instance-id $(curl -s http://169.254.169.254/latest/meta-data/instance-id) \
+                   --health-status Unhealthy
+            EOS
+
+            chmod 0755 /usr/local/bin/healthcheck
+
+            cat > /etc/cron.d/healthcheck <<EOS
+            * * * * * root /usr/local/bin/healthcheck
+            EOS
+
+            chmod 0644 /etc/cron.d/healthcheck
+
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MinInstancesInService: 0
+    Properties:
+      LaunchConfigurationName: !Ref LaunchConfiguration
+      MinSize: "1"
+      DesiredCapacity: "1"
+      MaxSize: "1"
+      HealthCheckGracePeriod: 60
+      Tags:
+        - Key: Name
+          Value: FakeProvider
+          PropagateAtLaunch: true
+      VPCZoneIdentifier:
+        - !Ref Subnet
