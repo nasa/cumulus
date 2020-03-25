@@ -6,10 +6,24 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### PLEASE NOTE
+
+- **CUMULUS-1762**: the `messageConsumer` for `sns` and `kinesis`-type rules now fetches
+  the collection information from the message. You should ensure that your rule's collection
+  name and version match what is in the message for these ingest messages to be processed.
+  If no matching rule is found, an error will be thrown and logged in the
+  `messageConsumer` Lambda function's log group.
+
 ### Added
 
 - **CUMULUS-1732**
   - Added Python task/activity workflow and integration test (`PythonReferenceSpec`) to test `cumulus-message-adapter-python`and `cumulus-process-py` integration.
+
+### Changed
+
+- **CUMULUS-1762**
+  - the `messageConsumer` for `sns` and `kinesis`-type rules now fetches the collection
+    information from the message.
 
 ### Removed
 
