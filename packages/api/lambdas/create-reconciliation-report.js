@@ -3,7 +3,10 @@
 const clonedeep = require('lodash.clonedeep');
 const keyBy = require('lodash.keyby');
 const moment = require('moment');
+<<<<<<< HEAD
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
+=======
+>>>>>>> remove use of bucketsConfigJsonObject
 const { buildS3Uri, getJsonS3Object } = require('@cumulus/aws-client/S3');
 const S3ListObjectsV2Queue = require('@cumulus/aws-client/S3ListObjectsV2Queue');
 const { s3 } = require('@cumulus/aws-client/services');
