@@ -4,11 +4,11 @@ const clonedeep = require('lodash.clonedeep');
 const keyBy = require('lodash.keyby');
 const moment = require('moment');
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
-const { buildS3Uri } = require('@cumulus/aws-client/S3');
+const { buildS3Uri, getJsonS3Object } = require('@cumulus/aws-client/S3');
 const S3ListObjectsV2Queue = require('@cumulus/aws-client/S3ListObjectsV2Queue');
 const { s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
-const bucketsConfigJsonObject = require('@cumulus/common/bucketsConfigJsonObject');
+const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 
 const CMR = require('@cumulus/cmr-client/CMR');
@@ -432,7 +432,7 @@ async function createReconciliationReport(params) {
   } = params;
 
   // Fetch the bucket names to reconcile
-  const bucketsConfigJson = await bucketsConfigJsonObject(systemBucket, stackName);
+  const bucketsConfigJson = await getJsonS3Object(systemBucket, getBucketsConfigKey(stackName))
   const dataBuckets = Object.values(bucketsConfigJson)
     .filter(isDataBucket).map((config) => config.name);
 

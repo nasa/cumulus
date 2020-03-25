@@ -12,26 +12,30 @@ const js2xmlParser = require('js2xmlparser');
 const {
   buildS3Uri,
   getS3Object,
+  getJsonS3Object,
   parseS3Uri,
   promiseS3Upload,
   s3GetObjectTagging,
   s3TagSetToQueryString
 } = require('@cumulus/aws-client/S3');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
-const { omit } = require('@cumulus/common/util');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
-const bucketsConfigJsonObject = require('@cumulus/common/bucketsConfigJsonObject');
 const { getLaunchpadToken } = require('@cumulus/common/launchpad');
 const log = require('@cumulus/common/log');
+const { getBucketsConfigKey } = require('@cumulus/common/stack');
+const { omit } = require('@cumulus/common/util');
 const errors = require('@cumulus/errors');
-
 const CMR = require('@cumulus/cmr-client/CMR');
 const { ummVersion } = require('@cumulus/cmr-client/UmmUtils');
+
 const {
   getUrl,
   xmlParseOptions,
   ummVersionToMetadataFormat
 } = require('./utils');
+
+// Only created to make mocking the request for buckets config easier.
+const getBucketsConfigJson = (bucket, stackName) => getJsonS3Object(bucket, getBucketsConfigKey(stackName));
 
 function getS3KeyOfFile(file) {
   if (file.filename) return parseS3Uri(file.filename).Key;
@@ -663,7 +667,7 @@ async function updateCMRMetadata({
   log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId}, cmrMetadata file ${filename}`);
   const buckets = inBuckets
         || new BucketsConfig(
-          await bucketsConfigJsonObject(process.env.system_bucket, process.env.stackName)
+          await getBucketsConfigJson(process.env.system_bucket, process.env.stackName)
         );
   const cmrCredentials = (published) ? await getCreds() : {};
   let theMetadata;
