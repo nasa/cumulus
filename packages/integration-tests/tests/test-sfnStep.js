@@ -56,7 +56,9 @@ test.serial('SfnStep.parseStepMessage returns correct output for for remote mess
     }
   };
 
-  const pullSfEventMock = SfnStepModule.__set__('pullStepFunctionEvent', async () => fullRemoteMessage);
+  const pullSfEventMock = SfnStepModule.__set__('StepFunctions', {
+    pullStepFunctionEvent: async () => fullRemoteMessage
+  });
 
   try {
     t.deepEqual(await SfnStep.parseStepMessage(event), fullRemoteMessage);
