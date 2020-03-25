@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-1732**
-  - Added Python task/activity workflow and integration test (`PythonReferenceSpec`) to test `cumulus-message-adapter-py`and `cumulus-process-py` integration.
+  - Added Python task/activity workflow and integration test (`PythonReferenceSpec`) to test `cumulus-message-adapter-python`and `cumulus-process-py` integration.
 
 ### Removed
 
