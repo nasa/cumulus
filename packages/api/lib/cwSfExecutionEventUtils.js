@@ -3,7 +3,6 @@
 const get = require('lodash.get');
 const set = require('lodash.set');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const { pullStepFunctionEvent } = require('@cumulus/aws-client/StepFunctions');
 const log = require('@cumulus/common/log');
 const { getMessageExecutionArn } = require('@cumulus/common/message');
 const {
@@ -90,7 +89,7 @@ const getCumulusMessageFromExecutionEvent = async (executionEvent) => {
     cumulusMessage = await getFailedExecutionMessage(inputMessage);
   }
 
-  const fullCumulusMessage = await pullStepFunctionEvent(cumulusMessage);
+  const fullCumulusMessage = await StepFunctions.pullStepFunctionEvent(cumulusMessage);
 
   const workflowStatus = executionStatusToWorkflowStatus(executionEvent.detail.status);
   set(fullCumulusMessage, 'meta.status', workflowStatus);
