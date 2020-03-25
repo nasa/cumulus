@@ -24,7 +24,7 @@ docker build -t cumuluss/cumulus-process-activity:{VERSION} .
 docker push cumuluss/cumulus-process-activity:{VERSION}
 ```
 
-Then update the [python_reference_workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/python_reference_workflow.tf) `python_processing_service` resource to utilize the correct image reference.
+Then update the `python_processing_service` resource in [python_reference_workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/python_reference_workflow.tf) to utilize the correct image reference.
 
 ***Note*** the activity will *not* automatically include the CMA in the same way `cumulus-ecs-task` does, as this module has not been similarly developed to pull down a deployed lambda and its layers. The current workflow for integrating the CMA with python activities is for users to create an image *per* activity, where the CMA is brought is as a dependency of `cumulus-process-py` or the module itself, and deploy that instead.
 
