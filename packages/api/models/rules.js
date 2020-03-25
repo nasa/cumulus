@@ -189,7 +189,10 @@ class Rule extends Manager {
 
     if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${key} for ${item.name}`);
 
-    const definition = await workflows.getWorkflowFile(stack, bucket, item.workflow);
+    const definition = await s3Utils.getJsonS3Object(
+      bucket,
+      workflows.getWorkflowFileKey(stack, item.workflow)
+    );
     const template = await s3Utils.getJsonS3Object(bucket, workflows.templateKey(stack));
 
     return {

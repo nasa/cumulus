@@ -1,6 +1,10 @@
 'use strict';
 
-const { getWorkflowList, getWorkflowFile } = require('@cumulus/common/workflows');
+const { getJsonS3Object } = require('@cumulus/aws-client/S3');
+const {
+  getWorkflowList,
+  getWorkflowFileKey
+} = require('@cumulus/common/workflows');
 const router = require('express-promise-router')();
 
 /**
@@ -27,7 +31,10 @@ async function list(req, res) {
 async function get(req, res) {
   const name = req.params.name;
   try {
-    const workflow = await getWorkflowFile(process.env.stackName, process.env.system_bucket, name);
+    const workflow = await getJsonS3Object(
+      process.env.system_bucket,
+      getWorkflowFileKey(process.env.stackName, name)
+    );
     return res.send(workflow);
   } catch (err) {
     if (err.name === 'NoSuchKey' || err.name === 'NoSuchBucket') {
