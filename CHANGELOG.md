@@ -13,27 +13,90 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- **CUMULUS-1799**
+- **CUMULUS-1799**: Deprecated code removals
   - Removed deprecated method `@cumulus/api/models/Granule.createGranulesFromSns()`
   - Removed deprecated method `@cumulus/api/models/Granule.removeGranuleFromCmr()`
-  - Removed `@cumulus/cmrjs/cmr-utils/getGranuleId()`
-  - Removed `@cumulus/cmrjs/cmr-utils/getCmrFiles()`
+  - Removed from `@cumulus/common/aws`:
+    - `apigateway()`
+    - `buildS3Uri()`
+    - `calculateS3ObjectChecksum()`
+    - `cf()`
+    - `cloudwatch()`
+    - `cloudwatchevents()`
+    - `cloudwatchlogs()`
+    - `createAndWaitForDynamoDbTable()`
+    - `createQueue()`
+    - `deleteSQSMessage()`
+    - `describeCfStackResources()`
+    - `downloadS3File()`
+    - `downloadS3Files()`
+    - `DynamoDbSearchQueue` class
+    - `dynamodbstreams()`
+    - `ec2()`
+    - `ecs()`
+    - `fileExists()`
+    - `findResourceArn()`
+    - `fromSfnExecutionName()`
+    - `getFileBucketAndKey()`
+    - `getJsonS3Object()`
+    - `getQueueUrl()`
+    - `getObjectSize()`
+    - `getS3ObjectReadStream()`
+    - `getSecretString()`
+    - `getStateMachineArn()`
+    - `headObject()`
+    - `isThrottlingException()`
+    - `kinesis()`
+    - `lambda()`
+    - `listS3Objects()`
+    - `promiseS3Upload()`
+    - `publishSnsMessage()`
+    - `putJsonS3Object()`
+    - `receiveSQSMessages()`
+    - `s3CopyObject()`
+    - `s3GetObjectTagging()`
+    - `s3Join()`
+    - `S3ListObjectsV2Queue` class
+    - `s3TagSetToQueryString()`
+    - `s3PutObjectTagging()`
+    - `secretsManager()`
+    - `sendSQSMessage()`
+    - `sfn()`
+    - `sns()`
+    - `sqs()`
+    - `sqsQueueExists()`
+    - `toSfnExecutionName()`
+    - `uploadS3FileStream()`
+    - `uploadS3Files()`
+    - `validateS3ObjectChecksum()`
+  - Removed `@cumulus/common/CloudFormationGateway` class
+  - Removed `@cumulus/common/concurrency/Mutex` class
+  - Removed `@cumulus/common/errors`
+  - Removed `@cumulus/common/sftp`
+  - Removed `@cumulus/common/string.unicodeEscape`
+  - Removed `@cumulus/cmrjs/cmr-utils.getGranuleId()`
+  - Removed `@cumulus/cmrjs/cmr-utils.getCmrFiles()`
   - Removed `@cumulus/cmrjs/cmr/CMR` class
   - Removed `@cumulus/cmrjs/cmr/CMRSearchConceptQueue` class
-  - Removed `@cumulus/cmrjs/utils/getHost()`
-  - Removed `@cumulus/cmrjs/utils/getIp()`
-  - Removed `@cumulus/cmrjs/utils/hostId()`
-  - Removed `@cumulus/cmrjs/utils/updateToken()`
+  - Removed `@cumulus/cmrjs/utils.getHost()`
+  - Removed `@cumulus/cmrjs/utils.getIp()`
+  - Removed `@cumulus/cmrjs/utils.hostId()`
   - Removed `@cumulus/cmrjs/utils/ummVersion()`
-  - Removed `@cumulus/cmrjs/utils/validateUMMG()`
-  - Removed `@cumulus/ingest/aws/getEndpoint()`
-  - Removed `@cumulus/ingest/aws/getExecutionUrl()`
+  - Removed `@cumulus/cmrjs/utils.updateToken()`
+  - Removed `@cumulus/cmrjs/utils.validateUMMG()`
+  - Removed `@cumulus/ingest/aws.getEndpoint()`
+  - Removed `@cumulus/ingest/aws.getExecutionUrl()`
   - Removed `@cumulus/ingest/aws/invoke()`
   - Removed `@cumulus/ingest/aws/CloudWatch` class
   - Removed `@cumulus/ingest/aws/ECS` class
   - Removed `@cumulus/ingest/aws/Events` class
   - Removed `@cumulus/ingest/aws/SQS` class
   - Removed `@cumulus/ingest/aws/StepFunction` class
+  - Removed `@cumulus/ingest/util.normalizeProviderPath()`
+  - Removed `@cumulus/integration-tests/index.listCollections()`
+  - Removed `@cumulus/integration-tests/index.listProviders()`
+  - Removed `@cumulus/integration-tests/index.rulesList()`
+  - Removed `@cumulus/integration-tests/api/api.addCollectionApi()`
 
 ## [v1.20.0] 2020-03-12
 

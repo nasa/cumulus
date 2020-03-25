@@ -1,8 +1,8 @@
-const DynamoDb = require('./DynamoDb');
 const {
   isConditionalCheckException,
   ResourcesLockedError
-} = require('./errors');
+} = require('@cumulus/errors');
+const DynamoDb = require('./DynamoDb');
 const log = require('./log');
 
 class Semaphore {
