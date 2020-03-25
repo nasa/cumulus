@@ -13,6 +13,7 @@ async function bucketsConfigJsonObject(
   bucket = process.env.system_bucket,
   stackName = process.env.stackName
 ) {
+  deprecate('@cumulus/common/bucketsConfigJsonObject', '1.20.0');
   const Key = `${stackName}/workflows/buckets.json`;
   try {
     const bucketsString = await aws.s3().getObject({
