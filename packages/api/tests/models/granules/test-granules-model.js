@@ -2,6 +2,7 @@
 
 const cloneDeep = require('lodash.clonedeep');
 const test = require('ava');
+const rewire = require('rewire');
 const sinon = require('sinon');
 
 const awsServices = require('@cumulus/aws-client/services');
