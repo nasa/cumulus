@@ -49,6 +49,7 @@ async function getWorkflowFile(stackName, bucketName, workflowName) {
  * @returns {Promise.<string>} workflow arn
  */
 async function getWorkflowArn(stackName, bucketName, workflowName) {
+  deprecate('@cumulus/common/workflows.getWorkflowArn()', '1.20.0');
   const workflow = await getWorkflowFile(stackName, bucketName, workflowName);
   return workflow.arn;
 }
