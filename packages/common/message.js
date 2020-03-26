@@ -28,6 +28,7 @@ const buildCumulusMeta = ({
   queueName,
   stateMachine
 }) => {
+  deprecate('@cumulus/common/message.buildCumulusMeta()', '1.20.0', '@cumulus/message/build.buildCumulusMeta()');
   const cumulusMeta = {
     execution_name: createExecutionName(),
     queueName,
@@ -91,6 +92,7 @@ function buildQueueMessageFromTemplate({
   customCumulusMeta = {},
   customMeta = {}
 }) {
+  deprecate('@cumulus/common/message.buildQueueMessageFromTemplate()', '1.20.0', '@cumulus/message/build.buildQueueMessageFromTemplate()');
   const cumulusMeta = buildCumulusMeta({
     asyncOperationId,
     parentExecutionArn,
@@ -120,10 +122,12 @@ function buildQueueMessageFromTemplate({
  * @param {Object} message - An execution message
  * @returns {string} - A collection ID
  */
-const getCollectionIdFromMessage = (message) =>
-  constructCollectionId(
+const getCollectionIdFromMessage = (message) => {
+  deprecate('@cumulus/common/message.getCollectionIdFromMessage()', '1.20.0', '@cumulus/message/collections.getCollectionIdFromMessage()');
+  return constructCollectionId(
     get(message, 'meta.collection.name'), get(message, 'meta.collection.version')
   );
+}
 
 /**
  * Get the maximum executions for a queue.
@@ -133,6 +137,7 @@ const getCollectionIdFromMessage = (message) =>
  * @returns {number} - Count of the maximum executions for the queue
  */
 const getMaximumExecutions = (message, queueName) => {
+  deprecate('@cumulus/common/message.getMaximumExecutions()', '1.20.0', '@cumulus/message/queue.getMaximumExecutions()');
   const maxExecutions = get(message, `meta.queueExecutionLimits.${queueName}`);
   if (isNil(maxExecutions)) {
     throw new Error(`Could not determine maximum executions for queue ${queueName}`);
@@ -147,6 +152,7 @@ const getMaximumExecutions = (message, queueName) => {
  * @returns {string} - An execution name
  */
 const getMessageExecutionName = (message) => {
+  deprecate('@cumulus/common/message.getMessageExecutionName()', '1.20.0', '@cumulus/message/executions.getMessageExecutionName()');
   const executionName = get(message, 'cumulus_meta.execution_name');
   if (!isString(executionName)) {
     throw new Error('cumulus_meta.execution_name not set in message');
@@ -161,7 +167,10 @@ const getMessageExecutionName = (message) => {
  * @returns {Array<Object>|undefined} - An array of granule objects, or
  *   undefined if `message.payload.granules` is not set
  */
-const getMessageGranules = (message) => get(message, 'payload.granules');
+const getMessageGranules = (message) => {
+  deprecate('@cumulus/common/message.getMessageGranules()', '1.20.0', '@cumulus/message/granules.getMessageGranules()');
+  return get(message, 'payload.granules')
+};
 
 /**
  * Get the state machine ARN from a workflow message.
@@ -170,6 +179,7 @@ const getMessageGranules = (message) => get(message, 'payload.granules');
  * @returns {string} - A state machine ARN
  */
 const getMessageStateMachineArn = (message) => {
+  deprecate('@cumulus/common/message.getMessageStateMachineArn()', '1.20.0', '@cumulus/message/executions.getMessageStateMachineArn()');
   const stateMachineArn = get(message, 'cumulus_meta.state_machine');
   if (!isString(stateMachineArn)) {
     throw new Error('cumulus_meta.state_machine not set in message');
@@ -184,6 +194,7 @@ const getMessageStateMachineArn = (message) => {
  * @returns {null|string} - A state machine execution ARN
  */
 const getMessageExecutionArn = (message) => {
+  deprecate('@cumulus/common/message.getMessageExecutionArn()', '1.20.0', '@cumulus/message/executions.getMessageExecutionArn()');
   try {
     return getExecutionArn(
       getMessageStateMachineArn(message),
@@ -202,6 +213,7 @@ const getMessageExecutionArn = (message) => {
  * @returns {string} - An SQS queue name
  */
 const getQueueNameByUrl = (message, queueUrl) => {
+  deprecate('@cumulus/common/message.getQueueNameByUrl()', '1.20.0', '@cumulus/message/queue.getQueueNameByUrl()');
   const queues = get(message, 'meta.queues', {});
   return findKey(queues, (value) => value === queueUrl);
 };
@@ -213,6 +225,7 @@ const getQueueNameByUrl = (message, queueUrl) => {
  * @returns {string} - A queue name
  */
 const getQueueName = (message) => {
+  deprecate('@cumulus/common/message.getQueueName()', '1.20.0', '@cumulus/message/queue.getQueueName()');
   const queueName = get(message, 'cumulus_meta.queueName');
   if (isNil(queueName)) {
     throw new Error('cumulus_meta.queueName not set in message');
@@ -227,6 +240,7 @@ const getQueueName = (message) => {
  * @returns {boolean} - True if there is a queue and execution limit.
  */
 const hasQueueAndExecutionLimit = (message) => {
+  deprecate('@cumulus/common/message.hasQueueAndExecutionLimit()', '1.20.0', '@cumulus/message/queue.hasQueueAndExecutionLimit()');
   try {
     const queueName = getQueueName(message);
     getMaximumExecutions(message, queueName);
