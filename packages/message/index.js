@@ -1,16 +1,17 @@
 const findKey = require('lodash.findkey');
 const get = require('lodash.get');
+const isNil = require('lodash.isnil');
 const merge = require('lodash.merge');
 const isString = require('lodash.isstring');
 const uuidv4 = require('uuid/v4');
 
-const { constructCollectionId } = require('./collection-config-store');
-const { isNil } = require('./util');
 const {
-  getExecutionArn,
   getS3Object,
   parseS3Uri
-} = require('./aws');
+} = require('@cumulus/aws-client/S3');
+const { getExecutionArn } = require('@cumulus/aws-client/StepFunctions');
+
+const { constructCollectionId } = require('./collection-config-store');
 
 const createExecutionName = () => uuidv4();
 
