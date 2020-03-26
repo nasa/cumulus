@@ -28,7 +28,7 @@ async function list(req, res) {
 }
 
 /**
- * List all collections with granules
+ * List all collections with active granules
  * If time params are specified the query will return collections 
  * that have granules that have been updated in that time frame.
  *
@@ -36,7 +36,7 @@ async function list(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function granuleList(req, res) {
+async function activeList(req, res) {
   const collection = new Collection(
     { queryStringParameters: req.query },
     null,
@@ -180,6 +180,6 @@ router.put('/:name/:version', put);
 router.delete('/:name/:version', del);
 router.post('/', post);
 router.get('/', list);
-router.get('/granules', granuleList);
+router.get('/active', activeList);
 
 module.exports = router;
