@@ -104,6 +104,5 @@ function buildQueueMessageFromTemplate({
 }
 
 module.exports = {
-  buildCumulusMeta,
   buildQueueMessageFromTemplate
 };

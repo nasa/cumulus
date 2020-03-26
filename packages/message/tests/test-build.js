@@ -4,14 +4,15 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const rewire = require('rewire');
 
-const message = rewire('..');
+const buildUtils = rewire('../build');
 const {
-  buildCumulusMeta,
   buildQueueMessageFromTemplate
-} = message;
+} = buildUtils;
+
+const buildCumulusMeta = buildUtils.__get__('buildCumulusMeta');
 
 const fakeId = cryptoRandomString({ length: 10 });
-message.__set__('uuidv4', () => fakeId);
+buildUtils.__set__('uuidv4', () => fakeId);
 
 const randomId = (prefix) => `${prefix}${cryptoRandomString({ length: 10 })}`;
 
