@@ -1,7 +1,7 @@
 'use strict';
 
 const awsServices = require('@cumulus/aws-client/services');
-const CloudFormationGateway = require('@cumulus/common/CloudFormationGateway');
+const CloudFormationGateway = require('@cumulus/aws-client/CloudFormationGateway');
 const log = require('@cumulus/common/log');
 const pRetry = require('p-retry');
 

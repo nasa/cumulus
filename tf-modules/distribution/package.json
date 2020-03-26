@@ -17,6 +17,7 @@
     "@cumulus/api": "1.20.0",
     "@cumulus/aws-client": "1.20.0",
     "@cumulus/common": "1.20.0",
+    "@cumulus/errors": "1.20.0",
     "@cumulus/logger": "1.20.0",
     "aws-serverless-express": "^3.3.6",
     "body-parser": "^1.19.0",
