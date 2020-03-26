@@ -144,16 +144,13 @@ class Collection extends BaseSearch {
       }
     };
 
-    const res = await super.query(searchParams);
-
-    // get aggregations for results
-    res.results = await this.addStatsToCollectionResults(res.results);
+    const res = await this.query(searchParams);
 
     return res;
   }
 
-  async query() {
-    const res = await super.query();
+  async query(searchParamsOverride = null) {
+    const res = await super.query(searchParamsOverride);
 
     // get aggregations for results
     res.results = await this.addStatsToCollectionResults(res.results);
