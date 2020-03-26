@@ -8,7 +8,7 @@ const {
 } = require('@cumulus/aws-client/services');
 const { createQueue } = require('@cumulus/aws-client/SQS');
 const { recursivelyDeleteS3Bucket, s3PutObject } = require('@cumulus/aws-client/S3');
-const { getExecutionArn } = require('@cumulus/aws-client/StepFunctions');
+const { buildExecutionArn } = require('@cumulus/message/executions');
 const {
   randomId,
   randomNumber,
@@ -158,7 +158,7 @@ test.serial('The correct message is enqueued', async (t) => {
   // if event.cumulus_config has 'state_machine' and 'execution_name', the enqueued message
   // will have 'parentExecutionArn'
   event.cumulus_config = { state_machine: randomString(), execution_name: randomString() };
-  const arn = getExecutionArn(
+  const arn = buildExecutionArn(
     event.cumulus_config.state_machine, event.cumulus_config.execution_name
   );
   event.input.pdrs = [

@@ -2,9 +2,9 @@
 
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { sendSQSMessage } = require('@cumulus/aws-client/SQS');
-const { getExecutionArn } = require('@cumulus/aws-client/StepFunctions');
 
 const { buildQueueMessageFromTemplate } = require('@cumulus/message/build');
+const { buildExecutionArn } = require('@cumulus/message/executions');
 const { getQueueNameByUrl } = require('@cumulus/message/queue');
 
 const {
@@ -59,7 +59,7 @@ async function enqueueParsePdrMessage({
     workflow
   });
 
-  const arn = getExecutionArn(
+  const arn = buildExecutionArn(
     message.cumulus_meta.state_machine,
     message.cumulus_meta.execution_name
   );
@@ -126,7 +126,7 @@ async function enqueueGranuleIngestMessage({
 
   if (pdr) message.meta.pdr = pdr;
 
-  const arn = getExecutionArn(
+  const arn = buildExecutionArn(
     message.cumulus_meta.state_machine,
     message.cumulus_meta.execution_name
   );

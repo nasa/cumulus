@@ -4,7 +4,7 @@ const get = require('lodash.get');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueGranuleIngestMessage } = require('@cumulus/ingest/queue');
 const { CollectionConfigStore } = require('@cumulus/common/collection-config-store');
-const { getExecutionArn } = require('@cumulus/aws-client/StepFunctions');
+const { buildExecutionArn } = require('@cumulus/message/executions');
 
 /**
 * See schemas/input.json and schemas/config.json for detailed event description
@@ -21,7 +21,7 @@ async function queueGranules(event) {
     event.config.stackName
   );
 
-  const arn = getExecutionArn(
+  const arn = buildExecutionArn(
     get(event, 'cumulus_config.state_machine'), get(event, 'cumulus_config.execution_name')
   );
 
