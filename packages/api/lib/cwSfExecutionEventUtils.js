@@ -4,12 +4,12 @@ const get = require('lodash.get');
 const set = require('lodash.set');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const log = require('@cumulus/common/log');
-const { getMessageExecutionArn } = require('@cumulus/common/message');
 const {
   getStepExitedEvent,
   getTaskExitedEventOutput
 } = require('@cumulus/common/execution-history');
 const { SfnStep } = require('@cumulus/common/sfnStep');
+const { getMessageExecutionArn } = require('@cumulus/message/executions');
 
 const executionStatusToWorkflowStatus = (executionStatus) => {
   const statusMap = {

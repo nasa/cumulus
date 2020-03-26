@@ -8,7 +8,7 @@ const { parseSQSMessageBody } = require('@cumulus/aws-client/SQS');
 const {
   getQueueName,
   getMaximumExecutions
-} = require('@cumulus/common/message');
+} = require('@cumulus/message/queue');
 const { Consumer } = require('@cumulus/ingest/consumer');
 
 const {

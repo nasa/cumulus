@@ -14,7 +14,6 @@ const getQueueNameByUrl = (message, queueUrl) => {
   return findKey(queues, (value) => value === queueUrl);
 };
 
-
 /**
  * Get the queue name from a workflow message.
  *

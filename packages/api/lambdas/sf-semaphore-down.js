@@ -10,7 +10,7 @@ const {
 const {
   getQueueName,
   hasQueueAndExecutionLimit
-} = require('@cumulus/common/message');
+} = require('@cumulus/message/queue');
 
 const { decrementQueueSemaphore } = require('../lib/SemaphoreUtils');
 
