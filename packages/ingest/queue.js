@@ -10,7 +10,7 @@ const {
 } = require('@cumulus/common/message');
 
 const {
-  getWorkflowArn,
+  getWorkflowFileKey,
   templateKey
 } = require('@cumulus/common/workflows');
 
@@ -40,7 +40,10 @@ async function enqueueParsePdrMessage({
   queueUrl
 }) {
   const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
-  const parsePdrArn = await getWorkflowArn(stack, systemBucket, parsePdrWorkflow);
+  const { arn: parsePdrArn } = await getJsonS3Object(
+    systemBucket,
+    getWorkflowFileKey(stack, parsePdrWorkflow)
+  );
   const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
   const payload = { pdr };
   const workflow = {
@@ -96,7 +99,10 @@ async function enqueueGranuleIngestMessage({
   queueUrl
 }) {
   const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
-  const ingestGranuleArn = await getWorkflowArn(stack, systemBucket, granuleIngestWorkflow);
+  const { arn: ingestGranuleArn } = await getJsonS3Object(
+    systemBucket,
+    getWorkflowFileKey(stack, granuleIngestWorkflow)
+  );
   const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
 
   const payload = {

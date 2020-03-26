@@ -1,9 +1,10 @@
 'use strict';
 
+const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { globalReplace } = require('@cumulus/common/string');
 const { randomString } = require('@cumulus/common/test-utils');
 const { sleep } = require('@cumulus/common/util');
-const { getWorkflowArn } = require('@cumulus/common/workflows');
+const { getWorkflowFileKey } = require('@cumulus/common/workflows');
 const { Rule } = require('@cumulus/api/models');
 
 const {
@@ -172,7 +173,11 @@ describe('The Kinesis Replay API', () => {
       let workflowArn;
 
       beforeAll(async () => {
-        workflowArn = await getWorkflowArn(testConfig.stackName, testConfig.bucket, rules[0].workflow);
+        workflowDefinition = await getJsonS3Object(
+          testConfig.bucket,
+          getWorkflowFileKey(testConfig.stackName, rules[0].workflow)
+        );
+        workflowArn = workflowDefinition.arn;
       });
 
       it('to start the expected workflows', async () => {

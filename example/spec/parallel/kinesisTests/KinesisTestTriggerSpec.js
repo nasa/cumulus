@@ -1,8 +1,9 @@
 'use strict';
 
 const { s3 } = require('@cumulus/aws-client/services');
+const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { globalReplace } = require('@cumulus/common/string');
-const { getWorkflowArn } = require('@cumulus/common/workflows');
+const { getWorkflowFileKey } = require('@cumulus/common/workflows');
 const { Execution } = require('@cumulus/api/models');
 const fs = require('fs');
 
@@ -117,7 +118,11 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     testDataFolder = createTestDataPath(testId);
     ruleSuffix = globalReplace(testSuffix, '-', '_');
 
-    workflowArn = await getWorkflowArn(testConfig.stackName, testConfig.bucket, testWorkflow);
+    workflowDefinition = await getJsonS3Object(
+      testConfig.bucket,
+      getWorkflowFileKey(testConfig.stackName, testWorkflow)
+    );
+    workflowArn = workflowDefinition.arn;
 
     record = JSON.parse(fs.readFileSync(`${__dirname}/data/records/L2_HR_PIXC_product_0001-of-4154.json`));
 

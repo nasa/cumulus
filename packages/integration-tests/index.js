@@ -24,7 +24,7 @@ const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
   templateKey,
-  getWorkflowArn
+  getWorkflowFileKey
 } = require('@cumulus/common/workflows');
 const { readJsonFile } = require('@cumulus/common/FileUtils');
 const { globalReplace } = require('@cumulus/common/string');
@@ -204,7 +204,10 @@ async function startWorkflowExecution(workflowArn, workflowMsg) {
  * @returns {string} - executionArn
  */
 async function startWorkflow(stackName, bucketName, workflowName, workflowMsg) {
-  const workflowArn = await getWorkflowArn(stackName, bucketName, workflowName);
+  const { arn: workflowArn } = await getJsonS3Object(
+    bucketName,
+    getWorkflowFileKey(stackName, workflowName)
+  );
   const { executionArn } = await startWorkflowExecution(workflowArn, workflowMsg);
 
   console.log(`Starting workflow: ${workflowName}. Execution ARN ${executionArn}`);
@@ -896,7 +899,10 @@ async function waitForTestExecutionStart({
   maxWaitSeconds = maxWaitForStartedExecutionSecs
 }) {
   let timeWaitedSecs = 0;
-  const workflowArn = await getWorkflowArn(stackName, bucket, workflowName);
+  const { arn: workflowArn } = await getJsonS3Object(
+    bucket,
+    getWorkflowFileKey(stackName, workflowName)
+  );
   /* eslint-disable no-await-in-loop */
   while (timeWaitedSecs < maxWaitSeconds) {
     await sleep(waitPeriodMs);
