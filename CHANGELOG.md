@@ -16,6 +16,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Deprecated
 
 - **CUMULUS-1799** - Deprecated the following code. For cases where the code was moved into another package, the new code location is noted:
+  - `@cumulus/aws-client/StepFunctions.fromSfnExecutionName()`
+  - `@cumulus/aws-client/StepFunctions.toSfnExecutionName()`
+  - `@cumulus/aws-client/StepFunctions.getExecutionArn()` => `@cumulus/message/executions.buildExecutionArn()`
+  - `@cumulus/aws-client/StepFunctions.getExecutionUrl()` => `@cumulus/message/executions.getExecutionUrlFromArn()`
+  - `@cumulus/aws-client/StepFunctions.getStateMachineArn()` => `@cumulus/message/executions.getStateMachineArnFromExecutionArn()`
   - `@cumulus/common/bucketsConfigJsonObject()`
   - `@cumulus/common/CloudWatchLogger`
   - `@cumulus/common/concurrency.limit()`

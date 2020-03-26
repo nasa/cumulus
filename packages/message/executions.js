@@ -3,6 +3,46 @@ const isString = require('lodash.isstring');
 const { getExecutionArn } = require('@cumulus/aws-client/StepFunctions');
 
 /**
+ * Build execution ARN from a state machine ARN and execution name
+ *
+ * @param {string} stateMachineArn - state machine ARN
+ * @param {string} executionName - state machine's execution name
+ * @returns {string} - an execution ARN
+ */
+const buildExecutionArn = (stateMachineArn, executionName) => {
+  if (stateMachineArn && executionName) {
+    const sfArn = stateMachineArn.replace('stateMachine', 'execution');
+    return `${sfArn}:${executionName}`;
+  }
+  return null;
+};
+
+/**
+ * Returns execution URL from an execution ARN.
+ *
+ * @param {string} executionArn - an execution ARN
+ * @returns {string} returns AWS console URL for the execution
+ */
+function getExecutionUrlFromArn(executionArn) {
+  const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
+  return `https://console.aws.amazon.com/states/home?region=${region}`
+         + `#/executions/details/${executionArn}`;
+}
+
+/**
+ * Get state machine ARN from an execution ARN
+ *
+ * @param {string} executionArn - an execution ARN
+ * @returns {string} - a state machine ARN
+ */
+const getStateMachineArnFromExecutionArn = (executionArn) => {
+  if (executionArn) {
+    return executionArn.replace('execution', 'stateMachine').split(':').slice(0, -1).join(':');
+  }
+  return null;
+};
+
+/**
  * Get the execution name from a workflow message.
  *
  * @param {Object} message - A workflow message object
@@ -48,6 +88,9 @@ const getMessageExecutionArn = (message) => {
 };
 
 module.exports = {
+  buildExecutionArn,
+  getExecutionUrlFromArn,
+  getStateMachineArnFromExecutionArn,
   getMessageExecutionArn,
   getMessageExecutionName,
   getMessageStateMachineArn
