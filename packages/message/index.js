@@ -1,11 +1,6 @@
 const merge = require('lodash.merge');
 const uuidv4 = require('uuid/v4');
 
-const {
-  getS3Object,
-  parseS3Uri
-} = require('@cumulus/aws-client/S3');
-
 const createExecutionName = () => uuidv4();
 
 /**
@@ -108,20 +103,7 @@ function buildQueueMessageFromTemplate({
   return message;
 }
 
-/**
- * Create a message from a template stored on S3
- *
- * @param {string} templateUri - S3 uri to the workflow template
- * @returns {Promise} message object
- **/
-async function getMessageFromTemplate(templateUri) {
-  const parsedS3Uri = parseS3Uri(templateUri);
-  const data = await getS3Object(parsedS3Uri.Bucket, parsedS3Uri.Key);
-  return JSON.parse(data.Body);
-}
-
 module.exports = {
   buildCumulusMeta,
-  buildQueueMessageFromTemplate,
-  getMessageFromTemplate
+  buildQueueMessageFromTemplate
 };

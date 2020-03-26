@@ -7,8 +7,7 @@ const rewire = require('rewire');
 const message = rewire('..');
 const {
   buildCumulusMeta,
-  buildQueueMessageFromTemplate,
-  getMessageFromTemplate
+  buildQueueMessageFromTemplate
 } = message;
 
 const fakeId = cryptoRandomString({ length: 10 });
@@ -60,14 +59,6 @@ test('buildCumulusMeta returns expected object', (t) => {
     parentExecutionArn,
     queueName
   });
-});
-
-test('getMessageFromTemplate throws error if invalid S3 URI is provided', async (t) => {
-  await t.throwsAsync(() => getMessageFromTemplate('fake-uri'));
-});
-
-test('getMessageFromTemplate throws error if non-existent S3 URI is provided', async (t) => {
-  await t.throwsAsync(() => getMessageFromTemplate('s3://some-bucket/some-key'));
 });
 
 test('buildQueueMessageFromTemplate does not overwrite contents from message template', (t) => {
@@ -316,5 +307,3 @@ test('buildQueueMessageFromTemplate returns expected message with custom cumulus
 
   t.deepEqual(actualMessage, expectedMessage);
 });
-
-test.todo('getMessageFromTemplate throws error if message template body is not JSON');
