@@ -3,8 +3,9 @@
 'use strict';
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const { isNil } = require('@cumulus/common/util');
+const { deprecate, isNil } = require('@cumulus/common/util');
 const log = require('@cumulus/common/log');
+const { parseStepMessage } = require('@cumulus/message/StepFunctions');
 
 /**
  * `SfnStep` provides methods for getting the output of a step within an AWS
@@ -23,6 +24,7 @@ class SfnStep {
    * @returns {Object} - Parsed step input object
    */
   static async parseStepMessage(stepMessage, stepName) {
+    deprecate('@cumulus/integration-tests/sfnStep/SfnStep.parseStepMessage()', '1.20.0', '@cumulus/message/StepFunctions.parseStepMessage()');
     let parsedStepMessage = stepMessage;
     if (stepMessage.cma) {
       parsedStepMessage = { ...stepMessage, ...stepMessage.cma, ...stepMessage.cma.event };
@@ -155,7 +157,7 @@ class SfnStep {
 
     const subStepExecutionDetails = scheduleEvent[this.eventDetailsKeys.scheduled];
     const stepInput = JSON.parse(subStepExecutionDetails.input);
-    return SfnStep.parseStepMessage(stepInput, stepName);
+    return parseStepMessage(stepInput, stepName);
   }
 
   /**

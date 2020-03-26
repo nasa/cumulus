@@ -1,6 +1,5 @@
 const get = require('lodash.get');
 const isString = require('lodash.isstring');
-const { getExecutionArn } = require('@cumulus/aws-client/StepFunctions');
 
 /**
  * Build execution ARN from a state machine ARN and execution name
@@ -78,7 +77,7 @@ const getMessageStateMachineArn = (message) => {
  */
 const getMessageExecutionArn = (message) => {
   try {
-    return getExecutionArn(
+    return buildExecutionArn(
       getMessageStateMachineArn(message),
       getMessageExecutionName(message)
     );

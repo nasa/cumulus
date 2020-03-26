@@ -8,8 +8,8 @@ const {
   getStepExitedEvent,
   getTaskExitedEventOutput
 } = require('@cumulus/common/execution-history');
-const { SfnStep } = require('@cumulus/common/sfnStep');
 const { getMessageExecutionArn } = require('@cumulus/message/executions');
+const { parseStepMessage } = require('@cumulus/message/StepFunctions');
 
 const executionStatusToWorkflowStatus = (executionStatus) => {
   const statusMap = {
@@ -68,7 +68,7 @@ const getFailedExecutionMessage = async (inputMessage) => {
     }
 
     const taskExitedEventOutput = getTaskExitedEventOutput(failedStepExitedEvent);
-    return await SfnStep.parseStepMessage(
+    return await parseStepMessage(
       JSON.parse(taskExitedEventOutput),
       failedStepExitedEvent.resource
     );

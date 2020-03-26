@@ -267,6 +267,7 @@ const getStateMachineArn = (executionArn) => {
  * @returns {Object} - the full Cumulus message
  */
 const pullStepFunctionEvent = async (event) => {
+  deprecate('@cumulus/aws-client/StepFunctions.pullStepFunctionEvent()', '1.20.0', '@cumulus/message/StepFunctions.pullStepFunctionEvent()');
   if (!event.replace) return event;
 
   const remoteMsg = await s3Utils.getJsonS3Object(
