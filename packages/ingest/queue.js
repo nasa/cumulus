@@ -4,10 +4,8 @@ const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { sendSQSMessage } = require('@cumulus/aws-client/SQS');
 const { getExecutionArn } = require('@cumulus/aws-client/StepFunctions');
 
-const {
-  buildQueueMessageFromTemplate,
-  getQueueNameByUrl
-} = require('@cumulus/common/message');
+const { buildQueueMessageFromTemplate } = require('@cumulus/message/build');
+const { getQueueNameByUrl } = require('@cumulus/message/queue');
 
 const {
   getWorkflowFileKey,
