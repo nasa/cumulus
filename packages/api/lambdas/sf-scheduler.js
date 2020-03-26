@@ -3,7 +3,7 @@
 const get = require('lodash.get');
 
 const SQS = require('@cumulus/aws-client/SQS');
-const { buildQueueMessageFromTemplate } = require('@cumulus/common/message');
+const { buildQueueMessageFromTemplate } = require('@cumulus/message/build');
 const { isNil } = require('@cumulus/common/util');
 const Collection = require('../models/collections');
 const Provider = require('../models/providers');
