@@ -68,7 +68,7 @@ const unless = (condition, fn, ...args) => {
 };
 
 const promiseUrl = (urlstr) => {
-  deprecate('@cumulus/common/concurrency.promiseUrl', '1.20.0')
+  deprecate('@cumulus/common/concurrency.promiseUrl', '1.20.0');
   return new Promise((resolve, reject) => {
     const client = urlstr.startsWith('https') ? https : http;
     const urlopts = url.parse(urlstr);

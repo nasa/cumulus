@@ -118,7 +118,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     testDataFolder = createTestDataPath(testId);
     ruleSuffix = globalReplace(testSuffix, '-', '_');
 
-    workflowDefinition = await getJsonS3Object(
+    const workflowDefinition = await getJsonS3Object(
       testConfig.bucket,
       getWorkflowFileKey(testConfig.stackName, testWorkflow)
     );

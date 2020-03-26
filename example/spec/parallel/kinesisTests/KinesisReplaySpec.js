@@ -173,7 +173,7 @@ describe('The Kinesis Replay API', () => {
       let workflowArn;
 
       beforeAll(async () => {
-        workflowDefinition = await getJsonS3Object(
+        const workflowDefinition = await getJsonS3Object(
           testConfig.bucket,
           getWorkflowFileKey(testConfig.stackName, rules[0].workflow)
         );
