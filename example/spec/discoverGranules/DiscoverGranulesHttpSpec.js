@@ -1,14 +1,13 @@
 'use strict';
 
 const { Execution } = require('@cumulus/api/models');
+const { deleteProvider } = require('@cumulus/integration-tests/api/providers');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
   api: apiTestUtils,
   addCollections,
-  addProviders,
   buildAndExecuteWorkflow,
   cleanupCollections,
-  cleanupProviders,
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
 
@@ -19,6 +18,7 @@ const {
   isCumulusLogEntry
 } = require('../helpers/testUtils');
 
+const { buildHttpProvider, createProvider } = require('../helpers/Providers');
 const { waitForModelStatus } = require('../helpers/apiUtils');
 
 const workflowName = 'DiscoverGranules';
@@ -26,7 +26,6 @@ const workflowName = 'DiscoverGranules';
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 2000000;
 
 describe('The Discover Granules workflow with http Protocol', () => {
-  const providersDir = './data/providers/http/';
   const collectionsDir = './data/collections/http_testcollection_001/';
 
   let config;
@@ -48,12 +47,12 @@ describe('The Discover Granules workflow with http Protocol', () => {
     testId = createTimestampedTestId(config.stackName, 'DiscoverGranules');
     testSuffix = createTestSuffix(testId);
     collection = { name: `http_testcollection${testSuffix}`, version: '001' };
-    provider = { id: `http_provider${testSuffix}` };
+    provider = await buildHttpProvider(testSuffix);
 
     // populate collections and providers
     await Promise.all([
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      addProviders(config.stackName, config.bucket, providersDir, null, testSuffix)
+      createProvider(config.stackName, provider)
     ]);
 
     collection = JSON.parse((await apiTestUtils.getCollection({
@@ -82,7 +81,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
     // clean up stack state added by test
     await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
+      deleteProvider(config.stackName, provider.id)
     ]);
   });
 

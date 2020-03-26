@@ -1,9 +1,9 @@
 'use strict';
 
 const test = require('ava');
+const { ResourcesLockedError } = require('@cumulus/errors');
 const { dynamodb, dynamodbDocClient } = require('../aws');
 const Semaphore = require('../Semaphore');
-const { ResourcesLockedError } = require('../errors');
 const { randomId } = require('../test-utils');
 
 test.before(async () => {

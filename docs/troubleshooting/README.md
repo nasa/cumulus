@@ -36,7 +36,7 @@ If a workflow errors, the error will be handled according to the [error handling
 
 Generally, first check your rule configuration. If that is satisfactory, the answer will likely be in the CloudWatch logs for the schedule SF or SF starter lambda functions. See the [workflow triggers](workflows/workflow-triggers.md) page for more information on how workflows start.
 
-For Kinesis rules specifically, if an error occurs during the message consumer process, the fallback consumer lambda will be called and if the message continues to error, a message will be placed on the dead letter queue. Check the dead letter queue for a failure message. Errors can be traced back to the CloudWatch logs for the message consumer and the fallback consumer.
+For Kinesis and SNS rules specifically, if an error occurs during the message consumer process, the fallback consumer lambda will be called and if the message continues to error, a message will be placed on the dead letter queue. Check the dead letter queue for a failure message. Errors can be traced back to the CloudWatch logs for the message consumer and the fallback consumer. Additionally, check that the name and version match those configured in your rule, as rules are filtered by the notification's collection name and version before scheduling executions.
 
 More information on kinesis error handling is [here](data-cookbooks/cnm-workflow.md#kinesis-record-error-handling).
 

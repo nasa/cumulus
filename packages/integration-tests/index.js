@@ -24,7 +24,7 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { getWorkflowTemplate, getWorkflowArn } = require('@cumulus/common/workflows');
 const { readJsonFile } = require('@cumulus/common/FileUtils');
 const { globalReplace } = require('@cumulus/common/string');
-const { deprecate, sleep } = require('@cumulus/common/util');
+const { sleep } = require('@cumulus/common/util');
 const ProvidersModel = require('@cumulus/api/models/providers');
 const RulesModel = require('@cumulus/api/models/rules');
 
@@ -425,23 +425,6 @@ async function addCollections(stackName, bucketName, dataDirectory, postfix,
 }
 
 /**
- * Return a list of collections
- *
- * @param {string} stackName - CloudFormation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @param {string} dataDirectory - the directory of collection json files
- * @returns {Promise.<Array>} list of collections
- */
-async function listCollections(stackName, bucketName, dataDirectory) {
-  deprecate(
-    '@cumulus/integration-tests/index.listCollections',
-    '1.18.0',
-    '@cumulus/integration-tests/index.readJsonFilesFromDir'
-  );
-  return setupSeedData(stackName, bucketName, dataDirectory);
-}
-
-/**
  * Delete collections from database
  *
  * @param {string} stackName - CloudFormation stack name
@@ -586,23 +569,6 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host, postfi
 }
 
 /**
- * Return a list of providers
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @param {string} dataDirectory - the directory of provider json files
- * @returns {Promise.<Array>} list of providers
- */
-async function listProviders(stackName, bucketName, dataDirectory) {
-  deprecate(
-    '@cumulus/integration-tests/index.rulesList',
-    '1.18.0',
-    '@cumulus/integration-tests/index.readJsonFilesFromDir'
-  );
-  return setupSeedData(stackName, bucketName, dataDirectory);
-}
-
-/**
  * Delete providers from database
  *
  * @param {string} stackName - CloudFormation stack name
@@ -739,19 +705,6 @@ function removeRuleAddedParams(rule) {
  */
 function isWorkflowTriggeredByRule(taskInput, params) {
   return taskInput.meta.triggerRule && taskInput.meta.triggerRule === params.rule;
-}
-
-/**
- * returns a list of rule objects
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @param {string} rulesDirectory - The directory continaing rules json files
- * @returns {list} - list of rules found in rulesDirectory
- */
-async function rulesList(stackName, bucketName, rulesDirectory) {
-  deprecate('@cumulus/integration-tests/index.rulesList', '1.18.0', '@cumulus/integration-tests/index.readJsonFilesFromDir');
-  return setupSeedData(stackName, bucketName, rulesDirectory);
 }
 
 /**
@@ -1046,11 +999,9 @@ module.exports = {
   LambdaStep,
   addCollections,
   addCustomUrlPathToCollectionFiles,
-  listCollections,
   deleteCollections,
   cleanupCollections,
   addProviders,
-  listProviders,
   deleteProviders,
   cleanupProviders,
   conceptExists: cmr.conceptExists,
@@ -1063,7 +1014,6 @@ module.exports = {
   removeRuleAddedParams,
   isWorkflowTriggeredByRule,
   getClusterArn,
-  rulesList,
   waitForAsyncOperationStatus,
   getLambdaVersions: lambda.getLambdaVersions,
   getLambdaAliases: lambda.getLambdaAliases,

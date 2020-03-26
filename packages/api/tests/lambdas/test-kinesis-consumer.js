@@ -302,7 +302,7 @@ test.serial('A kinesis message should not publish record to fallbackSNS if it pr
     Records: [{ kinesis: { data: Buffer.from(validMessage).toString('base64') } }]
   };
   t.true(publishStub.notCalled);
-  return handler(kinesisEvent, {}, testCallback).then((r) => t.deepEqual(r, [[]]));
+  return handler(kinesisEvent, {}, testCallback).then((r) => t.deepEqual(r, [[true, true]]));
 });
 
 test.serial('An SNS Fallback message should not throw if message is valid.', (t) => {
@@ -311,5 +311,5 @@ test.serial('An SNS Fallback message should not throw if message is valid.', (t)
     Records: [{ kinesis: { data: Buffer.from(validMessage).toString('base64') } }]
   };
   const snsEvent = wrapKinesisRecord(kinesisEvent.Records[0]);
-  return handler(snsEvent, {}, testCallback).then((r) => t.deepEqual(r, [[]]));
+  return handler(snsEvent, {}, testCallback).then((r) => t.deepEqual(r, [[true, true]]));
 });

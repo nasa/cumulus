@@ -1,6 +1,6 @@
 'use strict';
 
-const errors = require('@cumulus/common/errors');
+const errors = require('@cumulus/errors');
 const test = require('ava');
 
 const { s3 } = require('@cumulus/aws-client/services');
