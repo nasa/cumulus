@@ -18,9 +18,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1799** - Deprecated the following code. For cases where the code was moved into another package, the new code location is noted:
   - `@cumulus/aws-client/StepFunctions.fromSfnExecutionName()`
   - `@cumulus/aws-client/StepFunctions.toSfnExecutionName()`
-  - `@cumulus/aws-client/StepFunctions.getExecutionArn()` -> `@cumulus/message/executions.buildExecutionArn()`
-  - `@cumulus/aws-client/StepFunctions.getExecutionUrl()` -> `@cumulus/message/executions.getExecutionUrlFromArn()`
-  - `@cumulus/aws-client/StepFunctions.getStateMachineArn()` -> `@cumulus/message/executions.getStateMachineArnFromExecutionArn()`
+  - `@cumulus/aws-client/StepFunctions.getExecutionArn()` -> `@cumulus/message/Executions.buildExecutionArn()`
+  - `@cumulus/aws-client/StepFunctions.getExecutionUrl()` -> `@cumulus/message/Executions.getExecutionUrlFromArn()`
+  - `@cumulus/aws-client/StepFunctions.getStateMachineArn()` -> `@cumulus/message/Executions.getStateMachineArnFromExecutionArn()`
   - `@cumulus/aws-client/StepFunctions.pullStepFunctionEvent()` -> `@cumulus/message/StepFunctions.pullStepFunctionEvent()`
   - `@cumulus/common/bucketsConfigJsonObject()`
   - `@cumulus/common/CloudWatchLogger`
@@ -35,18 +35,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `@cumulus/common/config.resolveResource()`
   - `@cumulus/common/config.resourceToArn()`
   - `@cumulus/common/FieldPattern`
-  - `@cumulus/common/message.buildCumulusMeta()` -> `@cumulus/message/build.buildCumulusMeta()`
-  - `@cumulus/common/message.buildQueueMessageFromTemplate()` -> `@cumulus/message/build.buildQueueMessageFromTemplate()`
-  - `@cumulus/common/message.getCollectionIdFromMessage()` -> `@cumulus/message/collections.getCollectionIdFromMessage()`
-  - `@cumulus/common/message.getMessageExecutionArn()` -> `@cumulus/message/executions.getMessageExecutionArn()`
-  - `@cumulus/common/message.getMessageExecutionName()` -> `@cumulus/message/executions.getMessageExecutionName()`
-  - `@cumulus/common/message.getMaximumExecutions()` -> `@cumulus/message/queue.getMaximumExecutions()`
+  - `@cumulus/common/message.buildCumulusMeta()` -> `@cumulus/message/Build.buildCumulusMeta()`
+  - `@cumulus/common/message.buildQueueMessageFromTemplate()` -> `@cumulus/message/Build.buildQueueMessageFromTemplate()`
+  - `@cumulus/common/message.getCollectionIdFromMessage()` -> `@cumulus/message/Collections.getCollectionIdFromMessage()`
+  - `@cumulus/common/message.getMessageExecutionArn()` -> `@cumulus/message/Executions.getMessageExecutionArn()`
+  - `@cumulus/common/message.getMessageExecutionName()` -> `@cumulus/message/Executions.getMessageExecutionName()`
+  - `@cumulus/common/message.getMaximumExecutions()` -> `@cumulus/message/Queue.getMaximumExecutions()`
   - `@cumulus/common/message.getMessageFromTemplate()`
-  - `@cumulus/common/message.getMessageStateMachineArn()` -> `@cumulus/message/executions.getMessageStateMachineArn()`)
-  - `@cumulus/common/message.getMessageGranules()` -> `@cumulus/message/granules.getMessageGranules()`
-  - `@cumulus/common/message.getQueueNameByUrl()` -> `@cumulus/message/queue.getQueueNameByUrl()`
-  - `@cumulus/common/message.getQueueName()` -> `@cumulus/message/queue.getQueueName()`)
-  - `@cumulus/common/message.hasQueueAndExecutionLimit()` -> `@cumulus/message/queue.hasQueueAndExecutionLimit()`
+  - `@cumulus/common/message.getMessageStateMachineArn()` -> `@cumulus/message/Executions.getMessageStateMachineArn()`)
+  - `@cumulus/common/message.getMessageGranules()` -> `@cumulus/message/Granules.getMessageGranules()`
+  - `@cumulus/common/message.getQueueNameByUrl()` -> `@cumulus/message/Queue.getQueueNameByUrl()`
+  - `@cumulus/common/message.getQueueName()` -> `@cumulus/message/Queue.getQueueName()`)
+  - `@cumulus/common/message.hasQueueAndExecutionLimit()` -> `@cumulus/message/Queue.hasQueueAndExecutionLimit()`
   - `@cumulus/common/Semaphore`
   - `@cumulus/common/test-utils.throttleOnce()`
   - `@cumulus/common/workflows.getWorkflowArn()`
@@ -222,7 +222,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1784**
   - Updated `@cumulus/api/lib/DistributionEvent.remoteIP()` to parse the IP address in an S3 access log from the `A-sourceip` query parameter if present, otherwise fallback to the original parsing behavior.
 - **CUMULUS-1768**
-  - The `stats/summary` endpoint reports the distinct collections for the number of granules reported
+  - The `stats/summary` endpoint reports the distinct C for the number of granules reported
 
 ### Fixed
 
