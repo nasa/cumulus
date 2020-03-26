@@ -6,6 +6,7 @@ const https = require('follow-redirects').https;
 const url = require('url');
 const pLimit = require('p-limit');
 const log = require('./log');
+const { deprecate } = require('./util');
 
 /**
  * Wrap a function to limit how many instances can be run in parallel
@@ -20,7 +21,7 @@ const log = require('./log');
 const limit = (n, fn) => {
   deprecate('@cumulus/common/concurrency.limit', '1.20.0');
   return pLimit(n).bind(null, fn);
-}
+};
 
 const mapTolerant = (arr, fn) => {
   deprecate('@cumulus/common/concurrency.mapTolerant', '1.20.0');
@@ -50,7 +51,7 @@ const toPromise = (fn, ...args) => {
   deprecate('@cumulus/common/concurrency.toPromise', '1.20.0');
   return new Promise((resolve, reject) =>
     fn(...args, (err, data) => (err ? reject(err) : resolve(data))));
-}
+};
 
 /**
  * Returns a promise that resolves to the result of calling the given function if
@@ -64,7 +65,7 @@ const toPromise = (fn, ...args) => {
 const unless = (condition, fn, ...args) => {
   deprecate('@cumulus/common/concurrency.unless', '1.20.0');
   return Promise.resolve((condition(...args) ? null : fn(...args)));
-}
+};
 
 const promiseUrl = (urlstr) => {
   deprecate('@cumulus/common/concurrency.promiseUrl', '1.20.0')
@@ -86,7 +87,7 @@ const promiseUrl = (urlstr) => {
       }
     }).on('error', reject);
   });
-}
+};
 
 module.exports = {
   limit,

@@ -35,7 +35,8 @@ const {
 } = require('./utils');
 
 // Only created to make mocking the request for buckets config easier.
-const getBucketsConfigJson = (bucket, stackName) => getJsonS3Object(bucket, getBucketsConfigKey(stackName));
+const getBucketsConfigJson = (bucket, stackName) =>
+  getJsonS3Object(bucket, getBucketsConfigKey(stackName));
 
 function getS3KeyOfFile(file) {
   if (file.filename) return parseS3Uri(file.filename).Key;

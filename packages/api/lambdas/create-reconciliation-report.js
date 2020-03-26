@@ -432,7 +432,7 @@ async function createReconciliationReport(params) {
   } = params;
 
   // Fetch the bucket names to reconcile
-  const bucketsConfigJson = await getJsonS3Object(systemBucket, getBucketsConfigKey(stackName))
+  const bucketsConfigJson = await getJsonS3Object(systemBucket, getBucketsConfigKey(stackName));
   const dataBuckets = Object.values(bucketsConfigJson)
     .filter(isDataBucket).map((config) => config.name);
 

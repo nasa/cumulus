@@ -1,6 +1,7 @@
 'use strict';
 
 const AWS = require('aws-sdk');
+const fs = require('fs-extra');
 const { JSONPath } = require('jsonpath-plus');
 const pMap = require('p-map');
 const pRetry = require('p-retry');
@@ -165,28 +166,6 @@ exports.promiseS3Upload = exports.improveStackTrace(
     return exports.s3().upload(params).promise();
   }
 );
-
-/**
- * Downloads the given s3Obj to the given filename in a streaming manner
- *
- * @param {Object} s3Obj - The parameters to send to S3 getObject call
- * @param {string} filepath - The filepath of the file that is downloaded
- * @returns {Promise<string>} - returns filename if successful
- */
-exports.downloadS3File = (s3Obj, filepath) => {
-  deprecate('@cumulus/common/aws/downloadS3File', '1.17.0', '@cumulus/aws-client/S3/downloadS3File');
-  const s3 = exports.s3();
-  const fileWriteStream = fs.createWriteStream(filepath);
-
-  return new Promise((resolve, reject) => {
-    const objectReadStream = s3.getObject(s3Obj).createReadStream();
-
-    pump(objectReadStream, fileWriteStream, (err) => {
-      if (err) reject(err);
-      else resolve(filepath);
-    });
-  });
-};
 
 /**
 * Get an object from S3

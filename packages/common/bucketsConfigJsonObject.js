@@ -1,6 +1,7 @@
 'use strict';
 
 const aws = require('./aws');
+const { deprecate } = require('./util');
 
 /**
  * Retrieve the stack's bucket configuration from s3 and return the bucket configuration object.

@@ -4,6 +4,7 @@ const isString = require('lodash.isstring');
 const isObject = require('lodash.isobject');
 
 const log = require('./log');
+const { deprecate } = require('./util');
 
 /**
  * TODO Add docs

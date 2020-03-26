@@ -4,6 +4,7 @@ const {
 } = require('@cumulus/errors');
 const DynamoDb = require('./DynamoDb');
 const log = require('./log');
+const { deprecate } = require('./util');
 
 class Semaphore {
   constructor(docClient, tableName) {

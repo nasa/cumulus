@@ -42,7 +42,6 @@ let pdrsModel;
 let cmrStub;
 let stepFunctionsStub;
 let existsStub;
-let workflowStub;
 let templateStub;
 
 const input = JSON.stringify(granuleSuccess);

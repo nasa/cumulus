@@ -2,17 +2,14 @@
 
 const cloneDeep = require('lodash.clonedeep');
 const test = require('ava');
-const rewire = require('rewire');
 const sinon = require('sinon');
 
-const Lambda = require('@cumulus/aws-client/Lambda');
 const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const launchpad = require('@cumulus/common/launchpad');
 const { randomString } = require('@cumulus/common/test-utils');
-const workflows = require('@cumulus/common/workflows');
 const { removeNilProperties } = require('@cumulus/common/util');
 const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmr-client');

@@ -2,6 +2,7 @@
 
 const yaml = require('js-yaml');
 const log = require('./log');
+const { deprecate } = require('./util');
 
 /**
  * Builds a YAML schema for resolving GitcResource directives
@@ -83,4 +84,4 @@ exports.resolveResource = (cfResourcesById, prefix) =>
 exports.parseConfig = (collectionsStr, resourceResolver) => {
   deprecate('@cumulus/common/config.parseConfig', '1.20.0');
   return yaml.safeLoad(collectionsStr, { schema: buildSchema(resourceResolver) });
-}
+};

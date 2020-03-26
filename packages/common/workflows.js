@@ -1,6 +1,7 @@
 'use strict';
 
 const { getS3Object, listS3ObjectsV2 } = require('./aws');
+const { deprecate } = require('./util');
 
 const templateKey = (stack) => `${stack}/workflow_template.json`;
 
