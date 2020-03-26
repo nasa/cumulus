@@ -7,6 +7,7 @@ declare -a param_list=(
   "bamboo_CMR_PASSWORD"
   "bamboo_CMR_USERNAME"
   "bamboo_DEPLOYMENT"
+  "bamboo_FAKE_PROVIDER_CONFIG_BUCKET"
   "bamboo_KES_DEPLOYMENT"
   "bamboo_METRICS_ES_HOST"
   "bamboo_METRICS_ES_USER"

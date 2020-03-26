@@ -20,11 +20,12 @@ This is for installation for Cumulus development.  See the [Cumulus deployment i
 
 ### Prerequisites
 
-- [NVM](https://github.com/creationix/nvm) and node version 8.
+- [NVM](https://github.com/creationix/nvm) and node version 10.16.3
 - [AWS CLI](http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
 - BASH
 - Docker (only required for testing)
 - docker-compose (only required for testing `pip install docker-compose`)
+- Python 3.6+
 
 Install the correct node version:
 
