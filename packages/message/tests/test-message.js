@@ -1,31 +1,25 @@
 'use strict';
 
 const test = require('ava');
+const cryptoRandomString = require('crypto-random-string');
 const rewire = require('rewire');
+
 const message = rewire('..');
 const {
   buildCumulusMeta,
   buildQueueMessageFromTemplate,
-  getCollectionIdFromMessage,
-  getMaximumExecutions,
-  getMessageExecutionArn,
-  getMessageExecutionName,
-  getMessageFromTemplate,
-  getMessageGranules,
-  getMessageStateMachineArn,
-  getQueueNameByUrl
+  getMessageFromTemplate
 } = message;
 
-const { constructCollectionId } = require('../collection-config-store');
-const { randomId, randomString } = require('../test-utils');
-
-const fakeId = randomString();
+const fakeId = cryptoRandomString({ length: 10 });
 message.__set__('uuidv4', () => fakeId);
+
+const randomId = (prefix) => `${prefix}${cryptoRandomString({ length: 10 })}`;
 
 test('buildCumulusMeta returns expected object', (t) => {
   const stateMachine = randomId('states');
   const queueName = randomId('queue');
-  const asyncOperationId = randomString();
+  const asyncOperationId = cryptoRandomString({ length: 10 });
 
   let cumulusMeta = buildCumulusMeta({
     stateMachine,
@@ -66,124 +60,6 @@ test('buildCumulusMeta returns expected object', (t) => {
     parentExecutionArn,
     queueName
   });
-});
-
-test('getMessageExecutionName throws error if cumulus_meta.execution_name is missing', (t) => {
-  t.throws(
-    () => getMessageExecutionName(),
-    { message: 'cumulus_meta.execution_name not set in message' }
-  );
-});
-
-test('getMessageStateMachineArn throws error if cumulus_meta.state_machine is missing', (t) => {
-  t.throws(
-    () => getMessageStateMachineArn(),
-    { message: 'cumulus_meta.state_machine not set in message' }
-  );
-});
-
-test('getMessageExecutionArn returns correct execution ARN for valid message', (t) => {
-  const cumulusMessage = {
-    cumulus_meta: {
-      state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
-      execution_name: 'my-execution-name'
-    }
-  };
-
-  const executionArn = getMessageExecutionArn(cumulusMessage);
-
-  t.is(
-    executionArn,
-    'arn:aws:states:us-east-1:111122223333:execution:HelloWorld-StateMachine:my-execution-name'
-  );
-});
-
-test('getMessageExecutionArn returns null for an invalid message', (t) => {
-  const executionArn = getMessageExecutionArn({});
-  t.is(executionArn, null);
-});
-
-test('getCollectionIdFromMessage returns the correct collection ID', (t) => {
-  const name = 'test';
-  const version = '001';
-  const collectionId = getCollectionIdFromMessage({
-    meta: {
-      collection: {
-        name,
-        version
-      }
-    }
-  });
-  t.is(collectionId, constructCollectionId(name, version));
-});
-
-test('getCollectionIdFromMessage returns collection ID when meta.collection is not set', (t) => {
-  const collectionId = getCollectionIdFromMessage();
-  t.is(collectionId, constructCollectionId());
-});
-
-test('getQueueNameByUrl returns correct value', (t) => {
-  const queueName = randomId('queueName');
-  const queueUrl = randomId('queueUrl');
-  const testMessage = {
-    meta: {
-      queues: {
-        [queueName]: queueUrl
-      }
-    }
-  };
-
-  let queueNameResult = getQueueNameByUrl(testMessage, queueUrl);
-  t.is(queueNameResult, queueName);
-
-  queueNameResult = getQueueNameByUrl(testMessage, 'fake-value');
-  t.is(queueNameResult, undefined);
-
-  queueNameResult = getQueueNameByUrl({}, 'queueUrl');
-  t.is(queueNameResult, undefined);
-});
-
-test('getMaximumExecutions returns correct value', (t) => {
-  const queueName = randomId('queueName');
-  const testMessage = {
-    meta: {
-      queueExecutionLimits: {
-        [queueName]: 5
-      }
-    }
-  };
-  const maxExecutions = getMaximumExecutions(testMessage, queueName);
-  t.is(maxExecutions, 5);
-});
-
-test('getMaximumExecutions throw error when queue cannot be found', (t) => {
-  const testMessage = {
-    meta: {
-      queueExecutionLimits: {}
-    }
-  };
-  t.throws(
-    () => getMaximumExecutions(testMessage, 'testQueueName')
-  );
-});
-
-test('getMessageGranules returns granules from payload.granules', (t) => {
-  const granules = [{
-    granuleId: randomId('granule')
-  }];
-  const testMessage = {
-    payload: {
-      granules
-    }
-  };
-  const result = getMessageGranules(testMessage);
-  t.deepEqual(result, granules);
-});
-
-test('getMessageGranules returns nothing when granules are absent from message', (t) => {
-  const testMessage = {};
-  const result = getMessageGranules(testMessage);
-  t.is(result, undefined);
 });
 
 test('getMessageFromTemplate throws error if invalid S3 URI is provided', async (t) => {

@@ -1,17 +1,10 @@
-const findKey = require('lodash.findkey');
-const get = require('lodash.get');
-const isNil = require('lodash.isnil');
 const merge = require('lodash.merge');
-const isString = require('lodash.isstring');
 const uuidv4 = require('uuid/v4');
 
 const {
   getS3Object,
   parseS3Uri
 } = require('@cumulus/aws-client/S3');
-const { getExecutionArn } = require('@cumulus/aws-client/StepFunctions');
-
-const { constructCollectionId } = require('./collection-config-store');
 
 const createExecutionName = () => uuidv4();
 
@@ -116,129 +109,6 @@ function buildQueueMessageFromTemplate({
 }
 
 /**
- * Get collection ID from execution message.
- *
- * @param {Object} message - An execution message
- * @returns {string} - A collection ID
- */
-const getCollectionIdFromMessage = (message) =>
-  constructCollectionId(
-    get(message, 'meta.collection.name'), get(message, 'meta.collection.version')
-  );
-
-/**
- * Get the maximum executions for a queue.
- *
- * @param {Object} message - A workflow message object
- * @param {string} queueName - A queue name
- * @returns {number} - Count of the maximum executions for the queue
- */
-const getMaximumExecutions = (message, queueName) => {
-  const maxExecutions = get(message, `meta.queueExecutionLimits.${queueName}`);
-  if (isNil(maxExecutions)) {
-    throw new Error(`Could not determine maximum executions for queue ${queueName}`);
-  }
-  return maxExecutions;
-};
-
-/**
- * Get the execution name from a workflow message.
- *
- * @param {Object} message - A workflow message object
- * @returns {string} - An execution name
- */
-const getMessageExecutionName = (message) => {
-  const executionName = get(message, 'cumulus_meta.execution_name');
-  if (!isString(executionName)) {
-    throw new Error('cumulus_meta.execution_name not set in message');
-  }
-  return executionName;
-};
-
-/**
- * Get granules from execution message.
- *
- * @param {Object} message - An execution message
- * @returns {Array<Object>|undefined} - An array of granule objects, or
- *   undefined if `message.payload.granules` is not set
- */
-const getMessageGranules = (message) => get(message, 'payload.granules');
-
-/**
- * Get the state machine ARN from a workflow message.
- *
- * @param {Object} message - A workflow message object
- * @returns {string} - A state machine ARN
- */
-const getMessageStateMachineArn = (message) => {
-  const stateMachineArn = get(message, 'cumulus_meta.state_machine');
-  if (!isString(stateMachineArn)) {
-    throw new Error('cumulus_meta.state_machine not set in message');
-  }
-  return stateMachineArn;
-};
-
-/**
- * Get the execution ARN from a workflow message.
- *
- * @param {Object} message - A workflow message object
- * @returns {null|string} - A state machine execution ARN
- */
-const getMessageExecutionArn = (message) => {
-  try {
-    return getExecutionArn(
-      getMessageStateMachineArn(message),
-      getMessageExecutionName(message)
-    );
-  } catch (err) {
-    return null;
-  }
-};
-
-/**
- * Get queue name by URL from execution message.
- *
- * @param {Object} message - An execution message
- * @param {string} queueUrl - An SQS queue URL
- * @returns {string} - An SQS queue name
- */
-const getQueueNameByUrl = (message, queueUrl) => {
-  const queues = get(message, 'meta.queues', {});
-  return findKey(queues, (value) => value === queueUrl);
-};
-
-
-/**
- * Get the queue name from a workflow message.
- *
- * @param {Object} message - A workflow message object
- * @returns {string} - A queue name
- */
-const getQueueName = (message) => {
-  const queueName = get(message, 'cumulus_meta.queueName');
-  if (isNil(queueName)) {
-    throw new Error('cumulus_meta.queueName not set in message');
-  }
-  return queueName;
-};
-
-/**
- * Determine if there is a queue and queue execution limit in the message.
- *
- * @param {Object} message - A workflow message object
- * @returns {boolean} - True if there is a queue and execution limit.
- */
-const hasQueueAndExecutionLimit = (message) => {
-  try {
-    const queueName = getQueueName(message);
-    getMaximumExecutions(message, queueName);
-  } catch (err) {
-    return false;
-  }
-  return true;
-};
-
-/**
  * Create a message from a template stored on S3
  *
  * @param {string} templateUri - S3 uri to the workflow template
@@ -253,14 +123,5 @@ async function getMessageFromTemplate(templateUri) {
 module.exports = {
   buildCumulusMeta,
   buildQueueMessageFromTemplate,
-  getCollectionIdFromMessage,
-  getMaximumExecutions,
-  getMessageExecutionArn,
-  getMessageExecutionName,
-  getMessageFromTemplate,
-  getMessageGranules,
-  getMessageStateMachineArn,
-  getQueueNameByUrl,
-  getQueueName,
-  hasQueueAndExecutionLimit
+  getMessageFromTemplate
 };
