@@ -3,9 +3,6 @@
 ## Modules
 
 <dl>
-<dt><a href="#module_StepFunctions">StepFunctions</a></dt>
-<dd><p>Utility functions for working with the AWS StepFunctions API</p>
-</dd>
 <dt><a href="#module_string">string</a></dt>
 <dd><p>A collection of utilities for working with URLs</p>
 </dd>
@@ -16,105 +13,6 @@
 <dd><p>Simple utility functions</p>
 </dd>
 </dl>
-
-<a name="module_StepFunctions"></a>
-
-## StepFunctions
-Utility functions for working with the AWS StepFunctions API
-
-**Example**  
-```js
-const StepFunctions = require('@cumulus/common/StepFunctions');
-```
-
-* [StepFunctions](#module_StepFunctions)
-    * [.describeExecution(params)](#module_StepFunctions.describeExecution) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.describeStateMachine(params)](#module_StepFunctions.describeStateMachine) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.executionExists(executionArn)](#module_StepFunctions.executionExists) ⇒ <code>Promise.&lt;boolean&gt;</code>
-    * [.getExecutionHistory(params)](#module_StepFunctions.getExecutionHistory) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.listExecutions(params)](#module_StepFunctions.listExecutions) ⇒ <code>Promise.&lt;Object&gt;</code>
-
-<a name="module_StepFunctions.describeExecution"></a>
-
-### StepFunctions.describeExecution(params) ⇒ <code>Promise.&lt;Object&gt;</code>
-Call StepFunctions DescribeExecution
-
-See [StepFunctions.describeExecution()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#describeExecution-property)
-for descriptions of `params` and the return data.
-
-If a ThrottlingException is received, this function will retry using an
-exponential backoff.
-
-**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
-
-| Param | Type |
-| --- | --- |
-| params | <code>Object</code> | 
-
-<a name="module_StepFunctions.describeStateMachine"></a>
-
-### StepFunctions.describeStateMachine(params) ⇒ <code>Promise.&lt;Object&gt;</code>
-Call StepFunctions DescribeStateMachine
-
-See [StepFunctions.describeStateMachine()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#describeStateMachine-property)
-for descriptions of `params` and the return data.
-
-If a ThrottlingException is received, this function will retry using an
-exponential backoff.
-
-**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
-
-| Param | Type |
-| --- | --- |
-| params | <code>Object</code> | 
-
-<a name="module_StepFunctions.executionExists"></a>
-
-### StepFunctions.executionExists(executionArn) ⇒ <code>Promise.&lt;boolean&gt;</code>
-Check if a Step Function Execution exists
-
-If a ThrottlingException is received, this function will retry using an
-exponential backoff.
-
-**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| executionArn | <code>string</code> | the ARN of the Step Function Execution to   check for |
-
-<a name="module_StepFunctions.getExecutionHistory"></a>
-
-### StepFunctions.getExecutionHistory(params) ⇒ <code>Promise.&lt;Object&gt;</code>
-Call StepFunctions GetExecutionHistory
-
-See [StepFunctions.getExecutionHistory()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#getExecutionHistory-property)
-for descriptions of `params` and the return data.
-
-If a ThrottlingException is received, this function will retry using an
-exponential backoff.
-
-**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
-
-| Param | Type |
-| --- | --- |
-| params | <code>Object</code> | 
-
-<a name="module_StepFunctions.listExecutions"></a>
-
-### StepFunctions.listExecutions(params) ⇒ <code>Promise.&lt;Object&gt;</code>
-Call StepFunctions ListExecutions
-
-See [StepFunctions.listExecutions()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#listExecutions-property)
-for descriptions of `params` and the return data.
-
-If a ThrottlingException is received, this function will retry using an
-exponential backoff.
-
-**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
-
-| Param | Type |
-| --- | --- |
-| params | <code>Object</code> | 
 
 <a name="module_string"></a>
 
@@ -129,27 +27,34 @@ toLower('aSDf'); // => 'asdf'
 ```
 
 * [string](#module_string)
-    * [.unicodeEscape(str, regex)](#module_string.unicodeEscape) ⇒ <code>string</code>
+    * [.replace](#module_string.replace) ⇒ <code>string</code>
     * [.globalReplace(string, oldSubString, newSubString)](#module_string.globalReplace) ⇒ <code>string</code>
     * [.toLower(str)](#module_string.toLower) ⇒ <code>string</code>
     * [.toUpper(str)](#module_string.toUpper) ⇒ <code>string</code>
     * [.match(regexp, str)](#module_string.match) ⇒ <code>Array</code> \| <code>null</code>
     * [.matches(regexp, str)](#module_string.matches) ⇒ <code>boolean</code>
     * [.isValidHostname(hostname)](#module_string.isValidHostname) ⇒ <code>boolean</code>
+    * [.isNonEmptyString(x)](#module_string.isNonEmptyString) ⇒ <code>boolean</code>
 
-<a name="module_string.unicodeEscape"></a>
+<a name="module_string.replace"></a>
 
-### string.unicodeEscape(str, regex) ⇒ <code>string</code>
-Given a string, replaces all characters matching the passed regex with their unicode
-escape sequences
+### string.replace ⇒ <code>string</code>
+Return a new string with some or all matches of a pattern replaced by a
+replacement.
 
-**Kind**: static method of [<code>string</code>](#module_string)  
-**Returns**: <code>string</code> - The string with characters unicode-escaped  
+**Kind**: static constant of [<code>string</code>](#module_string)  
+**Returns**: <code>string</code> - the modified string
 
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| str | <code>string</code> |  | The string to escape |
-| regex | <code>string</code> | <code>&quot;&lt;RegExp /[\\s\\S]/g&gt;&quot;</code> | The regex matching characters to replace (default: all chars) |
+For additional details on the pattern and replacement arguments, see:
+  https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#Parameters
+
+This is a curried function - https://lodash.com/docs/4.17.11#curry  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| pattern | <code>string</code> \| <code>RegExp</code> | if a string, this is the substring to be   replaced by `replacement`. If a RegExp, any match or matches will be   replaced by `replacement`. |
+| replacement | <code>string</code> \| <code>function</code> | if a string, the value to replace   `pattern` with. If a function, instances of `pattern` will be replaced with   the result of calling the function. |
+| string | <code>string</code> | The string to modify |
 
 <a name="module_string.globalReplace"></a>
 
@@ -242,6 +147,17 @@ isValidHostname('example.com'); // => true
 isValidHostname('as!@#'); // => false
 isValidHostname('127.0.0.1'); // => false
 ```
+<a name="module_string.isNonEmptyString"></a>
+
+### string.isNonEmptyString(x) ⇒ <code>boolean</code>
+Test if a value is a string with a length greater than zero
+
+**Kind**: static method of [<code>string</code>](#module_string)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| x | <code>string</code> | the string to test |
+
 <a name="module_URLUtils"></a>
 
 ## URLUtils
@@ -306,6 +222,9 @@ isNil(undefined); // => true
     * [.setErrorStack(error, newStack)](#module_util.setErrorStack)
     * [.renameProperty(from, to, obj)](#module_util.renameProperty) ⇒ <code>Object</code>
     * [.removeNilProperties(obj)](#module_util.removeNilProperties) ⇒ <code>Object</code>
+    * [.lookupMimeType(key)](#module_util.lookupMimeType) ⇒ <code>string</code>
+    * [.isOneOf(collection, val)](#module_util.isOneOf) ⇒ <code>boolean</code>
+    * [.thread(value, ...fns)](#module_util.thread) ⇒ <code>\*</code>
 
 <a name="module_util.deprecate"></a>
 
@@ -435,6 +354,48 @@ Remove properties whose values are `null` or `undefined`
 | Param | Type | Description |
 | --- | --- | --- |
 | obj | <code>Object</code> | object to update |
+
+<a name="module_util.lookupMimeType"></a>
+
+### util.lookupMimeType(key) ⇒ <code>string</code>
+Return mime-type based on input url or filename
+
+**Kind**: static method of [<code>util</code>](#module_util)  
+**Returns**: <code>string</code> - mimeType or null  
+
+| Param | Type |
+| --- | --- |
+| key | <code>string</code> | 
+
+<a name="module_util.isOneOf"></a>
+
+### util.isOneOf(collection, val) ⇒ <code>boolean</code>
+Test if a value is included in a list of items
+
+This is a curried function - https://lodash.com/docs/4.17.11#curry
+
+**Kind**: static method of [<code>util</code>](#module_util)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| collection | <code>Array</code> | the list of items to check against |
+| val | <code>Object</code> | the item to check for in the collection |
+
+<a name="module_util.thread"></a>
+
+### util.thread(value, ...fns) ⇒ <code>\*</code>
+Pass a value through a pipeline of functions and return the result
+
+**Kind**: static method of [<code>util</code>](#module_util)  
+**Returns**: <code>\*</code> - the result of passing the value through the functions
+
+- If no functions are provided, the value is returned.
+- Functions should expect a single argument  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| value | <code>\*</code> | the value to be passed through the pipeline of functions |
+| ...fns | <code>function</code> | the functions to be invoked |
 
 
 ---
