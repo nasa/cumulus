@@ -65,6 +65,7 @@ async function getWorkflowArn(stackName, bucketName, workflowName) {
  * @returns {Promise.<Array>} list of workflows
  */
 async function getWorkflowList(stackName, bucketName) {
+  deprecate('@cumulus/common/workflows.getWorkflowList()', '1.20.0');
   const workflowsListKeyPrefix = getWorkflowsListKeyPrefix(stackName);
   const workflows = await listS3ObjectsV2({
     Bucket: bucketName,

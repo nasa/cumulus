@@ -53,6 +53,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Deprecate `@cumulus/common/test-utils.throttleOnce()`
   - Deprecate `@cumulus/common/workflows.getWorkflowArn()`
   - Deprecate `@cumulus/common/workflows.getWorkflowFile()`
+  - Deprecate `@cumulus/common/workflows.getWorkflowList()`
   - Deprecate `@cumulus/common/workflows.getWorkflowTemplate()`
 
 ### Removed
