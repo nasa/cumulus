@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Deprecate `@cumulus/common/config.resolveResource()`
   - Deprecate `@cumulus/common/config.resourceToArn()`
   - Deprecate `@cumulus/common/FieldPattern`
+  - Deprecate `@cumulus/common/message.getMessageFromTemplate()`
   - Deprecate `@cumulus/common/Semaphore`
   - Deprecate `@cumulus/common/test-utils.throttleOnce()`
   - Deprecate `@cumulus/common/workflows.getWorkflowArn()`

@@ -244,6 +244,7 @@ const hasQueueAndExecutionLimit = (message) => {
  * @returns {Promise} message object
  **/
 async function getMessageFromTemplate(templateUri) {
+  deprecate('@cumulus/common/message.getMessageFromTemplate()', '1.20.0');
   const parsedS3Uri = parseS3Uri(templateUri);
   const data = await getS3Object(parsedS3Uri.Bucket, parsedS3Uri.Key);
   return JSON.parse(data.Body);
