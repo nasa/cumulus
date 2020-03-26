@@ -4,7 +4,8 @@ const get = require('lodash.get');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const log = require('@cumulus/common/log');
-const { getCollectionIdFromMessage, getMessageExecutionArn } = require('@cumulus/common/message');
+const { getCollectionIdFromMessage } = require('@cumulus/message/collections');
+const { getMessageExecutionArn } = require('@cumulus/message/executions');
 const pvl = require('@cumulus/pvl');
 
 const Manager = require('./base');

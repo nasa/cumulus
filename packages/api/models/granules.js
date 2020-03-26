@@ -13,11 +13,9 @@ const { CMR } = require('@cumulus/cmr-client');
 const cmrjs = require('@cumulus/cmrjs');
 const launchpad = require('@cumulus/common/launchpad');
 const log = require('@cumulus/common/log');
-const {
-  getCollectionIdFromMessage,
-  getMessageExecutionArn,
-  getMessageGranules
-} = require('@cumulus/common/message');
+const { getCollectionIdFromMessage } = require('@cumulus/message/collections');
+const { getMessageExecutionArn } = require('@cumulus/message/executions');
+const { getMessageGranules } = require('@cumulus/message/granules');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const {
   isNil,

@@ -4,11 +4,11 @@ const get = require('lodash.get');
 const pLimit = require('p-limit');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
+const { getCollectionIdFromMessage } = require('@cumulus/message/collections');
 const {
-  getCollectionIdFromMessage,
   getMessageExecutionArn,
   getMessageExecutionName
-} = require('@cumulus/common/message');
+} = require('@cumulus/message/executions');
 const { isNil, removeNilProperties } = require('@cumulus/common/util');
 
 const executionSchema = require('./schemas').execution;
