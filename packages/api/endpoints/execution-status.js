@@ -1,10 +1,8 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const {
-  getStateMachineArn,
-  pullStepFunctionEvent
-} = require('@cumulus/aws-client/StepFunctions');
+const { getStateMachineArnFromExecutionArn } = require('@cumulus/message/executions');
+const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const models = require('../models');
@@ -96,7 +94,7 @@ async function get(req, res) {
   const warning = 'Execution does not exist in Step Functions API';
   const execution = {
     executionArn: response.arn,
-    stateMachineArn: getStateMachineArn(response.arn),
+    stateMachineArn: getStateMachineArnFromExecutionArn(response.arn),
     name: response.name,
     status: response.status === 'completed' ? 'SUCCEEDED' : response.status.toUpperCase(),
     startDate: new Date(response.createdAt),

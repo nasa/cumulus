@@ -1,6 +1,5 @@
 'use strict';
 
-const stepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
   getSfEventMessageObject,
   getSfEventStatus,
@@ -11,6 +10,7 @@ const {
   getQueueName,
   hasQueueAndExecutionLimit
 } = require('@cumulus/message/queue');
+const stepFunctions = require('@cumulus/message/StepFunctions');
 
 const { decrementQueueSemaphore } = require('../lib/SemaphoreUtils');
 

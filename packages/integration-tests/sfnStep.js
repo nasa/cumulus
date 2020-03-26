@@ -5,7 +5,7 @@
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { deprecate, isNil } = require('@cumulus/common/util');
 const log = require('@cumulus/common/log');
-const { parseStepMessage } = require('@cumulus/message/StepFunctions');
+const { parseStepMessage, pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 
 /**
  * `SfnStep` provides methods for getting the output of a step within an AWS
@@ -35,7 +35,7 @@ class SfnStep {
     if (parsedStepMessage.replace) {
       // Message was too large and output was written to S3
       log.info(`Retrieving ${stepName} output from ${JSON.stringify(parsedStepMessage.replace)}`);
-      parsedStepMessage = await StepFunctions.pullStepFunctionEvent(parsedStepMessage);
+      parsedStepMessage = await pullStepFunctionEvent(parsedStepMessage);
     }
     return parsedStepMessage;
   }
@@ -241,7 +241,7 @@ class SfnStep {
     if (stepOutput.replace) {
       // Message was too large and output was written to S3
       log.info(`Retrieving ${stepName} output from ${JSON.stringify(stepOutput.replace)}`);
-      stepOutput = StepFunctions.pullStepFunctionEvent(stepOutput);
+      stepOutput = pullStepFunctionEvent(stepOutput);
     }
     return stepOutput;
   }
