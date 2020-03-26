@@ -93,7 +93,65 @@ test.after.always(async () => {
   await s3.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
-test.only('addStatsToCollection add stats to ES collection results', async (t) => {
+test.serial('getStats returns an empty list if there are no records or ids', async (t) => {
+  const collectionSearch = new Collection({}, null, process.env.ES_INDEX);
+  const stats = await collectionSearch.getStats([], []);
+
+  t.deepEqual([], stats);
+});
+
+test.serial('getStats returns an empty list if there are no records', async (t) => {
+  const collectionSearch = new Collection({}, null, process.env.ES_INDEX);
+  const stats = await collectionSearch.getStats([], ['coll1___1']);
+
+  t.deepEqual(stats, []);
+});
+
+test.serial('getStats returns empty stats if there are no ids', async (t) => {
+  const records = [
+    { name: 'coll1', version: '1' },
+    { name: 'coll1', version: '2' }
+  ];
+  const collectionSearch = new Collection({}, null, process.env.ES_INDEX);
+  const stats = await collectionSearch.getStats(records, []);
+
+  t.deepEqual(stats,
+    records.map((r) => ({
+      ...r,
+      stats: { running: 0, completed: 0, failed: 0, total: 0 }
+    }))
+  );
+});
+
+test.serial('getStats correctly adds stats', async (t) => {
+  const collectionSearch = new Collection({}, null, process.env.ES_INDEX);
+  const stats = await collectionSearch.getStats([{ name: 'coll1', version: '1' }], ['coll1___1']);
+
+  t.is(stats.length, 1);
+  t.deepEqual(stats[0].stats, { running: 0, completed: 2, failed: 0, total: 2 });
+});
+
+test.serial('getStats correctly adds stats to different versions of collections', async (t) => {
+  const collectionSearch = new Collection({}, null, process.env.ES_INDEX);
+  const stats = await collectionSearch.getStats([
+    { name: 'coll1', version: '1' },
+    { name: 'coll1', version: '2' }
+  ],
+  ['coll1___1', 'coll1___2']);
+
+  t.is(stats.length, 2);
+  t.deepEqual(stats, [
+    {
+      name: 'coll1',
+      version: '1',
+      stats: { running: 0, completed: 2, failed: 0, total: 2 } },
+    { name: 'coll1',
+      version: '2',
+      stats: { running: 0, completed: 0, failed: 0, total: 0 } }
+  ]);
+});
+
+test.serial('addStatsToCollection add stats to ES collection results', async (t) => {
   const esResults = [
     {
       name: 'coll1',
@@ -117,6 +175,57 @@ test.only('addStatsToCollection add stats to ES collection results', async (t) =
       version: '2',
       stats: { running: 0, completed: 0, failed: 0, total: 0 } }
   ]);
+});
+
+test.serial('addStatsToCollection returns empty list for no collections', async (t) => {
+  const collectionSearch = new Collection({}, null, process.env.ES_INDEX);
+  const resultsWithStats = await collectionSearch.addStatsToCollectionResults([]);
+
+  t.deepEqual(resultsWithStats, []);
+});
+
+test.serial('query returns all collections with stats by default', async (t) => {
+  const collectionSearch = new Collection({}, null, process.env.ES_INDEX);
+  const queryResult = await collectionSearch.query();
+
+  t.is(queryResult.meta.count, 4);
+
+  const collections = queryResult.results.map((c) => ({ name: c.name, version: c.version, stats: c.stats }));
+  t.deepEqual(collections, [
+    {
+      name: 'coll1',
+      version: '2',
+      stats: { running: 0, completed: 0, failed: 0, total: 0 }
+    },
+    {
+      name: 'coll2',
+      version: '1',
+      stats: { running: 0, completed: 0, failed: 0, total: 0 }
+    },
+    {
+      name: 'coll1',
+      version: '1',
+      stats: { running: 0, completed: 2, failed: 0, total: 2 }
+    },
+    {
+      name: 'coll3',
+      version: '1',
+      stats: { running: 0, completed: 1, failed: 0, total: 1 }
+    }
+  ]);
+});
+
+test.serial('query correctly queries collection by date', async (t) => {
+  const collectionSearch = new Collection({
+    queryStringParameters: {
+      updatedAt__from: (new Date(2020, 0, 25)).getTime(),
+      updatedAt__to: (new Date(2020, 0, 30)).getTime()
+    }
+  }, null, process.env.ES_INDEX);
+  const queryResult = await collectionSearch.query();
+
+  t.is(queryResult.meta.count, 1);
+  t.is(queryResult.results[0].name, 'coll3');
 });
 
 test.serial('aggregateActiveGranuleCollections returns only collections with granules', async (t) => {
