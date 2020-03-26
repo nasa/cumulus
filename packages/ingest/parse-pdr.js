@@ -7,7 +7,7 @@
 
 const isNumber = require('lodash.isnumber');
 const isString = require('lodash.isstring');
-const { PDRParsingError } = require('@cumulus/common/errors');
+const { PDRParsingError } = require('@cumulus/errors');
 
 // If updating this mapping, please update the related documentation
 // at docs/workflow_tasks/parse_pdr.md

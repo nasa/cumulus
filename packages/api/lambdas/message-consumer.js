@@ -1,76 +1,67 @@
 'use strict';
 
 const Ajv = require('ajv');
+const get = require('lodash.get');
 const set = require('lodash.set');
 const { sns } = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
 const Rule = require('../models/rules');
 const kinesisSchema = require('./kinesis-consumer-event-schema.json');
-const { queueMessageForRule } = require('../lib/rulesHelpers');
+const { lookupCollectionInEvent, queueMessageForRule } = require('../lib/rulesHelpers');
 
 /**
- * `getKinesisRules` scans and returns DynamoDB rules table for enabled,
- * 'kinesis'-type rules associated with the * collection declared in the event
+ * `getKinesisRules` scans and returns DynamoDB rules table for enabled rules with the sourceArn in
+ * the `rule.value` field, then filters based on any collection name and version in the queryParams.
  *
- * @param {Object} collection - lambda event
+ * @param {Object} queryParams - any/all query params extracted from event object
  * @returns {Array} List of zero or more rules found from table scan
  */
-async function getKinesisRules(collection) {
+async function getRules(queryParams, originalMessageSource) {
+  if (!['kinesis', 'sns'].includes(originalMessageSource)) {
+    throw new Error(`Unrecognized event source: ${originalMessageSource}. Expected "kinesis" or "sns"`);
+  }
+  const names = {
+    '#st': 'state',
+    '#rl': 'rule',
+    '#tp': 'type'
+  };
+  let filter = '#st = :enabledState AND #rl.#tp = :ruleType';
+  const values = {
+    ':enabledState': 'ENABLED',
+    ':ruleType': originalMessageSource
+  };
+  if (queryParams.collectionName) {
+    values[':collectionName'] = queryParams.collectionName;
+    names['#col'] = 'collection';
+    names['#nm'] = 'name';
+    filter += ' AND #col.#nm = :collectionName';
+  }
+  if (queryParams.collectionVersion) {
+    values[':collectionVersion'] = queryParams.collectionVersion;
+    names['#col'] = 'collection';
+    names['#vr'] = 'version';
+    filter += ' AND #col.#vr = :collectionVersion';
+  }
+  if (queryParams.sourceArn) {
+    values[':ruleValue'] = queryParams.sourceArn;
+    names['#vl'] = 'value';
+    filter += ' AND #rl.#vl = :ruleValue';
+  }
   const model = new Rule();
-  const kinesisRules = await model.scan({
-    names: {
-      '#col': 'collection',
-      '#nm': 'name',
-      '#st': 'state',
-      '#rl': 'rule',
-      '#tp': 'type'
-    },
-    filter: '#st = :enabledState AND #col.#nm = :collectionName AND #rl.#tp = :ruleType',
-    values: {
-      ':enabledState': 'ENABLED',
-      ':collectionName': collection,
-      ':ruleType': 'kinesis'
-    }
+  const rulesQueryResultsForSourceArn = await model.scan({
+    names,
+    filter,
+    values
   });
 
-  return kinesisRules.Items;
-}
-
-/**
- * `getSnsRules` scans and returns DynamoDB rules table for enabled,
- * 'sns'-type rules associated with the * collection declared in the event
- *
- * @param {string} topicArn - sns topic arn
- * @returns {Array} List of zero or more rules found from table scan
- */
-async function getSnsRules(topicArn) {
-  const model = new Rule();
-  const snsRules = await model.scan({
-    names: {
-      '#st': 'state',
-      '#rl': 'rule',
-      '#tp': 'type',
-      '#vl': 'value'
-    },
-    filter: '#st = :enabledState AND #rl.#tp = :ruleType AND #rl.#vl = :ruleValue',
-    values: {
-      ':enabledState': 'ENABLED',
-      ':ruleType': 'sns',
-      ':ruleValue': topicArn
-    }
-  });
-
-  return snsRules.Items;
-}
-
-async function getRules(param, originalMessageSource) {
-  if (originalMessageSource === 'kinesis') {
-    return getKinesisRules(param);
+  const rules = rulesQueryResultsForSourceArn.Items || [];
+  if (rules.length === 0) {
+    throw new Error(
+      `No rules found that matched any/all of source ARN ${queryParams.sourceArn} and `
+      + `collection { name: ${queryParams.name}, version: ${queryParams.version} }`
+    );
   }
-  if (originalMessageSource === 'sns') {
-    return getSnsRules(param);
-  }
-  throw new Error('Unrecognized event source');
+  return rules;
 }
 
 /**
@@ -152,7 +143,7 @@ function handleProcessRecordError(error, record, fromSNS, isKinesisRetry) {
  * Process data sent to a kinesis stream. Validate the data and
  * queue a workflow message for each rule.
  *
- * @param {*} record - input to the kinesis stream
+ * @param {Object} record - input to the kinesis stream
  * @param {Bool} fromSNS - flag specifying if this is event is from SNS.  SNS
  *        events come from the fallback SNS Topic and are retries of original
  *        Kinesis events.  If this flag is true, errors are raised normally.
@@ -165,7 +156,7 @@ function handleProcessRecordError(error, record, fromSNS, isKinesisRetry) {
 function processRecord(record, fromSNS) {
   let eventObject;
   let isKinesisRetry = false;
-  let parsed;
+  let parsed = record;
   let validationSchema;
   let originalMessageSource;
   let ruleParam;
@@ -177,23 +168,27 @@ function processRecord(record, fromSNS) {
     // normal SNS notification - not a Kinesis fallback
     eventObject = parsed;
     originalMessageSource = 'sns';
-    ruleParam = record.Sns.TopicArn;
+    ruleParam = {
+      ...lookupCollectionInEvent(eventObject),
+      sourceArn: get(record, 'Sns.TopicArn')
+    };
   } else {
     // kinesis notification -  sns fallback or direct
-    let dataBlob;
     if (fromSNS) {
       // Kinesis fallback SNS notification
       isKinesisRetry = true;
-      dataBlob = parsed.kinesis.data;
-    } else {
-      dataBlob = record.kinesis.data;
     }
     try {
+      const kinesisObject = parsed.kinesis;
       validationSchema = kinesisSchema;
       originalMessageSource = 'kinesis';
-      const dataString = Buffer.from(dataBlob, 'base64').toString();
+      const dataString = Buffer.from(kinesisObject.data, 'base64').toString();
       eventObject = JSON.parse(dataString);
-      ruleParam = eventObject.collection;
+      // standard case (collection object), or CNM case
+      ruleParam = {
+        ...lookupCollectionInEvent(eventObject),
+        sourceArn: get(parsed, 'eventSourceARN')
+      };
     } catch (err) {
       log.error('Caught error parsing JSON:');
       log.error(err);
@@ -206,7 +201,7 @@ function processRecord(record, fromSNS) {
     .then(() => getRules(ruleParam, originalMessageSource))
     .then((rules) => (
       Promise.all(rules.map((rule) => {
-        if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParam);
+        if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParam.sourceArn);
         return queueMessageForRule(rule, eventObject);
       }))))
     .catch((err) => {

@@ -91,7 +91,7 @@ describe('The Kinesis Replay API', () => {
     testConfig.streamName = streamName;
 
     const createRecord = (identifier) => ({
-      provider: `SWOT_PODAAC${testSuffix}`,
+      provider: `PODAAC_SWOT${testSuffix}`,
       collection: `MOD09GQ${testSuffix}`,
       bucket: 'random-bucket',
       identifier: identifier || randomString()
