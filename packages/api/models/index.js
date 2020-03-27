@@ -9,7 +9,6 @@ const Pdr = require('./pdrs');
 const Provider = require('./providers');
 const Rule = require('./rules');
 const Execution = require('./executions');
-const FileClass = require('./files');
 
 module.exports = {
   AccessToken,
@@ -20,6 +19,5 @@ module.exports = {
   Provider,
   Rule,
   Manager,
-  Execution,
-  FileClass
+  Execution
 };

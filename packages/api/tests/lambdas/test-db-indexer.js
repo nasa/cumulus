@@ -6,7 +6,6 @@ const attr = require('dynamodb-data-types').AttributeValue;
 const awsServices = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
-const { RecordDoesNotExist } = require('@cumulus/errors');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const models = require('../../models');
@@ -20,6 +19,7 @@ const {
   fakeFileFactory,
   fakeProviderFactory
 } = require('../../lib/testUtils');
+const GranuleFilesCache = require('../../lib/GranuleFilesCache');
 
 const {
   getTableName,
@@ -27,8 +27,6 @@ const {
   handler,
   getParentId,
   getRecordId,
-  performFilesAddition,
-  performFilesDelete,
   performDelete,
   performIndex
 } = dbIndexer;
@@ -123,7 +121,6 @@ const buildGranuleRecord = ({ type, oldGranule = null, newGranule = null }) => {
 
 let collectionModel;
 let executionModel;
-let fileModel;
 let granuleModel;
 let ruleModel;
 
@@ -133,14 +130,12 @@ test.before(async (t) => {
   // create tables
   collectionModel = new models.Collection();
   granuleModel = new models.Granule();
-  fileModel = new models.FileClass();
   executionModel = new models.Execution();
   ruleModel = new models.Rule();
 
   await Promise.all([
     collectionModel.createTable(),
     executionModel.createTable(),
-    fileModel.createTable(),
     granuleModel.createTable(),
     ruleModel.createTable()
   ]);
@@ -158,7 +153,6 @@ test.after.always(async () => {
   await collectionModel.deleteTable();
   await granuleModel.deleteTable();
   await executionModel.deleteTable();
-  await fileModel.deleteTable();
   await ruleModel.deleteTable();
 
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
@@ -212,7 +206,7 @@ test('getTableName() returns the full name of the DynamoDB table associated with
 
 test('getTableIndexDetails() returns undefined for unsupported table', (t) => {
   t.is(getTableIndexDetails('fake-table-name'), undefined);
-  t.is(getTableIndexDetails(process.env.FilesTable), undefined);
+  t.is(getTableIndexDetails(GranuleFilesCache.cacheTableName()), undefined);
 });
 
 test('getTableIndexDetails() returns the correct function name and index type', (t) => {
@@ -220,59 +214,6 @@ test('getTableIndexDetails() returns the correct function name and index type', 
     indexFnName: 'indexCollection',
     indexType: 'collection'
   });
-});
-
-test('performFilesDelete() deletes files associated with a given granule', async (t) => {
-  const bucket = randomString();
-  const granule = fakeGranuleFactoryV2({
-    files: [fakeFileFactory({ bucket })]
-  });
-
-  await fileModel.createFilesFromGranule(granule);
-
-  await performFilesDelete(granule);
-
-  await t.throwsAsync(
-    () => fileModel.get({ bucket, key: granule.files[0].key }),
-    { instanceOf: RecordDoesNotExist }
-  );
-});
-
-test('performFilesAddition() creates files', async (t) => {
-  const bucket = randomString();
-  const granule = fakeGranuleFactoryV2({
-    files: [fakeFileFactory({ bucket })]
-  });
-
-  await performFilesAddition(granule, {});
-
-  await t.notThrowsAsync(
-    () => fileModel.get({ bucket, key: granule.files[0].key })
-  );
-});
-
-test('performFilesAddition() remove files that are no longer in the granule', async (t) => {
-  const bucket = randomString();
-  const granule = fakeGranuleFactoryV2({
-    files: [fakeFileFactory({ bucket })]
-  });
-
-  await performFilesAddition(granule, {});
-
-  const newGranule = {
-    ...granule,
-    files: [
-      ...granule.files
-    ]
-  };
-  const droppedFile = newGranule.files.pop();
-
-  await performFilesAddition(newGranule, granule);
-
-  await t.throwsAsync(
-    () => fileModel.get({ bucket, key: droppedFile.key }),
-    { instanceOf: RecordDoesNotExist }
-  );
 });
 
 test('performIndex() indexes a record to ES', async (t) => {
@@ -364,12 +305,6 @@ test.serial('create, update and delete a granule in DynamoDB and ES', async (t) 
 
   t.is(indexedRecord.granuleId, fakeGranule.granuleId);
 
-  // make sure all the file records are added
-  const record = await fileModel.get({ bucket: fakeFile.bucket, key: fakeFile.key });
-  t.is(record.bucket, fakeFile.bucket);
-  t.is(record.key, fakeFile.key);
-  t.is(record.granuleId, fakeGranule.granuleId);
-
   // change the record
   const modifyRecord = buildGranuleRecord({
     type: 'MODIFY',
@@ -394,12 +329,6 @@ test.serial('create, update and delete a granule in DynamoDB and ES', async (t) 
 
   indexedRecord = await granuleIndex.get(fakeGranule.granuleId);
   t.is(indexedRecord.detail, 'Record not found');
-
-  // make sure the file records are deleted
-  await t.throwsAsync(
-    () => fileModel.get({ bucket: fakeFile.bucket, key: fakeFile.key }),
-    /No record/
-  );
 
   const deletedGranIndex = new Search({}, 'deletedgranule', esAlias);
   const deletedGranRecord = await deletedGranIndex.get(fakeGranule.granuleId);
