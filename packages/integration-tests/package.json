@@ -31,6 +31,7 @@
     "@cumulus/cmrjs": "1.21.0",
     "@cumulus/common": "1.21.0",
     "@cumulus/deployment": "1.21.0",
+    "@cumulus/launchpad-auth": "1.20.0-alpha1",
     "@cumulus/message": "1.21.0-alpha3",
     "aws-sdk": "^2.585.0",
     "base-64": "^0.1.0",

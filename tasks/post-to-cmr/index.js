@@ -11,7 +11,7 @@ const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { CMRMetaFileNotFound } = require('@cumulus/errors');
-const launchpad = require('@cumulus/common/launchpad');
+const launchpad = require('@cumulus/launchpad-auth');
 
 /**
  * Builds the output of the post-to-cmr task

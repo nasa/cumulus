@@ -12,7 +12,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 
 const LaunchpadToken = require('../LaunchpadToken');
-const launchpad = rewire('../launchpad');
+const launchpad = rewire('..');
 const { getLaunchpadToken, validateLaunchpadToken } = launchpad;
 const launchpadTokenBucketKey = launchpad.__get__('launchpadTokenBucketKey');
 
