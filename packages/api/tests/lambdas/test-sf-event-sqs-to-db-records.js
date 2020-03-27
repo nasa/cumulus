@@ -6,7 +6,7 @@ const test = require('ava');
 const sinon = require('sinon');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { constructCollectionId } = require('@cumulus/message/collections');
 const { randomString } = require('@cumulus/common/test-utils');
 const Execution = require('../../models/executions');
 const Granule = require('../../models/granules');

@@ -5,7 +5,7 @@ const fs = require('fs-extra');
 const { buildS3Uri, deleteS3Files, getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { dynamodb, lambda, s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { constructCollectionId } = require('@cumulus/message/collections');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { randomString } = require('@cumulus/common/test-utils');
 

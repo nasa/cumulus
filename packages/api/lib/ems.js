@@ -11,7 +11,7 @@ const {
   buildS3Uri,
   getTextObject
 } = require('@cumulus/aws-client/S3');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { constructCollectionId } = require('@cumulus/message/collections');
 const log = require('@cumulus/common/log');
 const SftpClient = require('@cumulus/sftp-client');
 const { Collection } = require('../models');

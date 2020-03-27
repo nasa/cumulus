@@ -7,7 +7,7 @@ const sortBy = require('lodash.sortby');
 
 const { buildS3Uri, deleteS3Files } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { constructCollectionId } = require('@cumulus/message/collections');
 const log = require('@cumulus/common/log');
 const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue');
 const {
