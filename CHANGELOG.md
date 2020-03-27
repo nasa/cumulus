@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `@cumulus/aws-client/StepFunctions.pullStepFunctionEvent()` -> `@cumulus/message/StepFunctions.pullStepFunctionEvent()`
   - `@cumulus/common/bucketsConfigJsonObject()`
   - `@cumulus/common/CloudWatchLogger`
+  - `@cumulus/common/collection-config-store/CollectionConfigStore` -> `@cumulus/collection-config-store`
   - `@cumulus/common/collection-config-store.constructCollectionId()` -> `@cumulus/message/collections.constructCollectionId`
   - `@cumulus/common/concurrency.limit()`
   - `@cumulus/common/concurrency.mapTolerant()`

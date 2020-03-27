@@ -27,6 +27,7 @@ class CollectionConfigStore {
    * @param {string} stackName - the Cumulus deployment stack name
    */
   constructor(bucket, stackName) {
+    deprecate('@cumulus/common/collection-config-store/CollectionConfigStore', '1.20.0', '@cumulus/collection-config-store');
     this.bucket = bucket;
     this.stackName = stackName;
     this.cache = {};
