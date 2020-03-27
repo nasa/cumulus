@@ -1,6 +1,7 @@
 'use strict';
 
 const { s3 } = require('./aws');
+const { deprecate } = require('./util');
 
 /**
  * Returns the collectionId used in elasticsearch
@@ -11,6 +12,7 @@ const { s3 } = require('./aws');
  * @returns {string} collectionId
  */
 function constructCollectionId(name, version) {
+  deprecate('@cumulus/common/collection-config-store.constructCollectionId', '1.20.0', '@cumulus/message/collections.constructCollectionId');
   return `${name}___${version}`;
 }
 
