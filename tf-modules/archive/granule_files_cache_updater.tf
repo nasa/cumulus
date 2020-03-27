@@ -63,7 +63,7 @@ resource "aws_lambda_function" "granule_files_cache_updater" {
   handler          = "index.handler"
   runtime          = "nodejs10.x"
   timeout          = 30
-  memory_size      = 128
+  memory_size      = 256
 
   dynamic "vpc_config" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
@@ -93,6 +93,6 @@ resource "aws_cloudwatch_log_group" "granule_files_cache_updater_logs" {
 resource "aws_lambda_event_source_mapping" "granule_files_cache_updater" {
   event_source_arn  = data.aws_dynamodb_table.granules.stream_arn
   function_name     = aws_lambda_function.granule_files_cache_updater.arn
-  starting_position = "TRIM_HORIZON"
+  starting_position = "LATEST"
   batch_size        = 10
 }

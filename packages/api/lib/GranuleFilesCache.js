@@ -12,11 +12,12 @@
 
 'use strict';
 
+const AggregateError = require('aggregate-error');
 const chunk = require('lodash.chunk');
-const flatten = require('lodash.flatten');
+const get = require('lodash.get');
 const pick = require('lodash.pick');
 const pMap = require('p-map');
-const { isNil, noop } = require('@cumulus/common/util');
+const { noop } = require('@cumulus/common/util');
 const { dynamodb, dynamodbDocClient } = require('@cumulus/aws-client/services');
 const { isNonEmptyString } = require('@cumulus/common/string');
 
@@ -29,6 +30,31 @@ const cacheTableName = () => {
   throw new Error('process.env.FilesTable is not set');
 };
 
+const validatePutFile = (file) => {
+  ['bucket', 'key', 'granuleId'].forEach((prop) => {
+    if (!isNonEmptyString(file[prop])) {
+      throw new TypeError(
+        `${prop} is required in put request: ${JSON.stringify(file)}`
+      );
+    }
+  });
+};
+
+const validateDeleteFile = (file) => {
+  ['bucket', 'key'].forEach((prop) => {
+    if (!isNonEmptyString(file[prop])) {
+      throw new TypeError(
+        `${prop} is required in delete request: ${JSON.stringify(file)}`
+      );
+    }
+  });
+};
+
+const batchWriteItems = (items) =>
+  dynamodbDocClient().batchWrite({
+    RequestItems: { [cacheTableName()]: items }
+  }).promise();
+
 /**
  * Perform a bulk-update of the Granule Files cache table.
  *
@@ -38,61 +64,61 @@ const cacheTableName = () => {
  * Objects in the `deletes` array will be removed from the cache, and must
  * contain a `bucket` and `key`.
  *
+ * This function will try to successfully complete as many operations as it can.
+ * Any errors encountered will be thrown as part of an AggregateError.
+ *
  * @param {Object} params
  * @param {Array<Object>} params.puts - a list of new files to be added to the
  *   cache
  * @param {Array<Object>} params.deletes - a list of files to be removed from
  *   the cache
+ * @throws {AggregateError} - an AggregateError containing all of the errors
+ *   that were thrown
  */
 const batchUpdate = async (params = {}) => {
-  const { puts = [], deletes = [] } = params;
+  const requestItems = [];
+  const errors = [];
 
-  // Perform input validation
-  puts.forEach((put) => {
-    ['bucket', 'key', 'granuleId'].forEach((prop) => {
-      if (isNil(put[prop])) {
-        throw new TypeError(`${prop} is required in put request: ${JSON.stringify(put)}`);
-      }
-    });
+  get(params, 'puts', []).forEach((file) => {
+    try {
+      validatePutFile(file);
+
+      requestItems.push({
+        PutRequest: {
+          Item: pick(file, ['bucket', 'key', 'granuleId'])
+        }
+      });
+    } catch (error) {
+      errors.push(error);
+    }
   });
 
-  deletes.forEach((del) => {
-    ['bucket', 'key'].forEach((prop) => {
-      if (isNil(del[prop])) {
-        throw new TypeError(`${prop} is required in delete request: ${JSON.stringify(del)}`);
-      }
-    });
+  get(params, 'deletes', []).forEach((file) => {
+    try {
+      validateDeleteFile(file);
+
+      requestItems.push({
+        DeleteRequest: {
+          Key: pick(file, ['bucket', 'key'])
+        }
+      });
+    } catch (error) {
+      errors.push(error);
+    }
   });
-
-  // Build the request items
-  const putRequests = puts.map(
-    (file) => ({
-      PutRequest: {
-        Item: pick(file, ['bucket', 'key', 'granuleId'])
-      }
-    })
-  );
-
-  const deleteRequests = deletes.map(
-    (file) => ({
-      DeleteRequest: {
-        Key: pick(file, ['bucket', 'key'])
-      }
-    })
-  );
-
-  const requestItems = flatten([putRequests, deleteRequests]);
-
-  if (requestItems.length === 0) return;
 
   // Perform the batch writes 25 at a time
-  await pMap(
-    chunk(requestItems, 25),
-    (items) =>
-      dynamodbDocClient().batchWrite({
-        RequestItems: { [cacheTableName()]: items }
-      }).promise()
-  );
+  try {
+    await pMap(
+      chunk(requestItems, 25),
+      batchWriteItems,
+      { stopOnError: false }
+    );
+  } catch (batchWriteErrors) {
+    Array.from(batchWriteErrors).forEach((error) => errors.push(error));
+  }
+
+  if (errors.length > 0) throw new AggregateError(errors);
 };
 
 /**

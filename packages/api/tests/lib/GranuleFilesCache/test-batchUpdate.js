@@ -2,6 +2,7 @@
 
 // Note: These tests are run in serial to try to reduce the load on LocalStack
 
+const AggregateError = require('aggregate-error');
 const get = require('lodash.get');
 const range = require('lodash.range');
 const test = require('ava');
@@ -106,7 +107,7 @@ test.serial('batchUpdate() does not throw an exception when attempting to delete
 });
 
 test.serial('batchUpdate() will throw an exception if a put request does not contain a bucket property', async (t) => {
-  await t.throwsAsync(
+  const error = await t.throwsAsync(
     GranuleFilesCache.batchUpdate({
       puts: [
         {
@@ -115,15 +116,16 @@ test.serial('batchUpdate() will throw an exception if a put request does not con
         }
       ]
     }),
-    {
-      instanceOf: TypeError,
-      message: /^bucket is required/
-    }
+    AggregateError
   );
+
+  const errors = Array.from(error);
+  t.is(errors.length, 1);
+  t.regex(errors[0].message, /^bucket is required/);
 });
 
 test.serial('batchUpdate() will throw an exception if a put request does not contain a key property', async (t) => {
-  await t.throwsAsync(
+  const error = await t.throwsAsync(
     GranuleFilesCache.batchUpdate({
       puts: [
         {
@@ -132,15 +134,16 @@ test.serial('batchUpdate() will throw an exception if a put request does not con
         }
       ]
     }),
-    {
-      instanceOf: TypeError,
-      message: /^key is required/
-    }
+    AggregateError
   );
+
+  const errors = Array.from(error);
+  t.is(errors.length, 1);
+  t.regex(errors[0].message, /^key is required/);
 });
 
 test.serial('batchUpdate() will throw an exception if a put request does not contain a granuleId property', async (t) => {
-  await t.throwsAsync(
+  const error = await t.throwsAsync(
     GranuleFilesCache.batchUpdate({
       puts: [
         {
@@ -149,15 +152,16 @@ test.serial('batchUpdate() will throw an exception if a put request does not con
         }
       ]
     }),
-    {
-      instanceOf: TypeError,
-      message: /^granuleId is required/
-    }
+    AggregateError
   );
+
+  const errors = Array.from(error);
+  t.is(errors.length, 1);
+  t.regex(errors[0].message, /^granuleId is required/);
 });
 
 test.serial('batchUpdate() will throw an exception if a delete request does not contain a bucket property', async (t) => {
-  await t.throwsAsync(
+  const error = await t.throwsAsync(
     GranuleFilesCache.batchUpdate({
       deletes: [
         {
@@ -165,15 +169,16 @@ test.serial('batchUpdate() will throw an exception if a delete request does not 
         }
       ]
     }),
-    {
-      instanceOf: TypeError,
-      message: /^bucket is required/
-    }
+    AggregateError
   );
+
+  const errors = Array.from(error);
+  t.is(errors.length, 1);
+  t.regex(errors[0].message, /^bucket is required/);
 });
 
 test.serial('batchUpdate() will throw an exception if a delete request does not contain a key property', async (t) => {
-  await t.throwsAsync(
+  const error = await t.throwsAsync(
     GranuleFilesCache.batchUpdate({
       deletes: [
         {
@@ -181,11 +186,12 @@ test.serial('batchUpdate() will throw an exception if a delete request does not 
         }
       ]
     }),
-    {
-      instanceOf: TypeError,
-      message: /^key is required/
-    }
+    AggregateError
   );
+
+  const errors = Array.from(error);
+  t.is(errors.length, 1);
+  t.regex(errors[0].message, /^key is required/);
 });
 
 test.serial('batchUpdate() will ignore extra fields in a put', async (t) => {

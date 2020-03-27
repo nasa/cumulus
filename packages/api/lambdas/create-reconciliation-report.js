@@ -11,7 +11,9 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const bucketsConfigJsonObject = require('@cumulus/common/bucketsConfigJsonObject');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 
-const { CMR, CMRSearchConceptQueue, constructOnlineAccessUrl } = require('@cumulus/cmrjs');
+const CMR = require('@cumulus/cmr-client/CMR');
+const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue');
+const { constructOnlineAccessUrl } = require('@cumulus/cmrjs/cmr-utils');
 
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { Collection, Granule } = require('../models');

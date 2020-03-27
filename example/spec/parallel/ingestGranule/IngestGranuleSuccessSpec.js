@@ -346,7 +346,7 @@ describe('The S3 Ingest Granules workflow', () => {
             if (id === null) throw new Error(`File not found in cache: s3://${Bucket}/${Key}`);
             return id;
           },
-          { maxRetryTime: 60 * 1000, minTimeout: 2000, maxTimeout: 2000 }
+          { retries: 30, minTimeout: 2000, maxTimeout: 2000 }
         );
 
         expect(granuleId).toEqual(executionOutput.payload.granules[0].granuleId);
