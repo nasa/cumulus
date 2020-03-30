@@ -66,7 +66,7 @@ describe('The FTP Ingest Granules workflow', () => {
     // clean up stack state added by test
     await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      deleteProvider({ stack: config.stackName, provider: provider.id })
+      deleteProvider({ prefix: config.stackName, provider: provider.id })
     ]);
   });
 
