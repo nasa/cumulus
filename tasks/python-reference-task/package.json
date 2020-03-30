@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/python-reference-task",
   "private": true,
-  "version": "1.19.0",
+  "version": "1.21.0",
   "description": "Python reference task",
   "main": "index.js",
   "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/python-reference-task",
