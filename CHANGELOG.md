@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v1.21.0] 2020-03-30
+
 ### PLEASE NOTE
 
 - **CUMULUS-1762**: the `messageConsumer` for `sns` and `kinesis`-type rules now fetches
