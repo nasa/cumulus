@@ -4,8 +4,12 @@
   "description": "SNS to S3 Test Lambda",
   "main": "index.js",
   "private": true,
+  "engines": {
+    "node": ">=10.16.3"
+  },
   "scripts": {
-    "prepare": "rm -f lambda.zip && zip lambda.zip index.js"
+    "prepare": "rm -f lambda.zip && zip lambda.zip index.js",
+    "python-lint": "true"
   },
   "publishConfig": {
     "access": "private"

@@ -27,7 +27,8 @@
     "deploy-app": "kes cf deploy --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/app --profile $AWS_PROFILE --cf-file ./overrides/app/cloudformation.template.yml",
     "deploy-iam": "kes cf deploy --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/iam  --profile $AWS_PROFILE",
     "deploy-db": "kes cf deploy --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/db  --profile $AWS_PROFILE",
-    "prepare": "for x in lambdas/*; do (cd $x && npm run prepare); done"
+    "prepare": "for x in lambdas/*; do (cd $x && npm run prepare); done",
+    "python-lint": "for x in lambdas/*; do (cd $x && npm run python-lint); done"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
