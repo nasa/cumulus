@@ -11,7 +11,7 @@ const {
   cleanupCollections,
   granulesApi: granulesApiTestUtils
 } = require('@cumulus/integration-tests');
-const { deleteProvider } = require('@cumulus/integration-tests/api/providers');
+const { deleteProvider } = require('@cumulus/api-client/providers');
 const mime = require('mime-types');
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
@@ -66,7 +66,7 @@ describe('The FTP Ingest Granules workflow', () => {
     // clean up stack state added by test
     await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      deleteProvider(config.stackName, provider.id)
+      deleteProvider({ stack: config.stackName, provider: provider.id })
     ]);
   });
 
