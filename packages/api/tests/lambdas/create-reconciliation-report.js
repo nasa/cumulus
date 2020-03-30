@@ -23,6 +23,7 @@ const { constructCollectionId } = require('@cumulus/common/collection-config-sto
 const { randomString } = require('@cumulus/common/test-utils');
 const { sleep } = require('@cumulus/common/util');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
+const GranuleFilesCache = require('../../lib/GranuleFilesCache');
 
 const {
   handler, reconciliationReportForGranules, reconciliationReportForGranuleFiles
@@ -87,21 +88,6 @@ function storeToDynamoDb(tableName, putRequests) {
   );
 }
 
-// Expect files to have bucket, key, and granuleId properties
-function storeFilesToDynamoDb(tableName, files) {
-  const putRequests = files.map((file) => ({
-    PutRequest: {
-      Item: {
-        bucket: { S: file.bucket },
-        key: { S: file.key },
-        granuleId: { S: file.granuleId }
-      }
-    }
-  }));
-
-  return storeToDynamoDb(tableName, putRequests);
-}
-
 function storeCollectionsToDynamoDb(tableName, collections) {
   const putRequests = collections.map((collection) => ({
     PutRequest: {
@@ -146,7 +132,7 @@ test.beforeEach(async (t) => {
 
   await new models.Collection().createTable();
   await new models.Granule().createTable();
-  await new models.FileClass().createTable();
+  await GranuleFilesCache.createCacheTable();
 
   sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => []);
   sinon.stub(CMRSearchConceptQueue.prototype, 'peek').callsFake(() => null);
@@ -158,7 +144,7 @@ test.afterEach.always((t) => {
     t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket),
     new models.Collection().deleteTable(),
     new models.Granule().deleteTable(),
-    new models.FileClass().deleteTable()
+    GranuleFilesCache.deleteCacheTable()
   ]));
   CMR.prototype.searchCollections.restore();
   CMRSearchConceptQueue.prototype.peek.restore();
@@ -216,7 +202,7 @@ test.serial('A valid reconciliation report is generated when everything is in sy
   // Store the files to S3 and DynamoDB
   await Promise.all([
     storeFilesToS3(files),
-    storeFilesToDynamoDb(process.env.FilesTable, files)
+    GranuleFilesCache.batchUpdate({ puts: files })
   ]);
 
   // Create collections that are in sync
@@ -287,7 +273,7 @@ test.serial('A valid reconciliation report is generated when there are extra S3 
 
   // Store the files to S3 and DynamoDB
   await storeFilesToS3(matchingFiles.concat([extraS3File1, extraS3File2]));
-  await storeFilesToDynamoDb(process.env.FilesTable, matchingFiles);
+  await GranuleFilesCache.batchUpdate({ puts: matchingFiles });
 
   const event = {
     dataBuckets,
@@ -347,10 +333,9 @@ test.serial('A valid reconciliation report is generated when there are extra Dyn
 
   // Store the files to S3 and DynamoDB
   await storeFilesToS3(matchingFiles);
-  await storeFilesToDynamoDb(
-    process.env.FilesTable,
-    matchingFiles.concat([extraDbFile1, extraDbFile2])
-  );
+  await GranuleFilesCache.batchUpdate({
+    puts: matchingFiles.concat([extraDbFile1, extraDbFile2])
+  });
 
   const event = {
     dataBuckets,
@@ -415,10 +400,9 @@ test.serial('A valid reconciliation report is generated when there are both extr
 
   // Store the files to S3 and DynamoDB
   await storeFilesToS3(matchingFiles.concat([extraS3File1, extraS3File2]));
-  await storeFilesToDynamoDb(
-    process.env.FilesTable,
-    matchingFiles.concat([extraDbFile1, extraDbFile2])
-  );
+  await GranuleFilesCache.batchUpdate({
+    puts: matchingFiles.concat([extraDbFile1, extraDbFile2])
+  });
 
   const event = {
     dataBuckets,

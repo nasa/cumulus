@@ -1,0 +1,34 @@
+{
+  "name": "@cumulus/python-reference-task",
+  "private": true,
+  "version": "1.19.0",
+  "description": "Python reference task",
+  "main": "index.js",
+  "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/python-reference-task",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus"
+  },
+  "scripts": {
+    "test": "true",
+    "python-lint": "pylint *.py",
+    "lint": "npm run python-lint",
+    "clean": "rm -rf dist && rm -rf lib && mkdir dist && mkdir lib",
+    "build": "npm run clean && pip install -r requirements-dev.txt && pip install -r requirements.txt -t ./dist && cp *.py ./dist/ && cd ./dist && zip ./lambda.zip -x *.json -r .* && cd ..",
+    "prepare": "npm run build",
+    "install-python-deps": "pip install -r requirements-dev.txt && pip install -r requirements.txt"
+  },
+  "ava": {
+    "serial": true
+  },
+  "publishConfig": {
+    "access": "private"
+  },
+  "nyc": {
+    "exclude": [
+      "tests"
+    ]
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0"
+}

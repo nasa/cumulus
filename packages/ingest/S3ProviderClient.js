@@ -2,7 +2,7 @@
 
 const S3 = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
-const errors = require('@cumulus/common/errors');
+const errors = require('@cumulus/errors');
 const isString = require('lodash.isstring');
 const { basename, dirname } = require('path');
 
@@ -89,8 +89,6 @@ class S3ProviderClient {
 
     const syncTimeSecs = (new Date() - startTime) / 1000.0;
     log.info(`s3 Upload completed in ${syncTimeSecs} secs`, s3uri);
-    const syncedBytes = await S3.getObjectSize(params.Bucket, params.Key);
-    log.info(`synced ${syncedBytes} bytes`);
     return s3uri;
   }
 }

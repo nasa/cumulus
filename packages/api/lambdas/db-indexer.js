@@ -5,7 +5,6 @@ const pMap = require('p-map');
 const { AttributeValue } = require('dynamodb-data-types');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const log = require('@cumulus/common/log');
-const FileClass = require('../models/files');
 const indexer = require('../es/indexer');
 const { Search } = require('../es/search');
 const unwrap = AttributeValue.unwrap;
@@ -67,34 +66,6 @@ const mapIndexTypeToIdFieldName = (type) => {
   };
   return idFieldsByType[type];
 };
-
-/**
- * Delete files associated with a given granule.
- *
- * @param {Object} record - the dynamoDB record
- * @returns {Promise<undefined>} undefined
- */
-async function performFilesDelete(record) {
-  const fileClass = new FileClass();
-  await fileClass.deleteFilesOfGranule(record);
-}
-
-/**
- * Add files of a given granule.
- *
- * @param {Object} data - the new dynamoDB record
- * @param {Object} oldData - the old dynamoDB record
- * @returns {Promise<undefined>} undefined
- */
-async function performFilesAddition(data, oldData) {
-  const fileClass = new FileClass();
-
-  // create files
-  await fileClass.createFilesFromGranule(data);
-
-  // remove files that are no longer in the granule
-  await fileClass.deleteFilesAfterCompare(data, oldData);
-}
 
 /**
  * Return the full of name of the DynamoDB table associated with incoming
@@ -202,14 +173,10 @@ async function indexRecord(esClient, record) {
   const id = getRecordId(indexType, keys);
 
   if (record.eventName === 'REMOVE') {
-    // delete from files associated with a granule
-    if (indexType === 'granule') await performFilesDelete(oldData);
     const parentId = getParentId(indexType, oldData);
     return performDelete(esClient, indexType, id, parentId);
   }
 
-  // add files associated with a granule
-  if (indexType === 'granule') await performFilesAddition(data, oldData);
   return performIndex(indexFnName, esClient, data);
 }
 
@@ -243,8 +210,6 @@ module.exports = {
   getParentId,
   getRecordId,
   handler,
-  performFilesAddition,
-  performFilesDelete,
   performDelete,
   performIndex
 };

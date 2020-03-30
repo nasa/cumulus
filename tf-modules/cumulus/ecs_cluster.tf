@@ -140,6 +140,12 @@ resource "aws_iam_role_policy" "ecs_cluster_access_es_policy" {
   policy = data.aws_iam_policy_document.ecs_cluster_access_es_document[0].json
 }
 
+resource "aws_iam_role_policy_attachment" "NGAPProtAppInstanceMinimalPolicy" {
+  count = var.deploy_to_ngap ? 1 : 0
+  policy_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/NGAPProtAppInstanceMinimalPolicy"
+  role = aws_iam_role.ecs_cluster_instance.id
+}
+
 resource "aws_iam_instance_profile" "ecs_cluster_instance" {
   name = "${var.prefix}-ecs"
   role = aws_iam_role.ecs_cluster_instance.id
