@@ -1,0 +1,15 @@
+{
+  "name": "@cumulus/test-async-operations",
+  "version": "1.21.0",
+  "description": "AsyncOperations Test Lambda",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "prepare": "rm -f lambda.zip && zip lambda.zip index.js"
+  },
+  "publishConfig": {
+    "access": "private"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0"
+}
