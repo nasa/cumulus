@@ -65,7 +65,6 @@ const buildHttpProvider = async (postfix = '') => {
 };
 
 const createProvider = async (stackName, provider) => {
-  debugger;
   await providersApi.deleteProvider({ prefix: stackName, providerId: provider.id });
   await providersApi.createProvider({ prefix: stackName, provider: provider });
 };
