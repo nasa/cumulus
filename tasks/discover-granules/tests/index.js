@@ -71,7 +71,7 @@ test('discover granules sets the correct dataType for granules', async (t) => {
 test('discover granules using FTP', async (t) => {
   const { event } = t.context;
 
-  event.config.collection.provider_path = '/granules/fake_granules';
+  event.config.collection.provider_path = 'granules/^fake_granules$';
   event.config.useList = true;
   event.config.provider = {
     id: 'MODAPS',
@@ -95,7 +95,7 @@ test('discover granules using FTP', async (t) => {
 test('discover granules using SFTP', async (t) => {
   const { event } = t.context;
 
-  event.config.collection.provider_path = 'granules/fake_granules';
+  event.config.collection.provider_path = 'granules/^fake_granules$';
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'sftp',
