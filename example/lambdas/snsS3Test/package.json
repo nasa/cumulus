@@ -1,0 +1,22 @@
+{
+  "name": "@cumulus/test-sns-s3",
+  "version": "1.21.0",
+  "description": "SNS to S3 Test Lambda",
+  "main": "index.js",
+  "private": true,
+  "engines": {
+    "node": ">=10.16.3"
+  },
+  "scripts": {
+    "prepare": "rm -f lambda.zip && zip lambda.zip index.js",
+    "python-lint": "true"
+  },
+  "publishConfig": {
+    "access": "private"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "aws-sdk": "^2.585.0"
+  }
+}
