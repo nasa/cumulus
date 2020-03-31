@@ -1,10 +1,10 @@
 'use strict';
 
-const curry = require('lodash.curry');
-const groupBy = require('lodash.groupby');
-const isBoolean = require('lodash.isboolean');
+const curry = require('lodash/curry');
+const groupBy = require('lodash/groupBy');
+const isBoolean = require('lodash/isBoolean');
 const Logger = require('@cumulus/logger');
-const map = require('lodash.map');
+const map = require('lodash/map');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
 

@@ -121,6 +121,12 @@
   },
   "overrides": [
     {
+      "files": ["tasks/**/*.js"],
+      "rules": {
+        "lodash/import-scope": "off"
+      }
+    },
+    {
       "files": ["packages/api/migrations/**/*.js"],
       "rules": {
         "no-console": "off"

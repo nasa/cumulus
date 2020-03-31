@@ -1,6 +1,6 @@
 'use strict';
 
-const get = require('lodash.get');
+const get = require('lodash/get');
 const { sendSQSMessage } = require('@cumulus/aws-client/SQS');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 

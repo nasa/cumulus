@@ -3,7 +3,6 @@
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { generateCmrFilesForGranules } = require('@cumulus/integration-tests');
 const { promiseS3Upload } = require('@cumulus/aws-client/S3');
-const cloneDeep = require('lodash.clonedeep');
 const path = require('path');
 const fs = require('fs');
 const img = require('./data/testBrowse.jpg');
@@ -14,11 +13,12 @@ async function uploadFakeBrowse(input) {
   input.granules.forEach((granule) => {
     granule.files.forEach((file) => {
       if (file.type === 'data') {
-        const browseFile = cloneDeep(file);
+        const browseFile = { ...file };
         const browseName = browseFile.filename;
         browseFile.filename = browseName.replace(path.extname(browseName), '.jpg');
         browseFile.name = browseFile.name.replace(path.extname(browseFile.name), '.jpg');
         browseFile.type = 'browse';
+
         const browseStream = fs.createReadStream(img);
         uploadPromises.push(promiseS3Upload({
           Bucket: browseFile.bucket,
