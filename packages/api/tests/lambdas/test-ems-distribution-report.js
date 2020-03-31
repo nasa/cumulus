@@ -3,6 +3,7 @@
 const fs = require('fs-extra');
 const moment = require('moment');
 const path = require('path');
+const pMap = require('p-map');
 const test = require('ava');
 const {
   parseS3Uri,
@@ -16,6 +17,17 @@ const {
 } = require('../../lambdas/ems-distribution-report');
 const models = require('../../models');
 const { fakeCollectionFactory, fakeGranuleFactoryV2, fakeFileFactory } = require('../../lib/testUtils');
+const GranuleFilesCache = require('../../lib/GranuleFilesCache');
+
+const createGranule = async (granule) => {
+  await (new models.Granule()).create(granule);
+
+  await pMap(
+    granule.files,
+    ({ bucket, key }) =>
+      GranuleFilesCache.put({ bucket, key, granuleId: granule.granuleId })
+  );
+};
 
 // MYD13Q1___006 is reported to EMS
 const collections = [
@@ -88,13 +100,12 @@ test.beforeEach(async (t) => {
 
   t.context.collectionModel = new models.Collection();
   t.context.granuleModel = new models.Granule();
-  t.context.fileModel = new models.FileClass();
 
   await t.context.collectionModel.createTable();
   await t.context.collectionModel.create(collections);
 
   await t.context.granuleModel.createTable();
-  await t.context.fileModel.createTable();
+  await GranuleFilesCache.createCacheTable();
 
   const granules = fakeGranules();
 
@@ -109,10 +120,7 @@ test.beforeEach(async (t) => {
     `01-JUN-81 02:03:13 PM|&|-|&|192.0.2.3|&|s3://my-public-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.jpg|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|OTHER|&|HTTPS`
   ];
 
-  await Promise.all(granules.map(async (granule) => {
-    await t.context.granuleModel.create(granule);
-    await t.context.fileModel.createFilesFromGranule(granule);
-  }));
+  await pMap(granules, createGranule);
 
   // Read in all of the server logs from the fixtures files
   const fixturesDirectory = path.join(__dirname, 'fixtures', 'ems-distribution-report');
@@ -131,7 +139,7 @@ test.beforeEach(async (t) => {
 
 test.afterEach.always(async (t) => {
   await Promise.all([
-    t.context.fileModel.deleteTable(),
+    GranuleFilesCache.deleteCacheTable(),
     t.context.granuleModel.deleteTable(),
     t.context.collectionModel.deleteTable()
   ]);

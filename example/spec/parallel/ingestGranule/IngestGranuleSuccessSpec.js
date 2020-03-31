@@ -5,6 +5,8 @@ const isNumber = require('lodash.isnumber');
 const isString = require('lodash.isstring');
 const isObject = require('lodash.isobject');
 const path = require('path');
+const pMap = require('p-map');
+const pRetry = require('p-retry');
 const { URL, resolve } = require('url');
 const difference = require('lodash.difference');
 const includes = require('lodash.includes');
@@ -16,6 +18,7 @@ const {
   Pdr,
   Provider
 } = require('@cumulus/api/models');
+const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const {
   deleteS3Object,
   parseS3Uri,
@@ -32,6 +35,7 @@ const {
   buildAndExecuteWorkflow,
   buildAndStartWorkflow,
   conceptExists,
+  getExecutionOutput,
   getOnlineResources,
   waitForConceptExistsOutcome,
   waitForTestExecutionStart,
@@ -324,6 +328,31 @@ describe('The S3 Ingest Granules workflow', () => {
     );
     const collectionResult = JSON.parse(collectionResponse.body);
     expect(collectionResult).not.toBeNull();
+  });
+
+  it('results in the files being added to the granule files cache table', async () => {
+    process.env.FilesTable = `${config.stackName}-FilesTable`;
+
+    const executionOutput = await getExecutionOutput(workflowExecutionArn);
+
+    await pMap(
+      executionOutput.payload.granules[0].files,
+      async (file) => {
+        const { Bucket, Key } = parseS3Uri(file.filename);
+
+        const granuleId = await pRetry(
+          async () => {
+            const id = await GranuleFilesCache.getGranuleId(Bucket, Key);
+            if (id === null) throw new Error(`File not found in cache: s3://${Bucket}/${Key}`);
+            return id;
+          },
+          { retries: 30, minTimeout: 2000, maxTimeout: 2000 }
+        );
+
+        expect(granuleId).toEqual(executionOutput.payload.granules[0].granuleId);
+      },
+      { concurrency: 1 }
+    );
   });
 
   describe('the SyncGranules task', () => {

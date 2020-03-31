@@ -9,6 +9,7 @@ const bucketsConfigJsonObject = require('@cumulus/common/bucketsConfigJsonObject
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { randomString } = require('@cumulus/common/test-utils');
 
+const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const { Granule } = require('@cumulus/api/models');
 const {
   addCollections,
@@ -31,7 +32,6 @@ const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 
 const reportsPrefix = (stackName) => `${stackName}/reconciliation-reports/`;
-const filesTableName = (stackName) => `${stackName}-FilesTable`;
 const collectionsTableName = (stackName) => `${stackName}-CollectionsTable`;
 
 const providersDir = './data/providers/s3/';
@@ -186,15 +186,12 @@ describe('When there are granule differences and granule reconciliation is run',
 
     // Write an extra file to the DynamoDB Files table
     extraFileInDb = {
-      bucket: { S: protectedBucket },
-      key: { S: randomString() },
-      granuleId: { S: randomString() }
+      bucket: protectedBucket,
+      key: randomString(),
+      granuleId: randomString()
     };
-
-    await dynamodb().putItem({
-      TableName: filesTableName(config.stackName),
-      Item: extraFileInDb
-    }).promise();
+    process.env.FilesTable = `${config.stackName}-FilesTable`;
+    await GranuleFilesCache.put(extraFileInDb);
 
     // Write an extra collection to the Collections table
     extraCumulusCollection = {
@@ -250,7 +247,7 @@ describe('When there are granule differences and granule reconciliation is run',
   });
 
   it('generates a report showing cumulus files that are in the DynamoDB Files table but not in S3', () => {
-    const extraFileUri = buildS3Uri(extraFileInDb.bucket.S, extraFileInDb.key.S);
+    const extraFileUri = buildS3Uri(extraFileInDb.bucket, extraFileInDb.key);
     const extraDbUris = report.filesInCumulus.onlyInDynamoDb.map((i) => i.uri);
     expect(extraDbUris).toContain(extraFileUri);
   });
@@ -320,13 +317,7 @@ describe('When there are granule differences and granule reconciliation is run',
     await Promise.all([
       deleteReconciliationReports(config.bucket, config.stackName),
       s3().deleteObject(extraS3Object).promise(),
-      dynamodb().deleteItem({
-        TableName: filesTableName(config.stackName),
-        Key: {
-          bucket: extraFileInDb.bucket,
-          key: extraFileInDb.key
-        }
-      }).promise(),
+      GranuleFilesCache.del(extraFileInDb),
       dynamodb().deleteItem({
         TableName: collectionsTableName(config.stackName),
         Key: {

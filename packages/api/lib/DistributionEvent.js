@@ -1,7 +1,10 @@
-const moment = require('moment');
+'use strict';
 
+const moment = require('moment');
+const { isNil } = require('@cumulus/common/util');
+const Granule = require('../models/granules');
 const { deconstructCollectionId } = require('./utils');
-const FileClass = require('../models/files');
+const GranuleFilesCache = require('./GranuleFilesCache');
 
 /**
  * This class takes an S3 Server Log line and parses it for EMS Distribution Logs
@@ -181,19 +184,23 @@ class DistributionEvent {
    * @returns {Object} product object
    */
   async getProductInfo() {
-    if (this.productInfo) return this.productInfo;
+    if (isNil(this.productInfo)) {
+      const granuleId = await GranuleFilesCache.getGranuleId(this.bucket, this.key);
 
-    const fileModel = new FileClass();
-    this.productInfo = await fileModel.getGranuleForFile(this.bucket, this.key)
-      .then((granule) =>
-        (granule
-          ? {
-            collectionId: granule.collectionId,
-            ...deconstructCollectionId(granule.collectionId),
-            granuleId: granule.granuleId,
-            fileType: this.getFileType(this.bucket, this.key, granule)
-          }
-          : {}));
+      if (granuleId === null) {
+        this.productInfo = {};
+      } else {
+        const granule = await (new Granule()).get({ granuleId });
+
+        this.productInfo = {
+          collectionId: granule.collectionId,
+          ...deconstructCollectionId(granule.collectionId),
+          granuleId: granule.granuleId,
+          fileType: this.getFileType(this.bucket, this.key, granule)
+        };
+      }
+    }
+
     return this.productInfo;
   }
 
