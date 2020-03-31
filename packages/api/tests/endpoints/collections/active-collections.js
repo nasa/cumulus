@@ -3,40 +3,44 @@
 const test = require('ava');
 const request = require('supertest');
 const sinon = require('sinon');
+const rewire = require('rewire');
 const awsServices = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket
 } = require('@cumulus/aws-client/S3');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomId } = require('@cumulus/common/test-utils');
 const models = require('../../../models');
 const bootstrap = require('../../../lambdas/bootstrap');
+const indexer = rewire('../../../es/indexer');
 const {
   createFakeJwtAuthToken,
   fakeCollectionFactory,
+  fakeGranuleFactoryV2,
   setAuthorizedOAuthUsers
 } = require('../../../lib/testUtils');
-const EsCollection = require('../../../es/collections');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 
-process.env.AccessTokensTable = randomString();
-process.env.CollectionsTable = randomString();
-process.env.stackName = randomString();
-process.env.system_bucket = randomString();
-process.env.TOKEN_SECRET = randomString();
+process.env.AccessTokensTable = randomId('accessTokensTable');
+process.env.CollectionsTable = randomId('collectionsTable');
+process.env.GranulesTable = randomId('granulesTable');
+process.env.stackName = randomId('stackName');
+process.env.system_bucket = randomId('systemBucket');
+process.env.TOKEN_SECRET = randomId('tokenSecret');
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
 
-const esIndex = randomString();
+const esIndex = randomId('esindex');
 let esClient;
 
 let jwtAuthToken;
 let accessTokenModel;
 let collectionModel;
+let granuleModel;
 
 test.before(async () => {
-  const esAlias = randomString();
+  const esAlias = randomId('esAlias');
   process.env.ES_INDEX = esAlias;
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
@@ -45,7 +49,10 @@ test.before(async () => {
   collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
   await collectionModel.createTable();
 
-  const username = randomString();
+  granuleModel = new models.Granule({ tableName: process.env.GranulesTable });
+  await granuleModel.createTable();
+
+  const username = randomId('username');
   await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new models.AccessToken();
@@ -53,16 +60,42 @@ test.before(async () => {
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
   esClient = await Search.es('fakehost');
-});
 
-test.beforeEach(async (t) => {
-  t.context.testCollection = fakeCollectionFactory();
-  await collectionModel.create(t.context.testCollection);
+  await Promise.all([
+    indexer.indexCollection(esClient, fakeCollectionFactory({
+      name: 'coll1',
+      version: '1'
+    }), esAlias),
+    indexer.indexCollection(esClient, fakeCollectionFactory({
+      name: 'coll2',
+      version: '1'
+    }), esAlias),
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'coll1___1' }), esAlias),
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'coll1___1' }), esAlias)
+  ]);
+
+  // Indexing using Date.now() to generate the timestamp
+  const stub = sinon.stub(Date, 'now').returns((new Date(2020, 0, 29)).getTime());
+
+  await Promise.all([
+    indexer.indexCollection(esClient, fakeCollectionFactory({
+      name: 'coll3',
+      version: '1',
+      updatedAt: new Date(2020, 0, 29)
+    }), esAlias),
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2({
+      updatedAt: new Date(2020, 1, 29),
+      collectionId: 'coll3___1'
+    }), esAlias)
+  ]);
+
+  stub.restore();
 });
 
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await collectionModel.deleteTable();
+  await granuleModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
 });
@@ -86,11 +119,7 @@ test('GET without pathParameters and with an invalid access token returns an una
   assertions.isInvalidAccessTokenResponse(t, response);
 });
 
-test.todo('GET without pathParameters and with an unauthorized user returns an unauthorized response');
-
-test.serial('default returns list of collections', async (t) => {
-  const stub = sinon.stub(EsCollection.prototype, 'getStats').returns([t.context.testCollection]);
-
+test.serial('default returns collections with granules', async (t) => {
   const response = await request(app)
     .get('/collections/active')
     .set('Accept', 'application/json')
@@ -98,7 +127,35 @@ test.serial('default returns list of collections', async (t) => {
     .expect(200);
 
   const { results } = response.body;
-  stub.restore();
+  t.is(results.length, 2);
+  t.deepEqual(results.map((r) => r.name), ['coll1', 'coll3']);
+});
+
+test.serial('timestamp__from filters collections by granule date', async (t) => {
+  const fromDate = new Date(2020, 2, 1);
+
+  const response = await request(app)
+    .get(`/collections/active?timestamp__from=${fromDate.getTime()}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { results } = response.body;
   t.is(results.length, 1);
-  t.is(results[0].name, t.context.testCollection.name);
+  t.is(results[0].name, 'coll1');
+});
+
+test.serial('timestamps filters collections by granule date', async (t) => {
+  const fromDate = new Date(2020, 0, 1);
+  const toDate = new Date(2020, 1, 1);
+
+  const response = await request(app)
+    .get(`/collections/active?timestamp__from=${fromDate.getTime()}&timestamp__to=${toDate.getTime()}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { results } = response.body;
+  t.is(results.length, 1);
+  t.is(results[0].name, 'coll3');
 });
