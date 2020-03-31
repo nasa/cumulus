@@ -1,15 +1,14 @@
 'use strict';
 
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteGranule, waitForGranule } = require('@cumulus/api-client/granules');
 
 const {
   api: apiTestUtils,
   addCollections,
-  addProviders,
   buildAndExecuteWorkflow,
   cleanupCollections,
-  cleanupProviders,
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
 
@@ -20,7 +19,7 @@ const {
 } = require('../../helpers/testUtils');
 
 const workflowName = 'DiscoverGranules';
-
+const { buildHttpProvider, createProvider } = require('../../helpers/Providers');
 const updateCollectionDuplicateFlag = async (flag, collection, config) => {
   await apiTestUtils.updateCollection({
     prefix: config.stackName,
@@ -40,8 +39,7 @@ const awaitIngestExecutions = async (workflowExecution, lambdaStep) => {
 };
 
 describe('The Discover Granules workflow with http Protocol', () => {
-  const providersDir = './data/providers/http/';
-  const collectionsDir = './data/collections/http_testcollection_001/';
+  const collectionsDir = './data/collections/http_testcollection_002/';
 
   let collection;
   let config;
@@ -57,12 +55,12 @@ describe('The Discover Granules workflow with http Protocol', () => {
     process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
     testId = createTimestampedTestId(config.stackName, 'DiscoverGranulesDuplicate');
     testSuffix = createTestSuffix(testId);
-    collection = { name: `http_testcollection${testSuffix}`, version: '001' };
-    provider = { id: `http_provider${testSuffix}` };
+    collection = { name: `http_testcollection${testSuffix}`, version: '002' };
+    provider = await buildHttpProvider(testSuffix);
 
     await Promise.all([
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      addProviders(config.stackName, config.bucket, providersDir, null, testSuffix)
+      createProvider(config.stackName, provider)
     ]);
 
     collection = JSON.parse((await apiTestUtils.getCollection({
@@ -75,13 +73,13 @@ describe('The Discover Granules workflow with http Protocol', () => {
   afterAll(async () => {
     await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
+      deleteProvider({ prefix: config.stackName, providerId: provider.id })
     ]);
   });
 
 
   describe('when the collection configured with duplicateHandling set to "skip" it:', () => {
-    const expectedGranules = ['granule-1', 'granule-2', 'granule-3'];
+    const expectedGranules = ['granule-4', 'granule-5', 'granule-6'];
     let ingestStatus;
     let httpWorkflowExecution;
     let originalHttpWorkflowExecution;
@@ -97,7 +95,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
         waitForGranule({ prefix: config.stackName, granuleId: g }));
       await Promise.all(granuleStatusPromises);
 
-      await deleteGranule({ prefix: config.stackName, granuleId: 'granule-1' });
+      await deleteGranule({ prefix: config.stackName, granuleId: 'granule-4' });
       await updateCollectionDuplicateFlag('skip', collection, config);
 
       httpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
@@ -140,23 +138,29 @@ describe('The Discover Granules workflow with http Protocol', () => {
     let httpWorkflowExecution;
     let originalHttpWorkflowExecution;
     beforeAll(async () => {
-      const expectedGranules = ['granule-1', 'granule-2', 'granule-3'];
-      await updateCollectionDuplicateFlag('replace', collection, config);
+      try {
+        const expectedGranules = ['granule-4', 'granule-5', 'granule-6'];
+        await updateCollectionDuplicateFlag('replace', collection, config);
 
-      originalHttpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
-        config.bucket, workflowName, collection, provider);
+        originalHttpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
+          config.bucket, workflowName, collection, provider);
 
-      ingestStatus = await awaitIngestExecutions(originalHttpWorkflowExecution, lambdaStep);
-      const granuleStatusPromises = expectedGranules.map((g) =>
-        waitForGranule({
-          prefix: config.stackName, granuleId: g
-        }));
-      await Promise.all(granuleStatusPromises);
+        ingestStatus = await awaitIngestExecutions(originalHttpWorkflowExecution, lambdaStep);
+        const granuleStatusPromises = expectedGranules.map((g) =>
+          waitForGranule({
+            prefix: config.stackName, granuleId: g
+          }));
+        await Promise.all(granuleStatusPromises);
 
-      await updateCollectionDuplicateFlag('error', collection, config);
+        await updateCollectionDuplicateFlag('error', collection, config);
 
-      httpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
-        config.bucket, workflowName, collection, provider);
+        httpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
+          config.bucket, workflowName, collection, provider);
+      } catch (e) {
+        console.log(e);
+        console.log(JSON.stringify(e));
+        throw e;
+      }
     });
 
     it('executes initial ingest successfully', () => {

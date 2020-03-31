@@ -23,7 +23,7 @@ const fetchFakeProviderIp = async () => {
   return ip;
 };
 
-const getProviderHost = () => {
+const getProviderHost = async () => {
   if (isNonEmptyString(process.env.PROVIDER_HOST)) {
     return process.env.PROVIDER_HOST;
   }
