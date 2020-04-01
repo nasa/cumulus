@@ -15,8 +15,6 @@ const pWaitFor = require('p-wait-for');
 const pMap = require('p-map');
 const moment = require('moment');
 
-/* const deprecatedApiIncludes = { emsApi, executionsApi, granulesApi, rulesApi };
- */
 const {
   dynamodb,
   ecs,
