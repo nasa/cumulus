@@ -1,7 +1,7 @@
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const { ResourcesLockedError } = require('@cumulus/errors');
 const log = require('@cumulus/common/log');
-const Semaphore = require('@cumulus/common/Semaphore');
+const Semaphore = require('./Semaphore');
 
 /**
  * Increment the semaphore for executions started from a queue.

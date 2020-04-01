@@ -14,7 +14,7 @@ const { Consumer } = require('@cumulus/ingest/consumer');
 const {
   decrementQueueSemaphore,
   incrementQueueSemaphore
-} = require('../lib/semaphore');
+} = require('../lib/SemaphoreUtils');
 
 /**
  * Starts a new stepfunction with the given payload

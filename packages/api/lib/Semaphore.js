@@ -1,14 +1,14 @@
+const DynamoDb = require('@cumulus/aws-client/DynamoDb');
 const {
   isConditionalCheckException,
   ResourcesLockedError
 } = require('@cumulus/errors');
-const DynamoDb = require('./DynamoDb');
-const log = require('./log');
-const { deprecate } = require('./util');
+const Logger = require('@cumulus/logger');
+
+const log = new Logger({ sender: 'api/Semaphore' });
 
 class Semaphore {
   constructor(docClient, tableName) {
-    deprecate('@cumulus/common/Semaphore', '1.21.0');
     this.docClient = docClient;
     this.tableName = tableName;
   }

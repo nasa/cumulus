@@ -4,19 +4,18 @@ const cloneDeep = require('lodash.clonedeep');
 const test = require('ava');
 const sinon = require('sinon');
 
-const Lambda = require('@cumulus/aws-client/Lambda');
 const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const launchpad = require('@cumulus/common/launchpad');
 const { randomString } = require('@cumulus/common/test-utils');
-const workflows = require('@cumulus/common/workflows');
 const { removeNilProperties } = require('@cumulus/common/util');
 const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmr-client');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 
+const Rule = require('../../../models/rules');
 const Granule = require('../../../models/granules');
 const { filterDatabaseProperties } = require('../../../lib/FileUtils');
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
@@ -846,20 +845,17 @@ test.serial(
     };
     const fileExists = async () => true;
     const fileExistsStub = sinon.stub(s3Utils, 'fileExists').callsFake(fileExists);
-    const templateStub = sinon.stub(workflows, 'getWorkflowTemplate').callsFake(() => ({}));
-    const wfStub = sinon.stub(workflows, 'getWorkflowFile').callsFake(() => ({}));
-    const invokeStub = sinon.stub(Lambda, 'invoke');
+    const buildPayloadSpy = sinon.stub(Rule, 'buildPayload');
 
     try {
       await granuleModel.reingest(granule);
-      const invokeArgs = invokeStub.args[0];
-      const invokeLambdaPayload = invokeArgs[1];
-      t.is(invokeLambdaPayload.queueName, queueName);
+      // Rule.buildPayload has its own unit tests to ensure the queue name
+      // is used properly, so just ensure that we pass the correct argument
+      // to that function.
+      t.is(buildPayloadSpy.args[0][0].queueName, queueName);
     } finally {
       fileExistsStub.restore();
-      templateStub.restore();
-      wfStub.restore();
-      invokeStub.restore();
+      buildPayloadSpy.restore();
       updateStatusStub.restore();
     }
   }

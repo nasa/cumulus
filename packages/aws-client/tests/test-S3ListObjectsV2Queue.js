@@ -1,12 +1,14 @@
 'use strict';
 
 const test = require('ava');
+const cryptoRandomString = require('crypto-random-string');
 const range = require('lodash.range');
-const { randomString } = require('@cumulus/common/test-utils');
 
 const awsServices = require('../services');
 const { recursivelyDeleteS3Bucket } = require('../S3');
 const S3ListObjectsV2Queue = require('../S3ListObjectsV2Queue');
+
+const randomString = () => cryptoRandomString({ length: 10 });
 
 test.beforeEach((t) => {
   t.context.bucketName = randomString();
