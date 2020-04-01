@@ -6,33 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-## [v1.21.0] 2020-03-30
-
-### PLEASE NOTE
-
-- **CUMULUS-1762**: the `messageConsumer` for `sns` and `kinesis`-type rules now fetches
-  the collection information from the message. You should ensure that your rule's collection
-  name and version match what is in the message for these ingest messages to be processed.
-  If no matching rule is found, an error will be thrown and logged in the
-  `messageConsumer` Lambda function's log group.
-
 ### Added
 
-- **CUMULUS-1732**
-  - Added Python task/activity workflow and integration test (`PythonReferenceSpec`) to test `cumulus-message-adapter-python`and `cumulus-process-py` integration.
 - **CUMULUS-1799**
   - Added `@cumulus/common/stack.getBucketsConfigKey()` to return the S3 key for the buckets config object
   - Added `@cumulus/common/workflows.getWorkflowFileKey()` to return the S3 key for a workflow definition object
   - Added `@cumulus/common/workflows.getWorkflowsListKeyPrefix()` to return the S3 key prefix for objects containing workflow definitions
-
-- **CUMULUS-1795**
-  - Added an IAM policy on the Cumulus EC2 creation to enable SSM when the `deploy_to_ngap` flag is true
-
-### Changed
-
-- **CUMULUS-1762**
-  - the `messageConsumer` for `sns` and `kinesis`-type rules now fetches the collection
-    information from the message.
 
 ### Deprecated
 
@@ -55,6 +34,30 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Deprecate `@cumulus/common/workflows.getWorkflowFile()`
   - Deprecate `@cumulus/common/workflows.getWorkflowList()`
   - Deprecate `@cumulus/common/workflows.getWorkflowTemplate()`
+
+## [v1.21.0] 2020-03-30
+
+### PLEASE NOTE
+
+- **CUMULUS-1762**: the `messageConsumer` for `sns` and `kinesis`-type rules now fetches
+  the collection information from the message. You should ensure that your rule's collection
+  name and version match what is in the message for these ingest messages to be processed.
+  If no matching rule is found, an error will be thrown and logged in the
+  `messageConsumer` Lambda function's log group.
+
+### Added
+
+- **CUMULUS-1732**
+  - Added Python task/activity workflow and integration test (`PythonReferenceSpec`) to test `cumulus-message-adapter-python`and `cumulus-process-py` integration.
+
+- **CUMULUS-1795**
+  - Added an IAM policy on the Cumulus EC2 creation to enable SSM when the `deploy_to_ngap` flag is true
+
+### Changed
+
+- **CUMULUS-1762**
+  - the `messageConsumer` for `sns` and `kinesis`-type rules now fetches the collection
+    information from the message.
 
 ### Removed
 
