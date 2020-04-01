@@ -3,9 +3,10 @@
 const fs = require('fs-extra');
 const jsyaml = require('js-yaml');
 
+const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { cf } = require('@cumulus/aws-client/services');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const { getWorkflowArn } = require('@cumulus/common/workflows');
+const { getWorkflowFileKey } = require('@cumulus/common/workflows');
 
 const {
   loadConfig,
@@ -47,7 +48,10 @@ describe('When the useWorkflowLambdaVersions option is set to false the deployme
 
     // Get the definition for all workflows
     const defPromises = Object.keys(workflows).map(async (workflow) => {
-      const workflowArn = await getWorkflowArn(config.stackName, config.bucket, workflow);
+      const { arn: workflowArn } = await getJsonS3Object(
+        config.bucket,
+        getWorkflowFileKey(config.stackName, workflow)
+      );
       const stateMachine = await StepFunctions.describeStateMachine({ stateMachineArn: workflowArn });
       return stateMachine.definition;
     });

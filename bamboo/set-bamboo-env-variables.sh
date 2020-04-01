@@ -31,7 +31,6 @@ declare -a param_list=(
   "bamboo_SECRET_METRICS_ES_PASS"
   "bamboo_SECRET_NPM_TOKEN"
   "bamboo_SECRET_PROVIDER_FTP_PORT"
-  "bamboo_SECRET_PROVIDER_HOST"
   "bamboo_SECRET_PROVIDER_HTTP_PORT"
   "bamboo_SECRET_SECURITY_GROUP"
   "bamboo_SECRET_TOKEN_SECRET"

@@ -2,6 +2,7 @@
 
 const yaml = require('js-yaml');
 const log = require('./log');
+const { deprecate } = require('./util');
 
 /**
  * Builds a YAML schema for resolving GitcResource directives
@@ -10,6 +11,7 @@ const log = require('./log');
  * @returns {*} The schema
  */
 const buildSchema = (resourceResolver) => {
+  deprecate('@cumulus/common/config.buildSchema', '1.21.0');
   const resourceType = new yaml.Type('!GitcResource', {
     kind: 'scalar',
     construct: resourceResolver
@@ -26,6 +28,7 @@ const buildSchema = (resourceResolver) => {
  * @returns {string} The ARN of the resource
  */
 const resourceToArn = (resource) => {
+  deprecate('@cumulus/common/config.resourceToArn', '1.21.0');
   const physicalId = resource.PhysicalResourceId;
   if (physicalId.startsWith('arn:')) return physicalId;
 
@@ -59,6 +62,7 @@ const resourceToArn = (resource) => {
  */
 exports.resolveResource = (cfResourcesById, prefix) =>
   (key) => {
+    deprecate('@cumulus/common/config.resolveResource', '1.21.0');
     log.info(`Resolving ${key} with prefix ${prefix}`);
     const [name, fn] = key.split('.');
     const resource = cfResourcesById[name] || cfResourcesById[prefix + name];
@@ -77,5 +81,7 @@ exports.resolveResource = (cfResourcesById, prefix) =>
  *                                      logical resources into stack-specific URI/ARNs
  * @returns {Object} - The object created by parsing the yaml
  */
-exports.parseConfig = (collectionsStr, resourceResolver) =>
-  yaml.safeLoad(collectionsStr, { schema: buildSchema(resourceResolver) });
+exports.parseConfig = (collectionsStr, resourceResolver) => {
+  deprecate('@cumulus/common/config.parseConfig', '1.21.0');
+  return yaml.safeLoad(collectionsStr, { schema: buildSchema(resourceResolver) });
+};

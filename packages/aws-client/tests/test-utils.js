@@ -1,7 +1,7 @@
 const path = require('path');
 const test = require('ava');
-const { throttleOnce } = require('@cumulus/common/test-utils');
 
+const { throttleOnce } = require('../test-utils');
 const { retryOnThrottlingException } = require('../utils');
 const { getS3Object } = require('../S3');
 

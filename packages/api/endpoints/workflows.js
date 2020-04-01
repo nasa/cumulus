@@ -1,6 +1,10 @@
 'use strict';
 
-const { getWorkflowList, getWorkflowFile } = require('@cumulus/common/workflows');
+const { getJsonS3Object, listS3ObjectsV2 } = require('@cumulus/aws-client/S3');
+const {
+  getWorkflowsListKeyPrefix,
+  getWorkflowFileKey
+} = require('@cumulus/common/workflows');
 const router = require('express-promise-router')();
 
 /**
@@ -11,7 +15,13 @@ const router = require('express-promise-router')();
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const body = await getWorkflowList(process.env.stackName, process.env.system_bucket);
+  const workflows = await listS3ObjectsV2({
+    Bucket: process.env.system_bucket,
+    Prefix: getWorkflowsListKeyPrefix(process.env.stackName)
+  });
+  const body = await Promise.all(workflows.map(
+    (obj) => getJsonS3Object(process.env.system_bucket, obj.Key)
+  ));
   // we have to specify type json here because express
   // does not recognize an array as json automatically
   return res.type('json').send(body);
@@ -27,7 +37,10 @@ async function list(req, res) {
 async function get(req, res) {
   const name = req.params.name;
   try {
-    const workflow = await getWorkflowFile(process.env.stackName, process.env.system_bucket, name);
+    const workflow = await getJsonS3Object(
+      process.env.system_bucket,
+      getWorkflowFileKey(process.env.stackName, name)
+    );
     return res.send(workflow);
   } catch (err) {
     if (err.name === 'NoSuchKey' || err.name === 'NoSuchBucket') {
