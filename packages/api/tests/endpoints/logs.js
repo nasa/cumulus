@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('ava');
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
 const request = require('supertest');
 const rewire = require('rewire');
@@ -54,8 +54,9 @@ test.before(async (t) => {
   t.context.esClient = await Search.es('fakehost');
 
   // Index some fake logs
-  const inputtxt = fs.readFileSync(path.join(__dirname, '../data/log_events_input.txt'), 'utf8');
-  const event = JSON.parse(JSON.parse(inputtxt.toString()));
+  const event = JSON.parse(
+    await fs.readJson(path.join(__dirname, '../data/log_events_input.txt'))
+  );
   await indexer.indexLog(t.context.esClient, event.logEvents, esAlias);
 
   await t.context.esClient.indices.refresh();

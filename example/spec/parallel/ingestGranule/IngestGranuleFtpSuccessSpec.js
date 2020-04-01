@@ -48,7 +48,7 @@ describe('The FTP Ingest Granules workflow', () => {
     ]);
 
     console.log('\nStarting ingest test');
-    inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename, 'utf8'));
+    inputPayload = await fs.readJson(inputPayloadFilename);
     inputPayload.granules[0].dataType += testSuffix;
     inputPayload.granules[0].granuleId = randomStringFromRegex(granuleRegex);
 

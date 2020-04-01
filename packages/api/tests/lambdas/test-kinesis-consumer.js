@@ -5,6 +5,7 @@ const sinon = require('sinon');
 const test = require('ava');
 
 const { randomString } = require('@cumulus/common/test-utils');
+const { putJsonS3Object } = require('@cumulus/aws-client/S3');
 const SQS = require('@cumulus/aws-client/SQS');
 const { s3, sns } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
@@ -145,11 +146,7 @@ test.beforeEach(async (t) => {
   };
 
   await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
-  await s3().putObject({
-    Bucket: t.context.templateBucket,
-    Key: messageTemplateKey,
-    Body: JSON.stringify(t.context.messageTemplate)
-  }).promise();
+  await putJsonS3Object(t.context.templateBucket, messageTemplateKey, t.context.messageTemplate);
 
   sinon.stub(Rule, 'buildPayload').callsFake((item) => Promise.resolve({
     template: t.context.messageTemplate,

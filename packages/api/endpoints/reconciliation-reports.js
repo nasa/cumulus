@@ -5,7 +5,7 @@ const path = require('path');
 const { invoke } = require('@cumulus/aws-client/Lambda');
 const {
   deleteS3Object,
-  getS3Object,
+  getJsonS3Object,
   listS3ObjectsV2
 } = require('@cumulus/aws-client/S3');
 
@@ -42,12 +42,10 @@ async function list(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function get(req, res) {
-  const name = req.params.name;
-  const key = `${process.env.stackName}/reconciliation-reports/${name}`;
+  const key = `${process.env.stackName}/reconciliation-reports/${req.params.name}`;
 
   try {
-    const file = await getS3Object(process.env.system_bucket, key);
-    return res.send(JSON.parse(file.Body.toString()));
+    return await getJsonS3Object(process.env.system_bucket, key);
   } catch (err) {
     if (err.name === 'NoSuchKey') {
       return res.boom.notFound('The report does not exist!');

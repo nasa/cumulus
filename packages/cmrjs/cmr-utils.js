@@ -12,6 +12,7 @@ const js2xmlParser = require('js2xmlparser');
 const {
   buildS3Uri,
   getS3Object,
+  getJsonS3Object,
   parseS3Uri,
   promiseS3Upload,
   s3GetObjectTagging,
@@ -202,8 +203,7 @@ async function parseXmlString(xml) {
  */
 async function metadataObjectFromCMRJSONFile(cmrFilename) {
   const { Bucket, Key } = parseS3Uri(cmrFilename);
-  const obj = await getS3Object(Bucket, Key, { retries: 5 });
-  return JSON.parse(obj.Body.toString());
+  return getJsonS3Object(Bucket, Key, { retries: 5 });
 }
 
 /**

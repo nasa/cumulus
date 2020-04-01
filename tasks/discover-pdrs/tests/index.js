@@ -17,9 +17,7 @@ const {
 const { discoverPdrs } = require('..');
 
 test.beforeEach(async (t) => {
-  const inputPath = path.join(__dirname, 'fixtures', 'input.json');
-  const rawInput = await fs.readFile(inputPath, 'utf8');
-  t.context.input = JSON.parse(rawInput);
+  t.context.input = await fs.readJson(path.join(__dirname, 'fixtures', 'input.json'));
 });
 
 test('test pdr discovery with FTP assuming all PDRs are new', async (t) => {

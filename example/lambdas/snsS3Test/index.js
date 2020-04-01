@@ -49,13 +49,9 @@ async function handleGranules(event) {
  * @returns {Promise} confirmation of added message
  */
 async function handlePdrs(event) {
-  const s3 = new S3();
-  const messageString = event.Records[0].Sns.Message;
-  const pdr = JSON.parse(messageString);
-  if (!pdr.pdrName) {
-    return Promise.resolve();
-  }
-  return s3.putObject({
+  const pdr = JSON.parse(event.Records[0].Sns.Message);
+  if (!pdr.pdrName) return undefined;
+  return (new S3()).putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/test-output/${pdr.pdrName}-${pdr.status}.output`,
     Body: JSON.stringify(event, null, 2)

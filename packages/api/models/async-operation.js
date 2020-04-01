@@ -1,6 +1,7 @@
 'use strict';
 
-const { ecs, s3 } = require('@cumulus/aws-client/services');
+const { putJsonS3Object } = require('@cumulus/aws-client/S3');
+const { ecs } = require('@cumulus/aws-client/services');
 const uuidv4 = require('uuid/v4');
 const Manager = require('./base');
 const { asyncOperation: asyncOperationSchema } = require('./schemas');
@@ -74,11 +75,7 @@ class AsyncOperation extends Manager {
     const payloadBucket = this.systemBucket;
     const payloadKey = `${this.stackName}/async-operation-payloads/${id}.json`;
 
-    await s3().putObject({
-      Bucket: payloadBucket,
-      Key: payloadKey,
-      Body: JSON.stringify(payload)
-    }).promise();
+    await putJsonS3Object(payloadBucket, payloadKey, payload);
 
     // Start the task in ECS
     const runTaskResponse = await ecs().runTask({

@@ -10,11 +10,8 @@ const {
   validateConfig,
   validateOutput
 } = require('@cumulus/common/test-utils');
-const { promisify } = require('util');
 
 const { discoverGranules } = require('..');
-
-const readFile = promisify(fs.readFile);
 
 async function assertDiscoveredGranules(t, output) {
   await validateOutput(t, output);
@@ -24,9 +21,7 @@ async function assertDiscoveredGranules(t, output) {
 }
 
 test.beforeEach(async (t) => {
-  const eventPath = path.join(__dirname, 'fixtures', 'mur.json');
-  const rawEvent = await readFile(eventPath, 'utf8');
-  t.context.event = JSON.parse(rawEvent);
+  t.context.event = await fs.readJson(path.join(__dirname, 'fixtures', 'mur.json'));
 });
 
 test('discover granules sets the correct dataType for granules', async (t) => {

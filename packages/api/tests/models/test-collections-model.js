@@ -3,7 +3,10 @@
 const test = require('ava');
 const { s3 } = require('@cumulus/aws-client/services');
 const awsServices = require('@cumulus/aws-client/services');
-const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+const {
+  putJsonS3Object,
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { noop } = require('@cumulus/common/util');
 const {
@@ -164,16 +167,16 @@ test.serial('Collection.delete() throws an exception if the collection has assoc
 
   // The workflow message template must exist in S3 before the rule can be created
   await Promise.all([
-    s3().putObject({
-      Bucket: process.env.system_bucket,
-      Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
-      Body: JSON.stringify({})
-    }).promise(),
-    s3().putObject({
-      Bucket: process.env.system_bucket,
-      Key: `${process.env.stackName}/workflow_template.json`,
-      Body: JSON.stringify({})
-    }).promise()
+    putJsonS3Object(
+      process.env.system_bucket,
+      `${process.env.stackName}/workflows/${rule.workflow}.json`,
+      {}
+    ),
+    putJsonS3Object(
+      process.env.system_bucket,
+      `${process.env.stackName}/workflow_template.json`,
+      {}
+    )
   ]);
 
   await ruleModel.create(rule);

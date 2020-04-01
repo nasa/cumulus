@@ -37,8 +37,6 @@ const {
   createTestDataPath
 } = require('../../helpers/testUtils');
 
-const record = JSON.parse(fs.readFileSync(`${__dirname}/data/records/L2_HR_PIXC_product_0001-of-4154.json`));
-
 const ruleDirectory = './spec/parallel/kinesisTests/data/rules';
 
 describe('The messageConsumer receives a bad record.\n', () => {
@@ -46,6 +44,7 @@ describe('The messageConsumer receives a bad record.\n', () => {
   const collectionsDir = './data/collections/L2_HR_PIXC-000/';
 
   let failureSqsUrl;
+  let record;
   let ruleOverride;
   let ruleSuffix;
   let streamName;
@@ -78,6 +77,8 @@ describe('The messageConsumer receives a bad record.\n', () => {
   }
 
   beforeAll(async () => {
+    record = await fs.readJson(`${__dirname}/data/records/L2_HR_PIXC_product_0001-of-4154.json`);
+
     testConfig = await loadConfig();
 
     const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestError');

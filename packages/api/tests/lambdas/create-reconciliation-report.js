@@ -15,6 +15,8 @@ const CMR = require('@cumulus/cmr-client/CMR');
 const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue');
 const {
   buildS3Uri,
+  getJsonS3Object,
+  putJsonS3Object,
   recursivelyDeleteS3Bucket
 } = require('@cumulus/aws-client/S3');
 const awsServices = require('@cumulus/aws-client/services');
@@ -42,11 +44,8 @@ function storeBucketsConfigToS3(buckets, systemBucket, stackName) {
       type: 'protected'
     };
   });
-  return awsServices.s3().putObject({
-    Bucket: systemBucket,
-    Key: `${stackName}/workflows/buckets.json`,
-    Body: JSON.stringify(bucketsConfig)
-  }).promise();
+
+  return putJsonS3Object(systemBucket, `${stackName}/workflows/buckets.json`, bucketsConfig);
 }
 
 // Expect files to have bucket and key properties
@@ -105,10 +104,7 @@ async function fetchCompletedReport(Bucket, stackName) {
   const Prefix = `${stackName}/reconciliation-reports/`;
 
   const report = await awsServices.s3().listObjectsV2({ Bucket, Prefix }).promise()
-    .then((response) => response.Contents[0].Key)
-    .then((Key) => awsServices.s3().getObject({ Bucket, Key }).promise())
-    .then((response) => response.Body.toString())
-    .then(JSON.parse);
+    .then((response) => getJsonS3Object(Bucket, response.Contents[0].Key));
 
   if (report.status === 'RUNNING') {
     return sleep(1000)

@@ -90,7 +90,7 @@ describe('When the Sync Granule workflow is configured', () => {
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
     const newGranuleId = inputPayload.granules[0].granuleId;
 
-    const templatedOutputPayloadFilename = templateFile({
+    const templatedOutputPayloadFilename = await templateFile({
       inputTemplateFilename: './spec/parallel/syncGranule/SyncGranule.output.payload.template.json',
       config: {
         granules: [

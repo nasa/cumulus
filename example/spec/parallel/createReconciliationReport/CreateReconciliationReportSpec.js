@@ -2,7 +2,7 @@
 
 const cloneDeep = require('lodash.clonedeep');
 const fs = require('fs-extra');
-const { buildS3Uri, deleteS3Files } = require('@cumulus/aws-client/S3');
+const { buildS3Uri, deleteS3Files, getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { dynamodb, lambda, s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const bucketsConfigJsonObject = require('@cumulus/common/bucketsConfigJsonObject');
@@ -231,11 +231,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
     // Fetch the report
     const reportKey = (await getReportsKeys(config.bucket, config.stackName))[0];
-    report = await s3().getObject({
-      Bucket: config.bucket,
-      Key: reportKey
-    }).promise()
-      .then((response) => JSON.parse(response.Body.toString()));
+    report = await getJsonS3Object(config.bucket, reportKey);
 
     console.log(`update granule files back ${publishedGranuleId}`);
     await granuleModel.update({ granuleId: publishedGranuleId }, { files: JSON.parse(granuleResponse.body).files });

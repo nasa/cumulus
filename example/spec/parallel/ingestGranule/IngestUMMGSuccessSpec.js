@@ -11,7 +11,7 @@ const mime = require('mime-types');
 const Execution = require('@cumulus/api/models/executions');
 const Provider = require('@cumulus/api/models/providers');
 const {
-  getS3Object,
+  getJsonS3Object,
   s3ObjectExists,
   parseS3Uri,
   headObject
@@ -66,11 +66,9 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
 ];
 
-async function getUmmObject(fileLocation) {
+function getUmmObject(fileLocation) {
   const { Bucket, Key } = parseS3Uri(fileLocation);
-
-  const ummFile = await getS3Object(Bucket, Key);
-  return JSON.parse(ummFile.Body.toString());
+  return getJsonS3Object(Bucket, Key);
 }
 
 const cumulusDocUrl = 'https://nasa.github.io/cumulus/docs/cumulus-docs-readme';
@@ -115,7 +113,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     providerModel = new Provider();
 
     const collectionUrlPath = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
-    const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
+    const providerJson = await fs.readJson(`${providersDir}/s3_provider.json`);
     const providerData = {
       ...providerJson,
       id: provider.id,
@@ -128,12 +126,12 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       apiTestUtils.addProviderApi({ prefix: config.stackName, provider: providerData })
     ]);
 
-    const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+    const inputPayloadJson = await fs.readFile(inputPayloadFilename, 'utf8');
     // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
     const granuleId = inputPayload.granules[0].granuleId;
 
-    const templatedOutputPayloadFilename = templateFile({
+    const templatedOutputPayloadFilename = await templateFile({
       inputTemplateFilename: './spec/parallel/ingestGranule/IngestGranule.UMM.output.payload.template.json',
       config: {
         granules: [

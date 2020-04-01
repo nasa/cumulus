@@ -105,7 +105,7 @@ describe('The Sync Granules workflow', () => {
     await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
       s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
 
-    const templatedOutputPayloadFilename = templateFile({
+    const templatedOutputPayloadFilename = await templateFile({
       inputTemplateFilename: './spec/parallel/syncGranule/SyncGranule.output.payload.template.json',
       config: {
         granules: [

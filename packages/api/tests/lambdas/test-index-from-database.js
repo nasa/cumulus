@@ -4,7 +4,7 @@ const test = require('ava');
 
 const awsServices = require('@cumulus/aws-client/services');
 const {
-  promiseS3Upload,
+  putJsonS3Object,
   recursivelyDeleteS3Bucket
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -102,16 +102,8 @@ test.before(async (t) => {
   const wKey = `${process.env.stackName}/workflows/${workflowList[0].name}.json`;
   const tKey = `${process.env.stackName}/workflow_template.json`;
   await Promise.all([
-    promiseS3Upload({
-      Bucket: process.env.system_bucket,
-      Key: wKey,
-      Body: JSON.stringify(workflowList[0])
-    }),
-    promiseS3Upload({
-      Bucket: process.env.system_bucket,
-      Key: tKey,
-      Body: JSON.stringify({})
-    })
+    putJsonS3Object(process.env.system_bucket, wKey, workflowList[0]),
+    putJsonS3Object(process.env.system_bucket, tKey, {})
   ]);
 });
 

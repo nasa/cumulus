@@ -9,7 +9,6 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
-const { readJsonFixture } = require('@cumulus/common/test-utils');
 const { xmlParseOptions } = require('../../utils');
 
 const cmrUtil = rewire('../../cmr-utils');
@@ -153,8 +152,8 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
 
   const cmrXml = await fs.readFile('./tests/fixtures/cmrFileUpdateFixture.cmr.xml', 'utf8');
   const cmrMetadata = await (promisify(xml2js.parseString))(cmrXml, xmlParseOptions);
-  const filesObject = await readJsonFixture('./tests/fixtures/filesObjectFixture.json');
-  const buckets = new BucketsConfig(await readJsonFixture('./tests/fixtures/buckets.json'));
+  const filesObject = await fs.readJson('./tests/fixtures/filesObjectFixture.json');
+  const buckets = new BucketsConfig(await fs.readJson('./tests/fixtures/buckets.json'));
   const distEndpoint = 'https://distendpoint.com';
 
   const updateEcho10XMLMetadata = cmrUtil.__get__('updateEcho10XMLMetadata');
@@ -214,10 +213,9 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
 test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule files', async (t) => {
   const uploadEchoSpy = sinon.spy(() => Promise.resolve);
 
-  const cmrJSON = await fs.readFile('./tests/fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json', 'utf8');
-  const cmrMetadata = JSON.parse(cmrJSON);
-  const filesObject = await readJsonFixture('./tests/fixtures/UMMGFilesObjectFixture.json');
-  const buckets = new BucketsConfig(await readJsonFixture('./tests/fixtures/buckets.json'));
+  const cmrMetadata = await fs.readJson('./tests/fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json');
+  const filesObject = await fs.readJson('./tests/fixtures/UMMGFilesObjectFixture.json');
+  const buckets = new BucketsConfig(await fs.readJson('./tests/fixtures/buckets.json'));
   const distEndpoint = 'https://distendpoint.com';
 
   const updateUMMGMetadata = cmrUtil.__get__('updateUMMGMetadata');
@@ -267,8 +265,7 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
 });
 
 test.serial('getGranuleTemporalInfo returns temporal information from granule CMR json file', async (t) => {
-  const cmrJSON = await fs.readFile('./tests/fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json', 'utf8');
-  const cmrMetadata = JSON.parse(cmrJSON);
+  const cmrMetadata = await fs.readJson('./tests/fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json');
   const revertCmrFileObject = cmrUtil.__set__('granuleToCmrFileObject', () => ([{ filename: 'test.cmr.json', granuleId: 'testGranuleId' }]));
   const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRJSONFile', () => cmrMetadata);
 

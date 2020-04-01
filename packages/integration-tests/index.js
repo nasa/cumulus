@@ -240,8 +240,7 @@ async function executeWorkflow(stackName, bucketName, workflowName, workflowMsg,
  */
 async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
   try {
-    const rawInput = await fs.readFile(inputFile, 'utf8');
-    const parsedInput = JSON.parse(rawInput);
+    const parsedInput = await fs.readJson(inputFile);
     const workflowStatus = await executeWorkflow(stackName, bucketName, workflowName, parsedInput);
 
     if (workflowStatus.status === 'SUCCEEDED') {

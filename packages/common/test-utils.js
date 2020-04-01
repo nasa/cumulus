@@ -282,7 +282,7 @@ exports.randomStringFromRegex = (regex) => new RandExp(regex).gen();
  */
 async function validateJSON(t, schemaFilename, data) {
   const schemaName = path.basename(schemaFilename).split('.')[0];
-  const schema = await fs.readFile(schemaFilename, 'utf8').then(JSON.parse);
+  const schema = await fs.readJson(schemaFilename);
   const ajv = new Ajv();
   const valid = ajv.validate(schema, data);
   if (!valid) {
@@ -367,12 +367,10 @@ function findTestDataDirectory() {
 }
 exports.findTestDataDirectory = findTestDataDirectory;
 
-
-function readJsonFixture(fixturePath) {
-  return fs.readFile(fixturePath).then((obj) => JSON.parse(obj));
-}
-
-exports.readJsonFixture = readJsonFixture;
+exports.readJsonFixture = (fixturePath) => {
+  deprecate('@cumulus/common/test-utils.readJsonFixture', '1.21.0', 'fs-extra.readJson');
+  return fs.readJson(fixturePath);
+};
 
 /**
  * Prettify and display something to the console.

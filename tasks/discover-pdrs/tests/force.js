@@ -17,9 +17,7 @@ const { RemoteResourceError } = require('@cumulus/errors');
 const { discoverPdrs } = require('..');
 
 test.beforeEach(async (t) => {
-  const inputPath = path.join(__dirname, 'fixtures', 'input.json');
-  const rawInput = await fs.readFile(inputPath, 'utf8');
-  t.context.event = JSON.parse(rawInput);
+  t.context.event = await fs.readJson(path.join(__dirname, 'fixtures', 'input.json'));
 });
 
 test('test pdr discovery with force=false', async (t) => {

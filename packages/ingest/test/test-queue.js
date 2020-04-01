@@ -2,7 +2,7 @@
 
 const test = require('ava');
 const {
-  s3PutObject,
+  putJsonS3Object,
   recursivelyDeleteS3Bucket
 } = require('@cumulus/aws-client/S3');
 const { s3, sqs } = require('@cumulus/aws-client/services');
@@ -42,16 +42,8 @@ test.beforeEach(async (t) => {
   const workflowDefinitionKey = `${t.context.stackName}/workflows/${t.context.workflow}.json`;
   t.context.messageTemplateKey = messageTemplateKey;
   await Promise.all([
-    s3PutObject({
-      Bucket: t.context.templateBucket,
-      Key: messageTemplateKey,
-      Body: JSON.stringify(t.context.messageTemplate)
-    }),
-    s3PutObject({
-      Bucket: t.context.templateBucket,
-      Key: workflowDefinitionKey,
-      Body: JSON.stringify(workflowDefinition)
-    })
+    putJsonS3Object(t.context.templateBucket, messageTemplateKey, t.context.messageTemplate),
+    putJsonS3Object(t.context.templateBucket, workflowDefinitionKey, workflowDefinition)
   ]);
 
 

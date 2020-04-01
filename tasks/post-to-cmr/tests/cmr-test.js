@@ -1,10 +1,9 @@
 'use strict';
 
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
 const test = require('ava');
 const sinon = require('sinon');
-const { promisify } = require('util');
 
 const cmrClient = require('@cumulus/cmr-client');
 const awsServices = require('@cumulus/aws-client/services');
@@ -14,8 +13,6 @@ const { CMRMetaFileNotFound } = require('@cumulus/errors');
 const launchpad = require('@cumulus/common/launchpad');
 
 const { postToCMR } = require('..');
-
-const readFile = promisify(fs.readFile);
 
 const result = {
   'concept-id': 'testingtesting'
@@ -41,9 +38,7 @@ test.beforeEach(async (t) => {
   process.env.CMR_ENVIRONMENT = 'UAT';
   t.context.bucket = randomString();
 
-  const payloadPath = path.join(__dirname, 'data', 'payload.json');
-  const rawPayload = await readFile(payloadPath, 'utf8');
-  const payload = JSON.parse(rawPayload);
+  const payload = await fs.readJson(path.join(__dirname, 'data', 'payload.json'));
   t.context.payload = payload;
 
   t.context.payload.config.cmr.passwordSecretName = t.context.cmrPasswordSecretName;

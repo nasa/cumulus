@@ -21,11 +21,8 @@ const errors = require('@cumulus/errors');
 const {
   randomString, randomId, validateConfig, validateInput, validateOutput
 } = require('@cumulus/common/test-utils');
-const { promisify } = require('util');
 
 const { moveGranules } = require('..');
-
-const readFile = promisify(fs.readFile);
 
 async function uploadFiles(files, bucket) {
   await Promise.all(files.map((file) => promiseS3Upload({
@@ -119,9 +116,7 @@ test.beforeEach(async (t) => {
     s3().createBucket({ Bucket: t.context.protectedBucket }).promise()
   ]);
 
-  const payloadPath = path.join(__dirname, 'data', 'payload.json');
-  const rawPayload = await readFile(payloadPath, 'utf8');
-  t.context.payload = JSON.parse(rawPayload);
+  t.context.payload = await fs.readJson(path.join(__dirname, 'data', 'payload.json'));
   const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
   t.context.filesToUpload = filesToUpload.map((file) =>
     buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));

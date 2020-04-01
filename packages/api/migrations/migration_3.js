@@ -1,5 +1,6 @@
 'use strict';
 
+const { getJsonS3Object } = require('@cumulus/aws-client/services');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   CollectionConfigStore,
@@ -16,8 +17,7 @@ const {
  * @returns {null} - N/A
  */
 async function migrateCollection(file, prefix, bucket, collectionConfigStore) {
-  const coll = await s3.getObject(file.Bucket, file.Key);
-  const item = JSON.parse(coll.Body.toString());
+  const item = await getJsonS3Object(file.Bucket, file.Key);
 
   const dataType = item.dataType || item.name;
   const collectionId = constructCollectionId(dataType, item.dataVersion);

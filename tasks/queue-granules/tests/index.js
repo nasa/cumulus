@@ -7,7 +7,10 @@ const {
   sqs
 } = require('@cumulus/aws-client/services');
 const { createQueue } = require('@cumulus/aws-client/SQS');
-const { recursivelyDeleteS3Bucket, s3PutObject } = require('@cumulus/aws-client/S3');
+const {
+  putJsonS3Object,
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/aws-client/S3');
 const { getExecutionArn } = require('@cumulus/aws-client/StepFunctions');
 const {
   randomId,
@@ -60,16 +63,8 @@ test.beforeEach(async (t) => {
   const workflowDefinitionKey = `${t.context.stackName}/workflows/${t.context.workflow}.json`;
   t.context.messageTemplateKey = messageTemplateKey;
   await Promise.all([
-    s3PutObject({
-      Bucket: t.context.internalBucket,
-      Key: messageTemplateKey,
-      Body: JSON.stringify(t.context.messageTemplate)
-    }),
-    s3PutObject({
-      Bucket: t.context.internalBucket,
-      Key: workflowDefinitionKey,
-      Body: JSON.stringify(workflowDefinition)
-    })
+    putJsonS3Object(t.context.internalBucket, messageTemplateKey, t.context.messageTemplate),
+    putJsonS3Object(t.context.internalBucket, workflowDefinitionKey, workflowDefinition)
   ]);
 
   t.context.event = {

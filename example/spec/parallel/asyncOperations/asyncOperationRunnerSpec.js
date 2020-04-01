@@ -1,6 +1,7 @@
 'use strict';
 
 const uuidv4 = require('uuid/v4');
+const { putJsonS3Object } = require('@cumulus/aws-client/S3');
 const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
@@ -249,11 +250,7 @@ describe('The AsyncOperation task runner', () => {
 
       // Upload the payload
       payloadKey = `${config.stackName}/integration-tests/payloads/${asyncOperationId}.json`;
-      await s3().putObject({
-        Bucket: config.bucket,
-        Key: payloadKey,
-        Body: JSON.stringify([1, 2, 3])
-      }).promise();
+      await putJsonS3Object(config.bucket, payloadKey, [1, 2, 3]);
 
       await asyncOperationModel.create({
         id: asyncOperationId,
@@ -327,11 +324,7 @@ describe('The AsyncOperation task runner', () => {
 
       // Upload the payload
       payloadKey = `${config.stackName}/integration-tests/payloads/${asyncOperationId}.json`;
-      await s3().putObject({
-        Bucket: config.bucket,
-        Key: payloadKey,
-        Body: JSON.stringify([1, 2, 3])
-      }).promise();
+      await putJsonS3Object(config.bucket, payloadKey, [1, 2, 3]);
 
       await asyncOperationModel.create({
         id: asyncOperationId,

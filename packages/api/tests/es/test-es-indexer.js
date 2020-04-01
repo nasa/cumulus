@@ -20,8 +20,6 @@ const { fakeGranuleFactory, fakeCollectionFactory } = require('../../lib/testUti
 const { IndexExistsError } = require('../../lib/errors');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 
-const granuleSuccess = require('../data/granule_success.json');
-
 const esIndex = randomString();
 const collectionTable = randomString();
 const granuleTable = randomString();
@@ -35,6 +33,7 @@ let esClient;
 let collectionModel;
 let executionModel;
 let granuleModel;
+let input;
 let pdrsModel;
 let cmrStub;
 let stepFunctionsStub;
@@ -42,9 +41,9 @@ let existsStub;
 let workflowStub;
 let templateStub;
 
-const input = JSON.stringify(granuleSuccess);
-
 test.before(async (t) => {
+  input = await fs.readFile('../data/granule_success.json', 'utf8');
+
   // create the tables
   process.env.CollectionsTable = collectionTable;
   collectionModel = new models.Collection();
@@ -453,12 +452,7 @@ test.serial('indexing a granule record', async (t) => {
 test.serial('indexing a PDR record', async (t) => {
   const { esAlias } = t.context;
 
-  const txt = fs.readFileSync(
-    path.join(__dirname, '../data/sns_message_parse_pdr.txt'),
-    'utf8'
-  );
-
-  const event = JSON.parse(JSON.parse(txt.toString()));
+  const event = await fs.readJson(path.join(__dirname, '../data/sns_message_parse_pdr.txt'));
   const msg = JSON.parse(event.Records[0].Sns.Message);
 
   const pdr = await pdrsModel.generatePdrRecord(msg);

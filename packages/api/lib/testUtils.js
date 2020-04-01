@@ -11,13 +11,16 @@ const { authorizedOAuthUsersKey } = require('../app/auth');
 
 const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
 
-const dataDir = path.join(__dirname, '../app/data');
-const workflowDir = path.join(dataDir, 'workflows');
-const getWorkflowList = () => fs.readdirSync(workflowDir).map((f) => JSON.parse(fs.readFileSync(`${workflowDir}/${f}`).toString()));
+const dataDirectory = path.join(__dirname, '../app/data');
 
-const reconcileDir = path.join(dataDir, 'reconciliation-reports');
-const getReconcileReportsList = () => fs.readdirSync(reconcileDir).map((f) => JSON.parse(fs.readFileSync(`${reconcileDir}/${f}`).toString()));
+const loadJsonFromDataDir = async (directory) => {
+  const fullDirectory = path.join(dataDirectory, directory);
+  const files = await fs.readdir(fullDirectory);
+  return files.map((file) => fs.readJson(path.join(fullDirectory, file)));
+};
 
+const getWorkflowList = () => loadJsonFromDataDir('workflows');
+const getReconcileReportsList = () => loadJsonFromDataDir('reconciliation-reports');
 
 /**
  * mocks the context object of the lambda function with

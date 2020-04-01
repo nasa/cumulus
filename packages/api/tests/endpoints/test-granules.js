@@ -1,6 +1,6 @@
 'use strict';
 
-const fs = require('fs');
+const fs = require('fs-extra');
 const request = require('supertest');
 const path = require('path');
 const sinon = require('sinon');
@@ -9,6 +9,7 @@ const {
   buildS3Uri,
   createBucket,
   fileExists,
+  putJsonS3Object,
   recursivelyDeleteS3Bucket
 } = require('@cumulus/aws-client/S3');
 const {
@@ -87,11 +88,9 @@ async function setupBucketsConfig() {
   };
 
   process.env.DISTRIBUTION_ENDPOINT = 'http://example.com/';
-  await putObject({
-    Bucket: systemBucket,
-    Key: `${process.env.stackName}/workflows/buckets.json`,
-    Body: JSON.stringify(buckets)
-  });
+  await putJsonS3Object(
+    systemBucket, `${process.env.stackName}/workflows/buckets.json`, buckets
+  );
   await createBucket(buckets.public.name);
   return { internalBucket: systemBucket, publicBucket: buckets.public.name };
 }
@@ -827,8 +826,7 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
   const { internalBucket, publicBucket } = await setupBucketsConfig();
 
   const newGranule = fakeGranuleFactoryV2();
-  const ummgMetadataString = fs.readFileSync(path.resolve(__dirname, '../data/ummg-meta.json'));
-  const originalUMMG = JSON.parse(ummgMetadataString);
+  const originalUMMG = await fs.readJson(path.resolve(__dirname, '../data/ummg-meta.json'));
 
   newGranule.files = [
     {
@@ -849,7 +847,7 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
     if (file.name === `${newGranule.granuleId}.txt`) {
       return putObject({ Bucket: file.bucket, Key: file.key, Body: 'test data' });
     }
-    return putObject({ Bucket: file.bucket, Key: file.key, Body: ummgMetadataString });
+    return putJsonS3Object(file.bucket, file.key, originalUMMG);
   }));
 
   const destinationFilepath = `${process.env.stackName}/moved_granules/${randomString()}`;

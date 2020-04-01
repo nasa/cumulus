@@ -4,6 +4,7 @@ const test = require('ava');
 const fs = require('fs-extra');
 const moment = require('moment');
 const path = require('path');
+const pMap = require('p-map');
 const sinon = require('sinon');
 const { randomString } = require('@cumulus/common/test-utils');
 const awsServices = require('@cumulus/aws-client/services');
@@ -23,10 +24,10 @@ async function addTestCollections() {
   // Read in all of the CMR collections from the fixtures files
   const fixturesDirectory = path.join(__dirname, 'fixtures', 'ems-metadata-report');
   const collectionFilenames = await fs.readdir(fixturesDirectory);
-  const cmrCollections = await Promise.all(
-    collectionFilenames.map((collectionFilename) =>
-      fs.readFile(path.join(fixturesDirectory, collectionFilename), 'utf8')
-        .then((collection) => JSON.parse(collection)))
+
+  const cmrCollections = await pMap(
+    collectionFilenames,
+    (f) => fs.readJson(path.join(fixturesDirectory, f))
   );
 
   // verify that the function handles different CMR collections:

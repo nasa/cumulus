@@ -7,7 +7,7 @@ const range = require('lodash.range');
 
 const awsServices = require('@cumulus/aws-client/services');
 const {
-  s3PutObject,
+  putJsonS3Object,
   recursivelyDeleteS3Bucket
 } = require('@cumulus/aws-client/S3');
 const { sleep } = require('@cumulus/common/util');
@@ -81,16 +81,8 @@ test.before(async () => {
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   await Promise.all([
-    s3PutObject({
-      Bucket: process.env.system_bucket,
-      Key: messageTemplateKey,
-      Body: JSON.stringify({ meta: 'testmeta' })
-    }),
-    s3PutObject({
-      Bucket: process.env.system_bucket,
-      Key: workflowfile,
-      Body: JSON.stringify({ testworkflow: 'workflowconfig' })
-    })
+    putJsonS3Object(process.env.system_bucket, messageTemplateKey, { meta: 'testmeta' }),
+    putJsonS3Object(process.env.system_bucket, workflowfile, { testworkflow: 'workflowconfig' }),
   ]);
 });
 

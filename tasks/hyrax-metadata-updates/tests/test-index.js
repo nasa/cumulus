@@ -64,9 +64,8 @@ test('Test return error when invalid environment supplied for host generation', 
   );
 });
 
-test('Test granule ur extraction from UMM-G', (t) => {
-  const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
-  const metadata = JSON.parse(data);
+test('Test granule ur extraction from UMM-G', async (t) => {
+  const metadata = await fs.readJson('tests/data/umm-gin.json');
   const actual = getGranuleUr(metadata, true);
 
   t.is(actual, 'GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
@@ -80,20 +79,16 @@ test('Test granule ur extraction from ECHO10', async (t) => {
   t.is(actual, 'GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
 });
 
-test('Test adding OPeNDAP URL to UMM-G file', (t) => {
-  const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
-  const metadata = JSON.parse(data);
-  const expected = fs.readFileSync('tests/data/umm-gout.json', 'utf8');
-  const expectedObject = JSON.parse(expected);
+test('Test adding OPeNDAP URL to UMM-G file', async (t) => {
+  const metadata = await fs.readJson('tests/data/umm-gin.json');
+  const expectedObject = await fs.readJson('tests/data/umm-gout.json');
   const actual = addHyraxUrl(metadata, true, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
   t.is(actual, JSON.stringify(expectedObject, null, 2));
 });
 
-test('Test adding OPeNDAP URL to UMM-G file with no related urls', (t) => {
-  const data = fs.readFileSync('tests/data/umm-gin-no-related-urls.json', 'utf8');
-  const metadata = JSON.parse(data);
-  const expected = fs.readFileSync('tests/data/umm-gout-no-related-urls.json', 'utf8');
-  const expectedObject = JSON.parse(expected);
+test('Test adding OPeNDAP URL to UMM-G file with no related urls', async (t) => {
+  const metadata = await fs.readJson('tests/data/umm-gin-no-related-urls.json');
+  const expectedObject = await fs.readJson('tests/data/umm-gout-no-related-urls.json');
   const actual = addHyraxUrl(metadata, true, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
   t.is(actual, JSON.stringify(expectedObject, null, 2));
 });

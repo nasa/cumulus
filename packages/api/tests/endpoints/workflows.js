@@ -6,7 +6,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const {
-  promiseS3Upload,
+  putJsonS3Object,
   recursivelyDeleteS3Bucket
 } = require('@cumulus/aws-client/S3');
 
@@ -37,11 +37,7 @@ test.before(async () => {
   await s3().createBucket({ Bucket: testBucketName }).promise();
   await Promise.all(workflowList.map((wf) => {
     const workflowsListKey = `${process.env.stackName}/workflows/${wf.name}.json`;
-    return promiseS3Upload({
-      Bucket: testBucketName,
-      Key: workflowsListKey,
-      Body: JSON.stringify(wf)
-    });
+    return putJsonS3Object(testBucketName, workflowsListKey, wf);
   }));
 
   const username = randomString();

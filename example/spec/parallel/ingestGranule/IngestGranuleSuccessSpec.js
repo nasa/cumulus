@@ -142,7 +142,7 @@ describe('The S3 Ingest Granules workflow', () => {
     process.env.PdrsTable = `${config.stackName}-PdrsTable`;
     pdrModel = new Pdr();
 
-    const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
+    const providerJson = await fs.readJson(`${providersDir}/s3_provider.json`);
     const providerData = {
       ...providerJson,
       id: provider.id,
@@ -166,7 +166,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
     const collectionUrlString = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
 
-    const templatedSyncGranuleFilename = templateFile({
+    const templatedSyncGranuleFilename = await templateFile({
       inputTemplateFilename: './spec/parallel/ingestGranule/SyncGranule.output.payload.template.json',
       config: {
         granules: [
@@ -198,7 +198,7 @@ describe('The S3 Ingest Granules workflow', () => {
     expectedSyncGranulePayload.granules[0].dataType += testSuffix;
     expectedSyncGranulePayload.granules[0].files = addUrlPathToGranuleFiles(expectedSyncGranulePayload.granules[0].files, testId, '');
 
-    const templatedOutputPayloadFilename = templateFile({
+    const templatedOutputPayloadFilename = await templateFile({
       inputTemplateFilename: './spec/parallel/ingestGranule/IngestGranule.output.payload.template.json',
       config: {
         granules: [

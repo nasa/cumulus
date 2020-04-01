@@ -4,7 +4,7 @@ const isString = require('lodash.isstring');
 const test = require('ava');
 
 const { ecs, s3 } = require('@cumulus/aws-client/services');
-const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+const { getJsonS3Object, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const { AsyncOperation } = require('../../models');
@@ -109,12 +109,11 @@ test.serial('The AsyncOperation.start() method uploads the payload to S3', async
     payload
   });
 
-  const getObjectResponse = await s3().getObject({
-    Bucket: systemBucket,
-    Key: `${asyncOperationModel.stackName}/async-operation-payloads/${id}.json`
-  }).promise();
-
-  t.deepEqual(JSON.parse(getObjectResponse.Body.toString()), payload);
+  const fetchedObject = await getJsonS3Object(
+    systemBucket,
+    `${asyncOperationModel.stackName}/async-operation-payloads/${id}.json`
+  );
+  t.deepEqual(fetchedObject, payload);
 });
 
 test.serial('The AsyncOperation.start() method starts an ECS task with the correct parameters', async (t) => {

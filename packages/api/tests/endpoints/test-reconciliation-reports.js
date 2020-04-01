@@ -2,7 +2,8 @@
 
 const test = require('ava');
 const awsServices = require('@cumulus/aws-client/services');
-const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+const pMap = require('p-map');
+const { putJsonS3Object, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const request = require('supertest');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
@@ -39,12 +40,14 @@ test.beforeEach(async (t) => {
 
   t.context.jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
-  await Promise.all(reportNames.map((reportName) =>
-    awsServices.s3().putObject({
-      Bucket: process.env.system_bucket,
-      Key: `${reportDirectory}/${reportName}`,
-      Body: JSON.stringify({ test_key: `${reportName} test data` })
-    }).promise()));
+  await pMap(
+    reportNames,
+    (reportName) => putJsonS3Object(
+      process.env.system_bucket,
+      `${reportDirectory}/${reportName}`,
+      { test_key: `${reportName} test data` }
+    )
+  );
 });
 
 test.afterEach.always(async () => {

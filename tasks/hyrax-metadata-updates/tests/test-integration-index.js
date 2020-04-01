@@ -22,9 +22,9 @@ const {
   recursivelyDeleteS3Bucket,
   promiseS3Upload,
   parseS3Uri,
-  getS3Object
+  getS3Object,
+  getJsonS3Object
 } = require('@cumulus/aws-client/S3');
-const readFile = promisify(fs.readFile);
 const { InvalidArgument } = require('@cumulus/errors');
 const ValidationError = require('@cumulus/cmr-client/ValidationError');
 const { RecordDoesNotExist } = require('@cumulus/errors');
@@ -112,9 +112,7 @@ async function setupS3(t, isUmmG) {
     s3().createBucket({ Bucket: t.context.stagingBucket }).promise()
   ]);
   const filename = isUmmG ? 'payload-json.json' : 'payload-xml.json';
-  const payloadPath = path.join(__dirname, 'data', filename);
-  const rawPayload = await readFile(payloadPath, 'utf8');
-  t.context.payload = JSON.parse(rawPayload);
+  t.context.payload = await fs.readJson(path.join(__dirname, 'data', filename));
   const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
   t.context.filesToUpload = filesToUpload.map((file) => buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
   buildPayload(t);
@@ -171,12 +169,11 @@ test.serial('Test updating UMM-G metadata file in S3', async (t) => {
   await hyraxMetadataUpdate(e);
   // Verify the metadata has been updated at the S3 location
   const metadataFile = t.context.payload.input.granules[0].files.find((f) => f.type === 'metadata');
-  const actual = await getS3Object(`${metadataFile.bucket}/${metadataFile.fileStagingDir}`, metadataFile.name);
-  const expected = fs.readFileSync('tests/data/umm-gout.json', 'utf8');
-  // We do this dance because formatting.
-  const expectedString = JSON.stringify(JSON.parse(expected), null, 2);
-  const actualString = JSON.stringify(JSON.parse(actual.Body.toString()), null, 2);
-  t.is(actualString, expectedString);
+
+  t.deepEqual(
+    await getJsonS3Object(metadataFile.bucket, `${metadataFile.fileStagingDir}/${metadataFile.name}`),
+    await fs.readJson('tests/data/umm-gout.json')
+  );
 
   await recursivelyDeleteS3Bucket(t.context.stagingBucket);
 });
@@ -249,8 +246,7 @@ test.serial('Test record does not exist error when granule object has no recogni
 });
 
 test.serial('Test retrieving entry title from CMR using UMM-G', async (t) => {
-  const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
-  const metadataObject = JSON.parse(data);
+  const metadataObject = await fs.readJson('tests/data/umm-gin.json');
   const actual = await getEntryTitle(event.config, metadataObject, true);
   t.is(actual, 'GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC');
 });
@@ -263,8 +259,7 @@ test.serial('Test retrieving entry title from CMR using ECHO10', async (t) => {
 });
 
 test('Test generate path from UMM-G', async (t) => {
-  const metadata = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
-  const metadataObject = JSON.parse(metadata);
+  const metadataObject = await fs.readJson('tests/data/umm-gin.json');
   const actual = await generatePath(event.config, metadataObject, true);
 
   t.is(actual, 'providers/GES_DISC/collections/GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
@@ -287,8 +282,7 @@ test('Test generating OPeNDAP URL from ECHO10 file', async (t) => {
 });
 
 test('Test generating OPeNDAP URL from UMM-G file', async (t) => {
-  const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
-  const metadataObject = JSON.parse(data);
+  const metadataObject = await fs.readJson('tests/data/umm-gin.json');
   const actual = await generateHyraxUrl(event.config, metadataObject, true);
   t.is(actual, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4');
 });

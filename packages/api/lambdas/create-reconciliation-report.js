@@ -4,9 +4,8 @@ const clonedeep = require('lodash.clonedeep');
 const keyBy = require('lodash.keyby');
 const moment = require('moment');
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
-const { buildS3Uri } = require('@cumulus/aws-client/S3');
+const { buildS3Uri, putJsonS3Object } = require('@cumulus/aws-client/S3');
 const S3ListObjectsV2Queue = require('@cumulus/aws-client/S3ListObjectsV2Queue');
-const { s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const bucketsConfigJsonObject = require('@cumulus/common/bucketsConfigJsonObject');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
@@ -464,11 +463,7 @@ async function createReconciliationReport(params) {
 
   const reportKey = `${stackName}/reconciliation-reports/report-${report.reportStartTime}.json`;
 
-  await s3().putObject({
-    Bucket: systemBucket,
-    Key: reportKey,
-    Body: JSON.stringify(report)
-  }).promise();
+  await putJsonS3Object(systemBucket, reportKey, report);
 
   // Create a report for each bucket
   const promisedBucketReports = dataBuckets.map(
@@ -493,12 +488,9 @@ async function createReconciliationReport(params) {
   report.status = 'SUCCESS';
 
   // Write the full report to S3
-  return s3().putObject({
-    Bucket: systemBucket,
-    Key: reportKey,
-    Body: JSON.stringify(report)
-  }).promise()
-    .then(() => null);
+  await putJsonS3Object(systemBucket, reportKey, report);
+
+  return null;
 }
 
 function handler(event, _context, cb) {

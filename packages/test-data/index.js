@@ -1,23 +1,9 @@
 'use strict';
 
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
-const { promisify } = require('util');
-
-const readFile = promisify(fs.readFile);
 
 const testDataPath = (name) => path.join(__dirname, name);
-
-/**
- * Read test data in as a string
- *
- * @param {string} name - the path to the test data
- * @returns {Promise<string>} the test data as a string
- */
-const loadTestData = (name) => {
-  const filePath = testDataPath(name);
-  return readFile(filePath, 'utf8');
-};
 
 /**
  * Read and parse JSON-formatted test data
@@ -25,7 +11,7 @@ const loadTestData = (name) => {
  * @param {string} name - the path to the test data
  * @returns {Promise} the test data parsed into Javascript
  */
-const loadJSONTestData = (name) => loadTestData(name).then(JSON.parse);
+const loadJSONTestData = (name) => fs.readJson(testDataPath(name));
 
 /**
  * Get a stream containing test data
@@ -40,6 +26,5 @@ const streamTestData = (name) => {
 
 module.exports = {
   loadJSONTestData,
-  loadTestData,
   streamTestData
 };

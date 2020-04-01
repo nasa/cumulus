@@ -290,20 +290,26 @@ exports.getS3Object = improveStackTrace(
  *
  * @param {string} bucket - the S3 object's bucket
  * @param {string} key - the S3 object's key
+ * @param {Object} retryOptions - options to control retry behavior when an
+ *   object does not exist. See https://github.com/tim-kos/node-retry#retryoperationoptions
+ *   By default, retries will not be performed
  * @returns {Promise<string>} the contents of the S3 object
  */
-exports.getTextObject = (bucket, key) =>
-  exports.getS3Object(bucket, key)
+exports.getTextObject = (bucket, key, retryOptions) =>
+  exports.getS3Object(bucket, key, retryOptions)
     .then(({ Body }) => Body.toString());
 
 /**
  * Fetch JSON stored in an S3 object
  * @param {string} bucket - the S3 object's bucket
  * @param {string} key - the S3 object's key
+ * @param {Object} retryOptions - options to control retry behavior when an
+ *   object does not exist. See https://github.com/tim-kos/node-retry#retryoperationoptions
+ *   By default, retries will not be performed
  * @returns {Promise<*>} the contents of the S3 object, parsed as JSON
  */
-exports.getJsonS3Object = (bucket, key) =>
-  exports.getTextObject(bucket, key)
+exports.getJsonS3Object = (bucket, key, retryOptions) =>
+  exports.getTextObject(bucket, key, retryOptions)
     .then(JSON.parse);
 
 exports.putJsonS3Object = (bucket, key, data) =>

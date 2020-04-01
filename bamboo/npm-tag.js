@@ -29,7 +29,7 @@ async function getNpmTag() {
   const thisTag = process.env.GIT_TAG;
   if (!thisTag) throw new Error('Version is not set');
 
-  const lernaConfig = JSON.parse(await fs.readFile('lerna.json', 'utf8'));
+  const lernaConfig = await fs.readJson('lerna.json');
   const thisVersion = lernaConfig.version;
 
   const latestVersion = await getLatestVersion('@cumulus/common', { version: 'latest' });

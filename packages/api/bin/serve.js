@@ -1,7 +1,7 @@
 'use strict';
 
 const pLimit = require('p-limit');
-const { promiseS3Upload } = require('@cumulus/aws-client/S3');
+const { putJsonS3Object } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomId, inTestMode } = require('@cumulus/common/test-utils');
 const bootstrap = require('../lambdas/bootstrap');
@@ -38,28 +38,19 @@ async function createTable(Model, tableName) {
 
 async function populateBucket(bucket, stackName) {
   // upload workflow files
-  const workflowPromises = workflowList.map((obj) => promiseS3Upload({
-    Bucket: bucket,
-    Key: `${stackName}/workflows/${obj.name}.json`,
-    Body: JSON.stringify(obj)
-  }));
+  const workflowPromises = workflowList.map(
+    (obj) => putJsonS3Object(bucket, `${stackName}/workflows/${obj.name}.json`, obj)
+  );
 
   const reconcilePromises = reconcileList.map((obj) => {
     const filename = `report-${obj.reportStartTime}.json`;
-    return promiseS3Upload({
-      Bucket: bucket,
-      Key: `${stackName}/reconciliation-reports/${filename}`,
-      Body: JSON.stringify(obj)
-    });
+    return putJsonS3Object(bucket, `${stackName}/reconciliation-reports/${filename}`, obj);
   });
 
   // upload workflow template
   const workflow = `${stackName}/workflow_template.json`;
-  const templatePromise = promiseS3Upload({
-    Bucket: bucket,
-    Key: workflow,
-    Body: JSON.stringify({})
-  });
+  const templatePromise = putJsonS3Object(bucket, workflow, {});
+
   await Promise.all([...workflowPromises, ...reconcilePromises, templatePromise]);
 }
 

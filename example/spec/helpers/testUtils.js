@@ -1,8 +1,7 @@
 'use strict';
 
 const execa = require('execa');
-const fs = require('fs');
-const cloneDeep = require('lodash.clonedeep');
+const fs = require('fs-extra');
 const mime = require('mime-types');
 const merge = require('lodash.merge');
 const path = require('path');
@@ -39,13 +38,13 @@ const MILLISECONDS_IN_A_MINUTE = 60 * 1000;
  * @param   {Object} options.config - Object to use to write to fields in the template
  * @returns {string} - File path and name of output file (json)
  */
-function templateFile({ inputTemplateFilename, config }) {
-  const inputTemplate = JSON.parse(fs.readFileSync(inputTemplateFilename, 'utf8'));
-  const templatedInput = merge(cloneDeep(inputTemplate), config);
-  let jsonString = JSON.stringify(templatedInput, null, 2);
-  jsonString = jsonString.replace('{{AWS_ACCOUNT_ID}}', config.AWS_ACCOUNT_ID);
+async function templateFile({ inputTemplateFilename, config }) {
+  const inputTemplate = await fs.readJson(inputTemplateFilename);
+  const templatedInput = merge(inputTemplate, config);
+  const jsonString = JSON.stringify(templatedInput, null, 2)
+    .replace('{{AWS_ACCOUNT_ID}}', config.AWS_ACCOUNT_ID);
   const templatedInputFilename = inputTemplateFilename.replace('.template', '');
-  fs.writeFileSync(templatedInputFilename, jsonString);
+  await fs.writeFile(templatedInputFilename, jsonString);
   return templatedInputFilename;
 }
 

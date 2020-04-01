@@ -43,8 +43,7 @@ test.serial('Test retrieving entry title with invalid result', async (t) => {
     })
     .replyWithFile(200, 'tests/data/cmr-results-no-dataset-id.json', headers);
 
-  const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
-  const metadataObject = JSON.parse(data);
+  const metadataObject = await fs.readJson('tests/data/umm-gin.json');
 
   await t.throwsAsync(getEntryTitle(event.config, metadataObject, true), {
     instanceOf: RecordDoesNotExist,
@@ -65,8 +64,7 @@ test.serial('Test retrieving entry title with no results', async (t) => {
     })
     .replyWithFile(200, 'tests/data/cmr-results-no-results.json', headers);
 
-  const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
-  const metadataObject = JSON.parse(data);
+  const metadataObject = await fs.readJson('tests/data/umm-gin.json');
 
   await t.throwsAsync(getEntryTitle(event.config, metadataObject, true), {
     instanceOf: RecordDoesNotExist,
