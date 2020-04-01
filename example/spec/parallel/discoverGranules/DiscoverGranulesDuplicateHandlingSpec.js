@@ -136,30 +136,25 @@ describe('The Discover Granules workflow with http Protocol', () => {
     let ingestStatus;
     let httpWorkflowExecution;
     let originalHttpWorkflowExecution;
+
     beforeAll(async () => {
-      try {
-        const expectedGranules = ['granule-4', 'granule-5', 'granule-6'];
-        await updateCollectionDuplicateFlag('replace', collection, config);
+      const expectedGranules = ['granule-4', 'granule-5', 'granule-6'];
+      await updateCollectionDuplicateFlag('replace', collection, config);
 
-        originalHttpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
-          config.bucket, workflowName, collection, provider);
+      originalHttpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
+        config.bucket, workflowName, collection, provider);
 
-        ingestStatus = await awaitIngestExecutions(originalHttpWorkflowExecution, lambdaStep);
-        const granuleStatusPromises = expectedGranules.map((g) =>
-          waitForGranule({
-            prefix: config.stackName, granuleId: g
-          }));
-        await Promise.all(granuleStatusPromises);
+      ingestStatus = await awaitIngestExecutions(originalHttpWorkflowExecution, lambdaStep);
+      const granuleStatusPromises = expectedGranules.map((g) =>
+        waitForGranule({
+          prefix: config.stackName, granuleId: g
+        }));
+      await Promise.all(granuleStatusPromises);
 
-        await updateCollectionDuplicateFlag('error', collection, config);
+      await updateCollectionDuplicateFlag('error', collection, config);
 
-        httpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
-          config.bucket, workflowName, collection, provider);
-      } catch (e) {
-        console.log(e);
-        console.log(JSON.stringify(e));
-        throw e;
-      }
+      httpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
+        config.bucket, workflowName, collection, provider);
     });
 
     it('executes initial ingest successfully', () => {
