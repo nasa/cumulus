@@ -15,7 +15,6 @@ const {
   loadConfig,
   createTimestampedTestId,
   createTestSuffix,
-  isCumulusLogEntry
 } = require('../helpers/testUtils');
 
 const { buildHttpProvider, createProvider } = require('../helpers/Providers');
@@ -24,6 +23,13 @@ const { waitForModelStatus } = require('../helpers/apiUtils');
 const workflowName = 'DiscoverGranules';
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 2000000;
+
+const isLambdaStatusLogEntry = (logEntry) =>
+  logEntry.message.includes('START') ||
+  logEntry.message.includes('END') ||
+  logEntry.message.includes('REPORT');
+
+const isCumulusLogEntry = (e) => !isLambdaStatusLogEntry(e);
 
 describe('The Discover Granules workflow with http Protocol', () => {
   const collectionsDir = './data/collections/http_testcollection_001/';

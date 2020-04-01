@@ -190,6 +190,5 @@ module.exports = {
   addUrlPathToGranuleFiles,
   loadFileWithUpdatedGranuleIdPathAndCollection,
   setupTestGranuleForIngest,
-  waitForGranuleRecordInList,
   waitForGranuleRecordsInList
 };

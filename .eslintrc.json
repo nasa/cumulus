@@ -127,12 +127,6 @@
       }
     },
     {
-      "files": ["packages/deployment/**/*.js"],
-      "rules": {
-        "no-console": "off"
-      }
-    },
-    {
       "files": ["**/bin/**/*.js"],
       "rules": {
         "no-console": "off"

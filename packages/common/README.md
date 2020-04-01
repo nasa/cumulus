@@ -22,8 +22,6 @@ Cumulus is a cloud-based data ingest, archive, distribution and management proto
 * [@cumulus/common/concurrency](./concurrency.js) - Implementations of
   distributed concurrency primitives (mutex, semaphore) using DynamoDB
 * [@cumulus/common/errors](./errors.js) - Classes for thrown errors
-* [@cumulus/common/local-helpers](./local-helpers.js) - Provides methods for
-  setting up message payloads for use in development / local testing
 * [@cumulus/common/log](./log.js) - muting or potentially shipping logs to
   alternative locations
 * [@cumulus/common/string](./docs/API.md#module_string) - Utilities for
