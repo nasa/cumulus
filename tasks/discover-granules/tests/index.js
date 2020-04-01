@@ -372,7 +372,7 @@ test.serial('checkDuplicate throws an error when API lambda returns a granule an
       granulesRevert = discoverGranulesRewire.__set__('granules', {
         getGranule: async () => ({ statusCode: 200, body: '{}' })
       });
-      await t.throwsAsync(checkDuplicate('granuleId', 'error', { get: async () => 'dummy value' }));
+      await t.throwsAsync(checkDuplicate('granuleId', 'error'));
     } finally {
       granulesRevert();
     }
