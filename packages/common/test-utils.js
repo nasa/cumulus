@@ -402,6 +402,7 @@ const throwThrottlingException = () => {
  * @returns {Function}
  */
 exports.throttleOnce = (fn) => {
+  deprecate('@cumulus/common/test-utils/throttleOnce', '1.21.0');
   let throttleNextCall = true;
 
   return (...args) => {

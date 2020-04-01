@@ -1,8 +1,9 @@
 'use strict';
 
+const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { globalReplace } = require('@cumulus/common/string');
-const { getWorkflowArn } = require('@cumulus/common/workflows');
+const { getWorkflowFileKey } = require('@cumulus/common/workflows');
 const { Rule } = require('@cumulus/api/models');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 9 * 60 * 1000;
@@ -134,7 +135,11 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
         console.log(`Dropping record onto ${streamName}, recordIdentifier: ${recordIdentifier}.`);
         await putRecordOnStream(streamName, record);
 
-        const workflowArn = await getWorkflowArn(testConfig.stackName, testConfig.bucket, rules[1].workflow);
+        const { arn: workflowArn } = await getJsonS3Object(
+          testConfig.bucket,
+          getWorkflowFileKey(testConfig.stackName, rules[1].workflow)
+        );
+
         console.log('Waiting for step function to start...');
         workflowExecutions = await waitForAllTestSfForRecord(
           recordIdentifier,
