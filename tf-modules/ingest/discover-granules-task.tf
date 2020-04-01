@@ -13,9 +13,7 @@ resource "aws_lambda_function" "discover_granules_task" {
 
   environment {
     variables = {
-      CMR_ENVIRONMENT               = var.cmr_environment
       stackName                     = var.prefix
-      system_bucket                 = var.system_bucket
       GranulesTable                 = var.dynamo_tables.granules.name
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
     }
