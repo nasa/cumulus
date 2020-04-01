@@ -23,8 +23,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - skip:               Duplicates will be filtered from the granule list
     - error:              Duplicates encountered will result in step failure
     - replace, version:   Duplicates will be ignored and handled as normal.
-  - Adds a new copy of the API lambda `PrivateApiLambda() configured to not require auth, without an API front end
-  - Adds @cumulus/api-client with functions for use by workflow lambdas to call the API when needed
+  - Adds a new copy of the API lambda `PrivateApiLambda()` which is configured to not require authentication. This Lambda is not connected to an API gateway
+  - Adds `@cumulus/api-client` with functions for use by workflow lambdas to call the API when needed
 
 
 - **CUMULUS-1732**

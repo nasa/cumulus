@@ -58,8 +58,7 @@ A string configuration that configures the step to filter the granules discovere
 - error:              Duplicates encountered will result the step throwing an error
 - replace, version:   Duplicates will be included in the granules object
 
-These settings should match the collection duplicateHandling and can be set to match
-the collection in core by configuring this value to `"duplicateGranuleHandling": "{$.meta.collection.duplicateHandling}"`.
+The possible values match the `collection.duplicateHandling` and the task configuration can be set to use the `collection.duplicateHandling` by configuring this value to: `"duplicateGranuleHandling": "{$.meta.collection.duplicateHandling}"`.
 
 #### Ignore Files Configuration (`ignoreFilesConfigForDiscovery`)
 
