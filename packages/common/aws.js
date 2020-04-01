@@ -62,6 +62,10 @@ exports.s3 = (options) => {
   deprecate('@cumulus/common/aws/s3', '1.17.0', '@cumulus/aws-client/services/s3');
   return awsClient(AWS.S3, '2006-03-01')(options);
 };
+exports.cloudwatchlogs = (options) => {
+  deprecate('@cumulus/common/aws/cloudwatchlogs', '1.17.0', '@cumulus/aws-client/services/cloudwatchlogs');
+  return awsClient(AWS.CloudWatchLogs, '2014-03-28')(options);
+};
 exports.dynamodb = (options) => {
   deprecate('@cumulus/common/aws/dynamodb', '1.17.0', '@cumulus/aws-client/services/dynamodb');
   return awsClient(AWS.DynamoDB, '2012-08-10')(options);
@@ -132,6 +136,37 @@ exports.s3PutObject = exports.improveStackTrace(
 );
 
 /**
+* Copy an object from one location on S3 to another
+*
+* @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
+* @returns {Promise} - promise of the object being copied
+**/
+exports.s3CopyObject = exports.improveStackTrace(
+  (params) => {
+    deprecate('@cumulus/common/aws/s3CopyObject', '1.17.0', '@cumulus/aws-client/S3/s3CopyObject');
+    return exports.s3().copyObject({
+      TaggingDirective: 'COPY',
+      ...params
+    }).promise();
+  }
+);
+
+/**
+ * Upload data to S3
+ *
+ * Note: This is equivalent to calling `aws.s3().upload(params).promise()`
+ *
+ * @param {Object} params - see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
+ * @returns {Promise} see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
+ */
+exports.promiseS3Upload = exports.improveStackTrace(
+  (params) => {
+    deprecate('@cumulus/common/aws/promiseS3Upload', '1.17.0', '@cumulus/aws-client/S3/promiseS3Upload');
+    return exports.s3().upload(params).promise();
+  }
+);
+
+/**
 * Get an object from S3
 *
 * @param {string} Bucket - name of bucket
@@ -174,6 +209,7 @@ exports.headObject = exports.improveStackTrace(
     return exports.s3().headObject({ Bucket, Key }).promise();
   }
 );
+
 
 /**
  * Delete an object from S3

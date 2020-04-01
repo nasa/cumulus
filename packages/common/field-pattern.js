@@ -4,12 +4,14 @@ const isString = require('lodash.isstring');
 const isObject = require('lodash.isobject');
 
 const log = require('./log');
+const { deprecate } = require('./util');
 
 /**
  * TODO Add docs
  */
 module.exports = class FieldPattern {
   static formatAll(obj, fields) {
+    deprecate('@cumulus/common/FieldPattern.formatAll', '1.21.0');
     if (isString(obj)) {
       return new FieldPattern(obj).format(fields);
     }
@@ -27,6 +29,7 @@ module.exports = class FieldPattern {
   }
 
   constructor(pattern, initialValues = null) {
+    deprecate('@cumulus/common/FieldPattern', '1.21.0');
     this.fieldRegex = /{[\w\.\-]+}/g;
     this.pattern = pattern;
     if (initialValues) {

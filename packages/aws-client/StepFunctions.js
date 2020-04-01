@@ -263,12 +263,10 @@ const getStateMachineArn = (executionArn) => {
 const pullStepFunctionEvent = async (event) => {
   if (!event.replace) return event;
 
-  const remoteMsgS3Object = await s3Utils.getS3Object(
+  const remoteMsg = await s3Utils.getJsonS3Object(
     event.replace.Bucket,
-    event.replace.Key,
-    { retries: 0 }
+    event.replace.Key
   );
-  const remoteMsg = JSON.parse(remoteMsgS3Object.Body.toString());
 
   let returnEvent = remoteMsg;
   if (event.replace.TargetPath) {

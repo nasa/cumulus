@@ -2,11 +2,11 @@
 
 const cloneDeep = require('lodash.clonedeep');
 const fs = require('fs-extra');
-const { buildS3Uri, deleteS3Files } = require('@cumulus/aws-client/S3');
+const { buildS3Uri, deleteS3Files, getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { dynamodb, lambda, s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
-const bucketsConfigJsonObject = require('@cumulus/common/bucketsConfigJsonObject');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
@@ -39,7 +39,9 @@ const collectionsDir = './data/collections/s3_MYD13Q1_006';
 const collection = { name: 'MYD13Q1', version: '006' };
 
 async function findProtectedBucket(systemBucket, stackName) {
-  const bucketsConfig = new BucketsConfig(await bucketsConfigJsonObject(systemBucket, stackName));
+  const bucketsConfig = new BucketsConfig(
+    await getJsonS3Object(systemBucket, getBucketsConfigKey(stackName))
+  );
   const protectedBucketConfig = bucketsConfig.protectedBuckets();
   if (!protectedBucketConfig) throw new Error(`Unable to find protected bucket in ${JSON.stringify(bucketsConfig)}`);
   return protectedBucketConfig[0].name;

@@ -4,6 +4,7 @@ const isString = require('lodash.isstring');
 
 const aws = require('./aws');
 const log = require('./log');
+const { deprecate } = require('./util');
 
 /**
  * Takes a list of logging arguments and returns them as space-delimited fields
@@ -40,6 +41,7 @@ module.exports = class CloudWatchLogger {
    *                          and logStreamName
    */
   constructor(config) {
+    deprecate('@cumulus/common/CloudWatchLogger', '1.21.0');
     this.group = config.logGroupName;
     this.stream = config.logStreamName;
     this.token = null;

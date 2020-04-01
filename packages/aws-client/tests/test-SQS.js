@@ -1,11 +1,14 @@
 const test = require('ava');
-const { randomString } = require('@cumulus/common/test-utils');
+const cryptoRandomString = require('crypto-random-string');
+
 const awsServices = require('../services');
 const {
   createQueue,
   parseSQSMessageBody,
   sqsQueueExists
 } = require('../SQS');
+
+const randomString = () => cryptoRandomString({ length: 10 });
 
 test('parseSQSMessageBody parses messages correctly', (t) => {
   const messageBody = { test: 'value' };
