@@ -17,6 +17,7 @@ class CumulusNoLockError extends Error {
   constructor(message) {
     super(message);
     this.name = this.constructor.name;
+    this.code = this.name;
   }
 }
 
@@ -75,9 +76,9 @@ async function lockOperation(operation, gitSHA, deployment, shouldLock) {
 lockOperation(...process.argv.slice(2, 6)).catch((e) => {
   console.dir(e);
   process.exitCode = 100;
-  if (e.name === 'CumulusNoLockError') {
+  if (e.code === 'CumulusNoLockError') {
     process.exitCode = 101;
-  } else if (!['ConditionalCheckFailedException', 'CumulusLockError'].includes(e.name)) {
+  } else if (!['ConditionalCheckFailedException', 'CumulusLockError'].includes(e.code)) {
     process.exitCode = 1;
   }
 });
