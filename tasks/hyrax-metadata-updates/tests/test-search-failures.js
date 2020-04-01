@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('ava');
-const fs = require('fs');
+const fs = require('fs-extra');
 const nock = require('nock');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const rewire = require('rewire');

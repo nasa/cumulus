@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('ava');
-const fs = require('fs');
+const fs = require('fs-extra');
 const xml2js = require('xml2js');
 const { promisify } = require('util');
 

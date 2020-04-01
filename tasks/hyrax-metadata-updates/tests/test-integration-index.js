@@ -3,7 +3,7 @@
 const nock = require('nock');
 const { promisify } = require('util');
 const test = require('ava');
-const fs = require('fs');
+const fs = require('fs-extra');
 const xml2js = require('xml2js');
 
 const xmlParseOptions = {
