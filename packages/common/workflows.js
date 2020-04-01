@@ -20,7 +20,7 @@ const getWorkflowsListKeyPrefix = (stackName) => `${stackName}/workflows/`;
  * @returns {Promise.<Object>} template as a JSON object
  */
 async function getWorkflowTemplate(stackName, bucketName) {
-  deprecate('@cumulus/common/workflows.getWorkflowTemplate()', '1.20.0');
+  deprecate('@cumulus/common/workflows.getWorkflowTemplate()', '1.21.0');
   const key = templateKey(stackName);
   const templateJson = await getS3Object(bucketName, key);
   return JSON.parse(templateJson.Body.toString());
@@ -35,7 +35,7 @@ async function getWorkflowTemplate(stackName, bucketName) {
  * @returns {Promise.<Object>} definition file as a JSON object
  */
 async function getWorkflowFile(stackName, bucketName, workflowName) {
-  deprecate('@cumulus/common/workflows.getWorkflowFile()', '1.20.0');
+  deprecate('@cumulus/common/workflows.getWorkflowFile()', '1.21.0');
   const key = getWorkflowFileKey(stackName, workflowName);
   const wfJson = await getS3Object(bucketName, key);
   return JSON.parse(wfJson.Body.toString());
@@ -51,7 +51,7 @@ async function getWorkflowFile(stackName, bucketName, workflowName) {
  * @returns {Promise.<string>} workflow arn
  */
 async function getWorkflowArn(stackName, bucketName, workflowName) {
-  deprecate('@cumulus/common/workflows.getWorkflowArn()', '1.20.0');
+  deprecate('@cumulus/common/workflows.getWorkflowArn()', '1.21.0');
   const workflow = await getWorkflowFile(stackName, bucketName, workflowName);
   return workflow.arn;
 }
@@ -65,7 +65,7 @@ async function getWorkflowArn(stackName, bucketName, workflowName) {
  * @returns {Promise.<Array>} list of workflows
  */
 async function getWorkflowList(stackName, bucketName) {
-  deprecate('@cumulus/common/workflows.getWorkflowList()', '1.20.0');
+  deprecate('@cumulus/common/workflows.getWorkflowList()', '1.21.0');
   const workflowsListKeyPrefix = getWorkflowsListKeyPrefix(stackName);
   const workflows = await listS3ObjectsV2({
     Bucket: bucketName,

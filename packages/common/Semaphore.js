@@ -8,7 +8,7 @@ const { deprecate } = require('./util');
 
 class Semaphore {
   constructor(docClient, tableName) {
-    deprecate('@cumulus/common/Semaphore', '1.20.0');
+    deprecate('@cumulus/common/Semaphore', '1.21.0');
     this.docClient = docClient;
     this.tableName = tableName;
   }

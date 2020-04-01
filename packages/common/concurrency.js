@@ -19,12 +19,12 @@ const { deprecate } = require('./util');
  * @returns {Function} a version of `fn` that limits concurrency
  */
 const limit = (n, fn) => {
-  deprecate('@cumulus/common/concurrency.limit', '1.20.0');
+  deprecate('@cumulus/common/concurrency.limit', '1.21.0');
   return pLimit(n).bind(null, fn);
 };
 
 const mapTolerant = (arr, fn) => {
-  deprecate('@cumulus/common/concurrency.mapTolerant', '1.20.0');
+  deprecate('@cumulus/common/concurrency.mapTolerant', '1.21.0');
   const errors = [];
   const tolerate = (item, reason) => {
     if (reason.stack) {
@@ -48,7 +48,7 @@ const mapTolerant = (arr, fn) => {
 };
 
 const toPromise = (fn, ...args) => {
-  deprecate('@cumulus/common/concurrency.toPromise', '1.20.0');
+  deprecate('@cumulus/common/concurrency.toPromise', '1.21.0');
   return new Promise((resolve, reject) =>
     fn(...args, (err, data) => (err ? reject(err) : resolve(data))));
 };
@@ -63,12 +63,12 @@ const toPromise = (fn, ...args) => {
  * @returns {Promise<*>} - A promise that resolves to either null or the result of fn
 */
 const unless = (condition, fn, ...args) => {
-  deprecate('@cumulus/common/concurrency.unless', '1.20.0');
+  deprecate('@cumulus/common/concurrency.unless', '1.21.0');
   return Promise.resolve((condition(...args) ? null : fn(...args)));
 };
 
 const promiseUrl = (urlstr) => {
-  deprecate('@cumulus/common/concurrency.promiseUrl', '1.20.0');
+  deprecate('@cumulus/common/concurrency.promiseUrl', '1.21.0');
   return new Promise((resolve, reject) => {
     const client = urlstr.startsWith('https') ? https : http;
     const urlopts = url.parse(urlstr);
