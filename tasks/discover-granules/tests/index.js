@@ -358,7 +358,7 @@ test.serial('checkDuplicate returns false when API lambda returns a granule',
         getGranule: async () => ({ statusCode: 200, body: '{}' })
       });
       const actual = await checkDuplicate('granuleId', '');
-      t.false(false);
+      t.false(actual);
     } finally {
       granulesRevert();
     }
