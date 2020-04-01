@@ -15,13 +15,13 @@ npm install @cumulus/api-client
 ```javascript
 const { granules } = require('@cumulus/api-client');
 
-  const response = await granules.getGranule({
-    prefix: process.env.STACKNAME,
-    granuleId
-  });
+const response = await granules.getGranule({
+  prefix: process.env.STACKNAME,
+  granuleId
+});
 ```
 
-The above example call will return the full response from the API.  To get the body of the response, you will need to generally parse it: ```JSON.parse(resopnse.body)```
+The above example call will return the full response from the API.  To get the body of the response, you will need to generally parse it: `JSON.parse(resopnse.body)`
 
 ## About Cumulus
 
