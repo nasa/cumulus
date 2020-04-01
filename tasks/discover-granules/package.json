@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/discover-granules",
-  "version": "1.20.0",
+  "version": "1.21.0",
   "description": "Discover Granules in FTP/HTTP/HTTPS/SFTP/S3 endpoints",
   "main": "index.js",
   "directories": {
@@ -43,6 +43,9 @@
     "@cumulus/ingest": "1.20.0",
     "@cumulus/logger": "1.20.0",
     "got": "^9.2.1",
+    "@cumulus/ingest": "1.21.0",
+    "@cumulus/logger": "1.21.0",
+    "got": "^9.2.1",
     "lodash.curry": "^4.1.1",
     "lodash.groupby": "^4.6.0",
     "lodash.isboolean": "^3.0.3",
@@ -50,8 +53,8 @@
     "lodash.pick": "^4.4.0"
   },
   "devDependencies": {
-    "@cumulus/aws-client": "1.20.0",
-    "@cumulus/common": "1.20.0",
+    "@cumulus/aws-client": "1.21.0",
+    "@cumulus/common": "1.21.0",
     "ava": "^2.1.0",
     "babel-loader": "^8.0.6",
     "babel-plugin-source-map-support": "^2.1.1",
