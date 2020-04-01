@@ -179,7 +179,7 @@ const buildGranule = curry(
  *                    dupeConfig.duplicateHandling is set to 'error'
  *
  */
-const checkDuplicate = async (granuleId, duplicateHandling) => {
+const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
   const response = await granules.getGranule({
     prefix: process.env.STACKNAME,
     granuleId
@@ -213,7 +213,7 @@ const checkDuplicate = async (granuleId, duplicateHandling) => {
  */
 const filterDuplicates = async (granuleIds, duplicateHandling) => {
   const keysPromises = granuleIds.map((key) =>
-    checkDuplicate(key, duplicateHandling));
+    checkGranuleHasNoDuplicate(key, duplicateHandling));
 
   const filteredKeys = await Promise.all(keysPromises);
   return filteredKeys.filter(Boolean);
