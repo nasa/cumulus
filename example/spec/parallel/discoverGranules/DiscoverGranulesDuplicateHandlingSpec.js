@@ -52,7 +52,6 @@ describe('The Discover Granules workflow with http Protocol', () => {
     lambdaStep = new LambdaStep();
     config = await loadConfig();
 
-    process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
     testId = createTimestampedTestId(config.stackName, 'DiscoverGranulesDuplicate');
     testSuffix = createTestSuffix(testId);
     collection = { name: `http_testcollection${testSuffix}`, version: '002' };
