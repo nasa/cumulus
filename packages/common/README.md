@@ -19,8 +19,7 @@ Cumulus is a cloud-based data ingest, archive, distribution and management proto
 * [@cumulus/common/aws](./aws.js) - Utilities for working with AWS. For ease of
   setup, testing, and credential management, code should obtain AWS client
   objects from helpers in this module.
-* [@cumulus/common/concurrency](./concurrency.js) - Implementations of
-  distributed concurrency primitives (mutex, semaphore) using DynamoDB
+* [@cumulus/common/concurrency](./concurrency.js) - Utilities for writing concurrent code
 * [@cumulus/common/errors](./errors.js) - Classes for thrown errors
 * [@cumulus/common/log](./log.js) - muting or potentially shipping logs to
   alternative locations
