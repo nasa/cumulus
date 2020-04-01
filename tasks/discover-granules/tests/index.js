@@ -337,7 +337,7 @@ test.serial('filterDuplicates returns a set of filtered keys',
       const filterDuplicates = discoverGranulesRewire.__get__('filterDuplicates');
       checkDuplicateRevert = discoverGranulesRewire.__set__('checkDuplicate', async (key) => {
         if (key === 'duplicate') {
-          return '';
+          return false;
         }
         return key;
       });
