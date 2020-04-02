@@ -2,7 +2,7 @@
 
 /**
  * A collection of utilities for working with URLs
- * @module
+ * @module string
  *
  * @example
  * const { toLower } = require('@cumulus/common/string');
@@ -34,7 +34,8 @@ const { isNull, negate } = require('./util');
  *
  * This is a curried function - https://lodash.com/docs/4.17.11#curry
  *
- * @static
+ * @alias module:string
+ * @kind function
  */
 const replace = curry(
   (pattern, replacement, string) => string.replace(pattern, replacement)
@@ -48,7 +49,7 @@ const replace = curry(
  * @param {string} newSubString - The string replacement
  * @returns {string} the modified string
  *
- * @static
+ * @alias module:string
  */
 function globalReplace(string, oldSubString, newSubString) {
   return string.replace(new RegExp(oldSubString, 'g'), newSubString);
@@ -60,7 +61,7 @@ function globalReplace(string, oldSubString, newSubString) {
  * @param {string} str - the string to convert
  * @returns {string} the lower-cased string
  *
- * @static
+ * @alias module:string
  */
 const toLower = (str) => str.toLowerCase();
 
@@ -70,7 +71,7 @@ const toLower = (str) => str.toLowerCase();
  * @param {string} str - the string to convert
  * @returns {string} the upper-cased string
  *
- * @static
+ * @alias module:string
  */
 const toUpper = (str) => str.toUpperCase();
 
@@ -85,7 +86,7 @@ const toUpper = (str) => str.toUpperCase();
  * @param {string} str - the string to match against
  * @returns {Array|null}
  *
- * @static
+ * @alias module:string
  * @kind function
  */
 const match = curry((regexp, str) => str.match(regexp), 2);
@@ -99,7 +100,7 @@ const match = curry((regexp, str) => str.match(regexp), 2);
  * @param {string} str - the string to match against
  * @returns {boolean} true if the pattern matches the string, false otherwise
  *
- * @static
+ * @alias module:string
  * @kind function
  *
  * @example
@@ -119,7 +120,7 @@ const hostnameRegex = /^[a-z0-9][a-z0-9\.\-]*$/;
  * @param {String} hostname - the string to test
  * @returns {boolean}
  *
- * @static
+ * @alias module:string
  * @kind function
  *
  * @example
@@ -135,8 +136,7 @@ const isValidHostname = compose(matches(hostnameRegex), toLower);
  * @param {string} x - the string to test
  * @returns {boolean}
  *
- * @static
- * @kind function
+ * @alias module:string
  */
 const isNonEmptyString = (x) => isString(x) && x.length > 0;
 
