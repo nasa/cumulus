@@ -1,5 +1,5 @@
 const pWaitFor = require('p-wait-for');
-const { listRules } = require('@cumulus/integration-tests/api/rules');
+const { listRules } = require('@cumulus/api-client/rules');
 
 /**
  * Wait for the defined rule to exist in the rules list.

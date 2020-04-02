@@ -50,6 +50,16 @@ A list of buckets with types that will be used to assign bucket targets based on
 
 A Cumulus [collection](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) object.    Used to define granule file groupings and granule metadata for discovered files.   The collection object utilizes the collection type key to generate types in the output object on discovery.
 
+#### DuplicateGranuleHandling
+
+A string configuration that configures the step to filter the granules discovered:
+
+- skip:               Duplicates will be filtered from the granules object
+- error:              Duplicates encountered will result the step throwing an error
+- replace, version:   Duplicates will be included in the granules object
+
+The possible values match the `collection.duplicateHandling` and the task configuration can be set to use the `collection.duplicateHandling` by configuring this value to: `"duplicateGranuleHandling": "{$.meta.collection.duplicateHandling}"`.
+
 #### Ignore Files Configuration (`ignoreFilesConfigForDiscovery`)
 
 The `boolean` property `ignoreFilesConfigForDiscovery` indicates whether or not
