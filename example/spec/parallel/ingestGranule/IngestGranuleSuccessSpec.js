@@ -28,7 +28,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
-const { constructCollectionId } = require('@cumulus/message/collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { getUrl } = require('@cumulus/cmrjs');
 const {
   addCollections,

@@ -12,7 +12,7 @@ const { deprecate } = require('./util');
  * @returns {string} collectionId
  */
 function constructCollectionId(name, version) {
-  deprecate('@cumulus/common/collection-config-store.constructCollectionId', '1.20.0', '@cumulus/message/collections.constructCollectionId');
+  deprecate('@cumulus/common/collection-config-store.constructCollectionId', '1.20.0', '@cumulus/message/Collections.constructCollectionId');
   return `${name}___${version}`;
 }
 

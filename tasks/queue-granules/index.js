@@ -4,7 +4,7 @@ const get = require('lodash.get');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueGranuleIngestMessage } = require('@cumulus/ingest/queue');
 const { CollectionConfigStore } = require('@cumulus/common/collection-config-store');
-const { buildExecutionArn } = require('@cumulus/message/executions');
+const { buildExecutionArn } = require('@cumulus/message/Executions');
 
 /**
 * See schemas/input.json and schemas/config.json for detailed event description

@@ -3,7 +3,7 @@
 const get = require('lodash.get');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueParsePdrMessage } = require('@cumulus/ingest/queue');
-const { buildExecutionArn } = require('@cumulus/message/executions');
+const { buildExecutionArn } = require('@cumulus/message/Executions');
 
 /**
 * See schemas/input.json and schemas/config.json for detailed event description

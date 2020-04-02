@@ -1,7 +1,7 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const { getStateMachineArnFromExecutionArn } = require('@cumulus/message/executions');
+const { getStateMachineArnFromExecutionArn } = require('@cumulus/message/Executions');
 const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { RecordDoesNotExist } = require('@cumulus/errors');

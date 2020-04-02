@@ -17,7 +17,7 @@ const {
   headObject
 } = require('@cumulus/aws-client/S3');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
-const { constructCollectionId } = require('@cumulus/message/collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { getUrl } = require('@cumulus/cmrjs');
 const {
   addCollections,

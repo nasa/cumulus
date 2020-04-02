@@ -19,7 +19,7 @@ const {
   s3ObjectExists,
   parseS3Uri
 } = require('@cumulus/aws-client/S3');
-const { constructCollectionId } = require('@cumulus/message/collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
   loadConfig,

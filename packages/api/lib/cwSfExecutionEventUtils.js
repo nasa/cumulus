@@ -8,7 +8,7 @@ const {
   getStepExitedEvent,
   getTaskExitedEventOutput
 } = require('@cumulus/common/execution-history');
-const { getMessageExecutionArn } = require('@cumulus/message/executions');
+const { getMessageExecutionArn } = require('@cumulus/message/Executions');
 const { parseStepMessage, pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 
 const executionStatusToWorkflowStatus = (executionStatus) => {

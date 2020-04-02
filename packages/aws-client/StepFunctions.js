@@ -230,7 +230,7 @@ const fromSfnExecutionName = (str, delimiter = '__') => {
  * @returns {string} - Step Function Execution Arn
  */
 const getExecutionArn = (stateMachineArn, executionName) => {
-  deprecate('@cumulus/aws-client/StepFunctions.getExecutionArn()', '1.20.0', '@cumulus/message/executions.buildExecutionArn()');
+  deprecate('@cumulus/aws-client/StepFunctions.getExecutionArn()', '1.20.0', '@cumulus/message/Executions.buildExecutionArn()');
   if (stateMachineArn && executionName) {
     const sfArn = stateMachineArn.replace('stateMachine', 'execution');
     return `${sfArn}:${executionName}`;
@@ -245,14 +245,14 @@ const getExecutionArn = (stateMachineArn, executionName) => {
  * @returns {string} return aws console url for the execution
  */
 function getExecutionUrl(executionArn) {
-  deprecate('@cumulus/aws-client/StepFunctions.getExecutionUrl()', '1.20.0', '@cumulus/message/executions.getExecutionUrlFromArn()');
+  deprecate('@cumulus/aws-client/StepFunctions.getExecutionUrl()', '1.20.0', '@cumulus/message/Executions.getExecutionUrlFromArn()');
   const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
   return `https://console.aws.amazon.com/states/home?region=${region}`
          + `#/executions/details/${executionArn}`;
 }
 
 const getStateMachineArn = (executionArn) => {
-  deprecate('@cumulus/aws-client/StepFunctions.getStateMachineArn()', '1.20.0', '@cumulus/message/executions.getStateMachineArnFromExecutionArn()');
+  deprecate('@cumulus/aws-client/StepFunctions.getStateMachineArn()', '1.20.0', '@cumulus/message/Executions.getStateMachineArnFromExecutionArn()');
   if (executionArn) {
     return executionArn.replace('execution', 'stateMachine').split(':').slice(0, -1).join(':');
   }
