@@ -20,8 +20,12 @@ const {
   ecs,
   sfn
 } = require('@cumulus/aws-client/services');
+const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const { getWorkflowTemplate, getWorkflowArn } = require('@cumulus/common/workflows');
+const {
+  templateKey,
+  getWorkflowFileKey
+} = require('@cumulus/common/workflows');
 const { readJsonFile } = require('@cumulus/common/FileUtils');
 const { globalReplace } = require('@cumulus/common/string');
 const { sleep } = require('@cumulus/common/util');
@@ -200,7 +204,10 @@ async function startWorkflowExecution(workflowArn, workflowMsg) {
  * @returns {string} - executionArn
  */
 async function startWorkflow(stackName, bucketName, workflowName, workflowMsg) {
-  const workflowArn = await getWorkflowArn(stackName, bucketName, workflowName);
+  const { arn: workflowArn } = await getJsonS3Object(
+    bucketName,
+    getWorkflowFileKey(stackName, workflowName)
+  );
   const { executionArn } = await startWorkflowExecution(workflowArn, workflowMsg);
 
   console.log(`Starting workflow: ${workflowName}. Execution ARN ${executionArn}`);
@@ -755,7 +762,7 @@ async function buildWorkflow(
   payload,
   meta
 ) {
-  const template = await getWorkflowTemplate(stackName, bucketName);
+  const template = await getJsonS3Object(bucketName, templateKey(stackName));
 
   if (collection) {
     template.meta.collection = await collectionsApi.getCollection(
@@ -892,7 +899,10 @@ async function waitForTestExecutionStart({
   maxWaitSeconds = maxWaitForStartedExecutionSecs
 }) {
   let timeWaitedSecs = 0;
-  const workflowArn = await getWorkflowArn(stackName, bucket, workflowName);
+  const { arn: workflowArn } = await getJsonS3Object(
+    bucket,
+    getWorkflowFileKey(stackName, workflowName)
+  );
   /* eslint-disable no-await-in-loop */
   while (timeWaitedSecs < maxWaitSeconds) {
     await sleep(waitPeriodMs);

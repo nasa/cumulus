@@ -6,6 +6,7 @@ const https = require('follow-redirects').https;
 const url = require('url');
 const pLimit = require('p-limit');
 const log = require('./log');
+const { deprecate } = require('./util');
 
 /**
  * Wrap a function to limit how many instances can be run in parallel
@@ -17,9 +18,13 @@ const log = require('./log');
  * @param {Function} fn - the function to limit
  * @returns {Function} a version of `fn` that limits concurrency
  */
-const limit = (n, fn) => pLimit(n).bind(null, fn);
+const limit = (n, fn) => {
+  deprecate('@cumulus/common/concurrency.limit', '1.21.0');
+  return pLimit(n).bind(null, fn);
+};
 
 const mapTolerant = (arr, fn) => {
+  deprecate('@cumulus/common/concurrency.mapTolerant', '1.21.0');
   const errors = [];
   const tolerate = (item, reason) => {
     if (reason.stack) {
@@ -42,9 +47,11 @@ const mapTolerant = (arr, fn) => {
     });
 };
 
-const toPromise = (fn, ...args) =>
-  new Promise((resolve, reject) =>
+const toPromise = (fn, ...args) => {
+  deprecate('@cumulus/common/concurrency.toPromise', '1.21.0');
+  return new Promise((resolve, reject) =>
     fn(...args, (err, data) => (err ? reject(err) : resolve(data))));
+};
 
 /**
  * Returns a promise that resolves to the result of calling the given function if
@@ -55,11 +62,14 @@ const toPromise = (fn, ...args) =>
  * @param {*} args - Arguments to pass to calls to both condition and fn
  * @returns {Promise<*>} - A promise that resolves to either null or the result of fn
 */
-const unless = (condition, fn, ...args) =>
-  Promise.resolve((condition(...args) ? null : fn(...args)));
+const unless = (condition, fn, ...args) => {
+  deprecate('@cumulus/common/concurrency.unless', '1.21.0');
+  return Promise.resolve((condition(...args) ? null : fn(...args)));
+};
 
-const promiseUrl = (urlstr) =>
-  new Promise((resolve, reject) => {
+const promiseUrl = (urlstr) => {
+  deprecate('@cumulus/common/concurrency.promiseUrl', '1.21.0');
+  return new Promise((resolve, reject) => {
     const client = urlstr.startsWith('https') ? https : http;
     const urlopts = url.parse(urlstr);
     const options = {
@@ -77,11 +87,12 @@ const promiseUrl = (urlstr) =>
       }
     }).on('error', reject);
   });
+};
 
 module.exports = {
-  limit: limit,
-  mapTolerant: mapTolerant,
-  promiseUrl: promiseUrl,
-  toPromise: toPromise,
-  unless: unless
+  limit,
+  mapTolerant,
+  promiseUrl,
+  toPromise,
+  unless
 };
