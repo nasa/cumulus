@@ -1,3 +1,13 @@
+'use strict';
+
+/**
+ * Utility functions for parsing queue information from a Cumulus message
+ * @module Queue
+ *
+ * @example
+ * const Queue = require('@cumulus/message/Queue');
+ */
+
 const findKey = require('lodash.findkey');
 const get = require('lodash.get');
 const isNil = require('lodash.isnil');
@@ -7,7 +17,9 @@ const isNil = require('lodash.isnil');
  *
  * @param {Object} message - An execution message
  * @param {string} queueUrl - An SQS queue URL
- * @returns {string} - An SQS queue name
+ * @returns {string} An SQS queue name
+ *
+ * @alias module:Queue
  */
 const getQueueNameByUrl = (message, queueUrl) => {
   const queues = get(message, 'meta.queues', {});
@@ -18,7 +30,9 @@ const getQueueNameByUrl = (message, queueUrl) => {
  * Get the queue name from a workflow message.
  *
  * @param {Object} message - A workflow message object
- * @returns {string} - A queue name
+ * @returns {string} A queue name
+ *
+ * @alias module:Queue
  */
 const getQueueName = (message) => {
   const queueName = get(message, 'cumulus_meta.queueName');
@@ -32,7 +46,9 @@ const getQueueName = (message) => {
  * Determine if there is a queue and queue execution limit in the message.
  *
  * @param {Object} message - A workflow message object
- * @returns {boolean} - True if there is a queue and execution limit.
+ * @returns {boolean} True if there is a queue and execution limit.
+ *
+ * @alias module:Queue
  */
 const hasQueueAndExecutionLimit = (message) => {
   try {
@@ -49,7 +65,9 @@ const hasQueueAndExecutionLimit = (message) => {
  *
  * @param {Object} message - A workflow message object
  * @param {string} queueName - A queue name
- * @returns {number} - Count of the maximum executions for the queue
+ * @returns {number} Count of the maximum executions for the queue
+ *
+ * @alias module:Queue
  */
 const getMaximumExecutions = (message, queueName) => {
   const maxExecutions = get(message, `meta.queueExecutionLimits.${queueName}`);

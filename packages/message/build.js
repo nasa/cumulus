@@ -1,3 +1,14 @@
+'use strict';
+
+/**
+ * Utility functions for building Cumulus messages
+ *
+ * @module Build
+ *
+ * @example
+ * const Build = require('@cumulus/message/Build');
+ */
+
 const merge = require('lodash.merge');
 const uuidv4 = require('uuid/v4');
 
@@ -10,6 +21,8 @@ const createExecutionName = () => uuidv4();
  * @param {string} params.queueName - An SQS queue name
  * @param {Object} params.parentExecutionArn - Parent execution ARN
  * @returns {Object}
+ *
+ * @private
  */
 const buildCumulusMeta = ({
   asyncOperationId,
@@ -34,6 +47,8 @@ const buildCumulusMeta = ({
  * @param {string} params.queueName - An SQS queue name
  * @param {Object} params.parentExecutionArn - Parent execution ARN
  * @returns {Object}
+ *
+ * @private
  */
 const buildMeta = ({
   collection,
@@ -66,7 +81,9 @@ const buildMeta = ({
  * @param {Object} params.customCumulusMeta - Custom data for message.cumulus_meta
  * @param {Object} params.customMeta - Custom data for message.meta
  *
- * @returns {Object} - An SQS message object
+ * @returns {Object} An SQS message object
+ *
+ * @alias module:Build
  */
 function buildQueueMessageFromTemplate({
   provider,

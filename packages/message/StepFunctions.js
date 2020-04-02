@@ -1,3 +1,13 @@
+'use strict';
+
+/**
+ * Utility functions for working with AWS Step Function events/messages
+ * @module StepFunctions
+ *
+ * @example
+ * const StepFunctions = require('@cumulus/message/StepFunctions');
+ */
+
 const { JSONPath } = require('jsonpath-plus');
 const s3Utils = require('@cumulus/aws-client/S3');
 const Logger = require('@cumulus/logger');
@@ -6,6 +16,17 @@ const log = new Logger({
   sender: '@cumulus/message/StepFunctions'
 });
 
+/**
+ * Given a Step Function event, replace specified key in event with contents
+ * of S3 remote message
+ *
+ * @param {Object} event - Source event
+ * @returns {Promise<Object>} Updated event with target path replaced by remote message
+ * @throws {Error} if target path cannot be found on source event
+ *
+ * @async
+ * @alias module:StepFunctions
+ */
 const pullStepFunctionEvent = async (event) => {
   if (!event.replace) return event;
 
@@ -33,6 +54,17 @@ const pullStepFunctionEvent = async (event) => {
   return returnEvent;
 };
 
+/**
+ * Parse step message with CMA keys and replace specified key in event with contents
+ * of S3 remote message
+ *
+ * @param {Object} stepMessage - Message for the step
+ * @param {string} stepName - Name of the step
+ * @returns {Promise<Object>} Parsed and updated event with target path replaced by remote message
+ *
+ * @async
+ * @alias module:StepFunctions
+ */
 const parseStepMessage = async (stepMessage, stepName) => {
   let parsedStepMessage = stepMessage;
   if (stepMessage.cma) {
@@ -52,4 +84,4 @@ const parseStepMessage = async (stepMessage, stepName) => {
 module.exports = {
   pullStepFunctionEvent,
   parseStepMessage
-}
+};

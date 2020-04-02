@@ -1,3 +1,15 @@
+'use strict';
+
+/**
+ * Utility functions for generating collection information or parsing collection information
+ * from a Cumulus message
+ *
+ * @module Collections
+ *
+ * @example
+ * const Collections = require('@cumulus/message/Collections');
+ */
+
 const get = require('lodash.get');
 
 /**
@@ -6,6 +18,8 @@ const get = require('lodash.get');
  * @param {string} name - collection name
  * @param {string} version - collection version
  * @returns {string} collectionId
+ *
+ * @alias module:Collections
  */
 function constructCollectionId(name, version) {
   return `${name}___${version}`;
@@ -16,6 +30,8 @@ function constructCollectionId(name, version) {
  *
  * @param {Object} message - An execution message
  * @returns {string} - A collection ID
+ *
+ * @alias module:Collections
  */
 const getCollectionIdFromMessage = (message) =>
   constructCollectionId(
