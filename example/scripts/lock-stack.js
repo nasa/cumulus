@@ -17,6 +17,7 @@ class CumulusNoLockError extends Error {
   constructor(message) {
     super(message);
     this.name = this.constructor.name;
+    this.code = this.name;
   }
 }
 
@@ -77,8 +78,7 @@ lockOperation(...process.argv.slice(2, 6)).catch((e) => {
   process.exitCode = 100;
   if (e.code === 'CumulusNoLockError') {
     process.exitCode = 101;
-  }
-  if (!['ConditionalCheckFailedException', 'CumulusLockError'].includes(e.code)) {
+  } else if (!['ConditionalCheckFailedException', 'CumulusLockError'].includes(e.code)) {
     process.exitCode = 1;
   }
 });
