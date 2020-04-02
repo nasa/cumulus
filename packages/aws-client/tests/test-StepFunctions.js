@@ -2,8 +2,9 @@
 
 const test = require('ava');
 const sinon = require('sinon');
-const { throttleOnce } = require('@cumulus/common/test-utils');
+
 const awsServices = require('../services');
+const { throttleOnce } = require('../test-utils');
 const StepFunctions = require('../StepFunctions');
 const s3Utils = require('../S3');
 

@@ -1,6 +1,7 @@
 'use strict';
 
 const aws = require('./aws');
+const { deprecate } = require('./util');
 
 /**
  * Retrieve the stack's bucket configuration from s3 and return the bucket configuration object.
@@ -13,6 +14,7 @@ async function bucketsConfigJsonObject(
   bucket = process.env.system_bucket,
   stackName = process.env.stackName
 ) {
+  deprecate('@cumulus/common/bucketsConfigJsonObject', '1.21.0');
   const Key = `${stackName}/workflows/buckets.json`;
   try {
     const bucketsString = await aws.s3().getObject({

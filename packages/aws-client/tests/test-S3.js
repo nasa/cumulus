@@ -5,12 +5,14 @@ const os = require('os');
 const path = require('path');
 const { tmpdir } = require('os');
 const test = require('ava');
+const cryptoRandomString = require('crypto-random-string');
+const delay = require('delay');
 const pTimeout = require('p-timeout');
 
 const { promisify } = require('util');
 const { UnparsableFileLocationError } = require('@cumulus/errors');
-const { randomString } = require('@cumulus/common/test-utils');
-const { sleep } = require('@cumulus/common/util');
+
+const randomString = () => cryptoRandomString({ length: 10 });
 
 const {
   createBucket,
@@ -136,7 +138,7 @@ test('getS3Object() will retry if the requested key does not exist', async (t) =
   const Key = randomString();
 
   const promisedGetS3Object = getS3Object(Bucket, Key, { retries: 5 });
-  await sleep(3000)
+  await delay(3000)
     .then(() => awsServices.s3().putObject({ Bucket, Key, Body: 'asdf' }).promise());
 
   const response = await promisedGetS3Object;
@@ -316,7 +318,7 @@ test('headObject() will retry if the requested key does not exist', async (t) =>
   const Key = randomString();
 
   const promisedHeadObject = headObject(Bucket, Key, { retries: 5 });
-  await sleep(3000)
+  await delay(3000)
     .then(() => awsServices.s3().putObject({ Bucket, Key, Body: 'asdf' }).promise());
 
   await t.notThrowsAsync(promisedHeadObject);

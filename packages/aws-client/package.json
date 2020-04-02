@@ -54,8 +54,9 @@
     "pump": "^3.0.0"
   },
   "devDependencies": {
-    "@cumulus/common": "1.21.0",
     "ava": "^2.1.0",
+    "crypto-random-string": "^3.2.0",
+    "delay": "^4.3.0",
     "lodash.range": "^3.2.0",
     "nyc": "^14.0.0",
     "p-timeout": "^3.2.0",
