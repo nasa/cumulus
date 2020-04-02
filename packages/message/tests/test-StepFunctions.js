@@ -7,7 +7,7 @@ const sinon = require('sinon');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = rewire('../StepFunctions');
 
-test('pullStepFunctionEvent returns original message if message not on S3', async (t) => {
+test('pullStepFunctionEvent returns original message if message does not contain an event.replace key ', async (t) => {
   const event = {
     cumulus_meta: {
       state_machine: 'state machine',
@@ -23,7 +23,7 @@ test('pullStepFunctionEvent returns original message if message not on S3', asyn
   t.deepEqual(message, event);
 });
 
-test.serial('pullStepFunctionEvent returns message from S3 to target', async (t) => {
+test.serial('pullStepFunctionEvent replaces message key specified by replace.TargetPath with S3 message object', async (t) => {
   const expectedMessage = {
     cumulus_meta: {
       state_machine: 'state machine',
@@ -58,7 +58,7 @@ test.serial('pullStepFunctionEvent returns message from S3 to target', async (t)
   }
 });
 
-test.serial('pullStepFunctionEvent returns message from S3', async (t) => {
+test.serial('pullStepFunctionEvent replaces entire message with S3 message object if replace.TargetPath is not specified', async (t) => {
   const fullMessage = {
     cumulus_meta: {
       state_machine: 'state machine',
@@ -112,7 +112,7 @@ test('StepFunctions.parseStepMessage parses message correctly', async (t) => {
   });
 });
 
-test.serial('StepFunctions.parseStepMessage returns correct output for for remote message', async (t) => {
+test.serial('StepFunctions.parseStepMessage returns correct output if input message refers to a remote S3 message object', async (t) => {
   const event = {
     key: 'value',
     cma: {
