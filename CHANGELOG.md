@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-1799**
+  - Added `@cumulus/common/stack.getBucketsConfigKey()` to return the S3 key for the buckets config object
+  - Added `@cumulus/common/workflows.getWorkflowFileKey()` to return the S3 key for a workflow definition object
+  - Added `@cumulus/common/workflows.getWorkflowsListKeyPrefix()` to return the S3 key prefix for objects containing workflow definitions
+
+### Deprecated
+
+- **CUMULUS-1799**
+  - Deprecate `@cumulus/common/bucketsConfigJsonObject()`
+  - Deprecate `@cumulus/common/CloudWatchLogger`
+  - Deprecate `@cumulus/common/concurrency.limit()`
+  - Deprecate `@cumulus/common/concurrency.mapTolerant()`
+  - Deprecate `@cumulus/common/concurrency.promiseUrl()`
+  - Deprecate `@cumulus/common/concurrency.toPromise()`
+  - Deprecate `@cumulus/common/concurrency.unless()`
+  - Deprecate `@cumulus/common/config.buildSchema()`
+  - Deprecate `@cumulus/common/config.parseConfig()`
+  - Deprecate `@cumulus/common/config.resolveResource()`
+  - Deprecate `@cumulus/common/config.resourceToArn()`
+  - Deprecate `@cumulus/common/FieldPattern`
+  - Deprecate `@cumulus/common/Semaphore`
+  - Deprecate `@cumulus/common/test-utils.throttleOnce()`
+  - Deprecate `@cumulus/common/workflows.getWorkflowArn()`
+  - Deprecate `@cumulus/common/workflows.getWorkflowFile()`
+  - Deprecate `@cumulus/common/workflows.getWorkflowList()`
+  - Deprecate `@cumulus/common/workflows.getWorkflowTemplate()`
+
+## [v1.21.0] 2020-03-30
+
 ### PLEASE NOTE
 
 - **CUMULUS-1762**: the `messageConsumer` for `sns` and `kinesis`-type rules now fetches
@@ -2525,7 +2556,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v1.20.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v1.21.0...HEAD
+[v1.21.0]: https://github.com/nasa/cumulus/compare/v1.20.0...v1.21.0
 [v1.20.0]: https://github.com/nasa/cumulus/compare/v1.19.0...v1.20.0
 [v1.19.0]: https://github.com/nasa/cumulus/compare/v1.18.0...v1.19.0
 [v1.18.0]: https://github.com/nasa/cumulus/compare/v1.17.0...v1.18.0

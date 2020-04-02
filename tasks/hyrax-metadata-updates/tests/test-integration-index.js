@@ -38,11 +38,6 @@ const generateHyraxUrl = HyraxMetadataUpdate.__get__('generateHyraxUrl');
 const generatePath = HyraxMetadataUpdate.__get__('generatePath');
 const getEntryTitle = HyraxMetadataUpdate.__get__('getEntryTitle');
 
-test.before(() => {
-  nock.disableNetConnect();
-  nock.enableNetConnect('127.0.0.1');
-});
-
 test.beforeEach(() => {
   // Mock out retrieval of entryTitle from CMR
   const headers = { 'cmr-hits': 1, 'Content-Type': 'application/json;charset=utf-8' };
@@ -61,10 +56,6 @@ test.beforeEach(() => {
 test.afterEach.always(() => {
   nock.cleanAll();
   delete process.env.CMR_ENVIRONMENT;
-});
-
-test.after.always(() => {
-  nock.enableNetConnect();
 });
 
 async function uploadFilesXml(files, bucket) {

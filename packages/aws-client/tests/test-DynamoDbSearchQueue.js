@@ -1,11 +1,13 @@
 'use strict';
 
 const test = require('ava');
+const cryptoRandomString = require('crypto-random-string');
 const range = require('lodash.range');
-const { randomString } = require('@cumulus/common/test-utils');
 
 const awsServices = require('../services');
 const DynamoDbSearchQueue = require('../DynamoDbSearchQueue');
+
+const randomString = () => cryptoRandomString({ length: 10 });
 
 test.beforeEach(async (t) => {
   t.context.tableName = randomString();
