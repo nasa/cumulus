@@ -2,9 +2,31 @@
 
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const { getQueueNameByUrl, getMaximumExecutions } = require('../queue');
+const {
+  getQueueName,
+  getQueueNameByUrl,
+  getMaximumExecutions,
+  hasQueueAndExecutionLimit
+} = require('../queue');
 
 const randomId = (prefix) => `${prefix}${cryptoRandomString({ length: 10 })}`;
+
+test('getQueueName returns correct queue name', (t) => {
+  const queueName = randomId('queue');
+  const message = {
+    cumulus_meta: {
+      queueName
+    }
+  };
+  t.is(getQueueName(message), queueName);
+})
+
+test('getQueueName throws error if cumulus_meta.queueName is not set in message', (t) => {
+  const message = {
+    cumulus_meta: {}
+  };
+  t.throws(() => getQueueName(message));
+})
 
 test('getQueueNameByUrl returns correct value', (t) => {
   const queueName = randomId('queueName');
@@ -49,4 +71,45 @@ test('getMaximumExecutions throw error when queue cannot be found', (t) => {
   t.throws(
     () => getMaximumExecutions(testMessage, 'testQueueName')
   );
+});
+
+test('hasQueueAndExecutionLimit returns true if queue name and execution limit exist in message', (t) => {
+  const queueName = randomId('queue');
+  const message = {
+    cumulus_meta: {
+      queueName
+    },
+    meta: {
+      queueExecutionLimits: {
+        [queueName]: 5
+      }
+    }
+  };
+  t.true(hasQueueAndExecutionLimit(message));
+});
+
+test('hasQueueAndExecutionLimit returns false if queue name does not exist in message', (t) => {
+  const queueName = randomId('queue');
+  const message = {
+    cumulus_meta: {},
+    meta: {
+      queueExecutionLimits: {
+        [queueName]: 5
+      }
+    }
+  };
+  t.false(hasQueueAndExecutionLimit(message));
+});
+
+test('hasQueueAndExecutionLimit returns false if execution limit does not exist in message', (t) => {
+  const queueName = randomId('queue');
+  const message = {
+    cumulus_meta: {
+      queueName
+    },
+    meta: {
+      queueExecutionLimits: {}
+    }
+  };
+  t.false(hasQueueAndExecutionLimit(message));
 });
