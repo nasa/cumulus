@@ -10,7 +10,7 @@ Utilities for building and parsing Cumulus workflow messages.
 
 ## API
 
-See [API.md](docs/API.md)
+See [API.md](./docs/API.md)
 
 ## About Cumulus
 
