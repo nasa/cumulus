@@ -29,7 +29,7 @@ async function list(req, res) {
 
 /**
  * List all collections with active granules
- * If time params are specified the query will return collections 
+ * If time params are specified the query will return collections
  * that have granules that have been updated in that time frame.
  *
  * @param {Object} req - express request object

@@ -119,7 +119,8 @@ class Collection extends BaseSearch {
    * @returns {Promise<Array<Object>>} - collectionResults updated with granule stats
    */
   addStatsToCollectionResults(collectionResults) {
-    const ids = collectionResults.filter((r) => r.name).map((c) => constructCollectionId(c.name, c.version));
+    const ids = collectionResults.filter((r) => r.name)
+      .map((c) => constructCollectionId(c.name, c.version));
     return this.getStats(collectionResults, ids);
   }
 
@@ -128,7 +129,7 @@ class Collection extends BaseSearch {
    * are specified the query will return collections that have granules that have been updated
    * in that time frame.
    *
-   * @return {Promise<Object>} - query result object containing collections and their granule stats
+   * @returns {Promise<Object>} - query result object containing collections and their granule stats
    */
   async queryCollectionsWithActiveGranules() {
     const collectionIds = await this.aggregateActiveGranuleCollections();
