@@ -179,13 +179,20 @@ const discoverGranules = async ({ config }) => {
     config.collection.provider_path
   );
 
+  console.log(`Discovered files:\n ${JSON.stringify(discoveredFiles, null, 2)}`);
+
   const filesByGranuleId = groupFilesByGranuleId(
     config.collection.granuleIdExtraction,
     discoveredFiles
   );
 
+  console.log(`Files by granule id:\n ${JSON.stringify(discoveredFiles, null, 2)}`);
+
   const granules = map(filesByGranuleId, buildGranule(config));
 
+  console.log(`Granule map:\n ${JSON.stringify(discoveredFiles, null, 2)}`);
+
+  console.log(`Discovered ${granules.length} granules.`);
   logger().info(`Discovered ${granules.length} granules.`);
   return { granules };
 };

@@ -115,6 +115,8 @@ class SftpProviderClient {
       const files = await recursion(listFn, path);
       log.info({ host: this.host }, `${files.length} files were found on ${this.host}`);
 
+      console.log(`${files.length} files were found on ${this.host}`);
+
       // Type 'type' field is required to support recursive file listing, but
       // should not be part of the returned result.
       return files.map((file) => omit(file, 'type'));
