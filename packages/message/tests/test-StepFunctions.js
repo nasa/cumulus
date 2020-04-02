@@ -90,6 +90,29 @@ test.serial('pullStepFunctionEvent replaces entire message with S3 message objec
   }
 });
 
+test.serial('pullStepFunctionEvent throws error if replace.TargetPath cannot be found in the source message', async (t) => {
+  const event = {
+    cumulus_meta: {
+      state_machine: 'state machine',
+      execution_name: 'execution'
+    },
+    replace: {
+      Bucket: 'test bucket',
+      Key: 'key',
+      TargetPath: 'fakeKey'
+    }
+  };
+
+  const stub = sinon.stub(s3Utils, 'getS3Object').resolves({ Body: JSON.stringify({}) });
+
+  try {
+    await t.throwsAsync(StepFunctions.pullStepFunctionEvent(event));
+  } finally {
+    stub.restore();
+  }
+});
+
+
 test('StepFunctions.parseStepMessage parses message correctly', async (t) => {
   const event = {
     key: 'value',
