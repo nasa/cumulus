@@ -1,6 +1,8 @@
 version: "3"
 services:
   sftp:
+    environment:
+      - CI=false
     volumes:
       - ./bootstrap-sftp.sh:/bootstrap-sftp.sh
       - ../packages/test-data/keys/ssh_client_rsa_key.pub:/etc/authorized_keys/user
