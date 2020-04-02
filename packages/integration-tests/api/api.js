@@ -138,7 +138,7 @@ async function getExecutionLogs({ prefix, executionName }) {
  */
 async function addProviderApi({ prefix, provider }) {
   deprecate('@cumulus/integration-tests/addProviderApi',
-    '1.20.0', '@cumulus/api-client/providers.createProvider');
+    '1.21.0', '@cumulus/api-client/providers.createProvider');
   const response = await invokeApi({
     prefix: prefix,
     payload: {
@@ -163,7 +163,7 @@ async function addProviderApi({ prefix, provider }) {
  */
 async function getProviders({ prefix }) {
   deprecate('@cumulus/integration-tests/getProviders',
-    '1.20.0', '@cumulus/api-client/providers.getProviders');
+    '1.21.0', '@cumulus/api-client/providers.getProviders');
   const response = await invokeApi({
     prefix: prefix,
     payload: {
@@ -185,7 +185,7 @@ async function getProviders({ prefix }) {
  */
 async function getProvider({ prefix, providerId }) {
   deprecate('@cumulus/integration-tests/getProvider',
-    '1.20.0', '@cumulus/api-client/providers.getProvider');
+    '1.21.0', '@cumulus/api-client/providers.getProvider');
   const response = await invokeApi({
     prefix: prefix,
     payload: {
@@ -206,7 +206,7 @@ async function getProvider({ prefix, providerId }) {
  */
 async function getCollections({ prefix }) {
   deprecate('@cumulus/integration-tests/getCollections',
-    '1.20.0', '@cumulus/api-client/collections.getCollections');
+    '1.21.0', '@cumulus/api-client/collections.getCollections');
   const response = await invokeApi({
     prefix: prefix,
     payload: {
@@ -229,7 +229,7 @@ async function getCollections({ prefix }) {
  */
 async function getCollection({ prefix, collectionName, collectionVersion }) {
   deprecate('@cumulus/integration-tests/getCollection',
-    '1.20.0', '@cumulus/api-client/collections.getCollection');
+    '1.21.0', '@cumulus/api-client/collections.getCollection');
   const response = await invokeApi({
     prefix: prefix,
     payload: {
