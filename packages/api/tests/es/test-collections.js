@@ -29,7 +29,7 @@ let granuleModel;
 
 // Before each test create a new index and use that since it's very important for
 // these tests to test a clean ES index
-test.before(async (t) => {
+test.before(async () => {
   // create the tables
   process.env.CollectionsTable = collectionTable;
   collectionModel = new models.Collection();
@@ -118,9 +118,13 @@ test.serial('getStats returns empty stats if there are no ids', async (t) => {
   t.deepEqual(stats,
     records.map((r) => ({
       ...r,
-      stats: { running: 0, completed: 0, failed: 0, total: 0 }
-    }))
-  );
+      stats: {
+        running: 0,
+        completed: 0,
+        failed: 0,
+        total: 0
+      }
+    })));
 });
 
 test.serial('getStats correctly adds stats', async (t) => {
@@ -128,14 +132,25 @@ test.serial('getStats correctly adds stats', async (t) => {
   const stats = await collectionSearch.getStats([{ name: 'coll1', version: '1' }], ['coll1___1']);
 
   t.is(stats.length, 1);
-  t.deepEqual(stats[0].stats, { running: 0, completed: 2, failed: 0, total: 2 });
+  t.deepEqual(stats[0].stats, {
+    running: 0,
+    completed: 2,
+    failed: 0,
+    total: 2
+  });
 });
 
 test.serial('getStats correctly adds stats to different versions of collections', async (t) => {
   const collectionSearch = new Collection({}, null, process.env.ES_INDEX);
   const stats = await collectionSearch.getStats([
-    { name: 'coll1', version: '1' },
-    { name: 'coll1', version: '2' }
+    {
+      name: 'coll1',
+      version: '1'
+    },
+    {
+      name: 'coll1',
+      version: '2'
+    }
   ],
   ['coll1___1', 'coll1___2']);
 
@@ -144,10 +159,23 @@ test.serial('getStats correctly adds stats to different versions of collections'
     {
       name: 'coll1',
       version: '1',
-      stats: { running: 0, completed: 2, failed: 0, total: 2 } },
-    { name: 'coll1',
+      stats: {
+        running: 0,
+        completed: 2,
+        failed: 0,
+        total: 2
+      }
+    },
+    {
+      name: 'coll1',
       version: '2',
-      stats: { running: 0, completed: 0, failed: 0, total: 0 } }
+      stats: {
+        running: 0,
+        completed: 0,
+        failed: 0,
+        total: 0
+      }
+    }
   ]);
 });
 
@@ -170,10 +198,23 @@ test.serial('addStatsToCollection add stats to ES collection results', async (t)
     {
       name: 'coll1',
       version: '1',
-      stats: { running: 0, completed: 2, failed: 0, total: 2 } },
-    { name: 'coll1',
+      stats: {
+        running: 0,
+        completed: 2,
+        failed: 0,
+        total: 2
+      }
+    },
+    {
+      name: 'coll1',
       version: '2',
-      stats: { running: 0, completed: 0, failed: 0, total: 0 } }
+      stats: {
+        running: 0,
+        completed: 0,
+        failed: 0,
+        total: 0
+      }
+    }
   ]);
 });
 
@@ -190,27 +231,51 @@ test.serial('query returns all collections with stats by default', async (t) => 
 
   t.is(queryResult.meta.count, 4);
 
-  const collections = queryResult.results.map((c) => ({ name: c.name, version: c.version, stats: c.stats }));
+  const collections = queryResult.results.map((c) => ({
+    name: c.name,
+    version: c.version,
+    stats: c.stats
+  }));
   t.deepEqual(collections, [
     {
       name: 'coll1',
       version: '2',
-      stats: { running: 0, completed: 0, failed: 0, total: 0 }
+      stats: {
+        running: 0,
+        completed: 0,
+        failed: 0,
+        total: 0
+      }
     },
     {
       name: 'coll2',
       version: '1',
-      stats: { running: 0, completed: 0, failed: 0, total: 0 }
+      stats: {
+        running: 0,
+        completed: 0,
+        failed: 0,
+        total: 0
+      }
     },
     {
       name: 'coll1',
       version: '1',
-      stats: { running: 0, completed: 2, failed: 0, total: 2 }
+      stats: {
+        running: 0,
+        completed: 2,
+        failed: 0,
+        total: 2
+      }
     },
     {
       name: 'coll3',
       version: '1',
-      stats: { running: 0, completed: 1, failed: 0, total: 1 }
+      stats: {
+        running: 0,
+        completed: 1,
+        failed: 0,
+        total: 1
+      }
     }
   ]);
 });
@@ -232,7 +297,7 @@ test.serial('aggregateActiveGranuleCollections returns only collections with gra
   const collectionSearch = new Collection({}, null, process.env.ES_INDEX);
   const queryResult = await collectionSearch.aggregateActiveGranuleCollections();
 
-  t.deepEqual(queryResult, [ 'coll1___1', 'coll3___1' ]);
+  t.deepEqual(queryResult, ['coll1___1', 'coll3___1']);
 });
 
 test.serial('aggregateActiveGranuleCollections respects date range for granules', async (t) => {
@@ -244,7 +309,7 @@ test.serial('aggregateActiveGranuleCollections respects date range for granules'
   }, null, process.env.ES_INDEX);
   const queryResult = await collectionSearch.aggregateActiveGranuleCollections();
 
-  t.deepEqual(queryResult, [ 'coll3___1' ]);
+  t.deepEqual(queryResult, ['coll3___1']);
 });
 
 test.serial('queryCollectionsWithActiveGranules returns collection info and stats', async (t) => {
@@ -253,17 +318,31 @@ test.serial('queryCollectionsWithActiveGranules returns collection info and stat
 
   t.is(queryResult.meta.count, 2);
 
-  const collections = queryResult.results.map((c) => ({ name: c.name, version: c.version, stats: c.stats }));
+  const collections = queryResult.results.map((c) => ({
+    name: c.name,
+    version: c.version,
+    stats: c.stats
+  }));
   t.deepEqual(collections, [
     {
       name: 'coll1',
       version: '1',
-      stats: { running: 0, completed: 2, failed: 0, total: 2 }
+      stats: {
+        running: 0,
+        completed: 2,
+        failed: 0,
+        total: 2
+      }
     },
     {
       name: 'coll3',
       version: '1',
-      stats: { running: 0, completed: 1, failed: 0, total: 1 }
+      stats: {
+        running: 0,
+        completed: 1,
+        failed: 0,
+        total: 1
+      }
     }
   ]);
 });
