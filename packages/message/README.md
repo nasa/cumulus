@@ -8,6 +8,10 @@ Utilities for building and parsing Cumulus workflow messages.
   npm install @cumulus/message
 ```
 
+## API
+
+See [API.md](docs/API.md)
+
 ## About Cumulus
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
