@@ -1,64 +1,9 @@
 locals {
-  api_port_substring = var.api_port == null ? "" : ":${var.api_port}"
-  api_id             = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
-  api_uri            = var.api_url == null ? "https://${local.api_id}.execute-api.${data.aws_region.current.name}.amazonaws.com${local.api_port_substring}/${var.api_gateway_stage}/" : var.api_url
-  api_redirect_uri   = "${local.api_uri}token"
-}
-
-resource "aws_cloudwatch_log_group" "api" {
-  name              = "/aws/lambda/${aws_lambda_function.api.function_name}"
-  retention_in_days = 30
-  tags              = var.tags
-}
-
-resource "aws_secretsmanager_secret" "api_cmr_password" {
-  name_prefix = "${var.prefix}-api-cmr-password"
-  description = "CMR password for the Cumulus API's ${var.prefix} deployment"
-  tags        = var.tags
-}
-
-resource "aws_secretsmanager_secret_version" "api_cmr_password" {
-  count         = length(var.cmr_password) == 0 ? 0 : 1
-  secret_id     = aws_secretsmanager_secret.api_cmr_password.id
-  secret_string = var.cmr_password
-}
-
-resource "aws_secretsmanager_secret" "api_launchpad_passphrase" {
-  name_prefix = "${var.prefix}-api-launchpad-passphrase"
-  description = "Launchpad passphrase for the Cumulus API's ${var.prefix} deployment"
-  tags        = var.tags
-}
-
-resource "aws_secretsmanager_secret_version" "api_launchpad_passphrase" {
-  count         = length(var.launchpad_passphrase) == 0 ? 0 : 1
-  secret_id     = aws_secretsmanager_secret.api_launchpad_passphrase.id
-  secret_string = var.launchpad_passphrase
-}
-
-resource "aws_s3_bucket_object" "authorized_oauth_users" {
-  bucket  = var.system_bucket
-  key     = "${var.prefix}/api/authorized_oauth_users.json"
-  content = jsonencode(var.users)
-  etag    = md5(jsonencode(var.users))
-}
-
-resource "aws_sns_topic" "report_collections_topic" {
-  name = "${var.prefix}-report-collections-topic"
-  tags = var.tags
-}
-
-resource "aws_lambda_function" "api" {
-  depends_on       = [aws_s3_bucket_object.authorized_oauth_users]
-
-  function_name    = "${var.prefix}-ApiEndpoints"
-  filename         = "${path.module}/../../packages/api/dist/app/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/app/lambda.zip")
-  handler          = "index.handler"
-  role             = aws_iam_role.lambda_api_gateway.arn
-  runtime          = "nodejs10.x"
-  timeout          = 100
-  environment {
-    variables = {
+  api_port_substring        = var.api_port == null ? "" : ":${var.api_port}"
+  api_id                    = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
+  api_uri                   = var.api_url == null ? "https://${local.api_id}.execute-api.${data.aws_region.current.name}.amazonaws.com${local.api_port_substring}/${var.api_gateway_stage}/" : var.api_url
+  api_redirect_uri          = "${local.api_uri}token"
+  api_env_variables = {
       AccessTokensTable            = var.dynamo_tables.access_tokens.name
       AsyncOperationTaskDefinition = aws_ecs_task_definition.async_operation.arn
       AsyncOperationsTable         = var.dynamo_tables.async_operations.name
@@ -115,7 +60,95 @@ resource "aws_lambda_function" "api" {
       provider_kms_key_id          = aws_kms_key.provider_kms_key.key_id
       log_destination_arn          = var.log_destination_arn
       collection_sns_topic_arn     = aws_sns_topic.report_collections_topic.arn
+      auth_mode                    = "public"
     }
+}
+
+resource "aws_cloudwatch_log_group" "private_api" {
+  name              = "/aws/lambda/${aws_lambda_function.private_api.function_name}"
+  retention_in_days = 30
+  tags              = var.tags
+}
+
+resource "aws_cloudwatch_log_group" "api" {
+  name              = "/aws/lambda/${aws_lambda_function.api.function_name}"
+  retention_in_days = 30
+  tags              = var.tags
+}
+
+resource "aws_secretsmanager_secret" "api_cmr_password" {
+  name_prefix = "${var.prefix}-api-cmr-password"
+  description = "CMR password for the Cumulus API's ${var.prefix} deployment"
+  tags        = var.tags
+}
+
+resource "aws_secretsmanager_secret_version" "api_cmr_password" {
+  count         = length(var.cmr_password) == 0 ? 0 : 1
+  secret_id     = aws_secretsmanager_secret.api_cmr_password.id
+  secret_string = var.cmr_password
+}
+
+resource "aws_secretsmanager_secret" "api_launchpad_passphrase" {
+  name_prefix = "${var.prefix}-api-launchpad-passphrase"
+  description = "Launchpad passphrase for the Cumulus API's ${var.prefix} deployment"
+  tags        = var.tags
+}
+
+resource "aws_secretsmanager_secret_version" "api_launchpad_passphrase" {
+  count         = length(var.launchpad_passphrase) == 0 ? 0 : 1
+  secret_id     = aws_secretsmanager_secret.api_launchpad_passphrase.id
+  secret_string = var.launchpad_passphrase
+}
+
+resource "aws_s3_bucket_object" "authorized_oauth_users" {
+  bucket  = var.system_bucket
+  key     = "${var.prefix}/api/authorized_oauth_users.json"
+  content = jsonencode(var.users)
+  etag    = md5(jsonencode(var.users))
+}
+
+resource "aws_sns_topic" "report_collections_topic" {
+  name = "${var.prefix}-report-collections-topic"
+  tags = var.tags
+}
+
+resource "aws_lambda_function" "private_api" {
+  depends_on       = [aws_s3_bucket_object.authorized_oauth_users]
+
+  function_name    = "${var.prefix}-PrivateApiLambda"
+  filename         = "${path.module}/../../packages/api/dist/app/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/app/lambda.zip")
+  handler          = "index.handler"
+  role             = aws_iam_role.lambda_api_gateway.arn
+  runtime          = "nodejs10.x"
+  timeout          = 100
+  environment {
+    variables = merge(local.api_env_variables, {"auth_mode"="private"})
+  }
+  memory_size = 960
+  tags        = var.tags
+
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = local.lambda_security_group_ids
+    }
+  }
+}
+
+resource "aws_lambda_function" "api" {
+  depends_on       = [aws_s3_bucket_object.authorized_oauth_users]
+
+  function_name    = "${var.prefix}-ApiEndpoints"
+  filename         = "${path.module}/../../packages/api/dist/app/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/app/lambda.zip")
+  handler          = "index.handler"
+  role             = aws_iam_role.lambda_api_gateway.arn
+  runtime          = "nodejs10.x"
+  timeout          = 100
+  environment {
+    variables = merge(local.api_env_variables, {"auth_mode"="public"})
   }
   memory_size = 960
   tags        = var.tags

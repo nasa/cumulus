@@ -4,7 +4,7 @@ const AWS = require('aws-sdk');
 const path = require('path');
 const os = require('os');
 
-const emsApi = require('@cumulus/integration-tests/api/ems');
+const emsApi = require('@cumulus/api-client/ems');
 const Granule = require('@cumulus/api/models/granules');
 const { fileExists, getS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { lambda } = require('@cumulus/aws-client/services');
@@ -20,7 +20,7 @@ const {
   getDistributionApiRedirect,
   getTEARequestHeaders
 } = require('@cumulus/integration-tests/api/distribution');
-const granulesApiTestUtils = require('@cumulus/integration-tests/api/granules');
+const granulesApiTestUtils = require('@cumulus/api-client/granules');
 const { getOnlineResources } = require('@cumulus/integration-tests/cmr');
 
 const {

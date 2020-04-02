@@ -32,6 +32,9 @@ const isAuthorizedOAuthUser = (username) =>
  * @returns {Promise<Object>} - promise of an express response object
  */
 async function ensureAuthorized(req, res, next) {
+  if (process.env.auth_mode === 'private') {
+    return next();
+  }
   // Verify that the Authorization header was set in the request
   const authorizationKey = req.headers.authorization;
   if (!authorizationKey) {

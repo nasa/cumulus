@@ -1,3 +1,4 @@
+
 resource "aws_lambda_function" "discover_granules_task" {
   function_name    = "${var.prefix}-DiscoverGranules"
   filename         = "${path.module}/../../tasks/discover-granules/dist/lambda.zip"
@@ -12,8 +13,8 @@ resource "aws_lambda_function" "discover_granules_task" {
 
   environment {
     variables = {
-      CMR_ENVIRONMENT             = var.cmr_environment
-      stackName                   = var.prefix
+      stackName                     = var.prefix
+      GranulesTable                 = var.dynamo_tables.granules.name
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
     }
   }
