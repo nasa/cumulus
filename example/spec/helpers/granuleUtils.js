@@ -8,7 +8,7 @@ const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 const { thread } = require('@cumulus/common/util');
 const { listGranules } = require('@cumulus/api-client/granules');
 const path = require('path');
-const { cloneDeep } = require('lodash');
+const cloneDeep = require('lodash/cloneDeep');
 const pWaitFor = require('p-wait-for');
 
 

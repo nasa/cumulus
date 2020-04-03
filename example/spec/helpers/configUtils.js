@@ -2,7 +2,7 @@
 
 const fs = require('fs-extra');
 const yaml = require('js-yaml');
-const { assignIn } = require('lodash');
+const assignIn = require('lodash/assignIn');
 const { loadYmlFile } = require('./testUtils');
 
 /**

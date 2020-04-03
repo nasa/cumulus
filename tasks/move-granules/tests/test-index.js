@@ -16,7 +16,8 @@ const {
   parseS3Uri
 } = require('@cumulus/aws-client/S3');
 const { isCMRFile } = require('@cumulus/cmrjs');
-const { cloneDeep, set } = require('lodash');
+const cloneDeep = require('lodash/cloneDeep');
+const set = require('lodash/set');
 const errors = require('@cumulus/errors');
 const {
   randomString, randomId, validateConfig, validateInput, validateOutput

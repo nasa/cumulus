@@ -6,12 +6,10 @@ const pMap = require('p-map');
 const pRetry = require('p-retry');
 const { URL, resolve } = require('url');
 
-const {
-  difference,
-  get,
-  includes,
-  intersection
-} = require('lodash');
+const difference = require('lodash/difference');
+const get = require('lodash/get');
+const includes = require('lodash/includes');
+const intersection = require('lodash/intersection');
 
 const {
   Execution,

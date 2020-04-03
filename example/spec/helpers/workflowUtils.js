@@ -1,6 +1,7 @@
 'use strict';
 
-const { get, unset } = require('lodash');
+const get = require('lodash/get');
+const unset = require('lodash/unset');
 const { loadYmlConfigFile, saveYmlConfigFile } = require('./configUtils.js');
 
 /**

@@ -2,7 +2,8 @@
 
 const test = require('ava');
 const awsServices = require('@cumulus/aws-client/services');
-const { isEqual, some } = require('lodash');
+const isEqual = require('lodash/isEqual');
+const some = require('lodash/some');
 const {
   validateInput,
   validateOutput

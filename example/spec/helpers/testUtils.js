@@ -2,7 +2,8 @@
 
 const execa = require('execa');
 const fs = require('fs');
-const { cloneDeep, merge } = require('lodash');
+const cloneDeep = require('lodash/cloneDeep');
+const merge = require('lodash/merge');
 const mime = require('mime-types');
 const path = require('path');
 const { promisify } = require('util');
