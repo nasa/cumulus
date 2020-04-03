@@ -15,7 +15,6 @@
       "workflows/developing-a-cumulus-workflow",
       "workflows/developing-workflow-tasks",
       "workflows/lambda",
-      "workflows/logging-for-metrics",
       "workflows/docker",
       "workflows/workflow-configuration-how-to",
       "workflows/workflow-triggers"
@@ -51,7 +50,8 @@
       "features/execution_payload_retention",
       "features/lambda_versioning",
       "features/ancillary_metadata",
-      "features/distribution-metrics"
+      "features/distribution-metrics",
+      "features/logging-esdis-metrics"
     ],
     "Troubleshooting": [
       "troubleshooting/troubleshooting-readme",
