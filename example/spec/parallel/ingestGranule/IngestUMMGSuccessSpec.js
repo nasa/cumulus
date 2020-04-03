@@ -27,8 +27,8 @@ const {
   getOnlineResources
 } = require('@cumulus/integration-tests');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
-const { deleteCollection } = require('@cumulus/integration-tests/api/collections');
-const granulesApiTestUtils = require('@cumulus/integration-tests/api/granules');
+const { deleteCollection } = require('@cumulus/api-client/collections');
+const granulesApiTestUtils = require('@cumulus/api-client/granules');
 const {
   getDistributionFileUrl,
   getTEADistributionApiRedirect,
@@ -189,7 +189,11 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     // clean up stack state added by test
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
-      deleteCollection(config.stackName, collection.name, collection.version),
+      deleteCollection({
+        prefix: config.stackName,
+        collectionName: collection.name,
+        collectionVersion: collection.version
+      }),
       providerModel.delete(provider),
       executionModel.delete({ arn: workflowExecution.executionArn }),
       granulesApiTestUtils.removePublishedGranule({
