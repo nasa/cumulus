@@ -15,6 +15,7 @@
       "workflows/developing-a-cumulus-workflow",
       "workflows/developing-workflow-tasks",
       "workflows/lambda",
+      "workflows/logging-for-metrics",
       "workflows/docker",
       "workflows/workflow-configuration-how-to",
       "workflows/workflow-triggers"
