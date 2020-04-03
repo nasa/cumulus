@@ -31,8 +31,8 @@ module "ingest" {
 
   # Launchpad config
   launchpad_api         = var.launchpad_api
-  launchpad_certificate = var.launchpad_certificate
   launchpad_passphrase  = var.launchpad_passphrase
+  launchpad_certificate = var.launchpad_certificate
 
   # DB config
   dynamo_tables = var.dynamo_tables

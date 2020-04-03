@@ -1,6 +1,8 @@
 'use strict';
 
-const { callCumulusApi } = require('./api');
+const { deprecate } = require('@cumulus/common/util');
+const granulesApi = require('@cumulus/api-client/granules');
+
 
 /**
  * GET /granules/{granuleName}
@@ -8,17 +10,19 @@ const { callCumulusApi } = require('./api');
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
  * @param {string} params.granuleId - a granule ID
+ * @param {Object} params.callback - function to invoke the api lambda
+ *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - the granule fetched by the API
  */
-async function getGranule({ prefix, granuleId }) {
-  return callCumulusApi({
-    prefix: prefix,
-    payload: {
-      httpMethod: 'GET',
-      resource: '/{proxy+}',
-      path: `/granules/${granuleId}`
-    }
-  });
+async function getGranule(params) {
+  deprecate('@cumulus/integration-tests/granules.getGranule', '1.21.0', '@cumulus/cumulus-api-client/granules.getGranule');
+  return granulesApi.getGranule(params);
+}
+
+
+async function waitForGranule(params) {
+  deprecate('@cumulus/integration-tests/granules.waitForGranule', '1.21.0', '@cumulus/cumulus-api-client/granules.waitForGranule');
+  return granulesApi.waitForGranule(params);
 }
 
 /**
@@ -27,21 +31,13 @@ async function getGranule({ prefix, granuleId }) {
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
  * @param {string} params.granuleId - a granule ID
+ * @param {Object} params.callback - function to invoke the api lambda
+ *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - the granule fetched by the API
  */
-async function reingestGranule({ prefix, granuleId }) {
-  return callCumulusApi({
-    prefix: prefix,
-    payload: {
-      httpMethod: 'PUT',
-      resource: '/{proxy+}',
-      path: `/granules/${granuleId}`,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ action: 'reingest' })
-    }
-  });
+async function reingestGranule(params) {
+  deprecate('@cumulus/integration-tests/granules.reingestGranule', '1.21.0', '@cumulus/cumulus-api-client/granules.reingestGranule');
+  return granulesApi.reingestGranule(params);
 }
 
 /**
@@ -50,28 +46,13 @@ async function reingestGranule({ prefix, granuleId }) {
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
  * @param {string} params.granuleId - a granule ID
+ * @param {Object} params.callback - function to invoke the api lambda
+ *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - the granule fetched by the API
  */
-async function removeFromCMR({ prefix, granuleId }) {
-  const payload = await callCumulusApi({
-    prefix: prefix,
-    payload: {
-      httpMethod: 'PUT',
-      resource: '/{proxy+}',
-      path: `/granules/${granuleId}`,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ action: 'removeFromCmr' })
-    }
-  });
-
-  try {
-    return payload;
-  } catch (error) {
-    console.log(`Error parsing JSON response removing granule ${granuleId} from CMR: ${JSON.stringify(payload)}`);
-    throw error;
-  }
+async function removeFromCMR(params) {
+  deprecate('@cumulus/integration-tests/granules.removeFromCMR', '1.21.0', '@cumulus/cumulus-api-client/granules.removeFromCMR');
+  return granulesApi.removeFromCMR(params);
 }
 
 /**
@@ -81,21 +62,13 @@ async function removeFromCMR({ prefix, granuleId }) {
  * @param {string} params.prefix - the prefix configured for the stack
  * @param {string} params.granuleId - a granule ID
  * @param {string} params.workflow - workflow to be run with given granule
+ * @param {Object} params.callback - function to invoke the api lambda
+ *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - the granule fetched by the API
  */
-async function applyWorkflow({ prefix, granuleId, workflow }) {
-  return callCumulusApi({
-    prefix: prefix,
-    payload: {
-      httpMethod: 'PUT',
-      resource: '/{proxy+}',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      path: `/granules/${granuleId}`,
-      body: JSON.stringify({ action: 'applyWorkflow', workflow })
-    }
-  });
+async function applyWorkflow(params) {
+  deprecate('@cumulus/integration-tests/granules.applyWorkflow', '1.21.0', '@cumulus/cumulus-api-client/granules.applyWorkflow');
+  return granulesApi.applyWorkflow(params);
 }
 
 /**
@@ -104,17 +77,13 @@ async function applyWorkflow({ prefix, granuleId, workflow }) {
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
  * @param {string} params.granuleId - a granule ID
+ * @param {Object} params.callback - function to invoke the api lambda
+ *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - the delete confirmation from the API
  */
-async function deleteGranule({ prefix, granuleId }) {
-  return callCumulusApi({
-    prefix: prefix,
-    payload: {
-      httpMethod: 'DELETE',
-      resource: '/{proxy+}',
-      path: `/granules/${granuleId}`
-    }
-  });
+async function deleteGranule(params) {
+  deprecate('@cumulus/integration-tests/granules.deleteGranule', '1.21.0', '@cumulus/cumulus-api-client/granules.deleteGranule');
+  return granulesApi.deleteGranule(params);
 }
 
 /**
@@ -124,28 +93,13 @@ async function deleteGranule({ prefix, granuleId }) {
  * @param {string} params.prefix - the prefix configured for the stack
  * @param {string} params.granuleId - a granule ID
  * @param {Array<Object>} params.destinations - move granule destinations
+ * @param {Object} params.callback - function to invoke the api lambda
+ *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - the move response from the API
  */
-async function moveGranule({ prefix, granuleId, destinations }) {
-  const payload = await callCumulusApi({
-    prefix: prefix,
-    payload: {
-      httpMethod: 'PUT',
-      resource: '/{proxy+}',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      path: `/granules/${granuleId}`,
-      body: JSON.stringify({ action: 'move', destinations })
-    }
-  });
-
-  try {
-    return payload;
-  } catch (error) {
-    console.log(`Error parsing JSON response removing granule ${granuleId} from CMR: ${JSON.stringify(payload)}`);
-    throw error;
-  }
+async function moveGranule(params) {
+  deprecate('@cumulus/integration-tests/granules.moveGranule', '1.21.0', '@cumulus/cumulus-api-client/granules.moveGranule');
+  return granulesApi.moveGranule(params);
 }
 
 /**
@@ -154,24 +108,19 @@ async function moveGranule({ prefix, granuleId, destinations }) {
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
  * @param {string} params.granuleId - a granule ID
+ * @param {Object} params.callback - function to invoke the api lambda
+ *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - the delete confirmation from the API
  */
-async function removePublishedGranule({ prefix, granuleId }) {
-  // pre-delete: Remove the granule from CMR
-  await removeFromCMR({ prefix, granuleId });
-  return deleteGranule({ prefix, granuleId });
+async function removePublishedGranule(params) {
+  deprecate('@cumulus/integration-tests/granules.removePublishedGranule', '1.21.0', '@cumulus/cumulus-api-client/granules.removePublishedGranule');
+  return granulesApi.removePublishedGranule(params);
 }
 
-async function listGranules({ prefix, query = null }) {
-  return callCumulusApi({
-    prefix: prefix,
-    payload: {
-      httpMethod: 'GET',
-      resource: '/{proxy+}',
-      path: '/granules',
-      body: query ? JSON.stringify({ query }) : undefined
-    }
-  });
+
+async function listGranules(params) {
+  deprecate('@cumulus/integration-tests/granules.listGranules', '1.21.0', '@cumulus/cumulus-api-client/granules.listGranules');
+  return granulesApi.listGranules(params);
 }
 
 module.exports = {
@@ -182,5 +131,6 @@ module.exports = {
   deleteGranule,
   listGranules,
   moveGranule,
+  waitForGranule,
   removePublishedGranule
 };

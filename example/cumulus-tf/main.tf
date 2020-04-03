@@ -116,7 +116,6 @@ module "cumulus" {
     "chuckwondo",
     "jennyhliu",
     "jmcampbell",
-    "jnorton1",
     "kbaynes",
     "kkelly",
     "kovarik",
@@ -125,7 +124,6 @@ module "cumulus" {
     "mboyd",
     "menno.vandiermen",
     "mhuffnagle2",
-    "pquinn1",
     "brian.tennity",
     "jasmine"
   ]

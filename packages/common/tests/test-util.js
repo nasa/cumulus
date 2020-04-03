@@ -1,7 +1,6 @@
 'use strict';
 
 const test = require('ava');
-
 const util = require('../util');
 
 test('omit removes a key from object', (t) => {
