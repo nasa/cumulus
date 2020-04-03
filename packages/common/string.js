@@ -10,9 +10,9 @@
  * toLower('aSDf'); // => 'asdf'
  */
 
-const compose = require('lodash.flowright');
-const curry = require('lodash.curry');
-const isString = require('lodash.isstring');
+const curry = require('lodash/curry');
+const flow = require('lodash/flow');
+const isString = require('lodash/isString');
 
 const { isNull, negate } = require('./util');
 
@@ -107,7 +107,7 @@ const match = curry((regexp, str) => str.match(regexp), 2);
  * isCapitalized('Joe'); // => true
  */
 const matches = curry(
-  compose([negate(isNull), match]), 2
+  flow([match, negate(isNull)]), 2
 );
 
 // This regex is not perfect, but it's sufficient for our purposes.
@@ -127,7 +127,7 @@ const hostnameRegex = /^[a-z0-9][a-z0-9\.\-]*$/;
  * isValidHostname('as!@#'); // => false
  * isValidHostname('127.0.0.1'); // => false
  */
-const isValidHostname = compose(matches(hostnameRegex), toLower);
+const isValidHostname = flow(toLower, matches(hostnameRegex));
 
 /**
  * Test if a value is a string with a length greater than zero

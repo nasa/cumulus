@@ -4,8 +4,8 @@
 
 const sinon = require('sinon');
 const test = require('ava');
-const get = require('lodash.get');
-const clonedeep = require('lodash.clonedeep');
+const get = require('lodash/get');
+const clonedeep = require('lodash/clonedeep');
 
 const configFixture = require('./fixtures/config.json');
 const aliasFixture = require('./fixtures/aliases.json');

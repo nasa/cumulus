@@ -1,7 +1,7 @@
 'use strict';
 
 const uuidv4 = require('uuid/v4');
-const get = require('lodash.get');
+const get = require('lodash/get');
 
 const { sfn } = require('@cumulus/aws-client/services');
 const { parseSQSMessageBody } = require('@cumulus/aws-client/SQS');

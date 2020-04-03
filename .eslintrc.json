@@ -109,7 +109,7 @@
       { "allowWholeFile": true }
     ],
 
-    "lodash/import-scope": ["error", "method-package"],
+    "lodash/import-scope": "off",
     "lodash/prefer-constant": "off",
     "lodash/prefer-lodash-method": "off",
 
@@ -120,12 +120,6 @@
     "unicorn/prefer-spread": "off"
   },
   "overrides": [
-    {
-      "files": ["tasks/**/*.js"],
-      "rules": {
-        "lodash/import-scope": "off"
-      }
-    },
     {
       "files": ["packages/api/migrations/**/*.js"],
       "rules": {

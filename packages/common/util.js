@@ -10,10 +10,10 @@
  * isNil(undefined); // => true
  */
 
-const curry = require('lodash.curry');
-const flow = require('lodash.flow');
+const curry = require('lodash/curry');
+const flow = require('lodash/flow');
 const fs = require('fs');
-const omitBy = require('lodash.omitby');
+const omitBy = require('lodash/omitBy');
 const os = require('os');
 const path = require('path');
 const mime = require('mime-types');
@@ -78,9 +78,9 @@ exports.uuid = require('uuid/v4');
 exports.noop = () => {}; // eslint-disable-line lodash/prefer-noop
 
 /**
- * Replacement for lodash.omit returns a shallow copy of input object
+ * Replacement for lodash/omit returns a shallow copy of input object
  * with keys removed.
- * (lodash.omit will be removed in v5.0.0)
+ * (lodash/omit will be removed in v5.0.0)
  * https://github.com/lodash/lodash/wiki/Roadmap#v500-2019
  *
  * @param {Object} objectIn - input object
@@ -185,7 +185,7 @@ exports.lookupMimeType = (key) => mime.lookup(key) || null;
 /**
  * Test if a value is included in a list of items
  *
- * This is a curried function - https://lodash.com/docs/4.17.11#curry
+ * This is a curried function - https://lodash/com/docs/4.17.11#curry
  *
  * @param {Array} collection - the list of items to check against
  * @param {Object} val - the item to check for in the collection

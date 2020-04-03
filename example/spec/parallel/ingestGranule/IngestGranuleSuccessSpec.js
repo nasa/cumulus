@@ -1,16 +1,20 @@
 'use strict';
 
+const { get } = require('lodash');
 const fs = require('fs-extra');
-const isNumber = require('lodash.isnumber');
-const isString = require('lodash.isstring');
-const isObject = require('lodash.isobject');
 const path = require('path');
 const pMap = require('p-map');
 const pRetry = require('p-retry');
 const { URL, resolve } = require('url');
-const difference = require('lodash.difference');
-const includes = require('lodash.includes');
-const intersection = require('lodash.intersection');
+
+const {
+  difference,
+  includes,
+  intersection,
+  isNumber,
+  isObject,
+  isString
+} = require('lodash');
 
 const {
   Execution,
@@ -508,13 +512,13 @@ describe('The S3 Ingest Granules workflow', () => {
       const s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
       const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
 
-      console.log('parallel resourceURLs: ', resourceURLs);
-      console.log('s3CredsUrl: ', s3CredsUrl);
+      console.log('parallel resourceURLs:', resourceURLs);
+      console.log('s3CredsUrl:', s3CredsUrl);
 
-      expect(resourceURLs.includes(scienceFileUrl)).toBe(true);
-      expect(resourceURLs.includes(s3BrowseImageUrl)).toBe(true);
-      expect(resourceURLs.includes(s3CredsUrl)).toBe(true);
-      expect(resourceURLs.includes(opendapFilePath)).toBe(true);
+      expect(resourceURLs).toContain(scienceFileUrl);
+      expect(resourceURLs).toContain(s3BrowseImageUrl);
+      expect(resourceURLs).toContain(s3CredsUrl);
+      expect(resourceURLs).toContain(opendapFilePath);
     });
 
     it('updates the CMR metadata "online resources" with the proper types and urls', () => {
@@ -534,10 +538,10 @@ describe('The S3 Ingest Granules workflow', () => {
       ];
       const cmrUrls = resource.map((r) => r.URL);
 
-      expect(cmrUrls.includes(distributionUrl)).toBe(true);
-      expect(cmrUrls.includes(s3BrowseImageUrl)).toBe(true);
-      expect(cmrUrls.includes(s3CredsUrl)).toBe(true);
-      expect(cmrUrls.includes(opendapFilePath)).toBe(true);
+      expect(cmrUrls).toContain(distributionUrl);
+      expect(cmrUrls).toContain(s3BrowseImageUrl);
+      expect(cmrUrls).toContain(s3CredsUrl);
+      expect(cmrUrls).toContain(opendapFilePath);
       expect(expectedTypes).toEqual(resource.map((r) => r.Type));
     });
 
@@ -576,7 +580,7 @@ describe('The S3 Ingest Granules workflow', () => {
       );
 
       checkFiles.forEach((fileCheck) => {
-        expect(fileCheck).toBe(true);
+        expect(fileCheck).toBeTrue();
       });
     });
   });
@@ -620,7 +624,7 @@ describe('The S3 Ingest Granules workflow', () => {
         'failed'
       );
       expect(record.status).toEqual('failed');
-      expect(isObject(record.error)).toBe(true);
+      expect(isObject(record.error)).toBeTrue();
     });
   });
 
@@ -719,19 +723,19 @@ describe('The S3 Ingest Granules workflow', () => {
       });
 
       it('returns the granule with a timeToPreprocess', () => {
-        expect(isNumber(granule.timeToPreprocess)).toBe(true);
+        expect(isNumber(granule.timeToPreprocess)).toBeTrue();
       });
 
       it('returns the granule with a timeToArchive', () => {
-        expect(isNumber(granule.timeToArchive)).toBe(true);
+        expect(isNumber(granule.timeToArchive)).toBeTrue();
       });
 
       it('returns the granule with a processingStartDateTime', () => {
-        expect(isString(granule.processingStartDateTime)).toBe(true);
+        expect(isString(granule.processingStartDateTime)).toBeTrue();
       });
 
       it('returns the granule with a processingEndDateTime', () => {
-        expect(isString(granule.processingEndDateTime)).toBe(true);
+        expect(isString(granule.processingEndDateTime)).toBeTrue();
       });
 
       describe('when a reingest granule is triggered via the API', () => {
@@ -756,7 +760,7 @@ describe('The S3 Ingest Granules workflow', () => {
         });
 
         it('returns a warning that data may be overwritten when duplicateHandling is "error"', () => {
-          expect(reingestResponse.warning && reingestResponse.warning.includes('overwritten')).toBeTruthy();
+          expect(get(reingestResponse, 'warning', '')).toContain('overwritten');
         });
 
         it('overwrites granule files', async () => {
@@ -781,7 +785,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
           const moveGranuleOutputFiles = moveGranuleOutput.payload.granules[0].files;
           const nonCmrFiles = moveGranuleOutputFiles.filter((f) => !f.filename.endsWith('.cmr.xml'));
-          nonCmrFiles.forEach((f) => expect(f.duplicate_found).toBe(true));
+          nonCmrFiles.forEach((f) => expect(f.duplicate_found).toBeTrue());
 
           await waitForModelStatus(
             granuleModel,
@@ -916,7 +920,7 @@ describe('The S3 Ingest Granules workflow', () => {
           expect(moveGranuleResponse.statusCode).toEqual(200);
 
           fileExists = await s3ObjectExists({ Bucket: config.bucket, Key: destinationKey });
-          expect(fileExists).toBe(true);
+          expect(fileExists).toBeTrue();
         });
       });
 
@@ -1008,7 +1012,7 @@ describe('The S3 Ingest Granules workflow', () => {
       it('returns the stateMachine information and workflow definition', async () => {
         expect(executionStatus.stateMachine).toBeTruthy();
         expect(executionStatus.stateMachine.stateMachineArn).toEqual(executionStatus.execution.stateMachineArn);
-        expect(executionStatus.stateMachine.stateMachineArn.endsWith(executionStatus.stateMachine.name)).toBe(true);
+        expect(executionStatus.stateMachine.stateMachineArn.endsWith(executionStatus.stateMachine.name)).toBeTrue();
 
         const definition = JSON.parse(executionStatus.stateMachine.definition);
         expect(definition.Comment).toEqual('Ingest Granule');

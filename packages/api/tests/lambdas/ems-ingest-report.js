@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('ava');
-const clone = require('lodash.clonedeep');
+const cloneDeep = require('lodash/cloneDeep');
 const moment = require('moment');
 const { randomString } = require('@cumulus/common/test-utils');
 const awsServices = require('@cumulus/aws-client/services');
@@ -54,7 +54,7 @@ const granule = {
   lastUpdateDateTime: '2018-04-25T21:45:45.524053'
 };
 
-const deletedgranule = Object.assign(clone(granule), { deletedAt: Date.now() });
+const deletedgranule = Object.assign(cloneDeep(granule), { deletedAt: Date.now() });
 
 // report type and its regex for each field
 const datetimeRegx = '^(\\d{4})-(\\d{2})-(\\d{2}) (\\d{2}):(\\d{2})(A|P)M$';
@@ -118,7 +118,7 @@ test.before(async () => {
   // one granule from each day is from collection which has reportToEms set to false
   const granules = [];
   for (let i = 0; i < 30; i += 1) {
-    const newgran = clone(granule);
+    const newgran = cloneDeep(granule);
     newgran.granuleId = randomString();
     newgran.createdAt = moment.utc().subtract(Math.floor(i / 10), 'days').toDate().getTime();
     if (i % 10 === 2) newgran.status = 'failed';
@@ -142,7 +142,7 @@ test.before(async () => {
   // add 15 deleted granules to es, 5 from 1 day ago, 5 from 2 day ago, 5 from today
   const deletedgrans = [];
   for (let i = 0; i < 15; i += 1) {
-    const newgran = clone(deletedgranule);
+    const newgran = cloneDeep(deletedgranule);
     newgran.granuleId = randomString();
     newgran.deletedAt = moment.utc().subtract(Math.floor(i / 5), 'days').toDate().getTime();
     if (i % 5 === 2) newgran.status = 'failed';

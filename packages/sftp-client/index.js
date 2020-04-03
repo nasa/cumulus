@@ -1,6 +1,6 @@
 'use strict';
 
-const get = require('lodash.get');
+const get = require('lodash/get');
 const log = require('@cumulus/common/log');
 const path = require('path');
 const S3 = require('@cumulus/aws-client/S3');

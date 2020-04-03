@@ -269,7 +269,7 @@ describe('When the Ingest Granules workflow is configured\n', () => {
         return `${parsed.Key} already exists in ${parsed.Bucket} bucket`;
       });
 
-      expect(expectedErrorMessages.includes(errorCause.errorMessage)).toBe(true);
+      expect(expectedErrorMessages).toContain(errorCause.errorMessage);
     });
 
     it('completes execution with success status', async () => {

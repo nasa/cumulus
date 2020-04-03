@@ -273,9 +273,7 @@ describe('The EMS report', () => {
           expect(records.length).toEqual(1);
         }
 
-        if (submitReport) {
-          expect(parsed.Key.includes('/sent/')).toBe(true);
-        }
+        if (submitReport) expect(parsed.Key).toContain('/sent/');
 
         return true;
       });
@@ -375,9 +373,7 @@ describe('The EMS report', () => {
           const parsed = parseS3Uri(report.file);
           expect(await fileExists(parsed.Bucket, parsed.Key)).not.toBe(false);
 
-          if (submitReport) {
-            expect(parsed.Key.includes('/sent/')).toBe(true);
-          }
+          if (submitReport) expect(parsed.Key).toContain('/sent/');
 
           return true;
         });
@@ -401,7 +397,7 @@ describe('The EMS report', () => {
         });
 
         const message = JSON.parse(response.body).message;
-        expect(message === 'Reports are being generated').toBe(true);
+        expect(message === 'Reports are being generated').toBeTrue();
       });
     });
   });

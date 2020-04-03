@@ -1,6 +1,6 @@
 'use strict';
 
-const cloneDeep = require('lodash.clonedeep');
+const cloneDeep = require('lodash/cloneDeep');
 const pRetry = require('p-retry');
 const { lambda } = require('@cumulus/aws-client/services');
 const launchpad = require('@cumulus/common/launchpad');

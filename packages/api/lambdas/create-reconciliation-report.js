@@ -1,7 +1,7 @@
 'use strict';
 
-const clonedeep = require('lodash.clonedeep');
-const keyBy = require('lodash.keyby');
+const cloneDeep = require('lodash/cloneDeep');
+const keyBy = require('lodash/keyBy');
 const moment = require('moment');
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const { buildS3Uri, getJsonS3Object } = require('@cumulus/aws-client/S3');
@@ -457,9 +457,9 @@ async function createReconciliationReport(params) {
     status: 'RUNNING',
     error: null,
     filesInCumulus,
-    collectionsInCumulusCmr: clonedeep(reportFormatCumulusCmr),
-    granulesInCumulusCmr: clonedeep(reportFormatCumulusCmr),
-    filesInCumulusCmr: clonedeep(reportFormatCumulusCmr)
+    collectionsInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
+    granulesInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
+    filesInCumulusCmr: cloneDeep(reportFormatCumulusCmr)
   };
 
   const reportKey = `${stackName}/reconciliation-reports/report-${report.reportStartTime}.json`;

@@ -1,6 +1,6 @@
 'use strict';
 
-const clonedeep = require('lodash.clonedeep');
+const { clonedeep } = require('lodash');
 
 const {
   addCollections,
@@ -308,7 +308,7 @@ describe('The SNS-type rule', () => {
     });
 
     it('is removed from the rules API', () => {
-      expect(getRule.message.includes('No record found')).toBe(true);
+      expect(getRule.message).toContain('No record found');
     });
 
     it('deletes the policy and subscription', async () => {

@@ -1,8 +1,8 @@
 'use strict';
 
-const get = require('lodash.get');
-const isInteger = require('lodash.isinteger');
-const isObject = require('lodash.isobject');
+const get = require('lodash/get');
+const isInteger = require('lodash/isInteger');
+const isObject = require('lodash/isObject');
 const { isNil } = require('@cumulus/common/util');
 
 function errorify(err) {

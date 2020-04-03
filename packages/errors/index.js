@@ -1,4 +1,4 @@
-const isFunction = require('lodash.isfunction');
+const isFunction = require('lodash/isFunction');
 
 /**
  * Creates a new error type with the given name and parent class. Sets up

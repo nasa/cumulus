@@ -33,7 +33,6 @@ function filterOld(streams) {
 }
 
 function nukeStream(streamName) {
-  console.log(`nuking: ${streamName}`);
   return kinesis.deleteStream({ StreamName: streamName }).promise();
 }
 

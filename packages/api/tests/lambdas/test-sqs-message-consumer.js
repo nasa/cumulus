@@ -3,7 +3,7 @@
 const rewire = require('rewire');
 const sinon = require('sinon');
 const test = require('ava');
-const range = require('lodash.range');
+const range = require('lodash/range');
 
 const awsServices = require('@cumulus/aws-client/services');
 const {

@@ -1,8 +1,8 @@
 'use strict';
 
-const cloneDeep = require('lodash.clonedeep');
-const get = require('lodash.get');
-const partial = require('lodash.partial');
+const cloneDeep = require('lodash/cloneDeep');
+const get = require('lodash/get');
+const partial = require('lodash/partial');
 const path = require('path');
 
 const Lambda = require('@cumulus/aws-client/Lambda');

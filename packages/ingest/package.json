@@ -47,11 +47,7 @@
     "got": "^9.2.1",
     "is-ip": "^2.0.0",
     "jsftp": "https://github.com/jkovarik/jsftp.git#add_288",
-    "lodash.get": "^4.4.2",
-    "lodash.groupby": "^4.6.0",
-    "lodash.isnumber": "^3.0.3",
-    "lodash.isstring": "4.0.1",
-    "lodash.omit": "^4.5.0",
+    "lodash": "^4.17.15",
     "mime-types": "^2.1.22",
     "moment": "^2.22.1",
     "simplecrawler": "^1.1.4"

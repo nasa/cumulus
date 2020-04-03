@@ -1,8 +1,8 @@
 'use strict';
 
 const Logger = require('@cumulus/logger');
-const isNumber = require('lodash.isnumber');
-const isString = require('lodash.isstring');
+const isNumber = require('lodash/isNumber');
+const isString = require('lodash/isString');
 
 function logger() {
   return new Logger({

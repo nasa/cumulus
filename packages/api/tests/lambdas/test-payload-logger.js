@@ -1,6 +1,6 @@
 'use strict';
 
-const cloneDeep = require('lodash.clonedeep');
+const cloneDeep = require('lodash/cloneDeep');
 const log = require('@cumulus/common/log');
 const sinon = require('sinon');
 const test = require('ava');

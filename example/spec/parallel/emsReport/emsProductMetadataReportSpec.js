@@ -93,9 +93,7 @@ describe('The EMS product metadata report', () => {
         collectionsOnlyInCmr.includes(record.split('|&|')[0]));
       expect(cmrOnlyRecords.length).toEqual(0);
 
-      if (submitReport) {
-        expect(parsed.Key.includes('/sent/')).toBe(true);
-      }
+      if (submitReport) expect(parsed.Key).toContain('/sent/');
     });
 
     it('generates EMS product metadata reports through the Cumulus API', async () => {
