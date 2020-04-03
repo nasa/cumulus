@@ -1,6 +1,6 @@
 'use strict';
 
-const { clonedeep } = require('lodash');
+const { readJson } = require('fs-extra');
 
 const {
   addCollections,
@@ -65,9 +65,8 @@ describe('The SNS-type rule', () => {
     newValueTopicName = timestampedName(`${config.stackName}_SnsRuleValueChangeTestTopic`);
     consumerName = `${config.stackName}-messageConsumer`;
 
-    snsMessage = '{"Data":{}}';
-    // eslint-disable-next-line global-require
-    snsRuleDefinition = clonedeep(require('./snsRuleDef.json'));
+    snsMessage = JSON.stringify({ Data: {} });
+    snsRuleDefinition = await readJson('./snsRuleDef.json');
     snsRuleDefinition.name = ruleName;
     snsRuleDefinition.meta.triggerRule = ruleName;
     process.env.stackName = config.stackName;

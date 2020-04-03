@@ -5,14 +5,14 @@
 const sinon = require('sinon');
 const test = require('ava');
 const get = require('lodash/get');
-const clonedeep = require('lodash/clonedeep');
+const cloneDeep = require('lodash/cloneDeep');
 
 const configFixture = require('./fixtures/config.json');
 const aliasFixture = require('./fixtures/aliases.json');
 const UpdatedKes = require('../lib/kes');
 
 test.beforeEach((t) => {
-  const config = clonedeep(configFixture);
+  const config = cloneDeep(configFixture);
   t.context.kes = new UpdatedKes(config);
 });
 
@@ -190,7 +190,7 @@ test.serial('getAllLambdaAliases returns an unpaginated list of aliases', async 
 test.serial('getRetainedLambdaAliasMetadata returns filtered aliasNames', async (t) => {
   const kes = t.context.kes;
 
-  kes.config.workflowLambdas = clonedeep(aliasFixture.workflowLambdas);
+  kes.config.workflowLambdas = cloneDeep(aliasFixture.workflowLambdas);
   kes.config.maxNumberOfRetainedLambdas = 2;
   const getAllLambdaAliasesStub = sinon.stub(kes, 'getAllLambdaAliases');
   for (let i = 0; i < aliasFixture.aliases.length; i += 1) {
@@ -220,7 +220,7 @@ test.serial('getRetainedLambdaAliasNames returns filtered aliasNames '
             + 'on previous version redeployment', async (t) => {
   const kes = t.context.kes;
 
-  kes.config.workflowLambdas = clonedeep(aliasFixture.workflowLambdas);
+  kes.config.workflowLambdas = cloneDeep(aliasFixture.workflowLambdas);
   kes.config.maxNumberOfRetainedLambdas = 2;
   kes.config.workflowLambdas.VersionUpTest.hash = 'PreviousVersionHash';
   const getAllLambdaAliasesStub = sinon.stub(kes, 'getAllLambdaAliases');
@@ -343,7 +343,7 @@ test('buildCWDashboard creates alarm widgets', (t) => {
   t.is(alarmWidgetsNoEs.length, ecsDefaultAlarmCount + ecsCustomAlarmCount);
 
   // test no ES alarms
-  const esNoAlarms = clonedeep(kes.config.es);
+  const esNoAlarms = cloneDeep(kes.config.es);
   esNoAlarms.alarms = null;
   const dashboardNoEsAlarms = kes.buildCWDashboard(kes.config.dashboard, kes.config.ecs, esNoAlarms, 'mystack');
   const widgetsNoEsAlarms = JSON.parse(dashboardNoEsAlarms).widgets;
@@ -351,7 +351,7 @@ test('buildCWDashboard creates alarm widgets', (t) => {
   t.is(alarmWidgetsNoEsAlarms.length, ecsDefaultAlarmCount + ecsCustomAlarmCount);
 
   // test no ECS services
-  const ecsNoServices = clonedeep(kes.config.ecs);
+  const ecsNoServices = cloneDeep(kes.config.ecs);
   ecsNoServices.services = null;
   const dashboardNoEcsServices = kes.buildCWDashboard(kes.config.dashboard, ecsNoServices, kes.config.es, 'mystack');
   const widgetsNoEcsServices = JSON.parse(dashboardNoEcsServices).widgets;

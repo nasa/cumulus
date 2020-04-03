@@ -396,8 +396,8 @@ describe('The EMS report', () => {
           request: inputPayload
         });
 
-        const message = JSON.parse(response.body).message;
-        expect(message === 'Reports are being generated').toBeTrue();
+        const { message } = JSON.parse(response.body);
+        expect(message).toBe('Reports are being generated');
       });
     });
   });

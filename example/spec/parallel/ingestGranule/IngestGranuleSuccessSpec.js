@@ -1,6 +1,5 @@
 'use strict';
 
-const { get } = require('lodash');
 const fs = require('fs-extra');
 const path = require('path');
 const pMap = require('p-map');
@@ -9,11 +8,9 @@ const { URL, resolve } = require('url');
 
 const {
   difference,
+  get,
   includes,
-  intersection,
-  isNumber,
-  isObject,
-  isString
+  intersection
 } = require('lodash');
 
 const {
@@ -583,9 +580,7 @@ describe('The S3 Ingest Granules workflow', () => {
           })
       );
 
-      checkFiles.forEach((fileCheck) => {
-        expect(fileCheck).toBeTrue();
-      });
+      checkFiles.forEach((fileCheck) => expect(fileCheck).toBeTrue());
     });
   });
 
@@ -628,7 +623,7 @@ describe('The S3 Ingest Granules workflow', () => {
         'failed'
       );
       expect(record.status).toEqual('failed');
-      expect(isObject(record.error)).toBeTrue();
+      expect(record.Error).toBeInstanceOf(Object);
     });
   });
 
@@ -727,19 +722,19 @@ describe('The S3 Ingest Granules workflow', () => {
       });
 
       it('returns the granule with a timeToPreprocess', () => {
-        expect(isNumber(granule.timeToPreprocess)).toBeTrue();
+        expect(granule.timeToPreprocess).toBeInstanceOf(Number);
       });
 
       it('returns the granule with a timeToArchive', () => {
-        expect(isNumber(granule.timeToArchive)).toBeTrue();
+        expect(granule.timeToArchive).toBeInstanceOf(Number);
       });
 
       it('returns the granule with a processingStartDateTime', () => {
-        expect(isString(granule.processingStartDateTime)).toBeTrue();
+        expect(granule.processingStartDateTime).toBeInstanceOf(String);
       });
 
       it('returns the granule with a processingEndDateTime', () => {
-        expect(isString(granule.processingEndDateTime)).toBeTrue();
+        expect(granule.processingEndDateTime).toBeInstanceOf(String);
       });
 
       describe('when a reingest granule is triggered via the API', () => {
