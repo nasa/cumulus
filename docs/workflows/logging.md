@@ -4,9 +4,11 @@ title: Writing logs for Metrics
 hide_title: true
 ---
 
-# Writing logs for Metrics
+# Writing logs for NGAP ESDIS Metrics
 
-For messages logged by workflow task code that conform to an expected format, ESDIS metrics will automatically parse and ingest these messages to enable helpful searching/filtering of these logs via their Kibana dashboard.
+For messages logged by workflow task code that conform to an expected format, ESDIS metrics will automatically parse and ingest these messages to enable helpful searching/filtering of your logs via their Kibana dashboard.
+
+**Note:** In order for ESDIS metrics to receive and process your logs, you must [configure your Cumulus deployment to deliver your workflow task logs to the correct shared logs destination for ESDIS metrics](../additional-deployment-options/cloudwatch-logs-delivery).
 
 ## Expected log format
 
