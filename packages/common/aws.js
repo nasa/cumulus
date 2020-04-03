@@ -1,7 +1,6 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const { JSONPath } = require('jsonpath-plus');
 const pMap = require('p-map');
 const pRetry = require('p-retry');
 const url = require('url');
