@@ -80,7 +80,7 @@ exports.noop = () => {}; // eslint-disable-line lodash/prefer-noop
 /**
  * Replacement for lodash.omit returns a shallow copy of input object
  * with keys removed.
- * (lodash/omit will be removed in v5.0.0)
+ * (lodash.omit will be removed in v5.0.0)
  * https://github.com/lodash/lodash/wiki/Roadmap#v500-2019
  *
  * @param {Object} objectIn - input object
