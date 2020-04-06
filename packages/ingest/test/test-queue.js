@@ -8,7 +8,7 @@ const {
 const { s3, sqs } = require('@cumulus/aws-client/services');
 const { createQueue } = require('@cumulus/aws-client/SQS');
 const { randomString, randomId, randomNumber } = require('@cumulus/common/test-utils');
-const queue = require('../Queue');
+const queue = require('../queue');
 
 test.beforeEach(async (t) => {
   t.context.templateBucket = randomString();
