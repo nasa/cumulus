@@ -15,25 +15,53 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Deprecated
 
-- **CUMULUS-1799**
-  - Deprecate `@cumulus/common/bucketsConfigJsonObject()`
-  - Deprecate `@cumulus/common/CloudWatchLogger`
-  - Deprecate `@cumulus/common/concurrency.limit()`
-  - Deprecate `@cumulus/common/concurrency.mapTolerant()`
-  - Deprecate `@cumulus/common/concurrency.promiseUrl()`
-  - Deprecate `@cumulus/common/concurrency.toPromise()`
-  - Deprecate `@cumulus/common/concurrency.unless()`
-  - Deprecate `@cumulus/common/config.buildSchema()`
-  - Deprecate `@cumulus/common/config.parseConfig()`
-  - Deprecate `@cumulus/common/config.resolveResource()`
-  - Deprecate `@cumulus/common/config.resourceToArn()`
-  - Deprecate `@cumulus/common/FieldPattern`
-  - Deprecate `@cumulus/common/Semaphore`
-  - Deprecate `@cumulus/common/test-utils.throttleOnce()`
-  - Deprecate `@cumulus/common/workflows.getWorkflowArn()`
-  - Deprecate `@cumulus/common/workflows.getWorkflowFile()`
-  - Deprecate `@cumulus/common/workflows.getWorkflowList()`
-  - Deprecate `@cumulus/common/workflows.getWorkflowTemplate()`
+- **CUMULUS-1799** - Deprecated the following code. For cases where the code was moved into another package, the new code location is noted:
+  - `@cumulus/aws-client/StepFunctions.fromSfnExecutionName()`
+  - `@cumulus/aws-client/StepFunctions.toSfnExecutionName()`
+  - `@cumulus/aws-client/StepFunctions.getExecutionArn()` -> `@cumulus/message/executions.buildExecutionArn()`
+  - `@cumulus/aws-client/StepFunctions.getExecutionUrl()` -> `@cumulus/message/executions.getExecutionUrlFromArn()`
+  - `@cumulus/aws-client/StepFunctions.getStateMachineArn()` -> `@cumulus/message/executions.getStateMachineArnFromExecutionArn()`
+  - `@cumulus/aws-client/StepFunctions.pullStepFunctionEvent()` -> `@cumulus/message/StepFunctions.pullStepFunctionEvent()`
+  - `@cumulus/common/bucketsConfigJsonObject()`
+  - `@cumulus/common/CloudWatchLogger`
+  - `@cumulus/common/concurrency.limit()`
+  - `@cumulus/common/collection-config-store.constructCollectionId()` -> `@cumulus/message/collections.constructCollectionId`
+  - `@cumulus/common/concurrency.mapTolerant()`
+  - `@cumulus/common/concurrency.promiseUrl()`
+  - `@cumulus/common/concurrency.toPromise()`
+  - `@cumulus/common/concurrency.unless()`
+  - `@cumulus/common/config.buildSchema()`
+  - `@cumulus/common/config.parseConfig()`
+  - `@cumulus/common/config.resolveResource()`
+  - `@cumulus/common/config.resourceToArn()`
+  - `@cumulus/common/FieldPattern`
+  - `@cumulus/common/message.buildCumulusMeta()` -> `@cumulus/message/build.buildCumulusMeta()`
+  - `@cumulus/common/message.buildQueueMessageFromTemplate()` -> `@cumulus/message/build.buildQueueMessageFromTemplate()`
+  - `@cumulus/common/message.getCollectionIdFromMessage()` -> `@cumulus/message/collections.getCollectionIdFromMessage()`
+  - `@cumulus/common/message.getMessageExecutionArn()` -> `@cumulus/message/executions.getMessageExecutionArn()`
+  - `@cumulus/common/message.getMessageExecutionName()` -> `@cumulus/message/executions.getMessageExecutionName()`
+  - `@cumulus/common/message.getMaximumExecutions()` -> `@cumulus/message/queue.getMaximumExecutions()`
+  - `@cumulus/common/message.getMessageFromTemplate()`
+  - `@cumulus/common/message.getMessageStateMachineArn()` -> `@cumulus/message/executions.getMessageStateMachineArn()`)
+  - `@cumulus/common/message.getMessageGranules()` -> `@cumulus/message/granules.getMessageGranules()`
+  - `@cumulus/common/message.getQueueNameByUrl()` -> `@cumulus/message/queue.getQueueNameByUrl()`
+  - `@cumulus/common/message.getQueueName()` -> `@cumulus/message/queue.getQueueName()`)
+  - `@cumulus/common/message.hasQueueAndExecutionLimit()` -> `@cumulus/message/queue.hasQueueAndExecutionLimit()`
+  - `@cumulus/common/Semaphore`
+  - `@cumulus/common/test-utils.throttleOnce()`
+  - `@cumulus/common/workflows.getWorkflowArn()`
+  - `@cumulus/common/workflows.getWorkflowFile()`
+  - `@cumulus/common/workflows.getWorkflowList()`
+  - `@cumulus/common/workflows.getWorkflowTemplate()`
+  - `@cumulus/integration-tests/sfnStep/SfnStep.parseStepMessage()` -> `@cumulus/message/StepFunctions.parseStepMessage()`
+
+### Removed
+
+- **CUMULUS-1799**: Deprecated code removals:
+  - Removed from `@cumulus/common/aws`:
+    - `pullStepFunctionEvent()`
+  - Removed `@cumulus/common/sfnStep`
+  - Removed `@cumulus/common/StepFunctions`
 
 ## [v1.21.0] 2020-03-30
 

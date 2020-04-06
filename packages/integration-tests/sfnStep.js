@@ -3,8 +3,9 @@
 'use strict';
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const { isNil } = require('@cumulus/common/util');
+const { deprecate, isNil } = require('@cumulus/common/util');
 const log = require('@cumulus/common/log');
+const { parseStepMessage, pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 
 /**
  * `SfnStep` provides methods for getting the output of a step within an AWS
@@ -23,6 +24,7 @@ class SfnStep {
    * @returns {Object} - Parsed step input object
    */
   static async parseStepMessage(stepMessage, stepName) {
+    deprecate('@cumulus/integration-tests/sfnStep/SfnStep.parseStepMessage()', '1.20.0', '@cumulus/message/StepFunctions.parseStepMessage()');
     let parsedStepMessage = stepMessage;
     if (stepMessage.cma) {
       parsedStepMessage = { ...stepMessage, ...stepMessage.cma, ...stepMessage.cma.event };
@@ -33,7 +35,7 @@ class SfnStep {
     if (parsedStepMessage.replace) {
       // Message was too large and output was written to S3
       log.info(`Retrieving ${stepName} output from ${JSON.stringify(parsedStepMessage.replace)}`);
-      parsedStepMessage = await StepFunctions.pullStepFunctionEvent(parsedStepMessage);
+      parsedStepMessage = await pullStepFunctionEvent(parsedStepMessage);
     }
     return parsedStepMessage;
   }
@@ -155,7 +157,7 @@ class SfnStep {
 
     const subStepExecutionDetails = scheduleEvent[this.eventDetailsKeys.scheduled];
     const stepInput = JSON.parse(subStepExecutionDetails.input);
-    return SfnStep.parseStepMessage(stepInput, stepName);
+    return parseStepMessage(stepInput, stepName);
   }
 
   /**
@@ -239,7 +241,7 @@ class SfnStep {
     if (stepOutput.replace) {
       // Message was too large and output was written to S3
       log.info(`Retrieving ${stepName} output from ${JSON.stringify(stepOutput.replace)}`);
-      stepOutput = StepFunctions.pullStepFunctionEvent(stepOutput);
+      stepOutput = pullStepFunctionEvent(stepOutput);
     }
     return stepOutput;
   }

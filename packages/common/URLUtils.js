@@ -28,7 +28,7 @@ const { isNil } = require('./util');
  * @returns {string} a URL
  * @throws {TypeError} if protocol or host are not specified
  *
- * @static
+ * @alias module:URLUtils
  *
  * @example
  * buildURL({

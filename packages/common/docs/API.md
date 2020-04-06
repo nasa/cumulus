@@ -3,9 +3,6 @@
 ## Modules
 
 <dl>
-<dt><a href="#module_StepFunctions">StepFunctions</a></dt>
-<dd><p>Utility functions for working with the AWS StepFunctions API</p>
-</dd>
 <dt><a href="#module_string">string</a></dt>
 <dd><p>A collection of utilities for working with URLs</p>
 </dd>
@@ -16,105 +13,6 @@
 <dd><p>Simple utility functions</p>
 </dd>
 </dl>
-
-<a name="module_StepFunctions"></a>
-
-## StepFunctions
-Utility functions for working with the AWS StepFunctions API
-
-**Example**  
-```js
-const StepFunctions = require('@cumulus/common/StepFunctions');
-```
-
-* [StepFunctions](#module_StepFunctions)
-    * [.describeExecution(params)](#module_StepFunctions.describeExecution) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.describeStateMachine(params)](#module_StepFunctions.describeStateMachine) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.executionExists(executionArn)](#module_StepFunctions.executionExists) ⇒ <code>Promise.&lt;boolean&gt;</code>
-    * [.getExecutionHistory(params)](#module_StepFunctions.getExecutionHistory) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.listExecutions(params)](#module_StepFunctions.listExecutions) ⇒ <code>Promise.&lt;Object&gt;</code>
-
-<a name="module_StepFunctions.describeExecution"></a>
-
-### StepFunctions.describeExecution(params) ⇒ <code>Promise.&lt;Object&gt;</code>
-Call StepFunctions DescribeExecution
-
-See [StepFunctions.describeExecution()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#describeExecution-property)
-for descriptions of `params` and the return data.
-
-If a ThrottlingException is received, this function will retry using an
-exponential backoff.
-
-**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
-
-| Param | Type |
-| --- | --- |
-| params | <code>Object</code> | 
-
-<a name="module_StepFunctions.describeStateMachine"></a>
-
-### StepFunctions.describeStateMachine(params) ⇒ <code>Promise.&lt;Object&gt;</code>
-Call StepFunctions DescribeStateMachine
-
-See [StepFunctions.describeStateMachine()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#describeStateMachine-property)
-for descriptions of `params` and the return data.
-
-If a ThrottlingException is received, this function will retry using an
-exponential backoff.
-
-**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
-
-| Param | Type |
-| --- | --- |
-| params | <code>Object</code> | 
-
-<a name="module_StepFunctions.executionExists"></a>
-
-### StepFunctions.executionExists(executionArn) ⇒ <code>Promise.&lt;boolean&gt;</code>
-Check if a Step Function Execution exists
-
-If a ThrottlingException is received, this function will retry using an
-exponential backoff.
-
-**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| executionArn | <code>string</code> | the ARN of the Step Function Execution to   check for |
-
-<a name="module_StepFunctions.getExecutionHistory"></a>
-
-### StepFunctions.getExecutionHistory(params) ⇒ <code>Promise.&lt;Object&gt;</code>
-Call StepFunctions GetExecutionHistory
-
-See [StepFunctions.getExecutionHistory()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#getExecutionHistory-property)
-for descriptions of `params` and the return data.
-
-If a ThrottlingException is received, this function will retry using an
-exponential backoff.
-
-**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
-
-| Param | Type |
-| --- | --- |
-| params | <code>Object</code> | 
-
-<a name="module_StepFunctions.listExecutions"></a>
-
-### StepFunctions.listExecutions(params) ⇒ <code>Promise.&lt;Object&gt;</code>
-Call StepFunctions ListExecutions
-
-See [StepFunctions.listExecutions()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#listExecutions-property)
-for descriptions of `params` and the return data.
-
-If a ThrottlingException is received, this function will retry using an
-exponential backoff.
-
-**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
-
-| Param | Type |
-| --- | --- |
-| params | <code>Object</code> | 
 
 <a name="module_string"></a>
 
@@ -129,34 +27,41 @@ toLower('aSDf'); // => 'asdf'
 ```
 
 * [string](#module_string)
-    * [.unicodeEscape(str, regex)](#module_string.unicodeEscape) ⇒ <code>string</code>
-    * [.globalReplace(string, oldSubString, newSubString)](#module_string.globalReplace) ⇒ <code>string</code>
-    * [.toLower(str)](#module_string.toLower) ⇒ <code>string</code>
-    * [.toUpper(str)](#module_string.toUpper) ⇒ <code>string</code>
-    * [.match(regexp, str)](#module_string.match) ⇒ <code>Array</code> \| <code>null</code>
-    * [.matches(regexp, str)](#module_string.matches) ⇒ <code>boolean</code>
-    * [.isValidHostname(hostname)](#module_string.isValidHostname) ⇒ <code>boolean</code>
+    * [replace(pattern, replacement, string)](#exp_module_string--replace) ⇒ <code>string</code> ⏏
+    * [globalReplace(string, oldSubString, newSubString)](#exp_module_string--globalReplace) ⇒ <code>string</code> ⏏
+    * [toLower(str)](#exp_module_string--toLower) ⇒ <code>string</code> ⏏
+    * [toUpper(str)](#exp_module_string--toUpper) ⇒ <code>string</code> ⏏
+    * [match(regexp, str)](#exp_module_string--match) ⇒ <code>Array</code> \| <code>null</code> ⏏
+    * [matches(regexp, str)](#exp_module_string--matches) ⇒ <code>boolean</code> ⏏
+    * [isValidHostname(hostname)](#exp_module_string--isValidHostname) ⇒ <code>boolean</code> ⏏
+    * [isNonEmptyString(x)](#exp_module_string--isNonEmptyString) ⇒ <code>boolean</code> ⏏
 
-<a name="module_string.unicodeEscape"></a>
+<a name="exp_module_string--replace"></a>
 
-### string.unicodeEscape(str, regex) ⇒ <code>string</code>
-Given a string, replaces all characters matching the passed regex with their unicode
-escape sequences
+### replace(pattern, replacement, string) ⇒ <code>string</code> ⏏
+Return a new string with some or all matches of a pattern replaced by a
+replacement.
 
-**Kind**: static method of [<code>string</code>](#module_string)  
-**Returns**: <code>string</code> - The string with characters unicode-escaped  
+**Kind**: Exported function  
+**Returns**: <code>string</code> - the modified string
 
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| str | <code>string</code> |  | The string to escape |
-| regex | <code>string</code> | <code>&quot;&lt;RegExp /[\\s\\S]/g&gt;&quot;</code> | The regex matching characters to replace (default: all chars) |
+For additional details on the pattern and replacement arguments, see:
+  https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#Parameters
 
-<a name="module_string.globalReplace"></a>
+This is a curried function - https://lodash.com/docs/4.17.11#curry  
 
-### string.globalReplace(string, oldSubString, newSubString) ⇒ <code>string</code>
+| Param | Type | Description |
+| --- | --- | --- |
+| pattern | <code>string</code> \| <code>RegExp</code> | if a string, this is the substring to be   replaced by `replacement`. If a RegExp, any match or matches will be   replaced by `replacement`. |
+| replacement | <code>string</code> \| <code>function</code> | if a string, the value to replace   `pattern` with. If a function, instances of `pattern` will be replaced with   the result of calling the function. |
+| string | <code>string</code> | The string to modify |
+
+<a name="exp_module_string--globalReplace"></a>
+
+### globalReplace(string, oldSubString, newSubString) ⇒ <code>string</code> ⏏
 Globally replaces oldSubstring in string with newSubString
 
-**Kind**: static method of [<code>string</code>](#module_string)  
+**Kind**: Exported function  
 **Returns**: <code>string</code> - the modified string  
 
 | Param | Type | Description |
@@ -165,54 +70,54 @@ Globally replaces oldSubstring in string with newSubString
 | oldSubString | <code>string</code> | The string to replace |
 | newSubString | <code>string</code> | The string replacement |
 
-<a name="module_string.toLower"></a>
+<a name="exp_module_string--toLower"></a>
 
-### string.toLower(str) ⇒ <code>string</code>
+### toLower(str) ⇒ <code>string</code> ⏏
 Converts string, as a whole, to lower case just like String#toLowerCase
 
-**Kind**: static method of [<code>string</code>](#module_string)  
+**Kind**: Exported function  
 **Returns**: <code>string</code> - the lower-cased string  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | str | <code>string</code> | the string to convert |
 
-<a name="module_string.toUpper"></a>
+<a name="exp_module_string--toUpper"></a>
 
-### string.toUpper(str) ⇒ <code>string</code>
+### toUpper(str) ⇒ <code>string</code> ⏏
 Converts string, as a whole, to upper case just like String#toUpperCase
 
-**Kind**: static method of [<code>string</code>](#module_string)  
+**Kind**: Exported function  
 **Returns**: <code>string</code> - the upper-cased string  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | str | <code>string</code> | the string to convert |
 
-<a name="module_string.match"></a>
+<a name="exp_module_string--match"></a>
 
-### string.match(regexp, str) ⇒ <code>Array</code> \| <code>null</code>
+### match(regexp, str) ⇒ <code>Array</code> \| <code>null</code> ⏏
 Tests a regular expression against a String, returning matches
 
 Produces same output as https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match
 
 This is a curried function - https://lodash.com/docs/4.17.11#curry
 
-**Kind**: static method of [<code>string</code>](#module_string)  
+**Kind**: Exported function  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | regexp | <code>RegExp</code> | the pattern to match against |
 | str | <code>string</code> | the string to match against |
 
-<a name="module_string.matches"></a>
+<a name="exp_module_string--matches"></a>
 
-### string.matches(regexp, str) ⇒ <code>boolean</code>
+### matches(regexp, str) ⇒ <code>boolean</code> ⏏
 Tests a regular expression against a string, returning true / false
 
 This is a curried function - https://lodash.com/docs/4.17.11#curry
 
-**Kind**: static method of [<code>string</code>](#module_string)  
+**Kind**: Exported function  
 **Returns**: <code>boolean</code> - true if the pattern matches the string, false otherwise  
 
 | Param | Type | Description |
@@ -225,12 +130,12 @@ This is a curried function - https://lodash.com/docs/4.17.11#curry
 const isCapitalized = matches(/^[A-Z]/);
 isCapitalized('Joe'); // => true
 ```
-<a name="module_string.isValidHostname"></a>
+<a name="exp_module_string--isValidHostname"></a>
 
-### string.isValidHostname(hostname) ⇒ <code>boolean</code>
+### isValidHostname(hostname) ⇒ <code>boolean</code> ⏏
 Test if a string is a valid hostname, as defined by [RFC1123](https://tools.ietf.org/html/rfc1123#page-13)
 
-**Kind**: static method of [<code>string</code>](#module_string)  
+**Kind**: Exported function  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -242,6 +147,17 @@ isValidHostname('example.com'); // => true
 isValidHostname('as!@#'); // => false
 isValidHostname('127.0.0.1'); // => false
 ```
+<a name="exp_module_string--isNonEmptyString"></a>
+
+### isNonEmptyString(x) ⇒ <code>boolean</code> ⏏
+Test if a value is a string with a length greater than zero
+
+**Kind**: Exported function  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| x | <code>string</code> | the string to test |
+
 <a name="module_URLUtils"></a>
 
 ## URLUtils
@@ -253,12 +169,12 @@ const { buildURL } = require('@cumulus/common/URLUtils');
 
 buildURL({ protocol: 'http', host: 'example.com' }); // => 'http://example.com'
 ```
-<a name="module_URLUtils.buildURL"></a>
+<a name="exp_module_URLUtils--buildURL"></a>
 
-### URLUtils.buildURL(params) ⇒ <code>string</code>
+### buildURL(params) ⇒ <code>string</code> ⏏
 Build a URL
 
-**Kind**: static method of [<code>URLUtils</code>](#module_URLUtils)  
+**Kind**: Exported function  
 **Returns**: <code>string</code> - a URL  
 **Throws**:
 
@@ -295,24 +211,28 @@ isNil(undefined); // => true
 ```
 
 * [util](#module_util)
-    * [.deprecate(name, version, [alternative])](#module_util.deprecate)
-    * [.sleep(waitPeriodMs)](#module_util.sleep) ⇒ <code>Promise.&lt;undefined&gt;</code>
-    * [.uuid()](#module_util.uuid) ⇒ <code>string</code>
-    * [.noop()](#module_util.noop) ⇒ <code>undefined</code>
-    * [.omit(objectIn, keys)](#module_util.omit) ⇒ <code>Object</code>
-    * [.isNull(x)](#module_util.isNull) ⇒ <code>boolean</code>
-    * [.isUndefined(x)](#module_util.isUndefined) ⇒ <code>boolean</code>
-    * [.isNil(x)](#module_util.isNil) ⇒ <code>boolean</code>
-    * [.setErrorStack(error, newStack)](#module_util.setErrorStack)
-    * [.renameProperty(from, to, obj)](#module_util.renameProperty) ⇒ <code>Object</code>
-    * [.removeNilProperties(obj)](#module_util.removeNilProperties) ⇒ <code>Object</code>
+    * [exports.deprecate(name, version, [alternative])](#exp_module_util--exports.deprecate) ⏏
+    * [exports.sleep(waitPeriodMs)](#exp_module_util--exports.sleep) ⇒ <code>Promise.&lt;undefined&gt;</code> ⏏
+    * [exports.uuid()](#exp_module_util--exports.uuid) ⇒ <code>string</code> ⏏
+    * [exports.noop()](#exp_module_util--exports.noop) ⇒ <code>undefined</code> ⏏
+    * [exports.omit(objectIn, keys)](#exp_module_util--exports.omit) ⇒ <code>Object</code> ⏏
+    * [exports.negate(predicate)](#exp_module_util--exports.negate) ⇒ <code>function</code> ⏏
+    * [exports.isNull(x)](#exp_module_util--exports.isNull) ⇒ <code>boolean</code> ⏏
+    * [exports.isUndefined(x)](#exp_module_util--exports.isUndefined) ⇒ <code>boolean</code> ⏏
+    * [exports.isNil(x)](#exp_module_util--exports.isNil) ⇒ <code>boolean</code> ⏏
+    * ~~[exports.setErrorStack(error, newStack)](#exp_module_util--exports.setErrorStack) ⏏~~
+    * [exports.renameProperty(from, to, obj)](#exp_module_util--exports.renameProperty) ⇒ <code>Object</code> ⏏
+    * [exports.removeNilProperties(obj)](#exp_module_util--exports.removeNilProperties) ⇒ <code>Object</code> ⏏
+    * [exports.lookupMimeType(key)](#exp_module_util--exports.lookupMimeType) ⇒ <code>string</code> ⏏
+    * [exports.isOneOf(collection, val)](#exp_module_util--exports.isOneOf) ⇒ <code>boolean</code> ⏏
+    * [exports.thread(value, ...fns)](#exp_module_util--exports.thread) ⇒ <code>\*</code> ⏏
 
-<a name="module_util.deprecate"></a>
+<a name="exp_module_util--exports.deprecate"></a>
 
-### util.deprecate(name, version, [alternative])
+### exports.deprecate(name, version, [alternative]) ⏏
 Mark a piece of code as deprecated
 
-**Kind**: static method of [<code>util</code>](#module_util)  
+**Kind**: Exported function  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -320,41 +240,41 @@ Mark a piece of code as deprecated
 | version | <code>string</code> | the version after which the code will be marked   as deprecated |
 | [alternative] | <code>string</code> | the function / method / class to use instead   of this deprecated code |
 
-<a name="module_util.sleep"></a>
+<a name="exp_module_util--exports.sleep"></a>
 
-### util.sleep(waitPeriodMs) ⇒ <code>Promise.&lt;undefined&gt;</code>
+### exports.sleep(waitPeriodMs) ⇒ <code>Promise.&lt;undefined&gt;</code> ⏏
 Wait for the defined number of milliseconds
 
-**Kind**: static method of [<code>util</code>](#module_util)  
+**Kind**: Exported function  
 **Returns**: <code>Promise.&lt;undefined&gt;</code> - promise resolves after a given time period  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | waitPeriodMs | <code>number</code> | number of milliseconds to wait |
 
-<a name="module_util.uuid"></a>
+<a name="exp_module_util--exports.uuid"></a>
 
-### util.uuid() ⇒ <code>string</code>
+### exports.uuid() ⇒ <code>string</code> ⏏
 Generate and return an RFC4122 v4 UUID.
 
-**Kind**: static method of [<code>util</code>](#module_util)  
+**Kind**: Exported function  
 **Returns**: <code>string</code> - An RFC44122 v4 UUID.  
-<a name="module_util.noop"></a>
+<a name="exp_module_util--exports.noop"></a>
 
-### util.noop() ⇒ <code>undefined</code>
+### exports.noop() ⇒ <code>undefined</code> ⏏
 Does nothing.  Used where a callback is required but not used.
 
-**Kind**: static method of [<code>util</code>](#module_util)  
+**Kind**: Exported function  
 **Returns**: <code>undefined</code> - undefined  
-<a name="module_util.omit"></a>
+<a name="exp_module_util--exports.omit"></a>
 
-### util.omit(objectIn, keys) ⇒ <code>Object</code>
+### exports.omit(objectIn, keys) ⇒ <code>Object</code> ⏏
 Replacement for lodash.omit returns a shallow copy of input object
 with keys removed.
 (lodash.omit will be removed in v5.0.0)
 https://github.com/lodash/lodash/wiki/Roadmap#v500-2019
 
-**Kind**: static method of [<code>util</code>](#module_util)  
+**Kind**: Exported function  
 **Returns**: <code>Object</code> - copy of objectIn without keys attached.  
 
 | Param | Type | Description |
@@ -362,59 +282,81 @@ https://github.com/lodash/lodash/wiki/Roadmap#v500-2019
 | objectIn | <code>Object</code> | input object |
 | keys | <code>string</code> \| <code>Array.&lt;string&gt;</code> | key or list of keys to remove from object |
 
-<a name="module_util.isNull"></a>
+<a name="exp_module_util--exports.negate"></a>
 
-### util.isNull(x) ⇒ <code>boolean</code>
+### exports.negate(predicate) ⇒ <code>function</code> ⏏
+Creates a function that returns the opposite of the predicate function.
+
+**Kind**: Exported function  
+**Returns**: <code>function</code> - the new negated function  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| predicate | <code>function</code> | the predicate to negate |
+
+**Example**  
+```js
+const isEven = (x) => x % 2 === 0;
+const isOdd = negate(isEven);
+
+isOdd(2); // => false
+isOdd(3); // => true
+```
+<a name="exp_module_util--exports.isNull"></a>
+
+### exports.isNull(x) ⇒ <code>boolean</code> ⏏
 Test if a value is null
 
-**Kind**: static method of [<code>util</code>](#module_util)  
+**Kind**: Exported function  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | x | <code>\*</code> | value to check |
 
-<a name="module_util.isUndefined"></a>
+<a name="exp_module_util--exports.isUndefined"></a>
 
-### util.isUndefined(x) ⇒ <code>boolean</code>
+### exports.isUndefined(x) ⇒ <code>boolean</code> ⏏
 Test if a value is undefined
 
-**Kind**: static method of [<code>util</code>](#module_util)  
+**Kind**: Exported function  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | x | <code>\*</code> | value to check |
 
-<a name="module_util.isNil"></a>
+<a name="exp_module_util--exports.isNil"></a>
 
-### util.isNil(x) ⇒ <code>boolean</code>
+### exports.isNil(x) ⇒ <code>boolean</code> ⏏
 Test if a value is null or undefined
 
-**Kind**: static method of [<code>util</code>](#module_util)  
+**Kind**: Exported function  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | x | <code>\*</code> | value to check |
 
-<a name="module_util.setErrorStack"></a>
+<a name="exp_module_util--exports.setErrorStack"></a>
 
-### util.setErrorStack(error, newStack)
+### ~~exports.setErrorStack(error, newStack) ⏏~~
+***Deprecated***
+
 Replace the stack of an error
 
 Note: This mutates the error that was passed in.
 
-**Kind**: static method of [<code>util</code>](#module_util)  
+**Kind**: Exported function  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | error | <code>Error</code> | an Error |
 | newStack | <code>string</code> | a stack trace |
 
-<a name="module_util.renameProperty"></a>
+<a name="exp_module_util--exports.renameProperty"></a>
 
-### util.renameProperty(from, to, obj) ⇒ <code>Object</code>
+### exports.renameProperty(from, to, obj) ⇒ <code>Object</code> ⏏
 Rename an object property
 
-**Kind**: static method of [<code>util</code>](#module_util)  
+**Kind**: Exported function  
 **Returns**: <code>Object</code> - a shallow clone of the object with updated property name  
 
 | Param | Type | Description |
@@ -423,18 +365,59 @@ Rename an object property
 | to | <code>string</code> | new property name |
 | obj | <code>Object</code> | object to update |
 
-<a name="module_util.removeNilProperties"></a>
+<a name="exp_module_util--exports.removeNilProperties"></a>
 
-### util.removeNilProperties(obj) ⇒ <code>Object</code>
+### exports.removeNilProperties(obj) ⇒ <code>Object</code> ⏏
 Remove properties whose values are `null` or `undefined`
 
-**Kind**: static method of [<code>util</code>](#module_util)  
+**Kind**: Exported function  
 **Returns**: <code>Object</code> - a shallow clone of the object with `null` and `undefined`
   properties removed  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | obj | <code>Object</code> | object to update |
+
+<a name="exp_module_util--exports.lookupMimeType"></a>
+
+### exports.lookupMimeType(key) ⇒ <code>string</code> ⏏
+Return mime-type based on input url or filename
+
+**Kind**: Exported function  
+**Returns**: <code>string</code> - mimeType or null  
+
+| Param | Type |
+| --- | --- |
+| key | <code>string</code> | 
+
+<a name="exp_module_util--exports.isOneOf"></a>
+
+### exports.isOneOf(collection, val) ⇒ <code>boolean</code> ⏏
+Test if a value is included in a list of items
+
+This is a curried function - https://lodash.com/docs/4.17.11#curry
+
+**Kind**: Exported function  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| collection | <code>Array</code> | the list of items to check against |
+| val | <code>Object</code> | the item to check for in the collection |
+
+<a name="exp_module_util--exports.thread"></a>
+
+### exports.thread(value, ...fns) ⇒ <code>\*</code> ⏏
+Pass a value through a pipeline of functions and return the result
+
+**Kind**: Exported function  
+**Returns**: <code>\*</code> - the result of passing the value through the functions:
+  - If no functions are provided, the value is returned.
+  - Functions should expect a single argument  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| value | <code>\*</code> | the value to be passed through the pipeline of functions |
+| ...fns | <code>function</code> | the functions to be invoked |
 
 
 ---

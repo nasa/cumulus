@@ -46,7 +46,7 @@
   },
   "dependencies": {
     "@cumulus/api": "1.21.0",
-    "@cumulus/api-client": "1.19.0",
+    "@cumulus/api-client": "1.21.0",
     "@cumulus/aws-client": "1.21.0",
     "@cumulus/checksum": "1.21.0",
     "@cumulus/cmrjs": "1.21.0",
@@ -57,6 +57,7 @@
     "@cumulus/files-to-granules": "1.21.0",
     "@cumulus/hello-world": "1.21.0",
     "@cumulus/integration-tests": "1.21.0",
+    "@cumulus/message": "1.21.0-alpha3",
     "@cumulus/move-granules": "1.21.0",
     "@cumulus/parse-pdr": "1.21.0",
     "@cumulus/pdr-status-check": "1.21.0",
