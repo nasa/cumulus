@@ -47,6 +47,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-1629**`
+  - Updates discover-granules task to respect/utilize duplicateHandling configuration such that
+    - skip:               Duplicates will be filtered from the granule list
+    - error:              Duplicates encountered will result in step failure
+    - replace, version:   Duplicates will be ignored and handled as normal.
+  - Adds a new copy of the API lambda `PrivateApiLambda()` which is configured to not require authentication. This Lambda is not connected to an API gateway
+  - Adds `@cumulus/api-client` with functions for use by workflow lambdas to call the API when needed
+
+
 - **CUMULUS-1732**
   - Added Python task/activity workflow and integration test (`PythonReferenceSpec`) to test `cumulus-message-adapter-python`and `cumulus-process-py` integration.
 - **CUMULUS-1787**
@@ -60,6 +69,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1762**
   - the `messageConsumer` for `sns` and `kinesis`-type rules now fetches the collection
     information from the message.
+
+### Deprecated
+
+- **CUMULUS-1629**
+  - Deprecate `granulesApi`, `rulesApi`, `emsApi`, `executionsAPI` from `@cumulus/integration-test/api` in favor of code moved to `@cumulus/api-client`
 
 ### Removed
 

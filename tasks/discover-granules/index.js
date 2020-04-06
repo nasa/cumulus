@@ -3,8 +3,10 @@
 const curry = require('lodash.curry');
 const groupBy = require('lodash.groupby');
 const isBoolean = require('lodash.isboolean');
+const pick = require('lodash.pick');
 const Logger = require('@cumulus/logger');
 const map = require('lodash.map');
+const granules = require('@cumulus/api-client/granules');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
 
@@ -164,6 +166,86 @@ const buildGranule = curry(
   }
 );
 
+
+/**
+ * checks a granuleId against the Granules API to determine if
+ * there is a duplicate granule
+ *
+ * @param {string} granuleId - granuleId to evaluate
+ * @param {string} duplicateHandling - collection duplicate handling configuration value
+ * @returns {*}     - returns granuleId string if no duplicate found, false if
+ *                    a duplicate is found.
+ * @throws {Error}  - Throws an error on duplicate if
+ *                    dupeConfig.duplicateHandling is set to 'error'
+ *
+ */
+const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
+  const response = await granules.getGranule({
+    prefix: process.env.STACKNAME,
+    granuleId
+  });
+  const responseBody = JSON.parse(response.body);
+  if (response.statusCode === 404 && responseBody.error === 'Not Found') {
+    return granuleId;
+  }
+
+  if (response.statusCode === 200) {
+    if (duplicateHandling === 'error') {
+      throw new Error(`Duplicate granule found for ${granuleId} with duplicate configuration set to error`);
+    }
+    return false;
+  }
+  throw new Error(`Unexpected return from Private API lambda ${JSON.stringify(response)}`);
+};
+
+/**
+ * Filters granule duplicates from a list of granuleIds according to the
+ * configuration in duplicateHandling:
+ *
+ * skip:               Duplicates will be filtered from the list
+ * error:              Duplicates encountered will result in a thrown error
+ * replace, version:   Duplicates will be ignored
+ *
+ * @param {string[]} granuleIds - Array of granuleIds to filter
+ * @param {string} duplicateHandling - flag that defines this function's behavior (see description)
+ *
+ * @returns {Array.string} returns granuleIds parameter with applicable duplciates removed
+ */
+const filterDuplicates = async (granuleIds, duplicateHandling) => {
+  const keysPromises = granuleIds.map((key) =>
+    checkGranuleHasNoDuplicate(key, duplicateHandling));
+
+  const filteredKeys = await Promise.all(keysPromises);
+  return filteredKeys.filter(Boolean);
+};
+
+/**
+ * Handles duplicates in the filelist according to the duplicateHandling flag:
+ *
+ * skip:               Duplicates will be filtered from the list
+ * error:              Duplicates encountered will result in a thrown error
+ * replace, version:   Duplicates will be ignored
+ *
+ * @param {Object} filesByGranuleId - Object with granuleId for keys with an array of
+ *                                    matching files for each
+ *
+ * @param {string} duplicateHandling - flag that defines this function's behavior (see description)
+ *
+ * @returns {Object} returns filesByGranuleId with applicable duplciates removed
+ */
+const handleDuplicates = async (filesByGranuleId, duplicateHandling) => {
+  logger().info(`Running discoverGranules with duplicateHandling set to ${duplicateHandling}`);
+  if (['skip', 'error'].includes(duplicateHandling)) {
+    // Iterate over granules, remove if exists in dynamo
+    const filteredKeys = await filterDuplicates(Object.keys(filesByGranuleId), duplicateHandling);
+    return pick(filesByGranuleId, filteredKeys);
+  }
+  if (['replace', 'version'].includes(duplicateHandling)) {
+    return filesByGranuleId;
+  }
+  throw new Error(`Invalid duplicate handling configuration encountered: ${JSON.stringify(duplicateHandling)}`);
+};
+
 /**
  * Discovers granules. See schemas/input.json and schemas/config.json for
  * detailed event description.
@@ -179,15 +261,18 @@ const discoverGranules = async ({ config }) => {
     config.collection.provider_path
   );
 
-
-  const filesByGranuleId = groupFilesByGranuleId(
+  let filesByGranuleId = groupFilesByGranuleId(
     config.collection.granuleIdExtraction,
     discoveredFiles
   );
 
-  const granules = map(filesByGranuleId, buildGranule(config));
-  logger().info(`Discovered ${granules.length} granules.`);
-  return { granules };
+  const duplicateHandling = config.duplicateGranuleHandling || 'replace';
+  filesByGranuleId = await handleDuplicates(filesByGranuleId, duplicateHandling);
+
+  const discoveredGranules = map(filesByGranuleId, buildGranule(config));
+
+  logger().info(`Discovered ${discoveredGranules.length} granules.`);
+  return { granules: discoveredGranules };
 };
 
 /**

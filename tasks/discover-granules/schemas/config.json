@@ -77,6 +77,11 @@
       "description": "flag to tell ftp server to use 'LIST' instead of 'STAT'",
       "default": false,
       "type": "boolean"
+    },
+    "duplicateGranuleHandling": {
+      "description": "flag to set DiscoverGranules duplicate handling behavior",
+      "default": "replace",
+      "type": "string"
     }
   }
 }

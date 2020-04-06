@@ -11,11 +11,11 @@ const {
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
   createCollection, deleteCollection
-} = require('@cumulus/integration-tests/api/collections');
-const { getExecution } = require('@cumulus/integration-tests/api/executions');
+} = require('@cumulus/api-client/collections');
+const { getExecution } = require('@cumulus/api-client/executions');
 const {
   createProvider, deleteProvider
-} = require('@cumulus/integration-tests/api/providers');
+} = require('@cumulus/api-client/providers');
 const {
   deleteFolder, loadConfig, updateAndUploadTestDataToBucket
 } = require('../../helpers/testUtils');
@@ -45,7 +45,7 @@ describe('The DiscoverGranules workflow', () => {
       postfix: testId,
       s3Host: bucket
     });
-    await createProvider(stackName, provider);
+    await createProvider({ prefix: stackName, provider });
 
     // Create the collection
     const loadedCollection = await loadCollection({
@@ -57,7 +57,7 @@ describe('The DiscoverGranules workflow', () => {
       ...loadedCollection,
       provider_path: `cumulus-test-data/${testId}`
     };
-    await createCollection(stackName, collection);
+    await createCollection({ prefix: stackName, collection });
 
     // Upload the granule to be discovered
     await updateAndUploadTestDataToBucket(
@@ -92,8 +92,15 @@ describe('The DiscoverGranules workflow', () => {
   afterAll(() =>
     Promise.all([
       deleteFolder(bucket, collection.provider_path),
-      deleteCollection(stackName, collection.name, collection.version),
-      deleteProvider(stackName, provider.id)
+      deleteCollection({
+        prefix: stackName,
+        collectionName: collection.name,
+        collectionVersion: collection.version
+      }),
+      deleteProvider({
+        prefix: stackName,
+        provider: provider.id
+      })
     ]));
 
   it('executes successfully', () => {
