@@ -14,7 +14,21 @@ Log messages delivered to the ESDIS metrics logs destination conforming to an ex
 
 ## Expected log format
 
-The ESDIS metrics pipeline expects a log message to be a JSON string representation of an object (`dict` in Python or `map` in Java) which can contain the following properties:
+The ESDIS metrics pipeline expects a log message to be a JSON string representation of an object (`dict` in Python or `map` in Java). An example log message might look like:
+
+```json
+{
+  "level": "info",
+  "executions": "arn:aws:states:us-east-1:000000000000:execution:MySfn:abcd1234",
+  "granules": "[\"granule-1\",\"granule-2\"]",
+  "message": "hello world",
+  "sender": "greetingFunction",
+  "stackName": "myCumulus",
+  "timestamp": "2018-10-19T19:12:47.501Z"
+}
+```
+
+A log message can contain the following properties:
 
 - `executions`: The AWS Step Function exection name in which this task is executing, if any
 - `granules`: A JSON string of the array of granule IDs being processed by this code, if any
