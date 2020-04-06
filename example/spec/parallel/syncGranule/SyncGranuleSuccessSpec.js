@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { difference } = require('lodash/difference');
+const difference = require('lodash/difference');
 const path = require('path');
 const {
   buildAndExecuteWorkflow,
