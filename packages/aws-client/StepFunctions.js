@@ -9,12 +9,15 @@
  */
 
 const { JSONPath } = require('jsonpath-plus');
+const Logger = require('@cumulus/logger');
 const awsServices = require('./services');
 const s3Utils = require('./S3');
 const {
   improveStackTrace,
   retryOnThrottlingException
 } = require('./utils');
+
+const log = new Logger({ sender: '@cumulus/aws-client/StepFunctions' });
 
 // Utility functions
 
