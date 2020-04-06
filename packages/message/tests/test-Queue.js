@@ -19,14 +19,14 @@ test('getQueueName returns correct queue name', (t) => {
     }
   };
   t.is(getQueueName(message), queueName);
-})
+});
 
 test('getQueueName throws error if cumulus_meta.queueName is not set in message', (t) => {
   const message = {
     cumulus_meta: {}
   };
   t.throws(() => getQueueName(message));
-})
+});
 
 test('getQueueNameByUrl returns correct value', (t) => {
   const queueName = randomId('queueName');

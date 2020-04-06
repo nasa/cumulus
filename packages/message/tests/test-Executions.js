@@ -16,7 +16,7 @@ test('getExecutionUrlFromArn returns correct URL when no region environment vari
     'https://console.aws.amazon.com/states/home?region=us-east-1'
       + '#/executions/details/fake-arn'
   );
-})
+});
 
 test.serial('getExecutionUrlFromArn returns correct URL when a region environment variable is specified', (t) => {
   process.env.AWS_DEFAULT_REGION = 'fake-region';
@@ -26,7 +26,7 @@ test.serial('getExecutionUrlFromArn returns correct URL when a region environmen
       + '#/executions/details/fake-arn'
   );
   delete process.env.AWS_DEFAULT_REGION;
-})
+});
 
 test('getMessageExecutionName throws error if cumulus_meta.execution_name is missing', (t) => {
   t.throws(
@@ -70,11 +70,11 @@ test('getStateMachineArnFromExecutionArn returns correct state machine ARN', (t)
     ),
     'arn:aws:states:us-east-1:000000000000:stateMachine:fake-Workflow'
   );
-})
+});
 
 test('getStateMachineArnFromExecutionArn returns null for no input', (t) => {
   t.is(
     getStateMachineArnFromExecutionArn(),
     null
   );
-})
+});

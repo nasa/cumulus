@@ -69,7 +69,7 @@ exports.mkdtempSync = (name) => {
 /**
  * Generate and return an RFC4122 v4 UUID.
  *
- * @return {string} An RFC44122 v4 UUID.
+ * @returns {string} An RFC44122 v4 UUID.
  * @kind function
  *
  * @alias module:util
