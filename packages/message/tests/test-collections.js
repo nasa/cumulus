@@ -5,7 +5,7 @@ const test = require('ava');
 const {
   constructCollectionId,
   getCollectionIdFromMessage
-} = require('../collections');
+} = require('../Collections');
 
 test('getCollectionIdFromMessage returns the correct collection ID', (t) => {
   const name = 'test';

@@ -5,7 +5,7 @@ const isString = require('lodash.isstring');
 const uuidv4 = require('uuid/v4');
 
 const { constructCollectionId } = require('./collection-config-store');
-const { isNil } = require('./util');
+const { deprecate, isNil } = require('./util');
 const {
   getExecutionArn,
   getS3Object,
@@ -127,7 +127,7 @@ const getCollectionIdFromMessage = (message) => {
   return constructCollectionId(
     get(message, 'meta.collection.name'), get(message, 'meta.collection.version')
   );
-}
+};
 
 /**
  * Get the maximum executions for a queue.
@@ -169,7 +169,7 @@ const getMessageExecutionName = (message) => {
  */
 const getMessageGranules = (message) => {
   deprecate('@cumulus/common/message.getMessageGranules()', '1.20.0', '@cumulus/message/Granules.getMessageGranules()');
-  return get(message, 'payload.granules')
+  return get(message, 'payload.granules');
 };
 
 /**

@@ -4,7 +4,7 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const rewire = require('rewire');
 
-const buildUtils = rewire('../build');
+const buildUtils = rewire('../Build');
 const {
   buildQueueMessageFromTemplate
 } = buildUtils;

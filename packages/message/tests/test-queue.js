@@ -7,7 +7,7 @@ const {
   getQueueNameByUrl,
   getMaximumExecutions,
   hasQueueAndExecutionLimit
-} = require('../queue');
+} = require('../Queue');
 
 const randomId = (prefix) => `${prefix}${cryptoRandomString({ length: 10 })}`;
 

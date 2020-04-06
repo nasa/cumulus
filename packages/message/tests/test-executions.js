@@ -8,7 +8,7 @@ const {
   getMessageExecutionName,
   getMessageStateMachineArn,
   getStateMachineArnFromExecutionArn
-} = require('../executions');
+} = require('../Executions');
 
 test('getExecutionUrlFromArn returns correct URL when no region environment variable is specified', (t) => {
   t.is(

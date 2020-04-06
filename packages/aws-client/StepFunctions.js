@@ -26,6 +26,15 @@ const doesExecutionExist = (describeExecutionPromise) =>
       throw err;
     });
 
+// Copied here to avoid requiring @cumulus/common just for this function
+const deprecate = (name, version, alternative) => {
+  let message = `${name} is deprecated after version ${version} and will be removed in a future release.`;
+  if (alternative) message += ` Use ${alternative} instead.`;
+  if (!('NO_DEPRECATION_WARNINGS' in process.env)) {
+    log.warn(message);
+  }
+};
+
 /**
  * Given a character, replaces the JS unicode-escape sequence for the character
  *
@@ -220,7 +229,7 @@ const fromSfnExecutionName = (str, delimiter = '__') => {
   return str.split(delimiter)
     .map((s) => s.replace(/!/g, '\\').replace('"', '\\"'))
     .map((s) => JSON.parse(`"${s}"`));
-}
+};
 
 /**
  * Returns execution ARN from a statement machine Arn and executionName

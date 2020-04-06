@@ -43,6 +43,23 @@ const getQueueName = (message) => {
 };
 
 /**
+ * Get the maximum executions for a queue.
+ *
+ * @param {Object} message - A workflow message object
+ * @param {string} queueName - A queue name
+ * @returns {number} Count of the maximum executions for the queue
+ *
+ * @alias module:Queue
+ */
+const getMaximumExecutions = (message, queueName) => {
+  const maxExecutions = get(message, `meta.queueExecutionLimits.${queueName}`);
+  if (isNil(maxExecutions)) {
+    throw new Error(`Could not determine maximum executions for queue ${queueName}`);
+  }
+  return maxExecutions;
+};
+
+/**
  * Determine if there is a queue and queue execution limit in the message.
  *
  * @param {Object} message - A workflow message object
@@ -58,23 +75,6 @@ const hasQueueAndExecutionLimit = (message) => {
     return false;
   }
   return true;
-};
-
-/**
- * Get the maximum executions for a queue.
- *
- * @param {Object} message - A workflow message object
- * @param {string} queueName - A queue name
- * @returns {number} Count of the maximum executions for the queue
- *
- * @alias module:Queue
- */
-const getMaximumExecutions = (message, queueName) => {
-  const maxExecutions = get(message, `meta.queueExecutionLimits.${queueName}`);
-  if (isNil(maxExecutions)) {
-    throw new Error(`Could not determine maximum executions for queue ${queueName}`);
-  }
-  return maxExecutions;
 };
 
 module.exports = {

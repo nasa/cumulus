@@ -3,7 +3,7 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
-const { getMessageGranules } = require('../granules');
+const { getMessageGranules } = require('../Granules');
 
 const randomId = (prefix) => `${prefix}${cryptoRandomString({ length: 10 })}`;
 
