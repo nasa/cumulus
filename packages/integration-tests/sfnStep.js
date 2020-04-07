@@ -24,7 +24,7 @@ class SfnStep {
    * @returns {Object} - Parsed step input object
    */
   static async parseStepMessage(stepMessage, stepName) {
-    deprecate('@cumulus/integration-tests/sfnStep/SfnStep.parseStepMessage()', '1.20.0', '@cumulus/message/StepFunctions.parseStepMessage()');
+    deprecate('@cumulus/integration-tests/sfnStep/SfnStep.parseStepMessage()', '1.21.0', '@cumulus/message/StepFunctions.parseStepMessage()');
     let parsedStepMessage = stepMessage;
     if (stepMessage.cma) {
       parsedStepMessage = { ...stepMessage, ...stepMessage.cma, ...stepMessage.cma.event };

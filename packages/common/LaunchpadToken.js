@@ -29,7 +29,7 @@ class LaunchpadToken {
   * @param {string} params.certificate - the name of the Launchpad PKI pfx certificate
   */
   constructor(params) {
-    deprecate('@cumulus/common/LaunchpadToken', '1.20.0', '@cumulus/launchpad-auth/LaunchpadToken');
+    deprecate('@cumulus/common/LaunchpadToken', '1.21.0', '@cumulus/launchpad-auth/LaunchpadToken');
     this.api = params.api;
     this.passphrase = params.passphrase;
     this.certificate = params.certificate;
