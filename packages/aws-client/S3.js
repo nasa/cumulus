@@ -1,5 +1,5 @@
 const fs = require('fs');
-const isString = require('lodash.isstring');
+const isString = require('lodash/isString');
 const path = require('path');
 const pMap = require('p-map');
 const pRetry = require('p-retry');

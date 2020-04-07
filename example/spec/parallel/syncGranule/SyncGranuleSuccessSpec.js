@@ -1,5 +1,5 @@
 const fs = require('fs');
-const difference = require('lodash.difference');
+const difference = require('lodash/difference');
 const path = require('path');
 const {
   buildAndExecuteWorkflow,
@@ -301,7 +301,7 @@ describe('The Sync Granules workflow', () => {
       );
 
       syncGranuleTaskOutput.payload.granules[0].files.forEach((f) => {
-        expect(f.duplicate_found).toBe(true);
+        expect(f.duplicate_found).toBeTrue();
       });
 
       await waitForModelStatus(

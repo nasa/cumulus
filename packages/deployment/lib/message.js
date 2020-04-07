@@ -1,9 +1,9 @@
 'use strict';
 
-const get = require('lodash.get');
-const isObject = require('lodash.isobject');
-const isString = require('lodash.isstring');
-const omit = require('lodash.omit');
+const get = require('lodash/get');
+const isObject = require('lodash/isObject');
+const isString = require('lodash/isString');
+const omit = require('lodash/omit');
 const { deprecate } = require('@cumulus/common/util');
 
 /**

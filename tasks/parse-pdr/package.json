@@ -38,7 +38,7 @@
     "@cumulus/errors": "1.21.0",
     "@cumulus/ingest": "1.21.0",
     "@cumulus/pvl": "1.21.0",
-    "lodash.get": "^4.4.2"
+    "lodash": "^4.17.15"
   },
   "devDependencies": {
     "@cumulus/test-data": "1.21.0",

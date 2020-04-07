@@ -1,6 +1,5 @@
 'use strict';
 
-const cloneDeep = require('lodash.clonedeep');
 const pRetry = require('p-retry');
 const Logger = require('@cumulus/logger');
 const { lambda } = require('@cumulus/aws-client/services');
@@ -19,8 +18,7 @@ const logger = new Logger({ sender: '@api-client/cumulusApiClient' });
  * @returns {Promise<Object>}        - Returns promise that resolves to the output payload from the
  *                                     API lambda
  */
-function invokeApi(params) {
-  const { prefix, payload } = cloneDeep(params);
+function invokeApi({ prefix, payload }) {
   return pRetry(
     async () => {
       const apiOutput = await lambda().invoke({

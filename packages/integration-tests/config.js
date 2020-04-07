@@ -1,7 +1,7 @@
 'use strict';
 
 const dotenv = require('dotenv');
-const get = require('lodash.get');
+const get = require('lodash/get');
 const yaml = require('js-yaml');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { isNil } = require('@cumulus/common/util');

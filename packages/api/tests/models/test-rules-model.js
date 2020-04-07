@@ -2,8 +2,8 @@
 
 const test = require('ava');
 const sinon = require('sinon');
-const cloneDeep = require('lodash.clonedeep');
-const get = require('lodash.get');
+const cloneDeep = require('lodash/cloneDeep');
+const get = require('lodash/get');
 
 const awsServices = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');

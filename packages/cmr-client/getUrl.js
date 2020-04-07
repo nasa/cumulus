@@ -1,6 +1,6 @@
 'use strict';
 
-const get = require('lodash.get');
+const get = require('lodash/get');
 
 /**
  * Returns the environment specific identifier for the input cmr environment.

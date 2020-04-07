@@ -2,12 +2,12 @@
 
 'use strict';
 
-const orderBy = require('lodash.orderby');
+const orderBy = require('lodash/orderBy');
 const path = require('path');
-const cloneDeep = require('lodash.clonedeep');
-const isEqual = require('lodash.isequal');
-const isString = require('lodash.isstring');
-const merge = require('lodash.merge');
+const cloneDeep = require('lodash/cloneDeep');
+const isEqual = require('lodash/isEqual');
+const isString = require('lodash/isString');
+const merge = require('lodash/merge');
 const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');

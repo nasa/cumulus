@@ -3,8 +3,8 @@
 // Note: These tests are run in serial to try to reduce the load on LocalStack
 
 const AggregateError = require('aggregate-error');
-const get = require('lodash.get');
-const range = require('lodash.range');
+const get = require('lodash/get');
+const range = require('lodash/range');
 const test = require('ava');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const { noop } = require('@cumulus/common/util');

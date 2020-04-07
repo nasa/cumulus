@@ -10,7 +10,7 @@
  * const Collections = require('@cumulus/message/Collections');
  */
 
-const get = require('lodash.get');
+const get = require('lodash/get');
 
 /**
  * Returns the collection ID.

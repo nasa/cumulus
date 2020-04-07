@@ -10,8 +10,8 @@
 
 'use strict';
 
-const cloneDeep = require('lodash.clonedeep');
-const isString = require('lodash.isstring');
+const cloneDeep = require('lodash/cloneDeep');
+const isString = require('lodash/isString');
 const zlib = require('zlib');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const log = require('@cumulus/common/log');

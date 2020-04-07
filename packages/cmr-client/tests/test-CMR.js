@@ -2,7 +2,7 @@
 
 const test = require('ava');
 const nock = require('nock');
-const some = require('lodash.some');
+const some = require('lodash/some');
 
 const CMR = require('../CMR');
 const ValidationError = require('../ValidationError');

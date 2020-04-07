@@ -38,9 +38,7 @@
     "@cumulus/launchpad-auth": "1.21.0-alpha1",
     "got": "^8.3.0",
     "js2xmlparser": "^4.0.0",
-    "lodash.flatten": "^4.4.0",
-    "lodash.get": "^4.4.2",
-    "lodash.set": "^4.3.2",
+    "lodash": "^4.17.15",
     "public-ip": "^3.0.0",
     "url-join": "^1.0.0",
     "xml2js": "^0.4.19"

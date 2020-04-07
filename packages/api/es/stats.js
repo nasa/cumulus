@@ -1,7 +1,7 @@
 'use strict';
 
 const moment = require('moment');
-const omit = require('lodash.omit');
+const omit = require('lodash/omit');
 
 const { BaseSearch } = require('./search');
 

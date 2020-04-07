@@ -2,7 +2,7 @@
 
 'use strict';
 
-const groupBy = require('lodash.groupby');
+const groupBy = require('lodash/groupBy');
 const aws = require('@cumulus/aws-client/services');
 const { getS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
@@ -239,7 +239,7 @@ async function deploymentReport(regex = DEFAULT_DEPLOYMENT_REGEX) {
     resources: r.resources ? r.resources.length : 0
   }));
 
-  const resourcesByDeployment = groupBy(resourcesForReports, (r) => r.deployment);
+  const resourcesByDeployment = groupBy(resourcesForReports, 'deployment');
 
   return resourcesByDeployment;
 }

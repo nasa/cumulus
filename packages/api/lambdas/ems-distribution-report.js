@@ -1,6 +1,6 @@
 'use strict';
 
-const flatten = require('lodash.flatten');
+const flatten = require('lodash/flatten');
 const pMap = require('p-map');
 const moment = require('moment');
 const {

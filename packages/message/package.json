@@ -44,11 +44,7 @@
     "@cumulus/aws-client": "1.21.0",
     "@cumulus/logger": "1.21.0",
     "jsonpath-plus": "^3.0.0",
-    "lodash.findkey": "^4.6.0",
-    "lodash.get": "^4.4.2",
-    "lodash.isnil": "^4.0.0",
-    "lodash.isstring": "^4.0.1",
-    "lodash.merge": "^4.6.2",
+    "lodash": "^4.17.15",
     "uuid": "^3.2.1"
   },
   "devDependencies": {

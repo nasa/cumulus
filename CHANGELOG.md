@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-1787**
+  - Added `collections/active` endpoint for returning collections with active granules in `@cumulus/api`
 - **CUMULUS-1799**
   - Added `@cumulus/common/stack.getBucketsConfigKey()` to return the S3 key for the buckets config object
   - Added `@cumulus/common/workflows.getWorkflowFileKey()` to return the S3 key for a workflow definition object

@@ -1,9 +1,9 @@
 'use strict';
 
 const path = require('path');
-const _get = require('lodash.get');
-const _set = require('lodash.set');
-const flatten = require('lodash.flatten');
+const _get = require('lodash/get');
+const _set = require('lodash/set');
+const flatten = require('lodash/flatten');
 const { promisify } = require('util');
 const urljoin = require('url-join');
 const xml2js = require('xml2js');

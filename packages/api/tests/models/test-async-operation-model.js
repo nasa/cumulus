@@ -1,6 +1,6 @@
 'use strict';
 
-const isString = require('lodash.isstring');
+const isString = require('lodash/isString');
 const test = require('ava');
 
 const { ecs, s3 } = require('@cumulus/aws-client/services');

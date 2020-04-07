@@ -1,7 +1,7 @@
 'use strict';
 
-const isString = require('lodash.isstring');
-const isObject = require('lodash.isobject');
+const isString = require('lodash/isString');
+const isObject = require('lodash/isObject');
 
 const log = require('./log');
 const { deprecate } = require('./util');

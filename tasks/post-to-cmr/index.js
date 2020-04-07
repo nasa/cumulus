@@ -1,6 +1,6 @@
 'use strict';
 
-const keyBy = require('lodash.keyby');
+const keyBy = require('lodash/keyBy');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const {
   granulesToCmrFileObjects,

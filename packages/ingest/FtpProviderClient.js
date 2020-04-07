@@ -1,11 +1,11 @@
 'use strict';
 
-const get = require('lodash.get');
+const get = require('lodash/get');
 const JSFtp = require('jsftp');
 const KMS = require('@cumulus/aws-client/KMS');
 const { PassThrough } = require('stream');
 const log = require('@cumulus/common/log');
-const omit = require('lodash.omit');
+const omit = require('lodash/omit');
 const S3 = require('@cumulus/aws-client/S3');
 const { S3KeyPairProvider } = require('@cumulus/common/key-pair-provider');
 const { isNil } = require('@cumulus/common/util');

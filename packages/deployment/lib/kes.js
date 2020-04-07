@@ -23,9 +23,9 @@
 
 'use strict';
 
-const cloneDeep = require('lodash.clonedeep');
-const zipObject = require('lodash.zipobject');
-const get = require('lodash.get');
+const cloneDeep = require('lodash/cloneDeep');
+const zipObject = require('lodash/zipObject');
+const get = require('lodash/get');
 const { Kes, utils } = require('kes');
 const fs = require('fs-extra');
 const Handlebars = require('handlebars');

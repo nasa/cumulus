@@ -1,6 +1,6 @@
 'use strict';
 
-const cloneDeep = require('lodash.clonedeep');
+const cloneDeep = require('lodash/cloneDeep');
 const fs = require('fs-extra');
 const { buildS3Uri, deleteS3Files, getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { dynamodb, lambda, s3 } = require('@cumulus/aws-client/services');
