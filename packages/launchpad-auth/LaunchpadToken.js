@@ -6,21 +6,22 @@ const { URL } = require('url');
 const Logger = require('@cumulus/logger');
 const { getS3Object, s3ObjectExists } = require('@cumulus/aws-client/S3');
 
-const log = new Logger({ sender: '@cumulus/launchpad-auth' });
+const log = new Logger({ sender: '@cumulus/launchpad-auth/LaunchpadToken' });
 
 /**
- * A class for sending requests to Launchpad token service endpoints
+ * @class
+ * @classdesc A class for sending requests to Launchpad token service endpoints
  *
  * @example
  * const LaunchpadToken = require('@cumulus/launchpad-auth/LaunchpadToken');
  *
- * const LaunchpadToken = new LaunchpadToken({
+ * const launchpadToken = new LaunchpadToken({
  *  api: 'launchpad-token-api-endpoint',
  *  passphrase: 'my-pki-passphrase',
  *  certificate: 'my-pki-certificate.pfx'
  * });
  *
- * @class LaunchpadToken
+ * @alias LaunchpadToken
  */
 class LaunchpadToken {
   /**
@@ -36,9 +37,10 @@ class LaunchpadToken {
   }
 
   /**
-   * retrieve launchpad credentials
+   * Retrieve Launchpad credentials
    *
    * @returns {Promise<Buffer>} - an object with the pfx
+   * @private
    */
   async _retrieveCertificate() {
     if (!(process.env.stackName || process.env.system_bucket)) {
@@ -67,7 +69,7 @@ class LaunchpadToken {
   }
 
   /**
-   * get token from launchpad
+   * Get a token from Launchpad
    *
    * @returns {Promise.<Object>} - the Launchpad gettoken response object
    */
@@ -90,7 +92,7 @@ class LaunchpadToken {
   }
 
   /**
-   * validate Launchpad token
+   * Validate a Launchpad token
    *
    * @param {string} token - the Launchpad token for validation
    * @returns {Promise.<Object>} - the Launchpad validate token response object
@@ -119,11 +121,12 @@ class LaunchpadToken {
   }
 
   /**
-   * submit https request
+   * Submit HTTPS request
    *
    * @param {Object} options - the Launchpad token for validation
    * @param {string} data - the request body
    * @returns {Promise.<string>} - the response body
+   * @private
    */
   _submitRequest(options, data) {
     return new Promise((resolve, reject) => {
