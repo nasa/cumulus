@@ -8,7 +8,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { noop } = require('@cumulus/common/util');
 const {
   constructCollectionId
-} = require('@cumulus/common/collection-config-store');
+} = require('@cumulus/message/Collections');
 const { AssociatedRulesError } = require('../../lib/errors');
 const { Collection, Rule } = require('../../models');
 const {
