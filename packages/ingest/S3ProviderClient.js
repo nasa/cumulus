@@ -7,7 +7,7 @@ const isString = require('lodash/isString');
 const { basename, dirname } = require('path');
 
 class S3ProviderClient {
-  constructor({ bucket }) {
+  constructor({ bucket } = {}) {
     if (!isString(bucket)) throw new TypeError('bucket is required');
     this.bucket = bucket;
   }
