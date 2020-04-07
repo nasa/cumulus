@@ -8,6 +8,10 @@ Utility for persisting collection configuration to S3 and retrieving it.
   npm install @cumulus/collection-config-store
 ```
 
+## API
+
+See [docs/API.md](docs/API.md).
+
 ## About Cumulus
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.

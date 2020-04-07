@@ -1,3 +1,11 @@
+'use strict';
+
+/**
+ * Utilities for storing and retrieving collection config in S3
+ *
+ * @module collection-config-store
+ */
+
 const {
   deleteS3Object,
   getJsonS3Object,
@@ -6,11 +14,22 @@ const {
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 /**
- * Store and retrieve collection configs in S3
+ * @class
+ * @classdesc Store and retrieve collection configs in S3
+ *
+ * @example
+ * const CollectionConfigStore = require('@cumulus/collection-config-store');
+ *
+ * const collectionConfigStore = new CollectionConfigStore(
+ *   'system-bucket',
+ *   'stack-name'
+ * );
+ *
+ * @alias module:collection-config-store
  */
 class CollectionConfigStore {
   /**
-   * Initialize a CollectionConfigFetcher instance
+   * Initialize a CollectionConfigStore instance
    *
    * @param {string} bucket - the bucket where collection configs are stored
    * @param {string} stackName - the Cumulus deployment stack name
@@ -26,7 +45,9 @@ class CollectionConfigStore {
    *
    * @param {string} name - the name of the collection config to fetch
    * @param {string} version - the version of the collection config to fetch
-   * @returns {Object} the fetched collection config
+   * @returns {Promise<Object>} the fetched collection config
+   *
+   * @async
    */
   async get(name, version) {
     const collectionId = constructCollectionId(name, version);
@@ -64,6 +85,8 @@ class CollectionConfigStore {
    * @param {Object} config - the collection config to store
    * @returns {Promise<null>} resolves when the collection config has been written
    *   to S3
+   *
+   * @async
    */
   async put(name, version, config) {
     const collectionId = constructCollectionId(name, version);
@@ -84,6 +107,8 @@ class CollectionConfigStore {
    * @param {string} version - version of Collection
    * @returns {Promise<null>} resolves when the collection config has been deleted
    *   to S3
+   *
+   * @async
    */
   async delete(name, version) {
     const collectionId = constructCollectionId(name, version);
