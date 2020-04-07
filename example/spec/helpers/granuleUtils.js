@@ -3,12 +3,12 @@
 const fs = require('fs-extra');
 const { buildS3Uri, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
-const { replace } = require('@cumulus/common/string');
+const replace = require('lodash/fp/replace');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 const { thread } = require('@cumulus/common/util');
 const { listGranules } = require('@cumulus/api-client/granules');
 const path = require('path');
-const cloneDeep = require('lodash.clonedeep');
+const cloneDeep = require('lodash/cloneDeep');
 const pWaitFor = require('p-wait-for');
 
 

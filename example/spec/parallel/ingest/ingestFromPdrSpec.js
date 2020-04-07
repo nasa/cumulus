@@ -443,7 +443,7 @@ describe('Ingesting from PDR', () => {
             }
           }
 
-          expect(choiceVerified).toBe(true);
+          expect(choiceVerified).toBeTrue();
         });
       });
     });

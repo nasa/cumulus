@@ -1,6 +1,6 @@
 'use strict';
 
-const get = require('lodash.get');
+const get = require('lodash/get');
 const { sqs } = require('@cumulus/aws-client/services');
 const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const log = require('@cumulus/common/log');

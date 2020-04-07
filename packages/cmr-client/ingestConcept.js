@@ -1,7 +1,7 @@
 'use strict';
 
 const got = require('got');
-const property = require('lodash.property');
+const property = require('lodash/property');
 const Logger = require('@cumulus/logger');
 
 const validate = require('./validate');

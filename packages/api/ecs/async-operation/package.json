@@ -6,7 +6,7 @@
     "@cumulus/logger": "^1.13.0",
     "aws-sdk": "^2.585.0",
     "got": "^9.2.2",
-    "lodash.iserror": "^3.1.1",
+    "lodash": "^4.17.15",
     "p-retry": "^2.0.0"
   }
 }

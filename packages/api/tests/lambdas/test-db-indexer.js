@@ -5,7 +5,7 @@ const rewire = require('rewire');
 const attr = require('dynamodb-data-types').AttributeValue;
 const awsServices = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const models = require('../../models');

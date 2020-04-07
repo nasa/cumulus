@@ -5,8 +5,8 @@
 
 'use strict';
 
-const isNumber = require('lodash.isnumber');
-const isString = require('lodash.isstring');
+const isNumber = require('lodash/isNumber');
+const isString = require('lodash/isString');
 const { PDRParsingError } = require('@cumulus/errors');
 
 // If updating this mapping, please update the related documentation

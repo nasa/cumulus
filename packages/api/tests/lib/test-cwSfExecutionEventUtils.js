@@ -264,9 +264,9 @@ test.serial('getCumulusMessageFromExecutionEvent() returns the failed execution 
             }
           ]
         };
-      },
-      pullStepFunctionEvent: async () => input
-    }
+      }
+    },
+    pullStepFunctionEvent: async () => input
   })(() => getCumulusMessageFromExecutionEvent(event));
 
   const expectedMessage = {

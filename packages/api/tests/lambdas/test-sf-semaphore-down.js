@@ -1,12 +1,14 @@
 'use strict';
 
 const sinon = require('sinon');
-const stepFunctions = require('@cumulus/aws-client/StepFunctions');
 const proxyquire = require('proxyquire');
 const test = require('ava');
+
 const awsServices = require('@cumulus/aws-client/services');
 const Semaphore = require('@cumulus/common/Semaphore');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
+const stepFunctions = require('@cumulus/message/StepFunctions');
+
 const { Manager } = require('../../models');
 const {
   handleSemaphoreDecrementTask

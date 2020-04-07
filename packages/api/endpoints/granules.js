@@ -1,6 +1,6 @@
 'use strict';
 
-const lodashGet = require('lodash.get');
+const lodashGet = require('lodash/get');
 const pMap = require('p-map');
 const router = require('express-promise-router')();
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
