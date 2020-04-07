@@ -9,7 +9,7 @@
  * const Build = require('@cumulus/message/Build');
  */
 
-const merge = require('lodash.merge');
+const merge = require('lodash/merge');
 const uuidv4 = require('uuid/v4');
 
 const createExecutionName = () => uuidv4();
