@@ -1,5 +1,6 @@
 'use strict';
 
+const path = require('path');
 const { readJson } = require('fs-extra');
 
 const {
@@ -66,7 +67,7 @@ describe('The SNS-type rule', () => {
     consumerName = `${config.stackName}-messageConsumer`;
 
     snsMessage = JSON.stringify({ Data: {} });
-    snsRuleDefinition = await readJson('./snsRuleDef.json');
+    snsRuleDefinition = await readJson(path.join(__dirname, 'snsRuleDef.json'));
     snsRuleDefinition.name = ruleName;
     snsRuleDefinition.meta.triggerRule = ruleName;
     process.env.stackName = config.stackName;

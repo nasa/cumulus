@@ -621,7 +621,7 @@ describe('The S3 Ingest Granules workflow', () => {
         'failed'
       );
       expect(record.status).toEqual('failed');
-      expect(record.Error).toBeInstanceOf(Object);
+      expect(record.error).toBeInstanceOf(Object);
     });
   });
 
