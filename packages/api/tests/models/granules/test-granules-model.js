@@ -1,13 +1,13 @@
 'use strict';
 
-const cloneDeep = require('lodash.clonedeep');
+const cloneDeep = require('lodash/cloneDeep');
 const test = require('ava');
 const sinon = require('sinon');
 
 const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const launchpad = require('@cumulus/common/launchpad');
 const { randomString } = require('@cumulus/common/test-utils');
 const { removeNilProperties } = require('@cumulus/common/util');

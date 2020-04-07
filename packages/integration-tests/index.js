@@ -2,12 +2,12 @@
 
 'use strict';
 
-const orderBy = require('lodash.orderby');
+const orderBy = require('lodash/orderBy');
 const path = require('path');
-const cloneDeep = require('lodash.clonedeep');
-const isEqual = require('lodash.isequal');
-const isString = require('lodash.isstring');
-const merge = require('lodash.merge');
+const cloneDeep = require('lodash/cloneDeep');
+const isEqual = require('lodash/isEqual');
+const isString = require('lodash/isString');
+const merge = require('lodash/merge');
 const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
@@ -33,6 +33,7 @@ const ProvidersModel = require('@cumulus/api/models/providers');
 const RulesModel = require('@cumulus/api/models/rules');
 const collectionsApi = require('@cumulus/api-client/collections');
 const providersApi = require('@cumulus/api-client/providers');
+const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 const rulesApi = require('./api/rules');
 const emsApi = require('./api/ems');
 const executionsApi = require('./api/executions');
@@ -121,7 +122,7 @@ const getExecutionOutput = (executionArn) =>
   StepFunctions.describeExecution({ executionArn })
     .then((execution) => execution.output)
     .then(JSON.parse)
-    .then(StepFunctions.pullStepFunctionEvent);
+    .then(pullStepFunctionEvent);
 
 async function getExecutionInputObject(executionArn) {
   return JSON.parse(await getExecutionInput(executionArn));
@@ -916,7 +917,7 @@ async function waitForTestExecutionStart({
       const execution = executions[executionCtr];
       let taskInput = await lambdaStep.getStepInput(execution.executionArn, startTask);
       if (taskInput) {
-        taskInput = await StepFunctions.pullStepFunctionEvent(taskInput);
+        taskInput = await pullStepFunctionEvent(taskInput);
       }
       if (taskInput && findExecutionFn(taskInput, findExecutionFnParams)) {
         return execution;

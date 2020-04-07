@@ -1,5 +1,5 @@
 const fs = require('fs');
-const difference = require('lodash.difference');
+const difference = require('lodash/difference');
 const path = require('path');
 const {
   buildAndExecuteWorkflow,
@@ -19,7 +19,7 @@ const {
   s3ObjectExists,
   parseS3Uri
 } = require('@cumulus/aws-client/S3');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
   loadConfig,
@@ -301,7 +301,7 @@ describe('The Sync Granules workflow', () => {
       );
 
       syncGranuleTaskOutput.payload.granules[0].files.forEach((f) => {
-        expect(f.duplicate_found).toBe(true);
+        expect(f.duplicate_found).toBeTrue();
       });
 
       await waitForModelStatus(

@@ -10,7 +10,7 @@
  * buildURL({ protocol: 'http', host: 'example.com' }); // => 'http://example.com'
  */
 
-const isString = require('lodash.isstring');
+const isString = require('lodash/isString');
 const urljoin = require('url-join');
 const { URL } = require('url');
 const { isNil } = require('./util');
@@ -28,7 +28,7 @@ const { isNil } = require('./util');
  * @returns {string} a URL
  * @throws {TypeError} if protocol or host are not specified
  *
- * @static
+ * @alias module:URLUtils
  *
  * @example
  * buildURL({

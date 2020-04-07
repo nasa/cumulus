@@ -5,8 +5,8 @@
 
 'use strict';
 
-const has = require('lodash.has');
-const omit = require('lodash.omit');
+const has = require('lodash/has');
+const omit = require('lodash/omit');
 const aws = require('aws-sdk');
 const { AmazonConnection } = require('aws-elasticsearch-connector');
 const elasticsearch = require('@elastic/elasticsearch');

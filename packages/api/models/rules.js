@@ -1,9 +1,9 @@
 'use strict';
 
-const cloneDeep = require('lodash.clonedeep');
-const get = require('lodash.get');
-const merge = require('lodash.merge');
-const set = require('lodash.set');
+const cloneDeep = require('lodash/cloneDeep');
+const get = require('lodash/get');
+const merge = require('lodash/merge');
+const set = require('lodash/set');
 const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
 const { invoke } = require('@cumulus/aws-client/Lambda');
 const awsServices = require('@cumulus/aws-client/services');

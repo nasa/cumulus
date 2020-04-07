@@ -1,5 +1,6 @@
 'use strict';
 
+const { get } = require('lodash/fp');
 const fs = require('fs-extra');
 const path = require('path');
 const {
@@ -17,7 +18,7 @@ const {
   headObject
 } = require('@cumulus/aws-client/S3');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { getUrl } = require('@cumulus/cmrjs');
 const {
   addCollections,
@@ -342,13 +343,13 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         bucket: browseFile.bucket, key: browseFile.filepath
       });
 
-      expect(resourceURLs.includes(distributionUrl)).toBe(true);
-      expect(resourceURLs.includes(s3BrowseImageUrl)).toBe(true);
+      expect(resourceURLs).toContain(distributionUrl);
+      expect(resourceURLs).toContain(s3BrowseImageUrl);
     });
 
     it('adds the opendap URL to the CMR metadata', () => {
       const opendapFilePath = `https://opendap.uat.earthdata.nasa.gov/providers/CUMULUS/collections/MODIS/Terra%20Surface%20Reflectance%20Daily%20L2G%20Global%20250m%20SIN%20Grid%20V006/granules/${inputPayload.granules[0].granuleId}`;
-      expect(resourceURLs.includes(opendapFilePath)).toBe(true);
+      expect(resourceURLs).toContain(opendapFilePath);
     });
 
     it('publishes CMR metadata online resources with the correct type', () => {
@@ -357,17 +358,17 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
       const ExpectedResources = ['GET DATA', 'GET DATA', 'GET DATA', 'GET RELATED VISUALIZATION',
         'EXTENDED METADATA', 'VIEW RELATED INFORMATION'].sort();
-      expect(viewRelatedInfoResource.map((urlObj) => urlObj.URL).includes(s3CredsUrl)).toBe(true);
-      expect(onlineResources.map((x) => x.Type).sort()).toEqual(ExpectedResources);
+      expect(viewRelatedInfoResource.map(get('URL'))).toContain(s3CredsUrl);
+      expect(onlineResources.map(get('Type')).sort()).toEqual(ExpectedResources);
     });
 
     it('updates the CMR metadata online resources with s3credentials location', () => {
       const s3CredentialsURL = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
-      expect(resourceURLs.includes(s3CredentialsURL)).toBe(true);
+      expect(resourceURLs).toContain(s3CredentialsURL);
     });
 
     it('does not overwrite the original related url', () => {
-      expect(resourceURLs.includes(cumulusDocUrl)).toBe(true);
+      expect(resourceURLs).toContain(cumulusDocUrl);
     });
 
     it('includes the Earthdata login ID for requests to protected science files', async () => {
@@ -379,7 +380,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     it('downloads the requested science file for authorized requests', async () => {
       const scienceFileUrls = resourceURLs.filter(isUMMGScienceUrl);
-      console.log('scienceFileUrls: ', scienceFileUrls);
+      console.log('scienceFileUrls:', scienceFileUrls);
 
       const checkFiles = await Promise.all(
         scienceFileUrls
@@ -402,7 +403,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       );
 
       checkFiles.forEach((fileCheck) => {
-        expect(fileCheck).toBe(true);
+        expect(fileCheck).toBeTrue();
       });
     });
   });

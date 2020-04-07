@@ -2,7 +2,7 @@
 
 const encodeurl = require('encodeurl');
 const errors = require('@cumulus/errors');
-const get = require('lodash.get');
+const get = require('lodash/get');
 const moment = require('moment');
 const S3 = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');

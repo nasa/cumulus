@@ -7,7 +7,7 @@
 
 'use strict';
 
-const get = require('lodash.get');
+const get = require('lodash/get');
 const log = require('@cumulus/common/log');
 const pLimit = require('p-limit');
 const { inTestMode } = require('@cumulus/common/test-utils');

@@ -1,7 +1,7 @@
 'use strict';
 
-const cloneDeep = require('lodash.clonedeep');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const cloneDeep = require('lodash/cloneDeep');
 const { BaseSearch } = require('./search');
 
 
