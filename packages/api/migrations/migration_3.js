@@ -2,7 +2,7 @@
 
 const { s3 } = require('@cumulus/aws-client/services');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
-const { constructCollectionId } = require('@cumulus/message/collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 /**
  * Create correct file in s3 using version number

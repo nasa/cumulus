@@ -9,7 +9,7 @@ const {
   getJsonS3Object,
   putJsonS3Object
 } = require('@cumulus/aws-client/S3');
-const { constructCollectionId } = require('@cumulus/message/collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const CollectionConfigStore = require('..');
 
