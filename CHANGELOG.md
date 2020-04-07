@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/common/stack.getBucketsConfigKey()` to return the S3 key for the buckets config object
   - Added `@cumulus/common/workflows.getWorkflowFileKey()` to return the S3 key for a workflow definition object
   - Added `@cumulus/common/workflows.getWorkflowsListKeyPrefix()` to return the S3 key prefix for objects containing workflow definitions
+  - Added `@cumulus/message` package containing utilities for building and parsing Cumulus messages
 
 ### Deprecated
 
@@ -25,7 +26,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `@cumulus/common/bucketsConfigJsonObject()`
   - `@cumulus/common/CloudWatchLogger`
   - `@cumulus/common/collection-config-store/CollectionConfigStore` -> `@cumulus/collection-config-store`
-  - `@cumulus/common/collection-config-store.constructCollectionId()` -> `@cumulus/message/collections.constructCollectionId`
+  - `@cumulus/common/collection-config-store.constructCollectionId()` -> `@cumulus/message/Collections.constructCollectionId`
   - `@cumulus/common/concurrency.limit()`
   - `@cumulus/common/concurrency.mapTolerant()`
   - `@cumulus/common/concurrency.promiseUrl()`
@@ -91,11 +92,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added Python task/activity workflow and integration test (`PythonReferenceSpec`) to test `cumulus-message-adapter-python`and `cumulus-process-py` integration.
 - **CUMULUS-1795**
   - Added an IAM policy on the Cumulus EC2 creation to enable SSM when the `deploy_to_ngap` flag is true
-- **CUMULUS-1799**
-  - Added `@cumulus/common/stack.getBucketsConfigKey()` to return the S3 key for the buckets config object
-  - Added `@cumulus/common/workflows.getWorkflowFileKey()` to return the S3 key for a workflow definition object
-  - Added `@cumulus/common/workflows.getWorkflowsListKeyPrefix()` to return the S3 key prefix for objects containing workflow definitions
-  - Added `@cumulus/message` package containing utilities for building and parsing Cumulus messages
 
 ### Changed
 
@@ -226,7 +222,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1784**
   - Updated `@cumulus/api/lib/DistributionEvent.remoteIP()` to parse the IP address in an S3 access log from the `A-sourceip` query parameter if present, otherwise fallback to the original parsing behavior.
 - **CUMULUS-1768**
-  - The `stats/summary` endpoint reports the distinct C for the number of granules reported
+  - The `stats/summary` endpoint reports the distinct collections  for the number of granules reported
 
 ### Fixed
 
