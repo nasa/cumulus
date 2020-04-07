@@ -57,7 +57,7 @@
     "@cumulus/ingest": "1.21.0",
     "@cumulus/launchpad-auth": "1.20.0-alpha1",
     "@cumulus/logger": "1.21.0",
-    "@cumulus/message": "1.21.0-alpha3",
+    "@cumulus/message": "1.21.0",
     "@cumulus/pvl": "1.21.0",
     "@cumulus/sftp-client": "1.21.0",
     "@elastic/elasticsearch": "^5.6.20",

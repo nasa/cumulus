@@ -40,7 +40,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/aws-client": "1.21.0",
-    "@cumulus/message": "1.21.0-alpha3"
+    "@cumulus/message": "1.21.0"
   },
   "devDependencies": {
     "ava": "^2.1.0",
