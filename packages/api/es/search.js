@@ -293,8 +293,8 @@ class BaseSearch {
   }
 
 
-  async query() {
-    const searchParams = this._buildSearch();
+  async query(searchParamsOverride) {
+    const searchParams = searchParamsOverride || this._buildSearch();
 
     try {
       // search ES with the generated parameters
@@ -302,7 +302,6 @@ class BaseSearch {
         this.client = await this.constructor.es(null, this.metrics);
       }
       const result = await this.client.search(searchParams);
-
       const response = result.body.hits.hits.map((s) => s._source);
 
       const meta = this._metaTemplate();
