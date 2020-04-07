@@ -54,6 +54,11 @@ const {
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
 const {
+  waitForS3ObjectToExist,
+  waitForS3ObjectToNotExist
+} = require('@cumulus/integration-tests/S3');
+
+const {
   loadConfig,
   templateFile,
   uploadTestDataToBucket,
@@ -907,9 +912,7 @@ describe('The S3 Ingest Granules workflow', () => {
         it('when the file is deleted and the move retried, the move completes successfully', async () => {
           await deleteS3Object(config.bucket, destinationKey);
 
-          // Sanity check
-          let fileExists = await s3ObjectExists({ Bucket: config.bucket, Key: destinationKey });
-          expect(fileExists).toBe(false);
+          await waitForS3ObjectToNotExist(config.bucket, destinationKey);
 
           const moveGranuleResponse = await granulesApiTestUtils.moveGranule({
             prefix: config.stackName,
@@ -919,8 +922,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
           expect(moveGranuleResponse.statusCode).toEqual(200);
 
-          fileExists = await s3ObjectExists({ Bucket: config.bucket, Key: destinationKey });
-          expect(fileExists).toBe(true);
+          await waitForS3ObjectToExist(config.bucket, destinationKey);
         });
       });
 
