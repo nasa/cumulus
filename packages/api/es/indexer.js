@@ -13,7 +13,7 @@
 const cloneDeep = require('lodash/cloneDeep');
 const isString = require('lodash/isString');
 const zlib = require('zlib');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 

@@ -2,7 +2,7 @@
 
 /**
  * Simple utility functions
- * @module
+ * @module util
  *
  * @example
  * const { isNil } = require('@cumulus/common/util');
@@ -28,6 +28,8 @@ const log = require('./log');
  *   as deprecated
  * @param {string} [alternative] - the function / method / class to use instead
  *   of this deprecated code
+ *
+ * @alias module:util
  */
 exports.deprecate = (name, version, alternative) => {
   let message = `${name} is deprecated after version ${version} and will be removed in a future release.`;
@@ -42,6 +44,8 @@ exports.deprecate = (name, version, alternative) => {
  *
  * @param {number} waitPeriodMs - number of milliseconds to wait
  * @returns {Promise.<undefined>} promise resolves after a given time period
+ *
+ * @alias module:util
  */
 exports.sleep = (waitPeriodMs) =>
   (new Promise((resolve) =>
@@ -65,8 +69,10 @@ exports.mkdtempSync = (name) => {
 /**
  * Generate and return an RFC4122 v4 UUID.
  *
- * @return {string} An RFC44122 v4 UUID.
+ * @returns {string} An RFC44122 v4 UUID.
  * @kind function
+ *
+ * @alias module:util
  */
 exports.uuid = require('uuid/v4');
 
@@ -74,6 +80,8 @@ exports.uuid = require('uuid/v4');
  * Does nothing.  Used where a callback is required but not used.
  *
  * @returns {undefined} undefined
+ *
+ * @alias module:util
  */
 exports.noop = () => {}; // eslint-disable-line lodash/prefer-noop
 
@@ -86,6 +94,8 @@ exports.noop = () => {}; // eslint-disable-line lodash/prefer-noop
  * @param {Object} objectIn - input object
  * @param {(string|string[])} keys - key or list of keys to remove from object
  * @returns {Object} copy of objectIn without keys attached.
+ *
+ * @alias module:util
  */
 exports.omit = (objectIn, keys) => {
   const keysToRemove = [].concat(keys);
@@ -94,12 +104,13 @@ exports.omit = (objectIn, keys) => {
   return objectOut;
 };
 
-/*
+/**
  * Creates a function that returns the opposite of the predicate function.
  *
  * @param {Function} predicate - the predicate to negate
  * @returns {Function} the new negated function
- * @kind function
+ *
+ * @alias module:util
  *
  * @example
  * const isEven = (x) => x % 2 === 0;
@@ -115,6 +126,8 @@ exports.negate = (predicate) => (...args) => !predicate.apply(this, args);
  *
  * @param {*} x value to check
  * @returns {boolean}
+ *
+ * @alias module:util
  */
 exports.isNull = (x) => x === null;
 
@@ -123,6 +136,8 @@ exports.isNull = (x) => x === null;
  *
  * @param {*} x value to check
  * @returns {boolean}
+ *
+ * @alias module:util
  */
 exports.isUndefined = (x) => x === undefined;
 
@@ -131,6 +146,8 @@ exports.isUndefined = (x) => x === undefined;
  *
  * @param {*} x value to check
  * @returns {boolean}
+ *
+ * @alias module:util
  */
 exports.isNil = (x) => exports.isNull(x) || exports.isUndefined(x);
 
@@ -141,6 +158,9 @@ exports.isNil = (x) => exports.isNull(x) || exports.isUndefined(x);
  *
  * @param {Error} error - an Error
  * @param {string} newStack - a stack trace
+ *
+ * @alias module:util
+ * @deprecated
  */
 exports.setErrorStack = (error, newStack) => {
   exports.deprecate('@cumulus/common/util/setErrorStack', '1.17.0', '@cumulus/aws-client/utils/setErrorStack');
@@ -158,6 +178,8 @@ exports.setErrorStack = (error, newStack) => {
  * @param {string} to - new property name
  * @param {Object} obj - object to update
  * @returns {Object} a shallow clone of the object with updated property name
+ *
+ * @alias module:util
  */
 exports.renameProperty = (from, to, obj) => {
   const newObj = { ...obj, [to]: obj[from] };
@@ -171,6 +193,8 @@ exports.renameProperty = (from, to, obj) => {
  * @param {Object} obj - object to update
  * @returns {Object} a shallow clone of the object with `null` and `undefined`
  *   properties removed
+ *
+ * @alias module:util
  */
 exports.removeNilProperties = (obj) => omitBy(obj, exports.isNil);
 
@@ -179,6 +203,8 @@ exports.removeNilProperties = (obj) => omitBy(obj, exports.isNil);
  *
  * @param {string} key
  * @returns {string} mimeType or null
+ *
+ * @alias module:util
  */
 exports.lookupMimeType = (key) => mime.lookup(key) || null;
 
@@ -191,7 +217,7 @@ exports.lookupMimeType = (key) => mime.lookup(key) || null;
  * @param {Object} val - the item to check for in the collection
  * @returns {boolean}
  *
- * @static
+ * @alias module:util
  * @kind function
  */
 exports.isOneOf = curry((collection, val) => collection.includes(val));
@@ -201,9 +227,10 @@ exports.isOneOf = curry((collection, val) => collection.includes(val));
  *
  * @param {*} value - the value to be passed through the pipeline of functions
  * @param {...Function} fns - the functions to be invoked
- * @returns {*} the result of passing the value through the functions
+ * @returns {*} the result of passing the value through the functions:
+ *   - If no functions are provided, the value is returned.
+ *   - Functions should expect a single argument
  *
- * - If no functions are provided, the value is returned.
- * - Functions should expect a single argument
+ * @alias module:util
  */
 exports.thread = (value, ...fns) => flow(fns)(value);

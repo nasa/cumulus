@@ -4,12 +4,12 @@ const get = require('lodash/get');
 const set = require('lodash/set');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const log = require('@cumulus/common/log');
-const { getMessageExecutionArn } = require('@cumulus/common/message');
 const {
   getStepExitedEvent,
   getTaskExitedEventOutput
 } = require('@cumulus/common/execution-history');
-const { SfnStep } = require('@cumulus/common/sfnStep');
+const { getMessageExecutionArn } = require('@cumulus/message/Executions');
+const { parseStepMessage, pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 
 const executionStatusToWorkflowStatus = (executionStatus) => {
   const statusMap = {
@@ -68,7 +68,7 @@ const getFailedExecutionMessage = async (inputMessage) => {
     }
 
     const taskExitedEventOutput = getTaskExitedEventOutput(failedStepExitedEvent);
-    return await SfnStep.parseStepMessage(
+    return await parseStepMessage(
       JSON.parse(taskExitedEventOutput),
       failedStepExitedEvent.resource
     );
@@ -89,7 +89,7 @@ const getCumulusMessageFromExecutionEvent = async (executionEvent) => {
     cumulusMessage = await getFailedExecutionMessage(inputMessage);
   }
 
-  const fullCumulusMessage = await StepFunctions.pullStepFunctionEvent(cumulusMessage);
+  const fullCumulusMessage = await pullStepFunctionEvent(cumulusMessage);
 
   const workflowStatus = executionStatusToWorkflowStatus(executionEvent.detail.status);
   set(fullCumulusMessage, 'meta.status', workflowStatus);

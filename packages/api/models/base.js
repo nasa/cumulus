@@ -223,7 +223,8 @@ class Manager {
     return DynamoDb.get({
       tableName: this.tableName,
       item,
-      client: this.dynamodbDocClient
+      client: this.dynamodbDocClient,
+      getParams: { ConsistentRead: true }
     });
   }
 

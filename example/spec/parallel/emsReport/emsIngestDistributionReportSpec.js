@@ -8,7 +8,7 @@ const emsApi = require('@cumulus/api-client/ems');
 const Granule = require('@cumulus/api/models/granules');
 const { fileExists, getS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { lambda } = require('@cumulus/aws-client/services');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { download } = require('@cumulus/common/http');
 const {
   addCollections,

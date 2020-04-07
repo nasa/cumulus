@@ -5,7 +5,7 @@ const isFunction = require('lodash/isFunction');
  * boilerplate necessary to successfully subclass Error and preserve stack trace
  * @param {string} name - The name of the error type
  * @param {Error} parentType - The error that serves as the parent
- * @return - The new type
+ * @returns - The new type
  */
 
 const createErrorType = (name, ParentType = Error) => {
