@@ -2,7 +2,7 @@
 
 'use strict';
 
-const isNil = require('lodash.isnil');
+const isNil = require('lodash/isNil');
 
 /**
  * Create a function which will allow methods of an AWS service interface object

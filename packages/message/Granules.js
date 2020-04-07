@@ -8,7 +8,7 @@
  * const Granules = require('@cumulus/message/Granules');
  */
 
-const get = require('lodash.get');
+const get = require('lodash/get');
 
 /**
  * Get granules from execution message.

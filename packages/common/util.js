@@ -10,10 +10,10 @@
  * isNil(undefined); // => true
  */
 
-const curry = require('lodash.curry');
-const flow = require('lodash.flow');
+const curry = require('lodash/curry');
+const flow = require('lodash/flow');
 const fs = require('fs');
-const omitBy = require('lodash.omitby');
+const omitBy = require('lodash/omitBy');
 const os = require('os');
 const path = require('path');
 const mime = require('mime-types');

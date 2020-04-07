@@ -1,7 +1,7 @@
 'use strict';
 
 const fs = require('fs');
-const flatten = require('lodash.flatten');
+const flatten = require('lodash/flatten');
 const moment = require('moment');
 const os = require('os');
 const path = require('path');

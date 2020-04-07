@@ -1,7 +1,7 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const pick = require('lodash.pick');
+const pick = require('lodash/pick');
 
 const { Search } = require('../es/search');
 const { AsyncOperation: AsyncOperationModel } = require('../models');

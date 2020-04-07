@@ -1,6 +1,6 @@
 'use strict';
 
-const compact = require('lodash.compact');
+const compact = require('lodash/compact');
 const http = require('follow-redirects').http;
 const https = require('follow-redirects').https;
 const url = require('url');

@@ -7,7 +7,7 @@
 
 'use strict';
 
-const omit = require('lodash.omit');
+const omit = require('lodash/omit');
 
 const regexes = {
   terms: /^(.*)__in$/,

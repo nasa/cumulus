@@ -1,6 +1,6 @@
 'use strict';
 
-const flatten = require('lodash.flatten');
+const flatten = require('lodash/flatten');
 const path = require('path');
 const uuidv4 = require('uuid/v4');
 const S3 = require('@cumulus/aws-client/S3');

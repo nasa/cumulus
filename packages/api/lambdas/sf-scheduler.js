@@ -1,6 +1,6 @@
 'use strict';
 
-const get = require('lodash.get');
+const get = require('lodash/get');
 
 const SQS = require('@cumulus/aws-client/SQS');
 const { buildQueueMessageFromTemplate } = require('@cumulus/message/Build');

@@ -1,7 +1,7 @@
 'use strict';
 
-const get = require('lodash.get');
-const set = require('lodash.set');
+const get = require('lodash/get');
+const set = require('lodash/set');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const log = require('@cumulus/common/log');
 const {

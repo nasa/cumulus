@@ -16,8 +16,8 @@ const {
   parseS3Uri
 } = require('@cumulus/aws-client/S3');
 const { isCMRFile } = require('@cumulus/cmrjs');
-const clonedeep = require('lodash.clonedeep');
-const set = require('lodash.set');
+const cloneDeep = require('lodash/cloneDeep');
+const set = require('lodash/set');
 const errors = require('@cumulus/errors');
 const {
   randomString, randomId, validateConfig, validateInput, validateOutput
@@ -137,7 +137,7 @@ test.afterEach.always(async (t) => {
 
 test.serial('Should move files to final location.', async (t) => {
   const newPayload = buildPayload(t);
-  const filesToUpload = clonedeep(t.context.filesToUpload);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
   const output = await moveGranules(newPayload);
@@ -154,7 +154,7 @@ test.serial('Should move files to final location.', async (t) => {
 test.serial('should not move files when event.moveStagedFiles is false', async (t) => {
   const newPayload = buildPayload(t);
   newPayload.config.moveStagedFiles = false;
-  const filesToUpload = clonedeep(t.context.filesToUpload);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
 
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
@@ -171,7 +171,7 @@ test.serial('should not move files when event.moveStagedFiles is false', async (
 
 test.serial('should add input files to returned granule event.moveStagedFiles is false', async (t) => {
   const newPayload = buildPayload(t);
-  const filesToUpload = clonedeep(t.context.filesToUpload);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
 
   await uploadFiles(filesToUpload, t.context.stagingBucket);
   newPayload.config.moveStagedFiles = false;
@@ -189,7 +189,7 @@ test.serial('should add input files to returned granule event.moveStagedFiles is
 
 test.serial('Should move renamed files in staging area to final location.', async (t) => {
   const newPayload = buildPayload(t);
-  const filesToUpload = clonedeep(t.context.filesToUpload);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
 
   const renamedFile = `s3://${t.context.stagingBucket}/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.v20180926T131408705`;
   filesToUpload.push(renamedFile);
@@ -214,7 +214,7 @@ test.serial('Should move renamed files in staging area to final location.', asyn
 
 test.serial('Should add metadata type to CMR granule files.', async (t) => {
   const newPayload = buildPayload(t);
-  const filesToUpload = clonedeep(t.context.filesToUpload);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
 
   await uploadFiles(filesToUpload, t.context.stagingBucket);
   const output = await moveGranules(newPayload);
@@ -231,7 +231,7 @@ test.serial('Should add metadata type to CMR granule files.', async (t) => {
 test.serial('Should update filenames with updated S3 URLs.', async (t) => {
   const newPayload = buildPayload(t);
   const expectedFilenames = getExpectedOutputFileNames(t);
-  const filesToUpload = clonedeep(t.context.filesToUpload);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
 
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
@@ -244,7 +244,7 @@ test.serial('Should update filenames with updated S3 URLs.', async (t) => {
 test.serial('Should not overwrite CMR file type if already explicitly set', async (t) => {
   const newPayload = buildPayload(t);
   updateCmrFileType(newPayload);
-  const filesToUpload = clonedeep(t.context.filesToUpload);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
 
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
@@ -255,7 +255,7 @@ test.serial('Should not overwrite CMR file type if already explicitly set', asyn
 
 test.serial('Should preserve object tags.', async (t) => {
   const newPayload = buildPayload(t);
-  const filesToUpload = clonedeep(t.context.filesToUpload);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
   const tagset = [
     { Key: 'fakeTag', Value: 'test-tag' },
     { Key: 'granId', Value: newPayload.input.granules[0].granuleId }
@@ -358,7 +358,7 @@ test.serial('Should overwrite files.', async (t) => {
 // collection configuration
 async function duplicateHandlingErrorTest(t, duplicateHandling) {
   const newPayload = buildPayload(t);
-  const filesToUpload = clonedeep(t.context.filesToUpload);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
 
   if (duplicateHandling) newPayload.config.duplicateHandling = duplicateHandling;
 
@@ -370,7 +370,7 @@ async function duplicateHandlingErrorTest(t, duplicateHandling) {
     await validateInput(t, newPayload.input);
 
     // payload could be modified
-    const newPayloadOrig = clonedeep(newPayload);
+    const newPayloadOrig = cloneDeep(newPayload);
 
     const output = await moveGranules(newPayload);
     await validateOutput(t, output);
@@ -399,12 +399,12 @@ test.serial('when duplicateHandling is "error", throw an error on duplicate', as
 
 test.serial('when duplicateHandling is "version", keep both data if different', async (t) => {
   let newPayload = buildPayload(t);
-  const filesToUpload = clonedeep(t.context.filesToUpload);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
 
   newPayload.config.duplicateHandling = 'version';
 
   // payload could be modified
-  const newPayloadOrig = clonedeep(newPayload);
+  const newPayloadOrig = cloneDeep(newPayload);
 
   const expectedFilenames = getExpectedOutputFileNames(t);
 
@@ -425,7 +425,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   // it moves the existing data to a file with a suffix to distinguish it from the new file
 
   // run 'moveGranules' again with one of the input files updated
-  newPayload = clonedeep(newPayloadOrig);
+  newPayload = cloneDeep(newPayloadOrig);
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
   const inputHdfFile = filesToUpload.filter((f) => f.endsWith('.hdf'))[0];
@@ -463,7 +463,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   t.is(newHdfFileInfo.ContentLength, updatedBody.length);
 
   // run 'moveGranules' the third time with the same input file updated
-  newPayload = clonedeep(newPayloadOrig);
+  newPayload = cloneDeep(newPayloadOrig);
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
   params.Body = randomString();
@@ -488,10 +488,10 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
 test.serial('When duplicateHandling is "skip", does not overwrite or create new.', async (t) => {
   let newPayload = buildPayload(t);
   newPayload.config.duplicateHandling = 'skip';
-  const filesToUpload = clonedeep(t.context.filesToUpload);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
 
   // payload could be modified
-  const newPayloadOrig = clonedeep(newPayload);
+  const newPayloadOrig = cloneDeep(newPayload);
 
   const expectedFilenames = getExpectedOutputFileNames(t);
 
@@ -506,7 +506,7 @@ test.serial('When duplicateHandling is "skip", does not overwrite or create new.
   );
 
   // run 'moveGranules' again with one of the input files updated
-  newPayload = clonedeep(newPayloadOrig);
+  newPayload = cloneDeep(newPayloadOrig);
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
   const inputHdfFile = filesToUpload.filter((f) => f.endsWith('.hdf'))[0];
@@ -550,8 +550,8 @@ function setupDuplicateHandlingCollection(t, duplicateHandling) {
 
 async function granuleFilesOverwrittenTest(t, newPayload) {
   // payload could be modified
-  const newPayloadOrig = clonedeep(newPayload);
-  const filesToUpload = clonedeep(t.context.filesToUpload);
+  const newPayloadOrig = cloneDeep(newPayload);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
 
   const expectedFilenames = getExpectedOutputFileNames(t);
 
@@ -566,7 +566,7 @@ async function granuleFilesOverwrittenTest(t, newPayload) {
   const outputHdfFile = existingFileNames.filter((f) => f.endsWith('.hdf'))[0];
 
   // run 'moveGranules' again with one of the input files updated
-  newPayload = clonedeep(newPayloadOrig);
+  newPayload = cloneDeep(newPayloadOrig);
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
   const inputHdfFile = filesToUpload.filter((f) => f.endsWith('.hdf'))[0];
@@ -632,7 +632,7 @@ test.serial('Move granules throws an error when cmr file type is distribution an
   const newPayload = buildPayload(t);
   delete newPayload.config.distribution_endpoint;
 
-  const filesToUpload = clonedeep(t.context.filesToUpload);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
   const error = await t.throwsAsync(

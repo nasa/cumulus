@@ -33,15 +33,13 @@
   "dependencies": {
     "@cumulus/logger": "1.21.0",
     "got": "^9.6.0",
-    "lodash.get": "^4.4.2",
-    "lodash.property": "^4.4.2",
+    "lodash": "^4.17.15",
     "public-ip": "^3.0.0",
     "xml2js": "^0.4.19"
   },
   "devDependencies": {
     "ava": "^2.1.0",
     "jsdoc-to-markdown": "^4.0.1",
-    "lodash.some": "^4.6.0",
     "nock": "^10.0.6",
     "sinon": "^7.1.1"
   }

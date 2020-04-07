@@ -1,7 +1,7 @@
 'use strict';
 
 const pLimit = require('p-limit');
-const chunk = require('lodash.chunk');
+const chunk = require('lodash/chunk');
 const { Search } = require('../es/search');
 const models = require('../models');
 

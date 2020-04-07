@@ -1,6 +1,6 @@
 'use strict';
 
-const get = require('lodash.get');
+const get = require('lodash/get');
 
 const { removeNilProperties } = require('@cumulus/common/util');
 const { schedule } = require('../lambdas/sf-scheduler');

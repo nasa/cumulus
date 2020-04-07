@@ -1,8 +1,8 @@
 'use strict';
 
-const flatten = require('lodash.flatten');
-const get = require('lodash.get');
-const keyBy = require('lodash.keyby');
+const flatten = require('lodash/flatten');
+const get = require('lodash/get');
+const keyBy = require('lodash/keyBy');
 const path = require('path');
 
 const { parseS3Uri } = require('@cumulus/aws-client/S3');

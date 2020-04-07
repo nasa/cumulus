@@ -1,6 +1,6 @@
 'use strict';
 
-const get = require('lodash.get');
+const get = require('lodash/get');
 const got = require('got');
 const publicIp = require('public-ip');
 const Logger = require('@cumulus/logger');

@@ -7,7 +7,7 @@
 
 const path = require('path');
 const fs = require('fs-extra');
-const clone = require('lodash.clonedeep');
+const cloneDeep = require('lodash/cloneDeep');
 const { randomString } = require('@cumulus/common/test-utils');
 const { template } = require('@cumulus/deployment/lib/message');
 const { fetchMessageAdapter } = require('@cumulus/deployment/lib/adapter');
@@ -136,20 +136,20 @@ async function runStep(lambdaPath, lambdaHandler, message, stepName) {
  */
 async function runWorkflow(workflow, message) {
   const trail = {
-    input: clone(message),
+    input: cloneDeep(message),
     stepOutputs: {},
     output: {}
   };
 
-  let stepInput = clone(message);
+  let stepInput = cloneDeep(message);
 
   // eslint-disable-next-line no-restricted-syntax
   for (const step of workflow.steps) {
     // eslint-disable-next-line no-await-in-loop
     stepInput = await runStep(step.lambda, step.handler, stepInput, step.name);
-    trail.stepOutputs[step.name] = clone(stepInput);
+    trail.stepOutputs[step.name] = cloneDeep(stepInput);
   }
-  trail.output = clone(stepInput);
+  trail.output = cloneDeep(stepInput);
 
   return trail;
 }

@@ -1,10 +1,8 @@
 'use strict';
 
-const get = require('lodash.get');
-const unset = require('lodash.unset');
-
+const get = require('lodash/get');
+const unset = require('lodash/unset');
 const { loadYmlConfigFile, saveYmlConfigFile } = require('./configUtils.js');
-
 
 /**
  * Remove a workflow from the workflows config file and save the file

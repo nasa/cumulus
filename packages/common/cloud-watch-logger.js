@@ -1,6 +1,6 @@
 'use strict';
 
-const isString = require('lodash.isstring');
+const isString = require('lodash/isString');
 
 const aws = require('./aws');
 const log = require('./log');

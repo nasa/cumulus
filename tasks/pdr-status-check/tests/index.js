@@ -1,9 +1,9 @@
 'use strict';
 
-const isEqual = require('lodash.isequal');
-const some = require('lodash.some');
 const test = require('ava');
 const awsServices = require('@cumulus/aws-client/services');
+const isEqual = require('lodash/isEqual');
+const some = require('lodash/some');
 const {
   validateInput,
   validateOutput
