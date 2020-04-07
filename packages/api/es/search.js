@@ -293,7 +293,7 @@ class BaseSearch {
   }
 
 
-  async query(searchParamsOverride = null) {
+  async query(searchParamsOverride) {
     const searchParams = searchParamsOverride || this._buildSearch();
 
     try {

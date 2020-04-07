@@ -63,26 +63,35 @@ test.before(async () => {
       name: 'coll2',
       version: '1'
     }), esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'coll1___1' }), esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'coll1___1' }), esAlias)
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2({
+      collectionId: 'coll1___1',
+      status: 'completed'
+    }), esAlias),
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2({
+      collectionId: 'coll1___1',
+      status: 'completed'
+    }), esAlias)
   ]);
 
   // Indexing using Date.now() to generate the timestamp
   const stub = sinon.stub(Date, 'now').returns((new Date(2020, 0, 29)).getTime());
 
-  await Promise.all([
-    indexer.indexCollection(esClient, fakeCollectionFactory({
-      name: 'coll3',
-      version: '1',
-      updatedAt: new Date(2020, 0, 29)
-    }), esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({
-      updatedAt: new Date(2020, 1, 29),
-      collectionId: 'coll3___1'
-    }), esAlias)
-  ]);
-
-  stub.restore();
+  try {
+    await Promise.all([
+      indexer.indexCollection(esClient, fakeCollectionFactory({
+        name: 'coll3',
+        version: '1',
+        updatedAt: new Date(2020, 0, 29)
+      }), esAlias),
+      indexer.indexGranule(esClient, fakeGranuleFactoryV2({
+        updatedAt: new Date(2020, 1, 29),
+        collectionId: 'coll3___1',
+        status: 'completed'
+      }), esAlias)
+    ]);
+  } finally {
+    stub.restore();
+  }
 });
 
 
@@ -238,8 +247,8 @@ test.serial('query returns all collections with stats by default', async (t) => 
   }));
   t.deepEqual(collections, [
     {
-      name: 'coll1',
-      version: '2',
+      name: 'coll2',
+      version: '1',
       stats: {
         running: 0,
         completed: 0,
@@ -248,8 +257,8 @@ test.serial('query returns all collections with stats by default', async (t) => 
       }
     },
     {
-      name: 'coll2',
-      version: '1',
+      name: 'coll1',
+      version: '2',
       stats: {
         running: 0,
         completed: 0,

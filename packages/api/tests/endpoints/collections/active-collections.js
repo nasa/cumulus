@@ -77,19 +77,21 @@ test.before(async () => {
   // Indexing using Date.now() to generate the timestamp
   const stub = sinon.stub(Date, 'now').returns((new Date(2020, 0, 29)).getTime());
 
-  await Promise.all([
-    indexer.indexCollection(esClient, fakeCollectionFactory({
-      name: 'coll3',
-      version: '1',
-      updatedAt: new Date(2020, 0, 29)
-    }), esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({
-      updatedAt: new Date(2020, 1, 29),
-      collectionId: 'coll3___1'
-    }), esAlias)
-  ]);
-
-  stub.restore();
+  try {
+    await Promise.all([
+      indexer.indexCollection(esClient, fakeCollectionFactory({
+        name: 'coll3',
+        version: '1',
+        updatedAt: new Date(2020, 0, 29)
+      }), esAlias),
+      indexer.indexGranule(esClient, fakeGranuleFactoryV2({
+        updatedAt: new Date(2020, 1, 29),
+        collectionId: 'coll3___1'
+      }), esAlias)
+    ]);
+  } finally {
+    stub.restore();
+  }
 });
 
 test.after.always(async () => {

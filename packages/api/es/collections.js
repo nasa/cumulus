@@ -119,7 +119,7 @@ class Collection extends BaseSearch {
    * @returns {Promise<Array<Object>>} - collectionResults updated with granule stats
    */
   addStatsToCollectionResults(collectionResults) {
-    const ids = collectionResults.filter((r) => r.name)
+    const ids = collectionResults.filter((r) => r.name && r.version)
       .map((c) => constructCollectionId(c.name, c.version));
     return this.getStats(collectionResults, ids);
   }
@@ -150,7 +150,7 @@ class Collection extends BaseSearch {
     return res;
   }
 
-  async query(searchParamsOverride = null) {
+  async query(searchParamsOverride) {
     const res = await super.query(searchParamsOverride);
 
     // get aggregations for results
