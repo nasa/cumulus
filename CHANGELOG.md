@@ -222,7 +222,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1784**
   - Updated `@cumulus/api/lib/DistributionEvent.remoteIP()` to parse the IP address in an S3 access log from the `A-sourceip` query parameter if present, otherwise fallback to the original parsing behavior.
 - **CUMULUS-1768**
-  - The `stats/summary` endpoint reports the distinct collections  for the number of granules reported
+  - The `stats/summary` endpoint reports the distinct collections for the number of granules reported
 
 ### Fixed
 
