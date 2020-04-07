@@ -3,6 +3,7 @@
 const test = require('ava');
 const rewire = require('rewire');
 const sinon = require('sinon');
+const sortBy = require('lodash/sortBy');
 
 const awsServices = require('@cumulus/aws-client/services');
 const s3 = require('@cumulus/aws-client/S3');
@@ -245,15 +246,16 @@ test.serial('query returns all collections with stats by default', async (t) => 
     version: c.version,
     stats: c.stats
   }));
-  t.deepEqual(collections, [
+  const orderedCollections = sortBy(collections, ['name', 'version']);
+  t.deepEqual(orderedCollections, [
     {
-      name: 'coll2',
+      name: 'coll1',
       version: '1',
       stats: {
         running: 0,
-        completed: 0,
+        completed: 2,
         failed: 0,
-        total: 0
+        total: 2
       }
     },
     {
@@ -267,13 +269,13 @@ test.serial('query returns all collections with stats by default', async (t) => 
       }
     },
     {
-      name: 'coll1',
+      name: 'coll2',
       version: '1',
       stats: {
         running: 0,
-        completed: 2,
+        completed: 0,
         failed: 0,
-        total: 2
+        total: 0
       }
     },
     {
