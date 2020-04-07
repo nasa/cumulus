@@ -5,8 +5,8 @@ const got = require('got');
 const { JSONPath } = require('jsonpath-plus');
 const { parseString } = require('xml2js');
 const { promisify } = require('util');
-const flatten = require('lodash.flatten');
-const get = require('lodash.get');
+const flatten = require('lodash/flatten');
+const get = require('lodash/get');
 const log = require('@cumulus/common/log');
 
 const {

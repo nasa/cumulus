@@ -1,9 +1,9 @@
 'use strict';
 
-const get = require('lodash.get');
+const get = require('lodash/get');
 const KMS = require('@cumulus/aws-client/KMS');
 const log = require('@cumulus/common/log');
-const omit = require('lodash.omit');
+const omit = require('lodash/omit');
 const S3 = require('@cumulus/aws-client/S3');
 const SftpClient = require('@cumulus/sftp-client');
 const { isNil } = require('@cumulus/common/util');

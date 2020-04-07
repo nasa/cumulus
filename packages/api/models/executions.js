@@ -1,6 +1,6 @@
 'use strict';
 
-const get = require('lodash.get');
+const get = require('lodash/get');
 const pLimit = require('p-limit');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');

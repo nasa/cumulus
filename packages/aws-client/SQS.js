@@ -1,7 +1,7 @@
-const get = require('lodash.get');
-const isObject = require('lodash.isobject');
-const isString = require('lodash.isstring');
-const isNil = require('lodash.isnil');
+const get = require('lodash/get');
+const isObject = require('lodash/isObject');
+const isString = require('lodash/isString');
+const isNil = require('lodash/isNil');
 const url = require('url');
 
 const awsServices = require('./services');

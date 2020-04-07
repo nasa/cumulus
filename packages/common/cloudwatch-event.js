@@ -1,4 +1,4 @@
-const get = require('lodash.get');
+const get = require('lodash/get');
 
 const log = require('./log');
 const { isOneOf } = require('./util');

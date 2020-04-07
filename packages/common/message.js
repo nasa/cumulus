@@ -1,7 +1,7 @@
-const findKey = require('lodash.findkey');
-const get = require('lodash.get');
-const merge = require('lodash.merge');
-const isString = require('lodash.isstring');
+const findKey = require('lodash/findKey');
+const get = require('lodash/get');
+const merge = require('lodash/merge');
+const isString = require('lodash/isString');
 const uuidv4 = require('uuid/v4');
 
 const { constructCollectionId } = require('./collection-config-store');

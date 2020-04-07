@@ -10,8 +10,8 @@
  * const Executions = require('@cumulus/message/Executions');
  */
 
-const get = require('lodash.get');
-const isString = require('lodash.isstring');
+const get = require('lodash/get');
+const isString = require('lodash/isString');
 
 /**
  * Build execution ARN from a state machine ARN and execution name

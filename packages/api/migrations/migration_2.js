@@ -1,6 +1,6 @@
 'use strict';
 
-const drop = require('lodash.drop');
+const drop = require('lodash/drop');
 const { parseS3Uri } = require('@cumulus/aws-client/S3');
 const { dynamodb } = require('@cumulus/aws-client/services');
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');

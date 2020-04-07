@@ -2,7 +2,7 @@
 
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const range = require('lodash.range');
+const range = require('lodash/range');
 
 const awsServices = require('../services');
 const DynamoDbSearchQueue = require('../DynamoDbSearchQueue');

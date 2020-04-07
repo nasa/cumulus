@@ -10,7 +10,7 @@
  * buildURL({ protocol: 'http', host: 'example.com' }); // => 'http://example.com'
  */
 
-const isString = require('lodash.isstring');
+const isString = require('lodash/isString');
 const urljoin = require('url-join');
 const { URL } = require('url');
 const { isNil } = require('./util');

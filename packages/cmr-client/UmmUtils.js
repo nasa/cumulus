@@ -1,6 +1,6 @@
 'use strict';
 
-const get = require('lodash.get');
+const get = require('lodash/get');
 const got = require('got');
 const getUrl = require('./getUrl');
 const ValidationError = require('./ValidationError');

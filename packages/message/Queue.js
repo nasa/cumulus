@@ -8,9 +8,9 @@
  * const Queue = require('@cumulus/message/Queue');
  */
 
-const findKey = require('lodash.findkey');
-const get = require('lodash.get');
-const isNil = require('lodash.isnil');
+const findKey = require('lodash/findKey');
+const get = require('lodash/get');
+const isNil = require('lodash/isNil');
 
 /**
  * Get queue name by URL from execution message.

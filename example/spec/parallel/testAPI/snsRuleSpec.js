@@ -1,6 +1,7 @@
 'use strict';
 
-const clonedeep = require('lodash.clonedeep');
+const path = require('path');
+const { readJson } = require('fs-extra');
 
 const {
   addCollections,
@@ -65,9 +66,8 @@ describe('The SNS-type rule', () => {
     newValueTopicName = timestampedName(`${config.stackName}_SnsRuleValueChangeTestTopic`);
     consumerName = `${config.stackName}-messageConsumer`;
 
-    snsMessage = '{"Data":{}}';
-    // eslint-disable-next-line global-require
-    snsRuleDefinition = clonedeep(require('./snsRuleDef.json'));
+    snsMessage = JSON.stringify({ Data: {} });
+    snsRuleDefinition = await readJson(path.join(__dirname, 'snsRuleDef.json'));
     snsRuleDefinition.name = ruleName;
     snsRuleDefinition.meta.triggerRule = ruleName;
     process.env.stackName = config.stackName;
@@ -308,7 +308,7 @@ describe('The SNS-type rule', () => {
     });
 
     it('is removed from the rules API', () => {
-      expect(getRule.message.includes('No record found')).toBe(true);
+      expect(getRule.message).toContain('No record found');
     });
 
     it('deletes the policy and subscription', async () => {

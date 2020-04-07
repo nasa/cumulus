@@ -2,7 +2,7 @@
 
 const rewire = require('rewire');
 const test = require('ava');
-const get = require('lodash.get');
+const get = require('lodash/get');
 
 const awsServices = require('@cumulus/aws-client/services');
 const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');

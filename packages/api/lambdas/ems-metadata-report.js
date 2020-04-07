@@ -1,9 +1,9 @@
 'use strict';
 
 const moment = require('moment');
-const get = require('lodash.get');
-const isFunction = require('lodash.isfunction');
-const sortBy = require('lodash.sortby');
+const get = require('lodash/get');
+const isFunction = require('lodash/isFunction');
+const sortBy = require('lodash/sortBy');
 
 const { buildS3Uri, deleteS3Files } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
