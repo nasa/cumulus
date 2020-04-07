@@ -35,7 +35,7 @@
     "@cumulus/cmr-client": "1.21.0",
     "@cumulus/common": "1.21.0",
     "@cumulus/errors": "1.21.0",
-    "@cumulus/launchpad-auth": "1.20.0-alpha1",
+    "@cumulus/launchpad-auth": "1.21.0-alpha1",
     "got": "^8.3.0",
     "js2xmlparser": "^4.0.0",
     "lodash.flatten": "^4.4.0",
