@@ -8,7 +8,7 @@ outputPath="${1}/${specName}-running.txt"
 TIMESTAMP=$(date "+%Y-%m-%dT%H:%M:%S")
 echo "$TIMESTAMP jasmine $2 STARTED"
 
-jasmine "$2" > "$outputPath" 2>&1
+jasmine --no-color "$2" > "$outputPath" 2>&1
 result=$?
 
 TIMESTAMP=$(date "+%Y-%m-%dT%H:%M:%S")
