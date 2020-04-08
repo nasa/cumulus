@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs');
-const os = require('os');
 const { basename } = require('path');
 const test = require('ava');
 const S3 = require('@cumulus/aws-client/S3');
@@ -35,7 +34,7 @@ test.after.always(async (t) => {
     S3.recursivelyDeleteS3Bucket(t.context.sourceBucket),
     S3.recursivelyDeleteS3Bucket(t.context.targetBucket)
   ]);
-})
+});
 
 test('S3ProviderClient constructor throws error if no bucket specified', (t) => {
   t.throws(
@@ -61,11 +60,12 @@ test.serial('S3ProviderClient.downloads downloads a file to local disk', async (
 
   await s3ProviderClient.download(t.context.sourceKey, localPath);
   t.true(fs.existsSync(localPath));
+  t.is(fs.readFileSync(localPath).toString(), t.context.fileContent);
 });
 
 test.serial('S3ProviderClient.sync syncs a file to a target S3 location', async (t) => {
   const s3ProviderClient = new S3ProviderClient({ bucket: t.context.sourceBucket });
-  const targetKey = 'target.json'
+  const targetKey = 'target.json';
 
   await s3ProviderClient.sync(t.context.sourceKey, t.context.targetBucket, targetKey);
   t.true(await S3.s3ObjectExists({ Bucket: t.context.targetBucket, Key: targetKey }));
