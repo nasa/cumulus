@@ -26,3 +26,5 @@ terraform.tf
 .terraform/
 test-output
 /lambdas/*/lambda.zip
+__pycache__
+*.pyc
