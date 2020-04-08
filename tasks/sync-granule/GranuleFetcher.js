@@ -274,6 +274,7 @@ class GranuleFetcher {
    * @returns {Array<Object>} returns the staged file and the renamed existing duplicates if any
    */
   async ingestFile(file, destinationBucket, duplicateHandling) {
+    // TODO This is going to fail on systems that don't use `/` as the path separator
     const fileRemotePath = path.join(file.path, file.name);
     // place files in the <collectionId> subdirectory
     const stagingPath = path.join(this.fileStagingDir, this.collectionId);

@@ -12,6 +12,7 @@ const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
 
 const logger = () => new Logger({
   executions: process.env.EXECUTIONS,
+  // TODO Should this actually be coming from an env var? Seems like it should be a param
   granules: process.env.GRANULES,
   parentArn: process.env.PARENTARN,
   sender: process.env.SENDER,
@@ -184,7 +185,9 @@ const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
     prefix: process.env.STACKNAME,
     granuleId
   });
+  console.log('response in checkGranuleHasNoDuplicate:', JSON.stringify(response, null, 2));
   const responseBody = JSON.parse(response.body);
+  console.log('responseBody:', JSON.stringify(responseBody, null, 2));
   if (response.statusCode === 404 && responseBody.error === 'Not Found') {
     return granuleId;
   }
@@ -216,7 +219,10 @@ const filterDuplicates = async (granuleIds, duplicateHandling) => {
     checkGranuleHasNoDuplicate(key, duplicateHandling));
 
   const filteredKeys = await Promise.all(keysPromises);
-  return filteredKeys.filter(Boolean);
+  console.log('filteredKeys:', JSON.stringify(filteredKeys, null, 2));
+  const retVal = filteredKeys.filter(Boolean);
+  console.log('retVal:', JSON.stringify(retVal, null, 2));
+  return retVal;
 };
 
 /**
@@ -238,7 +244,10 @@ const handleDuplicates = async (filesByGranuleId, duplicateHandling) => {
   if (['skip', 'error'].includes(duplicateHandling)) {
     // Iterate over granules, remove if exists in dynamo
     const filteredKeys = await filterDuplicates(Object.keys(filesByGranuleId), duplicateHandling);
-    return pick(filesByGranuleId, filteredKeys);
+    console.log('filteredKeys in handleDuplicates():', JSON.stringify(filteredKeys, null, 2));
+    const handleDuplicatesRetVal = pick(filesByGranuleId, filteredKeys);
+    console.log('handleDuplicatesRetVal:', JSON.stringify(handleDuplicatesRetVal, null, 2));
+    return handleDuplicatesRetVal;
   }
   if (['replace', 'version'].includes(duplicateHandling)) {
     return filesByGranuleId;
@@ -255,11 +264,13 @@ const handleDuplicates = async (filesByGranuleId, duplicateHandling) => {
  *    is passed to the next task in the workflow
  */
 const discoverGranules = async ({ config }) => {
+  console.log('config:', JSON.stringify(config, null, 2));
   const discoveredFiles = await listFiles(
     config.provider,
     config.useList,
     config.collection.provider_path
   );
+  console.log('discoveredFiles:', JSON.stringify(discoveredFiles, null, 2));
 
   let filesByGranuleId = groupFilesByGranuleId(
     config.collection.granuleIdExtraction,
@@ -271,6 +282,9 @@ const discoverGranules = async ({ config }) => {
 
   const discoveredGranules = map(filesByGranuleId, buildGranule(config));
 
+  console.log('discoveredGranules:', JSON.stringify(discoveredGranules, null, 2));
+
+  // TODO This logger should know about the granules, right now that property is []
   logger().info(`Discovered ${discoveredGranules.length} granules.`);
   return { granules: discoveredGranules };
 };

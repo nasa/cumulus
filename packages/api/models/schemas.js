@@ -353,6 +353,7 @@ module.exports.rule = {
   title: 'Ingest Rule Record Object',
   type: 'object',
   properties: {
+    payload: {},
     name: {
       title: 'name',
       type: 'string'
@@ -365,6 +366,7 @@ module.exports.rule = {
       title: 'Provider ID',
       type: 'string'
     },
+    // TODO collection should not be required, there are workflows that don't need it
     collection: {
       title: 'Collection Name and Version',
       type: 'object',

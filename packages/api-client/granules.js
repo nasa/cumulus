@@ -1,11 +1,7 @@
 'use strict';
 
-const pRetry = require('p-retry');
-const Logger = require('@cumulus/logger');
+const pWaitFor = require('p-wait-for');
 const { invokeApi } = require('./cumulusApiClient');
-
-const logger = new Logger({ sender: '@api-client/granules' });
-
 
 /**
  * GET /granules/{granuleName}
@@ -29,38 +25,25 @@ const getGranule = async ({ prefix, granuleId, callback = invokeApi }) => callba
 });
 
 /**
- * Wait for a granule to be present in the database (using pRetry)
+ * Wait for a granule to reach the completed state
  *
- * @param {Object} params             - params
- * @param {string} params.granuleId   - granuleId to wait for
- * @param {number} params.retries     - number of times to retry
- * @param {Function} params.callback  - async function to invoke the api lambda
- *                                      that takes a prefix / user payload.  Defaults
- *                                      to cumulusApiClient.invokeApifunction to invoke the
- *                                      api lambda
+ * @param {Object} params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.granuleId - a granule ID
+ * @param {Function} params.callback - an async function to invoke the api
+ *   lambda that takes a prefix / user payload. Defaults to
+ *   cumulusApiClient.invokeApifunction to invoke the api lambda
+ * @returns {Promise<undefined>}
  */
-const waitForGranule = async ({
-  prefix, granuleId, retries = 10, callback = invokeApi
-}) => {
-  await pRetry(
+const waitForCompletedGranule = (params = {}) =>
+  pWaitFor(
     async () => {
-      const apiResult = await getGranule({ prefix, granuleId, callback });
-      if (apiResult.statusCode === 500) {
-        throw new pRetry.AbortError('API misconfigured/down/etc, failing test');
-      }
-      if (apiResult.statusCode !== 200) {
-        throw new Error(`granule ${granuleId} not in database yet, status ${apiResult.statusCode} retrying....`);
-      }
-      logger.info(`Granule ${granuleId} in database, proceeding...`); // TODO fix logging
+      const response = await getGranule({ callback: invokeApi, ...params });
+      const granule = JSON.parse(response.body);
+      return response.statusCode === 200 && granule.status === 'completed';
     },
-    {
-      retries,
-      onFailedAttempt: async (e) => {
-        logger.error(e.message);
-      }
-    }
+    { interval: 1000, timeout: 60000 }
   );
-};
 
 /**
  * Reingest a granule from the Cumulus API
@@ -87,7 +70,6 @@ const reingestGranule = async ({ prefix, granuleId, callback = invokeApi }) => c
     body: JSON.stringify({ action: 'reingest' })
   }
 });
-
 
 /**
  * Removes a granule from CMR via the Cumulus API
@@ -160,15 +142,15 @@ const applyWorkflow = async ({
  *                                      api lambda
  * @returns {Promise<Object>}         - the delete confirmation from the API
  */
-const deleteGranule = async ({ prefix, granuleId, callback = invokeApi }) => callback({
-  prefix: prefix,
-  payload: {
-    httpMethod: 'DELETE',
-    resource: '/{proxy+}',
-    path: `/granules/${granuleId}`
-  }
-});
-
+const deleteGranule = ({ prefix, granuleId, callback = invokeApi }) =>
+  callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'DELETE',
+      resource: '/{proxy+}',
+      path: `/granules/${granuleId}`
+    }
+  });
 
 /**
  * Move a granule via the API
@@ -198,7 +180,6 @@ const moveGranule = async ({
     body: JSON.stringify({ action: 'move', destinations })
   }
 });
-
 
 /**
  * Removed a granule from CMR and delete from Cumulus via the API
@@ -239,7 +220,6 @@ const listGranules = async ({ prefix, query = null, callback = invokeApi }) => c
   }
 });
 
-
 module.exports = {
   getGranule,
   reingestGranule,
@@ -248,6 +228,6 @@ module.exports = {
   deleteGranule,
   listGranules,
   moveGranule,
-  waitForGranule,
+  waitForCompletedGranule,
   removePublishedGranule
 };

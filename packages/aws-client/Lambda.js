@@ -17,8 +17,9 @@ const invoke = async (name, payload, type = 'Event') => {
     InvocationType: type
   };
 
-  log.info(`invoked ${name}`);
-  return awsServices.lambda().invoke(params).promise();
+  const promisedInvoke = awsServices.lambda().invoke(params).promise();
+  log.info(`Invoked ${name}`);
+  return promisedInvoke;
 };
 
 module.exports = {
