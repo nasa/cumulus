@@ -1,6 +1,6 @@
 'use strict';
 
-const omit = require('lodash.omit');
+const omit = require('lodash/omit');
 const test = require('ava');
 const request = require('supertest');
 const { s3 } = require('@cumulus/aws-client/services');

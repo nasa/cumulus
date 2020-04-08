@@ -1,7 +1,7 @@
 'use strict';
 
 const path = require('path');
-const pick = require('lodash.pick');
+const pick = require('lodash/pick');
 const { getS3Object, s3ObjectExists, s3PutObject } = require('./aws');
 const LaunchpadToken = require('./LaunchpadToken');
 const log = require('./log');

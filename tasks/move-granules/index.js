@@ -2,10 +2,9 @@
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 
-const get = require('lodash.get');
-const clonedeep = require('lodash.clonedeep');
-const flatten = require('lodash.flatten');
-const keyBy = require('lodash.keyby');
+const get = require('lodash/get');
+const flatten = require('lodash/flatten');
+const keyBy = require('lodash/keyBy');
 const path = require('path');
 
 const {
@@ -146,7 +145,7 @@ async function moveFileRequest(
   };
 
   // the file moved to destination
-  const fileMoved = clonedeep(file);
+  const fileMoved = { ...file };
   delete fileMoved.fileStagingDir;
 
   const s3ObjAlreadyExists = await s3ObjectExists(target);
@@ -167,16 +166,17 @@ async function moveFileRequest(
     await moveGranuleFile(source, target, options);
   }
 
+  const renamedFiles = versionedFiles.map((f) => ({
+    bucket: f.Bucket,
+    name: path.basename(f.Key),
+    filename: buildS3Uri(f.Bucket, f.Key),
+    filepath: f.Key,
+    size: f.size,
+    url_path: file.url_path
+  }));
+
   // return both file moved and renamed files
-  return [fileMoved]
-    .concat(versionedFiles.map((f) => ({
-      bucket: f.Bucket,
-      name: path.basename(f.Key),
-      filename: buildS3Uri(f.Bucket, f.Key),
-      filepath: f.Key,
-      size: f.size,
-      url_path: file.url_path
-    })));
+  return [fileMoved, ...renamedFiles];
 }
 
 /**

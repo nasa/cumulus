@@ -3,7 +3,7 @@ const AWS = require('aws-sdk');
 
 const { fileExists, getS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { lambda } = require('@cumulus/aws-client/services');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   addCollections,
   cleanupCollections,
@@ -93,9 +93,7 @@ describe('The EMS product metadata report', () => {
         collectionsOnlyInCmr.includes(record.split('|&|')[0]));
       expect(cmrOnlyRecords.length).toEqual(0);
 
-      if (submitReport) {
-        expect(parsed.Key.includes('/sent/')).toBe(true);
-      }
+      if (submitReport) expect(parsed.Key).toContain('/sent/');
     });
 
     it('generates EMS product metadata reports through the Cumulus API', async () => {

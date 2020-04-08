@@ -156,7 +156,7 @@ describe('The SQS rule', () => {
           'completed'
         );
         expect(record.granuleId).toBe(granuleId);
-        expect(record.execution.includes(workflowName)).toBe(true);
+        expect(record.execution).toContain(workflowName);
       });
     });
 

@@ -67,7 +67,7 @@ function createTaskMarkdown(taskName) {
  */
 function createTasksDoc(tasks) {
   const tasksMarkdown = tasks.map(createTaskMarkdown).join('\n\n---\n\n');
-  const markdown = tasksHeader + tasksMarkdown;
+  const markdown = `${tasksHeader}${tasksMarkdown}\n`;
   return fs.writeFile(tasksOutputFilePath, markdown);
 }
 

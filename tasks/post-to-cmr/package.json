@@ -41,7 +41,7 @@
     "@cumulus/common": "1.21.0",
     "@cumulus/cumulus-message-adapter-js": "^1.1.0",
     "@cumulus/errors": "1.21.0",
-    "lodash.keyby": "^4.6.0"
+    "lodash": "4.17.15"
   },
   "devDependencies": {
     "@cumulus/cmr-client": "1.21.0",

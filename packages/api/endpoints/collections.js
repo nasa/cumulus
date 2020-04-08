@@ -3,7 +3,7 @@
 const router = require('express-promise-router')();
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { Search } = require('../es/search');
 const { addToLocalES, indexCollection } = require('../es/indexer');
 const models = require('../models');
@@ -24,6 +24,25 @@ async function list(req, res) {
     process.env.ES_INDEX
   );
   const result = await collection.query();
+  return res.send(result);
+}
+
+/**
+ * List all collections with active granules
+ * If time params are specified the query will return collections
+ * that have granules that have been updated in that time frame.
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function activeList(req, res) {
+  const collection = new Collection(
+    { queryStringParameters: req.query },
+    null,
+    process.env.ES_INDEX
+  );
+  const result = await collection.queryCollectionsWithActiveGranules();
   return res.send(result);
 }
 
@@ -161,5 +180,6 @@ router.put('/:name/:version', put);
 router.delete('/:name/:version', del);
 router.post('/', post);
 router.get('/', list);
+router.get('/active', activeList);
 
 module.exports = router;

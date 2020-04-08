@@ -1,9 +1,9 @@
 'use strict';
 
-const get = require('lodash.get');
+const get = require('lodash/get');
 const pMap = require('p-map');
 const { AttributeValue } = require('dynamodb-data-types');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const log = require('@cumulus/common/log');
 const indexer = require('../es/indexer');
 const { Search } = require('../es/search');

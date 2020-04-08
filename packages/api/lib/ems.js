@@ -1,6 +1,6 @@
 'use strict';
 
-const get = require('lodash.get');
+const get = require('lodash/get');
 const moment = require('moment');
 const path = require('path');
 const {
@@ -11,7 +11,7 @@ const {
   buildS3Uri,
   getTextObject
 } = require('@cumulus/aws-client/S3');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const log = require('@cumulus/common/log');
 const SftpClient = require('@cumulus/sftp-client');
 const { Collection } = require('../models');

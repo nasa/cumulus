@@ -7,8 +7,9 @@ const { sleep } = require('@cumulus/common/util');
 const { getWorkflowFileKey } = require('@cumulus/common/workflows');
 const { Rule } = require('@cumulus/api/models');
 
+const { invokeApi } = require('@cumulus/api-client');
+
 const {
-  api: apiTestUtils,
   addCollections,
   addProviders,
   addRulesWithPostfix,
@@ -149,7 +150,7 @@ describe('The Kinesis Replay API', () => {
         endTimestamp,
         startTimestamp
       };
-      const response = await apiTestUtils.callCumulusApi({
+      const response = await invokeApi({
         prefix: testConfig.stackName,
         payload: {
           httpMethod: 'POST',

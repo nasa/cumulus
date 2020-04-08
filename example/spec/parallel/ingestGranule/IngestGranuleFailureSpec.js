@@ -173,7 +173,7 @@ describe('The Ingest Granule failure workflow', () => {
         }
       }
 
-      expect(choiceVerified).toBe(true);
+      expect(choiceVerified).toBeTrue();
     });
 
     it('propagates the error message to CMA output for next step', async () => {

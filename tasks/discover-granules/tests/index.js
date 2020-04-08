@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const test = require('ava');
+const rewire = require('rewire');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const {
@@ -12,9 +13,20 @@ const {
 } = require('@cumulus/common/test-utils');
 const { promisify } = require('util');
 
-const { discoverGranules } = require('..');
+const discoverGranulesRewire = rewire('..');
+const discoverGranules = discoverGranulesRewire.discoverGranules;
 
 const readFile = promisify(fs.readFile);
+
+const checkGranuleHasNoDuplicateRewire = (granuleId, duplicateHandling, _) => {
+  if (granuleId === 'duplicate') {
+    if (duplicateHandling === 'error') {
+      throw new Error(`Duplicate GranuleID ${granuleId} encountered in DiscoverGranules with duplicateHandling set to 'error'`);
+    }
+    return false;
+  }
+  return granuleId;
+};
 
 async function assertDiscoveredGranules(t, output) {
   await validateOutput(t, output);
@@ -24,9 +36,15 @@ async function assertDiscoveredGranules(t, output) {
 }
 
 test.beforeEach(async (t) => {
+  process.env.oauth_provider = 'earthdata';
   const eventPath = path.join(__dirname, 'fixtures', 'mur.json');
   const rawEvent = await readFile(eventPath, 'utf8');
   t.context.event = JSON.parse(rawEvent);
+  t.context.filesByGranuleId = {
+    duplicate: {},
+    notDuplicate: {},
+    someOtherGranule: {}
+  };
 });
 
 test('discover granules sets the correct dataType for granules', async (t) => {
@@ -53,7 +71,7 @@ test('discover granules sets the correct dataType for granules', async (t) => {
 test('discover granules using FTP', async (t) => {
   const { event } = t.context;
 
-  event.config.collection.provider_path = '/granules/fake_granules';
+  event.config.collection.provider_path = 'granules/^fake_granules$';
   event.config.useList = true;
   event.config.provider = {
     id: 'MODAPS',
@@ -77,7 +95,7 @@ test('discover granules using FTP', async (t) => {
 test('discover granules using SFTP', async (t) => {
   const { event } = t.context;
 
-  event.config.collection.provider_path = 'granules/fake_granules';
+  event.config.collection.provider_path = 'granules/^fake_granules$';
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'sftp',
@@ -258,4 +276,149 @@ test('discover granules using S3 throws error when discovery fails',
       };
     });
     await t.throwsAsync(() => assert(t), { code: 'NoSuchBucket' });
+  });
+
+test.serial('handleDuplicates filters on duplicateHandling set to "skip"',
+  async (t) => {
+    let checkGranuleHasNoDuplicateRevert;
+    try {
+      const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
+      checkGranuleHasNoDuplicateRevert = discoverGranulesRewire.__set__('checkGranuleHasNoDuplicate', checkGranuleHasNoDuplicateRewire);
+      const actual = await handleDuplicates(t.context.filesByGranuleId, 'skip');
+      delete t.context.filesByGranuleId.duplicate;
+      t.deepEqual(actual, t.context.filesByGranuleId);
+    } finally {
+      checkGranuleHasNoDuplicateRevert();
+    }
+  });
+
+test.serial('handleDuplicates throws Error on duplicateHandling set to "error"',
+  async (t) => {
+    let checkGranuleHasNoDuplicateRevert;
+    try {
+      const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
+      checkGranuleHasNoDuplicateRevert = discoverGranulesRewire.__set__('checkGranuleHasNoDuplicate', checkGranuleHasNoDuplicateRewire);
+      await t.throwsAsync(
+        () => handleDuplicates(t.context.filesByGranuleId, 'error')
+      );
+    } finally {
+      checkGranuleHasNoDuplicateRevert();
+    }
+  });
+
+test('handleDuplicates throws Error on an invalid duplicateHandling configuration',
+  async (t) => {
+    const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
+    await t.throwsAsync(
+      () => handleDuplicates(t.context.filesByGranuleId, 'foobar')
+    );
+  });
+
+test.serial('handleDuplicates does not filter when duplicateHandling is set to "replace" or "version"',
+  async (t) => {
+    let checkGranuleHasNoDuplicateRevert;
+    try {
+      const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
+      checkGranuleHasNoDuplicateRevert = discoverGranulesRewire.__set__('checkGranuleHasNoDuplicate', checkGranuleHasNoDuplicateRewire);
+      const replaceActual = await handleDuplicates(t.context.filesByGranuleId, 'replace');
+      const versionActual = await handleDuplicates(t.context.filesByGranuleId, 'version');
+      t.deepEqual(replaceActual, t.context.filesByGranuleId);
+      t.deepEqual(versionActual, t.context.filesByGranuleId);
+    } finally {
+      checkGranuleHasNoDuplicateRevert();
+    }
+  });
+
+
+test.serial('filterDuplicates returns a set of filtered keys',
+  async (t) => {
+    let checkGranuleHasNoDuplicateRevert;
+    try {
+      const filterDuplicates = discoverGranulesRewire.__get__('filterDuplicates');
+      checkGranuleHasNoDuplicateRevert = discoverGranulesRewire.__set__('checkGranuleHasNoDuplicate', async (key) => {
+        if (key === 'duplicate') {
+          return false;
+        }
+        return key;
+      });
+
+      const actual = await filterDuplicates(['duplicate', 'key1', 'key2'], 'bogusHandlingValue');
+      t.deepEqual(actual, ['key1', 'key2']);
+    } finally {
+      checkGranuleHasNoDuplicateRevert();
+    }
+  });
+
+test.serial('checkGranuleHasNoDuplicate returns false when API lambda returns a granule',
+  async (t) => {
+    let granulesRevert;
+    try {
+      const checkGranuleHasNoDuplicate = discoverGranulesRewire.__get__('checkGranuleHasNoDuplicate');
+      granulesRevert = discoverGranulesRewire.__set__('granules', {
+        getGranule: async () => ({ statusCode: 200, body: '{}' })
+      });
+      const actual = await checkGranuleHasNoDuplicate('granuleId', '');
+      t.false(actual);
+    } finally {
+      granulesRevert();
+    }
+  });
+
+test.serial('checkGranuleHasNoDuplicate throws an error when API lambda returns a granule and duplicateHandling is set to "error"',
+  async (t) => {
+    let granulesRevert;
+    try {
+      const checkGranuleHasNoDuplicate = discoverGranulesRewire.__get__('checkGranuleHasNoDuplicate');
+      granulesRevert = discoverGranulesRewire.__set__('granules', {
+        getGranule: async () => ({ statusCode: 200, body: '{}' })
+      });
+      await t.throwsAsync(checkGranuleHasNoDuplicate('granuleId', 'error'));
+    } finally {
+      granulesRevert();
+    }
+  });
+
+test.serial('checkGranuleHasNoDuplicate returns a granuleId string when the API lambda returns a 404/Not Found error',
+  async (t) => {
+    let granulesRevert;
+    try {
+      const checkGranuleHasNoDuplicate = discoverGranulesRewire.__get__('checkGranuleHasNoDuplicate');
+      granulesRevert = discoverGranulesRewire.__set__('granules', {
+        getGranule: async () => ({ statusCode: 404, body: '{"error": "Not Found"}' })
+      });
+      const actual = await checkGranuleHasNoDuplicate('granuleId', '');
+      t.is(actual, 'granuleId');
+    } finally {
+      granulesRevert();
+    }
+  });
+
+test.serial('checkGranuleHasNoDuplicate throws an error if the API lambda throws an error other than 404/Not Found',
+  async (t) => {
+    let granulesRevert;
+    try {
+      const checkGranuleHasNoDuplicate = discoverGranulesRewire.__get__('checkGranuleHasNoDuplicate');
+      granulesRevert = discoverGranulesRewire.__set__('granules', {
+        getGranule: async () => {
+          throw new Error('Test Error');
+        }
+      });
+      await t.throwsAsync(() => checkGranuleHasNoDuplicate('granuleId', ''));
+    } finally {
+      granulesRevert();
+    }
+  });
+
+test.serial('checkGranuleHasNoDuplicate throws an error on an unexpected API lambda return',
+  async (t) => {
+    let granulesRevert;
+    try {
+      const checkGranuleHasNoDuplicate = discoverGranulesRewire.__get__('checkGranuleHasNoDuplicate');
+      granulesRevert = discoverGranulesRewire.__set__('granules', {
+        getGranule: async () => ({ body: '{"statusCode": 500}' })
+      });
+      await t.throwsAsync(() => checkGranuleHasNoDuplicate('granuleId', ''));
+    } finally {
+      granulesRevert();
+    }
   });

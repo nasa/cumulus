@@ -4,9 +4,8 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { InvalidArgument } = require('@cumulus/errors');
 const { promisify } = require('util');
 
-const get = require('lodash.get');
-const isUndefined = require('lodash.isundefined');
-const cloneDeep = require('lodash.clonedeep');
+const get = require('lodash/get');
+const cloneDeep = require('lodash/cloneDeep');
 
 const {
   CMR
@@ -105,10 +104,13 @@ async function getEntryTitle(config, metadata, isUmmG) {
   // and we should halt.
   // Either the code is faulty or the provider is trying to ingest granules
   // into a collection that doesn't exist
-  if (result.length === 0 || isUndefined(result[0].dataset_id)) {
+  const datasetId = get(result, '[0].dataset_id');
+
+  if (datasetId === undefined) {
     throw new RecordDoesNotExist(`Unable to query parent collection entry title using short name ${shortName} and version ${version}`);
   }
-  return result[0].dataset_id;
+
+  return datasetId;
 }
 
 /**
@@ -123,7 +125,7 @@ async function getEntryTitle(config, metadata, isUmmG) {
 async function generatePath(config, metadata, isUmmG) {
   const providerId = get(config.cmr, 'provider');
   // Check if providerId is defined
-  if (isUndefined(providerId)) {
+  if (providerId === undefined) {
     throw new InvalidArgument('Provider not supplied in configuration. Unable to construct path');
   }
   const entryTitle = await getEntryTitle(config, metadata, isUmmG);
@@ -154,7 +156,7 @@ async function generateHyraxUrl(config, metadata, isUmmG) {
 function addHyraxUrlToUmmG(metadata, hyraxUrl) {
   const metadataCopy = cloneDeep(metadata);
 
-  if (isUndefined(metadataCopy.RelatedUrls)) {
+  if (metadataCopy.RelatedUrls === undefined) {
     metadataCopy.RelatedUrls = [];
   }
   const url = {
@@ -246,7 +248,7 @@ async function updateSingleGranule(config, granuleObject) {
   // Read in the metadata file
   const metadataFile = granuleObject.files.find((f) => isCMRFilename(f.filename));
   // If there is no metadata file, error out.
-  if (isUndefined(metadataFile)) {
+  if (metadataFile === undefined) {
     throw new RecordDoesNotExist('There is no recogizable CMR metadata file in this granule object (*.cmr.xml or *.cmr.json)');
   }
   const { Bucket, Key } = parseS3Uri(metadataFile.filename);

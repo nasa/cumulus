@@ -1,7 +1,7 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const get = require('lodash.get');
+const get = require('lodash/get');
 const Stats = require('../es/stats');
 
 /**

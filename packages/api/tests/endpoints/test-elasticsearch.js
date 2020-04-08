@@ -2,7 +2,7 @@
 
 const request = require('supertest');
 const test = require('ava');
-const get = require('lodash.get');
+const get = require('lodash/get');
 const sinon = require('sinon');
 const awsServices = require('@cumulus/aws-client/services');
 const {

@@ -1,7 +1,7 @@
 'use strict';
 
 const { randomId } = require('@cumulus/common/test-utils');
-const get = require('lodash.get');
+const get = require('lodash/get');
 const {
   JsonWebTokenError,
   TokenExpiredError

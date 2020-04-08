@@ -1,9 +1,9 @@
 'use strict';
 
-const omit = require('lodash.omit');
+const omit = require('lodash/omit');
 const test = require('ava');
 const request = require('supertest');
-const cloneDeep = require('lodash.clonedeep');
+const cloneDeep = require('lodash/cloneDeep');
 const awsServices = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');

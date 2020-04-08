@@ -1,8 +1,8 @@
 'use strict';
 
 const Ajv = require('ajv');
-const get = require('lodash.get');
-const set = require('lodash.set');
+const get = require('lodash/get');
+const set = require('lodash/set');
 const { sns } = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
 const Rule = require('../models/rules');
@@ -14,6 +14,7 @@ const { lookupCollectionInEvent, queueMessageForRule } = require('../lib/rulesHe
  * the `rule.value` field, then filters based on any collection name and version in the queryParams.
  *
  * @param {Object} queryParams - any/all query params extracted from event object
+ * @param {string} originalMessageSource - "kinesis" or "sns"
  * @returns {Array} List of zero or more rules found from table scan
  */
 async function getRules(queryParams, originalMessageSource) {

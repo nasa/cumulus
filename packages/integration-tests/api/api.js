@@ -1,110 +1,7 @@
 'use strict';
 
-const cloneDeep = require('lodash.clonedeep');
-const pRetry = require('p-retry');
-const { lambda } = require('@cumulus/aws-client/services');
-const launchpad = require('@cumulus/common/launchpad');
-const {
-  models: { AccessToken },
-  testUtils: { fakeAccessTokenFactory },
-  tokenUtils: { createJwtToken }
-} = require('@cumulus/api');
-const { loadConfig } = require('../config');
-
-function invokeApi(prefix, payload) {
-  return pRetry(
-    async () => {
-      const apiOutput = await lambda().invoke({
-        Payload: JSON.stringify(payload),
-        FunctionName: `${prefix}-ApiEndpoints`
-      }).promise();
-
-      const outputPayload = JSON.parse(apiOutput.Payload);
-
-      if (outputPayload.errorMessage
-        && outputPayload.errorMessage.includes('Task timed out')) {
-        throw new Error(`Error calling ${payload.path}: ${outputPayload.errorMessage}`);
-      }
-
-      return outputPayload;
-    },
-    {
-      retries: 3,
-      maxTimeout: 10000,
-      onFailedAttempt: (error) => console.log(`API invoke error: ${error.message}. Retrying.`)
-    }
-  );
-}
-
-async function getApiOauthProvider(prefix) {
-  if (process.env.OAUTH_PROVIDER) {
-    return process.env.OAUTH_PROVIDER;
-  }
-  const config = await lambda().getFunctionConfiguration({ FunctionName: `${prefix}-ApiEndpoints` }).promise();
-  return config.Environment.Variables.OAUTH_PROVIDER;
-}
-
-/**
- * Call the Cumulus API by invoking the Lambda function that backs the API
- * Gateway endpoint.
- *
- * Intended for use with integration tests.  Will invoke the function in AWS
- * Lambda.  This function will handle authorization of the request.
- *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
- *   backs the API Gateway endpoint.  Does not include the stack prefix in the
- *   name.
- * @param {string} params.payload - the payload to send to the Lambda function.
- *   See https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
- * @returns {Promise<Object>} - the parsed payload of the response.  See
- *   https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format
- */
-async function callCumulusApi({ prefix, payload: userPayload }) {
-  const payload = cloneDeep(userPayload);
-
-  process.env.AccessTokensTable = `${prefix}-AccessTokensTable`;
-  const accessTokenModel = new AccessToken();
-
-  let authToken;
-  const provider = await getApiOauthProvider(prefix);
-
-  if (provider === 'launchpad') {
-    authToken = await launchpad.getLaunchpadToken({
-      passphrase: process.env.LAUNCHPAD_PASSPHRASE,
-      api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1/gettoken',
-      certificate: 'launchpad.pfx'
-    });
-  } else {
-    const {
-      accessToken,
-      refreshToken,
-      expirationTime
-    } = fakeAccessTokenFactory();
-    await accessTokenModel.create({ accessToken, refreshToken });
-
-    const { apiUsername } = await loadConfig();
-
-    authToken = createJwtToken({
-      accessToken,
-      expirationTime,
-      username: apiUsername
-    });
-  }
-  // Add authorization header to the request
-  payload.headers = payload.headers || {};
-  payload.headers.Authorization = `Bearer ${authToken}`;
-
-  let apiOutput;
-  try {
-    apiOutput = await invokeApi(prefix, payload);
-  } finally {
-    if (provider !== 'launchpad') {
-      await accessTokenModel.delete({ accessToken: authToken });
-    }
-  }
-  return apiOutput;
-}
+const { invokeApi } = require('@cumulus/api-client/cumulusApiClient');
+const { deprecate } = require('@cumulus/common/util');
 
 /**
  * Check API Lambda response for errors.
@@ -137,7 +34,7 @@ function verifyCumulusApiResponse(response, acceptedCodes = []) {
  * @returns {Promise<Object>} - the AsyncOperation fetched by the API
  */
 async function getAsyncOperation({ prefix, id }) {
-  const response = await callCumulusApi({
+  const response = await invokeApi({
     prefix: prefix,
     payload: {
       httpMethod: 'GET',
@@ -157,7 +54,7 @@ async function getAsyncOperation({ prefix, id }) {
  * @returns {Promise<Object>} - the granule fetched by the API
  */
 async function postBulkDelete({ prefix, granuleIds }) {
-  const response = await callCumulusApi({
+  const response = await invokeApi({
     prefix: prefix,
     payload: {
       httpMethod: 'POST',
@@ -181,7 +78,7 @@ async function postBulkDelete({ prefix, granuleIds }) {
  * @returns {Promise<Object>} - the delete confirmation from the API
  */
 async function deletePdr({ prefix, pdr }) {
-  const response = await callCumulusApi({
+  const response = await invokeApi({
     prefix: prefix,
     payload: {
       httpMethod: 'DELETE',
@@ -200,7 +97,7 @@ async function deletePdr({ prefix, pdr }) {
  * @returns {Promise<Object>} - the logs fetched by the API
  */
 async function getLogs({ prefix }) {
-  const response = await callCumulusApi({
+  const response = await invokeApi({
     prefix: prefix,
     payload: {
       httpMethod: 'GET',
@@ -220,7 +117,7 @@ async function getLogs({ prefix }) {
  * @returns {Promise<Object>} - the logs fetched by the API
  */
 async function getExecutionLogs({ prefix, executionName }) {
-  const response = await callCumulusApi({
+  const response = await invokeApi({
     prefix: prefix,
     payload: {
       httpMethod: 'GET',
@@ -240,7 +137,9 @@ async function getExecutionLogs({ prefix, executionName }) {
  * @returns {Promise<Object>} - the POST confirmation from the API
  */
 async function addProviderApi({ prefix, provider }) {
-  const response = await callCumulusApi({
+  deprecate('@cumulus/integration-tests/addProviderApi',
+    '1.21.0', '@cumulus/api-client/providers.createProvider');
+  const response = await invokeApi({
     prefix: prefix,
     payload: {
       httpMethod: 'POST',
@@ -263,7 +162,9 @@ async function addProviderApi({ prefix, provider }) {
  * @returns {Promise<Object>} - the list of providers fetched by the API
  */
 async function getProviders({ prefix }) {
-  const response = await callCumulusApi({
+  deprecate('@cumulus/integration-tests/getProviders',
+    '1.21.0', '@cumulus/api-client/providers.getProviders');
+  const response = await invokeApi({
     prefix: prefix,
     payload: {
       httpMethod: 'GET',
@@ -283,7 +184,9 @@ async function getProviders({ prefix }) {
  * @returns {Promise<Object>} - the provider fetched by the API
  */
 async function getProvider({ prefix, providerId }) {
-  const response = await callCumulusApi({
+  deprecate('@cumulus/integration-tests/getProvider',
+    '1.21.0', '@cumulus/api-client/providers.getProvider');
+  const response = await invokeApi({
     prefix: prefix,
     payload: {
       httpMethod: 'GET',
@@ -302,7 +205,9 @@ async function getProvider({ prefix, providerId }) {
  * @returns {Promise<Object>} - the list of collections fetched by the API
  */
 async function getCollections({ prefix }) {
-  const response = await callCumulusApi({
+  deprecate('@cumulus/integration-tests/getCollections',
+    '1.21.0', '@cumulus/api-client/collections.getCollections');
+  const response = await invokeApi({
     prefix: prefix,
     payload: {
       httpMethod: 'GET',
@@ -323,7 +228,9 @@ async function getCollections({ prefix }) {
  * @returns {Promise<Object>} - the collection fetched by the API
  */
 async function getCollection({ prefix, collectionName, collectionVersion }) {
-  const response = await callCumulusApi({
+  deprecate('@cumulus/integration-tests/getCollection',
+    '1.21.0', '@cumulus/api-client/collections.getCollection');
+  const response = await invokeApi({
     prefix: prefix,
     payload: {
       httpMethod: 'GET',
@@ -342,7 +249,7 @@ async function getCollection({ prefix, collectionName, collectionVersion }) {
  * @returns {Promise<Object>} - the list of workflows fetched by the API
  */
 async function getWorkflows({ prefix }) {
-  const response = await callCumulusApi({
+  const response = await invokeApi({
     prefix: prefix,
     payload: {
       httpMethod: 'GET',
@@ -362,7 +269,7 @@ async function getWorkflows({ prefix }) {
  * @returns {Promise<Object>} - the workflow fetched by the API
  */
 async function getWorkflow({ prefix, workflowName }) {
-  const response = await callCumulusApi({
+  const response = await invokeApi({
     prefix: prefix,
     payload: {
       httpMethod: 'GET',
@@ -391,7 +298,7 @@ async function updateCollection({ prefix, collection, updateParams }) {
     collectionVersion: collection.version
   })).body);
 
-  const response = await callCumulusApi({
+  const response = await invokeApi({
     prefix: prefix,
     payload: {
       httpMethod: 'PUT',
@@ -421,7 +328,7 @@ async function updateCollection({ prefix, collection, updateParams }) {
  * @returns {Promise<Object>} - the updated provider from the API
  */
 async function updateProvider({ prefix, provider, updateParams }) {
-  const response = await callCumulusApi({
+  const response = await invokeApi({
     prefix: prefix,
     payload: {
       httpMethod: 'PUT',
@@ -437,7 +344,7 @@ async function updateProvider({ prefix, provider, updateParams }) {
 }
 
 module.exports = {
-  callCumulusApi,
+  invokeApi,
   getAsyncOperation,
   deletePdr,
   getExecutionLogs,

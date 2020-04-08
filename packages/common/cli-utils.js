@@ -2,7 +2,7 @@
 
 'use strict';
 
-const kebabCase = require('lodash.kebabcase');
+const kebabCase = require('lodash/kebabCase');
 
 /**
  * Find missing required parameters from cli commander command

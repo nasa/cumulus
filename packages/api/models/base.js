@@ -1,6 +1,6 @@
 'use strict';
 
-const get = require('lodash.get');
+const get = require('lodash/get');
 const Ajv = require('ajv');
 const pWaitFor = require('p-wait-for');
 const awsServices = require('@cumulus/aws-client/services');
@@ -223,7 +223,8 @@ class Manager {
     return DynamoDb.get({
       tableName: this.tableName,
       item,
-      client: this.dynamodbDocClient
+      client: this.dynamodbDocClient,
+      getParams: { ConsistentRead: true }
     });
   }
 
