@@ -14,7 +14,7 @@
     "verbose": true
   },
   "scripts": {
-    "test": "ava && for x in lambdas/*; do BASE=$PWD && cd $x && npm run test && cd $BASE; done",
+    "test": "ava && for x in `python -c 'import os; import sys; [print(os.path.realpath(path)) for path in sys.argv[1:]]' lambdas/*`; do BASE=$PWD && cd $x && npm run test && cd $BASE; done",
     "int-test": "jasmine && npm run parallel-tests",
     "parallel-tests": "sh scripts/tests-parallel.sh",
     "redeploy-test": "jasmine spec/standalone/redeployment/*.js",
@@ -28,7 +28,7 @@
     "deploy-iam": "kes cf deploy --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/iam  --profile $AWS_PROFILE",
     "deploy-db": "kes cf deploy --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/db  --profile $AWS_PROFILE",
     "prepare": "for x in lambdas/*; do cd $x && npm run prepare; done",
-    "python-lint": "for x in lambdas/*; do BASE=$PWD && cd $x && npm run python-lint && cd $BASE; done"
+    "python-lint": "for x in `python -c 'import os; import sys; [print(os.path.realpath(path)) for path in sys.argv[1:]]' lambdas/*`; do BASE=$PWD && cd $x && npm run python-lint && cd $BASE; done"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
