@@ -15,13 +15,13 @@ const granulesApi = require('@cumulus/api-client/granules');
  * @returns {Promise<Object>} - the granule fetched by the API
  */
 async function getGranule(params) {
-  deprecate('@cumulus/integration-tests/granules.getGranule', '1.21.0', '@cumulus/cumulus-api-client/granules.getGranule');
+  deprecate('@cumulus/integration-tests/granules.getGranule', '1.21.0', '@cumulus/api-client/granules.getGranule');
   return granulesApi.getGranule(params);
 }
 
 
 async function waitForGranule(params) {
-  deprecate('@cumulus/integration-tests/granules.waitForGranule', '1.21.0', '@cumulus/cumulus-api-client/granules.waitForGranule');
+  deprecate('@cumulus/integration-tests/granules.waitForGranule', '1.21.0', '@cumulus/api-client/granules.waitForGranule');
   return granulesApi.waitForGranule(params);
 }
 
@@ -36,7 +36,7 @@ async function waitForGranule(params) {
  * @returns {Promise<Object>} - the granule fetched by the API
  */
 async function reingestGranule(params) {
-  deprecate('@cumulus/integration-tests/granules.reingestGranule', '1.21.0', '@cumulus/cumulus-api-client/granules.reingestGranule');
+  deprecate('@cumulus/integration-tests/granules.reingestGranule', '1.21.0', '@cumulus/api-client/granules.reingestGranule');
   return granulesApi.reingestGranule(params);
 }
 
@@ -51,7 +51,7 @@ async function reingestGranule(params) {
  * @returns {Promise<Object>} - the granule fetched by the API
  */
 async function removeFromCMR(params) {
-  deprecate('@cumulus/integration-tests/granules.removeFromCMR', '1.21.0', '@cumulus/cumulus-api-client/granules.removeFromCMR');
+  deprecate('@cumulus/integration-tests/granules.removeFromCMR', '1.21.0', '@cumulus/api-client/granules.removeFromCMR');
   return granulesApi.removeFromCMR(params);
 }
 
@@ -67,7 +67,7 @@ async function removeFromCMR(params) {
  * @returns {Promise<Object>} - the granule fetched by the API
  */
 async function applyWorkflow(params) {
-  deprecate('@cumulus/integration-tests/granules.applyWorkflow', '1.21.0', '@cumulus/cumulus-api-client/granules.applyWorkflow');
+  deprecate('@cumulus/integration-tests/granules.applyWorkflow', '1.21.0', '@cumulus/api-client/granules.applyWorkflow');
   return granulesApi.applyWorkflow(params);
 }
 
@@ -82,7 +82,7 @@ async function applyWorkflow(params) {
  * @returns {Promise<Object>} - the delete confirmation from the API
  */
 async function deleteGranule(params) {
-  deprecate('@cumulus/integration-tests/granules.deleteGranule', '1.21.0', '@cumulus/cumulus-api-client/granules.deleteGranule');
+  deprecate('@cumulus/integration-tests/granules.deleteGranule', '1.21.0', '@cumulus/api-client/granules.deleteGranule');
   return granulesApi.deleteGranule(params);
 }
 
@@ -98,7 +98,7 @@ async function deleteGranule(params) {
  * @returns {Promise<Object>} - the move response from the API
  */
 async function moveGranule(params) {
-  deprecate('@cumulus/integration-tests/granules.moveGranule', '1.21.0', '@cumulus/cumulus-api-client/granules.moveGranule');
+  deprecate('@cumulus/integration-tests/granules.moveGranule', '1.21.0', '@cumulus/api-client/granules.moveGranule');
   return granulesApi.moveGranule(params);
 }
 
@@ -113,13 +113,13 @@ async function moveGranule(params) {
  * @returns {Promise<Object>} - the delete confirmation from the API
  */
 async function removePublishedGranule(params) {
-  deprecate('@cumulus/integration-tests/granules.removePublishedGranule', '1.21.0', '@cumulus/cumulus-api-client/granules.removePublishedGranule');
+  deprecate('@cumulus/integration-tests/granules.removePublishedGranule', '1.21.0', '@cumulus/api-client/granules.removePublishedGranule');
   return granulesApi.removePublishedGranule(params);
 }
 
 
 async function listGranules(params) {
-  deprecate('@cumulus/integration-tests/granules.listGranules', '1.21.0', '@cumulus/cumulus-api-client/granules.listGranules');
+  deprecate('@cumulus/integration-tests/granules.listGranules', '1.21.0', '@cumulus/api-client/granules.listGranules');
   return granulesApi.listGranules(params);
 }
 
