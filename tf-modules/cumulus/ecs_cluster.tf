@@ -1,4 +1,5 @@
 resource "aws_iam_role" "ecs_cluster_instance" {
+  name = "${var.prefix}_ecs_cluster_instance"
   assume_role_policy   = data.aws_iam_policy_document.ec2_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
 
