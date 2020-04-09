@@ -1,6 +1,7 @@
 # Background Processing Watcher
 
 resource "aws_cloudwatch_event_rule" "background_processing_watcher" {
+  name = "${var.prefix}_background_processing_watcher"
   schedule_expression = "rate(1 minute)"
   tags                = var.tags
 }
@@ -33,6 +34,7 @@ resource "aws_lambda_permission" "generic_lambda" {
 # sqsMessageConsumer Watcher
 
 resource "aws_cloudwatch_event_rule" "sqs_message_consumer_watcher" {
+  name = "${var.prefix}_sqs_message_consumer_watcher"
   schedule_expression = "rate(1 minute)"
   tags                = var.tags
 }
