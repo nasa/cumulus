@@ -9,6 +9,8 @@ const isNumber = require('lodash/isNumber');
 const isString = require('lodash/isString');
 const { PDRParsingError } = require('@cumulus/errors');
 
+const supportedChecksumTypes = ['CKSUM', 'MD5'];
+
 // If updating this mapping, please update the related documentation
 // at docs/workflow_tasks/parse_pdr.md
 const pdrToCnmMap = {
@@ -39,6 +41,35 @@ function getItem(spec, pdrName, name, must = true) {
 }
 
 /**
+ * Validate that checksum info from the PDR includes neither or both of a type and value, and
+ * that the type is a supported algorithm, and the value is a valid checksum value for the type.
+ *
+ * @param {string|number} checksum - checksum value
+ * @param {string} checksumType - checksum type (CKSUM & MD5 supported)
+ *
+ * @throws {PDRParsingError} - On failing to validate checksum information.
+ */
+function validateChecksumInfo(checksum, checksumType) {
+  // Make sure that both checksumType and checksum are set
+  if (checksum && !checksumType) throw new PDRParsingError('MISSING FILE_CKSUM_TYPE PARAMETER');
+  if (checksumType) {
+    if (!checksum) throw new PDRParsingError('MISSING FILE_CKSUM_VALUE PARAMETER');
+
+    // Make sure that the checksumType is valid
+    if (!supportedChecksumTypes.includes(checksumType)) {
+      throw new PDRParsingError(`UNSUPPORTED CHECKSUM TYPE: ${checksumType}`);
+    }
+    // Make sure that the checksum is valid
+    if ((checksumType === 'CKSUM') && (!isNumber(checksum))) {
+      throw new PDRParsingError(`Expected CKSUM value to be a number: ${checksum}`);
+    }
+    if ((checksumType === 'MD5') && (!isString(checksum))) {
+      throw new PDRParsingError(`Expected MD5 value to be a string: ${checksum}`);
+    }
+  }
+}
+
+/**
  * Makes sure that a FILE Spec has all the required files and returns
  * the content as an object. Throws error if anything is missing
  * For more info refer to https://github.com/nasa/cumulus-api/issues/104#issuecomment-285744333
@@ -66,33 +97,19 @@ function parseSpec(pdrName, spec) {
     }
   }
 
-  if (checksumType || checksum) {
-    // Make sure that both checksumType and checksum are set
-    if (!checksumType) throw new PDRParsingError('MISSING FILE_CKSUM_TYPE PARAMETER');
-    if (!checksum) throw new PDRParsingError('MISSING FILE_CKSUM_VALUE PARAMETER');
-
-    // Make sure that the checksumType is valid
-    if (!['CKSUM', 'MD5'].includes(checksumType)) {
-      throw new PDRParsingError(`UNSUPPORTED CHECKSUM TYPE: ${checksumType}`);
-    }
-
-    // Make sure that the checksum is valid
-    if ((checksumType === 'CKSUM') && (!isNumber(checksum))) {
-      throw new PDRParsingError(`Expected CKSUM value to be a number: ${checksum}`);
-    }
-    if ((checksumType === 'MD5') && (!isString(checksum))) {
-      throw new PDRParsingError(`Expected MD5 value to be a string: ${checksum}`);
-    }
-  }
-
   const parsedSpec = {
     path,
     size: fileSize,
     name: filename,
     type: pdrToCnmMap[fileType]
   };
-  if (checksumType) parsedSpec.checksumType = checksumType;
-  if (checksum) parsedSpec.checksum = checksum;
+
+  if (checksum || checksumType) {
+    validateChecksumInfo(checksum, checksumType);
+    parsedSpec.checksumType = checksumType;
+    parsedSpec.checksum = checksum;
+  }
+
   return parsedSpec;
 }
 module.exports.parseSpec = parseSpec;
