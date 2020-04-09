@@ -178,6 +178,9 @@ describe('The EMS report', () => {
         // ingest a granule but not publish it to CMR
         ingestAndPublishGranule(config, testSuffix, testDataFolder, false)
       ]);
+
+      // wait until records searchable in elasticsearch
+      await waitForGranuleRecordsInList(config.stackName, ingestedGranuleIds);
     } catch (e) {
       beforeAllError = e;
     }
@@ -236,8 +239,6 @@ describe('The EMS report', () => {
       const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
       AWS.config.update({ region: region });
 
-      // wait until records searchable in elasticsearch
-      await waitForGranuleRecordsInList(config.stackName, ingestedGranuleIds);
       const endTime = moment.utc().add(1, 'days').startOf('day').format();
       const startTime = moment.utc().startOf('day').format();
 
