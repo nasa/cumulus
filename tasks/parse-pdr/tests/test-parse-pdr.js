@@ -1,7 +1,6 @@
 'use strict';
 
 const test = require('ava');
-const path = require('path');
 const {
   recursivelyDeleteS3Bucket,
   s3
@@ -18,7 +17,7 @@ const { streamTestData } = require('@cumulus/test-data');
 const { parsePdr } = require('..');
 
 test.before(async (t) => {
-  const testBucket = `internal-bucket-${randomString().slice(0, 6)}`
+  const testBucket = `internal-bucket-${randomString().slice(0, 6)}`;
   await s3().createBucket({ Bucket: testBucket }).promise();
   t.context.stackName = `stack-${randomString().slice(0, 6)}`;
   t.context.collectionConfigStore = new CollectionConfigStore(
@@ -29,7 +28,7 @@ test.before(async (t) => {
     name: 'MOD09GQ',
     granuleIdExtraction: '^(.*)\.hdf'
   };
-  await t.context.collectionConfigStore.put('MOD09GQ', '006', collectionConfig); 
+  await t.context.collectionConfigStore.put('MOD09GQ', '006', collectionConfig);
 
   t.context.payload = {
     config: {
@@ -47,7 +46,7 @@ test.before(async (t) => {
         path: '/pdrs'
       }
     }
-  }; 
+  };
 });
 
 test.after.always(async (t) => {

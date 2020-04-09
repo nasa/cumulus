@@ -40,7 +40,7 @@ const getItem = (spec, pdrName, name, must = true) => {
   }
 
   return null;
-}
+};
 
 /**
  * Validate that checksum info from the PDR includes neither or both of a type and value, and
@@ -69,7 +69,7 @@ const validateChecksumInfo = (checksum, checksumType) => {
       throw new PDRParsingError(`Expected MD5 value to be a string: ${checksum}`);
     }
   }
-}
+};
 
 /**
  * Makes sure that a FILE Spec has all the required files and returns
@@ -81,16 +81,16 @@ const validateChecksumInfo = (checksum, checksumType) => {
  * @returns {Object} throws error if failed
  */
 const parseSpec = (pdrName, spec) => {
-  const get = getItem.bind(null, spec, pdrName);
+  const getter = getItem.bind(null, spec, pdrName);
 
   // check each file_spec has DIRECTORY_ID, FILE_ID, FILE_SIZE
-  const path = get('DIRECTORY_ID');
-  const filename = get('FILE_ID');
-  const fileSize = get('FILE_SIZE');
-  const fileType = get('FILE_TYPE');
+  const dirPath = getter('DIRECTORY_ID');
+  const filename = getter('FILE_ID');
+  const fileSize = getter('FILE_SIZE');
+  const fileType = getter('FILE_TYPE');
 
-  const checksumType = get('FILE_CKSUM_TYPE', false);
-  const checksum = get('FILE_CKSUM_VALUE', false);
+  const checksumType = getter('FILE_CKSUM_TYPE', false);
+  const checksum = getter('FILE_CKSUM_VALUE', false);
 
   // Validate fileType is in the mapping
   if (fileType) {
@@ -100,7 +100,7 @@ const parseSpec = (pdrName, spec) => {
   }
 
   const parsedSpec = {
-    path,
+    path: dirPath,
     size: fileSize,
     name: filename,
     type: pdrToCnmMap[fileType]
@@ -113,7 +113,7 @@ const parseSpec = (pdrName, spec) => {
   }
 
   return parsedSpec;
-}
+};
 
 /**
  * Extract a granuleId from a filename
@@ -132,11 +132,11 @@ const extractGranuleId = (fileName, regex) => {
     return match[1];
   }
   return fileName;
-}
+};
 
 /**
  * Convert PDR FILE_GROUP to granule object.
- * 
+ *
  * @param {Object} fileGroup - PDR FILE_GROUP object
  * @param {string} pdrName - name of the PDR for error reporting
  * @param {Object} collectionConfigStore - collectionConfigStore
@@ -167,7 +167,7 @@ const convertFileGroupToGranule = async (fileGroup, pdrName, collectionConfigSto
     granuleId: extractGranuleId(files[0].name, collectionConfig.granuleIdExtraction),
     granuleSize: files.reduce((total, file) => total + file.size, 0)
   };
-}
+};
 
 const buildPdrDocument = (rawPdr) => {
   if (rawPdr.trim().length === 0) throw new Error('PDR file had no contents');
