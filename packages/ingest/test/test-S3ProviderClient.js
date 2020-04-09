@@ -85,7 +85,7 @@ test.serial('S3ProviderClient.sync throws an error if the source file does not e
   const s3ProviderClient = new S3ProviderClient({ bucket: t.context.sourceBucket });
 
   await t.throwsAsync(
-    () => s3ProviderClient.sync('non-existent', t.context.targetBucket, 'target.json'),
+    s3ProviderClient.sync('non-existent', t.context.targetBucket, 'target.json'),
     {
       instanceOf: errors.FileNotFound,
       message: `Source file not found s3://${t.context.sourceBucket}/non-existent`
