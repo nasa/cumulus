@@ -1,9 +1,10 @@
 'use strict';
 
 const fs = require('fs');
-const { basename } = require('path');
+const { basename, dirname } = require('path');
 const test = require('ava');
 const S3 = require('@cumulus/aws-client/S3');
+const errors = require('@cumulus/errors');
 const { randomString } = require('@cumulus/common/test-utils');
 const S3ProviderClient = require('../S3ProviderClient');
 
@@ -47,6 +48,15 @@ test('S3ProviderClient constructor throws error if no bucket specified', (t) => 
   );
 });
 
+test.serial('S3ProviderClient.list lists objects from the bucket root with paths', async (t) => {
+  const s3ProviderClient = new S3ProviderClient({ bucket: t.context.sourceBucket });
+
+  const files = await s3ProviderClient.list('');
+  t.is(files.length, 1);
+  t.is(files[0].name, basename(t.context.sourceKey));
+  t.is(files[0].path, dirname(t.context.sourceKey));
+});
+
 test.serial('S3ProviderClient.list lists objects under a path in a bucket', async (t) => {
   const s3ProviderClient = new S3ProviderClient({ bucket: t.context.sourceBucket });
 
@@ -55,7 +65,7 @@ test.serial('S3ProviderClient.list lists objects under a path in a bucket', asyn
   t.is(files[0].name, basename(t.context.sourceKey));
 });
 
-test.serial('S3ProviderClient.downloads downloads a file to local disk', async (t) => {
+test.serial('S3ProviderClient.download downloads a file to local disk', async (t) => {
   const s3ProviderClient = new S3ProviderClient({ bucket: t.context.sourceBucket });
 
   await s3ProviderClient.download(t.context.sourceKey, localPath);
@@ -76,6 +86,9 @@ test.serial('S3ProviderClient.sync throws an error if the source file does not e
 
   await t.throwsAsync(
     () => s3ProviderClient.sync('non-existent', t.context.targetBucket, 'target.json'),
-    `Source file not found s3://${t.context.sourceBucket}/non-existent`
+    {
+      instanceOf: errors.FileNotFound,
+      message: `Source file not found s3://${t.context.sourceBucket}/non-existent`
+    }
   );
 });
