@@ -1,5 +1,5 @@
 resource "aws_iam_role" "ecs_cluster_instance" {
-  name = "${var.prefix}_ecs_cluster_instance"
+  name = "${var.prefix}_ecs_cluster_instance_role"
   assume_role_policy   = data.aws_iam_policy_document.ec2_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
 
@@ -150,7 +150,7 @@ resource "aws_iam_role_policy_attachment" "NGAPProtAppInstanceMinimalPolicy" {
 }
 
 resource "aws_iam_instance_profile" "ecs_cluster_instance" {
-  name = "${var.prefix}-ecs"
+  name = "${var.prefix}_ecs_cluster_profile"
   role = aws_iam_role.ecs_cluster_instance.id
 }
 
