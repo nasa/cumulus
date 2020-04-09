@@ -48,6 +48,7 @@ resource "aws_cloudwatch_event_rule" "daily_ems_distribution_report" {
 }
 
 resource "aws_cloudwatch_event_target" "daily_ems_distribution_report" {
+  target_id = "ems_distribution_lambda_target"
   rule = aws_cloudwatch_event_rule.daily_ems_distribution_report.name
   arn  = aws_lambda_function.ems_distribution_report.arn
 }
@@ -109,6 +110,7 @@ resource "aws_cloudwatch_event_rule" "daily_ems_product_metadata_report" {
 }
 
 resource "aws_cloudwatch_event_target" "daily_ems_product_metadata_report" {
+  target_id = "ems_product_lambda_target"
   rule = aws_cloudwatch_event_rule.daily_ems_product_metadata_report.name
   arn  = aws_lambda_function.ems_product_metadata_report.arn
 }
@@ -178,6 +180,7 @@ resource "aws_cloudwatch_event_rule" "daily_ems_ingest_report" {
 }
 
 resource "aws_cloudwatch_event_target" "daily_ems_ingest_report" {
+  target_id = "ems_ingest_lambda_target"
   rule = aws_cloudwatch_event_rule.daily_ems_ingest_report.name
   arn  = aws_lambda_function.ems_ingest_report.arn
 }

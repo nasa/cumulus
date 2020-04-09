@@ -55,6 +55,7 @@ resource "aws_cloudwatch_event_rule" "cumulus_test_cleanup" {
 }
 
 resource "aws_cloudwatch_event_target" "cumulus_test_cleanup" {
+  target_id = "cleanup_lambda_target"
   rule = aws_cloudwatch_event_rule.cumulus_test_cleanup.name
   arn  = aws_lambda_function.cumulus_test_cleanup.arn
 }

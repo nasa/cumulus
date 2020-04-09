@@ -7,6 +7,7 @@ resource "aws_cloudwatch_event_rule" "background_processing_watcher" {
 }
 
 resource "aws_cloudwatch_event_target" "background_processing_watcher" {
+  target_id = "throttle_lambda_target"
   rule = aws_cloudwatch_event_rule.background_processing_watcher.name
   arn  = aws_lambda_function.sqs2sfThrottle.arn
   input = jsonencode({
@@ -40,6 +41,7 @@ resource "aws_cloudwatch_event_rule" "sqs_message_consumer_watcher" {
 }
 
 resource "aws_cloudwatch_event_target" "sqs_message_consumer_watcher" {
+  target_id = "sqs_consumer_target"
   rule = aws_cloudwatch_event_rule.sqs_message_consumer_watcher.name
   arn  = aws_lambda_function.sqs_message_consumer.arn
   input = jsonencode({
