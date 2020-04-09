@@ -98,7 +98,6 @@ test.serial('waitForGranules retries on status codes other than 500, 200, then t
 });
 
 
-
 test.serial('waitForGranules retries if status does not match provided status', async (t) => {
   let retryCount = 0;
   const retries = 2;
@@ -108,8 +107,8 @@ test.serial('waitForGranules retries if status does not match provided status', 
   });
   let revertCallback;
   try {
-    const callback = (retries) => {
-      if (retries < 3) {
+    const callback = (retry) => {
+      if (retry < 3) {
         return {
           statusCode: 200,
           body: '{ "status": "running" }'
@@ -121,7 +120,7 @@ test.serial('waitForGranules retries if status does not match provided status', 
       };
     };
     revertCallback = granulesRewire.__set__('invokeApi', callback);
-    const actual = await granulesRewire.waitForGranule({
+    await granulesRewire.waitForGranule({
       prefix: t.context.testPrefix,
       granuleId: t.context.granule,
       status: 'completed',
