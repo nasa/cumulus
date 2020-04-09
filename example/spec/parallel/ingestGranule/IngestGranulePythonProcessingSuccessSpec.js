@@ -22,8 +22,8 @@ const {
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
-const { deleteCollection } = require('@cumulus/integration-tests/api/collections');
-const granulesApiTestUtils = require('@cumulus/integration-tests/api/granules');
+const { deleteCollection } = require('@cumulus/api-client/collections');
+const { getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { ActivityStep } = require('@cumulus/integration-tests/sfnStep');
 
 const {
@@ -107,6 +107,7 @@ describe('The TestPythonProcessing workflow', () => {
       const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
       // update test data filepaths
       inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+      debugger;
       const granuleId = inputPayload.granules[0].granuleId;
       expectedS3TagSet = [{ Key: 'granuleId', Value: granuleId }];
       await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
@@ -137,10 +138,14 @@ describe('The TestPythonProcessing workflow', () => {
     // clean up stack state added by test
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
-      deleteCollection(config.stackName, collection.name, collection.version),
+      deleteCollection({
+        prefix: config.stackName,
+        collectionName: collection.name,
+        collectionVersion: collection.version
+      }),
       providerModel.delete(provider),
       executionModel.delete({ arn: workflowExecutionArn }),
-      granulesApiTestUtils.removePublishedGranule({
+      removePublishedGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       }),
@@ -156,7 +161,7 @@ describe('The TestPythonProcessing workflow', () => {
       { granuleId: inputPayload.granules[0].granuleId },
       'completed'
     );
-    const granuleResponse = await granulesApiTestUtils.getGranule({
+    const granuleResponse = await getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId
     });
