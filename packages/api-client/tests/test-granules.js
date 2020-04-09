@@ -56,7 +56,6 @@ test.serial('waitForGranules calls getGranules with the expected payload', async
   }
 });
 
-
 test.serial('waitForGranules fails on 500 statusCode', async (t) => {
   const getGranuleRevert = granulesRewire.__set__('getGranule', async ({ callback }) => callback());
   let revertCallback;
@@ -98,6 +97,43 @@ test.serial('waitForGranules retries on status codes other than 500, 200, then t
   }
 });
 
+
+
+test.serial('waitForGranules retries if status does not match provided status', async (t) => {
+  let retryCount = 0;
+  const retries = 2;
+  const getGranuleRevert = granulesRewire.__set__('getGranule', async ({ callback }) => {
+    retryCount += 1;
+    return callback(retryCount);
+  });
+  let revertCallback;
+  try {
+    const callback = (retries) => {
+      if (retries < 3) {
+        return {
+          statusCode: 200,
+          body: '{ "status": "running" }'
+        };
+      }
+      return {
+        statusCode: 200,
+        body: '{ "status": "completed" }'
+      };
+    };
+    revertCallback = granulesRewire.__set__('invokeApi', callback);
+    const actual = await granulesRewire.waitForGranule({
+      prefix: t.context.testPrefix,
+      granuleId: t.context.granule,
+      status: 'completed',
+      retries,
+      callback
+    });
+    t.is(retries + 1, retryCount);
+  } finally {
+    getGranuleRevert();
+    revertCallback();
+  }
+});
 
 test('reingestGranule calls the callback with the expected object', async (t) => {
   const expected = {

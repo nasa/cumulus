@@ -8,9 +8,7 @@ const pRetry = require('p-retry');
 
 const {
   Execution,
-  Granule,
-  Pdr,
-  Provider
+  Pdr
 } = require('@cumulus/api/models');
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const { parseS3Uri } = require('@cumulus/aws-client/S3');
@@ -21,9 +19,12 @@ const {
   getExecutionOutput,
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
-const apiTestUtils = require('@cumulus/integration-tests/api/api');
-const { deleteCollection } = require('@cumulus/api-client/collections');
-const { getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
+const { getCollection, getCollections, deleteCollection } = require('@cumulus/api-client/collections');
+const { getGranule, removePublishedGranule, waitForGranule } = require('@cumulus/api-client/granules');
+const {
+  deleteProvider, getProvider, getProviders, createProvider
+} = require('@cumulus/api-client/providers');
+
 const { ActivityStep } = require('@cumulus/integration-tests/sfnStep');
 
 const {
@@ -34,7 +35,6 @@ const {
   createTestDataPath,
   createTestSuffix,
 } = require('../../helpers/testUtils');
-const { waitForModelStatus } = require('../../helpers/apiUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 
 
@@ -60,13 +60,11 @@ describe('The TestPythonProcessing workflow', () => {
   let config;
   let executionModel;
   let expectedS3TagSet;
-  let granuleModel;
   let granuleResult;
   let inputPayload;
   let pdrModel;
   let provider;
   let providerData;
-  let providerModel;
   let testDataFolder;
   let workflowExecutionArn;
 
@@ -81,12 +79,10 @@ describe('The TestPythonProcessing workflow', () => {
       collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
       provider = { id: `s3_provider${testSuffix}` };
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-      granuleModel = new Granule();
       process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
       executionModel = new Execution();
       process.env.system_bucket = config.bucket;
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
-      providerModel = new Provider();
       process.env.PdrsTable = `${config.stackName}-PdrsTable`;
 
       pdrModel = new Pdr();
@@ -101,7 +97,7 @@ describe('The TestPythonProcessing workflow', () => {
       await Promise.all([
         uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
         addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId, collectionDupeHandling),
-        apiTestUtils.addProviderApi({ prefix: config.stackName, provider: providerData })
+        createProvider({ prefix: config.stackName, provider: providerData })
       ]);
 
       const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
@@ -142,7 +138,7 @@ describe('The TestPythonProcessing workflow', () => {
         collectionName: collection.name,
         collectionVersion: collection.version
       }),
-      providerModel.delete(provider),
+      deleteProvider({ prefix: config.stackName, providerId: provider.id }),
       executionModel.delete({ arn: workflowExecutionArn }),
       removePublishedGranule({
         prefix: config.stackName,
@@ -155,11 +151,11 @@ describe('The TestPythonProcessing workflow', () => {
   });
 
   it('makes the granule available through the Cumulus API', async () => {
-    await waitForModelStatus(
-      granuleModel,
-      { granuleId: inputPayload.granules[0].granuleId },
-      'completed'
-    );
+    await waitForGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId,
+      status: 'completed'
+    });
     const granuleResponse = await getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId
@@ -186,25 +182,24 @@ describe('The TestPythonProcessing workflow', () => {
   });
 
   it('can retrieve the specific provider that was created', async () => {
-    const providerListResponse = await apiTestUtils.getProviders({ prefix: config.stackName });
+    const providerListResponse = await getProviders({ prefix: config.stackName });
     const providerList = JSON.parse(providerListResponse.body);
     expect(providerList.results.length).toBeGreaterThan(0);
 
-    const providerResultResponse = await apiTestUtils.getProvider({ prefix: config.stackName, providerId: provider.id });
+    const providerResultResponse = await getProvider({ prefix: config.stackName, providerId: provider.id });
     const providerResult = JSON.parse(providerResultResponse.body);
     expect(providerResult).not.toBeNull();
   });
 
   it('can retrieve the specific collection that was created', async () => {
-    const collectionListResponse = await apiTestUtils.getCollections({ prefix: config.stackName });
+    const collectionListResponse = await getCollections({ prefix: config.stackName });
     const collectionList = JSON.parse(collectionListResponse.body);
     expect(collectionList.results.length).toBeGreaterThan(0);
 
-    const collectionResponse = await apiTestUtils.getCollection(
+    const collectionResponse = await getCollection(
       { prefix: config.stackName, collectionName: collection.name, collectionVersion: collection.version }
     );
-    const collectionResult = JSON.parse(collectionResponse.body);
-    expect(collectionResult).not.toBeNull();
+    expect(collectionResponse.body).not.toBeNull();
   });
 
   it('results in the files being added to the granule files cache table', async () => {
