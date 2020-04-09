@@ -16,6 +16,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/common/workflows.getWorkflowsListKeyPrefix()` to return the S3 key prefix for objects containing workflow definitions
   - Added `@cumulus/message` package containing utilities for building and parsing Cumulus messages
 
+### Changed
+
+- **CUMULUS-1820**
+  - Updated the Thin Egress App module used in `tf-modules/distribution/main.tf` to build 74. [See the release notes](https://github.com/asfadmin/thin-egress-app/releases/tag/tea-build.74).
+
 ### Deprecated
 
 - **CUMULUS-1799** - Deprecated the following code. For cases where the code was moved into another package, the new code location is noted:
