@@ -68,7 +68,7 @@ test.serial('S3ProviderClient.sync syncs a file to a target S3 location', async 
   const targetKey = 'target.json';
 
   await s3ProviderClient.sync(t.context.sourceKey, t.context.targetBucket, targetKey);
-  t.true(await S3.s3ObjectExists({ Bucket: t.context.targetBucket, Key: targetKey }));
+  t.is(await S3.getTextObject(t.context.targetBucket, targetKey), t.context.fileContent);
 });
 
 test.serial('S3ProviderClient.sync throws an error if the source file does not exist', async (t) => {
