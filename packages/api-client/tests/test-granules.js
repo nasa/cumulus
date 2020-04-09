@@ -34,7 +34,6 @@ test('getGranule calls the callback with the expected object', async (t) => {
   }
 });
 
-
 test.serial('waitForGranules calls getGranules with the expected payload', async (t) => {
   const granule = t.context.granule;
   const getGranuleRevert = granulesRewire.__set__('getGranule', async ({ prefix, granuleId, callback }) => {
