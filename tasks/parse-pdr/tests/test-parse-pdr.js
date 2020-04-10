@@ -68,11 +68,7 @@ test.after.always(async (t) => {
 
 test.serial('parse-pdr properly parses a simple PDR file', async (t) => {
   t.context.payload.input.pdr.name = 'MOD09GQ.PDR';
-  await s3().putObject({
-    Bucket: t.context.payload.config.provider.host,
-    Key: `${t.context.payload.input.pdr.path}/${t.context.payload.input.pdr.name}`,
-    Body: streamTestData(`pdrs/${t.context.payload.input.pdr.name}`)
-  }).promise();
+  await setUpTestPdr(t);
 
   await validateInput(t, t.context.payload.input).catch(t.fail);
   await validateConfig(t, t.context.payload.config).catch(t.fail);
