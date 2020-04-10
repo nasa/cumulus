@@ -19,6 +19,7 @@
   },
   "scripts": {
     "build": "rm -rf dist && mkdir dist && webpack",
+    "build-docs": "true",
     "lint": "eslint .",
     "prepare": "npm run build"
   },

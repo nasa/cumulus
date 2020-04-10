@@ -20,6 +20,7 @@
   },
   "scripts": {
     "build": "true",
+    "build-docs": "true",
     "lint": "eslint .",
     "test": "ava",
     "test-coverage": "nyc ava",

@@ -20,6 +20,7 @@
   },
   "scripts": {
     "build": "true",
+    "build-docs": "true",
     "test": "ava"
   },
   "nyc": {

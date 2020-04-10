@@ -6,6 +6,7 @@
     "delete-stage": "bin/delete-stage-cli.js"
   },
   "scripts": {
+    "build-docs": "true",
     "test": "ava",
     "test-coverage": "nyc npm test",
     "build": "babel lib -d app",
