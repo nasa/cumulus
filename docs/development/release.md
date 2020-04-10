@@ -112,11 +112,11 @@ You should have been redirected to the `Branch Details` tab after creating the p
 
 * Go to the `Variables` tab. Ensure that you are on your branch plan and not the `master` plan: You should not see a large list of configured variables, but instead a dropdown allowing you to select variables to override, and the tab title will be `Branch Variables`. Set a DEPLOYMENT variable appropriate for the release (defaults to last committer). This should be `cumulus-from-npm-tf` *except* in special cases such as incompatible backport branches. Then set:
 
-* `USE_CACHED_BOOTSTRAP`: `false`,
-* `USE_TERRAFORM_ZIPS`: `true`, (**IMPORTANT**: MUST be set in order to run integration tests vs. the zips published during the build and actually test our released files)
-* `GIT_PR`: `true`,
-* `SKIP_AUDIT`: `true`,
-* `PUBLISH_FLAG`: `true`
+  * `USE_CACHED_BOOTSTRAP`: `false`,
+  * `USE_TERRAFORM_ZIPS`: `true`, (**IMPORTANT**: MUST be set in order to run integration tests vs. the zips published during the build and actually test our released files)
+  * `GIT_PR`: `true`,
+  * `SKIP_AUDIT`: `true`,
+  * `PUBLISH_FLAG`: `true`
 
 * Enable the branch from the `Branch Details` page.
 
