@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/launchpad-auth",
-  "version": "1.21.0-alpha1",
+  "version": "1.21.0",
   "description": "Utilities for authentication with Launchpad",
   "keywords": [
     "CUMULUS",
