@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1820**
   - Updated the Thin Egress App module used in `tf-modules/distribution/main.tf` to build 74. [See the release notes](https://github.com/asfadmin/thin-egress-app/releases/tag/tea-build.74).
+- **CUMULUS-1852**
+  - Updated POST endpoints for `/collections`, `/providers`, and `/rules` to log errors when returning a 500 response
 
 ### Deprecated
 
