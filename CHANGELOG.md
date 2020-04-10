@@ -13,6 +13,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/common/workflows.getWorkflowFileKey()` to return the S3 key for a workflow definition object
   - Added `@cumulus/common/workflows.getWorkflowsListKeyPrefix()` to return the S3 key prefix for objects containing workflow definitions
 
+### Changed
+
+- **CUMULUS-1820**
+  - Updated the Thin Egress App module used in `tf-modules/distribution/main.tf` to build 74. [See the release notes](https://github.com/asfadmin/thin-egress-app/releases/tag/tea-build.74).
+
 ### Deprecated
 
 - **CUMULUS-1799** - Deprecated the following code. For cases where the code was moved into another package, the new code location is noted:
@@ -86,6 +91,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1732**
   - Added Python task/activity workflow and integration test (`PythonReferenceSpec`) to test `cumulus-message-adapter-python`and `cumulus-process-py` integration.
+- **CUMULUS-1787**
+  - Added `collections/active` endpoint for returning collections with active granules in `@cumulus/api`
 
 - **CUMULUS-1795**
   - Added an IAM policy on the Cumulus EC2 creation to enable SSM when the `deploy_to_ngap` flag is true
