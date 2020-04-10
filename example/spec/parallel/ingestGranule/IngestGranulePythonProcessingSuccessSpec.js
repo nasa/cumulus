@@ -181,27 +181,6 @@ describe('The TestPythonProcessing workflow', () => {
     expect(workflowExecutionStatus).toEqual('SUCCEEDED');
   });
 
-  it('can retrieve the specific provider that was created', async () => {
-    const providerListResponse = await getProviders({ prefix: config.stackName });
-    const providerList = JSON.parse(providerListResponse.body);
-    expect(providerList.results.length).toBeGreaterThan(0);
-
-    const providerResultResponse = await getProvider({ prefix: config.stackName, providerId: provider.id });
-    const providerResult = JSON.parse(providerResultResponse.body);
-    expect(providerResult).not.toBeNull();
-  });
-
-  it('can retrieve the specific collection that was created', async () => {
-    const collectionListResponse = await getCollections({ prefix: config.stackName });
-    const collectionList = JSON.parse(collectionListResponse.body);
-    expect(collectionList.results.length).toBeGreaterThan(0);
-
-    const collectionResponse = await getCollection(
-      { prefix: config.stackName, collectionName: collection.name, collectionVersion: collection.version }
-    );
-    expect(collectionResponse.body).not.toBeNull();
-  });
-
   it('results in the files being added to the granule files cache table', async () => {
     process.env.FilesTable = `${config.stackName}-FilesTable`;
 
