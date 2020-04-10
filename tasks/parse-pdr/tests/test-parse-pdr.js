@@ -2,9 +2,10 @@
 
 const test = require('ava');
 const {
+  createBucket,
   recursivelyDeleteS3Bucket,
-  s3
-} = require('@cumulus/common/aws');
+  s3PutObject
+} = require('@cumulus/aws-client/S3');
 const {
   randomString,
   validateConfig,
@@ -16,17 +17,21 @@ const { PDRParsingError } = require('@cumulus/errors');
 const { streamTestData } = require('@cumulus/test-data');
 const { parsePdr } = require('..');
 
-async function setUpTestPdr(t) {
-  return s3().putObject({
-    Bucket: t.context.payload.config.provider.host,
-    Key: `${t.context.payload.input.pdr.path}/${t.context.payload.input.pdr.name}`,
-    Body: streamTestData(`pdrs/${t.context.payload.input.pdr.name}`)
-  }).promise();
+async function setUpTestPdrAndValidate(t) {
+  return Promise.all([
+    s3PutObject({
+      Bucket: t.context.payload.config.provider.host,
+      Key: `${t.context.payload.input.pdr.path}/${t.context.payload.input.pdr.name}`,
+      Body: streamTestData(`pdrs/${t.context.payload.input.pdr.name}`)
+    }),
+    validateInput(t, t.context.payload.input),
+    validateConfig(t, t.context.payload.config)
+  ]);
 }
 
 test.before(async (t) => {
   const testBucket = `internal-bucket-${randomString().slice(0, 6)}`;
-  await s3().createBucket({ Bucket: testBucket }).promise();
+  await createBucket(testBucket);
   t.context.stackName = `stack-${randomString().slice(0, 6)}`;
   t.context.collectionConfigStore = new CollectionConfigStore(
     testBucket,
@@ -68,10 +73,7 @@ test.after.always(async (t) => {
 
 test.serial('parse-pdr properly parses a simple PDR file', async (t) => {
   t.context.payload.input.pdr.name = 'MOD09GQ.PDR';
-  await setUpTestPdr(t);
-
-  await validateInput(t, t.context.payload.input).catch(t.fail);
-  await validateConfig(t, t.context.payload.config).catch(t.fail);
+  await setUpTestPdrAndValidate(t).catch(t.fail);
 
   const result = await parsePdr(t.context.payload);
   await validateOutput(t, result).catch(t.fail);
@@ -101,10 +103,7 @@ test.serial('parse-pdr properly parses a simple PDR file', async (t) => {
 
 test.serial('parse-pdr properly parses PDR with granules of different data-types', async (t) => {
   t.context.payload.input.pdr.name = 'multi-data-type.PDR';
-  await setUpTestPdr(t);
-
-  await validateInput(t, t.context.payload.input).catch(t.fail);
-  await validateConfig(t, t.context.payload.config).catch(t.fail);
+  await setUpTestPdrAndValidate(t).catch(t.fail);
 
   const result = await parsePdr(t.context.payload);
   await validateOutput(t, result).catch(t.fail);
@@ -157,10 +156,7 @@ test.serial('parse-pdr properly parses PDR with granules of different data-types
 
 test.serial('parsePdr throws an exception if FILE_CKSUM_TYPE is set but FILE_CKSUM_VALUE is not', async (t) => {
   t.context.payload.input.pdr.name = 'MOD09GQ-without-FILE_CKSUM_VALUE.PDR';
-  await setUpTestPdr(t);
-
-  await validateInput(t, t.context.payload.input).catch(t.fail);
-  await validateConfig(t, t.context.payload.config).catch(t.fail);
+  await setUpTestPdrAndValidate(t).catch(t.fail);
 
   await t.throwsAsync(
     parsePdr(t.context.payload),
@@ -173,10 +169,7 @@ test.serial('parsePdr throws an exception if FILE_CKSUM_TYPE is set but FILE_CKS
 
 test.serial('parsePdr throws an exception if FILE_CKSUM_VALUE is set but FILE_CKSUM_TYPE is not', async (t) => {
   t.context.payload.input.pdr.name = 'MOD09GQ-without-FILE_CKSUM_TYPE.PDR';
-  await setUpTestPdr(t);
-
-  await validateInput(t, t.context.payload.input).catch(t.fail);
-  await validateConfig(t, t.context.payload.config).catch(t.fail);
+  await setUpTestPdrAndValidate(t).catch(t.fail);
 
   await t.throwsAsync(
     parsePdr(t.context.payload),
@@ -189,10 +182,7 @@ test.serial('parsePdr throws an exception if FILE_CKSUM_VALUE is set but FILE_CK
 
 test.serial('parsePdr accepts an MD5 checksum', async (t) => {
   t.context.payload.input.pdr.name = 'MOD09GQ-with-MD5-checksum.PDR';
-  await setUpTestPdr(t);
-
-  await validateInput(t, t.context.payload.input).catch(t.fail);
-  await validateConfig(t, t.context.payload.config).catch(t.fail);
+  await setUpTestPdrAndValidate(t).catch(t.fail);
 
   const result = await parsePdr(t.context.payload);
   await validateOutput(t, result).catch(t.fail);
@@ -203,12 +193,9 @@ test.serial('parsePdr accepts an MD5 checksum', async (t) => {
 
 test.serial('parsePdr throws an exception if the value of an MD5 checksum is not a string', async (t) => {
   t.context.payload.input.pdr.name = 'MOD09GQ-with-invalid-MD5-checksum.PDR';
-  await setUpTestPdr(t);
+  await setUpTestPdrAndValidate(t).catch(t.fail);
 
   try {
-    await validateInput(t, t.context.payload.input).catch(t.fail);
-    await validateConfig(t, t.context.payload.config).catch(t.fail);
-
     await parsePdr(t.context.payload);
     t.fail('Expected parsePdr to throw an error');
   } catch (err) {
@@ -218,12 +205,9 @@ test.serial('parsePdr throws an exception if the value of an MD5 checksum is not
 
 test.serial('parsePdr throws an exception if the value of a CKSUM checksum is not a number', async (t) => {
   t.context.payload.input.pdr.name = 'MOD09GQ-with-invalid-CKSUM-checksum.PDR';
-  await setUpTestPdr(t);
+  await setUpTestPdrAndValidate(t).catch(t.fail);
 
   try {
-    await validateInput(t, t.context.payload.input).catch(t.fail);
-    await validateConfig(t, t.context.payload.config).catch(t.fail);
-
     await parsePdr(t.context.payload);
     t.fail('Expected parsePdr to throw an error');
   } catch (err) {
@@ -233,10 +217,7 @@ test.serial('parsePdr throws an exception if the value of a CKSUM checksum is no
 
 test.serial('parsePdr throws an exception if the a FILE_TYPE in the evaluated PDR is invalid', async (t) => {
   t.context.payload.input.pdr.name = 'MOD09GQ-with-invalid-file-type.PDR';
-  await setUpTestPdr(t);
-
-  await validateInput(t, t.context.payload.input).catch(t.fail);
-  await validateConfig(t, t.context.payload.config).catch(t.fail);
+  await setUpTestPdrAndValidate(t).catch(t.fail);
 
   await t.throwsAsync(
     parsePdr(t.context.payload),
