@@ -7,7 +7,7 @@ This 'task' is a reference activity implementation that is included with Cumulus
 
 ## Development
 
-This lambda is intended to be simple - the processing activity takes the input of a typical MOD09GQ.006 s3 ingest workflow output from the SyncGranules task, creates and uploads a simple `.md5` hashfile and returns it with the expected output filelist for `FilesToGranules` to complete the workflow via the `MoveGranules` task.
+This task is intended to be simple - the processing activity takes the input of a typical MOD09GQ.006 S3 ingest workflow output from the `SyncGranule` task, creates and uploads a simple `.md5` hashfile, and returns it with the expected output file list. The file list is passed on to the `FilesToGranules` step  and then the workflow completes with the `MoveGranules` step.
 
 ### Requirements
 
