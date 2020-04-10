@@ -7,7 +7,7 @@
  */
 
 const path = require('path');
-const pick = require('lodash.pick');
+const pick = require('lodash/pick');
 const {
   getS3Object,
   s3ObjectExists,

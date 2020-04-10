@@ -42,7 +42,7 @@
   "dependencies": {
     "@cumulus/aws-client": "1.21.0",
     "@cumulus/logger": "1.21.0",
-    "lodash.pick": "^4.4.0",
+    "lodash": "^4.17.15",
     "uuid": "^3.2.1"
   },
   "devDependencies": {
