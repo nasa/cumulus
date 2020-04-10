@@ -3,12 +3,15 @@
 const router = require('express-promise-router')();
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { Search } = require('../es/search');
 const { addToLocalES, indexCollection } = require('../es/indexer');
 const models = require('../models');
 const Collection = require('../es/collections');
 const { AssociatedRulesError, BadRequestError } = require('../lib/errors');
+
+const log = new Logger({ sender: '@cumulus/api/collections' });
 
 /**
  * List all collections.
@@ -108,6 +111,7 @@ async function post(req, res) {
     if (e instanceof BadRequestError) {
       return res.boom.badRequest(e.message);
     }
+    log.error('Error occurred while trying to create collection:', e);
     return res.boom.badImplementation(e.message);
   }
 }
