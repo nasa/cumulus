@@ -1,7 +1,9 @@
 'use strict';
 
 const test = require('ava');
+const sinon = require('sinon');
 const request = require('supertest');
+
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket
@@ -10,7 +12,8 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const bootstrap = require('../../../lambdas/bootstrap');
-const models = require('../../../models');
+const AccessToken = require('../../../models/access-tokens');
+const Provider = require('../../../models/providers');
 const {
   createFakeJwtAuthToken,
   fakeProviderFactory,
@@ -49,13 +52,13 @@ test.before(async () => {
   process.env.ES_INDEX = esAlias;
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
-  providerModel = new models.Provider();
+  providerModel = new Provider();
   await providerModel.createTable();
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
 
-  accessTokenModel = new models.AccessToken();
+  accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
@@ -131,4 +134,23 @@ test('POST creates a new provider', async (t) => {
   const { message, record } = response.body;
   t.is(message, 'Record saved');
   t.is(record.id, newProviderId);
+});
+
+test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
+  const stub = sinon.stub(Provider.prototype, 'create')
+    .callsFake(() => { throw new Error('unexpected error') });
+
+  const newProvider = fakeProviderFactory();
+
+  try {
+    const response = await request(app)
+      .post('/providers')
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send(newProvider)
+      .expect(500);
+    t.is(response.status, 500);
+  } finally {
+    stub.restore();
+  }
 });

@@ -165,7 +165,7 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
 
   try {
     const response = await request(app)
-      .post('/rules')
+      .post('/collections')
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send(newCollection)
