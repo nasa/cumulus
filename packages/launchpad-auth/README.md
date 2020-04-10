@@ -1,6 +1,6 @@
 # @cumulus/launchpad-auth
 
-Utilities for authentication with Launchpad.
+Utilities for authentication by Cumulus using Launchpad.
 
 ## Usage
 
