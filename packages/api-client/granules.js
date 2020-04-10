@@ -1,6 +1,5 @@
 'use strict';
 
-const pWaitFor = require('p-wait-for');
 const { invokeApi } = require('./cumulusApiClient');
 
 /**
@@ -23,27 +22,6 @@ const getGranule = async ({ prefix, granuleId, callback = invokeApi }) => callba
     path: `/granules/${granuleId}`
   }
 });
-
-/**
- * Wait for a granule to reach the completed state
- *
- * @param {Object} params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.granuleId - a granule ID
- * @param {Function} params.callback - an async function to invoke the api
- *   lambda that takes a prefix / user payload. Defaults to
- *   cumulusApiClient.invokeApifunction to invoke the api lambda
- * @returns {Promise<undefined>}
- */
-const waitForCompletedGranule = (params = {}) =>
-  pWaitFor(
-    async () => {
-      const response = await getGranule({ callback: invokeApi, ...params });
-      const granule = JSON.parse(response.body);
-      return response.statusCode === 200 && granule.status === 'completed';
-    },
-    { interval: 1000, timeout: 60000 }
-  );
 
 /**
  * Reingest a granule from the Cumulus API
@@ -228,6 +206,5 @@ module.exports = {
   deleteGranule,
   listGranules,
   moveGranule,
-  waitForCompletedGranule,
   removePublishedGranule
 };

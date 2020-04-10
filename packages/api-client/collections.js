@@ -2,7 +2,6 @@
 
 const { invokeApi } = require('./cumulusApiClient');
 
-
 /**
  * POST /collections
  *
@@ -14,16 +13,17 @@ const { invokeApi } = require('./cumulusApiClient');
  *                                     to cumulusApiClient.invokeApi
  * @returns {Promise<Object>}          - the response from the callback
  */
-const createCollection = async ({ prefix, collection, callback = invokeApi }) => callback({
-  prefix,
-  payload: {
-    httpMethod: 'POST',
-    resource: '/{proxy+}',
-    headers: { 'Content-Type': 'application/json' },
-    path: '/collections',
-    body: JSON.stringify(collection)
-  }
-});
+const createCollection = async ({ prefix, collection, callback = invokeApi }) =>
+  callback({
+    prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: { 'Content-Type': 'application/json' },
+      path: '/collections',
+      body: JSON.stringify(collection)
+    }
+  });
 
 /**
  * DELETE /collections/{collectionName}/{collectionVersion}

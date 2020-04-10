@@ -1,44 +1,50 @@
 # @cumulus/integration-tests
 
-@cumulus/integration-tests provides a CLI and functions for testing Cumulus workflow executions in a Cumulus deployment.
+Utilities for writing integration tests against Cumulus.
 
-## About Cumulus
+## Install
 
-Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
-
-[Cumulus Documentation](https://nasa.github.io/cumulus)
-
-## Installation
-
-```bash
-npm install @cumulus/integration-tests
+```shell
+$ npm install @cumulus/integration-tests
 ```
 
-## Usage
+## API
 
-```bash
-Usage: cumulus-test TYPE COMMAND [options]
+### Collections
 
-
-  Options:
-
-    -V, --version                   output the version number
-    -s, --stack-name <stackName>    AWS Cloud Formation stack name (default: null)
-    -b, --bucket-name <bucketName>  AWS S3 internal bucket name (default: null)
-    -w, --workflow <workflow>       Workflow name (default: null)
-    -i, --input-file <inputFile>    Workflow input JSON file (default: null)
-    -h, --help                      output usage information
-
-
-  Commands:
-
-    workflow  Execute a workflow and determine if the workflow completes successfully
+```js
+const collections = require('@cumulus/integration-test/collections');
 ```
 
-For example, to test the HelloWorld workflow:
+#### collections.createCollection(prefix, [overrides])
 
-`cumulus-test workflow --stack-name helloworld-cumulus --bucket-name cumulus-bucket-internal --workflow HelloWorldWorkflow --input-file ./helloWorldInput.json`
+Create a collection using the Cumulus API.
 
-## Contributing
+- `prefix` is the name of the Cumulus stack
+- `overrides` is an `Object` that contains values that should override the
+  default collection values
+- Returns a `Promise` that resolves to the created collection
 
-To make a contribution, please [see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).
+The default collection is very simple. It expects that, for any discovered file,
+the granule ID is everything in the filename before the extension. For example,
+a file named `gran-1.txt` would have a granuleId of `gran-1`. Filenames can only
+contain a single `.` character.
+
+**Collection defaults**
+
+- **name**: random string starting with `collection-name-`
+- **version**: random string starting with `collection-version-`
+- **reportToEms**: `false`
+- **granuleId**: `'^[^.]+$'`
+- **granuleIdExtraction**: `'^([^.]+)\..+$'`
+- **sampleFileName**: `'asdf.jpg'`
+- **files**:
+  ```js
+  [
+    {
+      bucket: 'protected',
+      regex: '^[^.]+\..+$',
+      sampleFileName: 'asdf.jpg'
+    }
+  ]
+  ```

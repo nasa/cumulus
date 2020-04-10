@@ -1,0 +1,123 @@
+'use strict';
+
+const pick = require('lodash/pick');
+const isNil = require('lodash/isNil');
+const pRetry = require('p-retry');
+const executionsApi = require('@cumulus/api-client/executions');
+
+const findExecutionArn = async (prefix, matcher, options = { timeout: 0 }) =>
+  pRetry(
+    async () => {
+      let execution;
+
+      try {
+        const { body } = await executionsApi.getExecutions({ prefix });
+        const executions = JSON.parse(body);
+        execution = executions.results.find(matcher);
+      } catch (err) {
+        throw new pRetry.AbortError(err);
+      }
+
+      if (isNil(execution)) throw new Error('Not Found');
+
+      return execution.arn;
+    },
+    {
+      retries: options.timeout,
+      maxTimeout: 1000
+    }
+  );
+
+/**
+ * Wait for an execution to be completed and return it
+ *
+ * @param {Object} params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.arn - an execution ARN
+ * @param {Function} params.callback - an async function to invoke the api
+ *   lambda that takes a prefix / user payload. Defaults to
+ *   cumulusApiClient.invokeApifunction to invoke the api lambda
+ * @param {integer} params.timeout - the number of seconds to wait for the
+ *   execution to reach a terminal state
+ * @returns {Promise<undefined>}
+ */
+const getCompletedExecution = async (params = {}) =>
+  pRetry(
+    async () => {
+      // TODO Handle the case where the execution does not exist
+      let execution;
+
+      try {
+        const response = await executionsApi.getExecution(
+          pick(params, ['prefix', 'arn', 'callback'])
+        );
+        execution = JSON.parse(response.body);
+      } catch (err) {
+        throw new pRetry.AbortError(err);
+      }
+
+      if (execution.status === 'completed') return execution;
+
+      if (execution.status === 'failed') {
+        throw new pRetry.AbortError(
+          new Error(`Execution ${params.arn} failed`)
+        );
+      }
+
+      throw new Error(`Execution ${params.arn} still running`);
+    },
+    {
+      retries: params.timeout,
+      maxTimeout: 1000
+    }
+  );
+
+/**
+ * Wait for an execution to be failed and return it
+ *
+ * @param {Object} params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.arn - an execution ARN
+ * @param {Function} params.callback - an async function to invoke the api
+ *   lambda that takes a prefix / user payload. Defaults to
+ *   cumulusApiClient.invokeApifunction to invoke the api lambda
+ * @param {integer} params.timeout - the number of seconds to wait for the
+ *   execution to reach a terminal state
+ * @returns {Promise<undefined>}
+ */
+const getFailedExecution = async (params = {}) =>
+  pRetry(
+    async () => {
+      // TODO Handle the case where the execution does not exist
+      let execution;
+
+      try {
+        const response = await executionsApi.getExecution(
+          pick(params, ['prefix', 'arn', 'callback'])
+        );
+        execution = JSON.parse(response.body);
+      } catch (err) {
+        throw new pRetry.AbortError(err);
+      }
+
+      if (execution.status === 'failed') return execution;
+
+      if (execution.status === 'completed') {
+        throw new pRetry.AbortError(
+          new Error(`Execution ${params.arn} was completed, not failed`)
+        );
+      }
+
+      throw new Error(`Execution ${params.arn} still running`);
+    },
+    {
+      retries: params.timeout,
+      maxTimeout: 1000
+    }
+  );
+
+module.exports = {
+  findExecutionArn,
+  getCompletedExecution,
+  getFailedExecution
+};
