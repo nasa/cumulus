@@ -20,7 +20,7 @@ class PythonProcess(Process):
     """
     @property
     def input_keys(self):
-        """ This property is helps the processing step to distinguish incoming
+        """ This property helps the processing step to distinguish incoming
             files from one another
         """
         return {
