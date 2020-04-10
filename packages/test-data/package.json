@@ -15,6 +15,9 @@
     "type": "git",
     "url": "https://github.com/nasa/cumulus"
   },
+  "scripts": {
+    "build-docs": "true"
+  },
   "engines": {
     "node": ">=10.16.3"
   },
