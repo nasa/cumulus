@@ -270,7 +270,7 @@ async function createFakeJwtAuthToken({ accessTokenModel, username }) {
     refreshToken,
     expirationTime
   } = fakeAccessTokenFactory();
-  await accessTokenModel.create({ accessToken, refreshToken });
+  await accessTokenModel.create({ accessToken, refreshToken, expirationTime });
 
   return createJwtToken({ accessToken, expirationTime, username });
 }
