@@ -3,9 +3,13 @@
 const router = require('express-promise-router')();
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const Logger = require('@cumulus/logger');
+
 const models = require('../models');
 const { Search } = require('../es/search');
 const { addToLocalES, indexRule } = require('../es/indexer');
+
+const log = new Logger({ sender: '@cumulus/api/rules' });
 
 /**
  * List all rules.
@@ -55,24 +59,32 @@ async function get(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
-  const data = req.body;
-  const name = data.name;
-
-  const model = new models.Rule();
-
   try {
-    await model.get({ name });
-    return res.boom.conflict(`A record already exists for ${name}`);
-  } catch (e) {
-    if (e instanceof RecordDoesNotExist) {
-      const record = await model.create(data);
+    const data = req.body;
+    const name = data.name;
 
-      if (inTestMode()) {
-        await addToLocalES(record, indexRule);
+    const model = new models.Rule();
+
+    try {
+      await model.get({ name });
+      return res.boom.conflict(`A record already exists for ${name}`);
+    } catch (e) {
+      if (e instanceof RecordDoesNotExist) {
+        const record = await model.create(data);
+
+        if (inTestMode()) {
+          await addToLocalES(record, indexRule);
+        }
+        return res.send({ message: 'Record saved', record });
       }
-      return res.send({ message: 'Record saved', record });
+      throw e;
     }
-    throw e;
+  } catch (e) {
+    if (e.name === 'SchemaValidationError') {
+      return res.boom.badRequest(e.message);
+    }
+    log.error('Error occurred while trying to create rule:', e);
+    return res.boom.badImplementation(e.message);
   }
 }
 

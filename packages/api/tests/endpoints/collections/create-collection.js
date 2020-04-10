@@ -1,13 +1,17 @@
 'use strict';
 
 const test = require('ava');
+const sinon = require('sinon');
 const request = require('supertest');
+
 const awsServices = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const models = require('../../../models');
+
+const AccessToken = require('../../../models/access-tokens');
+const Collection = require('../../../models/collections');
 const bootstrap = require('../../../lambdas/bootstrap');
 const {
   createFakeJwtAuthToken,
@@ -41,13 +45,13 @@ test.before(async () => {
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
-  collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
+  collectionModel = new Collection({ tableName: process.env.CollectionsTable });
   await collectionModel.createTable();
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
 
-  accessTokenModel = new models.AccessToken();
+  accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
@@ -151,4 +155,23 @@ test('POST with invalid file regex returns correct error', async (t) => {
 
   t.is(res.status, 400);
   t.is(res.body.message, `regex ${regex} cannot validate ${filename}`);
+});
+
+test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
+  const stub = sinon.stub(Collection.prototype, 'create')
+    .callsFake(() => { throw new Error('unexpected error') });
+
+  const newCollection = fakeCollectionFactory();
+
+  try {
+    const response = await request(app)
+      .post('/rules')
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send(newCollection)
+      .expect(500);
+    t.is(response.status, 500);
+  } finally {
+    stub.restore();
+  }
 });

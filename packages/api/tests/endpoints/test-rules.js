@@ -2,13 +2,16 @@
 
 const omit = require('lodash/omit');
 const test = require('ava');
+const sinon = require('sinon');
 const request = require('supertest');
 const cloneDeep = require('lodash/cloneDeep');
+
 const awsServices = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const bootstrap = require('../../lambdas/bootstrap');
-const models = require('../../models');
+const AccessToken = require('../../models/access-tokens');
+const Rule = require('../../models/rules');
 const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
 const indexer = require('../../es/indexer');
@@ -70,7 +73,7 @@ test.before(async () => {
     }).promise()
   ]);
 
-  ruleModel = new models.Rule();
+  ruleModel = new Rule();
   await ruleModel.createTable();
 
   const ruleRecord = await ruleModel.create(testRule);
@@ -79,7 +82,7 @@ test.before(async () => {
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
 
-  accessTokenModel = new models.AccessToken();
+  accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
@@ -303,6 +306,46 @@ test('POST returns a record exists when one exists', async (t) => {
   const { message, record } = response.body;
   t.is(message, `A record already exists for ${newRule.name}`);
   t.falsy(record);
+});
+
+test('POST returns a 400 response if record is missing a required property', async (t) => {
+  const newRule = {
+    ...testRule,
+    name: randomString()
+  };
+
+  // Remove required property to trigger create error
+  delete newRule.collection;
+
+  const response = await request(app)
+    .post('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newRule)
+    .expect(400);
+  t.is(response.status, 400);
+});
+
+test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
+  const stub = sinon.stub(Rule.prototype, 'create')
+    .callsFake(() => { throw new Error('unexpected error') });
+
+  const newRule = {
+    ...testRule,
+    name: randomString()
+  };
+
+  try {
+    const response = await request(app)
+      .post('/rules')
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send(newRule)
+      .expect(500);
+    t.is(response.status, 500);
+  } finally {
+    stub.restore();
+  }
 });
 
 test('PUT replaces a rule', async (t) => {
