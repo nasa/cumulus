@@ -107,7 +107,7 @@ test.serial('waitForGranules retries if status does not match provided status', 
   let revertCallback;
   try {
     const callback = (retry) => {
-      if (retry < 3) {
+      if (retry < retries + 1) {
         return {
           statusCode: 200,
           body: '{ "status": "running" }'
