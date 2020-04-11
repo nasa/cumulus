@@ -15,8 +15,8 @@ const pRetry = require('p-retry');
  *   lambda that takes a prefix / user payload. Defaults to
  *   cumulusApiClient.invokeApifunction to invoke the api lambda
  * @param {integer} params.timeout - the number of seconds to wait for the
- *   execution to reach a terminal state. Defaults to 30.
- * @returns {Promise<undefined>}
+ *   granule to reach a terminal state. Defaults to 30.
+ * @returns {Promise<Object>} the completed granule
  */
 const getCompletedGranule = async (params = {}) =>
   pRetry(
@@ -33,13 +33,17 @@ const getCompletedGranule = async (params = {}) =>
         throw new pRetry.AbortError(err);
       }
 
-      // TODO Handle the case where the granule does not exist
-
       if (granule.status === 'completed') return granule;
 
       if (granule.status === 'failed') {
         throw new pRetry.AbortError(
           new Error(`Granule ${params.granuleId} failed`)
+        );
+      }
+
+      if (granule.statusCode === 404) {
+        throw new pRetry.AbortError(
+          new Error(`Granule ${params.granuleId} not found`)
         );
       }
 

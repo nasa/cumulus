@@ -16,6 +16,16 @@ const buildOneTimeRule = (overrides = {}) =>
     }
   });
 
+/**
+ * Build a onetime rule and create it using the Cumulus API
+ *
+ * See the `@cumulus/integration-tests` README for more information
+ *
+ * @param {string} prefix - the Cumulus stack name
+ * @param {Object} overrides - properties to set on the rule, overriding the
+ *   defaults
+ * @returns {Promise<Object>} the generated rule
+ */
 const createOneTimeRule = async (prefix, overrides = {}) => {
   const rule = buildOneTimeRule(overrides);
 

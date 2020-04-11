@@ -18,6 +18,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/integration-tests/executions.findExecutionArn()`
   - Added `@cumulus/integration-tests/executions.getCompletedExecution()`
   - Added `@cumulus/integration-tests/executions.getFailedExecution()`
+  - Added `@cumulus/integration-tests/granules.getCompletedGranule()`
+  - Added `@cumulus/integration-tests/providers.createProvider()`
+  - Added `@cumulus/integration-tests/rules.createOneTimeRule()`
 
 ### Changed
 

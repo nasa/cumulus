@@ -32,7 +32,6 @@ const buildCollection = (overrides = {}) => ({
  */
 const createCollection = async (prefix, overrides = {}) => {
   const collection = buildCollection(overrides);
-  delete collection.name;
 
   const createResponse = await CollectionsApi.createCollection({
     prefix,

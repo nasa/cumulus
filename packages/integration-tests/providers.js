@@ -10,6 +10,16 @@ const buildProvider = (overrides = {}) => ({
   ...overrides
 });
 
+/**
+ * Build a provider and create it using the Cumulus API
+ *
+ * See the `@cumulus/integration-tests` README for more information
+ *
+ * @param {string} prefix - the Cumulus stack name
+ * @param {Object} overrides - properties to set on the provider, overriding
+ *   the defaults
+ * @returns {Promise<Object>} the generated provider
+ */
 const createProvider = async (prefix, overrides = {}) => {
   const provider = buildProvider(overrides);
 

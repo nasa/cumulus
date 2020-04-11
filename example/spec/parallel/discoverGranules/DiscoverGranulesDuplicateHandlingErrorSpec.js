@@ -3,7 +3,7 @@
 const get = require('lodash/get');
 const noop = require('lodash/noop');
 const pick = require('lodash/pick');
-const randomId = require('@cumulus/common/test-utils');
+const { randomId } = require('@cumulus/common/test-utils');
 
 const { createCollection } = require('@cumulus/integration-tests/collections');
 const {

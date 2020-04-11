@@ -51,12 +51,11 @@ const findExecutionArn = async (prefix, matcher, options = { timeout: 0 }) =>
  *   cumulusApiClient.invokeApifunction to invoke the api lambda
  * @param {integer} params.timeout - the number of seconds to wait for the
  *   execution to reach a terminal state. Defaults to 30
- * @returns {Promise<undefined>}
+ * @returns {Promise<Object>} the completed execution
  */
 const getCompletedExecution = async (params = {}) =>
   pRetry(
     async () => {
-      // TODO Handle the case where the execution does not exist
       let execution;
 
       try {
@@ -72,6 +71,12 @@ const getCompletedExecution = async (params = {}) =>
       if (execution.status === 'failed') {
         throw new pRetry.AbortError(
           new Error(`Execution ${params.arn} failed`)
+        );
+      }
+
+      if (execution.statusCode === 404) {
+        throw new pRetry.AbortError(
+          new Error(`Execution ${params.arn} not found`)
         );
       }
 
@@ -94,12 +99,11 @@ const getCompletedExecution = async (params = {}) =>
  *   cumulusApiClient.invokeApifunction to invoke the api lambda
  * @param {integer} params.timeout - the number of seconds to wait for the
  *   execution to reach a terminal state. Defaults to 30.
- * @returns {Promise<undefined>}
+ * @returns {Promise<Object>} the failed execution
  */
 const getFailedExecution = async (params = {}) =>
   pRetry(
     async () => {
-      // TODO Handle the case where the execution does not exist
       let execution;
 
       try {
@@ -115,6 +119,12 @@ const getFailedExecution = async (params = {}) =>
       if (execution.status === 'completed') {
         throw new pRetry.AbortError(
           new Error(`Execution ${params.arn} was completed, not failed`)
+        );
+      }
+
+      if (execution.statusCode === 404) {
+        throw new pRetry.AbortError(
+          new Error(`Execution ${params.arn} not found`)
         );
       }
 

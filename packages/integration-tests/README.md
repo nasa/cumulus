@@ -2,7 +2,7 @@
 
 @cumulus/integration-tests provides a CLI and functions for testing Cumulus.
 
-**Note:** The [documented API](#api) of this package will not change without a
+⚠️ The [documented API](#api) of this package will not change without a
 deprecation warning being provided in earlier releases. Code in this package
 that is _not_ documented in this README may change without warning, and is not
 considered part of the package's public API.
@@ -25,6 +25,8 @@ $ npm install @cumulus/integration-tests
 - [Collections](#collections)
 - [Executions](#executions)
 - [Granules](#granules)
+- [Providers](#providers)
+- [Rules](#rules)
 
 ### Collections
 
@@ -130,6 +132,47 @@ Wait for a granule's status to be `completed` and return the granule.
   terminal state. Defaults to 30.
 - Returns a `Promise` that resolves to a granule `Object`, as returned by the
   `GET /granules/<granule-id>` endpoint.
+
+### Providers
+
+```js
+const providers = require('@cumulus/integration-test/providers');
+```
+
+#### providers.createProvider(prefix, [overrides])
+
+Create a provider using the Cumulus API.
+
+- `prefix` is the name of the Cumulus stack.
+- `overrides` is an `Object` that contains values that should override the
+  default provider values.
+- Returns a `Promise` that resolves to the created provider.
+
+**Provider defaults**
+
+- **id**: random string starting with `provider-`
+- **protocol**: `s3`
+- **globalConnectionLimit**: `10`
+
+### Rules
+
+```js
+const rules = require('@cumulus/integration-test/rules');
+```
+
+#### rules.createOneTimeRule(prefix, [overrides])
+
+Create a `onetime` rule using the Cumulus API.
+
+- `prefix` is the name of the Cumulus stack.
+- `overrides` is an `Object` that contains values that should override the
+  default rule values.
+- Returns a `Promise` that resolves to the created rule.
+
+**Rule defaults**
+
+- **name**: random string starting with `rule_`
+- **rule**: `{ type: 'onetime' }`
 
 ## CLI Usage
 
