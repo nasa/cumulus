@@ -20,6 +20,16 @@ const buildCollection = (overrides = {}) => ({
   ...overrides
 });
 
+/**
+ * Build a collection and create it using the Cumulus API
+ *
+ * See the `@cumulus/integration-tests` README for more information
+ *
+ * @param {string} prefix - the Cumulus stack name
+ * @param {Object} overrides - properties to set on the collection, overriding
+ *   the defaults
+ * @returns {Promise<Object>} the generated collection
+ */
 const createCollection = async (prefix, overrides = {}) => {
   const collection = buildCollection(overrides);
   delete collection.name;

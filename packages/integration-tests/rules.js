@@ -1,7 +1,7 @@
 'use strict';
 
 const rulesApi = require('@cumulus/api-client/rules');
-const { randomId } = require('@cumulus/common/string');
+const { randomId } = require('@cumulus/common/test-utils');
 
 const buildRule = (overrides = {}) => ({
   name: randomId('rule_'),

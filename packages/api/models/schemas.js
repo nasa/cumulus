@@ -353,7 +353,6 @@ module.exports.rule = {
   title: 'Ingest Rule Record Object',
   type: 'object',
   properties: {
-    payload: {},
     name: {
       title: 'name',
       type: 'string'
@@ -395,6 +394,9 @@ module.exports.rule = {
         }
       },
       additionalProperties: true
+    },
+    payload: {
+      title: 'Optional input payload to be used in onetime and scheduled rules'
     },
     queueName: {
       title: 'Optional queue used to schedule executions for this rule',

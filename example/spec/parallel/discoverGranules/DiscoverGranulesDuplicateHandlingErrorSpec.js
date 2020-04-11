@@ -3,7 +3,7 @@
 const get = require('lodash/get');
 const noop = require('lodash/noop');
 const pick = require('lodash/pick');
-const randomId = require('@cumulus/integration-tests/randomId');
+const randomId = require('@cumulus/common/test-utils');
 
 const { createCollection } = require('@cumulus/integration-tests/collections');
 const {
@@ -43,7 +43,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
       sourceBucket = config.bucket;
 
       // The S3 path where granules will be ingested from
-      const sourcePath = `${prefix}/tmp/${randomId('test')}`;
+      const sourcePath = `${prefix}/tmp/${randomId('test-')}`;
 
       // Create the collection
       collection = await createCollection(
@@ -58,7 +58,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
       provider = await createProvider(prefix, { host: sourceBucket });
 
       // Stage the existing granule file to S3
-      existingGranuleId = randomId('existing-granule');
+      existingGranuleId = randomId('existing-granule-');
       existingGranuleKey = `${sourcePath}/${existingGranuleId}.txt`;
       await s3PutObject({
         Bucket: sourceBucket,
@@ -74,7 +74,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
           collection: pick(collection, ['name', 'version']),
           provider: provider.id,
           payload: {
-            testExecutionId: randomId('test-execution'),
+            testExecutionId: randomId('test-execution-'),
             granules: [
               {
                 granuleId: existingGranuleId,
@@ -117,7 +117,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
           },
           provider: provider.id,
           payload: {
-            testExecutionId: randomId('test-execution')
+            testExecutionId: randomId('test-execution-')
           }
         }
       );

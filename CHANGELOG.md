@@ -68,6 +68,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed `@cumulus/common/sfnStep`
   - Removed `@cumulus/common/StepFunctions`
 
+### Fixed
+
+- **CUMULUS-1853**
+  - Fixed a bug where attempting to create a rule containing a payload property
+    would fail schema validation.
+
 ## [v1.21.0] 2020-03-30
 
 ### PLEASE NOTE
