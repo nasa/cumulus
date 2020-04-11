@@ -23,10 +23,17 @@ $ npm install @cumulus/integration-tests
 ## API
 
 - [Collections](#collections)
+  - [createCollection](#collectionscreatecollectionprefix-overrides)
 - [Executions](#executions)
+  - [findExecutionArn](#executionsfindexecutionarnprefix-matcher-options)
+  - [getCompletedExecution](#executionsgetcompletedexecutionparams)
+  - [getFailedExecution](#executionsgetfailedexecutionparams)
 - [Granules](#granules)
+  - [getCompletedGranule](#granulesgetcompletedgranuleparams)
 - [Providers](#providers)
+  - [createProvider](#providerscreateproviderprefix-overrides)
 - [Rules](#rules)
+  - [createOneTimeRule](#rulescreateonetimeruleprefix-overrides)
 
 ### Collections
 
