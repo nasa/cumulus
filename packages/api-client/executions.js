@@ -11,18 +11,19 @@ const { invokeApi } = require('./cumulusApiClient');
  * @param {Function} params.callback - async function to invoke the api lambda
  *                                     that takes a prefix / user payload.  Defaults
  *                                     to cumulusApiClient.invokeApi
- * @returns {Promise<Object>}        - the response from the API
+ * @returns {Promise<Object>}        - the execution fetched by the API
  */
-const getExecution = async ({ prefix, arn, callback = invokeApi }) =>
-  // TODO What happens if the execution does not exist?
-  callback({
+const getExecution = async ({ prefix, arn, callback = invokeApi }) => {
+  const result = await callback({
     prefix,
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: `/executions/${arn}`
     }
-  });
+  }).then(({ body }) => JSON.parse(body));
+  return result;
+};
 
 /**
  * Fetch a list of executions from the Cumulus API

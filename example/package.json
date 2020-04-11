@@ -74,8 +74,6 @@
     "@cumulus/test-data": "1.21.0",
     "ava": "^2.4.0",
     "babel-preset-env": "^1.7.0",
-    "crypto-random-string": "^3.2.0",
-    "delay": "^4.3.0",
     "execa": "^1.0.0",
     "fs-extra": "7.0.0",
     "got": "^9.6.0",

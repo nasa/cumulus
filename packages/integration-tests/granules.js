@@ -1,8 +1,9 @@
 'use strict';
 
+const get = require('lodash/get');
+const granulesApi = require('@cumulus/api-client/granules');
 const pick = require('lodash/pick');
 const pRetry = require('p-retry');
-const granulesApi = require('@cumulus/api-client/granules');
 
 /**
  * Wait for a granule to be completed and return it
@@ -14,7 +15,7 @@ const granulesApi = require('@cumulus/api-client/granules');
  *   lambda that takes a prefix / user payload. Defaults to
  *   cumulusApiClient.invokeApifunction to invoke the api lambda
  * @param {integer} params.timeout - the number of seconds to wait for the
- *   execution to reach a terminal state
+ *   execution to reach a terminal state. Defaults to 30.
  * @returns {Promise<undefined>}
  */
 const getCompletedGranule = async (params = {}) =>
@@ -45,7 +46,7 @@ const getCompletedGranule = async (params = {}) =>
       throw new Error(`Granule ${params.granuleId} still running`);
     },
     {
-      retries: params.timeout,
+      retries: get(params, 'timeout', 30),
       maxTimeout: 1000
     }
   );

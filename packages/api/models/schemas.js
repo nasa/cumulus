@@ -366,7 +366,6 @@ module.exports.rule = {
       title: 'Provider ID',
       type: 'string'
     },
-    // TODO collection should not be required, there are workflows that don't need it
     collection: {
       title: 'Collection Name and Version',
       type: 'object',

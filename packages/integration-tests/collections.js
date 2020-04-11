@@ -1,11 +1,11 @@
 'use strict';
 
 const CollectionsApi = require('@cumulus/api-client/collections');
-const randomId = require('./randomId');
+const { randomId } = require('@cumulus/common/test-utils');
 
 const buildCollection = (overrides = {}) => ({
-  name: randomId('collection-name'),
-  version: randomId('collection-version'),
+  name: randomId('collection-name-'),
+  version: randomId('collection-version-'),
   reportToEms: false,
   granuleId: '^[^.]+$',
   granuleIdExtraction: '^([^.]+)\..+$',
@@ -22,6 +22,7 @@ const buildCollection = (overrides = {}) => ({
 
 const createCollection = async (prefix, overrides = {}) => {
   const collection = buildCollection(overrides);
+  delete collection.name;
 
   const createResponse = await CollectionsApi.createCollection({
     prefix,

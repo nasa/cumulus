@@ -289,7 +289,6 @@ class Manager {
    *   created record
    */
   async create(items) {
-    console.log('Writing to Dynamo:', JSON.stringify(items, null, 2));
     // This is confusing because the argument named "items" could either be
     // an Array of items  or a single item.  To make this function a little
     // easier to understand, converting the single item case here to an array
@@ -311,26 +310,19 @@ class Manager {
 
     if (this.validate) {
       // Make sure that all of the items are valid
-      console.time('recordIsValid');
       itemsWithTimestamps.forEach((item) => {
         this.constructor.recordIsValid(item, this.schema, this.removeAdditional);
       });
-      console.timeEnd('recordIsValid');
     }
 
     // Suggested method of handling a loop containing an await, according to
     // https://codeburst.io/javascript-async-await-with-foreach-b6ba62bbf404
-    console.time('suspicious for loop');
     for (let i = 0; i < itemsWithTimestamps.length; i += 1) {
-      console.log('doc client putting:', JSON.stringify(itemsWithTimestamps[i], null, 2));
       await this.dynamodbDocClient.put({ // eslint-disable-line no-await-in-loop
         TableName: this.tableName,
         Item: itemsWithTimestamps[i]
       }).promise();
     }
-    console.timeEnd('suspicious for loop');
-
-    console.log('Finished writing to Dynamo');
 
     // If the original item was an Array, return an Array.  If the original item
     // was an Object, return an Object.
@@ -355,10 +347,7 @@ class Manager {
       Key: item
     };
 
-    console.time('docclient.delete');
-    const x = this.dynamodbDocClient.delete(params).promise();
-    console.timeEnd('docclient.delete');
-    return x;
+    return this.dynamodbDocClient.delete(params).promise();
   }
 
   async update(itemKeys, updates = {}, fieldsToDelete = []) {

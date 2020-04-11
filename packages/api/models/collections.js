@@ -144,10 +144,8 @@ class Collection extends Manager {
    */
   async delete(item) {
     const { name, version } = item;
-    console.time('getAssociatedRules');
     const associatedRuleNames = (await this.getAssociatedRules(name, version))
       .map((rule) => rule.name);
-    console.timeEnd('getAssociatedRules');
 
     if (associatedRuleNames.length > 0) {
       throw new AssociatedRulesError(
@@ -156,9 +154,7 @@ class Collection extends Manager {
       );
     }
 
-    console.time('delete collection config store');
     await this.collectionConfigStore.delete(name, version);
-    console.timeEnd('delete collection config store');
 
     const record = {
       event: 'Delete',
@@ -168,9 +164,7 @@ class Collection extends Manager {
         version
       }
     };
-    console.time('publishCollectionSnsMessage');
     await publishCollectionSnsMessage(record);
-    console.timeEnd('publishCollectionSnsMessage');
 
     return super.delete({ name, version });
   }

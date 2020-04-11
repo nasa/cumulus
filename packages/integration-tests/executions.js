@@ -1,9 +1,10 @@
 'use strict';
 
-const pick = require('lodash/pick');
-const isNil = require('lodash/isNil');
-const pRetry = require('p-retry');
 const executionsApi = require('@cumulus/api-client/executions');
+const get = require('lodash/get');
+const isNil = require('lodash/isNil');
+const pick = require('lodash/pick');
+const pRetry = require('p-retry');
 
 const findExecutionArn = async (prefix, matcher, options = { timeout: 0 }) =>
   pRetry(
@@ -38,7 +39,7 @@ const findExecutionArn = async (prefix, matcher, options = { timeout: 0 }) =>
  *   lambda that takes a prefix / user payload. Defaults to
  *   cumulusApiClient.invokeApifunction to invoke the api lambda
  * @param {integer} params.timeout - the number of seconds to wait for the
- *   execution to reach a terminal state
+ *   execution to reach a terminal state. Defaults to 30
  * @returns {Promise<undefined>}
  */
 const getCompletedExecution = async (params = {}) =>
@@ -48,10 +49,9 @@ const getCompletedExecution = async (params = {}) =>
       let execution;
 
       try {
-        const response = await executionsApi.getExecution(
+        execution = await executionsApi.getExecution(
           pick(params, ['prefix', 'arn', 'callback'])
         );
-        execution = JSON.parse(response.body);
       } catch (err) {
         throw new pRetry.AbortError(err);
       }
@@ -67,7 +67,7 @@ const getCompletedExecution = async (params = {}) =>
       throw new Error(`Execution ${params.arn} still running`);
     },
     {
-      retries: params.timeout,
+      retries: get(params, 'timeout', 30),
       maxTimeout: 1000
     }
   );
@@ -82,7 +82,7 @@ const getCompletedExecution = async (params = {}) =>
  *   lambda that takes a prefix / user payload. Defaults to
  *   cumulusApiClient.invokeApifunction to invoke the api lambda
  * @param {integer} params.timeout - the number of seconds to wait for the
- *   execution to reach a terminal state
+ *   execution to reach a terminal state. Defaults to 30.
  * @returns {Promise<undefined>}
  */
 const getFailedExecution = async (params = {}) =>
@@ -92,10 +92,9 @@ const getFailedExecution = async (params = {}) =>
       let execution;
 
       try {
-        const response = await executionsApi.getExecution(
+        execution = await executionsApi.getExecution(
           pick(params, ['prefix', 'arn', 'callback'])
         );
-        execution = JSON.parse(response.body);
       } catch (err) {
         throw new pRetry.AbortError(err);
       }
@@ -111,7 +110,7 @@ const getFailedExecution = async (params = {}) =>
       throw new Error(`Execution ${params.arn} still running`);
     },
     {
-      retries: params.timeout,
+      retries: get(params, 'timeout', 30),
       maxTimeout: 1000
     }
   );

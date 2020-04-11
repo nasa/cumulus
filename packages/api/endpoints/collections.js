@@ -152,9 +152,7 @@ async function del(req, res) {
   const collectionModel = new models.Collection();
 
   try {
-    console.time('collectionModel.delete');
     await collectionModel.delete({ name, version });
-    console.timeEnd('collectionModel.delete');
 
     if (inTestMode()) {
       const collectionId = constructCollectionId(name, version);

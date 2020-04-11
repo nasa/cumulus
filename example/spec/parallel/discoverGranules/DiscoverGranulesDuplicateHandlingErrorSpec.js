@@ -27,7 +27,6 @@ const { loadConfig } = require('../../helpers/testUtils');
 describe('The DiscoverGranules workflow with an existing granule and duplicateHandling="error"', () => {
   let beforeAllFailed = false;
   let collection;
-  let config;
   let discoverGranulesExecutionArn;
   let discoverGranulesRule;
   let existingGranuleId;
@@ -39,10 +38,11 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
 
   beforeAll(async () => {
     try {
-      config = await loadConfig();
+      const config = await loadConfig();
       prefix = config.stackName;
       sourceBucket = config.bucket;
 
+      // The S3 path where granules will be ingested from
       const sourcePath = `${prefix}/tmp/${randomId('test')}`;
 
       // Create the collection
@@ -101,18 +101,10 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
       );
 
       // Wait for the "IngestGranule" execution to be completed
-      await getCompletedExecution({
-        prefix,
-        arn: ingestGranuleExecutionArn,
-        timeout: 15
-      });
+      await getCompletedExecution({ prefix, arn: ingestGranuleExecutionArn });
 
       // Wait for the existing granule to be fully ingested
-      await getCompletedGranule({
-        prefix,
-        granuleId: existingGranuleId,
-        timeout: 15
-      });
+      await getCompletedGranule({ prefix, granuleId: existingGranuleId });
 
       // Run DiscoverGranules
       discoverGranulesRule = await createOneTimeRule(
@@ -175,8 +167,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
     else {
       const execution = await getFailedExecution({
         prefix,
-        arn: discoverGranulesExecutionArn,
-        timeout: 15
+        arn: discoverGranulesExecutionArn
       });
 
       const errorCause = JSON.parse(get(execution, 'error.Cause', {}));

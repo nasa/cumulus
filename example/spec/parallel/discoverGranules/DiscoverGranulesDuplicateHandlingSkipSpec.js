@@ -25,7 +25,6 @@ const { loadConfig } = require('../../helpers/testUtils');
 describe('The DiscoverGranules workflow with one existing granule, one new granule, and duplicateHandling="skip"', () => {
   let beforeAllFailed = false;
   let collection;
-  let config;
   let discoverGranulesRule;
   let existingGranuleId;
   let existingGranuleKey;
@@ -39,10 +38,11 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
 
   beforeAll(async () => {
     try {
-      config = await loadConfig();
+      const config = await loadConfig();
       prefix = config.stackName;
       sourceBucket = config.bucket;
 
+      // The S3 path where granules will be ingested from
       const sourcePath = `${prefix}/tmp/${randomId('test')}`;
 
       // Create the collection
@@ -101,18 +101,10 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       );
 
       // Wait for the "IngestGranule" execution to be completed
-      await getCompletedExecution({
-        prefix,
-        arn: ingestGranuleExecutionArn,
-        timeout: 15
-      });
+      await getCompletedExecution({ prefix, arn: ingestGranuleExecutionArn });
 
       // Wait for the existing granule to be fully ingested
-      await getCompletedGranule({
-        prefix,
-        granuleId: existingGranuleId,
-        timeout: 15
-      });
+      await getCompletedGranule({ prefix, granuleId: existingGranuleId });
 
       // Stage the new granule file to S3
       newGranuleId = randomId('new-granule');
@@ -150,8 +142,7 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       // Get the completed "DiscoverGranules" execution
       finishedDiscoverGranulesExecution = await getCompletedExecution({
         prefix,
-        arn: discoverGranulesExecutionArn,
-        timeout: 15
+        arn: discoverGranulesExecutionArn
       });
     } catch (err) {
       beforeAllFailed = true;
@@ -201,9 +192,7 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       const arn = finishedDiscoverGranulesExecution.finalPayload.running[0];
 
       // Wait for the execution to end
-      const execution = await getCompletedExecution({
-        prefix, arn, timeout: 15
-      });
+      const execution = await getCompletedExecution({ prefix, arn });
 
       expect(execution.originalPayload.granules[0].granuleId)
         .toEqual(newGranuleId);
@@ -214,11 +203,7 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
       await expectAsync(
-        getCompletedGranule({
-          prefix,
-          granuleId: newGranuleId,
-          timeout: 15
-        })
+        getCompletedGranule({ prefix, granuleId: newGranuleId })
       ).toBeResolved();
     }
   });

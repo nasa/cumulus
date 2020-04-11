@@ -14,7 +14,7 @@ const { invokeApi } = require('./cumulusApiClient');
  * @returns {Promise<Object>}          - promise that resolves to the output
  *                                       of the API lambda
  */
-const createRule = async ({ prefix, rule, callback = invokeApi }) => callback({
+const postRule = async ({ prefix, rule, callback = invokeApi }) => callback({
   prefix,
   payload: {
     httpMethod: 'POST',
@@ -142,7 +142,7 @@ async function rerunRule({
 }
 
 module.exports = {
-  createRule,
+  postRule,
   updateRule,
   deleteRule,
   getRule,

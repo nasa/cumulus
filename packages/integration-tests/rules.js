@@ -1,10 +1,10 @@
 'use strict';
 
 const rulesApi = require('@cumulus/api-client/rules');
-const randomId = require('./randomId');
+const { randomId } = require('@cumulus/common/string');
 
 const buildRule = (overrides = {}) => ({
-  name: randomId('rule', '_'),
+  name: randomId('rule_'),
   ...overrides
 });
 
@@ -19,7 +19,7 @@ const buildOneTimeRule = (overrides = {}) =>
 const createOneTimeRule = async (prefix, overrides = {}) => {
   const rule = buildOneTimeRule(overrides);
 
-  const createResponse = await rulesApi.createRule({ prefix, rule });
+  const createResponse = await rulesApi.postRule({ prefix, rule });
 
   if (createResponse.statusCode !== 200) {
     throw new Error(`Failed to create rule: ${JSON.stringify(createResponse)}`);

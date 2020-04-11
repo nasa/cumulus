@@ -1,10 +1,10 @@
 'use strict';
 
 const providersApi = require('@cumulus/api-client/providers');
-const randomId = require('./randomId');
+const { randomId } = require('@cumulus/common/test-utils');
 
 const buildProvider = (overrides = {}) => ({
-  id: randomId('provider'),
+  id: randomId('provider-'),
   globalConnectionLimit: 10,
   protocol: 's3',
   ...overrides
