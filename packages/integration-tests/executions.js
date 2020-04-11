@@ -6,6 +6,17 @@ const isNil = require('lodash/isNil');
 const pick = require('lodash/pick');
 const pRetry = require('p-retry');
 
+/**
+ * Find the execution ARN matching the `matcher` function
+ *
+ * @param {string} prefix - the prefix configured for the stack
+ * @param {Function} matcher - a predicate function that takes an execution and
+ *   determines if this is the execution that is being searched for
+ * @param {Object} [options]
+ * @param {integer} [options.timeout] - the number of seconds to wait for a
+ *   matching execution to be found
+ * @returns {Promise<Object>} the matching execution
+ */
 const findExecutionArn = async (prefix, matcher, options = { timeout: 0 }) =>
   pRetry(
     async () => {

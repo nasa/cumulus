@@ -1,6 +1,11 @@
 # @cumulus/integration-tests
 
-@cumulus/integration-tests provides a CLI and functions for testing Cumulus
+@cumulus/integration-tests provides a CLI and functions for testing Cumulus.
+
+**Note:** The [documented API](#api) of this package will not change without a
+deprecation warning being provided in earlier releases. Code in this package
+that is _not_ documented in this README may change without warning, and is not
+considered part of the package's public API.
 
 ## About Cumulus
 
@@ -19,6 +24,7 @@ $ npm install @cumulus/integration-tests
 
 - [Collections](#collections)
 - [Executions](#executions)
+- [Granules](#granules)
 
 ### Collections
 
@@ -30,10 +36,10 @@ const collections = require('@cumulus/integration-test/collections');
 
 Create a collection using the Cumulus API.
 
-- `prefix` is the name of the Cumulus stack
+- `prefix` is the name of the Cumulus stack.
 - `overrides` is an `Object` that contains values that should override the
-  default collection values
-- Returns a `Promise` that resolves to the created collection
+  default collection values.
+- Returns a `Promise` that resolves to the created collection.
 
 The default collection is very simple. It expects that, for any discovered file,
 the granule ID is everything in the filename before the extension. For example,
@@ -67,14 +73,63 @@ const executions = require('@cumulus/integration-test/executions');
 
 #### executions.findExecutionArn(prefix, matcher, [options])
 
-Find the Step Function Execution ARN matching the `matcher` function.
+Find the execution ARN matching the `matcher` function.
 
-- `prefix` is the name of the Cumulus stack
-- `matcher` is a `Function` that takes an execution argument and returns `true`
-  if the execution is the one being searched for, and false otherwise
+- `prefix` is the name of the Cumulus stack.
+- `matcher` is a `Function` that takes an execution argument (as returned by the
+  `GET /executions` endpoint) and returns `true` if the execution is the one
+  being searched for, and false otherwise.
 - `options` is an optional `Object` with one property, `timeout`. This is the
-  number of seconds to wait for a matching execution to be found
-- Returns a `Promise` that resolves to the ARN of the matching execution
+  number of seconds to wait for a matching execution to be found.
+- Returns a `Promise` that resolves to the ARN of the matching execution.
+
+#### executions.getCompletedExecution(params)
+
+Wait for an execution status to be `completed` and return the execution.
+
+- `params.prefix` is the name of the Cumulus stack.
+- `params.arn` is the execution ARN to fetch.
+- `params.callback` is a `Promise`-returning `Function` to invoke the API lambda
+  that takes a prefix / user payload. Defaults to
+  `cumulusApiClient.invokeApifunction` to invoke the API Lambda.
+- `params.timeout`the number of seconds to wait for the execution to reach a
+  terminal state. Defaults to 30.
+- Returns a `Promise` that resolves to the execution `Object`, as returned by
+  the `GET /executions/<execution-arn>` endpoint.
+
+#### executions.getFailedExecution(params)
+
+Wait for an execution status to be `failed` and return the execution.
+
+- `params.prefix` is the name of the Cumulus stack.
+- `params.arn` is the execution ARN to fetch.
+- `params.callback` is a `Promise`-returning `Function` to invoke the API lambda
+  that takes a prefix / user payload. Defaults to
+  `cumulusApiClient.invokeApifunction` to invoke the API Lambda.
+- `params.timeout`the number of seconds to wait for the execution to reach a
+  terminal state. Defaults to 30.
+- Returns a `Promise` that resolves to the execution `Object`, as returned by
+  the `GET /executions/<execution-arn>` endpoint.
+
+### Granules
+
+```js
+const granules = require('@cumulus/integration-test/granules');
+```
+
+#### granules.getCompletedGranule(params)
+
+Wait for a granule's status to be `completed` and return the granule.
+
+- `params.prefix` is the name of the Cumulus stack.
+- `params.granuleId` is the `granuleId` of the granule
+- `params.callback` is a `Promise`-returning `Function` to invoke the API lambda
+  that takes a prefix / user payload. Defaults to
+  `cumulusApiClient.invokeApifunction` to invoke the API Lambda.
+- `params.timeout`the number of seconds to wait for the granule to reach a
+  terminal state. Defaults to 30.
+- Returns a `Promise` that resolves to a granule `Object`, as returned by the
+  `GET /granules/<granule-id>` endpoint.
 
 ## CLI Usage
 
