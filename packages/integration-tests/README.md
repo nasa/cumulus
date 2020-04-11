@@ -17,6 +17,9 @@ $ npm install @cumulus/integration-tests
 
 ## API
 
+- [Collections](#collections)
+- [Executions](#executions)
+
 ### Collections
 
 ```js
