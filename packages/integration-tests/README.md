@@ -53,7 +53,7 @@ The default collection is very simple. It expects that, for any discovered file,
 is everything in the filename before the extension. For example, a file named `gran-1.txt` would
 have a granuleId of `gran-1`. Filenames can only contain a single `.` character.
 
-**Collection defaults**
+**Collection defaults:**
 
 - **name**: random string starting with `collection-name-`
 - **version**: random string starting with `collection-version-`
@@ -75,10 +75,10 @@ have a granuleId of `gran-1`. Filenames can only contain a single `.` character.
 **Kind**: Exported function  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - the generated collection  
 
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| prefix | <code>string</code> |  | the Cumulus stack name |
-| [overrides] | <code>Object</code> | <code>{}</code> | properties to set on the collection, overriding the defaults |
+| Param | Type | Description |
+| --- | --- | --- |
+| prefix | <code>string</code> | the Cumulus stack name |
+| [overrides] | <code>Object</code> | properties to set on the collection, overriding the defaults |
 
 <a name="module_Executions"></a>
 
@@ -160,7 +160,7 @@ const Providers = require('@cumulus/integration-test/Providers');
 ### createProvider(prefix, [overrides]) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
 Create a provider using the Cumulus API
 
-**Provider defaults**
+**Provider defaults:**
 
 - **id**: random string starting with `provider-`
 - **protocol**: `s3`
@@ -169,10 +169,10 @@ Create a provider using the Cumulus API
 **Kind**: Exported function  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - the generated provider  
 
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| prefix | <code>string</code> |  | the Cumulus stack name |
-| [overrides] | <code>Object</code> | <code>{}</code> | properties to set on the provider, overriding the defaults |
+| Param | Type | Description |
+| --- | --- | --- |
+| prefix | <code>string</code> | the Cumulus stack name |
+| [overrides] | <code>Object</code> | properties to set on the provider, overriding the defaults |
 
 <a name="module_Rules"></a>
 
@@ -186,7 +186,7 @@ const Rules = require('@cumulus/integration-test/Rules');
 ### createOneTimeRule(prefix, [overrides]) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
 Create a `onetime` rule using the Cumulus API
 
-**Rule defaults**
+**Rule defaults:**
 
 - **name**: random string starting with `rule_`
 - **rule**: `{ type: 'onetime' }`
@@ -194,10 +194,10 @@ Create a `onetime` rule using the Cumulus API
 **Kind**: Exported function  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - the generated rule  
 
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| prefix | <code>string</code> |  | the name of the Cumulus stack |
-| [overrides] | <code>Object</code> | <code>{}</code> | properties to set on the rule, overriding the defaults |
+| Param | Type | Description |
+| --- | --- | --- |
+| prefix | <code>string</code> | the name of the Cumulus stack |
+| [overrides] | <code>Object</code> | properties to set on the rule, overriding the defaults |
 
 
 ## CLI Usage

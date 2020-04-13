@@ -26,13 +26,13 @@ const buildOneTimeRule = (overrides = {}) =>
 /**
  * Create a `onetime` rule using the Cumulus API
  *
- * **Rule defaults**
+ * **Rule defaults:**
  *
  * - **name**: random string starting with `rule_`
  * - **rule**: `{ type: 'onetime' }`
  *
  * @param {string} prefix - the name of the Cumulus stack
- * @param {Object} [overrides={}] - properties to set on the rule, overriding the defaults
+ * @param {Object} [overrides] - properties to set on the rule, overriding the defaults
  * @returns {Promise<Object>} the generated rule
  *
  * @alias module:Rules

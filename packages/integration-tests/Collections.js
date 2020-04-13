@@ -35,7 +35,7 @@ const buildCollection = (overrides = {}) => ({
  * is everything in the filename before the extension. For example, a file named `gran-1.txt` would
  * have a granuleId of `gran-1`. Filenames can only contain a single `.` character.
  *
- * **Collection defaults**
+ * **Collection defaults:**
  *
  * - **name**: random string starting with `collection-name-`
  * - **version**: random string starting with `collection-version-`
@@ -55,7 +55,7 @@ const buildCollection = (overrides = {}) => ({
  *   ```
  *
  * @param {string} prefix - the Cumulus stack name
- * @param {Object} [overrides={}] - properties to set on the collection, overriding the defaults
+ * @param {Object} [overrides] - properties to set on the collection, overriding the defaults
  * @returns {Promise<Object>} the generated collection
  *
  * @alias module:Collections
