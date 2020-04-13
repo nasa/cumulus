@@ -9,10 +9,9 @@ const { inTestMode, testAwsClient } = require('./test-utils');
  */
 const noop = () => {}; // eslint-disable-line lodash/prefer-noop
 
-exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-AWS.config.update({ region: exports.region });
+const getRegion = () => process.env.AWS_REGION || 'us-east-1';
 
-// Workaround upload hangs. See: https://github.com/andrewrk/node-s3-client/issues/74'
+// Workaround upload hangs. See: https://github.com/andrewrk/node-s3-client/issues/74
 AWS.util.update(AWS.S3.prototype, { addExpect100Continue: noop });
 AWS.config.setPromisesDependency(Promise);
 
@@ -37,6 +36,7 @@ const memoize = (fn) => {
 const awsClient = (Service, version = null) => {
   const options = {};
   if (version) options.apiVersion = version;
+  options.region = getRegion();
 
   if (inTestMode()) {
     if (AWS.DynamoDB.DocumentClient.serviceIdentifier === undefined) {
