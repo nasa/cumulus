@@ -40,7 +40,7 @@ const getGranule = async ({ prefix, granuleId, callback = invokeApi }) => callba
  *                                      api lambda
  */
 const waitForGranule = async ({
-  prefix, granuleId, retries = 10, callback = invokeApi
+  prefix, granuleId, status, retries = 10, callback = invokeApi
 }) => {
   await pRetry(
     async () => {
@@ -50,6 +50,12 @@ const waitForGranule = async ({
       }
       if (apiResult.statusCode !== 200) {
         throw new Error(`granule ${granuleId} not in database yet, status ${apiResult.statusCode} retrying....`);
+      }
+      if (status) {
+        const granuleStatus = JSON.parse(apiResult.body).status;
+        if (status !== granuleStatus) {
+          throw new Error(`Granule status ${granuleStatus} does not match requested status, retrying...`);
+        }
       }
       logger.info(`Granule ${granuleId} in database, proceeding...`); // TODO fix logging
     },
