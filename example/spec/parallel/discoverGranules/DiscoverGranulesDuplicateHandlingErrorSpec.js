@@ -10,7 +10,7 @@ const {
   findExecutionArn,
   getExecutionWithStatus
 } = require('@cumulus/integration-tests/Executions');
-const { getCompletedGranule } = require('@cumulus/integration-tests/Granules');
+const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 
@@ -107,7 +107,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
       });
 
       // Wait for the existing granule to be fully ingested
-      await getCompletedGranule({ prefix, granuleId: existingGranuleId });
+      await getGranuleWithStatus({ prefix, granuleId: existingGranuleId, status: 'completed' });
 
       // Run DiscoverGranules
       discoverGranulesRule = await createOneTimeRule(

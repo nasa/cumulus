@@ -9,7 +9,7 @@ const { createCollection } = require('@cumulus/integration-tests/Collections');
 const {
   findExecutionArn, getExecutionWithStatus
 } = require('@cumulus/integration-tests/Executions');
-const { getCompletedGranule } = require('@cumulus/integration-tests/Granules');
+const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 
@@ -104,7 +104,7 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       await getExecutionWithStatus({ prefix, arn: ingestGranuleExecutionArn, status: 'completed' });
 
       // Wait for the existing granule to be fully ingested
-      await getCompletedGranule({ prefix, granuleId: existingGranuleId });
+      await getGranuleWithStatus({ prefix, granuleId: existingGranuleId, status: 'completed' });
 
       // Stage the new granule file to S3
       newGranuleId = randomId('new-granule-');
@@ -173,7 +173,9 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
   it('results in the new granule being ingested', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      await expectAsync(getCompletedGranule({ prefix, granuleId: newGranuleId })).toBeResolved();
+      await expectAsync(
+        getGranuleWithStatus({ prefix, granuleId: newGranuleId, status: 'completed' })
+      ).toBeResolved();
     }
   });
 

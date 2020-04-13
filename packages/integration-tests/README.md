@@ -132,10 +132,10 @@ endpoint
 ```js
 const Granules = require('@cumulus/integration-test/Granules');
 ```
-<a name="exp_module_Granules--getCompletedGranule"></a>
+<a name="exp_module_Granules--getGranuleWithStatus"></a>
 
-### getCompletedGranule(params) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
-Wait for a granule's status to be `completed` and return the granule
+### getGranuleWithStatus(params) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
+Wait for a granule to have an expected status and return the granule
 
 **Kind**: Exported function  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - the granule as returned by the `GET /granules/<granule-id>` endpoint  
@@ -145,6 +145,7 @@ Wait for a granule's status to be `completed` and return the granule
 | params | <code>Object</code> |  |  |
 | params.prefix | <code>string</code> |  | the name of the Cumulus stack |
 | params.granuleId | <code>string</code> |  | the `granuleId` of the granule |
+| params.status | <code>string</code> |  | the status to wait for |
 | [params.callback] | <code>function</code> | <code>cumulusApiClient.invokeApifunction</code> | an async function to invoke the API Lambda that takes a prefix / user payload |
 | [params.timeout] | <code>integer</code> | <code>30</code> | the number of seconds to wait for the   execution to reach a terminal state |
 
