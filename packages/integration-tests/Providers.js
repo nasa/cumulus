@@ -29,6 +29,8 @@ const buildProvider = (overrides = {}) => ({
  * @param {string} prefix - the Cumulus stack name
  * @param {Object} [overrides={}] - properties to set on the provider, overriding the defaults
  * @returns {Promise<Object>} the generated provider
+ *
+ * @alias module:Providers
  */
 const createProvider = async (prefix, overrides = {}) => {
   const provider = buildProvider(overrides);

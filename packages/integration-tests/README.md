@@ -74,10 +74,11 @@ have a granuleId of `gran-1`. Filenames can only contain a single `.` character.
 
 **Kind**: Exported function  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - the generated collection  
-**Params**
 
-- prefix <code>string</code> - the Cumulus stack name
-- [overrides] <code>Object</code> <code> = {}</code> - properties to set on the collection, overriding the defaults
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| prefix | <code>string</code> |  | the Cumulus stack name |
+| [overrides] | <code>Object</code> | <code>{}</code> | properties to set on the collection, overriding the defaults |
 
 <a name="module_Executions"></a>
 
@@ -99,14 +100,13 @@ Find the execution ARN matching the `matcher` function
 
 **Kind**: Exported function  
 **Returns**: <code>Promise.&lt;string&gt;</code> - the ARN of the matching execution  
-**Params**
 
-- prefix <code>string</code> - the name of the Cumulus stack
-- matcher <code>function</code> - a predicate function that takes an execution and determines if this
-is the execution that is being searched for
-- [options] <code>Object</code>
-    - [.timeout] <code>integer</code> <code> = 0</code> - the number of seconds to wait for a matching execution
-to be found
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| prefix | <code>string</code> |  | the name of the Cumulus stack |
+| matcher | <code>function</code> |  | a predicate function that takes an execution and determines if this is the execution that is being searched for |
+| [options] | <code>Object</code> |  |  |
+| [options.timeout] | <code>integer</code> | <code>0</code> | the number of seconds to wait for a matching execution to be found |
 
 <a name="exp_module_Executions--getCompletedExecution"></a>
 
@@ -116,15 +116,14 @@ Wait for an execution status to be `completed` and return the execution
 **Kind**: Exported function  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - the execution as returned by the `GET /executions/<execution-arn>`
 endpoint  
-**Params**
 
-- params <code>Object</code>
-    - .prefix <code>string</code> - the name of the Cumulus stack
-    - .arn <code>string</code> - the execution ARN to fetch
-    - [.callback] <code>function</code> <code> = cumulusApiClient.invokeApifunction</code> - an async function to
-invoke the API Lambda that takes a prefix / user payload
-    - [.timeout] <code>integer</code> <code> = 30</code> - the number of seconds to wait for the
-  execution to reach a terminal state
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| params | <code>Object</code> |  |  |
+| params.prefix | <code>string</code> |  | the name of the Cumulus stack |
+| params.arn | <code>string</code> |  | the execution ARN to fetch |
+| [params.callback] | <code>function</code> | <code>cumulusApiClient.invokeApifunction</code> | an async function to invoke the API Lambda that takes a prefix / user payload |
+| [params.timeout] | <code>integer</code> | <code>30</code> | the number of seconds to wait for the   execution to reach a terminal state |
 
 <a name="exp_module_Executions--getFailedExecution"></a>
 
@@ -134,15 +133,14 @@ Wait for an execution status to be `failed` and return the execution
 **Kind**: Exported function  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - the execution as returned by the `GET /executions/<execution-arn>`
 endpoint  
-**Params**
 
-- params <code>Object</code>
-    - .prefix <code>string</code> - the prefix configured for the stack
-    - .arn <code>string</code> - an execution ARN
-    - [.callback] <code>function</code> <code> = cumulusApiClient.invokeApifunction</code> - an async function to
-invoke the API Lambda that takes a prefix / user payload
-    - [.timeout] <code>integer</code> <code> = 30</code> - the number of seconds to wait for the
-  execution to reach a terminal state
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| params | <code>Object</code> |  |  |
+| params.prefix | <code>string</code> |  | the prefix configured for the stack |
+| params.arn | <code>string</code> |  | an execution ARN |
+| [params.callback] | <code>function</code> | <code>cumulusApiClient.invokeApifunction</code> | an async function to invoke the API Lambda that takes a prefix / user payload |
+| [params.timeout] | <code>integer</code> | <code>30</code> | the number of seconds to wait for the   execution to reach a terminal state |
 
 <a name="module_Granules"></a>
 
@@ -158,15 +156,14 @@ Wait for a granule's status to be `completed` and return the granule
 
 **Kind**: Exported function  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - the granule as returned by the `GET /granules/<granule-id>` endpoint  
-**Params**
 
-- params <code>Object</code>
-    - .prefix <code>string</code> - the name of the Cumulus stack
-    - .granuleId <code>string</code> - the `granuleId` of the granule
-    - [.callback] <code>function</code> <code> = cumulusApiClient.invokeApifunction</code> - an async function to
-invoke the API Lambda that takes a prefix / user payload
-    - [.timeout] <code>integer</code> <code> = 30</code> - the number of seconds to wait for the
-  execution to reach a terminal state
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| params | <code>Object</code> |  |  |
+| params.prefix | <code>string</code> |  | the name of the Cumulus stack |
+| params.granuleId | <code>string</code> |  | the `granuleId` of the granule |
+| [params.callback] | <code>function</code> | <code>cumulusApiClient.invokeApifunction</code> | an async function to invoke the API Lambda that takes a prefix / user payload |
+| [params.timeout] | <code>integer</code> | <code>30</code> | the number of seconds to wait for the   execution to reach a terminal state |
 
 <a name="module_Providers"></a>
 
@@ -175,9 +172,9 @@ invoke the API Lambda that takes a prefix / user payload
 ```js
 const Providers = require('@cumulus/integration-test/Providers');
 ```
-<a name="module_Providers..createProvider"></a>
+<a name="exp_module_Providers--createProvider"></a>
 
-### Providers~createProvider(prefix, [overrides]) ⇒ <code>Promise.&lt;Object&gt;</code>
+### createProvider(prefix, [overrides]) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
 Create a provider using the Cumulus API
 
 **Provider defaults**
@@ -186,12 +183,13 @@ Create a provider using the Cumulus API
 - **protocol**: `s3`
 - **globalConnectionLimit**: `10`
 
-**Kind**: inner method of [<code>Providers</code>](#module_Providers)  
+**Kind**: Exported function  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - the generated provider  
-**Params**
 
-- prefix <code>string</code> - the Cumulus stack name
-- [overrides] <code>Object</code> <code> = {}</code> - properties to set on the provider, overriding the defaults
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| prefix | <code>string</code> |  | the Cumulus stack name |
+| [overrides] | <code>Object</code> | <code>{}</code> | properties to set on the provider, overriding the defaults |
 
 <a name="module_Rules"></a>
 
@@ -212,10 +210,11 @@ Create a `onetime` rule using the Cumulus API
 
 **Kind**: Exported function  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - the generated rule  
-**Params**
 
-- prefix <code>string</code> - the name of the Cumulus stack
-- [overrides] <code>Object</code> <code> = {}</code> - properties to set on the rule, overriding the defaults
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| prefix | <code>string</code> |  | the name of the Cumulus stack |
+| [overrides] | <code>Object</code> | <code>{}</code> | properties to set on the rule, overriding the defaults |
 
 
 ## CLI Usage

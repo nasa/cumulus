@@ -19,7 +19,7 @@
   },
   "scripts": {
     "build": "rm -rf dist && mkdir dist && webpack",
-    "build-docs": "jsdoc2md --template README.hbs --param-list-format list Collections.js Executions.js Granules.js Providers.js Rules.js > README.md",
+    "build-docs": "jsdoc2md --template README.hbs Collections.js Executions.js Granules.js Providers.js Rules.js > README.md",
     "lint": "eslint .",
     "prepare": "npm run build"
   },
