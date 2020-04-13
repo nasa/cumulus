@@ -12,8 +12,8 @@
     "test": "python -m unittest",
     "python-lint": "pylint *.py",
     "lint": "npm run python-lint",
-    "build": "true",
-    "prepare": "true"
+    "build": "pip install -r requirements-dev.txt && pip install -r requirements.txt",
+    "prepare": "npm run build"
   },
   "publishConfig": {
     "access": "private"
