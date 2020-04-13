@@ -134,7 +134,6 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
       );
     } catch (err) {
       beforeAllFailed = true;
-      console.error(err);
       throw err;
     }
   });

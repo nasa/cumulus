@@ -147,7 +147,6 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       });
     } catch (err) {
       beforeAllFailed = true;
-      console.error(err);
       throw err;
     }
   });
