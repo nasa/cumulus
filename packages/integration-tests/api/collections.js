@@ -16,7 +16,7 @@ const collectionsApi = require('@cumulus/api-client/collections');
  * @returns {Promise<Object>}          - the response from the callback
  */
 const createCollection = (params) => {
-  deprecate('@cumulus/integration-tests/collections.createCollection', '1.21.0', '@cumulus/cumulus-api-client/collections.createCollection');
+  deprecate('@cumulus/integration-tests/collections.createCollection', '1.21.0', '@cumulus/api-client/collections.createCollection');
   return collectionsApi.getGranule(params);
 };
 
@@ -33,7 +33,7 @@ const createCollection = (params) => {
 * @returns {Promise<Object>}                 - the response from the callback
 */
 const deleteCollection = (params) => {
-  deprecate('@cumulus/integration-tests/collections.deleteCollection', '1.21.0', '@cumulus/cumulus-api-client/collections.deleteCollection');
+  deprecate('@cumulus/integration-tests/collections.deleteCollection', '1.21.0', '@cumulus/api-client/collections.deleteCollection');
   return collectionsApi.deleteCollection(params);
 };
 
@@ -51,7 +51,7 @@ const deleteCollection = (params) => {
  * @returns {Promise<Object>}                 - the response from the callback
  */
 const getCollection = (params) => {
-  deprecate('@cumulus/integration-tests/collections.getCollection', '1.21.0', '@cumulus/cumulus-api-client/collections.getCollection');
+  deprecate('@cumulus/integration-tests/collections.getCollection', '1.21.0', '@cumulus/api-client/collections.getCollection');
   return collectionsApi.getCollection(params);
 };
 
