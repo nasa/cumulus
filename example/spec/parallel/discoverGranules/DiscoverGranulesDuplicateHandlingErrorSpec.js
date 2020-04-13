@@ -5,15 +5,14 @@ const pAll = require('p-all');
 const pick = require('lodash/pick');
 const { randomId } = require('@cumulus/common/test-utils');
 
-const { createCollection } = require('@cumulus/integration-tests/collections');
+const { createCollection } = require('@cumulus/integration-tests/Collections');
 const {
   findExecutionArn,
-  getCompletedExecution,
-  getFailedExecution
-} = require('@cumulus/integration-tests/executions');
-const { getCompletedGranule } = require('@cumulus/integration-tests/granules');
-const { createProvider } = require('@cumulus/integration-tests/providers');
-const { createOneTimeRule } = require('@cumulus/integration-tests/rules');
+  getExecutionWithStatus
+} = require('@cumulus/integration-tests/Executions');
+const { getCompletedGranule } = require('@cumulus/integration-tests/Granules');
+const { createProvider } = require('@cumulus/integration-tests/Providers');
+const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { deleteGranule } = require('@cumulus/api-client/granules');
@@ -101,7 +100,11 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
       );
 
       // Wait for the "IngestGranule" execution to be completed
-      await getCompletedExecution({ prefix, arn: ingestGranuleExecutionArn });
+      await getExecutionWithStatus({
+        prefix,
+        arn: ingestGranuleExecutionArn,
+        status: 'completed'
+      });
 
       // Wait for the existing granule to be fully ingested
       await getCompletedGranule({ prefix, granuleId: existingGranuleId });
@@ -139,7 +142,11 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
   it('fails the DiscoverGranules workflow', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      const execution = await getFailedExecution({ prefix, arn: discoverGranulesExecutionArn });
+      const execution = await getExecutionWithStatus({
+        prefix,
+        arn: discoverGranulesExecutionArn,
+        status: 'failed'
+      });
 
       const errorCause = JSON.parse(get(execution, 'error.Cause', {}));
       expect(errorCause.errorMessage)

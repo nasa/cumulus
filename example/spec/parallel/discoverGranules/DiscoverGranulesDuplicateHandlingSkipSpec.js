@@ -5,13 +5,13 @@ const pAll = require('p-all');
 const pick = require('lodash/pick');
 const { randomId } = require('@cumulus/common/test-utils');
 
-const { createCollection } = require('@cumulus/integration-tests/collections');
+const { createCollection } = require('@cumulus/integration-tests/Collections');
 const {
-  findExecutionArn, getCompletedExecution
-} = require('@cumulus/integration-tests/executions');
-const { getCompletedGranule } = require('@cumulus/integration-tests/granules');
-const { createProvider } = require('@cumulus/integration-tests/providers');
-const { createOneTimeRule } = require('@cumulus/integration-tests/rules');
+  findExecutionArn, getExecutionWithStatus
+} = require('@cumulus/integration-tests/Executions');
+const { getCompletedGranule } = require('@cumulus/integration-tests/Granules');
+const { createProvider } = require('@cumulus/integration-tests/Providers');
+const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { deleteGranule } = require('@cumulus/api-client/granules');
@@ -101,7 +101,7 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       );
 
       // Wait for the "IngestGranule" execution to be completed
-      await getCompletedExecution({ prefix, arn: ingestGranuleExecutionArn });
+      await getExecutionWithStatus({ prefix, arn: ingestGranuleExecutionArn, status: 'completed' });
 
       // Wait for the existing granule to be fully ingested
       await getCompletedGranule({ prefix, granuleId: existingGranuleId });
@@ -140,9 +140,10 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       );
 
       // Get the completed "DiscoverGranules" execution
-      finishedDiscoverGranulesExecution = await getCompletedExecution({
+      finishedDiscoverGranulesExecution = await getExecutionWithStatus({
         prefix,
-        arn: discoverGranulesExecutionArn
+        arn: discoverGranulesExecutionArn,
+        status: 'completed'
       });
     } catch (err) {
       beforeAllFailed = true;
@@ -164,7 +165,7 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       const arn = finishedDiscoverGranulesExecution.finalPayload.running[0];
 
       // Wait for the execution to end
-      const execution = await getCompletedExecution({ prefix, arn });
+      const execution = await getExecutionWithStatus({ prefix, arn, status: 'completed' });
 
       expect(execution.originalPayload.granules[0].granuleId).toEqual(newGranuleId);
     }

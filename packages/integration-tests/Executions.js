@@ -49,12 +49,29 @@ const findExecutionArn = async (prefix, matcher, options = { timeout: 0 }) =>
     }
   );
 
+class ExecutionNotFoundError extends Error {
+  constructor(arn) {
+    super(`Execution ${arn} not found`);
+    Error.captureStackTrace(this, this.constructor);
+    this.name = this.constructor.name;
+  }
+}
+
+const getExecution = async (params) => {
+  const execution = await executionsApi.getExecution(params);
+
+  if (execution.statusCode === 404) throw new ExecutionNotFoundError(params.arn);
+
+  return execution;
+};
+
 /**
- * Wait for an execution status to be `completed` and return the execution
+ * Wait for an execution to have an expected status and return the execution
  *
  * @param {Object} params
  * @param {string} params.prefix - the name of the Cumulus stack
  * @param {string} params.arn - the execution ARN to fetch
+ * @param {string} params.status - the status to wait for
  * @param {Function} [params.callback=cumulusApiClient.invokeApifunction] - an async function to
  * invoke the API Lambda that takes a prefix / user payload
  * @param {integer} [params.timeout=30] - the number of seconds to wait for the
@@ -64,80 +81,24 @@ const findExecutionArn = async (prefix, matcher, options = { timeout: 0 }) =>
  *
  * @alias module:Executions
  */
-const getCompletedExecution = async (params) =>
+const getExecutionWithStatus = async (params) =>
   pRetry(
     async () => {
       let execution;
 
       try {
-        execution = await executionsApi.getExecution(
-          pick(params, ['prefix', 'arn', 'callback'])
-        );
+        execution = await getExecution(pick(params, ['prefix', 'arn', 'callback']));
       } catch (err) {
         throw new pRetry.AbortError(err);
       }
 
-      if (execution.status === 'completed') return execution;
+      if (execution.status === params.status) return execution;
 
-      if (execution.status === 'failed') {
+      if (['completed', 'failed'].includes(execution.status)) {
         throw new pRetry.AbortError(
-          new Error(`Execution ${params.arn} failed`)
-        );
-      }
-
-      if (execution.statusCode === 404) {
-        throw new pRetry.AbortError(
-          new Error(`Execution ${params.arn} not found`)
-        );
-      }
-
-      throw new Error(`Execution ${params.arn} still running`);
-    },
-    {
-      retries: get(params, 'timeout', 30),
-      maxTimeout: 1000
-    }
-  );
-
-/**
- * Wait for an execution status to be `failed` and return the execution
- *
- * @param {Object} params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.arn - an execution ARN
- * @param {Function} [params.callback=cumulusApiClient.invokeApifunction] - an async function to
- * invoke the API Lambda that takes a prefix / user payload
- * @param {integer} [params.timeout=30] - the number of seconds to wait for the
- *   execution to reach a terminal state
- * @returns {Promise<Object>} the execution as returned by the `GET /executions/<execution-arn>`
- * endpoint
- *
- * @alias module:Executions
- */
-const getFailedExecution = async (params = {}) =>
-  pRetry(
-    async () => {
-      let execution;
-
-      try {
-        execution = await executionsApi.getExecution(
-          pick(params, ['prefix', 'arn', 'callback'])
-        );
-      } catch (err) {
-        throw new pRetry.AbortError(err);
-      }
-
-      if (execution.status === 'failed') return execution;
-
-      if (execution.status === 'completed') {
-        throw new pRetry.AbortError(
-          new Error(`Execution ${params.arn} was completed, not failed`)
-        );
-      }
-
-      if (execution.statusCode === 404) {
-        throw new pRetry.AbortError(
-          new Error(`Execution ${params.arn} not found`)
+          new Error(
+            `Expected ${params.arn} to have status ${params.status} but found ${execution.status}`
+          )
         );
       }
 
@@ -151,6 +112,5 @@ const getFailedExecution = async (params = {}) =>
 
 module.exports = {
   findExecutionArn,
-  getCompletedExecution,
-  getFailedExecution
+  getExecutionWithStatus
 };

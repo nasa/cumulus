@@ -90,8 +90,7 @@ const Executions = require('@cumulus/integration-test/Executions');
 
 * [Executions](#module_Executions)
     * [findExecutionArn(prefix, matcher, [options])](#exp_module_Executions--findExecutionArn) ⇒ <code>Promise.&lt;string&gt;</code> ⏏
-    * [getCompletedExecution(params)](#exp_module_Executions--getCompletedExecution) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
-    * [getFailedExecution(params)](#exp_module_Executions--getFailedExecution) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
+    * [getExecutionWithStatus(params)](#exp_module_Executions--getExecutionWithStatus) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
 
 <a name="exp_module_Executions--findExecutionArn"></a>
 
@@ -108,10 +107,10 @@ Find the execution ARN matching the `matcher` function
 | [options] | <code>Object</code> |  |  |
 | [options.timeout] | <code>integer</code> | <code>0</code> | the number of seconds to wait for a matching execution to be found |
 
-<a name="exp_module_Executions--getCompletedExecution"></a>
+<a name="exp_module_Executions--getExecutionWithStatus"></a>
 
-### getCompletedExecution(params) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
-Wait for an execution status to be `completed` and return the execution
+### getExecutionWithStatus(params) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
+Wait for an execution to have an expected status and return the execution
 
 **Kind**: Exported function  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - the execution as returned by the `GET /executions/<execution-arn>`
@@ -122,23 +121,7 @@ endpoint
 | params | <code>Object</code> |  |  |
 | params.prefix | <code>string</code> |  | the name of the Cumulus stack |
 | params.arn | <code>string</code> |  | the execution ARN to fetch |
-| [params.callback] | <code>function</code> | <code>cumulusApiClient.invokeApifunction</code> | an async function to invoke the API Lambda that takes a prefix / user payload |
-| [params.timeout] | <code>integer</code> | <code>30</code> | the number of seconds to wait for the   execution to reach a terminal state |
-
-<a name="exp_module_Executions--getFailedExecution"></a>
-
-### getFailedExecution(params) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
-Wait for an execution status to be `failed` and return the execution
-
-**Kind**: Exported function  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the execution as returned by the `GET /executions/<execution-arn>`
-endpoint  
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| params | <code>Object</code> |  |  |
-| params.prefix | <code>string</code> |  | the prefix configured for the stack |
-| params.arn | <code>string</code> |  | an execution ARN |
+| params.status | <code>string</code> |  | the status to wait for |
 | [params.callback] | <code>function</code> | <code>cumulusApiClient.invokeApifunction</code> | an async function to invoke the API Lambda that takes a prefix / user payload |
 | [params.timeout] | <code>integer</code> | <code>30</code> | the number of seconds to wait for the   execution to reach a terminal state |
 
