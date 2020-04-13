@@ -1,6 +1,6 @@
 # @cumulus/integration-tests
 
-@cumulus/integration-tests provides a CLI and functions for testing Cumulus.
+This package provides a CLI and functions for testing Cumulus.
 
 ⚠️ The [documented API](#api) of this package will not change without a
 deprecation warning being provided in earlier releases. Code in this package
@@ -22,38 +22,36 @@ $ npm install @cumulus/integration-tests
 
 ## API
 
-- [Collections](#collections)
-  - [createCollection](#collectionscreatecollectionprefix-overrides)
-- [Executions](#executions)
-  - [findExecutionArn](#executionsfindexecutionarnprefix-matcher-options)
-  - [getCompletedExecution](#executionsgetcompletedexecutionparams)
-  - [getFailedExecution](#executionsgetfailedexecutionparams)
-- [Granules](#granules)
-  - [getCompletedGranule](#granulesgetcompletedgranuleparams)
-- [Providers](#providers)
-  - [createProvider](#providerscreateproviderprefix-overrides)
-- [Rules](#rules)
-  - [createOneTimeRule](#rulescreateonetimeruleprefix-overrides)
+## Modules
 
-### Collections
+<dl>
+<dt><a href="#module_Collections">Collections</a></dt>
+<dd></dd>
+<dt><a href="#module_Executions">Executions</a></dt>
+<dd></dd>
+<dt><a href="#module_Granules">Granules</a></dt>
+<dd></dd>
+<dt><a href="#module_Providers">Providers</a></dt>
+<dd></dd>
+<dt><a href="#module_Rules">Rules</a></dt>
+<dd></dd>
+</dl>
 
+<a name="module_Collections"></a>
+
+## Collections
+**Example**  
 ```js
-const collections = require('@cumulus/integration-test/collections');
+const Collections = require('@cumulus/integration-test/Collections');
 ```
+<a name="exp_module_Collections--createCollection"></a>
 
-#### collections.createCollection(prefix, [overrides])
-
+### createCollection(prefix, [overrides]) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
 Create a collection using the Cumulus API.
 
-- `prefix` is the name of the Cumulus stack.
-- `overrides` is an `Object` that contains values that should override the
-  default collection values.
-- Returns a `Promise` that resolves to the created collection.
-
-The default collection is very simple. It expects that, for any discovered file,
-the granule ID is everything in the filename before the extension. For example,
-a file named `gran-1.txt` would have a granuleId of `gran-1`. Filenames can only
-contain a single `.` character.
+The default collection is very simple. It expects that, for any discovered file, the granule ID
+is everything in the filename before the extension. For example, a file named `gran-1.txt` would
+have a granuleId of `gran-1`. Filenames can only contain a single `.` character.
 
 **Collection defaults**
 
@@ -74,86 +72,113 @@ contain a single `.` character.
   ]
   ```
 
-### Executions
+**Kind**: Exported function  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the generated collection  
+**Params**
 
+- prefix <code>string</code> - the Cumulus stack name
+- [overrides] <code>Object</code> <code> = {}</code> - properties to set on the collection, overriding the defaults
+
+<a name="module_Executions"></a>
+
+## Executions
+**Example**  
 ```js
-const executions = require('@cumulus/integration-test/executions');
+const Executions = require('@cumulus/integration-test/Executions');
 ```
 
-#### executions.findExecutionArn(prefix, matcher, [options])
+* [Executions](#module_Executions)
+    * [findExecutionArn(prefix, matcher, [options])](#exp_module_Executions--findExecutionArn) ⇒ <code>Promise.&lt;string&gt;</code> ⏏
+    * [getCompletedExecution(params)](#exp_module_Executions--getCompletedExecution) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
+    * [getFailedExecution(params)](#exp_module_Executions--getFailedExecution) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
 
-Find the execution ARN matching the `matcher` function.
+<a name="exp_module_Executions--findExecutionArn"></a>
 
-- `prefix` is the name of the Cumulus stack.
-- `matcher` is a `Function` that takes an execution argument (as returned by the
-  `GET /executions` endpoint) and returns `true` if the execution is the one
-  being searched for, and false otherwise.
-- `options` is an optional `Object` with one property, `timeout`. This is the
-  number of seconds to wait for a matching execution to be found.
-- Returns a `Promise` that resolves to the ARN of the matching execution.
+### findExecutionArn(prefix, matcher, [options]) ⇒ <code>Promise.&lt;string&gt;</code> ⏏
+Find the execution ARN matching the `matcher` function
 
-#### executions.getCompletedExecution(params)
+**Kind**: Exported function  
+**Returns**: <code>Promise.&lt;string&gt;</code> - the ARN of the matching execution  
+**Params**
 
-Wait for an execution status to be `completed` and return the execution.
+- prefix <code>string</code> - the name of the Cumulus stack
+- matcher <code>function</code> - a predicate function that takes an execution and determines if this
+is the execution that is being searched for
+- [options] <code>Object</code>
+    - [.timeout] <code>integer</code> <code> = 0</code> - the number of seconds to wait for a matching execution
+to be found
 
-- `params.prefix` is the name of the Cumulus stack.
-- `params.arn` is the execution ARN to fetch.
-- `params.callback` is a `Promise`-returning `Function` to invoke the API lambda
-  that takes a prefix / user payload. Defaults to
-  `cumulusApiClient.invokeApifunction` to invoke the API Lambda.
-- `params.timeout`the number of seconds to wait for the execution to reach a
-  terminal state. Defaults to 30.
-- Returns a `Promise` that resolves to the execution `Object`, as returned by
-  the `GET /executions/<execution-arn>` endpoint.
+<a name="exp_module_Executions--getCompletedExecution"></a>
 
-#### executions.getFailedExecution(params)
+### getCompletedExecution(params) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
+Wait for an execution status to be `completed` and return the execution
 
-Wait for an execution status to be `failed` and return the execution.
+**Kind**: Exported function  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the execution as returned by the `GET /executions/<execution-arn>`
+endpoint  
+**Params**
 
-- `params.prefix` is the name of the Cumulus stack.
-- `params.arn` is the execution ARN to fetch.
-- `params.callback` is a `Promise`-returning `Function` to invoke the API lambda
-  that takes a prefix / user payload. Defaults to
-  `cumulusApiClient.invokeApifunction` to invoke the API Lambda.
-- `params.timeout`the number of seconds to wait for the execution to reach a
-  terminal state. Defaults to 30.
-- Returns a `Promise` that resolves to the execution `Object`, as returned by
-  the `GET /executions/<execution-arn>` endpoint.
+- params <code>Object</code>
+    - .prefix <code>string</code> - the name of the Cumulus stack
+    - .arn <code>string</code> - the execution ARN to fetch
+    - [.callback] <code>function</code> <code> = cumulusApiClient.invokeApifunction</code> - an async function to
+invoke the API Lambda that takes a prefix / user payload
+    - [.timeout] <code>integer</code> <code> = 30</code> - the number of seconds to wait for the
+  execution to reach a terminal state
 
-### Granules
+<a name="exp_module_Executions--getFailedExecution"></a>
 
+### getFailedExecution(params) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
+Wait for an execution status to be `failed` and return the execution
+
+**Kind**: Exported function  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the execution as returned by the `GET /executions/<execution-arn>`
+endpoint  
+**Params**
+
+- params <code>Object</code>
+    - .prefix <code>string</code> - the prefix configured for the stack
+    - .arn <code>string</code> - an execution ARN
+    - [.callback] <code>function</code> <code> = cumulusApiClient.invokeApifunction</code> - an async function to
+invoke the API Lambda that takes a prefix / user payload
+    - [.timeout] <code>integer</code> <code> = 30</code> - the number of seconds to wait for the
+  execution to reach a terminal state
+
+<a name="module_Granules"></a>
+
+## Granules
+**Example**  
 ```js
-const granules = require('@cumulus/integration-test/granules');
+const Granules = require('@cumulus/integration-test/Granules');
 ```
+<a name="exp_module_Granules--getCompletedGranule"></a>
 
-#### granules.getCompletedGranule(params)
+### getCompletedGranule(params) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
+Wait for a granule's status to be `completed` and return the granule
 
-Wait for a granule's status to be `completed` and return the granule.
+**Kind**: Exported function  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the granule as returned by the `GET /granules/<granule-id>` endpoint  
+**Params**
 
-- `params.prefix` is the name of the Cumulus stack.
-- `params.granuleId` is the `granuleId` of the granule
-- `params.callback` is a `Promise`-returning `Function` to invoke the API lambda
-  that takes a prefix / user payload. Defaults to
-  `cumulusApiClient.invokeApifunction` to invoke the API Lambda.
-- `params.timeout`the number of seconds to wait for the granule to reach a
-  terminal state. Defaults to 30.
-- Returns a `Promise` that resolves to a granule `Object`, as returned by the
-  `GET /granules/<granule-id>` endpoint.
+- params <code>Object</code>
+    - .prefix <code>string</code> - the name of the Cumulus stack
+    - .granuleId <code>string</code> - the `granuleId` of the granule
+    - [.callback] <code>function</code> <code> = cumulusApiClient.invokeApifunction</code> - an async function to
+invoke the API Lambda that takes a prefix / user payload
+    - [.timeout] <code>integer</code> <code> = 30</code> - the number of seconds to wait for the
+  execution to reach a terminal state
 
-### Providers
+<a name="module_Providers"></a>
 
+## Providers
+**Example**  
 ```js
-const providers = require('@cumulus/integration-test/providers');
+const Providers = require('@cumulus/integration-test/Providers');
 ```
+<a name="module_Providers..createProvider"></a>
 
-#### providers.createProvider(prefix, [overrides])
-
-Create a provider using the Cumulus API.
-
-- `prefix` is the name of the Cumulus stack.
-- `overrides` is an `Object` that contains values that should override the
-  default provider values.
-- Returns a `Promise` that resolves to the created provider.
+### Providers~createProvider(prefix, [overrides]) ⇒ <code>Promise.&lt;Object&gt;</code>
+Create a provider using the Cumulus API
 
 **Provider defaults**
 
@@ -161,25 +186,37 @@ Create a provider using the Cumulus API.
 - **protocol**: `s3`
 - **globalConnectionLimit**: `10`
 
-### Rules
+**Kind**: inner method of [<code>Providers</code>](#module_Providers)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the generated provider  
+**Params**
 
+- prefix <code>string</code> - the Cumulus stack name
+- [overrides] <code>Object</code> <code> = {}</code> - properties to set on the provider, overriding the defaults
+
+<a name="module_Rules"></a>
+
+## Rules
+**Example**  
 ```js
-const rules = require('@cumulus/integration-test/rules');
+const Rules = require('@cumulus/integration-test/Rules');
 ```
+<a name="exp_module_Rules--createOneTimeRule"></a>
 
-#### rules.createOneTimeRule(prefix, [overrides])
-
-Create a `onetime` rule using the Cumulus API.
-
-- `prefix` is the name of the Cumulus stack.
-- `overrides` is an `Object` that contains values that should override the
-  default rule values.
-- Returns a `Promise` that resolves to the created rule.
+### createOneTimeRule(prefix, [overrides]) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
+Create a `onetime` rule using the Cumulus API
 
 **Rule defaults**
 
 - **name**: random string starting with `rule_`
 - **rule**: `{ type: 'onetime' }`
+
+**Kind**: Exported function  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the generated rule  
+**Params**
+
+- prefix <code>string</code> - the name of the Cumulus stack
+- [overrides] <code>Object</code> <code> = {}</code> - properties to set on the rule, overriding the defaults
+
 
 ## CLI Usage
 
@@ -209,3 +246,6 @@ For example, to test the HelloWorld workflow:
 ## Contributing
 
 To make a contribution, please [see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).
+
+---
+Generated automatically using `npm run build-docs`

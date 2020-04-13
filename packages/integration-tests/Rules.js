@@ -1,5 +1,12 @@
 'use strict';
 
+/**
+ * @module Rules
+ *
+ * @example
+ * const Rules = require('@cumulus/integration-test/Rules');
+ */
+
 const rulesApi = require('@cumulus/api-client/rules');
 const { randomId } = require('@cumulus/common/test-utils');
 
@@ -17,14 +24,18 @@ const buildOneTimeRule = (overrides = {}) =>
   });
 
 /**
- * Build a onetime rule and create it using the Cumulus API
+ * Create a `onetime` rule using the Cumulus API
  *
- * See the `@cumulus/integration-tests` README for more information
+ * **Rule defaults**
  *
- * @param {string} prefix - the Cumulus stack name
- * @param {Object} overrides - properties to set on the rule, overriding the
- *   defaults
+ * - **name**: random string starting with `rule_`
+ * - **rule**: `{ type: 'onetime' }`
+ *
+ * @param {string} prefix - the name of the Cumulus stack
+ * @param {Object} [overrides={}] - properties to set on the rule, overriding the defaults
  * @returns {Promise<Object>} the generated rule
+ *
+ * @alias module:Rules
  */
 const createOneTimeRule = async (prefix, overrides = {}) => {
   const rule = buildOneTimeRule(overrides);

@@ -1,5 +1,12 @@
 'use strict';
 
+/**
+ * @module Providers
+ *
+ * @example
+ * const Providers = require('@cumulus/integration-test/Providers');
+ */
+
 const providersApi = require('@cumulus/api-client/providers');
 const { randomId } = require('@cumulus/common/test-utils');
 
@@ -11,13 +18,16 @@ const buildProvider = (overrides = {}) => ({
 });
 
 /**
- * Build a provider and create it using the Cumulus API
+ * Create a provider using the Cumulus API
  *
- * See the `@cumulus/integration-tests` README for more information
+ * **Provider defaults**
+ *
+ * - **id**: random string starting with `provider-`
+ * - **protocol**: `s3`
+ * - **globalConnectionLimit**: `10`
  *
  * @param {string} prefix - the Cumulus stack name
- * @param {Object} overrides - properties to set on the provider, overriding
- *   the defaults
+ * @param {Object} [overrides={}] - properties to set on the provider, overriding the defaults
  * @returns {Promise<Object>} the generated provider
  */
 const createProvider = async (prefix, overrides = {}) => {

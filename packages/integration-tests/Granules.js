@@ -1,22 +1,30 @@
 'use strict';
 
+/**
+ * @module Granules
+ *
+ * @example
+ * const Granules = require('@cumulus/integration-test/Granules');
+ */
+
 const get = require('lodash/get');
 const granulesApi = require('@cumulus/api-client/granules');
 const pick = require('lodash/pick');
 const pRetry = require('p-retry');
 
 /**
- * Wait for a granule to be completed and return it
+ * Wait for a granule's status to be `completed` and return the granule
  *
  * @param {Object} params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.granuleId - the granule id
- * @param {Function} params.callback - an async function to invoke the api
- *   lambda that takes a prefix / user payload. Defaults to
- *   cumulusApiClient.invokeApifunction to invoke the api lambda
- * @param {integer} params.timeout - the number of seconds to wait for the
- *   granule to reach a terminal state. Defaults to 30.
- * @returns {Promise<Object>} the completed granule
+ * @param {string} params.prefix - the name of the Cumulus stack
+ * @param {string} params.granuleId - the `granuleId` of the granule
+ * @param {Function} [params.callback=cumulusApiClient.invokeApifunction] - an async function to
+ * invoke the API Lambda that takes a prefix / user payload
+ * @param {integer} [params.timeout=30] - the number of seconds to wait for the
+ *   execution to reach a terminal state
+ * @returns {Promise<Object>} the granule as returned by the `GET /granules/<granule-id>` endpoint
+ *
+ * @alias module:Granules
  */
 const getCompletedGranule = async (params = {}) =>
   pRetry(
