@@ -19,10 +19,10 @@ const {
   getExecutionOutput,
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
-const { getCollection, getCollections, deleteCollection } = require('@cumulus/api-client/collections');
+const { deleteCollection } = require('@cumulus/api-client/collections');
 const { getGranule, removePublishedGranule, waitForGranule } = require('@cumulus/api-client/granules');
 const {
-  deleteProvider, getProvider, getProviders, createProvider
+  deleteProvider, createProvider
 } = require('@cumulus/api-client/providers');
 
 const { ActivityStep } = require('@cumulus/integration-tests/sfnStep');
@@ -33,7 +33,7 @@ const {
   deleteFolder,
   createTimestampedTestId,
   createTestDataPath,
-  createTestSuffix,
+  createTestSuffix
 } = require('../../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 
