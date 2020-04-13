@@ -1,7 +1,7 @@
 'use strict';
 
 const get = require('lodash/get');
-const noop = require('lodash/noop');
+const pAll = require('p-all');
 const pick = require('lodash/pick');
 const { randomId } = require('@cumulus/common/test-utils');
 
@@ -136,42 +136,39 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
     }
   });
 
-  afterAll(async () => {
-    await deleteS3Object(sourceBucket, existingGranuleKey).catch(noop);
-
-    await deleteRule({
-      prefix,
-      ruleName: get(ingestGranuleRule, 'name')
-    }).catch(noop);
-    await deleteRule({
-      prefix,
-      ruleName: get(discoverGranulesRule, 'name')
-    }).catch(noop);
-
-    await deleteGranule({ prefix, granuleId: existingGranuleId }).catch(noop);
-
-    await deleteProvider({
-      prefix,
-      providerId: get(provider, 'id')
-    }).catch(noop);
-
-    await deleteCollection({
-      prefix,
-      collectionName: get(collection, 'name'),
-      collectionVersion: get(collection, 'version')
-    }).catch(noop);
-  });
-
   it('fails the DiscoverGranules workflow', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      const execution = await getFailedExecution({
-        prefix,
-        arn: discoverGranulesExecutionArn
-      });
+      const execution = await getFailedExecution({ prefix, arn: discoverGranulesExecutionArn });
 
       const errorCause = JSON.parse(get(execution, 'error.Cause', {}));
-      expect(errorCause.errorMessage).toBe(`Duplicate granule found for ${existingGranuleId} with duplicate configuration set to error`);
+      expect(errorCause.errorMessage)
+        .toBe(`Duplicate granule found for ${existingGranuleId} with duplicate configuration set to error`);
     }
+  });
+
+  afterAll(async () => {
+    // Must delete rules before deleting associated collection and provider
+    await pAll(
+      [
+        () => deleteRule({ prefix, ruleName: get(ingestGranuleRule, 'name') }),
+        () => deleteRule({ prefix, ruleName: get(discoverGranulesRule, 'name') })
+      ],
+      { stopOnError: false }
+    ).catch(console.error);
+
+    await pAll(
+      [
+        () => deleteS3Object(sourceBucket, existingGranuleKey),
+        () => deleteGranule({ prefix, granuleId: existingGranuleId }),
+        () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
+        () => deleteCollection({
+          prefix,
+          collectionName: get(collection, 'name'),
+          collectionVersion: get(collection, 'version')
+        })
+      ],
+      { stopOnError: false }
+    ).catch(console.error);
   });
 });

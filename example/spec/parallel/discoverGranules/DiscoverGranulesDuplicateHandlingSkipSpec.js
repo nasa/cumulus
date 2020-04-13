@@ -1,7 +1,7 @@
 'use strict';
 
 const get = require('lodash/get');
-const noop = require('lodash/noop');
+const pAll = require('p-all');
 const pick = require('lodash/pick');
 const { randomId } = require('@cumulus/common/test-utils');
 
@@ -151,34 +151,6 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
     }
   });
 
-  afterAll(async () => {
-    await deleteS3Object(sourceBucket, existingGranuleKey).catch(noop);
-    await deleteS3Object(sourceBucket, newGranuleKey).catch(noop);
-
-    await deleteRule({
-      prefix,
-      ruleName: get(ingestGranuleRule, 'name')
-    }).catch(noop);
-    await deleteRule({
-      prefix,
-      ruleName: get(discoverGranulesRule, 'name')
-    }).catch(noop);
-
-    await deleteGranule({ prefix, granuleId: existingGranuleId }).catch(noop);
-    await deleteGranule({ prefix, granuleId: newGranuleId }).catch(noop);
-
-    await deleteProvider({
-      prefix,
-      providerId: get(provider, 'id')
-    }).catch(noop);
-
-    await deleteCollection({
-      prefix,
-      collectionName: get(collection, 'name'),
-      collectionVersion: get(collection, 'version')
-    }).catch(noop);
-  });
-
   it('queues one granule for ingest', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else expect(finishedDiscoverGranulesExecution.finalPayload.running.length).toEqual(1);
@@ -194,17 +166,41 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       // Wait for the execution to end
       const execution = await getCompletedExecution({ prefix, arn });
 
-      expect(execution.originalPayload.granules[0].granuleId)
-        .toEqual(newGranuleId);
+      expect(execution.originalPayload.granules[0].granuleId).toEqual(newGranuleId);
     }
   });
 
   it('results in the new granule being ingested', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      await expectAsync(
-        getCompletedGranule({ prefix, granuleId: newGranuleId })
-      ).toBeResolved();
+      await expectAsync(getCompletedGranule({ prefix, granuleId: newGranuleId })).toBeResolved();
     }
+  });
+
+  afterAll(async () => {
+    // Must delete rules before deleting associated collection and provider
+    await pAll(
+      [
+        () => deleteRule({ prefix, ruleName: get(ingestGranuleRule, 'name') }),
+        () => deleteRule({ prefix, ruleName: get(discoverGranulesRule, 'name') })
+      ],
+      { stopOnError: false }
+    ).catch(console.error);
+
+    await pAll(
+      [
+        () => deleteS3Object(sourceBucket, existingGranuleKey),
+        () => deleteS3Object(sourceBucket, newGranuleKey),
+        () => deleteGranule({ prefix, granuleId: existingGranuleId }),
+        () => deleteGranule({ prefix, granuleId: newGranuleId }),
+        () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
+        () => deleteCollection({
+          prefix,
+          collectionName: get(collection, 'name'),
+          collectionVersion: get(collection, 'version')
+        })
+      ],
+      { stopOnError: false }
+    ).catch(console.error);
   });
 });
