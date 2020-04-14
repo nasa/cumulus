@@ -213,6 +213,7 @@ describe('The Kinesis Replay API', () => {
           .catch((err) => expect(err.message).toBe('Never found started workflow.')));
 
         const workflowExecutions = await Promise.all(expectedWorkflows);
+        console.log('workflowExecutions', workflowExecutions);
         // if intermittent failures occur here, consider increasing maxWaitForSFExistSecs
         expect(workflowExecutions.length).toEqual(2);
         workflowExecutions.forEach((exec) => expect(exec).toBeDefined());
