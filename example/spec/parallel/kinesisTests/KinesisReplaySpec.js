@@ -186,31 +186,27 @@ describe('The Kinesis Replay API', () => {
 
         console.log('targetedRecords', targetedRecords);
 
-        const expectedWorkflows = targetedRecords
-          .map((record) => waitForTestSfForRecord(
-            record.identifier,
-            workflowArn,
-            maxWaitForSFExistSecs
-          )
-          .catch((err) => fail(err.message)));
+        const expectedWorkflows = targetedRecords.map((record) => waitForTestSfForRecord(
+          record.identifier,
+          workflowArn,
+          maxWaitForSFExistSecs
+        ).catch((err) => fail(err.message)));
 
         const tooOldToExpectWorkflows = tooOldToFetchRecords
           .map((r) => waitForTestSfForRecord(
             r.identifier,
             workflowArn,
             maxWaitForSFExistSecs
-          )
-          .then((ex) => fail(`should not find executions but found ${JSON.stringify(ex)}`))
-          .catch((err) => expect(err.message).toBe('Never found started workflow.')));
+          ).then((ex) => fail(`should not find executions but found ${JSON.stringify(ex)}`))
+            .catch((err) => expect(err.message).toBe('Never found started workflow.')));
 
         const tooNewToExpectWorkflows = newRecordsToSkip
           .map((r) => waitForTestSfForRecord(
             r.identifier,
             workflowArn,
             maxWaitForSFExistSecs
-          )
-          .then((ex) => fail(`should not find executions but found ${JSON.stringify(ex)}`))
-          .catch((err) => expect(err.message).toBe('Never found started workflow.')));
+          ).then((ex) => fail(`should not find executions but found ${JSON.stringify(ex)}`))
+            .catch((err) => expect(err.message).toBe('Never found started workflow.')));
 
         const workflowExecutions = await Promise.all(expectedWorkflows);
         console.log('workflowExecutions', workflowExecutions);
