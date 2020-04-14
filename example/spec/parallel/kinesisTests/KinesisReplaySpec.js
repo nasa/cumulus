@@ -183,27 +183,34 @@ describe('The Kinesis Replay API', () => {
 
       it('to start the expected workflows', async () => {
         console.log('Waiting for step functions to start...');
-        const expectedWorkflows = targetedRecords.map((record) => waitForTestSfForRecord(
-          record.identifier,
-          workflowArn,
-          maxWaitForSFExistSecs
-        ).catch((err) => fail(err.message)));
+
+        console.log('targetedRecords', targetedRecords);
+
+        const expectedWorkflows = targetedRecords
+          .map((record) => waitForTestSfForRecord(
+            record.identifier,
+            workflowArn,
+            maxWaitForSFExistSecs
+          )
+          .catch((err) => fail(err.message)));
 
         const tooOldToExpectWorkflows = tooOldToFetchRecords
           .map((r) => waitForTestSfForRecord(
             r.identifier,
             workflowArn,
             maxWaitForSFExistSecs
-          ).then((ex) => fail(`should not find executions but found ${JSON.stringify(ex)}`))
-            .catch((err) => expect(err.message).toBe('Never found started workflow.')));
+          )
+          .then((ex) => fail(`should not find executions but found ${JSON.stringify(ex)}`))
+          .catch((err) => expect(err.message).toBe('Never found started workflow.')));
 
         const tooNewToExpectWorkflows = newRecordsToSkip
           .map((r) => waitForTestSfForRecord(
             r.identifier,
             workflowArn,
             maxWaitForSFExistSecs
-          ).then((ex) => fail(`should not find executions but found ${JSON.stringify(ex)}`))
-            .catch((err) => expect(err.message).toBe('Never found started workflow.')));
+          )
+          .then((ex) => fail(`should not find executions but found ${JSON.stringify(ex)}`))
+          .catch((err) => expect(err.message).toBe('Never found started workflow.')));
 
         const workflowExecutions = await Promise.all(expectedWorkflows);
         // if intermittent failures occur here, consider increasing maxWaitForSFExistSecs

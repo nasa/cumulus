@@ -972,6 +972,7 @@ async function waitForAllTestSf(
     await sleep(waitPeriodMs);
     timeWaitedSecs = (moment.duration(moment().diff(startTime)).asSeconds());
     const executions = await getExecutions(workflowArn, 100);
+    console.log(executions);
     // Search all recent executions for target payload
     for (let ctr = 0; ctr < executions.length; ctr += 1) {
       const execution = executions[ctr];

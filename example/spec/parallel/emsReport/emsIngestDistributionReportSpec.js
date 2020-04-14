@@ -135,7 +135,7 @@ describe('The EMS report', () => {
   let submitReport;
   let testDataFolder;
   let testSuffix;
-  let beforeAllError;
+  let beforeAllFailed;
 
   beforeAll(async () => {
     try {
@@ -182,15 +182,14 @@ describe('The EMS report', () => {
       // wait until records searchable in elasticsearch
       await waitForGranuleRecordsInList(config.stackName, ingestedGranuleIds);
     } catch (e) {
-      beforeAllError = e;
+      beforeAllFailed = true;
+      throw e;
     }
   });
 
-  beforeEach(() => {
-    if (beforeAllError) fail(beforeAllError);
-  });
-
   afterAll(async () => {
+    if (beforeAllFailed) return;
+
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       // leave collection in the table for daily reports
@@ -201,8 +200,7 @@ describe('The EMS report', () => {
   describe('When run automatically', () => {
     let expectReports = false;
     beforeAll(async () => {
-      const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-      AWS.config.update({ region: region });
+      if (beforeAllFailed) return;
 
       const lambdaConfig = await lambda().getFunctionConfiguration({ FunctionName: emsIngestReportLambda })
         .promise();
@@ -217,6 +215,8 @@ describe('The EMS report', () => {
     });
 
     it('generates EMS reports every 24 hours', async () => {
+      if (beforeAllFailed) return fail('beforeAll failed');
+
       if (expectReports) {
         const datestring = moment.utc().format('YYYYMMDD');
         const types = ['Ing', 'Arch', 'ArchDel', 'DistCustom'];
@@ -236,8 +236,7 @@ describe('The EMS report', () => {
   describe('After execution of EmsIngestReport lambda', () => {
     let lambdaOutput;
     beforeAll(async () => {
-      const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-      AWS.config.update({ region: region });
+      if (beforeAllFailed) return;
 
       const endTime = moment.utc().add(1, 'days').startOf('day').format();
       const startTime = moment.utc().startOf('day').format();
@@ -255,6 +254,8 @@ describe('The EMS report', () => {
     });
 
     it('generates EMS ingest reports', async () => {
+      if (beforeAllFailed) return fail('beforeAll failed');
+
       // generated reports should have the records just ingested or deleted
       expect(lambdaOutput.length).toEqual(3);
       const jobs = lambdaOutput.map(async (report) => {
@@ -283,6 +284,8 @@ describe('The EMS report', () => {
     });
 
     it('generates EMS ingest reports through the Cumulus API', async () => {
+      if (beforeAllFailed) return fail('beforeAll failed');
+
       const inputPayload = {
         reportType: 'ingest',
         startTime: moment.utc().subtract(1, 'days').startOf('day').format(),
@@ -325,6 +328,7 @@ describe('The EMS report', () => {
     let headers;
 
     beforeAll(async () => {
+      if (beforeAllFailed) return;
       setDistributionApiEnvVars();
       headers = await getTEARequestHeaders(config.stackName);
     });
@@ -333,6 +337,8 @@ describe('The EMS report', () => {
     // so we are not able to generate the distribution report immediately after submitting distribution requests,
     // the distribution requests submitted here are for nightly distribution report.
     it('downloads the files of the published granule for generating nightly distribution report', async () => {
+      if (beforeAllFailed) return fail('beforeAll failed');
+
       const files = await getGranuleFilesForDownload(config.stackName, ingestedGranuleIds[0]);
       for (let i = 0; i < files.length; i += 1) {
         const filePath = `/${files[i].bucket}/${files[i].key}`;
@@ -348,9 +354,7 @@ describe('The EMS report', () => {
     describe('After execution of EmsDistributionReport lambda', () => {
       let lambdaOutput;
       beforeAll(async () => {
-        const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-        AWS.config.update({ region: region });
-
+        if (beforeAllFailed) return;
         const endTime = moment.utc().add(1, 'days').startOf('day').format();
         const startTime = moment.utc().startOf('day').format();
 
@@ -367,6 +371,8 @@ describe('The EMS report', () => {
       });
 
       it('generates an EMS distribution report', async () => {
+        if (beforeAllFailed) return fail('beforeAll failed');
+
         // verify report is generated, but can't verify the content since the s3 server access log
         // won't have recent access records until hours or minutes later
         expect(lambdaOutput.length).toEqual(1); // TODO: why would this fail intermittently?
@@ -383,6 +389,8 @@ describe('The EMS report', () => {
       });
 
       it('generates EMS distribution reports through the Cumulus API', async () => {
+        if (beforeAllFailed) return fail('beforeAll failed');
+
         // it could take long to generate distribution reports (greater than ApiEndpoints timeout),
         // so use async call
         const inputPayload = {
