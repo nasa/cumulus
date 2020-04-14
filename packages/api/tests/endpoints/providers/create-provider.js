@@ -136,6 +136,26 @@ test('POST creates a new provider', async (t) => {
   t.is(record.id, newProviderId);
 });
 
+test('POST returns a 400 error if the provider already exists', async (t) => {
+  const newProvider = {
+    ...t.context.testProvider,
+    id: randomString()
+  };
+
+  const providerModel = new Provider();
+  await providerModel.create(newProvider);
+
+  const response = await request(app)
+    .post('/providers')
+    .send(newProvider)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  const { message } = response.body;
+  t.is(message, (`A record already exists for ${newProvider.id}`));
+});
+
 test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
   const stub = sinon.stub(Provider.prototype, 'create')
     .callsFake(() => { throw new Error('unexpected error') });

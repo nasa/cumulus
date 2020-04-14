@@ -68,7 +68,7 @@ async function post(req, res) {
     try {
       // make sure the record doesn't exist
       await providerModel.get({ id });
-      return res.boom.badReqest(`A record already exists for ${id}`);
+      return res.boom.badRequest(`A record already exists for ${id}`);
     } catch (e) {
       if (e instanceof RecordDoesNotExist) {
         const record = await providerModel.create(data);
