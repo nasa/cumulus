@@ -6,7 +6,7 @@ const client = require('../client');
 test.afterEach.always(() => process.env.NODE_ENV = 'test');
 
 test.serial('client respects AWS_REGION when creating service clients', (t) => {
-  // Have to delete this env var to by pass "test mode" logic which will
+  // Have to delete this env var to bypass "test mode" logic which will
   // always use us-east-1 as the region
   delete process.env.NODE_ENV;
 
@@ -19,7 +19,7 @@ test.serial('client respects AWS_REGION when creating service clients', (t) => {
 });
 
 test.serial('client defaults region to us-east-1 when creating service clients', (t) => {
-  // Have to delete this env var to by pass "test mode" logic which will
+  // Have to delete this env var to bypass "test mode" logic which will
   // always use us-east-1 as the region
   delete process.env.NODE_ENV;
 
