@@ -389,4 +389,4 @@ test.serial('An error publishing falllback record for Kinesis message should re-
   } finally {
     publishStub.restore();
   }
-})
+});
