@@ -1,8 +1,7 @@
 
 import unittest
 
-from unittest.mock import MagicMock
-from mock import patch
+from unittest.mock import MagicMock, patch
 
 from process_activity import PythonProcess
 
