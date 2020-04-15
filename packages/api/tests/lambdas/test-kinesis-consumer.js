@@ -368,3 +368,25 @@ test.serial('An SNS Fallback message should not throw if message is valid.', (t)
   return handler(snsEvent, {}, testCallback)
     .then((r) => t.deepEqual(r, [[true, true, true, true]]));
 });
+
+test.serial('An error publishing falllback record for Kinesis message should re-throw error from validation', async (t) => {
+  publishStub.restore();
+  publishStub = sinon.stub(snsClient, 'publish').callsFake(() => {
+    throw new Error('fail');
+  });
+
+  const invalidMessage = JSON.stringify({ noCollection: 'in here' });
+  const invalidRecord = { kinesis: { data: Buffer.from(invalidMessage).toString('base64') } };
+  const kinesisEvent = {
+    Records: [validRecord, invalidRecord]
+  };
+
+  try {
+    await t.throwsAsync(
+      handler(kinesisEvent, {}, testCallback),
+      { message: /validation/ }
+    );
+  } finally {
+    publishStub.restore();
+  }
+})

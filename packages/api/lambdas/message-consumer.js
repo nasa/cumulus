@@ -188,14 +188,11 @@ function processRecord(record, fromSNS) {
       originalMessageSource = 'kinesis';
       const dataString = Buffer.from(kinesisObject.data, 'base64').toString();
       eventObject = JSON.parse(dataString);
-      console.log('parsed', parsed);
-      console.log('eventObject', eventObject);
       // standard case (collection object), or CNM case
       ruleParam = {
         ...lookupCollectionInEvent(eventObject),
         sourceArn: get(parsed, 'eventSourceARN')
       };
-      console.log('ruleParam', ruleParam);
     } catch (err) {
       log.error('Caught error parsing JSON:');
       log.error(err);
