@@ -3,7 +3,7 @@
 const get = require('lodash/get');
 
 const { removeNilProperties } = require('@cumulus/common/util');
-const { schedule } = require('../lambdas/sf-scheduler');
+const { handleScheduleEvent } = require('../lambdas/sf-scheduler');
 const Rule = require('../models/rules');
 
 function lookupCollectionInEvent(eventObject) {
@@ -29,7 +29,6 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
   const collection = (collectionInNotification.name && collectionInNotification.version)
     ? collectionInNotification
     : rule.collection;
-  console.log('collection', collection);
   const item = {
     workflow: rule.workflow,
     provider: rule.provider,
@@ -40,7 +39,7 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
 
   const payload = await Rule.buildPayload(item);
 
-  return schedule(payload);
+  return handleScheduleEvent(payload);
 }
 
 module.exports = {

@@ -167,7 +167,6 @@ describe('The Kinesis Replay API', () => {
     });
 
     it('starts an AsyncOperation and returns the AsyncOperationId', () => {
-      console.log('asyncOperationId', asyncOperationId);
       expect(asyncOperationId).toBeDefined();
     });
 
@@ -184,8 +183,6 @@ describe('The Kinesis Replay API', () => {
 
       it('to start the expected workflows', async () => {
         console.log('Waiting for step functions to start...');
-
-        console.log('targetedRecords', targetedRecords);
 
         const expectedWorkflows = targetedRecords.map((record) => waitForTestSfForRecord(
           record.identifier,
@@ -210,7 +207,6 @@ describe('The Kinesis Replay API', () => {
             .catch((err) => expect(err.message).toBe('Never found started workflow.')));
 
         const workflowExecutions = await Promise.all(expectedWorkflows);
-        console.log('workflowExecutions', workflowExecutions);
         // if intermittent failures occur here, consider increasing maxWaitForSFExistSecs
         expect(workflowExecutions.length).toEqual(2);
         workflowExecutions.forEach((exec) => expect(exec).toBeDefined());

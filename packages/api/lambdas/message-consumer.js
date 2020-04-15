@@ -52,11 +52,6 @@ async function getRules(queryParams, originalMessageSource) {
     filter += ' AND #rl.#vl = :ruleValue';
   }
   const model = new Rule();
-  console.log('rule query params', {
-    names,
-    filter,
-    values
-  });
   const rulesQueryResultsForSourceArn = await model.scan({
     names,
     filter,
