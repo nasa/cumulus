@@ -31,14 +31,14 @@ async function getRules(queryParams, originalMessageSource) {
     ':enabledState': 'ENABLED',
     ':ruleType': originalMessageSource
   };
-  if (queryParams.collectionName) {
-    values[':collectionName'] = queryParams.collectionName;
+  if (queryParams.name) {
+    values[':collectionName'] = queryParams.name;
     names['#col'] = 'collection';
     names['#nm'] = 'name';
     filter += ' AND #col.#nm = :collectionName';
   }
-  if (queryParams.collectionVersion) {
-    values[':collectionVersion'] = queryParams.collectionVersion;
+  if (queryParams.version) {
+    values[':collectionVersion'] = queryParams.version;
     names['#col'] = 'collection';
     names['#vr'] = 'version';
     filter += ' AND #col.#vr = :collectionVersion';

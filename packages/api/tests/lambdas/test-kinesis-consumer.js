@@ -8,7 +8,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const SQS = require('@cumulus/aws-client/SQS');
 const { s3, sns } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
-const { getRules, handler } = require('../../lambdas/message-consumer');
+const { getRules, processRecord, handler } = require('../../lambdas/message-consumer');
 const Collection = require('../../models/collections');
 const Rule = require('../../models/rules');
 const Provider = require('../../models/providers');
@@ -48,39 +48,56 @@ const kinesisRuleParams = {
   }
 };
 
-const rule1Params = {
+const rule1 = {
+  ...commonRuleParams,
+  ...kinesisRuleParams,
   name: 'testRule1',
   workflow: 'test-workflow-1',
   state: 'ENABLED'
 };
 
 // if the state is not provided, it will be set to default value 'ENABLED'
-const rule2Params = {
+const rule2 = {
   ...commonRuleParams,
+  ...kinesisRuleParams,
   name: 'testRule2',
   workflow: 'test-workflow-2'
 };
 
-const disabledRuleParams = {
+const rule3 = {
+  ...commonRuleParams,
+  ...kinesisRuleParams,
+  collection: {
+    name: testCollectionName,
+    version: '1.0.0'
+  },
+  name: 'testRule3',
+  workflow: 'test-workflow-3',
+  state: 'ENABLED'
+};
+
+const rule4 = {
+  ...commonRuleParams,
+  name: 'testRule4',
+  workflow: 'test-workflow-4',
+  state: 'ENABLED',
+  rule: {
+    type: 'kinesis',
+    value: 'kinesisarn-4'
+  }
+};
+
+const disabledRule = {
+  ...commonRuleParams,
+  ...kinesisRuleParams,
   name: 'disabledRule',
   workflow: 'test-workflow-1',
   state: 'DISABLED'
 };
 
-const allRuleTypesParams = [kinesisRuleParams];
-const allOtherRulesParams = [rule1Params, rule2Params, disabledRuleParams];
-const rulesToCreate = [];
-
 let sfSchedulerSpy;
 let publishStub;
 const stubQueueUrl = 'stubQueueUrl';
-
-allRuleTypesParams.forEach((ruleTypeParams) => {
-  allOtherRulesParams.forEach((otherRulesParams) => {
-    const ruleParams = { ...commonRuleParams, ...ruleTypeParams, ...otherRulesParams };
-    rulesToCreate.push(ruleParams);
-  });
-});
 
 /**
  * translates a kinesis event object into an object that an SNS event will
@@ -89,7 +106,7 @@ allRuleTypesParams.forEach((ruleTypeParams) => {
  * @param {Object} record - kinesis record object.
  * @returns {Object} - object representing an SNS event.
  */
-function wrapKinesisRecord(record) {
+function wrapKinesisRecordInSnsEvent(record) {
   return {
     Records: [{
       EventSource: 'aws:sns',
@@ -167,6 +184,7 @@ test.beforeEach(async (t) => {
   process.env.system_bucket = randomString();
   process.env.messageConsumer = randomString();
 
+  const rulesToCreate = [rule1, rule2, rule3, disabledRule, rule4];
   await Promise.all(rulesToCreate.map((rule) => ruleModel.create(rule)));
 });
 
@@ -185,10 +203,25 @@ test.after.always(async () => {
 
 // getKinesisRule tests
 test.serial('it should look up kinesis-type rules which are associated with the collection, but not those that are disabled', async (t) => {
-  await getRules(testCollectionName, 'kinesis')
-    .then((result) => {
-      t.is(result.length, 2);
-    });
+  const result = await getRules({
+    name: testCollectionName
+  }, 'kinesis');
+  t.is(result.length, 4);
+});
+
+test.serial('it should look up kinesis-type rules which are associated with the collection name and version', async (t) => {
+  const result = await getRules({
+    name: testCollectionName,
+    version: '1.0.0'
+  }, 'kinesis')
+  t.is(result.length, 1);
+});
+
+test.serial('it should look up kinesis-type rules which are associated with the source ARN', async (t) => {
+  const result = await getRules({
+    sourceArn: 'kinesisarn-4'
+  }, 'kinesis')
+  t.is(result.length, 1);
 });
 
 // handler tests
@@ -216,6 +249,16 @@ test.serial('it should enqueue a message for each associated workflow', async (t
   t.deepEqual(actualMessage.payload, expectedMessage.payload);
 });
 
+test.serial('processRecord', async (t) => {
+  const validMessage = JSON.stringify({
+    collection: 'confection-collection'
+  });
+  const record = { kinesis: { data: Buffer.from(validMessage).toString('base64') } };
+  await processRecord(record, false);
+  const actualMessage = sfSchedulerSpy.getCall(0).args[1];
+  debugger;
+});
+
 test.serial('A kinesis message, should publish the invalid record to fallbackSNS if message does not include a collection', async (t) => {
   const invalidMessage = JSON.stringify({ noCollection: 'in here' });
   const invalidRecord = { kinesis: { data: Buffer.from(invalidMessage).toString('base64') } };
@@ -233,7 +276,7 @@ test.serial('An SNS fallback retry, should throw an error if message does not in
   const kinesisEvent = {
     Records: [{ kinesis: { data: Buffer.from(invalidMessage).toString('base64') } }]
   };
-  const snsEvent = wrapKinesisRecord(kinesisEvent.Records[0]);
+  const snsEvent = wrapKinesisRecordInSnsEvent(kinesisEvent.Records[0]);
 
   const error = await t.throwsAsync(
     () => handler(snsEvent, {}, testCallback),
@@ -260,7 +303,7 @@ test.serial('An SNS Fallback retry, should throw an error if message collection 
   const kinesisEvent = {
     Records: [{ kinesis: { data: Buffer.from(invalidMessage).toString('base64') } }]
   };
-  const snsEvent = wrapKinesisRecord(kinesisEvent.Records[0]);
+  const snsEvent = wrapKinesisRecordInSnsEvent(kinesisEvent.Records[0]);
 
   const error = await t.throwsAsync(
     () => handler(snsEvent, {}, testCallback),
@@ -288,7 +331,7 @@ test.serial('An SNS Fallback retry, should throw an error if message is invalid 
   const kinesisEvent = {
     Records: [{ kinesis: { data: Buffer.from(invalidMessage).toString('base64') } }]
   };
-  const snsEvent = wrapKinesisRecord(kinesisEvent.Records[0]);
+  const snsEvent = wrapKinesisRecordInSnsEvent(kinesisEvent.Records[0]);
 
   await t.throws(
     () => handler(snsEvent, {}, testCallback),
@@ -310,6 +353,6 @@ test.serial('An SNS Fallback message should not throw if message is valid.', (t)
   const kinesisEvent = {
     Records: [{ kinesis: { data: Buffer.from(validMessage).toString('base64') } }]
   };
-  const snsEvent = wrapKinesisRecord(kinesisEvent.Records[0]);
+  const snsEvent = wrapKinesisRecordInSnsEvent(kinesisEvent.Records[0]);
   return handler(snsEvent, {}, testCallback).then((r) => t.deepEqual(r, [[true, true]]));
 });
