@@ -29,6 +29,7 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
   const collection = (collectionInNotification.name && collectionInNotification.version)
     ? collectionInNotification
     : rule.collection;
+  console.log('collection', collection);
   const item = {
     workflow: rule.workflow,
     provider: rule.provider,

@@ -84,6 +84,7 @@ async function processRecordBatch(records) {
       return 'skip';
     }
     try {
+      console.log('record', record);
       await messageConsumer.processRecord(
         { kinesis: { data: record.Data } },
         false
