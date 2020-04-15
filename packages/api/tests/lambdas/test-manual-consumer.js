@@ -21,7 +21,7 @@ test.before(() => {
       }
     })
   }));
-})
+});
 
 test.after.always(() => {
   kinesisDescribeStreamStub.restore();

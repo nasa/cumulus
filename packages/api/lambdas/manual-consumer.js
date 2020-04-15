@@ -126,7 +126,7 @@ async function processRecordBatch(streamName, records) {
  * @param {string} streamName - Kinesis stream name
  * @param {Array<Promise>} recordPromiseList - list of promises from calls to processRecordBatch
  * @param {string} shardIterator - ShardIterator Id
- * @returns {Array<Promise>} list of promises from calls to processRecordBatch
+ * @returns {Promise<Array<Promise>>} list of promises from calls to processRecordBatch
  */
 async function iterateOverShardRecursively(streamName, recordPromiseList, shardIterator) {
   try {
@@ -156,7 +156,9 @@ async function processShard(streamName, shardId) {
     const shardIterator = (
       await Kinesis.getShardIterator(iteratorParams).promise()
     ).ShardIterator;
-    const tallyList = await Promise.all(await iterateOverShardRecursively(streamName, [], shardIterator));
+    const tallyList = await Promise.all(
+      await iterateOverShardRecursively(streamName, [], shardIterator)
+    );
     const shardTally = tallyList.reduce(tallyReducer, 0);
     return shardTally;
   } catch (err) {
