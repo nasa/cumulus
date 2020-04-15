@@ -8,13 +8,14 @@ const { randomString } = require('@cumulus/common/test-utils');
 const SQS = require('@cumulus/aws-client/SQS');
 const { s3, sns } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
-const { getRules, processRecord, handler } = require('../../lambdas/message-consumer');
+const { getRules, handler } = require('../../lambdas/message-consumer');
 const Collection = require('../../models/collections');
 const Rule = require('../../models/rules');
 const Provider = require('../../models/providers');
-const testCollectionName = 'test-collection';
 
 const snsClient = sns();
+
+const testCollectionName = 'test-collection';
 
 const eventData = JSON.stringify({
   collection: testCollectionName
@@ -95,7 +96,7 @@ const disabledRule = {
   state: 'DISABLED'
 };
 
-let sfSchedulerSpy;
+let sendSQSMessageSpy;
 let publishStub;
 const stubQueueUrl = 'stubQueueUrl';
 
@@ -141,7 +142,7 @@ test.before(async () => {
 });
 
 test.beforeEach(async (t) => {
-  sfSchedulerSpy = sinon.stub(SQS, 'sendSQSMessage').returns(true);
+  sendSQSMessageSpy = sinon.stub(SQS, 'sendSQSMessage').returns(true);
   t.context.publishResponse = {
     ResponseMetadata: { RequestId: randomString() },
     MessageId: randomString()
@@ -176,8 +177,8 @@ test.beforeEach(async (t) => {
     payload: get(item, 'payload', {}),
     definition: workflowDefinition
   }));
-  sinon.stub(Provider.prototype, 'get').returns(provider);
-  sinon.stub(Collection.prototype, 'get').returns(collection);
+  sinon.stub(Provider.prototype, 'get').callsFake((provider) => provider);
+  sinon.stub(Collection.prototype, 'get').callsFake((collection) => collection);
 
   t.context.tableName = process.env.RulesTable;
   process.env.stackName = randomString();
@@ -190,7 +191,7 @@ test.beforeEach(async (t) => {
 
 test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.templateBucket);
-  sfSchedulerSpy.restore();
+  sendSQSMessageSpy.restore();
   publishStub.restore();
   Rule.buildPayload.restore();
   Provider.prototype.get.restore();
@@ -227,9 +228,9 @@ test.serial('it should look up kinesis-type rules which are associated with the 
 // handler tests
 test.serial('it should enqueue a message for each associated workflow', async (t) => {
   await handler(event, {}, testCallback);
-  const actualQueueUrl = sfSchedulerSpy.getCall(0).args[0];
+  const actualQueueUrl = sendSQSMessageSpy.getCall(0).args[0];
   t.is(actualQueueUrl, stubQueueUrl);
-  const actualMessage = sfSchedulerSpy.getCall(0).args[1];
+  const actualMessage = sendSQSMessageSpy.getCall(0).args[1];
   const expectedMessage = {
     cumulus_meta: {
       state_machine: t.context.stateMachineArn
@@ -249,14 +250,23 @@ test.serial('it should enqueue a message for each associated workflow', async (t
   t.deepEqual(actualMessage.payload, expectedMessage.payload);
 });
 
-test.skip('processRecord', async (t) => {
+test.serial('A message is scheduled with correct collection for CNM-style event', async (t) => {
   const validMessage = JSON.stringify({
-    collection: 'confection-collection'
+    collection: testCollectionName,
+    product: {
+      dataVersion: '1.0.0'
+    }
   });
   const record = { kinesis: { data: Buffer.from(validMessage).toString('base64') } };
-  await processRecord(record, false);
-  const actualMessage = sfSchedulerSpy.getCall(0).args[1];
-  debugger;
+  const kinesisEvent = {
+    Records: [record]
+  };
+  await handler(kinesisEvent, {}, testCallback);
+  const actualMessage = sendSQSMessageSpy.getCall(0).args[1];
+  t.deepEqual(actualMessage.meta.collection, {
+    name: testCollectionName,
+    version: '1.0.0'
+  })
 });
 
 test.serial('A kinesis message, should publish the invalid record to fallbackSNS if message does not include a collection', async (t) => {
@@ -345,7 +355,8 @@ test.serial('A kinesis message should not publish record to fallbackSNS if it pr
     Records: [{ kinesis: { data: Buffer.from(validMessage).toString('base64') } }]
   };
   t.true(publishStub.notCalled);
-  return handler(kinesisEvent, {}, testCallback).then((r) => t.deepEqual(r, [[true, true, true, true]]));
+  return handler(kinesisEvent, {}, testCallback)
+    .then((r) => t.deepEqual(r, [[true, true, true, true]]));
 });
 
 test.serial('An SNS Fallback message should not throw if message is valid.', (t) => {
@@ -354,5 +365,6 @@ test.serial('An SNS Fallback message should not throw if message is valid.', (t)
     Records: [{ kinesis: { data: Buffer.from(validMessage).toString('base64') } }]
   };
   const snsEvent = wrapKinesisRecordInSnsEvent(kinesisEvent.Records[0]);
-  return handler(snsEvent, {}, testCallback).then((r) => t.deepEqual(r, [[true, true, true, true]]));
+  return handler(snsEvent, {}, testCallback)
+    .then((r) => t.deepEqual(r, [[true, true, true, true]]));
 });
