@@ -68,7 +68,16 @@ test('queueMessageForRule respects eventObject with CNM-style collection', async
   });
 });
 
-test('queueMessageForRule falls back to rule collection', async (t) => {
+test('queueMessageForRule falls back to rule collection for partial CNM-style collection in the eventObject', async (t) => {
+  const rule = fakeRuleFactoryV2({ workflow });
+  const event = {
+    collection: 'whatever'
+  };
+  const payload = await rulesHelpers.queueMessageForRule(rule, event);
+  t.deepEqual(payload.collection, rule.collection);
+});
+
+test('queueMessageForRule falls back to rule collection if there is no collection in the eventObject', async (t) => {
   const rule = fakeRuleFactoryV2({ workflow });
   const event = {
     payload: 'whatever'
