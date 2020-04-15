@@ -14,6 +14,9 @@ const { lookupCollectionInEvent, queueMessageForRule } = require('../lib/rulesHe
  * the `rule.value` field, then filters based on any collection name and version in the queryParams.
  *
  * @param {Object} queryParams - any/all query params extracted from event object
+ * @param {string} queryParams.name - a collection name
+ * @param {string} queryParams.version - a collection version
+ * @param {string} queryParams.sourceArn - the ARN of the message source for the rule
  * @param {string} originalMessageSource - "kinesis" or "sns"
  * @returns {Array} List of zero or more rules found from table scan
  */
@@ -49,11 +52,11 @@ async function getRules(queryParams, originalMessageSource) {
     filter += ' AND #rl.#vl = :ruleValue';
   }
   const model = new Rule();
-  console.log('rule query params', {
-    names,
-    filter,
-    values
-  });
+  // console.log('rule query params', {
+  //   names,
+  //   filter,
+  //   values
+  // });
   const rulesQueryResultsForSourceArn = await model.scan({
     names,
     filter,
@@ -190,14 +193,14 @@ function processRecord(record, fromSNS) {
       originalMessageSource = 'kinesis';
       const dataString = Buffer.from(kinesisObject.data, 'base64').toString();
       eventObject = JSON.parse(dataString);
-      console.log('parsed', parsed);
-      console.log('eventObject', eventObject);
+      // console.log('parsed', parsed);
+      // console.log('eventObject', eventObject);
       // standard case (collection object), or CNM case
       ruleParam = {
         ...lookupCollectionInEvent(eventObject),
         sourceArn: get(parsed, 'eventSourceARN')
       };
-      console.log('ruleParam', ruleParam);
+      // console.log('ruleParam', ruleParam);
     } catch (err) {
       log.error('Caught error parsing JSON:');
       log.error(err);

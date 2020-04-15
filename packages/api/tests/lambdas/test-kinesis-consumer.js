@@ -249,7 +249,7 @@ test.serial('it should enqueue a message for each associated workflow', async (t
   t.deepEqual(actualMessage.payload, expectedMessage.payload);
 });
 
-test.serial('processRecord', async (t) => {
+test.skip('processRecord', async (t) => {
   const validMessage = JSON.stringify({
     collection: 'confection-collection'
   });
@@ -340,19 +340,19 @@ test.serial('An SNS Fallback retry, should throw an error if message is invalid 
 });
 
 test.serial('A kinesis message should not publish record to fallbackSNS if it processes.', (t) => {
-  const validMessage = JSON.stringify({ collection: 'confection-collection' });
+  const validMessage = JSON.stringify({ collection: testCollectionName });
   const kinesisEvent = {
     Records: [{ kinesis: { data: Buffer.from(validMessage).toString('base64') } }]
   };
   t.true(publishStub.notCalled);
-  return handler(kinesisEvent, {}, testCallback).then((r) => t.deepEqual(r, [[true, true]]));
+  return handler(kinesisEvent, {}, testCallback).then((r) => t.deepEqual(r, [[true, true, true, true]]));
 });
 
 test.serial('An SNS Fallback message should not throw if message is valid.', (t) => {
-  const validMessage = JSON.stringify({ collection: 'confection-collection' });
+  const validMessage = JSON.stringify({ collection: testCollectionName });
   const kinesisEvent = {
     Records: [{ kinesis: { data: Buffer.from(validMessage).toString('base64') } }]
   };
   const snsEvent = wrapKinesisRecordInSnsEvent(kinesisEvent.Records[0]);
-  return handler(snsEvent, {}, testCallback).then((r) => t.deepEqual(r, [[true, true]]));
+  return handler(snsEvent, {}, testCallback).then((r) => t.deepEqual(r, [[true, true, true, true]]));
 });
