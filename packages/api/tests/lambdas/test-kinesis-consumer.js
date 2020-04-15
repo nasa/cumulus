@@ -177,8 +177,8 @@ test.beforeEach(async (t) => {
     payload: get(item, 'payload', {}),
     definition: workflowDefinition
   }));
-  sinon.stub(Provider.prototype, 'get').callsFake((provider) => provider);
-  sinon.stub(Collection.prototype, 'get').callsFake((collection) => collection);
+  sinon.stub(Provider.prototype, 'get').callsFake((providerArg) => providerArg);
+  sinon.stub(Collection.prototype, 'get').callsFake((collectionArg) => collectionArg);
 
   t.context.tableName = process.env.RulesTable;
   process.env.stackName = randomString();
@@ -214,14 +214,14 @@ test.serial('it should look up kinesis-type rules which are associated with the 
   const result = await getRules({
     name: testCollectionName,
     version: '1.0.0'
-  }, 'kinesis')
+  }, 'kinesis');
   t.is(result.length, 1);
 });
 
 test.serial('it should look up kinesis-type rules which are associated with the source ARN', async (t) => {
   const result = await getRules({
     sourceArn: 'kinesisarn-4'
-  }, 'kinesis')
+  }, 'kinesis');
   t.is(result.length, 1);
 });
 
@@ -266,7 +266,7 @@ test.serial('A message is scheduled with correct collection for CNM-style event'
   t.deepEqual(actualMessage.meta.collection, {
     name: testCollectionName,
     version: '1.0.0'
-  })
+  });
 });
 
 test.serial('A kinesis message, should publish the invalid record to fallbackSNS if message does not include a collection', async (t) => {
