@@ -13,6 +13,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/common/workflows.getWorkflowFileKey()` to return the S3 key for a workflow definition object
   - Added `@cumulus/common/workflows.getWorkflowsListKeyPrefix()` to return the S3 key prefix for objects containing workflow definitions
 
+- **CUMULUS-1853**
+  - Added `@cumulus/integration-tests/collections.createCollection()`
+  - Added `@cumulus/integration-tests/executions.findExecutionArn()`
+  - Added `@cumulus/integration-tests/executions.getExecutionWithStatus()`
+  - Added `@cumulus/integration-tests/granules.getGranuleWithStatus()`
+  - Added `@cumulus/integration-tests/providers.createProvider()`
+  - Added `@cumulus/integration-tests/rules.createOneTimeRule()`
+
 ### Changed
 
 - **CUMULUS-1682**
@@ -70,6 +78,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `pullStepFunctionEvent()`
   - Removed `@cumulus/common/sfnStep`
   - Removed `@cumulus/common/StepFunctions`
+
+### Fixed
+
+- **CUMULUS-1853**
+  - Fixed a bug where attempting to create a rule containing a payload property
+    would fail schema validation.
 
 ## [v1.21.0] 2020-03-30
 

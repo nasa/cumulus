@@ -37,26 +37,15 @@ const get = improveStackTrace(
     client,
     getParams = {}
   }) => {
-    const params = {
+    const getResponse = await client.get({
       ...getParams,
       TableName: tableName,
       Key: item
-    };
+    }).promise();
 
-    try {
-      const getResponse = await client.get(params).promise();
-      if (!getResponse.Item) {
-        throw new RecordDoesNotExist();
-      }
-      return getResponse.Item;
-    } catch (e) {
-      if (e instanceof RecordDoesNotExist) {
-        throw new RecordDoesNotExist(
-          `No record found for ${JSON.stringify(item)} in ${tableName}`
-        );
-      }
-      throw e;
-    }
+    if (getResponse.Item) return getResponse.Item;
+
+    throw new RecordDoesNotExist(`No record found for ${JSON.stringify(item)} in ${tableName}`);
   }
 );
 
