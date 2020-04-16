@@ -1,7 +1,7 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const { AsyncOperation } = require('../models');
+const AsyncOperation = require('../models/async-operation');
 
 /**
  * Start an AsyncOperation that will perform kinesis message replay

@@ -85,6 +85,7 @@ async function processRecordBatch(streamName, records) {
   const streamResponse = await Kinesis.describeStream({
     StreamName: streamName
   }).promise();
+  console.log('streamResponse', streamResponse)
   const results = await Promise.all(records.map(async (record) => {
     if (new Date(record.ApproximateArrivalTimestamp) > new Date(process.env.endTimestamp)) {
       return 'skip';
