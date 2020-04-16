@@ -26,6 +26,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1820**
   - Updated the Thin Egress App module used in `tf-modules/distribution/main.tf` to build 74. [See the release notes](https://github.com/asfadmin/thin-egress-app/releases/tag/tea-build.74).
 
+### Fixed
+
+- **CUMULUS-1850**
+  - Fixed a bug in Kinesis event processing where the message consumer would not properly filter available rules based on the collection information in the event and the Kinesis stream ARN
+- **CUMULUS-1853**
+  - Fixed a bug where attempting to create a rule containing a payload property
+    would fail schema validation.
+
 ### Deprecated
 
 - **CUMULUS-1799** - Deprecated the following code. For cases where the code was moved into another package, the new code location is noted:
@@ -75,12 +83,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `pullStepFunctionEvent()`
   - Removed `@cumulus/common/sfnStep`
   - Removed `@cumulus/common/StepFunctions`
-
-### Fixed
-
-- **CUMULUS-1853**
-  - Fixed a bug where attempting to create a rule containing a payload property
-    would fail schema validation.
 
 ## [v1.21.0] 2020-03-30
 
