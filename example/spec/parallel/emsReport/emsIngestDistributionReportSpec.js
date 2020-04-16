@@ -1,5 +1,6 @@
 const fs = require('fs-extra');
 const moment = require('moment');
+const AWS = require('aws-sdk');
 const path = require('path');
 const os = require('os');
 
@@ -134,7 +135,7 @@ describe('The EMS report', () => {
   let submitReport;
   let testDataFolder;
   let testSuffix;
-  let beforeAllFailed;
+  let beforeAllError;
 
   beforeAll(async () => {
     try {
@@ -181,14 +182,15 @@ describe('The EMS report', () => {
       // wait until records searchable in elasticsearch
       await waitForGranuleRecordsInList(config.stackName, ingestedGranuleIds);
     } catch (e) {
-      beforeAllFailed = true;
-      throw e;
+      beforeAllError = e;
     }
   });
 
-  afterAll(async () => {
-    if (beforeAllFailed) return;
+  beforeEach(() => {
+    if (beforeAllError) fail(beforeAllError);
+  });
 
+  afterAll(async () => {
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       // leave collection in the table for daily reports
@@ -199,7 +201,8 @@ describe('The EMS report', () => {
   describe('When run automatically', () => {
     let expectReports = false;
     beforeAll(async () => {
-      if (beforeAllFailed) return;
+      const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
+      AWS.config.update({ region: region });
 
       const lambdaConfig = await lambda().getFunctionConfiguration({ FunctionName: emsIngestReportLambda })
         .promise();
@@ -214,23 +217,18 @@ describe('The EMS report', () => {
     });
 
     it('generates EMS reports every 24 hours', async () => {
-      if (beforeAllFailed) {
-        fail('beforeAll failed');
-      } else {
-        // eslint-disable-next-line no-lonely-if
-        if (expectReports) {
-          const datestring = moment.utc().format('YYYYMMDD');
-          const types = ['Ing', 'Arch', 'ArchDel', 'DistCustom'];
-          const jobs = types.map((type) => {
-            const filename = `${datestring}_${emsProvider}_${type}_${dataSource}.flt`;
-            const reportFolder = (type === 'DistCustom') ? 'ems-distribution/reports' : 'ems';
-            const key = `${config.stackName}/${reportFolder}/${filename}`;
-            const sentKey = `${config.stackName}/${reportFolder}/sent/${filename}`;
-            return fileExists(bucket, key) || fileExists(bucket, sentKey);
-          });
-          const results = await Promise.all(jobs);
-          results.forEach((result) => expect(result).not.toBe('false'));
-        }
+      if (expectReports) {
+        const datestring = moment.utc().format('YYYYMMDD');
+        const types = ['Ing', 'Arch', 'ArchDel', 'DistCustom'];
+        const jobs = types.map((type) => {
+          const filename = `${datestring}_${emsProvider}_${type}_${dataSource}.flt`;
+          const reportFolder = (type === 'DistCustom') ? 'ems-distribution/reports' : 'ems';
+          const key = `${config.stackName}/${reportFolder}/${filename}`;
+          const sentKey = `${config.stackName}/${reportFolder}/sent/${filename}`;
+          return fileExists(bucket, key) || fileExists(bucket, sentKey);
+        });
+        const results = await Promise.all(jobs);
+        results.forEach((result) => expect(result).not.toBe('false'));
       }
     });
   });
@@ -238,7 +236,8 @@ describe('The EMS report', () => {
   describe('After execution of EmsIngestReport lambda', () => {
     let lambdaOutput;
     beforeAll(async () => {
-      if (beforeAllFailed) return;
+      const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
+      AWS.config.update({ region: region });
 
       const endTime = moment.utc().add(1, 'days').startOf('day').format();
       const startTime = moment.utc().startOf('day').format();
@@ -256,77 +255,69 @@ describe('The EMS report', () => {
     });
 
     it('generates EMS ingest reports', async () => {
-      if (beforeAllFailed) {
-        fail('beforeAll failed');
-      } else {
-        // generated reports should have the records just ingested or deleted
-        expect(lambdaOutput.length).toEqual(3);
-        const jobs = lambdaOutput.map(async (report) => {
-          const parsed = parseS3Uri(report.file);
-          const obj = await getS3Object(parsed.Bucket, parsed.Key);
-          const reportRecords = obj.Body.toString().split('\n');
-          if (['ingest', 'archive'].includes(report.reportType)) {
-            const records = reportRecords.filter((record) =>
-              record.startsWith(ingestedGranuleIds[0]) || record.startsWith(ingestedGranuleIds[1]));
-            expect(records.length).toEqual(2);
-            records.forEach((record) =>
-              expect(record.split('|&|').find((field) => field.length === 0)).toBeFalsy());
-          }
-          if (report.reportType === 'delete') {
-            const records = reportRecords.filter((record) =>
-              record.startsWith(deletedGranuleId));
-            expect(records.length).toEqual(1);
-          }
+      // generated reports should have the records just ingested or deleted
+      expect(lambdaOutput.length).toEqual(3);
+      const jobs = lambdaOutput.map(async (report) => {
+        const parsed = parseS3Uri(report.file);
+        const obj = await getS3Object(parsed.Bucket, parsed.Key);
+        const reportRecords = obj.Body.toString().split('\n');
+        if (['ingest', 'archive'].includes(report.reportType)) {
+          const records = reportRecords.filter((record) =>
+            record.startsWith(ingestedGranuleIds[0]) || record.startsWith(ingestedGranuleIds[1]));
+          expect(records.length).toEqual(2);
+          records.forEach((record) =>
+            expect(record.split('|&|').find((field) => field.length === 0)).toBeFalsy());
+        }
+        if (report.reportType === 'delete') {
+          const records = reportRecords.filter((record) =>
+            record.startsWith(deletedGranuleId));
+          expect(records.length).toEqual(1);
+        }
 
-          if (submitReport) expect(parsed.Key).toContain('/sent/');
+        if (submitReport) expect(parsed.Key).toContain('/sent/');
 
-          return true;
-        });
-        const results = await Promise.all(jobs);
-        results.forEach((result) => expect(result).not.toBe(false));
-      }
+        return true;
+      });
+      const results = await Promise.all(jobs);
+      results.forEach((result) => expect(result).not.toBe(false));
     });
 
     it('generates EMS ingest reports through the Cumulus API', async () => {
-      if (beforeAllFailed) {
-        fail('beforeAll failed');
-      } else {
-        const inputPayload = {
-          reportType: 'ingest',
-          startTime: moment.utc().subtract(1, 'days').startOf('day').format(),
-          endTime: moment.utc().add(1, 'days').startOf('day').format(),
-          collectionId,
-          invocationType: 'RequestResponse'
-        };
+      const inputPayload = {
+        reportType: 'ingest',
+        startTime: moment.utc().subtract(1, 'days').startOf('day').format(),
+        endTime: moment.utc().add(1, 'days').startOf('day').format(),
+        collectionId,
+        invocationType: 'RequestResponse'
+      };
 
-        const response = await emsApi.createEmsReports({
-          prefix: config.stackName,
-          request: inputPayload
-        });
+      const response = await emsApi.createEmsReports({
+        prefix: config.stackName,
+        request: inputPayload
+      });
 
-        const reports = JSON.parse(response.body).reports;
-        expect(reports.length).toEqual(6);
+      const reports = JSON.parse(response.body).reports;
+      expect(reports.length).toEqual(6);
 
-        const jobs = reports.slice(3).map(async (report) => {
-          const parsed = parseS3Uri(report.file);
-          const obj = await getS3Object(parsed.Bucket, parsed.Key);
-          const reportRecords = obj.Body.toString().split('\n');
-          if (['ingest', 'archive'].includes(report.reportType)) {
-            const records = reportRecords.filter((record) =>
-              record.startsWith(ingestedGranuleIds[0]) || record.startsWith(ingestedGranuleIds[1]));
-            expect(records.length).toEqual(2);
-          }
-          if (report.reportType === 'delete') {
-            const records = reportRecords.filter((record) =>
-              record.startsWith(deletedGranuleId));
-            expect(records.length).toEqual(1);
-          }
+      const jobs = reports.slice(3).map(async (report) => {
+        const parsed = parseS3Uri(report.file);
+        const obj = await getS3Object(parsed.Bucket, parsed.Key);
+        const reportRecords = obj.Body.toString().split('\n');
+        if (['ingest', 'archive'].includes(report.reportType)) {
+          const records = reportRecords.filter((record) =>
+            record.startsWith(ingestedGranuleIds[0]) || record.startsWith(ingestedGranuleIds[1]));
+          expect(records.length).toEqual(2);
+        }
+        if (report.reportType === 'delete') {
+          const records = reportRecords.filter((record) =>
+            record.startsWith(deletedGranuleId));
+          expect(records.length).toEqual(1);
+        }
 
-          return true;
-        });
-        const results = await Promise.all(jobs);
-        results.forEach((result) => expect(result).not.toBe(false));
-      }
+        return true;
+      });
+      const results = await Promise.all(jobs);
+      results.forEach((result) => expect(result).not.toBe(false));
     });
   });
 
@@ -334,7 +325,6 @@ describe('The EMS report', () => {
     let headers;
 
     beforeAll(async () => {
-      if (beforeAllFailed) return;
       setDistributionApiEnvVars();
       headers = await getTEARequestHeaders(config.stackName);
     });
@@ -343,26 +333,24 @@ describe('The EMS report', () => {
     // so we are not able to generate the distribution report immediately after submitting distribution requests,
     // the distribution requests submitted here are for nightly distribution report.
     it('downloads the files of the published granule for generating nightly distribution report', async () => {
-      if (beforeAllFailed) {
-        fail('beforeAll failed');
-      } else {
-        const files = await getGranuleFilesForDownload(config.stackName, ingestedGranuleIds[0]);
-        for (let i = 0; i < files.length; i += 1) {
-          const filePath = `/${files[i].bucket}/${files[i].key}`;
-          const downloadedFile = path.join(os.tmpdir(), files[i].fileName);
-          // eslint-disable-next-line no-await-in-loop
-          const s3SignedUrl = await getDistributionApiRedirect(filePath, headers);
-          // eslint-disable-next-line no-await-in-loop
-          await download(s3SignedUrl, downloadedFile);
-          fs.unlinkSync(downloadedFile);
-        }
+      const files = await getGranuleFilesForDownload(config.stackName, ingestedGranuleIds[0]);
+      for (let i = 0; i < files.length; i += 1) {
+        const filePath = `/${files[i].bucket}/${files[i].key}`;
+        const downloadedFile = path.join(os.tmpdir(), files[i].fileName);
+        // eslint-disable-next-line no-await-in-loop
+        const s3SignedUrl = await getDistributionApiRedirect(filePath, headers);
+        // eslint-disable-next-line no-await-in-loop
+        await download(s3SignedUrl, downloadedFile);
+        fs.unlinkSync(downloadedFile);
       }
     });
 
     describe('After execution of EmsDistributionReport lambda', () => {
       let lambdaOutput;
       beforeAll(async () => {
-        if (beforeAllFailed) return;
+        const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
+        AWS.config.update({ region: region });
+
         const endTime = moment.utc().add(1, 'days').startOf('day').format();
         const startTime = moment.utc().startOf('day').format();
 
@@ -379,46 +367,38 @@ describe('The EMS report', () => {
       });
 
       it('generates an EMS distribution report', async () => {
-        if (beforeAllFailed) {
-          fail('beforeAll failed');
-        } else {
-          // verify report is generated, but can't verify the content since the s3 server access log
-          // won't have recent access records until hours or minutes later
-          expect(lambdaOutput.length).toEqual(1); // TODO: why would this fail intermittently?
-          const jobs = lambdaOutput.map(async (report) => {
-            const parsed = parseS3Uri(report.file);
-            expect(await fileExists(parsed.Bucket, parsed.Key)).not.toBe(false);
+        // verify report is generated, but can't verify the content since the s3 server access log
+        // won't have recent access records until hours or minutes later
+        expect(lambdaOutput.length).toEqual(1); // TODO: why would this fail intermittently?
+        const jobs = lambdaOutput.map(async (report) => {
+          const parsed = parseS3Uri(report.file);
+          expect(await fileExists(parsed.Bucket, parsed.Key)).not.toBe(false);
 
-            if (submitReport) expect(parsed.Key).toContain('/sent/');
+          if (submitReport) expect(parsed.Key).toContain('/sent/');
 
-            return true;
-          });
-          const results = await Promise.all(jobs);
-          results.forEach((result) => expect(result).not.toBe(false));
-        }
+          return true;
+        });
+        const results = await Promise.all(jobs);
+        results.forEach((result) => expect(result).not.toBe(false));
       });
 
       it('generates EMS distribution reports through the Cumulus API', async () => {
-        if (beforeAllFailed) {
-          fail('beforeAll failed');
-        } else {
-          // it could take long to generate distribution reports (greater than ApiEndpoints timeout),
-          // so use async call
-          const inputPayload = {
-            reportType: 'distribution',
-            startTime: moment.utc().subtract(1, 'days').startOf('day').format(),
-            endTime: moment.utc().add(1, 'days').startOf('day').format(),
-            collectionId
-          };
+        // it could take long to generate distribution reports (greater than ApiEndpoints timeout),
+        // so use async call
+        const inputPayload = {
+          reportType: 'distribution',
+          startTime: moment.utc().subtract(1, 'days').startOf('day').format(),
+          endTime: moment.utc().add(1, 'days').startOf('day').format(),
+          collectionId
+        };
 
-          const response = await emsApi.createEmsReports({
-            prefix: config.stackName,
-            request: inputPayload
-          });
+        const response = await emsApi.createEmsReports({
+          prefix: config.stackName,
+          request: inputPayload
+        });
 
-          const { message } = JSON.parse(response.body);
-          expect(message).toBe('Reports are being generated');
-        }
+        const { message } = JSON.parse(response.body);
+        expect(message).toBe('Reports are being generated');
       });
     });
   });
