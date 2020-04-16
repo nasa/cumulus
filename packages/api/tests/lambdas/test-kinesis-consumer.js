@@ -88,6 +88,22 @@ const rule4 = {
   }
 };
 
+const rule5 = {
+  ...commonRuleParams,
+  collection: {
+    name: testCollectionName,
+    version: '2.0.0'
+  },
+  name: 'testRule5',
+  workflow: 'test-workflow-5',
+  state: 'ENABLED',
+  rule: {
+    type: 'kinesis',
+    value: 'kinesisarn-5'
+  }
+};
+
+
 const disabledRule = {
   ...commonRuleParams,
   ...kinesisRuleParams,
@@ -185,7 +201,7 @@ test.beforeEach(async (t) => {
   process.env.system_bucket = randomString();
   process.env.messageConsumer = randomString();
 
-  const rulesToCreate = [rule1, rule2, rule3, disabledRule, rule4];
+  const rulesToCreate = [rule1, rule2, rule3, disabledRule, rule4, rule5];
   await Promise.all(rulesToCreate.map((rule) => ruleModel.create(rule)));
 });
 
@@ -207,7 +223,7 @@ test.serial('it should look up kinesis-type rules which are associated with the 
   const result = await getRules({
     name: testCollectionName
   }, 'kinesis');
-  t.is(result.length, 4);
+  t.is(result.length, 5);
 });
 
 test.serial('it should look up kinesis-type rules which are associated with the collection name and version', async (t) => {
@@ -221,6 +237,15 @@ test.serial('it should look up kinesis-type rules which are associated with the 
 test.serial('it should look up kinesis-type rules which are associated with the source ARN', async (t) => {
   const result = await getRules({
     sourceArn: 'kinesisarn-4'
+  }, 'kinesis');
+  t.is(result.length, 1);
+});
+
+test.serial('it should look up kinesis-type rules which are associated with the collection name/version and source ARN', async (t) => {
+  const result = await getRules({
+    name: testCollectionName,
+    version: '2.0.0',
+    sourceArn: 'kinesisarn-5'
   }, 'kinesis');
   t.is(result.length, 1);
 });
@@ -356,7 +381,7 @@ test.serial('A kinesis message should not publish record to fallbackSNS if it pr
   };
   t.true(publishStub.notCalled);
   return handler(kinesisEvent, {}, testCallback)
-    .then((r) => t.deepEqual(r, [[true, true, true, true]]));
+    .then((r) => t.deepEqual(r, [[true, true, true, true, true]]));
 });
 
 test.serial('An SNS Fallback message should not throw if message is valid.', (t) => {
@@ -366,7 +391,7 @@ test.serial('An SNS Fallback message should not throw if message is valid.', (t)
   };
   const snsEvent = wrapKinesisRecordInSnsEvent(kinesisEvent.Records[0]);
   return handler(snsEvent, {}, testCallback)
-    .then((r) => t.deepEqual(r, [[true, true, true, true]]));
+    .then((r) => t.deepEqual(r, [[true, true, true, true, true]]));
 });
 
 test.serial('An error publishing falllback record for Kinesis message should re-throw error from validation', async (t) => {
