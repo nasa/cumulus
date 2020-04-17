@@ -47,11 +47,13 @@ resource "aws_lambda_function" "clean_executions" {
 }
 
 resource "aws_cloudwatch_event_rule" "daily_execution_payload_cleanup" {
+  name = "${var.prefix}_daily_execution_payload_cleanup"
   schedule_expression = var.daily_execution_payload_cleanup_schedule_expression
   tags                = var.tags
 }
 
 resource "aws_cloudwatch_event_target" "daily_execution_payload_cleanup" {
+  target_id = "clean_executions_lambda_target"
   rule = aws_cloudwatch_event_rule.daily_execution_payload_cleanup.name
   arn  = aws_lambda_function.clean_executions.arn
 }
