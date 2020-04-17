@@ -4,6 +4,7 @@ const test = require('ava');
 const sinon = require('sinon');
 const rewire = require('rewire');
 
+const kinesisUtils = require('@cumulus/aws-client/Kinesis');
 const awsServices = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
 
@@ -11,20 +12,18 @@ const messageConsumer = require('../../lambdas/message-consumer');
 const manualConsumer = rewire('../../lambdas/manual-consumer');
 
 const Kinesis = awsServices.kinesis();
-let kinesisDescribeStreamStub;
+let describeStreamStub;
 
 test.before(() => {
-  kinesisDescribeStreamStub = sinon.stub(Kinesis, 'describeStream').callsFake(() => ({
-    promise: () => ({
-      StreamDescription: {
-        StreamARN: 'fake-stream-arn'
-      }
-    })
+  describeStreamStub = sinon.stub(kinesisUtils, 'describeStream').callsFake(async () => ({
+    StreamDescription: {
+      StreamARN: 'fake-stream-arn'
+    }
   }));
 });
 
 test.after.always(() => {
-  kinesisDescribeStreamStub.restore();
+  describeStreamStub.restore();
 });
 
 test.serial('configureTimestampEnvs throws error when invalid endTimestamp is provided', (t) => {
@@ -102,7 +101,7 @@ test.serial('processRecordBatch calls processRecord on each valid record and ret
   const processRecord = sinon.stub(messageConsumer, 'processRecord').returns(true);
 
   try {
-    const result = await manualConsumer.processRecordBatch('fake-stream', [
+    const result = await manualConsumer.processRecordBatch('fake-stream-arn', [
       { Data: 'record1', ApproximateArrivalTimestamp: Date.now() },
       { Data: 'record2', ApproximateArrivalTimestamp: Date.now() }
     ]);
@@ -130,7 +129,7 @@ test.serial('processRecordBatch skips records newer than the endTimestamp and lo
   const processRecord = sinon.stub(messageConsumer, 'processRecord').returns(true);
   const logInfo = sinon.spy(log, 'info');
   process.env.endTimestamp = new Date(Date.now() - 1000);
-  const result = await manualConsumer.processRecordBatch('fake-stream', [
+  const result = await manualConsumer.processRecordBatch('fake-stream-arn', [
     { Data: 'record1', ApproximateArrivalTimestamp: Date.now() },
     { Data: 'record2', ApproximateArrivalTimestamp: Date.now() }
   ]);
@@ -148,7 +147,7 @@ test.serial('processRecordBatch logs errors for processRecord failures and does 
   const processRecord = sinon.stub(messageConsumer, 'processRecord').throws();
   const logError = sinon.spy(log, 'error');
   const logWarn = sinon.spy(log, 'warn');
-  const result = await manualConsumer.processRecordBatch('fake-stream', [
+  const result = await manualConsumer.processRecordBatch('fake-stream-arn', [
     { Data: 'record1', ApproximateArrivalTimestamp: Date.now() },
     { Data: 'record2', ApproximateArrivalTimestamp: Date.now() }
   ]);
@@ -165,11 +164,13 @@ test.serial('processRecordBatch logs errors for processRecord failures and does 
 
 test.serial('iterateOverShardRecursively catches and logs failure of getRecords', async (t) => {
   const logError = sinon.spy(log, 'error');
-  await manualConsumer.iterateOverShardRecursively('fake-stream', [], 'fakeIterator');
 
-  logError.restore();
-
-  t.true(logError.calledOnce);
+  try {
+    await manualConsumer.iterateOverShardRecursively('fake-stream-arn', [], 'fakeIterator');
+    t.true(logError.calledOnce);
+  } finally {
+    logError.restore();
+  }
 });
 
 test.serial('iterateOverShardRecursively recurs until MillisBehindLatest reaches 0', async (t) => {
@@ -188,7 +189,7 @@ test.serial('iterateOverShardRecursively recurs until MillisBehindLatest reaches
   const processRecordStub = sinon.stub(messageConsumer, 'processRecord').returns(true);
   try {
     const existingPromiseList = [Promise.resolve(2), Promise.resolve(0)];
-    const output = await manualConsumer.iterateOverShardRecursively('fake-stream', existingPromiseList, 'fakeIterator');
+    const output = await manualConsumer.iterateOverShardRecursively('fake-stream-arn', existingPromiseList, 'fakeIterator');
     t.true(processRecordStub.calledTwice);
     t.deepEqual(await Promise.all(output), [2, 0, 1, 1]);
   } finally {
@@ -200,7 +201,7 @@ test.serial('iterateOverShardRecursively recurs until MillisBehindLatest reaches
 test.serial('processShard catches and logs failure of getShardIterator', async (t) => {
   const logError = sinon.spy(log, 'error');
   const processRecordBatch = sinon.spy(manualConsumer, 'processRecordBatch');
-  await manualConsumer.processShard('nonexistentStream', 'nonexistentShard');
+  await manualConsumer.processShard('nonexistentStream', 'non-existent-arn', 'nonexistentShard');
   logError.restore();
   t.true(logError.calledOnce);
   t.false(processRecordBatch.called);
@@ -216,7 +217,7 @@ test.serial('processShard returns number of records processed from shard', async
   });
   const logError = sinon.spy(log, 'error');
   const restoreProcessShard = manualConsumer.__set__('iterateOverShardRecursively', async () => [Promise.resolve(2), Promise.resolve(3)]);
-  const output = await manualConsumer.processShard('fakestream', 'fakeshard');
+  const output = await manualConsumer.processShard('fakestream', 'fake-stream-arn', 'fakeshard');
   logError.restore();
   restoreProcessShard();
   restoreKinesis();
@@ -227,7 +228,7 @@ test.serial('processShard returns number of records processed from shard', async
 test.serial('iterateOverStreamRecursivelyToDispatchShards catches and logs listShards failure, then exits', async (t) => {
   const logError = sinon.spy(log, 'error');
   const inputList = [Promise.resolve(4)];
-  const output = await manualConsumer.iterateOverStreamRecursivelyToDispatchShards('fakeStream', inputList, 'badParams');
+  const output = await manualConsumer.iterateOverStreamRecursivelyToDispatchShards('fakeStream', 'fake-arn', inputList, 'badParams');
   t.deepEqual(output, inputList);
   t.true(logError.calledTwice);
 });
@@ -247,7 +248,7 @@ test.serial('iterateOverStreamRecursivelyToDispatchShards recurs until listShard
     })
   });
   const restoreHandleShard = manualConsumer.__set__('processShard', async () => Promise.resolve(1));
-  const output = await manualConsumer.iterateOverStreamRecursivelyToDispatchShards('fakestream', [], {});
+  const output = await manualConsumer.iterateOverStreamRecursivelyToDispatchShards('fakestream', 'fake-arn', [], {});
   restoreHandleShard();
   restoreKinesis();
   t.deepEqual(await Promise.all(output), [1, 1]);
@@ -258,6 +259,26 @@ test.serial('processStream returns records processed', async (t) => {
   const output = await manualConsumer.processStream('fakestream', 'faketimestamp');
   restoreProcessStream();
   t.is(output, 'Processed 25 kinesis records from stream fakestream');
+});
+
+test.serial('processStream does not throw error if describeStream throws', async (t) => {
+  const restoreProcessStream = manualConsumer.__set__(
+    'iterateOverStreamRecursivelyToDispatchShards',
+    async () => [Promise.resolve(5)]
+  );
+
+  describeStreamStub.restore();
+  describeStreamStub = sinon.stub(kinesisUtils, 'describeStream')
+    .callsFake(async () => { throw new Error('error') });
+
+  try {
+    await t.notThrowsAsync(
+      manualConsumer.processStream('fakestream', 'faketimestamp')
+    );
+  } finally {
+    restoreProcessStream();
+    describeStreamStub.restore();
+  }
 });
 
 test.serial('handler sets envs from event', async (t) => {
