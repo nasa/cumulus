@@ -144,6 +144,7 @@ data "aws_iam_policy_document" "lambda_processing_policy" {
 }
 
 resource "aws_iam_role_policy" "lambda_processing" {
+  name   = "${var.prefix}_lambda_processing_policy"
   role   = aws_iam_role.lambda_processing.id
   policy = data.aws_iam_policy_document.lambda_processing_policy.json
 }

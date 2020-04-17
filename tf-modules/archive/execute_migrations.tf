@@ -123,6 +123,7 @@ data "aws_iam_policy_document" "migration_processing_policy" {
 }
 
 resource "aws_iam_role_policy" "migration_processing" {
+  name   = "${var.prefix}_migration_processing_policy"
   role   = aws_iam_role.migration_processing.id
   policy = data.aws_iam_policy_document.migration_processing_policy.json
 }

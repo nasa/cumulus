@@ -9,7 +9,8 @@ const { randomString } = require('@cumulus/common/test-utils');
 
 const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
 const rulesHelpers = rewire('../../lib/rulesHelpers');
-rulesHelpers.__set__('schedule', (payload) => payload);
+
+rulesHelpers.__set__('handleScheduleEvent', (payload) => payload);
 
 let workflow;
 
@@ -53,6 +54,17 @@ test('queueMessageForRule respects eventObject with collection object', async (t
   t.deepEqual(payload.collection, event.collection);
 });
 
+test('queueMessageForRule falls back to rule.collection for partial collection object', async (t) => {
+  const rule = fakeRuleFactoryV2({ workflow });
+  const event = {
+    collection: {
+      name: randomString()
+    }
+  };
+  const payload = await rulesHelpers.queueMessageForRule(rule, event);
+  t.deepEqual(payload.collection, rule.collection);
+});
+
 test('queueMessageForRule respects eventObject with CNM-style collection', async (t) => {
   const rule = fakeRuleFactoryV2({ workflow });
   const event = {
@@ -68,13 +80,31 @@ test('queueMessageForRule respects eventObject with CNM-style collection', async
   });
 });
 
-test('queueMessageForRule falls back to rule collection', async (t) => {
+test('queueMessageForRule falls back to rule collection for partial CNM-style collection in the eventObject', async (t) => {
+  const rule = fakeRuleFactoryV2({ workflow });
+  const event = {
+    collection: 'whatever'
+  };
+  const payload = await rulesHelpers.queueMessageForRule(rule, event);
+  t.deepEqual(payload.collection, rule.collection);
+});
+
+test('queueMessageForRule falls back to rule collection if there is no collection in the eventObject', async (t) => {
   const rule = fakeRuleFactoryV2({ workflow });
   const event = {
     payload: 'whatever'
   };
   const payload = await rulesHelpers.queueMessageForRule(rule, event);
   t.deepEqual(payload.collection, rule.collection);
+});
+
+test('queueMessageForRule includes eventSource in payload, if provided', async (t) => {
+  const rule = fakeRuleFactoryV2({ workflow });
+  const eventSource = {
+    foo: 'bar'
+  };
+  const payload = await rulesHelpers.queueMessageForRule(rule, {}, eventSource);
+  t.deepEqual(payload.meta.eventSource, eventSource);
 });
 
 test('rulesHelpers.lookupCollectionInEvent returns collection for standard case', (t) => {

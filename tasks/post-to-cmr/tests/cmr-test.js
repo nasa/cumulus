@@ -11,7 +11,7 @@ const awsServices = require('@cumulus/aws-client/services');
 const { promiseS3Upload, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { CMRMetaFileNotFound } = require('@cumulus/errors');
-const launchpad = require('@cumulus/common/launchpad');
+const launchpad = require('@cumulus/launchpad-auth');
 
 const { postToCMR } = require('..');
 
