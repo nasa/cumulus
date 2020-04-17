@@ -1,33 +1,40 @@
 'use strict';
 
-const { s3 } = require('./aws');
-const { deprecate } = require('./util');
-
 /**
- * Returns the collectionId used in elasticsearch
- * which is a combination of collection name and version
+ * Utilities for storing and retrieving collection config in S3
  *
- * @param {string} name - collection name
- * @param {string} version - collection version
- * @returns {string} collectionId
+ * @module collection-config-store
  */
-function constructCollectionId(name, version) {
-  deprecate('@cumulus/common/collection-config-store.constructCollectionId', '1.21.0', '@cumulus/message/Collections.constructCollectionId');
-  return `${name}___${version}`;
-}
+
+const {
+  deleteS3Object,
+  getJsonS3Object,
+  putJsonS3Object
+} = require('@cumulus/aws-client/S3');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 /**
- * Store and retrieve collection configs in S3
+ * @class
+ * @classdesc Store and retrieve collection configs in S3
+ *
+ * @example
+ * const CollectionConfigStore = require('@cumulus/collection-config-store');
+ *
+ * const collectionConfigStore = new CollectionConfigStore(
+ *   'system-bucket',
+ *   'stack-name'
+ * );
+ *
+ * @alias module:collection-config-store
  */
 class CollectionConfigStore {
   /**
-   * Initialize a CollectionConfigFetcher instance
+   * Initialize a CollectionConfigStore instance
    *
    * @param {string} bucket - the bucket where collection configs are stored
    * @param {string} stackName - the Cumulus deployment stack name
    */
   constructor(bucket, stackName) {
-    deprecate('@cumulus/common/collection-config-store/CollectionConfigStore', '1.21.0', '@cumulus/collection-config-store');
     this.bucket = bucket;
     this.stackName = stackName;
     this.cache = {};
@@ -38,20 +45,19 @@ class CollectionConfigStore {
    *
    * @param {string} name - the name of the collection config to fetch
    * @param {string} version - the version of the collection config to fetch
-   * @returns {Object} the fetched collection config
+   * @returns {Promise<Object>} the fetched collection config
+   *
+   * @async
    */
   async get(name, version) {
     const collectionId = constructCollectionId(name, version);
 
     // Check to see if the collection config has already been cached
     if (!this.cache[collectionId]) {
-      let response;
+      let collectionConfig;
       try {
         // Attempt to fetch the collection config from S3
-        response = await s3().getObject({
-          Bucket: this.bucket,
-          Key: this.configKey(collectionId)
-        }).promise();
+        collectionConfig = await getJsonS3Object(this.bucket, this.configKey(collectionId));
       } catch (err) {
         if (err.code === 'NoSuchKey') {
           throw new Error(`A collection config for data type "${collectionId}" was not found.`);
@@ -65,7 +71,7 @@ class CollectionConfigStore {
       }
 
       // Store the fetched collection config to the cache
-      this.cache[collectionId] = JSON.parse(response.Body.toString());
+      this.cache[collectionId] = collectionConfig;
     }
 
     return this.cache[collectionId];
@@ -79,17 +85,19 @@ class CollectionConfigStore {
    * @param {Object} config - the collection config to store
    * @returns {Promise<null>} resolves when the collection config has been written
    *   to S3
+   *
+   * @async
    */
   async put(name, version, config) {
     const collectionId = constructCollectionId(name, version);
 
     this.cache[collectionId] = config;
 
-    return s3().putObject({
-      Bucket: this.bucket,
-      Key: this.configKey(collectionId),
-      Body: JSON.stringify(config)
-    }).promise().then(() => null); // Don't leak implementation details to the caller
+    return putJsonS3Object(
+      this.bucket,
+      this.configKey(collectionId),
+      config
+    ).then(() => null); // Don't leak implementation details to the caller
   }
 
   /**
@@ -99,14 +107,13 @@ class CollectionConfigStore {
    * @param {string} version - version of Collection
    * @returns {Promise<null>} resolves when the collection config has been deleted
    *   to S3
+   *
+   * @async
    */
   async delete(name, version) {
     const collectionId = constructCollectionId(name, version);
 
-    await s3().deleteObject({
-      Bucket: this.bucket,
-      Key: this.configKey(collectionId)
-    }).promise();
+    await deleteS3Object(this.bucket, this.configKey(collectionId));
 
     delete this.cache[collectionId];
   }
@@ -124,5 +131,4 @@ class CollectionConfigStore {
   }
 }
 
-module.exports.constructCollectionId = constructCollectionId;
-module.exports.CollectionConfigStore = CollectionConfigStore;
+module.exports = CollectionConfigStore;

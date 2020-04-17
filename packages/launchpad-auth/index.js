@@ -1,16 +1,30 @@
 'use strict';
 
+/**
+ * Utility functions for generating and validating Launchpad tokens
+ *
+ * @module launchpad-auth
+ */
+
 const path = require('path');
 const pick = require('lodash/pick');
-const { getS3Object, s3ObjectExists, s3PutObject } = require('./aws');
+const {
+  getS3Object,
+  s3ObjectExists,
+  s3PutObject
+} = require('@cumulus/aws-client/S3');
+const Logger = require('@cumulus/logger');
+
 const LaunchpadToken = require('./LaunchpadToken');
-const log = require('./log');
-const { deprecate } = require('./util');
+
+const log = new Logger({ sender: '@cumulus/launchpad-auth' });
 
 /**
- * get s3 location of the Launchpad token
+ * Get S3 location of the Launchpad token
  *
- * @returns {Promise.<Object.<string, string>>} - s3 Bucket and Key where Launchpad token is stored
+ * @returns {Promise.<Object.<string, string>>} - S3 Bucket and Key where Launchpad token is stored
+ *
+ * @private
  */
 function launchpadTokenBucketKey() {
   if (!(process.env.stackName && process.env.system_bucket)) {
@@ -24,9 +38,12 @@ function launchpadTokenBucketKey() {
 }
 
 /**
- * retrieve Launchpad token from s3
+ * Retrieve Launchpad token from S3
  *
  * @returns {Promise.<string>} - the Launchpad token, null if token doesn't exist or invalid
+ *
+ * @async
+ * @private
  */
 async function getValidLaunchpadTokenFromS3() {
   const s3location = launchpadTokenBucketKey();
@@ -47,7 +64,7 @@ async function getValidLaunchpadTokenFromS3() {
 }
 
 /**
- * get Launchpad token
+ * Get a Launchpad token
  *
  * @param {Object} params - the configuration parameters for creating LaunchpadToken object
  * @param {string} params.api - the Launchpad token service api endpoint
@@ -55,9 +72,11 @@ async function getValidLaunchpadTokenFromS3() {
  * @param {string} params.certificate - the name of the Launchpad PKI pfx certificate
  *
  * @returns {Promise.<string>} - the Launchpad token
+ *
+ * @async
+ * @alias module:launchpad-auth
  */
 async function getLaunchpadToken(params) {
-  deprecate('@cumulus/common/launchpad.getLaunchpadToken()', '1.21.0', '@cumulus/launchpad-auth/index.getLaunchpadToken()');
   let token = await getValidLaunchpadTokenFromS3();
 
   if (!token) {
@@ -81,7 +100,7 @@ async function getLaunchpadToken(params) {
 }
 
 /**
- * validate Launchpad token
+ * Validate a Launchpad token
  *
  * @param {Object} params - the configuration parameters for creating LaunchpadToken object
  * @param {string} params.api - the Launchpad token service api endpoint
@@ -94,9 +113,11 @@ async function getLaunchpadToken(params) {
  * { status: 'success or failed', message: 'reason for failure',
  * session_maxtimeout: number second, session_starttime: number millisecond,
  * owner_auid: string}
+ *
+ * @async
+ * @alias module:launchpad-auth
  */
 async function validateLaunchpadToken(params, token, userGroup) {
-  deprecate('@cumulus/common/launchpad.validateLaunchpadToken()', '1.21.0', '@cumulus/launchpad-auth/index.validateLaunchpadToken()');
   log.debug('validateLaunchpadToken validating launchpad token');
   const launchpad = new LaunchpadToken(params);
   const response = await launchpad.validateToken(token);
@@ -121,5 +142,7 @@ async function validateLaunchpadToken(params, token, userGroup) {
   return result;
 }
 
-module.exports.getLaunchpadToken = getLaunchpadToken;
-module.exports.validateLaunchpadToken = validateLaunchpadToken;
+module.exports = {
+  getLaunchpadToken,
+  validateLaunchpadToken
+};
