@@ -8,10 +8,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-1787**
+  - Added `collections/active` endpoint for returning collections with active granules in `@cumulus/api`
 - **CUMULUS-1799**
   - Added `@cumulus/common/stack.getBucketsConfigKey()` to return the S3 key for the buckets config object
   - Added `@cumulus/common/workflows.getWorkflowFileKey()` to return the S3 key for a workflow definition object
   - Added `@cumulus/common/workflows.getWorkflowsListKeyPrefix()` to return the S3 key prefix for objects containing workflow definitions
+  - Added `@cumulus/message` package containing utilities for building and parsing Cumulus messages
 
 - **CUMULUS-1853**
   - Added `@cumulus/integration-tests/collections.createCollection()`
@@ -34,14 +37,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1799** - Deprecated the following code. For cases where the code was moved into another package, the new code location is noted:
   - `@cumulus/aws-client/StepFunctions.fromSfnExecutionName()`
   - `@cumulus/aws-client/StepFunctions.toSfnExecutionName()`
-  - `@cumulus/aws-client/StepFunctions.getExecutionArn()` -> `@cumulus/message/executions.buildExecutionArn()`
-  - `@cumulus/aws-client/StepFunctions.getExecutionUrl()` -> `@cumulus/message/executions.getExecutionUrlFromArn()`
-  - `@cumulus/aws-client/StepFunctions.getStateMachineArn()` -> `@cumulus/message/executions.getStateMachineArnFromExecutionArn()`
+  - `@cumulus/aws-client/StepFunctions.getExecutionArn()` -> `@cumulus/message/Executions.buildExecutionArn()`
+  - `@cumulus/aws-client/StepFunctions.getExecutionUrl()` -> `@cumulus/message/Executions.getExecutionUrlFromArn()`
+  - `@cumulus/aws-client/StepFunctions.getStateMachineArn()` -> `@cumulus/message/Executions.getStateMachineArnFromExecutionArn()`
   - `@cumulus/aws-client/StepFunctions.pullStepFunctionEvent()` -> `@cumulus/message/StepFunctions.pullStepFunctionEvent()`
   - `@cumulus/common/bucketsConfigJsonObject()`
   - `@cumulus/common/CloudWatchLogger`
+  - `@cumulus/common/collection-config-store/CollectionConfigStore` -> `@cumulus/collection-config-store`
+  - `@cumulus/common/collection-config-store.constructCollectionId()` -> `@cumulus/message/Collections.constructCollectionId`
   - `@cumulus/common/concurrency.limit()`
-  - `@cumulus/common/collection-config-store.constructCollectionId()` -> `@cumulus/message/collections.constructCollectionId`
   - `@cumulus/common/concurrency.mapTolerant()`
   - `@cumulus/common/concurrency.promiseUrl()`
   - `@cumulus/common/concurrency.toPromise()`
@@ -51,18 +55,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `@cumulus/common/config.resolveResource()`
   - `@cumulus/common/config.resourceToArn()`
   - `@cumulus/common/FieldPattern`
-  - `@cumulus/common/message.buildCumulusMeta()` -> `@cumulus/message/build.buildCumulusMeta()`
-  - `@cumulus/common/message.buildQueueMessageFromTemplate()` -> `@cumulus/message/build.buildQueueMessageFromTemplate()`
-  - `@cumulus/common/message.getCollectionIdFromMessage()` -> `@cumulus/message/collections.getCollectionIdFromMessage()`
-  - `@cumulus/common/message.getMessageExecutionArn()` -> `@cumulus/message/executions.getMessageExecutionArn()`
-  - `@cumulus/common/message.getMessageExecutionName()` -> `@cumulus/message/executions.getMessageExecutionName()`
-  - `@cumulus/common/message.getMaximumExecutions()` -> `@cumulus/message/queue.getMaximumExecutions()`
+  - `@cumulus/common/launchpad.getLaunchpadToken()` -> `@cumulus/launchpad-auth/index.getLaunchpadToken()`
+  - `@cumulus/common/LaunchpadToken` -> `@cumulus/launchpad-auth/LaunchpadToken`
+  - `@cumulus/common/launchpad.validateLaunchpadToken()` -> `@cumulus/launchpad-auth/index.validateLaunchpadToken()`
+  - `@cumulus/common/message.buildCumulusMeta()` -> `@cumulus/message/Build.buildCumulusMeta()`
+  - `@cumulus/common/message.buildQueueMessageFromTemplate()` -> `@cumulus/message/Build.buildQueueMessageFromTemplate()`
+  - `@cumulus/common/message.getCollectionIdFromMessage()` -> `@cumulus/message/Collections.getCollectionIdFromMessage()`
+  - `@cumulus/common/message.getMessageExecutionArn()` -> `@cumulus/message/Executions.getMessageExecutionArn()`
+  - `@cumulus/common/message.getMessageExecutionName()` -> `@cumulus/message/Executions.getMessageExecutionName()`
+  - `@cumulus/common/message.getMaximumExecutions()` -> `@cumulus/message/Queue.getMaximumExecutions()`
   - `@cumulus/common/message.getMessageFromTemplate()`
-  - `@cumulus/common/message.getMessageStateMachineArn()` -> `@cumulus/message/executions.getMessageStateMachineArn()`)
-  - `@cumulus/common/message.getMessageGranules()` -> `@cumulus/message/granules.getMessageGranules()`
-  - `@cumulus/common/message.getQueueNameByUrl()` -> `@cumulus/message/queue.getQueueNameByUrl()`
-  - `@cumulus/common/message.getQueueName()` -> `@cumulus/message/queue.getQueueName()`)
-  - `@cumulus/common/message.hasQueueAndExecutionLimit()` -> `@cumulus/message/queue.hasQueueAndExecutionLimit()`
+  - `@cumulus/common/message.getMessageStateMachineArn()` -> `@cumulus/message/Executions.getMessageStateMachineArn()`)
+  - `@cumulus/common/message.getMessageGranules()` -> `@cumulus/message/Granules.getMessageGranules()`
+  - `@cumulus/common/message.getQueueNameByUrl()` -> `@cumulus/message/Queue.getQueueNameByUrl()`
+  - `@cumulus/common/message.getQueueName()` -> `@cumulus/message/Queue.getQueueName()`)
+  - `@cumulus/common/message.hasQueueAndExecutionLimit()` -> `@cumulus/message/Queue.hasQueueAndExecutionLimit()`
   - `@cumulus/common/Semaphore`
   - `@cumulus/common/test-utils.throttleOnce()`
   - `@cumulus/common/workflows.getWorkflowArn()`
@@ -105,12 +112,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Adds a new copy of the API lambda `PrivateApiLambda()` which is configured to not require authentication. This Lambda is not connected to an API gateway
   - Adds `@cumulus/api-client` with functions for use by workflow lambdas to call the API when needed
 
-
 - **CUMULUS-1732**
   - Added Python task/activity workflow and integration test (`PythonReferenceSpec`) to test `cumulus-message-adapter-python`and `cumulus-process-py` integration.
-- **CUMULUS-1787**
-  - Added `collections/active` endpoint for returning collections with active granules in `@cumulus/api`
-
 - **CUMULUS-1795**
   - Added an IAM policy on the Cumulus EC2 creation to enable SSM when the `deploy_to_ngap` flag is true
 

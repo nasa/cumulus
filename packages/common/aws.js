@@ -209,7 +209,6 @@ exports.headObject = exports.improveStackTrace(
   }
 );
 
-
 /**
  * Delete an object from S3
  *
