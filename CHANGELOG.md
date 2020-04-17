@@ -12,7 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/common/stack.getBucketsConfigKey()` to return the S3 key for the buckets config object
   - Added `@cumulus/common/workflows.getWorkflowFileKey()` to return the S3 key for a workflow definition object
   - Added `@cumulus/common/workflows.getWorkflowsListKeyPrefix()` to return the S3 key prefix for objects containing workflow definitions
-
+- **CUMULUS-1850**
+  - Added `@cumulus/aws-client/Kinesis.describeStream()` to get a Kinesis stream description
 - **CUMULUS-1853**
   - Added `@cumulus/integration-tests/collections.createCollection()`
   - Added `@cumulus/integration-tests/executions.findExecutionArn()`
