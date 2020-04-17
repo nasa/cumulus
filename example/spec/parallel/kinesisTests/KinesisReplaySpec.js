@@ -167,6 +167,7 @@ describe('The Kinesis Replay API', () => {
     });
 
     it('starts an AsyncOperation and returns the AsyncOperationId', () => {
+      console.log('asyncOperationId', asyncOperationId);
       expect(asyncOperationId).toBeDefined();
     });
 
