@@ -214,9 +214,12 @@ async function iterateOverStreamRecursivelyToDispatchShards(
  */
 async function processStream(streamName, streamCreationTimestamp) {
   const initialParams = setupListShardParams(streamName, streamCreationTimestamp);
-  const streamArn = await kinesisUtils.describeStream({ StreamName: streamName })
-    .then((streamResponse) => get(streamResponse, 'StreamDescription.StreamARN'))
-    .catch(log.error);
+  const streamArn = await kinesisUtils.describeStream(
+    { StreamName: streamName },
+    { retries: 2 }
+  ).then(
+    (streamResponse) => get(streamResponse, 'StreamDescription.StreamARN')
+  ).catch(log.error);
   const streamPromiseList = await iterateOverStreamRecursivelyToDispatchShards(
     streamName, streamArn, [], initialParams
   );
