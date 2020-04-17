@@ -180,6 +180,7 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
 }
 
 resource "aws_iam_role_policy" "lambda_api_gateway" {
+  name   = "${var.prefix}_lambda_api_gateway_policy"
   role   = aws_iam_role.lambda_api_gateway.id
   policy = data.aws_iam_policy_document.lambda_api_gateway_policy.json
 }

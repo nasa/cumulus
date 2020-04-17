@@ -12,7 +12,7 @@ const { deprecate } = require('./util');
  * @returns {string} collectionId
  */
 function constructCollectionId(name, version) {
-  deprecate('@cumulus/common/collection-config-store.constructCollectionId', '1.20.0', '@cumulus/message/Collections.constructCollectionId');
+  deprecate('@cumulus/common/collection-config-store.constructCollectionId', '1.21.0', '@cumulus/message/Collections.constructCollectionId');
   return `${name}___${version}`;
 }
 
@@ -27,6 +27,7 @@ class CollectionConfigStore {
    * @param {string} stackName - the Cumulus deployment stack name
    */
   constructor(bucket, stackName) {
+    deprecate('@cumulus/common/collection-config-store/CollectionConfigStore', '1.21.0', '@cumulus/collection-config-store');
     this.bucket = bucket;
     this.stackName = stackName;
     this.cache = {};

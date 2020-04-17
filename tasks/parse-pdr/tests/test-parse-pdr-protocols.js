@@ -5,7 +5,7 @@ const test = require('ava');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
-const { CollectionConfigStore } = require('@cumulus/common/collection-config-store');
+const CollectionConfigStore = require('@cumulus/collection-config-store');
 const {
   randomString,
   validateConfig,

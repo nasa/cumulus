@@ -37,6 +37,7 @@ data "aws_iam_policy_document" "lambda_processing_role_get_secrets" {
 }
 
 resource "aws_iam_role_policy" "lambda_processing_role_get_secrets" {
+  name   = "${var.prefix}_lambda_processing_role_get_secrets_policy"
   role   = split("/", var.lambda_processing_role_arn)[1]
   policy = data.aws_iam_policy_document.lambda_processing_role_get_secrets.json
 }

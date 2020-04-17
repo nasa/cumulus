@@ -7,7 +7,7 @@ const isString = require('lodash/isString');
 const path = require('path');
 const S3 = require('@cumulus/aws-client/S3');
 const { buildProviderClient, fetchTextFile } = require('@cumulus/ingest/providerClientUtils');
-const { CollectionConfigStore } = require('@cumulus/common/collection-config-store');
+const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { PDRParsingError } = require('@cumulus/errors');
 const { pvlToJS } = require('@cumulus/pvl/t');
 
