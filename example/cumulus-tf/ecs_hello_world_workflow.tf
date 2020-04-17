@@ -29,7 +29,7 @@ module "hello_world_service" {
     module.cumulus.hello_world_task.task_arn
   ]
   alarms = {
-    TaskCountHight = {
+    TaskCountHigh = {
       comparison_operator = "GreaterThanThreshold"
       evaluation_periods  = 1
       metric_name         = "MemoryUtilization"

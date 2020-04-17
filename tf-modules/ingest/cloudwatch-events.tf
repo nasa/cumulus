@@ -1,11 +1,13 @@
 # Background Processing Watcher
 
 resource "aws_cloudwatch_event_rule" "background_processing_watcher" {
+  name = "${var.prefix}_background_processing_watcher"
   schedule_expression = "rate(1 minute)"
   tags                = var.tags
 }
 
 resource "aws_cloudwatch_event_target" "background_processing_watcher" {
+  target_id = "throttle_lambda_target"
   rule = aws_cloudwatch_event_rule.background_processing_watcher.name
   arn  = aws_lambda_function.sqs2sfThrottle.arn
   input = jsonencode({
@@ -33,11 +35,13 @@ resource "aws_lambda_permission" "generic_lambda" {
 # sqsMessageConsumer Watcher
 
 resource "aws_cloudwatch_event_rule" "sqs_message_consumer_watcher" {
+  name = "${var.prefix}_sqs_message_consumer_watcher"
   schedule_expression = "rate(1 minute)"
   tags                = var.tags
 }
 
 resource "aws_cloudwatch_event_target" "sqs_message_consumer_watcher" {
+  target_id = "sqs_consumer_target"
   rule = aws_cloudwatch_event_rule.sqs_message_consumer_watcher.name
   arn  = aws_lambda_function.sqs_message_consumer.arn
   input = jsonencode({
