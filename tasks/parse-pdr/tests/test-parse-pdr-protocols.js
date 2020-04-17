@@ -291,7 +291,7 @@ test.serial('Parse a PDR without a granuleIdFilter in the config', async (t) => 
   t.is(output.totalSize, 3952643);
 });
 
-test.serial('Empty FILE_ID valule in PDR, parse-pdr throws error', async (t) => {
+test.serial('Empty FILE_ID value in PDR, parse-pdr throws error', async (t) => {
   t.context.payload.config.provider = {
     id: 'MODAPS',
     protocol: 's3',
