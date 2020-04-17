@@ -1,5 +1,6 @@
 'use strict';
 
+const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
 const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -78,6 +79,11 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
           ]
         }
       }).promise();
+
+      const failures = get(runTaskResponse, 'failures', []);
+      if (failures.length > 0) {
+        throw new Error(`Failed to start tasks: ${JSON.stringify(failures)}`);
+      }
 
       taskArn = runTaskResponse.tasks[0].taskArn;
 
