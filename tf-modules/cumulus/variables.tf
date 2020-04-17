@@ -195,9 +195,9 @@ variable "ecs_cluster_instance_docker_volume_size" {
 }
 
 variable "ecs_cluster_instance_type" {
-  type        = "string"
+  type        = string
   description = "EC2 instance type for cluster instances"
-  default     = "t2.medium"
+  default     = "t3.medium"
 }
 
 variable "ecs_cluster_scale_in_adjustment_percent" {
