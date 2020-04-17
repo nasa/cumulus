@@ -24,7 +24,8 @@ module "discover_granules_workflow" {
             "provider": "{$.meta.provider}",
             "collection": "{$.meta.collection}",
             "buckets": "{$.meta.buckets}",
-            "stack": "{$.meta.stack}"
+            "stack": "{$.meta.stack}",
+            "duplicateGranuleHandling": "{$.meta.collection.duplicateHandling}"
           }
         }
       },

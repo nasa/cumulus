@@ -50,7 +50,8 @@
       "features/execution_payload_retention",
       "features/lambda_versioning",
       "features/ancillary_metadata",
-      "features/distribution-metrics"
+      "features/distribution-metrics",
+      "features/logging-esdis-metrics"
     ],
     "Troubleshooting": [
       "troubleshooting/troubleshooting-readme",
@@ -87,7 +88,8 @@
     "Configuration": [
       "operator-docs/lifecycle-policies",
       "operator-docs/locating-access-logs",
-      "operator-docs/collection-storage-best-practices"
+      "operator-docs/collection-storage-best-practices",
+      "operator-docs/serve-dashboard-from-cloudfront"
     ],
     "Operations": [
       "operator-docs/discovery-filtering",

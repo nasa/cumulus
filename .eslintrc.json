@@ -22,6 +22,7 @@
     "node": true
   },
   "rules": {
+    "complexity": ["error", 15],
     "indent": ["error", 2],
     "require-jsdoc": "off",
     "valid-jsdoc": [
@@ -109,7 +110,7 @@
       { "allowWholeFile": true }
     ],
 
-    "lodash/import-scope": ["error", "method-package"],
+    "lodash/import-scope": ["error", "method"],
     "lodash/prefer-constant": "off",
     "lodash/prefer-lodash-method": "off",
 
@@ -121,16 +122,14 @@
   },
   "overrides": [
     {
-      "files": ["packages/api/migrations/**/*.js"],
-      "rules": {
-        "no-console": "off"
-      }
-    },
-    {
-      "files": ["**/bin/**/*.js"],
-      "rules": {
-        "no-console": "off"
-      }
+      "files": [
+        "**/bin/**/*.js",
+        "**/spec/**/*.js",
+        "packages/api/migrations/**/*.js",
+        "packages/deployment/**/*.js",
+        "tf-modules/internal/cumulus-test-cleanup/**/*.js"
+      ],
+      "rules": { "no-console": "off" }
     },
     {
       "files": ["**/test/**/*.js", "**/tests/**/*.js"],
@@ -139,12 +138,6 @@
         "no-console": "off",
         "no-new": "off",
         "no-param-reassign": "off"
-      }
-    },
-    {
-      "files": ["**/spec/**/*.js"],
-      "rules": {
-        "no-console": "off"
       }
     }
   ]

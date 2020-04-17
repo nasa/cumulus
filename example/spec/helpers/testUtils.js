@@ -1,9 +1,9 @@
 'use strict';
 
 const fs = require('fs');
-const cloneDeep = require('lodash.clonedeep');
+const cloneDeep = require('lodash/cloneDeep');
+const merge = require('lodash/merge');
 const mime = require('mime-types');
-const merge = require('lodash.merge');
 const path = require('path');
 
 const { headObject, parseS3Uri } = require('@cumulus/aws-client/S3');

@@ -1,6 +1,6 @@
 'use strict';
 
-const isNumber = require('lodash.isnumber');
+const isNumber = require('lodash/isNumber');
 const rewire = require('rewire');
 const test = require('ava');
 

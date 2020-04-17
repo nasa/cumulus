@@ -1,7 +1,7 @@
 'use strict';
 
 const { Execution } = require('@cumulus/api/models');
-const { deleteProvider } = require('@cumulus/integration-tests/api/providers');
+const { deleteProvider } = require('@cumulus/api-client/providers');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
   api: apiTestUtils,
@@ -87,7 +87,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
     // clean up stack state added by test
     await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      deleteProvider(config.stackName, provider.id)
+      deleteProvider({ prefix: config.stackName, providerId: provider.id })
     ]);
   });
 

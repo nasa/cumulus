@@ -2,7 +2,6 @@
 
 const test = require('ava');
 const { sqs } = require('@cumulus/aws-client/services');
-const cloneDeep = require('lodash.clonedeep');
 const { randomString } = require('@cumulus/common/test-utils');
 const { reportSQSMessage } = require('..');
 
@@ -28,7 +27,7 @@ test('task returns payload as output', async (t) => {
     }
   };
 
-  const output = await reportSQSMessage(cloneDeep(event));
+  const output = await reportSQSMessage(event);
   t.deepEqual(output, event.input.payload);
 });
 
@@ -49,6 +48,6 @@ test('task returns empty object when no payload is present on input to the task'
   event.config.stateMachine = 'arn:aws:states:us-east-1:000000000000:stateMachine:TestCumulusParsePdrStateMach-K5Qk90fc8w4U';
   event.config.executionName = '7c543392-1da9-47f0-9c34-f43f6519412a';
 
-  const output = await reportSQSMessage(cloneDeep(event));
+  const output = await reportSQSMessage(event);
   t.deepEqual(output, {});
 });

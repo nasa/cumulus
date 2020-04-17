@@ -1,50 +1,23 @@
 'use strict';
 
-const { callCumulusApi } = require('./api');
+const { deprecate } = require('@cumulus/common/util');
+const rulesApi = require('@cumulus/api-client/rules');
 
-/**
- * Call function in rules API with payload
- *
- * @param {string} prefix - the prefix configured for the stack
- * @param {Object} requestPayload - payload to be sent to the API lambda
- * containing the httpMethod, path, path params, and body
- * @returns {Object} - response from API lambda
- * @throws error if response cannot be parsed
- */
-async function callRuleApiFunction(prefix, requestPayload) {
-  const payload = await callCumulusApi({
-    prefix,
-    payload: requestPayload
-  });
-
-  try {
-    return payload;
-  } catch (error) {
-    console.log(`Error parsing JSON response for rule ${payload.httpMethod}: ${payload}`);
-    throw error;
-  }
-}
 
 /**
  * Post a rule to the rules API
  *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {Object} params.rule - rule body to post
- * @returns {Promise<Object>} - promise that resolves to the output of the API lambda
+ * @param {Object} params            - params
+ * @param {string} params.prefix     - the prefix configured for the stack
+ * @param {Object} params.rule       - rule body to post
+ * @param {Object} params.callback   - function to invoke the api lambda
+ *                                     that takes a prefix / user payload
+ * @returns {Promise<Object>}        - promise that resolves to the output
+ *                                     of the API lambda
  */
-async function postRule({ prefix, rule }) {
-  const payload = {
-    httpMethod: 'POST',
-    resource: '/{proxy+}',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    path: '/rules',
-    body: JSON.stringify(rule)
-  };
-
-  return callRuleApiFunction(prefix, payload);
+async function postRule(params) {
+  deprecate('@cumulus/integration-tests/rules.getExecution', '1.21.0', '@cumulus/api-client/rules.getExecution');
+  return rulesApi.postRule(params);
 }
 
 /**
@@ -52,98 +25,78 @@ async function postRule({ prefix, rule }) {
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
- * @param {Object} params.rule - the rule to update
+ * @param {Object} params.ruleName - the rule to update
  * @param {Object} params.updateParams - key/value to update on the rule
+ * @param {Object} params.callback - function to invoke the api lambda
+ *                            that takes a prefix / user payload
  * @returns {Promise<Object>} - promise that resolves to the output of the API lambda
  */
-async function updateRule({ prefix, ruleName, updateParams }) {
-  const payload = {
-    httpMethod: 'PUT',
-    resource: '/{proxy+}',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    path: `/rules/${ruleName}`,
-    body: JSON.stringify(updateParams)
-  };
-
-  return callRuleApiFunction(prefix, payload);
+async function updateRule(params) {
+  deprecate('@cumulus/integration-tests/rules.updateRule', '1.21.0', '@cumulus/api-client/rules.updateRule');
+  return rulesApi.updateRule(params);
 }
 
 /**
  * Get a list of rules from the API
  *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.query - query params to use for listing rules
+ * @param {Object} params          - params
+ * @param {string} params.prefix   - the prefix configured for the stack
+ * @param {string} params.query    - query params to use for listing rules
+ * @param {Object} params.callback - function to invoke the api lambda
+ *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - promise that resolves to the output of the API lambda
  */
-async function listRules({ prefix, query = {} }) {
-  const payload = {
-    httpMethod: 'GET',
-    resource: '/{proxy+}',
-    path: '/rules',
-    queryStringParameters: query
-  };
-
-  return callRuleApiFunction(prefix, payload);
+async function listRules(params) {
+  deprecate('@cumulus/integration-tests/rules.listRules', '1.21.0', '@cumulus/api-client/rules.listRules');
+  return rulesApi.listRules(params);
 }
 
 /**
  * Get a rule definition from the API
  *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
+ * @param {Object} params          - params
+ * @param {string} params.prefix   - the prefix configured for the stack
  * @param {string} params.ruleName - name of the rule
- * @returns {Promise<Object>} - promise that resolves to the output of the API lambda
+ * @param {Object} params.callback - function to invoke the api lambda
+ *                                   that takes a prefix / user payload
+ * @returns {Promise<Object>}      - promise that resolves to the output of the
+ *                                   API lambda
  */
-async function getRule({ prefix, ruleName }) {
-  const payload = {
-    httpMethod: 'GET',
-    resource: '/{proxy+}',
-    path: `/rules/${ruleName}`
-  };
-
-  return callRuleApiFunction(prefix, payload);
+async function getRule(params) {
+  deprecate('@cumulus/integration-tests/rules.getRule', '1.21.0', '@cumulus/api-client/rules.getRule');
+  return rulesApi.getRule(params);
 }
 
 /**
  * Delete a rule via the API
  *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
+ * @param {Object} params          - params
+ * @param {string} params.prefix   - the prefix configured for the stack
  * @param {string} params.ruleName - name of the rule
+ * @param {Object} params.callback - function to invoke the api lambda
+ *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - promise that resolves to the output of the API lambda
  */
-async function deleteRule({ prefix, ruleName }) {
-  const payload = {
-    httpMethod: 'DELETE',
-    resource: '/{proxy+}',
-    path: `/rules/${ruleName}`
-  };
-
-  return callRuleApiFunction(prefix, payload);
+async function deleteRule(params) {
+  deprecate('@cumulus/integration-tests/rules.deleteRule', '1.21.0', '@cumulus/api-client/rules.deleteRule');
+  return rulesApi.deleteRule(params);
 }
 
 /**
  * Rerun a rule via the API.
  *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.ruleName - the name of the rule to rerun
+ * @param {Object} params              - params
+ * @param {string} params.prefix       - the prefix configured for the stack
+ * @param {string} params.ruleName     - the name of the rule to rerun
  * @param {Object} params.updateParams - key/value to update on the rule
+ * @param {Object} params.callback     - function to invoke the api lambda
+ *                                       that takes a prefix / user payload
  * @returns {Promise<Object>} - promise that resolves to the output of the API
  *    lambda
  */
-async function rerunRule({ prefix, ruleName, updateParams = {} }) {
-  return updateRule({
-    prefix,
-    ruleName,
-    updateParams: {
-      ...updateParams,
-      action: 'rerun'
-    }
-  });
+async function rerunRule(params) {
+  deprecate('@cumulus/integration-tests/rules.rerunRule', '1.21.0', '@cumulus/api-client/rules.rerunRule');
+  return rulesApi.rerunRule(params);
 }
 
 module.exports = {

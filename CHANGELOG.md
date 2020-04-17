@@ -13,27 +13,77 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/common/workflows.getWorkflowFileKey()` to return the S3 key for a workflow definition object
   - Added `@cumulus/common/workflows.getWorkflowsListKeyPrefix()` to return the S3 key prefix for objects containing workflow definitions
 
+- **CUMULUS-1853**
+  - Added `@cumulus/integration-tests/collections.createCollection()`
+  - Added `@cumulus/integration-tests/executions.findExecutionArn()`
+  - Added `@cumulus/integration-tests/executions.getExecutionWithStatus()`
+  - Added `@cumulus/integration-tests/granules.getGranuleWithStatus()`
+  - Added `@cumulus/integration-tests/providers.createProvider()`
+  - Added `@cumulus/integration-tests/rules.createOneTimeRule()`
+
+### Changed
+
+- **CUMULUS-1682**
+  - Moved all `@cumulus/ingest/parse-pdr` code into the `parse-pdr` task as it had become tightly coupled with that task's handler and was not used anywhere else. Unit tests also restored.
+
+- **CUMULUS-1820**
+  - Updated the Thin Egress App module used in `tf-modules/distribution/main.tf` to build 74. [See the release notes](https://github.com/asfadmin/thin-egress-app/releases/tag/tea-build.74).
+
 ### Deprecated
 
-- **CUMULUS-1799**
-  - Deprecate `@cumulus/common/bucketsConfigJsonObject()`
-  - Deprecate `@cumulus/common/CloudWatchLogger`
-  - Deprecate `@cumulus/common/concurrency.limit()`
-  - Deprecate `@cumulus/common/concurrency.mapTolerant()`
-  - Deprecate `@cumulus/common/concurrency.promiseUrl()`
-  - Deprecate `@cumulus/common/concurrency.toPromise()`
-  - Deprecate `@cumulus/common/concurrency.unless()`
-  - Deprecate `@cumulus/common/config.buildSchema()`
-  - Deprecate `@cumulus/common/config.parseConfig()`
-  - Deprecate `@cumulus/common/config.resolveResource()`
-  - Deprecate `@cumulus/common/config.resourceToArn()`
-  - Deprecate `@cumulus/common/FieldPattern`
-  - Deprecate `@cumulus/common/Semaphore`
-  - Deprecate `@cumulus/common/test-utils.throttleOnce()`
-  - Deprecate `@cumulus/common/workflows.getWorkflowArn()`
-  - Deprecate `@cumulus/common/workflows.getWorkflowFile()`
-  - Deprecate `@cumulus/common/workflows.getWorkflowList()`
-  - Deprecate `@cumulus/common/workflows.getWorkflowTemplate()`
+- **CUMULUS-1799** - Deprecated the following code. For cases where the code was moved into another package, the new code location is noted:
+  - `@cumulus/aws-client/StepFunctions.fromSfnExecutionName()`
+  - `@cumulus/aws-client/StepFunctions.toSfnExecutionName()`
+  - `@cumulus/aws-client/StepFunctions.getExecutionArn()` -> `@cumulus/message/executions.buildExecutionArn()`
+  - `@cumulus/aws-client/StepFunctions.getExecutionUrl()` -> `@cumulus/message/executions.getExecutionUrlFromArn()`
+  - `@cumulus/aws-client/StepFunctions.getStateMachineArn()` -> `@cumulus/message/executions.getStateMachineArnFromExecutionArn()`
+  - `@cumulus/aws-client/StepFunctions.pullStepFunctionEvent()` -> `@cumulus/message/StepFunctions.pullStepFunctionEvent()`
+  - `@cumulus/common/bucketsConfigJsonObject()`
+  - `@cumulus/common/CloudWatchLogger`
+  - `@cumulus/common/concurrency.limit()`
+  - `@cumulus/common/collection-config-store.constructCollectionId()` -> `@cumulus/message/collections.constructCollectionId`
+  - `@cumulus/common/concurrency.mapTolerant()`
+  - `@cumulus/common/concurrency.promiseUrl()`
+  - `@cumulus/common/concurrency.toPromise()`
+  - `@cumulus/common/concurrency.unless()`
+  - `@cumulus/common/config.buildSchema()`
+  - `@cumulus/common/config.parseConfig()`
+  - `@cumulus/common/config.resolveResource()`
+  - `@cumulus/common/config.resourceToArn()`
+  - `@cumulus/common/FieldPattern`
+  - `@cumulus/common/message.buildCumulusMeta()` -> `@cumulus/message/build.buildCumulusMeta()`
+  - `@cumulus/common/message.buildQueueMessageFromTemplate()` -> `@cumulus/message/build.buildQueueMessageFromTemplate()`
+  - `@cumulus/common/message.getCollectionIdFromMessage()` -> `@cumulus/message/collections.getCollectionIdFromMessage()`
+  - `@cumulus/common/message.getMessageExecutionArn()` -> `@cumulus/message/executions.getMessageExecutionArn()`
+  - `@cumulus/common/message.getMessageExecutionName()` -> `@cumulus/message/executions.getMessageExecutionName()`
+  - `@cumulus/common/message.getMaximumExecutions()` -> `@cumulus/message/queue.getMaximumExecutions()`
+  - `@cumulus/common/message.getMessageFromTemplate()`
+  - `@cumulus/common/message.getMessageStateMachineArn()` -> `@cumulus/message/executions.getMessageStateMachineArn()`)
+  - `@cumulus/common/message.getMessageGranules()` -> `@cumulus/message/granules.getMessageGranules()`
+  - `@cumulus/common/message.getQueueNameByUrl()` -> `@cumulus/message/queue.getQueueNameByUrl()`
+  - `@cumulus/common/message.getQueueName()` -> `@cumulus/message/queue.getQueueName()`)
+  - `@cumulus/common/message.hasQueueAndExecutionLimit()` -> `@cumulus/message/queue.hasQueueAndExecutionLimit()`
+  - `@cumulus/common/Semaphore`
+  - `@cumulus/common/test-utils.throttleOnce()`
+  - `@cumulus/common/workflows.getWorkflowArn()`
+  - `@cumulus/common/workflows.getWorkflowFile()`
+  - `@cumulus/common/workflows.getWorkflowList()`
+  - `@cumulus/common/workflows.getWorkflowTemplate()`
+  - `@cumulus/integration-tests/sfnStep/SfnStep.parseStepMessage()` -> `@cumulus/message/StepFunctions.parseStepMessage()`
+
+### Removed
+
+- **CUMULUS-1799**: Deprecated code removals:
+  - Removed from `@cumulus/common/aws`:
+    - `pullStepFunctionEvent()`
+  - Removed `@cumulus/common/sfnStep`
+  - Removed `@cumulus/common/StepFunctions`
+
+### Fixed
+
+- **CUMULUS-1853**
+  - Fixed a bug where attempting to create a rule containing a payload property
+    would fail schema validation.
 
 ## [v1.21.0] 2020-03-30
 
@@ -47,8 +97,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-1629**`
+  - Updates discover-granules task to respect/utilize duplicateHandling configuration such that
+    - skip:               Duplicates will be filtered from the granule list
+    - error:              Duplicates encountered will result in step failure
+    - replace, version:   Duplicates will be ignored and handled as normal.
+  - Adds a new copy of the API lambda `PrivateApiLambda()` which is configured to not require authentication. This Lambda is not connected to an API gateway
+  - Adds `@cumulus/api-client` with functions for use by workflow lambdas to call the API when needed
+
+
 - **CUMULUS-1732**
   - Added Python task/activity workflow and integration test (`PythonReferenceSpec`) to test `cumulus-message-adapter-python`and `cumulus-process-py` integration.
+- **CUMULUS-1787**
+  - Added `collections/active` endpoint for returning collections with active granules in `@cumulus/api`
 
 - **CUMULUS-1795**
   - Added an IAM policy on the Cumulus EC2 creation to enable SSM when the `deploy_to_ngap` flag is true
@@ -58,6 +119,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1762**
   - the `messageConsumer` for `sns` and `kinesis`-type rules now fetches the collection
     information from the message.
+
+### Deprecated
+
+- **CUMULUS-1629**
+  - Deprecate `granulesApi`, `rulesApi`, `emsApi`, `executionsAPI` from `@cumulus/integration-test/api` in favor of code moved to `@cumulus/api-client`
 
 ### Removed
 

@@ -1,7 +1,7 @@
 'use strict';
 
 const isIp = require('is-ip');
-const providersApi = require('@cumulus/integration-tests/api/providers');
+const providersApi = require('@cumulus/api-client/providers');
 const { getTextObject } = require('@cumulus/aws-client/S3');
 const { isNonEmptyString } = require('@cumulus/common/string');
 
@@ -23,7 +23,7 @@ const fetchFakeProviderIp = async () => {
   return ip;
 };
 
-const getProviderHost = () => {
+const getProviderHost = async () => {
   if (isNonEmptyString(process.env.PROVIDER_HOST)) {
     return process.env.PROVIDER_HOST;
   }
@@ -65,8 +65,8 @@ const buildHttpProvider = async (postfix = '') => {
 };
 
 const createProvider = async (stackName, provider) => {
-  await providersApi.deleteProvider(stackName, provider.id);
-  await providersApi.createProvider(stackName, provider);
+  await providersApi.deleteProvider({ prefix: stackName, providerId: provider.id });
+  await providersApi.createProvider({ prefix: stackName, provider: provider });
 };
 
 module.exports = {

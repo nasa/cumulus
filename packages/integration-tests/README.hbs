@@ -1,0 +1,57 @@
+# @cumulus/integration-tests
+
+This package provides a CLI and functions for testing Cumulus.
+
+⚠️ The [documented API](#api) of this package will not change without a
+deprecation warning being provided in earlier releases. Code in this package
+that is _not_ documented in this README may change without warning, and is not
+considered part of the package's public API.
+
+## About Cumulus
+
+Cumulus is a cloud-based data ingest, archive, distribution and management
+prototype for NASA's future Earth science data streams.
+
+[Cumulus Documentation](https://nasa.github.io/cumulus)
+
+## Installation
+
+```sh
+$ npm install @cumulus/integration-tests
+```
+
+## API
+
+{{>main}}
+
+## CLI Usage
+
+```bash
+Usage: cumulus-test TYPE COMMAND [options]
+
+
+  Options:
+
+    -V, --version                   output the version number
+    -s, --stack-name <stackName>    AWS Cloud Formation stack name (default: null)
+    -b, --bucket-name <bucketName>  AWS S3 internal bucket name (default: null)
+    -w, --workflow <workflow>       Workflow name (default: null)
+    -i, --input-file <inputFile>    Workflow input JSON file (default: null)
+    -h, --help                      output usage information
+
+
+  Commands:
+
+    workflow  Execute a workflow and determine if the workflow completes successfully
+```
+
+For example, to test the HelloWorld workflow:
+
+`cumulus-test workflow --stack-name helloworld-cumulus --bucket-name cumulus-bucket-internal --workflow HelloWorldWorkflow --input-file ./helloWorldInput.json`
+
+## Contributing
+
+To make a contribution, please [see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).
+
+---
+Generated automatically using `npm run build-docs`

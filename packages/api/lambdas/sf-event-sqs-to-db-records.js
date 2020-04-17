@@ -1,9 +1,9 @@
 'use strict';
 
-const get = require('lodash.get');
+const get = require('lodash/get');
 const { parseSQSMessageBody } = require('@cumulus/aws-client/SQS');
 const log = require('@cumulus/common/log');
-const { getMessageExecutionArn } = require('@cumulus/common/message');
+const { getMessageExecutionArn } = require('@cumulus/message/Executions');
 const Execution = require('../models/executions');
 const Granule = require('../models/granules');
 const Pdr = require('../models/pdrs');

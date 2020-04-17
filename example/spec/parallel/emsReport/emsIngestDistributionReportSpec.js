@@ -4,11 +4,11 @@ const AWS = require('aws-sdk');
 const path = require('path');
 const os = require('os');
 
-const emsApi = require('@cumulus/integration-tests/api/ems');
+const emsApi = require('@cumulus/api-client/ems');
 const Granule = require('@cumulus/api/models/granules');
 const { fileExists, getS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { lambda } = require('@cumulus/aws-client/services');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { download } = require('@cumulus/common/http');
 const {
   addCollections,
@@ -20,7 +20,7 @@ const {
   getDistributionApiRedirect,
   getTEARequestHeaders
 } = require('@cumulus/integration-tests/api/distribution');
-const granulesApiTestUtils = require('@cumulus/integration-tests/api/granules');
+const granulesApiTestUtils = require('@cumulus/api-client/granules');
 const { getOnlineResources } = require('@cumulus/integration-tests/cmr');
 
 const {
@@ -178,6 +178,9 @@ describe('The EMS report', () => {
         // ingest a granule but not publish it to CMR
         ingestAndPublishGranule(config, testSuffix, testDataFolder, false)
       ]);
+
+      // wait until records searchable in elasticsearch
+      await waitForGranuleRecordsInList(config.stackName, ingestedGranuleIds);
     } catch (e) {
       beforeAllError = e;
     }
@@ -236,8 +239,6 @@ describe('The EMS report', () => {
       const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
       AWS.config.update({ region: region });
 
-      // wait until records searchable in elasticsearch
-      await waitForGranuleRecordsInList(config.stackName, ingestedGranuleIds);
       const endTime = moment.utc().add(1, 'days').startOf('day').format();
       const startTime = moment.utc().startOf('day').format();
 
@@ -273,9 +274,7 @@ describe('The EMS report', () => {
           expect(records.length).toEqual(1);
         }
 
-        if (submitReport) {
-          expect(parsed.Key.includes('/sent/')).toBe(true);
-        }
+        if (submitReport) expect(parsed.Key).toContain('/sent/');
 
         return true;
       });
@@ -375,9 +374,7 @@ describe('The EMS report', () => {
           const parsed = parseS3Uri(report.file);
           expect(await fileExists(parsed.Bucket, parsed.Key)).not.toBe(false);
 
-          if (submitReport) {
-            expect(parsed.Key.includes('/sent/')).toBe(true);
-          }
+          if (submitReport) expect(parsed.Key).toContain('/sent/');
 
           return true;
         });
@@ -400,8 +397,8 @@ describe('The EMS report', () => {
           request: inputPayload
         });
 
-        const message = JSON.parse(response.body).message;
-        expect(message === 'Reports are being generated').toBe(true);
+        const { message } = JSON.parse(response.body);
+        expect(message).toBe('Reports are being generated');
       });
     });
   });

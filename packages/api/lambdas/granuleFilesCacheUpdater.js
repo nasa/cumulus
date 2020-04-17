@@ -1,7 +1,7 @@
 'use strict';
 
 const attr = require('dynamodb-data-types').AttributeValue;
-const differenceWith = require('lodash.differencewith');
+const differenceWith = require('lodash/differenceWith');
 const pMap = require('p-map');
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
 

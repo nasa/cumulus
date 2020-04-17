@@ -2,12 +2,12 @@
 
 'use strict';
 
-const orderBy = require('lodash.orderby');
+const orderBy = require('lodash/orderBy');
 const path = require('path');
-const cloneDeep = require('lodash.clonedeep');
-const isEqual = require('lodash.isequal');
-const isString = require('lodash.isstring');
-const merge = require('lodash.merge');
+const cloneDeep = require('lodash/cloneDeep');
+const isEqual = require('lodash/isEqual');
+const isString = require('lodash/isString');
+const merge = require('lodash/merge');
 const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
@@ -31,14 +31,15 @@ const { globalReplace } = require('@cumulus/common/string');
 const { sleep } = require('@cumulus/common/util');
 const ProvidersModel = require('@cumulus/api/models/providers');
 const RulesModel = require('@cumulus/api/models/rules');
-
-const api = require('./api/api');
-const collectionsApi = require('./api/collections');
-const providersApi = require('./api/providers');
+const collectionsApi = require('@cumulus/api-client/collections');
+const providersApi = require('@cumulus/api-client/providers');
+const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 const rulesApi = require('./api/rules');
 const emsApi = require('./api/ems');
 const executionsApi = require('./api/executions');
 const granulesApi = require('./api/granules');
+const api = require('./api/api');
+
 const EarthdataLogin = require('./api/EarthdataLogin');
 const distributionApi = require('./api/distribution');
 const cmr = require('./cmr.js');
@@ -121,7 +122,7 @@ const getExecutionOutput = (executionArn) =>
   StepFunctions.describeExecution({ executionArn })
     .then((execution) => execution.output)
     .then(JSON.parse)
-    .then(StepFunctions.pullStepFunctionEvent);
+    .then(pullStepFunctionEvent);
 
 async function getExecutionInputObject(executionArn) {
   return JSON.parse(await getExecutionInput(executionArn));
@@ -374,12 +375,12 @@ const buildCollection = (params = {}) => {
  * @returns {Promise<undefined>}
  */
 const addCollection = async (stackName, collection) => {
-  await collectionsApi.deleteCollection(
-    stackName,
-    collection.name,
-    collection.version
-  );
-  await collectionsApi.createCollection(stackName, collection);
+  await collectionsApi.deleteCollection({
+    prefix: stackName,
+    collectionName: collection.name,
+    collectionVersion: collection.version
+  });
+  await collectionsApi.createCollection({ prefix: stackName, collection });
 };
 
 /**
@@ -449,11 +450,14 @@ async function deleteCollections(stackName, bucketName, collections, postfix) {
     collections.map(
       ({ name, version }) => {
         const realName = postfix ? `${name}${postfix}` : name;
-        return collectionsApi.deleteCollection(stackName, realName, version);
+        return collectionsApi.deleteCollection({
+          prefix: stackName,
+          collectionName: realName,
+          collectionVersion: version
+        });
       }
     )
   );
-
   return collections.length;
 }
 
@@ -567,8 +571,8 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host, postfi
 
   await Promise.all(
     completeProviders.map(async (provider) => {
-      await providersApi.deleteProvider(stackName, provider.id);
-      await providersApi.createProvider(stackName, provider);
+      await providersApi.deleteProvider({ prefix: stackName, providerId: provider.id });
+      await providersApi.createProvider({ prefix: stackName, provider: provider });
     })
   );
 
@@ -593,7 +597,7 @@ async function deleteProviders(stackName, bucketName, providers, postfix) {
     providers.map(
       ({ id }) => {
         const readId = postfix ? `${id}${postfix}` : id;
-        return providersApi.deleteProvider(stackName, readId);
+        return providersApi.deleteProvider({ prefix: stackName, providerId: readId });
       }
     )
   );
@@ -765,11 +769,11 @@ async function buildWorkflow(
   const template = await getJsonS3Object(bucketName, templateKey(stackName));
 
   if (collection) {
-    template.meta.collection = await collectionsApi.getCollection(
-      stackName,
-      collection.name,
-      collection.version
-    );
+    template.meta.collection = await collectionsApi.getCollection({
+      prefix: stackName,
+      collectionName: collection.name,
+      collectionVersion: collection.version
+    });
   } else {
     template.meta.collection = {};
   }
@@ -913,7 +917,7 @@ async function waitForTestExecutionStart({
       const execution = executions[executionCtr];
       let taskInput = await lambdaStep.getStepInput(execution.executionArn, startTask);
       if (taskInput) {
-        taskInput = await StepFunctions.pullStepFunctionEvent(taskInput);
+        taskInput = await pullStepFunctionEvent(taskInput);
       }
       if (taskInput && findExecutionFn(taskInput, findExecutionFnParams)) {
         return execution;

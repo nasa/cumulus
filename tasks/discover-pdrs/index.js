@@ -1,6 +1,6 @@
 'use strict';
 
-const get = require('lodash.get');
+const get = require('lodash/get');
 const pFilter = require('p-filter');
 const { s3ObjectExists } = require('@cumulus/aws-client/S3');
 const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');

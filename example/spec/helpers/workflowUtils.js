@@ -1,6 +1,6 @@
 'use strict';
 
-const get = require('lodash.get');
+const get = require('lodash/get');
 
 function isReingestExecution(taskInput) {
   return get(

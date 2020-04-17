@@ -46,6 +46,15 @@ Example task
 
 ---
 
+### [@cumulus/hyrax-metadata-updates](https://github.com/nasa/cumulus/tree/master/tasks/hyrax-metadata-updates)
+
+Update granule metadata with hooks to OPeNDAP URL
+
+- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/hyrax-metadata-updates/schemas).
+- Resources: [npm](https://npmjs.com/package/@cumulus/hyrax-metadata-updates) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/hyrax-metadata-updates)
+
+---
+
 ### [@cumulus/move-granules](https://github.com/nasa/cumulus/tree/master/tasks/move-granules)
 
 Move granule files from staging to final location

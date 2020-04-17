@@ -1,6 +1,6 @@
 'use strict';
 
-const isString = require('lodash.isstring');
+const isString = require('lodash/isString');
 const { areIDsSame } = require('./utils');
 
 class PVLAggregate {

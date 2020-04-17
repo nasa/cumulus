@@ -1,8 +1,8 @@
 'use strict';
 
 const Ajv = require('ajv');
-const get = require('lodash.get');
-const set = require('lodash.set');
+const get = require('lodash/get');
+const set = require('lodash/set');
 const { sns } = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
 const Rule = require('../models/rules');
@@ -14,6 +14,7 @@ const { lookupCollectionInEvent, queueMessageForRule } = require('../lib/rulesHe
  * the `rule.value` field, then filters based on any collection name and version in the queryParams.
  *
  * @param {Object} queryParams - any/all query params extracted from event object
+ * @param {string} originalMessageSource - "kinesis" or "sns"
  * @returns {Array} List of zero or more rules found from table scan
  */
 async function getRules(queryParams, originalMessageSource) {
@@ -48,6 +49,7 @@ async function getRules(queryParams, originalMessageSource) {
     filter += ' AND #rl.#vl = :ruleValue';
   }
   const model = new Rule();
+  console.log('rule query param values', JSON.stringify(values, null, 2));
   const rulesQueryResultsForSourceArn = await model.scan({
     names,
     filter,
@@ -189,6 +191,7 @@ function processRecord(record, fromSNS) {
         ...lookupCollectionInEvent(eventObject),
         sourceArn: get(parsed, 'eventSourceARN')
       };
+      console.log('ruleParam', ruleParam);
     } catch (err) {
       log.error('Caught error parsing JSON:');
       log.error(err);
@@ -199,11 +202,10 @@ function processRecord(record, fromSNS) {
 
   return validateMessage(eventObject, originalMessageSource, validationSchema)
     .then(() => getRules(ruleParam, originalMessageSource))
-    .then((rules) => (
-      Promise.all(rules.map((rule) => {
-        if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParam.sourceArn);
-        return queueMessageForRule(rule, eventObject);
-      }))))
+    .then((rules) => Promise.all(rules.map((rule) => {
+      if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParam.sourceArn);
+      return queueMessageForRule(rule, eventObject);
+    })))
     .catch((err) => {
       log.error('Caught error in processRecord:');
       log.error(err);

@@ -1,6 +1,6 @@
 'use strict';
 
-const get = require('lodash.get');
+const get = require('lodash/get');
 const log = require('@cumulus/common/log');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { google } = require('googleapis');

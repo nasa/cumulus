@@ -9,12 +9,15 @@
  */
 
 const { JSONPath } = require('jsonpath-plus');
+const Logger = require('@cumulus/logger');
 const awsServices = require('./services');
 const s3Utils = require('./S3');
 const {
   improveStackTrace,
   retryOnThrottlingException
 } = require('./utils');
+
+const log = new Logger({ sender: '@cumulus/aws-client/StepFunctions' });
 
 // Utility functions
 
@@ -25,6 +28,15 @@ const doesExecutionExist = (describeExecutionPromise) =>
       if (err.code === 'ExecutionDoesNotExist') return false;
       throw err;
     });
+
+// Copied here to avoid requiring @cumulus/common just for this function
+const deprecate = (name, version, alternative) => {
+  let message = `${name} is deprecated after version ${version} and will be removed in a future release.`;
+  if (alternative) message += ` Use ${alternative} instead.`;
+  if (!('NO_DEPRECATION_WARNINGS' in process.env)) {
+    log.warn(message);
+  }
+};
 
 /**
  * Given a character, replaces the JS unicode-escape sequence for the character
@@ -193,6 +205,7 @@ const unicodeEscape = (str, regex = /[\s\S]/g) => str.replace(regex, unicodeEsca
  * @returns {string} A string that's safe to use as a StepFunctions execution name
  */
 const toSfnExecutionName = (fields, delimiter = '__') => {
+  deprecate('@cumulus/aws-client/StepFunctions.toSfnExecutionName()', '1.20.0');
   let sfnUnsafeChars = '[^\\w-=+_.]';
   if (delimiter) {
     sfnUnsafeChars = `(${delimiter}|${sfnUnsafeChars})`;
@@ -214,10 +227,12 @@ const toSfnExecutionName = (fields, delimiter = '__') => {
  *   no replacements
  * @returns {Array} An array of the original fields
  */
-const fromSfnExecutionName = (str, delimiter = '__') =>
-  str.split(delimiter)
+const fromSfnExecutionName = (str, delimiter = '__') => {
+  deprecate('@cumulus/aws-client/StepFunctions.fromSfnExecutionName()', '1.20.0');
+  return str.split(delimiter)
     .map((s) => s.replace(/!/g, '\\').replace('"', '\\"'))
     .map((s) => JSON.parse(`"${s}"`));
+};
 
 /**
  * Returns execution ARN from a statement machine Arn and executionName
@@ -227,6 +242,7 @@ const fromSfnExecutionName = (str, delimiter = '__') =>
  * @returns {string} - Step Function Execution Arn
  */
 const getExecutionArn = (stateMachineArn, executionName) => {
+  deprecate('@cumulus/aws-client/StepFunctions.getExecutionArn()', '1.20.0', '@cumulus/message/Executions.buildExecutionArn()');
   if (stateMachineArn && executionName) {
     const sfArn = stateMachineArn.replace('stateMachine', 'execution');
     return `${sfArn}:${executionName}`;
@@ -241,12 +257,14 @@ const getExecutionArn = (stateMachineArn, executionName) => {
  * @returns {string} return aws console url for the execution
  */
 function getExecutionUrl(executionArn) {
+  deprecate('@cumulus/aws-client/StepFunctions.getExecutionUrl()', '1.20.0', '@cumulus/message/Executions.getExecutionUrlFromArn()');
   const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
   return `https://console.aws.amazon.com/states/home?region=${region}`
          + `#/executions/details/${executionArn}`;
 }
 
 const getStateMachineArn = (executionArn) => {
+  deprecate('@cumulus/aws-client/StepFunctions.getStateMachineArn()', '1.20.0', '@cumulus/message/Executions.getStateMachineArnFromExecutionArn()');
   if (executionArn) {
     return executionArn.replace('execution', 'stateMachine').split(':').slice(0, -1).join(':');
   }
@@ -261,6 +279,7 @@ const getStateMachineArn = (executionArn) => {
  * @returns {Object} - the full Cumulus message
  */
 const pullStepFunctionEvent = async (event) => {
+  deprecate('@cumulus/aws-client/StepFunctions.pullStepFunctionEvent()', '1.20.0', '@cumulus/message/StepFunctions.pullStepFunctionEvent()');
   if (!event.replace) return event;
 
   const remoteMsg = await s3Utils.getJsonS3Object(

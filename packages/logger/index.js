@@ -2,7 +2,7 @@
 
 'use strict';
 
-const isError = require('lodash.iserror');
+const isError = require('lodash/isError');
 const { format } = require('util');
 
 const privates = new WeakMap();

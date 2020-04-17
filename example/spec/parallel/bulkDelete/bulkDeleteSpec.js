@@ -41,17 +41,17 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
   });
 
   it('returns a status code of 202', () => {
-    expect(beforeAllSucceeded).toBe(true);
+    expect(beforeAllSucceeded).toBeTrue();
     expect(postBulkDeleteResponse.statusCode).toEqual(202);
   });
 
   it('returns an Async Operation Id', () => {
-    expect(beforeAllSucceeded).toBe(true);
+    expect(beforeAllSucceeded).toBeTrue();
     expect(postBulkDeleteBody.asyncOperationId).toMatch(/[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}/);
   });
 
   it('creates an AsyncOperation', async () => {
-    expect(beforeAllSucceeded).toBe(true);
+    expect(beforeAllSucceeded).toBeTrue();
 
     const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
       prefix: config.stackName,
@@ -66,7 +66,7 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
   });
 
   it('runs an ECS task', async () => {
-    expect(beforeAllSucceeded).toBe(true);
+    expect(beforeAllSucceeded).toBeTrue();
 
     // Verify that the task ARN exists in that cluster
     const describeTasksResponse = await ecs().describeTasks({
@@ -78,7 +78,7 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
   });
 
   it('eventually generates the correct output', async () => {
-    expect(beforeAllSucceeded).toBe(true);
+    expect(beforeAllSucceeded).toBeTrue();
 
     await ecs().waitFor(
       'tasksStopped',
@@ -141,17 +141,17 @@ describe('POST /bulkDelete with a failed bulk delete operation', () => {
   });
 
   it('returns a status code of 202', () => {
-    expect(beforeAllSucceeded).toBe(true);
+    expect(beforeAllSucceeded).toBeTrue();
     expect(postBulkDeleteResponse.statusCode).toEqual(202);
   });
 
   it('returns an Async Operation Id', () => {
-    expect(beforeAllSucceeded).toBe(true);
+    expect(beforeAllSucceeded).toBeTrue();
     expect(postBulkDeleteBody.asyncOperationId).toMatch(/[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}/);
   });
 
   it('creates an AsyncOperation', async () => {
-    expect(beforeAllSucceeded).toBe(true);
+    expect(beforeAllSucceeded).toBeTrue();
 
     const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
       prefix: config.stackName,
@@ -166,7 +166,7 @@ describe('POST /bulkDelete with a failed bulk delete operation', () => {
   });
 
   it('runs an ECS task', async () => {
-    expect(beforeAllSucceeded).toBe(true);
+    expect(beforeAllSucceeded).toBeTrue();
 
     // Verify that the task ARN exists in that cluster
     const describeTasksResponse = await ecs().describeTasks({
@@ -178,7 +178,7 @@ describe('POST /bulkDelete with a failed bulk delete operation', () => {
   });
 
   it('eventually generates the correct output', async () => {
-    expect(beforeAllSucceeded).toBe(true);
+    expect(beforeAllSucceeded).toBeTrue();
 
     await ecs().waitFor(
       'tasksStopped',

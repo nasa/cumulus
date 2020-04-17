@@ -16,8 +16,8 @@ const {
   s3PutObject
 } = require('@cumulus/aws-client/S3');
 const errors = require('@cumulus/errors');
-const set = require('lodash.set');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const set = require('lodash/set');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { loadJSONTestData, streamTestData } = require('@cumulus/test-data');
 
 const {

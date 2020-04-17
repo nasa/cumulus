@@ -1,8 +1,8 @@
 'use strict';
 
-const cloneDeep = require('lodash.clonedeep');
-const get = require('lodash.get');
-const partial = require('lodash.partial');
+const cloneDeep = require('lodash/cloneDeep');
+const get = require('lodash/get');
+const partial = require('lodash/partial');
 const path = require('path');
 
 const Lambda = require('@cumulus/aws-client/Lambda');
@@ -13,11 +13,9 @@ const { CMR } = require('@cumulus/cmr-client');
 const cmrjs = require('@cumulus/cmrjs');
 const launchpad = require('@cumulus/common/launchpad');
 const log = require('@cumulus/common/log');
-const {
-  getCollectionIdFromMessage,
-  getMessageExecutionArn,
-  getMessageGranules
-} = require('@cumulus/common/message');
+const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
+const { getMessageExecutionArn } = require('@cumulus/message/Executions');
+const { getMessageGranules } = require('@cumulus/message/Granules');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const {
   isNil,

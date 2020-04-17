@@ -1,7 +1,6 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const { JSONPath } = require('jsonpath-plus');
 const pMap = require('p-map');
 const pRetry = require('p-retry');
 const url = require('url');
@@ -331,43 +330,6 @@ exports.getExecutionArn = (stateMachineArn, executionName) => {
     return `${sfArn}:${executionName}`;
   }
   return null;
-};
-
-/**
- * Given a Cumulus step function event, if the message is on S3, pull the full message
- * from S3 and return, otherwise return the event.
- *
- * @param {Object} event - the Cumulus event
- * @returns {Object} - the full Cumulus message
- */
-exports.pullStepFunctionEvent = async (event) => {
-  deprecate('@cumulus/common/aws/pullStepFunctionEvent', '1.17.0', '@cumulus/aws-client/StepFunctions/pullStepFunctionEvent');
-  if (!event.replace) return event;
-
-  const remoteMsgS3Object = await exports.getS3Object(
-    event.replace.Bucket,
-    event.replace.Key,
-    { retries: 0 }
-  );
-  const remoteMsg = JSON.parse(remoteMsgS3Object.Body.toString());
-
-  let returnEvent = remoteMsg;
-  if (event.replace.TargetPath) {
-    const replaceNodeSearch = JSONPath({
-      path: event.replace.TargetPath,
-      json: event,
-      resultType: 'all'
-    });
-    if (replaceNodeSearch.length !== 1) {
-      throw new Error(`Replacement TargetPath ${event.replace.TargetPath} invalid`);
-    }
-    if (replaceNodeSearch[0].parent) {
-      replaceNodeSearch[0].parent[replaceNodeSearch[0].parentProperty] = remoteMsg;
-      returnEvent = event;
-      delete returnEvent.replace;
-    }
-  }
-  return returnEvent;
 };
 
 /** General utils */
