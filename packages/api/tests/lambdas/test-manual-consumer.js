@@ -269,7 +269,9 @@ test.serial('processStream does not throw error if describeStream throws', async
 
   describeStreamStub.restore();
   describeStreamStub = sinon.stub(kinesisUtils, 'describeStream')
-    .callsFake(async () => { throw new Error('error') });
+    .callsFake(async () => {
+      throw new Error('error');
+    });
 
   try {
     await t.notThrowsAsync(

@@ -175,7 +175,12 @@ async function processShard(streamName, streamArn, shardId) {
  * @param {Object} params - listShards query params
  * @returns {Array<Promise>} list of promises from calls to processShard
  */
-async function iterateOverStreamRecursivelyToDispatchShards(streamName, streamArn, shardPromiseList, params) {
+async function iterateOverStreamRecursivelyToDispatchShards(
+  streamName,
+  streamArn,
+  shardPromiseList,
+  params
+) {
   const listShardsResponse = (await Kinesis.listShards(params).promise().catch(log.error));
   if (!listShardsResponse || !listShardsResponse.Shards || listShardsResponse.Shards.length === 0) {
     log.error(`No shards found for params ${JSON.stringify(params)}.`);
@@ -190,7 +195,12 @@ async function iterateOverStreamRecursivelyToDispatchShards(streamName, streamAr
     return shardPromiseList;
   }
   const newParams = { NextToken: listShardsResponse.NextToken };
-  return iterateOverStreamRecursivelyToDispatchShards(streamName, streamArn, shardPromiseList, newParams);
+  return iterateOverStreamRecursivelyToDispatchShards(
+    streamName,
+    streamArn,
+    shardPromiseList,
+    newParams
+  );
 }
 
 /**
