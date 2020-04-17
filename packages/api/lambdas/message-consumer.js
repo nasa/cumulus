@@ -52,7 +52,6 @@ async function getRules(queryParams, originalMessageSource) {
     filter += ' AND #rl.#vl = :ruleValue';
   }
   const model = new Rule();
-  console.log('rule query param values', values);
   const rulesQueryResultsForSourceArn = await model.scan({
     names,
     filter,
@@ -194,7 +193,6 @@ function processRecord(record, fromSNS) {
         ...lookupCollectionInEvent(eventObject),
         sourceArn: get(parsed, 'eventSourceARN')
       };
-      console.log('ruleParam', ruleParam);
     } catch (err) {
       log.error('Caught error parsing JSON:');
       log.error(err);
@@ -205,13 +203,10 @@ function processRecord(record, fromSNS) {
 
   return validateMessage(eventObject, originalMessageSource, validationSchema)
     .then(() => getRules(ruleParam, originalMessageSource))
-    .then((rules) => {
-      console.log('rules', rules);
-      return Promise.all(rules.map((rule) => {
-        if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParam.sourceArn);
-        return queueMessageForRule(rule, eventObject);
-      }));
-    })
+    .then((rules) =>  Promise.all(rules.map((rule) => {
+      if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParam.sourceArn);
+      return queueMessageForRule(rule, eventObject);
+    })))
     .catch((err) => {
       log.error('Caught error in processRecord:');
       log.error(err);
