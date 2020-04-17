@@ -37,6 +37,34 @@ class AsyncOperation extends Manager {
     this.stackName = params.stackName;
   }
 
+  runECSTask({
+    asyncOperationTaskDefinition,
+    cluster,
+    lambdaName,
+    id,
+    payloadBucket,
+    payloadKey
+  }) {
+    return ecs().runTask({
+      cluster,
+      taskDefinition: asyncOperationTaskDefinition,
+      launchType: 'EC2',
+      overrides: {
+        containerOverrides: [
+          {
+            name: 'AsyncOperation',
+            environment: [
+              { name: 'asyncOperationId', value: id },
+              { name: 'asyncOperationsTable', value: this.tableName },
+              { name: 'lambdaName', value: lambdaName },
+              { name: 'payloadUrl', value: `s3://${payloadBucket}/${payloadKey}` }
+            ]
+          }
+        ]
+      }
+    }).promise();
+  }
+
   /**
    * Start an AsyncOperation in ECS and store its associate record to DynamoDB
    *
@@ -53,9 +81,6 @@ class AsyncOperation extends Manager {
    */
   async start(params) {
     const {
-      asyncOperationTaskDefinition,
-      cluster,
-      lambdaName,
       description,
       operationType,
       payload
@@ -81,24 +106,12 @@ class AsyncOperation extends Manager {
     }).promise();
 
     // Start the task in ECS
-    const runTaskResponse = await ecs().runTask({
-      cluster,
-      taskDefinition: asyncOperationTaskDefinition,
-      launchType: 'EC2',
-      overrides: {
-        containerOverrides: [
-          {
-            name: 'AsyncOperation',
-            environment: [
-              { name: 'asyncOperationId', value: id },
-              { name: 'asyncOperationsTable', value: this.tableName },
-              { name: 'lambdaName', value: lambdaName },
-              { name: 'payloadUrl', value: `s3://${payloadBucket}/${payloadKey}` }
-            ]
-          }
-        ]
-      }
-    }).promise();
+    const runTaskResponse = this.runECSTask({
+      ...params,
+      id,
+      payloadBucket,
+      payloadKey
+    });
 
     // If creating the stack failed, update the database
     if (runTaskResponse.failures.length > 0) {

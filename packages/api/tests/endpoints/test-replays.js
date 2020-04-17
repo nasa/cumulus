@@ -10,7 +10,8 @@ const { randomString } = require('@cumulus/common/test-utils');
 
 const { app } = require('../../app');
 const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../lib/testUtils');
-const models = require('../../models');
+const AccessToken = require('../../models/access-tokens');
+const AsyncOperation = require('../../models/async-operation');
 
 let accessTokenModel;
 let jwtAuthToken;
@@ -39,7 +40,7 @@ test.before(async () => {
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
 
-  accessTokenModel = new models.AccessToken();
+  accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
@@ -55,7 +56,7 @@ test.after.always(async () => {
 });
 
 test.serial('request to replays endpoint returns 400 when no type is specified', async (t) => {
-  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').returns(
+  const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').returns(
     Promise.resolve({ id: '1234' })
   );
 
@@ -71,7 +72,7 @@ test.serial('request to replays endpoint returns 400 when no type is specified',
 });
 
 test.serial('request to replays endpoint returns 400 if type is kinesis but no kinesisStream is specified', async (t) => {
-  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').returns(
+  const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').returns(
     Promise.resolve({ id: '1234' })
   );
 
@@ -91,7 +92,7 @@ test.serial('request to replays endpoint returns 400 if type is kinesis but no k
 });
 
 test.serial('request to replays endpoint with valid kinesis parameters starts an AsyncOperation and returns its id', async (t) => {
-  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').returns(
+  const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').returns(
     Promise.resolve({ id: '1234' })
   );
 
@@ -124,4 +125,31 @@ test.serial('request to replays endpoint with valid kinesis parameters starts an
   });
 
   asyncOperationStartStub.restore();
+});
+
+test.serial.only('request to replays fails', async (t) => {
+  const stub = sinon.stub(AsyncOperation.prototype, 'runECSTask')
+    .callsFake(() => Promise.resolve({
+      failures: [{
+        reason: 'fail'
+      }]
+    }));
+
+  const body = {
+    type: 'kinesis',
+    kinesisStream: 'fakestream',
+    endTimestamp: 12345678,
+    startTimestamp: 12356789
+  };
+
+  try {
+    const response = await request(app)
+      .post('/replays')
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send(body)
+      .expect(202);
+  } finally {
+    stub.restore();
+  }
 });
