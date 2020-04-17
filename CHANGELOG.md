@@ -24,6 +24,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-1682**
+  - Moved all `@cumulus/ingest/parse-pdr` code into the `parse-pdr` task as it had become tightly coupled with that task's handler and was not used anywhere else. Unit tests also restored.
+
 - **CUMULUS-1820**
   - Updated the Thin Egress App module used in `tf-modules/distribution/main.tf` to build 74. [See the release notes](https://github.com/asfadmin/thin-egress-app/releases/tag/tea-build.74).
 
