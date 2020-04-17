@@ -53,6 +53,7 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
 
   statement {
     actions = [
+      "kinesis:describeStream",
       "kinesis:ListShards",
       "kinesis:getShardIterator",
       "kinesis:GetRecords"

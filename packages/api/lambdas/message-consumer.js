@@ -14,6 +14,9 @@ const { lookupCollectionInEvent, queueMessageForRule } = require('../lib/rulesHe
  * the `rule.value` field, then filters based on any collection name and version in the queryParams.
  *
  * @param {Object} queryParams - any/all query params extracted from event object
+ * @param {string} queryParams.name - a collection name
+ * @param {string} queryParams.version - a collection version
+ * @param {string} queryParams.sourceArn - the ARN of the message source for the rule
  * @param {string} originalMessageSource - "kinesis" or "sns"
  * @returns {Array} List of zero or more rules found from table scan
  */
@@ -31,14 +34,14 @@ async function getRules(queryParams, originalMessageSource) {
     ':enabledState': 'ENABLED',
     ':ruleType': originalMessageSource
   };
-  if (queryParams.collectionName) {
-    values[':collectionName'] = queryParams.collectionName;
+  if (queryParams.name) {
+    values[':collectionName'] = queryParams.name;
     names['#col'] = 'collection';
     names['#nm'] = 'name';
     filter += ' AND #col.#nm = :collectionName';
   }
-  if (queryParams.collectionVersion) {
-    values[':collectionVersion'] = queryParams.collectionVersion;
+  if (queryParams.version) {
+    values[':collectionVersion'] = queryParams.version;
     names['#col'] = 'collection';
     names['#vr'] = 'version';
     filter += ' AND #col.#vr = :collectionVersion';
