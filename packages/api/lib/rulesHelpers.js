@@ -38,7 +38,7 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
   };
 
   const payload = await Rule.buildPayload(item);
-
+  console.log('payload', JSON.stringify(payload, null, 2));
   return schedule(payload);
 }
 
