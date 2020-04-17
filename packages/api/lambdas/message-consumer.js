@@ -200,11 +200,10 @@ function processRecord(record, fromSNS) {
 
   return validateMessage(eventObject, originalMessageSource, validationSchema)
     .then(() => getRules(ruleParam, originalMessageSource))
-    .then((rules) => (
-      Promise.all(rules.map((rule) => {
-        if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParam.sourceArn);
-        return queueMessageForRule(rule, eventObject);
-      }))))
+    .then((rules) => Promise.all(rules.map((rule) => {
+      if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParam.sourceArn);
+      return queueMessageForRule(rule, eventObject);
+    })))
     .catch((err) => {
       log.error('Caught error in processRecord:');
       log.error(err);

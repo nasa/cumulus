@@ -183,6 +183,7 @@ describe('The Kinesis Replay API', () => {
 
       it('to start the expected workflows', async () => {
         console.log('Waiting for step functions to start...');
+
         const expectedWorkflows = targetedRecords.map((record) => waitForTestSfForRecord(
           record.identifier,
           workflowArn,
