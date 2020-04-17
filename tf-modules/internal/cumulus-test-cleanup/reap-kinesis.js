@@ -18,7 +18,7 @@ function getStreams() {
 }
 
 function filterOld(streams) {
-  const matcher = /(Error|Trigger|SourceTest)-(\d{13})-(Kinesis|Lambda)/;
+  const matcher = /(Error|Trigger|SourceTest|KinesisReplayTest)-(\d{13})-(Kinesis|Lambda|Replay)/;
   const results = streams.map((s) => {
     if (s.match(matcher)) {
       const streamDate = Number(s.match(matcher)[2]);

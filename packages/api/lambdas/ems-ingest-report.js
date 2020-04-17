@@ -155,8 +155,10 @@ async function uploadReportToS3(filename, reportBucket, reportKey) {
   return s3Uri;
 }
 
+/* eslint-disable complexity */
+// complexity rule here does not serve to make this trivial switch statement more readable
 /**
- * get the value of EMS record field from corresponding field of the  granule record
+ * get the value of a given EMS record field from the corresponding field of the granule record
  *
  * @param {Object} granule - es granule record
  * @param {string} emsField - EMS field
@@ -206,6 +208,7 @@ function getEmsFieldFromGranField(granule, emsField, granField) {
   }
   return result;
 }
+/* eslint-enable complexity */
 
 
 /**
