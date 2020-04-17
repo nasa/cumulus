@@ -43,6 +43,9 @@ test.before(async () => {
   accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
+  const asyncOperationsModel = new AsyncOperation();
+  await asyncOperationsModel.createTable();
+
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 });
 
