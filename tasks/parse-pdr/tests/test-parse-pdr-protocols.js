@@ -5,7 +5,7 @@ const test = require('ava');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
-const { CollectionConfigStore } = require('@cumulus/common/collection-config-store');
+const CollectionConfigStore = require('@cumulus/collection-config-store');
 const {
   randomString,
   validateConfig,
@@ -291,7 +291,7 @@ test.serial('Parse a PDR without a granuleIdFilter in the config', async (t) => 
   t.is(output.totalSize, 3952643);
 });
 
-test.serial('Empty FILE_ID valule in PDR, parse-pdr throws error', async (t) => {
+test.serial('Empty FILE_ID value in PDR, parse-pdr throws error', async (t) => {
   t.context.payload.config.provider = {
     id: 'MODAPS',
     protocol: 's3',

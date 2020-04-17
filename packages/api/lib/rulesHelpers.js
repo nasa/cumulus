@@ -38,7 +38,6 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
   };
 
   const payload = await Rule.buildPayload(item);
-
   return schedule(payload);
 }
 

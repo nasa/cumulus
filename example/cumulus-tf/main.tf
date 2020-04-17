@@ -55,9 +55,9 @@ module "cumulus" {
 
   ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
   ecs_cluster_instance_subnet_ids = var.subnet_ids
-  ecs_cluster_min_size            = 1
-  ecs_cluster_desired_size        = 1
-  ecs_cluster_max_size            = 2
+  ecs_cluster_min_size            = 2
+  ecs_cluster_desired_size        = 2
+  ecs_cluster_max_size            = 3
   key_name                        = var.key_name
 
   urs_url             = "https://uat.urs.earthdata.nasa.gov"

@@ -5,6 +5,7 @@ const pick = require('lodash/pick');
 const { getS3Object, s3ObjectExists, s3PutObject } = require('./aws');
 const LaunchpadToken = require('./LaunchpadToken');
 const log = require('./log');
+const { deprecate } = require('./util');
 
 /**
  * get s3 location of the Launchpad token
@@ -56,6 +57,7 @@ async function getValidLaunchpadTokenFromS3() {
  * @returns {Promise.<string>} - the Launchpad token
  */
 async function getLaunchpadToken(params) {
+  deprecate('@cumulus/common/launchpad.getLaunchpadToken()', '1.21.0', '@cumulus/launchpad-auth/index.getLaunchpadToken()');
   let token = await getValidLaunchpadTokenFromS3();
 
   if (!token) {
@@ -94,6 +96,7 @@ async function getLaunchpadToken(params) {
  * owner_auid: string}
  */
 async function validateLaunchpadToken(params, token, userGroup) {
+  deprecate('@cumulus/common/launchpad.validateLaunchpadToken()', '1.21.0', '@cumulus/launchpad-auth/index.validateLaunchpadToken()');
   log.debug('validateLaunchpadToken validating launchpad token');
   const launchpad = new LaunchpadToken(params);
   const response = await launchpad.validateToken(token);

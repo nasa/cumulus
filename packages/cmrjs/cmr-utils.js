@@ -20,7 +20,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
-const { getLaunchpadToken } = require('@cumulus/common/launchpad');
+const { getLaunchpadToken } = require('@cumulus/launchpad-auth');
 const log = require('@cumulus/common/log');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { omit } = require('@cumulus/common/util');
