@@ -8,7 +8,6 @@ declare -a param_list=(
   "bamboo_CMR_USERNAME"
   "bamboo_DEPLOYMENT"
   "bamboo_FAKE_PROVIDER_CONFIG_BUCKET"
-  "bamboo_KES_DEPLOYMENT"
   "bamboo_METRICS_ES_HOST"
   "bamboo_METRICS_ES_USER"
   "bamboo_NGAP_ENV"
@@ -151,23 +150,12 @@ if [[ -z $COMMIT_MESSAGE ]]; then
   echo export COMMIT_MESSAGE=\"$COMMIT_MESSAGE\" >> .bamboo_env_vars
 fi
 
-## Override KES_DEPLOYMENT options (for e.g. backports)
-if [[ $COMMIT_MESSAGE =~ deploy-kes || $BRANCH =~ kes ]]; then
-  echo "Running CI with Kes"
-  export KES_DEPLOYMENT=true
-  echo export KES_DEPLOYMENT=true >> .bamboo_env_vars
-else
-  echo "Running CI with Terraform"
-fi
-
 ## Set integration stack name if it's not been overridden *or* set by SIT
 if [[ -z $DEPLOYMENT ]]; then
   DEPLOYMENT=$(node ./bamboo/select-stack.js)
 
-  if [[ $KES_DEPLOYMENT != true ]]; then
-    echo "Using terraform stack name $DEPLOYMENT-tf"
-    DEPLOYMENT=$DEPLOYMENT-tf
-  fi
+  echo "Using terraform stack name $DEPLOYMENT-tf"
+  DEPLOYMENT=$DEPLOYMENT-tf
 
   echo deployment "$DEPLOYMENT"
   if [[ $DEPLOYMENT == none ]]; then
@@ -175,16 +163,6 @@ if [[ -z $DEPLOYMENT ]]; then
     exit 1
   fi
   echo export DEPLOYMENT=$DEPLOYMENT >> .bamboo_env_vars
-fi
-
-## Branch if branch is master, or a version tag is set, or the commit
-## message explicitly calls for running redeploy tests
-if [[ $KES_DEPLOYMENT == true ]]; then
-  if [[ $BRANCH == master || $VERSION_FLAG || $COMMIT_MESSAGE =~ run-redeploy-tests ]]; then
-    export RUN_REDEPLOYMENT=true
-    echo "Setting RUN_REDEPLOYMENT to true"
-    echo export RUN_REDEPLOYMENT="true" >> .bamboo_env_vars
-  fi
 fi
 
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then

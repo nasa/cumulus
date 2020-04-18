@@ -13,7 +13,7 @@ const {
   runKes
 } = require('../../helpers/testUtils');
 
-describe('When the useWorkflowLambdaVersions option is set to false the deployment', () => {
+xdescribe('When the useWorkflowLambdaVersions option is set to false the deployment', () => {
   let config;
   let lambdaVersionStackName;
   let stackList;

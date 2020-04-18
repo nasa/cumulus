@@ -2,16 +2,16 @@
 
 const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
-const { ecs, s3 } = require('@cumulus/aws-client/services');
+const { ecs } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   getClusterArn,
   waitForAsyncOperationStatus
 } = require('@cumulus/integration-tests');
 const { AsyncOperation } = require('@cumulus/api/models');
-const { loadConfig } = require('../../helpers/testUtils');
+const { loadConfig } = require('../helpers/testUtils');
 
-describe('The AsyncOperation task runner with a non-JSON payload', () => {
+describe('The AsyncOperation task runner with a non-existent payload', () => {
   let asyncOperationId;
   let asyncOperationModel;
   let asyncOperationsTableName;
@@ -20,7 +20,7 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
   let cluster;
   let config;
   let dynamoDbItem;
-  let payloadKey;
+  let payloadUrl;
   let successFunctionName;
   let taskArn;
 
@@ -48,14 +48,6 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
 
       asyncOperationId = uuidv4();
 
-      // Upload the payload
-      payloadKey = `${config.stackName}/integration-tests/payloads/${asyncOperationId}.json`;
-      await s3().putObject({
-        Bucket: config.bucket,
-        Key: payloadKey,
-        Body: 'invalid JSON'
-      }).promise();
-
       await asyncOperationModel.create({
         id: asyncOperationId,
         taskArn: randomString(),
@@ -64,6 +56,7 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
         status: 'RUNNING'
       });
 
+      payloadUrl = `s3://${config.bucket}/${randomString()}`;
       const runTaskResponse = await ecs().runTask({
         cluster,
         taskDefinition: asyncOperationTaskDefinition,
@@ -76,7 +69,7 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
                 { name: 'asyncOperationId', value: asyncOperationId },
                 { name: 'asyncOperationsTable', value: asyncOperationsTableName },
                 { name: 'lambdaName', value: successFunctionName },
-                { name: 'payloadUrl', value: `s3://${config.bucket}/${payloadKey}` }
+                { name: 'payloadUrl', value: payloadUrl }
               ]
             }
           ]
@@ -101,7 +94,7 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
       dynamoDbItem = await waitForAsyncOperationStatus({
         TableName: asyncOperationsTableName,
         id: asyncOperationId,
-        status: 'TASK_FAILED'
+        status: 'RUNNER_FAILED'
       });
     } catch (err) {
       beforeAllFailed = true;
@@ -109,9 +102,9 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
     }
   });
 
-  it('updates the status field in DynamoDB to "TASK_FAILED"', async () => {
+  it('updates the status field in DynamoDB to "RUNNER_FAILED"', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
-    else expect(dynamoDbItem.status.S).toEqual('TASK_FAILED');
+    else expect(dynamoDbItem.status.S).toEqual('RUNNER_FAILED');
   });
 
   it('updates the output field in DynamoDB', async () => {
@@ -119,7 +112,7 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
     else {
       const parsedOutput = JSON.parse(dynamoDbItem.output.S);
 
-      expect(parsedOutput.message).toContain('Unable to parse payload:');
+      expect(parsedOutput.message).toBe(`Failed to fetch ${payloadUrl}: The specified key does not exist.`);
     }
   });
 
@@ -127,6 +120,4 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else expect(dynamoDbItem.updatedAt.N).toBeGreaterThan(dynamoDbItem.createdAt.N);
   });
-
-  afterAll(() => s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise());
 });

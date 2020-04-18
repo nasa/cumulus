@@ -2,16 +2,16 @@
 
 const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
-const { ecs } = require('@cumulus/aws-client/services');
+const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   getClusterArn,
   waitForAsyncOperationStatus
 } = require('@cumulus/integration-tests');
 const { AsyncOperation } = require('@cumulus/api/models');
-const { loadConfig } = require('../../helpers/testUtils');
+const { loadConfig } = require('../helpers/testUtils');
 
-describe('The AsyncOperation task runner with a non-existent payload', () => {
+describe('The AsyncOperation task runner executing a successful lambda function', () => {
   let asyncOperationId;
   let asyncOperationModel;
   let asyncOperationsTableName;
@@ -20,7 +20,7 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
   let cluster;
   let config;
   let dynamoDbItem;
-  let payloadUrl;
+  let payloadKey;
   let successFunctionName;
   let taskArn;
 
@@ -48,6 +48,14 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
 
       asyncOperationId = uuidv4();
 
+      // Upload the payload
+      payloadKey = `${config.stackName}/integration-tests/payloads/${asyncOperationId}.json`;
+      await s3().putObject({
+        Bucket: config.bucket,
+        Key: payloadKey,
+        Body: JSON.stringify([1, 2, 3])
+      }).promise();
+
       await asyncOperationModel.create({
         id: asyncOperationId,
         taskArn: randomString(),
@@ -56,7 +64,6 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
         status: 'RUNNING'
       });
 
-      payloadUrl = `s3://${config.bucket}/${randomString()}`;
       const runTaskResponse = await ecs().runTask({
         cluster,
         taskDefinition: asyncOperationTaskDefinition,
@@ -69,7 +76,7 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
                 { name: 'asyncOperationId', value: asyncOperationId },
                 { name: 'asyncOperationsTable', value: asyncOperationsTableName },
                 { name: 'lambdaName', value: successFunctionName },
-                { name: 'payloadUrl', value: payloadUrl }
+                { name: 'payloadUrl', value: `s3://${config.bucket}/${payloadKey}` }
               ]
             }
           ]
@@ -94,7 +101,7 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
       dynamoDbItem = await waitForAsyncOperationStatus({
         TableName: asyncOperationsTableName,
         id: asyncOperationId,
-        status: 'RUNNER_FAILED'
+        status: 'SUCCEEDED'
       });
     } catch (err) {
       beforeAllFailed = true;
@@ -102,9 +109,9 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
     }
   });
 
-  it('updates the status field in DynamoDB to "RUNNER_FAILED"', async () => {
+  it('updates the status field in DynamoDB to "SUCCEEDED"', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
-    else expect(dynamoDbItem.status.S).toEqual('RUNNER_FAILED');
+    else expect(dynamoDbItem.status.S).toEqual('SUCCEEDED');
   });
 
   it('updates the output field in DynamoDB', async () => {
@@ -112,7 +119,7 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
     else {
       const parsedOutput = JSON.parse(dynamoDbItem.output.S);
 
-      expect(parsedOutput.message).toBe(`Failed to fetch ${payloadUrl}: The specified key does not exist.`);
+      expect(parsedOutput).toEqual([1, 2, 3]);
     }
   });
 
@@ -120,4 +127,6 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else expect(dynamoDbItem.updatedAt.N).toBeGreaterThan(dynamoDbItem.createdAt.N);
   });
+
+  afterAll(() => s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise());
 });
