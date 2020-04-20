@@ -26,7 +26,7 @@ const createCollection = async ({ prefix, collection, callback = invokeApi }) =>
 });
 
 /**
- * DELETE /collections/{vollectionName}/{collectionVersion}
+ * DELETE /collections/{collectionName}/{collectionVersion}
  *
  * @param {Object} params                     - params
  * @param {string} params.prefix              - the prefix configured for the stack

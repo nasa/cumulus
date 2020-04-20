@@ -9,6 +9,7 @@
   },
   "scripts": {
     "prepare": "rm -f lambda.zip && zip lambda.zip index.js",
+    "test": "true",
     "python-lint": "true"
   },
   "publishConfig": {

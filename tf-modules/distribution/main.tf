@@ -128,7 +128,7 @@ data "aws_iam_policy_document" "s3_credentials_lambda" {
 
 resource "aws_iam_role_policy" "s3_credentials_lambda" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
-
+  name   = "${var.prefix}_s3_credentials_lambda_policy"
   policy = data.aws_iam_policy_document.s3_credentials_lambda[0].json
   role   = aws_iam_role.s3_credentials_lambda[0].id
 }

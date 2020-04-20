@@ -15,11 +15,31 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/common/workflows.getWorkflowFileKey()` to return the S3 key for a workflow definition object
   - Added `@cumulus/common/workflows.getWorkflowsListKeyPrefix()` to return the S3 key prefix for objects containing workflow definitions
   - Added `@cumulus/message` package containing utilities for building and parsing Cumulus messages
+- **CUMULUS-1850**
+  - Added `@cumulus/aws-client/Kinesis.describeStream()` to get a Kinesis stream description
+- **CUMULUS-1853**
+  - Added `@cumulus/integration-tests/collections.createCollection()`
+  - Added `@cumulus/integration-tests/executions.findExecutionArn()`
+  - Added `@cumulus/integration-tests/executions.getExecutionWithStatus()`
+  - Added `@cumulus/integration-tests/granules.getGranuleWithStatus()`
+  - Added `@cumulus/integration-tests/providers.createProvider()`
+  - Added `@cumulus/integration-tests/rules.createOneTimeRule()`
 
 ### Changed
 
+- **CUMULUS-1682**
+  - Moved all `@cumulus/ingest/parse-pdr` code into the `parse-pdr` task as it had become tightly coupled with that task's handler and was not used anywhere else. Unit tests also restored.
+
 - **CUMULUS-1820**
   - Updated the Thin Egress App module used in `tf-modules/distribution/main.tf` to build 74. [See the release notes](https://github.com/asfadmin/thin-egress-app/releases/tag/tea-build.74).
+
+### Fixed
+
+- **CUMULUS-1850**
+  - Fixed a bug in Kinesis event processing where the message consumer would not properly filter available rules based on the collection information in the event and the Kinesis stream ARN
+- **CUMULUS-1853**
+  - Fixed a bug where attempting to create a rule containing a payload property
+    would fail schema validation.
 
 ### Deprecated
 

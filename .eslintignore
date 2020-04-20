@@ -2,10 +2,8 @@
 **/coverage/**
 **/build/**
 **/dist/**
-**/kes_dist/**
 **/node_modules/**
 **/webpack.config.js
-packages/deployment/**
 tmp/**
 docs/**
 _book/**
