@@ -47,6 +47,7 @@
     "fs-extra": "^5.0.0",
     "got": "^9.2.1",
     "is-ip": "^2.0.0",
+    "is-valid-hostname": "^0.0.1",
     "jsftp": "https://github.com/jkovarik/jsftp.git#add_288",
     "lodash": "^4.17.15",
     "mime-types": "^2.1.22",

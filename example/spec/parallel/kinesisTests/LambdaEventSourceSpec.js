@@ -1,8 +1,8 @@
 'use strict';
 
+const replace = require('lodash/replace');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { globalReplace } = require('@cumulus/common/string');
 const { getWorkflowFileKey } = require('@cumulus/common/workflows');
 const { Rule } = require('@cumulus/api/models');
 
@@ -82,7 +82,7 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
     const testId = createTimestampedTestId(testConfig.stackName, 'LambdaEventSourceTest');
     testSuffix = createTestSuffix(testId);
     testDataFolder = createTestDataPath(testId);
-    ruleSuffix = globalReplace(testSuffix, '-', '_');
+    ruleSuffix = replace(testSuffix, /-/g, '_');
     lambdaStep = new LambdaStep();
 
     process.env.ExecutionsTable = `${testConfig.stackName}-ExecutionsTable`;

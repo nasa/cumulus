@@ -19,20 +19,19 @@ const pick = require('lodash/pick');
 const pMap = require('p-map');
 const { noop } = require('@cumulus/common/util');
 const { dynamodb, dynamodbDocClient } = require('@cumulus/aws-client/services');
-const { isNonEmptyString } = require('@cumulus/common/string');
 
 /**
  * Return the name of the Granule Files cache table
  * @returns {string} the name of the DynamoDB table
  */
 const cacheTableName = () => {
-  if (isNonEmptyString(process.env.FilesTable)) return process.env.FilesTable;
+  if (process.env.FilesTable) return process.env.FilesTable;
   throw new Error('process.env.FilesTable is not set');
 };
 
 const validatePutFile = (file) => {
   ['bucket', 'key', 'granuleId'].forEach((prop) => {
-    if (!isNonEmptyString(file[prop])) {
+    if (!file[prop]) {
       throw new TypeError(
         `${prop} is required in put request: ${JSON.stringify(file)}`
       );
@@ -42,7 +41,7 @@ const validatePutFile = (file) => {
 
 const validateDeleteFile = (file) => {
   ['bucket', 'key'].forEach((prop) => {
-    if (!isNonEmptyString(file[prop])) {
+    if (!file[prop]) {
       throw new TypeError(
         `${prop} is required in delete request: ${JSON.stringify(file)}`
       );
