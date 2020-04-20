@@ -197,6 +197,7 @@ The constructor for the CMRSearchConceptQueue class
 | params.provider | <code>string</code> |  | the CMR provider id |
 | params.clientId | <code>string</code> |  | the CMR clientId |
 | params.type | <code>string</code> |  | the type of search 'granule' or 'collection' |
+| params.cmrEnvironment | <code>string</code> |  | optional, CMR environment to              use valid arguments are ['OPS', 'SIT', 'UAT'] |
 | [params.searchParams] | <code>string</code> | <code>&quot;{}&quot;</code> | the search parameters |
 | params.format | <code>string</code> |  | the result format |
 
