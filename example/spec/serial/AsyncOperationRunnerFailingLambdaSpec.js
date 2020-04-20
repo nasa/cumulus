@@ -4,14 +4,11 @@ const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
 const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
-const {
-  getClusterArn,
-  waitForAsyncOperationStatus
-} = require('@cumulus/integration-tests');
+const { getClusterArn, waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
 const { AsyncOperation } = require('@cumulus/api/models');
-const { loadConfig } = require('../../helpers/testUtils');
+const { loadConfig } = require('../helpers/testUtils');
 
-describe('The AsyncOperation task runner executing a successful lambda function', () => {
+describe('The AsyncOperation task runner executing a failing lambda function', () => {
   let asyncOperationId;
   let asyncOperationModel;
   let asyncOperationsTableName;
@@ -20,8 +17,8 @@ describe('The AsyncOperation task runner executing a successful lambda function'
   let cluster;
   let config;
   let dynamoDbItem;
+  let failFunctionName;
   let payloadKey;
-  let successFunctionName;
   let taskArn;
 
   beforeAll(async () => {
@@ -29,7 +26,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
       config = await loadConfig();
 
       asyncOperationsTableName = `${config.stackName}-AsyncOperationsTable`;
-      successFunctionName = `${config.stackName}-AsyncOperationSuccess`;
+      failFunctionName = `${config.stackName}-AsyncOperationFail`;
 
       asyncOperationModel = new AsyncOperation({
         stackName: config.stackName,
@@ -75,7 +72,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
               environment: [
                 { name: 'asyncOperationId', value: asyncOperationId },
                 { name: 'asyncOperationsTable', value: asyncOperationsTableName },
-                { name: 'lambdaName', value: successFunctionName },
+                { name: 'lambdaName', value: failFunctionName },
                 { name: 'payloadUrl', value: `s3://${config.bucket}/${payloadKey}` }
               ]
             }
@@ -101,7 +98,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
       dynamoDbItem = await waitForAsyncOperationStatus({
         TableName: asyncOperationsTableName,
         id: asyncOperationId,
-        status: 'SUCCEEDED'
+        status: 'TASK_FAILED'
       });
     } catch (err) {
       beforeAllFailed = true;
@@ -109,9 +106,9 @@ describe('The AsyncOperation task runner executing a successful lambda function'
     }
   });
 
-  it('updates the status field in DynamoDB to "SUCCEEDED"', async () => {
+  it('updates the status field in DynamoDB to "TASK_FAILED"', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
-    else expect(dynamoDbItem.status.S).toEqual('SUCCEEDED');
+    else expect(dynamoDbItem.status.S).toEqual('TASK_FAILED');
   });
 
   it('updates the output field in DynamoDB', async () => {
@@ -119,7 +116,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
     else {
       const parsedOutput = JSON.parse(dynamoDbItem.output.S);
 
-      expect(parsedOutput).toEqual([1, 2, 3]);
+      expect(parsedOutput.message).toBe('triggered failure');
     }
   });
 

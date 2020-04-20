@@ -76,12 +76,8 @@ const {
 
 const { isReingestExecutionForGranuleId } = require('../../helpers/workflowUtils');
 
-const { getConfigObject } = require('../../helpers/configUtils');
-
 const lambdaStep = new LambdaStep();
 const workflowName = 'IngestAndPublishGranule';
-
-const workflowConfigFile = './workflows/sips.yml';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
@@ -687,11 +683,6 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   describe('The Cumulus API', () => {
-    let workflowConfig;
-    beforeAll(() => {
-      workflowConfig = getConfigObject(workflowConfigFile, workflowName);
-    });
-
     describe('granule endpoint', () => {
       let granule;
       let cmrLink;
@@ -984,7 +975,6 @@ describe('The S3 Ingest Granules workflow', () => {
 
     describe('When accessing a workflow execution via the API', () => {
       let executionStatus;
-      let allStates;
 
       beforeAll(async () => {
         const executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
@@ -993,8 +983,6 @@ describe('The S3 Ingest Granules workflow', () => {
         });
 
         executionStatus = JSON.parse(executionStatusResponse.body);
-
-        allStates = Object.keys(workflowConfig.States);
       });
 
       it('returns the inputs and outputs for the entire workflow', async () => {
@@ -1013,10 +1001,9 @@ describe('The S3 Ingest Granules workflow', () => {
 
         const definition = JSON.parse(executionStatus.stateMachine.definition);
         expect(definition.Comment).toEqual('Ingest Granule');
-        const stateNames = Object.keys(definition.States);
 
         // definition has all the states' information
-        expect(difference(allStates, stateNames).length).toBe(0);
+        expect(Object.keys(definition.States).length).toBe(9);
       });
 
       it('returns the inputs, outputs, timing, and status information for each executed step', async () => {
@@ -1026,7 +1013,15 @@ describe('The S3 Ingest Granules workflow', () => {
         const expectedNotExecutedSteps = ['WorkflowFailed'];
 
         // expected 'executed' steps
-        const expectedExecutedSteps = difference(allStates, expectedNotExecutedSteps);
+        const expectedExecutedSteps = [
+          'SyncGranule',
+          'ChooseProcess',
+          'ProcessingStep',
+          'FilesToGranulesStep',
+          'MoveGranuleStep',
+          'CmrStep',
+          'WorkflowSucceeded'
+        ];
 
         // steps with *EventDetails will have the input/output, and also stepname when state is entered/exited
         const stepNames = [];
@@ -1083,10 +1078,19 @@ describe('The S3 Ingest Granules workflow', () => {
         });
 
         const foundWorkflow = JSON.parse(workflowResponse.body);
-        expect(foundWorkflow.definition.Comment).toEqual(workflowConfig.Comment);
+        expect(foundWorkflow.definition.Comment).toEqual('Ingest Granule');
 
         const foundKeys = Object.keys(foundWorkflow.definition.States);
-        const configKeys = Object.keys(workflowConfig.States);
+        const configKeys = [
+          'SyncGranule',
+          'ChooseProcess',
+          'ProcessingStep',
+          'FilesToGranulesStep',
+          'MoveGranuleStep',
+          'CmrStep',
+          'WorkflowSucceeded',
+          'WorkflowFailed'
+        ];
         expect(foundKeys.sort()).toEqual(configKeys.sort());
       });
     });

@@ -4,11 +4,14 @@ const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
 const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
-const { getClusterArn, waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
+const {
+  getClusterArn,
+  waitForAsyncOperationStatus
+} = require('@cumulus/integration-tests');
 const { AsyncOperation } = require('@cumulus/api/models');
-const { loadConfig } = require('../../helpers/testUtils');
+const { loadConfig } = require('../helpers/testUtils');
 
-describe('The AsyncOperation task runner executing a failing lambda function', () => {
+describe('The AsyncOperation task runner with a non-JSON payload', () => {
   let asyncOperationId;
   let asyncOperationModel;
   let asyncOperationsTableName;
@@ -17,8 +20,8 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
   let cluster;
   let config;
   let dynamoDbItem;
-  let failFunctionName;
   let payloadKey;
+  let successFunctionName;
   let taskArn;
 
   beforeAll(async () => {
@@ -26,7 +29,7 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
       config = await loadConfig();
 
       asyncOperationsTableName = `${config.stackName}-AsyncOperationsTable`;
-      failFunctionName = `${config.stackName}-AsyncOperationFail`;
+      successFunctionName = `${config.stackName}-AsyncOperationSuccess`;
 
       asyncOperationModel = new AsyncOperation({
         stackName: config.stackName,
@@ -50,7 +53,7 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
       await s3().putObject({
         Bucket: config.bucket,
         Key: payloadKey,
-        Body: JSON.stringify([1, 2, 3])
+        Body: 'invalid JSON'
       }).promise();
 
       await asyncOperationModel.create({
@@ -72,7 +75,7 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
               environment: [
                 { name: 'asyncOperationId', value: asyncOperationId },
                 { name: 'asyncOperationsTable', value: asyncOperationsTableName },
-                { name: 'lambdaName', value: failFunctionName },
+                { name: 'lambdaName', value: successFunctionName },
                 { name: 'payloadUrl', value: `s3://${config.bucket}/${payloadKey}` }
               ]
             }
@@ -116,7 +119,7 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
     else {
       const parsedOutput = JSON.parse(dynamoDbItem.output.S);
 
-      expect(parsedOutput.message).toBe('triggered failure');
+      expect(parsedOutput.message).toContain('Unable to parse payload:');
     }
   });
 
