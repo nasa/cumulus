@@ -1,4 +1,5 @@
 resource "aws_iam_role" "ecs_cluster_instance" {
+  name = "${var.prefix}_ecs_cluster_instance_role"
   assume_role_policy   = data.aws_iam_policy_document.ec2_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
 
@@ -52,6 +53,7 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
 
   statement {
     actions = [
+      "kinesis:describeStream",
       "kinesis:ListShards",
       "kinesis:getShardIterator",
       "kinesis:GetRecords"
@@ -115,6 +117,7 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
 }
 
 resource "aws_iam_role_policy" "ecs_cluster_instance" {
+  name   = "${var.prefix}_ecs_cluster_instance_policy"
   role   = aws_iam_role.ecs_cluster_instance.id
   policy = data.aws_iam_policy_document.ecs_cluster_instance_policy.json
 }
@@ -135,6 +138,7 @@ data "aws_iam_policy_document" "ecs_cluster_access_es_document" {
 }
 
 resource "aws_iam_role_policy" "ecs_cluster_access_es_policy" {
+  name   = "${var.prefix}_ecs_cluster_access_es_policy"
   count = var.elasticsearch_domain_arn != null ? 1 : 0
   role   = aws_iam_role.ecs_cluster_instance.id
   policy = data.aws_iam_policy_document.ecs_cluster_access_es_document[0].json
@@ -147,7 +151,7 @@ resource "aws_iam_role_policy_attachment" "NGAPProtAppInstanceMinimalPolicy" {
 }
 
 resource "aws_iam_instance_profile" "ecs_cluster_instance" {
-  name = "${var.prefix}-ecs"
+  name = "${var.prefix}_ecs_cluster_profile"
   role = aws_iam_role.ecs_cluster_instance.id
 }
 

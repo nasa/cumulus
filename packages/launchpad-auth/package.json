@@ -1,0 +1,56 @@
+{
+  "name": "@cumulus/launchpad-auth",
+  "version": "1.21.0",
+  "description": "Utilities for authentication with Launchpad",
+  "keywords": [
+    "CUMULUS",
+    "NASA"
+  ],
+  "engines": {
+    "node": ">=10.16.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/message",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus"
+  },
+  "scripts": {
+    "build": "true",
+    "build-docs": "jsdoc2md --template templates/docs-API.hbs index.js LaunchpadToken.js > docs/API.md",
+    "lint": "eslint .",
+    "test": "ava",
+    "test-coverage": "nyc ava",
+    "test-ci": "npm run lint"
+  },
+  "ava": {
+    "files": [
+      "tests/**"
+    ],
+    "verbose": true
+  },
+  "nyc": {
+    "exclude": [
+      "tests",
+      "test"
+    ]
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@cumulus/aws-client": "1.21.0",
+    "@cumulus/logger": "1.21.0",
+    "lodash": "^4.17.15",
+    "uuid": "^3.2.1"
+  },
+  "devDependencies": {
+    "ava": "^2.1.0",
+    "crypto-random-string": "^3.2.0",
+    "jsdoc-to-markdown": "^5.0.3",
+    "nock": "^12.0.3",
+    "nyc": "^14.0.0",
+    "rewire": "^4.0.1"
+  }
+}

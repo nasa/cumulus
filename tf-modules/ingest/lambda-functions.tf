@@ -166,7 +166,7 @@ resource "aws_lambda_function" "schedule_sf" {
   description      = "This lambda function is invoked by scheduled rules created via cumulus API"
   filename         = "${path.module}/../../packages/api/dist/sfScheduler/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/sfScheduler/lambda.zip")
-  handler          = "index.schedule"
+  handler          = "index.handleScheduleEvent"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs10.x"
   timeout          = 100

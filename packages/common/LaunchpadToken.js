@@ -5,6 +5,7 @@ const path = require('path');
 const { URL } = require('url');
 const log = require('./log');
 const { getS3Object, s3ObjectExists } = require('./aws');
+const { deprecate } = require('./util');
 
 /**
  * A class for sending requests to Launchpad token service endpoints
@@ -28,6 +29,7 @@ class LaunchpadToken {
   * @param {string} params.certificate - the name of the Launchpad PKI pfx certificate
   */
   constructor(params) {
+    deprecate('@cumulus/common/LaunchpadToken', '1.21.0', '@cumulus/launchpad-auth/LaunchpadToken');
     this.api = params.api;
     this.passphrase = params.passphrase;
     this.certificate = params.certificate;
