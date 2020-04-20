@@ -3,16 +3,23 @@
 const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { publishSnsMessage } = require('@cumulus/aws-client/SNS');
 const log = require('@cumulus/common/log');
+const { InvalidRegexError, UnmatchedRegexError } = require('@cumulus/errors');
+
 const Manager = require('./base');
 const { collection: collectionSchema } = require('./schemas');
 const Rule = require('./rules');
-const { AssociatedRulesError, BadRequestError } = require('../lib/errors');
+const { AssociatedRulesError } = require('../lib/errors');
 
 function checkRegex(regex, sampleFileName) {
-  const validation = new RegExp(regex);
-  const match = validation.test(sampleFileName);
+  let validation;
+  try {
+    validation = new RegExp(regex);
+  } catch (err) {
+    throw new InvalidRegexError(`Invalid regex ${regex}: ${err.message}`);
+  }
 
-  if (!match) throw new BadRequestError(`regex ${regex} cannot validate ${sampleFileName}`);
+  const match = validation.test(sampleFileName);
+  if (!match) throw new UnmatchedRegexError(`regex ${regex} cannot validate ${sampleFileName}`);
 }
 
 /**
@@ -40,11 +47,16 @@ class Collection extends Manager {
 
     // make sure regexes are correct
     // first test granuleId extraction and validation regex
-    const extraction = new RegExp(item.granuleIdExtraction);
-    const match = item.sampleFileName.match(extraction);
+    let extraction;
+    try {
+      extraction = new RegExp(item.granuleIdExtraction);
+    } catch (err) {
+      throw new InvalidRegexError(`Invalid granuleIdExtraction regex: ${err.message}`);
+    }
 
+    const match = item.sampleFileName.match(extraction);
     if (!match) {
-      throw new BadRequestError('granuleIdExtraction regex returns null when applied to sampleFileName');
+      throw new UnmatchedRegexError('granuleIdExtraction regex returns null when applied to sampleFileName');
     }
 
     checkRegex(item.granuleId, match[1]);

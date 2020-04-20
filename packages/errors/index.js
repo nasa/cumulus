@@ -118,5 +118,9 @@ module.exports = {
   UnparsableFileLocationError: createErrorType('UnparsableFileLocationError'),
 
   // if a record cannot be found
-  RecordDoesNotExist: createErrorType('RecordDoesNotExist')
+  RecordDoesNotExist: createErrorType('RecordDoesNotExist'),
+
+  InvalidRegexError: createErrorType('InvalidRegexError'),
+
+  UnmatchedRegexError: createErrorType('UnmatchedRegexError')
 };

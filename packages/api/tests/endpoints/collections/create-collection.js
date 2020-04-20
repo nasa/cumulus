@@ -37,6 +37,7 @@ let esClient;
 let jwtAuthToken;
 let accessTokenModel;
 let collectionModel;
+let revertPublishStub;
 
 test.before(async () => {
   const esAlias = randomString();
@@ -56,6 +57,11 @@ test.before(async () => {
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
   esClient = await Search.es('fakehost');
+
+  process.env.collection_sns_topic_arn = randomString();
+  revertPublishStub = sinon.stub(awsServices.sns(), 'publish').returns({
+    promise: async () => true
+  });
 });
 
 test.beforeEach(async (t) => {
@@ -68,6 +74,7 @@ test.after.always(async () => {
   await collectionModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
+  revertPublishStub();
 });
 
 test('CUMULUS-911 POST without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -118,7 +125,7 @@ test('POST creates a new collection', async (t) => {
   t.is(record.name, newCollection.name);
 });
 
-test('POST with invalid granuleIdExtraction returns correct error', async (t) => {
+test('POST with non-matching granuleIdExtraction regex returns 400 bad request response', async (t) => {
   const newCollection = fakeCollectionFactory();
 
   newCollection.granuleIdExtraction = 'badregex';
@@ -135,7 +142,7 @@ test('POST with invalid granuleIdExtraction returns correct error', async (t) =>
   t.is(res.body.message, 'granuleIdExtraction regex returns null when applied to sampleFileName');
 });
 
-test('POST with invalid file regex returns correct error', async (t) => {
+test('POST with non-matching file.regex returns 400 bad request repsonse', async (t) => {
   const newCollection = fakeCollectionFactory();
   const filename = 'filename.txt';
   const regex = 'badregex';
@@ -158,6 +165,7 @@ test('POST with invalid file regex returns correct error', async (t) => {
 });
 
 test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
+  debugger;
   const stub = sinon.stub(Collection.prototype, 'create')
     .callsFake(() => { throw new Error('unexpected error') });
 
@@ -174,4 +182,37 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
   } finally {
     stub.restore();
   }
+});
+
+test.serial('POST with invalid granuleIdExtraction regex returns 400 bad request', async (t) => {
+  const newCollection = fakeCollectionFactory({
+    granuleIdExtraction: '*'
+  });
+
+  const response = await request(app)
+    .post('/collections')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newCollection)
+    .expect(400);
+  t.is(response.status, 400);
+  t.true(response.body.message.includes('Invalid regular expression'));
+});
+
+test.serial('POST with invalid file.regex returns 400 bad request', async (t) => {
+  const newCollection = fakeCollectionFactory({
+    files: [{
+      bucket: 'test-bucket',
+      regex: '*',
+      sampleFileName: 'filename'
+    }]
+  });
+
+  const response = await request(app)
+    .post('/collections')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newCollection)
+    .expect(400);
+  t.is(response.status, 400);
 });

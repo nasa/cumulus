@@ -2,7 +2,12 @@
 
 const router = require('express-promise-router')();
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { RecordDoesNotExist } = require('@cumulus/errors');
+const {
+  RecordDoesNotExist,
+  InvalidRegexError,
+  UnmatchedRegexError
+} = require('@cumulus/errors');
+
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { Search } = require('../es/search');
@@ -105,10 +110,11 @@ async function post(req, res) {
       throw e;
     }
   } catch (e) {
-    if (e.name === 'SchemaValidationError') {
-      return res.boom.badRequest(e.message);
-    }
-    if (e instanceof BadRequestError) {
+    if (
+      e.name === 'SchemaValidationError'
+      || e instanceof InvalidRegexError
+      || e instanceof UnmatchedRegexError
+    ) {
       return res.boom.badRequest(e.message);
     }
     log.error('Error occurred while trying to create collection:', e);
