@@ -37,7 +37,7 @@ let esClient;
 let jwtAuthToken;
 let accessTokenModel;
 let collectionModel;
-let revertPublishStub;
+let publishStub;
 
 test.before(async () => {
   const esAlias = randomString();
@@ -59,7 +59,7 @@ test.before(async () => {
   esClient = await Search.es('fakehost');
 
   process.env.collection_sns_topic_arn = randomString();
-  revertPublishStub = sinon.stub(awsServices.sns(), 'publish').returns({
+  publishStub = sinon.stub(awsServices.sns(), 'publish').returns({
     promise: async () => true
   });
 });
@@ -74,7 +74,7 @@ test.after.always(async () => {
   await collectionModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
-  revertPublishStub();
+  publishStub.restore();
 });
 
 test('CUMULUS-911 POST without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -165,7 +165,6 @@ test('POST with non-matching file.regex returns 400 bad request repsonse', async
 });
 
 test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
-  debugger;
   const stub = sinon.stub(Collection.prototype, 'create')
     .callsFake(() => { throw new Error('unexpected error') });
 
