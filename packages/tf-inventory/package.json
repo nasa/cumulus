@@ -13,7 +13,6 @@
     "test": "ava",
     "test-coverage": "nyc npm test",
     "build": "echo 'no build step'",
-    "build-docs": "true",
     "watch": "echo 'no build step'"
   },
   "ava": {

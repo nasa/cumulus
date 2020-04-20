@@ -6,7 +6,6 @@
     "node": ">=10.16.3"
   },
   "scripts": {
-    "build-docs": "true",
     "test": "ava",
     "test-coverage": "nyc ava",
     "build": "echo 'do nothing'"

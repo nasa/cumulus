@@ -20,7 +20,6 @@
   },
   "scripts": {
     "build": "true",
-    "build-docs": "true",
     "lint": "eslint .",
     "test-ci": "npm run lint"
   },

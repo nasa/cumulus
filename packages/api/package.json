@@ -12,7 +12,6 @@
   "scripts": {
     "test": "ava",
     "test-coverage": "nyc npm test",
-    "build-docs": "true",
     "build": "webpack",
     "watch": "webpack --progress -w",
     "serve": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api serve",
