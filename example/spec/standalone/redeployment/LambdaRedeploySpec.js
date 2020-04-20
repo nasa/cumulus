@@ -15,7 +15,7 @@ const {
   runKes
 } = require('../../helpers/testUtils');
 
-describe('When a workflow is running and a new version of a workflow lambda is deployed', () => {
+xdescribe('When a workflow is running and a new version of a workflow lambda is deployed', () => {
   let workflowExecutionArn;
   let workflowStatus;
   let testVersionOutput;

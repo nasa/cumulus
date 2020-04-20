@@ -59,6 +59,5 @@ async function handleScheduleEvent(event) {
 }
 
 module.exports = {
-  handleScheduleEvent,
-  schedule: handleScheduleEvent // ¯\_(ツ)_/¯
+  handleScheduleEvent
 };

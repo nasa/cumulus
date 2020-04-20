@@ -1,0 +1,52 @@
+{
+  "name": "@cumulus/collection-config-store",
+  "version": "1.21.0",
+  "description": "Utility for persisting collection configuration to S3 and retrieving it",
+  "keywords": [
+    "CUMULUS",
+    "NASA"
+  ],
+  "engines": {
+    "node": ">=10.16.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/collection-config-store",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus"
+  },
+  "scripts": {
+    "build": "true",
+    "build-docs": "jsdoc2md --template templates/docs-API.hbs index.js > docs/API.md",
+    "lint": "eslint .",
+    "test": "ava",
+    "test-coverage": "nyc ava",
+    "test-ci": "npm run lint"
+  },
+  "ava": {
+    "files": [
+      "tests/**"
+    ],
+    "verbose": true
+  },
+  "nyc": {
+    "exclude": [
+      "tests",
+      "test"
+    ]
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@cumulus/aws-client": "1.21.0",
+    "@cumulus/message": "1.21.0"
+  },
+  "devDependencies": {
+    "ava": "^2.1.0",
+    "crypto-random-string": "^3.2.0",
+    "jsdoc-to-markdown": "^5.0.3",
+    "nyc": "^14.0.0"
+  }
+}

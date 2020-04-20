@@ -1,6 +1,6 @@
 'use strict';
 
-const { CollectionConfigStore } = require('@cumulus/common/collection-config-store');
+const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { publishSnsMessage } = require('@cumulus/aws-client/SNS');
 const log = require('@cumulus/common/log');
 const Manager = require('./base');
