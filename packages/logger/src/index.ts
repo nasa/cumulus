@@ -117,7 +117,7 @@ class Logger {
    * @param {Object} additionalKeys
    * @param {...any} [messageArgs] - the message to log
    */
-  infoWithAdditionalKeys(additionalKeys: object, ...messageArgs: string[]) {
+  infoWithAdditionalKeys(additionalKeys: object, ...messageArgs: any[]) {
     this._writeLogEvent('info', messageArgs, additionalKeys);
   }
 
