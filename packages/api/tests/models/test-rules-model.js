@@ -117,6 +117,42 @@ test('create and delete a onetime rule', async (t) => {
   t.false(await rulesModel.exists({ name: rule.name }));
 });
 
+test('Creating a rule with an invalid name throws an error', async (t) => {
+  const { onetimeRule } = t.context;
+  const ruleItem = cloneDeep(onetimeRule);
+
+  ruleItem.name = 'bad rule name';
+
+  await t.throwsAsync(
+    () => rulesModel.create(ruleItem),
+    { message: 'Rule name may only contain letters, numbers, and underscores.' }
+  );
+});
+
+test('Creating a rule with an undefined type throws an error', async (t) => {
+  const { onetimeRule } = t.context;
+  const ruleItem = cloneDeep(onetimeRule);
+
+  ruleItem.rule.type = undefined;
+
+  await t.throwsAsync(
+    () => rulesModel.create(ruleItem),
+    { message: 'Rule type undefined not supported.' }
+  );
+});
+
+test('Creating a rule with an invalid type throws an error', async (t) => {
+  const { onetimeRule } = t.context;
+  const ruleItem = cloneDeep(onetimeRule);
+
+  ruleItem.rule.type = 'invalid';
+
+  await t.throwsAsync(
+    () => rulesModel.create(ruleItem),
+    { message: 'Rule type invalid not supported.' }
+  );
+});
+
 test('enabling a disabled rule updates the state', async (t) => {
   const { onetimeRule } = t.context;
 
