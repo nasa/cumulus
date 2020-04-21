@@ -66,11 +66,6 @@ test.before(async () => {
   esClient = await Search.es('fakehost');
 });
 
-test.beforeEach(async (t) => {
-  t.context.testProvider = fakeProviderFactory();
-  await providerModel.create(t.context.testProvider);
-});
-
 test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await providerModel.deleteTable();
@@ -122,7 +117,9 @@ test('POST with invalid authorization scheme returns an invalid authorization re
 
 test('POST creates a new provider', async (t) => {
   const newProviderId = 'AQUA';
-  const newProvider = { ...t.context.testProvider, id: newProviderId };
+  const newProvider = fakeProviderFactory({
+    id: newProviderId
+  });
 
   const response = await request(app)
     .post('/providers')
@@ -136,11 +133,8 @@ test('POST creates a new provider', async (t) => {
   t.is(record.id, newProviderId);
 });
 
-test('POST returns a 400 error if the provider already exists', async (t) => {
-  const newProvider = {
-    ...t.context.testProvider,
-    id: randomString()
-  };
+test('POST returns a 409 error if the provider already exists', async (t) => {
+  const newProvider = fakeProviderFactory();
 
   const providerModel = new Provider();
   await providerModel.create(newProvider);
@@ -150,7 +144,7 @@ test('POST returns a 400 error if the provider already exists', async (t) => {
     .send(newProvider)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(400);
+    .expect(409);
 
   const { message } = response.body;
   t.is(message, (`A record already exists for ${newProvider.id}`));
@@ -173,4 +167,18 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
   } finally {
     stub.restore();
   }
+});
+
+test('POST returns a 400 response if invalid hostname is provided', async (t) => {
+  const newProvider = fakeProviderFactory({
+    host: '-bad-hostname'
+  });
+
+  const response = await request(app)
+    .post('/providers')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newProvider)
+    .expect(400);
+  t.is(response.status, 400);
 });

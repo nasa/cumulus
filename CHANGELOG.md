@@ -37,6 +37,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Return a 400 response when the `name` or `version` fields are missing
     - Return a 409 response if the collection already exists
     - Improved error messages to be more explicit
+  - Updated POST endpoint for `/providers`:
+    - Return a 400 response if the `host` field value is invalid
+    - Return a 409 response if the provider already exists
 
 ### Fixed
 

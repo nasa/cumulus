@@ -1,9 +1,9 @@
 'use strict';
 
-const isIp = require('is-ip');
+const isValidHostname = require('is-valid-hostname')
+
 const KMS = require('@cumulus/aws-client/KMS');
 const { isNil } = require('@cumulus/common/util');
-const { isValidHostname } = require('@cumulus/common/string');
 
 const Manager = require('./base');
 const Rule = require('./rules');
@@ -24,7 +24,6 @@ const buildValidationError = ({ detail }) => {
 const validateHost = (host) => {
   if (isNil(host)) return;
   if (isValidHostname(host)) return;
-  if (isIp(host)) return;
 
   throw buildValidationError({
     detail: `${host} is not a valid hostname or IP address`

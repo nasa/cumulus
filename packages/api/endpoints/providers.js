@@ -68,7 +68,7 @@ async function post(req, res) {
     try {
       // make sure the record doesn't exist
       await providerModel.get({ id });
-      return res.boom.badRequest(`A record already exists for ${id}`);
+      return res.boom.conflict(`A record already exists for ${id}`);
     } catch (e) {
       if (e instanceof RecordDoesNotExist) {
         const record = await providerModel.create(data);
@@ -81,7 +81,8 @@ async function post(req, res) {
       throw e;
     }
   } catch (err) {
-    if (err.name === 'SchemaValidationError') {
+    if (err.name === 'SchemaValidationError'
+       || err.name === 'ValidationError') {
       return res.boom.badRequest(err.message);
     }
     log.error('Error occurred while trying to create provider:', err);
