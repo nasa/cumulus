@@ -2,7 +2,7 @@
 
 const { Console } = require('console');
 const { Writable } = require('stream');
-const isString = require('lodash/isString');
+const isString = require('lodash.isstring');
 const moment = require('moment');
 const test = require('ava');
 

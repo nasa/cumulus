@@ -10,6 +10,8 @@
   "engines": {
     "node": ">=10.16.3"
   },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.js",
   "publishConfig": {
     "access": "public"
   },
@@ -19,7 +21,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
-    "build": "true",
+    "tsc": "tsc",
     "test": "ava"
   },
   "nyc": {
@@ -30,10 +32,12 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "lodash": "^4.17.15"
+    "lodash.iserror": "^3.1.1"
   },
   "devDependencies": {
+    "@types/lodash.iserror": "^3.1.6",
     "ava": "^2.1.0",
+    "lodash.isstring": "^4.0.1",
     "moment": "^2.22.2"
   }
 }
