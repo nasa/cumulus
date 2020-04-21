@@ -64,11 +64,6 @@ test.before(async () => {
   });
 });
 
-test.beforeEach(async (t) => {
-  t.context.testCollection = fakeCollectionFactory();
-  await collectionModel.create(t.context.testCollection);
-});
-
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await collectionModel.deleteTable();
@@ -125,6 +120,21 @@ test('POST creates a new collection', async (t) => {
   t.is(record.name, newCollection.name);
 });
 
+test('POST for an existing collection returns a 409', async (t) => {
+  const newCollection = fakeCollectionFactory();
+
+  await collectionModel.create(newCollection);
+
+  const res = await request(app)
+    .post('/collections')
+    .send(newCollection)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(409);
+  t.is(res.status, 409);
+  t.is(res.body.message, `A record already exists for ${newCollection.name} version: ${newCollection.version}`);
+});
+
 test('POST with non-matching granuleIdExtraction regex returns 400 bad request response', async (t) => {
   const newCollection = fakeCollectionFactory();
 
@@ -139,7 +149,7 @@ test('POST with non-matching granuleIdExtraction regex returns 400 bad request r
     .expect(400);
 
   t.is(res.status, 400);
-  t.is(res.body.message, 'granuleIdExtraction regex returns null when applied to sampleFileName');
+  t.is(res.body.message, 'granuleIdExtraction "badregex" cannot validate "filename.txt"');
 });
 
 test('POST with non-matching file.regex returns 400 bad request repsonse', async (t) => {
@@ -161,7 +171,7 @@ test('POST with non-matching file.regex returns 400 bad request repsonse', async
     .expect(400);
 
   t.is(res.status, 400);
-  t.is(res.body.message, `regex ${regex} cannot validate ${filename}`);
+  t.is(res.body.message, `regex "${regex}" cannot validate "${filename}"`);
 });
 
 test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
@@ -183,7 +193,7 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
   }
 });
 
-test.serial('POST with invalid granuleIdExtraction regex returns 400 bad request', async (t) => {
+test('POST with invalid granuleIdExtraction regex returns 400 bad request', async (t) => {
   const newCollection = fakeCollectionFactory({
     granuleIdExtraction: '*'
   });
@@ -195,10 +205,10 @@ test.serial('POST with invalid granuleIdExtraction regex returns 400 bad request
     .send(newCollection)
     .expect(400);
   t.is(response.status, 400);
-  t.true(response.body.message.includes('Invalid regular expression'));
+  t.true(response.body.message.includes('Invalid granuleIdExtraction'));
 });
 
-test.serial('POST with invalid file.regex returns 400 bad request', async (t) => {
+test('POST with invalid file.regex returns 400 bad request', async (t) => {
   const newCollection = fakeCollectionFactory({
     files: [{
       bucket: 'test-bucket',
@@ -214,4 +224,38 @@ test.serial('POST with invalid file.regex returns 400 bad request', async (t) =>
     .send(newCollection)
     .expect(400);
   t.is(response.status, 400);
+  t.true(response.body.message.includes(`Invalid regex`));
+});
+
+test('POST with invalid granuleId regex returns 400 bad request', async (t) => {
+  const newCollection = fakeCollectionFactory({
+    granuleId: '*'
+  });
+
+  const response = await request(app)
+    .post('/collections')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newCollection)
+    .expect(400);
+  t.is(response.status, 400);
+  t.true(response.body.message.includes('Invalid granuleId'));
+});
+
+test('POST with non-matching granuleId regex returns 400 bad request response', async (t) => {
+  const newCollection = fakeCollectionFactory({
+    granuleIdExtraction: '(filename)',
+    sampleFileName: 'filename',
+    granuleId: 'badregex'
+  });
+
+  const res = await request(app)
+    .post('/collections')
+    .send(newCollection)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  t.is(res.status, 400);
+  t.true(res.body.message.includes('granuleId "badregex" cannot validate "filename"'));
 });

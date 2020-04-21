@@ -96,7 +96,7 @@ async function post(req, res) {
 
     try {
       await c.get({ name, version });
-      return res.boom.badRequest(`A record already exists for ${name} version: ${version}`);
+      return res.boom.conflict(`A record already exists for ${name} version: ${version}`);
     } catch (e) {
       if (e instanceof RecordDoesNotExist) {
         await c.create(data);

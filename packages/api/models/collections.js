@@ -15,20 +15,24 @@ const { AssociatedRulesError } = require('../lib/errors');
  *
  * @param {string} regex - a regular expression
  * @param {string} sampleFileName - the same filename to test the regular expression
+ * @param {string} regexFieldName - Name of the field name for the regular expression, if any
  * @throws {InvalidRegexError|UnmatchedRegexError}
  * @returns {Array<string>} - Array of matches from applying the regex to the sample filename.
  *  See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match.
  */
-function checkRegex(regex, sampleFileName) {
+function checkRegex(regex, sampleFileName, regexFieldName = 'regex') {
   let matchingRegex;
   try {
     matchingRegex = new RegExp(regex);
   } catch (err) {
-    throw new InvalidRegexError(`Invalid regex ${regex}: ${err.message}`);
+    throw new InvalidRegexError(`Invalid ${regexFieldName}: ${err.message}`);
   }
 
   const match = sampleFileName.match(matchingRegex);
-  if (!match) throw new UnmatchedRegexError(`regex "${regex}" cannot validate "${sampleFileName}"`);
+  if (!match) {
+    throw new UnmatchedRegexError(`${regexFieldName} "${regex}" cannot validate "${sampleFileName}"`);
+  }
+
   return match;
 }
 
@@ -56,7 +60,7 @@ class Collection extends Manager {
     super.recordIsValid(item, schema);
 
     // Test that granuleIdExtraction regex matches against sampleFileName
-    const match = checkRegex(item.granuleIdExtraction, item.sampleFileName);
+    const match = checkRegex(item.granuleIdExtraction, item.sampleFileName, 'granuleIdExtraction');
 
     if (!match[1]) {
       throw new UnmatchedRegexError(
@@ -67,7 +71,7 @@ class Collection extends Manager {
 
     // Test that granuleId regex matches the what was extracted from the
     // sampleFileName using the granuleIdExtraction
-    checkRegex(item.granuleId, match[1]);
+    checkRegex(item.granuleId, match[1], 'granuleId');
 
     // Check that each file.regex matches against file.sampleFileName
     item.files.forEach((file) => checkRegex(file.regex, file.sampleFileName));
