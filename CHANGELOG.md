@@ -29,11 +29,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1682**
   - Moved all `@cumulus/ingest/parse-pdr` code into the `parse-pdr` task as it had become tightly coupled with that task's handler and was not used anywhere else. Unit tests also restored.
-
 - **CUMULUS-1820**
   - Updated the Thin Egress App module used in `tf-modules/distribution/main.tf` to build 74. [See the release notes](https://github.com/asfadmin/thin-egress-app/releases/tag/tea-build.74).
 - **CUMULUS-1852**
   - Updated POST endpoints for `/collections`, `/providers`, and `/rules` to log errors when returning a 500 response
+  - Updated POST endpoint for `/collections`:
+    - Return a 400 response when the `name` or `version` fields are missing
+    - Return a 409 response if the collection already exists
+    - Improved error messages to be more explicit
 
 ### Fixed
 
