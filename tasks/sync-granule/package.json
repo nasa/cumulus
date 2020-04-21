@@ -40,11 +40,12 @@
   },
   "dependencies": {
     "@cumulus/aws-client": "1.21.0",
+    "@cumulus/collection-config-store": "1.21.0",
     "@cumulus/common": "1.21.0",
     "@cumulus/cumulus-message-adapter-js": "^1.1.0",
     "@cumulus/errors": "1.21.0",
     "@cumulus/ingest": "1.21.0",
-    "@cumulus/message": "1.21.0-alpha3",
+    "@cumulus/message": "1.21.0",
     "lodash": "4.17.15",
     "p-map": "^2.1.0",
     "uuid": "^3.4.0"

@@ -12,10 +12,6 @@ function setDistributionApiEnvVars() {
   }
 }
 
-function stopDistributionApi(server, done) {
-  server.close(done);
-}
-
 /**
  * Check a record for a particular status and retry until the record gets that status
  * This is to mitigate issues where a workflow completes, but there is a lag between
@@ -44,6 +40,5 @@ async function waitForModelStatus(model, params, status) {
 
 module.exports = {
   setDistributionApiEnvVars,
-  stopDistributionApi,
   waitForModelStatus
 };

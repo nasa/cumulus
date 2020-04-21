@@ -14,6 +14,7 @@ data "aws_iam_policy_document" "provider_secrets_encryption" {
 }
 
 resource "aws_iam_role_policy" "provider_secrets_encryption" {
+  name   = "${var.prefix}_provider_secrets_encryption_policy"
   role   = aws_iam_role.lambda_api_gateway.id
   policy = data.aws_iam_policy_document.provider_secrets_encryption.json
 }
