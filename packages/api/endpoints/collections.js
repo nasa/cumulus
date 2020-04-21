@@ -90,7 +90,7 @@ async function post(req, res) {
 
     // make sure primary key is included
     if (!name || !version) {
-      return res.boom.notFound('Field name and/or version is missing');
+      return res.boom.badRequest('Field name and/or version is missing');
     }
     const c = new models.Collection();
 

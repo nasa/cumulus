@@ -120,6 +120,36 @@ test('POST creates a new collection', async (t) => {
   t.is(record.name, newCollection.name);
 });
 
+test('POST without a name returns a 400 error', async (t) => {
+  const newCollection = fakeCollectionFactory();
+  delete newCollection.name;
+
+  const res = await request(app)
+    .post('/collections')
+    .send(newCollection)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  const { message } = res.body;
+  t.is(message, 'Field name and/or version is missing');
+});
+
+test('POST without a version returns a 400 error', async (t) => {
+  const newCollection = fakeCollectionFactory();
+  delete newCollection.version;
+
+  const res = await request(app)
+    .post('/collections')
+    .send(newCollection)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  const { message } = res.body;
+  t.is(message, 'Field name and/or version is missing');
+});
+
 test('POST for an existing collection returns a 409', async (t) => {
   const newCollection = fakeCollectionFactory();
 
