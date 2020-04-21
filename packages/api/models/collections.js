@@ -59,6 +59,11 @@ class Collection extends Manager {
       throw new UnmatchedRegexError('granuleIdExtraction regex returns null when applied to sampleFileName');
     }
 
+    if (!match[1]) {
+      throw new UnmatchedRegexError(
+        `granuleIdExtraction regex ${item.granuleIdExtraction} does not return a matched group when applied to sampleFileName. Ensure that your regex includes capturing groups.`
+      );
+    }
     checkRegex(item.granuleId, match[1]);
 
     // then check all the files
