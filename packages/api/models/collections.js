@@ -51,17 +51,18 @@ class Collection extends Manager {
     try {
       extraction = new RegExp(item.granuleIdExtraction);
     } catch (err) {
-      throw new InvalidRegexError(`Invalid granuleIdExtraction regex: ${err.message}`);
+      throw new InvalidRegexError(`Invalid granuleIdExtraction regex ${item.granuleIdExtraction}: ${err.message}`);
     }
 
     const match = item.sampleFileName.match(extraction);
     if (!match) {
-      throw new UnmatchedRegexError('granuleIdExtraction regex returns null when applied to sampleFileName');
+      throw new UnmatchedRegexError(`granuleIdExtraction regex ${item.granuleIdExtraction} returns null when applied to sampleFileName ${item.sampleFileName}`);
     }
 
     if (!match[1]) {
       throw new UnmatchedRegexError(
-        `granuleIdExtraction regex ${item.granuleIdExtraction} does not return a matched group when applied to sampleFileName. Ensure that your regex includes capturing groups.`
+        `granuleIdExtraction regex ${item.granuleIdExtraction} does not return a matched group when applied to sampleFileName ${item.sampleFileName}. `
+        + 'Ensure that your regex includes capturing groups.'
       );
     }
     checkRegex(item.granuleId, match[1]);
