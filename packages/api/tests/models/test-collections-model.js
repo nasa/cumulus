@@ -37,9 +37,6 @@ const testMessagesReceived = async (t, QueueUrl, eventType, collection) => {
   } else {
     t.is(dbRecords.length, 2);
     const deleteRecord = dbRecords.find((r) => (r.event === eventType));
-    // {
-    //   if(r.event = eventType) return r;
-    // });
     t.is(deleteRecord.event, eventType);
     t.is(deleteRecord.record.name, collection.name);
     t.is(deleteRecord.record.version, collection.version);

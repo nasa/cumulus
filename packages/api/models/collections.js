@@ -10,16 +10,26 @@ const { collection: collectionSchema } = require('./schemas');
 const Rule = require('./rules');
 const { AssociatedRulesError } = require('../lib/errors');
 
+/**
+ * Test a regular expression against a sample filename.
+ *
+ * @param {string} regex - a regular expression
+ * @param {string} sampleFileName - the same filename to test the regular expression
+ * @throws {InvalidRegexError|UnmatchedRegexError}
+ * @returns {Array<string>} - Array of matches from applying the regex to the sample filename.
+ *  See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match.
+ */
 function checkRegex(regex, sampleFileName) {
-  let validation;
+  let matchingRegex;
   try {
-    validation = new RegExp(regex);
+    matchingRegex = new RegExp(regex);
   } catch (err) {
     throw new InvalidRegexError(`Invalid regex ${regex}: ${err.message}`);
   }
 
-  const match = validation.test(sampleFileName);
-  if (!match) throw new UnmatchedRegexError(`regex ${regex} cannot validate ${sampleFileName}`);
+  const match = sampleFileName.match(matchingRegex);
+  if (!match) throw new UnmatchedRegexError(`regex "${regex}" cannot validate "${sampleFileName}"`);
+  return match;
 }
 
 /**
@@ -45,29 +55,21 @@ class Collection extends Manager {
   static recordIsValid(item, schema = null) {
     super.recordIsValid(item, schema);
 
-    // make sure regexes are correct
-    // first test granuleId extraction and validation regex
-    let extraction;
-    try {
-      extraction = new RegExp(item.granuleIdExtraction);
-    } catch (err) {
-      throw new InvalidRegexError(`Invalid granuleIdExtraction regex ${item.granuleIdExtraction}: ${err.message}`);
-    }
-
-    const match = item.sampleFileName.match(extraction);
-    if (!match) {
-      throw new UnmatchedRegexError(`granuleIdExtraction regex ${item.granuleIdExtraction} returns null when applied to sampleFileName ${item.sampleFileName}`);
-    }
+    // Test that granuleIdExtraction regex matches against sampleFileName
+    const match = checkRegex(item.granuleIdExtraction, item.sampleFileName);
 
     if (!match[1]) {
       throw new UnmatchedRegexError(
-        `granuleIdExtraction regex ${item.granuleIdExtraction} does not return a matched group when applied to sampleFileName ${item.sampleFileName}. `
+        `granuleIdExtraction regex "${item.granuleIdExtraction}" does not return a matched group when applied to sampleFileName "${item.sampleFileName}". `
         + 'Ensure that your regex includes capturing groups.'
       );
     }
+
+    // Test that granuleId regex matches the what was extracted from the
+    // sampleFileName using the granuleIdExtraction
     checkRegex(item.granuleId, match[1]);
 
-    // then check all the files
+    // Check that each file.regex matches against file.sampleFileName
     item.files.forEach((file) => checkRegex(file.regex, file.sampleFileName));
   }
 
