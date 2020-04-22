@@ -328,7 +328,9 @@ test('POST returns a 400 response if record is missing a required property', asy
 
 test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
   const stub = sinon.stub(Rule.prototype, 'create')
-    .callsFake(() => { throw new Error('unexpected error') });
+    .callsFake(() => {
+      throw new Error('unexpected error');
+    });
 
   const newRule = {
     ...testRule,

@@ -1,6 +1,6 @@
 'use strict';
 
-const isValidHostname = require('is-valid-hostname')
+const isValidHostname = require('is-valid-hostname');
 
 const KMS = require('@cumulus/aws-client/KMS');
 const { isNil } = require('@cumulus/common/util');

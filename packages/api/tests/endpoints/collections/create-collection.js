@@ -206,7 +206,9 @@ test('POST with non-matching file.regex returns 400 bad request repsonse', async
 
 test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
   const stub = sinon.stub(Collection.prototype, 'create')
-    .callsFake(() => { throw new Error('unexpected error') });
+    .callsFake(() => {
+      throw new Error('unexpected error');
+    });
 
   const newCollection = fakeCollectionFactory();
 
@@ -254,7 +256,7 @@ test('POST with invalid file.regex returns 400 bad request', async (t) => {
     .send(newCollection)
     .expect(400);
   t.is(response.status, 400);
-  t.true(response.body.message.includes(`Invalid regex`));
+  t.true(response.body.message.includes('Invalid regex'));
 });
 
 test('POST with invalid granuleId regex returns 400 bad request', async (t) => {

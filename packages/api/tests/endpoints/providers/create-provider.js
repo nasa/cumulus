@@ -136,7 +136,6 @@ test('POST creates a new provider', async (t) => {
 test('POST returns a 409 error if the provider already exists', async (t) => {
   const newProvider = fakeProviderFactory();
 
-  const providerModel = new Provider();
   await providerModel.create(newProvider);
 
   const response = await request(app)
@@ -152,7 +151,9 @@ test('POST returns a 409 error if the provider already exists', async (t) => {
 
 test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
   const stub = sinon.stub(Provider.prototype, 'create')
-    .callsFake(() => { throw new Error('unexpected error') });
+    .callsFake(() => {
+      throw new Error('unexpected error');
+    });
 
   const newProvider = fakeProviderFactory();
 

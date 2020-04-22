@@ -14,7 +14,7 @@ const { Search } = require('../es/search');
 const { addToLocalES, indexCollection } = require('../es/indexer');
 const models = require('../models');
 const Collection = require('../es/collections');
-const { AssociatedRulesError, BadRequestError } = require('../lib/errors');
+const { AssociatedRulesError } = require('../lib/errors');
 
 const log = new Logger({ sender: '@cumulus/api/collections' });
 

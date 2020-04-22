@@ -126,7 +126,7 @@ test.serial('Collection.create() throws InvalidRegexError for invalid granuleIdE
       granuleIdExtraction: '*'
     })),
     InvalidRegexError
-  )
+  );
 });
 
 test.serial('Collection.create() throws UnmatchedRegexError for non-matching granuleIdExtraction', async (t) => {
@@ -136,7 +136,7 @@ test.serial('Collection.create() throws UnmatchedRegexError for non-matching gra
       sampleFileName: 'abcd'
     })),
     UnmatchedRegexError
-  )
+  );
 });
 
 test.serial('Collection.create() throws UnmatchedRegexError for granuleIdExtraction with no matching group', async (t) => {
@@ -146,7 +146,7 @@ test.serial('Collection.create() throws UnmatchedRegexError for granuleIdExtract
       sampleFileName: '1234'
     })),
     UnmatchedRegexError
-  )
+  );
 });
 
 test.serial('Collection.create() throws InvalidRegexError for invalid granuleId regex', async (t) => {
@@ -155,7 +155,7 @@ test.serial('Collection.create() throws InvalidRegexError for invalid granuleId 
       granuleId: '*'
     })),
     InvalidRegexError
-  )
+  );
 });
 
 test.serial('Collection.create() throws UnmatchedRegexError for non-matching granuleId regex', async (t) => {
@@ -166,7 +166,7 @@ test.serial('Collection.create() throws UnmatchedRegexError for non-matching gra
       granuleId: 'abcd'
     })),
     UnmatchedRegexError
-  )
+  );
 });
 
 test.serial('Collection.create() throws InvalidRegexError for invalid file.regex', async (t) => {
@@ -179,7 +179,7 @@ test.serial('Collection.create() throws InvalidRegexError for invalid file.regex
       }]
     })),
     InvalidRegexError
-  )
+  );
 });
 
 test.serial('Collection.create() throws UnmatchedRegexError for non-matching file.regex', async (t) => {
@@ -192,7 +192,7 @@ test.serial('Collection.create() throws UnmatchedRegexError for non-matching fil
       }]
     })),
     UnmatchedRegexError
-  )
+  );
 });
 
 test.serial('Collection.delete() sends a deletion record to SNS', async (t) => {
