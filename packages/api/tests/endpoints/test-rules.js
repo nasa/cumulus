@@ -33,26 +33,9 @@ const assertions = require('../../lib/assertions');
 const { app } = require('../../app');
 
 const esIndex = randomString();
-const workflowName = randomString();
-const workflowfile = `${process.env.stackName}/workflows/${workflowName}.json`;
-const templateFile = `${process.env.stackName}/workflow_template.json`;
+const testRule = fakeRuleFactoryV2();
 
-// const testRule = {
-//   name: 'make_coffee',
-//   workflow: workflowName,
-//   provider: 'whole-foods',
-//   collection: {
-//     name: 'compass',
-//     version: '0.0.0'
-//   },
-//   rule: {
-//     type: 'onetime'
-//   },
-//   state: 'DISABLED'
-// };
-const testRule = fakeRuleFactoryV2({
-  workflow: workflowName
-});
+const setBuildPayloadStub = () => sinon.stub(Rule, 'buildPayload').resolves({});
 
 let esClient;
 let jwtAuthToken;
@@ -68,20 +51,7 @@ test.before(async () => {
   esClient = await Search.es('fakehost');
   await S3.createBucket(process.env.system_bucket);
 
-  // await Promise.all([
-  //   awsServices.s3().putObject({
-  //     Bucket: process.env.system_bucket,
-  //     Key: workflowfile,
-  //     Body: '{}'
-  //   }).promise(),
-  //   awsServices.s3().putObject({
-  //     Bucket: process.env.system_bucket,
-  //     Key: templateFile,
-  //     Body: '{}'
-  //   }).promise()
-  // ]);
-  buildPayloadStub = sinon.stub(Rule, 'buildPayload')
-    .callsFake(async () => {});
+  buildPayloadStub = setBuildPayloadStub();
 
   ruleModel = new Rule();
   await ruleModel.createTable();
@@ -364,6 +334,23 @@ test('POST returns a 400 response if rule type is invalid', async (t) => {
     .send(newRule)
     .expect(400);
   t.is(response.status, 400);
+});
+
+test.serial('POST returns a 500 response if workflow definition file does not exist', async (t) => {
+  const newRule = fakeRuleFactoryV2();
+  buildPayloadStub.restore();
+
+  try {
+    const response = await request(app)
+      .post('/rules')
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send(newRule)
+      .expect(500);
+    t.is(response.status, 500);
+  } finally {
+    buildPayloadStub = setBuildPayloadStub();
+  }
 });
 
 test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
