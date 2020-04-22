@@ -31,6 +31,18 @@ async function getKinesisEventMappings() {
   return Promise.all(mappingPromises);
 }
 
+async function deleteKinesisEventSourceMappings() {
+  const eventMappings = await getKinesisEventMappings();
+
+  if(!eventMappings) {
+    return Promise.resolve();
+  }
+
+  const allEventMappings = eventMappings[0].EventSourceMappings.concat(eventMappings[1].EventSourceMappings);
+
+  return Promise.all(allEventMappings.map((e) => awsServices.lambda().deleteEventSourceMapping({ UUID: e.UUID }).promise()));
+}
+
 let rulesModel;
 
 test.before(async () => {
@@ -137,7 +149,7 @@ test('Creating a rule with an undefined type throws an error', async (t) => {
 
   await t.throwsAsync(
     () => rulesModel.create(ruleItem),
-    { message: 'Rule type \'undefined\' not supported.' }
+    { name: 'SchemaValidationError' }
   );
 });
 
@@ -149,7 +161,7 @@ test('Creating a rule with an invalid type throws an error', async (t) => {
 
   await t.throwsAsync(
     () => rulesModel.create(ruleItem),
-    { message: 'Rule type \'invalid\' not supported.' }
+    { name: 'SchemaValidationError' }
   );
 });
 
@@ -198,6 +210,7 @@ test.serial('create a kinesis type rule adds event mappings, creates rule', asyn
 
   // clean up
   await rulesModel.delete(createdRule);
+  await deleteKinesisEventSourceMappings();
 });
 
 test.serial('deleting a kinesis style rule removes event mappings', async (t) => {
@@ -236,6 +249,7 @@ test.serial('update a kinesis type rule state, event source mappings do not chan
 
   // clean up
   await rulesModel.delete(rule);
+  await deleteKinesisEventSourceMappings();
 });
 
 test.serial('update a kinesis type rule value, resulting in new event source mappings', async (t) => {
@@ -263,6 +277,7 @@ test.serial('update a kinesis type rule value, resulting in new event source map
   t.not(updatedRule.rule.logEventArn, rule.rule.logEventArn);
 
   await rulesModel.delete(rule);
+  await deleteKinesisEventSourceMappings();
 });
 
 test.serial('update a kinesis type rule workflow does not affect value or event source mappings', async (t) => {
@@ -290,6 +305,7 @@ test.serial('update a kinesis type rule workflow does not affect value or event 
   t.is(updatedRule.rule.logEventArn, rule.rule.logEventArn);
 
   await rulesModel.delete(rule);
+  await deleteKinesisEventSourceMappings();
 });
 
 test.serial('create a kinesis type rule, using existing event source mappings', async (t) => {
@@ -315,6 +331,7 @@ test.serial('create a kinesis type rule, using existing event source mappings', 
 
   await rulesModel.delete(rule);
   await rulesModel.delete(newRule);
+  await deleteKinesisEventSourceMappings();
 });
 
 test.serial('it does not delete event source mappings if they exist for other rules', async (t) => {
@@ -349,6 +366,7 @@ test.serial('it does not delete event source mappings if they exist for other ru
   // Cleanup -- this is required for repeated local testing, else localstack retains rules
   await rulesModel.delete(rule);
   await rulesModel.delete(ruleThree);
+  await deleteKinesisEventSourceMappings();
 });
 
 test.serial('Creating a kinesis rule where an event source mapping already exists, but is not enabled, succeeds', async (t) => {
@@ -398,7 +416,7 @@ test.serial('Creating a kinesis rule where an event source mapping already exist
   }
 });
 
-test.serial('creating an invalid kinesis type rule does not add event mappings', async (t) => {
+test('creating an invalid kinesis type rule does not add event mappings', async (t) => {
   const { kinesisRule } = t.context;
 
   const newKinesisRule = cloneDeep(kinesisRule);
@@ -410,6 +428,8 @@ test.serial('creating an invalid kinesis type rule does not add event mappings',
   const kinesisEventMappings = await getKinesisEventMappings();
   const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
   const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
+
+  console.log(JSON.stringify(kinesisEventMappings));
 
   t.is(consumerEventMappings.length, 0);
   t.is(logEventMappings.length, 0);
