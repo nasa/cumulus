@@ -137,7 +137,7 @@ test('Creating a rule with an undefined type throws an error', async (t) => {
 
   await t.throwsAsync(
     () => rulesModel.create(ruleItem),
-    { message: 'Rule type undefined not supported.' }
+    { message: 'Rule type \'undefined\' not supported.' }
   );
 });
 
@@ -149,7 +149,7 @@ test('Creating a rule with an invalid type throws an error', async (t) => {
 
   await t.throwsAsync(
     () => rulesModel.create(ruleItem),
-    { message: 'Rule type invalid not supported.' }
+    { message: 'Rule type \'invalid\' not supported.' }
   );
 });
 

@@ -254,7 +254,7 @@ class Rule extends Manager {
       newRuleItem = await this.validateAndUpdateSqsRule(newRuleItem);
       break;
     default:
-      throw new Error(`Rule type ${newRuleItem.rule.type} not supported.`);
+      throw new Error(`Rule type \'${newRuleItem.rule.type}\' not supported.`);
     }
 
     // save
