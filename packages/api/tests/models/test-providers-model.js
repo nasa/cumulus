@@ -123,17 +123,6 @@ test('Providers.create() throws a ValidationError if an invalid hostname is used
   );
 });
 
-test('Providers.create() throws a ValidationError if an invalid IP host is used', async (t) => {
-  const providersModel = new Provider();
-
-  await t.throwsAsync(
-    providersModel.create(
-      fakeProviderFactory({ host: '-127.0.0.1' })
-    ),
-    { name: 'ValidationError' }
-  );
-});
-
 test('Providers.create() encrypts the credentials using KMS', async (t) => {
   const providersModel = new Provider();
 

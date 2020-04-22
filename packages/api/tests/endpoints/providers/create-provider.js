@@ -169,6 +169,19 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
   }
 });
 
+test('POST returns a 400 response if invalid record is provided', async (t) => {
+  const newProvider = fakeProviderFactory();
+  delete newProvider.host;
+
+  const response = await request(app)
+    .post('/providers')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newProvider)
+    .expect(400);
+  t.is(response.status, 400);
+});
+
 test('POST returns a 400 response if invalid hostname is provided', async (t) => {
   const newProvider = fakeProviderFactory({
     host: '-bad-hostname'
