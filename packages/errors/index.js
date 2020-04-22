@@ -122,5 +122,7 @@ module.exports = {
 
   InvalidRegexError: createErrorType('InvalidRegexError'),
 
-  UnmatchedRegexError: createErrorType('UnmatchedRegexError')
+  UnmatchedRegexError: createErrorType('UnmatchedRegexError'),
+
+  ValidationError: createErrorType('ValidationError')
 };

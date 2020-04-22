@@ -8,6 +8,8 @@ const get = require('lodash/get');
 const awsServices = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { ValidationError } = require('@cumulus/errors');
+
 const models = require('../../models');
 const { createSqsQueues, fakeRuleFactoryV2 } = require('../../lib/testUtils');
 
@@ -125,7 +127,10 @@ test('Creating a rule with an invalid name throws an error', async (t) => {
 
   await t.throwsAsync(
     () => rulesModel.create(ruleItem),
-    { message: 'Rule name may only contain letters, numbers, and underscores.' }
+    {
+      instanceOf: ValidationError,
+      message: 'Rule name may only contain letters, numbers, and underscores.'
+    }
   );
 });
 
@@ -137,7 +142,10 @@ test('Creating a rule with an undefined type throws an error', async (t) => {
 
   await t.throwsAsync(
     () => rulesModel.create(ruleItem),
-    { message: 'Rule type \'undefined\' not supported.' }
+    {
+      instanceOf: ValidationError,
+      message: 'Rule type \'undefined\' not supported.'
+    }
   );
 });
 
@@ -149,7 +157,10 @@ test('Creating a rule with an invalid type throws an error', async (t) => {
 
   await t.throwsAsync(
     () => rulesModel.create(ruleItem),
-    { message: 'Rule type \'invalid\' not supported.' }
+    {
+      instanceOf: ValidationError,
+      message: 'Rule type \'invalid\' not supported.'
+    }
   );
 });
 

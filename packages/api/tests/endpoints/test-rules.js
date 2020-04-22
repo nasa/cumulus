@@ -293,7 +293,7 @@ test('POST creates a rule', async (t) => {
   t.deepEqual(record, newRule);
 });
 
-test('POST returns a record exists when one exists', async (t) => {
+test('POST returns a 409 response if record already exists', async (t) => {
   const newRule = { ...testRule };
 
   const response = await request(app)

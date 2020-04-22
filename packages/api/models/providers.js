@@ -4,6 +4,7 @@ const isValidHostname = require('is-valid-hostname');
 
 const KMS = require('@cumulus/aws-client/KMS');
 const { isNil } = require('@cumulus/common/util');
+const { ValidationError } = require('@cumulus/errors');
 
 const Manager = require('./base');
 const Rule = require('./rules');
@@ -14,10 +15,8 @@ const encryptValueWithKMS = (value) =>
   KMS.encrypt(process.env.provider_kms_key_id, value);
 
 const buildValidationError = ({ detail }) => {
-  const err = new Error('The record has validation errors');
-  err.name = 'ValidationError';
+  const err = new ValidationError('The record has validation errors');
   err.detail = detail;
-
   return err;
 };
 

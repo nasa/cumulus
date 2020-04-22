@@ -4,6 +4,7 @@ const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 const merge = require('lodash/merge');
 const set = require('lodash/set');
+
 const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
 const { invoke } = require('@cumulus/aws-client/Lambda');
 const awsServices = require('@cumulus/aws-client/services');
@@ -11,6 +12,8 @@ const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const s3Utils = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const workflows = require('@cumulus/common/workflows');
+const { ValidationError } = require('@cumulus/errors');
+
 const Manager = require('./base');
 const { rule: ruleSchema } = require('./schemas');
 
@@ -217,7 +220,7 @@ class Rule extends Manager {
     // make sure the name only has word characters
     const re = /[^\w]/;
     if (re.test(item.name)) {
-      throw new Error('Rule name may only contain letters, numbers, and underscores.');
+      throw new ValidationError('Rule name may only contain letters, numbers, and underscores.');
     }
 
     // Initialize new rule object
@@ -254,7 +257,7 @@ class Rule extends Manager {
       newRuleItem = await this.validateAndUpdateSqsRule(newRuleItem);
       break;
     default:
-      throw new Error(`Rule type \'${newRuleItem.rule.type}\' not supported.`);
+      throw new ValidationError(`Rule type \'${newRuleItem.rule.type}\' not supported.`);
     }
 
     // save
