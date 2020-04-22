@@ -137,6 +137,10 @@ test('enabling a disabled rule updates the state', async (t) => {
   await rulesModel.delete(rule);
 });
 
+test('creating a rule with an invalid schema throws an error', async (t) => {
+  await t.throwsAsync(rulesModel.create({}), { name: 'SchemaValidationError' });
+});
+
 test.serial('create a kinesis type rule adds event mappings, creates rule', async (t) => {
   const { kinesisRule } = t.context;
 
@@ -356,6 +360,23 @@ test.serial('Creating a kinesis rule where an event source mapping already exist
   } finally {
     lambdaStub.restore();
   }
+});
+
+test.serial('creating an invalid kinesis type rule does not add event mappings', async (t) => {
+  const { kinesisRule } = t.context;
+
+  const newKinesisRule = cloneDeep(kinesisRule);
+  delete newKinesisRule.name;
+
+  // attempt to create rule
+  await t.throwsAsync(rulesModel.create(newKinesisRule), { name: 'SchemaValidationError' });
+
+  const kinesisEventMappings = await getKinesisEventMappings();
+  const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
+  const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
+
+  t.is(consumerEventMappings.length, 0);
+  t.is(logEventMappings.length, 0);
 });
 
 test('Creating a rule with a queueName parameter', async (t) => {

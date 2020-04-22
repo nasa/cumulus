@@ -228,6 +228,12 @@ class Rule extends Manager {
       newRuleItem.state = 'ENABLED';
     }
 
+    newRuleItem.createdAt = Date.now();
+    newRuleItem.updatedAt = Date.now();
+
+    // Validate rule before kicking off workflows or adding event source mappings
+    await this.constructor.recordIsValid(newRuleItem, this.schema, this.removeAdditional);
+
     const payload = await Rule.buildPayload(newRuleItem);
     switch (newRuleItem.rule.type) {
     case 'onetime': {
