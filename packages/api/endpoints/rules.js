@@ -80,7 +80,8 @@ async function post(req, res) {
       throw e;
     }
   } catch (e) {
-    if (e.name === 'SchemaValidationError') {
+    if (e.name === 'SchemaValidationError'
+        || e.name === 'ValidationError') {
       return res.boom.badRequest(e.message);
     }
     log.error('Error occurred while trying to create rule:', e);
