@@ -88,7 +88,7 @@ A class for sending requests to Launchpad token service endpoints
 ```js
 const LaunchpadToken = require('@cumulus/launchpad-auth/LaunchpadToken');
 
-const LaunchpadToken = new LaunchpadToken({
+const launchpadToken = new LaunchpadToken({
  api: 'launchpad-token-api-endpoint',
  passphrase: 'my-pki-passphrase',
  certificate: 'my-pki-certificate.pfx'
