@@ -40,6 +40,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated POST endpoint for `/providers`:
     - Return a 400 response if the `host` field value is invalid
     - Return a 409 response if the provider already exists
+  - Updated POST endpoint for `/rules`:
+    - Return a 400 response if rule `name` is invalid
+    - Return a 400 response if rule `type` is invalid
 
 ### Fixed
 
