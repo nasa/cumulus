@@ -6,7 +6,7 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
 const Provider = require('../models/providers');
-const { AssociatedRulesError } = require('../lib/errors');
+const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 const { Search } = require('../es/search');
 const { addToLocalES, indexProvider } = require('../es/indexer');
 
@@ -81,8 +81,7 @@ async function post(req, res) {
       throw e;
     }
   } catch (err) {
-    if (err.name === 'SchemaValidationError'
-       || err.name === 'ValidationError') {
+    if (isBadRequestError(err)) {
       return res.boom.badRequest(err.message);
     }
     log.error('Error occurred while trying to create provider:', err);

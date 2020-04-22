@@ -5,6 +5,7 @@ const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
+const { isBadRequestError } = require('../lib/errors');
 const models = require('../models');
 const { Search } = require('../es/search');
 const { addToLocalES, indexRule } = require('../es/indexer');
@@ -80,8 +81,7 @@ async function post(req, res) {
       throw e;
     }
   } catch (e) {
-    if (e.name === 'SchemaValidationError'
-        || e.name === 'ValidationError') {
+    if (isBadRequestError(e)) {
       return res.boom.badRequest(e.message);
     }
     log.error('Error occurred while trying to create rule:', e);
