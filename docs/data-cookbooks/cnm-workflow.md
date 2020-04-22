@@ -8,7 +8,7 @@ hide_title: true
 
 This entry documents how to setup a workflow that utilizes the built-in CNM/Kinesis functionality in Cumulus.
 
-Prior to working through this entry you should be familiar with the [Cloud Notification Mechanism](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism).
+Prior to working through this entry you should be familiar with the [Cloud Notification Mechanism](https://github.com/podaac/cloud-notification-message-schema).
 
 ## Sections
 
@@ -227,10 +227,8 @@ To execute this workflow, you're required to include several Lambda resources in
 
 **Please note:** To utilize these tasks you need to ensure you have a compatible CMA layer. See the [deployment instructions](../deployment/README.md#deploy-cumulus-message-adapter-layer) for more details on how to deploy a CMA layer.
 
-For NASA Bitbucket users, the source code for these tasks can be found in these repositories:
-
-- `CNMToCMA`: <https://git.earthdata.nasa.gov/projects/POCUMULUS/repos/cnmtogranule/browse>
-- `CnmResponse`: <https://git.earthdata.nasa.gov/projects/POCUMULUS/repos/cnmresponsetask/browse>
+- `CNMToCMA`: <https://github.com/podaac/cumulus-cnm-to-granule>
+- `CnmResponse`: <https://github.com/podaac/cumulus-cnm-response-task>
 
 Below is a description of each of these tasks:
 
@@ -244,7 +242,7 @@ You can also manipulate the data sent to downstream tasks using `task_config` fo
 
 The `CnmResponse` Lambda generates a CNM response message and puts it on the `response-endpoint` Kinesis stream.
 
-You can read more about the expected schema of a `CnmResponse` record on the wiki page for [Cloud Notification Mechanism](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism#CloudNotificationMechanism-ResponseMessageFields).
+You can read more about the expected schema of a `CnmResponse` record in the [Cloud Notification Mechanism schema repository](https://github.com/podaac/cloud-notification-message-schema#response-message-fields).
 
 ##### Additional Tasks
 
@@ -300,7 +298,7 @@ For the purpose of this example, the easiest way to accomplish this is using the
 
 #### Create Record JSON
 
-Construct a JSON file containing an object that matches the values that have been previously setup. This JSON object should be a valid [Cloud Notification Mechanism](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism) message.
+Construct a JSON file containing an object that matches the values that have been previously setup. This JSON object should be a valid [Cloud Notification Mechanism](https://github.com/podaac/cloud-notification-message-schema#cumulus-sns-schema) message.
 
 **Please note**: _this example is somewhat contrived, as the downstream tasks don't care about most of these fields. A 'real' data ingest workflow would._
 
@@ -444,7 +442,7 @@ Assuming a successful execution of the workflow, this task will recover the `met
 
 If a prior step in the the workflow has failed, this will add a "FAILURE" record to the stream instead.
 
-The data written to the `response-endpoint` should adhere to the [Response Message Fields](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism#CloudNotificationMechanism-ResponseMessageFields) schema.
+The data written to the `response-endpoint` should adhere to the [Response Message Fields](https://github.com/podaac/cloud-notification-message-schema#cumulus-sns-schema) schema.
 
 **Example CNM Success Response**:
 

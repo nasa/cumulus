@@ -30,6 +30,9 @@ mth-dev-tf:
 lpf-tf:
   bucket: lf-internal
 
+lpf:
+  bucket: lf-internal
+
 mhs3:
   bucket: mhs3-internal
 
