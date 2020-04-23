@@ -7,7 +7,7 @@
   },
   "scripts": {
     "build": "webpack && (cd dist && rm -f package.zip && zip src.zip index.js)",
-    "webpack": "npm run build",
+    "package": "npm run build",
     "test": "ava"
   },
   "publishConfig": {

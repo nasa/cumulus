@@ -21,7 +21,7 @@
     "build": "rm -rf dist && mkdir dist && webpack",
     "build-docs": "jsdoc2md --template README.hbs Collections.js Executions.js Granules.js Providers.js Rules.js > README.md",
     "lint": "eslint .",
-    "webpack": "npm run build"
+    "package": "npm run build"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
