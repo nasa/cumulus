@@ -13,7 +13,8 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "./dist/**/*"
+    "./dist/**/*.js",
+    "./dist/**/*.d.ts"
   ],
   "publishConfig": {
     "access": "public"
@@ -26,7 +27,15 @@
   "scripts": {
     "tsc": "tsc",
     "prepare": "npm run tsc",
-    "test": "npm run tsc && ava"
+    "test": "ava"
+  },
+  "ava": {
+    "extensions": [
+      "ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ]
   },
   "nyc": {
     "exclude": [
@@ -42,6 +51,7 @@
     "@types/lodash.iserror": "^3.1.6",
     "ava": "^2.1.0",
     "moment": "^2.22.2",
+    "ts-node": "^8.9.0",
     "typescript": "^3.8.3"
   }
 }
