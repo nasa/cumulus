@@ -20,9 +20,9 @@
   "scripts": {
     "test": "echo 'No Tests'",
     "build": "rm -rf dist && mkdir dist && webpack",
-    "build-lambda-zips": "(cd dist && rm -f lambda.zip && zip lambda.zip index.js)",
+    "build-lambda-zips": "(cd dist && rm -f lambda.zip && zip -q lambda.zip index.js)",
     "watch": "rm -rf dist && mkdir dist && webpack --progress -w",
-    "webpack": "npm run build && npm run build-lambda-zips"
+    "package": "npm run build && npm run build-lambda-zips"
   },
   "nyc": {
     "exclude": [

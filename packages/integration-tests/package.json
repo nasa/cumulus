@@ -21,7 +21,7 @@
     "build": "rm -rf dist && mkdir dist && webpack",
     "build-docs": "jsdoc2md --template README.hbs Collections.js Executions.js Granules.js Providers.js Rules.js > README.md",
     "lint": "eslint .",
-    "webpack": "npm run build"
+    "package": "npm run build"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
@@ -31,7 +31,6 @@
     "@cumulus/aws-client": "1.21.0",
     "@cumulus/cmrjs": "1.21.0",
     "@cumulus/common": "1.21.0",
-    "@cumulus/deployment": "1.21.0",
     "@cumulus/launchpad-auth": "1.21.0",
     "@cumulus/message": "1.21.0",
     "aws-sdk": "^2.585.0",

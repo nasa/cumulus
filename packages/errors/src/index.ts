@@ -102,3 +102,9 @@ export const UnparsableFileLocationError = createErrorType('UnparsableFileLocati
 
 // if a record cannot be found
 export const RecordDoesNotExist = createErrorType('RecordDoesNotExist');
+
+export const InvalidRegexError = createErrorType('InvalidRegexError');
+
+export const UnmatchedRegexError = createErrorType('UnmatchedRegexError');
+
+export const ValidationError = createErrorType('ValidationError');

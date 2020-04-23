@@ -9,7 +9,7 @@
   "scripts": {
     "build": "rm -rf dist && mkdir dist && webpack",
     "watch": "rm -rf dist && mkdir dist && webpack --progress -w",
-    "webpack": "npm run build && (cd dist && zip -r lambda.zip index.js)"
+    "package": "npm run build && (cd dist && zip -q -r lambda.zip index.js)"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",

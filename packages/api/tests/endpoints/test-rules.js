@@ -2,14 +2,20 @@
 
 const omit = require('lodash/omit');
 const test = require('ava');
+const sinon = require('sinon');
 const request = require('supertest');
-const cloneDeep = require('lodash/cloneDeep');
-const awsServices = require('@cumulus/aws-client/services');
-const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+
+const S3 = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+
 const bootstrap = require('../../lambdas/bootstrap');
-const models = require('../../models');
-const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../lib/testUtils');
+const AccessToken = require('../../models/access-tokens');
+const Rule = require('../../models/rules');
+const {
+  createFakeJwtAuthToken,
+  setAuthorizedOAuthUsers,
+  fakeRuleFactoryV2
+} = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
 const indexer = require('../../es/indexer');
 const assertions = require('../../lib/assertions');
@@ -27,28 +33,15 @@ const assertions = require('../../lib/assertions');
 const { app } = require('../../app');
 
 const esIndex = randomString();
-const workflowName = randomString();
-const workflowfile = `${process.env.stackName}/workflows/${workflowName}.json`;
-const templateFile = `${process.env.stackName}/workflow_template.json`;
+const testRule = fakeRuleFactoryV2();
 
-const testRule = {
-  name: 'make_coffee',
-  workflow: workflowName,
-  provider: 'whole-foods',
-  collection: {
-    name: 'compass',
-    version: '0.0.0'
-  },
-  rule: {
-    type: 'onetime'
-  },
-  state: 'DISABLED'
-};
+const setBuildPayloadStub = () => sinon.stub(Rule, 'buildPayload').resolves({});
 
 let esClient;
 let jwtAuthToken;
 let accessTokenModel;
 let ruleModel;
+let buildPayloadStub;
 
 test.before(async () => {
   const esAlias = randomString();
@@ -56,21 +49,11 @@ test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
   esClient = await Search.es('fakehost');
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
-  await Promise.all([
-    awsServices.s3().putObject({
-      Bucket: process.env.system_bucket,
-      Key: workflowfile,
-      Body: '{}'
-    }).promise(),
-    awsServices.s3().putObject({
-      Bucket: process.env.system_bucket,
-      Key: templateFile,
-      Body: '{}'
-    }).promise()
-  ]);
+  await S3.createBucket(process.env.system_bucket);
 
-  ruleModel = new models.Rule();
+  buildPayloadStub = setBuildPayloadStub();
+
+  ruleModel = new Rule();
   await ruleModel.createTable();
 
   const ruleRecord = await ruleModel.create(testRule);
@@ -79,7 +62,7 @@ test.before(async () => {
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
 
-  accessTokenModel = new models.AccessToken();
+  accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
@@ -88,8 +71,9 @@ test.before(async () => {
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await ruleModel.deleteTable();
-  await recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await S3.recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
+  buildPayloadStub.restore();
 });
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -195,7 +179,7 @@ test('CUMULUS-912 DELETE with pathParameters and with an invalid access token re
 
 test.todo('CUMULUS-912 DELETE with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test('default returns list of rules', async (t) => {
+test.serial('default returns list of rules', async (t) => {
   const response = await request(app)
     .get('/rules')
     .set('Accept', 'application/json')
@@ -218,7 +202,7 @@ test('GET gets a rule', async (t) => {
 });
 
 test('When calling the API endpoint to delete an existing rule it does not return the deleted rule', async (t) => {
-  const newRule = { ...testRule, name: 'pop_culture_reference' };
+  const newRule = fakeRuleFactoryV2();
 
   let response = await request(app)
     .post('/rules')
@@ -241,7 +225,7 @@ test('When calling the API endpoint to delete an existing rule it does not retur
 });
 
 test('403 error when calling the API endpoint to delete an existing rule without an valid access token', async (t) => {
-  const newRule = { ...testRule, name: 'side_step_left' };
+  const newRule = fakeRuleFactoryV2();
 
   let response = await request(app)
     .post('/rules')
@@ -273,7 +257,9 @@ test('403 error when calling the API endpoint to delete an existing rule without
 });
 
 test('POST creates a rule', async (t) => {
-  const newRule = Object.assign(cloneDeep(testRule), { name: 'make_waffles' });
+  const newRule = fakeRuleFactoryV2({
+    name: 'make_waffles'
+  });
   const response = await request(app)
     .post('/rules')
     .set('Accept', 'application/json')
@@ -290,8 +276,10 @@ test('POST creates a rule', async (t) => {
   t.deepEqual(record, newRule);
 });
 
-test('POST returns a record exists when one exists', async (t) => {
-  const newRule = { ...testRule };
+test('POST returns a 409 response if record already exists', async (t) => {
+  const newRule = fakeRuleFactoryV2();
+
+  await ruleModel.create(newRule);
 
   const response = await request(app)
     .post('/rules')
@@ -303,6 +291,89 @@ test('POST returns a record exists when one exists', async (t) => {
   const { message, record } = response.body;
   t.is(message, `A record already exists for ${newRule.name}`);
   t.falsy(record);
+});
+
+test('POST returns a 400 response if record is missing a required property', async (t) => {
+  const newRule = fakeRuleFactoryV2();
+
+  // Remove required property to trigger create error
+  delete newRule.collection;
+
+  const response = await request(app)
+    .post('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newRule)
+    .expect(400);
+  t.is(response.status, 400);
+});
+
+test('POST returns a 400 response if rule name is invalid', async (t) => {
+  const newRule = fakeRuleFactoryV2({
+    name: 'bad rule name'
+  });
+
+  const response = await request(app)
+    .post('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newRule)
+    .expect(400);
+  t.is(response.status, 400);
+});
+
+test('POST returns a 400 response if rule type is invalid', async (t) => {
+  const newRule = fakeRuleFactoryV2({
+    type: 'invalid'
+  });
+
+  const response = await request(app)
+    .post('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newRule)
+    .expect(400);
+  t.is(response.status, 400);
+});
+
+test.serial('POST returns a 500 response if workflow definition file does not exist', async (t) => {
+  const newRule = fakeRuleFactoryV2();
+  buildPayloadStub.restore();
+
+  try {
+    const response = await request(app)
+      .post('/rules')
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send(newRule)
+      .expect(500);
+    t.is(response.status, 500);
+  } finally {
+    buildPayloadStub = setBuildPayloadStub();
+  }
+});
+
+test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
+  const stub = sinon.stub(Rule.prototype, 'create')
+    .callsFake(() => {
+      throw new Error('unexpected error');
+    });
+
+  const newRule = fakeRuleFactoryV2({
+    type: 'invalid'
+  });
+
+  try {
+    const response = await request(app)
+      .post('/rules')
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send(newRule)
+      .expect(500);
+    t.is(response.status, 500);
+  } finally {
+    stub.restore();
+  }
 });
 
 test('PUT replaces a rule', async (t) => {
@@ -365,7 +436,7 @@ test('PUT returns 400 for name mismatch between params and payload',
   });
 
 test('DELETE deletes a rule', async (t) => {
-  const newRule = { ...testRule, name: randomString() };
+  const newRule = fakeRuleFactoryV2();
 
   await request(app)
     .post('/rules')
