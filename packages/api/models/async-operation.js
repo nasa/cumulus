@@ -1,6 +1,8 @@
 'use strict';
 
 const { ecs, s3 } = require('@cumulus/aws-client/services');
+const { EcsStartTaskError } = require('@cumulus/errors');
+
 const uuidv4 = require('uuid/v4');
 const Manager = require('./base');
 const { asyncOperation: asyncOperationSchema } = require('./schemas');
@@ -35,6 +37,10 @@ class AsyncOperation extends Manager {
 
     this.systemBucket = params.systemBucket;
     this.stackName = params.stackName;
+  }
+
+  static generateID() {
+    return uuidv4();
   }
 
   runECSTask({
@@ -87,7 +93,7 @@ class AsyncOperation extends Manager {
     } = params;
 
     // Create the record in the database
-    const id = uuidv4();
+    const id = AsyncOperation.generateID();
     await this.create({
       id,
       status: 'RUNNING',
@@ -115,19 +121,25 @@ class AsyncOperation extends Manager {
 
     // If creating the stack failed, update the database
     if (runTaskResponse.failures.length > 0) {
-      return this.update(
+      const ecsStartTaskError = new EcsStartTaskError(
+        `Failed to start AsyncOperation: ${runTaskResponse.failures[0].reason}`
+      );
+
+      await this.update(
         { id },
         {
           status: 'RUNNER_FAILED',
           description,
           operationType,
           output: JSON.stringify({
-            name: 'EcsStartTaskError',
-            message: `Failed to start AsyncOperation: ${runTaskResponse.failures[0].reason}`,
-            stack: (new Error()).stack
+            name: ecsStartTaskError.name,
+            message: ecsStartTaskError.message,
+            stack: ecsStartTaskError.stack
           })
         }
       );
+
+      throw ecsStartTaskError;
     }
 
     // Update the database with the taskArn
