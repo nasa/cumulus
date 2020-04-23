@@ -24,9 +24,9 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
-    "build": "tsc",
-    "prepare": "npm run build",
-    "test": "npm run build && ava"
+    "tsc": "tsc",
+    "prepare": "npm run tsc",
+    "test": "npm run tsc && ava"
   },
   "nyc": {
     "exclude": [
