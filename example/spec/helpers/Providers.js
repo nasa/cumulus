@@ -3,10 +3,9 @@
 const isIp = require('is-ip');
 const providersApi = require('@cumulus/api-client/providers');
 const { getTextObject } = require('@cumulus/aws-client/S3');
-const { isNonEmptyString } = require('@cumulus/common/string');
 
 const fetchFakeProviderIp = async () => {
-  if (!isNonEmptyString(process.env.FAKE_PROVIDER_CONFIG_BUCKET)) {
+  if (!process.env.FAKE_PROVIDER_CONFIG_BUCKET) {
     throw new Error('The FAKE_PROVIDER_CONFIG_BUCKET environment variable must be set');
   }
 
@@ -23,13 +22,7 @@ const fetchFakeProviderIp = async () => {
   return ip;
 };
 
-const getProviderHost = async () => {
-  if (isNonEmptyString(process.env.PROVIDER_HOST)) {
-    return process.env.PROVIDER_HOST;
-  }
-
-  return fetchFakeProviderIp();
-};
+const getProviderHost = async () => process.env.PROVIDER_HOST || fetchFakeProviderIp();
 
 const buildFtpProvider = async (postfix = '') => {
   const provider = {
@@ -41,7 +34,7 @@ const buildFtpProvider = async (postfix = '') => {
     globalConnectionLimit: 10
   };
 
-  if (isNonEmptyString(process.env.PROVIDER_FTP_PORT)) {
+  if (process.env.PROVIDER_FTP_PORT) {
     provider.port = Number(process.env.PROVIDER_FTP_PORT);
   }
 
@@ -57,7 +50,7 @@ const buildHttpProvider = async (postfix = '') => {
     globalConnectionLimit: 10
   };
 
-  if (isNonEmptyString(process.env.PROVIDER_HTTP_PORT)) {
+  if (process.env.PROVIDER_HTTP_PORT) {
     provider.port = Number(process.env.PROVIDER_HTTP_PORT);
   }
 
