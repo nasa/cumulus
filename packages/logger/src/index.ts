@@ -16,26 +16,26 @@ type LoggerConstructorOptions = {
 };
 
 class Logger {
-  readonly #asyncOperationId: string | undefined;
-  readonly #executions: string | undefined;
-  readonly #granules: string | undefined;
-  readonly #parentArn: string | undefined;
-  readonly #pretty: boolean;
-  readonly #sender: string;
-  readonly #stackName: string | undefined;
-  readonly #console: Console;
-  readonly #version: string | undefined;
+  private readonly asyncOperationId: string | undefined;
+  private readonly executions: string | undefined;
+  private readonly granules: string | undefined;
+  private readonly parentArn: string | undefined;
+  private readonly pretty: boolean;
+  private readonly sender: string;
+  private readonly stackName: string | undefined;
+  private readonly console: Console;
+  private readonly version: string | undefined;
 
   constructor(options: LoggerConstructorOptions = {}) {
-    this.#asyncOperationId = options.asyncOperationId;
-    this.#executions = options.executions;
-    this.#granules = options.granules;
-    this.#parentArn = options.parentArn;
-    this.#pretty = options.pretty || false;
-    this.#sender = options.sender || 'unknown';
-    this.#stackName = options.stackName;
-    this.#console = options.console || global.console;
-    this.#version = options.version;
+    this.asyncOperationId = options.asyncOperationId;
+    this.executions = options.executions;
+    this.granules = options.granules;
+    this.parentArn = options.parentArn;
+    this.pretty = options.pretty || false;
+    this.sender = options.sender || 'unknown';
+    this.stackName = options.stackName;
+    this.console = options.console || global.console;
+    this.version = options.version;
   }
 
   /**
@@ -85,7 +85,7 @@ class Logger {
   /**
    * Log an info message
    */
-  info(...messageArgs: string[]) {
+  info(...messageArgs: any[]) {
     this.writeLogEvent('info', messageArgs);
   }
 
@@ -102,14 +102,14 @@ class Logger {
   /**
    * Log a trace message
    */
-  trace(...messageArgs: string[]) {
+  trace(...messageArgs: any[]) {
     this.writeLogEvent('trace', messageArgs);
   }
 
   /**
    * Log a warning message
    */
-  warn(...messageArgs: string[]) {
+  warn(...messageArgs: any[]) {
     this.writeLogEvent('warn', messageArgs);
   }
 
@@ -122,16 +122,16 @@ class Logger {
     }
 
     const standardLogEvent = {
-      asyncOperationId: this.#asyncOperationId,
-      executions: this.#executions,
-      granules: this.#granules,
+      asyncOperationId: this.asyncOperationId,
+      executions: this.executions,
+      granules: this.granules,
       level,
       message,
-      parentArn: this.#parentArn,
-      sender: this.#sender,
-      stackName: this.#stackName,
+      parentArn: this.parentArn,
+      sender: this.sender,
+      stackName: this.stackName,
       timestamp: (new Date()).toISOString(),
-      version: this.#version
+      version: this.version
     };
 
     const logEvent = {
@@ -139,12 +139,12 @@ class Logger {
       ...standardLogEvent
     };
 
-    const logEventString = this.#pretty
+    const logEventString = this.pretty
       ? JSON.stringify(logEvent, null, 2)
       : JSON.stringify(logEvent);
 
-    if (level === 'error') this.#console.error(logEventString);
-    else this.#console.log(logEventString);
+    if (level === 'error') this.console.error(logEventString);
+    else this.console.log(logEventString);
   }
 }
 
