@@ -4,6 +4,7 @@ const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 const merge = require('lodash/merge');
 const set = require('lodash/set');
+
 const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
 const { invoke } = require('@cumulus/aws-client/Lambda');
 const awsServices = require('@cumulus/aws-client/services');
@@ -11,6 +12,8 @@ const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const s3Utils = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const workflows = require('@cumulus/common/workflows');
+const { ValidationError } = require('@cumulus/errors');
+
 const Manager = require('./base');
 const { rule: ruleSchema } = require('./schemas');
 
@@ -195,14 +198,14 @@ class Rule extends Manager {
     // makes sure the workflow exists
     const bucket = process.env.system_bucket;
     const stack = process.env.stackName;
-    const key = `${stack}/workflows/${item.workflow}.json`;
-    const exists = await s3Utils.fileExists(bucket, key);
+    const workflowFileKey = workflows.getWorkflowFileKey(stack, item.workflow);
 
-    if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${key} for ${item.name}`);
+    const exists = await s3Utils.fileExists(bucket, workflowFileKey);
+    if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${workflowFileKey} for ${item.name}`);
 
     const definition = await s3Utils.getJsonS3Object(
       bucket,
-      workflows.getWorkflowFileKey(stack, item.workflow)
+      workflowFileKey
     );
     const template = await s3Utils.getJsonS3Object(bucket, workflows.templateKey(stack));
 
@@ -228,7 +231,7 @@ class Rule extends Manager {
     // make sure the name only has word characters
     const re = /[^\w]/;
     if (re.test(item.name)) {
-      throw new Error('Rule name may only contain letters, numbers, and underscores.');
+      throw new ValidationError('Rule name may only contain letters, numbers, and underscores.');
     }
 
     // Initialize new rule object
@@ -280,7 +283,7 @@ class Rule extends Manager {
         newRuleItem = await this.validateAndUpdateSqsRule(newRuleItem);
         break;
       default:
-        throw new Error(`Rule type \'${newRuleItem.rule.type}\' not supported.`);
+        throw new ValidationError(`Rule type \'${newRuleItem.rule.type}\' not supported.`);
     }
     return newRuleItem;
   }

@@ -5,11 +5,11 @@ const cloneDeep = require('lodash/cloneDeep');
 const merge = require('lodash/merge');
 const mime = require('mime-types');
 const path = require('path');
+const replace = require('lodash/replace');
 
 const { headObject, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
-const { globalReplace } = require('@cumulus/common/string');
 const { loadConfig } = require('@cumulus/integration-tests/config');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
@@ -41,21 +41,27 @@ function templateFile({ inputTemplateFilename, config }) {
 }
 
 /**
+ * @typedef {Object} StringReplacement
+ * @property {string} old - the string to be replaced
+ * @property {string} new - the replacement string
+ */
+
+/**
  * Upload a file from the test-data package to the S3 test data
  * and update contents with replacements
  *
  * @param {string} file - filename of data to upload
  * @param {string} bucket - bucket to upload to
  * @param {string} prefix - S3 folder prefix
- * @param {Array<Object>} [replacements] - array of replacements in file content e.g. [{old: 'test', new: 'newTest' }]
+ * @param {Array<StringReplacement>} [replacements] - array of replacements in file content e.g. [{old: 'test', new: 'newTest' }]
  * @returns {Promise<Object>} - promise returned from S3 PUT
  */
 function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-test-data/pdrs', replacements = []) {
   let data;
   if (replacements.length > 0) {
     data = fs.readFileSync(require.resolve(file), 'utf8');
-    replacements.forEach((replace) => {
-      data = globalReplace(data, replace.old, replace.new);
+    replacements.forEach((replacement) => {
+      data = replace(data, new RegExp(replacement.old, 'g'), replacement.new);
     });
   } else data = fs.readFileSync(require.resolve(file));
   const key = path.basename(file);

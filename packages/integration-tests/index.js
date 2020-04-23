@@ -2,6 +2,7 @@
 
 'use strict';
 
+const replace = require('lodash/replace');
 const orderBy = require('lodash/orderBy');
 const path = require('path');
 const cloneDeep = require('lodash/cloneDeep');
@@ -27,7 +28,6 @@ const {
   getWorkflowFileKey
 } = require('@cumulus/common/workflows');
 const { readJsonFile } = require('@cumulus/common/FileUtils');
-const { globalReplace } = require('@cumulus/common/string');
 const { sleep } = require('@cumulus/common/util');
 const ProvidersModel = require('@cumulus/api/models/providers');
 const RulesModel = require('@cumulus/api/models/rules');
@@ -646,7 +646,7 @@ async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
     rules,
     (rule) => {
       if (postfix) {
-        rule.name += globalReplace(postfix, '-', '_'); // rule cannot have dashes
+        rule.name += replace(postfix, /-/g, '_');
         rule.collection.name += postfix;
         rule.provider += postfix;
       }
