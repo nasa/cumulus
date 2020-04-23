@@ -111,7 +111,6 @@ export const InvalidArgument = createErrorType('InvalidArgument');
  */
 export const MismatchPdrCollection = createErrorType('MismatchPdrCollection');
 
-// Error class for file locations that are unparsable
 export const UnparsableFileLocationError = createErrorType('UnparsableFileLocationError');
 
 export const RecordDoesNotExist = createErrorType('RecordDoesNotExist');
