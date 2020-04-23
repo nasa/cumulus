@@ -97,6 +97,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `@cumulus/common/workflows.getWorkflowList()`
   - `@cumulus/common/workflows.getWorkflowTemplate()`
   - `@cumulus/integration-tests/sfnStep/SfnStep.parseStepMessage()` -> `@cumulus/message/StepFunctions.parseStepMessage()`
+- **CUMULUS-1858** - Deprecated the following functions.
+  - `@cumulus/common/string.globalReplace()`
+  - `@cumulus/common/string.isNonEmptyString()`
+  - `@cumulus/common/string.isValidHostname()`
+  - `@cumulus/common/string.match()`
+  - `@cumulus/common/string.matches()`
+  - `@cumulus/common/string.replace()`
+  - `@cumulus/common/string.toLower()`
+  - `@cumulus/common/string.toUpper()`
 
 ### Removed
 

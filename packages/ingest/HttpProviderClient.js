@@ -9,7 +9,7 @@ const got = require('got');
 
 const { buildS3Uri, promiseS3Upload } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
-const { isValidHostname } = require('@cumulus/common/string');
+const isValidHostname = require('is-valid-hostname');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const errors = require('@cumulus/errors');
 const { lookupMimeType } = require('./util');

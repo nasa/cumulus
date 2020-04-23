@@ -5,14 +5,15 @@
  * @module string
  *
  * @example
- * const { toLower } = require('@cumulus/common/string');
+ * const { match } = require('@cumulus/common/string');
  *
- * toLower('aSDf'); // => 'asdf'
+ * match(/aS/, aSDf');
  */
 
 const curry = require('lodash/curry');
 const flow = require('lodash/flow');
 const isString = require('lodash/isString');
+const { deprecate } = require('util');
 
 const { isNull, negate } = require('./util');
 
@@ -34,6 +35,8 @@ const { isNull, negate } = require('./util');
  *
  * This is a curried function - https://lodash.com/docs/4.17.11#curry
  *
+ * @deprecated
+ *
  * @alias module:string
  * @kind function
  */
@@ -49,6 +52,8 @@ const replace = curry(
  * @param {string} newSubString - The string replacement
  * @returns {string} the modified string
  *
+ * @deprecated
+ *
  * @alias module:string
  */
 function globalReplace(string, oldSubString, newSubString) {
@@ -61,6 +66,8 @@ function globalReplace(string, oldSubString, newSubString) {
  * @param {string} str - the string to convert
  * @returns {string} the lower-cased string
  *
+ * @deprecated
+ *
  * @alias module:string
  */
 const toLower = (str) => str.toLowerCase();
@@ -70,6 +77,8 @@ const toLower = (str) => str.toLowerCase();
  *
  * @param {string} str - the string to convert
  * @returns {string} the upper-cased string
+ *
+ * @deprecated
  *
  * @alias module:string
  */
@@ -86,6 +95,8 @@ const toUpper = (str) => str.toUpperCase();
  * @param {string} str - the string to match against
  * @returns {Array|null}
  *
+ * @deprecated
+ *
  * @alias module:string
  * @kind function
  */
@@ -99,6 +110,8 @@ const match = curry((regexp, str) => str.match(regexp), 2);
  * @param {RegExp} regexp - the pattern to match against
  * @param {string} str - the string to match against
  * @returns {boolean} true if the pattern matches the string, false otherwise
+ *
+ * @deprecated
  *
  * @alias module:string
  * @kind function
@@ -120,6 +133,8 @@ const hostnameRegex = /^[a-z0-9][a-z0-9\.\-]*$/;
  * @param {String} hostname - the string to test
  * @returns {boolean}
  *
+ * @deprecated
+ *
  * @alias module:string
  * @kind function
  *
@@ -136,17 +151,19 @@ const isValidHostname = flow(toLower, matches(hostnameRegex));
  * @param {string} x - the string to test
  * @returns {boolean}
  *
+ * @deprecated
+ *
  * @alias module:string
  */
 const isNonEmptyString = (x) => isString(x) && x.length > 0;
 
 module.exports = {
-  globalReplace,
-  isNonEmptyString,
-  isValidHostname,
-  match,
-  matches,
-  replace,
-  toLower,
-  toUpper
+  globalReplace: deprecate(globalReplace, '@cumulus/common/string.globalReplace() is deprecated after version 1.21.0 and will be removed in a future release. Use lodash/replace instead.'),
+  isNonEmptyString: deprecate(isNonEmptyString, '@cumulus/common/string.isNonEmptyString() is deprecated after version 1.21.0 and will be removed in a future release.'),
+  isValidHostname: deprecate(isValidHostname, '@cumulus/common/string.isValidHostname() is deprecated after version 1.21.0 and will be removed in a future release. Use is-valid-hostname instead.'),
+  match: deprecate(replace, '@cumulus/common/string.match() is deprecated after version 1.21.0 and will be removed in a future release.'),
+  matches: deprecate(replace, '@cumulus/common/string.matches() is deprecated after version 1.21.0 and will be removed in a future release.'),
+  replace: deprecate(replace, '@cumulus/common/string.replace() is deprecated after version 1.21.0 and will be removed in a future release. Use lodash/fp/replace instead.'),
+  toLower: deprecate(toLower, '@cumulus/common/string.toLower() is deprecated after version 1.21.0 and will be removed in a future release. Use lodash/toLower instead.'),
+  toUpper: deprecate(toUpper, '@cumulus/common/string.toUpper() is deprecated after version 1.21.0 and will be removed in a future release. Use lodash/toUpper instead.')
 };

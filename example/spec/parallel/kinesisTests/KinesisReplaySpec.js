@@ -1,7 +1,7 @@
 'use strict';
 
+const replace = require('lodash/replace');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
-const { globalReplace } = require('@cumulus/common/string');
 const { randomString } = require('@cumulus/common/test-utils');
 const { sleep } = require('@cumulus/common/util');
 const { getWorkflowFileKey } = require('@cumulus/common/workflows');
@@ -87,7 +87,7 @@ describe('The Kinesis Replay API', () => {
     const testId = createTimestampedTestId(testConfig.stackName, 'KinesisReplayTest');
     testSuffix = createTestSuffix(testId);
     testDataFolder = createTestDataPath(testId);
-    ruleSuffix = globalReplace(testSuffix, '-', '_');
+    ruleSuffix = replace(testSuffix, /-/g, '_');
 
     streamName = `${testId}-ReplayTestStream`;
     testConfig.streamName = streamName;

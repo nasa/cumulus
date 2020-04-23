@@ -1,8 +1,8 @@
 'use strict';
 
+const replace = require('lodash/replace');
 const { s3 } = require('@cumulus/aws-client/services');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
-const { globalReplace } = require('@cumulus/common/string');
 const { getWorkflowFileKey } = require('@cumulus/common/workflows');
 const { Execution } = require('@cumulus/api/models');
 const fs = require('fs');
@@ -116,7 +116,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestTrigger');
     testSuffix = createTestSuffix(testId);
     testDataFolder = createTestDataPath(testId);
-    ruleSuffix = globalReplace(testSuffix, '-', '_');
+    ruleSuffix = replace(testSuffix, /-/g, '_');
 
     const workflowDefinition = await getJsonS3Object(
       testConfig.bucket,
@@ -126,7 +126,11 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     record = JSON.parse(fs.readFileSync(`${__dirname}/data/records/L2_HR_PIXC_product_0001-of-4154.json`));
 
-    record.product.files[0].uri = globalReplace(record.product.files[0].uri, 'cumulus-test-data/pdrs', testDataFolder);
+    record.product.files[0].uri = replace(
+      record.product.files[0].uri,
+      /cumulus-test-data\/pdrs/g,
+      testDataFolder
+    );
     record.provider += testSuffix;
     record.collection += testSuffix;
 

@@ -1,11 +1,11 @@
 'use strict';
 
 const fs = require('fs-extra');
+const replace = require('lodash/replace');
 const { sqs } = require('@cumulus/aws-client/services');
 const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
 const { createSqsQueues, getSqsQueueMessageCounts } = require('@cumulus/api/lib/testUtils');
 const { Granule } = require('@cumulus/api/models');
-const { globalReplace } = require('@cumulus/common/string');
 const { sleep } = require('@cumulus/common/util');
 const {
   addCollections,
@@ -96,7 +96,7 @@ describe('The SQS rule', () => {
     testDataFolder = createTestDataPath(testId);
     const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
     const provider = { id: `s3_provider${testSuffix}` };
-    ruleSuffix = globalReplace(testSuffix, '-', '_');
+    ruleSuffix = replace(testSuffix, /-/g, '_');
     ruleOverride = {
       name: `MOD09GQ_006_sqsRule${ruleSuffix}`,
       collection: {
