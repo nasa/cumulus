@@ -13,8 +13,7 @@ const AsyncOperation = require('../models/async-operation');
 async function startKinesisReplayAsyncOperation(req, res) {
   const asyncOperationModel = new AsyncOperation({
     stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable
+    systemBucket: process.env.system_bucket
   });
 
   const payload = req.body;

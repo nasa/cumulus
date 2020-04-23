@@ -28,7 +28,7 @@ class AsyncOperation extends Manager {
     if (!params.systemBucket) throw new TypeError('systemBucket is required');
 
     super({
-      tableName: params.tableName,
+      tableName: params.tableName || process.env.AsyncOperationsTable,
       tableHash: { name: 'id', type: 'S' },
       schema: asyncOperationSchema
     });
@@ -106,7 +106,7 @@ class AsyncOperation extends Manager {
     }).promise();
 
     // Start the task in ECS
-    const runTaskResponse = this.runECSTask({
+    const runTaskResponse = await this.runECSTask({
       ...params,
       id,
       payloadBucket,

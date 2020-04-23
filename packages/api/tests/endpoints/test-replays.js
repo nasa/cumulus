@@ -43,7 +43,10 @@ test.before(async () => {
   accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
-  const asyncOperationsModel = new AsyncOperation();
+  const asyncOperationsModel = new AsyncOperation({
+    stackName: process.env.stackName,
+    systemBucket: process.env.system_bucket
+  });
   await asyncOperationsModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
@@ -59,8 +62,8 @@ test.after.always(async () => {
 });
 
 test.serial('request to replays endpoint returns 400 when no type is specified', async (t) => {
-  const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').returns(
-    Promise.resolve({ id: '1234' })
+  const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').resolves(
+    { id: '1234' }
   );
 
   await request(app)
@@ -75,8 +78,8 @@ test.serial('request to replays endpoint returns 400 when no type is specified',
 });
 
 test.serial('request to replays endpoint returns 400 if type is kinesis but no kinesisStream is specified', async (t) => {
-  const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').returns(
-    Promise.resolve({ id: '1234' })
+  const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').resolves(
+    { id: '1234' }
   );
 
   const body = {
@@ -95,8 +98,8 @@ test.serial('request to replays endpoint returns 400 if type is kinesis but no k
 });
 
 test.serial('request to replays endpoint with valid kinesis parameters starts an AsyncOperation and returns its id', async (t) => {
-  const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').returns(
-    Promise.resolve({ id: '1234' })
+  const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').resolves(
+    { id: '1234' }
   );
 
   const body = {
@@ -132,11 +135,11 @@ test.serial('request to replays endpoint with valid kinesis parameters starts an
 
 test.serial.only('request to replays fails', async (t) => {
   const stub = sinon.stub(AsyncOperation.prototype, 'runECSTask')
-    .callsFake(() => Promise.resolve({
+    .resolves({
       failures: [{
         reason: 'fail'
       }]
-    }));
+    });
 
   const body = {
     type: 'kinesis',
@@ -152,6 +155,8 @@ test.serial.only('request to replays fails', async (t) => {
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send(body)
       .expect(202);
+    t.is(response.status, 202);
+    debugger;
   } finally {
     stub.restore();
   }
