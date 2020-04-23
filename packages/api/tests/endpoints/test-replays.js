@@ -133,7 +133,7 @@ test.serial('request to replays endpoint with valid kinesis parameters starts an
   asyncOperationStartStub.restore();
 });
 
-test.serial.only('request to replays fails', async (t) => {
+test.serial('request to replays returns 503 if ECS task fails to start', async (t) => {
   const stub = sinon.stub(AsyncOperation.prototype, 'runECSTask')
     .resolves({
       failures: [{
@@ -154,9 +154,8 @@ test.serial.only('request to replays fails', async (t) => {
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send(body)
-      .expect(202);
-    t.is(response.status, 202);
-    debugger;
+      .expect(503);
+    t.is(response.status, 503);
   } finally {
     stub.restore();
   }
