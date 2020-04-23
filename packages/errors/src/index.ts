@@ -1,128 +1,123 @@
-const isFunction = require('lodash/isFunction');
-
 /**
  * Creates a new error type with the given name and parent class. Sets up
  * boilerplate necessary to successfully subclass Error and preserve stack trace
- * @param {string} name - The name of the error type
- * @param {Error} parentType - The error that serves as the parent
- * @returns - The new type
+ * @param name - The name of the error type
+ * @param ParentType - The error that serves as the parent
+ * @returns The new type
  */
-
-const createErrorType = (name, ParentType = Error) => {
-  function E(message) {
-    if (isFunction(Error.captureStackTrace)) {
-      Error.captureStackTrace(this, this.constructor);
-    } else {
-      this.stack = (new Error(message)).stack;
+export const createErrorType = (
+  name: string,
+  ParentType: new (message: string) => Error = Error
+) =>
+  (
+    class extends ParentType {
+      constructor(message: string) {
+        super(message);
+        this.name = name;
+        Error.captureStackTrace(this, this.constructor);
+      }
     }
-    this.message = message;
-  }
-  E.prototype = new ParentType();
-  E.prototype.name = name;
-  E.prototype.constructor = E;
-  return E;
-};
+  );
 
-const WorkflowError = createErrorType('WorkflowError');
+interface ErrorWithOptionalCode extends Error {
+  code?: string;
+}
 
 /**
  * Test to see if a given exception is an AWS Throttling Exception
- *
- * @param {Error} err
- * @returns {boolean}
  */
-const isThrottlingException = (err) => err.code === 'ThrottlingException';
+export const isThrottlingException = (err: ErrorWithOptionalCode) =>
+  err.code === 'ThrottlingException';
 
 /**
  * Returns true if the error is a resource error.
- *
- * @param {Error} error
- * @returns {boolean}
  */
-const isWorkflowError = (error) => error.name.includes('WorkflowError');
+export const isWorkflowError = (error: Error) => error.name.includes('WorkflowError');
 
 /**
  * Returns true if the error is a DynamoDB conditional check exception.
- *
- * @param {Error} error
- * @returns {boolean}
  */
-const isConditionalCheckException = (error) => error.code === 'ConditionalCheckFailedException';
+export const isConditionalCheckException = (error: { code?: string }) =>
+  error.code === 'ConditionalCheckFailedException';
 
-module.exports = {
+/**
+ * WorkflowError should be bubbled out to the overall workflow in the 'exception' field, rather than
+ * being thrown and causting an immediate failure
+ */
+export const WorkflowError = createErrorType('WorkflowError');
 
-  createErrorType: createErrorType,
+/**
+ * NotNeededError indicates that execution was not completed because it was unnecessary. The
+ * workflow should therefore terminate but be considered successful
+ */
+export const NotNeededError = createErrorType('NotNeededWorkflowError', WorkflowError);
 
-  isConditionalCheckException,
-  isThrottlingException,
-  isWorkflowError,
+/**
+ * IncompleteError indicates that the execution was partially successful and can be re-executed to
+ * make further progress. This may happen, for instance, if an execution timeout stops progress
+ */
+export const IncompleteError = createErrorType('IncompleteWorkflowError', WorkflowError);
 
-  // WorkflowError should be bubbled out to the overall workflow in the 'exception'
-  // field, rather than being thrown and causting an immediate failure
-  WorkflowError: WorkflowError,
+/**
+ * ResourcesLockedError indicates that the execution is unable to proceed due to resources being
+ * tied up in other executions. Execution may be retried after resources free up
+ */
+export const ResourcesLockedError = createErrorType('ResourcesLockedWorkflowError', WorkflowError);
 
-  // NotNeededError indicates that execution was not completed because it was unnecessary.
-  // The workflow should therefore terminate but be considered successful
-  NotNeededError: createErrorType('NotNeededWorkflowError', WorkflowError),
+/**
+ * RemoteResourceError indicates that a required remote resource could not be fetched or otherwise
+ * used
+ */
+export const RemoteResourceError = createErrorType('RemoteResourceError');
 
-  // IncompleteError indicates that the execution was partially successful and can be
-  // re-executed to make further progress. This may happen, for instance, if an execution timeout
-  // stops progress
-  IncompleteError: createErrorType('IncompleteWorkflowError', WorkflowError),
+/**
+ * The error object for when the xml file path is not provided
+ */
+export const XmlMetaFileNotFound = createErrorType('XmlMetaFileNotFound');
 
-  // ResourcesLockedError indicates that the execution is unable to proceed due to resources
-  // being tied up in other executions. Execution may be retried after resources free up
-  ResourcesLockedError: createErrorType('ResourcesLockedWorkflowError', WorkflowError),
+/**
+ * No CMR metadata file was present.
+ */
+export const CMRMetaFileNotFound = createErrorType('CMRMetaFileNotFound');
 
-  // RemoteResourceError indicates that a required remote resource could not be fetched or
-  // otherwise used
-  RemoteResourceError: createErrorType('RemoteResourceError'),
+/**
+ * The provider info is missing error
+ */
+export const ProviderNotFound = createErrorType('ProviderNotFound');
 
-  // The error object for when the xml file path is not provided
-  XmlMetaFileNotFound: createErrorType('XmlMetaFileNotFound'),
+export const FTPError = createErrorType('FTPError');
 
-  // No CMR metadata file was present.
-  CMRMetaFileNotFound: createErrorType('CMRMetaFileNotFound'),
+export const PDRParsingError = createErrorType('PDRParsingError');
 
-  // The provider info is missing error
-  ProviderNotFound: createErrorType('ProviderNotFound'),
+export const ConnectionTimeout = createErrorType('ConnectionTimeout');
 
-  // The FTPError
-  FTPError: createErrorType('FTPError'),
+export const HostNotFound = createErrorType('HostNotFound');
 
-  // The PDR Parsing Error
-  PDRParsingError: createErrorType('PDRParsingError'),
+export const FileNotFound = createErrorType('FileNotFound');
 
-  // Connection Timeout
-  ConnectionTimeout: createErrorType('ConnectionTimeout'),
+export const InvalidChecksum = createErrorType('InvalidChecksum');
 
-  HostNotFound: createErrorType('HostNotFound'),
+export const DuplicateFile = createErrorType('DuplicateFile');
 
-  // to be returned when the file is missing or forbidden
-  FileNotFound: createErrorType('FileNotFound'),
+export const UnexpectedFileSize = createErrorType('UnexpectedFileSize');
 
-  // if a checksum doesn't match
-  InvalidChecksum: createErrorType('InvalidChecksum'),
+/**
+ * Error thrown when system encounters a conflicting request.
+ */
+export const InvalidArgument = createErrorType('InvalidArgument');
 
-  DuplicateFile: createErrorType('DuplicateFile'),
+/**
+ * is raised if the PDR file doesn't match the collection
+ */
+export const MismatchPdrCollection = createErrorType('MismatchPdrCollection');
 
-  UnexpectedFileSize: createErrorType('UnexpectedFileSize'),
+// Error class for file locations that are unparsable
+export const UnparsableFileLocationError = createErrorType('UnparsableFileLocationError');
 
-  // Error thrown when system encounters a conflicting request.
-  InvalidArgument: createErrorType('InvalidArgument'),
+export const RecordDoesNotExist = createErrorType('RecordDoesNotExist');
 
-  // is raised if the PDR file doesn't match the collection
-  MismatchPdrCollection: createErrorType('MismatchPdrCollection'),
+export const InvalidRegexError = createErrorType('InvalidRegexError');
 
-  // Error class for file locations that are unparsable
-  UnparsableFileLocationError: createErrorType('UnparsableFileLocationError'),
+export const UnmatchedRegexError = createErrorType('UnmatchedRegexError');
 
-  // if a record cannot be found
-  RecordDoesNotExist: createErrorType('RecordDoesNotExist'),
-
-  InvalidRegexError: createErrorType('InvalidRegexError'),
-
-  UnmatchedRegexError: createErrorType('UnmatchedRegexError'),
-
-  ValidationError: createErrorType('ValidationError')
-};
+export const ValidationError = createErrorType('ValidationError');
