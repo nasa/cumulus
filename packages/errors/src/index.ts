@@ -37,7 +37,7 @@ export const isWorkflowError = (error: Error) => error.name.includes('WorkflowEr
 /**
  * Returns true if the error is a DynamoDB conditional check exception.
  */
-export const isConditionalCheckException = (error: { code?: string }) =>
+export const isConditionalCheckException = (error: ErrorWithOptionalCode) =>
   error.code === 'ConditionalCheckFailedException';
 
 /**
