@@ -1,14 +1,23 @@
 'use strict';
 
 const router = require('express-promise-router')();
+
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { RecordDoesNotExist } = require('@cumulus/errors');
+const {
+  RecordDoesNotExist,
+  InvalidRegexError,
+  UnmatchedRegexError
+} = require('@cumulus/errors');
+const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+
 const { Search } = require('../es/search');
 const { addToLocalES, indexCollection } = require('../es/indexer');
 const models = require('../models');
 const Collection = require('../es/collections');
-const { AssociatedRulesError, BadRequestError } = require('../lib/errors');
+const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
+
+const log = new Logger({ sender: '@cumulus/api/collections' });
 
 /**
  * List all collections.
@@ -82,13 +91,13 @@ async function post(req, res) {
 
     // make sure primary key is included
     if (!name || !version) {
-      return res.boom.notFound('Field name and/or version is missing');
+      return res.boom.badRequest('Field name and/or version is missing');
     }
     const c = new models.Collection();
 
     try {
       await c.get({ name, version });
-      return res.boom.badRequest(`A record already exists for ${name} version: ${version}`);
+      return res.boom.conflict(`A record already exists for ${name} version: ${version}`);
     } catch (e) {
       if (e instanceof RecordDoesNotExist) {
         await c.create(data);
@@ -102,12 +111,14 @@ async function post(req, res) {
       throw e;
     }
   } catch (e) {
-    if (e.name === 'SchemaValidationError') {
+    if (
+      isBadRequestError(e)
+      || e instanceof InvalidRegexError
+      || e instanceof UnmatchedRegexError
+    ) {
       return res.boom.badRequest(e.message);
     }
-    if (e instanceof BadRequestError) {
-      return res.boom.badRequest(e.message);
-    }
+    log.error('Error occurred while trying to create collection:', e);
     return res.boom.badImplementation(e.message);
   }
 }
