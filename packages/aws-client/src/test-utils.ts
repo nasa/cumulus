@@ -1,11 +1,9 @@
-/* eslint no-console: "off" */
+import * as AWS from 'aws-sdk';
 
-'use strict';
-
-exports.inTestMode = () => process.env.NODE_ENV === 'test';
+export const inTestMode = () => process.env.NODE_ENV === 'test';
 
 // From https://github.com/localstack/localstack/blob/master/README.md
-const localStackPorts = {
+const localStackPorts: { [key: string ]: number } = {
   stepfunctions: 4585,
   apigateway: 4567,
   cloudformation: 4581,
@@ -33,22 +31,22 @@ const localStackPorts = {
 /**
  * Test if a given AWS service is supported by LocalStack.
  *
- * @param {Function} Service - an AWS service object constructor function
- * @returns {boolean} true or false depending on whether the service is
- *   supported by LocalStack
+ * @param serviceIdentifier - an AWS service identifier
+ *
+ * @returns whether the service is supported by LocalStack
  */
-function localstackSupportedService(Service) {
-  const serviceIdentifier = Service.serviceIdentifier;
+function localstackSupportedService(serviceIdentifier: string) {
   return Object.keys(localStackPorts).includes(serviceIdentifier);
 }
 
 /**
  * Returns the proper endpoint for a given aws service
  *
- * @param {string} identifier - service name
- * @returns {string} the localstack endpoint
+ * @param identifier - service name
+ *
+ * @returns the localstack endpoint
  */
-function getLocalstackEndpoint(identifier) {
+export function getLocalstackEndpoint(identifier: string) {
   const key = `LOCAL_${identifier.toUpperCase()}_HOST`;
   if (process.env[key]) {
     return `http://${process.env[key]}:${localStackPorts[identifier]}`;
@@ -56,25 +54,29 @@ function getLocalstackEndpoint(identifier) {
 
   return `http://${process.env.LOCALSTACK_HOST}:${localStackPorts[identifier]}`;
 }
-exports.getLocalstackEndpoint = getLocalstackEndpoint;
 
 /**
  * Create an AWS service object that talks to LocalStack.
  *
  * This function expects that the LOCALSTACK_HOST environment variable will be set.
  *
- * @param {Function} Service - an AWS service object constructor function
- * @param {Object} options - options to pass to the service object constructor function
- * @returns {Object} - an AWS service object
+ * @param Service - an AWS service object constructor function
+ * @param options - options to pass to the service object constructor function
+ *
+ * @returns an AWS service object
  */
-function localStackAwsClient(Service, options) {
+function localStackAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
+  Service: new (params: object) => T,
+  options: object
+) {
   if (!process.env.LOCALSTACK_HOST) {
     throw new Error('The LOCALSTACK_HOST environment variable is not set.');
   }
 
+  // @ts-ignore
   const serviceIdentifier = Service.serviceIdentifier;
 
-  const localStackOptions = {
+  const localStackOptions: { [key: string ]: unknown } = {
     ...options,
     accessKeyId: 'my-access-key-id',
     secretAccessKey: 'my-secret-access-key',
@@ -90,40 +92,47 @@ function localStackAwsClient(Service, options) {
 /**
  * Create an AWS service object that does not actually talk to AWS.
  *
- * @param {Function} Service - an AWS service object constructor function
- * @param {Object} options - options to pass to the service object constructor function
- * @returns {Object} - an AWS service object
+ * @param Service - an AWS service object constructor function
+ * @param options - options to pass to the service object constructor function
+ *
+ * @returns an AWS service object
  */
-function testAwsClient(Service, options) {
-  if (localstackSupportedService(Service)) {
+export function testAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
+  Service: new (params: object) => T,
+  options: object
+): T {
+  // @ts-ignore
+  const serviceIdentifier = Service.serviceIdentifier;
+  if (localstackSupportedService(serviceIdentifier)) {
     return localStackAwsClient(Service, options);
   }
 
-  return {};
+  return <T>{};
 }
-exports.testAwsClient = testAwsClient;
 
-const throwThrottlingException = () => {
-  const throttlingException = new Error('ThrottlingException');
-  throttlingException.code = 'ThrottlingException';
+class ThrottlingException extends Error {
+  readonly code: string;
 
-  throw throttlingException;
-};
+  constructor() {
+    super('ThrottlingException');
+    this.code = 'ThrottlingException';
+  }
+}
 
 /**
  * Return a function that throws a ThrottlingException the first time it is called, then returns as
  * normal any other times.
  *
- * @param {Function} fn
- * @returns {Function}
+ * @param fn - the function to throttle
+ * @returns the throttled function
  */
-exports.throttleOnce = (fn) => {
+export const throttleOnce = (fn: (...args: unknown[]) => unknown) => {
   let throttleNextCall = true;
 
-  return (...args) => {
+  return (...args: unknown[]) => {
     if (throttleNextCall) {
       throttleNextCall = false;
-      throwThrottlingException();
+      throw new ThrottlingException();
     }
 
     return fn(...args);
