@@ -217,7 +217,7 @@ class Rule extends Manager {
     // make sure the name only has word characters
     const re = /[^\w]/;
     if (re.test(item.name)) {
-      throw new Error('Names may only contain letters, numbers, and underscores.');
+      throw new Error('Rule name may only contain letters, numbers, and underscores.');
     }
 
     // Initialize new rule object
@@ -254,7 +254,7 @@ class Rule extends Manager {
       newRuleItem = await this.validateAndUpdateSqsRule(newRuleItem);
       break;
     default:
-      throw new Error('Type not supported');
+      throw new Error(`Rule type \'${newRuleItem.rule.type}\' not supported.`);
     }
 
     // save
