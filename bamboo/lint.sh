@@ -10,5 +10,4 @@ set -ex
  fi
 
 (npm run bootstrap-no-build || true) && npm run bootstrap-no-build
-npm run lint-md
 npm run lint

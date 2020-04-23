@@ -1,4 +1,5 @@
 {
+  "root": true,
   "plugins": [
     "eslint-comments",
     "import",
@@ -121,6 +122,23 @@
     "unicorn/prefer-spread": "off"
   },
   "overrides": [
+    {
+      "files": ["*.ts"],
+      "parser": "@typescript-eslint/parser",
+      "plugins": [
+        "@typescript-eslint",
+        "eslint-plugin-tsdoc"
+      ],
+      "extends": ["airbnb-typescript/lib/shared"],
+      "rules": {
+        "@typescript-eslint/no-implied-eval": "off",
+        "@typescript-eslint/no-throw-literal": "off",
+        "comma-dangle": ["warn", "never"],
+        "lines-between-class-members": "off",
+        "valid-jsdoc": "off",
+        "tsdoc/syntax": "warn"
+      }
+    },
     {
       "files": [
         "**/bin/**/*.js",
