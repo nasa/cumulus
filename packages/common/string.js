@@ -164,6 +164,6 @@ module.exports = {
   match: deprecate(replace, '@cumulus/common/string.match() is deprecated after version 1.21.0 and will be removed in a future release.'),
   matches: deprecate(replace, '@cumulus/common/string.matches() is deprecated after version 1.21.0 and will be removed in a future release.'),
   replace: deprecate(replace, '@cumulus/common/string.replace() is deprecated after version 1.21.0 and will be removed in a future release. Use lodash/fp/replace instead.'),
-  toLower: deprecate(toLower, '@cumulus/common/string.toLower() is deprecated after version 1.21.0 and will be removed in a future release. Use lodash/fp/toLower instead.'),
+  toLower: deprecate(toLower, '@cumulus/common/string.toLower() is deprecated after version 1.21.0 and will be removed in a future release. Use lodash/toLower instead.'),
   toUpper: deprecate(toUpper, '@cumulus/common/string.toUpper() is deprecated after version 1.21.0 and will be removed in a future release. Use lodash/toUpper instead.')
 };
