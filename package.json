@@ -14,7 +14,7 @@
     "install-locks": "lerna exec --no-sort -- npm i --package-lock-only --no-audit",
     "lint": "npm run eslint && lerna run python-lint && npm run lint-md",
     "lint-md": "markdownlint docs/**/*.md docs/*.md tf-modules/**/*.md tf-modules/*.md",
-    "test": "npm run tsc && nyc lerna run --concurrency 1 test",
+    "test": "nyc lerna run --concurrency 1 test",
     "tsc": "lerna run tsc",
     "package": "lerna run package",
     "bootstrap": "lerna bootstrap --no-ci --force-local && npm run package",
