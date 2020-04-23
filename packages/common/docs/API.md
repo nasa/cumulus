@@ -21,24 +21,26 @@ A collection of utilities for working with URLs
 
 **Example**  
 ```js
-const { toLower } = require('@cumulus/common/string');
+const { match } = require('@cumulus/common/string');
 
-toLower('aSDf'); // => 'asdf'
+match(/aS/, aSDf');
 ```
 
 * [string](#module_string)
-    * [replace(pattern, replacement, string)](#exp_module_string--replace) ⇒ <code>string</code> ⏏
-    * [globalReplace(string, oldSubString, newSubString)](#exp_module_string--globalReplace) ⇒ <code>string</code> ⏏
-    * [toLower(str)](#exp_module_string--toLower) ⇒ <code>string</code> ⏏
-    * [toUpper(str)](#exp_module_string--toUpper) ⇒ <code>string</code> ⏏
-    * [match(regexp, str)](#exp_module_string--match) ⇒ <code>Array</code> \| <code>null</code> ⏏
-    * [matches(regexp, str)](#exp_module_string--matches) ⇒ <code>boolean</code> ⏏
-    * [isValidHostname(hostname)](#exp_module_string--isValidHostname) ⇒ <code>boolean</code> ⏏
-    * [isNonEmptyString(x)](#exp_module_string--isNonEmptyString) ⇒ <code>boolean</code> ⏏
+    * ~~[replace(pattern, replacement, string)](#exp_module_string--replace) ⇒ <code>string</code> ⏏~~
+    * ~~[globalReplace(string, oldSubString, newSubString)](#exp_module_string--globalReplace) ⇒ <code>string</code> ⏏~~
+    * ~~[toLower(str)](#exp_module_string--toLower) ⇒ <code>string</code> ⏏~~
+    * ~~[toUpper(str)](#exp_module_string--toUpper) ⇒ <code>string</code> ⏏~~
+    * ~~[match(regexp, str)](#exp_module_string--match) ⇒ <code>Array</code> \| <code>null</code> ⏏~~
+    * ~~[matches(regexp, str)](#exp_module_string--matches) ⇒ <code>boolean</code> ⏏~~
+    * ~~[isValidHostname(hostname)](#exp_module_string--isValidHostname) ⇒ <code>boolean</code> ⏏~~
+    * ~~[isNonEmptyString(x)](#exp_module_string--isNonEmptyString) ⇒ <code>boolean</code> ⏏~~
 
 <a name="exp_module_string--replace"></a>
 
-### replace(pattern, replacement, string) ⇒ <code>string</code> ⏏
+### ~~replace(pattern, replacement, string) ⇒ <code>string</code> ⏏~~
+***Deprecated***
+
 Return a new string with some or all matches of a pattern replaced by a
 replacement.
 
@@ -58,7 +60,9 @@ This is a curried function - https://lodash.com/docs/4.17.11#curry
 
 <a name="exp_module_string--globalReplace"></a>
 
-### globalReplace(string, oldSubString, newSubString) ⇒ <code>string</code> ⏏
+### ~~globalReplace(string, oldSubString, newSubString) ⇒ <code>string</code> ⏏~~
+***Deprecated***
+
 Globally replaces oldSubstring in string with newSubString
 
 **Kind**: Exported function  
@@ -72,7 +76,9 @@ Globally replaces oldSubstring in string with newSubString
 
 <a name="exp_module_string--toLower"></a>
 
-### toLower(str) ⇒ <code>string</code> ⏏
+### ~~toLower(str) ⇒ <code>string</code> ⏏~~
+***Deprecated***
+
 Converts string, as a whole, to lower case just like String#toLowerCase
 
 **Kind**: Exported function  
@@ -84,7 +90,9 @@ Converts string, as a whole, to lower case just like String#toLowerCase
 
 <a name="exp_module_string--toUpper"></a>
 
-### toUpper(str) ⇒ <code>string</code> ⏏
+### ~~toUpper(str) ⇒ <code>string</code> ⏏~~
+***Deprecated***
+
 Converts string, as a whole, to upper case just like String#toUpperCase
 
 **Kind**: Exported function  
@@ -96,7 +104,9 @@ Converts string, as a whole, to upper case just like String#toUpperCase
 
 <a name="exp_module_string--match"></a>
 
-### match(regexp, str) ⇒ <code>Array</code> \| <code>null</code> ⏏
+### ~~match(regexp, str) ⇒ <code>Array</code> \| <code>null</code> ⏏~~
+***Deprecated***
+
 Tests a regular expression against a String, returning matches
 
 Produces same output as https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match
@@ -112,7 +122,9 @@ This is a curried function - https://lodash.com/docs/4.17.11#curry
 
 <a name="exp_module_string--matches"></a>
 
-### matches(regexp, str) ⇒ <code>boolean</code> ⏏
+### ~~matches(regexp, str) ⇒ <code>boolean</code> ⏏~~
+***Deprecated***
+
 Tests a regular expression against a string, returning true / false
 
 This is a curried function - https://lodash.com/docs/4.17.11#curry
@@ -132,7 +144,9 @@ isCapitalized('Joe'); // => true
 ```
 <a name="exp_module_string--isValidHostname"></a>
 
-### isValidHostname(hostname) ⇒ <code>boolean</code> ⏏
+### ~~isValidHostname(hostname) ⇒ <code>boolean</code> ⏏~~
+***Deprecated***
+
 Test if a string is a valid hostname, as defined by [RFC1123](https://tools.ietf.org/html/rfc1123#page-13)
 
 **Kind**: Exported function  
@@ -149,7 +163,9 @@ isValidHostname('127.0.0.1'); // => false
 ```
 <a name="exp_module_string--isNonEmptyString"></a>
 
-### isNonEmptyString(x) ⇒ <code>boolean</code> ⏏
+### ~~isNonEmptyString(x) ⇒ <code>boolean</code> ⏏~~
+***Deprecated***
+
 Test if a value is a string with a length greater than zero
 
 **Kind**: Exported function  

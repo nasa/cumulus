@@ -80,6 +80,7 @@
     "got": "^8.3.0",
     "hsts": "^2.1.0",
     "is-ip": "^2.0.0",
+    "is-valid-hostname": "^0.0.1",
     "json2csv": "^4.5.1",
     "jsonpath-plus": "^1.1.0",
     "jsonwebtoken": "^8.4.0",

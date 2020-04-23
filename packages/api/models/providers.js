@@ -1,9 +1,9 @@
 'use strict';
 
 const isIp = require('is-ip');
+const isValidHostname = require('is-valid-hostname');
 const KMS = require('@cumulus/aws-client/KMS');
 const { isNil } = require('@cumulus/common/util');
-const { isValidHostname } = require('@cumulus/common/string');
 
 const Manager = require('./base');
 const Rule = require('./rules');

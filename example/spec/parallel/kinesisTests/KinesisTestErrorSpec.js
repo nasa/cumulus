@@ -1,9 +1,8 @@
 'use strict';
 
 const fs = require('fs');
-
+const replace = require('lodash/replace');
 const { deleteSQSMessage } = require('@cumulus/aws-client/SQS');
-const { globalReplace } = require('@cumulus/common/string');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const { sleep } = require('@cumulus/common/util');
@@ -83,13 +82,17 @@ describe('The messageConsumer receives a bad record.\n', () => {
     const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestError');
     testSuffix = createTestSuffix(testId);
     const testDataFolder = createTestDataPath(testId);
-    ruleSuffix = globalReplace(testSuffix, '-', '_');
+    ruleSuffix = replace(testSuffix, /-/g, '_');
 
     streamName = `${testId}-KinesisTestErrorStream`;
     testConfig.streamName = streamName;
     failureSqsUrl = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT_ID}/${testConfig.stackName}-kinesisFailure`;
 
-    record.product.files[0].uri = globalReplace(record.product.files[0].uri, 'cumulus-test-data/pdrs', testDataFolder);
+    record.product.files[0].uri = replace(
+      record.product.files[0].uri,
+      /cumulus-test-data\/pdrs/g,
+      testDataFolder
+    );
     record.provider += testSuffix;
     record.collection += testSuffix;
 
