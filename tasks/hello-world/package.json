@@ -19,7 +19,7 @@
     "test-coverage": "nyc ava",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
-    "package": "npm run build && (cd dist && zip -r lambda.zip index.js schemas)"
+    "package": "npm run build && (cd dist && zip -q -r lambda.zip index.js schemas)"
   },
   "ava": {
     "serial": true
