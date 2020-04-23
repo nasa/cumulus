@@ -173,13 +173,15 @@ test.serial('Creating an invalid rule does not create workflow triggers', async 
 
   const createTriggerStub = sinon.stub(models.Rule.prototype, 'createRuleTrigger').resolves(ruleItem);
 
-  await t.throwsAsync(
-    () => rulesModel.create(ruleItem),
-    { name: 'SchemaValidationError' }
-  );
-
-  t.true(createTriggerStub.notCalled);
-  createTriggerStub.restore();
+  try {
+    await t.throwsAsync(
+      () => rulesModel.create(ruleItem),
+      { name: 'SchemaValidationError' }
+    );
+    t.true(createTriggerStub.notCalled);
+  } finally {
+    createTriggerStub.restore();
+  }
 });
 
 test('enabling a disabled rule updates the state', async (t) => {
