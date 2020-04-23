@@ -135,8 +135,8 @@
         "comma-dangle": ["warn", "never"],
         "lines-between-class-members": "off",
         "node/no-unsupported-features/es-syntax": "off",
-        "tsdoc/syntax": "warn",
-        "valid-jsdoc": "off"
+        "valid-jsdoc": "off",
+        "tsdoc/syntax": "warn"
       }
     },
     {
