@@ -165,6 +165,23 @@ test('Creating a rule with an invalid type throws an error', async (t) => {
   );
 });
 
+test.serial('Creating an invalid rule does not create workflow triggers', async (t) => {
+  const { onetimeRule } = t.context;
+  const ruleItem = cloneDeep(onetimeRule);
+
+  ruleItem.rule.type = 'invalid';
+
+  const createTriggerStub = sinon.stub(models.Rule.prototype, 'createRuleTrigger').resolves(ruleItem);
+
+  await t.throwsAsync(
+    () => rulesModel.create(ruleItem),
+    { name: 'SchemaValidationError' }
+  );
+
+  t.true(createTriggerStub.notCalled);
+  createTriggerStub.restore();
+});
+
 test('enabling a disabled rule updates the state', async (t) => {
   const { onetimeRule } = t.context;
 
@@ -185,8 +202,22 @@ test('enabling a disabled rule updates the state', async (t) => {
   await rulesModel.delete(rule);
 });
 
-test('creating a rule with an invalid schema throws an error', async (t) => {
-  await t.throwsAsync(rulesModel.create({}), { name: 'SchemaValidationError' });
+test.serial('Updating a valid rule to have an invalid schema throws an error and does not update triggers', async (t) => {
+  const { onetimeRule } = t.context;
+
+  let rule = await rulesModel.create(onetimeRule);
+
+  const updates = { name: rule.name, rule: null };
+
+  const updateTriggerStub = sinon.stub(models.Rule.prototype, 'updateRuleTrigger').resolves(rule);
+
+  await t.throwsAsync(
+    () => rulesModel.update(rule, updates),
+    { name: 'SchemaValidationError' }
+  );
+
+  t.true(updateTriggerStub.notCalled);
+  updateTriggerStub.restore();
 });
 
 test.serial('create a kinesis type rule adds event mappings, creates rule', async (t) => {
