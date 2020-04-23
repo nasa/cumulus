@@ -27,18 +27,18 @@ class Logger {
   readonly #version: string | undefined;
 
   /**
-   * @param {Object} options - options object
-   * @param {string} [options.executions]  - AWS stepfunction execution name
-   * @param {string} [options.granules] - stringified array of granule objects
-   * @param {string} [options.parentArn] - parent stepfunction execution ARN
-   * @param {boolean} [options.pretty=false] - stringify objects on multiple lines
-   * @param {string} [options.sender="unknown"] - the sender of the log message
-   * @param {string} [options.stackName] - cumulus stack name
-   * @param {string} [options.asyncOperationId] - async operation id associated with the
+   * @param options - options object
+   * @param [options.executions]  - AWS stepfunction execution name
+   * @param [options.granules] - stringified array of granule objects
+   * @param [options.parentArn] - parent stepfunction execution ARN
+   * @param [options.pretty=false] - stringify objects on multiple lines
+   * @param [options.sender="unknown"] - the sender of the log message
+   * @param [options.stackName] - cumulus stack name
+   * @param [options.asyncOperationId] - async operation id associated with the
    *  kickoff of the workflow (optional)
-   * @param {Console} [options.console=global.console] - the console to write
+   * @param [options.console=global.console] - the console to write
    *   log events to
-   * @param {string} [options.version] - Lambda function version
+   * @param [options.version] - Lambda function version
    */
   constructor(options: LoggerConstructorOptions = {}) {
     this.#asyncOperationId = options.asyncOperationId;
@@ -55,7 +55,7 @@ class Logger {
   /**
    * Log a debug message
    *
-   * @param {...any} [messageArgs] - the message to log
+   * @param [messageArgs] - the message to log
    */
   debug(...messageArgs: any[]) {
     this._writeLogEvent('debug', messageArgs);
@@ -64,7 +64,7 @@ class Logger {
   /**
    * Log an error message
    *
-   * @param {...any} [messageArgs] - the message to log
+   * @param [messageArgs] - the message to log
    */
   error(...messageArgs: any[]) {
     const lastMessageArg = messageArgs[messageArgs.length - 1];
@@ -96,7 +96,7 @@ class Logger {
   /**
    * Log a fatal message
    *
-   * @param {...any} [messageArgs] - the message to log
+   * @param [messageArgs] - the message to log
    */
   fatal(...messageArgs: any[]) {
     this._writeLogEvent('fatal', messageArgs);
@@ -105,7 +105,7 @@ class Logger {
   /**
    * Log an info message
    *
-   * @param {...any} [messageArgs] - the message to log
+   * @param [messageArgs] - the message to log
    */
   info(...messageArgs: string[]) {
     this._writeLogEvent('info', messageArgs);
@@ -114,8 +114,8 @@ class Logger {
   /**
    * Log an event with additional properties
    *
-   * @param {Object} additionalKeys
-   * @param {...any} [messageArgs] - the message to log
+   * @param additionalKeys
+   * @param [messageArgs] - the message to log
    */
   infoWithAdditionalKeys(additionalKeys: object, ...messageArgs: any[]) {
     this._writeLogEvent('info', messageArgs, additionalKeys);
@@ -124,7 +124,7 @@ class Logger {
   /**
    * Log a trace message
    *
-   * @param {...any} [messageArgs] - the message to log
+   * @param [messageArgs] - the message to log
    */
   trace(...messageArgs: string[]) {
     this._writeLogEvent('trace', messageArgs);
@@ -133,7 +133,7 @@ class Logger {
   /**
    * Log a warning message
    *
-   * @param {...any} [messageArgs] - the message to log
+   * @param [messageArgs] - the message to log
    */
   warn(...messageArgs: string[]) {
     this._writeLogEvent('warn', messageArgs);

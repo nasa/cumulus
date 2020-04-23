@@ -2,7 +2,6 @@
 
 const { Console } = require('console');
 const { Writable } = require('stream');
-const isString = require('lodash.isstring');
 const moment = require('moment');
 const test = require('ava');
 
@@ -248,7 +247,7 @@ test('Logger.error() logs info about an Error', (t) => {
   t.is(logEntry.error.name, 'Error');
   t.is(logEntry.error.message, 'test123');
   t.true(Array.isArray(logEntry.error.stack));
-  t.true(isString(logEntry.error.stack[0]));
+  t.is(typeof logEntry.error.stack[0], 'string');
 });
 
 test('Logger.error() can handle just an Error', (t) => {
@@ -270,7 +269,7 @@ test('Logger.error() can handle just an Error', (t) => {
   t.is(logEntry.error.name, 'Error');
   t.is(logEntry.error.message, 'test123');
   t.true(Array.isArray(logEntry.error.stack));
-  t.true(isString(logEntry.error.stack[0]));
+  t.is(typeof logEntry.error.stack[0], 'string');
 });
 
 test('Logger.debug() creates the expected log entry', (t) => {

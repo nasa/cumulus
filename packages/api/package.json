@@ -22,7 +22,7 @@
     "serve-dist-remote": "cumulus-api serve-dist",
     "reset-tables": "LOCALSTACK_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api reset-tables",
     "link-api-bin": "sh ./bin/link-api-bin.sh",
-    "prepare": "npm run build && npm run link-api-bin && npm run build-lambda-zips",
+    "webpack": "npm run build && npm run link-api-bin && npm run build-lambda-zips",
     "build-lambda-zips": "for x in $(ls dist); do (cd dist/${x} && rm -f lambda.zip && find . | xargs zip lambda.zip && echo zipped ${x}); done"
   },
   "ava": {
