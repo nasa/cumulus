@@ -154,42 +154,42 @@ class Rule extends Manager {
     let updatedRuleItem = cloneDeep(ruleItem);
 
     switch (updatedRuleItem.rule.type) {
-      case 'scheduled': {
-        const payload = await Rule.buildPayload(updatedRuleItem);
-        await this.addRule(updatedRuleItem, payload);
-        break;
+    case 'scheduled': {
+      const payload = await Rule.buildPayload(updatedRuleItem);
+      await this.addRule(updatedRuleItem, payload);
+      break;
+    }
+    case 'kinesis':
+      if (valueUpdated) {
+        await this.deleteKinesisEventSources(updatedRuleItem);
+        const updatedRuleItemArns = await this.addKinesisEventSources(updatedRuleItem);
+        updatedRuleItem = this.updateKinesisRuleArns(updatedRuleItem,
+          updatedRuleItemArns);
       }
-      case 'kinesis':
-        if (valueUpdated) {
-          await this.deleteKinesisEventSources(updatedRuleItem);
-          const updatedRuleItemArns = await this.addKinesisEventSources(updatedRuleItem);
-          updatedRuleItem = this.updateKinesisRuleArns(updatedRuleItem,
-            updatedRuleItemArns);
+      break;
+    case 'sns': {
+      if (valueUpdated || stateChanged) {
+        if (updatedRuleItem.state === 'ENABLED' && stateChanged && updatedRuleItem.rule.arn) {
+          throw new Error('Including rule.arn is not allowed when enabling a disabled rule');
         }
-        break;
-      case 'sns': {
-        if (valueUpdated || stateChanged) {
-          if (updatedRuleItem.state === 'ENABLED' && stateChanged && updatedRuleItem.rule.arn) {
-            throw new Error('Including rule.arn is not allowed when enabling a disabled rule');
-          }
-          let snsSubscriptionArn;
-          if (updatedRuleItem.rule.arn) {
-            await this.deleteSnsTrigger(updatedRuleItem);
-          }
-          if (updatedRuleItem.state === 'ENABLED') {
-            snsSubscriptionArn = await this.addSnsTrigger(updatedRuleItem);
-          }
-          updatedRuleItem = this.updateSnsRuleArn(updatedRuleItem,
-            snsSubscriptionArn);
+        let snsSubscriptionArn;
+        if (updatedRuleItem.rule.arn) {
+          await this.deleteSnsTrigger(updatedRuleItem);
         }
-        break;
+        if (updatedRuleItem.state === 'ENABLED') {
+          snsSubscriptionArn = await this.addSnsTrigger(updatedRuleItem);
+        }
+        updatedRuleItem = this.updateSnsRuleArn(updatedRuleItem,
+          snsSubscriptionArn);
       }
-      case 'sqs':
-        updatedRuleItem = await this.validateAndUpdateSqsRule(updatedRuleItem);
-        break;
-      default:
-        break;
-      }
+      break;
+    }
+    case 'sqs':
+      updatedRuleItem = await this.validateAndUpdateSqsRule(updatedRuleItem);
+      break;
+    default:
+      break;
+    }
 
     return updatedRuleItem;
   }
@@ -259,31 +259,31 @@ class Rule extends Manager {
 
     const payload = await Rule.buildPayload(newRuleItem);
     switch (newRuleItem.rule.type) {
-      case 'onetime': {
-        await invoke(process.env.invoke, payload);
-        break;
+    case 'onetime': {
+      await invoke(process.env.invoke, payload);
+      break;
+    }
+    case 'scheduled': {
+      await this.addRule(newRuleItem, payload);
+      break;
+    }
+    case 'kinesis': {
+      const ruleArns = await this.addKinesisEventSources(newRuleItem);
+      newRuleItem = this.updateKinesisRuleArns(newRuleItem, ruleArns);
+      break;
+    }
+    case 'sns': {
+      if (newRuleItem.state === 'ENABLED') {
+        const snsSubscriptionArn = await this.addSnsTrigger(newRuleItem);
+        newRuleItem = this.updateSnsRuleArn(newRuleItem, snsSubscriptionArn);
       }
-      case 'scheduled': {
-        await this.addRule(newRuleItem, payload);
-        break;
-      }
-      case 'kinesis': {
-        const ruleArns = await this.addKinesisEventSources(newRuleItem);
-        newRuleItem = this.updateKinesisRuleArns(newRuleItem, ruleArns);
-        break;
-      }
-      case 'sns': {
-        if (newRuleItem.state === 'ENABLED') {
-          const snsSubscriptionArn = await this.addSnsTrigger(newRuleItem);
-          newRuleItem = this.updateSnsRuleArn(newRuleItem, snsSubscriptionArn);
-        }
-        break;
-      }
-      case 'sqs':
-        newRuleItem = await this.validateAndUpdateSqsRule(newRuleItem);
-        break;
-      default:
-        throw new ValidationError(`Rule type \'${newRuleItem.rule.type}\' not supported.`);
+      break;
+    }
+    case 'sqs':
+      newRuleItem = await this.validateAndUpdateSqsRule(newRuleItem);
+      break;
+    default:
+      throw new ValidationError(`Rule type \'${newRuleItem.rule.type}\' not supported.`);
     }
     return newRuleItem;
   }

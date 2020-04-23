@@ -36,13 +36,17 @@ async function getKinesisEventMappings() {
 async function deleteKinesisEventSourceMappings() {
   const eventMappings = await getKinesisEventMappings();
 
-  if(!eventMappings) {
+  if (!eventMappings) {
     return Promise.resolve();
   }
 
-  const allEventMappings = eventMappings[0].EventSourceMappings.concat(eventMappings[1].EventSourceMappings);
+  const allEventMappings = eventMappings[0].EventSourceMappings.concat(
+    eventMappings[1].EventSourceMappings
+  );
 
-  return Promise.all(allEventMappings.map((e) => awsServices.lambda().deleteEventSourceMapping({ UUID: e.UUID }).promise()));
+  return Promise.all(allEventMappings.map((e) =>
+    awsServices.lambda().deleteEventSourceMapping({ UUID: e.UUID }).promise()
+  ));
 }
 
 let rulesModel;
@@ -160,12 +164,11 @@ test('Creating a rule with an undefined type throws an error', async (t) => {
 
 test('Creating a rule with an invalid type throws an error', async (t) => {
   const { onetimeRule } = t.context;
-  const ruleItem = cloneDeep(onetimeRule);
 
-  ruleItem.rule.type = 'invalid';
+  onetimeRule.rule.type = 'invalid';
 
   await t.throwsAsync(
-    () => rulesModel.create(ruleItem),
+    () => rulesModel.create(onetimeRule),
     { name: 'SchemaValidationError' }
   );
 });
