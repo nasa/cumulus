@@ -1,5 +1,4 @@
 {
-  "root": true,
   "plugins": [
     "eslint-comments",
     "import",
