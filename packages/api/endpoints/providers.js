@@ -3,10 +3,14 @@
 const router = require('express-promise-router')();
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const models = require('../models');
-const { AssociatedRulesError } = require('../lib/errors');
+const Logger = require('@cumulus/logger');
+
+const Provider = require('../models/providers');
+const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 const { Search } = require('../es/search');
 const { addToLocalES, indexProvider } = require('../es/indexer');
+
+const log = new Logger({ sender: '@cumulus/api/providers' });
 
 /**
  * List all providers
@@ -36,7 +40,7 @@ async function list(req, res) {
 async function get(req, res) {
   const id = req.params.id;
 
-  const providerModel = new models.Provider();
+  const providerModel = new Provider();
   let result;
   try {
     result = await providerModel.get({ id });
@@ -55,25 +59,33 @@ async function get(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
-  const data = req.body;
-  const id = data.id;
-
-  const providerModel = new models.Provider();
-
   try {
-    // make sure the record doesn't exist
-    await providerModel.get({ id });
-    return res.boom.badReqest(`A record already exists for ${id}`);
-  } catch (e) {
-    if (e instanceof RecordDoesNotExist) {
-      const record = await providerModel.create(data);
+    const data = req.body;
+    const id = data.id;
 
-      if (inTestMode()) {
-        await addToLocalES(record, indexProvider);
+    const providerModel = new Provider();
+
+    try {
+      // make sure the record doesn't exist
+      await providerModel.get({ id });
+      return res.boom.conflict(`A record already exists for ${id}`);
+    } catch (e) {
+      if (e instanceof RecordDoesNotExist) {
+        const record = await providerModel.create(data);
+
+        if (inTestMode()) {
+          await addToLocalES(record, indexProvider);
+        }
+        return res.send({ record, message: 'Record saved' });
       }
-      return res.send({ record, message: 'Record saved' });
+      throw e;
     }
-    return res.boom.badImplementation(e.message);
+  } catch (err) {
+    if (isBadRequestError(err)) {
+      return res.boom.badRequest(err.message);
+    }
+    log.error('Error occurred while trying to create provider:', err);
+    return res.boom.badImplementation(err.message);
   }
 }
 
@@ -91,7 +103,7 @@ async function put({ params: { id }, body }, res) {
     );
   }
 
-  const providerModel = new models.Provider();
+  const providerModel = new Provider();
 
   return (!(await providerModel.exists(id)))
     ? res.boom.notFound(`Provider with ID '${id}' not found`)
@@ -112,7 +124,7 @@ async function put({ params: { id }, body }, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function del(req, res) {
-  const providerModel = new models.Provider();
+  const providerModel = new Provider();
 
   try {
     await providerModel.delete({ id: req.params.id });

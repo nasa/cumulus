@@ -111,18 +111,16 @@ test('Providers.delete() deletes a provider', async (t) => {
   t.false(await manager.exists({ id: providerId }));
 });
 
-test('Providers.create() throws a ValidationError if an invalid host is used', async (t) => {
+test('Providers.create() throws a ValidationError if an invalid hostname is used', async (t) => {
   const providersModel = new Provider();
 
-  try {
-    await providersModel.create(
+  await t.throwsAsync(
+    providersModel.create(
+      // host should just be a host name, not a full URL
       fakeProviderFactory({ host: 'http://www.example.com' })
-    );
-
-    t.fail('Expected an exception');
-  } catch (err) {
-    t.is(err.name, 'ValidationError');
-  }
+    ),
+    { name: 'ValidationError' }
+  );
 });
 
 test('Providers.create() encrypts the credentials using KMS', async (t) => {
