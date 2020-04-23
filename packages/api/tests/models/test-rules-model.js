@@ -221,13 +221,16 @@ test.serial('Updating a valid rule to have an invalid schema throws an error and
 
   const updateTriggerStub = sinon.stub(models.Rule.prototype, 'updateRuleTrigger').resolves(rule);
 
-  await t.throwsAsync(
-    () => rulesModel.update(rule, updates),
-    { name: 'SchemaValidationError' }
-  );
+  try {
+    await t.throwsAsync(
+      () => rulesModel.update(rule, updates),
+      { name: 'SchemaValidationError' }
+    );
 
-  t.true(updateTriggerStub.notCalled);
-  updateTriggerStub.restore();
+    t.true(updateTriggerStub.notCalled);
+  } finally {
+    updateTriggerStub.restore();
+  }
 });
 
 test.serial('create a kinesis type rule adds event mappings, creates rule', async (t) => {
