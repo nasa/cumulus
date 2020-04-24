@@ -1,27 +1,18 @@
-'use strict';
-
 /**
  * Utility functions for working with the AWS StepFunctions API
- * @module StepFunctions
- *
- * @example
- * const StepFunctions = require('@cumulus/aws-client/StepFunctions');
  */
 
-const { JSONPath } = require('jsonpath-plus');
-const Logger = require('@cumulus/logger');
-const awsServices = require('./services');
-const s3Utils = require('./S3');
-const {
-  improveStackTrace,
-  retryOnThrottlingException
-} = require('./utils');
+import { JSONPath } from 'jsonpath-plus';
+import Logger = require('@cumulus/logger');
+import { sfn } from './services';
+import * as s3Utils from './S3';
+import { improveStackTrace, retryOnThrottlingException } from './utils';
 
 const log = new Logger({ sender: '@cumulus/aws-client/StepFunctions' });
 
 // Utility functions
 
-const doesExecutionExist = (describeExecutionPromise) =>
+export const doesExecutionExist = (describeExecutionPromise: Promise<unknown>) =>
   describeExecutionPromise
     .then(() => true)
     .catch((err) => {
@@ -30,7 +21,7 @@ const doesExecutionExist = (describeExecutionPromise) =>
     });
 
 // Copied here to avoid requiring @cumulus/common just for this function
-const deprecate = (name, version, alternative) => {
+const deprecate = (name: string, version: string, alternative?: string) => {
   let message = `${name} is deprecated after version ${version} and will be removed in a future release.`;
   if (alternative) message += ` Use ${alternative} instead.`;
   if (!('NO_DEPRECATION_WARNINGS' in process.env)) {
@@ -41,13 +32,11 @@ const deprecate = (name, version, alternative) => {
 /**
  * Given a character, replaces the JS unicode-escape sequence for the character
  *
- * @param {char} char - The character to escape
- * @returns {string} The unicode escape sequence for char
- *
- * @private
+ * @param char - The character to escape
+ * @returns The unicode escape sequence for char
  */
-const unicodeEscapeCharacter = (char) =>
-  ['\\u', `0000${char.charCodeAt().toString(16)}`.slice(-4)].join('');
+const unicodeEscapeCharacter = (char: string) =>
+  ['\\u', `0000${char.charCodeAt(0).toString(16)}`.slice(-4)].join('');
 
 // Exported functions
 
@@ -59,15 +48,10 @@ const unicodeEscapeCharacter = (char) =>
  *
  * If a ThrottlingException is received, this function will retry using an
  * exponential backoff.
- *
- * @param {Object} params
- * @returns {Promise.<Object>}
- *
- * @kind function
  */
-const describeExecution = improveStackTrace(
+export const describeExecution = improveStackTrace(
   retryOnThrottlingException(
-    (params) => awsServices.sfn().describeExecution(params).promise()
+    (params: AWS.StepFunctions.DescribeExecutionInput) => sfn().describeExecution(params).promise()
   )
 );
 
@@ -79,15 +63,11 @@ const describeExecution = improveStackTrace(
  *
  * If a ThrottlingException is received, this function will retry using an
  * exponential backoff.
- *
- * @param {Object} params
- * @returns {Promise.<Object>}
- *
- * @kind function
  */
-const describeStateMachine = improveStackTrace(
+export const describeStateMachine = improveStackTrace(
   retryOnThrottlingException(
-    (params) => awsServices.sfn().describeStateMachine(params).promise()
+    (params: AWS.StepFunctions.DescribeStateMachineInput) =>
+      sfn().describeStateMachine(params).promise()
   )
 );
 
@@ -97,13 +77,10 @@ const describeStateMachine = improveStackTrace(
  * If a ThrottlingException is received, this function will retry using an
  * exponential backoff.
  *
- * @param {string} executionArn - the ARN of the Step Function Execution to
+ * @param executionArn - the ARN of the Step Function Execution to
  *   check for
- * @returns {Promise.<boolean>}
- *
- * @kind function
  */
-const executionExists = (executionArn) =>
+export const executionExists = (executionArn: string) =>
   doesExecutionExist(describeExecution({ executionArn }));
 
 /**
@@ -114,21 +91,16 @@ const executionExists = (executionArn) =>
  *
  * If a ThrottlingException is received, this function will retry using an
  * exponential backoff.
- *
- * @param {Object} params
- * @returns {Promise.<Object>}
- *
- * @kind function
  */
-const getExecutionHistory = improveStackTrace(
+export const getExecutionHistory = improveStackTrace(
   retryOnThrottlingException(
     async (
-      params,
-      previousResponse = {
+      params: AWS.StepFunctions.GetExecutionHistoryInput,
+      previousResponse: { events: AWS.StepFunctions.HistoryEventList } = {
         events: []
       }
-    ) => {
-      const response = await awsServices.sfn().getExecutionHistory(params).promise();
+    ): Promise<{ events: AWS.StepFunctions.HistoryEventList }> => {
+      const response = await sfn().getExecutionHistory(params).promise();
       const events = [
         ...previousResponse.events,
         ...response.events
@@ -150,7 +122,7 @@ const getExecutionHistory = improveStackTrace(
   )
 );
 
-const getExecutionStatus = async (executionArn) => {
+export const getExecutionStatus = async (executionArn: string) => {
   const [execution, executionHistory] = await Promise.all([
     describeExecution({ executionArn }),
     getExecutionHistory({ executionArn })
@@ -171,15 +143,10 @@ const getExecutionStatus = async (executionArn) => {
  *
  * If a ThrottlingException is received, this function will retry using an
  * exponential backoff.
- *
- * @param {Object} params
- * @returns {Promise.<Object>}
- *
- * @kind function
  */
-const listExecutions = improveStackTrace(
+export const listExecutions = improveStackTrace(
   retryOnThrottlingException(
-    (params) => awsServices.sfn().listExecutions(params).promise()
+    (params: AWS.StepFunctions.ListExecutionsInput) => sfn().listExecutions(params).promise()
   )
 );
 
@@ -187,11 +154,12 @@ const listExecutions = improveStackTrace(
  * Given a string, replaces all characters matching the passed regex with their unicode
  * escape sequences
  *
- * @param {string} str - The string to escape
- * @param {string} regex - The regex matching characters to replace (default: all chars)
- * @returns {string} The string with characters unicode-escaped
+ * @param str - The string to escape
+ * @param regex - The regex matching characters to replace (default: all chars)
+ * @returns The string with characters unicode-escaped
  */
-const unicodeEscape = (str, regex = /[\s\S]/g) => str.replace(regex, unicodeEscapeCharacter);
+export const unicodeEscape = (str: string, regex = /[\s\S]/g) =>
+  str.replace(regex, unicodeEscapeCharacter);
 
 /**
  * Given an array of fields, returns that a new string that's safe for use as a StepFunction,
@@ -199,12 +167,12 @@ const unicodeEscape = (str, regex = /[\s\S]/g) => str.replace(regex, unicodeEsca
  * Important: This transformation isn't entirely two-way. Names longer than 80 characters
  *            will be truncated.
  *
- * @param {string} fields - The fields to be injected into an execution name
- * @param {string} delimiter - An optional delimiter string to replace, pass null to make
+ * @param fields - The fields to be injected into an execution name
+ * @param delimiter - An optional delimiter string to replace, pass null to make
  *   no replacements
- * @returns {string} A string that's safe to use as a StepFunctions execution name
+ * @returns A string that's safe to use as a StepFunctions execution name
  */
-const toSfnExecutionName = (fields, delimiter = '__') => {
+export const toSfnExecutionName = (fields: string[], delimiter = '__') => {
   deprecate('@cumulus/aws-client/StepFunctions.toSfnExecutionName()', '1.21.0');
   let sfnUnsafeChars = '[^\\w-=+_.]';
   if (delimiter) {
@@ -222,12 +190,12 @@ const toSfnExecutionName = (fields, delimiter = '__') => {
  * Important: This value may be truncated from the original because of the 80-char limit on
  *            execution names
  *
- * @param {string} str - The string to make stepfunction safe
- * @param {string} [delimiter='__'] - An optional delimiter string to replace, pass null to make
+ * @param str - The string to make stepfunction safe
+ * @param delimiter - An optional delimiter string to replace, pass null to make
  *   no replacements
- * @returns {Array} An array of the original fields
+ * @returns An array of the original fields
  */
-const fromSfnExecutionName = (str, delimiter = '__') => {
+export const fromSfnExecutionName = (str: string, delimiter = '__') => {
   deprecate('@cumulus/aws-client/StepFunctions.fromSfnExecutionName()', '1.21.0');
   return str.split(delimiter)
     .map((s) => s.replace(/!/g, '\\').replace('"', '\\"'))
@@ -237,11 +205,11 @@ const fromSfnExecutionName = (str, delimiter = '__') => {
 /**
  * Returns execution ARN from a statement machine Arn and executionName
  *
- * @param {string} stateMachineArn - state machine ARN
- * @param {string} executionName - state machine's execution name
- * @returns {string} - Step Function Execution Arn
+ * @param stateMachineArn - state machine ARN
+ * @param executionName - state machine's execution name
+ * @returns Step Function Execution Arn
  */
-const getExecutionArn = (stateMachineArn, executionName) => {
+export const getExecutionArn = (stateMachineArn: string, executionName: string) => {
   deprecate('@cumulus/aws-client/StepFunctions.getExecutionArn()', '1.21.0', '@cumulus/message/Executions.buildExecutionArn()');
   if (stateMachineArn && executionName) {
     const sfArn = stateMachineArn.replace('stateMachine', 'execution');
@@ -253,17 +221,17 @@ const getExecutionArn = (stateMachineArn, executionName) => {
 /**
  * Returns execution ARN from a statement machine Arn and executionName
  *
- * @param {string} executionArn - execution ARN
- * @returns {string} return aws console url for the execution
+ * @param executionArn - execution ARN
+ * @returns return aws console url for the execution
  */
-function getExecutionUrl(executionArn) {
+export function getExecutionUrl(executionArn: string) {
   deprecate('@cumulus/aws-client/StepFunctions.getExecutionUrl()', '1.21.0', '@cumulus/message/Executions.getExecutionUrlFromArn()');
   const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
   return `https://console.aws.amazon.com/states/home?region=${region}`
          + `#/executions/details/${executionArn}`;
 }
 
-const getStateMachineArn = (executionArn) => {
+export const getStateMachineArn = (executionArn: string) => {
   deprecate('@cumulus/aws-client/StepFunctions.getStateMachineArn()', '1.21.0', '@cumulus/message/Executions.getStateMachineArnFromExecutionArn()');
   if (executionArn) {
     return executionArn.replace('execution', 'stateMachine').split(':').slice(0, -1).join(':');
@@ -271,14 +239,22 @@ const getStateMachineArn = (executionArn) => {
   return null;
 };
 
+type CumulusMessage = {
+  replace?: {
+    Bucket: string,
+    Key: string,
+    TargetPath: string
+  }
+};
+
 /**
  * Given a Cumulus step function event, if the message is on S3, pull the full message
  * from S3 and return, otherwise return the event.
  *
- * @param {Object} event - the Cumulus event
- * @returns {Object} - the full Cumulus message
+ * @param event - the Cumulus event
+ * @returns the full Cumulus message
  */
-const pullStepFunctionEvent = async (event) => {
+export const pullStepFunctionEvent = async (event: CumulusMessage) => {
   deprecate('@cumulus/aws-client/StepFunctions.pullStepFunctionEvent()', '1.21.0', '@cumulus/message/StepFunctions.pullStepFunctionEvent()');
   if (!event.replace) return event;
 
@@ -304,23 +280,4 @@ const pullStepFunctionEvent = async (event) => {
     }
   }
   return returnEvent;
-};
-
-module.exports = {
-  describeExecution,
-  describeStateMachine,
-  executionExists,
-  getExecutionHistory,
-  getExecutionStatus,
-  listExecutions,
-  unicodeEscape,
-  toSfnExecutionName,
-  fromSfnExecutionName,
-  getExecutionArn,
-  getExecutionUrl,
-  getStateMachineArn,
-  pullStepFunctionEvent,
-
-  // Not part of the public API, exported for testing
-  doesExecutionExist
 };
