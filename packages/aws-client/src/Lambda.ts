@@ -19,5 +19,3 @@ export const invoke = async (name: string, payload: unknown, type = 'Event') => 
     InvocationType: type
   }).promise();
 };
-
-export default invoke;

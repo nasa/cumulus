@@ -1,6 +1,6 @@
-const pRetry = require('p-retry');
-const Logger = require('@cumulus/logger');
-const awsServices = require('./services');
+import pRetry from 'p-retry';
+import Logger = require('@cumulus/logger');
+import { sns } from './services';
 
 const log = new Logger({ sender: 'aws-client/sns' });
 
@@ -8,15 +8,14 @@ const log = new Logger({ sender: 'aws-client/sns' });
  * Publish a message to an SNS topic. Does not catch
  * errors, to allow more specific handling by the caller.
  *
- * @param {string} snsTopicArn - SNS topic ARN
- * @param {Object} message - Message object
- * @param {Object} retryOptions - options to control retry behavior when publishing
+ * @param snsTopicArn - SNS topic ARN
+ * @param message - Message object
+ * @param retryOptions - options to control retry behavior when publishing
  * a message fails. See https://github.com/tim-kos/node-retry#retryoperationoptions
- * @returns {Promise<undefined>}
  */
-exports.publishSnsMessage = async (
-  snsTopicArn,
-  message,
+export const publishSnsMessage = async (
+  snsTopicArn: string,
+  message: any,
   retryOptions = {}
 ) =>
   pRetry(
@@ -25,7 +24,7 @@ exports.publishSnsMessage = async (
         throw new pRetry.AbortError('Missing SNS topic ARN');
       }
 
-      await awsServices.sns().publish({
+      await sns().publish({
         TopicArn: snsTopicArn,
         Message: JSON.stringify(message)
       }).promise();

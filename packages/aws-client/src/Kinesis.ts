@@ -22,5 +22,3 @@ export const describeStream = (
     },
     { maxTimeout: 10000, ...retryOptions }
   );
-
-export default describeStream;
