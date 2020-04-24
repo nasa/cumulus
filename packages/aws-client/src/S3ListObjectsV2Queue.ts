@@ -1,12 +1,16 @@
-const awsServices = require('./services');
+import { s3 } from './services';
 
 // Class to efficiently list all of the objects in an S3 bucket, without loading
 // them all into memory at once.  Handles paging of listS3ObjectsV2 requests.
 class S3ListObjectsV2Queue {
-  constructor(params) {
+  private readonly s3: AWS.S3;
+  private readonly params: AWS.S3.ListObjectsV2Request;
+  private items: Array<AWS.S3.Object | null>;
+
+  constructor(params: AWS.S3.ListObjectsV2Request) {
     this.items = [];
     this.params = params;
-    this.s3 = awsServices.s3();
+    this.s3 = s3();
   }
 
   /**
@@ -14,8 +18,6 @@ class S3ListObjectsV2Queue {
    *
    * This does not remove the object from the queue.  When there are no more
    * items in the queue, returns 'null'.
-   *
-   * @returns {Promise<Object>} - an S3 object description
    */
   async peek() {
     if (this.items.length === 0) await this.fetchItems();
@@ -26,8 +28,6 @@ class S3ListObjectsV2Queue {
    * Remove the next item from the queue
    *
    * When there are no more items in the queue, returns 'null'.
-   *
-   * @returns {Promise<Object>} - an S3 object description
    */
   async shift() {
     if (this.items.length === 0) await this.fetchItems();
@@ -36,14 +36,11 @@ class S3ListObjectsV2Queue {
 
   /**
    * Query the S3 API to get the next 1,000 items
-   *
-   * @returns {Promise<undefined>} - resolves when the queue has been updated
-   * @private
    */
-  async fetchItems() {
+  private async fetchItems() {
     const response = await this.s3.listObjectsV2(this.params).promise();
 
-    this.items = response.Contents;
+    this.items = (response.Contents || []);
 
     if (response.IsTruncated) {
       this.params.ContinuationToken = response.NextContinuationToken;
@@ -51,4 +48,4 @@ class S3ListObjectsV2Queue {
   }
 }
 
-module.exports = S3ListObjectsV2Queue;
+export = S3ListObjectsV2Queue;
