@@ -1,36 +1,31 @@
-const awsServices = require('./services');
+import { cloudwatchevents } from './services';
 
-exports.putEvent = (name, schedule, state, description = null, role = null) => {
-  const params = {
+export const putEvent = (
+  name: string,
+  schedule: string,
+  state: string,
+  description?: string,
+  role?: string
+) =>
+  cloudwatchevents().putRule({
     Name: name,
     Description: description,
     RoleArn: role,
     ScheduleExpression: schedule,
     State: state
-  };
+  }).promise();
 
-  return awsServices.cloudwatchevents().putRule(params).promise();
-};
+export const deleteEvent = (name: string) =>
+  cloudwatchevents().deleteRule({ Name: name }).promise();
 
-exports.deleteEvent = (name) => {
-  const params = {
-    Name: name
-  };
-
-  return awsServices.cloudwatchevents().deleteRule(params).promise();
-};
-
-exports.deleteTarget = (id, rule) => {
-  const params = {
+export const deleteTarget = (id: string, rule: string) =>
+  cloudwatchevents().removeTargets({
     Ids: [id],
     Rule: rule
-  };
+  }).promise();
 
-  return awsServices.cloudwatchevents().removeTargets(params).promise();
-};
-
-exports.putTarget = (rule, id, arn, input) => {
-  const params = {
+export const putTarget = (rule: string, id: string, arn: string, input: string) =>
+  cloudwatchevents().putTargets({
     Rule: rule,
     Targets: [ /* required */
       {
@@ -39,7 +34,4 @@ exports.putTarget = (rule, id, arn, input) => {
         Input: input
       }
     ]
-  };
-
-  return awsServices.cloudwatchevents().putTargets(params).promise();
-};
+  }).promise();
