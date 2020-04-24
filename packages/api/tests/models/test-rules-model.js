@@ -45,8 +45,7 @@ async function deleteKinesisEventSourceMappings() {
   );
 
   return Promise.all(allEventMappings.map((e) =>
-    awsServices.lambda().deleteEventSourceMapping({ UUID: e.UUID }).promise()
-  ));
+    awsServices.lambda().deleteEventSourceMapping({ UUID: e.UUID }).promise()));
 }
 
 let rulesModel;
@@ -215,7 +214,7 @@ test('enabling a disabled rule updates the state', async (t) => {
 test.serial('Updating a valid rule to have an invalid schema throws an error and does not update triggers', async (t) => {
   const { onetimeRule } = t.context;
 
-  let rule = await rulesModel.create(onetimeRule);
+  const rule = await rulesModel.create(onetimeRule);
 
   const updates = { name: rule.name, rule: null };
 
