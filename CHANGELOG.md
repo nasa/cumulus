@@ -48,9 +48,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1850**
   - Fixed a bug in Kinesis event processing where the message consumer would not properly filter available rules based on the collection information in the event and the Kinesis stream ARN
+
 - **CUMULUS-1853**
   - Fixed a bug where attempting to create a rule containing a payload property
     would fail schema validation.
+
+- **CUMULUS-1854**
+  - Rule schema is validated before starting workflows or creating event source mappings
 
 ### Deprecated
 
