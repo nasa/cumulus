@@ -162,7 +162,7 @@ test('The AsyncAdapter.start() method throws error and updates operation if it i
   };
 
   const id = randomString();
-  const stub = sinon.stub(AsyncOperation, 'generateID').returns(id);
+  const stub = sinon.stub(AsyncOperation.prototype, 'generateID').returns(id);
   const expectedMessage = 'Failed to start AsyncOperation: out of cheese';
 
   try {

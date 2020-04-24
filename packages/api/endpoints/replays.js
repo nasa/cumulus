@@ -55,8 +55,8 @@ async function startKinesisReplayAsyncOperation(req, res) {
     if (err.name === 'EcsStartTaskError') {
       return res.boom.serverUnavailable(`Failed to run ECS task: ${err.message}`);
     }
-    logger.error(`Failed to run ECS task: ${err.message}`);
-    return res.boom.badImplementation(`Failed to run ECS task: ${err.message}`);
+    logger.error('Failed to run ECS task', err);
+    return res.boom.badImplementation();
   }
 
   return res.status(202).send({ asyncOperationId: asyncOperation.id });

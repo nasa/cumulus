@@ -39,11 +39,32 @@ class AsyncOperation extends Manager {
     this.stackName = params.stackName;
   }
 
-  static generateID() {
+  /**
+   * Generate an ID for an async operation.
+   *
+   * @returns {string} - An async operation ID
+   */
+  generateID() {
     return uuidv4();
   }
 
-  runECSTask({
+  /**
+   * Start an ECS task for the async operation.
+   *
+   * @param {Object} params
+   * @param {string} params.asyncOperationTaskDefinition - ARN for the task definition
+   * @param {string} params.cluster - ARN for the ECS cluster to use for the task
+   * @param {string} params.lambdaName
+   *   Environment variable for Lambda name that will be run by the ECS task
+   * @param {string} params.id - the Async operation ID
+   * @param {string} params.payloadBucket
+   *   S3 bucket name where async operation payload is stored
+   * @param {string} params.payloadKey
+   *   S3 key name where async operation payload is stored
+   * @returns {Promise<Object>}
+   * @see https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/ECS.html#runTask-property
+   */
+  startECSTask({
     asyncOperationTaskDefinition,
     cluster,
     lambdaName,
@@ -93,7 +114,7 @@ class AsyncOperation extends Manager {
     } = params;
 
     // Create the record in the database
-    const id = AsyncOperation.generateID();
+    const id = this.generateID();
     await this.create({
       id,
       status: 'RUNNING',
@@ -112,7 +133,7 @@ class AsyncOperation extends Manager {
     }).promise();
 
     // Start the task in ECS
-    const runTaskResponse = await this.runECSTask({
+    const runTaskResponse = await this.startECSTask({
       ...params,
       id,
       payloadBucket,

@@ -134,7 +134,7 @@ test.serial('request to replays endpoint with valid kinesis parameters starts an
 });
 
 test.serial('request to replays endpoint returns 503 if ECS task fails to start', async (t) => {
-  const runECSTaskStub = sinon.stub(AsyncOperation.prototype, 'runECSTask')
+  const runECSTaskStub = sinon.stub(AsyncOperation.prototype, 'startECSTask')
     .resolves({
       failures: [{
         reason: 'fail'
@@ -162,7 +162,7 @@ test.serial('request to replays endpoint returns 503 if ECS task fails to start'
 });
 
 test.serial('request to replays endpoint returns 500 if starting ECS task throws unexpected error', async (t) => {
-  const runECSTaskStub = sinon.stub(AsyncOperation.prototype, 'runECSTask')
+  const runECSTaskStub = sinon.stub(AsyncOperation.prototype, 'startECSTask')
     .throws(() => new Error('error'));
 
   const body = {
