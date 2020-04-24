@@ -40,15 +40,6 @@ class AsyncOperation extends Manager {
   }
 
   /**
-   * Generate an ID for an async operation.
-   *
-   * @returns {string} - An async operation ID
-   */
-  generateID() {
-    return uuidv4();
-  }
-
-  /**
    * Start an ECS task for the async operation.
    *
    * @param {Object} params
@@ -114,7 +105,7 @@ class AsyncOperation extends Manager {
     } = params;
 
     // Create the record in the database
-    const id = this.generateID();
+    const id = uuidv4();
 
     // Store the payload to S3
     const payloadBucket = this.systemBucket;

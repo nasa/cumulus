@@ -110,7 +110,6 @@ router.use('/elasticsearch', ensureAuthorized, elasticsearch);
 router.use('/ems', ensureAuthorized, ems);
 
 // Catch and send the error message down (instead of just 500: internal server error)
-// Need all 4 params, because that's how express knows this is the error handler
 router.use(defaultErrorHandler);
 
 module.exports = router;

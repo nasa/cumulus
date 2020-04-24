@@ -13,9 +13,10 @@ const defaultErrorHandler = (error, req, res, next) => {
 
 // eslint-disable-next-line no-unused-vars
 const asyncOperationEndpointErrorHandler = async (err, req, res, next) => {
-  logger.error('Failed to run ECS task', err);
+  const message = 'Failed to run ECS task:';
+  logger.error(message, err);
   if (err instanceof EcsStartTaskError) {
-    return res.boom.serverUnavailable(`Failed to run ECS task: ${err.message}`);
+    return res.boom.serverUnavailable(`${message} ${err.message}`);
   }
   return res.boom.badImplementation();
 };

@@ -2,7 +2,6 @@
 
 const isString = require('lodash/isString');
 const test = require('ava');
-const sinon = require('sinon');
 
 const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
@@ -155,35 +154,25 @@ test.serial('The AsyncOperation.start() method starts an ECS task with the corre
   t.is(environmentOverrides.payloadUrl, `s3://${systemBucket}/${asyncOperationModel.stackName}/async-operation-payloads/${id}.json`);
 });
 
-test('The AsyncAdapter.start() method throws error and updates operation if it is unable to create an ECS task', async (t) => {
+test('The AsyncOperation.start() method throws error and updates operation if it is unable to create an ECS task', async (t) => {
   stubbedEcsRunTaskResult = {
     tasks: [],
     failures: [{ arn: randomString(), reason: 'out of cheese' }]
   };
 
-  const id = randomString();
-  const stub = sinon.stub(AsyncOperation.prototype, 'generateID').returns(id);
   const expectedMessage = 'Failed to start AsyncOperation: out of cheese';
 
-  try {
-    await t.throwsAsync(asyncOperationModel.start({
-      asyncOperationTaskDefinition: randomString(),
-      cluster: randomString(),
-      lambdaName: randomString(),
-      description: randomString(),
-      operationType: 'ES Index',
-      payload: {}
-    }), {
-      instanceOf: EcsStartTaskError,
-      message: expectedMessage
-    });
-
-    const { output } = await asyncOperationModel.get({ id });
-    const parsedOutput = JSON.parse(output);
-    t.is(parsedOutput.message, expectedMessage);
-  } finally {
-    stub.restore();
-  }
+  await t.throwsAsync(asyncOperationModel.start({
+    asyncOperationTaskDefinition: randomString(),
+    cluster: randomString(),
+    lambdaName: randomString(),
+    description: randomString(),
+    operationType: 'ES Index',
+    payload: {}
+  }), {
+    instanceOf: EcsStartTaskError,
+    message: expectedMessage
+  });
 });
 
 test.serial('The AsyncOperation.start() method writes a new record to DynamoDB', async (t) => {
