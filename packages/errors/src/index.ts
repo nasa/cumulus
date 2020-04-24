@@ -1,4 +1,10 @@
 /**
+ * A constructor function that returns an instance of Error (or something that inherits from Error).
+ * Typically, this is going to be a class, such as `Error`, `TypeError`, etc.
+ */
+type ErrorClass = new (message: string) => Error;
+
+/**
  * Creates a new error type with the given name and parent class. Sets up
  * boilerplate necessary to successfully subclass Error and preserve stack trace
  * @param name - The name of the error type
@@ -7,7 +13,7 @@
  */
 export const createErrorType = (
   name: string,
-  ParentType: new (message: string) => Error = Error
+  ParentType: ErrorClass = Error
 ) =>
   (
     class extends ParentType {
