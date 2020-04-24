@@ -43,12 +43,6 @@ test.before(async () => {
   accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
-  const asyncOperationsModel = new AsyncOperation({
-    stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket
-  });
-  await asyncOperationsModel.createTable();
-
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 });
 
