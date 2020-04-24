@@ -137,9 +137,21 @@ class Rule extends Manager {
     // Apply updates to updated rule item to be saved
     merge(updatedRuleItem, updates);
 
+    // Validate rule before kicking off workflows or adding event source mappings
+    await this.constructor.recordIsValid(updatedRuleItem, this.schema, this.removeAdditional);
+
     const stateChanged = (updates.state && updates.state !== original.state);
     const valueUpdated = (updates.rule
       && updates.rule.value !== original.rule.value);
+
+    updatedRuleItem = await this.updateRuleTrigger(updatedRuleItem, stateChanged, valueUpdated);
+
+    return super.update({ name: original.name }, updatedRuleItem,
+      fieldsToDelete);
+  }
+
+  async updateRuleTrigger(ruleItem, stateChanged, valueUpdated) {
+    let updatedRuleItem = cloneDeep(ruleItem);
 
     switch (updatedRuleItem.rule.type) {
     case 'scheduled': {
@@ -179,8 +191,7 @@ class Rule extends Manager {
       break;
     }
 
-    return super.update({ name: original.name }, updatedRuleItem,
-      fieldsToDelete);
+    return updatedRuleItem;
   }
 
   static async buildPayload(item) {
@@ -231,6 +242,21 @@ class Rule extends Manager {
       newRuleItem.state = 'ENABLED';
     }
 
+    newRuleItem.createdAt = Date.now();
+    newRuleItem.updatedAt = Date.now();
+
+    // Validate rule before kicking off workflows or adding event source mappings
+    await this.constructor.recordIsValid(newRuleItem, this.schema, this.removeAdditional);
+
+    newRuleItem = await this.createRuleTrigger(newRuleItem);
+
+    // save
+    return super.create(newRuleItem);
+  }
+
+  async createRuleTrigger(ruleItem) {
+    let newRuleItem = cloneDeep(ruleItem);
+
     const payload = await Rule.buildPayload(newRuleItem);
     switch (newRuleItem.rule.type) {
     case 'onetime': {
@@ -259,11 +285,8 @@ class Rule extends Manager {
     default:
       throw new ValidationError(`Rule type \'${newRuleItem.rule.type}\' not supported.`);
     }
-
-    // save
-    return super.create(newRuleItem);
+    return newRuleItem;
   }
-
 
   /**
    * Add  event sources for all mappings in the kinesisSourceEvents

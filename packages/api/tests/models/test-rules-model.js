@@ -33,6 +33,21 @@ async function getKinesisEventMappings() {
   return Promise.all(mappingPromises);
 }
 
+async function deleteKinesisEventSourceMappings() {
+  const eventMappings = await getKinesisEventMappings();
+
+  if (!eventMappings) {
+    return Promise.resolve();
+  }
+
+  const allEventMappings = eventMappings[0].EventSourceMappings.concat(
+    eventMappings[1].EventSourceMappings
+  );
+
+  return Promise.all(allEventMappings.map((e) =>
+    awsServices.lambda().deleteEventSourceMapping({ UUID: e.UUID }).promise()));
+}
+
 let rulesModel;
 
 test.before(async () => {
@@ -142,26 +157,38 @@ test('Creating a rule with an undefined type throws an error', async (t) => {
 
   await t.throwsAsync(
     () => rulesModel.create(ruleItem),
-    {
-      instanceOf: ValidationError,
-      message: 'Rule type \'undefined\' not supported.'
-    }
+    { name: 'SchemaValidationError' }
   );
 });
 
 test('Creating a rule with an invalid type throws an error', async (t) => {
   const { onetimeRule } = t.context;
+
+  onetimeRule.rule.type = 'invalid';
+
+  await t.throwsAsync(
+    () => rulesModel.create(onetimeRule),
+    { name: 'SchemaValidationError' }
+  );
+});
+
+test.serial('Creating an invalid rule does not create workflow triggers', async (t) => {
+  const { onetimeRule } = t.context;
   const ruleItem = cloneDeep(onetimeRule);
 
   ruleItem.rule.type = 'invalid';
 
-  await t.throwsAsync(
-    () => rulesModel.create(ruleItem),
-    {
-      instanceOf: ValidationError,
-      message: 'Rule type \'invalid\' not supported.'
-    }
-  );
+  const createTriggerStub = sinon.stub(models.Rule.prototype, 'createRuleTrigger').resolves(ruleItem);
+
+  try {
+    await t.throwsAsync(
+      () => rulesModel.create(ruleItem),
+      { name: 'SchemaValidationError' }
+    );
+    t.true(createTriggerStub.notCalled);
+  } finally {
+    createTriggerStub.restore();
+  }
 });
 
 test('enabling a disabled rule updates the state', async (t) => {
@@ -182,6 +209,27 @@ test('enabling a disabled rule updates the state', async (t) => {
   t.is(updatedRule.state, 'ENABLED');
 
   await rulesModel.delete(rule);
+});
+
+test.serial('Updating a valid rule to have an invalid schema throws an error and does not update triggers', async (t) => {
+  const { onetimeRule } = t.context;
+
+  const rule = await rulesModel.create(onetimeRule);
+
+  const updates = { name: rule.name, rule: null };
+
+  const updateTriggerStub = sinon.stub(models.Rule.prototype, 'updateRuleTrigger').resolves(rule);
+
+  try {
+    await t.throwsAsync(
+      () => rulesModel.update(rule, updates),
+      { name: 'SchemaValidationError' }
+    );
+
+    t.true(updateTriggerStub.notCalled);
+  } finally {
+    updateTriggerStub.restore();
+  }
 });
 
 test.serial('create a kinesis type rule adds event mappings, creates rule', async (t) => {
@@ -205,6 +253,7 @@ test.serial('create a kinesis type rule adds event mappings, creates rule', asyn
 
   // clean up
   await rulesModel.delete(createdRule);
+  await deleteKinesisEventSourceMappings();
 });
 
 test.serial('deleting a kinesis style rule removes event mappings', async (t) => {
@@ -243,6 +292,7 @@ test.serial('update a kinesis type rule state, event source mappings do not chan
 
   // clean up
   await rulesModel.delete(rule);
+  await deleteKinesisEventSourceMappings();
 });
 
 test.serial('update a kinesis type rule value, resulting in new event source mappings', async (t) => {
@@ -270,6 +320,7 @@ test.serial('update a kinesis type rule value, resulting in new event source map
   t.not(updatedRule.rule.logEventArn, rule.rule.logEventArn);
 
   await rulesModel.delete(rule);
+  await deleteKinesisEventSourceMappings();
 });
 
 test.serial('update a kinesis type rule workflow does not affect value or event source mappings', async (t) => {
@@ -297,6 +348,7 @@ test.serial('update a kinesis type rule workflow does not affect value or event 
   t.is(updatedRule.rule.logEventArn, rule.rule.logEventArn);
 
   await rulesModel.delete(rule);
+  await deleteKinesisEventSourceMappings();
 });
 
 test.serial('create a kinesis type rule, using existing event source mappings', async (t) => {
@@ -322,6 +374,7 @@ test.serial('create a kinesis type rule, using existing event source mappings', 
 
   await rulesModel.delete(rule);
   await rulesModel.delete(newRule);
+  await deleteKinesisEventSourceMappings();
 });
 
 test.serial('it does not delete event source mappings if they exist for other rules', async (t) => {
@@ -356,6 +409,7 @@ test.serial('it does not delete event source mappings if they exist for other ru
   // Cleanup -- this is required for repeated local testing, else localstack retains rules
   await rulesModel.delete(rule);
   await rulesModel.delete(ruleThree);
+  await deleteKinesisEventSourceMappings();
 });
 
 test.serial('Creating a kinesis rule where an event source mapping already exists, but is not enabled, succeeds', async (t) => {
@@ -403,6 +457,25 @@ test.serial('Creating a kinesis rule where an event source mapping already exist
   } finally {
     lambdaStub.restore();
   }
+});
+
+test('creating an invalid kinesis type rule does not add event mappings', async (t) => {
+  const { kinesisRule } = t.context;
+
+  const newKinesisRule = cloneDeep(kinesisRule);
+  delete newKinesisRule.name;
+
+  // attempt to create rule
+  await t.throwsAsync(rulesModel.create(newKinesisRule), { name: 'SchemaValidationError' });
+
+  const kinesisEventMappings = await getKinesisEventMappings();
+  const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
+  const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
+
+  console.log(JSON.stringify(kinesisEventMappings));
+
+  t.is(consumerEventMappings.length, 0);
+  t.is(logEventMappings.length, 0);
 });
 
 test('Creating a rule with a queueName parameter', async (t) => {
