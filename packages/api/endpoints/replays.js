@@ -2,7 +2,7 @@
 
 const router = require('express-promise-router')();
 
-const { asyncOperationEndpointErrorHandler } = require('../app/errors');
+const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const AsyncOperation = require('../models/async-operation');
 
 /**

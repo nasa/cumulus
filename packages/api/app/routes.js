@@ -2,7 +2,7 @@
 
 const router = require('express-promise-router')();
 
-const { defaultErrorHandler } = require('./errors');
+const { defaultErrorHandler } = require('./middleware');
 
 const collections = require('../endpoints/collections');
 const granules = require('../endpoints/granules');

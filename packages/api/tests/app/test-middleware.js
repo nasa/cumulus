@@ -5,7 +5,7 @@ const request = require('supertest');
 
 const { EcsStartTaskError } = require('@cumulus/errors');
 
-const { asyncOperationEndpointErrorHandler } = require('../../app/errors');
+const { asyncOperationEndpointErrorHandler } = require('../../app/middleware');
 
 const app = express();
 app.use(boom());
