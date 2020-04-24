@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const test = require('ava');
 const rewire = require('rewire');
+const sinon = require('sinon');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const {
@@ -11,6 +12,7 @@ const {
   validateConfig,
   validateOutput
 } = require('@cumulus/common/test-utils');
+const Logger = require('@cumulus/logger');
 const { promisify } = require('util');
 
 const discoverGranulesRewire = rewire('..');
@@ -45,6 +47,10 @@ test.beforeEach(async (t) => {
     notDuplicate: {},
     someOtherGranule: {}
   };
+});
+
+test.afterEach(() => {
+  delete process.env.GRANULES;
 });
 
 test('discover granules sets the correct dataType for granules', async (t) => {
@@ -420,5 +426,47 @@ test.serial('checkGranuleHasNoDuplicate throws an error on an unexpected API lam
       await t.throwsAsync(() => checkGranuleHasNoDuplicate('granuleId', ''));
     } finally {
       granulesRevert();
+    }
+  });
+
+test('discover granules sets the GRANULES environment variable and logs the granules', async (t) => {
+    const { event } = t.context;
+
+    event.config.collection.provider_path = '/granules/fake_granules';
+    event.config.provider = {
+      id: 'MODAPS',
+      protocol: 'http',
+      host: '127.0.0.1',
+      port: 3030
+    };
+
+    t.falsy(process.env.GRANULES);
+
+    const loggerInfoSpy = sinon.spy(Logger.prototype, 'info');
+
+    try {
+      await validateConfig(t, event.config);
+
+      await discoverGranules(event);
+
+      t.truthy(process.env.GRANULES);
+
+      const granules = JSON.parse(process.env.GRANULES);
+      t.deepEqual(granules, [
+        'granule-1',
+        'granule-2',
+        'granule-3'
+      ]);
+
+      // Check that the second log.info() call had the granules set
+      const loggerCall = loggerInfoSpy.getCall(1);
+      t.deepEqual(loggerCall.thisValue.granules[
+        'granule-1',
+        'granule-2',
+        'granule-3'
+      ]);
+    }
+    finally {
+      loggerInfoSpy.restore();
     }
   });

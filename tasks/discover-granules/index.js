@@ -271,6 +271,11 @@ const discoverGranules = async ({ config }) => {
 
   const discoveredGranules = map(filesByGranuleId, buildGranule(config));
 
+  // Set the environment variable for the logger
+  if (discoveredGranules) {
+    process.env.GRANULES = JSON.stringify(discoveredGranules.map((g) => g.granuleId));
+  }
+
   logger().info(`Discovered ${discoveredGranules.length} granules.`);
   return { granules: discoveredGranules };
 };
