@@ -140,6 +140,7 @@
         "lodash/prefer-lodash-typecheck": "off",
         "node/no-unsupported-features/es-syntax": "off",
         "tsdoc/syntax": "warn",
+        "unicorn/no-abusive-eslint-disable": "off",
         "valid-jsdoc": "off"
       }
     },
