@@ -13,7 +13,7 @@
     "python-lint": "pylint *.py",
     "lint": "npm run python-lint",
     "build": "pip install -r requirements-dev.txt && pip install -r requirements.txt",
-    "prepare": "npm run build",
+    "package": "npm run build",
     "install-python-deps": "pip install -r requirements-dev.txt && pip install -r requirements.txt"
   },
   "publishConfig": {
