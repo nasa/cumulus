@@ -24,6 +24,7 @@
   "rules": {
     "complexity": ["error", 15],
     "indent": ["error", 2],
+    "object-curly-newline": ["warn", { "consistent": true, "minProperties": 6 }],
     "require-jsdoc": "off",
     "valid-jsdoc": [
       "warn",
