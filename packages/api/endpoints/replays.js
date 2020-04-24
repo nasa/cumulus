@@ -2,11 +2,8 @@
 
 const router = require('express-promise-router')();
 
-const Logger = require('@cumulus/logger');
-
+const { asyncOperationEndpointErrorHandler } = require('../app/errors');
 const AsyncOperation = require('../models/async-operation');
-
-const logger = new Logger({ sender: '@cumulus/api/replays' });
 
 /**
  * Start an AsyncOperation that will perform kinesis message replay
@@ -41,27 +38,18 @@ async function startKinesisReplayAsyncOperation(req, res) {
     ...payload
   };
 
-  let asyncOperation;
-  try {
-    asyncOperation = await asyncOperationModel.start({
-      asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
-      cluster: process.env.EcsCluster,
-      lambdaName: process.env.ManualConsumerLambda,
-      description: 'Kinesis Replay',
-      operationType: 'Kinesis Replay',
-      payload: input
-    });
-  } catch (err) {
-    if (err.name === 'EcsStartTaskError') {
-      return res.boom.serverUnavailable(`Failed to run ECS task: ${err.message}`);
-    }
-    logger.error('Failed to run ECS task', err);
-    return res.boom.badImplementation();
-  }
+  const asyncOperation = await asyncOperationModel.start({
+    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+    cluster: process.env.EcsCluster,
+    lambdaName: process.env.ManualConsumerLambda,
+    description: 'Kinesis Replay',
+    operationType: 'Kinesis Replay',
+    payload: input
+  });
 
   return res.status(202).send({ asyncOperationId: asyncOperation.id });
 }
 
-router.post('/', startKinesisReplayAsyncOperation);
+router.post('/', startKinesisReplayAsyncOperation, asyncOperationEndpointErrorHandler);
 
 module.exports = router;
