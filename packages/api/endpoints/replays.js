@@ -1,7 +1,12 @@
 'use strict';
 
 const router = require('express-promise-router')();
+
+const Logger = require('@cumulus/logger');
+
 const AsyncOperation = require('../models/async-operation');
+
+const logger = new Logger({ sender: '@cumulus/api/replays' });
 
 /**
  * Start an AsyncOperation that will perform kinesis message replay
@@ -47,9 +52,11 @@ async function startKinesisReplayAsyncOperation(req, res) {
       payload: input
     });
   } catch (err) {
-    if (err.name !== 'EcsStartTaskError') throw err;
-
-    return res.boom.serverUnavailable(`Failed to run ECS task: ${err.message}`);
+    if (err.name === 'EcsStartTaskError') {
+      return res.boom.serverUnavailable(`Failed to run ECS task: ${err.message}`);
+    }
+    logger.error(`Failed to run ECS task: ${err.message}`);
+    return res.boom.badImplementation(`Failed to run ECS task: ${err.message}`);
   }
 
   return res.status(202).send({ asyncOperationId: asyncOperation.id });

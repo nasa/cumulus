@@ -133,8 +133,8 @@ test.serial('request to replays endpoint with valid kinesis parameters starts an
   asyncOperationStartStub.restore();
 });
 
-test.serial('request to replays returns 503 if ECS task fails to start', async (t) => {
-  const stub = sinon.stub(AsyncOperation.prototype, 'runECSTask')
+test.serial('request to replays endpoint returns 503 if ECS task fails to start', async (t) => {
+  const runECSTaskStub = sinon.stub(AsyncOperation.prototype, 'runECSTask')
     .resolves({
       failures: [{
         reason: 'fail'
@@ -157,6 +157,30 @@ test.serial('request to replays returns 503 if ECS task fails to start', async (
       .expect(503);
     t.is(response.status, 503);
   } finally {
-    stub.restore();
+    runECSTaskStub.restore();
+  }
+});
+
+test.serial('request to replays endpoint returns 500 if starting ECS task throws unexpected error', async (t) => {
+  const runECSTaskStub = sinon.stub(AsyncOperation.prototype, 'runECSTask')
+    .throws(() => new Error('error'));
+
+  const body = {
+    type: 'kinesis',
+    kinesisStream: 'fakestream',
+    endTimestamp: 12345678,
+    startTimestamp: 12356789
+  };
+
+  try {
+    const response = await request(app)
+      .post('/replays')
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send(body)
+      .expect(500);
+    t.is(response.status, 500);
+  } finally {
+    runECSTaskStub.restore();
   }
 });
