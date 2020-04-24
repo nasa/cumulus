@@ -115,12 +115,6 @@ class AsyncOperation extends Manager {
 
     // Create the record in the database
     const id = this.generateID();
-    await this.create({
-      id,
-      status: 'RUNNING',
-      description,
-      operationType
-    });
 
     // Store the payload to S3
     const payloadBucket = this.systemBucket;
@@ -142,37 +136,19 @@ class AsyncOperation extends Manager {
 
     // If creating the stack failed, update the database
     if (runTaskResponse.failures.length > 0) {
-      const ecsStartTaskError = new EcsStartTaskError(
+      throw new EcsStartTaskError(
         `Failed to start AsyncOperation: ${runTaskResponse.failures[0].reason}`
       );
-
-      await this.update(
-        { id },
-        {
-          status: 'RUNNER_FAILED',
-          description,
-          operationType,
-          output: JSON.stringify({
-            name: ecsStartTaskError.name,
-            message: ecsStartTaskError.message,
-            stack: ecsStartTaskError.stack
-          })
-        }
-      );
-
-      throw ecsStartTaskError;
     }
 
-    // Update the database with the taskArn
-    return this.update(
-      { id },
-      {
-        status: 'RUNNING',
-        taskArn: runTaskResponse.tasks[0].taskArn,
-        description,
-        operationType
-      }
-    );
+    // Create the database record with the taskArn
+    return this.create({
+      id,
+      status: 'RUNNING',
+      taskArn: runTaskResponse.tasks[0].taskArn,
+      description,
+      operationType
+    });
   }
 }
 module.exports = AsyncOperation;
