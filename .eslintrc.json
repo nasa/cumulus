@@ -126,8 +126,7 @@
       "files": ["*.ts"],
       "parser": "@typescript-eslint/parser",
       "plugins": [
-        "@typescript-eslint",
-        "eslint-plugin-tsdoc"
+        "@typescript-eslint"
       ],
       "extends": ["airbnb-typescript/lib/shared"],
       "rules": {
@@ -139,9 +138,7 @@
         "lines-between-class-members": "off",
         "lodash/prefer-lodash-typecheck": "off",
         "node/no-unsupported-features/es-syntax": "off",
-        "tsdoc/syntax": "warn",
-        "unicorn/no-abusive-eslint-disable": "off",
-        "valid-jsdoc": "off"
+        "unicorn/no-abusive-eslint-disable": "off"
       }
     },
     {
