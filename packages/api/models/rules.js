@@ -4,6 +4,7 @@ const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 const merge = require('lodash/merge');
 const set = require('lodash/set');
+
 const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
 const { invoke } = require('@cumulus/aws-client/Lambda');
 const awsServices = require('@cumulus/aws-client/services');
@@ -11,6 +12,8 @@ const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const s3Utils = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const workflows = require('@cumulus/common/workflows');
+const { ValidationError } = require('@cumulus/errors');
+
 const Manager = require('./base');
 const { rule: ruleSchema } = require('./schemas');
 
@@ -134,9 +137,21 @@ class Rule extends Manager {
     // Apply updates to updated rule item to be saved
     merge(updatedRuleItem, updates);
 
+    // Validate rule before kicking off workflows or adding event source mappings
+    await this.constructor.recordIsValid(updatedRuleItem, this.schema, this.removeAdditional);
+
     const stateChanged = (updates.state && updates.state !== original.state);
     const valueUpdated = (updates.rule
       && updates.rule.value !== original.rule.value);
+
+    updatedRuleItem = await this.updateRuleTrigger(updatedRuleItem, stateChanged, valueUpdated);
+
+    return super.update({ name: original.name }, updatedRuleItem,
+      fieldsToDelete);
+  }
+
+  async updateRuleTrigger(ruleItem, stateChanged, valueUpdated) {
+    let updatedRuleItem = cloneDeep(ruleItem);
 
     switch (updatedRuleItem.rule.type) {
     case 'scheduled': {
@@ -176,22 +191,21 @@ class Rule extends Manager {
       break;
     }
 
-    return super.update({ name: original.name }, updatedRuleItem,
-      fieldsToDelete);
+    return updatedRuleItem;
   }
 
   static async buildPayload(item) {
     // makes sure the workflow exists
     const bucket = process.env.system_bucket;
     const stack = process.env.stackName;
-    const key = `${stack}/workflows/${item.workflow}.json`;
-    const exists = await s3Utils.fileExists(bucket, key);
+    const workflowFileKey = workflows.getWorkflowFileKey(stack, item.workflow);
 
-    if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${key} for ${item.name}`);
+    const exists = await s3Utils.fileExists(bucket, workflowFileKey);
+    if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${workflowFileKey} for ${item.name}`);
 
     const definition = await s3Utils.getJsonS3Object(
       bucket,
-      workflows.getWorkflowFileKey(stack, item.workflow)
+      workflowFileKey
     );
     const template = await s3Utils.getJsonS3Object(bucket, workflows.templateKey(stack));
 
@@ -217,7 +231,7 @@ class Rule extends Manager {
     // make sure the name only has word characters
     const re = /[^\w]/;
     if (re.test(item.name)) {
-      throw new Error('Names may only contain letters, numbers, and underscores.');
+      throw new ValidationError('Rule name may only contain letters, numbers, and underscores.');
     }
 
     // Initialize new rule object
@@ -227,6 +241,21 @@ class Rule extends Manager {
     if (!item.state) {
       newRuleItem.state = 'ENABLED';
     }
+
+    newRuleItem.createdAt = Date.now();
+    newRuleItem.updatedAt = Date.now();
+
+    // Validate rule before kicking off workflows or adding event source mappings
+    await this.constructor.recordIsValid(newRuleItem, this.schema, this.removeAdditional);
+
+    newRuleItem = await this.createRuleTrigger(newRuleItem);
+
+    // save
+    return super.create(newRuleItem);
+  }
+
+  async createRuleTrigger(ruleItem) {
+    let newRuleItem = cloneDeep(ruleItem);
 
     const payload = await Rule.buildPayload(newRuleItem);
     switch (newRuleItem.rule.type) {
@@ -254,13 +283,10 @@ class Rule extends Manager {
       newRuleItem = await this.validateAndUpdateSqsRule(newRuleItem);
       break;
     default:
-      throw new Error('Type not supported');
+      throw new ValidationError(`Rule type \'${newRuleItem.rule.type}\' not supported.`);
     }
-
-    // save
-    return super.create(newRuleItem);
+    return newRuleItem;
   }
-
 
   /**
    * Add  event sources for all mappings in the kinesisSourceEvents

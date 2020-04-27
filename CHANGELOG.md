@@ -29,17 +29,32 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1682**
   - Moved all `@cumulus/ingest/parse-pdr` code into the `parse-pdr` task as it had become tightly coupled with that task's handler and was not used anywhere else. Unit tests also restored.
-
 - **CUMULUS-1820**
   - Updated the Thin Egress App module used in `tf-modules/distribution/main.tf` to build 74. [See the release notes](https://github.com/asfadmin/thin-egress-app/releases/tag/tea-build.74).
+- **CUMULUS-1852**
+  - Updated POST endpoints for `/collections`, `/providers`, and `/rules` to log errors when returning a 500 response
+  - Updated POST endpoint for `/collections`:
+    - Return a 400 response when the `name` or `version` fields are missing
+    - Return a 409 response if the collection already exists
+    - Improved error messages to be more explicit
+  - Updated POST endpoint for `/providers`:
+    - Return a 400 response if the `host` field value is invalid
+    - Return a 409 response if the provider already exists
+  - Updated POST endpoint for `/rules`:
+    - Return a 400 response if rule `name` is invalid
+    - Return a 400 response if rule `type` is invalid
 
 ### Fixed
 
 - **CUMULUS-1850**
   - Fixed a bug in Kinesis event processing where the message consumer would not properly filter available rules based on the collection information in the event and the Kinesis stream ARN
+
 - **CUMULUS-1853**
   - Fixed a bug where attempting to create a rule containing a payload property
     would fail schema validation.
+
+- **CUMULUS-1854**
+  - Rule schema is validated before starting workflows or creating event source mappings
 
 ### Deprecated
 
@@ -86,6 +101,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `@cumulus/common/workflows.getWorkflowList()`
   - `@cumulus/common/workflows.getWorkflowTemplate()`
   - `@cumulus/integration-tests/sfnStep/SfnStep.parseStepMessage()` -> `@cumulus/message/StepFunctions.parseStepMessage()`
+- **CUMULUS-1858** - Deprecated the following functions.
+  - `@cumulus/common/string.globalReplace()`
+  - `@cumulus/common/string.isNonEmptyString()`
+  - `@cumulus/common/string.isValidHostname()`
+  - `@cumulus/common/string.match()`
+  - `@cumulus/common/string.matches()`
+  - `@cumulus/common/string.replace()`
+  - `@cumulus/common/string.toLower()`
+  - `@cumulus/common/string.toUpper()`
 
 ### Removed
 

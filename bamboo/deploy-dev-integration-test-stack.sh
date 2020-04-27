@@ -27,6 +27,6 @@ npm install
 ## (similiar to  https://github.com/lerna/lerna/issues/1457)
 (npm run bootstrap-no-build || true) && npm run bootstrap-no-build
 
-npx lerna run prepare
+npx lerna run package
 
 . ./bamboo/deploy-integration-stack.sh

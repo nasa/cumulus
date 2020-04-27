@@ -10,6 +10,12 @@
   "engines": {
     "node": ">=10.16.3"
   },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "./dist/**/*.js",
+    "./dist/**/*.d.ts"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -19,16 +25,12 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
-    "build": "true",
-    "lint": "eslint .",
-    "test-ci": "npm run lint"
+    "tsc": "tsc",
+    "prepare": "npm run tsc"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
-  "dependencies": {
-    "lodash": "^4.17.15"
-  },
   "devDependencies": {
-    "eslint": "^6.8.0"
+    "typescript": "^3.8.3"
   }
 }
