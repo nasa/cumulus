@@ -32,5 +32,34 @@ class AccessToken extends Manager {
       }
     });
   }
+
+  /**
+   * Get the default expiration time for an access token.
+   *
+   * @returns {number} - the expiration timestamp, in seconds
+   */
+  _getDefaultExpirationTime() {
+    const currentTimeInSecs = Math.floor(Date.now() / 1000);
+    const oneHourInSecs = 60 * 60;
+    return currentTimeInSecs + oneHourInSecs;
+  }
+
+  /**
+   * Create the access token record.
+   *
+   * @param {Object} item - the access token record
+   * @returns {Promise<Object>} the created record
+   * @see #constructor
+   * @see Manager#create
+   */
+  create(item) {
+    const record = item.expirationTime
+      ? item
+      : {
+        ...item,
+        expirationTime: this._getDefaultExpirationTime()
+      };
+    return super.create(record);
+  }
 }
 module.exports = AccessToken;
