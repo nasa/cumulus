@@ -6,12 +6,15 @@ const request = require('supertest');
 const moment = require('moment');
 
 const { secretsManager } = require('@cumulus/aws-client/services');
+const { createBucket, putJsonS3Object } = require('@cumulus/aws-client/S3');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const EsCollection = require('../../es/collections');
 const models = require('../../models');
 const assertions = require('../../lib/assertions');
+const { createJwtToken } = require('../../lib/token');
+const { fakeAccessTokenFactory } = require('../../lib/testUtils');
 const { app } = require('../../app');
 
 const validateTokenResponse = {
@@ -20,6 +23,7 @@ const validateTokenResponse = {
   session_starttime: 1564067402,
   status: 'success'
 };
+const validUsername = randomId('user');
 
 let accessTokenModel;
 
@@ -30,6 +34,7 @@ test.before(async () => {
   process.env.system_bucket = randomId('bucket');
   process.env.stackName = randomId('stack');
   process.env.ES_INDEX = randomId();
+  process.env.TOKEN_SECRET = 'foobar';
 
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
@@ -40,6 +45,13 @@ test.before(async () => {
     Name: process.env.launchpad_passphrase_secret_name,
     SecretString: randomId('launchpad-passphrase')
   }).promise();
+
+  await createBucket(process.env.system_bucket);
+  await putJsonS3Object(
+    process.env.system_bucket,
+    `${process.env.stackName}/api/authorized_oauth_users.json`,
+    [validUsername]
+  );
 });
 
 test.after.always(async () => {
@@ -49,6 +61,7 @@ test.after.always(async () => {
   delete process.env.system_bucket;
   delete process.env.stackName;
   delete process.env.ES_INDEX;
+  delete process.env.TOKEN_SECRET;
 
   await accessTokenModel.deleteTable();
 
@@ -58,7 +71,7 @@ test.after.always(async () => {
   }).promise();
 });
 
-test.serial('API request with an valid token stores the access token', async (t) => {
+test.serial('API request with a valid Launchpad token stores the access token', async (t) => {
   const stub = sinon.stub(launchpad, 'validateLaunchpadToken').returns(validateTokenResponse);
   const collectionStub = sinon.stub(EsCollection.prototype, 'query').returns([]);
 
@@ -76,7 +89,7 @@ test.serial('API request with an valid token stores the access token', async (t)
   }
 });
 
-test.serial('API request with an invalid token returns an unauthorized response', async (t) => {
+test.serial('API request with an invalid Launchpad token returns a 403 unauthorized response', async (t) => {
   const tokenResponse = {
     message: 'Invalid access token',
     status: 'failed'
@@ -98,7 +111,7 @@ test.serial('API request with an invalid token returns an unauthorized response'
   }
 });
 
-test.serial('API request with a stored non-expired token returns a successful response', async (t) => {
+test.serial('API request with a stored non-expired Launchpad token record returns a successful response', async (t) => {
   let stub = sinon.stub(launchpad, 'validateLaunchpadToken').resolves(validateTokenResponse);
   const collectionStub = sinon.stub(EsCollection.prototype, 'query').returns([]);
 
@@ -129,7 +142,7 @@ test.serial('API request with a stored non-expired token returns a successful re
   }
 });
 
-test.serial('API request with a stored expired token returns an expired response', async (t) => {
+test.serial('API request with an expired Launchpad token returns a 401 response', async (t) => {
   const collectionStub = sinon.stub(EsCollection.prototype, 'query').returns([]);
 
   try {
@@ -150,7 +163,7 @@ test.serial('API request with a stored expired token returns an expired response
   }
 });
 
-test.serial('Request returns an unauthorized response when validation response does not contain user group', async (t) => {
+test.serial('API request returns a 403 unauthorized response when Launchpad validation response does not contain user group', async (t) => {
   const tokenResponse = {
     message: 'User not authorized',
     status: 'failed'
@@ -187,4 +200,36 @@ test.serial('Non-Launchpad protected API explicitly disallows valid Launchpad to
     stub.restore();
     process.env.OAUTH_PROVIDER = 'launchpad';
   }
+});
+
+test.serial('API request authorized with valid JWT returns 200 response', async (t) => {
+  const accessTokenRecord = fakeAccessTokenFactory({
+    username: validUsername
+  });
+  await accessTokenModel.create(accessTokenRecord);
+
+  const jwt = createJwtToken(accessTokenRecord);
+
+  const response = await request(app)
+    .get('/workflows')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwt}`)
+    .expect(200);
+  t.is(response.status, 200);
+});
+
+test.serial.only('API request authorized with expired JWT returns 401 response', async (t) => {
+  const accessTokenRecord = fakeAccessTokenFactory({
+    expirationTime: moment().unix()
+  });
+  await accessTokenModel.create(accessTokenRecord);
+
+  const jwt = createJwtToken(accessTokenRecord);
+
+  const response = await request(app)
+    .get('/workflows')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwt}`)
+    .expect(401);
+  t.is(response.status, 401);
 });
