@@ -1,6 +1,7 @@
 'use strict';
 
 const got = require('got');
+const moment = require('moment');
 const { URL } = require('url');
 
 const OAuth2 = require('./OAuth2');
@@ -130,7 +131,7 @@ class EarthdataLogin extends OAuth2 {
    * - accessToken
    * - refreshToken
    * - username
-   * - expirationTime (in milliseconds)
+   * - expirationTime (in seconds)
    *
    * @param {string} authorizationCode - an OAuth2 authorization code
    * @returns {Promise<Object>} access token information
@@ -145,8 +146,8 @@ class EarthdataLogin extends OAuth2 {
         accessToken: response.body.access_token,
         refreshToken: response.body.refresh_token,
         username: response.body.endpoint.split('/').pop(),
-        // expires_in value is in seconds, but expirationTime is milliseconds
-        expirationTime: Date.now() + (response.body.expires_in * 1000)
+        // expires_in value is in seconds
+        expirationTime: moment().unix() + response.body.expires_in
       };
     } catch (err) {
       if (isBadRequestError(err)) {
@@ -182,7 +183,7 @@ class EarthdataLogin extends OAuth2 {
         accessToken: response.body.access_token,
         refreshToken: response.body.refresh_token,
         username: response.body.endpoint.split('/').pop(),
-        expirationTime: Date.now() + (response.body.expires_in * 1000)
+        expirationTime: moment().unix() + response.body.expires_in
       };
     } catch (err) {
       if (isBadRequestError(err)) {
