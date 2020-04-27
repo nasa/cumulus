@@ -1,25 +1,18 @@
 'use strict';
 
-const execa = require('execa');
 const fs = require('fs');
 const cloneDeep = require('lodash/cloneDeep');
 const merge = require('lodash/merge');
 const mime = require('mime-types');
 const path = require('path');
-const { promisify } = require('util');
-const pTimeout = require('p-timeout');
-const tempy = require('tempy');
+const replace = require('lodash/replace');
 
 const { headObject, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
-const { globalReplace } = require('@cumulus/common/string');
-const { loadConfig, loadYmlFile } = require('@cumulus/integration-tests/config');
+const { loadConfig } = require('@cumulus/integration-tests/config');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
-
-const promisedCopyFile = promisify(fs.copyFile);
-const promisedUnlink = promisify(fs.unlink);
 
 const timestampedName = (name) => `${name}_${(new Date().getTime())}`;
 
@@ -27,8 +20,6 @@ const createTimestampedTestId = (stackName, testName) =>
   `${stackName}-${testName}-${Date.now()}`;
 const createTestDataPath = (prefix) => `${prefix}-test-data/files`;
 const createTestSuffix = (prefix) => `_test-${prefix}`;
-
-const MILLISECONDS_IN_A_MINUTE = 60 * 1000;
 
 /**
  * Creates a new file using a template file and configuration object which
@@ -50,21 +41,27 @@ function templateFile({ inputTemplateFilename, config }) {
 }
 
 /**
+ * @typedef {Object} StringReplacement
+ * @property {string} old - the string to be replaced
+ * @property {string} new - the replacement string
+ */
+
+/**
  * Upload a file from the test-data package to the S3 test data
  * and update contents with replacements
  *
  * @param {string} file - filename of data to upload
  * @param {string} bucket - bucket to upload to
  * @param {string} prefix - S3 folder prefix
- * @param {Array<Object>} [replacements] - array of replacements in file content e.g. [{old: 'test', new: 'newTest' }]
+ * @param {Array<StringReplacement>} [replacements] - array of replacements in file content e.g. [{old: 'test', new: 'newTest' }]
  * @returns {Promise<Object>} - promise returned from S3 PUT
  */
 function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-test-data/pdrs', replacements = []) {
   let data;
   if (replacements.length > 0) {
     data = fs.readFileSync(require.resolve(file), 'utf8');
-    replacements.forEach((replace) => {
-      data = globalReplace(data, replace.old, replace.new);
+    replacements.forEach((replacement) => {
+      data = replace(data, new RegExp(replacement.old, 'g'), replacement.new);
     });
   } else data = fs.readFileSync(require.resolve(file));
   const key = path.basename(file);
@@ -134,55 +131,6 @@ function getExecutionUrl(executionArn) {
           `#/executions/details/${executionArn}`;
 }
 
-/**
- * Get URL to a public file in S3
- *
- * @param {Object} params
- * @param {string} params.bucket - S3 bucket
- * @param {string} params.key - S3 object key
- *
- * @returns {string} - Public S3 file URL
- */
-function getPublicS3FileUrl({ bucket, key }) {
-  return `https://${bucket}.s3.amazonaws.com/${key}`;
-}
-
-/**
- * Run kes command using stack configuration.
- *
- * @param {Object} config - configuration object from loadConfig()
- * @param {Object} [options] - configuration options with the following keys>
- * @param {string} [options.template=node_modules/@cumulus/deployment/app] - optional template command line kes option
- * @param {string} [options.kesClass] - optional kes-class command line kes option
- * @param {string} [options.kesCommand] - optional kes command to run, defaults to deploy
- * @param {integer} [options.timeout=30] - Timeout value in minutes
- * @returns {Promise<undefined>}
- */
-async function runKes(config, options = {}) {
-  const timeoutInMinutes = options.timeout || 30;
-
-  const kesCommand = './node_modules/.bin/kes';
-  const kesOptions = [
-    'cf', options.kesCommand || 'deploy',
-    '--kes-folder', options.kesFolder || 'app',
-    '--template', options.template || 'node_modules/@cumulus/deployment/app',
-    '--deployment', config.deployment,
-    '--region', 'us-east-1'
-  ];
-
-  if (options.kesClass) kesOptions.push('--kes-class', options.kesClass);
-
-  const kesProcess = execa(kesCommand, kesOptions);
-
-  kesProcess.stdout.pipe(process.stdout);
-  kesProcess.stderr.pipe(process.stderr);
-
-  await pTimeout(
-    kesProcess,
-    timeoutInMinutes * MILLISECONDS_IN_A_MINUTE
-  );
-}
-
 async function getFileMetadata(file) {
   let Bucket;
   let Key;
@@ -223,32 +171,6 @@ function getFilesMetadata(files) {
   return Promise.all(files.map(getFileMetadata));
 }
 
-/**
- * Creates a backup of a file, executes the specified function, and makes sure
- * that the file is restored from backup.
- *
- * @param {string} file - the file to backup
- * @param {Function} fn - the function to execute
- */
-async function protectFile(file, fn) {
-  const backupLocation = tempy.file();
-  await promisedCopyFile(file, backupLocation);
-
-  try {
-    return await Promise.resolve().then(fn);
-  } finally {
-    await promisedCopyFile(backupLocation, file);
-    await promisedUnlink(backupLocation);
-  }
-}
-
-const isLambdaStatusLogEntry = (logEntry) =>
-  logEntry.message.includes('START') ||
-  logEntry.message.includes('END') ||
-  logEntry.message.includes('REPORT');
-
-const isCumulusLogEntry = (logEntry) => !isLambdaStatusLogEntry(logEntry);
-
 module.exports = {
   createTestDataPath,
   createTestSuffix,
@@ -256,12 +178,7 @@ module.exports = {
   deleteFolder,
   getExecutionUrl,
   getFilesMetadata,
-  getPublicS3FileUrl,
-  isCumulusLogEntry,
   loadConfig,
-  loadYmlFile,
-  protectFile,
-  runKes,
   templateFile,
   timestampedName,
   updateAndUploadTestDataToBucket,

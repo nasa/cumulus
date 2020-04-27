@@ -3,9 +3,6 @@
 ## Modules
 
 <dl>
-<dt><a href="#module_StepFunctions">StepFunctions</a></dt>
-<dd><p>Utility functions for working with AWS Step Function events/messages</p>
-</dd>
 <dt><a href="#module_Build">Build</a></dt>
 <dd><p>Utility functions for building Cumulus messages</p>
 </dd>
@@ -23,52 +20,10 @@ from a Cumulus message</p>
 <dt><a href="#module_Queue">Queue</a></dt>
 <dd><p>Utility functions for parsing queue information from a Cumulus message</p>
 </dd>
+<dt><a href="#module_StepFunctions">StepFunctions</a></dt>
+<dd><p>Utility functions for working with AWS Step Function events/messages</p>
+</dd>
 </dl>
-
-<a name="module_StepFunctions"></a>
-
-## StepFunctions
-Utility functions for working with AWS Step Function events/messages
-
-**Example**  
-```js
-const StepFunctions = require('@cumulus/message/StepFunctions');
-```
-
-* [StepFunctions](#module_StepFunctions)
-    * [pullStepFunctionEvent(event)](#exp_module_StepFunctions--pullStepFunctionEvent) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
-    * [parseStepMessage(stepMessage, stepName)](#exp_module_StepFunctions--parseStepMessage) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
-
-<a name="exp_module_StepFunctions--pullStepFunctionEvent"></a>
-
-### pullStepFunctionEvent(event) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
-Given a Step Function event, replace specified key in event with contents
-of S3 remote message
-
-**Kind**: Exported function  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - Updated event with target path replaced by remote message  
-**Throws**:
-
-- <code>Error</code> if target path cannot be found on source event
-
-
-| Param | Type | Description |
-| --- | --- | --- |
-| event | <code>Object</code> | Source event |
-
-<a name="exp_module_StepFunctions--parseStepMessage"></a>
-
-### parseStepMessage(stepMessage, stepName) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
-Parse step message with CMA keys and replace specified key in event with contents
-of S3 remote message
-
-**Kind**: Exported function  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - Parsed and updated event with target path replaced by remote message  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| stepMessage | <code>Object</code> | Message for the step |
-| stepName | <code>string</code> | Name of the step |
 
 <a name="module_Build"></a>
 
@@ -267,8 +222,8 @@ const Queue = require('@cumulus/message/Queue');
 * [Queue](#module_Queue)
     * [getQueueNameByUrl(message, queueUrl)](#exp_module_Queue--getQueueNameByUrl) ⇒ <code>string</code> ⏏
     * [getQueueName(message)](#exp_module_Queue--getQueueName) ⇒ <code>string</code> ⏏
-    * [hasQueueAndExecutionLimit(message)](#exp_module_Queue--hasQueueAndExecutionLimit) ⇒ <code>boolean</code> ⏏
     * [getMaximumExecutions(message, queueName)](#exp_module_Queue--getMaximumExecutions) ⇒ <code>number</code> ⏏
+    * [hasQueueAndExecutionLimit(message)](#exp_module_Queue--hasQueueAndExecutionLimit) ⇒ <code>boolean</code> ⏏
 
 <a name="exp_module_Queue--getQueueNameByUrl"></a>
 
@@ -295,18 +250,6 @@ Get the queue name from a workflow message.
 | --- | --- | --- |
 | message | <code>Object</code> | A workflow message object |
 
-<a name="exp_module_Queue--hasQueueAndExecutionLimit"></a>
-
-### hasQueueAndExecutionLimit(message) ⇒ <code>boolean</code> ⏏
-Determine if there is a queue and queue execution limit in the message.
-
-**Kind**: Exported function  
-**Returns**: <code>boolean</code> - True if there is a queue and execution limit.  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| message | <code>Object</code> | A workflow message object |
-
 <a name="exp_module_Queue--getMaximumExecutions"></a>
 
 ### getMaximumExecutions(message, queueName) ⇒ <code>number</code> ⏏
@@ -319,6 +262,63 @@ Get the maximum executions for a queue.
 | --- | --- | --- |
 | message | <code>Object</code> | A workflow message object |
 | queueName | <code>string</code> | A queue name |
+
+<a name="exp_module_Queue--hasQueueAndExecutionLimit"></a>
+
+### hasQueueAndExecutionLimit(message) ⇒ <code>boolean</code> ⏏
+Determine if there is a queue and queue execution limit in the message.
+
+**Kind**: Exported function  
+**Returns**: <code>boolean</code> - True if there is a queue and execution limit.  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| message | <code>Object</code> | A workflow message object |
+
+<a name="module_StepFunctions"></a>
+
+## StepFunctions
+Utility functions for working with AWS Step Function events/messages
+
+**Example**  
+```js
+const StepFunctions = require('@cumulus/message/StepFunctions');
+```
+
+* [StepFunctions](#module_StepFunctions)
+    * [pullStepFunctionEvent(event)](#exp_module_StepFunctions--pullStepFunctionEvent) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
+    * [parseStepMessage(stepMessage, stepName)](#exp_module_StepFunctions--parseStepMessage) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
+
+<a name="exp_module_StepFunctions--pullStepFunctionEvent"></a>
+
+### pullStepFunctionEvent(event) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
+Given a Step Function event, replace specified key in event with contents
+of S3 remote message
+
+**Kind**: Exported function  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - Updated event with target path replaced by remote message  
+**Throws**:
+
+- <code>Error</code> if target path cannot be found on source event
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| event | <code>Object</code> | Source event |
+
+<a name="exp_module_StepFunctions--parseStepMessage"></a>
+
+### parseStepMessage(stepMessage, stepName) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
+Parse step message with CMA keys and replace specified key in event with contents
+of S3 remote message
+
+**Kind**: Exported function  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - Parsed and updated event with target path replaced by remote message  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| stepMessage | <code>Object</code> | Message for the step |
+| stepName | <code>string</code> | Name of the step |
 
 
 ---

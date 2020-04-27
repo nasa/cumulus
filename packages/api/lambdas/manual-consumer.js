@@ -1,5 +1,8 @@
 'use strict';
 
+const get = require('lodash/get');
+
+const kinesisUtils = require('@cumulus/aws-client/Kinesis');
 const awsServices = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
 
@@ -75,16 +78,23 @@ const setupListShardParams = (stream, streamCreationTimestamp) => {
 /**
  * Process a batch of kinesis records.
  *
+ * @param {string} streamArn - Kinesis stream ARN
  * @param {Array<Object>} records - list of kinesis records
  * @returns {number} number of records successfully processed
  */
-async function processRecordBatch(records) {
+async function processRecordBatch(streamArn, records) {
   const results = await Promise.all(records.map(async (record) => {
     if (new Date(record.ApproximateArrivalTimestamp) > new Date(process.env.endTimestamp)) {
       return 'skip';
     }
     try {
-      await messageConsumer.processRecord({ kinesis: { data: record.Data } }, false);
+      await messageConsumer.processRecord(
+        {
+          kinesis: { data: record.Data },
+          eventSourceARN: streamArn
+        },
+        false
+      );
       return 'ok';
     } catch (err) {
       log.error(err);
@@ -110,19 +120,20 @@ async function processRecordBatch(records) {
  * Recursively process all records within a shard between start and end timestamps.
  * Starts at beginning of shard (TRIM_HORIZON) if no start timestamp is available.
  *
+ * @param {string} streamArn - Kinesis stream ARN
  * @param {Array<Promise>} recordPromiseList - list of promises from calls to processRecordBatch
  * @param {string} shardIterator - ShardIterator Id
- * @returns {Array<Promise>} list of promises from calls to processRecordBatch
+ * @returns {Promise<Array<Promise>>} list of promises from calls to processRecordBatch
  */
-async function iterateOverShardRecursively(recordPromiseList, shardIterator) {
+async function iterateOverShardRecursively(streamArn, recordPromiseList, shardIterator) {
   try {
     const response = await Kinesis.getRecords({
       ShardIterator: shardIterator
     }).promise();
-    recordPromiseList.push(processRecordBatch(response.Records));
+    recordPromiseList.push(processRecordBatch(streamArn, response.Records));
     if (response.MillisBehindLatest === 0 || !response.NextShardIterator) return recordPromiseList;
     const nextShardIterator = response.NextShardIterator;
-    return iterateOverShardRecursively(recordPromiseList, nextShardIterator);
+    return iterateOverShardRecursively(streamArn, recordPromiseList, nextShardIterator);
   } catch (error) {
     log.error(error);
     return recordPromiseList;
@@ -132,17 +143,20 @@ async function iterateOverShardRecursively(recordPromiseList, shardIterator) {
 /**
  * Handle shard by creating shardIterator and calling processShard.
  *
- * @param {string} stream - kinesis stream name
+ * @param {string} streamName - kinesis stream name
+ * @param {string} streamArn - Kinesis stream ARN
  * @param {string} shardId - shard ID
  * @returns {number} number of records successfully processed from shard
  */
-async function processShard(stream, shardId) {
-  const iteratorParams = setupIteratorParams(stream, shardId);
+async function processShard(streamName, streamArn, shardId) {
+  const iteratorParams = setupIteratorParams(streamName, shardId);
   try {
     const shardIterator = (
       await Kinesis.getShardIterator(iteratorParams).promise()
     ).ShardIterator;
-    const tallyList = await Promise.all(await iterateOverShardRecursively([], shardIterator));
+    const tallyList = await Promise.all(
+      await iterateOverShardRecursively(streamArn, [], shardIterator)
+    );
     const shardTally = tallyList.reduce(tallyReducer, 0);
     return shardTally;
   } catch (err) {
@@ -155,12 +169,18 @@ async function processShard(stream, shardId) {
  * Recursively fetch all records within a kinesis stream and process them through
  * message-consumer's processRecord function.
  *
- * @param {string} stream - Kinesis stream name
+ * @param {string} streamName - Kinesis stream name
+ * @param {string} streamArn - Kinesis stream ARN
  * @param {Array<Promise>} shardPromiseList - list of promises from calls to processShard
  * @param {Object} params - listShards query params
  * @returns {Array<Promise>} list of promises from calls to processShard
  */
-async function iterateOverStreamRecursivelyToDispatchShards(stream, shardPromiseList, params) {
+async function iterateOverStreamRecursivelyToDispatchShards(
+  streamName,
+  streamArn,
+  shardPromiseList,
+  params
+) {
   const listShardsResponse = (await Kinesis.listShards(params).promise().catch(log.error));
   if (!listShardsResponse || !listShardsResponse.Shards || listShardsResponse.Shards.length === 0) {
     log.error(`No shards found for params ${JSON.stringify(params)}.`);
@@ -168,33 +188,44 @@ async function iterateOverStreamRecursivelyToDispatchShards(stream, shardPromise
   }
   log.info(`Processing records from ${listShardsResponse.Shards.length} shards..`);
   const shardCalls = listShardsResponse.Shards.map(
-    (shard) => processShard(stream, shard.ShardId).catch(log.error)
+    (shard) => processShard(streamName, streamArn, shard.ShardId).catch(log.error)
   );
   shardPromiseList.push(...shardCalls);
   if (!listShardsResponse.NextToken) {
     return shardPromiseList;
   }
   const newParams = { NextToken: listShardsResponse.NextToken };
-  return iterateOverStreamRecursivelyToDispatchShards(stream, shardPromiseList, newParams);
+  return iterateOverStreamRecursivelyToDispatchShards(
+    streamName,
+    streamArn,
+    shardPromiseList,
+    newParams
+  );
 }
 
 /**
  * Fetch all records within a kinesis stream and process them through
  * message-consumer's processRecord function.
  *
- * @param {string} stream - kinesis stream name
+ * @param {string} streamName - kinesis stream name
  * @param {Date|string|number} [streamCreationTimestamp] - Optional. Stream creation
  * timestamp used to differentiate streams that have a name used by a previous stream.
  * @returns {number} number of records successfully processed from stream
  */
-async function processStream(stream, streamCreationTimestamp) {
-  const initialParams = setupListShardParams(stream, streamCreationTimestamp);
+async function processStream(streamName, streamCreationTimestamp) {
+  const initialParams = setupListShardParams(streamName, streamCreationTimestamp);
+  const streamArn = await kinesisUtils.describeStream(
+    { StreamName: streamName },
+    { retries: 2 }
+  ).then(
+    (streamResponse) => get(streamResponse, 'StreamDescription.StreamARN')
+  ).catch(log.error);
   const streamPromiseList = await iterateOverStreamRecursivelyToDispatchShards(
-    stream, [], initialParams
+    streamName, streamArn, [], initialParams
   );
   const streamResults = await Promise.all(streamPromiseList);
   const recordsProcessed = streamResults.reduce(tallyReducer, 0);
-  const outMsg = `Processed ${recordsProcessed} kinesis records from stream ${stream}`;
+  const outMsg = `Processed ${recordsProcessed} kinesis records from stream ${streamName}`;
   log.info(outMsg);
   return outMsg;
 }

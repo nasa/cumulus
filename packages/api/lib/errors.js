@@ -1,10 +1,16 @@
 'use strict';
 
-const { createErrorType } = require('@cumulus/errors');
+const {
+  createErrorType,
+  ValidationError
+} = require('@cumulus/errors');
 
-module.exports.TokenUnauthorizedUserError = createErrorType('TokenUnauthorizedUserError');
-module.exports.IndexExistsError = createErrorType('IndexExistsError');
-module.exports.BadRequestError = createErrorType('BadRequestError');
+const isBadRequestError = (err) =>
+  err.name === 'SchemaValidationError'
+  || err instanceof ValidationError;
+
+const TokenUnauthorizedUserError = createErrorType('TokenUnauthorizedUserError');
+const IndexExistsError = createErrorType('IndexExistsError');
 
 class AssociatedRulesError extends Error {
   constructor(message, rules = []) {
@@ -13,4 +19,10 @@ class AssociatedRulesError extends Error {
     this.name = this.constructor.name;
   }
 }
-exports.AssociatedRulesError = AssociatedRulesError;
+
+module.exports = {
+  AssociatedRulesError,
+  IndexExistsError,
+  TokenUnauthorizedUserError,
+  isBadRequestError
+};

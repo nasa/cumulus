@@ -9,6 +9,7 @@ const {
 const { createQueue } = require('@cumulus/aws-client/SQS');
 const { recursivelyDeleteS3Bucket, s3PutObject } = require('@cumulus/aws-client/S3');
 const { buildExecutionArn } = require('@cumulus/message/Executions');
+const CollectionConfigStore = require('@cumulus/collection-config-store');
 const {
   randomId,
   randomNumber,
@@ -17,7 +18,6 @@ const {
   validateInput,
   validateOutput
 } = require('@cumulus/common/test-utils');
-const { CollectionConfigStore } = require('@cumulus/common/collection-config-store');
 
 const { queueGranules } = require('..');
 

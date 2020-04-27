@@ -46,6 +46,7 @@ data "aws_iam_policy_document" "scaling_policy" {
 }
 
 resource "aws_iam_role_policy" "scaling" {
+  name   = "${var.prefix}_scaling_policy"
   role   = aws_iam_role.scaling.id
   policy = data.aws_iam_policy_document.scaling_policy.json
 }
@@ -81,6 +82,7 @@ data "aws_iam_policy_document" "step_policy" {
 }
 
 resource "aws_iam_role_policy" "step" {
+  name   = "${var.prefix}_step_policy"
   role   = aws_iam_role.step.id
   policy = data.aws_iam_policy_document.step_policy.json
 }

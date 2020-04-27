@@ -6,9 +6,11 @@ const awsServices = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { noop } = require('@cumulus/common/util');
+const { InvalidRegexError, UnmatchedRegexError } = require('@cumulus/errors');
 const {
   constructCollectionId
-} = require('@cumulus/common/collection-config-store');
+} = require('@cumulus/message/Collections');
+
 const { AssociatedRulesError } = require('../../lib/errors');
 const { Collection, Rule } = require('../../models');
 const {
@@ -35,9 +37,6 @@ const testMessagesReceived = async (t, QueueUrl, eventType, collection) => {
   } else {
     t.is(dbRecords.length, 2);
     const deleteRecord = dbRecords.find((r) => (r.event === eventType));
-    // {
-    //   if(r.event = eventType) return r;
-    // });
     t.is(deleteRecord.event, eventType);
     t.is(deleteRecord.record.name, collection.name);
     t.is(deleteRecord.record.version, collection.version);
@@ -119,6 +118,81 @@ test.serial('Collection.create() sends a creation record to SNS', async (t) => {
   await collectionsModel.create(fakeCollectionFactory({ name, version }));
 
   await testMessagesReceived(t, QueueUrl, 'Create', { name, version });
+});
+
+test.serial('Collection.create() throws InvalidRegexError for invalid granuleIdExtraction', async (t) => {
+  await t.throwsAsync(
+    collectionsModel.create(fakeCollectionFactory({
+      granuleIdExtraction: '*'
+    })),
+    InvalidRegexError
+  );
+});
+
+test.serial('Collection.create() throws UnmatchedRegexError for non-matching granuleIdExtraction', async (t) => {
+  await t.throwsAsync(
+    collectionsModel.create(fakeCollectionFactory({
+      granuleIdExtraction: '(1234)',
+      sampleFileName: 'abcd'
+    })),
+    UnmatchedRegexError
+  );
+});
+
+test.serial('Collection.create() throws UnmatchedRegexError for granuleIdExtraction with no matching group', async (t) => {
+  await t.throwsAsync(
+    collectionsModel.create(fakeCollectionFactory({
+      granuleIdExtraction: '1234',
+      sampleFileName: '1234'
+    })),
+    UnmatchedRegexError
+  );
+});
+
+test.serial('Collection.create() throws InvalidRegexError for invalid granuleId regex', async (t) => {
+  await t.throwsAsync(
+    collectionsModel.create(fakeCollectionFactory({
+      granuleId: '*'
+    })),
+    InvalidRegexError
+  );
+});
+
+test.serial('Collection.create() throws UnmatchedRegexError for non-matching granuleId regex', async (t) => {
+  await t.throwsAsync(
+    collectionsModel.create(fakeCollectionFactory({
+      granuleIdExtraction: '(1234)',
+      sampleFileName: '1234',
+      granuleId: 'abcd'
+    })),
+    UnmatchedRegexError
+  );
+});
+
+test.serial('Collection.create() throws InvalidRegexError for invalid file.regex', async (t) => {
+  await t.throwsAsync(
+    collectionsModel.create(fakeCollectionFactory({
+      files: [{
+        bucket: 'bucket',
+        regex: '*',
+        sampleFileName: 'filename'
+      }]
+    })),
+    InvalidRegexError
+  );
+});
+
+test.serial('Collection.create() throws UnmatchedRegexError for non-matching file.regex', async (t) => {
+  await t.throwsAsync(
+    collectionsModel.create(fakeCollectionFactory({
+      files: [{
+        bucket: 'bucket',
+        regex: '^1234$',
+        sampleFileName: 'filename'
+      }]
+    })),
+    UnmatchedRegexError
+  );
 });
 
 test.serial('Collection.delete() sends a deletion record to SNS', async (t) => {

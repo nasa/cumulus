@@ -3,7 +3,6 @@
 const KMS = require('@cumulus/aws-client/KMS');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const { S3KeyPairProvider } = require('@cumulus/common/key-pair-provider');
-const { isNonEmptyString } = require('@cumulus/common/string');
 const { isNil } = require('@cumulus/common/util');
 const Provider = require('../models/providers');
 
@@ -20,8 +19,8 @@ const migrateProvider = async (provider) => {
   const password = await getDecryptedField(provider, 'password');
 
   const updates = {};
-  if (isNonEmptyString(username)) updates.username = username;
-  if (isNonEmptyString(password)) updates.password = password;
+  if (username) updates.username = username;
+  if (password) updates.password = password;
 
   const providerModel = new Provider();
   return providerModel.update({ id: provider.id }, updates);

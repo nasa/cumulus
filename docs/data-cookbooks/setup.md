@@ -28,8 +28,8 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 |:---:|:-----:|:--------:|-----------|
 |name |`"MOD09GQ"`|Yes|The name attribute designates the name of the collection. This is the name under which the collection will be displayed on the dashboard|
 |version|`"006"`|Yes|A version tag for the collection|
-|granuleId|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$"`|Yes|REGEX to match granuleId extracted via granuleIdExtraction|
-|granuleIdExtraction|<code>"(MOD09GQ\\..*)(\\.hdf&#124;\\.cmr&#124;_ndvi\\.jpg)"</code>|Yes|REGEX that extracts a granuleId from filename|
+|granuleId|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$"`|Yes|The regular expression used to validate the granule ID extracted from filenames according to the `granuleIdExtraction`|
+|granuleIdExtraction|<code>"(MOD09GQ\\..*)(\\.hdf&#124;\\.cmr&#124;_ndvi\\.jpg)"</code>|Yes|The regular expression used to extract the granule ID from filenames. The first capturing group extracted from the filename by the regex will be used as the granule ID.|
 |sampleFileName|`"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"`|Yes|An example filename belonging to this collection|
 |files|`<JSON Object>` of files defined [here](#files-object)|Yes|Describe the individual files that will exist for each granule in this collection (size, browse, meta, etc.)|
 |dataType|`"MOD09GQ"`|No|Can be specified, but this value will default to the collection_name if not|
@@ -44,11 +44,11 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 
 |Key  |Value  |Required  |Description|
 |:---:|:-----:|:--------:|-----------|
-|regex|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$"`|Yes|Regex used to identify the file|
+|regex|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$"`|Yes|Regular expression used to identify the file|
 |sampleFileName|`MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"`|Yes|Filename used to validate the provided regex|
 |type|`"data"`|No|Value to be assigned to the Granule File Type. CNM types are used by Cumulus CMR steps, non-CNM values will be treated as 'data' type.  Currently only utilized in DiscoverGranules task|
 |bucket|`"internal"`|Yes|Name of the bucket where the file will be stored|
-|url_path|`"${collectionShortName}/{substring(file.name, 0, 3)}"`|No|Folder used to save the granule in the bucket. Defaults to the collection url_path|
+|url_path|`"${collectionShortName}/{substring(file.name, 0, 3)}"`|No|Folder used to save the granule in the bucket. Defaults to the collection `url_path`|
 
 ## Providers
 
@@ -82,6 +82,7 @@ An example of an SQS rule configuration is [here](https://github.com/nasa/cumulu
 |workflow|`"CNMExampleWorkflow"`|Yes|Name of the workflow to be run. A list of available workflows can be found on the Workflows page|
 |provider|`"PODAAC_SWOT"`|No|Configured provider's ID. This can be found on the Providers dashboard page|
 |collection|`<JSON Object>` collection object shown [below](#collection-object)|Yes|Name and version of the collection this rule will moderate. Relates to a collection configured and found in the Collections page|
+|payload|`<JSON Object or Array>`|No|The payload to be passed to the workflow|
 |meta|`<JSON Object>` of MetaData for the rule|No|MetaData for the rule. This metadata will be available to workflows for this rule via the [Cumulus Message Adapter](workflows/input_output.md).
 |rule|`<JSON Object>` rule type and associated values - discussed [below](#rule-object)|Yes|Object defining the type and subsequent attributes of the rule|
 |state|`"ENABLED"`|No|<code>("ENABLED"&#124;"DISABLED")</code> whether or not the rule will be active. Defaults to `"ENABLED"`.|

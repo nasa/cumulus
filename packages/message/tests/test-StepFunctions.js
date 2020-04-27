@@ -112,7 +112,6 @@ test.serial('pullStepFunctionEvent throws error if replace.TargetPath cannot be 
   }
 });
 
-
 test('StepFunctions.parseStepMessage parses message correctly', async (t) => {
   const event = {
     key: 'value',
