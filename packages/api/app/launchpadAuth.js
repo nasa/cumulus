@@ -1,8 +1,11 @@
 'use strict';
 
+const moment = require('moment');
+
 const launchpad = require('@cumulus/launchpad-auth');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+
 const { AccessToken } = require('../models');
 
 const launchpadProtectedAuth = () => (process.env.OAUTH_PROVIDER === 'launchpad');
@@ -40,7 +43,7 @@ async function ensureLaunchpadAPIAuthorized(req, res, next) {
 
     if (accessToken) {
       const userName = accessToken.username;
-      if (Date.now() > accessToken.expirationTime) {
+      if ((Date.now() / 1000) > accessToken.expirationTime) {
         return res.boom.unauthorized('Access token has expired');
       }
       // Adds additional metadata that authorized endpoints can access.
@@ -65,7 +68,7 @@ async function ensureLaunchpadAPIAuthorized(req, res, next) {
       if (verifyResponse.status === 'success') {
         await access.create({
           accessToken: token,
-          expirationTime: Date.now() + (verifyResponse.session_maxtimeout * 1000),
+          expirationTime: moment().unix() + verifyResponse.session_maxtimeout,
           username: verifyResponse.owner_auid
         });
 

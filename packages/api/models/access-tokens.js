@@ -1,6 +1,9 @@
 'use strict';
 
+const moment = require('moment');
+
 const DynamoDb = require('@cumulus/aws-client/DynamoDb');
+
 const Manager = require('./base');
 const { accessToken: accessTokenSchema } = require('./schemas');
 
@@ -39,7 +42,7 @@ class AccessToken extends Manager {
    * @returns {number} - the expiration timestamp, in seconds
    */
   _getDefaultExpirationTime() {
-    const currentTimeInSecs = Math.floor(Date.now() / 1000);
+    const currentTimeInSecs = moment().unix();
     const oneHourInSecs = 60 * 60;
     return currentTimeInSecs + oneHourInSecs;
   }
