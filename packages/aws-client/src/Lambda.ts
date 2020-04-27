@@ -1,7 +1,3 @@
-/**
- * @module Lambda
- */
-
 import Logger = require('@cumulus/logger');
 import { lambda } from './services';
 import { inTestMode } from './test-utils';
