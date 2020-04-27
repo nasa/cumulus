@@ -44,7 +44,10 @@ async function indexFromDatabase(esIndex, tables, esHost) {
     indexModel(esClient, tables.pdrsTable, esIndex, indexer.indexPdr),
     indexModel(esClient, tables.providersTable, esIndex, indexer.indexProvider),
     indexModel(esClient, tables.rulesTable, esIndex, indexer.indexRule)
-  ]);
+  ])
+  .catch((e) => {
+    console.log(`caught exception: ${e}`);
+  });
 }
 
 async function handler(event) {
