@@ -1,5 +1,5 @@
 import pRetry from 'p-retry';
-import Logger = require('@cumulus/logger');
+import Logger from '@cumulus/logger';
 import { isThrottlingException } from '@cumulus/errors';
 
 const log = new Logger({ sender: 'aws-client/CloudFormationGateway' });
@@ -11,6 +11,9 @@ class CloudFormationGateway {
 
   /**
    * Get the status of a CloudFormation stack
+   *
+   * @param {string} StackName
+   * @returns {string} the stack status
    */
   async getStackStatus(StackName: string) {
     return pRetry(

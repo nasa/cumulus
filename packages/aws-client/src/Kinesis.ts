@@ -1,11 +1,17 @@
 /**
- * Utility functions for interacting with Kinesis
+ * @module Kinesis
  */
+
+import pRetry from 'p-retry';
 import { kinesis } from './services';
-import pRetry = require('p-retry');
 
 /**
  * Describe a Kinesis stream.
+ *
+ * @param {Object} params
+ * @param {string} params.StreamName - A Kinesis stream name
+ * @param {Object} retryOptions - Options passed to p-retry module
+ * @returns {Promise<Object>} The stream description response
  */
 export const describeStream = (
   params: AWS.Kinesis.DescribeStreamInput,

@@ -31,9 +31,11 @@ const localStackPorts: { [key: string ]: number } = {
 /**
  * Test if a given AWS service is supported by LocalStack.
  *
- * @param serviceIdentifier - an AWS service identifier
+ * @param {Function} Service - an AWS service object constructor function
+ * @returns {boolean} true or false depending on whether the service is
+ *   supported by LocalStack
  *
- * @returns whether the service is supported by LocalStack
+ * @private
  */
 function localstackSupportedService(serviceIdentifier: string) {
   return Object.keys(localStackPorts).includes(serviceIdentifier);
@@ -42,9 +44,10 @@ function localstackSupportedService(serviceIdentifier: string) {
 /**
  * Returns the proper endpoint for a given aws service
  *
- * @param identifier - service name
+ * @param {string} identifier - service name
+ * @returns {string} the localstack endpoint
  *
- * @returns the localstack endpoint
+ * @private
  */
 export function getLocalstackEndpoint(identifier: string) {
   const key = `LOCAL_${identifier.toUpperCase()}_HOST`;
@@ -60,10 +63,11 @@ export function getLocalstackEndpoint(identifier: string) {
  *
  * This function expects that the LOCALSTACK_HOST environment variable will be set.
  *
- * @param Service - an AWS service object constructor function
- * @param options - options to pass to the service object constructor function
+ * @param {Function} Service - an AWS service object constructor function
+ * @param {Object} options - options to pass to the service object constructor function
+ * @returns {Object} an AWS service object
  *
- * @returns an AWS service object
+ * @private
  */
 function localStackAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
   Service: new (params: object) => T,
@@ -92,10 +96,11 @@ function localStackAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient
 /**
  * Create an AWS service object that does not actually talk to AWS.
  *
- * @param Service - an AWS service object constructor function
- * @param options - options to pass to the service object constructor function
+ * @param {Function} Service - an AWS service object constructor function
+ * @param {Object} options - options to pass to the service object constructor function
+ * @returns {Object} an AWS service object
  *
- * @returns an AWS service object
+ * @private
  */
 export function testAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
   Service: new (params: object) => T,
@@ -123,8 +128,10 @@ class ThrottlingException extends Error {
  * Return a function that throws a ThrottlingException the first time it is called, then returns as
  * normal any other times.
  *
- * @param fn - the function to throttle
- * @returns the throttled function
+ * @param {Function} fn
+ * @returns {Function}
+ *
+ * @private
  */
 export const throttleOnce = (fn: (...args: unknown[]) => unknown) => {
   let throttleNextCall = true;

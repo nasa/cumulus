@@ -1,13 +1,17 @@
-import pick = require('lodash/pick');
+/**
+ * @module CloudFormation
+ */
+
+import pick from 'lodash/pick';
 import { cf } from './services';
 
 /**
  * Describes a given CloudFormation stack
  *
- * See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudFormation.html#describeStacks-property
+ * See [CloudFormation.Stack](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudFormation.html#describeStacks-property)
  *
- * @param StackName - The name of the CloudFormation stack to query
- * @returns The resources belonging to the stack
+ * @param {string} StackName - The name of the CloudFormation stack to query
+ * @returns {Promise<CloudFormation.Stack>} The resources belonging to the stack
  */
 export const describeCfStack = async (StackName: string) => {
   const response = await cf().describeStacks({ StackName }).promise();
@@ -20,10 +24,10 @@ export const describeCfStack = async (StackName: string) => {
 /**
  * Describes the resources belonging to a given CloudFormation stack
  *
- * See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudFormation.html#describeStackResources-property
+ * See [CloudFormation.StackResources](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudFormation.html#describeStackResources-property)
  *
- * @param StackName - The name of the CloudFormation stack to query
- * @returns The resources belonging to the stack
+ * @param {string} StackName - The name of the CloudFormation stack to query
+ * @returns {Promise<CloudFormation.StackResources>} The resources belonging to the stack
  */
 export const describeCfStackResources = async (StackName: string) => {
   const response = await cf().describeStackResources({ StackName }).promise();
@@ -34,9 +38,9 @@ export const describeCfStackResources = async (StackName: string) => {
 /**
  * Get parameter values for the given CloudFormation stack
  *
- * @param stackName - The name of the CloudFormation stack to query
- * @param parameterKeys - Key names for the stack parameters that you want to return
- * @returns Object keyed by parameter names
+ * @param {string} stackName - The name of the CloudFormation stack to query
+ * @param {Array<string>} parameterKeys - Key names for the stack parameters that you want to return
+ * @returns {Promise<Object>} Object keyed by parameter names
  */
 export const getCfStackParameterValues = async (
   stackName: string,

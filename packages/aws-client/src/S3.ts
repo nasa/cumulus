@@ -1,3 +1,7 @@
+/**
+ * @module S3
+ */
+
 import fs = require('fs');
 import path = require('path');
 import pMap = require('p-map');
@@ -27,9 +31,10 @@ const S3_RATE_LIMIT = inTestMode() ? 1 : 20;
 /**
  * Join strings into an S3 key without a leading slash or double slashes
  *
- * @param args - the strings to join
+ * @param {...string|Array<string>} args - the strings to join
+ * @returns {string} the full S3 key
  *
- * @returns the full S3 key
+ * @static
  */
 export function s3Join(...args: [string | string[], ...string[]]) {
   let tokens: string[];
@@ -53,8 +58,8 @@ export function s3Join(...args: [string | string[], ...string[]]) {
 /**
 * parse an s3 uri to get the bucket and key
 *
-* @param uri - must be a uri with the `s3://` protocol
-* @returns Returns an object with `Bucket` and `Key` properties
+* @param {string} uri - must be a uri with the `s3://` protocol
+* @returns {Object} Returns an object with `Bucket` and `Key` properties
 **/
 export const parseS3Uri = (uri: string) => {
   const parsedUri = url.parse(uri);
@@ -76,18 +81,20 @@ export const parseS3Uri = (uri: string) => {
 /**
  * Given a bucket and key, return an S3 URI
  *
- * @param bucket - an S3 bucket name
- * @param key - an S3 key
- * @returns an S3 URI
+ * @param {string} bucket - an S3 bucket name
+ * @param {string} key - an S3 key
+ * @returns {string} an S3 URI
  */
 export const buildS3Uri = (bucket: string, key: string) =>
   `s3://${bucket}/${key.replace(/^\/+/, '')}`;
 
+
 /**
 * Convert S3 TagSet Object to query string
+* e.g. [{ Key: 'tag', Value: 'value }] to 'tag=value'
 *
-* @param tagset - S3 TagSet array
-* @returns tags query string
+* @param {Array<Object>} tagset - S3 TagSet array
+* @returns {string} tags query string
 */
 export const s3TagSetToQueryString = (tagset: AWS.S3.TagSet) =>
   tagset.reduce((acc, tag) => acc.concat(`&${tag.Key}=${tag.Value}`), '').substring(1);
@@ -95,9 +102,9 @@ export const s3TagSetToQueryString = (tagset: AWS.S3.TagSet) =>
 /**
  * Delete an object from S3
  *
- * @param bucket - bucket where the object exists
- * @param key - key of the object to be deleted
- * @returns promise of the object being deleted
+ * @param {string} bucket - bucket where the object exists
+ * @param {string} key - key of the object to be deleted
+ * promise of the object being deleted
  */
 export const deleteS3Object = improveStackTrace(
   (bucket: string, key: string) =>
@@ -107,12 +114,12 @@ export const deleteS3Object = improveStackTrace(
 /**
 * Get an object header from S3
 *
-* @param Bucket - name of bucket
-* @param Key - key for object (filepath + filename)
-* @param retryOptions - options to control retry behavior when an
+* @param {string} Bucket - name of bucket
+* @param {string} Key - key for object (filepath + filename)
+* @param {Object} retryOptions - options to control retry behavior when an
 *   object does not exist. See https://github.com/tim-kos/node-retry#retryoperationoptions
 *   By default, retries will not be performed
-* @returns returns response from `S3.headObject` as a promise
+* @returns {Promise} returns response from `S3.headObject` as a promise
 **/
 export const headObject = improveStackTrace(
   (Bucket: string, Key: string, retryOptions: pRetry.Options = { retries: 0 }) =>
@@ -132,8 +139,8 @@ export const headObject = improveStackTrace(
 /**
  * Test if an object exists in S3
  *
- * @param params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property
- * @returns a Promise that will resolve to a boolean indicating
+ * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property
+ * @returns {Promise<boolean>} a Promise that will resolve to a boolean indicating
  *                               if the object exists
  */
 export const s3ObjectExists = (params: { Bucket: string, Key: string }) =>
@@ -147,8 +154,8 @@ export const s3ObjectExists = (params: { Bucket: string, Key: string }) =>
 /**
 * Put an object on S3
 *
-* @param params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
-* @returns promise of the object being put
+* @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
+* promise of the object being put
 **/
 export const s3PutObject = improveStackTrace(
   (params: AWS.S3.PutObjectRequest) => s3().putObject({
@@ -160,9 +167,10 @@ export const s3PutObject = improveStackTrace(
 /**
  * Upload a file to S3
  *
- * @param bucket - the destination S3 bucket
- * @param key - the destination S3 key
- * @param filename - the local file to be uploaded
+ * @param {string} bucket - the destination S3 bucket
+ * @param {string} key - the destination S3 key
+ * @param {filename} filename - the local file to be uploaded
+ * @returns {Promise}
  */
 export const putFile = (bucket: string, key: string, filename: string) =>
   s3PutObject({
@@ -174,8 +182,8 @@ export const putFile = (bucket: string, key: string, filename: string) =>
 /**
 * Copy an object from one location on S3 to another
 *
-* @param params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
-* @returns promise of the object being copied
+* @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
+* @returns {Promise} promise of the object being copied
 **/
 export const s3CopyObject = improveStackTrace(
   (params: AWS.S3.CopyObjectRequest) => s3().copyObject({
@@ -189,8 +197,8 @@ export const s3CopyObject = improveStackTrace(
  *
  * Note: This is equivalent to calling `aws.s3().upload(params).promise()`
  *
- * @param params - see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
- * @returns see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
+ * @param {Object} params - see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
+ * @returns {Promise} see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
  */
 export const promiseS3Upload = improveStackTrace(
   (params: AWS.S3.PutObjectRequest) => s3().upload(params).promise()
@@ -199,9 +207,9 @@ export const promiseS3Upload = improveStackTrace(
 /**
  * Downloads the given s3Obj to the given filename in a streaming manner
  *
- * @param s3Obj - The parameters to send to S3 getObject call
- * @param filepath - The filepath of the file that is downloaded
- * @returns returns filename if successful
+ * @param {Object} s3Obj - The parameters to send to S3 getObject call
+ * @param {string} filepath - The filepath of the file that is downloaded
+ * @returns {Promise<string>} returns filename if successful
  */
 export const downloadS3File = (s3Obj: AWS.S3.GetObjectRequest, filepath: string) => {
   const fileWriteStream = fs.createWriteStream(filepath);
@@ -219,9 +227,9 @@ export const downloadS3File = (s3Obj: AWS.S3.GetObjectRequest, filepath: string)
 /**
  * Get the size of an S3Object, in bytes
  *
- * @param bucket - S3 bucket
- * @param key - S3 key
- * @returns object size, in bytes
+ * @param {string} bucket - S3 bucket
+ * @param {string} key - S3 key
+ * @returns {Promise<integer>} object size, in bytes
  */
 export const getObjectSize = (bucket: string, key: string) =>
   headObject(bucket, key, { retries: 3 })
@@ -230,9 +238,9 @@ export const getObjectSize = (bucket: string, key: string) =>
 /**
 * Get object Tagging from S3
 *
-* @param bucket - name of bucket
-* @param key - key for object (filepath + filename)
-* @returns returns response from `S3.getObjectTagging` as a promise
+* @param {string} bucket - name of bucket
+* @param {string} key - key for object (filepath + filename)
+* @returns {Promise} returns response from `S3.getObjectTagging` as a promise
 **/
 export const s3GetObjectTagging = improveStackTrace(
   (bucket: string, key: string) =>
@@ -243,10 +251,10 @@ export const s3GetObjectTagging = improveStackTrace(
 * Puts object Tagging in S3
 * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging-property
 *
-* @param Bucket - name of bucket
-* @param Key - key for object (filepath + filename)
-* @param Tagging - tagging object
-* @returns returns response from `S3.getObjectTagging` as a promise
+* @param {string} Bucket - name of bucket
+* @param {string} Key - key for object (filepath + filename)
+* @param {Object} Tagging - tagging object
+* @returns {Promise} returns response from `S3.getObjectTagging` as a promise
 **/
 export const s3PutObjectTagging = improveStackTrace(
   (Bucket: string, Key: string, Tagging: AWS.S3.Tagging) =>
@@ -260,12 +268,12 @@ export const s3PutObjectTagging = improveStackTrace(
 /**
 * Get an object from S3
 *
-* @param Bucket - name of bucket
-* @param Key - key for object (filepath + filename)
-* @param retryOptions - options to control retry behavior when an
+* @param {string} Bucket - name of bucket
+* @param {string} Key - key for object (filepath + filename)
+* @param {Object} retryOptions - options to control retry behavior when an
 *   object does not exist. See https://github.com/tim-kos/node-retry#retryoperationoptions
 *   By default, retries will not be performed
-* @returns returns response from `S3.getObject` as a promise
+* @returns {Promise} returns response from `S3.getObject` as a promise
 **/
 export const getS3Object = improveStackTrace(
   (Bucket: string, Key: string, retryOptions: pRetry.Options = { retries: 0 }) =>
@@ -289,9 +297,9 @@ export const getS3Object = improveStackTrace(
 /**
  * Fetch the contents of an S3 object
  *
- * @param bucket - the S3 object's bucket
- * @param key - the S3 object's key
- * @returns the contents of the S3 object
+ * @param {string} bucket - the S3 object's bucket
+ * @param {string} key - the S3 object's key
+ * @returns {Promise<string>} the contents of the S3 object
  */
 export const getTextObject = (bucket: string, key: string) =>
   getS3Object(bucket, key)
@@ -302,9 +310,9 @@ export const getTextObject = (bucket: string, key: string) =>
 
 /**
  * Fetch JSON stored in an S3 object
- * @param bucket - the S3 object's bucket
- * @param key - the S3 object's key
- * @returns the contents of the S3 object, parsed as JSON
+ * @param {string} bucket - the S3 object's bucket
+ * @param {string} key - the S3 object's key
+ * @returns {Promise<*>} the contents of the S3 object, parsed as JSON
  */
 export const getJsonS3Object = (bucket: string, key: string) =>
   getTextObject(bucket, key)
@@ -323,10 +331,10 @@ export const putJsonS3Object = (bucket: string, key: string, data: any) =>
 /**
  * Get a readable stream for an S3 object.
  *
- * @param bucket - the S3 object's bucket
- * @param key - the S3 object's key
- * @returns
- * @throws if S3 object cannot be found
+ * @param {string} bucket - the S3 object's bucket
+ * @param {string} key - the S3 object's key
+ * @returns {ReadableStream}
+ * @throws {Error} if S3 object cannot be found
  */
 export const getS3ObjectReadStream = (bucket: string, key: string) =>
   s3().getObject(
@@ -340,10 +348,10 @@ export const getS3ObjectReadStream = (bucket: string, key: string) =>
  * with eventual consistency issues by checking for object
  * with retries.
  *
- * @param bucket - the S3 object's bucket
- * @param key - the S3 object's key
- * @returns
- * @throws if S3 object cannot be found
+ * @param {string} bucket - the S3 object's bucket
+ * @param {string} key - the S3 object's key
+ * @returns {ReadableStream}
+ * @throws {Error} if S3 object cannot be found
  */
 export const getS3ObjectReadStreamAsync = (bucket: string, key: string) =>
   getS3Object(bucket, key, { retries: 3 })
@@ -352,9 +360,9 @@ export const getS3ObjectReadStreamAsync = (bucket: string, key: string) =>
 /**
 * Check if a file exists in an S3 object
 *
-* @param bucket - name of the S3 bucket
-* @param key - key of the file in the S3 bucket
-* @returns returns the response from `S3.headObject` as a promise
+* @param {string} bucket - name of the S3 bucket
+* @param {string} key - key of the file in the S3 bucket
+* @returns {Promise} returns the response from `S3.headObject` as a promise
 **/
 export const fileExists = async (bucket: string, key: string) => {
   try {
@@ -405,8 +413,8 @@ export const downloadS3Files = (
 /**
  * Delete files from S3
  *
- * @param s3Objs - An array of objects containing keys 'Bucket' and 'Key'
- * @returns A promise that resolves to an Array of the data returned
+ * @param {Array} s3Objs - An array of objects containing keys 'Bucket' and 'Key'
+ * @returns {Promise} A promise that resolves to an Array of the data returned
  *   from the deletion operations
  */
 export const deleteS3Files = (s3Objs: AWS.S3.DeleteObjectRequest[]) => pMap(
@@ -418,8 +426,8 @@ export const deleteS3Files = (s3Objs: AWS.S3.DeleteObjectRequest[]) => pMap(
 /**
 * Delete a bucket and all of its objects from S3
 *
-* @param bucket - name of the bucket
-* @returns the promised result of `S3.deleteBucket`
+* @param {string} bucket - name of the bucket
+* @returns {Promise} the promised result of `S3.deleteBucket`
 **/
 export const recursivelyDeleteS3Bucket = improveStackTrace(
   async (bucket: string) => {
@@ -496,11 +504,11 @@ export const uploadS3Files = (
 /**
  * Upload the file associated with the given stream to an S3 bucket
  *
- * @param fileStream - The stream for the file's contents
- * @param bucket - The S3 bucket to which the file is to be uploaded
- * @param key - The key to the file in the bucket
- * @param s3opts - Options to pass to the AWS sdk call (defaults to `{}`)
- * @returns A promise
+ * @param {ReadableStream} fileStream - The stream for the file's contents
+ * @param {string} bucket - The S3 bucket to which the file is to be uploaded
+ * @param {string} key - The key to the file in the bucket
+ * @param {Object} s3opts - Options to pass to the AWS sdk call (defaults to `{}`)
+ * @returns {Promise} A promise
  */
 export const uploadS3FileStream = (
   fileStream: Readable,
@@ -518,12 +526,12 @@ export const uploadS3FileStream = (
 /**
  * List the objects in an S3 bucket
  *
- * @param bucket - The name of the bucket
- * @param prefix - Only objects with keys starting with this prefix
+ * @param {string} bucket - The name of the bucket
+ * @param {string} prefix - Only objects with keys starting with this prefix
  *   will be included (useful for searching folders in buckets, e.g., '/PDR')
- * @param skipFolders - If true don't return objects that are folders
+ * @param {boolean} skipFolders - If true don't return objects that are folders
  *   (defaults to true)
- * @returns  A promise that resolves to the list of objects. Each S3
+ * @returns {Promise} A promise that resolves to the list of objects. Each S3
  *   object is represented as a JS object with the following attributes: `Key`,
  * `ETag`, `LastModified`, `Owner`, `Size`, `StorageClass`.
  */
@@ -557,9 +565,11 @@ export const listS3Objects = async (
  *
  * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#listObjectsV2-property
  *
- * @param params - params for the s3.listObjectsV2 call
- * @returns resolves to an array of objects corresponding to
+ * @param {Object} params - params for the s3.listObjectsV2 call
+ * @returns {Promise<Array>} resolves to an array of objects corresponding to
  *   the Contents property of the listObjectsV2 response
+ *
+ * @static
  */
 export async function listS3ObjectsV2(params: AWS.S3.ListObjectsV2Request) {
   // Fetch the first list of objects from S3
@@ -584,6 +594,14 @@ export async function listS3ObjectsV2(params: AWS.S3.ListObjectsV2Request) {
 
 /**
  * Calculate checksum for S3 Object
+ *
+ * @param {Object} params - params
+ * @param {string} params.algorithm - checksum algorithm
+ * @param {string} params.bucket - S3 bucket
+ * @param {string} params.key - S3 key
+ * @param {Object} [params.options] - crypto.createHash options
+ *
+ * @returns {number|string} calculated checksum
  */
 export const calculateS3ObjectChecksum = async (
   params: {
@@ -600,6 +618,16 @@ export const calculateS3ObjectChecksum = async (
 
 /**
  * Validate S3 object checksum against expected sum
+ *
+ * @param {Object} params - params
+ * @param {string} params.algorithm - checksum algorithm
+ * @param {string} params.bucket - S3 bucket
+ * @param {string} params.key - S3 key
+ * @param {number|string} params.expectedSum - expected checksum
+ * @param {Object} [params.options] - crypto.createHash options
+ *
+ * @throws {InvalidChecksum} - Throws error if validation fails
+ * @returns {boolean} returns true for success
  */
 export const validateS3ObjectChecksum = async (params: {
   algorithm: string,
@@ -619,6 +647,10 @@ export const validateS3ObjectChecksum = async (params: {
 
 /**
  * Extract the S3 bucket and key from the URL path parameters
+ *
+ * @param {string} pathParams - path parameters from the URL
+ * bucket/key in the form of
+ * @returns {Array<string>} `[Bucket, Key]`
  */
 export const getFileBucketAndKey = (pathParams: string): [string, string] => {
   const [Bucket, ...fields] = pathParams.split('/');
@@ -634,6 +666,9 @@ export const getFileBucketAndKey = (pathParams: string): [string, string] => {
 
 /**
  * Create an S3 bucket
+ *
+ * @param {string} Bucket - the name of the S3 bucket to create
+ * @returns {Promise}
  */
 export const createBucket = (Bucket: string) =>
   s3().createBucket({ Bucket }).promise();

@@ -1,3 +1,7 @@
+/**
+ * @module KMS
+ */
+
 import { kms } from './services';
 
 /**
@@ -5,6 +9,9 @@ import { kms } from './services';
  *
  * See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/KMS.html#createKey-property
  * for allowed params and return value.
+ *
+ * @param {Object} params
+ * @returns {Promise<Object>}
  */
 export const createKey = (params: AWS.KMS.CreateKeyRequest = {}) =>
   kms().createKey(params).promise();
@@ -12,9 +19,9 @@ export const createKey = (params: AWS.KMS.CreateKeyRequest = {}) =>
 /**
  * Encrypt a string using KMS
  *
- * @param KeyId - the KMS key to use for encryption
- * @param Plaintext - the string to be encrypted
- * @returns the Base 64 encoding of the encrypted value
+ * @param {string} KeyId - the KMS key to use for encryption
+ * @param {string} Plaintext - the string to be encrypted
+ * @returns {Promise<string>} the Base 64 encoding of the encrypted value
  */
 export const encrypt = async (KeyId: string, Plaintext: string) => {
   const { CiphertextBlob } = await kms().encrypt({ KeyId, Plaintext }).promise();
@@ -27,8 +34,8 @@ export const encrypt = async (KeyId: string, Plaintext: string) => {
 /**
  * Decrypt a KMS-encrypted string, Base 64 encoded
  *
- * @param ciphertext - a KMS-encrypted value, Base 64 encoded
- * @returns the plaintext
+ * @param {string} ciphertext - a KMS-encrypted value, Base 64 encoded
+ * @returns {string} the plaintext
  */
 export const decryptBase64String = async (ciphertext: string) => {
   const { Plaintext } = await kms().decrypt({

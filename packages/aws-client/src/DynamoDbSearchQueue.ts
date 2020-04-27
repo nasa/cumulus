@@ -1,7 +1,9 @@
 import { dynamodbDocClient } from './services';
 
-// Class to efficiently search all of the items in a DynamoDB table, without
-// loading them all into memory at once.  Handles paging.
+/**
+ * Class to efficiently search all of the items in a DynamoDB table, without loading them all into
+ * memory at once.  Handles paging.
+ */
 class DynamoDbSearchQueue {
   private readonly dynamodbDocClient: AWS.DynamoDB.DocumentClient;
   private readonly searchType: 'scan';
@@ -20,6 +22,8 @@ class DynamoDbSearchQueue {
    *
    * This does not remove the object from the queue.  When there are no more
    * items in the queue, returns 'null'.
+   *
+   * @returns {Promise<Object>} an item from the DynamoDB table
    */
   async peek() {
     if (this.items.length === 0) await this.fetchItems();
@@ -30,15 +34,14 @@ class DynamoDbSearchQueue {
    * Remove the next item from the queue
    *
    * When there are no more items in the queue, returns 'null'.
+   *
+   * @returns {Promise<Object>} an item from the DynamoDB table
    */
   async shift() {
     if (this.items.length === 0) await this.fetchItems();
     return this.items.shift();
   }
 
-  /**
-   * Query the DynamoDB API to get the next batch of items
-   */
   async fetchItems() {
     let response;
     do {

@@ -1,6 +1,7 @@
 /**
- * Utility functions for working with the AWS DynamoDb API
+ * @module DynamoDb
  */
+
 import { RecordDoesNotExist } from '@cumulus/errors';
 import { dynamodb } from './services';
 import { improveStackTrace } from './utils';
@@ -10,6 +11,14 @@ import { improveStackTrace } from './utils';
  *
  * See [DocumentClient.get()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#get-property)
  * for descriptions of `params` and the return data.
+ *
+ * @param {Object} params
+ * @param {string} params.tableName - Table name to read
+ * @param {any} params.item - Key identifying object to get
+ * @param {Object} params.client - Instance of a DynamoDb DocumentClient
+ * @param {Object} params.getParams - Additional parameters for DocumentClient.get()
+ * @returns {Promise<Object>}
+ * @throws {RecordDoesNotExist} if a record cannot be found
  */
 export const get = improveStackTrace(
   async (params: {
@@ -42,6 +51,9 @@ export const get = improveStackTrace(
  *
  * See [DocumentClient.scan()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#scan-property)
  * for descriptions of `params` and the return data.
+ *
+ * @param {Object} params
+ * @returns {Promise<Object>}
  */
 export const scan = improveStackTrace(
   async (params: {
@@ -128,9 +140,11 @@ export const scan = improveStackTrace(
 /**
  * Create a DynamoDB table and then wait for the table to exist
  *
- * @param params - the same params that you would pass to AWS.createTable
+ * @param {Object} params - the same params that you would pass to AWS.createTable
  *   See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#createTable-property
- * @returns the output of the createTable call
+ * @returns {Promise<Object>} the output of the createTable call
+ *
+ * @static
  */
 export async function createAndWaitForDynamoDbTable(params: AWS.DynamoDB.CreateTableInput) {
   const createTableResult = await dynamodb().createTable(params).promise();
@@ -142,8 +156,11 @@ export async function createAndWaitForDynamoDbTable(params: AWS.DynamoDB.CreateT
 /**
  * Delete a DynamoDB table and then wait for the table to not exist
  *
- * @param params - the same params that you would pass to AWS.deleteTable
+ * @param {Object} params - the same params that you would pass to AWS.deleteTable
  *   See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#deleteTable-property
+ * @returns {Promise}
+ *
+ * @static
  */
 export async function deleteAndWaitForDynamoDbTableNotExists(
   params: AWS.DynamoDB.DeleteTableInput

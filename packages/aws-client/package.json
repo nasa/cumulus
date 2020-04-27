@@ -17,13 +17,13 @@
   "publishConfig": {
     "access": "public"
   },
-  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/aws-client",
+  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/aws-client/README.md",
   "repository": {
     "type": "git",
     "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
-    "build": "true",
+    "build-docs": "npm run tsc && jsdoc2md -t README.hbs *.js > README.md",
     "lint": "eslint .",
     "prepare": "npm run tsc",
     "test": "ava",
@@ -62,6 +62,7 @@
     "ava": "^2.1.0",
     "crypto-random-string": "^3.2.0",
     "delay": "^4.3.0",
+    "jsdoc-to-markdown": "^5.0.3",
     "nyc": "^14.0.0",
     "p-timeout": "^3.2.0",
     "sinon": "^8.0.4",

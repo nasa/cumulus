@@ -1,3 +1,7 @@
+/**
+ * @module SQS
+ */
+
 import get = require('lodash/get');
 import isObject = require('lodash/isObject');
 import isString = require('lodash/isString');
@@ -21,8 +25,10 @@ export const getQueueUrlByName = async (queueName: string) => {
 /**
  * Create an SQS Queue.  Properly handles localstack queue URLs
  *
- * @param QueueName - queue name
- * @returns the Queue URL
+ * @param {string} QueueName - queue name
+ * @returns {Promise<string>} the Queue URL
+ *
+ * @static
  */
 export async function createQueue(QueueName: string) {
   const createQueueResponse = await sqs().createQueue({
@@ -76,13 +82,13 @@ export const getQueueAttributes = async (queueName: string) => {
 };
 
 /**
-* Send a message to AWS SQS
-*
-* @param queueUrl - url of the SQS queue
-* @param message - either string or object message. If an
-*   object it will be serialized into a JSON string.
-* @returns resolves when the messsage has been sent
-**/
+ * Send a message to AWS SQS
+ *
+ * @param {string} queueUrl - url of the SQS queue
+ * @param {string|Object} message - either string or object message. If an
+ *   object it will be serialized into a JSON string.
+ * @returns {Promise} resolves when the messsage has been sent
+ **/
 export const sendSQSMessage = (queueUrl: string, message: string | object) => {
   let messageBody;
   if (isString(message)) messageBody = message;
@@ -104,6 +110,14 @@ type receiveSQSMessagesOptions = {
 /**
  * Receives SQS messages from a given queue. The number of messages received
  * can be set and the timeout is also adjustable.
+ *
+ * @param {string} queueUrl - url of the SQS queue
+ * @param {Object} options - options object
+ * @param {integer} [options.numOfMessages=1] - number of messages to read from the queue
+ * @param {integer} [options.visibilityTimeout=30] - number of seconds a message is invisible
+ *   after read
+ * @param {integer} [options.waitTimeSeconds=0] - number of seconds to poll SQS queue (long polling)
+ * @returns {Promise<Array>} an array of messages
  */
 export const receiveSQSMessages = async (queueUrl: string, options: receiveSQSMessagesOptions) => {
   const params = {
@@ -126,9 +140,9 @@ export const parseSQSMessageBody = (message: any): unknown =>
 /**
  * Delete a given SQS message from a given queue.
  *
- * @param queueUrl - url of the SQS queue
- * @param receiptHandle - the unique identifier of the sQS message
- * @returns an AWS SQS response
+ * @param {string} queueUrl - url of the SQS queue
+ * @param {integer} receiptHandle - the unique identifier of the sQS message
+ * @returns {Promise} an AWS SQS response
  */
 export const deleteSQSMessage = improveStackTrace(
   (QueueUrl: string, ReceiptHandle: string) =>
@@ -138,8 +152,9 @@ export const deleteSQSMessage = improveStackTrace(
 /**
  * Test if an SQS queue exists
  *
- * @param queue - queue name or url
- * @returns a Promise that will resolve to a boolean indicating if the queue exists
+ * @param {Object} queue - queue name or url
+ * @returns {Promise<boolean>} a Promise that will resolve to a boolean indicating
+ *                               if the queue exists
  */
 export const sqsQueueExists = async (queue: string) => {
   const QueueName = queue.split('/').pop();

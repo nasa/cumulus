@@ -1,3 +1,7 @@
+/**
+ * @module SecretsManager
+ */
+
 import { secretsManager } from './services';
 
 export const getSecretString = (SecretId: string) =>
