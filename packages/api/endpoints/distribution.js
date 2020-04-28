@@ -1,10 +1,12 @@
 'use strict';
 
 const urljoin = require('url-join');
+
 const { getFileBucketAndKey } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { UnparsableFileLocationError } = require('@cumulus/errors');
 const { URL } = require('url');
+
 const EarthdataLogin = require('../lib/EarthdataLogin');
 const { isLocalApi } = require('../lib/testUtils');
 const { AccessToken } = require('../models');
@@ -79,12 +81,15 @@ async function handleRedirectRequest(req, res) {
     username: getAccessTokenResponse.username
   });
 
+  const expires = new Date(getAccessTokenResponse.expirationTime * 1000);
+  console.log('expires', expires);
   return res
     .cookie(
       'accessToken',
       getAccessTokenResponse.accessToken,
       {
-        expires: new Date(getAccessTokenResponse.expirationTime),
+        // expirationTime is in seconds but Date() expects milliseconds
+        expires,
         httpOnly: true,
         secure: useSecureCookies()
       }

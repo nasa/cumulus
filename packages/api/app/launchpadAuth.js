@@ -6,6 +6,7 @@ const launchpad = require('@cumulus/launchpad-auth');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
+const { isAccessTokenExpired } = require('../lib/token');
 const { AccessToken } = require('../models');
 
 const launchpadProtectedAuth = () => (process.env.OAUTH_PROVIDER === 'launchpad');
@@ -36,14 +37,14 @@ async function ensureLaunchpadAPIAuthorized(req, res, next) {
   if (!token) {
     return res.boom.unauthorized('Missing token');
   }
-  const access = new AccessToken();
-  let accessToken;
+  const accessTokenModel = new AccessToken();
+  let accessTokenRecord;
   try {
-    accessToken = await access.get({ accessToken: token });
+    accessTokenRecord = await accessTokenModel.get({ accessToken: token });
 
-    if (accessToken) {
-      const userName = accessToken.username;
-      if ((Date.now() / 1000) > accessToken.expirationTime) {
+    if (accessTokenRecord) {
+      const userName = accessTokenRecord.username;
+      if (isAccessTokenExpired(accessTokenRecord)) {
         return res.boom.unauthorized('Access token has expired');
       }
       // Adds additional metadata that authorized endpoints can access.
@@ -66,7 +67,7 @@ async function ensureLaunchpadAPIAuthorized(req, res, next) {
       const verifyResponse = await launchpad.validateLaunchpadToken(config, token, userGroup);
 
       if (verifyResponse.status === 'success') {
-        await access.create({
+        await accessTokenModel.create({
           accessToken: token,
           expirationTime: moment().unix() + verifyResponse.session_maxtimeout,
           username: verifyResponse.owner_auid

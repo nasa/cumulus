@@ -2,21 +2,13 @@ const router = require('express-promise-router')();
 
 const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+
 const {
   getConfigurations,
   handleRedirectRequest,
   handleFileRequest
 } = require('../endpoints/distribution');
-
-/**
- * Checks if the token is expired
- *
- * @param {Object} accessTokenRecord - the access token record
- * @returns {boolean} true indicates the token is expired
- */
-function isAccessTokenExpired(accessTokenRecord) {
-  return accessTokenRecord.expirationTime < Date.now();
-}
+const { isAccessTokenExpired } = require('../lib/token');
 
 
 /**
