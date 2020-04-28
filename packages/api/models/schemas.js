@@ -551,7 +551,7 @@ module.exports.provider = {
       type: 'string'
     },
     globalConnectionLimit: {
-      title: 'Concurrent Connnection Limit',
+      title: 'Concurrent Connection Limit',
       type: 'integer',
       default: 10
     },
