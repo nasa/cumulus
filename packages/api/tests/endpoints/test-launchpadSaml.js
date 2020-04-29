@@ -17,7 +17,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 
-const { verifyJwtToken } = require('../../lib/token');
+const { isAccessTokenExpired,verifyJwtToken } = require('../../lib/token');
 const { AccessToken } = require('../../models');
 const launchpadSaml = rewire('../../endpoints/launchpadSaml');
 const launchpadPublicCertificate = launchpadSaml.__get__(

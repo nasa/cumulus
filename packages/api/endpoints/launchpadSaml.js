@@ -7,7 +7,7 @@ const { parseString } = require('xml2js');
 const { promisify } = require('util');
 const flatten = require('lodash/flatten');
 const get = require('lodash/get');
-const log = require('@cumulus/common/log');
+const moment = require('moment');
 
 const {
   getS3Object,
@@ -15,6 +15,7 @@ const {
   s3ObjectExists,
   s3PutObject
 } = require('@cumulus/aws-client/S3');
+const log = require('@cumulus/common/log');
 
 const { AccessToken } = require('../models');
 const { createJwtToken } = require('../lib/token');
@@ -135,7 +136,8 @@ const parseSamlResponse = (samlResponse) => {
  */
 const buildLaunchpadJwt = async (samlResponse) => {
   const { username, accessToken } = parseSamlResponse(samlResponse);
-  const expirationTime = Date.now() + 60 * 60 * 1000;
+  // expires in 1 hour
+  const expirationTime = moment().unix() + 60 * 60;
   const accessTokenModel = new AccessToken();
   await accessTokenModel.create({ accessToken, expirationTime, username });
   return createJwtToken({ accessToken, expirationTime, username });

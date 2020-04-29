@@ -81,15 +81,13 @@ async function handleRedirectRequest(req, res) {
     username: getAccessTokenResponse.username
   });
 
-  const expires = new Date(getAccessTokenResponse.expirationTime * 1000);
-  console.log('expires', expires);
   return res
     .cookie(
       'accessToken',
       getAccessTokenResponse.accessToken,
       {
         // expirationTime is in seconds but Date() expects milliseconds
-        expires,
+        expires: new Date(getAccessTokenResponse.expirationTime * 1000),
         httpOnly: true,
         secure: useSecureCookies()
       }
