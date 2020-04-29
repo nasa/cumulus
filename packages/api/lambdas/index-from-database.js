@@ -8,10 +8,12 @@ const log = require('@cumulus/common/log');
 const { Search } = require('../es/search');
 const indexer = require('../es/indexer');
 
-const getEsRequestConcurrency = (event) =>
-  event.esRequestConcurrency
-  || parseInt(process.env.ES_CONCURRENCY, 10)
-  || 10;
+const getEsRequestConcurrency = (event) => {
+  if (process.env.ES_CONCURRENCY) {
+    return parseInt(process.env.ES_CONCURRENCY, 10);
+  }
+  return event.esRequestConcurrency;
+};
 
 async function indexModel({
   esClient,
@@ -25,6 +27,7 @@ async function indexModel({
   });
 
   let itemsComplete = false;
+  let totalItemsIndexed = 0;
 
   /* eslint-disable no-await-in-loop */
   while (itemsComplete === false) {
@@ -37,24 +40,41 @@ async function indexModel({
       scanQueue.items.pop();
     }
 
-    log.info(`Indexing ${scanQueue.items.length} records from ${tableName}`);
+    if (scanQueue.items.length === 0) {
+      log.info(`No records to index for ${tableName}`);
+      return true;
+    }
+
+    log.info(`Attempting to index ${scanQueue.items.length} records from ${tableName}`);
+
     const input = scanQueue.items.map(
       (item) => limitEsRequests(
-        () => indexFn(esClient, item, esIndex)
+        async () => {
+          try {
+            return await indexFn(esClient, item, esIndex);
+          } catch (err) {
+            log.error(`Error indexing record ${JSON.stringify(item)}, error: ${err}`);
+            return false;
+          }
+        }
       )
     );
-    await Promise.all(input);
+    const results = await Promise.all(input);
+    const successfulResults = results.filter((result) => result !== false);
+    totalItemsIndexed += successfulResults;
 
-    log.info(`Completed index of ${scanQueue.items.length} records from ${tableName}`);
+    log.info(`Completed index of ${successfulResults.length} records from ${tableName}`);
   }
   /* eslint-enable no-await-in-loop */
+
+  return totalItemsIndexed;
 }
 
 async function indexFromDatabase({
   esIndex,
   tables,
   esHost,
-  esRequestConcurrency
+  esRequestConcurrency = 10
 }) {
   const esClient = await Search.es(esHost);
   const limitEsRequests = pLimit(esRequestConcurrency);
@@ -116,13 +136,13 @@ async function handler(event) {
   log.info(`Starting index from database for index ${event.indexName}`);
 
   const {
-    index,
+    index: esIndex,
     tables,
     esHost = process.env.ES_HOST
   } = event;
 
   await indexFromDatabase({
-    indexName: index,
+    esIndex,
     tables,
     esHost,
     esRequestConcurrency: getEsRequestConcurrency(event)
