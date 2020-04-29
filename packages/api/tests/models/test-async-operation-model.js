@@ -160,8 +160,6 @@ test('The AsyncOperation.start() method throws error and updates operation if it
     failures: [{ arn: randomString(), reason: 'out of cheese' }]
   };
 
-  const expectedMessage = 'Failed to start AsyncOperation: out of cheese';
-
   await t.throwsAsync(asyncOperationModel.start({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
@@ -171,7 +169,7 @@ test('The AsyncOperation.start() method throws error and updates operation if it
     payload: {}
   }), {
     instanceOf: EcsStartTaskError,
-    message: expectedMessage
+    message: 'Failed to start AsyncOperation: out of cheese'
   });
 });
 

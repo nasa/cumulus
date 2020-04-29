@@ -11,7 +11,7 @@ const app = express();
 app.use(boom());
 
 // Set up fake endpoint to just test middleware
-app.post(
+app.get(
   '/fake-async-endpoint',
   () => {
     throw new Error('failed to start');
@@ -19,7 +19,7 @@ app.post(
   asyncOperationEndpointErrorHandler
 );
 
-app.post(
+app.get(
   '/fake-async-endpoint2',
   () => {
     throw new EcsStartTaskError('failed to start');
@@ -29,15 +29,12 @@ app.post(
 
 test('request to replays endpoint returns 500 if starting ECS task throws unexpected error', async (t) => {
   const response = await request(app)
-    .post('/fake-async-endpoint')
-    .expect(500);
+    .get('/fake-async-endpoint');
   t.is(response.status, 500);
 });
 
 test('request to replays endpoint returns 503 if starting ECS task throws EcsStartTaskError', async (t) => {
   const response = await request(app)
-    .post('/fake-async-endpoint2')
-    .send('ECS')
-    .expect(503);
+    .get('/fake-async-endpoint2');
   t.is(response.status, 503);
 });

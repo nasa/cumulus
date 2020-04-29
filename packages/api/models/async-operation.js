@@ -125,7 +125,6 @@ class AsyncOperation extends Manager {
       payloadKey
     });
 
-    // If creating the stack failed, update the database
     if (runTaskResponse.failures.length > 0) {
       throw new EcsStartTaskError(
         `Failed to start AsyncOperation: ${runTaskResponse.failures[0].reason}`
