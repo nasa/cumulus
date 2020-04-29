@@ -303,7 +303,7 @@ test('discover granules using S3 throws error when discovery fails',
         host: randomString()
       };
     });
-    await t.throwsAsync(() => assert(t), { code: 'NoSuchBucket' });
+    await t.throwsAsync(assert(t), { code: 'NoSuchBucket' });
   });
 
 test('handleDuplicates filters on duplicateHandling set to "skip"', async (t) => {
@@ -369,7 +369,7 @@ test(
 );
 
 test('checkGranuleHasNoDuplicate throws an error on an unexpected API lambda return', async (t) => {
-  const error = await t.throwsAsync(() => checkGranuleHasNoDuplicate('crash-the-api', 'skip'));
+  const error = await t.throwsAsync(checkGranuleHasNoDuplicate('crash-the-api', 'skip'));
   t.true(error.message.startsWith('Unexpected return from Private API lambda'));
 });
 
