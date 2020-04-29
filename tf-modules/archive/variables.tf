@@ -335,3 +335,9 @@ variable "log_destination_arn" {
   default = "N/A"
   description = "A shared AWS:Log:Destination that receives logs from log_groups"
 }
+
+variable "es_concurrency" {
+  type = number
+  default = 10
+  description = "Maximum number of concurrent requests to send to Elasticsearch. Used in index-from-database operation"
+}
