@@ -1,6 +1,8 @@
 'use strict';
 
 const log = require('@cumulus/common/log');
+const pLimit = require('p-limit');
+const limit = pLimit(process.env.ES_CONCURRENCY || 10);
 
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 
@@ -26,8 +28,8 @@ async function indexModel(esClient, tableName, esIndex, indexFn) {
     }
 
     log.info(`Indexing ${scanQueue.items.length} records from ${tableName}`);
-
-    await Promise.all(scanQueue.items.map((item) => indexFn(esClient, item, esIndex)));
+    const input = scanQueue.items.map((item) => limit(() => indexFn(esClient, item, esIndex)));
+    await Promise.all(input);
 
     log.info(`Completed index of ${scanQueue.items.length} records from ${tableName}`);
   }
