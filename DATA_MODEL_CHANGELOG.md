@@ -16,6 +16,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- **CUMULUS-1777**
+  - The `expirationTime` property is now a required field of the access tokens model.
+
+## [v1.19.0] - 2020-02-28
+
+### Changed
+
 - **CUMULUS-1736**
   - The `dataType` property of the collections model has been deprecated and
     should no longer be used. The `name` property should be used instead. There
