@@ -226,7 +226,8 @@ async function indexFromDatabase(req, res) {
           rulesTable: process.env.RulesTable,
           asyncOperationsTable: process.env.AsyncOperationsTable
         },
-        esHost: process.env.ES_HOST
+        esHost: process.env.ES_HOST,
+        esRequestConcurrency: process.env.ES_CONCURRENCY
       }
     });
   } catch (err) {
