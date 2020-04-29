@@ -1,6 +1,8 @@
 'use strict';
 
 const test = require('ava');
+const sinon = require('sinon');
+const omit = require('lodash/omit');
 
 const awsServices = require('@cumulus/aws-client/services');
 const {
@@ -23,6 +25,7 @@ const {
   getWorkflowList
 } = require('../../lib/testUtils');
 const bootstrap = require('../../lambdas/bootstrap');
+const indexer = require('../../es/indexer');
 const { Search } = require('../../es/search');
 
 const workflowList = getWorkflowList();
@@ -143,8 +146,8 @@ test.serial('getEsRequestConcurrency respects ES_CONCURRENCY', (t) => {
   delete process.env.ES_CONCURRENCY;
 });
 
-test('getEsRequestConcurrency returns 10 if nothing is specified', (t) => {
-  t.is(indexFromDatabase.getEsRequestConcurrency({}), 10);
+test('getEsRequestConcurrency correctly returns undefined when nothing is specified', (t) => {
+  t.is(indexFromDatabase.getEsRequestConcurrency({}), undefined);
 });
 
 test('No error is thrown if nothing is in the database', async (t) => {
@@ -156,7 +159,7 @@ test('No error is thrown if nothing is in the database', async (t) => {
   }));
 });
 
-test('indexing records of all types is succesful', async (t) => {
+test('Lambda successfully indexes records of all types', async (t) => {
   const { esAlias } = t.context;
 
   const numItems = 1;
@@ -171,10 +174,9 @@ test('indexing records of all types is succesful', async (t) => {
     addFakeData(numItems, fakeRuleFactoryV2, rulesModel, { workflow: workflowList[0].name })
   ]);
 
-  await indexFromDatabase.indexFromDatabase({
-    esIndex: esAlias,
-    tables,
-    esRequestConcurrency: 1
+  await indexFromDatabase.handler({
+    index: esAlias,
+    tables
   });
 
   const searchResults = await Promise.all([
@@ -193,4 +195,62 @@ test('indexing records of all types is succesful', async (t) => {
       res.results.map((r) => delete r.timestamp),
       fakeData[index].map((r) => delete r.timestamp)
     ));
+});
+
+test.serial('failure in indexing record of specific type should not prevent indexing of other records with same type', async (t) => {
+  const { esAlias, esClient } = t.context;
+
+  const numItems = 7;
+  const fakeData = await addFakeData(numItems, fakeGranuleFactoryV2, granuleModel);
+
+  let numCalls = 0;
+  const originalIndexGranule = indexer.indexGranule;
+  const successCount = 4;
+  const indexGranuleStub = sinon.stub(indexer, 'indexGranule')
+    .callsFake((
+      esClientArg,
+      payload,
+      index
+    ) => {
+      numCalls += 1;
+      if (numCalls <= successCount) {
+        return originalIndexGranule(esClientArg, payload, index);
+      }
+      throw new Error('fake error');
+    });
+
+  let searchResults;
+  try {
+    await indexFromDatabase.handler({
+      index: esAlias,
+      tables
+    });
+
+    searchResults = await searchEs('granule', esAlias);
+
+    t.is(searchResults.meta.count, successCount);
+
+    searchResults.results.forEach((result) => {
+      const sourceData = fakeData.find((data) => data.granuleId === result.granuleId);
+      t.deepEqual(
+        omit(sourceData, ['timestamp', 'updatedAt']),
+        omit(result, ['timestamp', 'updatedAt'])
+      );
+    });
+  } finally {
+    indexGranuleStub.restore();
+    await Promise.all(fakeData.map(
+      ({ granuleId }) => granuleModel.delete({ granuleId })
+    ));
+    await Promise.all(searchResults.results.map(
+      (result) =>
+        esClient.delete({
+          index: esAlias,
+          type: 'granule',
+          id: result.granuleId,
+          parent: result.collectionId,
+          refresh: true
+        })
+    ));
+  }
 });
