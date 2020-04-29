@@ -2,31 +2,16 @@ import * as cksum from 'cksum';
 import * as crypto from 'crypto';
 import { Readable, TransformOptions } from 'stream';
 
-/**
- * Get file checksum (cksum) from readable stream
- *
- * @param stream - A readable file stream
- *
- * @returns The file checksum
- */
-async function _getCksumFromStream(stream: Readable): Promise<number> {
+// Calculate the cksum of a readable stream
+async function getCksumFromStream(stream: Readable): Promise<number> {
   return new Promise((resolve, reject) =>
     stream
       .pipe(cksum.stream((value: Buffer) => resolve(value.readUInt32BE(0))))
       .on('error', reject));
 }
 
-/**
- * Get <algorithm> file checksum from readable stream
- *
- * @param algorithm - algorithm to use for hash, any algorithm accepted by node's
- * `crypto.createHash` https://nodejs.org/api/crypto.html#crypto_crypto_createhash_algorithm_options
- * @param stream - A readable file stream
- * @param options - Checksum options
- *
- * @returns Promise returning the file checksum
- */
-async function _getChecksumFromStream(
+// Calculate the hash of a readable stream using `crypto.createHash()`
+async function getChecksumFromStream(
   algorithm: string,
   stream: Readable,
   options: TransformOptions = {}
@@ -42,22 +27,22 @@ async function _getChecksumFromStream(
 /**
  * Create <algorithm> file checksum from readable stream
  *
- * @param algorithm - Checksum algorithm
- * @param stream - A readable file stream
- * @param options - Checksum options
+ * @param {string} algorithm - Checksum algorithm type
+ * @param {stream.Readable} stream - A readable file stream
+ * @param {Object} [options] - Checksum options, see `crypto.createHash()`
  *
- * @returns Promise returning the file checksum
+ * @returns {Promise<number|string>} the file checksum
+ *
+ * @alias module:checksum.generateChecksumFromStream
  */
 export function generateChecksumFromStream(
   algorithm: string,
   stream: Readable,
-  options: TransformOptions
+  options?: TransformOptions
 ): Promise<number | string> {
   if (algorithm.toLowerCase() === 'cksum') {
-    return _getCksumFromStream(stream);
+    return getCksumFromStream(stream);
   }
 
-  return _getChecksumFromStream(algorithm, stream, options);
+  return getChecksumFromStream(algorithm, stream, options);
 }
-
-export default generateChecksumFromStream;

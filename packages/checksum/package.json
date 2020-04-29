@@ -12,6 +12,7 @@
     "./dist/**/*.d.ts"
   ],
   "scripts": {
+    "build-docs": "npm run tsc && jsdoc2md -t templates/README.md.hbs ./dist/*.js > README.md",
     "test": "ava",
     "test-coverage": "nyc ava",
     "debug": "NODE_ENV=test node --inspect-brk node_modules/ava/profile.js --serial tests/*.js",
@@ -40,6 +41,7 @@
   },
   "devDependencies": {
     "ava": "^2.1.0",
+    "jsdoc-to-markdown": "^5.0.3",
     "nyc": "^14.0.0",
     "typescript": "^3.8.3"
   }

@@ -4,21 +4,21 @@ import { generateChecksumFromStream } from './checksum';
 /**
  * Validate expected checksum against calculated checksum
  *
- * @param algorithm - Checksum algorithm
- * @param stream - A readable file stream
- * @param expectedSum - expected checksum
- * @param options - Checksum options
+ * @param {string} algorithm - Checksum algorithm
+ * @param {stream.Readable} stream - A readable file stream
+ * @param {number|string} expectedSum - expected checksum
+ * @param {Object} [options] - Checksum options
  *
- * @returns whether expectedSum === calculatedSum
+ * @returns {Promise<boolean>} whether expectedSum === calculatedSum
+ *
+ * @alias module:checksum.validateChecksumFromStream
  */
 export async function validateChecksumFromStream(
   algorithm: string,
   stream: Readable,
-  expectedSum: string,
+  expectedSum: string | number,
   options: TransformOptions = {}
 ): Promise<boolean> {
   const calculatedSum = await generateChecksumFromStream(algorithm, stream, options);
   return expectedSum === calculatedSum;
 }
-
-export default validateChecksumFromStream;

@@ -24,6 +24,7 @@
   "rules": {
     "complexity": ["error", 15],
     "indent": ["error", 2],
+    "object-curly-newline": ["warn", { "consistent": true, "minProperties": 6 }],
     "require-jsdoc": "off",
     "valid-jsdoc": [
       "warn",
@@ -125,18 +126,19 @@
       "files": ["*.ts"],
       "parser": "@typescript-eslint/parser",
       "plugins": [
-        "@typescript-eslint",
-        "eslint-plugin-tsdoc"
+        "@typescript-eslint"
       ],
       "extends": ["airbnb-typescript/lib/shared"],
       "rules": {
         "@typescript-eslint/no-implied-eval": "off",
         "@typescript-eslint/no-throw-literal": "off",
         "comma-dangle": ["warn", "never"],
+        "import/first": "off",
+        "import/prefer-default-export": "off",
         "lines-between-class-members": "off",
+        "lodash/prefer-lodash-typecheck": "off",
         "node/no-unsupported-features/es-syntax": "off",
-        "valid-jsdoc": "off",
-        "tsdoc/syntax": "warn"
+        "unicorn/no-abusive-eslint-disable": "off"
       }
     },
     {
