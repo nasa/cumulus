@@ -131,13 +131,32 @@ test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
+test('getEsRequestConcurrency respects concurrency value in payload', (t) => {
+  t.is(indexFromDatabase.getEsRequestConcurrency({
+    esRequestConcurrency: 5
+  }), 5);
+});
+
+test.serial('getEsRequestConcurrency respects ES_CONCURRENCY', (t) => {
+  process.env.ES_CONCURRENCY = 35;
+  t.is(indexFromDatabase.getEsRequestConcurrency({}), 35);
+  delete process.env.ES_CONCURRENCY;
+});
+
+test('getEsRequestConcurrency returns 10 if nothing is specified', (t) => {
+  t.is(indexFromDatabase.getEsRequestConcurrency({}), 10);
+});
+
 test('No error is thrown if nothing is in the database', async (t) => {
   const { esAlias } = t.context;
 
-  t.notThrows(async () => indexFromDatabase.indexFromDatabase(esAlias, tables));
+  t.notThrows(async () => indexFromDatabase.indexFromDatabase({
+    esIndex: esAlias,
+    tables
+  }));
 });
 
-test('index executions', async (t) => {
+test('indexing records of all types is succesful', async (t) => {
   const { esAlias } = t.context;
 
   const numItems = 1;
@@ -152,7 +171,11 @@ test('index executions', async (t) => {
     addFakeData(numItems, fakeRuleFactoryV2, rulesModel, { workflow: workflowList[0].name })
   ]);
 
-  await indexFromDatabase.indexFromDatabase(esAlias, tables);
+  await indexFromDatabase.indexFromDatabase({
+    esIndex: esAlias,
+    tables,
+    esRequestConcurrency: 1
+  });
 
   const searchResults = await Promise.all([
     searchEs('collection', esAlias),
