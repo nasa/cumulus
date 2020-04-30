@@ -12,7 +12,7 @@ const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
 
 const logger = () => new Logger({
   executions: process.env.EXECUTIONS,
-  granules: process.env.GRANULES,
+  granules: process.env.GRANULES ? JSON.parse(process.env.GRANULES) : undefined,
   parentArn: process.env.PARENTARN,
   sender: process.env.SENDER,
   stackName: process.env.STACKNAME,
@@ -293,6 +293,9 @@ const handler = (event, context, callback) => {
 };
 
 module.exports = {
+  checkGranuleHasNoDuplicate, // exported to support testing
   discoverGranules,
-  handler
+  handler,
+  filterDuplicates, // exported to support testing
+  handleDuplicates // exported to support testing
 };

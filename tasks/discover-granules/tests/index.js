@@ -1,10 +1,9 @@
 'use strict';
 
-const fs = require('fs');
 const path = require('path');
 const test = require('ava');
-const rewire = require('rewire');
-const sinon = require('sinon');
+const proxyquire = require('proxyquire');
+const { readJson } = require('fs-extra');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const {
@@ -13,22 +12,67 @@ const {
   validateOutput
 } = require('@cumulus/common/test-utils');
 const Logger = require('@cumulus/logger');
-const { promisify } = require('util');
 
-const discoverGranulesRewire = rewire('..');
-const discoverGranules = discoverGranulesRewire.discoverGranules;
+// This creates a fake logger which saves its log entries out to the `logEvents` array, rather than
+// printing them out to the console. This allows us to test that an expected log event is written
+// in one of the tests.
+let logEvents = [];
 
-const readFile = promisify(fs.readFile);
-
-const checkGranuleHasNoDuplicateRewire = (granuleId, duplicateHandling, _) => {
-  if (granuleId === 'duplicate') {
-    if (duplicateHandling === 'error') {
-      throw new Error(`Duplicate GranuleID ${granuleId} encountered in DiscoverGranules with duplicateHandling set to 'error'`);
-    }
-    return false;
+const fakeConsole = {
+  log(message) {
+    logEvents.push(JSON.parse(message));
   }
-  return granuleId;
 };
+
+class FakeLogger extends Logger {
+  constructor(options = {}) {
+    super({ ...options, console: fakeConsole });
+  }
+}
+
+// This fakes the `@cumulus/api-client/granules` module so that we can simulate responses from the
+// Cumulus API in our tests. It returns different canned responses depending on the `granuleId`.
+const fakeGranulesModule = {
+  getGranule: async ({ granuleId }) => {
+    if (granuleId === 'throw-error') {
+      throw new Error('Test Error');
+    }
+
+    if (granuleId === 'crash-the-api') {
+      return {
+        statusCode: 500,
+        body: '{}'
+      };
+    }
+
+    if (granuleId === 'duplicate') {
+      return {
+        statusCode: 200,
+        body: '{}'
+      };
+    }
+
+    return {
+      statusCode: 404,
+      body: JSON.stringify({ error: 'Not Found' })
+    };
+  }
+};
+
+// Import the discover-granules functions that we'll be testing, configuring them to use the fake
+// granules module and the fake logger.
+const {
+  checkGranuleHasNoDuplicate,
+  discoverGranules,
+  filterDuplicates,
+  handleDuplicates
+} = proxyquire(
+  '..',
+  {
+    '@cumulus/api-client/granules': fakeGranulesModule,
+    '@cumulus/logger': FakeLogger
+  }
+);
 
 async function assertDiscoveredGranules(t, output) {
   await validateOutput(t, output);
@@ -39,18 +83,14 @@ async function assertDiscoveredGranules(t, output) {
 
 test.beforeEach(async (t) => {
   process.env.oauth_provider = 'earthdata';
-  const eventPath = path.join(__dirname, 'fixtures', 'mur.json');
-  const rawEvent = await readFile(eventPath, 'utf8');
-  t.context.event = JSON.parse(rawEvent);
+
+  t.context.event = await readJson(path.join(__dirname, 'fixtures', 'mur.json'));
+
   t.context.filesByGranuleId = {
     duplicate: {},
     notDuplicate: {},
     someOtherGranule: {}
   };
-});
-
-test.afterEach(() => {
-  delete process.env.GRANULES;
 });
 
 test('discover granules sets the correct dataType for granules', async (t) => {
@@ -89,13 +129,7 @@ test('discover granules using FTP', async (t) => {
 
   await validateConfig(t, event.config);
 
-  try {
-    await assertDiscoveredGranules(t, await discoverGranules(event));
-  } catch (e) {
-    if (e.message.includes('getaddrinfo ENOTFOUND')) {
-      t.pass('Ignoring this test. Test server seems to be down');
-    } else throw e;
-  }
+  await assertDiscoveredGranules(t, await discoverGranules(event));
 });
 
 test('discover granules using SFTP', async (t) => {
@@ -113,13 +147,7 @@ test('discover granules using SFTP', async (t) => {
 
   await validateConfig(t, event.config);
 
-  try {
-    await assertDiscoveredGranules(t, await discoverGranules(event));
-  } catch (e) {
-    if (e.code === 'ECONNREFUSED') {
-      t.pass('Ignoring this test. Remote host seems to be down.');
-    } else throw e;
-  }
+  await assertDiscoveredGranules(t, await discoverGranules(event));
 });
 
 test('discover granules using HTTP', async (t) => {
@@ -135,13 +163,7 @@ test('discover granules using HTTP', async (t) => {
 
   await validateConfig(t, event.config);
 
-  try {
-    await assertDiscoveredGranules(t, await discoverGranules(event));
-  } catch (e) {
-    if (e.message === 'Connection Refused') {
-      t.pass('Ignoring this test. Remote host seems to be down.');
-    } else throw e;
-  }
+  await assertDiscoveredGranules(t, await discoverGranules(event));
 });
 
 const discoverGranulesUsingS3 = (configure, assert = assertDiscoveredGranules) =>
@@ -281,192 +303,101 @@ test('discover granules using S3 throws error when discovery fails',
         host: randomString()
       };
     });
-    await t.throwsAsync(() => assert(t), { code: 'NoSuchBucket' });
+    await t.throwsAsync(assert(t), { code: 'NoSuchBucket' });
   });
 
-test.serial('handleDuplicates filters on duplicateHandling set to "skip"',
-  async (t) => {
-    let checkGranuleHasNoDuplicateRevert;
-    try {
-      const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
-      checkGranuleHasNoDuplicateRevert = discoverGranulesRewire.__set__('checkGranuleHasNoDuplicate', checkGranuleHasNoDuplicateRewire);
-      const actual = await handleDuplicates(t.context.filesByGranuleId, 'skip');
-      delete t.context.filesByGranuleId.duplicate;
-      t.deepEqual(actual, t.context.filesByGranuleId);
-    } finally {
-      checkGranuleHasNoDuplicateRevert();
-    }
-  });
+test('handleDuplicates filters on duplicateHandling set to "skip"', async (t) => {
+  const result = await handleDuplicates(t.context.filesByGranuleId, 'skip');
 
-test.serial('handleDuplicates throws Error on duplicateHandling set to "error"',
-  async (t) => {
-    let checkGranuleHasNoDuplicateRevert;
-    try {
-      const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
-      checkGranuleHasNoDuplicateRevert = discoverGranulesRewire.__set__('checkGranuleHasNoDuplicate', checkGranuleHasNoDuplicateRewire);
-      await t.throwsAsync(
-        () => handleDuplicates(t.context.filesByGranuleId, 'error')
-      );
-    } finally {
-      checkGranuleHasNoDuplicateRevert();
-    }
-  });
+  t.is(Object.keys(result).length, 2);
+  t.is(result.duplicate, undefined);
+});
 
-test('handleDuplicates throws Error on an invalid duplicateHandling configuration',
-  async (t) => {
-    const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
-    await t.throwsAsync(
-      () => handleDuplicates(t.context.filesByGranuleId, 'foobar')
-    );
-  });
+test(
+  'handleDuplicates throws Error on duplicateHandling set to "error"',
+  (t) => t.throwsAsync(handleDuplicates(t.context.filesByGranuleId, 'error'))
+);
 
-test.serial('handleDuplicates does not filter when duplicateHandling is set to "replace" or "version"',
-  async (t) => {
-    let checkGranuleHasNoDuplicateRevert;
-    try {
-      const handleDuplicates = discoverGranulesRewire.__get__('handleDuplicates');
-      checkGranuleHasNoDuplicateRevert = discoverGranulesRewire.__set__('checkGranuleHasNoDuplicate', checkGranuleHasNoDuplicateRewire);
-      const replaceActual = await handleDuplicates(t.context.filesByGranuleId, 'replace');
-      const versionActual = await handleDuplicates(t.context.filesByGranuleId, 'version');
-      t.deepEqual(replaceActual, t.context.filesByGranuleId);
-      t.deepEqual(versionActual, t.context.filesByGranuleId);
-    } finally {
-      checkGranuleHasNoDuplicateRevert();
-    }
-  });
+test(
+  'handleDuplicates throws Error on an invalid duplicateHandling configuration',
+  (t) => t.throwsAsync(handleDuplicates(t.context.filesByGranuleId, 'foobar'))
+);
 
+test('handleDuplicates does not filter when duplicateHandling is set to "replace"', async (t) => {
+  t.deepEqual(
+    await handleDuplicates(t.context.filesByGranuleId, 'replace'),
+    t.context.filesByGranuleId
+  );
+});
 
-test.serial('filterDuplicates returns a set of filtered keys',
-  async (t) => {
-    let checkGranuleHasNoDuplicateRevert;
-    try {
-      const filterDuplicates = discoverGranulesRewire.__get__('filterDuplicates');
-      checkGranuleHasNoDuplicateRevert = discoverGranulesRewire.__set__('checkGranuleHasNoDuplicate', async (key) => {
-        if (key === 'duplicate') {
-          return false;
-        }
-        return key;
-      });
+test('handleDuplicates does not filter when duplicateHandling is set to "version"', async (t) => {
+  t.deepEqual(
+    await handleDuplicates(t.context.filesByGranuleId, 'version'),
+    t.context.filesByGranuleId
+  );
+});
 
-      const actual = await filterDuplicates(['duplicate', 'key1', 'key2'], 'bogusHandlingValue');
-      t.deepEqual(actual, ['key1', 'key2']);
-    } finally {
-      checkGranuleHasNoDuplicateRevert();
-    }
-  });
+test('filterDuplicates returns a set of filtered keys', async (t) => {
+  t.deepEqual(
+    await filterDuplicates(['duplicate', 'key1', 'key2'], 'skip'),
+    ['key1', 'key2']
+  );
+});
 
-test.serial('checkGranuleHasNoDuplicate returns false when API lambda returns a granule',
-  async (t) => {
-    let granulesRevert;
-    try {
-      const checkGranuleHasNoDuplicate = discoverGranulesRewire.__get__('checkGranuleHasNoDuplicate');
-      granulesRevert = discoverGranulesRewire.__set__('granules', {
-        getGranule: async () => ({ statusCode: 200, body: '{}' })
-      });
-      const actual = await checkGranuleHasNoDuplicate('granuleId', '');
-      t.false(actual);
-    } finally {
-      granulesRevert();
-    }
-  });
+test('checkGranuleHasNoDuplicate returns false when API lambda returns a granule', async (t) => {
+  t.false(await checkGranuleHasNoDuplicate('duplicate', 'replace'));
+});
 
-test.serial('checkGranuleHasNoDuplicate throws an error when API lambda returns a granule and duplicateHandling is set to "error"',
-  async (t) => {
-    let granulesRevert;
-    try {
-      const checkGranuleHasNoDuplicate = discoverGranulesRewire.__get__('checkGranuleHasNoDuplicate');
-      granulesRevert = discoverGranulesRewire.__set__('granules', {
-        getGranule: async () => ({ statusCode: 200, body: '{}' })
-      });
-      await t.throwsAsync(checkGranuleHasNoDuplicate('granuleId', 'error'));
-    } finally {
-      granulesRevert();
-    }
-  });
+test(
+  'checkGranuleHasNoDuplicate throws an error when API lambda returns a granule and duplicateHandling is set to "error"',
+  (t) => t.throwsAsync(checkGranuleHasNoDuplicate('duplicate', 'error'))
+);
 
-test.serial('checkGranuleHasNoDuplicate returns a granuleId string when the API lambda returns a 404/Not Found error',
-  async (t) => {
-    let granulesRevert;
-    try {
-      const checkGranuleHasNoDuplicate = discoverGranulesRewire.__get__('checkGranuleHasNoDuplicate');
-      granulesRevert = discoverGranulesRewire.__set__('granules', {
-        getGranule: async () => ({ statusCode: 404, body: '{"error": "Not Found"}' })
-      });
-      const actual = await checkGranuleHasNoDuplicate('granuleId', '');
-      t.is(actual, 'granuleId');
-    } finally {
-      granulesRevert();
-    }
-  });
+test('checkGranuleHasNoDuplicate returns a granuleId string when the API lambda returns a 404/Not Found error', async (t) => {
+  t.is(
+    await checkGranuleHasNoDuplicate('granuleId', 'skip'),
+    'granuleId'
+  );
+});
 
-test.serial('checkGranuleHasNoDuplicate throws an error if the API lambda throws an error other than 404/Not Found',
-  async (t) => {
-    let granulesRevert;
-    try {
-      const checkGranuleHasNoDuplicate = discoverGranulesRewire.__get__('checkGranuleHasNoDuplicate');
-      granulesRevert = discoverGranulesRewire.__set__('granules', {
-        getGranule: async () => {
-          throw new Error('Test Error');
-        }
-      });
-      await t.throwsAsync(() => checkGranuleHasNoDuplicate('granuleId', ''));
-    } finally {
-      granulesRevert();
-    }
-  });
+test(
+  'checkGranuleHasNoDuplicate throws an error if the API lambda throws an error other than 404/Not Found',
+  (t) => t.throwsAsync(
+    checkGranuleHasNoDuplicate('throw-error', 'skip'),
+    'Test Error'
+  )
+);
 
-test.serial('checkGranuleHasNoDuplicate throws an error on an unexpected API lambda return',
-  async (t) => {
-    let granulesRevert;
-    try {
-      const checkGranuleHasNoDuplicate = discoverGranulesRewire.__get__('checkGranuleHasNoDuplicate');
-      granulesRevert = discoverGranulesRewire.__set__('granules', {
-        getGranule: async () => ({ body: '{"statusCode": 500}' })
-      });
-      await t.throwsAsync(() => checkGranuleHasNoDuplicate('granuleId', ''));
-    } finally {
-      granulesRevert();
-    }
-  });
+test('checkGranuleHasNoDuplicate throws an error on an unexpected API lambda return', async (t) => {
+  const error = await t.throwsAsync(checkGranuleHasNoDuplicate('crash-the-api', 'skip'));
+  t.true(error.message.startsWith('Unexpected return from Private API lambda'));
+});
 
-test('discover granules sets the GRANULES environment variable and logs the granules', async (t) => {
-    const { event } = t.context;
+test.serial('discover granules sets the GRANULES environment variable and logs the granules', async (t) => {
+  const { event } = t.context;
 
-    event.config.collection.provider_path = '/granules/fake_granules';
-    event.config.provider = {
-      id: 'MODAPS',
-      protocol: 'http',
-      host: '127.0.0.1',
-      port: 3030
-    };
+  event.config.collection.provider_path = '/granules/fake_granules';
+  event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: '127.0.0.1',
+    port: 3030
+  };
 
-    t.falsy(process.env.GRANULES);
+  // Empty out the list of log events
+  logEvents = [];
 
-    const loggerInfoSpy = sinon.spy(Logger.prototype, 'info');
+  try {
+    await discoverGranules(event);
+  } finally {
+    delete process.env.GRANULES;
+  }
 
-    try {
-      await validateConfig(t, event.config);
+  const logEventWithGranules = logEvents
+    .find(({ message }) => message === 'Discovered 3 granules.');
 
-      await discoverGranules(event);
-
-      t.truthy(process.env.GRANULES);
-
-      const granules = JSON.parse(process.env.GRANULES);
-      t.deepEqual(granules, [
-        'granule-1',
-        'granule-2',
-        'granule-3'
-      ]);
-
-      // Check that the second log.info() call had the granules set
-      const loggerCall = loggerInfoSpy.getCall(1);
-      t.deepEqual(loggerCall.thisValue.granules[
-        'granule-1',
-        'granule-2',
-        'granule-3'
-      ]);
-    }
-    finally {
-      loggerInfoSpy.restore();
-    }
-  });
+  t.deepEqual(
+    logEventWithGranules.granules,
+    ['granule-1', 'granule-2', 'granule-3']
+  );
+});
