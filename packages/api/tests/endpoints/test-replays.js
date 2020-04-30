@@ -7,6 +7,7 @@ const request = require('supertest');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const { EcsStartTaskError } = require('@cumulus/errors');
 
 const { app } = require('../../app');
 const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../lib/testUtils');
@@ -125,4 +126,52 @@ test.serial('request to replays endpoint with valid kinesis parameters starts an
   });
 
   asyncOperationStartStub.restore();
+});
+
+test.serial('request to /replays endpoint returns 500 if starting ECS task throws unexpected error', async (t) => {
+  const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').throws(
+    new Error('failed to start')
+  );
+
+  const body = {
+    type: 'kinesis',
+    kinesisStream: 'fakestream',
+    endTimestamp: 12345678,
+    startTimestamp: 12356789
+  };
+
+  try {
+    const response = await request(app)
+      .post('/replays')
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send(body);
+    t.is(response.status, 500);
+  } finally {
+    asyncOperationStartStub.restore();
+  }
+});
+
+test.serial('request to /replays endpoint returns 503 if starting ECS task throws unexpected error', async (t) => {
+  const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').throws(
+    new EcsStartTaskError('failed to start')
+  );
+
+  const body = {
+    type: 'kinesis',
+    kinesisStream: 'fakestream',
+    endTimestamp: 12345678,
+    startTimestamp: 12356789
+  };
+
+  try {
+    const response = await request(app)
+      .post('/replays')
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send(body);
+    t.is(response.status, 503);
+  } finally {
+    asyncOperationStartStub.restore();
+  }
 });
