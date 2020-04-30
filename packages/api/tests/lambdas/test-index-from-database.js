@@ -254,3 +254,53 @@ test.serial('failure in indexing record of specific type should not prevent inde
     ));
   }
 });
+
+test.serial('failure in indexing record of one type should not prevent indexing of other records with different type', async (t) => {
+  const { esAlias, esClient } = t.context;
+
+  const numItems = 2;
+  const [fakeProviderData, fakeGranuleData] = await Promise.all([
+    addFakeData(numItems, fakeProviderFactory, providersModel),
+    addFakeData(numItems, fakeGranuleFactoryV2, granuleModel)
+  ]);
+
+  const indexGranuleStub = sinon.stub(indexer, 'indexGranule')
+    .throws(new Error('error'));
+
+  let searchResults;
+  try {
+    await indexFromDatabase.handler({
+      index: esAlias,
+      tables
+    });
+
+    searchResults = await searchEs('provider', esAlias);
+
+    t.is(searchResults.meta.count, numItems);
+
+    searchResults.results.forEach((result) => {
+      const sourceData = fakeProviderData.find((data) => data.id === result.id);
+      t.deepEqual(
+        omit(sourceData, ['createdAt', 'timestamp', 'updatedAt']),
+        omit(result, ['createdAt', 'timestamp', 'updatedAt'])
+      );
+    });
+  } finally {
+    indexGranuleStub.restore();
+    await Promise.all(fakeProviderData.map(
+      ({ id }) => providersModel.delete({ id })
+    ));
+    await Promise.all(fakeGranuleData.map(
+      ({ granuleId }) => granuleModel.delete({ granuleId })
+    ));
+    await Promise.all(searchResults.results.map(
+      (result) =>
+        esClient.delete({
+          index: esAlias,
+          type: 'provider',
+          id: result.id,
+          refresh: true
+        })
+    ));
+  }
+});
