@@ -133,12 +133,10 @@
         "@typescript-eslint/no-implied-eval": "off",
         "@typescript-eslint/no-throw-literal": "off",
         "comma-dangle": ["warn", "never"],
-        "import/first": "off",
         "import/prefer-default-export": "off",
         "lines-between-class-members": "off",
         "lodash/prefer-lodash-typecheck": "off",
-        "node/no-unsupported-features/es-syntax": "off",
-        "unicorn/no-abusive-eslint-disable": "off"
+        "node/no-unsupported-features/es-syntax": "off"
       }
     },
     {
