@@ -43,6 +43,7 @@ module.exports = {
     alias: {
       'saml2-js': 'saml2-js/lib-js/saml2.js',
       ejs: 'ejs/ejs.min.js',
+      underscore: 'underscore/underscore.js',
       handlebars: 'handlebars/dist/handlebars.js'
     }
   },
