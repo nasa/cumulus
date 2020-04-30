@@ -56,6 +56,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1854**
   - Rule schema is validated before starting workflows or creating event source mappings
 
+- **CUMULUS-1974**
+  - Fixed @cumulus/api webpack config for missing underscore object due to underscore update
+
 ### Deprecated
 
 - **CUMULUS-1799** - Deprecated the following code. For cases where the code was moved into another package, the new code location is noted:
