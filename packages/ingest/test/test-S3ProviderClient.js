@@ -16,7 +16,7 @@ test.before(async (t) => {
   t.context.sourceKey = `${t.context.sourcePrefix}/${randomString()}`;
   t.context.targetBucket = randomString();
   t.context.fileContent = JSON.stringify({ type: 'fake-test-object' });
-  t.context.tagging = "key1=value1&key2=another%20value";
+  t.context.tagging = 'key1=value1&key2=another%20value';
 
   await Promise.all([
     S3.createBucket(t.context.sourceBucket),
@@ -76,7 +76,7 @@ test.serial('S3ProviderClient.download downloads a file to local disk', async (t
 });
 
 test.serial(
-  "S3ProviderClient.sync syncs a file to a target S3 location",
+  'S3ProviderClient.sync syncs a file to a target S3 location',
   async (t) => {
     const {
       fileContent,
@@ -86,7 +86,7 @@ test.serial(
       targetBucket,
     } = t.context;
     const s3ProviderClient = new S3ProviderClient({ bucket: sourceBucket });
-    const targetKey = "target.json";
+    const targetKey = 'target.json';
 
     // Should copy object
     await s3ProviderClient.sync(sourceKey, targetBucket, targetKey);
@@ -96,7 +96,7 @@ test.serial(
     t.is(S3.encodeTags(TagSet), tagging);
     // Should have Canned ACL of 'private'
     // See https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
-    const acl = await S3.getObjectAcl({ Bucket: targetBucket, Key: targetKey});
+    const acl = await S3.getObjectAcl({ Bucket: targetBucket, Key: targetKey });
     t.is(acl.Grants.length, 1);
     t.is(acl.Grants[0].Permission, 'FULL_CONTROL');
     t.is(acl.Grants[0].Grantee.Type, 'CanonicalUser');

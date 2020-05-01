@@ -181,6 +181,18 @@ exports.s3CopyUpload = improveStackTrace(async (params) => {
 });
 
 /**
+ * Returns a encoded URL Query parameter string of the form `Key=Value`, where
+ * `Key` and `Value` are the values of those properties of the specified tag.
+ *
+ * @param {Object} tag - the tag to be encoded
+ * @param {string} tag.Key - the tag's key
+ * @param {string} tag.Value - the tag's value
+ * @returns {string} encoded URL Query parameter string of the form `Key=Value`
+ */
+const encodeTag = ({ Key, Value }) =>
+  [encodeURIComponent(Key), encodeURIComponent(Value)].join('=');
+
+/**
  * Returns a string encoded as URL Query parameters constructed from the
  * specified tags, appropriate for the value of a `Tagging` parameter for
  * various S3 methods.
@@ -192,19 +204,7 @@ exports.s3CopyUpload = improveStackTrace(async (params) => {
  *    key and value is obtained from the `Key` and `Value` properties of each
  *    tag
  */
-exports.encodeTags = (tags) => tags.map(encodeTag).join("&");
-
-/**
- * Returns a encoded URL Query parameter string of the form `Key=Value`, where
- * `Key` and `Value` are the values of those properties of the specified tag.
- *
- * @param {Object} tag - the tag to be encoded
- * @param {string} tag.Key - the tag's key
- * @param {string} tag.Value - the tag's value
- * @return {string} encoded URL Query parameter string of the form `Key=Value`
- */
-const encodeTag = ({ Key, Value }) =>
-  [encodeURIComponent(Key), encodeURIComponent(Value)].join("=");
+exports.encodeTags = (tags) => tags.map(encodeTag).join('&');
 
 /**
  * Returns a promise of the access control list (ACL) of an object. To use this
@@ -216,8 +216,8 @@ const encodeTag = ({ Key, Value }) =>
  *    specified object
  * @see {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#getObjectAcl-property|AWS.S3.getObjectAcl}
  */
-exports.getObjectAcl = improveStackTrace((params) =>
-  awsServices.s3().getObjectAcl(params).promise()
+exports.getObjectAcl = improveStackTrace(
+  (params) => awsServices.s3().getObjectAcl(params).promise()
 );
 
 /**
@@ -667,13 +667,13 @@ exports.getFileBucketAndKey = (pathParams) => {
   const fields = (pathParams.startsWith('/')
     ? pathParams.slice(1) // Remove leading slash
     : pathParams
-  ).split("/");
+  ).split('/');
   const Bucket = fields.shift();
   const Key = fields.join('/');
 
   if (Bucket.length === 0 || Key.length === 0) {
     throw new UnparsableFileLocationError(
-      `File location "${pathParams}" could not be parsed`
+      `File location '${pathParams}' could not be parsed`
     );
   }
 

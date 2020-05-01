@@ -19,12 +19,10 @@ const {
   getFileBucketAndKey,
   getJsonS3Object,
   getObjectAcl,
-  getObjectSize,
   getS3Object,
   getTextObject,
   headObject,
   listS3ObjectsV2,
-  promiseS3Upload,
   putFile,
   recursivelyDeleteS3Bucket,
   s3CopyUpload,
@@ -338,36 +336,41 @@ const testEncodeTags = (t, input, expected) =>
 
 testEncodeTags.title = (_title, input, expected) => {
   const inputJSON = JSON.stringify(input);
-  return `encodeTags(${inputJSON}) returns "${expected}"`;
+  return `encodeTags(${inputJSON}) returns '${expected}'`;
 };
 
-test(testEncodeTags, [], "");
-test(testEncodeTags, [{ Key: "key", Value: "value" }], "key=value");
-test(testEncodeTags, [{ Key: "key", Value: "some value" }], "key=some%20value");
+test(testEncodeTags, [], '');
+test(testEncodeTags, [{ Key: 'key', Value: 'value' }], 'key=value');
+test(testEncodeTags, [{ Key: 'key', Value: 'some value' }], 'key=some%20value');
 test(
   testEncodeTags,
   [
-    { Key: "k1", Value: "v1" },
-    { Key: "k2", Value: "v2" },
+    { Key: 'k1', Value: 'v1' },
+    { Key: 'k2', Value: 'v2' },
   ],
-  "k1=v1&k2=v2"
+  'k1=v1&k2=v2'
 );
 
-test("getObjectAcl should return FULL_CONTROL for object saved with 'private' Canned ACL", async (t) => {
+test('getObjectAcl should return FULL_CONTROL for object saved with "private" Canned ACL', async (t) => {
   const { Bucket } = t.context;
   const Key = randomString();
   const acl = await awsServices
     .s3()
-    .putObject({ Bucket, Key, Body: "asdf", ACL: "private" })
+    .putObject({
+      Bucket,
+      Key,
+      Body: 'asdf',
+      ACL: 'private',
+    })
     .promise()
     .then(() => getObjectAcl({ Bucket, Key }));
 
   t.is(acl.Grants.length, 1);
-  t.is(acl.Grants[0].Permission, "FULL_CONTROL");
-  t.is(acl.Grants[0].Grantee.Type, "CanonicalUser");
+  t.is(acl.Grants[0].Permission, 'FULL_CONTROL');
+  t.is(acl.Grants[0].Grantee.Type, 'CanonicalUser');
 });
 
-test("s3CopyUpload should copy a small S3 object", async (t) => {
+test('s3CopyUpload should copy a small S3 object', async (t) => {
   const { Bucket } = t.context;
   const srcKey = randomString();
   const dstKey = randomString();
