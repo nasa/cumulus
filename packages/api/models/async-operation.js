@@ -1,6 +1,8 @@
 'use strict';
 
 const { ecs, s3 } = require('@cumulus/aws-client/services');
+const { EcsStartTaskError } = require('@cumulus/errors');
+
 const uuidv4 = require('uuid/v4');
 const Manager = require('./base');
 const { asyncOperation: asyncOperationSchema } = require('./schemas');
@@ -28,13 +30,57 @@ class AsyncOperation extends Manager {
     if (!params.systemBucket) throw new TypeError('systemBucket is required');
 
     super({
-      tableName: params.tableName,
+      tableName: params.tableName || process.env.AsyncOperationsTable,
       tableHash: { name: 'id', type: 'S' },
       schema: asyncOperationSchema
     });
 
     this.systemBucket = params.systemBucket;
     this.stackName = params.stackName;
+  }
+
+  /**
+   * Start an ECS task for the async operation.
+   *
+   * @param {Object} params
+   * @param {string} params.asyncOperationTaskDefinition - ARN for the task definition
+   * @param {string} params.cluster - ARN for the ECS cluster to use for the task
+   * @param {string} params.lambdaName
+   *   Environment variable for Lambda name that will be run by the ECS task
+   * @param {string} params.id - the Async operation ID
+   * @param {string} params.payloadBucket
+   *   S3 bucket name where async operation payload is stored
+   * @param {string} params.payloadKey
+   *   S3 key name where async operation payload is stored
+   * @returns {Promise<Object>}
+   * @see https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/ECS.html#runTask-property
+   */
+  startECSTask({
+    asyncOperationTaskDefinition,
+    cluster,
+    lambdaName,
+    id,
+    payloadBucket,
+    payloadKey
+  }) {
+    return ecs().runTask({
+      cluster,
+      taskDefinition: asyncOperationTaskDefinition,
+      launchType: 'EC2',
+      overrides: {
+        containerOverrides: [
+          {
+            name: 'AsyncOperation',
+            environment: [
+              { name: 'asyncOperationId', value: id },
+              { name: 'asyncOperationsTable', value: this.tableName },
+              { name: 'lambdaName', value: lambdaName },
+              { name: 'payloadUrl', value: `s3://${payloadBucket}/${payloadKey}` }
+            ]
+          }
+        ]
+      }
+    }).promise();
   }
 
   /**
@@ -53,9 +99,6 @@ class AsyncOperation extends Manager {
    */
   async start(params) {
     const {
-      asyncOperationTaskDefinition,
-      cluster,
-      lambdaName,
       description,
       operationType,
       payload
@@ -63,12 +106,6 @@ class AsyncOperation extends Manager {
 
     // Create the record in the database
     const id = uuidv4();
-    await this.create({
-      id,
-      status: 'RUNNING',
-      description,
-      operationType
-    });
 
     // Store the payload to S3
     const payloadBucket = this.systemBucket;
@@ -81,52 +118,27 @@ class AsyncOperation extends Manager {
     }).promise();
 
     // Start the task in ECS
-    const runTaskResponse = await ecs().runTask({
-      cluster,
-      taskDefinition: asyncOperationTaskDefinition,
-      launchType: 'EC2',
-      overrides: {
-        containerOverrides: [
-          {
-            name: 'AsyncOperation',
-            environment: [
-              { name: 'asyncOperationId', value: id },
-              { name: 'asyncOperationsTable', value: this.tableName },
-              { name: 'lambdaName', value: lambdaName },
-              { name: 'payloadUrl', value: `s3://${payloadBucket}/${payloadKey}` }
-            ]
-          }
-        ]
-      }
-    }).promise();
+    const runTaskResponse = await this.startECSTask({
+      ...params,
+      id,
+      payloadBucket,
+      payloadKey
+    });
 
-    // If creating the stack failed, update the database
     if (runTaskResponse.failures.length > 0) {
-      return this.update(
-        { id },
-        {
-          status: 'RUNNER_FAILED',
-          description,
-          operationType,
-          output: JSON.stringify({
-            name: 'EcsStartTaskError',
-            message: `Failed to start AsyncOperation: ${runTaskResponse.failures[0].reason}`,
-            stack: (new Error()).stack
-          })
-        }
+      throw new EcsStartTaskError(
+        `Failed to start AsyncOperation: ${runTaskResponse.failures[0].reason}`
       );
     }
 
-    // Update the database with the taskArn
-    return this.update(
-      { id },
-      {
-        status: 'RUNNING',
-        taskArn: runTaskResponse.tasks[0].taskArn,
-        description,
-        operationType
-      }
-    );
+    // Create the database record with the taskArn
+    return this.create({
+      id,
+      status: 'RUNNING',
+      taskArn: runTaskResponse.tasks[0].taskArn,
+      description,
+      operationType
+    });
   }
 }
 module.exports = AsyncOperation;

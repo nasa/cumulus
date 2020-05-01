@@ -2,7 +2,7 @@
 
 const router = require('express-promise-router')();
 
-const log = require('@cumulus/common/log');
+const { defaultErrorHandler } = require('./middleware');
 
 const collections = require('../endpoints/collections');
 const granules = require('../endpoints/granules');
@@ -110,11 +110,6 @@ router.use('/elasticsearch', ensureAuthorized, elasticsearch);
 router.use('/ems', ensureAuthorized, ems);
 
 // Catch and send the error message down (instead of just 500: internal server error)
-// Need all 4 params, because that's how express knows this is the error handler
-// eslint-disable-next-line no-unused-vars
-router.use((error, req, res, next) => {
-  log.error(error);
-  return res.boom.badRequest(error.message, error);
-});
+router.use(defaultErrorHandler);
 
 module.exports = router;

@@ -4,6 +4,7 @@ const router = require('express-promise-router')();
 
 const log = require('@cumulus/common/log');
 
+const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const { AsyncOperation } = require('../models');
 const { IndexExistsError } = require('../lib/errors');
 const { defaultIndexAlias, Search } = require('../es/search');
@@ -207,33 +208,26 @@ async function indexFromDatabase(req, res) {
     tableName: process.env.AsyncOperationsTable
   });
 
-  let asyncOperation;
-  try {
-    asyncOperation = await asyncOperationModel.start({
-      asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
-      cluster: process.env.EcsCluster,
-      lambdaName: process.env.IndexFromDatabaseLambda,
-      description: 'Elasticsearch index from database',
-      operationType: 'ES Index',
-      payload: {
-        indexName,
-        tables: {
-          collectionsTable: process.env.CollectionsTable,
-          executionsTable: process.env.ExecutionsTable,
-          granulesTable: process.env.GranulesTable,
-          pdrsTable: process.env.PdrsTable,
-          providersTable: process.env.ProvidersTable,
-          rulesTable: process.env.RulesTable,
-          asyncOperationsTable: process.env.AsyncOperationsTable
-        },
-        esHost: process.env.ES_HOST
-      }
-    });
-  } catch (err) {
-    if (err.name !== 'EcsStartTaskError') throw err;
-
-    return res.boom.serverUnavailable(`Failed to run ECS task: ${err.message}`);
-  }
+  const asyncOperation = await asyncOperationModel.start({
+    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+    cluster: process.env.EcsCluster,
+    lambdaName: process.env.IndexFromDatabaseLambda,
+    description: 'Elasticsearch index from database',
+    operationType: 'ES Index',
+    payload: {
+      indexName,
+      tables: {
+        collectionsTable: process.env.CollectionsTable,
+        executionsTable: process.env.ExecutionsTable,
+        granulesTable: process.env.GranulesTable,
+        pdrsTable: process.env.PdrsTable,
+        providersTable: process.env.ProvidersTable,
+        rulesTable: process.env.RulesTable,
+        asyncOperationsTable: process.env.AsyncOperationsTable
+      },
+      esHost: process.env.ES_HOST
+    }
+  });
 
   return res.send({ message: `Indexing database to ${indexName}. Operation id: ${asyncOperation.id}` });
 }
@@ -253,7 +247,7 @@ router.put('/create-snapshot', createEsSnapshot);
 router.post('/reindex', reindex);
 router.get('/reindex-status', reindexStatus);
 router.post('/change-index', changeIndex);
-router.post('/index-from-database', indexFromDatabase);
+router.post('/index-from-database', indexFromDatabase, asyncOperationEndpointErrorHandler);
 router.get('/indices-status', indicesStatus);
 router.get('/current-index/:alias', getCurrentIndex);
 router.get('/current-index', getCurrentIndex);
