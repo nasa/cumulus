@@ -1,6 +1,8 @@
 'use strict';
 
 const router = require('express-promise-router')();
+
+const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const { AsyncOperation } = require('../models');
 
 /**
@@ -17,25 +19,18 @@ async function startBulkDeleteAsyncOperation(req, res) {
     tableName: process.env.AsyncOperationsTable
   });
 
-  let asyncOperation;
-  try {
-    asyncOperation = await asyncOperationModel.start({
-      asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
-      cluster: process.env.EcsCluster,
-      lambdaName: process.env.BulkDeleteLambda,
-      description: 'Bulk Delete',
-      operationType: 'Bulk Delete',
-      payload: { granuleIds: req.body.granuleIds }
-    });
-  } catch (err) {
-    if (err.name !== 'EcsStartTaskError') throw err;
-
-    return res.boom.serverUnavailable(`Failed to run ECS task: ${err.message}`);
-  }
+  const asyncOperation = await asyncOperationModel.start({
+    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+    cluster: process.env.EcsCluster,
+    lambdaName: process.env.BulkDeleteLambda,
+    description: 'Bulk Delete',
+    operationType: 'Bulk Delete',
+    payload: { granuleIds: req.body.granuleIds }
+  });
 
   return res.status(202).send({ asyncOperationId: asyncOperation.id });
 }
 
-router.post('/', startBulkDeleteAsyncOperation);
+router.post('/', startBulkDeleteAsyncOperation, asyncOperationEndpointErrorHandler);
 
 module.exports = router;
