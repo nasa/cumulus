@@ -146,8 +146,8 @@ test.serial('getEsRequestConcurrency respects ES_CONCURRENCY', (t) => {
   delete process.env.ES_CONCURRENCY;
 });
 
-test('getEsRequestConcurrency correctly returns undefined when nothing is specified', (t) => {
-  t.is(indexFromDatabase.getEsRequestConcurrency({}), undefined);
+test('getEsRequestConcurrency correctly returns 10 when nothing is specified', (t) => {
+  t.is(indexFromDatabase.getEsRequestConcurrency({}), 10);
 });
 
 test('No error is thrown if nothing is in the database', async (t) => {

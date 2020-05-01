@@ -9,10 +9,9 @@ const { Search } = require('../es/search');
 const indexer = require('../es/indexer');
 
 const getEsRequestConcurrency = (event) => {
-  if (process.env.ES_CONCURRENCY) {
-    return parseInt(process.env.ES_CONCURRENCY, 10);
-  }
-  return event.esRequestConcurrency;
+  const concurrency = event.esRequestConcurrency
+    || process.env.ES_CONCURRENCY;
+  return concurrency ? parseInt(concurrency, 10) : 10;
 };
 
 async function indexModel({
@@ -70,13 +69,15 @@ async function indexModel({
   return totalItemsIndexed;
 }
 
-async function indexFromDatabase({
-  esIndex,
-  tables,
-  esHost,
-  esRequestConcurrency = 10
-}) {
+async function indexFromDatabase(event) {
+  const {
+    index: esIndex,
+    tables,
+    esHost = process.env.ES_HOST
+  } = event;
   const esClient = await Search.es(esHost);
+
+  const esRequestConcurrency = getEsRequestConcurrency(event);
   const limitEsRequests = pLimit(esRequestConcurrency);
 
   await Promise.all([
@@ -135,18 +136,7 @@ async function indexFromDatabase({
 async function handler(event) {
   log.info(`Starting index from database for index ${event.indexName}`);
 
-  const {
-    index: esIndex,
-    tables,
-    esHost = process.env.ES_HOST
-  } = event;
-
-  await indexFromDatabase({
-    esIndex,
-    tables,
-    esHost,
-    esRequestConcurrency: getEsRequestConcurrency(event)
-  });
+  await indexFromDatabase(event);
 
   log.info('Index from database complete');
 
