@@ -48,8 +48,8 @@ exports.reportSQSMessage = reportSQSMessage;
  * @param {Function} callback - an AWS Lambda callback
  * @returns {undefined} - does not return a value
  */
-function handler(event, context, callback) {
-  cumulusMessageAdapter.runCumulusTask(reportSQSMessage, event, context, callback);
+async function handler(event, context) {
+  return cumulusMessageAdapter.runCumulusTask(reportSQSMessage, event, context);
 }
 
 exports.handler = handler;

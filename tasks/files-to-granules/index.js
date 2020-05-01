@@ -86,8 +86,8 @@ function filesToGranules(event) {
 }
 exports.filesToGranules = filesToGranules;
 
-function handler(event, context, callback) {
-  cumulusMessageAdapter.runCumulusTask(
+async function handler(event, context, callback) {
+  return cumulusMessageAdapter.runCumulusTask(
     filesToGranules, event, context, callback
   );
 }

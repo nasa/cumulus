@@ -56,7 +56,7 @@ exports.queueGranules = queueGranules;
  * @param {Function} callback - an AWS Lambda handler
  * @returns {undefined} - does not return a value
  */
-function handler(event, context, callback) {
-  cumulusMessageAdapter.runCumulusTask(queueGranules, event, context, callback);
+async function handler(event, context) {
+  return cumulusMessageAdapter.runCumulusTask(queueGranules, event, context);
 }
 exports.handler = handler;

@@ -283,8 +283,8 @@ const discoverGranules = async ({ config }) => {
  * @param {Function} callback - an AWS Lambda handler
  * @returns {undefined} - does not return a value
  */
-const handler = (event, context, callback) => {
-  runCumulusTask(discoverGranules, event, context, callback);
+const handler = async (event, context) => {
+  return runCumulusTask(discoverGranules, event, context);
 };
 
 module.exports = {

@@ -180,7 +180,7 @@ exports.checkPdrStatuses = checkPdrStatuses;
  * @param {Function} callback - an AWS Lambda handler
  * @returns {undefined} - does not return a value
  */
-function handler(event, context, callback) {
-  cumulusMessageAdapter.runCumulusTask(checkPdrStatuses, event, context, callback);
+function handler(event, context) {
+  return cumulusMessageAdapter.runCumulusTask(checkPdrStatuses, event, context);
 }
 exports.handler = handler;

@@ -236,8 +236,8 @@ const parsePdr = async ({ config, input }) => {
  * @param {Function} callback - an AWS Lambda handler
  * @returns {undefined} - does not return a value
  */
-function handler(event, context, callback) {
-  cumulusMessageAdapter.runCumulusTask(parsePdr, event, context, callback);
+async function handler(event, context) {
+  return cumulusMessageAdapter.runCumulusTask(parsePdr, event, context);
 }
 
 module.exports = { handler, parsePdr };

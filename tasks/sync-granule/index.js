@@ -119,11 +119,10 @@ exports.syncGranule = function syncGranule(event) {
  * @param {Function} callback - an AWS Lambda handler
  * @returns {undefined} - does not return a value
  */
-exports.handler = function handler(event, context, callback) {
-  cumulusMessageAdapter.runCumulusTask(
+exports.handler = async function handler(event, context) {
+  return cumulusMessageAdapter.runCumulusTask(
     exports.syncGranule,
     event,
-    context,
-    callback
+    context
   );
 };
