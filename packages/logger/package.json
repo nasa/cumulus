@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/logger",
-  "version": "1.21.0",
+  "version": "1.22.0",
   "description": "A log library for use on Cumulus",
   "keywords": [
     "GIBS",
@@ -42,7 +42,7 @@
   "devDependencies": {
     "@types/lodash.iserror": "^3.1.6",
     "ava": "^2.1.0",
-    "moment": "^2.22.2",
+    "moment": "2.24.0",
     "typescript": "^3.8.3"
   }
 }
