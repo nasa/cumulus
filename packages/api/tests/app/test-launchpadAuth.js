@@ -202,7 +202,7 @@ test.serial('Non-Launchpad protected API explicitly disallows valid Launchpad to
   }
 });
 
-test.serial('API request authorized with valid JWT returns 200 response', async (t) => {
+test.serial('API request with valid JWT returns 200 response', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory({
     username: validUsername
   });
@@ -218,7 +218,7 @@ test.serial('API request authorized with valid JWT returns 200 response', async 
   t.is(response.status, 200);
 });
 
-test.serial.only('API request authorized with expired JWT returns 401 response', async (t) => {
+test.serial('API request with expired JWT returns 401 response', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory({
     expirationTime: moment().unix()
   });
@@ -232,4 +232,36 @@ test.serial.only('API request authorized with expired JWT returns 401 response',
     .set('Authorization', `Bearer ${jwt}`)
     .expect(401);
   t.is(response.status, 401);
+});
+
+test.serial('API request with invalid JWT returns 403 response', async (t) => {
+  const accessTokenRecord = fakeAccessTokenFactory();
+  await accessTokenModel.create(accessTokenRecord);
+
+  // Use bad secret value to generate invalid JWT
+  const tokenSecret = process.env.TOKEN_SECRET;
+  process.env.TOKEN_SECRET = 'badsecret';
+  const jwt = createJwtToken(accessTokenRecord);
+  process.env.TOKEN_SECRET = tokenSecret;
+
+  const response = await request(app)
+    .get('/workflows')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwt}`)
+    .expect(403);
+  t.is(response.status, 403);
+});
+
+test.serial('API request with JWT and no corresponding token record returns 401 response', async (t) => {
+  const accessTokenRecord = fakeAccessTokenFactory();
+
+  const jwt = createJwtToken(accessTokenRecord);
+
+  const response = await request(app)
+    .get('/workflows')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwt}`)
+    .expect(401);
+  t.is(response.status, 401);
+  t.is(response.body.message, 'User not authorized');
 });
