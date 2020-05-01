@@ -16,6 +16,7 @@ test.before(async (t) => {
   t.context.sourceKey = `${t.context.sourcePrefix}/${randomString()}`;
   t.context.targetBucket = randomString();
   t.context.fileContent = JSON.stringify({ type: 'fake-test-object' });
+  t.context.tagging = "key1=value1&key2=another%20value";
 
   await Promise.all([
     S3.createBucket(t.context.sourceBucket),
@@ -25,7 +26,8 @@ test.before(async (t) => {
   await S3.s3PutObject({
     Bucket: t.context.sourceBucket,
     Key: t.context.sourceKey,
-    Body: t.context.fileContent
+    Body: t.context.fileContent,
+    Tagging: t.context.tagging,
   });
 });
 
@@ -73,13 +75,33 @@ test.serial('S3ProviderClient.download downloads a file to local disk', async (t
   t.is(fs.readFileSync(localPath).toString(), t.context.fileContent);
 });
 
-test.serial('S3ProviderClient.sync syncs a file to a target S3 location', async (t) => {
-  const s3ProviderClient = new S3ProviderClient({ bucket: t.context.sourceBucket });
-  const targetKey = 'target.json';
+test.serial(
+  "S3ProviderClient.sync syncs a file to a target S3 location",
+  async (t) => {
+    const {
+      fileContent,
+      sourceBucket,
+      sourceKey,
+      tagging,
+      targetBucket,
+    } = t.context;
+    const s3ProviderClient = new S3ProviderClient({ bucket: sourceBucket });
+    const targetKey = "target.json";
 
-  await s3ProviderClient.sync(t.context.sourceKey, t.context.targetBucket, targetKey);
-  t.is(await S3.getTextObject(t.context.targetBucket, targetKey), t.context.fileContent);
-});
+    // Should copy object
+    await s3ProviderClient.sync(sourceKey, targetBucket, targetKey);
+    t.is(await S3.getTextObject(targetBucket, targetKey), fileContent);
+    // Should copy tags
+    const { TagSet } = await S3.s3GetObjectTagging(targetBucket, targetKey);
+    t.is(S3.encodeTags(TagSet), tagging);
+    // Should have Canned ACL of 'private'
+    // See https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
+    const acl = await S3.getObjectAcl({ Bucket: targetBucket, Key: targetKey});
+    t.is(acl.Grants.length, 1);
+    t.is(acl.Grants[0].Permission, 'FULL_CONTROL');
+    t.is(acl.Grants[0].Grantee.Type, 'CanonicalUser');
+  }
+);
 
 test.serial('S3ProviderClient.sync throws an error if the source file does not exist', async (t) => {
   const s3ProviderClient = new S3ProviderClient({ bucket: t.context.sourceBucket });

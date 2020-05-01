@@ -8,29 +8,31 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const delay = require('delay');
 const pTimeout = require('p-timeout');
-
 const { promisify } = require('util');
 const { UnparsableFileLocationError } = require('@cumulus/errors');
-
-const randomString = () => cryptoRandomString({ length: 10 });
-
+const awsServices = require('../services');
 const {
+  calculateS3ObjectChecksum,
   createBucket,
+  downloadS3File,
+  encodeTags,
+  getFileBucketAndKey,
   getJsonS3Object,
+  getObjectAcl,
+  getObjectSize,
   getS3Object,
   getTextObject,
   headObject,
-  downloadS3File,
   listS3ObjectsV2,
+  promiseS3Upload,
+  putFile,
   recursivelyDeleteS3Bucket,
+  s3CopyUpload,
   s3Join,
-  calculateS3ObjectChecksum,
   validateS3ObjectChecksum,
-  getFileBucketAndKey,
-  putFile
 } = require('../S3');
-const awsServices = require('../services');
 
+const randomString = () => cryptoRandomString({ length: 10 });
 const mkdtemp = promisify(fs.mkdtemp);
 const rmdir = promisify(fs.rmdir);
 const unlink = promisify(fs.unlink);
@@ -297,7 +299,14 @@ test('validateS3ObjectChecksum throws InvalidChecksum error on bad checksum', as
 
 test('getFileBucketAndKey parses bucket and key', (t) => {
   const pathParams = 'test-bucket/path/key.txt';
+  const [bucket, key] = getFileBucketAndKey(pathParams);
 
+  t.is(bucket, 'test-bucket');
+  t.is(key, 'path/key.txt');
+});
+
+test('getFileBucketAndKey parses bucket and key for input with leading slash', (t) => {
+  const pathParams = '/test-bucket/path/key.txt';
   const [bucket, key] = getFileBucketAndKey(pathParams);
 
   t.is(bucket, 'test-bucket');
@@ -322,4 +331,54 @@ test('headObject() will retry if the requested key does not exist', async (t) =>
     .then(() => awsServices.s3().putObject({ Bucket, Key, Body: 'asdf' }).promise());
 
   await t.notThrowsAsync(promisedHeadObject);
+});
+
+const testEncodeTags = (t, input, expected) =>
+  t.is(encodeTags(input), expected);
+
+testEncodeTags.title = (_title, input, expected) => {
+  const inputJSON = JSON.stringify(input);
+  return `encodeTags(${inputJSON}) returns "${expected}"`;
+};
+
+test(testEncodeTags, [], "");
+test(testEncodeTags, [{ Key: "key", Value: "value" }], "key=value");
+test(testEncodeTags, [{ Key: "key", Value: "some value" }], "key=some%20value");
+test(
+  testEncodeTags,
+  [
+    { Key: "k1", Value: "v1" },
+    { Key: "k2", Value: "v2" },
+  ],
+  "k1=v1&k2=v2"
+);
+
+test("getObjectAcl should return FULL_CONTROL for object saved with 'private' Canned ACL", async (t) => {
+  const { Bucket } = t.context;
+  const Key = randomString();
+  const acl = await awsServices
+    .s3()
+    .putObject({ Bucket, Key, Body: "asdf", ACL: "private" })
+    .promise()
+    .then(() => getObjectAcl({ Bucket, Key }));
+
+  t.is(acl.Grants.length, 1);
+  t.is(acl.Grants[0].Permission, "FULL_CONTROL");
+  t.is(acl.Grants[0].Grantee.Type, "CanonicalUser");
+});
+
+test("s3CopyUpload should copy a small S3 object", async (t) => {
+  const { Bucket } = t.context;
+  const srcKey = randomString();
+  const dstKey = randomString();
+  const params = { Bucket, Key: dstKey, CopySource: `${Bucket}/${srcKey}` };
+  const expectedBody = randomString();
+  const actualBody = await awsServices
+    .s3()
+    .putObject({ Bucket, Key: srcKey, Body: expectedBody })
+    .promise()
+    .then(() => s3CopyUpload(params))
+    .then(() => getTextObject(Bucket, dstKey));
+
+  t.is(actualBody, expectedBody);
 });

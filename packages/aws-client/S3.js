@@ -157,6 +157,70 @@ exports.s3CopyObject = improveStackTrace(
 );
 
 /**
+ * Copies an arbitrarily sized object from one S3 location to another by using
+ * a multipart upload, if the object is large enough, also copying over the
+ * tags, if any.
+ *
+ * @param {Object} params - same params as AWS.S3.copyObject
+ * @returns {Promise} a promise of the upload request
+ * @see {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-property|AWS.S3.copyObject}
+ */
+exports.s3CopyUpload = improveStackTrace(async (params) => {
+  const [srcBucket, srcKey] = exports.getFileBucketAndKey(params.CopySource);
+  const srcStream = exports.getS3ObjectReadStream(srcBucket, srcKey);
+  const tagging = await exports.s3GetObjectTagging(srcBucket, srcKey);
+  const uploadParams = {
+    Tagging: exports.encodeTags(tagging.TagSet),
+    ...params,
+    Body: srcStream,
+  };
+
+  delete uploadParams.CopySource;
+
+  return exports.promiseS3Upload(uploadParams);
+});
+
+/**
+ * Returns a string encoded as URL Query parameters constructed from the
+ * specified tags, appropriate for the value of a `Tagging` parameter for
+ * various S3 methods.
+ *
+ * @param {Array<Object>} tags - array of tags, where each tag is an object
+ *    with a `Key` and `Value` property
+ * @returns {string} encoded URL Query parameter string constructed from the
+ *    specified tags of the form `key1=value1&key2=value2&...`, where each
+ *    key and value is obtained from the `Key` and `Value` properties of each
+ *    tag
+ */
+exports.encodeTags = (tags) => tags.map(encodeTag).join("&");
+
+/**
+ * Returns a encoded URL Query parameter string of the form `Key=Value`, where
+ * `Key` and `Value` are the values of those properties of the specified tag.
+ *
+ * @param {Object} tag - the tag to be encoded
+ * @param {string} tag.Key - the tag's key
+ * @param {string} tag.Value - the tag's value
+ * @return {string} encoded URL Query parameter string of the form `Key=Value`
+ */
+const encodeTag = ({ Key, Value }) =>
+  [encodeURIComponent(Key), encodeURIComponent(Value)].join("=");
+
+/**
+ * Returns a promise of the access control list (ACL) of an object. To use this
+ * operation, you must have READ_ACP access to the object.
+ *
+ * @param {Object} params - same params as AWS.S3.getObjectAcl, where `Bucket`
+ *    and `Key` are required properties
+ * @returns {Promise} a promise of the access control list (ACL) of the
+ *    specified object
+ * @see {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#getObjectAcl-property|AWS.S3.getObjectAcl}
+ */
+exports.getObjectAcl = improveStackTrace((params) =>
+  awsServices.s3().getObjectAcl(params).promise()
+);
+
+/**
  * Upload data to S3
  *
  * Note: This is equivalent to calling `aws.s3().upload(params).promise()`
@@ -532,7 +596,6 @@ async function listS3ObjectsV2(params) {
     listObjectsResponse = await awsServices.s3().listObjectsV2( // eslint-disable-line no-await-in-loop, max-len
       // Update the params with a Continuation Token
       {
-
         ...params,
         ContinuationToken: listObjectsResponse.NextContinuationToken
       }
@@ -594,20 +657,24 @@ exports.validateS3ObjectChecksum = async ({
 };
 
 /**
- * Extract the S3 bucket and key from the URL path parameters
+ * Extracts the S3 bucket and key from the URL path parameters.
  *
  * @param {string} pathParams - path parameters from the URL
- * @returns {Object} - bucket/key in the form of
- * { Bucket: x, Key: y }
+ * @returns {Array<string>} 2-element array containing the bucket and the key,
+ *    respectively
  */
 exports.getFileBucketAndKey = (pathParams) => {
-  const fields = pathParams.split('/');
-
+  const fields = (pathParams.startsWith('/')
+    ? pathParams.slice(1) // Remove leading slash
+    : pathParams
+  ).split("/");
   const Bucket = fields.shift();
   const Key = fields.join('/');
 
   if (Bucket.length === 0 || Key.length === 0) {
-    throw new UnparsableFileLocationError(`File location "${pathParams}" could not be parsed`);
+    throw new UnparsableFileLocationError(
+      `File location "${pathParams}" could not be parsed`
+    );
   }
 
   return [Bucket, Key];

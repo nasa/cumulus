@@ -85,7 +85,7 @@ class S3ProviderClient {
     log.info('sync params:', params);
     const startTime = new Date();
 
-    await S3.s3CopyObject(params);
+    await S3.s3CopyUpload(params);
 
     const syncTimeSecs = (new Date() - startTime) / 1000.0;
     log.info(`s3 Upload completed in ${syncTimeSecs} secs`, s3uri);
