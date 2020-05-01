@@ -84,7 +84,7 @@
     "jsonpath-plus": "^1.1.0",
     "jsonwebtoken": "^8.4.0",
     "lodash": "^4.17.15",
-    "moment": "2.22.1",
+    "moment": "2.24.0",
     "morgan": "^1.9.1",
     "p-limit": "^1.2.0",
     "p-map": "^4.0.0",
