@@ -46,7 +46,7 @@ class HttpProviderClient {
     try {
       const s3Params = parseS3Uri(this.certificateUri);
       this.certificate = await getTextObject(s3Params.Bucket, s3Params.Key);
-      this.requestOptions = { ca: this.certificate, headers: { host: this.host } }
+      this.requestOptions = { ca: this.certificate, headers: { host: this.host } };
     } catch (e) {
       throw new errors.RemoteResourceError(`Failed to fetch CA certificate: ${e}`);
     }

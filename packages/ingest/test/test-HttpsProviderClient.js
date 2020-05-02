@@ -66,12 +66,12 @@ test('download() downloads a file', async (t) => {
 
 test('sync() downloads remote file to s3 with correct content-type', async (t) => {
   const bucket = randomString();
-  const key = `syncedFile.json`;
+  const key = 'syncedFile.json';
   const remotePath = 'test/file.hdf';
-  const remoteContent = "<HDF CONTENT>";
+  const remoteContent = '<HDF CONTENT>';
   const expectedContentType = 'application/x-hdf';
   t.context.server.get(`/${remotePath}`, (_, res) => {
-    res.header({ "content-type": expectedContentType });
+    res.header({ 'content-type': expectedContentType });
     res.end(remoteContent);
   });
   try {
