@@ -41,14 +41,23 @@ const buildFtpProvider = async (postfix = '') => {
   return provider;
 };
 
-const buildHttpProvider = async (postfix = '') => {
+const fakeProviderPortMap = {
+  http: 3030,
+  https: 4040
+};
+
+const buildHttpOrHttpsProvider = async (postfix = '', protocol = 'http') => {
   const provider = {
-    id: `http_provider${postfix}`,
-    protocol: 'http',
+    id: `${protocol}_provider${postfix}`,
+    protocol,
     host: await getProviderHost(),
-    port: 3030,
+    port: fakeProviderPortMap[protocol],
     globalConnectionLimit: 10
   };
+
+  if (protocol === 'https') {
+    provider.certificateUri = `s3://${process.env.FAKE_PROVIDER_CONFIG_BUCKET}/fake-provider-cert.pem`;
+  }
 
   if (process.env.PROVIDER_HTTP_PORT) {
     provider.port = Number(process.env.PROVIDER_HTTP_PORT);
@@ -64,6 +73,6 @@ const createProvider = async (stackName, provider) => {
 
 module.exports = {
   buildFtpProvider,
-  buildHttpProvider,
+  buildHttpOrHttpsProvider,
   createProvider
 };
