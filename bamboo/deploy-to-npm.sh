@@ -13,13 +13,16 @@ export NPM_TAG=$(node ./bamboo/npm-tag.js);
 
 echo "Publishing packages to NPM with version=${VERSION} and tag=${NPM_TAG}"
 export npm_config_unsafe_perm=true
-npx lerna publish \
-  ${VERSION} \
-  --no-git-tag-version \
-  --no-push \
-  --yes \
-  --force-publish=* \
-  --dist-tag=${NPM_TAG} \
-  --exact
+
+if [[ ! $SKIP_PUBLISH != true ]]; then
+  npx lerna publish \
+    ${VERSION} \
+    --no-git-tag-version \
+    --no-push \
+    --yes \
+    --force-publish=* \
+    --dist-tag=${NPM_TAG} \
+    --exact
+fi
 
 . ./bamboo/create-release.sh
