@@ -14,7 +14,7 @@ const {
 const {
   loadConfig,
   createTimestampedTestId,
-  createTestSuffix,
+  createTestSuffix
 } = require('../helpers/testUtils');
 
 const { buildHttpProvider, createProvider } = require('../helpers/Providers');
