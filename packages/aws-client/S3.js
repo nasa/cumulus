@@ -144,38 +144,60 @@ exports.putFile = (bucket, key, filename) =>
   });
 
 /**
-* Copy an object from one location on S3 to another
-*
-* @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
-* @returns {Promise} - promise of the object being copied
-**/
-exports.s3CopyObject = improveStackTrace(
-  (params) => awsServices.s3().copyObject({
-    TaggingDirective: 'COPY',
-    ...params
-  }).promise()
-);
+ * Copy an object from one location on S3 to another.  If copying fails because
+ * the object exceeds the size limit of `S3.copyObject`, a copy is attempted
+ * via `s3UploadCopy`, which handles large files via multipart upload.  By
+ * default, tags are copied from the source object to the target object, but
+ * this can be overridden by setting the `TaggingDirective` property in the
+ * specified parameters to something other than `"COPY"` (such as `"REPLACE"`,
+ * `null`, or `undefined`).
+ *
+ * @param {Object} params - same params as `S3.copyObject`
+ * @returns {Promise} - promise of the object being copied
+ * @see s3UploadCopy
+ * @see {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-property|S3.copyObject}
+ * @see {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property|S3.upload}
+ */
+exports.s3CopyObject = improveStackTrace(async (params) => {
+  const paramsWithTaggingDirective = { TaggingDirective: 'COPY', ...params };
+
+  return awsServices
+    .s3()
+    .copyObject(paramsWithTaggingDirective)
+    .promise()
+    .catch(() => exports.s3UploadCopy(paramsWithTaggingDirective));
+});
 
 /**
- * Copies an arbitrarily sized object from one S3 location to another by using
- * a multipart upload, if the object is large enough, also copying over the
- * tags, if any.
+ * Copy an arbitrarily large object from one location on S3 to another.  By
+ * default, tags are copied from the source object to the target object, but
+ * this can be overridden by setting the `TaggingDirective` property in the
+ * specified parameters to something other than `"COPY"` (such as `"REPLACE"`,
+ * `null`, or `undefined`).
  *
- * @param {Object} params - same params as AWS.S3.copyObject
- * @returns {Promise} a promise of the upload request
- * @see {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-property|AWS.S3.copyObject}
+ * @param {Object} params - same params as `S3.copyObject`
+ * @returns {Promise} - promise of the object being copied
+ * @see {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-property|S3.copyObject}
+ * @see {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property|S3.upload}
  */
-exports.s3CopyUpload = improveStackTrace(async (params) => {
+exports.s3UploadCopy = improveStackTrace(async (params) => {
+  // IMPLEMENTATION NOTE: Using S3.upload keeps things simple because it
+  // handles all the details of a multipart upload.  However, it might not
+  // perform as well as using S3.uploadPartCopy.
+  // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#uploadPartCopy-property
+
+  const paramsWithTaggingDirective = { TaggingDirective: 'COPY', ...params };
+  const { TaggingDirective } = paramsWithTaggingDirective;
   const [srcBucket, srcKey] = exports.getFileBucketAndKey(params.CopySource);
   const srcStream = exports.getS3ObjectReadStream(srcBucket, srcKey);
-  const tagging = await exports.s3GetObjectTagging(srcBucket, srcKey);
-  const uploadParams = {
-    Tagging: exports.encodeTags(tagging.TagSet),
-    ...params,
-    Body: srcStream,
-  };
-
+  const uploadParams = { ...paramsWithTaggingDirective, Body: srcStream };
+  // This only applies to S3.copyObject, so remove it for S3.upload
   delete uploadParams.CopySource;
+
+  if (TaggingDirective === 'COPY') {
+    const tagging = await exports.s3GetObjectTagging(srcBucket, srcKey);
+    uploadParams.Tagging = exports.encodeTags(tagging.TagSet);
+  }
 
   return exports.promiseS3Upload(uploadParams);
 });

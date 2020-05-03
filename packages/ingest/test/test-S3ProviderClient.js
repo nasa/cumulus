@@ -27,7 +27,7 @@ test.before(async (t) => {
     Bucket: t.context.sourceBucket,
     Key: t.context.sourceKey,
     Body: t.context.fileContent,
-    Tagging: t.context.tagging,
+    Tagging: t.context.tagging
   });
 });
 
@@ -83,7 +83,7 @@ test.serial(
       sourceBucket,
       sourceKey,
       tagging,
-      targetBucket,
+      targetBucket
     } = t.context;
     const s3ProviderClient = new S3ProviderClient({ bucket: sourceBucket });
     const targetKey = 'target.json';

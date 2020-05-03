@@ -25,9 +25,10 @@ const {
   listS3ObjectsV2,
   putFile,
   recursivelyDeleteS3Bucket,
-  s3CopyUpload,
+  s3CopyObject,
   s3Join,
-  validateS3ObjectChecksum,
+  s3UploadCopy,
+  validateS3ObjectChecksum
 } = require('../S3');
 
 const randomString = () => cryptoRandomString({ length: 10 });
@@ -331,25 +332,23 @@ test('headObject() will retry if the requested key does not exist', async (t) =>
   await t.notThrowsAsync(promisedHeadObject);
 });
 
-const testEncodeTags = (t, input, expected) =>
-  t.is(encodeTags(input), expected);
+test('encodeTags([]) should return ""', (t) => {
+  t.is(encodeTags([]), '');
+});
 
-testEncodeTags.title = (_title, input, expected) => {
-  const inputJSON = JSON.stringify(input);
-  return `encodeTags(${inputJSON}) returns '${expected}'`;
-};
+test('encodeTags([{ Key: "key", Value: "some value" }]) should return "key=some%20value"', (t) => {
+  t.is(encodeTags([{ Key: 'key', Value: 'some value' }]), 'key=some%20value');
+});
 
-test(testEncodeTags, [], '');
-test(testEncodeTags, [{ Key: 'key', Value: 'value' }], 'key=value');
-test(testEncodeTags, [{ Key: 'key', Value: 'some value' }], 'key=some%20value');
-test(
-  testEncodeTags,
-  [
-    { Key: 'k1', Value: 'v1' },
-    { Key: 'k2', Value: 'v2' },
-  ],
-  'k1=v1&k2=v2'
-);
+test('encodeTags([{"Key":"k1","Value":"v1"},{"Key":"k2","Value":"v2"}]) returns "k1=v1&k2=v2"', (t) => {
+  t.is(
+    encodeTags([
+      { Key: 'k1', Value: 'v1' },
+      { Key: 'k2', Value: 'v2' }
+    ]),
+    'k1=v1&k2=v2'
+  );
+});
 
 test('getObjectAcl should return FULL_CONTROL for object saved with "private" Canned ACL', async (t) => {
   const { Bucket } = t.context;
@@ -360,7 +359,7 @@ test('getObjectAcl should return FULL_CONTROL for object saved with "private" Ca
       Bucket,
       Key,
       Body: 'asdf',
-      ACL: 'private',
+      ACL: 'private'
     })
     .promise()
     .then(() => getObjectAcl({ Bucket, Key }));
@@ -370,7 +369,7 @@ test('getObjectAcl should return FULL_CONTROL for object saved with "private" Ca
   t.is(acl.Grants[0].Grantee.Type, 'CanonicalUser');
 });
 
-test('s3CopyUpload should copy a small S3 object', async (t) => {
+test('s3CopyObject should copy a small S3 object', async (t) => {
   const { Bucket } = t.context;
   const srcKey = randomString();
   const dstKey = randomString();
@@ -380,7 +379,23 @@ test('s3CopyUpload should copy a small S3 object', async (t) => {
     .s3()
     .putObject({ Bucket, Key: srcKey, Body: expectedBody })
     .promise()
-    .then(() => s3CopyUpload(params))
+    .then(() => s3CopyObject(params))
+    .then(() => getTextObject(Bucket, dstKey));
+
+  t.is(actualBody, expectedBody);
+});
+
+test('s3UploadCopy should copy a small S3 object', async (t) => {
+  const { Bucket } = t.context;
+  const srcKey = randomString();
+  const dstKey = randomString();
+  const params = { Bucket, Key: dstKey, CopySource: `${Bucket}/${srcKey}` };
+  const expectedBody = randomString();
+  const actualBody = await awsServices
+    .s3()
+    .putObject({ Bucket, Key: srcKey, Body: expectedBody })
+    .promise()
+    .then(() => s3UploadCopy(params))
     .then(() => getTextObject(Bucket, dstKey));
 
   t.is(actualBody, expectedBody);
