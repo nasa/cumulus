@@ -1,4 +1,5 @@
 import * as AWS from 'aws-sdk';
+import { ThrottlingException } from '@cumulus/errors';
 
 export const inTestMode = () => process.env.NODE_ENV === 'test';
 
@@ -31,7 +32,7 @@ const localStackPorts: { [key: string ]: number } = {
 /**
  * Test if a given AWS service is supported by LocalStack.
  *
- * @param {Function} Service - an AWS service object constructor function
+ * @param {Function} serviceIdentifier - an AWS service object constructor function
  * @returns {boolean} true or false depending on whether the service is
  *   supported by LocalStack
  *
@@ -113,15 +114,6 @@ export function testAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClien
   }
 
   return <T>{};
-}
-
-class ThrottlingException extends Error {
-  readonly code: string;
-
-  constructor() {
-    super('ThrottlingException');
-    this.code = 'ThrottlingException';
-  }
 }
 
 /**

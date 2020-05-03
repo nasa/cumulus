@@ -14,8 +14,8 @@ import { improveStackTrace } from './utils';
  *
  * @param {Object} params
  * @param {string} params.tableName - Table name to read
- * @param {any} params.item - Key identifying object to get
- * @param {Object} params.client - Instance of a DynamoDb DocumentClient
+ * @param {AWS.DynamoDB.DocumentClient.Key} params.item - Key identifying object to get
+ * @param {AWS.DynamoDB.DocumentClient} params.client - Instance of a DynamoDb DocumentClient
  * @param {Object} params.getParams - Additional parameters for DocumentClient.get()
  * @returns {Promise<Object>}
  * @throws {RecordDoesNotExist} if a record cannot be found

@@ -130,7 +130,7 @@ Create a CloudWatch Events rule
 | --- | --- | --- |
 | name | <code>string</code> | the rule name |
 | schedule | <code>string</code> | a ScheduleExpression |
-| state | <code>string</code> | the statue of the rule |
+| state | <code>string</code> | the state of the rule |
 | [description] | <code>string</code> |  |
 | [role] | <code>string</code> | a Role ARN |
 
@@ -162,8 +162,8 @@ for descriptions of `params` and the return data.
 | --- | --- | --- |
 | params | <code>Object</code> |  |
 | params.tableName | <code>string</code> | Table name to read |
-| params.item | <code>any</code> | Key identifying object to get |
-| params.client | <code>Object</code> | Instance of a DynamoDb DocumentClient |
+| params.item | <code>AWS.DynamoDB.DocumentClient.Key</code> | Key identifying object to get |
+| params.client | <code>AWS.DynamoDB.DocumentClient</code> | Instance of a DynamoDb DocumentClient |
 | params.getParams | <code>Object</code> | Additional parameters for DocumentClient.get() |
 
 <a name="module_DynamoDb.scan"></a>
@@ -271,6 +271,19 @@ Describe a Kinesis stream.
 <a name="module_Lambda"></a>
 
 ## Lambda
+<a name="module_Lambda.invoke"></a>
+
+### Lambda.invoke(name, payload, type) ⇒ <code>Promise.&lt;AWS.Lambda.InvocationResponse&gt;</code>
+Invoke a Lambda function
+
+**Kind**: static method of [<code>Lambda</code>](#module_Lambda)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| name | <code>string</code> | Lambda function name |
+| payload | <code>any</code> | the payload to the Lambda function |
+| type | <code>string</code> | the invocation type |
+
 <a name="module_S3"></a>
 
 ## S3
@@ -281,7 +294,7 @@ Describe a Kinesis stream.
     * [.s3PutObject](#module_S3.s3PutObject)
     * [.s3CopyObject](#module_S3.s3CopyObject) ⇒ <code>Promise</code>
     * [.promiseS3Upload](#module_S3.promiseS3Upload) ⇒ <code>Promise</code>
-    * [.s3GetObjectTagging](#module_S3.s3GetObjectTagging) ⇒ <code>Promise</code>
+    * [.s3GetObjectTagging](#module_S3.s3GetObjectTagging) ⇒ <code>Promise.&lt;AWS.S3.GetObjectTaggingOutput&gt;</code>
     * [.s3PutObjectTagging](#module_S3.s3PutObjectTagging) ⇒ <code>Promise</code>
     * [.getS3Object](#module_S3.getS3Object) ⇒ <code>Promise</code>
     * [.recursivelyDeleteS3Bucket](#module_S3.recursivelyDeleteS3Bucket) ⇒ <code>Promise</code>
@@ -303,7 +316,7 @@ Describe a Kinesis stream.
     * [.listS3Objects(bucket, prefix, skipFolders)](#module_S3.listS3Objects) ⇒ <code>Promise</code>
     * [.listS3ObjectsV2(params)](#module_S3.listS3ObjectsV2) ⇒ <code>Promise.&lt;Array&gt;</code>
     * [.calculateS3ObjectChecksum(params)](#module_S3.calculateS3ObjectChecksum) ⇒ <code>number</code> \| <code>string</code>
-    * [.validateS3ObjectChecksum(params)](#module_S3.validateS3ObjectChecksum) ⇒ <code>boolean</code>
+    * [.validateS3ObjectChecksum(params)](#module_S3.validateS3ObjectChecksum) ⇒ <code>Promise.&lt;boolean&gt;</code>
     * [.getFileBucketAndKey(pathParams)](#module_S3.getFileBucketAndKey) ⇒ <code>Array.&lt;string&gt;</code>
     * [.createBucket(Bucket)](#module_S3.createBucket) ⇒ <code>Promise</code>
 
@@ -372,11 +385,11 @@ Note: This is equivalent to calling `aws.s3().upload(params).promise()`
 
 <a name="module_S3.s3GetObjectTagging"></a>
 
-### S3.s3GetObjectTagging ⇒ <code>Promise</code>
+### S3.s3GetObjectTagging ⇒ <code>Promise.&lt;AWS.S3.GetObjectTaggingOutput&gt;</code>
 Get object Tagging from S3
 
 **Kind**: static property of [<code>S3</code>](#module_S3)  
-**Returns**: <code>Promise</code> - returns response from `S3.getObjectTagging` as a promise  
+**Returns**: <code>Promise.&lt;AWS.S3.GetObjectTaggingOutput&gt;</code> - the promised response from `S3.getObjectTagging`  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -683,11 +696,11 @@ Calculate checksum for S3 Object
 
 <a name="module_S3.validateS3ObjectChecksum"></a>
 
-### S3.validateS3ObjectChecksum(params) ⇒ <code>boolean</code>
+### S3.validateS3ObjectChecksum(params) ⇒ <code>Promise.&lt;boolean&gt;</code>
 Validate S3 object checksum against expected sum
 
 **Kind**: static method of [<code>S3</code>](#module_S3)  
-**Returns**: <code>boolean</code> - returns true for success  
+**Returns**: <code>Promise.&lt;boolean&gt;</code> - returns true for success  
 **Throws**:
 
 - <code>InvalidChecksum</code> - Throws error if validation fails

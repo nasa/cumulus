@@ -240,7 +240,7 @@ export const getObjectSize = (bucket: string, key: string) =>
 *
 * @param {string} bucket - name of bucket
 * @param {string} key - key for object (filepath + filename)
-* @returns {Promise} returns response from `S3.getObjectTagging` as a promise
+* @returns {Promise<AWS.S3.GetObjectTaggingOutput>} the promised response from `S3.getObjectTagging`
 **/
 export const s3GetObjectTagging = improveStackTrace(
   (bucket: string, key: string) =>
