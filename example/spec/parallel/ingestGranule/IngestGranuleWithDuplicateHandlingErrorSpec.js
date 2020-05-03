@@ -165,7 +165,6 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
   it('catches the error in MoveGranules', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      console.log('secondIngestGranuleExecution:', JSON.stringify(secondIngestGranuleExecution, null, 2));
       expect(
         get(secondIngestGranuleExecution, 'error.Error')
       ).toBe('DuplicateFile');

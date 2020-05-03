@@ -217,22 +217,26 @@ function generateCmrXml(granule, collection, additionalUrls) {
  */
 async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrls) {
   const xml = generateCmrXml(granule, collection, additionalUrls);
-
-  const granuleFilenames = granule.files.map((f) => f.filename);
+  const granuleFiles = granule.files.map((f) => f.filename);
 
   const stagingDir = granule.files[0].fileStagingDir;
 
   const filename = `${stagingDir}/${granule.granuleId}.cmr.xml`;
 
-  await s3().putObject({
+  const params = {
     Bucket: bucket,
     Key: filename,
     Body: xml,
     ContentType: 'application/xml',
     Tagging: `granuleId=${granule.granuleId}`
-  }).promise();
+  };
 
-  return [...granuleFilenames, `s3://${bucket}/${filename}`];
+  await s3().putObject(params).promise();
+
+  granuleFiles.push(`s3://${bucket}/${filename}`);
+  log.info(`s3://${bucket}/${filename}`);
+  log.info(granuleFiles);
+  return granuleFiles;
 }
 
 /**
@@ -414,19 +418,23 @@ async function generateCmrFilesForGranules(
   cmrMetadataFormat,
   additionalUrls
 ) {
+  let files;
+
   log.info(`Generating fake CMR file with type ${cmrMetadataFormat}`);
 
   if (isUMMGMetadataFormat(cmrMetadataFormat)) {
-    return Promise.all(
+    files = await Promise.all(
       granules.map(
         (g) => generateAndStoreCmrUmmJson(g, collection, bucket, additionalUrls, cmrMetadataFormat)
       )
     );
+  } else {
+    files = await Promise.all(
+      granules.map((g) => generateAndStoreCmrXml(g, collection, bucket, additionalUrls))
+    );
   }
 
-  return Promise.all(
-    granules.map((g) => generateAndStoreCmrXml(g, collection, bucket, additionalUrls))
-  );
+  return [].concat(...files);
 }
 
 module.exports = {
