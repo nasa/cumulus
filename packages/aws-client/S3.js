@@ -158,7 +158,7 @@ exports.putFile = (bucket, key, filename) =>
  * @see {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-property|S3.copyObject}
  * @see {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property|S3.upload}
  */
-exports.s3CopyObject = improveStackTrace(async (params) => {
+exports.s3CopyObject = improveStackTrace((params) => {
   const paramsWithTaggingDirective = { TaggingDirective: 'COPY', ...params };
 
   return awsServices
