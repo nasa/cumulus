@@ -627,7 +627,7 @@ export const calculateS3ObjectChecksum = async (
  * @param {Object} [params.options] - crypto.createHash options
  *
  * @throws {InvalidChecksum} - Throws error if validation fails
- * @returns {boolean} returns true for success
+ * @returns {Promise<boolean>} returns true for success
  */
 export const validateS3ObjectChecksum = async (params: {
   algorithm: string,
