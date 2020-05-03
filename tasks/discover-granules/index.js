@@ -12,7 +12,7 @@ const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
 
 const logger = () => new Logger({
   executions: process.env.EXECUTIONS,
-  granules: process.env.GRANULES,
+  granules: process.env.GRANULES ? JSON.parse(process.env.GRANULES) : undefined,
   parentArn: process.env.PARENTARN,
   sender: process.env.SENDER,
   stackName: process.env.STACKNAME,
@@ -271,6 +271,11 @@ const discoverGranules = async ({ config }) => {
 
   const discoveredGranules = map(filesByGranuleId, buildGranule(config));
 
+  // Set the environment variable for the logger
+  if (discoveredGranules) {
+    process.env.GRANULES = JSON.stringify(discoveredGranules.map((g) => g.granuleId));
+  }
+
   logger().info(`Discovered ${discoveredGranules.length} granules.`);
   return { granules: discoveredGranules };
 };
@@ -288,6 +293,9 @@ const handler = (event, context, callback) => {
 };
 
 module.exports = {
+  checkGranuleHasNoDuplicate, // exported to support testing
   discoverGranules,
-  handler
+  handler,
+  filterDuplicates, // exported to support testing
+  handleDuplicates // exported to support testing
 };
