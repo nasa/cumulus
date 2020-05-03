@@ -601,7 +601,7 @@ export async function listS3ObjectsV2(params: AWS.S3.ListObjectsV2Request) {
  * @param {string} params.key - S3 key
  * @param {Object} [params.options] - crypto.createHash options
  *
- * @returns {number|string} calculated checksum
+ * @returns {Promise<number|string>} calculated checksum
  */
 export const calculateS3ObjectChecksum = async (
   params: {
