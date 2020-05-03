@@ -1120,7 +1120,7 @@ SfSnsReport:
   ```
 
   Accepted fields in `ReplaceConfig` include `MaxSize`, `FullMessage`, `Path` and `TargetPath`.
-  See <https://github.com/nasa/cumulus-message-adapter/blob/master/CONTRACT.md#remote-message-configuration> for full details.
+  See https://github.com/nasa/cumulus-message-adapter/blob/master/CONTRACT.md#remote-message-configuration for full details.
 
   As this change is backward compatible in Cumulus Core, users wishing to utilize the previous version of the CMA may opt to transition to using a CMA lambda layer, or set `message_adapter_version` in their configuration to a version prior to v1.1.0.
 
@@ -1145,7 +1145,7 @@ SfSnsReport:
     - Disabled endpoints
       - `POST /refresh`
       - Changes authorization worklow:
-      - `ensureAuthorized` now presumes the bearer token is a JWT and tries to validate. If the token is malformed, it attempts to validate the token against Launchpad. This allows users to bring their own token as described here <https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication.> But it also allows dashboard users to manually authenticate via Launchpad SAML to receive a Launchpad-based JWT.
+      - `ensureAuthorized` now presumes the bearer token is a JWT and tries to validate. If the token is malformed, it attempts to validate the token against Launchpad. This allows users to bring their own token as described here https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication. But it also allows dashboard users to manually authenticate via Launchpad SAML to receive a Launchpad-based JWT.
 
 - **CUMULUS-1394**
   - Added `Granule.generateGranuleRecord()` method to granules model to generate a granule database record from a Cumulus execution message
@@ -1407,7 +1407,7 @@ If you deploy with no distribution app your deployment will succeed but you may 
     Previously, this behavior was missing.
 
 - **CUMULUS-1374**
-  - Addressed audit concerns (<https://www.npmjs.com/advisories/782)> in api package
+  - Addressed audit concerns (https://www.npmjs.com/advisories/782) in api package
 
 ### BREAKING CHANGES
 
@@ -1651,7 +1651,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 - **CUMULUS-670**
 
-  - The behavior of ParsePDR and related code has changed in this release. PDRs with FILE_TYPEs that do not conform to the PDR ICD (+ TGZ) (<https://cdn.earthdata.nasa.gov/conduit/upload/6376/ESDS-RFC-030v1.0.pdf)> will fail to parse.
+  - The behavior of ParsePDR and related code has changed in this release. PDRs with FILE_TYPEs that do not conform to the PDR ICD (+ TGZ) (https://cdn.earthdata.nasa.gov/conduit/upload/6376/ESDS-RFC-030v1.0.pdf) will fail to parse.
 
 - **CUMULUS-1208**
   - The granule object input to `@cumulus/queue-granules` will now be added to ingest workflow messages **as is**. In practice, this means that if you are using `@cumulus/queue-granules` to trigger ingest workflows and your granule objects input have invalid properties, then your ingest workflows will fail due to schema validation errors.
@@ -1676,7 +1676,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 - **CUMULUS-803**
   - Added CloudWatch alarms to check running tasks of each ECS service, and add the alarms to CloudWatch dashboard
 - **CUMULUS-670**
-  - Added Ancillary Metadata Export feature (see <https://nasa.github.io/cumulus/docs/features/ancillary_metadata> for more information)
+  - Added Ancillary Metadata Export feature (see https://nasa.github.io/cumulus/docs/features/ancillary_metadata for more information)
   - Added new Collection file parameter "fileType" that allows configuration of workflow granule file fileType
 - **CUMULUS-1184** - Added kes logging output to ensure we always see the state machine reference before failures due to configuration
 - **CUMULUS-1105** - Added a dashboard endpoint to serve the dashboard from an S3 bucket
@@ -1898,10 +1898,10 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.11.1] - 2018-12-18
 
-### **Please Note**
+**Please Note**
 
-Ensure your `app/config.yml` has a `clientId` specified in the `cmr` section. This will allow CMR to identify your requests for better support and metrics.
-For an example, please see [the example config](https://github.com/nasa/cumulus/blob/1c7e2bf41b75da9f87004c4e40fbcf0f39f56794/example/app/config.yml#L128).
+- Ensure your `app/config.yml` has a `clientId` specified in the `cmr` section. This will allow CMR to identify your requests for better support and metrics.
+  - For an example, please see [the example config](https://github.com/nasa/cumulus/blob/1c7e2bf41b75da9f87004c4e40fbcf0f39f56794/example/app/config.yml#L128).
 
 ### Added
 
@@ -1922,7 +1922,7 @@ For an example, please see [the example config](https://github.com/nasa/cumulus/
 
 ## [v1.11.0] - 2018-11-30
 
-### **Please Note**
+**Please Note**
 
 - Redeploy IAM roles:
   - CUMULUS-817 includes a migration that requires reconfiguration/redeployment of IAM roles. Please see the [upgrade instructions](https://nasa.github.io/cumulus/docs/upgrade/1.11.0) for more information.
@@ -2335,13 +2335,9 @@ For an example, please see [the example config](https://github.com/nasa/cumulus/
 
 - **CUMULUS-477** Update bucket configuration to support multiple buckets of the same type:
   - Change the structure of the buckets to allow for more than one bucket of each type. The bucket structure is now:
-  
-    ```plain
     bucket-key:
-      name: <bucket-name>
-      type: <type>  (e.g., internal, public, etc.)
-    ```
-
+    name: <bucket-name>
+    type: <type> i.e. internal, public, etc.
   - Change IAM and app deployment configuration to support new bucket structure
   - Update tasks and workflows to support new bucket structure
   - Replace instances where buckets.internal is relied upon to either use the system bucket or a configured bucket
@@ -2446,7 +2442,7 @@ For an example, please see [the example config](https://github.com/nasa/cumulus/
 ### Fixed
 
 - add the missing dist folder to the hello-world task
-- disable uglifyjs on the built version of the pdr-status-check (read: <https://github.com/webpack-contrib/uglifyjs-webpack-plugin/issues/264)>
+- disable uglifyjs on the built version of the pdr-status-check (read: https://github.com/webpack-contrib/uglifyjs-webpack-plugin/issues/264)
 
 ## [v1.5.0] - 2018-04-23
 
