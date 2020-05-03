@@ -76,7 +76,7 @@
     "require-yield": "off",
     "prefer-template": "warn",
     "no-underscore-dangle": "off",
-    "comma-dangle": ["warn", "only-multiline"],
+    "comma-dangle": ["warn", "never"],
     "strict": "off",
     "guard-for-in": "off",
     "object-shorthand": "off",
