@@ -8,7 +8,7 @@ if [[ ! $PUBLISH_FLAG == true ]]; then
   exit 0
 fi
 
-npm lerna run prepare
+npx lerna run prepare
 npx lerna run package
 
 export VERSION=$(jq --raw-output .version lerna.json)
