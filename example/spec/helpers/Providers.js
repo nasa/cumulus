@@ -2,7 +2,7 @@
 
 const isIp = require('is-ip');
 const providersApi = require('@cumulus/api-client/providers');
-const { getTextObject } = require('@cumulus/aws-client/S3');
+const { getTextObject, s3CopyObject } = require('@cumulus/aws-client/S3');
 
 const fetchFakeProviderIp = async () => {
   if (!process.env.FAKE_PROVIDER_CONFIG_BUCKET) {
@@ -46,7 +46,7 @@ const fakeProviderPortMap = {
   https: 4040
 };
 
-const buildHttpOrHttpsProvider = async (postfix = '', protocol = 'http') => {
+const buildHttpOrHttpsProvider = async (postfix = '', protocol = 'http', systemBucket) => {
   const provider = {
     id: `${protocol}_provider${postfix}`,
     protocol,
@@ -56,7 +56,13 @@ const buildHttpOrHttpsProvider = async (postfix = '', protocol = 'http') => {
   };
 
   if (protocol === 'https') {
-    provider.certificateUri = `s3://${process.env.FAKE_PROVIDER_CONFIG_BUCKET}/fake-provider-cert.pem`;
+    // copy certificate to system bucket to avoid permissions issues
+    await s3CopyObject({
+      CopySource: `${process.env.FAKE_PROVIDER_CONFIG_BUCKET}/fake-provider-cert.pem`,
+      Bucket: systemBucket,
+      Key: 'fake-provider-cert.pem'
+    });
+    provider.certificateUri = `s3://${systemBucket}/fake-provider-cert.pem`;
   }
 
   if (process.env.PROVIDER_HTTP_PORT) {
