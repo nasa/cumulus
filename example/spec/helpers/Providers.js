@@ -42,8 +42,8 @@ const buildFtpProvider = async (postfix = '') => {
 };
 
 const fakeProviderPortMap = {
-  http: 3030,
-  https: 4040
+  http: process.env.PROVIDER_HTTP_PORT || 3030,
+  https: process.env.PROVIDER_HTTPS_PORT || 4040
 };
 
 const buildHttpOrHttpsProvider = async (postfix = '', protocol = 'http', systemBucket) => {
@@ -63,10 +63,6 @@ const buildHttpOrHttpsProvider = async (postfix = '', protocol = 'http', systemB
       Key: 'fake-provider-cert.pem'
     });
     provider.certificateUri = `s3://${systemBucket}/fake-provider-cert.pem`;
-  }
-
-  if (process.env.PROVIDER_HTTP_PORT) {
-    provider.port = Number(process.env.PROVIDER_HTTP_PORT);
   }
 
   return provider;
