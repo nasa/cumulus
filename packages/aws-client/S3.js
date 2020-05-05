@@ -4,6 +4,7 @@ const path = require('path');
 const pMap = require('p-map');
 const pRetry = require('p-retry');
 const pump = require('pump');
+const range = require('lodash/range');
 const url = require('url');
 
 const {
@@ -262,11 +263,10 @@ exports.promiseS3Upload = improveStackTrace(
  * @returns {Promise<string>} - returns filename if successful
  */
 exports.downloadS3File = (s3Obj, filepath) => {
-  const s3 = awsServices.s3();
   const fileWriteStream = fs.createWriteStream(filepath);
 
   return new Promise((resolve, reject) => {
-    const objectReadStream = s3.getObject(s3Obj).createReadStream();
+    const objectReadStream = awsServices.s3().getObject(s3Obj).createReadStream();
 
     pump(objectReadStream, fileWriteStream, (err) => {
       if (err) reject(err);
@@ -436,10 +436,8 @@ exports.getS3ObjectReadStreamAsync = (bucket, key) =>
 * @returns {Promise} returns the response from `S3.headObject` as a promise
 **/
 exports.fileExists = async (bucket, key) => {
-  const s3 = awsServices.s3();
-
   try {
-    const r = await s3.headObject({ Key: key, Bucket: bucket }).promise();
+    const r = await awsServices.s3().headObject({ Key: key, Bucket: bucket }).promise();
     return r;
   } catch (e) {
     // if file is not return false
@@ -456,7 +454,7 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
     Bucket: s3Obj.Bucket,
     Key: s3Obj.Key
   }));
-  const s3 = awsServices.s3();
+
   let i = 0;
   const n = s3Objs.length;
   log.info(`Starting download of ${n} keys to ${dir}`);
@@ -465,7 +463,7 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
     const file = fs.createWriteStream(filename);
     const opts = Object.assign(s3Obj, s3opts);
     return new Promise((resolve, reject) => {
-      s3.getObject(opts)
+      awsServices.s3().getObject(opts)
         .createReadStream()
         .pipe(file)
         .on('finish', () => {
@@ -710,3 +708,108 @@ exports.getFileBucketAndKey = (pathParams) => {
  */
 exports.createBucket = (Bucket) =>
   awsServices.s3().createBucket({ Bucket }).promise();
+
+const GB = 1024 * 1024 * 1024;
+
+const createMultipartCopyObjectParts = (size, maxUploadSize = 5 * GB) => {
+  const numberOfFullParts = Math.floor(size / maxUploadSize);
+
+  // Build the list of full-size upload parts
+  const parts = range(numberOfFullParts).map((x) => {
+    const firstByte = x * maxUploadSize;
+    const lastByte = firstByte + maxUploadSize - 1;
+
+    return {
+      PartNumber: x + 1,
+      CopySourceRange: `bytes=${firstByte}-${lastByte}`
+    };
+  });
+
+  // If necessary, build the last, not-full-size upload part
+  if (size % maxUploadSize !== 0) {
+    const firstByte = numberOfFullParts * maxUploadSize;
+    const lastByte = size - 1;
+
+    parts.push({
+      PartNumber: numberOfFullParts + 1,
+      CopySourceRange: `bytes=${firstByte}-${lastByte}`
+    });
+  }
+
+  return parts;
+};
+exports.createMultipartCopyObjectParts = createMultipartCopyObjectParts;
+
+const createMultipartUpload = async (params) => {
+  const response = await awsServices.s3().createMultipartUpload(params).promise();
+  return response.UploadId;
+};
+
+const completeMultipartUpload = async (params) => {
+  await awsServices.s3().completeMultipartUpload(params).promise();
+};
+
+const abortMultipartUpload = async (params) => {
+  await awsServices.s3().abortMultipartUpload(params).promise();
+};
+
+const uploadPartCopy = async (params) => {
+  const response = await awsServices.s3().uploadPartCopy(params).promise();
+  return response.ETag;
+};
+
+exports.multipartCopyObject = async (params = {}) => {
+  const {
+    sourceBucket,
+    sourceKey,
+    destinationBucket,
+    destinationKey
+  } = params;
+
+  const objectSize = await exports.getObjectSize(sourceBucket, sourceKey);
+
+  const uploadId = await createMultipartUpload({
+    Bucket: destinationBucket,
+    Key: destinationKey
+  });
+
+  try {
+    const parts = createMultipartCopyObjectParts(objectSize);
+
+    const promisedUploads = parts.map(
+      async (part) => {
+        const eTag = await uploadPartCopy({
+          ...part,
+          UploadId: uploadId,
+          Bucket: destinationBucket,
+          Key: destinationKey,
+          CopySource: `${sourceBucket}/${sourceKey}`
+        });
+
+        return {
+          ETag: eTag,
+          PartNumber: part.PartNumber
+        };
+      }
+    );
+
+    const uploads = await Promise.all(promisedUploads);
+
+    await completeMultipartUpload({
+      Bucket: destinationBucket,
+      Key: destinationKey,
+      MultipartUpload: {
+        Parts: uploads
+      },
+      UploadId: uploadId
+    });
+  } catch (error) {
+    await abortMultipartUpload({
+      Bucket: destinationBucket,
+      Key: destinationKey,
+      UploadId: uploadId
+    });
+
+    throw error;
+  }
+};
