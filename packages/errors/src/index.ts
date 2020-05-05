@@ -126,3 +126,5 @@ export const InvalidRegexError = createErrorType('InvalidRegexError');
 export const UnmatchedRegexError = createErrorType('UnmatchedRegexError');
 
 export const ValidationError = createErrorType('ValidationError');
+
+export const EcsStartTaskError = createErrorType('EcsStartTaskError');
