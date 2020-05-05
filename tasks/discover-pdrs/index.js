@@ -64,9 +64,7 @@ const discoverPdrs = async ({ config }) => {
  * @param {Function} callback - an AWS Lambda handler
  * @returns {undefined} - does not return a value
  */
-const handler = async (event, context) => {
-  return runCumulusTask(discoverPdrs, event, context);
-};
+const handler = async (event, context) => runCumulusTask(discoverPdrs, event, context);
 
 module.exports = {
   discoverPdrs,
