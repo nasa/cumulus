@@ -42,8 +42,8 @@ const buildFtpProvider = async (postfix = '') => {
 };
 
 const fakeProviderPortMap = {
-  http: process.env.PROVIDER_HTTP_PORT || 3030,
-  https: process.env.PROVIDER_HTTPS_PORT || 4040
+  http: process.env.PROVIDER_HTTP_PORT ? Number(process.env.PROVIDER_HTTP_PORT) : 3030,
+  https: process.env.PROVIDER_HTTPS_PORT ? Number(process.env.PROVIDER_HTTPS_PORT) : 4040,
 };
 
 const buildHttpOrHttpsProvider = async (postfix = '', protocol = 'http', systemBucket) => {
