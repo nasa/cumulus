@@ -6,6 +6,7 @@ const test = require('ava');
 const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const { EcsStartTaskError } = require('@cumulus/errors');
 
 const { AsyncOperation } = require('../../models');
 
@@ -153,24 +154,23 @@ test.serial('The AsyncOperation.start() method starts an ECS task with the corre
   t.is(environmentOverrides.payloadUrl, `s3://${systemBucket}/${asyncOperationModel.stackName}/async-operation-payloads/${id}.json`);
 });
 
-test('The AsyncAdapter.start() method sets the output if it is unable to create an ECS task', async (t) => {
+test('The AsyncOperation.start() method throws error and updates operation if it is unable to create an ECS task', async (t) => {
   stubbedEcsRunTaskResult = {
     tasks: [],
     failures: [{ arn: randomString(), reason: 'out of cheese' }]
   };
 
-  const { id } = await asyncOperationModel.start({
+  await t.throwsAsync(asyncOperationModel.start({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
     lambdaName: randomString(),
     description: randomString(),
     operationType: 'ES Index',
     payload: {}
+  }), {
+    instanceOf: EcsStartTaskError,
+    message: 'Failed to start AsyncOperation: out of cheese'
   });
-
-  const { output } = await asyncOperationModel.get({ id });
-  const parsedOutput = JSON.parse(output);
-  t.is(parsedOutput.message, 'Failed to start AsyncOperation: out of cheese');
 });
 
 test.serial('The AsyncOperation.start() method writes a new record to DynamoDB', async (t) => {

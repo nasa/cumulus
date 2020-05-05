@@ -47,6 +47,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated POST endpoint for `/rules`:
     - Return a 400 response if rule `name` is invalid
     - Return a 400 response if rule `type` is invalid
+- **CUMULUS-1891**
+  - Updated the following endpoints using async operations to return a 503 error if the ECS task  cannot be started and a 500 response for a non-specific error:
+    - POST `/replays`
+    - POST `/bulkDelete`
+    - POST `/elasticsearch/index-from-database`
+    - POST `/granules/bulk`
 
 ### Fixed
 

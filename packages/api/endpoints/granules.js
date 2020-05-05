@@ -3,9 +3,12 @@
 const lodashGet = require('lodash/get');
 const pMap = require('p-map');
 const router = require('express-promise-router')();
+
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
+
+const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const Search = require('../es/search').Search;
 const indexer = require('../es/indexer');
 const models = require('../models');
@@ -223,39 +226,33 @@ async function bulk(req, res) {
     description = `Bulk run on ${payload.workflowName}`;
   }
 
-  try {
-    const asyncOperation = await asyncOperationModel.start({
-      asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
-      cluster: process.env.EcsCluster,
-      lambdaName: process.env.BulkOperationLambda,
-      description,
-      operationType: 'Bulk Granules',
-      payload: {
-        payload,
-        type: 'BULK_GRANULE',
-        granulesTable: process.env.GranulesTable,
-        system_bucket: process.env.system_bucket,
-        stackName: process.env.stackName,
-        invoke: process.env.invoke,
-        esHost: process.env.METRICS_ES_HOST,
-        esUser: process.env.METRICS_ES_USER,
-        esPassword: process.env.METRICS_ES_PASS
-      },
-      esHost: process.env.ES_HOST
-    });
+  const asyncOperation = await asyncOperationModel.start({
+    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+    cluster: process.env.EcsCluster,
+    lambdaName: process.env.BulkOperationLambda,
+    description,
+    operationType: 'Bulk Granules',
+    payload: {
+      payload,
+      type: 'BULK_GRANULE',
+      granulesTable: process.env.GranulesTable,
+      system_bucket: process.env.system_bucket,
+      stackName: process.env.stackName,
+      invoke: process.env.invoke,
+      esHost: process.env.METRICS_ES_HOST,
+      esUser: process.env.METRICS_ES_USER,
+      esPassword: process.env.METRICS_ES_PASS
+    },
+    esHost: process.env.ES_HOST
+  });
 
-    return res.send(asyncOperation);
-  } catch (err) {
-    if (err.name !== 'EcsStartTaskError') throw err;
-
-    return res.boom.serverUnavailable(`Failed to run ECS task: ${err.message}`);
-  }
+  return res.send(asyncOperation);
 }
 
 router.get('/:granuleName', get);
 router.get('/', list);
 router.put('/:granuleName', put);
-router.post('/bulk', bulk);
+router.post('/bulk', bulk, asyncOperationEndpointErrorHandler);
 router.delete('/:granuleName', del);
 
 module.exports = router;
