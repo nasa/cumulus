@@ -233,7 +233,6 @@ const parsePdr = async ({ config, input }) => {
  *
  * @param {Object} event - a Cumulus Message
  * @param {Object} context - an AWS Lambda context
- * @param {Function} callback - an AWS Lambda handler
  * @returns {undefined} - does not return a value
  */
 async function handler(event, context) {

@@ -177,7 +177,6 @@ exports.checkPdrStatuses = checkPdrStatuses;
  *
  * @param {Object} event - a Cumulus Message
  * @param {Object} context - an AWS Lambda context
- * @param {Function} callback - an AWS Lambda handler
  * @returns {undefined} - does not return a value
  */
 function handler(event, context) {

@@ -285,7 +285,6 @@ const discoverGranules = async ({ config }) => {
  *
  * @param {Object} event - a Cumulus Message
  * @param {Object} context - an AWS Lambda context
- * @param {Function} callback - an AWS Lambda handler
  * @returns {undefined} - does not return a value
  */
 const handler = async (event, context) => runCumulusTask(discoverGranules, event, context);
