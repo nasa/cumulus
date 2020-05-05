@@ -2,12 +2,17 @@
 
 const test = require('ava');
 const request = require('supertest');
+const sinon = require('sinon');
+
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { AccessToken } = require('../../models');
+const { EcsStartTaskError } = require('@cumulus/errors');
+
+const AccessToken = require('../../models/access-tokens');
+const AsyncOperation = require('../../models/async-operation');
 const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../lib/testUtils');
 
 let accessTokenModel;
@@ -59,4 +64,36 @@ test.serial('POST /bulkDelete returns a 401 status code if valid authorization i
     .expect(401);
 
   t.is(response.status, 401);
+});
+
+test.serial('request to /bulkDelete endpoint returns 500 if starting ECS task throws unexpected error', async (t) => {
+  const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').throws(
+    new Error('failed to start')
+  );
+
+  try {
+    const response = await request(app)
+      .post('/bulkDelete')
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`);
+    t.is(response.status, 500);
+  } finally {
+    asyncOperationStartStub.restore();
+  }
+});
+
+test.serial('request to /bulkDelete endpoint returns 503 if starting ECS task throws unexpected error', async (t) => {
+  const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').throws(
+    new EcsStartTaskError('failed to start')
+  );
+
+  try {
+    const response = await request(app)
+      .post('/bulkDelete')
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`);
+    t.is(response.status, 503);
+  } finally {
+    asyncOperationStartStub.restore();
+  }
 });

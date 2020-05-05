@@ -21,6 +21,7 @@ const { CMR } = require('@cumulus/cmr-client');
 const {
   metadataObjectFromCMRFile
 } = require('@cumulus/cmrjs/cmr-utils');
+const { EcsStartTaskError } = require('@cumulus/errors');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 
@@ -41,6 +42,7 @@ const {
 const { Search } = require('../../es/search');
 
 process.env.AccessTokensTable = randomId('token');
+process.env.AsyncOperationsTable = randomId('async');
 process.env.CollectionsTable = randomId('collection');
 process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
@@ -102,7 +104,7 @@ let esIndex;
 let accessTokenModel;
 let granuleModel;
 let collectionModel;
-let accessToken;
+let jwtAuthToken;
 
 test.before(async (t) => {
   esIndex = randomId('esindex');
@@ -136,7 +138,7 @@ test.before(async (t) => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  accessToken = await createFakeJwtAuthToken({ accessTokenModel, username });
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
   // Store the CMR password
   process.env.cmr_password_secret_name = randomString();
@@ -194,7 +196,7 @@ test.serial('default returns list of granules', async (t) => {
   const response = await request(app)
     .get('/granules')
     .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${accessToken}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
   const { meta, results } = response.body;
@@ -310,7 +312,7 @@ test.serial('GET returns an existing granule', async (t) => {
   const response = await request(app)
     .get(`/granules/${t.context.fakeGranules[0].granuleId}`)
     .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${accessToken}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
   const { granuleId } = response.body;
@@ -321,7 +323,7 @@ test.serial('GET returns a 404 response if the granule is not found', async (t) 
   const response = await request(app)
     .get('/granules/unknownGranule')
     .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${accessToken}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(404);
 
   t.is(response.status, 404);
@@ -333,7 +335,7 @@ test.serial('PUT fails if action is not supported', async (t) => {
   const response = await request(app)
     .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
     .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${accessToken}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ action: 'someUnsupportedAction' })
     .expect(400);
 
@@ -346,7 +348,7 @@ test.serial('PUT fails if action is not provided', async (t) => {
   const response = await request(app)
     .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
     .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${accessToken}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
 
   t.is(response.status, 400);
@@ -377,7 +379,7 @@ test.serial('reingest a granule', async (t) => {
   const response = await request(app)
     .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
     .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${accessToken}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ action: 'reingest' })
     .expect(200);
 
@@ -425,7 +427,7 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   const response = await request(app)
     .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
     .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${accessToken}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
       action: 'applyWorkflow',
       workflow: 'inPlaceWorkflow',
@@ -456,7 +458,7 @@ test.serial('remove a granule from CMR', async (t) => {
   const response = await request(app)
     .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
     .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${accessToken}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ action: 'removeFromCmr' })
     .expect(200);
 
@@ -489,7 +491,7 @@ test.serial('remove a granule from CMR with launchpad authentication', async (t)
   const response = await request(app)
     .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
     .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${accessToken}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ action: 'removeFromCmr' })
     .expect(200);
 
@@ -513,7 +515,7 @@ test.serial('DELETE deleting an existing granule that is published will fail', a
   const response = await request(app)
     .delete(`/granules/${t.context.fakeGranules[0].granuleId}`)
     .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${accessToken}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
 
   t.is(response.status, 400);
@@ -575,7 +577,7 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
   const response = await request(app)
     .delete(`/granules/${newGranule.granuleId}`)
     .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${accessToken}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
   t.is(response.status, 200);
@@ -613,7 +615,7 @@ test('DELETE for a granule with a file not present in S3 succeeds', async (t) =>
   const response = await request(app)
     .delete(`/granules/${newGranule.granuleId}`)
     .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${accessToken}`);
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
 
   t.is(response.status, 200);
 });
@@ -681,7 +683,7 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
       const response = await request(app)
         .put(`/granules/${newGranule.granuleId}`)
         .set('Accept', 'application/json')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Authorization', `Bearer ${jwtAuthToken}`)
         .send({
           action: 'move',
           destinations
@@ -778,7 +780,7 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
   const response = await request(app)
     .put(`/granules/${newGranule.granuleId}`)
     .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${accessToken}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
       action: 'move',
       destinations
@@ -869,7 +871,7 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
   const response = await request(app)
     .put(`/granules/${newGranule.granuleId}`)
     .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${accessToken}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
       action: 'move',
       destinations
@@ -935,7 +937,7 @@ test.serial('PUT with action move returns failure if one granule file exists', a
   const response = await request(app)
     .put(`/granules/${granule.granuleId}`)
     .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${accessToken}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
     .expect(409);
 
@@ -973,7 +975,7 @@ test('PUT with action move returns failure if more than one granule file exists'
   const response = await request(app)
     .put(`/granules/${granule.granuleId}`)
     .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${accessToken}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
     .expect(409);
 
@@ -984,4 +986,44 @@ test('PUT with action move returns failure if more than one granule file exists'
 
   filesExistingStub.restore();
   moveGranuleStub.restore();
+});
+
+test.serial('request to /granules/bulk endpoint returns 500 if starting ECS task throws unexpected error', async (t) => {
+  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').throws(
+    new Error('failed to start')
+  );
+
+  try {
+    const response = await request(app)
+      .post('/granules/bulk')
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send({
+        workflowName: 'workflowName',
+        ids: [1, 2, 3]
+      });
+    t.is(response.status, 500);
+  } finally {
+    asyncOperationStartStub.restore();
+  }
+});
+
+test.serial('request to /granules/bulk endpoint returns 503 if starting ECS task throws unexpected error', async (t) => {
+  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').throws(
+    new EcsStartTaskError('failed to start')
+  );
+
+  try {
+    const response = await request(app)
+      .post('/granules/bulk')
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send({
+        workflowName: 'workflowName',
+        ids: [1, 2, 3]
+      });
+    t.is(response.status, 503);
+  } finally {
+    asyncOperationStartStub.restore();
+  }
 });
