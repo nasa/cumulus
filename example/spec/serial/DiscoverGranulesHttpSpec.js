@@ -53,18 +53,13 @@ describe('The Discover Granules workflow with http Protocol', () => {
     testId = createTimestampedTestId(config.stackName, 'DiscoverGranules');
     testSuffix = createTestSuffix(testId);
     collection = { name: `http_testcollection${testSuffix}`, version: '001' };
-    try {
-      provider = await buildHttpOrHttpsProvider(testSuffix);
+    provider = await buildHttpOrHttpsProvider(testSuffix);
 
-      // populate collections and providers
-      await Promise.all([
-        addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-        createProvider(config.stackName, provider)
-      ]);
-    } catch (e) {
-      console.log('ERROR', e);
-      throw e;
-    }
+    // populate collections and providers
+    await Promise.all([
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      createProvider(config.stackName, provider)
+    ]);
 
     collection = JSON.parse((await apiTestUtils.getCollection({
       prefix: config.stackName,
