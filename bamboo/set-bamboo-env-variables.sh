@@ -44,6 +44,7 @@ declare -a param_list=(
   "bamboo_USE_NPM_PACKAGES"
   "bamboo_USE_TERRAFORM_ZIPS"
   "bamboo_VERSION_FLAG"
+  "bamboo_SKIP_NPM_PUBLISH"
 )
 regex='bamboo(_SECRET)?_(.*)'
 
