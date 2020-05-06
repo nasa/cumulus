@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sf-sqs-report",
-  "version": "1.21.0",
+  "version": "1.22.1",
   "description": "Sends an incoming Cumulus message to SQS",
   "main": "index.js",
   "directories": {
@@ -33,12 +33,12 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "1.21.0",
+    "@cumulus/aws-client": "1.22.1",
     "@cumulus/cumulus-message-adapter-js": "^1.1.0",
     "lodash": "4.17.15"
   },
   "devDependencies": {
-    "@cumulus/common": "1.21.0",
+    "@cumulus/common": "1.22.1",
     "ava": "^2.1.0",
     "babel-loader": "^8.0.6",
     "babel-plugin-source-map-support": "^2.1.1",
