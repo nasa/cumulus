@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const moment = require('moment');
 const isNumber = require('lodash/isNumber');
 
 const { randomString } = require('@cumulus/common/test-utils');
@@ -69,7 +70,7 @@ test('create() sets an expirationTime if none is provided', async (t) => {
 
   t.is(accessTokenRecord.accessToken, accessToken);
   t.true(isNumber(accessTokenRecord.expirationTime));
-  t.true(new Date(accessTokenRecord.expirationTime * 1000) > new Date());
+  t.true(accessTokenRecord.expirationTime > moment().unix());
 });
 
 test('get() throws error for missing record', async (t) => {

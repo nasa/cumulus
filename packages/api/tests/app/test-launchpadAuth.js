@@ -29,8 +29,8 @@ test.before(async () => {
   process.env.AccessTokensTable = randomId('AccessTokens');
   process.env.system_bucket = randomId('bucket');
   process.env.stackName = randomId('stack');
-
   process.env.ES_INDEX = randomId();
+
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
@@ -43,6 +43,13 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
+  delete process.env.oauth_user_group;
+  delete process.env.OAUTH_PROVIDER;
+  delete process.env.AccessTokensTable;
+  delete process.env.system_bucket;
+  delete process.env.stackName;
+  delete process.env.ES_INDEX;
+
   await accessTokenModel.deleteTable();
 
   await secretsManager().deleteSecret({
