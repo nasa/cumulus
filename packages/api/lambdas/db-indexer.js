@@ -174,10 +174,16 @@ async function indexRecord(esClient, record) {
 
   if (record.eventName === 'REMOVE') {
     const parentId = getParentId(indexType, oldData);
-    return performDelete(esClient, indexType, id, parentId);
+    console.time('performDelete');
+    const deletedObject = await performDelete(esClient, indexType, id, parentId);
+    console.timeEnd('performDelete');
+    return deletedObject;
   }
 
-  return performIndex(indexFnName, esClient, data);
+  console.time('performIndex');
+  const response = await performIndex(indexFnName, esClient, data);
+  console.timeEnd('performIndex');
+  return response;
 }
 
 /**
