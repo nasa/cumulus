@@ -175,7 +175,7 @@ async function changeIndex(req, res) {
   }).catch((err) =>
     res.boom.badRequest(`Error removing alias ${aliasName} from index ${currentIndex} and adding alias to ${newIndex}: ${err}`));
 
-  let message = `Reindex success - alias ${aliasName} now pointing to ${newIndex}`;
+  let message = `Change index success - alias ${aliasName} now pointing to ${newIndex}`;
 
   if (deleteSource) {
     await esClient.indices.delete({ index: currentIndex });

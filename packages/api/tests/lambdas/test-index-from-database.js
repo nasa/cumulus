@@ -154,7 +154,7 @@ test('No error is thrown if nothing is in the database', async (t) => {
   const { esAlias } = t.context;
 
   t.notThrows(async () => indexFromDatabase.indexFromDatabase({
-    esIndex: esAlias,
+    indexName: esAlias,
     tables
   }));
 });
@@ -175,7 +175,7 @@ test('Lambda successfully indexes records of all types', async (t) => {
   ]);
 
   await indexFromDatabase.handler({
-    index: esAlias,
+    indexName: esAlias,
     tables
   });
 
@@ -222,7 +222,7 @@ test.serial('failure in indexing record of specific type should not prevent inde
   let searchResults;
   try {
     await indexFromDatabase.handler({
-      index: esAlias,
+      indexName: esAlias,
       tables
     });
 
@@ -270,7 +270,7 @@ test.serial('failure in indexing record of one type should not prevent indexing 
   let searchResults;
   try {
     await indexFromDatabase.handler({
-      index: esAlias,
+      indexName: esAlias,
       tables
     });
 
