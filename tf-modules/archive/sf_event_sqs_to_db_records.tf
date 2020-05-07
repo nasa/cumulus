@@ -88,8 +88,6 @@ resource "aws_iam_role_policy" "sf_event_sqs_to_db_records_lambda_role_policy" {
   policy = data.aws_iam_policy_document.sf_event_sqs_to_db_records_lambda.json
 }
 
-
-
 resource "aws_sqs_queue" "sf_event_sqs_to_db_records_input_queue" {
   name = "${var.prefix}-sfEventSqsToDbRecordsInputQueue"
   receive_wait_time_seconds  = 20
