@@ -46,7 +46,8 @@ const fakeProviderPortMap = {
   https: process.env.PROVIDER_HTTPS_PORT ? Number(process.env.PROVIDER_HTTPS_PORT) : 4040,
 };
 
-const buildHttpOrHttpsProvider = async (postfix = '', protocol = 'http', systemBucket) => {
+const buildHttpOrHttpsProvider = async (postfix, systemBucket, protocol = 'http') => {
+  if (postfix === undefined) throw new Error('Test setup should be isolated, specify postfix!');
   const provider = {
     id: `${protocol}_provider${postfix}`,
     protocol,
@@ -56,6 +57,7 @@ const buildHttpOrHttpsProvider = async (postfix = '', protocol = 'http', systemB
   };
 
   if (protocol === 'https') {
+    if (systemBucket === undefined) throw new Error('HTTPS provider must have systembucket specified!');
     // copy certificate to system bucket to avoid permissions issues
     await s3CopyObject({
       CopySource: `${process.env.FAKE_PROVIDER_CONFIG_BUCKET}/fake-provider-cert.pem`,

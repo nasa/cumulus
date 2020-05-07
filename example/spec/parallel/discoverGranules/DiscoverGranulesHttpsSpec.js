@@ -42,7 +42,7 @@ describe('The Discover Granules workflow with https Protocol', () => {
     testId = createTimestampedTestId(config.stackName, 'DiscoverGranulesHttps');
     testSuffix = createTestSuffix(testId);
     collection = { name: `https_testcollection${testSuffix}`, version: '001' };
-    provider = await buildHttpOrHttpsProvider(testSuffix, 'https', config.bucket);
+    provider = await buildHttpOrHttpsProvider(testSuffix, config.bucket, 'https');
 
     // populate collections and providers
     await Promise.all([
