@@ -56,7 +56,11 @@ Update the CHANGELOG.md. Put a header under the 'Unreleased' section with the ne
 
 Add a link reference for the github "compare" view at the bottom of the CHANGELOG.md, following the existing pattern. This link reference should create a link in the CHANGELOG's release header to changes in the corresponding release.
 
-### 5. Update Cumulus package API documentation
+### 5. Update DATA_MODEL_CHANGELOG.md
+
+Similar to #4, make sure the DATA_MODEL_CHANGELOG is updated if there are data model changes in the release, and the link reference at the end of the document is updated as appropriate.
+
+### 6. Update Cumulus package API documentation
 
 Update auto-generated API documentation for any Cumulus packages that have it:
 
@@ -64,7 +68,7 @@ Update auto-generated API documentation for any Cumulus packages that have it:
   npm run docs-build-packages
 ```
 
-### 6. Cut new version of Cumulus Documentation
+### 7. Cut new version of Cumulus Documentation
 
 If this is a backport, do not version documentation. For various reasons, we do not merge backports back to master, other than changelog notes. Doc changes will not be published to our documentation website.
 
@@ -78,14 +82,14 @@ Where `${release_version}` corresponds to the version tag `v1.2.3`, for example.
 
 Note: This is for 1.10.3 or later.
 
-### 7. Create a pull request against the minor version branch
+### 8. Create a pull request against the minor version branch
 
 Push the release branch to GitHub.
 Create a PR against the minor version base branch.
 Verify that the Bamboo build for the PR succeeds and then merge to the minor version base branch.
 You may delete your release branch after merging to the base branch.
 
-### 8. Create a git tag for the release
+### 9. Create a git tag for the release
 
 Check out the minor version base branch now that your changes are merged in.
 Ensure you are on the latest commit.
@@ -97,7 +101,7 @@ Create and push a new git tag:
   git push origin v1.x.x
 ```
 
-### 9. Running the deployment
+### 10. Running the deployment
 
 Publishing of new releases is handled by a Bamboo release plan and is manually triggered.
 
@@ -132,7 +136,7 @@ You should have been redirected to the `Branch Details` tab after creating the p
 
 Bamboo will build and run lint, audit and unit tests against that tagged release, publish the new packages to NPM, and then run the integration tests using those newly released packages.
 
-### 10. Create a new Cumulus release on github
+### 11. Create a new Cumulus release on github
 
 The CI release scripts will automatically create a release based on the release version tag, as well as uploading release artifacts to the Github release for the Terraform modules provided by Cumulus. The Terraform release artifacts include:
 
@@ -144,7 +148,7 @@ The CI release scripts will automatically create a release based on the release 
 
 Just make sure to verify the appropriate .zip files are present on Github after the release process is complete.
 
-### 11. Merge base branch back to master
+### 12. Merge base branch back to master
 
 Finally, you need to reproduce the version update changes back to master.
 

@@ -13,7 +13,7 @@ The documentation is accessible at <https://nasa.github.io/cumulus>.
 ## Navigating the Cumulus Docs
 
 * Cumulus API Documentation - [here](https://nasa.github.io/cumulus-api)
-* Cumulus Developer Documentation - [here](https://github.com/nasa/cumulus) - Readme's throughout the main repository.
+* Cumulus Developer Documentation - [here](https://github.com/nasa/cumulus) - READMEs throughout the main repository.
 * General Cumulus Documentation - [here](cumulus-docs-readme) <- you're here
 * Data Cookbooks - [here](data-cookbooks/about-cookbooks)
 * Operator Docs - [here](operator-docs/about-operator-docs)

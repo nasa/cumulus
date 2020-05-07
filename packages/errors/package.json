@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/errors",
-  "version": "1.21.0",
+  "version": "1.22.1",
   "description": "Provides error classes for Cumulus",
   "keywords": [
     "GIBS",
@@ -10,11 +10,11 @@
   "engines": {
     "node": ">=10.16.3"
   },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "files": [
-    "./dist/**/*.js",
-    "./dist/**/*.d.ts"
+    "dist/**/*.js",
+    "dist/**/*.d.ts"
   ],
   "publishConfig": {
     "access": "public"

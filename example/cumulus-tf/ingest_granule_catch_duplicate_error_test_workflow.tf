@@ -195,7 +195,7 @@ module "ingest_granule_catch_duplicate_error_test_workflow" {
           "ErrorEquals": [
             "DuplicateFile"
           ],
-          "ResultPath": "$.meta.moveGranCaughtError",
+          "ResultPath": "$.exception",
           "Next": "WorkflowSucceeded"
         },
         {
