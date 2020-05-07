@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/logger",
-  "version": "1.21.0",
+  "version": "1.22.1",
   "description": "A log library for use on Cumulus",
   "keywords": [
     "GIBS",
@@ -10,11 +10,11 @@
   "engines": {
     "node": ">=10.16.3"
   },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "files": [
-    "./dist/**/*.js",
-    "./dist/**/*.d.ts"
+    "dist/**/*.js",
+    "dist/**/*.d.ts"
   ],
   "publishConfig": {
     "access": "public"
@@ -41,6 +41,7 @@
   },
   "devDependencies": {
     "@types/lodash.iserror": "^3.1.6",
+    "@types/node": "^10.16.3",
     "ava": "^2.1.0",
     "moment": "2.24.0",
     "typescript": "^3.8.3"
