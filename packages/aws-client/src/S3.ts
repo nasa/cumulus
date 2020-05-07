@@ -33,10 +33,8 @@ const S3_RATE_LIMIT = inTestMode() ? 1 : 20;
  *
  * @param {...string|Array<string>} args - the strings to join
  * @returns {string} the full S3 key
- *
- * @static
  */
-export function s3Join(...args: [string | string[], ...string[]]) {
+export const s3Join = (...args: [string | string[], ...string[]]) => {
   let tokens: string[];
   if (typeof args[0] === 'string') tokens = <string[]>args;
   else tokens = args[0];
@@ -53,7 +51,7 @@ export function s3Join(...args: [string | string[], ...string[]]) {
 
   if (tokens[tokens.length - 1].endsWith('/')) return `${key}/`;
   return key;
-}
+};
 
 /**
 * parse an s3 uri to get the bucket and key
@@ -571,7 +569,7 @@ export const listS3Objects = async (
  *
  * @static
  */
-export async function listS3ObjectsV2(params: AWS.S3.ListObjectsV2Request) {
+export const listS3ObjectsV2 = async (params: AWS.S3.ListObjectsV2Request) => {
   // Fetch the first list of objects from S3
   let listObjectsResponse = await s3().listObjectsV2(params).promise();
   let discoveredObjects = listObjectsResponse.Contents;
@@ -590,7 +588,7 @@ export async function listS3ObjectsV2(params: AWS.S3.ListObjectsV2Request) {
   }
 
   return discoveredObjects;
-}
+};
 
 /**
  * Calculate checksum for S3 Object

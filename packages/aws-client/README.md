@@ -298,7 +298,7 @@ Invoke a Lambda function
     * [.s3PutObjectTagging](#module_S3.s3PutObjectTagging) ⇒ <code>Promise</code>
     * [.getS3Object](#module_S3.getS3Object) ⇒ <code>Promise</code>
     * [.recursivelyDeleteS3Bucket](#module_S3.recursivelyDeleteS3Bucket) ⇒ <code>Promise</code>
-    * [.s3Join(...args)](#module_S3.s3Join) ⇒ <code>string</code>
+    * [.s3Join(args)](#module_S3.s3Join) ⇒ <code>string</code>
     * [.parseS3Uri(uri)](#module_S3.parseS3Uri) ⇒ <code>Object</code>
     * [.buildS3Uri(bucket, key)](#module_S3.buildS3Uri) ⇒ <code>string</code>
     * [.s3TagSetToQueryString(tagset)](#module_S3.s3TagSetToQueryString) ⇒ <code>string</code>
@@ -315,7 +315,7 @@ Invoke a Lambda function
     * [.uploadS3FileStream(fileStream, bucket, key, s3opts)](#module_S3.uploadS3FileStream) ⇒ <code>Promise</code>
     * [.listS3Objects(bucket, prefix, skipFolders)](#module_S3.listS3Objects) ⇒ <code>Promise</code>
     * [.listS3ObjectsV2(params)](#module_S3.listS3ObjectsV2) ⇒ <code>Promise.&lt;Array&gt;</code>
-    * [.calculateS3ObjectChecksum(params)](#module_S3.calculateS3ObjectChecksum) ⇒ <code>number</code> \| <code>string</code>
+    * [.calculateS3ObjectChecksum(params)](#module_S3.calculateS3ObjectChecksum) ⇒ <code>Promise.&lt;(number\|string)&gt;</code>
     * [.validateS3ObjectChecksum(params)](#module_S3.validateS3ObjectChecksum) ⇒ <code>Promise.&lt;boolean&gt;</code>
     * [.getFileBucketAndKey(pathParams)](#module_S3.getFileBucketAndKey) ⇒ <code>Array.&lt;string&gt;</code>
     * [.createBucket(Bucket)](#module_S3.createBucket) ⇒ <code>Promise</code>
@@ -439,7 +439,7 @@ Delete a bucket and all of its objects from S3
 
 <a name="module_S3.s3Join"></a>
 
-### S3.s3Join(...args) ⇒ <code>string</code>
+### S3.s3Join(args) ⇒ <code>string</code>
 Join strings into an S3 key without a leading slash or double slashes
 
 **Kind**: static method of [<code>S3</code>](#module_S3)  
@@ -447,7 +447,7 @@ Join strings into an S3 key without a leading slash or double slashes
 
 | Param | Type | Description |
 | --- | --- | --- |
-| ...args | <code>string</code> \| <code>Array.&lt;string&gt;</code> | the strings to join |
+| args | <code>string</code> \| <code>Array.&lt;string&gt;</code> | the strings to join |
 
 <a name="module_S3.parseS3Uri"></a>
 
@@ -680,11 +680,11 @@ https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#listObjectsV2-pr
 
 <a name="module_S3.calculateS3ObjectChecksum"></a>
 
-### S3.calculateS3ObjectChecksum(params) ⇒ <code>number</code> \| <code>string</code>
+### S3.calculateS3ObjectChecksum(params) ⇒ <code>Promise.&lt;(number\|string)&gt;</code>
 Calculate checksum for S3 Object
 
 **Kind**: static method of [<code>S3</code>](#module_S3)  
-**Returns**: <code>number</code> \| <code>string</code> - calculated checksum  
+**Returns**: <code>Promise.&lt;(number\|string)&gt;</code> - calculated checksum  
 
 | Param | Type | Description |
 | --- | --- | --- |
