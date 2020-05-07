@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-Limit concurrent Elasticsearch functions when doing an index from database
+  - Added a limit for concurrent Elasticsearch requests when doing an index from database operation
   - Added the `es_request_concurrency` parameter to the archive and cumulus Terraform modules
 
 ## [v1.22.1] 2020-05-04
