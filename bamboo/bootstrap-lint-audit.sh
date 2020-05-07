@@ -11,7 +11,7 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus, pull
   cd /cumulus/
   git fetch --all
   git checkout "$GIT_SHA"
-  rm package-lock.json || true
+  rm -f package-lock.json
 fi
 
 npm install --ignore-scripts --no-package-lock
