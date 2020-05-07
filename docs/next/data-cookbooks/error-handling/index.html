@@ -55,17 +55,51 @@
               }
             });
         </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"></header><article><div><span><h1><a class="anchor" aria-hidden="true" id="error-handling-in-workflows"></a><a href="#error-handling-in-workflows" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Error Handling in Workflows</h1>
-<p>Cumulus Workflow error handling is configurable via AWS Step Function definitions, which enable users to configure what the state machine does next when an exception is thrown. Read more in the AWS docs: <a href="https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html">How Step Functions Works: Error Handling</a>.</p>
-<p>Cumulus Workflow Tasks <em>should</em> throw errors and rely on the state machine logic to handle the error state. Errors and exceptions thrown in Cumulus Workflow Tasks using the Cumulus Message Adapter (CMA) are caught and rethrown by the CMA libraries <em>unless</em> the error name contains <code>WorkflowError</code>.</p>
-<p>The former (tasks which throw errors which are not <code>WorkflowError</code>s) is the expected behavior. However a <code>WorkflowError</code> can be used to handle errors that should <em>not</em> result in task failure.</p>
+<p>Cumulus Workflow error handling is configurable via AWS Step Function
+definitions, which enable users to configure what the state machine does next
+when an exception is thrown. Read more in the AWS docs:
+<a href="https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html">How Step Functions Works: Error Handling</a>.</p>
+<p>Cumulus Workflow Tasks <em>should</em> throw errors and rely on the state machine logic
+to handle the error state. Errors and exceptions thrown in Cumulus Workflow
+Tasks using the Cumulus Message Adapter (CMA) are caught and rethrown by the CMA
+libraries <em>unless</em> the error name contains <code>WorkflowError</code>.</p>
+<p>The former (tasks which throw errors which are not <code>WorkflowError</code>s) is the
+expected behavior. However a <code>WorkflowError</code> can be used to handle errors that
+should <em>not</em> result in task failure.</p>
 <h2><a class="anchor" aria-hidden="true" id="workflow-configuration"></a><a href="#workflow-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Workflow Configuration</h2>
 <p>Some best practices for error handling in Cumulus Workflows are:</p>
 <ul>
-<li>States should include a <code>Catch</code> configuration object which defines the <code>ResultPath</code> to be <code>$.exception</code>. This passes along the entire Cumulus message to the next state with the addition of the <code>Error</code> and <code>Cause</code> details of the thrown error in the <code>exception</code> key. Excluding this <code>Catch</code> configuration means that any execution records saved for your failed workflows will not include details about the exceptions.</li>
-<li>States may be configured to <code>Retry</code> a task on specified failures to handle transient issues, such as those arising from resource allocation throttling, instead of failing the entire workflow. Cumulus supports the AWS retry configuration outlined <a href="https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html">here</a> and an example is provided in the <code>HelloWorld</code> step of the <code>RetryPassWorkflow</code> workflow defined in the Cumulus repository's <a href="https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/retry_pass_workflow.tf">example workflow <code>retry_pass_workflow</code></a>.</li>
-<li>Tasks downstream of failed tasks should understand how to pass along exceptions if required. If a task throws an error which is caught by the workflow configuration and passed to another state which also uses the CMA, the CMA overrides the exception key to <code>&quot;None&quot;</code> so the exception will not be passed to downstream tasks after the next state. This works if the exception is not needed in downstream tasks. If the exception is needed in downstream tasks, you need to re-attach the exception to the Cumulus message by setting the <code>ResultPath</code> to be <code>$.exception</code> for the task where the error is initially caught. In the example below, <code>CnmResponseFail</code> catches and re-attaches the error to the message.</li>
-<li>If multiple downstream tasks should run after a workflow task has thrown an error, you can create a separate failure branch of your workflow by chaining tasks that catch and re-attach the error as described above.</li>
-<li>Tasks that are lambdas should be configured to retry in the event of a Lambda Service Exception. See <a href="https://docs.aws.amazon.com/step-functions/latest/dg/bp-lambda-serviceexception.html">this documentation</a> on configuring your workflow to handle transient lambda errors.</li>
+<li>States should include a <code>Catch</code> configuration object which defines the
+<code>ResultPath</code> to be <code>$.exception</code>. This passes along the entire Cumulus message
+to the next state with the addition of the <code>Error</code> and <code>Cause</code> details of the
+thrown error in the <code>exception</code> key. Excluding this <code>Catch</code> configuration
+means that any execution records saved for your failed workflows will not
+include details about the exceptions.</li>
+<li>States may be configured to <code>Retry</code> a task on specified failures to handle
+transient issues, such as those arising from resource allocation throttling,
+instead of failing the entire workflow. Cumulus supports the AWS retry
+configuration outlined
+<a href="https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html">here</a>
+and an example is provided in the <code>HelloWorld</code> step of the <code>RetryPassWorkflow</code>
+workflow defined in the Cumulus repository's
+<a href="https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/retry_pass_workflow.tf">example workflow <code>retry_pass_workflow</code></a>.</li>
+<li>Tasks downstream of failed tasks should understand how to pass along
+exceptions if required. If a task throws an error which is caught by the
+workflow configuration and passed to another state which also uses the CMA,
+the CMA overrides the exception key to <code>&quot;None&quot;</code> so the exception will not be
+passed to downstream tasks after the next state. This works if the exception
+is not needed in downstream tasks. If the exception is needed in downstream
+tasks, you need to re-attach the exception to the Cumulus message by setting
+the <code>ResultPath</code> to be <code>$.exception</code> for the task where the error is initially
+caught. In the example below, <code>CnmResponseFail</code> catches and re-attaches the
+error to the message.</li>
+<li>If multiple downstream tasks should run after a workflow task has thrown an
+error, you can create a separate failure branch of your workflow by chaining
+tasks that catch and re-attach the error as described above.</li>
+<li>Tasks that are lambdas should be configured to retry in the event of a Lambda
+Service Exception. See
+<a href="https://docs.aws.amazon.com/step-functions/latest/dg/bp-lambda-serviceexception.html">this documentation</a>
+on configuring your workflow to handle transient lambda errors.</li>
 </ul>
 <p><strong>Example <code>state machine definition</code>:</strong></p>
 <pre><code class="hljs css language-json">{
