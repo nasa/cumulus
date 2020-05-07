@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+Limit concurrent Elasticsearch functions when doing an index from database
+  - Added the `es_request_concurrency` parameter to the archive and cumulus Terraform modules
+
 ## [v1.22.1] 2020-05-04
 
 **Note**: v1.22.0 was not released as a package due to npm/release concerns.  Users upgrading to 1.22.x should start with 1.22.1
