@@ -5,7 +5,7 @@
     "lib": ["ES2018"],
     "declaration": true,
     "sourceMap": true,
-    "removeComments": true,
+    "removeComments": false,
     "strict": true,
     "alwaysStrict": true,
     "noUnusedLocals": true,
