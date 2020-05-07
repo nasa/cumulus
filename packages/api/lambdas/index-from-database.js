@@ -71,7 +71,7 @@ async function indexModel({
 
 async function indexFromDatabase(event) {
   const {
-    index: esIndex,
+    indexName: esIndex,
     tables,
     esHost = process.env.ES_HOST
   } = event;

@@ -112,6 +112,8 @@ module "cumulus" {
 
   token_secret = var.token_secret
 
+  es_request_concurrency = var.es_request_concurrency
+
   archive_api_users = [
     "chuckwondo",
     "jennyhliu",

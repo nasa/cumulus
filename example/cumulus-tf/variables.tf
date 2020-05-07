@@ -257,3 +257,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "es_request_concurrency" {
+  type = number
+  default = 10
+  description = "Maximum number of concurrent requests to send to Elasticsearch. Used in index-from-database operation"
+}

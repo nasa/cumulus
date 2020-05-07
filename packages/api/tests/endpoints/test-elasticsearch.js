@@ -436,7 +436,7 @@ test.serial('Change index and delete source index', async (t) => {
     .expect(200);
 
   t.is(response.body.message,
-    `Reindex success - alias ${aliasName} now pointing to ${destIndex} and index ${sourceIndex} deleted`);
+    `Change index success - alias ${aliasName} now pointing to ${destIndex} and index ${sourceIndex} deleted`);
   t.is((await esClient.indices.exists({ index: sourceIndex })).body, false);
 
   await esClient.indices.delete({ index: destIndex });
