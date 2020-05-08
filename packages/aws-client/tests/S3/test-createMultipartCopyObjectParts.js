@@ -80,6 +80,7 @@ test('buildUploadPartCopyParams returns the correct params', (t) => {
       sourceBucket: 'source-bucket',
       sourceKey: 'source-key',
       destinationBucket: 'destination-bucket',
+      destinationKey: 'destination-key',
       chunks: [
         { start: 0, end: 5 },
         { start: 6, end: 10 }
@@ -88,12 +89,14 @@ test('buildUploadPartCopyParams returns the correct params', (t) => {
     [
       {
         Bucket: 'destination-bucket',
+        Key: 'destination-key',
         PartNumber: 1,
         CopySource: '/source-bucket/source-key',
         CopySourceRange: 'bytes=0-5'
       },
       {
         Bucket: 'destination-bucket',
+        Key: 'destination-key',
         PartNumber: 2,
         CopySource: '/source-bucket/source-key',
         CopySourceRange: 'bytes=6-10'
