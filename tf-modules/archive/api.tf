@@ -61,6 +61,7 @@ locals {
       log_destination_arn          = var.log_destination_arn
       collection_sns_topic_arn     = aws_sns_topic.report_collections_topic.arn
       auth_mode                    = "public"
+      ES_CONCURRENCY               = var.es_request_concurrency
     }
 }
 
