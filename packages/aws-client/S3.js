@@ -769,13 +769,16 @@ const completeMultipartUpload = async (params) => {
   await awsServices.s3().completeMultipartUpload(params).promise();
 };
 
-const abortMultipartUpload = async (params) => {
-  await awsServices.s3().abortMultipartUpload(params).promise();
-};
+const abortMultipartUpload = (params) =>
+  awsServices.s3().abortMultipartUpload(params).promise();
 
 const uploadPartCopy = async (params) => {
   const response = await awsServices.s3().uploadPartCopy(params).promise();
-  return response.ETag;
+
+  return {
+    ...response,
+    PartNumber: params.PartNumber
+  };
 };
 
 const buildUploadPartCopyParams = ({
@@ -796,58 +799,66 @@ const buildUploadPartCopyParams = ({
   }));
 exports.buildUploadPartCopyParams = buildUploadPartCopyParams;
 
-exports.multipartCopyObject = async (params = {}) => {
-  const {
-    sourceBucket,
-    sourceKey,
-    destinationBucket,
-    destinationKey
-  } = params;
+const buildCompleteMultipartUploadParams = ({
+  destinationBucket
+}) => ({
+  Bucket: destinationBucket
+});
+exports.buildCompleteMultipartUploadParams = buildCompleteMultipartUploadParams;
 
-  const objectSize = await exports.getObjectSize(sourceBucket, sourceKey);
+// exports.multipartCopyObject = async (params = {}) => {
+//   const {
+//     sourceBucket,
+//     sourceKey,
+//     destinationBucket,
+//     destinationKey
+//   } = params;
 
-  const uploadId = await createMultipartUpload({
-    Bucket: destinationBucket,
-    Key: destinationKey
-  });
+//   const uploadId = await createMultipartUpload({
+//     Bucket: destinationBucket,
+//     Key: destinationKey
+//   });
 
-  try {
-    const parts = createMultipartCopyObjectParts(objectSize);
+//   try {
+//     const objectSize = await exports.getObjectSize(sourceBucket, sourceKey);
 
-    const promisedUploads = parts.map(
-      async (part) => {
-        const eTag = await uploadPartCopy({
-          ...part,
-          UploadId: uploadId,
-          Bucket: destinationBucket,
-          Key: destinationKey,
-          CopySource: `${sourceBucket}/${sourceKey}`
-        });
+//     const chunks = createMultipartChunks(objectSize);
 
-        return {
-          ETag: eTag,
-          PartNumber: part.PartNumber
-        };
-      }
-    );
+//     const uploadPartCopyParams = buildUploadPartCopyParams({
+//       chunks,
+//       destinationBucket,
+//       destinationKey,
+//       sourceBucket,
+//       sourceKey,
+//       uploadId
+//     });
 
-    const uploads = await Promise.all(promisedUploads);
+//     const uploadPartCopyResponses = await Promise.all(
+//       uploadPartCopyParams.map(uploadPartCopy)
+//     );
 
-    await completeMultipartUpload({
-      Bucket: destinationBucket,
-      Key: destinationKey,
-      MultipartUpload: {
-        Parts: uploads
-      },
-      UploadId: uploadId
-    });
-  } catch (error) {
-    await abortMultipartUpload({
-      Bucket: destinationBucket,
-      Key: destinationKey,
-      UploadId: uploadId
-    });
+//     const completeMultipartUploadParams = buildCompleteMultipartUploadParams({
+//       uploadPartCopyResponses,
+//       destinationBucket,
+//       destinationKey,
+//       uploadId
+//     });
 
-    throw error;
-  }
-};
+//     await completeMultipartUpload({
+//       Bucket: destinationBucket,
+//       Key: destinationKey,
+//       MultipartUpload: {
+//         Parts: uploads
+//       },
+//       UploadId: uploadId
+//     });
+//   } catch (error) {
+//     await abortMultipartUpload({
+//       Bucket: destinationBucket,
+//       Key: destinationKey,
+//       UploadId: uploadId
+//     });
+
+//     throw error;
+//   }
+// };
