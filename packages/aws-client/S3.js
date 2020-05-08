@@ -785,8 +785,8 @@ const buildUploadPartCopyParams = ({
   sourceBucket,
   sourceKey,
   uploadId
-}) => {
-  return chunks.map(({ start, end }, index) => ({
+}) =>
+  chunks.map(({ start, end }, index) => ({
     UploadId: uploadId,
     Bucket: destinationBucket,
     Key: destinationKey,
@@ -794,7 +794,6 @@ const buildUploadPartCopyParams = ({
     CopySource: `/${sourceBucket}/${sourceKey}`,
     CopySourceRange: `bytes=${start}-${end}`
   }));
-};
 exports.buildUploadPartCopyParams = buildUploadPartCopyParams;
 
 exports.multipartCopyObject = async (params = {}) => {
