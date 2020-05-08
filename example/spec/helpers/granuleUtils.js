@@ -1,15 +1,17 @@
 'use strict';
 
 const fs = require('fs-extra');
+const get = require('lodash/get');
+const replace = require('lodash/fp/replace');
+const cloneDeep = require('lodash/cloneDeep');
+const path = require('path');
+const pWaitFor = require('p-wait-for');
+
 const { buildS3Uri, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
-const replace = require('lodash/fp/replace');
+const { listGranules, listDeletedGranules } = require('@cumulus/api-client/granules');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 const { thread } = require('@cumulus/common/util');
-const { listGranules } = require('@cumulus/api-client/granules');
-const path = require('path');
-const cloneDeep = require('lodash/cloneDeep');
-const pWaitFor = require('p-wait-for');
 
 
 /**
@@ -185,10 +187,29 @@ const waitForGranuleRecordsInList = async (stackName, granuleIds) => Promise.all
   granuleIds.map((id) => waitForGranuleRecordInList(stackName, id))
 );
 
+const waitForDeletedGranuleRecordInList = async (stackName, granuleId) => pWaitFor(
+  async () => {
+    const resp = await listDeletedGranules({
+      prefix: stackName,
+      query: {
+        fields: 'granuleId',
+        granuleId
+      }
+    });
+    const ids = JSON.parse(resp.body).results.map((g) => g.granuleId);
+    return ids.includes(granuleId);
+  },
+  {
+    interval: 3000,
+    timeout: 60 * 1000
+  }
+);
+
 module.exports = {
   addUniqueGranuleFilePathToGranuleFiles,
   addUrlPathToGranuleFiles,
   loadFileWithUpdatedGranuleIdPathAndCollection,
   setupTestGranuleForIngest,
-  waitForGranuleRecordsInList
+  waitForGranuleRecordsInList,
+  waitForDeletedGranuleRecordInList
 };

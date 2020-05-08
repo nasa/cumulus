@@ -38,7 +38,8 @@ const {
 
 const {
   setupTestGranuleForIngest,
-  waitForGranuleRecordsInList
+  waitForGranuleRecordsInList,
+  waitForDeletedGranuleRecordInList
 } = require('../../helpers/granuleUtils');
 
 const providersDir = './data/providers/s3/';
@@ -169,6 +170,9 @@ describe('The EMS report', () => {
       // leave some granules for distribution report since the granule and collection information
       // is needed for distributed files.
       await deleteOldGranules(config.stackName, 2, [deletedGranuleId]);
+
+      // wait until deleted records are searchable in elasticsearch for EMS delete report
+      await waitForDeletedGranuleRecordInList(config.stackName, deletedGranuleId);
 
       // ingest two new granules, so that Archive and Ingest reports can be generated
       ingestedGranuleIds = await Promise.all([
