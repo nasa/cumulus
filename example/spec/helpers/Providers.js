@@ -59,11 +59,13 @@ const buildHttpOrHttpsProvider = async (postfix, systemBucket, protocol = 'http'
   if (protocol === 'https') {
     if (systemBucket === undefined) throw new Error('HTTPS provider must have systembucket specified!');
     // copy certificate to system bucket to avoid permissions issues
-    await s3CopyObject({
-      CopySource: `${process.env.FAKE_PROVIDER_CONFIG_BUCKET}/fake-provider-cert.pem`,
-      Bucket: systemBucket,
-      Key: 'fake-provider-cert.pem'
-    });
+    if (systemBucket !== process.env.FAKE_PROVIDER_CONFIG_BUCKET) {
+      await s3CopyObject({
+        CopySource: `${process.env.FAKE_PROVIDER_CONFIG_BUCKET}/fake-provider-cert.pem`,
+        Bucket: systemBucket,
+        Key: 'fake-provider-cert.pem'
+      });
+    }
     provider.certificateUri = `s3://${systemBucket}/fake-provider-cert.pem`;
   }
 
