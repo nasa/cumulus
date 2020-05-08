@@ -778,9 +778,14 @@ const uploadPartCopy = async (params) => {
   return response.ETag;
 };
 
-const buildUploadPartCopyParams = (params) => {
-  const { chunks, destinationBucket, destinationKey, sourceBucket, sourceKey, uploadId } = params;
-
+const buildUploadPartCopyParams = ({
+  chunks,
+  destinationBucket,
+  destinationKey,
+  sourceBucket,
+  sourceKey,
+  uploadId
+}) => {
   return chunks.map(({ start, end }, index) => ({
     UploadId: uploadId,
     Bucket: destinationBucket,
