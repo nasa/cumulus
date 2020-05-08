@@ -4,24 +4,32 @@ const cryptoRandomString = require('crypto-random-string');
 const fs = require('fs');
 const test = require('ava');
 const { createHash } = require('crypto');
+const {
+  buildCompleteMultipartUploadParams,
+  buildUploadPartCopyParams,
+  createBucket,
+  createMultipartChunks,
+  multipartCopyObject,
+  recursivelyDeleteS3Bucket
+} = require('../../S3');
 const { s3 } = require('../../services');
-const S3 = require('../../S3');
 
 const randomId = (prefix, separator = '-') =>
   `${prefix}${separator}${cryptoRandomString({ length: 6 })}`;
 
-// Not used yet
-const createDummyFile = (size) =>
-  new Promise((resolve) => {
-    const writeStream = fs.createWriteStream('file.dat');
-    writeStream.on('finish', () => resolve());
+// Create an object in with random data of the given size
+const createDummyObject = ({ Bucket, Key, size }) => {
+  const readStream = fs.createReadStream('/dev/urandom', { end: size - 1 });
 
-    const readStream = fs.createReadStream('/dev/zero', { end: size - 1 });
-    readStream.pipe(writeStream);
-  });
+  return s3().upload({
+    Bucket,
+    Key,
+    Body: readStream
+  }).promise();
+};
 
-// Not used yet
-const md5OfObject = (Bucket, Key) => new Promise(
+// Calculate the MD5 checksum of an object
+const md5OfObject = ({ Bucket, Key }) => new Promise(
   (resolve) => {
     const hash = createHash('MD5');
 
@@ -36,26 +44,26 @@ const md5OfObject = (Bucket, Key) => new Promise(
 
 test('createMultipartChunks() returns the correct chunks', (t) => {
   t.deepEqual(
-    S3.createMultipartChunks(0),
+    createMultipartChunks(0),
     []
   );
 
   t.deepEqual(
-    S3.createMultipartChunks(9, 10),
+    createMultipartChunks(9, 10),
     [
       { start: 0, end: 8 }
     ]
   );
 
   t.deepEqual(
-    S3.createMultipartChunks(10, 10),
+    createMultipartChunks(10, 10),
     [
       { start: 0, end: 9 }
     ]
   );
 
   t.deepEqual(
-    S3.createMultipartChunks(11, 10),
+    createMultipartChunks(11, 10),
     [
       { start: 0, end: 9 },
       { start: 10, end: 10 }
@@ -63,7 +71,7 @@ test('createMultipartChunks() returns the correct chunks', (t) => {
   );
 
   t.deepEqual(
-    S3.createMultipartChunks(12, 10),
+    createMultipartChunks(12, 10),
     [
       { start: 0, end: 9 },
       { start: 10, end: 11 }
@@ -73,14 +81,14 @@ test('createMultipartChunks() returns the correct chunks', (t) => {
 
 test('buildUploadPartCopyParams() returns the correct params', (t) => {
   t.deepEqual(
-    S3.buildUploadPartCopyParams({
+    buildUploadPartCopyParams({
       chunks: []
     }),
     []
   );
 
   t.deepEqual(
-    S3.buildUploadPartCopyParams({
+    buildUploadPartCopyParams({
       uploadId: 'upload-id',
       sourceBucket: 'source-bucket',
       sourceKey: 'source-key',
@@ -113,7 +121,7 @@ test('buildUploadPartCopyParams() returns the correct params', (t) => {
 });
 
 test('buildCompleteMultipartUploadParams() returns the correct params', (t) => {
-  const actualResult = S3.buildCompleteMultipartUploadParams({
+  const actualResult = buildCompleteMultipartUploadParams({
     uploadId: 'upload-id',
     destinationBucket: 'destination-bucket',
     destinationKey: 'destination-key',
@@ -154,17 +162,42 @@ test('buildCompleteMultipartUploadParams() returns the correct params', (t) => {
   t.deepEqual(actualResult, expectedResult);
 });
 
-test('multipartCopyObject() copies a file between S3 buckets', async (t) => {
+test('multipartCopyObject() copies a file between buckets', async (t) => {
   const sourceBucket = randomId('source-bucket');
+  const sourceKey = randomId('source-key');
   const destinationBucket = randomId('destination-bucket');
+  const destinationKey = randomId('destination-key');
 
   try {
-    await S3.createBucket(sourceBucket);
-    await S3.createBucket(destinationBucket);
+    await createBucket(sourceBucket);
+    await createBucket(destinationBucket);
 
-    t.pass();
+    await createDummyObject({
+      Bucket: sourceBucket,
+      Key: sourceKey,
+      size: 5 * 1024 * 1024
+    });
+
+    const sourceChecksum = await md5OfObject({
+      Bucket: sourceBucket,
+      Key: sourceKey
+    });
+
+    await multipartCopyObject({
+      sourceBucket,
+      sourceKey,
+      destinationBucket,
+      destinationKey
+    });
+
+    const destinationChecksum = await md5OfObject({
+      Bucket: destinationBucket,
+      Key: destinationKey
+    });
+
+    t.is(sourceChecksum, destinationChecksum, 'Source and destination checksums do not match');
   } finally {
-    await S3.recursivelyDeleteS3Bucket(sourceBucket);
-    await S3.recursivelyDeleteS3Bucket(destinationBucket);
+    await recursivelyDeleteS3Bucket(sourceBucket);
+    await recursivelyDeleteS3Bucket(destinationBucket);
   }
 });

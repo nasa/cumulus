@@ -729,6 +729,7 @@ const createMultipartChunks = (size, maxSize = 5 * GB) => {
 
   return chunks;
 };
+// exported to support testing
 exports.createMultipartChunks = createMultipartChunks;
 
 const createMultipartUpload = async (params) => {
@@ -768,6 +769,7 @@ const buildUploadPartCopyParams = ({
     CopySource: `/${sourceBucket}/${sourceKey}`,
     CopySourceRange: `bytes=${start}-${end}`
   }));
+// exported to support testing
 exports.buildUploadPartCopyParams = buildUploadPartCopyParams;
 
 const buildCompleteMultipartUploadParams = ({
@@ -788,9 +790,19 @@ const buildCompleteMultipartUploadParams = ({
     )
   }
 });
+// exported to support testing
 exports.buildCompleteMultipartUploadParams = buildCompleteMultipartUploadParams;
 
-exports.multipartCopyObject = async (params = {}) => {
+/**
+ * Copy an S3 object to another location in S3 using a multipart copy
+ *
+ * @param {Object} params
+ * @param {string} params.sourceBucket
+ * @param {string} params.sourceKey
+ * @param {string} params.destinationBucket
+ * @param {string} params.destinationKey
+ */
+const multipartCopyObject = async (params = {}) => {
   const {
     sourceBucket,
     sourceKey,
@@ -839,3 +851,4 @@ exports.multipartCopyObject = async (params = {}) => {
     throw error;
   }
 };
+exports.multipartCopyObject = multipartCopyObject;
