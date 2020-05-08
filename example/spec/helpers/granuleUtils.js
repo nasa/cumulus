@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs-extra');
-const get = require('lodash/get');
 const replace = require('lodash/fp/replace');
 const cloneDeep = require('lodash/cloneDeep');
 const path = require('path');
