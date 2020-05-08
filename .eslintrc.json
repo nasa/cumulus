@@ -140,14 +140,21 @@
       }
     },
     {
+      "files": ["**/bin/**/*.js"],
+      "rules": { "node/shebang": "off" }
+    },
+    {
       "files": [
         "**/bin/**/*.js",
-        "**/spec/**/*.js",
+        "example/spec/**/*.js",
         "packages/api/migrations/**/*.js",
         "packages/deployment/**/*.js",
         "tf-modules/internal/cumulus-test-cleanup/**/*.js"
       ],
-      "rules": { "no-console": "off" }
+      "rules": {
+        "no-console": "off",
+        "node/no-extraneous-require": "off"
+      }
     },
     {
       "files": ["**/test/**/*.js", "**/tests/**/*.js"],
@@ -155,7 +162,8 @@
         "max-classes-per-file": "off",
         "no-console": "off",
         "no-new": "off",
-        "no-param-reassign": "off"
+        "no-param-reassign": "off",
+        "node/no-extraneous-require": "off"
       }
     }
   ]

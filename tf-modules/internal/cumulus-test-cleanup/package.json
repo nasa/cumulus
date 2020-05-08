@@ -7,8 +7,8 @@
     "node": ">=10.16.3"
   },
   "scripts": {
-    "build": "rm -rf dist && mkdir dist && webpack",
-    "watch": "rm -rf dist && mkdir dist && webpack --progress -w",
+    "build": "rm -rf dist && mkdir dist && ../../node_modules/.bin/webpack",
+    "watch": "rm -rf dist && mkdir dist && ../../node_modules/.bin/webpack --progress -w",
     "package": "npm run build && (cd dist && zip -q -r lambda.zip index.js)"
   },
   "author": "Cumulus Authors",
@@ -16,10 +16,5 @@
   "dependencies": {
     "aws-sdk": "^2.585.0",
     "moment": "2.24.0"
-  },
-  "devDependencies": {
-    "babel-loader": "^8.0.6",
-    "webpack": "^4.41.5",
-    "webpack-cli": "^3.3.10"
   }
 }

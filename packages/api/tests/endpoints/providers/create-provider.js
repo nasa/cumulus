@@ -41,7 +41,7 @@ let accessTokenModel;
 const providerDoesNotExist = async (t, providerId) => {
   await t.throwsAsync(
     () => providerModel.get({ id: providerId }),
-    RecordDoesNotExist
+    { instanceOf: RecordDoesNotExist }
   );
 };
 

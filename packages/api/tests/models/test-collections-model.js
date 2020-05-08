@@ -125,7 +125,7 @@ test.serial('Collection.create() throws InvalidRegexError for invalid granuleIdE
     collectionsModel.create(fakeCollectionFactory({
       granuleIdExtraction: '*'
     })),
-    InvalidRegexError
+    { instanceOf: InvalidRegexError }
   );
 });
 
@@ -135,7 +135,7 @@ test.serial('Collection.create() throws UnmatchedRegexError for non-matching gra
       granuleIdExtraction: '(1234)',
       sampleFileName: 'abcd'
     })),
-    UnmatchedRegexError
+    { instanceOf: UnmatchedRegexError }
   );
 });
 
@@ -145,7 +145,7 @@ test.serial('Collection.create() throws UnmatchedRegexError for granuleIdExtract
       granuleIdExtraction: '1234',
       sampleFileName: '1234'
     })),
-    UnmatchedRegexError
+    { instanceOf: UnmatchedRegexError }
   );
 });
 
@@ -154,7 +154,7 @@ test.serial('Collection.create() throws InvalidRegexError for invalid granuleId 
     collectionsModel.create(fakeCollectionFactory({
       granuleId: '*'
     })),
-    InvalidRegexError
+    { instanceOf: InvalidRegexError }
   );
 });
 
@@ -165,7 +165,7 @@ test.serial('Collection.create() throws UnmatchedRegexError for non-matching gra
       sampleFileName: '1234',
       granuleId: 'abcd'
     })),
-    UnmatchedRegexError
+    { instanceOf: UnmatchedRegexError }
   );
 });
 
@@ -178,7 +178,7 @@ test.serial('Collection.create() throws InvalidRegexError for invalid file.regex
         sampleFileName: 'filename'
       }]
     })),
-    InvalidRegexError
+    { instanceOf: InvalidRegexError }
   );
 });
 
@@ -191,7 +191,7 @@ test.serial('Collection.create() throws UnmatchedRegexError for non-matching fil
         sampleFileName: 'filename'
       }]
     })),
-    UnmatchedRegexError
+    { instanceOf: UnmatchedRegexError }
   );
 });
 
@@ -281,7 +281,7 @@ test.serial(
     // expect attempting to get it from the config store to throw an exception.
     await t.throwsAsync(
       async () => collectionConfigStore.get(name, version),
-      { message: new RegExp(`${collectionId}`) }
+      { message: new RegExp(collectionId) }
     );
   }
 );

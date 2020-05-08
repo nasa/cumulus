@@ -21,7 +21,7 @@ consumer.__set__('receiveSQSMessages', stubReceiveSQSMessages);
 consumer.__set__('deleteSQSMessage', async () => true);
 function processFn() {}
 
-const sandbox = sinon.sandbox.create();
+const sandbox = sinon.createSandbox();
 let batchSpy;
 let messageSpy;
 
@@ -65,7 +65,7 @@ test.serial('stops after messageLimit is reached', async (t) => {
 test.serial('processMessages throws error on large batch sizes', async (t) => {
   await t.throwsAsync(
     () => testConsumer.processMessages(processFn, 20),
-    'Cannot process more than 10 messages per function call. Received limit: 20'
+    { message: 'Cannot process more than 10 messages per function call. Received limit: 20' }
   );
 });
 

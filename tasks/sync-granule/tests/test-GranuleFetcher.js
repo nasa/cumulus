@@ -134,7 +134,7 @@ test('addBucketToFile throws an exception if no config matches', (t) => {
 
   t.throws(
     () => testGranule.addBucketToFile(file),
-    'Unable to update file. Cannot find file config for file right-file'
+    { message: 'Unable to update file. Cannot find file config for file right-file' }
   );
 });
 

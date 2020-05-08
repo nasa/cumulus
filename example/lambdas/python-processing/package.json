@@ -16,9 +16,6 @@
     "prepare": "npm run build",
     "install-python-deps": "pip install -r requirements-dev.txt && pip install -r requirements.txt"
   },
-  "publishConfig": {
-    "access": "private"
-  },
   "nyc": {
     "exclude": [
       "tests"

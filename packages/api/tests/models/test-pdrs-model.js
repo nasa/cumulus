@@ -69,7 +69,7 @@ test('generatePdrRecord() throws error if message.payload.pdr.name is not set', 
       pdr: {}
     }
   }),
-  'Could not find name on PDR object {}');
+  { message: 'Could not find name on PDR object {}' });
 });
 
 test('generatePdrRecord() sets correct progress value for running PDR', async (t) => {

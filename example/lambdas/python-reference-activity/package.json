@@ -15,9 +15,6 @@
     "build": "true",
     "prepare": "true"
   },
-  "publishConfig": {
-    "access": "private"
-  },
   "nyc": {
     "exclude": [
       "tests"

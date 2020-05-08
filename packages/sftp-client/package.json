@@ -19,8 +19,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
-    "build": "true",
-    "test": "ava"
+    "test": "../../node_modules/.bin/ava"
   },
   "ava": {
     "verbose": true
@@ -40,7 +39,6 @@
   },
   "devDependencies": {
     "@cumulus/checksum": "1.22.1",
-    "@cumulus/test-data": "1.22.1",
-    "ava": "^3.1.0"
+    "@cumulus/test-data": "1.22.1"
   }
 }

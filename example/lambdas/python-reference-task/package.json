@@ -21,9 +21,6 @@
   "ava": {
     "serial": true
   },
-  "publishConfig": {
-    "access": "private"
-  },
   "nyc": {
     "exclude": [
       "tests"

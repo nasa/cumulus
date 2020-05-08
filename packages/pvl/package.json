@@ -7,8 +7,8 @@
     "node": ">=10.16.3"
   },
   "scripts": {
-    "test": "ava",
-    "test-coverage": "nyc ava"
+    "test": "../../node_modules/.bin/ava",
+    "test-coverage": "../../node_modules/.bin/nyc npm test"
   },
   "ava": {
     "serial": true
@@ -36,9 +36,5 @@
   "license": "Apache-2.0",
   "dependencies": {
     "lodash": "^4.17.15"
-  },
-  "devDependencies": {
-    "ava": "^2.1.0",
-    "nyc": "^14.0.0"
   }
 }

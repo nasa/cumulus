@@ -19,11 +19,8 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
-    "build": "true",
-    "lint": "eslint .",
-    "test": "ava",
-    "test-coverage": "nyc ava",
-    "test-ci": "npm run lint"
+    "test": "../../node_modules/.bin/ava",
+    "test-coverage": "../../node_modules/.bin/nyc npm test"
   },
   "ava": {
     "files": [

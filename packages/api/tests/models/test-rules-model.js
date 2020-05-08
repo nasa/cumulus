@@ -609,8 +609,10 @@ test.serial('enabling a disabled SNS rule and passing rule.arn throws specific e
   try {
     // Should fail because a disabled rule should not have an ARN
     // when being updated
-    await t.throwsAsync(rulesModel.update(rule, updates), null,
-      'Including rule.arn is not allowed when enabling a disabled rule');
+    await t.throwsAsync(
+      rulesModel.update(rule, updates),
+      { message: 'Including rule.arn is not allowed when enabling a disabled rule' }
+    );
   } finally {
     await rulesModel.delete(rule);
     snsStub.restore();

@@ -411,7 +411,7 @@ test.serial('delete a provider record', async (t) => {
 
   await t.throwsAsync(
     () => esClient.get({ index: esAlias, type, id: testRecord.id }),
-    'Response Error'
+    { message: 'Response Error' }
   );
 });
 
@@ -494,8 +494,10 @@ test.serial('Create new index - index already exists', async (t) => {
 
   await t.throwsAsync(
     () => indexer.createIndex(esClient, newIndex),
-    IndexExistsError,
-    `Index ${newIndex} exists and cannot be created.`
+    {
+      instanceOf: IndexExistsError,
+      message: `Index ${newIndex} exists and cannot be created.`
+    }
   );
 
   await esClient.indices.delete({ index: newIndex });

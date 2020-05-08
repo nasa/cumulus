@@ -12,9 +12,6 @@
     "prepare": "rm -f lambda.zip && zip -q lambda.zip index.js",
     "python-lint": "true"
   },
-  "publishConfig": {
-    "access": "private"
-  },
   "author": "Cumulus Authors",
   "license": "Apache-2.0"
 }
