@@ -174,15 +174,15 @@ async function indexRecord(esClient, record) {
 
   if (record.eventName === 'REMOVE') {
     const parentId = getParentId(indexType, oldData);
-    console.time('performDelete');
+    console.time(`performDelete for ${indexType} ${id}`);
     const deletedObject = await performDelete(esClient, indexType, id, parentId);
-    console.timeEnd('performDelete');
+    console.timeEnd(`performDelete for ${indexType} ${id}`);
     return deletedObject;
   }
 
-  console.time('performIndex');
+  console.time(`performIndex for ${indexType} ${id}`);
   const response = await performIndex(indexFnName, esClient, data);
-  console.timeEnd('performIndex');
+  console.timeEnd(`performIndex for ${indexType} ${id}`);
   return response;
 }
 
@@ -198,7 +198,7 @@ async function indexRecords(records) {
   return pMap(
     records,
     (record) => indexRecord(esClient, record).catch(log.error),
-    { concurrency: process.env.CONCURRENCY || 3 }
+    { concurrency: process.env.ES_CONCURRENCY || 3 }
   );
 }
 
