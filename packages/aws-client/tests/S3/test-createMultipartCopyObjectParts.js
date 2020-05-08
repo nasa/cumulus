@@ -1,14 +1,14 @@
 'use strict';
 
+const cryptoRandomString = require('crypto-random-string');
 const fs = require('fs');
 const test = require('ava');
 const { createHash } = require('crypto');
 const { s3 } = require('../../services');
-const {
-  buildCompleteMultipartUploadParams,
-  buildUploadPartCopyParams,
-  createMultipartChunks
-} = require('../../S3');
+const S3 = require('../../S3');
+
+const randomId = (prefix, separator = '-') =>
+  `${prefix}${separator}${cryptoRandomString({ length: 6 })}`;
 
 // Not used yet
 const createDummyFile = (size) =>
@@ -36,26 +36,26 @@ const md5OfObject = (Bucket, Key) => new Promise(
 
 test('createMultipartChunks() returns the correct chunks', (t) => {
   t.deepEqual(
-    createMultipartChunks(0),
+    S3.createMultipartChunks(0),
     []
   );
 
   t.deepEqual(
-    createMultipartChunks(9, 10),
+    S3.createMultipartChunks(9, 10),
     [
       { start: 0, end: 8 }
     ]
   );
 
   t.deepEqual(
-    createMultipartChunks(10, 10),
+    S3.createMultipartChunks(10, 10),
     [
       { start: 0, end: 9 }
     ]
   );
 
   t.deepEqual(
-    createMultipartChunks(11, 10),
+    S3.createMultipartChunks(11, 10),
     [
       { start: 0, end: 9 },
       { start: 10, end: 10 }
@@ -63,7 +63,7 @@ test('createMultipartChunks() returns the correct chunks', (t) => {
   );
 
   t.deepEqual(
-    createMultipartChunks(12, 10),
+    S3.createMultipartChunks(12, 10),
     [
       { start: 0, end: 9 },
       { start: 10, end: 11 }
@@ -73,14 +73,14 @@ test('createMultipartChunks() returns the correct chunks', (t) => {
 
 test('buildUploadPartCopyParams() returns the correct params', (t) => {
   t.deepEqual(
-    buildUploadPartCopyParams({
+    S3.buildUploadPartCopyParams({
       chunks: []
     }),
     []
   );
 
   t.deepEqual(
-    buildUploadPartCopyParams({
+    S3.buildUploadPartCopyParams({
       uploadId: 'upload-id',
       sourceBucket: 'source-bucket',
       sourceKey: 'source-key',
@@ -113,7 +113,7 @@ test('buildUploadPartCopyParams() returns the correct params', (t) => {
 });
 
 test('buildCompleteMultipartUploadParams() returns the correct params', (t) => {
-  const actualResult = buildCompleteMultipartUploadParams({
+  const actualResult = S3.buildCompleteMultipartUploadParams({
     uploadId: 'upload-id',
     destinationBucket: 'destination-bucket',
     destinationKey: 'destination-key',
@@ -152,4 +152,19 @@ test('buildCompleteMultipartUploadParams() returns the correct params', (t) => {
   };
 
   t.deepEqual(actualResult, expectedResult);
+});
+
+test('multipartCopyObject() copies a file between S3 buckets', async (t) => {
+  const sourceBucket = randomId('source-bucket');
+  const destinationBucket = randomId('destination-bucket');
+
+  try {
+    await S3.createBucket(sourceBucket);
+    await S3.createBucket(destinationBucket);
+
+    t.pass();
+  } finally {
+    await S3.recursivelyDeleteS3Bucket(sourceBucket);
+    await S3.recursivelyDeleteS3Bucket(destinationBucket);
+  }
 });

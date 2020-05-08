@@ -731,35 +731,6 @@ const createMultipartChunks = (size, maxSize = 5 * GB) => {
 };
 exports.createMultipartChunks = createMultipartChunks;
 
-// const createMultipartCopyObjectParts = (size, maxUploadSize = 5 * GB) => {
-//   const numberOfFullParts = Math.floor(size / maxUploadSize);
-
-//   // Build the list of full-size upload parts
-//   const parts = range(numberOfFullParts).map((x) => {
-//     const firstByte = x * maxUploadSize;
-//     const lastByte = firstByte + maxUploadSize - 1;
-
-//     return {
-//       PartNumber: x + 1,
-//       CopySourceRange: `bytes=${firstByte}-${lastByte}`
-//     };
-//   });
-
-//   // If necessary, build the last, not-full-size upload part
-//   if (size % maxUploadSize !== 0) {
-//     const firstByte = numberOfFullParts * maxUploadSize;
-//     const lastByte = size - 1;
-
-//     parts.push({
-//       PartNumber: numberOfFullParts + 1,
-//       CopySourceRange: `bytes=${firstByte}-${lastByte}`
-//     });
-//   }
-
-//   return parts;
-// };
-// exports.createMultipartCopyObjectParts = createMultipartCopyObjectParts;
-
 const createMultipartUpload = async (params) => {
   const response = await awsServices.s3().createMultipartUpload(params).promise();
   return response.UploadId;
@@ -819,59 +790,52 @@ const buildCompleteMultipartUploadParams = ({
 });
 exports.buildCompleteMultipartUploadParams = buildCompleteMultipartUploadParams;
 
-// exports.multipartCopyObject = async (params = {}) => {
-//   const {
-//     sourceBucket,
-//     sourceKey,
-//     destinationBucket,
-//     destinationKey
-//   } = params;
+exports.multipartCopyObject = async (params = {}) => {
+  const {
+    sourceBucket,
+    sourceKey,
+    destinationBucket,
+    destinationKey
+  } = params;
 
-//   const uploadId = await createMultipartUpload({
-//     Bucket: destinationBucket,
-//     Key: destinationKey
-//   });
+  const uploadId = await createMultipartUpload({
+    Bucket: destinationBucket,
+    Key: destinationKey
+  });
 
-//   try {
-//     const objectSize = await exports.getObjectSize(sourceBucket, sourceKey);
+  try {
+    const objectSize = await exports.getObjectSize(sourceBucket, sourceKey);
 
-//     const chunks = createMultipartChunks(objectSize);
+    const chunks = createMultipartChunks(objectSize);
 
-//     const uploadPartCopyParams = buildUploadPartCopyParams({
-//       chunks,
-//       destinationBucket,
-//       destinationKey,
-//       sourceBucket,
-//       sourceKey,
-//       uploadId
-//     });
+    const uploadPartCopyParams = buildUploadPartCopyParams({
+      chunks,
+      destinationBucket,
+      destinationKey,
+      sourceBucket,
+      sourceKey,
+      uploadId
+    });
 
-//     const uploadPartCopyResponses = await Promise.all(
-//       uploadPartCopyParams.map(uploadPartCopy)
-//     );
+    const uploadPartCopyResponses = await Promise.all(
+      uploadPartCopyParams.map(uploadPartCopy)
+    );
 
-//     const completeMultipartUploadParams = buildCompleteMultipartUploadParams({
-//       uploadPartCopyResponses,
-//       destinationBucket,
-//       destinationKey,
-//       uploadId
-//     });
+    const completeMultipartUploadParams = buildCompleteMultipartUploadParams({
+      uploadPartCopyResponses,
+      destinationBucket,
+      destinationKey,
+      uploadId
+    });
 
-//     await completeMultipartUpload({
-//       Bucket: destinationBucket,
-//       Key: destinationKey,
-//       MultipartUpload: {
-//         Parts: uploads
-//       },
-//       UploadId: uploadId
-//     });
-//   } catch (error) {
-//     await abortMultipartUpload({
-//       Bucket: destinationBucket,
-//       Key: destinationKey,
-//       UploadId: uploadId
-//     });
+    await completeMultipartUpload(completeMultipartUploadParams);
+  } catch (error) {
+    await abortMultipartUpload({
+      Bucket: destinationBucket,
+      Key: destinationKey,
+      UploadId: uploadId
+    });
 
-//     throw error;
-//   }
-// };
+    throw error;
+  }
+};
