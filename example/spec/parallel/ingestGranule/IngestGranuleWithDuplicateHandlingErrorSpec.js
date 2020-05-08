@@ -69,6 +69,8 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       granuleId = randomId('granule-id-');
 
       // Ingest the granule the first time
+      const testExecutionId = randomId('test-execution-');
+      console.log('testExecutionId: ', testExecutionId);
       firstIngestGranuleRule = await createOneTimeRule(
         prefix,
         {
@@ -76,7 +78,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
           collection: pick(collection, ['name', 'version']),
           provider: provider.id,
           payload: {
-            testExecutionId: randomId('test-execution-'),
+            testExecutionId,
             granules: [
               {
                 granuleId,
