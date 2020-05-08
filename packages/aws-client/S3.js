@@ -779,9 +779,10 @@ const uploadPartCopy = async (params) => {
 };
 
 const buildUploadPartCopyParams = (params) => {
-  const { chunks, destinationBucket, destinationKey, sourceBucket, sourceKey } = params;
+  const { chunks, destinationBucket, destinationKey, sourceBucket, sourceKey, uploadId } = params;
 
   return chunks.map(({ start, end }, index) => ({
+    UploadId: uploadId,
     Bucket: destinationBucket,
     Key: destinationKey,
     PartNumber: index + 1,
