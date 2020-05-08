@@ -781,11 +781,10 @@ const uploadPartCopy = async (params) => {
 const buildUploadPartCopyParams = (params) => {
   const { chunks } = params;
 
-  return chunks.map((chunk) => chunk);
-
-  // return chunks.map((chunk) => ({
-  //   Bucket: destinainoBucket
-  // }));
+  return chunks.map(({ start, end }, index) => ({
+    PartNumber: index + 1,
+    CopySourceRange: `bytes=${start}-${end}`
+  }));
 };
 exports.buildUploadPartCopyParams = buildUploadPartCopyParams;
 

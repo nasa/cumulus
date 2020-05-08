@@ -74,4 +74,23 @@ test('buildUploadPartCopyParams returns the correct params', (t) => {
     }),
     []
   );
+
+  t.deepEqual(
+    buildUploadPartCopyParams({
+      chunks: [
+        { start: 0, end: 5 },
+        { start: 6, end: 10 }
+      ]
+    }),
+    [
+      {
+        PartNumber: 1,
+        CopySourceRange: 'bytes=0-5'
+      },
+      {
+        PartNumber: 2,
+        CopySourceRange: 'bytes=6-10'
+      }
+    ]
+  );
 });
