@@ -12,7 +12,7 @@ const S3 = proxyquire(
     './services': {
       s3: () => ({
         headObject: () => ({
-          promise: () => Promise.resolve({ ContentLength: 5 })
+          promise: async () => ({ ContentLength: 5 })
         })
       })
     },
@@ -21,7 +21,7 @@ const S3 = proxyquire(
         abortMultipartUploadWasCalled = true;
         abortMultipartUploadParams = params;
       },
-      createMultipartUpload: () => Promise.resolve('abc-123'),
+      createMultipartUpload: async () => 'abc-123',
       uploadPartCopy: () => Promise.reject(new Error('uh oh'))
     }
   }
