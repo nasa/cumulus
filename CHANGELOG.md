@@ -14,6 +14,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   3. [Re-deploy your `data-persistence` module](https://nasa.github.io/cumulus/docs/deployment/upgrade-readme#update-data-persistence-resources), which should re-create the `<prefix>-AccessTokensTable` DynamoDB table
   4. Return to using the Cumulus API/dashboard as normal
 
+### Added
+
+- Added a limit for concurrent Elasticsearch requests when doing an index from database operation
+- Added the `es_request_concurrency` parameter to the archive and cumulus Terraform modules
+
 ### Changed
 
 - **CUMULUS-1777**
