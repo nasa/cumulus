@@ -116,13 +116,39 @@ test('buildCompleteMultipartUploadParams() returns the correct params', (t) => {
   const actualResult = buildCompleteMultipartUploadParams({
     uploadId: 'upload-id',
     destinationBucket: 'destination-bucket',
-    destinationKey: 'destination-key'
+    destinationKey: 'destination-key',
+    uploadPartCopyResponses: [
+      {
+        PartNumber: 1,
+        CopyPartResult: {
+          ETag: 'abc-1'
+        }
+      },
+      {
+        PartNumber: 2,
+        CopyPartResult: {
+          ETag: 'xyz-2'
+        }
+      }
+    ]
   });
 
   const expectedResult = {
     UploadId: 'upload-id',
     Bucket: 'destination-bucket',
-    Key: 'destination-key'
+    Key: 'destination-key',
+    MultipartUpload: {
+      Parts: [
+        {
+          PartNumber: 1,
+          ETag: 'abc-1'
+        },
+        {
+          PartNumber: 2,
+          ETag: 'xyz-2'
+        }
+      ]
+    }
   };
 
   t.deepEqual(actualResult, expectedResult);

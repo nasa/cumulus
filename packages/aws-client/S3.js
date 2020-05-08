@@ -802,11 +802,20 @@ exports.buildUploadPartCopyParams = buildUploadPartCopyParams;
 const buildCompleteMultipartUploadParams = ({
   destinationBucket,
   destinationKey,
-  uploadId
+  uploadId,
+  uploadPartCopyResponses
 }) => ({
   UploadId: uploadId,
   Bucket: destinationBucket,
-  Key: destinationKey
+  Key: destinationKey,
+  MultipartUpload: {
+    Parts: uploadPartCopyResponses.map(
+      (response) => ({
+        PartNumber: response.PartNumber,
+        ETag: response.CopyPartResult.ETag
+      })
+    )
+  }
 });
 exports.buildCompleteMultipartUploadParams = buildCompleteMultipartUploadParams;
 
