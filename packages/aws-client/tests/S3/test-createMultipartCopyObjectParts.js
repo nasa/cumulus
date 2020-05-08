@@ -114,11 +114,13 @@ test('buildUploadPartCopyParams() returns the correct params', (t) => {
 
 test('buildCompleteMultipartUploadParams() returns the correct params', (t) => {
   const actualResult = buildCompleteMultipartUploadParams({
+    uploadId: 'upload-id',
     destinationBucket: 'destination-bucket',
     destinationKey: 'destination-key'
   });
 
   const expectedResult = {
+    UploadId: 'upload-id',
     Bucket: 'destination-bucket',
     Key: 'destination-key'
   };

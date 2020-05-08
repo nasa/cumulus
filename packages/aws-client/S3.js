@@ -801,8 +801,10 @@ exports.buildUploadPartCopyParams = buildUploadPartCopyParams;
 
 const buildCompleteMultipartUploadParams = ({
   destinationBucket,
-  destinationKey
+  destinationKey,
+  uploadId
 }) => ({
+  UploadId: uploadId,
   Bucket: destinationBucket,
   Key: destinationKey
 });
