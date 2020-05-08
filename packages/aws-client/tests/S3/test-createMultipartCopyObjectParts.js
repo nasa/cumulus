@@ -4,7 +4,7 @@ const fs = require('fs');
 const test = require('ava');
 const { createHash } = require('crypto');
 const { s3 } = require('../../services');
-const { createMultipartCopyObjectParts } = require('../../S3');
+const { buildUploadPartCopyParams, createMultipartChunks } = require('../../S3');
 
 // Not used yet
 const createDummyFile = (size) =>
@@ -30,35 +30,48 @@ const md5OfObject = (Bucket, Key) => new Promise(
   }
 );
 
-test('createMultipartCopyObjectParts returns the correct parts', (t) => {
+test('createMultipartChunks returns the correct chunks', (t) => {
   t.deepEqual(
-    createMultipartCopyObjectParts(0),
+    createMultipartChunks(0),
     []
   );
 
   t.deepEqual(
-    createMultipartCopyObjectParts(9, 10),
-    [{ PartNumber: 1, CopySourceRange: 'bytes=0-8' }]
-  );
-
-  t.deepEqual(
-    createMultipartCopyObjectParts(10, 10),
-    [{ PartNumber: 1, CopySourceRange: 'bytes=0-9' }]
-  );
-
-  t.deepEqual(
-    createMultipartCopyObjectParts(11, 10),
+    createMultipartChunks(9, 10),
     [
-      { PartNumber: 1, CopySourceRange: 'bytes=0-9' },
-      { PartNumber: 2, CopySourceRange: 'bytes=10-10' }
+      { start: 0, end: 8 }
     ]
   );
 
   t.deepEqual(
-    createMultipartCopyObjectParts(12, 10),
+    createMultipartChunks(10, 10),
     [
-      { PartNumber: 1, CopySourceRange: 'bytes=0-9' },
-      { PartNumber: 2, CopySourceRange: 'bytes=10-11' }
+      { start: 0, end: 9 }
     ]
+  );
+
+  t.deepEqual(
+    createMultipartChunks(11, 10),
+    [
+      { start: 0, end: 9 },
+      { start: 10, end: 10 }
+    ]
+  );
+
+  t.deepEqual(
+    createMultipartChunks(12, 10),
+    [
+      { start: 0, end: 9 },
+      { start: 10, end: 11 }
+    ]
+  );
+});
+
+test('buildUploadPartCopyParams returns the correct params', (t) => {
+  t.deepEqual(
+    buildUploadPartCopyParams({
+      chunks: []
+    }),
+    []
   );
 });

@@ -711,34 +711,54 @@ exports.createBucket = (Bucket) =>
 
 const GB = 1024 * 1024 * 1024;
 
-const createMultipartCopyObjectParts = (size, maxUploadSize = 5 * GB) => {
-  const numberOfFullParts = Math.floor(size / maxUploadSize);
+const createMultipartChunks = (size, maxSize = 5 * GB) => {
+  const lastChunkSize = size % maxSize;
 
-  // Build the list of full-size upload parts
-  const parts = range(numberOfFullParts).map((x) => {
-    const firstByte = x * maxUploadSize;
-    const lastByte = firstByte + maxUploadSize - 1;
-
-    return {
-      PartNumber: x + 1,
-      CopySourceRange: `bytes=${firstByte}-${lastByte}`
-    };
+  // Build the list of full-size chunks
+  const chunks = range(0, size - lastChunkSize, maxSize).map((start) => {
+    const end = start + maxSize - 1;
+    return { start, end };
   });
 
-  // If necessary, build the last, not-full-size upload part
-  if (size % maxUploadSize !== 0) {
-    const firstByte = numberOfFullParts * maxUploadSize;
-    const lastByte = size - 1;
-
-    parts.push({
-      PartNumber: numberOfFullParts + 1,
-      CopySourceRange: `bytes=${firstByte}-${lastByte}`
-    });
+  // If necessary build the last, not-full-size chunk
+  if (lastChunkSize !== 0) {
+    const start = size - lastChunkSize;
+    const end = size - 1;
+    chunks.push({ start, end });
   }
 
-  return parts;
+  return chunks;
 };
-exports.createMultipartCopyObjectParts = createMultipartCopyObjectParts;
+exports.createMultipartChunks = createMultipartChunks;
+
+// const createMultipartCopyObjectParts = (size, maxUploadSize = 5 * GB) => {
+//   const numberOfFullParts = Math.floor(size / maxUploadSize);
+
+//   // Build the list of full-size upload parts
+//   const parts = range(numberOfFullParts).map((x) => {
+//     const firstByte = x * maxUploadSize;
+//     const lastByte = firstByte + maxUploadSize - 1;
+
+//     return {
+//       PartNumber: x + 1,
+//       CopySourceRange: `bytes=${firstByte}-${lastByte}`
+//     };
+//   });
+
+//   // If necessary, build the last, not-full-size upload part
+//   if (size % maxUploadSize !== 0) {
+//     const firstByte = numberOfFullParts * maxUploadSize;
+//     const lastByte = size - 1;
+
+//     parts.push({
+//       PartNumber: numberOfFullParts + 1,
+//       CopySourceRange: `bytes=${firstByte}-${lastByte}`
+//     });
+//   }
+
+//   return parts;
+// };
+// exports.createMultipartCopyObjectParts = createMultipartCopyObjectParts;
 
 const createMultipartUpload = async (params) => {
   const response = await awsServices.s3().createMultipartUpload(params).promise();
@@ -757,6 +777,17 @@ const uploadPartCopy = async (params) => {
   const response = await awsServices.s3().uploadPartCopy(params).promise();
   return response.ETag;
 };
+
+const buildUploadPartCopyParams = (params) => {
+  const { chunks } = params;
+
+  return chunks.map((chunk) => chunk);
+
+  // return chunks.map((chunk) => ({
+  //   Bucket: destinainoBucket
+  // }));
+};
+exports.buildUploadPartCopyParams = buildUploadPartCopyParams;
 
 exports.multipartCopyObject = async (params = {}) => {
   const {
