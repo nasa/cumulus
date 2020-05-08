@@ -34,25 +34,6 @@ async function list(req, res) {
 }
 
 /**
- * List deleted granules.
- *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
- */
-async function listDeleted(req, res) {
-  const es = new Search(
-    { queryStringParameters: req.query },
-    'deletedgranule',
-    process.env.ES_INDEX
-  );
-
-  const result = await es.query();
-
-  return res.send(result);
-}
-
-/**
  * Update a single granule.
  * Supported Actions: reingest, move, applyWorkflow, RemoveFromCMR.
  *
@@ -268,7 +249,6 @@ async function bulk(req, res) {
   return res.send(asyncOperation);
 }
 
-router.get('/deleted', listDeleted);
 router.get('/:granuleName', get);
 router.get('/', list);
 router.put('/:granuleName', put);

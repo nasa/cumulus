@@ -245,26 +245,6 @@ const listGranules = async ({ prefix, query = null, callback = invokeApi }) => c
   }
 });
 
-/**
- * Query deleted granules stored in cumulus
- * GET /granules/deleted
- * @param {Object} params             - params
- * @param {string} params.query       - query to pass the API lambda
- * @param {Function} params.callback  - async function to invoke the api lambda
- *                                      that takes a prefix / user payload.  Defaults
- *                                      to cumulusApiClient.invokeApifunction to invoke the
- *                                      api lambda
- * @returns {Promise<Object>}         - the response from the callback
- */
-const listDeletedGranules = async ({ prefix, query = null, callback = invokeApi }) => callback({
-  prefix: prefix,
-  payload: {
-    httpMethod: 'GET',
-    resource: '/{proxy+}',
-    path: '/granules/deleted',
-    body: query ? JSON.stringify({ query }) : undefined
-  }
-});
 
 module.exports = {
   getGranule,
@@ -273,7 +253,6 @@ module.exports = {
   applyWorkflow,
   deleteGranule,
   listGranules,
-  listDeletedGranules,
   moveGranule,
   waitForGranule,
   removePublishedGranule
