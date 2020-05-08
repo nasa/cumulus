@@ -1,0 +1,58 @@
+'use strict';
+
+const test = require('ava');
+const proxyquire = require('proxyquire');
+
+let abortMultipartUploadWasCalled = false;
+let abortMultipartUploadParams;
+
+const fakeS3Service = () => ({
+  abortMultipartUpload: (params) => ({
+    promise: async () => {
+      abortMultipartUploadWasCalled = true;
+      abortMultipartUploadParams = params;
+    }
+  }),
+  createMultipartUpload: () => ({
+    promise: () => Promise.resolve({
+      UploadId: 'abc-123'
+    })
+  }),
+  headObject: () => ({
+    promise: () => Promise.resolve({ ContentLength: 5 })
+  }),
+  uploadPartCopy: () => ({
+    promise: () => Promise.reject(new Error('uh oh'))
+  })
+});
+
+const S3 = proxyquire(
+  '../../S3',
+  {
+    './services': {
+      s3: fakeS3Service
+    }
+  }
+);
+
+test('multipartCopyObject() aborts the upload if something fails', async (t) => {
+  await t.throwsAsync(
+    S3.multipartCopyObject({
+      sourceBucket: 'source-bucket',
+      sourceKey: 'source-key',
+      destinationBucket: 'destination-bucket',
+      destinationKey: 'destination-key'
+    })
+  );
+
+  t.true(abortMultipartUploadWasCalled);
+
+  t.deepEqual(
+    abortMultipartUploadParams,
+    {
+      Bucket: 'destination-bucket',
+      Key: 'destination-key',
+      UploadId: 'abc-123'
+    }
+  );
+});
