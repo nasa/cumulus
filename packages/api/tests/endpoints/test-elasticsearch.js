@@ -392,7 +392,7 @@ test.serial('Change index', async (t) => {
     .expect(200);
 
   t.is(response.body.message,
-    `Reindex success - alias ${aliasName} now pointing to ${destIndex}`);
+    `Change index success - alias ${aliasName} now pointing to ${destIndex}`);
 
   const alias = await esClient.indices.getAlias({ name: aliasName })
     .then((aliasResponse) => aliasResponse.body);
