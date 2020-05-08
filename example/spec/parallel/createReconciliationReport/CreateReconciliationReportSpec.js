@@ -10,7 +10,7 @@ const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
-const { Granule } = require('@cumulus/api/models');
+const { Granule, ReconciliationReport } = require('@cumulus/api/models');
 const {
   addCollections,
   addProviders,
@@ -55,7 +55,13 @@ function getReportsKeys(systemBucket, stackName) {
     .then((response) => response.Contents.map((o) => o.Key));
 }
 
+// TODO we will call API to delete the reports when API is updated
 async function deleteReconciliationReports(systemBucket, stackName) {
+  const reconciliationReportModel = new ReconciliationReport();
+  const reportRecords = await reconciliationReportModel.scan();
+  await Promise.all(reportRecords.Items.map((report) =>
+    reconciliationReportModel.delete({ name: report.name })));
+
   const reportKeys = await getReportsKeys(systemBucket, stackName);
 
   const objectsToDelete = reportKeys.map((Key) => ({
@@ -174,6 +180,8 @@ describe('When there are granule differences and granule reconciliation is run',
     process.env.GranulesTable = `${config.stackName}-GranulesTable`;
     granuleModel = new Granule();
 
+    process.env.ReconciliationReportsTable = `${config.stackName}-ReconciliationReportsTable`;
+
     process.env.CMR_ENVIRONMENT = 'UAT';
 
     // Remove any pre-existing reconciliation reports
@@ -232,6 +240,7 @@ describe('When there are granule differences and granule reconciliation is run',
     await lambda().invoke({ FunctionName: `${config.stackName}-CreateReconciliationReport` }).promise();
 
     // Fetch the report
+    // TODO will use API to retrieve reports when API is updated
     const reportKey = (await getReportsKeys(config.bucket, config.stackName))[0];
     report = await s3().getObject({
       Bucket: config.bucket,

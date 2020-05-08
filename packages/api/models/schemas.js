@@ -351,6 +351,32 @@ module.exports.granule = {
   ]
 };
 
+// Reconciliation Report record
+module.exports.reconciliationReport = {
+  title: 'ReconciliationReport Object',
+  description: 'Cumulus API ReconciliationReports Table schema',
+  type: 'object',
+  required: ['name', 'type', 'status', 'createdAt', 'updatedAt'],
+  properties: {
+    name: { type: 'string' },
+    type: {
+      type: 'string',
+      enum: ['Inventory']
+    },
+    status: {
+      type: 'string',
+      enum: ['Generated', 'Pending', 'Failed']
+    },
+    location: { type: 'string' },
+    error: {
+      type: 'object',
+      additionalProperties: true
+    },
+    createdAt: { type: 'integer' },
+    updatedAt: { type: 'integer' }
+  }
+};
+
 // Ingest Rule Record Schema
 module.exports.rule = {
   title: 'Ingest Rule Record Object',

@@ -19,6 +19,7 @@ const {
   fakeGranuleFactoryV2,
   fakePdrFactoryV2,
   fakeProviderFactory,
+  fakeReconciliationReportFactory,
   fakeRuleFactoryV2,
   getWorkflowList
 } = require('../../lib/testUtils');
@@ -37,6 +38,7 @@ process.env.CollectionsTable = randomString();
 process.env.GranulesTable = randomString();
 process.env.PdrsTable = randomString();
 process.env.ProvidersTable = randomString();
+process.env.ReconciliationReportsTable = randomString();
 process.env.RulesTable = randomString();
 
 const tables = {
@@ -46,6 +48,7 @@ const tables = {
   granulesTable: process.env.GranulesTable,
   pdrsTable: process.env.PdrsTable,
   providersTable: process.env.ProvidersTable,
+  reconciliationReportsTable: process.env.ReconciliationReportsTable,
   rulesTable: process.env.RulesTable
 };
 
@@ -59,6 +62,7 @@ const collectionModel = new models.Collection();
 const granuleModel = new models.Granule();
 const pdrModel = new models.Pdr();
 const providersModel = new models.Provider();
+const reconciliationReportModel = new models.ReconciliationReport();
 const rulesModel = new models.Rule();
 
 async function addFakeData(numItems, factory, model, factoryParams = {}) {
@@ -97,6 +101,7 @@ test.before(async (t) => {
   await granuleModel.createTable();
   await pdrModel.createTable();
   await providersModel.createTable();
+  await reconciliationReportModel.createTable();
   await rulesModel.createTable();
 
   const wKey = `${process.env.stackName}/workflows/${workflowList[0].name}.json`;
@@ -126,6 +131,7 @@ test.after.always(async (t) => {
   await granuleModel.deleteTable();
   await pdrModel.deleteTable();
   await providersModel.deleteTable();
+  await reconciliationReportModel.deleteTable();
   await rulesModel.deleteTable();
 
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
@@ -149,6 +155,7 @@ test('index executions', async (t) => {
     addFakeData(numItems, fakeGranuleFactoryV2, granuleModel),
     addFakeData(numItems, fakePdrFactoryV2, pdrModel),
     addFakeData(numItems, fakeProviderFactory, providersModel),
+    addFakeData(numItems, fakeReconciliationReportFactory, reconciliationReportModel),
     addFakeData(numItems, fakeRuleFactoryV2, rulesModel, { workflow: workflowList[0].name })
   ]);
 
@@ -160,6 +167,7 @@ test('index executions', async (t) => {
     searchEs('granule', esAlias),
     searchEs('pdr', esAlias),
     searchEs('provider', esAlias),
+    searchEs('reconciliationReport', esAlias),
     searchEs('rule', esAlias)
   ]);
 

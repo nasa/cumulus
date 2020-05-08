@@ -15,6 +15,7 @@ const CMR = require('@cumulus/cmr-client/CMR');
 const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue');
 const {
   buildS3Uri,
+  parseS3Uri,
   recursivelyDeleteS3Bucket
 } = require('@cumulus/aws-client/S3');
 const awsServices = require('@cumulus/aws-client/services');
@@ -101,27 +102,25 @@ function storeCollectionsToDynamoDb(tableName, collections) {
   return storeToDynamoDb(tableName, putRequests);
 }
 
-async function fetchCompletedReport(Bucket, stackName) {
-  const Prefix = `${stackName}/reconciliation-reports/`;
-
-  const report = await awsServices.s3().listObjectsV2({ Bucket, Prefix }).promise()
-    .then((response) => response.Contents[0].Key)
-    .then((Key) => awsServices.s3().getObject({ Bucket, Key }).promise())
-    .then((response) => response.Body.toString())
-    .then(JSON.parse);
-
-  if (report.status === 'RUNNING') {
+async function fetchCompletedReport(t) {
+  const reportRecord = await new models.ReconciliationReport().scan();
+  t.is(reportRecord.Items.length, 1);
+  if (reportRecord.Items[0].status === 'Pending') {
     return sleep(1000)
-      .then(() => fetchCompletedReport(Bucket, stackName));
+      .then(() => fetchCompletedReport(t));
   }
 
-  return report;
+  t.is(reportRecord.Items[0].status, 'Generated');
+  return awsServices.s3().getObject(parseS3Uri(reportRecord.Items[0].location)).promise()
+    .then((response) => response.Body.toString())
+    .then(JSON.parse);
 }
 
 test.beforeEach(async (t) => {
   process.env.CollectionsTable = randomString();
   process.env.GranulesTable = randomString();
   process.env.FilesTable = randomString();
+  process.env.ReconciliationReportsTable = randomString();
 
   t.context.bucketsToCleanup = [];
   t.context.stackName = randomString();
@@ -133,6 +132,7 @@ test.beforeEach(async (t) => {
   await new models.Collection().createTable();
   await new models.Granule().createTable();
   await GranuleFilesCache.createCacheTable();
+  await new models.ReconciliationReport().createTable();
 
   sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => []);
   sinon.stub(CMRSearchConceptQueue.prototype, 'peek').callsFake(() => null);
@@ -144,7 +144,8 @@ test.afterEach.always((t) => {
     t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket),
     new models.Collection().deleteTable(),
     new models.Granule().deleteTable(),
-    GranuleFilesCache.deleteCacheTable()
+    GranuleFilesCache.deleteCacheTable(),
+    new models.ReconciliationReport().deleteTable()
   ]));
   CMR.prototype.searchCollections.restore();
   CMRSearchConceptQueue.prototype.peek.restore();
@@ -165,10 +166,10 @@ test.serial('A valid reconciliation report is generated for no buckets', async (
   };
   await promisifiedHandler(event, {});
 
-  const report = await fetchCompletedReport(t.context.systemBucket, t.context.stackName);
+  const report = await fetchCompletedReport(t);
   const filesInCumulus = report.filesInCumulus;
 
-  t.is(report.status, 'SUCCESS');
+  t.is(report.status, 'Generated');
   t.is(report.error, null);
   t.is(filesInCumulus.okCount, 0);
   t.is(filesInCumulus.onlyInS3.length, 0);
@@ -230,11 +231,11 @@ test.serial('A valid reconciliation report is generated when everything is in sy
   };
   await promisifiedHandler(event, {});
 
-  const report = await fetchCompletedReport(t.context.systemBucket, t.context.stackName);
+  const report = await fetchCompletedReport(t);
   const filesInCumulus = report.filesInCumulus;
   const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
 
-  t.is(report.status, 'SUCCESS');
+  t.is(report.status, 'Generated');
   t.is(report.error, null);
   t.is(filesInCumulus.okCount, files.length);
   t.is(filesInCumulus.onlyInS3.length, 0);
@@ -282,10 +283,10 @@ test.serial('A valid reconciliation report is generated when there are extra S3 
   };
   await promisifiedHandler(event, {});
 
-  const report = await fetchCompletedReport(t.context.systemBucket, t.context.stackName);
+  const report = await fetchCompletedReport(t);
   const filesInCumulus = report.filesInCumulus;
 
-  t.is(report.status, 'SUCCESS');
+  t.is(report.status, 'Generated');
   t.is(report.error, null);
   t.is(filesInCumulus.okCount, matchingFiles.length);
 
@@ -344,10 +345,10 @@ test.serial('A valid reconciliation report is generated when there are extra Dyn
   };
   await promisifiedHandler(event, {});
 
-  const report = await fetchCompletedReport(t.context.systemBucket, t.context.stackName);
+  const report = await fetchCompletedReport(t);
   const filesInCumulus = report.filesInCumulus;
 
-  t.is(report.status, 'SUCCESS');
+  t.is(report.status, 'Generated');
   t.is(report.error, null);
   t.is(filesInCumulus.okCount, matchingFiles.length);
   t.is(filesInCumulus.onlyInS3.length, 0);
@@ -411,10 +412,10 @@ test.serial('A valid reconciliation report is generated when there are both extr
   };
   await promisifiedHandler(event, {});
 
-  const report = await fetchCompletedReport(t.context.systemBucket, t.context.stackName);
+  const report = await fetchCompletedReport(t);
   const filesInCumulus = report.filesInCumulus;
 
-  t.is(report.status, 'SUCCESS');
+  t.is(report.status, 'Generated');
   t.is(report.error, null);
   t.is(filesInCumulus.okCount, matchingFiles.length);
 
@@ -483,10 +484,10 @@ test.serial('A valid reconciliation report is generated when there are both extr
   };
   await promisifiedHandler(event, {});
 
-  const report = await fetchCompletedReport(t.context.systemBucket, t.context.stackName);
+  const report = await fetchCompletedReport(t);
   const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
 
-  t.is(report.status, 'SUCCESS');
+  t.is(report.status, 'Generated');
   t.is(report.error, null);
   t.is(collectionsInCumulusCmr.okCount, matchingColls.length);
 

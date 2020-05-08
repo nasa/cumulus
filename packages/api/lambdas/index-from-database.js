@@ -44,6 +44,8 @@ async function indexFromDatabase(esIndex, tables, esHost) {
     indexModel(esClient, tables.granulesTable, esIndex, indexer.indexGranule),
     indexModel(esClient, tables.pdrsTable, esIndex, indexer.indexPdr),
     indexModel(esClient, tables.providersTable, esIndex, indexer.indexProvider),
+    indexModel(esClient, tables.reconciliationReportsTable, esIndex,
+      indexer.indexReconciliationReport),
     indexModel(esClient, tables.rulesTable, esIndex, indexer.indexRule)
   ]);
 }

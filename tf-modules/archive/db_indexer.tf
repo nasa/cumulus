@@ -20,18 +20,19 @@ resource "aws_lambda_function" "db_indexer" {
   }
   environment {
     variables = {
-      CMR_ENVIRONMENT       = var.cmr_environment
-      CollectionsTable      = var.dynamo_tables.collections.name
-      ExecutionsTable       = var.dynamo_tables.executions.name
-      AsyncOperationsTable  = var.dynamo_tables.async_operations.name
-      FilesTable            = var.dynamo_tables.files.name
-      GranulesTable         = var.dynamo_tables.granules.name
-      PdrsTable             = var.dynamo_tables.pdrs.name
-      ProvidersTable        = var.dynamo_tables.providers.name
-      RulesTable            = var.dynamo_tables.rules.name
-      ES_HOST               = var.elasticsearch_hostname
-      stackName             = var.prefix
-      system_bucket         = var.system_bucket
+      CMR_ENVIRONMENT            = var.cmr_environment
+      CollectionsTable           = var.dynamo_tables.collections.name
+      ExecutionsTable            = var.dynamo_tables.executions.name
+      AsyncOperationsTable       = var.dynamo_tables.async_operations.name
+      FilesTable                 = var.dynamo_tables.files.name
+      GranulesTable              = var.dynamo_tables.granules.name
+      PdrsTable                  = var.dynamo_tables.pdrs.name
+      ProvidersTable             = var.dynamo_tables.providers.name
+      ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
+      RulesTable                 = var.dynamo_tables.rules.name
+      ES_HOST                    = var.elasticsearch_hostname
+      stackName                  = var.prefix
+      system_bucket              = var.system_bucket
     }
   }
   tags = var.tags
@@ -106,6 +107,17 @@ data "aws_dynamodb_table" "providers" {
 
 resource "aws_lambda_event_source_mapping" "providers_table_db_indexer" {
   event_source_arn  = data.aws_dynamodb_table.providers.stream_arn
+  function_name     = aws_lambda_function.db_indexer.arn
+  starting_position = "TRIM_HORIZON"
+  batch_size        = 10
+}
+
+data "aws_dynamodb_table" "reconciliation_reports" {
+  name = var.dynamo_tables.reconciliation_reports.name
+}
+
+resource "aws_lambda_event_source_mapping" "reconciliation_reports_table_db_indexer" {
+  event_source_arn  = data.aws_dynamodb_table.reconciliation_reports.stream_arn
   function_name     = aws_lambda_function.db_indexer.arn
   starting_position = "TRIM_HORIZON"
   batch_size        = 10

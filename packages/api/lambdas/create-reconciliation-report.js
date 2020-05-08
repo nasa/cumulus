@@ -16,7 +16,7 @@ const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue
 const { constructOnlineAccessUrl } = require('@cumulus/cmrjs/cmr-utils');
 
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
-const { Collection, Granule } = require('../models');
+const { Collection, Granule, ReconciliationReport } = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
 
 const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includes(bucketConfig.type);
@@ -462,13 +462,23 @@ async function createReconciliationReport(params) {
     filesInCumulusCmr: cloneDeep(reportFormatCumulusCmr)
   };
 
-  const reportKey = `${stackName}/reconciliation-reports/report-${report.reportStartTime}.json`;
+  const reportKey = `${stackName}/reconciliation-reports/inventoryReport-${report.reportStartTime}.json`;
 
   await s3().putObject({
     Bucket: systemBucket,
     Key: reportKey,
     Body: JSON.stringify(report)
   }).promise();
+
+  // add to database
+  const reconciliationReportModel = new ReconciliationReport();
+  const reportRecord = {
+    name: `inventoryReport-${moment.utc(report.reportStartTime).format('YYYYMMDDTHHmmssSSS')}`,
+    type: 'Inventory',
+    status: 'Pending',
+    location: buildS3Uri(systemBucket, reportKey)
+  };
+  await reconciliationReportModel.create(reportRecord);
 
   // Create a report for each bucket
   const promisedBucketReports = dataBuckets.map(
@@ -493,12 +503,13 @@ async function createReconciliationReport(params) {
   report.status = 'SUCCESS';
 
   // Write the full report to S3
-  return s3().putObject({
+  await s3().putObject({
     Bucket: systemBucket,
     Key: reportKey,
     Body: JSON.stringify(report)
-  }).promise()
-    .then(() => null);
+  }).promise();
+
+  return reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
 }
 
 function handler(event, _context, cb) {

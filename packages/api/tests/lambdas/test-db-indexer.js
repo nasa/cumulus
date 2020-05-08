@@ -17,7 +17,8 @@ const {
   fakeGranuleFactoryV2,
   fakeExecutionFactory,
   fakeFileFactory,
-  fakeProviderFactory
+  fakeProviderFactory,
+  fakeReconciliationReportFactory
 } = require('../../lib/testUtils');
 const GranuleFilesCache = require('../../lib/GranuleFilesCache');
 
@@ -41,6 +42,7 @@ process.env.FilesTable = randomString();
 process.env.GranulesTable = randomString();
 process.env.PdrsTable = randomString();
 process.env.ProvidersTable = randomString();
+process.env.ReconciliationReportsTable = randomString();
 process.env.RulesTable = randomString();
 
 const buildDynamoStreamRecord = ({
@@ -119,9 +121,22 @@ const buildGranuleRecord = ({ type, oldGranule = null, newGranule = null }) => {
   });
 };
 
+const buildReconciliationReportRecord = ({ type, oldReport = null, newReport = null }) => {
+  const name = type === 'REMOVE' ? oldReport.name : newReport.name;
+
+  return buildDynamoStreamRecord({
+    eventName: type,
+    tableName: process.env.ReconciliationReportsTable,
+    keys: { name },
+    oldImage: oldReport,
+    newImage: newReport
+  });
+};
+
 let collectionModel;
 let executionModel;
 let granuleModel;
+let reconciliationReportModel;
 let ruleModel;
 
 test.before(async (t) => {
@@ -131,12 +146,14 @@ test.before(async (t) => {
   collectionModel = new models.Collection();
   granuleModel = new models.Granule();
   executionModel = new models.Execution();
+  reconciliationReportModel = new models.ReconciliationReport();
   ruleModel = new models.Rule();
 
   await Promise.all([
     collectionModel.createTable(),
     executionModel.createTable(),
     granuleModel.createTable(),
+    reconciliationReportModel.createTable(),
     ruleModel.createTable()
   ]);
 
@@ -153,6 +170,7 @@ test.after.always(async () => {
   await collectionModel.deleteTable();
   await granuleModel.deleteTable();
   await executionModel.deleteTable();
+  await reconciliationReportModel.deleteTable();
   await ruleModel.deleteTable();
 
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
@@ -393,4 +411,48 @@ test.serial('The db-indexer does not throw an exception when execution fails', a
       }
     })(() => handler({ Records: [insertRecord] }))
   );
+});
+
+test.serial('create, update and delete a reconciliationReport in DynamoDB and ES', async (t) => {
+  const { esAlias } = t.context;
+
+  const fakeReport = fakeReconciliationReportFactory();
+
+  const insertRecord = buildReconciliationReportRecord({
+    type: 'INSERT',
+    newReport: fakeReport
+  });
+
+  // fake the lambda trigger
+  await handler({ Records: [insertRecord] });
+
+  const reportIndex = new Search({}, 'reconciliationReport', esAlias);
+  let indexedRecord = await reportIndex.get(fakeReport.name);
+
+  t.is(indexedRecord.name, fakeReport.name);
+
+  // change the record
+  const modifyRecord = buildReconciliationReportRecord({
+    type: 'MODIFY',
+    oldReport: fakeReport,
+    newReport: { ...fakeReport, status: 'Failed' }
+  });
+
+  // fake the lambda trigger
+  await handler({ Records: [modifyRecord] });
+
+  indexedRecord = await reportIndex.get(fakeReport.name);
+  t.is(indexedRecord.status, 'Failed');
+
+  // delete the record
+  const removeRecord = buildReconciliationReportRecord({
+    type: 'REMOVE',
+    oldReport: { ...fakeReport, status: 'Failed' }
+  });
+
+  // fake the lambda trigger
+  await handler({ Records: [removeRecord] });
+
+  indexedRecord = await reportIndex.get(fakeReport.name);
+  t.is(indexedRecord.detail, 'Record not found');
 });
