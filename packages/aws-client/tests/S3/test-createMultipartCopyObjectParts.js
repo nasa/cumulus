@@ -4,7 +4,11 @@ const fs = require('fs');
 const test = require('ava');
 const { createHash } = require('crypto');
 const { s3 } = require('../../services');
-const { buildUploadPartCopyParams, createMultipartChunks } = require('../../S3');
+const {
+  buildCompleteMultipartUploadParams,
+  buildUploadPartCopyParams,
+  createMultipartChunks
+} = require('../../S3');
 
 // Not used yet
 const createDummyFile = (size) =>
@@ -30,7 +34,7 @@ const md5OfObject = (Bucket, Key) => new Promise(
   }
 );
 
-test('createMultipartChunks returns the correct chunks', (t) => {
+test('createMultipartChunks() returns the correct chunks', (t) => {
   t.deepEqual(
     createMultipartChunks(0),
     []
@@ -67,7 +71,7 @@ test('createMultipartChunks returns the correct chunks', (t) => {
   );
 });
 
-test('buildUploadPartCopyParams returns the correct params', (t) => {
+test('buildUploadPartCopyParams() returns the correct params', (t) => {
   t.deepEqual(
     buildUploadPartCopyParams({
       chunks: []
@@ -106,4 +110,18 @@ test('buildUploadPartCopyParams returns the correct params', (t) => {
       }
     ]
   );
+});
+
+test('buildCompleteMultipartUploadParams() returns the correct params', (t) => {
+  const actualResult = buildCompleteMultipartUploadParams({
+    destinationBucket: 'destination-bucket',
+    destinationKey: 'destination-key'
+  });
+
+  const expectedResult = {
+    Bucket: 'destination-bucket',
+    Key: 'destination-key'
+  };
+
+  t.deepEqual(actualResult, expectedResult);
 });
