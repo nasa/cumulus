@@ -77,6 +77,7 @@ test('buildUploadPartCopyParams returns the correct params', (t) => {
 
   t.deepEqual(
     buildUploadPartCopyParams({
+      destinationBucket: 'destination-bucket',
       chunks: [
         { start: 0, end: 5 },
         { start: 6, end: 10 }
@@ -84,10 +85,12 @@ test('buildUploadPartCopyParams returns the correct params', (t) => {
     }),
     [
       {
+        Bucket: 'destination-bucket',
         PartNumber: 1,
         CopySourceRange: 'bytes=0-5'
       },
       {
+        Bucket: 'destination-bucket',
         PartNumber: 2,
         CopySourceRange: 'bytes=6-10'
       }
