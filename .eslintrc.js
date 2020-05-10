@@ -1,5 +1,22 @@
 'use strict';
 
+const path = require('path');
+const { readFileSync } = require('fs');
+
+const getRootDevDependencies = () => {
+  const rootPackageJsonFilename = path.join(__dirname, 'package.json');
+
+  const rawRootPackageJson = readFileSync(rootPackageJsonFilename, 'utf8');
+
+  const rootPackageJson = JSON.parse(rawRootPackageJson);
+
+  if (rootPackageJson.devDependencies) {
+    return Object.keys(rootPackageJson.devDependencies);
+  }
+
+  return [];
+}
+
 module.exports = {
   plugins: [
     'eslint-comments',
@@ -152,12 +169,21 @@ module.exports = {
       rules: { 'no-console': 'off' }
     },
     {
-      files: ['**/test/**/*.js', '**/tests/**/*.js'],
+      files: [
+        '**/test/**/*.js',
+        '**/tests/**/*.js'
+      ],
       rules: {
         'max-classes-per-file': 'off',
         'no-console': 'off',
         'no-new': 'off',
-        'no-param-reassign': 'off'
+        'no-param-reassign': 'off',
+        'node/no-extraneous-require': [
+          'error',
+          {
+            allowModules: getRootDevDependencies()
+          }
+        ]
       }
     }
   ]
