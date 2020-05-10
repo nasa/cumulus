@@ -32,7 +32,7 @@ test.serial('configureTimestampEnvs throws error when invalid endTimestamp is pr
   };
   t.throws(
     () => manualConsumer.configureTimestampEnvs(event),
-    `endTimestamp ${event.endTimestamp} is not a valid input for new Date().`
+    { message: `endTimestamp ${event.endTimestamp} is not a valid input for new Date().` }
   );
   delete process.env.endTimestamp;
 });
@@ -43,7 +43,7 @@ test.serial('configureTimestampEnvs throws error when invalid startTimestamp is 
   };
   t.throws(
     () => manualConsumer.configureTimestampEnvs(event),
-    `startTimestamp ${event.startTimestamp} is not a valid input for new Date().`
+    { message: `startTimestamp ${event.startTimestamp} is not a valid input for new Date().` }
   );
   delete process.env.endTimestamp;
 });
