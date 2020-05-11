@@ -120,7 +120,7 @@ test.serial('GET /token with a code but no state returns the access token', asyn
   const stub = sinon.stub(
     EarthdataLoginClient.prototype,
     'getAccessToken'
-  ).callsFake(async () => getAccessTokenResponse);
+  ).resolves(getAccessTokenResponse);
 
   const response = await request(app)
     .get('/token')
@@ -139,7 +139,7 @@ test.serial('GET /token with a code and state results in a redirect to that stat
   const stub = sinon.stub(
     EarthdataLoginClient.prototype,
     'getAccessToken'
-  ).callsFake(async () => getAccessTokenResponse);
+  ).resolves(getAccessTokenResponse);
 
   const response = await request(app)
     .get('/token')
@@ -162,7 +162,7 @@ test.serial('GET /token with a code and state results in a redirect containing t
   const stub = sinon.stub(
     EarthdataLoginClient.prototype,
     'getAccessToken'
-  ).callsFake(async () => getAccessTokenResponse);
+  ).resolves(getAccessTokenResponse);
 
   const response = await request(app)
     .get('/token')
@@ -187,7 +187,7 @@ test.serial('GET /token with a code stores the access token in DynamoDb', async 
   const stub = sinon.stub(
     EarthdataLoginClient.prototype,
     'getAccessToken'
-  ).callsFake(async () => getAccessTokenResponse);
+  ).resolves(getAccessTokenResponse);
 
   await request(app)
     .get('/token')

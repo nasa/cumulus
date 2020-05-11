@@ -8,18 +8,24 @@ if [[ ! $PUBLISH_FLAG == true ]]; then
   exit 0
 fi
 
+npx lerna run prepare
+npx lerna run package
+
 export VERSION=$(jq --raw-output .version lerna.json)
 export NPM_TAG=$(node ./bamboo/npm-tag.js);
 
 echo "Publishing packages to NPM with version=${VERSION} and tag=${NPM_TAG}"
 export npm_config_unsafe_perm=true
-npx lerna publish \
-  ${VERSION} \
-  --no-git-tag-version \
-  --no-push \
-  --yes \
-  --force-publish=* \
-  --dist-tag=${NPM_TAG} \
-  --exact
+
+if [[ $SKIP_NPM_PUBLISH != true ]]; then
+  npx lerna publish \
+    ${VERSION} \
+    --no-git-tag-version \
+    --no-push \
+    --yes \
+    --force-publish=* \
+    --dist-tag=${NPM_TAG} \
+    --exact
+fi
 
 . ./bamboo/create-release.sh

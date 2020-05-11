@@ -75,7 +75,8 @@ async function token(event, oAuth2Provider, response) {
 
       await accessTokenModel.create({
         accessToken,
-        refreshToken
+        refreshToken,
+        expirationTime
       });
 
       const jwtToken = createJwtToken({ accessToken, username, expirationTime });
@@ -156,7 +157,8 @@ async function refreshAccessToken(request, oAuth2Provider, response) {
   // Store new token record
   await accessTokenModel.create({
     accessToken: newAccessToken,
-    refreshToken: newRefreshToken
+    refreshToken: newRefreshToken,
+    expirationTime
   });
 
   const jwtToken = createJwtToken({ accessToken: newAccessToken, username, expirationTime });

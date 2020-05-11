@@ -1,6 +1,8 @@
 'use strict';
 
 const test = require('ava');
+const sinon = require('sinon');
+const omit = require('lodash/omit');
 
 const awsServices = require('@cumulus/aws-client/services');
 const {
@@ -24,6 +26,7 @@ const {
   getWorkflowList
 } = require('../../lib/testUtils');
 const bootstrap = require('../../lambdas/bootstrap');
+const indexer = require('../../es/indexer');
 const { Search } = require('../../es/search');
 
 const workflowList = getWorkflowList();
@@ -137,13 +140,32 @@ test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
+test('getEsRequestConcurrency respects concurrency value in payload', (t) => {
+  t.is(indexFromDatabase.getEsRequestConcurrency({
+    esRequestConcurrency: 5
+  }), 5);
+});
+
+test.serial('getEsRequestConcurrency respects ES_CONCURRENCY', (t) => {
+  process.env.ES_CONCURRENCY = 35;
+  t.is(indexFromDatabase.getEsRequestConcurrency({}), 35);
+  delete process.env.ES_CONCURRENCY;
+});
+
+test('getEsRequestConcurrency correctly returns 10 when nothing is specified', (t) => {
+  t.is(indexFromDatabase.getEsRequestConcurrency({}), 10);
+});
+
 test('No error is thrown if nothing is in the database', async (t) => {
   const { esAlias } = t.context;
 
-  t.notThrows(async () => indexFromDatabase.indexFromDatabase(esAlias, tables));
+  t.notThrows(async () => indexFromDatabase.indexFromDatabase({
+    indexName: esAlias,
+    tables
+  }));
 });
 
-test('index executions', async (t) => {
+test('Lambda successfully indexes records of all types', async (t) => {
   const { esAlias } = t.context;
 
   const numItems = 1;
@@ -159,7 +181,10 @@ test('index executions', async (t) => {
     addFakeData(numItems, fakeRuleFactoryV2, rulesModel, { workflow: workflowList[0].name })
   ]);
 
-  await indexFromDatabase.indexFromDatabase(esAlias, tables);
+  await indexFromDatabase.handler({
+    indexName: esAlias,
+    tables
+  });
 
   const searchResults = await Promise.all([
     searchEs('collection', esAlias),
@@ -178,4 +203,112 @@ test('index executions', async (t) => {
       res.results.map((r) => delete r.timestamp),
       fakeData[index].map((r) => delete r.timestamp)
     ));
+});
+
+test.serial('failure in indexing record of specific type should not prevent indexing of other records with same type', async (t) => {
+  const { esAlias, esClient } = t.context;
+
+  const numItems = 7;
+  const fakeData = await addFakeData(numItems, fakeGranuleFactoryV2, granuleModel);
+
+  let numCalls = 0;
+  const originalIndexGranule = indexer.indexGranule;
+  const successCount = 4;
+  const indexGranuleStub = sinon.stub(indexer, 'indexGranule')
+    .callsFake((
+      esClientArg,
+      payload,
+      index
+    ) => {
+      numCalls += 1;
+      if (numCalls <= successCount) {
+        return originalIndexGranule(esClientArg, payload, index);
+      }
+      throw new Error('fake error');
+    });
+
+  let searchResults;
+  try {
+    await indexFromDatabase.handler({
+      indexName: esAlias,
+      tables
+    });
+
+    searchResults = await searchEs('granule', esAlias);
+
+    t.is(searchResults.meta.count, successCount);
+
+    searchResults.results.forEach((result) => {
+      const sourceData = fakeData.find((data) => data.granuleId === result.granuleId);
+      t.deepEqual(
+        omit(sourceData, ['timestamp', 'updatedAt']),
+        omit(result, ['timestamp', 'updatedAt'])
+      );
+    });
+  } finally {
+    indexGranuleStub.restore();
+    await Promise.all(fakeData.map(
+      ({ granuleId }) => granuleModel.delete({ granuleId })
+    ));
+    await Promise.all(searchResults.results.map(
+      (result) =>
+        esClient.delete({
+          index: esAlias,
+          type: 'granule',
+          id: result.granuleId,
+          parent: result.collectionId,
+          refresh: true
+        })
+    ));
+  }
+});
+
+test.serial('failure in indexing record of one type should not prevent indexing of other records with different type', async (t) => {
+  const { esAlias, esClient } = t.context;
+
+  const numItems = 2;
+  const [fakeProviderData, fakeGranuleData] = await Promise.all([
+    addFakeData(numItems, fakeProviderFactory, providersModel),
+    addFakeData(numItems, fakeGranuleFactoryV2, granuleModel)
+  ]);
+
+  const indexGranuleStub = sinon.stub(indexer, 'indexGranule')
+    .throws(new Error('error'));
+
+  let searchResults;
+  try {
+    await indexFromDatabase.handler({
+      indexName: esAlias,
+      tables
+    });
+
+    searchResults = await searchEs('provider', esAlias);
+
+    t.is(searchResults.meta.count, numItems);
+
+    searchResults.results.forEach((result) => {
+      const sourceData = fakeProviderData.find((data) => data.id === result.id);
+      t.deepEqual(
+        omit(sourceData, ['createdAt', 'timestamp', 'updatedAt']),
+        omit(result, ['createdAt', 'timestamp', 'updatedAt'])
+      );
+    });
+  } finally {
+    indexGranuleStub.restore();
+    await Promise.all(fakeProviderData.map(
+      ({ id }) => providersModel.delete({ id })
+    ));
+    await Promise.all(fakeGranuleData.map(
+      ({ granuleId }) => granuleModel.delete({ granuleId })
+    ));
+    await Promise.all(searchResults.results.map(
+      (result) =>
+        esClient.delete({
+          index: esAlias,
+          type: 'provider',
+          id: result.id,
+          refresh: true
+        })
+    ));
+  }
 });
