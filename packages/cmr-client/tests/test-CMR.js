@@ -41,6 +41,10 @@ test.serial('CMR.searchCollection handles paging correctly.', async (t) => {
     .query((q) => q.page_num === '3')
     .reply(200, body3, headers);
 
+  nock('https://cmr.uat.earthdata.nasa.gov')
+    .post('/legacy-services/rest/tokens')
+    .reply(200, { token: 'ABCDE' });
+
   const expected = [
     { cmrEntry1: 'data1' },
     { cmrEntry2: 'data2' },
@@ -51,7 +55,12 @@ test.serial('CMR.searchCollection handles paging correctly.', async (t) => {
   ];
   process.env.CMR_ENVIRONMENT = 'UAT';
 
-  const cmrSearch = new CMR({ provider: 'CUMULUS' });
+  const cmrSearch = new CMR({
+    provider: 'CUMULUS',
+    clientId: 'clientID',
+    username: 'username',
+    password: 'password'
+  });
   const results = await cmrSearch.searchCollections();
 
   t.is(expected.length, results.length);
@@ -61,7 +70,7 @@ test.serial('CMR.searchCollection handles paging correctly.', async (t) => {
   expected.forEach((expectedItem) => t.true(some(results, expectedItem)));
 });
 
-test('getHeaders returns correct Content-type for UMMG metadata', (t) => {
+test('getWriteHeaders returns correct Content-type for UMMG metadata', (t) => {
   const cmrInstance = new CMR({
     provider: 'provider',
     clientId: 'clientID',
@@ -69,28 +78,39 @@ test('getHeaders returns correct Content-type for UMMG metadata', (t) => {
     password: 'password'
   });
   const ummgVersion = '1.5';
-  const headers = cmrInstance.getHeaders({ ummgVersion });
-  console.log(headers);
+  const headers = cmrInstance.getWriteHeaders({ ummgVersion });
   t.is(headers['Content-type'], 'application/vnd.nasa.cmr.umm+json;version=1.5');
   t.is(headers.Accept, 'application/json');
 });
 
-test('getHeaders returns correct Content-type for xml metadata by default', (t) => {
+test('getWriteHeaders returns correct Content-type for xml metadata by default', (t) => {
   const cmrInstance = new CMR({
     provider: 'provider',
     clientId: 'clientID',
     username: 'username',
     password: 'password'
   });
-  const headers = cmrInstance.getHeaders();
-  console.log(headers);
+  const headers = cmrInstance.getWriteHeaders();
   t.is(headers['Content-type'], 'application/echo10+xml');
   t.is(headers['Client-Id'], 'clientID');
   t.is(headers.Accept, undefined);
 });
 
+test('getReadHeaders returns clientId and token', (t) => {
+  const cmrInstance = new CMR({
+    provider: 'provider',
+    clientId: 'test-client-id',
+    username: 'username',
+    password: 'password'
+  });
+
+  const headers = cmrInstance.getReadHeaders({ token: '12345' });
+  t.is(headers['Client-Id'], 'test-client-id');
+  t.is(headers['Echo-Token'], '12345');
+});
+
 test.serial('ingestUMMGranule() throws an exception if the input fails validation', async (t) => {
-  const cmrSearch = new CMR({ provider: 'my-provider', token: 'abc' });
+  const cmrSearch = new CMR({ provider: 'my-provider', token: 'abc', clientId: 'client' });
 
   const ummgMetadata = { GranuleUR: 'asdf' };
 

@@ -2,6 +2,7 @@
 
 const got = require('got');
 const { parseString } = require('xml2js');
+const { deprecate } = require('@cumulus/common/util');
 const {
   ValidationError,
   updateToken,
@@ -30,6 +31,7 @@ const {
  * found
  */
 async function getMetadata(cmrLink) {
+  deprecate('@cumulus/cmrjs/getMetadata(cmrLink)', '1.22.1', '@cumulus/cmr-client/CMR.getGranuleMetadata(cmrLink)');
   const response = await got.get(cmrLink);
 
   if (response.statusCode !== 200) {
@@ -50,6 +52,7 @@ async function getMetadata(cmrLink) {
  * @returns {Object} - Full metadata as a JS object
  */
 async function getFullMetadata(cmrLink) {
+  deprecate('@cumulus/cmrjs/getFullMetadata(cmrLink)', '1.22.1');
   const xmlLink = cmrLink.replace('json', 'echo10');
 
   const response = await got.get(xmlLink);

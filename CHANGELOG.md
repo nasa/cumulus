@@ -69,6 +69,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1974**
   - Fixed @cumulus/api webpack config for missing underscore object due to underscore update
 
+- **CUMULUS-1987**
+  - `Remove granule from CMR` operation in `@cumulus/api` passes token to get granule metadata from CMR
+
 ### Deprecated
 
 - **CUMULUS-1799** - Deprecated the following code. For cases where the code was moved into another package, the new code location is noted:
@@ -123,6 +126,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `@cumulus/common/string.replace()`
   - `@cumulus/common/string.toLower()`
   - `@cumulus/common/string.toUpper()`
+- **CUMULUS-1987** - Deprecated the following functions:
+  - `@cumulus/cmrjs/getMetadata(cmrLink)` -> `@cumulus/cmr-client/CMR.getGranuleMetadata(cmrLink)`
+  - `@cumulus/cmrjs/getFullMetadata(cmrLink)`
 
 ### Removed
 

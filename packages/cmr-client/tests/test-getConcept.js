@@ -4,11 +4,7 @@ const sinon = require('sinon');
 const test = require('ava');
 const got = require('got');
 
-const { getMetadata } = require('..');
-
-const granuleId = 'MYD13Q1.A2017297.h19v10.006.2017313221203';
-
-const alreadyDeleted = `Concept with native-id [${granuleId}] and concept-id [G1222482315-CUMULUS] is already deleted.`;
+const getConceptMetadata = require('../getConcept');
 
 // cmr responses for different status
 const gotResponses = {
@@ -20,7 +16,7 @@ const gotResponses = {
   404: {
     statusCode: 404,
     statusMessage: 'not found',
-    body: `<errors><error>${alreadyDeleted}</error></errors>`
+    body: `<errors><error>Granule deleted</error></errors>`
   },
   400: {
     statusCode: 400,
@@ -31,14 +27,6 @@ const gotResponses = {
 
 let statusCode;
 const stubclient = {
-  delete: () => {
-    if (statusCode === 200) {
-      return Promise.resolve(gotResponses[statusCode]);
-    }
-    const error = new Error();
-    error.response = gotResponses[statusCode];
-    return Promise.reject(error);
-  },
   getCmrData: () => ({
     statusCode,
     body: JSON.stringify({
@@ -60,7 +48,7 @@ test.serial('get CMR metadata, success', async (t) => {
   const stub = sinon.stub(got, 'get').callsFake(stubclient.getCmrData);
 
   try {
-    const response = await getMetadata('fakeLink');
+    const response = await getConceptMetadata('fakeLink');
     t.is(response.title, 'MOD09GQ.A2016358.h13v04.006.2016360104606');
   } finally {
     stub.restore();
@@ -72,7 +60,7 @@ test.serial('get CMR metadata, fail', async (t) => {
   const stub = sinon.stub(got, 'get').callsFake(stubclient.getCmrData);
 
   try {
-    const response = await getMetadata('fakeLink');
+    const response = await getConceptMetadata('fakeLink');
     t.is(response, null);
   } finally {
     stub.restore();

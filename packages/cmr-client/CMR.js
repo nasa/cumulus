@@ -8,6 +8,7 @@ const Logger = require('@cumulus/logger');
 const searchConcept = require('./searchConcept');
 const ingestConcept = require('./ingestConcept');
 const deleteConcept = require('./deleteConcept');
+const getConcept = require('./getConcept');
 const getUrl = require('./getUrl');
 const { ummVersion, validateUMMG } = require('./UmmUtils');
 
@@ -123,14 +124,14 @@ class CMR {
   }
 
   /**
-   * Return object containing CMR request headers
+   * Return object containing CMR request headers for PUT / POST / DELETE
    *
    * @param {Object} params
    * @param {string} [params.token] - CMR request token
    * @param {string} [params.ummgVersion] - UMMG metadata version string or null if echo10 metadata
    * @returns {Object} CMR headers object
    */
-  getHeaders(params = {}) {
+  getWriteHeaders(params = {}) {
     const contentType = params.ummgVersion
       ? `application/vnd.nasa.cmr.umm+json;version=${params.ummgVersion}`
       : 'application/echo10+xml';
@@ -147,13 +148,30 @@ class CMR {
   }
 
   /**
+   * Return object containing CMR request headers for GETs
+   *
+   * @param {Object} params
+   * @param {string} [params.token] - CMR request token
+   * @returns {Object} CMR headers object
+   */
+  getReadHeaders(params = {}) {
+    const headers = {
+      'Client-Id': this.clientId
+    };
+
+    if (params.token) headers['Echo-Token'] = params.token;
+
+    return headers;
+  }
+
+  /**
    * Adds a collection record to the CMR
    *
    * @param {string} xml - the collection XML document
    * @returns {Promise.<Object>} the CMR response
    */
   async ingestCollection(xml) {
-    const headers = this.getHeaders({ token: await this.getToken() });
+    const headers = this.getWriteHeaders({ token: await this.getToken() });
     return ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, headers);
   }
 
@@ -164,7 +182,7 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async ingestGranule(xml) {
-    const headers = this.getHeaders({ token: await this.getToken() });
+    const headers = this.getWriteHeaders({ token: await this.getToken() });
     return ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, headers);
   }
 
@@ -175,7 +193,7 @@ class CMR {
    * @returns {Promise<Object>} to the CMR response object.
    */
   async ingestUMMGranule(ummgMetadata) {
-    const headers = this.getHeaders({
+    const headers = this.getWriteHeaders({
       token: await this.getToken(),
       ummgVersion: ummVersion(ummgMetadata)
     });
@@ -213,7 +231,7 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async deleteCollection(datasetID) {
-    const headers = this.getHeaders({ token: await this.getToken() });
+    const headers = this.getWriteHeaders({ token: await this.getToken() });
     return deleteConcept('collection', datasetID, headers);
   }
 
@@ -224,7 +242,7 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async deleteGranule(granuleUR) {
-    const headers = this.getHeaders({ token: await this.getToken() });
+    const headers = this.getWriteHeaders({ token: await this.getToken() });
     return deleteConcept('granules', granuleUR, this.provider, headers);
   }
 
@@ -236,12 +254,13 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async searchCollections(params, format = 'json') {
+    const headers = this.getReadHeaders({ token: await this.getToken() });
     const searchParams = { provider_short_name: this.provider, ...params };
     return searchConcept({
       type: 'collections',
       searchParams,
       previousResults: [],
-      headers: { 'Client-Id': this.clientId },
+      headers,
       format
     });
   }
@@ -255,13 +274,25 @@ class CMR {
    */
   async searchGranules(params, format = 'json') {
     const searchParams = { provider_short_name: this.provider, ...params };
+    const headers = this.getReadHeaders({ token: await this.getToken() });
     return searchConcept({
       type: 'granules',
       searchParams,
       previousResults: [],
-      headers: { 'Client-Id': this.clientId },
+      headers,
       format
     });
+  }
+
+  /**
+   * Get the granule metadata from CMR using the cmrLink
+   *
+   * @param {string} cmrLink - URL to concept
+   *  @returns {Object} - metadata as a JS object, null if not found
+   */
+  async getGranuleMetadata(cmrLink) {
+    const headers = this.getReadHeaders({ token: await this.getToken() });
+    return getConcept(cmrLink, headers);
   }
 }
 module.exports = CMR;

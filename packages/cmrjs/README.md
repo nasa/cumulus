@@ -1,6 +1,6 @@
 # @cumulus/cmrjs
 
-A Node.js client to read from, write to, and delete from NASA's Common Metadata Repository (CMR) API.
+A Node.js client for Cumulus-specific functionality for reading from, writing to, and deleting from NASA's Common Metadata Repository (CMR) API. General CMR functionality should go in `@cumulus/cmr-client`.
 
 ## About Cumulus
 
