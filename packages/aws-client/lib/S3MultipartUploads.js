@@ -5,31 +5,38 @@
 const range = require('lodash/range');
 const { s3 } = require('../services');
 
-const GB = 1024 * 1024 * 1024;
+const MB = 1024 * 1024;
+const GB = 1024 * MB;
 
 // Each part of a multi-part copy needs to specify a byte range to be copied.
 // This byte range has a starting byte and an ending byte (inclusive) that makes
-// up the part. All parts must be larger than 5 MB, except that the last part
-// may be smaller than 5 MB. Parts cannot be larger than 5 GB.
+// up the part. The maximum allowed chunk size is 5368709120 bytes.
 //
 // This function takes a file size and an optional maxSize. It returns an array
 // of objects, each containing a `start` and an `end` value. These will make up
 // the ranges of the multi-part copy.
 //
+// From anecdotal testing, a chunk size of 250 MB seems to perform fairly well.
+//
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_UploadPartCopy.html
-const createMultipartChunks = (size, maxSize = 5 * GB) => {
-  const lastChunkSize = size % maxSize;
+const createMultipartChunks = (objectSize, maxChunkSize = 250 * MB) => {
+  if (maxChunkSize > (5 * GB)) {
+    throw new Error('maxChunkSize can be no greater than 5368709120');
+  }
+
+  const lastChunkSize = objectSize % maxChunkSize;
 
   // Build the list of full-size chunks
-  const chunks = range(0, size - lastChunkSize, maxSize).map((start) => {
-    const end = start + maxSize - 1;
-    return { start, end };
-  });
+  const chunks = range(0, objectSize - lastChunkSize, maxChunkSize)
+    .map((start) => {
+      const end = start + maxChunkSize - 1;
+      return { start, end };
+    });
 
   // If necessary build the last, not-full-size chunk
   if (lastChunkSize !== 0) {
-    const start = size - lastChunkSize;
-    const end = size - 1;
+    const start = objectSize - lastChunkSize;
+    const end = objectSize - 1;
     chunks.push({ start, end });
   }
 

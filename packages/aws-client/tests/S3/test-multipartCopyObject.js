@@ -11,6 +11,8 @@ const {
 } = require('../../S3');
 const { s3 } = require('../../services');
 
+const MB = 1024 * 1024;
+
 // Create a random id with a prefix
 const randomId = (prefix) =>
   `${prefix}-${cryptoRandomString({ length: 6 })}`;
@@ -53,7 +55,7 @@ test('multipartCopyObject() copies a file between buckets', async (t) => {
     await createDummyObject({
       Bucket: sourceBucket,
       Key: sourceKey,
-      size: 5 * 1024 * 1024
+      size: 6 * MB
     });
 
     const sourceChecksum = await md5OfObject({

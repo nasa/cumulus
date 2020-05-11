@@ -7,26 +7,32 @@ const {
   createMultipartChunks
 } = require('../../lib/S3MultipartUploads');
 
-test('createMultipartChunks() returns the correct chunks', (t) => {
+test('createMultipartChunks(0) returns the correct chunks', (t) => {
   t.deepEqual(
     createMultipartChunks(0),
     []
   );
+});
 
+test('createMultipartChunks(9, 10) returns the correct chunks', (t) => {
   t.deepEqual(
     createMultipartChunks(9, 10),
     [
       { start: 0, end: 8 }
     ]
   );
+});
 
+test('createMultipartChunks(10, 10) returns the correct chunks', (t) => {
   t.deepEqual(
     createMultipartChunks(10, 10),
     [
       { start: 0, end: 9 }
     ]
   );
+});
 
+test('createMultipartChunks(11, 10) returns the correct chunks', (t) => {
   t.deepEqual(
     createMultipartChunks(11, 10),
     [
@@ -34,7 +40,9 @@ test('createMultipartChunks() returns the correct chunks', (t) => {
       { start: 10, end: 10 }
     ]
   );
+});
 
+test('createMultipartChunks(12, 10) returns the correct chunks', (t) => {
   t.deepEqual(
     createMultipartChunks(12, 10),
     [
@@ -44,14 +52,20 @@ test('createMultipartChunks() returns the correct chunks', (t) => {
   );
 });
 
-test('buildUploadPartCopyParams() returns the correct params', (t) => {
+test('createMultipartChunks throws an exception for a chunk size larger than 5 GB', (t) => {
+  t.throws(() => createMultipartChunks(1, (5 * 1024 * 1024 * 1024) + 1));
+});
+
+test('buildUploadPartCopyParams() with no chunks returns the correct params', (t) => {
   t.deepEqual(
     buildUploadPartCopyParams({
       chunks: []
     }),
     []
   );
+});
 
+test('buildUploadPartCopyParams() with multiple chunks returns the correct params', (t) => {
   t.deepEqual(
     buildUploadPartCopyParams({
       uploadId: 'upload-id',
