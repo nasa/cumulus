@@ -6,10 +6,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### MIGRATION STEPS
+
+- To take advantage of the new TTL-based access token expiration implemented in CUMULUS-1777 (see notes below) and clear out existing records in your access tokens table, do the following:
+  1. Log out of any active dashboard sessions
+  2. Use the AWS console or CLI to delete your `<prefix>-AccessTokensTable` DynamoDB table
+  3. [Re-deploy your `data-persistence` module](https://nasa.github.io/cumulus/docs/deployment/upgrade-readme#update-data-persistence-resources), which should re-create the `<prefix>-AccessTokensTable` DynamoDB table
+  4. Return to using the Cumulus API/dashboard as normal
+
 ### Added
 
 - Added a limit for concurrent Elasticsearch requests when doing an index from database operation
 - Added the `es_request_concurrency` parameter to the archive and cumulus Terraform modules
+
+### Changed
+
+- **CUMULUS-1777**
+  - The `expirationTime` property is now a **required field** of the access tokens model.
+  - Updated the `AccessTokens` table to set a [TTL](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/howitworks-ttl.html) on the `expirationTime` field in `tf-modules/data-persistence/dynamo.tf`. As a result, access token records in this table whose `expirationTime` has passed should be **automatically deleted by DynamoDB**.
+  - Updated all code creating access token records in the Dynamo `AccessTokens` table to set the `expirationTime` field value in seconds from the epoch.
 
 ## [v1.22.1] 2020-05-04
 
@@ -19,6 +34,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1894**
   - Added `@cumulus/aws-client/S3.multipartCopyObject()`
+- **CUMULUS-408**
+  - Added `certificateUri` field to provider schema. This optional field allows operators to specify an S3 uri to a CA bundle to use for HTTPS requests.
 - **CUMULUS-1787**
   - Added `collections/active` endpoint for returning collections with active granules in `@cumulus/api`
 - **CUMULUS-1799**
@@ -62,6 +79,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - POST `/granules/bulk`
 
 ### Fixed
+
+- **CUMULUS-408**
+  - Fixed HTTPS discovery and ingest.
 
 - **CUMULUS-1850**
   - Fixed a bug in Kinesis event processing where the message consumer would not properly filter available rules based on the collection information in the event and the Kinesis stream ARN

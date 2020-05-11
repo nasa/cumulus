@@ -1,11 +1,13 @@
 'use strict';
 
-const { randomId } = require('@cumulus/common/test-utils');
 const get = require('lodash/get');
 const {
   JsonWebTokenError,
   TokenExpiredError
 } = require('jsonwebtoken');
+const moment = require('moment');
+
+const { randomId } = require('@cumulus/common/test-utils');
 
 const { createJwtToken, verifyJwtToken } = require('../lib/token');
 const { localUserName: username } = require('../bin/local-test-defaults');
@@ -13,7 +15,8 @@ const { localUserName: username } = require('../bin/local-test-defaults');
 let accessToken;
 const newToken = () => {
   accessToken = randomId('oauthcode');
-  const expirationTime = new Date(Date.now() + 3600 * 24 * 1000);
+  // Expires in 24 hours
+  const expirationTime = moment().unix() + 3600 * 24;
   return createJwtToken({ accessToken, username, expirationTime });
 };
 

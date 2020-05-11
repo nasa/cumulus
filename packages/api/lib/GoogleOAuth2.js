@@ -71,7 +71,8 @@ class GoogleOAuth2 extends OAuth2 {
     });
     return {
       accessToken: tokens.access_token,
-      expirationTime: tokens.expiry_date,
+      // expiry_date is in milliseconds, expirationTime should be in seconds
+      expirationTime: Math.floor(tokens.expiry_date / 1000),
       refreshToken: tokens.refresh_token,
       username: userDataResponse.data.emailAddresses[0].value
     };

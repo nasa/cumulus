@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [v1.19.0] 2020-02-28
+### Added
+
+- **CUMULUS-408**
+  - Added `certificateUri` field to provider schema. This optional field allows operators to specify an S3 uri to a CA bundle to use for HTTPS requests.
+
+### Changed
+
+- **CUMULUS-1777**
+  - The `expirationTime` property is now a required field of the access tokens model.
+
+## [v1.19.0] - 2020-02-28
 
 ### Changed
 
