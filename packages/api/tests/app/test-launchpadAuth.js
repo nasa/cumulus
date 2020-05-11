@@ -220,7 +220,8 @@ test.serial('API request with valid JWT returns 200 response', async (t) => {
 
 test.serial('API request with expired JWT returns 401 response', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory({
-    expirationTime: moment().unix()
+    expirationTime: moment().unix(),
+    username: validUsername
   });
   await accessTokenModel.create(accessTokenRecord);
 
@@ -235,7 +236,9 @@ test.serial('API request with expired JWT returns 401 response', async (t) => {
 });
 
 test.serial('API request with invalid JWT returns 403 response', async (t) => {
-  const accessTokenRecord = fakeAccessTokenFactory();
+  const accessTokenRecord = fakeAccessTokenFactory({
+    username: validUsername
+  });
   await accessTokenModel.create(accessTokenRecord);
 
   // Use bad secret value to generate invalid JWT
@@ -253,7 +256,9 @@ test.serial('API request with invalid JWT returns 403 response', async (t) => {
 });
 
 test.serial('API request with JWT and no corresponding token record returns 401 response', async (t) => {
-  const accessTokenRecord = fakeAccessTokenFactory();
+  const accessTokenRecord = fakeAccessTokenFactory({
+    username: validUsername
+  });
 
   const jwt = createJwtToken(accessTokenRecord);
 
