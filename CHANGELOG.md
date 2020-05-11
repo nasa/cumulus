@@ -43,6 +43,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-408**
+  - Added `certificateUri` field to provider schema. This optional field allows operators to specify an S3 uri to a CA bundle to use for HTTPS requests.
 - **CUMULUS-1787**
   - Added `collections/active` endpoint for returning collections with active granules in `@cumulus/api`
 - **CUMULUS-1799**
@@ -86,6 +88,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - POST `/granules/bulk`
 
 ### Fixed
+
+- **CUMULUS-408**
+  - Fixed HTTPS discovery and ingest.
 
 - **CUMULUS-1850**
   - Fixed a bug in Kinesis event processing where the message consumer would not properly filter available rules based on the collection information in the event and the Kinesis stream ARN

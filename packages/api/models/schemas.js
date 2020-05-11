@@ -620,6 +620,10 @@ module.exports.provider = {
     cmKeyId: {
       type: 'string',
       description: 'AWS KMS Customer Master Key arn or alias'
+    },
+    certificateUri: {
+      type: 'string',
+      description: 'Optional SSL Certificate S3 URI for custom or self-signed SSL (TLS) certificate'
     }
   },
   required: [
