@@ -154,7 +154,7 @@ describe('The SNS-type rule', () => {
     });
 
     it('triggers the workflow', () => {
-      console.log('Execution: ', JSON.stringify(execution));
+      console.log('Execution:', JSON.stringify(execution));
       expect(execution).toBeDefined();
     });
 
