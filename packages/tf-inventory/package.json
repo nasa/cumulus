@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "@cumulus/common": "1.22.1",
-    "ava": "^2.1.0",
+    "ava": "^3.8.2",
     "fs": "0.0.1-security",
     "nyc": "^14.0.0",
     "rewire": "^4.0.1",

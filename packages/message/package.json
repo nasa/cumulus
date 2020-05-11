@@ -48,7 +48,7 @@
     "uuid": "^3.2.1"
   },
   "devDependencies": {
-    "ava": "^2.1.0",
+    "ava": "^3.8.2",
     "crypto-random-string": "^3.2.0",
     "jsdoc-to-markdown": "^5.0.3",
     "nyc": "^14.0.0",
