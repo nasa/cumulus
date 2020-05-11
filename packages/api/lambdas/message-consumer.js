@@ -52,7 +52,6 @@ async function getRules(queryParams, originalMessageSource) {
     filter += ' AND #rl.#vl = :ruleValue';
   }
   const model = new Rule();
-  console.log('rule query param values', JSON.stringify(values, null, 2));
   const rulesQueryResultsForSourceArn = await model.scan({
     names,
     filter,
@@ -194,7 +193,6 @@ function processRecord(record, fromSNS) {
         ...lookupCollectionInEvent(eventObject),
         sourceArn: get(parsed, 'eventSourceARN')
       };
-      console.log('ruleParam', ruleParam);
     } catch (err) {
       log.error('Caught error parsing JSON:');
       log.error(err);
