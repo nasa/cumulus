@@ -13,7 +13,7 @@
     "python-lint": "pylint *.py",
     "lint": "npm run python-lint",
     "build": "true",
-    "prepare": "true"
+    "package": "true"
   },
   "publishConfig": {
     "access": "private"

@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@cumulus/common": "1.22.1",
-    "ava": "^2.1.0",
+    "ava": "^3.8.2",
     "babel-loader": "^8.0.6",
     "babel-plugin-source-map-support": "^2.1.1",
     "babel-preset-env": "^1.7.0",

@@ -185,10 +185,11 @@ test('GoogleOAuth2.getAccessToken() properly requests user info from the googleP
 });
 
 test('GoogleOAuth2.getAccessToken() returns token information for a valid authorizationCode', async (t) => {
+  const expiryDate = Date.now();
   const tokens = {
     access_token: 'my-access-token',
     refresh_token: 'my-refresh-token',
-    expiry_date: 12345
+    expiry_date: expiryDate
   };
 
   const getTokenResponse = { tokens };
@@ -226,7 +227,7 @@ test('GoogleOAuth2.getAccessToken() returns token information for a valid author
 
   t.is(accessToken, 'my-access-token');
   t.is(refreshToken, 'my-refresh-token');
-  t.is(expirationTime, 12345);
+  t.is(expirationTime, Math.floor(expiryDate / 1000));
   t.is(username, 'sidney@example.com');
 });
 

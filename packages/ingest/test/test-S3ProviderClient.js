@@ -40,11 +40,11 @@ test.after.always(async (t) => {
 test('S3ProviderClient constructor throws error if no bucket specified', (t) => {
   t.throws(
     () => new S3ProviderClient(),
-    'bucket is required'
+    { message: 'bucket is required' }
   );
   t.throws(
     () => new S3ProviderClient({}),
-    'bucket is required'
+    { message: 'bucket is required' }
   );
 });
 

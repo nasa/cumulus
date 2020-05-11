@@ -30,6 +30,7 @@ resource "aws_lambda_function" "db_indexer" {
       ProvidersTable        = var.dynamo_tables.providers.name
       RulesTable            = var.dynamo_tables.rules.name
       ES_HOST               = var.elasticsearch_hostname
+      ES_CONCURRENCY        = var.es_request_concurrency
       stackName             = var.prefix
       system_bucket         = var.system_bucket
     }
