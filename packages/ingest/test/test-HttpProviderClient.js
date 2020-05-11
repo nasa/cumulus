@@ -190,7 +190,7 @@ test.serial('list() does not strip leading spaces from name', async (t) => {
 test.serial('list() returns a valid exception if the connection times out', async (t) => {
   await t.throwsAsync(
     () => testListWith(t.context.httpProviderClient, 'fetchtimeout', {}, 100),
-    'Connection timed out'
+    { message: 'Connection timed out' }
   );
 });
 
@@ -221,7 +221,7 @@ test.serial('list() returns an exception with helpful information if a fetcherro
 test.serial('list() returns an exception if a fetchclienterror event occurs', async (t) => {
   await t.throwsAsync(
     () => testListWith(t.context.httpProviderClient, 'fetchclienterror'),
-    'Connection Error: undefined'
+    { message: 'Connection Refused' }
   );
 });
 
