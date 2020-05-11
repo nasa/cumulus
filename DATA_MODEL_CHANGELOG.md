@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [v1.19.0] 2020-02-28
+### Changed
+
+- **CUMULUS-1777**
+  - The `expirationTime` property is now a required field of the access tokens model.
+
+## [v1.19.0] - 2020-02-28
 
 ### Changed
 

@@ -1,7 +1,9 @@
 'use strict';
 
 const fs = require('fs');
+const moment = require('moment');
 const path = require('path');
+
 const { randomId } = require('@cumulus/common/test-utils');
 const { sqs } = require('@cumulus/aws-client/services');
 const { putJsonS3Object } = require('@cumulus/aws-client/S3');
@@ -256,7 +258,7 @@ function fakeAccessTokenFactory(params = {}) {
     accessToken: randomId('accessToken'),
     refreshToken: randomId('refreshToken'),
     username: randomId('username'),
-    expirationTime: Date.now() + (60 * 60 * 1000),
+    expirationTime: moment().unix() + 60 * 60,
     ...params
   };
 }
@@ -270,7 +272,7 @@ async function createFakeJwtAuthToken({ accessTokenModel, username }) {
     refreshToken,
     expirationTime
   } = fakeAccessTokenFactory();
-  await accessTokenModel.create({ accessToken, refreshToken });
+  await accessTokenModel.create({ accessToken, refreshToken, expirationTime });
 
   return createJwtToken({ accessToken, expirationTime, username });
 }
