@@ -634,8 +634,6 @@ exports.createBucket = (Bucket) =>
  * @returns {Promise<undefined>}
  */
 const multipartCopyObject = async (params) => {
-  debugger;
-
   const {
     sourceBucket,
     sourceKey,
