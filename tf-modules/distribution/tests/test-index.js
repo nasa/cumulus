@@ -3,6 +3,7 @@
 const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
+const moment = require('moment');
 
 const awsServices = require('@cumulus/aws-client/services');
 const {
@@ -19,9 +20,8 @@ process.env.EARTHDATA_CLIENT_PASSWORD = randomId('edlPW');
 process.env.DISTRIBUTION_REDIRECT_ENDPOINT = 'http://example.com';
 process.env.DISTRIBUTION_ENDPOINT = `https://${randomId('host')}/${randomId('path')}`;
 process.env.AccessTokensTable = randomId('tokenTable');
-
-
 process.env.TOKEN_SECRET = randomId('tokenSecret');
+
 let accessTokenModel;
 let authorizationUrl;
 
@@ -91,7 +91,6 @@ test('An authorized s3credential requeste invokes NGAPs request for credentials 
   });
 });
 
-
 test('An s3credential request without access Token redirects to Oauth2 provider.', async (t) => {
   const response = await request(distributionApp)
     .get('/s3credentials')
@@ -104,7 +103,7 @@ test('An s3credential request without access Token redirects to Oauth2 provider.
 
 test('An s3credential request with expired accessToken redirects to Oauth2 provider', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory({
-    expirationTime: Date.now() - (5 * 1000)
+    expirationTime: moment().unix()
   });
   await accessTokenModel.create(accessTokenRecord);
 
