@@ -17,7 +17,7 @@ const {
   createTestSuffix
 } = require('../helpers/testUtils');
 
-const { buildHttpProvider, createProvider } = require('../helpers/Providers');
+const { buildHttpOrHttpsProvider, createProvider } = require('../helpers/Providers');
 const { waitForModelStatus } = require('../helpers/apiUtils');
 
 const workflowName = 'DiscoverGranules';
@@ -53,7 +53,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
     testId = createTimestampedTestId(config.stackName, 'DiscoverGranules');
     testSuffix = createTestSuffix(testId);
     collection = { name: `http_testcollection${testSuffix}`, version: '001' };
-    provider = await buildHttpProvider(testSuffix);
+    provider = await buildHttpOrHttpsProvider(testSuffix);
 
     // populate collections and providers
     await Promise.all([
