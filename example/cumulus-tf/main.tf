@@ -38,7 +38,7 @@ data "aws_lambda_function" "sts_credentials" {
 }
 
 data "aws_ssm_parameter" "ecs_image_id" {
-  name = "image_id_ecs"
+  name = "image_id_ecs_amz2"
 }
 
 module "cumulus" {

@@ -5,6 +5,8 @@ const request = require('supertest');
 const sinon = require('sinon');
 const { Cookie } = require('tough-cookie');
 const { URL } = require('url');
+const moment = require('moment');
+
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
 
@@ -128,7 +130,7 @@ test('A request for a file using an expired access token returns a redirect to a
   const { accessTokenModel, fileLocation } = context;
 
   const accessTokenRecord = fakeAccessTokenFactory({
-    expirationTime: Date.now() - (5 * 1000)
+    expirationTime: moment().unix()
   });
   await accessTokenModel.create(accessTokenRecord);
 
@@ -204,8 +206,8 @@ test('A /redirect request with a good authorization code returns a correct respo
 
   t.is(
     setAccessTokenCookie.expires.valueOf(),
-    // Cookie expirations only have per-second precision
-    getAccessTokenResponse.expirationTime - (getAccessTokenResponse.expirationTime % 1000)
+    // expirationTime only has per-second precision
+    getAccessTokenResponse.expirationTime * 1000
   );
 });
 

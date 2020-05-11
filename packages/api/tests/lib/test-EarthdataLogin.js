@@ -2,6 +2,7 @@
 
 const nock = require('nock');
 const test = require('ava');
+const moment = require('moment');
 const { URL, URLSearchParams } = require('url');
 
 const EarthdataLogin = require('../../lib/EarthdataLogin');
@@ -210,22 +211,21 @@ test.serial('EarthdataLogin.getAccessToken() returns token information for a val
       }
     );
 
-  const requestStartTime = Date.now();
+  const requestStartTime = moment().unix();
   const {
     accessToken,
     refreshToken,
     expirationTime,
     username
   } = await earthdataLogin.getAccessToken('authorization-code');
-  const requestEndTime = Date.now();
+  const requestEndTime = moment().unix();
 
   t.true(tokenRequest.isDone());
 
   t.is(accessToken, 'access-token');
   t.is(refreshToken, 'refresh-token');
-  // expires_in (100 seconds) * 1000 = 1000000 milliseconds
-  t.true(expirationTime >= requestStartTime + (100 * 1000));
-  t.true(expirationTime <= requestEndTime + (100 * 1000));
+  t.true(expirationTime >= requestStartTime + 100);
+  t.true(expirationTime <= requestEndTime + 100);
   t.is(username, 'sidney');
 });
 
@@ -352,22 +352,21 @@ test.serial('EarthdataLogin.refreshAccessToken() returns token information for a
       }
     );
 
-  const requestStartTime = Date.now();
+  const requestStartTime = moment().unix();
   const {
     accessToken,
     refreshToken,
     expirationTime,
     username
   } = await earthdataLogin.refreshAccessToken('refresh-token');
-  const requestEndTime = Date.now();
+  const requestEndTime = moment().unix();
 
   t.true(tokenRequest.isDone());
 
   t.is(accessToken, 'access-token');
   t.is(refreshToken, 'refresh-token');
-  // expires_in (100 seconds) * 1000 = 1000000 milliseconds
-  t.true(expirationTime >= requestStartTime + (100 * 1000));
-  t.true(expirationTime <= requestEndTime + (100 * 1000));
+  t.true(expirationTime >= requestStartTime + 100);
+  t.true(expirationTime <= requestEndTime + 100);
   t.is(username, 'sidney');
 });
 

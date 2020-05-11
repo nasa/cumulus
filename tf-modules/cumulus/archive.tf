@@ -27,6 +27,8 @@ module "archive" {
   ems_submit_report     = var.ems_submit_report
   ems_username          = var.ems_username
 
+  es_request_concurrency = var.es_request_concurrency
+
   system_bucket     = var.system_bucket
   public_buckets    = local.public_bucket_names
   protected_buckets = local.protected_bucket_names
