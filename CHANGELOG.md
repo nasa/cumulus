@@ -14,10 +14,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   3. [Re-deploy your `data-persistence` module](https://nasa.github.io/cumulus/docs/deployment/upgrade-readme#update-data-persistence-resources), which should re-create the `<prefix>-AccessTokensTable` DynamoDB table
   4. Return to using the Cumulus API/dashboard as normal
 
+- Migrate existing s3 reconciliation report records to database (CUMULUS-1911)
+  After update your Cumulus stack, run the command:
+  ./node_modules/.bin/cumulus-api migrate --stack <your-cloudformation-stack-name> --migrationVersion migration5
+
 ### Added
 
 - Added a limit for concurrent Elasticsearch requests when doing an index from database operation
 - Added the `es_request_concurrency` parameter to the archive and cumulus Terraform modules
+
+- **CUMULUS-1911**
+  - Added ReconciliationReports table
+  - Updated CreateReconciliationReport lambda to save Reconciliation Report records to database
+  - Updated dbIndexer and IndexFromDatabase lambdas to index Reconciliation Report records to Elasticsearch
+  - Added migration_5 to migrate existng s3 reconciliation report records to database and Elasticsearch
+  - Updated `@cumulus/api` package, `tf-modules/archive` and `tf-modules/data-persistence` Terraform modules
 
 ### Changed
 

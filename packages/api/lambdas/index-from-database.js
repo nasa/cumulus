@@ -127,7 +127,7 @@ async function indexFromDatabase(event) {
       esClient,
       tableName: tables.reconciliationReportsTable,
       esIndex,
-      indexFn: indexer.indexReconciliationReport),
+      indexFn: indexer.indexReconciliationReport,
       limitEsRequests
     }),
     indexModel({
