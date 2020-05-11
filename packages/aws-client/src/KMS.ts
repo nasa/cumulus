@@ -1,6 +1,8 @@
-'use strict';
+/**
+ * @module KMS
+ */
 
-const { kms } = require('./services');
+import { kms } from './services';
 
 /**
  * Create a KMS key
@@ -11,7 +13,8 @@ const { kms } = require('./services');
  * @param {Object} params
  * @returns {Promise<Object>}
  */
-const createKey = (params = {}) => kms().createKey(params).promise();
+export const createKey = (params: AWS.KMS.CreateKeyRequest = {}) =>
+  kms().createKey(params).promise();
 
 /**
  * Encrypt a string using KMS
@@ -20,9 +23,13 @@ const createKey = (params = {}) => kms().createKey(params).promise();
  * @param {string} Plaintext - the string to be encrypted
  * @returns {Promise<string>} the Base 64 encoding of the encrypted value
  */
-const encrypt = (KeyId, Plaintext) =>
-  kms().encrypt({ KeyId, Plaintext }).promise()
-    .then(({ CiphertextBlob }) => CiphertextBlob.toString('base64'));
+export const encrypt = async (KeyId: string, Plaintext: string) => {
+  const { CiphertextBlob } = await kms().encrypt({ KeyId, Plaintext }).promise();
+
+  if (CiphertextBlob === undefined) throw new Error('Returned CiphertextBlob is undefined');
+
+  return CiphertextBlob.toString('base64');
+};
 
 /**
  * Decrypt a KMS-encrypted string, Base 64 encoded
@@ -30,14 +37,12 @@ const encrypt = (KeyId, Plaintext) =>
  * @param {string} ciphertext - a KMS-encrypted value, Base 64 encoded
  * @returns {string} the plaintext
  */
-const decryptBase64String = (ciphertext) =>
-  kms().decrypt({
+export const decryptBase64String = async (ciphertext: string) => {
+  const { Plaintext } = await kms().decrypt({
     CiphertextBlob: Buffer.from(ciphertext, 'base64')
-  }).promise()
-    .then(({ Plaintext }) => Plaintext.toString());
+  }).promise();
 
-module.exports = {
-  createKey,
-  decryptBase64String,
-  encrypt
+  if (Plaintext === undefined) return undefined;
+
+  return Plaintext.toString();
 };

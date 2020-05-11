@@ -70,7 +70,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
 
       // Ingest the granule the first time
       const testExecutionId = randomId('test-execution-');
-      console.log('testExecutionId: ', testExecutionId);
+      console.log('testExecutionId:', testExecutionId);
       firstIngestGranuleRule = await createOneTimeRule(
         prefix,
         {
