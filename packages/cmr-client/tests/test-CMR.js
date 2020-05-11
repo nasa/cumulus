@@ -113,6 +113,6 @@ test.serial('ingestUMMGranule() throws an exception if the input fails validatio
 
   await t.throwsAsync(
     () => cmrSearch.ingestUMMGranule(ummgMetadata),
-    ValidationError
+    { instanceOf: ValidationError }
   );
 });

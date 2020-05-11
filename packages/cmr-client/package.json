@@ -38,7 +38,7 @@
     "xml2js": "^0.4.19"
   },
   "devDependencies": {
-    "ava": "^2.1.0",
+    "ava": "^3.8.2",
     "jsdoc-to-markdown": "^4.0.1",
     "nock": "^10.0.6",
     "sinon": "^7.1.1"
