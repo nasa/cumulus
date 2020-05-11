@@ -3,7 +3,7 @@
  */
 
 import pRetry from 'p-retry';
-import Logger = require('@cumulus/logger');
+import Logger from '@cumulus/logger';
 import { sns } from './services';
 
 const log = new Logger({ sender: 'aws-client/sns' });

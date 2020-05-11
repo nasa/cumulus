@@ -2,10 +2,10 @@
  * @module SQS
  */
 
-import get = require('lodash/get');
-import isObject = require('lodash/isObject');
-import isString = require('lodash/isString');
-import isNil = require('lodash/isNil');
+import get from 'lodash/get';
+import isObject from 'lodash/isObject';
+import isString from 'lodash/isString';
+import isNil from 'lodash/isNil';
 import * as url from 'url';
 
 import { sqs } from './services';

@@ -2,12 +2,12 @@
  * @module S3
  */
 
-import fs = require('fs');
-import path = require('path');
-import pMap = require('p-map');
-import pRetry = require('p-retry');
-import pump = require('pump');
-import url = require('url');
+import fs from 'fs';
+import path from 'path';
+import pMap from 'p-map';
+import pRetry from 'p-retry';
+import pump from 'pump';
+import url from 'url';
 import { Readable, TransformOptions } from 'stream';
 
 import {
@@ -18,7 +18,7 @@ import {
   InvalidChecksum,
   UnparsableFileLocationError
 } from '@cumulus/errors';
-import Logger = require('@cumulus/logger');
+import Logger from '@cumulus/logger';
 
 import { s3 } from './services';
 import { inTestMode } from './test-utils';

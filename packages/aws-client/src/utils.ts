@@ -1,4 +1,4 @@
-import pRetry = require('p-retry');
+import pRetry from 'p-retry';
 import { isThrottlingException } from '@cumulus/errors';
 
 // Replace the stack of an error

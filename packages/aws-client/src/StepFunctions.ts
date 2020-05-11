@@ -3,7 +3,7 @@
  */
 
 import { JSONPath } from 'jsonpath-plus';
-import Logger = require('@cumulus/logger');
+import Logger from '@cumulus/logger';
 import { sfn } from './services';
 import * as s3Utils from './S3';
 import { improveStackTrace, retryOnThrottlingException } from './utils';
