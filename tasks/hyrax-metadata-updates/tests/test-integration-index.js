@@ -50,6 +50,11 @@ test.beforeEach(() => {
       provider_short_name: 'GES_DISC'
     })
     .replyWithFile(200, 'tests/data/cmr-results.json', headers);
+
+  nock('https://cmr.earthdata.nasa.gov')
+    .post('/legacy-services/rest/tokens')
+    .reply(200, { token: 'ABCDE' });
+
   process.env.CMR_ENVIRONMENT = 'OPS';
 });
 

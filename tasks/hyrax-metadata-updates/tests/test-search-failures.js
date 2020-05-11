@@ -24,10 +24,15 @@ const event = {
 
 test.beforeEach(() => {
   process.env.CMR_ENVIRONMENT = 'OPS';
+
+  nock('https://cmr.earthdata.nasa.gov')
+    .post('/legacy-services/rest/tokens')
+    .reply(200, { token: 'ABCDE' });
 });
 
 test.afterEach.always(() => {
   delete process.env.CMR_ENVIRONMENT;
+  nock.cleanAll();
 });
 
 test.serial('Test retrieving entry title with invalid result', async (t) => {
