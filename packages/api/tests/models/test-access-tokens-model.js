@@ -1,6 +1,9 @@
 'use strict';
 
 const test = require('ava');
+const moment = require('moment');
+const isNumber = require('lodash/isNumber');
+
 const { randomString } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
@@ -52,14 +55,22 @@ test('create() suceeds with only an access token value', async (t) => {
   t.is(accessTokenRecord.accessToken, accessToken);
 });
 
-test('create() creates a valid access token record without username or expiration', async (t) => {
+test('create() creates a valid access token record without username', async (t) => {
   const { accessToken, refreshToken } = fakeAccessTokenFactory();
   const accessTokenRecord = await accessTokenModel.create({ accessToken, refreshToken });
 
   t.is(accessTokenRecord.accessToken, accessToken);
   t.is(accessTokenRecord.refreshToken, refreshToken);
   t.is(accessTokenRecord.username, undefined);
-  t.is(accessTokenRecord.expirationTime, undefined);
+});
+
+test('create() sets an expirationTime if none is provided', async (t) => {
+  const { accessToken } = fakeAccessTokenFactory();
+  const accessTokenRecord = await accessTokenModel.create({ accessToken });
+
+  t.is(accessTokenRecord.accessToken, accessToken);
+  t.true(isNumber(accessTokenRecord.expirationTime));
+  t.true(accessTokenRecord.expirationTime > moment().unix());
 });
 
 test('get() throws error for missing record', async (t) => {

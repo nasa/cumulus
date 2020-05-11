@@ -15,6 +15,7 @@ const urljoin = require('url-join');
 
 const { AccessToken } = require('@cumulus/api/models');
 const { isLocalApi } = require('@cumulus/api/lib/testUtils');
+const { isAccessTokenExpired } = require('@cumulus/api/lib/token');
 const awsServices = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
@@ -144,16 +145,6 @@ async function handleRedirectRequest(req, res) {
  */
 async function handleCredentialRequest(req, res) {
   return s3credentials(req, res);
-}
-
-/**
- * Checks if the token is expired
- *
- * @param {Object} accessTokenRecord - the access token record
- * @returns {boolean} true indicates the token is expired
- */
-function isAccessTokenExpired(accessTokenRecord) {
-  return accessTokenRecord.expirationTime < Date.now();
 }
 
 /**

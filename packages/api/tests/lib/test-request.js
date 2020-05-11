@@ -6,6 +6,8 @@ const {
   JsonWebTokenError,
   TokenExpiredError
 } = require('jsonwebtoken');
+const moment = require('moment');
+
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -78,7 +80,7 @@ test('verifyJwtAuthorization() throws JsonWebTokenError for token signed with in
 
 test('verifyJwtAuthorization() throws TokenExpiredError for expired token', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory({
-    expirationTime: Date.now() - 60
+    expirationTime: moment().unix()
   });
   const expiredJwtToken = createJwtToken(accessTokenRecord);
 
