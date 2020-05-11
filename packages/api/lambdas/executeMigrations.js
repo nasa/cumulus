@@ -8,12 +8,14 @@ const migration1 = require('../migrations/migration_1');
 const migration2 = require('../migrations/migration_2');
 const migration3 = require('../migrations/migration_3');
 const migration4 = require('../migrations/migration_4');
+const migration5 = require('../migrations/migration_5');
 
 const mappings = {
   migration1: migration1,
   migration2: migration2,
   migration3: migration3,
-  migration4: migration4
+  migration4: migration4,
+  migration5: migration5
 };
 
 /**
