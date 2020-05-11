@@ -2,7 +2,7 @@
 
 const isIp = require('is-ip');
 const providersApi = require('@cumulus/api-client/providers');
-const { getTextObject } = require('@cumulus/aws-client/S3');
+const { getTextObject, s3CopyObject } = require('@cumulus/aws-client/S3');
 
 const fetchFakeProviderIp = async () => {
   if (!process.env.FAKE_PROVIDER_CONFIG_BUCKET) {
@@ -41,17 +41,32 @@ const buildFtpProvider = async (postfix = '') => {
   return provider;
 };
 
-const buildHttpProvider = async (postfix = '') => {
+const fakeProviderPortMap = {
+  http: process.env.PROVIDER_HTTP_PORT ? Number(process.env.PROVIDER_HTTP_PORT) : 3030,
+  https: process.env.PROVIDER_HTTPS_PORT ? Number(process.env.PROVIDER_HTTPS_PORT) : 4040
+};
+
+const buildHttpOrHttpsProvider = async (postfix, systemBucket, protocol = 'http') => {
+  if (postfix === undefined) throw new Error('Test setup should be isolated, specify postfix!');
   const provider = {
-    id: `http_provider${postfix}`,
-    protocol: 'http',
+    id: `${protocol}_provider${postfix}`,
+    protocol,
     host: await getProviderHost(),
-    port: 3030,
+    port: fakeProviderPortMap[protocol],
     globalConnectionLimit: 10
   };
 
-  if (process.env.PROVIDER_HTTP_PORT) {
-    provider.port = Number(process.env.PROVIDER_HTTP_PORT);
+  if (protocol === 'https') {
+    if (systemBucket === undefined) throw new Error('HTTPS provider must have systembucket specified!');
+    // copy certificate to system bucket to avoid permissions issues
+    if (systemBucket !== process.env.FAKE_PROVIDER_CONFIG_BUCKET) {
+      await s3CopyObject({
+        CopySource: `${process.env.FAKE_PROVIDER_CONFIG_BUCKET}/fake-provider-cert.pem`,
+        Bucket: systemBucket,
+        Key: 'fake-provider-cert.pem'
+      });
+    }
+    provider.certificateUri = `s3://${systemBucket}/fake-provider-cert.pem`;
   }
 
   return provider;
@@ -64,6 +79,6 @@ const createProvider = async (stackName, provider) => {
 
 module.exports = {
   buildFtpProvider,
-  buildHttpProvider,
+  buildHttpOrHttpsProvider,
   createProvider
 };

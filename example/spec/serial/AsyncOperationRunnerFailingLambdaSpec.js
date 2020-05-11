@@ -6,6 +6,7 @@ const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getClusterArn, waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
 const { AsyncOperation } = require('@cumulus/api/models');
+const { findAsyncOperationTaskDefinitionForDeployment } = require('../helpers/ecsHelpers');
 const { loadConfig } = require('../helpers/testUtils');
 
 describe('The AsyncOperation task runner executing a failing lambda function', () => {
@@ -38,10 +39,7 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
       cluster = await getClusterArn(config.stackName);
 
       // Find the ARN of the AsyncOperationTaskDefinition
-      const { taskDefinitionArns } = await ecs().listTaskDefinitions().promise();
-      asyncOperationTaskDefinition = taskDefinitionArns.find(
-        (arn) => arn.includes(`${config.stackName}-AsyncOperationTaskDefinition`)
-      );
+      asyncOperationTaskDefinition = await findAsyncOperationTaskDefinitionForDeployment(config.stackName);
 
       asyncOperationId = uuidv4();
 
@@ -52,7 +50,6 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
         Key: payloadKey,
         Body: JSON.stringify([1, 2, 3])
       }).promise();
-
       await asyncOperationModel.create({
         id: asyncOperationId,
         taskArn: randomString(),

@@ -221,7 +221,7 @@ test.serial('list() returns an exception with helpful information if a fetcherro
 test.serial('list() returns an exception if a fetchclienterror event occurs', async (t) => {
   await t.throwsAsync(
     () => testListWith(t.context.httpProviderClient, 'fetchclienterror'),
-    'Connection Refused'
+    'Connection Error: undefined'
   );
 });
 
