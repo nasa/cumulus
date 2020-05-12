@@ -10,20 +10,26 @@
   "engines": {
     "node": ">=10.16.3"
   },
+  "files": [
+    "./*.js",
+    "./*.d.ts"
+  ],
   "publishConfig": {
     "access": "public"
   },
-  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/aws-client",
+  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/aws-client/README.md",
   "repository": {
     "type": "git",
     "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
-    "build": "true",
+    "build-docs": "npm run tsc && jsdoc2md -t README.hbs *.js > README.md",
     "lint": "eslint .",
+    "prepare": "npm run tsc",
     "test": "ava",
     "test-coverage": "nyc ava",
-    "test-ci": "npm run lint"
+    "test-ci": "npm run lint",
+    "tsc": "tsc"
   },
   "ava": {
     "files": [
@@ -51,13 +57,17 @@
     "pump": "^3.0.0"
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.150",
+    "@types/pump": "^1.1.0",
     "ava": "^2.1.0",
     "crypto-random-string": "^3.2.0",
     "delay": "^4.3.0",
+    "jsdoc-to-markdown": "^5.0.3",
     "nyc": "^14.0.0",
     "p-timeout": "^3.2.0",
     "proxyquire": "^2.1.3",
     "rewire": "^4.0.1",
-    "sinon": "^8.0.4"
+    "sinon": "^8.0.4",
+    "typescript": "^3.8.3"
   }
 }

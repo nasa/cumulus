@@ -8,3 +8,5 @@ tmp/**
 docs/**
 _book/**
 website/**
+/packages/aws-client/*.js
+/packages/aws-client/*.d.ts

@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 /**
  * A constructor function that returns an instance of Error (or something that inherits from Error).
  * Typically, this is going to be a class, such as `Error`, `TypeError`, etc.
@@ -24,6 +25,17 @@ export const createErrorType = (
       }
     }
   );
+
+export class ThrottlingException extends Error {
+  readonly code: string;
+
+  constructor() {
+    super('ThrottlingException');
+    this.name = 'ThrottlingException';
+    this.code = 'ThrottlingException';
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
 
 interface ErrorWithOptionalCode extends Error {
   code?: string;
