@@ -24,6 +24,11 @@ resource "aws_dynamodb_table" "access_tokens_table" {
     type = "S"
   }
 
+  ttl {
+    attribute_name = "expirationTime"
+    enabled        = true
+  }
+
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.access_tokens_table)
   }

@@ -21,7 +21,7 @@ exports.download = (uri, destination, options = {}) => {
   const file = fs.createWriteStream(destination);
 
   return new Promise((resolve, reject) => {
-    got.stream(uri, { headers: options.headers })
+    got.stream(uri, options)
       .on('error', reject)
       .pipe(file);
 

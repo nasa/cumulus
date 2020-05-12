@@ -138,7 +138,25 @@ module.exports = {
 
     'unicorn/filename-case': 'off',
     'unicorn/no-process-exit': 'off',
-    'unicorn/prefer-spread': 'off'
+    'unicorn/prefer-spread': 'off',
+    'unicorn/better-regex': 'off',
+    'unicorn/catch-error-name': 'off',
+    'unicorn/consistent-function-scoping': 'off',
+    'unicorn/explicit-length-check': 'off',
+    'unicorn/filename-case': 'off',
+    'unicorn/no-fn-reference-in-iterator': 'off',
+    'unicorn/no-for-loop': 'off',
+    'unicorn/no-null': 'off',
+    'unicorn/no-process-exit': 'off',
+    'unicorn/no-zero-fractions': 'off',
+    'unicorn/prefer-flat-map': 'off',
+    'unicorn/prefer-negative-index': 'off',
+    'unicorn/prefer-number-properties': 'off',
+    'unicorn/prefer-set-has': 'off',
+    'unicorn/prefer-spread': 'off',
+    'unicorn/prefer-string-slice': 'off',
+    'unicorn/prefer-trim-start-end': 'off',
+    'unicorn/prevent-abbreviations': 'off'
   },
   overrides: [
     {

@@ -2,6 +2,7 @@
 
 const nock = require('nock');
 const test = require('ava');
+const moment = require('moment');
 const { URL, URLSearchParams } = require('url');
 
 const EarthdataLogin = require('../../lib/EarthdataLogin');
@@ -20,7 +21,7 @@ test('The EarthdataLogin constructor throws a TypeError if clientId is not speci
       redirectUri: 'http://www.example.com/cb'
     });
   },
-  TypeError);
+  { instanceOf: TypeError });
 
   t.is(err.message, 'clientId is required');
 });
@@ -33,7 +34,7 @@ test('The EarthdataLogin constructor throws a TypeError if clientPassword is not
       redirectUri: 'http://www.example.com/cb'
     });
   },
-  TypeError);
+  { instanceOf: TypeError });
 
   t.is(err.message, 'clientPassword is required');
 });
@@ -46,7 +47,7 @@ test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is 
       redirectUri: 'http://www.example.com/cb'
     });
   },
-  TypeError);
+  { instanceOf: TypeError });
 
   t.is(err.message, 'earthdataLoginUrl is required');
 });
@@ -60,7 +61,7 @@ test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is 
       redirectUri: 'http://www.example.com/cb'
     });
   },
-  TypeError);
+  { instanceOf: TypeError });
 });
 
 test('The EarthdataLogin constructor throws a TypeError if redirectUri is not specified', (t) => {
@@ -71,7 +72,7 @@ test('The EarthdataLogin constructor throws a TypeError if redirectUri is not sp
       earthdataLoginUrl: 'http://www.example.com'
     });
   },
-  TypeError);
+  { instanceOf: TypeError });
 
   t.is(err.message, 'redirectUri is required');
 });
@@ -85,7 +86,7 @@ test('The EarthdataLogin constructor throws a TypeError if redirectUri is not a 
       redirectUri: 'asdf'
     });
   },
-  TypeError);
+  { instanceOf: TypeError });
 });
 
 test('EarthdataLogin.getAuthorizationUrl() returns the correct URL when no state is specified', (t) => {
@@ -210,22 +211,21 @@ test.serial('EarthdataLogin.getAccessToken() returns token information for a val
       }
     );
 
-  const requestStartTime = Date.now();
+  const requestStartTime = moment().unix();
   const {
     accessToken,
     refreshToken,
     expirationTime,
     username
   } = await earthdataLogin.getAccessToken('authorization-code');
-  const requestEndTime = Date.now();
+  const requestEndTime = moment().unix();
 
   t.true(tokenRequest.isDone());
 
   t.is(accessToken, 'access-token');
   t.is(refreshToken, 'refresh-token');
-  // expires_in (100 seconds) * 1000 = 1000000 milliseconds
-  t.true(expirationTime >= requestStartTime + (100 * 1000));
-  t.true(expirationTime <= requestEndTime + (100 * 1000));
+  t.true(expirationTime >= requestStartTime + 100);
+  t.true(expirationTime <= requestEndTime + 100);
   t.is(username, 'sidney');
 });
 
@@ -243,7 +243,7 @@ test.serial('EarthdataLogin.getAccessToken() throws an OAuth2AuthenticationFailu
 
   await t.throwsAsync(
     () => earthdataLogin.getAccessToken('authorization-code'),
-    OAuth2AuthenticationFailure
+    { instanceOf: OAuth2AuthenticationFailure }
   );
 
   t.true(tokenRequest.isDone());
@@ -263,7 +263,7 @@ test.serial('EarthdataLogin.getAccessToken() throws an OAuth2AuthenticationError
 
   await t.throwsAsync(
     () => earthdataLogin.getAccessToken('authorization-code'),
-    OAuth2AuthenticationError
+    { instanceOf: OAuth2AuthenticationError }
   );
 
   t.true(tokenRequest.isDone());
@@ -352,22 +352,21 @@ test.serial('EarthdataLogin.refreshAccessToken() returns token information for a
       }
     );
 
-  const requestStartTime = Date.now();
+  const requestStartTime = moment().unix();
   const {
     accessToken,
     refreshToken,
     expirationTime,
     username
   } = await earthdataLogin.refreshAccessToken('refresh-token');
-  const requestEndTime = Date.now();
+  const requestEndTime = moment().unix();
 
   t.true(tokenRequest.isDone());
 
   t.is(accessToken, 'access-token');
   t.is(refreshToken, 'refresh-token');
-  // expires_in (100 seconds) * 1000 = 1000000 milliseconds
-  t.true(expirationTime >= requestStartTime + (100 * 1000));
-  t.true(expirationTime <= requestEndTime + (100 * 1000));
+  t.true(expirationTime >= requestStartTime + 100);
+  t.true(expirationTime <= requestEndTime + 100);
   t.is(username, 'sidney');
 });
 
@@ -385,7 +384,7 @@ test.serial('EarthdataLogin.refreshAccessToken() throws an OAuth2AuthenticationF
 
   await t.throwsAsync(
     () => earthdataLogin.refreshAccessToken('invalid-refresh-token'),
-    OAuth2AuthenticationFailure
+    { instanceOf: OAuth2AuthenticationFailure }
   );
 
   t.true(tokenRequest.isDone());
@@ -405,7 +404,7 @@ test.serial('EarthdataLogin.refreshAccessToken() throws an OAuth2AuthenticationE
 
   await t.throwsAsync(
     () => earthdataLogin.refreshAccessToken('refresh-token'),
-    OAuth2AuthenticationError
+    { instanceOf: OAuth2AuthenticationError }
   );
 
   t.true(tokenRequest.isDone());

@@ -73,7 +73,7 @@ test('Semaphore.add() cannot increment the semaphore value beyond the maximum', 
       semaphore.add(key, 1, maximum),
       semaphore.add(key, 1, maximum)
     ]),
-    ResourcesLockedError
+    { instanceOf: ResourcesLockedError }
   );
 });
 
@@ -83,7 +83,7 @@ test('Semaphore.add() cannot increment the semaphore value when maximum is 0', a
 
   await t.throwsAsync(
     () => semaphore.add(key, 1, maximum),
-    ResourcesLockedError
+    { instanceOf: ResourcesLockedError }
   );
 });
 
@@ -146,6 +146,6 @@ test('Semaphore.checkout() throws error when trying to increment beyond the maxi
 
   await t.throwsAsync(
     () => semaphore.checkout(key, 2, maximum, asyncFn),
-    ResourcesLockedError
+    { instanceOf: ResourcesLockedError }
   );
 });
