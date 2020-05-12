@@ -101,7 +101,7 @@ test('Attempting to delete a collection with an invalid access token returns an 
     .delete('/collections/asdf/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });

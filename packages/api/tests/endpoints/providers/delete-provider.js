@@ -100,7 +100,7 @@ test('Attempting to delete a provider with an invalid access token returns an un
     .delete('/providers/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });

@@ -21,7 +21,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- The Cumulus archive API now returns a `401` response instead of a `403` for any request where the JWT passed as a Bearer token is invalid.
+- Updates to Cumulus archive API:
+  - All endpoints now return a `401` response instead of a `403` for any request where the JWT passed as a Bearer token is invalid.
+  - POST `/refresh` and DELETE `/token/<token>` endpoints now return a `401` response for requests with expired tokens
 - **CUMULUS-1777**
   - The `expirationTime` property is now a **required field** of the access tokens model.
   - Updated the `AccessTokens` table to set a [TTL](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/howitworks-ttl.html) on the `expirationTime` field in `tf-modules/data-persistence/dynamo.tf`. As a result, access token records in this table whose `expirationTime` has passed should be **automatically deleted by DynamoDB**.

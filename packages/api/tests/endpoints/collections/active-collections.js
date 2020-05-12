@@ -116,7 +116,7 @@ test('GET without pathParameters and with an invalid access token returns an una
     .get('/collections/active')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });

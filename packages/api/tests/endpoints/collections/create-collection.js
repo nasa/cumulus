@@ -89,7 +89,7 @@ test('CUMULUS-912 POST with an invalid access token returns an unauthorized resp
     .send(newCollection)
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
   assertions.isInvalidAccessTokenResponse(t, res);
 });
 

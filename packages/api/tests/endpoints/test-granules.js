@@ -251,7 +251,7 @@ test.serial('CUMULUS-912 GET without pathParameters and with an invalid access t
     .get('/granules/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -275,7 +275,7 @@ test.serial('CUMULUS-912 GET with pathParameters.granuleName set and with an inv
     .get('/granules/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -287,7 +287,7 @@ test.serial('CUMULUS-912 PUT with pathParameters.granuleName set and with an inv
     .put('/granules/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
