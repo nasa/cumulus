@@ -1,0 +1,44 @@
+import pRetry from 'p-retry';
+import Logger from '@cumulus/logger';
+import { isThrottlingException } from '@cumulus/errors';
+
+const log = new Logger({ sender: 'aws-client/CloudFormationGateway' });
+
+class CloudFormationGateway {
+  constructor(
+    private cloudFormationService: AWS.CloudFormation
+  ) {}
+
+  /**
+   * Get the status of a CloudFormation stack
+   *
+   * @param {string} StackName
+   * @returns {string} the stack status
+   */
+  async getStackStatus(StackName: string) {
+    return pRetry(
+      async () => {
+        try {
+          const stackDetails = await this.cloudFormationService.describeStacks({
+            StackName
+          }).promise();
+
+          if (!stackDetails.Stacks) {
+            throw new Error(`Could not fetch stack details of ${StackName}`);
+          }
+
+          return stackDetails.Stacks[0].StackStatus;
+        } catch (err) {
+          if (isThrottlingException(err)) throw new Error('Trigger retry');
+          throw new pRetry.AbortError(err);
+        }
+      },
+      {
+        maxTimeout: 5000,
+        onFailedAttempt: () => log.debug('ThrottlingException when calling cloudformation.describeStacks(), will retry.')
+      }
+    );
+  }
+}
+
+export = CloudFormationGateway;

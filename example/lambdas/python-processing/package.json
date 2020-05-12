@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/python-process-activity",
   "private": true,
-  "version": "1.21.0",
+  "version": "1.22.1",
   "description": "Python reference activity",
   "homepage": "https://github.com/nasa/cumulus/tree/master/example/lambdas/python-reference-activity",
   "repository": {
@@ -13,7 +13,7 @@
     "python-lint": "pylint *.py",
     "lint": "npm run python-lint",
     "build": "pip install -r requirements-dev.txt && pip install -r requirements.txt",
-    "prepare": "npm run build",
+    "package": "npm run build",
     "install-python-deps": "pip install -r requirements-dev.txt && pip install -r requirements.txt"
   },
   "publishConfig": {

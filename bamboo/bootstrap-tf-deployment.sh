@@ -58,7 +58,7 @@ echo "terraform {
 
 if [[ $NGAP_ENV = "SIT" ]]; then
   BASE_VAR_FILE="sit.tfvars"
-  CMA_LAYER_VERSION=10
+  CMA_LAYER_VERSION=11
 else
   BASE_VAR_FILE="sandbox.tfvars"
   CMA_LAYER_VERSION=15

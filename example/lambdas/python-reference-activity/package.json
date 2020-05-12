@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/python-reference-activity",
   "private": true,
-  "version": "1.21.0",
+  "version": "1.22.1",
   "description": "Python reference activity",
   "homepage": "https://github.com/nasa/cumulus/tree/master/example/lambdas/python-reference-activity",
   "repository": {
@@ -13,7 +13,7 @@
     "python-lint": "pylint *.py",
     "lint": "npm run python-lint",
     "build": "true",
-    "prepare": "true"
+    "package": "true"
   },
   "publishConfig": {
     "access": "private"

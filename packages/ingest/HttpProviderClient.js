@@ -1,13 +1,19 @@
 'use strict';
 
 const http = require('@cumulus/common/http');
+const https = require('https');
 const isIp = require('is-ip');
 const { basename } = require('path');
 const { PassThrough } = require('stream');
 const Crawler = require('simplecrawler');
 const got = require('got');
 
-const { buildS3Uri, promiseS3Upload } = require('@cumulus/aws-client/S3');
+const {
+  buildS3Uri,
+  getTextObject,
+  parseS3Uri,
+  promiseS3Upload
+} = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const isValidHostname = require('is-valid-hostname');
 const { buildURL } = require('@cumulus/common/URLUtils');
@@ -22,9 +28,11 @@ const validateHost = (host) => {
 
 class HttpProviderClient {
   constructor(providerConfig) {
+    this.requestOptions = {};
     this.protocol = providerConfig.protocol;
     this.host = providerConfig.host;
     this.port = providerConfig.port;
+    this.certificateUri = providerConfig.certificateUri;
 
     this.endpoint = buildURL({
       protocol: this.protocol,
@@ -33,14 +41,26 @@ class HttpProviderClient {
     });
   }
 
+  async downloadTLSCertificate() {
+    if (!this.certificateUri || this.certificate !== undefined) return;
+    try {
+      const s3Params = parseS3Uri(this.certificateUri);
+      this.certificate = await getTextObject(s3Params.Bucket, s3Params.Key);
+      this.requestOptions = { ca: this.certificate, headers: { host: this.host } };
+    } catch (e) {
+      throw new errors.RemoteResourceError(`Failed to fetch CA certificate: ${e}`);
+    }
+  }
+
   /**
    * List all PDR files from a given endpoint
    *
    * @param {string} path - the remote path to list
    * @returns {Promise<Array>} a list of files
    */
-  list(path) {
+  async list(path) {
     validateHost(this.host);
+    await this.downloadTLSCertificate();
 
     // Make pattern case-insensitive and return all matches
     // instead of just first one
@@ -56,6 +76,9 @@ class HttpProviderClient {
       })
     );
 
+    if (this.protocol === 'https' && this.certificate !== undefined) {
+      c.httpsAgent = new https.Agent({ ca: this.certificate });
+    }
     c.timeout = 2000;
     c.interval = 0;
     c.maxConcurrency = 10;
@@ -104,8 +127,8 @@ class HttpProviderClient {
         });
       });
 
-      c.on('fetchclienterror', () =>
-        reject(new errors.RemoteResourceError('Connection Refused')));
+      c.on('fetchclienterror', (_, errorData) =>
+        reject(new errors.RemoteResourceError(`Connection Error: ${JSON.stringify(errorData)}`)));
 
       c.on('fetch404', (queueItem, _) => {
         const errorToThrow = new Error(`Received a 404 error from ${this.endpoint}. Check your endpoint!`);
@@ -126,6 +149,7 @@ class HttpProviderClient {
    */
   async download(remotePath, localPath) {
     validateHost(this.host);
+    await this.downloadTLSCertificate();
 
     const remoteUrl = buildURL({
       protocol: this.protocol,
@@ -136,7 +160,7 @@ class HttpProviderClient {
 
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
     try {
-      await http.download(remoteUrl, localPath);
+      await http.download(remoteUrl, localPath, this.requestOptions);
     } catch (e) {
       if (e.message && e.message.includes('Unexpected HTTP status code: 403')) {
         const message = `${basename(remotePath)} was not found on the server with 403 status`;
@@ -158,7 +182,7 @@ class HttpProviderClient {
    */
   async sync(remotePath, bucket, key) {
     validateHost(this.host);
-
+    await this.downloadTLSCertificate();
     const remoteUrl = buildURL({
       protocol: this.protocol,
       host: this.host,
@@ -171,7 +195,7 @@ class HttpProviderClient {
 
     let headers = {};
     try {
-      const headResponse = await got.head(remoteUrl);
+      const headResponse = await got.head(remoteUrl, this.requestOptions);
       headers = headResponse.headers;
     } catch (err) {
       log.info(`HEAD failed for ${remoteUrl} with error: ${err}.`);
@@ -179,8 +203,7 @@ class HttpProviderClient {
     const contentType = headers['content-type'] || lookupMimeType(key);
 
     const pass = new PassThrough();
-    got.stream(remoteUrl).pipe(pass);
-
+    got.stream(remoteUrl, this.requestOptions).pipe(pass);
     await promiseS3Upload({
       Bucket: bucket,
       Key: key,

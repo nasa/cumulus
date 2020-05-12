@@ -12,6 +12,7 @@ resource "aws_lambda_function" "index_from_database" {
       CMR_ENVIRONMENT = var.cmr_environment
       ES_HOST         = var.elasticsearch_hostname
       stackName       = var.prefix
+      ES_CONCURRENCY  = var.es_request_concurrency
     }
   }
   tags = var.tags

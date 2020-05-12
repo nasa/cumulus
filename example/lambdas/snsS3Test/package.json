@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/test-sns-s3",
-  "version": "1.21.0",
+  "version": "1.22.1",
   "description": "SNS to S3 Test Lambda",
   "main": "index.js",
   "private": true,
@@ -8,7 +8,7 @@
     "node": ">=10.16.3"
   },
   "scripts": {
-    "prepare": "rm -f lambda.zip && zip -q lambda.zip index.js",
+    "package": "rm -f lambda.zip && zip -q lambda.zip index.js",
     "test": "true",
     "python-lint": "true"
   },

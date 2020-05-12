@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/test-s3-access",
-  "version": "1.21.0",
+  "version": "1.22.1",
   "description": "S3 Access Test Lambda",
   "main": "index.js",
   "private": true,
@@ -9,7 +9,7 @@
   },
   "scripts": {
     "test": "true",
-    "prepare": "rm -f lambda.zip && zip -q lambda.zip index.js",
+    "package": "rm -f lambda.zip && zip -q lambda.zip index.js",
     "python-lint": "true"
   },
   "publishConfig": {

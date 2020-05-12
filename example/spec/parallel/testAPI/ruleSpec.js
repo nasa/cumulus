@@ -236,11 +236,20 @@ describe('When I create a one-time rule via the Cumulus API', () => {
   });
 
   describe('When listing the rules via the API', () => {
-    it('the rule is returned with the listed rules', async () => {
-      await expectAsync(waitForRuleInList(config.stackName, {
+    it('the rule is returned with the listed rules', async (done) => {
+      const ruleSearchParams = {
         name: helloWorldRule.name,
         'meta.triggerRule': updatedCheck
-      })).toBeResolved();
+      };
+      try {
+        await waitForRuleInList(config.stackName, ruleSearchParams);
+        done();
+      } catch (error) {
+        fail(
+          `Could not find rule with params ${JSON.stringify(ruleSearchParams)}`,
+          error
+        );
+      }
     });
   });
 });

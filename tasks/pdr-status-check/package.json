@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/pdr-status-check",
-  "version": "1.21.0",
+  "version": "1.22.1",
   "description": "Checks execution status of granules in a PDR",
   "main": "index.js",
   "directories": {
@@ -35,13 +35,13 @@
     ]
   },
   "dependencies": {
-    "@cumulus/aws-client": "1.21.0",
-    "@cumulus/common": "1.21.0",
+    "@cumulus/aws-client": "1.22.1",
+    "@cumulus/common": "1.22.1",
     "@cumulus/cumulus-message-adapter-js": "^1.2.0",
-    "@cumulus/errors": "1.21.0"
+    "@cumulus/errors": "1.22.1"
   },
   "devDependencies": {
-    "ava": "^2.1.0",
+    "ava": "^3.8.2",
     "babel-loader": "^8.0.6",
     "babel-plugin-source-map-support": "^2.1.1",
     "babel-preset-env": "^1.7.0",

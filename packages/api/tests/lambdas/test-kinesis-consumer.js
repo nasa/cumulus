@@ -315,7 +315,7 @@ test.serial('An SNS fallback retry, should throw an error if message does not in
 
   const error = await t.throwsAsync(
     () => handler(snsEvent, {}, testCallback),
-    'validation failed'
+    { message: 'validation failed' }
   );
 
   t.is(error.errors[0].message, 'should have required property \'collection\'');
@@ -342,7 +342,7 @@ test.serial('An SNS Fallback retry, should throw an error if message collection 
 
   const error = await t.throwsAsync(
     () => handler(snsEvent, {}, testCallback),
-    'validation failed'
+    { message: 'validation failed' }
   );
 
   t.is(error.errors[0].dataPath, '.collection');
@@ -370,7 +370,7 @@ test.serial('An SNS Fallback retry, should throw an error if message is invalid 
 
   await t.throws(
     () => handler(snsEvent, {}, testCallback),
-    'Unexpected end of JSON input'
+    { message: 'Unexpected end of JSON input' }
   );
 });
 
