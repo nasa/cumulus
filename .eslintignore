@@ -10,3 +10,5 @@ _book/**
 website/**
 /packages/aws-client/*.js
 /packages/aws-client/*.d.ts
+/packages/aws-client/lib/*.js
+/packages/aws-client/lib/*.d.ts

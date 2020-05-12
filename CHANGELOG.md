@@ -32,6 +32,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-1894**
+  - Added `@cumulus/aws-client/S3.multipartCopyObject()`
 - **CUMULUS-408**
   - Added `certificateUri` field to provider schema. This optional field allows operators to specify an S3 uri to a CA bundle to use for HTTPS requests.
 - **CUMULUS-1787**
