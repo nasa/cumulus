@@ -18,8 +18,8 @@ const Rule = require('../models/rules');
  * messages from SQS queue are processed
  */
 async function processQueues(event, dispatchFn) {
-  const model = new Rule();
-  const rules = await model.getRulesByTypeAndState('sqs', 'ENABLED');
+  const rulesModel = new Rule();
+  const rules = await rulesModel.getRulesByTypeAndState('sqs', 'ENABLED');
 
   const messageLimit = event.messageLimit || 1;
   const timeLimit = event.timeLimit || 240;
@@ -42,7 +42,7 @@ async function processQueues(event, dispatchFn) {
 }
 
 /**
- * process an SQS message
+ * Process an SQS message
  *
  * @param {Object} message - incoming queue message
  * @returns {Promise} - promise resolved when the message is dispatched
@@ -89,15 +89,11 @@ function dispatch(message) {
  *   this execution (default 1)
  * @param {string} event.timeLimit - how many seconds the lambda function will
  *   remain active and query the queue (default 240 s)
- * @param {*} context - lambda context
- * @param {*} cb - callback function to explicitly return information back to the caller.
- * @returns {(error|string)} Success message or error
+ * @returns {Promise<undefined>} Success message or error
+ * @throws {Error}
  */
-function handler(event, context, cb) {
-  return processQueues(event, dispatch)
-    .catch((err) => {
-      cb(err);
-    });
+async function handler(event) {
+  return processQueues(event, dispatch);
 }
 
 module.exports = {

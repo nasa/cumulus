@@ -113,6 +113,7 @@ function processRecord(record, fromSNS) {
     eventObject = parsed;
     originalMessageSource = 'sns';
     ruleParam = {
+      type: 'sns',
       ...lookupCollectionInEvent(eventObject),
       sourceArn: get(record, 'Sns.TopicArn')
     };
@@ -130,6 +131,7 @@ function processRecord(record, fromSNS) {
       eventObject = JSON.parse(dataString);
       // standard case (collection object), or CNM case
       ruleParam = {
+        type: 'kinesis',
         ...lookupCollectionInEvent(eventObject),
         sourceArn: get(parsed, 'eventSourceARN')
       };
@@ -177,7 +179,6 @@ function handler(event, context, cb) {
 }
 
 module.exports = {
-  getRules,
   processRecord,
   handler
 };
