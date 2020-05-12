@@ -6,25 +6,6 @@ const got = require('got');
 
 const getConceptMetadata = require('../getConcept');
 
-// cmr responses for different status
-const gotResponses = {
-  200: {
-    statusCode: 200,
-    statusMessage: 'OK',
-    body: '<result><concept-id>G1222482316-CUMULUS</concept-id><revision-id>9</revision-id></result>'
-  },
-  404: {
-    statusCode: 404,
-    statusMessage: 'not found',
-    body: `<errors><error>Granule deleted</error></errors>`
-  },
-  400: {
-    statusCode: 400,
-    statusMessage: 'bad request',
-    body: '<errors><error>Bad request</error></errors>'
-  }
-};
-
 let statusCode;
 const stubclient = {
   getCmrData: () => ({

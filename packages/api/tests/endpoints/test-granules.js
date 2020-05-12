@@ -16,7 +16,6 @@ const {
   secretsManager,
   sfn
 } = require('@cumulus/aws-client/services');
-const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmr-client');
 const {
   metadataObjectFromCMRFile
@@ -451,27 +450,29 @@ test.serial('remove a granule from CMR', async (t) => {
   ).callsFake(() => Promise.resolve());
 
   sinon.stub(
-    cmrjs,
-    'getMetadata'
+    CMR.prototype,
+    'getGranuleMetadata'
   ).callsFake(() => Promise.resolve({ title: t.context.fakeGranules[0].granuleId }));
 
-  const response = await request(app)
-    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({ action: 'removeFromCmr' })
-    .expect(200);
+  try {
+    const response = await request(app)
+      .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send({ action: 'removeFromCmr' })
+      .expect(200);
 
-  const body = response.body;
-  t.is(body.status, 'SUCCESS');
-  t.is(body.action, 'removeFromCmr');
+    const body = response.body;
+    t.is(body.status, 'SUCCESS');
+    t.is(body.action, 'removeFromCmr');
 
-  const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
-  t.is(updatedGranule.published, false);
-  t.is(updatedGranule.cmrLink, undefined);
-
-  CMR.prototype.deleteGranule.restore();
-  cmrjs.getMetadata.restore();
+    const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
+    t.is(updatedGranule.published, false);
+    t.is(updatedGranule.cmrLink, undefined);
+  } finally {
+    CMR.prototype.deleteGranule.restore();
+    CMR.prototype.getGranuleMetadata.restore();
+  }
 });
 
 test.serial('remove a granule from CMR with launchpad authentication', async (t) => {
@@ -484,31 +485,33 @@ test.serial('remove a granule from CMR with launchpad authentication', async (t)
   ).callsFake(() => Promise.resolve());
 
   sinon.stub(
-    cmrjs,
-    'getMetadata'
+    CMR.prototype,
+    'getGranuleMetadata'
   ).callsFake(() => Promise.resolve({ title: t.context.fakeGranules[0].granuleId }));
 
-  const response = await request(app)
-    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({ action: 'removeFromCmr' })
-    .expect(200);
+  try {
+    const response = await request(app)
+      .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send({ action: 'removeFromCmr' })
+      .expect(200);
 
-  const body = response.body;
-  t.is(body.status, 'SUCCESS');
-  t.is(body.action, 'removeFromCmr');
+    const body = response.body;
+    t.is(body.status, 'SUCCESS');
+    t.is(body.action, 'removeFromCmr');
 
-  const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
-  t.is(updatedGranule.published, false);
-  t.is(updatedGranule.cmrLink, undefined);
+    const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
+    t.is(updatedGranule.published, false);
+    t.is(updatedGranule.cmrLink, undefined);
 
-  t.is(launchpadStub.calledOnce, true);
-
-  process.env.cmr_oauth_provider = 'earthdata';
-  launchpadStub.restore();
-  CMR.prototype.deleteGranule.restore();
-  cmrjs.getMetadata.restore();
+    t.is(launchpadStub.calledOnce, true);
+  } finally {
+    process.env.cmr_oauth_provider = 'earthdata';
+    launchpadStub.restore();
+    CMR.prototype.deleteGranule.restore();
+    CMR.prototype.getGranuleMetadata.restore();
+  }
 });
 
 test.serial('DELETE deleting an existing granule that is published will fail', async (t) => {

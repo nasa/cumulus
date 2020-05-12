@@ -561,24 +561,26 @@ test.serial('removing a granule from CMR passes the granule UR to the cmr delete
   ).callsFake((granuleUr) => Promise.resolve(t.is(granuleUr, 'granule-ur')));
 
   sinon.stub(
-    cmrjs,
-    'getMetadata'
+    CMR.prototype,
+    'getGranuleMetadata'
   ).callsFake(() => Promise.resolve({ title: 'granule-ur' }));
 
-  const granule = fakeGranuleFactoryV2();
+  try {
+    const granule = fakeGranuleFactoryV2();
 
-  await awsServices.dynamodbDocClient().put({
-    TableName: process.env.GranulesTable,
-    Item: granule
-  }).promise();
+    await awsServices.dynamodbDocClient().put({
+      TableName: process.env.GranulesTable,
+      Item: granule
+    }).promise();
 
-  const granuleModel = new Granule();
+    const granuleModel = new Granule();
 
-  await granuleModel.removeGranuleFromCmrByGranule(granule);
-
-  CMR.prototype.deleteGranule.restore();
-  DefaultProvider.decrypt.restore();
-  cmrjs.getMetadata.restore();
+    await granuleModel.removeGranuleFromCmrByGranule(granule);
+  } finally {
+    CMR.prototype.deleteGranule.restore();
+    DefaultProvider.decrypt.restore();
+    CMR.prototype.getGranuleMetadata.restore();
+  }
 });
 
 test.serial('removing a granule from CMR succeeds with Launchpad authentication', async (t) => {
@@ -596,28 +598,30 @@ test.serial('removing a granule from CMR succeeds with Launchpad authentication'
   ).callsFake((granuleUr) => Promise.resolve(t.is(granuleUr, 'granule-ur')));
 
   sinon.stub(
-    cmrjs,
-    'getMetadata'
+    CMR.prototype,
+    'getGranuleMetadata'
   ).callsFake(() => Promise.resolve({ title: 'granule-ur' }));
 
-  const granule = fakeGranuleFactoryV2();
+  try {
+    const granule = fakeGranuleFactoryV2();
 
-  await awsServices.dynamodbDocClient().put({
-    TableName: process.env.GranulesTable,
-    Item: granule
-  }).promise();
+    await awsServices.dynamodbDocClient().put({
+      TableName: process.env.GranulesTable,
+      Item: granule
+    }).promise();
 
-  const granuleModel = new Granule();
+    const granuleModel = new Granule();
 
-  await granuleModel.removeGranuleFromCmrByGranule(granule);
+    await granuleModel.removeGranuleFromCmrByGranule(granule);
 
-  t.is(launchpadStub.calledOnce, true);
-
-  process.env.cmr_oauth_provider = 'earthdata';
-  launchpadStub.restore();
-  CMR.prototype.deleteGranule.restore();
-  DefaultProvider.decrypt.restore();
-  cmrjs.getMetadata.restore();
+    t.is(launchpadStub.calledOnce, true);
+  } finally {
+    process.env.cmr_oauth_provider = 'earthdata';
+    launchpadStub.restore();
+    CMR.prototype.deleteGranule.restore();
+    DefaultProvider.decrypt.restore();
+    CMR.prototype.getGranuleMetadata.restore();
+  }
 });
 
 test(
