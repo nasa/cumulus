@@ -364,7 +364,7 @@ test(
   'checkGranuleHasNoDuplicate throws an error if the API lambda throws an error other than 404/Not Found',
   (t) => t.throwsAsync(
     checkGranuleHasNoDuplicate('throw-error', 'skip'),
-    'Test Error'
+    { message: 'Test Error' }
   )
 );
 
