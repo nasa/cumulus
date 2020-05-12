@@ -57,9 +57,9 @@
     "pump": "^3.0.0"
   },
   "devDependencies": {
+    "ava": "^3.8.2",
     "@types/lodash": "^4.14.150",
     "@types/pump": "^1.1.0",
-    "ava": "^2.1.0",
     "crypto-random-string": "^3.2.0",
     "delay": "^4.3.0",
     "jsdoc-to-markdown": "^5.0.3",

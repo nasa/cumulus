@@ -131,19 +131,19 @@ test(
   (t) =>
     t.throwsAsync(
       () => handleEvent(createRuleInput()),
-      'queueUrl is missing'
+      { message: 'queueUrl is missing' }
     )
 );
 
 test('handleEvent throws error when timeLimit is <= 0', async (t) => {
   await t.throwsAsync(
     () => handleEvent(createRuleInput('test', 0)),
-    'timeLimit must be greater than 0'
+    { message: 'timeLimit must be greater than 0' }
   );
 
   await t.throwsAsync(
     () => handleEvent(createRuleInput('test', -1)),
-    'timeLimit must be greater than 0'
+    { message: 'timeLimit must be greater than 0' }
   );
 });
 
@@ -162,7 +162,7 @@ test.serial('handleEvent returns the number of messages consumed', async (t) => 
 test('incrementAndDispatch throws error for message without queue name', async (t) => {
   await t.throwsAsync(
     () => incrementAndDispatch({ Body: createWorkflowMessage() }),
-    'cumulus_meta.queueName not set in message'
+    { message: 'cumulus_meta.queueName not set in message' }
   );
 });
 
@@ -171,7 +171,7 @@ test('incrementAndDispatch throws error for message with no maximum executions v
 
   await t.throwsAsync(
     () => incrementAndDispatch({ Body: createWorkflowMessage(queueName) }),
-    `Could not determine maximum executions for queue ${queueName}`
+    { message: `Could not determine maximum executions for queue ${queueName}` }
   );
 });
 
@@ -230,7 +230,7 @@ test('incrementAndDispatch throws error when trying to increment priority semaph
 
   await t.throwsAsync(
     () => incrementAndDispatch({ Body: createWorkflowMessage(queueName, maxExecutions) }),
-    ResourcesLockedError
+    { instanceOf: ResourcesLockedError }
   );
 });
 

@@ -312,7 +312,7 @@ test.serial('Empty FILE_ID value in PDR, parse-pdr throws error', async (t) => {
 
   await t.throwsAsync(
     () => parsePdr(t.context.payload),
-    "Failed to parse value ('') of FILE_ID",
+    { message: "Failed to parse value ('') of FILE_ID" },
     'Value corresponding to FILE_ID key in the PDR is empty'
   );
 });
@@ -338,7 +338,8 @@ test.serial('Missing FILE_ID in PDR, parse-pdr throws error', async (t) => {
 
   await t.throwsAsync(
     () => parsePdr(t.context.payload),
-    'FILE_ID', 'FILE_ID Key is not present in the supplied PDR'
+    { message: 'FILE_ID' },
+    'FILE_ID Key is not present in the supplied PDR'
   );
 });
 

@@ -116,7 +116,7 @@ test.serial('batchUpdate() will throw an exception if a put request does not con
         }
       ]
     }),
-    AggregateError
+    { instanceOf: AggregateError }
   );
 
   const errors = Array.from(error);
@@ -134,7 +134,7 @@ test.serial('batchUpdate() will throw an exception if a put request does not con
         }
       ]
     }),
-    AggregateError
+    { instanceOf: AggregateError }
   );
 
   const errors = Array.from(error);
@@ -152,7 +152,7 @@ test.serial('batchUpdate() will throw an exception if a put request does not con
         }
       ]
     }),
-    AggregateError
+    { instanceOf: AggregateError }
   );
 
   const errors = Array.from(error);
@@ -169,7 +169,7 @@ test.serial('batchUpdate() will throw an exception if a delete request does not 
         }
       ]
     }),
-    AggregateError
+    { instanceOf: AggregateError }
   );
 
   const errors = Array.from(error);
@@ -186,7 +186,7 @@ test.serial('batchUpdate() will throw an exception if a delete request does not 
         }
       ]
     }),
-    AggregateError
+    { instanceOf: AggregateError }
   );
 
   const errors = Array.from(error);

@@ -41,14 +41,14 @@ test.afterEach.always(
 test('The Manager constructor throws an exception if the tableName property is not set', (t) => {
   t.throws(
     () => (new Manager({ tableHash: {} })),
-    TypeError
+    { instanceOf: TypeError }
   );
 });
 
 test('The Manager constructor throws an exception if the tableHash property is not set', (t) => {
   t.throws(
     () => (new Manager({ tableName: 'asdf' })),
-    TypeError
+    { instanceOf: TypeError }
   );
 });
 

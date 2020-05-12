@@ -12,6 +12,6 @@ test('getGranuleId is successful', (t) => {
 test('getGranuleId fails', (t) => {
   const uri = 'test.txt';
   const regex = '(.*).TXT';
-  const error = t.throws(() => getGranuleId(uri, regex), Error);
+  const error = t.throws(() => getGranuleId(uri, regex), { instanceOf: Error });
   t.is(error.message, `Could not determine granule id of ${uri} using ${regex}`);
 });

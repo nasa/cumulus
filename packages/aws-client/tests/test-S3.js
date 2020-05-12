@@ -289,7 +289,9 @@ test('validateS3ObjectChecksum throws InvalidChecksum error on bad checksum', as
     () => validateS3ObjectChecksum({
       algorithm: 'cksum', bucket: Bucket, key: Key, expectedSum: cksum
     }),
-    `Invalid checksum for S3 object s3://${Bucket}/${Key} with type cksum and expected sum ${cksum}`
+    {
+      message: `Invalid checksum for S3 object s3://${Bucket}/${Key} with type cksum and expected sum ${cksum}`
+    }
   );
 
   return recursivelyDeleteS3Bucket(Bucket);
@@ -309,7 +311,7 @@ test('getFileBucketAndKey throws UnparsableFileLocationError if location cannot 
 
   t.throws(
     () => getFileBucketAndKey(pathParams),
-    UnparsableFileLocationError
+    { instanceOf: UnparsableFileLocationError }
   );
 });
 
