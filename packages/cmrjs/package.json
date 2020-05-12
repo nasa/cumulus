@@ -6,8 +6,8 @@
     "node": ">=10.16.3"
   },
   "scripts": {
-    "test": "ava",
-    "test-coverage": "nyc ava",
+    "test": "../../node_modules/.bin/ava",
+    "test-coverage": "../../node_modules/.bin/nyc npm test",
     "debug": "NODE_ENV=test node --inspect-brk node_modules/ava/profile.js --serial tests/*.js"
   },
   "ava": {
@@ -42,12 +42,5 @@
     "public-ip": "^3.0.0",
     "url-join": "^1.0.0",
     "xml2js": "^0.4.19"
-  },
-  "devDependencies": {
-    "ava": "^3.8.2",
-    "fs-extra": "7.0.0",
-    "nyc": "^14.0.0",
-    "rewire": "^4.0.1",
-    "sinon": "^7.1.1"
   }
 }
