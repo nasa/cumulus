@@ -19,7 +19,7 @@
     "parallel-tests": "sh scripts/tests-parallel.sh",
     "redeploy-test": "jasmine spec/standalone/redeployment/*.js",
     "all-tests": "npm run parallel-tests && jasmine && npm run redeploy-test",
-    "prepare": "for x in lambdas/*; do cd $x && npm run prepare && cd -; done",
+    "package": "for x in lambdas/*; do cd $x && npm run package && cd -; done",
     "python-lint": "for x in lambdas/*; do cd $x && npm run python-lint && cd -; done",
     "install-python-deps": "for x in lambdas/*; do cd $x && npm run install-python-deps || true && cd -; done"
   },
@@ -64,7 +64,7 @@
   },
   "devDependencies": {
     "@cumulus/test-data": "1.22.1",
-    "ava": "^2.4.0",
+    "ava": "^3.8.2",
     "babel-preset-env": "^1.7.0",
     "fs-extra": "7.0.0",
     "got": "^9.6.0",

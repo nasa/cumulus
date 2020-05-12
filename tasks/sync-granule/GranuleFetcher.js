@@ -80,16 +80,7 @@ class GranuleFetcher {
       );
     }
 
-    this.providerClient = buildProviderClient({
-      cmKeyId: provider.cmKeyId,
-      encrypted: provider.encrypted,
-      host: provider.host,
-      password: provider.password,
-      port: provider.port,
-      privateKey: provider.privateKey,
-      protocol: provider.protocol,
-      username: provider.username
-    });
+    this.providerClient = buildProviderClient(provider);
   }
 
   /**

@@ -1,6 +1,7 @@
 const test = require('ava');
 const sinon = require('sinon');
 
+const S3 = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const cmrjs = require('@cumulus/cmrjs');
 const { randomId } = require('@cumulus/common/test-utils');
@@ -235,40 +236,52 @@ test('_validateAndStoreGranuleRecord() does not throw an error for a failing rec
 test('storeGranulesFromCumulusMessage() stores multiple granules from Cumulus message', async (t) => {
   const { granuleModel } = t.context;
 
-  const granule1 = fakeGranuleFactoryV2({
-    files: [fakeFileFactory()]
-  });
-  const granule2 = fakeGranuleFactoryV2({
-    files: [fakeFileFactory()]
-  });
+  const bucket = randomId('bucket-');
+  await S3.createBucket(bucket);
 
-  const cumulusMessage = {
-    cumulus_meta: {
-      execution_name: randomId('execution'),
-      state_machine: 'state-machine',
-      workflow_start_time: Date.now()
-    },
-    meta: {
-      collection: {
-        name: 'name',
-        version: '001'
+  try {
+    const granule1 = fakeGranuleFactoryV2({
+      files: [fakeFileFactory({ bucket })]
+    });
+    const granule2 = fakeGranuleFactoryV2({
+      files: [fakeFileFactory({ bucket })]
+    });
+
+    await Promise.all([
+      S3.s3PutObject({ Bucket: bucket, Key: granule1.files[0].key, Body: 'asdf' }),
+      S3.s3PutObject({ Bucket: bucket, Key: granule2.files[0].key, Body: 'asdf' })
+    ]);
+
+    const cumulusMessage = {
+      cumulus_meta: {
+        execution_name: randomId('execution'),
+        state_machine: 'state-machine',
+        workflow_start_time: Date.now()
       },
-      provider: {
-        host: 'example-bucket',
-        protocol: 's3'
+      meta: {
+        collection: {
+          name: 'name',
+          version: '001'
+        },
+        provider: {
+          host: 'example-bucket',
+          protocol: 's3'
+        },
+        status: 'completed'
       },
-      status: 'completed'
-    },
-    payload: {
-      granules: [
-        granule1,
-        granule2
-      ]
-    }
-  };
+      payload: {
+        granules: [
+          granule1,
+          granule2
+        ]
+      }
+    };
 
-  await granuleModel.storeGranulesFromCumulusMessage(cumulusMessage);
+    await granuleModel.storeGranulesFromCumulusMessage(cumulusMessage);
 
-  t.true(await granuleModel.exists({ granuleId: granule1.granuleId }));
-  t.true(await granuleModel.exists({ granuleId: granule2.granuleId }));
+    t.true(await granuleModel.exists({ granuleId: granule1.granuleId }));
+    t.true(await granuleModel.exists({ granuleId: granule2.granuleId }));
+  } finally {
+    await S3.recursivelyDeleteS3Bucket(bucket);
+  }
 });
