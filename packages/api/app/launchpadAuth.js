@@ -20,9 +20,9 @@ const ensureValidCustomLaunchpadToken = async (req, res, next) => {
   const token = req.headers.authorization.trim().split(/\s+/)[1];
 
   const accessTokenModel = new AccessToken();
-  let accessTokenRecord;
+
   try {
-    accessTokenRecord = await accessTokenModel.get({ accessToken: token });
+    const accessTokenRecord = await accessTokenModel.get({ accessToken: token });
 
     if (accessTokenRecord) {
       const userName = accessTokenRecord.username;
@@ -111,7 +111,7 @@ async function ensureLaunchpadAPIAuthorized(req, res, next) {
     }
 
     if (error instanceof JsonWebTokenError) {
-      return res.boom.forbidden('Invalid access token');
+      return res.boom.unauthorized('Invalid access token');
     }
 
     log.error('Authorization error:', error);

@@ -84,7 +84,7 @@ test('API request with expired JWT returns 401 response', async (t) => {
   t.is(response.body.message, 'Access token has expired');
 });
 
-test.serial('API request with invalid JWT returns 403 response', async (t) => {
+test.serial('API request with invalid JWT returns 401 response', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory({
     username: validUsername
   });
@@ -100,8 +100,8 @@ test.serial('API request with invalid JWT returns 403 response', async (t) => {
     .get('/workflows')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwt}`)
-    .expect(403);
-  t.is(response.status, 403);
+    .expect(401);
+  t.is(response.status, 401);
   t.is(response.body.message, 'Invalid access token');
 });
 

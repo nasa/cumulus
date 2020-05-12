@@ -77,7 +77,7 @@ async function ensureAuthorized(req, res, next) {
     }
 
     if (error instanceof JsonWebTokenError) {
-      return res.boom.forbidden('Invalid access token');
+      return res.boom.unauthorized('Invalid access token');
     }
 
     log.error('Authorization error:', error);
