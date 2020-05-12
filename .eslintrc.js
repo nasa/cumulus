@@ -136,9 +136,6 @@ module.exports = {
 
     'node/no-missing-require': 'off',
 
-    'unicorn/filename-case': 'off',
-    'unicorn/no-process-exit': 'off',
-    'unicorn/prefer-spread': 'off',
     'unicorn/better-regex': 'off',
     'unicorn/catch-error-name': 'off',
     'unicorn/consistent-function-scoping': 'off',
