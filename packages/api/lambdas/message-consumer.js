@@ -103,7 +103,7 @@ function processRecord(record, fromSNS) {
   let parsed = record;
   let validationSchema;
   let originalMessageSource;
-  let ruleParam;
+  let ruleParam = {};
 
   if (fromSNS) {
     parsed = JSON.parse(record.Sns.Message);

@@ -530,8 +530,9 @@ class Rule extends Manager {
   }
 
   /**
-   * `queryRules` scans and returns DynamoDB rules table based on:
+   * `queryRules` scans and returns rules in the DynamoDB table based on:
    *
+   * - `rule.type`
    * - `rule.status` (ENABLED or DISABLED)
    * - sourceArn in the `rule.value` field
    * - collection name and version in `rule.collection`
@@ -540,13 +541,20 @@ class Rule extends Manager {
    * @param {string} queryParams.name - a collection name
    * @param {string} queryParams.version - a collection version
    * @param {string} queryParams.sourceArn - the ARN of the message source for the rule
-   * @param {string} originalMessageSource - "kinesis", "sns", or "sqs"
+   * @param {string} queryParams.status - "ENABLED" or "DISABLED"
+   * @param {string} queryParams.type - "kinesis", "sns" "sqs", or "onetime"
    * @returns {Array} List of zero or more rules found from table scan
-   * @throws {Error} if no rules are found
+   * @throws {Error}
    */
-  async queryRules(queryParams, originalMessageSource) {
-    if (!['kinesis', 'sns', 'sqs'].includes(originalMessageSource)) {
-      throw new Error(`Unrecognized event source: ${originalMessageSource}. Expected "kinesis", "sns", or "sqs"`);
+  async queryRules({
+    name,
+    version,
+    sourceArn,
+    status = 'ENABLED',
+    type
+  }) {
+    if (!['kinesis', 'sns', 'sqs', 'onetime'].includes(type)) {
+      throw new Error(`Unrecognized rule type: ${type}. Expected "kinesis", "sns", "sqs", or "onetime"`);
     }
     const names = {
       '#st': 'state',
@@ -555,23 +563,23 @@ class Rule extends Manager {
     };
     let filter = '#st = :enabledState AND #rl.#tp = :ruleType';
     const values = {
-      ':enabledState': 'ENABLED',
-      ':ruleType': originalMessageSource
+      ':enabledState': status,
+      ':ruleType': type
     };
-    if (queryParams.name) {
-      values[':collectionName'] = queryParams.name;
+    if (name) {
+      values[':collectionName'] = name;
       names['#col'] = 'collection';
       names['#nm'] = 'name';
       filter += ' AND #col.#nm = :collectionName';
     }
-    if (queryParams.version) {
-      values[':collectionVersion'] = queryParams.version;
+    if (version) {
+      values[':collectionVersion'] = version;
       names['#col'] = 'collection';
       names['#vr'] = 'version';
       filter += ' AND #col.#vr = :collectionVersion';
     }
-    if (queryParams.sourceArn) {
-      values[':ruleValue'] = queryParams.sourceArn;
+    if (sourceArn) {
+      values[':ruleValue'] = sourceArn;
       names['#vl'] = 'value';
       filter += ' AND #rl.#vl = :ruleValue';
     }
@@ -584,8 +592,8 @@ class Rule extends Manager {
     const rules = rulesQueryResultsForSourceArn.Items || [];
     if (rules.length === 0) {
       throw new Error(
-        `No rules found that matched any/all of source ARN ${queryParams.sourceArn} and `
-        + `collection { name: ${queryParams.name}, version: ${queryParams.version} }`
+        `No rules found that matched any/all of source ARN ${sourceArn} and `
+        + `collection { name: ${name}, version: ${version} }`
       );
     }
     return rules;

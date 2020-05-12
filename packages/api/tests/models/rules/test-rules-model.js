@@ -10,8 +10,8 @@ const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { ValidationError } = require('@cumulus/errors');
 
-const models = require('../../models');
-const { createSqsQueues, fakeRuleFactoryV2 } = require('../../lib/testUtils');
+const models = require('../../../models');
+const { createSqsQueues, fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 
 process.env.RulesTable = `RulesTable_${randomString()}`;
 process.env.stackName = randomString();
@@ -798,47 +798,6 @@ test('update preserves nested keys', async (t) => {
 
   t.is(updatedRule.meta.foo, 'bar');
   t.deepEqual(updatedRule.meta.testObject, newTestObject);
-});
-
-test('getRulesByTypeAndState returns list of rules', async (t) => {
-  const queueUrls = await createSqsQueues(randomString());
-  const rules = [
-    fakeRuleFactoryV2({
-      workflow,
-      rule: {
-        type: 'onetime'
-      },
-      state: 'ENABLED'
-    }),
-    fakeRuleFactoryV2({
-      workflow,
-      rule: {
-        type: 'sqs',
-        value: queueUrls.queueUrl
-      },
-      state: 'ENABLED'
-    }),
-    fakeRuleFactoryV2({
-      workflow,
-      rule: {
-        type: 'onetime'
-      },
-      state: 'DISABLED'
-    })
-  ];
-  const createdRules = await Promise.all(
-    rules.map((rule) => rulesModel.create(rule))
-  );
-
-  await Promise.all(
-    Object.values(queueUrls)
-      .map((queueUrl) => awsServices.sqs().deleteQueue({ QueueUrl: queueUrl }).promise())
-  );
-
-  const result = await rulesModel.getRulesByTypeAndState('onetime', 'ENABLED');
-  t.truthy(result.find((rule) => rule.name === createdRules[0].name));
-  t.falsy(result.find((rule) => rule.name === createdRules[1].name));
-  t.falsy(result.find((rule) => rule.name === createdRules[2].name));
 });
 
 test('create, update and delete sqs type rule', async (t) => {
