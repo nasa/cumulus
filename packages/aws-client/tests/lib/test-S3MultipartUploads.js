@@ -52,10 +52,6 @@ test('createMultipartChunks(12, 10) returns the correct chunks', (t) => {
   );
 });
 
-test('createMultipartChunks throws an exception for a chunk size larger than 5 GB', (t) => {
-  t.throws(() => createMultipartChunks(1, (5 * 1024 * 1024 * 1024) + 1));
-});
-
 test('buildUploadPartCopyParams() with no chunks returns the correct params', (t) => {
   t.deepEqual(
     buildUploadPartCopyParams({

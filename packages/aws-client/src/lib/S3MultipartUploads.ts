@@ -9,7 +9,6 @@ type Chunk = {
 };
 
 const MB = 1024 * 1024;
-const GB = 1024 * MB;
 
 // Each part of a multi-part copy needs to specify a byte range to be copied.
 // This byte range has a starting byte and an ending byte (inclusive) that makes
@@ -25,29 +24,14 @@ const GB = 1024 * MB;
 export const createMultipartChunks = (
   objectSize: number,
   maxChunkSize = 250 * MB
-): Chunk[] => {
-  if (maxChunkSize > (5 * GB)) {
-    throw new Error('maxChunkSize can be no greater than 5368709120');
-  }
-
-  const lastChunkSize = objectSize % maxChunkSize;
-
-  // Build the list of full-size chunks
-  const chunks = range(0, objectSize - lastChunkSize, maxChunkSize)
-    .map((start) => {
-      const end = start + maxChunkSize - 1;
-      return { start, end };
-    });
-
-  // If necessary build the last, not-full-size chunk
-  if (lastChunkSize !== 0) {
-    const start = objectSize - lastChunkSize;
-    const end = objectSize - 1;
-    chunks.push({ start, end });
-  }
-
-  return chunks;
-};
+): Chunk[] =>
+  range(0, objectSize, maxChunkSize)
+    .map(
+      (start) => ({
+        start,
+        end: Math.min(start + maxChunkSize, objectSize) - 1
+      })
+    );
 
 export const createMultipartUpload = async (
   params: AWS.S3.CreateMultipartUploadRequest
