@@ -466,7 +466,9 @@ test.serial('remove a granule from CMR', async (t) => {
     t.is(body.status, 'SUCCESS');
     t.is(body.action, 'removeFromCmr');
 
-    const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
+    const updatedGranule = await granuleModel.get({
+      granuleId: t.context.fakeGranules[0].granuleId
+    });
     t.is(updatedGranule.published, false);
     t.is(updatedGranule.cmrLink, undefined);
   } finally {
@@ -501,7 +503,9 @@ test.serial('remove a granule from CMR with launchpad authentication', async (t)
     t.is(body.status, 'SUCCESS');
     t.is(body.action, 'removeFromCmr');
 
-    const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
+    const updatedGranule = await granuleModel.get({
+      granuleId: t.context.fakeGranules[0].granuleId
+    });
     t.is(updatedGranule.published, false);
     t.is(updatedGranule.cmrLink, undefined);
 

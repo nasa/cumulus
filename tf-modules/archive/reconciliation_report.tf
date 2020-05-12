@@ -20,6 +20,8 @@ resource "aws_lambda_function" "create_reconciliation_report" {
       system_bucket         = var.system_bucket
       cmr_client_id         = var.cmr_client_id
       cmr_provider          = var.cmr_provider
+      cmr_username          = var.cmr_username
+      cmr_password          = var.cmr_password
       CMR_LIMIT             = var.cmr_limit
       CMR_PAGE_SIZE         = var.cmr_page_size
     }
