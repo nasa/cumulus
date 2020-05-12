@@ -528,6 +528,68 @@ class Rule extends Manager {
 
     return scanResult.Items;
   }
+
+  /**
+   * `queryRules` scans and returns DynamoDB rules table based on:
+   *
+   * - `rule.status` (ENABLED or DISABLED)
+   * - sourceArn in the `rule.value` field
+   * - collection name and version in `rule.collection`
+   *
+   * @param {Object} queryParams - any/all query params extracted from event object
+   * @param {string} queryParams.name - a collection name
+   * @param {string} queryParams.version - a collection version
+   * @param {string} queryParams.sourceArn - the ARN of the message source for the rule
+   * @param {string} originalMessageSource - "kinesis", "sns", or "sqs"
+   * @returns {Array} List of zero or more rules found from table scan
+   * @throws {Error} if no rules are found
+   */
+  async queryRules(queryParams, originalMessageSource) {
+    if (!['kinesis', 'sns', 'sqs'].includes(originalMessageSource)) {
+      throw new Error(`Unrecognized event source: ${originalMessageSource}. Expected "kinesis", "sns", or "sqs"`);
+    }
+    const names = {
+      '#st': 'state',
+      '#rl': 'rule',
+      '#tp': 'type'
+    };
+    let filter = '#st = :enabledState AND #rl.#tp = :ruleType';
+    const values = {
+      ':enabledState': 'ENABLED',
+      ':ruleType': originalMessageSource
+    };
+    if (queryParams.name) {
+      values[':collectionName'] = queryParams.name;
+      names['#col'] = 'collection';
+      names['#nm'] = 'name';
+      filter += ' AND #col.#nm = :collectionName';
+    }
+    if (queryParams.version) {
+      values[':collectionVersion'] = queryParams.version;
+      names['#col'] = 'collection';
+      names['#vr'] = 'version';
+      filter += ' AND #col.#vr = :collectionVersion';
+    }
+    if (queryParams.sourceArn) {
+      values[':ruleValue'] = queryParams.sourceArn;
+      names['#vl'] = 'value';
+      filter += ' AND #rl.#vl = :ruleValue';
+    }
+    const rulesQueryResultsForSourceArn = await this.scan({
+      names,
+      filter,
+      values
+    });
+
+    const rules = rulesQueryResultsForSourceArn.Items || [];
+    if (rules.length === 0) {
+      throw new Error(
+        `No rules found that matched any/all of source ARN ${queryParams.sourceArn} and `
+        + `collection { name: ${queryParams.name}, version: ${queryParams.version} }`
+      );
+    }
+    return rules;
+  }
 }
 
 module.exports = Rule;
