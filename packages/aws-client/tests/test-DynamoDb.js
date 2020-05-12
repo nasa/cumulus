@@ -68,7 +68,7 @@ test('DynamoDb.get() throws RecordDoesNotExist when item does not exist', async 
         hash: `hash${cryptoRandomString({ length: 10 })}`
       }
     }),
-    RecordDoesNotExist
+    { instanceOf: RecordDoesNotExist }
   );
 });
 

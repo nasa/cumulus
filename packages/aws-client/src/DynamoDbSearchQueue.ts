@@ -42,6 +42,33 @@ class DynamoDbSearchQueue {
     return this.items.shift();
   }
 
+  /**
+   * A DynamoDbSearchQueue instance stores the list of items to be returned in
+   * the `this.items` array. When that list is empty, the `fetchItems()` method
+   * is called to repopulate `this.items`. Typically, the new items are fetched
+   * using the AWS.DynamoDB.`DocumentClient.scan()` method.
+   *
+   * DynamoDB scans up to 1 MB of items at a time and then filters that 1 MB to
+   * look for matching items. If there are more items to be search beyond that
+   * 1 MB limit, the scan response will include a `LastEvaluatedKey` property.
+   * Future calls to `scan()` should set `ExclusiveStartKey` equal to that
+   * `LastEvaluatedKey`, so that DynamoDB knows where to resume the search.
+   *
+   * Because DynamoDB only applies filtering to 1 MB at a time, it's possible
+   * that a particular 1 MB chunk may not contain any items that match the
+   * filter. In that case, the response from `scan()` will contain an empty list
+   * of items and a `LastEvaluatedKey` indicating that there are still more
+   * items to be scanned.
+   *
+   * The goal of `fetchItems()` is to either add more items to `this.items` or,
+   * if the entire Dynamo table has been scanned, push `null` onto the list of
+   * items. It will continue to call `scan()` until one of those two conditions
+   * has been satisfied.
+   *
+   * Reference: https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#scan-property
+   *
+   * @private
+   */
   async fetchItems() {
     let response;
     do {
