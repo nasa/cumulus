@@ -13,6 +13,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   2. Use the AWS console or CLI to delete your `<prefix>-AccessTokensTable` DynamoDB table
   3. [Re-deploy your `data-persistence` module](https://nasa.github.io/cumulus/docs/deployment/upgrade-readme#update-data-persistence-resources), which should re-create the `<prefix>-AccessTokensTable` DynamoDB table
   4. Return to using the Cumulus API/dashboard as normal
+- This release requires the Cumulus Message Adapter layer deployed with Cumulus Core to be at least 1.3.0, as the core lambdas have updated to [cumulus-message-adapter-js v1.2.0](https://github.com/nasa/cumulus-message-adapter-js/releases/tag/v1.2.0) and the new CMA interface.  As a result, users should:
+  1. Follow the [Cumulus Message Adapter(CMA) deployment instructions](https://nasa.github.io/cumulus/docs/deployment/deployment-readme#deploy-the-cumulus-message-adapter-layer) and install a CMA layer version >=1.3.0
+  2. If utilizing node.js in your workflows *and* the Cumulus CMA layer/`cumulus-message-adapter-js`, you must update your lambda to use [cumulus-message-adapter-js v1.2.0](https://github.com/nasa/cumulus-message-adapter-js/releases/tag/v1.2.0) and follow the migration instructions in the release notes.    Prior versions of `cumulus-message-adapter-js` are not compatible with CMA >= 1.3.0.
+
+### BREAKING CHANGES
+
+- **CUMULUS-1896**
+  Updated all Cumulus core lambdas to utilize the new message adapter streaming interface via [cumulus-message-adapter-js v1.2.0](https://github.com/nasa/cumulus-message-adapter-js/releases/tag/v1.2.0).   Users of this version of Cumulus (or later) must utilize version 1.3.0 or greater of the [cumulus-message-adapter](https://github.com/nasa/cumulus-message-adapter) to support core lambdas.
 
 ### Added
 
