@@ -20,6 +20,7 @@ import {
 } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
 
+import * as S3MultipartUploads from './lib/S3MultipartUploads';
 import { s3 } from './services';
 import { inTestMode } from './test-utils';
 import { improveStackTrace } from './utils';
@@ -670,3 +671,83 @@ export const getFileBucketAndKey = (pathParams: string): [string, string] => {
  */
 export const createBucket = (Bucket: string) =>
   s3().createBucket({ Bucket }).promise();
+
+/**
+ * Copy an S3 object to another location in S3 using a multipart copy
+ *
+ * @param {Object} params
+ * @param {string} params.sourceBucket
+ * @param {string} params.sourceKey
+ * @param {string} params.destinationBucket
+ * @param {string} params.destinationKey
+ * @returns {Promise<undefined>}
+ */
+export const multipartCopyObject = async (
+  params: {
+    sourceBucket: string,
+    sourceKey: string,
+    destinationBucket: string,
+    destinationKey: string
+  }
+) => {
+  const {
+    sourceBucket,
+    sourceKey,
+    destinationBucket,
+    destinationKey
+  } = params;
+
+  // Create a multi-part upload (copy) and get its UploadId
+  const uploadId = await S3MultipartUploads.createMultipartUpload({
+    Bucket: destinationBucket,
+    Key: destinationKey
+  });
+
+  if (uploadId === undefined) {
+    throw new Error('Unable to create multipart upload');
+  }
+
+  try {
+    // Build the separate parts of the multi-part upload (copy)
+    const objectSize = await getObjectSize(sourceBucket, sourceKey);
+    if (objectSize === undefined) {
+      throw new Error(`Unable to determine size of s3://${sourceBucket}/${sourceKey}`);
+    }
+
+    const chunks = S3MultipartUploads.createMultipartChunks(objectSize);
+
+    const uploadPartCopyParams = S3MultipartUploads.buildUploadPartCopyParams({
+      chunks,
+      destinationBucket,
+      destinationKey,
+      sourceBucket,
+      sourceKey,
+      uploadId
+    });
+
+    // Submit all of the upload (copy) parts to S3
+    const uploadPartCopyResponses = await Promise.all(
+      uploadPartCopyParams.map((p) => S3MultipartUploads.uploadPartCopy(p))
+    );
+
+    // Let S3 know that the multi-part upload (copy) is completed
+    const completeMultipartUploadParams = S3MultipartUploads.buildCompleteMultipartUploadParams({
+      uploadPartCopyResponses,
+      destinationBucket,
+      destinationKey,
+      uploadId
+    });
+
+    await S3MultipartUploads.completeMultipartUpload(completeMultipartUploadParams);
+  } catch (error) {
+    // If anything went wrong, make sure that the multi-part upload (copy)
+    // is aborted.
+    await S3MultipartUploads.abortMultipartUpload({
+      Bucket: destinationBucket,
+      Key: destinationKey,
+      UploadId: uploadId
+    });
+
+    throw error;
+  }
+};
