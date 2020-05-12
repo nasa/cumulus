@@ -8,7 +8,7 @@ test('The GoogleOAuth2 constructor throws a TypeError if googleOAuth2Client is n
   const err = t.throws(() => {
     new GoogleOAuth2(null, {});
   },
-  TypeError);
+  { instanceOf: TypeError });
 
   t.is(err.message, 'googleOAuth2Client is required');
 });
@@ -17,7 +17,7 @@ test('The GoogleOAuth2 constructor throws a TypeError if googlePlusPeopleClient 
   const err = t.throws(() => {
     new GoogleOAuth2({}, null);
   },
-  TypeError);
+  { instanceOf: TypeError });
 
   t.is(err.message, 'googlePlusPeopleClient is required');
 });

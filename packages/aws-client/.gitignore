@@ -7,3 +7,5 @@ tmp
 config/authorized_keys
 config/cloudformation.yml
 cache-invalidation/config/runtime_config.json
+/*.js
+/*.d.ts

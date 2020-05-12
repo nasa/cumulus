@@ -415,7 +415,7 @@ test.serial('download granule with bad checksum in file from HTTP endpoint throw
 
   await t.throwsAsync(
     () => syncGranule(t.context.event),
-    errorMessage
+    { message: errorMessage }
   );
 });
 

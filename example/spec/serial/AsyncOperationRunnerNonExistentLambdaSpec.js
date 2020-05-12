@@ -3,6 +3,7 @@
 const { ecs } = require('@cumulus/aws-client/services');
 const { getClusterArn, waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
 const { AsyncOperation } = require('@cumulus/api/models');
+const { findAsyncOperationTaskDefinitionForDeployment } = require('../helpers/ecsHelpers');
 const { loadConfig } = require('../helpers/testUtils');
 
 describe('The AsyncOperation task runner running a non-existent lambda function', () => {
@@ -32,10 +33,8 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
       cluster = await getClusterArn(config.stackName);
 
       // Find the ARN of the AsyncOperationTaskDefinition
-      const { taskDefinitionArns } = await ecs().listTaskDefinitions().promise();
-      asyncOperationTaskDefinition = taskDefinitionArns.find(
-        (arn) => arn.includes(`${config.stackName}-AsyncOperationTaskDefinition`)
-      );
+      asyncOperationTaskDefinition = await findAsyncOperationTaskDefinitionForDeployment(config.stackName);
+
 
       // Start the AsyncOperation
       ({

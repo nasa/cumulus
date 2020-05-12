@@ -1,110 +1,103 @@
 'use strict';
 
-const rewire = require('rewire');
 const test = require('ava');
+const cryptoRandomString = require('crypto-random-string');
+const CloudFormation = require('../CloudFormation');
+const { cf } = require('../services');
 
-const CloudFormation = rewire('../CloudFormation');
+test('describeCfStack() returns the stack information', async (t) => {
+  const StackName = cryptoRandomString({ length: 10 });
 
-test.serial('describeCfStack() returns the stack information', async (t) => {
-  const stack = { foo: 'bar' };
-  const actualStack = await CloudFormation.__with__({
-    cf: () => ({
-      describeStacks: () => ({
-        promise: () => Promise.resolve({
-          Stacks: [stack]
-        })
-      })
+  await cf().createStack({
+    StackName,
+    TemplateBody: JSON.stringify({
+      Resources: {}
     })
-  })(() => CloudFormation.describeCfStack('test'));
-  t.deepEqual(actualStack, stack);
+  }).promise();
+
+  const actualStack = await CloudFormation.describeCfStack(StackName);
+
+  t.is(actualStack.StackName, StackName);
+
+  await cf().deleteStack({ StackName }).promise();
 });
 
-test.serial('describeCfStack() returns undefined for stack that does not exist', async (t) => {
-  const actualStack = await CloudFormation.__with__({
-    cf: () => ({
-      describeStacks: () => ({
-        promise: () => Promise.resolve({
-          Stacks: []
-        })
-      })
+test('describeCfStack() throws an exception for stack that does not exist', (t) =>
+  t.throwsAsync(() => CloudFormation.describeCfStack('test')));
+
+test('describeCfStackResources() returns resources for stack', async (t) => {
+  const StackName = cryptoRandomString({ length: 10 });
+
+  await cf().createStack({
+    StackName,
+    TemplateBody: JSON.stringify({
+      Resources: {
+        MyBucket: {
+          Type: 'AWS::S3::Bucket'
+        }
+      }
     })
-  })(() => CloudFormation.describeCfStack('test'));
-  t.is(actualStack, undefined);
+  }).promise();
+
+  const actualStackResources = await CloudFormation.describeCfStackResources(StackName);
+
+  t.is(actualStackResources.length, 1);
+  t.is(actualStackResources[0].StackName, StackName);
+  t.is(actualStackResources[0].ResourceType, 'AWS::S3::Bucket');
+
+  await cf().deleteStack({ StackName }).promise();
 });
 
-test.serial('describeCfStackResources() returns resources for stack', async (t) => {
-  const StackResources = 'resources';
-  const actualStackResources = await CloudFormation.__with__({
-    cf: () => ({
-      describeStackResources: () => ({
-        promise: () => Promise.resolve({
-          StackResources
-        })
-      })
-    })
-  })(() => CloudFormation.describeCfStackResources('test'));
-  t.is(actualStackResources, StackResources);
-});
+test('getCfStackParameterValues() returns empty object if no stack is found', async (t) => {
+  const parameters = await CloudFormation.getCfStackParameterValues('test', ['foo']);
 
-test.serial('getCfStackParameterValues() returns empty object if no stack is found', async (t) => {
-  const parameters = await CloudFormation.__with__({
-    cf: () => ({
-      describeStacks: () => ({
-        promise: () => Promise.resolve({
-          Stacks: []
-        })
-      })
-    })
-  })(
-    () => CloudFormation.getCfStackParameterValues('test', ['foo'])
-  );
   t.deepEqual(parameters, {});
 });
 
-test.serial('getCfStackParameterValues() returns object excluding keys for missing parameters', async (t) => {
-  const parameters = await CloudFormation.__with__({
-    cf: () => ({
-      describeStacks: () => ({
-        promise: () => Promise.resolve({
-          Stacks: [{
-            Parameters: []
-          }]
-        })
-      })
+test('getCfStackParameterValues() returns object excluding keys for missing parameters', async (t) => {
+  const StackName = cryptoRandomString({ length: 10 });
+
+  await cf().createStack({
+    StackName,
+    TemplateBody: JSON.stringify({
+      Resources: {}
     })
-  })(
-    () => CloudFormation.getCfStackParameterValues('test', [
-      'foo'
-    ])
-  );
+  }).promise();
+
+  const parameters = await CloudFormation.getCfStackParameterValues('test', ['foo']);
+
   t.deepEqual(parameters, {});
+
+  await cf().deleteStack({ StackName }).promise();
 });
 
-test.serial('getCfStackParameterValues() returns requested stack parameters', async (t) => {
-  const parameters = await CloudFormation.__with__({
-    cf: () => ({
-      describeStacks: () => ({
-        promise: () => Promise.resolve({
-          Stacks: [{
-            Parameters: [{
-              ParameterKey: 'foo',
-              ParameterValue: 'bar'
-            }, {
-              ParameterKey: 'key',
-              ParameterValue: 'value'
-            }]
-          }]
-        })
-      })
-    })
-  })(
-    () => CloudFormation.getCfStackParameterValues('test', [
-      'foo',
-      'key'
-    ])
+test('getCfStackParameterValues() returns requested stack parameters', async (t) => {
+  const StackName = cryptoRandomString({ length: 10 });
+
+  await cf().createStack({
+    StackName,
+    TemplateBody: JSON.stringify({
+      Parameters: {
+        foo: { Type: 'String' },
+        key: { Type: 'String' }
+      },
+      Resources: {}
+    }),
+    Parameters: [
+      { ParameterKey: 'foo', ParameterValue: 'bar' },
+      { ParameterKey: 'key', ParameterValue: 'value' }
+    ]
+  }).promise();
+
+  const parameters = await CloudFormation.getCfStackParameterValues(StackName, ['foo', 'key']);
+
+  t.deepEqual(
+    parameters,
+    {
+      foo: 'bar',
+      key: 'value'
+    }
   );
-  t.deepEqual(parameters, {
-    foo: 'bar',
-    key: 'value'
-  });
+
+  await cf().deleteStack({ StackName }).promise();
 });

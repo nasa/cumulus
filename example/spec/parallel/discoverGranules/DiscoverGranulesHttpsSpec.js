@@ -1,22 +1,17 @@
-const fs = require('fs-extra');
 const { Execution } = require('@cumulus/api/models');
+const { deleteProvider } = require('@cumulus/api-client/providers');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
-  api: apiTestUtils,
   addCollections,
   buildAndExecuteWorkflow,
   cleanupCollections,
-  cleanupProviders,
   granulesApi: granulesApiTestUtils,
-  getProviderHost,
-  getProviderPort
+  waitForCompletedExecution
 } = require('@cumulus/integration-tests');
 
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
-
+const { buildHttpOrHttpsProvider, createProvider } = require('../../helpers/Providers');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
-
-const lambdaStep = new LambdaStep();
 
 const workflowName = 'DiscoverGranules';
 
@@ -25,41 +20,34 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = 2000000;
 // Note: This test runs in serial due to the logs endpoint tests
 
 // Disabled until we're acutally using https
-xdescribe('The Discover Granules workflow with https Protocol', () => {
-  const providersDir = './data/providers/https/';
+describe('The Discover Granules workflow with https Protocol', () => {
   const collectionsDir = './data/collections/https_testcollection_001/';
   let httpsWorkflowExecution = null;
 
+  let collection;
   let config;
+  let executionModel;
+  let lambdaStep;
+  let provider;
+  let queueGranulesOutput;
+  let testId;
   let testSuffix;
 
   beforeAll(async () => {
     config = await loadConfig();
 
     process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+    executionModel = new Execution();
 
-    const testId = createTimestampedTestId(config.stackName, 'DiscoverGranules');
+    testId = createTimestampedTestId(config.stackName, 'DiscoverGranulesHttps');
     testSuffix = createTestSuffix(testId);
-
-    const collection = { name: `https_testcollection${testSuffix}`, version: '001' };
-
-    const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/https_provider.json`, 'utf8'));
-
-    // we actually want https for this test. we will later update provider to use https
-    const provider = Object.assign(providerJson, {
-      protocol: 'http',
-      host: getProviderHost(providerJson),
-      port: getProviderPort(providerJson),
-      id: `https_provider${testSuffix}`
-    });
+    collection = { name: `https_testcollection${testSuffix}`, version: '001' };
+    provider = await buildHttpOrHttpsProvider(testSuffix, config.bucket, 'https');
 
     // populate collections and providers
     await Promise.all([
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      apiTestUtils.addProviderApi({
-        prefix: config.stackName,
-        provider
-      })
+      createProvider(config.stackName, provider)
     ]);
 
     httpsWorkflowExecution = await buildAndExecuteWorkflow(
@@ -69,13 +57,20 @@ xdescribe('The Discover Granules workflow with https Protocol', () => {
       collection,
       provider
     );
+
+    lambdaStep = new LambdaStep();
+
+    queueGranulesOutput = await lambdaStep.getStepOutput(
+      httpsWorkflowExecution.executionArn,
+      'QueueGranules'
+    );
   });
 
   afterAll(async () => {
     // clean up stack state added by test
     await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
+      deleteProvider({ prefix: config.stackName, providerId: provider.id })
     ]);
   });
 
@@ -121,14 +116,47 @@ xdescribe('The Discover Granules workflow with https Protocol', () => {
 
   describe('the reporting lambda has received the cloudwatch stepfunction event and', () => {
     it('the execution record is added to DynamoDB', async () => {
-      const executionModel = new Execution();
-
       const record = await waitForModelStatus(
         executionModel,
         { arn: httpsWorkflowExecution.executionArn },
         'completed'
       );
       expect(record.status).toEqual('completed');
+    });
+  });
+
+  describe('QueueGranules lambda function', () => {
+    it('has expected arns output', () => {
+      expect(queueGranulesOutput.payload.running.length).toEqual(3);
+    });
+  });
+
+  /**
+   * The DiscoverGranules workflow queues granule ingest workflows, so check that one of the
+   * granule ingest workflow completes successfully.
+   */
+  describe('IngestGranule workflow', () => {
+    let ingestGranuleWorkflowArn;
+    let ingestGranuleExecutionStatus;
+
+    beforeAll(async () => {
+      ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
+      console.log('\nwait for ingestGranuleWorkflow', ingestGranuleWorkflowArn);
+      ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn);
+    });
+
+    it('executes successfully', () => {
+      expect(ingestGranuleExecutionStatus).toEqual('SUCCEEDED');
+    });
+
+    describe('SyncGranule lambda function', () => {
+      it('outputs 1 granule', async () => {
+        const lambdaOutput = await lambdaStep.getStepOutput(
+          ingestGranuleWorkflowArn,
+          'SyncGranule'
+        );
+        expect(lambdaOutput.payload.granules.length).toEqual(1);
+      });
     });
   });
 });
