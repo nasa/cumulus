@@ -7,14 +7,11 @@
     "node": ">=10.16.3"
   },
   "scripts": {
-    "test": "ava"
+    "test": "../../node_modules/.bin/ava"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
     "aws-sdk": "^2.585.0"
-  },
-  "devDependencies": {
-    "ava": "^3.8.2"
   }
 }
