@@ -37,24 +37,16 @@ const collection = {
 };
 const provider = { id: 'PROV1' };
 
-const commonRuleParams = {
+const kinesisRule = {
   collection,
-  provider: provider.id
-};
-
-const kinesisRuleParams = {
+  provider: provider.id,
+  name: 'testRule1',
+  workflow: 'test-workflow-1',
+  state: 'ENABLED',
   rule: {
     type: 'kinesis',
     value: 'test-kinesisarn'
   }
-};
-
-const rule1 = {
-  ...commonRuleParams,
-  ...kinesisRuleParams,
-  name: 'testRule1',
-  workflow: 'test-workflow-1',
-  state: 'ENABLED'
 };
 
 let sendSQSMessageSpy;
@@ -146,8 +138,7 @@ test.beforeEach(async (t) => {
   process.env.system_bucket = randomString();
   process.env.messageConsumer = randomString();
 
-  const rulesToCreate = [rule1];
-  await Promise.all(rulesToCreate.map((rule) => ruleModel.create(rule)));
+  await ruleModel.create(kinesisRule);
 });
 
 test.afterEach.always(async (t) => {

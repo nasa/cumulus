@@ -113,7 +113,7 @@ function processRecord(record, fromSNS) {
     eventObject = parsed;
     originalMessageSource = 'sns';
     ruleParam = {
-      type: 'sns',
+      type: originalMessageSource,
       ...lookupCollectionInEvent(eventObject),
       sourceArn: get(record, 'Sns.TopicArn')
     };
@@ -131,7 +131,7 @@ function processRecord(record, fromSNS) {
       eventObject = JSON.parse(dataString);
       // standard case (collection object), or CNM case
       ruleParam = {
-        type: 'kinesis',
+        type: originalMessageSource,
         ...lookupCollectionInEvent(eventObject),
         sourceArn: get(parsed, 'eventSourceARN')
       };
@@ -145,7 +145,7 @@ function processRecord(record, fromSNS) {
 
   const rulesModel = new Rule();
   return validateMessage(eventObject, originalMessageSource, validationSchema)
-    .then(() => rulesModel.queryRules(ruleParam, originalMessageSource))
+    .then(() => rulesModel.queryRules(ruleParam))
     .then((rules) => Promise.all(rules.map((rule) => {
       if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParam.sourceArn);
       return queueMessageForRule(rule, eventObject);

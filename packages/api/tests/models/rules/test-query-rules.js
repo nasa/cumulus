@@ -1,12 +1,14 @@
 'use strict';
 
 const test = require('ava');
+const sinon = require('sinon');
 
+const S3 = require('@cumulus/aws-client/S3');
 const awsServices = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const models = require('../../../models');
-const { createSqsQueues, fakeRuleFactoryV2 } = require('../../../lib/testUtils');
+const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 
 process.env.RulesTable = randomId('rules');
 process.env.stackName = randomId('stack');
@@ -19,6 +21,7 @@ const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
 const templateFile = `${process.env.stackName}/workflow_template.json`;
 
 let rulesModel;
+let sqsStub;
 
 // Kinesis rules
 const testCollectionName = randomId('collection');
@@ -107,21 +110,35 @@ test.before(async () => {
   rulesModel = new models.Rule();
   await rulesModel.createTable();
 
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await S3.createBucket(process.env.system_bucket);
   await Promise.all([
-    awsServices.s3().putObject({
-      Bucket: process.env.system_bucket,
-      Key: workflowfile,
-      Body: '{}'
-    }).promise(),
-    awsServices.s3().putObject({
-      Bucket: process.env.system_bucket,
-      Key: templateFile,
-      Body: '{}'
-    }).promise()
+    S3.putJsonS3Object(
+      process.env.system_bucket,
+      workflowfile,
+      {}
+    ),
+    S3.putJsonS3Object(
+      process.env.system_bucket,
+      templateFile,
+      {}
+    )
   ]);
 
-  const rulesToCreate = [
+  sqsStub = sinon.stub(awsServices, 'sqs').returns({
+    getQueueUrl: () => ({
+      promise: () => Promise.resolve(true)
+    }),
+    getQueueAttributes: () => ({
+      promise: () => Promise.resolve({
+        Attributes: {
+          RedrivePolicy: 'fake-policy',
+          VisibilityTimeout: '10'
+        }
+      })
+    })
+  });
+
+  const kinesisRules = [
     kinesisRule1,
     kinesisRule2,
     kinesisRule3,
@@ -129,16 +146,17 @@ test.before(async () => {
     kinesisRule5,
     disabledKinesisRule
   ];
-  await Promise.all(rulesToCreate.map((rule) => rulesModel.create(rule)));
+  await Promise.all(kinesisRules.map((rule) => rulesModel.create(rule)));
 });
 
 test.after.always(async () => {
   await rulesModel.deleteTable();
+  await S3.recursivelyDeleteS3Bucket(process.env.system_bucket);
+  sqsStub.restore();
 });
 
-test('queryRules returns correct list of rules', async (t) => {
-  const queueUrls = await createSqsQueues(randomId('queue'));
-  const rules = [
+test.serial('queryRules returns correct list of rules', async (t) => {
+  const onetimeRules = [
     fakeRuleFactoryV2({
       workflow,
       rule: {
@@ -150,7 +168,7 @@ test('queryRules returns correct list of rules', async (t) => {
       workflow,
       rule: {
         type: 'sqs',
-        value: queueUrls.queueUrl
+        value: randomId('queue')
       },
       state: 'ENABLED'
     }),
@@ -162,25 +180,53 @@ test('queryRules returns correct list of rules', async (t) => {
       state: 'DISABLED'
     })
   ];
-  const createdRules = await Promise.all(
-    rules.map((rule) => rulesModel.create(rule))
-  );
-
-  await Promise.all(
-    Object.values(queueUrls)
-      .map((queueUrl) => awsServices.sqs().deleteQueue({ QueueUrl: queueUrl }).promise())
-  );
+  await Promise.all(onetimeRules.map((rule) => rulesModel.create(rule)));
 
   const result = await rulesModel.queryRules({
     status: 'ENABLED',
     type: 'onetime'
   });
-  t.truthy(result.find((rule) => rule.name === createdRules[0].name));
-  t.falsy(result.find((rule) => rule.name === createdRules[1].name));
-  t.falsy(result.find((rule) => rule.name === createdRules[2].name));
+  t.truthy(result.find((rule) => rule.name === onetimeRules[0].name));
+  t.falsy(result.find((rule) => rule.name === onetimeRules[1].name));
+  t.falsy(result.find((rule) => rule.name === onetimeRules[2].name));
+
+  t.teardown(async () => {
+    await Promise.all(onetimeRules.map((rule) => rulesModel.delete(rule)));
+  });
 });
 
-test.todo('queryRules defaults to returning only ENABLED rules');
+test.serial('queryRules defaults to returning only ENABLED rules', async (t) => {
+  const rules = [
+    fakeRuleFactoryV2({
+      workflow,
+      rule: {
+        type: 'onetime'
+      },
+      state: 'ENABLED'
+    }),
+    fakeRuleFactoryV2({
+      workflow,
+      rule: {
+        type: 'onetime'
+      },
+      state: 'DISABLED'
+    })
+  ];
+  await Promise.all(rules.map((rule) => rulesModel.create(rule)));
+  const results = await rulesModel.queryRules({
+    status: 'ENABLED',
+    type: 'onetime'
+  });
+  t.is(results.length, 1);
+  const expectedRule = results[0];
+  delete expectedRule.createdAt;
+  delete expectedRule.updatedAt;
+  t.deepEqual(rules[0], expectedRule);
+
+  t.teardown(async () => {
+    await Promise.all(rules.map((rule) => rulesModel.delete(rule)));
+  });
+});
 
 test('queryRules should look up kinesis-type rules which are associated with the collection, but not those that are disabled', async (t) => {
   const result = await rulesModel.queryRules({

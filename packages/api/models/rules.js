@@ -537,7 +537,7 @@ class Rule extends Manager {
    * - sourceArn in the `rule.value` field
    * - collection name and version in `rule.collection`
    *
-   * @param {Object} queryParams - any/all query params extracted from event object
+   * @param {Object} queryParams - query params for filtering rules
    * @param {string} queryParams.name - a collection name
    * @param {string} queryParams.version - a collection version
    * @param {string} queryParams.sourceArn - the ARN of the message source for the rule
