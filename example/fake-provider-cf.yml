@@ -1,6 +1,8 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Fake http and ftp providers for use with Cumulus integration tests
 Parameters:
+  Prefix:
+    Type: String
   Bucket:
     Type: String
   FtpPassword:
@@ -15,7 +17,13 @@ Parameters:
     Type: AWS::EC2::Subnet::Id
   VpcId:
     Type: AWS::EC2::VPC::Id
+
 Resources:
+
+  S3ProviderBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${Prefix}-fake-s3-provider"
 
   Role:
     Type: AWS::IAM::Role
@@ -92,8 +100,8 @@ Resources:
             yum install -y mod_ssl
             openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes \
               -keyout /etc/ssl/certs/cumulus.key -out /etc/ssl/certs/cumulus.crt -outform PEM -extensions san -config \
-              <(echo "[req]"; 
-                echo distinguished_name=req; 
+              <(echo "[req]";
+                echo distinguished_name=req;
                 echo "[san]";
                 echo "subjectAltName=IP:$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)";
                 ) \
@@ -170,6 +178,11 @@ Resources:
             cat /etc/ssl/certs/cumulus.crt |\
               aws s3 cp - s3://${Bucket}/fake-provider-cert.pem
 
+            # Create large files for ingest testing
+            dd if=/dev/zero bs=300M count=1 | aws s3 cp - s3://${S3ProviderBucket}/300M.dat
+            dd if=/dev/zero bs=1G count=11 | aws s3 cp - s3://${S3ProviderBucket}/11G.dat
+            echo "${S3ProviderBucket}" | aws s3 cp - s3://${Bucket}/fake-s3-provider-bucket
+
             # Configure health checks
             cat > /usr/local/bin/healthcheck <<EOS
             #!/bin/sh
@@ -195,12 +208,13 @@ Resources:
     UpdatePolicy:
       AutoScalingRollingUpdate:
         MinInstancesInService: 0
+    DependsOn: S3ProviderBucket
     Properties:
       LaunchConfigurationName: !Ref LaunchConfiguration
       MinSize: "1"
       DesiredCapacity: "1"
       MaxSize: "1"
-      HealthCheckGracePeriod: 60
+      HealthCheckGracePeriod: 240
       Tags:
         - Key: Name
           Value: FakeProvider
