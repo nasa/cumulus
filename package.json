@@ -94,7 +94,6 @@
     "eslint-plugin-unicorn": "^19.0.1",
     "eslint": "^6.8.0",
     "file-loader": "^3.0.1",
-    "fs": "0.0.1-security",
     "jsdoc-to-markdown": "^5.0.3",
     "latest-version": "^4.0.0",
     "lerna": "3.20.2",
