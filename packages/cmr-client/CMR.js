@@ -288,7 +288,7 @@ class CMR {
    * Get the granule metadata from CMR using the cmrLink
    *
    * @param {string} cmrLink - URL to concept
-   *  @returns {Object} - metadata as a JS object, null if not found
+   * @returns {Object} - metadata as a JS object, null if not found
    */
   async getGranuleMetadata(cmrLink) {
     const headers = this.getReadHeaders({ token: await this.getToken() });
