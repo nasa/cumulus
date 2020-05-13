@@ -4,6 +4,8 @@ const test = require('ava');
 const nock = require('nock');
 const some = require('lodash/some');
 
+const awsServices = require('@cumulus/aws-client/services');
+
 const CMR = require('../CMR');
 const ValidationError = require('../ValidationError');
 
@@ -135,4 +137,30 @@ test.serial('ingestUMMGranule() throws an exception if the input fails validatio
     () => cmrSearch.ingestUMMGranule(ummgMetadata),
     { instanceOf: ValidationError }
   );
+});
+
+test('getCmrPassword returns the set password if no secret exists', async (t) => {
+  const cmr = new CMR({ password: 'test-password' });
+
+  t.is(await cmr.getCmrPassword(), 'test-password');
+});
+
+test('getCmrPassword returns password from AWS secret when set', async (t) => {
+  // Store the CMR password
+  const secretName = 'secret-name';
+  await awsServices.secretsManager().createSecret({
+    Name: secretName,
+    SecretString: 'secretString'
+  }).promise();
+
+  try {
+    const cmr = new CMR({ passwordSecretName: secretName, password: 'cmr-password' });
+
+    t.is(await cmr.getCmrPassword(), 'secretString');
+  } finally {
+    await awsServices.secretsManager().deleteSecret({
+      SecretId: secretName,
+      ForceDeleteWithoutRecovery: true
+    }).promise();
+  }
 });
