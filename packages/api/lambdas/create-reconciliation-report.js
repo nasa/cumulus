@@ -120,7 +120,7 @@ async function reconciliationReportForCollections() {
     provider: process.env.cmr_provider,
     clientId: process.env.cmr_client_id,
     username: process.env.cmr_username,
-    password: process.env.cmr_password
+    passwordSecretName: process.env.cmr_password_secret_name
   });
   const cmrCollectionItems = await cmr.searchCollections({}, 'umm_json');
   const cmrCollectionIds = cmrCollectionItems.map((item) =>

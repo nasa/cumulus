@@ -4,6 +4,7 @@ const get = require('lodash/get');
 const got = require('got');
 const publicIp = require('public-ip');
 const Logger = require('@cumulus/logger');
+const secretsManagerUtils = require('@cumulus/aws-client/SecretsManager');
 
 const searchConcept = require('./searchConcept');
 const ingestConcept = require('./ingestConcept');
@@ -101,7 +102,9 @@ class CMR {
    * @param {string} params.provider - the CMR provider id
    * @param {string} params.clientId - the CMR clientId
    * @param {string} params.username - CMR username, not used if token is provided
-   * @param {string} params.password - CMR password, not used if token is provided
+   * @param {string} params.passwordSecretName - CMR password secret, not used if token is provided
+   * @param {string} params.password - CMR password, not used if token or
+   *  passwordSecretName is provided
    * @param {string} params.token - CMR or Launchpad token,
    * if not provided, CMR username and password are used to get a cmr token
    */
@@ -110,7 +113,22 @@ class CMR {
     this.provider = params.provider;
     this.username = params.username;
     this.password = params.password;
+    this.passwordSecretName = params.passwordSecretName;
     this.token = params.token;
+  }
+
+  /**
+  * Get the CMR password, from the AWS secret if set, else return the password
+  * @returns {Promise.<string>} - the CMR password
+  */
+  getCmrPassword() {
+    if (this.passwordSecretName) {
+      return secretsManagerUtils.getSecretString(
+        this.passwordSecretName
+      );
+    }
+
+    return this.password;
   }
 
   /**
@@ -118,9 +136,9 @@ class CMR {
    *
    * @returns {Promise.<string>} the token
    */
-  getToken() {
+  async getToken() {
     return (this.token) ? this.token
-      : updateToken(this.provider, this.clientId, this.username, this.password);
+      : updateToken(this.provider, this.clientId, this.username, await this.getCmrPassword());
   }
 
   /**

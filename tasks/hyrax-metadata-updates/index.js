@@ -91,7 +91,7 @@ async function getEntryTitle(config, metadata, isUmmG) {
   const cmrInstance = new CMR({
     provider: config.cmr.provider,
     username: config.cmr.username,
-    password: config.cmr.passwordSecretName,
+    passwordSecretName: config.cmr.passwordSecretName,
     clientId: config.cmr.clientId
   });
 

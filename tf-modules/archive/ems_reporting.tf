@@ -77,8 +77,6 @@ resource "aws_lambda_function" "ems_product_metadata_report" {
       CollectionsTable    = var.dynamo_tables.collections.name
       cmr_client_id       = var.cmr_client_id
       cmr_provider        = var.cmr_provider
-      cmr_username        = var.cmr_username
-      cmr_password        = var.cmr_password
       ems_dataSource      = var.ems_datasource
       ems_host            = var.ems_host
       ems_path            = var.ems_path
