@@ -61,35 +61,32 @@ class S3ProviderClient {
   /**
    * Download the remote file to a given s3 location
    *
-   * @param {string} remotePath - the full path to the remote file to be fetched
-   * @param {string} bucket - destination s3 bucket of the file
-   * @param {string} key - destination s3 key of the file
-   * @returns {Promise} s3 uri of destination file
+   * @param {string} sourceKey - the full path to the remote file to be fetched
+   * @param {string} destinationBucket - destination s3 bucket of the file
+   * @param {string} destinationKey - destination s3 key of the file
+   * @returns {Promise<string>} s3 uri of destination file
    */
-  async sync(remotePath, bucket, key) {
-    const remoteUrl = S3.buildS3Uri(this.bucket, remotePath);
-    const s3uri = S3.buildS3Uri(bucket, key);
-    log.info(`Sync ${remoteUrl} to ${s3uri}`);
+  async sync(sourceKey, destinationBucket, destinationKey) {
+    try {
+      await S3.multipartCopyObject({
+        sourceBucket: this.bucket,
+        sourceKey,
+        destinationBucket,
+        destinationKey,
+        ACL: 'private',
+        copyTags: true
+      });
+    } catch (error) {
+      if (error.code === 'NotFound') {
+        const sourceUrl = S3.buildS3Uri(this.bucket, sourceKey);
+        throw new errors.FileNotFound(`Source file not found ${sourceUrl}`);
+      }
 
-    const exist = await S3.fileExists(this.bucket, remotePath.replace(/^\/+/, ''));
-    if (!exist) {
-      const message = `Source file not found ${remoteUrl}`;
-      throw new errors.FileNotFound(message);
+      throw error;
     }
-    const params = {
-      Bucket: bucket,
-      CopySource: remoteUrl.replace(/^s3:\//, ''),
-      Key: key,
-      ACL: 'private'
-    };
-    log.info('sync params:', params);
-    const startTime = new Date();
 
-    await S3.s3CopyObject(params);
 
-    const syncTimeSecs = (new Date() - startTime) / 1000.0;
-    log.info(`s3 Upload completed in ${syncTimeSecs} secs`, s3uri);
-    return s3uri;
+    return S3.buildS3Uri(destinationBucket, destinationKey);
   }
 }
 

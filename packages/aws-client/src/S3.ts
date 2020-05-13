@@ -803,7 +803,9 @@ export const multipartCopyObject = async (
 
   try {
     // Build the separate parts of the multi-part upload (copy)
-    const objectSize = await getObjectSize(sourceBucket, sourceKey);
+    const {
+      ContentLength: objectSize
+    } = await headObject(sourceBucket, sourceKey);
 
     if (objectSize === undefined) {
       throw new Error(`Unable to determine size of s3://${sourceBucket}/${sourceKey}`);
