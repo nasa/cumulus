@@ -12,7 +12,7 @@ const xmlParseOptions = {
   explicitArray: false
 };
 
-const { s3 } = require('@cumulus/aws-client/services');
+const { s3, secretsManager } = require('@cumulus/aws-client/services');
 const {
   randomId
 } = require('@cumulus/common/test-utils');
@@ -38,6 +38,15 @@ const generateHyraxUrl = HyraxMetadataUpdate.__get__('generateHyraxUrl');
 const generatePath = HyraxMetadataUpdate.__get__('generatePath');
 const getEntryTitle = HyraxMetadataUpdate.__get__('getEntryTitle');
 
+const cmrPasswordSecret = randomId('cmrPassword');
+
+test.before(async () => {
+  await secretsManager().createSecret({
+    Name: cmrPasswordSecret,
+    SecretString: randomId('cmrPasswordSecret')
+  }).promise();
+});
+
 test.beforeEach(() => {
   // Mock out retrieval of entryTitle from CMR
   const headers = { 'cmr-hits': 1, 'Content-Type': 'application/json;charset=utf-8' };
@@ -61,6 +70,13 @@ test.beforeEach(() => {
 test.afterEach.always(() => {
   nock.cleanAll();
   delete process.env.CMR_ENVIRONMENT;
+});
+
+test.after.always(async () => {
+  await secretsManager().deleteSecret({
+    SecretId: cmrPasswordSecret,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
 });
 
 async function uploadFilesXml(files, bucket) {
@@ -128,7 +144,7 @@ const event = {
       provider: 'GES_DISC',
       clientId: 'xxxxxx',
       username: 'xxxxxx',
-      passwordSecretName: 'xxxxx'
+      passwordSecretName: cmrPasswordSecret
     }
   },
   input: {}

@@ -6,8 +6,14 @@ const nock = require('nock');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const rewire = require('rewire');
 const HyraxMetadataUpdate = rewire('../index');
+const { secretsManager } = require('@cumulus/aws-client/services');
+const {
+  randomId
+} = require('@cumulus/common/test-utils');
 
 const getEntryTitle = HyraxMetadataUpdate.__get__('getEntryTitle');
+
+const cmrPasswordSecret = randomId('cmrPassword');
 
 const event = {
   config: {
@@ -16,11 +22,18 @@ const event = {
       provider: 'GES_DISC',
       clientId: 'xxxxxx',
       username: 'xxxxxx',
-      passwordSecretName: 'xxxxx'
+      passwordSecretName: cmrPasswordSecret
     }
   },
   input: {}
 };
+
+test.before(async () => {
+  await secretsManager().createSecret({
+    Name: cmrPasswordSecret,
+    SecretString: randomId('cmrPasswordSecret')
+  }).promise();
+});
 
 test.beforeEach(() => {
   process.env.CMR_ENVIRONMENT = 'OPS';
@@ -33,6 +46,13 @@ test.beforeEach(() => {
 test.afterEach.always(() => {
   delete process.env.CMR_ENVIRONMENT;
   nock.cleanAll();
+});
+
+test.after.always(async () => {
+  await secretsManager().deleteSecret({
+    SecretId: cmrPasswordSecret,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
 });
 
 test.serial('Test retrieving entry title with invalid result', async (t) => {
