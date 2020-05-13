@@ -141,6 +141,14 @@ data "aws_iam_policy_document" "lambda_processing_policy" {
     actions   = ["kms:Decrypt"]
     resources = [module.archive.provider_kms_key_arn]
   }
+
+  statement {
+    actions = ["secretsmanager:GetSecretValue"]
+    resources = [
+      module.archive.cmr_password_secret_arn,
+      module.archive.launchpad_passphrase_secret_arn,
+    ]
+  }
 }
 
 resource "aws_iam_role_policy" "lambda_processing" {
