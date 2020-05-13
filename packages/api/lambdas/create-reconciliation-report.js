@@ -8,6 +8,7 @@ const { buildS3Uri, getJsonS3Object } = require('@cumulus/aws-client/S3');
 const S3ListObjectsV2Queue = require('@cumulus/aws-client/S3ListObjectsV2Queue');
 const { s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
+const log = require('@cumulus/common/log');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
@@ -17,7 +18,7 @@ const { constructOnlineAccessUrl } = require('@cumulus/cmrjs/cmr-utils');
 
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { Collection, Granule, ReconciliationReport } = require('../models');
-const { deconstructCollectionId } = require('../lib/utils');
+const { deconstructCollectionId, parseException } = require('../lib/utils');
 
 const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includes(bucketConfig.type);
 
@@ -414,6 +415,14 @@ async function reconciliationReportForCumulusCMR(bucketsConfig) {
 
   return { collectionsInCumulusCmr, granulesInCumulusCmr, filesInCumulusCmr };
 }
+/**
+ * Generate s3 report key
+ *
+ * @param {string} stackName - the name of the CUMULUS stack
+ * @param {moment} reportStartTime - the report start time
+ * @returns {string} s3 report key
+ */
+const s3ReportKey = (stackName, reportStartTime) => `${stackName}/reconciliation-reports/inventoryReport-${reportStartTime.toISOString()}.json`;
 
 /**
  * Create a Reconciliation report and save it to S3
@@ -421,15 +430,13 @@ async function reconciliationReportForCumulusCMR(bucketsConfig) {
  * @param {Object} params - params
  * @param {string} params.systemBucket - the name of the CUMULUS system bucket
  * @param {string} params.stackName - the name of the CUMULUS stack
+ * @param {moment} params.reportStartTime - the report start time
  *   DynamoDB
  * @returns {Promise<null>} a Promise that resolves when the report has been
  *   uploaded to S3
  */
 async function createReconciliationReport(params) {
-  const {
-    systemBucket,
-    stackName
-  } = params;
+  const { systemBucket, stackName, reportStartTime } = params;
 
   // Fetch the bucket names to reconcile
   const bucketsConfigJson = await getJsonS3Object(systemBucket, getBucketsConfigKey(stackName));
@@ -452,7 +459,7 @@ async function createReconciliationReport(params) {
   };
 
   let report = {
-    reportStartTime: moment.utc().toISOString(),
+    reportStartTime: reportStartTime.toISOString(),
     reportEndTime: null,
     status: 'RUNNING',
     error: null,
@@ -462,23 +469,13 @@ async function createReconciliationReport(params) {
     filesInCumulusCmr: cloneDeep(reportFormatCumulusCmr)
   };
 
-  const reportKey = `${stackName}/reconciliation-reports/inventoryReport-${report.reportStartTime}.json`;
+  const reportKey = s3ReportKey(stackName, reportStartTime);
 
   await s3().putObject({
     Bucket: systemBucket,
     Key: reportKey,
     Body: JSON.stringify(report)
   }).promise();
-
-  // add to database
-  const reconciliationReportModel = new ReconciliationReport();
-  const reportRecord = {
-    name: `inventoryReport-${moment.utc(report.reportStartTime).format('YYYYMMDDTHHmmssSSS')}`,
-    type: 'Inventory',
-    status: 'Pending',
-    location: buildS3Uri(systemBucket, reportKey)
-  };
-  await reconciliationReportModel.create(reportRecord);
 
   // Create a report for each bucket
   const promisedBucketReports = dataBuckets.map(
@@ -503,13 +500,49 @@ async function createReconciliationReport(params) {
   report.status = 'SUCCESS';
 
   // Write the full report to S3
-  await s3().putObject({
+  return s3().putObject({
     Bucket: systemBucket,
     Key: reportKey,
     Body: JSON.stringify(report)
   }).promise();
+}
 
-  return reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
+/**
+ * start the report generation process and save the record to database
+ * @param {Object} params - params
+ * @param {string} params.systemBucket - the name of the CUMULUS system bucket
+ * @param {string} params.stackName - the name of the CUMULUS stack
+ *   DynamoDB
+ * @returns {Promise<null>} a Promise that resolves when the report has been
+ *   uploaded to S3
+ */
+async function processRequest(params) {
+  const { systemBucket, stackName } = params;
+  const reportStartTime = moment.utc();
+  const reportRecordName = `inventoryReport-${reportStartTime.format('YYYYMMDDTHHmmssSSS')}`;
+  const reportKey = s3ReportKey(stackName, reportStartTime);
+
+  // add request to database
+  const reconciliationReportModel = new ReconciliationReport();
+  const reportRecord = {
+    name: reportRecordName,
+    type: 'Inventory',
+    status: 'Pending',
+    location: buildS3Uri(systemBucket, reportKey)
+  };
+  await reconciliationReportModel.create(reportRecord);
+
+  try {
+    await createReconciliationReport({ ...params, reportStartTime });
+    await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
+  } catch (e) {
+    log.debug(`createReconciliationReport error ${e}`);
+    const updates = {
+      status: 'Failed',
+      error: parseException(e)
+    };
+    await reconciliationReportModel.update({ name: reportRecord.name }, updates);
+  }
 }
 
 function handler(event, _context, cb) {
@@ -517,7 +550,7 @@ function handler(event, _context, cb) {
   process.env.CMR_LIMIT = process.env.CMR_LIMIT || 5000;
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || 200;
 
-  return createReconciliationReport({
+  return processRequest({
     systemBucket: event.systemBucket || process.env.system_bucket,
     stackName: event.stackName || process.env.stackName
   })

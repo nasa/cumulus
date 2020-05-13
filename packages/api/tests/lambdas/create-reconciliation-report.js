@@ -105,15 +105,18 @@ function storeCollectionsToDynamoDb(tableName, collections) {
 async function fetchCompletedReport(t) {
   const reportRecord = await new models.ReconciliationReport().scan();
   t.is(reportRecord.Items.length, 1);
-  if (reportRecord.Items[0].status === 'Pending') {
+  t.is(reportRecord.Items[0].status, 'Generated');
+
+  const report = await awsServices.s3()
+    .getObject(parseS3Uri(reportRecord.Items[0].location)).promise()
+    .then((response) => response.Body.toString())
+    .then(JSON.parse);
+
+  if (report.status === 'RUNNING') {
     return sleep(1000)
       .then(() => fetchCompletedReport(t));
   }
-
-  t.is(reportRecord.Items[0].status, 'Generated');
-  return awsServices.s3().getObject(parseS3Uri(reportRecord.Items[0].location)).promise()
-    .then((response) => response.Body.toString())
-    .then(JSON.parse);
+  return report;
 }
 
 test.beforeEach(async (t) => {
@@ -277,7 +280,6 @@ test.serial('A valid reconciliation report is generated when there are extra S3 
   await GranuleFilesCache.batchUpdate({ puts: matchingFiles });
 
   const event = {
-    dataBuckets,
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName
   };
@@ -339,7 +341,6 @@ test.serial('A valid reconciliation report is generated when there are extra Dyn
   });
 
   const event = {
-    dataBuckets,
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName
   };
@@ -406,7 +407,6 @@ test.serial('A valid reconciliation report is generated when there are both extr
   });
 
   const event = {
-    dataBuckets,
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName
   };
@@ -478,7 +478,6 @@ test.serial('A valid reconciliation report is generated when there are both extr
   );
 
   const event = {
-    dataBuckets,
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName
   };
@@ -855,4 +854,35 @@ test.serial('reconciliationReportForGranuleFiles does not fail if no distributio
 
   t.is(report.onlyInCmr.length, filesOnlyInCmr.length);
   t.deepEqual(map(report.onlyInCmr, 'URL').sort(), map(filesOnlyInCmr, 'URL').sort());
+});
+
+test.serial('When report creation fails, reconciliation report status is set to Failed with error', async (t) => {
+  const dataBuckets = range(2).map(() => randomString());
+  await Promise.all(dataBuckets.map((bucket) =>
+    createBucket(bucket)
+      .then(() => t.context.bucketsToCleanup.push(bucket))));
+
+  // Write the buckets config to S3
+  await storeBucketsConfigToS3(
+    dataBuckets,
+    t.context.systemBucket,
+    t.context.stackName
+  );
+
+  // create an error case
+  CMR.prototype.searchCollections.restore();
+  sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => {
+    throw new Error('test error');
+  });
+
+  const event = {
+    systemBucket: t.context.systemBucket,
+    stackName: t.context.stackName
+  };
+  await promisifiedHandler(event, {});
+
+  const reportRecord = await new models.ReconciliationReport().scan();
+  t.is(reportRecord.Items.length, 1);
+  t.is(reportRecord.Items[0].status, 'Failed');
+  t.truthy(reportRecord.Items[0].error);
 });
