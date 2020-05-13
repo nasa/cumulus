@@ -72,9 +72,16 @@ export const parseS3Uri = (uri: string) => {
     throw new TypeError(`Unable to determine key of ${uri}`);
   }
 
+  let key;
+  if (parsedUri.path === undefined) {
+    key = '';
+  } else {
+    key = parsedUri.path.substring(1);
+  }
+
   return {
     Bucket: parsedUri.hostname,
-    Key: parsedUri.path.substring(1)
+    Key: key
   };
 };
 
