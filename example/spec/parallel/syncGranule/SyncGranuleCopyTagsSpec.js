@@ -10,6 +10,7 @@
 const get = require('lodash/get');
 const pAll = require('p-all');
 const querystring = require('querystring');
+
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { deleteCollection } = require('@cumulus/api-client/collections');
@@ -51,7 +52,7 @@ describe('The SyncGranule task', () => {
 
       granuleId = randomId('granule-id-');
 
-      // Stage the granule files to S3
+      // Stage the granule file to S3
       const sourceFilename = `${randomId('file-')}.txt`;
       sourceKey = `${sourcePath}/${sourceFilename}`;
       await s3PutObject({
@@ -61,6 +62,7 @@ describe('The SyncGranule task', () => {
         Tagging: querystring.stringify({ granuleId })
       });
 
+      // Call syncGranule
       const syncGranuleResponse = await syncGranule({
         config: {
           stack: config.stackName,
@@ -86,6 +88,7 @@ describe('The SyncGranule task', () => {
         }
       });
 
+      // Verify that the tags of the synced granule match the tags of the source
       const stagedFile = syncGranuleResponse.granules[0].files[0];
 
       const stagedFileTags = await s3GetObjectTagging(
