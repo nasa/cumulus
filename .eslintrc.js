@@ -200,7 +200,8 @@ module.exports = {
     {
       files: [
         '**/test/**/*.js',
-        '**/tests/**/*.js'
+        '**/tests/**/*.js',
+        'example/spec/**/*.js'
       ],
       rules: {
         'max-classes-per-file': 'off',
