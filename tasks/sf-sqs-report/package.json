@@ -25,6 +25,9 @@
     "watch": "rm -rf dist && mkdir dist && webpack --progress -w",
     "package": "npm run build && npm run build-lambda-zips"
   },
+  "ava": {
+    "timeout": "15m"
+  },
   "nyc": {
     "exclude": [
       "tests"
