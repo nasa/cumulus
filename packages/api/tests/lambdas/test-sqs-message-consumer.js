@@ -209,7 +209,7 @@ test.serial('messages failed to be processed are retried', async (t) => {
   t.teardown(() => queueMessageStub.restore());
 });
 
-test.serial.skip('SQS message consumer only starts workflows for rules matching the event collection', async (t) => {
+test.serial('SQS message consumer only starts workflows for rules matching the event collection', async (t) => {
   const queueMessageStub = sinon.stub(rulesHelpers, 'queueMessageForRule');
 
   // Set visibility timeout to 0 for testing to ensure that message is
@@ -243,7 +243,7 @@ test.serial.skip('SQS message consumer only starts workflows for rules matching 
   await Promise.all(rules.map((rule) => rulesModel.create(rule)));
   await SQS.sendSQSMessage(
     queueUrl,
-    { testdata: randomString() }
+    { collection }
   );
 
   await handler(event);
