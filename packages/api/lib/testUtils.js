@@ -281,15 +281,16 @@ async function createFakeJwtAuthToken({ accessTokenModel, username }) {
  * create a dead-letter queue and a source queue
  *
  * @param {string} queueNamePrefix - prefix of the queue name
+ * @param {string} visibilityTimeout - visibility timeout for queue messages
  * @returns {Object} - {deadLetterQueueUrl: <url>, queueUrl: <url>} queues created
  */
-async function createSqsQueues(queueNamePrefix) {
+async function createSqsQueues(queueNamePrefix, visibilityTimeout = '300') {
   // dead letter queue
   const deadLetterQueueName = `${queueNamePrefix}DeadLetterQueue`;
   const deadLetterQueueParms = {
     QueueName: deadLetterQueueName,
     Attributes: {
-      VisibilityTimeout: '300'
+      VisibilityTimeout: visibilityTimeout
     }
   };
   const { QueueUrl: deadLetterQueueUrl } = await sqs()
@@ -310,7 +311,7 @@ async function createSqsQueues(queueNamePrefix) {
         deadLetterTargetArn: deadLetterQueueArn,
         maxReceiveCount: 3
       }),
-      VisibilityTimeout: '300'
+      VisibilityTimeout: visibilityTimeout
     }
   };
 

@@ -1,24 +1,22 @@
 'use strict';
 
-const rewire = require('rewire');
 const sinon = require('sinon');
 const test = require('ava');
 const range = require('lodash/range');
 
-const awsServices = require('@cumulus/aws-client/services');
+const SQS = require('@cumulus/aws-client/SQS');
 const {
-  s3PutObject,
+  createBucket,
+  putJsonS3Object,
   recursivelyDeleteS3Bucket
 } = require('@cumulus/aws-client/S3');
 const { sleep } = require('@cumulus/common/util');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 const models = require('../../models');
 const { fakeRuleFactoryV2, createSqsQueues, getSqsQueueMessageCounts } = require('../../lib/testUtils');
 const rulesHelpers = require('../../lib/rulesHelpers');
 
-const sqsMessageConsumer = rewire('../../lambdas/sqs-message-consumer');
-const processQueues = sqsMessageConsumer.__get__('processQueues');
-const dispatch = sqsMessageConsumer.__get__('dispatch');
+const { handler } = require('../../lambdas/sqs-message-consumer');
 
 process.env.RulesTable = `RulesTable_${randomString()}`;
 process.env.stackName = randomString();
@@ -78,19 +76,19 @@ test.before(async () => {
   // create Rules table
   rulesModel = new models.Rule();
   await rulesModel.createTable();
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await createBucket(process.env.system_bucket);
 
   await Promise.all([
-    s3PutObject({
-      Bucket: process.env.system_bucket,
-      Key: messageTemplateKey,
-      Body: JSON.stringify({ meta: 'testmeta' })
-    }),
-    s3PutObject({
-      Bucket: process.env.system_bucket,
-      Key: workflowfile,
-      Body: JSON.stringify({ testworkflow: 'workflowconfig' })
-    })
+    putJsonS3Object(
+      process.env.system_bucket,
+      messageTemplateKey,
+      { meta: 'testmeta' }
+    ),
+    putJsonS3Object(
+      process.env.system_bucket,
+      workflowfile,
+      { testworkflow: 'workflowconfig' }
+    )
   ]);
 });
 
@@ -110,15 +108,15 @@ test.afterEach.always(async () => {
   );
 
   await Promise.all(
-    queueUrls.map((queueUrl) => awsServices.sqs().deleteQueue({ QueueUrl: queueUrl }).promise())
+    queueUrls.map((queueUrl) => SQS.deleteQueue(queueUrl))
   );
 });
 
 test.serial('processQueues does nothing when there is no message', async (t) => {
   const queueMessageStub = sinon.stub(rulesHelpers, 'queueMessageForRule');
-  await processQueues(event, dispatch);
+  await handler(event);
   t.is(queueMessageStub.notCalled, true);
-  queueMessageStub.restore();
+  t.teardown(() => queueMessageStub.restore());
 });
 
 test.serial('processQueues processes messages from the ENABLED sqs rule', async (t) => {
@@ -130,19 +128,21 @@ test.serial('processQueues processes messages from the ENABLED sqs rule', async 
   // send two messages to the queue of the ENABLED sqs rule
   await Promise.all(
     range(2).map(() =>
-      awsServices.sqs().sendMessage({
-        QueueUrl: sqsQueues[0].queueUrl, MessageBody: JSON.stringify({ testdata: randomString() })
-      }).promise())
+      SQS.sendSQSMessage(
+        sqsQueues[0].queueUrl,
+        { testdata: randomString() }
+      ))
   );
 
   // send three messages to the queue of the DISABLED sqs rule
   await Promise.all(
     range(3).map(() =>
-      awsServices.sqs().sendMessage({
-        QueueUrl: sqsQueues[1].queueUrl, MessageBody: JSON.stringify({ testdata: randomString() })
-      }).promise())
+      SQS.sendSQSMessage(
+        sqsQueues[1].queueUrl,
+        { testdata: randomString() }
+      ))
   );
-  await processQueues(event, dispatch);
+  await handler(event);
 
   // verify only messages from ENABLED rule are processed
   t.is(queueMessageStub.calledTwice, true);
@@ -151,7 +151,7 @@ test.serial('processQueues processes messages from the ENABLED sqs rule', async 
 
   // messages are not processed multiple times in parallel
   // given the visibilityTimeout is long enough
-  await processQueues(event, dispatch);
+  await handler(event);
   t.is(queueMessageStub.notCalled, true);
   t.is(queueMessageFromEnabledRuleStub.notCalled, true);
 
@@ -165,7 +165,7 @@ test.serial('processQueues processes messages from the ENABLED sqs rule', async 
   // processed messages stay in queue until workflow execution succeeds
   // in this test, workflow executions are stubbed
   t.is(numberOfMessages.numberOfMessagesNotVisible, 2);
-  queueMessageStub.restore();
+  t.teardown(() => queueMessageStub.restore());
 });
 
 test.serial('messages failed to be processed are retried', async (t) => {
@@ -178,17 +178,18 @@ test.serial('messages failed to be processed are retried', async (t) => {
   // send two messages to the queue of the ENABLED sqs rule
   await Promise.all(
     range(2).map(() =>
-      awsServices.sqs().sendMessage({
-        QueueUrl: sqsQueues[0].queueUrl, MessageBody: JSON.stringify({ testdata: randomString() })
-      }).promise())
+      SQS.sendSQSMessage(
+        sqsQueues[0].queueUrl,
+        { testdata: randomString() }
+      ))
   );
 
-  await processQueues(event, dispatch);
+  await handler(event);
 
   /* eslint-disable no-await-in-loop */
   for (let i = 0; i < 3; i += 1) {
     await sleep(5 * 1000);
-    await processQueues(event, dispatch);
+    await handler(event);
   }
   /* eslint-enable no-await-in-loop */
 
@@ -205,5 +206,52 @@ test.serial('messages failed to be processed are retried', async (t) => {
   const numberOfMessagesDLQ = await getSqsQueueMessageCounts(sqsQueues[0].deadLetterQueueUrl);
   t.is(numberOfMessagesDLQ.numberOfMessagesAvailable, 2);
 
-  queueMessageStub.restore();
+  t.teardown(() => queueMessageStub.restore());
+});
+
+test.serial.skip('SQS message consumer only starts workflows for rules matching the event collection', async (t) => {
+  const queueMessageStub = sinon.stub(rulesHelpers, 'queueMessageForRule');
+
+  // Set visibility timeout to 0 for testing to ensure that message is
+  // read when processing all rules
+  const { queueUrl } = await createSqsQueues(randomId('queue'), '0');
+  const collection = {
+    name: randomId('collection'),
+    version: '1.0.0'
+  };
+  const rules = [
+    fakeRuleFactoryV2({
+      name: randomId('matchingRule'),
+      collection,
+      rule: {
+        type: 'sqs',
+        value: queueUrl
+      },
+      state: 'ENABLED',
+      workflow
+    }),
+    fakeRuleFactoryV2({
+      rule: {
+        type: 'sqs',
+        value: queueUrl
+      },
+      state: 'ENABLED',
+      workflow
+    })
+  ];
+
+  await Promise.all(rules.map((rule) => rulesModel.create(rule)));
+  await SQS.sendSQSMessage(
+    queueUrl,
+    { testdata: randomString() }
+  );
+
+  await handler(event);
+
+  // Should only queue message for the workflow on the rule matching the collection in the event
+  t.is(queueMessageStub.callCount, 1);
+
+  t.teardown(async () => {
+    await Promise.all(rules.map((rule) => rulesModel.delete(rule)));
+  });
 });

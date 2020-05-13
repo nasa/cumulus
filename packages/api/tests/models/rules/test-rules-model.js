@@ -848,3 +848,6 @@ test('create, update and delete sqs type rule', async (t) => {
     queues.map((queueUrl) => awsServices.sqs().deleteQueue({ QueueUrl: queueUrl }).promise())
   );
 });
+
+test.todo('creating SQS rule fails if queue does not exist');
+test.todo('creating SQS rule fails if there is no redrive policy on the queue');
