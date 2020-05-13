@@ -33,7 +33,8 @@
     "files": [
       "tests/**/*.js"
     ],
-    "verbose": true
+    "verbose": true,
+    "timeout": "15m"
   },
   "nyc": {
     "exclude": [

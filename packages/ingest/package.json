@@ -15,7 +15,8 @@
   "ava": {
     "files": [
       "!test/fixtures/**/*"
-    ]
+    ],
+    "timeout": "15m"
   },
   "nyc": {
     "exclude": [

@@ -32,7 +32,8 @@
       "!tests/endpoints/fixtures/**/*.js"
     ],
     "fail-fast": true,
-    "verbose": true
+    "verbose": true,
+    "timeout": "15m"
   },
   "nyc": {
     "exclude": [

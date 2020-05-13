@@ -29,6 +29,9 @@
     "test": "../../node_modules/.bin/ava",
     "tsc": "../../node_modules/.bin/tsc"
   },
+  "ava": {
+    "timeout": "15m"
+  },
   "nyc": {
     "exclude": [
       "test"

@@ -11,7 +11,8 @@
     "test-coverage": "../../node_modules/.bin/ npm test"
   },
   "ava": {
-    "serial": true
+    "serial": true,
+    "timeout": "15m"
   },
   "nyc": {
     "exclude": [

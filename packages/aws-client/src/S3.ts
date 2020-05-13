@@ -7,6 +7,7 @@ import path from 'path';
 import pMap from 'p-map';
 import pRetry from 'p-retry';
 import pump from 'pump';
+import querystring from 'querystring';
 import url from 'url';
 import { Readable, TransformOptions } from 'stream';
 
@@ -245,6 +246,21 @@ export const s3GetObjectTagging = improveStackTrace(
   (bucket: string, key: string) =>
     s3().getObjectTagging({ Bucket: bucket, Key: key }).promise()
 );
+
+const getObjectTags = async (bucket: string, key: string) => {
+  const taggingResponse = await s3GetObjectTagging(bucket, key);
+
+  return taggingResponse.TagSet.reduce(
+    (acc, { Key, Value }) => ({ ...acc, [Key]: Value }),
+    {}
+  );
+};
+
+const getObjectTaggingString = async (bucket: string, key: string) => {
+  const tags = await getObjectTags(bucket, key);
+
+  return querystring.stringify(tags);
+};
 
 /**
 * Puts object Tagging in S3
@@ -672,6 +688,78 @@ export const getFileBucketAndKey = (pathParams: string): [string, string] => {
 export const createBucket = (Bucket: string) =>
   s3().createBucket({ Bucket }).promise();
 
+const createMultipartUpload = async (
+  params: {
+    sourceBucket: string,
+    sourceKey: string,
+    destinationBucket: string,
+    destinationKey: string,
+    ACL?: AWS.S3.ObjectCannedACL,
+    copyTags?: boolean
+  }
+) => {
+  const uploadParams: AWS.S3.CreateMultipartUploadRequest = {
+    Bucket: params.destinationBucket,
+    Key: params.destinationKey,
+    ACL: params.ACL
+  };
+
+  if (params.copyTags) {
+    uploadParams.Tagging = await getObjectTaggingString(
+      params.sourceBucket,
+      params.sourceKey
+    );
+  }
+
+  // Create a multi-part upload (copy) and get its UploadId
+  const { UploadId } = await S3MultipartUploads.createMultipartUpload(
+    uploadParams
+  );
+
+  if (UploadId === undefined) {
+    throw new Error('Unable to create multipart upload');
+  }
+
+  return UploadId;
+};
+
+// This performs an S3 `uploadPartCopy` call. That response includes an `ETag`
+// value specific to the part that was uploaded. When `completeMultipartUpload`
+// is called later, it needs that `ETag` value, as well as the `PartNumber` for
+// each part. Since the `PartNumber` is not included in the `uploadPartCopy`
+// response, we are adding it here to make our lives easier when we eventually
+// call `completeMultipartUpload`.
+const uploadPartCopy = async (
+  params: {
+    partNumber: number,
+    start: number,
+    end: number,
+    destinationBucket: string,
+    destinationKey: string,
+    sourceBucket: string,
+    sourceKey: string,
+    uploadId: string
+  }
+) => {
+  const response = await S3MultipartUploads.uploadPartCopy({
+    UploadId: params.uploadId,
+    Bucket: params.destinationBucket,
+    Key: params.destinationKey,
+    PartNumber: params.partNumber,
+    CopySource: `/${params.sourceBucket}/${params.sourceKey}`,
+    CopySourceRange: `bytes=${params.start}-${params.end}`
+  });
+
+  if (response.CopyPartResult === undefined) {
+    throw new Error('Did not get ETag from uploadPartCopy');
+  }
+
+  return {
+    ETag: response.CopyPartResult.ETag,
+    PartNumber: params.partNumber
+  };
+};
+
 /**
  * Copy an S3 object to another location in S3 using a multipart copy
  *
@@ -680,6 +768,8 @@ export const createBucket = (Bucket: string) =>
  * @param {string} params.sourceKey
  * @param {string} params.destinationBucket
  * @param {string} params.destinationKey
+ * @param {string} [params.ACL] - an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
+ * @param {boolean} [params.copyTags=false]
  * @returns {Promise<undefined>}
  */
 export const multipartCopyObject = async (
@@ -687,58 +777,66 @@ export const multipartCopyObject = async (
     sourceBucket: string,
     sourceKey: string,
     destinationBucket: string,
-    destinationKey: string
+    destinationKey: string,
+    ACL?: AWS.S3.ObjectCannedACL,
+    copyTags?: boolean
   }
 ) => {
   const {
     sourceBucket,
     sourceKey,
     destinationBucket,
-    destinationKey
+    destinationKey,
+    ACL,
+    copyTags = false
   } = params;
 
   // Create a multi-part upload (copy) and get its UploadId
-  const uploadId = await S3MultipartUploads.createMultipartUpload({
-    Bucket: destinationBucket,
-    Key: destinationKey
+  const uploadId = await createMultipartUpload({
+    sourceBucket,
+    sourceKey,
+    destinationBucket,
+    destinationKey,
+    ACL,
+    copyTags
   });
-
-  if (uploadId === undefined) {
-    throw new Error('Unable to create multipart upload');
-  }
 
   try {
     // Build the separate parts of the multi-part upload (copy)
     const objectSize = await getObjectSize(sourceBucket, sourceKey);
+
     if (objectSize === undefined) {
       throw new Error(`Unable to determine size of s3://${sourceBucket}/${sourceKey}`);
     }
 
     const chunks = S3MultipartUploads.createMultipartChunks(objectSize);
 
-    const uploadPartCopyParams = S3MultipartUploads.buildUploadPartCopyParams({
-      chunks,
-      destinationBucket,
-      destinationKey,
-      sourceBucket,
-      sourceKey,
-      uploadId
-    });
-
     // Submit all of the upload (copy) parts to S3
     const uploadPartCopyResponses = await Promise.all(
-      uploadPartCopyParams.map((p) => S3MultipartUploads.uploadPartCopy(p))
+      chunks.map(
+        ({ start, end }, index) =>
+          uploadPartCopy({
+            uploadId,
+            partNumber: index + 1,
+            start,
+            end,
+            sourceBucket,
+            sourceKey,
+            destinationBucket,
+            destinationKey
+          })
+      )
     );
 
     // Let S3 know that the multi-part upload (copy) is completed
-    const completeMultipartUploadParams = S3MultipartUploads.buildCompleteMultipartUploadParams({
-      uploadPartCopyResponses,
-      destinationBucket,
-      destinationKey,
-      uploadId
+    await S3MultipartUploads.completeMultipartUpload({
+      UploadId: uploadId,
+      Bucket: destinationBucket,
+      Key: destinationKey,
+      MultipartUpload: {
+        Parts: uploadPartCopyResponses
+      }
     });
-
-    await S3MultipartUploads.completeMultipartUpload(completeMultipartUploadParams);
   } catch (error) {
     // If anything went wrong, make sure that the multi-part upload (copy)
     // is aborted.
