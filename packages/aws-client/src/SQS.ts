@@ -45,7 +45,7 @@ export async function createQueue(QueueName: string) {
     // actually be found.  CI breaks without this.
     const returnedQueueUrl = url.parse(createQueueResponse.QueueUrl);
 
-    returnedQueueUrl.host = undefined;
+    returnedQueueUrl.host = null;
 
     if (!process.env.LOCALSTACK_HOST) {
       throw new Error('The LOCALSTACK_HOST environment variable must be set');
