@@ -320,6 +320,7 @@ Invoke a Lambda function
     * [.getFileBucketAndKey(pathParams)](#module_S3.getFileBucketAndKey) ⇒ <code>Array.&lt;string&gt;</code>
     * [.createBucket(Bucket)](#module_S3.createBucket) ⇒ <code>Promise</code>
     * [.multipartCopyObject(params)](#module_S3.multipartCopyObject) ⇒ <code>Promise.&lt;undefined&gt;</code>
+    * [.moveObject(params)](#module_S3.moveObject) ⇒ <code>Promise.&lt;undefined&gt;</code>
 
 <a name="module_S3.deleteS3Object"></a>
 
@@ -743,6 +744,23 @@ Create an S3 bucket
 
 ### S3.multipartCopyObject(params) ⇒ <code>Promise.&lt;undefined&gt;</code>
 Copy an S3 object to another location in S3 using a multipart copy
+
+**Kind**: static method of [<code>S3</code>](#module_S3)  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| params | <code>Object</code> |  |  |
+| params.sourceBucket | <code>string</code> |  |  |
+| params.sourceKey | <code>string</code> |  |  |
+| params.destinationBucket | <code>string</code> |  |  |
+| params.destinationKey | <code>string</code> |  |  |
+| [params.ACL] | <code>string</code> |  | an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl) |
+| [params.copyTags] | <code>boolean</code> | <code>false</code> |  |
+
+<a name="module_S3.moveObject"></a>
+
+### S3.moveObject(params) ⇒ <code>Promise.&lt;undefined&gt;</code>
+Move an S3 object to another location in S3
 
 **Kind**: static method of [<code>S3</code>](#module_S3)  
 

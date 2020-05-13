@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- **CUMULUS-1894**
+  - `@cumulus/ingest/granule.handleDuplicateFile()`
+    - The `copyOptions` parameter has been removed
+    - An `ACL` parameter has been added
+  - `@cumulus/ingest/granule.renameS3FileWithTimestamp()`
+    - Now returns `undefined`
+
 ### MIGRATION STEPS
 
 - To take advantage of the new TTL-based access token expiration implemented in CUMULUS-1777 (see notes below) and clear out existing records in your access tokens table, do the following:
@@ -19,6 +28,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Added a limit for concurrent Elasticsearch requests when doing an index from database operation
 - Added the `es_request_concurrency` parameter to the archive and cumulus Terraform modules
 
+- **CUMULUS-1894**
+  - Added `@cumulus/aws-client/S3.moveObject()`
+
 ### Changed
 
 - **CUMULUS-1777**
@@ -30,6 +42,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1894**
   - The `SyncGranule` task can now handle files larger than 5 GB
+
+### Deprecated
+
+- **CUMULUS-1894**
+  - `@cumulus/ingest/granule.copyGranuleFile()`
+  - `@cumulus/ingest/granule.moveGranuleFile()`
 
 ## [v1.22.1] 2020-05-04
 
