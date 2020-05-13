@@ -680,6 +680,7 @@ export const createBucket = (Bucket: string) =>
  * @param {string} params.sourceKey
  * @param {string} params.destinationBucket
  * @param {string} params.destinationKey
+ * @param {string} [params.ACL] - an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
  * @returns {Promise<undefined>}
  */
 export const multipartCopyObject = async (
@@ -687,20 +688,23 @@ export const multipartCopyObject = async (
     sourceBucket: string,
     sourceKey: string,
     destinationBucket: string,
-    destinationKey: string
+    destinationKey: string,
+    ACL?: AWS.S3.ObjectCannedACL
   }
 ) => {
   const {
     sourceBucket,
     sourceKey,
     destinationBucket,
-    destinationKey
+    destinationKey,
+    ACL
   } = params;
 
   // Create a multi-part upload (copy) and get its UploadId
   const uploadId = await S3MultipartUploads.createMultipartUpload({
     Bucket: destinationBucket,
-    Key: destinationKey
+    Key: destinationKey,
+    ACL
   });
 
   if (uploadId === undefined) {
