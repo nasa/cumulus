@@ -236,7 +236,7 @@ test('queryRules should look up kinesis-type rules which are associated with the
   t.is(result.length, 5);
 });
 
-test('it should look up kinesis-type rules which are associated with the collection name and version', async (t) => {
+test('queryRules should look up kinesis-type rules which are associated with the collection name and version', async (t) => {
   const result = await rulesModel.queryRules({
     name: testCollectionName,
     version: '1.0.0',
@@ -245,7 +245,7 @@ test('it should look up kinesis-type rules which are associated with the collect
   t.is(result.length, 1);
 });
 
-test('it should look up kinesis-type rules which are associated with the source ARN', async (t) => {
+test('queryRules should look up kinesis-type rules which are associated with the source ARN', async (t) => {
   const result = await rulesModel.queryRules({
     sourceArn: 'kinesisarn-4',
     type: 'kinesis'
@@ -253,7 +253,7 @@ test('it should look up kinesis-type rules which are associated with the source 
   t.is(result.length, 1);
 });
 
-test('it should look up kinesis-type rules which are associated with the collection name/version and source ARN', async (t) => {
+test('queryRules should look up kinesis-type rules which are associated with the collection name/version and source ARN', async (t) => {
   const result = await rulesModel.queryRules({
     name: testCollectionName,
     version: '2.0.0',
