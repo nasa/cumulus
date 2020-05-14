@@ -139,16 +139,17 @@ resource "aws_lambda_function" "execute_migrations" {
   memory_size      = 1024
   environment {
     variables = {
-      CMR_ENVIRONMENT           = var.cmr_environment
-      ES_HOST                   = var.elasticsearch_hostname
-      ExecutionsTable           = var.dynamo_tables.executions.name
-      FilesTable                = var.dynamo_tables.files.name
-      GranulesTable             = var.dynamo_tables.granules.name
-      KinesisInboundEventLogger = var.kinesis_inbound_event_logger_lambda_function_arn
-      PdrsTable                 = var.dynamo_tables.pdrs.name
-      RulesTable                = var.dynamo_tables.rules.name
-      stackName                 = var.prefix
-      system_bucket             = var.system_bucket
+      CMR_ENVIRONMENT            = var.cmr_environment
+      ES_HOST                    = var.elasticsearch_hostname
+      ExecutionsTable            = var.dynamo_tables.executions.name
+      FilesTable                 = var.dynamo_tables.files.name
+      GranulesTable              = var.dynamo_tables.granules.name
+      KinesisInboundEventLogger  = var.kinesis_inbound_event_logger_lambda_function_arn
+      PdrsTable                  = var.dynamo_tables.pdrs.name
+      ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
+      RulesTable                 = var.dynamo_tables.rules.name
+      stackName                  = var.prefix
+      system_bucket              = var.system_bucket
     }
   }
   tags = var.tags
