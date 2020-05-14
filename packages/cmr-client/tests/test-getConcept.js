@@ -1,9 +1,7 @@
 'use strict';
 
-const sinon = require('sinon');
 const nock = require('nock');
 const test = require('ava');
-const got = require('got');
 
 const getConceptMetadata = require('../getConcept');
 
