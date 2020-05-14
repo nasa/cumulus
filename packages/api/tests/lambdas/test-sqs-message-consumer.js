@@ -227,7 +227,7 @@ test.serial('messages are retried the correct number of times based on the rule 
   });
 });
 
-test.serial('SQS message consumer only starts workflows for rules matching the event collection', async (t) => {
+test.serial('SQS message consumer queues correct number of workflows for rules matching the event collection', async (t) => {
   const { queueMessageStub } = t.context;
 
   const queue = await createSqsQueues(randomId('queue'));

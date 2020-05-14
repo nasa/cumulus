@@ -24,28 +24,23 @@ async function processQueues(event, dispatchFn) {
   const messageLimit = event.messageLimit || 1;
   const timeLimit = event.timeLimit || 240;
 
-  const rulesByQueueMap = await rules.reduce(async (previousMap, rule) => {
-    // if you use async/await in .reduce, then the returned accumulated
-    // value is a promise
-    const map = await previousMap;
+  const rulesByQueueMap = rules.reduce((map, rule) => {
     const queueUrl = rule.rule.value;
-
-    // does this make sense?
-    if (!(await sqsQueueExists(queueUrl))) {
-      log.info(`Could not find queue ${queueUrl}`);
-      return map;
-    }
-
+    // eslint-disable-next-line no-param-reassign
     map[queueUrl] = map[queueUrl] || [];
-    // ensure we don't write duplicates to each key?
     map[queueUrl].push(rule);
     return map;
   }, {});
 
-  await Promise.all(Object.keys(rulesByQueueMap).map((queueUrl) => {
+  await Promise.all(Object.keys(rulesByQueueMap).map(async (queueUrl) => {
     const rulesForQueue = rulesByQueueMap[queueUrl];
 
-    // TODO: Does this make sense?
+    if (!(await sqsQueueExists(queueUrl))) {
+      const ruleIds = rulesForQueue.map((rule) => rule.id);
+      log.info(`Could not find queue ${queueUrl}. Unable to process ${ruleIds}`);
+      return Promise.resolve();
+    }
+
     // Use the max of the visibility timeouts for all the rules
     // bound to this queue.
     const visibilityTimeout = rulesForQueue.reduce(
@@ -77,18 +72,16 @@ async function processQueues(event, dispatchFn) {
  *
  * @param {Object} message - incoming queue message
  * @returns {Promise} - promise resolved when the message is dispatched
- *
  */
 function dispatch(message) {
   const messageReceiveCount = parseInt(message.Attributes.ApproximateReceiveCount, 10);
   const queueUrl = this.queueUrl;
   const rulesForQueue = this.rulesForQueue;
-  let rulesToSchedule = rulesForQueue;
 
   const eventObject = JSON.parse(message.Body);
   const eventCollection = rulesHelpers.lookupCollectionInEvent(eventObject);
 
-  rulesToSchedule = rulesForQueue.filter(
+  const rulesToSchedule = rulesForQueue.filter(
     (queueRule) => {
       // Match as much collection info as we found in the message
       const nameMatch = eventCollection.name
