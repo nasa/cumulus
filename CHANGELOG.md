@@ -45,6 +45,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated the `AccessTokens` table to set a [TTL](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/howitworks-ttl.html) on the `expirationTime` field in `tf-modules/data-persistence/dynamo.tf`. As a result, access token records in this table whose `expirationTime` has passed should be **automatically deleted by DynamoDB**.
   - Updated all code creating access token records in the Dynamo `AccessTokens` table to set the `expirationTime` field value in seconds from the epoch.
 
+### Fixed
+
+- **CUMULUS-1894**
+  - The `SyncGranule` task can now handle files larger than 5 GB
+
 ## [v1.22.1] 2020-05-04
 
 **Note**: v1.22.0 was not released as a package due to npm/release concerns.  Users upgrading to 1.22.x should start with 1.22.1
