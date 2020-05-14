@@ -86,9 +86,17 @@ function filesToGranules(event) {
 }
 exports.filesToGranules = filesToGranules;
 
-async function handler(event, context, callback) {
+/**
+ * Lambda handler
+ *
+ * @param {Object} event      - a Cumulus Message
+ * @param {Object} context .  - an AWS Lambda context
+ * @returns {Promise<Object>} - Returns output from task.
+ *                              See schemas/output.json for detailed output schema
+ */
+async function handler(event, context) {
   return cumulusMessageAdapter.runCumulusTask(
-    filesToGranules, event, context, callback
+    filesToGranules, event, context
   );
 }
 

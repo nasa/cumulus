@@ -68,7 +68,7 @@ async function fakeProcessing(event) {
  *
  * @param {Object} event - a description of the ingestgranules
  * @param {Object} context - an AWS Lambda context
- * @returns {undefined} - does not return a value
+ * @returns {Promise<string[]>} - the list of s3 locations for granule files
  */
 async function handler(event, context) {
   return cumulusMessageAdapter.runCumulusTask(fakeProcessing, event, context);

@@ -231,9 +231,10 @@ const parsePdr = async ({ config, input }) => {
 /**
  * Lambda handler
  *
- * @param {Object} event - a Cumulus Message
- * @param {Object} context - an AWS Lambda context
- * @returns {undefined} - does not return a value
+ * @param {Object} event      - a Cumulus Message
+ * @param {Object} context    - an AWS Lambda context
+ * @returns {Promise<Object>} - Returns output from task.
+ *                             See schemas/output.json for detailed output schema
  */
 async function handler(event, context) {
   return cumulusMessageAdapter.runCumulusTask(parsePdr, event, context);

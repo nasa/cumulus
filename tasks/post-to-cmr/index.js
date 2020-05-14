@@ -152,7 +152,8 @@ exports.postToCMR = postToCMR;
  *
  * @param {Object} event - a Cumulus Message
  * @param {Object} context - an AWS Lambda context
- * @returns {undefined} - does not return a value
+ * @returns {Promise<Object>} - Returns output from task.
+ *                              See schemas/output.json for detailed output schema
  */
 async function handler(event, context) {
   return cumulusMessageAdapter.runCumulusTask(postToCMR, event, context);
