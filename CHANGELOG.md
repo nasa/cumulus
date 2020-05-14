@@ -42,6 +42,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1894**
   - Added `@cumulus/aws-client/S3.moveObject()`
+
 - **CUMULUS-1911**
   - Added ReconciliationReports table
   - Updated CreateReconciliationReport lambda to save Reconciliation Report records to database

@@ -18,34 +18,24 @@ const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 
-const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
-
 const { loadConfig } = require('../../helpers/testUtils');
+const { fetchFakeS3ProviderBucket } = require('../../helpers/Providers');
 
-describe('The IngestGranule workflow ingesting a 300M file', () => {
+describe('The IngestGranule workflow ingesting an 11G file', () => {
   let beforeAllFailed = false;
   let collection;
-  let differentChecksumFilename;
-  let differentChecksumKey;
   let ingestGranuleRule;
   let granuleId;
   let ingestGranuleExecution;
-  let newFileFilename;
-  let newFileKey;
   let prefix;
   let provider;
-  let sourceFilename;
-  let sameChecksumKey;
-  let secondIngestGranuleExecution;
-  let secondIngestGranuleRule;
   let sourceBucket;
 
   beforeAll(async () => {
     try {
       const config = await loadConfig();
       prefix = config.stackName;
-      // TODO Need to dynamically get this bucket
-      sourceBucket = 'mth-internal';
+      sourceBucket = await fetchFakeS3ProviderBucket();
 
       // Create the collection
       collection = await createCollection(
@@ -77,7 +67,7 @@ describe('The IngestGranule workflow ingesting a 300M file', () => {
                 version: collection.version,
                 files: [
                   {
-                    name: '300M',
+                    name: '11G.dat',
                     path: ''
                   }
                 ]
@@ -101,13 +91,12 @@ describe('The IngestGranule workflow ingesting a 300M file', () => {
       ingestGranuleExecution = await getExecutionWithStatus({
         prefix,
         arn: ingestGranuleExecutionArn,
-        status: 'completed'
+        status: 'completed',
+        timeout: 120
       });
 
       // Wait for the granule to be fully ingested
       await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
-
-      console.log('ingestGranuleExecution:', JSON.stringify(ingestGranuleExecution, null, 2));
     } catch (error) {
       beforeAllFailed = true;
       throw error;
