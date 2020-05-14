@@ -24,26 +24,26 @@ async function processQueues(event, dispatchFn) {
   const messageLimit = event.messageLimit || 1;
   const timeLimit = event.timeLimit || 240;
 
-  const queueMap = await rules.reduce(async (map, rule) => {
+  const rulesByQueueMap = await rules.reduce(async (previousMap, rule) => {
     // if you use async/await in .reduce, then the returned accumulated
     // value is a promise
-    const test = await map;
+    const map = await previousMap;
     const queueUrl = rule.rule.value;
 
     // does this make sense?
     if (!(await sqsQueueExists(queueUrl))) {
       log.info(`Could not find queue ${queueUrl}`);
-      return test;
+      return map;
     }
 
-    test[queueUrl] = test[queueUrl] || [];
+    map[queueUrl] = map[queueUrl] || [];
     // ensure we don't write duplicates to each key?
-    test[queueUrl].push(rule);
-    return test;
+    map[queueUrl].push(rule);
+    return map;
   }, {});
 
-  await Promise.all(Object.keys(queueMap).map((queueUrl) => {
-    const rulesForQueue = queueMap[queueUrl];
+  await Promise.all(Object.keys(rulesByQueueMap).map((queueUrl) => {
+    const rulesForQueue = rulesByQueueMap[queueUrl];
 
     // TODO: Does this make sense?
     // Use the max of the visibility timeouts for all the rules
