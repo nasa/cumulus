@@ -21,6 +21,7 @@ const { deleteRule } = require('@cumulus/api-client/rules');
 const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
 
 const { loadConfig } = require('../../helpers/testUtils');
+const { fetchFakeS3ProviderBucket } = require('../../helpers/Providers');
 
 describe('The IngestGranule workflow ingesting a 300M file', () => {
   let beforeAllFailed = false;
@@ -44,8 +45,7 @@ describe('The IngestGranule workflow ingesting a 300M file', () => {
     try {
       const config = await loadConfig();
       prefix = config.stackName;
-      // TODO Need to dynamically get this bucket
-      sourceBucket = 'mth-internal';
+      sourceBucket = await fetchFakeS3ProviderBucket();
 
       // Create the collection
       collection = await createCollection(
@@ -77,7 +77,7 @@ describe('The IngestGranule workflow ingesting a 300M file', () => {
                 version: collection.version,
                 files: [
                   {
-                    name: '300M',
+                    name: '300M.dat',
                     path: ''
                   }
                 ]
