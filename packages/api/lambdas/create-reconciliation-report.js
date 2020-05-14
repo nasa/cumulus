@@ -415,14 +415,6 @@ async function reconciliationReportForCumulusCMR(bucketsConfig) {
 
   return { collectionsInCumulusCmr, granulesInCumulusCmr, filesInCumulusCmr };
 }
-/**
- * Generate s3 report key
- *
- * @param {string} stackName - the name of the CUMULUS stack
- * @param {moment} reportStartTime - the report start time
- * @returns {string} s3 report key
- */
-const s3ReportKey = (stackName, reportStartTime) => `${stackName}/reconciliation-reports/inventoryReport-${reportStartTime.toISOString()}.json`;
 
 /**
  * Create a Reconciliation report and save it to S3
@@ -431,12 +423,12 @@ const s3ReportKey = (stackName, reportStartTime) => `${stackName}/reconciliation
  * @param {string} params.systemBucket - the name of the CUMULUS system bucket
  * @param {string} params.stackName - the name of the CUMULUS stack
  * @param {moment} params.reportStartTime - the report start time
- *   DynamoDB
+ * @param {string} params.reportKey - the s3 report key
  * @returns {Promise<null>} a Promise that resolves when the report has been
  *   uploaded to S3
  */
 async function createReconciliationReport(params) {
-  const { systemBucket, stackName, reportStartTime } = params;
+  const { systemBucket, stackName, reportStartTime, reportKey } = params;
 
   // Fetch the bucket names to reconcile
   const bucketsConfigJson = await getJsonS3Object(systemBucket, getBucketsConfigKey(stackName));
@@ -468,8 +460,6 @@ async function createReconciliationReport(params) {
     granulesInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
     filesInCumulusCmr: cloneDeep(reportFormatCumulusCmr)
   };
-
-  const reportKey = s3ReportKey(stackName, reportStartTime);
 
   await s3().putObject({
     Bucket: systemBucket,
@@ -513,14 +503,13 @@ async function createReconciliationReport(params) {
  * @param {string} params.systemBucket - the name of the CUMULUS system bucket
  * @param {string} params.stackName - the name of the CUMULUS stack
  *   DynamoDB
- * @returns {Promise<null>} a Promise that resolves when the report has been
- *   uploaded to S3
+ * @returns {Object} report record saved to the database
  */
 async function processRequest(params) {
   const { systemBucket, stackName } = params;
   const reportStartTime = moment.utc();
   const reportRecordName = `inventoryReport-${reportStartTime.format('YYYYMMDDTHHmmssSSS')}`;
-  const reportKey = s3ReportKey(stackName, reportStartTime);
+  const reportKey = `${stackName}/reconciliation-reports/inventoryReport-${reportRecordName}.json`;
 
   // add request to database
   const reconciliationReportModel = new ReconciliationReport();
@@ -533,10 +522,10 @@ async function processRequest(params) {
   await reconciliationReportModel.create(reportRecord);
 
   try {
-    await createReconciliationReport({ ...params, reportStartTime });
+    await createReconciliationReport({ ...params, reportStartTime, reportKey });
     await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
   } catch (e) {
-    log.debug(`createReconciliationReport error ${e}`);
+    log.error(`Error creating reconciliation report ${reportRecordName}`, e);
     const updates = {
       status: 'Failed',
       error: parseException(e)
