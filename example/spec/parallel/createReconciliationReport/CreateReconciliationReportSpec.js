@@ -2,7 +2,7 @@
 
 const cloneDeep = require('lodash/cloneDeep');
 const fs = require('fs-extra');
-const { buildS3Uri, deleteS3Files, getJsonS3Object } = require('@cumulus/aws-client/S3');
+const { buildS3Uri, deleteS3Files, getJsonS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { dynamodb, lambda, s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -10,7 +10,7 @@ const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
-const { Granule } = require('@cumulus/api/models');
+const { Granule, ReconciliationReport } = require('@cumulus/api/models');
 const {
   addCollections,
   addProviders,
@@ -55,7 +55,13 @@ function getReportsKeys(systemBucket, stackName) {
     .then((response) => response.Contents.map((o) => o.Key));
 }
 
+// TODO we will call API to delete the reports when API is updated
 async function deleteReconciliationReports(systemBucket, stackName) {
+  const reconciliationReportModel = new ReconciliationReport();
+  const reportRecords = await reconciliationReportModel.scan();
+  await Promise.all(reportRecords.Items.map((report) =>
+    reconciliationReportModel.delete({ name: report.name })));
+
   const reportKeys = await getReportsKeys(systemBucket, stackName);
 
   const objectsToDelete = reportKeys.map((Key) => ({
@@ -174,6 +180,8 @@ describe('When there are granule differences and granule reconciliation is run',
     process.env.GranulesTable = `${config.stackName}-GranulesTable`;
     granuleModel = new Granule();
 
+    process.env.ReconciliationReportsTable = `${config.stackName}-ReconciliationReportsTable`;
+
     process.env.CMR_ENVIRONMENT = 'UAT';
 
     // Remove any pre-existing reconciliation reports
@@ -229,14 +237,12 @@ describe('When there are granule differences and granule reconciliation is run',
     console.log(`invoke ${config.stackName}-CreateReconciliationReport`);
 
     // Run the report
-    await lambda().invoke({ FunctionName: `${config.stackName}-CreateReconciliationReport` }).promise();
+    const result = await lambda().invoke({ FunctionName: `${config.stackName}-CreateReconciliationReport` }).promise();
+    const lambdaOutput = JSON.parse(result.Payload);
 
     // Fetch the report
-    const reportKey = (await getReportsKeys(config.bucket, config.stackName))[0];
-    report = await s3().getObject({
-      Bucket: config.bucket,
-      Key: reportKey
-    }).promise()
+    // TODO will use API to retrieve reports when API is updated
+    report = await s3().getObject(parseS3Uri(lambdaOutput.location)).promise()
       .then((response) => JSON.parse(response.Body.toString()));
 
     console.log(`update granule files back ${publishedGranuleId}`);

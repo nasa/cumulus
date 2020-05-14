@@ -13,11 +13,30 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   2. Use the AWS console or CLI to delete your `<prefix>-AccessTokensTable` DynamoDB table
   3. [Re-deploy your `data-persistence` module](https://nasa.github.io/cumulus/docs/deployment/upgrade-readme#update-data-persistence-resources), which should re-create the `<prefix>-AccessTokensTable` DynamoDB table
   4. Return to using the Cumulus API/dashboard as normal
+- This release requires the Cumulus Message Adapter layer deployed with Cumulus Core to be at least 1.3.0, as the core lambdas have updated to [cumulus-message-adapter-js v1.2.0](https://github.com/nasa/cumulus-message-adapter-js/releases/tag/v1.2.0) and the new CMA interface.  As a result, users should:
+  1. Follow the [Cumulus Message Adapter (CMA) deployment instructions](https://nasa.github.io/cumulus/docs/deployment/deployment-readme#deploy-the-cumulus-message-adapter-layer) and install a CMA layer version >=1.3.0
+  2. If you are using any custom Node.js Lambdas in your workflows **and** the Cumulus CMA layer/`cumulus-message-adapter-js`, you must update your lambda to use [cumulus-message-adapter-js v1.2.0](https://github.com/nasa/cumulus-message-adapter-js/releases/tag/v1.2.0) and follow the migration instructions in the release notes. Prior versions of `cumulus-message-adapter-js` are not compatible with CMA >= 1.3.0.
+
+### BREAKING CHANGES
+
+- **CUMULUS-1896**
+  Updated all Cumulus core lambdas to utilize the new message adapter streaming interface via [cumulus-message-adapter-js v1.2.0](https://github.com/nasa/cumulus-message-adapter-js/releases/tag/v1.2.0).   Users of this version of Cumulus (or later) must utilize version 1.3.0 or greater of the [cumulus-message-adapter](https://github.com/nasa/cumulus-message-adapter) to support core lambdas.
+
+- Migrate existing s3 reconciliation report records to database (CUMULUS-1911)
+  After update your `data persistence` module and Cumulus resources, run the command:
+  ./node_modules/.bin/cumulus-api migrate --stack <your-terraform-deployment-prefix> --migrationVersion migration5
 
 ### Added
 
 - Added a limit for concurrent Elasticsearch requests when doing an index from database operation
 - Added the `es_request_concurrency` parameter to the archive and cumulus Terraform modules
+
+- **CUMULUS-1911**
+  - Added ReconciliationReports table
+  - Updated CreateReconciliationReport lambda to save Reconciliation Report records to database
+  - Updated dbIndexer and IndexFromDatabase lambdas to index Reconciliation Report records to Elasticsearch
+  - Added migration_5 to migrate existing s3 reconciliation report records to database and Elasticsearch
+  - Updated `@cumulus/api` package, `tf-modules/archive` and `tf-modules/data-persistence` Terraform modules
 
 ### Changed
 
