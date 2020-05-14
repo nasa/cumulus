@@ -95,7 +95,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixed @cumulus/api webpack config for missing underscore object due to underscore update
 
 - **CUMULUS-1987**
-  - `Remove granule from CMR` operation in `@cumulus/api` passes token to get granule metadata from CMR
+  - `Remove granule from CMR` operation in `@cumulus/api` now passes token to CMR when fetching granule metadata, allowing removal of private granules
 
 ### Deprecated
 
