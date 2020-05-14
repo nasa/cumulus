@@ -299,13 +299,13 @@ async function hyraxMetadataUpdate(event) {
 /**
  * Lambda handler
  *
- * @param {Object} event - a Cumulus Message
- * @param {Object} context - an AWS Lambda context
- * @param {Function} callback - an AWS Lambda handler
- * @returns {undefined} - does not return a value
+ * @param {Object} event      - a Cumulus Message
+ * @param {Object} context    - an AWS Lambda context
+ * @returns {Promise<Object>} - Returns output from task.
+ *                              See schemas/output.json for detailed output schema
  */
-function handler(event, context, callback) {
-  cumulusMessageAdapter.runCumulusTask(hyraxMetadataUpdate, event, context, callback);
+async function handler(event, context) {
+  return cumulusMessageAdapter.runCumulusTask(hyraxMetadataUpdate, event, context);
 }
 
 exports.handler = handler;

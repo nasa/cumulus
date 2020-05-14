@@ -26,7 +26,8 @@
     "package": "npm run build && (cd dist && zip -q -r lambda.zip index.js schemas)"
   },
   "ava": {
-    "serial": true
+    "serial": true,
+    "timeout": "15m"
   },
   "nyc": {
     "exclude": [
@@ -39,7 +40,7 @@
     "@cumulus/aws-client": "1.22.1",
     "@cumulus/cmrjs": "1.22.1",
     "@cumulus/common": "1.22.1",
-    "@cumulus/cumulus-message-adapter-js": "1.1.0",
+    "@cumulus/cumulus-message-adapter-js": "1.2.0",
     "@cumulus/errors": "1.22.1",
     "@cumulus/launchpad-auth": "1.22.1",
     "lodash": "4.17.15"
