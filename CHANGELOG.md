@@ -26,6 +26,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated the `AccessTokens` table to set a [TTL](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/howitworks-ttl.html) on the `expirationTime` field in `tf-modules/data-persistence/dynamo.tf`. As a result, access token records in this table whose `expirationTime` has passed should be **automatically deleted by DynamoDB**.
   - Updated all code creating access token records in the Dynamo `AccessTokens` table to set the `expirationTime` field value in seconds from the epoch.
 
+### Fixed
+
+- **CUMULUS-1987**
+  - `Remove granule from CMR` operation in `@cumulus/api` now passes token to CMR when fetching granule metadata, allowing removal of private granules
+
+
+### Deprecated
+
+- **CUMULUS-1987** - Deprecated the following functions:
+  - `@cumulus/cmrjs/getMetadata(cmrLink)` -> `@cumulus/cmr-client/CMR.getGranuleMetadata(cmrLink)`
+  - `@cumulus/cmrjs/getFullMetadata(cmrLink)`
+
 ## [v1.22.1] 2020-05-04
 
 **Note**: v1.22.0 was not released as a package due to npm/release concerns.  Users upgrading to 1.22.x should start with 1.22.1
@@ -94,9 +106,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1974**
   - Fixed @cumulus/api webpack config for missing underscore object due to underscore update
 
-- **CUMULUS-1987**
-  - `Remove granule from CMR` operation in `@cumulus/api` now passes token to CMR when fetching granule metadata, allowing removal of private granules
-
 ### Deprecated
 
 - **CUMULUS-1799** - Deprecated the following code. For cases where the code was moved into another package, the new code location is noted:
@@ -151,9 +160,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `@cumulus/common/string.replace()`
   - `@cumulus/common/string.toLower()`
   - `@cumulus/common/string.toUpper()`
-- **CUMULUS-1987** - Deprecated the following functions:
-  - `@cumulus/cmrjs/getMetadata(cmrLink)` -> `@cumulus/cmr-client/CMR.getGranuleMetadata(cmrLink)`
-  - `@cumulus/cmrjs/getFullMetadata(cmrLink)`
 
 ### Removed
 
