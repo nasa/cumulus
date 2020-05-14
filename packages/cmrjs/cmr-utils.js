@@ -496,7 +496,7 @@ async function updateUMMGMetadata({
   return metadataObject;
 }
 
-/** helper to build an CMR credential object
+/** helper to build an CMR settings object, used to initialize CMR
  * @param {Object} cmrConfig - CMR configuration object
  * @param {string} cmrConfig.oauthProvider - Oauth provider: launchpad or earthdata
  * @param {string} cmrConfig.provider - the CMR provider
@@ -508,7 +508,7 @@ async function updateUMMGMetadata({
  * @param {string} cmrConfig.passwordSecretName - CMR password secret name
  * @returns {Object} object to create CMR instance.
 */
-async function getCmrCredentials(cmrConfig = {}) {
+async function getCmrSettings(cmrConfig = {}) {
   const oauthProvider = cmrConfig.oauthProvider || process.env.cmr_oauth_provider;
 
   const cmrCredentials = {
@@ -688,7 +688,7 @@ async function updateCMRMetadata({
         || new BucketsConfig(
           await getBucketsConfigJson(process.env.system_bucket, process.env.stackName)
         );
-  const cmrCredentials = (published) ? await getCmrCredentials() : {};
+  const cmrCredentials = (published) ? await getCmrSettings() : {};
   let theMetadata;
 
   const params = {
@@ -803,5 +803,5 @@ module.exports = {
   granulesToCmrFileObjects,
   updateCMRMetadata,
   generateEcho10XMLString,
-  getCmrCredentials
+  getCmrSettings
 };

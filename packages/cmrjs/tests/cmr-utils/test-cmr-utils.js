@@ -13,7 +13,7 @@ const { randomId, readJsonFixture } = require('@cumulus/common/test-utils');
 const launchpad = require('@cumulus/launchpad-auth');
 const { xmlParseOptions } = require('../../utils');
 
-const { getCmrCredentials } = require('../../cmr-utils');
+const { getCmrSettings } = require('../../cmr-utils');
 const cmrUtil = rewire('../../cmr-utils');
 const { isCMRFile, getGranuleTemporalInfo } = cmrUtil;
 const uploadEcho10CMRFile = cmrUtil.__get__('uploadEcho10CMRFile');
@@ -418,8 +418,8 @@ test.serial('generateFileUrl returns null for cmrGranuleUrlType none', (t) => {
   t.is(url, null);
 });
 
-test('getCmrCredentials uses values in environment variables by default', async (t) => {
-  const credentials = await getCmrCredentials();
+test('getCmrSettings uses values in environment variables by default', async (t) => {
+  const credentials = await getCmrSettings();
 
   t.deepEqual(credentials, {
     provider: 'CUMULUS-TEST',
@@ -429,8 +429,8 @@ test('getCmrCredentials uses values in environment variables by default', async 
   });
 });
 
-test('getCmrCredentials uses values in environment variables by default for launchpad auth', async (t) => {
-  const credentials = await getCmrCredentials({ oauthProvider: 'launchpad' });
+test('getCmrSettings uses values in environment variables by default for launchpad auth', async (t) => {
+  const credentials = await getCmrSettings({ oauthProvider: 'launchpad' });
 
   t.deepEqual(credentials, {
     provider: 'CUMULUS-TEST',
@@ -439,7 +439,7 @@ test('getCmrCredentials uses values in environment variables by default for laun
   });
 });
 
-test('getCmrCredentials uses values in config for earthdata oauth', async (t) => {
+test('getCmrSettings uses values in config for earthdata oauth', async (t) => {
   const testPasswordSecret = randomId('test-password-secret');
   const testPassword = randomId('test-password');
 
@@ -449,7 +449,7 @@ test('getCmrCredentials uses values in config for earthdata oauth', async (t) =>
   }).promise();
 
   try {
-    const credentials = await getCmrCredentials({
+    const credentials = await getCmrSettings({
       provider: 'CUMULUS-PROV',
       clientId: 'test-client-id',
       username: 'cumulus',
@@ -470,7 +470,7 @@ test('getCmrCredentials uses values in config for earthdata oauth', async (t) =>
   }
 });
 
-test('getCmrCredentials uses values in config for launchpad oauth', async (t) => {
+test('getCmrSettings uses values in config for launchpad oauth', async (t) => {
   const testPassphraseSecret = randomId('test-passphrase-secret');
   const testPassphrase = randomId('test-password');
 
@@ -480,7 +480,7 @@ test('getCmrCredentials uses values in config for launchpad oauth', async (t) =>
   }).promise();
 
   try {
-    const credentials = await getCmrCredentials({
+    const credentials = await getCmrSettings({
       oauthProvider: 'launchpad',
       passphraseSecretName: testPassphraseSecret,
       api: 'test-api',
