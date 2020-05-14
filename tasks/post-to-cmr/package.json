@@ -26,7 +26,8 @@
     "package": "npm run build && (cd dist && zip -q -r lambda.zip index.js schemas)"
   },
   "ava": {
-    "serial": true
+    "serial": true,
+    "timeout": "15m"
   },
   "nyc": {
     "exclude": [

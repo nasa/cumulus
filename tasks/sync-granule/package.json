@@ -31,7 +31,8 @@
     "verbose": true,
     "files": [
       "!tests/fixtures/**/*"
-    ]
+    ],
+    "timeout": "15m"
   },
   "nyc": {
     "exclude": [

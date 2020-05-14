@@ -19,6 +19,9 @@
     "tsc": "tsc",
     "prepare": "npm run tsc"
   },
+  "ava": {
+    "timeout": "15m"
+  },
   "nyc": {
     "exclude": [
       "tests"

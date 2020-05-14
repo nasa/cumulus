@@ -24,6 +24,9 @@
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
     "package": "npm run build && (cd dist && zip -q -r lambda.zip index.js schemas)"
   },
+  "ava": {
+    "timeout": "15m"
+  },
   "nyc": {
     "exclude": [
       "tests"
