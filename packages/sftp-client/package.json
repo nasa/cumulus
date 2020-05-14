@@ -23,7 +23,8 @@
     "test": "ava"
   },
   "ava": {
-    "verbose": true
+    "verbose": true,
+    "timeout": "15m"
   },
   "nyc": {
     "exclude": [

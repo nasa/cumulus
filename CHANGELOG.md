@@ -13,6 +13,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   2. Use the AWS console or CLI to delete your `<prefix>-AccessTokensTable` DynamoDB table
   3. [Re-deploy your `data-persistence` module](https://nasa.github.io/cumulus/docs/deployment/upgrade-readme#update-data-persistence-resources), which should re-create the `<prefix>-AccessTokensTable` DynamoDB table
   4. Return to using the Cumulus API/dashboard as normal
+- This release requires the Cumulus Message Adapter layer deployed with Cumulus Core to be at least 1.3.0, as the core lambdas have updated to [cumulus-message-adapter-js v1.2.0](https://github.com/nasa/cumulus-message-adapter-js/releases/tag/v1.2.0) and the new CMA interface.  As a result, users should:
+  1. Follow the [Cumulus Message Adapter (CMA) deployment instructions](https://nasa.github.io/cumulus/docs/deployment/deployment-readme#deploy-the-cumulus-message-adapter-layer) and install a CMA layer version >=1.3.0
+  2. If you are using any custom Node.js Lambdas in your workflows **and** the Cumulus CMA layer/`cumulus-message-adapter-js`, you must update your lambda to use [cumulus-message-adapter-js v1.2.0](https://github.com/nasa/cumulus-message-adapter-js/releases/tag/v1.2.0) and follow the migration instructions in the release notes. Prior versions of `cumulus-message-adapter-js` are not compatible with CMA >= 1.3.0.
+
+### BREAKING CHANGES
+
+- **CUMULUS-1896**
+  Updated all Cumulus core lambdas to utilize the new message adapter streaming interface via [cumulus-message-adapter-js v1.2.0](https://github.com/nasa/cumulus-message-adapter-js/releases/tag/v1.2.0).   Users of this version of Cumulus (or later) must utilize version 1.3.0 or greater of the [cumulus-message-adapter](https://github.com/nasa/cumulus-message-adapter) to support core lambdas.
 
 ### Added
 
@@ -26,12 +34,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated the `AccessTokens` table to set a [TTL](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/howitworks-ttl.html) on the `expirationTime` field in `tf-modules/data-persistence/dynamo.tf`. As a result, access token records in this table whose `expirationTime` has passed should be **automatically deleted by DynamoDB**.
   - Updated all code creating access token records in the Dynamo `AccessTokens` table to set the `expirationTime` field value in seconds from the epoch.
 
+### Fixed
+
+- **CUMULUS-1987**
+  - `Remove granule from CMR` operation in `@cumulus/api` now passes token to CMR when fetching granule metadata, allowing removal of private granules
+
+
+### Deprecated
+
+- **CUMULUS-1987** - Deprecated the following functions:
+  - `@cumulus/cmrjs/getMetadata(cmrLink)` -> `@cumulus/cmr-client/CMR.getGranuleMetadata(cmrLink)`
+  - `@cumulus/cmrjs/getFullMetadata(cmrLink)`
+
 ## [v1.22.1] 2020-05-04
 
 **Note**: v1.22.0 was not released as a package due to npm/release concerns.  Users upgrading to 1.22.x should start with 1.22.1
 
 ### Added
 
+- **CUMULUS-1894**
+  - Added `@cumulus/aws-client/S3.multipartCopyObject()`
 - **CUMULUS-408**
   - Added `certificateUri` field to provider schema. This optional field allows operators to specify an S3 uri to a CA bundle to use for HTTPS requests.
 - **CUMULUS-1787**
@@ -94,9 +116,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1974**
   - Fixed @cumulus/api webpack config for missing underscore object due to underscore update
 
-- **CUMULUS-1987**
-  - `Remove granule from CMR` operation in `@cumulus/api` passes token to get granule metadata from CMR
-
 ### Deprecated
 
 - **CUMULUS-1799** - Deprecated the following code. For cases where the code was moved into another package, the new code location is noted:
@@ -151,9 +170,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `@cumulus/common/string.replace()`
   - `@cumulus/common/string.toLower()`
   - `@cumulus/common/string.toUpper()`
-- **CUMULUS-1987** - Deprecated the following functions:
-  - `@cumulus/cmrjs/getMetadata(cmrLink)` -> `@cumulus/cmr-client/CMR.getGranuleMetadata(cmrLink)`
-  - `@cumulus/cmrjs/getFullMetadata(cmrLink)`
 
 ### Removed
 

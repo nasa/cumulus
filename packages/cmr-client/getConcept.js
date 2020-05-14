@@ -1,6 +1,9 @@
 'use strict';
 
 const got = require('got');
+const Logger = require('@cumulus/logger');
+
+const log = new Logger({ sender: 'cmr-client' });
 
 /**
  * Get the CMR JSON metadata from the cmrLink
@@ -11,9 +14,17 @@ const got = require('got');
  * found
  */
 async function getConceptMetadata(conceptLink, headers) {
-  const response = await got.get(conceptLink, { headers });
+  let response;
+
+  try {
+    response = await got.get(conceptLink, { headers });
+  } catch (e) {
+    log.error(`Error getting concept metadata from ${conceptLink}`, e);
+    return null;
+  }
 
   if (response.statusCode !== 200) {
+    log.error(`Received statusCode ${response.statusCode} getting concept metadata from ${conceptLink}`);
     return null;
   }
 

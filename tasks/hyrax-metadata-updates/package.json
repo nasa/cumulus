@@ -31,7 +31,8 @@
     ],
     "fail-fast": true,
     "serial": true,
-    "verbose": true
+    "verbose": true,
+    "timeout": "15m"
   },
   "nyc": {
     "exclude": [
@@ -45,7 +46,7 @@
     "@cumulus/cmr-client": "1.22.1",
     "@cumulus/cmrjs": "1.22.1",
     "@cumulus/common": "1.22.1",
-    "@cumulus/cumulus-message-adapter-js": "1.1.0",
+    "@cumulus/cumulus-message-adapter-js": "1.2.0",
     "@cumulus/errors": "1.22.1",
     "libxmljs": "^0.19.7",
     "lodash": "^4.17.15",
