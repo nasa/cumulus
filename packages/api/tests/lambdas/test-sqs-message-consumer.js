@@ -146,6 +146,39 @@ test.serial('processQueues does nothing when queue does not exist', async (t) =>
   t.teardown(() => validateSqsRuleStub.restore());
 });
 
+test.serial('processQueues does nothing when no rule matches collection in message', async (t) => {
+  const { queueMessageStub } = t.context;
+
+  const queue = await createSqsQueues(randomId('queue'));
+  const collection = {
+    name: randomId('col'),
+    version: '1.0.0'
+  };
+  const rule = await rulesModel.create(fakeRuleFactoryV2({
+    collection: {
+      name: 'different-collection',
+      version: '1.2.3'
+    },
+    workflow,
+    rule: {
+      type: 'sqs',
+      value: queue.queueUrl
+    },
+    state: 'ENABLED'
+  }));
+
+  await SQS.sendSQSMessage(
+    queue.queueUrl,
+    { collection }
+  );
+  await handler(event);
+
+  t.is(queueMessageStub.notCalled, true);
+  t.teardown(async () => {
+    await cleanupRulesAndQueues([rule], [queue]);
+  });
+});
+
 test.serial('processQueues processes messages from the ENABLED sqs rule', async (t) => {
   const { queueMessageStub } = t.context;
   const { rules, queues } = await createRulesAndQueues();
