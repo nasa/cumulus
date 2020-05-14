@@ -31,7 +31,8 @@
     ],
     "fail-fast": true,
     "serial": true,
-    "verbose": true
+    "verbose": true,
+    "timeout": "15m"
   },
   "nyc": {
     "exclude": [

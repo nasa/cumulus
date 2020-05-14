@@ -746,14 +746,15 @@ Copy an S3 object to another location in S3 using a multipart copy
 
 **Kind**: static method of [<code>S3</code>](#module_S3)  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| params | <code>Object</code> |  |
-| params.sourceBucket | <code>string</code> |  |
-| params.sourceKey | <code>string</code> |  |
-| params.destinationBucket | <code>string</code> |  |
-| params.destinationKey | <code>string</code> |  |
-| [params.ACL] | <code>string</code> | an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl) |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| params | <code>Object</code> |  |  |
+| params.sourceBucket | <code>string</code> |  |  |
+| params.sourceKey | <code>string</code> |  |  |
+| params.destinationBucket | <code>string</code> |  |  |
+| params.destinationKey | <code>string</code> |  |  |
+| [params.ACL] | <code>string</code> |  | an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl) |
+| [params.copyTags] | <code>boolean</code> | <code>false</code> |  |
 
 <a name="module_SNS"></a>
 

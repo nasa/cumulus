@@ -21,7 +21,7 @@ const S3 = proxyquire(
         abortMultipartUploadWasCalled = true;
         abortMultipartUploadParams = params;
       },
-      createMultipartUpload: async () => 'abc-123',
+      createMultipartUpload: () => Promise.resolve({ UploadId: 'abc-123' }),
       uploadPartCopy: () => Promise.reject(new Error('uh oh'))
     }
   }
