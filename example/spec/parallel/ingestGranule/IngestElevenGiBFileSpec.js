@@ -21,7 +21,7 @@ const { deleteRule } = require('@cumulus/api-client/rules');
 const { loadConfig } = require('../../helpers/testUtils');
 const { fetchFakeS3ProviderBucket } = require('../../helpers/Providers');
 
-describe('The IngestGranule workflow ingesting a 300M file', () => {
+describe('The IngestGranule workflow ingesting an 11G file', () => {
   let beforeAllFailed = false;
   let collection;
   let ingestGranuleRule;
@@ -67,7 +67,7 @@ describe('The IngestGranule workflow ingesting a 300M file', () => {
                 version: collection.version,
                 files: [
                   {
-                    name: '300M.dat',
+                    name: '11G.dat',
                     path: ''
                   }
                 ]
@@ -91,7 +91,8 @@ describe('The IngestGranule workflow ingesting a 300M file', () => {
       ingestGranuleExecution = await getExecutionWithStatus({
         prefix,
         arn: ingestGranuleExecutionArn,
-        status: 'completed'
+        status: 'completed',
+        timeout: 120
       });
 
       // Wait for the granule to be fully ingested
