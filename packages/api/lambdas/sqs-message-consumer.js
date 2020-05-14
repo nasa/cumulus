@@ -43,41 +43,43 @@ async function processQueues(event, dispatchFn) {
   }, {});
 
   await Promise.all(Object.keys(queueMap).map((queueUrl) => {
+    const rulesForQueue = queueMap[queueUrl];
+
+    // TODO: Does this make sense?
+    // Use the max of the visibility timeouts for all the rules
+    // bound to this queue.
+    const visibilityTimeout = rulesForQueue.reduce(
+      (prevMax, rule) => Math.max(
+        prevMax,
+        get(rule, 'meta.visibilityTimeout', 0)
+      ),
+      0
+    );
+
     const consumer = new Consumer({
       queueUrl,
       messageLimit,
       timeLimit,
-      // TODO: does this matter now since we're only consuming each
-      // queue message once per invocation, not once per rule?
-      // visibilityTimeout: rule.meta.visibilityTimeout,
+      visibilityTimeout,
       deleteProcessedMessage: false
     });
     log.info(`processing queue ${queueUrl}`);
-    const rulesForQueue = queueMap[queueUrl];
+
     return consumer.consume(dispatchFn.bind({
       queueUrl,
       rulesForQueue
     }));
   }));
-
-  // await Promise.all(rules.map(async (rule) => {
-  //   const queueUrl = rule.rule.value;
-
-  //   if (!(await sqsQueueExists(queueUrl))) return Promise.resolve();
-
-  //   const consumer = new Consumer({
-  //     queueUrl: queueUrl,
-  //     messageLimit,
-  //     timeLimit,
-  //     visibilityTimeout: rule.meta.visibilityTimeout,
-  //     deleteProcessedMessage: false
-  //   });
-  //   log.info(`processQueues for rule ${rule.name} and queue ${queueUrl}`);
-  //   return consumer.consume(dispatchFn.bind({ rule: rule }));
-  // }));
 }
 
-function dispatch2(message) {
+/**
+ * Process an SQS message
+ *
+ * @param {Object} message - incoming queue message
+ * @returns {Promise} - promise resolved when the message is dispatched
+ *
+ */
+function dispatch(message) {
   const messageReceiveCount = parseInt(message.Attributes.ApproximateReceiveCount, 10);
   const queueUrl = this.queueUrl;
   const rulesForQueue = this.rulesForQueue;
@@ -86,7 +88,6 @@ function dispatch2(message) {
   const eventObject = JSON.parse(message.Body);
   const eventCollection = rulesHelpers.lookupCollectionInEvent(eventObject);
 
-  // if (eventCollection.name && eventCollection.version) {
   rulesToSchedule = rulesForQueue.filter(
     (queueRule) => {
       let nameMatch = true;
@@ -118,7 +119,6 @@ function dispatch2(message) {
       log.debug(`message ${message.MessageId} from queue ${queueUrl} is being processed ${messageReceiveCount} times`);
     }
 
-
     const eventSource = {
       type: 'sqs',
       messageId: message.MessageId,
@@ -130,45 +130,6 @@ function dispatch2(message) {
     };
     return rulesHelpers.queueMessageForRule(rule, eventObject, eventSource);
   }));
-}
-
-/**
- * Process an SQS message
- *
- * @param {Object} message - incoming queue message
- * @returns {Promise} - promise resolved when the message is dispatched
- *
- */
-function dispatch(message) {
-  const queueUrl = this.rule.rule.value;
-  const messageReceiveCount = parseInt(message.Attributes.ApproximateReceiveCount, 10);
-
-  if (get(this.rule, 'meta.retries', 3) < messageReceiveCount - 1) {
-    log.debug(`message ${message.MessageId} from queue ${queueUrl} has been processed ${messageReceiveCount - 1} times, no more retries`);
-    // update visibilityTimeout to 5s
-    const params = {
-      QueueUrl: queueUrl,
-      ReceiptHandle: message.ReceiptHandle,
-      VisibilityTimeout: 5
-    };
-    return sqs().changeMessageVisibility(params).promise();
-  }
-
-  if (messageReceiveCount !== 1) {
-    log.debug(`message ${message.MessageId} from queue ${queueUrl} is being processed ${messageReceiveCount} times`);
-  }
-
-  const eventObject = JSON.parse(message.Body);
-  const eventSource = {
-    type: 'sqs',
-    messageId: message.MessageId,
-    queueUrl,
-    receiptHandle: message.ReceiptHandle,
-    receivedCount: messageReceiveCount,
-    deleteCompletedMessage: true,
-    workflow_name: this.rule.workflow
-  };
-  return rulesHelpers.queueMessageForRule(this.rule, eventObject, eventSource);
 }
 
 /**
@@ -184,7 +145,7 @@ function dispatch(message) {
  * @throws {Error}
  */
 async function handler(event) {
-  return processQueues(event, dispatch2);
+  return processQueues(event, dispatch);
 }
 
 module.exports = {

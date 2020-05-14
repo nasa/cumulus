@@ -31,8 +31,10 @@ let sqsQueues = [];
 let createdRules = [];
 const event = { messageLimit: 10, timeLimit: 100 };
 
-async function createRules(meta) {
-  sqsQueues = await Promise.all(range(2).map(() => createSqsQueues(randomString())));
+async function createRules(ruleMeta, queueMaxReceiveCount) {
+  sqsQueues = await Promise.all(range(2).map(
+    () => createSqsQueues(randomString(), queueMaxReceiveCount)
+  ));
   const rules = [
     fakeRuleFactoryV2({
       workflow,
@@ -49,7 +51,7 @@ async function createRules(meta) {
       },
       meta: {
         visibilityTimeout: 120,
-        ...meta
+        ...ruleMeta
       },
       state: 'ENABLED'
     }),
@@ -61,7 +63,7 @@ async function createRules(meta) {
       },
       meta: {
         visibilityTimeout: 120,
-        ...meta
+        ...ruleMeta
       },
       state: 'DISABLED'
     })
@@ -102,6 +104,7 @@ test.afterEach.always(async () => {
   await Promise.all(
     createdRules.map((rule) => rulesModel.delete(rule))
   );
+  createdRules = [];
 
   const queueUrls = sqsQueues.reduce(
     (accumulator, currentValue) => accumulator.concat(Object.values(currentValue)), []
@@ -110,6 +113,7 @@ test.afterEach.always(async () => {
   await Promise.all(
     queueUrls.map((queueUrl) => SQS.deleteQueue(queueUrl))
   );
+  sqsQueues = [];
 });
 
 test.serial('processQueues does nothing when there is no message', async (t) => {
@@ -168,9 +172,13 @@ test.serial('processQueues processes messages from the ENABLED sqs rule', async 
   t.teardown(() => queueMessageStub.restore());
 });
 
-test.serial('messages failed to be processed are retried', async (t) => {
+test.serial('messages are retried the correct number of times based on the rule configuration', async (t) => {
   // set visibilityTimeout to 5s so the message is available 5s after retrieval
-  createdRules = await createRules({ visibilityTimeout: 5, retries: 1 });
+  const visibilityTimeout = 5;
+  const queueMaxReceiveCount = 3;
+
+  createdRules = await createRules({ visibilityTimeout, retries: 1 }, queueMaxReceiveCount);
+
   const queueMessageStub = sinon.stub(rulesHelpers, 'queueMessageForRule');
   const queueMessageFromEnabledRuleStub = queueMessageStub
     .withArgs(createdRules[1], sinon.match.any, sinon.match.any);
@@ -187,8 +195,8 @@ test.serial('messages failed to be processed are retried', async (t) => {
   await handler(event);
 
   /* eslint-disable no-await-in-loop */
-  for (let i = 0; i < 3; i += 1) {
-    await sleep(5 * 1000);
+  for (let i = 0; i < queueMaxReceiveCount; i += 1) {
+    await sleep(visibilityTimeout * 1000);
     await handler(event);
   }
   /* eslint-enable no-await-in-loop */
@@ -202,7 +210,7 @@ test.serial('messages failed to be processed are retried', async (t) => {
   const numberOfMessages = await getSqsQueueMessageCounts(sqsQueues[0].queueUrl);
   t.is(numberOfMessages.numberOfMessagesAvailable, 0);
 
-  // messages are moved to dead-letter queue after retries
+  // messages are moved to dead-letter queue after `queueMaxReceiveCount` retries
   const numberOfMessagesDLQ = await getSqsQueueMessageCounts(sqsQueues[0].deadLetterQueueUrl);
   t.is(numberOfMessagesDLQ.numberOfMessagesAvailable, 2);
 
@@ -212,13 +220,14 @@ test.serial('messages failed to be processed are retried', async (t) => {
 test.serial('SQS message consumer only starts workflows for rules matching the event collection', async (t) => {
   const queueMessageStub = sinon.stub(rulesHelpers, 'queueMessageForRule');
 
-  // Set visibility timeout to 0 for testing to ensure that message is
-  // read when processing all rules
-  const { queueUrl } = await createSqsQueues(randomId('queue'), '0');
+  const { queueUrl } = await createSqsQueues(randomId('queue'));
   const collection = {
     name: randomId('collection'),
     version: '1.0.0'
   };
+  // Set visibility timeout to 0 for testing to ensure that message is
+  // read when processing all rules
+  const visibilityTimeout = 0;
   const rules = [
     fakeRuleFactoryV2({
       name: randomId('matchingRule'),
@@ -227,6 +236,9 @@ test.serial('SQS message consumer only starts workflows for rules matching the e
         type: 'sqs',
         value: queueUrl
       },
+      meta: {
+        visibilityTimeout
+      },
       state: 'ENABLED',
       workflow
     }),
@@ -234,6 +246,9 @@ test.serial('SQS message consumer only starts workflows for rules matching the e
       rule: {
         type: 'sqs',
         value: queueUrl
+      },
+      meta: {
+        visibilityTimeout
       },
       state: 'ENABLED',
       workflow

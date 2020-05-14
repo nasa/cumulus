@@ -281,10 +281,16 @@ async function createFakeJwtAuthToken({ accessTokenModel, username }) {
  * create a dead-letter queue and a source queue
  *
  * @param {string} queueNamePrefix - prefix of the queue name
+ * @param {number} maxReceiveCount
+ *   Maximum number of times message can be removed before being sent to DLQ
  * @param {string} visibilityTimeout - visibility timeout for queue messages
  * @returns {Object} - {deadLetterQueueUrl: <url>, queueUrl: <url>} queues created
  */
-async function createSqsQueues(queueNamePrefix, visibilityTimeout = '300') {
+async function createSqsQueues(
+  queueNamePrefix,
+  maxReceiveCount = 3,
+  visibilityTimeout = '300'
+) {
   // dead letter queue
   const deadLetterQueueName = `${queueNamePrefix}DeadLetterQueue`;
   const deadLetterQueueParms = {
@@ -309,7 +315,7 @@ async function createSqsQueues(queueNamePrefix, visibilityTimeout = '300') {
     Attributes: {
       RedrivePolicy: JSON.stringify({
         deadLetterTargetArn: deadLetterQueueArn,
-        maxReceiveCount: 3
+        maxReceiveCount
       }),
       VisibilityTimeout: visibilityTimeout
     }
