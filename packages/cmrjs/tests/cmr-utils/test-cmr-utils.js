@@ -48,7 +48,7 @@ test.before(async (t) => {
   }).promise();
 
   t.context.launchpadStub = sinon.stub(launchpad, 'getLaunchpadToken')
-    .callsFake((config) => Promise.resolve(`${config.api}-${config.certificate}`));
+    .callsFake((config) => Promise.resolve(`${config.passphrase}-${config.api}-${config.certificate}`));
 });
 
 test.after.always(async (t) => {
@@ -435,17 +435,67 @@ test('getCmrCredentials uses values in environment variables by default for laun
   t.deepEqual(credentials, {
     provider: 'CUMULUS-TEST',
     clientId: 'Cumulus-Client-Id',
-    token: 'launchpad-api-launchpad-cert'
+    token: `${launchpadPassphrase}-launchpad-api-launchpad-cert`
   });
 });
 
-test.todo('getCmrCredentials uses values in config for earthdata oauth', async (t) => {
-  // const credentials = await getCmrCredentials();
+test('getCmrCredentials uses values in config for earthdata oauth', async (t) => {
+  const testPasswordSecret = randomId('test-password-secret');
+  const testPassword = randomId('test-password');
 
-  // t.deepEqual(credentials, {
-  //   provider: 'CUMULUS-TEST',
-  //   clientId: 'Cumulus-Client-Id',
-  //   password: cmrPassword,
-  //   username: 'cmr-user'
-  // });
+  await secretsManager().createSecret({
+    Name: testPasswordSecret,
+    SecretString: testPassword
+  }).promise();
+
+  try {
+    const credentials = await getCmrCredentials({
+      provider: 'CUMULUS-PROV',
+      clientId: 'test-client-id',
+      username: 'cumulus',
+      passwordSecretName: testPasswordSecret
+    });
+
+    t.deepEqual(credentials, {
+      provider: 'CUMULUS-PROV',
+      clientId: 'test-client-id',
+      password: testPassword,
+      username: 'cumulus'
+    });
+  } finally {
+    await secretsManager().deleteSecret({
+      SecretId: testPasswordSecret,
+      ForceDeleteWithoutRecovery: true
+    }).promise();
+  }
+});
+
+test('getCmrCredentials uses values in config for launchpad oauth', async (t) => {
+  const testPassphraseSecret = randomId('test-passphrase-secret');
+  const testPassphrase = randomId('test-password');
+
+  await secretsManager().createSecret({
+    Name: testPassphraseSecret,
+    SecretString: testPassphrase
+  }).promise();
+
+  try {
+    const credentials = await getCmrCredentials({
+      oauthProvider: 'launchpad',
+      passphraseSecretName: testPassphraseSecret,
+      api: 'test-api',
+      certificate: 'test-certificate'
+    });
+
+    t.deepEqual(credentials, {
+      provider: 'CUMULUS-TEST',
+      clientId: 'Cumulus-Client-Id',
+      token: `${testPassphrase}-test-api-test-certificate`
+    });
+  } finally {
+    await secretsManager().deleteSecret({
+      SecretId: testPassphraseSecret,
+      ForceDeleteWithoutRecovery: true
+    }).promise();
+  }
 });

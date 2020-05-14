@@ -505,6 +505,7 @@ async function updateUMMGMetadata({
  * @param {string} cmrConfig.api - Launchpad api
  * @param {string} cmrConfig.certificate - Launchpad certificate
  * @param {string} cmrConfig.username - EDL username
+ * @param {string} cmrConfig.passwordSecretName - CMR password secret name
  * @returns {Object} object to create CMR instance.
 */
 async function getCmrCredentials(cmrConfig = {}) {
