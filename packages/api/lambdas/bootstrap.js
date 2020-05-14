@@ -80,6 +80,8 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
     await esClient.indices.delete({ index: alias });
   }
 
+  await esClient.indices.delete({ index });
+
   // check if the index exists
   const exists = await esClient.indices.exists({ index })
     .then((response) => response.body);
@@ -88,7 +90,8 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
     // add mapping
     await esClient.indices.create({
       index,
-      body: { mappings }
+      body: { mappings },
+      number_of_shards: 2
     });
 
     await esClient.indices.putAlias({
