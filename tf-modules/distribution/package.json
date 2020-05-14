@@ -10,6 +10,9 @@
     "package": "npm run build",
     "test": "ava"
   },
+  "ava": {
+    "timeout": "15m"
+  },
   "publishConfig": {
     "access": "public"
   },
