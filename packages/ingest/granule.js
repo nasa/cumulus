@@ -69,47 +69,6 @@ async function moveGranuleFile(source, target, options) {
 }
 
 /**
-  * rename s3 file with timestamp
-  *
-  * @param {string} bucket - bucket of the file
-  * @param {string} key - s3 key of the file
-  * @returns {Promise} promise that resolves when file is renamed
-  */
-async function renameS3FileWithTimestamp(bucket, key) {
-  const formatString = 'YYYYMMDDTHHmmssSSS';
-  const timestamp = (await S3.headObject(bucket, key)).LastModified;
-  let renamedKey = `${key}.v${moment.utc(timestamp).format(formatString)}`;
-
-  // if the renamed file already exists, get a new name
-  // eslint-disable-next-line no-await-in-loop
-  while (await S3.s3ObjectExists({ Bucket: bucket, Key: renamedKey })) {
-    renamedKey = `${key}.v${moment.utc(timestamp).add(1, 'milliseconds').format(formatString)}`;
-  }
-
-  log.debug(`renameS3FileWithTimestamp renaming ${bucket} ${key} to ${renamedKey}`);
-
-  await S3.moveObject({
-    sourceBucket: bucket,
-    sourceKey: key,
-    destinationBucket: bucket,
-    destinationKey: renamedKey,
-    copyTags: true
-  });
-}
-
-/**
-  * get all renamed s3 files for a given bucket and key
-  *
-  * @param {string} bucket - bucket of the file
-  * @param {string} key - s3 key of the file
-  * @returns {Array<Object>} returns renamed files
-  */
-async function getRenamedS3File(bucket, key) {
-  const s3list = await S3.listS3ObjectsV2({ Bucket: bucket, Prefix: `${key}.v` });
-  return s3list.map((c) => ({ Bucket: bucket, Key: c.Key, size: c.Size }));
-}
-
-/**
 * Move granule file from one s3 bucket & keypath to another,
 * creating a versioned copy of any file already existing at the target location
 * and returning an array of the moved file and all versioned filenames.
@@ -142,7 +101,7 @@ async function moveGranuleFileWithVersioning(source, target, sourceChecksumObjec
     await S3.deleteS3Object(source.Bucket, source.Key);
   } else {
     log.debug(`Renaming ${target.Key}...`);
-    await renameS3FileWithTimestamp(target.Bucket, target.Key);
+    await exports.renameS3FileWithTimestamp(target.Bucket, target.Key);
 
     await S3.moveObject({
       sourceBucket: source.Bucket,
@@ -154,7 +113,7 @@ async function moveGranuleFileWithVersioning(source, target, sourceChecksumObjec
     });
   }
   // return renamed files
-  return getRenamedS3File(target.Bucket, target.Key);
+  return exports.getRenamedS3File(target.Bucket, target.Key);
 }
 
 /**
@@ -337,6 +296,47 @@ async function moveGranuleFiles(sourceFiles, destinations) {
 }
 
 /**
+  * rename s3 file with timestamp
+  *
+  * @param {string} bucket - bucket of the file
+  * @param {string} key - s3 key of the file
+  * @returns {Promise} promise that resolves when file is renamed
+  */
+async function renameS3FileWithTimestamp(bucket, key) {
+  const formatString = 'YYYYMMDDTHHmmssSSS';
+  const timestamp = (await S3.headObject(bucket, key)).LastModified;
+  let renamedKey = `${key}.v${moment.utc(timestamp).format(formatString)}`;
+
+  // if the renamed file already exists, get a new name
+  // eslint-disable-next-line no-await-in-loop
+  while (await S3.s3ObjectExists({ Bucket: bucket, Key: renamedKey })) {
+    renamedKey = `${key}.v${moment.utc(timestamp).add(1, 'milliseconds').format(formatString)}`;
+  }
+
+  log.debug(`renameS3FileWithTimestamp renaming ${bucket} ${key} to ${renamedKey}`);
+
+  await S3.moveObject({
+    sourceBucket: bucket,
+    sourceKey: key,
+    destinationBucket: bucket,
+    destinationKey: renamedKey,
+    copyTags: true
+  });
+}
+
+/**
+  * get all renamed s3 files for a given bucket and key
+  *
+  * @param {string} bucket - bucket of the file
+  * @param {string} key - s3 key of the file
+  * @returns {Array<Object>} returns renamed files
+  */
+async function getRenamedS3File(bucket, key) {
+  const s3list = await S3.listS3ObjectsV2({ Bucket: bucket, Prefix: `${key}.v` });
+  return s3list.map((c) => ({ Bucket: bucket, Key: c.Key, size: c.Size }));
+}
+
+/**
  * check to see if the file has the suffix with timestamp '.vYYYYMMDDTHHmmssSSS'
  *
  * @param {string} filename - name of the file
@@ -381,14 +381,12 @@ function duplicateHandlingType(event) {
   return duplicateHandling;
 }
 
-module.exports = {
-  getRenamedS3File,
-  handleDuplicateFile,
-  copyGranuleFile,
-  unversionFilename,
-  moveGranuleFile,
-  moveGranuleFiles,
-  renameS3FileWithTimestamp,
-  generateMoveFileParams,
-  duplicateHandlingType
-};
+module.exports.getRenamedS3File = getRenamedS3File;
+module.exports.handleDuplicateFile = handleDuplicateFile;
+module.exports.copyGranuleFile = copyGranuleFile;
+module.exports.unversionFilename = unversionFilename;
+module.exports.moveGranuleFile = moveGranuleFile;
+module.exports.moveGranuleFiles = moveGranuleFiles;
+module.exports.renameS3FileWithTimestamp = renameS3FileWithTimestamp;
+module.exports.generateMoveFileParams = generateMoveFileParams;
+module.exports.duplicateHandlingType = duplicateHandlingType;
