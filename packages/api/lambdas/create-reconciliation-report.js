@@ -543,6 +543,8 @@ async function processRequest(params) {
     };
     await reconciliationReportModel.update({ name: reportRecord.name }, updates);
   }
+
+  return reconciliationReportModel.get({ name: reportRecord.name });
 }
 
 function handler(event, _context, cb) {
@@ -554,7 +556,7 @@ function handler(event, _context, cb) {
     systemBucket: event.systemBucket || process.env.system_bucket,
     stackName: event.stackName || process.env.stackName
   })
-    .then(() => cb(null))
+    .then((reportRecord) => cb(null, reportRecord))
     .catch(cb);
 }
 exports.handler = handler;

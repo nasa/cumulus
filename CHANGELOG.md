@@ -15,7 +15,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   4. Return to using the Cumulus API/dashboard as normal
 
 - Migrate existing s3 reconciliation report records to database (CUMULUS-1911)
-  After update your Cumulus stack, run the command:
+  After update your `data persistence` module and Cumulus resources, run the command:
   ./node_modules/.bin/cumulus-api migrate --stack <your-terraform-deployment-prefix> --migrationVersion migration5
 
 ### Added

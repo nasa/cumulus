@@ -2,7 +2,7 @@
 
 const cloneDeep = require('lodash/cloneDeep');
 const fs = require('fs-extra');
-const { buildS3Uri, deleteS3Files, getJsonS3Object } = require('@cumulus/aws-client/S3');
+const { buildS3Uri, deleteS3Files, getJsonS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { dynamodb, lambda, s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -237,15 +237,12 @@ describe('When there are granule differences and granule reconciliation is run',
     console.log(`invoke ${config.stackName}-CreateReconciliationReport`);
 
     // Run the report
-    await lambda().invoke({ FunctionName: `${config.stackName}-CreateReconciliationReport` }).promise();
+    const result = await lambda().invoke({ FunctionName: `${config.stackName}-CreateReconciliationReport` }).promise();
+    const lambdaOutput = JSON.parse(result.Payload);
 
     // Fetch the report
     // TODO will use API to retrieve reports when API is updated
-    const reportKey = (await getReportsKeys(config.bucket, config.stackName))[0];
-    report = await s3().getObject({
-      Bucket: config.bucket,
-      Key: reportKey
-    }).promise()
+    report = await s3().getObject(parseS3Uri(lambdaOutput.location)).promise()
       .then((response) => JSON.parse(response.Body.toString()));
 
     console.log(`update granule files back ${publishedGranuleId}`);
