@@ -80,11 +80,17 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
     await esClient.indices.delete({ index: alias });
   }
 
-  await esClient.indices.delete({ index });
-
   // check if the index exists
-  const exists = await esClient.indices.exists({ index })
+  let exists = await esClient.indices.exists({ index })
     .then((response) => response.body);
+
+  if (exists) {
+    console.log('index exists');
+    await esClient.indices.delete({ index });
+    console.log('deleted index');
+    index = 'cumulus2';
+    exists = false;
+  }
 
   if (!exists) {
     // add mapping
@@ -158,6 +164,7 @@ const handler = async ({ elasticsearchHostname }) => {
     await bootstrapElasticSearch(elasticsearchHostname);
     return { Status: 'SUCCESS', Data: {} };
   } catch (err) {
+    log.error(err);
     return { Status: 'FAILED', Error: err };
   }
 };
