@@ -90,15 +90,13 @@ function dispatch(message) {
 
   rulesToSchedule = rulesForQueue.filter(
     (queueRule) => {
-      let nameMatch = true;
-      let versionMatch = true;
       // Match as much collection info as we found in the message
-      if (eventCollection.name) {
-        nameMatch = queueRule.collection.name === eventCollection.name;
-      }
-      if (eventCollection.version) {
-        versionMatch = queueRule.collection.version === eventCollection.version;
-      }
+      const nameMatch = eventCollection.name
+        ? queueRule.collection.name === eventCollection.name
+        : true;
+      const versionMatch = eventCollection.version
+        ? queueRule.collection.version === eventCollection.version
+        : true;
       return nameMatch && versionMatch;
     }
   );
