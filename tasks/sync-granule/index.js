@@ -114,8 +114,8 @@ exports.syncGranule = function syncGranule(event) {
 /**
  * Lambda handler
  *
- * @param {Object} event - a Cumulus Message
- * @param {Object} context - an AWS Lambda context
+ * @param {Object} event      - a Cumulus Message
+ * @param {Object} context    - an AWS Lambda context
  * @returns {Promise<Object>} - Returns output from task.
  *                              See schemas/output.json for detailed output schema
  */
