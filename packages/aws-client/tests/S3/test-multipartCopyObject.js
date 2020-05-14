@@ -18,13 +18,14 @@ const randomId = (prefix) =>
   `${prefix}-${cryptoRandomString({ length: 6 })}`;
 
 // Create an object in with random data of the given size
-const createDummyObject = ({ Bucket, Key, size }) => {
+const createDummyObject = ({ Bucket, Key, size, contentType }) => {
   const readStream = fs.createReadStream('/dev/urandom', { end: size - 1 });
 
   return s3().upload({
     Bucket,
     Key,
-    Body: readStream
+    Body: readStream,
+    ContentType: contentType
   }).promise();
 };
 
@@ -118,4 +119,35 @@ test("multipartCopyObject() sets the object's ACL", async (t) => {
   );
 
   t.is(allUsersGrant.Permission, 'READ');
+});
+
+test('multipartCopyObject() copies content type', async (t) => {
+  const { sourceBucket, destinationBucket } = t.context;
+
+  const sourceKey = randomId('source-key');
+  const destinationKey = randomId('destination-key');
+
+  await createDummyObject({
+    Bucket: sourceBucket,
+    Key: sourceKey,
+    size: 5,
+    contentType: 'application/xml'
+  });
+
+  await multipartCopyObject({
+    sourceBucket,
+    sourceKey,
+    destinationBucket,
+    destinationKey
+  });
+
+  const copiedObject = await s3().headObject({
+    Bucket: destinationBucket,
+    Key: destinationKey
+  }).promise();
+
+  t.deepEqual(
+    copiedObject.ContentType,
+    'application/xml'
+  );
 });
