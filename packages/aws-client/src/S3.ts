@@ -696,13 +696,15 @@ const createMultipartUpload = async (
     destinationBucket: string,
     destinationKey: string,
     ACL?: AWS.S3.ObjectCannedACL,
-    copyTags?: boolean
+    copyTags?: boolean,
+    contentType?: AWS.S3.ContentType
   }
 ) => {
   const uploadParams: AWS.S3.CreateMultipartUploadRequest = {
     Bucket: params.destinationBucket,
     Key: params.destinationKey,
-    ACL: params.ACL
+    ACL: params.ACL,
+    ContentType: params.contentType
   };
 
   if (params.copyTags) {
@@ -780,7 +782,8 @@ export const multipartCopyObject = async (
     destinationBucket: string,
     destinationKey: string,
     ACL?: AWS.S3.ObjectCannedACL,
-    copyTags?: boolean
+    copyTags?: boolean,
+    copyMetadata?: boolean
   }
 ) => {
   const {
@@ -792,6 +795,8 @@ export const multipartCopyObject = async (
     copyTags = false
   } = params;
 
+  const sourceObject = await headObject(sourceBucket, sourceKey);
+
   // Create a multi-part upload (copy) and get its UploadId
   const uploadId = await createMultipartUpload({
     sourceBucket,
@@ -799,14 +804,13 @@ export const multipartCopyObject = async (
     destinationBucket,
     destinationKey,
     ACL,
-    copyTags
+    copyTags,
+    contentType: sourceObject.ContentType
   });
 
   try {
     // Build the separate parts of the multi-part upload (copy)
-    const {
-      ContentLength: objectSize
-    } = await headObject(sourceBucket, sourceKey);
+    const objectSize = sourceObject.ContentLength;
 
     if (objectSize === undefined) {
       throw new Error(`Unable to determine size of s3://${sourceBucket}/${sourceKey}`);

@@ -11,7 +11,8 @@
     "test-coverage": "nyc ava"
   },
   "ava": {
-    "serial": true
+    "serial": true,
+    "timeout": "15m"
   },
   "nyc": {
     "exclude": [

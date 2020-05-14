@@ -11,7 +11,8 @@
     "files": [
       "./scripts/tests/**/*.js"
     ],
-    "verbose": true
+    "verbose": true,
+    "timeout": "15m"
   },
   "scripts": {
     "test": "ava && for x in lambdas/*; do cd $x && npm run test && cd -; done",
