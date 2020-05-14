@@ -4,16 +4,10 @@
 'use strict';
 
 const migrations = require('../migrations');
-const migration1 = require('../migrations/migration_1');
-const migration2 = require('../migrations/migration_2');
-const migration3 = require('../migrations/migration_3');
-const migration4 = require('../migrations/migration_4');
+const migration5 = require('../migrations/migration_5');
 
 const mappings = {
-  migration1: migration1,
-  migration2: migration2,
-  migration3: migration3,
-  migration4: migration4
+  migration5: migration5
 };
 
 /**
@@ -26,19 +20,7 @@ const mappings = {
  */
 function handler(event, context, cb) {
   const eventMigrations = event.migrations.map((m) => mappings[m]);
-  return migrations(eventMigrations, {
-    // Used by migration1
-    tables: [
-      process.env.GranulesTable,
-      process.env.ExecutionsTable,
-      process.env.PdrsTable
-    ],
-    elasticsearch_host: process.env.ES_HOST,
-
-    // Used by Migration_3
-    bucket: process.env.system_bucket,
-    stackName: process.env.stackName
-  })
+  return migrations(eventMigrations, {})
     .then((r) => cb(null, r))
     .catch(cb);
 }
