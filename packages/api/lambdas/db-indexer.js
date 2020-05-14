@@ -42,6 +42,10 @@ const getTableIndexDetails = (tableName) => {
       indexFnName: 'indexProvider',
       indexType: 'provider'
     },
+    [process.env.ReconciliationReportsTable]: {
+      indexFnName: 'indexReconciliationReport',
+      indexType: 'reconciliationReport'
+    },
     [process.env.RulesTable]: {
       indexFnName: 'indexRule',
       indexType: 'rule'
@@ -62,6 +66,7 @@ const mapIndexTypeToIdFieldName = (type) => {
     granule: 'granuleId',
     pdr: 'pdrName',
     provider: 'id',
+    reconciliationReport: 'name',
     rule: 'name'
   };
   return idFieldsByType[type];

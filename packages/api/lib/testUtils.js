@@ -253,6 +253,24 @@ function fakeProviderFactory(options = {}) {
   };
 }
 
+/**
+ * creates fake reconciliationReport records
+ *
+ * @param {Object} options - properties to set on the reconciliationReport
+ * @returns {Object} fake reconciliationReport object
+ */
+function fakeReconciliationReportFactory(options = {}) {
+  return {
+    name: randomId('name'),
+    type: 'Inventory',
+    status: 'Generated',
+    location: randomId('location'),
+    createdAt: Date.now() - 180.5 * 1000,
+    updatedAt: Date.now(),
+    ...options
+  };
+}
+
 function fakeAccessTokenFactory(params = {}) {
   return {
     accessToken: randomId('accessToken'),
@@ -358,6 +376,7 @@ module.exports = {
   fakeRuleFactoryV2,
   fakeFileFactory,
   fakeProviderFactory,
+  fakeReconciliationReportFactory,
   getReconcileReportsList,
   getSqsQueueMessageCounts,
   getWorkflowList,

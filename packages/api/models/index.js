@@ -7,6 +7,7 @@ const Collection = require('./collections');
 const Granule = require('./granules');
 const Pdr = require('./pdrs');
 const Provider = require('./providers');
+const ReconciliationReport = require('./reconciliation-reports');
 const Rule = require('./rules');
 const Execution = require('./executions');
 
@@ -17,6 +18,7 @@ module.exports = {
   Granule,
   Pdr,
   Provider,
+  ReconciliationReport,
   Rule,
   Manager,
   Execution

@@ -8,6 +8,7 @@ const { buildS3Uri, getJsonS3Object } = require('@cumulus/aws-client/S3');
 const S3ListObjectsV2Queue = require('@cumulus/aws-client/S3ListObjectsV2Queue');
 const { s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
+const log = require('@cumulus/common/log');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
@@ -16,8 +17,8 @@ const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue
 const { constructOnlineAccessUrl } = require('@cumulus/cmrjs/cmr-utils');
 
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
-const { Collection, Granule } = require('../models');
-const { deconstructCollectionId } = require('../lib/utils');
+const { Collection, Granule, ReconciliationReport } = require('../models');
+const { deconstructCollectionId, parseException } = require('../lib/utils');
 
 const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includes(bucketConfig.type);
 
@@ -423,15 +424,13 @@ async function reconciliationReportForCumulusCMR(bucketsConfig) {
  * @param {Object} params - params
  * @param {string} params.systemBucket - the name of the CUMULUS system bucket
  * @param {string} params.stackName - the name of the CUMULUS stack
- *   DynamoDB
+ * @param {moment} params.reportStartTime - the report start time
+ * @param {string} params.reportKey - the s3 report key
  * @returns {Promise<null>} a Promise that resolves when the report has been
  *   uploaded to S3
  */
 async function createReconciliationReport(params) {
-  const {
-    systemBucket,
-    stackName
-  } = params;
+  const { systemBucket, stackName, reportStartTime, reportKey } = params;
 
   // Fetch the bucket names to reconcile
   const bucketsConfigJson = await getJsonS3Object(systemBucket, getBucketsConfigKey(stackName));
@@ -454,7 +453,7 @@ async function createReconciliationReport(params) {
   };
 
   let report = {
-    reportStartTime: moment.utc().toISOString(),
+    reportStartTime: reportStartTime.toISOString(),
     reportEndTime: null,
     status: 'RUNNING',
     error: null,
@@ -463,8 +462,6 @@ async function createReconciliationReport(params) {
     granulesInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
     filesInCumulusCmr: cloneDeep(reportFormatCumulusCmr)
   };
-
-  const reportKey = `${stackName}/reconciliation-reports/report-${report.reportStartTime}.json`;
 
   await s3().putObject({
     Bucket: systemBucket,
@@ -499,8 +496,46 @@ async function createReconciliationReport(params) {
     Bucket: systemBucket,
     Key: reportKey,
     Body: JSON.stringify(report)
-  }).promise()
-    .then(() => null);
+  }).promise();
+}
+
+/**
+ * start the report generation process and save the record to database
+ * @param {Object} params - params
+ * @param {string} params.systemBucket - the name of the CUMULUS system bucket
+ * @param {string} params.stackName - the name of the CUMULUS stack
+ *   DynamoDB
+ * @returns {Object} report record saved to the database
+ */
+async function processRequest(params) {
+  const { systemBucket, stackName } = params;
+  const reportStartTime = moment.utc();
+  const reportRecordName = `inventoryReport-${reportStartTime.format('YYYYMMDDTHHmmssSSS')}`;
+  const reportKey = `${stackName}/reconciliation-reports/inventoryReport-${reportRecordName}.json`;
+
+  // add request to database
+  const reconciliationReportModel = new ReconciliationReport();
+  const reportRecord = {
+    name: reportRecordName,
+    type: 'Inventory',
+    status: 'Pending',
+    location: buildS3Uri(systemBucket, reportKey)
+  };
+  await reconciliationReportModel.create(reportRecord);
+
+  try {
+    await createReconciliationReport({ ...params, reportStartTime, reportKey });
+    await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
+  } catch (e) {
+    log.error(`Error creating reconciliation report ${reportRecordName}`, e);
+    const updates = {
+      status: 'Failed',
+      error: parseException(e)
+    };
+    await reconciliationReportModel.update({ name: reportRecord.name }, updates);
+  }
+
+  return reconciliationReportModel.get({ name: reportRecord.name });
 }
 
 function handler(event, _context, cb) {
@@ -508,11 +543,11 @@ function handler(event, _context, cb) {
   process.env.CMR_LIMIT = process.env.CMR_LIMIT || 5000;
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || 200;
 
-  return createReconciliationReport({
+  return processRequest({
     systemBucket: event.systemBucket || process.env.system_bucket,
     stackName: event.stackName || process.env.stackName
   })
-    .then(() => cb(null))
+    .then((reportRecord) => cb(null, reportRecord))
     .catch(cb);
 }
 exports.handler = handler;
