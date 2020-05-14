@@ -155,8 +155,7 @@ function indexExecution(esClient, payload, index = defaultIndexAlias, type = 'ex
 }
 
 /**
- * Indexes a step function message to Elastic Search. The message must
- * comply with the cumulus message protocol
+ * Indexes the asyncOperation type on ElasticSearch
  *
  * @param  {Object} esClient - ElasticSearch Connection object
  * @param  {Object} payload  - Cumulus Step Function message
@@ -193,6 +192,19 @@ function indexCollection(esClient, meta, index = defaultIndexAlias, type = 'coll
  */
 function indexProvider(esClient, payload, index = defaultIndexAlias, type = 'provider') {
   return genericRecordUpdate(esClient, payload.id, payload, index, type);
+}
+
+/**
+ * Indexes the reconciliationReport type on ElasticSearch
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} payload  - the ReconciliationReport record
+ * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} type     - Elasticsearch type (default: reconciliationReport)
+ * @returns {Promise} Elasticsearch response
+ */
+function indexReconciliationReport(esClient, payload, index = defaultIndexAlias, type = 'reconciliationReport') {
+  return genericRecordUpdate(esClient, payload.name, payload, index, type);
 }
 
 /**
@@ -370,6 +382,7 @@ module.exports = {
   indexCollection,
   indexLog,
   indexProvider,
+  indexReconciliationReport,
   indexRule,
   indexGranule,
   indexPdr,
