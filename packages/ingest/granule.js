@@ -251,22 +251,23 @@ async function moveGranuleFiles(sourceFiles, destinations) {
   const moveFileParams = generateMoveFileParams(sourceFiles, destinations);
 
   const processedFiles = [];
-  const moveFileRequests = moveFileParams.map(async (moveFileParam) => {
+  const moveFileRequests = moveFileParams.map((moveFileParam) => {
     const { source, target, file } = moveFileParam;
 
     if (target) {
-      await S3.moveObject({
+      log.debug('moveGranuleFiles', source, target);
+      return S3.moveObject({
         sourceBucket: source.Bucket,
         sourceKey: source.Key,
         destinationBucket: target.Bucket,
         destinationKey: target.Key,
         copyTags: true
-      });
-
-      processedFiles.push({
-        bucket: target.Bucket,
-        key: target.Key,
-        name: file.name || file.fileName
+      }).then(() => {
+        processedFiles.push({
+          bucket: target.Bucket,
+          key: target.Key,
+          name: file.name || file.fileName
+        });
       });
     }
 
