@@ -9,10 +9,32 @@ data "aws_s3_bucket" "fake_s3_provider" {
 data "aws_iam_policy_document" "lambda_processing_access_fake_s3_provider" {
   statement {
     actions = [
-      "s3:GetObject"
+      "s3:GetAccelerateConfiguration",
+      "s3:GetBucket*",
+      "s3:GetLifecycleConfiguration",
+      "s3:GetReplicationConfiguration",
+      "s3:ListBucket*",
+      "s3:PutAccelerateConfiguration",
+      "s3:PutBucket*",
+      "s3:PutLifecycleConfiguration",
+      "s3:PutReplicationConfiguration"
     ]
     resources = [
       data.aws_s3_bucket.fake_s3_provider.arn
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:AbortMultipartUpload",
+      "s3:DeleteObject",
+      "s3:DeleteObjectVersion",
+      "s3:GetObject*",
+      "s3:ListMultipartUploadParts",
+      "s3:PutObject*"
+    ]
+    resources = [
+      "${data.aws_s3_bucket.fake_s3_provider.arn}/*"
     ]
   }
 }
