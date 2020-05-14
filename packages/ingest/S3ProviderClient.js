@@ -77,7 +77,7 @@ class S3ProviderClient {
         copyTags: true
       });
     } catch (error) {
-      if (error.code === 'NotFound') {
+      if (error.code === 'NotFound' || error.code === 'NoSuchKey') {
         const sourceUrl = S3.buildS3Uri(this.bucket, sourceKey);
         throw new errors.FileNotFound(`Source file not found ${sourceUrl}`);
       }
