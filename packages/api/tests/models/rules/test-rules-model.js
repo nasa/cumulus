@@ -6,7 +6,12 @@ const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 
 const awsServices = require('@cumulus/aws-client/services');
-const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+const {
+  createBucket,
+  putJsonS3Object,
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/aws-client/S3');
+const SQS = require('@cumulus/aws-client/SQS');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { ValidationError } = require('@cumulus/errors');
 
@@ -54,18 +59,18 @@ test.before(async () => {
   // create Rules table
   rulesModel = new models.Rule();
   await rulesModel.createTable();
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await createBucket(process.env.system_bucket);
   await Promise.all([
-    awsServices.s3().putObject({
-      Bucket: process.env.system_bucket,
-      Key: workflowfile,
-      Body: '{}'
-    }).promise(),
-    awsServices.s3().putObject({
-      Bucket: process.env.system_bucket,
-      Key: templateFile,
-      Body: '{}'
-    }).promise()
+    putJsonS3Object(
+      process.env.system_bucket,
+      workflowfile,
+      {}
+    ),
+    putJsonS3Object(
+      process.env.system_bucket,
+      templateFile,
+      {}
+    )
   ]);
 });
 
@@ -849,5 +854,33 @@ test('create, update and delete sqs type rule', async (t) => {
   );
 });
 
-test.todo('creating SQS rule fails if queue does not exist');
-test.todo('creating SQS rule fails if there is no redrive policy on the queue');
+test('creating SQS rule fails if queue does not exist', async (t) => {
+  const rule = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sqs',
+      value: 'non-existent-queue'
+    },
+    state: 'ENABLED'
+  });
+  await t.throwsAsync(
+    rulesModel.create(rule),
+    { message: /SQS queue non-existent-queue does not exist/ }
+  );
+});
+
+test('creating SQS rule fails if there is no redrive policy on the queue', async (t) => {
+  const queueUrl = await SQS.createQueue(randomId('queue'));
+  const rule = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sqs',
+      value: queueUrl
+    },
+    state: 'ENABLED'
+  });
+  await t.throwsAsync(
+    rulesModel.create(rule),
+    { message: `SQS queue ${queueUrl} does not have a dead-letter queue configured` }
+  );
+});

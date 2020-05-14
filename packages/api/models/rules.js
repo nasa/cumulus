@@ -493,7 +493,7 @@ class Rule extends Manager {
     };
     const attributes = await awsServices.sqs().getQueueAttributes(qAttrParams).promise();
     if (!attributes.Attributes.RedrivePolicy) {
-      throw new Error(`SQS queue ${rule} does not have a dead-letter queue configured`);
+      throw new Error(`SQS queue ${queueUrl} does not have a dead-letter queue configured`);
     }
 
     // update rule meta
