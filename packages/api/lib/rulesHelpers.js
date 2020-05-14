@@ -6,6 +6,19 @@ const { removeNilProperties } = require('@cumulus/common/util');
 const { handleScheduleEvent } = require('../lambdas/sf-scheduler');
 const Rule = require('../models/rules');
 
+const filterRulesbyCollection = (rules, collection) => rules.filter(
+  (rule) => {
+    // Match as much collection info as we found in the message
+    const nameMatch = collection.name
+      ? get(rule, 'collection.name') === collection.name
+      : true;
+    const versionMatch = collection.version
+      ? get(rule, 'collection.version') === collection.version
+      : true;
+    return nameMatch && versionMatch;
+  }
+);
+
 const getMaxTimeoutForRules = (rules) => rules.reduce(
   (prevMax, rule) => {
     const ruleTimeout = get(rule, 'meta.visibilityTimeout');
@@ -55,6 +68,7 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
 }
 
 module.exports = {
+  filterRulesbyCollection,
   getMaxTimeoutForRules,
   lookupCollectionInEvent,
   queueMessageForRule

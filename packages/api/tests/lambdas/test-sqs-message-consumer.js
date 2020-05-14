@@ -12,12 +12,11 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { sleep } = require('@cumulus/common/util');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
-const models = require('../../models');
+const Rule = require('../../models/rules');
 const { fakeRuleFactoryV2, createSqsQueues, getSqsQueueMessageCounts } = require('../../lib/testUtils');
 const rulesHelpers = require('../../lib/rulesHelpers');
 
 const {
-  getMaxTimeoutForRules,
   handler
 } = require('../../lambdas/sqs-message-consumer');
 
@@ -91,7 +90,7 @@ async function cleanupRulesAndQueues(rules, queues) {
 
 test.before(async () => {
   // create Rules table
-  rulesModel = new models.Rule();
+  rulesModel = new Rule();
   await rulesModel.createTable();
   await createBucket(process.env.system_bucket);
 
@@ -128,6 +127,23 @@ test.serial('processQueues does nothing when there is no message', async (t) => 
   await createRulesAndQueues();
   await handler(event);
   t.is(queueMessageStub.notCalled, true);
+});
+
+test.serial('processQueues does nothing when queue does not exist', async (t) => {
+  const { queueMessageStub } = t.context;
+  const validateSqsRuleStub = sinon.stub(Rule.prototype, 'validateAndUpdateSqsRule')
+    .callsFake(async (item) => item);
+  await rulesModel.create(fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sqs',
+      value: 'non-existent-queue'
+    },
+    state: 'ENABLED'
+  }));
+  await handler(event);
+  t.is(queueMessageStub.notCalled, true);
+  t.teardown(() => validateSqsRuleStub.restore());
 });
 
 test.serial('processQueues processes messages from the ENABLED sqs rule', async (t) => {

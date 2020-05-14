@@ -5,7 +5,7 @@ const rewire = require('rewire');
 
 const awsServices = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 
 const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
 const rulesHelpers = rewire('../../lib/rulesHelpers');
@@ -39,6 +39,56 @@ test.after(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   delete process.env.system_bucket;
   delete process.env.stackName;
+});
+
+test('filterRulesbyCollection returns rules with matching only collection name', (t) => {
+  const collection = {
+    name: randomId('name')
+  };
+  const rule1 = fakeRuleFactoryV2({
+    collection
+  });
+  const rule2 = fakeRuleFactoryV2();
+  t.deepEqual(
+    rulesHelpers.filterRulesbyCollection([rule1, rule2], collection),
+    [rule1]
+  );
+});
+
+test('filterRulesbyCollection returns rules with matching collection name and version', (t) => {
+  const collection = {
+    name: randomId('name'),
+    version: '1.0.0'
+  };
+  const rule1 = fakeRuleFactoryV2({
+    collection
+  });
+  const rule2 = fakeRuleFactoryV2({
+    collection: {
+      name: collection.name,
+      version: '2.0.0'
+    }
+  });
+  t.deepEqual(
+    rulesHelpers.filterRulesbyCollection([rule1, rule2], collection),
+    [rule1]
+  );
+});
+
+test('filterRulesbyCollection handles rules with no collection information', (t) => {
+  const collection = {
+    name: randomId('name'),
+    version: '1.0.0'
+  };
+  const rule1 = fakeRuleFactoryV2({
+    collection
+  });
+  const rule2 = fakeRuleFactoryV2();
+  delete rule2.collection;
+  t.deepEqual(
+    rulesHelpers.filterRulesbyCollection([rule1, rule2], collection),
+    [rule1]
+  );
 });
 
 test('getMaxTimeoutForRules returns correct max timeout', (t) => {

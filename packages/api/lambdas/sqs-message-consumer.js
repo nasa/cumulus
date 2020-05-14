@@ -37,7 +37,7 @@ async function processQueues(event, dispatchFn) {
 
     if (!(await sqsQueueExists(queueUrl))) {
       const ruleIds = rulesForQueue.map((rule) => rule.id);
-      log.info(`Could not find queue ${queueUrl}. Unable to process ${ruleIds}`);
+      log.info(`Could not find queue ${queueUrl}. Unable to process rules ${ruleIds}`);
       return Promise.resolve();
     }
 
@@ -75,18 +75,7 @@ function dispatch(message) {
   const eventObject = JSON.parse(message.Body);
   const eventCollection = rulesHelpers.lookupCollectionInEvent(eventObject);
 
-  const rulesToSchedule = rulesForQueue.filter(
-    (queueRule) => {
-      // Match as much collection info as we found in the message
-      const nameMatch = eventCollection.name
-        ? queueRule.collection.name === eventCollection.name
-        : true;
-      const versionMatch = eventCollection.version
-        ? queueRule.collection.version === eventCollection.version
-        : true;
-      return nameMatch && versionMatch;
-    }
-  );
+  const rulesToSchedule = rulesHelpers.filterRulesbyCollection(rulesForQueue, eventCollection);
 
   return Promise.all(rulesToSchedule.map((rule) => {
     if (get(rule, 'meta.retries', 3) < messageReceiveCount - 1) {
