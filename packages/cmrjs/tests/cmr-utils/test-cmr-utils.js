@@ -7,17 +7,64 @@ const { promisify } = require('util');
 const {
   recursivelyDeleteS3Bucket, promiseS3Upload, getS3Object, s3GetObjectTagging
 } = require('@cumulus/aws-client/S3');
-const { s3 } = require('@cumulus/aws-client/services');
+const { s3, secretsManager } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
-const { readJsonFixture } = require('@cumulus/common/test-utils');
+const { randomId, readJsonFixture } = require('@cumulus/common/test-utils');
+const launchpad = require('@cumulus/launchpad-auth');
 const { xmlParseOptions } = require('../../utils');
 
+const { getCmrCredentials } = require('../../cmr-utils');
 const cmrUtil = rewire('../../cmr-utils');
 const { isCMRFile, getGranuleTemporalInfo } = cmrUtil;
 const uploadEcho10CMRFile = cmrUtil.__get__('uploadEcho10CMRFile');
 const uploadUMMGJSONCMRFile = cmrUtil.__get__('uploadUMMGJSONCMRFile');
 const generateFileUrl = cmrUtil.__get__('generateFileUrl');
 
+const launchpadSecret = randomId('launchpad-secret');
+const launchpadPassphrase = randomId('launchpad-passphrase');
+const cmrPasswordSecret = randomId('cmr-password-secret');
+const cmrPassword = randomId('cmr-password');
+
+test.before(async (t) => {
+  process.env.cmr_provider = 'CUMULUS-TEST';
+  process.env.cmr_client_id = 'Cumulus-Client-Id';
+  process.env.cmr_oauth_provider = 'earthdata';
+
+  process.env.launchpad_passphrase_secret_name = launchpadSecret;
+  process.env.launchpad_api = 'launchpad-api';
+  process.env.launchpad_certificate = 'launchpad-cert';
+
+  await secretsManager().createSecret({
+    Name: launchpadSecret,
+    SecretString: launchpadPassphrase
+  }).promise();
+
+  process.env.cmr_password_secret_name = cmrPasswordSecret;
+  process.env.cmr_username = 'cmr-user';
+
+  await secretsManager().createSecret({
+    Name: cmrPasswordSecret,
+    SecretString: cmrPassword
+  }).promise();
+
+  t.context.launchpadStub = sinon.stub(launchpad, 'getLaunchpadToken')
+    .callsFake((config) => Promise.resolve(`${config.api}-${config.certificate}`));
+});
+
+test.after.always(async (t) => {
+  await Promise.all([
+    await secretsManager().deleteSecret({
+      SecretId: launchpadSecret,
+      ForceDeleteWithoutRecovery: true
+    }).promise(),
+    await secretsManager().deleteSecret({
+      SecretId: cmrPasswordSecret,
+      ForceDeleteWithoutRecovery: true
+    }).promise()
+  ]);
+
+  t.context.launchpadStub.restore();
+});
 
 test('isCMRFile returns truthy if fileobject has valid xml name', (t) => {
   const fileObj = {
@@ -369,4 +416,36 @@ test.serial('generateFileUrl returns null for cmrGranuleUrlType none', (t) => {
   const url = generateFileUrl(file, distEndpoint, 'none');
 
   t.is(url, null);
+});
+
+test('getCmrCredentials uses values in environment variables by default', async (t) => {
+  const credentials = await getCmrCredentials();
+
+  t.deepEqual(credentials, {
+    provider: 'CUMULUS-TEST',
+    clientId: 'Cumulus-Client-Id',
+    password: cmrPassword,
+    username: 'cmr-user'
+  });
+});
+
+test('getCmrCredentials uses values in environment variables by default for launchpad auth', async (t) => {
+  const credentials = await getCmrCredentials({ oauthProvider: 'launchpad' });
+
+  t.deepEqual(credentials, {
+    provider: 'CUMULUS-TEST',
+    clientId: 'Cumulus-Client-Id',
+    token: 'launchpad-api-launchpad-cert'
+  });
+});
+
+test.todo('getCmrCredentials uses values in config for earthdata oauth', async (t) => {
+  // const credentials = await getCmrCredentials();
+
+  // t.deepEqual(credentials, {
+  //   provider: 'CUMULUS-TEST',
+  //   clientId: 'Cumulus-Client-Id',
+  //   password: cmrPassword,
+  //   username: 'cmr-user'
+  // });
 });
