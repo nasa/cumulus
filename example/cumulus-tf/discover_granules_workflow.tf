@@ -66,7 +66,7 @@ module "discover_granules_workflow" {
             "provider": "{$.meta.provider}",
             "internalBucket": "{$.meta.buckets.internal.name}",
             "stackName": "{$.meta.stack}",
-            "granuleIngestWorkflow": "${module.ingest_granule_workflow.name}"
+            "granuleIngestWorkflow": "${module.ingest_and_publish_granule_workflow.name}"
           }
         }
       },
