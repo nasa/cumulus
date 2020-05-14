@@ -43,13 +43,7 @@ async function processQueues(event, dispatchFn) {
 
     // Use the max of the visibility timeouts for all the rules
     // bound to this queue.
-    const visibilityTimeout = rulesForQueue.reduce(
-      (prevMax, rule) => Math.max(
-        prevMax,
-        get(rule, 'meta.visibilityTimeout', 0)
-      ),
-      0
-    );
+    const visibilityTimeout = rulesHelpers.getMaxTimeoutForRules(rulesForQueue);
 
     const consumer = new Consumer({
       queueUrl,

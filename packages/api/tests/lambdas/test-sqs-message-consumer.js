@@ -16,7 +16,10 @@ const models = require('../../models');
 const { fakeRuleFactoryV2, createSqsQueues, getSqsQueueMessageCounts } = require('../../lib/testUtils');
 const rulesHelpers = require('../../lib/rulesHelpers');
 
-const { handler } = require('../../lambdas/sqs-message-consumer');
+const {
+  getMaxTimeoutForRules,
+  handler
+} = require('../../lambdas/sqs-message-consumer');
 
 process.env.RulesTable = `RulesTable_${randomString()}`;
 process.env.stackName = randomString();

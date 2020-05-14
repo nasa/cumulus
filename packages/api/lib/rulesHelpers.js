@@ -6,6 +6,18 @@ const { removeNilProperties } = require('@cumulus/common/util');
 const { handleScheduleEvent } = require('../lambdas/sf-scheduler');
 const Rule = require('../models/rules');
 
+const getMaxTimeoutForRules = (rules) => rules.reduce(
+  (prevMax, rule) => {
+    const ruleTimeout = get(rule, 'meta.visibilityTimeout');
+    if (!ruleTimeout) return prevMax;
+    return Math.max(
+      prevMax || 0,
+      ruleTimeout
+    );
+  },
+  undefined
+);
+
 function lookupCollectionInEvent(eventObject) {
   // standard case (collection object), or CNM case
   return removeNilProperties({
@@ -43,6 +55,7 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
 }
 
 module.exports = {
+  getMaxTimeoutForRules,
   lookupCollectionInEvent,
   queueMessageForRule
 };

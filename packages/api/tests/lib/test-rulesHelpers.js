@@ -41,6 +41,49 @@ test.after(async () => {
   delete process.env.stackName;
 });
 
+test('getMaxTimeoutForRules returns correct max timeout', (t) => {
+  const rule1 = fakeRuleFactoryV2({
+    meta: {
+      visibilityTimeout: 5
+    }
+  });
+  const rule2 = fakeRuleFactoryV2({
+    meta: {
+      visibilityTimeout: 10
+    }
+  });
+  t.is(rulesHelpers.getMaxTimeoutForRules([rule1, rule2]), 10);
+});
+
+test('getMaxTimeoutForRules returns undefined for single rule with no timeout', (t) => {
+  const rule = fakeRuleFactoryV2({
+    meta: {}
+  });
+  t.is(rulesHelpers.getMaxTimeoutForRules([rule]), undefined);
+});
+
+test('getMaxTimeoutForRules returns undefined for multiple rules with no timeout', (t) => {
+  const rule1 = fakeRuleFactoryV2({
+    meta: {}
+  });
+  const rule2 = fakeRuleFactoryV2({
+    meta: {}
+  });
+  t.is(rulesHelpers.getMaxTimeoutForRules([rule1, rule2]), undefined);
+});
+
+test('getMaxTimeoutForRules returns correct max for rules with and without timeouts', (t) => {
+  const rule1 = fakeRuleFactoryV2({
+    meta: {
+      visibilityTimeout: 1
+    }
+  });
+  const rule2 = fakeRuleFactoryV2({
+    meta: {}
+  });
+  t.is(rulesHelpers.getMaxTimeoutForRules([rule1, rule2]), 1);
+});
+
 test('queueMessageForRule respects eventObject with collection object', async (t) => {
   const rule = fakeRuleFactoryV2({ workflow });
   const event = {
