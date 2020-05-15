@@ -88,12 +88,7 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
     // add mapping
     await esClient.indices.create({
       index,
-      body: {
-        mappings,
-        settings: {
-          index: { number_of_shards: 4 }
-        }
-      }
+      body: { mappings }
     });
 
     await esClient.indices.putAlias({
