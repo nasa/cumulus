@@ -55,7 +55,6 @@ describe('The MoveGranules task', () => {
         Tagging: querystring.stringify({ granuleId })
       });
 
-      // Call syncGranule
       const moveGranulesResponse = await moveGranules({
         config: {
           bucket: config.bucket,

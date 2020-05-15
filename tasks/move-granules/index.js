@@ -6,10 +6,10 @@ const get = require('lodash/get');
 const flatten = require('lodash/flatten');
 const keyBy = require('lodash/keyBy');
 const path = require('path');
-const S3 = require('@cumulus/aws-client/S3');
 
 const {
   buildS3Uri,
+  moveObject,
   s3ObjectExists
 } = require('@cumulus/aws-client/S3');
 
@@ -164,7 +164,7 @@ async function moveFileRequest(
       ACL
     });
   } else {
-    await S3.moveObject({
+    await moveObject({
       sourceBucket: source.Bucket,
       sourceKey: source.Key,
       destinationBucket: target.Bucket,
