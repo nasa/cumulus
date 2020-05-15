@@ -25,6 +25,9 @@
     "watch": "rm -rf dist && mkdir dist && webpack --progress -w",
     "package": "npm run build && npm run build-lambda-zips"
   },
+  "ava": {
+    "timeout": "15m"
+  },
   "nyc": {
     "exclude": [
       "tests"
@@ -34,7 +37,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/aws-client": "1.22.1",
-    "@cumulus/cumulus-message-adapter-js": "1.1.0",
+    "@cumulus/cumulus-message-adapter-js": "1.2.0",
     "lodash": "4.17.15"
   },
   "devDependencies": {

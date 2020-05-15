@@ -18,13 +18,14 @@ const randomId = (prefix) =>
   `${prefix}-${cryptoRandomString({ length: 6 })}`;
 
 // Create an object in with random data of the given size
-const createDummyObject = ({ Bucket, Key, size }) => {
+const createDummyObject = ({ Bucket, Key, size, contentType }) => {
   const readStream = fs.createReadStream('/dev/urandom', { end: size - 1 });
 
   return s3().upload({
     Bucket,
     Key,
-    Body: readStream
+    Body: readStream,
+    ContentType: contentType
   }).promise();
 };
 
@@ -42,42 +43,111 @@ const md5OfObject = ({ Bucket, Key }) => new Promise(
   }
 );
 
+test.before(async (t) => {
+  t.context.sourceBucket = randomId('source-bucket');
+  t.context.destinationBucket = randomId('destination-bucket');
+
+  await createBucket(t.context.sourceBucket);
+  await createBucket(t.context.destinationBucket);
+});
+
+test.after.always(async (t) => {
+  await recursivelyDeleteS3Bucket(t.context.sourceBucket);
+  await recursivelyDeleteS3Bucket(t.context.destinationBucket);
+});
+
 test('multipartCopyObject() copies a file between buckets', async (t) => {
-  const sourceBucket = randomId('source-bucket');
+  const { sourceBucket, destinationBucket } = t.context;
+
   const sourceKey = randomId('source-key');
-  const destinationBucket = randomId('destination-bucket');
   const destinationKey = randomId('destination-key');
 
-  try {
-    await createBucket(sourceBucket);
-    await createBucket(destinationBucket);
+  await createDummyObject({
+    Bucket: sourceBucket,
+    Key: sourceKey,
+    size: 6 * MB
+  });
 
-    await createDummyObject({
-      Bucket: sourceBucket,
-      Key: sourceKey,
-      size: 6 * MB
-    });
+  const sourceChecksum = await md5OfObject({
+    Bucket: sourceBucket,
+    Key: sourceKey
+  });
 
-    const sourceChecksum = await md5OfObject({
-      Bucket: sourceBucket,
-      Key: sourceKey
-    });
+  await multipartCopyObject({
+    sourceBucket,
+    sourceKey,
+    destinationBucket,
+    destinationKey
+  });
 
-    await multipartCopyObject({
-      sourceBucket,
-      sourceKey,
-      destinationBucket,
-      destinationKey
-    });
+  const destinationChecksum = await md5OfObject({
+    Bucket: destinationBucket,
+    Key: destinationKey
+  });
 
-    const destinationChecksum = await md5OfObject({
-      Bucket: destinationBucket,
-      Key: destinationKey
-    });
+  t.is(sourceChecksum, destinationChecksum, 'Source and destination checksums do not match');
+});
 
-    t.is(sourceChecksum, destinationChecksum, 'Source and destination checksums do not match');
-  } finally {
-    await recursivelyDeleteS3Bucket(sourceBucket);
-    await recursivelyDeleteS3Bucket(destinationBucket);
-  }
+test("multipartCopyObject() sets the object's ACL", async (t) => {
+  const { sourceBucket, destinationBucket } = t.context;
+
+  const sourceKey = randomId('source-key');
+  const destinationKey = randomId('destination-key');
+
+  await createDummyObject({
+    Bucket: sourceBucket,
+    Key: sourceKey,
+    size: 10
+  });
+
+  await multipartCopyObject({
+    sourceBucket,
+    sourceKey,
+    destinationBucket,
+    destinationKey,
+    ACL: 'public-read'
+  });
+
+  const destinationAcls = await s3().getObjectAcl({
+    Bucket: destinationBucket,
+    Key: destinationKey
+  }).promise();
+
+  const allUsersGrant = destinationAcls.Grants.find(
+    (grant) =>
+      grant.Grantee.URI === 'http://acs.amazonaws.com/groups/global/AllUsers'
+  );
+
+  t.is(allUsersGrant.Permission, 'READ');
+});
+
+test('multipartCopyObject() copies content type', async (t) => {
+  const { sourceBucket, destinationBucket } = t.context;
+
+  const sourceKey = randomId('source-key');
+  const destinationKey = randomId('destination-key');
+
+  await createDummyObject({
+    Bucket: sourceBucket,
+    Key: sourceKey,
+    size: 5,
+    contentType: 'application/xml'
+  });
+
+  await multipartCopyObject({
+    sourceBucket,
+    sourceKey,
+    destinationBucket,
+    destinationKey
+  });
+
+  const copiedObject = await s3().headObject({
+    Bucket: destinationBucket,
+    Key: destinationKey
+  }).promise();
+
+  t.deepEqual(
+    copiedObject.ContentType,
+    'application/xml'
+  );
 });

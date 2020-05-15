@@ -37,3 +37,11 @@ output "report_pdrs_sns_topic_arn" {
 output "async_operation_log_group" {
   value = aws_cloudwatch_log_group.async_operation.name
 }
+
+output "cmr_password_secret_arn" {
+  value = aws_secretsmanager_secret.api_cmr_password.arn
+}
+
+output "launchpad_passphrase_secret_arn" {
+  value = aws_secretsmanager_secret.api_cmr_password.arn
+}
