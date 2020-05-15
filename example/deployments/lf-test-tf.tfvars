@@ -22,3 +22,4 @@ buckets = {
     type = "public"
   }
 }
+archive_api_port = 8000

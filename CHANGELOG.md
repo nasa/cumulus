@@ -31,6 +31,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Added a limit for concurrent Elasticsearch requests when doing an index from database operation
 - Added the `es_request_concurrency` parameter to the archive and cumulus Terraform modules
 
+- **CUMULUS-1995**
+  - Added the `es_index_shards` paramater to the archive and cumulus Terraform modules to configure the number of shards for the ES index
+    - If you have an existing ES index, you will need to [reindex](https://nasa.github.io/cumulus-api/#reindex) to take advantage of shard updates
+
 - **CUMULUS-1911**
   - Added ReconciliationReports table
   - Updated CreateReconciliationReport lambda to save Reconciliation Report records to database
