@@ -19,7 +19,10 @@ const Rule = require('../models/rules');
  */
 async function processQueues(event, dispatchFn) {
   const rulesModel = new Rule();
-  const rules = await rulesModel.getRulesByTypeAndState('sqs', 'ENABLED');
+  const rules = await rulesModel.queryRules({
+    type: 'sqs',
+    status: 'ENABLED'
+  });
 
   const messageLimit = event.messageLimit || 1;
   const timeLimit = event.timeLimit || 240;

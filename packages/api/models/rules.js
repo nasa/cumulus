@@ -506,30 +506,6 @@ class Rule extends Manager {
   }
 
   /**
-   * get all rules with specified type and state
-   *
-   * @param {string} type - rule type
-   * @param {string} state - rule state
-   * @returns {Promise<Object>}
-   */
-  async getRulesByTypeAndState(type, state) {
-    const scanResult = await this.scan({
-      names: {
-        '#st': 'state',
-        '#rl': 'rule',
-        '#tp': 'type'
-      },
-      filter: '#st = :enabledState AND #rl.#tp = :ruleType',
-      values: {
-        ':enabledState': state,
-        ':ruleType': type
-      }
-    });
-
-    return scanResult.Items;
-  }
-
-  /**
    * `queryRules` scans and returns rules in the DynamoDB table based on:
    *
    * - `rule.type`
