@@ -50,6 +50,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1987**
   - `Remove granule from CMR` operation in `@cumulus/api` now passes token to CMR when fetching granule metadata, allowing removal of private granules
 
+- **CUMULUS-1894**
+  - The `SyncGranule` task can now handle files larger than 5 GB
+
 
 ### Deprecated
 
