@@ -47,8 +47,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-1987**
+  - `Remove granule from CMR` operation in `@cumulus/api` now passes token to CMR when fetching granule metadata, allowing removal of private granules
+
 - **CUMULUS-1894**
   - The `SyncGranule` task can now handle files larger than 5 GB
+
+
+### Deprecated
+
+- **CUMULUS-1987** - Deprecated the following functions:
+  - `@cumulus/cmrjs/getMetadata(cmrLink)` -> `@cumulus/cmr-client/CMR.getGranuleMetadata(cmrLink)`
+  - `@cumulus/cmrjs/getFullMetadata(cmrLink)`
 
 ## [v1.22.1] 2020-05-04
 
