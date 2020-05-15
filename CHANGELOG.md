@@ -22,10 +22,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1896**
   Updated all Cumulus core lambdas to utilize the new message adapter streaming interface via [cumulus-message-adapter-js v1.2.0](https://github.com/nasa/cumulus-message-adapter-js/releases/tag/v1.2.0).   Users of this version of Cumulus (or later) must utilize version 1.3.0 or greater of the [cumulus-message-adapter](https://github.com/nasa/cumulus-message-adapter) to support core lambdas.
 
+- Migrate existing s3 reconciliation report records to database (CUMULUS-1911)
+  After update your `data persistence` module and Cumulus resources, run the command:
+  ./node_modules/.bin/cumulus-api migrate --stack <your-terraform-deployment-prefix> --migrationVersion migration5
+
 ### Added
 
 - Added a limit for concurrent Elasticsearch requests when doing an index from database operation
 - Added the `es_request_concurrency` parameter to the archive and cumulus Terraform modules
+
+- **CUMULUS-1911**
+  - Added ReconciliationReports table
+  - Updated CreateReconciliationReport lambda to save Reconciliation Report records to database
+  - Updated dbIndexer and IndexFromDatabase lambdas to index Reconciliation Report records to Elasticsearch
+  - Added migration_5 to migrate existing s3 reconciliation report records to database and Elasticsearch
+  - Updated `@cumulus/api` package, `tf-modules/archive` and `tf-modules/data-persistence` Terraform modules
 
 ### Changed
 
@@ -33,6 +44,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - The `expirationTime` property is now a **required field** of the access tokens model.
   - Updated the `AccessTokens` table to set a [TTL](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/howitworks-ttl.html) on the `expirationTime` field in `tf-modules/data-persistence/dynamo.tf`. As a result, access token records in this table whose `expirationTime` has passed should be **automatically deleted by DynamoDB**.
   - Updated all code creating access token records in the Dynamo `AccessTokens` table to set the `expirationTime` field value in seconds from the epoch.
+
+### Fixed
+
+- **CUMULUS-1987**
+  - `Remove granule from CMR` operation in `@cumulus/api` now passes token to CMR when fetching granule metadata, allowing removal of private granules
+
+- **CUMULUS-1894**
+  - The `SyncGranule` task can now handle files larger than 5 GB
+
+
+### Deprecated
+
+- **CUMULUS-1987** - Deprecated the following functions:
+  - `@cumulus/cmrjs/getMetadata(cmrLink)` -> `@cumulus/cmr-client/CMR.getGranuleMetadata(cmrLink)`
+  - `@cumulus/cmrjs/getFullMetadata(cmrLink)`
 
 ## [v1.22.1] 2020-05-04
 

@@ -8,8 +8,6 @@ const {
   listS3ObjectsV2,
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
-  s3GetObjectTagging,
-  s3PutObjectTagging,
   promiseS3Upload,
   headObject,
   parseS3Uri,
@@ -297,19 +295,12 @@ test.serial('download granule from S3 provider', async (t) => {
   await s3().createBucket({ Bucket: t.context.event.config.provider.host }).promise();
 
   try {
-    const TagSet = [{ Key: 'granuleId', Value: 'test-granuleId' }];
     // Stage the file that's going to be downloaded
     await s3PutObject({
       Bucket: t.context.event.config.provider.host,
       Key: `${granuleFilePath}/${granuleFileName}`,
       Body: streamTestData(`granules/${granuleFileName}`)
     });
-    // add tags to test preservation
-    await s3PutObjectTagging(
-      t.context.event.config.provider.host,
-      `${granuleFilePath}/${granuleFileName}`,
-      { TagSet }
-    );
 
     const output = await syncGranule(t.context.event);
 
@@ -330,8 +321,6 @@ test.serial('download granule from S3 provider', async (t) => {
         Key: `${keypath}/${granuleFileName}`
       })
     );
-    const actualTags = await s3GetObjectTagging(t.context.internalBucketName, `${keypath}/${granuleFileName}`);
-    t.deepEqual(TagSet, actualTags.TagSet);
   } finally {
     // Clean up
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
