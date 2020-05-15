@@ -64,13 +64,12 @@ async function helloWorld(event) {
 /**
  * Lambda handler
  *
- * @param {Object} event - a Cumulus Message
- * @param {Object} context - an AWS Lambda context
- * @param {Function} callback - an AWS Lambda handler
- * @returns {undefined} - does not return a value
+ * @param {Object} event      - a Cumulus Message
+ * @param {Object} context    - an AWS Lambda context
+ * @returns {Promise<Object>} - sample JSON object
  */
-function handler(event, context, callback) {
-  cumulusMessageAdapter.runCumulusTask(helloWorld, event, context, callback);
+async function handler(event, context) {
+  return cumulusMessageAdapter.runCumulusTask(helloWorld, event, context);
 }
 
 exports.handler = handler;

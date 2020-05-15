@@ -43,7 +43,7 @@
     "@cumulus/aws-client": "1.22.1",
     "@cumulus/collection-config-store": "1.22.1",
     "@cumulus/common": "1.22.1",
-    "@cumulus/cumulus-message-adapter-js": "1.1.0",
+    "@cumulus/cumulus-message-adapter-js": "1.2.0",
     "@cumulus/errors": "1.22.1",
     "@cumulus/ingest": "1.22.1",
     "@cumulus/message": "1.22.1",

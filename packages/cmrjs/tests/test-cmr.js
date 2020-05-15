@@ -59,18 +59,22 @@ test.serial('get CMR metadata, success', async (t) => {
   statusCode = 200;
   const stub = sinon.stub(got, 'get').callsFake(stubclient.getCmrData);
 
-  const response = await getMetadata('fakeLink');
-  t.is(response.title, 'MOD09GQ.A2016358.h13v04.006.2016360104606');
-
-  stub.restore();
+  try {
+    const response = await getMetadata('fakeLink');
+    t.is(response.title, 'MOD09GQ.A2016358.h13v04.006.2016360104606');
+  } finally {
+    stub.restore();
+  }
 });
 
 test.serial('get CMR metadata, fail', async (t) => {
   statusCode = 404;
   const stub = sinon.stub(got, 'get').callsFake(stubclient.getCmrData);
 
-  const response = await getMetadata('fakeLink');
-  t.is(response, null);
-
-  stub.restore();
+  try {
+    const response = await getMetadata('fakeLink');
+    t.is(response, null);
+  } finally {
+    stub.restore();
+  }
 });
