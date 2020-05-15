@@ -68,11 +68,11 @@ const sampleEcho10Granule = {
         }
       }
     },
-    TwoDCoordinateSystem: {
-      StartCoordinate1: '19',
-      StartCoordinate2: '10',
-      TwoDCoordinateSystemName: 'MODIS Tile SIN'
-    },
+    // TwoDCoordinateSystem: {
+    //   StartCoordinate1: '19',
+    //   StartCoordinate2: '10',
+    //   TwoDCoordinateSystemName: 'MODIS Tile SIN'
+    // },
     OnlineAccessURLs: [{
       OnlineAccessURL: {
         URL: 'https://enjo7p7os7.execute-api.us-east-1.amazonaws.com/dev/MYD13Q1.A2017297.h19v10.006.2017313221202.hdf',
