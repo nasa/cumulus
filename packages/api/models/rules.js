@@ -509,7 +509,7 @@ class Rule extends Manager {
    * `queryRules` scans and returns rules in the DynamoDB table based on:
    *
    * - `rule.type`
-   * - `rule.status` (ENABLED or DISABLED)
+   * - `rule.state` (ENABLED or DISABLED)
    * - sourceArn in the `rule.value` field
    * - collection name and version in `rule.collection`
    *
@@ -517,7 +517,7 @@ class Rule extends Manager {
    * @param {string} queryParams.name - a collection name
    * @param {string} queryParams.version - a collection version
    * @param {string} queryParams.sourceArn - the ARN of the message source for the rule
-   * @param {string} queryParams.status - "ENABLED" or "DISABLED"
+   * @param {string} queryParams.state - "ENABLED" or "DISABLED"
    * @param {string} queryParams.type - "kinesis", "sns" "sqs", or "onetime"
    * @returns {Array} List of zero or more rules found from table scan
    * @throws {Error}
@@ -526,7 +526,7 @@ class Rule extends Manager {
     name,
     version,
     sourceArn,
-    status = 'ENABLED',
+    state = 'ENABLED',
     type
   }) {
     if (!['kinesis', 'sns', 'sqs', 'onetime'].includes(type)) {
@@ -539,7 +539,7 @@ class Rule extends Manager {
     };
     let filter = '#st = :enabledState AND #rl.#tp = :ruleType';
     const values = {
-      ':enabledState': status,
+      ':enabledState': state,
       ':ruleType': type
     };
     if (name) {

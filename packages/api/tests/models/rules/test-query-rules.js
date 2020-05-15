@@ -155,7 +155,7 @@ test.after.always(async () => {
   sqsStub.restore();
 });
 
-test.serial('queryRules returns correct list of rules', async (t) => {
+test.serial('queryRules returns correct rules for given state and type', async (t) => {
   const onetimeRules = [
     fakeRuleFactoryV2({
       workflow,
@@ -214,7 +214,6 @@ test.serial('queryRules defaults to returning only ENABLED rules', async (t) => 
   ];
   await Promise.all(rules.map((rule) => rulesModel.create(rule)));
   const results = await rulesModel.queryRules({
-    status: 'ENABLED',
     type: 'onetime'
   });
   t.is(results.length, 1);

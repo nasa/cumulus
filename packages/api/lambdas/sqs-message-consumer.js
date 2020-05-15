@@ -21,7 +21,7 @@ async function processQueues(event, dispatchFn) {
   const rulesModel = new Rule();
   const rules = await rulesModel.queryRules({
     type: 'sqs',
-    status: 'ENABLED'
+    state: 'ENABLED'
   });
 
   const messageLimit = event.messageLimit || 1;
