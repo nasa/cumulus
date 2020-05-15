@@ -141,6 +141,8 @@ module "cumulus" {
   additional_log_groups_to_elk  = var.additional_log_groups_to_elk
 
   tags = local.tags
+
+  enable_deprecation_warnings = var.enable_deprecation_warnings
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {

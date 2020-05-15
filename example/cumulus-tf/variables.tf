@@ -257,3 +257,8 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "enable_deprecation_warnings" {
+  type = string
+  default = "true"
+}

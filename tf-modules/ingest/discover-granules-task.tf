@@ -15,7 +15,8 @@ resource "aws_lambda_function" "discover_granules_task" {
     variables = {
       stackName                     = var.prefix
       GranulesTable                 = var.dynamo_tables.granules.name
-      CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
+      CUMULUS_MESSAGE_ADAPTER_DIR   = "/opt/"
+      NO_DEPRECATION_WARNINGS       = var.enable_deprecation_warnings
     }
   }
 
