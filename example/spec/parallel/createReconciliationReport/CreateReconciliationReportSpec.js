@@ -2,15 +2,16 @@
 
 const cloneDeep = require('lodash/cloneDeep');
 const fs = require('fs-extra');
-const { buildS3Uri, deleteS3Files, getJsonS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
-const { dynamodb, lambda, s3 } = require('@cumulus/aws-client/services');
+const reconciliationReportsApi = require('@cumulus/api-client/reconciliationReports');
+const { buildS3Uri, getJsonS3Object } = require('@cumulus/aws-client/S3');
+const { dynamodb, s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
-const { Granule, ReconciliationReport } = require('@cumulus/api/models');
+const { Granule } = require('@cumulus/api/models');
 const {
   addCollections,
   addProviders,
@@ -31,7 +32,6 @@ const {
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 
-const reportsPrefix = (stackName) => `${stackName}/reconciliation-reports/`;
 const collectionsTableName = (stackName) => `${stackName}-CollectionsTable`;
 
 const providersDir = './data/providers/s3/';
@@ -45,31 +45,6 @@ async function findProtectedBucket(systemBucket, stackName) {
   const protectedBucketConfig = bucketsConfig.protectedBuckets();
   if (!protectedBucketConfig) throw new Error(`Unable to find protected bucket in ${JSON.stringify(bucketsConfig)}`);
   return protectedBucketConfig[0].name;
-}
-
-function getReportsKeys(systemBucket, stackName) {
-  return s3().listObjectsV2({
-    Bucket: systemBucket,
-    Prefix: reportsPrefix(stackName)
-  }).promise()
-    .then((response) => response.Contents.map((o) => o.Key));
-}
-
-// TODO we will call API to delete the reports when API is updated
-async function deleteReconciliationReports(systemBucket, stackName) {
-  const reconciliationReportModel = new ReconciliationReport();
-  const reportRecords = await reconciliationReportModel.scan();
-  await Promise.all(reportRecords.Items.map((report) =>
-    reconciliationReportModel.delete({ name: report.name })));
-
-  const reportKeys = await getReportsKeys(systemBucket, stackName);
-
-  const objectsToDelete = reportKeys.map((Key) => ({
-    Bucket: systemBucket,
-    Key
-  }));
-
-  return deleteS3Files(objectsToDelete);
 }
 
 // add MYD13Q1___006 collection
@@ -165,12 +140,15 @@ describe('When there are granule differences and granule reconciliation is run',
   let extraS3Object;
   let granuleModel;
   let originalGranuleFile;
+  let granuleBeforeUpdate;
   let protectedBucket;
   let publishedGranuleId;
-  let report;
   let testDataFolder;
   let testSuffix;
   let updatedGranuleFile;
+  // report record in db and report in s3
+  let reportRecord;
+  let report;
 
   beforeAll(async () => {
     collectionId = constructCollectionId(collection.name, collection.version);
@@ -183,9 +161,6 @@ describe('When there are granule differences and granule reconciliation is run',
     process.env.ReconciliationReportsTable = `${config.stackName}-ReconciliationReportsTable`;
 
     process.env.CMR_ENVIRONMENT = 'UAT';
-
-    // Remove any pre-existing reconciliation reports
-    await deleteReconciliationReports(config.bucket, config.stackName);
 
     // Find a protected bucket
     protectedBucket = await findProtectedBucket(config.bucket, config.stackName);
@@ -227,26 +202,34 @@ describe('When there are granule differences and granule reconciliation is run',
     ]);
 
     // update one of the granule files in database so that that file won't match with CMR
-    const granuleResponse = await granulesApiTestUtils.getGranule({
+    granuleBeforeUpdate = await granulesApiTestUtils.getGranule({
       prefix: config.stackName,
       granuleId: publishedGranuleId
     });
 
-    ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleResponse.body).files, /jpg$/, 'jpg2'));
+    ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, 'jpg2'));
+  });
 
-    console.log(`invoke ${config.stackName}-CreateReconciliationReport`);
+  it('generates reconciliation report through the Cumulus API', async () => {
+    const inputPayload = {
+      invocationType: 'RequestResponse'
+    };
 
-    // Run the report
-    const result = await lambda().invoke({ FunctionName: `${config.stackName}-CreateReconciliationReport` }).promise();
-    const lambdaOutput = JSON.parse(result.Payload);
+    const response = await reconciliationReportsApi.createReconciliationReport({
+      prefix: config.stackName,
+      request: inputPayload
+    });
 
-    // Fetch the report
-    // TODO will use API to retrieve reports when API is updated
-    report = await s3().getObject(parseS3Uri(lambdaOutput.location)).promise()
-      .then((response) => JSON.parse(response.Body.toString()));
+    reportRecord = JSON.parse(response.body).report;
+  });
 
-    console.log(`update granule files back ${publishedGranuleId}`);
-    await granuleModel.update({ granuleId: publishedGranuleId }, { files: JSON.parse(granuleResponse.body).files });
+  it('fetches a reconciliation report through the Cumulus API', async () => {
+    const response = await reconciliationReportsApi.getReconciliationReport({
+      prefix: config.stackName,
+      name: reportRecord.name
+    });
+
+    report = JSON.parse(response.body);
   });
 
   it('generates a report showing cumulus files that are in S3 but not in the DynamoDB Files table', () => {
@@ -321,9 +304,23 @@ describe('When there are granule differences and granule reconciliation is run',
       .toBe(1);
   });
 
+  it('deletes a reconciliation report through the Cumulus API', async () => {
+    await reconciliationReportsApi.deleteReconciliationReport({
+      prefix: config.stackName,
+      name: reportRecord.name
+    });
+
+    reconciliationReportsApi.getReconciliationReport({
+      prefix: config.stackName,
+      name: reportRecord.name
+    });
+  });
+
   afterAll(async () => {
+    console.log(`update granule files back ${publishedGranuleId}`);
+    await granuleModel.update({ granuleId: publishedGranuleId }, { files: JSON.parse(granuleBeforeUpdate.body).files });
+
     await Promise.all([
-      deleteReconciliationReports(config.bucket, config.stackName),
       s3().deleteObject(extraS3Object).promise(),
       GranuleFilesCache.del(extraFileInDb),
       dynamodb().deleteItem({

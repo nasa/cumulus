@@ -511,7 +511,7 @@ async function processRequest(params) {
   const { systemBucket, stackName } = params;
   const reportStartTime = moment.utc();
   const reportRecordName = `inventoryReport-${reportStartTime.format('YYYYMMDDTHHmmssSSS')}`;
-  const reportKey = `${stackName}/reconciliation-reports/inventoryReport-${reportRecordName}.json`;
+  const reportKey = `${stackName}/reconciliation-reports/${reportRecordName}.json`;
 
   // add request to database
   const reconciliationReportModel = new ReconciliationReport();
