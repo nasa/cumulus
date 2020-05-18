@@ -3,12 +3,26 @@
 const path = require('path');
 const { readFileSync } = require('fs');
 
-const getRootDevDependencies = () => {
+const loadRootPackageJson = () => {
   const rootPackageJsonFilename = path.join(__dirname, 'package.json');
 
   const rawRootPackageJson = readFileSync(rootPackageJsonFilename, 'utf8');
 
-  const rootPackageJson = JSON.parse(rawRootPackageJson);
+  return JSON.parse(rawRootPackageJson);
+}
+
+const getRootDependencies = () => {
+  const rootPackageJson = loadRootPackageJson();
+
+  if (rootPackageJson.dependencies) {
+    return Object.keys(rootPackageJson.dependencies);
+  }
+
+  return [];
+}
+
+const getRootDevDependencies = () => {
+  const rootPackageJson = loadRootPackageJson();
 
   if (rootPackageJson.devDependencies) {
     return Object.keys(rootPackageJson.devDependencies);
@@ -186,7 +200,8 @@ module.exports = {
     {
       files: [
         '**/test/**/*.js',
-        '**/tests/**/*.js'
+        '**/tests/**/*.js',
+        'example/spec/**/*.js'
       ],
       rules: {
         'max-classes-per-file': 'off',
@@ -196,7 +211,10 @@ module.exports = {
         'node/no-extraneous-require': [
           'error',
           {
-            allowModules: getRootDevDependencies()
+            allowModules: [
+              ...getRootDependencies(),
+              ...getRootDevDependencies()
+            ]
           }
         ]
       }
