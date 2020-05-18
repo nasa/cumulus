@@ -114,12 +114,13 @@ async function createKinesisStream(streamName) {
       try {
         return kinesis.createStream({ StreamName: streamName, ShardCount: 1 }).promise();
       } catch (error) {
-        if (error.code === 'LimitExceededException') throw new Error('Trigger retry');
+        if (error.code === 'LimitExceededException') throw error;
         throw new pRetry.AbortError(error);
       }
     },
     {
-      maxTimeout: 20000,
+      minTimeout: 2000,
+      maxTimeout: 32000,
       onFailedAttempt: () => console.log('LimitExceededException when calling kinesis.createStream(), will retry.')
     }
   );

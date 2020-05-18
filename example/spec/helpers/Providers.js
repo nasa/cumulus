@@ -4,6 +4,16 @@ const isIp = require('is-ip');
 const providersApi = require('@cumulus/api-client/providers');
 const { getTextObject, s3CopyObject } = require('@cumulus/aws-client/S3');
 
+const fetchFakeS3ProviderBucket = async () => {
+  if (!process.env.FAKE_PROVIDER_CONFIG_BUCKET) {
+    throw new Error('The FAKE_PROVIDER_CONFIG_BUCKET environment variable must be set');
+  }
+
+  return (await getTextObject(
+    process.env.FAKE_PROVIDER_CONFIG_BUCKET, 'fake-s3-provider-bucket'
+  )).trim();
+};
+
 const fetchFakeProviderIp = async () => {
   if (!process.env.FAKE_PROVIDER_CONFIG_BUCKET) {
     throw new Error('The FAKE_PROVIDER_CONFIG_BUCKET environment variable must be set');
@@ -80,5 +90,6 @@ const createProvider = async (stackName, provider) => {
 module.exports = {
   buildFtpProvider,
   buildHttpOrHttpsProvider,
-  createProvider
+  createProvider,
+  fetchFakeS3ProviderBucket
 };

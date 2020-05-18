@@ -6,6 +6,7 @@ const get = require('lodash/get');
 const moment = require('moment');
 const S3 = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
+const { deprecate } = require('@cumulus/common/util');
 
 /**
 * Copy granule file from one s3 bucket & keypath to another
@@ -21,6 +22,12 @@ const log = require('@cumulus/common/log');
 * @returns {Promise} returms a promise that is resolved when the file is copied
 **/
 function copyGranuleFile(source, target, options = {}) {
+  deprecate(
+    '@cumulus/ingest/granule.copyGranuleFile',
+    '1.22.1',
+    '@cumulus/aws-client/S3.multipartCopyObject'
+  );
+
   const CopySource = encodeurl(`${source.Bucket}/${source.Key}`);
 
   const params = {
@@ -51,6 +58,12 @@ function copyGranuleFile(source, target, options = {}) {
 * @returns {Promise} returns a promise that is resolved when the file is moved
 **/
 async function moveGranuleFile(source, target, options) {
+  deprecate(
+    '@cumulus/ingest/granule.moveGranuleFile',
+    '1.22.1',
+    '@cumulus/aws-client/S3.moveObject'
+  );
+
   await copyGranuleFile(source, target, options);
   return S3.deleteS3Object(source.Bucket, source.Key);
 }
@@ -69,11 +82,10 @@ async function moveGranuleFile(source, target, options) {
 * @param {Object} sourceChecksumObject - source checksum information
 * @param {string} sourceChecksumObject.checksumType - checksum type, e.g. 'md5'
 * @param {Object} sourceChecksumObject.checksum - checksum value
-* @param {Object} copyOptions - optional object with properties as defined by AWS API:
-* https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-prop
+* @param {string} ACL - an S3 [Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
 * @returns {Promise<Array>} returns a promise that resolves to a list of s3 version file objects.
 **/
-async function moveGranuleFileWithVersioning(source, target, sourceChecksumObject, copyOptions) {
+async function moveGranuleFileWithVersioning(source, target, sourceChecksumObject, ACL) {
   const { checksumType, checksum } = sourceChecksumObject;
   // compare the checksum of the existing file and new file, and handle them accordingly
   const targetFileSum = await S3.calculateS3ObjectChecksum(
@@ -90,11 +102,15 @@ async function moveGranuleFileWithVersioning(source, target, sourceChecksumObjec
   } else {
     log.debug(`Renaming ${target.Key}...`);
     await exports.renameS3FileWithTimestamp(target.Bucket, target.Key);
-    await exports.moveGranuleFile(
-      { Bucket: source.Bucket, Key: source.Key },
-      { Bucket: target.Bucket, Key: target.Key },
-      copyOptions
-    );
+
+    await S3.moveObject({
+      sourceBucket: source.Bucket,
+      sourceKey: source.Key,
+      destinationBucket: target.Bucket,
+      destinationKey: target.Key,
+      copyTags: true,
+      ACL
+    });
   }
   // return renamed files
   return exports.getRenamedS3File(target.Bucket, target.Key);
@@ -106,7 +122,7 @@ async function moveGranuleFileWithVersioning(source, target, sourceChecksumObjec
  * @param {Object} params - params object
  * @param {Object} params.source - source object: { Bucket, Key }
  * @param {Object} params.target - target object: { Bucket, Key }
- * @param {Object} params.copyOptions - s3 CopyObject() options
+ * @param {string} params.ACL - an S3 [Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
  * @param {string} params.duplicateHandling - duplicateHandling config string
  * One of [`error`, `skip`, `replace`, `version`].
  * @param {Function} [params.checksumFunction] - optional function to verify source & target:
@@ -124,10 +140,10 @@ async function moveGranuleFileWithVersioning(source, target, sourceChecksumObjec
 async function handleDuplicateFile({
   source,
   target,
-  copyOptions,
   duplicateHandling,
   checksumFunction,
-  syncFileFunction
+  syncFileFunction,
+  ACL
 }) {
   if (duplicateHandling === 'error') {
     // Have to throw DuplicateFile and not WorkflowError, because the latter
@@ -147,14 +163,21 @@ async function handleDuplicateFile({
       source,
       target,
       sourceChecksumObject,
-      copyOptions
+      ACL
     );
   } else if (duplicateHandling === 'replace') {
     if (syncFileFunction) {
       // sync directly to target location
       await syncFileFunction(target.Bucket, target.Key);
     } else {
-      await moveGranuleFile(source, target, copyOptions);
+      await S3.moveObject({
+        sourceBucket: source.Bucket,
+        sourceKey: source.Key,
+        destinationBucket: target.Bucket,
+        destinationKey: target.Key,
+        copyTags: true,
+        ACL
+      });
     }
     // verify integrity after sync/move
     if (checksumFunction) await checksumFunction(target.Bucket, target.Key);
@@ -233,7 +256,13 @@ async function moveGranuleFiles(sourceFiles, destinations) {
 
     if (target) {
       log.debug('moveGranuleFiles', source, target);
-      return moveGranuleFile(source, target).then(() => {
+      return S3.moveObject({
+        sourceBucket: source.Bucket,
+        sourceKey: source.Key,
+        destinationBucket: target.Bucket,
+        destinationKey: target.Key,
+        copyTags: true
+      }).then(() => {
         processedFiles.push({
           bucket: target.Bucket,
           key: target.Key,
@@ -286,9 +315,14 @@ async function renameS3FileWithTimestamp(bucket, key) {
   }
 
   log.debug(`renameS3FileWithTimestamp renaming ${bucket} ${key} to ${renamedKey}`);
-  return exports.moveGranuleFile(
-    { Bucket: bucket, Key: key }, { Bucket: bucket, Key: renamedKey }
-  );
+
+  await S3.moveObject({
+    sourceBucket: bucket,
+    sourceKey: key,
+    destinationBucket: bucket,
+    destinationKey: renamedKey,
+    copyTags: true
+  });
 }
 
 /**
