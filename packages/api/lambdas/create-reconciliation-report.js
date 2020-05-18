@@ -14,7 +14,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const CMR = require('@cumulus/cmr-client/CMR');
 const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue');
-const { constructOnlineAccessUrl } = require('@cumulus/cmrjs/cmr-utils');
+const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { Collection, Granule, ReconciliationReport } = require('../models');
@@ -117,12 +117,8 @@ async function reconciliationReportForCollections() {
 
   // get all collections from CMR and sort them, since CMR query doesn't support
   // 'Version' as sort_key
-  const cmr = new CMR({
-    provider: process.env.cmr_provider,
-    clientId: process.env.cmr_client_id,
-    username: process.env.cmr_username,
-    passwordSecretName: process.env.cmr_password_secret_name
-  });
+  const cmrSettings = await getCmrSettings();
+  const cmr = new CMR(cmrSettings);
   const cmrCollectionItems = await cmr.searchCollections({}, 'umm_json');
   const cmrCollectionIds = cmrCollectionItems.map((item) =>
     constructCollectionId(item.umm.ShortName, item.umm.Version)).sort();
