@@ -9,8 +9,6 @@ const {
   listS3ObjectsV2,
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
-  s3GetObjectTagging,
-  s3PutObjectTagging,
   promiseS3Upload,
   headObject,
   parseS3Uri
@@ -35,14 +33,6 @@ async function uploadFiles(files, bucket) {
     Body: file.endsWith('.cmr.xml')
       ? fs.createReadStream('tests/data/meta.xml') : parseS3Uri(file).Key
   })));
-}
-
-async function updateFileTags(files, bucket, TagSet) {
-  await Promise.all(files.map((file) => s3PutObjectTagging(
-    bucket,
-    parseS3Uri(file).Key,
-    { TagSet }
-  )));
 }
 
 function updateCmrFileType(payload) {
@@ -251,24 +241,6 @@ test.serial('Should not overwrite CMR file type if already explicitly set', asyn
   const output = await moveGranules(newPayload);
   const cmrFile = output.granules[0].files.filter((file) => file.filename.includes('.cmr.xml'));
   t.is('userSetType', cmrFile[0].type);
-});
-
-test.serial('Should preserve object tags.', async (t) => {
-  const newPayload = buildPayload(t);
-  const filesToUpload = cloneDeep(t.context.filesToUpload);
-  const tagset = [
-    { Key: 'fakeTag', Value: 'test-tag' },
-    { Key: 'granId', Value: newPayload.input.granules[0].granuleId }
-  ];
-
-  await uploadFiles(filesToUpload, t.context.stagingBucket);
-  await updateFileTags(filesToUpload, t.context.stagingBucket, tagset);
-
-  const output = await moveGranules(newPayload);
-  await Promise.all(output.granules[0].files.map(async (file) => {
-    const actualTags = await s3GetObjectTagging(file.bucket, file.filepath);
-    t.deepEqual(tagset, actualTags.TagSet);
-  }));
 });
 
 test.serial('Should overwrite files.', async (t) => {
