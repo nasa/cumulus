@@ -60,5 +60,8 @@
     "@cumulus/sf-sqs-report": "1.22.1",
     "@cumulus/sync-granule": "1.22.1",
     "@cumulus/test-processing": "1.22.1"
+  },
+  "devDependencies": {
+    "@cumulus/test-data": "1.22.1"
   }
 }
