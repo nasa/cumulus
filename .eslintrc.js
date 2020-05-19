@@ -1,5 +1,36 @@
 'use strict';
 
+const path = require('path');
+const { readFileSync } = require('fs');
+
+const loadRootPackageJson = () => {
+  const rootPackageJsonFilename = path.join(__dirname, 'package.json');
+
+  const rawRootPackageJson = readFileSync(rootPackageJsonFilename, 'utf8');
+
+  return JSON.parse(rawRootPackageJson);
+}
+
+const getRootDependencies = () => {
+  const rootPackageJson = loadRootPackageJson();
+
+  if (rootPackageJson.dependencies) {
+    return Object.keys(rootPackageJson.dependencies);
+  }
+
+  return [];
+}
+
+const getRootDevDependencies = () => {
+  const rootPackageJson = loadRootPackageJson();
+
+  if (rootPackageJson.devDependencies) {
+    return Object.keys(rootPackageJson.devDependencies);
+  }
+
+  return [];
+}
+
 module.exports = {
   plugins: [
     'eslint-comments',
@@ -167,12 +198,25 @@ module.exports = {
       rules: { 'no-console': 'off' }
     },
     {
-      files: ['**/test/**/*.js', '**/tests/**/*.js'],
+      files: [
+        '**/test/**/*.js',
+        '**/tests/**/*.js',
+        'example/spec/**/*.js'
+      ],
       rules: {
         'max-classes-per-file': 'off',
         'no-console': 'off',
         'no-new': 'off',
-        'no-param-reassign': 'off'
+        'no-param-reassign': 'off',
+        'node/no-extraneous-require': [
+          'error',
+          {
+            allowModules: [
+              ...getRootDependencies(),
+              ...getRootDevDependencies()
+            ]
+          }
+        ]
       }
     }
   ]

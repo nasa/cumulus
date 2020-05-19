@@ -11,14 +11,15 @@
     "files": [
       "./scripts/tests/**/*.js"
     ],
-    "verbose": true
+    "verbose": true,
+    "timeout": "15m"
   },
   "scripts": {
-    "test": "ava && for x in lambdas/*; do cd $x && npm run test && cd -; done",
-    "int-test": "jasmine && npm run parallel-tests",
+    "test": "../node_modules/.bin/ava && for x in lambdas/*; do cd $x && npm run test && cd -; done",
+    "int-test": "../node_modules/.bin/jasmine && npm run parallel-tests",
     "parallel-tests": "sh scripts/tests-parallel.sh",
-    "redeploy-test": "jasmine spec/standalone/redeployment/*.js",
-    "all-tests": "npm run parallel-tests && jasmine && npm run redeploy-test",
+    "redeploy-test": "../node_modules/.bin/jasmine spec/standalone/redeployment/*.js",
+    "all-tests": "npm run parallel-tests && ../node_modules/.bin/jasmine && npm run redeploy-test",
     "package": "for x in lambdas/*; do cd $x && npm run package && cd -; done",
     "python-lint": "for x in lambdas/*; do cd $x && npm run python-lint && cd -; done",
     "install-python-deps": "for x in lambdas/*; do cd $x && npm run install-python-deps || true && cd -; done"
@@ -58,33 +59,9 @@
     "@cumulus/queue-pdrs": "1.22.1",
     "@cumulus/sf-sqs-report": "1.22.1",
     "@cumulus/sync-granule": "1.22.1",
-    "@cumulus/test-processing": "1.22.1",
-    "aws-sdk": "^2.585.0",
-    "ssh2-streams": "^0.4.8"
+    "@cumulus/test-processing": "1.22.1"
   },
   "devDependencies": {
-    "@cumulus/test-data": "1.22.1",
-    "ava": "^3.8.2",
-    "babel-preset-env": "^1.7.0",
-    "fs-extra": "7.0.0",
-    "got": "^9.6.0",
-    "hasha": "v5.2.0",
-    "is-ip": "^3.1.0",
-    "jasmine": "^3.1.0",
-    "jasmine-console-reporter": "^2.0.1",
-    "jasmine-reporters": "^2.3.2",
-    "js-yaml": "^3.13.1",
-    "lodash": "^4.17.15",
-    "md5": "^2.2.1",
-    "mime-types": "^2.1.22",
-    "moment": "2.24.0",
-    "p-all": "^3.0.0",
-    "p-map": "^4.0.0",
-    "p-retry": "^4.2.0",
-    "p-wait-for": "^3.1.0",
-    "parallel": "^1.2.0",
-    "retry": "^0.12.0",
-    "rewire": "^4.0.1",
-    "uuid": "^3.2.1"
+    "@cumulus/test-data": "1.22.1"
   }
 }

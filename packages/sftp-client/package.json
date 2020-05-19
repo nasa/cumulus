@@ -19,11 +19,11 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
-    "build": "true",
-    "test": "ava"
+    "test": "../../node_modules/.bin/ava"
   },
   "ava": {
-    "verbose": true
+    "verbose": true,
+    "timeout": "15m"
   },
   "nyc": {
     "exclude": [
@@ -40,7 +40,6 @@
   },
   "devDependencies": {
     "@cumulus/checksum": "1.22.1",
-    "@cumulus/test-data": "1.22.1",
-    "ava": "^3.8.2"
+    "@cumulus/test-data": "1.22.1"
   }
 }

@@ -19,18 +19,16 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
-    "build": "true",
-    "build-docs": "jsdoc2md --template templates/docs-API.hbs string.js URLUtils.js util.js > docs/API.md",
-    "lint": "eslint .",
-    "test": "ava",
-    "test-coverage": "nyc ava",
-    "test-ci": "npm run lint"
+    "build-docs": "../../node_modules/.bin/jsdoc2md --template templates/docs-API.hbs string.js URLUtils.js util.js > docs/API.md",
+    "test": "../../node_modules/.bin/ava",
+    "test-coverage": "../../node_modules/.bin/nyc npm test"
   },
   "ava": {
     "files": [
       "tests/**"
     ],
-    "verbose": true
+    "verbose": true,
+    "timeout": "15m"
   },
   "nyc": {
     "exclude": [
@@ -61,14 +59,5 @@
     "ssh2": "^0.8.7",
     "url-join": "^4.0.0",
     "uuid": "^3.2.1"
-  },
-  "devDependencies": {
-    "ava": "^3.8.2",
-    "jsdoc-to-markdown": "^4.0.1",
-    "nock": "^10.0.0",
-    "nyc": "^14.0.0",
-    "p-timeout": "^3.2.0",
-    "rewire": "^4.0.1",
-    "sinon": "^7.1.1"
   }
 }

@@ -9,6 +9,7 @@ const path = require('path');
 
 const {
   buildS3Uri,
+  moveObject,
   s3ObjectExists
 } = require('@cumulus/aws-client/S3');
 
@@ -17,7 +18,6 @@ const { InvalidArgument } = require('@cumulus/errors');
 const {
   handleDuplicateFile,
   unversionFilename,
-  moveGranuleFile,
   duplicateHandlingType
 } = require('@cumulus/ingest/granule');
 
@@ -151,7 +151,8 @@ async function moveFileRequest(
   const s3ObjAlreadyExists = await s3ObjectExists(target);
   log.debug(`file ${target.Key} exists in ${target.Bucket}: ${s3ObjAlreadyExists}`);
 
-  const options = (bucketsConfig.type(file.bucket).match('public')) ? { ACL: 'public-read' } : null;
+  const ACL = bucketsConfig.type(file.bucket) === 'public' ? 'public-read' : undefined;
+
   let versionedFiles = [];
   if (s3ObjAlreadyExists) {
     if (markDuplicates) fileMoved.duplicate_found = true;
@@ -159,11 +160,18 @@ async function moveFileRequest(
     versionedFiles = await handleDuplicateFile({
       source,
       target,
-      copyOptions: options,
-      duplicateHandling
+      duplicateHandling,
+      ACL
     });
   } else {
-    await moveGranuleFile(source, target, options);
+    await moveObject({
+      sourceBucket: source.Bucket,
+      sourceKey: source.Key,
+      destinationBucket: target.Bucket,
+      destinationKey: target.Key,
+      copyTags: true,
+      ACL
+    });
   }
 
   const renamedFiles = versionedFiles.map((f) => ({
@@ -319,13 +327,13 @@ exports.moveGranules = moveGranules;
 /**
  * Lambda handler
  *
- * @param {Object} event - a Cumulus Message
- * @param {Object} context - an AWS Lambda context
- * @param {Function} callback - an AWS Lambda handler
- * @returns {undefined} - does not return a value
+ * @param {Object} event      - a Cumulus Message
+ * @param {Object} context    - an AWS Lambda context
+ * @returns {Promise<Object>} - Returns output from task.
+ *                              See schemas/output.json for detailed output schema
  */
-function handler(event, context, callback) {
-  cumulusMessageAdapter.runCumulusTask(moveGranules, event, context, callback);
+async function handler(event, context) {
+  return cumulusMessageAdapter.runCumulusTask(moveGranules, event, context);
 }
 
 exports.handler = handler;

@@ -18,10 +18,10 @@
     "node": ">=10.16.3"
   },
   "scripts": {
-    "test": "ava",
-    "test-coverage": "nyc ava",
-    "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack",
-    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
+    "test": "../../node_modules/.bin/ava",
+    "test-coverage": "../../node_modules/.bin/nyc npm test",
+    "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack",
+    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
     "package": "npm run build && (cd dist && zip -q -r lambda.zip $(ls | grep -v lambda.zip))"
   },
   "author": "Cumulus Authors",
@@ -31,7 +31,8 @@
     "verbose": true,
     "files": [
       "!tests/fixtures/**/*"
-    ]
+    ],
+    "timeout": "15m"
   },
   "nyc": {
     "exclude": [
@@ -42,7 +43,7 @@
     "@cumulus/aws-client": "1.22.1",
     "@cumulus/collection-config-store": "1.22.1",
     "@cumulus/common": "1.22.1",
-    "@cumulus/cumulus-message-adapter-js": "1.1.0",
+    "@cumulus/cumulus-message-adapter-js": "1.2.0",
     "@cumulus/errors": "1.22.1",
     "@cumulus/ingest": "1.22.1",
     "@cumulus/message": "1.22.1",
@@ -51,14 +52,6 @@
     "uuid": "^3.4.0"
   },
   "devDependencies": {
-    "@cumulus/test-data": "1.22.1",
-    "ava": "^3.8.2",
-    "babel-loader": "^8.0.6",
-    "babel-plugin-source-map-support": "^2.1.1",
-    "babel-preset-env": "^1.7.0",
-    "moment": "2.24.0",
-    "nyc": "^14.0.0",
-    "webpack": "~4.5.0",
-    "webpack-cli": "~2.0.14"
+    "@cumulus/test-data": "1.22.1"
   }
 }

@@ -21,7 +21,7 @@ consumer.__set__('receiveSQSMessages', stubReceiveSQSMessages);
 consumer.__set__('deleteSQSMessage', async () => true);
 function processFn() {}
 
-const sandbox = sinon.sandbox.create();
+const sandbox = sinon.createSandbox();
 let batchSpy;
 let messageSpy;
 
