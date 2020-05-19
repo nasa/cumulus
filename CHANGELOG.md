@@ -20,7 +20,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Migrate existing s3 reconciliation report records to database (CUMULUS-1911)
   After update your `data persistence` module and Cumulus resources, run the command:
+
+  ```bash
   ./node_modules/.bin/cumulus-api migrate --stack <your-terraform-deployment-prefix> --migrationVersion migration5
+  ```
 
 ### MIGRATION STEPS
 
@@ -57,11 +60,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- **CUMULUS-1987**
-  - `Remove granule from CMR` operation in `@cumulus/api` now passes token to CMR when fetching granule metadata, allowing removal of private granules
-
 - **CUMULUS-1894**
   - The `SyncGranule` task can now handle files larger than 5 GB
+- **CUMULUS-1987**
+  - `Remove granule from CMR` operation in `@cumulus/api` now passes token to CMR when fetching granule metadata, allowing removal of private granules
+- **CUMULUS-1993**
+  - For a given queue, the `sqs-message-consumer` Lambda will now only schedule workflows for rules matching the queue **and the collection information in each queue message (if any)**
+    - The consumer also now only reads each queue message **once per Lambda invocation**, whereas previously each message was read **once per queue rule per Lambda invocation**
 
 ### Deprecated
 

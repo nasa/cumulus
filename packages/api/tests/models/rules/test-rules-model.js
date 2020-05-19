@@ -6,12 +6,17 @@ const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 
 const awsServices = require('@cumulus/aws-client/services');
-const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+const {
+  createBucket,
+  putJsonS3Object,
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/aws-client/S3');
+const SQS = require('@cumulus/aws-client/SQS');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { ValidationError } = require('@cumulus/errors');
 
-const models = require('../../models');
-const { createSqsQueues, fakeRuleFactoryV2 } = require('../../lib/testUtils');
+const models = require('../../../models');
+const { createSqsQueues, fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 
 process.env.RulesTable = `RulesTable_${randomString()}`;
 process.env.stackName = randomString();
@@ -54,18 +59,18 @@ test.before(async () => {
   // create Rules table
   rulesModel = new models.Rule();
   await rulesModel.createTable();
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await createBucket(process.env.system_bucket);
   await Promise.all([
-    awsServices.s3().putObject({
-      Bucket: process.env.system_bucket,
-      Key: workflowfile,
-      Body: '{}'
-    }).promise(),
-    awsServices.s3().putObject({
-      Bucket: process.env.system_bucket,
-      Key: templateFile,
-      Body: '{}'
-    }).promise()
+    putJsonS3Object(
+      process.env.system_bucket,
+      workflowfile,
+      {}
+    ),
+    putJsonS3Object(
+      process.env.system_bucket,
+      templateFile,
+      {}
+    )
   ]);
 });
 
@@ -493,236 +498,6 @@ test('Creating a rule with a queueName parameter', async (t) => {
   t.is(payload.queueName, ruleItem.queueName);
 });
 
-test('creating a disabled SNS rule creates no event source mapping', async (t) => {
-  const snsTopicArn = randomString();
-  const item = fakeRuleFactoryV2({
-    workflow,
-    rule: {
-      type: 'sns',
-      value: snsTopicArn
-    },
-    state: 'DISABLED'
-  });
-
-  const rule = await rulesModel.create(item);
-
-  t.is(rule.state, 'DISABLED');
-  t.is(rule.rule.value, snsTopicArn);
-  t.falsy(rule.rule.arn);
-});
-
-test.serial('disabling an SNS rule removes the event source mapping', async (t) => {
-  const snsTopicArn = randomString();
-  const snsStub = sinon.stub(awsServices, 'sns')
-    .returns({
-      listSubscriptionsByTopic: () => ({
-        promise: () => Promise.resolve({
-          Subscriptions: [{
-            Endpoint: process.env.messageConsumer,
-            SubscriptionArn: snsTopicArn
-          }]
-        })
-      }),
-      unsubscribe: () => ({
-        promise: () => Promise.resolve()
-      })
-    });
-  const lambdaStub = sinon.stub(awsServices, 'lambda')
-    .returns({
-      addPermission: () => ({
-        promise: () => Promise.resolve()
-      }),
-      removePermission: () => ({
-        promise: () => Promise.resolve()
-      })
-    });
-
-  const item = fakeRuleFactoryV2({
-    workflow,
-    rule: {
-      type: 'sns',
-      value: snsTopicArn
-    },
-    state: 'ENABLED'
-  });
-
-  const rule = await rulesModel.create(item);
-
-  t.is(rule.rule.value, snsTopicArn);
-  t.truthy(rule.rule.arn);
-  t.is(rule.state, 'ENABLED');
-
-  const updates = { name: rule.name, state: 'DISABLED' };
-  const updatedRule = await rulesModel.update(rule, updates);
-
-  t.is(updatedRule.name, rule.name);
-  t.is(updatedRule.state, 'DISABLED');
-  t.is(updatedRule.rule.type, rule.rule.type);
-  t.is(updatedRule.rule.value, rule.rule.value);
-  t.falsy(updatedRule.rule.arn);
-
-  await rulesModel.delete(rule);
-  snsStub.restore();
-  lambdaStub.restore();
-});
-
-test.serial('enabling a disabled SNS rule and passing rule.arn throws specific error', async (t) => {
-  const snsTopicArn = randomString();
-  const snsStub = sinon.stub(awsServices, 'sns')
-    .returns({
-      listSubscriptionsByTopic: () => ({
-        promise: () => Promise.resolve({
-          Subscriptions: [{
-            Endpoint: process.env.messageConsumer,
-            SubscriptionArn: snsTopicArn
-          }]
-        })
-      }),
-      unsubscribe: () => ({
-        promise: () => Promise.resolve()
-      })
-    });
-
-  const item = fakeRuleFactoryV2({
-    workflow,
-    rule: {
-      type: 'sns',
-      value: snsTopicArn
-    },
-    state: 'DISABLED'
-  });
-
-  const rule = await rulesModel.create(item);
-
-  t.is(rule.rule.value, snsTopicArn);
-  t.falsy(rule.rule.arn);
-  t.is(rule.state, 'DISABLED');
-
-  const updates = {
-    name: rule.name,
-    state: 'ENABLED',
-    rule: {
-      ...rule.rule,
-      arn: 'test-value'
-    }
-  };
-  try {
-    // Should fail because a disabled rule should not have an ARN
-    // when being updated
-    await t.throwsAsync(rulesModel.update(rule, updates), null,
-      'Including rule.arn is not allowed when enabling a disabled rule');
-  } finally {
-    await rulesModel.delete(rule);
-    snsStub.restore();
-  }
-});
-
-test.serial('updating an SNS rule updates the event source mapping', async (t) => {
-  const snsTopicArn = randomString();
-  const newSnsTopicArn = randomString();
-
-  const snsStub = sinon.stub(awsServices, 'sns')
-    .returns({
-      listSubscriptionsByTopic: () => ({
-        promise: () => Promise.resolve({
-          Subscriptions: [{
-            Endpoint: process.env.messageConsumer,
-            SubscriptionArn: randomString()
-          }]
-        })
-      }),
-      unsubscribe: () => ({
-        promise: () => Promise.resolve()
-      })
-    });
-  const lambdaStub = sinon.stub(awsServices, 'lambda')
-    .returns({
-      addPermission: () => ({
-        promise: () => Promise.resolve()
-      }),
-      removePermission: () => ({
-        promise: () => Promise.resolve()
-      })
-    });
-
-  const item = fakeRuleFactoryV2({
-    workflow,
-    rule: {
-      type: 'sns',
-      value: snsTopicArn
-    },
-    state: 'ENABLED'
-  });
-
-  const rule = await rulesModel.create(item);
-
-  t.is(rule.rule.value, snsTopicArn);
-
-  const updates = { name: rule.name, rule: { value: newSnsTopicArn } };
-  const updatedRule = await rulesModel.update(rule, updates);
-
-  t.is(updatedRule.name, rule.name);
-  t.is(updatedRule.type, rule.type);
-  t.is(updatedRule.rule.value, newSnsTopicArn);
-  t.not(updatedRule.rule.arn, rule.rule.arn);
-
-  await rulesModel.delete(rule);
-  snsStub.restore();
-  lambdaStub.restore();
-});
-
-test.serial('deleting an SNS rule updates the event source mapping', async (t) => {
-  const snsTopicArn = randomString();
-
-  const snsStub = sinon.stub(awsServices, 'sns')
-    .returns({
-      listSubscriptionsByTopic: () => ({
-        promise: () => Promise.resolve({
-          Subscriptions: [{
-            Endpoint: process.env.messageConsumer,
-            SubscriptionArn: randomString()
-          }]
-        })
-      }),
-      unsubscribe: () => ({
-        promise: () => Promise.resolve()
-      })
-    });
-  const lambdaStub = sinon.stub(awsServices, 'lambda')
-    .returns({
-      addPermission: () => ({
-        promise: () => Promise.resolve()
-      }),
-      removePermission: () => ({
-        promise: () => Promise.resolve()
-      })
-    });
-  const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
-
-  const item = fakeRuleFactoryV2({
-    workflow,
-    rule: {
-      type: 'sns',
-      value: snsTopicArn
-    },
-    state: 'ENABLED'
-  });
-
-  const rule = await rulesModel.create(item);
-
-  t.is(rule.rule.value, snsTopicArn);
-
-  await rulesModel.delete(rule);
-
-  t.true(unsubscribeSpy.called);
-  t.true(unsubscribeSpy.calledWith({
-    SubscriptionArn: rule.rule.arn
-  }));
-
-  snsStub.restore();
-  lambdaStub.restore();
-});
-
 test('updates rule meta object', async (t) => {
   const { onetimeRule } = t.context;
 
@@ -800,47 +575,6 @@ test('update preserves nested keys', async (t) => {
   t.deepEqual(updatedRule.meta.testObject, newTestObject);
 });
 
-test('getRulesByTypeAndState returns list of rules', async (t) => {
-  const queueUrls = await createSqsQueues(randomString());
-  const rules = [
-    fakeRuleFactoryV2({
-      workflow,
-      rule: {
-        type: 'onetime'
-      },
-      state: 'ENABLED'
-    }),
-    fakeRuleFactoryV2({
-      workflow,
-      rule: {
-        type: 'sqs',
-        value: queueUrls.queueUrl
-      },
-      state: 'ENABLED'
-    }),
-    fakeRuleFactoryV2({
-      workflow,
-      rule: {
-        type: 'onetime'
-      },
-      state: 'DISABLED'
-    })
-  ];
-  const createdRules = await Promise.all(
-    rules.map((rule) => rulesModel.create(rule))
-  );
-
-  await Promise.all(
-    Object.values(queueUrls)
-      .map((queueUrl) => awsServices.sqs().deleteQueue({ QueueUrl: queueUrl }).promise())
-  );
-
-  const result = await rulesModel.getRulesByTypeAndState('onetime', 'ENABLED');
-  t.truthy(result.find((rule) => rule.name === createdRules[0].name));
-  t.falsy(result.find((rule) => rule.name === createdRules[1].name));
-  t.falsy(result.find((rule) => rule.name === createdRules[2].name));
-});
-
 test('create, update and delete sqs type rule', async (t) => {
   const queueUrls = await createSqsQueues(randomString());
   const newQueueUrls = await createSqsQueues(randomString());
@@ -887,5 +621,36 @@ test('create, update and delete sqs type rule', async (t) => {
   const queues = Object.values(queueUrls).concat(Object.values(newQueueUrls));
   await Promise.all(
     queues.map((queueUrl) => awsServices.sqs().deleteQueue({ QueueUrl: queueUrl }).promise())
+  );
+});
+
+test('creating SQS rule fails if queue does not exist', async (t) => {
+  const rule = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sqs',
+      value: 'non-existent-queue'
+    },
+    state: 'ENABLED'
+  });
+  await t.throwsAsync(
+    rulesModel.create(rule),
+    { message: /SQS queue non-existent-queue does not exist/ }
+  );
+});
+
+test('creating SQS rule fails if there is no redrive policy on the queue', async (t) => {
+  const queueUrl = await SQS.createQueue(randomId('queue'));
+  const rule = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sqs',
+      value: queueUrl
+    },
+    state: 'ENABLED'
+  });
+  await t.throwsAsync(
+    rulesModel.create(rule),
+    { message: `SQS queue ${queueUrl} does not have a dead-letter queue configured` }
   );
 });
