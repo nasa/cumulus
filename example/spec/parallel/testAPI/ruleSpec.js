@@ -27,33 +27,39 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
   beforeAll(async () => {
-    config = await loadConfig();
-    process.env.stackName = config.stackName;
+    try {
+      config = await loadConfig();
+      process.env.stackName = config.stackName;
 
-    const testId = createTimestampedTestId(config.stackName, 'Rule');
-    testSuffix = createTestSuffix(testId);
-    scheduledRuleName = timestampedName('SchedHelloWorldTest');
-    scheduledHelloWorldRule = {
-      name: scheduledRuleName,
-      collection: { name: `MOD09GQ${testSuffix}`, version: '006' },
-      workflow: 'HelloWorldWorkflow',
-      rule: {
-        type: 'scheduled',
-        value: 'rate(2 minutes)'
-      },
-      meta: {
-        triggerRule: scheduledRuleName
-      }
-    };
+      const testId = createTimestampedTestId(config.stackName, 'Rule');
+      testSuffix = createTestSuffix(testId);
+      scheduledRuleName = timestampedName('SchedHelloWorldTest');
+      scheduledHelloWorldRule = {
+        name: scheduledRuleName,
+        collection: { name: `MOD09GQ${testSuffix}`, version: '006' },
+        workflow: 'HelloWorldWorkflow',
+        rule: {
+          type: 'scheduled',
+          value: 'rate(2 minutes)'
+        },
+        meta: {
+          triggerRule: scheduledRuleName
+        }
+      };
 
-    await addCollections(config.stackName, config.bucket, collectionsDir,
-      testSuffix, testId);
-    // Create a scheduled rule
-    console.log(`post rule ${scheduledRuleName}`);
-    await rulesApiTestUtils.postRule({
-      prefix: config.stackName,
-      rule: scheduledHelloWorldRule
-    });
+      await addCollections(config.stackName, config.bucket, collectionsDir,
+        testSuffix, testId);
+      console.log('added collection');
+      // Create a scheduled rule
+      console.log(`post rule ${scheduledRuleName}`);
+      await rulesApiTestUtils.postRule({
+        prefix: config.stackName,
+        rule: scheduledHelloWorldRule
+      });
+      console.log(`posted rule ${JSON.stringify(scheduledHelloWorldRule)}`);
+    } catch (err) {
+      console.log(err);
+    }
   });
 
   afterAll(async () => {
@@ -69,6 +75,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
 
   describe('The scheduled rule kicks off a workflow', () => {
     beforeAll(async () => {
+      console.log(`scheduledRuleName: ${scheduledRuleName}`);
       execution = await waitForTestExecutionStart({
         workflowName: scheduledHelloWorldRule.workflow,
         stackName: config.stackName,
