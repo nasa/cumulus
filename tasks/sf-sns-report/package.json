@@ -18,10 +18,9 @@
     "node": ">=10.16.3"
   },
   "scripts": {
-    "test": "echo 'No Tests'",
-    "build": "rm -rf dist && mkdir dist && webpack",
+    "build": "rm -rf dist && mkdir dist && ../../node_modules/.bin/webpack",
     "build-lambda-zips": "(cd dist && rm -f lambda.zip && zip -q lambda.zip index.js)",
-    "watch": "rm -rf dist && mkdir dist && webpack --progress -w",
+    "watch": "rm -rf dist && mkdir dist && ../../node_modules/.bin/webpack --progress -w",
     "package": "npm run build && npm run build-lambda-zips"
   },
   "nyc": {
@@ -33,12 +32,5 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/cumulus-message-adapter-js": "1.2.0"
-  },
-  "devDependencies": {
-    "babel-loader": "^8.0.6",
-    "babel-plugin-source-map-support": "^2.1.1",
-    "babel-preset-env": "^1.7.0",
-    "webpack": "~4.5.0",
-    "webpack-cli": "~2.0.14"
   }
 }
