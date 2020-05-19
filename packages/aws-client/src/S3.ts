@@ -69,7 +69,7 @@ export const parseS3Uri = (uri: string) => {
     throw new TypeError('uri must be a S3 uri, e.g. s3://bucketname');
   }
 
-  if (parsedUri.path === null) {
+  if (typeof parsedUri.path !== 'string') {
     throw new TypeError(`Unable to determine key of ${uri}`);
   }
 
