@@ -46,8 +46,8 @@ const deleteReconciliationReport = async ({ prefix, name, callback = invokeApi }
 });
 
 /**
- * Post a request to the ems API
- * POST /ems
+ * Post a request to the reconciliationReports API
+ * POST /reconciliationReports
  *
  * @param {Object} params            - params
  * @param {string} params.prefix     - the prefix configured for the stack

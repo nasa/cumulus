@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   Updated all Cumulus core lambdas to utilize the new message adapter streaming interface via [cumulus-message-adapter-js v1.2.0](https://github.com/nasa/cumulus-message-adapter-js/releases/tag/v1.2.0).   Users of this version of Cumulus (or later) must utilize version 1.3.0 or greater of the [cumulus-message-adapter](https://github.com/nasa/cumulus-message-adapter) to support core lambdas.
 
 - **CUMULUS-1912**
-  - `@cumulus/api` reconciliationReports LIST endpoint returns a list of reconciliationReport records instead of S3Uri.
+  - `@cumulus/api` reconciliationReports list endpoint returns a list of reconciliationReport records instead of S3Uri.
 
 ### MIGRATION STEPS
 

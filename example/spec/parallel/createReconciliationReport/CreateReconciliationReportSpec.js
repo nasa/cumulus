@@ -3,7 +3,7 @@
 const cloneDeep = require('lodash/cloneDeep');
 const fs = require('fs-extra');
 const reconciliationReportsApi = require('@cumulus/api-client/reconciliationReports');
-const { buildS3Uri, getJsonS3Object } = require('@cumulus/aws-client/S3');
+const { buildS3Uri, fileExists, getJsonS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { dynamodb, s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -310,10 +310,17 @@ describe('When there are granule differences and granule reconciliation is run',
       name: reportRecord.name
     });
 
-    reconciliationReportsApi.getReconciliationReport({
+    const parsed = parseS3Uri(reportRecord.location);
+    const exists = await fileExists(parsed.Bucket, parsed.Key);
+    expect(exists).toBeFalse();
+
+    const response = await reconciliationReportsApi.getReconciliationReport({
       prefix: config.stackName,
       name: reportRecord.name
     });
+
+    expect(response.statusCode).toBe(404);
+    expect(JSON.parse(response.body).message).toBe(`No record found for ${reportRecord.name}`);
   });
 
   afterAll(async () => {
