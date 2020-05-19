@@ -2,7 +2,7 @@
 
 /**
  * This script should be used to build zip files for deployment to Lambda. It
- * hard-codes the timestamp of each file in the generatd zip so that identical
+ * hard-codes the timestamp of each file in the generated zip so that identical
  * files with different timestamps will result in an identical Lambda.
  */
 
@@ -15,6 +15,7 @@ const isDirectory = (x) => fs.statSync(x).isDirectory();
 // other arguments are the files to add to the zip.
 const [zipPath, ...files] = process.argv.slice(2);
 
+// I had to pick a date to use for all of the files, so why not
 // https://en.wikipedia.org/wiki/2009_Stanley_Cup_Finals#Game_seven
 const date = new Date('2009-06-12');
 
