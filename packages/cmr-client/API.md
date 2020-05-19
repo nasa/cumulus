@@ -17,7 +17,7 @@ CMR search, without loading them all into memory at once.  Handles paging.</p>
 ## CMR
 A class to simplify requests to the CMR
 
-**Kind**: global class  
+**Kind**: global class
 
 * [CMR](#CMR)
     * [new CMR(params)](#new_CMR_new)
@@ -46,7 +46,7 @@ The constructor for the CMR class
 | params.password | <code>string</code> | CMR password, not used if token is provided |
 | params.token | <code>string</code> | CMR or Launchpad token, if not provided, CMR username and password are used to get a cmr token |
 
-**Example**  
+**Example**
 ```js
 const { CMR } = require('@cumulus/cmr-client');
 
@@ -70,15 +70,15 @@ const cmrClient = new CMR({
 ### cmrClient.getToken() ⇒ <code>Promise.&lt;string&gt;</code>
 The method for getting the token
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Promise.&lt;string&gt;</code> - the token  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Promise.&lt;string&gt;</code> - the token
 <a name="CMR+getHeaders"></a>
 
 ### cmrClient.getHeaders(params) ⇒ <code>Object</code>
 Return object containing CMR request headers
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Object</code> - CMR headers object  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Object</code> - CMR headers object
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -91,8 +91,8 @@ Return object containing CMR request headers
 ### cmrClient.ingestCollection(xml) ⇒ <code>Promise.&lt;Object&gt;</code>
 Adds a collection record to the CMR
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -103,8 +103,8 @@ Adds a collection record to the CMR
 ### cmrClient.ingestGranule(xml) ⇒ <code>Promise.&lt;Object&gt;</code>
 Adds a granule record to the CMR
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -115,8 +115,8 @@ Adds a granule record to the CMR
 ### cmrClient.ingestUMMGranule(ummgMetadata) ⇒ <code>Promise.&lt;Object&gt;</code>
 Adds/Updates UMMG json metadata in the CMR
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - to the CMR response object.  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - to the CMR response object.
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -127,8 +127,8 @@ Adds/Updates UMMG json metadata in the CMR
 ### cmrClient.deleteCollection(datasetID) ⇒ <code>Promise.&lt;Object&gt;</code>
 Deletes a collection record from the CMR
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -139,8 +139,8 @@ Deletes a collection record from the CMR
 ### cmrClient.deleteGranule(granuleUR) ⇒ <code>Promise.&lt;Object&gt;</code>
 Deletes a granule record from the CMR
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -151,8 +151,8 @@ Deletes a granule record from the CMR
 ### cmrClient.searchCollections(params, [format]) ⇒ <code>Promise.&lt;Object&gt;</code>
 Search in collections
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -164,8 +164,8 @@ Search in collections
 ### cmrClient.searchGranules(params, [format]) ⇒ <code>Promise.&lt;Object&gt;</code>
 Search in granules
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -178,7 +178,7 @@ Search in granules
 A class to efficiently list all of the concepts (collections/granules) from
 CMR search, without loading them all into memory at once.  Handles paging.
 
-**Kind**: global class  
+**Kind**: global class
 
 * [CMRSearchConceptQueue](#CMRSearchConceptQueue)
     * [new CMRSearchConceptQueue(params)](#new_CMRSearchConceptQueue_new)
@@ -201,7 +201,7 @@ The constructor for the CMRSearchConceptQueue class
 | [params.searchParams] | <code>string</code> | <code>&quot;{}&quot;</code> | the search parameters |
 | params.format | <code>string</code> |  | the result format |
 
-**Example**  
+**Example**
 ```js
 const { CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 
@@ -221,8 +221,8 @@ View the next item in the queue
 This does not remove the object from the queue.  When there are no more
 items in the queue, returns 'null'.
 
-**Kind**: instance method of [<code>CMRSearchConceptQueue</code>](#CMRSearchConceptQueue)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - an item from the CMR search  
+**Kind**: instance method of [<code>CMRSearchConceptQueue</code>](#CMRSearchConceptQueue)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - an item from the CMR search
 <a name="CMRSearchConceptQueue+shift"></a>
 
 ### cmrSearchConceptQueue.shift() ⇒ <code>Promise.&lt;Object&gt;</code>
@@ -230,8 +230,8 @@ Remove the next item from the queue
 
 When there are no more items in the queue, returns `null`.
 
-**Kind**: instance method of [<code>CMRSearchConceptQueue</code>](#CMRSearchConceptQueue)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - an item from the CMR search  
+**Kind**: instance method of [<code>CMRSearchConceptQueue</code>](#CMRSearchConceptQueue)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - an item from the CMR search
 
 ---
 

@@ -18,6 +18,7 @@ const buildCollection = (overrides = {}) => ({
   granuleId: '^[^.]+$',
   granuleIdExtraction: '^([^.]+)\..+$',
   sampleFileName: 'asdf.jpg',
+  url_path: randomId('url-path-'),
   files: [
     {
       bucket: 'protected',

@@ -23,13 +23,11 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
-    "build-docs": "npm run tsc && jsdoc2md -t README.hbs *.js > README.md",
-    "lint": "eslint .",
+    "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md -t README.hbs *.js > README.md",
     "prepare": "npm run tsc",
-    "test": "ava",
-    "test-coverage": "nyc ava",
-    "test-ci": "npm run lint",
-    "tsc": "tsc"
+    "test": "../../node_modules/.bin/ava",
+    "test-coverage": "../../node_modules/.bin/nyc npm test",
+    "tsc": "../../node_modules/.bin/tsc"
   },
   "ava": {
     "files": [
@@ -56,19 +54,5 @@
     "p-map": "^1.2.0",
     "p-retry": "^4.2.0",
     "pump": "^3.0.0"
-  },
-  "devDependencies": {
-    "ava": "^3.8.2",
-    "@types/lodash": "^4.14.150",
-    "@types/pump": "^1.1.0",
-    "crypto-random-string": "^3.2.0",
-    "delay": "^4.3.0",
-    "jsdoc-to-markdown": "^5.0.3",
-    "nyc": "^14.0.0",
-    "p-timeout": "^3.2.0",
-    "proxyquire": "^2.1.3",
-    "rewire": "^4.0.1",
-    "sinon": "^8.0.4",
-    "typescript": "^3.8.3"
   }
 }

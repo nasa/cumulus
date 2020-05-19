@@ -6,9 +6,8 @@
     "node": ">=10.16.3"
   },
   "scripts": {
-    "test": "ava",
-    "test-coverage": "nyc ava",
-    "build": "echo 'do nothing'"
+    "test": "../../node_modules/.bin/ava",
+    "test-coverage": "../../node_modules/.bin/nyc npm test"
   },
   "publishConfig": {
     "access": "public"
@@ -58,13 +57,6 @@
   "devDependencies": {
     "@cumulus/checksum": "1.22.1",
     "@cumulus/cmrjs": "1.22.1",
-    "@cumulus/test-data": "1.22.1",
-    "ava": "^3.8.2",
-    "create-test-server": "^3.0.1",
-    "nyc": "^14.0.0",
-    "proxyquire": "^2.0.0",
-    "rewire": "^4.0.1",
-    "sinon": "^7.1.1",
-    "xml2js": "^0.4.19"
+    "@cumulus/test-data": "1.22.1"
   }
 }

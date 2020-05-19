@@ -3,6 +3,7 @@
  */
 
 import fs from 'fs';
+import isBoolean from 'lodash/isBoolean';
 import path from 'path';
 import pMap from 'p-map';
 import pRetry from 'p-retry';
@@ -68,7 +69,7 @@ export const parseS3Uri = (uri: string) => {
     throw new TypeError('uri must be a S3 uri, e.g. s3://bucketname');
   }
 
-  if (parsedUri.path === null) {
+  if (typeof parsedUri.path !== 'string') {
     throw new TypeError(`Unable to determine key of ${uri}`);
   }
 
@@ -854,4 +855,37 @@ export const multipartCopyObject = async (
 
     throw error;
   }
+};
+
+/**
+ * Move an S3 object to another location in S3
+ *
+ * @param {Object} params
+ * @param {string} params.sourceBucket
+ * @param {string} params.sourceKey
+ * @param {string} params.destinationBucket
+ * @param {string} params.destinationKey
+ * @param {string} [params.ACL] - an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
+ * @param {boolean} [params.copyTags=false]
+ * @returns {Promise<undefined>}
+ */
+export const moveObject = async (
+  params: {
+    sourceBucket: string,
+    sourceKey: string,
+    destinationBucket: string,
+    destinationKey: string,
+    ACL?: AWS.S3.ObjectCannedACL,
+    copyTags?: boolean
+  }
+) => {
+  await multipartCopyObject({
+    sourceBucket: params.sourceBucket,
+    sourceKey: params.sourceKey,
+    destinationBucket: params.destinationBucket,
+    destinationKey: params.destinationKey,
+    ACL: params.ACL,
+    copyTags: isBoolean(params.copyTags) ? params.copyTags : true
+  });
+  await deleteS3Object(params.sourceBucket, params.sourceKey);
 };
