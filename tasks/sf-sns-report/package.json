@@ -19,7 +19,7 @@
   },
   "scripts": {
     "build": "rm -rf dist && mkdir dist && ../../node_modules/.bin/webpack",
-    "build-lambda-zips": "(cd dist && rm -f lambda.zip && zip -q lambda.zip index.js)",
+    "build-lambda-zips": "(cd dist && rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js)",
     "watch": "rm -rf dist && mkdir dist && ../../node_modules/.bin/webpack --progress -w",
     "package": "npm run build && npm run build-lambda-zips"
   },

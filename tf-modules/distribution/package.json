@@ -6,7 +6,7 @@
     "node": ">=10.16.3"
   },
   "scripts": {
-    "build": "../../node_modules/.bin/webpack && (cd dist && rm -f package.zip && zip -q src.zip index.js)",
+    "build": "../../node_modules/.bin/webpack && (cd dist && rm -f package.zip && node ../../../bin/zip.js src.zip index.js)",
     "package": "npm run build",
     "test": "../../node_modules/.bin/ava"
   },

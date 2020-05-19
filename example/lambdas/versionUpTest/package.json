@@ -9,7 +9,7 @@
   },
   "scripts": {
     "test": "true",
-    "package": "rm -f lambda.zip && zip -q lambda.zip index.js",
+    "package": "rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js",
     "python-lint": "true"
   },
   "publishConfig": {
