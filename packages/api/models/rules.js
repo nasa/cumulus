@@ -386,7 +386,7 @@ class Rule extends Manager {
    *
    * @param {Object} item - the rule item
    * @param {string} eventType - kinesisSourceEvent Type
-   * @returns {boolean} return true if no other rules share the same event source mapping
+   * @returns {Promise<boolean>} return true if other rules share the same event source mapping
    */
   async isEventSourceMappingShared(item, eventType) {
     const arnClause = `#rl.#${this.eventMapping[eventType]} = :${this.eventMapping[eventType]}`;
@@ -403,13 +403,13 @@ class Rule extends Manager {
     };
     queryValues[`:${eventType}`] = item.rule[eventType];
 
-    const kinesisRules = await super.scan({
+    const rules = await super.scan({
       names: queryNames,
       filter: `#nm <> :name AND #rl.#tp = :ruleType AND ${arnClause}`,
       values: queryValues
     });
 
-    return (kinesisRules.Count && kinesisRules.Count > 0);
+    return (rules.Count && rules.Count > 0);
   }
 
   async addSnsTrigger(item) {
@@ -462,6 +462,10 @@ class Rule extends Manager {
   }
 
   async deleteSnsTrigger(item) {
+    // If event source mapping is shared by other rules, don't delete it
+    if (await this.isEventSourceMappingShared(item, 'arn')) {
+      return Promise.resolve();
+    }
     // delete permission statement
     const permissionParams = {
       FunctionName: process.env.messageConsumer,

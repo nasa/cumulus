@@ -289,11 +289,6 @@ test.serial('queryRules should look up sns-type rules which are associated with 
   const { TopicArn } = await awsServices.sns().createTopic({
     Name: randomId('topic')
   }).promise();
-  // 2 enabled SNS rules can't have same source ARN or there will be a
-  // bug on deletion
-  const { TopicArn: topicArn2 } = await awsServices.sns().createTopic({
-    Name: randomId('random')
-  }).promise();
 
   const rules = [
     fakeRuleFactoryV2({
@@ -307,7 +302,7 @@ test.serial('queryRules should look up sns-type rules which are associated with 
     fakeRuleFactoryV2({
       rule: {
         type: 'sns',
-        value: topicArn2
+        value: TopicArn
       },
       state: 'ENABLED'
     })
@@ -323,14 +318,9 @@ test.serial('queryRules should look up sns-type rules which are associated with 
   t.deepEqual(result[0], createdRules[0]);
   t.teardown(async () => {
     await Promise.all(createdRules.map((rule) => rulesModel.delete(rule)));
-    await Promise.all([
-      awsServices.sns().deleteTopic({
-        TopicArn
-      }),
-      awsServices.sns().deleteTopic({
-        TopicArn: topicArn2
-      })
-    ]);
+    await awsServices.sns().deleteTopic({
+      TopicArn
+    });
     stub.restore();
   });
 });
