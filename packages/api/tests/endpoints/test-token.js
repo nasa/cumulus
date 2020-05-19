@@ -217,7 +217,7 @@ test.serial('GET /refresh with an invalid token results in an authorization fail
     .post('/refresh')
     .set('Accept', 'application/json')
     .send({ token: 'InvalidToken' })
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -233,7 +233,7 @@ test.serial('GET /refresh with an non-existent token results in an authorization
     .post('/refresh')
     .set('Accept', 'application/json')
     .send({ token: jwtToken })
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -327,7 +327,7 @@ test.serial('DELETE /tokenDelete with an invalid token returns an invalid token 
   const response = await request(app)
     .delete('/token/InvalidToken')
     .set('Accept', 'application/json')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });

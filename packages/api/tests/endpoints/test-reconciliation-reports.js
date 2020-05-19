@@ -129,7 +129,7 @@ test.serial('CUMULUS-911 GET without pathParameters and with an invalid access t
     .get('/reconciliationReports')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -141,7 +141,7 @@ test.serial('CUMULUS-911 GET with pathParameters and with an invalid access toke
     .get('/reconciliationReports/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -153,7 +153,7 @@ test.serial('CUMULUS-911 POST with an invalid access token returns an unauthoriz
     .post('/reconciliationReports')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -165,7 +165,7 @@ test.serial('CUMULUS-911 DELETE with pathParameters and with an invalid access t
     .delete('/reconciliationReports/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
