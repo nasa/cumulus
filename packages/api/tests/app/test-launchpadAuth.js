@@ -105,7 +105,8 @@ test.serial('API request with an invalid Launchpad token returns a 403 unauthori
       .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
       .expect(403);
 
-    assertions.isInvalidAccessTokenResponse(t, response);
+    t.is(response.status, 403);
+    t.is(response.body.message, 'Invalid access token');
   } finally {
     stub.restore();
   }
