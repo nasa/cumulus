@@ -62,6 +62,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "archiver": "^4.0.1",
     "fs-extra": "^9.0.0"
   },
   "devDependencies": {

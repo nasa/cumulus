@@ -22,7 +22,7 @@
     "test-coverage": "../../node_modules/.bin/nyc npm test",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
-    "package": "npm run build && (cd dist && zip -q -r lambda.zip $(ls | grep -v lambda.zip))"
+    "package": "npm run build && (cd dist && rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js schemas)"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
