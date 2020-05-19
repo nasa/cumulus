@@ -254,11 +254,12 @@ const handleDuplicates = async (filesByGranuleId, duplicateHandling) => {
  * @returns {Object} - see schemas/output.json for detailed output schema that
  *    is passed to the next task in the workflow
  */
-const discoverGranules = async ({ config }) => {
+const discoverGranules = async ({ config, input }) => {
   const discoveredFiles = await listFiles(
     config.provider,
     config.useList,
-    config.collection.provider_path
+    // Temporarily pull from both so that I don't have to update all of the tests right now
+    input.provider_path || config.collection.provider_path
   );
 
   let filesByGranuleId = groupFilesByGranuleId(

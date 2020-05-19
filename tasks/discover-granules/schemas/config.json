@@ -26,7 +26,7 @@
       "patternProperties": {
         "\\S*": {
           "description": "bucket configuration for the key'd bucket",
-          "type": "object", 
+          "type": "object",
           "properties": {
             "name": {
               "type": "string",
@@ -46,7 +46,6 @@
       "properties": {
         "name": { "type": "string" },
         "version": { "type": "string" },
-        "provider_path": { "type": "string" },
         "url_path": { "type": "string" },
         "granuleId": { "type": "string" },
         "sampleFileName": { "type": "string" },

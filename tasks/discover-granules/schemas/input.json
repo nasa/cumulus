@@ -1,0 +1,10 @@
+{
+  "title": "DiscoverGranulesInput",
+  "description": "Describes the input used by the discover-granules task",
+  "type": "object",
+  "properties": {
+    "provider_path": {
+      "type": "string"
+    }
+  }
+}
