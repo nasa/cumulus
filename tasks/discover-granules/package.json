@@ -20,7 +20,7 @@
     "local": "node index.js | pino",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
-    "package": "npm run build && (cd dist && zip -q -r lambda.zip index.js schemas)"
+    "package": "npm run build && (cd dist && node ../../../bin/zip.js lambda.zip index.js schemas)"
   },
   "publishConfig": {
     "access": "public"
