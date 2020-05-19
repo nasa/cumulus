@@ -10,6 +10,7 @@ locals {
 }
 
 resource "aws_s3_bucket_object" "bucket_map_yaml" {
+  count = var.bucket_map_key == null ? 1 : 0
   bucket  = var.system_bucket
   key     = "${var.prefix}/thin-egress-app/bucket_map.yaml"
   content = templatefile("${path.module}/bucket_map.yaml.tmpl", { protected_buckets = var.protected_buckets, public_buckets = var.public_buckets })
@@ -32,10 +33,10 @@ resource "aws_secretsmanager_secret_version" "thin_egress_urs_creds" {
 }
 
 module "thin_egress_app" {
-  source = "https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.74.zip"
+  source = "s3::https://s3.amazonaws.com/cumulus-test-sandbox-private/tea-terraform-manual_build.zip"
 
   auth_base_url                      = var.urs_url
-  bucket_map_file                    = aws_s3_bucket_object.bucket_map_yaml.key
+  bucket_map_file                    = var.bucket_map_key == null ? aws_s3_bucket_object.bucket_map_yaml[0].key : var.bucket_map_key
   bucketname_prefix                  = ""
   config_bucket                      = var.system_bucket
   cookie_domain                      = var.thin_egress_cookie_domain

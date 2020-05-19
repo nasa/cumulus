@@ -312,7 +312,7 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
   t.deepEqual(temporalInfo, expectedTemporalInfo);
 });
 
-test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distribution', (t) => {
+test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distribution', async (t) => {
   const filename = 's3://fake-bucket/folder/key.txt';
   const distEndpoint = 'www.example.com/';
 
@@ -322,12 +322,12 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distrib
     key: 'folder/key.txt'
   };
 
-  const url = generateFileUrl(file, distEndpoint, 'distribution');
+  const url = await generateFileUrl(file, distEndpoint, 'distribution');
 
   t.is(url, 'www.example.com/fake-bucket/folder/key.txt');
 });
 
-test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3', (t) => {
+test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3', async (t) => {
   const filename = 's3://fake-bucket/folder/key.txt';
   const distEndpoint = 'www.example.com/';
 
@@ -337,12 +337,12 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3', (t
     key: 'folder/key.txt'
   };
 
-  const url = generateFileUrl(file, distEndpoint, 's3');
+  const url = await generateFileUrl(file, distEndpoint, 's3');
 
   t.is(url, filename);
 });
 
-test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3 with no filename', (t) => {
+test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3 with no filename', async (t) => {
   const filename = 's3://fake-bucket/folder/key.txt';
   const distEndpoint = 'www.example.com/';
 
@@ -351,12 +351,12 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3 with
     key: 'folder/key.txt'
   };
 
-  const url = generateFileUrl(file, distEndpoint, 's3');
+  const url = await generateFileUrl(file, distEndpoint, 's3');
 
   t.is(url, filename);
 });
 
-test.serial('generateFileUrl returns null for cmrGranuleUrlType none', (t) => {
+test.serial('generateFileUrl returns null for cmrGranuleUrlType none', async (t) => {
   const filename = 's3://fake-bucket/folder/key.txt';
   const distEndpoint = 'www.example.com/';
 
@@ -366,7 +366,7 @@ test.serial('generateFileUrl returns null for cmrGranuleUrlType none', (t) => {
     key: 'folder/key.txt'
   };
 
-  const url = generateFileUrl(file, distEndpoint, 'none');
+  const url = await generateFileUrl(file, distEndpoint, 'none');
 
   t.is(url, null);
 });
