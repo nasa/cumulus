@@ -6,7 +6,7 @@ const { removeNilProperties } = require('@cumulus/common/util');
 const { handleScheduleEvent } = require('../lambdas/sf-scheduler');
 const Rule = require('../models/rules');
 
-const filterRulesbyCollection = (rules, collection) => rules.filter(
+const filterRulesbyCollection = (rules, collection = {}) => rules.filter(
   (rule) => {
     // Match as much collection info as we found in the message
     const nameMatch = collection.name

@@ -91,6 +91,16 @@ test('filterRulesbyCollection handles rules with no collection information', (t)
   );
 });
 
+test('filterRulesbyCollection returns all rules if no collection information is provided', (t) => {
+  const rule1 = fakeRuleFactoryV2();
+  const rule2 = fakeRuleFactoryV2();
+
+  t.deepEqual(
+    rulesHelpers.filterRulesbyCollection([rule1, rule2], {}),
+    [rule1, rule2]
+  );
+});
+
 test('getMaxTimeoutForRules returns correct max timeout', (t) => {
   const rule1 = fakeRuleFactoryV2({
     meta: {

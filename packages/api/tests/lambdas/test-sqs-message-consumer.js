@@ -279,6 +279,36 @@ test.serial('messages are retried the correct number of times based on the rule 
   });
 });
 
+test.serial('SQS message consumer queues workflow for rule when there is no event collection', async (t) => {
+  const { queueMessageStub } = t.context;
+
+  const queue = await createSqsQueues(randomId('queue'));
+  const rule = fakeRuleFactoryV2({
+    name: randomId('matchingRule'),
+    rule: {
+      type: 'sqs',
+      value: queue.queueUrl
+    },
+    state: 'ENABLED',
+    workflow
+  });
+
+  const createdRule = await rulesModel.create(rule);
+  await SQS.sendSQSMessage(
+    queue.queueUrl,
+    { foo: 'bar' }
+  );
+
+  await handler(event);
+
+  // Should queue message for enabled rule
+  t.is(queueMessageStub.callCount, 1);
+
+  t.teardown(async () => {
+    await cleanupRulesAndQueues([createdRule], [queue]);
+  });
+});
+
 test.serial('SQS message consumer queues correct number of workflows for rules matching the event collection', async (t) => {
   const { queueMessageStub } = t.context;
 
@@ -320,7 +350,7 @@ test.serial('SQS message consumer queues correct number of workflows for rules m
   await Promise.all(rules.map((rule) => rulesModel.create(rule)));
   await SQS.sendSQSMessage(
     queue.queueUrl,
-    { collection }
+    { collection } // include collection in message
   );
 
   await handler(event);

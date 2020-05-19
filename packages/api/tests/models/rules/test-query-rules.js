@@ -307,7 +307,7 @@ test.serial('queryRules should look up sns-type rules which are associated with 
     fakeRuleFactoryV2({
       rule: {
         type: 'sns',
-        value: TopicArn
+        value: topicArn2
       },
       state: 'ENABLED'
     })
