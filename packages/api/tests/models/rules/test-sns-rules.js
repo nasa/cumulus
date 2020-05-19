@@ -271,40 +271,35 @@ test.serial('multiple rules using same SNS topic can be created and deleted', as
     Name: randomId('topic')
   }).promise();
 
-  const rules = [
-    fakeRuleFactoryV2({
-      rule: {
-        type: 'sns',
-        value: TopicArn
-      },
-      workflow,
-      state: 'ENABLED'
-    }),
-    fakeRuleFactoryV2({
-      rule: {
-        type: 'sns',
-        value: TopicArn
-      },
-      workflow,
-      state: 'ENABLED'
-    })
-  ];
-  const createdRules = await Promise.all(
-    rules.map((rule) => rulesModel.create(rule))
-  );
+  const rule1 = await rulesModel.create(fakeRuleFactoryV2({
+    rule: {
+      type: 'sns',
+      value: TopicArn
+    },
+    workflow,
+    state: 'ENABLED'
+  }));
+  const rule2 = await rulesModel.create(fakeRuleFactoryV2({
+    rule: {
+      type: 'sns',
+      value: TopicArn
+    },
+    workflow,
+    state: 'ENABLED'
+  }));
 
   // rules share the same subscription
-  t.is(createdRules[0].rule.arn, createdRules[1].rule.arn);
+  t.is(rule1.rule.arn, rule2.rule.arn);
 
   // Have to delete rules serially otherwise all rules still exist
   // when logic to check for shared source mapping is evaluated
-  await rulesModel.delete(createdRules[0]);
-  await t.notThrowsAsync(rulesModel.delete(createdRules[1]));
+  await rulesModel.delete(rule1);
+  await t.notThrowsAsync(rulesModel.delete(rule2));
 
   // Ensure that cleanup for SNS rule subscription was actually called
   t.true(unsubscribeSpy.called);
   t.true(unsubscribeSpy.calledWith({
-    SubscriptionArn: createdRules[0].rule.arn
+    SubscriptionArn: rule1.rule.arn
   }));
 
   t.teardown(async () => {
