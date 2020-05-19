@@ -71,6 +71,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1993**
   - For a given queue, the `sqs-message-consumer` Lambda will now only schedule workflows for rules matching the queue **and the collection information in each queue message (if any)**
     - The consumer also now only reads each queue message **once per Lambda invocation**, whereas previously each message was read **once per queue rule per Lambda invocation**
+  - Fixed bug preventing the deletion of multiple SNS rules that share the same SNS topic
 
 ### Deprecated
 
