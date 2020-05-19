@@ -8,7 +8,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const SQS = require('@cumulus/aws-client/SQS');
 const { s3, sns } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
-const { getRules, handler } = require('../../lambdas/message-consumer');
+const { handler } = require('../../lambdas/message-consumer');
 const Collection = require('../../models/collections');
 const Rule = require('../../models/rules');
 const Provider = require('../../models/providers');
@@ -33,83 +33,20 @@ const event = {
 
 const collection = {
   name: testCollectionName,
-  version: '0.0.0'
+  version: '1.0.0'
 };
 const provider = { id: 'PROV1' };
 
-const commonRuleParams = {
+const kinesisRule = {
   collection,
-  provider: provider.id
-};
-
-const kinesisRuleParams = {
+  provider: provider.id,
+  name: 'testRule1',
+  workflow: 'test-workflow-1',
+  state: 'ENABLED',
   rule: {
     type: 'kinesis',
     value: 'test-kinesisarn'
   }
-};
-
-const rule1 = {
-  ...commonRuleParams,
-  ...kinesisRuleParams,
-  name: 'testRule1',
-  workflow: 'test-workflow-1',
-  state: 'ENABLED'
-};
-
-// if the state is not provided, it will be set to default value 'ENABLED'
-const rule2 = {
-  ...commonRuleParams,
-  ...kinesisRuleParams,
-  name: 'testRule2',
-  workflow: 'test-workflow-2'
-};
-
-const rule3 = {
-  ...commonRuleParams,
-  ...kinesisRuleParams,
-  collection: {
-    name: testCollectionName,
-    version: '1.0.0'
-  },
-  name: 'testRule3',
-  workflow: 'test-workflow-3',
-  state: 'ENABLED'
-};
-
-const rule4 = {
-  ...commonRuleParams,
-  name: 'testRule4',
-  workflow: 'test-workflow-4',
-  state: 'ENABLED',
-  rule: {
-    type: 'kinesis',
-    value: 'kinesisarn-4'
-  }
-};
-
-const rule5 = {
-  ...commonRuleParams,
-  collection: {
-    name: testCollectionName,
-    version: '2.0.0'
-  },
-  name: 'testRule5',
-  workflow: 'test-workflow-5',
-  state: 'ENABLED',
-  rule: {
-    type: 'kinesis',
-    value: 'kinesisarn-5'
-  }
-};
-
-
-const disabledRule = {
-  ...commonRuleParams,
-  ...kinesisRuleParams,
-  name: 'disabledRule',
-  workflow: 'test-workflow-1',
-  state: 'DISABLED'
 };
 
 let sendSQSMessageSpy;
@@ -201,8 +138,7 @@ test.beforeEach(async (t) => {
   process.env.system_bucket = randomString();
   process.env.messageConsumer = randomString();
 
-  const rulesToCreate = [rule1, rule2, rule3, disabledRule, rule4, rule5];
-  await Promise.all(rulesToCreate.map((rule) => ruleModel.create(rule)));
+  await ruleModel.create(kinesisRule);
 });
 
 test.afterEach.always(async (t) => {
@@ -216,38 +152,6 @@ test.afterEach.always(async (t) => {
 
 test.after.always(async () => {
   await ruleModel.deleteTable();
-});
-
-// getKinesisRule tests
-test.serial('it should look up kinesis-type rules which are associated with the collection, but not those that are disabled', async (t) => {
-  const result = await getRules({
-    name: testCollectionName
-  }, 'kinesis');
-  t.is(result.length, 5);
-});
-
-test.serial('it should look up kinesis-type rules which are associated with the collection name and version', async (t) => {
-  const result = await getRules({
-    name: testCollectionName,
-    version: '1.0.0'
-  }, 'kinesis');
-  t.is(result.length, 1);
-});
-
-test.serial('it should look up kinesis-type rules which are associated with the source ARN', async (t) => {
-  const result = await getRules({
-    sourceArn: 'kinesisarn-4'
-  }, 'kinesis');
-  t.is(result.length, 1);
-});
-
-test.serial('it should look up kinesis-type rules which are associated with the collection name/version and source ARN', async (t) => {
-  const result = await getRules({
-    name: testCollectionName,
-    version: '2.0.0',
-    sourceArn: 'kinesisarn-5'
-  }, 'kinesis');
-  t.is(result.length, 1);
 });
 
 // handler tests
@@ -381,7 +285,7 @@ test.serial('A kinesis message should not publish record to fallbackSNS if it pr
   };
   t.true(publishStub.notCalled);
   return handler(kinesisEvent, {}, testCallback)
-    .then((r) => t.deepEqual(r, [[true, true, true, true, true]]));
+    .then((r) => t.deepEqual(r, [[true]]));
 });
 
 test.serial('An SNS Fallback message should not throw if message is valid.', (t) => {
@@ -391,7 +295,7 @@ test.serial('An SNS Fallback message should not throw if message is valid.', (t)
   };
   const snsEvent = wrapKinesisRecordInSnsEvent(kinesisEvent.Records[0]);
   return handler(snsEvent, {}, testCallback)
-    .then((r) => t.deepEqual(r, [[true, true, true, true, true]]));
+    .then((r) => t.deepEqual(r, [[true]]));
 });
 
 test.serial('An error publishing falllback record for Kinesis message should re-throw error from validation', async (t) => {

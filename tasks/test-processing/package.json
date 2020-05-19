@@ -12,9 +12,9 @@
     "node": ">=10.16.3"
   },
   "scripts": {
-    "build": "webpack",
-    "watch": "webpack --progress -w",
-    "package": "npm run build && (cd dist && zip -q -r lambda.zip $(ls | grep -v lambda.zip))"
+    "build": "../../node_modules/.bin/webpack",
+    "watch": "../../node_modules/.bin/webpack --progress -w",
+    "package": "npm run build && (cd dist && node ../../../bin/zip.js lambda.zip $(ls | grep -v lambda.zip))"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
@@ -22,13 +22,5 @@
     "@cumulus/aws-client": "1.22.1",
     "@cumulus/cumulus-message-adapter-js": "1.2.0",
     "@cumulus/integration-tests": "1.22.1"
-  },
-  "devDependencies": {
-    "babel-loader": "^8.0.6",
-    "babel-plugin-source-map-support": "^2.1.1",
-    "babel-preset-env": "^1.7.0",
-    "file-loader": "^3.0.1",
-    "webpack": "~4.5.0",
-    "webpack-cli": "~2.0.14"
   }
 }

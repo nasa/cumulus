@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- Updates to the Cumulus archive API:
+  - All endpoints now return a `401` response instead of a `403` for any request where the JWT passed as a Bearer token is invalid.
+  - POST `/refresh` and DELETE `/token/<token>` endpoints now return a `401` response for requests with expired tokens
+
+- **CUMULUS-1894**
+  - `@cumulus/ingest/granule.handleDuplicateFile()`
+    - The `copyOptions` parameter has been removed
+    - An `ACL` parameter has been added
+  - `@cumulus/ingest/granule.renameS3FileWithTimestamp()`
+    - Now returns `undefined`
+
+- **CUMULUS-1896**
+  Updated all Cumulus core lambdas to utilize the new message adapter streaming interface via [cumulus-message-adapter-js v1.2.0](https://github.com/nasa/cumulus-message-adapter-js/releases/tag/v1.2.0).   Users of this version of Cumulus (or later) must utilize version 1.3.0 or greater of the [cumulus-message-adapter](https://github.com/nasa/cumulus-message-adapter) to support core lambdas.
+
+- Migrate existing s3 reconciliation report records to database (CUMULUS-1911)
+  After update your `data persistence` module and Cumulus resources, run the command:
+
+  ```bash
+  ./node_modules/.bin/cumulus-api migrate --stack <your-terraform-deployment-prefix> --migrationVersion migration5
+  ```
+
 ### MIGRATION STEPS
 
 - To take advantage of the new TTL-based access token expiration implemented in CUMULUS-1777 (see notes below) and clear out existing records in your access tokens table, do the following:
@@ -17,19 +40,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   1. Follow the [Cumulus Message Adapter (CMA) deployment instructions](https://nasa.github.io/cumulus/docs/deployment/deployment-readme#deploy-the-cumulus-message-adapter-layer) and install a CMA layer version >=1.3.0
   2. If you are using any custom Node.js Lambdas in your workflows **and** the Cumulus CMA layer/`cumulus-message-adapter-js`, you must update your lambda to use [cumulus-message-adapter-js v1.2.0](https://github.com/nasa/cumulus-message-adapter-js/releases/tag/v1.2.0) and follow the migration instructions in the release notes. Prior versions of `cumulus-message-adapter-js` are not compatible with CMA >= 1.3.0.
 
-### BREAKING CHANGES
-
-- **CUMULUS-1896**
-  Updated all Cumulus core lambdas to utilize the new message adapter streaming interface via [cumulus-message-adapter-js v1.2.0](https://github.com/nasa/cumulus-message-adapter-js/releases/tag/v1.2.0).   Users of this version of Cumulus (or later) must utilize version 1.3.0 or greater of the [cumulus-message-adapter](https://github.com/nasa/cumulus-message-adapter) to support core lambdas.
-
-- Migrate existing s3 reconciliation report records to database (CUMULUS-1911)
-  After update your `data persistence` module and Cumulus resources, run the command:
-  ./node_modules/.bin/cumulus-api migrate --stack <your-terraform-deployment-prefix> --migrationVersion migration5
-
 ### Added
 
 - Added a limit for concurrent Elasticsearch requests when doing an index from database operation
 - Added the `es_request_concurrency` parameter to the archive and cumulus Terraform modules
+
+- **CUMULUS-1894**
+  - Added `@cumulus/aws-client/S3.moveObject()`
 
 - **CUMULUS-1911**
   - Added ReconciliationReports table
@@ -47,14 +64,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- **CUMULUS-1987**
-  - `Remove granule from CMR` operation in `@cumulus/api` now passes token to CMR when fetching granule metadata, allowing removal of private granules
-
 - **CUMULUS-1894**
   - The `SyncGranule` task can now handle files larger than 5 GB
-
+- **CUMULUS-1987**
+  - `Remove granule from CMR` operation in `@cumulus/api` now passes token to CMR when fetching granule metadata, allowing removal of private granules
+- **CUMULUS-1993**
+  - For a given queue, the `sqs-message-consumer` Lambda will now only schedule workflows for rules matching the queue **and the collection information in each queue message (if any)**
+    - The consumer also now only reads each queue message **once per Lambda invocation**, whereas previously each message was read **once per queue rule per Lambda invocation**
+  - Fixed bug preventing the deletion of multiple SNS rules that share the same SNS topic
 
 ### Deprecated
+
+- **CUMULUS-1894**
+  - `@cumulus/ingest/granule.copyGranuleFile()`
+  - `@cumulus/ingest/granule.moveGranuleFile()`
 
 - **CUMULUS-1987** - Deprecated the following functions:
   - `@cumulus/cmrjs/getMetadata(cmrLink)` -> `@cumulus/cmr-client/CMR.getGranuleMetadata(cmrLink)`

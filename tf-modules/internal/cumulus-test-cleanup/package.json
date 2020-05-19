@@ -7,9 +7,9 @@
     "node": ">=10.16.3"
   },
   "scripts": {
-    "build": "rm -rf dist && mkdir dist && webpack",
-    "watch": "rm -rf dist && mkdir dist && webpack --progress -w",
-    "package": "npm run build && (cd dist && zip -q -r lambda.zip index.js)"
+    "build": "rm -rf dist && mkdir dist && ../../../node_modules/.bin/webpack",
+    "watch": "rm -rf dist && mkdir dist && ../../../node_modules/.bin/webpack --progress -w",
+    "package": "npm run build && (cd dist && node ../../../../bin/zip.js lambda.zip index.js)"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",

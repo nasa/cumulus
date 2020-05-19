@@ -5,7 +5,7 @@ const rewire = require('rewire');
 
 const awsServices = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 
 const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
 const rulesHelpers = rewire('../../lib/rulesHelpers');
@@ -39,6 +39,109 @@ test.after(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   delete process.env.system_bucket;
   delete process.env.stackName;
+});
+
+test('filterRulesbyCollection returns rules with matching only collection name', (t) => {
+  const collection = {
+    name: randomId('name')
+  };
+  const rule1 = fakeRuleFactoryV2({
+    collection
+  });
+  const rule2 = fakeRuleFactoryV2();
+  t.deepEqual(
+    rulesHelpers.filterRulesbyCollection([rule1, rule2], collection),
+    [rule1]
+  );
+});
+
+test('filterRulesbyCollection returns rules with matching collection name and version', (t) => {
+  const collection = {
+    name: randomId('name'),
+    version: '1.0.0'
+  };
+  const rule1 = fakeRuleFactoryV2({
+    collection
+  });
+  const rule2 = fakeRuleFactoryV2({
+    collection: {
+      name: collection.name,
+      version: '2.0.0'
+    }
+  });
+  t.deepEqual(
+    rulesHelpers.filterRulesbyCollection([rule1, rule2], collection),
+    [rule1]
+  );
+});
+
+test('filterRulesbyCollection handles rules with no collection information', (t) => {
+  const collection = {
+    name: randomId('name'),
+    version: '1.0.0'
+  };
+  const rule1 = fakeRuleFactoryV2({
+    collection
+  });
+  const rule2 = fakeRuleFactoryV2();
+  delete rule2.collection;
+  t.deepEqual(
+    rulesHelpers.filterRulesbyCollection([rule1, rule2], collection),
+    [rule1]
+  );
+});
+
+test('filterRulesbyCollection returns all rules if no collection information is provided', (t) => {
+  const rule1 = fakeRuleFactoryV2();
+  const rule2 = fakeRuleFactoryV2();
+
+  t.deepEqual(
+    rulesHelpers.filterRulesbyCollection([rule1, rule2], {}),
+    [rule1, rule2]
+  );
+});
+
+test('getMaxTimeoutForRules returns correct max timeout', (t) => {
+  const rule1 = fakeRuleFactoryV2({
+    meta: {
+      visibilityTimeout: 5
+    }
+  });
+  const rule2 = fakeRuleFactoryV2({
+    meta: {
+      visibilityTimeout: 10
+    }
+  });
+  t.is(rulesHelpers.getMaxTimeoutForRules([rule1, rule2]), 10);
+});
+
+test('getMaxTimeoutForRules returns undefined for single rule with no timeout', (t) => {
+  const rule = fakeRuleFactoryV2({
+    meta: {}
+  });
+  t.is(rulesHelpers.getMaxTimeoutForRules([rule]), undefined);
+});
+
+test('getMaxTimeoutForRules returns undefined for multiple rules with no timeout', (t) => {
+  const rule1 = fakeRuleFactoryV2({
+    meta: {}
+  });
+  const rule2 = fakeRuleFactoryV2({
+    meta: {}
+  });
+  t.is(rulesHelpers.getMaxTimeoutForRules([rule1, rule2]), undefined);
+});
+
+test('getMaxTimeoutForRules returns correct max for rules with and without timeouts', (t) => {
+  const rule1 = fakeRuleFactoryV2({
+    meta: {
+      visibilityTimeout: 1
+    }
+  });
+  const rule2 = fakeRuleFactoryV2({
+    meta: {}
+  });
+  t.is(rulesHelpers.getMaxTimeoutForRules([rule1, rule2]), 1);
 });
 
 test('queueMessageForRule respects eventObject with collection object', async (t) => {

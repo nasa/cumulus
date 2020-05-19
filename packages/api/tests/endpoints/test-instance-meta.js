@@ -73,7 +73,7 @@ test('GET with invalid access token returns an invalid token response', async (t
     .get('/instanceMeta')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });

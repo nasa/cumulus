@@ -12,11 +12,11 @@
     "./dist/**/*.d.ts"
   ],
   "scripts": {
-    "build-docs": "npm run tsc && jsdoc2md -t templates/README.md.hbs ./dist/*.js > README.md",
-    "test": "ava",
-    "test-coverage": "nyc ava",
+    "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md -t templates/README.md.hbs ./dist/*.js > README.md",
+    "test": "../../node_modules/.bin/ava",
+    "test-coverage": "../../node_modules/.bin/nyc npm test",
     "debug": "NODE_ENV=test node --inspect-brk node_modules/ava/profile.js --serial tests/*.js",
-    "tsc": "tsc",
+    "tsc": "../../node_modules/.bin/tsc",
     "prepare": "npm run tsc"
   },
   "ava": {
@@ -42,11 +42,5 @@
   "license": "Apache-2.0",
   "dependencies": {
     "cksum": "^1.3.0"
-  },
-  "devDependencies": {
-    "ava": "^3.8.2",
-    "jsdoc-to-markdown": "^5.0.3",
-    "nyc": "^14.0.0",
-    "typescript": "^3.8.3"
   }
 }
