@@ -12,7 +12,6 @@ const { randomId } = require('@cumulus/common/test-utils');
 
 const EsCollection = require('../../es/collections');
 const models = require('../../models');
-const assertions = require('../../lib/assertions');
 const { createJwtToken } = require('../../lib/token');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
 const { app } = require('../../app');
