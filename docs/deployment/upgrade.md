@@ -22,10 +22,14 @@ When breaking changes have been introduced, the Cumulus Core team will publish i
 
 **IMPORTANT** 
 
-1. **Use consistent Cumulus versions:** All modules must be updated to the same Cumulus version number (see below)
+1. **Use consistent Cumulus versions:** All Terraform modules must be updated to the same Cumulus version number (see below). In addition, your workflow lambdas that utilize published Cumulus Core npm modules should always match your deployed Cumulus version to ensure compatibility. **Check the CHANGELOG for deprecation/breaking change notices.**
 2. **Follow all intervening steps:** When skipping over versions, you **must perform all intervening migration steps**.  For example, if going from version 1.1.0 to 1.3.0, upgrade from 1.1.0 to 1.2.0 and then to 1.3.0.  This is critical because each release that contains migration steps provide instructions _only_ for migrating from the _immediately_ previous release, but you must follow _all_ migration steps between your currently installed release and _every release_ through the release that you wish to migrate to.
 3. **Migrate lower environments first:** Migrate your "lowest" environment first and test it to ensure correctness before performing migration steps in each successively higher environment.  For example, update Sandbox, then UAT, then SIT, and finally Prod.
-4. **Migrate during appropriate times:** Choose a time to migrate when support is more likely to be available in case you encounter problems, such as when you are most likely to be able to obtain support relatively promptly.  Prefer earlier in the week over later in the week (particularly avoiding Fridays, if possible).
+4. **Conduct smoke tests:** In each environment, perform smoke tests that give you confidence that the upgrade was successful, prior to moving on to the next environment. Since deployments can vary widely, it is up to you to determine tests that might be specific to your deployment, but here are some general tests you might wish to perform:
+    * Confirm the Cumulus API is running and reachable by hitting the `/version` endpoint
+    * Run a workflow and confirm its operation (taking care in Production)
+    * Confirm distribution works
+5. **Migrate during appropriate times:** Choose a time to migrate when support is more likely to be available in case you encounter problems, such as when you are most likely to be able to obtain support relatively promptly.  Prefer earlier in the week over later in the week (particularly avoiding Fridays, if possible).
 
 ## Updating Cumulus version
 
