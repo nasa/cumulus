@@ -18,7 +18,7 @@ const { constructOnlineAccessUrl } = require('@cumulus/cmrjs/cmr-utils');
 
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { Collection, Granule, ReconciliationReport } = require('../models');
-const { deconstructCollectionId, parseException } = require('../lib/utils');
+const { deconstructCollectionId, errorify } = require('../lib/utils');
 
 const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includes(bucketConfig.type);
 
@@ -511,7 +511,7 @@ async function processRequest(params) {
   const { systemBucket, stackName } = params;
   const reportStartTime = moment.utc();
   const reportRecordName = `inventoryReport-${reportStartTime.format('YYYYMMDDTHHmmssSSS')}`;
-  const reportKey = `${stackName}/reconciliation-reports/inventoryReport-${reportRecordName}.json`;
+  const reportKey = `${stackName}/reconciliation-reports/${reportRecordName}.json`;
 
   // add request to database
   const reconciliationReportModel = new ReconciliationReport();
@@ -530,7 +530,10 @@ async function processRequest(params) {
     log.error(`Error creating reconciliation report ${reportRecordName}`, e);
     const updates = {
       status: 'Failed',
-      error: parseException(e)
+      error: {
+        Error: e.message,
+        Cause: errorify(e)
+      }
     };
     await reconciliationReportModel.update({ name: reportRecord.name }, updates);
   }

@@ -18,66 +18,101 @@ const Rule = require('../models/rules');
  * messages from SQS queue are processed
  */
 async function processQueues(event, dispatchFn) {
-  const model = new Rule();
-  const rules = await model.getRulesByTypeAndState('sqs', 'ENABLED');
+  const rulesModel = new Rule();
+  let rules;
+
+  try {
+    rules = await rulesModel.queryRules({
+      type: 'sqs',
+      state: 'ENABLED'
+    });
+  } catch (err) {
+    log.error(err);
+  }
 
   const messageLimit = event.messageLimit || 1;
   const timeLimit = event.timeLimit || 240;
 
-  await Promise.all(rules.map(async (rule) => {
+  const rulesByQueueMap = rules.reduce((map, rule) => {
     const queueUrl = rule.rule.value;
+    // eslint-disable-next-line no-param-reassign
+    map[queueUrl] = map[queueUrl] || [];
+    map[queueUrl].push(rule);
+    return map;
+  }, {});
 
-    if (!(await sqsQueueExists(queueUrl))) return Promise.resolve();
+  await Promise.all(Object.keys(rulesByQueueMap).map(async (queueUrl) => {
+    const rulesForQueue = rulesByQueueMap[queueUrl];
+
+    if (!(await sqsQueueExists(queueUrl))) {
+      const ruleIds = rulesForQueue.map((rule) => rule.id);
+      log.info(`Could not find queue ${queueUrl}. Unable to process rules ${ruleIds}`);
+      return Promise.resolve();
+    }
+
+    // Use the max of the visibility timeouts for all the rules
+    // bound to this queue.
+    const visibilityTimeout = rulesHelpers.getMaxTimeoutForRules(rulesForQueue);
 
     const consumer = new Consumer({
-      queueUrl: queueUrl,
+      queueUrl,
       messageLimit,
       timeLimit,
-      visibilityTimeout: rule.meta.visibilityTimeout,
+      visibilityTimeout,
       deleteProcessedMessage: false
     });
-    log.info(`processQueues for rule ${rule.name} and queue ${queueUrl}`);
-    return consumer.consume(dispatchFn.bind({ rule: rule }));
+    log.info(`processing queue ${queueUrl}`);
+
+    return consumer.consume(dispatchFn.bind({
+      queueUrl,
+      rulesForQueue
+    }));
   }));
 }
 
 /**
- * process an SQS message
+ * Process an SQS message
  *
  * @param {Object} message - incoming queue message
  * @returns {Promise} - promise resolved when the message is dispatched
- *
  */
 function dispatch(message) {
-  const queueUrl = this.rule.rule.value;
   const messageReceiveCount = parseInt(message.Attributes.ApproximateReceiveCount, 10);
-
-  if (get(this.rule, 'meta.retries', 3) < messageReceiveCount - 1) {
-    log.debug(`message ${message.MessageId} from queue ${queueUrl} has been processed ${messageReceiveCount - 1} times, no more retries`);
-    // update visibilityTimeout to 5s
-    const params = {
-      QueueUrl: queueUrl,
-      ReceiptHandle: message.ReceiptHandle,
-      VisibilityTimeout: 5
-    };
-    return sqs().changeMessageVisibility(params).promise();
-  }
-
-  if (messageReceiveCount !== 1) {
-    log.debug(`message ${message.MessageId} from queue ${queueUrl} is being processed ${messageReceiveCount} times`);
-  }
+  const queueUrl = this.queueUrl;
+  const rulesForQueue = this.rulesForQueue;
 
   const eventObject = JSON.parse(message.Body);
-  const eventSource = {
-    type: 'sqs',
-    messageId: message.MessageId,
-    queueUrl,
-    receiptHandle: message.ReceiptHandle,
-    receivedCount: messageReceiveCount,
-    deleteCompletedMessage: true,
-    workflow_name: this.rule.workflow
-  };
-  return rulesHelpers.queueMessageForRule(this.rule, eventObject, eventSource);
+  const eventCollection = rulesHelpers.lookupCollectionInEvent(eventObject);
+
+  const rulesToSchedule = rulesHelpers.filterRulesbyCollection(rulesForQueue, eventCollection);
+
+  return Promise.all(rulesToSchedule.map((rule) => {
+    if (get(rule, 'meta.retries', 3) < messageReceiveCount - 1) {
+      log.debug(`message ${message.MessageId} from queue ${queueUrl} has been processed ${messageReceiveCount - 1} times, no more retries`);
+      // update visibilityTimeout to 5s
+      const params = {
+        QueueUrl: queueUrl,
+        ReceiptHandle: message.ReceiptHandle,
+        VisibilityTimeout: 5
+      };
+      return sqs().changeMessageVisibility(params).promise();
+    }
+
+    if (messageReceiveCount !== 1) {
+      log.debug(`message ${message.MessageId} from queue ${queueUrl} is being processed ${messageReceiveCount} times`);
+    }
+
+    const eventSource = {
+      type: 'sqs',
+      messageId: message.MessageId,
+      queueUrl,
+      receiptHandle: message.ReceiptHandle,
+      receivedCount: messageReceiveCount,
+      deleteCompletedMessage: true,
+      workflow_name: rule.workflow
+    };
+    return rulesHelpers.queueMessageForRule(rule, eventObject, eventSource);
+  }));
 }
 
 /**
@@ -89,15 +124,11 @@ function dispatch(message) {
  *   this execution (default 1)
  * @param {string} event.timeLimit - how many seconds the lambda function will
  *   remain active and query the queue (default 240 s)
- * @param {*} context - lambda context
- * @param {*} cb - callback function to explicitly return information back to the caller.
- * @returns {(error|string)} Success message or error
+ * @returns {Promise<undefined>} Success message or error
+ * @throws {Error}
  */
-function handler(event, context, cb) {
-  return processQueues(event, dispatch)
-    .catch((err) => {
-      cb(err);
-    });
+async function handler(event) {
+  return processQueues(event, dispatch);
 }
 
 module.exports = {

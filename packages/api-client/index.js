@@ -8,6 +8,7 @@ const collections = require('./collections');
 const ems = require('./ems');
 const executions = require('./executions');
 const providers = require('./providers');
+const reconciliationReports = require('./reconciliationReports');
 
 module.exports = {
   collections,
@@ -17,5 +18,6 @@ module.exports = {
   granules,
   invokeApi,
   providers,
+  reconciliationReports,
   rules
 };

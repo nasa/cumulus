@@ -1,13 +1,19 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const path = require('path');
 const { invoke } = require('@cumulus/aws-client/Lambda');
 const {
   deleteS3Object,
   getS3Object,
-  listS3ObjectsV2
+  fileExists,
+  parseS3Uri
 } = require('@cumulus/aws-client/S3');
+const { inTestMode } = require('@cumulus/common/test-utils');
+const { RecordDoesNotExist } = require('@cumulus/errors');
+
+const models = require('../models');
+const { Search } = require('../es/search');
+const indexer = require('../es/indexer');
 
 /**
  * List all reconciliation reports
@@ -17,21 +23,14 @@ const {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const constructResultFunc = (fileNames) =>
-    ({
-      meta: {
-        name: 'cumulus-api',
-        stack: process.env.stackName
-      },
-      results: fileNames
-    });
+  const search = new Search(
+    { queryStringParameters: req.query },
+    'reconciliationReport',
+    process.env.ES_INDEX
+  );
 
-  const systemBucket = process.env.system_bucket;
-  const key = `${process.env.stackName}/reconciliation-reports/`;
-  const fileList = await listS3ObjectsV2({ Bucket: systemBucket, Prefix: key });
-  const fileNames = fileList.filter((s3Object) => !s3Object.Key.endsWith(key))
-    .map((s3Object) => path.basename(s3Object.Key));
-  return res.send(constructResultFunc(fileNames));
+  const response = await search.query();
+  return res.send(response);
 }
 
 /**
@@ -43,16 +42,21 @@ async function list(req, res) {
  */
 async function get(req, res) {
   const name = req.params.name;
-  const key = `${process.env.stackName}/reconciliation-reports/${name}`;
+  const reconciliationReportModel = new models.ReconciliationReport();
 
   try {
-    const file = await getS3Object(process.env.system_bucket, key);
+    const result = await reconciliationReportModel.get({ name });
+    const { Bucket, Key } = parseS3Uri(result.location);
+    const file = await getS3Object(Bucket, Key);
     return res.send(JSON.parse(file.Body.toString()));
-  } catch (err) {
-    if (err.name === 'NoSuchKey') {
+  } catch (e) {
+    if (e instanceof RecordDoesNotExist) {
+      return res.boom.notFound(`No record found for ${name}`);
+    }
+    if (e.name === 'NoSuchKey') {
       return res.boom.notFound('The report does not exist!');
     }
-    throw err;
+    throw e;
   }
 }
 
@@ -65,9 +69,26 @@ async function get(req, res) {
  */
 async function del(req, res) {
   const name = req.params.name;
-  const key = `${process.env.stackName}/reconciliation-reports/${name}`;
+  const reconciliationReportModel = new models.ReconciliationReport();
+  const record = await reconciliationReportModel.get({ name });
 
-  await deleteS3Object(process.env.system_bucket, key);
+  const { Bucket, Key } = parseS3Uri(record.location);
+  if (await fileExists(Bucket, Key)) {
+    await deleteS3Object(Bucket, Key);
+  }
+  await reconciliationReportModel.delete({ name });
+
+  if (inTestMode()) {
+    const esClient = await Search.es(process.env.ES_HOST);
+    await indexer.deleteRecord({
+      esClient,
+      id: name,
+      type: 'reconciliationReport',
+      index: process.env.ES_INDEX,
+      ignore: [404]
+    });
+  }
+
   return res.send({ message: 'Report deleted' });
 }
 
@@ -79,8 +100,12 @@ async function del(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
-  const data = await invoke(process.env.invokeReconcileLambda, {});
-  return res.send({ message: 'Report is being generated', status: data.StatusCode });
+  const invocationType = req.body.invocationType || 'Event';
+  const result = await invoke(process.env.invokeReconcileLambda, {}, invocationType);
+  const response = (invocationType === 'Event')
+    ? { message: 'Report is being generated', status: result.StatusCode }
+    : { message: 'Report generated', report: JSON.parse(result.Payload) };
+  return res.send(response);
 }
 
 router.get('/:name', get);
