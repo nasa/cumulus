@@ -27,6 +27,7 @@ locals {
       OAUTH_PROVIDER               = var.oauth_provider
       PdrsTable                    = var.dynamo_tables.pdrs.name
       ProvidersTable               = var.dynamo_tables.providers.name
+      ReconciliationReportsTable   = var.dynamo_tables.reconciliation_reports.name
       RulesTable                   = var.dynamo_tables.rules.name
       oauth_user_group             = var.oauth_user_group
       TOKEN_REDIRECT_ENDPOINT      = local.api_redirect_uri
@@ -62,6 +63,7 @@ locals {
       collection_sns_topic_arn     = aws_sns_topic.report_collections_topic.arn
       auth_mode                    = "public"
       ES_CONCURRENCY               = var.es_request_concurrency
+      ES_INDEX_SHARDS              = var.es_index_shards
     }
 }
 

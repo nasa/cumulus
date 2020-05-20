@@ -12,6 +12,7 @@ resource "aws_lambda_function" "custom_bootstrap" {
       CMR_ENVIRONMENT = var.cmr_environment
       stackName       = var.prefix
       system_bucket   = var.system_bucket
+      ES_INDEX_SHARDS = var.es_index_shards
     }
   }
 

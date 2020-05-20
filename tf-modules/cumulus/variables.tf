@@ -518,3 +518,9 @@ variable "additional_log_groups_to_elk" {
   type = map(string)
   default = {}
 }
+
+variable "es_index_shards" {
+  description = "The number of shards for the Elasticsearch index"
+  type        = number
+  default     = 2
+}
