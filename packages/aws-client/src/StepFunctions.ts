@@ -21,16 +21,19 @@ export const doesExecutionExist = (describeExecutionPromise: Promise<unknown>) =
     });
 
 // Copied here to avoid requiring @cumulus/common just for this function
-const warned = new Set();
-const deprecate = (name: string, version: string, alternative?: string) => {
-  const key = `${name}-${version}`;
-  if (!warned.has(key)) {
+const deprecate = (() => {
+  const warned = new Set();
+
+  return (name:string, version: string, alternative:string) => {
+    const key = `${name}-${version}`;
+    if (warned.has(key)) return;
+
     warned.add(key);
     let message = `${name} is deprecated after version ${version} and will be removed in a future release.`;
     if (alternative) message += ` Use ${alternative} instead.`;
     log.warn(message);
-  }
-};
+  };
+})();
 
 /**
  * Given a character, replaces the JS unicode-escape sequence for the character

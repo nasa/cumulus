@@ -31,16 +31,19 @@ const log = require('./log');
  *
  * @alias module:util
  */
-const warned = new Set();
-exports.deprecate = (name, version, alternative) => {
-  const key = `${name}-${version}`;
-  if (!warned.has(key)) {
+exports.deprecate = (() => {
+  const warned = new Set();
+
+  return (name, version, alternative) => {
+    const key = `${name}-${version}`;
+    if (warned.has(key)) return;
+
     warned.add(key);
     let message = `${name} is deprecated after version ${version} and will be removed in a future release.`;
     if (alternative) message += ` Use ${alternative} instead.`;
     log.warn(message);
-  }
-};
+  };
+})();
 
 /**
  * Wait for the defined number of milliseconds
