@@ -28,9 +28,7 @@ const deprecate = (name: string, version: string, alternative?: string) => {
     warned.add(key);
     let message = `${name} is deprecated after version ${version} and will be removed in a future release.`;
     if (alternative) message += ` Use ${alternative} instead.`;
-    if (process.env.ENABLE_DEPRECATION_WARNINGS !== 'true') {
-      log.warn(message);
-    }
+    log.warn(message);
   }
 };
 
