@@ -21,11 +21,16 @@ export const doesExecutionExist = (describeExecutionPromise: Promise<unknown>) =
     });
 
 // Copied here to avoid requiring @cumulus/common just for this function
+const warned = new Set();
 const deprecate = (name: string, version: string, alternative?: string) => {
-  let message = `${name} is deprecated after version ${version} and will be removed in a future release.`;
-  if (alternative) message += ` Use ${alternative} instead.`;
-  if (!('NO_DEPRECATION_WARNINGS' in process.env)) {
-    log.warn(message);
+  const key = `${name}-${version}`;
+  if (!warned.has(key)) {
+    warned.add(key);
+    let message = `${name} is deprecated after version ${version} and will be removed in a future release.`;
+    if (alternative) message += ` Use ${alternative} instead.`;
+    if (process.env.ENABLE_DEPRECATION_WARNINGS !== 'true') {
+      log.warn(message);
+    }
   }
 };
 
