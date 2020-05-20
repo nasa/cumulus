@@ -32,7 +32,14 @@ async function createIndex(esClient, indexName) {
 
   await esClient.indices.create({
     index: indexName,
-    body: { mappings }
+    body: {
+      mappings,
+      settings: {
+        index: {
+          number_of_shards: process.env.ES_INDEX_SHARDS || 1
+        }
+      }
+    }
   });
 
   log.info(`Created esIndex ${indexName}`);
