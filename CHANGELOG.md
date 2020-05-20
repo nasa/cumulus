@@ -8,12 +8,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
-- **CUMULUS-1969**
-  - The `DiscoverGranules` task now expects `provider_path` to be provided at
-    `event.config.provider_path`, not `event.config.collection.provider_path`
-  - `config.provider_path` is now a required parameter of the `DiscoverGranules`
-    task
-
 - Updates to the Cumulus archive API:
   - All endpoints now return a `401` response instead of a `403` for any request where the JWT passed as a Bearer token is invalid.
   - POST `/refresh` and DELETE `/token/<token>` endpoints now return a `401` response for requests with expired tokens
@@ -30,6 +24,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1912**
   - `@cumulus/api` reconciliationReports list endpoint returns a list of reconciliationReport records instead of S3Uri.
+
+- **CUMULUS-1969**
+  - The `DiscoverGranules` task now expects `provider_path` to be provided at
+    `event.config.provider_path`, not `event.config.collection.provider_path`
+  - `config.provider_path` is now a required parameter of the `DiscoverGranules`
+    task
 
 ### MIGRATION STEPS
 
