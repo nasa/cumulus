@@ -61,6 +61,7 @@ variable "dynamo_tables" {
 
 variable "enable_deprecation_warnings" {
   type = string
+  description = "controls whether code deprecation warnings be logged to the output"
   default = "false"
 }
 

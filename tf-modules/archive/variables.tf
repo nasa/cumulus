@@ -66,6 +66,12 @@ variable "ems_host" {
   type = string
 }
 
+variable "enable_deprecation_warnings" {
+  type = string
+  description = "controls whether code deprecation warnings be logged to the output"
+  default = "false"
+}
+
 variable "kinesis_inbound_event_logger_lambda_function_arn" {
   type = string
 }
