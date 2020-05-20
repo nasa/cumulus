@@ -24,7 +24,7 @@ export const doesExecutionExist = (describeExecutionPromise: Promise<unknown>) =
 const deprecate = (() => {
   const warned = new Set();
 
-  return (name:string, version: string, alternative?:string) => {
+  return (name: string, version: string, alternative?: string) => {
     const key = `${name}-${version}`;
     if (warned.has(key)) return;
 
