@@ -9,10 +9,9 @@ resource "aws_lambda_function" "custom_bootstrap" {
   memory_size      = 320
   environment {
     variables = {
-      CMR_ENVIRONMENT             = var.cmr_environment
-      stackName                   = var.prefix
-      system_bucket               = var.system_bucket
-      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
+      CMR_ENVIRONMENT = var.cmr_environment
+      stackName       = var.prefix
+      system_bucket   = var.system_bucket
     }
   }
 

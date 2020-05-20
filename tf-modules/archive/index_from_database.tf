@@ -9,11 +9,10 @@ resource "aws_lambda_function" "index_from_database" {
   memory_size      = 512
   environment {
     variables = {
-      CMR_ENVIRONMENT             = var.cmr_environment
-      ES_HOST                     = var.elasticsearch_hostname
-      stackName                   = var.prefix
-      ES_CONCURRENCY              = var.es_request_concurrency
-      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
+      CMR_ENVIRONMENT = var.cmr_environment
+      ES_HOST         = var.elasticsearch_hostname
+      stackName       = var.prefix
+      ES_CONCURRENCY  = var.es_request_concurrency
     }
   }
   tags = var.tags

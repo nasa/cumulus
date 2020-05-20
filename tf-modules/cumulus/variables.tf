@@ -304,12 +304,6 @@ variable "ems_username" {
   default     = "cumulus"
 }
 
-variable "enable_deprecation_warnings" {
-  type = string
-  description = "controls whether code deprecation warnings be logged to the output"
-  default = "false"
-}
-
 variable "es_request_concurrency" {
   type = number
   default = 10

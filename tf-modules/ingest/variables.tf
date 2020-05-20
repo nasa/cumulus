@@ -59,12 +59,6 @@ variable "dynamo_tables" {
   type = map(object({ name = string, arn = string }))
 }
 
-variable "enable_deprecation_warnings" {
-  type = string
-  description = "controls whether code deprecation warnings be logged to the output"
-  default = "false"
-}
-
 variable "lambda_processing_role_arn" {
   type = string
 }

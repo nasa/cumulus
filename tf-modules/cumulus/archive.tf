@@ -110,6 +110,4 @@ module "archive" {
   log_destination_arn = var.log_destination_arn
 
   tags = var.tags
-
-  enable_deprecation_warnings = var.enable_deprecation_warnings
 }

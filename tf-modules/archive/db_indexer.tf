@@ -21,20 +21,19 @@ resource "aws_lambda_function" "db_indexer" {
   environment {
     variables = {
       CMR_ENVIRONMENT            = var.cmr_environment
-      CollectionsTable            = var.dynamo_tables.collections.name
-      ExecutionsTable             = var.dynamo_tables.executions.name
-      AsyncOperationsTable        = var.dynamo_tables.async_operations.name
-      FilesTable                  = var.dynamo_tables.files.name
-      GranulesTable               = var.dynamo_tables.granules.name
-      PdrsTable                   = var.dynamo_tables.pdrs.name
-      ProvidersTable              = var.dynamo_tables.providers.name
-      ReconciliationReportsTable  = var.dynamo_tables.reconciliation_reports.name
-      RulesTable                  = var.dynamo_tables.rules.name
-      ES_HOST                     = var.elasticsearch_hostname
-      ES_CONCURRENCY              = var.es_request_concurrency
-      stackName                   = var.prefix
-      system_bucket               = var.system_bucket
-      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
+      CollectionsTable           = var.dynamo_tables.collections.name
+      ExecutionsTable            = var.dynamo_tables.executions.name
+      AsyncOperationsTable       = var.dynamo_tables.async_operations.name
+      FilesTable                 = var.dynamo_tables.files.name
+      GranulesTable              = var.dynamo_tables.granules.name
+      PdrsTable                  = var.dynamo_tables.pdrs.name
+      ProvidersTable             = var.dynamo_tables.providers.name
+      ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
+      RulesTable                 = var.dynamo_tables.rules.name
+      ES_HOST                    = var.elasticsearch_hostname
+      ES_CONCURRENCY             = var.es_request_concurrency
+      stackName                  = var.prefix
+      system_bucket              = var.system_bucket
     }
   }
   tags = var.tags

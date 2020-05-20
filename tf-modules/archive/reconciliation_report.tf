@@ -11,21 +11,20 @@ resource "aws_lambda_function" "create_reconciliation_report" {
   memory_size      = 256
   environment {
     variables = {
-      CMR_ENVIRONMENT             = var.cmr_environment
-      CollectionsTable            = var.dynamo_tables.collections.name
-      DISTRIBUTION_ENDPOINT       = var.distribution_url
-      FilesTable                  = var.dynamo_tables.files.name
-      GranulesTable               = var.dynamo_tables.granules.name
-      ReconciliationReportsTable  = var.dynamo_tables.reconciliation_reports.name
-      stackName                   = var.prefix
-      system_bucket               = var.system_bucket
-      cmr_client_id               = var.cmr_client_id
-      cmr_provider                = var.cmr_provider
-      cmr_username                = var.cmr_username
-      cmr_password_secret_name    = length(var.cmr_password) == 0 ? null : aws_secretsmanager_secret.api_cmr_password.name
-      CMR_LIMIT                   = var.cmr_limit
-      CMR_PAGE_SIZE               = var.cmr_page_size
-      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
+      CMR_ENVIRONMENT            = var.cmr_environment
+      CollectionsTable           = var.dynamo_tables.collections.name
+      DISTRIBUTION_ENDPOINT      = var.distribution_url
+      FilesTable                 = var.dynamo_tables.files.name
+      GranulesTable              = var.dynamo_tables.granules.name
+      ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
+      stackName                  = var.prefix
+      system_bucket              = var.system_bucket
+      cmr_client_id              = var.cmr_client_id
+      cmr_provider               = var.cmr_provider
+      cmr_username                 = var.cmr_username
+      cmr_password_secret_name     = length(var.cmr_password) == 0 ? null : aws_secretsmanager_secret.api_cmr_password.name
+      CMR_LIMIT                  = var.cmr_limit
+      CMR_PAGE_SIZE              = var.cmr_page_size
     }
   }
   tags = var.tags
