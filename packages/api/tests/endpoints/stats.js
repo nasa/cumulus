@@ -133,7 +133,7 @@ test('GET without pathParameters and with an invalid access token returns an una
     .get('/stats/')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -145,7 +145,7 @@ test('GET /stats/aggregate with an invalid access token returns an unauthorized 
     .get('/stats/aggregate')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });

@@ -215,7 +215,7 @@ test('CUMULUS-912 GET with an invalid access token returns an unauthorized respo
     .get('/executions/status/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });

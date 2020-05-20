@@ -79,7 +79,7 @@ test('CUMULUS-912 GET without pathParameters and with an invalid access token re
     .get('/providers')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });

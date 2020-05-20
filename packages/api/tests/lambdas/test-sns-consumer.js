@@ -4,15 +4,25 @@ const get = require('lodash/get');
 const sinon = require('sinon');
 const test = require('ava');
 
-const { s3 } = require('@cumulus/aws-client/services');
-const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const SQS = require('@cumulus/aws-client/SQS');
 const { randomString } = require('@cumulus/common/test-utils');
-const { getRules, handler } = require('../../lambdas/message-consumer');
+const { handler } = require('../../lambdas/message-consumer');
 const Collection = require('../../models/collections');
 const Rule = require('../../models/rules');
 const Provider = require('../../models/providers');
 const testCollectionName = 'test-collection';
+
+/**
+ * Callback used for testing
+ *
+ * @param {*} err - error
+ * @param {Object} object - object
+ * @returns {Object} object, if no error is thrown
+ */
+function testCallback(err, object) {
+  if (err) throw err;
+  return object;
+}
 
 const snsArn = 'test-SnsArn';
 const messageBody = '{"Data":{}}';
@@ -41,69 +51,31 @@ const collection = {
 };
 const provider = { id: 'PROV1' };
 
-const commonRuleParams = {
-  collection,
-  provider: provider.id,
-  rule: {
-    type: 'sns',
-    value: snsArn
-  },
-  state: 'ENABLED'
-};
-
-const rule1Params = {
-  ...commonRuleParams,
-  name: 'testRule1',
-  workflow: 'test-workflow-1'
-};
-
-const rule2Params = {
-  ...commonRuleParams,
-  name: 'testRule2',
-  workflow: 'test-workflow-2'
-};
-
-const disabledRuleParams = {
-  ...commonRuleParams,
-  name: 'disabledRule',
-  workflow: 'test-workflow-1',
-  state: 'DISABLED'
-};
-
-/**
- * Callback used for testing
- *
- * @param {*} err - error
- * @param {Object} object - object
- * @returns {Object} object, if no error is thrown
- */
-function testCallback(err, object) {
-  if (err) throw err;
-  return object;
-}
-
-let sfSchedulerSpy;
 const stubQueueUrl = 'stubQueueUrl';
-
 let ruleModel;
+let sandbox;
+let sfSchedulerSpy;
+
 test.before(async () => {
   process.env.CollectionsTable = randomString();
   process.env.ProvidersTable = randomString();
   process.env.RulesTable = randomString();
+  process.env.stackName = randomString();
+  process.env.system_bucket = randomString();
+  process.env.messageConsumer = randomString();
+
   ruleModel = new Rule();
   await ruleModel.createTable();
-  sinon.stub(ruleModel, 'addSnsTrigger');
-  sinon.stub(ruleModel, 'deleteSnsTrigger');
+
+  sandbox = sinon.createSandbox();
+  sandbox.stub(ruleModel, 'addSnsTrigger');
+  sandbox.stub(ruleModel, 'deleteSnsTrigger');
 });
 
 test.beforeEach(async (t) => {
-  sfSchedulerSpy = sinon.stub(SQS, 'sendSQSMessage').returns(true);
   t.context.templateBucket = randomString();
   t.context.workflow = randomString();
   t.context.stateMachineArn = randomString();
-  const messageTemplateKey = `${randomString()}/template.json`;
-
-  t.context.messageTemplateKey = messageTemplateKey;
   t.context.messageTemplate = {
     meta: { queues: { startSF: stubQueueUrl } }
   };
@@ -112,14 +84,9 @@ test.beforeEach(async (t) => {
     arn: t.context.stateMachineArn
   };
 
-  await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
-  await s3().putObject({
-    Bucket: t.context.templateBucket,
-    Key: messageTemplateKey,
-    Body: JSON.stringify(t.context.messageTemplate)
-  }).promise();
+  sfSchedulerSpy = sandbox.stub(SQS, 'sendSQSMessage').returns(true);
 
-  sinon.stub(Rule, 'buildPayload').callsFake((item) => Promise.resolve({
+  sandbox.stub(Rule, 'buildPayload').callsFake((item) => Promise.resolve({
     template: t.context.messageTemplate,
     provider: item.provider,
     collection: item.collection,
@@ -127,43 +94,36 @@ test.beforeEach(async (t) => {
     payload: get(item, 'payload', {}),
     definition: workflowDefinition
   }));
-  sinon.stub(Provider.prototype, 'get').returns(provider);
-  sinon.stub(Collection.prototype, 'get').returns(collection);
-
-  t.context.tableName = process.env.RulesTable;
-  process.env.stackName = randomString();
-  process.env.system_bucket = randomString();
-  process.env.messageConsumer = randomString();
-
-  await Promise.all([rule1Params, rule2Params, disabledRuleParams]
-    .map((rule) => ruleModel.create(rule)));
+  sandbox.stub(Provider.prototype, 'get').resolves(provider);
+  sandbox.stub(Collection.prototype, 'get').resolves(collection);
 });
 
-test.afterEach.always(async (t) => {
-  await recursivelyDeleteS3Bucket(t.context.templateBucket);
-  sfSchedulerSpy.restore();
-  Rule.buildPayload.restore();
-  Provider.prototype.get.restore();
-  Collection.prototype.get.restore();
+test.afterEach.always(async () => {
+  sfSchedulerSpy.resetHistory();
 });
 
 test.after.always(async () => {
   await ruleModel.deleteTable();
-  ruleModel.addSnsTrigger.restore();
-  ruleModel.deleteSnsTrigger.restore();
-});
-
-// getKinesisRule tests
-test.serial('it should look up sns-type rules which are associated with the collection, but not those that are disabled', async (t) => {
-  await getRules(snsArn, 'sns')
-    .then((result) => {
-      t.is(result.length, 2);
-    });
+  sandbox.restore();
 });
 
 // handler tests
 test.serial('it should enqueue a message for each associated workflow', async (t) => {
+  const rule1 = {
+    name: 'testRule1',
+    collection,
+    provider: provider.id,
+    rule: {
+      type: 'sns',
+      value: snsArn
+    },
+    state: 'ENABLED',
+    workflow: 'test-workflow-1'
+  };
+
+  await ruleModel.create(rule1);
   await handler(event, {}, testCallback);
+
   const actualQueueUrl = sfSchedulerSpy.getCall(0).args[0];
   t.is(actualQueueUrl, stubQueueUrl);
   const actualMessage = sfSchedulerSpy.getCall(0).args[1];

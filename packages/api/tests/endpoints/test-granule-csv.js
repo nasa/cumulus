@@ -99,7 +99,7 @@ test.serial('GET with an invalid access token returns an unauthorized response',
     .get('/granule-csv')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
