@@ -246,7 +246,10 @@ isNil(undefined); // => true
 <a name="exp_module_util--exports.deprecate"></a>
 
 ### exports.deprecate ⏏
-Mark a piece of code as deprecated
+Mark a piece of code as deprecated.
+
+Each deprecation notice for a given name and version combination will
+only be printed once.
 
 **Kind**: Exported member  
 
