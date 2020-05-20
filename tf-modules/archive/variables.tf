@@ -341,3 +341,9 @@ variable "log_destination_arn" {
   default = "N/A"
   description = "A shared AWS:Log:Destination that receives logs from log_groups"
 }
+
+variable "es_index_shards" {
+  description = "The number of shards for the Elasticsearch index"
+  type        = number
+  default     = 2
+}

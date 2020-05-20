@@ -98,7 +98,7 @@ test('GET without pathParameters and an invalid access token returns an unauthor
     .get('/logs/executions')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });

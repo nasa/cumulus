@@ -38,10 +38,10 @@ const buildPermanentRedirectResponse = (location, response) =>
  */
 function handleJwtVerificationError(err, response) {
   if (err instanceof TokenExpiredError) {
-    return response.boom.forbidden('Access token has expired');
+    return response.boom.unauthorized('Access token has expired');
   }
   if (err instanceof JsonWebTokenError) {
-    return response.boom.forbidden('Invalid access token');
+    return response.boom.unauthorized('Invalid access token');
   }
   if (err instanceof TokenUnauthorizedUserError) {
     return response.boom.unauthorized('User not authorized');
@@ -132,7 +132,7 @@ async function refreshAccessToken(request, oAuth2Provider, response) {
     accessTokenRecord = await accessTokenModel.get({ accessToken });
   } catch (err) {
     if (err instanceof RecordDoesNotExist) {
-      return response.boom.forbidden('Invalid access token');
+      return response.boom.unauthorized('Invalid access token');
     }
   }
 
