@@ -2,7 +2,10 @@
   "title": "DiscoverGranulesConfig",
   "description": "Describes the config used by the discover-granules task",
   "type": "object",
-  "required": [ "provider" ],
+  "required": [
+    "provider",
+    "provider_path"
+  ],
   "properties": {
     "provider": {
       "type": "object",
@@ -20,6 +23,7 @@
         }
       }
     },
+    "provider_path": { "type": "string" },
     "buckets": {
       "type": "object",
       "description": "aws s3 buckets used by this task",

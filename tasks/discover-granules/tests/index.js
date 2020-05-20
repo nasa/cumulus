@@ -9,7 +9,6 @@ const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const {
   randomString,
   validateConfig,
-  validateInput,
   validateOutput
 } = require('@cumulus/common/test-utils');
 const Logger = require('@cumulus/logger');
@@ -97,7 +96,7 @@ test.beforeEach(async (t) => {
 test('discover granules sets the correct dataType for granules', async (t) => {
   const { event } = t.context;
 
-  event.input.provider_path = '/granules/fake_granules';
+  event.config.provider_path = '/granules/fake_granules';
 
   event.config.provider = {
     id: 'MODAPS',
@@ -107,7 +106,6 @@ test('discover granules sets the correct dataType for granules', async (t) => {
   };
 
   await validateConfig(t, event.config);
-  await validateInput(t, event.input);
 
   const output = await discoverGranules(event);
   await assertDiscoveredGranules(t, output);
@@ -120,7 +118,7 @@ test('discover granules sets the correct dataType for granules', async (t) => {
 test('discover granules using FTP', async (t) => {
   const { event } = t.context;
 
-  event.input.provider_path = 'granules/^fake_granules$';
+  event.config.provider_path = 'granules/^fake_granules$';
 
   event.config.useList = true;
   event.config.provider = {
@@ -132,7 +130,6 @@ test('discover granules using FTP', async (t) => {
   };
 
   await validateConfig(t, event.config);
-  await validateInput(t, event.input);
 
   await assertDiscoveredGranules(t, await discoverGranules(event));
 });
@@ -140,7 +137,7 @@ test('discover granules using FTP', async (t) => {
 test('discover granules using SFTP', async (t) => {
   const { event } = t.context;
 
-  event.input.provider_path = 'granules/^fake_granules$';
+  event.config.provider_path = 'granules/^fake_granules$';
 
   event.config.provider = {
     id: 'MODAPS',
@@ -152,7 +149,6 @@ test('discover granules using SFTP', async (t) => {
   };
 
   await validateConfig(t, event.config);
-  await validateInput(t, event.input);
 
   await assertDiscoveredGranules(t, await discoverGranules(event));
 });
@@ -160,7 +156,7 @@ test('discover granules using SFTP', async (t) => {
 test('discover granules using HTTP', async (t) => {
   const { event } = t.context;
 
-  event.input.provider_path = '/granules/fake_granules';
+  event.config.provider_path = '/granules/fake_granules';
 
   event.config.provider = {
     id: 'MODAPS',
@@ -170,7 +166,6 @@ test('discover granules using HTTP', async (t) => {
   };
 
   await validateConfig(t, event.config);
-  await validateInput(t, event.input);
 
   await assertDiscoveredGranules(t, await discoverGranules(event));
 });
@@ -186,19 +181,18 @@ const discoverGranulesUsingS3 = (configure, assert = assertDiscoveredGranules) =
     ];
 
     config.sourceBucketName = randomString();
-    event.input.provider_path = randomString();
+    event.config.provider_path = randomString();
 
     configure(t);
 
     await validateConfig(t, config);
-    await validateInput(t, event.input);
     await s3().createBucket({ Bucket: config.sourceBucketName }).promise();
 
     try {
       await Promise.all(files.map((file) =>
         s3().putObject({
           Bucket: config.sourceBucketName,
-          Key: `${event.input.provider_path}/${file}`,
+          Key: `${event.config.provider_path}/${file}`,
           Body: `This is ${file}`
         }).promise()));
       await assert(t, await discoverGranules(event));
@@ -386,7 +380,7 @@ test('checkGranuleHasNoDuplicate throws an error on an unexpected API lambda ret
 test.serial('discover granules sets the GRANULES environment variable and logs the granules', async (t) => {
   const { event } = t.context;
 
-  event.input.provider_path = '/granules/fake_granules';
+  event.config.provider_path = '/granules/fake_granules';
 
   event.config.provider = {
     id: 'MODAPS',
