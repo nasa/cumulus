@@ -145,9 +145,10 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
 
   environment {
     variables = {
-      ExecutionsTable = var.dynamo_tables.executions.name
-      GranulesTable   = var.dynamo_tables.granules.name
-      PdrsTable       = var.dynamo_tables.pdrs.name
+      ExecutionsTable             = var.dynamo_tables.executions.name
+      GranulesTable               = var.dynamo_tables.granules.name
+      PdrsTable                   = var.dynamo_tables.pdrs.name
+      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
     }
   }
 

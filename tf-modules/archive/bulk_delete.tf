@@ -9,8 +9,9 @@ resource "aws_lambda_function" "bulk_delete" {
   timeout          = 300
   environment {
     variables = {
-      CMR_ENVIRONMENT = var.cmr_environment
-      stackName       = var.prefix
+      CMR_ENVIRONMENT             = var.cmr_environment
+      stackName                   = var.prefix
+      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
     }
   }
 

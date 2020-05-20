@@ -91,7 +91,8 @@ resource "aws_lambda_function" "publish_executions" {
 
   environment {
     variables = {
-      execution_sns_topic_arn = aws_sns_topic.report_executions_topic.arn
+      execution_sns_topic_arn     = aws_sns_topic.report_executions_topic.arn
+      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
     }
   }
 

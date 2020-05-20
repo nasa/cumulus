@@ -19,9 +19,10 @@ resource "aws_lambda_function" "log2elasticsearch" {
   }
   environment {
     variables = {
-      CMR_ENVIRONMENT = var.cmr_environment
-      ES_HOST         = var.elasticsearch_hostname
-      stackName       = var.prefix
+      CMR_ENVIRONMENT             = var.cmr_environment
+      ES_HOST                     = var.elasticsearch_hostname
+      stackName                   = var.prefix
+      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
     }
   }
   tags = var.tags

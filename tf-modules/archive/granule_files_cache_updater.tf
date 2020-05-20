@@ -77,7 +77,8 @@ resource "aws_lambda_function" "granule_files_cache_updater" {
 
   environment {
     variables = {
-      FilesTable = var.dynamo_tables.files.name
+      FilesTable                  = var.dynamo_tables.files.name
+      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
     }
   }
 

@@ -30,6 +30,8 @@ resource "aws_lambda_function" "clean_executions" {
 
       nonCompleteExecutionPayloadTimeoutDisable = var.non_complete_execution_payload_timeout_disable
       nonCompleteExecutionPayloadTimeout        = var.non_complete_execution_payload_timeout
+
+      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
     }
   }
 

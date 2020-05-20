@@ -29,10 +29,11 @@ resource "aws_lambda_function" "provider_secrets_migration" {
   timeout          = 100
   environment {
     variables = {
-      stackName           = var.prefix
-      system_bucket       = var.system_bucket
-      provider_kms_key_id = aws_kms_key.provider_kms_key.key_id
-      ProvidersTable      = var.dynamo_tables.providers.name
+      stackName                   = var.prefix
+      system_bucket               = var.system_bucket
+      provider_kms_key_id         = aws_kms_key.provider_kms_key.key_id
+      ProvidersTable              = var.dynamo_tables.providers.name
+      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
     }
   }
   memory_size = 256

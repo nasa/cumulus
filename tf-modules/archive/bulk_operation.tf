@@ -9,13 +9,14 @@ resource "aws_lambda_function" "bulk_operation" {
   memory_size      = 512
   environment {
     variables = {
-      METRICS_ES_HOST  = var.metrics_es_host
-      METRICS_ES_USER  = var.metrics_es_username
-      METRICS_ES_PASS  = var.metrics_es_password
-      GranulesTable    = var.dynamo_tables.granules.name
-      system_bucket    = var.system_bucket
-      invoke           = var.schedule_sf_function_arn
-      stackName        = var.prefix
+      METRICS_ES_HOST             = var.metrics_es_host
+      METRICS_ES_USER             = var.metrics_es_username
+      METRICS_ES_PASS             = var.metrics_es_password
+      GranulesTable               = var.dynamo_tables.granules.name
+      system_bucket               = var.system_bucket
+      invoke                      = var.schedule_sf_function_arn
+      stackName                   = var.prefix
+      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
     }
   }
 
