@@ -40,7 +40,7 @@ test.beforeEach(async (t) => {
   });
   // protected endpoint with redirect to /auth
   t.context.server.get(protectedFile, (req, res) => {
-    if (req.cookies && req.cookies['DATA'] === 'abcd1234') {
+    if (req.cookies && req.cookies.DATA === 'abcd1234') {
       res.header({ 'content-type': expectedContentType });
       res.end(remoteContent);
     } else {
@@ -127,9 +127,8 @@ test('HttpsProviderClient throws error if it gets a username but no password', (
     certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
     username: 'user'
   }),
-    ReferenceError,
-    'Found providerConfig.username, but providerConfig.password is not defined'
-  );
+  ReferenceError,
+  'Found providerConfig.username, but providerConfig.password is not defined');
 });
 
 test('HttpsProviderClient supports basic auth with redirects for download', async (t) => {
