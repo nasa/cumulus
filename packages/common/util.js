@@ -21,7 +21,10 @@ const mime = require('mime-types');
 const log = require('./log');
 
 /**
- * Mark a piece of code as deprecated
+ * Mark a piece of code as deprecated.
+ *
+ * Each deprecation notice for a given name and version combination will
+ * only be printed once.
  *
  * @param {string} name - the name of the function / method / class to deprecate
  * @param {string} version - the version after which the code will be marked
