@@ -24,6 +24,7 @@ resource "aws_lambda_function" "fallback_consumer" {
       RulesTable       = var.dynamo_tables.rules.name
       stackName        = var.prefix
       system_bucket    = var.system_bucket
+      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
     }
   }
   tags = var.tags
@@ -52,6 +53,7 @@ resource "aws_lambda_function" "kinesis_inbound_event_logger" {
     variables = {
       CMR_ENVIRONMENT = var.cmr_environment
       stackName       = var.prefix
+      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
     }
   }
   tags = var.tags
@@ -80,6 +82,7 @@ resource "aws_lambda_function" "kinesis_outbound_event_logger" {
     variables = {
       CMR_ENVIRONMENT = var.cmr_environment
       stackName       = var.prefix
+      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
     }
   }
   tags = var.tags
@@ -113,6 +116,7 @@ resource "aws_lambda_function" "manual_consumer" {
       RulesTable       = var.dynamo_tables.rules.name
       system_bucket    = var.system_bucket
       FallbackTopicArn = aws_sns_topic.kinesis_fallback.arn
+      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
     }
   }
   tags = var.tags
@@ -146,6 +150,7 @@ resource "aws_lambda_function" "message_consumer" {
       RulesTable       = var.dynamo_tables.rules.name
       system_bucket    = var.system_bucket
       FallbackTopicArn = aws_sns_topic.kinesis_fallback.arn
+      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
     }
   }
   tags = var.tags
@@ -180,6 +185,7 @@ resource "aws_lambda_function" "schedule_sf" {
       CollectionsTable = var.dynamo_tables.collections.name
       ProvidersTable   = var.dynamo_tables.providers.name
       stackName        = var.prefix
+      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
     }
   }
   tags = var.tags
@@ -209,6 +215,7 @@ resource "aws_lambda_function" "sf_semaphore_down" {
       CMR_ENVIRONMENT = var.cmr_environment
       stackName       = var.prefix
       SemaphoresTable = var.dynamo_tables.semaphores.name
+      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
     }
   }
   tags = var.tags
@@ -243,6 +250,7 @@ resource "aws_lambda_function" "sf_sqs_report_task" {
       stackName                   = var.prefix
       ExecutionsTable             = var.dynamo_tables.executions.name
       reporting_queue_url         = var.sf_event_sqs_to_db_records_sqs_queue_url
+      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
     }
   }
   tags = var.tags
@@ -271,6 +279,7 @@ resource "aws_lambda_function" "sqs2sf" {
     variables = {
       CMR_ENVIRONMENT = var.cmr_environment
       stackName       = var.prefix
+      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
     }
   }
   tags = var.tags
@@ -300,6 +309,7 @@ resource "aws_lambda_function" "sqs2sfThrottle" {
       CMR_ENVIRONMENT = var.cmr_environment
       stackName       = var.prefix
       SemaphoresTable = var.dynamo_tables.semaphores.name
+      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
     }
   }
 
@@ -333,6 +343,7 @@ resource "aws_lambda_function" "sqs_message_consumer" {
       ProvidersTable   = var.dynamo_tables.providers.name
       RulesTable       = var.dynamo_tables.rules.name
       system_bucket    = var.system_bucket
+      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
     }
   }
   tags = var.tags
@@ -362,6 +373,7 @@ resource "aws_lambda_function" "sqs_message_remover" {
       CMR_ENVIRONMENT  = var.cmr_environment
       stackName        = var.prefix
       system_bucket    = var.system_bucket
+      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
     }
   }
   tags = var.tags

@@ -15,7 +15,7 @@ resource "aws_lambda_function" "pdr_status_check_task" {
       CMR_ENVIRONMENT             = var.cmr_environment
       stackName                   = var.prefix
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
-      ENABLE_DEPRECATION_WARNINGS     = var.enable_deprecation_warnings
+      ENABLE_DEPRECATION_WARNINGS = var.enable_deprecation_warnings
     }
   }
 
