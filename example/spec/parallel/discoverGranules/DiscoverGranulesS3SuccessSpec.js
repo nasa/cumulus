@@ -28,7 +28,6 @@ describe('The DiscoverGranules workflow', () => {
   let workflowExecution;
   let stackName;
   let bucket;
-  let providerPath;
 
   beforeAll(async () => {
     ({ stackName, bucket } = await loadConfig());
@@ -54,12 +53,11 @@ describe('The DiscoverGranules workflow', () => {
       postfix: testId
     });
 
-    collection = { ...loadedCollection };
-    delete collection.provider_path;
-
+    collection = {
+      ...loadedCollection,
+      provider_path: `cumulus-test-data/${testId}`
+    };
     await createCollection({ prefix: stackName, collection });
-
-    providerPath = `cumulus-test-data/${testId}`;
 
     // Upload the granule to be discovered
     await updateAndUploadTestDataToBucket(
@@ -69,7 +67,7 @@ describe('The DiscoverGranules workflow', () => {
         '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
         '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
       ],
-      providerPath
+      collection.provider_path
     );
 
     // Execute the DiscoverGranules workflow
@@ -78,8 +76,7 @@ describe('The DiscoverGranules workflow', () => {
       bucket,
       'DiscoverGranules',
       collection,
-      provider,
-      { provider_path: providerPath }
+      provider
     );
 
     // Get the output of the QueueGranules task. Doing it here because there are
@@ -94,7 +91,7 @@ describe('The DiscoverGranules workflow', () => {
 
   afterAll(() =>
     Promise.all([
-      deleteFolder(bucket, providerPath),
+      deleteFolder(bucket, collection.provider_path),
       deleteCollection({
         prefix: stackName,
         collectionName: collection.name,
