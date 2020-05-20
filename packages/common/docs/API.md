@@ -227,7 +227,7 @@ isNil(undefined); // => true
 ```
 
 * [util](#module_util)
-    * [exports.deprecate(name, version, [alternative])](#exp_module_util--exports.deprecate) ⏏
+    * [exports.deprecate](#exp_module_util--exports.deprecate) ⏏
     * [exports.sleep(waitPeriodMs)](#exp_module_util--exports.sleep) ⇒ <code>Promise.&lt;undefined&gt;</code> ⏏
     * [exports.uuid()](#exp_module_util--exports.uuid) ⇒ <code>string</code> ⏏
     * [exports.noop()](#exp_module_util--exports.noop) ⇒ <code>undefined</code> ⏏
@@ -245,10 +245,10 @@ isNil(undefined); // => true
 
 <a name="exp_module_util--exports.deprecate"></a>
 
-### exports.deprecate(name, version, [alternative]) ⏏
+### exports.deprecate ⏏
 Mark a piece of code as deprecated
 
-**Kind**: Exported function  
+**Kind**: Exported member  
 
 | Param | Type | Description |
 | --- | --- | --- |
