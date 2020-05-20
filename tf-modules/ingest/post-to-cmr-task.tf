@@ -16,7 +16,7 @@ resource "aws_lambda_function" "post_to_cmr_task" {
       stackName                   = var.prefix
       system_bucket               = var.system_bucket
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
-      NO_DEPRECATION_WARNINGS     = var.enable_deprecation_warnings
+      ENABLE_DEPRECATION_WARNINGS     = var.enable_deprecation_warnings
     }
   }
 
