@@ -67,6 +67,11 @@ $ AWS_REGION=<region> \ # e.g. us-east-1
     terraform apply
 ```
 
+Once you have successfully updated all of your resources, verify that your
+deployment functions correctly. Please refer to some recommended smoke tests
+given above, and consider additional tests appropriate for your particular
+deployment and environment.
+
 ## Update Cumulus Dashboard
 
 If there are breaking (or otherwise significant) changes to the Cumulus API, you should also upgrade your Cumulus Dashboard deployment to use the version of the Cumulus API matching the version of Cumulus to which you are migrating.
