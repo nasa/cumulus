@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- **CUMULUS-1969**
+  - The `DiscoverPdrs` task now expects `provider_path` to be provided at
+    `event.config.provider_path`, not `event.config.collection.provider_path`
+  - `event.config.provider_path` is now a required parameter of the
+    `DiscoverGranules` task
+  - `event.config.collection` is no longer a parameter to the `DiscoverPdrs`
+    task
+
 - Updates to the Cumulus archive API:
   - All endpoints now return a `401` response instead of a `403` for any request where the JWT passed as a Bearer token is invalid.
   - POST `/refresh` and DELETE `/token/<token>` endpoints now return a `401` response for requests with expired tokens
@@ -37,7 +45,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   2. If you are using any custom Node.js Lambdas in your workflows **and** the Cumulus CMA layer/`cumulus-message-adapter-js`, you must update your lambda to use [cumulus-message-adapter-js v1.2.0](https://github.com/nasa/cumulus-message-adapter-js/releases/tag/v1.2.0) and follow the migration instructions in the release notes. Prior versions of `cumulus-message-adapter-js` are not compatible with CMA >= 1.3.0.
 - Migrate existing s3 reconciliation report records to database (CUMULUS-1911):
   - After update your `data persistence` module and Cumulus resources, run the command:
-  
+
   ```bash
   ./node_modules/.bin/cumulus-api migrate --stack `<your-terraform-deployment-prefix>` --migrationVersion migration5
   ```
