@@ -37,7 +37,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   2. If you are using any custom Node.js Lambdas in your workflows **and** the Cumulus CMA layer/`cumulus-message-adapter-js`, you must update your lambda to use [cumulus-message-adapter-js v1.2.0](https://github.com/nasa/cumulus-message-adapter-js/releases/tag/v1.2.0) and follow the migration instructions in the release notes. Prior versions of `cumulus-message-adapter-js` are not compatible with CMA >= 1.3.0.
 - Migrate existing s3 reconciliation report records to database (CUMULUS-1911):
   - After update your `data persistence` module and Cumulus resources, run the command:
-  
+
   ```bash
   ./node_modules/.bin/cumulus-api migrate --stack `<your-terraform-deployment-prefix>` --migrationVersion migration5
   ```
@@ -73,6 +73,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1912**
   - Updated reconciliationReports endpoints to query against Elasticsearch, delete report from both database and s3
   - Added `@cumulus/api-client/reconciliationReports`
+- **CUMULUS-1999**
+  - Updated `@cumulus/common/util.deprecate()` so that only a single deprecation notice is printed for each name/version combination
 
 ### Fixed
 

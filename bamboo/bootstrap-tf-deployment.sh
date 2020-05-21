@@ -32,12 +32,21 @@ echo "terraform {
 ../terraform init \
   -input=false
 
+if [[ $NGAP_ENV = "SIT" ]]; then
+  BASE_VAR_FILE="sit.tfvars"
+  CMA_LAYER_VERSION=12
+else
+  BASE_VAR_FILE="sandbox.tfvars"
+  CMA_LAYER_VERSION=15
+fi
+
 # Deploy data-persistence-tf via terraform
 echo "Deploying Cumulus data-persistence module to $DEPLOYMENT"
 ../terraform apply \
   -auto-approve \
   -input=false \
-  -var "prefix=$DEPLOYMENT" \
+  -var-file="../deployments/data-persistence/$BASE_VAR_FILE" \
+  -var-file="../deployments/data-persistence/$DEPLOYMENT.tfvars" \
   -var "aws_region=$AWS_REGION" \
   -var "subnet_ids=[\"$AWS_SUBNET\"]"
 
@@ -56,20 +65,13 @@ echo "terraform {
 ../terraform init \
   -input=false
 
-if [[ $NGAP_ENV = "SIT" ]]; then
-  BASE_VAR_FILE="sit.tfvars"
-  CMA_LAYER_VERSION=12
-else
-  BASE_VAR_FILE="sandbox.tfvars"
-  CMA_LAYER_VERSION=15
-fi
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
 ../terraform apply \
   -auto-approve \
   -input=false \
-  -var-file="../deployments/$BASE_VAR_FILE" \
-  -var-file="../deployments/$DEPLOYMENT.tfvars" \
+  -var-file="../deployments/cumulus/$BASE_VAR_FILE" \
+  -var-file="../deployments/cumulus/$DEPLOYMENT.tfvars" \
   -var "cumulus_message_adapter_lambda_layer_arn=arn:aws:lambda:us-east-1:$AWS_ACCOUNT_ID:layer:Cumulus_Message_Adapter:$CMA_LAYER_VERSION" \
   -var "cmr_username=$CMR_USERNAME" \
   -var "cmr_password=$CMR_PASSWORD" \
