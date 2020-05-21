@@ -19,7 +19,7 @@ const log = require('@cumulus/common/log');
 const isValidHostname = require('is-valid-hostname');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const errors = require('@cumulus/errors');
-const { lookupMimeType } = require('./util');
+const { lookupMimeType, decrypt } = require('./util');
 
 const validateHost = (host) => {
   if (isValidHostname(host) || isIp(host)) return;
@@ -29,16 +29,15 @@ const validateHost = (host) => {
 
 class HttpProviderClient {
   constructor(providerConfig) {
+    this.providerConfig = providerConfig;
     this.protocol = providerConfig.protocol;
     this.host = providerConfig.host;
     this.port = providerConfig.port;
-    this.certificateUri = providerConfig.certificateUri;
     this.gotOptions = { headers: { host: this.host } };
-    if (providerConfig.username) {
-      // if there is a username we will assume Basic Auth
-      this.setUpBasicAuth(providerConfig.username, providerConfig.password);
+    this.certificateUri = providerConfig.certificateUri;
+    if (providerConfig.username && !providerConfig.password) {
+      throw new ReferenceError('Found providerConfig.username, but providerConfig.password is not defined');
     }
-
     this.endpoint = buildURL({
       protocol: this.protocol,
       host: this.host,
@@ -46,10 +45,16 @@ class HttpProviderClient {
     });
   }
 
-  setUpBasicAuth(username, password) {
-    if (!password) throw new ReferenceError('Found providerConfig.username, but providerConfig.password is not defined');
+  async setUpGotOptions() {
+    if (this.encrypted === true) {
+      this.username = await decrypt(this.providerConfig.username);
+      this.password = await decrypt(this.providerConfig.password);
+    } else {
+      this.username = this.providerConfig.username;
+      this.password = this.providerConfig.password;
+    }
     const cookieJar = new CookieJar();
-    const auth = `${username}:${password}`;
+    const auth = `${this.username}:${this.password}`;
     this.gotOptions = {
       ...this.gotOptions,
       auth,
@@ -165,6 +170,7 @@ class HttpProviderClient {
    */
   async download(remotePath, localPath) {
     validateHost(this.host);
+    await this.setUpGotOptions();
     await this.downloadTLSCertificate();
 
     const remoteUrl = buildURL({
@@ -198,6 +204,7 @@ class HttpProviderClient {
    */
   async sync(remotePath, bucket, key) {
     validateHost(this.host);
+    await this.setUpGotOptions();
     await this.downloadTLSCertificate();
     const remoteUrl = buildURL({
       protocol: this.protocol,

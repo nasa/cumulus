@@ -127,8 +127,10 @@ test('HttpsProviderClient throws error if it gets a username but no password', (
     certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
     username: 'user'
   }),
-  ReferenceError,
-  'Found providerConfig.username, but providerConfig.password is not defined');
+  {
+    instanceOf: ReferenceError,
+    message: 'Found providerConfig.username, but providerConfig.password is not defined'
+  });
 });
 
 test('HttpsProviderClient supports basic auth with redirects for download', async (t) => {
