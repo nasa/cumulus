@@ -1,5 +1,6 @@
 const test = require('ava');
 const rewire = require('rewire');
+const proxyquire = require('proxyquire').noPreserveCache();
 const fs = require('fs-extra');
 const xml2js = require('xml2js');
 const sinon = require('sinon');
@@ -16,7 +17,7 @@ const cmrUtil = rewire('../../cmr-utils');
 const { isCMRFile, getGranuleTemporalInfo } = cmrUtil;
 const uploadEcho10CMRFile = cmrUtil.__get__('uploadEcho10CMRFile');
 const uploadUMMGJSONCMRFile = cmrUtil.__get__('uploadUMMGJSONCMRFile');
-const generateFileUrl = cmrUtil.__get__('generateFileUrl');
+const { generateFileUrl } = require('../../cmr-utils');
 
 
 test('isCMRFile returns truthy if fileobject has valid xml name', (t) => {
@@ -204,7 +205,6 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
     revertMockUpload();
     revertGenerateXml();
   }
-
   t.deepEqual(actual.Granule.OnlineAccessURLs.OnlineAccessURL, onlineAccessURLsExpected);
   t.deepEqual(actual.Granule.OnlineResources.OnlineResource, onlineResourcesExpected);
   t.deepEqual(actual.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl, AssociatedBrowseExpected);
@@ -322,7 +322,7 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distrib
     key: 'folder/key.txt'
   };
 
-  const url = await generateFileUrl(file, distEndpoint, 'distribution');
+  const url = await generateFileUrl({ file, distEndpoint, cmrGranuleUrlType: 'distribution' });
 
   t.is(url, 'www.example.com/fake-bucket/folder/key.txt');
 });
@@ -337,7 +337,7 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3', as
     key: 'folder/key.txt'
   };
 
-  const url = await generateFileUrl(file, distEndpoint, 's3');
+  const url = await generateFileUrl({ file, distEndpoint, cmrGranuleUrlType: 's3' });
 
   t.is(url, filename);
 });
@@ -351,7 +351,7 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3 with
     key: 'folder/key.txt'
   };
 
-  const url = await generateFileUrl(file, distEndpoint, 's3');
+  const url = await generateFileUrl({ file, distEndpoint, cmrGranuleUrlType: 's3' });
 
   t.is(url, filename);
 });
@@ -366,7 +366,50 @@ test.serial('generateFileUrl returns null for cmrGranuleUrlType none', async (t)
     key: 'folder/key.txt'
   };
 
-  const url = await generateFileUrl(file, distEndpoint, 'none');
+  const url = await generateFileUrl({ file, distEndpoint, cmrGranuleUrlType: 'none' });
 
   t.is(url, null);
+});
+
+test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distribution with TEA bucket map defined', async (t) => {
+  // eslint-disable-next-line no-shadow
+  const { generateFileUrl } = proxyquire('../../cmr-utils', {
+    './tea': {
+      getTeaBucketPath: async () => 'fake-bucket-redirect/path'
+    }
+  });
+  const filename = 's3://fake-bucket/folder/key.txt';
+  const distEndpoint = 'www.example.com/';
+
+  const file = {
+    filename,
+    bucket: 'fake-bucket',
+    key: 'folder/key.txt'
+  };
+
+  const url = await generateFileUrl({ file, distEndpoint, teaEndpoint: 'fakeTeaEndpoint', cmrGranuleUrlType: 'distribution' });
+
+  t.is(url, 'www.example.com/fake-bucket-redirect/path/folder/key.txt');
+});
+
+
+test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distribution with TEA bucket map undefined', async (t) => {
+  // eslint-disable-next-line no-shadow
+  const { generateFileUrl } = proxyquire('../../cmr-utils', {
+    './tea': {
+      getTeaBucketPath: async () => ''
+    }
+  });
+  const filename = 's3://fake-bucket/folder/key.txt';
+  const distEndpoint = 'www.example.com/';
+
+  const file = {
+    filename,
+    bucket: 'fake-bucket',
+    key: 'folder/key.txt'
+  };
+
+  const url = await generateFileUrl({ file, distEndpoint, teaEndpoint: 'fakeTeaEndpoint', cmrGranuleUrlType: 'distribution' });
+
+  t.is(url, 'www.example.com/fake-bucket/folder/key.txt');
 });

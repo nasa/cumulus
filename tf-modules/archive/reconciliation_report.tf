@@ -11,7 +11,11 @@ resource "aws_lambda_function" "create_reconciliation_report" {
   memory_size      = 256
   environment {
     variables = {
+      cmr_client_id              = var.cmr_client_id
       CMR_ENVIRONMENT            = var.cmr_environment
+      CMR_LIMIT                  = var.cmr_limit
+      CMR_PAGE_SIZE              = var.cmr_page_size
+      cmr_provider               = var.cmr_provider
       CollectionsTable           = var.dynamo_tables.collections.name
       DISTRIBUTION_ENDPOINT      = var.distribution_url
       FilesTable                 = var.dynamo_tables.files.name
@@ -19,10 +23,7 @@ resource "aws_lambda_function" "create_reconciliation_report" {
       ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
       stackName                  = var.prefix
       system_bucket              = var.system_bucket
-      cmr_client_id              = var.cmr_client_id
-      cmr_provider               = var.cmr_provider
-      CMR_LIMIT                  = var.cmr_limit
-      CMR_PAGE_SIZE              = var.cmr_page_size
+      TEA_API                    = var.internal_tea_api
     }
   }
   tags = var.tags

@@ -233,7 +233,8 @@ class Granule extends Manager {
       granuleId: g.granuleId,
       updatedFiles,
       distEndpoint,
-      published: g.published
+      published: g.published,
+      teaEndpoint: process.env.TEA_API
     });
 
     return this.update(

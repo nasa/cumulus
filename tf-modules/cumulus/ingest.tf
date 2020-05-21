@@ -37,6 +37,8 @@ module "ingest" {
   # DB config
   dynamo_tables = var.dynamo_tables
 
+  internal_tea_api = module.distribution.internal_tea_api
+
   custom_queues = var.custom_queues
   throttled_queues = var.throttled_queues
 

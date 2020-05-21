@@ -91,7 +91,8 @@ test('reconcileCMRMetadata calls updateCMRMetadata if metadatafile present', asy
       cmrFile: updatedFiles[1],
       files: updatedFiles,
       distEndpoint,
-      published
+      published,
+      teaEndpoint: undefined
     })
   );
 
@@ -154,7 +155,8 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
       files: updatedFiles,
       distEndpoint,
       cmrGranuleUrlType: 'distribution',
-      buckets: new BucketsConfig(fakeBuckets)
+      buckets: new BucketsConfig(fakeBuckets),
+      teaEndpoint: undefined
     };
 
     // assert
@@ -213,7 +215,8 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
     files: updatedFiles,
     distEndpoint,
     cmrGranuleUrlType: 'distribution',
-    buckets: new BucketsConfig(fakeBuckets)
+    buckets: new BucketsConfig(fakeBuckets),
+    teaEndpoint: undefined
   };
 
   t.deepEqual(paramsIntoUpdateEcho10XML, fakeUpdateCMRMetadata.firstCall.args[0]);
@@ -277,7 +280,8 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
     files: updatedFiles,
     distEndpoint,
     cmrGranuleUrlType: 'distribution',
-    buckets
+    buckets,
+    teaEndpoint: undefined
   };
 
   // assert

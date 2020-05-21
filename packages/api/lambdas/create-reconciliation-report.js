@@ -190,7 +190,7 @@ async function reconciliationReportForGranuleFiles(granuleInDb, granuleInCmr, bu
   const cmrRelatedDataTypes = ['VIEW RELATED INFORMATION'];
 
   // check each URL entry against database records
-  granuleInCmr.RelatedUrls.forEach((relatedUrl) => {
+  const relatedUrlPromises = granuleInCmr.RelatedUrls.map(async (relatedUrl) => {
     // only check URL types for downloading granule files and related data (such as documents)
     if (cmrGetDataTypes.includes(relatedUrl.Type)
       || cmrRelatedDataTypes.includes(relatedUrl.Type)) {
@@ -203,14 +203,16 @@ async function reconciliationReportForGranuleFiles(granuleInDb, granuleInCmr, bu
           file: granuleFiles[urlFileName],
           distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
           buckets: bucketsConfig,
-          cmrGranuleUrlType: 'distribution'
+          cmrGranuleUrlType: 'distribution',
+          teaEndpoint: process.env.TEA_API
         });
 
         const s3AccessUrl = await constructOnlineAccessUrl({
           file: granuleFiles[urlFileName],
           distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
           buckets: bucketsConfig,
-          cmrGranuleUrlType: 's3'
+          cmrGranuleUrlType: 's3',
+          teaEndpoint: process.env.TEA_API
         });
 
         if (distributionAccessUrl && relatedUrl.URL === distributionAccessUrl.URL) {
@@ -239,6 +241,8 @@ async function reconciliationReportForGranuleFiles(granuleInDb, granuleInCmr, bu
     }
   });
 
+  await Promise.all(relatedUrlPromises);
+
   // any remaining database items to the report
   Object.keys(granuleFiles).forEach((fileName) => {
     // private file only in database, it's ok
@@ -253,7 +257,6 @@ async function reconciliationReportForGranuleFiles(granuleInDb, granuleInCmr, bu
       });
     }
   });
-
   return { okCount, onlyInCumulus, onlyInCmr };
 }
 // export for testing

@@ -196,6 +196,12 @@ variable "es_request_concurrency" {
   description = "Maximum number of concurrent requests to send to Elasticsearch. Used in index-from-database operation"
 }
 
+variable "internal_tea_api" {
+  type = string
+  default = null
+  description = "Internal TEA endpoint.  Used by the granules endpoint 'move' to update distribution urls and the CMR reconciliation report lambda"
+}
+
 variable "lambda_subnet_ids" {
   type    = list(string)
   default = []

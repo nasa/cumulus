@@ -2,6 +2,10 @@ output "distribution_url" {
   value = module.thin_egress_app.api_endpoint
 }
 
+output "internal_tea_api" {
+  value = module.thin_egress_app.internal_api_endpoint
+}
+
 output "rest_api_id" {
   value = module.thin_egress_app.rest_api.id
 }
