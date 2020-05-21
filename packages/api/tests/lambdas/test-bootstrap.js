@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('ava');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 
 const bootstrap = require('../../lambdas/bootstrap');
 const { Search } = require('../../es/search');
@@ -28,20 +28,41 @@ test.serial.skip('bootstrap dynamoDb activates pointInTime on a given table', as
 });
 
 test('bootstrap creates index with alias', async (t) => {
-  const indexName = randomString();
-  const testAlias = randomString();
+  const indexName = randomId('esindex');
+  const testAlias = randomId('esalias');
 
   await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
-  esClient = await Search.es();
+  try {
+    esClient = await Search.es();
 
-  t.is((await esClient.indices.exists({ index: indexName })).body, true);
+    t.is((await esClient.indices.exists({ index: indexName })).body, true);
 
-  const alias = await esClient.indices.getAlias({ name: testAlias })
-    .then((response) => response.body);
+    const alias = await esClient.indices.getAlias({ name: testAlias })
+      .then((response) => response.body);
 
-  t.deepEqual(Object.keys(alias), [indexName]);
+    t.deepEqual(Object.keys(alias), [indexName]);
+  } finally {
+    await esClient.indices.delete({ index: indexName });
+  }
+});
 
-  await esClient.indices.delete({ index: indexName });
+test.serial('bootstrap creates index with specified number of shards', async (t) => {
+  const indexName = randomId('esindex');
+  const testAlias = randomId('esalias');
+
+  process.env.ES_INDEX_SHARDS = 4;
+  try {
+    await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
+    esClient = await Search.es();
+
+    const indexSettings = await esClient.indices.get({ index: indexName })
+      .then((response) => response.body);
+
+    t.is(indexSettings[indexName].settings.index.number_of_shards, '4');
+  } finally {
+    delete process.env.ES_INDEX_SHARDS;
+    await esClient.indices.delete({ index: indexName });
+  }
 });
 
 test('bootstrap adds alias to existing index', async (t) => {

@@ -107,6 +107,7 @@ module "cumulus" {
   elasticsearch_domain_arn        = local.elasticsearch_domain_arn
   elasticsearch_hostname          = local.elasticsearch_hostname
   elasticsearch_security_group_id = local.elasticsearch_security_group_id
+  es_index_shards                 = var.es_index_shards
 
   dynamo_tables = data.terraform_remote_state.data_persistence.outputs.dynamo_tables
 

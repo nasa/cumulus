@@ -63,6 +63,7 @@ locals {
       collection_sns_topic_arn     = aws_sns_topic.report_collections_topic.arn
       auth_mode                    = "public"
       ES_CONCURRENCY               = var.es_request_concurrency
+      ES_INDEX_SHARDS              = var.es_index_shards
     }
 }
 
