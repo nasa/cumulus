@@ -9,8 +9,17 @@ const awsServices = require('@cumulus/aws-client/services');
 const CMR = require('../CMR');
 const ValidationError = require('../ValidationError');
 
+test.before(() => {
+  nock.disableNetConnect();
+  nock.enableNetConnect(/(localhost|127.0.0.1)/);
+});
+
 test.afterEach.always(() => {
   nock.cleanAll();
+});
+
+test.after.always(() => {
+  nock.enableNetConnect();
 });
 
 test.serial('CMR.searchCollection handles paging correctly.', async (t) => {
