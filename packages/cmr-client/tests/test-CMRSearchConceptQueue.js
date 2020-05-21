@@ -35,8 +35,10 @@ test('CMRSearchConceptQueue handles paging correctly.', async (t) => {
   ];
   process.env.CMR_ENVIRONMENT = 'UAT';
   const cmrSearchQueue = new CMRSearchConceptQueue({
-    provider: 'CUMULUS',
-    clientId: 'fakeClient',
+    cmrSettings: {
+      provider: 'CUMULUS',
+      clientId: 'fakeClient'
+    },
     type: 'granules',
     searchParams: {},
     format: 'umm_json'
@@ -62,8 +64,10 @@ test('CMRSearchConceptQueue uses cmrEnvironment from parameter over environment 
   ];
   process.env.CMR_ENVIRONMENT = 'UAT';
   const cmrSearchQueue = new CMRSearchConceptQueue({
-    provider: 'CUMULUS',
-    clientId: 'fakeClient',
+    cmrSettings: {
+      provider: 'CUMULUS',
+      clientId: 'fakeClient'
+    },
     type: 'granules',
     cmrEnvironment: 'SIT',
     searchParams: {},

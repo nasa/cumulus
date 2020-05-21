@@ -271,9 +271,9 @@ async function reconciliationReportForGranules(collectionId, bucketsConfig) {
   //   Report granules only in CMR
   //   Report granules only in CUMULUS
   const { name, version } = deconstructCollectionId(collectionId);
+  const cmrSettings = await getCmrSettings();
   const cmrGranulesIterator = new CMRSearchConceptQueue({
-    provider: process.env.cmr_provider,
-    clientId: process.env.cmr_client_id,
+    cmrSettings,
     type: 'granules',
     searchParams: { short_name: name, version: version, sort_key: ['granule_ur'] },
     format: 'umm_json'

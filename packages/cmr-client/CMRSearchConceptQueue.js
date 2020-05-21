@@ -1,6 +1,7 @@
 'use strict';
 
 const searchConcept = require('./searchConcept');
+const CMR = require('./CMR');
 
 /**
  * A class to efficiently list all of the concepts (collections/granules) from
@@ -24,7 +25,6 @@ class CMRSearchConceptQueue {
    * The constructor for the CMRSearchConceptQueue class
    *
    * @param {Object} params
-   * @param {string} params.provider - the CMR provider id
    * @param {string} params.clientId - the CMR clientId
    * @param {string} params.type - the type of search 'granule' or 'collection'
    * @param {string} params.cmrEnvironment - optional, CMR environment to
@@ -33,13 +33,15 @@ class CMRSearchConceptQueue {
    * @param {string} params.format - the result format
    */
   constructor(params = { searchParams: {} }) {
-    this.clientId = params.clientId;
-    this.provider = params.provider;
+    this.clientId = params.cmrSettings.clientId;
+    this.provider = params.cmrSettings.clientId;
     this.type = params.type;
     this.cmrEnvironment = params.cmrEnvironment;
-    this.params = { provider_short_name: this.provider, ...params.searchParams };
+    this.params = { provider_short_name: params.cmrSettings.provider, ...params.searchParams };
     this.format = params.format;
     this.items = [];
+
+    this.CMR = new CMR(params.cmrSettings);
   }
 
   /**

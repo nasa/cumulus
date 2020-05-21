@@ -264,6 +264,17 @@ class CMR {
     return deleteConcept('granules', granuleUR, this.provider, headers);
   }
 
+  async searchConcept(type, searchParams, format = 'json') {
+    const headers = this.getReadHeaders({ token: await this.getToken() });
+    return searchConcept({
+      type,
+      searchParams,
+      previousResults: [],
+      headers,
+      format
+    });
+  }
+
   /**
    * Search in collections
    *
@@ -272,15 +283,12 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async searchCollections(params, format = 'json') {
-    const headers = this.getReadHeaders({ token: await this.getToken() });
     const searchParams = { provider_short_name: this.provider, ...params };
-    return searchConcept({
-      type: 'collections',
+    return this.searchConcept(
+      'collections',
       searchParams,
-      previousResults: [],
-      headers,
       format
-    });
+    );
   }
 
   /**
@@ -292,14 +300,11 @@ class CMR {
    */
   async searchGranules(params, format = 'json') {
     const searchParams = { provider_short_name: this.provider, ...params };
-    const headers = this.getReadHeaders({ token: await this.getToken() });
-    return searchConcept({
-      type: 'granules',
+    return this.searchConcept(
+      'granules',
       searchParams,
-      previousResults: [],
-      headers,
       format
-    });
+    );
   }
 
   /**
