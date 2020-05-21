@@ -11,21 +11,29 @@ resource "aws_lambda_function" "ems_distribution_report" {
   memory_size      = 320
   environment {
     variables = {
-      CMR_ENVIRONMENT     = var.cmr_environment
-      CollectionsTable    = var.dynamo_tables.collections.name
-      FilesTable          = var.dynamo_tables.files.name
-      GranulesTable       = var.dynamo_tables.granules.name
-      ems_dataSource      = var.ems_datasource
-      ems_host            = var.ems_host
-      ems_path            = var.ems_path
-      ems_port            = var.ems_port
-      ems_privateKey      = var.ems_private_key
-      ems_provider        = var.ems_provider
-      ems_retentionInDays = var.ems_retention_in_days
-      ems_submitReport    = var.ems_submit_report
-      ems_username        = var.ems_username
-      stackName           = var.prefix
-      system_bucket       = var.system_bucket
+      CMR_ENVIRONMENT                  = var.cmr_environment
+      CollectionsTable                 = var.dynamo_tables.collections.name
+      FilesTable                       = var.dynamo_tables.files.name
+      GranulesTable                    = var.dynamo_tables.granules.name
+      ems_dataSource                   = var.ems_datasource
+      ems_host                         = var.ems_host
+      ems_path                         = var.ems_path
+      ems_port                         = var.ems_port
+      ems_privateKey                   = var.ems_private_key
+      ems_provider                     = var.ems_provider
+      ems_retentionInDays              = var.ems_retention_in_days
+      ems_submitReport                 = var.ems_submit_report
+      ems_username                     = var.ems_username
+      stackName                        = var.prefix
+      system_bucket                    = var.system_bucket
+      launchpad_api                    = var.launchpad_api
+      launchpad_certificate            = var.launchpad_certificate
+      launchpad_passphrase_secret_name = length(var.launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.api_launchpad_passphrase.name
+      cmr_client_id                    = var.cmr_client_id
+      cmr_oauth_provider               = var.cmr_oauth_provider
+      cmr_password_secret_name         = length(var.cmr_password) == 0 ? null : aws_secretsmanager_secret.api_cmr_password.name
+      cmr_provider                     = var.cmr_provider
+      cmr_username                     = var.cmr_username
     }
   }
   tags = var.tags
