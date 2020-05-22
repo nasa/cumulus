@@ -1,5 +1,9 @@
 # Required
 
+variable "lambda_processing_role_arn" {
+  type        = string
+  description = "Cumulus lambda processing role"
+}
 variable "prefix" {
   type        = string
   description = "Resource prefix unique to this deployment"
