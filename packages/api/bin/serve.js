@@ -17,7 +17,6 @@ const {
 } = require('./local-test-defaults');
 
 const workflowList = testUtils.getWorkflowList();
-const reconcileList = testUtils.getReconcileReportsList();
 
 async function createTable(Model, tableName) {
   try {
@@ -44,15 +43,6 @@ async function populateBucket(bucket, stackName) {
     Body: JSON.stringify(obj)
   }));
 
-  const reconcilePromises = reconcileList.map((obj) => {
-    const filename = `report-${obj.reportStartTime}.json`;
-    return promiseS3Upload({
-      Bucket: bucket,
-      Key: `${stackName}/reconciliation-reports/${filename}`,
-      Body: JSON.stringify(obj)
-    });
-  });
-
   // upload workflow template
   const workflow = `${stackName}/workflow_template.json`;
   const templatePromise = promiseS3Upload({
@@ -60,7 +50,7 @@ async function populateBucket(bucket, stackName) {
     Key: workflow,
     Body: JSON.stringify({})
   });
-  await Promise.all([...workflowPromises, ...reconcilePromises, templatePromise]);
+  await Promise.all([...workflowPromises, templatePromise]);
 }
 
 function setTableEnvVariables(stackName) {
