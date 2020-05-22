@@ -20,8 +20,6 @@ To view the released module artifacts for each Cumulus core version, see the [Cu
 
 When breaking changes have been introduced, the Cumulus Core team will publish instructions on migrating from one version to another.  Detailed release notes with migration instructions (if any) for each release can be found on the [Cumulus Releases] page.
 
-**IMPORTANT** 
-
 1. **Use consistent Cumulus versions:** All Terraform modules must be updated to the same Cumulus version number (see below). In addition, your workflow lambdas that utilize published Cumulus Core npm modules should always match your deployed Cumulus version to ensure compatibility. **Check the CHANGELOG for deprecation/breaking change notices.**
 2. **Follow all intervening steps:** When skipping over versions, you **must perform all intervening migration steps**.  For example, if going from version 1.1.0 to 1.3.0, upgrade from 1.1.0 to 1.2.0 and then to 1.3.0.  This is critical because each release that contains migration steps provide instructions _only_ for migrating from the _immediately_ previous release, but you must follow _all_ migration steps between your currently installed release and _every release_ through the release that you wish to migrate to.
 3. **Migrate lower environments first:** Migrate your "lowest" environment first and test it to ensure correctness before performing migration steps in each successively higher environment.  For example, update Sandbox, then UAT, then SIT, and finally Prod.
