@@ -49,7 +49,7 @@ data "aws_lambda_invocation" "tea_map_cache" {
   function_name = module.tea_map_cache.lambda_function_name
   input = jsonencode({ bucketList = local.tea_buckets,
                        s3Bucket = var.system_bucket
-                       s3Key = "${var.prefix}/thin-egress-app/bucket_cache.json"
+                       s3Key = "${var.prefix}/distribution_bucket_map.json"
   })
 }
 

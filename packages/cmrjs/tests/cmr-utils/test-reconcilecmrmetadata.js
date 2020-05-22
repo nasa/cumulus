@@ -8,6 +8,7 @@ const log = require('@cumulus/common/log');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const cmrUtils = rewire('../../cmr-utils');
+cmrUtils.__set__('getDistributionBucketMap', async () => ({ private: 'private' }));
 
 test.before(async (t) => {
   // Store the CMR password
@@ -92,7 +93,6 @@ test('reconcileCMRMetadata calls updateCMRMetadata if metadatafile present', asy
       files: updatedFiles,
       distEndpoint,
       published,
-      teaEndpoint: undefined
     })
   );
 
@@ -156,7 +156,6 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
       distEndpoint,
       cmrGranuleUrlType: 'distribution',
       buckets: new BucketsConfig(fakeBuckets),
-      teaEndpoint: undefined
     };
 
     // assert
@@ -216,7 +215,6 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
     distEndpoint,
     cmrGranuleUrlType: 'distribution',
     buckets: new BucketsConfig(fakeBuckets),
-    teaEndpoint: undefined
   };
 
   t.deepEqual(paramsIntoUpdateEcho10XML, fakeUpdateCMRMetadata.firstCall.args[0]);
@@ -254,7 +252,6 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
 
   const fakePublishUMMGJSON2CMR = sinon.fake.resolves({ });
   const restorePublishUMMGJSON2CMR = cmrUtils.__set__('publishUMMGJSON2CMR', fakePublishUMMGJSON2CMR);
-
   const publishObject = {
     filename: jsonCMRFile.filename,
     metadataObject: { fake: 'metadata' },
@@ -281,7 +278,6 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
     distEndpoint,
     cmrGranuleUrlType: 'distribution',
     buckets,
-    teaEndpoint: undefined
   };
 
   // assert

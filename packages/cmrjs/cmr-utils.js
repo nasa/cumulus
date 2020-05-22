@@ -8,7 +8,6 @@ const js2xmlParser = require('js2xmlparser');
 const path = require('path');
 const urljoin = require('url-join');
 const xml2js = require('xml2js');
-
 const {
   buildS3Uri,
   getS3Object,
@@ -28,7 +27,6 @@ const errors = require('@cumulus/errors');
 const CMR = require('@cumulus/cmr-client/CMR');
 const { ummVersion } = require('@cumulus/cmr-client/UmmUtils');
 
-const { getTeaBucketPath } = require('./tea');
 const {
   getUrl,
   xmlParseOptions,
@@ -276,17 +274,19 @@ function mapCNMTypeToCMRType(type) {
   return mapping[type];
 }
 
+async function getDistributionBucketMap() {
+  return getJsonS3Object(process.env.system_bucket, `${process.env.stackName}/distribution_bucket_map.json`);
+}
+
 async function generateFileUrl({
   file,
   distEndpoint,
-  teaEndpoint,
   cmrGranuleUrlType = 'distribution'
 }) {
   if (cmrGranuleUrlType === 'distribution') {
-    let bucketPath = file.bucket;
-    if (teaEndpoint) {
-      bucketPath = await getTeaBucketPath(bucketPath, teaEndpoint) || bucketPath;
-    }
+    const bucketMap = await getDistributionBucketMap();
+    const bucketPath = bucketMap[file.bucket] ? bucketMap[file.bucket] : file.bucket;
+
     const extension = urljoin(bucketPath, getS3KeyOfFile(file));
     return urljoin(distEndpoint, extension);
   }
@@ -318,13 +318,12 @@ async function constructOnlineAccessUrl({
   file, // 'file object' given CMR.
   distEndpoint,
   buckets,
-  cmrGranuleUrlType = 'distribution',
-  teaEndpoint
+  cmrGranuleUrlType = 'distribution'
 }) {
   try {
     const bucketType = buckets.type(file.bucket);
     const distributionApiBuckets = ['protected', 'public'];
-    const fileUrl = await generateFileUrl({ file, distEndpoint, teaEndpoint, cmrGranuleUrlType });
+    const fileUrl = await generateFileUrl({ file, distEndpoint, cmrGranuleUrlType });
     if (fileUrl && distributionApiBuckets.includes(bucketType)) {
       return {
         URL: fileUrl,
@@ -334,8 +333,9 @@ async function constructOnlineAccessUrl({
       };
     }
     return null;
-  } catch (error) { // TODO make error a custom error class
-    throw new Error(`Error constructing online access urls for ${JSON.stringify(file)}: ${error.message}`);
+  } catch (error) {
+    log.error(`Error constructing online access urls for ${JSON.stringify(file)}: ${error.message}`)
+    throw error;
   }
 }
 
@@ -353,15 +353,13 @@ async function constructOnlineAccessUrls({
   files,
   distEndpoint,
   buckets,
-  cmrGranuleUrlType = 'distribution',
-  teaEndpoint
+  cmrGranuleUrlType = 'distribution'
 }) {
   const urlListPromises = files.map((file) => constructOnlineAccessUrl({
     file,
     distEndpoint,
     buckets,
-    cmrGranuleUrlType,
-    teaEndpoint
+    cmrGranuleUrlType
   }));
 
   const urlList = await Promise.all(urlListPromises);
@@ -384,8 +382,7 @@ async function constructRelatedUrls({
   distEndpoint,
   buckets,
   s3CredsEndpoint = 's3credentials',
-  cmrGranuleUrlType = 'distribution',
-  teaEndpoint
+  cmrGranuleUrlType = 'distribution'
 }) {
   const credsUrl = urljoin(distEndpoint, s3CredsEndpoint);
   const s3CredentialsObject = getS3CredentialsObject(credsUrl);
@@ -393,8 +390,7 @@ async function constructRelatedUrls({
     files,
     distEndpoint,
     buckets,
-    cmrGranuleUrlType,
-    teaEndpoint
+    cmrGranuleUrlType
   });
 
   const relatedUrls = cmrUrlObjects.concat(s3CredentialsObject);
@@ -500,15 +496,13 @@ async function updateUMMGMetadata({
   files,
   distEndpoint,
   buckets,
-  cmrGranuleUrlType = 'distribution',
-  teaEndpoint
+  cmrGranuleUrlType = 'distribution'
 }) {
   const newURLs = await constructRelatedUrls({
     files,
     distEndpoint,
     buckets,
-    cmrGranuleUrlType,
-    teaEndpoint
+    cmrGranuleUrlType
   });
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
   const filename = getS3UrlOfFile(cmrFile);
@@ -624,8 +618,7 @@ async function updateEcho10XMLMetadata({
   distEndpoint,
   buckets,
   s3CredsEndpoint = 's3credentials',
-  cmrGranuleUrlType = 'distribution',
-  teaEndpoint
+  cmrGranuleUrlType = 'distribution'
 }) {
   // add/replace the OnlineAccessUrls
   const filename = getS3UrlOfFile(cmrFile);
@@ -645,8 +638,7 @@ async function updateEcho10XMLMetadata({
     files,
     distEndpoint,
     buckets,
-    cmrGranuleUrlType,
-    teaEndpoint
+    cmrGranuleUrlType
   });
   newURLs = newURLs.concat(getS3CredentialsObject(urljoin(distEndpoint, s3CredsEndpoint)));
 
@@ -690,8 +682,7 @@ async function updateCMRMetadata({
   distEndpoint,
   published,
   inBuckets = null,
-  cmrGranuleUrlType = 'distribution',
-  teaEndpoint
+  cmrGranuleUrlType = 'distribution'
 }) {
   const filename = getS3UrlOfFile(cmrFile);
 
@@ -708,8 +699,7 @@ async function updateCMRMetadata({
     files,
     distEndpoint,
     buckets,
-    cmrGranuleUrlType,
-    teaEndpoint
+    cmrGranuleUrlType
   };
 
   if (isECHO10File(filename)) {
@@ -746,8 +736,7 @@ async function reconcileCMRMetadata({
   granuleId,
   updatedFiles,
   distEndpoint,
-  published,
-  teaEndpoint
+  published
 }) {
   const cmrMetadataFiles = getCmrFileObjs(updatedFiles);
   if (cmrMetadataFiles.length === 1) {
@@ -756,8 +745,7 @@ async function reconcileCMRMetadata({
       cmrFile: cmrMetadataFiles[0],
       files: updatedFiles,
       distEndpoint,
-      published,
-      teaEndpoint
+      published
     });
   }
   if (cmrMetadataFiles.length > 1) {

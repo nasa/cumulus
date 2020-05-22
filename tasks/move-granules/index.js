@@ -247,7 +247,6 @@ async function updateEachCmrFileAccessURLs(
       published: false, // Do the publish in publish-to-cmr step
       inBuckets: bucketsConfig,
       cmrGranuleUrlType,
-      teaEndpoint: process.env.TEA_API
     });
   }));
 }
