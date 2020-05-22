@@ -341,7 +341,9 @@ Once you have your provider and rule added, go to the Rules tab, and add a rule 
     "name": "MOD09GQ",
     "version": "006"
   },
-  "meta": {},
+  "meta": {
+    "provider_path": "{{path_to_data}}"
+  },
   "rule": {
     "type": "onetime"
   },
