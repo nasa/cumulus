@@ -95,7 +95,6 @@ test('GET with no path parameters and an authorized user returns a list of workf
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  t.is(response.status, 200);
   // order of response is not guaranteed
   t.is(workflowList.length, response.body.length);
 });
@@ -107,7 +106,6 @@ test('GET an existing workflow with an authorized user returns a specific workfl
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  t.is(response.status, 200);
   t.deepEqual(response.body, workflowList[0]);
 });
 
@@ -118,6 +116,21 @@ test('GET with path parameters returns a 404 for a nonexistent workflow', async 
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(404);
 
-  t.is(response.status, 404);
   t.is(response.body.message, 'Workflow does not exist!');
+});
+
+test('GET /workflows/<name> returns the correct workflow', async (t) => {
+  const response = await request(app)
+    .get('/workflows/HelloWorldWorkflow')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const workflow = JSON.parse(response.text);
+
+  t.is(workflow.name, 'HelloWorldWorkflow');
+  t.is(workflow.definition.Comment, 'Tests Lambda update after redeploy');
+
+  const stateNames = Object.keys(workflow.definition.States);
+  t.deepEqual(stateNames.sort(), ['StartStatus', 'StopStatus']);
 });
