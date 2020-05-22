@@ -25,7 +25,11 @@ const uploadEcho10CMRFile = cmrUtil.__get__('uploadEcho10CMRFile');
 const uploadUMMGJSONCMRFile = cmrUtil.__get__('uploadUMMGJSONCMRFile');
 const distributionBucketMap = {
   'fake-bucket': 'fake-bucket',
-  'mapped-bucket': 'mapped/path/example'
+  'mapped-bucket': 'mapped/path/example',
+  'cumulus-test-sandbox-protected': 'cumulus-test-sandbox-protected',
+  'cumulus-test-sandbox-protected-2': 'cumulus-test-sandbox-protected-2',
+  'cumulus-test-sandbox-public': 'cumulus-test-sandbox-public',
+  'other-fake-bucket': 'other-fake-bucket'
 };
 const { generateFileUrl } = proxyquire('../../cmr-utils', {
   '@cumulus/aws-client/S3': {

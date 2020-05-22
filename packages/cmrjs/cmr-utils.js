@@ -285,7 +285,10 @@ async function generateFileUrl({
 }) {
   if (cmrGranuleUrlType === 'distribution') {
     const bucketMap = await getDistributionBucketMap();
-    const bucketPath = bucketMap[file.bucket] ? bucketMap[file.bucket] : file.bucket;
+    const bucketPath = bucketMap[file.bucket];
+    if (!bucketPath) {
+      throw new Error(`No distribution bucket mapping exists for ${file.bucket}`);
+    }
 
     const extension = urljoin(bucketPath, getS3KeyOfFile(file));
     return urljoin(distEndpoint, extension);
@@ -323,14 +326,16 @@ async function constructOnlineAccessUrl({
   try {
     const bucketType = buckets.type(file.bucket);
     const distributionApiBuckets = ['protected', 'public'];
-    const fileUrl = await generateFileUrl({ file, distEndpoint, cmrGranuleUrlType });
-    if (fileUrl && distributionApiBuckets.includes(bucketType)) {
-      return {
-        URL: fileUrl,
-        URLDescription: 'File to download', // used by ECHO10
-        Description: 'File to download', // used by UMMG
-        Type: mapCNMTypeToCMRType(file.type) // used by UMMG
-      };
+    if (distributionApiBuckets.includes(bucketType)) {
+      const fileUrl = await generateFileUrl({ file, distEndpoint, cmrGranuleUrlType });
+      if (fileUrl) {
+        return {
+          URL: fileUrl,
+          URLDescription: 'File to download', // used by ECHO10
+          Description: 'File to download', // used by UMMG
+          Type: mapCNMTypeToCMRType(file.type) // used by UMMG
+        };
+      }
     }
     return null;
   } catch (error) {
