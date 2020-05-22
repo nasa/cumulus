@@ -57,7 +57,8 @@ To use the buckets specified in the configuration, you can do the following:
       "cma": {
         "event.$": "$",
         "task_config": {
-          "Provider": "{$.meta.provider}",
+          "provider": "{$.meta.provider}",
+          "provider_path": "{$.meta.provider_path}",
           "collection": "{$.meta.collection}",
           "buckets": "{$.meta.buckets}"
         }
@@ -97,6 +98,7 @@ Bucket names can be hardcoded in your workflow configuration, for example:
         "event.$": "$",
         "task_config": {
           "provider": "{$.meta.provider}",
+          "provider_path": "{$.meta.provider_path}",
           "collection": "{$.meta.collection}",
           "buckets": {
             "internal": "sample-internal-bucket",
@@ -119,6 +121,7 @@ Or you can do a combination of meta buckets and hardcoded:
         "event.$": "$",
         "task_config": {
           "provider": "{$.meta.provider}",
+          "provider_path": "{$.meta.provider_path}",
           "collection": "{$.meta.collection}",
           "buckets": {
             "internal": "sample-internal-bucket",
@@ -143,6 +146,7 @@ Bucket names can be configured using a mixture of hardcoded values and values fr
         "event.$": "$",
         "task_config": {
           "provider": "{$.meta.provider}",
+          "provider_path": "{$.meta.provider_path}",
           "collection": "{$.meta.collection}",
           "buckets": {
             "internal": "{$.meta.collection.name}-bucket"
