@@ -67,6 +67,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added migration_5 to migrate existing s3 reconciliation report records to database and Elasticsearch
   - Updated `@cumulus/api` package, `tf-modules/archive` and `tf-modules/data-persistence` Terraform modules
 
+- **CUMULUS-1916**
+  - Added util function for seeding reconciliation reports when running API locally in dashboard
+
 ### Changed
 
 - **CUMULUS-1777**
@@ -76,6 +79,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1912**
   - Updated reconciliationReports endpoints to query against Elasticsearch, delete report from both database and s3
   - Added `@cumulus/api-client/reconciliationReports`
+- **CUMULUS-1999**
+  - Updated `@cumulus/common/util.deprecate()` so that only a single deprecation notice is printed for each name/version combination
 
 ### Fixed
 

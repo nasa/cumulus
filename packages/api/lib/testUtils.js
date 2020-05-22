@@ -17,10 +17,6 @@ const dataDir = path.join(__dirname, '../app/data');
 const workflowDir = path.join(dataDir, 'workflows');
 const getWorkflowList = () => fs.readdirSync(workflowDir).map((f) => JSON.parse(fs.readFileSync(`${workflowDir}/${f}`).toString()));
 
-const reconcileDir = path.join(dataDir, 'reconciliation-reports');
-const getReconcileReportsList = () => fs.readdirSync(reconcileDir).map((f) => JSON.parse(fs.readFileSync(`${reconcileDir}/${f}`).toString()));
-
-
 /**
  * mocks the context object of the lambda function with
  * succeed and fail functions to facilitate testing of
@@ -384,7 +380,6 @@ module.exports = {
   fakeFileFactory,
   fakeProviderFactory,
   fakeReconciliationReportFactory,
-  getReconcileReportsList,
   getSqsQueueMessageCounts,
   getWorkflowList,
   isLocalApi,
