@@ -25,6 +25,10 @@ test.beforeEach((t) => {
     public: { name: randomId('public'), type: 'public' }
   };
   t.context.buckets = new BucketsConfig(t.context.bucketConfig);
+  cmrUtils.__set__('getDistributionBucketMap', async () => ({
+    [t.context.bucketConfig.protected.name]: t.context.bucketConfig.protected.name,
+    [t.context.bucketConfig.public.name]: t.context.bucketConfig.public.name
+  }));
 });
 
 test('mapCNMTypeToCMRType returns a mapping', (t) => {
