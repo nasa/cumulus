@@ -66,6 +66,7 @@ exports.syncGranule = function syncGranule(event) {
   const provider = config.provider;
   const collection = config.collection;
   const downloadBucket = config.downloadBucket;
+  const syncChecksumFiles = config.syncChecksumFiles;
 
   const duplicateHandling = duplicateHandlingType(event);
 
@@ -81,13 +82,14 @@ exports.syncGranule = function syncGranule(event) {
     return Promise.reject(err);
   }
 
-  const ingest = new GranuleFetcher(
+  const ingest = new GranuleFetcher({
     buckets,
     collection,
     provider,
     fileStagingDir,
-    duplicateHandling
-  );
+    duplicateHandling,
+    syncChecksumFiles
+  });
 
   return download(ingest, downloadBucket, provider, input.granules)
     .then((granules) => {

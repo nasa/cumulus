@@ -15,18 +15,11 @@ const { handleDuplicateFile } = require('@cumulus/ingest/granule');
 const isChecksumFile = (file) =>
   ['.md5', '.cksum', '.sha1', '.sha256'].includes(path.extname(file.name));
 
-const addChecksumToFile = async (providerClient, checksumFiles, dataFile) => {
+const addChecksumToFile = async (providerClient, checksumFile, dataFile) => {
   if (dataFile.checksumType && dataFile.checksum) return dataFile;
-
-  const checksumFile = checksumFiles.find((cf) => {
-    const ext = path.extname(cf.name);
-    return cf.name === `${dataFile.name}${ext}`;
-  });
-
   if (checksumFile === undefined) return dataFile;
 
   const checksumType = checksumFile.name.split('.').pop();
-
   const checksum = (await fetchTextFile(
     providerClient,
     path.join(checksumFile.path, checksumFile.name)
@@ -36,47 +29,61 @@ const addChecksumToFile = async (providerClient, checksumFiles, dataFile) => {
 };
 
 const addChecksumsToFiles = async (providerClient, files) => {
-  const checksumFiles = files.filter(isChecksumFile);
-  const dataFiles = files.filter((f) => !isChecksumFile(f));
+  // Map data file name to checksum file object, if it has a checksum file
+  const checksumFileOf = files.reduce((acc, file) => {
+    if (isChecksumFile(file)) {
+      const ext = path.extname(file.name);
+      const dataFilename = path.basename(file.name, ext);
+      acc[dataFilename] = file;
+    }
+    return acc;
+  }, {});
 
-  const updatedDataFiles = await Promise.all(
-    dataFiles.map((dataFile) =>
-      addChecksumToFile(providerClient, checksumFiles, dataFile))
+  return Promise.all(
+    // Map over all files in order to preserve original file ordering
+    files.map((file) => addChecksumToFile(
+      providerClient, checksumFileOf[file.name], file
+    ))
   );
-
-  return [...checksumFiles, ...updatedDataFiles];
 };
 
 class GranuleFetcher {
   /**
-   * Constructor for GranuleFetcher class
+   * Constructor for GranuleFetcher class.
    *
-   * @param {Object} buckets - s3 buckets available from config
-   * @param {Object} collection - collection configuration object
-   * @param {Object} provider - provider configuration object
-   * @param {string} fileStagingDir - staging directory on bucket,
-   * files will be placed in collectionId subdirectory
-   * @param {boolean} duplicateHandling - duplicateHandling of a file
+   * @param {Object} options - keyword options argument
+   * @param {Object} options.buckets - s3 buckets available from config
+   * @param {Object} options.collection - collection configuration object
+   * @param {Object} options.provider - provider configuration object
+   * @param {string} options.fileStagingDir - staging directory on bucket,
+   *    files will be placed in collectionId subdirectory
+   * @param {string} options.duplicateHandling - duplicateHandling of a file;
+   *    one of 'replace', 'version', 'skip', or 'error' (default)
+   * @param {boolean} options.syncChecksumFiles - if `true`, also synchronize
+   *    checksum files (default: `false`)
    */
-  constructor(
+  constructor({
     buckets,
     collection,
     provider,
     fileStagingDir = 'file-staging',
-    duplicateHandling = 'error'
-  ) {
+    duplicateHandling = 'error',
+    syncChecksumFiles = false
+  }) {
     this.buckets = buckets;
     this.collection = collection;
 
-    if (fileStagingDir && fileStagingDir[0] === '/') this.fileStagingDir = fileStagingDir.substr(1);
-    else this.fileStagingDir = fileStagingDir;
+    this.fileStagingDir = (fileStagingDir && fileStagingDir[0] === '/')
+      ? fileStagingDir.substr(1)
+      : fileStagingDir;
 
     this.duplicateHandling = duplicateHandling;
+    this.syncChecksumFiles = syncChecksumFiles;
 
     // default collectionId, could be overwritten by granule's collection information
-    if (this.collection) {
+    if (collection) {
       this.collectionId = constructCollectionId(
-        this.collection.name, this.collection.version
+        collection.name, collection.version
       );
     }
 
@@ -123,7 +130,7 @@ class GranuleFetcher {
     );
 
     const downloadFiles = filesWithChecksums
-      .filter((f) => !isChecksumFile(f))
+      .filter((f) => this.syncChecksumFiles || !isChecksumFile(f))
       .map((f) => this.ingestFile(f, bucket, this.duplicateHandling));
 
     log.debug('awaiting all download.Files');

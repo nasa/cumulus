@@ -329,56 +329,156 @@ test.serial('download granule from S3 provider', async (t) => {
 
 test.serial('download granule with checksum in file from an HTTP endpoint', async (t) => {
   const event = await loadJSONTestData('payloads/new-message-schema/ingest-checksumfile.json');
+  const { config, input } = event;
 
-  event.config.downloadBucket = t.context.internalBucketName;
-  event.config.buckets.internal = {
-    name: t.context.internalBucketName,
-    type: 'internal'
-  };
-  event.config.buckets.private = {
-    name: t.context.privateBucketName,
-    type: 'private'
-  };
-  event.config.buckets.protected = {
-    name: t.context.protectedBucketName,
-    type: 'protected'
-  };
-  event.config.provider = {
+  config.downloadBucket = t.context.internalBucketName;
+  config.buckets.internal.name = t.context.internalBucketName;
+  config.buckets.private.name = t.context.privateBucketName;
+  config.buckets.protected.name = t.context.protectedBucketName;
+  config.provider = {
     id: 'MODAPS',
     protocol: 'http',
     host: '127.0.0.1',
     port: 3030
   };
 
-  event.input.granules[0].files[0].path = '/granules';
-  event.input.granules[0].files[1].path = '/granules';
+  await validateConfig(t, config);
+  await validateInput(t, input);
 
-  await validateConfig(t, event.config);
-  await validateInput(t, event.input);
-
-  // Stage the files to be downloaded
-  const granuleFilename = event.input.granules[0].files[0].name;
-
+  const granuleFilename = input.granules[0].files[0].name;
+  const checksumFilename = input.granules[0].files[1].name;
+  const { name, version } = config.collection;
+  const collectionId = constructCollectionId(name, version);
+  const keypath = `file-staging/${config.stack}/${collectionId}`;
   const output = await syncGranule(event);
 
   await validateOutput(t, output);
 
   t.is(output.granules.length, 1);
   t.is(output.granules[0].files.length, 1);
-  const config = t.context.event.config;
-  const keypath = `file-staging/${config.stack}/${config.collection.name}___${parseInt(config.collection.version, 10)}`;
   t.is(
     output.granules[0].files[0].filename,
     `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
   );
-  t.is(
-    true,
+  t.true(
     await s3ObjectExists({
       Bucket: t.context.internalBucketName,
       Key: `${keypath}/${granuleFilename}`
     })
   );
+  t.false(
+    await s3ObjectExists({
+      Bucket: t.context.internalBucketName,
+      Key: `${keypath}/${checksumFilename}`
+    })
+  );
 });
+
+test.serial('download granule as well as checksum file from an HTTP endpoint', async (t) => {
+  const event = await loadJSONTestData('payloads/new-message-schema/ingest-checksumfile.json');
+  const { config, input } = event;
+
+  config.syncChecksumFiles = true;
+  config.downloadBucket = t.context.internalBucketName;
+  config.buckets.internal.name = t.context.internalBucketName;
+  config.buckets.private.name = t.context.privateBucketName;
+  config.buckets.protected.name = t.context.protectedBucketName;
+  config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: '127.0.0.1',
+    port: 3030
+  };
+
+  await validateConfig(t, config);
+  await validateInput(t, input);
+
+  const granuleFilename = input.granules[0].files[0].name;
+  const checksumFilename = input.granules[0].files[1].name;
+  const { name, version } = config.collection;
+  const collectionId = constructCollectionId(name, version);
+  const keypath = `file-staging/${config.stack}/${collectionId}`;
+  const output = await syncGranule(event);
+
+  await validateOutput(t, output);
+
+  t.is(output.granules.length, 1);
+  t.is(output.granules[0].files.length, 2);
+  t.is(
+    output.granules[0].files[0].filename,
+    `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
+  );
+  t.is(
+    output.granules[0].files[1].filename,
+    `s3://${t.context.internalBucketName}/${keypath}/${checksumFilename}`
+  );
+  t.true(
+    await s3ObjectExists({
+      Bucket: t.context.internalBucketName,
+      Key: `${keypath}/${granuleFilename}`
+    })
+  );
+  t.true(
+    await s3ObjectExists({
+      Bucket: t.context.internalBucketName,
+      Key: `${keypath}/${checksumFilename}`
+    })
+  );
+});
+
+
+/*
+test.serial('download granule file and checksum file from an HTTP endpoint', async (t) => {
+  const event = await loadJSONTestData('payloads/new-message-schema/ingest-checksumfile.json');
+  const { config, input } = t.context.event;
+
+  config.downloadBucket = t.context.internalBucketName;
+  config.buckets.internal.name = t.context.internalBucketName;
+  config.buckets.private.name = t.context.privateBucketName;
+  config.buckets.protected.name = t.context.protectedBucketName;
+  config.syncChecksumFiles = true;
+  config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: '127.0.0.1',
+    port: 3030
+  };
+
+  await validateConfig(t, config);
+  await validateInput(t, input);
+
+  // Stage the files to be downloaded
+  const granuleFilename = input.granules[0].files[0].name;
+  const checksumFilename = input.granules[0].files[1].name;
+  const output = await syncGranule(event);
+
+  await validateOutput(t, output);
+
+  t.is(output.granules.length, 1);
+  t.is(output.granules[0].files.length, 2);
+
+  const { name, version } = config.collection;
+  const collectionId = constructCollectionId(name, version);
+  const keypath = `file-staging/${config.stack}/${collectionId}`;
+
+  t.is(
+    output.granules[0].files[0].filename,
+    `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
+  );
+  t.true(
+    await s3ObjectExists({
+      Bucket: t.context.internalBucketName,
+      Key: `${keypath}/${granuleFilename}`
+    })
+  );
+  t.true(
+    await s3ObjectExists({
+      Bucket: t.context.internalBucketName,
+      Key: `${keypath}/${checksumFilename}`
+    })
+  );
+});
+*/
 
 test.serial('download granule with bad checksum in file from HTTP endpoint throws', async (t) => {
   const granuleChecksumValue = 8675309;
