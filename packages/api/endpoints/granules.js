@@ -274,7 +274,7 @@ async function bulkDelete(req, res) {
   const asyncOperation = await asyncOperationModel.start({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
-    lambdaName: process.env.BulkDeleteLambda,
+    lambdaName: process.env.BulkOperationLambda,
     description: 'Bulk granule deletion',
     operationType: 'Bulk granule deletion',
     payload: {

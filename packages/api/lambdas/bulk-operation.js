@@ -5,9 +5,18 @@ const log = require('@cumulus/common/log');
 const GranuleModel = require('../models/granules');
 const SCROLL_SIZE = 500; // default size in Kibana
 
+/**
+ * Return a unique list of granule IDs based on the provided list or the response from the
+ * query to ES using the provided query and index.
+ *
+ * @param {Object} payload
+ * @param {Object} [payload.query] - Optional parameter of query to send to ES
+ * @param {string} [payload.index] - Optional parameter of ES index to query.
+ * Must exist if payload.query exists.
+ * @param {Object} [payload.ids] - Optional list of granule IDs to bulk operate on
+ * @returns {Promise<Array<string>>}
+ */
 async function getGranuleIdsForPayload(payload) {
-  // const queueName = payload.queueName;
-  // const workflowName = payload.workflowName;
   const granuleIds = payload.ids || [];
 
   // query ElasticSearch if needed
@@ -93,6 +102,7 @@ function applyWorkflowToGranules(granuleIds, workflowName, queueName) {
  * @param {string} [payload.index] - Optional parameter of ES index to query.
  * Must exist if payload.query exists.
  * @param {Object} [payload.ids] - Optional list of granule IDs to bulk operate on
+ * @returns {Promise}
  */
 async function bulkGranuleDelete(payload) {
   const queueName = payload.queueName;
@@ -112,6 +122,7 @@ async function bulkGranuleDelete(payload) {
  * @param {string} [payload.index] - Optional parameter of ES index to query.
  * Must exist if payload.query exists.
  * @param {Object} [payload.ids] - Optional list of granule IDs to bulk operate on
+ * @returns {Promise}
  */
 async function bulkGranule(payload) {
   const queueName = payload.queueName;

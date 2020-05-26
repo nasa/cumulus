@@ -23,7 +23,7 @@ let jwtAuthToken;
 
 process.env.AsyncOperationsTable = randomString();
 process.env.AsyncOperationTaskDefinition = randomString();
-process.env.BulkDeleteLambda = randomString();
+process.env.BulkOperationLambda = randomString();
 process.env.EcsCluster = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
