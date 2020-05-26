@@ -64,6 +64,9 @@ test.after.always(async () => {
   await accessTokenModel.deleteTable();
 });
 
+test.todo('Request to granules bulk endpoint starts an async-operation with the correct parameters and list of ids');
+test.todo('Request to granules bulk endpoint starts an async-operation with the correct parameters and es query');
+
 test.serial('POST /granules/bulkDelete returns a 400 when a query is provided with no index', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedQuery = { query: 'fake-query' };

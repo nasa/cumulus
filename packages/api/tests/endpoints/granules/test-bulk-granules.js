@@ -48,16 +48,24 @@ test.before(async () => {
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 });
 
+test.beforeEach((t) => {
+  const asyncOperationId = randomString();
+  t.context.asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').returns(
+    new Promise((resolve) => resolve({ id: asyncOperationId }))
+  );
+});
+
+test.afterEach.always((t) => {
+  t.context.asyncOperationStartStub.restore();
+});
+
 test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await accessTokenModel.deleteTable();
 });
 
-test.serial('Request to granules bulk endpoint starts an async-operation with the correct parameters and list of ids.', async (t) => {
-  const asyncOperationId = randomString();
-  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').returns(
-    new Promise((resolve) => resolve({ id: asyncOperationId }))
-  );
+test.serial('Request to granules bulk endpoint starts an async-operation with the correct parameters and list of ids', async (t) => {
+  const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
   const expectedIds = ['MOD09GQ.A8592978.nofTNT.006.4914003503063'];
@@ -73,14 +81,14 @@ test.serial('Request to granules bulk endpoint starts an async-operation with th
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(200);
+    .expect(202);
   const {
     lambdaName,
     cluster,
     description,
     payload
   } = asyncOperationStartStub.args[0][0];
-  t.is(asyncOperationStartStub.calledOnce, true);
+  t.true(asyncOperationStartStub.calledOnce);
   t.is(lambdaName, process.env.BulkOperationLambda);
   t.is(cluster, process.env.EcsCluster);
   t.is(description, `Bulk run ${expectedWorkflowName} on 1 granules`);
@@ -99,11 +107,8 @@ test.serial('Request to granules bulk endpoint starts an async-operation with th
   asyncOperationStartStub.restore();
 });
 
-test.serial('Request to granules bulk endpoint starts an async-operation with the correct parameters and es query.', async (t) => {
-  const asyncOperationId = randomString();
-  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').returns(
-    new Promise((resolve) => resolve({ id: asyncOperationId }))
-  );
+test.serial('Request to granules bulk endpoint starts an async-operation with the correct parameters and es query', async (t) => {
+  const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
   const expectedIndex = 'my-index';
@@ -121,7 +126,7 @@ test.serial('Request to granules bulk endpoint starts an async-operation with th
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(200);
+    .expect(202);
 
   const {
     lambdaName,
@@ -129,7 +134,7 @@ test.serial('Request to granules bulk endpoint starts an async-operation with th
     description,
     payload
   } = asyncOperationStartStub.args[0][0];
-  t.is(asyncOperationStartStub.calledOnce, true);
+  t.true(asyncOperationStartStub.calledOnce);
   t.is(lambdaName, process.env.BulkOperationLambda);
   t.is(cluster, process.env.EcsCluster);
   t.is(description, `Bulk run ${expectedWorkflowName} on 2 granules`);
@@ -144,15 +149,10 @@ test.serial('Request to granules bulk endpoint starts an async-operation with th
     esUser: process.env.METRICS_ES_USER,
     esPassword: process.env.METRICS_ES_PASS
   });
-
-  asyncOperationStartStub.restore();
 });
 
 test.serial('Request to granules bulk endpoint returns a 400 when a query is provided with no index', async (t) => {
-  const asyncOperationId = randomString();
-  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').returns(
-    new Promise((resolve) => resolve({ id: asyncOperationId }))
-  );
+  const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
   const expectedQuery = { query: 'fake-query' };
@@ -170,16 +170,11 @@ test.serial('Request to granules bulk endpoint returns a 400 when a query is pro
     .send(body)
     .expect(400, /Index is required if query is sent/);
 
-  t.is(asyncOperationStartStub.notCalled, true);
-
-  asyncOperationStartStub.restore();
+  t.true(asyncOperationStartStub.notCalled);
 });
 
 test.serial('Request to granules bulk endpoint returns a 400 when no IDs or Query is provided', async (t) => {
-  const asyncOperationId = randomString();
-  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').returns(
-    new Promise((resolve) => resolve({ id: asyncOperationId }))
-  );
+  const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
   const expectedIndex = 'my-index';
@@ -197,16 +192,11 @@ test.serial('Request to granules bulk endpoint returns a 400 when no IDs or Quer
     .send(body)
     .expect(400, /One of ids or query is required/);
 
-  t.is(asyncOperationStartStub.notCalled, true);
-
-  asyncOperationStartStub.restore();
+  t.true(asyncOperationStartStub.notCalled);
 });
 
 test.serial('Request to granules bulk endpoint returns a 400 when no workflowName is provided', async (t) => {
-  const asyncOperationId = randomString();
-  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').returns(
-    new Promise((resolve) => resolve({ id: asyncOperationId }))
-  );
+  const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedIndex = 'my-index';
   const expectedQuery = { query: 'fake-query' };
@@ -224,16 +214,11 @@ test.serial('Request to granules bulk endpoint returns a 400 when no workflowNam
     .send(body)
     .expect(400, /workflowName is required/);
 
-  t.is(asyncOperationStartStub.notCalled, true);
-
-  asyncOperationStartStub.restore();
+  t.true(asyncOperationStartStub.notCalled);
 });
 
 test.serial('Request to granules bulk endpoint returns a 400 when the Metrics ELK stack is not configured', async (t) => {
-  const asyncOperationId = randomString();
-  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').returns(
-    new Promise((resolve) => resolve({ id: asyncOperationId }))
-  );
+  const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
   const expectedIndex = 'my-index';
@@ -255,7 +240,5 @@ test.serial('Request to granules bulk endpoint returns a 400 when the Metrics EL
     .send(body)
     .expect(400, /ELK Metrics stack not configured/);
 
-  t.is(asyncOperationStartStub.notCalled, true);
-
-  asyncOperationStartStub.restore();
+  t.true(asyncOperationStartStub.notCalled);
 });
