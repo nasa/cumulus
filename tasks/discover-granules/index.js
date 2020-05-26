@@ -24,7 +24,7 @@ const logger = () => new Logger({
  *
  * @param {Object} providerConfig - the connection config for the provider
  * @param {bool} useList - flag to tell ftp server to use 'LIST' instead of 'STAT'
- * @param {*} path - the provider path to search
+ * @param {string} path - the provider path to search
  * @returns {Array<Object>} a list of discovered file objects
  */
 const listFiles = (providerConfig, useList, path) =>
@@ -258,7 +258,7 @@ const discoverGranules = async ({ config }) => {
   const discoveredFiles = await listFiles(
     config.provider,
     config.useList,
-    config.collection.provider_path
+    config.provider_path
   );
 
   let filesByGranuleId = groupFilesByGranuleId(

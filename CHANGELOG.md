@@ -25,6 +25,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1912**
   - `@cumulus/api` reconciliationReports list endpoint returns a list of reconciliationReport records instead of S3Uri.
 
+- **CUMULUS-1969**
+  - The `DiscoverGranules` task now expects `provider_path` to be provided at
+    `event.config.provider_path`, not `event.config.collection.provider_path`
+  - `config.provider_path` is now a required parameter of the `DiscoverGranules`
+    task
+
 ### MIGRATION STEPS
 
 - To take advantage of the new TTL-based access token expiration implemented in CUMULUS-1777 (see notes below) and clear out existing records in your access tokens table, do the following:
@@ -37,7 +43,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   2. If you are using any custom Node.js Lambdas in your workflows **and** the Cumulus CMA layer/`cumulus-message-adapter-js`, you must update your lambda to use [cumulus-message-adapter-js v1.2.0](https://github.com/nasa/cumulus-message-adapter-js/releases/tag/v1.2.0) and follow the migration instructions in the release notes. Prior versions of `cumulus-message-adapter-js` are not compatible with CMA >= 1.3.0.
 - Migrate existing s3 reconciliation report records to database (CUMULUS-1911):
   - After update your `data persistence` module and Cumulus resources, run the command:
-  
+
   ```bash
   ./node_modules/.bin/cumulus-api migrate --stack `<your-terraform-deployment-prefix>` --migrationVersion migration5
   ```
@@ -61,6 +67,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added migration_5 to migrate existing s3 reconciliation report records to database and Elasticsearch
   - Updated `@cumulus/api` package, `tf-modules/archive` and `tf-modules/data-persistence` Terraform modules
 
+- **CUMULUS-1916**
+  - Added util function for seeding reconciliation reports when running API locally in dashboard
+
 ### Changed
 
 - **CUMULUS-1777**
@@ -70,6 +79,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1912**
   - Updated reconciliationReports endpoints to query against Elasticsearch, delete report from both database and s3
   - Added `@cumulus/api-client/reconciliationReports`
+- **CUMULUS-1999**
+  - Updated `@cumulus/common/util.deprecate()` so that only a single deprecation notice is printed for each name/version combination
 
 ### Fixed
 

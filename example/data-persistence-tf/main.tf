@@ -23,6 +23,24 @@ variable "tags" {
   default     = {}
 }
 
+variable "elasticsearch_config" {
+  description = "Configuration object for Elasticsearch"
+  type = object({
+    domain_name    = string
+    instance_count = number
+    instance_type  = string
+    version        = string
+    volume_size    = number
+  })
+  default = {
+    domain_name    = "es"
+    instance_count = 1
+    instance_type  = "t2.small.elasticsearch"
+    version        = "5.3"
+    volume_size    = 10
+  }
+}
+
 terraform {
   required_providers {
     aws = ">= 2.31.0"
@@ -40,6 +58,8 @@ module "data_persistence" {
   subnet_ids                 = var.subnet_ids
 
   enable_point_in_time_tables = var.enable_point_in_time_tables
+
+  elasticsearch_config = var.elasticsearch_config
 
   tags = merge(var.tags, { Deployment = var.prefix })
 }
