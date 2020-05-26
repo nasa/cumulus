@@ -12,6 +12,7 @@ const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const Search = require('../es/search').Search;
 const indexer = require('../es/indexer');
 const models = require('../models');
+const FileUtils = require('../lib/FileUtils');
 const { deconstructCollectionId } = require('../lib/utils');
 
 /**
@@ -133,7 +134,7 @@ async function del(req, res) {
   log.info(`granules.del ${granuleId}`);
 
   const granuleModelClient = new models.Granule();
-  const granule = await granuleModelClient.get({ granuleId });
+  const granule = await granuleModelClient.getRecord({ granuleId });
 
   if (granule.detail) {
     return res.boom.badRequest(granule);
@@ -146,7 +147,11 @@ async function del(req, res) {
   // remove files from s3
   await pMap(
     lodashGet(granule, 'files', []),
-    ({ bucket, key }) => deleteS3Object(bucket, key)
+    (file) => {
+      const bucket = FileUtils.getBucket(file);
+      const key = FileUtils.getKey(file);
+      return deleteS3Object(bucket, key);
+    }
   );
 
   await granuleModelClient.delete({ granuleId });

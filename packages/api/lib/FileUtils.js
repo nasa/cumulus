@@ -128,5 +128,7 @@ module.exports = {
   filterDatabaseProperties,
   getChecksum,
   getFileName,
-  setS3FileSize
+  setS3FileSize,
+  getBucket,
+  getKey
 };

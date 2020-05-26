@@ -391,6 +391,23 @@ test('get() will correctly return a granule file stored using the new schema', a
   );
 });
 
+test('getRecord() returns a granule record from the database', async (t) => {
+  const granule = fakeGranuleFactoryV2();
+
+  await awsServices.dynamodbDocClient().put({
+    TableName: process.env.GranulesTable,
+    Item: granule
+  }).promise();
+
+  const granuleModel = new Granule();
+
+  const fetchedGranule = await granuleModel.getRecord({
+    granuleId: granule.granuleId
+  });
+
+  t.is(fetchedGranule.granuleId, granule.granuleId);
+});
+
 test('batchGet() will translate old-style granule files into the new schema', async (t) => {
   const oldFile = {
     bucket: 'my-bucket',
