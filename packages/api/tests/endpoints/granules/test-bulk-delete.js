@@ -11,9 +11,12 @@ const {
 const { randomString } = require('@cumulus/common/test-utils');
 const { EcsStartTaskError } = require('@cumulus/errors');
 
-const AccessToken = require('../../models/access-tokens');
-const AsyncOperation = require('../../models/async-operation');
-const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../lib/testUtils');
+const {
+  createFakeJwtAuthToken,
+  setAuthorizedOAuthUsers
+} = require('../../../lib/testUtils');
+const AccessToken = require('../../../models/access-tokens');
+const AsyncOperation = require('../../../models/async-operation');
 
 let accessTokenModel;
 let jwtAuthToken;
@@ -28,7 +31,7 @@ process.env.TOKEN_SECRET = randomString();
 process.env.AccessTokensTable = randomString();
 
 // import the express app after setting the env variables
-const { app } = require('../../app');
+const { app } = require('../../../app');
 
 test.before(async () => {
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
@@ -47,9 +50,9 @@ test.after.always(async () => {
   await accessTokenModel.deleteTable();
 });
 
-test.serial('GET /bulkDelete returns a 404 status code', async (t) => {
+test.serial('GET /granules/bulkDelete returns a 404 status code', async (t) => {
   const response = await request(app)
-    .get('/bulkDelete')
+    .get('/granules/bulkDelete')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(404);
@@ -57,23 +60,23 @@ test.serial('GET /bulkDelete returns a 404 status code', async (t) => {
   t.is(response.status, 404);
 });
 
-test.serial('POST /bulkDelete returns a 401 status code if valid authorization is not specified', async (t) => {
+test.serial('POST /granules/bulkDelete returns a 401 status code if valid authorization is not specified', async (t) => {
   const response = await request(app)
-    .post('/bulkDelete')
+    .post('/granules/bulkDelete')
     .set('Accept', 'application/json')
     .expect(401);
 
   t.is(response.status, 401);
 });
 
-test.serial('request to /bulkDelete endpoint returns 500 if starting ECS task throws unexpected error', async (t) => {
+test.serial('request to /granules/bulkDelete endpoint returns 500 if starting ECS task throws unexpected error', async (t) => {
   const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').throws(
     new Error('failed to start')
   );
 
   try {
     const response = await request(app)
-      .post('/bulkDelete')
+      .post('/granules/bulkDelete')
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`);
     t.is(response.status, 500);
@@ -82,14 +85,14 @@ test.serial('request to /bulkDelete endpoint returns 500 if starting ECS task th
   }
 });
 
-test.serial('request to /bulkDelete endpoint returns 503 if starting ECS task throws unexpected error', async (t) => {
+test.serial('request to /granules/bulkDelete endpoint returns 503 if starting ECS task throws unexpected error', async (t) => {
   const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').throws(
     new EcsStartTaskError('failed to start')
   );
 
   try {
     const response = await request(app)
-      .post('/bulkDelete')
+      .post('/granules/bulkDelete')
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`);
     t.is(response.status, 503);

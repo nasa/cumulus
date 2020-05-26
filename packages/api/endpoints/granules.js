@@ -216,25 +216,6 @@ function validateBulkGranulesRequest(req, res, next) {
 async function bulkOperations(req, res) {
   const payload = req.body;
 
-  // if (!payload.workflowName) {
-  //   return res.boom.badRequest('workflowName is required.');
-  // }
-
-  // if (!payload.ids && !payload.query) {
-  //   return res.boom.badRequest('One of ids or query is required');
-  // }
-
-  // if (payload.query
-  //   && !(process.env.METRICS_ES_HOST
-  //   && process.env.METRICS_ES_USER
-  //   && process.env.METRICS_ES_PASS)) {
-  //   return res.boom.badRequest('ELK Metrics stack not configured');
-  // }
-
-  // if (payload.query && !payload.index) {
-  //   return res.boom.badRequest('Index is required if query is sent');
-  // }
-
   const asyncOperationModel = new models.AsyncOperation({
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
@@ -282,6 +263,8 @@ async function bulkOperations(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function bulkDelete(req, res) {
+  const payload = req.body;
+
   const asyncOperationModel = new models.AsyncOperation({
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
@@ -292,9 +275,12 @@ async function bulkDelete(req, res) {
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
     lambdaName: process.env.BulkDeleteLambda,
-    description: 'Bulk delete of granules',
-    operationType: 'Bulk Delete',
-    payload: { granuleIds: req.body.granuleIds }
+    description: 'Bulk granule deletion',
+    operationType: 'Bulk granule deletion',
+    payload: {
+      type: 'BULK_GRANULE_DELETE',
+      payload
+    }
   });
 
   return res.status(202).send({ asyncOperationId: asyncOperation.id });
