@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-## [v1.23.0] 2020-05-21
+## [v1.23.1] 2020-05-22
 
 ### BREAKING CHANGES
 
@@ -26,6 +26,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1912**
   - `@cumulus/api` reconciliationReports list endpoint returns a list of reconciliationReport records instead of S3Uri.
+
+- **CUMULUS-1969**
+  - The `DiscoverGranules` task now expects `provider_path` to be provided at
+    `event.config.provider_path`, not `event.config.collection.provider_path`
+  - `config.provider_path` is now a required parameter of the `DiscoverGranules`
+    task
 
 ### MIGRATION STEPS
 
@@ -2763,8 +2769,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v1.23.0...HEAD
-[v1.23.0]: https://github.com/nasa/cumulus/compare/v1.22.1...v1.23.0
+[unreleased]: https://github.com/nasa/cumulus/compare/v1.23.1...HEAD
+[v1.23.1]: https://github.com/nasa/cumulus/compare/v1.22.1...v1.23.1
 [v1.22.1]: https://github.com/nasa/cumulus/compare/v1.21.0...v1.22.1
 [v1.21.0]: https://github.com/nasa/cumulus/compare/v1.20.0...v1.21.0
 [v1.20.0]: https://github.com/nasa/cumulus/compare/v1.19.0...v1.20.0

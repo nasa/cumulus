@@ -1,7 +1,8 @@
 ---
-id: upgrade-readme
+id: version-v1.23.1-upgrade-readme
 title: Upgrading Cumulus
 hide_title: true
+original_id: upgrade-readme
 ---
 
 # Upgrading Cumulus

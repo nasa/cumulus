@@ -1,7 +1,8 @@
 ---
-id: browse-generation
+id: version-v1.23.1-browse-generation
 title: Ingest Browse Generation
 hide_title: true
+original_id: browse-generation
 ---
 
 # Browse Generation

@@ -96,7 +96,8 @@ test.beforeEach(async (t) => {
 test('discover granules sets the correct dataType for granules', async (t) => {
   const { event } = t.context;
 
-  event.config.collection.provider_path = '/granules/fake_granules';
+  event.config.provider_path = '/granules/fake_granules';
+
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
@@ -117,7 +118,8 @@ test('discover granules sets the correct dataType for granules', async (t) => {
 test('discover granules using FTP', async (t) => {
   const { event } = t.context;
 
-  event.config.collection.provider_path = 'granules/^fake_granules$';
+  event.config.provider_path = 'granules/^fake_granules$';
+
   event.config.useList = true;
   event.config.provider = {
     id: 'MODAPS',
@@ -135,7 +137,8 @@ test('discover granules using FTP', async (t) => {
 test('discover granules using SFTP', async (t) => {
   const { event } = t.context;
 
-  event.config.collection.provider_path = 'granules/^fake_granules$';
+  event.config.provider_path = 'granules/^fake_granules$';
+
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'sftp',
@@ -153,7 +156,8 @@ test('discover granules using SFTP', async (t) => {
 test('discover granules using HTTP', async (t) => {
   const { event } = t.context;
 
-  event.config.collection.provider_path = '/granules/fake_granules';
+  event.config.provider_path = '/granules/fake_granules';
+
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
@@ -177,7 +181,7 @@ const discoverGranulesUsingS3 = (configure, assert = assertDiscoveredGranules) =
     ];
 
     config.sourceBucketName = randomString();
-    config.collection.provider_path = randomString();
+    event.config.provider_path = randomString();
 
     configure(t);
 
@@ -188,7 +192,7 @@ const discoverGranulesUsingS3 = (configure, assert = assertDiscoveredGranules) =
       await Promise.all(files.map((file) =>
         s3().putObject({
           Bucket: config.sourceBucketName,
-          Key: `${config.collection.provider_path}/${file}`,
+          Key: `${event.config.provider_path}/${file}`,
           Body: `This is ${file}`
         }).promise()));
       await assert(t, await discoverGranules(event));
@@ -376,7 +380,8 @@ test('checkGranuleHasNoDuplicate throws an error on an unexpected API lambda ret
 test.serial('discover granules sets the GRANULES environment variable and logs the granules', async (t) => {
   const { event } = t.context;
 
-  event.config.collection.provider_path = '/granules/fake_granules';
+  event.config.provider_path = '/granules/fake_granules';
+
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
