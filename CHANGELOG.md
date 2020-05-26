@@ -52,6 +52,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `config.provider_path` is now a required parameter of the `DiscoverGranules`
     task
 
+- **CUMULUS-1977**
+  - Moved bulk granule deletion endpoint from `/bulkDelete` to `/granules/bulkDelete`
+
 ### MIGRATION STEPS
 
 - To take advantage of the new TTL-based access token expiration implemented in CUMULUS-1777 (see notes below) and clear out existing records in your access tokens table, do the following:
@@ -100,6 +103,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1912**
   - Updated reconciliationReports endpoints to query against Elasticsearch, delete report from both database and s3
   - Added `@cumulus/api-client/reconciliationReports`
+- **CUMULUS-1977**
+  - `/granules/bulk` now returns a 202 status on a successful response instead of a 200 response
 - **CUMULUS-1999**
   - Updated `@cumulus/common/util.deprecate()` so that only a single deprecation notice is printed for each name/version combination
 

@@ -188,7 +188,7 @@ async function get(req, res) {
   return res.send(result);
 }
 
-async function bulk(req, res) {
+function validateBulkGranulesRequest(req, res, next) {
   const payload = req.body;
 
   if (!payload.workflowName) {
@@ -209,6 +209,31 @@ async function bulk(req, res) {
   if (payload.query && !payload.index) {
     return res.boom.badRequest('Index is required if query is sent');
   }
+
+  return next();
+}
+
+async function bulkOperations(req, res) {
+  const payload = req.body;
+
+  // if (!payload.workflowName) {
+  //   return res.boom.badRequest('workflowName is required.');
+  // }
+
+  // if (!payload.ids && !payload.query) {
+  //   return res.boom.badRequest('One of ids or query is required');
+  // }
+
+  // if (payload.query
+  //   && !(process.env.METRICS_ES_HOST
+  //   && process.env.METRICS_ES_USER
+  //   && process.env.METRICS_ES_PASS)) {
+  //   return res.boom.badRequest('ELK Metrics stack not configured');
+  // }
+
+  // if (payload.query && !payload.index) {
+  //   return res.boom.badRequest('Index is required if query is sent');
+  // }
 
   const asyncOperationModel = new models.AsyncOperation({
     stackName: process.env.stackName,
@@ -246,13 +271,50 @@ async function bulk(req, res) {
     esHost: process.env.ES_HOST
   });
 
-  return res.send(asyncOperation);
+  return res.status(202).send(asyncOperation);
+}
+
+/**
+ * Start an AsyncOperation that will perform a bulk granules delete
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function bulkDelete(req, res) {
+  const asyncOperationModel = new models.AsyncOperation({
+    stackName: process.env.stackName,
+    systemBucket: process.env.system_bucket,
+    tableName: process.env.AsyncOperationsTable
+  });
+
+  const asyncOperation = await asyncOperationModel.start({
+    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+    cluster: process.env.EcsCluster,
+    lambdaName: process.env.BulkDeleteLambda,
+    description: 'Bulk delete of granules',
+    operationType: 'Bulk Delete',
+    payload: { granuleIds: req.body.granuleIds }
+  });
+
+  return res.status(202).send({ asyncOperationId: asyncOperation.id });
 }
 
 router.get('/:granuleName', get);
 router.get('/', list);
 router.put('/:granuleName', put);
-router.post('/bulk', bulk, asyncOperationEndpointErrorHandler);
+router.post(
+  '/bulk',
+  validateBulkGranulesRequest,
+  bulkOperations,
+  asyncOperationEndpointErrorHandler
+);
+router.post(
+  '/bulkDelete',
+  validateBulkGranulesRequest,
+  bulkDelete,
+  asyncOperationEndpointErrorHandler
+);
 router.delete('/:granuleName', del);
 
 module.exports = router;
