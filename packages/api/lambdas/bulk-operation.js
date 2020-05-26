@@ -147,7 +147,7 @@ async function handler(event) {
     return bulkGranuleDelete(event.payload);
   }
   // throw an appropriate error here
-  return 'Type could not be matched, no operation attempted.';
+  throw new Error('Type could not be matched, no operation attempted.');
 }
 
 module.exports = {

@@ -191,10 +191,6 @@ async function get(req, res) {
 function validateBulkGranulesRequest(req, res, next) {
   const payload = req.body;
 
-  if (!payload.workflowName) {
-    return res.boom.badRequest('workflowName is required.');
-  }
-
   if (!payload.ids && !payload.query) {
     return res.boom.badRequest('One of ids or query is required');
   }
@@ -215,6 +211,10 @@ function validateBulkGranulesRequest(req, res, next) {
 
 async function bulkOperations(req, res) {
   const payload = req.body;
+
+  if (!payload.workflowName) {
+    return res.boom.badRequest('workflowName is required.');
+  }
 
   const asyncOperationModel = new models.AsyncOperation({
     stackName: process.env.stackName,

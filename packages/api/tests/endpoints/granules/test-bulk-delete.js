@@ -21,19 +21,22 @@ const AsyncOperation = require('../../../models/async-operation');
 let accessTokenModel;
 let jwtAuthToken;
 
-process.env.AsyncOperationsTable = randomString();
-process.env.AsyncOperationTaskDefinition = randomString();
-process.env.BulkOperationLambda = randomString();
-process.env.EcsCluster = randomString();
-process.env.stackName = randomString();
-process.env.system_bucket = randomString();
-process.env.TOKEN_SECRET = randomString();
-process.env.AccessTokensTable = randomString();
-
 // import the express app after setting the env variables
 const { app } = require('../../../app');
 
 test.before(async () => {
+  process.env.AsyncOperationsTable = randomString();
+  process.env.AsyncOperationTaskDefinition = randomString();
+  process.env.BulkOperationLambda = randomString();
+  process.env.EcsCluster = randomString();
+  process.env.stackName = randomString();
+  process.env.system_bucket = randomString();
+  process.env.TOKEN_SECRET = randomString();
+  process.env.AccessTokensTable = randomString();
+  process.env.METRICS_ES_HOST = randomString();
+  process.env.METRICS_ES_USER = randomString();
+  process.env.METRICS_ES_PASS = randomString();
+
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   const username = randomString();
@@ -45,19 +48,74 @@ test.before(async () => {
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 });
 
+test.beforeEach((t) => {
+  const asyncOperationId = randomString();
+  t.context.asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').returns(
+    new Promise((resolve) => resolve({ id: asyncOperationId }))
+  );
+});
+
+test.afterEach.always((t) => {
+  t.context.asyncOperationStartStub.restore();
+});
+
 test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await accessTokenModel.deleteTable();
 });
 
-test.serial('GET /granules/bulkDelete returns a 404 status code', async (t) => {
-  const response = await request(app)
-    .get('/granules/bulkDelete')
+test.serial('POST /granules/bulkDelete returns a 400 when a query is provided with no index', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+  const expectedQuery = { query: 'fake-query' };
+
+  const body = {
+    query: expectedQuery
+  };
+
+  await request(app)
+    .post('/granules/bulkDelete')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(404);
+    .send(body)
+    .expect(400, /Index is required if query is sent/);
 
-  t.is(response.status, 404);
+  t.true(asyncOperationStartStub.notCalled);
+});
+
+test.serial('POST /granules/bulkDelete returns 400 when no IDs or Query is provided', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const body = {};
+  await request(app)
+    .post('/granules/bulkDelete')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /One of ids or query is required/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
+test.serial('POST /granules/bulkDelete returns 400 when the Metrics ELK stack is not configured', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const body = {
+    query: 'fake-query'
+  };
+
+  delete process.env.METRICS_ES_HOST;
+  t.teardown(() => {
+    process.env.METRICS_ES_HOST = randomString();
+  });
+
+  await request(app)
+    .post('/granules/bulkDelete')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /ELK Metrics stack not configured/);
+
+  t.true(asyncOperationStartStub.notCalled);
 });
 
 test.serial('POST /granules/bulkDelete returns a 401 status code if valid authorization is not specified', async (t) => {
@@ -70,33 +128,37 @@ test.serial('POST /granules/bulkDelete returns a 401 status code if valid author
 });
 
 test.serial('request to /granules/bulkDelete endpoint returns 500 if starting ECS task throws unexpected error', async (t) => {
-  const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').throws(
+  t.context.asyncOperationStartStub.restore();
+  t.context.asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').throws(
     new Error('failed to start')
   );
 
-  try {
-    const response = await request(app)
-      .post('/granules/bulkDelete')
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`);
-    t.is(response.status, 500);
-  } finally {
-    asyncOperationStartStub.restore();
-  }
+  const body = {
+    ids: [randomString()]
+  };
+
+  const response = await request(app)
+    .post('/granules/bulkDelete')
+    .send(body)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+  t.is(response.status, 500);
 });
 
 test.serial('request to /granules/bulkDelete endpoint returns 503 if starting ECS task throws unexpected error', async (t) => {
-  const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').throws(
+  t.context.asyncOperationStartStub.restore();
+  t.context.asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').throws(
     new EcsStartTaskError('failed to start')
   );
 
-  try {
-    const response = await request(app)
-      .post('/granules/bulkDelete')
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`);
-    t.is(response.status, 503);
-  } finally {
-    asyncOperationStartStub.restore();
-  }
+  const body = {
+    ids: [randomString()]
+  };
+
+  const response = await request(app)
+    .post('/granules/bulkDelete')
+    .send(body)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+  t.is(response.status, 503);
 });
