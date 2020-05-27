@@ -59,7 +59,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1800**
   - Added task configuration setting named `syncChecksumFiles` to the
-    SyncGranule workflow. This setting is `false` by default, but when set to
+    SyncGranule task. This setting is `false` by default, but when set to
     `true`, all checksum files associated with data files that are downloaded
     will be downloaded as well.
 
