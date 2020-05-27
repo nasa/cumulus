@@ -41,6 +41,12 @@ test.after.always(() => {
 test.todo('getGranuleIdsForPayload returns granule IDs from query');
 test.todo('getGranuleIdsForPayload handles paging');
 
+test('bulk operation lambda throws error for unknown event type', async (t) => {
+  await t.throwsAsync(bulkOperation.handler({
+    type: randomId('type')
+  }));
+});
+
 test.serial('bulk operation lambda applies workflow to list of granule IDs', async (t) => {
   const granuleModel = new Granule();
   const granules = await Promise.all([
