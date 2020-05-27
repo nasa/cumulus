@@ -47,7 +47,7 @@ test('bulk operation lambda throws error for unknown event type', async (t) => {
   }));
 });
 
-test.serial('bulk operation lambda applies workflow to list of granule IDs', async (t) => {
+test.serial('bulk operation BULK_GRANULE applies workflow to list of granule IDs', async (t) => {
   const granuleModel = new Granule();
   const granules = await Promise.all([
     granuleModel.create(fakeGranuleFactoryV2()),
@@ -74,7 +74,7 @@ test.serial('bulk operation lambda applies workflow to list of granule IDs', asy
   });
 });
 
-test.serial('bulk operation lambda applies workflow to granule IDs returned by query', async (t) => {
+test.serial('bulk operation BULK_GRANULE applies workflow to granule IDs returned by query', async (t) => {
   const granuleModel = new Granule();
   const granules = await Promise.all([
     granuleModel.create(fakeGranuleFactoryV2()),
@@ -120,7 +120,7 @@ test.serial('bulk operation lambda applies workflow to granule IDs returned by q
   });
 });
 
-test.serial('bulk operation lambda deletes listed granule IDs', async (t) => {
+test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs', async (t) => {
   const granuleModel = new Granule();
   const granules = await Promise.all([
     granuleModel.create(fakeGranuleFactoryV2({ published: false })),
@@ -146,7 +146,7 @@ test.serial('bulk operation lambda deletes listed granule IDs', async (t) => {
   ]);
 });
 
-test.serial('bulk operation lambda deletes granule IDs returned by query', async (t) => {
+test.serial('bulk operation BULK_GRANULE_DELETE deletes granule IDs returned by query', async (t) => {
   const granuleModel = new Granule();
   const granules = await Promise.all([
     granuleModel.create(fakeGranuleFactoryV2({ published: false })),
