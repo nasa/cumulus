@@ -7,7 +7,7 @@ const test = require('ava');
 const chunk = require('lodash/chunk');
 const range = require('lodash/range');
 const { randomString } = require('@cumulus/common/test-utils');
-const { fakeGranuleFactory } = require('../../lib/testUtils');
+const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const models = require('../../models');
 const restore = require('../../bin/restore');
 const backup = require('../../bin/backup');
@@ -24,7 +24,7 @@ let gModel;
  * @returns {Promise<Array>} an array of objects with granuleIds
  */
 async function populateDynamoDB(granuleModel, limit) {
-  const granules = range(limit).map(() => fakeGranuleFactory());
+  const granules = range(limit).map(() => fakeGranuleFactoryV2({ published: false }));
 
   const chunkedGranules = chunk(granules, 25);
   await Promise.all(chunkedGranules.map((c) => granuleModel.batchWrite(null, c)));
