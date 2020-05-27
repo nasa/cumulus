@@ -24,6 +24,9 @@ const {
   renameProperty
 } = require('@cumulus/common/util');
 const {
+  DeletePublishedGranule
+} = require('@cumulus/errors');
+const {
   generateMoveFileParams,
   moveGranuleFiles
 } = require('@cumulus/ingest/granule');
@@ -407,6 +410,10 @@ class Granule extends Manager {
    * @returns {Promise}
    */
   async delete(granule) {
+    if (granule.published) {
+      throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
+    }
+
     // Delete granule files
     await pMap(
       get(granule, 'files', []),

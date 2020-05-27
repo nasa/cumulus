@@ -7,6 +7,9 @@ const router = require('express-promise-router')();
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
+const {
+  DeletePublishedGranule
+} = require('@cumulus/errors');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const Search = require('../es/search').Search;
@@ -139,17 +142,14 @@ async function del(req, res) {
     return res.boom.badRequest(granule);
   }
 
-  if (granule.published) {
-    return res.boom.badRequest('You cannot delete a granule that is published to CMR. Remove it from CMR first');
+  try {
+    await granuleModelClient.delete(granule);
+  } catch (err) {
+    if (err instanceof DeletePublishedGranule) {
+      return res.boom.badRequest(err.message);
+    }
+    throw err;
   }
-
-  // remove files from s3
-  await pMap(
-    lodashGet(granule, 'files', []),
-    ({ bucket, key }) => deleteS3Object(bucket, key)
-  );
-
-  await granuleModelClient.delete({ granuleId });
 
   if (inTestMode()) {
     const esClient = await Search.es(process.env.ES_HOST);

@@ -1,10 +1,12 @@
 'use strict';
 
-const cloneDeep = require('lodash/cloneDeep');
 const test = require('ava');
 
 const s3Utils = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
+const {
+  DeletePublishedGranule
+} = require('@cumulus/errors');
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 const Granule = require('../../../models/granules');
@@ -59,5 +61,19 @@ test('granule.delete() removes granule files from S3 and record from Dynamo', as
       file.key
     ))),
     [false, false]
+  );
+});
+
+test('granule.delete() throws error if granule is published', async (t) => {
+  const granule = fakeGranuleFactoryV2({
+    published: true
+  });
+
+  await t.throwsAsync(
+    granuleModel.delete(granule),
+    {
+      instanceOf: DeletePublishedGranule,
+      message: 'You cannot delete a granule that is published to CMR. Remove it from CMR first'
+    }
   );
 });
