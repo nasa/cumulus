@@ -41,14 +41,14 @@ test.after.always(() => {
 });
 
 test('getGranuleIdsForPayload returns unique granule IDs from payload', async (t) => {
-  const id1 = randomId('id1');
-  const id2 = randomId('id2');
-  const ids = [id1, id1, id2];
+  const granuleId1 = randomId('granule');
+  const granuleId2 = randomId('granule');
+  const ids = [granuleId1, granuleId1, granuleId2];
   t.deepEqual(
     await bulkOperation.getGranuleIdsForPayload({
       ids
     }),
-    [id1, id2]
+    [granuleId1, granuleId2]
   );
 });
 
