@@ -1,5 +1,6 @@
 'use strict';
 
+const pRetry = require('p-retry');
 const { get } = require('lodash/fp');
 const fs = require('fs-extra');
 const path = require('path');
@@ -73,6 +74,26 @@ async function getUmmObject(fileLocation) {
   const ummFile = await getS3Object(Bucket, Key);
   return JSON.parse(ummFile.Body.toString());
 }
+
+const getOnlineResourcesWithRetries = async (granule) =>
+  pRetry(
+    async () => {
+      let onlineResources;
+
+      try {
+        onlineResources = await getOnlineResources(granule);
+      } catch (error) {
+        throw new pRetry.AbortError(error);
+      }
+
+      if (onlineResources.length === 0) {
+        throw new Error('No online resources found');
+      }
+
+      return onlineResources;
+    },
+    { retries: 60, maxTimeout: 1000 }
+  );
 
 const cumulusDocUrl = 'https://nasa.github.io/cumulus/docs/cumulus-docs-readme';
 const isUMMGScienceUrl = (url) => url !== cumulusDocUrl &&
@@ -287,15 +308,16 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         granule = postToCmrOutput.payload.granules[0];
         files = granule.files;
         process.env.CMR_ENVIRONMENT = 'UAT';
-        const result = await Promise.all([
-          getOnlineResources(granule),
+
+        [
+          onlineResources,
+          teaRequestHeaders
+        ] = await Promise.all([
+          getOnlineResourcesWithRetries(granule),
           getTEARequestHeaders(config.stackName)
         ]);
 
-        onlineResources = result[0];
         resourceURLs = onlineResources.map((resource) => resource.URL);
-
-        teaRequestHeaders = result[1];
       } catch (e) {
         beforeAllError = e;
       }

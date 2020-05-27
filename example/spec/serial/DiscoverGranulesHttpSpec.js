@@ -22,8 +22,6 @@ const { waitForModelStatus } = require('../helpers/apiUtils');
 
 const workflowName = 'DiscoverGranules';
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 2000000;
-
 const isLambdaStatusLogEntry = (logEntry) =>
   logEntry.message.includes('START') ||
   logEntry.message.includes('END') ||
