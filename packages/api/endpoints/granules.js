@@ -279,7 +279,11 @@ async function bulkDelete(req, res) {
     operationType: 'Bulk granule deletion',
     payload: {
       type: 'BULK_GRANULE_DELETE',
-      payload
+      payload,
+      granulesTable: process.env.GranulesTable,
+      esHost: process.env.METRICS_ES_HOST,
+      esUser: process.env.METRICS_ES_USER,
+      esPassword: process.env.METRICS_ES_PASS
     }
   });
 

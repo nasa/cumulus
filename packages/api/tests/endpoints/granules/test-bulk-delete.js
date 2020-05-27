@@ -64,8 +64,76 @@ test.after.always(async () => {
   await accessTokenModel.deleteTable();
 });
 
-test.todo('Request to granules bulk endpoint starts an async-operation with the correct parameters and list of ids');
-test.todo('Request to granules bulk endpoint starts an async-operation with the correct parameters and es query');
+test.serial('POST /granules/bulkDelete starts an async-operation with the correct payload and list of IDs', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+  const expectedIds = ['MOD09GQ.A8592978.nofTNT.006.4914003503063'];
+
+  const body = {
+    ids: expectedIds
+  };
+
+  await request(app)
+    .post('/granules/bulkDelete')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(202);
+  const {
+    lambdaName,
+    cluster,
+    description,
+    payload
+  } = asyncOperationStartStub.args[0][0];
+  t.true(asyncOperationStartStub.calledOnce);
+  t.is(lambdaName, process.env.BulkOperationLambda);
+  t.is(cluster, process.env.EcsCluster);
+  t.is(description, 'Bulk granule deletion');
+  t.deepEqual(payload, {
+    payload: body,
+    type: 'BULK_GRANULE_DELETE',
+    granulesTable: process.env.GranulesTable,
+    esHost: process.env.METRICS_ES_HOST,
+    esUser: process.env.METRICS_ES_USER,
+    esPassword: process.env.METRICS_ES_PASS
+  });
+});
+
+test.serial('POST /granules/bulkDelete starts an async-operation with the correct payload and ES query', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+  const expectedIndex = 'my-index';
+  const expectedQuery = { query: 'fake-query', size: 2 };
+
+  const body = {
+    index: expectedIndex,
+    query: expectedQuery
+  };
+
+  await request(app)
+    .post('/granules/bulkDelete')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(202);
+
+  const {
+    lambdaName,
+    cluster,
+    description,
+    payload
+  } = asyncOperationStartStub.args[0][0];
+  t.true(asyncOperationStartStub.calledOnce);
+  t.is(lambdaName, process.env.BulkOperationLambda);
+  t.is(cluster, process.env.EcsCluster);
+  t.is(description, 'Bulk granule deletion');
+  t.deepEqual(payload, {
+    payload: body,
+    type: 'BULK_GRANULE_DELETE',
+    granulesTable: process.env.GranulesTable,
+    esHost: process.env.METRICS_ES_HOST,
+    esUser: process.env.METRICS_ES_USER,
+    esPassword: process.env.METRICS_ES_PASS
+  });
+});
 
 test.serial('POST /granules/bulkDelete returns a 400 when a query is provided with no index', async (t) => {
   const { asyncOperationStartStub } = t.context;

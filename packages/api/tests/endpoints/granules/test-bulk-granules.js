@@ -64,7 +64,7 @@ test.after.always(async () => {
   await accessTokenModel.deleteTable();
 });
 
-test.serial('Request to granules bulk endpoint starts an async-operation with the correct parameters and list of ids', async (t) => {
+test.serial('POST /granules/bulk starts an async-operation with the correct payload and list of IDs', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
@@ -103,11 +103,9 @@ test.serial('Request to granules bulk endpoint starts an async-operation with th
     esUser: process.env.METRICS_ES_USER,
     esPassword: process.env.METRICS_ES_PASS
   });
-
-  asyncOperationStartStub.restore();
 });
 
-test.serial('Request to granules bulk endpoint starts an async-operation with the correct parameters and es query', async (t) => {
+test.serial('POST /granules/bulk starts an async-operation with the correct payload and ES query', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
@@ -151,7 +149,7 @@ test.serial('Request to granules bulk endpoint starts an async-operation with th
   });
 });
 
-test.serial('Request to granules bulk endpoint returns a 400 when a query is provided with no index', async (t) => {
+test.serial('POST /granules/bulk returns 400 when a query is provided with no index', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
@@ -173,7 +171,7 @@ test.serial('Request to granules bulk endpoint returns a 400 when a query is pro
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('Request to granules bulk endpoint returns a 400 when no IDs or Query is provided', async (t) => {
+test.serial('POST /granules/bulk returns 400 when no IDs or query is provided', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
@@ -195,7 +193,7 @@ test.serial('Request to granules bulk endpoint returns a 400 when no IDs or Quer
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('Request to granules bulk endpoint returns a 400 when no workflowName is provided', async (t) => {
+test.serial('POST /granules/bulk returns 400 when no workflowName is provided', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedIndex = 'my-index';
@@ -217,7 +215,7 @@ test.serial('Request to granules bulk endpoint returns a 400 when no workflowNam
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('Request to granules bulk endpoint returns a 400 when the Metrics ELK stack is not configured', async (t) => {
+test.serial('POST /granules/bulk returns 400 when the Metrics ELK stack is not configured', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
