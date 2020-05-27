@@ -15,8 +15,6 @@ const { waitForModelStatus } = require('../../helpers/apiUtils');
 
 const workflowName = 'DiscoverGranules';
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 2000000;
-
 // Note: This test runs in serial due to the logs endpoint tests
 
 // Disabled until we're acutally using https
