@@ -132,6 +132,7 @@ async function bulkGranule(payload) {
 }
 
 async function handler(event) {
+  // TODO: why is this here?
   if (!process.env.GranulesTable) process.env.GranulesTable = event.granulesTable;
   if (!process.env.system_bucket) process.env.system_bucket = event.system_bucket;
   if (!process.env.stackName) process.env.stackName = event.stackName;

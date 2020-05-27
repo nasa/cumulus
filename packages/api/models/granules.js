@@ -4,6 +4,7 @@ const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 const partial = require('lodash/partial');
 const path = require('path');
+const pMap = require('p-map');
 
 const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
@@ -400,12 +401,28 @@ class Granule extends Manager {
   }
 
   /**
+   * Delete a granule
+   *
+   * @param {Object} granule record
+   * @returns {Promise}
+   */
+  async delete(granule) {
+    // Delete granule files
+    await pMap(
+      get(granule, 'files', []),
+      ({ bucket, key }) => s3Utils.deleteS3Object(bucket, key)
+    );
+
+    return super.delete({ granuleId: granule.granuleId });
+  }
+
+  /**
    * Only used for tests
    */
   async deleteGranules() {
     const granules = await this.scan();
     return Promise.all(granules.Items.map((granule) =>
-      super.delete({ granuleId: granule.granuleId })));
+      this.delete(granule)));
   }
 
   /**
