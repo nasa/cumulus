@@ -89,6 +89,7 @@ const getExecutionWithStatus = async (params) =>
       try {
         execution = await getExecution(pick(params, ['prefix', 'arn', 'callback']));
       } catch (err) {
+        if (err.name === 'ExecutionNotFoundError') throw err;
         throw new pRetry.AbortError(`Error fetching execution ${params.arn}: ${err}`);
       }
 
