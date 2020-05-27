@@ -12,7 +12,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
 const { loadConfig } = require('@cumulus/integration-tests/config');
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 20 * 60 * 1000;
 
 const timestampedName = (name) => `${name}_${(new Date().getTime())}`;
 
