@@ -10,6 +10,8 @@ const Granule = require('../../models/granules');
 const sandbox = sinon.createSandbox();
 const FakeEsClient = sandbox.stub();
 const esSearchStub = sandbox.stub();
+const esScrollStub = sandbox.stub();
+FakeEsClient.prototype.scroll = esScrollStub;
 FakeEsClient.prototype.search = esSearchStub;
 const bulkOperation = proxyquire('../../lambdas/bulk-operation', {
   '@elastic/elasticsearch': { Client: FakeEsClient }
@@ -38,8 +40,96 @@ test.after.always(() => {
   sandbox.restore();
 });
 
-test.todo('getGranuleIdsForPayload returns granule IDs from query');
-test.todo('getGranuleIdsForPayload handles paging');
+test('getGranuleIdsForPayload returns unique granule IDs from payload', async (t) => {
+  const id1 = randomId('id1');
+  const id2 = randomId('id2');
+  const ids = [id1, id1, id2];
+  t.deepEqual(
+    await bulkOperation.getGranuleIdsForPayload({
+      ids
+    }),
+    [id1, id2]
+  );
+});
+
+test.serial('getGranuleIdsForPayload returns unique granule IDs from query', async (t) => {
+  const granuleId1 = randomId('granule');
+  const granuleId2 = randomId('granule');
+  esSearchStub.resolves({
+    body: {
+      hits: {
+        hits: [{
+          _source: {
+            granuleId: granuleId1
+          }
+        }, {
+          _source: {
+            granuleId: granuleId1
+          }
+        }, {
+          _source: {
+            granuleId: granuleId2
+          }
+        }],
+        total: {
+          value: 3
+        }
+      }
+    }
+  });
+  t.deepEqual(
+    await bulkOperation.getGranuleIdsForPayload({
+      query: 'fake-query',
+      index: 'fake-index'
+    }),
+    [granuleId1, granuleId2]
+  );
+});
+
+test.serial('getGranuleIdsForPayload handles query paging', async (t) => {
+  const granuleId1 = randomId('granule');
+  const granuleId2 = randomId('granule');
+  const granuleId3 = randomId('granule');
+  esSearchStub.resolves({
+    body: {
+      hits: {
+        hits: [{
+          _source: {
+            granuleId: granuleId1
+          }
+        }, {
+          _source: {
+            granuleId: granuleId2
+          }
+        }],
+        total: {
+          value: 3
+        }
+      }
+    }
+  });
+  esScrollStub.resolves({
+    body: {
+      hits: {
+        hits: [{
+          _source: {
+            granuleId: granuleId3
+          }
+        }],
+        total: {
+          value: 3
+        }
+      }
+    }
+  });
+  t.deepEqual(
+    await bulkOperation.getGranuleIdsForPayload({
+      query: 'fake-query',
+      index: 'fake-index'
+    }),
+    [granuleId1, granuleId2, granuleId3]
+  );
+});
 
 test('bulk operation lambda throws error for unknown event type', async (t) => {
   await t.throwsAsync(bulkOperation.handler({

@@ -156,6 +156,6 @@ async function handler(event) {
 }
 
 module.exports = {
-  handler,
-  bulkGranule
+  getGranuleIdsForPayload,
+  handler
 };
