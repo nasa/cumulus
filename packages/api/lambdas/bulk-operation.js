@@ -1,4 +1,5 @@
 const elasticsearch = require('@elastic/elasticsearch');
+const pMap = require('p-map');
 
 const log = require('@cumulus/common/log');
 
@@ -105,10 +106,13 @@ function applyWorkflowToGranules(granuleIds, workflowName, queueName) {
  * @returns {Promise}
  */
 async function bulkGranuleDelete(payload) {
-  const queueName = payload.queueName;
-  const workflowName = payload.workflowName;
   const granuleIds = await getGranuleIdsForPayload(payload);
-  return applyWorkflowToGranules(granuleIds, workflowName, queueName);
+  const granuleModel = new GranuleModel();
+  return pMap(
+    granuleIds,
+    (granuleId) => granuleModel.delete({ granuleId }),
+    { concurrency: 10 } // is this necessary?
+  );
 }
 
 /**
