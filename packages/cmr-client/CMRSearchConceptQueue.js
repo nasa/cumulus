@@ -34,7 +34,7 @@ class CMRSearchConceptQueue {
    */
   constructor(params = { searchParams: {} }) {
     this.clientId = params.cmrSettings.clientId;
-    this.provider = params.cmrSettings.clientId;
+    this.provider = params.cmrSettings.provider;
     this.type = params.type;
     this.cmrEnvironment = params.cmrEnvironment;
     this.params = { provider_short_name: params.cmrSettings.provider, ...params.searchParams };
