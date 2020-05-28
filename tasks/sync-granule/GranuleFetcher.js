@@ -46,6 +46,21 @@ const addChecksumsToFiles = async (providerClient, files) => {
   );
 };
 
+const dataTypeFrom = ({ granule = {}, collection = {} }) =>
+  granule.dataType || collection.dataType;
+
+const versionFrom = ({ granule = {}, collection = {} }) =>
+  granule.version || collection.version;
+
+const fetchCollection = ({ bucket, stackName, dataType, version }) => {
+  if (!dataType) throw new TypeError('dataType missing');
+  if (!version) throw new TypeError('version missing');
+
+  const collectionConfigStore = new CollectionConfigStore(bucket, stackName);
+
+  return collectionConfigStore.get(dataType, version);
+};
+
 class GranuleFetcher {
   /**
    * Constructor for GranuleFetcher class.
@@ -99,23 +114,16 @@ class GranuleFetcher {
     // for each granule file
     // download / verify integrity / upload
 
-    const stackName = process.env.stackName;
-    let dataType = granule.dataType;
-    let version = granule.version;
+    const dataType = dataTypeFrom({ granule, collection: this.collection });
+    const version = versionFrom({ granule, collection: this.collection });
 
-    // if no collection is passed then retrieve the right collection
     if (!this.collection) {
-      if (!granule.dataType || !granule.version) {
-        throw new Error(
-          'Downloading the collection failed because dataType or version was missing!'
-        );
-      }
-      const collectionConfigStore = new CollectionConfigStore(bucket, stackName);
-      this.collection = await collectionConfigStore.get(granule.dataType, granule.version);
-    } else {
-      // Collection is passed in, but granule does not define the dataType and version
-      if (!dataType) dataType = this.collection.name;
-      if (!version) version = this.collection.version;
+      this.collection = await fetchCollection({
+        bucket,
+        stackName: process.env.stackName,
+        dataType,
+        version
+      });
     }
 
     // make sure there is a url_path
