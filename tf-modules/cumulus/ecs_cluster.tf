@@ -108,6 +108,7 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
 
   statement {
     actions   = [
+      "dynamodb:DeleteItem",
       "dynamodb:GetItem",
       "dynamodb:UpdateItem",
       "dynamodb:Scan"
