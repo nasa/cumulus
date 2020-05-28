@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `DiscoverPdrs` task
   - `event.config.collection` is no longer a parameter to the `DiscoverPdrs`
     task
+- **CUMULUS-1977**
+  - Moved bulk granule deletion endpoint from `/bulkDelete` to `/granules/bulkDelete`
 
 ### Added
 
@@ -24,6 +26,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `true`, all checksum files associated with data files that are downloaded
     will be downloaded as well.
 
+### Changed
+
+- **CUMULUS-1977**
+  - `/granules/bulk` now returns a 202 status on a successful response instead of a 200 response
 
 ## [v1.23.2] 2020-05-22
 
@@ -51,9 +57,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `event.config.provider_path`, not `event.config.collection.provider_path`
   - `config.provider_path` is now a required parameter of the `DiscoverGranules`
     task
-
-- **CUMULUS-1977**
-  - Moved bulk granule deletion endpoint from `/bulkDelete` to `/granules/bulkDelete`
 
 ### MIGRATION STEPS
 
@@ -103,8 +106,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1912**
   - Updated reconciliationReports endpoints to query against Elasticsearch, delete report from both database and s3
   - Added `@cumulus/api-client/reconciliationReports`
-- **CUMULUS-1977**
-  - `/granules/bulk` now returns a 202 status on a successful response instead of a 200 response
 - **CUMULUS-1999**
   - Updated `@cumulus/common/util.deprecate()` so that only a single deprecation notice is printed for each name/version combination
 
