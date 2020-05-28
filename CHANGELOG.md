@@ -16,6 +16,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `event.config.collection` is no longer a parameter to the `DiscoverPdrs`
     task
 
+- **CUMULUS-1997**
+  - `@cmr-client/CMRSearchConceptQueue` parameters have been changed to take a `cmrSettings` object containing clientId, provider, and auth information. This can be generated using `@cmrjs/cmr-utils/getCmrSettings`.
+
 ### Added
 
 - **CUMULUS-1800**
@@ -24,6 +27,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `true`, all checksum files associated with data files that are downloaded
     will be downloaded as well.
 
+- **CUMULUS-1997**
+  - Added optional `launchpad` configuration to `@cumulus/hyrax-metadata-updates` task config schema.
+
+### Fixed
+
+- **CUMULUS-1997**
+  - Updated all CMR operations to use configured authentication scheme
 
 ## [v1.23.2] 2020-05-22
 
@@ -51,9 +61,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `event.config.provider_path`, not `event.config.collection.provider_path`
   - `config.provider_path` is now a required parameter of the `DiscoverGranules`
     task
-
-- **CUMULUS-1997**
-  - `@cmr-client/CMRSearchConceptQueue` parameters have been changed to take a `cmrSettings` object containing clientId, provider, and auth information. This can be generated using `@cmrjs/cmr-utils/getCmrSettings`.
 
 ### MIGRATION STEPS
 
@@ -94,9 +101,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1916**
   - Added util function for seeding reconciliation reports when running API locally in dashboard
 
-- **CUMULUS-1997**
-  - Added optional `launchpad` configuration to `@cumulus/hyrax-metadata-updates` task config schema.
-
 ### Changed
 
 - **CUMULUS-1777**
@@ -119,8 +123,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - For a given queue, the `sqs-message-consumer` Lambda will now only schedule workflows for rules matching the queue **and the collection information in each queue message (if any)**
     - The consumer also now only reads each queue message **once per Lambda invocation**, whereas previously each message was read **once per queue rule per Lambda invocation**
   - Fixed bug preventing the deletion of multiple SNS rules that share the same SNS topic
-- **CUMULUS-1997**
-  - Updated all CMR operations to use configured authentication scheme
 
 ### Deprecated
 
