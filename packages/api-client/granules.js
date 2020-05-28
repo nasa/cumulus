@@ -258,8 +258,11 @@ const listGranules = async ({ prefix, query = null, callback = invokeApi }) => c
 const bulkDeleteGranules = async ({ prefix, body, callback = invokeApi }) => callback({
   prefix: prefix,
   payload: {
-    httpMethod: 'GET',
+    httpMethod: 'POST',
     resource: '/{proxy+}',
+    headers: {
+      'Content-Type': 'application/json'
+    },
     path: '/granules/bulkDelete',
     body: JSON.stringify(body)
   }
