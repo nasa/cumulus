@@ -245,7 +245,7 @@ test.serial('POST /granules/bulk returns 400 when the Metrics ELK stack is not c
 
 test.serial('POST /granules/bulk returns 500 if starting ECS task throws unexpected error', async (t) => {
   t.context.asyncOperationStartStub.restore();
-  t.context.asyncOperationStartStub.stub(models.AsyncOperation.prototype, 'start').throws(
+  t.context.asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').throws(
     new Error('failed to start')
   );
 
