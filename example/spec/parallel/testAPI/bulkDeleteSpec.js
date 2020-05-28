@@ -18,7 +18,6 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
   let taskArn;
   let beforeAllSucceeded = false;
 
-
   const granule = fakeGranuleFactoryV2({ published: false });
 
   beforeAll(async () => {
@@ -126,14 +125,18 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
   });
 });
 
-xdescribe('POST /bulkDelete with a failed bulk delete operation', () => {
+describe('POST /bulkDelete with a failed bulk delete operation', () => {
   let postBulkDeleteResponse;
   let postBulkDeleteBody;
   let config;
   let clusterArn;
   let taskArn;
-
   let beforeAllSucceeded = false;
+
+  // Published granule will fail to delete unless override for bulk
+  // delete request is specified
+  const granule = fakeGranuleFactoryV2({ published: true });
+
   beforeAll(async () => {
     config = await loadConfig();
 
@@ -141,9 +144,15 @@ xdescribe('POST /bulkDelete with a failed bulk delete operation', () => {
     clusterArn = await getClusterArn(config.stackName);
     if (!clusterArn) throw new Error('Unable to find ECS cluster');
 
-    postBulkDeleteResponse = await apiTestUtils.postBulkDelete({
+    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+    const granulesModel = new Granule();
+    await granulesModel.create(granule);
+
+    postBulkDeleteResponse = await granules.bulkDeleteGranules({
       prefix: config.stackName,
-      granuleIds: ['trigger-failure']
+      body: {
+        ids: [granule.granuleId]
+      }
     });
     postBulkDeleteBody = JSON.parse(postBulkDeleteResponse.body);
 
@@ -222,8 +231,8 @@ xdescribe('POST /bulkDelete with a failed bulk delete operation', () => {
       throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
     }
 
-    expect(output.name).toBe('Error');
-    expect(output.message).toBe('triggered failure');
+    expect(output.name).toBe('AggregateError');
+    expect(output.message).toContain('DeletePublishedGranule');
     expect(output.stack).toBeDefined();
   });
 });
