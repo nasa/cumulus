@@ -69,7 +69,8 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
   const expectedIds = ['MOD09GQ.A8592978.nofTNT.006.4914003503063'];
 
   const body = {
-    ids: expectedIds
+    ids: expectedIds,
+    forceRemoveFromCmr: true
   };
 
   await request(app)
