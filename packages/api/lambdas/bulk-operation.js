@@ -108,11 +108,12 @@ function applyWorkflowToGranules(granuleIds, workflowName, queueName) {
 async function bulkGranuleDelete(payload) {
   const granuleIds = await getGranuleIdsForPayload(payload);
   const granuleModel = new GranuleModel();
-  return pMap(
+  const deletedGranules = await pMap(
     granuleIds,
     (granuleId) => granuleModel.delete({ granuleId }),
     { concurrency: 10 } // is this necessary?
   );
+  return { deletedGranules };
 }
 
 /**
