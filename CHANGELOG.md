@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `event.config.collection` is no longer a parameter to the `DiscoverPdrs`
     task
 
+
 ## [v1.23.2] 2020-05-22
 
 ### BREAKING CHANGES
