@@ -143,6 +143,11 @@
         "error"
       ],
       "default": "error"
+    },
+    "syncChecksumFiles": {
+      "type": "boolean",
+      "description": "If true, checksum files are also synced. Default: false.",
+      "default": false
     }
   }
 }
