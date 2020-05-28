@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- **CUMULUS-1969**
+  - The `DiscoverPdrs` task now expects `provider_path` to be provided at
+    `event.config.provider_path`, not `event.config.collection.provider_path`
+  - `event.config.provider_path` is now a required parameter of the
+    `DiscoverPdrs` task
+  - `event.config.collection` is no longer a parameter to the `DiscoverPdrs`
+    task
+
 - Updates to the Cumulus archive API:
   - All endpoints now return a `401` response instead of a `403` for any request where the JWT passed as a Bearer token is invalid.
   - POST `/refresh` and DELETE `/token/<token>` endpoints now return a `401` response for requests with expired tokens
@@ -24,6 +32,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1912**
   - `@cumulus/api` reconciliationReports list endpoint returns a list of reconciliationReport records instead of S3Uri.
+
+- **CUMULUS-1969**
+  - The `DiscoverGranules` task now expects `provider_path` to be provided at
+    `event.config.provider_path`, not `event.config.collection.provider_path`
+  - `config.provider_path` is now a required parameter of the `DiscoverGranules`
+    task
 
 ### MIGRATION STEPS
 
@@ -51,6 +65,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added the `es_index_shards` parameter to the archive and cumulus Terraform modules to configure the number of shards for the ES index
     - If you have an existing ES index, you will need to [reindex](https://nasa.github.io/cumulus-api/#reindex) and then [change index](https://nasa.github.io/cumulus-api/#change-index) to take advantage of shard updates
 
+- **CUMULUS-1800**
+  - Added task configuration setting named `syncChecksumFiles` to the
+    SyncGranule task. This setting is `false` by default, but when set to
+    `true`, all checksum files associated with data files that are downloaded
+    will be downloaded as well.
+
 - **CUMULUS-1894**
   - Added `@cumulus/aws-client/S3.moveObject()`
 
@@ -61,6 +81,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added migration_5 to migrate existing s3 reconciliation report records to database and Elasticsearch
   - Updated `@cumulus/api` package, `tf-modules/archive` and `tf-modules/data-persistence` Terraform modules
 
+- **CUMULUS-1916**
+  - Added util function for seeding reconciliation reports when running API locally in dashboard
+
 ### Changed
 
 - **CUMULUS-1777**
@@ -70,6 +93,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1912**
   - Updated reconciliationReports endpoints to query against Elasticsearch, delete report from both database and s3
   - Added `@cumulus/api-client/reconciliationReports`
+- **CUMULUS-1999**
+  - Updated `@cumulus/common/util.deprecate()` so that only a single deprecation notice is printed for each name/version combination
 
 ### Fixed
 

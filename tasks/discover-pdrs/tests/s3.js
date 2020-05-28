@@ -12,16 +12,12 @@ test.beforeEach(async (t) => {
   t.context.event = {
     config: {
       bucket: randomString(),
-      collection: {
-        name: randomString(),
-        granuleIdExtraction: '^(.*)$',
-        provider_path: randomString()
-      },
       provider: {
         host: randomString(),
         id: randomString(),
         protocol: 's3'
       },
+      provider_path: randomString(),
       stack: randomString()
     }
   };
@@ -38,11 +34,6 @@ test.afterEach.always((t) => Promise.all([
 ]));
 
 test.serial('test pdr discovery with S3 when there are no PDRs', async (t) => {
-  t.context.event.config.collection = {
-    granuleIdExtraction: '^(.*)$',
-    name: randomString()
-  };
-
   await validateConfig(t, t.context.event.config);
 
   const output = await discoverPdrs(t.context.event);
@@ -57,7 +48,7 @@ test.serial('test pdr discovery with S3 when no PDRs are new', async (t) => {
 
   await s3().putObject({
     Bucket: t.context.event.config.bucket,
-    Key: `${t.context.event.config.collection.provider_path}/${pdrName}`,
+    Key: `${t.context.event.config.provider_path}/${pdrName}`,
     Body: 'test PDR body'
   }).promise();
 
@@ -90,12 +81,12 @@ test.serial('test pdr discovery with S3 when some PDRs are new', async (t) => {
   await Promise.all([
     s3().putObject({
       Bucket: t.context.event.config.provider.host,
-      Key: `${t.context.event.config.collection.provider_path}/${oldPdrName}`,
+      Key: `${t.context.event.config.provider_path}/${oldPdrName}`,
       Body: 'test PDR body'
     }).promise(),
     s3().putObject({
       Bucket: t.context.event.config.provider.host,
-      Key: `${t.context.event.config.collection.provider_path}/${newPdrName}`,
+      Key: `${t.context.event.config.provider_path}/${newPdrName}`,
       Body: 'test PDR body'
     }).promise()
   ]);
@@ -127,7 +118,7 @@ test.serial('test pdr discovery with S3 when all PDRs are new', async (t) => {
 
   await s3().putObject({
     Bucket: t.context.event.config.provider.host,
-    Key: `${t.context.event.config.collection.provider_path}/${pdrName}`,
+    Key: `${t.context.event.config.provider_path}/${pdrName}`,
     Body: 'test PDR body'
   }).promise();
 

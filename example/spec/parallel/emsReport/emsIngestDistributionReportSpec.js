@@ -123,7 +123,7 @@ async function getGranuleFilesForDownload(stackName, granuleId) {
     .filter((file) => (cmrResource.filter((resource) => resource.href.endsWith(file.fileName)).length > 0));
 }
 
-describe('The EMS report', () => {
+xdescribe('The EMS report', () => {
   let bucket;
   let config;
   let dataSource;

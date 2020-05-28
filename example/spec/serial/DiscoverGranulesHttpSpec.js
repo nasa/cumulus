@@ -22,8 +22,6 @@ const { waitForModelStatus } = require('../helpers/apiUtils');
 
 const workflowName = 'DiscoverGranules';
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 2000000;
-
 const isLambdaStatusLogEntry = (logEntry) =>
   logEntry.message.includes('START') ||
   logEntry.message.includes('END') ||
@@ -72,7 +70,9 @@ describe('The Discover Granules workflow with http Protocol', () => {
       config.bucket,
       workflowName,
       collection,
-      provider
+      provider,
+      undefined,
+      { provider_path: 'granules/fake_granules' }
     );
 
     lambdaStep = new LambdaStep();
@@ -189,8 +189,15 @@ describe('The Discover Granules workflow with http Protocol', () => {
         updateParams: { files: [] }
       });
 
-      httpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
-        config.bucket, workflowName, collection, provider);
+      httpWorkflowExecution = await buildAndExecuteWorkflow(
+        config.stackName,
+        config.bucket,
+        workflowName,
+        collection,
+        provider,
+        undefined,
+        { provider_path: 'granules/fake_granules' }
+      );
     });
 
     it('encounters a collection without a files configuration', async () => {
@@ -226,8 +233,15 @@ describe('The Discover Granules workflow with http Protocol', () => {
         updateParams: { files: [collection.files[0]] }
       });
 
-      httpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
-        config.bucket, workflowName, collection, provider);
+      httpWorkflowExecution = await buildAndExecuteWorkflow(
+        config.stackName,
+        config.bucket,
+        workflowName,
+        collection,
+        provider,
+        undefined,
+        { provider_path: 'granules/fake_granules' }
+      );
     });
 
     it('encounters a collection with a files configuration that does not match all files', async () => {
@@ -266,8 +280,15 @@ describe('The Discover Granules workflow with http Protocol', () => {
         }
       });
 
-      httpWorkflowExecution = await buildAndExecuteWorkflow(config.stackName,
-        config.bucket, workflowName, collection, provider);
+      httpWorkflowExecution = await buildAndExecuteWorkflow(
+        config.stackName,
+        config.bucket,
+        workflowName,
+        collection,
+        provider,
+        undefined,
+        { provider_path: 'granules/fake_granules' }
+      );
     });
 
     it('encounters a collection that has no files config, but should ignore files config', async () => {

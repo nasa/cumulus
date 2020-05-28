@@ -1,6 +1,6 @@
 'use strict';
 
-const pWaitFor = require('p-wait-for');
+const get = require('lodash/get');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   buildAndExecuteWorkflow,
@@ -8,9 +8,11 @@ const {
   loadProvider
 } = require('@cumulus/integration-tests');
 const {
+  getExecutionWithStatus
+} = require('@cumulus/integration-tests/Executions');
+const {
   createCollection, deleteCollection
 } = require('@cumulus/api-client/collections');
-const { getExecution } = require('@cumulus/api-client/executions');
 const {
   createProvider, deleteProvider
 } = require('@cumulus/api-client/providers');
@@ -59,7 +61,9 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
       bucket,
       'DiscoverGranules',
       collection,
-      provider
+      provider,
+      undefined,
+      { provider_path: 'cumulus-test-data/pdrs' }
     );
 
     beforeAllCompleted = true;
@@ -80,22 +84,20 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
     else expect(workflowExecution.status).toEqual('FAILED');
   });
 
-  it('can be fetched from the API', async () => {
+  it('records the correct execution failure reason in the API', async () => {
     if (!beforeAllCompleted) fail('beforeAll() failed');
     else {
-      await expectAsync(
-        pWaitFor(
-          async () => {
-            const { status } = await getExecution({
-              prefix: stackName,
-              arn: workflowExecution.executionArn
-            });
+      const failedExecutionFromApi = await getExecutionWithStatus({
+        prefix: stackName,
+        arn: workflowExecution.executionArn,
+        status: 'failed'
+      });
 
-            return status === 'failed';
-          },
-          { interval: 2000, timeout: 60000 }
-        )
-      ).toBeResolved();
+      expect(
+        get(failedExecutionFromApi, 'error.Error')
+      ).toBe(
+        'NoSuchBucket'
+      );
     }
   });
 });
