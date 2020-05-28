@@ -16,6 +16,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `event.config.collection` is no longer a parameter to the `DiscoverPdrs`
     task
 
+### Added
+
+- **CUMULUS-1800**
+  - Added task configuration setting named `syncChecksumFiles` to the
+    SyncGranule task. This setting is `false` by default, but when set to
+    `true`, all checksum files associated with data files that are downloaded
+    will be downloaded as well.
+
+
+## [v1.23.2] 2020-05-22
+
+### BREAKING CHANGES
+
 - Updates to the Cumulus archive API:
   - All endpoints now return a `401` response instead of a `403` for any request where the JWT passed as a Bearer token is invalid.
   - POST `/refresh` and DELETE `/token/<token>` endpoints now return a `401` response for requests with expired tokens
@@ -64,12 +77,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1995**
   - Added the `es_index_shards` parameter to the archive and cumulus Terraform modules to configure the number of shards for the ES index
     - If you have an existing ES index, you will need to [reindex](https://nasa.github.io/cumulus-api/#reindex) and then [change index](https://nasa.github.io/cumulus-api/#change-index) to take advantage of shard updates
-
-- **CUMULUS-1800**
-  - Added task configuration setting named `syncChecksumFiles` to the
-    SyncGranule task. This setting is `false` by default, but when set to
-    `true`, all checksum files associated with data files that are downloaded
-    will be downloaded as well.
 
 - **CUMULUS-1894**
   - Added `@cumulus/aws-client/S3.moveObject()`
@@ -2781,7 +2788,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v1.22.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v1.23.2...HEAD
+[v1.23.2]: https://github.com/nasa/cumulus/compare/v1.22.1...v1.23.2
 [v1.22.1]: https://github.com/nasa/cumulus/compare/v1.21.0...v1.22.1
 [v1.21.0]: https://github.com/nasa/cumulus/compare/v1.20.0...v1.21.0
 [v1.20.0]: https://github.com/nasa/cumulus/compare/v1.19.0...v1.20.0
