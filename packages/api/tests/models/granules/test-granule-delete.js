@@ -64,6 +64,19 @@ test('granule.delete() removes granule files from S3 and record from Dynamo', as
   );
 });
 
+test('granule.delete() for deleted record should not throw error', async (t) => {
+  const granule = fakeGranuleFactoryV2({
+    published: false
+  });
+
+  await granuleModel.create(granule);
+  t.true(await granuleModel.exists({ granuleId: granule.granuleId }));
+
+  await granuleModel.delete(granule);
+  t.false(await granuleModel.exists({ granuleId: granule.granuleId }));
+  await t.notThrowsAsync(granuleModel.delete(granule));
+});
+
 test('granule.delete() throws error if granule is published', async (t) => {
   const granule = fakeGranuleFactoryV2({
     published: true
