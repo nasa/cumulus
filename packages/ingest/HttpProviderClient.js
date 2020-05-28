@@ -33,11 +33,12 @@ class HttpProviderClient {
     this.protocol = providerConfig.protocol;
     this.host = providerConfig.host;
     this.port = providerConfig.port;
-    this.gotOptions = { headers: { host: this.host } };
+    this.gotOptions = {};
     this.certificateUri = providerConfig.certificateUri;
     if (providerConfig.username && !providerConfig.password) {
       throw new ReferenceError('Found providerConfig.username, but providerConfig.password is not defined');
     }
+    this.encrypted = providerConfig.encrypted;
     this.endpoint = buildURL({
       protocol: this.protocol,
       host: this.host,
