@@ -276,6 +276,20 @@ test('POST creates a rule', async (t) => {
   t.deepEqual(record, newRule);
 });
 
+test('POST creates a rule that is enabled by default', async (t) => {
+  const newRule = fakeRuleFactoryV2();
+  delete newRule.state;
+
+  const response = await request(app)
+    .post('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newRule)
+    .expect(200);
+
+  t.is(response.body.record.state, 'ENABLED');
+});
+
 test('POST returns a 409 response if record already exists', async (t) => {
   const newRule = fakeRuleFactoryV2();
 
