@@ -115,7 +115,10 @@ async function bulkGranuleDelete(payload) {
       await granuleModel.delete(granule);
       return granuleId;
     },
-    { concurrency: 10 } // is this necessary?
+    {
+      concurrency: 10, // is this necessary?
+      stopOnError: false
+    }
   );
   return { deletedGranules };
 }

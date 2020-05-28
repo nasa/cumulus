@@ -32,6 +32,7 @@ test.before(async () => {
   deleteStub = sandbox.stub(Granule.prototype, 'delete');
 });
 
+
 test.afterEach.always(() => {
   sandbox.resetHistory();
 });
@@ -44,11 +45,12 @@ test('getGranuleIdsForPayload returns unique granule IDs from payload', async (t
   const granuleId1 = randomId('granule');
   const granuleId2 = randomId('granule');
   const ids = [granuleId1, granuleId1, granuleId2];
+  const returnedIds = await bulkOperation.getGranuleIdsForPayload({
+    ids
+  });
   t.deepEqual(
-    await bulkOperation.getGranuleIdsForPayload({
-      ids
-    }),
-    [granuleId1, granuleId2]
+    returnedIds.sort(),
+    [granuleId1, granuleId2].sort()
   );
 });
 
@@ -77,12 +79,13 @@ test.serial('getGranuleIdsForPayload returns unique granule IDs from query', asy
       }
     }
   });
+  const returnedIds = await bulkOperation.getGranuleIdsForPayload({
+    query: 'fake-query',
+    index: 'fake-index'
+  });
   t.deepEqual(
-    await bulkOperation.getGranuleIdsForPayload({
-      query: 'fake-query',
-      index: 'fake-index'
-    }),
-    [granuleId1, granuleId2]
+    returnedIds.sort(),
+    [granuleId1, granuleId2].sort()
   );
 });
 
@@ -230,10 +233,67 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs', asy
   t.is(deleteStub.callCount, 2);
   // Can't guarantee processing order so ensure all IDs were deleted
   const deletedIds = deleteStub.args.map((callArgs) => callArgs[0].granuleId);
-  t.deepEqual(deletedIds, [
-    granules[0].granuleId,
-    granules[1].granuleId
+  t.deepEqual(
+    deletedIds.sort(),
+    [
+      granules[0].granuleId,
+      granules[1].granuleId
+    ].sort()
+  );
+});
+
+test.serial('bulk operation BULK_GRANULE_DELETE processes all granules that do not error', async (t) => {
+  const errorMessage = 'fail';
+  let count = 0;
+
+  deleteStub.restore();
+  deleteStub = sinon.stub(Granule.prototype, 'delete')
+    .callsFake(() => {
+      count += 1;
+      if (count > 3) {
+        throw new Error(errorMessage);
+      }
+      return Promise.resolve();
+    });
+  t.teardown(() => {
+    deleteStub.restore();
+    deleteStub = sandbox.stub(Granule.prototype, 'delete');
+  });
+
+  const granuleModel = new Granule();
+  const granules = await Promise.all([
+    granuleModel.create(fakeGranuleFactoryV2()),
+    granuleModel.create(fakeGranuleFactoryV2()),
+    granuleModel.create(fakeGranuleFactoryV2()),
+    granuleModel.create(fakeGranuleFactoryV2()),
+    granuleModel.create(fakeGranuleFactoryV2()),
+    granuleModel.create(fakeGranuleFactoryV2())
   ]);
+
+  const aggregateError = await t.throwsAsync(bulkOperation.handler({
+    type: 'BULK_GRANULE_DELETE',
+    payload: {
+      ids: [
+        granules[0].granuleId,
+        granules[1].granuleId,
+        granules[2].granuleId,
+        granules[3].granuleId,
+        granules[4].granuleId,
+        granules[5].granuleId
+      ]
+    }
+  }));
+
+  // tried to delete 6 times, but failed 3 times
+  t.is(deleteStub.callCount, 6);
+  t.deepEqual(
+    Array.from(aggregateError).map((error) => error.message),
+    [
+      errorMessage,
+      errorMessage,
+      errorMessage
+    ]
+  );
 });
 
 test.serial('bulk operation BULK_GRANULE_DELETE deletes granule IDs returned by query', async (t) => {
@@ -274,8 +334,11 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes granule IDs returned by 
   t.is(deleteStub.callCount, 2);
   // Can't guarantee processing order so ensure all IDs were deleted
   const deletedIds = deleteStub.args.map((callArgs) => callArgs[0].granuleId);
-  t.deepEqual(deletedIds, [
-    granules[0].granuleId,
-    granules[1].granuleId
-  ]);
+  t.deepEqual(
+    deletedIds.sort(),
+    [
+      granules[0].granuleId,
+      granules[1].granuleId
+    ].sort()
+  );
 });
