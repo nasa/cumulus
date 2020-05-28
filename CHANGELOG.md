@@ -39,6 +39,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `config.provider_path` is now a required parameter of the `DiscoverGranules`
     task
 
+- **CUMULUS-1997**
+  - `@cmr-client/CMRSearchConceptQueue` parameters have been changed to take a `cmrSettings` object containing clientId, provider, and auth information. This can be generated using `@cmrjs/cmr-utils/getCmrSettings`.
+
 ### MIGRATION STEPS
 
 - To take advantage of the new TTL-based access token expiration implemented in CUMULUS-1777 (see notes below) and clear out existing records in your access tokens table, do the following:
@@ -83,6 +86,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1916**
   - Added util function for seeding reconciliation reports when running API locally in dashboard
+
+- **CUMULUS-1997**
+  - Added optional `launchpad` configuration to `@cumulus/hyrax-metadata-updates` task config schema.
 
 ### Changed
 

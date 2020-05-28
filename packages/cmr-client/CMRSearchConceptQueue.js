@@ -25,7 +25,8 @@ class CMRSearchConceptQueue {
    * The constructor for the CMRSearchConceptQueue class
    *
    * @param {Object} params
-   * @param {string} params.clientId - the CMR clientId
+   * @param {string} params.cmrSettings - the CMR settings for the requests - the provider,
+   * clientId, and either launchpad token or EDL username and password
    * @param {string} params.type - the type of search 'granule' or 'collection'
    * @param {string} params.cmrEnvironment - optional, CMR environment to
    *              use valid arguments are ['OPS', 'SIT', 'UAT']

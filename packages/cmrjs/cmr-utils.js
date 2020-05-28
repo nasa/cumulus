@@ -506,7 +506,8 @@ async function updateUMMGMetadata({
  * @param {string} cmrConfig.certificate - Launchpad certificate
  * @param {string} cmrConfig.username - EDL username
  * @param {string} cmrConfig.passwordSecretName - CMR password secret name
- * @returns {Object} object to create CMR instance.
+ * @returns {Object} object to create CMR instance - contains the provider, clientId, and either
+ * launchpad token or EDL username and password
 */
 async function getCmrSettings(cmrConfig = {}) {
   const oauthProvider = cmrConfig.oauthProvider || process.env.cmr_oauth_provider;
