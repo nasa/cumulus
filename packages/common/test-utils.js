@@ -177,7 +177,7 @@ async function validateJSON(t, schemaFilename, data) {
  *
  * @param {Object} t - an ava test
  * @param {Object} data - the object to be validated
- * @returns {boolean} - whether the object is valid or not
+ * @returns {Promise<boolean>} - whether the object is valid or not
  */
 async function validateInput(t, data) {
   return validateJSON(t, './schemas/input.json', data);

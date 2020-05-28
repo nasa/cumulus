@@ -45,11 +45,7 @@ test.afterEach(async (t) => {
 
 Object.keys(sums).forEach((key) => {
   test(`granule.verifyFile ${key}`, async (t) => {
-    const granuleFetcher = new GranuleFetcher(
-      ingestPayload.config.buckets,
-      ingestPayload.config.collection,
-      ingestPayload.config.provider
-    );
+    const granuleFetcher = new GranuleFetcher(ingestPayload.config);
     const filepath = path.join(__dirname, 'fixtures', `${key}.txt`);
     await S3.putFile(t.context.internalBucket, key, filepath);
 
@@ -71,11 +67,10 @@ test('findCollectionFileConfigForFile returns the correct config', (t) => {
     files: [rightCollectionFileConfig, wrongCollectionFileConfig]
   };
 
-  const testGranule = new GranuleFetcher(
-    {},
-    collectionConfig,
-    { protocol: 's3', host: 'some-bucket' }
-  );
+  const testGranule = new GranuleFetcher({
+    collection: collectionConfig,
+    provider: { protocol: 's3', host: 'some-bucket' }
+  });
 
   const file = { name: 'right-file' };
   const fileCollectionConfig = testGranule.findCollectionFileConfigForFile(file);
@@ -89,11 +84,10 @@ test('findCollectionFileConfigForFile returns undefined if no config matches', (
     files: [wrongCollectionFileConfig]
   };
 
-  const testGranule = new GranuleFetcher(
-    {},
-    collectionConfig,
-    { protocol: 's3', host: 'some-bucket' }
-  );
+  const testGranule = new GranuleFetcher({
+    collection: collectionConfig,
+    provider: { protocol: 's3', host: 'some-bucket' }
+  });
 
   const file = { name: 'right-file' };
   const fileCollectionConfig = testGranule.findCollectionFileConfigForFile(file);
@@ -114,11 +108,11 @@ test('addBucketToFile throws an exception if no config matches', (t) => {
     files: [wrongCollectionFileConfig]
   };
 
-  const testGranule = new GranuleFetcher(
+  const testGranule = new GranuleFetcher({
     buckets,
-    collectionConfig,
-    { protocol: 's3', host: 'some-bucket' }
-  );
+    collection: collectionConfig,
+    provider: { protocol: 's3', host: 'some-bucket' }
+  });
 
   const file = { name: 'right-file' };
 
@@ -148,11 +142,11 @@ test('addBucketToFile adds the correct bucket when a config is found', (t) => {
     files: [rightCollectionFileConfig, wrongCollectionFileConfig]
   };
 
-  const testGranule = new GranuleFetcher(
+  const testGranule = new GranuleFetcher({
     buckets,
-    collectionConfig,
-    { protocol: 's3', host: 'some-bucket' }
-  );
+    collection: collectionConfig,
+    provider: { protocol: 's3', host: 'some-bucket' }
+  });
 
   const file = { name: 'right-file' };
   const updatedFile = testGranule.addBucketToFile(file);
@@ -174,17 +168,12 @@ test('ingestFile keeps both new and old data when duplicateHandling is version',
   const duplicateHandling = 'version';
   // leading '/' should be trimmed
   const fileStagingDir = '/file-staging';
-  const testGranule = new GranuleFetcher(
-    {},
-    collectionConfig,
-    {
-      protocol: 's3',
-      host: internalBucket
-    },
+  const testGranule = new GranuleFetcher({
+    collection: collectionConfig,
+    provider: { protocol: 's3', host: internalBucket },
     fileStagingDir,
-    false,
     duplicateHandling
-  );
+  });
 
   const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
   t.is(oldfiles.length, 1);
@@ -212,17 +201,12 @@ test('ingestFile throws error when configured to handle duplicates with error', 
 
   const duplicateHandling = 'error';
   const fileStagingDir = 'file-staging';
-  const testGranule = new GranuleFetcher(
-    {},
-    collectionConfig,
-    {
-      protocol: 's3',
-      host: internalBucket
-    },
+  const testGranule = new GranuleFetcher({
+    collection: collectionConfig,
+    provider: { protocol: 's3', host: internalBucket },
     fileStagingDir,
-    false,
     duplicateHandling
-  );
+  });
 
   // This test needs to use a unique bucket for each test (or remove the object
   // added to the destination bucket). Otherwise, it will throw an error on the
@@ -253,17 +237,12 @@ test('ingestFile skips ingest when duplicateHandling is skip', async (t) => {
 
   const duplicateHandling = 'skip';
   const fileStagingDir = 'file-staging';
-  const testGranule = new GranuleFetcher(
-    {},
-    collectionConfig,
-    {
-      protocol: 's3',
-      host: internalBucket
-    },
+  const testGranule = new GranuleFetcher({
+    collection: collectionConfig,
+    provider: { protocol: 's3', host: internalBucket },
     fileStagingDir,
-    false,
     duplicateHandling
-  );
+  });
 
   const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
   t.is(oldfiles.length, 1);
@@ -293,17 +272,12 @@ test('ingestFile replaces file when duplicateHandling is replace', async (t) => 
 
   const duplicateHandling = 'replace';
   const fileStagingDir = 'file-staging';
-  const testGranule = new GranuleFetcher(
-    {},
-    collectionConfig,
-    {
-      protocol: 's3',
-      host: internalBucket
-    },
+  const testGranule = new GranuleFetcher({
+    collection: collectionConfig,
+    provider: { protocol: 's3', host: internalBucket },
     fileStagingDir,
-    false,
     duplicateHandling
-  );
+  });
 
   const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
   t.is(oldfiles.length, 1);
@@ -336,17 +310,12 @@ test('ingestFile throws an error when invalid checksum is provided', async (t) =
 
   const duplicateHandling = 'replace';
   const fileStagingDir = 'file-staging';
-  const testGranule = new GranuleFetcher(
-    {},
-    collectionConfig,
-    {
-      protocol: 's3',
-      host: internalBucket
-    },
+  const testGranule = new GranuleFetcher({
+    collection: collectionConfig,
+    provider: { protocol: 's3', host: internalBucket },
     fileStagingDir,
-    false,
     duplicateHandling
-  );
+  });
 
   const stagingPath = path.join(testGranule.fileStagingDir, testGranule.collectionId);
   // This test needs to use a unique bucket for each test (or remove the object
@@ -377,17 +346,12 @@ test('ingestFile throws an error when no checksum is provided and the size is no
 
   const duplicateHandling = 'replace';
   const fileStagingDir = 'file-staging';
-  const testGranule = new GranuleFetcher(
-    {},
-    collectionConfig,
-    {
-      protocol: 's3',
-      host: internalBucket
-    },
+  const testGranule = new GranuleFetcher({
+    collection: collectionConfig,
+    provider: { protocol: 's3', host: internalBucket },
     fileStagingDir,
-    false,
     duplicateHandling
-  );
+  });
 
   // This test needs to use a unique bucket for each test (or remove the object
   // added to the destination bucket). Otherwise, it will throw an error on the
@@ -420,17 +384,12 @@ test('verifyFile returns type and value when file is verified', async (t) => {
 
   const duplicateHandling = 'replace';
   const fileStagingDir = 'file-staging';
-  const testGranule = new GranuleFetcher(
-    {},
-    collectionConfig,
-    {
-      protocol: 's3',
-      host: internalBucket
-    },
+  const testGranule = new GranuleFetcher({
+    collection: collectionConfig,
+    provider: { protocol: 's3', host: internalBucket },
     fileStagingDir,
-    false,
     duplicateHandling
-  );
+  });
 
   const [type, value] = await testGranule.verifyFile(file, internalBucket, Key);
   t.is(type, file.checksumType);
@@ -445,7 +404,10 @@ test("getUrlPath() returns the collection's url_path if there are no matching co
     files: []
   };
 
-  const granuleFetcher = new GranuleFetcher(null, collectionConfig, provider);
+  const granuleFetcher = new GranuleFetcher({
+    collection: collectionConfig,
+    provider
+  });
 
   const file = { name: 'asdf' };
 
@@ -463,7 +425,10 @@ test("getUrlPath() returns the collection file config's url_path if there is one
     }]
   };
 
-  const granuleFetcher = new GranuleFetcher(null, collectionConfig, provider);
+  const granuleFetcher = new GranuleFetcher({
+    collection: collectionConfig,
+    provider
+  });
 
   const file = { name: 'asdf' };
 
@@ -480,7 +445,10 @@ test("getUrlPath() returns the collection's url_path if there is a matching coll
     }]
   };
 
-  const granuleFetcher = new GranuleFetcher(null, collectionConfig, provider);
+  const granuleFetcher = new GranuleFetcher({
+    collection: collectionConfig,
+    provider
+  });
 
   const file = { name: 'asdf' };
 
