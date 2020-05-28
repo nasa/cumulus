@@ -35,7 +35,7 @@ const discoverPdrs = async ({ config }) => {
   const discoveredFiles = await listFiles(
     config.provider,
     config.useList,
-    config.collection.provider_path
+    config.provider_path
   );
 
   const discoveredPdrs = discoveredFiles.filter(isPdrFile);
