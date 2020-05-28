@@ -7,6 +7,7 @@ import isBoolean from 'lodash/isBoolean';
 import path from 'path';
 import pMap from 'p-map';
 import pRetry from 'p-retry';
+import pWaitFor from 'p-wait-for';
 import pump from 'pump';
 import querystring from 'querystring';
 import url from 'url';
@@ -151,6 +152,35 @@ export const s3ObjectExists = (params: { Bucket: string, Key: string }) =>
       if (e.code === 'NotFound') return false;
       throw e;
     });
+
+/**
+ * Wait for an object to exist in S3
+ *
+ * @param {Object} params
+ * @param {string} params.bucket
+ * @param {string} params.key
+ * @param {number} [params.interval=1000]
+ * @param {number} [params.timeout=30000]
+ * @returns {Promise<undefined>}
+ */
+export const waitForObjectToExist = async (params: {
+  bucket: string,
+  key: string,
+  interval: number,
+  timeout: number
+}) => {
+  const {
+    bucket,
+    key,
+    interval = 1000,
+    timeout = 30 * 1000
+  } = params;
+
+  await pWaitFor(
+    () => s3ObjectExists({ Bucket: bucket, Key: key }),
+    { interval, timeout }
+  );
+};
 
 /**
 * Put an object on S3
