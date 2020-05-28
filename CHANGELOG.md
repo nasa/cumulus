@@ -16,6 +16,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `event.config.collection` is no longer a parameter to the `DiscoverPdrs`
     task
 
+### Added
+
+- **CUMULUS-1800**
+  - Added task configuration setting named `syncChecksumFiles` to the
+    SyncGranule task. This setting is `false` by default, but when set to
+    `true`, all checksum files associated with data files that are downloaded
+    will be downloaded as well.
+
 
 ## [v1.23.2] 2020-05-22
 
@@ -69,12 +77,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1995**
   - Added the `es_index_shards` parameter to the archive and cumulus Terraform modules to configure the number of shards for the ES index
     - If you have an existing ES index, you will need to [reindex](https://nasa.github.io/cumulus-api/#reindex) and then [change index](https://nasa.github.io/cumulus-api/#change-index) to take advantage of shard updates
-
-- **CUMULUS-1800**
-  - Added task configuration setting named `syncChecksumFiles` to the
-    SyncGranule task. This setting is `false` by default, but when set to
-    `true`, all checksum files associated with data files that are downloaded
-    will be downloaded as well.
 
 - **CUMULUS-1894**
   - Added `@cumulus/aws-client/S3.moveObject()`
