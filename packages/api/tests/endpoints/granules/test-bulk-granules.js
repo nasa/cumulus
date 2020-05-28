@@ -7,6 +7,8 @@ const {
   recursivelyDeleteS3Bucket
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const { EcsStartTaskError } = require('@cumulus/errors');
+
 const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../../lib/testUtils');
 
 const models = require('../../../models');
@@ -239,4 +241,38 @@ test.serial('POST /granules/bulk returns 400 when the Metrics ELK stack is not c
     .expect(400, /ELK Metrics stack not configured/);
 
   t.true(asyncOperationStartStub.notCalled);
+});
+
+test.serial('POST /granules/bulk returns 500 if starting ECS task throws unexpected error', async (t) => {
+  t.context.asyncOperationStartStub.restore();
+  t.context.asyncOperationStartStub.stub(models.AsyncOperation.prototype, 'start').throws(
+    new Error('failed to start')
+  );
+
+  const response = await request(app)
+    .post('/granules/bulk')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({
+      workflowName: 'workflowName',
+      ids: [1, 2, 3]
+    });
+  t.is(response.status, 500);
+});
+
+test.serial('POST /granules/bulk returns 503 if starting ECS task throws unexpected error', async (t) => {
+  t.context.asyncOperationStartStub.restore();
+  t.context.asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').throws(
+    new EcsStartTaskError('failed to start')
+  );
+
+  const response = await request(app)
+    .post('/granules/bulk')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({
+      workflowName: 'workflowName',
+      ids: [1, 2, 3]
+    });
+  t.is(response.status, 503);
 });

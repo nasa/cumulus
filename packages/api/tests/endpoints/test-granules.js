@@ -20,7 +20,6 @@ const { CMR } = require('@cumulus/cmr-client');
 const {
   metadataObjectFromCMRFile
 } = require('@cumulus/cmrjs/cmr-utils');
-const { EcsStartTaskError } = require('@cumulus/errors');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 
@@ -627,6 +626,50 @@ test('DELETE for a granule with a file not present in S3 succeeds', async (t) =>
   t.is(response.status, 200);
 });
 
+test('Deleting a granule with the old file format succeeds', async (t) => {
+  const granuleBucket = randomId('granuleBucket');
+
+  const key = randomId('key');
+  const newGranule = fakeGranuleFactoryV2({
+    published: false,
+    files: [
+      {
+        filename: `s3://${granuleBucket}/${key}`
+      }
+    ]
+  });
+
+  await createBucket(granuleBucket);
+  t.teardown(() => recursivelyDeleteS3Bucket(granuleBucket));
+
+  await putObject({
+    Bucket: granuleBucket,
+    Key: key,
+    Body: 'asdf'
+  });
+
+  // create a new unpublished granule
+  const baseModel = new models.Manager({
+    tableName: process.env.GranulesTable,
+    tableHash: { name: 'granuleId', type: 'S' },
+    tableAttributes: [{ name: 'collectionId', type: 'S' }],
+    validate: false
+  });
+
+  await baseModel.create(newGranule);
+
+  const response = await request(app)
+    .delete(`/granules/${newGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.body.detail, 'Record deleted');
+
+  // verify the file is deleted
+  t.false(await fileExists(granuleBucket, key));
+});
+
 test.serial('move a granule with no .cmr.xml file', async (t) => {
   const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');
@@ -993,44 +1036,4 @@ test('PUT with action move returns failure if more than one granule file exists'
 
   filesExistingStub.restore();
   moveGranuleStub.restore();
-});
-
-test.serial('request to /granules/bulk endpoint returns 500 if starting ECS task throws unexpected error', async (t) => {
-  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').throws(
-    new Error('failed to start')
-  );
-
-  try {
-    const response = await request(app)
-      .post('/granules/bulk')
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .send({
-        workflowName: 'workflowName',
-        ids: [1, 2, 3]
-      });
-    t.is(response.status, 500);
-  } finally {
-    asyncOperationStartStub.restore();
-  }
-});
-
-test.serial('request to /granules/bulk endpoint returns 503 if starting ECS task throws unexpected error', async (t) => {
-  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').throws(
-    new EcsStartTaskError('failed to start')
-  );
-
-  try {
-    const response = await request(app)
-      .post('/granules/bulk')
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .send({
-        workflowName: 'workflowName',
-        ids: [1, 2, 3]
-      });
-    t.is(response.status, 503);
-  } finally {
-    asyncOperationStartStub.restore();
-  }
 });

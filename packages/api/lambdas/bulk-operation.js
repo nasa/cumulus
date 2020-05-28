@@ -110,7 +110,11 @@ async function bulkGranuleDelete(payload) {
   const granuleModel = new GranuleModel();
   const deletedGranules = await pMap(
     granuleIds,
-    (granuleId) => granuleModel.delete({ granuleId }),
+    async (granuleId) => {
+      const granule = await granuleModel.getRecord({ granuleId });
+      await granuleModel.delete(granule);
+      return granuleId;
+    },
     { concurrency: 10 } // is this necessary?
   );
   return { deletedGranules };

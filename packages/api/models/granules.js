@@ -81,6 +81,10 @@ class Granule extends Manager {
     return translateGranule(await super.get(...args));
   }
 
+  getRecord({ granuleId }) {
+    return super.get({ granuleId });
+  }
+
   async batchGet(...args) {
     const result = cloneDeep(await super.batchGet(...args));
 
