@@ -32,7 +32,6 @@ test.before(async () => {
   deleteStub = sandbox.stub(Granule.prototype, 'delete');
 });
 
-
 test.afterEach.always(() => {
   sandbox.resetHistory();
 });
