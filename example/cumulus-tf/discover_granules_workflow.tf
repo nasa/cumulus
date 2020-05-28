@@ -22,7 +22,7 @@ module "discover_granules_workflow" {
           },
           "task_config": {
             "provider": "{$.meta.provider}",
-            "provider_path": "{$.meta.collection.provider_path}",
+            "provider_path": "{$.meta.provider_path}",
             "collection": "{$.meta.collection}",
             "buckets": "{$.meta.buckets}",
             "stack": "{$.meta.stack}",
