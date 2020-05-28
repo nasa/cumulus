@@ -46,19 +46,22 @@ const addChecksumsToFiles = async (providerClient, files) => {
   );
 };
 
-const dataTypeFrom = ({ granule = {}, collection = {} }) =>
-  granule.dataType || collection.dataType;
+const collectionNameFrom = (granule = {}, collection = {}) =>
+  granule.dataType || collection.name;
 
-const versionFrom = ({ granule = {}, collection = {} }) =>
+const collectionVersionFrom = (granule = {}, collection = {}) =>
   granule.version || collection.version;
 
-const fetchCollection = ({ bucket, stackName, dataType, version }) => {
-  if (!dataType) throw new TypeError('dataType missing');
+const fetchCollection = ({ systemBucket, stackName, name, version }) => {
+  if (!name) throw new TypeError('name missing');
   if (!version) throw new TypeError('version missing');
 
-  const collectionConfigStore = new CollectionConfigStore(bucket, stackName);
+  const collectionConfigStore = new CollectionConfigStore(
+    systemBucket,
+    stackName
+  );
 
-  return collectionConfigStore.get(dataType, version);
+  return collectionConfigStore.get(name, version);
 };
 
 class GranuleFetcher {
@@ -114,21 +117,21 @@ class GranuleFetcher {
     // for each granule file
     // download / verify integrity / upload
 
-    const dataType = dataTypeFrom({ granule, collection: this.collection });
-    const version = versionFrom({ granule, collection: this.collection });
+    const collectionName = collectionNameFrom(granule, this.collection);
+    const collectionVersion = collectionVersionFrom(granule, this.collection);
 
     if (!this.collection) {
       this.collection = await fetchCollection({
-        bucket,
+        systemBucket: bucket,
         stackName: process.env.stackName,
-        dataType,
-        version
+        name: collectionName,
+        version: collectionVersion
       });
     }
 
     // make sure there is a url_path
     this.collection.url_path = this.collection.url_path || '';
-    this.collectionId = constructCollectionId(dataType, version);
+    this.collectionId = constructCollectionId(collectionName, collectionVersion);
 
     const filesWithChecksums = await addChecksumsToFiles(
       this.providerClient, granule.files
@@ -141,10 +144,11 @@ class GranuleFetcher {
     log.debug('awaiting all download.Files');
     const files = flatten(await Promise.all(downloadFiles));
     log.debug('finished ingest()');
+
     return {
       granuleId: granule.granuleId,
-      dataType,
-      version,
+      dataType: collectionName,
+      version: collectionVersion,
       files
     };
   }
