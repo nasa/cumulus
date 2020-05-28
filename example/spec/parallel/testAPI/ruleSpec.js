@@ -227,8 +227,9 @@ describe('When I create a one-time rule via the Cumulus API', () => {
       async () => {
         const listRulesResponse = await rulesApi.listRules({ prefix });
 
-        const rules = JSON.parse(listRulesResponse.body).results;
-        console.log(`Rules meta: ${JSON.parse(listRulesResponse.body).meta}`);
+        const body = JSON.parse(listRulesResponse.body);
+        const rules = body.results;
+        console.log(`Rules meta: ${JSON.stringify(body.meta)}`);
 
         const ruleNames = rules.map((x) => x.name);
         console.log(`rule name: ${helloWorldRule.name}`);
