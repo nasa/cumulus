@@ -10,7 +10,7 @@ const {
 } = require('@cumulus/integration-tests');
 const { loadConfig } = require('../../helpers/testUtils');
 
-describe('POST /bulkDelete with a failed bulk delete operation', () => {
+describe('POST /granules/bulkDelete with a failed bulk delete operation', () => {
   let postBulkDeleteResponse;
   let postBulkDeleteBody;
   let config;
