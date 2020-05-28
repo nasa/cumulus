@@ -70,11 +70,24 @@ async function addPdrs(pdrs) {
   );
 }
 
+async function addReconciliationReports(reconciliationReports) {
+  const reconciliationReportModel = new models.ReconciliationReport();
+  const es = await getESClientAndIndex();
+  return Promise.all(
+    reconciliationReports.map((r) =>
+      reconciliationReportModel
+        .create(r)
+        .then((reconciliationReport) =>
+          indexer.indexReconciliationReport(es.client, reconciliationReport, es.index)))
+  );
+}
+
 module.exports = {
   addCollections,
   addExecutions,
   addGranules,
   addPdrs,
   addProviders,
+  addReconciliationReports,
   addRules
 };

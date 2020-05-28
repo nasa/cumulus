@@ -1,16 +1,15 @@
 'use strict';
 
+const pWaitFor = require('p-wait-for');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
   addCollections,
   cleanupCollections,
   isWorkflowTriggeredByRule,
-  removeRuleAddedParams,
-  rulesApi: rulesApiTestUtils,
+  rulesApi,
   waitForTestExecutionStart
 } = require('@cumulus/integration-tests');
 
-const { waitForRuleInList } = require('../../helpers/ruleUtils');
 const {
   createTestSuffix,
   createTimestampedTestId,
@@ -50,7 +49,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
       testSuffix, testId);
     // Create a scheduled rule
     console.log(`post rule ${scheduledRuleName}`);
-    await rulesApiTestUtils.postRule({
+    await rulesApi.postRule({
       prefix: config.stackName,
       rule: scheduledHelloWorldRule
     });
@@ -59,7 +58,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
   afterAll(async () => {
     console.log(`deleting rule ${scheduledRuleName}`);
 
-    await rulesApiTestUtils.deleteRule({
+    await rulesApi.deleteRule({
       prefix: config.stackName,
       ruleName: scheduledRuleName
     });
@@ -91,7 +90,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
     beforeAll(async () => {
       console.log(`deleting rule ${scheduledHelloWorldRule.name}`);
 
-      await rulesApiTestUtils.deleteRule({
+      await rulesApi.deleteRule({
         prefix: config.stackName,
         ruleName: scheduledHelloWorldRule.name
       });
@@ -120,12 +119,14 @@ describe('When I create a one-time rule via the Cumulus API', () => {
   let helloWorldRule;
   let lambdaStep;
   let postRule;
+  let prefix;
   let testSuffix;
   let updatedCheck;
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
   beforeAll(async () => {
     config = await loadConfig();
+    prefix = config.stackName;
     process.env.stackName = config.stackName;
 
     lambdaStep = new LambdaStep();
@@ -151,7 +152,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
     await addCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix, testId);
     // Create a one-time rule
-    const postRuleResponse = await rulesApiTestUtils.postRule({
+    const postRuleResponse = await rulesApi.postRule({
       prefix: config.stackName,
       rule: helloWorldRule
     });
@@ -161,22 +162,12 @@ describe('When I create a one-time rule via the Cumulus API', () => {
   afterAll(async () => {
     console.log(`deleting rule ${helloWorldRule.name}`);
 
-    await rulesApiTestUtils.deleteRule({
+    await rulesApi.deleteRule({
       prefix: config.stackName,
       ruleName: helloWorldRule.name
     });
     await cleanupCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix);
-  });
-
-  it('the rule is returned in the post response', () => {
-    const responseCopy = removeRuleAddedParams(postRule.record);
-
-    expect(responseCopy).toEqual(helloWorldRule);
-  });
-
-  it('the rule is enabled by default', () => {
-    expect(postRule.record.state).toEqual('ENABLED');
   });
 
   describe('Upon rule creation', () => {
@@ -196,12 +187,8 @@ describe('When I create a one-time rule via the Cumulus API', () => {
       console.log(`Execution ARN: ${execution.executionArn}`);
     });
 
-    it('a workflow is triggered by the rule', () => {
-      expect(execution).toBeDefined();
-    });
-
     it('the rule can be updated', async () => {
-      const updatingRuleResponse = await rulesApiTestUtils.updateRule({
+      const updatingRuleResponse = await rulesApi.updateRule({
         prefix: config.stackName,
         ruleName: helloWorldRule.name,
         updateParams: {
@@ -214,7 +201,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
 
       const updatedRule = JSON.parse(updatingRuleResponse.body);
 
-      await rulesApiTestUtils.rerunRule({
+      await rulesApi.rerunRule({
         prefix: config.stackName,
         ruleName: helloWorldRule.name,
         updateParams: { ...updatedRule }
@@ -235,21 +222,23 @@ describe('When I create a one-time rule via the Cumulus API', () => {
     });
   });
 
-  describe('When listing the rules via the API', () => {
-    it('the rule is returned with the listed rules', async (done) => {
-      const ruleSearchParams = {
-        name: helloWorldRule.name,
-        'meta.triggerRule': updatedCheck
-      };
-      try {
-        await waitForRuleInList(config.stackName, ruleSearchParams);
-        done();
-      } catch (error) {
-        fail(
-          `Could not find rule with params ${JSON.stringify(ruleSearchParams)}`,
-          error
-        );
-      }
-    });
+  it('the rule is returned with the listed rules', async () => {
+    await expectAsync(
+      pWaitFor(
+        async () => {
+          const listRulesResponse = await rulesApi.listRules({ prefix });
+
+          const rules = JSON.parse(listRulesResponse.body).results;
+
+          const ruleNames = rules.map((x) => x.name);
+
+          return ruleNames.includes(helloWorldRule.name);
+        },
+        {
+          interval: 1000,
+          timeout: 60 * 1000
+        }
+      )
+    ).toBeResolved();
   });
 });
