@@ -1,10 +1,7 @@
 'use strict';
 
-const lodashGet = require('lodash/get');
-const pMap = require('p-map');
 const router = require('express-promise-router')();
 
-const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const {
@@ -136,7 +133,7 @@ async function del(req, res) {
   log.info(`granules.del ${granuleId}`);
 
   const granuleModelClient = new models.Granule();
-  const granule = await granuleModelClient.get({ granuleId });
+  const granule = await granuleModelClient.getRecord({ granuleId });
 
   if (granule.detail) {
     return res.boom.badRequest(granule);

@@ -626,50 +626,6 @@ test('DELETE for a granule with a file not present in S3 succeeds', async (t) =>
   t.is(response.status, 200);
 });
 
-test('Deleting a granule with the old file format succeeds', async (t) => {
-  const granuleBucket = randomId('granuleBucket');
-
-  const key = randomId('key');
-  const newGranule = fakeGranuleFactoryV2({
-    published: false,
-    files: [
-      {
-        filename: `s3://${granuleBucket}/${key}`
-      }
-    ]
-  });
-
-  await createBucket(granuleBucket);
-  t.teardown(() => recursivelyDeleteS3Bucket(granuleBucket));
-
-  await putObject({
-    Bucket: granuleBucket,
-    Key: key,
-    Body: 'asdf'
-  });
-
-  // create a new unpublished granule
-  const baseModel = new models.Manager({
-    tableName: process.env.GranulesTable,
-    tableHash: { name: 'granuleId', type: 'S' },
-    tableAttributes: [{ name: 'collectionId', type: 'S' }],
-    validate: false
-  });
-
-  await baseModel.create(newGranule);
-
-  const response = await request(app)
-    .delete(`/granules/${newGranule.granuleId}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  t.is(response.body.detail, 'Record deleted');
-
-  // verify the file is deleted
-  t.false(await fileExists(granuleBucket, key));
-});
-
 test.serial('move a granule with no .cmr.xml file', async (t) => {
   const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');

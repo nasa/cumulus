@@ -33,7 +33,7 @@ const {
 
 const Manager = require('./base');
 
-const { buildDatabaseFiles } = require('../lib/FileUtils');
+const FileUtils = require('../lib/FileUtils');
 const { translateGranule } = require('../lib/granules');
 const GranuleSearchQueue = require('../lib/GranuleSearchQueue');
 
@@ -307,7 +307,7 @@ class Granule extends Manager {
     if (!granule.granuleId) throw new Error(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
     const collectionId = getCollectionIdFromMessage(message);
 
-    const granuleFiles = await buildDatabaseFiles({
+    const granuleFiles = await FileUtils.buildDatabaseFiles({
       providerURL: buildURL({
         protocol: message.meta.provider.protocol,
         host: message.meta.provider.host,
@@ -421,7 +421,11 @@ class Granule extends Manager {
     // Delete granule files
     await pMap(
       get(granule, 'files', []),
-      ({ bucket, key }) => s3Utils.deleteS3Object(bucket, key)
+      (file) => {
+        const bucket = FileUtils.getBucket(file);
+        const key = FileUtils.getKey(file);
+        return s3Utils.deleteS3Object(bucket, key);
+      }
     );
 
     return super.delete({ granuleId: granule.granuleId });

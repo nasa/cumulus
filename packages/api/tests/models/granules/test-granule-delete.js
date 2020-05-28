@@ -9,7 +9,7 @@ const {
 } = require('@cumulus/errors');
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
-const Granule = require('../../../models/granules');
+const models = require('../../../models');
 
 const bucket = randomId('bucket');
 let granuleModel;
@@ -18,7 +18,7 @@ test.before(async () => {
   await s3Utils.createBucket(bucket);
 
   process.env.GranulesTable = randomId('granule');
-  granuleModel = new Granule();
+  granuleModel = new models.Granule();
   await granuleModel.createTable();
 });
 
@@ -76,4 +76,43 @@ test('granule.delete() throws error if granule is published', async (t) => {
       message: 'You cannot delete a granule that is published to CMR. Remove it from CMR first'
     }
   );
+});
+
+test('granule.delete() with the old file format succeeds', async (t) => {
+  const granuleBucket = randomId('granuleBucket');
+
+  const key = randomId('key');
+  const newGranule = fakeGranuleFactoryV2({
+    published: false,
+    files: [
+      {
+        filename: `s3://${granuleBucket}/${key}`
+      }
+    ]
+  });
+
+  await s3Utils.createBucket(granuleBucket);
+  t.teardown(() => s3Utils.recursivelyDeleteS3Bucket(granuleBucket));
+
+  await s3Utils.s3PutObject({
+    Bucket: granuleBucket,
+    Key: key,
+    Body: 'asdf'
+  });
+
+  // create a new unpublished granule
+  const baseModel = new models.Manager({
+    tableName: process.env.GranulesTable,
+    tableHash: { name: 'granuleId', type: 'S' },
+    tableAttributes: [{ name: 'collectionId', type: 'S' }],
+    validate: false
+  });
+
+  await baseModel.create(newGranule);
+
+  await granuleModel.delete(newGranule);
+
+  t.false(await granuleModel.exists({ granuleId: newGranule.granuleId }));
+  // verify the file is deleted
+  t.false(await s3Utils.fileExists(granuleBucket, key));
 });
