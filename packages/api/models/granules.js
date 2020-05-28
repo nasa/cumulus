@@ -144,7 +144,7 @@ class Granule extends Manager {
 
     // Use granule UR to delete from CMR
     await cmr.deleteGranule(metadata.title, granule.collectionId);
-    await this.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']);
+    return this.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']);
   }
 
   /**

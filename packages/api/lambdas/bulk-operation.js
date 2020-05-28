@@ -99,6 +99,8 @@ function applyWorkflowToGranules(granuleIds, workflowName, queueName) {
  * ES using the provided query and index.
  *
  * @param {Object} payload
+ * @param {boolean} [payload.forceRemoveFromCmr]
+ *   Whether published granule should be deleted from CMR before removal
  * @param {Object} [payload.query] - Optional parameter of query to send to ES
  * @param {string} [payload.index] - Optional parameter of ES index to query.
  * Must exist if payload.query exists.
@@ -108,10 +110,14 @@ function applyWorkflowToGranules(granuleIds, workflowName, queueName) {
 async function bulkGranuleDelete(payload) {
   const granuleIds = await getGranuleIdsForPayload(payload);
   const granuleModel = new GranuleModel();
+  const forceRemoveFromCmr = payload.forceRemoveFromCmr;
   const deletedGranules = await pMap(
     granuleIds,
     async (granuleId) => {
-      const granule = await granuleModel.getRecord({ granuleId });
+      let granule = await granuleModel.getRecord({ granuleId });
+      if (granule.published && forceRemoveFromCmr) {
+        granule = await granuleModel.removeGranuleFromCmrByGranule(granule);
+      }
       await granuleModel.delete(granule);
       return granuleId;
     },

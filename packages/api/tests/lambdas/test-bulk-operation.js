@@ -2,6 +2,8 @@ const test = require('ava');
 const proxyquire = require('proxyquire');
 const sinon = require('sinon');
 
+const secretsManagerUtils = require('@cumulus/aws-client/SecretsManager');
+const { CMR } = require('@cumulus/cmr-client');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
@@ -18,7 +20,6 @@ const bulkOperation = proxyquire('../../lambdas/bulk-operation', {
 });
 
 let applyWorkflowStub;
-let deleteStub;
 
 test.before(async () => {
   process.env.METRICS_ES_HOST = randomId('host');
@@ -29,7 +30,17 @@ test.before(async () => {
   await new Granule().createTable();
 
   applyWorkflowStub = sandbox.stub(Granule.prototype, 'applyWorkflow');
-  deleteStub = sandbox.stub(Granule.prototype, 'delete');
+
+  process.env.cmr_password_secret_name = randomId('secret');
+  sandbox.stub(secretsManagerUtils, 'getSecretString')
+    .withArgs(process.env.cmr_password_secret_name)
+    .resolves('fakePassword');
+
+  sandbox.stub(CMR.prototype, 'deleteGranule').resolves();
+  sandbox.stub(
+    CMR.prototype,
+    'getGranuleMetadata'
+  ).callsFake(() => Promise.resolve({ title: 'granule-ur' }));
 });
 
 test.afterEach.always(() => {
@@ -219,7 +230,7 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs', asy
     granuleModel.create(fakeGranuleFactoryV2({ published: false }))
   ]);
 
-  await bulkOperation.handler({
+  const { deletedGranules } = await bulkOperation.handler({
     type: 'BULK_GRANULE_DELETE',
     payload: {
       ids: [
@@ -229,15 +240,12 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs', asy
     }
   });
 
-  t.is(deleteStub.callCount, 2);
-  // Can't guarantee processing order so ensure all IDs were deleted
-  const deletedIds = deleteStub.args.map((callArgs) => callArgs[0].granuleId);
   t.deepEqual(
-    deletedIds.sort(),
+    deletedGranules,
     [
       granules[0].granuleId,
       granules[1].granuleId
-    ].sort()
+    ]
   );
 });
 
@@ -245,8 +253,7 @@ test.serial('bulk operation BULK_GRANULE_DELETE processes all granules that do n
   const errorMessage = 'fail';
   let count = 0;
 
-  deleteStub.restore();
-  deleteStub = sinon.stub(Granule.prototype, 'delete')
+  const deleteStub = sinon.stub(Granule.prototype, 'delete')
     .callsFake(() => {
       count += 1;
       if (count > 3) {
@@ -256,7 +263,6 @@ test.serial('bulk operation BULK_GRANULE_DELETE processes all granules that do n
     });
   t.teardown(() => {
     deleteStub.restore();
-    deleteStub = sandbox.stub(Granule.prototype, 'delete');
   });
 
   const granuleModel = new Granule();
@@ -321,7 +327,7 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes granule IDs returned by 
     }
   });
 
-  await bulkOperation.handler({
+  const { deletedGranules } = await bulkOperation.handler({
     type: 'BULK_GRANULE_DELETE',
     payload: {
       query: 'fake-query',
@@ -330,14 +336,38 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes granule IDs returned by 
   });
 
   t.true(esSearchStub.called);
-  t.is(deleteStub.callCount, 2);
-  // Can't guarantee processing order so ensure all IDs were deleted
-  const deletedIds = deleteStub.args.map((callArgs) => callArgs[0].granuleId);
   t.deepEqual(
-    deletedIds.sort(),
+    deletedGranules,
     [
       granules[0].granuleId,
       granules[1].granuleId
-    ].sort()
+    ]
+  );
+});
+
+test.serial('bulk operation BULK_GRANULE_DELETE does not fail on publish granules if payload.forceRemoveFromCmr is true', async (t) => {
+  const granuleModel = new Granule();
+  const granules = await Promise.all([
+    granuleModel.create(fakeGranuleFactoryV2({ published: true })),
+    granuleModel.create(fakeGranuleFactoryV2({ published: true }))
+  ]);
+
+  const { deletedGranules } = await bulkOperation.handler({
+    type: 'BULK_GRANULE_DELETE',
+    payload: {
+      ids: [
+        granules[0].granuleId,
+        granules[1].granuleId
+      ],
+      forceRemoveFromCmr: true
+    }
+  });
+
+  t.deepEqual(
+    deletedGranules,
+    [
+      granules[0].granuleId,
+      granules[1].granuleId
+    ]
   );
 });
