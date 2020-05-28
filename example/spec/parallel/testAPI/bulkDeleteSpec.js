@@ -1,5 +1,8 @@
 'use strict';
 
+const { fakeGranuleFactoryV2 } = require('@cumulus/api/lib/testUtils');
+const Granule = require('@cumulus/api/models/granules');
+const granules = require('@cumulus/api-client/granules');
 const { ecs } = require('@cumulus/aws-client/services');
 const {
   api: apiTestUtils,
@@ -13,8 +16,11 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
   let config;
   let clusterArn;
   let taskArn;
-
   let beforeAllSucceeded = false;
+
+
+  const granule = fakeGranuleFactoryV2({ published: false });
+
   beforeAll(async () => {
     config = await loadConfig();
     process.env.stackName = config.stackName;
@@ -24,9 +30,15 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
     clusterArn = await getClusterArn(config.stackName);
     if (!clusterArn) throw new Error('Unable to find ECS cluster');
 
-    postBulkDeleteResponse = await apiTestUtils.postBulkDelete({
+    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+    const granulesModel = new Granule();
+    await granulesModel.create(granule);
+
+    postBulkDeleteResponse = await granules.bulkDeleteGranules({
       prefix: config.stackName,
-      granuleIds: ['g-123']
+      body: {
+        ids: [granule.granuleId]
+      }
     });
     postBulkDeleteBody = JSON.parse(postBulkDeleteResponse.body);
 
@@ -38,6 +50,11 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
     ({ taskArn } = JSON.parse(getAsyncOperationResponse.body));
 
     beforeAllSucceeded = true;
+  });
+
+  afterAll(async () => {
+    const granulesModel = new Granule();
+    await granulesModel.delete({ granuleId: granule.granuleId });
   });
 
   it('returns a status code of 202', () => {
@@ -105,11 +122,11 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
       throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
     }
 
-    expect(output).toEqual({ deletedGranules: ['g-123'] });
+    expect(output).toEqual({ deletedGranules: [granule.granuleId] });
   });
 });
 
-describe('POST /bulkDelete with a failed bulk delete operation', () => {
+xdescribe('POST /bulkDelete with a failed bulk delete operation', () => {
   let postBulkDeleteResponse;
   let postBulkDeleteBody;
   let config;
