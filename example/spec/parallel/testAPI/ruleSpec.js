@@ -48,7 +48,7 @@ async function queryForRule(ruleName, prefix, pageNumber) {
   };
 }
 
-xdescribe('When I create a scheduled rule via the Cumulus API', () => {
+describe('When I create a scheduled rule via the Cumulus API', () => {
   let config;
   let execution;
   let scheduledRuleName;
