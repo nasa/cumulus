@@ -10,7 +10,8 @@ const path = require('path');
 const {
   buildS3Uri,
   moveObject,
-  s3ObjectExists
+  s3ObjectExists,
+  waitForObjectToExist
 } = require('@cumulus/aws-client/S3');
 
 const { InvalidArgument } = require('@cumulus/errors');
@@ -143,6 +144,10 @@ async function moveFileRequest(
     Bucket: file.bucket,
     Key: file.filepath
   };
+
+  // Due to S3's eventual consistency model, we need to make sure that the
+  // source object is available in S3.
+  await waitForObjectToExist({ bucket: source.Bucket, key: source.Key });
 
   // the file moved to destination
   const fileMoved = { ...file };
@@ -319,7 +324,7 @@ async function moveGranules(event) {
   }
 
   return {
-    granules: Object.keys(movedGranules).map((k) => movedGranules[k])
+    granules: Object.values(movedGranules)
   };
 }
 exports.moveGranules = moveGranules;
