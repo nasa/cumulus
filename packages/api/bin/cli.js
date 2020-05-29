@@ -60,7 +60,7 @@ program
       throw new Error('table name is missing');
     }
 
-    const concurrency = !cmd.concurrency ? 2 : parseInt(cmd.concurrency, 10);
+    const concurrency = !cmd.concurrency ? 2 : Number.parseInt(cmd.concurrency, 10);
 
     if (cmd.region) {
       process.env.AWS_DEFAULT_REGION = cmd.region;

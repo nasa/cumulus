@@ -502,7 +502,7 @@ class Rule extends Manager {
 
     // update rule meta
     if (!get(rule, 'meta.visibilityTimeout')) {
-      set(rule, 'meta.visibilityTimeout', parseInt(attributes.Attributes.VisibilityTimeout, 10));
+      set(rule, 'meta.visibilityTimeout', Number.parseInt(attributes.Attributes.VisibilityTimeout, 10));
     }
 
     if (!get(rule, 'meta.retries')) set(rule, 'meta.retries', 3);
