@@ -159,8 +159,8 @@ export const s3ObjectExists = (params: { Bucket: string, Key: string }) =>
  * @param {Object} params
  * @param {string} params.bucket
  * @param {string} params.key
- * @param {number} [params.interval=1000]
- * @param {number} [params.timeout=30000]
+ * @param {number} [params.interval=1000] - interval before retries, in ms
+ * @param {number} [params.timeout=30000] - timeout, in ms
  * @returns {Promise<undefined>}
  */
 export const waitForObjectToExist = async (params: {
