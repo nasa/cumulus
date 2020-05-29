@@ -13,6 +13,8 @@ const isNil = require('lodash/isNil');
 const pick = require('lodash/pick');
 const pRetry = require('p-retry');
 
+const EXECUTION_LIST_LIMIT = 50;
+
 /**
  * Find the execution ARN matching the `matcher` function
  *
@@ -30,11 +32,31 @@ const findExecutionArn = async (prefix, matcher, options = { timeout: 0 }) =>
   pRetry(
     async () => {
       let execution;
+      let pageNumber = 1;
 
       try {
-        const { body } = await executionsApi.getExecutions({ prefix });
-        const executions = JSON.parse(body);
+        const { body } = await executionsApi.getExecutions({
+          prefix,
+          query: {
+            limit: EXECUTION_LIST_LIMIT,
+            page: pageNumber
+          }
+        });
+        let executions = JSON.parse(body);
         execution = executions.results.find(matcher);
+
+        while (isNil(execution) && executions.meta.count > (EXECUTION_LIST_LIMIT * pageNumber)) {
+          // eslint-disable-next-line no-await-in-loop
+          const response = await executionsApi.getExecutions({
+            prefix,
+            query: {
+              limit: EXECUTION_LIST_LIMIT,
+              page: pageNumber += 1
+            }
+          });
+          executions = JSON.parse(response.body);
+          execution = executions.results.find(matcher);
+        }
       } catch (err) {
         throw new pRetry.AbortError(err);
       }
