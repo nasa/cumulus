@@ -153,7 +153,6 @@ module.exports = {
     'unicorn/better-regex': 'off',
     'unicorn/catch-error-name': 'off',
     'unicorn/consistent-function-scoping': 'off',
-    'unicorn/explicit-length-check': 'off',
     'unicorn/filename-case': 'off',
     'unicorn/no-fn-reference-in-iterator': 'off',
     'unicorn/no-for-loop': 'off',
