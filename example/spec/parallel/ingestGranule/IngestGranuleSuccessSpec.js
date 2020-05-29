@@ -1060,39 +1060,5 @@ describe('The S3 Ingest Granules workflow', () => {
         });
       });
     });
-
-    describe('workflows endpoint', () => {
-      it('returns a list of workflows', async () => {
-        const workflowsResponse = await apiTestUtils.getWorkflows({ prefix: config.stackName });
-
-        const workflows = JSON.parse(workflowsResponse.body);
-        expect(workflows).not.toBe(undefined);
-        expect(workflows.length).toBeGreaterThan(0);
-      });
-
-      // This test needs to be updated to work with Terraform
-      xit('returns the expected workflow', async () => {
-        const workflowResponse = await apiTestUtils.getWorkflow({
-          workflowName,
-          prefix: config.stackName
-        });
-
-        const foundWorkflow = JSON.parse(workflowResponse.body);
-        expect(foundWorkflow.definition.Comment).toEqual('Ingest Granule');
-
-        const foundKeys = Object.keys(foundWorkflow.definition.States);
-        const configKeys = [
-          'SyncGranule',
-          'ChooseProcess',
-          'ProcessingStep',
-          'FilesToGranulesStep',
-          'MoveGranuleStep',
-          'CmrStep',
-          'WorkflowSucceeded',
-          'WorkflowFailed'
-        ];
-        expect(foundKeys.sort()).toEqual(configKeys.sort());
-      });
-    });
   });
 });

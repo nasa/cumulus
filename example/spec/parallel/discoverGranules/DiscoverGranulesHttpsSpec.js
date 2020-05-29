@@ -17,7 +17,6 @@ const workflowName = 'DiscoverGranules';
 
 // Note: This test runs in serial due to the logs endpoint tests
 
-// Disabled until we're acutally using https
 describe('The Discover Granules workflow with https Protocol', () => {
   const collectionsDir = './data/collections/https_testcollection_001/';
   let httpsWorkflowExecution = null;
@@ -53,7 +52,9 @@ describe('The Discover Granules workflow with https Protocol', () => {
       config.bucket,
       workflowName,
       collection,
-      provider
+      provider,
+      undefined,
+      { provider_path: 'granules/fake_granules' }
     );
 
     lambdaStep = new LambdaStep();
