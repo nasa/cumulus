@@ -25,8 +25,6 @@ export const publishSnsMessage = async (
 ) =>
   pRetry(
     async () => {
-      if (!snsTopicArn && process.env.NODE_ENV === 'test') return;
-
       if (!snsTopicArn) {
         throw new pRetry.AbortError('Missing SNS topic ARN');
       }
