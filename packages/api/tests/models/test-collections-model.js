@@ -12,7 +12,7 @@ const {
 } = require('@cumulus/message/Collections');
 
 const { AssociatedRulesError } = require('../../lib/errors');
-const { Collection, Rule } = require('../../models');
+const { Collection, Manager, Rule } = require('../../models');
 const {
   fakeCollectionFactory,
   fakeRuleFactoryV2
@@ -294,4 +294,24 @@ test.serial('Collection.delete() does not throw exception when attempting to del
   t.false(await collectionsModel.exists(name, version));
   await collectionsModel.delete({ name, version });
   t.false(await collectionsModel.exists(name, version));
+});
+
+test('Collection.get() does not return the deprecated `provider_path` field', async (t) => {
+  const collection = fakeCollectionFactory({ provider_path: 'asdf' });
+
+  const baseModel = new Manager({
+    tableName: process.env.CollectionsTable,
+    tableHash: { name: 'name', type: 'S' },
+    tableRange: { name: 'version', type: 'S' },
+    validate: false
+  });
+
+  await baseModel.create(collection);
+
+  const fetchedCollection = await collectionsModel.get({
+    name: collection.name,
+    version: collection.version
+  });
+
+  t.is(fetchedCollection.provider_path, undefined);
 });

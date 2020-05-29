@@ -1,7 +1,10 @@
 'use strict';
 
+const omit = require('lodash/omit');
 const { invokeApi } = require('./cumulusApiClient');
 
+// Fields which are no longer supported in collection items
+const deprecatedFields = ['provider_path'];
 
 /**
  * POST /collections
@@ -21,7 +24,7 @@ const createCollection = async ({ prefix, collection, callback = invokeApi }) =>
     resource: '/{proxy+}',
     headers: { 'Content-Type': 'application/json' },
     path: '/collections',
-    body: JSON.stringify(collection)
+    body: JSON.stringify(omit(collection, deprecatedFields))
   }
 });
 
