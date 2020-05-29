@@ -37,7 +37,9 @@ test('CMRSearchConceptQueue handles paging correctly.', async (t) => {
   const cmrSearchQueue = new CMRSearchConceptQueue({
     cmrSettings: {
       provider: 'CUMULUS',
-      clientId: 'fakeClient'
+      clientId: 'fakeClient',
+      username: 'fakeUser',
+      password: 'fakePassword'
     },
     type: 'granules',
     searchParams: {},
