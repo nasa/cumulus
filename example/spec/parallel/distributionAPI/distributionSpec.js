@@ -35,6 +35,11 @@ describe('Distribution API', () => {
     try {
       const config = await loadConfig();
 
+      if (!config.stackName) {
+        console.log('config:', JSON.stringify(config, null, 2));
+        throw new Error('config.stackName not found');
+      }
+
       process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
       setDistributionApiEnvVars();
 
