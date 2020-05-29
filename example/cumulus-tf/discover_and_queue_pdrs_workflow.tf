@@ -22,7 +22,7 @@ module "discover_and_queue_pdrs_workflow" {
           "task_config": {
             "stack": "{$.meta.stack}",
             "provider": "{$.meta.provider}",
-            "provider_path": "{$.meta.collection.provider_path}",
+            "provider_path": "{$.meta.provider_path}",
             "bucket": "{$.meta.buckets.internal.name}"
           }
         }

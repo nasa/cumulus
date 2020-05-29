@@ -57,7 +57,7 @@ const {
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 
 const lambdaStep = new LambdaStep();
-const taskName = 'DiscoverAndQueuePdrs';
+const workflowName = 'DiscoverAndQueuePdrs';
 const origPdrFilename = 'MOD09GQ_1granule_v3.PDR';
 
 const s3data = [
@@ -73,7 +73,6 @@ describe('Ingesting from PDR', () => {
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
-  let collection;
   let config;
   let executionModel;
   let parsePdrExecutionArn;
@@ -97,7 +96,6 @@ describe('Ingesting from PDR', () => {
 
     pdrFilename = `${testSuffix.slice(1)}_${origPdrFilename}`;
 
-    collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
     provider = { id: `s3_provider${testSuffix}` };
 
     // populate collections, providers and test data
@@ -119,13 +117,6 @@ describe('Ingesting from PDR', () => {
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
       addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
-
-    // update provider path
-    await apiTestUtils.updateCollection({
-      prefix: config.stackName,
-      collection,
-      updateParams: { provider_path: testDataFolder }
-    });
 
     // Rename the PDR to avoid race conditions
     await s3().copyObject({
@@ -159,9 +150,11 @@ describe('Ingesting from PDR', () => {
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName,
         config.bucket,
-        taskName,
-        collection,
-        provider
+        workflowName,
+        undefined,
+        provider,
+        undefined,
+        { provider_path: testDataFolder }
       );
 
       queuePdrsOutput = await lambdaStep.getStepOutput(
