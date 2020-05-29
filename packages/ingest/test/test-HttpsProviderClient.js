@@ -1,6 +1,8 @@
 'use strict';
 
+const pick = require('lodash/pick');
 const test = require('ava');
+const rewire = require('rewire');
 const fs = require('fs');
 const path = require('path');
 const createTestServer = require('create-test-server');
@@ -15,7 +17,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
-const HttpProviderClient = require('../HttpProviderClient');
+const HttpProviderClient = rewire('../HttpProviderClient');
 
 const remoteContent = '<HDF CONTENT>';
 const expectedContentType = 'application/x-hdf';
@@ -76,6 +78,33 @@ test.beforeEach(async (t) => {
 test.afterEach.always(async (t) => {
   await t.context.server.close();
   await recursivelyDeleteS3Bucket(t.context.configBucket);
+});
+
+test('HttpsProviderClient decrypts credentials when encrypted', async (t) => {
+  const encryptedUser = 'abcd1234';
+  const encryptedPass = '1234abcd';
+  const encryptionMap = {
+    [encryptedUser]: basicUsername,
+    [encryptedPass]: basicPassword
+  };
+
+  HttpProviderClient.__set__('decrypt', (encryptedValue) => Promise.resolve(encryptionMap[encryptedValue]));
+  const httpsProviderClient = new HttpProviderClient({
+    protocol: 'https',
+    host: '127.0.0.1',
+    port: t.context.server.sslPort,
+    certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
+    username: encryptedUser,
+    password: encryptedPass,
+    encrypted: true
+  })
+
+  await httpsProviderClient.setUpGotOptions();
+
+  t.deepEqual(
+    { username: basicUsername, password: basicPassword },
+    pick(httpsProviderClient, ['username', 'password'])
+  )
 });
 
 test('list() with HTTPS returns expected files', async (t) => {
