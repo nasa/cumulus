@@ -49,8 +49,7 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       collection = await createCollection(
         prefix,
         {
-          duplicateHandling: 'skip',
-          provider_path: `${sourcePath}/`
+          duplicateHandling: 'skip'
         }
       );
 
@@ -125,6 +124,9 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
             version: collection.version
           },
           provider: provider.id,
+          meta: {
+            provider_path: `${sourcePath}/`
+          },
           payload: {
             testExecutionId: randomId('test-execution-')
           }

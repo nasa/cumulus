@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/integration-tests",
-  "version": "1.22.1",
+  "version": "1.23.2",
   "description": "Integration tests",
   "bin": {
     "cumulus-test": "./bin/cli.js"
@@ -20,18 +20,19 @@
   "scripts": {
     "build": "rm -rf dist && mkdir dist && ../../node_modules/.bin/webpack",
     "build-docs": "../../node_modules/.bin/jsdoc2md --template README.hbs Collections.js Executions.js Granules.js Providers.js Rules.js > README.md",
-    "package": "npm run build"
+    "package": "npm run build",
+    "test": "../../node_modules/.bin/ava"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api": "1.22.1",
-    "@cumulus/api-client": "1.22.1",
-    "@cumulus/aws-client": "1.22.1",
-    "@cumulus/cmrjs": "1.22.1",
-    "@cumulus/common": "1.22.1",
-    "@cumulus/launchpad-auth": "1.22.1",
-    "@cumulus/message": "1.22.1",
+    "@cumulus/api": "1.23.2",
+    "@cumulus/api-client": "1.23.2",
+    "@cumulus/aws-client": "1.23.2",
+    "@cumulus/cmrjs": "1.23.2",
+    "@cumulus/common": "1.23.2",
+    "@cumulus/launchpad-auth": "1.23.2",
+    "@cumulus/message": "1.23.2",
     "aws-sdk": "^2.585.0",
     "base-64": "^0.1.0",
     "commander": "^2.15.0",

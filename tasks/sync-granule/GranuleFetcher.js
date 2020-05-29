@@ -15,18 +15,11 @@ const { handleDuplicateFile } = require('@cumulus/ingest/granule');
 const isChecksumFile = (file) =>
   ['.md5', '.cksum', '.sha1', '.sha256'].includes(path.extname(file.name));
 
-const addChecksumToFile = async (providerClient, checksumFiles, dataFile) => {
+const addChecksumToFile = async (providerClient, dataFile, checksumFile) => {
   if (dataFile.checksumType && dataFile.checksum) return dataFile;
-
-  const checksumFile = checksumFiles.find((cf) => {
-    const ext = path.extname(cf.name);
-    return cf.name === `${dataFile.name}${ext}`;
-  });
-
   if (checksumFile === undefined) return dataFile;
 
   const checksumType = checksumFile.name.split('.').pop();
-
   const checksum = (await fetchTextFile(
     providerClient,
     path.join(checksumFile.path, checksumFile.name)
@@ -36,47 +29,56 @@ const addChecksumToFile = async (providerClient, checksumFiles, dataFile) => {
 };
 
 const addChecksumsToFiles = async (providerClient, files) => {
-  const checksumFiles = files.filter(isChecksumFile);
-  const dataFiles = files.filter((f) => !isChecksumFile(f));
+  // Map data file name to checksum file object, if it has a checksum file
+  const checksumFileOf = files
+    .filter((file) => isChecksumFile(file))
+    .reduce((acc, checksumFile) => {
+      const checksumFileExt = path.extname(checksumFile.name);
+      const dataFilename = path.basename(checksumFile.name, checksumFileExt);
+      acc[dataFilename] = checksumFile;
+      return acc;
+    }, {});
 
-  const updatedDataFiles = await Promise.all(
-    dataFiles.map((dataFile) =>
-      addChecksumToFile(providerClient, checksumFiles, dataFile))
+  return Promise.all(
+    files.map((file) => addChecksumToFile(
+      providerClient, file, checksumFileOf[file.name]
+    ))
   );
-
-  return [...checksumFiles, ...updatedDataFiles];
 };
 
 class GranuleFetcher {
   /**
-   * Constructor for GranuleFetcher class
+   * Constructor for GranuleFetcher class.
    *
-   * @param {Object} buckets - s3 buckets available from config
-   * @param {Object} collection - collection configuration object
-   * @param {Object} provider - provider configuration object
-   * @param {string} fileStagingDir - staging directory on bucket,
-   * files will be placed in collectionId subdirectory
-   * @param {boolean} duplicateHandling - duplicateHandling of a file
+   * @param {Object} kwargs - keyword arguments
+   * @param {Object} kwargs.buckets - s3 buckets available from config
+   * @param {Object} kwargs.collection - collection configuration object
+   * @param {Object} kwargs.provider - provider configuration object
+   * @param {string} kwargs.fileStagingDir - staging directory on bucket,
+   *    files will be placed in collectionId subdirectory
+   * @param {string} kwargs.duplicateHandling - duplicateHandling of a file;
+   *    one of 'replace', 'version', 'skip', or 'error' (default)
    */
-  constructor(
+  constructor({
     buckets,
     collection,
     provider,
     fileStagingDir = 'file-staging',
     duplicateHandling = 'error'
-  ) {
+  }) {
     this.buckets = buckets;
     this.collection = collection;
 
-    if (fileStagingDir && fileStagingDir[0] === '/') this.fileStagingDir = fileStagingDir.substr(1);
-    else this.fileStagingDir = fileStagingDir;
+    this.fileStagingDir = (fileStagingDir && fileStagingDir[0] === '/')
+      ? fileStagingDir.substr(1)
+      : fileStagingDir;
 
     this.duplicateHandling = duplicateHandling;
 
     // default collectionId, could be overwritten by granule's collection information
-    if (this.collection) {
+    if (collection) {
       this.collectionId = constructCollectionId(
-        this.collection.name, this.collection.version
+        collection.name, collection.version
       );
     }
 
@@ -86,11 +88,14 @@ class GranuleFetcher {
   /**
    * Ingest all files in a granule
    *
-   * @param {Object} granule - granule object
-   * @param {string} bucket - s3 bucket to use for files
+   * @param {Object} kwargs - keyword parameters
+   * @param {Object} kwargs.granule - granule object
+   * @param {string} kwargs.bucket - s3 bucket to use for files
+   * @param {boolean} [kwargs.syncChecksumFiles=false] - if `true`, also ingest
+   *    checksum files
    * @returns {Promise<Object>} return granule object
    */
-  async ingest(granule, bucket) {
+  async ingest({ granule, bucket, syncChecksumFiles = false }) {
     // for each granule file
     // download / verify integrity / upload
 
@@ -115,7 +120,6 @@ class GranuleFetcher {
 
     // make sure there is a url_path
     this.collection.url_path = this.collection.url_path || '';
-
     this.collectionId = constructCollectionId(dataType, version);
 
     const filesWithChecksums = await addChecksumsToFiles(
@@ -123,7 +127,7 @@ class GranuleFetcher {
     );
 
     const downloadFiles = filesWithChecksums
-      .filter((f) => !isChecksumFile(f))
+      .filter((f) => syncChecksumFiles || !isChecksumFile(f))
       .map((f) => this.ingestFile(f, bucket, this.duplicateHandling));
 
     log.debug('awaiting all download.Files');
@@ -174,8 +178,7 @@ class GranuleFetcher {
    *
    * @param {Object} file - an object containing a "name" property
    * @returns {Object} the file with a bucket property set
-   * @throws {Error} throws an exception if the file didn't have a matching
-   *   config
+   * @throws {Error} if the file didn't have a matching config
    * @private
    */
   addBucketToFile(file) {

@@ -6,18 +6,17 @@ Discover PDRs in FTP/HTTP/HTTPS/SFTP/S3 endpoints
 
 ### Config
 
-| field name | default | description
-| --------   | ------- | ----------
-| provider   | (required) | The cumulus-api provider object
-| collection | (required) | The cumulus-api collection object
-| bucket     | (required) | The internal bucket name (used for record keeping)
-| stack      | (required) | Cumulus deployment stack name
+| field name    | default    | description
+| ------------- | ---------- | -----------
+| provider      | (required) | The cumulus-api provider object
+| provider_path | (required) | The path of the PDRs on the provider
+| collection    | (required) | The cumulus-api collection object
+| bucket        | (required) | The internal bucket name (used for record keeping)
+| stack         | (required) | Cumulus deployment stack name
 
 ### Input
 
-| field name | default | description
-| --------   | ------- | ----------
-| N/A        | N/A     | N/A
+None
 
 ## About Cumulus
 

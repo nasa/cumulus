@@ -10,6 +10,8 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   ## Configure TF deployment to use deployed packages for the version being built
   echo "***Deploying stack with deployment packages"
 
+  npm install
+
   ## Update cumulus-tf
   cd example/cumulus-tf
   # Update to use workflow module

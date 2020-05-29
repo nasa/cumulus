@@ -6,7 +6,6 @@ const fs = require('fs-extra');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
-const { RemoteResourceError } = require('@cumulus/errors');
 
 const {
   findTestDataDirectory,
@@ -25,7 +24,7 @@ test.beforeEach(async (t) => {
 test('test pdr discovery with FTP assuming all PDRs are new', async (t) => {
   const event = t.context.input;
   event.config.bucket = randomString();
-  event.config.collection.provider_path = '/pdrs/discover-pdrs';
+  event.config.provider_path = '/pdrs/discover-pdrs';
   event.config.useList = true;
   event.config.provider = {
     id: 'MODAPS',
@@ -44,10 +43,6 @@ test('test pdr discovery with FTP assuming all PDRs are new', async (t) => {
 
     await validateOutput(t, output);
     t.is(output.pdrs.length, 5);
-  } catch (err) {
-    if (err instanceof RemoteResourceError) {
-      t.pass('ignoring this test. Test server seems to be down');
-    } else t.fail(err);
   } finally {
     await recursivelyDeleteS3Bucket(event.config.bucket);
   }
@@ -65,7 +60,7 @@ test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
   const newPayload = t.context.input;
   newPayload.config.useList = true;
   newPayload.config.provider = provider;
-  newPayload.config.collection.provider_path = '/pdrs/discover-pdrs';
+  newPayload.config.provider_path = '/pdrs/discover-pdrs';
   newPayload.input = {};
 
   const internalBucketName = randomString();
@@ -93,13 +88,7 @@ test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
       return validateOutput(t, output);
     })
     .then(() => recursivelyDeleteS3Bucket(internalBucketName))
-    .catch((e) => {
-      if (e instanceof RemoteResourceError) {
-        t.pass('ignoring this test. Test server seems to be down');
-        return recursivelyDeleteS3Bucket(internalBucketName);
-      }
-      return recursivelyDeleteS3Bucket(internalBucketName).then(t.fail);
-    });
+    .catch(() => recursivelyDeleteS3Bucket(internalBucketName).then(t.fail));
 });
 
 test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
@@ -121,7 +110,7 @@ test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
       host: '127.0.0.1',
       port: 3030
     };
-    event.config.collection.provider_path = '/pdrs/discover-pdrs';
+    event.config.provider_path = '/pdrs/discover-pdrs';
     event.input = {};
 
     // Mark one of the PDRs as not new
@@ -133,20 +122,13 @@ test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
     }).promise();
 
     await validateConfig(t, event.config);
-    let output;
-    try {
-      output = await discoverPdrs(event, {});
+    const output = await discoverPdrs(event, {});
 
-      await validateOutput(t, output);
+    await validateOutput(t, output);
 
-      t.is(output.pdrs.length, 4);
-      const names = output.pdrs.map((p) => p.name);
-      newPdrs.forEach((pdr) => t.true(names.includes(pdr)));
-    } catch (e) {
-      if (e instanceof RemoteResourceError) {
-        t.pass('Ignoring this test. Test server seems to be down');
-      } else t.fail(e);
-    }
+    t.is(output.pdrs.length, 4);
+    const names = output.pdrs.map((p) => p.name);
+    newPdrs.forEach((pdr) => t.true(names.includes(pdr)));
   } finally {
     // Clean up
     await recursivelyDeleteS3Bucket(internalBucketName);
@@ -180,7 +162,7 @@ test('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
       username: 'user',
       password: 'password'
     };
-    event.config.collection.provider_path = 'pdrs/discover-pdrs';
+    event.config.provider_path = 'pdrs/discover-pdrs';
     event.input = {};
 
     // Mark one of the PDRs as not new
@@ -192,20 +174,14 @@ test('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
     }).promise();
 
     await validateConfig(t, event.config);
-    let output;
-    try {
-      output = await discoverPdrs(event, {});
 
-      await validateOutput(t, output);
+    const output = await discoverPdrs(event, {});
 
-      t.is(output.pdrs.length, 4);
-      const names = output.pdrs.map((p) => p.name);
-      newPdrs.forEach((pdr) => t.true(names.includes(pdr)));
-    } catch (e) {
-      if (e instanceof RemoteResourceError) {
-        t.pass('Ignoring this test. Test server seems to be down');
-      } else t.fail(e);
-    }
+    await validateOutput(t, output);
+
+    t.is(output.pdrs.length, 4);
+    const names = output.pdrs.map((p) => p.name);
+    newPdrs.forEach((pdr) => t.true(names.includes(pdr)));
   } finally {
     // Clean up
     await recursivelyDeleteS3Bucket(internalBucketName);

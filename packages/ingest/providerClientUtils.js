@@ -36,7 +36,7 @@ const buildProviderClient = (providerConfig = {}) => {
  *
  * @param {Object} providerClient - a provider client
  * @param {string} remotePath - the path of the file to fetch
- * @returns {string} the contents of the remote file
+ * @returns {Promise<string>} the contents of the remote file
  */
 const fetchTextFile = async (providerClient, remotePath) => {
   const localPath = path.join(os.tmpdir(), randomString());
