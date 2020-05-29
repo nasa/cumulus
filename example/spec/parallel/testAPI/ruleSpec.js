@@ -18,7 +18,7 @@ const {
   timestampedName
 } = require('../../helpers/testUtils');
 
-const LIST_RULES_LIMIT = 1;
+const LIST_RULES_LIMIT = 50;
 
 /**
  * Query the rules list from the API for the ruleName rule
