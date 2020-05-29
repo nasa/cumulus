@@ -7,6 +7,7 @@ const { basename } = require('path');
 const { PassThrough } = require('stream');
 const Crawler = require('simplecrawler');
 const got = require('got');
+const { CookieJar } = require('tough-cookie');
 
 const {
   buildS3Uri,
@@ -18,7 +19,7 @@ const log = require('@cumulus/common/log');
 const isValidHostname = require('is-valid-hostname');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const errors = require('@cumulus/errors');
-const { lookupMimeType } = require('./util');
+const { lookupMimeType, decrypt } = require('./util');
 
 const validateHost = (host) => {
   if (isValidHostname(host) || isIp(host)) return;
@@ -28,12 +29,16 @@ const validateHost = (host) => {
 
 class HttpProviderClient {
   constructor(providerConfig) {
-    this.requestOptions = {};
+    this.providerConfig = providerConfig;
     this.protocol = providerConfig.protocol;
     this.host = providerConfig.host;
     this.port = providerConfig.port;
+    this.gotOptions = {};
     this.certificateUri = providerConfig.certificateUri;
-
+    if (providerConfig.username && !providerConfig.password) {
+      throw new ReferenceError('Found providerConfig.username, but providerConfig.password is not defined');
+    }
+    this.encrypted = providerConfig.encrypted;
     this.endpoint = buildURL({
       protocol: this.protocol,
       host: this.host,
@@ -41,12 +46,29 @@ class HttpProviderClient {
     });
   }
 
+  async setUpGotOptions() {
+    if (this.encrypted === true) {
+      this.username = await decrypt(this.providerConfig.username);
+      this.password = await decrypt(this.providerConfig.password);
+    } else {
+      this.username = this.providerConfig.username;
+      this.password = this.providerConfig.password;
+    }
+    const cookieJar = new CookieJar();
+    const auth = `${this.username}:${this.password}`;
+    this.gotOptions = {
+      ...this.gotOptions,
+      auth,
+      cookieJar
+    };
+  }
+
   async downloadTLSCertificate() {
     if (!this.certificateUri || this.certificate !== undefined) return;
     try {
       const s3Params = parseS3Uri(this.certificateUri);
       this.certificate = await getTextObject(s3Params.Bucket, s3Params.Key);
-      this.requestOptions = { ca: this.certificate, headers: { host: this.host } };
+      this.gotOptions.ca = this.certificate;
     } catch (e) {
       throw new errors.RemoteResourceError(`Failed to fetch CA certificate: ${e}`);
     }
@@ -149,6 +171,7 @@ class HttpProviderClient {
    */
   async download(remotePath, localPath) {
     validateHost(this.host);
+    await this.setUpGotOptions();
     await this.downloadTLSCertificate();
 
     const remoteUrl = buildURL({
@@ -160,7 +183,7 @@ class HttpProviderClient {
 
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
     try {
-      await http.download(remoteUrl, localPath, this.requestOptions);
+      await http.download(remoteUrl, localPath, this.gotOptions);
     } catch (e) {
       if (e.message && e.message.includes('Unexpected HTTP status code: 403')) {
         const message = `${basename(remotePath)} was not found on the server with 403 status`;
@@ -182,6 +205,7 @@ class HttpProviderClient {
    */
   async sync(remotePath, bucket, key) {
     validateHost(this.host);
+    await this.setUpGotOptions();
     await this.downloadTLSCertificate();
     const remoteUrl = buildURL({
       protocol: this.protocol,
@@ -195,7 +219,7 @@ class HttpProviderClient {
 
     let headers = {};
     try {
-      const headResponse = await got.head(remoteUrl, this.requestOptions);
+      const headResponse = await got.head(remoteUrl, this.gotOptions);
       headers = headResponse.headers;
     } catch (err) {
       log.info(`HEAD failed for ${remoteUrl} with error: ${err}.`);
@@ -203,7 +227,7 @@ class HttpProviderClient {
     const contentType = headers['content-type'] || lookupMimeType(key);
 
     const pass = new PassThrough();
-    got.stream(remoteUrl, this.requestOptions).pipe(pass);
+    got.stream(remoteUrl, this.gotOptions).pipe(pass);
     await promiseS3Upload({
       Bucket: bucket,
       Key: key,
