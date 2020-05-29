@@ -6,9 +6,10 @@ const {
   addCollections,
   cleanupCollections,
   isWorkflowTriggeredByRule,
-  rulesApi,
   waitForTestExecutionStart
 } = require('@cumulus/integration-tests');
+
+const rulesApi = require('@cumulus/api-client/rules');
 
 const {
   createTestSuffix,
@@ -17,7 +18,37 @@ const {
   timestampedName
 } = require('../../helpers/testUtils');
 
-describe('When I create a scheduled rule via the Cumulus API', () => {
+const LIST_RULES_LIMIT = 1;
+
+/**
+ * Query the rules list from the API for the ruleName rule
+ *
+ * @param {string} ruleName - rule name to find
+ * @param {string} prefix - deployment prefix
+ * @param {int} pageNumber - page number to query
+ * @returns {Promise<Object>} - object containing whether the rule
+ * was found and the total number of rules
+ */
+async function queryForRule(ruleName, prefix, pageNumber) {
+  const listRulesResponse = await rulesApi.listRules({
+    prefix,
+    query: {
+      limit: LIST_RULES_LIMIT,
+      page: pageNumber
+    }
+  });
+
+  const responseBody = JSON.parse(listRulesResponse.body);
+
+  const ruleNames = responseBody.results.map((x) => x.name);
+
+  return {
+    ruleFound: ruleNames.includes(ruleName),
+    count: responseBody.meta.count
+  };
+}
+
+xdescribe('When I create a scheduled rule via the Cumulus API', () => {
   let config;
   let execution;
   let scheduledRuleName;
@@ -226,13 +257,16 @@ describe('When I create a one-time rule via the Cumulus API', () => {
     await expectAsync(
       pWaitFor(
         async () => {
-          const listRulesResponse = await rulesApi.listRules({ prefix });
+          let pageNumber = 1;
+          let ruleResults = await queryForRule(helloWorldRule.name, prefix, pageNumber);
 
-          const rules = JSON.parse(listRulesResponse.body).results;
+          // If the rule list spans multiple pages, query the other pages
+          while (!ruleResults.ruleFound && ruleResults.count > (LIST_RULES_LIMIT * pageNumber)) {
+            // eslint-disable-next-line no-await-in-loop
+            ruleResults = await queryForRule(helloWorldRule.name, prefix, pageNumber += 1);
+          }
 
-          const ruleNames = rules.map((x) => x.name);
-
-          return ruleNames.includes(helloWorldRule.name);
+          return ruleResults.ruleFound;
         },
         {
           interval: 1000,
