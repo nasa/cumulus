@@ -7,16 +7,8 @@ const omit = require('lodash/omit');
 const S3 = require('@cumulus/aws-client/S3');
 const SftpClient = require('@cumulus/sftp-client');
 const { isNil } = require('@cumulus/common/util');
-const { S3KeyPairProvider } = require('@cumulus/common/key-pair-provider');
 const recursion = require('./recursion');
-
-const decrypt = async (ciphertext) => {
-  try {
-    return await KMS.decryptBase64String(ciphertext);
-  } catch (_) {
-    return S3KeyPairProvider.decrypt(ciphertext);
-  }
-};
+const { decrypt } = require('./util');
 
 class SftpProviderClient {
   constructor(providerConfig) {
