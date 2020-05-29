@@ -97,14 +97,14 @@ test('HttpsProviderClient decrypts credentials when encrypted', async (t) => {
     username: encryptedUser,
     password: encryptedPass,
     encrypted: true
-  })
+  });
 
   await httpsProviderClient.setUpGotOptions();
 
   t.deepEqual(
     { username: basicUsername, password: basicPassword },
     pick(httpsProviderClient, ['username', 'password'])
-  )
+  );
 });
 
 test('list() with HTTPS returns expected files', async (t) => {
