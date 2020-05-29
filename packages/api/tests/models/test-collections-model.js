@@ -315,3 +315,22 @@ test('Collection.get() does not return the deprecated `provider_path` field', as
 
   t.is(fetchedCollection.provider_path, undefined);
 });
+
+test('Collection.getAllCollections() does not return the deprecated `provider_path` field', async (t) => {
+  const collection = fakeCollectionFactory({ provider_path: 'asdf' });
+
+  const baseModel = new Manager({
+    tableName: process.env.CollectionsTable,
+    tableHash: { name: 'name', type: 'S' },
+    tableRange: { name: 'version', type: 'S' },
+    validate: false
+  });
+
+  await baseModel.create(collection);
+
+  const fetchedCollections = await collectionsModel.getAllCollections();
+
+  fetchedCollections.forEach((fetchedCollection) => {
+    t.is(fetchedCollection.provider_path, undefined);
+  });
+});
