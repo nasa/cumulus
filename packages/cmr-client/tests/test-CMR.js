@@ -11,7 +11,7 @@ const ValidationError = require('../ValidationError');
 
 test.before(() => {
   nock.disableNetConnect();
-  nock.enableNetConnect('127.0.0.1');
+  nock.enableNetConnect(/(localhost|127.0.0.1)/);
 });
 
 test.afterEach.always(() => {
