@@ -15,6 +15,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `DiscoverPdrs` task
   - `event.config.collection` is no longer a parameter to the `DiscoverPdrs`
     task
+  - Collections no longer support the `provider_path` property. The tasks that
+    relied on that property are now referencing `config.meta.provider_path`.
+    Workflows should be updated accordingly.
 
 ### Added
 

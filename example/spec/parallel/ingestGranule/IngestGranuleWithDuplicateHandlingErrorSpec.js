@@ -49,7 +49,6 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
         prefix,
         {
           duplicateHandling: 'error',
-          provider_path: `${sourcePath}/`,
           process: 'modis'
         }
       );

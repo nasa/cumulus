@@ -85,13 +85,6 @@ module.exports.collection = {
       description: 'Name of the docker process to be used, e.g. modis, aster',
       type: 'string'
     },
-    provider_path: {
-      title: 'Provider Path',
-      description: 'The path to look for the collection Granules or '
-        + 'PDRs. Use regex for recursive search',
-      type: 'string',
-      default: ''
-    },
     url_path: {
       title: 'Url Path',
       description: 'The folder (url) used to save granules on S3 buckets',
