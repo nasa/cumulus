@@ -1,5 +1,6 @@
 'use strict';
 
+const omit = require('lodash/omit');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { publishSnsMessage } = require('@cumulus/aws-client/SNS');
 const log = require('@cumulus/common/log');
@@ -55,28 +56,32 @@ async function publishCollectionSnsMessage(collectionRecord) {
   }
 }
 
-class Collection extends Manager {
-  static recordIsValid(item, schema = null) {
-    super.recordIsValid(item, schema);
+const validateCollection = (collection) => {
+  // Test that granuleIdExtraction regex matches against sampleFileName
+  const match = checkRegex(collection.granuleIdExtraction, collection.sampleFileName, 'granuleIdExtraction');
 
-    // Test that granuleIdExtraction regex matches against sampleFileName
-    const match = checkRegex(item.granuleIdExtraction, item.sampleFileName, 'granuleIdExtraction');
-
-    if (!match[1]) {
-      throw new UnmatchedRegexError(
-        `granuleIdExtraction regex "${item.granuleIdExtraction}" does not return a matched group when applied to sampleFileName "${item.sampleFileName}". `
-        + 'Ensure that your regex includes capturing groups.'
-      );
-    }
-
-    // Test that granuleId regex matches the what was extracted from the
-    // sampleFileName using the granuleIdExtraction
-    checkRegex(item.granuleId, match[1], 'granuleId');
-
-    // Check that each file.regex matches against file.sampleFileName
-    item.files.forEach((file) => checkRegex(file.regex, file.sampleFileName));
+  if (!match[1]) {
+    throw new UnmatchedRegexError(
+      `granuleIdExtraction regex "${collection.granuleIdExtraction}" does not return a matched group when applied to sampleFileName "${collection.sampleFileName}". `
+      + 'Ensure that your regex includes capturing groups.'
+    );
   }
 
+  // Test that granuleId regex matches the what was extracted from the
+  // sampleFileName using the granuleIdExtraction
+  checkRegex(collection.granuleId, match[1], 'granuleId');
+
+  // Check that each file.regex matches against file.sampleFileName
+  collection.files.forEach((file) => checkRegex(file.regex, file.sampleFileName));
+};
+
+// Fields which are no longer supported in collection items, and which should
+// not be returned when records are read from the database.
+const deprecatedFields = Object.freeze([
+  'provider_path'
+]);
+
+class Collection {
   /**
    * Creates a new Collection model for managing storage and retrieval of
    * collections against a DynamoDB table. The name of the table is specified
@@ -95,7 +100,7 @@ class Collection extends Manager {
    * @see Manager#constructor
    */
   constructor() {
-    super({
+    this.dynamoDbClient = new Manager({
       tableName: process.env.CollectionsTable,
       tableHash: { name: 'name', type: 'S' },
       tableRange: { name: 'version', type: 'S' },
@@ -108,6 +113,20 @@ class Collection extends Manager {
     );
   }
 
+  createTable() {
+    return this.dynamoDbClient.createTable();
+  }
+
+  deleteTable() {
+    return this.dynamoDbClient.deleteTable();
+  }
+
+  async get({ name, version }) {
+    const fetchedCollection = await this.dynamoDbClient.get({ name, version });
+
+    return omit(fetchedCollection, deprecatedFields);
+  }
+
   /**
    * Returns `true` if the collection with the specified name and version
    * exists; `false` otherwise.
@@ -118,7 +137,7 @@ class Collection extends Manager {
    *    version exists; `false` otherwise
    */
   async exists(name, version) {
-    return super.exists({ name, version });
+    return this.dynamoDbClient.exists({ name, version });
   }
 
   /**
@@ -135,11 +154,13 @@ class Collection extends Manager {
    * @see Manager#create
    * @see CollectionConfigStore#put
    */
-  async create(item) {
+  async createItem(item) {
+    validateCollection(item);
+
     const { name, version } = item;
     await this.collectionConfigStore.put(name, version, item);
 
-    const collectionRecord = await super.create(item);
+    const collectionRecord = await this.dynamoDbClient.create(item);
     const publishRecord = {
       event: 'Create',
       record: collectionRecord
@@ -147,6 +168,20 @@ class Collection extends Manager {
     await publishCollectionSnsMessage(publishRecord);
 
     return collectionRecord;
+  }
+
+  createItems(items) {
+    return Promise.all(
+      items.map((item) => this.createItem(item))
+    );
+  }
+
+  create(input) {
+    if (Array.isArray(input)) {
+      return this.createItems(input);
+    }
+
+    return this.createItem(input);
   }
 
   /**
@@ -190,7 +225,7 @@ class Collection extends Manager {
     };
     await publishCollectionSnsMessage(record);
 
-    return super.delete({ name, version });
+    return this.dynamoDbClient.delete({ name, version });
   }
 
   /**
@@ -227,7 +262,7 @@ class Collection extends Manager {
    * @returns {Array<Object>} list of collections
    */
   async getAllCollections() {
-    return this.scan(
+    return this.dynamoDbClient.scan(
       {
         names: {
           '#name': 'name',
