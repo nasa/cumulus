@@ -42,7 +42,6 @@ describe('The SyncGranule task', () => {
         prefix,
         {
           duplicateHandling: 'error',
-          provider_path: `${sourcePath}/`,
           process: 'modis'
         }
       );

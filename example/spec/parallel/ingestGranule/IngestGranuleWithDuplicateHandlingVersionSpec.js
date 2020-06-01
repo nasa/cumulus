@@ -53,7 +53,6 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
         prefix,
         {
           duplicateHandling: 'version',
-          provider_path: `${sourcePath}/`,
           process: 'modis'
         }
       );
