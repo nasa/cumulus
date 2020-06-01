@@ -135,7 +135,7 @@ async function bulkGranuleDelete(payload) {
  *
  * @param {Object} payload
  * @param {string} payload.workflowName - name of the workflow that will be applied to each granule.
- * @param {string} payload.queueName - name of queue that will be used to start workflows
+ * @param {string} [payload.queueName] - name of queue that will be used to start workflows
  * @param {Object} [payload.query] - Optional parameter of query to send to ES
  * @param {string} [payload.index] - Optional parameter of ES index to query.
  * Must exist if payload.query exists.
@@ -166,7 +166,7 @@ async function handler(event) {
     return bulkGranuleDelete(event.payload);
   }
   // throw an appropriate error here
-  throw new Error('Type could not be matched, no operation attempted.');
+  throw new TypeError('Type could not be matched, no operation attempted.');
 }
 
 module.exports = {

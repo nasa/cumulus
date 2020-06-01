@@ -412,8 +412,8 @@ export const getS3ObjectReadStreamAsync = (bucket: string, key: string) =>
 **/
 export const fileExists = async (bucket: string, key: string) => {
   try {
-    await s3().headObject({ Key: key, Bucket: bucket }).promise();
-    return true;
+    const r = s3().headObject({ Key: key, Bucket: bucket }).promise();
+    return r;
   } catch (e) {
     // if file is not return false
     if (e.stack.match(/(NotFound)/) || e.stack.match(/(NoSuchBucket)/)) {
