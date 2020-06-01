@@ -21,6 +21,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   relied on that property are now referencing `config.meta.provider_path`.
   Workflows should be updated accordingly.
 
+- **CUMULUS-1997**
+  - `@cumulus/cmr-client/CMRSearchConceptQueue` parameters have been changed to take a `cmrSettings` object containing clientId, provider, and auth information. This can be generated using `@cumulus/cmrjs/cmr-utils/getCmrSettings`. The `cmrEnvironment` variable has been removed.
+
 ### Added
 
 - **CUMULUS-1800**
@@ -42,6 +45,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1977**
   - `/granules/bulk` now returns a 202 status on a successful response instead of a 200 response
   - `@cumulus/api/models/Granule.update()` now returns the updated granule record
+- **CUMULUS-1997**
+  - Added optional `launchpad` configuration to `@cumulus/hyrax-metadata-updates` task config schema.
+
+### Fixed
+
+- **CUMULUS-1997**
+  - Updated all CMR operations to use configured authentication scheme
 
 ## [v1.23.2] 2020-05-22
 
