@@ -4,6 +4,10 @@ const test = require('ava');
 const nock = require('nock');
 const CMRSearchConceptQueue = require('../CMRSearchConceptQueue');
 
+test.before(() => {
+  nock.cleanAll();
+});
+
 test.after.always(() => {
   nock.cleanAll();
 });
@@ -30,6 +34,7 @@ test('CMRSearchConceptQueue handles paging correctly.', async (t) => {
     .reply(200, body3, headers);
 
   nock('https://cmr.uat.earthdata.nasa.gov')
+    .persist()
     .post('/legacy-services/rest/tokens')
     .reply(200, { token: 'ABCDE' });
 
