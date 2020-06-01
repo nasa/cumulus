@@ -4,6 +4,7 @@ const test = require('ava');
 const sinon = require('sinon');
 
 const awsServices = require('@cumulus/aws-client/services');
+const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const launchpad = require('@cumulus/launchpad-auth');
@@ -675,4 +676,33 @@ test('applyWorkflow throws error if workflow argument is missing', async (t) => 
       instanceOf: TypeError
     }
   );
+});
+
+test('applyWorkflow updates granule status and invokes Lambda to schedule workflow', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2();
+  const workflow = randomString();
+  const lambdaPayload = {
+    payload: {
+      granules: [granule]
+    }
+  };
+
+  await granuleModel.create(granule);
+
+  const buildPayloadStub = sinon.stub(Rule, 'buildPayload').resolves(lambdaPayload);
+  const lambdaInvokeStub = sinon.stub(Lambda, 'invoke').resolves();
+  t.teardown(() => {
+    buildPayloadStub.restore();
+    lambdaInvokeStub.restore();
+  });
+
+  await granuleModel.applyWorkflow(granule, workflow);
+
+  const { status } = await granuleModel.get({ granuleId: granule.granuleId });
+  t.is(status, 'running');
+
+  t.true(lambdaInvokeStub.called);
+  t.deepEqual(lambdaInvokeStub.args[0][1], lambdaPayload);
 });
