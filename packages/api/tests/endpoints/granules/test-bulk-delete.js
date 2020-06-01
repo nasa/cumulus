@@ -190,6 +190,24 @@ test.serial('POST /granules/bulkDelete returns 400 when the Metrics ELK stack is
   t.true(asyncOperationStartStub.notCalled);
 });
 
+test.serial('POST /granules/bulkDelete returns a 400 when forceRemoveFromCmr is not a boolean value', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const body = {
+    ids: ['granule-1'],
+    forceRemoveFromCmr: 'true'
+  };
+
+  await request(app)
+    .post('/granules/bulkDelete')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /forceRemoveFromCmr must be a boolean value/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
 test.serial('POST /granules/bulkDelete returns a 401 status code if valid authorization is not specified', async (t) => {
   const response = await request(app)
     .post('/granules/bulkDelete')

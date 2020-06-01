@@ -1,6 +1,7 @@
 'use strict';
 
 const router = require('express-promise-router')();
+const isBoolean = require('lodash/isBoolean');
 
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
@@ -261,6 +262,10 @@ async function bulkOperations(req, res) {
  */
 async function bulkDelete(req, res) {
   const payload = req.body;
+
+  if (payload.forceRemoveFromCmr && !isBoolean(payload.forceRemoveFromCmr)) {
+    return res.boom.badRequest('forceRemoveFromCmr must be a boolean value');
+  }
 
   const asyncOperationModel = new models.AsyncOperation({
     stackName: process.env.stackName,
