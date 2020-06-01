@@ -20,7 +20,9 @@ We need to have a [provider](data-cookbooks/setup.md#providers) from whom data c
 
 ### Collection
 
-We need to build a collection. Details on collections can be found [here](data-cookbooks/setup.md#collections). The following collection will have `MOD09GQ` as a collection name, `006` as a version, and is configured to pull PDRs from `${bucket}/cumulus-test-data/pdrs` in S3 (where `${bucket}` is configured in the provider).
+We need to build a collection. Details on collections can be found
+[here](data-cookbooks/setup.md#collections). The following collection will have
+`MOD09GQ` as a collection name, `006` as a version.
 
 ```json
 {
@@ -32,7 +34,6 @@ We need to build a collection. Details on collections can be found [here](data-c
   "granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg)",
   "createdAt": 1531324194001,
   "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
-  "provider_path": "cumulus-test-data/pdrs",
   "files": [
     {
       "bucket": "protected",
