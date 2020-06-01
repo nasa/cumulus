@@ -4,6 +4,10 @@ const test = require('ava');
 const nock = require('nock');
 const CMRSearchConceptQueue = require('../CMRSearchConceptQueue');
 
+test.after.always(() => {
+  nock.cleanAll();
+});
+
 test('CMRSearchConceptQueue handles paging correctly.', async (t) => {
   const headers = { 'cmr-hits': 6 };
   const body1 = '{"hits":6,"items":[{"cmrEntry1":"data1"}, {"cmrEntry2":"data2"}]}';
@@ -24,6 +28,10 @@ test('CMRSearchConceptQueue handles paging correctly.', async (t) => {
     .get('/search/granules.umm_json')
     .query((q) => q.page_num === '3')
     .reply(200, body3, headers);
+
+  nock('https://cmr.uat.earthdata.nasa.gov')
+    .post('/legacy-services/rest/tokens')
+    .reply(200, { token: 'ABCDE' });
 
   const expected = [
     { cmrEntry1: 'data1' },

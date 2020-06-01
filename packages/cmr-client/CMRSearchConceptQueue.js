@@ -71,11 +71,11 @@ class CMRSearchConceptQueue {
    * @private
    */
   async fetchItems() {
-    const results = await this.CMR.searchConcept({
-      type: this.type,
-      searchParams: this.params,
-      format: this.format
-    });
+    const results = await this.CMR.searchConcept(
+      this.type,
+      this.params,
+      this.format
+    );
     this.items = results;
     this.params.page_num = (this.params.page_num) ? this.params.page_num + 1 : 1;
     if (results.length === 0) this.items.push(null);
