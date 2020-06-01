@@ -408,11 +408,11 @@ export const getS3ObjectReadStreamAsync = (bucket: string, key: string) =>
 *
 * @param {string} bucket - name of the S3 bucket
 * @param {string} key - key of the file in the S3 bucket
-* @returns {Promise<boolean>} returns the response from `S3.headObject` as a promise
+* @returns {Promise} returns the response from `S3.headObject` as a promise
 **/
 export const fileExists = async (bucket: string, key: string) => {
   try {
-    const r = s3().headObject({ Key: key, Bucket: bucket }).promise();
+    const r = await s3().headObject({ Key: key, Bucket: bucket }).promise();
     return r;
   } catch (e) {
     // if file is not return false
