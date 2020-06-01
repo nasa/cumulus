@@ -159,6 +159,7 @@ const handler = async ({ elasticsearchHostname }) => {
     await bootstrapElasticSearch(elasticsearchHostname);
     return { Status: 'SUCCESS', Data: {} };
   } catch (err) {
+    log.error(err);
     return { Status: 'FAILED', Error: err };
   }
 };

@@ -9,6 +9,7 @@ const { buildS3Uri, deleteS3Files } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const log = require('@cumulus/common/log');
+const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue');
 const {
   determineReportKey, getExpiredS3Objects, submitReports
@@ -109,9 +110,9 @@ async function getCmrCollections() {
   const collections = [];
   // get all collections from CMR and sort them, since CMR query doesn't support
   // 'version' as sort_key
+  const cmrSettings = await getCmrSettings();
   const cmrCollectionsIterator = new CMRSearchConceptQueue({
-    provider: process.env.cmr_provider,
-    clientId: process.env.cmr_client_id,
+    cmrSettings,
     type: 'collections',
     format: 'echo10'
   });

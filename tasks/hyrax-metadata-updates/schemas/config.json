@@ -29,6 +29,26 @@
           "type": "string"
         }
       }
+    },
+    "launchpad": {
+      "type": "object",
+      "description": "credentials needed to get launchpad token",
+      "required": [
+        "api",
+        "passphraseSecretName",
+        "certificate"
+      ],
+      "properties": {
+        "api": {
+          "type": "string"
+        },
+        "passphraseSecretName": {
+          "type": "string"
+        },
+        "certificate": {
+          "type": "string"
+        }
+      }
     }
   }
 }
