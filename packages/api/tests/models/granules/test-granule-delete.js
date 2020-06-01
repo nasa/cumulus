@@ -46,20 +46,20 @@ test('granule.delete() removes granule files from S3 and record from Dynamo', as
   await granuleModel.create(granule);
   t.true(await granuleModel.exists({ granuleId: granule.granuleId }));
   t.deepEqual(
-    await Promise.all(granule.files.map((file) => s3Utils.fileExists(
-      file.bucket,
-      file.key
-    ))),
+    await Promise.all(granule.files.map((file) => s3Utils.s3ObjectExists({
+      Bucket: file.bucket,
+      Key: file.key
+    }))),
     [true, true]
   );
 
   await granuleModel.delete(granule);
   t.false(await granuleModel.exists({ granuleId: granule.granuleId }));
   t.deepEqual(
-    await Promise.all(granule.files.map((file) => s3Utils.fileExists(
-      file.bucket,
-      file.key
-    ))),
+    await Promise.all(granule.files.map((file) => s3Utils.s3ObjectExists({
+      Bucket: file.bucket,
+      Key: file.key
+    }))),
     [false, false]
   );
 });
@@ -127,5 +127,8 @@ test('granule.delete() with the old file format succeeds', async (t) => {
 
   t.false(await granuleModel.exists({ granuleId: newGranule.granuleId }));
   // verify the file is deleted
-  t.false(await s3Utils.fileExists(granuleBucket, key));
+  t.false(await s3Utils.s3ObjectExists({
+    Bucket: granuleBucket,
+    Key: key
+  }));
 });
