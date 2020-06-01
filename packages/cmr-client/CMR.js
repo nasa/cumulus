@@ -37,10 +37,10 @@ const userIpAddress = () =>
  * @private
  */
 async function updateToken(cmrProvider, clientId, username, password) {
-  if (!cmrProvider) throw new Error('cmrProvider is required.');
-  if (!clientId) throw new Error('clientId is required.');
-  if (!username) throw new Error('username is required.');
-  if (!password) throw new Error('password is required.');
+  // if (!cmrProvider) throw new Error('cmrProvider is required.');
+  // if (!clientId) throw new Error('clientId is required.');
+  // if (!username) throw new Error('username is required.');
+  // if (!password) throw new Error('password is required.');
 
   // Update the saved ECHO token
   // for info on how to add collections to CMR: https://cmr.earthdata.nasa.gov/ingest/site/ingest_api_docs.html#validate-collection
@@ -264,14 +264,15 @@ class CMR {
     return deleteConcept('granules', granuleUR, this.provider, headers);
   }
 
-  async searchConcept(type, searchParams, format = 'json') {
+  async searchConcept(type, searchParams, format = 'json', recursive = true) {
     const headers = this.getReadHeaders({ token: await this.getToken() });
     return searchConcept({
       type,
       searchParams,
       previousResults: [],
       headers,
-      format
+      format,
+      recursive
     });
   }
 

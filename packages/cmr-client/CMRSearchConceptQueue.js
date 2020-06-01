@@ -74,7 +74,8 @@ class CMRSearchConceptQueue {
     const results = await this.CMR.searchConcept(
       this.type,
       this.params,
-      this.format
+      this.format,
+      false
     );
     this.items = results;
     this.params.page_num = (this.params.page_num) ? this.params.page_num + 1 : 1;
