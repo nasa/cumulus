@@ -110,7 +110,7 @@ function applyWorkflowToGranules(granuleIds, workflowName, queueName) {
 async function bulkGranuleDelete(payload) {
   const granuleIds = await getGranuleIdsForPayload(payload);
   const granuleModel = new GranuleModel();
-  const forceRemoveFromCmr = payload.forceRemoveFromCmr;
+  const forceRemoveFromCmr = payload.forceRemoveFromCmr === true;
   const deletedGranules = await pMap(
     granuleIds,
     async (granuleId) => {
