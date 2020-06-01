@@ -199,6 +199,10 @@ class Granule extends Manager {
     queueName = undefined,
     asyncOperationId = undefined
   ) {
+    if (!workflow) {
+      throw new TypeError('granule.applyWorkflow requires a `workflow` parameter');
+    }
+
     const { name, version } = deconstructCollectionId(g.collectionId);
 
     const lambdaPayload = await Rule.buildPayload({

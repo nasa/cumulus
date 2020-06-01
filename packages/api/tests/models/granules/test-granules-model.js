@@ -911,3 +911,18 @@ test('_getMutableFieldNames() returns correct fields for completed status', asyn
 
   t.deepEqual(updateFields, Object.keys(item));
 });
+
+test('applyWorkflow throws error if workflow argument is missing', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = {
+    granuleId: randomString()
+  };
+
+  await t.throwsAsync(
+    granuleModel.applyWorkflow(granule),
+    {
+      instanceOf: TypeError
+    }
+  );
+});
