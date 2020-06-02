@@ -115,6 +115,14 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
     ]
     resources = [for k, v in var.dynamo_tables : v.arn]
   }
+
+  statement {
+    actions = ["secretsmanager:GetSecretValue"]
+    resources = [
+      module.archive.cmr_password_secret_arn,
+      module.archive.launchpad_passphrase_secret_arn,
+    ]
+  }
 }
 
 resource "aws_iam_role_policy" "ecs_cluster_instance" {
