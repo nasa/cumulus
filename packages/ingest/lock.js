@@ -65,7 +65,7 @@ async function proceed(bucket, provider, filename, counter = 0) {
   const count = await countLock(bucket, provider.id);
 
   if (count >= globalConnectionLimit) {
-    log.debug({ provider: provider.id }, 'Reached the connection limit, trying again');
+    log.debug(`The "${provider.id}" provider's globalConnectionLimit of "${provider.globalConnectionLimit}" has been reached.`);
     // wait for 5 second and try again
     await sleep(5000);
     return proceed(bucket, provider, filename, counter + 1);
