@@ -274,18 +274,14 @@ function mapCNMTypeToCMRType(type) {
   return mapping[type];
 }
 
-async function getDistributionBucketMap() {
-  return getJsonS3Object(process.env.system_bucket, `${process.env.stackName}/distribution_bucket_map.json`);
-}
-
 async function generateFileUrl({
   file,
   distEndpoint,
-  cmrGranuleUrlType = 'distribution'
+  cmrGranuleUrlType = 'distribution',
+  distributionBucketMap
 }) {
   if (cmrGranuleUrlType === 'distribution') {
-    const bucketMap = await getDistributionBucketMap();
-    const bucketPath = bucketMap[file.bucket];
+    const bucketPath = distributionBucketMap[file.bucket];
     if (!bucketPath) {
       throw new Error(`No distribution bucket mapping exists for ${file.bucket}`);
     }
@@ -321,13 +317,14 @@ async function constructOnlineAccessUrl({
   file, // 'file object' given CMR.
   distEndpoint,
   buckets,
-  cmrGranuleUrlType = 'distribution'
+  cmrGranuleUrlType = 'distribution',
+  distributionBucketMap
 }) {
   try {
     const bucketType = buckets.type(file.bucket);
     const distributionApiBuckets = ['protected', 'public'];
     if (distributionApiBuckets.includes(bucketType)) {
-      const fileUrl = await generateFileUrl({ file, distEndpoint, cmrGranuleUrlType });
+      const fileUrl = await generateFileUrl({ file, distEndpoint, cmrGranuleUrlType, distributionBucketMap });
       if (fileUrl) {
         return {
           URL: fileUrl,

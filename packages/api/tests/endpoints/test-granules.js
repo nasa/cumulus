@@ -99,7 +99,10 @@ async function setupBucketsConfig() {
   await putObject({
     Bucket: systemBucket,
     Key: `${process.env.stackName}/distribution_bucket_map.json`,
-    Body: JSON.stringify({ systemBucket, [buckets.public.name]: buckets.public.name })
+    Body: JSON.stringify({
+      [systemBucket]: systemBucket,
+      [buckets.public.name]: buckets.public.name
+    })
   });
   return { internalBucket: systemBucket, publicBucket: buckets.public.name };
 }
