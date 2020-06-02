@@ -6,7 +6,8 @@ const isBoolean = require('lodash/isBoolean');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const {
-  DeletePublishedGranule
+  DeletePublishedGranule,
+  RecordDoesNotExist
 } = require('@cumulus/errors');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
@@ -134,7 +135,16 @@ async function del(req, res) {
   log.info(`granules.del ${granuleId}`);
 
   const granuleModelClient = new models.Granule();
-  const granule = await granuleModelClient.getRecord({ granuleId });
+
+  let granule;
+  try {
+    granule = await granuleModelClient.getRecord({ granuleId });
+  } catch (err) {
+    if (err instanceof RecordDoesNotExist) {
+      return res.boom.notFound(err);
+    }
+    throw err;
+  }
 
   if (granule.detail) {
     return res.boom.badRequest(granule);

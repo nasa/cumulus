@@ -517,6 +517,16 @@ test.serial('remove a granule from CMR with launchpad authentication', async (t)
   }
 });
 
+test('DELETE returns 400 if granule does not exist', async (t) => {
+  const granuleId = randomString();
+  const response = await request(app)
+    .delete(`/granules/${granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+  t.true(response.body.message.includes('No record found'));
+});
+
 test.serial('DELETE deleting an existing granule that is published will fail', async (t) => {
   const response = await request(app)
     .delete(`/granules/${t.context.fakeGranules[0].granuleId}`)
