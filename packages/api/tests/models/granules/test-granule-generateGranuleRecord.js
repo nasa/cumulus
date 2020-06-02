@@ -3,7 +3,7 @@ const test = require('ava');
 const sinon = require('sinon');
 
 const s3Utils = require('@cumulus/aws-client/S3');
-const cmrjs = require('@cumulus/cmrjs');
+const cmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const { randomString } = require('@cumulus/common/test-utils');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -80,7 +80,7 @@ test.before(async () => {
     lastUpdateDateTime: '2018-04-20T21:45:45.524Z',
     productionDateTime: '2018-04-25T21:45:45.524Z'
   };
-  sandbox.stub(cmrjs, 'getGranuleTemporalInfo').resolves(fakeMetadata);
+  sandbox.stub(cmrUtils, 'getGranuleTemporalInfo').resolves(fakeMetadata);
 
   fakeExecution = {
     input: JSON.stringify(testCumulusMessage),
