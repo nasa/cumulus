@@ -203,6 +203,14 @@ function validateBulkGranulesRequest(req, res, next) {
     return res.boom.badRequest('One of ids or query is required');
   }
 
+  if (payload.ids && !Array.isArray(payload.ids)) {
+    return res.boom.badRequest(`ids should be an array of values, received ${payload.ids}`);
+  }
+
+  if (!payload.query && payload.ids && payload.ids.length === 0) {
+    return res.boom.badRequest('no values provided for ids');
+  }
+
   if (payload.query
     && !(process.env.METRICS_ES_HOST
     && process.env.METRICS_ES_USER
@@ -311,7 +319,7 @@ async function bulkDelete(req, res) {
     }
   });
 
-  return res.status(202).send({ asyncOperationId: asyncOperation.id });
+  return res.status(202).send(asyncOperation);
 }
 
 router.get('/:granuleName', get);

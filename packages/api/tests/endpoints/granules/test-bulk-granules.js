@@ -78,12 +78,14 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
     ids: expectedIds
   };
 
-  await request(app)
+  const response = await request(app)
     .post('/granules/bulk')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
     .expect(202);
+  // expect a returned async operation ID
+  t.truthy(response.body.id);
   const {
     lambdaName,
     cluster,
@@ -126,12 +128,15 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
     query: expectedQuery
   };
 
-  await request(app)
+  const response = await request(app)
     .post('/granules/bulk')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
     .expect(202);
+
+  // expect a returned async operation ID
+  t.truthy(response.body.id);
 
   const {
     lambdaName,
@@ -201,6 +206,52 @@ test.serial('POST /granules/bulk returns 400 when no IDs or query is provided', 
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
     .expect(400, /One of ids or query is required/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
+test.serial('POST /granules/bulk returns 400 when IDs is not an array', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+  const expectedQueueName = 'backgroundProcessing';
+  const expectedWorkflowName = 'HelloWorldWorkflow';
+  const expectedIndex = 'my-index';
+
+  const body = {
+    queueName: expectedQueueName,
+    workflowName: expectedWorkflowName,
+    index: expectedIndex,
+    ids: 'bad-value'
+  };
+
+  await request(app)
+    .post('/granules/bulk')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /ids should be an array of values/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
+test.serial('POST /granules/bulk returns 400 when IDs is an empty array', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+  const expectedQueueName = 'backgroundProcessing';
+  const expectedWorkflowName = 'HelloWorldWorkflow';
+  const expectedIndex = 'my-index';
+
+  const body = {
+    queueName: expectedQueueName,
+    workflowName: expectedWorkflowName,
+    index: expectedIndex,
+    ids: []
+  };
+
+  await request(app)
+    .post('/granules/bulk')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /no values provided for ids/);
 
   t.true(asyncOperationStartStub.notCalled);
 });

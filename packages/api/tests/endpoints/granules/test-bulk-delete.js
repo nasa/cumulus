@@ -82,12 +82,16 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
     forceRemoveFromCmr: true
   };
 
-  await request(app)
+  const response = await request(app)
     .post('/granules/bulkDelete')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
     .expect(202);
+
+  // expect a returned async operation ID
+  t.truthy(response.body.id);
+
   const {
     lambdaName,
     cluster,
@@ -131,12 +135,15 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
     query: expectedQuery
   };
 
-  await request(app)
+  const response = await request(app)
     .post('/granules/bulkDelete')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
     .expect(202);
+
+  // expect a returned async operation ID
+  t.truthy(response.body.id);
 
   const {
     lambdaName,
@@ -199,6 +206,38 @@ test.serial('POST /granules/bulkDelete returns 400 when no IDs or Query is provi
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
     .expect(400, /One of ids or query is required/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
+test.serial('POST /granules/bulkDelete returns 400 when IDs are not an array', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const body = {
+    ids: 'bad-value'
+  };
+  await request(app)
+    .post('/granules/bulkDelete')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /ids should be an array of values/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
+test.serial('POST /granules/bulkDelete returns 400 when IDs is an empty array of values', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const body = {
+    ids: []
+  };
+  await request(app)
+    .post('/granules/bulkDelete')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /no values provided for ids/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
