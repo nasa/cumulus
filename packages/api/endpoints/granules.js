@@ -288,14 +288,22 @@ async function bulkDelete(req, res) {
     cluster: process.env.EcsCluster,
     lambdaName: process.env.BulkOperationLambda,
     description: 'Bulk granule deletion',
-    operationType: 'Bulk Granule Delete', // this value is set to an ENUM field, so cannot change
+    operationType: 'Bulk Granule Delete', // this value is set on an ENUM field, so cannot change
     payload: {
       type: 'BULK_GRANULE_DELETE',
       payload,
+      cmr_client_id: process.env.cmr_client_id,
+      cmr_oauth_provider: process.env.cmr_oauth_provider,
+      cmr_password_secret_name: process.env.cmr_password_secret_name,
+      cmr_provider: process.env.cmr_provider,
+      cmr_username: process.env.cmr_username,
       granulesTable: process.env.GranulesTable,
       esHost: process.env.METRICS_ES_HOST,
       esUser: process.env.METRICS_ES_USER,
-      esPassword: process.env.METRICS_ES_PASS
+      esPassword: process.env.METRICS_ES_PASS,
+      launchpad_api: process.env.launchpad_api,
+      launchpad_certificate: process.env.launchpad_certificate,
+      launchpad_passphrase_secret_name: process.env.launchpad_passphrase_secret_name
     }
   });
 
