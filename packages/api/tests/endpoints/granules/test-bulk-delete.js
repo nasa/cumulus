@@ -33,6 +33,7 @@ test.before(async () => {
   process.env.system_bucket = randomString();
   process.env.TOKEN_SECRET = randomString();
   process.env.AccessTokensTable = randomString();
+  process.env.GranulesTable = randomString();
   process.env.METRICS_ES_HOST = randomString();
   process.env.METRICS_ES_USER = randomString();
   process.env.METRICS_ES_PASS = randomString();
@@ -41,6 +42,9 @@ test.before(async () => {
   process.env.cmr_password_secret_name = randomString();
   process.env.cmr_provider = randomString();
   process.env.cmr_username = randomString();
+  process.env.launchpad_api = randomString();
+  process.env.launchpad_certificate = randomString();
+  process.env.launchpad_passphrase_secret_name = randomString();
 
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
@@ -112,6 +116,9 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
       METRICS_ES_PASS: process.env.METRICS_ES_PASS
     }
   });
+  Object.keys(payload.envVars).forEach((envVarKey) => {
+    t.truthy(payload.envVars[envVarKey]);
+  });
 });
 
 test.serial('POST /granules/bulkDelete starts an async-operation with the correct payload and ES query', async (t) => {
@@ -158,6 +165,9 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
       METRICS_ES_USER: process.env.METRICS_ES_USER,
       METRICS_ES_PASS: process.env.METRICS_ES_PASS
     }
+  });
+  Object.keys(payload.envVars).forEach((envVarKey) => {
+    t.truthy(payload.envVars[envVarKey]);
   });
 });
 

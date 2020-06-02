@@ -107,6 +107,9 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
       METRICS_ES_PASS: process.env.METRICS_ES_PASS
     }
   });
+  Object.keys(payload.envVars).forEach((envVarKey) => {
+    t.truthy(payload.envVars[envVarKey]);
+  });
 });
 
 test.serial('POST /granules/bulk starts an async-operation with the correct payload and ES query', async (t) => {
@@ -152,6 +155,9 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
       METRICS_ES_USER: process.env.METRICS_ES_USER,
       METRICS_ES_PASS: process.env.METRICS_ES_PASS
     }
+  });
+  Object.keys(payload.envVars).forEach((envVarKey) => {
+    t.truthy(payload.envVars[envVarKey]);
   });
 });
 
