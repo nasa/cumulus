@@ -97,13 +97,15 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
   t.deepEqual(payload, {
     payload: body,
     type: 'BULK_GRANULE',
-    granulesTable: process.env.GranulesTable,
-    system_bucket: process.env.system_bucket,
-    stackName: process.env.stackName,
-    invoke: process.env.invoke,
-    esHost: process.env.METRICS_ES_HOST,
-    esUser: process.env.METRICS_ES_USER,
-    esPassword: process.env.METRICS_ES_PASS
+    envVars: {
+      GranulesTable: process.env.GranulesTable,
+      system_bucket: process.env.system_bucket,
+      stackName: process.env.stackName,
+      invoke: process.env.invoke,
+      METRICS_ES_HOST: process.env.METRICS_ES_HOST,
+      METRICS_ES_USER: process.env.METRICS_ES_USER,
+      METRICS_ES_PASS: process.env.METRICS_ES_PASS
+    }
   });
 });
 
@@ -141,13 +143,15 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
   t.deepEqual(payload, {
     payload: body,
     type: 'BULK_GRANULE',
-    granulesTable: process.env.GranulesTable,
-    system_bucket: process.env.system_bucket,
-    stackName: process.env.stackName,
-    invoke: process.env.invoke,
-    esHost: process.env.METRICS_ES_HOST,
-    esUser: process.env.METRICS_ES_USER,
-    esPassword: process.env.METRICS_ES_PASS
+    envVars: {
+      GranulesTable: process.env.GranulesTable,
+      system_bucket: process.env.system_bucket,
+      stackName: process.env.stackName,
+      invoke: process.env.invoke,
+      METRICS_ES_HOST: process.env.METRICS_ES_HOST,
+      METRICS_ES_USER: process.env.METRICS_ES_USER,
+      METRICS_ES_PASS: process.env.METRICS_ES_PASS
+    }
   });
 });
 
