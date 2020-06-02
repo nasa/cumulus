@@ -26,13 +26,15 @@ const envVars = {
   cmr_password_secret_name: randomId('cmr_secret'),
   cmr_provider: randomId('cmr_provider'),
   cmr_username: randomId('cmr_user'),
+  invoke: randomId('invoke'),
   launchpad_api: randomId('api'),
   launchpad_certificate: randomId('certificate'),
   launchpad_passphrase_secret_name: randomId('launchpad_secret'),
   METRICS_ES_HOST: randomId('host'),
   METRICS_ES_USER: randomId('user'),
   METRICS_ES_PASS: randomId('pass'),
-  stackName: randomId('stack')
+  stackName: randomId('stack'),
+  system_bucket: randomId('bucket')
 };
 
 test.before(async () => {
@@ -178,7 +180,7 @@ test.serial('bulk operation lambda sets env vars provided in payload', async (t)
     }
   });
   Object.keys(envVars).forEach((envVarKey) => {
-    t.truthy(process.env[envVarKey]);
+    t.is(process.env[envVarKey], envVars[envVarKey]);
   });
 });
 

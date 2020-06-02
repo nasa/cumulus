@@ -117,7 +117,7 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
     }
   });
   Object.keys(payload.envVars).forEach((envVarKey) => {
-    t.truthy(payload.envVars[envVarKey]);
+    t.is(payload.envVars[envVarKey], process.env[envVarKey]);
   });
 });
 
@@ -167,7 +167,7 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
     }
   });
   Object.keys(payload.envVars).forEach((envVarKey) => {
-    t.truthy(payload.envVars[envVarKey]);
+    t.is(payload.envVars[envVarKey], process.env[envVarKey]);
   });
 });
 
