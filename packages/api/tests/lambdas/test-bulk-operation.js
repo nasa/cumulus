@@ -2,8 +2,8 @@ const test = require('ava');
 const proxyquire = require('proxyquire');
 const sinon = require('sinon');
 
-const secretsManagerUtils = require('@cumulus/aws-client/SecretsManager');
 const { CMR } = require('@cumulus/cmr-client');
+const cmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
@@ -31,11 +31,7 @@ test.before(async () => {
 
   applyWorkflowStub = sandbox.stub(Granule.prototype, 'applyWorkflow');
 
-  process.env.cmr_password_secret_name = randomId('secret');
-  sandbox.stub(secretsManagerUtils, 'getSecretString')
-    .withArgs(process.env.cmr_password_secret_name)
-    .resolves('fakePassword');
-
+  sandbox.stub(cmrUtils, 'getCmrSettings').resolves({});
   sandbox.stub(CMR.prototype, 'deleteGranule').resolves();
   sandbox.stub(
     CMR.prototype,

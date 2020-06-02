@@ -10,8 +10,7 @@ const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
-const cmrjs = require('@cumulus/cmrjs');
-const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
+const cmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
@@ -114,7 +113,7 @@ class Granule extends Manager {
       throw new Error(`Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
     }
 
-    const cmrSettings = await getCmrSettings();
+    const cmrSettings = await cmrUtils.getCmrSettings();
     const cmr = new CMR(cmrSettings);
     const metadata = await cmr.getGranuleMetadata(granule.cmrLink);
 
@@ -217,7 +216,7 @@ class Granule extends Manager {
 
     const updatedFiles = await moveGranuleFiles(g.files, destinations);
 
-    await cmrjs.reconcileCMRMetadata({
+    await cmrUtils.reconcileCMRMetadata({
       granuleId: g.granuleId,
       updatedFiles,
       distEndpoint,
@@ -296,7 +295,7 @@ class Granule extends Manager {
       files: granule.files
     });
 
-    const temporalInfo = await cmrjs.getGranuleTemporalInfo(granule);
+    const temporalInfo = await cmrUtils.getGranuleTemporalInfo(granule);
 
     const { startDate, stopDate } = executionDescription;
     const processingTimeInfo = {};
