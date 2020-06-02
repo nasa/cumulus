@@ -48,8 +48,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
       collection = await createCollection(
         prefix,
         {
-          duplicateHandling: 'error',
-          provider_path: `${sourcePath}/`
+          duplicateHandling: 'error'
         }
       );
 
@@ -119,6 +118,9 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
             version: collection.version
           },
           provider: provider.id,
+          meta: {
+            provider_path: `${sourcePath}/`
+          },
           payload: {
             testExecutionId: randomId('test-execution-')
           }
@@ -133,6 +135,8 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
         { timeout: 15 }
       );
     } catch (err) {
+      console.log('ingestGranuleRule.payload.testExecutionId', ingestGranuleRule.payload.testExecutionId);
+      console.log('discoverGranulesRule.payload.testExecutionId', discoverGranulesRule.payload.testExecutionId);
       beforeAllFailed = true;
       throw err;
     }

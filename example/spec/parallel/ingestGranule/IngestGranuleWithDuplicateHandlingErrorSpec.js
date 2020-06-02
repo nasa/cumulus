@@ -49,7 +49,6 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
         prefix,
         {
           duplicateHandling: 'error',
-          provider_path: `${sourcePath}/`,
           process: 'modis'
         }
       );
@@ -97,6 +96,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       );
 
       // Find the execution ARN
+      console.log('firstIngestGranuleRule.payload.testExecutionId', firstIngestGranuleRule.payload.testExecutionId);
       const firstIngestGranuleExecutionArn = await findExecutionArn(
         prefix,
         (execution) => {
@@ -143,6 +143,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       );
 
       // Find the execution ARN
+      console.log('secondIngestGranuleRule.payload.testExecutionId', secondIngestGranuleRule.payload.testExecutionId);
       const secondIngestGranuleExecutionArn = await findExecutionArn(
         prefix,
         (execution) => {

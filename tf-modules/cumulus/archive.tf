@@ -27,6 +27,7 @@ module "archive" {
   ems_submit_report     = var.ems_submit_report
   ems_username          = var.ems_username
 
+  es_index_shards        = var.es_index_shards
   es_request_concurrency = var.es_request_concurrency
 
   system_bucket     = var.system_bucket

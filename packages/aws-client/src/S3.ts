@@ -3,9 +3,11 @@
  */
 
 import fs from 'fs';
+import isBoolean from 'lodash/isBoolean';
 import path from 'path';
 import pMap from 'p-map';
 import pRetry from 'p-retry';
+import pWaitFor from 'p-wait-for';
 import pump from 'pump';
 import querystring from 'querystring';
 import url from 'url';
@@ -68,7 +70,7 @@ export const parseS3Uri = (uri: string) => {
     throw new TypeError('uri must be a S3 uri, e.g. s3://bucketname');
   }
 
-  if (parsedUri.path === null) {
+  if (typeof parsedUri.path !== 'string') {
     throw new TypeError(`Unable to determine key of ${uri}`);
   }
 
@@ -150,6 +152,35 @@ export const s3ObjectExists = (params: { Bucket: string, Key: string }) =>
       if (e.code === 'NotFound') return false;
       throw e;
     });
+
+/**
+ * Wait for an object to exist in S3
+ *
+ * @param {Object} params
+ * @param {string} params.bucket
+ * @param {string} params.key
+ * @param {number} [params.interval=1000] - interval before retries, in ms
+ * @param {number} [params.timeout=30000] - timeout, in ms
+ * @returns {Promise<undefined>}
+ */
+export const waitForObjectToExist = async (params: {
+  bucket: string,
+  key: string,
+  interval: number,
+  timeout: number
+}) => {
+  const {
+    bucket,
+    key,
+    interval = 1000,
+    timeout = 30 * 1000
+  } = params;
+
+  await pWaitFor(
+    () => s3ObjectExists({ Bucket: bucket, Key: key }),
+    { interval, timeout }
+  );
+};
 
 /**
 * Put an object on S3
@@ -854,4 +885,37 @@ export const multipartCopyObject = async (
 
     throw error;
   }
+};
+
+/**
+ * Move an S3 object to another location in S3
+ *
+ * @param {Object} params
+ * @param {string} params.sourceBucket
+ * @param {string} params.sourceKey
+ * @param {string} params.destinationBucket
+ * @param {string} params.destinationKey
+ * @param {string} [params.ACL] - an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
+ * @param {boolean} [params.copyTags=false]
+ * @returns {Promise<undefined>}
+ */
+export const moveObject = async (
+  params: {
+    sourceBucket: string,
+    sourceKey: string,
+    destinationBucket: string,
+    destinationKey: string,
+    ACL?: AWS.S3.ObjectCannedACL,
+    copyTags?: boolean
+  }
+) => {
+  await multipartCopyObject({
+    sourceBucket: params.sourceBucket,
+    sourceKey: params.sourceKey,
+    destinationBucket: params.destinationBucket,
+    destinationKey: params.destinationKey,
+    ACL: params.ACL,
+    copyTags: isBoolean(params.copyTags) ? params.copyTags : true
+  });
+  await deleteS3Object(params.sourceBucket, params.sourceKey);
 };

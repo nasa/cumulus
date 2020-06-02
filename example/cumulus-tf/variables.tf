@@ -261,3 +261,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "es_index_shards" {
+  description = "The number of shards for the Elasticsearch index"
+  type        = number
+  default     = 2
+}

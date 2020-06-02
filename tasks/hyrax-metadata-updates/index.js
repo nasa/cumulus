@@ -15,7 +15,8 @@ const {
   isECHO10File,
   isUMMGFile,
   isCMRFilename,
-  generateEcho10XMLString
+  generateEcho10XMLString,
+  getCmrSettings
 } = require('@cumulus/cmrjs/cmr-utils');
 
 
@@ -87,12 +88,14 @@ async function getEntryTitle(config, metadata, isUmmG) {
     shortName = metadata.Granule.Collection.ShortName;
     version = metadata.Granule.Collection.VersionId;
   }
-  // Query CMR for collection and retrieve entry title
-  const cmrInstance = new CMR({
-    provider: config.cmr.provider,
-    username: config.cmr.username,
-    password: config.cmr.passwordSecretName
+
+  const cmrSettings = await getCmrSettings({
+    ...config.cmr,
+    ...config.launchpad
   });
+
+  // Query CMR for collection and retrieve entry title
+  const cmrInstance = new CMR(cmrSettings);
 
   const searchParams = {
     short_name: shortName,

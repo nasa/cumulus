@@ -386,7 +386,7 @@ class Rule extends Manager {
    *
    * @param {Object} item - the rule item
    * @param {string} eventType - kinesisSourceEvent Type
-   * @returns {boolean} return true if no other rules share the same event source mapping
+   * @returns {Promise<boolean>} return true if other rules share the same event source mapping
    */
   async isEventSourceMappingShared(item, eventType) {
     const arnClause = `#rl.#${this.eventMapping[eventType]} = :${this.eventMapping[eventType]}`;
@@ -403,13 +403,13 @@ class Rule extends Manager {
     };
     queryValues[`:${eventType}`] = item.rule[eventType];
 
-    const kinesisRules = await super.scan({
+    const rules = await super.scan({
       names: queryNames,
       filter: `#nm <> :name AND #rl.#tp = :ruleType AND ${arnClause}`,
       values: queryValues
     });
 
-    return (kinesisRules.Count && kinesisRules.Count > 0);
+    return (rules.Count && rules.Count > 0);
   }
 
   async addSnsTrigger(item) {
@@ -462,6 +462,10 @@ class Rule extends Manager {
   }
 
   async deleteSnsTrigger(item) {
+    // If event source mapping is shared by other rules, don't delete it
+    if (await this.isEventSourceMappingShared(item, 'arn')) {
+      return Promise.resolve();
+    }
     // delete permission statement
     const permissionParams = {
       FunctionName: process.env.messageConsumer,
@@ -493,7 +497,7 @@ class Rule extends Manager {
     };
     const attributes = await awsServices.sqs().getQueueAttributes(qAttrParams).promise();
     if (!attributes.Attributes.RedrivePolicy) {
-      throw new Error(`SQS queue ${rule} does not have a dead-letter queue configured`);
+      throw new Error(`SQS queue ${queueUrl} does not have a dead-letter queue configured`);
     }
 
     // update rule meta
@@ -506,27 +510,73 @@ class Rule extends Manager {
   }
 
   /**
-   * get all rules with specified type and state
+   * `queryRules` scans and returns rules in the DynamoDB table based on:
    *
-   * @param {string} type - rule type
-   * @param {string} state - rule state
-   * @returns {Promise<Object>}
+   * - `rule.type`
+   * - `rule.state` (ENABLED or DISABLED)
+   * - sourceArn in the `rule.value` field
+   * - collection name and version in `rule.collection`
+   *
+   * @param {Object} queryParams - query params for filtering rules
+   * @param {string} queryParams.name - a collection name
+   * @param {string} queryParams.version - a collection version
+   * @param {string} queryParams.sourceArn - the ARN of the message source for the rule
+   * @param {string} queryParams.state - "ENABLED" or "DISABLED"
+   * @param {string} queryParams.type - "kinesis", "sns" "sqs", or "onetime"
+   * @returns {Array} List of zero or more rules found from table scan
+   * @throws {Error}
    */
-  async getRulesByTypeAndState(type, state) {
-    const scanResult = await this.scan({
-      names: {
-        '#st': 'state',
-        '#rl': 'rule',
-        '#tp': 'type'
-      },
-      filter: '#st = :enabledState AND #rl.#tp = :ruleType',
-      values: {
-        ':enabledState': state,
-        ':ruleType': type
-      }
+  async queryRules({
+    name,
+    version,
+    sourceArn,
+    state = 'ENABLED',
+    type
+  }) {
+    if (!['kinesis', 'sns', 'sqs', 'onetime'].includes(type)) {
+      throw new Error(`Unrecognized rule type: ${type}. Expected "kinesis", "sns", "sqs", or "onetime"`);
+    }
+    const names = {
+      '#st': 'state',
+      '#rl': 'rule',
+      '#tp': 'type'
+    };
+    let filter = '#st = :enabledState AND #rl.#tp = :ruleType';
+    const values = {
+      ':enabledState': state,
+      ':ruleType': type
+    };
+    if (name) {
+      values[':collectionName'] = name;
+      names['#col'] = 'collection';
+      names['#nm'] = 'name';
+      filter += ' AND #col.#nm = :collectionName';
+    }
+    if (version) {
+      values[':collectionVersion'] = version;
+      names['#col'] = 'collection';
+      names['#vr'] = 'version';
+      filter += ' AND #col.#vr = :collectionVersion';
+    }
+    if (sourceArn) {
+      values[':ruleValue'] = sourceArn;
+      names['#vl'] = 'value';
+      filter += ' AND #rl.#vl = :ruleValue';
+    }
+    const rulesQueryResultsForSourceArn = await this.scan({
+      names,
+      filter,
+      values
     });
 
-    return scanResult.Items;
+    const rules = rulesQueryResultsForSourceArn.Items || [];
+    if (rules.length === 0) {
+      throw new Error(
+        `No rules found that matched any/all of source ARN ${sourceArn} and `
+        + `collection { name: ${name}, version: ${version} }`
+      );
+    }
+    return rules;
   }
 }
 

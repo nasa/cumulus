@@ -79,7 +79,7 @@ test('CUMULUS-912 PUT with pathParameters and with an invalid access token retur
     .put('/collections/asdf/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -87,12 +87,15 @@ test('CUMULUS-912 PUT with pathParameters and with an invalid access token retur
 test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('PUT replaces an existing collection', async (t) => {
-  const originalCollection = fakeCollectionFactory({ process: randomString() });
+  const originalCollection = fakeCollectionFactory({
+    duplicateHandling: 'replace',
+    process: randomString()
+  });
   await collectionModel.create(originalCollection);
 
   const updatedCollection = {
     ...originalCollection,
-    provider_path: randomString()
+    duplicateHandling: 'error'
   };
 
   delete updatedCollection.process;
@@ -111,7 +114,7 @@ test('PUT replaces an existing collection', async (t) => {
 
   t.is(fetchedCollection.name, originalCollection.name);
   t.is(fetchedCollection.version, originalCollection.version);
-  t.is(fetchedCollection.provider_path, updatedCollection.provider_path);
+  t.is(fetchedCollection.duplicateHandling, 'error');
   t.is(fetchedCollection.process, undefined);
 });
 

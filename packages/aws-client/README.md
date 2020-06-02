@@ -303,6 +303,7 @@ Invoke a Lambda function
     * [.buildS3Uri(bucket, key)](#module_S3.buildS3Uri) ⇒ <code>string</code>
     * [.s3TagSetToQueryString(tagset)](#module_S3.s3TagSetToQueryString) ⇒ <code>string</code>
     * [.s3ObjectExists(params)](#module_S3.s3ObjectExists) ⇒ <code>Promise.&lt;boolean&gt;</code>
+    * [.waitForObjectToExist(params)](#module_S3.waitForObjectToExist) ⇒ <code>Promise.&lt;undefined&gt;</code>
     * [.putFile(bucket, key, filename)](#module_S3.putFile) ⇒ <code>Promise</code>
     * [.downloadS3File(s3Obj, filepath)](#module_S3.downloadS3File) ⇒ <code>Promise.&lt;string&gt;</code>
     * [.getObjectSize(bucket, key)](#module_S3.getObjectSize) ⇒ <code>Promise.&lt;integer&gt;</code>
@@ -320,6 +321,7 @@ Invoke a Lambda function
     * [.getFileBucketAndKey(pathParams)](#module_S3.getFileBucketAndKey) ⇒ <code>Array.&lt;string&gt;</code>
     * [.createBucket(Bucket)](#module_S3.createBucket) ⇒ <code>Promise</code>
     * [.multipartCopyObject(params)](#module_S3.multipartCopyObject) ⇒ <code>Promise.&lt;undefined&gt;</code>
+    * [.moveObject(params)](#module_S3.moveObject) ⇒ <code>Promise.&lt;undefined&gt;</code>
 
 <a name="module_S3.deleteS3Object"></a>
 
@@ -500,6 +502,21 @@ Test if an object exists in S3
 | Param | Type | Description |
 | --- | --- | --- |
 | params | <code>Object</code> | same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property |
+
+<a name="module_S3.waitForObjectToExist"></a>
+
+### S3.waitForObjectToExist(params) ⇒ <code>Promise.&lt;undefined&gt;</code>
+Wait for an object to exist in S3
+
+**Kind**: static method of [<code>S3</code>](#module_S3)  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| params | <code>Object</code> |  |  |
+| params.bucket | <code>string</code> |  |  |
+| params.key | <code>string</code> |  |  |
+| [params.interval] | <code>number</code> | <code>1000</code> | interval before retries, in ms |
+| [params.timeout] | <code>number</code> | <code>30000</code> | timeout, in ms |
 
 <a name="module_S3.putFile"></a>
 
@@ -743,6 +760,23 @@ Create an S3 bucket
 
 ### S3.multipartCopyObject(params) ⇒ <code>Promise.&lt;undefined&gt;</code>
 Copy an S3 object to another location in S3 using a multipart copy
+
+**Kind**: static method of [<code>S3</code>](#module_S3)  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| params | <code>Object</code> |  |  |
+| params.sourceBucket | <code>string</code> |  |  |
+| params.sourceKey | <code>string</code> |  |  |
+| params.destinationBucket | <code>string</code> |  |  |
+| params.destinationKey | <code>string</code> |  |  |
+| [params.ACL] | <code>string</code> |  | an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl) |
+| [params.copyTags] | <code>boolean</code> | <code>false</code> |  |
+
+<a name="module_S3.moveObject"></a>
+
+### S3.moveObject(params) ⇒ <code>Promise.&lt;undefined&gt;</code>
+Move an S3 object to another location in S3
 
 **Kind**: static method of [<code>S3</code>](#module_S3)  
 

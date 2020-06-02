@@ -126,7 +126,7 @@ test('CUMULUS-912 GET without pathParameters and with an invalid access token re
     .get('/rules')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -136,7 +136,7 @@ test('CUMULUS-912 GET with pathParameters and with an invalid access token retur
     .get('/rules/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -148,7 +148,7 @@ test('CUMULUS-912 POST with pathParameters and with an invalid access token retu
     .post('/rules/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -160,7 +160,7 @@ test('CUMULUS-912 PUT with pathParameters and with an invalid access token retur
     .put('/rules/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -172,7 +172,7 @@ test('CUMULUS-912 DELETE with pathParameters and with an invalid access token re
     .delete('/rules/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -243,7 +243,7 @@ test('403 error when calling the API endpoint to delete an existing rule without
     .delete(`/rules/${newRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 
@@ -274,6 +274,20 @@ test('POST creates a rule', async (t) => {
   newRule.updatedAt = record.updatedAt;
 
   t.deepEqual(record, newRule);
+});
+
+test('POST creates a rule that is enabled by default', async (t) => {
+  const newRule = fakeRuleFactoryV2();
+  delete newRule.state;
+
+  const response = await request(app)
+    .post('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newRule)
+    .expect(200);
+
+  t.is(response.body.record.state, 'ENABLED');
 });
 
 test('POST returns a 409 response if record already exists', async (t) => {

@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/common",
-  "version": "1.22.1",
+  "version": "1.23.2",
   "description": "Common utilities used across tasks",
   "keywords": [
     "GIBS",
@@ -19,12 +19,9 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
-    "build": "true",
-    "build-docs": "jsdoc2md --template templates/docs-API.hbs string.js URLUtils.js util.js > docs/API.md",
-    "lint": "eslint .",
-    "test": "ava",
-    "test-coverage": "nyc ava",
-    "test-ci": "npm run lint"
+    "build-docs": "../../node_modules/.bin/jsdoc2md --template templates/docs-API.hbs string.js URLUtils.js util.js > docs/API.md",
+    "test": "../../node_modules/.bin/ava",
+    "test-coverage": "../../node_modules/.bin/nyc npm test"
   },
   "ava": {
     "files": [
@@ -42,9 +39,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/errors": "1.22.1",
-    "@cumulus/logger": "1.22.1",
-    "@cumulus/aws-client": "1.22.1",
+    "@cumulus/errors": "1.23.2",
+    "@cumulus/logger": "1.23.2",
+    "@cumulus/aws-client": "1.23.2",
     "ajv": "^5.2.2",
     "aws-sdk": "^2.585.0",
     "follow-redirects": "^1.2.4",
@@ -63,14 +60,5 @@
     "ssh2": "^0.8.7",
     "url-join": "^4.0.0",
     "uuid": "^3.2.1"
-  },
-  "devDependencies": {
-    "ava": "^3.8.2",
-    "jsdoc-to-markdown": "^4.0.1",
-    "nock": "^10.0.0",
-    "nyc": "^14.0.0",
-    "p-timeout": "^3.2.0",
-    "rewire": "^4.0.1",
-    "sinon": "^7.1.1"
   }
 }

@@ -4,10 +4,12 @@ const get = require('lodash/get');
 const got = require('got');
 const publicIp = require('public-ip');
 const Logger = require('@cumulus/logger');
+const secretsManagerUtils = require('@cumulus/aws-client/SecretsManager');
 
 const searchConcept = require('./searchConcept');
 const ingestConcept = require('./ingestConcept');
 const deleteConcept = require('./deleteConcept');
+const getConcept = require('./getConcept');
 const getUrl = require('./getUrl');
 const { ummVersion, validateUMMG } = require('./UmmUtils');
 
@@ -35,10 +37,10 @@ const userIpAddress = () =>
  * @private
  */
 async function updateToken(cmrProvider, clientId, username, password) {
-  if (!cmrProvider) throw new Error('cmrProvider is required.');
-  if (!clientId) throw new Error('clientId is required.');
-  if (!username) throw new Error('username is required.');
-  if (!password) throw new Error('password is required.');
+  // if (!cmrProvider) throw new Error('cmrProvider is required.');
+  // if (!clientId) throw new Error('clientId is required.');
+  // if (!username) throw new Error('username is required.');
+  // if (!password) throw new Error('password is required.');
 
   // Update the saved ECHO token
   // for info on how to add collections to CMR: https://cmr.earthdata.nasa.gov/ingest/site/ingest_api_docs.html#validate-collection
@@ -100,7 +102,9 @@ class CMR {
    * @param {string} params.provider - the CMR provider id
    * @param {string} params.clientId - the CMR clientId
    * @param {string} params.username - CMR username, not used if token is provided
-   * @param {string} params.password - CMR password, not used if token is provided
+   * @param {string} params.passwordSecretName - CMR password secret, not used if token is provided
+   * @param {string} params.password - CMR password, not used if token or
+   *  passwordSecretName is provided
    * @param {string} params.token - CMR or Launchpad token,
    * if not provided, CMR username and password are used to get a cmr token
    */
@@ -109,7 +113,22 @@ class CMR {
     this.provider = params.provider;
     this.username = params.username;
     this.password = params.password;
+    this.passwordSecretName = params.passwordSecretName;
     this.token = params.token;
+  }
+
+  /**
+  * Get the CMR password, from the AWS secret if set, else return the password
+  * @returns {Promise.<string>} - the CMR password
+  */
+  getCmrPassword() {
+    if (this.passwordSecretName) {
+      return secretsManagerUtils.getSecretString(
+        this.passwordSecretName
+      );
+    }
+
+    return this.password;
   }
 
   /**
@@ -117,20 +136,20 @@ class CMR {
    *
    * @returns {Promise.<string>} the token
    */
-  getToken() {
+  async getToken() {
     return (this.token) ? this.token
-      : updateToken(this.provider, this.clientId, this.username, this.password);
+      : updateToken(this.provider, this.clientId, this.username, await this.getCmrPassword());
   }
 
   /**
-   * Return object containing CMR request headers
+   * Return object containing CMR request headers for PUT / POST / DELETE
    *
    * @param {Object} params
    * @param {string} [params.token] - CMR request token
    * @param {string} [params.ummgVersion] - UMMG metadata version string or null if echo10 metadata
    * @returns {Object} CMR headers object
    */
-  getHeaders(params = {}) {
+  getWriteHeaders(params = {}) {
     const contentType = params.ummgVersion
       ? `application/vnd.nasa.cmr.umm+json;version=${params.ummgVersion}`
       : 'application/echo10+xml';
@@ -147,13 +166,30 @@ class CMR {
   }
 
   /**
+   * Return object containing CMR request headers for GETs
+   *
+   * @param {Object} params
+   * @param {string} [params.token] - CMR request token
+   * @returns {Object} CMR headers object
+   */
+  getReadHeaders(params = {}) {
+    const headers = {
+      'Client-Id': this.clientId
+    };
+
+    if (params.token) headers['Echo-Token'] = params.token;
+
+    return headers;
+  }
+
+  /**
    * Adds a collection record to the CMR
    *
    * @param {string} xml - the collection XML document
    * @returns {Promise.<Object>} the CMR response
    */
   async ingestCollection(xml) {
-    const headers = this.getHeaders({ token: await this.getToken() });
+    const headers = this.getWriteHeaders({ token: await this.getToken() });
     return ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, headers);
   }
 
@@ -164,7 +200,7 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async ingestGranule(xml) {
-    const headers = this.getHeaders({ token: await this.getToken() });
+    const headers = this.getWriteHeaders({ token: await this.getToken() });
     return ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, headers);
   }
 
@@ -175,7 +211,7 @@ class CMR {
    * @returns {Promise<Object>} to the CMR response object.
    */
   async ingestUMMGranule(ummgMetadata) {
-    const headers = this.getHeaders({
+    const headers = this.getWriteHeaders({
       token: await this.getToken(),
       ummgVersion: ummVersion(ummgMetadata)
     });
@@ -213,7 +249,7 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async deleteCollection(datasetID) {
-    const headers = this.getHeaders({ token: await this.getToken() });
+    const headers = this.getWriteHeaders({ token: await this.getToken() });
     return deleteConcept('collection', datasetID, headers);
   }
 
@@ -224,8 +260,20 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async deleteGranule(granuleUR) {
-    const headers = this.getHeaders({ token: await this.getToken() });
+    const headers = this.getWriteHeaders({ token: await this.getToken() });
     return deleteConcept('granules', granuleUR, this.provider, headers);
+  }
+
+  async searchConcept(type, searchParams, format = 'json', recursive = true) {
+    const headers = this.getReadHeaders({ token: await this.getToken() });
+    return searchConcept({
+      type,
+      searchParams,
+      previousResults: [],
+      headers,
+      format,
+      recursive
+    });
   }
 
   /**
@@ -237,13 +285,11 @@ class CMR {
    */
   async searchCollections(params, format = 'json') {
     const searchParams = { provider_short_name: this.provider, ...params };
-    return searchConcept({
-      type: 'collections',
+    return this.searchConcept(
+      'collections',
       searchParams,
-      previousResults: [],
-      headers: { 'Client-Id': this.clientId },
       format
-    });
+    );
   }
 
   /**
@@ -255,13 +301,22 @@ class CMR {
    */
   async searchGranules(params, format = 'json') {
     const searchParams = { provider_short_name: this.provider, ...params };
-    return searchConcept({
-      type: 'granules',
+    return this.searchConcept(
+      'granules',
       searchParams,
-      previousResults: [],
-      headers: { 'Client-Id': this.clientId },
       format
-    });
+    );
+  }
+
+  /**
+   * Get the granule metadata from CMR using the cmrLink
+   *
+   * @param {string} cmrLink - URL to concept
+   * @returns {Object} - metadata as a JS object, null if not found
+   */
+  async getGranuleMetadata(cmrLink) {
+    const headers = this.getReadHeaders({ token: await this.getToken() });
+    return getConcept(cmrLink, headers);
   }
 }
 module.exports = CMR;

@@ -19,7 +19,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
-const { getLaunchpadToken } = require('@cumulus/launchpad-auth');
+const launchpad = require('@cumulus/launchpad-auth');
 const log = require('@cumulus/common/log');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { omit } = require('@cumulus/common/util');
@@ -336,7 +336,7 @@ async function constructOnlineAccessUrl({
     }
     return null;
   } catch (error) {
-    log.error(`Error constructing online access urls for ${JSON.stringify(file)}: ${error.message}`)
+    log.error(`Error constructing online access urls for ${JSON.stringify(file)}: ${error.message}`);
     throw error;
   }
 }
@@ -518,39 +518,58 @@ async function updateUMMGMetadata({
   return metadataObject;
 }
 
-/** helper to build an CMR credential object
- * @returns {Object} object to create CMR instance.
+/** helper to build an CMR settings object, used to initialize CMR
+ * @param {Object} cmrConfig - CMR configuration object
+ * @param {string} cmrConfig.oauthProvider - Oauth provider: launchpad or earthdata
+ * @param {string} cmrConfig.provider - the CMR provider
+ * @param {string} cmrConfig.clientId - Client id for CMR requests
+ * @param {string} cmrConfig.passphraseSecretName - Launchpad passphrase secret name
+ * @param {string} cmrConfig.api - Launchpad api
+ * @param {string} cmrConfig.certificate - Launchpad certificate
+ * @param {string} cmrConfig.username - EDL username
+ * @param {string} cmrConfig.passwordSecretName - CMR password secret name
+ * @returns {Object} object to create CMR instance - contains the provider, clientId, and either
+ * launchpad token or EDL username and password
 */
-async function getCreds() {
-  if (process.env.cmr_oauth_provider === 'launchpad') {
+async function getCmrSettings(cmrConfig = {}) {
+  const oauthProvider = cmrConfig.oauthProvider || process.env.cmr_oauth_provider;
+
+  const cmrCredentials = {
+    provider: cmrConfig.provider || process.env.cmr_provider,
+    clientId: cmrConfig.clientId || process.env.cmr_client_id
+  };
+
+  if (oauthProvider === 'launchpad') {
+    const launchpadPassphraseSecretName = cmrConfig.passphraseSecretName
+      || process.env.launchpad_passphrase_secret_name;
     const passphrase = await getSecretString(
-      process.env.launchpad_passphrase_secret_name
+      launchpadPassphraseSecretName
     );
 
     const config = {
       passphrase,
-      api: process.env.launchpad_api,
-      certificate: process.env.launchpad_certificate
+      api: cmrConfig.api || process.env.launchpad_api,
+      certificate: cmrConfig.certificate || process.env.launchpad_certificate
     };
 
     log.debug('cmrjs.getCreds getLaunchpadToken');
-    const token = await getLaunchpadToken(config);
+    const token = await launchpad.getLaunchpadToken(config);
     return {
-      provider: process.env.cmr_provider,
-      clientId: process.env.cmr_client_id,
+      ...cmrCredentials,
       token
     };
   }
 
+  const passwordSecretName = cmrConfig.passwordSecretName
+    || process.env.cmr_password_secret_name;
   const password = await getSecretString(
-    process.env.cmr_password_secret_name
+    passwordSecretName
   );
 
   return {
+    ...cmrCredentials,
     password,
-    provider: process.env.cmr_provider,
-    clientId: process.env.cmr_client_id,
-    username: process.env.cmr_username
+    username: cmrConfig.username || process.env.cmr_username
   };
 }
 
@@ -693,7 +712,7 @@ async function updateCMRMetadata({
         || new BucketsConfig(
           await getBucketsConfigJson(process.env.system_bucket, process.env.stackName)
         );
-  const cmrCredentials = (published) ? await getCreds() : {};
+  const cmrCredentials = (published) ? await getCmrSettings() : {};
   let theMetadata;
 
   const params = {
@@ -808,5 +827,9 @@ module.exports = {
   metadataObjectFromCMRFile,
   publish2CMR,
   reconcileCMRMetadata,
-  updateCMRMetadata
+  updateCMRMetadata,
+  granulesToCmrFileObjects,
+  updateCMRMetadata,
+  generateEcho10XMLString,
+  getCmrSettings
 };

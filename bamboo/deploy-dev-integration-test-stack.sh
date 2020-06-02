@@ -25,8 +25,8 @@ npm install
 ## Double bootstrapping required as workaround to
 ## lerna re-bootstrapping issue in older releases
 ## (similiar to  https://github.com/lerna/lerna/issues/1457)
-(npm run bootstrap-no-build || true) && npm run bootstrap-no-build
+(npm run bootstrap-no-build-no-scripts || true) && npm run bootstrap-no-build
 
-npx lerna run package
+./node_modules/.bin/lerna run package
 
 . ./bamboo/deploy-integration-stack.sh

@@ -12,7 +12,9 @@ const log = require('@cumulus/common/log');
 const pLimit = require('p-limit');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { Search, defaultIndexAlias } = require('../es/search');
+const { createIndex } = require('../es/indexer');
 const mappings = require('../models/mappings.json');
+const { IndexExistsError } = require('../lib/errors');
 
 /**
  * Check the index to see if mappings have been updated since the index was last updated.
@@ -80,23 +82,25 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
     await esClient.indices.delete({ index: alias });
   }
 
-  // check if the index exists
-  const exists = await esClient.indices.exists({ index })
-    .then((response) => response.body);
+  let exists = false;
+
+  try {
+    await createIndex(esClient, index);
+  } catch (err) {
+    if (err instanceof IndexExistsError) {
+      exists = true;
+    } else {
+      throw err;
+    }
+  }
 
   if (!exists) {
-    // add mapping
-    await esClient.indices.create({
-      index,
-      body: { mappings }
-    });
-
     await esClient.indices.putAlias({
       index: index,
       name: alias
     });
 
-    log.info(`index ${index} created with alias ${alias} and mappings added.`);
+    log.info(`Created alias ${alias} for index ${index}`);
   } else {
     log.info(`index ${index} already exists`);
 
@@ -155,6 +159,7 @@ const handler = async ({ elasticsearchHostname }) => {
     await bootstrapElasticSearch(elasticsearchHostname);
     return { Status: 'SUCCESS', Data: {} };
   } catch (err) {
+    log.error(err);
     return { Status: 'FAILED', Error: err };
   }
 };

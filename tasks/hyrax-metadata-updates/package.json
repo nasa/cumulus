@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/hyrax-metadata-updates",
-  "version": "1.22.1",
+  "version": "1.23.2",
   "description": "Update granule metadata with hooks to OPeNDAP URL",
   "main": "index.js",
   "directories": {
@@ -18,12 +18,12 @@
     "node": ">=10.16.3"
   },
   "scripts": {
-    "test": "ava",
-    "test-coverage": "nyc ava",
+    "test": "../../node_modules/.bin/ava",
+    "test-coverage": "../../node_modules/.bin/nyc npm test",
     "debug": "NODE_ENV=test node --inspect-brk node_modules/ava/profile.js --serial tests/*.js",
-    "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack",
-    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
-    "package": "npm run build && (cd dist && zip -q -r lambda.zip index.js schemas)"
+    "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack",
+    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
+    "package": "npm run build && (cd dist && node ../../../bin/zip.js lambda.zip index.js schemas)"
   },
   "ava": {
     "files": [
@@ -42,26 +42,17 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "1.22.1",
-    "@cumulus/cmr-client": "1.22.1",
-    "@cumulus/cmrjs": "1.22.1",
-    "@cumulus/common": "1.22.1",
+    "@cumulus/aws-client": "1.23.2",
+    "@cumulus/cmr-client": "1.23.2",
+    "@cumulus/cmrjs": "1.23.2",
+    "@cumulus/common": "1.23.2",
     "@cumulus/cumulus-message-adapter-js": "1.2.0",
-    "@cumulus/errors": "1.22.1",
+    "@cumulus/errors": "1.23.2",
     "libxmljs": "^0.19.7",
     "lodash": "^4.17.15",
     "nock": "^12.0.1",
     "rewire": "^4.0.1",
     "xml2js": "^0.4.23"
-  },
-  "devDependencies": {
-    "ava": "^3.8.2",
-    "babel-loader": "^8.0.6",
-    "babel-plugin-source-map-support": "^2.1.1",
-    "babel-preset-env": "^1.7.0",
-    "nyc": "^14.0.0",
-    "webpack": "~4.5.0",
-    "webpack-cli": "~2.0.14"
   },
   "bugs": {
     "url": "https://github.com/nasa/cumulus/issues"

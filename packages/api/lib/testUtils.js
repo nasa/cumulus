@@ -17,10 +17,6 @@ const dataDir = path.join(__dirname, '../app/data');
 const workflowDir = path.join(dataDir, 'workflows');
 const getWorkflowList = () => fs.readdirSync(workflowDir).map((f) => JSON.parse(fs.readFileSync(`${workflowDir}/${f}`).toString()));
 
-const reconcileDir = path.join(dataDir, 'reconciliation-reports');
-const getReconcileReportsList = () => fs.readdirSync(reconcileDir).map((f) => JSON.parse(fs.readFileSync(`${reconcileDir}/${f}`).toString()));
-
-
 /**
  * mocks the context object of the lambda function with
  * succeed and fail functions to facilitate testing of
@@ -226,7 +222,6 @@ function fakeCollectionFactory(options = {}) {
   return {
     name: randomId('collectionName'),
     version: '0.0.0',
-    provider_path: '',
     duplicateHandling: 'replace',
     granuleId: '^MOD09GQ\\.A[\\d]{7}\.[\\S]{6}\\.006\\.[\\d]{13}$',
     granuleIdExtraction: '(MOD09GQ\\.(.*))\\.hdf',
@@ -299,15 +294,22 @@ async function createFakeJwtAuthToken({ accessTokenModel, username }) {
  * create a dead-letter queue and a source queue
  *
  * @param {string} queueNamePrefix - prefix of the queue name
+ * @param {number} maxReceiveCount
+ *   Maximum number of times message can be removed before being sent to DLQ
+ * @param {string} visibilityTimeout - visibility timeout for queue messages
  * @returns {Object} - {deadLetterQueueUrl: <url>, queueUrl: <url>} queues created
  */
-async function createSqsQueues(queueNamePrefix) {
+async function createSqsQueues(
+  queueNamePrefix,
+  maxReceiveCount = 3,
+  visibilityTimeout = '300'
+) {
   // dead letter queue
   const deadLetterQueueName = `${queueNamePrefix}DeadLetterQueue`;
   const deadLetterQueueParms = {
     QueueName: deadLetterQueueName,
     Attributes: {
-      VisibilityTimeout: '300'
+      VisibilityTimeout: visibilityTimeout
     }
   };
   const { QueueUrl: deadLetterQueueUrl } = await sqs()
@@ -326,9 +328,9 @@ async function createSqsQueues(queueNamePrefix) {
     Attributes: {
       RedrivePolicy: JSON.stringify({
         deadLetterTargetArn: deadLetterQueueArn,
-        maxReceiveCount: 3
+        maxReceiveCount
       }),
-      VisibilityTimeout: '300'
+      VisibilityTimeout: visibilityTimeout
     }
   };
 
@@ -377,7 +379,6 @@ module.exports = {
   fakeFileFactory,
   fakeProviderFactory,
   fakeReconciliationReportFactory,
-  getReconcileReportsList,
   getSqsQueueMessageCounts,
   getWorkflowList,
   isLocalApi,

@@ -275,14 +275,13 @@ Now that Cumulus has been updated updated with the new workflows and code, we wi
 
 ### Add Collection
 
-Navigate to the 'Collection' tab on the interface and add a collection. Note that you need to set the "provider_path" to the path on your bucket (e.g. "/data") that you've staged your mock/test data.
+Navigate to the 'Collection' tab on the interface and add a collection.
 
 ```json
 {
   "name": "MOD09GQ",
   "version": "006",
   "process": "modis",
-  "provider_path": "{{path_to_data}}",
   "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
   "duplicateHandling": "replace",
   "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
@@ -330,7 +329,11 @@ Host: {{data_source_bucket}}
 
 ### Add Rule
 
-Once you have your provider and rule added, go to the Rules tab, and add a rule with the following values (using whatever name you wish, populating the workflow and provider keys with the previously entered values:
+Once you have your provider added, go to the Rules tab and add a rule with the
+following values (using whatever name you wish, populating the workflow and
+provider keys with the previously entered values) Note that you need to set the
+"provider_path" to the path on your bucket (e.g. "/data") that you've staged
+your mock/test data.:
 
 ```json
 {
@@ -341,7 +344,9 @@ Once you have your provider and rule added, go to the Rules tab, and add a rule 
     "name": "MOD09GQ",
     "version": "006"
   },
-  "meta": {},
+  "meta": {
+    "provider_path": "{{path_to_data}}"
+  },
   "rule": {
     "type": "onetime"
   },

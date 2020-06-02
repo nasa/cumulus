@@ -14,11 +14,11 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const CMR = require('@cumulus/cmr-client/CMR');
 const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue');
-const { constructOnlineAccessUrl } = require('@cumulus/cmrjs/cmr-utils');
+const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { Collection, Granule, ReconciliationReport } = require('../models');
-const { deconstructCollectionId, parseException } = require('../lib/utils');
+const { deconstructCollectionId, errorify } = require('../lib/utils');
 
 const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includes(bucketConfig.type);
 
@@ -117,10 +117,8 @@ async function reconciliationReportForCollections() {
 
   // get all collections from CMR and sort them, since CMR query doesn't support
   // 'Version' as sort_key
-  const cmr = new CMR({
-    provider: process.env.cmr_provider,
-    clientId: process.env.cmr_client_id
-  });
+  const cmrSettings = await getCmrSettings();
+  const cmr = new CMR(cmrSettings);
   const cmrCollectionItems = await cmr.searchCollections({}, 'umm_json');
   const cmrCollectionIds = cmrCollectionItems.map((item) =>
     constructCollectionId(item.umm.ShortName, item.umm.Version)).sort();
@@ -276,9 +274,9 @@ async function reconciliationReportForGranules(collectionId, bucketsConfig, dist
   //   Report granules only in CMR
   //   Report granules only in CUMULUS
   const { name, version } = deconstructCollectionId(collectionId);
+  const cmrSettings = await getCmrSettings();
   const cmrGranulesIterator = new CMRSearchConceptQueue({
-    provider: process.env.cmr_provider,
-    clientId: process.env.cmr_client_id,
+    cmrSettings,
     type: 'granules',
     searchParams: { short_name: name, version: version, sort_key: ['granule_ur'] },
     format: 'umm_json'
@@ -513,7 +511,7 @@ async function processRequest(params) {
   const { systemBucket, stackName } = params;
   const reportStartTime = moment.utc();
   const reportRecordName = `inventoryReport-${reportStartTime.format('YYYYMMDDTHHmmssSSS')}`;
-  const reportKey = `${stackName}/reconciliation-reports/inventoryReport-${reportRecordName}.json`;
+  const reportKey = `${stackName}/reconciliation-reports/${reportRecordName}.json`;
 
   // add request to database
   const reconciliationReportModel = new ReconciliationReport();
@@ -532,7 +530,10 @@ async function processRequest(params) {
     log.error(`Error creating reconciliation report ${reportRecordName}`, e);
     const updates = {
       status: 'Failed',
-      error: parseException(e)
+      error: {
+        Error: e.message,
+        Cause: errorify(e)
+      }
     };
     await reconciliationReportModel.update({ name: reportRecord.name }, updates);
   }

@@ -218,7 +218,8 @@ module "ingest_and_publish_granule_workflow" {
           "task_config": {
             "bucket": "{$.meta.buckets.internal.name}",
             "stack": "{$.meta.stack}",
-            "cmr": "{$.meta.cmr}"
+            "cmr": "{$.meta.cmr}",
+            "launchpad": "{$.meta.launchpad}"
           }
         }
       },

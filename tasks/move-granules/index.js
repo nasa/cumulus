@@ -9,7 +9,9 @@ const path = require('path');
 
 const {
   buildS3Uri,
-  s3ObjectExists
+  moveObject,
+  s3ObjectExists,
+  waitForObjectToExist
 } = require('@cumulus/aws-client/S3');
 
 const { InvalidArgument } = require('@cumulus/errors');
@@ -17,7 +19,6 @@ const { InvalidArgument } = require('@cumulus/errors');
 const {
   handleDuplicateFile,
   unversionFilename,
-  moveGranuleFile,
   duplicateHandlingType
 } = require('@cumulus/ingest/granule');
 
@@ -144,6 +145,10 @@ async function moveFileRequest(
     Key: file.filepath
   };
 
+  // Due to S3's eventual consistency model, we need to make sure that the
+  // source object is available in S3.
+  await waitForObjectToExist({ bucket: source.Bucket, key: source.Key });
+
   // the file moved to destination
   const fileMoved = { ...file };
   delete fileMoved.fileStagingDir;
@@ -151,7 +156,8 @@ async function moveFileRequest(
   const s3ObjAlreadyExists = await s3ObjectExists(target);
   log.debug(`file ${target.Key} exists in ${target.Bucket}: ${s3ObjAlreadyExists}`);
 
-  const options = (bucketsConfig.type(file.bucket).match('public')) ? { ACL: 'public-read' } : null;
+  const ACL = bucketsConfig.type(file.bucket) === 'public' ? 'public-read' : undefined;
+
   let versionedFiles = [];
   if (s3ObjAlreadyExists) {
     if (markDuplicates) fileMoved.duplicate_found = true;
@@ -159,11 +165,18 @@ async function moveFileRequest(
     versionedFiles = await handleDuplicateFile({
       source,
       target,
-      copyOptions: options,
-      duplicateHandling
+      duplicateHandling,
+      ACL
     });
   } else {
-    await moveGranuleFile(source, target, options);
+    await moveObject({
+      sourceBucket: source.Bucket,
+      sourceKey: source.Key,
+      destinationBucket: target.Bucket,
+      destinationKey: target.Key,
+      copyTags: true,
+      ACL
+    });
   }
 
   const renamedFiles = versionedFiles.map((f) => ({
@@ -311,7 +324,7 @@ async function moveGranules(event) {
   }
 
   return {
-    granules: Object.keys(movedGranules).map((k) => movedGranules[k])
+    granules: Object.values(movedGranules)
   };
 }
 exports.moveGranules = moveGranules;

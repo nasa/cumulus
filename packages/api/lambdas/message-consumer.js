@@ -10,65 +10,6 @@ const kinesisSchema = require('./kinesis-consumer-event-schema.json');
 const { lookupCollectionInEvent, queueMessageForRule } = require('../lib/rulesHelpers');
 
 /**
- * `getKinesisRules` scans and returns DynamoDB rules table for enabled rules with the sourceArn in
- * the `rule.value` field, then filters based on any collection name and version in the queryParams.
- *
- * @param {Object} queryParams - any/all query params extracted from event object
- * @param {string} queryParams.name - a collection name
- * @param {string} queryParams.version - a collection version
- * @param {string} queryParams.sourceArn - the ARN of the message source for the rule
- * @param {string} originalMessageSource - "kinesis" or "sns"
- * @returns {Array} List of zero or more rules found from table scan
- */
-async function getRules(queryParams, originalMessageSource) {
-  if (!['kinesis', 'sns'].includes(originalMessageSource)) {
-    throw new Error(`Unrecognized event source: ${originalMessageSource}. Expected "kinesis" or "sns"`);
-  }
-  const names = {
-    '#st': 'state',
-    '#rl': 'rule',
-    '#tp': 'type'
-  };
-  let filter = '#st = :enabledState AND #rl.#tp = :ruleType';
-  const values = {
-    ':enabledState': 'ENABLED',
-    ':ruleType': originalMessageSource
-  };
-  if (queryParams.name) {
-    values[':collectionName'] = queryParams.name;
-    names['#col'] = 'collection';
-    names['#nm'] = 'name';
-    filter += ' AND #col.#nm = :collectionName';
-  }
-  if (queryParams.version) {
-    values[':collectionVersion'] = queryParams.version;
-    names['#col'] = 'collection';
-    names['#vr'] = 'version';
-    filter += ' AND #col.#vr = :collectionVersion';
-  }
-  if (queryParams.sourceArn) {
-    values[':ruleValue'] = queryParams.sourceArn;
-    names['#vl'] = 'value';
-    filter += ' AND #rl.#vl = :ruleValue';
-  }
-  const model = new Rule();
-  const rulesQueryResultsForSourceArn = await model.scan({
-    names,
-    filter,
-    values
-  });
-
-  const rules = rulesQueryResultsForSourceArn.Items || [];
-  if (rules.length === 0) {
-    throw new Error(
-      `No rules found that matched any/all of source ARN ${queryParams.sourceArn} and `
-      + `collection { name: ${queryParams.name}, version: ${queryParams.version} }`
-    );
-  }
-  return rules;
-}
-
-/**
  * `validateMessage` validates an event as being valid for creating a workflow.
  * See the schemas defined at the top of this file.
  *
@@ -85,7 +26,6 @@ function validateMessage(event, originalMessageSource, messageSchema) {
   const validate = ajv.compile(messageSchema);
   return validate(event);
 }
-
 
 /**
  * Publish a record to the fallback SNS topic for further processing.
@@ -163,7 +103,7 @@ function processRecord(record, fromSNS) {
   let parsed = record;
   let validationSchema;
   let originalMessageSource;
-  let ruleParam;
+  let ruleParam = {};
 
   if (fromSNS) {
     parsed = JSON.parse(record.Sns.Message);
@@ -173,6 +113,7 @@ function processRecord(record, fromSNS) {
     eventObject = parsed;
     originalMessageSource = 'sns';
     ruleParam = {
+      type: originalMessageSource,
       ...lookupCollectionInEvent(eventObject),
       sourceArn: get(record, 'Sns.TopicArn')
     };
@@ -190,6 +131,7 @@ function processRecord(record, fromSNS) {
       eventObject = JSON.parse(dataString);
       // standard case (collection object), or CNM case
       ruleParam = {
+        type: originalMessageSource,
         ...lookupCollectionInEvent(eventObject),
         sourceArn: get(parsed, 'eventSourceARN')
       };
@@ -201,8 +143,9 @@ function processRecord(record, fromSNS) {
     }
   }
 
+  const rulesModel = new Rule();
   return validateMessage(eventObject, originalMessageSource, validationSchema)
-    .then(() => getRules(ruleParam, originalMessageSource))
+    .then(() => rulesModel.queryRules(ruleParam))
     .then((rules) => Promise.all(rules.map((rule) => {
       if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParam.sourceArn);
       return queueMessageForRule(rule, eventObject);
@@ -236,7 +179,6 @@ function handler(event, context, cb) {
 }
 
 module.exports = {
-  getRules,
   processRecord,
   handler
 };

@@ -21,8 +21,10 @@ A class to simplify requests to the CMR
 
 * [CMR](#CMR)
     * [new CMR(params)](#new_CMR_new)
+    * [.getCmrPassword()](#CMR+getCmrPassword) ⇒ <code>Promise.&lt;string&gt;</code>
     * [.getToken()](#CMR+getToken) ⇒ <code>Promise.&lt;string&gt;</code>
-    * [.getHeaders(params)](#CMR+getHeaders) ⇒ <code>Object</code>
+    * [.getWriteHeaders(params)](#CMR+getWriteHeaders) ⇒ <code>Object</code>
+    * [.getReadHeaders(params)](#CMR+getReadHeaders) ⇒ <code>Object</code>
     * [.ingestCollection(xml)](#CMR+ingestCollection) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.ingestGranule(xml)](#CMR+ingestGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.ingestUMMGranule(ummgMetadata)](#CMR+ingestUMMGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
@@ -30,6 +32,7 @@ A class to simplify requests to the CMR
     * [.deleteGranule(granuleUR)](#CMR+deleteGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.searchCollections(params, [format])](#CMR+searchCollections) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.searchGranules(params, [format])](#CMR+searchGranules) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.getGranuleMetadata(cmrLink)](#CMR+getGranuleMetadata) ⇒ <code>Object</code>
 
 <a name="new_CMR_new"></a>
 
@@ -43,7 +46,8 @@ The constructor for the CMR class
 | params.provider | <code>string</code> | the CMR provider id |
 | params.clientId | <code>string</code> | the CMR clientId |
 | params.username | <code>string</code> | CMR username, not used if token is provided |
-| params.password | <code>string</code> | CMR password, not used if token is provided |
+| params.passwordSecretName | <code>string</code> | CMR password secret, not used if token is provided |
+| params.password | <code>string</code> | CMR password, not used if token or  passwordSecretName is provided |
 | params.token | <code>string</code> | CMR or Launchpad token, if not provided, CMR username and password are used to get a cmr token |
 
 **Example**  
@@ -65,6 +69,13 @@ const cmrClient = new CMR({
  token: 'cmr_or_launchpad_token'
 });
 ```
+<a name="CMR+getCmrPassword"></a>
+
+### cmrClient.getCmrPassword() ⇒ <code>Promise.&lt;string&gt;</code>
+Get the CMR password, from the AWS secret if set, else return the password
+
+**Kind**: instance method of [<code>CMR</code>](#CMR)  
+**Returns**: <code>Promise.&lt;string&gt;</code> - - the CMR password  
 <a name="CMR+getToken"></a>
 
 ### cmrClient.getToken() ⇒ <code>Promise.&lt;string&gt;</code>
@@ -72,10 +83,10 @@ The method for getting the token
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)  
 **Returns**: <code>Promise.&lt;string&gt;</code> - the token  
-<a name="CMR+getHeaders"></a>
+<a name="CMR+getWriteHeaders"></a>
 
-### cmrClient.getHeaders(params) ⇒ <code>Object</code>
-Return object containing CMR request headers
+### cmrClient.getWriteHeaders(params) ⇒ <code>Object</code>
+Return object containing CMR request headers for PUT / POST / DELETE
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)  
 **Returns**: <code>Object</code> - CMR headers object  
@@ -85,6 +96,19 @@ Return object containing CMR request headers
 | params | <code>Object</code> |  |
 | [params.token] | <code>string</code> | CMR request token |
 | [params.ummgVersion] | <code>string</code> | UMMG metadata version string or null if echo10 metadata |
+
+<a name="CMR+getReadHeaders"></a>
+
+### cmrClient.getReadHeaders(params) ⇒ <code>Object</code>
+Return object containing CMR request headers for GETs
+
+**Kind**: instance method of [<code>CMR</code>](#CMR)  
+**Returns**: <code>Object</code> - CMR headers object  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| params | <code>Object</code> |  |
+| [params.token] | <code>string</code> | CMR request token |
 
 <a name="CMR+ingestCollection"></a>
 
@@ -171,6 +195,18 @@ Search in granules
 | --- | --- | --- | --- |
 | params | <code>string</code> |  | the search parameters |
 | [format] | <code>string</code> | <code>&quot;&#x27;json&#x27;&quot;</code> | format of the response |
+
+<a name="CMR+getGranuleMetadata"></a>
+
+### cmrClient.getGranuleMetadata(cmrLink) ⇒ <code>Object</code>
+Get the granule metadata from CMR using the cmrLink
+
+**Kind**: instance method of [<code>CMR</code>](#CMR)  
+**Returns**: <code>Object</code> - - metadata as a JS object, null if not found  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| cmrLink | <code>string</code> | URL to concept |
 
 <a name="CMRSearchConceptQueue"></a>
 

@@ -7,11 +7,10 @@ const path = require('path');
 
 const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
-const secretsManagerUtils = require('@cumulus/aws-client/SecretsManager');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
 const cmrjs = require('@cumulus/cmrjs');
-const launchpad = require('@cumulus/launchpad-auth');
+const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
@@ -107,32 +106,9 @@ class Granule extends Manager {
       throw new Error(`Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
     }
 
-    const params = {
-      provider: process.env.cmr_provider,
-      clientId: process.env.cmr_client_id
-    };
-
-    if (process.env.cmr_oauth_provider === 'launchpad') {
-      const passphrase = await secretsManagerUtils.getSecretString(
-        process.env.launchpad_passphrase_secret_name
-      );
-
-      const token = await launchpad.getLaunchpadToken({
-        passphrase,
-        api: process.env.launchpad_api,
-        certificate: process.env.launchpad_certificate
-      });
-
-      params.token = token;
-    } else {
-      params.username = process.env.cmr_username;
-      params.password = await secretsManagerUtils.getSecretString(
-        process.env.cmr_password_secret_name
-      );
-    }
-
-    const cmr = new CMR(params);
-    const metadata = await cmrjs.getMetadata(granule.cmrLink);
+    const cmrSettings = await getCmrSettings();
+    const cmr = new CMR(cmrSettings);
+    const metadata = await cmr.getGranuleMetadata(granule.cmrLink);
 
     // Use granule UR to delete from CMR
     await cmr.deleteGranule(metadata.title, granule.collectionId);

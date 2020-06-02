@@ -91,7 +91,7 @@ You may delete your release branch after merging to the base branch.
 
 ### 9. Create a git tag for the release
 
-Check out the minor version base branch now that your changes are merged in.
+Check out the minor version base branch now that your changes are merged in and do a git pull.
 Ensure you are on the latest commit.
 
 Create and push a new git tag:

@@ -1,14 +1,14 @@
 {
   "name": "@cumulus/pvl",
-  "version": "1.22.1",
+  "version": "1.23.2",
   "description": "Parse and serialize Parameter Value Language, a data markup language used by NASA",
   "main": "index.js",
   "engine": {
     "node": ">=10.16.3"
   },
   "scripts": {
-    "test": "ava",
-    "test-coverage": "nyc ava"
+    "test": "../../node_modules/.bin/ava",
+    "test-coverage": "../../node_modules/.bin/ npm test"
   },
   "ava": {
     "serial": true,
@@ -37,9 +37,5 @@
   "license": "Apache-2.0",
   "dependencies": {
     "lodash": "^4.17.15"
-  },
-  "devDependencies": {
-    "ava": "^3.8.2",
-    "nyc": "^14.0.0"
   }
 }

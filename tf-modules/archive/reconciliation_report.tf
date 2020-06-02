@@ -11,19 +11,24 @@ resource "aws_lambda_function" "create_reconciliation_report" {
   memory_size      = 256
   environment {
     variables = {
-      cmr_client_id              = var.cmr_client_id
-      CMR_ENVIRONMENT            = var.cmr_environment
-      CMR_LIMIT                  = var.cmr_limit
-      CMR_PAGE_SIZE              = var.cmr_page_size
-      cmr_provider               = var.cmr_provider
-      CollectionsTable           = var.dynamo_tables.collections.name
-      DISTRIBUTION_ENDPOINT      = var.distribution_url
-      FilesTable                 = var.dynamo_tables.files.name
-      GranulesTable              = var.dynamo_tables.granules.name
-      ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
-      stackName                  = var.prefix
-      system_bucket              = var.system_bucket
-      TEA_API                    = var.internal_tea_api
+      CMR_ENVIRONMENT                  = var.cmr_environment
+      CollectionsTable                 = var.dynamo_tables.collections.name
+      DISTRIBUTION_ENDPOINT            = var.distribution_url
+      FilesTable                       = var.dynamo_tables.files.name
+      GranulesTable                    = var.dynamo_tables.granules.name
+      ReconciliationReportsTable       = var.dynamo_tables.reconciliation_reports.name
+      stackName                        = var.prefix
+      system_bucket                    = var.system_bucket
+      cmr_client_id                    = var.cmr_client_id
+      cmr_provider                     = var.cmr_provider
+      cmr_username                     = var.cmr_username
+      cmr_password_secret_name         = length(var.cmr_password) == 0 ? null : aws_secretsmanager_secret.api_cmr_password.name
+      CMR_LIMIT                        = var.cmr_limit
+      CMR_PAGE_SIZE                    = var.cmr_page_size
+      launchpad_api                    = var.launchpad_api
+      launchpad_certificate            = var.launchpad_certificate
+      launchpad_passphrase_secret_name = length(var.launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.api_launchpad_passphrase.name
+      TEA_API                          = var.internal_tea_api
     }
   }
   tags = var.tags

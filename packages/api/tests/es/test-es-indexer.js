@@ -9,7 +9,7 @@ const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const cmrjs = require('@cumulus/cmrjs');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const indexer = rewire('../../es/indexer');
@@ -475,20 +475,22 @@ test.serial('indexing a PDR record', async (t) => {
 });
 
 test.serial('Create new index', async (t) => {
-  const newIndex = randomString();
+  const newIndex = randomId('esindex');
 
   await indexer.createIndex(esClient, newIndex);
 
-  const indexExists = await esClient.indices.exists({ index: newIndex })
-    .then((response) => response.body);
+  try {
+    const indexExists = await esClient.indices.exists({ index: newIndex })
+      .then((response) => response.body);
 
-  t.true(indexExists);
-
-  await esClient.indices.delete({ index: newIndex });
+    t.true(indexExists);
+  } finally {
+    await esClient.indices.delete({ index: newIndex });
+  }
 });
 
 test.serial('Create new index - index already exists', async (t) => {
-  const newIndex = randomString();
+  const newIndex = randomId('esindex');
 
   await indexer.createIndex(esClient, newIndex);
 
@@ -499,6 +501,24 @@ test.serial('Create new index - index already exists', async (t) => {
   );
 
   await esClient.indices.delete({ index: newIndex });
+});
+
+test.serial('Create new index with number of shards env var set', async (t) => {
+  const newIndex = randomId('esindex');
+
+  process.env.ES_INDEX_SHARDS = 4;
+
+  try {
+    await indexer.createIndex(esClient, newIndex);
+
+    const indexSettings = await esClient.indices.get({ index: newIndex })
+      .then((response) => response.body);
+
+    t.is(indexSettings[newIndex].settings.index.number_of_shards, '4');
+  } finally {
+    delete process.env.ES_INDEX_SHARDS;
+    await esClient.indices.delete({ index: newIndex });
+  }
 });
 
 test.serial('parsePayload correctly parses AWS Linux style console output', async (t) => {
