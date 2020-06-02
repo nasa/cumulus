@@ -288,7 +288,7 @@ async function bulkDelete(req, res) {
     cluster: process.env.EcsCluster,
     lambdaName: process.env.BulkOperationLambda,
     description: 'Bulk granule deletion',
-    operationType: 'Bulk Delete', // this value is set to an ENUM field, so cannot change
+    operationType: 'Bulk Granule Delete', // this value is set to an ENUM field, so cannot change
     payload: {
       type: 'BULK_GRANULE_DELETE',
       payload,
