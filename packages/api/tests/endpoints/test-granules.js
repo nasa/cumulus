@@ -517,7 +517,7 @@ test.serial('remove a granule from CMR with launchpad authentication', async (t)
   }
 });
 
-test('DELETE returns 400 if granule does not exist', async (t) => {
+test('DELETE returns 404 if granule does not exist', async (t) => {
   const granuleId = randomString();
   const response = await request(app)
     .delete(`/granules/${granuleId}`)
