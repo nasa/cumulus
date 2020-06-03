@@ -4,7 +4,6 @@
     "dataType": "MOD14A1",
     "process": "modis",
     "duplicateHandling": "replace",
-    "provider_path": "cumulus-test-data/pdrs",
     "granuleId": "^MOD14A1\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
     "granuleIdExtraction": "(MOD14A1\\..*)(\\.hdf|\\.cmr|_1.jpg|_2.jpg)",
     "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",

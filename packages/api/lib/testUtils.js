@@ -222,7 +222,6 @@ function fakeCollectionFactory(options = {}) {
   return {
     name: randomId('collectionName'),
     version: '0.0.0',
-    provider_path: '',
     duplicateHandling: 'replace',
     granuleId: '^MOD09GQ\\.A[\\d]{7}\.[\\S]{6}\\.006\\.[\\d]{13}$',
     granuleIdExtraction: '(MOD09GQ\\.(.*))\\.hdf',

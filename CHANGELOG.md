@@ -15,6 +15,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `DiscoverPdrs` task
   - `event.config.collection` is no longer a parameter to the `DiscoverPdrs`
     task
+  - Collections no longer support the `provider_path` property. The tasks that
+    relied on that property are now referencing `config.meta.provider_path`.
+    Workflows should be updated accordingly.
+
+- **CUMULUS-1997**
+  - `@cumulus/cmr-client/CMRSearchConceptQueue` parameters have been changed to take a `cmrSettings` object containing clientId, provider, and auth information. This can be generated using `@cumulus/cmrjs/cmr-utils/getCmrSettings`. The `cmrEnvironment` variable has been removed.
 
 ### Added
 
@@ -27,6 +33,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated HTTP(S) provider client to accept username/password for Basic authorization. This change adds support for Basic Authorization such as Earthdata login redirects to ingest (i.e. as implemented in SyncGranule), but not to discovery (i.e. as implemented in DiscoverGranules). Discovery still expects the provider's file system to be publicly accessible, but not the individual files and their contents.
   - **NOTE**: Using this in combination with the HTTP protocol may expose usernames and passwords to intermediary network entities. HTTPS is highly recommended.
 
+- **CUMULUS-1997**
+  - Added optional `launchpad` configuration to `@cumulus/hyrax-metadata-updates` task config schema.
+
+### Fixed
+
+- **CUMULUS-1997**
+  - Updated all CMR operations to use configured authentication scheme
+- **CUMULUS-2010**
+  - Updated `@cumulus/api/launchpadSaml` to support multiple userGroup attributes from the SAML response
 
 ## [v1.23.2] 2020-05-22
 
