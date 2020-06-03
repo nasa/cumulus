@@ -75,7 +75,7 @@ test('GET /s3credentials with a valid EDL token and client id returns credential
     httpMethod: 'GET',
     path: '/s3credentials',
     headers: {
-      'EDL-Client-Id': t.context.remoteServiceClientId,
+      'EDL-Client-Id': t.context.callerClientId,
       'EDL-Token': t.context.validToken
     }
   };
@@ -95,7 +95,7 @@ test('GET /s3credentials returns a 403 response for an invalid EDL token', async
     httpMethod: 'GET',
     path: '/s3credentials',
     headers: {
-      'EDL-Client-Id': t.context.remoteServiceClientId,
+      'EDL-Client-Id': t.context.callerClientId,
       'EDL-Token': t.context.invalidToken
     }
   };
