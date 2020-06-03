@@ -40,6 +40,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1997**
   - Updated all CMR operations to use configured authentication scheme
+- **CUMULUS-2010**
+  - Updated `@cumulus/api/launchpadSaml` to support multiple userGroup attributes from the SAML response
 
 ## [v1.23.2] 2020-05-22
 
