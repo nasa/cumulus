@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v1.24.0] 2020-06-03
+
 ### BREAKING CHANGES
 
 - **CUMULUS-1969**
