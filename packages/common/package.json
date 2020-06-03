@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/common",
-  "version": "1.23.2",
+  "version": "1.24.0",
   "description": "Common utilities used across tasks",
   "keywords": [
     "GIBS",
@@ -39,8 +39,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/errors": "1.23.2",
-    "@cumulus/logger": "1.23.2",
+    "@cumulus/errors": "1.24.0",
+    "@cumulus/logger": "1.24.0",
     "ajv": "^5.2.2",
     "aws-sdk": "^2.585.0",
     "follow-redirects": "^1.2.4",
