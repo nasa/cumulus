@@ -24,7 +24,7 @@ test.before(async (t) => {
 
   nock.disableNetConnect();
 
-  const nockResponses = [
+  const nockInterceptors = [
     {
       token: t.context.invalidToken,
       statusCode: 403,
@@ -63,7 +63,7 @@ test.before(async (t) => {
     }
   ];
 
-  nockResponses.forEach(({ token, statusCode, body }) => {
+  nockInterceptors.forEach(({ token, statusCode, body }) => {
     nock(t.context.earthdataLoginEndpoint)
       .persist()
       .post(

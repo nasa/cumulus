@@ -20,6 +20,8 @@ const awsServices = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
+const { getTokenUsername, TokenValidationError } = require('./EarthdataLogin');
+
 const log = new Logger({ sender: 's3credentials' });
 
 /**
@@ -177,6 +179,30 @@ function isPublicRequest(path) {
   }
 }
 
+const isTokenAuthRequest = (req) =>
+  req.get('EDL-Client-Id') && req.get('EDL-Token');
+
+const handleTokenAuthRequest = async (req, res, next) => {
+  try {
+    const userName = await getTokenUsername({
+      earthdataLoginEndpoint: process.env.EARTHDATA_BASE_URL,
+      clientId: process.env.EARTHDATA_CLIENT_ID,
+      onBehalfOf: req.get('EDL-Client-Id'),
+      token: req.get('EDL-Token')
+    });
+
+    req.authorizedMetadata = { userName };
+
+    return next();
+  } catch (error) {
+    if (error instanceof TokenValidationError) {
+      res.boom.forbidden('EDL-Token authentication failed');
+    }
+
+    throw error;
+  }
+};
+
 /**
  * Ensure request is authorized through EarthdataLogin or redirect to become so.
  *
@@ -197,6 +223,10 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   if (isPublicRequest(req.path)) {
     req.authorizedMetadata = { userName: 'unauthenticated user' };
     return next();
+  }
+
+  if (isTokenAuthRequest(req)) {
+    return handleTokenAuthRequest(req, res, next);
   }
 
   const {
@@ -265,9 +295,10 @@ distributionApp.use((err, req, res, _next) => {
   return res.boom.badImplementation('Something broke!');
 });
 
-const server = awsServerlessExpress.createServer(distributionApp, null);
+const server = awsServerlessExpress.createServer(distributionApp);
 
-const handler = (event, context) => awsServerlessExpress.proxy(server, event, context);
+const handler = async (event, context) =>
+  awsServerlessExpress.proxy(server, event, context, 'PROMISE').promise;
 
 module.exports = {
   distributionApp,
