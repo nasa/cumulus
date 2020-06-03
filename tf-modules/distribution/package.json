@@ -11,7 +11,10 @@
     "test": "../../node_modules/.bin/ava"
   },
   "ava": {
-    "timeout": "15m"
+    "files": [
+      "tests/**/*.js",
+      "!tests/helpers.js"
+    ]
   },
   "publishConfig": {
     "access": "public"
@@ -19,7 +22,6 @@
   "dependencies": {
     "@cumulus/api": "1.23.2",
     "@cumulus/aws-client": "1.23.2",
-    "@cumulus/common": "1.23.2",
     "@cumulus/errors": "1.23.2",
     "@cumulus/logger": "1.23.2",
     "aws-serverless-express": "^3.3.6",

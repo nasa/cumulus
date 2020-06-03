@@ -6,14 +6,13 @@ const request = require('supertest');
 const moment = require('moment');
 
 const awsServices = require('@cumulus/aws-client/services');
-const {
-  randomId
-} = require('@cumulus/common/test-utils');
 
 const EarthdataLoginClient = require('@cumulus/api/lib/EarthdataLogin');
 
 const models = require('@cumulus/api/models');
 const { fakeAccessTokenFactory } = require('@cumulus/api/lib/testUtils');
+
+const { randomId } = require('./helpers');
 
 process.env.EARTHDATA_CLIENT_ID = randomId('edlID');
 process.env.EARTHDATA_CLIENT_PASSWORD = randomId('edlPW');

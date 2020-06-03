@@ -14,10 +14,8 @@ const morgan = require('morgan');
 const urljoin = require('url-join');
 
 const { AccessToken } = require('@cumulus/api/models');
-const { isLocalApi } = require('@cumulus/api/lib/testUtils');
 const { isAccessTokenExpired } = require('@cumulus/api/lib/token');
 const awsServices = require('@cumulus/aws-client/services');
-const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const { getTokenUsername, TokenValidationError } = require('./EarthdataLogin');
@@ -35,6 +33,7 @@ const log = new Logger({ sender: 's3credentials' });
  */
 async function requestTemporaryCredentialsFromNgap(username) {
   const FunctionName = process.env.STSCredentialsLambda;
+
   const Payload = JSON.stringify({
     accesstype: 'sameregion',
     returntype: 'lowerCamel',
@@ -49,6 +48,18 @@ async function requestTemporaryCredentialsFromNgap(username) {
   }).promise();
 }
 
+const isFailedCredentialsResponse = (credentials) => {
+  /* eslint-disable no-prototype-builtins */
+
+  if (credentials.hasOwnProperty('errorMessage')) return true;
+  if (credentials.hasOwnProperty('errorType')) return true;
+  if (credentials.hasOwnProperty('stackTrace')) return true;
+
+  /* eslint-enable no-prototype-builtins */
+
+  return false;
+};
+
 /**
  * Dispenses time based temporary credentials for same-region direct s3 access.
  *
@@ -57,27 +68,23 @@ async function requestTemporaryCredentialsFromNgap(username) {
  * @returns {Object} the express response object with object containing
  *                   tempoary s3 credentials for direct same-region s3 access.
  */
-async function s3credentials(req, res) {
+async function handleCredentialRequest(req, res) {
   const username = req.authorizedMetadata.userName;
-  const credentials = await requestTemporaryCredentialsFromNgap(username);
-  const creds = JSON.parse(credentials.Payload);
-  if (Object.keys(creds).some((key) => ['errorMessage', 'errorType', 'stackTrace'].includes(key))) {
-    log.error(credentials.Payload);
+
+  const credentialsResponse = await requestTemporaryCredentialsFromNgap(username);
+
+  const parsedCredentialsResponse = JSON.parse(credentialsResponse.Payload);
+
+  if (isFailedCredentialsResponse(parsedCredentialsResponse)) {
+    log.error(credentialsResponse.Payload);
+
     return res.boom.failedDependency(
-      `Unable to retrieve credentials from Server: ${credentials.Payload}`
+      `Unable to retrieve credentials from Server: ${credentialsResponse.Payload}`
     );
   }
-  return res.send(creds);
-}
 
-// Running API locally will be on http, not https, so cookies
-// should not be set to secure for local runs of the API.
-const useSecureCookies = () => {
-  if (isLocalApi()) {
-    return false;
-  }
-  return true;
-};
+  return res.send(parsedCredentialsResponse);
+}
 
 /**
  * Returns a configuration object
@@ -96,6 +103,8 @@ function getConfigurations() {
     s3Client: awsServices.s3()
   };
 }
+
+const isSecureRequest = (req) => req.protocol === 'https';
 
 /**
  * Responds to a redirect request
@@ -129,7 +138,7 @@ async function handleRedirectRequest(req, res) {
       {
         expires: new Date(getAccessTokenResponse.expirationTime),
         httpOnly: true,
-        secure: useSecureCookies()
+        secure: isSecureRequest(req)
       }
     )
     .set({ Location: urljoin(distributionUrl, state) })
@@ -137,17 +146,13 @@ async function handleRedirectRequest(req, res) {
     .send('Redirecting');
 }
 
-/**
- * Responds to a request for temporary s3 credentials.
- *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object containing
- * temporary credentials
- */
-async function handleCredentialRequest(req, res) {
-  return s3credentials(req, res);
-}
+const useFakeAuth = () => Boolean(process.env.FAKE_AUTH);
+
+const handleFakeAuth = (req, _res, next) => {
+  req.authorizedMetadata = { userName: 'fake-username' };
+
+  return next();
+};
 
 /**
  * Helper function to pull bucket out of a path string.
@@ -179,6 +184,11 @@ function isPublicRequest(path) {
   }
 }
 
+const handlePublicAuth = (req, _res, next) => {
+  req.authorizedMetadata = { userName: 'unauthenticated user' };
+  return next();
+};
+
 const isTokenAuthRequest = (req) =>
   req.get('EDL-Client-Id') && req.get('EDL-Token');
 
@@ -203,32 +213,7 @@ const handleTokenAuthRequest = async (req, res, next) => {
   }
 };
 
-/**
- * Ensure request is authorized through EarthdataLogin or redirect to become so.
- *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @param {Function} next - express middleware callback function
- * @returns {Promise<Object>} - promise of an express response object
- */
-async function ensureAuthorizedOrRedirect(req, res, next) {
-  // Skip authentication for debugging purposes.
-  // TODO Really should remove this
-  if (process.env.FAKE_AUTH) {
-    req.authorizedMetadata = { userName: randomId('username') };
-    return next();
-  }
-
-  // Public data doesn't need authentication
-  if (isPublicRequest(req.path)) {
-    req.authorizedMetadata = { userName: 'unauthenticated user' };
-    return next();
-  }
-
-  if (isTokenAuthRequest(req)) {
-    return handleTokenAuthRequest(req, res, next);
-  }
-
+const handleOAuth2 = async (req, res, next) => {
   const {
     accessTokenModel,
     authClient
@@ -253,11 +238,40 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   }
 
   req.authorizedMetadata = { userName: accessTokenRecord.username };
+
   return next();
+};
+
+/**
+ * Ensure request is authorized through EarthdataLogin or redirect to become so.
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @param {Function} next - express middleware callback function
+ * @returns {Promise<Object>} - promise of an express response object
+ */
+async function authenticateRequest(req, res, next) {
+  // Skip authentication for debugging purposes.
+  if (useFakeAuth()) {
+    return handleFakeAuth(req, res, next);
+  }
+
+  // Public data doesn't need authentication
+  if (isPublicRequest(req.path)) {
+    return handlePublicAuth(req, res, next);
+  }
+
+  // If an Earthdata Login token was provided, try to authenticate using that
+  if (isTokenAuthRequest(req)) {
+    return handleTokenAuthRequest(req, res, next);
+  }
+
+  // By default, use OAuth2
+  return handleOAuth2(req, res, next);
 }
 
 distributionRouter.get('/redirect', handleRedirectRequest);
-distributionRouter.get('/s3credentials', ensureAuthorizedOrRedirect, handleCredentialRequest);
+distributionRouter.get('/s3credentials', authenticateRequest, handleCredentialRequest);
 
 const distributionApp = express();
 
@@ -285,12 +299,12 @@ distributionApp.use(hsts({ maxAge: 31536000 }));
 distributionApp.use('/', distributionRouter);
 
 // global 404 response when page is not found
-distributionApp.use((req, res) => {
+distributionApp.use((_req, res) => {
   res.boom.notFound('requested page not found');
 });
 
-// catch all error handling
-distributionApp.use((err, req, res, _next) => {
+// Catch-all error handling
+distributionApp.use((err, _req, res, _next) => {
   res.error = JSON.stringify(err, Object.getOwnPropertyNames(err));
   return res.boom.badImplementation('Something broke!');
 });
