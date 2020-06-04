@@ -19,8 +19,7 @@ const { isAccessTokenExpired } = require('@cumulus/api/lib/token');
 const awsServices = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-
-const { getTokenUsername, TokenValidationError } = require('./EarthdataLogin');
+const { EarthdataLoginTokenValidationError } = require('@cumulus/api/lib/errors');
 
 const log = new Logger({ sender: 's3credentials' });
 
@@ -183,10 +182,12 @@ const isTokenAuthRequest = (req) =>
   req.get('EDL-Client-Id') && req.get('EDL-Token');
 
 const handleTokenAuthRequest = async (req, res, next) => {
+  const earthdataLoginClient = EarthdataLogin.createFromEnv({
+    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT
+  });
+
   try {
-    const userName = await getTokenUsername({
-      earthdataLoginEndpoint: process.env.EARTHDATA_BASE_URL,
-      clientId: process.env.EARTHDATA_CLIENT_ID,
+    const userName = await earthdataLoginClient.getTokenUsername({
       onBehalfOf: req.get('EDL-Client-Id'),
       token: req.get('EDL-Token')
     });
@@ -195,7 +196,7 @@ const handleTokenAuthRequest = async (req, res, next) => {
 
     return next();
   } catch (error) {
-    if (error instanceof TokenValidationError) {
+    if (error instanceof EarthdataLoginTokenValidationError) {
       res.boom.forbidden('EDL-Token authentication failed');
     }
 

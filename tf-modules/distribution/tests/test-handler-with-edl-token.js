@@ -27,8 +27,10 @@ test.before(async (t) => {
   t.context.validToken = 'valid-token';
   t.context.invalidToken = 'invalid-token';
 
-  process.env.EARTHDATA_CLIENT_ID = 'this-client-id';
+  process.env.DISTRIBUTION_REDIRECT_ENDPOINT = 'https://blah';
   process.env.EARTHDATA_BASE_URL = 'https://uat.urs.earthdata.nasa.gov';
+  process.env.EARTHDATA_CLIENT_ID = 'this-client-id';
+  process.env.EARTHDATA_CLIENT_PASSWORD = 'this-client-password';
 
   nock.disableNetConnect();
 
