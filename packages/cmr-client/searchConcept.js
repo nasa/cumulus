@@ -23,12 +23,12 @@ const { parseXMLString } = require('./Utils');
  */
 async function searchConcept({
   type,
-  cmrEnvironment,
   searchParams,
   previousResults = [],
   headers = {},
   format = 'json',
   recursive = true,
+  cmrEnvironment = process.env.CMR_ENVIRONMENT,
   cmrLimit = process.env.CMR_LIMIT,
   cmrPageSize = process.env.CMR_PAGE_SIZE
 }) {

@@ -2,7 +2,6 @@
 
 const { invokeApi } = require('./cumulusApiClient');
 
-
 /**
  * POST /collections
  *
