@@ -9,9 +9,9 @@ const moment = require('moment');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
+const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
 
 const { AccessToken } = require('../../models');
-const EarthdataLoginClient = require('../../lib/EarthdataLogin');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
 
 process.env.EARTHDATA_CLIENT_ID = randomId('edlId');

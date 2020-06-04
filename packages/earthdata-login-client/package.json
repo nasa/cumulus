@@ -1,0 +1,24 @@
+{
+  "name": "@cumulus/earthdata-login-client",
+  "version": "1.23.2",
+  "description": "A client for interacting with the Earthata Login service",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": ">=10.18.0"
+  },
+  "scripts": {
+    "test": "../../node_modules/.bin/ava"
+  },
+  "ava": {
+    "verbose": true
+  },
+  "keywords": [
+    "Cumulus"
+  ],
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "got": "^11.2.0"
+  }
+}

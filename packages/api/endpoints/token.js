@@ -8,11 +8,11 @@ const {
   JsonWebTokenError,
   TokenExpiredError
 } = require('jsonwebtoken');
+const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
 const {
   TokenUnauthorizedUserError
 } = require('../lib/errors');
 
-const EarthdataLogin = require('../lib/EarthdataLogin');
 const GoogleOAuth2 = require('../lib/GoogleOAuth2');
 const {
   createJwtToken
@@ -226,7 +226,7 @@ function buildGoogleOAuth2ProviderFromEnv() {
 }
 
 function buildEarthdataLoginProviderFromEnv() {
-  return EarthdataLogin.createFromEnv({
+  return EarthdataLoginClient.createFromEnv({
     redirectUri: process.env.TOKEN_REDIRECT_ENDPOINT
   });
 }

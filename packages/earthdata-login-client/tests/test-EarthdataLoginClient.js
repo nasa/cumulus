@@ -6,10 +6,12 @@ const test = require('ava');
 const moment = require('moment');
 const { URL, URLSearchParams } = require('url');
 
-const EarthdataLogin = require('../../lib/EarthdataLogin');
-const OAuth2AuthenticationError = require('../../lib/OAuth2AuthenticationError');
-const OAuth2AuthenticationFailure = require('../../lib/OAuth2AuthenticationFailure');
-const { EarthdataLoginError } = require('../../lib/errors');
+const {
+  EarthdataLoginClient,
+  OAuth2AuthenticationError,
+  OAuth2AuthenticationFailure,
+  EarthdataLoginError
+} = require('..');
 
 const randomString = () => cryptoRandomString({ length: 6 });
 
@@ -17,7 +19,7 @@ const randomId = (prefix, separator = '-') =>
   [prefix, randomString()].filter((x) => x).join(separator);
 
 const buildEarthdataLoginClient = () =>
-  new EarthdataLogin({
+  new EarthdataLoginClient({
     clientId: randomId('client-id'),
     clientPassword: randomId('client-password'),
     earthdataLoginUrl: `http://${randomId()}.local`,
@@ -47,7 +49,7 @@ test.before(() => {
 test('The EarthdataLogin constructor throws a TypeError if clientId is not specified', (t) => {
   t.throws(
     () => {
-      new EarthdataLogin({
+      new EarthdataLoginClient({
         clientPassword: 'client-password',
         earthdataLoginUrl: 'http://www.example.com',
         redirectUri: 'http://www.example.com/cb'
@@ -63,7 +65,7 @@ test('The EarthdataLogin constructor throws a TypeError if clientId is not speci
 test('The EarthdataLogin constructor throws a TypeError if clientPassword is not specified', (t) => {
   t.throws(
     () => {
-      new EarthdataLogin({
+      new EarthdataLoginClient({
         clientId: 'client-id',
         earthdataLoginUrl: 'http://www.example.com',
         redirectUri: 'http://www.example.com/cb'
@@ -79,7 +81,7 @@ test('The EarthdataLogin constructor throws a TypeError if clientPassword is not
 test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is not specified', (t) => {
   t.throws(
     () => {
-      new EarthdataLogin({
+      new EarthdataLoginClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
         redirectUri: 'http://www.example.com/cb'
@@ -95,7 +97,7 @@ test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is 
 test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is not a valid URL', (t) => {
   t.throws(
     () => {
-      new EarthdataLogin({
+      new EarthdataLoginClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
         earthdataLoginUrl: 'asdf',
@@ -109,7 +111,7 @@ test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is 
 test('The EarthdataLogin constructor throws a TypeError if redirectUri is not specified', (t) => {
   t.throws(
     () => {
-      new EarthdataLogin({
+      new EarthdataLoginClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
         earthdataLoginUrl: 'http://www.example.com'
@@ -125,7 +127,7 @@ test('The EarthdataLogin constructor throws a TypeError if redirectUri is not sp
 test('The EarthdataLogin constructor throws a TypeError if redirectUri is not a valid URL', (t) => {
   t.throws(
     () => {
-      new EarthdataLogin({
+      new EarthdataLoginClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
         earthdataLoginUrl: 'http://www.example.com',
@@ -541,7 +543,7 @@ test('EarthdataLogin.getTokenUsername() throws an exception if EarthdataLogin re
     }),
     {
       instanceOf: EarthdataLoginError,
-      code: 'InvalidResponse'
+      code: 'UnexpectedResponse'
     }
   );
 });

@@ -1,41 +1,22 @@
 'use strict';
 
 const got = require('got');
-const moment = require('moment');
 const { URL } = require('url');
 
-const OAuth2 = require('./OAuth2');
-const OAuth2AuthenticationError = require('./OAuth2AuthenticationError');
-const OAuth2AuthenticationFailure = require('./OAuth2AuthenticationFailure');
-const { EarthdataLoginError } = require('./errors');
-
-const parseResponseBody = (body) => {
-  try {
-    return JSON.parse(body);
-  } catch (error) {
-    if (error instanceof SyntaxError) {
-      throw new EarthdataLoginError(
-        'InvalidResponse',
-        'Response from Earthdata Login was not valid JSON'
-      );
-    }
-
-    throw error;
-  }
-};
+const { EarthdataLoginError } = require('./EarthdataLoginError');
+const { OAuth2AuthenticationError } = require('./OAuth2AuthenticationError');
+const { OAuth2AuthenticationFailure } = require('./OAuth2AuthenticationFailure');
 
 const isHttpError = (error) => error.name === 'HTTPError';
 
 const isHttpBadRequestError = (error) =>
-  isHttpError(error) && error.statusCode === 400;
+  isHttpError(error) && error.response.statusCode === 400;
 
 const isHttpForbiddenError = (error) =>
-  isHttpError(error) && error.statusCode === 403;
+  isHttpError(error) && error.response.statusCode === 403;
 
 const httpErrorToEarthdataLoginError = (httpError) => {
-  const parsedResponseBody = parseResponseBody(httpError.response.body);
-
-  switch (parsedResponseBody.error) {
+  switch (httpError.response.body.error) {
   case 'invalid_token':
     return new EarthdataLoginError('InvalidToken', 'Invalid token');
   case 'token_expired':
@@ -56,7 +37,7 @@ const validateUrl = (urlString) => {
 /**
  * This is an interface to the Earthdata Login service.
  */
-class EarthdataLogin extends OAuth2 {
+class EarthdataLoginClient {
   /**
    * Create Earthdata login client using environment variables.
    *
@@ -64,11 +45,11 @@ class EarthdataLogin extends OAuth2 {
    * @param {string} params.redirectUri
    *   The redirect URL to use for the Earthdata login client
    *
-   * @returns {EarthdataLogin}
+   * @returns {EarthdataLoginClient}
    *   An Earthdata login client
    */
   static createFromEnv({ redirectUri }) {
-    return new EarthdataLogin({
+    return new EarthdataLoginClient({
       clientId: process.env.EARTHDATA_CLIENT_ID,
       clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
       earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
@@ -93,8 +74,6 @@ class EarthdataLogin extends OAuth2 {
    * });
    */
   constructor(params) {
-    super();
-
     const {
       clientId,
       clientPassword,
@@ -137,22 +116,18 @@ class EarthdataLogin extends OAuth2 {
     return url.toString();
   }
 
-  urlOfEndpoint(path) {
-    return (new URL(path, this.earthdataLoginUrl)).toString();
-  }
-
   /**
    * Get the URL of the Earthdata Login token endpoint
    *
    * @returns {string} the URL of the Earthdata Login token endpoint
    */
   tokenEndpoint() {
-    return this.urlOfEndpoint('/oauth/token');
+    return (new URL('/oauth/token', this.earthdataLoginUrl)).toString();
   }
 
   requestAccessToken(authorizationCode) {
     return this.sendRequest({
-      earthdataLoginPath: '/oauth/token',
+      earthdataLoginPath: 'oauth/token',
       body: {
         grant_type: 'authorization_code',
         code: authorizationCode,
@@ -180,14 +155,13 @@ class EarthdataLogin extends OAuth2 {
 
     try {
       const response = await this.requestAccessToken(authorizationCode);
-      const parsedResponseBody = JSON.parse(response.body);
 
       return {
-        accessToken: parsedResponseBody.access_token,
-        refreshToken: parsedResponseBody.refresh_token,
-        username: parsedResponseBody.endpoint.split('/').pop(),
+        accessToken: response.body.access_token,
+        refreshToken: response.body.refresh_token,
+        username: response.body.endpoint.split('/').pop(),
         // expires_in value is in seconds
-        expirationTime: moment().unix() + parsedResponseBody.expires_in
+        expirationTime: Math.floor(Date.now() / 1000) + response.body.expires_in
       };
     } catch (err) {
       if (isHttpBadRequestError(err)) {
@@ -200,7 +174,7 @@ class EarthdataLogin extends OAuth2 {
 
   requestRefreshAccessToken(refreshToken) {
     return this.sendRequest({
-      earthdataLoginPath: '/oauth/token',
+      earthdataLoginPath: 'oauth/token',
       body: {
         grant_type: 'refresh_token',
         refresh_token: refreshToken
@@ -213,13 +187,12 @@ class EarthdataLogin extends OAuth2 {
 
     try {
       const response = await this.requestRefreshAccessToken(refreshToken);
-      const parsedResponseBody = parseResponseBody(response.body);
 
       return {
-        accessToken: parsedResponseBody.access_token,
-        refreshToken: parsedResponseBody.refresh_token,
-        username: parsedResponseBody.endpoint.split('/').pop(),
-        expirationTime: moment().unix() + parsedResponseBody.expires_in
+        accessToken: response.body.access_token,
+        refreshToken: response.body.refresh_token,
+        username: response.body.endpoint.split('/').pop(),
+        expirationTime: Math.floor(Date.now() / 1000) + response.body.expires_in
       };
     } catch (err) {
       if (isHttpBadRequestError(err)) {
@@ -233,7 +206,7 @@ class EarthdataLogin extends OAuth2 {
   async getTokenUsername({ onBehalfOf, token }) {
     try {
       const response = await this.sendRequest({
-        earthdataLoginPath: '/oauth/tokens/user',
+        earthdataLoginPath: 'oauth/tokens/user',
         body: {
           client_id: this.clientId,
           on_behalf_of: onBehalfOf,
@@ -241,10 +214,15 @@ class EarthdataLogin extends OAuth2 {
         }
       });
 
-      const { uid } = parseResponseBody(response.body);
-
-      return uid;
+      return response.body.uid;
     } catch (error) {
+      if (error instanceof got.ParseError) {
+        throw new EarthdataLoginError(
+          'InvalidResponse',
+          'Response from Earthdata Login was not valid JSON'
+        );
+      }
+
       if (isHttpForbiddenError(error)) {
         throw httpErrorToEarthdataLoginError(error);
       }
@@ -255,15 +233,18 @@ class EarthdataLogin extends OAuth2 {
 
   sendRequest({ earthdataLoginPath, body }) {
     return got.post(
-      this.urlOfEndpoint(earthdataLoginPath),
+      earthdataLoginPath,
       {
-        headers: { accept: 'application/json' },
-        auth: `${this.clientId}:${this.clientPassword}`,
-        form: true,
-        body
+        prefixUrl: this.earthdataLoginUrl,
+        username: this.clientId,
+        password: this.clientPassword,
+        form: body,
+        responseType: 'json'
       }
     );
   }
 }
 
-module.exports = EarthdataLogin;
+module.exports = {
+  EarthdataLoginClient
+};

@@ -12,4 +12,6 @@ class OAuth2AuthenticationError extends Error {
   }
 }
 
-module.exports = OAuth2AuthenticationError;
+module.exports = {
+  OAuth2AuthenticationError
+};

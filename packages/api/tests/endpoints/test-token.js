@@ -7,10 +7,12 @@ const { URL } = require('url');
 const { randomString } = require('@cumulus/common/test-utils');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+const {
+  EarthdataLoginClient,
+  OAuth2AuthenticationFailure
+} = require('@cumulus/earthdata-login-client');
 
-const OAuth2AuthenticationFailure = require('../../lib/OAuth2AuthenticationFailure');
 const assertions = require('../../lib/assertions');
-const EarthdataLoginClient = require('../../lib/EarthdataLogin');
 const {
   createJwtToken
 } = require('../../lib/token');

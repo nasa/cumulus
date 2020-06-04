@@ -6,7 +6,10 @@ const boom = require('express-boom');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const distributionRouter = require('express-promise-router')();
-const EarthdataLogin = require('@cumulus/api/lib/EarthdataLogin');
+const {
+  EarthdataLoginClient,
+  EarthdataLoginError
+} = require('@cumulus/earthdata-login-client');
 const express = require('express');
 const hsts = require('hsts');
 const Logger = require('@cumulus/logger');
@@ -19,7 +22,6 @@ const { isAccessTokenExpired } = require('@cumulus/api/lib/token');
 const awsServices = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { EarthdataLoginError } = require('@cumulus/api/lib/errors');
 
 const log = new Logger({ sender: 's3credentials' });
 
@@ -84,7 +86,7 @@ const useSecureCookies = () => {
  * @returns {Object} the configuration object needed to handle requests
  */
 function getConfigurations() {
-  const earthdataLoginClient = EarthdataLogin.createFromEnv({
+  const earthdataLoginClient = EarthdataLoginClient.createFromEnv({
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT
   });
 
@@ -182,7 +184,7 @@ const isTokenAuthRequest = (req) =>
   req.get('EDL-Client-Id') && req.get('EDL-Token');
 
 const handleTokenAuthRequest = async (req, res, next) => {
-  const earthdataLoginClient = EarthdataLogin.createFromEnv({
+  const earthdataLoginClient = EarthdataLoginClient.createFromEnv({
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT
   });
 

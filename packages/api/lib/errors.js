@@ -1,5 +1,3 @@
-/* eslint-disable max-classes-per-file */
-
 'use strict';
 
 const {
@@ -22,21 +20,9 @@ class AssociatedRulesError extends Error {
   }
 }
 
-class EarthdataLoginError extends Error {
-  constructor(code, message) {
-    super(message);
-
-    this.name = 'EarthdataLoginError';
-    this.code = code;
-
-    Error.captureStackTrace(this, EarthdataLoginError);
-  }
-}
-
 module.exports = {
   AssociatedRulesError,
   IndexExistsError,
   TokenUnauthorizedUserError,
-  EarthdataLoginError,
   isBadRequestError
 };
