@@ -1,5 +1,6 @@
 'use strict';
 
+const cryptoRandomString = require('crypto-random-string');
 const nock = require('nock');
 const test = require('ava');
 const moment = require('moment');
@@ -10,138 +11,164 @@ const OAuth2AuthenticationError = require('../../lib/OAuth2AuthenticationError')
 const OAuth2AuthenticationFailure = require('../../lib/OAuth2AuthenticationFailure');
 const { EarthdataLoginError } = require('../../lib/errors');
 
+const randomString = () => cryptoRandomString({ length: 6 });
+
+const randomId = (prefix, separator = '-') =>
+  [prefix, randomString()].filter((x) => x).join(separator);
+
+const buildEarthdataLoginClient = () =>
+  new EarthdataLogin({
+    clientId: randomId('client-id'),
+    clientPassword: randomId('client-password'),
+    earthdataLoginUrl: `http://${randomId()}.local`,
+    redirectUri: `http://${randomId()}.local`
+  });
+
+const nockEarthdataLoginCall = ({
+  earthdataLoginClient,
+  path,
+  requestBody,
+  responseStatus,
+  responseBody
+}) => {
+  nock(earthdataLoginClient.earthdataLoginUrl)
+    .post(path, requestBody)
+    .basicAuth({
+      user: earthdataLoginClient.clientId,
+      pass: earthdataLoginClient.clientPassword
+    })
+    .reply(responseStatus, responseBody);
+};
+
 test.before(() => {
   nock.disableNetConnect();
 });
 
-test.beforeEach(() => {
-  nock.cleanAll();
-});
-
 test('The EarthdataLogin constructor throws a TypeError if clientId is not specified', (t) => {
-  const err = t.throws(() => {
-    new EarthdataLogin({
-      clientPassword: 'client-password',
-      earthdataLoginUrl: 'http://www.example.com',
-      redirectUri: 'http://www.example.com/cb'
-    });
-  },
-  { instanceOf: TypeError });
-
-  t.is(err.message, 'clientId is required');
+  t.throws(
+    () => {
+      new EarthdataLogin({
+        clientPassword: 'client-password',
+        earthdataLoginUrl: 'http://www.example.com',
+        redirectUri: 'http://www.example.com/cb'
+      });
+    },
+    {
+      instanceOf: TypeError,
+      message: 'clientId is required'
+    }
+  );
 });
 
 test('The EarthdataLogin constructor throws a TypeError if clientPassword is not specified', (t) => {
-  const err = t.throws(() => {
-    new EarthdataLogin({
-      clientId: 'client-id',
-      earthdataLoginUrl: 'http://www.example.com',
-      redirectUri: 'http://www.example.com/cb'
-    });
-  },
-  { instanceOf: TypeError });
-
-  t.is(err.message, 'clientPassword is required');
+  t.throws(
+    () => {
+      new EarthdataLogin({
+        clientId: 'client-id',
+        earthdataLoginUrl: 'http://www.example.com',
+        redirectUri: 'http://www.example.com/cb'
+      });
+    },
+    {
+      instanceOf: TypeError,
+      message: 'clientPassword is required'
+    }
+  );
 });
 
 test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is not specified', (t) => {
-  const err = t.throws(() => {
-    new EarthdataLogin({
-      clientId: 'client-id',
-      clientPassword: 'client-password',
-      redirectUri: 'http://www.example.com/cb'
-    });
-  },
-  { instanceOf: TypeError });
-
-  t.is(err.message, 'earthdataLoginUrl is required');
+  t.throws(
+    () => {
+      new EarthdataLogin({
+        clientId: 'client-id',
+        clientPassword: 'client-password',
+        redirectUri: 'http://www.example.com/cb'
+      });
+    },
+    {
+      instanceOf: TypeError,
+      message: 'earthdataLoginUrl is required'
+    }
+  );
 });
 
 test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is not a valid URL', (t) => {
-  t.throws(() => {
-    new EarthdataLogin({
-      clientId: 'client-id',
-      clientPassword: 'client-password',
-      earthdataLoginUrl: 'asdf',
-      redirectUri: 'http://www.example.com/cb'
-    });
-  },
-  { instanceOf: TypeError });
+  t.throws(
+    () => {
+      new EarthdataLogin({
+        clientId: 'client-id',
+        clientPassword: 'client-password',
+        earthdataLoginUrl: 'asdf',
+        redirectUri: 'http://www.example.com/cb'
+      });
+    },
+    { instanceOf: TypeError }
+  );
 });
 
 test('The EarthdataLogin constructor throws a TypeError if redirectUri is not specified', (t) => {
-  const err = t.throws(() => {
-    new EarthdataLogin({
-      clientId: 'client-id',
-      clientPassword: 'client-password',
-      earthdataLoginUrl: 'http://www.example.com'
-    });
-  },
-  { instanceOf: TypeError });
-
-  t.is(err.message, 'redirectUri is required');
+  t.throws(
+    () => {
+      new EarthdataLogin({
+        clientId: 'client-id',
+        clientPassword: 'client-password',
+        earthdataLoginUrl: 'http://www.example.com'
+      });
+    },
+    {
+      instanceOf: TypeError,
+      message: 'redirectUri is required'
+    }
+  );
 });
 
 test('The EarthdataLogin constructor throws a TypeError if redirectUri is not a valid URL', (t) => {
-  t.throws(() => {
-    new EarthdataLogin({
-      clientId: 'client-id',
-      clientPassword: 'client-password',
-      earthdataLoginUrl: 'http://www.example.com',
-      redirectUri: 'asdf'
-    });
-  },
-  { instanceOf: TypeError });
+  t.throws(
+    () => {
+      new EarthdataLogin({
+        clientId: 'client-id',
+        clientPassword: 'client-password',
+        earthdataLoginUrl: 'http://www.example.com',
+        redirectUri: 'asdf'
+      });
+    },
+    { instanceOf: TypeError }
+  );
 });
 
 test('EarthdataLogin.getAuthorizationUrl() returns the correct URL when no state is specified', (t) => {
-  const earthdataLogin = new EarthdataLogin({
-    clientId: 'client-id',
-    clientPassword: 'client-password',
-    earthdataLoginUrl: 'http://www.example.com',
-    redirectUri: 'http://www.example.com/cb'
-  });
+  const earthdataLoginClient = buildEarthdataLoginClient();
 
-  const authorizationUrl = earthdataLogin.getAuthorizationUrl();
+  const authorizationUrl = earthdataLoginClient.getAuthorizationUrl();
   const parsedAuthorizationUrl = new URL(authorizationUrl);
 
-  t.is(parsedAuthorizationUrl.origin, 'http://www.example.com');
+  t.is(parsedAuthorizationUrl.origin, earthdataLoginClient.earthdataLoginUrl);
   t.is(parsedAuthorizationUrl.pathname, '/oauth/authorize');
   t.is(parsedAuthorizationUrl.searchParams.get('response_type'), 'code');
-  t.is(parsedAuthorizationUrl.searchParams.get('client_id'), 'client-id');
-  t.is(parsedAuthorizationUrl.searchParams.get('redirect_uri'), 'http://www.example.com/cb');
+  t.is(parsedAuthorizationUrl.searchParams.get('client_id'), earthdataLoginClient.clientId);
+  t.is(parsedAuthorizationUrl.searchParams.get('redirect_uri'), earthdataLoginClient.redirectUri);
   t.false(parsedAuthorizationUrl.searchParams.has('state'));
 });
 
 test('EarthdataLogin.getAuthorizationUrl() returns the correct URL when a state is specified', (t) => {
-  const earthdataLogin = new EarthdataLogin({
-    clientId: 'client-id',
-    clientPassword: 'client-password',
-    earthdataLoginUrl: 'http://www.example.com',
-    redirectUri: 'http://www.example.com/cb'
-  });
+  const earthdataLoginClient = buildEarthdataLoginClient();
 
-  const authorizationUrl = earthdataLogin.getAuthorizationUrl('the-state');
+  const authorizationUrl = earthdataLoginClient.getAuthorizationUrl('the-state');
   const parsedAuthorizationUrl = new URL(authorizationUrl);
 
-  t.is(parsedAuthorizationUrl.origin, 'http://www.example.com');
+  t.is(parsedAuthorizationUrl.origin, earthdataLoginClient.earthdataLoginUrl);
   t.is(parsedAuthorizationUrl.pathname, '/oauth/authorize');
   t.is(parsedAuthorizationUrl.searchParams.get('response_type'), 'code');
-  t.is(parsedAuthorizationUrl.searchParams.get('client_id'), 'client-id');
-  t.is(parsedAuthorizationUrl.searchParams.get('redirect_uri'), 'http://www.example.com/cb');
+  t.is(parsedAuthorizationUrl.searchParams.get('client_id'), earthdataLoginClient.clientId);
+  t.is(parsedAuthorizationUrl.searchParams.get('redirect_uri'), earthdataLoginClient.redirectUri);
   t.is(parsedAuthorizationUrl.searchParams.get('state'), 'the-state');
 });
 
 test('EarthdataLogin.getAccessToken() throws a TypeError if authorizationCode is not set', async (t) => {
-  const earthdataLogin = new EarthdataLogin({
-    clientId: 'client-id',
-    clientPassword: 'client-password',
-    earthdataLoginUrl: 'http://www.example.com',
-    redirectUri: 'http://www.example.com/cb'
-  });
+  const earthdataLoginClient = buildEarthdataLoginClient();
 
   await t.throwsAsync(
-    () => earthdataLogin.getAccessToken(),
+    () => earthdataLoginClient.getAccessToken(),
     {
       instanceOf: TypeError,
       message: 'authorizationCode is required'
@@ -149,16 +176,11 @@ test('EarthdataLogin.getAccessToken() throws a TypeError if authorizationCode is
   );
 });
 
-test.serial('EarthdataLogin.getAccessToken() sends a correct request to the token endpoint', async (t) => {
-  const earthdataLogin = new EarthdataLogin({
-    clientId: 'client-id',
-    clientPassword: 'client-password',
-    earthdataLoginUrl: 'http://www.example.com',
-    redirectUri: 'http://www.example.com/cb'
-  });
+test('EarthdataLogin.getAccessToken() sends a correct request to the token endpoint', async (t) => {
+  const earthdataLoginClient = buildEarthdataLoginClient();
 
-  const tokenRequest = nock(
-    'http://www.example.com',
+  nock(
+    earthdataLoginClient.earthdataLoginUrl,
     {
       reqHeaders: {
         'content-type': 'application/x-www-form-urlencoded'
@@ -172,12 +194,12 @@ test.serial('EarthdataLogin.getAccessToken() sends a correct request to the toke
 
         return parsedBody.get('grant_type') === 'authorization_code'
           && parsedBody.get('code') === 'authorization-code'
-          && parsedBody.get('redirect_uri') === 'http://www.example.com/cb';
+          && parsedBody.get('redirect_uri') === earthdataLoginClient.redirectUri;
       }
     )
     .basicAuth({
-      user: 'client-id',
-      pass: 'client-password'
+      user: earthdataLoginClient.clientId,
+      pass: earthdataLoginClient.clientPassword
     })
     .reply(
       200,
@@ -190,31 +212,26 @@ test.serial('EarthdataLogin.getAccessToken() sends a correct request to the toke
       }
     );
 
-  await earthdataLogin.getAccessToken('authorization-code');
+  await earthdataLoginClient.getAccessToken('authorization-code');
 
-  t.true(tokenRequest.isDone());
+  t.pass();
 });
 
-test.serial('EarthdataLogin.getAccessToken() returns token information for a valid authorizationCode', async (t) => {
-  const earthdataLogin = new EarthdataLogin({
-    clientId: 'client-id',
-    clientPassword: 'client-password',
-    earthdataLoginUrl: 'http://www.example.com',
-    redirectUri: 'http://www.example.com/cb'
-  });
+test('EarthdataLogin.getAccessToken() returns token information for a valid authorizationCode', async (t) => {
+  const earthdataLoginClient = buildEarthdataLoginClient();
 
-  const tokenRequest = nock('http://www.example.com')
-    .post('/oauth/token')
-    .reply(
-      200,
-      {
-        access_token: 'access-token',
-        token_type: 'bearer',
-        expires_in: 100,
-        refresh_token: 'refresh-token',
-        endpoint: '/api/users/sidney'
-      }
-    );
+  nockEarthdataLoginCall({
+    earthdataLoginClient,
+    path: '/oauth/token',
+    responseStatus: 200,
+    responseBody: {
+      access_token: 'access-token',
+      token_type: 'bearer',
+      expires_in: 100,
+      refresh_token: 'refresh-token',
+      endpoint: '/api/users/sidney'
+    }
+  });
 
   const requestStartTime = moment().unix();
   const {
@@ -222,10 +239,8 @@ test.serial('EarthdataLogin.getAccessToken() returns token information for a val
     refreshToken,
     expirationTime,
     username
-  } = await earthdataLogin.getAccessToken('authorization-code');
+  } = await earthdataLoginClient.getAccessToken('authorization-code');
   const requestEndTime = moment().unix();
-
-  t.true(tokenRequest.isDone());
 
   t.is(accessToken, 'access-token');
   t.is(refreshToken, 'refresh-token');
@@ -234,56 +249,41 @@ test.serial('EarthdataLogin.getAccessToken() returns token information for a val
   t.is(username, 'sidney');
 });
 
-test.serial('EarthdataLogin.getAccessToken() throws an OAuth2AuthenticationFailure error for an invalid authorizationCode', async (t) => {
-  const earthdataLogin = new EarthdataLogin({
-    clientId: 'client-id',
-    clientPassword: 'client-password',
-    earthdataLoginUrl: 'http://www.example.com',
-    redirectUri: 'http://www.example.com/cb'
+test('EarthdataLogin.getAccessToken() throws an OAuth2AuthenticationFailure error for an invalid authorizationCode', async (t) => {
+  const earthdataLoginClient = buildEarthdataLoginClient();
+
+  nockEarthdataLoginCall({
+    earthdataLoginClient,
+    path: '/oauth/token',
+    responseStatus: 400
   });
 
-  const tokenRequest = nock('http://www.example.com')
-    .post('/oauth/token')
-    .reply(400);
-
   await t.throwsAsync(
-    () => earthdataLogin.getAccessToken('authorization-code'),
+    () => earthdataLoginClient.getAccessToken('authorization-code'),
     { instanceOf: OAuth2AuthenticationFailure }
   );
-
-  t.true(tokenRequest.isDone());
 });
 
-test.serial('EarthdataLogin.getAccessToken() throws an OAuth2AuthenticationError error if there is a problem with the Earthdata Login service', async (t) => {
-  const earthdataLogin = new EarthdataLogin({
-    clientId: 'client-id',
-    clientPassword: 'client-password',
-    earthdataLoginUrl: 'http://www.example.com',
-    redirectUri: 'http://www.example.com/cb'
+test('EarthdataLogin.getAccessToken() throws an OAuth2AuthenticationError error if there is a problem with the Earthdata Login service', async (t) => {
+  const earthdataLoginClient = buildEarthdataLoginClient();
+
+  nockEarthdataLoginCall({
+    earthdataLoginClient,
+    path: '/oauth/token',
+    responseStatus: 500
   });
 
-  const tokenRequest = nock('http://www.example.com')
-    .post('/oauth/token')
-    .reply(500);
-
   await t.throwsAsync(
-    () => earthdataLogin.getAccessToken('authorization-code'),
+    () => earthdataLoginClient.getAccessToken('authorization-code'),
     { instanceOf: OAuth2AuthenticationError }
   );
-
-  t.true(tokenRequest.isDone());
 });
 
 test('EarthdataLogin.refreshAccessToken() throws a TypeError if refreshToken is not set', async (t) => {
-  const earthdataLogin = new EarthdataLogin({
-    clientId: 'client-id',
-    clientPassword: 'client-password',
-    earthdataLoginUrl: 'http://www.example.com',
-    redirectUri: 'http://www.example.com/cb'
-  });
+  const earthdataLoginClient = buildEarthdataLoginClient();
 
   await t.throwsAsync(
-    () => earthdataLogin.refreshAccessToken(),
+    () => earthdataLoginClient.refreshAccessToken(),
     {
       instanceOf: TypeError,
       message: 'refreshToken is required'
@@ -291,16 +291,11 @@ test('EarthdataLogin.refreshAccessToken() throws a TypeError if refreshToken is 
   );
 });
 
-test.serial('EarthdataLogin.refreshAccessToken() sends a correct request to the token endpoint', async (t) => {
-  const earthdataLogin = new EarthdataLogin({
-    clientId: 'client-id',
-    clientPassword: 'client-password',
-    earthdataLoginUrl: 'http://www.example.com',
-    redirectUri: 'http://www.example.com/cb'
-  });
+test('EarthdataLogin.refreshAccessToken() sends a correct request to the token endpoint', async (t) => {
+  const earthdataLoginClient = buildEarthdataLoginClient();
 
-  const tokenRequest = nock(
-    'http://www.example.com',
+  nock(
+    earthdataLoginClient.earthdataLoginUrl,
     {
       reqHeaders: {
         'content-type': 'application/x-www-form-urlencoded'
@@ -317,8 +312,8 @@ test.serial('EarthdataLogin.refreshAccessToken() sends a correct request to the 
       }
     )
     .basicAuth({
-      user: 'client-id',
-      pass: 'client-password'
+      user: earthdataLoginClient.clientId,
+      pass: earthdataLoginClient.clientPassword
     })
     .reply(
       200,
@@ -331,31 +326,26 @@ test.serial('EarthdataLogin.refreshAccessToken() sends a correct request to the 
       }
     );
 
-  await earthdataLogin.refreshAccessToken('refresh-token');
+  await earthdataLoginClient.refreshAccessToken('refresh-token');
 
-  t.true(tokenRequest.isDone());
+  t.pass();
 });
 
-test.serial('EarthdataLogin.refreshAccessToken() returns token information for a valid refreshToken', async (t) => {
-  const earthdataLogin = new EarthdataLogin({
-    clientId: 'client-id',
-    clientPassword: 'client-password',
-    earthdataLoginUrl: 'http://www.example.com',
-    redirectUri: 'http://www.example.com/cb'
-  });
+test('EarthdataLogin.refreshAccessToken() returns token information for a valid refreshToken', async (t) => {
+  const earthdataLoginClient = buildEarthdataLoginClient();
 
-  const tokenRequest = nock('http://www.example.com')
-    .post('/oauth/token')
-    .reply(
-      200,
-      {
-        access_token: 'access-token',
-        token_type: 'bearer',
-        expires_in: 100,
-        refresh_token: 'refresh-token',
-        endpoint: '/api/users/sidney'
-      }
-    );
+  nockEarthdataLoginCall({
+    earthdataLoginClient,
+    path: '/oauth/token',
+    responseStatus: 200,
+    responseBody: {
+      access_token: 'access-token',
+      token_type: 'bearer',
+      expires_in: 100,
+      refresh_token: 'refresh-token',
+      endpoint: '/api/users/sidney'
+    }
+  });
 
   const requestStartTime = moment().unix();
   const {
@@ -363,10 +353,8 @@ test.serial('EarthdataLogin.refreshAccessToken() returns token information for a
     refreshToken,
     expirationTime,
     username
-  } = await earthdataLogin.refreshAccessToken('refresh-token');
+  } = await earthdataLoginClient.refreshAccessToken('refresh-token');
   const requestEndTime = moment().unix();
-
-  t.true(tokenRequest.isDone());
 
   t.is(accessToken, 'access-token');
   t.is(refreshToken, 'refresh-token');
@@ -375,272 +363,215 @@ test.serial('EarthdataLogin.refreshAccessToken() returns token information for a
   t.is(username, 'sidney');
 });
 
-test.serial('EarthdataLogin.refreshAccessToken() throws an OAuth2AuthenticationFailure error for an invalid refreshToken', async (t) => {
-  const earthdataLogin = new EarthdataLogin({
-    clientId: 'client-id',
-    clientPassword: 'client-password',
-    earthdataLoginUrl: 'http://www.example.com',
-    redirectUri: 'http://www.example.com/cb'
+test('EarthdataLogin.refreshAccessToken() throws an OAuth2AuthenticationFailure error for an invalid refreshToken', async (t) => {
+  const earthdataLoginClient = buildEarthdataLoginClient();
+
+  nockEarthdataLoginCall({
+    earthdataLoginClient,
+    path: '/oauth/token',
+    responseStatus: 400
   });
 
-  const tokenRequest = nock('http://www.example.com')
-    .post('/oauth/token')
-    .reply(400);
-
   await t.throwsAsync(
-    () => earthdataLogin.refreshAccessToken('invalid-refresh-token'),
+    () => earthdataLoginClient.refreshAccessToken('invalid-refresh-token'),
     { instanceOf: OAuth2AuthenticationFailure }
   );
-
-  t.true(tokenRequest.isDone());
 });
 
-test.serial('EarthdataLogin.refreshAccessToken() throws an OAuth2AuthenticationError error if there is a problem with the Earthdata Login service', async (t) => {
-  const earthdataLogin = new EarthdataLogin({
-    clientId: 'client-id',
-    clientPassword: 'client-password',
-    earthdataLoginUrl: 'http://www.example.com',
-    redirectUri: 'http://www.example.com/cb'
-  });
+test('EarthdataLogin.refreshAccessToken() throws an OAuth2AuthenticationError error if there is a problem with the Earthdata Login service', async (t) => {
+  const earthdataLoginClient = buildEarthdataLoginClient();
 
-  const tokenRequest = nock('http://www.example.com')
-    .post('/oauth/token')
-    .reply(500);
+  nockEarthdataLoginCall({
+    earthdataLoginClient,
+    path: '/oauth/token',
+    responseStatus: 500
+  });
 
   await t.throwsAsync(
-    () => earthdataLogin.refreshAccessToken('refresh-token'),
+    () => earthdataLoginClient.refreshAccessToken('refresh-token'),
     { instanceOf: OAuth2AuthenticationError }
   );
-
-  t.true(tokenRequest.isDone());
 });
 
-test.serial('EarthdataLogin.getTokenUsername() returns the username associated with a valid token', async (t) => {
-  const earthdataLogin = new EarthdataLogin({
-    clientId: 'client-id',
-    clientPassword: 'client-password',
-    earthdataLoginUrl: 'http://www.example.com',
-    redirectUri: 'http://www.example.com/cb'
+test('EarthdataLogin.getTokenUsername() returns the username associated with a valid token', async (t) => {
+  const earthdataLoginClient = buildEarthdataLoginClient();
+
+  const expectedUsername = randomId('valid-username');
+  const token = randomId('valid-token');
+  const onBehalfOf = randomId('on-behalf-of');
+
+  nockEarthdataLoginCall({
+    earthdataLoginClient,
+    path: '/oauth/tokens/user',
+    requestBody: {
+      token,
+      client_id: earthdataLoginClient.clientId,
+      on_behalf_of: onBehalfOf
+    },
+    responseStatus: 200,
+    responseBody: { uid: expectedUsername }
   });
 
-  const token = 'token';
-  const onBehalfOf = 'on-behalf-of';
-
-  nock('http://www.example.com')
-    .post(
-      '/oauth/tokens/user',
-      {
-        token,
-        client_id: 'client-id',
-        on_behalf_of: onBehalfOf
-      }
-    )
-    .basicAuth({ user: 'client-id', pass: 'client-password' })
-    .reply(
-      200,
-      {
-        uid: 'valid-username'
-      }
-    );
-
-  const username = await earthdataLogin.getTokenUsername({
+  const username = await earthdataLoginClient.getTokenUsername({
     token,
     onBehalfOf
   });
 
-  t.is(username, 'valid-username');
+  t.is(username, expectedUsername);
 });
 
-test.serial('EarthdataLogin.getTokenUsername() throws an exception for an invalid token', async (t) => {
-  const earthdataLogin = new EarthdataLogin({
-    clientId: 'client-id',
-    clientPassword: 'client-password',
-    earthdataLoginUrl: 'http://www.example.com',
-    redirectUri: 'http://www.example.com/cb'
+test('EarthdataLogin.getTokenUsername() throws an exception for an invalid token', async (t) => {
+  const earthdataLoginClient = buildEarthdataLoginClient();
+
+  const token = randomId('invalid-token');
+  const onBehalfOf = randomId('on-behalf-of');
+
+  nockEarthdataLoginCall({
+    earthdataLoginClient,
+    path: '/oauth/tokens/user',
+    requestBody: {
+      token,
+      client_id: earthdataLoginClient.clientId,
+      on_behalf_of: onBehalfOf
+    },
+    responseStatus: 403,
+    responseBody: {
+      error: 'invalid_token',
+      error_description: 'The token is either malformed or does not exist'
+    }
   });
 
-  const token = 'token';
-  const onBehalfOf = 'on-behalf-of';
-
-  nock('http://www.example.com')
-    .post(
-      '/oauth/tokens/user',
-      {
-        token,
-        client_id: 'client-id',
-        on_behalf_of: onBehalfOf
-      }
-    )
-    .basicAuth({ user: 'client-id', pass: 'client-password' })
-    .reply(
-      403,
-      {
-        error: 'invalid_token',
-        error_description: 'The token is either malformed or does not exist'
-      }
-    );
-
-  const error = await t.throwsAsync(
-    earthdataLogin.getTokenUsername({
+  await t.throwsAsync(
+    earthdataLoginClient.getTokenUsername({
       token,
       onBehalfOf
     }),
-    { instanceOf: EarthdataLoginError }
+    {
+      instanceOf: EarthdataLoginError,
+      code: 'InvalidToken'
+    }
   );
-
-  t.is(error.code, 'InvalidToken');
 });
 
-test.serial('EarthdataLogin.getTokenUsername() throws an exception for an expired token', async (t) => {
-  const earthdataLogin = new EarthdataLogin({
-    clientId: 'client-id',
-    clientPassword: 'client-password',
-    earthdataLoginUrl: 'http://www.example.com',
-    redirectUri: 'http://www.example.com/cb'
+test('EarthdataLogin.getTokenUsername() throws an exception for an expired token', async (t) => {
+  const earthdataLoginClient = buildEarthdataLoginClient();
+
+  const token = randomId('expired-token');
+  const onBehalfOf = randomId('on-behalf-of');
+
+  nockEarthdataLoginCall({
+    earthdataLoginClient,
+    path: '/oauth/tokens/user',
+    requestBody: {
+      token,
+      client_id: earthdataLoginClient.clientId,
+      on_behalf_of: onBehalfOf
+    },
+    responseStatus: 403,
+    responseBody: {
+      error: 'token_expired',
+      error_description: 'The token has expired'
+    }
   });
 
-  const token = 'token';
-  const onBehalfOf = 'on-behalf-of';
-
-  nock('http://www.example.com')
-    .post(
-      '/oauth/tokens/user',
-      {
-        token,
-        client_id: 'client-id',
-        on_behalf_of: onBehalfOf
-      }
-    )
-    .basicAuth({ user: 'client-id', pass: 'client-password' })
-    .reply(
-      403,
-      {
-        error: 'token_expired',
-        error_description: 'The token has expired'
-      }
-    );
-
-  const error = await t.throwsAsync(
-    earthdataLogin.getTokenUsername({
+  await t.throwsAsync(
+    earthdataLoginClient.getTokenUsername({
       token,
       onBehalfOf
     }),
-    { instanceOf: EarthdataLoginError }
+    {
+      instanceOf: EarthdataLoginError,
+      code: 'TokenExpired'
+    }
   );
-
-  t.is(error.code, 'TokenExpired');
 });
 
-test.serial('EarthdataLogin.getTokenUsername() throws an exception if EarthdataLogin returns 200 with invalid JSON', async (t) => {
-  const earthdataLogin = new EarthdataLogin({
-    clientId: 'client-id',
-    clientPassword: 'client-password',
-    earthdataLoginUrl: 'http://www.example.com',
-    redirectUri: 'http://www.example.com/cb'
+test('EarthdataLogin.getTokenUsername() throws an exception if EarthdataLogin returns 200 with invalid JSON', async (t) => {
+  const earthdataLoginClient = buildEarthdataLoginClient();
+
+  const token = randomId('invalid-json-200-token');
+  const onBehalfOf = randomId('on-behalf-of');
+
+  nockEarthdataLoginCall({
+    earthdataLoginClient,
+    path: '/oauth/tokens/user',
+    requestBody: {
+      token,
+      client_id: earthdataLoginClient.clientId,
+      on_behalf_of: onBehalfOf
+    },
+    responseStatus: 200,
+    responseBody: 'asdf'
   });
 
-  const token = 'token';
-  const onBehalfOf = 'on-behalf-of';
-
-  nock('http://www.example.com')
-    .post(
-      '/oauth/tokens/user',
-      {
-        token,
-        client_id: 'client-id',
-        on_behalf_of: onBehalfOf
-      }
-    )
-    .basicAuth({ user: 'client-id', pass: 'client-password' })
-    .reply(
-      200,
-      'asdf'
-    );
-
-  const error = await t.throwsAsync(
-    earthdataLogin.getTokenUsername({
+  await t.throwsAsync(
+    earthdataLoginClient.getTokenUsername({
       token,
       onBehalfOf
     }),
-    { instanceOf: EarthdataLoginError }
+    {
+      instanceOf: EarthdataLoginError,
+      code: 'InvalidResponse'
+    }
   );
-
-  t.is(error.code, 'InvalidResponse');
 });
 
-test.serial('EarthdataLogin.getTokenUsername() throws an exception if EarthdataLogin returns 403 with invalid JSON', async (t) => {
-  const earthdataLogin = new EarthdataLogin({
-    clientId: 'client-id',
-    clientPassword: 'client-password',
-    earthdataLoginUrl: 'http://www.example.com',
-    redirectUri: 'http://www.example.com/cb'
+test('EarthdataLogin.getTokenUsername() throws an exception if EarthdataLogin returns 403 with invalid JSON', async (t) => {
+  const earthdataLoginClient = buildEarthdataLoginClient();
+
+  const token = randomId('invalid-json-403-token');
+  const onBehalfOf = randomId('on-behalf-of');
+
+  nockEarthdataLoginCall({
+    earthdataLoginClient,
+    path: '/oauth/tokens/user',
+    requestBody: {
+      token,
+      client_id: earthdataLoginClient.clientId,
+      on_behalf_of: onBehalfOf
+    },
+    responseStatus: 403,
+    responseBody: 'asdf'
   });
 
-  const token = 'token';
-  const onBehalfOf = 'on-behalf-of';
-
-  nock('http://www.example.com')
-    .post(
-      '/oauth/tokens/user',
-      {
-        token,
-        client_id: 'client-id',
-        on_behalf_of: onBehalfOf
-      }
-    )
-    .basicAuth({ user: 'client-id', pass: 'client-password' })
-    .reply(
-      403,
-      'asdf'
-    );
-
-  const error = await t.throwsAsync(
-    earthdataLogin.getTokenUsername({
+  await t.throwsAsync(
+    earthdataLoginClient.getTokenUsername({
       token,
       onBehalfOf
     }),
-    { instanceOf: EarthdataLoginError }
+    {
+      instanceOf: EarthdataLoginError,
+      code: 'InvalidResponse'
+    }
   );
-
-  t.is(error.code, 'InvalidResponse');
 });
 
-test.serial('EarthdataLogin.getTokenUsername() throws an exception if EarthdataLogin returns an unexpected error', async (t) => {
-  const earthdataLogin = new EarthdataLogin({
-    clientId: 'client-id',
-    clientPassword: 'client-password',
-    earthdataLoginUrl: 'http://www.example.com',
-    redirectUri: 'http://www.example.com/cb'
+test('EarthdataLogin.getTokenUsername() throws an exception if EarthdataLogin returns an unexpected error', async (t) => {
+  const earthdataLoginClient = buildEarthdataLoginClient();
+
+  const token = randomId('unexpected-error-token');
+  const onBehalfOf = randomId('on-behalf-of');
+
+  nockEarthdataLoginCall({
+    earthdataLoginClient,
+    path: '/oauth/tokens/user',
+    requestBody: {
+      token,
+      client_id: earthdataLoginClient.clientId,
+      on_behalf_of: onBehalfOf
+    },
+    responseStatus: 403,
+    responseBody: {
+      error: 'something_unexpected',
+      error_description: 'Something unexpected'
+    }
   });
 
-  const token = 'token';
-  const onBehalfOf = 'on-behalf-of';
-
-  nock('http://www.example.com')
-    .post(
-      '/oauth/tokens/user',
-      {
-        token,
-        client_id: 'client-id',
-        on_behalf_of: onBehalfOf
-      }
-    )
-    .basicAuth({ user: 'client-id', pass: 'client-password' })
-    .reply(
-      403,
-      {
-        error: 'something_unexpected',
-        error_description: 'Something unexpected'
-      }
-    );
-
-  const error = await t.throwsAsync(
-    earthdataLogin.getTokenUsername({
-      token,
-      onBehalfOf
-    }),
-    { instanceOf: EarthdataLoginError }
+  await t.throwsAsync(
+    earthdataLoginClient.getTokenUsername({ token, onBehalfOf }),
+    {
+      instanceOf: EarthdataLoginError,
+      code: 'UnexpectedResponse'
+    }
   );
-
-  t.is(error.code, 'UnexpectedResponse');
 });

@@ -48,6 +48,11 @@ const httpErrorToEarthdataLoginError = (httpError) => {
   }
 };
 
+const validateUrl = (urlString) => {
+  // eslint-disable-next-line no-new
+  new URL(urlString);
+};
+
 /**
  * This is an interface to the Earthdata Login service.
  */
@@ -104,10 +109,12 @@ class EarthdataLogin extends OAuth2 {
     this.clientPassword = clientPassword;
 
     if (!earthdataLoginUrl) throw new TypeError('earthdataLoginUrl is required');
-    this.earthdataLoginUrl = new URL(earthdataLoginUrl);
+    validateUrl(earthdataLoginUrl);
+    this.earthdataLoginUrl = earthdataLoginUrl;
 
     if (!redirectUri) throw new TypeError('redirectUri is required');
-    this.redirectUri = new URL(redirectUri);
+    validateUrl(redirectUri);
+    this.redirectUri = redirectUri;
   }
 
   /**
@@ -117,11 +124,10 @@ class EarthdataLogin extends OAuth2 {
    * @returns {string} the Earthdata Login authorization URL
    */
   getAuthorizationUrl(state) {
-    const url = new URL(this.earthdataLoginUrl);
+    const url = new URL('/oauth/authorize', this.earthdataLoginUrl);
 
-    url.pathname = '/oauth/authorize';
     url.searchParams.set('client_id', this.clientId);
-    url.searchParams.set('redirect_uri', this.redirectUri.toString());
+    url.searchParams.set('redirect_uri', this.redirectUri);
     url.searchParams.set('response_type', 'code');
 
     if (state) {
@@ -132,9 +138,7 @@ class EarthdataLogin extends OAuth2 {
   }
 
   urlOfEndpoint(path) {
-    const url = new URL(path, this.earthdataLoginUrl);
-
-    return url.toString();
+    return (new URL(path, this.earthdataLoginUrl)).toString();
   }
 
   /**
@@ -152,7 +156,7 @@ class EarthdataLogin extends OAuth2 {
       body: {
         grant_type: 'authorization_code',
         code: authorizationCode,
-        redirect_uri: this.redirectUri.toString()
+        redirect_uri: this.redirectUri
       }
     });
   }
