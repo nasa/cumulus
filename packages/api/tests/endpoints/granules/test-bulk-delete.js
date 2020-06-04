@@ -37,6 +37,7 @@ test.before(async () => {
   process.env.METRICS_ES_HOST = randomString();
   process.env.METRICS_ES_USER = randomString();
   process.env.METRICS_ES_PASS = randomString();
+  process.env.CMR_ENVIRONMENT = randomString();
   process.env.cmr_client_id = randomString();
   process.env.cmr_oauth_provider = randomString();
   process.env.cmr_password_secret_name = randomString();
@@ -107,6 +108,7 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
     type: 'BULK_GRANULE_DELETE',
     envVars: {
       cmr_client_id: process.env.cmr_client_id,
+      CMR_ENVIRONMENT: process.env.CMR_ENVIRONMENT,
       cmr_oauth_provider: process.env.cmr_oauth_provider,
       cmr_password_secret_name: process.env.cmr_password_secret_name,
       cmr_provider: process.env.cmr_provider,
@@ -160,6 +162,7 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
     type: 'BULK_GRANULE_DELETE',
     envVars: {
       cmr_client_id: process.env.cmr_client_id,
+      CMR_ENVIRONMENT: process.env.CMR_ENVIRONMENT,
       cmr_oauth_provider: process.env.cmr_oauth_provider,
       cmr_password_secret_name: process.env.cmr_password_secret_name,
       cmr_provider: process.env.cmr_provider,

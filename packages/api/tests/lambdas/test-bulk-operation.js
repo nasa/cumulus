@@ -22,6 +22,7 @@ const bulkOperation = proxyquire('../../lambdas/bulk-operation', {
 let applyWorkflowStub;
 const envVars = {
   cmr_client_id: randomId('cmr_client'),
+  CMR_ENVIRONMENT: randomId('env'),
   cmr_oauth_provider: randomId('cmr_oauth'),
   cmr_password_secret_name: randomId('cmr_secret'),
   cmr_provider: randomId('cmr_provider'),
