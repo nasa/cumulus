@@ -4,6 +4,14 @@ const test = require('ava');
 const nock = require('nock');
 const CMRSearchConceptQueue = require('../CMRSearchConceptQueue');
 
+test.before(() => {
+  nock.cleanAll();
+});
+
+test.after.always(() => {
+  nock.cleanAll();
+});
+
 test('CMRSearchConceptQueue handles paging correctly.', async (t) => {
   const headers = { 'cmr-hits': 6 };
   const body1 = '{"hits":6,"items":[{"cmrEntry1":"data1"}, {"cmrEntry2":"data2"}]}';
@@ -25,6 +33,11 @@ test('CMRSearchConceptQueue handles paging correctly.', async (t) => {
     .query((q) => q.page_num === '3')
     .reply(200, body3, headers);
 
+  nock('https://cmr.uat.earthdata.nasa.gov')
+    .persist()
+    .post('/legacy-services/rest/tokens')
+    .reply(200, { token: 'ABCDE' });
+
   const expected = [
     { cmrEntry1: 'data1' },
     { cmrEntry2: 'data2' },
@@ -35,41 +48,17 @@ test('CMRSearchConceptQueue handles paging correctly.', async (t) => {
   ];
   process.env.CMR_ENVIRONMENT = 'UAT';
   const cmrSearchQueue = new CMRSearchConceptQueue({
-    provider: 'CUMULUS',
-    clientId: 'fakeClient',
+    cmrSettings: {
+      provider: 'CUMULUS',
+      clientId: 'fakeClient',
+      username: 'fakeUser',
+      password: 'fakePassword'
+    },
     type: 'granules',
     searchParams: {},
     format: 'umm_json'
   });
   for (let i = 0; i < 6; i += 1) {
-    t.deepEqual(await cmrSearchQueue.peek(), expected[i]); // eslint-disable-line no-await-in-loop
-    await cmrSearchQueue.shift(); // eslint-disable-line no-await-in-loop
-  }
-});
-
-test('CMRSearchConceptQueue uses cmrEnvironment from parameter over environment variable.', async (t) => {
-  const headers = { 'cmr-hits': 2 };
-  const body = '{"hits":2,"items":[{"cmrEntry1":"data1"}, {"cmrEntry2":"data2"}]}';
-
-  nock('https://cmr.sit.earthdata.nasa.gov')
-    .get('/search/granules.umm_json')
-    .query((q) => q.page_num === '1')
-    .reply(200, body, headers);
-
-  const expected = [
-    { cmrEntry1: 'data1' },
-    { cmrEntry2: 'data2' }
-  ];
-  process.env.CMR_ENVIRONMENT = 'UAT';
-  const cmrSearchQueue = new CMRSearchConceptQueue({
-    provider: 'CUMULUS',
-    clientId: 'fakeClient',
-    type: 'granules',
-    cmrEnvironment: 'SIT',
-    searchParams: {},
-    format: 'umm_json'
-  });
-  for (let i = 0; i < 2; i += 1) {
     t.deepEqual(await cmrSearchQueue.peek(), expected[i]); // eslint-disable-line no-await-in-loop
     await cmrSearchQueue.shift(); // eslint-disable-line no-await-in-loop
   }

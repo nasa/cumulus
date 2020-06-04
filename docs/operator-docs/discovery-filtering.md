@@ -17,7 +17,7 @@ very large remote file system for a small subset of files.
 
 This feature is available for certain ingest protocols (see below), and allows operators
 to filter which paths on a remote file system are explored by interpreting each segment of the
-collection's `provider_path` as a regular expression to filter contents listed recursively,
+task's `config.provider_path` as a regular expression to filter contents listed recursively,
 starting from the default directory.
 
 Items that fail the filter are ignored.
@@ -26,7 +26,7 @@ An item that passes the filter is handled depending on its type:
 - *Directories* that pass the filter are **recurred into** for further recursive listing.
 - *Files* that pass the filter are **appended** to the final output returned by the discovery.
 
-Two example values for `collection.provider_path` are provided below to help explain the recursive filtering algorithm:
+Two example values for `provider_path` are provided below to help explain the recursive filtering algorithm:
 
 ```json
 {

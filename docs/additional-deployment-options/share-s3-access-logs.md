@@ -14,7 +14,26 @@ The S3 Replicator is a node package that contains a simple lambda function, asso
 
 First ensure that you have enabled [S3 Server Access Logging](../deployment/server_access_logging).
 
-Next configure your `config.tfvars` as described in the s3-replicator/README.md to correspond to your deployment.  The `source_bucket` and `source_prefix` are determined by how you enabled the [S3 Server Access Logging](../deployment/server_access_logging).
+Next configure your `config.tfvars` as described in the [`s3-replicator/README.md`](https://github.com/nasa/cumulus/blob/master/tf-modules/s3-replicator/README.md) to correspond to your deployment.  The `source_bucket` and `source_prefix` are determined by how you enabled the [S3 Server Access Logging](../deployment/server_access_logging).
+
+In order to deploy the s3-replicator with cumulus you will need to add the module to your terraform main.tf definition.
+e.g.
+
+```hcl
+module "s3-replicator" {
+  source = "<path to s3-replicator.zip>"
+  prefix               = var.prefix
+  vpc_id               = var.vpc_id
+  subnet_ids           = var.subnet_ids
+  permissions_boundary = var.permissions_boundary_arn
+  source_bucket        = var.s3_replicator_config.source_bucket
+  source_prefix        = var.s3_replicator_config.source_prefix
+  target_bucket        = var.s3_replicator_config.target_bucket
+  target_prefix        = var.s3_replicator_config.target_prefix
+}
+```
+
+The terraform source package can be found on the [Cumulus github release page](https://github.com/nasa/cumulus/releases) under the asset tab `terraform-aws-cumulus-s3-replicator.zip`.
 
 ## ESDIS Metrics
 

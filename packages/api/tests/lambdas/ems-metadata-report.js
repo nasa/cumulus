@@ -5,7 +5,7 @@ const fs = require('fs-extra');
 const moment = require('moment');
 const path = require('path');
 const sinon = require('sinon');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 const awsServices = require('@cumulus/aws-client/services');
 const {
   fileExists,
@@ -60,6 +60,22 @@ async function addTestCollections() {
 
   await new models.Collection().create(matchingColls.concat(extraDbColls));
 }
+
+test.before(async () => {
+  process.env.cmr_password_secret_name = randomId('cmr-secret-name');
+  await awsServices.secretsManager().createSecret({
+    Name: process.env.cmr_password_secret_name,
+    SecretString: randomId('cmr-password')
+  }).promise();
+});
+
+test.after.always(async () => {
+  await awsServices.secretsManager().deleteSecret({
+    SecretId: process.env.cmr_password_secret_name,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
+  delete process.env.cmr_password_secret_name;
+});
 
 test.beforeEach(async (t) => {
   process.env.system_bucket = randomString();
