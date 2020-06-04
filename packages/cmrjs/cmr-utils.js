@@ -281,7 +281,7 @@ async function generateFileUrl({
   distributionBucketMap
 }) {
   if (cmrGranuleUrlType === 'distribution') {
-    const bucketPath = distributionBucketMap[file.bucket];
+    const bucketPath = _get(distributionBucketMap, file.bucket);
     if (!bucketPath) {
       throw new Error(`No distribution bucket mapping exists for ${file.bucket}`);
     }
@@ -355,15 +355,16 @@ async function constructOnlineAccessUrls({
   files,
   distEndpoint,
   buckets,
-  cmrGranuleUrlType = 'distribution'
+  cmrGranuleUrlType = 'distribution',
+  distributionBucketMap
 }) {
   const urlListPromises = files.map((file) => constructOnlineAccessUrl({
     file,
     distEndpoint,
     buckets,
-    cmrGranuleUrlType
+    cmrGranuleUrlType,
+    distributionBucketMap
   }));
-
   const urlList = await Promise.all(urlListPromises);
   return urlList.filter((urlObj) => !(urlObj == null));
 }
@@ -384,7 +385,8 @@ async function constructRelatedUrls({
   distEndpoint,
   buckets,
   s3CredsEndpoint = 's3credentials',
-  cmrGranuleUrlType = 'distribution'
+  cmrGranuleUrlType = 'distribution',
+  distributionBucketMap
 }) {
   const credsUrl = urljoin(distEndpoint, s3CredsEndpoint);
   const s3CredentialsObject = getS3CredentialsObject(credsUrl);
@@ -392,7 +394,8 @@ async function constructRelatedUrls({
     files,
     distEndpoint,
     buckets,
-    cmrGranuleUrlType
+    cmrGranuleUrlType,
+    distributionBucketMap
   });
 
   const relatedUrls = cmrUrlObjects.concat(s3CredentialsObject);
@@ -498,13 +501,15 @@ async function updateUMMGMetadata({
   files,
   distEndpoint,
   buckets,
-  cmrGranuleUrlType = 'distribution'
+  cmrGranuleUrlType = 'distribution',
+  distributionBucketMap
 }) {
   const newURLs = await constructRelatedUrls({
     files,
     distEndpoint,
     buckets,
-    cmrGranuleUrlType
+    cmrGranuleUrlType,
+    distributionBucketMap
   });
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
   const filename = getS3UrlOfFile(cmrFile);
@@ -639,7 +644,8 @@ async function updateEcho10XMLMetadata({
   distEndpoint,
   buckets,
   s3CredsEndpoint = 's3credentials',
-  cmrGranuleUrlType = 'distribution'
+  cmrGranuleUrlType = 'distribution',
+  distributionBucketMap
 }) {
   // add/replace the OnlineAccessUrls
   const filename = getS3UrlOfFile(cmrFile);
@@ -659,7 +665,8 @@ async function updateEcho10XMLMetadata({
     files,
     distEndpoint,
     buckets,
-    cmrGranuleUrlType
+    cmrGranuleUrlType,
+    distributionBucketMap
   });
   newURLs = newURLs.concat(getS3CredentialsObject(urljoin(distEndpoint, s3CredsEndpoint)));
 
@@ -703,7 +710,8 @@ async function updateCMRMetadata({
   distEndpoint,
   published,
   inBuckets = null,
-  cmrGranuleUrlType = 'distribution'
+  cmrGranuleUrlType = 'distribution',
+  distributionBucketMap
 }) {
   const filename = getS3UrlOfFile(cmrFile);
 
@@ -720,7 +728,8 @@ async function updateCMRMetadata({
     files,
     distEndpoint,
     buckets,
-    cmrGranuleUrlType
+    cmrGranuleUrlType,
+    distributionBucketMap
   };
 
   if (isECHO10File(filename)) {
@@ -757,7 +766,8 @@ async function reconcileCMRMetadata({
   granuleId,
   updatedFiles,
   distEndpoint,
-  published
+  published,
+  distributionBucketMap
 }) {
   const cmrMetadataFiles = getCmrFileObjs(updatedFiles);
   if (cmrMetadataFiles.length === 1) {
@@ -766,7 +776,8 @@ async function reconcileCMRMetadata({
       cmrFile: cmrMetadataFiles[0],
       files: updatedFiles,
       distEndpoint,
-      published
+      published,
+      distributionBucketMap
     });
   }
   if (cmrMetadataFiles.length > 1) {

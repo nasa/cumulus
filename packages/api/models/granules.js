@@ -203,6 +203,7 @@ class Granule extends Manager {
   async move(g, destinations, distEndpoint) {
     log.info(`granules.move ${g.granuleId}`);
 
+    const distributionBucketMap = await s3Utils.getJsonS3Object(process.env.system_bucket, `${process.env.stackName}/distribution_bucket_map.json`);
     const updatedFiles = await moveGranuleFiles(g.files, destinations);
 
     await cmrjs.reconcileCMRMetadata({
@@ -210,7 +211,7 @@ class Granule extends Manager {
       updatedFiles,
       distEndpoint,
       published: g.published,
-      teaEndpoint: process.env.TEA_API
+      distributionBucketMap
     });
 
     return this.update(

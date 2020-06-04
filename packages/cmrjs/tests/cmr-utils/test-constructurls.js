@@ -25,10 +25,10 @@ test.beforeEach((t) => {
     public: { name: randomId('public'), type: 'public' }
   };
   t.context.buckets = new BucketsConfig(t.context.bucketConfig);
-  cmrUtils.__set__('getDistributionBucketMap', async () => ({
+  t.context.distributionBucketMap = {
     [t.context.bucketConfig.protected.name]: t.context.bucketConfig.protected.name,
     [t.context.bucketConfig.public.name]: t.context.bucketConfig.public.name
-  }));
+  };
 });
 
 test('mapCNMTypeToCMRType returns a mapping', (t) => {
@@ -62,7 +62,8 @@ test('returns correct url for protected data', async (t) => {
   const actual = await constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets
+    buckets: t.context.buckets,
+    distributionBucketMap: t.context.distributionBucketMap
   });
 
   t.deepEqual(actual, expected);
@@ -88,7 +89,8 @@ test('Returns correct url object for public data.', async (t) => {
   const actual = await constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets
+    buckets: t.context.buckets,
+    distributionBucketMap: t.context.distributionBucketMap
   });
 
   t.deepEqual(actual, expected);
@@ -106,7 +108,8 @@ test('Returns empty list for private data.', async (t) => {
   const actual = await constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets
+    buckets: t.context.buckets,
+    distributionBucketMap: t.context.distributionBucketMap
   });
 
   t.deepEqual(actual, []);
@@ -149,7 +152,8 @@ test('returns an array of correct url objects given a list of moved files.', asy
   const actual = await constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets
+    buckets: t.context.buckets,
+    distributionBucketMap: t.context.distributionBucketMap
   });
 
   t.deepEqual(actual.sort(sortByURL), expected.sort(sortByURL));
@@ -188,7 +192,8 @@ test('constructRelatedUrls returns expected array when called with file list', a
   const actual = await constructRelatedUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets
+    buckets: t.context.buckets,
+    distributionBucketMap: t.context.distributionBucketMap
   });
 
   t.deepEqual(actual.sort(sortByURL), expected.sort(sortByURL));
@@ -201,7 +206,8 @@ test('constructRelatedUrls returns expected array when called with an empty file
   const actual = await constructRelatedUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets
+    buckets: t.context.buckets,
+    distributionBucketMap: t.context.distributionBucketMap
   });
 
   t.deepEqual(actual, expected);
@@ -230,7 +236,8 @@ test.serial('returns correct links with s3 cmrGranuleUrlType', async (t) => {
     files: movedFiles,
     distEndpoint,
     buckets: t.context.buckets,
-    cmrGranuleUrlType: 's3'
+    cmrGranuleUrlType: 's3',
+    distributionBucketMap: t.context.distributionBucketMap
   });
 
   t.deepEqual(actual, expected.sort(sortByURL));
@@ -250,7 +257,8 @@ test.serial('returns no links when cmrGranuleUrlType is none', async (t) => {
     files: movedFiles,
     distEndpoint,
     buckets: t.context.buckets,
-    cmrGranuleUrlType: 'none'
+    cmrGranuleUrlType: 'none',
+    distributionBucketMap: t.context.distributionBucketMap
   });
 
   t.deepEqual(actual, []);
@@ -279,7 +287,8 @@ test('constructRelatedUrls returns s3 urls when cmrGranuleUrlType is s3', async 
     files: movedFiles,
     distEndpoint,
     buckets: t.context.buckets,
-    cmrGranuleUrlType: 's3'
+    cmrGranuleUrlType: 's3',
+    distributionBucketMap: t.context.distributionBucketMap
   });
 
   t.deepEqual(actual, expected);
@@ -299,7 +308,8 @@ test('constructRelatedUrls returns just s3 credentials url when cmrGranuleUrlTyp
     files: movedFiles,
     distEndpoint,
     buckets: t.context.buckets,
-    cmrGranuleUrlType: 'none'
+    cmrGranuleUrlType: 'none',
+    distributionBucketMap: t.context.distributionBucketMap
   });
 
   t.deepEqual(actual, [omit(s3CredentialsEndpointObject, 'URLDescription')]);

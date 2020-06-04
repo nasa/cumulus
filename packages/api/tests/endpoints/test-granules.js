@@ -9,6 +9,7 @@ const {
   buildS3Uri,
   createBucket,
   fileExists,
+  putJsonS3Object,
   recursivelyDeleteS3Bucket
 } = require('@cumulus/aws-client/S3');
 const {
@@ -695,6 +696,8 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
           filepath: destinationFilepath
         }
       ];
+
+      await putJsonS3Object(process.env.system_bucket, `${process.env.stackName}/distribution_bucket_map.json`, {});
 
       const response = await request(app)
         .put(`/granules/${newGranule.granuleId}`)

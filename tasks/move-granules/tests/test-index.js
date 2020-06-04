@@ -8,6 +8,7 @@ const {
   buildS3Uri,
   listS3ObjectsV2,
   recursivelyDeleteS3Bucket,
+  putJsonS3Object,
   s3ObjectExists,
   promiseS3Upload,
   headObject,
@@ -21,6 +22,7 @@ const {
   randomString, randomId, validateConfig, validateInput, validateOutput
 } = require('@cumulus/common/test-utils');
 const { promisify } = require('util');
+const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
 
 const { moveGranules } = require('..');
 
@@ -104,11 +106,26 @@ test.beforeEach(async (t) => {
   t.context.stagingBucket = randomId('staging');
   t.context.publicBucket = randomId('public');
   t.context.protectedBucket = randomId('protected');
+  t.context.systemBucket = randomId('system');
+  t.context.stackName = 'moveGranulesTestStack';
   await Promise.all([
     s3().createBucket({ Bucket: t.context.stagingBucket }).promise(),
     s3().createBucket({ Bucket: t.context.publicBucket }).promise(),
-    s3().createBucket({ Bucket: t.context.protectedBucket }).promise()
+    s3().createBucket({ Bucket: t.context.protectedBucket }).promise(),
+    s3().createBucket({ Bucket: t.context.systemBucket }).promise()
   ]);
+  process.env.system_bucket = t.context.systemBucket;
+  process.env.stackName = t.context.stackName;
+  putJsonS3Object(
+    t.context.systemBucket,
+    getDistributionBucketMapKey(t.context.stackName),
+    {
+      [t.context.stagingBucket]: t.context.stagingBucket,
+      [t.context.publicBucket]: t.context.publicBucket,
+      [t.context.protectedBucket]: t.context.protectedBucket,
+      [t.context.systemBucket]: t.context.systemBucket
+    }
+  );
 
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
   const rawPayload = await readFile(payloadPath, 'utf8');
