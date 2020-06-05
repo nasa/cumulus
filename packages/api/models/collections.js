@@ -160,14 +160,7 @@ class Collection {
     const { name, version } = item;
     await this.collectionConfigStore.put(name, version, item);
 
-    const collectionRecord = await this.dynamoDbClient.create(item);
-    const publishRecord = {
-      event: 'Create',
-      record: collectionRecord
-    };
-    await publishCollectionSnsMessage(publishRecord);
-
-    return collectionRecord;
+    return this.dynamoDbClient.create(item);
   }
 
   createItems(items) {
@@ -214,16 +207,6 @@ class Collection {
     }
 
     await this.collectionConfigStore.delete(name, version);
-
-    const record = {
-      event: 'Delete',
-      deletedAt: Date.now(),
-      record: {
-        name,
-        version
-      }
-    };
-    await publishCollectionSnsMessage(record);
 
     return this.dynamoDbClient.delete({ name, version });
   }
