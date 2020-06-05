@@ -27,7 +27,7 @@ output "stepfunction_event_reporter_queue_url" {
 }
 
 output "report_collections_sns_topic_arn" {
-  value = aws_sns_topic.report_collections_topic.arn
+  value = module.archive.report_collections_topic.arn
 }
 
 output "report_executions_sns_topic_arn" {
