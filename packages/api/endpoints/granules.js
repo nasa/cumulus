@@ -315,7 +315,9 @@ async function bulkDelete(req, res) {
         launchpad_passphrase_secret_name: process.env.launchpad_passphrase_secret_name,
         METRICS_ES_HOST: process.env.METRICS_ES_HOST,
         METRICS_ES_USER: process.env.METRICS_ES_USER,
-        METRICS_ES_PASS: process.env.METRICS_ES_PASS
+        METRICS_ES_PASS: process.env.METRICS_ES_PASS,
+        stackName: process.env.stackName,
+        system_bucket: process.env.system_bucket
       }
     }
   });
