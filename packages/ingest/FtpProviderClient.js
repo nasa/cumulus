@@ -2,23 +2,13 @@
 
 const get = require('lodash/get');
 const JSFtp = require('jsftp');
-const KMS = require('@cumulus/aws-client/KMS');
 const { PassThrough } = require('stream');
 const log = require('@cumulus/common/log');
 const omit = require('lodash/omit');
 const S3 = require('@cumulus/aws-client/S3');
-const { S3KeyPairProvider } = require('@cumulus/common/key-pair-provider');
 const { isNil } = require('@cumulus/common/util');
 const recursion = require('./recursion');
-const { lookupMimeType } = require('./util');
-
-const decrypt = async (ciphertext) => {
-  try {
-    return await KMS.decryptBase64String(ciphertext);
-  } catch (_) {
-    return S3KeyPairProvider.decrypt(ciphertext);
-  }
-};
+const { lookupMimeType, decrypt } = require('./util');
 
 class FtpProviderClient {
   // jsftp.ls is called in _list and uses 'STAT' as a default. Some FTP
@@ -39,7 +29,6 @@ class FtpProviderClient {
     if (!this.plaintextUsername) {
       this.plaintextUsername = await decrypt(this.providerConfig.username);
     }
-
     return this.plaintextUsername;
   }
 
@@ -47,7 +36,6 @@ class FtpProviderClient {
     if (!this.plaintextPassword) {
       this.plaintextPassword = await decrypt(this.providerConfig.password);
     }
-
     return this.plaintextPassword;
   }
 
@@ -138,7 +126,7 @@ class FtpProviderClient {
         return resolve(data.map((d) => ({
           name: d.name,
           path: path,
-          size: parseInt(d.size, 10),
+          size: Number.parseInt(d.size, 10),
           time: d.time,
           type: d.type
         })));

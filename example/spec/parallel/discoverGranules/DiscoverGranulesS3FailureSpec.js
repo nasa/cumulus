@@ -44,15 +44,11 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
     });
     await createProvider({ prefix: stackName, provider });
     // Create the collection
-    const loadedCollection = await loadCollection({
+    collection = await loadCollection({
       filename: './data/collections/s3_MOD09GQ_006/s3_MOD09GQ_006.json',
       postfix: testId
     });
 
-    collection = {
-      ...loadedCollection,
-      provider_path: `cumulus-test-data/${testId}`
-    };
     await createCollection({ prefix: stackName, collection });
 
     // Execute the DiscoverGranules workflow

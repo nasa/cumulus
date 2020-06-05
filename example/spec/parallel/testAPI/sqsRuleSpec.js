@@ -2,6 +2,9 @@
 
 const fs = require('fs-extra');
 const replace = require('lodash/replace');
+const pWaitFor = require('p-wait-for');
+
+const { deleteGranule } = require('@cumulus/api-client/granules');
 const { sqs } = require('@cumulus/aws-client/services');
 const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
 const { createSqsQueues, getSqsQueueMessageCounts } = require('@cumulus/api/lib/testUtils');
@@ -11,7 +14,6 @@ const {
   addCollections,
   addRules,
   addProviders,
-  granulesApi: granulesApiTestUtils,
   cleanupProviders,
   cleanupCollections,
   readJsonFilesFromDir,
@@ -86,6 +88,22 @@ async function ingestGranule(queue) {
   return granuleId;
 }
 
+const waitForQueueMessageCount = (queueUrl, expectedCount) =>
+  pWaitFor(
+    async () => {
+      const {
+        numberOfMessagesAvailable,
+        numberOfMessagesNotVisible
+      } = await getSqsQueueMessageCounts(queueUrl);
+      return numberOfMessagesAvailable === expectedCount &&
+        numberOfMessagesNotVisible === expectedCount;
+    },
+    {
+      interval: 3000,
+      timeout: 30 * 1000
+    }
+  );
+
 describe('The SQS rule', () => {
   let ruleList = [];
 
@@ -143,7 +161,7 @@ describe('The SQS rule', () => {
     });
 
     afterAll(async () => {
-      await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId });
+      await deleteGranule({ prefix: config.stackName, granuleId });
     });
 
     describe('If the message is processable by the workflow', () => {
@@ -175,15 +193,13 @@ describe('The SQS rule', () => {
 
         expect(messages.length).toBe(1);
         // maxReceiveCount of RedrivePolicy is 3
-        expect(parseInt(messages[0].Attributes.ApproximateReceiveCount, 10)).toBe(4);
+        expect(Number.parseInt(messages[0].Attributes.ApproximateReceiveCount, 10)).toBe(4);
         expect(messages[0].Body).toEqual(invalidMessage);
       });
     });
 
     it('messages are picked up and removed from source queue', async () => {
-      const numberOfMessages = await getSqsQueueMessageCounts(queues.queueUrl);
-      expect(numberOfMessages.numberOfMessagesAvailable).toBe(0);
-      expect(numberOfMessages.numberOfMessagesNotVisible).toBe(0);
+      await expectAsync(waitForQueueMessageCount(queues.queueUrl, 0)).toBeResolved();
     });
   });
 });
