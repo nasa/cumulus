@@ -62,8 +62,33 @@ async function handlePdrs(event) {
   }).promise();
 }
 
+/**
+ * Put collection messages from SNS topic onto S3.
+ *
+ * @param {Object} event - from SNS
+ * @returns {Promise} confirmation of added message
+ */
+async function handleCollections(event) {
+  const s3 = new S3();
+  const messageString = event.Records[0].Sns.Message;
+  const message = JSON.parse(messageString);
+  const {
+    event: eventType,
+    record: collection
+  } = message;
+  if (!collection.name) {
+    return Promise.resolve();
+  }
+  return s3.putObject({
+    Bucket: process.env.system_bucket,
+    Key: `${process.env.stackName}/test-output/${collection.name}-${collection.version}-${eventType}.output`,
+    Body: JSON.stringify(event, null, 2)
+  }).promise();
+}
+
 module.exports = {
   handleExecutions,
   handleGranules,
-  handlePdrs
+  handlePdrs,
+  handleCollections
 };
