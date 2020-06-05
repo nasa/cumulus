@@ -357,7 +357,7 @@ describe('the sf-starter lambda function', () => {
           messageLimit: totalNumMessages
         })
       }).promise();
-      messagesConsumed = parseInt(Payload, 10);
+      messagesConsumed = Number.parseInt(Payload, 10);
       // Can't test that the messages consumed is exactly the number the
       // maximum allowed because of eventual consistency in SQS
       expect(messagesConsumed).toBeGreaterThan(0);
