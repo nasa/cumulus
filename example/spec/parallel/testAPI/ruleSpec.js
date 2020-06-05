@@ -226,7 +226,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
 
   it('the rule is returned with the listed rules', async () => {
     await expectAsync(
-      await pWaitFor(
+      pWaitFor(
         async () => {
           const listRulesResponse = await rulesApi.listRules({
             prefix,
