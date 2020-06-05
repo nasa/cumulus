@@ -151,8 +151,8 @@ resource "aws_lambda_function" "s3_credentials" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
   function_name    = "${var.prefix}-s3-credentials-endpoint"
-  filename         = "${path.module}/dist/src.zip"
-  source_code_hash = filebase64sha256("${path.module}/dist/src.zip")
+  filename         = "${path.module}/../../packages/s3-credentials-endpoint/dist/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../packages/s3-credentials-endpoint/dist/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.s3_credentials_lambda[0].arn
   runtime          = "nodejs10.x"
