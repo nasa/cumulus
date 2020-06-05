@@ -21,7 +21,7 @@ const {
 const awsServices = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const GranuleFilesCache = require('../../lib/GranuleFilesCache');
 
@@ -108,6 +108,14 @@ async function fetchCompletedReport(reportRecord) {
     .then(JSON.parse);
 }
 
+test.before(async () => {
+  process.env.cmr_password_secret_name = randomId('cmr-secret-name');
+  await awsServices.secretsManager().createSecret({
+    Name: process.env.cmr_password_secret_name,
+    SecretString: randomId('cmr-password')
+  }).promise();
+});
+
 test.beforeEach(async (t) => {
   process.env.CollectionsTable = randomString();
   process.env.GranulesTable = randomString();
@@ -142,6 +150,14 @@ test.afterEach.always((t) => {
   CMR.prototype.searchCollections.restore();
   CMRSearchConceptQueue.prototype.peek.restore();
   CMRSearchConceptQueue.prototype.shift.restore();
+});
+
+test.after.always(async () => {
+  await awsServices.secretsManager().deleteSecret({
+    SecretId: process.env.cmr_password_secret_name,
+    ForceDeleteWithoutRecovery: true
+  }).promise();
+  delete process.env.cmr_password_secret_name;
 });
 
 test.serial('A valid reconciliation report is generated for no buckets', async (t) => {
