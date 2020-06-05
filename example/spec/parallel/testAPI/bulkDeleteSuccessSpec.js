@@ -138,7 +138,8 @@ describe('POST /granules/bulkDelete', () => {
         await getExecutionWithStatus({
           prefix,
           arn: firstIngestGranuleExecutionArn,
-          status: 'completed'
+          status: 'completed',
+          timeout: 60
         });
 
         // Wait for the granule to be fully ingested
