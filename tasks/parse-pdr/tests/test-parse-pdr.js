@@ -12,7 +12,7 @@ const {
   validateInput,
   validateOutput
 } = require('@cumulus/common/test-utils');
-const { CollectionConfigStore } = require('@cumulus/common');
+const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { PDRParsingError } = require('@cumulus/errors');
 const { streamTestData } = require('@cumulus/test-data');
 const { parsePdr } = require('..');
