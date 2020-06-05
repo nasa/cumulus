@@ -18,35 +18,6 @@ const {
   timestampedName
 } = require('../../helpers/testUtils');
 
-const LIST_RULES_LIMIT = 50;
-
-/**
- * Query the rules list from the API for the ruleName rule
- *
- * @param {string} ruleName - rule name to find
- * @param {string} prefix - deployment prefix
- * @param {int} pageNumber - page number to query
- * @returns {Promise<Object>} - object containing whether the rule
- * was found and the total number of rules
- */
-async function queryForRule(ruleName, prefix, pageNumber) {
-  const listRulesResponse = await rulesApi.listRules({
-    prefix,
-    query: {
-      limit: LIST_RULES_LIMIT,
-      page: pageNumber
-    }
-  });
-
-  const responseBody = JSON.parse(listRulesResponse.body);
-
-  const ruleNames = responseBody.results.map((x) => x.name);
-
-  return {
-    ruleFound: ruleNames.includes(ruleName),
-    count: responseBody.meta.count
-  };
-}
 
 describe('When I create a scheduled rule via the Cumulus API', () => {
   let config;
@@ -255,18 +226,17 @@ describe('When I create a one-time rule via the Cumulus API', () => {
 
   it('the rule is returned with the listed rules', async () => {
     await expectAsync(
-      pWaitFor(
+      await pWaitFor(
         async () => {
-          let pageNumber = 1;
-          let ruleResults = await queryForRule(helloWorldRule.name, prefix, pageNumber);
+          const listRulesResponse = await rulesApi.listRules({
+            prefix,
+            query: {
+              name: helloWorldRule.name
+            }
+          });
+          const responseBody = JSON.parse(listRulesResponse.body);
 
-          // If the rule list spans multiple pages, query the other pages
-          while (!ruleResults.ruleFound && ruleResults.count > (LIST_RULES_LIMIT * pageNumber)) {
-            // eslint-disable-next-line no-await-in-loop
-            ruleResults = await queryForRule(helloWorldRule.name, prefix, pageNumber += 1);
-          }
-
-          return ruleResults.ruleFound;
+          return responseBody.meta.count > 0;
         },
         {
           interval: 1000,
