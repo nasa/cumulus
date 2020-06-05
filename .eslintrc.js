@@ -159,7 +159,6 @@ module.exports = {
     'unicorn/no-for-loop': 'off',
     'unicorn/no-null': 'warn',
     'unicorn/no-process-exit': 'off',
-    'unicorn/no-zero-fractions': 'off',
     'unicorn/prefer-flat-map': 'off',
     'unicorn/prefer-negative-index': 'off',
     'unicorn/prefer-set-has': 'off',
