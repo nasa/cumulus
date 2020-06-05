@@ -5,10 +5,10 @@ const proxyquire = require('proxyquire');
 const test = require('ava');
 
 const awsServices = require('@cumulus/aws-client/services');
-const Semaphore = require('@cumulus/common/Semaphore');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const stepFunctions = require('@cumulus/message/StepFunctions');
 
+const Semaphore = require('../../lib/Semaphore');
 const { Manager } = require('../../models');
 const {
   handleSemaphoreDecrementTask

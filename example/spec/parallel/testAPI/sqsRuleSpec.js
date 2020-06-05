@@ -193,7 +193,7 @@ describe('The SQS rule', () => {
 
         expect(messages.length).toBe(1);
         // maxReceiveCount of RedrivePolicy is 3
-        expect(parseInt(messages[0].Attributes.ApproximateReceiveCount, 10)).toBe(4);
+        expect(Number.parseInt(messages[0].Attributes.ApproximateReceiveCount, 10)).toBe(4);
         expect(messages[0].Body).toEqual(invalidMessage);
       });
     });

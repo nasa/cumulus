@@ -66,7 +66,7 @@ class DistributionEvent {
    * @returns {number} bytes sent
    */
   get bytesSent() {
-    return parseInt(this.rawLine.split('"')[2].trim().split(' ')[2], 10);
+    return Number.parseInt(this.rawLine.split('"')[2].trim().split(' ')[2], 10);
   }
 
   /**
@@ -95,7 +95,7 @@ class DistributionEvent {
    * @returns {number} size in bytes
    */
   get objectSize() {
-    return parseInt(this.rawLine.split('"')[2].trim().split(' ')[3], 10);
+    return Number.parseInt(this.rawLine.split('"')[2].trim().split(' ')[3], 10);
   }
 
   /**
