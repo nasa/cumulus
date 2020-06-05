@@ -157,7 +157,7 @@ module.exports = {
     'unicorn/filename-case': 'off',
     'unicorn/no-fn-reference-in-iterator': 'off',
     'unicorn/no-for-loop': 'off',
-    'unicorn/no-null': 'off',
+    'unicorn/no-null': 'warn',
     'unicorn/no-process-exit': 'off',
     'unicorn/no-zero-fractions': 'off',
     'unicorn/prefer-flat-map': 'off',
