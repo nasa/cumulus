@@ -26,6 +26,10 @@ output "stepfunction_event_reporter_queue_url" {
   value = module.archive.sf_event_sqs_to_db_records_sqs_queue_url
 }
 
+output "report_collections_sns_topic_arn" {
+  value = aws_sns_topic.report_collections_topic.arn
+}
+
 output "report_executions_sns_topic_arn" {
   value = module.archive.report_executions_sns_topic_arn
 }
