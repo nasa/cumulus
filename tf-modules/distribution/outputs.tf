@@ -17,3 +17,7 @@ output "s3_credentials_redirect_uri" {
 output "thin_egress_app_redirect_uri" {
   value = module.thin_egress_app.urs_redirect_uri
 }
+
+output "distribution_bucket_map" {
+  value = jsondecode(data.aws_lambda_invocation.tea_map_cache.result)
+}

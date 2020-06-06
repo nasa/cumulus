@@ -11,6 +11,8 @@ resource "aws_lambda_function" "tea_cache" {
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs10.x"
+  memory_size      = 256
+  timeout          = 120
   environment {
     variables = {
       TEA_API = var.tea_api_url

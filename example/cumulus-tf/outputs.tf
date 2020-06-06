@@ -6,6 +6,10 @@ output "archive_api_redirect_uri" {
   value = module.cumulus.archive_api_redirect_uri
 }
 
+output "distribution_bucket_map" {
+  value = module.cumulus.distribution_bucket_map
+}
+
 output "distribution_url" {
   value = module.cumulus.distribution_url
 }
