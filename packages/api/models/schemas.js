@@ -44,7 +44,7 @@ module.exports.asyncOperation = {
     description: { type: 'string' },
     operationType: {
       type: 'string',
-      enum: ['ES Index', 'Bulk Granules', 'Bulk Delete', 'Kinesis Replay']
+      enum: ['ES Index', 'Bulk Granules', 'Bulk Granule Delete', 'Kinesis Replay']
     },
     output: {
       description: 'The result of the operation, stored as JSON',

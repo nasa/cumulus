@@ -357,8 +357,8 @@ async function getSqsQueueMessageCounts(queueUrl) {
   } = attributes.Attributes;
 
   return {
-    numberOfMessagesAvailable: parseInt(numberOfMessagesAvailable, 10),
-    numberOfMessagesNotVisible: parseInt(numberOfMessagesNotVisible, 10)
+    numberOfMessagesAvailable: Number.parseInt(numberOfMessagesAvailable, 10),
+    numberOfMessagesNotVisible: Number.parseInt(numberOfMessagesNotVisible, 10)
   };
 }
 

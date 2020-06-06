@@ -1,9 +1,8 @@
 'use strict';
 
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const cloneDeep = require('lodash/cloneDeep');
 const { BaseSearch } = require('./search');
-
 
 class Collection extends BaseSearch {
   constructor(event, type, index) {
