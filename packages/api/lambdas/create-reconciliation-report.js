@@ -176,7 +176,9 @@ async function reconciliationReportForCollections() {
  * @param {Object} bucketsConfig - bucket configuration object
  * @returns {Promise<Object>} an object with the okCount, onlyInCumulus, onlyInCmr
  */
-async function reconciliationReportForGranuleFiles(granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap) {
+async function reconciliationReportForGranuleFiles(
+  granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap
+) {
   let okCount = 0;
   const onlyInCumulus = [];
   const onlyInCmr = [];
@@ -432,7 +434,9 @@ async function createReconciliationReport(params) {
 
   // Fetch the bucket names to reconcile
   const bucketsConfigJson = await getJsonS3Object(systemBucket, getBucketsConfigKey(stackName));
-  const distributionBucketMap = await getJsonS3Object(systemBucket, getDistributionBucketMapKey(stackName));
+  const distributionBucketMap = await getJsonS3Object(
+    systemBucket, getDistributionBucketMapKey(stackName)
+  );
 
   const dataBuckets = Object.values(bucketsConfigJson)
     .filter(isDataBucket).map((config) => config.name);
@@ -484,7 +488,9 @@ async function createReconciliationReport(params) {
   });
 
   // compare the CUMULUS holdings with the holdings in CMR
-  const cumulusCmrReport = await reconciliationReportForCumulusCMR(bucketsConfig, distributionBucketMap);
+  const cumulusCmrReport = await reconciliationReportForCumulusCMR(
+    bucketsConfig, distributionBucketMap
+  );
   report = Object.assign(report, cumulusCmrReport);
 
   // Create the full report

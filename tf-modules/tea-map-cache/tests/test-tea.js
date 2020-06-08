@@ -39,4 +39,3 @@ test('getTeaBucketPath returns empty string if TEA throws a 404', async (t) => {
   const actual = await getTeaBucketPath();
   t.is('', actual);
 });
-

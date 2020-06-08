@@ -299,7 +299,10 @@ async function moveGranules(event) {
   const cmrFiles = granulesToCmrFileObjects(granulesInput);
   const granulesByGranuleId = keyBy(granulesInput, 'granuleId');
 
-  const distributionBucketMap = await getJsonS3Object(process.env.system_bucket, getDistributionBucketMapKey(process.env.stackName));
+  const distributionBucketMap = await getJsonS3Object(
+    process.env.system_bucket,
+    getDistributionBucketMapKey(process.env.stackName)
+  );
 
   let movedGranules;
 

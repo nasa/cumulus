@@ -829,6 +829,7 @@ module.exports = {
   constructOnlineAccessUrl,
   generateEcho10XMLString,
   generateFileUrl,
+  getCmrSettings,
   getGranuleTemporalInfo,
   granulesToCmrFileObjects,
   isCMRFile,
@@ -838,9 +839,5 @@ module.exports = {
   metadataObjectFromCMRFile,
   publish2CMR,
   reconcileCMRMetadata,
-  updateCMRMetadata,
-  granulesToCmrFileObjects,
-  updateCMRMetadata,
-  generateEcho10XMLString,
-  getCmrSettings
+  updateCMRMetadata
 };
