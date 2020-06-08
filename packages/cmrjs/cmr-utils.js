@@ -311,6 +311,8 @@ async function generateFileUrl({
  * @param {Object} params.file - file object
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {BucketsConfig} params.buckets -  stack BucketConfig instance
+ * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
+ *                                                               for all distribution bucketss
  * @returns {Object} online access url object
  */
 async function constructOnlineAccessUrl({
@@ -348,6 +350,8 @@ async function constructOnlineAccessUrl({
  * @param {Array<Object>} params.files - array of file objects
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {BucketsConfig} params.buckets -  stack BucketConfig instance
+ * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
+ *                                                               for all distribution bucketss
  * @returns {Array<{URL: string, URLDescription: string}>}
  *   returns the list of online access url objects
  */
@@ -377,6 +381,8 @@ async function constructOnlineAccessUrls({
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {BucketsConfig} params.buckets -  Class instance
  * @param {string} params.s3CredsEndpoint - Optional endpoint for acquiring temporary s3 creds
+ * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
+ *                                                               for all distribution bucketss
  * @returns {Array<{URL: string, string, Description: string, Type: string}>}
  *   returns the list of online access url objects
  */
@@ -494,6 +500,8 @@ async function uploadUMMGJSONCMRFile(metadataObject, cmrFile) {
  * @param {Array<Object>} params.files - array of moved file objects.
  * @param {string} params.distEndpoint - distribution endpoint form config.
  * @param {BucketsConfig} params.buckets - stack BucketConfig instance.
+ * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
+ *                                                               for all distribution bucketss
  * @returns {Promise} returns promised updated UMMG metadata object.
  */
 async function updateUMMGMetadata({
@@ -636,6 +644,8 @@ function buildMergedEchoURLObject(URLlist = [], originalURLlist = [], removedURL
  * @param {Array<Object>} params.files - array of file objects
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {BucketsConfig} params.buckets - stack BucketConfig instance
+ * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
+ *                                                               for all distribution bucketss
  * @returns {Promise} returns promised updated metadata object.
  */
 async function updateEcho10XMLMetadata({
@@ -700,6 +710,8 @@ async function updateEcho10XMLMetadata({
  * @param {BucketsConfig} params.inBuckets - BucketsConfig instance if available, will
  *                                    default one build with s3 stored config.
  * @param {string} params.cmrGranuleUrlType - type of granule CMR url
+ * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
+ *                                                               for all distribution buckets
  * @returns {Promise} returns promise to publish metadata to CMR Service
  *                    or resolved promise if published === false.
  */
@@ -761,6 +773,8 @@ async function updateCMRMetadata({
  * @param {string} params.distEndpoint - distribution endpoint URL
  * @param {boolean} params.published - boolean true if the data should be published to
  *   the CMR service.
+ * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
+ *                                                               for all distribution buckets
  */
 async function reconcileCMRMetadata({
   granuleId,
