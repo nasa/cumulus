@@ -29,18 +29,21 @@ const buildEarthdataLoginClient = () =>
 const nockEarthdataLoginCall = ({
   earthdataLoginClient,
   path,
+  requestHeaders = {},
   requestBody,
   responseStatus,
   responseBody
-}) => {
-  nock(earthdataLoginClient.earthdataLoginUrl)
+}) =>
+  nock(
+    earthdataLoginClient.earthdataLoginUrl,
+    { reqheaders: requestHeaders }
+  )
     .post(path, requestBody)
     .basicAuth({
       user: earthdataLoginClient.clientId,
       pass: earthdataLoginClient.clientPassword
     })
     .reply(responseStatus, responseBody);
-};
 
 test.before(() => {
   nock.disableNetConnect();
@@ -420,6 +423,35 @@ test('EarthdataLogin.getTokenUsername() returns the username associated with a v
   });
 
   t.is(username, expectedUsername);
+});
+
+test('EarthdataLogin.getTokenUsername() forwards the X-Request-Id if present', async (t) => {
+  const earthdataLoginClient = buildEarthdataLoginClient();
+
+  const expectedUsername = randomId('valid-username');
+  const token = randomId('valid-token');
+  const onBehalfOf = randomId('on-behalf-of');
+  const xRequestId = randomId('x-request-id');
+
+  const nockScope = nockEarthdataLoginCall({
+    earthdataLoginClient,
+    path: '/oauth/tokens/user',
+    requestHeaders: { 'X-Request-Id': xRequestId },
+    requestBody: {
+      token,
+      client_id: earthdataLoginClient.clientId,
+      on_behalf_of: onBehalfOf
+    },
+    responseStatus: 200,
+    responseBody: { uid: expectedUsername }
+  });
+  await earthdataLoginClient.getTokenUsername({
+    token,
+    onBehalfOf,
+    xRequestId
+  });
+
+  t.true(nockScope.isDone());
 });
 
 test('EarthdataLogin.getTokenUsername() throws an exception for an invalid token', async (t) => {

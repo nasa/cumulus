@@ -190,7 +190,8 @@ const handleTokenAuthRequest = async (req, res, next) => {
   try {
     const userName = await earthdataLoginClient.getTokenUsername({
       onBehalfOf: req.get('EDL-Client-Id'),
-      token: req.get('EDL-Token')
+      token: req.get('EDL-Token'),
+      xRequestId: req.get('X-Request-Id')
     });
 
     req.authorizedMetadata = { userName };
@@ -287,12 +288,12 @@ distributionApp.use(hsts({ maxAge: 31536000 }));
 distributionApp.use('/', distributionRouter);
 
 // global 404 response when page is not found
-distributionApp.use((req, res) => {
+distributionApp.use((_req, res) => {
   res.boom.notFound('requested page not found');
 });
 
 // catch all error handling
-distributionApp.use((err, req, res, _next) => {
+distributionApp.use((err, _req, res, _next) => {
   res.error = JSON.stringify(err, Object.getOwnPropertyNames(err));
   return res.boom.badImplementation('Something broke!');
 });

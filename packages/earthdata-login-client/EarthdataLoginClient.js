@@ -203,10 +203,13 @@ class EarthdataLoginClient {
     }
   }
 
-  async getTokenUsername({ onBehalfOf, token }) {
+  async getTokenUsername({ onBehalfOf, token, xRequestId }) {
+    const headers = xRequestId ? { 'X-Request-Id': xRequestId } : undefined;
+
     try {
       const response = await this.sendRequest({
         earthdataLoginPath: 'oauth/tokens/user',
+        headers,
         body: {
           client_id: this.clientId,
           on_behalf_of: onBehalfOf,
@@ -231,13 +234,14 @@ class EarthdataLoginClient {
     }
   }
 
-  sendRequest({ earthdataLoginPath, body }) {
+  sendRequest({ earthdataLoginPath, headers, body }) {
     return got.post(
       earthdataLoginPath,
       {
         prefixUrl: this.earthdataLoginUrl,
         username: this.clientId,
         password: this.clientPassword,
+        headers,
         form: body,
         responseType: 'json'
       }
