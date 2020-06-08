@@ -105,19 +105,21 @@ const authorizedUserGroup = (samlUserGroup, authorizedGroup) => {
 const parseSamlResponse = (samlResponse) => {
   let username;
   let accessToken;
-  let userGroup;
+  let userGroups;
   try {
     const attributes = samlResponse.user.attributes;
     username = get(attributes, 'UserId', get(attributes, 'UserID'))[0];
     accessToken = samlResponse.user.session_index;
-    userGroup = samlResponse.user.attributes.userGroup[0];
+    userGroups = samlResponse.user.attributes.userGroup;
   } catch (error) {
     throw new Error(
       `invalid SAML response received ${JSON.stringify(samlResponse)}`
     );
   }
 
-  if (!authorizedUserGroup(userGroup, process.env.oauth_user_group)) {
+  const validGroups = userGroups.filter((userGroup) =>
+    authorizedUserGroup(userGroup, process.env.oauth_user_group));
+  if (validGroups.length === 0) {
     throw new Error(
       `User not authorized for this application ${username} not a member of userGroup: ${process.env.oauth_user_group}`
     );

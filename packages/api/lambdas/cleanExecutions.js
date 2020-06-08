@@ -13,8 +13,8 @@ async function cleanExecutionPayloads(ExecutionModel) {
     return [];
   }
 
-  const nonCompleteTimeout = parseInt(process.env.nonCompleteExecutionPayloadTimeout, 10);
-  const completeTimeout = parseInt(process.env.completeExecutionPayloadTimeout, 10);
+  const nonCompleteTimeout = Number.parseInt(process.env.nonCompleteExecutionPayloadTimeout, 10);
+  const completeTimeout = Number.parseInt(process.env.completeExecutionPayloadTimeout, 10);
 
   const configuration = [{
     name: 'nonCompleteExecutionPayloadTimeout',

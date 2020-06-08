@@ -222,7 +222,6 @@ function fakeCollectionFactory(options = {}) {
   return {
     name: randomId('collectionName'),
     version: '0.0.0',
-    provider_path: '',
     duplicateHandling: 'replace',
     granuleId: '^MOD09GQ\\.A[\\d]{7}\.[\\S]{6}\\.006\\.[\\d]{13}$',
     granuleIdExtraction: '(MOD09GQ\\.(.*))\\.hdf',
@@ -358,8 +357,8 @@ async function getSqsQueueMessageCounts(queueUrl) {
   } = attributes.Attributes;
 
   return {
-    numberOfMessagesAvailable: parseInt(numberOfMessagesAvailable, 10),
-    numberOfMessagesNotVisible: parseInt(numberOfMessagesNotVisible, 10)
+    numberOfMessagesAvailable: Number.parseInt(numberOfMessagesAvailable, 10),
+    numberOfMessagesNotVisible: Number.parseInt(numberOfMessagesNotVisible, 10)
   };
 }
 

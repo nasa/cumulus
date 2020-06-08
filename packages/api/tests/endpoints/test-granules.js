@@ -20,7 +20,6 @@ const { CMR } = require('@cumulus/cmr-client');
 const {
   metadataObjectFromCMRFile
 } = require('@cumulus/cmrjs/cmr-utils');
-const { EcsStartTaskError } = require('@cumulus/errors');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 
@@ -518,6 +517,16 @@ test.serial('remove a granule from CMR with launchpad authentication', async (t)
   }
 });
 
+test('DELETE returns 404 if granule does not exist', async (t) => {
+  const granuleId = randomString();
+  const response = await request(app)
+    .delete(`/granules/${granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+  t.true(response.body.message.includes('No record found'));
+});
+
 test.serial('DELETE deleting an existing granule that is published will fail', async (t) => {
   const response = await request(app)
     .delete(`/granules/${t.context.fakeGranules[0].granuleId}`)
@@ -993,44 +1002,4 @@ test('PUT with action move returns failure if more than one granule file exists'
 
   filesExistingStub.restore();
   moveGranuleStub.restore();
-});
-
-test.serial('request to /granules/bulk endpoint returns 500 if starting ECS task throws unexpected error', async (t) => {
-  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').throws(
-    new Error('failed to start')
-  );
-
-  try {
-    const response = await request(app)
-      .post('/granules/bulk')
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .send({
-        workflowName: 'workflowName',
-        ids: [1, 2, 3]
-      });
-    t.is(response.status, 500);
-  } finally {
-    asyncOperationStartStub.restore();
-  }
-});
-
-test.serial('request to /granules/bulk endpoint returns 503 if starting ECS task throws unexpected error', async (t) => {
-  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').throws(
-    new EcsStartTaskError('failed to start')
-  );
-
-  try {
-    const response = await request(app)
-      .post('/granules/bulk')
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .send({
-        workflowName: 'workflowName',
-        ids: [1, 2, 3]
-      });
-    t.is(response.status, 503);
-  } finally {
-    asyncOperationStartStub.restore();
-  }
 });

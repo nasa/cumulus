@@ -15,6 +15,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `DiscoverPdrs` task
   - `event.config.collection` is no longer a parameter to the `DiscoverPdrs`
     task
+  - Collections no longer support the `provider_path` property. The tasks that
+    relied on that property are now referencing `config.meta.provider_path`.
+    Workflows should be updated accordingly.
+- **CUMULUS-1977**
+  - Moved bulk granule deletion endpoint from `/bulkDelete` to `/granules/bulkDelete`
+
+- **CUMULUS-1997**
+  - `@cumulus/cmr-client/CMRSearchConceptQueue` parameters have been changed to take a `cmrSettings` object containing clientId, provider, and auth information. This can be generated using `@cumulus/cmrjs/cmr-utils/getCmrSettings`. The `cmrEnvironment` variable has been removed.
 
 ### Added
 
@@ -26,7 +34,125 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1952**
   - Updated HTTP(S) provider client to accept username/password for Basic authorization. This change adds support for Basic Authorization such as Earthdata login redirects to ingest (i.e. as implemented in SyncGranule), but not to discovery (i.e. as implemented in DiscoverGranules). Discovery still expects the provider's file system to be publicly accessible, but not the individual files and their contents.
   - **NOTE**: Using this in combination with the HTTP protocol may expose usernames and passwords to intermediary network entities. HTTPS is highly recommended.
+- **CUMULUS-1977**
+  - Implemented POST `/granules/bulkDelete` API endpoint to support deleting granules specified by ID or returned by the provided query in the request body. If the request is successful, the endpoint returns the async operation ID that has been started to remove the granules.
+    - To use a query in the request body, your deployment must be [configured to access the Elasticsearch host for ESDIS metrics](https://nasa.github.io/cumulus/docs/additional-deployment-options/cloudwatch-logs-delivery#esdis-metrics) in your environment
+  - Added `@cumulus/api/models/Granule.getRecord()` method to return raw record from DynamoDB
+  - Added `@cumulus/api/models/Granule.delete()` method which handles deleting the granule record from DynamoDB and the granule files from S3
 
+### Changed
+
+- **CUMULUS-1977**
+  - API endpoint POST `/granules/bulk` now returns a 202 status on a successful response instead of a 200 response
+  - API endpoint DELETE `/granules/<granule-id>` now returns a 404 status if the granule record was already deleted
+  - `@cumulus/api/models/Granule.update()` now returns the updated granule record
+- **CUMULUS-1997**
+  - Added optional `launchpad` configuration to `@cumulus/hyrax-metadata-updates` task config schema.
+
+### Fixed
+
+- **CUMULUS-1997**
+  - Updated all CMR operations to use configured authentication scheme
+- **CUMULUS-2010**
+  - Updated `@cumulus/api/launchpadSaml` to support multiple userGroup attributes from the SAML response
+
+### Removed
+
+- The deprecated `@cumulus/common.bucketsConfigJsonObject` function has been
+  removed
+- The deprecated `@cumulus/common.CollectionConfigStore` class has been removed
+- The deprecated `@cumulus/common.concurrency` module has been removed
+- The deprecated `@cumulus/common.constructCollectionId` function has been
+  removed
+- The deprecated `@cumulus/common.launchpad` module has been removed
+- The deprecated `@cumulus/common.LaunchpadToken` class has been removed
+- The deprecated `@cumulus/common.Semaphore` class has been removed
+- The deprecated `@cumulus/common.stringUtils` module has been removed
+- The deprecated `@cumulus/common/aws.cloudwatchlogs` function has been removed
+- The deprecated `@cumulus/common/aws.deleteS3Files` function has been removed
+- The deprecated `@cumulus/common/aws.deleteS3Object` function has been removed
+- The deprecated `@cumulus/common/aws.dynamodb` function has been removed
+- The deprecated `@cumulus/common/aws.dynamodbDocClient` function has been
+  removed
+- The deprecated `@cumulus/common/aws.getExecutionArn` function has been removed
+- The deprecated `@cumulus/common/aws.headObject` function has been removed
+- The deprecated `@cumulus/common/aws.listS3ObjectsV2` function has been removed
+- The deprecated `@cumulus/common/aws.parseS3Uri` function has been removed
+- The deprecated `@cumulus/common/aws.promiseS3Upload` function has been removed
+- The deprecated `@cumulus/common/aws.recursivelyDeleteS3Bucket` function has
+  been removed
+- The deprecated `@cumulus/common/aws.s3CopyObject` function has been removed
+- The deprecated `@cumulus/common/aws.s3ObjectExists` function has been removed
+- The deprecated `@cumulus/common/aws.s3PutObject` function has been removed
+- The deprecated `@cumulus/common/bucketsConfigJsonObject` function has been
+  removed
+- The deprecated `@cumulus/common/CloudWatchLogger` class has been removed
+- The deprecated `@cumulus/common/collection-config-store.CollectionConfigStore`
+  class has been removed
+- The deprecated `@cumulus/common/collection-config-store.constructCollectionId`
+  function has been removed
+- The deprecated `@cumulus/common/concurrency.limit` function has been removed
+- The deprecated `@cumulus/common/concurrency.mapTolerant` function has been
+  removed
+- The deprecated `@cumulus/common/concurrency.promiseUrl` function has been
+  removed
+- The deprecated `@cumulus/common/concurrency.toPromise` function has been
+  removed
+- The deprecated `@cumulus/common/concurrency.unless` function has been removed
+- The deprecated `@cumulus/common/config.parseConfig` function has been removed
+- The deprecated `@cumulus/common/config.resolveResource` function has been
+  removed
+- The deprecated `@cumulus/common/DynamoDb.get` function has been removed
+- The deprecated `@cumulus/common/DynamoDb.scan` function has been removed
+- The deprecated `@cumulus/common/FieldPattern` class has been removed
+- The deprecated `@cumulus/common/launchpad.getLaunchpadToken` function has been
+  removed
+- The deprecated `@cumulus/common/launchpad.validateLaunchpadToken` function has
+  been removed
+- The deprecated `@cumulus/common/LaunchpadToken` class has been removed
+- The deprecated `@cumulus/common/message.buildCumulusMeta` function has been
+  removed
+- The deprecated `@cumulus/common/message.buildQueueMessageFromTemplate`
+  function has been removed
+- The deprecated `@cumulus/common/message.getCollectionIdFromMessage` function
+  has been removed
+- The deprecated `@cumulus/common/message.getMaximumExecutions` function has
+  been removed
+- The deprecated `@cumulus/common/message.getMessageExecutionArn` function has
+  been removed
+- The deprecated `@cumulus/common/message.getMessageExecutionName` function has
+  been removed
+- The deprecated `@cumulus/common/message.getMessageFromTemplate` function has
+  been removed
+- The deprecated `@cumulus/common/message.getMessageGranules` function has been
+  removed
+- The deprecated `@cumulus/common/message.getMessageStateMachineArn` function
+  has been removed
+- The deprecated `@cumulus/common/message.getQueueName` function has been
+  removed
+- The deprecated `@cumulus/common/message.getQueueNameByUrl` function has been
+  removed
+- The deprecated `@cumulus/common/message.hasQueueAndExecutionLimit` function
+  has been removed
+- The deprecated `@cumulus/common/Semaphore` class has been removed
+- The deprecated `@cumulus/common/string.globalReplace` functon has been removed
+- The deprecated `@cumulus/common/string.isNonEmptyString` functon has been
+  removed
+- The deprecated `@cumulus/common/string.isValidHostname` functon has been
+  removed
+- The deprecated `@cumulus/common/string.match` functon has been removed
+- The deprecated `@cumulus/common/string.matches` functon has been removed
+- The deprecated `@cumulus/common/string.replace` functon has been removed
+- The deprecated `@cumulus/common/string.toLower` functon has been removed
+- The deprecated `@cumulus/common/string.toUpper` functon has been removed
+- The deprecated `@cumulus/common/workflows.getWorkflowArn` function has been
+  removed
+- The deprecated `@cumulus/common/workflows.getWorkflowFile` function has been
+  removed
+- The deprecated `@cumulus/common/workflows.getWorkflowList` function has been
+  removed
+- The deprecated `@cumulus/common/workflows.getWorkflowTemplate` function has
+  been removed
 
 ## [v1.23.2] 2020-05-22
 
