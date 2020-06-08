@@ -291,9 +291,9 @@ async function generateFileUrl({
   }
 
   if (cmrGranuleUrlType === 's3') {
-    /* This is here for legacy compliance reasons due to model simplification in
-       CUMULUS-1139 where filename was remapped to bucket and key
-       Note: this change also remapped name to fileName*/
+    /* The check for file.filename is here
+       for legacy compliance reasons due to model simplification in
+       CUMULUS-1139 where filename was remapped to bucket and key*/
     if (file.filename) {
       return file.filename;
     }
