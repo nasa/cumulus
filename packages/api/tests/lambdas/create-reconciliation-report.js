@@ -897,7 +897,9 @@ test.serial('reconciliationReportForGranuleFiles does not fail if no distributio
     RelatedUrls: matchingFilesInCmr.concat(filesOnlyInCmr).concat(urlsShouldOnlyInCmr)
   };
 
-  const report = await reconciliationReportForGranuleFiles(granInDb, granInCmr, bucketsConfig, distributionBucketMap);
+  const report = await reconciliationReportForGranuleFiles(
+    granInDb, granInCmr, bucketsConfig, distributionBucketMap
+  );
   t.is(report.okCount, matchingFilesInDb.length + privateFilesInDb.length);
 
   t.is(report.onlyInCumulus.length, filesOnlyInDb.length);
