@@ -113,12 +113,6 @@ variable "tags" {
   default     = {}
 }
 
-variable "internal_tea_api" {
-  description = "Internal TEA endpoint used by workflow lambdas utilizing cmrjs/cmr-utils"
-  type      = string
-  default     = null
-}
-
 variable "throttled_queues" {
   description = "Array of configuration for custom queues with execution limits"
   type    = list(object({ id = string, url = string, execution_limit = number }))

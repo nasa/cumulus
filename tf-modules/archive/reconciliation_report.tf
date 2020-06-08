@@ -28,7 +28,6 @@ resource "aws_lambda_function" "create_reconciliation_report" {
       launchpad_api                    = var.launchpad_api
       launchpad_certificate            = var.launchpad_certificate
       launchpad_passphrase_secret_name = length(var.launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.api_launchpad_passphrase.name
-      TEA_API                          = var.internal_tea_api
     }
   }
   tags = var.tags

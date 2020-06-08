@@ -21,6 +21,7 @@ const {
   removeNilProperties,
   renameProperty
 } = require('@cumulus/common/util');
+const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
 const {
   DeletePublishedGranule
 } = require('@cumulus/errors');
@@ -214,7 +215,10 @@ class Granule extends Manager {
   async move(g, destinations, distEndpoint) {
     log.info(`granules.move ${g.granuleId}`);
 
-    const distributionBucketMap = await s3Utils.getJsonS3Object(process.env.system_bucket, `${process.env.stackName}/distribution_bucket_map.json`);
+    const distributionBucketMap = await s3Utils.getJsonS3Object(
+      process.env.system_bucket,
+      getDistributionBucketMapKey(process.env.stackName)
+    );
     const updatedFiles = await moveGranuleFiles(g.files, destinations);
 
     await cmrUtils.reconcileCMRMetadata({

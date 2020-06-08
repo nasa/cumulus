@@ -44,8 +44,6 @@ const { generateFileUrl } = proxyquire('../../cmr-utils', {
     s3TagSetToQueryString
   }
 });
-// TODO: Brought in from master
-// const generateFileUrl = cmrUtil.__get__('generateFileUrl');
 
 const launchpadSecret = randomId('launchpad-secret');
 const launchpadPassphrase = randomId('launchpad-passphrase');
@@ -229,7 +227,6 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
   const filesObject = await readJsonFixture('./tests/fixtures/filesObjectFixture.json');
   const buckets = new BucketsConfig(await readJsonFixture('./tests/fixtures/buckets.json'));
 
-  // TODO - DRY this up
   const bucketMappings = Object.keys(buckets.buckets).map((key) => (
     { [buckets.buckets[key].name]: buckets.buckets[key].name }
   ));
@@ -242,7 +239,6 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
   const revertGenerateXml = cmrUtil.__set__('generateEcho10XMLString', () => 'testXmlString');
   const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRXMLFile', () => cmrMetadata);
   const revertMockUpload = cmrUtil.__set__('uploadEcho10CMRFile', uploadEchoSpy);
-  // TODO needs bucket map
 
   const onlineAccessURLsExpected = [
     {

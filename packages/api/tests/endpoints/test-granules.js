@@ -23,7 +23,7 @@ const {
 } = require('@cumulus/cmrjs/cmr-utils');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-
+const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
 const assertions = require('../../lib/assertions');
 const models = require('../../models');
 const bootstrap = require('../../lambdas/bootstrap');
@@ -97,7 +97,7 @@ async function setupBucketsConfig() {
   // Create the required bucket map configuration file
   await putObject({
     Bucket: systemBucket,
-    Key: `${process.env.stackName}/distribution_bucket_map.json`,
+    Key: getDistributionBucketMapKey(process.env.stackName),
     Body: JSON.stringify({
       [systemBucket]: systemBucket,
       [buckets.public.name]: buckets.public.name
@@ -706,7 +706,11 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
         }
       ];
 
-      await putJsonS3Object(process.env.system_bucket, `${process.env.stackName}/distribution_bucket_map.json`, {});
+      await putJsonS3Object(
+        process.env.system_bucket,
+        getDistributionBucketMapKey(process.env.stackName),
+        {}
+      );
 
       const response = await request(app)
         .put(`/granules/${newGranule.granuleId}`)

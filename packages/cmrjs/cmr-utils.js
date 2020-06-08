@@ -316,7 +316,7 @@ async function generateFileUrl({
  * @returns {Object} online access url object
  */
 async function constructOnlineAccessUrl({
-  file, // 'file object' given CMR.
+  file,
   distEndpoint,
   buckets,
   cmrGranuleUrlType = 'distribution',

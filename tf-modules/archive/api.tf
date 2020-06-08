@@ -29,7 +29,6 @@ locals {
       ReconciliationReportsTable   = var.dynamo_tables.reconciliation_reports.name
       RulesTable                   = var.dynamo_tables.rules.name
       oauth_user_group             = var.oauth_user_group
-      TEA_API                      = var.internal_tea_api
       TOKEN_REDIRECT_ENDPOINT      = local.api_redirect_uri
       TOKEN_SECRET                 = var.token_secret
       backgroundQueueName          = var.background_queue_name

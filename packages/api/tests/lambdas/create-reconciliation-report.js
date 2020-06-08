@@ -22,6 +22,8 @@ const awsServices = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
+
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const GranuleFilesCache = require('../../lib/GranuleFilesCache');
 
@@ -66,7 +68,7 @@ async function storeBucketsConfigToS3(buckets, systemBucket, stackName) {
 
   await awsServices.s3().putObject({
     Bucket: systemBucket,
-    Key: `${stackName}/distribution_bucket_map.json`,
+    Key: getDistributionBucketMapKey(stackName),
     Body: JSON.stringify(distributionMap)
   }).promise();
 

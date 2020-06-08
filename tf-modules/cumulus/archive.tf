@@ -110,7 +110,5 @@ module "archive" {
 
   log_destination_arn = var.log_destination_arn
 
-  internal_tea_api = module.distribution.internal_tea_api
-
   tags = var.tags
 }
