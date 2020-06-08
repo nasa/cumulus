@@ -6,7 +6,7 @@ terraform {
 resource "aws_lambda_function" "tea_cache" {
   function_name    = "${var.prefix}-TeaCache"
   description      = "Bootstrap lambda to write tea cache file"
-  filename         = "${path.module}/lambda.zip"
+  filename         = "${path.module}/../../packages/tea-map-cache/dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/tea-map-cache/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
