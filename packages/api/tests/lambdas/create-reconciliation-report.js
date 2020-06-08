@@ -139,14 +139,16 @@ test.beforeEach(async (t) => {
   sinon.stub(CMRSearchConceptQueue.prototype, 'shift').callsFake(() => null);
 });
 
-test.afterEach.always((t) => {
-  Promise.all(flatten([
-    t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket),
-    new models.Collection().deleteTable(),
-    new models.Granule().deleteTable(),
-    GranuleFilesCache.deleteCacheTable(),
-    new models.ReconciliationReport().deleteTable()
-  ]));
+test.afterEach.always(async (t) => {
+  await Promise.all(
+    flatten([
+      t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket),
+      new models.Collection().deleteTable(),
+      new models.Granule().deleteTable(),
+      GranuleFilesCache.deleteCacheTable(),
+      new models.ReconciliationReport().deleteTable()
+    ])
+  );
   CMR.prototype.searchCollections.restore();
   CMRSearchConceptQueue.prototype.peek.restore();
   CMRSearchConceptQueue.prototype.shift.restore();
