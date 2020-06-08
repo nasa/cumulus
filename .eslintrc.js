@@ -151,7 +151,7 @@ module.exports = {
     'node/no-missing-require': 'off',
 
     'unicorn/better-regex': 'off',
-    'unicorn/catch-error-name': 'off',
+    'unicorn/catch-error-name': 'warn',
     'unicorn/consistent-function-scoping': 'off',
     'unicorn/explicit-length-check': 'off',
     'unicorn/filename-case': 'off',
