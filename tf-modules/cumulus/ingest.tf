@@ -10,7 +10,6 @@ module "ingest" {
 
   # Buckets config
   system_bucket = var.system_bucket
-  distribution_bucket_map = jsonencode(module.distribution.distribution_bucket_map)
 
   # VPC config
   vpc_id            = var.vpc_id

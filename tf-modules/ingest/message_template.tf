@@ -61,8 +61,6 @@ locals {
 
   message_template_key = "${var.prefix}/workflow_template.json"
 
-  distribution_bucket_map = jsondecode(var.distribution_bucket_map)
-
   message_template = jsonencode({
     cumulus_meta = {
       message_source          = "sfn"
@@ -72,7 +70,6 @@ locals {
       workflow_start_time     = null
     }
     meta = {
-      distribution_bucket_map = local.distribution_bucket_map
       workflow_name  = null
       workflow_tasks = {}
       stack          = var.prefix

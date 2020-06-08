@@ -4,11 +4,6 @@ variable "buckets" {
   default = {}
 }
 
-variable "distribution_bucket_map" {
-  type    = string
-  default = "{}"
-}
-
 variable "cmr_oauth_provider" {
   type = string
 }
