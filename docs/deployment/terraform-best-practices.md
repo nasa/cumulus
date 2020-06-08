@@ -19,9 +19,9 @@ To enable bucket versioning, either use the AWS CLI command given in
 [Configuring the Cumulus deployment], or the AWS Management Console, as follows:
 
 1. Go to the S3 service
-1. Go to the bucket used for storing Terraform state files
-1. Click the **Properties** tab
-1. If the **Versioning** property is disabled, click **Disabled** to enable it,
+2. Go to the bucket used for storing Terraform state files
+3. Click the **Properties** tab
+4. If the **Versioning** property is disabled, click **Disabled** to enable it,
    which should then show the property as **Enabled**, with a check mark next
    to it.
 
@@ -40,24 +40,24 @@ For either approach, when using the **AWS Management Console**, the first steps
 are:
 
 1. Go to the S3 service
-1. Go to the appropriate bucket
-1. On the **Overview** tab for the bucket, click the **Show** button to show
+2. Go to the appropriate bucket
+3. On the **Overview** tab for the bucket, click the **Show** button to show
    object versions
-1. Locate your state file
+4. Locate your state file
 
 To **copy a previous version of your state file into the same bucket**:
 
 1. Select the desired (good) version of the state file that you wish to make
    the latest version
-1. Click the **Download** button
-1. Choose the location where you wish to save the file
-1. **IMPORTANT:** Ensure the file name is identical to the name of the state
+2. Click the **Download** button
+3. Choose the location where you wish to save the file
+4. **IMPORTANT:** Ensure the file name is identical to the name of the state
    file in the bucket
-1. Click **Save**
-1. Now click the **Upload** button
-1. Click the **Add files** button
-1. Choose the file you just downloaded and click **Open**
-1. Click the **Next** button (multiple times), then click the **Upload** button
+5. Click **Save**
+6. Now click the **Upload** button
+7. Click the **Add files** button
+8. Choose the file you just downloaded and click **Open**
+9. Click the **Next** button (multiple times), then click the **Upload** button
 
 Once the upload completes, the newly uploaded file (identical to the good
 version you just downloaded) becomes the **Latest version** of the state file.
@@ -66,8 +66,8 @@ version you just downloaded) becomes the **Latest version** of the state file.
 of the state file:
 
 1. Click the latest version of the file (listed at the top)
-1. Click the **Actions** button and select **Delete**
-1. On the dialog window, click the **Delete** button
+2. Click the **Actions** button and select **Delete**
+3. On the dialog window, click the **Delete** button
 
 At this point, the previous version is now the latest version.
 
@@ -130,11 +130,12 @@ sure you want to delete the bucket.
 To perform this action this via the **AWS Management Console**:
 
 1. Go to the S3 service
-1. Go to the bucket used for storing state files
-1. Click the **Permissions** tab
-1. Click **Bucket Policy**
-1. Add the following policy statement to _deny_ the s3:DeleteBucket action for
+2. Go to the bucket used for storing state files
+3. Click the **Permissions** tab
+4. Click **Bucket Policy**
+5. Add the following policy statement to _deny_ the s3:DeleteBucket action for
    all (`"*"`) principals, replacing `BUCKET_NAME` with the name of the bucket:
+
    ```json
    {
      "Statement": [
@@ -148,7 +149,8 @@ To perform this action this via the **AWS Management Console**:
      ]
    }
    ```
-1. Click **Save**
+
+6. Click **Save**
 
 To perform this action via the **AWS CLI** instead, save the JSON shown above
 to a file named `policy.json` and run the following command from the directory
@@ -186,7 +188,7 @@ How do I destroy all of my resources when I actually want to?
 
 ### When Your State File Is Out of Sync with Your Actual State
 
-Finding and deleting resources via tags, detecting conflicts via redeploy, etc. 
+Finding and deleting resources via tags, detecting conflicts via redeploy, etc.
 
 [Configuring the Cumulus deployment]:
   README.md#configuring-the-cumulus-deployment
