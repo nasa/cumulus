@@ -55,6 +55,10 @@ function removeLock(bucket, providerName, filename) {
 }
 
 async function proceed(bucket, provider, filename, counter = 0) {
+  if (provider.globalConnectionLimit === undefined) {
+    return true;
+  }
+
   // Fail if lock is not removed after 270 tries.
   if (counter > 270) {
     return false;

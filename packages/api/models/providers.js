@@ -30,7 +30,7 @@ const validateHost = (host) => {
 };
 
 class Provider extends Manager {
-  static recordIsValid(item, schema = null) {
+  static recordIsValid(item, schema) {
     super.recordIsValid(item, schema);
 
     validateHost(item.host);

@@ -42,6 +42,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-1982**
+  - The `globalConnectionLimit` property of providers is now optional and
+    defaults to "unlimited"
 - **CUMULUS-1977**
   - API endpoint POST `/granules/bulk` now returns a 202 status on a successful response instead of a 200 response
   - API endpoint DELETE `/granules/<granule-id>` now returns a 404 status if the granule record was already deleted
