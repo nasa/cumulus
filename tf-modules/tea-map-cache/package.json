@@ -1,0 +1,29 @@
+{
+  "name": "@cumuluss/tea-map-cache",
+  "version": "1.22.1",
+  "description": "Tea Bucket Map Cache Writer",
+  "main": "index.js",
+  "private": true,
+  "engines": {
+    "node": ">=10.16.3"
+  },
+  "scripts": {
+    "test": "../../node_modules/.bin/ava",
+    "package": "rm -f lambda.zip && zip -r -q lambda.zip *.js node_modules"
+  },
+  "ava": {
+    "files": [
+      "tests/**/*.js"
+    ],
+    "fail-fast": true,
+    "verbose": true,
+    "timeout": "2m"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "aws-sdk": "^2.585.0",
+    "got": "^9.6.0",
+    "p-retry": "^4.2.0"
+  }
+}

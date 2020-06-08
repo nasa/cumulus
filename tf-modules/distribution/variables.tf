@@ -1,5 +1,9 @@
 # Required
 
+variable "lambda_processing_role_arn" {
+  type        = string
+  description = "Cumulus lambda processing role"
+}
 variable "prefix" {
   type        = string
   description = "Resource prefix unique to this deployment"
@@ -26,6 +30,12 @@ variable "api_gateway_stage" {
   type        = string
   default     = "DEV"
   description = "The API Gateway stage to create"
+}
+
+variable "bucket_map_key" {
+  type        = string
+  default     = null
+  description = "Optional custom TEA Bucket Map location.  If not provided, Cumulus will generate one for you"
 }
 
 variable "deploy_s3_credentials_endpoint" {

@@ -19,6 +19,10 @@ variable "cmr_provider" {
 variable "cmr_username" {
   type = string
 }
+variable "bucket_map_key" {
+  type = string
+  default = null
+}
 
 variable "cumulus_message_adapter_lambda_layer_arn" {
   type = string
