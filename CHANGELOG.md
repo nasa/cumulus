@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- **CUMULUS-1958**
+  - The following methods exported from `@cumulus/cmr-js/cmr-utils` were made async, and added distributionBucketMap as a parameter:
+    - constructOnlineAccessUrl
+    - generateFileUrl
+    - reconcileCMRMetadata
+    - updateCMRMetadata
+
 - **CUMULUS-1969**
   - The `DiscoverPdrs` task now expects `provider_path` to be provided at
     `event.config.provider_path`, not `event.config.collection.provider_path`
@@ -25,6 +32,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `@cumulus/cmr-client/CMRSearchConceptQueue` parameters have been changed to take a `cmrSettings` object containing clientId, provider, and auth information. This can be generated using `@cumulus/cmrjs/cmr-utils/getCmrSettings`. The `cmrEnvironment` variable has been removed.
 
 ### Added
+
+- **CUMULUS-1958**
+  - Add the ability for users to specify a `bucket_map_key` to the `cumulus` terraform module as an override for the default .yaml values that are passed to TEA by Core.    Using this option *requires* that each configured Cumulus 'distribution' bucket (e.g. public/protected buckets) have a single TEA mapping.  Multiple maps per bucket are not supported.
+  - Updated Generating a distribution URL, the MoveGranules task and all CMR reconciliation functionality to utilize the TEA bucket map override.
 
 - **CUMULUS-1800**
   - Added task configuration setting named `syncChecksumFiles` to the
