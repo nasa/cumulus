@@ -1,6 +1,13 @@
 const got = require('got');
 const pRetry = require('p-retry');
 
+/**
+ * getTeaBucketPath
+ *
+ * @param {string} bucket - Bucket name to get TEA path mapping
+ * @param {string} teaEndPoint - TEA API URL
+ * @returns {string} TEA path for the given bucket
+ */
 async function getTeaBucketPath(bucket, teaEndPoint) {
   return pRetry(
     async () => {
