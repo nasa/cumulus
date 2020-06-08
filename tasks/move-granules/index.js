@@ -9,6 +9,7 @@ const path = require('path');
 
 const {
   buildS3Uri,
+  getJsonS3Object,
   moveObject,
   s3ObjectExists,
   waitForObjectToExist
@@ -33,6 +34,8 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
 
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const log = require('@cumulus/common/log');
+const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
+
 
 /**
  * validates the file matched only one collection.file and has a valid bucket
@@ -246,7 +249,8 @@ async function updateEachCmrFileAccessURLs(
   granulesObject,
   cmrGranuleUrlType,
   distEndpoint,
-  bucketsConfig
+  bucketsConfig,
+  distributionBucketMap
 ) {
   return Promise.all(cmrFiles.map(async (cmrFile) => {
     const granuleId = cmrFile.granuleId;
@@ -259,7 +263,8 @@ async function updateEachCmrFileAccessURLs(
       distEndpoint,
       published: false, // Do the publish in publish-to-cmr step
       inBuckets: bucketsConfig,
-      cmrGranuleUrlType
+      cmrGranuleUrlType,
+      distributionBucketMap
     });
   }));
 }
@@ -294,6 +299,11 @@ async function moveGranules(event) {
   const cmrFiles = granulesToCmrFileObjects(granulesInput);
   const granulesByGranuleId = keyBy(granulesInput, 'granuleId');
 
+  const distributionBucketMap = await getJsonS3Object(
+    process.env.system_bucket,
+    getDistributionBucketMapKey(process.env.stackName)
+  );
+
   let movedGranules;
 
   if (cmrGranuleUrlType === 'distribution' && !config.distribution_endpoint) {
@@ -317,7 +327,8 @@ async function moveGranules(event) {
       movedGranules,
       cmrGranuleUrlType,
       config.distribution_endpoint,
-      bucketsConfig
+      bucketsConfig,
+      distributionBucketMap
     );
   } else {
     movedGranules = granulesByGranuleId;

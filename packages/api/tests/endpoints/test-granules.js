@@ -9,6 +9,7 @@ const {
   buildS3Uri,
   createBucket,
   fileExists,
+  putJsonS3Object,
   recursivelyDeleteS3Bucket
 } = require('@cumulus/aws-client/S3');
 const {
@@ -22,7 +23,7 @@ const {
 } = require('@cumulus/cmrjs/cmr-utils');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-
+const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
 const assertions = require('../../lib/assertions');
 const models = require('../../models');
 const bootstrap = require('../../lambdas/bootstrap');
@@ -93,6 +94,15 @@ async function setupBucketsConfig() {
     Body: JSON.stringify(buckets)
   });
   await createBucket(buckets.public.name);
+  // Create the required bucket map configuration file
+  await putObject({
+    Bucket: systemBucket,
+    Key: getDistributionBucketMapKey(process.env.stackName),
+    Body: JSON.stringify({
+      [systemBucket]: systemBucket,
+      [buckets.public.name]: buckets.public.name
+    })
+  });
   return { internalBucket: systemBucket, publicBucket: buckets.public.name };
 }
 
@@ -695,6 +705,12 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
           filepath: destinationFilepath
         }
       ];
+
+      await putJsonS3Object(
+        process.env.system_bucket,
+        getDistributionBucketMapKey(process.env.stackName),
+        {}
+      );
 
       const response = await request(app)
         .put(`/granules/${newGranule.granuleId}`)
