@@ -229,7 +229,7 @@ class Rule extends Manager {
 
   async create(item) {
     // make sure the name only has word characters
-    const re = /[^\w]/;
+    const re = /\W/;
     if (re.test(item.name)) {
       throw new ValidationError('Rule name may only contain letters, numbers, and underscores.');
     }

@@ -58,7 +58,7 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
 
   it('returns an Async Operation Id', () => {
     expect(beforeAllSucceeded).toBeTrue();
-    expect(postBulkDeleteBody.id).toMatch(/[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}/);
+    expect(postBulkDeleteBody.id).toMatch(/[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}/);
   });
 
   it('creates an AsyncOperation', async () => {

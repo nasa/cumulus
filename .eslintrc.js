@@ -150,7 +150,6 @@ module.exports = {
 
     'node/no-missing-require': 'off',
 
-    'unicorn/better-regex': 'off',
     'unicorn/catch-error-name': 'off',
     'unicorn/consistent-function-scoping': 'off',
     'unicorn/explicit-length-check': 'off',
