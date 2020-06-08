@@ -9,7 +9,7 @@
   },
   "scripts": {
     "test": "../../node_modules/.bin/ava",
-    "package": "rm -f lambda.zip && zip -r -q lambda.zip *.js node_modules"
+    "package": "rm -Rf ./dist/ && mkdir dist && zip -r -q ./dist/lambda.zip *.js node_modules"
   },
   "ava": {
     "files": [
