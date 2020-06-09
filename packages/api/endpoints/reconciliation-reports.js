@@ -100,12 +100,23 @@ async function del(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
-  const invocationType = req.body.invocationType || 'Event';
-  const result = await invoke(process.env.invokeReconcileLambda, {}, invocationType);
-  const response = (invocationType === 'Event')
-    ? { message: 'Report is being generated', status: result.StatusCode }
-    : { message: 'Report generated', report: JSON.parse(result.Payload) };
-  return res.send(response);
+  const asyncOperationModel = new models.AsyncOperation({
+    stackName: process.env.stackName,
+    systemBucket: process.env.system_bucket,
+    tableName: process.env.AsyncOperationsTable
+  });
+
+  const asyncOperation = await asyncOperationModel.start({
+    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+    cluster: process.env.EcsCluster,
+    lambdaName: process.env.invokeReconcileLambda,
+    description: 'Create Inventory Report',
+    operationType: 'Reconciliation Report',
+    payload: { },
+    useLambdaEnvironmentVariables: true
+  });
+
+  return res.send(asyncOperation);
 }
 
 router.get('/:name', get);
