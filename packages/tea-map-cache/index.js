@@ -3,12 +3,14 @@ const AWS = require('aws-sdk');
 const { getTeaBucketPath } = require('./tea');
 
 /**
- * Lambda handler that takes a bucketlist and a S3URI to write and
- * queries TEA for a bucket mapping object.   Returns the bucket map object
+ * Lambda handler that takes a bucketlist and a bucket/key event,
+ * queires TEA and write a bucket mapping object to S3.   Returns the bucket map object.
  *
- * @param {Object} event - Event containing
- * @param {string} event.bucketList - An array of buckets to cache values for
- * @returns {Promise<Object>} - A bucketmap object {bucket1: mapping1, bucket2: mapping2}
+ * @param {Object} event              - Event containing
+ * @param {string[]} event.bucketList - An array of buckets to cache values for
+ * @param {string} event.s3Bucket     - Bucket to write .json tea map cache file to
+ * @param {string} event.s3Key        - Key to write .json tea map cache file to
+ * @returns {Promise<Object>}         - A bucketmap object {bucket1: mapping1, bucket2: mapping2}
  */
 async function handler(event) {
   const { bucketList, s3Bucket, s3Key } = event;
