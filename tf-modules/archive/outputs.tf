@@ -43,5 +43,5 @@ output "cmr_password_secret_arn" {
 }
 
 output "launchpad_passphrase_secret_arn" {
-  value = aws_secretsmanager_secret.api_cmr_password.arn
+  value = aws_secretsmanager_secret.api_launchpad_passphrase.arn
 }

@@ -6,9 +6,10 @@ const {
   addCollections,
   cleanupCollections,
   isWorkflowTriggeredByRule,
-  rulesApi,
   waitForTestExecutionStart
 } = require('@cumulus/integration-tests');
+
+const rulesApi = require('@cumulus/api-client/rules');
 
 const {
   createTestSuffix,
@@ -16,6 +17,7 @@ const {
   loadConfig,
   timestampedName
 } = require('../../helpers/testUtils');
+
 
 describe('When I create a scheduled rule via the Cumulus API', () => {
   let config;
@@ -226,13 +228,15 @@ describe('When I create a one-time rule via the Cumulus API', () => {
     await expectAsync(
       pWaitFor(
         async () => {
-          const listRulesResponse = await rulesApi.listRules({ prefix });
+          const listRulesResponse = await rulesApi.listRules({
+            prefix,
+            query: {
+              name: helloWorldRule.name
+            }
+          });
+          const responseBody = JSON.parse(listRulesResponse.body);
 
-          const rules = JSON.parse(listRulesResponse.body).results;
-
-          const ruleNames = rules.map((x) => x.name);
-
-          return ruleNames.includes(helloWorldRule.name);
+          return responseBody.meta.count > 0;
         },
         {
           interval: 1000,

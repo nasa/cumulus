@@ -40,7 +40,7 @@ $ npm install @cumulus/integration-tests
 <a name="module_Collections"></a>
 
 ## Collections
-**Example**  
+**Example**
 ```js
 const Collections = require('@cumulus/integration-test/Collections');
 ```
@@ -72,8 +72,8 @@ have a granuleId of `gran-1`. Filenames can only contain a single `.` character.
   ]
   ```
 
-**Kind**: Exported function  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the generated collection  
+**Kind**: Exported function
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the generated collection
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -83,7 +83,7 @@ have a granuleId of `gran-1`. Filenames can only contain a single `.` character.
 <a name="module_Executions"></a>
 
 ## Executions
-**Example**  
+**Example**
 ```js
 const Executions = require('@cumulus/integration-test/Executions');
 ```
@@ -97,8 +97,8 @@ const Executions = require('@cumulus/integration-test/Executions');
 ### findExecutionArn(prefix, matcher, [options]) ⇒ <code>Promise.&lt;string&gt;</code> ⏏
 Find the execution ARN matching the `matcher` function
 
-**Kind**: Exported function  
-**Returns**: <code>Promise.&lt;string&gt;</code> - the ARN of the matching execution  
+**Kind**: Exported function
+**Returns**: <code>Promise.&lt;string&gt;</code> - the ARN of the matching execution
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -112,9 +112,9 @@ Find the execution ARN matching the `matcher` function
 ### getExecutionWithStatus(params) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
 Wait for an execution to have an expected status and return the execution
 
-**Kind**: Exported function  
+**Kind**: Exported function
 **Returns**: <code>Promise.&lt;Object&gt;</code> - the execution as returned by the `GET /executions/<execution-arn>`
-endpoint  
+endpoint
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -128,7 +128,7 @@ endpoint
 <a name="module_Granules"></a>
 
 ## Granules
-**Example**  
+**Example**
 ```js
 const Granules = require('@cumulus/integration-test/Granules');
 ```
@@ -137,8 +137,8 @@ const Granules = require('@cumulus/integration-test/Granules');
 ### getGranuleWithStatus(params) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
 Wait for a granule to have an expected status and return the granule
 
-**Kind**: Exported function  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the granule as returned by the `GET /granules/<granule-id>` endpoint  
+**Kind**: Exported function
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the granule as returned by the `GET /granules/<granule-id>` endpoint
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -152,7 +152,7 @@ Wait for a granule to have an expected status and return the granule
 <a name="module_Providers"></a>
 
 ## Providers
-**Example**  
+**Example**
 ```js
 const Providers = require('@cumulus/integration-test/Providers');
 ```
@@ -165,10 +165,9 @@ Create a provider using the Cumulus API
 
 - **id**: random string starting with `provider-`
 - **protocol**: `s3`
-- **globalConnectionLimit**: `10`
 
-**Kind**: Exported function  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the generated provider  
+**Kind**: Exported function
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the generated provider
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -178,7 +177,7 @@ Create a provider using the Cumulus API
 <a name="module_Rules"></a>
 
 ## Rules
-**Example**  
+**Example**
 ```js
 const Rules = require('@cumulus/integration-test/Rules');
 ```
@@ -192,8 +191,8 @@ Create a `onetime` rule using the Cumulus API
 - **name**: random string starting with `rule_`
 - **rule**: `{ type: 'onetime' }`
 
-**Kind**: Exported function  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the generated rule  
+**Kind**: Exported function
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the generated rule
 
 | Param | Type | Description |
 | --- | --- | --- |

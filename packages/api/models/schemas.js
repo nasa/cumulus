@@ -44,7 +44,7 @@ module.exports.asyncOperation = {
     description: { type: 'string' },
     operationType: {
       type: 'string',
-      enum: ['ES Index', 'Bulk Granules', 'Bulk Delete', 'Kinesis Replay']
+      enum: ['ES Index', 'Bulk Granules', 'Bulk Granule Delete', 'Kinesis Replay']
     },
     output: {
       description: 'The result of the operation, stored as JSON',
@@ -84,13 +84,6 @@ module.exports.collection = {
       title: 'Process',
       description: 'Name of the docker process to be used, e.g. modis, aster',
       type: 'string'
-    },
-    provider_path: {
-      title: 'Provider Path',
-      description: 'The path to look for the collection Granules or '
-        + 'PDRs. Use regex for recursive search',
-      type: 'string',
-      default: ''
     },
     url_path: {
       title: 'Url Path',
@@ -578,8 +571,7 @@ module.exports.provider = {
     },
     globalConnectionLimit: {
       title: 'Concurrent Connection Limit',
-      type: 'integer',
-      default: 10
+      type: 'integer'
     },
     protocol: {
       title: 'Protocol',
@@ -628,7 +620,6 @@ module.exports.provider = {
   },
   required: [
     'id',
-    'globalConnectionLimit',
     'protocol',
     'host',
     'createdAt'

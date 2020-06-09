@@ -1,6 +1,6 @@
 'use strict';
 
-const searchConcept = require('./searchConcept');
+const CMR = require('./CMR');
 
 /**
  * A class to efficiently list all of the concepts (collections/granules) from
@@ -24,22 +24,19 @@ class CMRSearchConceptQueue {
    * The constructor for the CMRSearchConceptQueue class
    *
    * @param {Object} params
-   * @param {string} params.provider - the CMR provider id
-   * @param {string} params.clientId - the CMR clientId
+   * @param {string} params.cmrSettings - the CMR settings for the requests - the provider,
+   * clientId, and either launchpad token or EDL username and password
    * @param {string} params.type - the type of search 'granule' or 'collection'
-   * @param {string} params.cmrEnvironment - optional, CMR environment to
-   *              use valid arguments are ['OPS', 'SIT', 'UAT']
    * @param {string} [params.searchParams={}] - the search parameters
    * @param {string} params.format - the result format
    */
   constructor(params = { searchParams: {} }) {
-    this.clientId = params.clientId;
-    this.provider = params.provider;
     this.type = params.type;
-    this.cmrEnvironment = params.cmrEnvironment;
-    this.params = { provider_short_name: this.provider, ...params.searchParams };
+    this.params = { provider_short_name: params.cmrSettings.provider, ...params.searchParams };
     this.format = params.format;
     this.items = [];
+
+    this.CMR = new CMR(params.cmrSettings);
   }
 
   /**
@@ -74,15 +71,12 @@ class CMRSearchConceptQueue {
    * @private
    */
   async fetchItems() {
-    const results = await searchConcept({
-      type: this.type,
-      cmrEnvironment: this.cmrEnvironment,
-      searchParams: this.params,
-      previousResults: [],
-      headers: { 'Client-Id': this.clientId },
-      format: this.format,
-      recursive: false
-    });
+    const results = await this.CMR.searchConcept(
+      this.type,
+      this.params,
+      this.format,
+      false
+    );
     this.items = results;
     this.params.page_num = (this.params.page_num) ? this.params.page_num + 1 : 1;
     if (results.length === 0) this.items.push(null);

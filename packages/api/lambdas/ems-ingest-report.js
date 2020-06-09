@@ -173,7 +173,7 @@ function getEmsFieldFromGranField(granule, emsField, granField) {
     result = deconstructCollectionId(metadata).name;
     break;
   case 'versionID':
-    result = parseInt(deconstructCollectionId(metadata).version, 10);
+    result = Number.parseInt(deconstructCollectionId(metadata).version, 10);
     break;
   case 'deleteFromArchive':
     result = 'N';
