@@ -7,6 +7,7 @@ const isInteger = require('lodash/isInteger');
 const partial = require('lodash/partial');
 const pick = require('lodash/pick');
 const urljoin = require('url-join');
+const awsClients = require('@cumulus/aws-client/services');
 const { getObjectSize, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { removeNilProperties } = require('@cumulus/common/util');
 const schemas = require('../models/schemas');
@@ -56,13 +57,20 @@ const setKey = simpleFieldAdder('key', getKey);
 
 const setS3FileSize = async (file) => {
   if (isInteger(file.size)) return file;
+
   if (isInteger(file.fileSize)) {
     const newFileObj = { ...file, size: file.fileSize };
     delete newFileObj.fileSize;
     return newFileObj;
   }
+
   try {
-    const size = await getObjectSize(file.bucket, file.key);
+    const size = await getObjectSize({
+      s3: awsClients.s3(),
+      bucket: file.bucket,
+      key: file.key
+    });
+
     return { ...file, size };
   } catch (error) {
     return file;

@@ -17,6 +17,7 @@ const randomString = () => cryptoRandomString({ length: 10 });
 const {
   createBucket,
   getJsonS3Object,
+  getObjectSize,
   getS3Object,
   getTextObject,
   headObject,
@@ -324,4 +325,23 @@ test('headObject() will retry if the requested key does not exist', async (t) =>
     .then(() => awsServices.s3().putObject({ Bucket, Key, Body: 'asdf' }).promise());
 
   await t.notThrowsAsync(promisedHeadObject);
+});
+
+test('getObjectSize() returns the size of an object', async (t) => {
+  const { Bucket } = t.context;
+  const key = randomString();
+
+  await awsServices.s3().putObject({
+    Bucket,
+    Key: key,
+    Body: 'asdf'
+  }).promise();
+
+  const objectSize = await getObjectSize({
+    s3: awsServices.s3(),
+    bucket: Bucket,
+    key
+  });
+
+  t.is(objectSize, 4);
 });
