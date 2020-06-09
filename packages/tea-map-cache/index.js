@@ -25,10 +25,9 @@ async function handler(event) {
   }));
   const bucketMapObjects = await Promise.all(bucketMapPromises);
 
-  let bucketMap = {};
-  bucketMapObjects.forEach((object) => {
-    bucketMap = { ...bucketMap, ...object };
-  });
+  const bucketMap = bucketMapObjects.reduce(
+    (map, obj) => Object.assign(map, obj), {}
+  );
 
   await s3.putObject({
     Bucket: s3Bucket,
