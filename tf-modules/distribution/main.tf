@@ -11,7 +11,7 @@ locals {
 }
 
 resource "aws_s3_bucket_object" "bucket_map_yaml" {
-  count = var.bucket_map_key == null ? 1 : 0
+  count   = var.bucket_map_key == null ? 1 : 0
   bucket  = var.system_bucket
   key     = "${var.prefix}/thin-egress-app/bucket_map.yaml"
   content = templatefile("${path.module}/bucket_map.yaml.tmpl", { protected_buckets = var.protected_buckets, public_buckets = var.public_buckets })
