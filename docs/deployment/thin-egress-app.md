@@ -8,16 +8,24 @@ hide_title: true
 
 The [Thin Egress App (TEA)](https://github.com/asfadmin/thin-egress-app) is an app running in Lambda that allows retrieving data from S3 using temporary links and provides URS integration.
 
-Note: If you are using the `cumulus` module, you will not need the information on this page, as Cumulus packages TEA within its `distribution` tf-module, which is pre-configured and included in our releases as a submodule of the `cumulus` module. However, if you are using individual Cumulus modules in your own Terraform configuration, or wish to configure TEA on your own, the information below is important to set up distribution.
+## Cumulus "Packaged" Deployment
 
-## Thin Egress App deployment
+ If you are using the `cumulus` module, you will not need to manually deploy TEA as Cumulus packages TEA within its `distribution` tf-module, which is pre-configured and included in our releases as a submodule of the `cumulus` module.
+
+The `cumulus` module provides a TEA configuration option in the form of a configuration variable `bucket_map_key` that allows you to provide a path to a custom [bucket map YAML](https://github.com/asfadmin/thin-egress-app#buckets-and-bucket-map).     **Please note: Cumulus only supports a one-to-one mapping of bucket->path name, mapping multiple paths to the same bucket will result in a deployment failure.**
+
+By default, Core provides a one-to-one mapping where each protected and public bucket map to a path of the same name as the bucket.
+
+## Manual Deployment
+
+If you are using individual Cumulus modules in your own Terraform configuration, or wish to configure TEA on your own, the information below is important to set up distribution manually.
 
 TEA is deployed using [Terraform](https://terraform.io) modules. Refer to [these instructions](./components) for guidance on how to integrate new components with your deployment.
 
 The TEA module provides [these instructions](https://github.com/asfadmin/thin-egress-app/blob/devel/NGAP-DEPLOY-README.MD)
 showing how to add it to your deployment. Below are some Cumulus-specific tips:
 
-## bucket_map.yaml
+### bucket_map.yaml
 
 The Thin Egress App uses a `bucket_map.yaml` file to determine which buckets to
 serve. Documentation of the file format is available [here](https://github.com/asfadmin/thin-egress-app#bucket-map).
@@ -36,7 +44,7 @@ PUBLIC_BUCKETS:
   - my-public
 ```
 
-## Earthdata Login credentials
+### Earthdata Login credentials
 
 The Thin Egress App stores its Earthdata Login credentials in AWS Secrets
 Manager. There are two values stored in the secret: `UrsId` and `UrsAuth`.
@@ -71,13 +79,13 @@ bXktY2xpZW50LWlkOm15LWNsaWVudC1wYXNzd29yZA==
 it will add a newline to the end of the string, which will give you an incorrect
 base64 hash.
 
-## Permissions boundaries
+### Permissions boundaries
 
 For NASA NGAP users, When storing the secret in Secrets Manager, and when
 performing a Terraform deployment, you _must_ be run using `NGAPShNonProd`
 credentials.
 
-## Outputs
+### Outputs
 
 In addition to adding the Thin Egress App module, it is useful to configure the
 TEA outputs as outputs of your Terraform deployment. That would look something
@@ -105,3 +113,17 @@ Pass `api_distribution_url` to your `archive` module's `distribution_url` var.
 
 You will also need to configure the `tea_urs_redirect_uri` value as a Redirect
 URI in your app's URS configuration.
+
+### Cumulus Configuration
+
+The default Cumulus module generates a file at `s3://${system_bucket}/distribution_bucket_map.json` -- if you've manually deployed TEA outside the `cumulus` module, you'll need to provide this configuration file as part of your Terraform deployment if you wish for Cumulus's CMR related functionality (`Move Granules` task and all CMR reconciliation functions) to function.
+
+The configuration file is a simple json mapping of the form:
+
+```json
+{
+  "bucket_name": "bucket_path_in_TEA"
+}
+```
+
+ **Please note: Cumulus only supports a one-to-one mapping of bucket->TEA path for 'distribution' buckets.**
