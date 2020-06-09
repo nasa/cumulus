@@ -201,7 +201,7 @@ async function indexRecords(records) {
     (record) => indexRecord(esClient, record).catch(log.error),
     {
       concurrency: process.env.ES_CONCURRENCY
-        ? parseInt(process.env.ES_CONCURRENCY, 10)
+        ? Number.parseInt(process.env.ES_CONCURRENCY, 10)
         : 3
     }
   );

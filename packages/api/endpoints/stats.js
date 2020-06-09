@@ -37,12 +37,12 @@ function getType(req) {
 async function summary(req, res) {
   const params = req.query;
 
-  params.timestamp__from = parseInt(get(
+  params.timestamp__from = Number.parseInt(get(
     params,
     'timestamp__from',
     0
   ), 10);
-  params.timestamp__to = parseInt(get(params, 'timestamp__to', Date.now()), 10);
+  params.timestamp__to = Number.parseInt(get(params, 'timestamp__to', Date.now()), 10);
 
   const stats = new Stats({ queryStringParameters: params }, null, process.env.ES_INDEX);
   const r = await stats.query();
