@@ -10,9 +10,9 @@ The [Thin Egress App (TEA)](https://github.com/asfadmin/thin-egress-app) is an a
 
 ## Cumulus "Packaged" Deployment
 
- If you are using the `cumulus` module, you will not need to manually deploy TEA as Cumulus packages TEA within its `distribution` tf-module, which is pre-configured and included in our releases as a submodule of the `cumulus` module.
+ If you are using the `cumulus` module or the core `distribution` module (deployed with the `cumulus` module), you will not need to manually deploy TEA as Cumulus packages TEA within its `distribution` tf-module, which is pre-configured and included in our releases as a submodule of the `cumulus` module.
 
-The `cumulus` module provides a TEA configuration option in the form of a configuration variable `bucket_map_key` that allows you to provide a path to a custom [bucket map YAML](https://github.com/asfadmin/thin-egress-app#buckets-and-bucket-map).     **Please note: Cumulus only supports a one-to-one mapping of bucket->path name, mapping multiple paths to the same bucket will result in a deployment failure.**
+The `cumulus` and `distribution` modules provide a TEA configuration option in the form of a configuration variable `bucket_map_key` that allows you to provide a path to a custom [bucket map YAML](https://github.com/asfadmin/thin-egress-app#buckets-and-bucket-map).     **Please note: Cumulus only supports a one-to-one mapping of bucket->path name, mapping multiple paths to the same bucket will result in a deployment failure.**
 
 By default, Core provides a one-to-one mapping where each protected and public bucket map to a path of the same name as the bucket.
 
