@@ -8,7 +8,7 @@ const { getTeaBucketPath } = require('./tea');
  *
  * @param {Object} event - Event containing
  * @param {string} event.bucketList - An array of buckets to cache values for
- * @returns {Promise<Object>} - Returns a bucketmap object {bucket1: mapping1, bucket2: mapping2}
+ * @returns {Promise<Object>} - A bucketmap object {bucket1: mapping1, bucket2: mapping2}
  */
 async function handler(event) {
   const { bucketList, s3Bucket, s3Key } = event;
