@@ -7,7 +7,7 @@ terraform {
 locals {
   thin_egress_stack_name = "${var.prefix}-thin-egress-app"
   lambda_log_group_name  = "/aws/lambda/${local.thin_egress_stack_name}-EgressLambda"
-  tea_buckets = concat(var.protected_buckets, var.public_buckets)
+  tea_buckets            = concat(var.protected_buckets, var.public_buckets)
 }
 
 resource "aws_s3_bucket_object" "bucket_map_yaml" {
@@ -26,30 +26,30 @@ resource "aws_secretsmanager_secret" "thin_egress_urs_creds" {
 }
 
 resource "aws_secretsmanager_secret_version" "thin_egress_urs_creds" {
-  secret_id = aws_secretsmanager_secret.thin_egress_urs_creds.id
+  secret_id     = aws_secretsmanager_secret.thin_egress_urs_creds.id
   secret_string = jsonencode({
-    UrsId   = var.urs_client_id
-    UrsAuth = base64encode("${var.urs_client_id}:${var.urs_client_password}")
+    UrsId       = var.urs_client_id
+    UrsAuth     = base64encode("${var.urs_client_id}:${var.urs_client_password}")
   })
 }
 
 module "tea_map_cache" {
-  prefix = var.prefix
-  source = "../tea-map-cache"
+  prefix                     = var.prefix
+  source                     = "../tea-map-cache"
   lambda_processing_role_arn = var.lambda_processing_role_arn
-  tea_api_url = module.thin_egress_app.internal_api_endpoint
-  tags = var.tags
-  lambda_subnet_ids = var.subnet_ids
-  vpc_id = var.vpc_id
+  tea_api_url                = module.thin_egress_app.internal_api_endpoint
+  tags                       = var.tags
+  lambda_subnet_ids          = var.subnet_ids
+  vpc_id                     = var.vpc_id
 }
 
 
 data "aws_lambda_invocation" "tea_map_cache" {
-  depends_on = [module.tea_map_cache.lambda_function_name]
-  function_name = module.tea_map_cache.lambda_function_name
-  input = jsonencode({ bucketList = local.tea_buckets,
-                       s3Bucket = var.system_bucket
-                       s3Key = "${var.prefix}/distribution_bucket_map.json"
+  depends_on                      = [module.tea_map_cache.lambda_function_name]
+  function_name                   = module.tea_map_cache.lambda_function_name
+  input                           = jsonencode({ bucketList = local.tea_buckets,
+                                                 s3Bucket = var.system_bucket
+                                                 s3Key = "${var.prefix}/distribution_bucket_map.json"
   })
 }
 
@@ -149,7 +149,7 @@ data "aws_iam_policy_document" "s3_credentials_lambda" {
 }
 
 resource "aws_iam_role_policy" "s3_credentials_lambda" {
-  count = var.deploy_s3_credentials_endpoint ? 1 : 0
+  count  = var.deploy_s3_credentials_endpoint ? 1 : 0
   name   = "${var.prefix}_s3_credentials_lambda_policy"
   policy = data.aws_iam_policy_document.s3_credentials_lambda[0].json
   role   = aws_iam_role.s3_credentials_lambda[0].id
@@ -204,7 +204,7 @@ resource "aws_lambda_function" "s3_credentials" {
 data "aws_region" "current" {}
 
 resource "aws_lambda_permission" "lambda_permission" {
-  count = var.deploy_s3_credentials_endpoint ? 1 : 0
+  count         = var.deploy_s3_credentials_endpoint ? 1 : 0
 
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.s3_credentials[0].function_name
