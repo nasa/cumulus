@@ -116,7 +116,7 @@ URI in your app's URS configuration.
 
 ### Cumulus Configuration
 
-The default Cumulus module generates a file at `s3://${system_bucket}/distribution_bucket_map.json` -- if you've manually deployed TEA outside the `cumulus` module, you'll need to provide this configuration file as part of your Terraform deployment if you wish for Cumulus's CMR related functionality (`Move Granules` task and all CMR reconciliation functions) to function.
+The default Cumulus module generates a file at `s3://${system_bucket}/distribution_bucket_map.json`. If you've manually deployed TEA outside the `cumulus` module, you'll need to provide this configuration file as part of your Terraform deployment.
 
 The configuration file is a simple json mapping of the form:
 
