@@ -39,7 +39,7 @@ const granuleFileToRecord = (granuleFile) => {
   return removeNilProperties(filterDatabaseProperties(granuleRecord));
 };
 
-test.before(async () => {
+test.before(async (t) => {
   process.env.GranulesTable = randomString();
   await new Granule().createTable();
 
@@ -87,6 +87,14 @@ test.before(async () => {
     startDate: new Date(Date.UTC(2019, 6, 28)),
     stopDate: new Date(Date.UTC(2019, 6, 28, 1))
   };
+
+  t.context.fakeS3 = {
+    headObject: () => ({
+      promise: async () => ({
+        ContentLength: mockedFileSize
+      })
+    })
+  };
 });
 
 test.beforeEach((t) => {
@@ -105,11 +113,12 @@ test(
     const [granule] = cumulusMessage.payload.granules;
     cumulusMessage.payload.granules[0].sync_granule_duration = 123;
 
-    const record = await Granule.generateGranuleRecord(
+    const record = await Granule.generateGranuleRecord({
+      s3: t.context.fakeS3,
       granule,
-      cumulusMessage,
-      randomString()
-    );
+      message: cumulusMessage,
+      executionUrl: randomString()
+    });
 
     t.is(record.timeToPreprocess, 0.123);
   }
@@ -122,11 +131,12 @@ test(
     const [granule] = cumulusMessage.payload.granules;
     cumulusMessage.payload.granules[0].sync_granule_duration = 0;
 
-    const record = await Granule.generateGranuleRecord(
+    const record = await Granule.generateGranuleRecord({
+      s3: t.context.fakeS3,
       granule,
-      cumulusMessage,
-      randomString()
-    );
+      message: cumulusMessage,
+      executionUrl: randomString()
+    });
 
     t.is(record.timeToPreprocess, 0);
   }
@@ -139,11 +149,12 @@ test(
     const [granule] = cumulusMessage.payload.granules;
     cumulusMessage.payload.granules[0].post_to_cmr_duration = 123;
 
-    const record = await Granule.generateGranuleRecord(
+    const record = await Granule.generateGranuleRecord({
+      s3: t.context.fakeS3,
       granule,
-      cumulusMessage,
-      randomString()
-    );
+      message: cumulusMessage,
+      executionUrl: randomString()
+    });
 
     t.is(record.timeToArchive, 0.123);
   }
@@ -156,11 +167,12 @@ test(
     const [granule] = cumulusMessage.payload.granules;
     cumulusMessage.payload.granules[0].post_to_cmr_duration = 0;
 
-    const record = await Granule.generateGranuleRecord(
+    const record = await Granule.generateGranuleRecord({
+      s3: t.context.fakeS3,
       granule,
-      cumulusMessage,
-      randomString()
-    );
+      message: cumulusMessage,
+      executionUrl: randomString()
+    });
 
     t.is(record.timeToArchive, 0);
   }
@@ -175,12 +187,13 @@ test(
     const newFakeExecution = cloneDeep(fakeExecution);
     delete newFakeExecution.stopDate;
 
-    const record = await Granule.generateGranuleRecord(
+    const record = await Granule.generateGranuleRecord({
+      s3: t.context.fakeS3,
       granule,
-      cumulusMessage,
-      randomString(),
-      newFakeExecution
-    );
+      message: cumulusMessage,
+      executionUrl: randomString(),
+      executionDescription: newFakeExecution
+    });
 
     t.is(record.processingStartDateTime, '2019-07-28T00:00:00.000Z');
     t.is(typeof record.processingEndDateTime, 'string');
@@ -193,12 +206,13 @@ test(
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
 
-    const record = await Granule.generateGranuleRecord(
+    const record = await Granule.generateGranuleRecord({
+      s3: t.context.fakeS3,
       granule,
-      cumulusMessage,
-      randomString(),
-      fakeExecution
-    );
+      message: cumulusMessage,
+      executionUrl: randomString(),
+      executionDescription: fakeExecution
+    });
 
     t.is(record.processingStartDateTime, '2019-07-28T00:00:00.000Z');
     t.is(record.processingEndDateTime, '2019-07-28T01:00:00.000Z');
@@ -211,11 +225,12 @@ test(
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
 
-    const record = await Granule.generateGranuleRecord(
+    const record = await Granule.generateGranuleRecord({
+      s3: t.context.fakeS3,
       granule,
-      cumulusMessage,
-      randomString()
-    );
+      message: cumulusMessage,
+      executionUrl: randomString()
+    });
 
     t.falsy(record.processingStartDateTime);
     t.falsy(record.processingEndDateTime);
@@ -231,71 +246,67 @@ test(
     const [granule] = cumulusMessage.payload.granules;
     granule.status = 'running';
 
-    const record = await Granule.generateGranuleRecord(
+    const record = await Granule.generateGranuleRecord({
+      s3: t.context.fakeS3,
       granule,
-      cumulusMessage,
-      randomString()
-    );
+      message: cumulusMessage,
+      executionUrl: randomString()
+    });
 
     t.is(record.status, 'running');
   }
 );
 
-test.serial(
-  'generateGranuleRecord() builds successful granule record',
-  async (t) => {
-    // Stub out headObject S3 call used in api/models/granules.js,
-    // so we don't have to create artifacts
-    sinon.stub(s3Utils, 'headObject').resolves({ ContentLength: mockedFileSize });
+test('generateGranuleRecord() builds successful granule record', async (t) => {
+  const granule = granuleSuccess.payload.granules[0];
+  const collection = granuleSuccess.meta.collection;
+  const collectionId = constructCollectionId(collection.name, collection.version);
+  const executionUrl = randomString();
 
-    const granule = granuleSuccess.payload.granules[0];
-    const collection = granuleSuccess.meta.collection;
-    const collectionId = constructCollectionId(collection.name, collection.version);
-    const executionUrl = randomString();
+  const record = await Granule.generateGranuleRecord({
+    s3: t.context.fakeS3,
+    granule,
+    message: granuleSuccess,
+    executionUrl,
+    executionDescription: fakeExecution
+  });
 
-    const record = await Granule.generateGranuleRecord(
-      granule,
-      granuleSuccess,
-      executionUrl,
-      fakeExecution
-    );
+  t.deepEqual(
+    record.files,
+    granule.files.map(granuleFileToRecord)
+  );
+  t.is(record.createdAt, 1519167138335);
+  t.is(typeof record.duration, 'number');
+  t.is(record.status, 'completed');
+  t.is(record.collectionId, collectionId);
+  t.is(record.execution, executionUrl);
+  t.is(record.granuleId, granule.granuleId);
+  t.is(record.cmrLink, granule.cmrLink);
+  t.is(record.published, granule.published);
+  t.is(record.productVolume, 17934423);
+  t.is(record.beginningDateTime, '2017-10-24T00:00:00.000Z');
+  t.is(record.endingDateTime, '2018-10-24T00:00:00.000Z');
+  t.is(record.productionDateTime, '2018-04-25T21:45:45.524Z');
+  t.is(record.lastUpdateDateTime, '2018-04-20T21:45:45.524Z');
+  t.is(record.timeToArchive, 100 / 1000);
+  t.is(record.timeToPreprocess, 120 / 1000);
+  t.is(record.processingStartDateTime, '2019-07-28T00:00:00.000Z');
+  t.is(record.processingEndDateTime, '2019-07-28T01:00:00.000Z');
 
-    t.deepEqual(
-      record.files,
-      granule.files.map(granuleFileToRecord)
-    );
-    t.is(record.createdAt, 1519167138335);
-    t.is(typeof record.duration, 'number');
-    t.is(record.status, 'completed');
-    t.is(record.collectionId, collectionId);
-    t.is(record.execution, executionUrl);
-    t.is(record.granuleId, granule.granuleId);
-    t.is(record.cmrLink, granule.cmrLink);
-    t.is(record.published, granule.published);
-    t.is(record.productVolume, 17934423);
-    t.is(record.beginningDateTime, '2017-10-24T00:00:00.000Z');
-    t.is(record.endingDateTime, '2018-10-24T00:00:00.000Z');
-    t.is(record.productionDateTime, '2018-04-25T21:45:45.524Z');
-    t.is(record.lastUpdateDateTime, '2018-04-20T21:45:45.524Z');
-    t.is(record.timeToArchive, 100 / 1000);
-    t.is(record.timeToPreprocess, 120 / 1000);
-    t.is(record.processingStartDateTime, '2019-07-28T00:00:00.000Z');
-    t.is(record.processingEndDateTime, '2019-07-28T01:00:00.000Z');
-
-    const { name: deconstructed } = deconstructCollectionId(record.collectionId);
-    t.is(deconstructed, collection.name);
-  }
-);
+  const { name: deconstructed } = deconstructCollectionId(record.collectionId);
+  t.is(deconstructed, collection.name);
+});
 
 test('generateGranuleRecord() builds a failed granule record', async (t) => {
   const granule = granuleFailure.payload.granules[0];
   const executionUrl = randomString();
-  const record = await Granule.generateGranuleRecord(
+  const record = await Granule.generateGranuleRecord({
+    s3: t.context.fakeS3,
     granule,
-    granuleFailure,
+    message: granuleFailure,
     executionUrl,
-    fakeExecution
-  );
+    executionDescription: fakeExecution
+  });
 
   t.deepEqual(
     record.files,

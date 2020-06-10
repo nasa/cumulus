@@ -6,6 +6,7 @@ const partial = require('lodash/partial');
 const path = require('path');
 const pMap = require('p-map');
 
+const awsClients = require('@cumulus/aws-client/services');
 const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
@@ -269,24 +270,28 @@ class Granule extends Manager {
   /**
    * Build a granule record.
    *
-   * @param {Object} granule - A granule object
-   * @param {Object} message - A workflow execution message
-   * @param {string} executionUrl - A Step Function execution URL
-   * @param {Object} [executionDescription={}] - Defaults to empty object
-   * @param {Date} executionDescription.startDate - Start date of the workflow execution
-   * @param {Date} executionDescription.stopDate - Stop date of the workflow execution
-   * @returns {Object} - A granule record
+   * @param {Object} params
+   * @param {AWS.S3} params.s3 - an AWS.S3 instance
+   * @param {Object} params.granule - A granule object
+   * @param {Object} params.message - A workflow execution message
+   * @param {string} params.executionUrl - A Step Function execution URL
+   * @param {Object} [params.executionDescription={}] - Defaults to empty object
+   * @param {Date} params.executionDescription.startDate - Start date of the workflow execution
+   * @param {Date} params.executionDescription.stopDate - Stop date of the workflow execution
+   * @returns {Promise<Object>} A granule record
    */
-  static async generateGranuleRecord(
+  static async generateGranuleRecord({
+    s3,
     granule,
     message,
     executionUrl,
     executionDescription = {}
-  ) {
+  }) {
     if (!granule.granuleId) throw new Error(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
     const collectionId = getCollectionIdFromMessage(message);
 
     const granuleFiles = await FileUtils.buildDatabaseFiles({
+      s3,
       providerURL: buildURL({
         protocol: message.meta.provider.protocol,
         host: message.meta.provider.host,
@@ -458,18 +463,18 @@ class Granule extends Manager {
     const promisedGranuleRecords = granules
       .map(async (granule) => {
         try {
-          return await Granule.generateGranuleRecord(
+          return await Granule.generateGranuleRecord({
+            s3: awsClients.s3(),
             granule,
-            cumulusMessage,
+            message: cumulusMessage,
             executionUrl,
             executionDescription
-          );
+          });
         } catch (err) {
           log.error(
             'Error handling granule records: ', err,
             'Execution message: ', cumulusMessage
           );
-          return null;
         }
       });
 
