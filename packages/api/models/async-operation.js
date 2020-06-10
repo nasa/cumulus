@@ -11,7 +11,7 @@ const { asyncOperation: asyncOperationSchema } = require('./schemas');
  * A class for tracking AsyncOperations using DynamoDB.
  *
  * @class AsyncOperation
- * @extends {Manager}
+ * @augments {Manager}
  */
 class AsyncOperation extends Manager {
   /**

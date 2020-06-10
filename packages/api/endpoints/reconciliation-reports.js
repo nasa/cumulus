@@ -1,7 +1,6 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const { invoke } = require('@cumulus/aws-client/Lambda');
 const {
   deleteS3Object,
   getS3Object,
@@ -14,6 +13,7 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 const models = require('../models');
 const { Search } = require('../es/search');
 const indexer = require('../es/indexer');
+const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 
 /**
  * List all reconciliation reports
@@ -116,12 +116,12 @@ async function post(req, res) {
     useLambdaEnvironmentVariables: true
   });
 
-  return res.send(asyncOperation);
+  return res.status(202).send(asyncOperation);
 }
 
 router.get('/:name', get);
 router.delete('/:name', del);
 router.get('/', list);
-router.post('/', post);
+router.post('/', post, asyncOperationEndpointErrorHandler);
 
 module.exports = router;
