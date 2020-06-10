@@ -2,8 +2,9 @@
 
 const isString = require('lodash/isString');
 const test = require('ava');
+const sinon = require('sinon');
 
-const { ecs, s3 } = require('@cumulus/aws-client/services');
+const { ecs, lambda, s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { EcsStartTaskError } = require('@cumulus/errors');
@@ -39,9 +40,21 @@ test.before(async () => {
       }
     };
   };
+
+  sinon.stub(lambda(), 'getFunctionConfiguration').returns({
+    promise: () => Promise.resolve({
+      Environment: {
+        Variables: {
+          ES_HOST: 'es-host',
+          AsyncOperationsTable: 'async-operations-table'
+        }
+      }
+    })
+  });
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
+  sinon.restore();
   await asyncOperationModel.deleteTable();
   await recursivelyDeleteS3Bucket(systemBucket);
 });
@@ -245,4 +258,37 @@ test.serial('The AsyncOperation.start() method returns the newly-generated recor
   });
 
   t.is(taskArn, stubbedEcsRunTaskResult.tasks[0].taskArn);
+});
+
+test.serial('getLambdaEnvironmentVariables returns formatted environment variables', async (t) => {
+  const vars = await asyncOperationModel.getLambdaEnvironmentVariables('name');
+  t.deepEqual(vars, [
+    { name: 'ES_HOST', value: 'es-host' },
+    { name: 'AsyncOperationsTable', value: 'async-operations-table' }
+  ]);
+});
+
+test.serial('ECS task params contain lambda environment variables when fag is set', async (t) => {
+  stubbedEcsRunTaskResult = {
+    tasks: [{ taskArn: randomString() }],
+    failures: []
+  };
+
+  await asyncOperationModel.start({
+    asyncOperationTaskDefinition: randomString(),
+    cluster: randomString(),
+    lambdaName: randomString(),
+    description: randomString(),
+    operationType: 'ES Index',
+    payload: {},
+    useLambdaEnvironmentVariables: true
+  });
+
+  const environmentOverrides = {};
+  stubbedEcsRunTaskParams.overrides.containerOverrides[0].environment.forEach((env) => {
+    environmentOverrides[env.name] = env.value;
+  });
+
+  t.is(environmentOverrides.ES_HOST, 'es-host');
+  t.is(environmentOverrides.AsyncOperationsTable, 'async-operations-table');
 });
