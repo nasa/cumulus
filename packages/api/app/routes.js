@@ -14,7 +14,6 @@ const executionStatus = require('../endpoints/execution-status');
 const executions = require('../endpoints/executions');
 const asyncOperations = require('../endpoints/async-operations');
 const instanceMeta = require('../endpoints/instance-meta');
-const bulkDelete = require('../endpoints/bulk-delete');
 const logs = require('../endpoints/logs');
 const reconcilliationReports = require('../endpoints/reconciliation-reports');
 const replays = require('../endpoints/replays');
@@ -59,9 +58,6 @@ router.use('/executions', ensureAuthorized, executions);
 
 // async operation endpoint
 router.use('/asyncOperations', ensureAuthorized, asyncOperations);
-
-// bulk delete endpoint
-router.use('/bulkDelete', ensureAuthorized, bulkDelete);
 
 // instance meta endpoint
 router.use('/instanceMeta', ensureAuthorized, instanceMeta);
