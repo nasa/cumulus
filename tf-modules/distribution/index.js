@@ -23,6 +23,11 @@ const { EarthdataLoginError } = require('@cumulus/api/lib/errors');
 
 const log = new Logger({ sender: 's3credentials' });
 
+const buildEarthdataLoginClient = () =>
+  EarthdataLogin.createFromEnv({
+    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT
+  });
+
 /**
  * Use NGAP's time-based, temporary credential dispensing lambda.
  *
@@ -84,13 +89,9 @@ const useSecureCookies = () => {
  * @returns {Object} the configuration object needed to handle requests
  */
 function getConfigurations() {
-  const earthdataLoginClient = EarthdataLogin.createFromEnv({
-    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT
-  });
-
   return {
     accessTokenModel: new AccessToken(),
-    authClient: earthdataLoginClient,
+    authClient: buildEarthdataLoginClient(),
     distributionUrl: process.env.DISTRIBUTION_ENDPOINT,
     s3Client: awsServices.s3()
   };
@@ -182,9 +183,7 @@ const isTokenAuthRequest = (req) =>
   req.get('EDL-Client-Id') && req.get('EDL-Token');
 
 const handleTokenAuthRequest = async (req, res, next) => {
-  const earthdataLoginClient = EarthdataLogin.createFromEnv({
-    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT
-  });
+  const earthdataLoginClient = buildEarthdataLoginClient();
 
   try {
     const userName = await earthdataLoginClient.getTokenUsername({
