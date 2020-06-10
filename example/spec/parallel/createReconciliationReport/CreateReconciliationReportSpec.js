@@ -18,7 +18,8 @@ const {
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
-  granulesApi: granulesApiTestUtils
+  granulesApi: granulesApiTestUtils,
+  waitForAsyncOperationStatus
 } = require('@cumulus/integration-tests');
 
 const {
@@ -131,6 +132,8 @@ async function updateGranuleFile(granuleId, granuleFiles, regex, replacement) {
 }
 
 describe('When there are granule differences and granule reconciliation is run', () => {
+  let asyncOperationId;
+  let asyncOperationsTableName;
   let cmrGranule;
   let collectionId;
   let config;
@@ -159,6 +162,7 @@ describe('When there are granule differences and granule reconciliation is run',
     granuleModel = new Granule();
 
     process.env.ReconciliationReportsTable = `${config.stackName}-ReconciliationReportsTable`;
+    asyncOperationsTableName = `${config.stackName}-AsyncOperationsTable`;
 
     process.env.CMR_ENVIRONMENT = 'UAT';
 
@@ -210,17 +214,26 @@ describe('When there are granule differences and granule reconciliation is run',
     ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, 'jpg2'));
   });
 
-  it('generates reconciliation report through the Cumulus API', async () => {
-    const inputPayload = {
-      invocationType: 'RequestResponse'
-    };
-
+  it('generates an async operation through the Cumulus API', async () => {
     const response = await reconciliationReportsApi.createReconciliationReport({
-      prefix: config.stackName,
-      request: inputPayload
+      prefix: config.stackName
     });
 
-    reportRecord = JSON.parse(response.body).report;
+    const responseBody = JSON.parse(response.body);
+    asyncOperationId = responseBody.id;
+    expect(responseBody.operationType).toBe('Reconciliation Report');
+  });
+
+  it('generates reconciliation report through the Cumulus API', async () => {
+
+    const dynamoDbItem = await waitForAsyncOperationStatus({
+      TableName: asyncOperationsTableName,
+      id: asyncOperationId,
+      status: 'SUCCEEDED',
+      retries: 100
+    });
+
+    reportRecord = JSON.parse(dynamoDbItem.output.S);
   });
 
   it('fetches a reconciliation report through the Cumulus API', async () => {
