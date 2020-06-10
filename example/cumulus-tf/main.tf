@@ -50,6 +50,8 @@ module "cumulus" {
 
   deploy_to_ngap = true
 
+  bucket_map_key = var.bucket_map_key
+
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.subnet_ids
 

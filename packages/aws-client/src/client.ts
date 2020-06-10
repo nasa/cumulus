@@ -1,5 +1,5 @@
+import AWS from 'aws-sdk';
 import { inTestMode, testAwsClient } from './test-utils';
-import AWS = require('aws-sdk');
 
 const noop = () => {}; // eslint-disable-line lodash/prefer-noop
 
