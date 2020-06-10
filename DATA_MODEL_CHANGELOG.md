@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+- **CUMULUS-1982**
+  - `provider.globalConnectionLimit` is now optional
 - **CUMULUS-1969**
   - Remove `provider_path` from collection schema
 - **CUMULUS-1977**
