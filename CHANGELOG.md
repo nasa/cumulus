@@ -26,6 +26,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-1958**
+  - Updated deploy process to utilize a bootstrap 'tea-map-cache' lambda that will, after deployment of Cumulus Core's TEA instance, query TEA for all protected/public buckets and generate a mapping configuration used internally by Core.  This object is also exposed as an output of the Cumulus module as `distribution_bucket_map`.
+
 - **CUMULUS-1800**
   - Added task configuration setting named `syncChecksumFiles` to the
     SyncGranule task. This setting is `false` by default, but when set to
