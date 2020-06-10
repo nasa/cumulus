@@ -11,7 +11,7 @@ locals {
 }
 
 resource "aws_s3_bucket_object" "bucket_map_yaml" {
-  count   = var.bucket_map_key == null ? 1 : 0
+#  count   = var.bucket_map_key == null ? 1 : 0  ## Disabled until TEA release for CUMULUS-1958
   bucket  = var.system_bucket
   key     = "${var.prefix}/thin-egress-app/bucket_map.yaml"
   content = templatefile("${path.module}/bucket_map.yaml.tmpl", { protected_buckets = var.protected_buckets, public_buckets = var.public_buckets })
@@ -33,7 +33,8 @@ resource "aws_secretsmanager_secret_version" "thin_egress_urs_creds" {
   })
 }
 
-module "tea_map_cache" {
+## Disabled until TEA release for CUMULUS-1958
+/* module "tea_map_cache" {
   prefix                     = var.prefix
   source                     = "../tea-map-cache"
   lambda_processing_role_arn = var.lambda_processing_role_arn
@@ -42,22 +43,24 @@ module "tea_map_cache" {
   lambda_subnet_ids          = var.subnet_ids
   vpc_id                     = var.vpc_id
 }
-
-
-data "aws_lambda_invocation" "tea_map_cache" {
+ */
+## Disabled until TEA release for CUMULUS-1958
+/* data "aws_lambda_invocation" "tea_map_cache" {
   depends_on                      = [module.tea_map_cache.lambda_function_name]
   function_name                   = module.tea_map_cache.lambda_function_name
   input                           = jsonencode({ bucketList = local.tea_buckets,
                                                  s3Bucket = var.system_bucket
                                                  s3Key = "${var.prefix}/distribution_bucket_map.json"
   })
-}
+} */
 
 module "thin_egress_app" {
-  source = "s3::https://s3.amazonaws.com/cumulus-test-sandbox-private/tea-terraform-manual_build.zip"
+  source = "https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.74.zip"
 
   auth_base_url                      = var.urs_url
-  bucket_map_file                    = var.bucket_map_key == null ? aws_s3_bucket_object.bucket_map_yaml[0].key : var.bucket_map_key
+# Disabled until TEA release for CUMULUS-1958
+#  bucket_map_file                    = var.bucket_map_key == null ? aws_s3_bucket_object.bucket_map_yaml[0].key : var.bucket_map_key
+  bucket_map_file                    = aws_s3_bucket_object.bucket_map_yaml.key
   bucketname_prefix                  = ""
   config_bucket                      = var.system_bucket
   cookie_domain                      = var.thin_egress_cookie_domain
