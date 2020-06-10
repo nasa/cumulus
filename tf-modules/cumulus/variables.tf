@@ -140,6 +140,12 @@ variable "buckets" {
   default     = {}
 }
 
+variable "bucket_map_key" {
+  description = "Optional S3 Key for TEA bucket map object to override default Cumulus configuration"
+  type        = string
+  default     = null
+}
+
 variable "cmr_limit" {
   description = "Limit of the number of results to return from CMR"
   type        = number

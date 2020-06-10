@@ -58,7 +58,7 @@ Providers generate and distribute input data that Cumulus obtains and sends to w
 |Key  |Value  |Required|Description|
 |:---:|:-----:|:------:|-----------|
 |id|`"s3_provider"`|Yes|Unique identifier for provider|
-|globalConnectionLimit|`10`|Yes|Integer specifying the connection limit to the provider|
+|globalConnectionLimit|unlimited|No|Integer specifying the connection limit to the provider|
 |protocol|`s3`|Yes|<code>(http&#124;https&#124;ftp&#124;sftp&#124;s3)</code> are current valid entries|
 |host|`"cumulus-data-shared"`|Yes|Host where the files will exist or s3 bucket if "s3" provider|
 |port|`${port_number}`|No|Port to connect with the provider on|
