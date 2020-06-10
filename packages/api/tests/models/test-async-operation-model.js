@@ -53,7 +53,7 @@ test.before(async () => {
   });
 });
 
-test.after.always(async (t) => {
+test.after.always(async () => {
   sinon.restore();
   await asyncOperationModel.deleteTable();
   await recursivelyDeleteS3Bucket(systemBucket);
