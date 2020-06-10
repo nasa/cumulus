@@ -225,7 +225,6 @@ describe('When there are granule differences and granule reconciliation is run',
   });
 
   it('generates reconciliation report through the Cumulus API', async () => {
-
     const dynamoDbItem = await waitForAsyncOperationStatus({
       TableName: asyncOperationsTableName,
       id: asyncOperationId,
