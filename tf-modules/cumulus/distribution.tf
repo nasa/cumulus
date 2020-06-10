@@ -2,8 +2,10 @@ module "distribution" {
   source = "../distribution"
 
   api_gateway_stage                              = var.distribution_api_gateway_stage
+  bucket_map_key                                 = var.bucket_map_key
   deploy_s3_credentials_endpoint                 = var.deploy_distribution_s3_credentials_endpoint
   distribution_url                               = var.distribution_url
+  lambda_processing_role_arn                     = aws_iam_role.lambda_processing.arn
   log_api_gateway_to_cloudwatch                  = var.log_api_gateway_to_cloudwatch
   log_destination_arn                            = var.log_destination_arn
   permissions_boundary_arn                       = var.permissions_boundary_arn

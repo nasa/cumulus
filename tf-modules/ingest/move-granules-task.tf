@@ -15,6 +15,7 @@ resource "aws_lambda_function" "move_granules_task" {
       CMR_ENVIRONMENT             = var.cmr_environment
       stackName                   = var.prefix
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
+      system_bucket               = var.system_bucket
     }
   }
 

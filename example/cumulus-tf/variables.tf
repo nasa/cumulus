@@ -20,27 +20,32 @@ variable "cmr_username" {
   type = string
 }
 
+variable "bucket_map_key" {
+  type    = string
+  default = null
+}
+
 variable "cumulus_message_adapter_lambda_layer_arn" {
   type = string
 }
 
 variable "cmr_oauth_provider" {
-  type = string
+  type    = string
   default = "earthdata"
 }
 
 variable "launchpad_api" {
-  type = string
+  type    = string
   default = "launchpadApi"
 }
 
 variable "launchpad_certificate" {
-  type = string
+  type    = string
   default = "launchpad.pfx"
 }
 
 variable "launchpad_passphrase" {
-  type = string
+  type    = string
   default = ""
 }
 
@@ -222,7 +227,7 @@ variable "archive_api_port" {
 }
 
 variable "private_archive_api_gateway" {
-  type = bool
+  type    = bool
   default = true
 }
 
@@ -233,22 +238,22 @@ variable "thin_egress_jwt_secret_name" {
 }
 
 variable "metrics_es_host" {
-  type = string
+  type    = string
   default = null
 }
 
 variable "metrics_es_password" {
-  type = string
+  type    = string
   default = null
 }
 
 variable "metrics_es_username" {
-  type = string
+  type    = string
   default = null
 }
 
 variable "additional_log_groups_to_elk" {
-  type = map(string)
+  type    = map(string)
   default = {}
 }
 

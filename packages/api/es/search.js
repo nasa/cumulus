@@ -116,17 +116,17 @@ class BaseSearch {
     }
 
     // get page number
-    const page = parseInt((params.page) ? params.page : 1, 10);
+    const page = Number.parseInt((params.page) ? params.page : 1, 10);
     this.params = params;
     //log.debug('Generated params:', params, logDetails);
 
-    this.size = parseInt((params.limit) ? params.limit : logLimit, 10);
+    this.size = Number.parseInt((params.limit) ? params.limit : logLimit, 10);
 
     // max size is 100 for performance reasons
     this.size = this.size > 100 ? 100 : this.size;
 
     this.frm = (page - 1) * this.size;
-    this.page = parseInt((params.skip) ? params.skip : page, 10);
+    this.page = Number.parseInt((params.skip) ? params.skip : page, 10);
     this.index = index || defaultIndexAlias;
 
     if (this.type === process.env.CollectionsTable) {
