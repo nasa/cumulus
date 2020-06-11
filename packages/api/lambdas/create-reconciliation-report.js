@@ -141,7 +141,7 @@ async function reconciliationReportForCollections() {
       await dbCollectionIds.shift(); // eslint-disable-line no-await-in-loop
       collectionsOnlyInCumulus.push(nextDbCollectionId);
     } else if (nextDbCollectionId > nextCmrCollectionId) {
-      // Found an item that is only in cmr and not in database
+      // Found an item that is only in cmr and not in Cumulus database
       collectionsOnlyInCmr.push(nextCmrCollectionId);
       cmrCollectionIds.shift();
     } else {
@@ -197,7 +197,7 @@ async function reconciliationReportForGranuleFiles(params) {
       || cmrRelatedDataTypes.includes(relatedUrl.Type)) {
       const urlFileName = relatedUrl.URL.split('/').pop();
 
-      // filename in both cumulus and CMR
+      // filename in both Cumulus and CMR
       if (granuleFiles[urlFileName] && bucketsConfig.key(granuleFiles[urlFileName].bucket)) {
         // not all files should be in CMR
         const distributionAccessUrl = await constructOnlineAccessUrl({
@@ -311,14 +311,14 @@ async function reconciliationReportForGranules(params) {
     const nextCmrGranuleId = nextCmrItem.umm.GranuleUR;
 
     if (nextDbGranuleId < nextCmrGranuleId) {
-      // Found an item that is only in database and not in cmr
+      // Found an item that is only in Cumulus database and not in CMR
       granulesReport.onlyInCumulus.push({
         granuleId: nextDbGranuleId,
         collectionId: collectionId
       });
       await dbGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
     } else if (nextDbGranuleId > nextCmrGranuleId) {
-      // Found an item that is only in cmr and not in database
+      // Found an item that is only in CMR and not in Cumulus database
       granulesReport.onlyInCmr.push({
         GranuleUR: nextCmrGranuleId,
         ShortName: nextCmrItem.umm.CollectionReference.ShortName,
@@ -326,7 +326,7 @@ async function reconciliationReportForGranules(params) {
       });
       await cmrGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
     } else {
-      // Found an item that is in both cmr and database
+      // Found an item that is in both CMR and Cumulus database
       granulesReport.okCount += 1;
       const granuleInDb = {
         granuleId: nextDbGranuleId,
@@ -432,15 +432,24 @@ async function reconciliationReportForCumulusCMR(params) {
  * Create a Reconciliation report and save it to S3
  *
  * @param {Object} params - params
- * @param {string} params.systemBucket - the name of the CUMULUS system bucket
- * @param {string} params.stackName - the name of the CUMULUS stack
- * @param {moment} params.reportStartTime - the report start time
+ * @param {moment} params.createStartTime - when the report creation was begun
+ * @param {moment} params.endTimestamp - end of date range for report
  * @param {string} params.reportKey - the s3 report key
+ * @param {string} params.stackName - the name of the CUMULUS stack
+ * @param {moment} params.startTimestamp - begginning of date range for report
+ * @param {string} params.systemBucket - the name of the CUMULUS system bucket
  * @returns {Promise<null>} a Promise that resolves when the report has been
  *   uploaded to S3
  */
 async function createReconciliationReport(params) {
-  const { systemBucket, stackName, reportStartTime, reportKey } = params;
+  const {
+    createStartTime,
+    endTimestamp,
+    reportKey,
+    stackName,
+    startTimestamp,
+    systemBucket
+  } = params;
 
   // Fetch the bucket names to reconcile
   const bucketsConfigJson = await getJsonS3Object(systemBucket, getBucketsConfigKey(stackName));
@@ -467,8 +476,10 @@ async function createReconciliationReport(params) {
   };
 
   let report = {
-    reportStartTime: reportStartTime.toISOString(),
-    reportEndTime: null,
+    createStartTime: createStartTime.toISOString(),
+    createEndTime: null,
+    reportStartTime: startTimestamp,
+    reportEndTime: endTimestamp,
     status: 'RUNNING',
     error: null,
     filesInCumulus,
@@ -493,8 +504,7 @@ async function createReconciliationReport(params) {
   bucketReports.forEach((bucketReport) => {
     report.filesInCumulus.okCount += bucketReport.okCount;
     report.filesInCumulus.onlyInS3 = report.filesInCumulus.onlyInS3.concat(bucketReport.onlyInS3);
-    report.filesInCumulus.onlyInDynamoDb = report.filesInCumulus
-      .onlyInDynamoDb.concat(bucketReport.onlyInDynamoDb);
+    report.filesInCumulus.onlyInDynamoDb = report.filesInCumulus.onlyInDynamoDb.concat(bucketReport.onlyInDynamoDb);
   });
 
   // compare the CUMULUS holdings with the holdings in CMR
@@ -504,7 +514,7 @@ async function createReconciliationReport(params) {
   report = Object.assign(report, cumulusCmrReport);
 
   // Create the full report
-  report.reportEndTime = moment.utc().toISOString();
+  report.createEndTime = moment.utc().toISOString();
   report.status = 'SUCCESS';
 
   // Write the full report to S3
@@ -525,8 +535,8 @@ async function createReconciliationReport(params) {
  */
 async function processRequest(params) {
   const { systemBucket, stackName } = params;
-  const reportStartTime = moment.utc();
-  const reportRecordName = `inventoryReport-${reportStartTime.format('YYYYMMDDTHHmmssSSS')}`;
+  const createStartTime = moment.utc();
+  const reportRecordName = `inventoryReport-${createStartTime.format('YYYYMMDDTHHmmssSSS')}`;
   const reportKey = `${stackName}/reconciliation-reports/${reportRecordName}.json`;
 
   // add request to database
@@ -540,7 +550,7 @@ async function processRequest(params) {
   await reconciliationReportModel.create(reportRecord);
 
   try {
-    await createReconciliationReport({ ...params, reportStartTime, reportKey });
+    await createReconciliationReport({ ...params, createStartTime, reportKey });
     await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
   } catch (error) {
     log.error(`Error creating reconciliation report ${reportRecordName}`, error);
@@ -564,7 +574,9 @@ function handler(event, _context, cb) {
 
   return processRequest({
     systemBucket: event.systemBucket || process.env.system_bucket,
-    stackName: event.stackName || process.env.stackName
+    stackName: event.stackName || process.env.stackName,
+    startTimestamp: event.startTimestamp || null,
+    endTimestamp: event.endTimestamp || null
   })
     .then((reportRecord) => cb(null, reportRecord))
     .catch(cb);

@@ -22,7 +22,7 @@ const indexer = require('../es/indexer');
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function list(req, res) {
+async function listReports(req, res) {
   const search = new Search(
     { queryStringParameters: req.query },
     'reconciliationReport',
@@ -40,7 +40,7 @@ async function list(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function get(req, res) {
+async function getReport(req, res) {
   const name = req.params.name;
   const reconciliationReportModel = new models.ReconciliationReport();
 
@@ -67,7 +67,7 @@ async function get(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function del(req, res) {
+async function deleteReport(req, res) {
   const name = req.params.name;
   const reconciliationReportModel = new models.ReconciliationReport();
   const record = await reconciliationReportModel.get({ name });
@@ -99,18 +99,21 @@ async function del(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function post(req, res) {
+async function createReport(req, res) {
   const invocationType = req.body.invocationType || 'Event';
-  const result = await invoke(process.env.invokeReconcileLambda, {}, invocationType);
+  const startTimestamp = req.body.startTimestamp || undefined;
+  const endTimestamp = req.body.endTimestamp || undefined;
+  const payload = { startTimestamp, endTimestamp };
+  const result = await invoke(process.env.invokeReconcileLambda, payload, invocationType);
   const response = (invocationType === 'Event')
     ? { message: 'Report is being generated', status: result.StatusCode }
     : { message: 'Report generated', report: JSON.parse(result.Payload) };
   return res.send(response);
 }
 
-router.get('/:name', get);
-router.delete('/:name', del);
-router.get('/', list);
-router.post('/', post);
+router.get('/:name', getReport);
+router.delete('/:name', deleteReport);
+router.get('/', listReports);
+router.post('/', createReport);
 
 module.exports = router;
