@@ -3,7 +3,7 @@ const got = require('got');
 const { URL } = require('url');
 
 const { AccessToken } = require('@cumulus/api/models');
-const EarthdataLogin = require('@cumulus/api/lib/EarthdataLogin');
+const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
 
 /**
  * Login to Earthdata and get access token.
@@ -34,7 +34,7 @@ async function getEarthdataAccessToken({
   }
 
   // Create Earthdata client and get authorization URL.
-  const earthdataLoginClient = EarthdataLogin.createFromEnv({
+  const earthdataLoginClient = EarthdataLoginClient.createFromEnv({
     redirectUri
   });
   const authorizeUrl = earthdataLoginClient.getAuthorizationUrl();
