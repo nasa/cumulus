@@ -137,8 +137,8 @@ async function reconciliationReportForCollections() {
 
   while (nextDbCollectionId && nextCmrCollectionId) {
     if (nextDbCollectionId < nextCmrCollectionId) {
-      // Found an item that is only in database and not in cmr
-      await dbCollectionIds.shift(); // eslint-disable-line no-await-in-loop
+      // Found an item that is only in Cumulus database and not in cmr
+      dbCollectionIds.shift();
       collectionsOnlyInCumulus.push(nextDbCollectionId);
     } else if (nextDbCollectionId > nextCmrCollectionId) {
       // Found an item that is only in cmr and not in Cumulus database
