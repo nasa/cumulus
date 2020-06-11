@@ -256,7 +256,7 @@ function getS3CredentialsObject(s3CredsUrl) {
  * Returns UMM/ECHO10 resource type mapping for CNM file type
  *
  * @param {string} type - CNM resource type to convert to UMM/ECHO10 type
- * @returns {string} type - UMM/ECHO10 resource type
+ * @returns {( string | undefined )} type - UMM/ECHO10 resource type
  */
 function mapCNMTypeToCMRType(type) {
   const mapping = {
@@ -283,7 +283,7 @@ async function generateFileUrl({
   if (cmrGranuleUrlType === 'distribution') {
     const bucketPath = _get(distributionBucketMap, file.bucket);
     if (!bucketPath) {
-      throw new Error(`No distribution bucket mapping exists for ${file.bucket}`);
+      throw new errors.MissingBucketMap(`No distribution bucket mapping exists for ${file.bucket}`);
     }
 
     const extension = urljoin(bucketPath, getS3KeyOfFile(file));
@@ -300,7 +300,7 @@ async function generateFileUrl({
     return buildS3Uri(file.bucket, file.key);
   }
 
-  return null;
+  return undefined;
 }
 
 
@@ -313,7 +313,7 @@ async function generateFileUrl({
  * @param {BucketsConfig} params.buckets -  stack BucketConfig instance
  * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
  *                                                               for all distribution bucketss
- * @returns {Object} online access url object
+ * @returns {(Object | undefined)} online access url object, undefined if no URL exists
  */
 async function constructOnlineAccessUrl({
   file,
@@ -336,7 +336,7 @@ async function constructOnlineAccessUrl({
         };
       }
     }
-    return null;
+    return undefined;
   } catch (error) {
     log.error(`Error constructing online access urls for ${JSON.stringify(file)}: ${error.message}`);
     throw error;
@@ -370,7 +370,7 @@ async function constructOnlineAccessUrls({
     distributionBucketMap
   }));
   const urlList = await Promise.all(urlListPromises);
-  return urlList.filter((urlObj) => !(urlObj == null));
+  return urlList.filter((urlObj) => !(urlObj === undefined));
 }
 
 /**

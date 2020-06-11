@@ -17,6 +17,7 @@ const {
 const { s3, secretsManager } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { randomId, readJsonFixture } = require('@cumulus/common/test-utils');
+const errors = require('@cumulus/errors');
 const launchpad = require('@cumulus/launchpad-auth');
 const { xmlParseOptions } = require('../../utils');
 
@@ -30,8 +31,7 @@ const mockDistributionBucketMap = {
   'mapped-bucket': 'mapped/path/example',
   'cumulus-test-sandbox-protected': 'cumulus-test-sandbox-protected',
   'cumulus-test-sandbox-protected-2': 'cumulus-test-sandbox-protected-2',
-  'cumulus-test-sandbox-public': 'cumulus-test-sandbox-public',
-  'other-fake-bucket': 'other-fake-bucket'
+  'cumulus-test-sandbox-public': 'cumulus-test-sandbox-public'
 };
 const { generateFileUrl } = proxyquire('../../cmr-utils', {
   '@cumulus/aws-client/S3': {
@@ -496,7 +496,7 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distrib
 });
 
 
-test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distribution with no bucket-map-entry', async (t) => {
+test.serial('generateFileUrl throws error for cmrGranuleUrlType distribution with no bucket map defined', async (t) => {
   const filename = 's3://other-fake-bucket/folder/key.txt';
   const distEndpoint = 'www.example.com/';
 
@@ -506,15 +506,14 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distrib
     key: 'folder/key.txt'
   };
 
-  const url = await generateFileUrl({
+  await t.throwsAsync(generateFileUrl({
     file,
     distEndpoint,
     teaEndpoint: 'fakeTeaEndpoint',
     cmrGranuleUrlType: 'distribution',
     distributionBucketMap: mockDistributionBucketMap
-  });
-
-  t.is(url, 'www.example.com/other-fake-bucket/folder/key.txt');
+  }),
+  { instanceOf: errors.MissingBucketMap });
 });
 
 test('getCmrSettings uses values in environment variables by default', async (t) => {
