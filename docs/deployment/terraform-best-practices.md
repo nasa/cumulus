@@ -1,5 +1,5 @@
 ---
-id: terraform_best_practices
+id: terraform-best-practices
 title: Terraform Best Practices
 hide_title: true
 ---

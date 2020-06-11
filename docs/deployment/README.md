@@ -190,9 +190,12 @@ aws s3api put-bucket-versioning \
     --versioning-configuration Status=Enabled
 ```
 
-⚠️ **Note:** If your state information does become lost or corrupt, then deployment (via
-`terraform apply`) will have unpredictable results, including possible loss of data and loss of
-deployed resources.
+⚠️ **Note:** If your state information does become lost or corrupt, then
+deployment (via `terraform apply`) will have unpredictable results, including
+possible loss of data and loss of deployed resources. In order to reduce your
+risk of the corruption or loss of your Terraform state file, or otherwise
+corrupt your Cumulus deployment, please see the
+[Terraform Best Practices](terraform-best-practices.md) guide.
 
 Terraform uses a lock stored in DynamoDB in order to prevent multiple
 simultaneous updates. In the following examples, that table will be called
@@ -394,12 +397,6 @@ Login to URS (UAT), and under My Applications -> Application Administration -> u
 Also add the Distribution url `https://<kido2r7kji>.execute-api.us-east-1.amazonaws.com/dev/login`[^1]. You may also delete the placeholder url you used to create the application.
 
 If you've lost track of the needed redirect URIs, they can be located on the [API Gateway](https://console.aws.amazon.com/apigateway). Once there, select `<prefix>-archive` and/or `<prefix>-thin-egress-app-EgressGateway`, `Dashboard` and utilizing the base URL at the top of the page that is accompanied by the text `Invoke this API at:`. Make sure to append `/token` for the archive URL and `/login` to the thin egress app URL.
-
-### Terraform best practices
-
-In order to reduce your risk of the corruption or loss of your Terraform state
-file, or otherwise corrupt your Cumulus deployment, please see our
-[Terraform Best Practices](terraform-best-practices.md) guide.
 
 ### Troubleshooting
 
