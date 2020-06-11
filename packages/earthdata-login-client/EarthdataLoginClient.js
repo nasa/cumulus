@@ -161,12 +161,11 @@ class EarthdataLoginClient {
 
     try {
       const response = await this.requestAccessToken(authorizationCode);
-      const parsedResponseBody = JSON.parse(response.body);
 
       return {
-        accessToken: parsedResponseBody.access_token,
-        refreshToken: parsedResponseBody.refresh_token,
-        username: parsedResponseBody.endpoint.split('/').pop(),
+        accessToken: response.body.access_token,
+        refreshToken: response.body.refresh_token,
+        username: response.body.endpoint.split('/').pop(),
         // expires_in value is in seconds
         expirationTime: Math.floor(Date.now() / 1000) + response.body.expires_in
       };
