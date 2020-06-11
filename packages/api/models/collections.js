@@ -2,8 +2,6 @@
 
 const omit = require('lodash/omit');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
-const { publishSnsMessage } = require('@cumulus/aws-client/SNS');
-const log = require('@cumulus/common/log');
 const { InvalidRegexError, UnmatchedRegexError } = require('@cumulus/errors');
 
 const Manager = require('./base');
@@ -35,25 +33,6 @@ function checkRegex(regex, sampleFileName, regexFieldName = 'regex') {
   }
 
   return match;
-}
-
-/**
- * Publish SNS message for Collection reporting.
- *
- * @param {Object} collectionRecord - A Collection record with event type
- * @returns {Promise<undefined>}
- */
-async function publishCollectionSnsMessage(collectionRecord) {
-  try {
-    const collectionSnsTopicArn = process.env.collection_sns_topic_arn;
-    await publishSnsMessage(collectionSnsTopicArn, collectionRecord);
-  } catch (err) {
-    log.warn(
-      `Failed to create record for collection ${collectionRecord.record.name} ${collectionRecord.record.version}: ${err.message}`,
-      'Cause: ', err,
-      'Collection record: ', collectionRecord
-    );
-  }
 }
 
 const validateCollection = (collection) => {
