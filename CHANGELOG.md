@@ -69,7 +69,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - The `globalConnectionLimit` property of providers is now optional and
     defaults to "unlimited"
 - **CUMULUS-1997**
-  - Added optional `launchpad` configuration to `@cumulus/hyrax-metadata-updates` task config schema.
+  - Added optional `launchpad` configuration to
+    `@cumulus/hyrax-metadata-updates` task config schema.
 - **CUMULUS-2016**
   - Upgrade TEA to version 79
 
