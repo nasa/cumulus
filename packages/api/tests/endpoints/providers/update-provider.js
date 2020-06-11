@@ -109,7 +109,6 @@ test('PUT replaces existing provider', async (t) => {
 
   t.deepEqual(actualProvider, {
     ...expectedProvider,
-    globalConnectionLimit: 10, // Default value
     protocol: 'http', // Default value
     createdAt: actualProvider.createdAt,
     updatedAt: actualProvider.updatedAt
