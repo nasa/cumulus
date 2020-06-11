@@ -11,7 +11,7 @@ const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 
 const granules = [
   fakeGranuleFactoryV2(),
-  fakeGranuleFactoryV2({ granuleId: randomId('granprefix') }),
+  fakeGranuleFactoryV2({ granuleId: randomId('granprefix123') }),
   fakeGranuleFactoryV2({ granuleId: randomId('granprefix'), status: 'failed' }),
   fakeGranuleFactoryV2({ status: 'failed' })
 ];
@@ -61,14 +61,14 @@ test('Search with prefix returns correct granules', async (t) => {
 
 test('Search with infix returns correct granules', async (t) => {
   const granuleId = granules[2].granuleId;
-  const _infix = granuleId.substring(4, 14);
+  const infix = granuleId.substring(4, 14);
   const params = {
     limit: 50,
     page: 1,
     order: 'desc',
     sort_by: 'timestamp',
     status: 'failed',
-    infix: _infix
+    infix
   };
 
   const es = new Search(
@@ -82,4 +82,29 @@ test('Search with infix returns correct granules', async (t) => {
   t.is(queryResult.meta.count, 1);
   t.is(queryResult.results.length, 1);
   t.is(queryResult.results[0].granuleId, granuleId);
+});
+
+test('Search with both prefix and infix returns correct granules', async (t) => {
+  const prefix = 'granprefix';
+  const infix = 'fix123';
+  const params = {
+    limit: 50,
+    page: 1,
+    order: 'desc',
+    sort_by: 'timestamp',
+    prefix,
+    infix
+  };
+
+  const es = new Search(
+    { queryStringParameters: params },
+    'granule',
+    process.env.ES_INDEX
+  );
+
+  const queryResult = await es.query();
+
+  t.is(queryResult.meta.count, 1);
+  t.is(queryResult.results.length, 1);
+  t.is(queryResult.results[0].granuleId, granules[1].granuleId);
 });
