@@ -571,8 +571,7 @@ module.exports.provider = {
     },
     globalConnectionLimit: {
       title: 'Concurrent Connection Limit',
-      type: 'integer',
-      default: 10
+      type: 'integer'
     },
     protocol: {
       title: 'Protocol',
@@ -621,7 +620,6 @@ module.exports.provider = {
   },
   required: [
     'id',
-    'globalConnectionLimit',
     'protocol',
     'host',
     'createdAt'
