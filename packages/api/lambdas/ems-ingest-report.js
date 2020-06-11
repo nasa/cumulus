@@ -173,7 +173,7 @@ function getEmsFieldFromGranField(granule, emsField, granField) {
     result = deconstructCollectionId(metadata).name;
     break;
   case 'versionID':
-    result = parseInt(deconstructCollectionId(metadata).version, 10);
+    result = Number.parseInt(deconstructCollectionId(metadata).version, 10);
     break;
   case 'deleteFromArchive':
     result = 'N';
@@ -261,7 +261,7 @@ async function generateReport(reportType, startTime, endTime, collections) {
     .then((searchResponse) => searchResponse.body);
   let granules = response.hits.hits.map((s) => s._source);
   let records = buildEMSRecords(emsMappings[reportType], granules, collections);
-  stream.write(records.length ? records.join('\n') : '');
+  stream.write(records.join('\n'));
   let numRetrieved = granules.length;
   let numRecords = records.length;
 
@@ -272,7 +272,7 @@ async function generateReport(reportType, startTime, endTime, collections) {
     }).then((scrollResponse) => scrollResponse.body);
     granules = response.hits.hits.map((s) => s._source);
     records = buildEMSRecords(emsMappings[reportType], granules, collections);
-    stream.write(records.length ? `\n${records.join('\n')}` : '');
+    stream.write(records.length > 0 ? `\n${records.join('\n')}` : '');
     numRetrieved += granules.length;
     numRecords += records.length;
   }

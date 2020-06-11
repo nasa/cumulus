@@ -140,3 +140,5 @@ export const UnmatchedRegexError = createErrorType('UnmatchedRegexError');
 export const ValidationError = createErrorType('ValidationError');
 
 export const EcsStartTaskError = createErrorType('EcsStartTaskError');
+
+export const DeletePublishedGranule = createErrorType('DeletePublishedGranule');

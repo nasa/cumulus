@@ -6,7 +6,6 @@ const { invokeApi } = require('./cumulusApiClient');
 
 const logger = new Logger({ sender: '@api-client/granules' });
 
-
 /**
  * GET /granules/{granuleName}
  *
@@ -245,6 +244,29 @@ const listGranules = async ({ prefix, query = null, callback = invokeApi }) => c
   }
 });
 
+/**
+ * Bulk delete granules stored in cumulus
+ * POST /granules/bulkDelete
+ * @param {Object} params             - params
+ * @param {Object} params.body       - body to pass the API lambda
+ * @param {Function} params.callback  - async function to invoke the api lambda
+ *                                      that takes a prefix / user payload.  Defaults
+ *                                      to cumulusApiClient.invokeApifunction to invoke the
+ *                                      api lambda
+ * @returns {Promise<Object>}         - the response from the callback
+ */
+const bulkDeleteGranules = async ({ prefix, body, callback = invokeApi }) => callback({
+  prefix: prefix,
+  payload: {
+    httpMethod: 'POST',
+    resource: '/{proxy+}',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    path: '/granules/bulkDelete',
+    body: JSON.stringify(body)
+  }
+});
 
 module.exports = {
   getGranule,
@@ -255,5 +277,6 @@ module.exports = {
   listGranules,
   moveGranule,
   waitForGranule,
-  removePublishedGranule
+  removePublishedGranule,
+  bulkDeleteGranules
 };

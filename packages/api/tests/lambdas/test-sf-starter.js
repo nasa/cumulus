@@ -11,9 +11,9 @@ const {
   sendSQSMessage
 } = require('@cumulus/aws-client/SQS');
 const { ResourcesLockedError } = require('@cumulus/errors');
-const Semaphore = require('@cumulus/common/Semaphore');
 const { randomId } = require('@cumulus/common/test-utils');
 
+const Semaphore = require('../../lib/Semaphore');
 const sfStarter = rewire('../../lambdas/sf-starter');
 const { Manager } = require('../../models');
 

@@ -116,6 +116,12 @@ class EarthdataLoginClient {
     return url.toString();
   }
 
+  urlOfEndpoint(path) {
+    const url = new URL(path, this.earthdataLoginUrl);
+
+    return url.toString();
+  }
+
   /**
    * Get the URL of the Earthdata Login token endpoint
    *
@@ -155,20 +161,21 @@ class EarthdataLoginClient {
 
     try {
       const response = await this.requestAccessToken(authorizationCode);
+      const parsedResponseBody = JSON.parse(response.body);
 
       return {
-        accessToken: response.body.access_token,
-        refreshToken: response.body.refresh_token,
-        username: response.body.endpoint.split('/').pop(),
+        accessToken: parsedResponseBody.access_token,
+        refreshToken: parsedResponseBody.refresh_token,
+        username: parsedResponseBody.endpoint.split('/').pop(),
         // expires_in value is in seconds
         expirationTime: Math.floor(Date.now() / 1000) + response.body.expires_in
       };
-    } catch (err) {
-      if (isHttpBadRequestError(err)) {
+    } catch (error) {
+      if (isHttpBadRequestError(error)) {
         throw new OAuth2AuthenticationFailure();
       }
 
-      throw new OAuth2AuthenticationError(err.message);
+      throw new OAuth2AuthenticationError(error.message);
     }
   }
 
@@ -194,12 +201,12 @@ class EarthdataLoginClient {
         username: response.body.endpoint.split('/').pop(),
         expirationTime: Math.floor(Date.now() / 1000) + response.body.expires_in
       };
-    } catch (err) {
-      if (isHttpBadRequestError(err)) {
+    } catch (error) {
+      if (isHttpBadRequestError(error)) {
         throw new OAuth2AuthenticationFailure();
       }
 
-      throw new OAuth2AuthenticationError(err.message);
+      throw new OAuth2AuthenticationError(error.message);
     }
   }
 
