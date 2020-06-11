@@ -54,6 +54,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `@cumulus/api/models/Granule.update()` now returns the updated granule record
 - **CUMULUS-1997**
   - Added optional `launchpad` configuration to `@cumulus/hyrax-metadata-updates` task config schema.
+- **CUMULUS-2011**
+  - Reconciliation reports are not generated within an AsyncOperation
 
 ### Fixed
 
