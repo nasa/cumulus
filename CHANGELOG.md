@@ -40,6 +40,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     a request contains the `EDL-ClientId` and `EDL-Token` headers,
     authentication will be handled using that token rather than attempting to
     use OAuth.
+  - If EDL token authentication is being used, and the `EDL-Client-Name` header
+    is set, `@the-client-name` will be appended to the end of the Earthdata
+    Login username that is used as the `RoleSessionName` of the temporary IAM
+    credentials. This value will show up in the AWS S3 server access logs.
 
 - **CUMULUS-1997**
   - Added optional `launchpad` configuration to `@cumulus/hyrax-metadata-updates` task config schema.

@@ -24,6 +24,19 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const log = new Logger({ sender: 's3credentials' });
 
+// From https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html#API_AssumeRole_RequestParameters
+const roleSessionNameRegex = /^[\w+=,.@-]{2,64}$/;
+
+const isValidRoleSessionNameString = (x) => roleSessionNameRegex.test(x);
+
+const buildRoleSessionName = (username, clientName) => {
+  if (clientName) {
+    return `${username}@${clientName}`;
+  }
+
+  return username;
+};
+
 /**
  * Use NGAP's time-based, temporary credential dispensing lambda.
  *
@@ -33,24 +46,28 @@ const log = new Logger({ sender: 's3credentials' });
  *                   SecretAccessKey, SessionToken, Expiration and can be use
  *                   for same-region s3 direct access.
  */
-async function requestTemporaryCredentialsFromNgap(username) {
-  const FunctionName = process.env.STSCredentialsLambda;
+async function requestTemporaryCredentialsFromNgap({
+  lambda,
+  lambdaFunctionName,
+  userId,
+  roleSessionName
+}) {
   const Payload = JSON.stringify({
     accesstype: 'sameregion',
     returntype: 'lowerCamel',
     duration: '3600', // one hour max allowed by AWS.
-    rolesession: username, // <- shows up in access logs
-    userid: username // <- used by NGAP
+    rolesession: roleSessionName, // <- shows up in S3 server access logs
+    userid: userId // <- used by NGAP
   });
 
-  return awsServices.lambda().invoke({
-    FunctionName,
+  return lambda.invoke({
+    FunctionName: lambdaFunctionName,
     Payload
   }).promise();
 }
 
 /**
- * Dispenses time based temporary credentials for same-region direct s3 access.
+ * Dispenses time-based temporary credentials for same-region direct s3 access.
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
@@ -58,9 +75,20 @@ async function requestTemporaryCredentialsFromNgap(username) {
  *                   tempoary s3 credentials for direct same-region s3 access.
  */
 async function s3credentials(req, res) {
-  const username = req.authorizedMetadata.userName;
-  const credentials = await requestTemporaryCredentialsFromNgap(username);
+  const roleSessionName = buildRoleSessionName(
+    req.authorizedMetadata.userName,
+    req.authorizedMetadata.clientName
+  );
+
+  const credentials = await requestTemporaryCredentialsFromNgap({
+    lambda: req.lambda,
+    lambdaFunctionName: process.env.STSCredentialsLambda,
+    userId: req.authorizedMetadata.userName,
+    roleSessionName
+  });
+
   const creds = JSON.parse(credentials.Payload);
+
   if (Object.keys(creds).some((key) => ['errorMessage', 'errorType', 'stackTrace'].includes(key))) {
     log.error(credentials.Payload);
     return res.boom.failedDependency(
@@ -146,6 +174,7 @@ async function handleRedirectRequest(req, res) {
  * temporary credentials
  */
 async function handleCredentialRequest(req, res) {
+  req.lambda = awsServices.lambda();
   return s3credentials(req, res);
 }
 
@@ -183,18 +212,21 @@ const isTokenAuthRequest = (req) =>
   req.get('EDL-Client-Id') && req.get('EDL-Token');
 
 const handleTokenAuthRequest = async (req, res, next) => {
-  const earthdataLoginClient = EarthdataLoginClient.createFromEnv({
-    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT
-  });
-
   try {
-    const userName = await earthdataLoginClient.getTokenUsername({
+    const userName = await req.earthdataLoginClient.getTokenUsername({
       onBehalfOf: req.get('EDL-Client-Id'),
       token: req.get('EDL-Token'),
       xRequestId: req.get('X-Request-Id')
     });
 
     req.authorizedMetadata = { userName };
+
+    const clientName = req.get('EDL-Client-Name');
+    if (isValidRoleSessionNameString(clientName)) {
+      req.authorizedMetadata.clientName = clientName;
+    } else {
+      return res.boom.badRequest('EDL-Client-Name is invalid');
+    }
 
     return next();
   } catch (error) {
@@ -227,6 +259,10 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
     req.authorizedMetadata = { userName: 'unauthenticated user' };
     return next();
   }
+
+  req.earthdataLoginClient = EarthdataLoginClient.createFromEnv({
+    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT
+  });
 
   if (isTokenAuthRequest(req)) {
     return handleTokenAuthRequest(req, res, next);
@@ -307,6 +343,10 @@ const handler = async (event, context) =>
   ).promise;
 
 module.exports = {
+  buildRoleSessionName,
   distributionApp,
-  handler
+  handler,
+  handleTokenAuthRequest,
+  requestTemporaryCredentialsFromNgap,
+  s3credentials
 };
