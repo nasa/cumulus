@@ -578,8 +578,11 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
 
   await new models.Granule().create(matchingGrans.concat(extraDbGrans));
 
-  const { granulesReport, filesReport } = await
-  reconciliationReportForGranules(collectionId, new BucketsConfig({}));
+  const { granulesReport, filesReport } = await reconciliationReportForGranules({
+    collectionId,
+    bucketsConfig: new BucketsConfig({}),
+    distributionBucketMap: {}
+  });
 
   t.is(granulesReport.okCount, 10);
 
@@ -646,7 +649,7 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     fileName: 'extra456.jpg'
   }];
 
-  const granInDb = {
+  const granuleInDb = {
     granuleId: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
     collectionId: 'MOD09GQ___006',
     files: matchingFilesInDb.concat(privateFilesInDb).concat(filesOnlyInDb)
@@ -680,18 +683,18 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access'
   }];
 
-  const granInCmr = {
+  const granuleInCmr = {
     GranuleUR: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
     ShortName: 'MOD09GQ',
     Version: '006',
     RelatedUrls: matchingFilesInCmr.concat(filesOnlyInCmr).concat(urlsShouldOnlyInCmr)
   };
-  const report = await reconciliationReportForGranuleFiles(
-    granInDb,
-    granInCmr,
+  const report = await reconciliationReportForGranuleFiles({
+    granuleInDb,
+    granuleInCmr,
     bucketsConfig,
     distributionBucketMap
-  );
+  });
   t.is(report.okCount, matchingFilesInDb.length + privateFilesInDb.length);
 
   t.is(report.onlyInCumulus.length, filesOnlyInDb.length);
@@ -751,7 +754,7 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     fileName: 'extra456.jpg'
   }];
 
-  const granInDb = {
+  const granuleInDb = {
     granuleId: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
     collectionId: 'MOD09GQ___006',
     files: matchingFilesInDb.concat(privateFilesInDb).concat(filesOnlyInDb)
@@ -785,19 +788,19 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access'
   }];
 
-  const granInCmr = {
+  const granuleInCmr = {
     GranuleUR: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
     ShortName: 'MOD09GQ',
     Version: '006',
     RelatedUrls: matchingFilesInCmr.concat(filesOnlyInCmr).concat(urlsShouldOnlyInCmr)
   };
 
-  const report = await reconciliationReportForGranuleFiles(
-    granInDb,
-    granInCmr,
+  const report = await reconciliationReportForGranuleFiles({
+    granuleInDb,
+    granuleInCmr,
     bucketsConfig,
     distributionBucketMap
-  );
+  });
 
   t.is(report.okCount, matchingFilesInDb.length + privateFilesInDb.length);
 
@@ -858,7 +861,7 @@ test.serial('reconciliationReportForGranuleFiles does not fail if no distributio
     fileName: 'extra456.jpg'
   }];
 
-  const granInDb = {
+  const granuleInDb = {
     granuleId: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
     collectionId: 'MOD09GQ___006',
     files: matchingFilesInDb.concat(privateFilesInDb).concat(filesOnlyInDb)
@@ -892,16 +895,16 @@ test.serial('reconciliationReportForGranuleFiles does not fail if no distributio
     Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access'
   }];
 
-  const granInCmr = {
+  const granuleInCmr = {
     GranuleUR: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
     ShortName: 'MOD09GQ',
     Version: '006',
     RelatedUrls: matchingFilesInCmr.concat(filesOnlyInCmr).concat(urlsShouldOnlyInCmr)
   };
 
-  const report = await reconciliationReportForGranuleFiles(
-    granInDb, granInCmr, bucketsConfig, distributionBucketMap
-  );
+  const report = await reconciliationReportForGranuleFiles({
+    granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap
+  });
   t.is(report.okCount, matchingFilesInDb.length + privateFilesInDb.length);
 
   t.is(report.onlyInCumulus.length, filesOnlyInDb.length);
