@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- **CUMULUS-1930**
+  - The `@cumulus/common/util.uuid()` function has been removed
 - **CUMULUS-1969**
   - The `DiscoverPdrs` task now expects `provider_path` to be provided at
     `event.config.provider_path`, not `event.config.collection.provider_path`
@@ -85,6 +87,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1930**
   - `@cumulus/common/log.convertLogLevel()`
+  - `@cumulus/common/util.isNull()`
+  - `@cumulus/common/util.isUndefined()`
+  - `@cumulus/common/util.negate()`
+  - `@cumulus/common/util.noop()`
+  - `@cumulus/common/util.isNil()`
+  - `@cumulus/common/util.renameProperty()`
+  - `@cumulus/common/util.lookupMimeType()`
+  - `@cumulus/common/util.thread()`
+  - `@cumulus/common/util.mkdtempSync()`
 
 ### Removed
 
@@ -175,6 +186,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - The deprecated `@cumulus/common/string.replace` functon has been removed
 - The deprecated `@cumulus/common/string.toLower` functon has been removed
 - The deprecated `@cumulus/common/string.toUpper` functon has been removed
+- The deprecated `@cumulus/common/util.setErrorStack` function has been removed
 - The deprecated `@cumulus/common/workflows.getWorkflowArn` function has been
   removed
 - The deprecated `@cumulus/common/workflows.getWorkflowFile` function has been

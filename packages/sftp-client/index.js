@@ -2,10 +2,10 @@
 
 const get = require('lodash/get');
 const log = require('@cumulus/common/log');
+const mime = require('mime-types');
 const path = require('path');
 const S3 = require('@cumulus/aws-client/S3');
 const { Client } = require('ssh2');
-const { lookupMimeType } = require('@cumulus/common/util');
 const { PassThrough } = require('stream');
 
 class SftpClient {
@@ -119,7 +119,8 @@ class SftpClient {
       Bucket: bucket,
       Key: key,
       Body: pass,
-      ContentType: lookupMimeType(key)
+      // eslint-disable-next-line unicorn/no-null
+      ContentType: mime.lookup(key) || null
     };
 
     const result = await S3.promiseS3Upload(params);

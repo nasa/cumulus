@@ -18,8 +18,7 @@ const { getMessageGranules } = require('@cumulus/message/Granules');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const {
   isNil,
-  removeNilProperties,
-  renameProperty
+  removeNilProperties
 } = require('@cumulus/common/util');
 const {
   DeletePublishedGranule
@@ -42,6 +41,12 @@ const {
 } = require('../lib/utils');
 const Rule = require('./rules');
 const granuleSchema = require('./schemas').granule;
+
+const renameProperty = (from, to, obj) => {
+  const newObj = { ...obj, [to]: obj[from] };
+  delete newObj[from];
+  return newObj;
+};
 
 class Granule extends Manager {
   constructor() {
@@ -451,8 +456,8 @@ class Granule extends Manager {
     let executionDescription;
     try {
       executionDescription = await StepFunctions.describeExecution({ executionArn });
-    } catch (err) {
-      log.error(`Could not describe execution ${executionArn}`, err);
+    } catch (error) {
+      log.error(`Could not describe execution ${executionArn}`, error);
     }
 
     const promisedGranuleRecords = granules
@@ -464,12 +469,12 @@ class Granule extends Manager {
             executionUrl,
             executionDescription
           );
-        } catch (err) {
+        } catch (error) {
           log.error(
-            'Error handling granule records: ', err,
+            'Error handling granule records: ', error,
             'Execution message: ', cumulusMessage
           );
-          return null;
+          return undefined;
         }
       });
 
@@ -504,10 +509,10 @@ class Granule extends Manager {
       }
 
       await this.dynamodbDocClient.update(updateParams).promise();
-    } catch (err) {
+    } catch (error) {
       log.error(
         'Could not store granule record: ', granuleRecord,
-        err
+        error
       );
     }
   }

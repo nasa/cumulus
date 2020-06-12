@@ -36,6 +36,7 @@
     "@cumulus/aws-client": "1.23.2",
     "@cumulus/common": "1.23.2",
     "lodash": "^4.17.15",
+    "mime-types": "^2.1.27",
     "ssh2": "^0.8.7"
   },
   "devDependencies": {

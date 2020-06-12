@@ -71,6 +71,7 @@
     "@octokit/graphql": "2.1.1",
     "@types/lodash.iserror": "^3.1.6",
     "@types/lodash": "^4.14.150",
+    "@types/mime-types": "^2.1.0",
     "@types/node": "^10.16.3",
     "@types/pump": "^1.1.0",
     "@typescript-eslint/eslint-plugin": "^2.29.0",

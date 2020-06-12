@@ -1,5 +1,6 @@
 'use strict';
 
+const flow = require('lodash/flow');
 const fs = require('fs-extra');
 const replace = require('lodash/fp/replace');
 const cloneDeep = require('lodash/cloneDeep');
@@ -9,7 +10,6 @@ const pWaitFor = require('p-wait-for');
 const { buildS3Uri, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
-const { thread } = require('@cumulus/common/util');
 const { listGranules } = require('@cumulus/api-client/granules');
 
 /**
@@ -79,9 +79,9 @@ function createGranuleFiles(granuleFiles, bucket, oldGranuleId, newGranuleId) {
       CopySource: `${bucket}/${file.path}/${file.name}`,
       Key: `${file.path}/${file.name.replace(oldGranuleId, newGranuleId)}`
     }).promise()
-      .catch((err) => {
-        console.error(`Failed to copy s3://${bucket}/${file.path}/${file.name} to s3://${bucket}/${file.path}/${file.name.replace(oldGranuleId, newGranuleId)}: ${err.message}`);
-        throw err;
+      .catch((error) => {
+        console.error(`Failed to copy s3://${bucket}/${file.path}/${file.name} to s3://${bucket}/${file.path}/${file.name.replace(oldGranuleId, newGranuleId)}: ${error.message}`);
+        throw error;
       });
 
   return Promise.all(granuleFiles.map(copyFile));
@@ -99,7 +99,7 @@ function createGranuleFiles(granuleFiles, bucket, oldGranuleId, newGranuleId) {
  * @param {string} testDataFolder - test data S3 path
  * @returns {Promise<Object>} - input payload as a JS object with the updated granule ids
  */
-async function setupTestGranuleForIngest(bucket, inputPayloadJson, granuleRegex, testSuffix = '', testDataFolder = null) {
+async function setupTestGranuleForIngest(bucket, inputPayloadJson, granuleRegex, testSuffix = '', testDataFolder = undefined) {
   let payloadJson;
 
   if (testDataFolder) {
@@ -129,12 +129,11 @@ async function setupTestGranuleForIngest(bucket, inputPayloadJson, granuleRegex,
     newGranuleId
   );
 
-  return thread(
-    baseInputPayload,
+  return flow([
     JSON.stringify,
     replace(new RegExp(oldGranuleId, 'g'), newGranuleId),
     JSON.parse
-  );
+  ])(baseInputPayload);
 }
 
 /**
@@ -154,14 +153,17 @@ const loadFileWithUpdatedGranuleIdPathAndCollection = (
   newPath,
   newCollectionId,
   stackId
-) => thread(
-  fs.readFileSync(filename, 'utf8'),
-  replace(new RegExp('replace-me-granuleId', 'g'), newGranuleId),
-  replace(new RegExp('replace-me-path', 'g'), newPath),
-  replace(new RegExp('replace-me-collectionId', 'g'), newCollectionId),
-  replace(new RegExp('replace-me-stackId', 'g'), stackId),
-  JSON.parse
-);
+) => {
+  const fileContents = fs.readFileSync(filename, 'utf8');
+
+  return flow([
+    replace(new RegExp('replace-me-granuleId', 'g'), newGranuleId),
+    replace(new RegExp('replace-me-path', 'g'), newPath),
+    replace(new RegExp('replace-me-collectionId', 'g'), newCollectionId),
+    replace(new RegExp('replace-me-stackId', 'g'), stackId),
+    JSON.parse
+  ])(fileContents);
+};
 
 const waitForGranuleRecordInList = async (stackName, granuleId) => pWaitFor(
   async () => {

@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * Simple utility functions
  * @module util
@@ -10,15 +8,14 @@
  * isNil(undefined); // => true
  */
 
-const curry = require('lodash/curry');
-const flow = require('lodash/flow');
-const fs = require('fs');
-const omitBy = require('lodash/omitBy');
-const os = require('os');
-const path = require('path');
-const mime = require('mime-types');
-
-const log = require('./log');
+import curry from 'lodash/curry';
+import flow from 'lodash/flow';
+import fs from 'fs';
+import mime from 'mime-types';
+import omitBy from 'lodash/omitBy';
+import os from 'os';
+import path from 'path';
+import * as log from './log';
 
 /**
  * Mark a piece of code as deprecated.
@@ -34,10 +31,10 @@ const log = require('./log');
  *
  * @alias module:util
  */
-exports.deprecate = (() => {
+export const deprecate = (() => {
   const warned = new Set();
 
-  return (name, version, alternative) => {
+  return (name: string, version: string, alternative?: string) => {
     const key = `${name}-${version}`;
     if (warned.has(key)) return;
 
@@ -56,7 +53,7 @@ exports.deprecate = (() => {
  *
  * @alias module:util
  */
-exports.sleep = (waitPeriodMs) =>
+export const sleep = (waitPeriodMs: number) =>
   (new Promise((resolve) =>
     setTimeout(resolve, waitPeriodMs)));
 
@@ -68,22 +65,13 @@ exports.sleep = (waitPeriodMs) =>
  * @returns {string} The absolute path to the created dir
  * @private
  */
-exports.mkdtempSync = (name) => {
+export const mkdtempSync = (name: string) => {
+  deprecate('@cumulus/common/util.noop()', '1.23.2');
   const dirname = ['gitc', name, +new Date()].join('_');
   const abspath = path.join(os.tmpdir(), dirname);
   fs.mkdirSync(abspath, 0o700);
   return abspath;
 };
-
-/**
- * Generate and return an RFC4122 v4 UUID.
- *
- * @returns {string} An RFC44122 v4 UUID.
- * @kind function
- *
- * @alias module:util
- */
-exports.uuid = require('uuid/v4');
 
 /**
  * Does nothing.  Used where a callback is required but not used.
@@ -92,7 +80,9 @@ exports.uuid = require('uuid/v4');
  *
  * @alias module:util
  */
-exports.noop = () => {}; // eslint-disable-line lodash/prefer-noop
+export const noop = () => {
+  deprecate('@cumulus/common/util.noop()', '1.23.2', 'lodash/noop');
+};
 
 /**
  * Replacement for lodash.omit returns a shallow copy of input object
@@ -106,7 +96,9 @@ exports.noop = () => {}; // eslint-disable-line lodash/prefer-noop
  *
  * @alias module:util
  */
-exports.omit = (objectIn, keys) => {
+// @ts-ignore
+export const omit = (objectIn, keys) => {
+  deprecate('@cumulus/common/util.omit()', '1.23.2', 'lodash/omit');
   const keysToRemove = [].concat(keys);
   const objectOut = { ...objectIn };
   keysToRemove.forEach((key) => delete objectOut[key]);
@@ -128,17 +120,26 @@ exports.omit = (objectIn, keys) => {
  * isOdd(2); // => false
  * isOdd(3); // => true
  */
-exports.negate = (predicate) => (...args) => !predicate.apply(this, args);
+// @ts-ignore
+export const negate = (predicate) => {
+  deprecate('@cumulus/common/util.omit()', '1.23.2', 'lodash/omit');
+
+  // @ts-ignore
+  return (...args) => !predicate.apply(this, args);
+};
 
 /**
  * Test if a value is null
  *
- * @param {*} x value to check
+ * @param {u} x value to check
  * @returns {boolean}
  *
  * @alias module:util
  */
-exports.isNull = (x) => x === null;
+export const isNull = (x: unknown) => {
+  deprecate('@cumulus/common/util.isNull()', '1.23.2', 'lodash/isNull');
+  return x === null;
+};
 
 /**
  * Test if a value is undefined
@@ -148,7 +149,10 @@ exports.isNull = (x) => x === null;
  *
  * @alias module:util
  */
-exports.isUndefined = (x) => x === undefined;
+export const isUndefined = (x: unknown) => {
+  deprecate('@cumulus/common/util.isUndefined()', '1.23.2', 'lodash/isUndefined');
+  return x === undefined;
+};
 
 /**
  * Test if a value is null or undefined
@@ -158,26 +162,9 @@ exports.isUndefined = (x) => x === undefined;
  *
  * @alias module:util
  */
-exports.isNil = (x) => exports.isNull(x) || exports.isUndefined(x);
-
-/**
- * Replace the stack of an error
- *
- * Note: This mutates the error that was passed in.
- *
- * @param {Error} error - an Error
- * @param {string} newStack - a stack trace
- *
- * @alias module:util
- * @deprecated
- */
-exports.setErrorStack = (error, newStack) => {
-  exports.deprecate('@cumulus/common/util/setErrorStack', '1.17.0', '@cumulus/aws-client/utils/setErrorStack');
-  // eslint-disable-next-line no-param-reassign
-  error.stack = [
-    error.stack.split('\n')[0],
-    ...newStack.split('\n').slice(1)
-  ].join('\n');
+export const isNil = (x: unknown) => {
+  deprecate('@cumulus/common/util.isNil()', '1.23.2', 'lodash/isNil');
+  return isNull(x) || isUndefined(x);
 };
 
 /**
@@ -190,7 +177,9 @@ exports.setErrorStack = (error, newStack) => {
  *
  * @alias module:util
  */
-exports.renameProperty = (from, to, obj) => {
+// @ts-ignore
+export const renameProperty = (from, to, obj) => {
+  deprecate('@cumulus/common/util.renameProperty()', '1.23.2');
   const newObj = { ...obj, [to]: obj[from] };
   delete newObj[from];
   return newObj;
@@ -205,7 +194,8 @@ exports.renameProperty = (from, to, obj) => {
  *
  * @alias module:util
  */
-exports.removeNilProperties = (obj) => omitBy(obj, exports.isNil);
+export const removeNilProperties = <T extends object>(obj: T) =>
+  omitBy(obj, isNil);
 
 /**
  * Return mime-type based on input url or filename
@@ -215,7 +205,11 @@ exports.removeNilProperties = (obj) => omitBy(obj, exports.isNil);
  *
  * @alias module:util
  */
-exports.lookupMimeType = (key) => mime.lookup(key) || null;
+export const lookupMimeType = (key: string) => {
+  deprecate('@cumulus/common/util.lookupMimeType()', '1.23.2');
+  // eslint-disable-next-line unicorn/no-null
+  return mime.lookup(key) || null;
+};
 
 /**
  * Test if a value is included in a list of items
@@ -229,7 +223,8 @@ exports.lookupMimeType = (key) => mime.lookup(key) || null;
  * @alias module:util
  * @kind function
  */
-exports.isOneOf = curry((collection, val) => collection.includes(val));
+export const isOneOf = curry((collection: unknown[], val: unknown) =>
+  collection.includes(val));
 
 /**
  * Pass a value through a pipeline of functions and return the result
@@ -242,4 +237,8 @@ exports.isOneOf = curry((collection, val) => collection.includes(val));
  *
  * @alias module:util
  */
-exports.thread = (value, ...fns) => flow(fns)(value);
+// @ts-ignore
+export const thread = (value, ...fns) => {
+  deprecate('@cumulus/common/util.thread()', '1.23.2');
+  return flow(fns)(value);
+};
