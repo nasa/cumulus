@@ -27,8 +27,7 @@
     "files": [
       "tests/**"
     ],
-    "verbose": true,
-    "timeout": "15m"
+    "verbose": true
   },
   "nyc": {
     "exclude": [
@@ -42,7 +41,6 @@
     "@cumulus/errors": "1.23.2",
     "@cumulus/logger": "1.23.2",
     "ajv": "^5.2.2",
-    "aws-sdk": "^2.585.0",
     "follow-redirects": "^1.2.4",
     "fs-extra": "^5.0.0",
     "got": "^9.2.1",

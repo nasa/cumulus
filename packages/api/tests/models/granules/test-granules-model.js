@@ -10,7 +10,6 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString } = require('@cumulus/common/test-utils');
 const { CMR } = require('@cumulus/cmr-client');
-const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 
 const Rule = require('../../../models/rules');
 const Granule = require('../../../models/granules');
@@ -530,11 +529,6 @@ test('removing a granule from CMR fails if the granule is not in CMR', async (t)
 
 test.serial('removing a granule from CMR passes the granule UR to the cmr delete function', async (t) => {
   sinon.stub(
-    DefaultProvider,
-    'decrypt'
-  ).callsFake(() => Promise.resolve('fakePassword'));
-
-  sinon.stub(
     CMR.prototype,
     'deleteGranule'
   ).callsFake((granuleUr) => Promise.resolve(t.is(granuleUr, 'granule-ur')));
@@ -557,7 +551,6 @@ test.serial('removing a granule from CMR passes the granule UR to the cmr delete
     await granuleModel.removeGranuleFromCmrByGranule(granule);
   } finally {
     CMR.prototype.deleteGranule.restore();
-    DefaultProvider.decrypt.restore();
     CMR.prototype.getGranuleMetadata.restore();
   }
 });
@@ -565,11 +558,6 @@ test.serial('removing a granule from CMR passes the granule UR to the cmr delete
 test.serial('removing a granule from CMR succeeds with Launchpad authentication', async (t) => {
   process.env.cmr_oauth_provider = 'launchpad';
   const launchpadStub = sinon.stub(launchpad, 'getLaunchpadToken').callsFake(() => randomString());
-
-  sinon.stub(
-    DefaultProvider,
-    'decrypt'
-  ).callsFake(() => Promise.resolve('fakePassword'));
 
   sinon.stub(
     CMR.prototype,
@@ -598,7 +586,6 @@ test.serial('removing a granule from CMR succeeds with Launchpad authentication'
     process.env.cmr_oauth_provider = 'earthdata';
     launchpadStub.restore();
     CMR.prototype.deleteGranule.restore();
-    DefaultProvider.decrypt.restore();
     CMR.prototype.getGranuleMetadata.restore();
   }
 });

@@ -8,7 +8,6 @@ const KMS = require('@cumulus/aws-client/KMS');
 const S3 = require('@cumulus/aws-client/S3');
 const { promisify } = require('util');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
-const { S3KeyPairProvider } = require('@cumulus/common/key-pair-provider');
 const { randomString } = require('@cumulus/common/test-utils');
 const SftpProviderClient = require('../SftpProviderClient');
 
@@ -65,19 +64,6 @@ test('SftpProviderClient supports plaintext usernames and passwords', async (t) 
     username: 'user',
     password: 'password',
     encrypted: false
-  });
-
-  const files = await sftpProviderClient.list('/');
-  t.true(files.map((f) => f.name).includes('index.html'));
-});
-
-test('SftpProviderClient supports S3-keypair-encrypted usernames and passwords', async (t) => {
-  const sftpProviderClient = new SftpProviderClient({
-    host: '127.0.0.1',
-    port: 2222,
-    username: await S3KeyPairProvider.encrypt('user'),
-    password: await S3KeyPairProvider.encrypt('password'),
-    encrypted: true
   });
 
   const files = await sftpProviderClient.list('/');

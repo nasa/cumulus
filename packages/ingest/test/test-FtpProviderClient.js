@@ -6,7 +6,6 @@ const test = require('ava');
 const JSFtp = require('jsftp');
 const KMS = require('@cumulus/aws-client/KMS');
 const S3 = require('@cumulus/aws-client/S3');
-const { S3KeyPairProvider } = require('@cumulus/common/key-pair-provider');
 const {
   calculateS3ObjectChecksum,
   fileExists,
@@ -86,22 +85,6 @@ test('FtpProviderClient supports plaintext usernames and passwords', async (t) =
 
   t.true(fileNames.includes('index.html'));
 });
-
-test('FtpProviderClient supports S3-keypair-encrypted usernames and passwords',
-  async (t) => {
-    const ftpClient = new FtpProviderClient({
-      host: '127.0.0.1',
-      encrypted: true,
-      username: await S3KeyPairProvider.encrypt('testuser'),
-      password: await S3KeyPairProvider.encrypt('testpass'),
-      useList: true
-    });
-
-    const files = await ftpClient.list('/');
-    const fileNames = files.map((f) => f.name);
-
-    t.true(fileNames.includes('index.html'));
-  });
 
 test('FtpProviderClient supports KMS-encrypted usernames and passwords', async (t) => {
   const ftpClient = new FtpProviderClient({
