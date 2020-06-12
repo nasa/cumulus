@@ -9,5 +9,6 @@ config/cloudformation.yml
 cache-invalidation/config/runtime_config.json
 /log.js
 /util.js
+/BucketsConfig.js
 /*.d.ts
 /*.d.ts.map

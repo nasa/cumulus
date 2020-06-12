@@ -62,7 +62,6 @@ test('bucket object are found by bucketName', (t) => {
   t.deepEqual(actual, expected);
 });
 
-
 test('checks a bucket existence in config', (t) => {
   const existsName = 'a-public-bucket';
   const doesNotExistName = 'not-included-bucket';
@@ -91,21 +90,6 @@ test('bucketsOfType returns a list of buckets of desired type with string input'
   ];
 
   const actual = Bucket.bucketsOfType(testType);
-
-  t.deepEqual(actual.sort(sortByName), expected.sort(sortByName));
-});
-
-test('bucketsOfType returns protected and private buckets with array input', (t) => {
-  const testTypes = ['public', 'protected'];
-
-  const Bucket = new BucketsConfig(bucketConfig);
-  const expected = [
-    { type: 'public', name: 'a-public-bucket' },
-    { type: 'public', name: 'a-second-public-bucket' },
-    { type: 'protected', name: 'a-protected-bucket' }
-  ];
-
-  const actual = Bucket.bucketsOfType(testTypes);
 
   t.deepEqual(actual.sort(sortByName), expected.sort(sortByName));
 });

@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1930**
   - The `@cumulus/common/util.uuid()` function has been removed
+  - The `@cumulus/common/BucketsConfig.bucketsOfType()` now only takes a single
+    type as a string. The option to pass an array of strings has been removed.
 - **CUMULUS-1969**
   - The `DiscoverPdrs` task now expects `provider_path` to be provided at
     `event.config.provider_path`, not `event.config.collection.provider_path`
