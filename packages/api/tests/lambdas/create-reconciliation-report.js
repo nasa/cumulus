@@ -36,7 +36,6 @@ const models = require('../../models');
 const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket }).promise();
 const promisifiedHandler = promisify(handler);
 
-
 function createDistributionBucketMapFromBuckets(buckets) {
   let bucketMap = {};
   Object.keys(buckets).forEach((key) => {

@@ -36,7 +36,6 @@ const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const log = require('@cumulus/common/log');
 const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
 
-
 /**
  * validates the file matched only one collection.file and has a valid bucket
  * config.

@@ -493,7 +493,6 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distrib
   t.is(url, 'www.example.com/mapped/path/example/folder/key.txt');
 });
 
-
 test.serial('generateFileUrl throws error for cmrGranuleUrlType distribution with no bucket map defined', async (t) => {
   const filename = 's3://other-fake-bucket/folder/key.txt';
   const distEndpoint = 'www.example.com/';

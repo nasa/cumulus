@@ -33,7 +33,6 @@ const {
   ummVersionToMetadataFormat
 } = require('./utils');
 
-
 // Only created to make mocking the request for buckets config easier.
 const getBucketsConfigJson = (bucket, stackName) =>
   getJsonS3Object(bucket, getBucketsConfigKey(stackName));
@@ -301,7 +300,6 @@ async function generateFileUrl({
 
   return undefined;
 }
-
 
 /**
  * Construct online access url for a given file.

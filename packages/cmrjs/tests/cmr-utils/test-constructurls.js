@@ -95,7 +95,7 @@ test('Returns correct url object for public data.', async (t) => {
   t.deepEqual(actual, expected);
 });
 
-test('Returns empty list for private data.', (t) => {
+test('Returns empty list for private data.', async (t) => {
   const privateBucket = t.context.bucketConfig.private.name;
   const movedFiles = [
     {
