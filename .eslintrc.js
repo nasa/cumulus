@@ -106,6 +106,7 @@ module.exports = {
     'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     'no-useless-escape': 'off',
     'no-console': 'warn',
+    'no-mulitple-empty-lines': 'warn',
     'spaced-comment': 'off',
     'require-yield': 'off',
     'prefer-template': 'warn',
