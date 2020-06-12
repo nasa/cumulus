@@ -673,7 +673,7 @@ async function updateEcho10XMLMetadata({
     cmrGranuleUrlType,
     distributionBucketMap
   });
-  newURLs = newURLs.concat(getS3CredentialsObject(urljoin(distEndpoint, s3CredsEndpoint)));
+  newURLs.push(getS3CredentialsObject(urljoin(distEndpoint, s3CredsEndpoint)));
 
   const mergedOnlineResources = buildMergedEchoURLObject(newURLs, originalOnlineResourceURLs,
     removedURLs, ['EXTENDED METADATA', 'VIEW RELATED INFORMATION'], ['URLDescription']);
