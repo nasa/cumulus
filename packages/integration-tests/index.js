@@ -2,6 +2,7 @@
 
 'use strict';
 
+const delay = require('delay');
 const replace = require('lodash/replace');
 const orderBy = require('lodash/orderBy');
 const path = require('path');
@@ -28,7 +29,6 @@ const {
   getWorkflowFileKey
 } = require('@cumulus/common/workflows');
 const { readJsonFile } = require('@cumulus/common/FileUtils');
-const { sleep } = require('@cumulus/common/util');
 const ProvidersModel = require('@cumulus/api/models/providers');
 const RulesModel = require('@cumulus/api/models/rules');
 const collectionsApi = require('@cumulus/api-client/collections');
@@ -80,7 +80,7 @@ async function waitForAsyncOperationStatus({
 
   if (Item.status.S === status || retries <= 0) return Item;
 
-  await sleep(2000);
+  await delay(2000);
   return waitForAsyncOperationStatus({
     TableName,
     id,
@@ -909,7 +909,7 @@ async function waitForTestExecutionStart({
   );
   /* eslint-disable no-await-in-loop */
   while (timeWaitedSecs < maxWaitSeconds) {
-    await sleep(waitPeriodMs);
+    await delay(waitPeriodMs);
     timeWaitedSecs += (waitPeriodMs / 1000);
     const executions = await getExecutions(workflowArn);
 
@@ -969,7 +969,7 @@ async function waitForAllTestSf(
 
   /* eslint-disable no-await-in-loop */
   while (timeWaitedSecs < maxWaitTimeSecs && workflowExecutions.length < numExecutions) {
-    await sleep(waitPeriodMs);
+    await delay(waitPeriodMs);
     timeWaitedSecs = (moment.duration(moment().diff(startTime)).asSeconds());
     const executions = await getExecutions(workflowArn, 100);
     // Search all recent executions for target payload
