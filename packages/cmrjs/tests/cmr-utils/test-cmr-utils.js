@@ -294,10 +294,9 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
   const cmrMetadata = JSON.parse(cmrJSON);
   const filesObject = await readJsonFixture('./tests/fixtures/UMMGFilesObjectFixture.json');
   const buckets = new BucketsConfig(await readJsonFixture('./tests/fixtures/buckets.json'));
-  const bucketMappings = Object.keys(buckets.buckets).map(
-    (key) => ({ [buckets.buckets[key].name]: buckets.buckets[key].name })
-  );
-  const distributionBucketMap = Object.assign({}, ...bucketMappings);
+  const distributionBucketMap = {};
+  Object.values(buckets.buckets)
+    .forEach(({ name }) => Object.assign(distributionBucketMap, ({ [name]: name })));
 
   const distEndpoint = 'https://distendpoint.com';
 
