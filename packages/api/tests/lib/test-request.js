@@ -77,7 +77,6 @@ test('verifyJwtAuthorization() throws JsonWebTokenError for token signed with in
   }
 });
 
-
 test('verifyJwtAuthorization() throws TokenExpiredError for expired token', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory({
     expirationTime: moment().unix()

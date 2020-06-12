@@ -3,7 +3,6 @@
 const { lambda } = require('@cumulus/aws-client/services');
 const { invokeApi } = require('./cumulusApiClient');
 
-
 /**
  * Fetch deployment's `ems_*` environment variables.
  *

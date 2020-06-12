@@ -17,7 +17,6 @@ test.beforeEach((t) => {
   t.context.buckets = new BucketsConfig(t.context.bucketConfig);
 });
 
-
 test('returns an empty set if no private files', (t) => {
   const movedFiles = [
     {

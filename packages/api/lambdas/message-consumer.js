@@ -43,7 +43,6 @@ async function publishRecordToFallbackTopic(record) {
   }).promise();
 }
 
-
 /**
  * processRecord error handler.  If the error comes on first attempt then publish the failure
  * to the fallback SNS topic. If the message is already a fallback message, throw an error.
