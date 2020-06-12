@@ -237,12 +237,15 @@ async function moveFilesForAllGranules(
  * Update each of the CMR files' OnlineAccessURL fields to represent the new
  * file locations.
  *
- * @param {Array<Object>} cmrFiles - array of objects that include CMR xmls uris and granuleIds
- * @param {Object} granulesObject - an object of the granules where the key is the granuleId
- * @param {string} cmrGranuleUrlType - type of granule CMR url
- * @param {string} distEndpoint - the api distribution endpoint
- * @param {BucketsConfig} bucketsConfig - BucketsConfig instance
- * @returns {Promise} promise resolves when all files have been updated
+ * @param {Array<Object>} cmrFiles       - array of objects that include CMR xmls uris and
+ *                                         granuleIds
+ * @param {Object} granulesObject        - an object of the granules where the key is the granuleId
+ * @param {string} cmrGranuleUrlType .   - type of granule CMR url
+ * @param {string} distEndpoint          - the api distribution endpoint
+ * @param {BucketsConfig} bucketsConfig  - BucketsConfig instance
+ * @param {Object} distributionBucketMap - mapping of bucket->distirubtion path values
+ *                                         (e.g. { bucket: distribution path })
+ * @returns {Promise}                    - promise resolves when all files have been updated
  **/
 async function updateEachCmrFileAccessURLs(
   cmrFiles,
@@ -283,6 +286,7 @@ async function updateEachCmrFileAccessURLs(
  * @param {boolean} [event.config.moveStagedFiles=true] - set to false to skip moving files
  *                                 from staging to final bucket. Mostly useful for testing.
  * @param {Object} event.input - a granules object containing an array of granules
+ *
  * @returns {Promise} returns the promise of an updated event object
  */
 async function moveGranules(event) {
