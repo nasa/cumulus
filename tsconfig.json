@@ -5,6 +5,7 @@
     "lib": ["ES2018"],
     "esModuleInterop": true,
     "declaration": true,
+    "declarationMap": true,
     "sourceMap": true,
     "removeComments": false,
     "strict": true,

@@ -116,5 +116,4 @@ class BucketsConfig {
   }
 }
 
-
 module.exports = BucketsConfig;

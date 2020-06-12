@@ -7,7 +7,6 @@ const assertions = require('../../lib/assertions');
 // import the express app after setting the env variables
 const { app } = require('../../app');
 
-
 test('CUMULUS-911 GET with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
     .get('/schemas/asdf')

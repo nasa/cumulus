@@ -54,7 +54,6 @@ test.beforeEach(async (t) => {
     })
   ]);
 
-
   t.context.template = `s3://${t.context.templateBucket}/${messageTemplateKey}`;
 });
 
