@@ -17,6 +17,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 
+const { convertLogLevel } = require('./logUtils');
 const { Search, defaultIndexAlias } = require('./search');
 const { Granule } = require('../models');
 const { IndexExistsError } = require('../lib/errors');
@@ -72,7 +73,7 @@ function parsePayload(payload) {
       record = JSON.parse(payload.message);
     }
     // level is number in elasticsearch
-    if (isString(record.level)) record.level = log.convertLogLevel(record.level);
+    if (isString(record.level)) record.level = convertLogLevel(record.level);
   } catch (e) {
     record = {
       message: payload.message.trim(),

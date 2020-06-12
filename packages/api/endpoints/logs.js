@@ -1,7 +1,7 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const log = require('@cumulus/common/log');
+const { convertLogLevel } = require('../es/logUtils');
 const { Search } = require('../es/search');
 
 const metrics = () => ('log_destination_arn' in process.env);
@@ -11,7 +11,7 @@ function convertLogLevelForQuery(query) {
     return query;
   }
 
-  return { ...query, level: log.convertLogLevel(query.level) };
+  return { ...query, level: convertLogLevel(query.level) };
 }
 
 function metricsConfig() {

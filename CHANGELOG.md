@@ -81,6 +81,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2010**
   - Updated `@cumulus/api/launchpadSaml` to support multiple userGroup attributes from the SAML response
 
+### Deprecated
+
+- **CUMULUS-1930**
+  - `@cumulus/common/log.convertLogLevel()`
+
 ### Removed
 
 - The deprecated `@cumulus/common.bucketsConfigJsonObject` function has been
