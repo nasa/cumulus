@@ -154,7 +154,6 @@ module.exports = {
     'unicorn/catch-error-name': 'warn',
     'unicorn/consistent-function-scoping': 'off',
     'unicorn/filename-case': 'off',
-    'unicorn/no-fn-reference-in-iterator': 'off',
     'unicorn/no-for-loop': 'off',
     'unicorn/no-null': 'warn',
     'unicorn/no-process-exit': 'off',
