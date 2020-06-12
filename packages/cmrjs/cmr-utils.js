@@ -666,7 +666,7 @@ async function updateEcho10XMLMetadata({
     'AssociatedBrowseImageUrls.ProviderBrowseUrl', []));
 
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
-  let newURLs = await constructOnlineAccessUrls({
+  const newURLs = await constructOnlineAccessUrls({
     files,
     distEndpoint,
     buckets,

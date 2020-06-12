@@ -106,7 +106,7 @@ module.exports = {
     'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     'no-useless-escape': 'off',
     'no-console': 'warn',
-    'no-mulitple-empty-lines': 'warn',
+    'unicorn/no-fn-reference-in-iterator': 'off',
     'spaced-comment': 'off',
     'require-yield': 'off',
     'prefer-template': 'warn',
@@ -138,6 +138,7 @@ module.exports = {
     'prefer-destructuring': 'off',
     'function-paren-newline': ['error', 'consistent'],
     'implicit-arrow-linebreak': 'off',
+    'no-multiple-empty-lines': 'off',
 
     'eslint-comments/no-unused-disable': 'warn',
     'eslint-comments/disable-enable-pair': [
