@@ -6,7 +6,6 @@ const mergeURLs = cmrUtil.__get__('mergeURLs');
 
 const sortByURL = (a, b) => a.URL < b.URL;
 
-
 test('Merges two sets of URLs.', (t) => {
   const originalURLs = [
     {

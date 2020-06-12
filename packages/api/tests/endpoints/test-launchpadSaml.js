@@ -249,7 +249,6 @@ test('buildLaunchpadJwt throws with unauthorized user.', async (t) => {
   });
 });
 
-
 test('/saml/auth with bad metadata returns Bad Request.', async (t) => {
   const callback = sandbox.fake.yields('post_assert callsback with Error', null);
   const mockExample = sandbox.stub();
@@ -283,7 +282,6 @@ test('/saml/auth with good metadata returns redirect.', async (t) => {
   t.is(decodedToken.username, t.context.validUser);
   t.is(decodedToken.accessToken, t.context.validIndex);
 });
-
 
 test('/token endpoint with a token query parameter returns the parameter.', async (t) => {
   const returnedToken = await request(app)

@@ -29,7 +29,6 @@ let authorizationUrl;
 // const { distributionApp } = require('../distribution');
 const { distributionApp } = require('..');
 
-
 test.before(async () => {
   accessTokenModel = new models.AccessToken('token');
   await accessTokenModel.createTable();

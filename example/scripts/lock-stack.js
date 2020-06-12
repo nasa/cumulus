@@ -9,7 +9,6 @@
  * a string - 'key' and no sort key. The table name should be set in LOCK_TABLE_NAME
  */
 
-
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const Mutex = require('./lib/Mutex');
 const usage = 'lock-stack.js lock SHA stackname/deployment true/false \n lock-stack.js confirmLock SHA stackname/deployment\n\n';

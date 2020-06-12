@@ -35,7 +35,6 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
       // Find the ARN of the AsyncOperationTaskDefinition
       asyncOperationTaskDefinition = await findAsyncOperationTaskDefinitionForDeployment(config.stackName);
 
-
       // Start the AsyncOperation
       ({
         id: asyncOperationId,

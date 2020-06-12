@@ -18,7 +18,6 @@ const {
   createJwtToken
 } = require('../lib/token');
 
-
 const { verifyJwtAuthorization } = require('../lib/request');
 
 const { AccessToken } = require('../models');

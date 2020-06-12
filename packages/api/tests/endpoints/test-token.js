@@ -288,7 +288,6 @@ test.serial('GET /refresh with a valid token returns a refreshed token', async (
 
   const requestJwtToken = createJwtToken(initialTokenRecord);
 
-
   const refreshedTokenRecord = fakeAccessTokenFactory();
   const refreshedJwtToken = createJwtToken(refreshedTokenRecord);
 

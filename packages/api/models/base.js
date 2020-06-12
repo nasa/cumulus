@@ -417,7 +417,6 @@ class Manager {
     return this.update(key, { status });
   }
 
-
   /**
    * Marks the record is failed with proper status
    * and error message

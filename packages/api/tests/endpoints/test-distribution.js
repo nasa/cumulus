@@ -51,7 +51,6 @@ test.before(async () => {
   const fileLocation = `${fileBucket}/${fileKey}`;
   const signedFileUrl = new URL(`https://${randomId('host2')}.com/${randomId('path2')}`);
 
-
   const getAccessTokenResponse = fakeAccessTokenFactory();
 
   sinon.stub(
@@ -162,7 +161,6 @@ test('An authenticated request for a file returns a redirect to S3', async (t) =
     signedFileUrl
   } = context;
 
-
   const response = await request(distributionApp)
     .get(`/${fileLocation}`)
     .set('Accept', 'application/json')
@@ -217,7 +215,6 @@ test('A /redirect request with a good authorization code stores the access token
     authorizationCode,
     fileLocation
   } = context;
-
 
   const response = await request(distributionApp)
     .get('/redirect')

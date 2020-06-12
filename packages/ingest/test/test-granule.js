@@ -194,7 +194,6 @@ test('moveGranuleFiles only moves granule files specified with regex', async (t)
   });
 });
 
-
 test('moveGranuleFiles returns an updated list of files in their new locations.', async (t) => {
   const bucket = t.context.internalBucket;
   const secondBucket = t.context.destBucket;
@@ -269,7 +268,6 @@ test('moveGranuleFiles returns an updated list of files in their new locations.'
     t.deepEqual(updatedFile, expected);
   });
 });
-
 
 test('generateMoveFileParams generates correct parameters', (t) => {
   const filenames = [

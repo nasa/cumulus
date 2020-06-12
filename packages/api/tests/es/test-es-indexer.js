@@ -545,7 +545,6 @@ test.serial('parsePayload correctly parses AWS Linux 2 style console output', as
   t.deepEqual(actual, expected);
 });
 
-
 test.serial('parsePayload correctly handles unparseable record', async (t) => {
   const parsePayload = indexer.__get__('parsePayload');
   const testPayload = {
