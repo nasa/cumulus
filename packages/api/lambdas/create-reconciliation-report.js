@@ -170,15 +170,15 @@ async function reconciliationReportForCollections() {
 
 /**
  * Compare the file holdings in CMR with Cumulus for a given granule
- *
- * @param {Object} granuleInDb - granule object in database
- * @param {Object} granuleInCmr - granule object in CMR
- * @param {Object} bucketsConfig - bucket configuration object
- * @returns {Promise<Object>} an object with the okCount, onlyInCumulus, onlyInCmr
+ * @param {Object} params .                      - parameters object
+ * @param {Object} params.granuleInDb            - granule object in database
+ * @param {Object} params.granuleInCmr           - granule object in CMR
+ * @param {Object} params.bucketsConfig          - bucket configuration
+ * @param {Object} params.distributionBucketMap  - map of { bucket: distribution path }
+ * @returns {Promise<Object>}    - an object with the okCount, onlyInCumulus, onlyInCmr
  */
-async function reconciliationReportForGranuleFiles(
-  granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap
-) {
+async function reconciliationReportForGranuleFiles(params) {
+  const { granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap } = params;
   let okCount = 0;
   const onlyInCumulus = [];
   const onlyInCmr = [];
@@ -338,9 +338,9 @@ async function reconciliationReportForGranules(collectionId, bucketsConfig, dist
 
       // compare the files now to avoid keeping the granules' information in memory
       // eslint-disable-next-line no-await-in-loop
-      const fileReport = await reconciliationReportForGranuleFiles(
+      const fileReport = await reconciliationReportForGranuleFiles({
         granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap
-      );
+      });
       filesReport.okCount += fileReport.okCount;
       filesReport.onlyInCumulus = filesReport.onlyInCumulus.concat(fileReport.onlyInCumulus);
       filesReport.onlyInCmr = filesReport.onlyInCmr.concat(fileReport.onlyInCmr);
