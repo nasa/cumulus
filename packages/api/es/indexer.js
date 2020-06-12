@@ -45,7 +45,6 @@ async function createIndex(esClient, indexName) {
   log.info(`Created esIndex ${indexName}`);
 }
 
-
 /**
  * Parses a StepFunction log payload  and returns a es logsrecord object
  *
@@ -87,7 +86,6 @@ function parsePayload(payload) {
   }
   return record;
 }
-
 
 /**
  * Extracts info from a stepFunction message and indexes it to

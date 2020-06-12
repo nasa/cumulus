@@ -17,7 +17,6 @@ const sortByURL = (a, b) => a.URL < b.URL;
 const distEndpoint = 'https://endpoint';
 const s3CredentialsEndpointObject = getS3CredentialsObject(`${distEndpoint}/s3credentials`);
 
-
 test.beforeEach((t) => {
   t.context.bucketConfig = {
     private: { name: randomId('private'), type: 'private' },
@@ -89,7 +88,6 @@ test('Returns correct url object for public data.', (t) => {
 
   t.deepEqual(actual, expected);
 });
-
 
 test('Returns empty list for private data.', (t) => {
   const privateBucket = t.context.bucketConfig.private.name;

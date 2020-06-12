@@ -134,7 +134,6 @@ xdescribe('When accessing an S3 bucket directly', () => {
       expect(whoami.UserId).toMatch(new RegExp(`.*:${username}`));
     });
 
-
     function executeTestsAgainst(testBucket) {
       describe('while in the the same region ', () => {
         it('the bucket contents can be listed', async () => {

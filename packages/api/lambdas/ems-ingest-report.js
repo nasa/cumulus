@@ -210,7 +210,6 @@ function getEmsFieldFromGranField(granule, emsField, granField) {
 }
 /* eslint-enable complexity */
 
-
 /**
  * build EMS records from es granules
  *
@@ -364,7 +363,6 @@ async function cleanup() {
         .then((s3objects) => deleteS3Files(s3objects)));
   return Promise.all(jobs);
 }
-
 
 /**
  * Lambda task, generate and send EMS ingest reports

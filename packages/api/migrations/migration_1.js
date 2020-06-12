@@ -26,20 +26,17 @@ async function copyEsToDynamoDB(Cls, index = 'cumulus', type, concurrency = 1, p
 
   const record = new Cls();
 
-
   // catch possible duplicate granule records
   const hash = {};
   res.body.hits.hits.forEach((s) => {
     hash[s._id] = s._source;
   });
 
-
   const records = Object.keys(hash).map((key) => hash[key]);
   const chunkedRecords = chunk(records, 25); // divide results into chunks of 25
 
   // add them to dynamoDB
   await Promise.all(chunkedRecords.map((c) => conc(() => record.batchWrite(null, c))));
-
 
   if (records.length === limit) {
     await copyEsToDynamoDB(Cls, index, type, concurrency, page + 1);
