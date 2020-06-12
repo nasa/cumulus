@@ -10,7 +10,8 @@ const verifyProvider = async (provider) => {
       await KMS.decryptBase64String(provider.username);
       await KMS.decryptBase64String(provider.password);
     } catch (error) {
-      throw new Error(`Provider ${provider.id} credentials could not be decrypted using KMS. It is possible that you still need to run the providerSecretsMigration Lambda function.`);
+      const message = `Provider ${provider.id} credentials could not be decrypted using KMS. It is possible that you still need to run the providerSecretsMigration Lambda function. Root cause: ${error.name} - ${error.message}`;
+      throw new Error(message);
     }
   } else {
     if (isNil(provider.username) && isNil(provider.password)) return;
