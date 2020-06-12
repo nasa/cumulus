@@ -453,7 +453,7 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3 with
   t.is(url, filename);
 });
 
-test.serial('generateFileUrl returns null for cmrGranuleUrlType none', async (t) => {
+test.serial('generateFileUrl returns undefined for cmrGranuleUrlType none', async (t) => {
   const filename = 's3://fake-bucket/folder/key.txt';
   const distEndpoint = 'www.example.com/';
 
@@ -470,7 +470,7 @@ test.serial('generateFileUrl returns null for cmrGranuleUrlType none', async (t)
     distributionBucketMap: mockDistributionBucketMap
   });
 
-  t.is(url, null);
+  t.is(url, undefined);
 });
 
 test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distribution with bucket map defined', async (t) => {
