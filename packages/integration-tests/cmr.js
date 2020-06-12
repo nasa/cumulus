@@ -1,11 +1,11 @@
 'use strict';
 
+const delay = require('delay');
 const got = require('got');
 const pWaitFor = require('p-wait-for');
 const xml2js = require('xml2js');
 const { s3 } = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
-const { sleep } = require('@cumulus/common/util');
 const { getUrl } = require('@cumulus/cmrjs/utils');
 
 const ONE_SECOND = 1000;
@@ -143,7 +143,7 @@ async function conceptExists(cmrLink) {
 }
 
 // See https://bugs.earthdata.nasa.gov/browse/CUMULUS-962
-const waitForCmrToBeConsistent = () => sleep(ONE_SECOND);
+const waitForCmrToBeConsistent = () => delay(ONE_SECOND);
 
 /**
  * Checks for granule in CMR until it get the desired outcome or hits
