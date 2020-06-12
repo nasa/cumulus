@@ -325,7 +325,7 @@ test.serial('POST returns a 500 when failing to create an async operation', asyn
   }
 });
 
-test.serial('POST returns a 500 when there is an ecs error', async (t) => {
+test.serial('POST returns a 503 when there is an ecs error', async (t) => {
   const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').throws(
     new EcsStartTaskError('failed to start')
   );

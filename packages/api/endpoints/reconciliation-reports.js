@@ -112,7 +112,7 @@ async function post(req, res) {
     lambdaName: process.env.invokeReconcileLambda,
     description: 'Create Inventory Report',
     operationType: 'Reconciliation Report',
-    payload: { },
+    payload: {},
     useLambdaEnvironmentVariables: true
   });
 

@@ -15,9 +15,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2011**
-  - Reconciliation reports are not generated within an AsyncOperation
-  - Added optional `launchpad` configuration to
-    `@cumulus/hyrax-metadata-updates` task config schema.
+  - Reconciliation reports are now generated within an AsyncOperation
 
 - **CUMULUS-2016**
   - Upgrade TEA to version 79

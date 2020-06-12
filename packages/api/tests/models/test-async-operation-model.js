@@ -268,7 +268,7 @@ test.serial('getLambdaEnvironmentVariables returns formatted environment variabl
   ]);
 });
 
-test.serial('ECS task params contain lambda environment variables when fag is set', async (t) => {
+test.serial('ECS task params contain lambda environment variables when flag is set', async (t) => {
   stubbedEcsRunTaskResult = {
     tasks: [{ taskArn: randomString() }],
     failures: []
