@@ -14,7 +14,7 @@ If you are using the `cumulus` module or the core `distribution` module, you wil
 
 By default, Core provides a one-to-one mapping where each protected and public bucket map to a path of the same name as the bucket.
 
-The `cumulus` and `distribution` modules provide a `bucket_map_key` input variable which allows you to specify the path to a custom [bucket map YAML](https://github.com/asfadmin/thin-egress-app#buckets-and-bucket-map).
+The `cumulus` and `distribution` modules provide a `bucket_map_key` input variable which allows you to specify the path to a custom [bucket map YAML](https://github.com/asfadmin/thin-egress-app#buckets-and-bucket-map) that's stored in the bucket defined in the `system bucket` cumulus/distribution module input variable.
 
 **Note: Cumulus only supports a one-to-one mapping of bucket->path name. Mapping multiple paths to the same bucket will result in a deployment failure.**
 
@@ -124,7 +124,7 @@ The configuration file is a simple json mapping of the form:
 
 ```json
 {
-  "bucket_name": "bucket_path_in_TEA"
+  "daac-public-data-bucket": /path/to/this/kind/of/data
 }
 ```
 
