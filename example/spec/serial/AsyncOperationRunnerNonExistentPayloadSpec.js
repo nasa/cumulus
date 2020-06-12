@@ -44,7 +44,6 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
       // Find the ARN of the AsyncOperationTaskDefinition
       asyncOperationTaskDefinition = await findAsyncOperationTaskDefinitionForDeployment(config.stackName);
 
-
       asyncOperationId = uuidv4();
 
       await asyncOperationModel.create({

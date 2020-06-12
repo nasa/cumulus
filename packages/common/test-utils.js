@@ -116,7 +116,6 @@ exports.throwTestError = throwTestError;
  */
 exports.randomString = (numBytes = 20) => crypto.randomBytes(numBytes).toString('hex');
 
-
 /**
  * Postpend a [10-character] random string to input identifier.
  *
@@ -241,7 +240,6 @@ function findTestDataDirectory() {
     .then((gitRepoRoot) => path.join(gitRepoRoot, 'packages', 'test-data'));
 }
 exports.findTestDataDirectory = findTestDataDirectory;
-
 
 function readJsonFixture(fixturePath) {
   return fs.readFile(fixturePath).then((obj) => JSON.parse(obj));

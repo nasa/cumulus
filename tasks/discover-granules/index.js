@@ -166,7 +166,6 @@ const buildGranule = curry(
   }
 );
 
-
 /**
  * checks a granuleId against the Granules API to determine if
  * there is a duplicate granule

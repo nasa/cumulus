@@ -145,7 +145,6 @@ test.serial('parse PDR from HTTP endpoint', async (t) => {
       t.is(testHdfFile[key], hdfFile[key]);
     });
 
-
     const metFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
     t.truthy(metFile);
@@ -189,7 +188,6 @@ test.serial('parse PDR from SFTP endpoint', async (t) => {
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf');
     t.truthy(hdfFile);
     Object.keys(testHdfFile).forEach((key) => t.is(testHdfFile[key], hdfFile[key]));
-
 
     const metFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');

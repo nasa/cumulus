@@ -472,7 +472,6 @@ test('recursion falls back to directly listing the path and subdirectores when f
   ]);
 });
 
-
 test('recursion supports both - and 0 types for listed files', async (t) => {
   const dirs = {
     '.': [

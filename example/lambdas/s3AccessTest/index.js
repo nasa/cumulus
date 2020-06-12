@@ -2,7 +2,6 @@
 
 const { S3 } = require('aws-sdk');
 
-
 /**
  * Lambda handler that tests GET access on an S3 bucket by calling getObject on
  * a file in the bucket. Returns true if the body is not null, false otherwise
