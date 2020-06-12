@@ -267,11 +267,12 @@ exports.reconciliationReportForGranuleFiles = reconciliationReportForGranuleFile
  * Compare the granule holdings in CMR with Cumulus for a given collection
  *
  * @param {Object} params                        - parameters
- * @param {string} params.collectionId           - the collection which has the granules to be reconciled
+ * @param {string} params.collectionId           - the collection which has the granules to be
+ *                                                 reconciled
  * @param {Object} params.bucketsConfig          - bucket configuration object
  * @param {Object} params.distributionBucketMap  - mapping of bucket->distirubtion path values
  *                                                 (e.g. { bucket: distribution path })
- * @returns {Promise<Object>} .                  - an object with the granulesReport and filesReport
+ * @returns {Promise<Object>}                    - an object with the granulesReport and filesReport
  */
 async function reconciliationReportForGranules(params) {
   // compare granule holdings:
@@ -384,10 +385,14 @@ exports.reconciliationReportForGranules = reconciliationReportForGranules;
 /**
  * Compare the holdings in CMR with Cumulus' internal data store, report any discrepancies
  *
- * @param {Object} bucketsConfig - bucket configuration object
- * @returns {Promise<Object>} a reconciliation report
+ * @param {Object} params .                      - parameters
+ * @param {Object} params.bucketsConfig          - bucket configuration object
+ * @param {Object} params.distributionBucketMap  - mapping of bucket->distirubtion path values
+ *                                                 (e.g. { bucket: distribution path })
+ * @returns {Promise<Object>}                    - a reconciliation report
  */
-async function reconciliationReportForCumulusCMR(bucketsConfig, distributionBucketMap) {
+async function reconciliationReportForCumulusCMR(params) {
+  const { bucketsConfig, distributionBucketMap } = params;
   const collectionReport = await reconciliationReportForCollections();
   const collectionsInCumulusCmr = {
     okCount: collectionReport.okCollections.length,
@@ -493,9 +498,9 @@ async function createReconciliationReport(params) {
   });
 
   // compare the CUMULUS holdings with the holdings in CMR
-  const cumulusCmrReport = await reconciliationReportForCumulusCMR(
+  const cumulusCmrReport = await reconciliationReportForCumulusCMR({
     bucketsConfig, distributionBucketMap
-  );
+  });
   report = Object.assign(report, cumulusCmrReport);
 
   // Create the full report
