@@ -7,7 +7,7 @@ const { deleteCollection } = require('@cumulus/api-client/collections');
 const { loadConfig } = require('../../helpers/testUtils');
 
 describe('Collections API', () => {
-  let beforeAllSucceeded = false;
+  let beforeAllFailed = false;
   let config;
   let collection;
   let prefix;
@@ -25,10 +25,9 @@ describe('Collections API', () => {
       const reportKeyPrefix = `${config.stackName}/test-output`;
       recordCreatedKey = `${reportKeyPrefix}/${name}-${version}-Create.output`;
       recordDeletedKey = `${reportKeyPrefix}/${name}-${version}-Delete.output`;
-
-      beforeAllSucceeded = true;
-    } catch (err) {
-      console.log(err);
+    } catch (error) {
+      beforeAllFailed = true;
+      console.log(error);
     }
   });
 
@@ -40,26 +39,32 @@ describe('Collections API', () => {
   });
 
   it('creating a collection publishes a record to the collection reporting SNS topic', async () => {
-    expect(beforeAllSucceeded).toBeTrue();
+    if (beforeAllFailed) {
+      fail('beforeAll() failed');
+    } else {
+      expect(beforeAllFailed).toBeTrue();
 
-    await expectAsync(waitForObjectToExist({
-      bucket: config.bucket,
-      key: recordCreatedKey
-    })).toBeResolved();
+      await expectAsync(waitForObjectToExist({
+        bucket: config.bucket,
+        key: recordCreatedKey
+      })).toBeResolved();
+    }
   });
 
   it('deleting a collection publishes a record to the collection reporting SNS topic', async () => {
-    expect(beforeAllSucceeded).toBeTrue();
+    if (beforeAllFailed) {
+      fail('beforeAll() failed');
+    } else {
+      await deleteCollection({
+        prefix,
+        collectionName: collection.name,
+        collectionVersion: collection.version
+      });
 
-    await deleteCollection({
-      prefix,
-      collectionName: collection.name,
-      collectionVersion: collection.version
-    });
-
-    await expectAsync(waitForObjectToExist({
-      bucket: config.bucket,
-      key: recordDeletedKey
-    })).toBeResolved();
+      await expectAsync(waitForObjectToExist({
+        bucket: config.bucket,
+        key: recordDeletedKey
+      })).toBeResolved();
+    }
   });
 });

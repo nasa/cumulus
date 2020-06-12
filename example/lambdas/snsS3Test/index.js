@@ -69,16 +69,17 @@ async function handlePdrs(event) {
  * @returns {Promise} confirmation of added message
  */
 async function handleCollections(event) {
-  const s3 = new S3();
-  const messageString = event.Records[0].Sns.Message;
-  const message = JSON.parse(messageString);
   const {
     event: eventType,
     record: collection
-  } = message;
+  } = JSON.parse(event.Records[0].Sns.Message);
+
   if (!collection.name) {
-    return Promise.resolve();
+    return undefined;
   }
+
+  const s3 = new S3();
+
   return s3.putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/test-output/${collection.name}-${collection.version}-${eventType}.output`,

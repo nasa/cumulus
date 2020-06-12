@@ -105,7 +105,7 @@ resource "aws_lambda_function" "sns_s3_collections_test" {
   source_code_hash = filebase64sha256("${path.module}/../lambdas/snsS3Test/lambda.zip")
   handler          = "index.handleCollections"
   role             = module.cumulus.lambda_processing_role_arn
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
 
   environment {
     variables = {
