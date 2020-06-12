@@ -365,7 +365,7 @@ async function constructOnlineAccessUrls({
     distributionBucketMap
   }));
   const urlList = await Promise.all(urlListPromises);
-  return urlList.filter((urlObj) => !(urlObj === undefined));
+  return urlList.filter((urlObj) => urlObj);
 }
 
 /**
