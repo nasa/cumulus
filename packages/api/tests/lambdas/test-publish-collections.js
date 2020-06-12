@@ -112,18 +112,15 @@ test.serial('The publish-collections Lambda function takes a DynamoDB stream eve
 
   t.is(Messages.length, 2);
 
-  const message1 = JSON.parse(JSON.parse(Messages[0].Body).Message);
-  const message2 = JSON.parse(JSON.parse(Messages[1].Body).Message);
+  const actualMessages = Messages
+    .map((message) => JSON.parse(JSON.parse(message.Body).Message))
+    .sort((message) => (message.event === 'Create' ? -1 : 1));
   const expectedMessages = [
     { event: 'Create', record: collection1 },
     { event: 'Update', record: collection2 }
   ];
 
-  if (message1.event === 'Create') {
-    t.deepEqual([message1, message2], expectedMessages);
-  } else {
-    t.deepEqual([message2, message1], expectedMessages);
-  }
+  t.deepEqual(actualMessages, expectedMessages);
 });
 
 test.serial('The publish-collections Lambda function takes a DynamoDB stream event with a REMOVE record and adds a deletedAt to the SNS message', async (t) => {
