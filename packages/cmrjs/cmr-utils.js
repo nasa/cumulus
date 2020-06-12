@@ -322,25 +322,20 @@ async function constructOnlineAccessUrl({
   cmrGranuleUrlType = 'distribution',
   distributionBucketMap
 }) {
-  try {
-    const bucketType = buckets.type(file.bucket);
-    const distributionApiBuckets = ['protected', 'public'];
-    if (distributionApiBuckets.includes(bucketType)) {
-      const fileUrl = await generateFileUrl({ file, distEndpoint, cmrGranuleUrlType, distributionBucketMap });
-      if (fileUrl) {
-        return {
-          URL: fileUrl,
-          URLDescription: 'File to download', // used by ECHO10
-          Description: 'File to download', // used by UMMG
-          Type: mapCNMTypeToCMRType(file.type) // used by UMMG
-        };
-      }
+  const bucketType = buckets.type(file.bucket);
+  const distributionApiBuckets = ['protected', 'public'];
+  if (distributionApiBuckets.includes(bucketType)) {
+    const fileUrl = await generateFileUrl({ file, distEndpoint, cmrGranuleUrlType, distributionBucketMap });
+    if (fileUrl) {
+      return {
+        URL: fileUrl,
+        URLDescription: 'File to download', // used by ECHO10
+        Description: 'File to download', // used by UMMG
+        Type: mapCNMTypeToCMRType(file.type) // used by UMMG
+      };
     }
-    return undefined;
-  } catch (error) {
-    log.error(`Error constructing online access urls for ${JSON.stringify(file)}: ${error.message}`);
-    throw error;
   }
+  return undefined;
 }
 
 /**
