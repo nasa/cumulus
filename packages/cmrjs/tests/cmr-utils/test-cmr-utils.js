@@ -26,7 +26,7 @@ const cmrUtil = rewire('../../cmr-utils');
 const { isCMRFile, getGranuleTemporalInfo } = cmrUtil;
 const uploadEcho10CMRFile = cmrUtil.__get__('uploadEcho10CMRFile');
 const uploadUMMGJSONCMRFile = cmrUtil.__get__('uploadUMMGJSONCMRFile');
-const mockDistributionBucketMap = {
+const stubDistributionBucketMap = {
   'fake-bucket': 'fake-bucket',
   'mapped-bucket': 'mapped/path/example',
   'cumulus-test-sandbox-protected': 'cumulus-test-sandbox-protected',
@@ -37,7 +37,7 @@ const { generateFileUrl } = proxyquire('../../cmr-utils', {
   '@cumulus/aws-client/S3': {
     buildS3Uri,
     getS3Object,
-    getJsonS3Object: async () => mockDistributionBucketMap,
+    getJsonS3Object: async () => stubDistributionBucketMap,
     parseS3Uri,
     promiseS3Upload,
     s3GetObjectTagging,
@@ -407,7 +407,7 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distrib
     file,
     distEndpoint,
     cmrGranuleUrlType: 'distribution',
-    distributionBucketMap: mockDistributionBucketMap
+    distributionBucketMap: stubDistributionBucketMap
   });
 
   t.is(url, 'www.example.com/fake-bucket/folder/key.txt');
@@ -427,7 +427,7 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3', as
     file,
     distEndpoint,
     cmrGranuleUrlType: 's3',
-    distributionBucketMap: mockDistributionBucketMap
+    distributionBucketMap: stubDistributionBucketMap
   });
 
   t.is(url, filename);
@@ -446,7 +446,7 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3 with
     file,
     distEndpoint,
     cmrGranuleUrlType: 's3',
-    distributionBucketMap: mockDistributionBucketMap
+    distributionBucketMap: stubDistributionBucketMap
   });
 
   t.is(url, filename);
@@ -466,7 +466,7 @@ test.serial('generateFileUrl returns undefined for cmrGranuleUrlType none', asyn
     file,
     distEndpoint,
     cmrGranuleUrlType: 'none',
-    distributionBucketMap: mockDistributionBucketMap
+    distributionBucketMap: stubDistributionBucketMap
   });
 
   t.is(url, undefined);
@@ -487,7 +487,7 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distrib
     distEndpoint,
     teaEndpoint: 'fakeTeaEndpoint',
     cmrGranuleUrlType: 'distribution',
-    distributionBucketMap: mockDistributionBucketMap
+    distributionBucketMap: stubDistributionBucketMap
   });
 
   t.is(url, 'www.example.com/mapped/path/example/folder/key.txt');
@@ -509,7 +509,7 @@ test.serial('generateFileUrl throws error for cmrGranuleUrlType distribution wit
     distEndpoint,
     teaEndpoint: 'fakeTeaEndpoint',
     cmrGranuleUrlType: 'distribution',
-    distributionBucketMap: mockDistributionBucketMap
+    distributionBucketMap: stubDistributionBucketMap
   }),
   { instanceOf: errors.MissingBucketMap });
 });
