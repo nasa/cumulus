@@ -69,8 +69,8 @@ class HttpProviderClient {
       const s3Params = parseS3Uri(this.certificateUri);
       this.certificate = await getTextObject(s3Params.Bucket, s3Params.Key);
       this.gotOptions.ca = this.certificate;
-    } catch (e) {
-      throw new errors.RemoteResourceError(`Failed to fetch CA certificate: ${e}`);
+    } catch (error) {
+      throw new errors.RemoteResourceError(`Failed to fetch CA certificate: ${error}`);
     }
   }
 
@@ -184,11 +184,11 @@ class HttpProviderClient {
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
     try {
       await http.download(remoteUrl, localPath, this.gotOptions);
-    } catch (e) {
-      if (e.message && e.message.includes('Unexpected HTTP status code: 403')) {
+    } catch (error) {
+      if (error.message && error.message.includes('Unexpected HTTP status code: 403')) {
         const message = `${basename(remotePath)} was not found on the server with 403 status`;
         throw new errors.FileNotFound(message);
-      } else throw e;
+      } else throw error;
     }
     log.info(`Finishing downloading ${remoteUrl}`);
 
@@ -221,8 +221,8 @@ class HttpProviderClient {
     try {
       const headResponse = await got.head(remoteUrl, this.gotOptions);
       headers = headResponse.headers;
-    } catch (err) {
-      log.info(`HEAD failed for ${remoteUrl} with error: ${err}.`);
+    } catch (error) {
+      log.info(`HEAD failed for ${remoteUrl} with error: ${error}.`);
     }
     const contentType = headers['content-type'] || lookupMimeType(key);
 

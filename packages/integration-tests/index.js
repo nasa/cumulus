@@ -140,9 +140,9 @@ async function getExecutionStatus(executionArn) {
   try {
     const { status } = await StepFunctions.describeExecution({ executionArn });
     return status;
-  } catch (err) {
-    if (err.code === 'ExecutionDoesNotExist') return 'STARTING';
-    throw err;
+  } catch (error) {
+    if (error.code === 'ExecutionDoesNotExist') return 'STARTING';
+    throw error;
   }
 }
 
@@ -257,8 +257,8 @@ async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
     } else {
       console.log(`Workflow ${workflowName} execution failed with state: ${workflowStatus.status}`);
     }
-  } catch (err) {
-    console.log(`Error executing workflow ${workflowName}. Error: ${err}`);
+  } catch (error) {
+    console.log(`Error executing workflow ${workflowName}. Error: ${error}`);
   }
 }
 

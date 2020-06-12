@@ -21,9 +21,9 @@ async function verifyJwtAuthorization(requestJwtToken) {
   let username;
   try {
     ({ accessToken, username } = verifyJwtToken(requestJwtToken));
-  } catch (err) {
-    log.error('Error caught when checking JWT token', err);
-    throw err;
+  } catch (error) {
+    log.error('Error caught when checking JWT token', error);
+    throw error;
   }
 
   if (!(await isAuthorizedOAuthUser(username))) {

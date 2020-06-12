@@ -128,9 +128,9 @@ export const headObject = improveStackTrace(
       async () => {
         try {
           return await s3().headObject({ Bucket, Key }).promise();
-        } catch (err) {
-          if (err.code === 'NotFound') throw err;
-          throw new pRetry.AbortError(err);
+        } catch (error) {
+          if (error.code === 'NotFound') throw error;
+          throw new pRetry.AbortError(error);
         }
       },
       { maxTimeout: 10000, ...retryOptions }
@@ -147,9 +147,9 @@ export const headObject = improveStackTrace(
 export const s3ObjectExists = (params: { Bucket: string, Key: string }) =>
   headObject(params.Bucket, params.Key)
     .then(() => true)
-    .catch((e) => {
-      if (e.code === 'NotFound') return false;
-      throw e;
+    .catch((error) => {
+      if (error.code === 'NotFound') return false;
+      throw error;
     });
 
 /**
@@ -326,9 +326,9 @@ export const getS3Object = improveStackTrace(
       async () => {
         try {
           return await s3().getObject({ Bucket, Key }).promise();
-        } catch (err) {
-          if (err.code === 'NoSuchKey') throw err;
-          throw new pRetry.AbortError(err);
+        } catch (error) {
+          if (error.code === 'NoSuchKey') throw error;
+          throw new pRetry.AbortError(error);
         }
       },
       {
@@ -413,12 +413,12 @@ export const fileExists = async (bucket: string, key: string) => {
   try {
     const r = await s3().headObject({ Key: key, Bucket: bucket }).promise();
     return r;
-  } catch (e) {
+  } catch (error) {
     // if file is not return false
-    if (e.stack.match(/(NotFound)/) || e.stack.match(/(NoSuchBucket)/)) {
+    if (error.stack.match(/(NotFound)/) || error.stack.match(/(NoSuchBucket)/)) {
       return false;
     }
-    throw e;
+    throw error;
   }
 };
 

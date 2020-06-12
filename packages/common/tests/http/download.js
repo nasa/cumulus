@@ -15,8 +15,8 @@ const readFile = promisify(fs.readFile);
 const deleteFile = (file) => {
   const pUnlink = promisify(fs.unlink);
   return pUnlink(file)
-    .catch((err) => {
-      if (err.code !== 'ENOENT') throw err;
+    .catch((error) => {
+      if (error.code !== 'ENOENT') throw error;
     });
 };
 

@@ -15,9 +15,9 @@ const log = new Logger({ sender: '@cumulus/aws-client/StepFunctions' });
 export const doesExecutionExist = (describeExecutionPromise: Promise<unknown>) =>
   describeExecutionPromise
     .then(() => true)
-    .catch((err) => {
-      if (err.code === 'ExecutionDoesNotExist') return false;
-      throw err;
+    .catch((error) => {
+      if (error.code === 'ExecutionDoesNotExist') return false;
+      throw error;
     });
 
 // Copied here to avoid requiring @cumulus/common just for this function

@@ -112,7 +112,7 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
     let output;
     try {
       output = JSON.parse(getAsyncOperationBody.output);
-    } catch (err) {
+    } catch (error) {
       throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
     }
 

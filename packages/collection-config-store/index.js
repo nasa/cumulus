@@ -58,16 +58,16 @@ class CollectionConfigStore {
       try {
         // Attempt to fetch the collection config from S3
         collectionConfig = await getJsonS3Object(this.bucket, this.configKey(collectionId));
-      } catch (err) {
-        if (err.code === 'NoSuchKey') {
+      } catch (error) {
+        if (error.code === 'NoSuchKey') {
           throw new Error(`A collection config for data type "${collectionId}" was not found.`);
         }
 
-        if (err.code === 'NoSuchBucket') {
+        if (error.code === 'NoSuchBucket') {
           throw new Error(`Collection config bucket does not exist: ${this.bucket}`);
         }
 
-        throw err;
+        throw error;
       }
 
       // Store the fetched collection config to the cache

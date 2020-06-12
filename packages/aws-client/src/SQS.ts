@@ -166,8 +166,8 @@ export const sqsQueueExists = async (queue: string) => {
   try {
     await sqs().getQueueUrl({ QueueName }).promise();
     return true;
-  } catch (err) {
-    if (err.code === 'AWS.SimpleQueueService.NonExistentQueue') return false;
-    throw err;
+  } catch (error) {
+    if (error.code === 'AWS.SimpleQueueService.NonExistentQueue') return false;
+    throw error;
   }
 };

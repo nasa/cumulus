@@ -205,8 +205,8 @@ test.serial('postToCMR continues without metadata file if there is skipMetaCheck
   try {
     const output = await postToCMR(newPayload);
     t.is(output.granules[0].granuleId, granuleId);
-  } catch (err) {
-    t.fail(err);
+  } catch (error) {
+    t.fail(error);
   }
 });
 
@@ -236,8 +236,8 @@ test.serial('postToCMR continues with skipMetaCheck even if any granule is missi
       `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
     );
     t.is(output.granules[1].cmrLink, undefined);
-  } catch (err) {
-    t.fail(err);
+  } catch (error) {
+    t.fail(error);
   } finally {
     cmrClient.CMR.prototype.ingestGranule.restore();
   }
