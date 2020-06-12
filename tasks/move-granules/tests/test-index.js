@@ -140,6 +140,7 @@ test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.publicBucket);
   await recursivelyDeleteS3Bucket(t.context.stagingBucket);
   await recursivelyDeleteS3Bucket(t.context.protectedBucket);
+  await recursivelyDeleteS3Bucket(t.context.systemBucket);
 });
 
 test.serial('Should move files to final location.', async (t) => {
