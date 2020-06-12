@@ -148,7 +148,6 @@ test.serial('validateUMMG calls post with default version (1.4) when metadata ve
   t.true(nock.isDone());
 });
 
-
 test('ummVersion returns UMM version if found on metadata object.', (t) => {
   const metadata = {
     restOfMetadataUpHere: 'it is all fake',

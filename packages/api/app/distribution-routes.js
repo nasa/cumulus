@@ -10,7 +10,6 @@ const {
 } = require('../endpoints/distribution');
 const { isAccessTokenExpired } = require('../lib/token');
 
-
 /**
  * Helper function to pull bucket out of a path string.
  * Will ignore leading slash.

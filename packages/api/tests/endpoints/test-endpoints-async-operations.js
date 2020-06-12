@@ -17,7 +17,6 @@ const {
 } = require('../../models');
 const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../lib/testUtils');
 
-
 let esClient;
 let esIndex;
 let esAlias;

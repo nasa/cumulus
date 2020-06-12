@@ -197,7 +197,6 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
   const fakeBucketsConfigJsonObject = sinon.fake.returns(fakeBuckets);
   const restoreBucketsConfigDefaults = cmrUtils.__set__('getBucketsConfigJson', fakeBucketsConfigJsonObject);
 
-
   const bucket = randomId('bucket');
   const stackName = randomId('stack');
   process.env.system_bucket = bucket;

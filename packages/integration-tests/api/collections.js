@@ -3,7 +3,6 @@
 const { deprecate } = require('@cumulus/common/util');
 const collectionsApi = require('@cumulus/api-client/collections');
 
-
 /**
  * POST /collections
  *

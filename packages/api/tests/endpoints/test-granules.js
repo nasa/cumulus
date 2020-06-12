@@ -736,7 +736,6 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
         t.is(item.Key.indexOf(destinationFilepath), 0);
       });
 
-
       const thirdBucketObjects = await s3().listObjects({
         Bucket: thirdBucket,
         Prefix: destinationFilepath
@@ -746,7 +745,6 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
       thirdBucketObjects.Contents.forEach((item) => {
         t.is(item.Key.indexOf(destinationFilepath), 0);
       });
-
 
       // check the granule in table is updated
       const updatedGranule = await granuleModel.get({ granuleId: newGranule.granuleId });
@@ -972,7 +970,6 @@ test.serial('PUT with action move returns failure if one granule file exists', a
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
     .expect(409);
-
 
   const responseBody = response.body;
   t.is(response.status, 409);

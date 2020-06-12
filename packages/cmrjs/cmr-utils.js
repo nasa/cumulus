@@ -221,7 +221,6 @@ async function metadataObjectFromCMRXMLFile(cmrFilename) {
   return parseXmlString(metadata);
 }
 
-
 /**
  * Return cmr metadata object from a CMR Echo10XML file or CMR UMMG File.
  * @param {string} cmrFilename - s3 path to cmr file
