@@ -18,6 +18,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - The `@cumulus/common/util.uuid()` function has been removed
   - The `@cumulus/common/BucketsConfig.bucketsOfType()` now only takes a single
     type as a string. The option to pass an array of strings has been removed.
+  - `@cumulus/common/cloudwatch-event.getSfEventMessageObject()` now returns
+    `undefined` instead of `null` if the message was not a valid JSON string
 - **CUMULUS-1969**
   - The `DiscoverPdrs` task now expects `provider_path` to be provided at
     `event.config.provider_path`, not `event.config.collection.provider_path`
