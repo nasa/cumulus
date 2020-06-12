@@ -281,7 +281,7 @@ async function generateFileUrl({
   distributionBucketMap
 }) {
   if (cmrGranuleUrlType === 'distribution') {
-    const bucketPath = _get(distributionBucketMap, file.bucket);
+    const bucketPath = distributionBucketMap[file.bucket];
     if (!bucketPath) {
       throw new errors.MissingBucketMap(`No distribution bucket mapping exists for ${file.bucket}`);
     }
