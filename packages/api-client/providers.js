@@ -2,7 +2,6 @@
 
 const { invokeApi } = require('./cumulusApiClient');
 
-
 /**
  * Create a provider via the API
  *
@@ -65,7 +64,6 @@ const getProvider = ({ prefix, providerId, callback = invokeApi }) => callback({
     path: `/providers/${providerId}`
   }
 });
-
 
 /**
  * Fetch a list of providers from the Cumulus API

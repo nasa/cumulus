@@ -13,7 +13,6 @@ const {
 } = require('@cumulus/common/cloudwatch-event');
 const log = require('@cumulus/common/log');
 
-
 /**
  * Determine if the SQS queue update is needed for the event
  *

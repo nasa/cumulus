@@ -90,7 +90,6 @@ export const parseS3Uri = (uri: string) => {
 export const buildS3Uri = (bucket: string, key: string) =>
   `s3://${bucket}/${key.replace(/^\/+/, '')}`;
 
-
 /**
 * Convert S3 TagSet Object to query string
 * e.g. [{ Key: 'tag', Value: 'value }] to 'tag=value'
