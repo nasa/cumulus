@@ -53,6 +53,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     SyncGranule task. This setting is `false` by default, but when set to
     `true`, all checksum files associated with data files that are downloaded
     will be downloaded as well.
+
 - **CUMULUS-1952**
   - Updated HTTP(S) provider client to accept username/password for Basic authorization. This change adds support for Basic Authorization such as Earthdata login redirects to ingest (i.e. as implemented in SyncGranule), but not to discovery (i.e. as implemented in DiscoverGranules). Discovery still expects the provider's file system to be publicly accessible, but not the individual files and their contents.
   - **NOTE**: Using this in combination with the HTTP protocol may expose usernames and passwords to intermediary network entities. HTTPS is highly recommended.
@@ -64,15 +65,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-1956**
+  - The `/s3credentials` endpoint that is deployed as part of distribution now
+    supports authentication using tokens created by a different application. If
+    a request contains the `EDL-ClientId` and `EDL-Token` headers,
+    authentication will be handled using that token rather than attempting to
+    use OAuth.
+- **CUMULUS-1977**
+  - API endpoint POST `/granules/bulk` now returns a 202 status on a successful
+    response instead of a 200 response
+  - API endpoint DELETE `/granules/<granule-id>` now returns a 404 status if the
+    granule record was already deleted
+  - `@cumulus/api/models/Granule.update()` now returns the updated granule
+    record
 - **CUMULUS-1982**
   - The `globalConnectionLimit` property of providers is now optional and
     defaults to "unlimited"
-- **CUMULUS-1977**
-  - API endpoint POST `/granules/bulk` now returns a 202 status on a successful response instead of a 200 response
-  - API endpoint DELETE `/granules/<granule-id>` now returns a 404 status if the granule record was already deleted
-  - `@cumulus/api/models/Granule.update()` now returns the updated granule record
 - **CUMULUS-1997**
-  - Added optional `launchpad` configuration to `@cumulus/hyrax-metadata-updates` task config schema.
+  - Added optional `launchpad` configuration to
+    `@cumulus/hyrax-metadata-updates` task config schema.
 
 ### Fixed
 
