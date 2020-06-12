@@ -138,7 +138,6 @@ module.exports = {
     'prefer-destructuring': 'off',
     'function-paren-newline': ['error', 'consistent'],
     'implicit-arrow-linebreak': 'off',
-    'no-multiple-empty-lines': 'off',
 
     'eslint-comments/no-unused-disable': 'warn',
     'eslint-comments/disable-enable-pair': [
@@ -151,7 +150,6 @@ module.exports = {
     'lodash/prefer-lodash-method': 'off',
 
     'node/no-missing-require': 'off',
-
     'unicorn/better-regex': 'off',
     'unicorn/catch-error-name': 'warn',
     'unicorn/consistent-function-scoping': 'off',
