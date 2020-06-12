@@ -54,7 +54,7 @@ data "aws_lambda_invocation" "tea_map_cache" {
 }
 
 module "thin_egress_app" {
-  source = "s3::https://s3.amazonaws.com/cumulus-test-sandbox-private/tea-terraform-manual_build.zip"
+  source = "s3::https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.79.zip"
 
   auth_base_url                      = var.urs_url
   bucket_map_file                    = var.bucket_map_key == null ? aws_s3_bucket_object.bucket_map_yaml[0].key : var.bucket_map_key
