@@ -217,7 +217,6 @@ test.serial('Should add metadata type to CMR granule files.', async (t) => {
   t.is(1, cmrOutputFiles.length);
 });
 
-
 test.serial('Should update filenames with updated S3 URLs.', async (t) => {
   const newPayload = buildPayload(t);
   const expectedFilenames = getExpectedOutputFileNames(t);
@@ -229,7 +228,6 @@ test.serial('Should update filenames with updated S3 URLs.', async (t) => {
   const outputFilenames = output.granules[0].files.map((f) => f.filename);
   t.deepEqual(expectedFilenames.sort(), outputFilenames.sort());
 });
-
 
 test.serial('Should not overwrite CMR file type if already explicitly set', async (t) => {
   const newPayload = buildPayload(t);

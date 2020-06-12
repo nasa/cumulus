@@ -94,7 +94,6 @@ async function checkOrCreateTables(stackName) {
   await Promise.all(promises);
 }
 
-
 async function prepareServices(stackName, bucket) {
   setLocalEsVariables(stackName);
   await bootstrap.bootstrapElasticSearch(process.env.ES_HOST, process.env.ES_INDEX);

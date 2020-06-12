@@ -62,7 +62,6 @@ test('bucket object are found by bucketName', (t) => {
   t.deepEqual(actual, expected);
 });
 
-
 test('checks a bucket existence in config', (t) => {
   const existsName = 'a-public-bucket';
   const doesNotExistName = 'not-included-bucket';

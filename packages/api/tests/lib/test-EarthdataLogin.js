@@ -8,6 +8,11 @@ const { URL, URLSearchParams } = require('url');
 const EarthdataLogin = require('../../lib/EarthdataLogin');
 const OAuth2AuthenticationError = require('../../lib/OAuth2AuthenticationError');
 const OAuth2AuthenticationFailure = require('../../lib/OAuth2AuthenticationFailure');
+const { EarthdataLoginError } = require('../../lib/errors');
+
+test.before(() => {
+  nock.disableNetConnect();
+});
 
 test.beforeEach(() => {
   nock.cleanAll();
@@ -408,4 +413,234 @@ test.serial('EarthdataLogin.refreshAccessToken() throws an OAuth2AuthenticationE
   );
 
   t.true(tokenRequest.isDone());
+});
+
+test.serial('EarthdataLogin.getTokenUsername() returns the username associated with a valid token', async (t) => {
+  const earthdataLogin = new EarthdataLogin({
+    clientId: 'client-id',
+    clientPassword: 'client-password',
+    earthdataLoginUrl: 'http://www.example.com',
+    redirectUri: 'http://www.example.com/cb'
+  });
+
+  const token = 'token';
+  const onBehalfOf = 'on-behalf-of';
+
+  nock('http://www.example.com')
+    .post(
+      '/oauth/tokens/user',
+      {
+        token,
+        client_id: 'client-id',
+        on_behalf_of: onBehalfOf
+      }
+    )
+    .basicAuth({ user: 'client-id', pass: 'client-password' })
+    .reply(
+      200,
+      {
+        uid: 'valid-username'
+      }
+    );
+
+  const username = await earthdataLogin.getTokenUsername({
+    token,
+    onBehalfOf
+  });
+
+  t.is(username, 'valid-username');
+});
+
+test.serial('EarthdataLogin.getTokenUsername() throws an exception for an invalid token', async (t) => {
+  const earthdataLogin = new EarthdataLogin({
+    clientId: 'client-id',
+    clientPassword: 'client-password',
+    earthdataLoginUrl: 'http://www.example.com',
+    redirectUri: 'http://www.example.com/cb'
+  });
+
+  const token = 'token';
+  const onBehalfOf = 'on-behalf-of';
+
+  nock('http://www.example.com')
+    .post(
+      '/oauth/tokens/user',
+      {
+        token,
+        client_id: 'client-id',
+        on_behalf_of: onBehalfOf
+      }
+    )
+    .basicAuth({ user: 'client-id', pass: 'client-password' })
+    .reply(
+      403,
+      {
+        error: 'invalid_token',
+        error_description: 'The token is either malformed or does not exist'
+      }
+    );
+
+  const error = await t.throwsAsync(
+    earthdataLogin.getTokenUsername({
+      token,
+      onBehalfOf
+    }),
+    { instanceOf: EarthdataLoginError }
+  );
+
+  t.is(error.code, 'InvalidToken');
+});
+
+test.serial('EarthdataLogin.getTokenUsername() throws an exception for an expired token', async (t) => {
+  const earthdataLogin = new EarthdataLogin({
+    clientId: 'client-id',
+    clientPassword: 'client-password',
+    earthdataLoginUrl: 'http://www.example.com',
+    redirectUri: 'http://www.example.com/cb'
+  });
+
+  const token = 'token';
+  const onBehalfOf = 'on-behalf-of';
+
+  nock('http://www.example.com')
+    .post(
+      '/oauth/tokens/user',
+      {
+        token,
+        client_id: 'client-id',
+        on_behalf_of: onBehalfOf
+      }
+    )
+    .basicAuth({ user: 'client-id', pass: 'client-password' })
+    .reply(
+      403,
+      {
+        error: 'token_expired',
+        error_description: 'The token has expired'
+      }
+    );
+
+  const error = await t.throwsAsync(
+    earthdataLogin.getTokenUsername({
+      token,
+      onBehalfOf
+    }),
+    { instanceOf: EarthdataLoginError }
+  );
+
+  t.is(error.code, 'TokenExpired');
+});
+
+test.serial('EarthdataLogin.getTokenUsername() throws an exception if EarthdataLogin returns 200 with invalid JSON', async (t) => {
+  const earthdataLogin = new EarthdataLogin({
+    clientId: 'client-id',
+    clientPassword: 'client-password',
+    earthdataLoginUrl: 'http://www.example.com',
+    redirectUri: 'http://www.example.com/cb'
+  });
+
+  const token = 'token';
+  const onBehalfOf = 'on-behalf-of';
+
+  nock('http://www.example.com')
+    .post(
+      '/oauth/tokens/user',
+      {
+        token,
+        client_id: 'client-id',
+        on_behalf_of: onBehalfOf
+      }
+    )
+    .basicAuth({ user: 'client-id', pass: 'client-password' })
+    .reply(
+      200,
+      'asdf'
+    );
+
+  const error = await t.throwsAsync(
+    earthdataLogin.getTokenUsername({
+      token,
+      onBehalfOf
+    }),
+    { instanceOf: EarthdataLoginError }
+  );
+
+  t.is(error.code, 'InvalidResponse');
+});
+
+test.serial('EarthdataLogin.getTokenUsername() throws an exception if EarthdataLogin returns 403 with invalid JSON', async (t) => {
+  const earthdataLogin = new EarthdataLogin({
+    clientId: 'client-id',
+    clientPassword: 'client-password',
+    earthdataLoginUrl: 'http://www.example.com',
+    redirectUri: 'http://www.example.com/cb'
+  });
+
+  const token = 'token';
+  const onBehalfOf = 'on-behalf-of';
+
+  nock('http://www.example.com')
+    .post(
+      '/oauth/tokens/user',
+      {
+        token,
+        client_id: 'client-id',
+        on_behalf_of: onBehalfOf
+      }
+    )
+    .basicAuth({ user: 'client-id', pass: 'client-password' })
+    .reply(
+      403,
+      'asdf'
+    );
+
+  const error = await t.throwsAsync(
+    earthdataLogin.getTokenUsername({
+      token,
+      onBehalfOf
+    }),
+    { instanceOf: EarthdataLoginError }
+  );
+
+  t.is(error.code, 'InvalidResponse');
+});
+
+test.serial('EarthdataLogin.getTokenUsername() throws an exception if EarthdataLogin returns an unexpected error', async (t) => {
+  const earthdataLogin = new EarthdataLogin({
+    clientId: 'client-id',
+    clientPassword: 'client-password',
+    earthdataLoginUrl: 'http://www.example.com',
+    redirectUri: 'http://www.example.com/cb'
+  });
+
+  const token = 'token';
+  const onBehalfOf = 'on-behalf-of';
+
+  nock('http://www.example.com')
+    .post(
+      '/oauth/tokens/user',
+      {
+        token,
+        client_id: 'client-id',
+        on_behalf_of: onBehalfOf
+      }
+    )
+    .basicAuth({ user: 'client-id', pass: 'client-password' })
+    .reply(
+      403,
+      {
+        error: 'something_unexpected',
+        error_description: 'Something unexpected'
+      }
+    );
+
+  const error = await t.throwsAsync(
+    earthdataLogin.getTokenUsername({
+      token,
+      onBehalfOf
+    }),
+    { instanceOf: EarthdataLoginError }
+  );
+
+  t.is(error.code, 'UnexpectedResponse');
 });

@@ -7,7 +7,6 @@ const path = require('path');
 const fs = require('fs');
 const img = require('./data/testBrowse.jpg');
 
-
 async function uploadFakeBrowse(input) {
   const uploadPromises = [];
   input.granules.forEach((granule) => {
@@ -32,7 +31,6 @@ async function uploadFakeBrowse(input) {
   await Promise.all(uploadPromises);
   return input.granules;
 }
-
 
 /**
  * For each granule, create a CMR XML file and store to S3

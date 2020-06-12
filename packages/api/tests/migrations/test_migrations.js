@@ -16,7 +16,6 @@ const { fakeGranuleFactory, fakeExecutionFactory } = require('../../lib/testUtil
 let esClient;
 const esIndex = randomString();
 
-
 let executionModel;
 let executionsTable;
 let granuleModel;

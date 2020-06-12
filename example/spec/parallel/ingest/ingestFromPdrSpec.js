@@ -491,7 +491,6 @@ describe('Ingesting from PDR', () => {
       let pdrRunningMessageKey;
       let pdrCompletedMessageKey;
 
-
       beforeAll(async () => {
         const parsePdrExecutionName = parsePdrExecutionArn.split(':').pop();
 

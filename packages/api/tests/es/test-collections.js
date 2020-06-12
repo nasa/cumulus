@@ -95,7 +95,6 @@ test.before(async () => {
   }
 });
 
-
 test.after.always(async () => {
   await esClient.indices.delete({ index: esIndex });
   await collectionModel.deleteTable();
