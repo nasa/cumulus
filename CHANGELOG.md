@@ -9,7 +9,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### BREAKING CHANGES
 
 - **CUMULUS-1958**
-  - The following methods exported from `@cumulus/cmr-js/cmr-utils` were made async, and added distributionBucketMap as a parameter:
+  - The following methods exported from `@cumulus/cmr-js/cmr-utils` were made
+    async, and added distributionBucketMap as a parameter:
     - constructOnlineAccessUrl
     - generateFileUrl
     - reconcileCMRMetadata
@@ -34,9 +35,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-1958**
-  - Add the ability for users to specify a `bucket_map_key` to the `cumulus` terraform module as an override for the default .yaml values that are passed to TEA by Core.    Using this option *requires* that each configured Cumulus 'distribution' bucket (e.g. public/protected buckets) have a single TEA mapping.  Multiple maps per bucket are not supported.
-  - Updated Generating a distribution URL, the MoveGranules task and all CMR reconciliation functionality to utilize the TEA bucket map override.
-  - Updated deploy process to utilize a bootstrap 'tea-map-cache' lambda that will, after deployment of Cumulus Core's TEA instance, query TEA for all protected/public buckets and generate a mapping configuration used internally by Core.  This object is also exposed as an output of the Cumulus module as `distribution_bucket_map`.
+  - Add the ability for users to specify a `bucket_map_key` to the `cumulus`
+    terraform module as an override for the default .yaml values that are passed
+    to TEA by Core.    Using this option *requires* that each configured
+    Cumulus 'distribution' bucket (e.g. public/protected buckets) have a single
+    TEA mapping.  Multiple maps per bucket are not supported.
+  - Updated Generating a distribution URL, the MoveGranules task and all CMR
+    reconciliation functionality to utilize the TEA bucket map override.
+  - Updated deploy process to utilize a bootstrap 'tea-map-cache' lambda that
+    will, after deployment of Cumulus Core's TEA instance, query TEA for all
+    protected/public buckets and generate a mapping configuration used
+    internally by Core.  This object is also exposed as an output of the Cumulus
+    module as `distribution_bucket_map`.
 
 - **CUMULUS-1800**
   - Added task configuration setting named `syncChecksumFiles` to the
