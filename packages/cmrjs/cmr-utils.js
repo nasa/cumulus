@@ -286,8 +286,8 @@ async function generateFileUrl({
       throw new errors.MissingBucketMap(`No distribution bucket mapping exists for ${file.bucket}`);
     }
 
-    const extension = urljoin(bucketPath, getS3KeyOfFile(file));
-    return urljoin(distEndpoint, extension);
+    const urlPath = urljoin(bucketPath, getS3KeyOfFile(file));
+    return urljoin(distEndpoint, urlPath);
   }
 
   if (cmrGranuleUrlType === 's3') {
