@@ -14,7 +14,6 @@ test('getTeaBucketPath returns a mapped bucket path on an expected response from
   t.is('fake-bucket-redirect/path', actual);
 });
 
-
 test('getTeaBucketPath throws error if multiple paths are returned', async (t) => {
   const { getTeaBucketPath } = proxyquire('../tea', {
     got: {

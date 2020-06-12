@@ -100,7 +100,6 @@ async function deleteTestStream(streamName) {
   return kinesis.deleteStream({ StreamName: streamName }).promise();
 }
 
-
 /**
  * patiently create a kinesis stream
  *
