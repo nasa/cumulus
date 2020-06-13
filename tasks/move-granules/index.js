@@ -9,6 +9,7 @@ const path = require('path');
 
 const {
   buildS3Uri,
+  getJsonS3Object,
   moveObject,
   s3ObjectExists,
   waitForObjectToExist
@@ -33,6 +34,7 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
 
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const log = require('@cumulus/common/log');
+const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
 
 /**
  * validates the file matched only one collection.file and has a valid bucket
@@ -234,19 +236,23 @@ async function moveFilesForAllGranules(
  * Update each of the CMR files' OnlineAccessURL fields to represent the new
  * file locations.
  *
- * @param {Array<Object>} cmrFiles - array of objects that include CMR xmls uris and granuleIds
- * @param {Object} granulesObject - an object of the granules where the key is the granuleId
- * @param {string} cmrGranuleUrlType - type of granule CMR url
- * @param {string} distEndpoint - the api distribution endpoint
- * @param {BucketsConfig} bucketsConfig - BucketsConfig instance
- * @returns {Promise} promise resolves when all files have been updated
+ * @param {Array<Object>} cmrFiles       - array of objects that include CMR xmls uris and
+ *                                         granuleIds
+ * @param {Object} granulesObject        - an object of the granules where the key is the granuleId
+ * @param {string} cmrGranuleUrlType .   - type of granule CMR url
+ * @param {string} distEndpoint          - the api distribution endpoint
+ * @param {BucketsConfig} bucketsConfig  - BucketsConfig instance
+ * @param {Object} distributionBucketMap - mapping of bucket->distirubtion path values
+ *                                         (e.g. { bucket: distribution path })
+ * @returns {Promise}                    - promise resolves when all files have been updated
  **/
 async function updateEachCmrFileAccessURLs(
   cmrFiles,
   granulesObject,
   cmrGranuleUrlType,
   distEndpoint,
-  bucketsConfig
+  bucketsConfig,
+  distributionBucketMap
 ) {
   return Promise.all(cmrFiles.map(async (cmrFile) => {
     const granuleId = cmrFile.granuleId;
@@ -259,7 +265,8 @@ async function updateEachCmrFileAccessURLs(
       distEndpoint,
       published: false, // Do the publish in publish-to-cmr step
       inBuckets: bucketsConfig,
-      cmrGranuleUrlType
+      cmrGranuleUrlType,
+      distributionBucketMap
     });
   }));
 }
@@ -278,6 +285,7 @@ async function updateEachCmrFileAccessURLs(
  * @param {boolean} [event.config.moveStagedFiles=true] - set to false to skip moving files
  *                                 from staging to final bucket. Mostly useful for testing.
  * @param {Object} event.input - a granules object containing an array of granules
+ *
  * @returns {Promise} returns the promise of an updated event object
  */
 async function moveGranules(event) {
@@ -293,6 +301,11 @@ async function moveGranules(event) {
   const granulesInput = event.input.granules;
   const cmrFiles = granulesToCmrFileObjects(granulesInput);
   const granulesByGranuleId = keyBy(granulesInput, 'granuleId');
+
+  const distributionBucketMap = await getJsonS3Object(
+    process.env.system_bucket,
+    getDistributionBucketMapKey(process.env.stackName)
+  );
 
   let movedGranules;
 
@@ -317,7 +330,8 @@ async function moveGranules(event) {
       movedGranules,
       cmrGranuleUrlType,
       config.distribution_endpoint,
-      bucketsConfig
+      bucketsConfig,
+      distributionBucketMap
     );
   } else {
     movedGranules = granulesByGranuleId;
