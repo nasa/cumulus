@@ -8,7 +8,6 @@ async function getLambdaEmsSettings(lambdaName) {
   return emsApi.getLambdaEmsSettings(lambdaName);
 }
 
-
 async function createEmsReports(params) {
   deprecate('@cumulus/integration-tests/ems.getLambdaEmsSettings', '1.21.0', '@cumulus/api-client/ems.getLambdaEmsSettings');
   return emsApi.createEmsReports(params);

@@ -19,7 +19,6 @@ const {
   getCmrSettings
 } = require('@cumulus/cmrjs/cmr-utils');
 
-
 const { validateUMMG } = require('@cumulus/cmr-client/UmmUtils');
 const validate = require('@cumulus/cmr-client/validate');
 const { RecordDoesNotExist } = require('@cumulus/errors');

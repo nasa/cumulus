@@ -3,7 +3,6 @@
 const { deprecate } = require('@cumulus/common/util');
 const granulesApi = require('@cumulus/api-client/granules');
 
-
 /**
  * GET /granules/{granuleName}
  *
@@ -18,7 +17,6 @@ async function getGranule(params) {
   deprecate('@cumulus/integration-tests/granules.getGranule', '1.21.0', '@cumulus/api-client/granules.getGranule');
   return granulesApi.getGranule(params);
 }
-
 
 async function waitForGranule(params) {
   deprecate('@cumulus/integration-tests/granules.waitForGranule', '1.21.0', '@cumulus/api-client/granules.waitForGranule');
@@ -116,7 +114,6 @@ async function removePublishedGranule(params) {
   deprecate('@cumulus/integration-tests/granules.removePublishedGranule', '1.21.0', '@cumulus/api-client/granules.removePublishedGranule');
   return granulesApi.removePublishedGranule(params);
 }
-
 
 async function listGranules(params) {
   deprecate('@cumulus/integration-tests/granules.listGranules', '1.21.0', '@cumulus/api-client/granules.listGranules');

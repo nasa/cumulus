@@ -17,6 +17,16 @@ const regexes = {
   range: /^(.*)__(from|to)$/
 };
 
+const queryFields = [
+  'error',
+  'granuleId',
+  'id',
+  'status',
+  'pdrName',
+  'msg',
+  'name'
+];
+
 const build = {
   general: (params) => ({
     query_string: {
@@ -26,14 +36,7 @@ const build = {
 
   prefix: (queries, _prefix, terms) => {
     if (_prefix) {
-      let fields = [
-        'error',
-        'granuleId',
-        'status',
-        'pdrName',
-        'msg',
-        'name'
-      ];
+      let fields = queryFields.slice();
 
       terms = terms.map((f) => f.name);
 
@@ -47,7 +50,28 @@ const build = {
       }));
 
       queries.should = queries.should.concat(results);
-      queries.minimum_should_match = 1;
+      queries.minimum_should_match = (queries.minimum_should_match || 0) + 1;
+    }
+  },
+
+  infix: (queries, _infix, terms) => {
+    if (_infix) {
+      let fields = queryFields.slice();
+
+      terms = terms.map((f) => f.name);
+
+      // remove fields that are included in the termFields
+      fields = fields.filter((field) => !terms.includes(field));
+
+      const results = {
+        query_string: {
+          query: `*${_infix}*`,
+          fields
+        }
+      };
+
+      queries.should = queries.should.concat(results);
+      queries.minimum_should_match = (queries.minimum_should_match || 0) + 1;
     }
   },
 
@@ -160,7 +184,7 @@ module.exports = function query(params) {
     must_not: []
   };
 
-  const _prefix = params.prefix;
+  const { prefix: _prefix, infix: _infix } = params;
 
   // remove reserved words (that are not fields)
   params = omit(
@@ -172,11 +196,12 @@ module.exports = function query(params) {
       'sort_by',
       'order',
       'prefix',
+      'infix',
       'fields'
     ]
   );
 
-  if (Object.keys(params).length === 0 && !_prefix) {
+  if (Object.keys(params).length === 0 && !_prefix && !_infix) {
     return response;
   }
 
@@ -198,8 +223,9 @@ module.exports = function query(params) {
     }
   });
 
-  // perform prefix search
+  // perform prefix and infix searches
   build.prefix(queries, _prefix, fields);
+  build.infix(queries, _infix, fields);
 
   response.query = {
     bool: queries

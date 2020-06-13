@@ -93,7 +93,6 @@ const reingestGranule = async ({ prefix, granuleId, callback = invokeApi }) => c
   }
 });
 
-
 /**
  * Removes a granule from CMR via the Cumulus API
  * PUT /granules/{granuleId}
@@ -174,7 +173,6 @@ const deleteGranule = async ({ prefix, granuleId, callback = invokeApi }) => cal
   }
 });
 
-
 /**
  * Move a granule via the API
  * PUT /granules/{granuleId}
@@ -203,7 +201,6 @@ const moveGranule = async ({
     body: JSON.stringify({ action: 'move', destinations })
   }
 });
-
 
 /**
  * Removed a granule from CMR and delete from Cumulus via the API

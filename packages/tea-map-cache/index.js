@@ -21,7 +21,7 @@ async function handler(event) {
   const s3 = new AWS.S3();
 
   const bucketMapPromises = event.bucketList.map(async (bucket) => ({
-    [bucket]: await getTeaBucketPath(bucket, process.env.TEA_API)
+    [bucket]: await getTeaBucketPath({ bucket, teaEndPoint: process.env.TEA_API })
   }));
   const bucketMapObjects = await Promise.all(bucketMapPromises);
 
