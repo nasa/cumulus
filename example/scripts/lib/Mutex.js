@@ -87,12 +87,12 @@ class Mutex {
     let deleteResult;
     try {
       deleteResult = await this.docClient.delete(params).promise();
-    } catch (e) {
+    } catch (error) {
       const shaCheck = await this.checkMatchingSha(key, gitSHA);
       if (!['match', 'noLock'].includes(shaCheck)) {
-        throw new CumulusLockError(`Cannot unlock stack, lock already exists from another build with SHA ${shaCheck}, error: ${e}`);
+        throw new CumulusLockError(`Cannot unlock stack, lock already exists from another build with SHA ${shaCheck}, error: ${error}`);
       }
-      throw e;
+      throw error;
     }
     return deleteResult;
   }

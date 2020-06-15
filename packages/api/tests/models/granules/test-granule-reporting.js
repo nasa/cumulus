@@ -228,8 +228,8 @@ test('_validateAndStoreGranuleRecord() does not throw an error for a failing rec
   try {
     await granuleModel._validateAndStoreGranuleRecord(granule);
     t.pass();
-  } catch (err) {
-    t.fail(`Expected error not to be thrown, caught: ${err}`);
+  } catch (error) {
+    t.fail(`Expected error not to be thrown, caught: ${error}`);
   }
 });
 

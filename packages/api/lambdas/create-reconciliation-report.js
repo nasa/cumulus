@@ -542,13 +542,13 @@ async function processRequest(params) {
   try {
     await createReconciliationReport({ ...params, reportStartTime, reportKey });
     await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
-  } catch (e) {
-    log.error(`Error creating reconciliation report ${reportRecordName}`, e);
+  } catch (error) {
+    log.error(`Error creating reconciliation report ${reportRecordName}`, error);
     const updates = {
       status: 'Failed',
       error: {
-        Error: e.message,
-        Cause: errorify(e)
+        Error: error.message,
+        Cause: errorify(error)
       }
     };
     await reconciliationReportModel.update({ name: reportRecord.name }, updates);

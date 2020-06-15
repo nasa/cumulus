@@ -468,8 +468,8 @@ describe('The S3 Ingest Granules workflow', () => {
         ummCmrResource = result[1];
         resourceURLs = cmrResource.map((resource) => resource.href);
         teaRequestHeaders = result[2];
-      } catch (e) {
-        beforeAllError = e;
+      } catch (error) {
+        beforeAllError = error;
       }
     });
 
@@ -865,8 +865,8 @@ describe('The S3 Ingest Granules workflow', () => {
               bucket: config.bucket,
               filepath: `${testDataFolder}/${path.dirname(file.key)}`
             }];
-          } catch (err) {
-            console.error('Error in beforeAll() block:', err);
+          } catch (error) {
+            console.error('Error in beforeAll() block:', error);
             console.log(`File errored on: ${JSON.stringify(file, null, 2)}`);
           }
         });

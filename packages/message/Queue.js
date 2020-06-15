@@ -71,7 +71,7 @@ const hasQueueAndExecutionLimit = (message) => {
   try {
     const queueName = getQueueName(message);
     getMaximumExecutions(message, queueName);
-  } catch (err) {
+  } catch (error) {
     return false;
   }
   return true;

@@ -112,9 +112,9 @@ xdescribe('When accessing an S3 bucket directly', () => {
         redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
         requestOrigin: process.env.DISTRIBUTION_ENDPOINT,
         userParams: { username }
-      }).catch((err) => {
-        console.log(err);
-        throw err;
+      }).catch((error) => {
+        console.log(error);
+        throw error;
       });
 
       accessToken = accessTokenResponse.accessToken;
@@ -123,10 +123,10 @@ xdescribe('When accessing an S3 bucket directly', () => {
       try {
         response = await invokeApiDistributionLambda('/s3credentials', accessToken);
         creds = JSON.parse(response.body);
-      } catch (e) {
-        console.log(e);
+      } catch (error) {
+        console.log(error);
         console.log(`Distribution API response: ${JSON.stringify(response, null, 2)}`);
-        throw e;
+        throw error;
       }
     });
 

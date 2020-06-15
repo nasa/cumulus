@@ -457,8 +457,8 @@ class Granule extends Manager {
     let executionDescription;
     try {
       executionDescription = await StepFunctions.describeExecution({ executionArn });
-    } catch (err) {
-      log.error(`Could not describe execution ${executionArn}`, err);
+    } catch (error) {
+      log.error(`Could not describe execution ${executionArn}`, error);
     }
 
     const promisedGranuleRecords = granules
@@ -470,9 +470,9 @@ class Granule extends Manager {
             executionUrl,
             executionDescription
           );
-        } catch (err) {
+        } catch (error) {
           log.error(
-            'Error handling granule records: ', err,
+            'Error handling granule records: ', error,
             'Execution message: ', cumulusMessage
           );
           return null;
@@ -510,10 +510,10 @@ class Granule extends Manager {
       }
 
       await this.dynamodbDocClient.update(updateParams).promise();
-    } catch (err) {
+    } catch (error) {
       log.error(
         'Could not store granule record: ', granuleRecord,
-        err
+        error
       );
     }
   }

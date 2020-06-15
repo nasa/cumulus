@@ -162,8 +162,8 @@ describe('POST /granules/bulkDelete', () => {
         });
         ({ taskArn } = JSON.parse(getAsyncOperationResponse.body));
         beforeAllSucceeded = true;
-      } catch (err) {
-        console.log(err);
+      } catch (error) {
+        console.log(error);
       }
     });
 
@@ -251,7 +251,7 @@ describe('POST /granules/bulkDelete', () => {
       let output;
       try {
         output = JSON.parse(getAsyncOperationBody.output);
-      } catch (err) {
+      } catch (error) {
         throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
       }
 

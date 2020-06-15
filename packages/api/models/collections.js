@@ -23,8 +23,8 @@ function checkRegex(regex, sampleFileName, regexFieldName = 'regex') {
   let matchingRegex;
   try {
     matchingRegex = new RegExp(regex);
-  } catch (err) {
-    throw new InvalidRegexError(`Invalid ${regexFieldName}: ${err.message}`);
+  } catch (error) {
+    throw new InvalidRegexError(`Invalid ${regexFieldName}: ${error.message}`);
   }
 
   const match = sampleFileName.match(matchingRegex);
@@ -33,6 +33,25 @@ function checkRegex(regex, sampleFileName, regexFieldName = 'regex') {
   }
 
   return match;
+}
+
+/**
+ * Publish SNS message for Collection reporting.
+ *
+ * @param {Object} collectionRecord - A Collection record with event type
+ * @returns {Promise<undefined>}
+ */
+async function publishCollectionSnsMessage(collectionRecord) {
+  try {
+    const collectionSnsTopicArn = process.env.collection_sns_topic_arn;
+    await publishSnsMessage(collectionSnsTopicArn, collectionRecord);
+  } catch (error) {
+    log.warn(
+      `Failed to create record for collection ${collectionRecord.record.name} ${collectionRecord.record.version}: ${error.message}`,
+      'Cause: ', error,
+      'Collection record: ', collectionRecord
+    );
+  }
 }
 
 const validateCollection = (collection) => {

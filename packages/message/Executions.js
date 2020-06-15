@@ -105,7 +105,7 @@ const getMessageExecutionArn = (message) => {
       getMessageStateMachineArn(message),
       getMessageExecutionName(message)
     );
-  } catch (err) {
+  } catch (error) {
     return null;
   }
 };

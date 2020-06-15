@@ -196,10 +196,10 @@ class Manager {
     try {
       await this.get(Key);
       return true;
-    } catch (err) {
-      if (err instanceof RecordDoesNotExist) return false;
+    } catch (error) {
+      if (error instanceof RecordDoesNotExist) return false;
 
-      throw err;
+      throw error;
     }
   }
 

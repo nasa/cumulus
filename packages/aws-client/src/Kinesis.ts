@@ -21,9 +21,9 @@ export const describeStream = (
     async () => {
       try {
         return await kinesis().describeStream(params).promise();
-      } catch (err) {
-        if (err.code === 'ResourceNotFoundException') throw err;
-        throw new pRetry.AbortError(err);
+      } catch (error) {
+        if (error.code === 'ResourceNotFoundException') throw error;
+        throw new pRetry.AbortError(error);
       }
     },
     { maxTimeout: 10000, ...retryOptions }

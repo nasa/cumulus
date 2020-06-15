@@ -541,7 +541,7 @@ async function duplicateHandlingErrorTest(t) {
 
     await syncGranule(t.context.event);
     t.fail();
-  } catch (err) {
+  } catch (error) {
     const collection = t.context.event.config.collection;
     const collectionId = constructCollectionId(collection.name, collection.version);
     const granuleFileKey = path.join(
@@ -550,9 +550,9 @@ async function duplicateHandlingErrorTest(t) {
       collectionId,
       granuleFileName
     );
-    t.true(err instanceof errors.DuplicateFile);
+    t.true(error instanceof errors.DuplicateFile);
     t.is(
-      err.message,
+      error.message,
       `${granuleFileKey} already exists in ${t.context.event.config.downloadBucket} bucket`
     );
   } finally {
