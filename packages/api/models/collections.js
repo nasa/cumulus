@@ -35,25 +35,6 @@ function checkRegex(regex, sampleFileName, regexFieldName = 'regex') {
   return match;
 }
 
-/**
- * Publish SNS message for Collection reporting.
- *
- * @param {Object} collectionRecord - A Collection record with event type
- * @returns {Promise<undefined>}
- */
-async function publishCollectionSnsMessage(collectionRecord) {
-  try {
-    const collectionSnsTopicArn = process.env.collection_sns_topic_arn;
-    await publishSnsMessage(collectionSnsTopicArn, collectionRecord);
-  } catch (error) {
-    log.warn(
-      `Failed to create record for collection ${collectionRecord.record.name} ${collectionRecord.record.version}: ${error.message}`,
-      'Cause: ', error,
-      'Collection record: ', collectionRecord
-    );
-  }
-}
-
 const validateCollection = (collection) => {
   // Test that granuleIdExtraction regex matches against sampleFileName
   const match = checkRegex(collection.granuleIdExtraction, collection.sampleFileName, 'granuleIdExtraction');

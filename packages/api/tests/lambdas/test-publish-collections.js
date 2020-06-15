@@ -110,8 +110,6 @@ test.serial('The publish-collections Lambda function takes a DynamoDB stream eve
     WaitTimeSeconds: 10
   }).promise();
 
-  t.is(Messages.length, 2);
-
   const actualMessages = Messages
     .map((message) => JSON.parse(JSON.parse(message.Body).Message))
     .sort((message) => (message.event === 'Create' ? -1 : 1));
