@@ -80,9 +80,4 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
       expect(parsedOutput.message).toContain('Function not found');
     }
   });
-
-  it('updates the updatedAt field in DynamoDB', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
-    else expect(asyncOperation.updatedAt).toBeGreaterThan(asyncOperation.createdAt);
-  });
 });

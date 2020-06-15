@@ -2,7 +2,7 @@
 
 const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
-const { ecs, s3 } = require('@cumulus/aws-client/services');
+const { dynamodb, ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getClusterArn, waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
 const { AsyncOperation } = require('@cumulus/api/models');
@@ -119,7 +119,14 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
 
   it('updates the updatedAt field in DynamoDB', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
-    else expect(asyncOperation.updatedAt).toBeGreaterThan(asyncOperation.createdAt);
+    else {
+      const { Item } = await dynamodb().getItem({
+        TableName: asyncOperationsTableName,
+        Key: { id: { S: asyncOperationId } }
+      }).promise();
+
+      expect(Item.updatedAt.N).toBeGreaterThan(Item.createdAt.N);
+    }
   });
 
   afterAll(() => s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise());

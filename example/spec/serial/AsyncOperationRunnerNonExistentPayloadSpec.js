@@ -113,9 +113,4 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
       expect(parsedOutput.message).toBe(`Failed to fetch ${payloadUrl}: The specified key does not exist.`);
     }
   });
-
-  it('updates the updatedAt field in DynamoDB', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
-    else expect(asyncOperation.updatedAt).toBeGreaterThan(asyncOperation.createdAt);
-  });
 });

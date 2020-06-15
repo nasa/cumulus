@@ -121,10 +121,5 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
     }
   });
 
-  it('updates the updatedAt field in DynamoDB', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
-    else expect(asyncOperation.updatedAt).toBeGreaterThan(asyncOperation.createdAt);
-  });
-
   afterAll(() => s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise());
 });
