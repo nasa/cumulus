@@ -86,7 +86,7 @@ class HttpProviderClient {
 
     // Make pattern case-insensitive and return all matches
     // instead of just first one
-    const matchLinksPattern = /<a href="([^>]*)">[^<]+<\/a>/ig;
+    const matchLinksPattern = /<a href="([^>]*)">[^<]+<\/a>/gi;
     const matchLeadingSlashesPattern = /^\/+/;
 
     const c = new Crawler(

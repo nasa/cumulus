@@ -39,7 +39,7 @@ function evaluateOperation(name, args) {
  */
 function templateReplacer(context, submatch) {
   // parse the string to get the operation and arguments
-  const expressionRegex = /([^\(]+)\(([^\)]+)\)/;
+  const expressionRegex = /([^(]+)\(([^)]+)\)/;
   const matches = submatch.match(expressionRegex);
 
   // submatch contains operation

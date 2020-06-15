@@ -52,7 +52,7 @@ function pvlToJS(pvlString) {
 
     if (['BEGIN_GROUP', 'GROUP', 'BEGIN_OBJECT', 'OBJECT'].includes(key)) {
       // Group names _can_ be wrapped in quotes
-      value = value.replace(/['"]/g, '');
+      value = value.replace(/["']/g, '');
       aggregate = key.includes('GROUP') ? new PVLGroup(value) : new PVLObject(value);
       aggregates[aggregates.length - 1].addAggregate(aggregate);
       aggregates.push(aggregate);
