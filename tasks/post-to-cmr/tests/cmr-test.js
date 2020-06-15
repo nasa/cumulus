@@ -50,7 +50,7 @@ test.beforeEach(async (t) => {
   t.context.payload.config.launchpad.passphraseSecretName = t.context.launchpadPassphraseSecretName;
 
   //update cmr file path
-  const match = /^s3\:\/\/(.*)\/(.*)$/;
+  const match = /^s3:\/\/(.*)\/(.*)$/;
   const cmrFile = payload.input.granules[0].files[3].filename;
   payload.input.granules[0].files[3].filename = `s3://${t.context.bucket}/${match.exec(cmrFile)[2]}`;
   payload.input.granules[0].files[3].bucket = t.context.bucket;
@@ -205,8 +205,8 @@ test.serial('postToCMR continues without metadata file if there is skipMetaCheck
   try {
     const output = await postToCMR(newPayload);
     t.is(output.granules[0].granuleId, granuleId);
-  } catch (err) {
-    t.fail(err);
+  } catch (error) {
+    t.fail(error);
   }
 });
 
@@ -236,8 +236,8 @@ test.serial('postToCMR continues with skipMetaCheck even if any granule is missi
       `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
     );
     t.is(output.granules[1].cmrLink, undefined);
-  } catch (err) {
-    t.fail(err);
+  } catch (error) {
+    t.fail(error);
   } finally {
     cmrClient.CMR.prototype.ingestGranule.restore();
   }

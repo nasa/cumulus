@@ -30,6 +30,9 @@ describe('The MoveGranules task', () => {
     const prefix = config.stackName;
     const sourceBucket = config.bucket;
 
+    process.env.stackName = config.stackName;
+    process.env.system_bucket = config.buckets.internal.name;
+
     // The S3 path where granules will be ingested from
     const stagingDir = 'file-staging';
 

@@ -5,7 +5,6 @@ const hasha = require('hasha');
 const pMap = require('p-map');
 const pRetry = require('p-retry');
 
-
 const {
   Execution,
   Pdr
@@ -36,7 +35,6 @@ const {
   createTestSuffix
 } = require('../../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
-
 
 const workflowName = 'TestPythonProcessing';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
@@ -120,8 +118,8 @@ describe('The TestPythonProcessing workflow', () => {
           distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT
         }
       );
-    } catch (e) {
-      beforeAllError = e;
+    } catch (error) {
+      beforeAllError = error;
     }
   });
 
@@ -175,7 +173,6 @@ describe('The TestPythonProcessing workflow', () => {
     expect(dataHash).toEqual(md5FileContent.Body.toString());
   });
 
-
   it('completes execution with success status', async () => {
     const workflowExecutionStatus = await waitForCompletedExecution(workflowExecutionArn);
     expect(workflowExecutionStatus).toEqual('SUCCEEDED');
@@ -217,8 +214,8 @@ describe('The TestPythonProcessing workflow', () => {
           return;
         }
         processingFiles = activityOutput.payload;
-      } catch (e) {
-        beforeAllError = e;
+      } catch (error) {
+        beforeAllError = error;
       }
     });
 

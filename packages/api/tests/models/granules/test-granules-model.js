@@ -523,8 +523,8 @@ test('removing a granule from CMR fails if the granule is not in CMR', async (t)
 
   try {
     await granuleModel.removeGranuleFromCmrByGranule(granule);
-  } catch (err) {
-    t.is(err.message, `Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
+  } catch (error) {
+    t.is(error.message, `Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
   }
 });
 

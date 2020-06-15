@@ -33,8 +33,8 @@ async function shouldCatchPolicyError(consumerName) {
   try {
     await lambda().getPolicy({ FunctionName: consumerName }).promise();
     return undefined;
-  } catch (e) {
-    return e.message;
+  } catch (error) {
+    return error.message;
   }
 }
 
@@ -97,7 +97,7 @@ describe('The SNS-type rule', () => {
         StatementId: `${ruleName}Permission`
       };
       await lambda().removePermission(permissionParams).promise();
-    } catch (err) {
+    } catch (error) {
       // If the deletion test passed, this _should_ fail.  This is just handling
       // the case where the deletion test did not properly clean this up.
     }

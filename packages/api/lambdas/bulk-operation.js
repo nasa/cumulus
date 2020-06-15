@@ -88,8 +88,8 @@ function applyWorkflowToGranules(granuleIds, workflowName, queueName) {
         process.env.asyncOperationId
       );
       return granuleId;
-    } catch (err) {
-      return { granuleId, err };
+    } catch (error) {
+      return { granuleId, err: error };
     }
   });
   return Promise.all(applyWorkflowRequests);

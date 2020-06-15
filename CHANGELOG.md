@@ -6,15 +6,50 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-2019**
+  - Add `infix` search to es query builder `@cumulus/api/es/es/queries` to support partial matching of the keywords
+
+
 ### BREAKING CHANGES
 
+- **CUMULUS-1958**
+  - The following methods exported from `@cumulus/cmr-js/cmr-utils` were made
+    async, and added distributionBucketMap as a parameter:
+    - constructOnlineAccessUrl
+    - generateFileUrl
+    - reconcileCMRMetadata
+    - updateCMRMetadata
+
+- **CUMULUS-1969**
+  - The `DiscoverPdrs` task now expects `provider_path` to be provided at
+    `event.config.provider_path`, not `event.config.collection.provider_path`
+  - `event.config.provider_path` is now a required parameter of the
+    `DiscoverPdrs` task
+  - `event.config.collection` is no longer a parameter to the `DiscoverPdrs`
+    task
+  - Collections no longer support the `provider_path` property. The tasks that
+    relied on that property are now referencing `config.meta.provider_path`.
+    Workflows should be updated accordingly.
 - **CUMULUS-1977**
   - Moved bulk granule deletion endpoint from `/bulkDelete` to `/granules/bulkDelete`
 
 ### Added
 
 - **CUMULUS-1958**
-  - Updated deploy process to utilize a bootstrap 'tea-map-cache' lambda that will, after deployment of Cumulus Core's TEA instance, query TEA for all protected/public buckets and generate a mapping configuration used internally by Core.  This object is also exposed as an output of the Cumulus module as `distribution_bucket_map`.
+  - Add the ability for users to specify a `bucket_map_key` to the `cumulus`
+    terraform module as an override for the default .yaml values that are passed
+    to TEA by Core.    Using this option *requires* that each configured
+    Cumulus 'distribution' bucket (e.g. public/protected buckets) have a single
+    TEA mapping.  Multiple maps per bucket are not supported.
+  - Updated Generating a distribution URL, the MoveGranules task and all CMR
+    reconciliation functionality to utilize the TEA bucket map override.
+  - Updated deploy process to utilize a bootstrap 'tea-map-cache' lambda that
+    will, after deployment of Cumulus Core's TEA instance, query TEA for all
+    protected/public buckets and generate a mapping configuration used
+    internally by Core.  This object is also exposed as an output of the Cumulus
+    module as `distribution_bucket_map`.
 
 ### Changed
 
@@ -23,6 +58,32 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - To use a query in the request body, your deployment must be [configured to access the Elasticsearch host for ESDIS metrics](https://nasa.github.io/cumulus/docs/additional-deployment-options/cloudwatch-logs-delivery#esdis-metrics) in your environment
   - Added `@cumulus/api/models/Granule.getRecord()` method to return raw record from DynamoDB
   - Added `@cumulus/api/models/Granule.delete()` method which handles deleting the granule record from DynamoDB and the granule files from S3
+
+### Changed
+
+- **CUMULUS-1956**
+  - The `/s3credentials` endpoint that is deployed as part of distribution now
+    supports authentication using tokens created by a different application. If
+    a request contains the `EDL-ClientId` and `EDL-Token` headers,
+    authentication will be handled using that token rather than attempting to
+    use OAuth.
+- **CUMULUS-1977**
+  - API endpoint POST `/granules/bulk` now returns a 202 status on a successful
+    response instead of a 200 response
+  - API endpoint DELETE `/granules/<granule-id>` now returns a 404 status if the
+    granule record was already deleted
+  - `@cumulus/api/models/Granule.update()` now returns the updated granule
+    record
+- **CUMULUS-1982**
+  - The `globalConnectionLimit` property of providers is now optional and
+    defaults to "unlimited"
+- **CUMULUS-2016**
+  - Upgrade TEA to version 79
+
+### Deprecated
+
+- `@cumulus/collection-config-store`
+- `@cumulus/common/util.sleep()`
 
 ### Removed
 
@@ -150,16 +211,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1952**
   - Updated HTTP(S) provider client to accept username/password for Basic authorization. This change adds support for Basic Authorization such as Earthdata login redirects to ingest (i.e. as implemented in SyncGranule), but not to discovery (i.e. as implemented in DiscoverGranules). Discovery still expects the provider's file system to be publicly accessible, but not the individual files and their contents.
   - **NOTE**: Using this in combination with the HTTP protocol may expose usernames and passwords to intermediary network entities. HTTPS is highly recommended.
-
-### Changed
-
-- **CUMULUS-1982**
-  - The `globalConnectionLimit` property of providers is now optional and
-    defaults to "unlimited"
-- **CUMULUS-1977**
-  - API endpoint POST `/granules/bulk` now returns a 202 status on a successful response instead of a 200 response
-  - API endpoint DELETE `/granules/<granule-id>` now returns a 404 status if the granule record was already deleted
-  - `@cumulus/api/models/Granule.update()` now returns the updated granule record
 - **CUMULUS-1997**
   - Added optional `launchpad` configuration to `@cumulus/hyrax-metadata-updates` task config schema.
 

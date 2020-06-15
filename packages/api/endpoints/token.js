@@ -18,7 +18,6 @@ const {
   createJwtToken
 } = require('../lib/token');
 
-
 const { verifyJwtAuthorization } = require('../lib/request');
 
 const { AccessToken } = require('../models');
@@ -89,13 +88,13 @@ async function token(event, oAuth2Provider, response) {
       }
       log.info('Log info: No state specified, responding 200');
       return response.send({ message: { token: jwtToken } });
-    } catch (e) {
-      if (e.statusCode === 400) {
+    } catch (error) {
+      if (error.statusCode === 400) {
         return response.boom.unauthorized('Failed to get authorization token');
       }
 
-      log.error('Error caught when checking code', e);
-      return response.boom.unauthorized(e.message);
+      log.error('Error caught when checking code', error);
+      return response.boom.unauthorized(error.message);
     }
   }
 
@@ -121,8 +120,8 @@ async function refreshAccessToken(request, oAuth2Provider, response) {
   let accessToken;
   try {
     accessToken = await verifyJwtAuthorization(requestJwtToken);
-  } catch (err) {
-    return handleJwtVerificationError(err, response);
+  } catch (error) {
+    return handleJwtVerificationError(error, response);
   }
 
   const accessTokenModel = new AccessToken();
@@ -130,8 +129,8 @@ async function refreshAccessToken(request, oAuth2Provider, response) {
   let accessTokenRecord;
   try {
     accessTokenRecord = await accessTokenModel.get({ accessToken });
-  } catch (err) {
-    if (err instanceof RecordDoesNotExist) {
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
       return response.boom.unauthorized('Invalid access token');
     }
   }
@@ -182,8 +181,8 @@ async function deleteTokenEndpoint(request, response) {
   let accessToken;
   try {
     accessToken = await verifyJwtAuthorization(requestJwtToken);
-  } catch (err) {
-    return handleJwtVerificationError(err, response);
+  } catch (error) {
+    return handleJwtVerificationError(error, response);
   }
 
   const accessTokenModel = new AccessToken();

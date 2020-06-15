@@ -46,8 +46,8 @@ async function getStateFilesFromTable(tableName) {
       return stateFiles;
     }
     /* eslint-enable no-await-in-loop */
-  } catch (e) {
-    console.log(`Error describing table ${tableName}: ${e}`);
+  } catch (error) {
+    console.log(`Error describing table ${tableName}: ${error}`);
   }
 
   return [];
@@ -96,8 +96,8 @@ async function listClusterEC2Instances(clusterArn) {
   const clusterContainerInstances = await aws.ecs().listContainerInstances({
     cluster: clusterArn
   }).promise()
-    .catch((e) => {
-      console.log(`Error listing container instances for cluster ${clusterArn}: ${e}`);
+    .catch((error) => {
+      console.log(`Error listing container instances for cluster ${clusterArn}: ${error}`);
       return [];
     });
 
@@ -154,8 +154,8 @@ async function getStateFileDeploymentInfo(file, regex = DEFAULT_DEPLOYMENT_REGEX
       lastModified: stateFile.LastModified,
       resources: stateFileBody.resources
     };
-  } catch (e) {
-    console.log(`Error reading ${file}: ${e.message}`);
+  } catch (error) {
+    console.log(`Error reading ${file}: ${error.message}`);
   }
 
   return null;

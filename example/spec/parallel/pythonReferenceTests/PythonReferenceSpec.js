@@ -1,6 +1,5 @@
 'use strict';
 
-
 const { ActivityStep, LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
 

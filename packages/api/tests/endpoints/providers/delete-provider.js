@@ -165,7 +165,6 @@ test('Attempting to delete a provider with an associated rule does not delete th
     Body: JSON.stringify({})
   }).promise();
 
-
   await ruleModel.create(rule);
 
   await request(app)
