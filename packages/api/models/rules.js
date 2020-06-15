@@ -308,7 +308,6 @@ class Rule extends Manager {
     return { arn, logEventArn };
   }
 
-
   /**
    * add an event source to a target lambda function
    *

@@ -90,7 +90,6 @@ async function listAwsResources() {
   };
 }
 
-
 /**
  * Gather resources from all state files and compare against what is on AWS
  * Output an object containing lists of resources that are only present on AWS,

@@ -18,7 +18,6 @@ const {
   timestampedName
 } = require('../../helpers/testUtils');
 
-
 describe('When I create a scheduled rule via the Cumulus API', () => {
   let config;
   let execution;

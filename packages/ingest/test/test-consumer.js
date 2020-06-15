@@ -1,10 +1,9 @@
 'use strict';
 
+const delay = require('delay');
 const rewire = require('rewire');
 const sinon = require('sinon');
 const test = require('ava');
-
-const { sleep } = require('@cumulus/common/util');
 
 const consumer = rewire('../consumer');
 const Consumer = consumer.Consumer;
@@ -14,7 +13,7 @@ const timeLimitModifier = 50;
 let testConsumer;
 
 async function stubReceiveSQSMessages(_url, { numOfMessages }) {
-  await sleep(timeToReceiveMessages);
+  await delay(timeToReceiveMessages);
   return Array.apply(null, { length: numOfMessages }).map(() => 'i am a message'); // eslint-disable-line prefer-spread
 }
 consumer.__set__('receiveSQSMessages', stubReceiveSQSMessages);

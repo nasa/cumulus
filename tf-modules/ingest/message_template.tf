@@ -63,11 +63,11 @@ locals {
 
   message_template = jsonencode({
     cumulus_meta = {
-      message_source      = "sfn"
-      system_bucket       = var.system_bucket
-      state_machine       = null
-      execution_name      = null
-      workflow_start_time = null
+      message_source          = "sfn"
+      system_bucket           = var.system_bucket
+      state_machine           = null
+      execution_name          = null
+      workflow_start_time     = null
     }
     meta = {
       workflow_name  = null

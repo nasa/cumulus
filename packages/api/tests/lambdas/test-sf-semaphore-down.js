@@ -58,7 +58,6 @@ const createCloudwatchPackagedEventMessage = ({
   return { source, detail };
 };
 
-
 const createExecutionMessage = ((queueName) => (
   {
     cumulus_meta: {
@@ -72,7 +71,6 @@ const createExecutionMessage = ((queueName) => (
     }
   }
 ));
-
 
 const testTerminalEventMessage = async (t, status) => {
   const { client, semaphore } = t.context;
@@ -234,7 +232,6 @@ test('sfSemaphoreDown lambda decrements semaphore for s3-stored event message', 
     pullStepFunctionStub.restore();
   }
 });
-
 
 test('sfSemaphoreDown lambda decrements semaphore for completed event message', async (t) => {
   await testTerminalEventMessage(t, 'SUCCEEDED');

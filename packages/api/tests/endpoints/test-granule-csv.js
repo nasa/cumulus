@@ -24,7 +24,6 @@ const {
 const { createJwtToken } = require('../../lib/token');
 const { app } = require('../../app');
 
-
 process.env.AccessTokensTable = randomId('token');
 process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
