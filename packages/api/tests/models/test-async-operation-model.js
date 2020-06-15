@@ -260,12 +260,11 @@ test.serial('The AsyncOperation.start() method returns the newly-generated recor
   t.is(taskArn, stubbedEcsRunTaskResult.tasks[0].taskArn);
 });
 
-test.serial('getLambdaEnvironmentVariables returns formatted environment variables', async (t) => {
+test('getLambdaEnvironmentVariables returns formatted environment variables', async (t) => {
   const vars = await asyncOperationModel.getLambdaEnvironmentVariables('name');
-  t.deepEqual(vars, [
-    { name: 'ES_HOST', value: 'es-host' },
-    { name: 'AsyncOperationsTable', value: 'async-operations-table' }
-  ]);
+
+  t.true(vars.includes({ name: 'ES_HOST', value: 'es-host' }));
+  t.true(vars.includes({ name: 'AsyncOperationsTable', value: 'async-operations-table' }));
 });
 
 test.serial('ECS task params contain lambda environment variables when flag is set', async (t) => {

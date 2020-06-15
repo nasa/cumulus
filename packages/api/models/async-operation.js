@@ -43,10 +43,8 @@ class AsyncOperation extends Manager {
     const lambdaConfig = await lambda().getFunctionConfiguration({
       FunctionName: functionName
     }).promise();
-    return Object.keys(lambdaConfig.Environment.Variables).map((e) => ({
-      name: e,
-      value: lambdaConfig.Environment.Variables[e]
-    }));
+    return Object.entries(lambdaConfig.Environment.Variables)
+      .map(([name, value]) => ({ name, value }));
   }
 
   /**

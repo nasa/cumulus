@@ -229,8 +229,6 @@ describe('When there are granule differences and granule reconciliation is run',
       retries: 100
     });
 
-    console.log(asyncOperation);
-
     reportRecord = JSON.parse(asyncOperation.output);
   });
 
@@ -239,8 +237,6 @@ describe('When there are granule differences and granule reconciliation is run',
       prefix: config.stackName,
       name: reportRecord.name
     });
-
-    console.log(response.body);
 
     report = JSON.parse(response.body);
   });
