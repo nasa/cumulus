@@ -172,6 +172,7 @@ deployment resources. Specifically, this means:
 - **DO NOT** change deployment resources via the AWS Management Console
 - **DO NOT** change deployment resources via the AWS CLI
 - **DO NOT** change deployment resources via any of the AWS SDKs
+- Remove resources by removing them from your Terraform configuration and redeploying. Do not remove them manually except where instructed in the destroy documentation.
 
 Instead, change deployment resources **only** via changes to your Terraform
 files, along with subsequent Terraform commands.
