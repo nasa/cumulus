@@ -6,6 +6,7 @@
  * @module collection-config-store
  */
 
+const { deprecate } = require('@cumulus/common/util');
 const {
   deleteS3Object,
   getJsonS3Object,
@@ -35,6 +36,12 @@ class CollectionConfigStore {
    * @param {string} stackName - the Cumulus deployment stack name
    */
   constructor(bucket, stackName) {
+    deprecate(
+      '@cumulus/collection-config-store',
+      '1.23.2',
+      '@cumulus/api-client/collections.getCollection()'
+    );
+
     this.bucket = bucket;
     this.stackName = stackName;
     this.cache = {};

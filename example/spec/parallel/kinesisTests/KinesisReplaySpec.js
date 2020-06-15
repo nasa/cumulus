@@ -1,9 +1,9 @@
 'use strict';
 
+const delay = require('delay');
 const replace = require('lodash/replace');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { sleep } = require('@cumulus/common/util');
 const { getWorkflowFileKey } = require('@cumulus/common/workflows');
 const { Rule } = require('@cumulus/api/models');
 
@@ -135,13 +135,13 @@ describe('The Kinesis Replay API', () => {
       await rule.deleteKinesisEventSources(rules[0]);
 
       await Promise.all(tooOldToFetchRecords.map((r) => putRecordOnStream(streamName, r)));
-      await sleep(10 * 1000);
+      await delay(10 * 1000);
       startTimestamp = Date.now();
-      await sleep(5 * 1000);
+      await delay(5 * 1000);
       await Promise.all(targetedRecords.map((r) => putRecordOnStream(streamName, r)));
-      await sleep(5 * 1000);
+      await delay(5 * 1000);
       endTimestamp = Date.now();
-      await sleep(10 * 1000);
+      await delay(10 * 1000);
       await Promise.all(newRecordsToSkip.map((r) => putRecordOnStream(streamName, r)));
 
       const apiRequestBody = {

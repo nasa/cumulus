@@ -80,7 +80,7 @@ const mapIndexTypeToIdFieldName = (type) => {
  * @returns {undefined|string} name of the DynamoDB table
  */
 function getTableName(sourceArn) {
-  const tableName = sourceArn.match(/table\/(.[^\/]*)/);
+  const tableName = sourceArn.match(/table\/(.[^/]*)/);
   if (!tableName) {
     return undefined;
   }

@@ -189,7 +189,7 @@ export const listExecutions = improveStackTrace(
  * @param {string} regex - The regex matching characters to replace (default: all chars)
  * @returns {string} The string with characters unicode-escaped
  */
-export const unicodeEscape = (str: string, regex = /[\s\S]/g) =>
+export const unicodeEscape = (str: string, regex = /[\S\s]/g) =>
   str.replace(regex, unicodeEscapeCharacter);
 
 /**
