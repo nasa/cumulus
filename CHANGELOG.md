@@ -14,6 +14,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- Changes to `@cumulus/aws-client/S3`
+  - The signature of the `getObjectSize` function has changed. It now takes a
+    params object with three properties:
+    - **s3**: an instance of an AWS.S3 object
+    - **bucket**
+    - **key**
+  - The `getObjectSize` function will no longer retry if the object does not exist
 - **CUMULUS-1958**
   - The following methods exported from `@cumulus/cmr-js/cmr-utils` were made
     async, and added distributionBucketMap as a parameter:
@@ -21,7 +28,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - generateFileUrl
     - reconcileCMRMetadata
     - updateCMRMetadata
-
 - **CUMULUS-1969**
   - The `DiscoverPdrs` task now expects `provider_path` to be provided at
     `event.config.provider_path`, not `event.config.collection.provider_path`
