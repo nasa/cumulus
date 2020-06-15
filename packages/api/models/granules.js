@@ -22,6 +22,7 @@ const {
   removeNilProperties,
   renameProperty
 } = require('@cumulus/common/util');
+const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
 const {
   DeletePublishedGranule
 } = require('@cumulus/errors');
@@ -215,13 +216,18 @@ class Granule extends Manager {
   async move(g, destinations, distEndpoint) {
     log.info(`granules.move ${g.granuleId}`);
 
+    const distributionBucketMap = await s3Utils.getJsonS3Object(
+      process.env.system_bucket,
+      getDistributionBucketMapKey(process.env.stackName)
+    );
     const updatedFiles = await moveGranuleFiles(g.files, destinations);
 
     await cmrUtils.reconcileCMRMetadata({
       granuleId: g.granuleId,
       updatedFiles,
       distEndpoint,
-      published: g.published
+      published: g.published,
+      distributionBucketMap
     });
 
     return this.update(
@@ -456,27 +462,21 @@ class Granule extends Manager {
     let executionDescription;
     try {
       executionDescription = await StepFunctions.describeExecution({ executionArn });
-    } catch (err) {
-      log.error(`Could not describe execution ${executionArn}`, err);
+    } catch (error) {
+      log.error(`Could not describe execution ${executionArn}`, error);
     }
 
     const promisedGranuleRecords = granules
-      .map(async (granule) => {
-        try {
-          return await Granule.generateGranuleRecord({
+      .map(
+        (granule) =>
+          Granule.generateGranuleRecord({
             s3: awsClients.s3(),
             granule,
             message: cumulusMessage,
             executionUrl,
             executionDescription
-          });
-        } catch (err) {
-          log.error(
-            'Error handling granule records: ', err,
-            'Execution message: ', cumulusMessage
-          );
-        }
-      });
+          })
+      );
 
     const granuleRecords = await Promise.all(promisedGranuleRecords);
 
@@ -509,10 +509,10 @@ class Granule extends Manager {
       }
 
       await this.dynamodbDocClient.update(updateParams).promise();
-    } catch (err) {
+    } catch (error) {
       log.error(
         'Could not store granule record: ', granuleRecord,
-        err
+        error
       );
     }
   }

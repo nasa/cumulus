@@ -155,7 +155,6 @@ test('useList defaults to false when not assigned', async (t) => {
   t.is(jsftpSpy.getCall(0).args[0].useList, false);
 });
 
-
 test('Download remote file to s3 with correct content-type', async (t) => {
   const myFtpProviderClient = new FtpProviderClient({
     host: '127.0.0.1',

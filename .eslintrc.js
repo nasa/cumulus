@@ -106,6 +106,7 @@ module.exports = {
     'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     'no-useless-escape': 'off',
     'no-console': 'warn',
+    'unicorn/no-fn-reference-in-iterator': 'off',
     'spaced-comment': 'off',
     'require-yield': 'off',
     'prefer-template': 'warn',
@@ -150,11 +151,9 @@ module.exports = {
 
     'node/no-missing-require': 'off',
 
-    'unicorn/better-regex': 'off',
-    'unicorn/catch-error-name': 'off',
+    'unicorn/catch-error-name': 'warn',
     'unicorn/consistent-function-scoping': 'off',
     'unicorn/filename-case': 'off',
-    'unicorn/no-fn-reference-in-iterator': 'off',
     'unicorn/no-for-loop': 'off',
     'unicorn/no-null': 'warn',
     'unicorn/no-process-exit': 'off',

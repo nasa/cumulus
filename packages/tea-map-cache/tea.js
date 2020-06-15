@@ -1,14 +1,19 @@
 const got = require('got');
 const pRetry = require('p-retry');
+const Logger = require('@cumulus/logger');
+const log = new Logger({ sender: '@cumulus/tea-map-cache/tea' });
 
 /**
  * getTeaBucketPath
- *
- * @param {string} bucket      - Bucket name to get TEA path mapping
- * @param {string} teaEndPoint - TEA API URL
+
+ * @param {Object} params      - parameters
+ * @param {string} params.bucket      - Bucket name to get TEA path mapping
+ * @param {string} params.teaEndPoint - TEA API URL
+ * @param {number} params.retries     - retries override for pRetry
  * @returns {Promise<string>}  - TEA path for the given bucket
  */
-async function getTeaBucketPath(bucket, teaEndPoint) {
+async function getTeaBucketPath(params = {}) {
+  const { bucket, teaEndPoint, retries = 5 } = params;
   return pRetry(
     async () => {
       let apiResponse;
@@ -16,7 +21,10 @@ async function getTeaBucketPath(bucket, teaEndPoint) {
         apiResponse = await got.get(`${teaEndPoint}/locate?bucket_name=${bucket}`);
       } catch (error) {
         if (error.name === 'HTTPError' && error.statusCode === 404) {
-          return '';
+          if (error.response.body.includes(`No route defined for ${bucket}`)) {
+            log.warn(`Warning: Deployment initialized with no distribution bucket map for ${bucket}`);
+            return '';
+          }
         }
         throw error;
       }
@@ -27,7 +35,7 @@ async function getTeaBucketPath(bucket, teaEndPoint) {
       }
       return bucketMapList[0];
     },
-    { retries: 5, minTimeout: 1000, maxTimeout: 5000 }
+    { retries, minTimeout: 1000, maxTimeout: 5000 }
   );
 }
 

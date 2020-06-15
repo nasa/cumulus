@@ -181,8 +181,8 @@ xdescribe('The EMS report', () => {
 
       // wait until records searchable in elasticsearch
       await waitForGranuleRecordsInList(config.stackName, ingestedGranuleIds);
-    } catch (e) {
-      beforeAllError = e;
+    } catch (error) {
+      beforeAllError = error;
     }
   });
 
@@ -249,7 +249,7 @@ xdescribe('The EMS report', () => {
           endTime
         })
       }).promise()
-        .catch((err) => console.log('invoke err', err));
+        .catch((error) => console.log('invoke err', error));
 
       lambdaOutput = JSON.parse(response.Payload);
     });
@@ -361,7 +361,7 @@ xdescribe('The EMS report', () => {
             endTime
           })
         }).promise()
-          .catch((err) => console.log('invoke err', err));
+          .catch((error) => console.log('invoke err', error));
 
         lambdaOutput = JSON.parse(response.Payload);
       });

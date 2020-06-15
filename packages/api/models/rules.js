@@ -229,7 +229,7 @@ class Rule extends Manager {
 
   async create(item) {
     // make sure the name only has word characters
-    const re = /[^\w]/;
+    const re = /\W/;
     if (re.test(item.name)) {
       throw new ValidationError('Rule name may only contain letters, numbers, and underscores.');
     }
@@ -296,9 +296,9 @@ class Rule extends Manager {
   async addKinesisEventSources(item) {
     const sourceEventPromises = this.kinesisSourceEvents.map(
       (lambda) => this.addKinesisEventSource(item, lambda).catch(
-        (err) => {
-          log.error(`Error adding eventSourceMapping for ${item.name}: ${err}`);
-          if (err.code !== 'ResourceNotFoundException') throw err;
+        (error) => {
+          log.error(`Error adding eventSourceMapping for ${item.name}: ${error}`);
+          if (error.code !== 'ResourceNotFoundException') throw error;
         }
       )
     );
@@ -307,7 +307,6 @@ class Rule extends Manager {
     const logEventArn = eventAdd[1].UUID;
     return { arn, logEventArn };
   }
-
 
   /**
    * add an event source to a target lambda function
@@ -355,9 +354,9 @@ class Rule extends Manager {
   async deleteKinesisEventSources(item) {
     const deleteEventPromises = this.kinesisSourceEvents.map(
       (lambda) => this.deleteKinesisEventSource(item, lambda.eventType).catch(
-        (err) => {
-          log.error(`Error deleting eventSourceMapping for ${item.name}: ${err}`);
-          if (err.code !== 'ResourceNotFoundException') throw err;
+        (error) => {
+          log.error(`Error deleting eventSourceMapping for ${item.name}: ${error}`);
+          if (error.code !== 'ResourceNotFoundException') throw error;
         }
       )
     );

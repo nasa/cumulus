@@ -56,9 +56,12 @@ exports.deprecate = (() => {
  *
  * @alias module:util
  */
-exports.sleep = (waitPeriodMs) =>
-  (new Promise((resolve) =>
+exports.sleep = (waitPeriodMs) => {
+  exports.deprecate('@cumulus/common/util.sleep', '1.23.2', 'delay');
+
+  return (new Promise((resolve) =>
     setTimeout(resolve, waitPeriodMs)));
+};
 
 /**
  * Synchronously makes a temporary directory, smoothing over the differences between

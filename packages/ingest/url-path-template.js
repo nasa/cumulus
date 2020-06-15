@@ -39,7 +39,7 @@ function evaluateOperation(name, args) {
  */
 function templateReplacer(context, submatch) {
   // parse the string to get the operation and arguments
-  const expressionRegex = /([^\(]+)\(([^\)]+)\)/;
+  const expressionRegex = /([^(]+)\(([^)]+)\)/;
   const matches = submatch.match(expressionRegex);
 
   // submatch contains operation
@@ -71,9 +71,9 @@ function urlPathTemplate(pathTemplate, context) {
     // match: The matched substring, submatch: The parenthesized submatch string
     return pathTemplate.replace(templateRegex, (match, submatch) =>
       templateReplacer(context, submatch));
-  } catch (e) {
+  } catch (error) {
     throw new Error(
-      `Could not resolve path template "${pathTemplate}" with error "${e.toString()}"`
+      `Could not resolve path template "${pathTemplate}" with error "${error.toString()}"`
     );
   }
 }

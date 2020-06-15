@@ -111,11 +111,11 @@ async function handleFileRequest(req, res) {
   let fileKey;
   try {
     [fileBucket, fileKey] = getFileBucketAndKey(req.params[0]);
-  } catch (err) {
-    if (err instanceof UnparsableFileLocationError) {
-      return res.boom.notFound(err.message);
+  } catch (error) {
+    if (error instanceof UnparsableFileLocationError) {
+      return res.boom.notFound(error.message);
     }
-    throw err;
+    throw error;
   }
 
   const signedS3Url = getSignedS3Url(

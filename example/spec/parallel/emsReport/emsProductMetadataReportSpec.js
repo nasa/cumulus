@@ -61,8 +61,8 @@ describe('The EMS product metadata report', () => {
           })
         }).promise();
         lambdaOutput = JSON.parse(response.Payload);
-      } catch (err) {
-        beforeAllError = err;
+      } catch (error) {
+        beforeAllError = error;
       }
     });
 

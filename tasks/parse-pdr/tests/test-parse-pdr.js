@@ -137,7 +137,6 @@ test.serial('parse-pdr properly parses PDR with granules of different data-types
   t.is(mod87Granule.granuleId, 'MOD87GQ.A2017224.h09v02.006.2017227165020');
   t.is(mod87Granule.granuleSize, 17909733);
 
-
   const mod87HdfFile = mod87Granule.files.find((file) => file.name === 'PENS-MOD87GQ.A2017224.h09v02.006.2017227165020.hdf');
   t.truthy(mod87HdfFile);
   t.is(mod87HdfFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
@@ -145,7 +144,6 @@ test.serial('parse-pdr properly parses PDR with granules of different data-types
   t.is(mod87HdfFile.checksumType, 'CKSUM');
   t.is(mod87HdfFile.checksum, 4208254019);
   t.is(mod87HdfFile.type, 'data');
-
 
   const mod87MetFile = mod87Granule.files.find((file) => file.name === 'PENS-MOD87GQ.A2017224.h09v02.006.2017227165020.hdf.met');
   t.truthy(mod87MetFile);
@@ -198,8 +196,8 @@ test.serial('parsePdr throws an exception if the value of an MD5 checksum is not
   try {
     await parsePdr(t.context.payload);
     t.fail('Expected parsePdr to throw an error');
-  } catch (err) {
-    t.true(err.message.startsWith('Expected MD5 value to be a string'));
+  } catch (error) {
+    t.true(error.message.startsWith('Expected MD5 value to be a string'));
   }
 });
 
@@ -210,8 +208,8 @@ test.serial('parsePdr throws an exception if the value of a CKSUM checksum is no
   try {
     await parsePdr(t.context.payload);
     t.fail('Expected parsePdr to throw an error');
-  } catch (err) {
-    t.true(err.message.startsWith('Expected CKSUM value to be a number'));
+  } catch (error) {
+    t.true(error.message.startsWith('Expected CKSUM value to be a number'));
   }
 });
 

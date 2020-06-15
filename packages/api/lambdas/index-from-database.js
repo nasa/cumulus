@@ -51,8 +51,8 @@ async function indexModel({
         async () => {
           try {
             return await indexFn(esClient, item, esIndex);
-          } catch (err) {
-            log.error(`Error indexing record ${JSON.stringify(item)}, error: ${err}`);
+          } catch (error) {
+            log.error(`Error indexing record ${JSON.stringify(item)}, error: ${error}`);
             return false;
           }
         }

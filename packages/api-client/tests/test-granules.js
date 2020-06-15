@@ -96,7 +96,6 @@ test.serial('waitForGranules retries on status codes other than 500, 200, then t
   }
 });
 
-
 test.serial('waitForGranules retries if status does not match provided status', async (t) => {
   let retryCount = 0;
   const retries = 2;
@@ -249,7 +248,6 @@ test('deleteGranule calls the callback with the expected object', async (t) => {
   }
 });
 
-
 test('moveGranule calls the callback with the expected object', async (t) => {
   const destinations = 'test destination';
   const expected = {
@@ -308,7 +306,6 @@ test('listGranules calls the callback with the expected object', async (t) => {
     revertCallback();
   }
 });
-
 
 test('listGranules calls the callback with the expected object if there is no query param', async (t) => {
   const query = undefined;

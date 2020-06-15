@@ -91,7 +91,7 @@ fs.readdir('tasks')
   .then(filterOutDirsMissingPackageJson)
   .then(sort)
   .then(createTasksDoc)
-  .catch((err) => {
-    console.error(err);
+  .catch((error) => {
+    console.error(error);
     process.exitCode = 1;
   });

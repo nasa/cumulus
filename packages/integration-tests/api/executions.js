@@ -3,7 +3,6 @@
 const { deprecate } = require('@cumulus/common/util');
 const executionsApi = require('@cumulus/api-client/executions');
 
-
 /**
  * Fetch an execution from the Cumulus API
  *
@@ -32,7 +31,6 @@ const getExecutions = async (params) => {
   deprecate('@cumulus/integration-tests/exeuctions.getExecutions', '1.21.0', '@cumulus/api-client/executions.getExecutions');
   return executionsApi.getExecutions(params);
 };
-
 
 /**
  * get execution status from the Cumulus API
