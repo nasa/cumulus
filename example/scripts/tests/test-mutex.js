@@ -79,7 +79,6 @@ test('Mutex.unlock() throws a CumulusLockError if there is a SHA mismatch', asyn
   );
 });
 
-
 test('Mutex.unlock() re-throws error from DynamoDb document client if checkMatchingSha returns a match or no lock', async (t) => {
   const key = t.context.key;
   const gitSha = t.context.sha;

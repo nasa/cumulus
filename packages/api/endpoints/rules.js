@@ -44,11 +44,11 @@ async function get(req, res) {
     const result = await model.get({ name });
     delete result.password;
     return res.send(result);
-  } catch (e) {
-    if (e instanceof RecordDoesNotExist) {
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('No record found');
     }
-    throw e;
+    throw error;
   }
 }
 
@@ -69,8 +69,8 @@ async function post(req, res) {
     try {
       await model.get({ name });
       return res.boom.conflict(`A record already exists for ${name}`);
-    } catch (e) {
-      if (e instanceof RecordDoesNotExist) {
+    } catch (error) {
+      if (error instanceof RecordDoesNotExist) {
         const record = await model.create(data);
 
         if (inTestMode()) {
@@ -78,14 +78,14 @@ async function post(req, res) {
         }
         return res.send({ message: 'Record saved', record });
       }
-      throw e;
+      throw error;
     }
-  } catch (e) {
-    if (isBadRequestError(e)) {
-      return res.boom.badRequest(e.message);
+  } catch (error) {
+    if (isBadRequestError(error)) {
+      return res.boom.badRequest(error.message);
     }
-    log.error('Error occurred while trying to create rule:', e);
-    return res.boom.badImplementation(e.message);
+    log.error('Error occurred while trying to create rule:', error);
+    return res.boom.badImplementation(error.message);
   }
 }
 
@@ -125,12 +125,12 @@ async function put({ params: { name }, body }, res) {
     if (inTestMode()) await addToLocalES(newRule, indexRule);
 
     return res.send(newRule);
-  } catch (e) {
-    if (e instanceof RecordDoesNotExist) {
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(`Rule '${name}' not found`);
     }
 
-    throw e;
+    throw error;
   }
 }
 
@@ -148,11 +148,11 @@ async function del(req, res) {
   let record;
   try {
     record = await model.get({ name });
-  } catch (e) {
-    if (e instanceof RecordDoesNotExist) {
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('No record found');
     }
-    throw e;
+    throw error;
   }
   await model.delete(record);
   if (inTestMode()) {

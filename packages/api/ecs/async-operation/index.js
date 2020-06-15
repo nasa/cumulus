@@ -41,16 +41,16 @@ async function fetchPayload(Bucket, Key) {
   let payloadResponse;
   try {
     payloadResponse = await s3.getObject({ Bucket, Key }).promise();
-  } catch (err) {
-    throw new Error(`Failed to fetch s3://${Bucket}/${Key}: ${err.message}`);
+  } catch (error) {
+    throw new Error(`Failed to fetch s3://${Bucket}/${Key}: ${error.message}`);
   }
 
   let parsedPayload;
   try {
     parsedPayload = JSON.parse(payloadResponse.Body.toString());
-  } catch (err) {
-    if (err.name !== 'SyntaxError') throw err;
-    const newError = new Error(`Unable to parse payload: ${err.message}`);
+  } catch (error) {
+    if (error.name !== 'SyntaxError') throw error;
+    const newError = new Error(`Unable to parse payload: ${error.message}`);
     newError.name = 'JSONParsingError';
     throw newError;
   }
@@ -199,21 +199,21 @@ async function runTask() {
 
     // Download the task (to the /home/task/lambda-function directory)
     await fetchLambdaFunction(lambdaInfo.codeUrl);
-  } catch (err) {
-    logger.error('Failed to fetch lambda function:', err);
-    await updateAsyncOperation('RUNNER_FAILED', err);
+  } catch (error) {
+    logger.error('Failed to fetch lambda function:', error);
+    await updateAsyncOperation('RUNNER_FAILED', error);
     return;
   }
 
   try {
     // Fetch the event that will be passed to the lambda function from S3
     payload = await fetchAndDeletePayload(process.env.payloadUrl);
-  } catch (err) {
-    logger.error('Failed to fetch payload:', err);
-    if (err.name === 'JSONParsingError') {
-      await updateAsyncOperation('TASK_FAILED', err);
+  } catch (error) {
+    logger.error('Failed to fetch payload:', error);
+    if (error.name === 'JSONParsingError') {
+      await updateAsyncOperation('TASK_FAILED', error);
     } else {
-      await updateAsyncOperation('RUNNER_FAILED', err);
+      await updateAsyncOperation('RUNNER_FAILED', error);
     }
 
     return;
@@ -226,9 +226,9 @@ async function runTask() {
 
     // Run the lambda function
     result = await task[lambdaInfo.moduleFunctionName](payload);
-  } catch (err) {
-    logger.error('Failed to execute the lambda function:', err);
-    await updateAsyncOperation('TASK_FAILED', err);
+  } catch (error) {
+    logger.error('Failed to execute the lambda function:', error);
+    await updateAsyncOperation('TASK_FAILED', error);
     return;
   }
 

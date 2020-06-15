@@ -44,7 +44,6 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
       // Find the ARN of the AsyncOperationTaskDefinition
       asyncOperationTaskDefinition = await findAsyncOperationTaskDefinitionForDeployment(config.stackName);
 
-
       asyncOperationId = uuidv4();
 
       // Upload the payload
@@ -102,9 +101,9 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
         id: asyncOperationId,
         status: 'TASK_FAILED'
       });
-    } catch (err) {
+    } catch (error) {
       beforeAllFailed = true;
-      throw err;
+      throw error;
     }
   });
 

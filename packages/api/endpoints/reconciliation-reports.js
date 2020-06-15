@@ -49,14 +49,14 @@ async function get(req, res) {
     const { Bucket, Key } = parseS3Uri(result.location);
     const file = await getS3Object(Bucket, Key);
     return res.send(JSON.parse(file.Body.toString()));
-  } catch (e) {
-    if (e instanceof RecordDoesNotExist) {
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(`No record found for ${name}`);
     }
-    if (e.name === 'NoSuchKey') {
+    if (error.name === 'NoSuchKey') {
       return res.boom.notFound('The report does not exist!');
     }
-    throw e;
+    throw error;
   }
 }
 

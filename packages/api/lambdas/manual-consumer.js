@@ -96,8 +96,8 @@ async function processRecordBatch(streamArn, records) {
         false
       );
       return 'ok';
-    } catch (err) {
-      log.error(err);
+    } catch (error) {
+      log.error(error);
       return 'err';
     }
   }));
@@ -159,8 +159,8 @@ async function processShard(streamName, streamArn, shardId) {
     );
     const shardTally = tallyList.reduce(tallyReducer, 0);
     return shardTally;
-  } catch (err) {
-    log.error(err);
+  } catch (error) {
+    log.error(error);
     return 0;
   }
 }

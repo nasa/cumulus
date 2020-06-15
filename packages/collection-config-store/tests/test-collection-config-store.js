@@ -32,10 +32,10 @@ test.beforeEach(async (t) => {
 
 test.afterEach((t) =>
   recursivelyDeleteS3Bucket(t.context.bucket)
-    .catch((err) => {
+    .catch((error) => {
       // Some tests delete the bucket before this "afterEach" hook is run,
       // which is okay.
-      if (err.code !== 'NoSuchBucket') throw err;
+      if (error.code !== 'NoSuchBucket') throw error;
     }));
 
 test.serial('get() fetches a collection config from S3', async (t) => {

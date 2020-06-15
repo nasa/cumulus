@@ -1,6 +1,5 @@
 'use strict';
 
-const Logger = require('@cumulus/logger');
 const KMS = require('@cumulus/aws-client/KMS');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const { isNil } = require('@cumulus/common/util');
@@ -11,9 +10,8 @@ const verifyProvider = async (provider) => {
       await KMS.decryptBase64String(provider.username);
       await KMS.decryptBase64String(provider.password);
     } catch (error) {
-      const logger = new Logger({});
-      logger.error(`Provider ${provider.id} credentials could not be decrypted using KMS. It is possible that you still need to run the providerSecretsMigration Lambda function.`);
-      throw error;
+      const message = `Provider ${provider.id} credentials could not be decrypted using KMS. It is possible that you still need to run the providerSecretsMigration Lambda function. Root cause: ${error.name} - ${error.message}`;
+      throw new Error(message);
     }
   } else {
     if (isNil(provider.username) && isNil(provider.password)) return;

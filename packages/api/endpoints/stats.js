@@ -26,7 +26,6 @@ function getType(req) {
   return type;
 }
 
-
 /**
  * get summary stats
  *

@@ -4,7 +4,6 @@ const test = require('ava');
 const rewire = require('rewire');
 const executionsRewire = rewire('../executions');
 
-
 test.before(async (t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.arn = 'testArn';

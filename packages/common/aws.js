@@ -74,10 +74,10 @@ exports.improveStackTrace = (fn) =>
     try {
       Error.captureStackTrace(tracerError);
       return await fn(...args);
-    } catch (err) {
-      setErrorStack(err, tracerError.stack);
-      err.message = `${err.message}; Function params: ${JSON.stringify(args, null, 2)}`;
-      throw err;
+    } catch (error) {
+      setErrorStack(error, tracerError.stack);
+      error.message = `${error.message}; Function params: ${JSON.stringify(args, null, 2)}`;
+      throw error;
     }
   };
 
@@ -98,9 +98,9 @@ exports.getS3Object = exports.improveStackTrace(
         deprecate('@cumulus/common/aws/getS3Object', '1.17.0', '@cumulus/aws-client/S3/getS3Object');
         try {
           return await exports.s3().getObject({ Bucket, Key }).promise();
-        } catch (err) {
-          if (err.code === 'NoSuchKey') throw err;
-          throw new pRetry.AbortError(err);
+        } catch (error) {
+          if (error.code === 'NoSuchKey') throw error;
+          throw new pRetry.AbortError(error);
         }
       },
       {

@@ -1,12 +1,12 @@
 'use strict';
 
+const delay = require('delay');
 const {
   s3PutObject,
   deleteS3Object,
   listS3ObjectsV2
 } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
-const { sleep } = require('@cumulus/common/util');
 const lockPrefix = 'lock';
 
 /**
@@ -55,6 +55,10 @@ function removeLock(bucket, providerName, filename) {
 }
 
 async function proceed(bucket, provider, filename, counter = 0) {
+  if (provider.globalConnectionLimit === undefined) {
+    return true;
+  }
+
   // Fail if lock is not removed after 270 tries.
   if (counter > 270) {
     return false;
@@ -67,7 +71,7 @@ async function proceed(bucket, provider, filename, counter = 0) {
   if (count >= globalConnectionLimit) {
     log.debug(`The "${provider.id}" provider's globalConnectionLimit of "${provider.globalConnectionLimit}" has been reached.`);
     // wait for 5 second and try again
-    await sleep(5000);
+    await delay(5000);
     return proceed(bucket, provider, filename, counter + 1);
   }
 

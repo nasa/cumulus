@@ -70,7 +70,7 @@ test('moveGranuleFile overwrites existing file by default', async (t) => {
 
   try {
     await moveGranuleFile(source, target);
-  } catch (err) {
+  } catch (error) {
     t.fail();
   } finally {
     const objects = await s3().listObjects({ Bucket: destBucket }).promise();
@@ -202,7 +202,6 @@ test('moveGranuleFiles only moves granule files specified with regex', async (t)
   t.is(secondBucketListResponse.Contents[0].Key, 'destination/included-in-move.txt');
 });
 
-
 test('moveGranuleFiles returns an updated list of files in their new locations.', async (t) => {
   const bucket = t.context.internalBucket;
   const secondBucket = t.context.destBucket;
@@ -277,7 +276,6 @@ test('moveGranuleFiles returns an updated list of files in their new locations.'
     t.deepEqual(updatedFile, expected);
   });
 });
-
 
 test('generateMoveFileParams generates correct parameters', (t) => {
   const filenames = [

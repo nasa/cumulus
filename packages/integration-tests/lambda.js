@@ -2,7 +2,6 @@
 
 const { lambda } = require('@cumulus/aws-client/services');
 
-
 async function getEventSourceMapping(uuid) {
   return lambda().getEventSourceMapping({ UUID: uuid }).promise();
 }
@@ -60,6 +59,5 @@ async function getLambdaVersions(lambdaFunctionName) {
   return getAllPages(config, 'Versions',
     lambda().listVersionsByFunction.bind(lambda()));
 }
-
 
 module.exports = { getLambdaAliases, getLambdaVersions, getEventSourceMapping };

@@ -7,9 +7,46 @@ const { URL } = require('url');
 const OAuth2 = require('./OAuth2');
 const OAuth2AuthenticationError = require('./OAuth2AuthenticationError');
 const OAuth2AuthenticationFailure = require('./OAuth2AuthenticationFailure');
+const { EarthdataLoginError } = require('./errors');
 
-const isBadRequestError = ({ name, statusCode }) =>
-  name === 'HTTPError' && statusCode === 400;
+const parseResponseBody = (body) => {
+  try {
+    return JSON.parse(body);
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new EarthdataLoginError(
+        'InvalidResponse',
+        'Response from Earthdata Login was not valid JSON'
+      );
+    }
+
+    throw error;
+  }
+};
+
+const isHttpError = (error) => error.name === 'HTTPError';
+
+const isHttpBadRequestError = (error) =>
+  isHttpError(error) && error.statusCode === 400;
+
+const isHttpForbiddenError = (error) =>
+  isHttpError(error) && error.statusCode === 403;
+
+const httpErrorToEarthdataLoginError = (httpError) => {
+  const parsedResponseBody = parseResponseBody(httpError.response.body);
+
+  switch (parsedResponseBody.error) {
+  case 'invalid_token':
+    return new EarthdataLoginError('InvalidToken', 'Invalid token');
+  case 'token_expired':
+    return new EarthdataLoginError('TokenExpired', 'The token has expired');
+  default:
+    return new EarthdataLoginError(
+      'UnexpectedResponse',
+      `Unexpected response: ${httpError.response.body}`
+    );
+  }
+};
 
 /**
  * This is an interface to the Earthdata Login service.
@@ -94,32 +131,30 @@ class EarthdataLogin extends OAuth2 {
     return url.toString();
   }
 
+  urlOfEndpoint(path) {
+    const url = new URL(path, this.earthdataLoginUrl);
+
+    return url.toString();
+  }
+
   /**
    * Get the URL of the Earthdata Login token endpoint
    *
    * @returns {string} the URL of the Earthdata Login token endpoint
    */
   tokenEndpoint() {
-    const url = new URL(this.earthdataLoginUrl);
-    url.pathname = '/oauth/token';
-
-    return url.toString();
+    return this.urlOfEndpoint('/oauth/token');
   }
 
   requestAccessToken(authorizationCode) {
-    return got.post(
-      this.tokenEndpoint(),
-      {
-        json: true,
-        form: true,
-        body: {
-          grant_type: 'authorization_code',
-          code: authorizationCode,
-          redirect_uri: this.redirectUri.toString()
-        },
-        auth: `${this.clientId}:${this.clientPassword}`
+    return this.sendRequest({
+      earthdataLoginPath: '/oauth/token',
+      body: {
+        grant_type: 'authorization_code',
+        code: authorizationCode,
+        redirect_uri: this.redirectUri.toString()
       }
-    );
+    });
   }
 
   /**
@@ -141,36 +176,32 @@ class EarthdataLogin extends OAuth2 {
 
     try {
       const response = await this.requestAccessToken(authorizationCode);
+      const parsedResponseBody = JSON.parse(response.body);
 
       return {
-        accessToken: response.body.access_token,
-        refreshToken: response.body.refresh_token,
-        username: response.body.endpoint.split('/').pop(),
+        accessToken: parsedResponseBody.access_token,
+        refreshToken: parsedResponseBody.refresh_token,
+        username: parsedResponseBody.endpoint.split('/').pop(),
         // expires_in value is in seconds
-        expirationTime: moment().unix() + response.body.expires_in
+        expirationTime: moment().unix() + parsedResponseBody.expires_in
       };
-    } catch (err) {
-      if (isBadRequestError(err)) {
+    } catch (error) {
+      if (isHttpBadRequestError(error)) {
         throw new OAuth2AuthenticationFailure();
       }
 
-      throw new OAuth2AuthenticationError(err.message);
+      throw new OAuth2AuthenticationError(error.message);
     }
   }
 
   requestRefreshAccessToken(refreshToken) {
-    return got.post(
-      this.tokenEndpoint(),
-      {
-        json: true,
-        form: true,
-        body: {
-          grant_type: 'refresh_token',
-          refresh_token: refreshToken
-        },
-        auth: `${this.clientId}:${this.clientPassword}`
+    return this.sendRequest({
+      earthdataLoginPath: '/oauth/token',
+      body: {
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken
       }
-    );
+    });
   }
 
   async refreshAccessToken(refreshToken) {
@@ -178,20 +209,56 @@ class EarthdataLogin extends OAuth2 {
 
     try {
       const response = await this.requestRefreshAccessToken(refreshToken);
+      const parsedResponseBody = parseResponseBody(response.body);
 
       return {
-        accessToken: response.body.access_token,
-        refreshToken: response.body.refresh_token,
-        username: response.body.endpoint.split('/').pop(),
-        expirationTime: moment().unix() + response.body.expires_in
+        accessToken: parsedResponseBody.access_token,
+        refreshToken: parsedResponseBody.refresh_token,
+        username: parsedResponseBody.endpoint.split('/').pop(),
+        expirationTime: moment().unix() + parsedResponseBody.expires_in
       };
-    } catch (err) {
-      if (isBadRequestError(err)) {
+    } catch (error) {
+      if (isHttpBadRequestError(error)) {
         throw new OAuth2AuthenticationFailure();
       }
 
-      throw new OAuth2AuthenticationError(err.message);
+      throw new OAuth2AuthenticationError(error.message);
     }
+  }
+
+  async getTokenUsername({ onBehalfOf, token }) {
+    try {
+      const response = await this.sendRequest({
+        earthdataLoginPath: '/oauth/tokens/user',
+        body: {
+          client_id: this.clientId,
+          on_behalf_of: onBehalfOf,
+          token
+        }
+      });
+
+      const { uid } = parseResponseBody(response.body);
+
+      return uid;
+    } catch (error) {
+      if (isHttpForbiddenError(error)) {
+        throw httpErrorToEarthdataLoginError(error);
+      }
+
+      throw error;
+    }
+  }
+
+  sendRequest({ earthdataLoginPath, body }) {
+    return got.post(
+      this.urlOfEndpoint(earthdataLoginPath),
+      {
+        headers: { accept: 'application/json' },
+        auth: `${this.clientId}:${this.clientPassword}`,
+        form: true,
+        body
+      }
+    );
   }
 }
 

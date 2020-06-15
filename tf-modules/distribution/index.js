@@ -19,8 +19,14 @@ const { isAccessTokenExpired } = require('@cumulus/api/lib/token');
 const awsServices = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const { EarthdataLoginError } = require('@cumulus/api/lib/errors');
 
 const log = new Logger({ sender: 's3credentials' });
+
+const buildEarthdataLoginClient = () =>
+  EarthdataLogin.createFromEnv({
+    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT
+  });
 
 /**
  * Use NGAP's time-based, temporary credential dispensing lambda.
@@ -83,13 +89,9 @@ const useSecureCookies = () => {
  * @returns {Object} the configuration object needed to handle requests
  */
 function getConfigurations() {
-  const earthdataLoginClient = EarthdataLogin.createFromEnv({
-    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT
-  });
-
   return {
     accessTokenModel: new AccessToken(),
-    authClient: earthdataLoginClient,
+    authClient: buildEarthdataLoginClient(),
     distributionUrl: process.env.DISTRIBUTION_ENDPOINT,
     s3Client: awsServices.s3()
   };
@@ -177,6 +179,30 @@ function isPublicRequest(path) {
   }
 }
 
+const isTokenAuthRequest = (req) =>
+  req.get('EDL-Client-Id') && req.get('EDL-Token');
+
+const handleTokenAuthRequest = async (req, res, next) => {
+  const earthdataLoginClient = buildEarthdataLoginClient();
+
+  try {
+    const userName = await earthdataLoginClient.getTokenUsername({
+      onBehalfOf: req.get('EDL-Client-Id'),
+      token: req.get('EDL-Token')
+    });
+
+    req.authorizedMetadata = { userName };
+
+    return next();
+  } catch (error) {
+    if (error instanceof EarthdataLoginError) {
+      res.boom.forbidden('EDL-Token authentication failed');
+    }
+
+    throw error;
+  }
+};
+
 /**
  * Ensure request is authorized through EarthdataLogin or redirect to become so.
  *
@@ -199,6 +225,10 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
     return next();
   }
 
+  if (isTokenAuthRequest(req)) {
+    return handleTokenAuthRequest(req, res, next);
+  }
+
   const {
     accessTokenModel,
     authClient
@@ -211,11 +241,11 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   let accessTokenRecord;
   try {
     accessTokenRecord = await accessTokenModel.get({ accessToken });
-  } catch (err) {
-    if (err instanceof RecordDoesNotExist) {
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
       return res.redirect(307, redirectURLForAuthorizationCode);
     }
-    throw err;
+    throw error;
   }
 
   if (isAccessTokenExpired(accessTokenRecord)) {
@@ -265,9 +295,13 @@ distributionApp.use((err, req, res, _next) => {
   return res.boom.badImplementation('Something broke!');
 });
 
-const server = awsServerlessExpress.createServer(distributionApp, null);
-
-const handler = (event, context) => awsServerlessExpress.proxy(server, event, context);
+const handler = async (event, context) =>
+  awsServerlessExpress.proxy(
+    awsServerlessExpress.createServer(distributionApp),
+    event,
+    context,
+    'PROMISE'
+  ).promise;
 
 module.exports = {
   distributionApp,

@@ -18,7 +18,6 @@ const {
   timestampedName
 } = require('../../helpers/testUtils');
 
-
 describe('When I create a scheduled rule via the Cumulus API', () => {
   let config;
   let execution;
@@ -109,8 +108,8 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
           (taskInput.cumulus_meta.execution_name !== params.execution.name),
         findExecutionFnParams: { ruleName: scheduledRuleName, execution },
         startTask: 'HelloWorld'
-      }).catch((err) =>
-        expect(err.message).toEqual('Never found started workflow.'));
+      }).catch((error) =>
+        expect(error.message).toEqual('Never found started workflow.'));
     });
   });
 });

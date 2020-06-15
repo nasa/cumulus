@@ -23,11 +23,11 @@ async function incrementQueueSemaphore(queueName, maximum) {
   try {
     await semaphore.up(queueName, maximum);
     log.info(`incremented queue semaphore for queue ${queueName}`);
-  } catch (err) {
-    if (err instanceof ResourcesLockedError) {
+  } catch (error) {
+    if (error instanceof ResourcesLockedError) {
       log.info(`Unable to start new execution: the maximum number of executions (${maximum}) allowed for ${queueName} are already running.`);
     }
-    throw err;
+    throw error;
   }
 }
 
@@ -50,9 +50,9 @@ async function decrementQueueSemaphore(queueName) {
   try {
     await semaphore.down(queueName);
     log.info(`decremented queue semaphore for queue ${queueName}`);
-  } catch (err) {
+  } catch (error) {
     log.error(`Failure: attempted to decrement semaphore for queue ${queueName} below 0`);
-    throw err;
+    throw error;
   }
 }
 

@@ -59,8 +59,8 @@ describe('Distribution API', () => {
         uploadTestDataToBucket(protectedBucketName, s3Data, testDataFolder),
         uploadTestDataToBucket(publicBucketName, s3Data, testDataFolder)
       ]);
-    } catch (err) {
-      console.log(err);
+    } catch (error) {
+      console.log(error);
     }
   });
 

@@ -9,7 +9,7 @@ const S3ListObjectsV2Queue = require('@cumulus/aws-client/S3ListObjectsV2Queue')
 const { s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const log = require('@cumulus/common/log');
-const { getBucketsConfigKey } = require('@cumulus/common/stack');
+const { getBucketsConfigKey, getDistributionBucketMapKey } = require('@cumulus/common/stack');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const CMR = require('@cumulus/cmr-client/CMR');
@@ -170,13 +170,16 @@ async function reconciliationReportForCollections() {
 
 /**
  * Compare the file holdings in CMR with Cumulus for a given granule
- *
- * @param {Object} granuleInDb - granule object in database
- * @param {Object} granuleInCmr - granule object in CMR
- * @param {Object} bucketsConfig - bucket configuration object
- * @returns {Promise<Object>} an object with the okCount, onlyInCumulus, onlyInCmr
+ * @param {Object} params .                      - parameters
+ * @param {Object} params.granuleInDb            - granule object in database
+ * @param {Object} params.granuleInCmr           - granule object in CMR
+ * @param {Object} params.bucketsConfig          - bucket configuration
+ * @param {Object} params.distributionBucketMap  - mapping of bucket->distirubtion path values
+ *                                                 (e.g. { bucket: distribution path })
+ * @returns {Promise<Object>}    - an object with the okCount, onlyInCumulus, onlyInCmr
  */
-async function reconciliationReportForGranuleFiles(granuleInDb, granuleInCmr, bucketsConfig) {
+async function reconciliationReportForGranuleFiles(params) {
+  const { granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap } = params;
   let okCount = 0;
   const onlyInCumulus = [];
   const onlyInCmr = [];
@@ -188,7 +191,7 @@ async function reconciliationReportForGranuleFiles(granuleInDb, granuleInCmr, bu
   const cmrRelatedDataTypes = ['VIEW RELATED INFORMATION'];
 
   // check each URL entry against database records
-  granuleInCmr.RelatedUrls.forEach((relatedUrl) => {
+  const relatedUrlPromises = granuleInCmr.RelatedUrls.map(async (relatedUrl) => {
     // only check URL types for downloading granule files and related data (such as documents)
     if (cmrGetDataTypes.includes(relatedUrl.Type)
       || cmrRelatedDataTypes.includes(relatedUrl.Type)) {
@@ -197,18 +200,20 @@ async function reconciliationReportForGranuleFiles(granuleInDb, granuleInCmr, bu
       // filename in both cumulus and CMR
       if (granuleFiles[urlFileName] && bucketsConfig.key(granuleFiles[urlFileName].bucket)) {
         // not all files should be in CMR
-        const distributionAccessUrl = constructOnlineAccessUrl({
+        const distributionAccessUrl = await constructOnlineAccessUrl({
           file: granuleFiles[urlFileName],
           distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
           buckets: bucketsConfig,
-          cmrGranuleUrlType: 'distribution'
+          cmrGranuleUrlType: 'distribution',
+          distributionBucketMap
         });
 
-        const s3AccessUrl = constructOnlineAccessUrl({
+        const s3AccessUrl = await constructOnlineAccessUrl({
           file: granuleFiles[urlFileName],
           distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
           buckets: bucketsConfig,
-          cmrGranuleUrlType: 's3'
+          cmrGranuleUrlType: 's3',
+          distributionBucketMap
         });
 
         if (distributionAccessUrl && relatedUrl.URL === distributionAccessUrl.URL) {
@@ -237,6 +242,8 @@ async function reconciliationReportForGranuleFiles(granuleInDb, granuleInCmr, bu
     }
   });
 
+  await Promise.all(relatedUrlPromises);
+
   // any remaining database items to the report
   Object.keys(granuleFiles).forEach((fileName) => {
     // private file only in database, it's ok
@@ -251,7 +258,6 @@ async function reconciliationReportForGranuleFiles(granuleInDb, granuleInCmr, bu
       });
     }
   });
-
   return { okCount, onlyInCumulus, onlyInCmr };
 }
 // export for testing
@@ -260,16 +266,21 @@ exports.reconciliationReportForGranuleFiles = reconciliationReportForGranuleFile
 /**
  * Compare the granule holdings in CMR with Cumulus for a given collection
  *
- * @param {string} collectionId - the collection which has the granules to be reconciled
- * @param {Object} bucketsConfig - bucket configuration object
- * @returns {Promise<Object>} an object with the granulesReport and filesReport
+ * @param {Object} params                        - parameters
+ * @param {string} params.collectionId           - the collection which has the granules to be
+ *                                                 reconciled
+ * @param {Object} params.bucketsConfig          - bucket configuration object
+ * @param {Object} params.distributionBucketMap  - mapping of bucket->distirubtion path values
+ *                                                 (e.g. { bucket: distribution path })
+ * @returns {Promise<Object>}                    - an object with the granulesReport and filesReport
  */
-async function reconciliationReportForGranules(collectionId, bucketsConfig) {
+async function reconciliationReportForGranules(params) {
   // compare granule holdings:
   //   Get CMR granules list (by PROVIDER, short_name, version, sort_key: ['granule_ur'])
   //   Get CUMULUS granules list (by collectionId order by granuleId)
   //   Report granules only in CMR
   //   Report granules only in CUMULUS
+  const { collectionId, bucketsConfig, distributionBucketMap } = params;
   const { name, version } = deconstructCollectionId(collectionId);
   const cmrSettings = await getCmrSettings();
   const cmrGranulesIterator = new CMRSearchConceptQueue({
@@ -333,9 +344,9 @@ async function reconciliationReportForGranules(collectionId, bucketsConfig) {
 
       // compare the files now to avoid keeping the granules' information in memory
       // eslint-disable-next-line no-await-in-loop
-      const fileReport = await reconciliationReportForGranuleFiles(
-        granuleInDb, granuleInCmr, bucketsConfig
-      );
+      const fileReport = await reconciliationReportForGranuleFiles({
+        granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap
+      });
       filesReport.okCount += fileReport.okCount;
       filesReport.onlyInCumulus = filesReport.onlyInCumulus.concat(fileReport.onlyInCumulus);
       filesReport.onlyInCmr = filesReport.onlyInCmr.concat(fileReport.onlyInCmr);
@@ -374,10 +385,14 @@ exports.reconciliationReportForGranules = reconciliationReportForGranules;
 /**
  * Compare the holdings in CMR with Cumulus' internal data store, report any discrepancies
  *
- * @param {Object} bucketsConfig - bucket configuration object
- * @returns {Promise<Object>} a reconciliation report
+ * @param {Object} params .                      - parameters
+ * @param {Object} params.bucketsConfig          - bucket configuration object
+ * @param {Object} params.distributionBucketMap  - mapping of bucket->distirubtion path values
+ *                                                 (e.g. { bucket: distribution path })
+ * @returns {Promise<Object>}                    - a reconciliation report
  */
-async function reconciliationReportForCumulusCMR(bucketsConfig) {
+async function reconciliationReportForCumulusCMR(params) {
+  const { bucketsConfig, distributionBucketMap } = params;
   const collectionReport = await reconciliationReportForCollections();
   const collectionsInCumulusCmr = {
     okCount: collectionReport.okCollections.length,
@@ -387,7 +402,7 @@ async function reconciliationReportForCumulusCMR(bucketsConfig) {
 
   // create granule and granule file report for collections in both Cumulus and CMR
   const promisedGranuleReports = collectionReport.okCollections.map((collectionId) =>
-    reconciliationReportForGranules(collectionId, bucketsConfig));
+    reconciliationReportForGranules({ collectionId, bucketsConfig, distributionBucketMap }));
   const granuleAndFilesReports = await Promise.all(promisedGranuleReports);
 
   const granulesInCumulusCmr = {};
@@ -413,7 +428,6 @@ async function reconciliationReportForCumulusCMR(bucketsConfig) {
 
   return { collectionsInCumulusCmr, granulesInCumulusCmr, filesInCumulusCmr };
 }
-
 /**
  * Create a Reconciliation report and save it to S3
  *
@@ -430,6 +444,10 @@ async function createReconciliationReport(params) {
 
   // Fetch the bucket names to reconcile
   const bucketsConfigJson = await getJsonS3Object(systemBucket, getBucketsConfigKey(stackName));
+  const distributionBucketMap = await getJsonS3Object(
+    systemBucket, getDistributionBucketMapKey(stackName)
+  );
+
   const dataBuckets = Object.values(bucketsConfigJson)
     .filter(isDataBucket).map((config) => config.name);
 
@@ -480,7 +498,9 @@ async function createReconciliationReport(params) {
   });
 
   // compare the CUMULUS holdings with the holdings in CMR
-  const cumulusCmrReport = await reconciliationReportForCumulusCMR(bucketsConfig);
+  const cumulusCmrReport = await reconciliationReportForCumulusCMR({
+    bucketsConfig, distributionBucketMap
+  });
   report = Object.assign(report, cumulusCmrReport);
 
   // Create the full report
@@ -522,13 +542,13 @@ async function processRequest(params) {
   try {
     await createReconciliationReport({ ...params, reportStartTime, reportKey });
     await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
-  } catch (e) {
-    log.error(`Error creating reconciliation report ${reportRecordName}`, e);
+  } catch (error) {
+    log.error(`Error creating reconciliation report ${reportRecordName}`, error);
     const updates = {
       status: 'Failed',
       error: {
-        Error: e.message,
-        Cause: errorify(e)
+        Error: error.message,
+        Cause: errorify(error)
       }
     };
     await reconciliationReportModel.update({ name: reportRecord.name }, updates);

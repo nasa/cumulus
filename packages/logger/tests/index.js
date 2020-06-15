@@ -220,8 +220,8 @@ test('Logger.error() supports templates when an Error object is passed', (t) => 
 
   try {
     throw new Error('so wrong');
-  } catch (err) {
-    logger.error('%s %s', 'hello', 'world', err);
+  } catch (error) {
+    logger.error('%s %s', 'hello', 'world', error);
   }
 
   t.is(testConsole.stderrLogEntries.length, 1);
@@ -235,8 +235,8 @@ test('Logger.error() logs info about an Error', (t) => {
 
   try {
     throw new Error('test123');
-  } catch (err) {
-    logger.error('something bad', err);
+  } catch (error) {
+    logger.error('something bad', error);
   }
 
   const logEntry = testConsole.stderrLogEntries[0];
@@ -257,8 +257,8 @@ test('Logger.error() can handle just an Error', (t) => {
 
   try {
     throw new Error('test123');
-  } catch (err) {
-    logger.error(err);
+  } catch (error) {
+    logger.error(error);
   }
 
   const logEntry = testConsole.stderrLogEntries[0];
