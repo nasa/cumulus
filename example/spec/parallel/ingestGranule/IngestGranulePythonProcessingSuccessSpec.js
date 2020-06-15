@@ -118,8 +118,8 @@ describe('The TestPythonProcessing workflow', () => {
           distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT
         }
       );
-    } catch (e) {
-      beforeAllError = e;
+    } catch (error) {
+      beforeAllError = error;
     }
   });
 
@@ -214,8 +214,8 @@ describe('The TestPythonProcessing workflow', () => {
           return;
         }
         processingFiles = activityOutput.payload;
-      } catch (e) {
-        beforeAllError = e;
+      } catch (error) {
+        beforeAllError = error;
       }
     });
 

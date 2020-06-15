@@ -79,9 +79,9 @@ function createGranuleFiles(granuleFiles, bucket, oldGranuleId, newGranuleId) {
       CopySource: `${bucket}/${file.path}/${file.name}`,
       Key: `${file.path}/${file.name.replace(oldGranuleId, newGranuleId)}`
     }).promise()
-      .catch((err) => {
-        console.error(`Failed to copy s3://${bucket}/${file.path}/${file.name} to s3://${bucket}/${file.path}/${file.name.replace(oldGranuleId, newGranuleId)}: ${err.message}`);
-        throw err;
+      .catch((error) => {
+        console.error(`Failed to copy s3://${bucket}/${file.path}/${file.name} to s3://${bucket}/${file.path}/${file.name.replace(oldGranuleId, newGranuleId)}: ${error.message}`);
+        throw error;
       });
 
   return Promise.all(granuleFiles.map(copyFile));

@@ -57,8 +57,8 @@ const findExecutionArn = async (prefix, matcher, options = { timeout: 0 }) =>
           executions = JSON.parse(response.body);
           execution = executions.results.find(matcher);
         }
-      } catch (err) {
-        throw new pRetry.AbortError(err);
+      } catch (error) {
+        throw new pRetry.AbortError(error);
       }
 
       if (isNil(execution)) throw new Error('Not Found');
@@ -110,9 +110,9 @@ const getExecutionWithStatus = async (params) =>
 
       try {
         execution = await getExecution(pick(params, ['prefix', 'arn', 'callback']));
-      } catch (err) {
-        if (err.name === 'ExecutionNotFoundError') throw err;
-        throw new pRetry.AbortError(`Error fetching execution ${params.arn}: ${err}`);
+      } catch (error) {
+        if (error.name === 'ExecutionNotFoundError') throw error;
+        throw new pRetry.AbortError(`Error fetching execution ${params.arn}: ${error}`);
       }
 
       if (execution.status === params.status) return execution;

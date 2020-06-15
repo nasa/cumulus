@@ -128,9 +128,9 @@ export const headObject = improveStackTrace(
       async () => {
         try {
           return await s3().headObject({ Bucket, Key }).promise();
-        } catch (err) {
-          if (err.code === 'NotFound') throw err;
-          throw new pRetry.AbortError(err);
+        } catch (error) {
+          if (error.code === 'NotFound') throw error;
+          throw new pRetry.AbortError(error);
         }
       },
       { maxTimeout: 10000, ...retryOptions }
@@ -147,9 +147,9 @@ export const headObject = improveStackTrace(
 export const s3ObjectExists = (params: { Bucket: string, Key: string }) =>
   headObject(params.Bucket, params.Key)
     .then(() => true)
-    .catch((e) => {
-      if (e.code === 'NotFound') return false;
-      throw e;
+    .catch((error) => {
+      if (error.code === 'NotFound') return false;
+      throw error;
     });
 
 /**
@@ -255,15 +255,35 @@ export const downloadS3File = (s3Obj: AWS.S3.GetObjectRequest, filepath: string)
 };
 
 /**
- * Get the size of an S3Object, in bytes
+ * Get the size of an S3 object
  *
- * @param {string} bucket - S3 bucket
- * @param {string} key - S3 key
- * @returns {Promise<integer>} object size, in bytes
+ * @param {Object} params
+ * @param {string} params.bucket
+ * @param {string} params.key
+ * @param {AWS.S3} params.s3 - an S3 client instance
+ * @returns {Promise<number|undefined>} object size, in bytes
  */
-export const getObjectSize = (bucket: string, key: string) =>
-  headObject(bucket, key, { retries: 3 })
-    .then((response) => response.ContentLength);
+export const getObjectSize = async (
+  params: {
+    s3: {
+      headObject: (params: { Bucket: string, Key: string }) => {
+        promise: () => Promise<{ ContentLength?: number }>
+      }
+    },
+    bucket: string,
+    key: string
+  }
+) => {
+  // eslint-disable-next-line no-shadow
+  const { s3, bucket, key } = params;
+
+  const headObjectResponse = await s3.headObject({
+    Bucket: bucket,
+    Key: key
+  }).promise();
+
+  return headObjectResponse.ContentLength;
+};
 
 /**
 * Get object Tagging from S3
@@ -326,9 +346,9 @@ export const getS3Object = improveStackTrace(
       async () => {
         try {
           return await s3().getObject({ Bucket, Key }).promise();
-        } catch (err) {
-          if (err.code === 'NoSuchKey') throw err;
-          throw new pRetry.AbortError(err);
+        } catch (error) {
+          if (error.code === 'NoSuchKey') throw error;
+          throw new pRetry.AbortError(error);
         }
       },
       {
@@ -413,12 +433,12 @@ export const fileExists = async (bucket: string, key: string) => {
   try {
     const r = await s3().headObject({ Key: key, Bucket: bucket }).promise();
     return r;
-  } catch (e) {
+  } catch (error) {
     // if file is not return false
-    if (e.stack.match(/(NotFound)/) || e.stack.match(/(NoSuchBucket)/)) {
+    if (error.stack.match(/(NotFound)/) || error.stack.match(/(NoSuchBucket)/)) {
       return false;
     }
-    throw e;
+    throw error;
   }
 };
 

@@ -13,9 +13,9 @@ const saveExecutionToDb = async (cumulusMessage) => {
   const executionModel = new Execution();
   try {
     await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
-  } catch (err) {
+  } catch (error) {
     const executionArn = getMessageExecutionArn(cumulusMessage);
-    log.fatal(`Failed to create/update database record for execution ${executionArn}: ${err.message}`);
+    log.fatal(`Failed to create/update database record for execution ${executionArn}: ${error.message}`);
   }
 };
 
@@ -23,9 +23,9 @@ const savePdrToDb = async (cumulusMessage) => {
   const pdrModel = new Pdr();
   try {
     await pdrModel.storePdrFromCumulusMessage(cumulusMessage);
-  } catch (err) {
+  } catch (error) {
     const executionArn = getMessageExecutionArn(cumulusMessage);
-    log.fatal(`Failed to create/update PDR database record for execution ${executionArn}: ${err.message}`);
+    log.fatal(`Failed to create/update PDR database record for execution ${executionArn}: ${error.message}`);
   }
 };
 
@@ -34,9 +34,9 @@ const saveGranulesToDb = async (cumulusMessage) => {
 
   try {
     await granuleModel.storeGranulesFromCumulusMessage(cumulusMessage);
-  } catch (err) {
+  } catch (error) {
     const executionArn = getMessageExecutionArn(cumulusMessage);
-    log.fatal(`Failed to create/update granule records for execution ${executionArn}: ${err.message}`);
+    log.fatal(`Failed to create/update granule records for execution ${executionArn}: ${error.message}`);
   }
 };
 

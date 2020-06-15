@@ -92,8 +92,8 @@ class Logger {
   /**
    * Log an event with additional properties
    *
-   * @param additionalKeys -
-   * @param messageArgs - the message to log
+   * @param {Object} additionalKeys
+   * @param {Array<any>} messageArgs - the message to log
    */
   infoWithAdditionalKeys(additionalKeys: object, ...messageArgs: any[]) {
     this.writeLogEvent('info', messageArgs, additionalKeys);
@@ -140,7 +140,7 @@ class Logger {
     };
 
     const logEventString = this.pretty
-      ? JSON.stringify(logEvent, null, 2)
+      ? JSON.stringify(logEvent, undefined, 2)
       : JSON.stringify(logEvent);
 
     if (level === 'error') this.console.error(logEventString);

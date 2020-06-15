@@ -162,8 +162,8 @@ describe('POST /granules/bulkDelete', () => {
         });
         ({ taskArn } = JSON.parse(getAsyncOperationResponse.body));
         beforeAllSucceeded = true;
-      } catch (err) {
-        console.log(err);
+      } catch (error) {
+        console.log(error);
       }
     });
 
@@ -197,7 +197,7 @@ describe('POST /granules/bulkDelete', () => {
 
     it('returns an Async Operation Id', () => {
       expect(beforeAllSucceeded).toBeTrue();
-      expect(postBulkDeleteBody.id).toMatch(/[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}/);
+      expect(postBulkDeleteBody.id).toMatch(/[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}/);
     });
 
     it('creates an AsyncOperation', async () => {
@@ -251,7 +251,7 @@ describe('POST /granules/bulkDelete', () => {
       let output;
       try {
         output = JSON.parse(getAsyncOperationBody.output);
-      } catch (err) {
+      } catch (error) {
         throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
       }
 

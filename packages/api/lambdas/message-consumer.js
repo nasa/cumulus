@@ -134,11 +134,11 @@ function processRecord(record, fromSNS) {
         ...lookupCollectionInEvent(eventObject),
         sourceArn: get(parsed, 'eventSourceARN')
       };
-    } catch (err) {
+    } catch (error) {
       log.error('Caught error parsing JSON:');
-      log.error(err);
+      log.error(error);
       // TODO (out of scope): does it make sense to attempt retrying bad JSON?
-      return handleProcessRecordError(err, record, isKinesisRetry, fromSNS);
+      return handleProcessRecordError(error, record, isKinesisRetry, fromSNS);
     }
   }
 
@@ -149,10 +149,10 @@ function processRecord(record, fromSNS) {
       if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParam.sourceArn);
       return queueMessageForRule(rule, eventObject);
     })))
-    .catch((err) => {
+    .catch((error) => {
       log.error('Caught error in processRecord:');
-      log.error(err);
-      return handleProcessRecordError(err, record, isKinesisRetry, fromSNS);
+      log.error(error);
+      return handleProcessRecordError(error, record, isKinesisRetry, fromSNS);
     });
 }
 
@@ -172,8 +172,8 @@ function handler(event, context, cb) {
 
   return Promise.all(records.map((r) => processRecord(r, fromSns)))
     .then((results) => cb(null, results.filter((r) => r !== undefined)))
-    .catch((err) => {
-      cb(err);
+    .catch((error) => {
+      cb(error);
     });
 }
 

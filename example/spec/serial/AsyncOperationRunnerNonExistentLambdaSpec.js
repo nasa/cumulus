@@ -61,9 +61,9 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
         id: asyncOperationId,
         status: 'RUNNER_FAILED'
       });
-    } catch (err) {
+    } catch (error) {
       beforeAllFailed = true;
-      throw err;
+      throw error;
     }
   });
 

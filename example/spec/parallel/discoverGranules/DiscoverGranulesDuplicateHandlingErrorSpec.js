@@ -134,11 +134,11 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
           get(execution, 'originalPayload.testExecutionId') === discoverGranulesRule.payload.testExecutionId,
         { timeout: 15 }
       );
-    } catch (err) {
+    } catch (error) {
       console.log('ingestGranuleRule.payload.testExecutionId', ingestGranuleRule.payload.testExecutionId);
       console.log('discoverGranulesRule.payload.testExecutionId', discoverGranulesRule.payload.testExecutionId);
       beforeAllFailed = true;
-      throw err;
+      throw error;
     }
   });
 

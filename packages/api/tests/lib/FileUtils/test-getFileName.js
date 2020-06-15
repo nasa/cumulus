@@ -33,11 +33,11 @@ test('getFileName() prefers fileName over name', (t) => {
   );
 });
 
-test('getFileName() returns null if no file name could be found', (t) => {
+test('getFileName() returns undefined if no file name could be found', (t) => {
   const file = {};
 
   t.is(
     getFileName(file),
-    null
+    undefined
   );
 });

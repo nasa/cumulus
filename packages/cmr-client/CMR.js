@@ -59,11 +59,11 @@ async function updateToken(cmrProvider, clientId, username, password) {
         }
       }
     });
-  } catch (err) {
-    if (get(err, 'response.body.errors')) {
-      throw new Error(`CMR Error: ${err.response.body.errors[0]}`);
+  } catch (error) {
+    if (get(error, 'response.body.errors')) {
+      throw new Error(`CMR Error: ${error.response.body.errors[0]}`);
     }
-    throw err;
+    throw error;
   }
 
   if (!response.body.token) throw new Error('Authentication with CMR failed');

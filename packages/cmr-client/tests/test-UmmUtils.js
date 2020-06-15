@@ -45,7 +45,7 @@ test.serial('CMR.validateUMMG UMMG validation succeeds', async (t) => {
   try {
     await validateUMMG(ummMetadata, granuleId, provider);
     t.pass();
-  } catch (e) {
+  } catch (error) {
     t.fail('Validation error is not expected');
   }
 });
@@ -60,9 +60,9 @@ test.serial('CMR.validateUMMG UMMG validation fails with error messages from CMR
   try {
     await validateUMMG(ummMetadata, granuleId, provider);
     t.fail('Expected a validation error to be thrown');
-  } catch (e) {
-    t.true(e instanceof ValidationError);
-    t.true(e.message.includes(cmrError));
+  } catch (error) {
+    t.true(error instanceof ValidationError);
+    t.true(error.message.includes(cmrError));
   }
 });
 
@@ -76,7 +76,7 @@ test.serial('cmr-client.validate XML validation succeeds', async (t) => {
   try {
     await validate('granule', xmlMetadata, granuleId, provider);
     t.pass();
-  } catch (e) {
+  } catch (error) {
     t.fail('Validation error is not expected');
   }
 });
@@ -100,9 +100,9 @@ test.serial('cmr-client.validate XML validation fails with error messages from C
   try {
     await validate('granule', xmlMetadata, granuleId, provider);
     t.fail('Expected a validation error to be thrown');
-  } catch (e) {
-    t.true(e instanceof ValidationError);
-    t.true(e.message.includes(cmrError));
+  } catch (error) {
+    t.true(error instanceof ValidationError);
+    t.true(error.message.includes(cmrError));
   }
 });
 

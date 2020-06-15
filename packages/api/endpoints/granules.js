@@ -139,11 +139,11 @@ async function del(req, res) {
   let granule;
   try {
     granule = await granuleModelClient.getRecord({ granuleId });
-  } catch (err) {
-    if (err instanceof RecordDoesNotExist) {
-      return res.boom.notFound(err);
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.notFound(error);
     }
-    throw err;
+    throw error;
   }
 
   if (granule.detail) {
@@ -152,11 +152,11 @@ async function del(req, res) {
 
   try {
     await granuleModelClient.delete(granule);
-  } catch (err) {
-    if (err instanceof DeletePublishedGranule) {
-      return res.boom.badRequest(err.message);
+  } catch (error) {
+    if (error instanceof DeletePublishedGranule) {
+      return res.boom.badRequest(error.message);
     }
-    throw err;
+    throw error;
   }
 
   if (inTestMode()) {
@@ -185,12 +185,12 @@ async function get(req, res) {
   let result;
   try {
     result = await (new models.Granule()).get({ granuleId: req.params.granuleName });
-  } catch (err) {
-    if (err.message.startsWith('No record found')) {
+  } catch (error) {
+    if (error.message.startsWith('No record found')) {
       return res.boom.notFound('Granule not found');
     }
 
-    throw err;
+    throw error;
   }
 
   return res.send(result);

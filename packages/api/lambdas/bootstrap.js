@@ -86,11 +86,11 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
 
   try {
     await createIndex(esClient, index);
-  } catch (err) {
-    if (err instanceof IndexExistsError) {
+  } catch (error) {
+    if (error instanceof IndexExistsError) {
       exists = true;
     } else {
-      throw err;
+      throw error;
     }
   }
 
@@ -158,9 +158,9 @@ const handler = async ({ elasticsearchHostname }) => {
   try {
     await bootstrapElasticSearch(elasticsearchHostname);
     return { Status: 'SUCCESS', Data: {} };
-  } catch (err) {
-    log.error(err);
-    return { Status: 'FAILED', Error: err };
+  } catch (error) {
+    log.error(error);
+    return { Status: 'FAILED', Error: error };
   }
 };
 
