@@ -50,7 +50,7 @@ test.beforeEach(async (t) => {
   t.context.payload.config.launchpad.passphraseSecretName = t.context.launchpadPassphraseSecretName;
 
   //update cmr file path
-  const match = /^s3\:\/\/(.*)\/(.*)$/;
+  const match = /^s3:\/\/(.*)\/(.*)$/;
   const cmrFile = payload.input.granules[0].files[3].filename;
   payload.input.granules[0].files[3].filename = `s3://${t.context.bucket}/${match.exec(cmrFile)[2]}`;
   payload.input.granules[0].files[3].bucket = t.context.bucket;
