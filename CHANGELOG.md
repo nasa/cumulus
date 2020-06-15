@@ -102,6 +102,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Deprecated
 
+- **CUMULUS-1930**
+  - `@cumulus/common/log.convertLogLevel()`
 - `@cumulus/collection-config-store`
 - `@cumulus/common/util.sleep()`
 
