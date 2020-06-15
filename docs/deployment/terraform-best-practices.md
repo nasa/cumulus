@@ -178,17 +178,46 @@ files, along with subsequent Terraform commands.
 
 ## Avoid Changing Connectivity Resources
 
-Don't mess with things that affect connectivity, like security groups
+Don't mess with things that affect connectivity, like security groups.
 
 ## How to Destroy Everything
 
-### When Your State File Accurately Reflects Your Actual State
+If you want to completely remove a deployment, note that there is some
+protection in place to prevent accidental destruction of your data.  Therefore,
+there is an additional step required when you truly want to remove your entire
+deployment. Further, destruction is performed in reverse order of creation.
 
-How do I destroy all of my resources when I actually want to?
+Starting from the root of your deployment repository workspace, perform the
+following commands to first **destroy the resources for your `cumulus` module**
+deployment.
 
-### When Your State File Is Out of Sync with Your Actual State
+**NOTE:** If you are using Terraform workspaces, be sure to select the relevant
+workspace first.
 
-Finding and deleting resources via tags, detecting conflicts via redeploy, etc.
+```bash
+tfenv use 0.12.12
+cd cumulus-tf
+terraform init -reconfigure
+terraform destroy
+```
+
+The next step is to _manually_ **delete the DynamoDB tables** related to your
+deployment. Again, these tables are protected such that they are **not**
+_automatically_ deleted by the `terraform destroy` command. This is a safety
+measure to prevent _accidental_ removal.
+
+However, this does not prevent manual destruction in case you truly do wish to
+remove them. You may do so via either the **AWS Management Console** or the
+**AWS CLI**. As an additional precaution, you may want to create a backup for
+each table in your deployment _before_ you delete them.
+
+Finally, **destroy the resources for your `data-persistence` module**:
+
+```bash
+cd ../data-persistence-tf
+terraform init -reconfigure
+terraform destroy
+```
 
 [Configuring the Cumulus deployment]:
   README.md#configuring-the-cumulus-deployment
