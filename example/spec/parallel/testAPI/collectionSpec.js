@@ -42,8 +42,6 @@ describe('Collections API', () => {
     if (beforeAllFailed) {
       fail('beforeAll() failed');
     } else {
-      expect(beforeAllFailed).toBeTrue();
-
       await expectAsync(waitForObjectToExist({
         bucket: config.bucket,
         key: recordCreatedKey
