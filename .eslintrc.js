@@ -150,7 +150,7 @@ module.exports = {
     'lodash/prefer-lodash-method': 'off',
 
     'node/no-missing-require': 'off',
-    'unicorn/better-regex': 'off',
+
     'unicorn/catch-error-name': 'warn',
     'unicorn/consistent-function-scoping': 'off',
     'unicorn/filename-case': 'off',
