@@ -16,8 +16,8 @@ const { deleteCollection } = require('@cumulus/api-client/collections');
 const { deleteS3Object, s3GetObjectTagging, s3PutObject } = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 
+const { moveGranules } = require('@cumulus/move-granules');
 const { loadConfig } = require('../../helpers/testUtils');
-const { moveGranules } = require('../../../../tasks/move-granules');
 
 describe('The MoveGranules task', () => {
   it('perserves object tags', async () => {
