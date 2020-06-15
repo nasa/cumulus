@@ -7,6 +7,7 @@ const { findAsyncOperationTaskDefinitionForDeployment } = require('../helpers/ec
 const { loadConfig } = require('../helpers/testUtils');
 
 describe('The AsyncOperation task runner running a non-existent lambda function', () => {
+  let asyncOperation;
   let asyncOperationId;
   let asyncOperationModel;
   let asyncOperationsTableName;
@@ -14,7 +15,6 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
   let beforeAllFailed = false;
   let cluster;
   let config;
-  let dynamoDbItem;
   let taskArn;
 
   beforeAll(async () => {
@@ -56,26 +56,26 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
         }
       ).promise();
 
-      dynamoDbItem = await waitForAsyncOperationStatus({
-        TableName: asyncOperationsTableName,
+      asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,
-        status: 'RUNNER_FAILED'
+        status: 'RUNNER_FAILED',
+        stackName: config.stackName
       });
-    } catch (err) {
+    } catch (error) {
       beforeAllFailed = true;
-      throw err;
+      throw error;
     }
   });
 
   it('updates the status field in DynamoDB to "RUNNER_FAILED"', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
-    else expect(dynamoDbItem.status.S).toEqual('RUNNER_FAILED');
+    else expect(asyncOperation.status).toEqual('RUNNER_FAILED');
   });
 
   it('updates the output field in DynamoDB', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      const parsedOutput = JSON.parse(dynamoDbItem.output.S);
+      const parsedOutput = JSON.parse(asyncOperation.output);
 
       expect(parsedOutput.message).toContain('Function not found');
     }
@@ -83,6 +83,6 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
 
   it('updates the updatedAt field in DynamoDB', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
-    else expect(dynamoDbItem.updatedAt.N).toBeGreaterThan(dynamoDbItem.createdAt.N);
+    else expect(asyncOperation.updatedAt).toBeGreaterThan(asyncOperation.createdAt);
   });
 });

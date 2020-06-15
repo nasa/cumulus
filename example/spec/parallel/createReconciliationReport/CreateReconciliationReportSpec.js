@@ -133,7 +133,6 @@ async function updateGranuleFile(granuleId, granuleFiles, regex, replacement) {
 
 describe('When there are granule differences and granule reconciliation is run', () => {
   let asyncOperationId;
-  let asyncOperationsTableName;
   let cmrGranule;
   let collectionId;
   let config;
@@ -162,8 +161,6 @@ describe('When there are granule differences and granule reconciliation is run',
     granuleModel = new Granule();
 
     process.env.ReconciliationReportsTable = `${config.stackName}-ReconciliationReportsTable`;
-    asyncOperationsTableName = `${config.stackName}-AsyncOperationsTable`;
-
     process.env.CMR_ENVIRONMENT = 'UAT';
 
     // Find a protected bucket
@@ -225,14 +222,14 @@ describe('When there are granule differences and granule reconciliation is run',
   });
 
   it('generates reconciliation report through the Cumulus API', async () => {
-    const dynamoDbItem = await waitForAsyncOperationStatus({
-      TableName: asyncOperationsTableName,
+    const asyncOperation = await waitForAsyncOperationStatus({
       id: asyncOperationId,
       status: 'SUCCEEDED',
+      stackName: config.stackName,
       retries: 100
     });
 
-    reportRecord = JSON.parse(dynamoDbItem.output.S);
+    reportRecord = JSON.parse(asyncOperation.output);
   });
 
   it('fetches a reconciliation report through the Cumulus API', async () => {
