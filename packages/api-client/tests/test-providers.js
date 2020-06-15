@@ -4,13 +4,11 @@ const test = require('ava');
 const rewire = require('rewire');
 const providerRewire = rewire('../providers');
 
-
 test.before(async (t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.testProviderId = 'testProviderId';
   t.context.testProvider = '{ some: "providerObject" }';
 });
-
 
 test('createProvider calls the callback with the expected object', async (t) => {
   const expected = {
@@ -38,7 +36,6 @@ test('createProvider calls the callback with the expected object', async (t) => 
     revertCallback();
   }
 });
-
 
 test('deleteProvider calls the callback with the expected object', async (t) => {
   const expected = {

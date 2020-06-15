@@ -119,13 +119,13 @@ class Pdr extends Manager {
       updateParams.ConditionExpression = 'execution <> :execution OR progress < :progress';
       try {
         return await this.dynamodbDocClient.update(updateParams).promise();
-      } catch (err) {
-        if (err.name && err.name.includes('ConditionalCheckFailedException')) {
+      } catch (error) {
+        if (error.name && error.name.includes('ConditionalCheckFailedException')) {
           const executionArn = getMessageExecutionArn(cumulusMessage);
           log.info(`Did not process delayed 'running' event for PDR: ${pdrRecord.pdrName} (execution: ${executionArn})`);
           return null;
         }
-        throw err;
+        throw error;
       }
     }
     return this.dynamodbDocClient.update(updateParams).promise();

@@ -21,6 +21,7 @@ const {
   removeNilProperties,
   renameProperty
 } = require('@cumulus/common/util');
+const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
 const {
   DeletePublishedGranule
 } = require('@cumulus/errors');
@@ -214,13 +215,18 @@ class Granule extends Manager {
   async move(g, destinations, distEndpoint) {
     log.info(`granules.move ${g.granuleId}`);
 
+    const distributionBucketMap = await s3Utils.getJsonS3Object(
+      process.env.system_bucket,
+      getDistributionBucketMapKey(process.env.stackName)
+    );
     const updatedFiles = await moveGranuleFiles(g.files, destinations);
 
     await cmrUtils.reconcileCMRMetadata({
       granuleId: g.granuleId,
       updatedFiles,
       distEndpoint,
-      published: g.published
+      published: g.published,
+      distributionBucketMap
     });
 
     return this.update(
@@ -451,8 +457,8 @@ class Granule extends Manager {
     let executionDescription;
     try {
       executionDescription = await StepFunctions.describeExecution({ executionArn });
-    } catch (err) {
-      log.error(`Could not describe execution ${executionArn}`, err);
+    } catch (error) {
+      log.error(`Could not describe execution ${executionArn}`, error);
     }
 
     const promisedGranuleRecords = granules
@@ -464,9 +470,9 @@ class Granule extends Manager {
             executionUrl,
             executionDescription
           );
-        } catch (err) {
+        } catch (error) {
           log.error(
-            'Error handling granule records: ', err,
+            'Error handling granule records: ', error,
             'Execution message: ', cumulusMessage
           );
           return null;
@@ -504,10 +510,10 @@ class Granule extends Manager {
       }
 
       await this.dynamodbDocClient.update(updateParams).promise();
-    } catch (err) {
+    } catch (error) {
       log.error(
         'Could not store granule record: ', granuleRecord,
-        err
+        error
       );
     }
   }

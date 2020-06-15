@@ -155,9 +155,9 @@ async function getFileMetadata(file) {
       size: headObjectResponse.ContentLength,
       LastModified: headObjectResponse.LastModified
     };
-  } catch (err) {
+  } catch (error) {
     log.error(`Failed to headObject the object at ${Bucket}/${Key} in s3.`);
-    throw (err);
+    throw (error);
   }
 }
 

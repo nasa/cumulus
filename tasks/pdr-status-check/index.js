@@ -134,11 +134,11 @@ function buildOutput(event, groupedExecutions) {
  */
 function describeExecutionStatus(executionArn) {
   return StepFunctions.describeExecution({ executionArn })
-    .catch((e) => {
-      if (e.code === 'ExecutionDoesNotExist') {
+    .catch((error) => {
+      if (error.code === 'ExecutionDoesNotExist') {
         return { executionArn: executionArn, status: 'RUNNING' };
       }
-      throw e;
+      throw error;
     });
 }
 /**

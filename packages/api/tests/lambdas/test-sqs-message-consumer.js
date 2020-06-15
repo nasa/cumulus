@@ -1,5 +1,6 @@
 'use strict';
 
+const delay = require('delay');
 const sinon = require('sinon');
 const test = require('ava');
 const range = require('lodash/range');
@@ -10,7 +11,6 @@ const {
   putJsonS3Object,
   recursivelyDeleteS3Bucket
 } = require('@cumulus/aws-client/S3');
-const { sleep } = require('@cumulus/common/util');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const Rule = require('../../models/rules');
 const { fakeRuleFactoryV2, createSqsQueues, getSqsQueueMessageCounts } = require('../../lib/testUtils');
@@ -257,7 +257,7 @@ test.serial('messages are retried the correct number of times based on the rule 
 
   /* eslint-disable no-await-in-loop */
   for (let i = 0; i < queueMaxReceiveCount; i += 1) {
-    await sleep(visibilityTimeout * 1000);
+    await delay(visibilityTimeout * 1000);
     await handler(event);
   }
   /* eslint-enable no-await-in-loop */

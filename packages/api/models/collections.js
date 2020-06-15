@@ -25,8 +25,8 @@ function checkRegex(regex, sampleFileName, regexFieldName = 'regex') {
   let matchingRegex;
   try {
     matchingRegex = new RegExp(regex);
-  } catch (err) {
-    throw new InvalidRegexError(`Invalid ${regexFieldName}: ${err.message}`);
+  } catch (error) {
+    throw new InvalidRegexError(`Invalid ${regexFieldName}: ${error.message}`);
   }
 
   const match = sampleFileName.match(matchingRegex);
@@ -47,10 +47,10 @@ async function publishCollectionSnsMessage(collectionRecord) {
   try {
     const collectionSnsTopicArn = process.env.collection_sns_topic_arn;
     await publishSnsMessage(collectionSnsTopicArn, collectionRecord);
-  } catch (err) {
+  } catch (error) {
     log.warn(
-      `Failed to create record for collection ${collectionRecord.record.name} ${collectionRecord.record.version}: ${err.message}`,
-      'Cause: ', err,
+      `Failed to create record for collection ${collectionRecord.record.name} ${collectionRecord.record.version}: ${error.message}`,
+      'Cause: ', error,
       'Collection record: ', collectionRecord
     );
   }

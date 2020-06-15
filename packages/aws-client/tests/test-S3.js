@@ -210,8 +210,8 @@ test('downloadS3File rejects promise if key not found', async (t) => {
 
   try {
     await downloadS3File({ Bucket, Key: 'not-gonna-find-it' }, '/tmp/wut');
-  } catch (err) {
-    t.is(err.message, 'The specified key does not exist.');
+  } catch (error) {
+    t.is(error.message, 'The specified key does not exist.');
   }
 });
 

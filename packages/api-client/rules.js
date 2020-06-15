@@ -113,7 +113,6 @@ const deleteRule = async ({ prefix, ruleName, callback = invokeApi }) => callbac
   }
 });
 
-
 /**
  * Rerun a rule via the API.
  *

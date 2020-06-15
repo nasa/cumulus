@@ -39,6 +39,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/aws-client": "1.23.2",
+    "@cumulus/common": "1.23.2",
     "@cumulus/message": "1.23.2"
   }
 }

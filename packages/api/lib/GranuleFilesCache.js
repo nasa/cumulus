@@ -76,7 +76,7 @@ const batchWriteItems = (items) =>
  */
 const batchUpdate = async (params = {}) => {
   const requestItems = [];
-  const errors = [];
+  let errors = [];
 
   get(params, 'puts', []).forEach((file) => {
     try {
@@ -113,8 +113,11 @@ const batchUpdate = async (params = {}) => {
       batchWriteItems,
       { stopOnError: false }
     );
-  } catch (batchWriteErrors) {
-    Array.from(batchWriteErrors).forEach((error) => errors.push(error));
+  } catch (error) {
+    errors = [
+      ...errors,
+      ...Array.from(error)
+    ];
   }
 
   if (errors.length > 0) throw new AggregateError(errors);

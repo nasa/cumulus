@@ -28,6 +28,7 @@ test.beforeEach((t) => {
   t.context.granId = randomId('granuleId');
   t.context.distEndpoint = randomId('https://example.com/');
   t.context.published = true;
+  t.context.distributionBucketMap = {};
 });
 
 test.after.always(async (t) => {
@@ -69,7 +70,8 @@ test('reconcileCMRMetadata calls updateCMRMetadata if metadatafile present', asy
   const {
     granId,
     distEndpoint,
-    published
+    published,
+    distributionBucketMap
   } = t.context;
 
   const fakeUpdateCMRMetadata = sinon.fake.resolves(true);
@@ -79,7 +81,8 @@ test('reconcileCMRMetadata calls updateCMRMetadata if metadatafile present', asy
     granuleId: granId,
     updatedFiles,
     distEndpoint,
-    published
+    published,
+    distributionBucketMap
   };
 
   const results = await cmrUtils.reconcileCMRMetadata(params);
@@ -91,7 +94,8 @@ test('reconcileCMRMetadata calls updateCMRMetadata if metadatafile present', asy
       cmrFile: updatedFiles[1],
       files: updatedFiles,
       distEndpoint,
-      published
+      published,
+      distributionBucketMap
     })
   );
 
@@ -128,7 +132,7 @@ test('reconcileCMRMetadata logs an error if multiple metadatafiles present.', as
 test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XML2CMR if xml metadata present and publish is false', async (t) => {
   // arrange
   const updatedFiles = [{ filename: 'anotherfile' }, { filename: 'cmrmeta.cmr.xml' }];
-  const { granId, distEndpoint } = t.context;
+  const { granId, distEndpoint, distributionBucketMap } = t.context;
   const published = false;
   const fakeBuckets = { private: { type: 'private', name: 'private' } };
   const fakeBucketsConfigJsonObject = sinon.fake.returns(fakeBuckets);
@@ -146,7 +150,8 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
       granuleId: granId,
       updatedFiles,
       distEndpoint,
-      published
+      published,
+      distributionBucketMap
     });
 
     const paramsIntoUpdateEcho10XML = {
@@ -154,7 +159,8 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
       files: updatedFiles,
       distEndpoint,
       cmrGranuleUrlType: 'distribution',
-      buckets: new BucketsConfig(fakeBuckets)
+      buckets: new BucketsConfig(fakeBuckets),
+      distributionBucketMap
     };
 
     // assert
@@ -175,7 +181,8 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
   const {
     granId,
     distEndpoint,
-    published
+    published,
+    distributionBucketMap
   } = t.context;
 
   const fakeMetadataObject = { fake: 'metadata' };
@@ -189,7 +196,6 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
   const fakeBuckets = { private: { type: 'private', name: 'private' } };
   const fakeBucketsConfigJsonObject = sinon.fake.returns(fakeBuckets);
   const restoreBucketsConfigDefaults = cmrUtils.__set__('getBucketsConfigJson', fakeBucketsConfigJsonObject);
-
 
   const bucket = randomId('bucket');
   const stackName = randomId('stack');
@@ -205,7 +211,8 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
     granuleId: granId,
     updatedFiles,
     distEndpoint,
-    published
+    published,
+    distributionBucketMap
   });
 
   const paramsIntoUpdateEcho10XML = {
@@ -213,7 +220,8 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
     files: updatedFiles,
     distEndpoint,
     cmrGranuleUrlType: 'distribution',
-    buckets: new BucketsConfig(fakeBuckets)
+    buckets: new BucketsConfig(fakeBuckets),
+    distributionBucketMap
   };
 
   t.deepEqual(paramsIntoUpdateEcho10XML, fakeUpdateCMRMetadata.firstCall.args[0]);
@@ -239,7 +247,8 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
   const {
     granId,
     distEndpoint,
-    published
+    published,
+    distributionBucketMap
   } = t.context;
 
   const defaultBucketsConfig = { private: { type: 'private', name: 'private' } };
@@ -251,7 +260,6 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
 
   const fakePublishUMMGJSON2CMR = sinon.fake.resolves({ });
   const restorePublishUMMGJSON2CMR = cmrUtils.__set__('publishUMMGJSON2CMR', fakePublishUMMGJSON2CMR);
-
   const publishObject = {
     filename: jsonCMRFile.filename,
     metadataObject: { fake: 'metadata' },
@@ -269,7 +277,8 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
     granuleId: granId,
     updatedFiles,
     distEndpoint,
-    published
+    published,
+    distributionBucketMap
   });
 
   const paramsIntoUpdateUMMG = {
@@ -277,7 +286,8 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
     files: updatedFiles,
     distEndpoint,
     cmrGranuleUrlType: 'distribution',
-    buckets
+    buckets,
+    distributionBucketMap
   };
 
   // assert

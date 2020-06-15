@@ -185,12 +185,12 @@ class EarthdataLogin extends OAuth2 {
         // expires_in value is in seconds
         expirationTime: moment().unix() + parsedResponseBody.expires_in
       };
-    } catch (err) {
-      if (isHttpBadRequestError(err)) {
+    } catch (error) {
+      if (isHttpBadRequestError(error)) {
         throw new OAuth2AuthenticationFailure();
       }
 
-      throw new OAuth2AuthenticationError(err.message);
+      throw new OAuth2AuthenticationError(error.message);
     }
   }
 
@@ -217,12 +217,12 @@ class EarthdataLogin extends OAuth2 {
         username: parsedResponseBody.endpoint.split('/').pop(),
         expirationTime: moment().unix() + parsedResponseBody.expires_in
       };
-    } catch (err) {
-      if (isHttpBadRequestError(err)) {
+    } catch (error) {
+      if (isHttpBadRequestError(error)) {
         throw new OAuth2AuthenticationFailure();
       }
 
-      throw new OAuth2AuthenticationError(err.message);
+      throw new OAuth2AuthenticationError(error.message);
     }
   }
 
