@@ -468,14 +468,31 @@ class Granule extends Manager {
 
     const promisedGranuleRecords = granules
       .map(
-        (granule) =>
-          Granule.generateGranuleRecord({
-            s3: awsClients.s3(),
-            granule,
-            message: cumulusMessage,
-            executionUrl,
-            executionDescription
-          })
+        async (granule) => {
+          try {
+            return await Granule.generateGranuleRecord({
+              s3: awsClients.s3(),
+              granule,
+              message: cumulusMessage,
+              executionUrl,
+              executionDescription
+            });
+          } catch (error) {
+            log.logAdditionalKeys(
+              {
+                error: {
+                  name: error.name,
+                  message: error.message,
+                  stack: error.stack.split('\n')
+                },
+                cumulusMessage
+              },
+              'Unable to get granule records from Cumulus Message'
+            );
+
+            return undefined;
+          }
+        }
       );
 
     const granuleRecords = await Promise.all(promisedGranuleRecords);
