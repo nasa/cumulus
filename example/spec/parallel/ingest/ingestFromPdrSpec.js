@@ -389,9 +389,9 @@ describe('Ingesting from PDR', () => {
 
           try {
             executionStatus = JSON.parse(executionStatusResponse.body);
-          } catch (e) {
+          } catch (error) {
             console.log(`Error parsing JSON ${executionStatusResponse}`);
-            throw e;
+            throw error;
           }
         });
 

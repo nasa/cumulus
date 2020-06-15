@@ -55,13 +55,13 @@ async function getEarthdataAccessToken({
   try {
     const loginResponse = await got.post(authorizeUrl, requestOptions);
     redirectUrl = loginResponse.headers.location;
-  } catch (err) {
-    if (err.statusCode === 401) {
+  } catch (error) {
+    if (error.statusCode === 401) {
       throw new Error(
         'Unauthorized: Check that your EARTHDATA_USERNAME and EARTHDATA_PASSWORD values can be used for log into the Earthdata app specified by the EARTHDATA_CLIENT_ID'
       );
     }
-    throw err;
+    throw error;
   }
 
   if (!redirectUrl.includes(redirectUri)) {

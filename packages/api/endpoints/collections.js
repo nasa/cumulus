@@ -71,8 +71,8 @@ async function get(req, res) {
     const result = await c.get({ name, version });
     // const stats = await collection.getStats([res], [res.name]);
     return res.send(result);
-  } catch (e) {
-    return res.boom.notFound(e.message);
+  } catch (error) {
+    return res.boom.notFound(error.message);
   }
 }
 
@@ -98,8 +98,8 @@ async function post(req, res) {
     try {
       await c.get({ name, version });
       return res.boom.conflict(`A record already exists for ${name} version: ${version}`);
-    } catch (e) {
-      if (e instanceof RecordDoesNotExist) {
+    } catch (error) {
+      if (error instanceof RecordDoesNotExist) {
         await c.create(data);
 
         if (inTestMode()) {
@@ -108,18 +108,18 @@ async function post(req, res) {
 
         return res.send({ message: 'Record saved', record: data });
       }
-      throw e;
+      throw error;
     }
-  } catch (e) {
+  } catch (error) {
     if (
-      isBadRequestError(e)
-      || e instanceof InvalidRegexError
-      || e instanceof UnmatchedRegexError
+      isBadRequestError(error)
+      || error instanceof InvalidRegexError
+      || error instanceof UnmatchedRegexError
     ) {
-      return res.boom.badRequest(e.message);
+      return res.boom.badRequest(error.message);
     }
-    log.error('Error occurred while trying to create collection:', e);
-    return res.boom.badImplementation(e.message);
+    log.error('Error occurred while trying to create collection:', error);
+    return res.boom.badImplementation(error.message);
   }
 }
 
@@ -176,12 +176,12 @@ async function del(req, res) {
     }
 
     return res.send({ message: 'Record deleted' });
-  } catch (err) {
-    if (err instanceof AssociatedRulesError) {
-      const message = `Cannot delete collection with associated rules: ${err.rules.join(', ')}`;
+  } catch (error) {
+    if (error instanceof AssociatedRulesError) {
+      const message = `Cannot delete collection with associated rules: ${error.rules.join(', ')}`;
       return res.boom.conflict(message);
     }
-    throw err;
+    throw error;
   }
 }
 

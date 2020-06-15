@@ -61,9 +61,9 @@ async function incrementAndDispatch(queueMessage) {
   // manually.
   try {
     return await dispatch(queueMessage);
-  } catch (err) {
+  } catch (error) {
     await decrementQueueSemaphore(queueName);
-    throw err;
+    throw error;
   }
 }
 

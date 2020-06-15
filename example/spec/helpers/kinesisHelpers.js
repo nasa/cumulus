@@ -31,8 +31,8 @@ async function tryCatchExit(cleanupCallback, wrappedFunction, ...args) { // esli
     console.log("Tests conditions can't get met...exiting.");
     try {
       await cleanupCallback();
-    } catch (e) {
-      console.log(`Cleanup failed, ${e}.   Stack may need to be manually cleaned up.`);
+    } catch (error_) {
+      console.log(`Cleanup failed, ${error_}.   Stack may need to be manually cleaned up.`);
     }
     // We should find a better way to do this
     process.exit(1); // eslint-disable-line no-process-exit
@@ -138,13 +138,13 @@ async function createOrUseTestStream(streamName) {
 
   try {
     stream = await kinesis.describeStream({ StreamName: streamName }).promise();
-  } catch (err) {
-    if (err.code === 'ResourceNotFoundException') {
+  } catch (error) {
+    if (error.code === 'ResourceNotFoundException') {
       console.log('Creating a new stream:', streamName);
       stream = await createKinesisStream(streamName);
     } else {
-      console.log(`describeStream error ${err}`);
-      throw err;
+      console.log(`describeStream error ${error}`);
+      throw error;
     }
   }
   return stream;

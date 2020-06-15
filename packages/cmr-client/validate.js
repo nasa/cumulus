@@ -28,8 +28,8 @@ async function validate(type, xml, identifier, provider) {
     if (result.statusCode === 200) {
       return true;
     }
-  } catch (e) {
-    result = e.response;
+  } catch (error) {
+    result = error.response;
   }
 
   const parsed = await parseXMLString(result.body);

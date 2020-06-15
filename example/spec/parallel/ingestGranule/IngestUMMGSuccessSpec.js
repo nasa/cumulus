@@ -318,8 +318,8 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         ]);
 
         resourceURLs = onlineResources.map((resource) => resource.URL);
-      } catch (e) {
-        beforeAllError = e;
+      } catch (error) {
+        beforeAllError = error;
       }
     });
 

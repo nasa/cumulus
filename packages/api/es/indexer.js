@@ -72,7 +72,7 @@ function parsePayload(payload) {
     }
     // level is number in elasticsearch
     if (isString(record.level)) record.level = log.convertLogLevel(record.level);
-  } catch (e) {
+  } catch (error) {
     record = {
       message: payload.message.trim(),
       sender: payload.sender,
@@ -360,7 +360,7 @@ function logHandler(event, context, cb) {
       return indexLog(undefined, logs.logEvents)
         .then((s) => cb(null, s))
         .catch(cb);
-    } catch (err) {
+    } catch (error) {
       log.error(e);
       return cb(null);
     }

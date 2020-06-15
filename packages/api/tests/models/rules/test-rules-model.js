@@ -457,8 +457,8 @@ test.serial('Creating a kinesis rule where an event source mapping already exist
   try {
     await rulesModel.create(item);
     t.pass();
-  } catch (err) {
-    t.fail(err);
+  } catch (error) {
+    t.fail(error);
   } finally {
     lambdaStub.restore();
   }

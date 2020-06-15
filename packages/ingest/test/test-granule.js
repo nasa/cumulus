@@ -71,7 +71,7 @@ test('moveGranuleFile overwrites existing file by default', async (t) => {
 
   try {
     await moveGranuleFile(source, target);
-  } catch (err) {
+  } catch (error) {
     t.fail();
   } finally {
     const objects = await s3().listObjects({ Bucket: destBucket }).promise();

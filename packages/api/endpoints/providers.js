@@ -69,8 +69,8 @@ async function post(req, res) {
       // make sure the record doesn't exist
       await providerModel.get({ id });
       return res.boom.conflict(`A record already exists for ${id}`);
-    } catch (e) {
-      if (e instanceof RecordDoesNotExist) {
+    } catch (error) {
+      if (error instanceof RecordDoesNotExist) {
         const record = await providerModel.create(data);
 
         if (inTestMode()) {
@@ -78,14 +78,14 @@ async function post(req, res) {
         }
         return res.send({ record, message: 'Record saved' });
       }
-      throw e;
+      throw error;
     }
-  } catch (err) {
-    if (isBadRequestError(err)) {
-      return res.boom.badRequest(err.message);
+  } catch (error) {
+    if (isBadRequestError(error)) {
+      return res.boom.badRequest(error.message);
     }
-    log.error('Error occurred while trying to create provider:', err);
-    return res.boom.badImplementation(err.message);
+    log.error('Error occurred while trying to create provider:', error);
+    return res.boom.badImplementation(error.message);
   }
 }
 
@@ -138,12 +138,12 @@ async function del(req, res) {
       }, { ignore: [404] });
     }
     return res.send({ message: 'Record deleted' });
-  } catch (err) {
-    if (err instanceof AssociatedRulesError) {
-      const message = `Cannot delete provider with associated rules: ${err.rules.join(', ')}`;
+  } catch (error) {
+    if (error instanceof AssociatedRulesError) {
+      const message = `Cannot delete provider with associated rules: ${error.rules.join(', ')}`;
       return res.boom.conflict(message);
     }
-    throw err;
+    throw error;
   }
 }
 

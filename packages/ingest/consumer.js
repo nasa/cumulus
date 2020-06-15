@@ -25,8 +25,8 @@ class Consumer {
       await fn(message);
       if (this.deleteProcessedMessage) await deleteSQSMessage(this.queueUrl, message.ReceiptHandle);
       return 1;
-    } catch (e) {
-      log.error(e);
+    } catch (error) {
+      log.error(error);
       return 0;
     }
   }
