@@ -263,8 +263,10 @@ test.serial('The AsyncOperation.start() method returns the newly-generated recor
 test('getLambdaEnvironmentVariables returns formatted environment variables', async (t) => {
   const vars = await asyncOperationModel.getLambdaEnvironmentVariables('name');
 
-  t.true(vars.includes({ name: 'ES_HOST', value: 'es-host' }));
-  t.true(vars.includes({ name: 'AsyncOperationsTable', value: 'async-operations-table' }));
+  t.deepEqual(new Set(vars), new Set([
+    { name: 'ES_HOST', value: 'es-host' },
+    { name: 'AsyncOperationsTable', value: 'async-operations-table' }
+  ]));
 });
 
 test.serial('ECS task params contain lambda environment variables when flag is set', async (t) => {
