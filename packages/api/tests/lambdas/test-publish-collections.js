@@ -38,7 +38,7 @@ test.before(async (t) => {
 test.after.always(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
 
-  Promise.all([
+  await Promise.all([
     sqs().deleteQueue({ QueueUrl }).promise(),
     sns().deleteTopic({ TopicArn }).promise()
   ]);
