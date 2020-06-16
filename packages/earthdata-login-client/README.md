@@ -39,19 +39,16 @@ const client = new EarthdataLogin({
 <a name="EarthdataLoginClient"></a>
 
 ## EarthdataLoginClient
-This is an interface to the Earthdata Login service.
+A client for the Earthdata Login API
 
 **Kind**: global class  
 
 * [EarthdataLoginClient](#EarthdataLoginClient)
     * [new EarthdataLoginClient(params)](#new_EarthdataLoginClient_new)
-    * _instance_
-        * [.getAuthorizationUrl([state])](#EarthdataLoginClient+getAuthorizationUrl) ⇒ <code>string</code>
-        * [.getAccessToken(authorizationCode)](#EarthdataLoginClient+getAccessToken) ⇒ <code>Promise.&lt;Object&gt;</code>
-        * [.refreshAccessToken(refreshToken)](#EarthdataLoginClient+refreshAccessToken) ⇒ <code>Promise.&lt;Object&gt;</code>
-        * [.getTokenUsername(params)](#EarthdataLoginClient+getTokenUsername) ⇒ <code>Promise.&lt;string&gt;</code>
-    * _static_
-        * [.createFromEnv(params)](#EarthdataLoginClient.createFromEnv) ⇒ [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)
+    * [.getAuthorizationUrl([state])](#EarthdataLoginClient+getAuthorizationUrl) ⇒ <code>string</code>
+    * [.getAccessToken(authorizationCode)](#EarthdataLoginClient+getAccessToken) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.refreshAccessToken(refreshToken)](#EarthdataLoginClient+refreshAccessToken) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.getTokenUsername(params)](#EarthdataLoginClient+getTokenUsername) ⇒ <code>Promise.&lt;string&gt;</code>
 
 <a name="new_EarthdataLoginClient_new"></a>
 
@@ -139,19 +136,6 @@ Query the Earthdata Login API for the UID associated with a token
 | params | <code>Object</code> |  |
 | params.onBehalfOf | <code>string</code> | the Earthdata Login client id of the   app requesting the username |
 | params.token | <code>string</code> | the Earthdata Login token |
-
-<a name="EarthdataLoginClient.createFromEnv"></a>
-
-### EarthdataLoginClient.createFromEnv(params) ⇒ [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)
-Create Earthdata login client using environment variables.
-
-**Kind**: static method of [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)  
-**Returns**: [<code>EarthdataLoginClient</code>](#EarthdataLoginClient) - An Earthdata login client  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| params | <code>Object</code> |  |
-| params.redirectUri | <code>string</code> | The redirect URL to use for the Earthdata login client |
 
 
 ## About Cumulus

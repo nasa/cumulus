@@ -26,7 +26,10 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 const log = new Logger({ sender: 's3credentials' });
 
 const buildEarthdataLoginClient = () =>
-  EarthdataLoginClient.createFromEnv({
+  new EarthdataLoginClient({
+    clientId: process.env.EARTHDATA_CLIENT_ID,
+    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
+    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT
   });
 

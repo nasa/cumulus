@@ -45,36 +45,9 @@ const validateUrl = (urlString: string) => {
 };
 
 /**
- * This is an interface to the Earthdata Login service.
+ * A client for the Earthdata Login API
  */
 export class EarthdataLoginClient {
-  /**
-   * Create Earthdata login client using environment variables.
-   *
-   * @param {Object} params
-   * @param {string} params.redirectUri
-   *   The redirect URL to use for the Earthdata login client
-   *
-   * @returns {EarthdataLoginClient}
-   *   An Earthdata login client
-   */
-  static createFromEnv(params: { redirectUri: string }) {
-    if (!process.env.EARTHDATA_CLIENT_ID) {
-      throw new TypeError('EARTHDATA_CLIENT_ID environment variable is required');
-    }
-
-    if (!process.env.EARTHDATA_CLIENT_PASSWORD) {
-      throw new TypeError('EARTHDATA_CLIENT_PASSWORD environment variable is required');
-    }
-
-    return new EarthdataLoginClient({
-      clientId: process.env.EARTHDATA_CLIENT_ID,
-      clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
-      earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
-      redirectUri: params.redirectUri
-    });
-  }
-
   readonly clientId: string;
   readonly clientPassword: string;
   readonly earthdataLoginUrl: string;
