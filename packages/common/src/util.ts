@@ -134,7 +134,7 @@ export const negate = (predicate) => {
 /**
  * Test if a value is null
  *
- * @param {u} x value to check
+ * @param {*} x - value to check
  * @returns {boolean}
  *
  * @alias module:util
