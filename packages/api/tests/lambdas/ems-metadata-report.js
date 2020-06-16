@@ -93,10 +93,12 @@ test.beforeEach(async (t) => {
   await addTestCollections();
 });
 
-test.afterEach.always((t) => {
-  Promise.all([
+test.afterEach.always(async (t) => {
+  await Promise.all([
     recursivelyDeleteS3Bucket(process.env.system_bucket),
-    t.context.collectionModel.deleteTable()]);
+    t.context.collectionModel.deleteTable()
+  ]);
+
   CMR.prototype.searchCollections.restore();
   CMRSearchConceptQueue.prototype.peek.restore();
   CMRSearchConceptQueue.prototype.shift.restore();

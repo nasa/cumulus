@@ -38,6 +38,7 @@ module.exports = {
     'jsdoc',
     'lodash',
     'node',
+    'promise',
     'unicorn'
   ],
   extends: [
@@ -47,6 +48,7 @@ module.exports = {
     'plugin:import/warnings',
     'plugin:lodash/recommended',
     'plugin:node/recommended',
+    'plugin:promise/recommended',
     'plugin:unicorn/recommended'
   ],
   parser: 'babel-eslint',
