@@ -2,8 +2,6 @@ import got, { CancelableRequest, HTTPError, Response } from 'got';
 import { URL } from 'url';
 
 import { EarthdataLoginError } from './EarthdataLoginError';
-import { OAuth2AuthenticationError } from './OAuth2AuthenticationError';
-import { OAuth2AuthenticationFailure } from './OAuth2AuthenticationFailure';
 
 type AccessTokenResponse = Response<{
   access_token: string,
@@ -15,17 +13,6 @@ type AccessTokenResponse = Response<{
 type VerifyTokenResponse = Response<{uid: string}>;
 
 type EarthdataLoginErrorResponse = Response<{error: string}>;
-
-// type GetAccessTokenResponse = {
-//   body: {
-//     access_token: string,
-//     refresh_token: string
-//   }
-// };
-
-// type GetTokenUsernameResponseBody = {
-//   uid: string
-// };
 
 const encodeCredentials = (username: string, password: string) =>
   Buffer.from(`${username}:${password}`).toString('base64');
@@ -94,7 +81,7 @@ export class EarthdataLoginClient {
   readonly redirectUri: string;
 
   /**
-   * @param {Object} params - params
+   * @param {Object} params
    * @param {string} params.clientId - see example
    * @param {string} params.clientPassword - see example
    * @param {string} params.earthdataLoginUrl - see example
@@ -199,10 +186,10 @@ export class EarthdataLoginClient {
       };
     } catch (error) {
       if (isHttpBadRequestError(error)) {
-        throw new OAuth2AuthenticationFailure();
+        throw new EarthdataLoginError('BadRequest', error.message);
       }
 
-      throw new OAuth2AuthenticationError(error.message);
+      throw new EarthdataLoginError('Unknown', error.message);
     }
   }
 
@@ -232,10 +219,10 @@ export class EarthdataLoginClient {
       };
     } catch (error) {
       if (isHttpBadRequestError(error)) {
-        throw new OAuth2AuthenticationFailure();
+        throw new EarthdataLoginError('BadRequest', error.message);
       }
 
-      throw new OAuth2AuthenticationError(error.message);
+      throw new EarthdataLoginError('Unknown', error.message);
     }
   }
 

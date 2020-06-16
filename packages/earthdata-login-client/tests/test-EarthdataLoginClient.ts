@@ -1,13 +1,10 @@
 import cryptoRandomString from 'crypto-random-string';
 import nock from 'nock';
 import test from 'ava';
-// import moment from 'moment';
 import { URL, URLSearchParams } from 'url';
 
 import {
   EarthdataLoginClient,
-  OAuth2AuthenticationError,
-  OAuth2AuthenticationFailure,
   EarthdataLoginError
 } from '../src';
 
@@ -266,7 +263,7 @@ test('EarthdataLogin.getAccessToken() returns token information for a valid auth
   t.is(username, 'sidney');
 });
 
-test('EarthdataLogin.getAccessToken() throws an OAuth2AuthenticationFailure error for an invalid authorizationCode', async (t) => {
+test('EarthdataLogin.getAccessToken() throws an EarthdataLoginError error for an invalid authorizationCode', async (t) => {
   const earthdataLoginClient = buildEarthdataLoginClient();
 
   nockEarthdataLoginCall({
@@ -277,11 +274,11 @@ test('EarthdataLogin.getAccessToken() throws an OAuth2AuthenticationFailure erro
 
   await t.throwsAsync(
     () => earthdataLoginClient.getAccessToken('authorization-code'),
-    { instanceOf: OAuth2AuthenticationFailure }
+    { instanceOf: EarthdataLoginError }
   );
 });
 
-test('EarthdataLogin.getAccessToken() throws an OAuth2AuthenticationError error if there is a problem with the Earthdata Login service', async (t) => {
+test('EarthdataLogin.getAccessToken() throws an EarthdataLoginError error if there is a problem with the Earthdata Login service', async (t) => {
   const earthdataLoginClient = buildEarthdataLoginClient();
 
   nockEarthdataLoginCall({
@@ -292,7 +289,7 @@ test('EarthdataLogin.getAccessToken() throws an OAuth2AuthenticationError error 
 
   await t.throwsAsync(
     () => earthdataLoginClient.getAccessToken('authorization-code'),
-    { instanceOf: OAuth2AuthenticationError }
+    { instanceOf: EarthdataLoginError }
   );
 });
 
@@ -381,7 +378,7 @@ test('EarthdataLogin.refreshAccessToken() returns token information for a valid 
   t.is(username, 'sidney');
 });
 
-test('EarthdataLogin.refreshAccessToken() throws an OAuth2AuthenticationFailure error for an invalid refreshToken', async (t) => {
+test('EarthdataLogin.refreshAccessToken() throws an EarthdataLoginError error for an invalid refreshToken', async (t) => {
   const earthdataLoginClient = buildEarthdataLoginClient();
 
   nockEarthdataLoginCall({
@@ -392,11 +389,11 @@ test('EarthdataLogin.refreshAccessToken() throws an OAuth2AuthenticationFailure 
 
   await t.throwsAsync(
     () => earthdataLoginClient.refreshAccessToken('invalid-refresh-token'),
-    { instanceOf: OAuth2AuthenticationFailure }
+    { instanceOf: EarthdataLoginError }
   );
 });
 
-test('EarthdataLogin.refreshAccessToken() throws an OAuth2AuthenticationError error if there is a problem with the Earthdata Login service', async (t) => {
+test('EarthdataLogin.refreshAccessToken() throws an EarthdataLoginError error if there is a problem with the Earthdata Login service', async (t) => {
   const earthdataLoginClient = buildEarthdataLoginClient();
 
   nockEarthdataLoginCall({
@@ -407,7 +404,7 @@ test('EarthdataLogin.refreshAccessToken() throws an OAuth2AuthenticationError er
 
   await t.throwsAsync(
     () => earthdataLoginClient.refreshAccessToken('refresh-token'),
-    { instanceOf: OAuth2AuthenticationError }
+    { instanceOf: EarthdataLoginError }
   );
 });
 

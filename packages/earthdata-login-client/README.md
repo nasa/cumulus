@@ -1,4 +1,4 @@
-# @cumulus/earthdata-login
+# @cumulus/earthdata-login-client
 
 Utilities for OAuth authentication using
 [NASA Earthdata Login](https://urs.earthdata.nasa.gov/).
@@ -19,6 +19,17 @@ to automatically update to new patch versions.
 
 ```bash
 npm install @cumulus/earthdata-login-client
+```
+
+```js
+const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
+
+const client = new EarthdataLogin({
+  clientId: 'my-client-id',
+  clientPassword: 'my-client-password',
+  earthdataLoginUrl: 'https://earthdata.login.nasa.gov',
+  redirectUri: 'http://my-api.com'
+});
 ```
 
 ## API
@@ -62,7 +73,7 @@ This is an interface to the Earthdata Login service.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| params | <code>Object</code> | params |
+| params | <code>Object</code> |  |
 | params.clientId | <code>string</code> | see example |
 | params.clientPassword | <code>string</code> | see example |
 | params.earthdataLoginUrl | <code>string</code> | see example |
