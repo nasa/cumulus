@@ -1,12 +1,15 @@
 # @cumulus/earthdata-login
 
-Utilities for OAuth authentication using [NASA Earthdata Login](https://urs.earthdata.nasa.gov/).
+Utilities for OAuth authentication using
+[NASA Earthdata Login](https://urs.earthdata.nasa.gov/).
 
 ## Versioning
 
-Cumulus uses a modified semantic versioning scheme and minor releases likely include breaking changes.
+Cumulus uses a modified semantic versioning scheme and minor releases likely
+include breaking changes.
 
-Before upgrade, please read the Cumulus [release notes](https://github.com/nasa/cumulus/releases) before upgraded.
+Before upgrade, please read the Cumulus
+[release notes](https://github.com/nasa/cumulus/releases) before upgraded.
 
 It is strongly recommended you do not use `^` in your `package.json` to
 automatically update to new minor versions. Instead, pin the version or use `~`
@@ -18,12 +21,135 @@ to automatically update to new patch versions.
 npm install @cumulus/earthdata-login-client
 ```
 
+## API
+
+## Classes
+
+<dl>
+<dt><a href="#EarthdataLoginClient">EarthdataLoginClient</a></dt>
+<dd><p>This is an interface to the Earthdata Login service.</p>
+</dd>
+<dt><a href="#OAuth2AuthenticationError">OAuth2AuthenticationError</a></dt>
+<dd><p>Thrown if there is an error that is not caused by bad user credentials.
+For example, getting an internal server error back from the OAuth2 server
+would result in an OAuth2AuthenticationError error being thrown.</p>
+</dd>
+<dt><a href="#OAuth2AuthenticationFailure">OAuth2AuthenticationFailure</a></dt>
+<dd><p>Thrown if there is a problem with the user&#39;s credentials.  For example,
+trying to get an access token with an expired authorization code would result
+in an OAuth2AuthenticationFailure being thrown.</p>
+</dd>
+</dl>
+
+<a name="EarthdataLoginClient"></a>
+
+## EarthdataLoginClient
+This is an interface to the Earthdata Login service.
+
+**Kind**: global class  
+
+* [EarthdataLoginClient](#EarthdataLoginClient)
+    * [new EarthdataLoginClient(params)](#new_EarthdataLoginClient_new)
+    * _instance_
+        * [.getAuthorizationUrl([state])](#EarthdataLoginClient+getAuthorizationUrl) ⇒ <code>string</code>
+        * [.getAccessToken(authorizationCode)](#EarthdataLoginClient+getAccessToken) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * _static_
+        * [.createFromEnv(params)](#EarthdataLoginClient.createFromEnv) ⇒ [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)
+
+<a name="new_EarthdataLoginClient_new"></a>
+
+### new EarthdataLoginClient(params)
+
+| Param | Type | Description |
+| --- | --- | --- |
+| params | <code>Object</code> | params |
+| params.clientId | <code>string</code> | see example |
+| params.clientPassword | <code>string</code> | see example |
+| params.earthdataLoginUrl | <code>string</code> | see example |
+| params.redirectUri | <code>string</code> | see example |
+
+**Example**  
+```js
+const oAuth2Provider = new EarthdataLogin({
+  clientId: 'my-client-id',
+  clientPassword: 'my-client-password',
+  earthdataLoginUrl: 'https://earthdata.login.nasa.gov',
+  redirectUri: 'http://my-api.com'
+});
+```
+<a name="EarthdataLoginClient+getAuthorizationUrl"></a>
+
+### earthdataLoginClient.getAuthorizationUrl([state]) ⇒ <code>string</code>
+Get a URL of the Earthdata Login authorization endpoint
+
+**Kind**: instance method of [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)  
+**Returns**: <code>string</code> - the Earthdata Login authorization URL  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [state] | <code>string</code> | an optional state to pass to Earthdata Login |
+
+<a name="EarthdataLoginClient+getAccessToken"></a>
+
+### earthdataLoginClient.getAccessToken(authorizationCode) ⇒ <code>Promise.&lt;Object&gt;</code>
+Given an authorization code, request an access token and associated
+information from the Earthdata Login service.
+
+Returns an object with the following properties:
+
+- accessToken
+- refreshToken
+- username
+- expirationTime (in seconds)
+
+**Kind**: instance method of [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - access token information  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| authorizationCode | <code>string</code> | an OAuth2 authorization code |
+
+<a name="EarthdataLoginClient.createFromEnv"></a>
+
+### EarthdataLoginClient.createFromEnv(params) ⇒ [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)
+Create Earthdata login client using environment variables.
+
+**Kind**: static method of [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)  
+**Returns**: [<code>EarthdataLoginClient</code>](#EarthdataLoginClient) - An Earthdata login client  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| params | <code>Object</code> |  |
+| params.redirectUri | <code>string</code> | The redirect URL to use for the Earthdata login client |
+
+<a name="OAuth2AuthenticationError"></a>
+
+## OAuth2AuthenticationError
+Thrown if there is an error that is not caused by bad user credentials.
+For example, getting an internal server error back from the OAuth2 server
+would result in an OAuth2AuthenticationError error being thrown.
+
+**Kind**: global class  
+<a name="OAuth2AuthenticationFailure"></a>
+
+## OAuth2AuthenticationFailure
+Thrown if there is a problem with the user's credentials.  For example,
+trying to get an access token with an expired authorization code would result
+in an OAuth2AuthenticationFailure being thrown.
+
+**Kind**: global class  
+
 ## About Cumulus
 
-Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
+Cumulus is a cloud-based data ingest, archive, distribution and management
+prototype for NASA's future Earth science data streams.
 
 [Cumulus Documentation](https://nasa.github.io/cumulus)
 
 ## Contributing
 
-To make a contribution, please [see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).
+To make a contribution, please
+[see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).
+
+---
+Generated automatically using `npm run build-docs`

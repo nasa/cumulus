@@ -23,7 +23,7 @@
     "dist/src/**/*.d.ts"
   ],
   "scripts": {
-    "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md -t templates/README.hbs *.js > README.md",
+    "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md -t templates/README.md.hbs dist/src/*.js > README.md",
     "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/ava",
     "tsc": "../../node_modules/.bin/tsc"
