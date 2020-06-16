@@ -42,9 +42,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1977**
   - Moved bulk granule deletion endpoint from `/bulkDelete` to `/granules/bulkDelete`
 
-- **CUMULUS-1997**
-  - `@cumulus/cmr-client/CMRSearchConceptQueue` parameters have been changed to take a `cmrSettings` object containing clientId, provider, and auth information. This can be generated using `@cumulus/cmrjs/cmr-utils/getCmrSettings`. The `cmrEnvironment` variable has been removed.
-
 ### Added
 
 - **CUMULUS-1958**
@@ -61,15 +58,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     internally by Core.  This object is also exposed as an output of the Cumulus
     module as `distribution_bucket_map`.
 
-- **CUMULUS-1800**
-  - Added task configuration setting named `syncChecksumFiles` to the
-    SyncGranule task. This setting is `false` by default, but when set to
-    `true`, all checksum files associated with data files that are downloaded
-    will be downloaded as well.
+### Changed
 
-- **CUMULUS-1952**
-  - Updated HTTP(S) provider client to accept username/password for Basic authorization. This change adds support for Basic Authorization such as Earthdata login redirects to ingest (i.e. as implemented in SyncGranule), but not to discovery (i.e. as implemented in DiscoverGranules). Discovery still expects the provider's file system to be publicly accessible, but not the individual files and their contents.
-  - **NOTE**: Using this in combination with the HTTP protocol may expose usernames and passwords to intermediary network entities. HTTPS is highly recommended.
 - **CUMULUS-1977**
   - Implemented POST `/granules/bulkDelete` API endpoint to support deleting granules specified by ID or returned by the provided query in the request body. If the request is successful, the endpoint returns the async operation ID that has been started to remove the granules.
     - To use a query in the request body, your deployment must be [configured to access the Elasticsearch host for ESDIS metrics](https://nasa.github.io/cumulus/docs/additional-deployment-options/cloudwatch-logs-delivery#esdis-metrics) in your environment
@@ -94,18 +84,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1982**
   - The `globalConnectionLimit` property of providers is now optional and
     defaults to "unlimited"
-- **CUMULUS-1997**
-  - Added optional `launchpad` configuration to
-    `@cumulus/hyrax-metadata-updates` task config schema.
 - **CUMULUS-2016**
   - Upgrade TEA to version 79
-
-### Fixed
-
-- **CUMULUS-1997**
-  - Updated all CMR operations to use configured authentication scheme
-- **CUMULUS-2010**
-  - Updated `@cumulus/api/launchpadSaml` to support multiple userGroup attributes from the SAML response
 
 ### Deprecated
 
@@ -211,6 +191,44 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   removed
 - The deprecated `@cumulus/common/workflows.getWorkflowTemplate` function has
   been removed
+
+## [v1.24.0] 2020-06-03
+
+### BREAKING CHANGES
+
+- **CUMULUS-1969**
+  - The `DiscoverPdrs` task now expects `provider_path` to be provided at
+    `event.config.provider_path`, not `event.config.collection.provider_path`
+  - `event.config.provider_path` is now a required parameter of the
+    `DiscoverPdrs` task
+  - `event.config.collection` is no longer a parameter to the `DiscoverPdrs`
+    task
+  - Collections no longer support the `provider_path` property. The tasks that
+    relied on that property are now referencing `config.meta.provider_path`.
+    Workflows should be updated accordingly.
+
+- **CUMULUS-1997**
+  - `@cumulus/cmr-client/CMRSearchConceptQueue` parameters have been changed to take a `cmrSettings` object containing clientId, provider, and auth information. This can be generated using `@cumulus/cmrjs/cmr-utils/getCmrSettings`. The `cmrEnvironment` variable has been removed.
+
+### Added
+
+- **CUMULUS-1800**
+  - Added task configuration setting named `syncChecksumFiles` to the
+    SyncGranule task. This setting is `false` by default, but when set to
+    `true`, all checksum files associated with data files that are downloaded
+    will be downloaded as well.
+- **CUMULUS-1952**
+  - Updated HTTP(S) provider client to accept username/password for Basic authorization. This change adds support for Basic Authorization such as Earthdata login redirects to ingest (i.e. as implemented in SyncGranule), but not to discovery (i.e. as implemented in DiscoverGranules). Discovery still expects the provider's file system to be publicly accessible, but not the individual files and their contents.
+  - **NOTE**: Using this in combination with the HTTP protocol may expose usernames and passwords to intermediary network entities. HTTPS is highly recommended.
+- **CUMULUS-1997**
+  - Added optional `launchpad` configuration to `@cumulus/hyrax-metadata-updates` task config schema.
+
+### Fixed
+
+- **CUMULUS-1997**
+  - Updated all CMR operations to use configured authentication scheme
+- **CUMULUS-2010**
+  - Updated `@cumulus/api/launchpadSaml` to support multiple userGroup attributes from the SAML response
 
 ## [v1.23.2] 2020-05-22
 

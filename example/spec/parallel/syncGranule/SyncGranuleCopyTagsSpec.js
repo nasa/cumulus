@@ -19,8 +19,8 @@ const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteS3Object, s3GetObjectTagging, s3PutObject } = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 
+const { syncGranule } = require('@cumulus/sync-granule');
 const { loadConfig } = require('../../helpers/testUtils');
-const { syncGranule } = require('../../../../tasks/sync-granule');
 
 describe('The SyncGranule task', () => {
   it('copies tags from the source files to the destination', async () => {
