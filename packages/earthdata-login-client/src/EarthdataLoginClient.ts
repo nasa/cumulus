@@ -1,35 +1,58 @@
-'use strict';
+import got, { CancelableRequest, HTTPError, Response } from 'got';
+import { URL } from 'url';
 
-const got = require('got');
-const { URL } = require('url');
+import { EarthdataLoginError } from './EarthdataLoginError';
+import { OAuth2AuthenticationError } from './OAuth2AuthenticationError';
+import { OAuth2AuthenticationFailure } from './OAuth2AuthenticationFailure';
 
-const { EarthdataLoginError } = require('./EarthdataLoginError');
-const { OAuth2AuthenticationError } = require('./OAuth2AuthenticationError');
-const { OAuth2AuthenticationFailure } = require('./OAuth2AuthenticationFailure');
+type AccessTokenResponse = Response<{
+  access_token: string,
+  refresh_token: string,
+  endpoint: string,
+  expires_in: number
+}>;
 
-const isHttpError = (error) => error.name === 'HTTPError';
+type VerifyTokenResponse = Response<{uid: string}>;
 
-const isHttpBadRequestError = (error) =>
-  isHttpError(error) && error.response.statusCode === 400;
+type EarthdataLoginErrorResponse = Response<{error: string}>;
 
-const isHttpForbiddenError = (error) =>
-  isHttpError(error) && error.response.statusCode === 403;
+// type GetAccessTokenResponse = {
+//   body: {
+//     access_token: string,
+//     refresh_token: string
+//   }
+// };
 
-const httpErrorToEarthdataLoginError = (httpError) => {
-  switch (httpError.response.body.error) {
-  case 'invalid_token':
-    return new EarthdataLoginError('InvalidToken', 'Invalid token');
-  case 'token_expired':
-    return new EarthdataLoginError('TokenExpired', 'The token has expired');
-  default:
-    return new EarthdataLoginError(
-      'UnexpectedResponse',
-      `Unexpected response: ${httpError.response.body}`
-    );
+// type GetTokenUsernameResponseBody = {
+//   uid: string
+// };
+
+const encodeCredentials = (username: string, password: string) =>
+  Buffer.from(`${username}:${password}`).toString('base64');
+
+const isHttpBadRequestError = (error: unknown) =>
+  error instanceof HTTPError && error.response.statusCode === 400;
+
+const isHttpForbiddenError = (error: unknown) =>
+  error instanceof HTTPError && error.response.statusCode === 403;
+
+const httpErrorToEarthdataLoginError = (httpError: HTTPError) => {
+  const response = <EarthdataLoginErrorResponse>httpError.response;
+
+  switch (response.body.error) {
+    case 'invalid_token':
+      return new EarthdataLoginError('InvalidToken', 'Invalid token');
+    case 'token_expired':
+      return new EarthdataLoginError('TokenExpired', 'The token has expired');
+    default:
+      return new EarthdataLoginError(
+        'UnexpectedResponse',
+        `Unexpected response: ${httpError.response.body}`
+      );
   }
 };
 
-const validateUrl = (urlString) => {
+const validateUrl = (urlString: string) => {
   // eslint-disable-next-line no-new
   new URL(urlString);
 };
@@ -37,7 +60,7 @@ const validateUrl = (urlString) => {
 /**
  * This is an interface to the Earthdata Login service.
  */
-class EarthdataLoginClient {
+export class EarthdataLoginClient {
   /**
    * Create Earthdata login client using environment variables.
    *
@@ -48,14 +71,27 @@ class EarthdataLoginClient {
    * @returns {EarthdataLoginClient}
    *   An Earthdata login client
    */
-  static createFromEnv({ redirectUri }) {
+  static createFromEnv(params: { redirectUri: string }) {
+    if (!process.env.EARTHDATA_CLIENT_ID) {
+      throw new TypeError('EARTHDATA_CLIENT_ID environment variable is required');
+    }
+
+    if (!process.env.EARTHDATA_CLIENT_PASSWORD) {
+      throw new TypeError('EARTHDATA_CLIENT_PASSWORD environment variable is required');
+    }
+
     return new EarthdataLoginClient({
       clientId: process.env.EARTHDATA_CLIENT_ID,
       clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
       earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
-      redirectUri
+      redirectUri: params.redirectUri
     });
   }
+
+  readonly clientId: string;
+  readonly clientPassword: string;
+  readonly earthdataLoginUrl: string;
+  readonly redirectUri: string;
 
   /**
    * @param {Object} params - params
@@ -73,7 +109,14 @@ class EarthdataLoginClient {
    *   redirectUri: 'http://my-api.com'
    * });
    */
-  constructor(params) {
+  constructor(
+    params: {
+      clientId: string,
+      clientPassword: string,
+      earthdataLoginUrl: string,
+      redirectUri: string
+    }
+  ) {
     const {
       clientId,
       clientPassword,
@@ -102,7 +145,7 @@ class EarthdataLoginClient {
    * @param {string} [state] - an optional state to pass to Earthdata Login
    * @returns {string} the Earthdata Login authorization URL
    */
-  getAuthorizationUrl(state) {
+  getAuthorizationUrl(state?: string) {
     const url = new URL('/oauth/authorize', this.earthdataLoginUrl);
 
     url.searchParams.set('client_id', this.clientId);
@@ -116,30 +159,15 @@ class EarthdataLoginClient {
     return url.toString();
   }
 
-  urlOfEndpoint(path) {
-    const url = new URL(path, this.earthdataLoginUrl);
-
-    return url.toString();
-  }
-
-  /**
-   * Get the URL of the Earthdata Login token endpoint
-   *
-   * @returns {string} the URL of the Earthdata Login token endpoint
-   */
-  tokenEndpoint() {
-    return (new URL('/oauth/token', this.earthdataLoginUrl)).toString();
-  }
-
-  requestAccessToken(authorizationCode) {
-    return this.sendRequest({
+  requestAccessToken(authorizationCode: string) {
+    return <CancelableRequest<AccessTokenResponse>>(this.sendRequest({
       earthdataLoginPath: 'oauth/token',
-      body: {
+      form: {
         grant_type: 'authorization_code',
         code: authorizationCode,
         redirect_uri: this.redirectUri
       }
-    });
+    }));
   }
 
   /**
@@ -156,7 +184,7 @@ class EarthdataLoginClient {
    * @param {string} authorizationCode - an OAuth2 authorization code
    * @returns {Promise<Object>} access token information
    */
-  async getAccessToken(authorizationCode) {
+  async getAccessToken(authorizationCode: string) {
     if (!authorizationCode) throw new TypeError('authorizationCode is required');
 
     try {
@@ -178,17 +206,19 @@ class EarthdataLoginClient {
     }
   }
 
-  requestRefreshAccessToken(refreshToken) {
-    return this.sendRequest({
+  async requestRefreshAccessToken(refreshToken: string) {
+    const response = <AccessTokenResponse>(await this.sendRequest({
       earthdataLoginPath: 'oauth/token',
-      body: {
+      form: {
         grant_type: 'refresh_token',
         refresh_token: refreshToken
       }
-    });
+    }));
+
+    return response;
   }
 
-  async refreshAccessToken(refreshToken) {
+  async refreshAccessToken(refreshToken: string) {
     if (!refreshToken) throw new TypeError('refreshToken is required');
 
     try {
@@ -209,16 +239,16 @@ class EarthdataLoginClient {
     }
   }
 
-  async getTokenUsername({ onBehalfOf, token }) {
+  async getTokenUsername(params: { onBehalfOf: string, token: string }) {
     try {
-      const response = await this.sendRequest({
+      const response = <VerifyTokenResponse>(await this.sendRequest({
         earthdataLoginPath: 'oauth/tokens/user',
-        body: {
+        form: {
           client_id: this.clientId,
-          on_behalf_of: onBehalfOf,
-          token
+          on_behalf_of: params.onBehalfOf,
+          token: params.token
         }
-      });
+      }));
 
       return response.body.uid;
     } catch (error) {
@@ -237,20 +267,25 @@ class EarthdataLoginClient {
     }
   }
 
-  sendRequest({ earthdataLoginPath, body }) {
+  sendRequest(
+    params: {
+      earthdataLoginPath: string,
+      form: {[key: string]: any}
+    }
+  ) {
+    // https://github.com/sindresorhus/got/issues/1169
+    const credentials = encodeCredentials(this.clientId, this.clientPassword);
+
     return got.post(
-      earthdataLoginPath,
+      params.earthdataLoginPath,
       {
         prefixUrl: this.earthdataLoginUrl,
-        username: this.clientId,
-        password: this.clientPassword,
-        form: body,
+        headers: {
+          Authorization: `Basic ${credentials}`
+        },
+        form: params.form,
         responseType: 'json'
       }
     );
   }
 }
-
-module.exports = {
-  EarthdataLoginClient
-};

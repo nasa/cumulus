@@ -177,6 +177,7 @@ module.exports = {
         '@typescript-eslint/no-implied-eval': 'off',
         '@typescript-eslint/no-throw-literal': 'off',
         'comma-dangle': ['warn', 'never'],
+        'import/no-extraneous-dependencies': 'off',
         'import/prefer-default-export': 'off',
         'lines-between-class-members': 'off',
         'lodash/prefer-lodash-typecheck': 'off',

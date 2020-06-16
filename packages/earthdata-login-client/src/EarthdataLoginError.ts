@@ -1,7 +1,7 @@
-'use strict';
+export class EarthdataLoginError extends Error {
+  code: string;
 
-class EarthdataLoginError extends Error {
-  constructor(code, message) {
+  constructor(code: string, message: string) {
     super(message);
 
     this.name = 'EarthdataLoginError';
@@ -10,7 +10,3 @@ class EarthdataLoginError extends Error {
     Error.captureStackTrace(this, EarthdataLoginError);
   }
 }
-
-module.exports = {
-  EarthdataLoginError
-};

@@ -1,38 +1,48 @@
-'use strict';
+import cryptoRandomString from 'crypto-random-string';
+import nock from 'nock';
+import test from 'ava';
+// import moment from 'moment';
+import { URL, URLSearchParams } from 'url';
 
-const cryptoRandomString = require('crypto-random-string');
-const nock = require('nock');
-const test = require('ava');
-const moment = require('moment');
-const { URL, URLSearchParams } = require('url');
-
-const {
+import {
   EarthdataLoginClient,
   OAuth2AuthenticationError,
   OAuth2AuthenticationFailure,
   EarthdataLoginError
-} = require('..');
+} from '../src';
 
 const randomString = () => cryptoRandomString({ length: 6 });
 
-const randomId = (prefix, separator = '-') =>
+const randomId = (prefix: string, separator = '-') =>
   [prefix, randomString()].filter((x) => x).join(separator);
+
+const randomUrl = () => `http://${randomString()}.local`;
 
 const buildEarthdataLoginClient = () =>
   new EarthdataLoginClient({
     clientId: randomId('client-id'),
     clientPassword: randomId('client-password'),
-    earthdataLoginUrl: `http://${randomId()}.local`,
-    redirectUri: `http://${randomId()}.local`
+    earthdataLoginUrl: randomUrl(),
+    redirectUri: randomUrl()
   });
 
-const nockEarthdataLoginCall = ({
-  earthdataLoginClient,
-  path,
-  requestBody,
-  responseStatus,
-  responseBody
-}) => {
+const nockEarthdataLoginCall = (
+  params: {
+    earthdataLoginClient: EarthdataLoginClient,
+    path: string,
+    requestBody?: nock.RequestBodyMatcher,
+    responseStatus: number,
+    responseBody?: nock.Body
+  }
+) => {
+  const {
+    earthdataLoginClient,
+    path,
+    requestBody,
+    responseStatus,
+    responseBody
+  } = params;
+
   nock(earthdataLoginClient.earthdataLoginUrl)
     .post(path, requestBody)
     .basicAuth({
@@ -49,7 +59,8 @@ test.before(() => {
 test('The EarthdataLogin constructor throws a TypeError if clientId is not specified', (t) => {
   t.throws(
     () => {
-      new EarthdataLoginClient({
+      // @ts-expect-error
+      new EarthdataLoginClient({ // eslint-disable-line no-new
         clientPassword: 'client-password',
         earthdataLoginUrl: 'http://www.example.com',
         redirectUri: 'http://www.example.com/cb'
@@ -65,7 +76,8 @@ test('The EarthdataLogin constructor throws a TypeError if clientId is not speci
 test('The EarthdataLogin constructor throws a TypeError if clientPassword is not specified', (t) => {
   t.throws(
     () => {
-      new EarthdataLoginClient({
+      // @ts-expect-error
+      new EarthdataLoginClient({ // eslint-disable-line no-new
         clientId: 'client-id',
         earthdataLoginUrl: 'http://www.example.com',
         redirectUri: 'http://www.example.com/cb'
@@ -81,7 +93,8 @@ test('The EarthdataLogin constructor throws a TypeError if clientPassword is not
 test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is not specified', (t) => {
   t.throws(
     () => {
-      new EarthdataLoginClient({
+      // @ts-expect-error
+      new EarthdataLoginClient({ // eslint-disable-line no-new
         clientId: 'client-id',
         clientPassword: 'client-password',
         redirectUri: 'http://www.example.com/cb'
@@ -97,7 +110,7 @@ test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is 
 test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is not a valid URL', (t) => {
   t.throws(
     () => {
-      new EarthdataLoginClient({
+      new EarthdataLoginClient({ // eslint-disable-line no-new
         clientId: 'client-id',
         clientPassword: 'client-password',
         earthdataLoginUrl: 'asdf',
@@ -111,7 +124,8 @@ test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is 
 test('The EarthdataLogin constructor throws a TypeError if redirectUri is not specified', (t) => {
   t.throws(
     () => {
-      new EarthdataLoginClient({
+      // @ts-expect-error
+      new EarthdataLoginClient({ // eslint-disable-line no-new
         clientId: 'client-id',
         clientPassword: 'client-password',
         earthdataLoginUrl: 'http://www.example.com'
@@ -127,7 +141,7 @@ test('The EarthdataLogin constructor throws a TypeError if redirectUri is not sp
 test('The EarthdataLogin constructor throws a TypeError if redirectUri is not a valid URL', (t) => {
   t.throws(
     () => {
-      new EarthdataLoginClient({
+      new EarthdataLoginClient({ // eslint-disable-line no-new
         clientId: 'client-id',
         clientPassword: 'client-password',
         earthdataLoginUrl: 'http://www.example.com',
@@ -170,6 +184,7 @@ test('EarthdataLogin.getAccessToken() throws a TypeError if authorizationCode is
   const earthdataLoginClient = buildEarthdataLoginClient();
 
   await t.throwsAsync(
+    // @ts-expect-error
     () => earthdataLoginClient.getAccessToken(),
     {
       instanceOf: TypeError,
@@ -184,7 +199,7 @@ test('EarthdataLogin.getAccessToken() sends a correct request to the token endpo
   nock(
     earthdataLoginClient.earthdataLoginUrl,
     {
-      reqHeaders: {
+      reqheaders: {
         'content-type': 'application/x-www-form-urlencoded'
       }
     }
@@ -235,14 +250,14 @@ test('EarthdataLogin.getAccessToken() returns token information for a valid auth
     }
   });
 
-  const requestStartTime = moment().unix();
+  const requestStartTime = Math.floor(Date.now() / 1000);
   const {
     accessToken,
     refreshToken,
     expirationTime,
     username
   } = await earthdataLoginClient.getAccessToken('authorization-code');
-  const requestEndTime = moment().unix();
+  const requestEndTime = Math.floor(Date.now() / 1000);
 
   t.is(accessToken, 'access-token');
   t.is(refreshToken, 'refresh-token');
@@ -285,6 +300,7 @@ test('EarthdataLogin.refreshAccessToken() throws a TypeError if refreshToken is 
   const earthdataLoginClient = buildEarthdataLoginClient();
 
   await t.throwsAsync(
+    // @ts-expect-error
     () => earthdataLoginClient.refreshAccessToken(),
     {
       instanceOf: TypeError,
@@ -299,7 +315,7 @@ test('EarthdataLogin.refreshAccessToken() sends a correct request to the token e
   nock(
     earthdataLoginClient.earthdataLoginUrl,
     {
-      reqHeaders: {
+      reqheaders: {
         'content-type': 'application/x-www-form-urlencoded'
       }
     }
@@ -349,14 +365,14 @@ test('EarthdataLogin.refreshAccessToken() returns token information for a valid 
     }
   });
 
-  const requestStartTime = moment().unix();
+  const requestStartTime = Math.floor(Date.now() / 1000);
   const {
     accessToken,
     refreshToken,
     expirationTime,
     username
   } = await earthdataLoginClient.refreshAccessToken('refresh-token');
-  const requestEndTime = moment().unix();
+  const requestEndTime = Math.floor(Date.now() / 1000);
 
   t.is(accessToken, 'access-token');
   t.is(refreshToken, 'refresh-token');
