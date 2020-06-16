@@ -1,6 +1,7 @@
 'use strict';
 
 const flatten = require('lodash/flatten');
+const has = require('lodash/has');
 const path = require('path');
 const uuidv4 = require('uuid/v4');
 const S3 = require('@cumulus/aws-client/S3');
@@ -11,9 +12,6 @@ const log = require('@cumulus/common/log');
 const errors = require('@cumulus/errors');
 const { buildProviderClient, fetchTextFile } = require('@cumulus/ingest/providerClientUtils');
 const { handleDuplicateFile } = require('@cumulus/ingest/granule');
-
-const isChecksumFile = (file) =>
-  ['.md5', '.cksum', '.sha1', '.sha256'].includes(path.extname(file.name));
 
 const addChecksumToFile = async (providerClient, dataFile, checksumFile) => {
   if (dataFile.checksumType && dataFile.checksum) return dataFile;
@@ -26,24 +24,6 @@ const addChecksumToFile = async (providerClient, dataFile, checksumFile) => {
   )).split(' ').shift();
 
   return { ...dataFile, checksum, checksumType };
-};
-
-const addChecksumsToFiles = async (providerClient, files) => {
-  // Map data file name to checksum file object, if it has a checksum file
-  const checksumFileOf = files
-    .filter((file) => isChecksumFile(file))
-    .reduce((acc, checksumFile) => {
-      const checksumFileExt = path.extname(checksumFile.name);
-      const dataFilename = path.basename(checksumFile.name, checksumFileExt);
-      acc[dataFilename] = checksumFile;
-      return acc;
-    }, {});
-
-  return Promise.all(
-    files.map((file) => addChecksumToFile(
-      providerClient, file, checksumFileOf[file.name]
-    ))
-  );
 };
 
 const collectionNameFrom = (granule = {}, collection = {}) =>
@@ -133,12 +113,10 @@ class GranuleFetcher {
     this.collection.url_path = this.collection.url_path || '';
     this.collectionId = constructCollectionId(collectionName, collectionVersion);
 
-    const filesWithChecksums = await addChecksumsToFiles(
-      this.providerClient, granule.files
-    );
+    const filesWithChecksums = await this.addChecksumsToFiles(granule.files);
 
     const downloadFiles = filesWithChecksums
-      .filter((f) => syncChecksumFiles || !isChecksumFile(f))
+      .filter((f) => syncChecksumFiles || !this.isChecksumFile(f))
       .map((f) => this.ingestFile(f, bucket, this.duplicateHandling));
 
     log.debug('awaiting all download.Files');
@@ -181,6 +159,61 @@ class GranuleFetcher {
   findCollectionFileConfigForFile(file) {
     return this.collection.files.find((fileConfig) =>
       file.name.match(fileConfig.regex));
+  }
+
+  /**
+   * Check whether file object qualifies as a checksum file based on
+   * file extension or file collection config.
+   *
+   * @param {Object} file - file object
+   * @returns {boolean} - whether file is a checksum file
+   * @private
+   */
+  isChecksumFile(file) {
+    return this.hasChecksumForFileConfig(file) || ['.md5', '.cksum', '.sha1', '.sha256'].includes(path.extname(file.name));
+  }
+
+  /**
+   * Determine whether given file has a checksumFor property
+   *
+   * @param {Object} file - file object
+   * @returns {boolean} - true/false collection config for file has checksumFor property
+   * @private
+   */
+  hasChecksumForFileConfig(file) {
+    return has(
+      this.findCollectionFileConfigForFile(file),
+      'checksumFor'
+    );
+  }
+
+  /**
+   * Add checksum types and values to files
+   *
+   * @param {Array<Object>} files - files objects with name and path
+   * @returns {Array<Object>} - files with checksum types and values added
+   */
+  async addChecksumsToFiles(files) {
+    // Map data file name to checksum file object, if it has a checksum file
+    const checksumFileOf = files
+      .filter((file) => this.isChecksumFile(file))
+      .reduce((acc, checksumFile) => {
+        if (this.hasChecksumForFileConfig(checksumFile)) {
+          const checksumForTarget = files.find((file) => file.name.match(checksumFile.checksumFor));
+          acc[checksumForTarget.name] = checksumFile;
+          return acc;
+        }
+        const checksumFileExt = path.extname(checksumFile.name);
+        const dataFilename = path.basename(checksumFile.name, checksumFileExt);
+        acc[dataFilename] = checksumFile;
+        return acc;
+      }, {});
+
+    return Promise.all(
+      files.map((file) => addChecksumToFile(
+        this.providerClient, file, checksumFileOf[file.name]
+      ))
+    );
   }
 
   /**
