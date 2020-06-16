@@ -36,24 +36,6 @@ const client = new EarthdataLogin({
 
 ## API
 
-## Classes
-
-<dl>
-<dt><a href="#EarthdataLoginClient">EarthdataLoginClient</a></dt>
-<dd><p>This is an interface to the Earthdata Login service.</p>
-</dd>
-<dt><a href="#OAuth2AuthenticationError">OAuth2AuthenticationError</a></dt>
-<dd><p>Thrown if there is an error that is not caused by bad user credentials.
-For example, getting an internal server error back from the OAuth2 server
-would result in an OAuth2AuthenticationError error being thrown.</p>
-</dd>
-<dt><a href="#OAuth2AuthenticationFailure">OAuth2AuthenticationFailure</a></dt>
-<dd><p>Thrown if there is a problem with the user&#39;s credentials.  For example,
-trying to get an access token with an expired authorization code would result
-in an OAuth2AuthenticationFailure being thrown.</p>
-</dd>
-</dl>
-
 <a name="EarthdataLoginClient"></a>
 
 ## EarthdataLoginClient
@@ -135,22 +117,6 @@ Create Earthdata login client using environment variables.
 | params | <code>Object</code> |  |
 | params.redirectUri | <code>string</code> | The redirect URL to use for the Earthdata login client |
 
-<a name="OAuth2AuthenticationError"></a>
-
-## OAuth2AuthenticationError
-Thrown if there is an error that is not caused by bad user credentials.
-For example, getting an internal server error back from the OAuth2 server
-would result in an OAuth2AuthenticationError error being thrown.
-
-**Kind**: global class  
-<a name="OAuth2AuthenticationFailure"></a>
-
-## OAuth2AuthenticationFailure
-Thrown if there is a problem with the user's credentials.  For example,
-trying to get an access token with an expired authorization code would result
-in an OAuth2AuthenticationFailure being thrown.
-
-**Kind**: global class  
 
 ## About Cumulus
 
