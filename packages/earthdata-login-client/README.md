@@ -1,0 +1,29 @@
+# @cumulus/earthdata-login
+
+Utilities for OAuth authentication using [NASA Earthdata Login](https://urs.earthdata.nasa.gov/).
+
+## Versioning
+
+Cumulus uses a modified semantic versioning scheme and minor releases likely include breaking changes.
+
+Before upgrade, please read the Cumulus [release notes](https://github.com/nasa/cumulus/releases) before upgraded.
+
+It is strongly recommended you do not use `^` in your `package.json` to
+automatically update to new minor versions. Instead, pin the version or use `~`
+to automatically update to new patch versions.
+
+## Usage
+
+```bash
+npm install @cumulus/earthdata-login-client
+```
+
+## About Cumulus
+
+Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
+
+[Cumulus Documentation](https://nasa.github.io/cumulus)
+
+## Contributing
+
+To make a contribution, please [see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).
