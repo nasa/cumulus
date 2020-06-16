@@ -48,6 +48,8 @@ This is an interface to the Earthdata Login service.
     * _instance_
         * [.getAuthorizationUrl([state])](#EarthdataLoginClient+getAuthorizationUrl) ⇒ <code>string</code>
         * [.getAccessToken(authorizationCode)](#EarthdataLoginClient+getAccessToken) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.refreshAccessToken(refreshToken)](#EarthdataLoginClient+refreshAccessToken) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.getTokenUsername(params)](#EarthdataLoginClient+getTokenUsername) ⇒ <code>Promise.&lt;string&gt;</code>
     * _static_
         * [.createFromEnv(params)](#EarthdataLoginClient.createFromEnv) ⇒ [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)
 
@@ -103,6 +105,40 @@ Returns an object with the following properties:
 | Param | Type | Description |
 | --- | --- | --- |
 | authorizationCode | <code>string</code> | an OAuth2 authorization code |
+
+<a name="EarthdataLoginClient+refreshAccessToken"></a>
+
+### earthdataLoginClient.refreshAccessToken(refreshToken) ⇒ <code>Promise.&lt;Object&gt;</code>
+Given a refresh token, request an access token and associated information
+from the Earthdata Login service.
+
+Returns an object with the following properties:
+
+- accessToken
+- refreshToken
+- username
+- expirationTime (in seconds)
+
+**Kind**: instance method of [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - access token information  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| refreshToken | <code>string</code> | an OAuth2 refresh token |
+
+<a name="EarthdataLoginClient+getTokenUsername"></a>
+
+### earthdataLoginClient.getTokenUsername(params) ⇒ <code>Promise.&lt;string&gt;</code>
+Query the Earthdata Login API for the UID associated with a token
+
+**Kind**: instance method of [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)  
+**Returns**: <code>Promise.&lt;string&gt;</code> - the UID associated with the token  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| params | <code>Object</code> |  |
+| params.onBehalfOf | <code>string</code> | the Earthdata Login client id of the   app requesting the username |
+| params.token | <code>string</code> | the Earthdata Login token |
 
 <a name="EarthdataLoginClient.createFromEnv"></a>
 

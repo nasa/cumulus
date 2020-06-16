@@ -146,7 +146,7 @@ export class EarthdataLoginClient {
     return url.toString();
   }
 
-  requestAccessToken(authorizationCode: string) {
+  private requestAccessToken(authorizationCode: string) {
     return <CancelableRequest<AccessTokenResponse>>(this.sendRequest({
       earthdataLoginPath: 'oauth/token',
       form: {
@@ -193,18 +193,30 @@ export class EarthdataLoginClient {
     }
   }
 
-  async requestRefreshAccessToken(refreshToken: string) {
-    const response = <AccessTokenResponse>(await this.sendRequest({
+  private requestRefreshAccessToken(refreshToken: string) {
+    return <CancelableRequest<AccessTokenResponse>>(this.sendRequest({
       earthdataLoginPath: 'oauth/token',
       form: {
         grant_type: 'refresh_token',
         refresh_token: refreshToken
       }
     }));
-
-    return response;
   }
 
+  /**
+   * Given a refresh token, request an access token and associated information
+   * from the Earthdata Login service.
+   *
+   * Returns an object with the following properties:
+   *
+   * - accessToken
+   * - refreshToken
+   * - username
+   * - expirationTime (in seconds)
+   *
+   * @param {string} refreshToken - an OAuth2 refresh token
+   * @returns {Promise<Object>} access token information
+   */
   async refreshAccessToken(refreshToken: string) {
     if (!refreshToken) throw new TypeError('refreshToken is required');
 
@@ -226,6 +238,15 @@ export class EarthdataLoginClient {
     }
   }
 
+  /**
+   * Query the Earthdata Login API for the UID associated with a token
+   *
+   * @param {Object} params
+   * @param {string} params.onBehalfOf - the Earthdata Login client id of the
+   *   app requesting the username
+   * @param {string} params.token - the Earthdata Login token
+   * @returns {Promise<string>} the UID associated with the token
+   */
   async getTokenUsername(params: { onBehalfOf: string, token: string }) {
     try {
       const response = <VerifyTokenResponse>(await this.sendRequest({
@@ -254,7 +275,7 @@ export class EarthdataLoginClient {
     }
   }
 
-  sendRequest(
+  private sendRequest(
     params: {
       earthdataLoginPath: string,
       form: {[key: string]: any}
