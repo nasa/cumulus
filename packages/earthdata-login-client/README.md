@@ -1,4 +1,4 @@
-# @cumulus/launchpad-auth
+# @cumulus/earthdata-login
 
 Utilities for OAuth authentication using [NASA Earthdata Login](https://urs.earthdata.nasa.gov/).
 
@@ -8,12 +8,14 @@ Cumulus uses a modified semantic versioning scheme and minor releases likely inc
 
 Before upgrade, please read the Cumulus [release notes](https://github.com/nasa/cumulus/releases) before upgraded.
 
-It is strongly recommended you do not use `^` in your `package.json` to automatically update to new minor versions. Instead, pin the version or use `~` to automatically update to new patch versions.
+It is strongly recommended you do not use `^` in your `package.json` to
+automatically update to new minor versions. Instead, pin the version or use `~`
+to automatically update to new patch versions.
 
 ## Usage
 
 ```bash
-  npm install @cumulus/earthdata-login-client
+npm install @cumulus/earthdata-login-client
 ```
 
 ## About Cumulus
