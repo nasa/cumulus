@@ -51,6 +51,8 @@ export const deprecate = (() => {
  * @param {number} waitPeriodMs - number of milliseconds to wait
  * @returns {Promise.<undefined>} promise resolves after a given time period
  *
+ * @deprecated
+ *
  * @alias module:util
  */
 export const sleep = (waitPeriodMs: number) => {
@@ -66,7 +68,10 @@ export const sleep = (waitPeriodMs: number) => {
  *
  * @param {string} name - A base name for the temp dir, to be uniquified for the final name
  * @returns {string} The absolute path to the created dir
+ *
  * @private
+ *
+ * @deprecated
  */
 export const mkdtempSync = (name: string) => {
   deprecate('@cumulus/common/util.noop()', '1.23.2');
@@ -82,6 +87,8 @@ export const mkdtempSync = (name: string) => {
  * @returns {undefined} undefined
  *
  * @alias module:util
+ *
+ * @deprecated
  */
 export const noop = () => {
   deprecate('@cumulus/common/util.noop()', '1.23.2', 'lodash/noop');
@@ -98,6 +105,8 @@ export const noop = () => {
  * @returns {Object} copy of objectIn without keys attached.
  *
  * @alias module:util
+ *
+ * @deprecated
  */
 // @ts-ignore
 export const omit = (objectIn, keys) => {
@@ -115,6 +124,8 @@ export const omit = (objectIn, keys) => {
  * @returns {Function} the new negated function
  *
  * @alias module:util
+ *
+ * @deprecated
  *
  * @example
  * const isEven = (x) => x % 2 === 0;
@@ -137,6 +148,8 @@ export const negate = (predicate) => {
  * @param {*} x - value to check
  * @returns {boolean}
  *
+ * @deprecated
+ *
  * @alias module:util
  */
 export const isNull = (x: unknown) => {
@@ -150,6 +163,8 @@ export const isNull = (x: unknown) => {
  * @param {*} x value to check
  * @returns {boolean}
  *
+ * @deprecated
+ *
  * @alias module:util
  */
 export const isUndefined = (x: unknown) => {
@@ -162,6 +177,8 @@ export const isUndefined = (x: unknown) => {
  *
  * @param {*} x value to check
  * @returns {boolean}
+ *
+ * @deprecated
  *
  * @alias module:util
  */
@@ -177,6 +194,8 @@ export const isNil = (x: unknown) => {
  * @param {string} to - new property name
  * @param {Object} obj - object to update
  * @returns {Object} a shallow clone of the object with updated property name
+ *
+ * @deprecated
  *
  * @alias module:util
  */
@@ -205,6 +224,8 @@ export const removeNilProperties = <T extends object>(obj: T) =>
  *
  * @param {string} key
  * @returns {string} mimeType or null
+ *
+ * @deprecated
  *
  * @alias module:util
  */
@@ -237,6 +258,8 @@ export const isOneOf = curry((collection: unknown[], val: unknown) =>
  * @returns {*} the result of passing the value through the functions:
  *   - If no functions are provided, the value is returned.
  *   - Functions should expect a single argument
+ *
+ * @deprecated
  *
  * @alias module:util
  */
