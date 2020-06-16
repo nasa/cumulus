@@ -106,7 +106,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006-umm';
 
-  let workflowExecution = null;
+  let workflowExecution;
   let inputPayload;
   let expectedPayload;
   let postToCmrOutput;
@@ -318,8 +318,8 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         ]);
 
         resourceURLs = onlineResources.map((resource) => resource.URL);
-      } catch (e) {
-        beforeAllError = e;
+      } catch (error) {
+        beforeAllError = error;
       }
     });
 
@@ -468,17 +468,17 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       const updatedUmm = await getUmmObject(newS3UMMJsonFileLocation);
 
       const changedUrls = updatedUmm.RelatedUrls
-        .filter((urlObject) => urlObject.URL.match(/.*.hdf$/))
+        .filter((urlObject) => urlObject.URL.endsWith('.hdf'))
         .map((urlObject) => urlObject.URL);
       const unchangedUrls = updatedUmm.RelatedUrls
-        .filter((urlObject) => !urlObject.URL.match(/.*.hdf$/))
+        .filter((urlObject) => !urlObject.URL.endsWith('.hdf'))
         .map((urlObject) => urlObject.URL);
 
       // Only the file that was moved was updated
       expect(changedUrls.length).toEqual(1);
       expect(changedUrls[0]).toContain(destinationKey);
 
-      const unchangedOriginalUrls = originalUmmUrls.filter((original) => !original.match(/.*.hdf$/));
+      const unchangedOriginalUrls = originalUmmUrls.filter((original) => !original.endsWith('.hdf'));
       expect(unchangedOriginalUrls.length).toEqual(unchangedUrls.length);
 
       // Each originalUmmUrl (removing the DISTRIBUTION_ENDPOINT) should be found

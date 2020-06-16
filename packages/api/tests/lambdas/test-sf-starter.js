@@ -206,7 +206,7 @@ test.serial('incrementAndDispatch decrements priority semaphore if dispatch() th
 
   try {
     await incrementAndDispatch({ Body: message });
-  } catch (err) {
+  } catch (error) {
     const response = await semaphore.get(queueName);
     t.is(response.semvalue, 0);
   } finally {

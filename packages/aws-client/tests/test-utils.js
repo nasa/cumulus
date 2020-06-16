@@ -13,8 +13,8 @@ test('better stack traces', async (t) => {
   try {
     console.log(await h());
     t.fail('Expected an exception');
-  } catch (err) {
-    t.true(err.stack.includes(path.basename(__filename)));
+  } catch (error) {
+    t.true(error.stack.includes(path.basename(__filename)));
   }
 });
 

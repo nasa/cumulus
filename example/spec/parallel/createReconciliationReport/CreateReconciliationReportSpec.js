@@ -130,7 +130,7 @@ async function updateGranuleFile(granuleId, granuleFiles, regex, replacement) {
   return { originalGranuleFile, updatedGranuleFile };
 }
 
-describe('When there are granule differences and granule reconciliation is run', () => {
+xdescribe('When there are granule differences and granule reconciliation is run', () => {
   let cmrGranule;
   let collectionId;
   let config;
@@ -248,7 +248,7 @@ describe('When there are granule differences and granule reconciliation is run',
     expect(report.collectionsInCumulusCmr.okCount).toBeGreaterThanOrEqual(1);
   });
 
-  it('generates a report showing collections that are in the Cumulus but not in CMR', () => {
+  it('generates a report showing collections that are in Cumulus but not in CMR', () => {
     const extraCollection = constructCollectionId(extraCumulusCollection.name.S, extraCumulusCollection.version.S);
     expect(report.collectionsInCumulusCmr.onlyInCumulus).toContain(extraCollection);
     expect(report.collectionsInCumulusCmr.onlyInCumulus).not.toContain(collectionId);
@@ -285,7 +285,7 @@ describe('When there are granule differences and granule reconciliation is run',
     expect(report.filesInCumulusCmr.okCount).toBeGreaterThanOrEqual(2);
   });
 
-  it('generates a report showing granule files that are in the Cumulus but not in CMR', () => {
+  it('generates a report showing granule files that are in Cumulus but not in CMR', () => {
     // published granule should have one file(renamed file) in Cumulus
     const fileNames = report.filesInCumulusCmr.onlyInCumulus.map((file) => file.fileName);
     expect(fileNames).toContain(updatedGranuleFile.fileName);

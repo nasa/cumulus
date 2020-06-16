@@ -101,9 +101,9 @@ describe('The AsyncOperation task runner executing a successful lambda function'
         id: asyncOperationId,
         status: 'SUCCEEDED'
       });
-    } catch (err) {
+    } catch (error) {
       beforeAllFailed = true;
-      throw err;
+      throw error;
     }
   });
 

@@ -72,7 +72,7 @@ const getFailedExecutionMessage = async (inputMessage) => {
       JSON.parse(taskExitedEventOutput),
       failedStepExitedEvent.resource
     );
-  } catch (err) {
+  } catch (error) {
     return inputMessage;
   }
 };

@@ -292,7 +292,6 @@ class BaseSearch {
     return newObj;
   }
 
-
   async query(searchParamsOverride) {
     const searchParams = searchParamsOverride || this._buildSearch();
 
@@ -313,9 +312,9 @@ class BaseSearch {
         meta,
         results: response
       };
-    } catch (e) {
+    } catch (error) {
       //log.error(e, logDetails);
-      return e;
+      return error;
     }
   }
 
@@ -337,9 +336,9 @@ class BaseSearch {
         },
         counts: result.body.aggregations
       };
-    } catch (e) {
+    } catch (error) {
       //log.error(e, logDetails);
-      return e;
+      return error;
     }
   }
 }

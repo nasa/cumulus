@@ -55,9 +55,9 @@ async function download({
         ...r,
         sync_granule_duration: endTime - startTime
       };
-    } catch (e) {
-      log.error(e);
-      throw e;
+    } catch (error) {
+      log.error(error);
+      throw error;
     }
   };
 
@@ -117,13 +117,13 @@ exports.syncGranule = function syncGranule(event) {
     if (config.pdr) output.pdr = config.pdr;
     log.debug(`SyncGranule Complete. Returning output: ${JSON.stringify(output)}`);
     return output;
-  }).catch((e) => {
+  }).catch((error) => {
     log.debug('SyncGranule errored.');
 
-    let errorToThrow = e;
-    if (e.toString().includes('ECONNREFUSED')) {
+    let errorToThrow = error;
+    if (error.toString().includes('ECONNREFUSED')) {
       errorToThrow = new errors.RemoteResourceError('Connection Refused');
-    } else if (e.details && e.details.status === 'timeout') {
+    } else if (error.details && error.details.status === 'timeout') {
       errorToThrow = new errors.ConnectionTimeout('Connection Timed Out');
     }
 

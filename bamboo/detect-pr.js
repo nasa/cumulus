@@ -52,8 +52,8 @@ async function getPrsForRef(headRefName, baseRefName) {
   }
 }
 
-getPrsForRef(process.argv[2], process.argv[3]).catch((e) => {
+getPrsForRef(process.argv[2], process.argv[3]).catch((error) => {
   console.log('Error querying API');
-  console.log(e);
+  console.log(error);
   process.exitCode = 1;
 });
