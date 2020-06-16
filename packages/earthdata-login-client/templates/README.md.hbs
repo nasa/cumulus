@@ -15,11 +15,13 @@ It is strongly recommended you do not use `^` in your `package.json` to
 automatically update to new minor versions. Instead, pin the version or use `~`
 to automatically update to new patch versions.
 
-## Usage
+## Installation
 
 ```bash
-npm install @cumulus/earthdata-login-client
+$ npm install @cumulus/earthdata-login-client
 ```
+
+## Usage
 
 ```js
 const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
