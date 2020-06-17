@@ -2,7 +2,7 @@
 
 const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
-const { dynamodb, ecs, s3 } = require('@cumulus/aws-client/services');
+const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getClusterArn, waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
 const { AsyncOperation } = require('@cumulus/api/models');
@@ -103,7 +103,7 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
     }
   });
 
-  it('updates the status field in DynamoDB to "TASK_FAILED"', async () => {
+  it('updates the status field to "TASK_FAILED"', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else expect(asyncOperation.status).toEqual('TASK_FAILED');
   });
@@ -114,18 +114,6 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
       const parsedOutput = JSON.parse(asyncOperation.output);
 
       expect(parsedOutput.message).toBe('triggered failure');
-    }
-  });
-
-  it('updates the updatedAt field in DynamoDB', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
-    else {
-      const { Item } = await dynamodb().getItem({
-        TableName: asyncOperationsTableName,
-        Key: { id: { S: asyncOperationId } }
-      }).promise();
-
-      expect(Item.updatedAt.N).toBeGreaterThan(Item.createdAt.N);
     }
   });
 

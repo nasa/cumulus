@@ -107,7 +107,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
     }
   });
 
-  it('updates the status field in DynamoDB to "SUCCEEDED"', async () => {
+  it('updates the status field to "SUCCEEDED"', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else expect(asyncOperation.status).toEqual('SUCCEEDED');
   });
@@ -118,18 +118,6 @@ describe('The AsyncOperation task runner executing a successful lambda function'
       const parsedOutput = JSON.parse(asyncOperation.output);
 
       expect(parsedOutput).toEqual([1, 2, 3]);
-    }
-  });
-
-  it('updates the updatedAt field in DynamoDB', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
-    else {
-      const { Item } = await dynamodb().getItem({
-        TableName: asyncOperationsTableName,
-        Key: { id: { S: asyncOperationId } }
-      }).promise();
-
-      expect(Item.updatedAt.N).toBeGreaterThan(Item.createdAt.N);
     }
   });
 
