@@ -34,9 +34,13 @@ async function getEarthdataAccessToken({
   }
 
   // Create Earthdata client and get authorization URL.
-  const earthdataLoginClient = EarthdataLoginClient.createFromEnv({
+  const earthdataLoginClient = new EarthdataLoginClient({
+    clientId: process.env.EARTHDATA_CLIENT_ID,
+    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
+    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
     redirectUri
   });
+
   const authorizeUrl = earthdataLoginClient.getAuthorizationUrl();
 
   // Prepare request options for login to Earthdata.
