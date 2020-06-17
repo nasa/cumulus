@@ -35,7 +35,6 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
     scheduledRuleName = timestampedName('SchedHelloWorldTest');
     scheduledHelloWorldRule = {
       name: scheduledRuleName,
-      collection: { name: `MOD09GQ${testSuffix}`, version: '006' },
       workflow: 'HelloWorldWorkflow',
       rule: {
         type: 'scheduled',
@@ -46,8 +45,6 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
       }
     };
 
-    await addCollections(config.stackName, config.bucket, collectionsDir,
-      testSuffix, testId);
     // Create a scheduled rule
     console.log(`post rule ${scheduledRuleName}`);
     await rulesApi.postRule({

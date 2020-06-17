@@ -406,7 +406,7 @@ const loadCollection = async (params = {}) =>
  * @param {string} [postfix] - string to append to collection name
  * @param {string} [customFilePath]
  * @param {string} [duplicateHandling]
- * @returns {Promise<number>} number of collections added
+ * @returns {Promise<object>} - collections that were added
  */
 async function addCollections(stackName, bucketName, dataDirectory, postfix,
   customFilePath, duplicateHandling) {
@@ -424,12 +424,10 @@ async function addCollections(stackName, bucketName, dataDirectory, postfix,
       postfix
     })
   );
-
   await Promise.all(
     collections.map((collection) => addCollection(stackName, collection))
   );
-
-  return rawCollections.length;
+  return collections;
 }
 
 /**

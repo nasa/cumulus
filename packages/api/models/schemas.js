@@ -471,7 +471,7 @@ module.exports.rule = {
     }
   },
   required: [
-    'name', 'workflow', 'collection', 'rule', 'state', 'createdAt', 'updatedAt'
+    'name', 'workflow', 'rule', 'state', 'createdAt', 'updatedAt'
   ]
 };
 

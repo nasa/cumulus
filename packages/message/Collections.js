@@ -1,5 +1,8 @@
 'use strict';
 
+const get = require('lodash/get');
+const { CumulusMessageError } = require('./errors');
+
 /**
  * Utility functions for generating collection information or parsing collection information
  * from a Cumulus message
@@ -9,8 +12,6 @@
  * @example
  * const Collections = require('@cumulus/message/Collections');
  */
-
-const get = require('lodash/get');
 
 /**
  * Returns the collection ID.
@@ -33,11 +34,14 @@ function constructCollectionId(name, version) {
  *
  * @alias module:Collections
  */
-const getCollectionIdFromMessage = (message) =>
-  constructCollectionId(
-    get(message, 'meta.collection.name'), get(message, 'meta.collection.version')
-  );
-
+const getCollectionIdFromMessage = (message) => {
+  const collectionName = get(message, 'meta.collection.name');
+  const collectionVersion = get(message, 'meta.collection.version');
+  if (!collectionName && !collectionVersion) {
+    throw new CumulusMessageError(`Collection name and version missing from message meta: ${JSON.stringify(message.meta)}`);
+  }
+  return constructCollectionId(collectionName, collectionVersion);
+};
 module.exports = {
   constructCollectionId,
   getCollectionIdFromMessage

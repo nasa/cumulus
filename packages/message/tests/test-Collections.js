@@ -6,6 +6,7 @@ const {
   constructCollectionId,
   getCollectionIdFromMessage
 } = require('../Collections');
+const { CumulusMessageError } = require('../errors');
 
 test('getCollectionIdFromMessage returns the correct collection ID', (t) => {
   const name = 'test';
@@ -21,7 +22,6 @@ test('getCollectionIdFromMessage returns the correct collection ID', (t) => {
   t.is(collectionId, constructCollectionId(name, version));
 });
 
-test('getCollectionIdFromMessage returns collection ID when meta.collection is not set', (t) => {
-  const collectionId = getCollectionIdFromMessage();
-  t.is(collectionId, constructCollectionId());
+test('getCollectionIdFromMessage throws CumulusMessageError when meta.collection is not set', (t) => {
+  t.throws(() => getCollectionIdFromMessage({}), { instanceOf: CumulusMessageError });
 });
