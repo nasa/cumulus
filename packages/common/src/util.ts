@@ -74,7 +74,7 @@ export const sleep = (waitPeriodMs: number) => {
  * @deprecated
  */
 export const mkdtempSync = (name: string) => {
-  deprecate('@cumulus/common/util.noop()', '1.23.2');
+  deprecate('@cumulus/common/util.mkdtempSync()', '1.23.2');
   const dirname = ['gitc', name, +new Date()].join('_');
   const abspath = path.join(os.tmpdir(), dirname);
   fs.mkdirSync(abspath, 0o700);
@@ -136,7 +136,7 @@ export const omit = (objectIn, keys) => {
  */
 // @ts-ignore
 export const negate = (predicate) => {
-  deprecate('@cumulus/common/util.omit()', '1.23.2', 'lodash/omit');
+  deprecate('@cumulus/common/util.negate()', '1.23.2');
 
   // @ts-ignore
   return (...args) => !predicate.apply(this, args);

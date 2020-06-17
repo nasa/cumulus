@@ -199,6 +199,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - The deprecated `@cumulus/common/string.toLower` functon has been removed
 - The deprecated `@cumulus/common/string.toUpper` functon has been removed
 - The deprecated `@cumulus/common/util.setErrorStack` function has been removed
+- The `@cumulus/common/util.uuid` function has been removed
 - The deprecated `@cumulus/common/workflows.getWorkflowArn` function has been
   removed
 - The deprecated `@cumulus/common/workflows.getWorkflowFile` function has been

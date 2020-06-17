@@ -157,10 +157,10 @@ const loadFileWithUpdatedGranuleIdPathAndCollection = (
   const fileContents = fs.readFileSync(filename, 'utf8');
 
   return flow([
-    replace(new RegExp('replace-me-granuleId', 'g'), newGranuleId),
-    replace(new RegExp('replace-me-path', 'g'), newPath),
-    replace(new RegExp('replace-me-collectionId', 'g'), newCollectionId),
-    replace(new RegExp('replace-me-stackId', 'g'), stackId),
+    replace(/replace-me-granuleId/g, newGranuleId),
+    replace(/replace-me-path/g, newPath),
+    replace(/replace-me-collectionId/g, newCollectionId),
+    replace(/replace-me-stackId/g, stackId),
     JSON.parse
   ])(fileContents);
 };
