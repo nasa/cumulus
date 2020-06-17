@@ -34,9 +34,10 @@ const getCredentials = () =>
  * @returns {string} elasticsearch local address
  */
 const getLocalEsHost = () => {
-  if (process.env.LOCAL_ES_HOST) return `http://${process.env.LOCAL_ES_HOST}:9200`;
-  if (process.env.LOCALSTACK_HOST) return `http://${process.env.LOCALSTACK_HOST}:4571`;
-  return 'http://localhost:9200';
+  const prot = (process.env.LOCAL_ES_HOST_PROTOCOL) ? process.env.LOCAL_ES_HOST_PROTOCOL : 'http';
+  if (process.env.LOCAL_ES_HOST) return `${prot}://${process.env.LOCAL_ES_HOST}:9200`;
+  if (process.env.LOCALSTACK_HOST) return `${prot}://${process.env.LOCALSTACK_HOST}:4571`;
+  return `${prot}://localhost:9200`;
 };
 
 const esTestConfig = () => ({
@@ -85,7 +86,7 @@ const esMetricsConfig = () => {
 
 const esConfig = async (host, metrics = false) => {
   let config;
-  if (inTestMode()) {
+  if (inTestMode() || process.env.LOCAL_ES_HOST !== '') {
     config = esTestConfig();
   } else if (metrics) {
     config = esMetricsConfig();
