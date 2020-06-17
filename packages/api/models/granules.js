@@ -4,13 +4,14 @@ const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 const partial = require('lodash/partial');
 const path = require('path');
+const pMap = require('p-map');
 
+const awsClients = require('@cumulus/aws-client/services');
 const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
-const cmrjs = require('@cumulus/cmrjs');
-const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
+const cmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
@@ -21,6 +22,10 @@ const {
   removeNilProperties,
   renameProperty
 } = require('@cumulus/common/util');
+const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
+const {
+  DeletePublishedGranule
+} = require('@cumulus/errors');
 const {
   generateMoveFileParams,
   moveGranuleFiles
@@ -28,7 +33,7 @@ const {
 
 const Manager = require('./base');
 
-const { buildDatabaseFiles } = require('../lib/FileUtils');
+const FileUtils = require('../lib/FileUtils');
 const { translateGranule } = require('../lib/granules');
 const GranuleSearchQueue = require('../lib/GranuleSearchQueue');
 
@@ -76,6 +81,10 @@ class Granule extends Manager {
     return translateGranule(await super.get(...args));
   }
 
+  getRecord({ granuleId }) {
+    return super.get({ granuleId });
+  }
+
   async batchGet(...args) {
     const result = cloneDeep(await super.batchGet(...args));
 
@@ -106,13 +115,13 @@ class Granule extends Manager {
       throw new Error(`Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
     }
 
-    const cmrSettings = await getCmrSettings();
+    const cmrSettings = await cmrUtils.getCmrSettings();
     const cmr = new CMR(cmrSettings);
     const metadata = await cmr.getGranuleMetadata(granule.cmrLink);
 
     // Use granule UR to delete from CMR
     await cmr.deleteGranule(metadata.title, granule.collectionId);
-    await this.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']);
+    return this.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']);
   }
 
   /**
@@ -167,6 +176,10 @@ class Granule extends Manager {
     queueName = undefined,
     asyncOperationId = undefined
   ) {
+    if (!workflow) {
+      throw new TypeError('granule.applyWorkflow requires a `workflow` parameter');
+    }
+
     const { name, version } = deconstructCollectionId(g.collectionId);
 
     const lambdaPayload = await Rule.buildPayload({
@@ -203,13 +216,18 @@ class Granule extends Manager {
   async move(g, destinations, distEndpoint) {
     log.info(`granules.move ${g.granuleId}`);
 
+    const distributionBucketMap = await s3Utils.getJsonS3Object(
+      process.env.system_bucket,
+      getDistributionBucketMapKey(process.env.stackName)
+    );
     const updatedFiles = await moveGranuleFiles(g.files, destinations);
 
-    await cmrjs.reconcileCMRMetadata({
+    await cmrUtils.reconcileCMRMetadata({
       granuleId: g.granuleId,
       updatedFiles,
       distEndpoint,
-      published: g.published
+      published: g.published,
+      distributionBucketMap
     });
 
     return this.update(
@@ -258,24 +276,28 @@ class Granule extends Manager {
   /**
    * Build a granule record.
    *
-   * @param {Object} granule - A granule object
-   * @param {Object} message - A workflow execution message
-   * @param {string} executionUrl - A Step Function execution URL
-   * @param {Object} [executionDescription={}] - Defaults to empty object
-   * @param {Date} executionDescription.startDate - Start date of the workflow execution
-   * @param {Date} executionDescription.stopDate - Stop date of the workflow execution
-   * @returns {Object} - A granule record
+   * @param {Object} params
+   * @param {AWS.S3} params.s3 - an AWS.S3 instance
+   * @param {Object} params.granule - A granule object
+   * @param {Object} params.message - A workflow execution message
+   * @param {string} params.executionUrl - A Step Function execution URL
+   * @param {Object} [params.executionDescription={}] - Defaults to empty object
+   * @param {Date} params.executionDescription.startDate - Start date of the workflow execution
+   * @param {Date} params.executionDescription.stopDate - Stop date of the workflow execution
+   * @returns {Promise<Object>} A granule record
    */
-  static async generateGranuleRecord(
+  static async generateGranuleRecord({
+    s3,
     granule,
     message,
     executionUrl,
     executionDescription = {}
-  ) {
+  }) {
     if (!granule.granuleId) throw new Error(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
     const collectionId = getCollectionIdFromMessage(message);
 
-    const granuleFiles = await buildDatabaseFiles({
+    const granuleFiles = await FileUtils.buildDatabaseFiles({
+      s3,
       providerURL: buildURL({
         protocol: message.meta.provider.protocol,
         host: message.meta.provider.host,
@@ -284,7 +306,7 @@ class Granule extends Manager {
       files: granule.files
     });
 
-    const temporalInfo = await cmrjs.getGranuleTemporalInfo(granule);
+    const temporalInfo = await cmrUtils.getGranuleTemporalInfo(granule);
 
     const { startDate, stopDate } = executionDescription;
     const processingTimeInfo = {};
@@ -376,12 +398,36 @@ class Granule extends Manager {
   }
 
   /**
+   * Delete a granule
+   *
+   * @param {Object} granule record
+   * @returns {Promise}
+   */
+  async delete(granule) {
+    if (granule.published) {
+      throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
+    }
+
+    // Delete granule files
+    await pMap(
+      get(granule, 'files', []),
+      (file) => {
+        const bucket = FileUtils.getBucket(file);
+        const key = FileUtils.getKey(file);
+        return s3Utils.deleteS3Object(bucket, key);
+      }
+    );
+
+    return super.delete({ granuleId: granule.granuleId });
+  }
+
+  /**
    * Only used for tests
    */
   async deleteGranules() {
     const granules = await this.scan();
     return Promise.all(granules.Items.map((granule) =>
-      super.delete({ granuleId: granule.granuleId })));
+      this.delete(granule)));
   }
 
   /**
@@ -416,27 +462,38 @@ class Granule extends Manager {
     let executionDescription;
     try {
       executionDescription = await StepFunctions.describeExecution({ executionArn });
-    } catch (err) {
-      log.error(`Could not describe execution ${executionArn}`, err);
+    } catch (error) {
+      log.error(`Could not describe execution ${executionArn}`, error);
     }
 
     const promisedGranuleRecords = granules
-      .map(async (granule) => {
-        try {
-          return await Granule.generateGranuleRecord(
-            granule,
-            cumulusMessage,
-            executionUrl,
-            executionDescription
-          );
-        } catch (err) {
-          log.error(
-            'Error handling granule records: ', err,
-            'Execution message: ', cumulusMessage
-          );
-          return null;
+      .map(
+        async (granule) => {
+          try {
+            return await Granule.generateGranuleRecord({
+              s3: awsClients.s3(),
+              granule,
+              message: cumulusMessage,
+              executionUrl,
+              executionDescription
+            });
+          } catch (error) {
+            log.logAdditionalKeys(
+              {
+                error: {
+                  name: error.name,
+                  message: error.message,
+                  stack: error.stack.split('\n')
+                },
+                cumulusMessage
+              },
+              'Unable to get granule records from Cumulus Message'
+            );
+
+            return undefined;
+          }
         }
-      });
+      );
 
     const granuleRecords = await Promise.all(promisedGranuleRecords);
 
@@ -469,10 +526,10 @@ class Granule extends Manager {
       }
 
       await this.dynamodbDocClient.update(updateParams).promise();
-    } catch (err) {
+    } catch (error) {
       log.error(
         'Could not store granule record: ', granuleRecord,
-        err
+        error
       );
     }
   }

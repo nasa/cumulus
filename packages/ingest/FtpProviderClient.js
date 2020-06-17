@@ -126,7 +126,7 @@ class FtpProviderClient {
         return resolve(data.map((d) => ({
           name: d.name,
           path: path,
-          size: parseInt(d.size, 10),
+          size: Number.parseInt(d.size, 10),
           time: d.time,
           type: d.type
         })));

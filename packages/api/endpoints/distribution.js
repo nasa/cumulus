@@ -44,7 +44,10 @@ function getSignedS3Url(s3Client, Bucket, Key, username) {
  * @returns {Object} the configuration object needed to handle requests
  */
 function getConfigurations() {
-  const earthdataLoginClient = EarthdataLoginClient.createFromEnv({
+  const earthdataLoginClient = new EarthdataLoginClient({
+    clientId: process.env.EARTHDATA_CLIENT_ID,
+    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
+    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT
   });
 
@@ -111,11 +114,11 @@ async function handleFileRequest(req, res) {
   let fileKey;
   try {
     [fileBucket, fileKey] = getFileBucketAndKey(req.params[0]);
-  } catch (err) {
-    if (err instanceof UnparsableFileLocationError) {
-      return res.boom.notFound(err.message);
+  } catch (error) {
+    if (error instanceof UnparsableFileLocationError) {
+      return res.boom.notFound(error.message);
     }
-    throw err;
+    throw error;
   }
 
   const signedS3Url = getSignedS3Url(

@@ -15,7 +15,7 @@ const { AssociatedRulesError } = require('../../lib/errors');
 
 let manager;
 let ruleModel;
-test.before(async () => {
+test.before(async (t) => {
   process.env.stackName = randomString();
 
   process.env.system_bucket = randomString();
@@ -26,6 +26,7 @@ test.before(async () => {
 
   process.env.ProvidersTable = randomString();
 
+  t.context.providersModel = new Provider();
   manager = new Manager({
     tableName: process.env.ProvidersTable,
     tableHash: { name: 'id', type: 'S' },
@@ -46,23 +47,23 @@ test.after.always(async () => {
 });
 
 test('Providers.exists() returns true when a record exists', async (t) => {
+  const { providersModel } = t.context;
+
   const id = randomString();
 
   await manager.create(fakeProviderFactory({ id }));
-
-  const providersModel = new Provider();
 
   t.true(await providersModel.exists(id));
 });
 
 test('Providers.exists() returns false when a record does not exist', async (t) => {
-  const providersModel = new Provider();
+  const { providersModel } = t.context;
 
   t.false(await providersModel.exists(randomString()));
 });
 
 test('Providers.delete() throws an exception if the provider has associated rules', async (t) => {
-  const providersModel = new Provider();
+  const { providersModel } = t.context;
 
   const providerId = randomString();
   await manager.create(fakeProviderFactory({ id: providerId }));
@@ -93,15 +94,15 @@ test('Providers.delete() throws an exception if the provider has associated rule
   try {
     await providersModel.delete({ id: providerId });
     t.fail('Expected an exception to be thrown');
-  } catch (err) {
-    t.true(err instanceof AssociatedRulesError);
-    t.is(err.message, 'Cannot delete a provider that has associated rules');
-    t.deepEqual(err.rules, [rule.name]);
+  } catch (error) {
+    t.true(error instanceof AssociatedRulesError);
+    t.is(error.message, 'Cannot delete a provider that has associated rules');
+    t.deepEqual(error.rules, [rule.name]);
   }
 });
 
 test('Providers.delete() deletes a provider', async (t) => {
-  const providersModel = new Provider();
+  const { providersModel } = t.context;
 
   const providerId = randomString();
   await manager.create(fakeProviderFactory({ id: providerId }));
@@ -112,7 +113,7 @@ test('Providers.delete() deletes a provider', async (t) => {
 });
 
 test('Providers.create() throws a ValidationError if an invalid hostname is used', async (t) => {
-  const providersModel = new Provider();
+  const { providersModel } = t.context;
 
   await t.throwsAsync(
     providersModel.create(
@@ -124,7 +125,7 @@ test('Providers.create() throws a ValidationError if an invalid hostname is used
 });
 
 test('Providers.create() encrypts the credentials using KMS', async (t) => {
-  const providersModel = new Provider();
+  const { providersModel } = t.context;
 
   const provider = fakeProviderFactory({
     username: 'my-username',
@@ -148,8 +149,21 @@ test('Providers.create() encrypts the credentials using KMS', async (t) => {
   );
 });
 
+test('Providers.create() allows creation of a provider without a globalConnectionLimit', async (t) => {
+  const { providersModel } = t.context;
+
+  const provider = fakeProviderFactory();
+  delete provider.globalConnectionLimit;
+
+  await providersModel.create(provider);
+
+  const fetchedProvider = await providersModel.get({ id: provider.id });
+
+  t.is(fetchedProvider.globalConnectionLimit, undefined);
+});
+
 test('Providers.update() throws a ValidationError if an invalid host is used', async (t) => {
-  const providersModel = new Provider();
+  const { providersModel } = t.context;
 
   const provider = fakeProviderFactory();
   await providersModel.create(provider);
@@ -161,13 +175,13 @@ test('Providers.update() throws a ValidationError if an invalid host is used', a
     );
 
     t.fail('Expected an exception');
-  } catch (err) {
-    t.is(err.name, 'ValidationError');
+  } catch (error) {
+    t.is(error.name, 'ValidationError');
   }
 });
 
 test('Providers.update() encrypts the credentials using KMS', async (t) => {
-  const providersModel = new Provider();
+  const { providersModel } = t.context;
 
   const provider = fakeProviderFactory({
     username: 'my-username-1',

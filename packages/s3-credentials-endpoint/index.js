@@ -24,6 +24,14 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const log = new Logger({ sender: 's3credentials' });
 
+const buildEarthdataLoginClient = () =>
+  new EarthdataLoginClient({
+    clientId: process.env.EARTHDATA_CLIENT_ID,
+    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
+    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
+    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT
+  });
+
 /**
  * Use NGAP's time-based, temporary credential dispensing lambda.
  *
@@ -85,13 +93,9 @@ const useSecureCookies = () => {
  * @returns {Object} the configuration object needed to handle requests
  */
 function getConfigurations() {
-  const earthdataLoginClient = EarthdataLoginClient.createFromEnv({
-    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT
-  });
-
   return {
     accessTokenModel: new AccessToken(),
-    authClient: earthdataLoginClient,
+    authClient: buildEarthdataLoginClient(),
     distributionUrl: process.env.DISTRIBUTION_ENDPOINT,
     s3Client: awsServices.s3()
   };
@@ -183,9 +187,7 @@ const isTokenAuthRequest = (req) =>
   req.get('EDL-Client-Id') && req.get('EDL-Token');
 
 const handleTokenAuthRequest = async (req, res, next) => {
-  const earthdataLoginClient = EarthdataLoginClient.createFromEnv({
-    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT
-  });
+  const earthdataLoginClient = buildEarthdataLoginClient();
 
   try {
     const userName = await earthdataLoginClient.getTokenUsername({
@@ -243,11 +245,11 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   let accessTokenRecord;
   try {
     accessTokenRecord = await accessTokenModel.get({ accessToken });
-  } catch (err) {
-    if (err instanceof RecordDoesNotExist) {
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
       return res.redirect(307, redirectURLForAuthorizationCode);
     }
-    throw err;
+    throw error;
   }
 
   if (isAccessTokenExpired(accessTokenRecord)) {

@@ -13,6 +13,8 @@ const isNil = require('lodash/isNil');
 const pick = require('lodash/pick');
 const pRetry = require('p-retry');
 
+const EXECUTION_LIST_LIMIT = 50;
+
 /**
  * Find the execution ARN matching the `matcher` function
  *
@@ -30,13 +32,33 @@ const findExecutionArn = async (prefix, matcher, options = { timeout: 0 }) =>
   pRetry(
     async () => {
       let execution;
+      let pageNumber = 1;
 
       try {
-        const { body } = await executionsApi.getExecutions({ prefix });
-        const executions = JSON.parse(body);
+        const { body } = await executionsApi.getExecutions({
+          prefix,
+          query: {
+            limit: EXECUTION_LIST_LIMIT,
+            page: pageNumber
+          }
+        });
+        let executions = JSON.parse(body);
         execution = executions.results.find(matcher);
-      } catch (err) {
-        throw new pRetry.AbortError(err);
+
+        while (isNil(execution) && executions.meta.count > (EXECUTION_LIST_LIMIT * pageNumber)) {
+          // eslint-disable-next-line no-await-in-loop
+          const response = await executionsApi.getExecutions({
+            prefix,
+            query: {
+              limit: EXECUTION_LIST_LIMIT,
+              page: pageNumber += 1
+            }
+          });
+          executions = JSON.parse(response.body);
+          execution = executions.results.find(matcher);
+        }
+      } catch (error) {
+        throw new pRetry.AbortError(error);
       }
 
       if (isNil(execution)) throw new Error('Not Found');
@@ -88,9 +110,9 @@ const getExecutionWithStatus = async (params) =>
 
       try {
         execution = await getExecution(pick(params, ['prefix', 'arn', 'callback']));
-      } catch (err) {
-        if (err.name === 'ExecutionNotFoundError') throw err;
-        throw new pRetry.AbortError(`Error fetching execution ${params.arn}: ${err}`);
+      } catch (error) {
+        if (error.name === 'ExecutionNotFoundError') throw error;
+        throw new pRetry.AbortError(`Error fetching execution ${params.arn}: ${error}`);
       }
 
       if (execution.status === params.status) return execution;

@@ -35,9 +35,9 @@ const loadEnvFile = async (filename) => {
     Object.keys(envConfig).forEach((k) => {
       if (isNil(process.env[k])) process.env[k] = envConfig[k];
     });
-  } catch (err) {
-    if (err.code === 'ENOENT') return;
-    throw err;
+  } catch (error) {
+    if (error.code === 'ENOENT') return;
+    throw error;
   }
 };
 

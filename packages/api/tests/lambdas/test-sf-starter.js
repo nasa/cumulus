@@ -11,9 +11,9 @@ const {
   sendSQSMessage
 } = require('@cumulus/aws-client/SQS');
 const { ResourcesLockedError } = require('@cumulus/errors');
-const Semaphore = require('@cumulus/common/Semaphore');
 const { randomId } = require('@cumulus/common/test-utils');
 
+const Semaphore = require('../../lib/Semaphore');
 const sfStarter = rewire('../../lambdas/sf-starter');
 const { Manager } = require('../../models');
 
@@ -206,7 +206,7 @@ test.serial('incrementAndDispatch decrements priority semaphore if dispatch() th
 
   try {
     await incrementAndDispatch({ Body: message });
-  } catch (err) {
+  } catch (error) {
     const response = await semaphore.get(queueName);
     t.is(response.semvalue, 0);
   } finally {

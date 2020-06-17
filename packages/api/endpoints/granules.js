@@ -1,12 +1,14 @@
 'use strict';
 
-const lodashGet = require('lodash/get');
-const pMap = require('p-map');
 const router = require('express-promise-router')();
+const isBoolean = require('lodash/isBoolean');
 
-const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
+const {
+  DeletePublishedGranule,
+  RecordDoesNotExist
+} = require('@cumulus/errors');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const Search = require('../es/search').Search;
@@ -133,23 +135,29 @@ async function del(req, res) {
   log.info(`granules.del ${granuleId}`);
 
   const granuleModelClient = new models.Granule();
-  const granule = await granuleModelClient.get({ granuleId });
+
+  let granule;
+  try {
+    granule = await granuleModelClient.getRecord({ granuleId });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.notFound(error);
+    }
+    throw error;
+  }
 
   if (granule.detail) {
     return res.boom.badRequest(granule);
   }
 
-  if (granule.published) {
-    return res.boom.badRequest('You cannot delete a granule that is published to CMR. Remove it from CMR first');
+  try {
+    await granuleModelClient.delete(granule);
+  } catch (error) {
+    if (error instanceof DeletePublishedGranule) {
+      return res.boom.badRequest(error.message);
+    }
+    throw error;
   }
-
-  // remove files from s3
-  await pMap(
-    lodashGet(granule, 'files', []),
-    ({ bucket, key }) => deleteS3Object(bucket, key)
-  );
-
-  await granuleModelClient.delete({ granuleId });
 
   if (inTestMode()) {
     const esClient = await Search.es(process.env.ES_HOST);
@@ -177,26 +185,30 @@ async function get(req, res) {
   let result;
   try {
     result = await (new models.Granule()).get({ granuleId: req.params.granuleName });
-  } catch (err) {
-    if (err.message.startsWith('No record found')) {
+  } catch (error) {
+    if (error.message.startsWith('No record found')) {
       return res.boom.notFound('Granule not found');
     }
 
-    throw err;
+    throw error;
   }
 
   return res.send(result);
 }
 
-async function bulk(req, res) {
+function validateBulkGranulesRequest(req, res, next) {
   const payload = req.body;
-
-  if (!payload.workflowName) {
-    return res.boom.badRequest('workflowName is required.');
-  }
 
   if (!payload.ids && !payload.query) {
     return res.boom.badRequest('One of ids or query is required');
+  }
+
+  if (payload.ids && !Array.isArray(payload.ids)) {
+    return res.boom.badRequest(`ids should be an array of values, received ${payload.ids}`);
+  }
+
+  if (!payload.query && payload.ids && payload.ids.length === 0) {
+    return res.boom.badRequest('no values provided for ids');
   }
 
   if (payload.query
@@ -208,6 +220,16 @@ async function bulk(req, res) {
 
   if (payload.query && !payload.index) {
     return res.boom.badRequest('Index is required if query is sent');
+  }
+
+  return next();
+}
+
+async function bulkOperations(req, res) {
+  const payload = req.body;
+
+  if (!payload.workflowName) {
+    return res.boom.badRequest('workflowName is required.');
   }
 
   const asyncOperationModel = new models.AsyncOperation({
@@ -235,24 +257,89 @@ async function bulk(req, res) {
     payload: {
       payload,
       type: 'BULK_GRANULE',
-      granulesTable: process.env.GranulesTable,
-      system_bucket: process.env.system_bucket,
-      stackName: process.env.stackName,
-      invoke: process.env.invoke,
-      esHost: process.env.METRICS_ES_HOST,
-      esUser: process.env.METRICS_ES_USER,
-      esPassword: process.env.METRICS_ES_PASS
+      envVars: {
+        GranulesTable: process.env.GranulesTable,
+        system_bucket: process.env.system_bucket,
+        stackName: process.env.stackName,
+        invoke: process.env.invoke,
+        METRICS_ES_HOST: process.env.METRICS_ES_HOST,
+        METRICS_ES_USER: process.env.METRICS_ES_USER,
+        METRICS_ES_PASS: process.env.METRICS_ES_PASS
+      }
     },
     esHost: process.env.ES_HOST
   });
 
-  return res.send(asyncOperation);
+  return res.status(202).send(asyncOperation);
+}
+
+/**
+ * Start an AsyncOperation that will perform a bulk granules delete
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function bulkDelete(req, res) {
+  const payload = req.body;
+
+  if (payload.forceRemoveFromCmr && !isBoolean(payload.forceRemoveFromCmr)) {
+    return res.boom.badRequest('forceRemoveFromCmr must be a boolean value');
+  }
+
+  const asyncOperationModel = new models.AsyncOperation({
+    stackName: process.env.stackName,
+    systemBucket: process.env.system_bucket,
+    tableName: process.env.AsyncOperationsTable
+  });
+
+  const asyncOperation = await asyncOperationModel.start({
+    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+    cluster: process.env.EcsCluster,
+    lambdaName: process.env.BulkOperationLambda,
+    description: 'Bulk granule deletion',
+    operationType: 'Bulk Granule Delete', // this value is set on an ENUM field, so cannot change
+    payload: {
+      type: 'BULK_GRANULE_DELETE',
+      payload,
+      envVars: {
+        cmr_client_id: process.env.cmr_client_id,
+        CMR_ENVIRONMENT: process.env.CMR_ENVIRONMENT,
+        cmr_oauth_provider: process.env.cmr_oauth_provider,
+        cmr_password_secret_name: process.env.cmr_password_secret_name,
+        cmr_provider: process.env.cmr_provider,
+        cmr_username: process.env.cmr_username,
+        GranulesTable: process.env.GranulesTable,
+        launchpad_api: process.env.launchpad_api,
+        launchpad_certificate: process.env.launchpad_certificate,
+        launchpad_passphrase_secret_name: process.env.launchpad_passphrase_secret_name,
+        METRICS_ES_HOST: process.env.METRICS_ES_HOST,
+        METRICS_ES_USER: process.env.METRICS_ES_USER,
+        METRICS_ES_PASS: process.env.METRICS_ES_PASS,
+        stackName: process.env.stackName,
+        system_bucket: process.env.system_bucket
+      }
+    }
+  });
+
+  return res.status(202).send(asyncOperation);
 }
 
 router.get('/:granuleName', get);
 router.get('/', list);
 router.put('/:granuleName', put);
-router.post('/bulk', bulk, asyncOperationEndpointErrorHandler);
+router.post(
+  '/bulk',
+  validateBulkGranulesRequest,
+  bulkOperations,
+  asyncOperationEndpointErrorHandler
+);
+router.post(
+  '/bulkDelete',
+  validateBulkGranulesRequest,
+  bulkDelete,
+  asyncOperationEndpointErrorHandler
+);
 router.delete('/:granuleName', del);
 
 module.exports = router;

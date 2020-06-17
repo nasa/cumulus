@@ -14,25 +14,25 @@ const schemas = require('../models/schemas');
 const getBucket = (file) => {
   if (file.bucket) return file.bucket;
   if (file.filename) return parseS3Uri(file.filename).Bucket;
-  return null;
+  return undefined;
 };
 
 const getChecksum = (file) => {
   if (file.checksum) return file.checksum;
   if (file.checksumValue) return file.checksumValue;
-  return null;
+  return undefined;
 };
 
 const getFileName = (file) => {
   if (file.fileName) return file.fileName;
   if (file.name) return file.name;
-  return null;
+  return undefined;
 };
 
 const getKey = (file) => {
   if (file.key) return file.key;
   if (file.filename) return parseS3Uri(file.filename).Key;
-  return null;
+  return undefined;
 };
 
 const buildFileSourceURL = (providerURL, file) => {
@@ -54,15 +54,22 @@ const setFileName = simpleFieldAdder('fileName', getFileName);
 
 const setKey = simpleFieldAdder('key', getKey);
 
-const setS3FileSize = async (file) => {
+const setS3FileSize = async (s3, file) => {
   if (isInteger(file.size)) return file;
+
   if (isInteger(file.fileSize)) {
     const newFileObj = { ...file, size: file.fileSize };
     delete newFileObj.fileSize;
     return newFileObj;
   }
+
   try {
-    const size = await getObjectSize(file.bucket, file.key);
+    const size = await getObjectSize({
+      s3,
+      bucket: file.bucket,
+      key: file.key
+    });
+
     return { ...file, size };
   } catch (error) {
     return file;
@@ -99,7 +106,7 @@ const filterDatabaseProperties = (file) =>
     Object.keys(schemas.granule.properties.files.items.properties)
   );
 
-const buildDatabaseFile = (providerURL, file) =>
+const buildDatabaseFile = (s3, providerURL, file) =>
   flow([
     setBucket,
     setKey,
@@ -107,7 +114,7 @@ const buildDatabaseFile = (providerURL, file) =>
     setFileName,
     partial(setSource, providerURL),
     parseSource,
-    setS3FileSize // This one is last because it returns a Promise
+    partial(setS3FileSize, s3) // This one is last because it returns a Promise
   ])(file);
 
 const cleanDatabaseFile = (file) =>
@@ -116,9 +123,9 @@ const cleanDatabaseFile = (file) =>
     removeNilProperties
   ])(file);
 
-const buildDatabaseFiles = async ({ providerURL, files }) =>
+const buildDatabaseFiles = async ({ s3, providerURL, files }) =>
   Promise.all(
-    files.map(partial(buildDatabaseFile, providerURL))
+    files.map(partial(buildDatabaseFile, s3, providerURL))
   ).then((newFiles) => newFiles.map(cleanDatabaseFile));
 
 module.exports = {
@@ -128,5 +135,7 @@ module.exports = {
   filterDatabaseProperties,
   getChecksum,
   getFileName,
-  setS3FileSize
+  setS3FileSize,
+  getBucket,
+  getKey
 };

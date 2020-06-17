@@ -5,7 +5,7 @@ const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const lock = rewire('../lock');
-const { checkOldLocks, countLock } = lock;
+const { checkOldLocks, countLock, proceed } = lock;
 
 // 5 * 60 seconds * 1000 milliseconds
 const fiveMinutes = 5 * 60 * 1000;
@@ -56,4 +56,8 @@ test('countLock() returns the correct number of locks', async (t) => {
     }
   ]))(() => countLock(bucket, providerName));
   t.is(count, 1);
+});
+
+test('proceed() returns true if globalConnectionLimit is undefined', async (t) => {
+  t.true(await proceed(undefined, {}, undefined));
 });

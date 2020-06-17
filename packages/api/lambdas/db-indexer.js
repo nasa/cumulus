@@ -80,7 +80,7 @@ const mapIndexTypeToIdFieldName = (type) => {
  * @returns {undefined|string} name of the DynamoDB table
  */
 function getTableName(sourceArn) {
-  const tableName = sourceArn.match(/table\/(.[^\/]*)/);
+  const tableName = sourceArn.match(/table\/(.[^/]*)/);
   if (!tableName) {
     return undefined;
   }
@@ -201,7 +201,7 @@ async function indexRecords(records) {
     (record) => indexRecord(esClient, record).catch(log.error),
     {
       concurrency: process.env.ES_CONCURRENCY
-        ? parseInt(process.env.ES_CONCURRENCY, 10)
+        ? Number.parseInt(process.env.ES_CONCURRENCY, 10)
         : 3
     }
   );

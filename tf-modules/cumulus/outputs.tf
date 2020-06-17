@@ -1,5 +1,9 @@
 # API outputs
 
+output "distribution_bucket_map" {
+  value = module.distribution.distribution_bucket_map
+}
+
 output "archive_api_uri" {
   value = module.archive.api_uri
 }
@@ -24,6 +28,10 @@ output "s3_credentials_redirect_uri" {
 
 output "stepfunction_event_reporter_queue_url" {
   value = module.archive.sf_event_sqs_to_db_records_sqs_queue_url
+}
+
+output "report_collections_sns_topic_arn" {
+  value = module.archive.report_collections_sns_topic_arn
 }
 
 output "report_executions_sns_topic_arn" {

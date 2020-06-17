@@ -8,6 +8,199 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- Changes to `@cumulus/aws-client/S3`
+  - The signature of the `getObjectSize` function has changed. It now takes a
+    params object with three properties:
+    - **s3**: an instance of an AWS.S3 object
+    - **bucket**
+    - **key**
+  - The `getObjectSize` function will no longer retry if the object does not
+    exist
+- **CUMULUS-1958**
+  - The following methods exported from `@cumulus/cmr-js/cmr-utils` were made
+    async, and added distributionBucketMap as a parameter:
+    - constructOnlineAccessUrl
+    - generateFileUrl
+    - reconcileCMRMetadata
+    - updateCMRMetadata
+- **CUMULUS-1969**
+  - The `DiscoverPdrs` task now expects `provider_path` to be provided at
+    `event.config.provider_path`, not `event.config.collection.provider_path`
+  - `event.config.provider_path` is now a required parameter of the
+    `DiscoverPdrs` task
+  - `event.config.collection` is no longer a parameter to the `DiscoverPdrs`
+    task
+  - Collections no longer support the `provider_path` property. The tasks that
+    relied on that property are now referencing `config.meta.provider_path`.
+    Workflows should be updated accordingly.
+- **CUMULUS-1977**
+  - Moved bulk granule deletion endpoint from `/bulkDelete` to
+    `/granules/bulkDelete`
+
+### Added
+
+- **CUMULUS-1956**
+  - Added `@cumulus/earthata-login-client` package
+  - The `/s3credentials` endpoint that is deployed as part of distribution now
+    supports authentication using tokens created by a different application. If
+    a request contains the `EDL-ClientId` and `EDL-Token` headers,
+    authentication will be handled using that token rather than attempting to
+    use OAuth.
+- **CUMULUS-1958**
+  - Add the ability for users to specify a `bucket_map_key` to the `cumulus`
+    terraform module as an override for the default .yaml values that are passed
+    to TEA by Core.    Using this option *requires* that each configured
+    Cumulus 'distribution' bucket (e.g. public/protected buckets) have a single
+    TEA mapping.  Multiple maps per bucket are not supported.
+  - Updated Generating a distribution URL, the MoveGranules task and all CMR
+    reconciliation functionality to utilize the TEA bucket map override.
+  - Updated deploy process to utilize a bootstrap 'tea-map-cache' lambda that
+    will, after deployment of Cumulus Core's TEA instance, query TEA for all
+    protected/public buckets and generate a mapping configuration used
+    internally by Core.  This object is also exposed as an output of the Cumulus
+    module as `distribution_bucket_map`.
+- **CUMULUS-2019**
+  - Add `infix` search to es query builder `@cumulus/api/es/es/queries` to
+    support partial matching of the keywords
+
+### Changed
+
+- **CUMULUS-1977**
+  - Implemented POST `/granules/bulkDelete` API endpoint to support deleting granules specified by ID or returned by the provided query in the request body. If the request is successful, the endpoint returns the async operation ID that has been started to remove the granules.
+    - To use a query in the request body, your deployment must be [configured to access the Elasticsearch host for ESDIS metrics](https://nasa.github.io/cumulus/docs/additional-deployment-options/cloudwatch-logs-delivery#esdis-metrics) in your environment
+  - Added `@cumulus/api/models/Granule.getRecord()` method to return raw record from DynamoDB
+  - Added `@cumulus/api/models/Granule.delete()` method which handles deleting the granule record from DynamoDB and the granule files from S3
+
+### Changed
+
+- **CUMULUS-1956**
+  - The `/s3credentials` endpoint that is deployed as part of distribution now
+    supports authentication using tokens created by a different application. If
+    a request contains the `EDL-ClientId` and `EDL-Token` headers,
+    authentication will be handled using that token rather than attempting to
+    use OAuth.
+- **CUMULUS-1977**
+  - API endpoint POST `/granules/bulk` now returns a 202 status on a successful
+    response instead of a 200 response
+  - API endpoint DELETE `/granules/<granule-id>` now returns a 404 status if the
+    granule record was already deleted
+  - `@cumulus/api/models/Granule.update()` now returns the updated granule
+    record
+- **CUMULUS-1982**
+  - The `globalConnectionLimit` property of providers is now optional and
+    defaults to "unlimited"
+- **CUMULUS-2016**
+  - Upgrade TEA to version 79
+
+### Deprecated
+
+- **CUMULUS-1930**
+  - `@cumulus/common/log.convertLogLevel()`
+- `@cumulus/collection-config-store`
+- `@cumulus/common/util.sleep()`
+
+### Removed
+
+- The deprecated `@cumulus/common.bucketsConfigJsonObject` function has been
+  removed
+- The deprecated `@cumulus/common.CollectionConfigStore` class has been removed
+- The deprecated `@cumulus/common.concurrency` module has been removed
+- The deprecated `@cumulus/common.constructCollectionId` function has been
+  removed
+- The deprecated `@cumulus/common.launchpad` module has been removed
+- The deprecated `@cumulus/common.LaunchpadToken` class has been removed
+- The deprecated `@cumulus/common.Semaphore` class has been removed
+- The deprecated `@cumulus/common.stringUtils` module has been removed
+- The deprecated `@cumulus/common/aws.cloudwatchlogs` function has been removed
+- The deprecated `@cumulus/common/aws.deleteS3Files` function has been removed
+- The deprecated `@cumulus/common/aws.deleteS3Object` function has been removed
+- The deprecated `@cumulus/common/aws.dynamodb` function has been removed
+- The deprecated `@cumulus/common/aws.dynamodbDocClient` function has been
+  removed
+- The deprecated `@cumulus/common/aws.getExecutionArn` function has been removed
+- The deprecated `@cumulus/common/aws.headObject` function has been removed
+- The deprecated `@cumulus/common/aws.listS3ObjectsV2` function has been removed
+- The deprecated `@cumulus/common/aws.parseS3Uri` function has been removed
+- The deprecated `@cumulus/common/aws.promiseS3Upload` function has been removed
+- The deprecated `@cumulus/common/aws.recursivelyDeleteS3Bucket` function has
+  been removed
+- The deprecated `@cumulus/common/aws.s3CopyObject` function has been removed
+- The deprecated `@cumulus/common/aws.s3ObjectExists` function has been removed
+- The deprecated `@cumulus/common/aws.s3PutObject` function has been removed
+- The deprecated `@cumulus/common/bucketsConfigJsonObject` function has been
+  removed
+- The deprecated `@cumulus/common/CloudWatchLogger` class has been removed
+- The deprecated `@cumulus/common/collection-config-store.CollectionConfigStore`
+  class has been removed
+- The deprecated `@cumulus/common/collection-config-store.constructCollectionId`
+  function has been removed
+- The deprecated `@cumulus/common/concurrency.limit` function has been removed
+- The deprecated `@cumulus/common/concurrency.mapTolerant` function has been
+  removed
+- The deprecated `@cumulus/common/concurrency.promiseUrl` function has been
+  removed
+- The deprecated `@cumulus/common/concurrency.toPromise` function has been
+  removed
+- The deprecated `@cumulus/common/concurrency.unless` function has been removed
+- The deprecated `@cumulus/common/config.parseConfig` function has been removed
+- The deprecated `@cumulus/common/config.resolveResource` function has been
+  removed
+- The deprecated `@cumulus/common/DynamoDb.get` function has been removed
+- The deprecated `@cumulus/common/DynamoDb.scan` function has been removed
+- The deprecated `@cumulus/common/FieldPattern` class has been removed
+- The deprecated `@cumulus/common/launchpad.getLaunchpadToken` function has been
+  removed
+- The deprecated `@cumulus/common/launchpad.validateLaunchpadToken` function has
+  been removed
+- The deprecated `@cumulus/common/LaunchpadToken` class has been removed
+- The deprecated `@cumulus/common/message.buildCumulusMeta` function has been
+  removed
+- The deprecated `@cumulus/common/message.buildQueueMessageFromTemplate`
+  function has been removed
+- The deprecated `@cumulus/common/message.getCollectionIdFromMessage` function
+  has been removed
+- The deprecated `@cumulus/common/message.getMaximumExecutions` function has
+  been removed
+- The deprecated `@cumulus/common/message.getMessageExecutionArn` function has
+  been removed
+- The deprecated `@cumulus/common/message.getMessageExecutionName` function has
+  been removed
+- The deprecated `@cumulus/common/message.getMessageFromTemplate` function has
+  been removed
+- The deprecated `@cumulus/common/message.getMessageGranules` function has been
+  removed
+- The deprecated `@cumulus/common/message.getMessageStateMachineArn` function
+  has been removed
+- The deprecated `@cumulus/common/message.getQueueName` function has been
+  removed
+- The deprecated `@cumulus/common/message.getQueueNameByUrl` function has been
+  removed
+- The deprecated `@cumulus/common/message.hasQueueAndExecutionLimit` function
+  has been removed
+- The deprecated `@cumulus/common/Semaphore` class has been removed
+- The deprecated `@cumulus/common/string.globalReplace` functon has been removed
+- The deprecated `@cumulus/common/string.isNonEmptyString` functon has been
+  removed
+- The deprecated `@cumulus/common/string.isValidHostname` functon has been
+  removed
+- The deprecated `@cumulus/common/string.match` functon has been removed
+- The deprecated `@cumulus/common/string.matches` functon has been removed
+- The deprecated `@cumulus/common/string.replace` functon has been removed
+- The deprecated `@cumulus/common/string.toLower` functon has been removed
+- The deprecated `@cumulus/common/string.toUpper` functon has been removed
+- The deprecated `@cumulus/common/workflows.getWorkflowArn` function has been
+  removed
+- The deprecated `@cumulus/common/workflows.getWorkflowFile` function has been
+  removed
+- The deprecated `@cumulus/common/workflows.getWorkflowList` function has been
+  removed
+- The deprecated `@cumulus/common/workflows.getWorkflowTemplate` function has
+  been removed
+
+## [v1.24.0] 2020-06-03
+
+### BREAKING CHANGES
+
 - **CUMULUS-1969**
   - The `DiscoverPdrs` task now expects `provider_path` to be provided at
     `event.config.provider_path`, not `event.config.collection.provider_path`
@@ -29,18 +222,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     SyncGranule task. This setting is `false` by default, but when set to
     `true`, all checksum files associated with data files that are downloaded
     will be downloaded as well.
-
 - **CUMULUS-1952**
   - Updated HTTP(S) provider client to accept username/password for Basic authorization. This change adds support for Basic Authorization such as Earthdata login redirects to ingest (i.e. as implemented in SyncGranule), but not to discovery (i.e. as implemented in DiscoverGranules). Discovery still expects the provider's file system to be publicly accessible, but not the individual files and their contents.
   - **NOTE**: Using this in combination with the HTTP protocol may expose usernames and passwords to intermediary network entities. HTTPS is highly recommended.
-
-- **CUMULUS-1956**
-  - The `/s3credentials` endpoint that is deployed as part of distribution now
-    supports authentication using tokens created by a different application. If
-    a request contains the `EDL-ClientId` and `EDL-Token` headers,
-    authentication will be handled using that token rather than attempting to
-    use OAuth.
-
 - **CUMULUS-1997**
   - Added optional `launchpad` configuration to `@cumulus/hyrax-metadata-updates` task config schema.
 

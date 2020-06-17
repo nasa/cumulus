@@ -49,7 +49,7 @@ export const getCfStackParameterValues = async (
   let response;
   try {
     response = await describeCfStack(stackName);
-  } catch (err) {
+  } catch (error) {
     return {};
   }
 

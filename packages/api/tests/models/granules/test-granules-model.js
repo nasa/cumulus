@@ -1,52 +1,24 @@
 'use strict';
 
-const cloneDeep = require('lodash/cloneDeep');
 const test = require('ava');
 const sinon = require('sinon');
 
 const awsServices = require('@cumulus/aws-client/services');
+const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString } = require('@cumulus/common/test-utils');
-const { removeNilProperties } = require('@cumulus/common/util');
-const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmr-client');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 
 const Rule = require('../../../models/rules');
 const Granule = require('../../../models/granules');
-const { filterDatabaseProperties } = require('../../../lib/FileUtils');
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
-const { deconstructCollectionId } = require('../../../lib/utils');
-
-const granuleSuccess = require('../../data/granule_success.json');
-const granuleFailure = require('../../data/granule_failed.json');
 
 let fakeExecution;
-let stepFunctionsStub;
 let testCumulusMessage;
-
-const mockedFileSize = 12345;
-
-const granuleFileToRecord = (granuleFile) => {
-  const granuleRecord = {
-    size: mockedFileSize,
-    ...granuleFile,
-    key: s3Utils.parseS3Uri(granuleFile.filename).Key,
-    fileName: granuleFile.name,
-    checksum: granuleFile.checksum
-  };
-
-  if (granuleFile.path) {
-    // This hard-coded URL comes from the provider configure in the
-    // test fixtures (e.g. data/granule_success.json)
-    granuleRecord.source = `https://07f1bfba.ngrok.io/granules/${granuleFile.name}`;
-  }
-
-  return removeNilProperties(filterDatabaseProperties(granuleRecord));
-};
+let sandbox;
 
 test.before(async () => {
   process.env.GranulesTable = randomString();
@@ -81,21 +53,14 @@ test.before(async () => {
     }
   };
 
-  const fakeMetadata = {
-    beginningDateTime: '2017-10-24T00:00:00.000Z',
-    endingDateTime: '2018-10-24T00:00:00.000Z',
-    lastUpdateDateTime: '2018-04-20T21:45:45.524Z',
-    productionDateTime: '2018-04-25T21:45:45.524Z'
-  };
-
-  sinon.stub(cmrjs, 'getGranuleTemporalInfo').callsFake(() => fakeMetadata);
+  sandbox = sinon.createSandbox();
 
   fakeExecution = {
     input: JSON.stringify(testCumulusMessage),
     startDate: new Date(Date.UTC(2019, 6, 28)),
     stopDate: new Date(Date.UTC(2019, 6, 28, 1))
   };
-  stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').callsFake(() => fakeExecution);
+  sandbox.stub(StepFunctions, 'describeExecution').resolves(fakeExecution);
 
   // Store the CMR password
   process.env.cmr_password_secret_name = randomString();
@@ -114,8 +79,6 @@ test.before(async () => {
 
 test.beforeEach((t) => {
   t.context.granuleModel = new Granule();
-  t.context.granuleId = testCumulusMessage.payload.granules[0].granuleId;
-  t.context.cumulusMessage = testCumulusMessage;
 });
 
 test.after.always(async () => {
@@ -128,8 +91,7 @@ test.after.always(async () => {
     ForceDeleteWithoutRecovery: true
   }).promise();
   await new Granule().deleteTable();
-  stepFunctionsStub.restore();
-  sinon.reset();
+  sandbox.restore();
 });
 
 test('files existing at location returns empty array if no files exist', async (t) => {
@@ -391,6 +353,23 @@ test('get() will correctly return a granule file stored using the new schema', a
   );
 });
 
+test('getRecord() returns a granule record from the database', async (t) => {
+  const granule = fakeGranuleFactoryV2();
+
+  await awsServices.dynamodbDocClient().put({
+    TableName: process.env.GranulesTable,
+    Item: granule
+  }).promise();
+
+  const granuleModel = new Granule();
+
+  const fetchedGranule = await granuleModel.getRecord({
+    granuleId: granule.granuleId
+  });
+
+  t.is(fetchedGranule.granuleId, granule.granuleId);
+});
+
 test('batchGet() will translate old-style granule files into the new schema', async (t) => {
   const oldFile = {
     bucket: 'my-bucket',
@@ -544,8 +523,8 @@ test('removing a granule from CMR fails if the granule is not in CMR', async (t)
 
   try {
     await granuleModel.removeGranuleFromCmrByGranule(granule);
-  } catch (err) {
-    t.is(err.message, `Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
+  } catch (error) {
+    t.is(error.message, `Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
   }
 });
 
@@ -624,217 +603,6 @@ test.serial('removing a granule from CMR succeeds with Launchpad authentication'
   }
 });
 
-test(
-  'generateGranuleRecord() properly sets timeToPreprocess when sync_granule_duration is present for a granule',
-  async (t) => {
-    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    const [granule] = cumulusMessage.payload.granules;
-    cumulusMessage.payload.granules[0].sync_granule_duration = 123;
-
-    const record = await Granule.generateGranuleRecord(
-      granule,
-      cumulusMessage,
-      randomString()
-    );
-
-    t.is(record.timeToPreprocess, 0.123);
-  }
-);
-
-test(
-  'generateGranuleRecord() properly sets timeToPreprocess when sync_granule_duration is not present for a granule',
-  async (t) => {
-    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    const [granule] = cumulusMessage.payload.granules;
-    cumulusMessage.payload.granules[0].sync_granule_duration = 0;
-
-    const record = await Granule.generateGranuleRecord(
-      granule,
-      cumulusMessage,
-      randomString()
-    );
-
-    t.is(record.timeToPreprocess, 0);
-  }
-);
-
-test(
-  'generateGranuleRecord() properly sets timeToArchive when post_to_cmr_duration is present for a granule',
-  async (t) => {
-    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    const [granule] = cumulusMessage.payload.granules;
-    cumulusMessage.payload.granules[0].post_to_cmr_duration = 123;
-
-    const record = await Granule.generateGranuleRecord(
-      granule,
-      cumulusMessage,
-      randomString()
-    );
-
-    t.is(record.timeToArchive, 0.123);
-  }
-);
-
-test(
-  'generateGranuleRecord() properly sets timeToArchive when post_to_cmr_duration is not present for a granule',
-  async (t) => {
-    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    const [granule] = cumulusMessage.payload.granules;
-    cumulusMessage.payload.granules[0].post_to_cmr_duration = 0;
-
-    const record = await Granule.generateGranuleRecord(
-      granule,
-      cumulusMessage,
-      randomString()
-    );
-
-    t.is(record.timeToArchive, 0);
-  }
-);
-
-test(
-  'generateGranuleRecord() sets processingEndDateTime when execution stopDate is missing',
-  async (t) => {
-    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    const [granule] = cumulusMessage.payload.granules;
-
-    const newFakeExecution = cloneDeep(fakeExecution);
-    delete newFakeExecution.stopDate;
-
-    const record = await Granule.generateGranuleRecord(
-      granule,
-      cumulusMessage,
-      randomString(),
-      newFakeExecution
-    );
-
-    t.is(record.processingStartDateTime, '2019-07-28T00:00:00.000Z');
-    t.is(typeof record.processingEndDateTime, 'string');
-  }
-);
-
-test(
-  'generateGranuleRecord() sets processingStartDateTime and processingEndDateTime correctly',
-  async (t) => {
-    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    const [granule] = cumulusMessage.payload.granules;
-
-    const record = await Granule.generateGranuleRecord(
-      granule,
-      cumulusMessage,
-      randomString(),
-      fakeExecution
-    );
-
-    t.is(record.processingStartDateTime, '2019-07-28T00:00:00.000Z');
-    t.is(record.processingEndDateTime, '2019-07-28T01:00:00.000Z');
-  }
-);
-
-test(
-  'generateGranuleRecord() does not include processing times if execution startDate is not provided',
-  async (t) => {
-    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    const [granule] = cumulusMessage.payload.granules;
-
-    const record = await Granule.generateGranuleRecord(
-      granule,
-      cumulusMessage,
-      randomString()
-    );
-
-    t.falsy(record.processingStartDateTime);
-    t.falsy(record.processingEndDateTime);
-  }
-);
-
-test(
-  'generateGranuleRecord() uses granule.status if meta.status does not exist',
-  async (t) => {
-    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    delete cumulusMessage.meta.status;
-
-    const [granule] = cumulusMessage.payload.granules;
-    granule.status = 'running';
-
-    const record = await Granule.generateGranuleRecord(
-      granule,
-      cumulusMessage,
-      randomString()
-    );
-
-    t.is(record.status, 'running');
-  }
-);
-
-test.serial(
-  'generateGranuleRecord() builds successful granule record',
-  async (t) => {
-    // Stub out headobject S3 call used in api/models/granules.js,
-    // so we don't have to create artifacts
-    sinon.stub(s3Utils, 'headObject').resolves({ ContentLength: mockedFileSize });
-
-    const granule = granuleSuccess.payload.granules[0];
-    const collection = granuleSuccess.meta.collection;
-    const collectionId = constructCollectionId(collection.name, collection.version);
-    const executionUrl = randomString();
-
-    const record = await Granule.generateGranuleRecord(
-      granule,
-      granuleSuccess,
-      executionUrl,
-      fakeExecution
-    );
-
-    t.deepEqual(
-      record.files,
-      granule.files.map(granuleFileToRecord)
-    );
-    t.is(record.createdAt, 1519167138335);
-    t.is(typeof record.duration, 'number');
-    t.is(record.status, 'completed');
-    t.is(record.collectionId, collectionId);
-    t.is(record.execution, executionUrl);
-    t.is(record.granuleId, granule.granuleId);
-    t.is(record.cmrLink, granule.cmrLink);
-    t.is(record.published, granule.published);
-    t.is(record.productVolume, 17934423);
-    t.is(record.beginningDateTime, '2017-10-24T00:00:00.000Z');
-    t.is(record.endingDateTime, '2018-10-24T00:00:00.000Z');
-    t.is(record.productionDateTime, '2018-04-25T21:45:45.524Z');
-    t.is(record.lastUpdateDateTime, '2018-04-20T21:45:45.524Z');
-    t.is(record.timeToArchive, 100 / 1000);
-    t.is(record.timeToPreprocess, 120 / 1000);
-    t.is(record.processingStartDateTime, '2019-07-28T00:00:00.000Z');
-    t.is(record.processingEndDateTime, '2019-07-28T01:00:00.000Z');
-
-    const { name: deconstructed } = deconstructCollectionId(record.collectionId);
-    t.is(deconstructed, collection.name);
-  }
-);
-
-test('generateGranuleRecord() builds a failed granule record', async (t) => {
-  const granule = granuleFailure.payload.granules[0];
-  const executionUrl = randomString();
-  const record = await Granule.generateGranuleRecord(
-    granule,
-    granuleFailure,
-    executionUrl,
-    fakeExecution
-  );
-
-  t.deepEqual(
-    record.files,
-    granule.files.map(granuleFileToRecord)
-  );
-  t.is(record.status, 'failed');
-  t.is(record.execution, executionUrl);
-  t.is(record.granuleId, granule.granuleId);
-  t.is(record.published, false);
-  t.is(record.error.Error, granuleFailure.exception.Error);
-  t.is(record.error.Cause, granuleFailure.exception.Cause);
-});
-
 test.serial(
   'reingest pushes a message with the correct queueName',
   async (t) => {
@@ -893,4 +661,48 @@ test('_getMutableFieldNames() returns correct fields for completed status', asyn
   const updateFields = granuleModel._getMutableFieldNames(item);
 
   t.deepEqual(updateFields, Object.keys(item));
+});
+
+test('applyWorkflow throws error if workflow argument is missing', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = {
+    granuleId: randomString()
+  };
+
+  await t.throwsAsync(
+    granuleModel.applyWorkflow(granule),
+    {
+      instanceOf: TypeError
+    }
+  );
+});
+
+test('applyWorkflow updates granule status and invokes Lambda to schedule workflow', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2();
+  const workflow = randomString();
+  const lambdaPayload = {
+    payload: {
+      granules: [granule]
+    }
+  };
+
+  await granuleModel.create(granule);
+
+  const buildPayloadStub = sinon.stub(Rule, 'buildPayload').resolves(lambdaPayload);
+  const lambdaInvokeStub = sinon.stub(Lambda, 'invoke').resolves();
+  t.teardown(() => {
+    buildPayloadStub.restore();
+    lambdaInvokeStub.restore();
+  });
+
+  await granuleModel.applyWorkflow(granule, workflow);
+
+  const { status } = await granuleModel.get({ granuleId: granule.granuleId });
+  t.is(status, 'running');
+
+  t.true(lambdaInvokeStub.called);
+  t.deepEqual(lambdaInvokeStub.args[0][1], lambdaPayload);
 });

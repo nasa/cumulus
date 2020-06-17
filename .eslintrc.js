@@ -38,6 +38,7 @@ module.exports = {
     'jsdoc',
     'lodash',
     'node',
+    'promise',
     'unicorn'
   ],
   extends: [
@@ -47,6 +48,7 @@ module.exports = {
     'plugin:import/warnings',
     'plugin:lodash/recommended',
     'plugin:node/recommended',
+    'plugin:promise/recommended',
     'plugin:unicorn/recommended'
   ],
   parser: 'babel-eslint',
@@ -106,6 +108,7 @@ module.exports = {
     'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     'no-useless-escape': 'off',
     'no-console': 'warn',
+    'unicorn/no-fn-reference-in-iterator': 'off',
     'spaced-comment': 'off',
     'require-yield': 'off',
     'prefer-template': 'warn',
@@ -150,19 +153,14 @@ module.exports = {
 
     'node/no-missing-require': 'off',
 
-    'unicorn/better-regex': 'off',
-    'unicorn/catch-error-name': 'off',
+    'unicorn/catch-error-name': 'warn',
     'unicorn/consistent-function-scoping': 'off',
-    'unicorn/explicit-length-check': 'off',
     'unicorn/filename-case': 'off',
-    'unicorn/no-fn-reference-in-iterator': 'off',
     'unicorn/no-for-loop': 'off',
-    'unicorn/no-null': 'off',
+    'unicorn/no-null': 'warn',
     'unicorn/no-process-exit': 'off',
-    'unicorn/no-zero-fractions': 'off',
     'unicorn/prefer-flat-map': 'off',
     'unicorn/prefer-negative-index': 'off',
-    'unicorn/prefer-number-properties': 'off',
     'unicorn/prefer-set-has': 'off',
     'unicorn/prefer-spread': 'off',
     'unicorn/prefer-string-slice': 'off',
@@ -181,6 +179,7 @@ module.exports = {
         '@typescript-eslint/no-implied-eval': 'off',
         '@typescript-eslint/no-throw-literal': 'off',
         'comma-dangle': ['warn', 'never'],
+        'import/no-extraneous-dependencies': 'off',
         'import/prefer-default-export': 'off',
         'lines-between-class-members': 'off',
         'lodash/prefer-lodash-typecheck': 'off',

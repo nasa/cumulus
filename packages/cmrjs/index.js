@@ -22,7 +22,6 @@ const {
   updateCMRMetadata
 } = require('./cmr-utils');
 
-
 /**
  * Get the CMR JSON metadata from the cmrLink
  *

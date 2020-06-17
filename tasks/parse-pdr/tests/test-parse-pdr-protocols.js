@@ -105,10 +105,10 @@ test.serial('parse PDR from FTP endpoint', async (t) => {
     const metFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
     Object.keys(testMetFile).forEach((key) => t.is(testMetFile[key], metFile[key]));
-  } catch (err) {
-    if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
+  } catch (error) {
+    if (error instanceof errors.RemoteResourceError || error.code === 'AllAccessDisabled') {
       t.pass('ignoring this test. Test server seems to be down');
-    } else t.fail(err);
+    } else t.fail(error);
   }
 });
 
@@ -145,15 +145,14 @@ test.serial('parse PDR from HTTP endpoint', async (t) => {
       t.is(testHdfFile[key], hdfFile[key]);
     });
 
-
     const metFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
     t.truthy(metFile);
     Object.keys(testMetFile).forEach((key) => t.is(testMetFile[key], metFile[key]));
-  } catch (err) {
-    if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
+  } catch (error) {
+    if (error instanceof errors.RemoteResourceError || error.code === 'AllAccessDisabled') {
       t.pass('ignoring this test. Test server seems to be down');
-    } else t.fail(err);
+    } else t.fail(error);
   }
 });
 
@@ -190,15 +189,14 @@ test.serial('parse PDR from SFTP endpoint', async (t) => {
     t.truthy(hdfFile);
     Object.keys(testHdfFile).forEach((key) => t.is(testHdfFile[key], hdfFile[key]));
 
-
     const metFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
     t.truthy(metFile);
     Object.keys(testMetFile).forEach((key) => t.is(testMetFile[key], metFile[key]));
-  } catch (err) {
-    if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
+  } catch (error) {
+    if (error instanceof errors.RemoteResourceError || error.code === 'AllAccessDisabled') {
       t.pass('ignoring this test. Test server seems to be down');
-    } else t.fail(err);
+    } else t.fail(error);
   }
 });
 
@@ -242,10 +240,10 @@ test.serial('Parse a PDR from an S3 provider', async (t) => {
     const metFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
     Object.keys(testMetFile).forEach((key) => t.is(testMetFile[key], metFile[key]));
-  } catch (err) {
-    if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
+  } catch (error) {
+    if (error instanceof errors.RemoteResourceError || error.code === 'AllAccessDisabled') {
       t.pass('ignoring this test. Test server seems to be down');
-    } else t.fail(err);
+    } else t.fail(error);
   } finally {
     await recursivelyDeleteS3Bucket(t.context.payload.config.provider.host);
   }

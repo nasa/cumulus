@@ -1,14 +1,13 @@
 'use strict';
 
-const path = require('path');
 const _get = require('lodash/get');
 const _set = require('lodash/set');
-const flatten = require('lodash/flatten');
 const { promisify } = require('util');
+const flatten = require('lodash/flatten');
+const js2xmlParser = require('js2xmlparser');
+const path = require('path');
 const urljoin = require('url-join');
 const xml2js = require('xml2js');
-const js2xmlParser = require('js2xmlparser');
-
 const {
   buildS3Uri,
   getS3Object,
@@ -221,7 +220,6 @@ async function metadataObjectFromCMRXMLFile(cmrFilename) {
   return parseXmlString(metadata);
 }
 
-
 /**
  * Return cmr metadata object from a CMR Echo10XML file or CMR UMMG File.
  * @param {string} cmrFilename - s3 path to cmr file
@@ -256,7 +254,7 @@ function getS3CredentialsObject(s3CredsUrl) {
  * Returns UMM/ECHO10 resource type mapping for CNM file type
  *
  * @param {string} type - CNM resource type to convert to UMM/ECHO10 type
- * @returns {string} type - UMM/ECHO10 resource type
+ * @returns {( string | undefined )} type - UMM/ECHO10 resource type
  */
 function mapCNMTypeToCMRType(type) {
   const mapping = {
@@ -274,21 +272,33 @@ function mapCNMTypeToCMRType(type) {
   return mapping[type];
 }
 
-function generateFileUrl(file, distEndpoint, cmrGranuleUrlType = 'distribution') {
+async function generateFileUrl({
+  file,
+  distEndpoint,
+  cmrGranuleUrlType = 'distribution',
+  distributionBucketMap
+}) {
   if (cmrGranuleUrlType === 'distribution') {
-    const extension = urljoin(file.bucket, getS3KeyOfFile(file));
-    return urljoin(distEndpoint, extension);
+    const bucketPath = distributionBucketMap[file.bucket];
+    if (!bucketPath) {
+      throw new errors.MissingBucketMap(`No distribution bucket mapping exists for ${file.bucket}`);
+    }
+
+    const urlPath = urljoin(bucketPath, getS3KeyOfFile(file));
+    return urljoin(distEndpoint, urlPath);
   }
 
   if (cmrGranuleUrlType === 's3') {
+    /* The check for file.filename is here
+       for legacy compliance reasons due to model simplification in
+       CUMULUS-1139 where filename was remapped to bucket and key*/
     if (file.filename) {
       return file.filename;
     }
-
     return buildS3Uri(file.bucket, file.key);
   }
 
-  return null;
+  return undefined;
 }
 
 /**
@@ -298,26 +308,31 @@ function generateFileUrl(file, distEndpoint, cmrGranuleUrlType = 'distribution')
  * @param {Object} params.file - file object
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {BucketsConfig} params.buckets -  stack BucketConfig instance
- * @returns {Object} online access url object
+ * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
+ *                                                               for all distribution bucketss
+ * @returns {(Object | undefined)} online access url object, undefined if no URL exists
  */
-function constructOnlineAccessUrl({
+async function constructOnlineAccessUrl({
   file,
   distEndpoint,
   buckets,
-  cmrGranuleUrlType = 'distribution'
+  cmrGranuleUrlType = 'distribution',
+  distributionBucketMap
 }) {
   const bucketType = buckets.type(file.bucket);
   const distributionApiBuckets = ['protected', 'public'];
-  const fileUrl = generateFileUrl(file, distEndpoint, cmrGranuleUrlType);
-  if (fileUrl && distributionApiBuckets.includes(bucketType)) {
-    return {
-      URL: fileUrl,
-      URLDescription: 'File to download', // used by ECHO10
-      Description: 'File to download', // used by UMMG
-      Type: mapCNMTypeToCMRType(file.type) // used by UMMG
-    };
+  if (distributionApiBuckets.includes(bucketType)) {
+    const fileUrl = await generateFileUrl({ file, distEndpoint, cmrGranuleUrlType, distributionBucketMap });
+    if (fileUrl) {
+      return {
+        URL: fileUrl,
+        URLDescription: 'File to download', // used by ECHO10
+        Description: 'File to download', // used by UMMG
+        Type: mapCNMTypeToCMRType(file.type) // used by UMMG
+      };
+    }
   }
-  return null;
+  return undefined;
 }
 
 /**
@@ -327,23 +342,27 @@ function constructOnlineAccessUrl({
  * @param {Array<Object>} params.files - array of file objects
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {BucketsConfig} params.buckets -  stack BucketConfig instance
+ * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
+ *                                                               for all distribution bucketss
  * @returns {Array<{URL: string, URLDescription: string}>}
  *   returns the list of online access url objects
  */
-function constructOnlineAccessUrls({
+async function constructOnlineAccessUrls({
   files,
   distEndpoint,
   buckets,
-  cmrGranuleUrlType = 'distribution'
+  cmrGranuleUrlType = 'distribution',
+  distributionBucketMap
 }) {
-  const urlList = files.map((file) => constructOnlineAccessUrl({
+  const urlListPromises = files.map((file) => constructOnlineAccessUrl({
     file,
     distEndpoint,
     buckets,
-    cmrGranuleUrlType
+    cmrGranuleUrlType,
+    distributionBucketMap
   }));
-
-  return urlList.filter((urlObj) => !(urlObj == null));
+  const urlList = await Promise.all(urlListPromises);
+  return urlList.filter((urlObj) => urlObj);
 }
 
 /**
@@ -354,23 +373,27 @@ function constructOnlineAccessUrls({
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {BucketsConfig} params.buckets -  Class instance
  * @param {string} params.s3CredsEndpoint - Optional endpoint for acquiring temporary s3 creds
+ * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
+ *                                                               for all distribution bucketss
  * @returns {Array<{URL: string, string, Description: string, Type: string}>}
  *   returns the list of online access url objects
  */
-function constructRelatedUrls({
+async function constructRelatedUrls({
   files,
   distEndpoint,
   buckets,
   s3CredsEndpoint = 's3credentials',
-  cmrGranuleUrlType = 'distribution'
+  cmrGranuleUrlType = 'distribution',
+  distributionBucketMap
 }) {
   const credsUrl = urljoin(distEndpoint, s3CredsEndpoint);
   const s3CredentialsObject = getS3CredentialsObject(credsUrl);
-  const cmrUrlObjects = constructOnlineAccessUrls({
+  const cmrUrlObjects = await constructOnlineAccessUrls({
     files,
     distEndpoint,
     buckets,
-    cmrGranuleUrlType
+    cmrGranuleUrlType,
+    distributionBucketMap
   });
 
   const relatedUrls = cmrUrlObjects.concat(s3CredentialsObject);
@@ -469,6 +492,8 @@ async function uploadUMMGJSONCMRFile(metadataObject, cmrFile) {
  * @param {Array<Object>} params.files - array of moved file objects.
  * @param {string} params.distEndpoint - distribution endpoint form config.
  * @param {BucketsConfig} params.buckets - stack BucketConfig instance.
+ * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
+ *                                                               for all distribution bucketss
  * @returns {Promise} returns promised updated UMMG metadata object.
  */
 async function updateUMMGMetadata({
@@ -476,13 +501,15 @@ async function updateUMMGMetadata({
   files,
   distEndpoint,
   buckets,
-  cmrGranuleUrlType = 'distribution'
+  cmrGranuleUrlType = 'distribution',
+  distributionBucketMap
 }) {
-  const newURLs = constructRelatedUrls({
+  const newURLs = await constructRelatedUrls({
     files,
     distEndpoint,
     buckets,
-    cmrGranuleUrlType
+    cmrGranuleUrlType,
+    distributionBucketMap
   });
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
   const filename = getS3UrlOfFile(cmrFile);
@@ -609,6 +636,8 @@ function buildMergedEchoURLObject(URLlist = [], originalURLlist = [], removedURL
  * @param {Array<Object>} params.files - array of file objects
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {BucketsConfig} params.buckets - stack BucketConfig instance
+ * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
+ *                                                               for all distribution bucketss
  * @returns {Promise} returns promised updated metadata object.
  */
 async function updateEcho10XMLMetadata({
@@ -617,7 +646,8 @@ async function updateEcho10XMLMetadata({
   distEndpoint,
   buckets,
   s3CredsEndpoint = 's3credentials',
-  cmrGranuleUrlType = 'distribution'
+  cmrGranuleUrlType = 'distribution',
+  distributionBucketMap
 }) {
   // add/replace the OnlineAccessUrls
   const filename = getS3UrlOfFile(cmrFile);
@@ -633,12 +663,14 @@ async function updateEcho10XMLMetadata({
     'AssociatedBrowseImageUrls.ProviderBrowseUrl', []));
 
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
-  const newURLs = constructOnlineAccessUrls({
+  const newURLs = await constructOnlineAccessUrls({
     files,
     distEndpoint,
     buckets,
-    cmrGranuleUrlType
-  }).concat(getS3CredentialsObject(urljoin(distEndpoint, s3CredsEndpoint)));
+    cmrGranuleUrlType,
+    distributionBucketMap
+  });
+  newURLs.push(getS3CredentialsObject(urljoin(distEndpoint, s3CredsEndpoint)));
 
   const mergedOnlineResources = buildMergedEchoURLObject(newURLs, originalOnlineResourceURLs,
     removedURLs, ['EXTENDED METADATA', 'VIEW RELATED INFORMATION'], ['URLDescription']);
@@ -670,6 +702,8 @@ async function updateEcho10XMLMetadata({
  * @param {BucketsConfig} params.inBuckets - BucketsConfig instance if available, will
  *                                    default one build with s3 stored config.
  * @param {string} params.cmrGranuleUrlType - type of granule CMR url
+ * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
+ *                                                               for all distribution buckets
  * @returns {Promise} returns promise to publish metadata to CMR Service
  *                    or resolved promise if published === false.
  */
@@ -680,7 +714,8 @@ async function updateCMRMetadata({
   distEndpoint,
   published,
   inBuckets = null,
-  cmrGranuleUrlType = 'distribution'
+  cmrGranuleUrlType = 'distribution',
+  distributionBucketMap
 }) {
   const filename = getS3UrlOfFile(cmrFile);
 
@@ -697,7 +732,8 @@ async function updateCMRMetadata({
     files,
     distEndpoint,
     buckets,
-    cmrGranuleUrlType
+    cmrGranuleUrlType,
+    distributionBucketMap
   };
 
   if (isECHO10File(filename)) {
@@ -729,12 +765,15 @@ async function updateCMRMetadata({
  * @param {string} params.distEndpoint - distribution endpoint URL
  * @param {boolean} params.published - boolean true if the data should be published to
  *   the CMR service.
+ * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
+ *                                                               for all distribution buckets
  */
 async function reconcileCMRMetadata({
   granuleId,
   updatedFiles,
   distEndpoint,
-  published
+  published,
+  distributionBucketMap
 }) {
   const cmrMetadataFiles = getCmrFileObjs(updatedFiles);
   if (cmrMetadataFiles.length === 1) {
@@ -743,7 +782,8 @@ async function reconcileCMRMetadata({
       cmrFile: cmrMetadataFiles[0],
       files: updatedFiles,
       distEndpoint,
-      published
+      published,
+      distributionBucketMap
     });
   }
   if (cmrMetadataFiles.length > 1) {
@@ -793,16 +833,17 @@ async function getGranuleTemporalInfo(granule) {
 
 module.exports = {
   constructOnlineAccessUrl,
+  generateEcho10XMLString,
+  generateFileUrl,
+  getCmrSettings,
   getGranuleTemporalInfo,
+  granulesToCmrFileObjects,
   isCMRFile,
-  isUMMGFile,
-  isECHO10File,
   isCMRFilename,
+  isECHO10File,
+  isUMMGFile,
   metadataObjectFromCMRFile,
   publish2CMR,
   reconcileCMRMetadata,
-  granulesToCmrFileObjects,
-  updateCMRMetadata,
-  generateEcho10XMLString,
-  getCmrSettings
+  updateCMRMetadata
 };

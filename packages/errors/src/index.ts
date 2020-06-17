@@ -99,6 +99,11 @@ export const XmlMetaFileNotFound = createErrorType('XmlMetaFileNotFound');
 export const CMRMetaFileNotFound = createErrorType('CMRMetaFileNotFound');
 
 /**
+ * Distribution bucket map is missing a configured value for a distribution bucket
+ */
+export const MissingBucketMap = createErrorType('MissingBucketMap');
+
+/**
  * The provider info is missing error
  */
 export const ProviderNotFound = createErrorType('ProviderNotFound');
@@ -127,16 +132,19 @@ export const InvalidArgument = createErrorType('InvalidArgument');
 /**
  * is raised if the PDR file doesn't match the collection
  */
-export const MismatchPdrCollection = createErrorType('MismatchPdrCollection');
 
-export const UnparsableFileLocationError = createErrorType('UnparsableFileLocationError');
+export const DeletePublishedGranule = createErrorType('DeletePublishedGranule');
 
-export const RecordDoesNotExist = createErrorType('RecordDoesNotExist');
+export const EcsStartTaskError = createErrorType('EcsStartTaskError');
 
 export const InvalidRegexError = createErrorType('InvalidRegexError');
 
+export const MismatchPdrCollection = createErrorType('MismatchPdrCollection');
+
+export const RecordDoesNotExist = createErrorType('RecordDoesNotExist');
+
 export const UnmatchedRegexError = createErrorType('UnmatchedRegexError');
 
-export const ValidationError = createErrorType('ValidationError');
+export const UnparsableFileLocationError = createErrorType('UnparsableFileLocationError');
 
-export const EcsStartTaskError = createErrorType('EcsStartTaskError');
+export const ValidationError = createErrorType('ValidationError');

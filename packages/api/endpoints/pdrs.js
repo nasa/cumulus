@@ -41,11 +41,11 @@ async function get(req, res) {
   try {
     const result = await pdrModel.get({ pdrName });
     return res.send(result);
-  } catch (e) {
-    if (e instanceof RecordDoesNotExist) {
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(`No record found for ${pdrName}`);
     }
-    throw e;
+    throw error;
   }
 }
 
@@ -78,8 +78,8 @@ async function del(req, res) {
         type: 'pdr'
       }, { ignore: [404] });
     }
-  } catch (err) {
-    if (!isRecordDoesNotExistError(err)) throw err;
+  } catch (error) {
+    if (!isRecordDoesNotExistError(error)) throw error;
   }
 
   return res.send({ detail: 'Record deleted' });

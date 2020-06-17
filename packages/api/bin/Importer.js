@@ -1,5 +1,6 @@
 'use strict';
 
+const nodeify = require('nodeify');
 const readline = require('readline');
 const pLimit = require('p-limit');
 const { Transform } = require('stream');
@@ -56,10 +57,12 @@ class Importer extends Transform {
    * @returns {undefined} undefined
    */
   _final(callback) {
-    Promise.all(this.promises).then(() => {
-      console.log(`Finished restoring ${this.count} records to DynamoDB`);
-      callback();
-    }).catch(callback);
+    return nodeify(this.waitForRestorationToFinish(), callback);
+  }
+
+  async waitForRestorationToFinish() {
+    await Promise.all(this.promises);
+    console.log(`Finished restoring ${this.count} records to DynamoDB`);
   }
 }
 

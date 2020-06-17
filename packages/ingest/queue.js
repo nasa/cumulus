@@ -12,7 +12,6 @@ const {
   templateKey
 } = require('@cumulus/common/workflows');
 
-
 /**
  * Enqueue a PDR to be parsed
  *

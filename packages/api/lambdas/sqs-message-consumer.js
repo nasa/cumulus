@@ -26,8 +26,8 @@ async function processQueues(event, dispatchFn) {
       type: 'sqs',
       state: 'ENABLED'
     });
-  } catch (err) {
-    log.error(err);
+  } catch (error) {
+    log.error(error);
   }
 
   const messageLimit = event.messageLimit || 1;
@@ -77,7 +77,7 @@ async function processQueues(event, dispatchFn) {
  * @returns {Promise} - promise resolved when the message is dispatched
  */
 function dispatch(message) {
-  const messageReceiveCount = parseInt(message.Attributes.ApproximateReceiveCount, 10);
+  const messageReceiveCount = Number.parseInt(message.Attributes.ApproximateReceiveCount, 10);
   const queueUrl = this.queueUrl;
   const rulesForQueue = this.rulesForQueue;
 

@@ -39,8 +39,8 @@ test.serial('Function throws error if passed invalid complete timeout', async (t
   process.env.nonCompleteExecutionPayloadTimeout = 100;
   process.env.completeExecutionPayloadTimeout = 'notaninteger';
   let actual;
-  await cleanExecutionPayloads(executionModel).catch((e) => {
-    actual = e.message;
+  await cleanExecutionPayloads(executionModel).catch((error) => {
+    actual = error.message;
   });
   const expected = 'Invalid number of days specified in configuration for completeExecutionPayloadTimeout: notaninteger';
   t.is(actual, expected);
@@ -50,8 +50,8 @@ test.serial('Function throws error if passed invalid non-complete timeout', asyn
   process.env.nonCompleteExecutionPayloadTimeout = 'notaninteger';
   process.env.completeExecutionPayloadTimeout = 100;
   let actual;
-  await cleanExecutionPayloads(executionModel).catch((e) => {
-    actual = e.message;
+  await cleanExecutionPayloads(executionModel).catch((error) => {
+    actual = error.message;
   });
   const expected = 'Invalid number of days specified in configuration for nonCompleteExecutionPayloadTimeout: notaninteger';
   t.is(actual, expected);

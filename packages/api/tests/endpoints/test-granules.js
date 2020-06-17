@@ -9,6 +9,7 @@ const {
   buildS3Uri,
   createBucket,
   fileExists,
+  putJsonS3Object,
   recursivelyDeleteS3Bucket
 } = require('@cumulus/aws-client/S3');
 const {
@@ -20,10 +21,9 @@ const { CMR } = require('@cumulus/cmr-client');
 const {
   metadataObjectFromCMRFile
 } = require('@cumulus/cmrjs/cmr-utils');
-const { EcsStartTaskError } = require('@cumulus/errors');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-
+const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
 const assertions = require('../../lib/assertions');
 const models = require('../../models');
 const bootstrap = require('../../lambdas/bootstrap');
@@ -94,6 +94,15 @@ async function setupBucketsConfig() {
     Body: JSON.stringify(buckets)
   });
   await createBucket(buckets.public.name);
+  // Create the required bucket map configuration file
+  await putObject({
+    Bucket: systemBucket,
+    Key: getDistributionBucketMapKey(process.env.stackName),
+    Body: JSON.stringify({
+      [systemBucket]: systemBucket,
+      [buckets.public.name]: buckets.public.name
+    })
+  });
   return { internalBucket: systemBucket, publicBucket: buckets.public.name };
 }
 
@@ -518,6 +527,16 @@ test.serial('remove a granule from CMR with launchpad authentication', async (t)
   }
 });
 
+test('DELETE returns 404 if granule does not exist', async (t) => {
+  const granuleId = randomString();
+  const response = await request(app)
+    .delete(`/granules/${granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+  t.true(response.body.message.includes('No record found'));
+});
+
 test.serial('DELETE deleting an existing granule that is published will fail', async (t) => {
   const response = await request(app)
     .delete(`/granules/${t.context.fakeGranules[0].granuleId}`)
@@ -687,6 +706,12 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
         }
       ];
 
+      await putJsonS3Object(
+        process.env.system_bucket,
+        getDistributionBucketMapKey(process.env.stackName),
+        {}
+      );
+
       const response = await request(app)
         .put(`/granules/${newGranule.granuleId}`)
         .set('Accept', 'application/json')
@@ -711,7 +736,6 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
         t.is(item.Key.indexOf(destinationFilepath), 0);
       });
 
-
       const thirdBucketObjects = await s3().listObjects({
         Bucket: thirdBucket,
         Prefix: destinationFilepath
@@ -721,7 +745,6 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
       thirdBucketObjects.Contents.forEach((item) => {
         t.is(item.Key.indexOf(destinationFilepath), 0);
       });
-
 
       // check the granule in table is updated
       const updatedGranule = await granuleModel.get({ granuleId: newGranule.granuleId });
@@ -948,7 +971,6 @@ test.serial('PUT with action move returns failure if one granule file exists', a
     .send(body)
     .expect(409);
 
-
   const responseBody = response.body;
   t.is(response.status, 409);
   t.is(responseBody.message,
@@ -993,44 +1015,4 @@ test('PUT with action move returns failure if more than one granule file exists'
 
   filesExistingStub.restore();
   moveGranuleStub.restore();
-});
-
-test.serial('request to /granules/bulk endpoint returns 500 if starting ECS task throws unexpected error', async (t) => {
-  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').throws(
-    new Error('failed to start')
-  );
-
-  try {
-    const response = await request(app)
-      .post('/granules/bulk')
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .send({
-        workflowName: 'workflowName',
-        ids: [1, 2, 3]
-      });
-    t.is(response.status, 500);
-  } finally {
-    asyncOperationStartStub.restore();
-  }
-});
-
-test.serial('request to /granules/bulk endpoint returns 503 if starting ECS task throws unexpected error', async (t) => {
-  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').throws(
-    new EcsStartTaskError('failed to start')
-  );
-
-  try {
-    const response = await request(app)
-      .post('/granules/bulk')
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .send({
-        workflowName: 'workflowName',
-        ids: [1, 2, 3]
-      });
-    t.is(response.status, 503);
-  } finally {
-    asyncOperationStartStub.restore();
-  }
 });
