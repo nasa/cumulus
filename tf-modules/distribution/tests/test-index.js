@@ -10,7 +10,7 @@ const {
   randomId
 } = require('@cumulus/common/test-utils');
 
-const EarthdataLoginClient = require('@cumulus/api/lib/EarthdataLogin');
+const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
 
 const models = require('@cumulus/api/models');
 const { fakeAccessTokenFactory } = require('@cumulus/api/lib/testUtils');
