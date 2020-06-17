@@ -2,7 +2,7 @@
 
 const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
-const { dynamodb, ecs, s3 } = require('@cumulus/aws-client/services');
+const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   getClusterArn,
