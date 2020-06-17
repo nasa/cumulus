@@ -42,7 +42,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "engines": {
-    "node": ">=10.16.3"
+    "node": ">=10.18.0"
   },
   "bin": {
     "build-tasks-doc": "./bin/build-tasks-doc.js"
@@ -67,6 +67,7 @@
     "fs-extra": "^9.0.0"
   },
   "devDependencies": {
+    "@ava/typescript": "^1.1.1",
     "@babel/core": "^7.9.6",
     "@octokit/graphql": "2.1.1",
     "@types/lodash.iserror": "^3.1.6",
@@ -96,6 +97,7 @@
     "eslint-plugin-jsdoc": "^22.1.0",
     "eslint-plugin-lodash": "^2.7.0",
     "eslint-plugin-node": "^7.0.1",
+    "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-unicorn": "^19.0.1",
     "eslint": "^6.8.0",
     "file-loader": "^3.0.1",
