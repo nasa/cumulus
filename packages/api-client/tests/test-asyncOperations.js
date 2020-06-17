@@ -1,18 +1,14 @@
 'use strict';
 
 const test = require('ava');
-const rewire = require('rewire');
-const asyncOperationsRewire = rewire('../asyncOperations');
-
-test.before(async (t) => {
-  t.context.testPrefix = 'unitTestStack';
-});
+const asyncOperations = require('../asyncOperations');
 
 test('getAsyncOperation calls the callback with the expected object and returns the parsed response', async (t) => {
+  const prefix = 'unitTestStack';
   const asyncOperationId = 'id-1234';
 
   const expected = {
-    prefix: t.context.testPrefix,
+    prefix,
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
@@ -21,19 +17,16 @@ test('getAsyncOperation calls the callback with the expected object and returns 
   };
 
   const callback = async (configObject) => {
-    t.deepEqual(expected, configObject);
+    t.deepEqual(configObject, expected);
+
     return { body: '{ "foo": "bar" }' };
   };
 
-  let revertCallback;
-  try {
-    revertCallback = asyncOperationsRewire.__set__('invokeApi', callback);
-    const result = await asyncOperationsRewire.getAsyncOperation({
-      prefix: t.context.testPrefix,
-      asyncOperationId
-    });
-    t.deepEqual(JSON.parse(result.body), { foo: 'bar' });
-  } finally {
-    revertCallback();
-  }
+  const result = await asyncOperations.getAsyncOperation({
+    prefix,
+    asyncOperationId,
+    callback
+  });
+
+  t.deepEqual(JSON.parse(result.body), { foo: 'bar' });
 });
