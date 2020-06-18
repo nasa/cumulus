@@ -5,10 +5,10 @@
     "lib": [
       "es2019"
     ],
-    "outDir": "./dist"
+    "outDir": "dist"
   },
   "include": [
     "src",
-    "test"
+    "tests"
   ]
 }
