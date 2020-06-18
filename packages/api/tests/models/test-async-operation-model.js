@@ -66,9 +66,9 @@ test('The AsyncOperation constructor requires that stackName be specified', (t) 
       tableName: 'asdf'
     });
     t.fail('stackName should be required');
-  } catch (err) {
-    t.true(err instanceof TypeError);
-    t.is(err.message, 'stackName is required');
+  } catch (error) {
+    t.true(error instanceof TypeError);
+    t.is(error.message, 'stackName is required');
   }
 });
 
@@ -79,9 +79,9 @@ test('The AsyncOperation constructor requires that systemBucket be specified', (
       tableName: 'asdf'
     });
     t.fail('systemBucket should be required');
-  } catch (err) {
-    t.true(err instanceof TypeError);
-    t.is(err.message, 'systemBucket is required');
+  } catch (error) {
+    t.true(error instanceof TypeError);
+    t.is(error.message, 'systemBucket is required');
   }
 });
 

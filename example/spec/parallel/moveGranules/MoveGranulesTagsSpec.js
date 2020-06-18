@@ -16,8 +16,8 @@ const { deleteCollection } = require('@cumulus/api-client/collections');
 const { deleteS3Object, s3GetObjectTagging, s3PutObject } = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 
+const { moveGranules } = require('@cumulus/move-granules');
 const { loadConfig } = require('../../helpers/testUtils');
-const { moveGranules } = require('../../../../tasks/move-granules');
 
 describe('The MoveGranules task', () => {
   it('perserves object tags', async () => {
@@ -29,6 +29,9 @@ describe('The MoveGranules task', () => {
     const config = await loadConfig();
     const prefix = config.stackName;
     const sourceBucket = config.bucket;
+
+    process.env.stackName = config.stackName;
+    process.env.system_bucket = config.buckets.internal.name;
 
     // The S3 path where granules will be ingested from
     const stagingDir = 'file-staging';

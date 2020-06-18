@@ -2,6 +2,7 @@
 
 'use strict';
 
+const delay = require('delay');
 const replace = require('lodash/replace');
 const orderBy = require('lodash/orderBy');
 const path = require('path');
@@ -27,7 +28,6 @@ const {
   getWorkflowFileKey
 } = require('@cumulus/common/workflows');
 const { readJsonFile } = require('@cumulus/common/FileUtils');
-const { sleep } = require('@cumulus/common/util');
 const ProvidersModel = require('@cumulus/api/models/providers');
 const RulesModel = require('@cumulus/api/models/rules');
 const collectionsApi = require('@cumulus/api-client/collections');
@@ -82,7 +82,7 @@ async function waitForAsyncOperationStatus({
 
   if (operation.status === status || retries <= 0) return operation;
 
-  await sleep(2000);
+  await delay(2000);
   return waitForAsyncOperationStatus({
     id,
     status,
@@ -142,9 +142,9 @@ async function getExecutionStatus(executionArn) {
   try {
     const { status } = await StepFunctions.describeExecution({ executionArn });
     return status;
-  } catch (err) {
-    if (err.code === 'ExecutionDoesNotExist') return 'STARTING';
-    throw err;
+  } catch (error) {
+    if (error.code === 'ExecutionDoesNotExist') return 'STARTING';
+    throw error;
   }
 }
 
@@ -259,8 +259,8 @@ async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
     } else {
       console.log(`Workflow ${workflowName} execution failed with state: ${workflowStatus.status}`);
     }
-  } catch (err) {
-    console.log(`Error executing workflow ${workflowName}. Error: ${err}`);
+  } catch (error) {
+    console.log(`Error executing workflow ${workflowName}. Error: ${error}`);
   }
 }
 
@@ -911,7 +911,7 @@ async function waitForTestExecutionStart({
   );
   /* eslint-disable no-await-in-loop */
   while (timeWaitedSecs < maxWaitSeconds) {
-    await sleep(waitPeriodMs);
+    await delay(waitPeriodMs);
     timeWaitedSecs += (waitPeriodMs / 1000);
     const executions = await getExecutions(workflowArn);
 
@@ -971,7 +971,7 @@ async function waitForAllTestSf(
 
   /* eslint-disable no-await-in-loop */
   while (timeWaitedSecs < maxWaitTimeSecs && workflowExecutions.length < numExecutions) {
-    await sleep(waitPeriodMs);
+    await delay(waitPeriodMs);
     timeWaitedSecs = (moment.duration(moment().diff(startTime)).asSeconds());
     const executions = await getExecutions(workflowArn, 100);
     // Search all recent executions for target payload

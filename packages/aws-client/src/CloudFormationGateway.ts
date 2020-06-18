@@ -28,9 +28,9 @@ class CloudFormationGateway {
           }
 
           return stackDetails.Stacks[0].StackStatus;
-        } catch (err) {
-          if (isThrottlingException(err)) throw new Error('Trigger retry');
-          throw new pRetry.AbortError(err);
+        } catch (error) {
+          if (isThrottlingException(error)) throw new Error('Trigger retry');
+          throw new pRetry.AbortError(error);
         }
       },
       {

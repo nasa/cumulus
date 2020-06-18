@@ -541,7 +541,7 @@ async function duplicateHandlingErrorTest(t) {
 
     await syncGranule(t.context.event);
     t.fail();
-  } catch (err) {
+  } catch (error) {
     const collection = t.context.event.config.collection;
     const collectionId = constructCollectionId(collection.name, collection.version);
     const granuleFileKey = path.join(
@@ -550,9 +550,9 @@ async function duplicateHandlingErrorTest(t) {
       collectionId,
       granuleFileName
     );
-    t.true(err instanceof errors.DuplicateFile);
+    t.true(error instanceof errors.DuplicateFile);
     t.is(
-      err.message,
+      error.message,
       `${granuleFileKey} already exists in ${t.context.event.config.downloadBucket} bucket`
     );
   } finally {
@@ -867,10 +867,14 @@ test.serial('download multiple granules from S3 provider to staging directory', 
           output.granules[i].files[j].filename,
           `s3://${t.context.internalBucketName}/${keypath}/${granuleFileName}`
         );
-        s3ObjectExists({
-          Bucket: t.context.internalBucketName,
-          Key: `${keypath}/${granuleFileName}`
-        }).then((outcome) => t.is(outcome, true));
+
+        t.true(
+          // eslint-disable-next-line no-await-in-loop
+          await s3ObjectExists({
+            Bucket: t.context.internalBucketName,
+            Key: `${keypath}/${granuleFileName}`
+          })
+        );
       }
     }
   } finally {

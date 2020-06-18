@@ -2,8 +2,6 @@
 
 const omit = require('lodash/omit');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
-const { publishSnsMessage } = require('@cumulus/aws-client/SNS');
-const log = require('@cumulus/common/log');
 const { InvalidRegexError, UnmatchedRegexError } = require('@cumulus/errors');
 
 const Manager = require('./base');
@@ -25,8 +23,8 @@ function checkRegex(regex, sampleFileName, regexFieldName = 'regex') {
   let matchingRegex;
   try {
     matchingRegex = new RegExp(regex);
-  } catch (err) {
-    throw new InvalidRegexError(`Invalid ${regexFieldName}: ${err.message}`);
+  } catch (error) {
+    throw new InvalidRegexError(`Invalid ${regexFieldName}: ${error.message}`);
   }
 
   const match = sampleFileName.match(matchingRegex);
@@ -35,25 +33,6 @@ function checkRegex(regex, sampleFileName, regexFieldName = 'regex') {
   }
 
   return match;
-}
-
-/**
- * Publish SNS message for Collection reporting.
- *
- * @param {Object} collectionRecord - A Collection record with event type
- * @returns {Promise<undefined>}
- */
-async function publishCollectionSnsMessage(collectionRecord) {
-  try {
-    const collectionSnsTopicArn = process.env.collection_sns_topic_arn;
-    await publishSnsMessage(collectionSnsTopicArn, collectionRecord);
-  } catch (err) {
-    log.warn(
-      `Failed to create record for collection ${collectionRecord.record.name} ${collectionRecord.record.version}: ${err.message}`,
-      'Cause: ', err,
-      'Collection record: ', collectionRecord
-    );
-  }
 }
 
 const validateCollection = (collection) => {
@@ -160,14 +139,7 @@ class Collection {
     const { name, version } = item;
     await this.collectionConfigStore.put(name, version, item);
 
-    const collectionRecord = await this.dynamoDbClient.create(item);
-    const publishRecord = {
-      event: 'Create',
-      record: collectionRecord
-    };
-    await publishCollectionSnsMessage(publishRecord);
-
-    return collectionRecord;
+    return this.dynamoDbClient.create(item);
   }
 
   createItems(items) {
@@ -214,16 +186,6 @@ class Collection {
     }
 
     await this.collectionConfigStore.delete(name, version);
-
-    const record = {
-      event: 'Delete',
-      deletedAt: Date.now(),
-      record: {
-        name,
-        version
-      }
-    };
-    await publishCollectionSnsMessage(record);
 
     return this.dynamoDbClient.delete({ name, version });
   }

@@ -50,9 +50,9 @@ async function ingestConcept(type, xmlString, identifierPath, provider, headers)
     }
 
     return xmlObject;
-  } catch (e) {
-    log.error(e, logDetails);
-    throw e;
+  } catch (error) {
+    log.error(error, logDetails);
+    throw error;
   }
 }
 module.exports = ingestConcept;

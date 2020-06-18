@@ -101,7 +101,7 @@ test('saveExecutionToDb() creates an execution item in Dynamo', async (t) => {
     t.is(fetchedExecution.status, 'running');
     t.is(fetchedExecution.createdAt, 122);
     t.deepEqual(fetchedExecution.originalPayload, { key: 'my-payload' });
-  } catch (err) {
+  } catch (error) {
     t.fail('Failed to fetch execution');
   }
 });
@@ -115,8 +115,8 @@ test('saveExecutionToDb() does not throw an exception if storeExecutionFromCumul
   try {
     await saveExecutionToDb(cumulusMessage);
     t.pass();
-  } catch (err) {
-    t.fail(`Exception should not have been thrown, but caught: ${err}`);
+  } catch (error) {
+    t.fail(`Exception should not have been thrown, but caught: ${error}`);
   }
 });
 
@@ -173,8 +173,8 @@ test.serial('saveGranulesToDb() does not throw an exception if storeGranulesFrom
   try {
     await saveGranulesToDb(cumulusMessage);
     t.pass();
-  } catch (err) {
-    t.fail(`Exception should not have been thrown, but caught: ${err}`);
+  } catch (error) {
+    t.fail(`Exception should not have been thrown, but caught: ${error}`);
   } finally {
     storeGranuleStub.restore();
   }

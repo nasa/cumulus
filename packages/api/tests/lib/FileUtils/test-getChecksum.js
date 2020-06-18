@@ -33,11 +33,11 @@ test('getChecksum() prefers checksum over checksumValue', (t) => {
   );
 });
 
-test('getChecksum() returns null if no checksum could be found', (t) => {
+test('getChecksum() returns undefined if no checksum could be found', (t) => {
   const file = {};
 
   t.is(
     getChecksum(file),
-    null
+    undefined
   );
 });

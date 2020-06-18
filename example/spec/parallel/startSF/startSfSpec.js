@@ -1,5 +1,6 @@
 'use strict';
 
+const delay = require('delay');
 const {
   lambda,
   sfn,
@@ -311,11 +312,9 @@ describe('the sf-starter lambda function', () => {
         rulePermissionId
       });
 
-      await new Promise((res) => {
-        // Wait 60 seconds before starting new executions to allow the Cloudwatch rule to settle.
-        // This prevents failure to decrement the semaphore.
-        setTimeout(res, 60000);
-      });
+      // Wait 60 seconds before starting new executions to allow the Cloudwatch rule to settle.
+      // This prevents failure to decrement the semaphore.
+      await delay(60000);
 
       await sendStartSfMessages({
         numOfMessages: totalNumMessages,
@@ -375,10 +374,8 @@ describe('the sf-starter lambda function', () => {
           QueueUrl: maxQueueUrl
         });
 
-        await new Promise((res) => {
-          // Wait 10 seconds to allow running executions to finish.
-          setTimeout(res, 10000);
-        });
+        // Wait 10 seconds to allow running executions to finish.
+        await delay(10000);
       });
 
       it('is decremented to 0', async () => {

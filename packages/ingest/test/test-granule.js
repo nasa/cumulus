@@ -43,12 +43,11 @@ test('moveGranuleFile moves a single file between s3 locations', async (t) => {
   const target = { Bucket, Key: `moved/${name}` };
 
   await moveGranuleFile(source, target);
-  return s3().listObjects({ Bucket }).promise().then((list) => {
-    t.is(list.Contents.length, 1);
 
-    const item = list.Contents[0];
-    t.is(item.Key, `moved/${name}`);
-  });
+  const listObjectsResponse = await s3().listObjects({ Bucket }).promise();
+
+  t.is(listObjectsResponse.Contents.length, 1);
+  t.is(listObjectsResponse.Contents[0].Key, `moved/${name}`);
 });
 
 test('moveGranuleFile overwrites existing file by default', async (t) => {
@@ -71,7 +70,7 @@ test('moveGranuleFile overwrites existing file by default', async (t) => {
 
   try {
     await moveGranuleFile(source, target);
-  } catch (err) {
+  } catch (error) {
     t.fail();
   } finally {
     const objects = await s3().listObjects({ Bucket: destBucket }).promise();
@@ -132,21 +131,24 @@ test('moveGranuleFiles moves granule files between s3 locations', async (t) => {
   await moveGranuleFiles(sourceFiles, destinations);
 
   // ASSERT
-  await s3().listObjects({ Bucket: bucket }).promise().then((list) => {
-    t.is(list.Contents.length, 2);
+  const listObjectsResponse = await s3().listObjects({
+    Bucket: bucket
+  }).promise();
 
-    list.Contents.forEach((item) => {
-      t.is(item.Key.indexOf(destinationFilepath), 0);
-    });
-  });
+  t.is(listObjectsResponse.Contents.length, 2);
 
-  return s3().listObjects({ Bucket: secondBucket }).promise().then((list) => {
-    t.is(list.Contents.length, 1);
+  t.true(listObjectsResponse.Contents[0].Key.startsWith(destinationFilepath));
+  t.true(listObjectsResponse.Contents[1].Key.startsWith(destinationFilepath));
 
-    list.Contents.forEach((item) => {
-      t.is(item.Key.indexOf(destinationFilepath), 0);
-    });
-  });
+  const secondListObjectsResponse = await s3().listObjects({
+    Bucket: secondBucket
+  }).promise();
+
+  t.is((secondListObjectsResponse).Contents.length, 1);
+
+  t.true(
+    secondListObjectsResponse.Contents[0].Key.startsWith(destinationFilepath)
+  );
 });
 
 test('moveGranuleFiles only moves granule files specified with regex', async (t) => {
@@ -183,15 +185,21 @@ test('moveGranuleFiles only moves granule files specified with regex', async (t)
   const sourceFiles = await Promise.all(sourceFilePromises);
   await moveGranuleFiles(sourceFiles, destinations);
 
-  await s3().listObjects({ Bucket: bucket }).promise().then((list) => {
-    t.is(list.Contents.length, 1);
-    t.is(list.Contents[0].Key, 'origin/excluded-from-move');
-  });
+  const bucketListResponse = await s3().listObjects({
+    Bucket: bucket
+  }).promise();
 
-  return s3().listObjects({ Bucket: secondBucket }).promise().then((list) => {
-    t.is(list.Contents.length, 1);
-    t.is(list.Contents[0].Key, 'destination/included-in-move.txt');
-  });
+  t.is(bucketListResponse.Contents.length, 1);
+
+  t.is(bucketListResponse.Contents[0].Key, 'origin/excluded-from-move');
+
+  const secondBucketListResponse = await s3().listObjects({
+    Bucket: secondBucket
+  }).promise();
+
+  t.is(secondBucketListResponse.Contents.length, 1);
+
+  t.is(secondBucketListResponse.Contents[0].Key, 'destination/included-in-move.txt');
 });
 
 test('moveGranuleFiles returns an updated list of files in their new locations.', async (t) => {

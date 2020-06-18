@@ -6,7 +6,10 @@ const boom = require('express-boom');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const distributionRouter = require('express-promise-router')();
-const EarthdataLogin = require('@cumulus/api/lib/EarthdataLogin');
+const {
+  EarthdataLoginClient,
+  EarthdataLoginError
+} = require('@cumulus/earthdata-login-client');
 const express = require('express');
 const hsts = require('hsts');
 const Logger = require('@cumulus/logger');
@@ -19,12 +22,14 @@ const { isAccessTokenExpired } = require('@cumulus/api/lib/token');
 const awsServices = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { EarthdataLoginError } = require('@cumulus/api/lib/errors');
 
 const log = new Logger({ sender: 's3credentials' });
 
 const buildEarthdataLoginClient = () =>
-  EarthdataLogin.createFromEnv({
+  new EarthdataLoginClient({
+    clientId: process.env.EARTHDATA_CLIENT_ID,
+    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
+    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT
   });
 
@@ -241,11 +246,11 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   let accessTokenRecord;
   try {
     accessTokenRecord = await accessTokenModel.get({ accessToken });
-  } catch (err) {
-    if (err instanceof RecordDoesNotExist) {
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
       return res.redirect(307, redirectURLForAuthorizationCode);
     }
-    throw err;
+    throw error;
   }
 
   if (isAccessTokenExpired(accessTokenRecord)) {

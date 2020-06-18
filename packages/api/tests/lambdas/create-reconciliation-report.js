@@ -21,6 +21,8 @@ const awsServices = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
+
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const GranuleFilesCache = require('../../lib/GranuleFilesCache');
 
@@ -32,7 +34,25 @@ const models = require('../../models');
 
 const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket }).promise();
 
-function storeBucketsConfigToS3(buckets, systemBucket, stackName) {
+function createDistributionBucketMapFromBuckets(buckets) {
+  let bucketMap = {};
+  Object.keys(buckets).forEach((key) => {
+    bucketMap = {
+      ...bucketMap, ...{ [buckets[key].name]: buckets[key].name }
+    };
+  });
+  return bucketMap;
+}
+
+function createDistributionBucketMap(bucketList) {
+  const distributionMap = {};
+  bucketList.forEach((bucket) => {
+    distributionMap[bucket] = bucket;
+  });
+  return distributionMap;
+}
+
+async function storeBucketsConfigToS3(buckets, systemBucket, stackName) {
   const bucketsConfig = {};
   buckets.forEach((bucket) => {
     bucketsConfig[bucket] = {
@@ -40,6 +60,15 @@ function storeBucketsConfigToS3(buckets, systemBucket, stackName) {
       type: 'protected'
     };
   });
+
+  const distributionMap = createDistributionBucketMap(buckets);
+
+  await awsServices.s3().putObject({
+    Bucket: systemBucket,
+    Key: getDistributionBucketMapKey(stackName),
+    Body: JSON.stringify(distributionMap)
+  }).promise();
+
   return awsServices.s3().putObject({
     Bucket: systemBucket,
     Key: `${stackName}/workflows/buckets.json`,
@@ -137,14 +166,16 @@ test.beforeEach(async (t) => {
   sinon.stub(CMRSearchConceptQueue.prototype, 'shift').callsFake(() => undefined);
 });
 
-test.afterEach.always((t) => {
-  Promise.all(flatten([
-    t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket),
-    new models.Collection().deleteTable(),
-    new models.Granule().deleteTable(),
-    GranuleFilesCache.deleteCacheTable(),
-    new models.ReconciliationReport().deleteTable()
-  ]));
+test.afterEach.always(async (t) => {
+  await Promise.all(
+    flatten([
+      t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket),
+      new models.Collection().deleteTable(),
+      new models.Granule().deleteTable(),
+      GranuleFilesCache.deleteCacheTable(),
+      new models.ReconciliationReport().deleteTable()
+    ])
+  );
   CMR.prototype.searchCollections.restore();
   CMRSearchConceptQueue.prototype.peek.restore();
   CMRSearchConceptQueue.prototype.shift.restore();
@@ -546,8 +577,11 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
 
   await new models.Granule().create(matchingGrans.concat(extraDbGrans));
 
-  const { granulesReport, filesReport } = await
-  reconciliationReportForGranules(collectionId, new BucketsConfig({}));
+  const { granulesReport, filesReport } = await reconciliationReportForGranules({
+    collectionId,
+    bucketsConfig: new BucketsConfig({}),
+    distributionBucketMap: {}
+  });
 
   t.is(granulesReport.okCount, 10);
 
@@ -573,6 +607,7 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     'protected-2': { name: 'testbucket-protected-2', type: 'protected' }
   };
   const bucketsConfig = new BucketsConfig(buckets);
+  const distributionBucketMap = createDistributionBucketMapFromBuckets(buckets);
 
   const matchingFilesInDb = [{
     bucket: 'testbucket-protected',
@@ -613,7 +648,7 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     fileName: 'extra456.jpg'
   }];
 
-  const granInDb = {
+  const granuleInDb = {
     granuleId: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
     collectionId: 'MOD09GQ___006',
     files: matchingFilesInDb.concat(privateFilesInDb).concat(filesOnlyInDb)
@@ -647,14 +682,18 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access'
   }];
 
-  const granInCmr = {
+  const granuleInCmr = {
     GranuleUR: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
     ShortName: 'MOD09GQ',
     Version: '006',
     RelatedUrls: matchingFilesInCmr.concat(filesOnlyInCmr).concat(urlsShouldOnlyInCmr)
   };
-
-  const report = await reconciliationReportForGranuleFiles(granInDb, granInCmr, bucketsConfig);
+  const report = await reconciliationReportForGranuleFiles({
+    granuleInDb,
+    granuleInCmr,
+    bucketsConfig,
+    distributionBucketMap
+  });
   t.is(report.okCount, matchingFilesInDb.length + privateFilesInDb.length);
 
   t.is(report.onlyInCumulus.length, filesOnlyInDb.length);
@@ -674,7 +713,7 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     'protected-2': { name: 'testbucket-protected-2', type: 'protected' }
   };
   const bucketsConfig = new BucketsConfig(buckets);
-
+  const distributionBucketMap = createDistributionBucketMapFromBuckets(buckets);
   const matchingFilesInDb = [{
     bucket: 'testbucket-protected',
     key: 'MOD09GQ___006/2017/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf',
@@ -714,7 +753,7 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     fileName: 'extra456.jpg'
   }];
 
-  const granInDb = {
+  const granuleInDb = {
     granuleId: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
     collectionId: 'MOD09GQ___006',
     files: matchingFilesInDb.concat(privateFilesInDb).concat(filesOnlyInDb)
@@ -748,14 +787,20 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access'
   }];
 
-  const granInCmr = {
+  const granuleInCmr = {
     GranuleUR: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
     ShortName: 'MOD09GQ',
     Version: '006',
     RelatedUrls: matchingFilesInCmr.concat(filesOnlyInCmr).concat(urlsShouldOnlyInCmr)
   };
 
-  const report = await reconciliationReportForGranuleFiles(granInDb, granInCmr, bucketsConfig);
+  const report = await reconciliationReportForGranuleFiles({
+    granuleInDb,
+    granuleInCmr,
+    bucketsConfig,
+    distributionBucketMap
+  });
+
   t.is(report.okCount, matchingFilesInDb.length + privateFilesInDb.length);
 
   t.is(report.onlyInCumulus.length, filesOnlyInDb.length);
@@ -774,6 +819,7 @@ test.serial('reconciliationReportForGranuleFiles does not fail if no distributio
     'protected-2': { name: 'testbucket-protected-2', type: 'protected' }
   };
   const bucketsConfig = new BucketsConfig(buckets);
+  const distributionBucketMap = createDistributionBucketMapFromBuckets(buckets);
 
   const matchingFilesInDb = [{
     bucket: 'testbucket-protected',
@@ -814,7 +860,7 @@ test.serial('reconciliationReportForGranuleFiles does not fail if no distributio
     fileName: 'extra456.jpg'
   }];
 
-  const granInDb = {
+  const granuleInDb = {
     granuleId: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
     collectionId: 'MOD09GQ___006',
     files: matchingFilesInDb.concat(privateFilesInDb).concat(filesOnlyInDb)
@@ -848,14 +894,16 @@ test.serial('reconciliationReportForGranuleFiles does not fail if no distributio
     Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access'
   }];
 
-  const granInCmr = {
+  const granuleInCmr = {
     GranuleUR: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
     ShortName: 'MOD09GQ',
     Version: '006',
     RelatedUrls: matchingFilesInCmr.concat(filesOnlyInCmr).concat(urlsShouldOnlyInCmr)
   };
 
-  const report = await reconciliationReportForGranuleFiles(granInDb, granInCmr, bucketsConfig);
+  const report = await reconciliationReportForGranuleFiles({
+    granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap
+  });
   t.is(report.okCount, matchingFilesInDb.length + privateFilesInDb.length);
 
   t.is(report.onlyInCumulus.length, filesOnlyInDb.length);

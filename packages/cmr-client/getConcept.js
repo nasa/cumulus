@@ -18,8 +18,8 @@ async function getConceptMetadata(conceptLink, headers) {
 
   try {
     response = await got.get(conceptLink, { headers });
-  } catch (e) {
-    log.error(`Error getting concept metadata from ${conceptLink}`, e);
+  } catch (error) {
+    log.error(`Error getting concept metadata from ${conceptLink}`, error);
     return null;
   }
 

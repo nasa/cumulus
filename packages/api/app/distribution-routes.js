@@ -74,12 +74,12 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   let accessTokenRecord;
   try {
     accessTokenRecord = await accessTokenModel.get({ accessToken });
-  } catch (err) {
-    if (err instanceof RecordDoesNotExist) {
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
       return res.redirect(307, redirectURLForAuthorizationCode);
     }
 
-    throw err;
+    throw error;
   }
 
   if (isAccessTokenExpired(accessTokenRecord)) {
