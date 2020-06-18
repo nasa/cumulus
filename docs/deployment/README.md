@@ -190,9 +190,12 @@ aws s3api put-bucket-versioning \
     --versioning-configuration Status=Enabled
 ```
 
-⚠️ **Note:** If your state information does become lost or corrupt, then deployment (via
-`terraform apply`) will have unpredictable results, including possible loss of data and loss of
-deployed resources.
+⚠️ **Note:** If your state information does become lost or corrupt, then
+deployment (via `terraform apply`) will have unpredictable results, including
+possible loss of data and loss of deployed resources. In order to reduce your
+risk of the corruption or loss of your Terraform state file, or otherwise
+corrupt your Cumulus deployment, please see the
+[Terraform Best Practices](terraform-best-practices.md) guide.
 
 Terraform uses a lock stored in DynamoDB in order to prevent multiple
 simultaneous updates. In the following examples, that table will be called
