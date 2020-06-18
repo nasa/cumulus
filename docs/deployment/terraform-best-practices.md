@@ -181,9 +181,8 @@ a deployment).
 
 ### Avoid Changing Connectivity Resources
 
-Don't change things that affect connectivity, like security groups. Keep in mind
-that changing connectivity resources can affect your ingest functionality and
-API availability.
+Keep in mind that changing connectivity resources can affect your ingest
+functionality and API availability.
 
 Only update connectivity resources such as your VPC, subnets, and security
 groups through Terraform deployments with S3 bucket versioning enabled. Test
