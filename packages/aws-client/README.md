@@ -306,7 +306,7 @@ Invoke a Lambda function
     * [.waitForObjectToExist(params)](#module_S3.waitForObjectToExist) ⇒ <code>Promise.&lt;undefined&gt;</code>
     * [.putFile(bucket, key, filename)](#module_S3.putFile) ⇒ <code>Promise</code>
     * [.downloadS3File(s3Obj, filepath)](#module_S3.downloadS3File) ⇒ <code>Promise.&lt;string&gt;</code>
-    * [.getObjectSize(bucket, key)](#module_S3.getObjectSize) ⇒ <code>Promise.&lt;integer&gt;</code>
+    * [.getObjectSize(params)](#module_S3.getObjectSize) ⇒ <code>Promise.&lt;(number\|undefined)&gt;</code>
     * [.getTextObject(bucket, key)](#module_S3.getTextObject) ⇒ <code>Promise.&lt;string&gt;</code>
     * [.getJsonS3Object(bucket, key)](#module_S3.getJsonS3Object) ⇒ <code>Promise.&lt;\*&gt;</code>
     * [.getS3ObjectReadStream(bucket, key)](#module_S3.getS3ObjectReadStream) ⇒ <code>ReadableStream</code>
@@ -546,16 +546,18 @@ Downloads the given s3Obj to the given filename in a streaming manner
 
 <a name="module_S3.getObjectSize"></a>
 
-### S3.getObjectSize(bucket, key) ⇒ <code>Promise.&lt;integer&gt;</code>
-Get the size of an S3Object, in bytes
+### S3.getObjectSize(params) ⇒ <code>Promise.&lt;(number\|undefined)&gt;</code>
+Get the size of an S3 object
 
 **Kind**: static method of [<code>S3</code>](#module_S3)  
-**Returns**: <code>Promise.&lt;integer&gt;</code> - object size, in bytes  
+**Returns**: <code>Promise.&lt;(number\|undefined)&gt;</code> - object size, in bytes  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| bucket | <code>string</code> | S3 bucket |
-| key | <code>string</code> | S3 key |
+| params | <code>Object</code> |  |
+| params.bucket | <code>string</code> |  |
+| params.key | <code>string</code> |  |
+| params.s3 | <code>AWS.S3</code> | an S3 client instance |
 
 <a name="module_S3.getTextObject"></a>
 

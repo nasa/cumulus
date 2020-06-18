@@ -20,8 +20,9 @@ const {
   getFileBucketAndKey,
   getJsonS3Object,
   getObjectReadStream,
-  getS3ObjectReadStream,
+  getObjectSize,
   getS3Object,
+  getS3ObjectReadStream,
   getTextObject,
   headObject,
   listS3ObjectsV2,
@@ -398,4 +399,23 @@ test('calculateObjectHash() calculates the correct hash', async (t) => {
   t.is(getObjectCallCount, 1);
 
   t.is(hash, '912ec803b2ce49e4a541068d495ab570');
+});
+
+test('getObjectSize() returns the size of an object', async (t) => {
+  const { Bucket } = t.context;
+  const key = randomString();
+
+  await awsServices.s3().putObject({
+    Bucket,
+    Key: key,
+    Body: 'asdf'
+  }).promise();
+
+  const objectSize = await getObjectSize({
+    s3: awsServices.s3(),
+    bucket: Bucket,
+    key
+  });
+
+  t.is(objectSize, 4);
 });

@@ -186,6 +186,8 @@ async function handleDuplicateFile({
   return [];
 }
 
+const getNameOfFile = (file) => file.fileName || file.name;
+
 /**
  * For each source file, see if there is a destination and generate the source
  * and target for the file moves.
@@ -200,7 +202,7 @@ async function handleDuplicateFile({
  */
 function generateMoveFileParams(sourceFiles, destinations) {
   return sourceFiles.map((file) => {
-    const fileName = file.name || file.fileName;
+    const fileName = getNameOfFile(file);
     const destination = destinations.find((dest) => fileName.match(dest.regex));
 
     // if there's no match, we skip the file
@@ -218,11 +220,9 @@ function generateMoveFileParams(sourceFiles, destinations) {
       throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
     }
 
-    const getFileName = (f) => f.fileName || f.name;
-
     const targetKey = destination.filepath
-      ? `${destination.filepath}/${getFileName(file)}`
-      : getFileName(file);
+      ? `${destination.filepath}/${getNameOfFile(file)}`
+      : getNameOfFile(file);
 
     const target = {
       Bucket: destination.bucket,
@@ -251,48 +251,51 @@ async function moveGranuleFiles(sourceFiles, destinations) {
   const moveFileParams = generateMoveFileParams(sourceFiles, destinations);
 
   const processedFiles = [];
-  const moveFileRequests = moveFileParams.map((moveFileParam) => {
-    const { source, target, file } = moveFileParam;
+  const moveFileRequests = moveFileParams.map(
+    async (moveFileParam) => {
+      const { source, target, file } = moveFileParam;
 
-    if (target) {
-      log.debug('moveGranuleFiles', source, target);
-      return S3.moveObject({
-        sourceBucket: source.Bucket,
-        sourceKey: source.Key,
-        destinationBucket: target.Bucket,
-        destinationKey: target.Key,
-        copyTags: true
-      }).then(() => {
+      if (target) {
+        log.debug('moveGranuleFiles', source, target);
+
+        await S3.moveObject({
+          sourceBucket: source.Bucket,
+          sourceKey: source.Key,
+          destinationBucket: target.Bucket,
+          destinationKey: target.Key,
+          copyTags: true
+        });
+
         processedFiles.push({
           bucket: target.Bucket,
           key: target.Key,
-          name: file.name || file.fileName
+          name: getNameOfFile(file)
         });
-      });
+      } else {
+        let fileBucket;
+        let fileKey;
+        if (file.bucket && file.key) {
+          fileBucket = file.bucket;
+          fileKey = file.key;
+        } else if (file.filename) {
+          const parsed = S3.parseS3Uri(file.filename);
+          fileBucket = parsed.Bucket;
+          fileKey = parsed.Key;
+        } else {
+          throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
+        }
+
+        processedFiles.push({
+          bucket: fileBucket,
+          key: fileKey,
+          name: getNameOfFile(file)
+        });
+      }
     }
+  );
 
-    let fileBucket;
-    let fileKey;
-    if (file.bucket && file.key) {
-      fileBucket = file.bucket;
-      fileKey = file.key;
-    } else if (file.filename) {
-      const parsed = S3.parseS3Uri(file.filename);
-      fileBucket = parsed.Bucket;
-      fileKey = parsed.Key;
-    } else {
-      throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
-    }
-
-    processedFiles.push({
-      bucket: fileBucket,
-      key: fileKey,
-      name: file.name || file.fileName
-    });
-
-    return Promise.resolve();
-  });
   await Promise.all(moveFileRequests);
+
   return processedFiles;
 }
 

@@ -1,8 +1,6 @@
-'use strict';
-
-const Logger = require('@cumulus/logger');
-const isNumber = require('lodash/isNumber');
-const isString = require('lodash/isString');
+import Logger from '@cumulus/logger';
+import isNumber from 'lodash/isNumber';
+import isString from 'lodash/isString';
 
 function logger() {
   return new Logger({
@@ -23,7 +21,7 @@ function logger() {
  * @param {string} args - Message to log and any other information
  * @returns {undefined} - log is printed to stdout, nothing is returned
  */
-function logAdditionalKeys(additionalKeys, ...args) {
+export function logAdditionalKeys(additionalKeys: object, ...args: any[]) {
   logger().infoWithAdditionalKeys(additionalKeys, ...args);
 }
 
@@ -32,7 +30,7 @@ function logAdditionalKeys(additionalKeys, ...args) {
  *
  * @param {string} args - Includes message and any other information to log
  */
-function info(...args) {
+export function info(...args: any[]) {
   logger().info(...args);
 }
 
@@ -41,7 +39,7 @@ function info(...args) {
  *
  * @param {Object} args - Includes error and any other information to log
  */
-function error(...args) {
+export function error(...args: any[]) {
   logger().error(...args);
 }
 
@@ -50,7 +48,7 @@ function error(...args) {
  *
  * @param {Object} args - Includes debugger message and any other information to log
  */
-function debug(...args) {
+export function debug(...args: any[]) {
   logger().debug(...args);
 }
 
@@ -59,7 +57,7 @@ function debug(...args) {
  *
  * @param {Object} args - Includes Warn message and any other information to log
  */
-function warn(...args) {
+export function warn(...args: any[]) {
   logger().warn(...args);
 }
 
@@ -68,7 +66,7 @@ function warn(...args) {
  *
  * @param {Object} args - Includes Fatal message and any other information to log
  */
-function fatal(...args) {
+export function fatal(...args: any[]) {
   logger().fatal(...args);
 }
 /**
@@ -76,7 +74,7 @@ function fatal(...args) {
  *
  * @param {Object} args - Includes Trace message and any other information to log
  */
-function trace(...args) {
+export function trace(...args: any[]) {
   logger().trace(...args);
 }
 
@@ -86,7 +84,10 @@ function trace(...args) {
  * @param {string/number} level - log level in string or number
  * @returns {number/string} - level in number or string
  */
-function convertLogLevel(level) {
+// @ts-ignore
+export function convertLogLevel(level) {
+  warn('@cumulus/common/log.convertLogLevel() is deprecated after version 1.23.2 and will be removed in a future release.');
+
   const mapping = {
     fatal: 60,
     error: 50,
@@ -95,16 +96,9 @@ function convertLogLevel(level) {
     debug: 20,
     trace: 10
   };
+  // @ts-ignore
   if (isString(level)) return mapping[level];
+  // @ts-ignore
   if (isNumber(level)) return Object.keys(mapping).find((key) => mapping[key] === level);
   return undefined;
 }
-
-module.exports.info = info;
-module.exports.error = error;
-module.exports.debug = debug;
-module.exports.warn = warn;
-module.exports.fatal = fatal;
-module.exports.trace = trace;
-module.exports.convertLogLevel = convertLogLevel;
-module.exports.logAdditionalKeys = logAdditionalKeys;

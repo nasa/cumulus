@@ -1,3 +1,6 @@
+'use strict';
+
+const awsClients = require('@cumulus/aws-client/services');
 const { isNil } = require('@cumulus/common/util');
 
 const { buildDatabaseFiles } = require('./FileUtils');
@@ -7,7 +10,10 @@ const translateGranule = async (granule) => {
 
   return {
     ...granule,
-    files: await buildDatabaseFiles({ files: granule.files })
+    files: await buildDatabaseFiles({
+      s3: awsClients.s3(),
+      files: granule.files
+    })
   };
 };
 

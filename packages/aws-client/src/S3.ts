@@ -276,15 +276,35 @@ export const downloadS3File = (s3Obj: AWS.S3.GetObjectRequest, filepath: string)
 };
 
 /**
- * Get the size of an S3Object, in bytes
+ * Get the size of an S3 object
  *
- * @param {string} bucket - S3 bucket
- * @param {string} key - S3 key
- * @returns {Promise<integer>} object size, in bytes
+ * @param {Object} params
+ * @param {string} params.bucket
+ * @param {string} params.key
+ * @param {AWS.S3} params.s3 - an S3 client instance
+ * @returns {Promise<number|undefined>} object size, in bytes
  */
-export const getObjectSize = (bucket: string, key: string) =>
-  headObject(bucket, key, { retries: 3 })
-    .then((response) => response.ContentLength);
+export const getObjectSize = async (
+  params: {
+    s3: {
+      headObject: (params: { Bucket: string, Key: string }) => {
+        promise: () => Promise<{ ContentLength?: number }>
+      }
+    },
+    bucket: string,
+    key: string
+  }
+) => {
+  // eslint-disable-next-line no-shadow
+  const { s3, bucket, key } = params;
+
+  const headObjectResponse = await s3.headObject({
+    Bucket: bucket,
+    Key: key
+  }).promise();
+
+  return headObjectResponse.ContentLength;
+};
 
 /**
 * Get object Tagging from S3
