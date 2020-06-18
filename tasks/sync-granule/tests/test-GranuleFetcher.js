@@ -551,3 +551,46 @@ test('addChecksumsToFiles falls back to dataFileExt.checksumExt assumption if ch
     }
   );
 });
+
+test('addChecksumsToFiles throws an error if no file matches the checksumFor config', async (t) => {
+  const { internalBucket } = t.context;
+  const provider = { protocol: 's3', host: internalBucket };
+
+  const checksumFor = '.*\.nc';
+  const collectionConfig = {
+    name: 'testName',
+    version: 'testVersion',
+    files: [{
+      regex: '.*\.hdf'
+    },
+    {
+      regex: '.*\.md5',
+      checksumFor
+    }]
+  };
+
+  const fetcher = new GranuleFetcher({
+    collection: collectionConfig,
+    provider
+  });
+
+  const dataFile = {
+    name: 'dataFile.hdf',
+    path: ''
+  };
+  const checksumFile = {
+    name: 'dataFile.md5',
+    path: ''
+  };
+
+  const files = [dataFile, checksumFile];
+
+  await t.throwsAsync(
+    () => fetcher.addChecksumsToFiles(files),
+    {
+      instanceOf: errors.FileNotFound,
+      message: `Could not find file to match ${checksumFile.name} checksumFor ${checksumFor}`
+    }
+  );
+  
+});
