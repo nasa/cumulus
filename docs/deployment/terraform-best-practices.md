@@ -34,7 +34,8 @@ approaches, but the AWS documentation does not provide specific instructions
 for either one:
 
 - **Option 1:** Copy a previous version of the state file into the same bucket
-- **Option 2:** Permanently delete the current version of the file (i.e., the corrupted one)
+- **Option 2:** Permanently delete the current version of the file (i.e., the
+  corrupted one)
 
 For either approach, when using the **AWS Management Console**, the first steps
 are:
@@ -127,13 +128,13 @@ loss, it is also recommended that you deny all users the ability to delete the
 bucket itself. At a later time, you may remove this protection when you are
 sure you want to delete the bucket.
 
-To perform this action this via the **AWS Management Console**:
+To perform this action via the **AWS Management Console**:
 
 1. Go to the S3 service
 2. Go to the bucket used for storing state files
 3. Click the **Permissions** tab
 4. Click **Bucket Policy**
-5. Add the following policy statement to _deny_ the s3:DeleteBucket action for
+5. Add the following policy statement to _deny_ the `s3:DeleteBucket` action for
    all (`"*"`) principals, replacing `BUCKET_NAME` with the name of the bucket:
 
    ```json
@@ -158,7 +159,7 @@ in which you saved `policy.json`, replacing `BUCKET_NAME` with the name of the
 bucket:
 
 ```bash
-aws s3api put-bucket-policy --bucket BUCKET_NAME --policy file://policy.json
+aws s3api put-bucket-policy --policy file://policy.json --bucket BUCKET_NAME
 ```
 
 Afterwards, remove the `policy.json` file.
@@ -172,14 +173,37 @@ deployment resources. Specifically, this means:
 - **DO NOT** change deployment resources via the AWS Management Console
 - **DO NOT** change deployment resources via the AWS CLI
 - **DO NOT** change deployment resources via any of the AWS SDKs
-- Remove resources by removing them from your Terraform configuration and redeploying. Do not remove them manually except where instructed in the destroy documentation.
 
-Instead, change deployment resources **only** via changes to your Terraform
-files, along with subsequent Terraform commands.
+Instead, **DO** change deployment resources **only** via changes to your
+Terraform files (along with subsequent Terraform commands), except where
+specifically instructed otherwise (such as in the instructions for destroying
+a deployment).
 
-## Avoid Changing Connectivity Resources
+### Avoid Changing Connectivity Resources
 
-Don't mess with things that affect connectivity, like security groups.
+Don't change things that affect connectivity, like security groups. Keep in mind
+that changing connectivity resources can affect your ingest functionality and
+API availability.
+
+Only update connectivity resources such as your VPC, subnets, and security
+groups through Terraform deployments with S3 bucket versioning enabled. Test
+connectivity immediately following deployment.
+
+### How to Reconcile Differences
+
+If your state file should get out of synch with the true state of your
+resources, there are a number of things you can attempt to reconcile the
+differences. However, given that each Cumulus deployment is unique, we can
+provide only general guidance:
+
+- Consider restoring a previous version of your state file, as described
+  in the earlier section about recovering from a corrupted state file
+- If resources exist, but are not listed in your state file, consider using
+  `terraform import` (see <https://www.terraform.io/docs/import/index.html>)
+- If resources are missing, but are listed in your state file, run
+  `terraform plan` or `terraform apply`, both of which automatically run
+  `terraform refresh` to reconcile state. You may also run `terraform refresh`
+  directly.
 
 ## How to Destroy Everything
 
@@ -219,6 +243,19 @@ cd ../data-persistence-tf
 terraform init -reconfigure
 terraform destroy
 ```
+
+Finally, since we tag the resources in your deployment, you should see if there
+are any dangling resources left behind for any reason, by running the following
+AWS CLI command, replacing `PREFIX` with your deployment prefix name:
+
+```bash
+aws resourcegroupstaggingapi get-resources \
+  --query "ResourceTagMappingList[].ResourceARN" \
+  --tag-filters Key=Deployment,Values=PREFIX
+```
+
+Ideally, the output should be an empty list, but if it is not, then you may
+need to manually delete the listed resources.
 
 [Configuring the Cumulus deployment]:
   README.md#configuring-the-cumulus-deployment
