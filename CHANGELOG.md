@@ -56,6 +56,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     module as `distribution_bucket_map`.
 - **CUMULUS-1970**
   - Created the `add-missing-file-checksums` workflow task
+  - Added `@cumulus/aws-client/S3.calculateObjectHash()` function
+  - Added `@cumulus/aws-client/S3.getObjectReadStream()` function
+
 - **CUMULUS-2019**
   - Add `infix` search to es query builder `@cumulus/api/es/es/queries` to
     support partial matching of the keywords
@@ -98,8 +101,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Deprecated
 
-- **CUMULUS-1930**
-  - `@cumulus/common/log.convertLogLevel()`
+- `@cumulus/aws-client/S3.calculateS3ObjectChecksum()`
+- `@cumulus/aws-client/S3.getS3ObjectReadStream()`
+- `@cumulus/common/log.convertLogLevel()`
 - `@cumulus/collection-config-store`
 - `@cumulus/common/util.sleep()`
 

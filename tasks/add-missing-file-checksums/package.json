@@ -2,12 +2,10 @@
   "name": "@cumulus/add-missing-file-checksums",
   "version": "1.23.2",
   "description": "Add checksums to files in S3 which don't have one",
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
   "private": true,
-  "main": "dist/index.js",
-  "directories": {
-    "test": "tests"
-  },
-  "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/add-missing-file-checksums/README.md",
+  "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/add-missing-file-checksums#readme",
   "repository": {
     "type": "git",
     "url": "https://github.com/nasa/cumulus",
@@ -16,10 +14,13 @@
   "engines": {
     "node": ">=12.0.0"
   },
+  "main": "dist/index.js",
+  "directories": {
+    "test": "tests"
+  },
   "scripts": {
     "package": "./bin/package.sh",
     "test": "../../node_modules/.bin/ava",
-    "test-coverage": "../../node_modules/.bin/nyc npm test",
     "tsc": "../../node_modules/.bin/tsc",
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'",
     "webpack": "../../node_modules/.bin/webpack"
@@ -35,13 +36,6 @@
 			}
 		}
   },
-  "nyc": {
-    "exclude": [
-      "tests"
-    ]
-  },
-  "author": "Cumulus Authors",
-  "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/aws-client": "1.24.0",
     "@cumulus/cumulus-message-adapter-js": "1.2.0"

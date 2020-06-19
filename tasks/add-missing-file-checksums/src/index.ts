@@ -31,12 +31,7 @@ const calculateGranuleFileChecksum = async (params: {
 
   const { bucket, key } = parseS3Uri(granuleFile.filename);
 
-  return S3.calculateObjectHash({
-    s3,
-    algorithm,
-    bucket: bucket,
-    key: key
-  });
+  return S3.calculateObjectHash({ s3, algorithm, bucket, key });
 };
 
 const granuleFileHasPartialChecksum = (granuleFile: GranuleFile) =>
