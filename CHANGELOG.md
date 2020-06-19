@@ -13,6 +13,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2019**
   - Add `infix` search to es query builder `@cumulus/api/es/es/queries` to support partial matching of the keywords
 
+### Changed
+
+- **CUMULUS-2011**
+  - Reconciliation reports are now generated within an AsyncOperation
+
+- **CUMULUS-2016**
+  - Upgrade TEA to version 79
+
+
 ### BREAKING CHANGES
 
 - Changes to `@cumulus/aws-client/S3`
@@ -86,8 +95,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1982**
   - The `globalConnectionLimit` property of providers is now optional and
     defaults to "unlimited"
-- **CUMULUS-2016**
-  - Upgrade TEA to version 79
+- **CUMULUS-1997**
+  - Added optional `launchpad` configuration to `@cumulus/hyrax-metadata-updates` task config schema.
 
 ### Deprecated
 
