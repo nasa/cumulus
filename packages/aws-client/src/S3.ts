@@ -710,7 +710,7 @@ export const listS3ObjectsV2 = async (params: AWS.S3.ListObjectsV2Request) => {
  *
  * @param {Object} params
  * @param {AWS.S3} params.s3 - an AWS.S3 instance
- * @param {string} params.algorithm - `cksum`, or a an algorithm listed in
+ * @param {string} params.algorithm - `cksum`, or an algorithm listed in
  *   `openssl list -digest-algorithms`
  * @param {string} params.bucket
  * @param {string} params.key

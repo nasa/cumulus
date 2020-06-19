@@ -21,36 +21,47 @@ test.before((t) => {
   };
 });
 
-test('addChecksumToGranuleFile() throws an exception if checksumType is set but checksum is not', async (t) => {
+test('addChecksumToGranuleFile() does not update a granule file if checksumType is set but checksum is not', async (t) => {
   const granuleFile = {
     filename: 's3://bucket/key',
     checksumType: 'md5'
   };
 
-  await t.throwsAsync(
-    addChecksumToGranuleFile({
-      s3: t.context.stubS3,
-      algorithm: 'md5',
-      granuleFile
-    }),
-    { instanceOf: TypeError }
-  );
+  const result = await addChecksumToGranuleFile({
+    s3: t.context.stubS3,
+    algorithm: 'md5',
+    granuleFile
+  });
+
+  t.deepEqual(result, granuleFile);
 });
 
-test('addChecksumToGranuleFile() throws an exception if checksum is set but checksumType is not', async (t) => {
+test('addChecksumToGranuleFile() does not update a granule file if checksum is set but checksumType is not', async (t) => {
   const granuleFile = {
     filename: 's3://bucket/key',
     checksum: 'asdf'
   };
 
-  await t.throwsAsync(
-    addChecksumToGranuleFile({
-      s3: t.context.stubS3,
-      algorithm: 'md5',
-      granuleFile
-    }),
-    { instanceOf: TypeError }
-  );
+  const result = await addChecksumToGranuleFile({
+    s3: t.context.stubS3,
+    algorithm: 'md5',
+    granuleFile
+  });
+
+  t.deepEqual(result, granuleFile);
+});
+
+test('addChecksumToGranuleFile() does not update a granule file if it does not have a filename', async (t) => {
+  const granuleFile = {};
+
+  const result = await addChecksumToGranuleFile({
+    s3: t.context.stubS3,
+    algorithm: 'md5',
+    // @ts-expect-error
+    granuleFile
+  });
+
+  t.deepEqual(result, granuleFile);
 });
 
 test('addChecksumToGranuleFile() returns the file if checksumType and checksum are already set', async (t) => {
@@ -163,4 +174,85 @@ test('The handler updates files that do not have a checksum', async (t) => {
 
   t.is(result.granules[0].files[0].checksumType, 'md5');
   t.is(result.granules[0].files[0].checksum, '912ec803b2ce49e4a541068d495ab570');
+});
+
+test('The handler preserves extra input properties', async (t) => {
+  const event = {
+    config: {
+      algorithm: 'md5'
+    },
+    input: {
+      foo: 'bar',
+      granules: [
+        {
+          granuleId: 'g-1',
+          files: [
+            {
+              filename: 's3://bucket/key',
+              checksumType: 'c-type',
+              checksum: 'c-value'
+            }
+          ]
+        }
+      ]
+    }
+  };
+
+  const result = await handler(event);
+
+  t.is(result.foo, 'bar');
+});
+
+test('The handler preserves extra granule properties', async (t) => {
+  const event = {
+    config: {
+      algorithm: 'md5'
+    },
+    input: {
+      granules: [
+        {
+          granuleId: 'g-1',
+          foo: 'bar',
+          files: [
+            {
+              filename: 's3://bucket/key',
+              checksumType: 'c-type',
+              checksum: 'c-value'
+            }
+          ]
+        }
+      ]
+    }
+  };
+
+  const result = await handler(event);
+
+  t.is(result.granules[0].foo, 'bar');
+});
+
+test('The handler preserves extra granule file properties', async (t) => {
+  const event = {
+    config: {
+      algorithm: 'md5'
+    },
+    input: {
+      granules: [
+        {
+          granuleId: 'g-1',
+          files: [
+            {
+              foo: 'bar',
+              filename: 's3://bucket/key',
+              checksumType: 'c-type',
+              checksum: 'c-value'
+            }
+          ]
+        }
+      ]
+    }
+  };
+
+  const result = await handler(event);
+
+  t.is(result.granules[0].files[0].foo, 'bar');
 });

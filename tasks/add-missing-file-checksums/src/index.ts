@@ -1,20 +1,8 @@
+// @ts-expect-error
+import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import * as awsClients from '@cumulus/aws-client/services';
 import * as S3 from '@cumulus/aws-client/S3';
-import { Granule, GranuleFile, HandlerEvent } from './types';
-
-const validateGranuleFile = (granuleFile: GranuleFile) => {
-  if (granuleFile.checksumType && !granuleFile.checksum) {
-    throw new TypeError(
-      `checksumType is set but checksum is not: ${JSON.stringify(granuleFile)}`
-    );
-  }
-
-  if (granuleFile.checksum && !granuleFile.checksumType) {
-    throw new TypeError(
-      `checksum is set but checksumType is not: ${JSON.stringify(granuleFile)}`
-    );
-  }
-};
+import { Granule, GranuleFile, HandlerEvent, HandlerInput } from './types';
 
 const parseS3Uri = (uri: string) => {
   const { Bucket, Key } = S3.parseS3Uri(uri);
@@ -51,8 +39,20 @@ const calculateGranuleFileChecksum = async (params: {
   });
 };
 
+const granuleFileHasPartialChecksum = (granuleFile: GranuleFile) =>
+  (granuleFile.checksumType && !granuleFile.checksum)
+  || (granuleFile.checksum && !granuleFile.checksumType);
+
 const granuleFileHasChecksum = (granuleFile: GranuleFile) =>
   granuleFile.checksumType && granuleFile.checksum;
+
+const granuleFileDoesNotHaveFilename = (granuleFile: GranuleFile) =>
+  !granuleFile.filename;
+
+const skipGranuleFileUpdate = (granuleFile: GranuleFile) =>
+  granuleFileHasChecksum(granuleFile)
+  || granuleFileHasPartialChecksum(granuleFile)
+  || granuleFileDoesNotHaveFilename(granuleFile);
 
 export const addChecksumToGranuleFile = async (params: {
   s3: { getObject: S3.GetObjectMethod },
@@ -61,9 +61,7 @@ export const addChecksumToGranuleFile = async (params: {
 }) => {
   const { s3, algorithm, granuleFile } = params;
 
-  validateGranuleFile(granuleFile);
-
-  if (granuleFileHasChecksum(granuleFile)) {
+  if (skipGranuleFileUpdate(granuleFile)) {
     return granuleFile;
   }
 
@@ -116,8 +114,11 @@ export const handler = async (event: HandlerEvent) => {
     )
   );
 
-  return { granules: granulesWithChecksums };
+  return <HandlerInput>{
+    ...input,
+    granules: granulesWithChecksums
+  };
 };
 
-// export const cmaHandler = (event, context) =>
-//   runCumulusTask(handler, event, context);
+export const cmaHandler = (event: unknown, context: unknown) =>
+  runCumulusTask(handler, event, context);

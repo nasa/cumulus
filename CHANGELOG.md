@@ -6,13 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Added
-
-- **CUMULUS-1956**
-  - Added `@cumulus/earthata-login-client` package
-- **CUMULUS-2019**
-  - Add `infix` search to es query builder `@cumulus/api/es/es/queries` to support partial matching of the keywords
-
 ### BREAKING CHANGES
 
 - Changes to `@cumulus/aws-client/S3`
@@ -21,7 +14,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - **s3**: an instance of an AWS.S3 object
     - **bucket**
     - **key**
-  - The `getObjectSize` function will no longer retry if the object does not exist
+  - The `getObjectSize` function will no longer retry if the object does not
+    exist
 - **CUMULUS-1958**
   - The following methods exported from `@cumulus/cmr-js/cmr-utils` were made
     async, and added distributionBucketMap as a parameter:
@@ -40,10 +34,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     relied on that property are now referencing `config.meta.provider_path`.
     Workflows should be updated accordingly.
 - **CUMULUS-1977**
-  - Moved bulk granule deletion endpoint from `/bulkDelete` to `/granules/bulkDelete`
+  - Moved bulk granule deletion endpoint from `/bulkDelete` to
+    `/granules/bulkDelete`
 
 ### Added
 
+- **CUMULUS-1956**
+  - Added `@cumulus/earthata-login-client` package
 - **CUMULUS-1958**
   - Add the ability for users to specify a `bucket_map_key` to the `cumulus`
     terraform module as an override for the default .yaml values that are passed
@@ -57,14 +54,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     protected/public buckets and generate a mapping configuration used
     internally by Core.  This object is also exposed as an output of the Cumulus
     module as `distribution_bucket_map`.
+- **CUMULUS-1970**
+  - Created the `add-missing-file-checksums` workflow task
+- **CUMULUS-2019**
+  - Add `infix` search to es query builder `@cumulus/api/es/es/queries` to
+    support partial matching of the keywords
 
 ### Changed
 
 - **CUMULUS-1977**
-  - Implemented POST `/granules/bulkDelete` API endpoint to support deleting granules specified by ID or returned by the provided query in the request body. If the request is successful, the endpoint returns the async operation ID that has been started to remove the granules.
-    - To use a query in the request body, your deployment must be [configured to access the Elasticsearch host for ESDIS metrics](https://nasa.github.io/cumulus/docs/additional-deployment-options/cloudwatch-logs-delivery#esdis-metrics) in your environment
-  - Added `@cumulus/api/models/Granule.getRecord()` method to return raw record from DynamoDB
-  - Added `@cumulus/api/models/Granule.delete()` method which handles deleting the granule record from DynamoDB and the granule files from S3
+  - Implemented POST `/granules/bulkDelete` API endpoint to support deleting
+    granules specified by ID or returned by the provided query in the request
+    body. If the request is successful, the endpoint returns the async operation
+    ID that has been started to remove the granules.
+    - To use a query in the request body, your deployment must be
+      [configured to access the Elasticsearch host for ESDIS metrics](https://nasa.github.io/cumulus/docs/additional-deployment-options/cloudwatch-logs-delivery#esdis-metrics)
+      in your environment
+  - Added `@cumulus/api/models/Granule.getRecord()` method to return raw record
+    from DynamoDB
+  - Added `@cumulus/api/models/Granule.delete()` method which handles deleting
+    the granule record from DynamoDB and the granule files from S3
 
 ### Changed
 
