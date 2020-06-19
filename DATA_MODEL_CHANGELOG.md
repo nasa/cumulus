@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-2011**
+  - Added `Reconciliation Report` as an async operation `operationType`
+
 - **CUMULUS-1982**
   - `provider.globalConnectionLimit` is now optional
 

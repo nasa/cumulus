@@ -62,21 +62,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **CUMULUS-1977**
-  - Implemented POST `/granules/bulkDelete` API endpoint to support deleting
-    granules specified by ID or returned by the provided query in the request
-    body. If the request is successful, the endpoint returns the async operation
-    ID that has been started to remove the granules.
-    - To use a query in the request body, your deployment must be
-      [configured to access the Elasticsearch host for ESDIS metrics](https://nasa.github.io/cumulus/docs/additional-deployment-options/cloudwatch-logs-delivery#esdis-metrics)
-      in your environment
-  - Added `@cumulus/api/models/Granule.getRecord()` method to return raw record
-    from DynamoDB
-  - Added `@cumulus/api/models/Granule.delete()` method which handles deleting
-    the granule record from DynamoDB and the granule files from S3
-
-### Changed
-
 - **CUMULUS-1956**
   - The `/s3credentials` endpoint that is deployed as part of distribution now
     supports authentication using tokens created by a different application. If
@@ -90,9 +75,24 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     granule record was already deleted
   - `@cumulus/api/models/Granule.update()` now returns the updated granule
     record
+  - Implemented POST `/granules/bulkDelete` API endpoint to support deleting
+    granules specified by ID or returned by the provided query in the request
+    body. If the request is successful, the endpoint returns the async operation
+    ID that has been started to remove the granules.
+    - To use a query in the request body, your deployment must be
+      [configured to access the Elasticsearch host for ESDIS metrics](https://nasa.github.io/cumulus/docs/additional-deployment-options/cloudwatch-logs-delivery#esdis-metrics)
+      in your environment
+  - Added `@cumulus/api/models/Granule.getRecord()` method to return raw record
+    from DynamoDB
+  - Added `@cumulus/api/models/Granule.delete()` method which handles deleting
+    the granule record from DynamoDB and the granule files from S3
 - **CUMULUS-1982**
   - The `globalConnectionLimit` property of providers is now optional and
     defaults to "unlimited"
+- **CUMULUS-1997**
+  - Added optional `launchpad` configuration to `@cumulus/hyrax-metadata-updates` task config schema.
+- **CUMULUS-2011**
+  - Reconciliation reports are now generated within an AsyncOperation
 - **CUMULUS-2016**
   - Upgrade TEA to version 79
 
