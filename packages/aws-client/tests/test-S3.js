@@ -13,23 +13,23 @@ const { promisify } = require('util');
 const { UnparsableFileLocationError } = require('@cumulus/errors');
 
 const {
-  calculateObjectHash,
-  calculateS3ObjectChecksum,
   createBucket,
-  downloadS3File,
-  getFileBucketAndKey,
   getJsonS3Object,
-  getObjectReadStream,
   getObjectSize,
   getS3Object,
-  getS3ObjectReadStream,
   getTextObject,
   headObject,
+  downloadS3File,
   listS3ObjectsV2,
-  putFile,
   recursivelyDeleteS3Bucket,
   s3Join,
-  validateS3ObjectChecksum
+  calculateS3ObjectChecksum,
+  validateS3ObjectChecksum,
+  getFileBucketAndKey,
+  putFile,
+  calculateObjectHash,
+  getObjectReadStream,
+  getS3ObjectReadStream
 } = require('../S3');
 const awsServices = require('../services');
 
