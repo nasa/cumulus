@@ -11,5 +11,6 @@ cache-invalidation/config/runtime_config.json
 /util.js
 /BucketsConfig.js
 /cli-utils.js
+/cloudwatch-event.js
 /*.d.ts
 /*.d.ts.map
