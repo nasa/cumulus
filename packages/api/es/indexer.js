@@ -359,11 +359,11 @@ function logHandler(event, context, cb) {
       const logs = JSON.parse(r.toString());
       log.debug(logs);
       return indexLog(undefined, logs.logEvents)
-        .then((s) => cb(null, s))
+        .then((s) => cb(undefined, s))
         .catch(cb);
     } catch (error) {
       log.error(e);
-      return cb(null);
+      return cb();
     }
   });
 }

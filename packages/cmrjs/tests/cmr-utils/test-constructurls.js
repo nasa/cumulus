@@ -3,7 +3,7 @@ const rewire = require('rewire');
 
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { randomId } = require('@cumulus/common/test-utils');
-const { omit } = require('@cumulus/common/util');
+const omit = require('lodash/omit');
 
 const cmrUtils = rewire('../../cmr-utils');
 
