@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+- **CUMULUS-1417**
+  - Collection file configs have a new optional field: `checksumFor`.
+    This field expects a regex which matches that of a different file config.
+    It allows an operator to specify the target of a checksum file.
+
 - **CUMULUS-1982**
   - `provider.globalConnectionLimit` is now optional
 
