@@ -1,8 +1,6 @@
 'use strict';
 
-const OAuth2 = require('./OAuth2');
-
-class GoogleOAuth2 extends OAuth2 {
+class GoogleOAuth2 {
   /**
    * @param {Object} googleOAuth2Client - see example
    * @param {Object} googlePlusPeopleClient - see example
@@ -20,8 +18,6 @@ class GoogleOAuth2 extends OAuth2 {
    * const oAuth2Provider = new GoogleOAuth2(googleOAuth2Client, googlePlusPeopleClient);
    */
   constructor(googleOAuth2Client, googlePlusPeopleClient) {
-    super();
-
     if (!googleOAuth2Client) throw new TypeError('googleOAuth2Client is required');
     this.googleOAuth2Client = googleOAuth2Client;
 

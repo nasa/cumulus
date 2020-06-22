@@ -18,7 +18,6 @@ const pMap = require('p-map');
 const moment = require('moment');
 
 const {
-  dynamodb,
   ecs,
   sfn
 } = require('@cumulus/aws-client/services');
@@ -33,6 +32,7 @@ const ProvidersModel = require('@cumulus/api/models/providers');
 const RulesModel = require('@cumulus/api/models/rules');
 const collectionsApi = require('@cumulus/api-client/collections');
 const providersApi = require('@cumulus/api-client/providers');
+const asyncOperationsApi = require('@cumulus/api-client/asyncOperations');
 const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 const rulesApi = require('./api/rules');
 const emsApi = require('./api/ems');
@@ -68,23 +68,25 @@ const lambdaStep = new LambdaStep();
  * @returns {Promise<Object>} - the AsyncOperation object
  */
 async function waitForAsyncOperationStatus({
-  TableName,
   id,
   status,
+  stackName,
   retries = 10
 }) {
-  const { Item } = await dynamodb().getItem({
-    TableName,
-    Key: { id: { S: id } }
-  }).promise();
+  const response = await asyncOperationsApi.getAsyncOperation({
+    prefix: stackName,
+    asyncOperationId: id
+  });
 
-  if (Item.status.S === status || retries <= 0) return Item;
+  const operation = JSON.parse(response.body);
+
+  if (operation.status === status || retries <= 0) return operation;
 
   await delay(2000);
   return waitForAsyncOperationStatus({
-    TableName,
     id,
     status,
+    stackName,
     retries: retries - 1
   });
 }

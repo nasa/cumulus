@@ -19,8 +19,7 @@ const { getMessageGranules } = require('@cumulus/message/Granules');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const {
   isNil,
-  removeNilProperties,
-  renameProperty
+  removeNilProperties
 } = require('@cumulus/common/util');
 const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
 const {
@@ -44,6 +43,12 @@ const {
 } = require('../lib/utils');
 const Rule = require('./rules');
 const granuleSchema = require('./schemas').granule;
+
+const renameProperty = (from, to, obj) => {
+  const newObj = { ...obj, [to]: obj[from] };
+  delete newObj[from];
+  return newObj;
+};
 
 class Granule extends Manager {
   constructor() {

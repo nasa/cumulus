@@ -1,7 +1,6 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const { invoke } = require('@cumulus/aws-client/Lambda');
 const {
   deleteS3Object,
   getS3Object,
@@ -14,6 +13,7 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 const models = require('../models');
 const { Search } = require('../es/search');
 const indexer = require('../es/indexer');
+const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 
 /**
  * List all reconciliation reports
@@ -100,17 +100,28 @@ async function del(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
-  const invocationType = req.body.invocationType || 'Event';
-  const result = await invoke(process.env.invokeReconcileLambda, {}, invocationType);
-  const response = (invocationType === 'Event')
-    ? { message: 'Report is being generated', status: result.StatusCode }
-    : { message: 'Report generated', report: JSON.parse(result.Payload) };
-  return res.send(response);
+  const asyncOperationModel = new models.AsyncOperation({
+    stackName: process.env.stackName,
+    systemBucket: process.env.system_bucket,
+    tableName: process.env.AsyncOperationsTable
+  });
+
+  const asyncOperation = await asyncOperationModel.start({
+    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+    cluster: process.env.EcsCluster,
+    lambdaName: process.env.invokeReconcileLambda,
+    description: 'Create Inventory Report',
+    operationType: 'Reconciliation Report',
+    payload: {},
+    useLambdaEnvironmentVariables: true
+  });
+
+  return res.status(202).send(asyncOperation);
 }
 
 router.get('/:name', get);
 router.delete('/:name', del);
 router.get('/', list);
-router.post('/', post);
+router.post('/', post, asyncOperationEndpointErrorHandler);
 
 module.exports = router;
