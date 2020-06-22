@@ -114,6 +114,67 @@ test.serial('Collection.create() throws UnmatchedRegexError for non-matching fil
   );
 });
 
+test.serial('Collection.create() throws UnmatchedRegexError for unmatched file.checksumFor', async (t) => {
+  await t.throwsAsync(
+    collectionsModel.create(fakeCollectionFactory({
+      files: [{
+        bucket: 'bucket',
+        regex: '^.*$',
+        sampleFileName: 'filename',
+        checksumFor: '^1234$'
+      }]
+    })),
+    {
+      instanceOf: UnmatchedRegexError,
+      message: 'checksumFor ^1234$ does not match any file regex'
+    }
+  );
+});
+
+test.serial('Collection.create() throws InvalidRegexError for file.checksumFor matching multiple files', async (t) => {
+  await t.throwsAsync(
+    collectionsModel.create(fakeCollectionFactory({
+      files: [{
+        bucket: 'bucket',
+        regex: '^.*$',
+        sampleFileName: 'filename'
+      },
+      {
+        bucket: 'bucket',
+        regex: '^.*$',
+        sampleFileName: 'filename2'
+      },
+      {
+        bucket: 'bucket',
+        regex: '^file.*$',
+        sampleFileName: 'filename3',
+        checksumFor: '^.*$'
+      }]
+    })),
+    {
+      instanceOf: InvalidRegexError,
+      message: 'checksumFor ^.*$ matches multiple file regexes'
+    }
+  );
+});
+
+test.serial('Collection.create() throws InvalidRegexError for file.checksumFor matching its own file', async (t) => {
+  await t.throwsAsync(
+    collectionsModel.create(fakeCollectionFactory({
+      files: [{
+        bucket: 'bucket',
+        regex: '^.*$',
+        sampleFileName: 'filename',
+        checksumFor: '^.*$'
+      }]
+    })),
+    {
+      instanceOf: InvalidRegexError,
+      message: 'checksumFor ^.*$ cannot be used to validate itself'
+    }
+  );
+});
+
 test.serial('Collection.exists() returns true when a record exists', async (t) => {
   const name = randomString();
   const version = randomString();
