@@ -24,8 +24,6 @@ class Execution extends Manager {
     });
   }
 
-
-
   /**
    * Generate an execution record from a Cumulus message.
    *
