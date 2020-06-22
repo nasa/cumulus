@@ -70,7 +70,7 @@ resource "aws_lambda_function" "publish_executions" {
   function_name    = "${var.prefix}-publishExecutions"
   role             = aws_iam_role.publish_executions_lambda_role.arn
   handler          = "index.handler"
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
   timeout          = 30
   memory_size      = 128
 
@@ -187,7 +187,7 @@ resource "aws_lambda_function" "publish_granules" {
   function_name    = "${var.prefix}-publishGranules"
   role             = aws_iam_role.publish_granules_lambda_role.arn
   handler          = "index.handler"
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
   timeout          = 30
   memory_size      = 128
 
@@ -299,7 +299,7 @@ resource "aws_lambda_function" "publish_pdrs" {
   function_name    = "${var.prefix}-publishPdrs"
   role             = aws_iam_role.publish_pdrs_lambda_role.arn
   handler          = "index.handler"
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
   timeout          = 30
   memory_size      = 128
 
@@ -411,7 +411,7 @@ resource "aws_lambda_function" "publish_collections" {
   function_name    = "${var.prefix}-publishCollections"
   role             = aws_iam_role.publish_collections_lambda_role.arn
   handler          = "index.handler"
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
   timeout          = 30
   memory_size      = 128
 
