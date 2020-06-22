@@ -200,7 +200,9 @@ class GranuleFetcher {
       .reduce((acc, checksumFile) => {
         const checksumFileConfig = this.findCollectionFileConfigForFile(checksumFile);
         if (has(checksumFileConfig, 'checksumFor')) {
-          const checksumForTarget = files.find((file) => file.name.match(checksumFileConfig.checksumFor));
+          const checksumForTarget = files.find(
+            (file) => file.name.match(checksumFileConfig.checksumFor)
+          );
           if (!checksumForTarget) {
             throw new errors.FileNotFound(
               `Could not find file to match ${checksumFile.name} checksumFor ${checksumFileConfig.checksumFor}`

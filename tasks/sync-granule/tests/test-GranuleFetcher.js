@@ -592,5 +592,4 @@ test('addChecksumsToFiles throws an error if no file matches the checksumFor con
       message: `Could not find file to match ${checksumFile.name} checksumFor ${checksumFor}`
     }
   );
-  
 });
