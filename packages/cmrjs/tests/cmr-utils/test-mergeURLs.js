@@ -4,7 +4,7 @@ const rewire = require('rewire');
 const cmrUtil = rewire('../../cmr-utils');
 const mergeURLs = cmrUtil.__get__('mergeURLs');
 
-const sortByURL = (a, b) => a.URL < b.URL;
+const sortByURL = (a, b) => (a.URL < b.URL ? -1 : 1);
 
 test('Merges two sets of URLs.', (t) => {
   const originalURLs = [
