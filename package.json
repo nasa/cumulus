@@ -132,7 +132,7 @@
     "sinon": "^9.0.1",
     "ssh2-streams": "^0.4.8",
     "supertest": "^4.0.2",
-    "typescript": "^3.8.3",
+    "typescript": "^3.9.0",
     "uuid": "^3.2.1",
     "webpack-cli": "^3.3.5",
     "webpack": "~4.5.0",
