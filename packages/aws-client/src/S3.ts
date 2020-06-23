@@ -12,6 +12,7 @@ import pump from 'pump';
 import querystring from 'querystring';
 import url from 'url';
 import { Readable, TransformOptions } from 'stream';
+import { deprecate } from 'util';
 
 import {
   generateChecksumFromStream,
@@ -34,22 +35,16 @@ export type GetObjectMethod = (params: { Bucket: string, Key: string }) => {
 
 const log = new Logger({ sender: 'aws-client/s3' });
 
-// TODO I'm not thrilled about copying this from common/util, but I seem to
-// remember that we don't want aws-client depending on common for some reason.
-// Is it worth moving this single function into its own package?
-const deprecate = (() => {
-  const warned = new Set();
+const buildDeprecationMessage = (
+  name: string,
+  version: string,
+  alternative?: string
+) => {
+  let message = `${name} is deprecated after version ${version} and will be removed in a future release.`;
+  if (alternative) message += ` Use ${alternative} instead.`;
 
-  return (name: string, version: string, alternative?: string) => {
-    const key = `${name}-${version}`;
-    if (warned.has(key)) return;
-
-    warned.add(key);
-    let message = `${name} is deprecated after version ${version} and will be removed in a future release.`;
-    if (alternative) message += ` Use ${alternative} instead.`;
-    log.warn(message);
-  };
-})();
+  return log.buildMessage('warn', message);
+};
 
 const S3_RATE_LIMIT = inTestMode() ? 1 : 20;
 
@@ -444,15 +439,15 @@ export const getObjectReadStream = (params: {
  *
  * @deprecated
  */
-export const getS3ObjectReadStream = (bucket: string, key: string) => {
-  deprecate(
+export const getS3ObjectReadStream = deprecate(
+  (bucket: string, key: string) =>
+    getObjectReadStream({ s3: s3(), bucket, key }),
+  buildDeprecationMessage(
     '@cumulus/aws-client/S3.getS3ObjectReadStream',
     '1.24.0',
     '@cumulus/aws-client/S3.getObjectReadStream'
-  );
-
-  return getObjectReadStream({ s3: s3(), bucket, key });
-};
+  )
+);
 
 /**
  * Get a readable stream for an S3 object.
@@ -744,24 +739,25 @@ export const calculateObjectHash = async (
  *
  * @deprecated
  */
-export const calculateS3ObjectChecksum = async (
-  params: {
-    algorithm: string,
-    bucket: string,
-    key: string,
-    options: TransformOptions
-  }
-) => {
-  deprecate(
+export const calculateS3ObjectChecksum = deprecate(
+  async (
+    params: {
+      algorithm: string,
+      bucket: string,
+      key: string,
+      options: TransformOptions
+    }
+  ) => {
+    const { algorithm, bucket, key, options } = params;
+    const fileStream = await getS3ObjectReadStreamAsync(bucket, key);
+    return generateChecksumFromStream(algorithm, fileStream, options);
+  },
+  buildDeprecationMessage(
     '@cumulus/aws-client/S3.calculateS3ObjectChecksum',
     '1.24.0',
     '@cumulus/aws-client/S3.calculateObjectHash'
-  );
-
-  const { algorithm, bucket, key, options } = params;
-  const fileStream = await getS3ObjectReadStreamAsync(bucket, key);
-  return generateChecksumFromStream(algorithm, fileStream, options);
-};
+  )
+);
 
 /**
  * Validate S3 object checksum against expected sum
