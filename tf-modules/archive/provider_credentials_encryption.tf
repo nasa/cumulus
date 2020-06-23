@@ -25,7 +25,7 @@ resource "aws_lambda_function" "provider_secrets_migration" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/providerSecretsMigration/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.lambda_api_gateway.arn
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
   timeout          = 100
   environment {
     variables = {
@@ -53,7 +53,7 @@ resource "aws_lambda_function" "verify_provider_secrets_migration" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/verifyProviderSecretsMigration/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.lambda_api_gateway.arn
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
   timeout          = 100
   environment {
     variables = {
