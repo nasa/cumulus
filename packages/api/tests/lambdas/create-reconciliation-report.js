@@ -199,7 +199,9 @@ test.serial('A valid reconciliation report is generated for no buckets', async (
 
   const event = {
     systemBucket: t.context.systemBucket,
-    stackName: t.context.stackName
+    stackName: t.context.stackName,
+    startTimestamp: randomId('startTimestamp'),
+    endTimestamp: randomId('endTimestamp'),
   };
 
   const reportRecord = await handler(event, {});
@@ -211,11 +213,13 @@ test.serial('A valid reconciliation report is generated for no buckets', async (
   t.is(report.error, null);
   t.is(filesInCumulus.okCount, 0);
   t.is(filesInCumulus.onlyInS3.length, 0);
-  t.is(filesInCumulus.onlyInDynamoDb.length, 0);
+  t.is(filesInCumulus.onlyInElasticsearch.length, 0);
 
-  const reportStartTime = moment(report.reportStartTime);
-  const reportEndTime = moment(report.reportEndTime);
-  t.true(reportStartTime <= reportEndTime);
+  const createStartTime = moment(report.createStartTime);
+  const createEndTime = moment(report.createEndTime);
+  t.true(createStartTime <= createEndTime);
+  t.is(report.reportStartTime, event.startTimestamp);
+  t.is(report.reportEndTime, event.endTimestamp);
 });
 
 test.serial('A valid reconciliation report is generated when everything is in sync', async (t) => {
