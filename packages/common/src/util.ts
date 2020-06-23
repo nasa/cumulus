@@ -51,11 +51,16 @@ export const deprecate = (() => {
  * @param {number} waitPeriodMs - number of milliseconds to wait
  * @returns {Promise.<undefined>} promise resolves after a given time period
  *
+ * @deprecated
+ *
  * @alias module:util
  */
-export const sleep = (waitPeriodMs: number) =>
-  (new Promise((resolve) =>
+export const sleep = (waitPeriodMs: number) => {
+  deprecate('@cumulus/common/util.sleep', '1.23.2', 'delay');
+
+  return (new Promise((resolve) =>
     setTimeout(resolve, waitPeriodMs)));
+};
 
 /**
  * Synchronously makes a temporary directory, smoothing over the differences between
@@ -63,10 +68,13 @@ export const sleep = (waitPeriodMs: number) =>
  *
  * @param {string} name - A base name for the temp dir, to be uniquified for the final name
  * @returns {string} The absolute path to the created dir
+ *
  * @private
+ *
+ * @deprecated
  */
 export const mkdtempSync = (name: string) => {
-  deprecate('@cumulus/common/util.noop()', '1.23.2');
+  deprecate('@cumulus/common/util.mkdtempSync()', '1.23.2');
   const dirname = ['gitc', name, +new Date()].join('_');
   const abspath = path.join(os.tmpdir(), dirname);
   fs.mkdirSync(abspath, 0o700);
@@ -79,6 +87,8 @@ export const mkdtempSync = (name: string) => {
  * @returns {undefined} undefined
  *
  * @alias module:util
+ *
+ * @deprecated
  */
 export const noop = () => {
   deprecate('@cumulus/common/util.noop()', '1.23.2', 'lodash/noop');
@@ -95,6 +105,8 @@ export const noop = () => {
  * @returns {Object} copy of objectIn without keys attached.
  *
  * @alias module:util
+ *
+ * @deprecated
  */
 // @ts-ignore
 export const omit = (objectIn, keys) => {
@@ -113,6 +125,8 @@ export const omit = (objectIn, keys) => {
  *
  * @alias module:util
  *
+ * @deprecated
+ *
  * @example
  * const isEven = (x) => x % 2 === 0;
  * const isOdd = negate(isEven);
@@ -122,7 +136,7 @@ export const omit = (objectIn, keys) => {
  */
 // @ts-ignore
 export const negate = (predicate) => {
-  deprecate('@cumulus/common/util.omit()', '1.23.2', 'lodash/omit');
+  deprecate('@cumulus/common/util.negate()', '1.23.2');
 
   // @ts-ignore
   return (...args) => !predicate.apply(this, args);
@@ -131,8 +145,10 @@ export const negate = (predicate) => {
 /**
  * Test if a value is null
  *
- * @param {u} x value to check
+ * @param {*} x - value to check
  * @returns {boolean}
+ *
+ * @deprecated
  *
  * @alias module:util
  */
@@ -147,6 +163,8 @@ export const isNull = (x: unknown) => {
  * @param {*} x value to check
  * @returns {boolean}
  *
+ * @deprecated
+ *
  * @alias module:util
  */
 export const isUndefined = (x: unknown) => {
@@ -159,6 +177,8 @@ export const isUndefined = (x: unknown) => {
  *
  * @param {*} x value to check
  * @returns {boolean}
+ *
+ * @deprecated
  *
  * @alias module:util
  */
@@ -174,6 +194,8 @@ export const isNil = (x: unknown) => {
  * @param {string} to - new property name
  * @param {Object} obj - object to update
  * @returns {Object} a shallow clone of the object with updated property name
+ *
+ * @deprecated
  *
  * @alias module:util
  */
@@ -202,6 +224,8 @@ export const removeNilProperties = <T extends object>(obj: T) =>
  *
  * @param {string} key
  * @returns {string} mimeType or null
+ *
+ * @deprecated
  *
  * @alias module:util
  */
@@ -234,6 +258,8 @@ export const isOneOf = curry((collection: unknown[], val: unknown) =>
  * @returns {*} the result of passing the value through the functions:
  *   - If no functions are provided, the value is returned.
  *   - Functions should expect a single argument
+ *
+ * @deprecated
  *
  * @alias module:util
  */

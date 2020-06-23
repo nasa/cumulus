@@ -1,6 +1,5 @@
 const { Manager, Rule } = require('../models');
 
-
 async function run(_options) {
   const rule = new Rule();
   const manager = new Manager({

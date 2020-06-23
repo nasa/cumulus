@@ -119,8 +119,7 @@ class SftpClient {
       Bucket: bucket,
       Key: key,
       Body: pass,
-      // eslint-disable-next-line unicorn/no-null
-      ContentType: mime.lookup(key) || null
+      ContentType: mime.lookup(key) || undefined
     };
 
     const result = await S3.promiseS3Upload(params);

@@ -3,7 +3,7 @@ const got = require('got');
 const { URL } = require('url');
 
 const { AccessToken } = require('@cumulus/api/models');
-const EarthdataLogin = require('@cumulus/api/lib/EarthdataLogin');
+const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
 
 /**
  * Login to Earthdata and get access token.
@@ -34,9 +34,13 @@ async function getEarthdataAccessToken({
   }
 
   // Create Earthdata client and get authorization URL.
-  const earthdataLoginClient = EarthdataLogin.createFromEnv({
+  const earthdataLoginClient = new EarthdataLoginClient({
+    clientId: process.env.EARTHDATA_CLIENT_ID,
+    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
+    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
     redirectUri
   });
+
   const authorizeUrl = earthdataLoginClient.getAuthorizationUrl();
 
   // Prepare request options for login to Earthdata.
@@ -55,13 +59,13 @@ async function getEarthdataAccessToken({
   try {
     const loginResponse = await got.post(authorizeUrl, requestOptions);
     redirectUrl = loginResponse.headers.location;
-  } catch (err) {
-    if (err.statusCode === 401) {
+  } catch (error) {
+    if (error.statusCode === 401) {
       throw new Error(
         'Unauthorized: Check that your EARTHDATA_USERNAME and EARTHDATA_PASSWORD values can be used for log into the Earthdata app specified by the EARTHDATA_CLIENT_ID'
       );
     }
-    throw err;
+    throw error;
   }
 
   if (!redirectUrl.includes(redirectUri)) {

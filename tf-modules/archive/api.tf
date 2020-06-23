@@ -59,7 +59,6 @@ locals {
       METRICS_ES_PASS              = var.metrics_es_password
       provider_kms_key_id          = aws_kms_key.provider_kms_key.key_id
       log_destination_arn          = var.log_destination_arn
-      collection_sns_topic_arn     = aws_sns_topic.report_collections_topic.arn
       auth_mode                    = "public"
       ES_CONCURRENCY               = var.es_request_concurrency
       ES_INDEX_SHARDS              = var.es_index_shards
@@ -109,11 +108,6 @@ resource "aws_s3_bucket_object" "authorized_oauth_users" {
   etag    = md5(jsonencode(var.users))
 }
 
-resource "aws_sns_topic" "report_collections_topic" {
-  name = "${var.prefix}-report-collections-topic"
-  tags = var.tags
-}
-
 resource "aws_lambda_function" "private_api" {
   depends_on       = [aws_s3_bucket_object.authorized_oauth_users]
 
@@ -122,7 +116,7 @@ resource "aws_lambda_function" "private_api" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/app/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.lambda_api_gateway.arn
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
   timeout          = 100
   environment {
     variables = merge(local.api_env_variables, {"auth_mode"="private"})
@@ -147,7 +141,7 @@ resource "aws_lambda_function" "api" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/app/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.lambda_api_gateway.arn
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
   timeout          = 100
   environment {
     variables = merge(local.api_env_variables, {"auth_mode"="public"})

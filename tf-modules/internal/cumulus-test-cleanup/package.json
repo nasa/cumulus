@@ -4,7 +4,7 @@
   "description": "Nightly cron job for cleaning up integration test artifacts",
   "main": "index.js",
   "engines": {
-    "node": ">=10.16.3"
+    "node": ">=12.18.0"
   },
   "scripts": {
     "build": "rm -rf dist && mkdir dist && ../../../node_modules/.bin/webpack",

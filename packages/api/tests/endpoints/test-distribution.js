@@ -9,9 +9,9 @@ const moment = require('moment');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
+const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
 
 const { AccessToken } = require('../../models');
-const EarthdataLoginClient = require('../../lib/EarthdataLogin');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
 
 process.env.EARTHDATA_CLIENT_ID = randomId('edlId');
@@ -50,7 +50,6 @@ test.before(async () => {
   const fileKey = randomId('key');
   const fileLocation = `${fileBucket}/${fileKey}`;
   const signedFileUrl = new URL(`https://${randomId('host2')}.com/${randomId('path2')}`);
-
 
   const getAccessTokenResponse = fakeAccessTokenFactory();
 
@@ -162,7 +161,6 @@ test('An authenticated request for a file returns a redirect to S3', async (t) =
     signedFileUrl
   } = context;
 
-
   const response = await request(distributionApp)
     .get(`/${fileLocation}`)
     .set('Accept', 'application/json')
@@ -217,7 +215,6 @@ test('A /redirect request with a good authorization code stores the access token
     authorizationCode,
     fileLocation
   } = context;
-
 
   const response = await request(distributionApp)
     .get('/redirect')

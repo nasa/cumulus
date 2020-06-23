@@ -230,7 +230,7 @@ class GranuleFetcher {
       log.warn(`Could not verify ${file.name} expected checksum: ${file.checksum} of type ${file.checksumType}.`);
     }
     if (file.size || file.fileSize) { // file.fileSize to be removed after CnmToGranule update
-      const ingestedSize = await S3.getObjectSize(bucket, key);
+      const ingestedSize = await S3.getObjectSize({ s3: s3(), bucket, key });
       if (ingestedSize !== (file.size || file.fileSize)) { // file.fileSize to be removed
         throw new errors.UnexpectedFileSize(
           `verifyFile ${file.name} failed: Actual file size ${ingestedSize}`
@@ -322,7 +322,11 @@ class GranuleFetcher {
     }
 
     // Set final file size
-    stagedFile.size = await S3.getObjectSize(destinationBucket, destinationKey);
+    stagedFile.size = await S3.getObjectSize({
+      s3: s3(),
+      bucket: destinationBucket,
+      key: destinationKey
+    });
     delete stagedFile.fileSize; // CUMULUS-1269: delete obsolete field until CnmToGranule is patched
     // return all files, the renamed files don't have the same properties
     // (name, size, checksum) as input file

@@ -1,8 +1,8 @@
 {
   "name": "@cumulus/cmr-client",
-  "version": "1.23.2",
+  "version": "1.24.0",
   "engines": {
-    "node": ">=10.16.3"
+    "node": ">=12.18.0"
   },
   "scripts": {
     "build-docs": "../../node_modules/.bin/jsdoc2md --heading-depth 2 --template templates/API.hbs CMR.js CMRSearchConceptQueue.js > API.md",
@@ -32,8 +32,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "1.23.2",
-    "@cumulus/logger": "1.23.2",
+    "@cumulus/aws-client": "1.24.0",
+    "@cumulus/logger": "1.24.0",
     "got": "^9.6.0",
     "lodash": "^4.17.15",
     "public-ip": "^3.0.0",

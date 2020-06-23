@@ -8,6 +8,10 @@ hide_title: true
 
 This document provides 'notes' on frequently encountered deployment issues. The issues reported are organized by relevant subsection.
 
+⚠️ **Note:** In order to reduce your risk of the corruption or loss of your
+Terraform state file, or otherwise corrupt your Cumulus deployment, please see
+the [Terraform Best Practices](../deployment/terraform-best-practices.md) guide.
+
 ## Terraform Logging
 
 The `TF_LOG` environment variable can be set to help debug Terraform-specific issues. See [Terraform debugging](https://www.terraform.io/docs/internals/debugging.html).

@@ -85,7 +85,6 @@ class S3ProviderClient {
       throw error;
     }
 
-
     return S3.buildS3Uri(destinationBucket, destinationKey);
   }
 }

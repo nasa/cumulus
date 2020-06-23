@@ -232,7 +232,6 @@ async function generateAndStoreReportsForEachDay(params) {
 // Export to support testing
 exports.generateAndStoreReportsForEachDay = generateAndStoreReportsForEachDay;
 
-
 /**
  * A lambda task for generating and EMS Distribution Report
  *

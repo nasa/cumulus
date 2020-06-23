@@ -9,7 +9,6 @@
  * a string - 'key' and no sort key. The table name should be set in LOCK_TABLE_NAME
  */
 
-
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const Mutex = require('./lib/Mutex');
 const usage = 'lock-stack.js lock SHA stackname/deployment true/false \n lock-stack.js confirmLock SHA stackname/deployment\n\n';
@@ -73,12 +72,12 @@ async function lockOperation(operation, gitSHA, deployment, shouldLock) {
  *   Returns exit code 1 if another stack has provisioned a lock for this SHA or
  *   if a general error is thrown, and 101 if no lock exists.
  */
-lockOperation(...process.argv.slice(2, 6)).catch((e) => {
-  console.dir(e);
+lockOperation(...process.argv.slice(2, 6)).catch((error) => {
+  console.dir(error);
   process.exitCode = 100;
-  if (e.code === 'CumulusNoLockError') {
+  if (error.code === 'CumulusNoLockError') {
     process.exitCode = 101;
-  } else if (!['ConditionalCheckFailedException', 'CumulusLockError'].includes(e.code)) {
+  } else if (!['ConditionalCheckFailedException', 'CumulusLockError'].includes(error.code)) {
     process.exitCode = 1;
   }
 });

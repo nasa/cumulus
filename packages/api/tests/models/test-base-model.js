@@ -90,8 +90,8 @@ test('The Manager deleteTable method deletes the correct table', async (t) => {
   try {
     await dynamodb().describeTable({ TableName: tableName }).promise();
     t.fail();
-  } catch (err) {
-    t.is(err.code, 'ResourceNotFoundException');
+  } catch (error) {
+    t.is(error.code, 'ResourceNotFoundException');
   }
 });
 

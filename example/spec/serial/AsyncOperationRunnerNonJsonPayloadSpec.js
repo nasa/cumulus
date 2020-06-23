@@ -13,6 +13,7 @@ const { findAsyncOperationTaskDefinitionForDeployment } = require('../helpers/ec
 const { loadConfig } = require('../helpers/testUtils');
 
 describe('The AsyncOperation task runner with a non-JSON payload', () => {
+  let asyncOperation;
   let asyncOperationId;
   let asyncOperationModel;
   let asyncOperationsTableName;
@@ -20,7 +21,6 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
   let beforeAllFailed = false;
   let cluster;
   let config;
-  let dynamoDbItem;
   let payloadKey;
   let successFunctionName;
   let taskArn;
@@ -43,7 +43,6 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
 
       // Find the ARN of the AsyncOperationTaskDefinition
       asyncOperationTaskDefinition = await findAsyncOperationTaskDefinitionForDeployment(config.stackName);
-
 
       asyncOperationId = uuidv4();
 
@@ -97,34 +96,29 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
         }
       ).promise();
 
-      dynamoDbItem = await waitForAsyncOperationStatus({
-        TableName: asyncOperationsTableName,
+      asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,
-        status: 'TASK_FAILED'
+        status: 'TASK_FAILED',
+        stackName: config.stackName
       });
-    } catch (err) {
+    } catch (error) {
       beforeAllFailed = true;
-      throw err;
+      throw error;
     }
   });
 
   it('updates the status field in DynamoDB to "TASK_FAILED"', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
-    else expect(dynamoDbItem.status.S).toEqual('TASK_FAILED');
+    else expect(asyncOperation.status).toEqual('TASK_FAILED');
   });
 
   it('updates the output field in DynamoDB', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      const parsedOutput = JSON.parse(dynamoDbItem.output.S);
+      const parsedOutput = JSON.parse(asyncOperation.output);
 
       expect(parsedOutput.message).toContain('Unable to parse payload:');
     }
-  });
-
-  it('updates the updatedAt field in DynamoDB', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
-    else expect(dynamoDbItem.updatedAt.N).toBeGreaterThan(dynamoDbItem.createdAt.N);
   });
 
   afterAll(() => s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise());

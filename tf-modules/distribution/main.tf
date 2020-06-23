@@ -177,7 +177,7 @@ resource "aws_lambda_function" "s3_credentials" {
   source_code_hash = filebase64sha256("${path.module}/dist/src.zip")
   handler          = "index.handler"
   role             = aws_iam_role.s3_credentials_lambda[0].arn
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
   timeout          = 10
   memory_size      = 320
 

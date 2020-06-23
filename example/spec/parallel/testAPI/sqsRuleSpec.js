@@ -1,5 +1,6 @@
 'use strict';
 
+const delay = require('delay');
 const fs = require('fs-extra');
 const replace = require('lodash/replace');
 const pWaitFor = require('p-wait-for');
@@ -9,7 +10,6 @@ const { sqs } = require('@cumulus/aws-client/services');
 const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
 const { createSqsQueues, getSqsQueueMessageCounts } = require('@cumulus/api/lib/testUtils');
 const { Granule } = require('@cumulus/api/models');
-const { sleep } = require('@cumulus/common/util');
 const {
   addCollections,
   addRules,
@@ -185,7 +185,7 @@ describe('The SQS rule', () => {
 
         /* eslint-disable no-await-in-loop */
         for (let i = 0; i < 10 && messages.length === 0; i += 1) {
-          await sleep(20 * 1000);
+          await delay(20 * 1000);
           console.log('wait for the message to arrive at dead-letter queue');
           messages = await receiveSQSMessages(queues.deadLetterQueueUrl, sqsOptions);
         }

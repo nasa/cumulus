@@ -29,7 +29,7 @@ const getSnsEventMessageObject = (event) => {
   const message = getSnsEventMessage(event, '{}');
   try {
     return JSON.parse(message);
-  } catch (e) {
+  } catch (error) {
     log.error(`Could not parse '${message}'`);
     return null;
   }

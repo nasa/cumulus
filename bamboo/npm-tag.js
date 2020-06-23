@@ -48,7 +48,7 @@ async function getNpmTag() {
 
 getNpmTag()
   .then(console.log)
-  .catch((err) => {
-    console.error(err.message);
+  .catch((error) => {
+    console.error(error.message);
     process.exitCode = 1;
   });

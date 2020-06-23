@@ -66,7 +66,7 @@ const getSfEventMessageObject = (event, messageSource, defaultValue) => {
   const message = getSfEventDetailValue(event, messageSource, defaultValue);
   try {
     return JSON.parse(message);
-  } catch (e) {
+  } catch (error) {
     log.error(`Could not parse '${message}'`);
     return null;
   }

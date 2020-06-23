@@ -147,9 +147,9 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
         arn: discoverGranulesExecutionArn,
         status: 'completed'
       });
-    } catch (err) {
+    } catch (error) {
       beforeAllFailed = true;
-      throw err;
+      throw error;
     }
   });
 

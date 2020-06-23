@@ -7,16 +7,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-2011**
+  - Added `Reconciliation Report` as an async operation `operationType`
+
 - **CUMULUS-1982**
   - `provider.globalConnectionLimit` is now optional
-- **CUMULUS-1969**
-  - Remove `provider_path` from collection schema
+
 - **CUMULUS-1977**
   - Updated ENUM `operationType` field for asyncOperation model to allow these values:
     - `ES Index`
     - `Bulk Granules`
     - `Bulk Granule Delete`
     - `Kinesis Replay`
+
+## [v1.24.0] 2020-06-03
+
+- **CUMULUS-1969**
+  - Remove `provider_path` from collection schema
 
 ## [v1.23.2] - 2020-05-22
 

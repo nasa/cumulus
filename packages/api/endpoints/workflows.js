@@ -42,11 +42,11 @@ async function get(req, res) {
       getWorkflowFileKey(process.env.stackName, name)
     );
     return res.send(workflow);
-  } catch (err) {
-    if (err.name === 'NoSuchKey' || err.name === 'NoSuchBucket') {
+  } catch (error) {
+    if (error.name === 'NoSuchKey' || error.name === 'NoSuchBucket') {
       return res.boom.notFound('Workflow does not exist!');
     }
-    throw err;
+    throw error;
   }
 }
 
