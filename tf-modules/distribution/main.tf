@@ -9,8 +9,9 @@ locals {
   lambda_log_group_name  = "/aws/lambda/${local.thin_egress_stack_name}-EgressLambda"
   tea_buckets            = concat(var.protected_buckets, var.public_buckets)
 
+  built_lambda_source_file = "${path.module}/lambda.zip"
   repo_lambda_source_file = "${path.module}/../../packages/s3-credentials-endpoint/dist/lambda.zip"
-  lambda_source_file = fileexists(local.repo_lambda_source_file) ? local.repo_lambda_source_file : "${path.module}/lambda.zip"
+  lambda_source_file = fileexists(local.built_lambda_source_file) ? local.built_lambda_source_file : local.repo_lambda_source_file
 }
 
 resource "aws_s3_bucket_object" "bucket_map_yaml" {
