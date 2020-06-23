@@ -1,5 +1,6 @@
 'use strict';
 
+const flatten = require('lodash/flatten');
 const Logger = require('@cumulus/logger');
 const { Search, defaultIndexAlias } = require('./search');
 
@@ -12,10 +13,13 @@ const sameBucket = (bucket) => (object) =>
   object.bucket && object.bucket === bucket;
 
 const buildFilesResponse = (granuleFilesList, bucket) =>
-  granuleFilesList.map((gfl) =>
-    gfl.files
-      .filter(sameBucket(bucket))
-      .map((object) => ({ granuleId: gfl.granuleId, ...object })));
+  flatten(
+    granuleFilesList.map((gfl) =>
+      gfl.files.filter(sameBucket(bucket)).map((object) => ({
+        granuleId: gfl.granuleId,
+        ...object
+      })))
+  );
 
 class ESFileSearchQueue {
   constructor({ bucket, esIndex }) {
@@ -76,8 +80,7 @@ class ESFileSearchQueue {
     }
     this.scrollId = response._scroll_id;
     const granuleFilesList = response.hits.hits.map((s) => s._source);
-    const s3Files = buildFilesResponse(granuleFilesList, this.bucket);
-    this.items = s3Files;
+    this.items = buildFilesResponse(granuleFilesList, this.bucket);
   }
 }
 
