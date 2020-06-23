@@ -126,7 +126,7 @@ test.serial('Collection.create() throws UnmatchedRegexError for unmatched file.c
     })),
     {
       instanceOf: UnmatchedRegexError,
-      message: 'checksumFor ^1234$ does not match any file regex'
+      message: 'checksumFor \'^1234$\' does not match any file regex'
     }
   );
 });
@@ -153,7 +153,7 @@ test.serial('Collection.create() throws InvalidRegexError for file.checksumFor m
     })),
     {
       instanceOf: InvalidRegexError,
-      message: 'checksumFor ^.*$ matches multiple file regexes'
+      message: 'checksumFor \'^.*$\' matches multiple file regexes'
     }
   );
 });
@@ -170,7 +170,7 @@ test.serial('Collection.create() throws InvalidRegexError for file.checksumFor m
     })),
     {
       instanceOf: InvalidRegexError,
-      message: 'checksumFor ^.*$ cannot be used to validate itself'
+      message: 'checksumFor \'^.*$\' cannot be used to validate itself'
     }
   );
 });

@@ -44,6 +44,8 @@ const fetchCollection = ({ systemBucket, stackName, name, version }) => {
   return collectionConfigStore.get(name, version);
 };
 
+const hasChecksumFileExtension = (file) => ['.md5', '.cksum', '.sha1', '.sha256'].includes(path.extname(file.name));
+
 class GranuleFetcher {
   /**
    * Constructor for GranuleFetcher class.
@@ -170,7 +172,7 @@ class GranuleFetcher {
    * @private
    */
   isChecksumFile(file) {
-    return this.hasChecksumForFileConfig(file) || ['.md5', '.cksum', '.sha1', '.sha256'].includes(path.extname(file.name));
+    return this.fileHasChecksumForInCollectionFileConfig(file) || hasChecksumFileExtension(file);
   }
 
   /**
@@ -180,7 +182,7 @@ class GranuleFetcher {
    * @returns {boolean} - true/false collection config for file has checksumFor property
    * @private
    */
-  hasChecksumForFileConfig(file) {
+  fileHasChecksumForInCollectionFileConfig(file) {
     return has(
       this.findCollectionFileConfigForFile(file),
       'checksumFor'
