@@ -8,11 +8,11 @@ const {
   JsonWebTokenError,
   TokenExpiredError
 } = require('jsonwebtoken');
+const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
 const {
   TokenUnauthorizedUserError
 } = require('../lib/errors');
 
-const EarthdataLogin = require('../lib/EarthdataLogin');
 const GoogleOAuth2 = require('../lib/GoogleOAuth2');
 const {
   createJwtToken
@@ -225,7 +225,10 @@ function buildGoogleOAuth2ProviderFromEnv() {
 }
 
 function buildEarthdataLoginProviderFromEnv() {
-  return EarthdataLogin.createFromEnv({
+  return new EarthdataLoginClient({
+    clientId: process.env.EARTHDATA_CLIENT_ID,
+    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
+    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
     redirectUri: process.env.TOKEN_REDIRECT_ENDPOINT
   });
 }

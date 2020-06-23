@@ -19,7 +19,7 @@
       "workflows/workflow-configuration-how-to",
       "workflows/workflow-triggers"
     ],
-    "Tasks" : [
+    "Tasks": [
       "tasks",
       "workflow_tasks/discover_granules",
       "workflow_tasks/files_to_granules",
@@ -28,13 +28,14 @@
     ],
     "Deployment": [
       "deployment/deployment-readme",
+      "deployment/terraform-best-practices",
       "deployment/upgrade-readme",
       "deployment/components",
       "deployment/create_bucket",
       "deployment/server_access_logging",
       "deployment/thin_egress_app"
     ],
-    "Deployment Options":[
+    "Deployment Options": [
       "additional-deployment-options/api-gateway-logging",
       "additional-deployment-options/share-s3-access-logs",
       "additional-deployment-options/cloudwatch-logs-delivery",

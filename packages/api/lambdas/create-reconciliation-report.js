@@ -561,7 +561,7 @@ async function processRequest(params) {
   return reconciliationReportModel.get({ name: reportRecord.name });
 }
 
-function handler(event, _context, cb) {
+async function handler(event) {
   // increase the limit of search result from CMR.searchCollections/searchGranules
   process.env.CMR_LIMIT = process.env.CMR_LIMIT || 5000;
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || 200;
@@ -571,8 +571,7 @@ function handler(event, _context, cb) {
     stackName: event.stackName || process.env.stackName,
     startTimestamp: event.startTimestamp || null,
     endTimestamp: event.endTimestamp || null
-  })
-    .then((reportRecord) => cb(null, reportRecord))
-    .catch(cb);
+  });
+
 }
 exports.handler = handler;

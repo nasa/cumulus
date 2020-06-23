@@ -4,7 +4,7 @@
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
-    "node": ">=10.16.3"
+    "node": ">=12.18.0"
   },
   "bin": {
     "cumulus-api": "./bin/cli.js"
@@ -54,6 +54,7 @@
     "@cumulus/cmrjs": "1.24.0",
     "@cumulus/collection-config-store": "1.24.0",
     "@cumulus/common": "1.24.0",
+    "@cumulus/earthdata-login-client": "1.24.0-alpha.0",
     "@cumulus/errors": "1.24.0",
     "@cumulus/ingest": "1.24.0",
     "@cumulus/launchpad-auth": "1.24.0",

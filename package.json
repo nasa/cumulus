@@ -42,7 +42,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "engines": {
-    "node": ">=10.16.3"
+    "node": ">=12.18.0"
   },
   "bin": {
     "build-tasks-doc": "./bin/build-tasks-doc.js"
@@ -67,11 +67,13 @@
     "fs-extra": "^9.0.0"
   },
   "devDependencies": {
+    "@ava/typescript": "^1.1.1",
     "@babel/core": "^7.9.6",
     "@octokit/graphql": "2.1.1",
     "@types/lodash.iserror": "^3.1.6",
     "@types/lodash": "^4.14.150",
-    "@types/node": "^10.16.3",
+    "@types/mime-types": "^2.1.0",
+    "@types/node": "^12.12.6",
     "@types/pump": "^1.1.0",
     "@typescript-eslint/eslint-plugin": "^2.29.0",
     "@typescript-eslint/parser": "^2.29.0",
@@ -130,7 +132,7 @@
     "sinon": "^9.0.1",
     "ssh2-streams": "^0.4.8",
     "supertest": "^4.0.2",
-    "typescript": "^3.8.3",
+    "typescript": "^3.9.0",
     "uuid": "^3.2.1",
     "webpack-cli": "^3.3.5",
     "webpack": "~4.5.0",

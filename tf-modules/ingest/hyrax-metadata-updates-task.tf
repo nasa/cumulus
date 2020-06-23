@@ -4,7 +4,7 @@ resource "aws_lambda_function" "hyrax_metadata_updates_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/hyrax-metadata-updates/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
   timeout          = 300
   memory_size      = 256
 
