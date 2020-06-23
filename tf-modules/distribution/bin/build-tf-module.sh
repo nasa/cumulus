@@ -1,7 +1,7 @@
 #!/bin/sh
 
 set -e
-
+# This is meant to be run from the tf-modules/distribution directory as part of the bamboo/create-release.sh script
 (cd ../../packages/s3-credentials-endpoint && npm run package)
 
 mkdir -p dist
