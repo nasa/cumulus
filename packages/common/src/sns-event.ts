@@ -1,6 +1,10 @@
-const get = require('lodash/get');
+import * as log from './log';
 
-const log = require('./log');
+type SnsEvent = {
+  Sns?: {
+    Message?: string
+  }
+};
 
 /**
  * Determine if event is an SNS event
@@ -8,16 +12,18 @@ const log = require('./log');
  * @param {Object} event - A Cloudwatch event object
  * @returns {boolean} - True if event is an SNS event
  */
-const isSnsEvent = (event) => event.EventSource === 'aws:sns';
+export const isSnsEvent = (event: {EventSource?: string}) =>
+  event.EventSource === 'aws:sns';
 
 /**
  * Get message from SNS event.
  *
- * @param {var} event - SNS event
+ * @param {Object} event - SNS event
  * @param {any} [defaultValue] - Default value to use for message, if none exists.
  * @returns {any} - Message from SNS event
  */
-const getSnsEventMessage = (event, defaultValue) => get(event, 'Sns.Message', defaultValue);
+const getSnsEventMessage = (event: SnsEvent, defaultValue: string) =>
+  event?.Sns?.Message ?? defaultValue;
 
 /**
  * Get message object from SNS event.
@@ -25,18 +31,12 @@ const getSnsEventMessage = (event, defaultValue) => get(event, 'Sns.Message', de
  * @param {Object} event - SNS event
  * @returns {Object} - Message object from SNS event
  */
-const getSnsEventMessageObject = (event) => {
+export const getSnsEventMessageObject = (event: SnsEvent) => {
   const message = getSnsEventMessage(event, '{}');
   try {
     return JSON.parse(message);
   } catch (error) {
     log.error(`Could not parse '${message}'`);
-    return null;
+    return undefined;
   }
-};
-
-module.exports = {
-  getSnsEventMessage,
-  getSnsEventMessageObject,
-  isSnsEvent
 };

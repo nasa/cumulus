@@ -1,19 +1,17 @@
-'use strict';
-
 /**
  * A collection of utilities for working with URLs
  * @module URLUtils
  *
  * @example
- * const { buildURL } = require('@cumulus/common/URLUtils');
+ * const { buildURL } from '@cumulus/common/URLUtils');
  *
  * buildURL({ protocol: 'http', host: 'example.com' }); // => 'http://example.com'
  */
 
-const isString = require('lodash/isString');
-const urljoin = require('url-join');
-const { URL } = require('url');
-const { isNil } = require('./util');
+import isString from 'lodash/isString';
+import urljoin from 'url-join';
+import { URL } from 'url';
+import { isNil } from './util';
 
 /**
  * Build a URL
@@ -38,25 +36,23 @@ const { isNil } = require('./util');
  *   path: ['path', 'to', 'file.txt']
  * }); // => 'http://example.com:8080/path/to/file.txt'
  */
-const buildURL = ({
-  protocol,
-  host,
-  port,
-  path = []
+export const buildURL = (params: {
+  protocol: string,
+  host: string,
+  port?: string,
+  path?: string[]
 }) => {
+  const { protocol, host, port, path = [] } = params;
+
   if (isNil(protocol)) throw new TypeError('protocol is required');
   if (isNil(host)) throw new TypeError('host is required');
 
   const url = new URL(`${protocol}://${host}`);
 
-  if (protocol !== 's3') url.port = port;
+  if (protocol !== 's3' && port) url.port = port;
 
   if (isString(path)) url.pathname = path;
   else if (path.length > 0) url.pathname = urljoin(...path);
 
   return url.toString().replace(/\/$/, '');
-};
-
-module.exports = {
-  buildURL
 };

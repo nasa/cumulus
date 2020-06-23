@@ -3,10 +3,8 @@
  * @module
  */
 
-'use strict';
-
-const fs = require('fs');
-const got = require('got');
+import fs from 'fs';
+import got from 'got';
 
 /**
  * Download a file to disk
@@ -17,7 +15,11 @@ const got = require('got');
  * @param {Object} options.headers - headers to include in the request
  * @returns {Promise} - resolves when the download is complete
  */
-exports.download = (uri, destination, options = {}) => {
+export const download = (
+  uri: string,
+  destination: string,
+  options?: got.GotOptions<string|null>
+): Promise<undefined> => {
   const file = fs.createWriteStream(destination);
 
   return new Promise((resolve, reject) => {

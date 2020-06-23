@@ -1,27 +1,26 @@
-'use strict';
-
-const AWS = require('aws-sdk');
-const pRetry = require('p-retry');
-
-const errors = require('@cumulus/errors');
-const Logger = require('@cumulus/logger');
-
-const { inTestMode, testAwsClient } = require('./test-utils');
-const { deprecate } = require('./util');
+import AWS from 'aws-sdk';
+import pRetry from 'p-retry';
+import errors from '@cumulus/errors';
+import Logger from '@cumulus/logger';
+import { inTestMode, testAwsClient } from './test-utils';
+import { deprecate } from './util';
 
 const noop = () => { }; // eslint-disable-line lodash/prefer-noop
 
 const log = new Logger({ sender: 'common/aws' });
 
-exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-AWS.config.update({ region: exports.region });
+export const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
+AWS.config.update({ region });
 
 // Workaround upload hangs. See: https://github.com/andrewrk/node-s3-client/issues/74'
+// @ts-expect-error
 AWS.util.update(AWS.S3.prototype, { addExpect100Continue: noop });
 AWS.config.setPromisesDependency(Promise);
 
+// @ts-expect-error
 const memoize = (fn) => {
-  let memo = null;
+  let memo: unknown;
+  // @ts-expect-error
   return (options) => {
     if (!memo) memo = fn(options);
     return memo;
@@ -38,21 +37,28 @@ const memoize = (fn) => {
  * @param {string} version - the API version to use
  * @returns {Function} - a function which, when called, will return an AWS service object
  */
-const awsClient = (Service, version = null) => {
+// @ts-expect-error
+const awsClient = (Service, version) => {
   const options = {};
+  // @ts-expect-error
   if (version) options.apiVersion = version;
 
   if (inTestMode()) {
+    // @ts-expect-error
     if (AWS.DynamoDB.DocumentClient.serviceIdentifier === undefined) {
+      // @ts-expect-error
       AWS.DynamoDB.DocumentClient.serviceIdentifier = 'dynamodb';
     }
+    // @ts-expect-error
     return memoize((o) => testAwsClient(Service, Object.assign(options, o)));
   }
+  // @ts-expect-error
   return memoize((o) => new Service(Object.assign(options, o)));
 };
 
-exports.s3 = (options) => {
+export const s3 = (options?: unknown): AWS.S3 => {
   deprecate('@cumulus/common/aws/s3', '1.17.0', '@cumulus/aws-client/services/s3');
+  // @ts-expect-error
   return awsClient(AWS.S3, '2006-03-01')(options);
 };
 
@@ -68,7 +74,9 @@ exports.s3 = (options) => {
  * @param {Function} fn - the function to wrap
  * @returns {Function} a wrapper function
  */
-exports.improveStackTrace = (fn) =>
+// @ts-expect-error
+export const improveStackTrace = (fn) =>
+// @ts-expect-error
   async (...args) => {
     const tracerError = {};
     try {
@@ -90,13 +98,13 @@ exports.improveStackTrace = (fn) =>
 *   By default, retries will not be performed
 * @returns {Promise} - returns response from `S3.getObject` as a promise
 **/
-exports.getS3Object = exports.improveStackTrace(
-  (Bucket, Key, retryOptions = { retries: 0 }) =>
+export const getS3Object = improveStackTrace(
+  (Bucket: string, Key: string, retryOptions = { retries: 0 }) =>
     pRetry(
       async () => {
         deprecate('@cumulus/common/aws/getS3Object', '1.17.0', '@cumulus/aws-client/S3/getS3Object');
         try {
-          return await exports.s3().getObject({ Bucket, Key }).promise();
+          return await s3().getObject({ Bucket, Key }).promise();
         } catch (error) {
           if (error.code === 'NoSuchKey') throw error;
           throw new pRetry.AbortError(error);
@@ -111,7 +119,7 @@ exports.getS3Object = exports.improveStackTrace(
 );
 /** General utils */
 
-const retryIfThrottlingException = (err) => {
+const retryIfThrottlingException = (err: Error) => {
   if (errors.isThrottlingException(err)) throw err;
   throw new pRetry.AbortError(err);
 };
@@ -126,7 +134,9 @@ const retryIfThrottlingException = (err) => {
  *   - https://github.com/tim-kos/node-retry#retrytimeoutsoptions
  * @returns {Function} a function that will retry on a ThrottlingException
  */
-exports.retryOnThrottlingException = (fn, options) =>
+// @ts-expect-error
+export const retryOnThrottlingException = (fn, options) =>
+  // @ts-expect-error
   (...args) =>
     pRetry(
       () => fn(...args).catch(retryIfThrottlingException),

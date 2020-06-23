@@ -1,14 +1,12 @@
 /* eslint no-console: "off" */
 
-'use strict';
-
-const Ajv = require('ajv');
-const crypto = require('crypto');
-const path = require('path');
-const RandExp = require('randexp');
-const fs = require('fs-extra');
-
-const { deprecate } = require('./util');
+import Ajv from 'ajv';
+import crypto from 'crypto';
+import path from 'path';
+import RandExp from 'randexp';
+import fs from 'fs-extra';
+import { ExecutionContext } from 'ava';
+import { deprecate } from './util';
 
 // From https://github.com/localstack/localstack/blob/master/README.md
 const localStackPorts = {
@@ -35,10 +33,17 @@ const localStackPorts = {
   sts: 4592
 };
 
-exports.inTestMode = () => process.env.NODE_ENV === 'test';
+export const inTestMode = () => process.env.NODE_ENV === 'test';
 
-exports.getLocalstackEndpoint = (identifier) => {
-  deprecate('@cumulus/common/test-utils/getLocalstackEndpoint', '1.17.0', '@cumulus/aws-client/test-utils/getLocalstackEndpoint');
+export const getLocalstackEndpoint = (
+  identifier: keyof typeof localStackPorts
+) => {
+  deprecate(
+    '@cumulus/common/test-utils/getLocalstackEndpoint',
+    '1.17.0',
+    '@cumulus/aws-client/test-utils/getLocalstackEndpoint'
+  );
+
   const key = `LOCAL_${identifier.toUpperCase()}_HOST`;
   if (process.env[key]) {
     return `http://${process.env[key]}:${localStackPorts[identifier]}`;
@@ -50,12 +55,15 @@ exports.getLocalstackEndpoint = (identifier) => {
 /**
  * Create an AWS service object that talks to LocalStack.
  *
- * This function expects that the LOCALSTACK_HOST environment variable will be set.
+ * This function expects that the LOCALSTACK_HOST environment variable will be
+ * set.
  *
  * @param {Function} Service - an AWS service object constructor function
- * @param {Object} options - options to pass to the service object constructor function
+ * @param {Object} options - options to pass to the service object constructor
+ *   function
  * @returns {Object} - an AWS service object
  */
+// @ts-expect-error
 function localStackAwsClient(Service, options) {
   if (!process.env.LOCALSTACK_HOST) {
     throw new Error('The LOCALSTACK_HOST environment variable is not set.');
@@ -68,7 +76,7 @@ function localStackAwsClient(Service, options) {
     accessKeyId: 'my-access-key-id',
     secretAccessKey: 'my-secret-access-key',
     region: 'us-east-1',
-    endpoint: exports.getLocalstackEndpoint(serviceIdentifier)
+    endpoint: getLocalstackEndpoint(serviceIdentifier)
   };
 
   if (serviceIdentifier === 's3') localStackOptions.s3ForcePathStyle = true;
@@ -83,13 +91,19 @@ function localStackAwsClient(Service, options) {
  * @returns {boolean} true or false depending on whether the service is
  *   supported by LocalStack
  */
+// @ts-expect-error
 function localstackSupportedService(Service) {
   const serviceIdentifier = Service.serviceIdentifier;
   return Object.keys(localStackPorts).includes(serviceIdentifier);
 }
 
-exports.testAwsClient = (Service, options) => {
-  deprecate('@cumulus/common/test-utils/testAwsClient', '1.17.0', '@cumulus/aws-client/test-utils/testAwsClient');
+// @ts-expect-error
+export const testAwsClient = (Service, options) => {
+  deprecate(
+    '@cumulus/common/test-utils/testAwsClient',
+    '1.17.0',
+    '@cumulus/aws-client/test-utils/testAwsClient'
+  );
 
   if (localstackSupportedService(Service)) {
     return localStackAwsClient(Service, options);
@@ -102,10 +116,9 @@ exports.testAwsClient = (Service, options) => {
  * Helper function to throw error for unit test exports
  * @throws {Error}
  */
-function throwTestError() {
+export function throwTestError() {
   throw (new Error('This function is only exportable when NODE_ENV === test for unit test purposes'));
 }
-exports.throwTestError = throwTestError;
 
 /**
  * Generate a [40 character] random string
@@ -114,7 +127,8 @@ exports.throwTestError = throwTestError;
  *                 defaults to 20 to produce a 40 character string
  * @returns {string} - a random string
  */
-exports.randomString = (numBytes = 20) => crypto.randomBytes(numBytes).toString('hex');
+export const randomString = (numBytes = 20) =>
+  crypto.randomBytes(numBytes).toString('hex');
 
 /**
  * Postpend a [10-character] random string to input identifier.
@@ -124,7 +138,8 @@ exports.randomString = (numBytes = 20) => crypto.randomBytes(numBytes).toString(
  *                 extension. Default 5 to produce 10 characters..
  * @returns {string} - a random string
  */
-exports.randomId = (id, numBytes = 5) => `${id}${exports.randomString(numBytes)}`;
+export const randomId = (id: string, numBytes = 5) =>
+  `${id}${randomString(numBytes)}`;
 
 /**
  * Generate a random for the given scale.
@@ -134,7 +149,7 @@ exports.randomId = (id, numBytes = 5) => `${id}${exports.randomString(numBytes)}
  * @param {number} scale - scale for the random number. Defaults to 10.
  * @returns {number} - a random number
  */
-exports.randomNumber = (scale = 10) => Math.ceil(Math.random() * scale);
+export const randomNumber = (scale = 10) => Math.ceil(Math.random() * scale);
 
 /**
  * Create a random granule id from the regular expression
@@ -142,7 +157,8 @@ exports.randomNumber = (scale = 10) => Math.ceil(Math.random() * scale);
  * @param {string} regex - regular expression string
  * @returns {string} - random granule id
  */
-exports.randomStringFromRegex = (regex) => new RandExp(regex).gen();
+export const randomStringFromRegex = (regex: string) =>
+  new RandExp(regex).gen();
 
 /**
  * Validate an object using json-schema
@@ -154,7 +170,11 @@ exports.randomStringFromRegex = (regex) => new RandExp(regex).gen();
  * @param {Object} data - the object to be validated
  * @returns {Promise<boolean>} - whether the object is valid or not
  */
-async function validateJSON(t, schemaFilename, data) {
+async function validateJSON(
+  t: ExecutionContext,
+  schemaFilename: string,
+  data: unknown
+) {
   const schemaName = path.basename(schemaFilename).split('.')[0];
   const schema = await fs.readFile(schemaFilename, 'utf8').then(JSON.parse);
   const ajv = new Ajv();
@@ -162,7 +182,7 @@ async function validateJSON(t, schemaFilename, data) {
   if (!valid) {
     const message = `${schemaName} validation failed: ${ajv.errorsText()}`;
     console.log(message);
-    console.log(JSON.stringify(data, null, 2));
+    console.log(JSON.stringify(data, undefined, 2));
     t.fail(message);
     throw new Error(message);
   }
@@ -178,10 +198,9 @@ async function validateJSON(t, schemaFilename, data) {
  * @param {Object} data - the object to be validated
  * @returns {Promise<boolean>} - whether the object is valid or not
  */
-async function validateInput(t, data) {
+export async function validateInput(t: ExecutionContext, data: unknown) {
   return validateJSON(t, './schemas/input.json', data);
 }
-exports.validateInput = validateInput;
 
 /**
  * Validate a task config object using json-schema
@@ -192,10 +211,9 @@ exports.validateInput = validateInput;
  * @param {Object} data - the object to be validated
  * @returns {Promise<boolean>} - whether the object is valid or not
  */
-async function validateConfig(t, data) {
+export async function validateConfig(t: ExecutionContext, data: unknown) {
   return validateJSON(t, './schemas/config.json', data);
 }
-exports.validateConfig = validateConfig;
 
 /**
  * Validate a task output object using json-schema
@@ -206,10 +224,9 @@ exports.validateConfig = validateConfig;
  * @param {Object} data - the object to be validated
  * @returns {Promise<boolean>} - whether the object is valid or not
  */
-async function validateOutput(t, data) {
+export async function validateOutput(t: ExecutionContext, data: unknown) {
   return validateJSON(t, './schemas/output.json', data);
 }
-exports.validateOutput = validateOutput;
 
 /**
  * Determine the path of the current git repo
@@ -218,7 +235,9 @@ exports.validateOutput = validateOutput;
  *   root for
  * @returns {Promise.<string>} - the filesystem path of the current git repo
  */
-async function findGitRepoRootDirectory(dirname) {
+export async function findGitRepoRootDirectory(
+  dirname: string
+): Promise<string> {
   if (await fs.pathExists(path.join(dirname, '.git'))) return dirname;
 
   // This indicates that we've reached the root of the filesystem
@@ -228,24 +247,20 @@ async function findGitRepoRootDirectory(dirname) {
 
   return findGitRepoRootDirectory(path.dirname(dirname));
 }
-exports.findGitRepoRootDirectory = findGitRepoRootDirectory;
 
 /**
  * Determine the path of the packages/test-data directory
  *
  * @returns {Promise.<string>} - the filesystem path of the packages/test-data directory
  */
-function findTestDataDirectory() {
-  return exports.findGitRepoRootDirectory(process.cwd())
+export function findTestDataDirectory() {
+  return findGitRepoRootDirectory(process.cwd())
     .then((gitRepoRoot) => path.join(gitRepoRoot, 'packages', 'test-data'));
 }
-exports.findTestDataDirectory = findTestDataDirectory;
 
-function readJsonFixture(fixturePath) {
-  return fs.readFile(fixturePath).then((obj) => JSON.parse(obj));
+export function readJsonFixture(fixturePath: string) {
+  return fs.readFile(fixturePath).then((obj) => JSON.parse(obj.toString()));
 }
-
-exports.readJsonFixture = readJsonFixture;
 
 /**
  * Prettify and display something to the console.
@@ -255,13 +270,13 @@ exports.readJsonFixture = readJsonFixture;
  * @param {Object|Array} object - an object or array to be stringifyed
  * @returns {undefined} - no return value
  */
-function jlog(object) {
-  console.log(JSON.stringify(object, null, 2));
+export function jlog(object: unknown) {
+  console.log(JSON.stringify(object, undefined, 2));
 }
-exports.jlog = jlog;
 
 const throwThrottlingException = () => {
-  const throttlingException = new Error('ThrottlingException');
+  const throttlingException: Error & {code?: string} = new Error('ThrottlingException');
+
   throttlingException.code = 'ThrottlingException';
 
   throw throttlingException;
@@ -274,10 +289,12 @@ const throwThrottlingException = () => {
  * @param {Function} fn
  * @returns {Function}
  */
-exports.throttleOnce = (fn) => {
+// @ts-expect-error
+export const throttleOnce = (fn) => {
   deprecate('@cumulus/common/test-utils/throttleOnce', '1.21.0');
   let throttleNextCall = true;
 
+  // @ts-expect-error
   return (...args) => {
     if (throttleNextCall) {
       throttleNextCall = false;
