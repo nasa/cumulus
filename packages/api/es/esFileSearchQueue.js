@@ -1,12 +1,9 @@
 'use strict';
 
 const flatten = require('lodash/flatten');
-const Logger = require('@cumulus/logger');
 const { Search, defaultIndexAlias } = require('./search');
 
-const log = new Logger({ sender: '@api/es/esFileSearchQueue' });
-
-const defaultESScrollSize = 2;
+const defaultESScrollSize = 1000;
 const defaultESScrollDuration = '30s';
 
 const sameBucket = (bucket) => (object) =>

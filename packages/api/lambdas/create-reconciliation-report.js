@@ -26,7 +26,7 @@ const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includ
 /**
  * return the queue of the files for a given bucket,
  * the items should be ordered by the range key which is the 'key' attribute
- * @param {string} bucket
+ * @param {string} bucket - bucket name
  * @returns {Array<Object>} the files' queue for a given bucket.
  */
 const createESSearchQueueForBucket = (bucket) => new ESFileSearchQueue({ bucket });
