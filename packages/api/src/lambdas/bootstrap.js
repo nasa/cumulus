@@ -9,11 +9,13 @@
 
 const get = require('lodash/get');
 const log = require('@cumulus/common/log');
+const path = require('path');
+const pkgDir = require('pkg-dir');
 const pLimit = require('p-limit');
+const { readJson } = require('fs-extra');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { Search, defaultIndexAlias } = require('../es/search');
 const { createIndex } = require('../es/indexer');
-const mappings = require('../models/mappings.json');
 const { IndexExistsError } = require('../lib/errors');
 
 /**
@@ -47,6 +49,12 @@ async function findMissingMappings(esClient, index, newMappings) {
     return !!fields.filter((field) => !Object.keys(oldMapping.properties).includes(field)).length;
   });
 }
+
+const loadMappings = async () => {
+  const thisPkgDir = await pkgDir(__dirname);
+  const mappingsPath = path.join(thisPkgDir, 'models', 'mappings.json');
+  return readJson(mappingsPath);
+};
 
 /**
  * Initialize elastic search. If the index does not exist, create it with an alias.
@@ -127,6 +135,8 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
         log.info(`Multiple indices found for alias ${alias}, using index ${aliasedIndex}.`);
       }
     }
+
+    const mappings = await loadMappings();
 
     const missingTypes = await findMissingMappings(esClient, aliasedIndex, mappings);
 

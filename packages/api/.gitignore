@@ -1,10 +1,10 @@
 *.d.ts
 /app/*.js
-/bin/
+/bin/*.js
 /endpoints/
 /es/
 /lambdas/*.js
 /lib/
 /migrations/
 /models/*.js
-index.js
+/index.js

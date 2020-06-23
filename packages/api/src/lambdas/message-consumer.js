@@ -2,11 +2,13 @@
 
 const Ajv = require('ajv');
 const get = require('lodash/get');
+const path = require('path');
+const pkgDir = require('pkg-dir');
 const set = require('lodash/set');
+const { readJsonSync } = require('fs-extra');
 const { sns } = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
 const Rule = require('../models/rules');
-const kinesisSchema = require('./kinesis-consumer-event-schema.json');
 const { lookupCollectionInEvent, queueMessageForRule } = require('../lib/rulesHelpers');
 
 /**
@@ -82,6 +84,16 @@ function handleProcessRecordError(error, record, fromSNS, isKinesisRetry) {
   throw error;
 }
 
+const loadKinesisSchema = () => {
+  const thisPkgDir = pkgDir.sync(__dirname);
+  const schemaPath = path.join(
+    thisPkgDir,
+    'lambdas',
+    'kinesis-consumer-event-schema.json'
+  );
+  return readJsonSync(schemaPath);
+};
+
 /**
  * Process data sent to a kinesis stream. Validate the data and
  * queue a workflow message for each rule.
@@ -124,7 +136,7 @@ function processRecord(record, fromSNS) {
     }
     try {
       const kinesisObject = parsed.kinesis;
-      validationSchema = kinesisSchema;
+      validationSchema = loadKinesisSchema();
       originalMessageSource = 'kinesis';
       const dataString = Buffer.from(kinesisObject.data, 'base64').toString();
       eventObject = JSON.parse(dataString);

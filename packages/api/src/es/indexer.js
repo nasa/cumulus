@@ -12,7 +12,10 @@
 
 const cloneDeep = require('lodash/cloneDeep');
 const isString = require('lodash/isString');
+const path = require('path');
+const pkgDir = require('pkg-dir');
 const zlib = require('zlib');
+const { readJson } = require('fs-extra');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
@@ -21,7 +24,6 @@ const { convertLogLevel } = require('./logUtils');
 const { Search, defaultIndexAlias } = require('./search');
 const { Granule } = require('../models');
 const { IndexExistsError } = require('../lib/errors');
-const mappings = require('../models/mappings.json');
 
 async function createIndex(esClient, indexName) {
   const indexExists = await esClient.indices.exists({ index: indexName })
@@ -30,6 +32,10 @@ async function createIndex(esClient, indexName) {
   if (indexExists) {
     throw new IndexExistsError(`Index ${indexName} exists and cannot be created.`);
   }
+
+  const thisPkgDir = await pkgDir(__dirname);
+  const mappingsPath = path.join(thisPkgDir, 'models', 'mappings.json');
+  const mappings = await readJson(mappingsPath);
 
   await esClient.indices.create({
     index: indexName,

@@ -1,15 +1,23 @@
 #!/usr/bin/env node
 
-'use strict';
-
+// eslint-disable-next-line node/shebang
+const path = require('path');
 const program = require('commander');
+const pkgDir = require('pkg-dir');
+const { readJsonSync } = require('fs-extra');
 const { lambda } = require('@cumulus/aws-client/services');
-const pckg = require('../package.json');
 const backup = require('./backup');
 const restore = require('./restore');
 const { serveApi, serveDistributionApi, resetTables } = require('./serve');
 
-program.version(pckg.version);
+const version = () => {
+  const thisPkgDir = pkgDir.sync(__dirname);
+  const packageJsonPath = path.join(thisPkgDir, 'package.json');
+  const packageJson = readJsonSync(packageJsonPath);
+  return packageJson.version;
+};
+
+program.version(version());
 
 program
   .usage('TYPE COMMAND [options]');

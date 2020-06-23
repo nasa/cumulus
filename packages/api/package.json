@@ -10,6 +10,7 @@
     "cumulus-api": "./bin/cli.js"
   },
   "scripts": {
+    "clean": "rm -f index.*; for x in app bin endpoints es lambdas lib migrations models; do (cd $x && rm -f *.d.ts *.js *.map); done",
     "test": "../../node_modules/.bin/ava",
     "test-coverage": "../../node_modules/.bin/nyc npm test",
     "build": "../../node_modules/.bin/webpack",
@@ -80,6 +81,7 @@
     "express": "^4.16.4",
     "express-boom": "^3.0.0",
     "express-promise-router": "^3.0.3",
+    "fs-extra": "^9.0.1",
     "googleapis": "^47.0.0",
     "got": "^8.3.0",
     "hsts": "^2.1.0",
@@ -95,6 +97,7 @@
     "p-map": "^4.0.0",
     "p-retry": "^2.0.0",
     "p-wait-for": "^2.0.1",
+    "pkg-dir": "^4.2.0",
     "querystring": "^0.2.0",
     "saml2-js": "^2.0.3",
     "split2": "^2.2.0",

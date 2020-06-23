@@ -1,7 +1,9 @@
 'use strict';
 
+const path = require('path');
+const pkgDir = require('pkg-dir');
 const router = require('express-promise-router')();
-const pckg = require('../package.json');
+const { readJsonSync } = require('fs-extra');
 
 /**
  * get the API response and package versions
@@ -11,9 +13,12 @@ const pckg = require('../package.json');
  * @returns {Object} API response and package versions
  */
 function get(req, res) {
+  const thisPackageDir = pkgDir.sync(__dirname);
+  const packageJson = readJsonSync(path.join(thisPackageDir, 'package.json'));
+
   return res.send({
     response_version: 'v1',
-    api_version: pckg.version
+    api_version: packageJson.version
   });
 }
 
