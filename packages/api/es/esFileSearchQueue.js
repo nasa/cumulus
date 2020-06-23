@@ -1,29 +1,32 @@
 'use strict';
 
-const { buildS3Uri } = require('@cumulus/aws-client/S3');
+const Logger = require('@cumulus/logger');
 const { Search, defaultIndexAlias } = require('./search');
 
+const log = new Logger({ sender: '@api/es/esFileSearchQueue' });
+
+const defaultESScrollSize = 2;
 const defaultESScrollDuration = '30s';
 
 const sameBucket = (bucket) => (object) =>
   object.bucket && object.bucket === bucket;
 
-const s3UrlBuilder = (object) => buildS3Uri(object.bucket, object.key);
-
 const buildFilesResponse = (granuleFilesList, bucket) =>
   granuleFilesList.map((gfl) =>
-    gfl.files.filter(sameBucket(bucket)).map(s3UrlBuilder));
+    gfl.files
+      .filter(sameBucket(bucket))
+      .map((object) => ({ granuleId: gfl.granuleId, ...object })));
 
 class ESFileSearchQueue {
-  constructor(bucket, esIndex) {
+  constructor({ bucket, esIndex }) {
     this.items = [];
     this.bucket = bucket;
     this.params = {
       index: esIndex || defaultIndexAlias,
       type: 'granule',
-      size: 1000,
+      size: process.env.ES_SCROLL_SIZE || defaultESScrollSize,
       scroll: defaultESScrollDuration,
-      _source: ['files'],
+      _source: ['files', 'granuleId'],
       body: {
         query: {
           term: {
@@ -78,4 +81,4 @@ class ESFileSearchQueue {
   }
 }
 
-module.exports = ESFileSearchQueue;
+module.exports = { ESFileSearchQueue };

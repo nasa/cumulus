@@ -8,7 +8,7 @@ const { buildS3Uri, getJsonS3Object } = require('@cumulus/aws-client/S3');
 const S3ListObjectsV2Queue = require('@cumulus/aws-client/S3ListObjectsV2Queue');
 const { s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
-const log = require('@cumulus/common/log');
+const Logger = require('@cumulus/logger');
 const { getBucketsConfigKey, getDistributionBucketMapKey } = require('@cumulus/common/stack');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
@@ -19,6 +19,9 @@ const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { Collection, Granule, ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');
+const { ESFileSearchQueue } = require('../es/esFileSearchQueue');
+
+const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
 
 const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includes(bucketConfig.type);
 
@@ -29,15 +32,17 @@ const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includ
  * @param {string} bucket - bucket name
  * @returns {Array<Object>} the files' queue for a given bucket
  */
-const createSearchQueueForBucket = (bucket) => new DynamoDbSearchQueue(
-  {
-    TableName: GranuleFilesCache.cacheTableName(),
-    ExpressionAttributeNames: { '#b': 'bucket' },
-    ExpressionAttributeValues: { ':bucket': bucket },
-    FilterExpression: '#b = :bucket'
-  },
-  'scan'
-);
+// const createSearchQueueForBucket = (bucket) => new DynamoDbSearchQueue(
+//   {
+//     TableName: GranuleFilesCache.cacheTableName(),
+//     ExpressionAttributeNames: { '#b': 'bucket' },
+//     ExpressionAttributeValues: { ':bucket': bucket },
+//     FilterExpression: '#b = :bucket'
+//   },
+//   'scan'
+// );
+
+const createESSearchQueueForBucket = ( bucket ) => new ESFileSearchQueue({ bucket });
 
 /**
  * Verify that all objects in an S3 bucket contain corresponding entries in
@@ -48,7 +53,8 @@ const createSearchQueueForBucket = (bucket) => new DynamoDbSearchQueue(
  */
 async function createReconciliationReportForBucket(Bucket) {
   const s3ObjectsQueue = new S3ListObjectsV2Queue({ Bucket });
-  const dynamoDbFilesLister = createSearchQueueForBucket(Bucket);
+  // const dynamoDbFilesLister =     createSearchQueueForBucket(Bucket);
+  const dynamoDbFilesLister = createESSearchQueueForBucket(Bucket);
 
   let okCount = 0;
   const onlyInS3 = [];
@@ -56,6 +62,8 @@ async function createReconciliationReportForBucket(Bucket) {
 
   let [nextS3Object, nextDynamoDbItem] = await Promise.all([s3ObjectsQueue.peek(), dynamoDbFilesLister.peek()]); // eslint-disable-line max-len
   while (nextS3Object && nextDynamoDbItem) {
+    log.debug('nextDynamoDbItem:', nextDynamoDbItem);
+    nextDynamoDbItem = nextDynamoDbItem[0];
     const nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
     const nextDynamoDbUri = buildS3Uri(Bucket, nextDynamoDbItem.key);
 
@@ -79,6 +87,7 @@ async function createReconciliationReportForBucket(Bucket) {
 
     [nextS3Object, nextDynamoDbItem] = await Promise.all([s3ObjectsQueue.peek(), dynamoDbFilesLister.peek()]); // eslint-disable-line max-len, no-await-in-loop
   }
+  log.debug('done with ES for now');
 
   // Add any remaining S3 items to the report
   while (await s3ObjectsQueue.peek()) { // eslint-disable-line no-await-in-loop

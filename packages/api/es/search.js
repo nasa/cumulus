@@ -10,6 +10,7 @@ const omit = require('lodash/omit');
 const aws = require('aws-sdk');
 const { AmazonConnection } = require('aws-elasticsearch-connector');
 const elasticsearch = require('@elastic/elasticsearch');
+const Logger = require('@cumulus/logger');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const queries = require('./queries');
 const aggs = require('./aggregations');
@@ -18,6 +19,8 @@ const logDetails = {
   file: 'lib/es/search.js',
   type: 'apigateway'
 };
+
+const log = new Logger({ sender: '@cumulus/api/lib/es/search' });
 
 const defaultIndexAlias = 'cumulus-alias';
 
@@ -86,14 +89,14 @@ const esMetricsConfig = () => {
 
 const esConfig = async (host, metrics = false) => {
   let config;
-  if (inTestMode() || process.env.LOCAL_ES_HOST !== '') {
+  if (inTestMode() || 'LOCAL_ES_HOST' in process.env) {
+    log.debug('Using Elasticsearch TEST configuration.');
     config = esTestConfig();
   } else if (metrics) {
     config = esMetricsConfig();
   } else {
     config = await esProdConfig(host);
   }
-
   return config;
 };
 
