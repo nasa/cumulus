@@ -24,6 +24,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- The minimum supported version of all published Cumulus packages is now Node
+  12.18.0
 - Changes to `@cumulus/aws-client/S3`
   - The signature of the `getObjectSize` function has changed. It now takes a
     params object with three properties:

@@ -31,7 +31,7 @@ resource "aws_lambda_function" "s3_replicator" {
   function_name = "${var.prefix}-s3-replicator"
   role          = "${aws_iam_role.replicator_lambda_role.arn}"
   handler       = "index.handler"
-  runtime       = "nodejs10.x"
+  runtime       = "nodejs12.x"
   timeout       = 300
 
   source_code_hash = "${data.archive_file.replicator_package.output_base64sha256}"

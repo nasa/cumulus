@@ -22,7 +22,7 @@
     "package": "npm run build && (cd dist && node ../../../bin/zip.js lambda.zip index.js schemas)"
   },
   "engines": {
-    "node": ">=10.16.3"
+    "node": ">=12.18.0"
   },
   "ava": {
     "timeout": "15m"
