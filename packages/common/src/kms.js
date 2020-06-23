@@ -6,7 +6,8 @@ const { createErrorType } = require('@cumulus/errors');
 const KMSDecryptionFailed = createErrorType('KMSDecryptionFailed');
 const { deprecate } = require('./util');
 
-class KMS {
+// eslint-disable-next-line node/no-unsupported-features/es-syntax, import/prefer-default-export
+export class KMS {
   static async encrypt(text, kmsId) {
     deprecate('@cumulus/common/key-pair-provider', '1.17.0', '@cumulus/aws-client/KMS.encrypt');
 

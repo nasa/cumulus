@@ -13,7 +13,8 @@ const log = require('./log');
 /**
  * Provides encryption and decryption methods using a keypair stored in S3
  */
-class S3KeyPairProvider {
+// eslint-disable-next-line node/no-unsupported-features/es-syntax, import/prefer-default-export
+export class S3KeyPairProvider {
   /**
    * Encrypt the given string using the given public key stored in the system_bucket.
    *
