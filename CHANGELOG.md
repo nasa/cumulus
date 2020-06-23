@@ -6,8 +6,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-1956**
+  - Added `@cumulus/earthata-login-client` package
+- **CUMULUS-2019**
+  - Add `infix` search to es query builder `@cumulus/api/es/es/queries` to support partial matching of the keywords
+
+### Changed
+
+- **CUMULUS-2011**
+  - Reconciliation reports are now generated within an AsyncOperation
+
+- **CUMULUS-2016**
+  - Upgrade TEA to version 79
+
+
 ### BREAKING CHANGES
 
+- The minimum supported version of all published Cumulus packages is now Node
+  12.18.0
 - Changes to `@cumulus/aws-client/S3`
   - The signature of the `getObjectSize` function has changed. It now takes a
     params object with three properties:
@@ -16,6 +34,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - **key**
   - The `getObjectSize` function will no longer retry if the object does not
     exist
+- **CUMULUS-1930**
+  - The `@cumulus/common/util.uuid()` function has been removed
 - **CUMULUS-1958**
   - The following methods exported from `@cumulus/cmr-js/cmr-utils` were made
     async, and added distributionBucketMap as a parameter:
@@ -89,8 +109,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1982**
   - The `globalConnectionLimit` property of providers is now optional and
     defaults to "unlimited"
-- **CUMULUS-2016**
-  - Upgrade TEA to version 79
+- **CUMULUS-1997**
+  - Added optional `launchpad` configuration to `@cumulus/hyrax-metadata-updates` task config schema.
 
 ### Deprecated
 
@@ -98,6 +118,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `@cumulus/common/log.convertLogLevel()`
 - `@cumulus/collection-config-store`
 - `@cumulus/common/util.sleep()`
+
+### Deprecated
+
+- **CUMULUS-1930**
+  - `@cumulus/common/log.convertLogLevel()`
+  - `@cumulus/common/util.isNull()`
+  - `@cumulus/common/util.isUndefined()`
+  - `@cumulus/common/util.negate()`
+  - `@cumulus/common/util.noop()`
+  - `@cumulus/common/util.isNil()`
+  - `@cumulus/common/util.renameProperty()`
+  - `@cumulus/common/util.lookupMimeType()`
+  - `@cumulus/common/util.thread()`
+  - `@cumulus/common/util.mkdtempSync()`
 
 ### Removed
 
@@ -188,6 +222,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - The deprecated `@cumulus/common/string.replace` functon has been removed
 - The deprecated `@cumulus/common/string.toLower` functon has been removed
 - The deprecated `@cumulus/common/string.toUpper` functon has been removed
+- The deprecated `@cumulus/common/util.setErrorStack` function has been removed
+- The `@cumulus/common/util.uuid` function has been removed
 - The deprecated `@cumulus/common/workflows.getWorkflowArn` function has been
   removed
 - The deprecated `@cumulus/common/workflows.getWorkflowFile` function has been

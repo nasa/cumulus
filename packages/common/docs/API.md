@@ -3,9 +3,6 @@
 ## Modules
 
 <dl>
-<dt><a href="#module_string">string</a></dt>
-<dd><p>A collection of utilities for working with URLs</p>
-</dd>
 <dt><a href="#module_URLUtils">URLUtils</a></dt>
 <dd><p>A collection of utilities for working with URLs</p>
 </dd>
@@ -13,166 +10,6 @@
 <dd><p>Simple utility functions</p>
 </dd>
 </dl>
-
-<a name="module_string"></a>
-
-## string
-A collection of utilities for working with URLs
-
-**Example**  
-```js
-const { match } = require('@cumulus/common/string');
-
-match(/aS/, aSDf');
-```
-
-* [string](#module_string)
-    * ~~[replace(pattern, replacement, string)](#exp_module_string--replace) ⇒ <code>string</code> ⏏~~
-    * ~~[globalReplace(string, oldSubString, newSubString)](#exp_module_string--globalReplace) ⇒ <code>string</code> ⏏~~
-    * ~~[toLower(str)](#exp_module_string--toLower) ⇒ <code>string</code> ⏏~~
-    * ~~[toUpper(str)](#exp_module_string--toUpper) ⇒ <code>string</code> ⏏~~
-    * ~~[match(regexp, str)](#exp_module_string--match) ⇒ <code>Array</code> \| <code>null</code> ⏏~~
-    * ~~[matches(regexp, str)](#exp_module_string--matches) ⇒ <code>boolean</code> ⏏~~
-    * ~~[isValidHostname(hostname)](#exp_module_string--isValidHostname) ⇒ <code>boolean</code> ⏏~~
-    * ~~[isNonEmptyString(x)](#exp_module_string--isNonEmptyString) ⇒ <code>boolean</code> ⏏~~
-
-<a name="exp_module_string--replace"></a>
-
-### ~~replace(pattern, replacement, string) ⇒ <code>string</code> ⏏~~
-***Deprecated***
-
-Return a new string with some or all matches of a pattern replaced by a
-replacement.
-
-**Kind**: Exported function  
-**Returns**: <code>string</code> - the modified string
-
-For additional details on the pattern and replacement arguments, see:
-  https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#Parameters
-
-This is a curried function - https://lodash.com/docs/4.17.11#curry  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| pattern | <code>string</code> \| <code>RegExp</code> | if a string, this is the substring to be   replaced by `replacement`. If a RegExp, any match or matches will be   replaced by `replacement`. |
-| replacement | <code>string</code> \| <code>function</code> | if a string, the value to replace   `pattern` with. If a function, instances of `pattern` will be replaced with   the result of calling the function. |
-| string | <code>string</code> | The string to modify |
-
-<a name="exp_module_string--globalReplace"></a>
-
-### ~~globalReplace(string, oldSubString, newSubString) ⇒ <code>string</code> ⏏~~
-***Deprecated***
-
-Globally replaces oldSubstring in string with newSubString
-
-**Kind**: Exported function  
-**Returns**: <code>string</code> - the modified string  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| string | <code>string</code> | The string to modify |
-| oldSubString | <code>string</code> | The string to replace |
-| newSubString | <code>string</code> | The string replacement |
-
-<a name="exp_module_string--toLower"></a>
-
-### ~~toLower(str) ⇒ <code>string</code> ⏏~~
-***Deprecated***
-
-Converts string, as a whole, to lower case just like String#toLowerCase
-
-**Kind**: Exported function  
-**Returns**: <code>string</code> - the lower-cased string  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| str | <code>string</code> | the string to convert |
-
-<a name="exp_module_string--toUpper"></a>
-
-### ~~toUpper(str) ⇒ <code>string</code> ⏏~~
-***Deprecated***
-
-Converts string, as a whole, to upper case just like String#toUpperCase
-
-**Kind**: Exported function  
-**Returns**: <code>string</code> - the upper-cased string  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| str | <code>string</code> | the string to convert |
-
-<a name="exp_module_string--match"></a>
-
-### ~~match(regexp, str) ⇒ <code>Array</code> \| <code>null</code> ⏏~~
-***Deprecated***
-
-Tests a regular expression against a String, returning matches
-
-Produces same output as https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match
-
-This is a curried function - https://lodash.com/docs/4.17.11#curry
-
-**Kind**: Exported function  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| regexp | <code>RegExp</code> | the pattern to match against |
-| str | <code>string</code> | the string to match against |
-
-<a name="exp_module_string--matches"></a>
-
-### ~~matches(regexp, str) ⇒ <code>boolean</code> ⏏~~
-***Deprecated***
-
-Tests a regular expression against a string, returning true / false
-
-This is a curried function - https://lodash.com/docs/4.17.11#curry
-
-**Kind**: Exported function  
-**Returns**: <code>boolean</code> - true if the pattern matches the string, false otherwise  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| regexp | <code>RegExp</code> | the pattern to match against |
-| str | <code>string</code> | the string to match against |
-
-**Example**  
-```js
-const isCapitalized = matches(/^[A-Z]/);
-isCapitalized('Joe'); // => true
-```
-<a name="exp_module_string--isValidHostname"></a>
-
-### ~~isValidHostname(hostname) ⇒ <code>boolean</code> ⏏~~
-***Deprecated***
-
-Test if a string is a valid hostname, as defined by [RFC1123](https://tools.ietf.org/html/rfc1123#page-13)
-
-**Kind**: Exported function  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| hostname | <code>String</code> | the string to test |
-
-**Example**  
-```js
-isValidHostname('example.com'); // => true
-isValidHostname('as!@#'); // => false
-isValidHostname('127.0.0.1'); // => false
-```
-<a name="exp_module_string--isNonEmptyString"></a>
-
-### ~~isNonEmptyString(x) ⇒ <code>boolean</code> ⏏~~
-***Deprecated***
-
-Test if a value is a string with a length greater than zero
-
-**Kind**: Exported function  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| x | <code>string</code> | the string to test |
 
 <a name="module_URLUtils"></a>
 
@@ -228,20 +65,18 @@ isNil(undefined); // => true
 
 * [util](#module_util)
     * [exports.deprecate](#exp_module_util--exports.deprecate) ⏏
-    * [exports.sleep(waitPeriodMs)](#exp_module_util--exports.sleep) ⇒ <code>Promise.&lt;undefined&gt;</code> ⏏
-    * [exports.uuid()](#exp_module_util--exports.uuid) ⇒ <code>string</code> ⏏
-    * [exports.noop()](#exp_module_util--exports.noop) ⇒ <code>undefined</code> ⏏
-    * [exports.omit(objectIn, keys)](#exp_module_util--exports.omit) ⇒ <code>Object</code> ⏏
-    * [exports.negate(predicate)](#exp_module_util--exports.negate) ⇒ <code>function</code> ⏏
-    * [exports.isNull(x)](#exp_module_util--exports.isNull) ⇒ <code>boolean</code> ⏏
-    * [exports.isUndefined(x)](#exp_module_util--exports.isUndefined) ⇒ <code>boolean</code> ⏏
-    * [exports.isNil(x)](#exp_module_util--exports.isNil) ⇒ <code>boolean</code> ⏏
-    * ~~[exports.setErrorStack(error, newStack)](#exp_module_util--exports.setErrorStack) ⏏~~
-    * [exports.renameProperty(from, to, obj)](#exp_module_util--exports.renameProperty) ⇒ <code>Object</code> ⏏
+    * ~~[exports.sleep(waitPeriodMs)](#exp_module_util--exports.sleep) ⇒ <code>Promise.&lt;undefined&gt;</code> ⏏~~
+    * ~~[exports.noop()](#exp_module_util--exports.noop) ⇒ <code>undefined</code> ⏏~~
+    * ~~[exports.omit(objectIn, keys)](#exp_module_util--exports.omit) ⇒ <code>Object</code> ⏏~~
+    * ~~[exports.negate(predicate)](#exp_module_util--exports.negate) ⇒ <code>function</code> ⏏~~
+    * ~~[exports.isNull(x)](#exp_module_util--exports.isNull) ⇒ <code>boolean</code> ⏏~~
+    * ~~[exports.isUndefined(x)](#exp_module_util--exports.isUndefined) ⇒ <code>boolean</code> ⏏~~
+    * ~~[exports.isNil(x)](#exp_module_util--exports.isNil) ⇒ <code>boolean</code> ⏏~~
+    * ~~[exports.renameProperty(from, to, obj)](#exp_module_util--exports.renameProperty) ⇒ <code>Object</code> ⏏~~
     * [exports.removeNilProperties(obj)](#exp_module_util--exports.removeNilProperties) ⇒ <code>Object</code> ⏏
-    * [exports.lookupMimeType(key)](#exp_module_util--exports.lookupMimeType) ⇒ <code>string</code> ⏏
+    * ~~[exports.lookupMimeType(key)](#exp_module_util--exports.lookupMimeType) ⇒ <code>string</code> ⏏~~
     * [exports.isOneOf(collection, val)](#exp_module_util--exports.isOneOf) ⇒ <code>boolean</code> ⏏
-    * [exports.thread(value, ...fns)](#exp_module_util--exports.thread) ⇒ <code>\*</code> ⏏
+    * ~~[exports.thread(value, ...fns)](#exp_module_util--exports.thread) ⇒ <code>\*</code> ⏏~~
 
 <a name="exp_module_util--exports.deprecate"></a>
 
@@ -261,7 +96,9 @@ only be printed once.
 
 <a name="exp_module_util--exports.sleep"></a>
 
-### exports.sleep(waitPeriodMs) ⇒ <code>Promise.&lt;undefined&gt;</code> ⏏
+### ~~exports.sleep(waitPeriodMs) ⇒ <code>Promise.&lt;undefined&gt;</code> ⏏~~
+***Deprecated***
+
 Wait for the defined number of milliseconds
 
 **Kind**: Exported function  
@@ -271,23 +108,20 @@ Wait for the defined number of milliseconds
 | --- | --- | --- |
 | waitPeriodMs | <code>number</code> | number of milliseconds to wait |
 
-<a name="exp_module_util--exports.uuid"></a>
-
-### exports.uuid() ⇒ <code>string</code> ⏏
-Generate and return an RFC4122 v4 UUID.
-
-**Kind**: Exported function  
-**Returns**: <code>string</code> - An RFC44122 v4 UUID.  
 <a name="exp_module_util--exports.noop"></a>
 
-### exports.noop() ⇒ <code>undefined</code> ⏏
+### ~~exports.noop() ⇒ <code>undefined</code> ⏏~~
+***Deprecated***
+
 Does nothing.  Used where a callback is required but not used.
 
 **Kind**: Exported function  
 **Returns**: <code>undefined</code> - undefined  
 <a name="exp_module_util--exports.omit"></a>
 
-### exports.omit(objectIn, keys) ⇒ <code>Object</code> ⏏
+### ~~exports.omit(objectIn, keys) ⇒ <code>Object</code> ⏏~~
+***Deprecated***
+
 Replacement for lodash.omit returns a shallow copy of input object
 with keys removed.
 (lodash.omit will be removed in v5.0.0)
@@ -303,7 +137,9 @@ https://github.com/lodash/lodash/wiki/Roadmap#v500-2019
 
 <a name="exp_module_util--exports.negate"></a>
 
-### exports.negate(predicate) ⇒ <code>function</code> ⏏
+### ~~exports.negate(predicate) ⇒ <code>function</code> ⏏~~
+***Deprecated***
+
 Creates a function that returns the opposite of the predicate function.
 
 **Kind**: Exported function  
@@ -323,7 +159,9 @@ isOdd(3); // => true
 ```
 <a name="exp_module_util--exports.isNull"></a>
 
-### exports.isNull(x) ⇒ <code>boolean</code> ⏏
+### ~~exports.isNull(x) ⇒ <code>boolean</code> ⏏~~
+***Deprecated***
+
 Test if a value is null
 
 **Kind**: Exported function  
@@ -334,7 +172,9 @@ Test if a value is null
 
 <a name="exp_module_util--exports.isUndefined"></a>
 
-### exports.isUndefined(x) ⇒ <code>boolean</code> ⏏
+### ~~exports.isUndefined(x) ⇒ <code>boolean</code> ⏏~~
+***Deprecated***
+
 Test if a value is undefined
 
 **Kind**: Exported function  
@@ -345,7 +185,9 @@ Test if a value is undefined
 
 <a name="exp_module_util--exports.isNil"></a>
 
-### exports.isNil(x) ⇒ <code>boolean</code> ⏏
+### ~~exports.isNil(x) ⇒ <code>boolean</code> ⏏~~
+***Deprecated***
+
 Test if a value is null or undefined
 
 **Kind**: Exported function  
@@ -354,25 +196,11 @@ Test if a value is null or undefined
 | --- | --- | --- |
 | x | <code>\*</code> | value to check |
 
-<a name="exp_module_util--exports.setErrorStack"></a>
-
-### ~~exports.setErrorStack(error, newStack) ⏏~~
-***Deprecated***
-
-Replace the stack of an error
-
-Note: This mutates the error that was passed in.
-
-**Kind**: Exported function  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| error | <code>Error</code> | an Error |
-| newStack | <code>string</code> | a stack trace |
-
 <a name="exp_module_util--exports.renameProperty"></a>
 
-### exports.renameProperty(from, to, obj) ⇒ <code>Object</code> ⏏
+### ~~exports.renameProperty(from, to, obj) ⇒ <code>Object</code> ⏏~~
+***Deprecated***
+
 Rename an object property
 
 **Kind**: Exported function  
@@ -399,7 +227,9 @@ Remove properties whose values are `null` or `undefined`
 
 <a name="exp_module_util--exports.lookupMimeType"></a>
 
-### exports.lookupMimeType(key) ⇒ <code>string</code> ⏏
+### ~~exports.lookupMimeType(key) ⇒ <code>string</code> ⏏~~
+***Deprecated***
+
 Return mime-type based on input url or filename
 
 **Kind**: Exported function  
@@ -425,7 +255,9 @@ This is a curried function - https://lodash.com/docs/4.17.11#curry
 
 <a name="exp_module_util--exports.thread"></a>
 
-### exports.thread(value, ...fns) ⇒ <code>\*</code> ⏏
+### ~~exports.thread(value, ...fns) ⇒ <code>\*</code> ⏏~~
+***Deprecated***
+
 Pass a value through a pipeline of functions and return the result
 
 **Kind**: Exported function  

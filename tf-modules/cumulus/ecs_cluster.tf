@@ -110,10 +110,16 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
     actions   = [
       "dynamodb:DeleteItem",
       "dynamodb:GetItem",
+      "dynamodb:PutItem",
       "dynamodb:UpdateItem",
       "dynamodb:Scan"
     ]
     resources = [for k, v in var.dynamo_tables : v.arn]
+  }
+
+  statement {
+    actions   = ["dynamodb:Query"]
+    resources = [for k, v in var.dynamo_tables : "${v.arn}/index/*"]
   }
 
   statement {

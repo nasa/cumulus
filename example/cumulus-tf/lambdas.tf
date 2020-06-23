@@ -4,7 +4,7 @@ resource "aws_lambda_function" "async_operation_fail" {
   source_code_hash = filebase64sha256("${path.module}/../lambdas/asyncOperations/lambda.zip")
   handler          = "index.fail"
   role             = module.cumulus.lambda_processing_role_arn
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
 
   tags = local.tags
 
@@ -20,7 +20,7 @@ resource "aws_lambda_function" "async_operation_success" {
   source_code_hash = filebase64sha256("${path.module}/../lambdas/asyncOperations/lambda.zip")
   handler          = "index.success"
   role             = module.cumulus.lambda_processing_role_arn
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
 
   tags = local.tags
 
@@ -36,7 +36,7 @@ resource "aws_lambda_function" "sns_s3_executions_test" {
   source_code_hash = filebase64sha256("${path.module}/../lambdas/snsS3Test/lambda.zip")
   handler          = "index.handleExecutions"
   role             = module.cumulus.lambda_processing_role_arn
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
 
   environment {
     variables = {
@@ -59,7 +59,7 @@ resource "aws_lambda_function" "sns_s3_granules_test" {
   source_code_hash = filebase64sha256("${path.module}/../lambdas/snsS3Test/lambda.zip")
   handler          = "index.handleGranules"
   role             = module.cumulus.lambda_processing_role_arn
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
 
   environment {
     variables = {
@@ -82,7 +82,7 @@ resource "aws_lambda_function" "sns_s3_pdrs_test" {
   source_code_hash = filebase64sha256("${path.module}/../lambdas/snsS3Test/lambda.zip")
   handler          = "index.handlePdrs"
   role             = module.cumulus.lambda_processing_role_arn
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
 
   environment {
     variables = {
