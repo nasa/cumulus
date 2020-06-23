@@ -8,7 +8,7 @@
     "NASA"
   ],
   "engines": {
-    "node": ">=10.16.3"
+    "node": ">=12.18.0"
   },
   "publishConfig": {
     "access": "public"
@@ -36,6 +36,7 @@
     "@cumulus/aws-client": "1.24.0",
     "@cumulus/common": "1.24.0",
     "lodash": "^4.17.15",
+    "mime-types": "^2.1.27",
     "ssh2": "^0.8.7"
   },
   "devDependencies": {
