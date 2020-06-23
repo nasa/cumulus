@@ -1,8 +1,7 @@
 /* eslint no-console: "off" */
 
-'use strict';
-
-const kebabCase = require('lodash/kebabCase');
+import { deprecate } from './util';
+import kebabCase from 'lodash/kebabCase';
 
 /**
  * Find missing required parameters from cli commander command
@@ -11,7 +10,11 @@ const kebabCase = require('lodash/kebabCase');
  * @param {Array<string>} requiredOptions - option names
  * @returns {Array<string>} - required options not present in command
  */
-function findMissingOptions(command, requiredOptions) {
+export function findMissingOptions(
+  command: { [key: string]: unknown },
+  requiredOptions: string[]
+) {
+  deprecate('@cumulus/common/cli-utils.findMissingOption', '1.23.2');
   return requiredOptions.filter((param) => !command[param]);
 }
 
@@ -21,7 +24,7 @@ function findMissingOptions(command, requiredOptions) {
  * @param {string} optionName - name of option
  * @returns {string} - display name
  */
-function convertCamelOptionToLongOption(optionName) {
+function convertCamelOptionToLongOption(optionName: string) {
   return `--${kebabCase(optionName)}`;
 }
 
@@ -31,12 +34,8 @@ function convertCamelOptionToLongOption(optionName) {
  * @param {Array<string>} missingOptions - missing option names
  * @returns {undefined} - none
  */
-function displayMissingOptionsMessage(missingOptions) {
+export function displayMissingOptionsMessage(missingOptions: string[]) {
+  deprecate('@cumulus/common/cli-utils.displayMissingOptionsMessage', '1.23.2');
   const fullMissingOptions = missingOptions.map(convertCamelOptionToLongOption);
   console.error(`Missing options: ${fullMissingOptions.join(', ')}`);
 }
-
-module.exports = {
-  findMissingOptions,
-  displayMissingOptionsMessage
-};
