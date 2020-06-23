@@ -40,14 +40,14 @@ Example input:
 The `filename` property is used to determine the location of the S3 object to
 use when calculating the checksum.
 
-Files which already contain `checksumType` or `checksum` will not be updated.
-
-Files which do not contain a `filename` property will not be updated.
-
 ### Output
 
 The output will be the same as the input, but with `checksumType` and `checksum`
 added to files where it was missing.
+
+Files which already contain `checksumType` or `checksum` will not be updated.
+
+Files which do not contain a `filename` property will not be updated.
 
 ## About Cumulus
 
@@ -58,5 +58,5 @@ prototype for NASA's future Earth science data streams.
 
 ## Contributing
 
-To make a contribution, please
-[see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).
+To make a contribution, please see our
+[contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).
