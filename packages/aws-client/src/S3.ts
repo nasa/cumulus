@@ -63,9 +63,7 @@ export const s3Join = (...args: [string | string[], ...string[]]) => {
 * @returns {Object} Returns an object with `Bucket` and `Key` properties
 **/
 export const parseS3Uri = (uri: string) => {
-  const s3Regex = new RegExp('s3://([^/]+)(/(.*))?$');
-
-  const match = s3Regex.exec(uri);
+  const match = uri.match('^s3://([^/]+)/(.*)$');
 
   if (match === null) {
     throw new TypeError(`Unable to parse S3 URI: ${uri}`);
@@ -73,7 +71,7 @@ export const parseS3Uri = (uri: string) => {
 
   return {
     Bucket: match[1],
-    Key: match[3]
+    Key: match[2]
   };
 };
 

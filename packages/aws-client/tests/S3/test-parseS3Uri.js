@@ -4,7 +4,6 @@ const test = require('ava');
 const { parseS3Uri } = require('../../S3');
 
 [
-  ['s3://bucket', { Bucket: 'bucket', Key: undefined }],
   ['s3://bucket/key/asdf', { Bucket: 'bucket', Key: 'key/asdf' }],
   ['s3://bucket/key', { Bucket: 'bucket', Key: 'key' }],
   ['s3://bucket/key/', { Bucket: 'bucket', Key: 'key/' }],
@@ -16,10 +15,11 @@ const { parseS3Uri } = require('../../S3');
 });
 
 [
+  's3://bucket',
   'http://asdf',
   'asdf'
 ].forEach((input) => {
-  test(`parseS3Uri('${input}') throws a TypeError for an invalid S3 URI`, (t) => {
+  test(`parseS3Uri('${input}') throws a TypeError`, (t) => {
     t.throws(
       () => parseS3Uri(input),
       { instanceOf: TypeError }
