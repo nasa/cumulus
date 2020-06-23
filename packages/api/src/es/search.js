@@ -96,7 +96,8 @@ const esConfig = async (host, metrics = false) => {
   return config;
 };
 
-class BaseSearch {
+// eslint-disable-next-line import/prefer-default-export, node/no-unsupported-features/es-syntax
+export class BaseSearch {
   static async es(host, metrics) {
     return new elasticsearch.Client(await esConfig(host, metrics));
   }

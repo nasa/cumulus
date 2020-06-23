@@ -70,6 +70,7 @@
     "@ava/typescript": "^1.1.1",
     "@babel/core": "^7.9.6",
     "@octokit/graphql": "2.1.1",
+    "@types/express": "^4.16.4",
     "@types/lodash.iserror": "^3.1.6",
     "@types/lodash": "^4.14.150",
     "@types/mime-types": "^2.1.0",
