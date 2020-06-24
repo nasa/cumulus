@@ -10,7 +10,6 @@ import pRetry from 'p-retry';
 import pWaitFor from 'p-wait-for';
 import pump from 'pump';
 import querystring from 'querystring';
-import url from 'url';
 import { Readable, TransformOptions } from 'stream';
 import { deprecate } from 'util';
 
@@ -80,19 +79,15 @@ export const s3Join = (...args: [string | string[], ...string[]]) => {
 * @returns {Object} Returns an object with `Bucket` and `Key` properties
 **/
 export const parseS3Uri = (uri: string) => {
-  const parsedUri = url.parse(uri);
+  const match = uri.match('^s3://([^/]+)/(.*)$');
 
-  if (parsedUri.protocol !== 's3:') {
-    throw new TypeError('uri must be a S3 uri, e.g. s3://bucketname');
-  }
-
-  if (typeof parsedUri.path !== 'string') {
-    throw new TypeError(`Unable to determine key of ${uri}`);
+  if (match === null) {
+    throw new TypeError(`Unable to parse S3 URI: ${uri}`);
   }
 
   return {
-    Bucket: parsedUri.hostname,
-    Key: parsedUri.path.substring(1)
+    Bucket: match[1],
+    Key: match[2]
   };
 };
 
