@@ -200,6 +200,7 @@ module.exports = {
       files: [
         '**/test/**/*.js',
         '**/tests/**/*.js',
+        '**/tests/**/*.ts',
         'example/spec/**/*.js'
       ],
       rules: {

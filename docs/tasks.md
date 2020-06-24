@@ -10,6 +10,13 @@ A list of reusable Cumulus tasks. [Add your own.](adding-a-task.md)
 
 ## Tasks
 
+### [@cumulus/add-missing-file-checksums](https://github.com/nasa/cumulus/tree/master/tasks/add-missing-file-checksums)
+
+Add checksums to granule files
+
+- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/add-missing-file-checksums/schemas).
+- Resources: [git](https://github.com/nasa/cumulus) | [homepage](https://github.com/nasa/cumulus/tree/master/tasks/add-missing-file-checksums#readme)
+
 ### [@cumulus/discover-granules](https://github.com/nasa/cumulus/tree/master/tasks/discover-granules)
 
 Discover Granules in FTP/HTTP/HTTPS/SFTP/S3 endpoints

@@ -93,6 +93,10 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
     'completed'
   );
 
+  if (!inputPayload.granules[0].granuleId) {
+    throw new Error(`No granule id found in ${JSON.stringify(inputPayload)}`);
+  }
+
   return inputPayload.granules[0].granuleId;
 }
 
