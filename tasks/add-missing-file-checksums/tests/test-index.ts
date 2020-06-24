@@ -14,8 +14,6 @@ const test = anyTest as TestInterface<{
 test.before((t) => {
   t.context.stubS3 = {
     getObject: () => ({
-      // Readable.from is not yet supported in @types/node@10.17.x
-      // @ts-expect-error
       createReadStream: () => Readable.from(['asdf'])
     })
   };
@@ -86,7 +84,6 @@ test('addChecksumToGranuleFile() adds the checksumType and checksum to the file 
   };
 
   const fakeGetObject = sinon.fake.returns({
-    // @ts-expect-error
     createReadStream: () => Readable.from(['asdf'])
   });
 

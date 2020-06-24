@@ -20,6 +20,7 @@
   },
   "scripts": {
     "package": "./bin/package.sh",
+    "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/ava",
     "tsc": "../../node_modules/.bin/tsc",
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'",
