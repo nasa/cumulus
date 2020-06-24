@@ -97,7 +97,10 @@
       "operator-docs/replay-kinesis-messages"
     ],
     "Common Use Cases": [
-      "operator-docs/common-use-cases"
+      "operator-docs/common-use-cases",
+      "operator-docs/aws-long-term-access-key",
+      "operator-docs/granule-workflows",
+      "operator-docs/run-a-stress-test"
     ]
   }
 }
