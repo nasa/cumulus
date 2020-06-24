@@ -8,11 +8,9 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const delay = require('delay');
 const pTimeout = require('p-timeout');
-
+const { Readable } = require('stream');
 const { promisify } = require('util');
 const { UnparsableFileLocationError } = require('@cumulus/errors');
-
-const randomString = () => cryptoRandomString({ length: 10 });
 
 const {
   createBucket,
@@ -28,7 +26,10 @@ const {
   calculateS3ObjectChecksum,
   validateS3ObjectChecksum,
   getFileBucketAndKey,
-  putFile
+  putFile,
+  calculateObjectHash,
+  getObjectReadStream,
+  getS3ObjectReadStream
 } = require('../S3');
 const awsServices = require('../services');
 
@@ -36,6 +37,31 @@ const mkdtemp = promisify(fs.mkdtemp);
 const rmdir = promisify(fs.rmdir);
 const unlink = promisify(fs.unlink);
 const writeFile = promisify(fs.writeFile);
+
+const randomString = () => cryptoRandomString({ length: 10 });
+
+const streamToString = (stream) => {
+  let result = '';
+
+  // eslint-disable-next-line no-return-assign
+  stream.on('data', (chunk) => result += chunk.toString());
+
+  return new Promise((resolve) => {
+    stream.on('end', () => resolve(result));
+  });
+};
+
+const stageTestObjectToLocalStack = async (bucket, body) => {
+  const key = randomString();
+
+  await awsServices.s3().putObject({
+    Bucket: bucket,
+    Key: key,
+    Body: body
+  }).promise();
+
+  return key;
+};
 
 test.before(async (t) => {
   t.context.Bucket = randomString();
@@ -49,22 +75,19 @@ test.after.always(async (t) => {
 
 test('getTextObject() returns the contents of an S3 object', async (t) => {
   const { Bucket } = t.context;
-  const Key = randomString();
 
-  await awsServices.s3().putObject({ Bucket, Key, Body: 'asdf' }).promise();
+  const Key = await stageTestObjectToLocalStack(Bucket, 'asdf');
 
   t.is(await getTextObject(Bucket, Key), 'asdf');
 });
 
 test('getJsonS3Object() returns the JSON-parsed contents of an S3 object', async (t) => {
   const { Bucket } = t.context;
-  const Key = randomString();
 
-  await awsServices.s3().putObject({
+  const Key = await stageTestObjectToLocalStack(
     Bucket,
-    Key,
-    Body: JSON.stringify({ a: 1 })
-  }).promise();
+    JSON.stringify({ a: 1 })
+  );
 
   t.deepEqual(await getJsonS3Object(Bucket, Key), { a: 1 });
 });
@@ -101,9 +124,8 @@ test('putFile() uploads a file to S3', async (t) => {
 
 test('getS3Object() returns an existing S3 object', async (t) => {
   const { Bucket } = t.context;
-  const Key = randomString();
 
-  await awsServices.s3().putObject({ Bucket, Key, Body: 'asdf' }).promise();
+  const Key = await stageTestObjectToLocalStack(Bucket, 'asdf');
 
   const response = await getS3Object(Bucket, Key);
   t.is(response.Body.toString(), 'asdf');
@@ -325,6 +347,58 @@ test('headObject() will retry if the requested key does not exist', async (t) =>
     .then(() => awsServices.s3().putObject({ Bucket, Key, Body: 'asdf' }).promise());
 
   await t.notThrowsAsync(promisedHeadObject);
+});
+
+test('getObjectReadStream() returns a readable stream for the requested object', async (t) => {
+  const key = await stageTestObjectToLocalStack(t.context.Bucket, 'asdf');
+
+  const s3 = awsServices.s3();
+
+  const stream = getObjectReadStream({ s3, bucket: t.context.Bucket, key });
+
+  const result = await streamToString(stream);
+
+  t.is(result, 'asdf');
+});
+
+test('getS3ObjectReadStream() returns a readable stream for the requested object', async (t) => {
+  const key = await stageTestObjectToLocalStack(t.context.Bucket, 'asdf');
+
+  const stream = getS3ObjectReadStream(t.context.Bucket, key);
+
+  const result = await streamToString(stream);
+
+  t.is(result, 'asdf');
+});
+
+test('calculateObjectHash() calculates the correct hash', async (t) => {
+  const key = 'expected-key';
+
+  let getObjectCallCount = 0;
+
+  const stubS3 = {
+    getObject: (params = {}) => {
+      getObjectCallCount += 1;
+
+      t.is(params.Bucket, t.context.Bucket);
+      t.is(params.Key, key);
+
+      return {
+        createReadStream: () => Readable.from(['asdf'])
+      };
+    }
+  };
+
+  const hash = await calculateObjectHash({
+    s3: stubS3,
+    bucket: t.context.Bucket,
+    key,
+    algorithm: 'md5'
+  });
+
+  t.is(getObjectCallCount, 1);
+
+  t.is(hash, '912ec803b2ce49e4a541068d495ab570');
 });
 
 test('getObjectSize() returns the size of an object', async (t) => {
