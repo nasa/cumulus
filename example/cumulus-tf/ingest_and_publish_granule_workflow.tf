@@ -32,6 +32,10 @@ module "ingest_and_publish_granule_workflow" {
               "input": "{$.payload}",
               "outputs": [
                 {
+                  "source": "{$.granules}",
+                  "destination": "{$.meta.input_granules}"
+                },
+                {
                   "source": "{$}",
                   "destination": "{$.payload}"
                 },
