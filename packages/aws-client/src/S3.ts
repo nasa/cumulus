@@ -11,6 +11,7 @@ import pWaitFor from 'p-wait-for';
 import pump from 'pump';
 import querystring from 'querystring';
 import { Readable, TransformOptions } from 'stream';
+import { deprecate } from 'util';
 
 import {
   generateChecksumFromStream,
@@ -27,7 +28,22 @@ import { s3 } from './services';
 import { inTestMode } from './test-utils';
 import { improveStackTrace } from './utils';
 
+export type GetObjectMethod = (params: { Bucket: string, Key: string }) => {
+  createReadStream: () => Readable
+};
+
 const log = new Logger({ sender: 'aws-client/s3' });
+
+const buildDeprecationMessage = (
+  name: string,
+  version: string,
+  alternative?: string
+) => {
+  let message = `${name} is deprecated after version ${version} and will be removed in a future release.`;
+  if (alternative) message += ` Use ${alternative} instead.`;
+
+  return log.buildMessage('warn', message);
+};
 
 const S3_RATE_LIMIT = inTestMode() ? 1 : 20;
 
@@ -389,17 +405,44 @@ export const putJsonS3Object = (bucket: string, key: string, data: any) =>
   });
 
 /**
+ * Get a readable stream for an S3 object
+ *
+ * @param {Object} params
+ * @param {AWS.S3} params.s3 - an AWS.S3 instance
+ * @param {string} params.bucket - the bucket of the requested object
+ * @param {string} params.key - the key of the requested object
+ * @returns {Readable}
+ */
+export const getObjectReadStream = (params: {
+  s3: { getObject: GetObjectMethod },
+  bucket: string,
+  key: string
+}) => {
+  // eslint-disable-next-line no-shadow
+  const { s3, bucket, key } = params;
+
+  return s3.getObject({ Bucket: bucket, Key: key }).createReadStream();
+};
+
+/**
  * Get a readable stream for an S3 object.
  *
  * @param {string} bucket - the S3 object's bucket
  * @param {string} key - the S3 object's key
  * @returns {ReadableStream}
  * @throws {Error} if S3 object cannot be found
+ *
+ * @deprecated
  */
-export const getS3ObjectReadStream = (bucket: string, key: string) =>
-  s3().getObject(
-    { Bucket: bucket, Key: key }
-  ).createReadStream();
+export const getS3ObjectReadStream = deprecate(
+  (bucket: string, key: string) =>
+    getObjectReadStream({ s3: s3(), bucket, key }),
+  buildDeprecationMessage(
+    '@cumulus/aws-client/S3.getS3ObjectReadStream',
+    '1.24.0',
+    '@cumulus/aws-client/S3.getObjectReadStream'
+  )
+);
 
 /**
  * Get a readable stream for an S3 object.
@@ -415,7 +458,7 @@ export const getS3ObjectReadStream = (bucket: string, key: string) =>
  */
 export const getS3ObjectReadStreamAsync = (bucket: string, key: string) =>
   getS3Object(bucket, key, { retries: 3 })
-    .then(() => getS3ObjectReadStream(bucket, key));
+    .then(() => getObjectReadStream({ s3: s3(), bucket, key }));
 
 /**
 * Check if a file exists in an S3 object
@@ -653,6 +696,32 @@ export const listS3ObjectsV2 = async (params: AWS.S3.ListObjectsV2Request) => {
 };
 
 /**
+ * Calculate the cryptographic hash of an S3 object
+ *
+ * @param {Object} params
+ * @param {AWS.S3} params.s3 - an AWS.S3 instance
+ * @param {string} params.algorithm - `cksum`, or an algorithm listed in
+ *   `openssl list -digest-algorithms`
+ * @param {string} params.bucket
+ * @param {string} params.key
+ */
+export const calculateObjectHash = async (
+  params: {
+    s3: { getObject: GetObjectMethod },
+    algorithm: string,
+    bucket: string,
+    key: string
+  }
+) => {
+  // eslint-disable-next-line no-shadow
+  const { algorithm, bucket, key, s3 } = params;
+
+  const stream = getObjectReadStream({ s3, bucket, key });
+
+  return generateChecksumFromStream(algorithm, stream);
+};
+
+/**
  * Calculate checksum for S3 Object
  *
  * @param {Object} params - params
@@ -662,19 +731,28 @@ export const listS3ObjectsV2 = async (params: AWS.S3.ListObjectsV2Request) => {
  * @param {Object} [params.options] - crypto.createHash options
  *
  * @returns {Promise<number|string>} calculated checksum
+ *
+ * @deprecated
  */
-export const calculateS3ObjectChecksum = async (
-  params: {
-    algorithm: string,
-    bucket: string,
-    key: string,
-    options: TransformOptions
-  }
-) => {
-  const { algorithm, bucket, key, options } = params;
-  const fileStream = await getS3ObjectReadStreamAsync(bucket, key);
-  return generateChecksumFromStream(algorithm, fileStream, options);
-};
+export const calculateS3ObjectChecksum = deprecate(
+  async (
+    params: {
+      algorithm: string,
+      bucket: string,
+      key: string,
+      options: TransformOptions
+    }
+  ) => {
+    const { algorithm, bucket, key, options } = params;
+    const fileStream = await getS3ObjectReadStreamAsync(bucket, key);
+    return generateChecksumFromStream(algorithm, fileStream, options);
+  },
+  buildDeprecationMessage(
+    '@cumulus/aws-client/S3.calculateS3ObjectChecksum',
+    '1.24.0',
+    '@cumulus/aws-client/S3.calculateObjectHash'
+  )
+);
 
 /**
  * Validate S3 object checksum against expected sum
