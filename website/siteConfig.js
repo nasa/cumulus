@@ -88,11 +88,18 @@ const siteConfig = {
   cleanUrl: true,
 
   // Allow docs navigation sections to be collapsed
-  docsSideNavCollapsible: true
+  docsSideNavCollapsible: true,
 
   // You may provide arbitrary config keys to be used as needed by your
   // template. For example, if you need your repo's URL...
   //   repoUrl: 'https://github.com/facebook/test-site',
+
+  // Add Top of Page button for long content
+  scrollToTop: true,
+  scrollToTopOptions: {
+    zIndex: 100,
+    backgroundColor: '#2276AC',
+  },
 };
 
 module.exports = siteConfig;

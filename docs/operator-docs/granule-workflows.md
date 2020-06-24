@@ -49,9 +49,10 @@ hide_title: true
 
 ### Multiple Failed Granules
 
-1. Go to Granules Page
+1. Select Failed Granules
 
-* In the Cumulus dashboard, go to the Granules page
-* Click on "Failed Granules"
+* In the Cumulus dashboard, go to the Collections page.
+* Click on 'Failed Granules'.
+* Select multiple granules.
 
 2. Bulk Re-ingest Granules
