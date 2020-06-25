@@ -20,7 +20,6 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { getUrl } = require('@cumulus/cmrjs');
 const {
   addCollections,
   buildAndExecuteWorkflow,
@@ -325,25 +324,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     beforeEach(() => {
       if (beforeAllError) fail(beforeAllError);
-    });
-
-    it('has expected payload', () => {
-      expect(granule.cmrLink).toEqual(`${getUrl('search')}granules.json?concept_id=${granule.cmrConceptId}`);
-
-      const updatedGranule = expectedPayload.granules[0];
-      const updatedExpectedPayload = {
-        ...expectedPayload,
-        granules: [
-          {
-            ...updatedGranule,
-            cmrConceptId: granule.cmrConceptId,
-            cmrLink: granule.cmrLink,
-            post_to_cmr_duration: granule.post_to_cmr_duration,
-            sync_granule_duration: granule.sync_granule_duration
-          }
-        ]
-      };
-      expect(postToCmrOutput.payload).toEqual(updatedExpectedPayload);
     });
 
     it('publishes the granule metadata to CMR', async () => {

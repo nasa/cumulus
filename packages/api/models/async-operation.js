@@ -1,6 +1,6 @@
 'use strict';
 
-const { ecs, s3 } = require('@cumulus/aws-client/services');
+const { ecs, s3, lambda } = require('@cumulus/aws-client/services');
 const { EcsStartTaskError } = require('@cumulus/errors');
 
 const uuidv4 = require('uuid/v4');
@@ -11,7 +11,7 @@ const { asyncOperation: asyncOperationSchema } = require('./schemas');
  * A class for tracking AsyncOperations using DynamoDB.
  *
  * @class AsyncOperation
- * @extends {Manager}
+ * @augments {Manager}
  */
 class AsyncOperation extends Manager {
   /**
@@ -39,6 +39,14 @@ class AsyncOperation extends Manager {
     this.stackName = params.stackName;
   }
 
+  async getLambdaEnvironmentVariables(functionName) {
+    const lambdaConfig = await lambda().getFunctionConfiguration({
+      FunctionName: functionName
+    }).promise();
+    return Object.entries(lambdaConfig.Environment.Variables)
+      .map(([name, value]) => ({ name, value }));
+  }
+
   /**
    * Start an ECS task for the async operation.
    *
@@ -55,14 +63,27 @@ class AsyncOperation extends Manager {
    * @returns {Promise<Object>}
    * @see https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/ECS.html#runTask-property
    */
-  startECSTask({
+  async startECSTask({
     asyncOperationTaskDefinition,
     cluster,
     lambdaName,
     id,
     payloadBucket,
-    payloadKey
+    payloadKey,
+    useLambdaEnvironmentVariables
   }) {
+    let envVars = [
+      { name: 'asyncOperationId', value: id },
+      { name: 'asyncOperationsTable', value: this.tableName },
+      { name: 'lambdaName', value: lambdaName },
+      { name: 'payloadUrl', value: `s3://${payloadBucket}/${payloadKey}` }
+    ];
+
+    if (useLambdaEnvironmentVariables) {
+      const lambdaVars = await this.getLambdaEnvironmentVariables(lambdaName);
+      envVars = envVars.concat(lambdaVars);
+    }
+
     return ecs().runTask({
       cluster,
       taskDefinition: asyncOperationTaskDefinition,
@@ -71,12 +92,7 @@ class AsyncOperation extends Manager {
         containerOverrides: [
           {
             name: 'AsyncOperation',
-            environment: [
-              { name: 'asyncOperationId', value: id },
-              { name: 'asyncOperationsTable', value: this.tableName },
-              { name: 'lambdaName', value: lambdaName },
-              { name: 'payloadUrl', value: `s3://${payloadBucket}/${payloadKey}` }
-            ]
+            environment: envVars
           }
         ]
       }

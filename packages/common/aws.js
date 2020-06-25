@@ -7,7 +7,7 @@ const errors = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
 const { inTestMode, testAwsClient } = require('./test-utils');
-const { deprecate, setErrorStack } = require('./util');
+const { deprecate } = require('./util');
 
 const noop = () => { }; // eslint-disable-line lodash/prefer-noop
 
@@ -75,7 +75,6 @@ exports.improveStackTrace = (fn) =>
       Error.captureStackTrace(tracerError);
       return await fn(...args);
     } catch (error) {
-      setErrorStack(error, tracerError.stack);
       error.message = `${error.message}; Function params: ${JSON.stringify(args, null, 2)}`;
       throw error;
     }

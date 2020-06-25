@@ -18,7 +18,8 @@ const {
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
-  granulesApi: granulesApiTestUtils
+  granulesApi: granulesApiTestUtils,
+  waitForAsyncOperationStatus
 } = require('@cumulus/integration-tests');
 
 const {
@@ -92,6 +93,10 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
     'completed'
   );
 
+  if (!inputPayload.granules[0].granuleId) {
+    throw new Error(`No granule id found in ${JSON.stringify(inputPayload)}`);
+  }
+
   return inputPayload.granules[0].granuleId;
 }
 
@@ -130,7 +135,8 @@ async function updateGranuleFile(granuleId, granuleFiles, regex, replacement) {
   return { originalGranuleFile, updatedGranuleFile };
 }
 
-xdescribe('When there are granule differences and granule reconciliation is run', () => {
+describe('When there are granule differences and granule reconciliation is run', () => {
+  let asyncOperationId;
   let cmrGranule;
   let collectionId;
   let config;
@@ -159,7 +165,6 @@ xdescribe('When there are granule differences and granule reconciliation is run'
     granuleModel = new Granule();
 
     process.env.ReconciliationReportsTable = `${config.stackName}-ReconciliationReportsTable`;
-
     process.env.CMR_ENVIRONMENT = 'UAT';
 
     // Find a protected bucket
@@ -210,17 +215,25 @@ xdescribe('When there are granule differences and granule reconciliation is run'
     ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, 'jpg2'));
   });
 
-  it('generates reconciliation report through the Cumulus API', async () => {
-    const inputPayload = {
-      invocationType: 'RequestResponse'
-    };
-
+  it('generates an async operation through the Cumulus API', async () => {
     const response = await reconciliationReportsApi.createReconciliationReport({
-      prefix: config.stackName,
-      request: inputPayload
+      prefix: config.stackName
     });
 
-    reportRecord = JSON.parse(response.body).report;
+    const responseBody = JSON.parse(response.body);
+    asyncOperationId = responseBody.id;
+    expect(responseBody.operationType).toBe('Reconciliation Report');
+  });
+
+  it('generates reconciliation report through the Cumulus API', async () => {
+    const asyncOperation = await waitForAsyncOperationStatus({
+      id: asyncOperationId,
+      status: 'SUCCEEDED',
+      stackName: config.stackName,
+      retries: 100
+    });
+
+    reportRecord = JSON.parse(asyncOperation.output);
   });
 
   it('fetches a reconciliation report through the Cumulus API', async () => {
