@@ -319,7 +319,7 @@ test('sf-event-sqs-to-db-records handler sends message to DLQ when granule and p
   t.true(await executionModel.exists({ arn: executionArn }));
   t.false(await granuleModel.exists({ granuleId }));
   t.false(await pdrModel.exists({ pdrName }));
-  t.is(handlerResponse[0].value[1], sqsEvent.Records[0]);
+  t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
 });
 
 test('The sf-event-sqs-to-db-records Lambda adds records to the granule, execution and pdr tables', async (t) => {

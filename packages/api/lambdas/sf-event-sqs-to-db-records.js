@@ -46,7 +46,7 @@ const saveGranulesToDb = async (cumulusMessage) => {
 const handler = async (event) => {
   const sqsMessages = get(event, 'Records', []);
 
-  return Promise.allSettled(sqsMessages.map(async (message) => {
+  return Promise.all(sqsMessages.map(async (message) => {
     const executionEvent = parseSQSMessageBody(message);
     const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
     const results = await Promise.allSettled([
