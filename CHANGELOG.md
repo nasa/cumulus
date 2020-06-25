@@ -37,10 +37,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- **CUMULUS-1902**
-  - Add Common Use Cases section under Operator Docs
 - **CUMULUS-1956**
   - Added `@cumulus/earthata-login-client` package
+  - The `/s3credentials` endpoint that is deployed as part of distribution now
+    supports authentication using tokens created by a different application. If
+    a request contains the `EDL-ClientId` and `EDL-Token` headers,
+    authentication will be handled using that token rather than attempting to
+    use OAuth.
 - **CUMULUS-1958**
   - Add the ability for users to specify a `bucket_map_key` to the `cumulus`
     terraform module as an override for the default .yaml values that are passed
