@@ -8,10 +8,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- **CUMULUS-1956**
-  - Added `@cumulus/earthata-login-client` package
 - **CUMULUS-1902**
   - Added Common Use Cases section under Operator Docs
+- **CUMULUS-1956**
+  - Added `@cumulus/earthata-login-client` package
 - **CUMULUS-2019**
   - Add `infix` search to es query builder `@cumulus/api/es/es/queries` to support partial matching of the keywords
 
