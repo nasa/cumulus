@@ -160,7 +160,7 @@ describe('Ingesting from PDR', () => {
           config.stackName,
           config.bucket,
           workflowName,
-          { name: addedCollection.name, version: addedCollection.version },
+          undefined,
           provider,
           undefined,
           { provider_path: testDataFolder }
