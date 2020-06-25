@@ -10,7 +10,7 @@ const defaultESScrollSize = 1000;
 const defaultESScrollDuration = '30s';
 
 const logAndToss = (error) => {
-  log.error(error);
+  log.error(JSON.stringify(error));
   throw error;
 };
 
@@ -47,7 +47,8 @@ class ESFileSearchQueue {
         sort: [
           {
             'files.key.keyword': {
-              order: 'asc'
+              order: 'asc',
+              unmapped_type: 'keyword'
             }
           }
         ]

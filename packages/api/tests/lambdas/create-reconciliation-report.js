@@ -22,15 +22,19 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
-
+const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const GranuleFilesCache = require('../../lib/GranuleFilesCache');
-
+const { Search } = require('../../es/search');
 const {
   handler, reconciliationReportForGranules, reconciliationReportForGranuleFiles
 } = require('../../lambdas/create-reconciliation-report');
 
 const models = require('../../models');
+
+let esAlias;
+let esIndex;
+let esClient;
 
 const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket }).promise();
 
@@ -81,7 +85,7 @@ function storeFilesToS3(files) {
   const putObjectParams = files.map((file) => ({
     Bucket: file.bucket,
     Key: file.key,
-    Body: randomString()
+    Body: randomId('Body')
   }));
 
   return pMap(
@@ -96,7 +100,7 @@ function storeFilesToS3(files) {
  *
  * @param {string} tableName table name to store data
  * @param {Array<Object>} putRequests list of put requests
- * @returns {undefined} promise of the store requests
+ * @returns {Promise} promise of the store requests
  */
 function storeToDynamoDb(tableName, putRequests) {
   // Break the requests into groups of 25
@@ -141,17 +145,24 @@ test.before(async () => {
     Name: process.env.cmr_password_secret_name,
     SecretString: randomId('cmr-password')
   }).promise();
+
+  esAlias = randomId('esalias');
+  esIndex = randomId('esindex');
+  process.env.ES_INDEX = esAlias;
+  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  esClient = await Search.es();
 });
 
 test.beforeEach(async (t) => {
-  process.env.CollectionsTable = randomString();
-  process.env.GranulesTable = randomString();
-  process.env.FilesTable = randomString();
-  process.env.ReconciliationReportsTable = randomString();
+  process.env.CollectionsTable = randomId('collectionTable');
+  process.env.GranulesTable = randomId('granulesTable');
+  process.env.FilesTable = randomId('filesTable');
+  process.env.ReconciliationReportsTable = randomId('reconciliationTable');
+
 
   t.context.bucketsToCleanup = [];
-  t.context.stackName = randomString();
-  t.context.systemBucket = randomString();
+  t.context.stackName = randomId('stack');
+  t.context.systemBucket = randomId('systembucket');
 
   await awsServices.s3().createBucket({ Bucket: t.context.systemBucket }).promise()
     .then(() => t.context.bucketsToCleanup.push(t.context.systemBucket));
@@ -187,6 +198,7 @@ test.after.always(async () => {
     ForceDeleteWithoutRecovery: true
   }).promise();
   delete process.env.cmr_password_secret_name;
+  await esClient.indices.delete({ index: esIndex });
 });
 
 test.serial('A valid reconciliation report is generated for no buckets', async (t) => {
@@ -201,10 +213,11 @@ test.serial('A valid reconciliation report is generated for no buckets', async (
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName,
     startTimestamp: randomId('startTimestamp'),
-    endTimestamp: randomId('endTimestamp'),
+    endTimestamp: randomId('endTimestamp')
   };
 
   const reportRecord = await handler(event, {});
+
   t.is(reportRecord.status, 'Generated');
 
   const report = await fetchCompletedReport(reportRecord);
@@ -223,7 +236,7 @@ test.serial('A valid reconciliation report is generated for no buckets', async (
 });
 
 test.serial('A valid reconciliation report is generated when everything is in sync', async (t) => {
-  const dataBuckets = range(2).map(() => randomString());
+  const dataBuckets = range(2).map(() => randomId('bucket'));
   await Promise.all(dataBuckets.map((bucket) =>
     createBucket(bucket)
       .then(() => t.context.bucketsToCleanup.push(bucket))));
@@ -238,8 +251,8 @@ test.serial('A valid reconciliation report is generated when everything is in sy
   // Create random files
   const files = range(10).map((i) => ({
     bucket: dataBuckets[i % dataBuckets.length],
-    key: randomString(),
-    granuleId: randomString()
+    key: randomId('key'),
+    granuleId: randomId('granuleId')
   }));
 
   // Store the files to S3 and DynamoDB
@@ -250,8 +263,8 @@ test.serial('A valid reconciliation report is generated when everything is in sy
 
   // Create collections that are in sync
   const matchingColls = range(10).map(() => ({
-    name: randomString(),
-    version: randomString()
+    name: randomId('name'),
+    version: randomId('vers')
   }));
 
   const cmrCollections = sortBy(matchingColls, ['name', 'version'])
@@ -293,7 +306,7 @@ test.serial('A valid reconciliation report is generated when everything is in sy
 });
 
 test.serial('A valid reconciliation report is generated when there are extra S3 objects', async (t) => {
-  const dataBuckets = range(2).map(() => randomString());
+  const dataBuckets = range(2).map(() => randomId('bucket'));
   await Promise.all(dataBuckets.map((bucket) =>
     createBucket(bucket)
       .then(() => t.context.bucketsToCleanup.push(bucket))));
@@ -308,12 +321,12 @@ test.serial('A valid reconciliation report is generated when there are extra S3 
   // Create files that are in sync
   const matchingFiles = range(10).map(() => ({
     bucket: sample(dataBuckets),
-    key: randomString(),
-    granuleId: randomString()
+    key: randomId('key'),
+    granuleId: randomId('granuleId')
   }));
 
-  const extraS3File1 = { bucket: sample(dataBuckets), key: randomString() };
-  const extraS3File2 = { bucket: sample(dataBuckets), key: randomString() };
+  const extraS3File1 = { bucket: sample(dataBuckets), key: randomId('key') };
+  const extraS3File2 = { bucket: sample(dataBuckets), key: randomId('key') };
 
   // Store the files to S3 and DynamoDB
   await storeFilesToS3(matchingFiles.concat([extraS3File1, extraS3File2]));
