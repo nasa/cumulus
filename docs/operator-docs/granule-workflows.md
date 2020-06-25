@@ -55,7 +55,7 @@ hide_title: true
 ### Multiple Failed Granules
 
 1. Delete from CMR
-* Review the granules by the Collection ID
+* Review the granules by the Collection ID.
 
 2. Select Failed Granules
 
