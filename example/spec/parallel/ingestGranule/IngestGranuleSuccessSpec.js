@@ -18,6 +18,8 @@ const {
   Provider
 } = require('@cumulus/api/models');
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
+const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 const {
   deleteS3Object,
   parseS3Uri,
@@ -28,7 +30,6 @@ const {
 const { s3 } = require('@cumulus/aws-client/services');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { getUrl } = require('@cumulus/cmrjs');
 const {
   addCollections,
   buildAndExecuteWorkflow,
@@ -307,6 +308,23 @@ describe('The S3 Ingest Granules workflow', () => {
     expect(workflowExecutionStatus).toEqual('SUCCEEDED');
   });
 
+  it('adds checksums to all granule files', async () => {
+    const execution = await StepFunctions.describeExecution({
+      executionArn: workflowExecutionArn
+    });
+
+    const executionOutput = JSON.parse(execution.output);
+
+    const fullExecutionOutput = await pullStepFunctionEvent(executionOutput);
+
+    fullExecutionOutput.meta.input_granules.forEach((granule) => {
+      granule.files.forEach((granuleFile) => {
+        expect(granuleFile.checksumType).withContext(JSON.stringify(granuleFile)).toBeTruthy();
+        expect(granuleFile.checksum).withContext(JSON.stringify(granuleFile)).toBeTruthy();
+      });
+    });
+  });
+
   it('can retrieve the specific provider that was created', async () => {
     const providerListResponse = await apiTestUtils.getProviders({ prefix: config.stackName });
     const providerList = JSON.parse(providerListResponse.body);
@@ -468,31 +486,13 @@ describe('The S3 Ingest Granules workflow', () => {
         ummCmrResource = result[1];
         resourceURLs = cmrResource.map((resource) => resource.href);
         teaRequestHeaders = result[2];
-      } catch (e) {
-        beforeAllError = e;
+      } catch (error) {
+        beforeAllError = error;
       }
     });
 
     beforeEach(() => {
       if (beforeAllError) fail(beforeAllError);
-    });
-
-    it('has expected payload', () => {
-      expect(granule.cmrLink).toEqual(`${getUrl('search', null, 'UAT')}granules.json?concept_id=${granule.cmrConceptId}`);
-      const updatedGranule = expectedPayload.granules[0];
-      const thisExpectedPayload = {
-        ...expectedPayload,
-        granules: [
-          {
-            ...updatedGranule,
-            cmrConceptId: postToCmrOutput.payload.granules[0].cmrConceptId,
-            cmrLink: postToCmrOutput.payload.granules[0].cmrLink,
-            post_to_cmr_duration: postToCmrOutput.payload.granules[0].post_to_cmr_duration,
-            sync_granule_duration: postToCmrOutput.payload.granules[0].sync_granule_duration
-          }
-        ]
-      };
-      expect(postToCmrOutput.payload).toEqual(thisExpectedPayload);
     });
 
     it('publishes the granule metadata to CMR', () => {
@@ -865,9 +865,9 @@ describe('The S3 Ingest Granules workflow', () => {
               bucket: config.bucket,
               filepath: `${testDataFolder}/${path.dirname(file.key)}`
             }];
-          } catch (err) {
-            console.error('Error in beforeAll() block:', err);
-            console.log(`File errored on: ${JSON.stringify(file, null, 2)}`);
+          } catch (error) {
+            console.error('Error in beforeAll() block:', error);
+            console.log(`File errored on: ${JSON.stringify(file, undefined, 2)}`);
           }
         });
 
@@ -1003,7 +1003,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(definition.Comment).toEqual('Ingest Granule');
 
         // definition has all the states' information
-        expect(Object.keys(definition.States).length).toBe(9);
+        expect(Object.keys(definition.States).length).toBe(10);
       });
 
       it('returns the inputs, outputs, timing, and status information for each executed step', async () => {

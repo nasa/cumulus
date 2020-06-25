@@ -20,7 +20,6 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { getUrl } = require('@cumulus/cmrjs');
 const {
   addCollections,
   buildAndExecuteWorkflow,
@@ -106,7 +105,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006-umm';
 
-  let workflowExecution = null;
+  let workflowExecution;
   let inputPayload;
   let expectedPayload;
   let postToCmrOutput;
@@ -318,32 +317,13 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         ]);
 
         resourceURLs = onlineResources.map((resource) => resource.URL);
-      } catch (e) {
-        beforeAllError = e;
+      } catch (error) {
+        beforeAllError = error;
       }
     });
 
     beforeEach(() => {
       if (beforeAllError) fail(beforeAllError);
-    });
-
-    it('has expected payload', () => {
-      expect(granule.cmrLink).toEqual(`${getUrl('search')}granules.json?concept_id=${granule.cmrConceptId}`);
-
-      const updatedGranule = expectedPayload.granules[0];
-      const updatedExpectedPayload = {
-        ...expectedPayload,
-        granules: [
-          {
-            ...updatedGranule,
-            cmrConceptId: granule.cmrConceptId,
-            cmrLink: granule.cmrLink,
-            post_to_cmr_duration: granule.post_to_cmr_duration,
-            sync_granule_duration: granule.sync_granule_duration
-          }
-        ]
-      };
-      expect(postToCmrOutput.payload).toEqual(updatedExpectedPayload);
     });
 
     it('publishes the granule metadata to CMR', async () => {
@@ -468,17 +448,17 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       const updatedUmm = await getUmmObject(newS3UMMJsonFileLocation);
 
       const changedUrls = updatedUmm.RelatedUrls
-        .filter((urlObject) => urlObject.URL.match(/.*.hdf$/))
+        .filter((urlObject) => urlObject.URL.endsWith('.hdf'))
         .map((urlObject) => urlObject.URL);
       const unchangedUrls = updatedUmm.RelatedUrls
-        .filter((urlObject) => !urlObject.URL.match(/.*.hdf$/))
+        .filter((urlObject) => !urlObject.URL.endsWith('.hdf'))
         .map((urlObject) => urlObject.URL);
 
       // Only the file that was moved was updated
       expect(changedUrls.length).toEqual(1);
       expect(changedUrls[0]).toContain(destinationKey);
 
-      const unchangedOriginalUrls = originalUmmUrls.filter((original) => !original.match(/.*.hdf$/));
+      const unchangedOriginalUrls = originalUmmUrls.filter((original) => !original.endsWith('.hdf'));
       expect(unchangedOriginalUrls.length).toEqual(unchangedUrls.length);
 
       // Each originalUmmUrl (removing the DISTRIBUTION_ENDPOINT) should be found

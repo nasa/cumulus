@@ -3,7 +3,6 @@
 const test = require('ava');
 const HelloWorld = require('..');
 
-
 test('Test return value from Hello World Task', async (t) => {
   const event = {
     config: {},

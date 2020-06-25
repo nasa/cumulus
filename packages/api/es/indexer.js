@@ -17,6 +17,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 
+const { convertLogLevel } = require('./logUtils');
 const { Search, defaultIndexAlias } = require('./search');
 const { Granule } = require('../models');
 const { IndexExistsError } = require('../lib/errors');
@@ -45,7 +46,6 @@ async function createIndex(esClient, indexName) {
   log.info(`Created esIndex ${indexName}`);
 }
 
-
 /**
  * Parses a StepFunction log payload  and returns a es logsrecord object
  *
@@ -72,8 +72,8 @@ function parsePayload(payload) {
       record = JSON.parse(payload.message);
     }
     // level is number in elasticsearch
-    if (isString(record.level)) record.level = log.convertLogLevel(record.level);
-  } catch (e) {
+    if (isString(record.level)) record.level = convertLogLevel(record.level);
+  } catch (error) {
     record = {
       message: payload.message.trim(),
       sender: payload.sender,
@@ -87,7 +87,6 @@ function parsePayload(payload) {
   }
   return record;
 }
-
 
 /**
  * Extracts info from a stepFunction message and indexes it to
@@ -360,11 +359,11 @@ function logHandler(event, context, cb) {
       const logs = JSON.parse(r.toString());
       log.debug(logs);
       return indexLog(undefined, logs.logEvents)
-        .then((s) => cb(null, s))
+        .then((s) => cb(undefined, s))
         .catch(cb);
-    } catch (err) {
+    } catch (error) {
       log.error(e);
-      return cb(null);
+      return cb();
     }
   });
 }

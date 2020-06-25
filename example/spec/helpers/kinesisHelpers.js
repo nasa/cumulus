@@ -1,10 +1,10 @@
 'use strict';
 
+const delay = require('delay');
 const pRetry = require('p-retry');
 
 const { Kinesis } = require('aws-sdk');
 const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
-const { sleep } = require('@cumulus/common/util');
 
 const {
   waitForAllTestSf
@@ -31,8 +31,8 @@ async function tryCatchExit(cleanupCallback, wrappedFunction, ...args) { // esli
     console.log("Tests conditions can't get met...exiting.");
     try {
       await cleanupCallback();
-    } catch (e) {
-      console.log(`Cleanup failed, ${e}.   Stack may need to be manually cleaned up.`);
+    } catch (error_) {
+      console.log(`Cleanup failed, ${error_}.   Stack may need to be manually cleaned up.`);
     }
     // We should find a better way to do this
     process.exit(1); // eslint-disable-line no-process-exit
@@ -69,7 +69,7 @@ async function waitForActiveStream(streamName, initialDelaySecs = 10, maxRetries
   let stream;
   const displayName = streamName.split('-').pop();
 
-  await sleep(initialDelaySecs * 1000);
+  await delay(initialDelaySecs * 1000);
 
   return pRetry(
     async () => {
@@ -99,7 +99,6 @@ async function deleteTestStream(streamName) {
   const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: getRegion() });
   return kinesis.deleteStream({ StreamName: streamName }).promise();
 }
-
 
 /**
  * patiently create a kinesis stream
@@ -139,13 +138,13 @@ async function createOrUseTestStream(streamName) {
 
   try {
     stream = await kinesis.describeStream({ StreamName: streamName }).promise();
-  } catch (err) {
-    if (err.code === 'ResourceNotFoundException') {
+  } catch (error) {
+    if (error.code === 'ResourceNotFoundException') {
       console.log('Creating a new stream:', streamName);
       stream = await createKinesisStream(streamName);
     } else {
-      console.log(`describeStream error ${err}`);
-      throw err;
+      console.log(`describeStream error ${error}`);
+      throw error;
     }
   }
   return stream;
@@ -195,7 +194,7 @@ async function getRecords(shardIterator, records = []) {
   const data = await kinesis.getRecords({ ShardIterator: shardIterator }).promise();
   records.push(...data.Records);
   if ((data.NextShardIterator !== null) && (data.MillisBehindLatest > 0)) {
-    await sleep(waitPeriodMs);
+    await delay(waitPeriodMs);
     return getRecords(data.NextShardIterator, records);
   }
   return records;

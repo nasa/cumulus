@@ -4,7 +4,6 @@ const test = require('ava');
 const rewire = require('rewire');
 const rulesRewire = rewire('../rules');
 
-
 test.before(async (t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.testName = 'testRule';

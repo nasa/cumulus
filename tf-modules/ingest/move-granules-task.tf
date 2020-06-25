@@ -4,7 +4,7 @@ resource "aws_lambda_function" "move_granules_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/move-granules/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
   timeout          = 300
   memory_size      = 1024
 
@@ -15,6 +15,7 @@ resource "aws_lambda_function" "move_granules_task" {
       CMR_ENVIRONMENT             = var.cmr_environment
       stackName                   = var.prefix
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
+      system_bucket               = var.system_bucket
     }
   }
 

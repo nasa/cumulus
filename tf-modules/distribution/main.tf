@@ -7,9 +7,15 @@ terraform {
 locals {
   thin_egress_stack_name = "${var.prefix}-thin-egress-app"
   lambda_log_group_name  = "/aws/lambda/${local.thin_egress_stack_name}-EgressLambda"
+  tea_buckets            = concat(var.protected_buckets, var.public_buckets)
+
+  built_lambda_source_file = "${path.module}/lambda.zip"
+  repo_lambda_source_file = "${path.module}/../../packages/s3-credentials-endpoint/dist/lambda.zip"
+  lambda_source_file = fileexists(local.built_lambda_source_file) ? local.built_lambda_source_file : local.repo_lambda_source_file
 }
 
 resource "aws_s3_bucket_object" "bucket_map_yaml" {
+  count   = var.bucket_map_key == null ? 1 : 0
   bucket  = var.system_bucket
   key     = "${var.prefix}/thin-egress-app/bucket_map.yaml"
   content = templatefile("${path.module}/bucket_map.yaml.tmpl", { protected_buckets = var.protected_buckets, public_buckets = var.public_buckets })
@@ -24,18 +30,38 @@ resource "aws_secretsmanager_secret" "thin_egress_urs_creds" {
 }
 
 resource "aws_secretsmanager_secret_version" "thin_egress_urs_creds" {
-  secret_id = aws_secretsmanager_secret.thin_egress_urs_creds.id
+  secret_id     = aws_secretsmanager_secret.thin_egress_urs_creds.id
   secret_string = jsonencode({
-    UrsId   = var.urs_client_id
-    UrsAuth = base64encode("${var.urs_client_id}:${var.urs_client_password}")
+    UrsId       = var.urs_client_id
+    UrsAuth     = base64encode("${var.urs_client_id}:${var.urs_client_password}")
+  })
+}
+
+module "tea_map_cache" {
+  prefix                     = var.prefix
+  source                     = "../tea-map-cache"
+  lambda_processing_role_arn = var.lambda_processing_role_arn
+  tea_api_url                = module.thin_egress_app.internal_api_endpoint
+  tags                       = var.tags
+  lambda_subnet_ids          = var.subnet_ids
+  vpc_id                     = var.vpc_id
+}
+
+
+data "aws_lambda_invocation" "tea_map_cache" {
+  depends_on                      = [module.tea_map_cache.lambda_function_name]
+  function_name                   = module.tea_map_cache.lambda_function_name
+  input                           = jsonencode({ bucketList = local.tea_buckets,
+                                                 s3Bucket = var.system_bucket
+                                                 s3Key = "${var.prefix}/distribution_bucket_map.json"
   })
 }
 
 module "thin_egress_app" {
-  source = "https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.74.zip"
+  source = "s3::https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.79.zip"
 
   auth_base_url                      = var.urs_url
-  bucket_map_file                    = aws_s3_bucket_object.bucket_map_yaml.key
+  bucket_map_file                    = var.bucket_map_key == null ? aws_s3_bucket_object.bucket_map_yaml[0].key : var.bucket_map_key
   bucketname_prefix                  = ""
   config_bucket                      = var.system_bucket
   cookie_domain                      = var.thin_egress_cookie_domain
@@ -127,7 +153,7 @@ data "aws_iam_policy_document" "s3_credentials_lambda" {
 }
 
 resource "aws_iam_role_policy" "s3_credentials_lambda" {
-  count = var.deploy_s3_credentials_endpoint ? 1 : 0
+  count  = var.deploy_s3_credentials_endpoint ? 1 : 0
   name   = "${var.prefix}_s3_credentials_lambda_policy"
   policy = data.aws_iam_policy_document.s3_credentials_lambda[0].json
   role   = aws_iam_role.s3_credentials_lambda[0].id
@@ -151,11 +177,11 @@ resource "aws_lambda_function" "s3_credentials" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
   function_name    = "${var.prefix}-s3-credentials-endpoint"
-  filename         = "${path.module}/../../packages/s3-credentials-endpoint/dist/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../packages/s3-credentials-endpoint/dist/lambda.zip")
+  filename         = local.lambda_source_file
+  source_code_hash = filebase64sha256(local.lambda_source_file)
   handler          = "index.handler"
   role             = aws_iam_role.s3_credentials_lambda[0].arn
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
   timeout          = 10
   memory_size      = 320
 
@@ -182,7 +208,7 @@ resource "aws_lambda_function" "s3_credentials" {
 data "aws_region" "current" {}
 
 resource "aws_lambda_permission" "lambda_permission" {
-  count = var.deploy_s3_credentials_endpoint ? 1 : 0
+  count         = var.deploy_s3_credentials_endpoint ? 1 : 0
 
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.s3_credentials[0].function_name

@@ -11,7 +11,7 @@ const indexer = require('../es/indexer');
 const getEsRequestConcurrency = (event) => {
   const concurrency = event.esRequestConcurrency
     || process.env.ES_CONCURRENCY;
-  return concurrency ? parseInt(concurrency, 10) : 10;
+  return concurrency ? Number.parseInt(concurrency, 10) : 10;
 };
 
 async function indexModel({
@@ -51,8 +51,8 @@ async function indexModel({
         async () => {
           try {
             return await indexFn(esClient, item, esIndex);
-          } catch (err) {
-            log.error(`Error indexing record ${JSON.stringify(item)}, error: ${err}`);
+          } catch (error) {
+            log.error(`Error indexing record ${JSON.stringify(item)}, error: ${error}`);
             return false;
           }
         }

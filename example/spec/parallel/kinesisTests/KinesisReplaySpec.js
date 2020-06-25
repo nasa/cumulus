@@ -1,9 +1,9 @@
 'use strict';
 
+const delay = require('delay');
 const replace = require('lodash/replace');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { sleep } = require('@cumulus/common/util');
 const { getWorkflowFileKey } = require('@cumulus/common/workflows');
 const { Rule } = require('@cumulus/api/models');
 
@@ -77,8 +77,8 @@ describe('The Kinesis Replay API', () => {
         cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
         deleteTestStream(streamName)
       ]);
-    } catch (e) {
-      console.log(`Cleanup failed, ${e}.   Stack may need to be manually cleaned up.`);
+    } catch (error) {
+      console.log(`Cleanup failed, ${error}.   Stack may need to be manually cleaned up.`);
     }
   }
 
@@ -135,13 +135,13 @@ describe('The Kinesis Replay API', () => {
       await rule.deleteKinesisEventSources(rules[0]);
 
       await Promise.all(tooOldToFetchRecords.map((r) => putRecordOnStream(streamName, r)));
-      await sleep(10 * 1000);
+      await delay(10 * 1000);
       startTimestamp = Date.now();
-      await sleep(5 * 1000);
+      await delay(5 * 1000);
       await Promise.all(targetedRecords.map((r) => putRecordOnStream(streamName, r)));
-      await sleep(5 * 1000);
+      await delay(5 * 1000);
       endTimestamp = Date.now();
-      await sleep(10 * 1000);
+      await delay(10 * 1000);
       await Promise.all(newRecordsToSkip.map((r) => putRecordOnStream(streamName, r)));
 
       const apiRequestBody = {
@@ -189,7 +189,7 @@ describe('The Kinesis Replay API', () => {
           record.identifier,
           workflowArn,
           maxWaitForSFExistSecs
-        ).catch((err) => fail(err.message)));
+        ).catch((error) => fail(error.message)));
 
         const tooOldToExpectWorkflows = tooOldToFetchRecords
           .map((r) => waitForTestSfForRecord(
@@ -197,7 +197,7 @@ describe('The Kinesis Replay API', () => {
             workflowArn,
             maxWaitForSFExistSecs
           ).then((ex) => fail(`should not find executions but found ${JSON.stringify(ex)}`))
-            .catch((err) => expect(err.message).toBe('Never found started workflow.')));
+            .catch((error) => expect(error.message).toBe('Never found started workflow.')));
 
         const tooNewToExpectWorkflows = newRecordsToSkip
           .map((r) => waitForTestSfForRecord(
@@ -205,7 +205,7 @@ describe('The Kinesis Replay API', () => {
             workflowArn,
             maxWaitForSFExistSecs
           ).then((ex) => fail(`should not find executions but found ${JSON.stringify(ex)}`))
-            .catch((err) => expect(err.message).toBe('Never found started workflow.')));
+            .catch((error) => expect(error.message).toBe('Never found started workflow.')));
 
         const workflowExecutions = await Promise.all(expectedWorkflows);
         // if intermittent failures occur here, consider increasing maxWaitForSFExistSecs

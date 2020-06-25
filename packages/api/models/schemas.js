@@ -44,7 +44,7 @@ module.exports.asyncOperation = {
     description: { type: 'string' },
     operationType: {
       type: 'string',
-      enum: ['ES Index', 'Bulk Granules', 'Bulk Delete', 'Kinesis Replay']
+      enum: ['ES Index', 'Bulk Granules', 'Bulk Granule Delete', 'Kinesis Replay', 'Reconciliation Report']
     },
     output: {
       description: 'The result of the operation, stored as JSON',
@@ -571,8 +571,7 @@ module.exports.provider = {
     },
     globalConnectionLimit: {
       title: 'Concurrent Connection Limit',
-      type: 'integer',
-      default: 10
+      type: 'integer'
     },
     protocol: {
       title: 'Protocol',
@@ -621,7 +620,6 @@ module.exports.provider = {
   },
   required: [
     'id',
-    'globalConnectionLimit',
     'protocol',
     'host',
     'createdAt'

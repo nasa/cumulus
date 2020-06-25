@@ -1,21 +1,21 @@
 {
   "name": "@cumulus/s3-credentials-endpoint",
   "private": true,
-  "version": "1.23.2",
+  "version": "1.24.0",
   "engines": {
-    "node": ">=10.18.0"
+    "node": ">=12.18.0"
   },
   "scripts": {
-    "build": "../../node_modules/.bin/webpack && (cd dist && rm -f package.zip && node ../../../bin/zip.js lambda.zip index.js)",
+    "build": "../../node_modules/.bin/webpack && (cd dist && rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js)",
     "package": "npm run build",
     "test": "../../node_modules/.bin/ava"
   },
   "dependencies": {
-    "@cumulus/api": "1.23.2",
-    "@cumulus/aws-client": "1.23.2",
-    "@cumulus/earthdata-login-client": "1.23.2",
-    "@cumulus/errors": "1.23.2",
-    "@cumulus/logger": "1.23.2",
+    "@cumulus/api": "1.24.0",
+    "@cumulus/aws-client": "1.24.0",
+    "@cumulus/earthdata-login-client": "1.24.0-alpha.0",
+    "@cumulus/errors": "1.24.0",
+    "@cumulus/logger": "1.24.0",
     "aws-serverless-express": "^3.3.6",
     "body-parser": "^1.19.0",
     "cookie-parser": "^1.4.4",

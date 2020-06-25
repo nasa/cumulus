@@ -110,10 +110,8 @@ const deleteRule = async ({ prefix, ruleName, callback = invokeApi }) => callbac
     httpMethod: 'DELETE',
     resource: '/{proxy+}',
     path: `/rules/${ruleName}`
-
   }
 });
-
 
 /**
  * Rerun a rule via the API.

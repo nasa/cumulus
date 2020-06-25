@@ -38,6 +38,10 @@ class Logger {
     this.version = options.version;
   }
 
+  buildMessage(level: Level, ...messageArgs: any[]) {
+    return this.buildLogEventMessage(level, messageArgs);
+  }
+
   /**
    * Log a debug message
    */
@@ -92,8 +96,8 @@ class Logger {
   /**
    * Log an event with additional properties
    *
-   * @param additionalKeys -
-   * @param messageArgs - the message to log
+   * @param {Object} additionalKeys
+   * @param {Array<any>} messageArgs - the message to log
    */
   infoWithAdditionalKeys(additionalKeys: object, ...messageArgs: any[]) {
     this.writeLogEvent('info', messageArgs, additionalKeys);
@@ -113,7 +117,7 @@ class Logger {
     this.writeLogEvent('warn', messageArgs);
   }
 
-  private writeLogEvent(level: Level, messageArgs: any[], additionalKeys = {}) {
+  private buildLogEventMessage(level: Level, messageArgs: any[], additionalKeys = {}) {
     let message: string;
     if (messageArgs.length === 0) {
       message = '';
@@ -139,9 +143,17 @@ class Logger {
       ...standardLogEvent
     };
 
-    const logEventString = this.pretty
-      ? JSON.stringify(logEvent, null, 2)
+    return this.pretty
+      ? JSON.stringify(logEvent, undefined, 2)
       : JSON.stringify(logEvent);
+  }
+
+  private writeLogEvent(level: Level, messageArgs: any[], additionalKeys = {}) {
+    const logEventString = this.buildLogEventMessage(
+      level,
+      messageArgs,
+      additionalKeys
+    );
 
     if (level === 'error') this.console.error(logEventString);
     else this.console.log(logEventString);

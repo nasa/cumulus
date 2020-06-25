@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
-    "target": "ES2018",
+    "target": "ES2019",
     "module": "commonjs",
-    "lib": ["ES2018"],
     "esModuleInterop": true,
     "declaration": true,
+    "declarationMap": true,
     "sourceMap": true,
     "removeComments": false,
     "strict": true,

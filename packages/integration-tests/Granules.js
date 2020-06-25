@@ -52,8 +52,8 @@ const getGranuleWithStatus = async (params = {}) =>
 
       try {
         granule = await getGranule(pick(params, ['prefix', 'granuleId', 'callback']));
-      } catch (err) {
-        throw new pRetry.AbortError(err);
+      } catch (error) {
+        throw new pRetry.AbortError(error);
       }
 
       if (granule.status === params.status) return granule;

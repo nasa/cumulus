@@ -34,11 +34,11 @@ export const improveStackTrace = <T, U extends unknown[]>(fn: (...args: U) => Pr
     try {
       Error.captureStackTrace(tracerError);
       return await fn(...args);
-    } catch (err) {
+    } catch (error) {
       // @ts-ignore
-      setErrorStack(err, tracerError.stack);
-      err.message = `${err.message}; Function params: ${JSON.stringify(args, null, 2)}`;
-      throw err;
+      setErrorStack(error, tracerError.stack);
+      error.message = `${error.message}; Function params: ${JSON.stringify(args, null, 2)}`;
+      throw error;
     }
   };
 

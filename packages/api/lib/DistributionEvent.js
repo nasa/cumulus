@@ -5,6 +5,7 @@ const { isNil } = require('@cumulus/common/util');
 const Granule = require('../models/granules');
 const { deconstructCollectionId } = require('./utils');
 const GranuleFilesCache = require('./GranuleFilesCache');
+const FileUtils = require('./FileUtils');
 
 /**
  * This class takes an S3 Server Log line and parses it for EMS Distribution Logs
@@ -66,7 +67,7 @@ class DistributionEvent {
    * @returns {number} bytes sent
    */
   get bytesSent() {
-    return parseInt(this.rawLine.split('"')[2].trim().split(' ')[2], 10);
+    return Number.parseInt(this.rawLine.split('"')[2].trim().split(' ')[2], 10);
   }
 
   /**
@@ -95,7 +96,7 @@ class DistributionEvent {
    * @returns {number} size in bytes
    */
   get objectSize() {
-    return parseInt(this.rawLine.split('"')[2].trim().split(' ')[3], 10);
+    return Number.parseInt(this.rawLine.split('"')[2].trim().split(' ')[3], 10);
   }
 
   /**
@@ -169,7 +170,12 @@ class DistributionEvent {
 
     // convert Cumulus granule file.type (CNM file type) to EMS file type
     const fileTypes = granule.files
-      .filter((file) => (file.bucket === bucket && file.key === key))
+      .filter((file) => {
+        const fileBucket = FileUtils.getBucket(file);
+        const fileKey = FileUtils.getKey(file);
+
+        return fileBucket === bucket && fileKey === key;
+      })
       .map((file) => {
         let fileType = file.type || 'OTHER';
         fileType = (fileType === 'data') ? 'SCIENCE' : fileType.toUpperCase();
@@ -190,7 +196,7 @@ class DistributionEvent {
       if (granuleId === null) {
         this.productInfo = {};
       } else {
-        const granule = await (new Granule()).get({ granuleId });
+        const granule = await (new Granule()).getRecord({ granuleId });
 
         this.productInfo = {
           collectionId: granule.collectionId,

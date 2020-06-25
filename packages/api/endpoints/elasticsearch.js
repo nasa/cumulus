@@ -90,12 +90,12 @@ async function reindex(req, res) {
 
   try {
     await createIndex(esClient, destIndex);
-  } catch (err) {
-    if (err instanceof IndexExistsError) {
+  } catch (error) {
+    if (error instanceof IndexExistsError) {
       return res.boom.badRequest(`Destination index ${destIndex} exists. Please specify an index name that does not exist.`);
     }
 
-    return res.boom.badRequest(`Error creating index ${destIndex}: ${err.message}`);
+    return res.boom.badRequest(`Error creating index ${destIndex}: ${error.message}`);
   }
 
   log.info(`Created destination index ${destIndex}.`);
@@ -163,17 +163,22 @@ async function changeIndex(req, res) {
     return res.boom.badRequest(`New index ${newIndex} does not exist.`);
   }
 
-  await esClient.indices.updateAliases({
-    body: {
-      actions: [
-        { remove: { index: currentIndex, alias: aliasName } },
-        { add: { index: newIndex, alias: aliasName } }
-      ]
-    }
-  }).then(() => {
+  try {
+    await esClient.indices.updateAliases({
+      body: {
+        actions: [
+          { remove: { index: currentIndex, alias: aliasName } },
+          { add: { index: newIndex, alias: aliasName } }
+        ]
+      }
+    });
+
     log.info(`Removed alias ${aliasName} from index ${currentIndex} and added alias to ${newIndex}`);
-  }).catch((err) =>
-    res.boom.badRequest(`Error removing alias ${aliasName} from index ${currentIndex} and adding alias to ${newIndex}: ${err}`));
+  } catch (error) {
+    return res.boom.badRequest(
+      `Error removing alias ${aliasName} from index ${currentIndex} and adding alias to ${newIndex}: ${error}`
+    );
+  }
 
   let message = `Change index success - alias ${aliasName} now pointing to ${newIndex}`;
 
@@ -198,8 +203,8 @@ async function indexFromDatabase(req, res) {
   const indexName = req.body.indexName || timestampedIndexName();
 
   await createIndex(esClient, indexName)
-    .catch((e) => {
-      if (!(e instanceof IndexExistsError)) throw e;
+    .catch((error) => {
+      if (!(error instanceof IndexExistsError)) throw error;
     });
 
   const asyncOperationModel = new AsyncOperation({

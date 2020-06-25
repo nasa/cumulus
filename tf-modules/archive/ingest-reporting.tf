@@ -70,7 +70,7 @@ resource "aws_lambda_function" "publish_executions" {
   function_name    = "${var.prefix}-publishExecutions"
   role             = aws_iam_role.publish_executions_lambda_role.arn
   handler          = "index.handler"
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
   timeout          = 30
   memory_size      = 128
 
@@ -187,7 +187,7 @@ resource "aws_lambda_function" "publish_granules" {
   function_name    = "${var.prefix}-publishGranules"
   role             = aws_iam_role.publish_granules_lambda_role.arn
   handler          = "index.handler"
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
   timeout          = 30
   memory_size      = 128
 
@@ -299,7 +299,7 @@ resource "aws_lambda_function" "publish_pdrs" {
   function_name    = "${var.prefix}-publishPdrs"
   role             = aws_iam_role.publish_pdrs_lambda_role.arn
   handler          = "index.handler"
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
   timeout          = 30
   memory_size      = 128
 
@@ -340,6 +340,118 @@ resource "aws_sns_topic" "report_pdrs_topic" {
 resource "aws_lambda_event_source_mapping" "publish_pdrs" {
   event_source_arn  = data.aws_dynamodb_table.pdrs.stream_arn
   function_name     = aws_lambda_function.publish_pdrs.arn
+  starting_position = "TRIM_HORIZON"
+  batch_size        = 10
+}
+
+# Report collections
+
+resource "aws_iam_role" "publish_collections_lambda_role" {
+  name                 = "${var.prefix}-PublishCollectionsLambda"
+  assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
+  permissions_boundary = var.permissions_boundary_arn
+
+  tags = var.tags
+}
+
+data "aws_iam_policy_document" "publish_collections_policy_document" {
+  statement {
+    actions   = ["sns:Publish"]
+    resources = [aws_sns_topic.report_collections_topic.arn]
+  }
+  statement {
+    actions = [
+      "ec2:CreateNetworkInterface",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:DeleteNetworkInterface"
+    ]
+    resources = ["*"]
+  }
+  statement {
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:DescribeLogStreams",
+      "logs:PutLogEvents"
+    ]
+    resources = ["*"]
+  }
+  statement {
+    actions = ["sqs:SendMessage"]
+    resources = [aws_sqs_queue.publish_collections_dead_letter_queue.arn]
+  }
+  statement {
+    actions = [
+      "dynamodb:GetRecords",
+      "dynamodb:GetShardIterator",
+      "dynamodb:DescribeStream",
+      "dynamodb:ListStreams"
+    ]
+    resources = ["${var.dynamo_tables.collections.arn}/stream/*"]
+  }
+}
+
+resource "aws_iam_role_policy" "publish_collections_lambda_role_policy" {
+  name   = "${var.prefix}_publish_collections_lambda_role_policy"
+  role   = aws_iam_role.publish_collections_lambda_role.id
+  policy = data.aws_iam_policy_document.publish_collections_policy_document.json
+}
+
+resource "aws_sqs_queue" "publish_collections_dead_letter_queue" {
+  name                       = "${var.prefix}-publishCollectionsDeadLetterQueue"
+  receive_wait_time_seconds  = 20
+  message_retention_seconds  = 1209600
+  visibility_timeout_seconds = 60
+  tags                       = var.tags
+}
+
+resource "aws_lambda_function" "publish_collections" {
+  filename         = "${path.module}/../../packages/api/dist/publishCollections/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/publishCollections/lambda.zip")
+  function_name    = "${var.prefix}-publishCollections"
+  role             = aws_iam_role.publish_collections_lambda_role.arn
+  handler          = "index.handler"
+  runtime          = "nodejs12.x"
+  timeout          = 30
+  memory_size      = 128
+
+  dead_letter_config {
+    target_arn = aws_sqs_queue.publish_collections_dead_letter_queue.arn
+  }
+
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = [
+        aws_security_group.no_ingress_all_egress[0].id
+      ]
+    }
+  }
+
+  environment {
+    variables = {
+      collection_sns_topic_arn = aws_sns_topic.report_collections_topic.arn
+    }
+  }
+
+  tags = var.tags
+}
+
+resource "aws_cloudwatch_log_group" "publish_collections_logs" {
+  name              = "/aws/lambda/${aws_lambda_function.publish_collections.function_name}"
+  retention_in_days = 14
+  tags              = var.tags
+}
+
+resource "aws_sns_topic" "report_collections_topic" {
+  name = "${var.prefix}-report-collections-topic"
+  tags = var.tags
+}
+
+resource "aws_lambda_event_source_mapping" "publish_collections" {
+  event_source_arn  = data.aws_dynamodb_table.collections.stream_arn
+  function_name     = aws_lambda_function.publish_collections.arn
   starting_position = "TRIM_HORIZON"
   batch_size        = 10
 }

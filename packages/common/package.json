@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/common",
-  "version": "1.23.2",
+  "version": "1.24.0",
   "description": "Common utilities used across tasks",
   "keywords": [
     "GIBS",
@@ -8,8 +8,12 @@
     "NASA"
   ],
   "engines": {
-    "node": ">=10.16.3"
+    "node": ">=12.18.0"
   },
+  "files": [
+    "*.js",
+    "*.d.ts"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -19,16 +23,17 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
-    "build-docs": "../../node_modules/.bin/jsdoc2md --template templates/docs-API.hbs string.js URLUtils.js util.js > docs/API.md",
+    "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md --template templates/docs-API.hbs URLUtils.js util.js > docs/API.md",
+    "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/ava",
-    "test-coverage": "../../node_modules/.bin/nyc npm test"
+    "test-coverage": "../../node_modules/.bin/nyc npm test",
+    "tsc": "../../node_modules/.bin/tsc"
   },
   "ava": {
     "files": [
       "tests/**"
     ],
-    "verbose": true,
-    "timeout": "15m"
+    "verbose": true
   },
   "nyc": {
     "exclude": [
@@ -39,8 +44,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/errors": "1.23.2",
-    "@cumulus/logger": "1.23.2",
+    "@cumulus/errors": "1.24.0",
+    "@cumulus/logger": "1.24.0",
     "ajv": "^5.2.2",
     "aws-sdk": "^2.585.0",
     "follow-redirects": "^1.2.4",

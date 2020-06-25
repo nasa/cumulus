@@ -38,7 +38,7 @@ test.after.always(async (t) => {
   await sns().deleteTopic({ TopicArn }).promise();
 });
 
-test.serial('The test-publish-executions Lambda function takes a DynamoDB stream event with a single record and publishes an execution to SNS', async (t) => {
+test.serial('The publish-executions Lambda function takes a DynamoDB stream event with a single record and publishes an execution to SNS', async (t) => {
   const { QueueUrl } = t.context;
 
   const executionArn = randomString();
@@ -69,7 +69,7 @@ test.serial('The test-publish-executions Lambda function takes a DynamoDB stream
   t.is(executionRecord.status, 'running');
 });
 
-test.serial('The test-publish-executions Lambda function takes a DynamoDB stream event with a multiple records and publishes their executions to SNS', async (t) => {
+test.serial('The publish-executions Lambda function takes a DynamoDB stream event with a multiple records and publishes their executions to SNS', async (t) => {
   const { QueueUrl } = t.context;
 
   const event = {

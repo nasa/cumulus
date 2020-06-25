@@ -10,8 +10,8 @@ import pRetry from 'p-retry';
 import pWaitFor from 'p-wait-for';
 import pump from 'pump';
 import querystring from 'querystring';
-import url from 'url';
 import { Readable, TransformOptions } from 'stream';
+import { deprecate } from 'util';
 
 import {
   generateChecksumFromStream,
@@ -28,7 +28,22 @@ import { s3 } from './services';
 import { inTestMode } from './test-utils';
 import { improveStackTrace } from './utils';
 
+export type GetObjectMethod = (params: { Bucket: string, Key: string }) => {
+  createReadStream: () => Readable
+};
+
 const log = new Logger({ sender: 'aws-client/s3' });
+
+const buildDeprecationMessage = (
+  name: string,
+  version: string,
+  alternative?: string
+) => {
+  let message = `${name} is deprecated after version ${version} and will be removed in a future release.`;
+  if (alternative) message += ` Use ${alternative} instead.`;
+
+  return log.buildMessage('warn', message);
+};
 
 const S3_RATE_LIMIT = inTestMode() ? 1 : 20;
 
@@ -64,19 +79,15 @@ export const s3Join = (...args: [string | string[], ...string[]]) => {
 * @returns {Object} Returns an object with `Bucket` and `Key` properties
 **/
 export const parseS3Uri = (uri: string) => {
-  const parsedUri = url.parse(uri);
+  const match = uri.match('^s3://([^/]+)/(.*)$');
 
-  if (parsedUri.protocol !== 's3:') {
-    throw new TypeError('uri must be a S3 uri, e.g. s3://bucketname');
-  }
-
-  if (typeof parsedUri.path !== 'string') {
-    throw new TypeError(`Unable to determine key of ${uri}`);
+  if (match === null) {
+    throw new TypeError(`Unable to parse S3 URI: ${uri}`);
   }
 
   return {
-    Bucket: parsedUri.hostname,
-    Key: parsedUri.path.substring(1)
+    Bucket: match[1],
+    Key: match[2]
   };
 };
 
@@ -89,7 +100,6 @@ export const parseS3Uri = (uri: string) => {
  */
 export const buildS3Uri = (bucket: string, key: string) =>
   `s3://${bucket}/${key.replace(/^\/+/, '')}`;
-
 
 /**
 * Convert S3 TagSet Object to query string
@@ -129,9 +139,9 @@ export const headObject = improveStackTrace(
       async () => {
         try {
           return await s3().headObject({ Bucket, Key }).promise();
-        } catch (err) {
-          if (err.code === 'NotFound') throw err;
-          throw new pRetry.AbortError(err);
+        } catch (error) {
+          if (error.code === 'NotFound') throw error;
+          throw new pRetry.AbortError(error);
         }
       },
       { maxTimeout: 10000, ...retryOptions }
@@ -148,9 +158,9 @@ export const headObject = improveStackTrace(
 export const s3ObjectExists = (params: { Bucket: string, Key: string }) =>
   headObject(params.Bucket, params.Key)
     .then(() => true)
-    .catch((e) => {
-      if (e.code === 'NotFound') return false;
-      throw e;
+    .catch((error) => {
+      if (error.code === 'NotFound') return false;
+      throw error;
     });
 
 /**
@@ -256,15 +266,35 @@ export const downloadS3File = (s3Obj: AWS.S3.GetObjectRequest, filepath: string)
 };
 
 /**
- * Get the size of an S3Object, in bytes
+ * Get the size of an S3 object
  *
- * @param {string} bucket - S3 bucket
- * @param {string} key - S3 key
- * @returns {Promise<integer>} object size, in bytes
+ * @param {Object} params
+ * @param {string} params.bucket
+ * @param {string} params.key
+ * @param {AWS.S3} params.s3 - an S3 client instance
+ * @returns {Promise<number|undefined>} object size, in bytes
  */
-export const getObjectSize = (bucket: string, key: string) =>
-  headObject(bucket, key, { retries: 3 })
-    .then((response) => response.ContentLength);
+export const getObjectSize = async (
+  params: {
+    s3: {
+      headObject: (params: { Bucket: string, Key: string }) => {
+        promise: () => Promise<{ ContentLength?: number }>
+      }
+    },
+    bucket: string,
+    key: string
+  }
+) => {
+  // eslint-disable-next-line no-shadow
+  const { s3, bucket, key } = params;
+
+  const headObjectResponse = await s3.headObject({
+    Bucket: bucket,
+    Key: key
+  }).promise();
+
+  return headObjectResponse.ContentLength;
+};
 
 /**
 * Get object Tagging from S3
@@ -327,9 +357,9 @@ export const getS3Object = improveStackTrace(
       async () => {
         try {
           return await s3().getObject({ Bucket, Key }).promise();
-        } catch (err) {
-          if (err.code === 'NoSuchKey') throw err;
-          throw new pRetry.AbortError(err);
+        } catch (error) {
+          if (error.code === 'NoSuchKey') throw error;
+          throw new pRetry.AbortError(error);
         }
       },
       {
@@ -375,17 +405,44 @@ export const putJsonS3Object = (bucket: string, key: string, data: any) =>
   });
 
 /**
+ * Get a readable stream for an S3 object
+ *
+ * @param {Object} params
+ * @param {AWS.S3} params.s3 - an AWS.S3 instance
+ * @param {string} params.bucket - the bucket of the requested object
+ * @param {string} params.key - the key of the requested object
+ * @returns {Readable}
+ */
+export const getObjectReadStream = (params: {
+  s3: { getObject: GetObjectMethod },
+  bucket: string,
+  key: string
+}) => {
+  // eslint-disable-next-line no-shadow
+  const { s3, bucket, key } = params;
+
+  return s3.getObject({ Bucket: bucket, Key: key }).createReadStream();
+};
+
+/**
  * Get a readable stream for an S3 object.
  *
  * @param {string} bucket - the S3 object's bucket
  * @param {string} key - the S3 object's key
  * @returns {ReadableStream}
  * @throws {Error} if S3 object cannot be found
+ *
+ * @deprecated
  */
-export const getS3ObjectReadStream = (bucket: string, key: string) =>
-  s3().getObject(
-    { Bucket: bucket, Key: key }
-  ).createReadStream();
+export const getS3ObjectReadStream = deprecate(
+  (bucket: string, key: string) =>
+    getObjectReadStream({ s3: s3(), bucket, key }),
+  buildDeprecationMessage(
+    '@cumulus/aws-client/S3.getS3ObjectReadStream',
+    '1.24.0',
+    '@cumulus/aws-client/S3.getObjectReadStream'
+  )
+);
 
 /**
  * Get a readable stream for an S3 object.
@@ -401,7 +458,7 @@ export const getS3ObjectReadStream = (bucket: string, key: string) =>
  */
 export const getS3ObjectReadStreamAsync = (bucket: string, key: string) =>
   getS3Object(bucket, key, { retries: 3 })
-    .then(() => getS3ObjectReadStream(bucket, key));
+    .then(() => getObjectReadStream({ s3: s3(), bucket, key }));
 
 /**
 * Check if a file exists in an S3 object
@@ -414,12 +471,12 @@ export const fileExists = async (bucket: string, key: string) => {
   try {
     const r = await s3().headObject({ Key: key, Bucket: bucket }).promise();
     return r;
-  } catch (e) {
+  } catch (error) {
     // if file is not return false
-    if (e.stack.match(/(NotFound)/) || e.stack.match(/(NoSuchBucket)/)) {
+    if (error.stack.match(/(NotFound)/) || error.stack.match(/(NoSuchBucket)/)) {
       return false;
     }
-    throw e;
+    throw error;
   }
 };
 
@@ -639,6 +696,32 @@ export const listS3ObjectsV2 = async (params: AWS.S3.ListObjectsV2Request) => {
 };
 
 /**
+ * Calculate the cryptographic hash of an S3 object
+ *
+ * @param {Object} params
+ * @param {AWS.S3} params.s3 - an AWS.S3 instance
+ * @param {string} params.algorithm - `cksum`, or an algorithm listed in
+ *   `openssl list -digest-algorithms`
+ * @param {string} params.bucket
+ * @param {string} params.key
+ */
+export const calculateObjectHash = async (
+  params: {
+    s3: { getObject: GetObjectMethod },
+    algorithm: string,
+    bucket: string,
+    key: string
+  }
+) => {
+  // eslint-disable-next-line no-shadow
+  const { algorithm, bucket, key, s3 } = params;
+
+  const stream = getObjectReadStream({ s3, bucket, key });
+
+  return generateChecksumFromStream(algorithm, stream);
+};
+
+/**
  * Calculate checksum for S3 Object
  *
  * @param {Object} params - params
@@ -648,19 +731,28 @@ export const listS3ObjectsV2 = async (params: AWS.S3.ListObjectsV2Request) => {
  * @param {Object} [params.options] - crypto.createHash options
  *
  * @returns {Promise<number|string>} calculated checksum
+ *
+ * @deprecated
  */
-export const calculateS3ObjectChecksum = async (
-  params: {
-    algorithm: string,
-    bucket: string,
-    key: string,
-    options: TransformOptions
-  }
-) => {
-  const { algorithm, bucket, key, options } = params;
-  const fileStream = await getS3ObjectReadStreamAsync(bucket, key);
-  return generateChecksumFromStream(algorithm, fileStream, options);
-};
+export const calculateS3ObjectChecksum = deprecate(
+  async (
+    params: {
+      algorithm: string,
+      bucket: string,
+      key: string,
+      options: TransformOptions
+    }
+  ) => {
+    const { algorithm, bucket, key, options } = params;
+    const fileStream = await getS3ObjectReadStreamAsync(bucket, key);
+    return generateChecksumFromStream(algorithm, fileStream, options);
+  },
+  buildDeprecationMessage(
+    '@cumulus/aws-client/S3.calculateS3ObjectChecksum',
+    '1.24.0',
+    '@cumulus/aws-client/S3.calculateObjectHash'
+  )
+);
 
 /**
  * Validate S3 object checksum against expected sum

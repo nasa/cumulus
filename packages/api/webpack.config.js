@@ -10,7 +10,6 @@ module.exports = {
   entry: {
     app: './app/index.js',
     bootstrap: './lambdas/bootstrap.js',
-    bulkDelete: './lambdas/bulk-delete.js',
     bulkOperation: './lambdas/bulk-operation.js',
     cleanExecutions: './lambdas/cleanExecutions.js',
     createReconciliationReport: './lambdas/create-reconciliation-report.js',
@@ -28,6 +27,7 @@ module.exports = {
     messageConsumer: './lambdas/message-consumer.js',
     payloadLogger: './lambdas/payload-logger.js',
     providerSecretsMigration: './lambdas/providerSecretsMigration.js',
+    publishCollections: './lambdas/publish-collections.js',
     publishExecutions: './lambdas/publish-executions.js',
     publishGranules: './lambdas/publish-granules.js',
     publishPdrs: './lambdas/publish-pdrs.js',

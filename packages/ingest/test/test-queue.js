@@ -54,7 +54,6 @@ test.beforeEach(async (t) => {
     })
   ]);
 
-
   t.context.template = `s3://${t.context.templateBucket}/${messageTemplateKey}`;
 });
 
@@ -97,8 +96,8 @@ test.serial('the queue receives a correctly formatted workflow message without a
       MaxNumberOfMessages: 10,
       WaitTimeSeconds: 1
     }).promise();
-  } catch (err) {
-    t.fail(err);
+  } catch (error) {
+    t.fail(error);
   }
 
   t.is(receiveMessageResponse.Messages.length, 1);
@@ -164,8 +163,8 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
       MaxNumberOfMessages: 10,
       WaitTimeSeconds: 1
     }).promise();
-  } catch (err) {
-    t.fail(err);
+  } catch (error) {
+    t.fail(error);
   }
 
   t.is(receiveMessageResponse.Messages.length, 1);
@@ -238,8 +237,8 @@ test.serial('enqueueGranuleIngestMessage does not transform granule objects ', a
       MaxNumberOfMessages: 10,
       WaitTimeSeconds: 1
     }).promise();
-  } catch (err) {
-    t.fail(err);
+  } catch (error) {
+    t.fail(error);
   }
 
   const actualMessage = JSON.parse(response.Messages[0].Body);

@@ -13,7 +13,7 @@ const bucketConfig = {
   public2: { type: 'public', name: 'a-second-public-bucket' }
 };
 
-const sortByName = (a, b) => a.name < b.name;
+const sortByName = (a, b) => (a.name < b.name ? -1 : 1);
 
 test('bucket keys are found by bucketName', (t) => {
   const bucketName = 'a-protected-bucket';
@@ -61,7 +61,6 @@ test('bucket object are found by bucketName', (t) => {
 
   t.deepEqual(actual, expected);
 });
-
 
 test('checks a bucket existence in config', (t) => {
   const existsName = 'a-public-bucket';

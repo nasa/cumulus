@@ -45,7 +45,8 @@ export async function createQueue(QueueName: string) {
     // actually be found.  CI breaks without this.
     const returnedQueueUrl = url.parse(createQueueResponse.QueueUrl);
 
-    returnedQueueUrl.host = undefined;
+    // eslint-disable-next-line unicorn/no-null
+    returnedQueueUrl.host = null;
 
     if (!process.env.LOCALSTACK_HOST) {
       throw new Error('The LOCALSTACK_HOST environment variable must be set');
@@ -166,8 +167,8 @@ export const sqsQueueExists = async (queue: string) => {
   try {
     await sqs().getQueueUrl({ QueueName }).promise();
     return true;
-  } catch (err) {
-    if (err.code === 'AWS.SimpleQueueService.NonExistentQueue') return false;
-    throw err;
+  } catch (error) {
+    if (error.code === 'AWS.SimpleQueueService.NonExistentQueue') return false;
+    throw error;
   }
 };

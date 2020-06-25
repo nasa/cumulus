@@ -17,7 +17,7 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
   let beforeAllFailed = false;
   let cluster;
   let config;
-  let dynamoDbItem;
+  let asyncOperation;
   let failFunctionName;
   let payloadKey;
   let taskArn;
@@ -92,34 +92,29 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
         }
       ).promise();
 
-      dynamoDbItem = await waitForAsyncOperationStatus({
-        TableName: asyncOperationsTableName,
+      asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,
-        status: 'TASK_FAILED'
+        status: 'TASK_FAILED',
+        stackName: config.stackName
       });
-    } catch (err) {
+    } catch (error) {
       beforeAllFailed = true;
-      throw err;
+      throw error;
     }
   });
 
-  it('updates the status field in DynamoDB to "TASK_FAILED"', async () => {
+  it('updates the status field to "TASK_FAILED"', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
-    else expect(dynamoDbItem.status.S).toEqual('TASK_FAILED');
+    else expect(asyncOperation.status).toEqual('TASK_FAILED');
   });
 
   it('updates the output field in DynamoDB', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      const parsedOutput = JSON.parse(dynamoDbItem.output.S);
+      const parsedOutput = JSON.parse(asyncOperation.output);
 
       expect(parsedOutput.message).toBe('triggered failure');
     }
-  });
-
-  it('updates the updatedAt field in DynamoDB', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
-    else expect(dynamoDbItem.updatedAt.N).toBeGreaterThan(dynamoDbItem.createdAt.N);
   });
 
   afterAll(() => s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise());

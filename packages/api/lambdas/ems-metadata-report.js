@@ -90,7 +90,7 @@ const instrument = (collection) =>
 const emsMapping = {
   product: (collection) => collection.ShortName,
   metaDataLongName: (collection) => collection.DataSetId,
-  productLevel: (collection) => collection.ProcessingLevelId.replace(/^Level\s?/i, ''), // optional field
+  productLevel: (collection) => collection.ProcessingLevelId.replace(/^level\s?/i, ''), // optional field
   discipline: discipline, // optional field
   processingCenter: (collection) => collection.ProcessingCenter || collection.ArchiveCenter,
   archiveCenter: () => process.env.ems_provider,

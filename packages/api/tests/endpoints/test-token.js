@@ -9,7 +9,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const {
   EarthdataLoginClient,
-  OAuth2AuthenticationFailure
+  EarthdataLoginError
 } = require('@cumulus/earthdata-login-client');
 
 const assertions = require('../../lib/assertions');
@@ -96,7 +96,7 @@ test.serial('GET /token with an invalid code results in an authorization failure
     'getAccessToken'
   ).callsFake(async (authorizationCode) => {
     t.is(authorizationCode, 'invalid-authorization-code');
-    throw new OAuth2AuthenticationFailure('Failed to get authorization token');
+    throw new EarthdataLoginError('BadRequest', 'Failed to get authorization token');
   });
 
   const response = await request(app)
@@ -287,7 +287,6 @@ test.serial('GET /refresh with a valid token returns a refreshed token', async (
   await accessTokenModel.create(initialTokenRecord);
 
   const requestJwtToken = createJwtToken(initialTokenRecord);
-
 
   const refreshedTokenRecord = fakeAccessTokenFactory();
   const refreshedJwtToken = createJwtToken(refreshedTokenRecord);

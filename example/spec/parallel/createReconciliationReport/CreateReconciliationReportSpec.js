@@ -18,7 +18,8 @@ const {
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
-  granulesApi: granulesApiTestUtils
+  granulesApi: granulesApiTestUtils,
+  waitForAsyncOperationStatus
 } = require('@cumulus/integration-tests');
 
 const {
@@ -92,6 +93,10 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
     'completed'
   );
 
+  if (!inputPayload.granules[0].granuleId) {
+    throw new Error(`No granule id found in ${JSON.stringify(inputPayload)}`);
+  }
+
   return inputPayload.granules[0].granuleId;
 }
 
@@ -131,6 +136,7 @@ async function updateGranuleFile(granuleId, granuleFiles, regex, replacement) {
 }
 
 describe('When there are granule differences and granule reconciliation is run', () => {
+  let asyncOperationId;
   let cmrGranule;
   let collectionId;
   let config;
@@ -159,7 +165,6 @@ describe('When there are granule differences and granule reconciliation is run',
     granuleModel = new Granule();
 
     process.env.ReconciliationReportsTable = `${config.stackName}-ReconciliationReportsTable`;
-
     process.env.CMR_ENVIRONMENT = 'UAT';
 
     // Find a protected bucket
@@ -210,17 +215,25 @@ describe('When there are granule differences and granule reconciliation is run',
     ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, 'jpg2'));
   });
 
-  it('generates reconciliation report through the Cumulus API', async () => {
-    const inputPayload = {
-      invocationType: 'RequestResponse'
-    };
-
+  it('generates an async operation through the Cumulus API', async () => {
     const response = await reconciliationReportsApi.createReconciliationReport({
-      prefix: config.stackName,
-      request: inputPayload
+      prefix: config.stackName
     });
 
-    reportRecord = JSON.parse(response.body).report;
+    const responseBody = JSON.parse(response.body);
+    asyncOperationId = responseBody.id;
+    expect(responseBody.operationType).toBe('Reconciliation Report');
+  });
+
+  it('generates reconciliation report through the Cumulus API', async () => {
+    const asyncOperation = await waitForAsyncOperationStatus({
+      id: asyncOperationId,
+      status: 'SUCCEEDED',
+      stackName: config.stackName,
+      retries: 100
+    });
+
+    reportRecord = JSON.parse(asyncOperation.output);
   });
 
   it('fetches a reconciliation report through the Cumulus API', async () => {
@@ -248,7 +261,7 @@ describe('When there are granule differences and granule reconciliation is run',
     expect(report.collectionsInCumulusCmr.okCount).toBeGreaterThanOrEqual(1);
   });
 
-  it('generates a report showing collections that are in the Cumulus but not in CMR', () => {
+  it('generates a report showing collections that are in Cumulus but not in CMR', () => {
     const extraCollection = constructCollectionId(extraCumulusCollection.name.S, extraCumulusCollection.version.S);
     expect(report.collectionsInCumulusCmr.onlyInCumulus).toContain(extraCollection);
     expect(report.collectionsInCumulusCmr.onlyInCumulus).not.toContain(collectionId);
@@ -285,7 +298,7 @@ describe('When there are granule differences and granule reconciliation is run',
     expect(report.filesInCumulusCmr.okCount).toBeGreaterThanOrEqual(2);
   });
 
-  it('generates a report showing granule files that are in the Cumulus but not in CMR', () => {
+  it('generates a report showing granule files that are in Cumulus but not in CMR', () => {
     // published granule should have one file(renamed file) in Cumulus
     const fileNames = report.filesInCumulusCmr.onlyInCumulus.map((file) => file.fileName);
     expect(fileNames).toContain(updatedGranuleFile.fileName);
