@@ -282,7 +282,7 @@ test.serial('savePdrToDb() saves a PDR record', async (t) => {
   t.deepEqual(fetchedPdr, expectedPdr);
 });
 
-test('savePdrsToDb() throws an exception if storePdrFromCumulusMessage() throws an exception', async (t) => {
+test.serial('savePdrsToDb() throws an exception if storePdrFromCumulusMessage() throws an exception', async (t) => {
   const { cumulusMessage } = t.context;
 
   const storeGranuleStub = sinon.stub(Pdr.prototype, 'storePdrFromCumulusMessage')
@@ -299,7 +299,7 @@ test('savePdrsToDb() throws an exception if storePdrFromCumulusMessage() throws 
   }
 });
 
-test.serial('sf-event-sqs-to-db-records handler sends message to DLQ when granule and pdr fail to write to database', async (t) => {
+test('sf-event-sqs-to-db-records handler sends message to DLQ when granule and pdr fail to write to database', async (t) => {
   const {
     cumulusMessage,
     executionModel,
