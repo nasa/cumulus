@@ -408,7 +408,7 @@ const loadCollection = async (params = {}) =>
  * @param {string} [postfix] - string to append to collection name
  * @param {string} [customFilePath]
  * @param {string} [duplicateHandling]
- * @returns {Promise<Array>} - collections that were added
+ * @returns {Promise<Object[]>} - collections that were added
  */
 async function addCollections(stackName, bucketName, dataDirectory, postfix,
   customFilePath, duplicateHandling) {
