@@ -1,7 +1,8 @@
 {
   "name": "@cumulus/s3-credentials-endpoint",
-  "private": true,
   "version": "1.24.0",
+  "description": "An API Gateway Lambda to return AWS credentials for fetching objects from S3",
+  "license": "Apache-2.0",
   "engines": {
     "node": ">=12.18.0"
   },
@@ -27,5 +28,6 @@
     "hsts": "^2.2.0",
     "morgan": "^1.9.1",
     "url-join": "^4.0.0"
-  }
+  },
+  "private": true
 }
