@@ -6,9 +6,13 @@
     "node": ">=12.18.0"
   },
   "scripts": {
-    "test": "../../node_modules/.bin/ava",
+    "clean": "rm -f ./*.js ./*.d.ts",
+    "debug": "NODE_ENV=test node --inspect-brk node_modules/ava/profile.js --serial tests/*.js",
+    "prepare": "npm run tsc",
     "test-coverage": "../../node_modules/.bin/nyc npm test",
-    "debug": "NODE_ENV=test node --inspect-brk node_modules/ava/profile.js --serial tests/*.js"
+    "test": "../../node_modules/.bin/ava",
+    "tsc": "../../node_modules/.bin/tsc",
+    "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'"
   },
   "ava": {
     "serial": true,
@@ -25,9 +29,11 @@
   "publishConfig": {
     "access": "public"
   },
+  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/cmrjs#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nasa/cumulus"
+    "url": "https://github.com/nasa/cumulus",
+    "directory": "packages/cmrjs"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",

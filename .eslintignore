@@ -12,5 +12,7 @@ website/**
 /packages/aws-client/*.d.ts
 /packages/aws-client/lib/*.js
 /packages/aws-client/lib/*.d.ts
+/packages/cmrjs/*.js
+/packages/cmrjs/*.d.ts
 /packages/common/*.js
 /packages/common/*.d.ts
