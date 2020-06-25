@@ -31,7 +31,8 @@ hide_title: true
 ```
 
 6. Scale Down
-You will need to scale down your AWS project instances.
+
+  You will need to scale down your AWS project instances.
 
 * In the AWS Console, click on the ECS cluster.
 * Click on the link for `Service Name`.
