@@ -31,6 +31,7 @@ const {
 } = require('../../lambdas/create-reconciliation-report');
 
 const models = require('../../models');
+const indexer = require('../../es/indexer');
 
 let esAlias;
 let esIndex;
@@ -92,6 +93,28 @@ function storeFilesToS3(files) {
     putObjectParams,
     (params) => awsServices.s3().putObject(params).promise(),
     { concurrency: 10 }
+  );
+}
+
+/**
+ * Convert a file object into a granule
+ * @param {Object} file - object with bucket, key and granuleId keys
+ * @returns {Object} - granule object for Elasticsearch indexing
+ */
+function fileToGranuleDoc(file) {
+  const { bucket, key, granuleId } = file;
+  return fakeGranuleFactoryV2({ granuleId, files: [{ bucket, key }] });
+}
+
+/**
+ * Index files to ES for testing.
+ *
+ * @param {Array<Object>} files - list of file objects with bucket, key and granuleId
+ */
+async function storeFilesToES(files) {
+  const granuleDocs = files.map(fileToGranuleDoc);
+  await Promise.all(
+    granuleDocs.map((granule) => indexer.indexGranule(esClient, granule, esAlias))
   );
 }
 
@@ -258,6 +281,7 @@ test.serial('A valid reconciliation report is generated when everything is in sy
   // Store the files to S3 and DynamoDB
   await Promise.all([
     storeFilesToS3(files),
+    storeFilesToES(files),
     GranuleFilesCache.batchUpdate({ puts: files })
   ]);
 
@@ -295,14 +319,14 @@ test.serial('A valid reconciliation report is generated when everything is in sy
   t.is(report.error, null);
   t.is(filesInCumulus.okCount, files.length);
   t.is(filesInCumulus.onlyInS3.length, 0);
-  t.is(filesInCumulus.onlyInDynamoDb.length, 0);
+  t.is(filesInCumulus.onlyInElasticsearch.length, 0);
   t.is(collectionsInCumulusCmr.okCount, matchingColls.length);
   t.is(collectionsInCumulusCmr.onlyInCumulus.length, 0);
   t.is(collectionsInCumulusCmr.onlyInCmr.length, 0);
 
-  const reportStartTime = moment(report.reportStartTime);
-  const reportEndTime = moment(report.reportEndTime);
-  t.true(reportStartTime <= reportEndTime);
+  const createStartTime = moment(report.createStartTime);
+  const createEndTime = moment(report.createEndTime);
+  t.true(createStartTime <= createEndTime);
 });
 
 test.serial('A valid reconciliation report is generated when there are extra S3 objects', async (t) => {
