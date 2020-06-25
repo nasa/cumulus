@@ -3,7 +3,7 @@ const rewire = require('rewire');
 
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { randomId } = require('@cumulus/common/test-utils');
-const { omit } = require('@cumulus/common/util');
+const omit = require('lodash/omit');
 
 const cmrUtils = rewire('../../cmr-utils');
 
@@ -12,7 +12,7 @@ const constructRelatedUrls = cmrUtils.__get__('constructRelatedUrls');
 const getS3CredentialsObject = cmrUtils.__get__('getS3CredentialsObject');
 const mapCNMTypeToCMRType = cmrUtils.__get__('mapCNMTypeToCMRType');
 
-const sortByURL = (a, b) => a.URL < b.URL;
+const sortByURL = (a, b) => (a.URL < b.URL ? -1 : 1);
 
 const distEndpoint = 'https://endpoint';
 const s3CredentialsEndpointObject = getS3CredentialsObject(`${distEndpoint}/s3credentials`);

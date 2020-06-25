@@ -1,0 +1,32 @@
+{
+  "title": "AddMissingFileChecksumsInput",
+  "description": "Describes the input expected by the add-missing-file-checksums task",
+  "type": "object",
+  "required": ["granules"],
+  "properties": {
+    "granules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["files"],
+        "properties": {
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["filename"],
+              "properties": {
+                "filename": {
+                  "type": "string",
+                  "description": "The s3:// URI of the file"
+                },
+                "checksumType": { "type": "string" },
+                "checksum": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

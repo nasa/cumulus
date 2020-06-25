@@ -3,7 +3,6 @@
 const pMap = require('p-map');
 const test = require('ava');
 const moment = require('moment');
-const { promisify } = require('util');
 const chunk = require('lodash/chunk');
 const flatten = require('lodash/flatten');
 const map = require('lodash/map');
@@ -34,7 +33,6 @@ const {
 const models = require('../../models');
 
 const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket }).promise();
-const promisifiedHandler = promisify(handler);
 
 function createDistributionBucketMapFromBuckets(buckets) {
   let bucketMap = {};
@@ -164,18 +162,20 @@ test.beforeEach(async (t) => {
   await new models.ReconciliationReport().createTable();
 
   sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => []);
-  sinon.stub(CMRSearchConceptQueue.prototype, 'peek').callsFake(() => null);
-  sinon.stub(CMRSearchConceptQueue.prototype, 'shift').callsFake(() => null);
+  sinon.stub(CMRSearchConceptQueue.prototype, 'peek').callsFake(() => undefined);
+  sinon.stub(CMRSearchConceptQueue.prototype, 'shift').callsFake(() => undefined);
 });
 
-test.afterEach.always((t) => {
-  Promise.all(flatten([
-    t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket),
-    new models.Collection().deleteTable(),
-    new models.Granule().deleteTable(),
-    GranuleFilesCache.deleteCacheTable(),
-    new models.ReconciliationReport().deleteTable()
-  ]));
+test.afterEach.always(async (t) => {
+  await Promise.all(
+    flatten([
+      t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket),
+      new models.Collection().deleteTable(),
+      new models.Granule().deleteTable(),
+      GranuleFilesCache.deleteCacheTable(),
+      new models.ReconciliationReport().deleteTable()
+    ])
+  );
   CMR.prototype.searchCollections.restore();
   CMRSearchConceptQueue.prototype.peek.restore();
   CMRSearchConceptQueue.prototype.shift.restore();
@@ -202,7 +202,7 @@ test.serial('A valid reconciliation report is generated for no buckets', async (
     stackName: t.context.stackName
   };
 
-  const reportRecord = await promisifiedHandler(event, {});
+  const reportRecord = await handler(event, {});
   t.is(reportRecord.status, 'Generated');
 
   const report = await fetchCompletedReport(reportRecord);
@@ -268,7 +268,7 @@ test.serial('A valid reconciliation report is generated when everything is in sy
     stackName: t.context.stackName
   };
 
-  const reportRecord = await promisifiedHandler(event, {});
+  const reportRecord = await handler(event);
   t.is(reportRecord.status, 'Generated');
 
   const report = await fetchCompletedReport(reportRecord);
@@ -320,7 +320,7 @@ test.serial('A valid reconciliation report is generated when there are extra S3 
     stackName: t.context.stackName
   };
 
-  const reportRecord = await promisifiedHandler(event, {});
+  const reportRecord = await handler(event);
   t.is(reportRecord.status, 'Generated');
 
   const report = await fetchCompletedReport(reportRecord);
@@ -382,7 +382,7 @@ test.serial('A valid reconciliation report is generated when there are extra Dyn
     stackName: t.context.stackName
   };
 
-  const reportRecord = await promisifiedHandler(event, {});
+  const reportRecord = await handler(event);
   t.is(reportRecord.status, 'Generated');
 
   const report = await fetchCompletedReport(reportRecord);
@@ -449,7 +449,7 @@ test.serial('A valid reconciliation report is generated when there are both extr
     stackName: t.context.stackName
   };
 
-  const reportRecord = await promisifiedHandler(event, {});
+  const reportRecord = await handler(event);
   t.is(reportRecord.status, 'Generated');
 
   const report = await fetchCompletedReport(reportRecord);
@@ -521,7 +521,7 @@ test.serial('A valid reconciliation report is generated when there are both extr
     stackName: t.context.stackName
   };
 
-  const reportRecord = await promisifiedHandler(event, {});
+  const reportRecord = await handler(event);
   t.is(reportRecord.status, 'Generated');
 
   const report = await fetchCompletedReport(reportRecord);
@@ -937,7 +937,7 @@ test.serial('When report creation fails, reconciliation report status is set to 
     stackName: t.context.stackName
   };
 
-  const reportRecord = await promisifiedHandler(event, {});
+  const reportRecord = await handler(event);
   t.is(reportRecord.status, 'Failed');
   t.truthy(reportRecord.error);
 });

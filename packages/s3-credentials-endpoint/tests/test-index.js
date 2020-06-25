@@ -1,19 +1,22 @@
 'use strict';
 
+const cryptoRandomString = require('crypto-random-string');
 const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
 const moment = require('moment');
 
 const awsServices = require('@cumulus/aws-client/services');
-const {
-  randomId
-} = require('@cumulus/common/test-utils');
 
-const EarthdataLoginClient = require('@cumulus/api/lib/EarthdataLogin');
+const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
 
 const models = require('@cumulus/api/models');
 const { fakeAccessTokenFactory } = require('@cumulus/api/lib/testUtils');
+
+const randomString = () => cryptoRandomString({ length: 6 });
+
+const randomId = (prefix, separator = '-') =>
+  [prefix, randomString()].filter((x) => x).join(separator);
 
 process.env.EARTHDATA_CLIENT_ID = randomId('edlID');
 process.env.EARTHDATA_CLIENT_PASSWORD = randomId('edlPW');

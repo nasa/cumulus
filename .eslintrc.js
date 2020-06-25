@@ -38,6 +38,7 @@ module.exports = {
     'jsdoc',
     'lodash',
     'node',
+    'promise',
     'unicorn'
   ],
   extends: [
@@ -47,6 +48,7 @@ module.exports = {
     'plugin:import/warnings',
     'plugin:lodash/recommended',
     'plugin:node/recommended',
+    'plugin:promise/recommended',
     'plugin:unicorn/recommended'
   ],
   parser: 'babel-eslint',
@@ -177,6 +179,7 @@ module.exports = {
         '@typescript-eslint/no-implied-eval': 'off',
         '@typescript-eslint/no-throw-literal': 'off',
         'comma-dangle': ['warn', 'never'],
+        'import/no-extraneous-dependencies': 'off',
         'import/prefer-default-export': 'off',
         'lines-between-class-members': 'off',
         'lodash/prefer-lodash-typecheck': 'off',
@@ -197,6 +200,7 @@ module.exports = {
       files: [
         '**/test/**/*.js',
         '**/tests/**/*.js',
+        '**/tests/**/*.ts',
         'example/spec/**/*.js'
       ],
       rules: {

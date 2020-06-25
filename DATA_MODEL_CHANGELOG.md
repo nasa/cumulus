@@ -7,10 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-- **CUMULUS-1417**
-  - Collection file configs have a new optional field: `checksumFor`.
-    This field expects a regex which matches that of a different file config.
-    It allows an operator to specify the target of a checksum file.
+### Added
+
+- **CUMULUS-2011**
+  - Added `Reconciliation Report` as an async operation `operationType`
 
 - **CUMULUS-1982**
   - `provider.globalConnectionLimit` is now optional
@@ -21,6 +21,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - `Bulk Granules`
     - `Bulk Granule Delete`
     - `Kinesis Replay`
+
+- **CUMULUS-1417**
+  - Collection file configs have a new optional field: `checksumFor`.
+    This field expects a regex which matches that of a different file config.
+    It allows an operator to specify the target of a checksum file.
 
 ## [v1.24.0] 2020-06-03
 

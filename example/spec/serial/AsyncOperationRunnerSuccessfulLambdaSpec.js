@@ -13,6 +13,7 @@ const { findAsyncOperationTaskDefinitionForDeployment } = require('../helpers/ec
 const { loadConfig } = require('../helpers/testUtils');
 
 describe('The AsyncOperation task runner executing a successful lambda function', () => {
+  let asyncOperation;
   let asyncOperationId;
   let asyncOperationModel;
   let asyncOperationsTableName;
@@ -20,7 +21,6 @@ describe('The AsyncOperation task runner executing a successful lambda function'
   let beforeAllFailed = false;
   let cluster;
   let config;
-  let dynamoDbItem;
   let payloadKey;
   let successFunctionName;
   let taskArn;
@@ -96,10 +96,10 @@ describe('The AsyncOperation task runner executing a successful lambda function'
         }
       ).promise();
 
-      dynamoDbItem = await waitForAsyncOperationStatus({
-        TableName: asyncOperationsTableName,
+      asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,
-        status: 'SUCCEEDED'
+        status: 'SUCCEEDED',
+        stackName: config.stackName
       });
     } catch (error) {
       beforeAllFailed = true;
@@ -107,23 +107,18 @@ describe('The AsyncOperation task runner executing a successful lambda function'
     }
   });
 
-  it('updates the status field in DynamoDB to "SUCCEEDED"', async () => {
+  it('updates the status field to "SUCCEEDED"', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
-    else expect(dynamoDbItem.status.S).toEqual('SUCCEEDED');
+    else expect(asyncOperation.status).toEqual('SUCCEEDED');
   });
 
   it('updates the output field in DynamoDB', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      const parsedOutput = JSON.parse(dynamoDbItem.output.S);
+      const parsedOutput = JSON.parse(asyncOperation.output);
 
       expect(parsedOutput).toEqual([1, 2, 3]);
     }
-  });
-
-  it('updates the updatedAt field in DynamoDB', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
-    else expect(dynamoDbItem.updatedAt.N).toBeGreaterThan(dynamoDbItem.createdAt.N);
   });
 
   afterAll(() => s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise());

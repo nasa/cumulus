@@ -135,7 +135,7 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
   function_name    = "${var.prefix}-sfEventSqsToDbRecords"
   role             = aws_iam_role.sf_event_sqs_to_db_records_lambda.arn
   handler          = "index.handler"
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs12.x"
   timeout          = local.sf_event_sqs_lambda_timeout
   memory_size      = 256
 

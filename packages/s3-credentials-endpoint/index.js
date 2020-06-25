@@ -6,7 +6,10 @@ const boom = require('express-boom');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const distributionRouter = require('express-promise-router')();
-const EarthdataLogin = require('@cumulus/api/lib/EarthdataLogin');
+const {
+  EarthdataLoginClient,
+  EarthdataLoginError
+} = require('@cumulus/earthdata-login-client');
 const express = require('express');
 const hsts = require('hsts');
 const Logger = require('@cumulus/logger');
@@ -17,14 +20,15 @@ const { AccessToken } = require('@cumulus/api/models');
 const { isLocalApi } = require('@cumulus/api/lib/testUtils');
 const { isAccessTokenExpired } = require('@cumulus/api/lib/token');
 const awsServices = require('@cumulus/aws-client/services');
-const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { EarthdataLoginError } = require('@cumulus/api/lib/errors');
 
 const log = new Logger({ sender: 's3credentials' });
 
 const buildEarthdataLoginClient = () =>
-  EarthdataLogin.createFromEnv({
+  new EarthdataLoginClient({
+    clientId: process.env.EARTHDATA_CLIENT_ID,
+    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
+    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT
   });
 
@@ -215,7 +219,7 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   // Skip authentication for debugging purposes.
   // TODO Really should remove this
   if (process.env.FAKE_AUTH) {
-    req.authorizedMetadata = { userName: randomId('username') };
+    req.authorizedMetadata = { userName: 'fake-auth-username' };
     return next();
   }
 

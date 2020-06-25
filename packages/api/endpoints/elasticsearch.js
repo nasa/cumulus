@@ -163,17 +163,22 @@ async function changeIndex(req, res) {
     return res.boom.badRequest(`New index ${newIndex} does not exist.`);
   }
 
-  await esClient.indices.updateAliases({
-    body: {
-      actions: [
-        { remove: { index: currentIndex, alias: aliasName } },
-        { add: { index: newIndex, alias: aliasName } }
-      ]
-    }
-  }).then(() => {
+  try {
+    await esClient.indices.updateAliases({
+      body: {
+        actions: [
+          { remove: { index: currentIndex, alias: aliasName } },
+          { add: { index: newIndex, alias: aliasName } }
+        ]
+      }
+    });
+
     log.info(`Removed alias ${aliasName} from index ${currentIndex} and added alias to ${newIndex}`);
-  }).catch((error) =>
-    res.boom.badRequest(`Error removing alias ${aliasName} from index ${currentIndex} and adding alias to ${newIndex}: ${error}`));
+  } catch (error) {
+    return res.boom.badRequest(
+      `Error removing alias ${aliasName} from index ${currentIndex} and adding alias to ${newIndex}: ${error}`
+    );
+  }
 
   let message = `Change index success - alias ${aliasName} now pointing to ${newIndex}`;
 

@@ -867,10 +867,14 @@ test.serial('download multiple granules from S3 provider to staging directory', 
           output.granules[i].files[j].filename,
           `s3://${t.context.internalBucketName}/${keypath}/${granuleFileName}`
         );
-        s3ObjectExists({
-          Bucket: t.context.internalBucketName,
-          Key: `${keypath}/${granuleFileName}`
-        }).then((outcome) => t.is(outcome, true));
+
+        t.true(
+          // eslint-disable-next-line no-await-in-loop
+          await s3ObjectExists({
+            Bucket: t.context.internalBucketName,
+            Key: `${keypath}/${granuleFileName}`
+          })
+        );
       }
     }
   } finally {
