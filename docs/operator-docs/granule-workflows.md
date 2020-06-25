@@ -18,12 +18,12 @@ hide_title: true
 * Open another tab in your browser and go to your Earthdata Git repository URL or where your collection data files are located.
 * Open the collection configuration .json file that you will copy to the Cumulus dashboard.
 * In the Cumulus dashboard, add a new collection with an attached rule.
-  - Go to the 'Collections' page and then click on `Add Collection`.
+  - Go to the `Collections` page and then click on `Add Collection`.
   ![Screenshot of Collections Page](assets/cd_collections_page.png)
   - Cut and paste the collection in the template between the `{}` lines.
   ![Screenshot of a Collection template for adding a new collection](assets/cd_collection.png)
   - Click `Save` to create the new collection.
-  - Go to the 'Rules' page and then click on `Add Rule`.
+  - Go to the `Rules` page and then click on `Add Rule`.
   ![Screenshot of Rules page](assets/cd_rules_page.png)
   - Fill out the template form. If you need details on the fields and how to complete a rule form go to [Create Rule In Cumulus]()
   ![Screenshot of a Rules template for adding a new rule](assets/cd_add_rule.png)
@@ -42,20 +42,20 @@ hide_title: true
 ### Failed Granule
 
 1. Delete from CMR
-* Review the granule by the Collection ID
+* Review the granule by the `Collection ID`.
 
 2. Select Failed Granule
 * In the Cumulus dashboard, go to the `Collections` page.
-* Use search to find the granule.
+* Use search field to find the granule.
 
-2. Re-ingest Granule
-* Go to the 'Collections' page
+3. Re-ingest Granule
+* Go to the `Collections` page.
 * Click on `Reingest` and a modal will pop up for your confirmation.
 
 ### Multiple Failed Granules
 
 1. Delete from CMR
-* Review the granules by the Collection ID.
+* Review the granules by the `Collection ID`.
 
 2. Select Failed Granules
 
@@ -63,5 +63,5 @@ hide_title: true
 * Click on `Failed Granules`.
 * Select multiple granules.
 
-2. Bulk Re-ingest Granules
+3. Bulk Re-ingest Granules
 * Click on `Reingest` and a modal will pop up for your confirmation.
