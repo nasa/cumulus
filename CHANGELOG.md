@@ -6,15 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Added
-
-- **CUMULUS-1902**
-  - Added Common Use Cases section under Operator Docs
-- **CUMULUS-1956**
-  - Added `@cumulus/earthata-login-client` package
-- **CUMULUS-2019**
-  - Add `infix` search to es query builder `@cumulus/api/es/es/queries` to support partial matching of the keywords
-
 ### BREAKING CHANGES
 
 - Changes to `@cumulus/aws-client/S3`
@@ -46,6 +37,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-1902**
+  - Add Common Use Cases section under Operator Docs
+- **CUMULUS-1956**
+  - Added `@cumulus/earthata-login-client` package
 - **CUMULUS-1958**
   - Add the ability for users to specify a `bucket_map_key` to the `cumulus`
     terraform module as an override for the default .yaml values that are passed
@@ -59,6 +54,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     protected/public buckets and generate a mapping configuration used
     internally by Core.  This object is also exposed as an output of the Cumulus
     module as `distribution_bucket_map`.
+- **CUMULUS-1970**
+  - Created the `add-missing-file-checksums` workflow task
+  - Added `@cumulus/aws-client/S3.calculateObjectHash()` function
+  - Added `@cumulus/aws-client/S3.getObjectReadStream()` function
+- **CUMULUS-2019**
+  - Add `infix` search to es query builder `@cumulus/api/es/es/queries` to support partial matching of the keywords
 
 ### Changed
 
