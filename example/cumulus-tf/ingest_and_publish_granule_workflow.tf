@@ -50,7 +50,7 @@ module "ingest_and_publish_granule_workflow" {
       },
       "Type": "Task",
       "Resource": "${module.cumulus.sync_granule_task.task_arn}",
-      "Next": "ChooseProcess",
+      "Next": "AddMissingFileChecksums",
       "Catch": [
         {
           "ErrorEquals": [
@@ -67,6 +67,45 @@ module "ingest_and_publish_granule_workflow" {
           ],
           "IntervalSeconds": 2,
           "MaxAttempts": 3
+        }
+      ]
+    },
+    "AddMissingFileChecksums": {
+      "Type": "Task",
+      "Resource": "${module.cumulus.add_missing_file_checksums_task.task_arn}",
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "Path": "$.payload",
+            "TargetPath": "$.payload"
+          },
+          "task_config": {
+            "algorithm": "md5",
+            "cumulus_message": {
+              "input": "{$.payload}",
+              "outputs": [
+                {
+                  "source": "{$.granules}",
+                  "destination": "{$.meta.input_granules}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Next": "ChooseProcess",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "WorkflowFailed",
+          "ResultPath": "$.exception"
         }
       ]
     },
