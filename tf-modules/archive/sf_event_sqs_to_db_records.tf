@@ -60,6 +60,16 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
     resources = [for b in flatten([var.public_buckets, var.protected_buckets, var.private_buckets, var.system_bucket]) : "arn:aws:s3:::${b}/*"]
   }
 
+  statement {
+    actions = [
+      "sqs:GetQueueUrl",
+      "sqs:GetQueueAttributes",
+      "sqs:SendMessage",
+    ]
+    resources = ["arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.prefix}-*"]
+  }
+
+
   # Required for DLQ
   statement {
     actions = ["sqs:SendMessage"]
@@ -129,6 +139,10 @@ resource "aws_sqs_queue" "sf_event_sqs_to_db_records_dead_letter_queue" {
   tags                       = var.tags
 }
 
+data "aws_sqs_queue" "sf_event_sqs_to_db_records_dead_letter_queue" {
+  name = "${var.prefix}-sfEventSqsToDbRecordsDeadLetterQueue"
+}
+
 resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
   filename         = "${path.module}/../../packages/api/dist/sfEventSqsToDbRecords/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/sfEventSqsToDbRecords/lambda.zip")
@@ -145,9 +159,10 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
 
   environment {
     variables = {
-      ExecutionsTable = var.dynamo_tables.executions.name
-      GranulesTable   = var.dynamo_tables.granules.name
-      PdrsTable       = var.dynamo_tables.pdrs.name
+      ExecutionsTable      = var.dynamo_tables.executions.name
+      GranulesTable        = var.dynamo_tables.granules.name
+      PdrsTable            = var.dynamo_tables.pdrs.name
+      DeadLetterQueue      = data.aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.url
     }
   }
 

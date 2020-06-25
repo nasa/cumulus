@@ -1,7 +1,7 @@
 'use strict';
 
 const get = require('lodash/get');
-const { parseSQSMessageBody } = require('@cumulus/aws-client/SQS');
+const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 const log = require('@cumulus/common/log');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
 const Execution = require('../models/executions');
@@ -16,6 +16,7 @@ const saveExecutionToDb = async (cumulusMessage) => {
   } catch (error) {
     const executionArn = getMessageExecutionArn(cumulusMessage);
     log.fatal(`Failed to create/update database record for execution ${executionArn}: ${error.message}`);
+    throw error;
   }
 };
 
@@ -26,6 +27,7 @@ const savePdrToDb = async (cumulusMessage) => {
   } catch (error) {
     const executionArn = getMessageExecutionArn(cumulusMessage);
     log.fatal(`Failed to create/update PDR database record for execution ${executionArn}: ${error.message}`);
+    throw error;
   }
 };
 
@@ -37,21 +39,26 @@ const saveGranulesToDb = async (cumulusMessage) => {
   } catch (error) {
     const executionArn = getMessageExecutionArn(cumulusMessage);
     log.fatal(`Failed to create/update granule records for execution ${executionArn}: ${error.message}`);
+    throw error;
   }
 };
 
 const handler = async (event) => {
   const sqsMessages = get(event, 'Records', []);
 
-  return Promise.all(sqsMessages.map(async (message) => {
+  return Promise.allSettled(sqsMessages.map(async (message) => {
     const executionEvent = parseSQSMessageBody(message);
     const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
-
-    return Promise.all([
+    const results = await Promise.allSettled([
       saveExecutionToDb(cumulusMessage),
       saveGranulesToDb(cumulusMessage),
       savePdrToDb(cumulusMessage)
     ]);
+    if (results.some((result) => result.status === 'rejected')) {
+      log.fatal(`Writing message failed: ${JSON.stringify(message)}`);
+      return sendSQSMessage(process.env.DeadLetterQueue, message);
+    }
+    return results;
   }));
 };
 
