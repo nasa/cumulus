@@ -99,6 +99,8 @@
     "Common Use Cases": [
       "operator-docs/common-use-cases",
       "operator-docs/aws-long-term-access-key",
+      "operator-docs/kinesis-stream-for-ingest",
+      "operator-docs/create-rule-in-cumulus",
       "operator-docs/granule-workflows",
       "operator-docs/run-a-stress-test"
     ]

@@ -25,13 +25,13 @@ hide_title: true
   - Click `Save` to create the new collection.
   - Go to the 'Rules' page and then click on `Add Rule`.
   ![Screenshot of Rules page](assets/cd_rules_page.png)
-  - Fill out the template form.
+  - Fill out the template form. If you need details on the fields and how to complete a rule form go to [Create Rule In Cumulus]()
   ![Screenshot of a Rules template for adding a new rule](assets/cd_add_rule.png)
   - Click `Save` to create the new rule.
 
 
 3. Bulk Ingest Granules
-* Go to the 'Granules' page
+* Go to the 'Collections' page
 * Click on `Run Bulk Granules` and a modal will pop up. Select `Run Bulk Operations` button on the right.
 ![Screenshot of Run Bulk Granules](assets/cd_run_bulk_modal.png)
 * Complete the form
@@ -39,20 +39,29 @@ hide_title: true
 * Go to the 'Executions' page to view the status of the ingested granules.
 ![Screenshot of Executions Page](assets/cd_executions_page.png)
 
-
-
 ### Failed Granule
 
 1. Delete from CMR
+* Review the granule by the Collection ID
+
+2. Select Failed Granule
+* In the Cumulus dashboard, go to the `Collections` page.
+* Use search to find the granule.
 
 2. Re-ingest Granule
+* Go to the 'Collections' page
+* Click on `Reingest` and a modal will pop up for your confirmation.
 
 ### Multiple Failed Granules
 
-1. Select Failed Granules
+1. Delete from CMR
+* Review the granules by the Collection ID
 
-* In the Cumulus dashboard, go to the Collections page.
-* Click on 'Failed Granules'.
+2. Select Failed Granules
+
+* In the Cumulus dashboard, go to the `Collections` page.
+* Click on `Failed Granules`.
 * Select multiple granules.
 
 2. Bulk Re-ingest Granules
+* Click on `Reingest` and a modal will pop up for your confirmation.

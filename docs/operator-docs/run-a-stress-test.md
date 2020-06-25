@@ -34,10 +34,10 @@ hide_title: true
 You will need to scale down your AWS project instances.
 
 * In the AWS Console, click on the ECS cluster.
-* Click on the link for 'Service Name'.
-* Click on 'Tasks' tab to see your list of running instances.
+* Click on the link for `Service Name`.
+* Click on `Tasks` tab to see your list of running instances.
 * In the top corner, click on 'Update' and this will show you the number os set tasks
 * Change number of tasks (your integrator may advise you on what that number should be).
-* Click on 'Next Step'.
+* Click on `Next Step`.
 * Then click on
 * Please wait for the instances to drop down to the number you had set.
