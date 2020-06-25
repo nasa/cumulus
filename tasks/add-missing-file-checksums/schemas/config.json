@@ -1,0 +1,12 @@
+{
+  "title": "AddMissingFileChecksumsConfig",
+  "description": "Describes the config used by the add-missing-file-checksums task",
+  "type": "object",
+  "required": ["algorithm"],
+  "properties": {
+    "algorithm": {
+      "type": "string",
+      "description": "The algorithm to use for checksums"
+    }
+  }
+}

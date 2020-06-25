@@ -48,6 +48,10 @@ output "report_pdrs_sns_topic_arn" {
 
 # Cumulus core task outputs
 
+output "add_missing_file_checksums_task" {
+  value = module.ingest.add_missing_file_checksums_task
+}
+
 output "discover_granules_task" {
   value = module.ingest.discover_granules_task
 }

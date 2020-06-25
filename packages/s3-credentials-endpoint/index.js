@@ -20,7 +20,6 @@ const { AccessToken } = require('@cumulus/api/models');
 const { isLocalApi } = require('@cumulus/api/lib/testUtils');
 const { isAccessTokenExpired } = require('@cumulus/api/lib/token');
 const awsServices = require('@cumulus/aws-client/services');
-const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const log = new Logger({ sender: 's3credentials' });
@@ -220,7 +219,7 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   // Skip authentication for debugging purposes.
   // TODO Really should remove this
   if (process.env.FAKE_AUTH) {
-    req.authorizedMetadata = { userName: randomId('username') };
+    req.authorizedMetadata = { userName: 'fake-auth-username' };
     return next();
   }
 
