@@ -4,7 +4,6 @@ const fs = require('fs-extra');
 const test = require('ava');
 const rewire = require('rewire');
 
-
 const esFileSearchQueue = rewire('../../es/esFileSearchQueue');
 
 const buildFilesResponse = esFileSearchQueue.__get__('buildFilesResponse');

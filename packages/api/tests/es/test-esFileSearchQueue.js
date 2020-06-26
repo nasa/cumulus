@@ -2,15 +2,21 @@
 
 const test = require('ava');
 const sinon = require('sinon');
+const rewire = require('rewire');
 const range = require('lodash/range');
 const { randomId } = require('@cumulus/common/test-utils');
 const indexer = require('../../es/indexer');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
-const { ESFileSearchQueue } = require('../../es/esFileSearchQueue');
+const esFileSearchQueue = rewire('../../es/esFileSearchQueue');
 const { Search } = require('../../es/search');
 
+let esObject = { };
+esFileSearchQueue.__set__('Search', { es: () => Promise.resolve(esObject) });
+const ESFileSearchQueue = esFileSearchQueue.__get__('ESFileSearchQueue');
+
 const sandbox = sinon.createSandbox();
+
 test.beforeEach(async (t) => {
   t.context.esAlias = randomId('esalias');
   t.context.esIndex = randomId('esindex');
@@ -21,6 +27,8 @@ test.beforeEach(async (t) => {
     t.context.esAlias
   );
   t.context.esClient = await Search.es();
+  t.context.esClientSpy = sinon.spy(t.context.esClient, 'scroll');
+  esObject = t.context.esClient;
 });
 
 test.afterEach.always(async (t) => {
@@ -74,7 +82,7 @@ test.serial(
 test.serial(
   'esFileSearchQueue.shift() returns the next item and removes it from the queue.',
   async (t) => {
-    let grans = await granuleFactory(2, { bucket: randomId('mebucket') });
+    let grans = await granuleFactory(2, { bucket: randomId('bucket2') });
     await loadGranules(grans, t);
 
     grans = grans.sort(sortByFileKey);
@@ -103,7 +111,7 @@ test.serial('esFileSearchQueue can handle paging.', async (t) => {
   const pageLengh = 3;
   process.env.ES_SCROLL_SIZE = pageLengh;
   const numGrans = 13;
-  let grans = await granuleFactory(numGrans, { bucket: randomId('mebucket') });
+  let grans = await granuleFactory(numGrans, { bucket: randomId('bucket2') });
   await loadGranules(grans, t);
 
   grans = grans.sort(sortByFileKey);
@@ -115,6 +123,8 @@ test.serial('esFileSearchQueue can handle paging.', async (t) => {
 
   const fetched = [];
 
+  t.false(t.context.esClientSpy.called);
+
   /* eslint-disable no-await-in-loop */
   while (await sq.peek()) {
     fetched.push(await sq.shift());
@@ -122,6 +132,7 @@ test.serial('esFileSearchQueue can handle paging.', async (t) => {
   /* eslint-enable no-await-in-loop */
 
   t.true(spiedSq.getCalls().length >= numGrans / pageLengh);
+  t.true(t.context.esClientSpy.called);
   t.is(fetched.length, numGrans);
   delete process.env.ES_SCROLL_SIZE;
 });
