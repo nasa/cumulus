@@ -100,7 +100,6 @@ async function deleteReport(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function createReport(req, res) {
-
   const startTimestamp = req.body.startTimestamp || undefined;
   const endTimestamp = req.body.endTimestamp || undefined;
   const payload = { startTimestamp, endTimestamp };

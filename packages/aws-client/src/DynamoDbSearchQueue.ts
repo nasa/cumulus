@@ -21,7 +21,7 @@ class DynamoDbSearchQueue {
    * View the next item in the queue
    *
    * This does not remove the object from the queue.  When there are no more
-   * items in the queue, returns 'undefined'.
+   * items in the queue, returns 'null'.
    *
    * @returns {Promise<Object>} an item from the DynamoDB table
    */
@@ -33,7 +33,7 @@ class DynamoDbSearchQueue {
   /**
    * Remove the next item from the queue
    *
-   * When there are no more items in the queue, returns 'undefined'.
+   * When there are no more items in the queue, returns 'null'.
    *
    * @returns {Promise<Object>} an item from the DynamoDB table
    */

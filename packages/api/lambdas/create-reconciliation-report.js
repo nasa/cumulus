@@ -572,6 +572,5 @@ async function handler(event) {
     startTimestamp: event.startTimestamp || null,
     endTimestamp: event.endTimestamp || null
   });
-
 }
 exports.handler = handler;
