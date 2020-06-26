@@ -192,7 +192,8 @@ const handleTokenAuthRequest = async (req, res, next) => {
   try {
     const userName = await earthdataLoginClient.getTokenUsername({
       onBehalfOf: req.get('EDL-Client-Id'),
-      token: req.get('EDL-Token')
+      token: req.get('EDL-Token'),
+      xRequestId: req.get('X-Request-Id')
     });
 
     req.authorizedMetadata = { userName };

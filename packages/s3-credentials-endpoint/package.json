@@ -11,6 +11,9 @@
     "package": "npm run build",
     "test": "../../node_modules/.bin/ava"
   },
+  "ava": {
+    "timeout": "15m"
+  },
   "dependencies": {
     "@cumulus/api": "1.24.0",
     "@cumulus/aws-client": "1.24.0",
