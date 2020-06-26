@@ -30,6 +30,7 @@ const {
   moveGranuleFiles
 } = require('@cumulus/ingest/granule');
 
+const StepFunctionUtils = require('../lib/StepFunctionUtils');
 const Manager = require('./base');
 
 const FileUtils = require('../lib/FileUtils');
@@ -462,7 +463,7 @@ class Granule extends Manager {
     }
 
     const executionArn = getMessageExecutionArn(cumulusMessage);
-    const executionUrl = StepFunctions.getExecutionUrl(executionArn);
+    const executionUrl = StepFunctionUtils.getExecutionUrl(executionArn);
 
     let executionDescription;
     try {
