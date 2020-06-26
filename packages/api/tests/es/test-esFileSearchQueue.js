@@ -133,6 +133,8 @@ test.serial('esFileSearchQueue can handle paging.', async (t) => {
 
   t.true(spiedSq.getCalls().length >= numGrans / pageLengh);
   t.true(t.context.esClientSpy.called);
+  t.true(t.context.esClientSpy.calledWithMatch(sinon.match.has('scrollId')));
+  t.true(t.context.esClientSpy.calledWithMatch({ scroll: '30s' }));
   t.is(fetched.length, numGrans);
   delete process.env.ES_SCROLL_SIZE;
 });
