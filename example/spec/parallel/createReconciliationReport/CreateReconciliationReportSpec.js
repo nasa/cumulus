@@ -252,7 +252,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
   it('generates a report showing cumulus files that are in the DynamoDB Files table but not in S3', () => {
     const extraFileUri = buildS3Uri(extraFileInDb.bucket, extraFileInDb.key);
-    const extraDbUris = report.filesInCumulus.onlyInDynamoDb.map((i) => i.uri);
+    const extraDbUris = report.filesInCumulus.onlyInElasticsearch.map((i) => i.uri);
     expect(extraDbUris).toContain(extraFileUri);
   });
 
