@@ -4,7 +4,7 @@ import { ThrottlingException } from '@cumulus/errors';
 export const inTestMode = () => process.env.NODE_ENV === 'test';
 
 // From https://github.com/localstack/localstack/blob/master/README.md
-const localStackPorts: { [key: string ]: number } = {
+const localStackPorts = {
   stepfunctions: 4585,
   apigateway: 4567,
   cloudformation: 4581,
@@ -50,7 +50,7 @@ function localstackSupportedService(serviceIdentifier: string) {
  *
  * @private
  */
-export function getLocalstackEndpoint(identifier: string) {
+export function getLocalstackEndpoint(identifier: keyof typeof localStackPorts) {
   const key = `LOCAL_${identifier.toUpperCase()}_HOST`;
   if (process.env[key]) {
     return `http://${process.env[key]}:${localStackPorts[identifier]}`;
