@@ -1,5 +1,13 @@
 #!/bin/sh
 
+
+# Notes
+#
+# - Alireza's explicitly added here because his git commits used "scisco" rather
+#   than his full name
+# - The `egrep -v` toward the end is handling mispellings and double-listed
+#   contributors.
+
 cat > CONTRIBUTORS.md <<EOS
 # Cumulus Contributors
 
