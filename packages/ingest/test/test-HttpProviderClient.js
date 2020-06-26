@@ -44,9 +44,11 @@ test('sync() downloads remote file to s3 with correct content-type', async (t) =
   const expectedContentType = 'application/x-hdf';
   try {
     await s3().createBucket({ Bucket: bucket }).promise();
-    await t.context.httpProviderClient.sync(
+    const { s3uri, etag } = await t.context.httpProviderClient.sync(
       '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf', bucket, key
     );
+    t.truthy(s3uri, 'Missing s3uri');
+    t.truthy(etag, 'Missing etag');
     t.truthy(fileExists(bucket, key));
     const sum = await calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket, key });
     t.is(sum, 1435712144);

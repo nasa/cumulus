@@ -64,11 +64,13 @@ class S3ProviderClient {
    * @param {string} sourceKey - the full path to the remote file to be fetched
    * @param {string} destinationBucket - destination s3 bucket of the file
    * @param {string} destinationKey - destination s3 key of the file
-   * @returns {Promise<string>} s3 uri of destination file
+   * @returns {Promise.<{ s3uri, etag }>} promise resolving to an object
+   *   containing the s3 uri and etag of the destination file
    */
   async sync(sourceKey, destinationBucket, destinationKey) {
     try {
-      await S3.multipartCopyObject({
+      const s3uri = S3.buildS3Uri(destinationBucket, destinationKey);
+      const { ETag: etag } = await S3.multipartCopyObject({
         sourceBucket: this.bucket,
         sourceKey,
         destinationBucket,
@@ -76,6 +78,8 @@ class S3ProviderClient {
         ACL: 'private',
         copyTags: true
       });
+
+      return { s3uri, etag };
     } catch (error) {
       if (error.code === 'NotFound' || error.code === 'NoSuchKey') {
         const sourceUrl = S3.buildS3Uri(this.bucket, sourceKey);
@@ -84,8 +88,6 @@ class S3ProviderClient {
 
       throw error;
     }
-
-    return S3.buildS3Uri(destinationBucket, destinationKey);
   }
 }
 

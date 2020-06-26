@@ -6,7 +6,7 @@ const { PassThrough } = require('stream');
 const log = require('@cumulus/common/log');
 const omit = require('lodash/omit');
 const S3 = require('@cumulus/aws-client/S3');
-const { isNil } = require('@cumulus/common/util');
+const isNil = require('lodash/isNil');
 const recursion = require('./recursion');
 const { lookupMimeType, decrypt } = require('./util');
 
@@ -156,7 +156,8 @@ class FtpProviderClient {
    * @param {string} remotePath - the full path to the remote file to be fetched
    * @param {string} bucket - destination s3 bucket of the file
    * @param {string} key - destination s3 key of the file
-   * @returns {Promise} s3 uri of destination file
+   * @returns {Promise.<{ s3uri: string, etag: string }>} promise resolving to
+   *   an object containing the s3 uri and etag of the destination file
    */
   async sync(remotePath, bucket, key) {
     const remoteUrl = `ftp://${this.host}/${remotePath}`;
@@ -184,11 +185,11 @@ class FtpProviderClient {
       Body: pass,
       ContentType: lookupMimeType(key)
     };
-    await S3.promiseS3Upload(params);
+    const { ETag: etag } = await S3.promiseS3Upload(params);
     log.info('Uploading to s3 is complete(ftp)', s3uri);
 
     client.destroy();
-    return s3uri;
+    return { s3uri, etag };
   }
 }
 

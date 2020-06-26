@@ -116,7 +116,7 @@ class HttpProviderClient {
           const trimmedLine = line.trim();
           let match = matchLinksPattern.exec(trimmedLine);
 
-          while (match != null) {
+          while (match !== null) {
             const linkTarget = match[1];
             // Remove the path and leading slashes from the filename.
             const name = linkTarget
@@ -201,7 +201,8 @@ class HttpProviderClient {
    * @param {string} remotePath - the full path to the remote file to be fetched
    * @param {string} bucket - destination s3 bucket of the file
    * @param {string} key - destination s3 key of the file
-   * @returns {Promise} s3 uri of destination file
+   * @returns {Promise.<{ s3uri, etag }>} promise resolving to an object
+   *    containing the s3 uri and etag of the destination file
    */
   async sync(remotePath, bucket, key) {
     validateHost(this.host);
@@ -228,7 +229,7 @@ class HttpProviderClient {
 
     const pass = new PassThrough();
     got.stream(remoteUrl, this.gotOptions).pipe(pass);
-    await promiseS3Upload({
+    const { ETag: etag } = await promiseS3Upload({
       Bucket: bucket,
       Key: key,
       Body: pass,
@@ -236,7 +237,7 @@ class HttpProviderClient {
     });
 
     log.info('Uploading to s3 is complete (http)', s3uri);
-    return s3uri;
+    return { s3uri, etag };
   }
 }
 

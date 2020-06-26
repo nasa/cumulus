@@ -6,7 +6,7 @@ const log = require('@cumulus/common/log');
 const omit = require('lodash/omit');
 const S3 = require('@cumulus/aws-client/S3');
 const SftpClient = require('@cumulus/sftp-client');
-const { isNil } = require('@cumulus/common/util');
+const isNil = require('lodash/isNil');
 const recursion = require('./recursion');
 const { decrypt } = require('./util');
 
@@ -121,7 +121,8 @@ class SftpProviderClient {
    * @param {string} remotePath - the full path to the remote file to be fetched
    * @param {string} bucket - destination s3 bucket of the file
    * @param {string} key - destination s3 key of the file
-   * @returns {Promise} s3 uri of destination file
+   * @returns {Promise.<{ s3uri, etag }>} promise resolving to an object
+   *   containing the s3 uri and etag of the destination file
    */
   async sync(remotePath, bucket, key) {
     const sftpClient = await this.getSftpClient();
