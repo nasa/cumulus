@@ -60,6 +60,13 @@ Add a link reference for the github "compare" view at the bottom of the CHANGELO
 
 Similar to #4, make sure the DATA_MODEL_CHANGELOG is updated if there are data model changes in the release, and the link reference at the end of the document is updated as appropriate.
 
+### 5. Update CONTRIBUTORS.md
+
+```bash
+./bin/update-contributors.sh
+git add CONTRIBUTORS.md
+```
+
 ### 6. Update Cumulus package API documentation
 
 Update auto-generated API documentation for any Cumulus packages that have it:
