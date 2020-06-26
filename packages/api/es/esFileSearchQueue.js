@@ -15,8 +15,8 @@ const logAndToss = (error) => {
 };
 
 /**
- * Returns a function that returns truthyness of an object having a key:bucket
- * that matches the input bucket string.
+ * Returns a function that returns truthyness value that an object has a key:bucket
+ * that matches the input `bucket`.
  *
  * @param {string} bucket - bucket to build a filter for.
  * @returns {Function} - filter function

@@ -40,8 +40,7 @@ const granuleFactory = (number = 1, opts) =>
 const loadGranules = async (granules, t) => {
   await Promise.all(
     granules.map((g) =>
-      indexer.indexGranule(t.context.esClient, g, t.context.esAlias)
-    )
+      indexer.indexGranule(t.context.esClient, g, t.context.esAlias))
   );
 };
 
@@ -62,7 +61,7 @@ test.serial(
 
     const expected = {
       granuleId: grans[0].granuleId,
-      ...grans[0].files[0],
+      ...grans[0].files[0]
     };
 
     const sq = new ESFileSearchQueue({ bucket: targetBucket });
@@ -81,11 +80,11 @@ test.serial(
     grans = grans.sort(sortByFileKey);
     const expected0 = {
       granuleId: grans[0].granuleId,
-      ...grans[0].files[0],
+      ...grans[0].files[0]
     };
     const expected1 = {
       granuleId: grans[1].granuleId,
-      ...grans[1].files[0],
+      ...grans[1].files[0]
     };
 
     const bucket = grans[0].files[0].bucket;
