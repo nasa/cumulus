@@ -8,6 +8,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- Changes to the `@cumulus/cmrjs` package
+  - `@cumulus/cmrjs.constructOnlineAccessUrl()` and
+    `@cumulus/cmrjs/cmr-utils.constructOnlineAccessUrl()` previously took a
+    `buckets` parameter, which was an instance of
+    `@cumulus/common/BucketsConfig`. They now take a `bucketTypes` parameter,
+    which is a simple object mapping bucket names to bucket types. Example:
+    `{ 'private-1': 'private', 'public-1': 'public' }`
+  - `@cumulus/cmrjs.reconcileCMRMetadata()` and
+    `@cumulus/cmrjs/cmr-utils.reconcileCMRMetadata()` now take a **required**
+    `bucketTypes` parameter, which is a simple object mapping bucket names to
+    bucket types. Example: `{ 'private-1': 'private', 'public-1': 'public' }`
+  - `@cumulus/cmrjs.updateCMRMetadata()` and
+    `@cumulus/cmrjs/cmr-utils.updateCMRMetadata()` previously took an optional
+    `inBuckets` parameter, which was an instance of
+    `@cumulus/common/BucketsConfig`. They now take a **required** `bucketTypes`
+    parameter, which is a simple object mapping bucket names to bucket types.
+    Example: `{ 'private-1': 'private', 'public-1': 'public' }`
 - The minimum supported version of all published Cumulus packages is now Node
   12.18.0
   - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to
