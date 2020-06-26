@@ -63,8 +63,8 @@ Similar to #4, make sure the DATA_MODEL_CHANGELOG is updated if there are data m
 ### 5. Update CONTRIBUTORS.md
 
 ```bash
-$ ./bin/update-contributors.sh
-$ git add CONTRIBUTORS.md
+./bin/update-contributors.sh
+git add CONTRIBUTORS.md
 ```
 
 ### 6. Update Cumulus package API documentation
