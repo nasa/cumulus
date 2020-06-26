@@ -53,6 +53,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     a request contains the `EDL-ClientId` and `EDL-Token` headers,
     authentication will be handled using that token rather than attempting to
     use OAuth.
+  - `@cumulus/earthata-login-client.getTokenUsername()` now accepts an
+    `xRequestId` argument, which will be included as the `X-Request-Id` header
+    when calling Earthdata Login.
+  - If the `s3Credentials` endpoint is invoked with an EDL token and an
+    `X-Request-Id` header, that `X-Request-Id` header will be forwarded to
+    Earthata Login.
 - **CUMULUS-1958**
   - Add the ability for users to specify a `bucket_map_key` to the `cumulus`
     terraform module as an override for the default .yaml values that are passed
