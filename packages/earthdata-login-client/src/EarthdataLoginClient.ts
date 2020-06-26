@@ -218,16 +218,27 @@ export class EarthdataLoginClient {
    * @param {string} params.onBehalfOf - the Earthdata Login client id of the
    *   app requesting the username
    * @param {string} params.token - the Earthdata Login token
+   * @param {string} [params.xRequestId] - a string to help identify the request
+   *   in the Earthdata Login logs
    * @returns {Promise<string>} the UID associated with the token
    */
-  async getTokenUsername(params: { onBehalfOf: string, token: string }) {
+  async getTokenUsername(params: {
+    onBehalfOf: string,
+    token: string,
+    xRequestId?: string
+  }) {
+    const { onBehalfOf, token, xRequestId } = params;
+
+    const headers = xRequestId ? { 'X-Request-Id': xRequestId } : undefined;
+
     try {
       const response = <VerifyTokenResponse>(await this.sendRequest({
         earthdataLoginPath: 'oauth/tokens/user',
+        headers,
         form: {
           client_id: this.clientId,
-          on_behalf_of: params.onBehalfOf,
-          token: params.token
+          on_behalf_of: onBehalfOf,
+          token
         }
       }));
 
@@ -251,7 +262,8 @@ export class EarthdataLoginClient {
   private sendRequest(
     params: {
       earthdataLoginPath: string,
-      form: {[key: string]: any}
+      form: {[key: string]: any},
+      headers?: Record<string, string|string[]|undefined>
     }
   ) {
     // https://github.com/sindresorhus/got/issues/1169
@@ -262,6 +274,7 @@ export class EarthdataLoginClient {
       {
         prefixUrl: this.earthdataLoginUrl,
         headers: {
+          ...params.headers,
           Authorization: `Basic ${credentials}`
         },
         form: params.form,

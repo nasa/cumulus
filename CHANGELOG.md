@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - The minimum supported version of all published Cumulus packages is now Node
   12.18.0
+  - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to
+    `cumuluss/cumulus-ecs-task:1.7.0`. This can be done by updating the `image`
+    property of any tasks defined using the `cumulus_ecs_service` Terraform
+    module.
 - Changes to `@cumulus/aws-client/S3`
   - The signature of the `getObjectSize` function has changed. It now takes a
     params object with three properties:
@@ -45,6 +49,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1956**
   - Added `@cumulus/earthata-login-client` package
+  - The `/s3credentials` endpoint that is deployed as part of distribution now
+    supports authentication using tokens created by a different application. If
+    a request contains the `EDL-ClientId` and `EDL-Token` headers,
+    authentication will be handled using that token rather than attempting to
+    use OAuth.
+  - `@cumulus/earthata-login-client.getTokenUsername()` now accepts an
+    `xRequestId` argument, which will be included as the `X-Request-Id` header
+    when calling Earthdata Login.
+  - If the `s3Credentials` endpoint is invoked with an EDL token and an
+    `X-Request-Id` header, that `X-Request-Id` header will be forwarded to
+    Earthata Login.
 - **CUMULUS-1958**
   - Add the ability for users to specify a `bucket_map_key` to the `cumulus`
     terraform module as an override for the default .yaml values that are passed
@@ -62,7 +77,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Created the `add-missing-file-checksums` workflow task
   - Added `@cumulus/aws-client/S3.calculateObjectHash()` function
   - Added `@cumulus/aws-client/S3.getObjectReadStream()` function
-
 - **CUMULUS-2019**
   - Add `infix` search to es query builder `@cumulus/api/es/es/queries` to
     support partial matching of the keywords
