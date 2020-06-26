@@ -4,9 +4,9 @@ title: AWS Long Term Access Key
 hide_title: true
 ---
 
-## AWS Long Term Access Key
+# AWS Long Term Access Key
 
-### Create & Generate AWS Access Key
+## Create & Generate AWS Access Key
 
 For instructions on how to create and generate a AWS Long Term Access Key via CloudTamer go to [Get Access Keys Through CloudTamer](https://wiki.earthdata.nasa.gov/display/ESKB/Get+Access+Keys+Through+CloudTamer).
 
