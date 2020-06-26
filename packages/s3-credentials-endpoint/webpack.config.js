@@ -37,5 +37,11 @@ module.exports = {
     ],
   },
   devtool: 'inline-source-map',
-  target: 'node'
+  target: 'node',
+  // https://github.com/webpack/webpack/issues/196#issuecomment-620227719
+  stats: {
+    warningsFilter: [
+      /critical dependency:/i
+    ],
+  }
 };

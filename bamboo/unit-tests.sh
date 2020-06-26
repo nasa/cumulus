@@ -5,7 +5,7 @@ set -ex
 docker ps -a ## Show running containers for output logs
 
 # Run unit tests (excluding integration/api tests)
-docker exec -i ${container_id}\_build_env_1 /bin/bash -c "cd $UNIT_TEST_BUILD_DIR; nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api --ignore cumulus-integration-tests"
+docker exec -i ${container_id}\_build_env_1 /bin/bash -c "cd $UNIT_TEST_BUILD_DIR; nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api --ignore @cumulus/cumulus-integration-tests"
 # Run api tests
 docker exec -i ${container_id}\_build_env_1 /bin/bash -c "cd $UNIT_TEST_BUILD_DIR/packages/api; npm run test-coverage"
 # Report combined code coverage

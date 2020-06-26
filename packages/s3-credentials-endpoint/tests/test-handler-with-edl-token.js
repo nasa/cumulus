@@ -106,3 +106,37 @@ test('GET /s3credentials returns a 403 response for an invalid EDL token', async
 
   t.is(response.statusCode, 403);
 });
+
+test('GET /s3credentials forwards the X-Request-Id header to Earthdata Login', async (t) => {
+  const event = {
+    httpMethod: 'GET',
+    path: '/s3credentials',
+    headers: {
+      'EDL-Client-Id': t.context.callerClientId,
+      'EDL-Token': 'X-Request-Id-test',
+      'X-Request-Id': 'test-x-request-id'
+    }
+  };
+
+  const nockScope = nock(
+    process.env.EARTHDATA_BASE_URL,
+    {
+      reqheaders: {
+        'X-Request-Id': event.headers['X-Request-Id']
+      }
+    }
+  )
+    .post(
+      '/oauth/tokens/user',
+      {
+        token: event.headers['EDL-Token'],
+        client_id: process.env.EARTHDATA_CLIENT_ID,
+        on_behalf_of: t.context.callerClientId
+      }
+    )
+    .reply(200, {});
+
+  await handler(event);
+
+  t.true(nockScope.isDone());
+});
