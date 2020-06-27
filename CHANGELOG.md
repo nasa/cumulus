@@ -79,7 +79,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-1861**
-  - Updates Rule objects to no longer require a defined collection.
+  - Updates Rule objects to no longer require a collection.
   - Changes the DLQ behavior for `sfEventSqsToDbRecords` and
     `sfEventSqsToDbRecordsInputQueue`. Previously failure to write a database
     record would result in lambda success, and an error log in the CloudWatch
