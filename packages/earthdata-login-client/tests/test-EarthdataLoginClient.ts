@@ -28,6 +28,7 @@ const nockEarthdataLoginCall = (
     earthdataLoginClient: EarthdataLoginClient,
     path: string,
     requestBody?: nock.RequestBodyMatcher,
+    requestHeaders?: Record<string, nock.RequestHeaderMatcher>,
     responseStatus: number,
     responseBody?: nock.Body
   }
@@ -36,11 +37,15 @@ const nockEarthdataLoginCall = (
     earthdataLoginClient,
     path,
     requestBody,
+    requestHeaders = {},
     responseStatus,
     responseBody
   } = params;
 
-  nock(earthdataLoginClient.earthdataLoginUrl)
+  return nock(
+    earthdataLoginClient.earthdataLoginUrl,
+    { reqheaders: requestHeaders }
+  )
     .post(path, requestBody)
     .basicAuth({
       user: earthdataLoginClient.clientId,
@@ -57,7 +62,7 @@ test('The EarthdataLogin constructor throws a TypeError if clientId is not speci
   t.throws(
     () => {
       // @ts-expect-error
-      new EarthdataLoginClient({ // eslint-disable-line no-new
+      new EarthdataLoginClient({
         clientPassword: 'client-password',
         earthdataLoginUrl: 'http://www.example.com',
         redirectUri: 'http://www.example.com/cb'
@@ -74,7 +79,7 @@ test('The EarthdataLogin constructor throws a TypeError if clientPassword is not
   t.throws(
     () => {
       // @ts-expect-error
-      new EarthdataLoginClient({ // eslint-disable-line no-new
+      new EarthdataLoginClient({
         clientId: 'client-id',
         earthdataLoginUrl: 'http://www.example.com',
         redirectUri: 'http://www.example.com/cb'
@@ -91,7 +96,7 @@ test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is 
   t.throws(
     () => {
       // @ts-expect-error
-      new EarthdataLoginClient({ // eslint-disable-line no-new
+      new EarthdataLoginClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
         redirectUri: 'http://www.example.com/cb'
@@ -107,7 +112,7 @@ test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is 
 test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is not a valid URL', (t) => {
   t.throws(
     () => {
-      new EarthdataLoginClient({ // eslint-disable-line no-new
+      new EarthdataLoginClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
         earthdataLoginUrl: 'asdf',
@@ -122,7 +127,7 @@ test('The EarthdataLogin constructor throws a TypeError if redirectUri is not sp
   t.throws(
     () => {
       // @ts-expect-error
-      new EarthdataLoginClient({ // eslint-disable-line no-new
+      new EarthdataLoginClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
         earthdataLoginUrl: 'http://www.example.com'
@@ -138,7 +143,7 @@ test('The EarthdataLogin constructor throws a TypeError if redirectUri is not sp
 test('The EarthdataLogin constructor throws a TypeError if redirectUri is not a valid URL', (t) => {
   t.throws(
     () => {
-      new EarthdataLoginClient({ // eslint-disable-line no-new
+      new EarthdataLoginClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
         earthdataLoginUrl: 'http://www.example.com',
@@ -589,4 +594,33 @@ test('EarthdataLogin.getTokenUsername() throws an exception if EarthdataLogin re
       code: 'UnexpectedResponse'
     }
   );
+});
+
+test('EarthdataLogin.getTokenUsername() forwards the X-Request-Id if present', async (t) => {
+  const earthdataLoginClient = buildEarthdataLoginClient();
+
+  const expectedUsername = randomId('valid-username');
+  const token = randomId('valid-token');
+  const onBehalfOf = randomId('on-behalf-of');
+  const xRequestId = randomId('x-request-id');
+
+  const nockScope = nockEarthdataLoginCall({
+    earthdataLoginClient,
+    path: '/oauth/tokens/user',
+    requestHeaders: { 'X-Request-Id': xRequestId },
+    requestBody: {
+      token,
+      client_id: earthdataLoginClient.clientId,
+      on_behalf_of: onBehalfOf
+    },
+    responseStatus: 200,
+    responseBody: { uid: expectedUsername }
+  });
+  await earthdataLoginClient.getTokenUsername({
+    token,
+    onBehalfOf,
+    xRequestId
+  });
+
+  t.true(nockScope.isDone());
 });

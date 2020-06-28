@@ -1,5 +1,5 @@
 {
-  "name": "s3-replicator",
+  "name": "@cumulus/s3-replicator",
   "version": "1.24.0",
   "description": "Replicate S3 Events to alternate bucket. Solves same-region replication.",
   "main": "index.js",
@@ -16,5 +16,6 @@
   "license": "Apache-2.0",
   "dependencies": {
     "aws-sdk": "^2.585.0"
-  }
+  },
+  "private": true
 }
