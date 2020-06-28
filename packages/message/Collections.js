@@ -37,8 +37,8 @@ function constructCollectionId(name, version) {
 const getCollectionIdFromMessage = (message) => {
   const collectionName = get(message, 'meta.collection.name');
   const collectionVersion = get(message, 'meta.collection.version');
-  if (!collectionName && !collectionVersion) {
-    throw new CumulusMessageError(`Collection name and version missing from message meta: ${JSON.stringify(message.meta)}`);
+  if (!collectionName || !collectionVersion) {
+    return undefined;
   }
   return constructCollectionId(collectionName, collectionVersion);
 };

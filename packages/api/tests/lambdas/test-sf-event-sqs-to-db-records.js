@@ -160,10 +160,7 @@ test.serial('saveExecutionToDb() throws an exception if storeExecutionFromCumulu
     });
 
   try {
-    await saveExecutionToDb(cumulusMessage);
-    t.fail('Exception should have been thrown');
-  } catch (error) {
-    t.pass();
+    await t.throwsAsync(saveExecutionToDb(cumulusMessage));
   } finally {
     saveExecutionStub.restore();
   }
@@ -220,10 +217,7 @@ test.serial('saveGranulesToDb() throws an exception if storeGranulesFromCumulusM
     });
 
   try {
-    await saveGranulesToDb(cumulusMessage);
-    t.fail('Exception should have been thrown');
-  } catch (error) {
-    t.pass();
+    await t.throwsAsync(saveGranulesToDb(cumulusMessage));
   } finally {
     storeGranuleStub.restore();
   }
@@ -290,10 +284,7 @@ test.serial('savePdrsToDb() throws an exception if storePdrFromCumulusMessage() 
       throw new Error('error');
     });
   try {
-    await savePdrToDb(cumulusMessage);
-    t.fail('Exception should have been thrown');
-  } catch (error) {
-    t.pass();
+    await t.throwsAsync(savePdrToDb(cumulusMessage));
   } finally {
     storeGranuleStub.restore();
   }

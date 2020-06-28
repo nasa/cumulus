@@ -32,6 +32,7 @@ const {
 
 const Manager = require('./base');
 
+const { CumulusModelError } = require('./errors');
 const FileUtils = require('../lib/FileUtils');
 const { translateGranule } = require('../lib/granules');
 const GranuleSearchQueue = require('../lib/GranuleSearchQueue');
@@ -117,7 +118,7 @@ class Granule extends Manager {
     log.info(`granules.removeGranuleFromCmrByGranule ${granule.granuleId}`);
 
     if (!granule.published || !granule.cmrLink) {
-      throw new Error(`Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
+      throw new CumulusModelError(`Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
     }
 
     const cmrSettings = await cmrUtils.getCmrSettings();
@@ -298,9 +299,11 @@ class Granule extends Manager {
     executionUrl,
     executionDescription = {}
   }) {
-    if (!granule.granuleId) throw new Error(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
+    if (!granule.granuleId) throw new CumulusModelError(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
     const collectionId = getCollectionIdFromMessage(message);
-
+    if (!collectionId) {
+      throw new CumulusModelError('meta.collection required to generate a granule record');
+    }
     const granuleFiles = await FileUtils.buildDatabaseFiles({
       s3,
       providerURL: buildURL({

@@ -41,14 +41,7 @@ class Execution extends Manager {
     const workflowStartTime = get(cumulusMessage, 'cumulus_meta.workflow_start_time');
     const workflowStopTime = get(cumulusMessage, 'cumulus_meta.workflow_stop_time');
 
-    let collectionId;
-    try {
-      collectionId = getCollectionIdFromMessage(cumulusMessage);
-    } catch (error) {
-      if (!error.name === 'CumulusMessageError') {
-        throw error;
-      }
-    }
+    const collectionId = getCollectionIdFromMessage(cumulusMessage);
 
     const record = {
       name: getMessageExecutionName(cumulusMessage),
