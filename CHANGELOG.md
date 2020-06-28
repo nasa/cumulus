@@ -22,7 +22,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `@cumulus/message/Collections.getCollectionIdFromMessage` now throws a
     `CumulusMessageError` if `collectionName` and `collectionVersion` are missing
     from `meta.collection`.   Previously this method would return
-    `'undefined___undefined'` instead.
+    `'undefined___undefined'` instead
+  - `@cumulus/integration-tests/addCollections` now returns an array of collections that
+    were added rather than the count of added collections
 - **CUMULUS-1930**
   - The `@cumulus/common/util.uuid()` function has been removed
 - **CUMULUS-1958**
