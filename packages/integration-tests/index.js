@@ -46,6 +46,7 @@ const cmr = require('./cmr.js');
 const lambda = require('./lambda');
 const waitForDeployment = require('./lambdas/waitForDeployment');
 const { ActivityStep, LambdaStep } = require('./sfnStep');
+const { addCollections } = require('./Collections.js');
 
 const waitPeriodMs = 1000;
 
@@ -370,22 +371,6 @@ const buildCollection = (params = {}) => {
 };
 
 /**
- * Add a collection to Cumulus
- *
- * @param {string} stackName - the prefix of the Cumulus stack
- * @param {Object} collection - a Cumulus collection
- * @returns {Promise<undefined>}
- */
-const addCollection = async (stackName, collection) => {
-  await collectionsApi.deleteCollection({
-    prefix: stackName,
-    collectionName: collection.name,
-    collectionVersion: collection.version
-  });
-  await collectionsApi.createCollection({ prefix: stackName, collection });
-};
-
-/**
  * Load a collection from a JSON file and update it
  *
  * @param {Object} params
@@ -398,39 +383,6 @@ const addCollection = async (stackName, collection) => {
 const loadCollection = async (params = {}) =>
   readJsonFile(params.filename)
     .then((collection) => buildCollection({ ...params, collection }));
-
-/**
- * add collections to database
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @param {string} dataDirectory - the directory of collection json files
- * @param {string} [postfix] - string to append to collection name
- * @param {string} [customFilePath]
- * @param {string} [duplicateHandling]
- * @returns {Promise<Object[]>} - collections that were added
- */
-async function addCollections(stackName, bucketName, dataDirectory, postfix,
-  customFilePath, duplicateHandling) {
-  // setProcessEnvironment is not needed by this function, but other code
-  // depends on this undocumented side effect
-  setProcessEnvironment(stackName, bucketName);
-
-  const rawCollections = await readJsonFilesFromDir(dataDirectory);
-
-  const collections = rawCollections.map(
-    (collection) => buildCollection({
-      collection,
-      customFilePath,
-      duplicateHandling,
-      postfix
-    })
-  );
-  await Promise.all(
-    collections.map((collection) => addCollection(stackName, collection))
-  );
-  return collections;
-}
 
 /**
  * Delete collections from database
@@ -994,52 +946,53 @@ async function waitForAllTestSf(
 }
 
 module.exports = {
-  api,
-  rulesApi,
-  granulesApi,
-  emsApi,
-  executionsApi,
-  distributionApi,
-  EarthdataLogin,
-  buildWorkflow,
-  testWorkflow,
-  executeWorkflow,
-  buildAndExecuteWorkflow,
-  buildAndStartWorkflow,
-  waitForAllTestSf,
-  waitForCompletedExecution,
-  waitForTestExecutionStart,
   ActivityStep,
-  LambdaStep,
   addCollections,
   addCustomUrlPathToCollectionFiles,
-  deleteCollections,
-  cleanupCollections,
   addProviders,
-  deleteProviders,
-  cleanupProviders,
-  conceptExists: cmr.conceptExists,
-  getOnlineResources: cmr.getOnlineResources,
-  generateCmrFilesForGranules: cmr.generateCmrFilesForGranules,
-  generateCmrXml: cmr.generateCmrXml,
   addRules,
   addRulesWithPostfix,
+  api,
+  buildAndExecuteWorkflow,
+  buildAndStartWorkflow,
+  buildCollection,
+  buildWorkflow,
+  cleanupCollections,
+  cleanupProviders,
+  conceptExists: cmr.conceptExists,
+  deleteCollections,
+  deleteProviders,
   deleteRules,
-  removeRuleAddedParams,
-  isWorkflowTriggeredByRule,
+  distributionApi,
+  EarthdataLogin,
+  emsApi,
+  executeWorkflow,
+  executionsApi,
+  generateCmrFilesForGranules: cmr.generateCmrFilesForGranules,
+  generateCmrXml: cmr.generateCmrXml,
   getClusterArn,
-  waitForAsyncOperationStatus,
-  getLambdaVersions: lambda.getLambdaVersions,
-  getLambdaAliases: lambda.getLambdaAliases,
   getEventSourceMapping: lambda.getEventSourceMapping,
-  waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
+  getExecutionOutput,
   getExecutions,
-  waitForDeploymentHandler: waitForDeployment.handler,
+  getLambdaAliases: lambda.getLambdaAliases,
+  getLambdaVersions: lambda.getLambdaVersions,
+  getOnlineResources: cmr.getOnlineResources,
   getProviderHost,
   getProviderPort,
+  granulesApi,
+  isWorkflowTriggeredByRule,
+  LambdaStep,
   loadCollection,
   loadProvider,
-  getExecutionOutput,
   readJsonFilesFromDir,
-  setProcessEnvironment
+  removeRuleAddedParams,
+  rulesApi,
+  setProcessEnvironment,
+  testWorkflow,
+  waitForAllTestSf,
+  waitForAsyncOperationStatus,
+  waitForCompletedExecution,
+  waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
+  waitForDeploymentHandler: waitForDeployment.handler,
+  waitForTestExecutionStart
 };

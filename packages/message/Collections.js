@@ -1,7 +1,6 @@
 'use strict';
 
 const get = require('lodash/get');
-const { CumulusMessageError } = require('./errors');
 
 /**
  * Utility functions for generating collection information or parsing collection information
@@ -29,8 +28,10 @@ function constructCollectionId(name, version) {
 /**
  * Get collection ID from execution message.
  *
- * @param {Object} message - An execution message
- * @returns {string} - A collection ID
+ * @param {Object} message       - An execution message
+ * @returns {string | undefined} - A collection ID or undefined if
+ *                                 message.meta.collection isn't
+ *                                 present
  *
  * @alias module:Collections
  */
