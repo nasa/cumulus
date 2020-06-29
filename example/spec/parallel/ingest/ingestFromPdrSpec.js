@@ -179,7 +179,9 @@ describe('Ingesting from PDR', () => {
 
     it('executes successfully', () => {
       if (beforeAllFailed) fail('beforeAll() failed');
-      expect(workflowExecution.status).toEqual('SUCCEEDED');
+      else {
+        expect(workflowExecution.status).toEqual('SUCCEEDED');
+      }
     });
 
     describe('the DiscoverPdrs Lambda', () => {
@@ -196,17 +198,21 @@ describe('Ingesting from PDR', () => {
 
       it('has expected path and name output', () => {
         if (beforeAllFailed) fail('beforeAll() failed');
-        expect(lambdaOutput.payload.pdrs[0].path).toEqual(testDataFolder);
-        expect(lambdaOutput.payload.pdrs[0].name).toEqual(pdrFilename);
+        else {
+          expect(lambdaOutput.payload.pdrs[0].path).toEqual(testDataFolder);
+          expect(lambdaOutput.payload.pdrs[0].name).toEqual(pdrFilename);
+        }
       });
     });
 
     describe('the QueuePdrs Lambda', () => {
       if (beforeAllFailed) fail('beforeAll() failed');
-      it('has expected output', () => {
-        expect(queuePdrsOutput.payload.pdrs_queued).toEqual(1);
-        expect(queuePdrsOutput.payload.running.length).toEqual(1);
-      });
+      else {
+        it('has expected output', () => {
+          expect(queuePdrsOutput.payload.pdrs_queued).toEqual(1);
+          expect(queuePdrsOutput.payload.running.length).toEqual(1);
+        });
+      }
     });
 
     /**
@@ -258,34 +264,40 @@ describe('Ingesting from PDR', () => {
 
       it('executes successfully', async () => {
         if (beforeAllFailed) fail('beforeAll() failed');
-        console.log(`Wait for execution ${parsePdrExecutionArn}`);
-        parsePdrExecutionStatus = await waitForCompletedExecution(parsePdrExecutionArn);
-        expect(parsePdrExecutionStatus).toEqual('SUCCEEDED');
+        else {
+          console.log(`Wait for execution ${parsePdrExecutionArn}`);
+          parsePdrExecutionStatus = await waitForCompletedExecution(parsePdrExecutionArn);
+          expect(parsePdrExecutionStatus).toEqual('SUCCEEDED');
+        }
       });
 
       describe('ParsePdr lambda function', () => {
         if (beforeAllFailed) fail('beforeAll() failed');
-        it('successfully parses a granule from the PDR', async () => {
-          parseLambdaOutput = await lambdaStep.getStepOutput(
-            parsePdrExecutionArn,
-            'ParsePdr'
-          );
-          expect(parseLambdaOutput.payload.granules).toEqual(expectedParsePdrOutput.granules);
-        });
+        else {
+          it('successfully parses a granule from the PDR', async () => {
+            parseLambdaOutput = await lambdaStep.getStepOutput(
+              parsePdrExecutionArn,
+              'ParsePdr'
+            );
+            expect(parseLambdaOutput.payload.granules).toEqual(expectedParsePdrOutput.granules);
+          });
+        }
       });
 
       describe('QueueGranules lambda function', () => {
         it('has expected pdr and arns output', async () => {
           if (beforeAllFailed) fail('beforeAll() failed');
-          queueGranulesOutput = await lambdaStep.getStepOutput(
-            parsePdrExecutionArn,
-            'QueueGranules'
-          );
+          else {
+            queueGranulesOutput = await lambdaStep.getStepOutput(
+              parsePdrExecutionArn,
+              'QueueGranules'
+            );
 
-          expect(queueGranulesOutput.payload.running.length).toEqual(1);
+            expect(queueGranulesOutput.payload.running.length).toEqual(1);
 
-          expect(queueGranulesOutput.payload.pdr.path).toEqual(expectedParsePdrOutput.pdr.path);
-          expect(queueGranulesOutput.payload.pdr.name).toEqual(expectedParsePdrOutput.pdr.name);
+            expect(queueGranulesOutput.payload.pdr.path).toEqual(expectedParsePdrOutput.pdr.path);
+            expect(queueGranulesOutput.payload.pdr.name).toEqual(expectedParsePdrOutput.pdr.name);
+          }
         });
       });
 
@@ -301,11 +313,13 @@ describe('Ingesting from PDR', () => {
 
         it('has expected output', () => {
           if (beforeAllFailed) fail('beforeAll() failed');
-          const payload = lambdaOutput.payload;
-          expect(payload.running.concat(payload.completed, payload.failed).length).toEqual(1);
+          else {
+            const payload = lambdaOutput.payload;
+            expect(payload.running.concat(payload.completed, payload.failed).length).toEqual(1);
 
-          expect(payload.pdr.path).toEqual(expectedParsePdrOutput.pdr.path);
-          expect(payload.pdr.name).toEqual(expectedParsePdrOutput.pdr.name);
+            expect(payload.pdr.path).toEqual(expectedParsePdrOutput.pdr.path);
+            expect(payload.pdr.name).toEqual(expectedParsePdrOutput.pdr.name);
+          }
         });
       });
 
@@ -323,9 +337,9 @@ describe('Ingesting from PDR', () => {
         // SfSnsReport lambda is used in the workflow multiple times, apparantly, only the first output
         it('has expected output message', () => {
           if (beforeAllFailed) fail('beforeAll() failed');
-          // Sometimes PDR ingestion completes before this step is reached, so it is never invoked
-          // and there is no Lambda output to check.
-          if (lambdaOutput) {
+          else if (lambdaOutput) {
+            // Sometimes PDR ingestion completes before this step is reached, so it is never invoked
+            // and there is no Lambda output to check.
             expect(lambdaOutput.payload.pdr.path).toEqual(expectedParsePdrOutput.pdr.path);
             expect(lambdaOutput.payload.pdr.name).toEqual(expectedParsePdrOutput.pdr.name);
           }
@@ -368,18 +382,22 @@ describe('Ingesting from PDR', () => {
 
         it('executes successfully', () => {
           if (beforeAllFailed) fail('beforeAll() failed');
-          expect(ingestGranuleExecutionStatus).toEqual('SUCCEEDED');
+          else {
+            expect(ingestGranuleExecutionStatus).toEqual('SUCCEEDED');
+          }
         });
 
         describe('SyncGranule lambda function', () => {
           it('outputs 1 granule and pdr', async () => {
             if (beforeAllFailed) fail('beforeAll() failed');
-            const lambdaOutput = await lambdaStep.getStepOutput(
-              ingestGranuleWorkflowArn,
-              'SyncGranule'
-            );
-            expect(lambdaOutput.payload.granules.length).toEqual(1);
-            expect(lambdaOutput.payload.pdr).toEqual(lambdaOutput.payload.pdr);
+            else {
+              const lambdaOutput = await lambdaStep.getStepOutput(
+                ingestGranuleWorkflowArn,
+                'SyncGranule'
+              );
+              expect(lambdaOutput.payload.granules.length).toEqual(1);
+              expect(lambdaOutput.payload.pdr).toEqual(lambdaOutput.payload.pdr);
+            }
           });
         });
       });
@@ -392,30 +410,34 @@ describe('Ingesting from PDR', () => {
 
         it('displays a link to the parent', async () => {
           if (beforeAllFailed) fail('beforeAll() failed');
-          await waitForModelStatus(
-            executionModel,
-            { arn: ingestGranuleWorkflowArn },
-            'completed'
-          );
+          else {
+            await waitForModelStatus(
+              executionModel,
+              { arn: ingestGranuleWorkflowArn },
+              'completed'
+            );
 
-          const ingestGranuleExecution = await executionsApiTestUtils.getExecution({
-            prefix: config.stackName,
-            arn: ingestGranuleWorkflowArn
-          });
+            const ingestGranuleExecution = await executionsApiTestUtils.getExecution({
+              prefix: config.stackName,
+              arn: ingestGranuleWorkflowArn
+            });
 
-          expect(ingestGranuleExecution.parentArn).toEqual(parsePdrExecutionArn);
+            expect(ingestGranuleExecution.parentArn).toEqual(parsePdrExecutionArn);
+          }
         });
       });
 
       describe('When accessing an execution via the API that was not triggered from a parent step function', () => {
         it('does not display a parent link', async () => {
           if (beforeAllFailed) fail('beforeAll() failed');
-          const parsePdrExecution = await executionsApiTestUtils.getExecution({
-            prefix: config.stackName,
-            arn: workflowExecution.executionArn
-          });
+          else {
+            const parsePdrExecution = await executionsApiTestUtils.getExecution({
+              prefix: config.stackName,
+              arn: workflowExecution.executionArn
+            });
 
-          expect(parsePdrExecution.parentArn).toBeUndefined();
+            expect(parsePdrExecution.parentArn).toBeUndefined();
+          }
         });
       });
 
@@ -440,47 +462,48 @@ describe('Ingesting from PDR', () => {
 
         it('branches according to the CMA output', async () => {
           if (beforeAllFailed) fail('beforeAll() failed');
-          expect(executionStatus.executionHistory).toBeTruthy();
-          const events = executionStatus.executionHistory.events;
+          else {
+            expect(executionStatus.executionHistory).toBeTruthy();
+            const events = executionStatus.executionHistory.events;
 
-          // the output of the CheckStatus is used to determine the task of choice
-          const checkStatusTaskName = 'CheckStatus';
-          const successStepName = 'WorkflowSucceeded';
-          const pdrStatusReportTaskName = 'PdrStatusReport';
+            // the output of the CheckStatus is used to determine the task of choice
+            const checkStatusTaskName = 'CheckStatus';
+            const successStepName = 'WorkflowSucceeded';
+            const pdrStatusReportTaskName = 'PdrStatusReport';
 
-          let choiceVerified = false;
-          for (let i = 0; i < events.length; i += 1) {
-            const currentEvent = events[i];
-            if (currentEvent.type === 'TaskStateExited' &&
-              currentEvent.name === checkStatusTaskName) {
-              const output = JSON.parse(currentEvent.output);
-              const isFinished = output.payload.isFinished;
+            let choiceVerified = false;
+            for (let i = 0; i < events.length; i += 1) {
+              const currentEvent = events[i];
+              if (currentEvent.type === 'TaskStateExited' &&
+                currentEvent.name === checkStatusTaskName) {
+                const output = JSON.parse(currentEvent.output);
+                const isFinished = output.payload.isFinished;
 
-              // get the next task executed
-              let nextTask;
-              while (!nextTask && i < events.length - 1) {
-                i += 1;
-                const nextEvent = events[i];
-                if ((
-                  nextEvent.type === 'TaskStateEntered' ||
-                  nextEvent.type === 'SucceedStateEntered'
-                ) && nextEvent.name) {
-                  nextTask = nextEvent.name;
+                // get the next task executed
+                let nextTask;
+                while (!nextTask && i < events.length - 1) {
+                  i += 1;
+                  const nextEvent = events[i];
+                  if ((
+                    nextEvent.type === 'TaskStateEntered' ||
+                    nextEvent.type === 'SucceedStateEntered'
+                  ) && nextEvent.name) {
+                    nextTask = nextEvent.name;
+                  }
                 }
-              }
 
-              expect(nextTask).toBeTruthy();
+                expect(nextTask).toBeTruthy();
 
-              if (isFinished === true) {
-                expect(nextTask).toEqual(successStepName);
-              } else {
-                expect(nextTask).toEqual(pdrStatusReportTaskName);
+                if (isFinished === true) {
+                  expect(nextTask).toEqual(successStepName);
+                } else {
+                  expect(nextTask).toEqual(pdrStatusReportTaskName);
+                }
+                choiceVerified = true;
               }
-              choiceVerified = true;
             }
+            expect(choiceVerified).toBeTrue();
           }
-
-          expect(choiceVerified).toBeTrue();
         });
       });
     });
@@ -488,23 +511,27 @@ describe('Ingesting from PDR', () => {
     describe('the reporting lambda has received the cloudwatch stepfunction event and', () => {
       it('the execution record is added to DynamoDB', async () => {
         if (beforeAllFailed) fail('beforeAll() failed');
-        const record = await waitForModelStatus(
-          executionModel,
-          { arn: parsePdrExecutionArn },
-          'completed'
-        );
-        expect(record.status).toEqual('completed');
+        else {
+          const record = await waitForModelStatus(
+            executionModel,
+            { arn: parsePdrExecutionArn },
+            'completed'
+          );
+          expect(record.status).toEqual('completed');
+        }
       });
 
       it('the pdr record is added to DynamoDB', async () => {
         if (beforeAllFailed) fail('beforeAll() failed');
-        const record = await waitForModelStatus(
-          new Pdr(),
-          { pdrName: pdrFilename },
-          'completed'
-        );
-        expect(record.execution).toEqual(getExecutionUrl(parsePdrExecutionArn));
-        expect(record.status).toEqual('completed');
+        else {
+          const record = await waitForModelStatus(
+            new Pdr(),
+            { pdrName: pdrFilename },
+            'completed'
+          );
+          expect(record.execution).toEqual(getExecutionUrl(parsePdrExecutionArn));
+          expect(record.status).toEqual('completed');
+        }
       });
     });
 
@@ -512,25 +539,29 @@ describe('Ingesting from PDR', () => {
     describe('When accessing an execution via the API that was triggered from a parent step function', () => {
       it('displays a link to the parent', async () => {
         if (beforeAllFailed) fail('beforeAll() failed');
-        parsePdrExecutionArn = queuePdrsOutput.payload.running[0];
-        const parsePdrExecution = await executionsApiTestUtils.getExecution({
-          prefix: config.stackName,
-          arn: parsePdrExecutionArn
-        });
+        else {
+          parsePdrExecutionArn = queuePdrsOutput.payload.running[0];
+          const parsePdrExecution = await executionsApiTestUtils.getExecution({
+            prefix: config.stackName,
+            arn: parsePdrExecutionArn
+          });
 
-        expect(parsePdrExecution.parentArn).toEqual(workflowExecution.executionArn);
+          expect(parsePdrExecution.parentArn).toEqual(workflowExecution.executionArn);
+        }
       });
     });
 
     describe('When accessing an execution via the API that was not triggered from a parent step function', () => {
       it('does not display a parent link', async () => {
         if (beforeAllFailed) fail('beforeAll() failed');
-        const queuePdrsExecution = await executionsApiTestUtils.getExecution({
-          prefix: config.stackName,
-          arn: workflowExecution.executionArn
-        });
+        else {
+          const queuePdrsExecution = await executionsApiTestUtils.getExecution({
+            prefix: config.stackName,
+            arn: workflowExecution.executionArn
+          });
 
-        expect(queuePdrsExecution.parentArn).toBeUndefined();
+          expect(queuePdrsExecution.parentArn).toBeUndefined();
+        }
       });
     });
 
@@ -563,29 +594,35 @@ describe('Ingesting from PDR', () => {
 
       it('is published for a running PDR', async () => {
         if (beforeAllFailed) fail('beforeAll() failed');
-        const pdrExists = await s3ObjectExists({
-          Bucket: config.bucket,
-          Key: pdrRunningMessageKey
-        });
-        expect(pdrExists).toEqual(true);
+        else {
+          const pdrExists = await s3ObjectExists({
+            Bucket: config.bucket,
+            Key: pdrRunningMessageKey
+          });
+          expect(pdrExists).toEqual(true);
+        }
       });
 
       it('is published for an execution on a successful workflow completion', async () => {
         if (beforeAllFailed) fail('beforeAll() failed');
-        const executionExists = await s3ObjectExists({
-          Bucket: config.bucket,
-          Key: executionCompletedKey
-        });
-        expect(executionExists).toEqual(true);
+        else {
+          const executionExists = await s3ObjectExists({
+            Bucket: config.bucket,
+            Key: executionCompletedKey
+          });
+          expect(executionExists).toEqual(true);
+        }
       });
 
       it('is published for a PDR on a successful workflow completion', async () => {
         if (beforeAllFailed) fail('beforeAll() failed');
-        const pdrExists = await s3ObjectExists({
-          Bucket: config.bucket,
-          Key: pdrCompletedMessageKey
-        });
-        expect(pdrExists).toEqual(true);
+        else {
+          const pdrExists = await s3ObjectExists({
+            Bucket: config.bucket,
+            Key: pdrCompletedMessageKey
+          });
+          expect(pdrExists).toEqual(true);
+        }
       });
     });
   });
