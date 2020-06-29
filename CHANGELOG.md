@@ -238,6 +238,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   removed
 - The deprecated `@cumulus/common/workflows.getWorkflowTemplate` function has
   been removed
+- `@cumulus/aws-client/StepFunctions.toSfnExecutionName()`
+- `@cumulus/aws-client/StepFunctions.fromSfnExecutionName()`
+- `@cumulus/aws-client/StepFunctions.getExecutionArn()`
+- `@cumulus/aws-client/StepFunctions.getExecutionUrl()`
+- `@cumulus/aws-client/StepFunctions.getStateMachineArn()`
+- `@cumulus/aws-client/StepFunctions.pullStepFunctionEvent()`
+- `@cumulus/common/test-utils/throttleOnce()`
+- `@cumulus/integration-tests/api/distribution.invokeApiDistributionLambda()`
+- `@cumulus/integration-tests/api/distribution.getDistributionApiRedirect()`
+- `@cumulus/integration-tests/api/distribution.getDistributionApiFileStream()`
 
 ## [v1.24.0] 2020-06-03
 
