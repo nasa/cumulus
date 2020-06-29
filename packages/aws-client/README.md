@@ -297,7 +297,9 @@ Invoke a Lambda function
     * [.s3GetObjectTagging](#module_S3.s3GetObjectTagging) ⇒ <code>Promise.&lt;AWS.S3.GetObjectTaggingOutput&gt;</code>
     * [.s3PutObjectTagging](#module_S3.s3PutObjectTagging) ⇒ <code>Promise</code>
     * [.getS3Object](#module_S3.getS3Object) ⇒ <code>Promise</code>
+    * ~~[.getS3ObjectReadStream](#module_S3.getS3ObjectReadStream) ⇒ <code>ReadableStream</code>~~
     * [.recursivelyDeleteS3Bucket](#module_S3.recursivelyDeleteS3Bucket) ⇒ <code>Promise</code>
+    * ~~[.calculateS3ObjectChecksum](#module_S3.calculateS3ObjectChecksum) ⇒ <code>Promise.&lt;(number\|string)&gt;</code>~~
     * [.s3Join(args)](#module_S3.s3Join) ⇒ <code>string</code>
     * [.parseS3Uri(uri)](#module_S3.parseS3Uri) ⇒ <code>Object</code>
     * [.buildS3Uri(bucket, key)](#module_S3.buildS3Uri) ⇒ <code>string</code>
@@ -309,14 +311,14 @@ Invoke a Lambda function
     * [.getObjectSize(params)](#module_S3.getObjectSize) ⇒ <code>Promise.&lt;(number\|undefined)&gt;</code>
     * [.getTextObject(bucket, key)](#module_S3.getTextObject) ⇒ <code>Promise.&lt;string&gt;</code>
     * [.getJsonS3Object(bucket, key)](#module_S3.getJsonS3Object) ⇒ <code>Promise.&lt;\*&gt;</code>
-    * [.getS3ObjectReadStream(bucket, key)](#module_S3.getS3ObjectReadStream) ⇒ <code>ReadableStream</code>
+    * [.getObjectReadStream(params)](#module_S3.getObjectReadStream) ⇒ <code>Readable</code>
     * [.getS3ObjectReadStreamAsync(bucket, key)](#module_S3.getS3ObjectReadStreamAsync) ⇒ <code>ReadableStream</code>
     * [.fileExists(bucket, key)](#module_S3.fileExists) ⇒ <code>Promise</code>
     * [.deleteS3Files(s3Objs)](#module_S3.deleteS3Files) ⇒ <code>Promise</code>
     * [.uploadS3FileStream(fileStream, bucket, key, s3opts)](#module_S3.uploadS3FileStream) ⇒ <code>Promise</code>
     * [.listS3Objects(bucket, prefix, skipFolders)](#module_S3.listS3Objects) ⇒ <code>Promise</code>
     * [.listS3ObjectsV2(params)](#module_S3.listS3ObjectsV2) ⇒ <code>Promise.&lt;Array&gt;</code>
-    * [.calculateS3ObjectChecksum(params)](#module_S3.calculateS3ObjectChecksum) ⇒ <code>Promise.&lt;(number\|string)&gt;</code>
+    * [.calculateObjectHash(params)](#module_S3.calculateObjectHash)
     * [.validateS3ObjectChecksum(params)](#module_S3.validateS3ObjectChecksum) ⇒ <code>Promise.&lt;boolean&gt;</code>
     * [.getFileBucketAndKey(pathParams)](#module_S3.getFileBucketAndKey) ⇒ <code>Array.&lt;string&gt;</code>
     * [.createBucket(Bucket)](#module_S3.createBucket) ⇒ <code>Promise</code>
@@ -428,6 +430,24 @@ Get an object from S3
 | Key | <code>string</code> | key for object (filepath + filename) |
 | retryOptions | <code>Object</code> | options to control retry behavior when an   object does not exist. See https://github.com/tim-kos/node-retry#retryoperationoptions   By default, retries will not be performed |
 
+<a name="module_S3.getS3ObjectReadStream"></a>
+
+### ~~S3.getS3ObjectReadStream ⇒ <code>ReadableStream</code>~~
+***Deprecated***
+
+Get a readable stream for an S3 object.
+
+**Kind**: static property of [<code>S3</code>](#module_S3)  
+**Throws**:
+
+- <code>Error</code> if S3 object cannot be found
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| bucket | <code>string</code> | the S3 object's bucket |
+| key | <code>string</code> | the S3 object's key |
+
 <a name="module_S3.recursivelyDeleteS3Bucket"></a>
 
 ### S3.recursivelyDeleteS3Bucket ⇒ <code>Promise</code>
@@ -439,6 +459,24 @@ Delete a bucket and all of its objects from S3
 | Param | Type | Description |
 | --- | --- | --- |
 | bucket | <code>string</code> | name of the bucket |
+
+<a name="module_S3.calculateS3ObjectChecksum"></a>
+
+### ~~S3.calculateS3ObjectChecksum ⇒ <code>Promise.&lt;(number\|string)&gt;</code>~~
+***Deprecated***
+
+Calculate checksum for S3 Object
+
+**Kind**: static property of [<code>S3</code>](#module_S3)  
+**Returns**: <code>Promise.&lt;(number\|string)&gt;</code> - calculated checksum  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| params | <code>Object</code> | params |
+| params.algorithm | <code>string</code> | checksum algorithm |
+| params.bucket | <code>string</code> | S3 bucket |
+| params.key | <code>string</code> | S3 key |
+| [params.options] | <code>Object</code> | crypto.createHash options |
 
 <a name="module_S3.s3Join"></a>
 
@@ -585,21 +623,19 @@ Fetch JSON stored in an S3 object
 | bucket | <code>string</code> | the S3 object's bucket |
 | key | <code>string</code> | the S3 object's key |
 
-<a name="module_S3.getS3ObjectReadStream"></a>
+<a name="module_S3.getObjectReadStream"></a>
 
-### S3.getS3ObjectReadStream(bucket, key) ⇒ <code>ReadableStream</code>
-Get a readable stream for an S3 object.
+### S3.getObjectReadStream(params) ⇒ <code>Readable</code>
+Get a readable stream for an S3 object
 
 **Kind**: static method of [<code>S3</code>](#module_S3)  
-**Throws**:
-
-- <code>Error</code> if S3 object cannot be found
-
 
 | Param | Type | Description |
 | --- | --- | --- |
-| bucket | <code>string</code> | the S3 object's bucket |
-| key | <code>string</code> | the S3 object's key |
+| params | <code>Object</code> |  |
+| params.s3 | <code>AWS.S3</code> | an AWS.S3 instance |
+| params.bucket | <code>string</code> | the bucket of the requested object |
+| params.key | <code>string</code> | the key of the requested object |
 
 <a name="module_S3.getS3ObjectReadStreamAsync"></a>
 
@@ -698,21 +734,20 @@ https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#listObjectsV2-pr
 | --- | --- | --- |
 | params | <code>Object</code> | params for the s3.listObjectsV2 call |
 
-<a name="module_S3.calculateS3ObjectChecksum"></a>
+<a name="module_S3.calculateObjectHash"></a>
 
-### S3.calculateS3ObjectChecksum(params) ⇒ <code>Promise.&lt;(number\|string)&gt;</code>
-Calculate checksum for S3 Object
+### S3.calculateObjectHash(params)
+Calculate the cryptographic hash of an S3 object
 
 **Kind**: static method of [<code>S3</code>](#module_S3)  
-**Returns**: <code>Promise.&lt;(number\|string)&gt;</code> - calculated checksum  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| params | <code>Object</code> | params |
-| params.algorithm | <code>string</code> | checksum algorithm |
-| params.bucket | <code>string</code> | S3 bucket |
-| params.key | <code>string</code> | S3 key |
-| [params.options] | <code>Object</code> | crypto.createHash options |
+| params | <code>Object</code> |  |
+| params.s3 | <code>AWS.S3</code> | an AWS.S3 instance |
+| params.algorithm | <code>string</code> | `cksum`, or an algorithm listed in   `openssl list -digest-algorithms` |
+| params.bucket | <code>string</code> |  |
+| params.key | <code>string</code> |  |
 
 <a name="module_S3.validateS3ObjectChecksum"></a>
 
@@ -901,12 +936,6 @@ Test if an SQS queue exists
     * [.executionExists(executionArn)](#module_StepFunctions.executionExists) ⇒ <code>Promise.&lt;boolean&gt;</code>
     * [.getExecutionHistory(params)](#module_StepFunctions.getExecutionHistory) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.listExecutions(params)](#module_StepFunctions.listExecutions) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.unicodeEscape(str, regex)](#module_StepFunctions.unicodeEscape) ⇒ <code>string</code>
-    * [.toSfnExecutionName(fields, delimiter)](#module_StepFunctions.toSfnExecutionName) ⇒ <code>string</code>
-    * [.fromSfnExecutionName(str, [delimiter])](#module_StepFunctions.fromSfnExecutionName) ⇒ <code>Array</code>
-    * [.getExecutionArn(stateMachineArn, executionName)](#module_StepFunctions.getExecutionArn) ⇒ <code>string</code>
-    * [.getExecutionUrl(executionArn)](#module_StepFunctions.getExecutionUrl) ⇒ <code>string</code>
-    * [.pullStepFunctionEvent(event)](#module_StepFunctions.pullStepFunctionEvent) ⇒ <code>Object</code>
 
 <a name="module_StepFunctions.describeExecution"></a>
 
@@ -989,90 +1018,6 @@ exponential backoff.
 | Param | Type |
 | --- | --- |
 | params | <code>Object</code> | 
-
-<a name="module_StepFunctions.unicodeEscape"></a>
-
-### StepFunctions.unicodeEscape(str, regex) ⇒ <code>string</code>
-Given a string, replaces all characters matching the passed regex with their unicode
-escape sequences
-
-**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
-**Returns**: <code>string</code> - The string with characters unicode-escaped  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| str | <code>string</code> | The string to escape |
-| regex | <code>string</code> | The regex matching characters to replace (default: all chars) |
-
-<a name="module_StepFunctions.toSfnExecutionName"></a>
-
-### StepFunctions.toSfnExecutionName(fields, delimiter) ⇒ <code>string</code>
-Given an array of fields, returns that a new string that's safe for use as a StepFunction,
-execution name, where all fields are joined by a StepFunction-safe delimiter
-Important: This transformation isn't entirely two-way. Names longer than 80 characters
-           will be truncated.
-
-**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
-**Returns**: <code>string</code> - A string that's safe to use as a StepFunctions execution name  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| fields | <code>string</code> | The fields to be injected into an execution name |
-| delimiter | <code>string</code> | An optional delimiter string to replace, pass null to make   no replacements |
-
-<a name="module_StepFunctions.fromSfnExecutionName"></a>
-
-### StepFunctions.fromSfnExecutionName(str, [delimiter]) ⇒ <code>Array</code>
-Opposite of toSfnExecutionName. Given a delimited StepFunction execution name, returns
-an array of its original fields
-Important: This value may be truncated from the original because of the 80-char limit on
-           execution names
-
-**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
-**Returns**: <code>Array</code> - An array of the original fields  
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| str | <code>string</code> |  | The string to make stepfunction safe |
-| [delimiter] | <code>string</code> | <code>&quot;&#x27;__&#x27;&quot;</code> | An optional delimiter string to replace, pass null to make   no replacements |
-
-<a name="module_StepFunctions.getExecutionArn"></a>
-
-### StepFunctions.getExecutionArn(stateMachineArn, executionName) ⇒ <code>string</code>
-Returns execution ARN from a statement machine Arn and executionName
-
-**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
-**Returns**: <code>string</code> - Step Function Execution Arn  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| stateMachineArn | <code>string</code> | state machine ARN |
-| executionName | <code>string</code> | state machine's execution name |
-
-<a name="module_StepFunctions.getExecutionUrl"></a>
-
-### StepFunctions.getExecutionUrl(executionArn) ⇒ <code>string</code>
-Returns execution ARN from a statement machine Arn and executionName
-
-**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
-**Returns**: <code>string</code> - return aws console url for the execution  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| executionArn | <code>string</code> | execution ARN |
-
-<a name="module_StepFunctions.pullStepFunctionEvent"></a>
-
-### StepFunctions.pullStepFunctionEvent(event) ⇒ <code>Object</code>
-Given a Cumulus step function event, if the message is on S3, pull the full message
-from S3 and return, otherwise return the event.
-
-**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
-**Returns**: <code>Object</code> - the full Cumulus message  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| event | <code>Object</code> | the Cumulus event |
 
 <a name="DynamoDbSearchQueue"></a>
 
