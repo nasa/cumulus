@@ -108,7 +108,7 @@ async function ingestGranuleButDeleteFileObject(config, testSuffix, testDataFold
   await Promise.all(
     granule.files.map((f) => s3().deleteObject({ Bucket: f.bucket, Key: f.key }).promise())
   );
-  return granule.files;
+  return granule;
 }
 
 // ingest a granule to CMR and remove it from database
@@ -254,7 +254,7 @@ describe('When there are granule differences and granule reconciliation is run',
   });
 
   it('generates a report showing cumulus files that are in the Elasticsearch table but not in S3', () => {
-    extraFilesInDb.forEach((f) => {
+    extraFilesInDb.files.forEach((f) => {
       const extraFileUri = buildS3Uri(f.bucket, f.key);
       const extraDbUris = report.filesInCumulus.onlyInElasticsearch.map((i) => i.uri);
       expect(extraDbUris).toContain(extraFileUri);
@@ -360,6 +360,7 @@ describe('When there are granule differences and granule reconciliation is run',
       granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranuleId })
     ]);
 
+    granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: extraFilesInDb.granuleId });
     // need to add the cmr granule back to the table, so the granule can be removed from api
     await granuleModel.create(cmrGranule);
     await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: cmrGranule.granuleId });
