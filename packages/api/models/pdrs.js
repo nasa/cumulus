@@ -2,12 +2,11 @@
 
 const get = require('lodash/get');
 
-const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
 const pvl = require('@cumulus/pvl');
-
+const StepFunctionUtils = require('../lib/StepFunctionUtils');
 const Manager = require('./base');
 const pdrSchema = require('./schemas').pdr;
 
@@ -68,7 +67,7 @@ class Pdr extends Manager {
     }
 
     const arn = getMessageExecutionArn(message);
-    const execution = StepFunctions.getExecutionUrl(arn);
+    const execution = StepFunctionUtils.getExecutionUrl(arn);
 
     const collectionId = getCollectionIdFromMessage(message);
 

@@ -30,7 +30,13 @@ let authorizationUrl;
 
 // import the express app after setting the env variables
 // const { distributionApp } = require('../distribution');
-const { distributionApp } = require('..');
+const {
+  buildRoleSessionName,
+  distributionApp,
+  handleTokenAuthRequest,
+  requestTemporaryCredentialsFromNgap,
+  s3credentials
+} = require('..');
 
 test.before(async () => {
   accessTokenModel = new models.AccessToken('token');
@@ -85,7 +91,6 @@ test('An authorized s3credential requeste invokes NGAPs request for credentials 
     .set('Cookie', [`accessToken=${accessTokenRecord.accessToken}`])
     .expect(200);
 
-  console.log(spy.args);
   t.true(spy.called);
   t.deepEqual(spy.args[0][0], {
     FunctionName,
@@ -117,4 +122,186 @@ test('An s3credential request with expired accessToken redirects to Oauth2 provi
 
   t.is(response.status, 307);
   t.is(response.headers.location, authorizationUrl);
+});
+
+test('buildRoleSessionName() returns the username if a client name is not provided', (t) => {
+  t.is(
+    buildRoleSessionName('username'),
+    'username'
+  );
+});
+
+test('buildRoleSessionName() returns the username and client name if a client name is provided', (t) => {
+  t.is(
+    buildRoleSessionName('username', 'clientname'),
+    'username@clientname'
+  );
+});
+
+test('requestTemporaryCredentialsFromNgap() invokes the credentials lambda with the correct payload', async (t) => {
+  let invocationCount = 0;
+
+  const lambdaFunctionName = 'my-lambda-function-name';
+  const roleSessionName = 'my-role-session-name';
+  const userId = 'my-user-id';
+
+  const fakeLambda = {
+    invoke: (params) => {
+      invocationCount += 1;
+
+      t.is(params.FunctionName, lambdaFunctionName);
+
+      t.deepEqual(
+        JSON.parse(params.Payload),
+        {
+          accesstype: 'sameregion',
+          returntype: 'lowerCamel',
+          duration: '3600',
+          rolesession: roleSessionName,
+          userid: userId
+        }
+      );
+
+      return {
+        promise: async () => undefined
+      };
+    }
+  };
+
+  await requestTemporaryCredentialsFromNgap({
+    lambda: fakeLambda,
+    lambdaFunctionName,
+    userId,
+    roleSessionName
+  });
+
+  t.is(invocationCount, 1);
+});
+
+test('handleTokenAuthRequest() saves the client name in the request, if provided', async (t) => {
+  const req = {
+    get(headerName) {
+      return this.headers[headerName];
+    },
+    headers: {
+      'EDL-Client-Id': 'my-client-id',
+      'EDL-Token': 'my-token',
+      'EDL-Client-Name': 'my-client-name'
+    },
+    earthdataLoginClient: {
+      async getTokenUsername() {
+        return 'my-username';
+      }
+    }
+  };
+
+  await handleTokenAuthRequest(req, undefined, () => undefined);
+
+  t.is(req.authorizedMetadata.clientName, 'my-client-name');
+});
+
+test('handleTokenAuthRequest() with an invalid client name results in a "Bad Request" response', async (t) => {
+  const req = {
+    get(headerName) {
+      return this.headers[headerName];
+    },
+    headers: {
+      'EDL-Client-Id': 'my-client-id',
+      'EDL-Token': 'my-token',
+      'EDL-Client-Name': 'not valid'
+    },
+    earthdataLoginClient: {
+      async getTokenUsername() {
+        return 'my-username';
+      }
+    }
+  };
+
+  const res = {
+    boom: {
+      badRequest: () => 'response-from-boom-badRequest'
+    }
+  };
+
+  const next = () => t.fail('next() should not have been called');
+
+  t.is(
+    await handleTokenAuthRequest(req, res, next),
+    'response-from-boom-badRequest'
+  );
+});
+
+test('s3credentials() with just a username sends the correct request to the Lambda function', async (t) => {
+  let lambdaInvocationCount = 0;
+
+  const fakeLambda = {
+    invoke: ({ Payload }) => {
+      lambdaInvocationCount += 1;
+
+      const parsedPayload = JSON.parse(Payload);
+
+      t.is(parsedPayload.userid, 'my-user-name');
+      t.is(parsedPayload.rolesession, 'my-user-name');
+
+      return {
+        promise: async () => ({
+          Payload: JSON.stringify({})
+        })
+      };
+    }
+  };
+
+  const req = {
+    authorizedMetadata: {
+      userName: 'my-user-name'
+    },
+    lambda: fakeLambda
+  };
+
+  const res = {
+    // eslint-disable-next-line lodash/prefer-noop
+    send() {}
+  };
+
+  await s3credentials(req, res);
+
+  t.is(lambdaInvocationCount, 1);
+});
+
+test('s3credentials() with a username and a client name sends the correct request to the Lambda function', async (t) => {
+  let lambdaInvocationCount = 0;
+
+  const fakeLambda = {
+    invoke: ({ Payload }) => {
+      lambdaInvocationCount += 1;
+
+      const parsedPayload = JSON.parse(Payload);
+
+      t.is(parsedPayload.userid, 'my-user-name');
+      t.is(parsedPayload.rolesession, 'my-user-name@my-client-name');
+
+      return {
+        promise: async () => ({
+          Payload: JSON.stringify({})
+        })
+      };
+    }
+  };
+
+  const req = {
+    authorizedMetadata: {
+      userName: 'my-user-name',
+      clientName: 'my-client-name'
+    },
+    lambda: fakeLambda
+  };
+
+  const res = {
+    // eslint-disable-next-line lodash/prefer-noop
+    send() {}
+  };
+
+  await s3credentials(req, res);
+
+  t.is(lambdaInvocationCount, 1);
 });
