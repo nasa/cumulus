@@ -10,7 +10,6 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { randomString } = require('@cumulus/common/test-utils');
 
-const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const { Granule } = require('@cumulus/api/models');
 const {
   addCollections,
@@ -100,6 +99,18 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
   return inputPayload.granules[0].granuleId;
 }
 
+// Ingest test granule to cumulus but then delete its s3 objects.  This creates a file in the database that is not on S3.
+async function ingestGranuleButDeleteFileObject(config, testSuffix, testDataFolder) {
+  const granuleId = await ingestAndPublishGranule(config, testSuffix, testDataFolder, false);
+  const granuleModel = new Granule();
+  const granule = await granuleModel.getRecord({ granuleId });
+
+  await Promise.all(
+    granule.files.map((f) => s3().deleteObject({ Bucket: f.bucket, Key: f.key }).promise())
+  );
+  return granule.files;
+}
+
 // ingest a granule to CMR and remove it from database
 // return granule object retrieved from database
 async function ingestGranuleToCMR(config, testSuffix, testDataFolder) {
@@ -142,7 +153,7 @@ describe('When there are granule differences and granule reconciliation is run',
   let config;
   let dbGranuleId;
   let extraCumulusCollection;
-  let extraFileInDb;
+  let extraFilesInDb;
   let extraS3Object;
   let granuleModel;
   let originalGranuleFile;
@@ -174,15 +185,6 @@ describe('When there are granule differences and granule reconciliation is run',
     extraS3Object = { Bucket: protectedBucket, Key: randomString() };
     await s3().putObject({ Body: 'delete-me', ...extraS3Object }).promise();
 
-    // Write an extra file to the DynamoDB Files table
-    extraFileInDb = {
-      bucket: protectedBucket,
-      key: randomString(),
-      granuleId: randomString()
-    };
-    process.env.FilesTable = `${config.stackName}-FilesTable`;
-    await GranuleFilesCache.put(extraFileInDb);
-
     // Write an extra collection to the Collections table
     extraCumulusCollection = {
       name: { S: randomString() },
@@ -200,9 +202,10 @@ describe('When there are granule differences and granule reconciliation is run',
 
     await setupCollectionAndTestData(config, testSuffix, testDataFolder);
 
-    [publishedGranuleId, dbGranuleId, cmrGranule] = await Promise.all([
+    [publishedGranuleId, dbGranuleId, extraFilesInDb, cmrGranule] = await Promise.all([
       ingestAndPublishGranule(config, testSuffix, testDataFolder),
       ingestAndPublishGranule(config, testSuffix, testDataFolder, false),
+      ingestGranuleButDeleteFileObject(config, testSuffix, testDataFolder),
       ingestGranuleToCMR(config, testSuffix, testDataFolder)
     ]);
 
@@ -245,15 +248,17 @@ describe('When there are granule differences and granule reconciliation is run',
     report = JSON.parse(response.body);
   });
 
-  it('generates a report showing cumulus files that are in S3 but not in the DynamoDB Files table', () => {
+  it('generates a report showing cumulus files that are in S3 but not in the Elasticsearch table', () => {
     const extraS3ObjectUri = buildS3Uri(extraS3Object.Bucket, extraS3Object.Key);
     expect(report.filesInCumulus.onlyInS3).toContain(extraS3ObjectUri);
   });
 
-  it('generates a report showing cumulus files that are in the DynamoDB Files table but not in S3', () => {
-    const extraFileUri = buildS3Uri(extraFileInDb.bucket, extraFileInDb.key);
-    const extraDbUris = report.filesInCumulus.onlyInElasticsearch.map((i) => i.uri);
-    expect(extraDbUris).toContain(extraFileUri);
+  it('generates a report showing cumulus files that are in the Elasticsearch table but not in S3', () => {
+    extraFilesInDb.forEach((f) => {
+      const extraFileUri = buildS3Uri(f.bucket, f.key);
+      const extraDbUris = report.filesInCumulus.onlyInElasticsearch.map((i) => i.uri);
+      expect(extraDbUris).toContain(extraFileUri);
+    });
   });
 
   it('generates a report showing number of collections that are in both Cumulus and CMR', () => {
@@ -342,7 +347,6 @@ describe('When there are granule differences and granule reconciliation is run',
 
     await Promise.all([
       s3().deleteObject(extraS3Object).promise(),
-      GranuleFilesCache.del(extraFileInDb),
       dynamodb().deleteItem({
         TableName: collectionsTableName(config.stackName),
         Key: {
