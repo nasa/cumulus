@@ -6,7 +6,6 @@ const sinon = require('sinon');
 const awsServices = require('../services');
 const { throttleOnce } = require('../test-utils');
 const StepFunctions = require('../StepFunctions');
-const s3Utils = require('../S3');
 
 const runWithStubbedAndThrottledSfnOperation = async (operation, response, fn) => {
   const operationBefore = awsServices.sfn()[operation];
