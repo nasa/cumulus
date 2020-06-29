@@ -100,7 +100,7 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
 }
 
 // Ingest test granule to cumulus but then delete its s3 objects.  This creates a file in the database that is not on S3.
-async function ingestGranuleButDeleteFileObject(config, testSuffix, testDataFolder) {
+async function ingestGranuleButDeleteFileObjects(config, testSuffix, testDataFolder) {
   const granuleId = await ingestAndPublishGranule(config, testSuffix, testDataFolder, false);
   const granuleModel = new Granule();
   const granule = await granuleModel.getRecord({ granuleId });
@@ -205,7 +205,7 @@ describe('When there are granule differences and granule reconciliation is run',
     [publishedGranuleId, dbGranuleId, extraFilesInDb, cmrGranule] = await Promise.all([
       ingestAndPublishGranule(config, testSuffix, testDataFolder),
       ingestAndPublishGranule(config, testSuffix, testDataFolder, false),
-      ingestGranuleButDeleteFileObject(config, testSuffix, testDataFolder),
+      ingestGranuleButDeleteFileObjects(config, testSuffix, testDataFolder),
       ingestGranuleToCMR(config, testSuffix, testDataFolder)
     ]);
 

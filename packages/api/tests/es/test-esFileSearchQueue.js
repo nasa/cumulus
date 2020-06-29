@@ -52,6 +52,7 @@ const loadGranules = async (granules, t) => {
   );
 };
 
+// sort function to return granules in order that Elasticsearch will return them.
 const sortByFileKey = (a, b) => (a.files[0].key < b.files[0].key ? -1 : 1);
 
 const byBucketName = (bucket) => (granule) =>
