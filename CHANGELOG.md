@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - The minimum supported version of all published Cumulus packages is now Node
   12.18.0
+  - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to
+    `cumuluss/cumulus-ecs-task:1.7.0`. This can be done by updating the `image`
+    property of any tasks defined using the `cumulus_ecs_service` Terraform
+    module.
 - Changes to `@cumulus/aws-client/S3`
   - The signature of the `getObjectSize` function has changed. It now takes a
     params object with three properties:
@@ -239,6 +243,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   removed
 - The deprecated `@cumulus/common/workflows.getWorkflowTemplate` function has
   been removed
+- `@cumulus/aws-client/StepFunctions.toSfnExecutionName()`
+- `@cumulus/aws-client/StepFunctions.fromSfnExecutionName()`
+- `@cumulus/aws-client/StepFunctions.getExecutionArn()`
+- `@cumulus/aws-client/StepFunctions.getExecutionUrl()`
+- `@cumulus/aws-client/StepFunctions.getStateMachineArn()`
+- `@cumulus/aws-client/StepFunctions.pullStepFunctionEvent()`
+- `@cumulus/common/test-utils/throttleOnce()`
+- `@cumulus/integration-tests/api/distribution.invokeApiDistributionLambda()`
+- `@cumulus/integration-tests/api/distribution.getDistributionApiRedirect()`
+- `@cumulus/integration-tests/api/distribution.getDistributionApiFileStream()`
 
 ## [v1.24.0] 2020-06-03
 

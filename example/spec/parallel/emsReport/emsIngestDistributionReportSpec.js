@@ -17,7 +17,7 @@ const {
   cleanupProviders
 } = require('@cumulus/integration-tests');
 const {
-  getDistributionApiRedirect,
+  getTEADistributionApiRedirect,
   getTEARequestHeaders
 } = require('@cumulus/integration-tests/api/distribution');
 const granulesApiTestUtils = require('@cumulus/api-client/granules');
@@ -338,7 +338,7 @@ xdescribe('The EMS report', () => {
         const filePath = `/${files[i].bucket}/${files[i].key}`;
         const downloadedFile = path.join(os.tmpdir(), files[i].fileName);
         // eslint-disable-next-line no-await-in-loop
-        const s3SignedUrl = await getDistributionApiRedirect(filePath, headers);
+        const s3SignedUrl = await getTEADistributionApiRedirect(filePath, headers);
         // eslint-disable-next-line no-await-in-loop
         await download(s3SignedUrl, downloadedFile);
         fs.unlinkSync(downloadedFile);
