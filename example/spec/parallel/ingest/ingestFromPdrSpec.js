@@ -133,6 +133,7 @@ describe('Ingesting from PDR', () => {
       await deleteS3Object(config.bucket, `${testDataFolder}/${origPdrFilename}`);
     } catch (error) {
       beforeAllFailed = true;
+      throw error;
     }
   });
 
@@ -172,6 +173,7 @@ describe('Ingesting from PDR', () => {
         );
       } catch (error) {
         beforeAllFailed = true;
+        throw error;
       }
     });
 
@@ -188,6 +190,7 @@ describe('Ingesting from PDR', () => {
           lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'DiscoverPdrs');
         } catch (error) {
           beforeAllFailed = true;
+          throw error;
         }
       });
 
@@ -236,8 +239,8 @@ describe('Ingesting from PDR', () => {
           expectedParsePdrOutput.granules[0].dataType += testSuffix;
           expectedParsePdrOutput.pdr.name = pdrFilename;
         } catch (error) {
-          console.log(error);
           beforeAllFailed = true;
+          throw error;
         }
       });
 
@@ -313,6 +316,7 @@ describe('Ingesting from PDR', () => {
             lambdaOutput = await lambdaStep.getStepOutput(parsePdrExecutionArn, 'SfSqsReport');
           } catch (error) {
             beforeAllFailed = true;
+            throw error;
           }
         });
 
@@ -345,6 +349,7 @@ describe('Ingesting from PDR', () => {
             ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn);
           } catch (error) {
             beforeAllFailed = true;
+            throw error;
           }
         });
 
@@ -544,6 +549,7 @@ describe('Ingesting from PDR', () => {
           pdrCompletedMessageKey = `${config.stackName}/test-output/${pdrFilename}-completed.output`;
         } catch (error) {
           beforeAllFailed = true;
+          throw error;
         }
       });
 
