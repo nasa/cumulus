@@ -18,7 +18,7 @@ hide_title: true
 * Open another tab in your browser and go to your Earthdata Git repository URL or where your collection data files are located.
 * Open the collection configuration .json file that you will copy to the Cumulus dashboard.
 * In the Cumulus dashboard, add a new collection with an attached rule.
-  * Go to the `Collections` page and then click on `Add Collection`.
+* Go to the `Collections` page and then click on `Add Collection`.
 
   ![Screenshot of Collections Page](assets/cd_collections_page.png)
 
@@ -27,7 +27,8 @@ hide_title: true
   ![Screenshot of a Collection template for adding a new collection](assets/cd_collection.png)
 
   * Click `Save` to create the new collection.
-  * Go to the `Rules` page and then click on `Add Rule`.
+  
+* Go to the `Rules` page and then click on `Add Rule`.
 
   ![Screenshot of Rules page](assets/cd_rules_page.png)
 
@@ -40,17 +41,18 @@ hide_title: true
 3. Bulk Ingest Granules
 
 * Go to the 'Collections' page
-* Click on `Run Bulk Granules` and a modal will pop up. Select `Run Bulk Operations` button on the right.
 
-![Screenshot of Run Bulk Granules](assets/cd_run_bulk_modal.png)
+  * Click on `Run Bulk Granules` and a modal will pop up. Select `Run Bulk Operations` button on the right.
 
-* Complete the form
+  ![Screenshot of Run Bulk Granules](assets/cd_run_bulk_modal.png)
 
-![Screenshot of Run Bulk Operations template](assets/cd_run_bulk_granules.png)
+  * Complete the form
+
+  ![Screenshot of Run Bulk Operations template](assets/cd_run_bulk_granules.png)
 
 * Go to the 'Executions' page to view the status of the ingested granules.
 
-![Screenshot of Executions Page](assets/cd_executions_page.png)
+  ![Screenshot of Executions Page](assets/cd_executions_page.png)
 
 ## Failed Granule
 
