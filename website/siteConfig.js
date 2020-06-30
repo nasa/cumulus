@@ -42,7 +42,6 @@ const siteConfig = {
     { doc: 'cumulus-docs-readme', label: 'Developer Docs' },
     { doc: 'data-cookbooks/about-cookbooks', label: 'Data-Cookbooks' },
     { doc: 'operator-docs/about-operator-docs', label: 'Operator Docs' },
-    { doc: 'team', label: 'Team' },
     { search: true }
   ],
 
