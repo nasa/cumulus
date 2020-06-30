@@ -22,6 +22,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - **key**
   - The `getObjectSize` function will no longer retry if the object does not
     exist
+- **CUMULUS-1861**
+  - `@cumulus/message/Collections.getCollectionIdFromMessage` now throws a
+    `CumulusMessageError` if `collectionName` and `collectionVersion` are missing
+    from `meta.collection`.   Previously this method would return
+    `'undefined___undefined'` instead
+  - `@cumulus/integration-tests/addCollections` now returns an array of collections that
+    were added rather than the count of added collections
 - **CUMULUS-1930**
   - The `@cumulus/common/util.uuid()` function has been removed
 - **CUMULUS-1958**
@@ -90,6 +97,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     support partial matching of the keywords
 
 ### Changed
+
+- **CUMULUS-1861**
+  - Updates Rule objects to no longer require a collection.
+  - Changes the DLQ behavior for `sfEventSqsToDbRecords` and
+    `sfEventSqsToDbRecordsInputQueue`. Previously failure to write a database
+    record would result in lambda success, and an error log in the CloudWatch
+    logs.   The lambda has been updated to manually add a record to
+    the `sfEventSqsToDbRecordsDeadLetterQueue` if the granule, execution, *or*
+    pdr record fails to write, in addition to the previous error logging.
 
 - **CUMULUS-1956**
   - The `/s3credentials` endpoint that is deployed as part of distribution now
