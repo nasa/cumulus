@@ -8,11 +8,74 @@
  * const Collections = require('@cumulus/integration-test/Collections');
  */
 
+const isString = require('lodash/isString');
+
 const CollectionsApi = require('@cumulus/api-client/collections');
 const { randomId } = require('@cumulus/common/test-utils');
-// disabled until refactor
-// eslint-disable-next-line unicorn/import-index
-const { readJsonFilesFromDir, buildCollection, setProcessEnvironment } = require('./index');
+const { readJsonFilesFromDir, setProcessEnvironment } = require('./utils');
+
+/**
+ * Given a Cumulus collection configuration, return a list of the filetype
+ * configs with their `url_path`s updated.
+ *
+ * @param {Object} collection - a Cumulus collection
+ * @param {string} customFilePath - path to be added to the end of the url_path
+ * @returns {Array<Object>} a list of collection filetype configs
+ */
+const addCustomUrlPathToCollectionFiles = (collection, customFilePath) =>
+  collection.files.map((file) => {
+    let urlPath;
+    if (isString(file.url_path)) {
+      urlPath = `${file.url_path}/`;
+    } else if (isString(collection.url_path)) {
+      urlPath = `${collection.url_path}/`;
+    } else {
+      urlPath = '';
+    }
+
+    return {
+      ...file,
+      url_path: `${urlPath}${customFilePath}/`
+    };
+  });
+
+/**
+ * Update a collection with a custom file path, duplicate handling, and name
+ * updated with the postfix.
+ *
+ * @param {Object} params
+ * @param {Object} params.collection - a collection configuration
+ * @param {string} params.customFilePath - path to be added to the end of the
+ *   url_path
+ * @param {string} params.duplicateHandling - duplicate handling setting
+ * @param {string} params.postfix - a string to be appended to the end of the
+ *   name
+ * @returns {Object} an updated collection
+ */
+const buildCollection = (params = {}) => {
+  const {
+    collection, customFilePath, duplicateHandling, postfix
+  } = params;
+
+  const updatedCollection = { ...collection };
+
+  if (postfix) {
+    updatedCollection.name += postfix;
+  }
+
+  if (customFilePath) {
+    updatedCollection.files = addCustomUrlPathToCollectionFiles(
+      collection,
+      customFilePath
+    );
+  }
+
+  if (duplicateHandling) {
+    updatedCollection.duplicateHandling = duplicateHandling;
+  }
+
+  return updatedCollection;
+};
 
 const buildRandomizedCollection = (overrides = {}) => ({
   name: randomId('collection-name-'),
@@ -66,7 +129,6 @@ async function addCollections(stackName, bucketName, dataDirectory, postfix,
   setProcessEnvironment(stackName, bucketName);
 
   const rawCollections = await readJsonFilesFromDir(dataDirectory);
-
   const collections = rawCollections.map(
     (collection) => buildCollection({
       collection,
@@ -75,6 +137,7 @@ async function addCollections(stackName, bucketName, dataDirectory, postfix,
       postfix
     })
   );
+
   await Promise.all(
     collections.map((collection) => addCollection(stackName, collection))
   );
@@ -130,5 +193,6 @@ const createCollection = async (prefix, overrides = {}) => {
 
 module.exports = {
   addCollections,
+  buildCollection,
   createCollection
 };

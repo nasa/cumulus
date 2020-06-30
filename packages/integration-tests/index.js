@@ -5,10 +5,8 @@
 const delay = require('delay');
 const replace = require('lodash/replace');
 const orderBy = require('lodash/orderBy');
-const path = require('path');
 const cloneDeep = require('lodash/cloneDeep');
 const isEqual = require('lodash/isEqual');
-const isString = require('lodash/isString');
 const merge = require('lodash/merge');
 const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
@@ -34,6 +32,8 @@ const collectionsApi = require('@cumulus/api-client/collections');
 const providersApi = require('@cumulus/api-client/providers');
 const asyncOperationsApi = require('@cumulus/api-client/asyncOperations');
 const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
+
+const { addCollections, addCustomUrlPathToCollectionFiles, buildCollection } = require('./Collections.js');
 const rulesApi = require('./api/rules');
 const emsApi = require('./api/ems');
 const executionsApi = require('./api/executions');
@@ -46,8 +46,7 @@ const cmr = require('./cmr.js');
 const lambda = require('./lambda');
 const waitForDeployment = require('./lambdas/waitForDeployment');
 const { ActivityStep, LambdaStep } = require('./sfnStep');
-const { addCollections } = require('./Collections.js');
-
+const { setProcessEnvironment, readJsonFilesFromDir } = require('./utils');
 const waitPeriodMs = 1000;
 
 const maxWaitForStartedExecutionSecs = 60 * 5;
@@ -266,35 +265,6 @@ async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
 }
 
 /**
- * set process environment necessary for database transactions
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- */
-function setProcessEnvironment(stackName, bucketName) {
-  process.env.system_bucket = bucketName;
-  process.env.stackName = stackName;
-  process.env.messageConsumer = `${stackName}-messageConsumer`;
-  process.env.KinesisInboundEventLogger = `${stackName}-KinesisInboundEventLogger`;
-  process.env.CollectionsTable = `${stackName}-CollectionsTable`;
-  process.env.ProvidersTable = `${stackName}-ProvidersTable`;
-  process.env.RulesTable = `${stackName}-RulesTable`;
-}
-
-/**
- * Load and parse all of the JSON files from a directory
- *
- * @param {string} sourceDir - the directory containing the JSON files to load
- * @returns {Promise<Array<*>>} the parsed JSON files
- */
-const readJsonFilesFromDir = async (sourceDir) => {
-  const allFiles = await fs.readdir(sourceDir);
-  const jsonFiles = allFiles.filter((f) => f.endsWith('.json'));
-  const absoluteFiles = jsonFiles.map((f) => path.join(sourceDir, f));
-  return Promise.all(absoluteFiles.map(readJsonFile));
-};
-
-/**
  * Set environment variables and read in seed files from dataDirectory
  *
  * @param {string} stackName - Cloud formation stack name
@@ -307,68 +277,7 @@ function setupSeedData(stackName, bucketName, dataDirectory) {
   return readJsonFilesFromDir(dataDirectory);
 }
 
-/**
- * Given a Cumulus collection configuration, return a list of the filetype
- * configs with their `url_path`s updated.
- *
- * @param {Object} collection - a Cumulus collection
- * @param {string} customFilePath - path to be added to the end of the url_path
- * @returns {Array<Object>} a list of collection filetype configs
- */
-const addCustomUrlPathToCollectionFiles = (collection, customFilePath) =>
-  collection.files.map((file) => {
-    let urlPath;
-    if (isString(file.url_path)) {
-      urlPath = `${file.url_path}/`;
-    } else if (isString(collection.url_path)) {
-      urlPath = `${collection.url_path}/`;
-    } else {
-      urlPath = '';
-    }
 
-    return {
-      ...file,
-      url_path: `${urlPath}${customFilePath}/`
-    };
-  });
-
-/**
- * Update a collection with a custom file path, duplicate handling, and name
- * updated with the postfix.
- *
- * @param {Object} params
- * @param {Object} params.collection - a collection configuration
- * @param {string} params.customFilePath - path to be added to the end of the
- *   url_path
- * @param {string} params.duplicateHandling - duplicate handling setting
- * @param {string} params.postfix - a string to be appended to the end of the
- *   name
- * @returns {Object} an updated collection
- */
-const buildCollection = (params = {}) => {
-  const {
-    collection, customFilePath, duplicateHandling, postfix
-  } = params;
-
-  const updatedCollection = { ...collection };
-
-  if (postfix) {
-    updatedCollection.name += postfix;
-  }
-
-  if (customFilePath) {
-    updatedCollection.files = addCustomUrlPathToCollectionFiles(
-      collection,
-      customFilePath
-    );
-  }
-
-  if (duplicateHandling) {
-    updatedCollection.duplicateHandling = duplicateHandling;
-  }
-
-  return updatedCollection;
-};
 
 /**
  * Load a collection from a JSON file and update it
