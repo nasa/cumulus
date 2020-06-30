@@ -15,6 +15,8 @@ const CMR = require('@cumulus/cmr-client/CMR');
 const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue');
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
+const ESCollection = require('../es/collections');
+
 const { Collection, Granule, ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');
 const { ESFileSearchQueue } = require('../es/esFileSearchQueue');
@@ -116,21 +118,23 @@ async function reconciliationReportForCollections() {
     constructCollectionId(item.umm.ShortName, item.umm.Version)).sort();
 
   // get all collections from database and sort them, since the scan result is not ordered
-  const dbCollectionsItems = await new Collection().getAllCollections();
-  const dbCollectionIds = dbCollectionsItems.map((item) =>
-    constructCollectionId(item.name, item.version)).sort();
+  const esCollection = new ESCollection({}, 'collection', process.env.ES_INDEX);
+  const esCollectionItems = await esCollection.query();
+  const esCollectionIds = esCollectionItems.map(
+    (item) => constructCollectionId(item.name, item.version)
+  ).sort();
 
   const okCollections = [];
   let collectionsOnlyInCumulus = [];
   let collectionsOnlyInCmr = [];
 
-  let nextDbCollectionId = (dbCollectionIds.length !== 0) ? dbCollectionIds[0] : null;
+  let nextDbCollectionId = (esCollectionIds.length !== 0) ? esCollectionIds[0] : null;
   let nextCmrCollectionId = (cmrCollectionIds.length !== 0) ? cmrCollectionIds[0] : null;
 
   while (nextDbCollectionId && nextCmrCollectionId) {
     if (nextDbCollectionId < nextCmrCollectionId) {
       // Found an item that is only in Cumulus database and not in cmr
-      dbCollectionIds.shift();
+      esCollectionIds.shift();
       collectionsOnlyInCumulus.push(nextDbCollectionId);
     } else if (nextDbCollectionId > nextCmrCollectionId) {
       // Found an item that is only in cmr and not in Cumulus database
@@ -139,16 +143,16 @@ async function reconciliationReportForCollections() {
     } else {
       // Found an item that is in both cmr and database
       okCollections.push(nextDbCollectionId);
-      dbCollectionIds.shift();
+      esCollectionIds.shift();
       cmrCollectionIds.shift();
     }
 
-    nextDbCollectionId = (dbCollectionIds.length !== 0) ? dbCollectionIds[0] : null;
+    nextDbCollectionId = (esCollectionIds.length !== 0) ? esCollectionIds[0] : null;
     nextCmrCollectionId = (cmrCollectionIds.length !== 0) ? cmrCollectionIds[0] : null;
   }
 
   // Add any remaining database items to the report
-  collectionsOnlyInCumulus = collectionsOnlyInCumulus.concat(dbCollectionIds);
+  collectionsOnlyInCumulus = collectionsOnlyInCumulus.concat(esCollectionIds);
 
   // Add any remaining CMR items to the report
   collectionsOnlyInCmr = collectionsOnlyInCmr.concat(cmrCollectionIds);
