@@ -7,7 +7,6 @@ const jwt = require('jsonwebtoken');
 
 const CloudFormation = require('@cumulus/aws-client/CloudFormation');
 const SecretsManager = require('@cumulus/aws-client/SecretsManager');
-const { deprecate } = require('@cumulus/common/util');
 
 const { getEarthdataAccessToken } = require('./EarthdataLogin');
 
@@ -63,26 +62,6 @@ async function invokeTEADistributionLambda(
   const payload = JSON.parse(data.Payload);
 
   return payload;
-}
-
-/**
- * Maintained for legacy compatibility.
- *
- * @param {string} path
- *   path to file requested.  This is just "/bucket/keytofile"
- * @param {headers} headers
- *   Headers to use for TEA request
- *   @see getTEARequestHeaders()
- * @returns {string}
- *   signed s3 URL for the requested file.
- */
-function invokeApiDistributionLambda(path, headers) {
-  deprecate(
-    '@cumulus/integration-tests/api/distribution.invokeApiDistributionLambda',
-    '1.19.0',
-    '@cumulus/integration-tests/api/distribution.invokeTEADistributionLambda'
-  );
-  return invokeTEADistributionLambda(path, headers);
 }
 
 /**
@@ -149,7 +128,7 @@ function getDistributionFileUrl({
  * @returns {string} - Redirect header location
  */
 async function getTEADistributionApiRedirect(filepath, headers) {
-  const payload = await invokeApiDistributionLambda(
+  const payload = await invokeTEADistributionLambda(
     filepath,
     headers
   );
@@ -247,61 +226,10 @@ async function getTEARequestHeaders(stackName) {
   return buildTeaRequestHeaders(accessTokenResponse.accessToken, jwtToken);
 }
 
-/**
- * Invoke the Distribution Lambda and return the headers location
- *
- * @param {filepath} filepath - request.path parameter
- * @param {Object} headers
- *   Headers to use for Distribution API request
- *   @see getTEARequestHeaders()
- * @returns {string} - Redirect header location
- */
-function getDistributionApiRedirect(filepath, headers) {
-  deprecate(
-    '@cumulus/integration-tests/api/distribution.getDistributionApiRedirect',
-    '1.19.0',
-    '@cumulus/integration-tests/api/distribution.getTEADistributionApiRedirect'
-  );
-  return getTEADistributionApiRedirect(filepath, headers);
-}
-
-/**
- * Return a stream for file protected by distribution API by invoking the
- * lambda directly and reading the returned signed url.
- *
- * @param {string} filepath
- *   Distribution API file path to request
- * @param {string} accessToken
- *   Access token from OAuth provider
- *
- * @returns {ReadableStream}
- *   Stream to the file protected by the distribution
- */
-async function getDistributionApiFileStream(filepath, accessToken) {
-  deprecate(
-    '@cumulus/integration-tests/api/distribution.getDistributionApiFileStream',
-    '1.19.0',
-    '@cumulus/integration-tests/api/distribution.getTEADistributionApiFileStream'
-  );
-  const teaJwtToken = await getTEARequestJwtToken(
-    process.env.DEPLOYMENT,
-    {
-      accessToken,
-      expirationTime: Date.now()
-    }
-  );
-  const headers = buildTeaRequestHeaders(accessToken, teaJwtToken);
-  const s3SignedUrl = await getTEADistributionApiRedirect(filepath, headers);
-  return got.stream(s3SignedUrl);
-}
-
 module.exports = {
-  getDistributionApiFileStream,
-  getDistributionApiRedirect,
   getDistributionFileUrl,
   getTEADistributionApiFileStream,
   getTEADistributionApiRedirect,
   getTEARequestHeaders,
-  invokeApiDistributionLambda,
   invokeS3CredentialsLambda
 };
