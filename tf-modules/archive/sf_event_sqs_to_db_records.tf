@@ -66,7 +66,7 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
       "sqs:GetQueueAttributes",
       "sqs:SendMessage",
     ]
-    resources = ["arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.prefix}-*"]
+    resources = ["arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.prefix}-sfEventSqsToDbRecordsInputQueue"]
   }
 
 
