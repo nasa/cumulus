@@ -277,8 +277,6 @@ function setupSeedData(stackName, bucketName, dataDirectory) {
   return readJsonFilesFromDir(dataDirectory);
 }
 
-
-
 /**
  * Load a collection from a JSON file and update it
  *
