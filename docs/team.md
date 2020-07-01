@@ -1,6 +1,6 @@
 ---
 id: team
-title: Cumulus Tasks
+title: Cumulus Team
 hide_title: true
 ---
 
