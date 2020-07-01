@@ -35,7 +35,7 @@ function checkRegex(regex, sampleFileName, regexFieldName = 'regex') {
   return match;
 }
 
-const validateCollection = (collection) => {
+const validateCollectionCoreConfig = (collection) => {
   // Test that granuleIdExtraction regex matches against sampleFileName
   const match = checkRegex(collection.granuleIdExtraction, collection.sampleFileName, 'granuleIdExtraction');
 
@@ -49,9 +49,32 @@ const validateCollection = (collection) => {
   // Test that granuleId regex matches the what was extracted from the
   // sampleFileName using the granuleIdExtraction
   checkRegex(collection.granuleId, match[1], 'granuleId');
+};
 
+const validateCollectionFilesConfig = (collection) => {
   // Check that each file.regex matches against file.sampleFileName
   collection.files.forEach((file) => checkRegex(file.regex, file.sampleFileName));
+
+  // Check that any files with a `checksumFor` field match one of the other files;
+  collection.files.forEach((fileConfig) => {
+    const checksumFor = fileConfig.checksumFor;
+    if (!checksumFor) return;
+    const matchingFiles = collection.files.filter((f) => f.regex === checksumFor);
+    if (matchingFiles.length === 0) {
+      throw new UnmatchedRegexError(`checksumFor '${checksumFor}' does not match any file regex`);
+    }
+    if (matchingFiles.length > 1) {
+      throw new InvalidRegexError(`checksumFor '${checksumFor}' matches multiple file regexes`);
+    }
+    if (matchingFiles[0] === fileConfig) {
+      throw new InvalidRegexError(`checksumFor '${checksumFor}' cannot be used to validate itself`);
+    }
+  });
+};
+
+const validateCollection = (collection) => {
+  validateCollectionCoreConfig(collection);
+  validateCollectionFilesConfig(collection);
 };
 
 // Fields which are no longer supported in collection items, and which should

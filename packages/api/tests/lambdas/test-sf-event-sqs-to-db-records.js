@@ -7,16 +7,22 @@ const sinon = require('sinon');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+const proxyquire = require('proxyquire');
 const { randomString } = require('@cumulus/common/test-utils');
 const Execution = require('../../models/executions');
 const Granule = require('../../models/granules');
 const Pdr = require('../../models/pdrs');
 const {
-  handler,
   saveExecutionToDb,
   saveGranulesToDb,
   savePdrToDb
 } = require('../../lambdas/sf-event-sqs-to-db-records');
+const { handler } = proxyquire('../../lambdas/sf-event-sqs-to-db-records', {
+  '@cumulus/aws-client/SQS': {
+    sendSQSMessage: async (queue, message) => [queue, message]
+  }
+});
+
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 
 const loadFixture = (filename) =>
@@ -28,6 +34,45 @@ const loadFixture = (filename) =>
       filename
     )
   );
+
+const runHandler = async (cumulusMessage = {}) => {
+  const fixture = await loadFixture('execution-running-event.json');
+
+  const stateMachineName = randomString();
+  const stateMachineArn = `arn:aws:states:${fixture.region}:${fixture.account}:stateMachine:${stateMachineName}`;
+  cumulusMessage.cumulus_meta.state_machine = stateMachineArn;
+
+  const executionName = randomString();
+  cumulusMessage.cumulus_meta.execution_name = executionName;
+  const executionArn = `arn:aws:states:${fixture.region}:${fixture.account}:execution:${stateMachineName}:${executionName}`;
+
+  fixture.resources = [executionArn];
+  fixture.detail.executionArn = executionArn;
+  fixture.detail.stateMachineArn = stateMachineArn;
+  fixture.detail.name = executionName;
+
+  const granuleId = randomString();
+  const files = [fakeFileFactory()];
+  const granule = fakeGranuleFactoryV2({ files, granuleId });
+
+  cumulusMessage.payload.granules = [granule];
+
+  const pdrName = randomString();
+  cumulusMessage.payload.pdr = {
+    name: pdrName
+  };
+
+  fixture.detail.input = JSON.stringify(cumulusMessage);
+
+  const sqsEvent = {
+    Records: [{
+      eventSource: 'aws:sqs',
+      body: JSON.stringify(fixture)
+    }]
+  };
+  const handlerResponse = await handler(sqsEvent);
+  return { executionArn, granuleId, pdrName, handlerResponse, sqsEvent };
+};
 
 test.before(async (t) => {
   process.env.ExecutionsTable = randomString();
@@ -106,17 +151,18 @@ test('saveExecutionToDb() creates an execution item in Dynamo', async (t) => {
   }
 });
 
-test('saveExecutionToDb() does not throw an exception if storeExecutionFromCumulusMessage() throws an exception', async (t) => {
+test.serial('saveExecutionToDb() throws an exception if storeExecutionFromCumulusMessage() throws an exception', async (t) => {
   const { cumulusMessage } = t.context;
 
-  // Because state_machine is missing, generating this execution record will fail
-  delete cumulusMessage.cumulus_meta.state_machine;
+  const saveExecutionStub = sinon.stub(Execution.prototype, 'storeExecutionFromCumulusMessage')
+    .callsFake(() => {
+      throw new Error('error');
+    });
 
   try {
-    await saveExecutionToDb(cumulusMessage);
-    t.pass();
-  } catch (error) {
-    t.fail(`Exception should not have been thrown, but caught: ${error}`);
+    await t.throwsAsync(saveExecutionToDb(cumulusMessage));
+  } finally {
+    saveExecutionStub.restore();
   }
 });
 
@@ -162,7 +208,7 @@ test('saveGranulesToDb() saves a granule record to the database', async (t) => {
   t.deepEqual(fetchedGranule, expectedGranule);
 });
 
-test.serial('saveGranulesToDb() does not throw an exception if storeGranulesFromCumulusMessage() throws an exception', async (t) => {
+test.serial('saveGranulesToDb() throws an exception if storeGranulesFromCumulusMessage() throws an exception', async (t) => {
   const { cumulusMessage } = t.context;
 
   const storeGranuleStub = sinon.stub(Granule.prototype, 'storeGranulesFromCumulusMessage')
@@ -171,10 +217,7 @@ test.serial('saveGranulesToDb() does not throw an exception if storeGranulesFrom
     });
 
   try {
-    await saveGranulesToDb(cumulusMessage);
-    t.pass();
-  } catch (error) {
-    t.fail(`Exception should not have been thrown, but caught: ${error}`);
+    await t.throwsAsync(saveGranulesToDb(cumulusMessage));
   } finally {
     storeGranuleStub.restore();
   }
@@ -233,7 +276,21 @@ test.serial('savePdrToDb() saves a PDR record', async (t) => {
   t.deepEqual(fetchedPdr, expectedPdr);
 });
 
-test('The sf-event-sqs-to-db-records Lambda function creates execution, granule and pdr records', async (t) => {
+test.serial('savePdrsToDb() throws an exception if storePdrFromCumulusMessage() throws an exception', async (t) => {
+  const { cumulusMessage } = t.context;
+
+  const storeGranuleStub = sinon.stub(Pdr.prototype, 'storePdrFromCumulusMessage')
+    .callsFake(() => {
+      throw new Error('error');
+    });
+  try {
+    await t.throwsAsync(savePdrToDb(cumulusMessage));
+  } finally {
+    storeGranuleStub.restore();
+  }
+});
+
+test('sf-event-sqs-to-db-records handler sends message to DLQ when granule and pdr fail to write to database', async (t) => {
   const {
     cumulusMessage,
     executionModel,
@@ -241,40 +298,30 @@ test('The sf-event-sqs-to-db-records Lambda function creates execution, granule 
     pdrModel
   } = t.context;
 
-  const fixture = await loadFixture('execution-running-event.json');
+  delete cumulusMessage.meta.collection;
+  const {
+    executionArn,
+    granuleId,
+    pdrName,
+    handlerResponse,
+    sqsEvent
+  } = await runHandler(cumulusMessage);
 
-  const stateMachineName = randomString();
-  const stateMachineArn = `arn:aws:states:${fixture.region}:${fixture.account}:stateMachine:${stateMachineName}`;
-  cumulusMessage.cumulus_meta.state_machine = stateMachineArn;
+  t.true(await executionModel.exists({ arn: executionArn }));
+  t.false(await granuleModel.exists({ granuleId }));
+  t.false(await pdrModel.exists({ pdrName }));
+  t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
+});
 
-  const executionName = randomString();
-  cumulusMessage.cumulus_meta.execution_name = executionName;
-  const executionArn = `arn:aws:states:${fixture.region}:${fixture.account}:execution:${stateMachineName}:${executionName}`;
+test('The sf-event-sqs-to-db-records Lambda adds records to the granule, execution and pdr tables', async (t) => {
+  const {
+    cumulusMessage,
+    executionModel,
+    granuleModel,
+    pdrModel
+  } = t.context;
 
-  fixture.resources = [executionArn];
-  fixture.detail.executionArn = executionArn;
-  fixture.detail.stateMachineArn = stateMachineArn;
-  fixture.detail.name = executionName;
-
-  const granuleId = randomString();
-  const files = [fakeFileFactory()];
-  const granule = fakeGranuleFactoryV2({ files, granuleId });
-  cumulusMessage.payload.granules = [granule];
-
-  const pdrName = randomString();
-  cumulusMessage.payload.pdr = {
-    name: pdrName
-  };
-
-  fixture.detail.input = JSON.stringify(cumulusMessage);
-
-  const sqsEvent = {
-    Records: [{
-      eventSource: 'aws:sqs',
-      body: JSON.stringify(fixture)
-    }]
-  };
-  await handler(sqsEvent);
+  const { executionArn, granuleId, pdrName } = await runHandler(cumulusMessage);
 
   t.true(await executionModel.exists({ arn: executionArn }));
   t.true(await granuleModel.exists({ granuleId }));
