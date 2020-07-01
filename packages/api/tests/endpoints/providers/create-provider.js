@@ -196,3 +196,26 @@ test('POST returns a 400 response if invalid hostname is provided', async (t) =>
     .expect(400);
   t.is(response.status, 400);
 });
+
+test('CUMULUS-176 POST returns a 404 if ', async (t) => {
+  const newProvider = fakeProviderFactory();
+
+  const response = await request(app)
+    .post(`/providers/${newProvider.providerid}`)
+    .send(newProvider)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+
+  t.is(response.statusCode, 404);
+});
+
+test('CUMULUS-176 POST returns a 400 response if invalid JSON provided', async (t) => {
+  const response = await request(app)
+    .post('/providers')
+    .set('Content-Type', 'application/json')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send('asdf');
+
+  t.is(response.statusCode, 400);
+});

@@ -91,6 +91,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-176**
+  - The API will now respond with a 400 status code when a request body contains
+    invalid JSON. It had previously returned a 500 status code.
 - **CUMULUS-1956**
   - The `/s3credentials` endpoint that is deployed as part of distribution now
     supports authentication using tokens created by a different application. If
