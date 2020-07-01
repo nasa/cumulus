@@ -11,7 +11,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 
 const {
   EarthdataLogin: { getEarthdataAccessToken },
-  distributionApi: { invokeApiDistributionLambda }
+  distributionApi: { invokeTEADistributionLambda }
 } = require('@cumulus/integration-tests');
 
 const { setDistributionApiEnvVars } = require('../../helpers/apiUtils');
@@ -95,7 +95,7 @@ xdescribe('When accessing an S3 bucket directly', () => {
 
   describe('an unauthenticated request', () => {
     it('redirects to Earthdata login for requests on /s3credentials endpoint.', async () => {
-      const response = await invokeApiDistributionLambda('/s3credentials');
+      const response = await invokeTEADistributionLambda('/s3credentials');
       const authorizeUrl = new URL(response.headers.location);
       expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
       expect(authorizeUrl.searchParams.get('state')).toEqual('/s3credentials');
@@ -121,7 +121,7 @@ xdescribe('When accessing an S3 bucket directly', () => {
 
       let response;
       try {
-        response = await invokeApiDistributionLambda('/s3credentials', accessToken);
+        response = await invokeTEADistributionLambda('/s3credentials', accessToken);
         creds = JSON.parse(response.body);
       } catch (error) {
         console.log(error);
