@@ -48,6 +48,7 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 |type|`"data"`|No|Value to be assigned to the Granule File Type. CNM types are used by Cumulus CMR steps, non-CNM values will be treated as 'data' type.  Currently only utilized in DiscoverGranules task|
 |bucket|`"internal"`|Yes|Name of the bucket where the file will be stored|
 |url_path|`"${collectionShortName}/{substring(file.name, 0, 3)}"`|No|Folder used to save the granule in the bucket. Defaults to the collection `url_path`|
+|checksumFor|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$"`|No|If this is a checksum file, set `checksumFor` to the `regex` of the target file.|
 
 ## Providers
 

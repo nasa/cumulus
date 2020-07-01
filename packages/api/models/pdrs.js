@@ -2,13 +2,13 @@
 
 const get = require('lodash/get');
 
-const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
 const pvl = require('@cumulus/pvl');
-
+const StepFunctionUtils = require('../lib/StepFunctionUtils');
 const Manager = require('./base');
+const { CumulusModelError } = require('./errors');
 const pdrSchema = require('./schemas').pdr;
 
 class Pdr extends Manager {
@@ -64,13 +64,16 @@ class Pdr extends Manager {
     }
 
     if (!pdr.name) { // We got a message with a PDR but no name to identify it (Not OK)
-      throw new Error(`Could not find name on PDR object ${JSON.stringify(pdr)}`);
+      throw new CumulusModelError(`Could not find name on PDR object ${JSON.stringify(pdr)}`);
     }
 
     const arn = getMessageExecutionArn(message);
-    const execution = StepFunctions.getExecutionUrl(arn);
+    const execution = StepFunctionUtils.getExecutionUrl(arn);
 
     const collectionId = getCollectionIdFromMessage(message);
+    if (!collectionId) {
+      throw new CumulusModelError('meta.collection required to generate a PDR record');
+    }
 
     const stats = {
       processing: get(message, 'payload.running', []).length,

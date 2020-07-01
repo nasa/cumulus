@@ -164,6 +164,11 @@ module.exports.collection = {
             title: 'File Type',
             description: 'CNM file type.  Cumulus uses this for CMR submission.  Non-CNM file types will be treated as "data" type',
             type: 'string'
+          },
+          checksumFor: {
+            title: 'Checksum-For Regex',
+            description: 'Regex to identify the base file for which this files serves as a sidecar checksum file. Should be identical to the \'regex\' property of the base file',
+            type: 'string'
           }
         },
         required: [
@@ -471,7 +476,7 @@ module.exports.rule = {
     }
   },
   required: [
-    'name', 'workflow', 'collection', 'rule', 'state', 'createdAt', 'updatedAt'
+    'name', 'workflow', 'rule', 'state', 'createdAt', 'updatedAt'
   ]
 };
 

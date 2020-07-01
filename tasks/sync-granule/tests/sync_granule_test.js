@@ -570,49 +570,6 @@ test.serial('when duplicateHandling is "error", throw an error on duplicate', as
   await duplicateHandlingErrorTest(t);
 });
 
-// TODO Fix this test as part of https://bugs.earthdata.nasa.gov/browse/CUMULUS-272
-// test.cb('replace duplicate Granule', (t) => {
-//   const provider = {
-//     id: 'MODAPS',
-//     protocol: 'http',
-//     host: 'http://127.0.0.1:3030'
-//   };
-//   sinon.stub(S3, 'fileExists').callsFake(() => true);
-//   const uploaded = sinon.stub(S3, 'upload').callsFake(() => '/test/test.hd');
-
-//   const newPayload = cloneDeep(payload);
-//   newPayload.provider = provider;
-//   handler(newPayload, {}, (e, r) => {
-//     S3.fileExists.restore();
-//     S3.upload.restore();
-//     if (e instanceof errors.RemoteResourceError) {
-//       log.info('ignoring this test. Test server seems to be down');
-//       return t.end();
-//     }
-//     t.true(uploaded.called);
-//     return t.end(e);
-//   });
-// });
-
-// TODO Fix this test as part of https://bugs.earthdata.nasa.gov/browse/CUMULUS-272
-// test.cb('skip duplicate Granule', (t) => {
-//   sinon.stub(S3, 'fileExists').callsFake(() => true);
-//   const uploaded = sinon.stub(S3, 'upload').callsFake(() => '/test/test.hd');
-
-//   const newPayload = cloneDeep(payload);
-//   newPayload.config.collection.duplicateHandling = 'skip';
-//   handler(newPayload, {}, (e, r) => {
-//     S3.fileExists.restore();
-//     S3.upload.restore();
-//     if (e instanceof errors.RemoteResourceError) {
-//       log.info('ignoring this test. Test server seems to be down');
-//       return t.end();
-//     }
-//     t.false(uploaded.called);
-//     return t.end(e);
-//   });
-// });
-
 test.serial('when duplicateHandling is "version", keep both data if different', async (t) => {
   await prepareS3DownloadEvent(t);
   // duplicateHandling is taken from task config or collection config
