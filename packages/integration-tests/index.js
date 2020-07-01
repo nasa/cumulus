@@ -836,8 +836,8 @@ async function waitForAllTestSf(
       const execution = executions[ctr];
       if (!workflowExecutions.find((e) => e.executionArn === execution.executionArn)) {
         const executionInput = await getExecutionInputObject(execution.executionArn);
-        if (executionInput !== null
-          && payloadContainsExpected(executionInput.payload, expectedPayload)) {
+        if (executionInput !== null &&
+          payloadContainsExpected(executionInput.payload, expectedPayload)) {
           workflowExecutions.push(execution);
           if (workflowExecutions.length === numExecutions) {
             break;

@@ -211,9 +211,9 @@ test('EarthdataLogin.getAccessToken() sends a correct request to the token endpo
       (body) => {
         const parsedBody = new URLSearchParams(body);
 
-        return parsedBody.get('grant_type') === 'authorization_code'
-          && parsedBody.get('code') === 'authorization-code'
-          && parsedBody.get('redirect_uri') === earthdataLoginClient.redirectUri;
+        return parsedBody.get('grant_type') === 'authorization_code' &&
+          parsedBody.get('code') === 'authorization-code' &&
+          parsedBody.get('redirect_uri') === earthdataLoginClient.redirectUri;
       }
     )
     .basicAuth({
@@ -327,8 +327,8 @@ test('EarthdataLogin.refreshAccessToken() sends a correct request to the token e
       (body) => {
         const parsedBody = new URLSearchParams(body);
 
-        return parsedBody.get('grant_type') === 'refresh_token'
-          && parsedBody.get('refresh_token') === 'refresh-token';
+        return parsedBody.get('grant_type') === 'refresh_token' &&
+          parsedBody.get('refresh_token') === 'refresh-token';
       }
     )
     .basicAuth({

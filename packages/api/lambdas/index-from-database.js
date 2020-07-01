@@ -9,8 +9,8 @@ const { Search } = require('../es/search');
 const indexer = require('../es/indexer');
 
 const getEsRequestConcurrency = (event) => {
-  const concurrency = event.esRequestConcurrency
-    || process.env.ES_CONCURRENCY;
+  const concurrency = event.esRequestConcurrency ||
+    process.env.ES_CONCURRENCY;
   return concurrency ? Number.parseInt(concurrency, 10) : 10;
 };
 

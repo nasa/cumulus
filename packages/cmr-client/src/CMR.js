@@ -137,8 +137,8 @@ class CMR {
    * @returns {Promise.<string>} the token
    */
   async getToken() {
-    return (this.token) ? this.token
-      : updateToken(this.provider, this.clientId, this.username, await this.getCmrPassword());
+    return (this.token) ? this.token :
+      updateToken(this.provider, this.clientId, this.username, await this.getCmrPassword());
   }
 
   /**
@@ -150,9 +150,9 @@ class CMR {
    * @returns {Object} CMR headers object
    */
   getWriteHeaders(params = {}) {
-    const contentType = params.ummgVersion
-      ? `application/vnd.nasa.cmr.umm+json;version=${params.ummgVersion}`
-      : 'application/echo10+xml';
+    const contentType = params.ummgVersion ?
+      `application/vnd.nasa.cmr.umm+json;version=${params.ummgVersion}` :
+      'application/echo10+xml';
 
     const headers = {
       'Client-Id': this.clientId,

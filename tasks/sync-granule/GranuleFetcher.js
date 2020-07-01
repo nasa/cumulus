@@ -69,9 +69,9 @@ class GranuleFetcher {
     this.buckets = buckets;
     this.collection = collection;
 
-    this.fileStagingDir = (fileStagingDir && fileStagingDir[0] === '/')
-      ? fileStagingDir.substr(1)
-      : fileStagingDir;
+    this.fileStagingDir = (fileStagingDir && fileStagingDir[0] === '/') ?
+      fileStagingDir.substr(1) :
+      fileStagingDir;
 
     this.duplicateHandling = duplicateHandling;
 
@@ -276,17 +276,17 @@ class GranuleFetcher {
       const ingestedSize = await S3.getObjectSize({ s3: s3(), bucket, key });
       if (ingestedSize !== (file.size || file.fileSize)) { // file.fileSize to be removed
         throw new errors.UnexpectedFileSize(
-          `verifyFile ${file.name} failed: Actual file size ${ingestedSize}`
-          + ` did not match expected file size ${(file.size || file.fileSize)}`
+          `verifyFile ${file.name} failed: Actual file size ${ingestedSize}` +
+          ` did not match expected file size ${(file.size || file.fileSize)}`
         );
       }
     } else {
       log.warn(`Could not verify ${file.name} expected file size: ${file.size}.`);
     }
 
-    return (file.checksumType || file.checksum)
-      ? [file.checksumType, file.checksum]
-      : [null, null];
+    return (file.checksumType || file.checksum) ?
+      [file.checksumType, file.checksum] :
+      [null, null];
   }
 
   /**

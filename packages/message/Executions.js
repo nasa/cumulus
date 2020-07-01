@@ -40,8 +40,8 @@ const buildExecutionArn = (stateMachineArn, executionName) => {
  */
 function getExecutionUrlFromArn(executionArn) {
   const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-  return `https://console.aws.amazon.com/states/home?region=${region}`
-         + `#/executions/details/${executionArn}`;
+  return `https://console.aws.amazon.com/states/home?region=${region}` +
+         `#/executions/details/${executionArn}`;
 }
 
 /**

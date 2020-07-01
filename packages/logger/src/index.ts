@@ -143,9 +143,9 @@ class Logger {
       ...standardLogEvent
     };
 
-    return this.pretty
-      ? JSON.stringify(logEvent, undefined, 2)
-      : JSON.stringify(logEvent);
+    return this.pretty ?
+      JSON.stringify(logEvent, undefined, 2) :
+      JSON.stringify(logEvent);
   }
 
   private writeLogEvent(level: Level, messageArgs: any[], additionalKeys = {}) {

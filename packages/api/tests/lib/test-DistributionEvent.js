@@ -45,33 +45,33 @@ test.before(async (t) => {
 
   t.context.fakeIP = '192.0.2.5';
   t.context.username = randomString();
-  t.context.authDownloadLogLine = 'fe3f16719bb293e218f6e5fea86e345b0a696560d784177395715b24041da90e '
-    + `${t.context.protectedBucket} [24/Feb/2020:15:05:51 +0000] `
-    + '192.0.2.3 arn:aws:sts::XXXXXXXX:assumed-role/DownloadRoleLocal '
-    + '30E6BC41DB11A8CE REST.GET.OBJECT '
-    + 'files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met '
-    + `"GET /files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met?A-userid=${t.context.username} `
-    + 'HTTP/1.1" 200 - 21708 21708 28 27 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:73.0) '
-    + 'Gecko/20100101 Firefox/73.0" - k0f1eqG9dkjCcPtRsuZRXNFyNAqpXANK/GFJz9C+fKUiH2V4+O6HcUCdKZlL3XOhH5BZ/UJMqEU='
-    + `SigV4 ECDHE-RSA-AES128-GCM-SHA256 QueryString ${t.context.protectedBucket}.s3.amazonaws.com TLSv1.2`;
-  t.context.noAuthDownloadLogLine = 'fe3f16719bb293e218f6e5fea86e345b0a696560d784177395715b24041da90e '
-    + `${t.context.publicBucket} [24/Feb/2020:21:45:37 +0000] `
-    + '192.0.2.3 arn:aws:sts::XXXXXXXX:assumed-role/DownloadRoleLocal '
-    + '30E6BC41DB11A8CE REST.GET.OBJECT '
-    + 'files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf '
-    + '"GET /files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf?A-userid=None '
-    + 'HTTP/1.1" 200 - 21708 21708 28 27 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:73.0) '
-    + 'Gecko/20100101 Firefox/73.0" - k0f1eqG9dkjCcPtRsuZRXNFyNAqpXANK/GFJz9C+fKUiH2V4+O6HcUCdKZlL3XOhH5BZ/UJMqEU='
-    + `SigV4 ECDHE-RSA-AES128-GCM-SHA256 QueryString ${t.context.publicBucket}.s3.amazonaws.com TLSv1.2`;
-  t.context.proxyDownloadLogLine = 'fe3f16719bb293e218f6e5fea86e345b0a696560d784177395715b24041da90e '
-    + `${t.context.protectedBucket} [24/Feb/2020:15:05:51 +0000] `
-    + '192.0.2.3 arn:aws:sts::XXXXXXXX:assumed-role/DownloadRoleLocal '
-    + '30E6BC41DB11A8CE REST.GET.OBJECT '
-    + 'files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met '
-    + `"GET /files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met?A-userid=${t.context.username}&A-sourceip=${t.context.fakeIP} `
-    + 'HTTP/1.1" 200 - 21708 21708 28 27 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:73.0) '
-    + 'Gecko/20100101 Firefox/73.0" - k0f1eqG9dkjCcPtRsuZRXNFyNAqpXANK/GFJz9C+fKUiH2V4+O6HcUCdKZlL3XOhH5BZ/UJMqEU='
-    + `SigV4 ECDHE-RSA-AES128-GCM-SHA256 QueryString ${t.context.protectedBucket}.s3.amazonaws.com TLSv1.2`;
+  t.context.authDownloadLogLine = 'fe3f16719bb293e218f6e5fea86e345b0a696560d784177395715b24041da90e ' +
+    `${t.context.protectedBucket} [24/Feb/2020:15:05:51 +0000] ` +
+    '192.0.2.3 arn:aws:sts::XXXXXXXX:assumed-role/DownloadRoleLocal ' +
+    '30E6BC41DB11A8CE REST.GET.OBJECT ' +
+    'files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met ' +
+    `"GET /files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met?A-userid=${t.context.username} ` +
+    'HTTP/1.1" 200 - 21708 21708 28 27 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:73.0) ' +
+    'Gecko/20100101 Firefox/73.0" - k0f1eqG9dkjCcPtRsuZRXNFyNAqpXANK/GFJz9C+fKUiH2V4+O6HcUCdKZlL3XOhH5BZ/UJMqEU=' +
+    `SigV4 ECDHE-RSA-AES128-GCM-SHA256 QueryString ${t.context.protectedBucket}.s3.amazonaws.com TLSv1.2`;
+  t.context.noAuthDownloadLogLine = 'fe3f16719bb293e218f6e5fea86e345b0a696560d784177395715b24041da90e ' +
+    `${t.context.publicBucket} [24/Feb/2020:21:45:37 +0000] ` +
+    '192.0.2.3 arn:aws:sts::XXXXXXXX:assumed-role/DownloadRoleLocal ' +
+    '30E6BC41DB11A8CE REST.GET.OBJECT ' +
+    'files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf ' +
+    '"GET /files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf?A-userid=None ' +
+    'HTTP/1.1" 200 - 21708 21708 28 27 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:73.0) ' +
+    'Gecko/20100101 Firefox/73.0" - k0f1eqG9dkjCcPtRsuZRXNFyNAqpXANK/GFJz9C+fKUiH2V4+O6HcUCdKZlL3XOhH5BZ/UJMqEU=' +
+    `SigV4 ECDHE-RSA-AES128-GCM-SHA256 QueryString ${t.context.publicBucket}.s3.amazonaws.com TLSv1.2`;
+  t.context.proxyDownloadLogLine = 'fe3f16719bb293e218f6e5fea86e345b0a696560d784177395715b24041da90e ' +
+    `${t.context.protectedBucket} [24/Feb/2020:15:05:51 +0000] ` +
+    '192.0.2.3 arn:aws:sts::XXXXXXXX:assumed-role/DownloadRoleLocal ' +
+    '30E6BC41DB11A8CE REST.GET.OBJECT ' +
+    'files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met ' +
+    `"GET /files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met?A-userid=${t.context.username}&A-sourceip=${t.context.fakeIP} ` +
+    'HTTP/1.1" 200 - 21708 21708 28 27 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:73.0) ' +
+    'Gecko/20100101 Firefox/73.0" - k0f1eqG9dkjCcPtRsuZRXNFyNAqpXANK/GFJz9C+fKUiH2V4+O6HcUCdKZlL3XOhH5BZ/UJMqEU=' +
+    `SigV4 ECDHE-RSA-AES128-GCM-SHA256 QueryString ${t.context.protectedBucket}.s3.amazonaws.com TLSv1.2`;
 
   t.context.hdfGranule = fakeGranuleFactoryV2({
     collectionId: 'MOD09GQ___001',

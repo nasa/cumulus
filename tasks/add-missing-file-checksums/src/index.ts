@@ -35,8 +35,8 @@ const calculateGranuleFileChecksum = async (params: {
 };
 
 const granuleFileHasPartialChecksum = (granuleFile: GranuleFile) =>
-  (granuleFile.checksumType && !granuleFile.checksum)
-  || (granuleFile.checksum && !granuleFile.checksumType);
+  (granuleFile.checksumType && !granuleFile.checksum) ||
+  (granuleFile.checksum && !granuleFile.checksumType);
 
 const granuleFileHasChecksum = (granuleFile: GranuleFile) =>
   granuleFile.checksumType && granuleFile.checksum;
@@ -45,9 +45,9 @@ const granuleFileDoesNotHaveFilename = (granuleFile: GranuleFile) =>
   !granuleFile.filename;
 
 const skipGranuleFileUpdate = (granuleFile: GranuleFile) =>
-  granuleFileHasChecksum(granuleFile)
-  || granuleFileHasPartialChecksum(granuleFile)
-  || granuleFileDoesNotHaveFilename(granuleFile);
+  granuleFileHasChecksum(granuleFile) ||
+  granuleFileHasPartialChecksum(granuleFile) ||
+  granuleFileDoesNotHaveFilename(granuleFile);
 
 export const addChecksumToGranuleFile = async (params: {
   s3: { getObject: S3.GetObjectMethod },

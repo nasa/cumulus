@@ -36,11 +36,11 @@ async function getNpmTag() {
 
   if (
     // tag starts with "v" and a digit
-    thisTag.match(/^v(\d.*)/)
+    thisTag.match(/^v(\d.*)/) &&
     // the version in lerna.json is not a pre-release version
-    && !semver.prerelease(thisVersion)
+    !semver.prerelease(thisVersion) &&
     // the version in lerna.json is greater than the currently published "latest" version
-    && semver.gt(thisVersion, latestVersion)
+    semver.gt(thisVersion, latestVersion)
   ) return 'latest';
 
   return `release-${thisTag}`;

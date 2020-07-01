@@ -394,11 +394,11 @@ test.serial('A valid reconciliation report is generated when there are extra Dyn
 
   t.is(filesInCumulus.onlyInDynamoDb.length, 2);
   t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
-    f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key)
-    && f.granuleId === extraDbFile1.granuleId));
+    f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key) &&
+    f.granuleId === extraDbFile1.granuleId));
   t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
-    f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key)
-    && f.granuleId === extraDbFile2.granuleId));
+    f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key) &&
+    f.granuleId === extraDbFile2.granuleId));
 
   const reportStartTime = moment(report.reportStartTime);
   const reportEndTime = moment(report.reportEndTime);
@@ -464,11 +464,11 @@ test.serial('A valid reconciliation report is generated when there are both extr
 
   t.is(filesInCumulus.onlyInDynamoDb.length, 2);
   t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
-    f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key)
-    && f.granuleId === extraDbFile1.granuleId));
+    f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key) &&
+    f.granuleId === extraDbFile1.granuleId));
   t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
-    f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key)
-    && f.granuleId === extraDbFile2.granuleId));
+    f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key) &&
+    f.granuleId === extraDbFile2.granuleId));
 
   const reportStartTime = moment(report.reportStartTime);
   const reportEndTime = moment(report.reportEndTime);

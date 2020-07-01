@@ -445,8 +445,8 @@ function mergeURLs(original, updated = [], removed = []) {
   const removedBasenames = removed.map((url) => path.basename(url.URL));
 
   const unchangedOriginals = original.filter(
-    (url) => !newURLBasenames.includes(path.basename(url.URL))
-      && !removedBasenames.includes(path.basename(url.URL))
+    (url) => !newURLBasenames.includes(path.basename(url.URL)) &&
+      !removedBasenames.includes(path.basename(url.URL))
   );
 
   const updatedWithMergedOriginals = updated.map((url) => {
@@ -545,8 +545,8 @@ async function getCmrSettings(cmrConfig = {}) {
   };
 
   if (oauthProvider === 'launchpad') {
-    const launchpadPassphraseSecretName = cmrConfig.passphraseSecretName
-      || process.env.launchpad_passphrase_secret_name;
+    const launchpadPassphraseSecretName = cmrConfig.passphraseSecretName ||
+      process.env.launchpad_passphrase_secret_name;
     const passphrase = await getSecretString(
       launchpadPassphraseSecretName
     );
@@ -565,8 +565,8 @@ async function getCmrSettings(cmrConfig = {}) {
     };
   }
 
-  const passwordSecretName = cmrConfig.passwordSecretName
-    || process.env.cmr_password_secret_name;
+  const passwordSecretName = cmrConfig.passwordSecretName ||
+    process.env.cmr_password_secret_name;
   const password = await getSecretString(
     passwordSecretName
   );
@@ -720,8 +720,8 @@ async function updateCMRMetadata({
   const filename = getS3UrlOfFile(cmrFile);
 
   log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId}, cmrMetadata file ${filename}`);
-  const buckets = inBuckets
-        || new BucketsConfig(
+  const buckets = inBuckets ||
+        new BucketsConfig(
           await getBucketsConfigJson(process.env.system_bucket, process.env.stackName)
         );
   const cmrCredentials = (published) ? await getCmrSettings() : {};

@@ -310,8 +310,8 @@ morgan.token('error_obj', (_req, res) => {
 });
 morgan.format(
   'combined',
-  '[:date[clf]] ":method :url HTTP/:http-version"'
-  + ':status :res[content-length] ":referrer" ":user-agent" :error_obj'
+  '[:date[clf]] ":method :url HTTP/:http-version"' +
+  ':status :res[content-length] ":referrer" ":user-agent" :error_obj'
 );
 
 // Config

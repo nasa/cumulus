@@ -14,9 +14,9 @@ class PVLAggregate {
   }
 
   get(key) {
-    return this.store.find((item) => item[0] === key)
-      ? this.store.find((item) => item[0] === key)[1]
-      : null;
+    return this.store.find((item) => item[0] === key) ?
+      this.store.find((item) => item[0] === key)[1] :
+      null;
   }
 
   getAll(key) {

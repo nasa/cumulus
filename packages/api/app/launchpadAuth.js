@@ -101,8 +101,8 @@ async function ensureLaunchpadAPIAuthorized(req, res, next) {
     req.authorizedMetadata = { userName };
     return next();
   } catch (error) {
-    if (error instanceof JsonWebTokenError
-        && error.message === 'jwt malformed') {
+    if (error instanceof JsonWebTokenError &&
+        error.message === 'jwt malformed') {
       return ensureValidCustomLaunchpadToken(req, res, next);
     }
 

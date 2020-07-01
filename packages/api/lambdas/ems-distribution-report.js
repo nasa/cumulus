@@ -138,8 +138,8 @@ async function generateDistributionReport(params) {
 
   const distributionEventsInReportPeriod = allDistributionEvents.filter(eventTimeFilter);
 
-  log.info(`Found ${distributionEventsInReportPeriod.length} distribution events between `
-    + `${reportStartTime.format()} and ${reportEndTime.format()}`);
+  log.info(`Found ${distributionEventsInReportPeriod.length} distribution events between ` +
+    `${reportStartTime.format()} and ${reportEndTime.format()}`);
 
   const emsCollections = await getEmsEnabledCollections();
 
@@ -207,8 +207,8 @@ exports.generateAndStoreDistributionReport = generateAndStoreDistributionReport;
  * @returns {Promise} resolves when the report has been generated
  */
 async function generateAndStoreReportsForEachDay(params) {
-  log.info('generateAndStoreReportsForEachDay for access records between'
-    + `${params.startTime} and ${params.endTime}`);
+  log.info('generateAndStoreReportsForEachDay for access records between' +
+    `${params.startTime} and ${params.endTime}`);
 
   const reportTimes = determineReportsStartEndTime(params.startTime, params.endTime);
   let reportStartTime = reportTimes.reportStartTime;

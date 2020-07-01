@@ -140,6 +140,7 @@ module.exports = {
     'prefer-destructuring': 'off',
     'function-paren-newline': ['error', 'consistent'],
     'implicit-arrow-linebreak': 'off',
+    'operator-linebreak': ['error', 'after'],
 
     'eslint-comments/no-unused-disable': 'warn',
     'eslint-comments/disable-enable-pair': [

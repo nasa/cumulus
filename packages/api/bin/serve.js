@@ -101,9 +101,9 @@ async function prepareServices(stackName, bucket) {
 }
 
 function getRequiredAuthEnvVariables() {
-  const authEnvVariables = process.env.FAKE_AUTH
-    ? []
-    : ['EARTHDATA_CLIENT_ID', 'EARTHDATA_CLIENT_PASSWORD'];
+  const authEnvVariables = process.env.FAKE_AUTH ?
+    [] :
+    ['EARTHDATA_CLIENT_ID', 'EARTHDATA_CLIENT_PASSWORD'];
   return authEnvVariables;
 }
 

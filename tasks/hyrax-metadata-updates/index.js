@@ -188,9 +188,9 @@ function addHyraxUrlToEcho10(metadata, hyraxUrl) {
   delete metadataCopy.Granule.OnlineResources;
 
   const existingResourceUrls = get(metadata, 'Granule.OnlineResources.OnlineResource', []);
-  const resourceUrls = Array.isArray(existingResourceUrls)
-    ? existingResourceUrls
-    : [existingResourceUrls];
+  const resourceUrls = Array.isArray(existingResourceUrls) ?
+    existingResourceUrls :
+    [existingResourceUrls];
 
   const url = {
     URL: hyraxUrl,

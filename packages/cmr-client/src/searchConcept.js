@@ -45,9 +45,9 @@ async function searchConcept({
   const query = { ...defaultParams, ...searchParams, page_num: pageNum };
   const response = await got.get(url, { json: format.endsWith('json'), query, headers });
 
-  const responseItems = (format === 'echo10')
-    ? (await parseXMLString(response.body)).results.result || []
-    : (response.body.items || response.body.feed.entry);
+  const responseItems = (format === 'echo10') ?
+    (await parseXMLString(response.body)).results.result || [] :
+    (response.body.items || response.body.feed.entry);
 
   const fetchedResults = previousResults.concat(responseItems || []);
 

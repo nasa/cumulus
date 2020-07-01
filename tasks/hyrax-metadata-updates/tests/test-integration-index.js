@@ -83,8 +83,8 @@ async function uploadFilesXml(files, bucket) {
   await Promise.all(files.map((file) => promiseS3Upload({
     Bucket: bucket,
     Key: parseS3Uri(file).Key,
-    Body: file.endsWith('.cmr.xml')
-      ? fs.createReadStream('tests/data/echo10in.xml') : parseS3Uri(file).Key
+    Body: file.endsWith('.cmr.xml') ?
+      fs.createReadStream('tests/data/echo10in.xml') : parseS3Uri(file).Key
   })));
 }
 
@@ -92,8 +92,8 @@ async function uploadFilesJson(files, bucket) {
   await Promise.all(files.map((file) => promiseS3Upload({
     Bucket: bucket,
     Key: parseS3Uri(file).Key,
-    Body: file.endsWith('.cmr.json')
-      ? fs.createReadStream('tests/data/umm-gin.json') : parseS3Uri(file).Key
+    Body: file.endsWith('.cmr.json') ?
+      fs.createReadStream('tests/data/umm-gin.json') : parseS3Uri(file).Key
   })));
 }
 

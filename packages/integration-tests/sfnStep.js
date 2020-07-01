@@ -131,8 +131,8 @@ class SfnStep {
    * @returns {boolean} truthness of the execution being successful.
    */
   completedSuccessfulFilter(execution) {
-    return (!isNil(execution.completeEvent)
-            && execution.completeEvent.type === this.successEvent);
+    return (!isNil(execution.completeEvent) &&
+            execution.completeEvent.type === this.successEvent);
   }
 
   /**
@@ -213,9 +213,9 @@ class SfnStep {
     let stepExecution;
     const successfulPassedExecutions = stepExecutions
       .filter((e) => this.completedSuccessfulFilter(e));
-    if (eventType === 'success'
-        && successfulPassedExecutions
-        && successfulPassedExecutions.length > 0) {
+    if (eventType === 'success' &&
+        successfulPassedExecutions &&
+        successfulPassedExecutions.length > 0) {
       stepExecution = successfulPassedExecutions[0];
     } else {
       stepExecution = stepExecutions[stepExecutions.length - 1];

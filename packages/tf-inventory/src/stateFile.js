@@ -21,8 +21,8 @@ async function getStateFilesFromTable(tableName) {
     const tableInfo = await aws.dynamodb().describeTable({ TableName: tableName }).promise();
 
     // Check that the table holds state files and actually has items
-    if (tableInfo.Table.AttributeDefinitions[0].AttributeName === 'LockID'
-        && tableInfo.Table.ItemCount > 0) {
+    if (tableInfo.Table.AttributeDefinitions[0].AttributeName === 'LockID' &&
+        tableInfo.Table.ItemCount > 0) {
       let stateFiles = [];
       const scanQueue = new DynamoDbSearchQueue({ TableName: tableName });
 

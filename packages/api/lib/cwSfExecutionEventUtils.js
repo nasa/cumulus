@@ -56,8 +56,8 @@ const getFailedExecutionMessage = async (inputMessage) => {
         'Error:', new Error(`Could not find TaskStateExited event after step ID ${lastStepFailedEvent.id} for execution ${executionArn}`)
       );
 
-      const exception = lastStepFailedEvent.lambdaFunctionFailedEventDetails
-        || lastStepFailedEvent.activityFailedEventDetails;
+      const exception = lastStepFailedEvent.lambdaFunctionFailedEventDetails ||
+        lastStepFailedEvent.activityFailedEventDetails;
 
       // If input from the failed step cannot be retrieved, then fall back to execution
       // input.

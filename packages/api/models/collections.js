@@ -41,8 +41,8 @@ const validateCollectionCoreConfig = (collection) => {
 
   if (!match[1]) {
     throw new UnmatchedRegexError(
-      `granuleIdExtraction regex "${collection.granuleIdExtraction}" does not return a matched group when applied to sampleFileName "${collection.sampleFileName}". `
-      + 'Ensure that your regex includes capturing groups.'
+      `granuleIdExtraction regex "${collection.granuleIdExtraction}" does not return a matched group when applied to sampleFileName "${collection.sampleFileName}". ` +
+      'Ensure that your regex includes capturing groups.'
     );
   }
 

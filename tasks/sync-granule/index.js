@@ -29,10 +29,10 @@ async function download({
   syncChecksumFiles = false
 }) {
   log.debug(
-    'awaiting lock.proceed in download() '
-    + `bucket: ${bucket}, `
-    + `provider: ${JSON.stringify(provider)}, `
-    + `granuleID: ${granules[0].granuleId}`
+    'awaiting lock.proceed in download() ' +
+    `bucket: ${bucket}, ` +
+    `provider: ${JSON.stringify(provider)}, ` +
+    `granuleID: ${granules[0].granuleId}`
   );
 
   const proceed = await lock.proceed(bucket, provider, granules[0].granuleId);

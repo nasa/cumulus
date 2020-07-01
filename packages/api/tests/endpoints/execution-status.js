@@ -139,8 +139,8 @@ const stepFunctionMock = {
 };
 
 const executionExistsMock = (arn) => {
-  if ((arn.executionArn === expiredExecutionArn)
-      || (arn.executionArn === expiredMissingExecutionArn)) {
+  if ((arn.executionArn === expiredExecutionArn) ||
+      (arn.executionArn === expiredMissingExecutionArn)) {
     return {
       promise: () => {
         const error = new Error();

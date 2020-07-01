@@ -32,8 +32,8 @@ exports.bucketsPrefixes = bucketsPrefixes;
  */
 const discipline = (collection) => {
   let scienceKeywords = get(collection, 'ScienceKeywords.ScienceKeyword', []);
-  scienceKeywords = (Array.isArray(scienceKeywords))
-    ? scienceKeywords : [scienceKeywords];
+  scienceKeywords = (Array.isArray(scienceKeywords)) ?
+    scienceKeywords : [scienceKeywords];
 
   return scienceKeywords
     .map((scienceKeyword) => scienceKeyword.TopicKeyword)
@@ -216,8 +216,8 @@ async function getCollectionsForEms(startTime, endTime) {
 
   // only the collections updated in CMR or CUMULUS within the time range are included
   const lastUpdateFilter = (collection) =>
-    (moment.utc(collection.lastUpdate).isBetween(startTime, endTime, null, '[)')
-    || moment.utc(collection.dbLastUpdate).isBetween(startTime, endTime, null, '[)'));
+    (moment.utc(collection.lastUpdate).isBetween(startTime, endTime, null, '[)') ||
+    moment.utc(collection.dbLastUpdate).isBetween(startTime, endTime, null, '[)'));
 
   return emsCollections.filter(lastUpdateFilter);
 }

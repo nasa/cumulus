@@ -26,8 +26,8 @@ function invokeApi({ prefix, payload }) {
         FunctionName: `${prefix}-PrivateApiLambda`
       }).promise();
       const outputPayload = JSON.parse(apiOutput.Payload);
-      if (outputPayload.errorMessage
-        && outputPayload.errorMessage.includes('Task timed out')) {
+      if (outputPayload.errorMessage &&
+        outputPayload.errorMessage.includes('Task timed out')) {
         throw new CumulusApiClientError(`Error calling ${payload.path}: ${outputPayload.errorMessage}`);
       }
       return outputPayload;

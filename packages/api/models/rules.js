@@ -141,8 +141,8 @@ class Rule extends Manager {
     await this.constructor.recordIsValid(updatedRuleItem, this.schema, this.removeAdditional);
 
     const stateChanged = (updates.state && updates.state !== original.state);
-    const valueUpdated = (updates.rule
-      && updates.rule.value !== original.rule.value);
+    const valueUpdated = (updates.rule &&
+      updates.rule.value !== original.rule.value);
 
     updatedRuleItem = await this.updateRuleTrigger(updatedRuleItem, stateChanged, valueUpdated);
 
@@ -571,8 +571,8 @@ class Rule extends Manager {
     const rules = rulesQueryResultsForSourceArn.Items || [];
     if (rules.length === 0) {
       throw new Error(
-        `No rules found that matched any/all of source ARN ${sourceArn} and `
-        + `collection { name: ${name}, version: ${version} }`
+        `No rules found that matched any/all of source ARN ${sourceArn} and ` +
+        `collection { name: ${name}, version: ${version} }`
       );
     }
     return rules;

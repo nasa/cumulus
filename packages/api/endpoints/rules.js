@@ -105,8 +105,8 @@ async function put({ params: { name }, body }, res) {
   const model = new models.Rule();
 
   if (name !== body.name) {
-    return res.boom.badRequest(`Expected rule name to be '${name}', but found`
-      + ` '${body.name}' in payload`);
+    return res.boom.badRequest(`Expected rule name to be '${name}', but found` +
+      ` '${body.name}' in payload`);
   }
 
   try {

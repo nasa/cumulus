@@ -125,8 +125,8 @@ async function validateLaunchpadToken(params, token, userGroup) {
 
   if (response.status === 'success') {
     // check if user is in the given group
-    if (userGroup && userGroup.toUpperCase() !== 'N/A'
-    && response.owner_groups.filter((group) => group.includes(userGroup)).length === 0) {
+    if (userGroup && userGroup.toUpperCase() !== 'N/A' &&
+    response.owner_groups.filter((group) => group.includes(userGroup)).length === 0) {
       result.status = 'failed';
       result.message = 'User not authorized';
     }

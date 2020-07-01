@@ -34,9 +34,9 @@ async function post(req, res) {
     InvocationType: invocationType
   }).promise();
 
-  const response = (invocationType === 'Event')
-    ? { message: 'Reports are being generated', status: result.StatusCode }
-    : { message: 'Reports generated', reports: JSON.parse(result.Payload) };
+  const response = (invocationType === 'Event') ?
+    { message: 'Reports are being generated', status: result.StatusCode } :
+    { message: 'Reports generated', reports: JSON.parse(result.Payload) };
   return res.send(response);
 }
 

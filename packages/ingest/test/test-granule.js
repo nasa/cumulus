@@ -270,8 +270,8 @@ test('moveGranuleFiles returns an updated list of files in their new locations.'
   expectedUpdatedFiles.forEach((expected) => {
     const updatedFile = updatedFiles.find(
       (file) =>
-        file.bucket === expected.bucket
-        && file.key === expected.key
+        file.bucket === expected.bucket &&
+        file.key === expected.key
     );
     t.deepEqual(updatedFile, expected);
   });

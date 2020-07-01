@@ -8,8 +8,8 @@ const {
 } = require('@cumulus/errors');
 
 const isBadRequestError = (err) =>
-  err.name === 'SchemaValidationError'
-  || err instanceof ValidationError;
+  err.name === 'SchemaValidationError' ||
+  err instanceof ValidationError;
 
 const TokenUnauthorizedUserError = createErrorType('TokenUnauthorizedUserError');
 const IndexExistsError = createErrorType('IndexExistsError');

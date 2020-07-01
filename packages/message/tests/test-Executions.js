@@ -13,8 +13,8 @@ const {
 test('getExecutionUrlFromArn returns correct URL when no region environment variable is specified', (t) => {
   t.is(
     getExecutionUrlFromArn('fake-arn'),
-    'https://console.aws.amazon.com/states/home?region=us-east-1'
-      + '#/executions/details/fake-arn'
+    'https://console.aws.amazon.com/states/home?region=us-east-1' +
+      '#/executions/details/fake-arn'
   );
 });
 
@@ -22,8 +22,8 @@ test.serial('getExecutionUrlFromArn returns correct URL when a region environmen
   process.env.AWS_DEFAULT_REGION = 'fake-region';
   t.is(
     getExecutionUrlFromArn('fake-arn'),
-    'https://console.aws.amazon.com/states/home?region=fake-region'
-      + '#/executions/details/fake-arn'
+    'https://console.aws.amazon.com/states/home?region=fake-region' +
+      '#/executions/details/fake-arn'
   );
   delete process.env.AWS_DEFAULT_REGION;
 });

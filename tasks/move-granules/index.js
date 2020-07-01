@@ -54,8 +54,8 @@ function validateMatch(match, bucketsConfig, fileName, fileSpecs) {
     throw new InvalidArgument(`File (${fileName}) did not match any of ${JSON.stringify(collectionRegexes)}`);
   }
   if (!bucketsConfig.keyExists(match[0].bucket)) {
-    throw new InvalidArgument(`Collection config specifies a bucket key of ${match[0].bucket}, `
-                              + `but the configured bucket keys are: ${Object.keys(bucketsConfig).join(', ')}`);
+    throw new InvalidArgument(`Collection config specifies a bucket key of ${match[0].bucket}, ` +
+                              `but the configured bucket keys are: ${Object.keys(bucketsConfig).join(', ')}`);
   }
 }
 

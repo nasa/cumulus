@@ -254,8 +254,8 @@ test.serial(
   }
 );
 
-test.serial('Collection.delete() does not throw exception when attempting to delete'
-  + ' a collection that does not exist', async (t) => {
+test.serial('Collection.delete() does not throw exception when attempting to delete' +
+  ' a collection that does not exist', async (t) => {
   const name = randomString();
   const version = randomString();
 

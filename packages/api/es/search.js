@@ -68,9 +68,9 @@ const esProdConfig = async (host) => {
 };
 
 const esMetricsConfig = () => {
-  if (!process.env.METRICS_ES_HOST
-    || !process.env.METRICS_ES_USER
-    || !process.env.METRICS_ES_PASS) {
+  if (!process.env.METRICS_ES_HOST ||
+    !process.env.METRICS_ES_USER ||
+    !process.env.METRICS_ES_PASS) {
     throw new Error('ELK Metrics stack not configured');
   }
 
@@ -280,10 +280,10 @@ class BaseSearch {
     if (newObj.granules > 0) {
       newObj.progress = (
         (
-          (newObj.granulesStatus.completed + newObj.granulesStatus.failed)
-          / newObj.granules
-        )
-        * 100
+          (newObj.granulesStatus.completed + newObj.granulesStatus.failed) /
+          newObj.granules
+        ) *
+        100
       );
     } else {
       newObj.progress = 0;

@@ -193,8 +193,8 @@ async function reconciliationReportForGranuleFiles(params) {
   // check each URL entry against database records
   const relatedUrlPromises = granuleInCmr.RelatedUrls.map(async (relatedUrl) => {
     // only check URL types for downloading granule files and related data (such as documents)
-    if (cmrGetDataTypes.includes(relatedUrl.Type)
-      || cmrRelatedDataTypes.includes(relatedUrl.Type)) {
+    if (cmrGetDataTypes.includes(relatedUrl.Type) ||
+      cmrRelatedDataTypes.includes(relatedUrl.Type)) {
       const urlFileName = relatedUrl.URL.split('/').pop();
 
       // filename in both cumulus and CMR
@@ -247,8 +247,8 @@ async function reconciliationReportForGranuleFiles(params) {
   // any remaining database items to the report
   Object.keys(granuleFiles).forEach((fileName) => {
     // private file only in database, it's ok
-    if (bucketsConfig.key(granuleFiles[fileName].bucket)
-      && bucketsConfig.type(granuleFiles[fileName].bucket) === 'private') {
+    if (bucketsConfig.key(granuleFiles[fileName].bucket) &&
+      bucketsConfig.type(granuleFiles[fileName].bucket) === 'private') {
       okCount += 1;
     } else {
       onlyInCumulus.push({

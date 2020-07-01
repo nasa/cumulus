@@ -58,9 +58,9 @@ class FtpProviderClient {
     // `err` param, but normally javascript errors have a `message` field. We want to normalize
     // this before throwing it out of the `FtpProviderClient` because it is a quirk of jsftp.
     if (!error.message && error.text) {
-      const message = `${error.code
-        ? `FTP Code ${error.code}: ${error.text}`
-        : `FTP error: ${error.text}`} This may be caused by user permissions disallowing the listing.`;
+      const message = `${error.code ?
+        `FTP Code ${error.code}: ${error.text}` :
+        `FTP error: ${error.text}`} This may be caused by user permissions disallowing the listing.`;
       normalizedError = new Error(message);
     }
     if (!isNil(this.ftpClient)) {

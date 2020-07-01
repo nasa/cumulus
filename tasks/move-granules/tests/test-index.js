@@ -32,8 +32,8 @@ async function uploadFiles(files, bucket) {
   await Promise.all(files.map((file) => promiseS3Upload({
     Bucket: bucket,
     Key: parseS3Uri(file).Key,
-    Body: file.endsWith('.cmr.xml')
-      ? fs.createReadStream('tests/data/meta.xml') : parseS3Uri(file).Key
+    Body: file.endsWith('.cmr.xml') ?
+      fs.createReadStream('tests/data/meta.xml') : parseS3Uri(file).Key
   })));
 }
 

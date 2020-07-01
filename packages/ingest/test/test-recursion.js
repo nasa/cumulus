@@ -450,8 +450,8 @@ test('recursion replaces duplicated slashes with a single slash', async (t) => {
   t.deepEqual(files, dirs['/dir/files']);
 });
 
-test('recursion falls back to directly listing the path and subdirectores when filtering'
- + 'encounters an error', async (t) => {
+test('recursion falls back to directly listing the path and subdirectores when filtering' +
+ 'encounters an error', async (t) => {
   const dirs = {
     '.': () => {
       throw new Error('Permission Denied');
