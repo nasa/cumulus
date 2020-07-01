@@ -1,6 +1,6 @@
 ---
 id: team
-title: Team
+title: Cumulus Team
 hide_title: true
 ---
 
