@@ -25,6 +25,7 @@ const asyncOperationEndpointErrorHandler = async (err, req, res, next) => {
   return res.boom.badImplementation();
 };
 
+// https://www.npmjs.com/package/body-parser#errors
 const isBodyParserError = (error) =>
   has(error, 'statusCode') && has(error, 'expose');
 
