@@ -31,7 +31,7 @@ git status
 
 ```
 
-* Then run CNMTestHarness log file. Check with your developer on where to find your python resource for this test.
+* Then review the CNMTestHarness log file or your team's code location for the testHarness for example tests to run. Check with your integrator regarding this resource.
 
 6. Scale Down
 
