@@ -40,6 +40,8 @@ class Execution extends Manager {
     const workflowStartTime = get(cumulusMessage, 'cumulus_meta.workflow_start_time');
     const workflowStopTime = get(cumulusMessage, 'cumulus_meta.workflow_stop_time');
 
+    const collectionId = getCollectionIdFromMessage(cumulusMessage);
+
     const record = {
       name: getMessageExecutionName(cumulusMessage),
       arn,
@@ -49,7 +51,7 @@ class Execution extends Manager {
       tasks: get(cumulusMessage, 'meta.workflow_tasks'),
       error: parseException(cumulusMessage.exception),
       type: get(cumulusMessage, 'meta.workflow_name'),
-      collectionId: getCollectionIdFromMessage(cumulusMessage),
+      collectionId,
       status,
       createdAt: workflowStartTime,
       timestamp: now,
