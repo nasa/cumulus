@@ -37,7 +37,7 @@ class ESFileSearchQueue {
     this.items = [];
     this.bucket = bucket;
     this.index = esIndex || process.env.ES_INDEX || defaultIndexAlias;
-    this.queryStringParameters = {
+    this.params = {
       fields: ['files', 'granuleId'],
       'files.bucket.keyword': bucket,
       sortParams: {
@@ -86,7 +86,9 @@ class ESFileSearchQueue {
   async fetchItems() {
     if (!this.esClient) {
       this.esClient = new ESScrollSearch(
-        this.queryStringParameters,
+        {
+          queryStringParameters: this.params
+        },
         'granule',
         this.index
       );
