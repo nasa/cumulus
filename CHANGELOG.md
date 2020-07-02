@@ -48,6 +48,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     were added rather than the count of added collections
 - **CUMULUS-1930**
   - The `@cumulus/common/util.uuid()` function has been removed
+- **CUMULUS-1955**
+  - `@cumulus/aws-client/S3.multipartCopyObject` now returns an object with the
+    AWS `etag` of the destination object
+  - The `sync` methods of the following classes in the `@cumulus/ingest` package
+    now return an object with the AWS `s3uri` and `etag` of the destination file
+    (they previously returned only a string representing the S3 URI)
+    - `FtpProviderClient`
+    - `HttpProviderClient`
+    - `S3ProviderClient`
+    - `SftpProviderClient`
 - **CUMULUS-1958**
   - The following methods exported from `@cumulus/cmr-js/cmr-utils` were made
     async, and added distributionBucketMap as a parameter:

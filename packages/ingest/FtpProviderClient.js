@@ -156,8 +156,8 @@ class FtpProviderClient {
    * @param {string} remotePath - the full path to the remote file to be fetched
    * @param {string} bucket - destination s3 bucket of the file
    * @param {string} key - destination s3 key of the file
-   * @returns {Promise.<{ s3uri: string, etag: string }>} promise resolving to
-   *   an object containing the s3 uri and etag of the destination file
+   * @returns {Promise.<{ s3uri: string, etag: string }>} an object containing
+   *    the S3 URI and ETag of the destination file
    */
   async sync(remotePath, bucket, key) {
     const remoteUrl = `ftp://${this.host}/${remotePath}`;
@@ -185,11 +185,15 @@ class FtpProviderClient {
       Body: pass,
       ContentType: lookupMimeType(key)
     };
-    const { ETag: etag } = await S3.promiseS3Upload(params);
-    log.info('Uploading to s3 is complete(ftp)', s3uri);
 
-    client.destroy();
-    return { s3uri, etag };
+    try {
+      const { ETag: etag } = await S3.promiseS3Upload(params);
+      log.info('Uploading to s3 is complete(ftp)', s3uri);
+
+      return { s3uri, etag };
+    } finally {
+      client.destroy();
+    }
   }
 }
 

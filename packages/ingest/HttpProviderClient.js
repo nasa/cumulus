@@ -201,8 +201,8 @@ class HttpProviderClient {
    * @param {string} remotePath - the full path to the remote file to be fetched
    * @param {string} bucket - destination s3 bucket of the file
    * @param {string} key - destination s3 key of the file
-   * @returns {Promise.<{ s3uri, etag }>} promise resolving to an object
-   *    containing the s3 uri and etag of the destination file
+   * @returns {Promise.<{ s3uri: string, etag: string }>} an object containing
+   *    the S3 URI and ETag of the destination file
    */
   async sync(remotePath, bucket, key) {
     validateHost(this.host);

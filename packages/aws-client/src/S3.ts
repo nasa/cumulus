@@ -895,7 +895,8 @@ const uploadPartCopy = async (
  * @param {string} params.destinationKey
  * @param {string} [params.ACL] - an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
  * @param {boolean} [params.copyTags=false]
- * @returns {Promise} promise of result returned by [S3.completeMultipartUpload](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#completeMultipartUpload-property)
+ * @returns {Promise.<{ etag: string }>} object containing the ETag of the
+ *    destination object
  */
 export const multipartCopyObject = async (
   params: {
@@ -958,7 +959,7 @@ export const multipartCopyObject = async (
     );
 
     // Let S3 know that the multi-part upload (copy) is completed
-    return await S3MultipartUploads.completeMultipartUpload({
+    const { ETag: etag } = await S3MultipartUploads.completeMultipartUpload({
       UploadId: uploadId,
       Bucket: destinationBucket,
       Key: destinationKey,
@@ -966,6 +967,8 @@ export const multipartCopyObject = async (
         Parts: uploadPartCopyResponses
       }
     });
+
+    return { etag };
   } catch (error) {
     // If anything went wrong, make sure that the multi-part upload (copy)
     // is aborted.

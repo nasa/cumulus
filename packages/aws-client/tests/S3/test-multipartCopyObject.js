@@ -73,7 +73,7 @@ test('multipartCopyObject() copies a file between buckets', async (t) => {
     Key: sourceKey
   });
 
-  const { ETag: etag } = await multipartCopyObject({
+  const { etag } = await multipartCopyObject({
     sourceBucket,
     sourceKey,
     destinationBucket,
