@@ -15,7 +15,7 @@
     "lint": "npm run lint-package-json && npm run eslint && lerna run python-lint && npm run lint-md",
     "lint-md": "markdownlint docs/**/*.md docs/*.md tf-modules/**/*.md tf-modules/*.md",
     "lint-package-json": "npmPkgJsonLint .",
-    "test": "rm -rf .nyc_output coverage && env NYC_SILENT=true lerna run --concurrency 1 test && nyc report --reporter=text --reporter=html",
+    "test": "rm -rf .nyc_output coverage && env NYC_CLEAN=false NYC_SILENT=true lerna run --concurrency 1 test && nyc report --reporter=text --reporter=html",
     "tsc": "lerna run tsc",
     "package": "lerna run package",
     "bootstrap": "lerna bootstrap --no-ci --force-local && npm run package",
