@@ -10,6 +10,7 @@ module.exports = {
   include: [
     '**',
     '!**/coverage/**',
-    '!nyc.config.js'
+    '!nyc.config.js',
+    '!webpack.config.js'
   ]
 };
