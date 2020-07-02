@@ -166,12 +166,14 @@ function selectParams(fields, regex) {
 module.exports = function query(params) {
   const sortBy = params.sort_by || 'timestamp';
   const order = params.order || 'desc';
+  const sortParams = params.sortParams || { sort: [
+    { [sortBy]: { order: order } }
+  ] };
+  delete params.sortParams;
 
   const response = {
     query: { match_all: {} },
-    sort: [
-      { [sortBy]: { order: order } }
-    ]
+    sort: sortParams.sort
   };
 
   const queries = {
