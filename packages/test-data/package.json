@@ -10,6 +10,9 @@
   "publishConfig": {
     "access": "public"
   },
+  "scripts": {
+    "test": "../../node_modules/.bin/nyc true"
+  },
   "homepage": "https://github.com/nasa/cumulus/tree/master/packages/test-data",
   "repository": {
     "type": "git",
