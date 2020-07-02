@@ -241,7 +241,7 @@ async function moveFilesForAllGranules(
  * @param {Object} granulesObject        - an object of the granules where the key is the granuleId
  * @param {string} cmrGranuleUrlType .   - type of granule CMR url
  * @param {string} distEndpoint          - the api distribution endpoint
- * @param {BucketsConfig} bucketsConfig  - BucketsConfig instance
+ * @param {Object} bucketTypes - map of bucket names to bucket types
  * @param {Object} distributionBucketMap - mapping of bucket->distirubtion path values
  *                                         (e.g. { bucket: distribution path })
  * @returns {Promise}                    - promise resolves when all files have been updated
@@ -251,7 +251,7 @@ async function updateEachCmrFileAccessURLs(
   granulesObject,
   cmrGranuleUrlType,
   distEndpoint,
-  bucketsConfig,
+  bucketTypes,
   distributionBucketMap
 ) {
   return Promise.all(cmrFiles.map(async (cmrFile) => {
@@ -264,7 +264,7 @@ async function updateEachCmrFileAccessURLs(
       files: granule.files,
       distEndpoint,
       published: false, // Do the publish in publish-to-cmr step
-      inBuckets: bucketsConfig,
+      bucketTypes,
       cmrGranuleUrlType,
       distributionBucketMap
     });
@@ -293,6 +293,13 @@ async function moveGranules(event) {
   // first we check if there is an output file
   const config = event.config;
   const bucketsConfig = new BucketsConfig(config.buckets);
+
+  const bucketTypes = Object.values(bucketsConfig.buckets)
+    .reduce(
+      (acc, { name, type }) => ({ ...acc, [name]: type }),
+      {}
+    );
+
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
   const cmrGranuleUrlType = get(config, 'cmrGranuleUrlType', 'distribution');
 
@@ -330,7 +337,7 @@ async function moveGranules(event) {
       movedGranules,
       cmrGranuleUrlType,
       config.distribution_endpoint,
-      bucketsConfig,
+      bucketTypes,
       distributionBucketMap
     );
   } else {

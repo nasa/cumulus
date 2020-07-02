@@ -1,7 +1,6 @@
 const test = require('ava');
 const rewire = require('rewire');
 
-const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const cmrUtils = rewire('../../cmr-utils');
@@ -14,7 +13,11 @@ test.beforeEach((t) => {
     protected: { name: randomId('protected'), type: 'protected' },
     public: { name: randomId('public'), type: 'public' }
   };
-  t.context.buckets = new BucketsConfig(t.context.bucketConfig);
+  t.context.bucketTypes = Object.values(t.context.bucketConfig)
+    .reduce(
+      (acc, { name, type }) => ({ ...acc, [name]: type }),
+      {}
+    );
 });
 
 test('returns an empty set if no private files', (t) => {
@@ -24,7 +27,7 @@ test('returns an empty set if no private files', (t) => {
       bucket: t.context.bucketConfig.protected.name
     }
   ];
-  const actual = onlineAccessURLsToRemove(movedFiles, t.context.buckets);
+  const actual = onlineAccessURLsToRemove(movedFiles, t.context.bucketTypes);
 
   t.deepEqual(actual, []);
 });
@@ -41,7 +44,7 @@ test('returns a list of files to remove if there are private files', (t) => {
     }
 
   ];
-  const actual = onlineAccessURLsToRemove(movedFiles, t.context.buckets);
+  const actual = onlineAccessURLsToRemove(movedFiles, t.context.bucketTypes);
 
   t.deepEqual(actual, [{ URL: 'some/path/private-file.hdf' }]);
 });
