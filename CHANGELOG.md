@@ -39,6 +39,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - **key**
   - The `getObjectSize` function will no longer retry if the object does not
     exist
+- **CUMULUS-1861**
+  - `@cumulus/message/Collections.getCollectionIdFromMessage` now throws a
+    `CumulusMessageError` if `collectionName` and `collectionVersion` are missing
+    from `meta.collection`.   Previously this method would return
+    `'undefined___undefined'` instead
+  - `@cumulus/integration-tests/addCollections` now returns an array of collections that
+    were added rather than the count of added collections
 - **CUMULUS-1930**
   - The `@cumulus/common/util.uuid()` function has been removed
 - **CUMULUS-1958**
@@ -64,6 +71,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-1417**
+  - Added a `checksumFor` property to collection `files` config. Set this property on a checksum file's definition matching the `regex` of the target file. More details in the ['Data Cookbooks Setup'](https://nasa.github.io/cumulus/docs/next/data-cookbooks/setup) documentation.
+  - Added `checksumFor` validation to collections model.
 - **CUMULUS-1956**
   - Added `@cumulus/earthata-login-client` package
   - The `/s3credentials` endpoint that is deployed as part of distribution now
@@ -77,6 +87,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - If the `s3Credentials` endpoint is invoked with an EDL token and an
     `X-Request-Id` header, that `X-Request-Id` header will be forwarded to
     Earthata Login.
+- **CUMULUS-1957**
+  - If EDL token authentication is being used, and the `EDL-Client-Name` header
+    is set, `@the-client-name` will be appended to the end of the Earthdata
+    Login username that is used as the `RoleSessionName` of the temporary IAM
+    credentials. This value will show up in the AWS S3 server access logs.
 - **CUMULUS-1958**
   - Add the ability for users to specify a `bucket_map_key` to the `cumulus`
     terraform module as an override for the default .yaml values that are passed
@@ -99,6 +114,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     support partial matching of the keywords
 
 ### Changed
+
+- **CUMULUS-1861**
+  - Updates Rule objects to no longer require a collection.
+  - Changes the DLQ behavior for `sfEventSqsToDbRecords` and
+    `sfEventSqsToDbRecordsInputQueue`. Previously failure to write a database
+    record would result in lambda success, and an error log in the CloudWatch
+    logs.   The lambda has been updated to manually add a record to
+    the `sfEventSqsToDbRecordsDeadLetterQueue` if the granule, execution, *or*
+    pdr record fails to write, in addition to the previous error logging.
 
 - **CUMULUS-1956**
   - The `/s3credentials` endpoint that is deployed as part of distribution now
@@ -255,6 +279,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   removed
 - The deprecated `@cumulus/common/workflows.getWorkflowTemplate` function has
   been removed
+- `@cumulus/aws-client/StepFunctions.toSfnExecutionName()`
+- `@cumulus/aws-client/StepFunctions.fromSfnExecutionName()`
+- `@cumulus/aws-client/StepFunctions.getExecutionArn()`
+- `@cumulus/aws-client/StepFunctions.getExecutionUrl()`
+- `@cumulus/aws-client/StepFunctions.getStateMachineArn()`
+- `@cumulus/aws-client/StepFunctions.pullStepFunctionEvent()`
+- `@cumulus/common/test-utils/throttleOnce()`
+- `@cumulus/integration-tests/api/distribution.invokeApiDistributionLambda()`
+- `@cumulus/integration-tests/api/distribution.getDistributionApiRedirect()`
+- `@cumulus/integration-tests/api/distribution.getDistributionApiFileStream()`
 
 ## [v1.24.0] 2020-06-03
 

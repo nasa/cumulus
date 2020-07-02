@@ -266,24 +266,3 @@ const throwThrottlingException = () => {
 
   throw throttlingException;
 };
-
-/**
- * Return a function that throws a ThrottlingException the first time it is called, then returns as
- * normal any other times.
- *
- * @param {Function} fn
- * @returns {Function}
- */
-exports.throttleOnce = (fn) => {
-  deprecate('@cumulus/common/test-utils/throttleOnce', '1.21.0');
-  let throttleNextCall = true;
-
-  return (...args) => {
-    if (throttleNextCall) {
-      throttleNextCall = false;
-      throwThrottlingException();
-    }
-
-    return fn(...args);
-  };
-};

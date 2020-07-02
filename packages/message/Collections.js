@@ -1,5 +1,7 @@
 'use strict';
 
+const get = require('lodash/get');
+
 /**
  * Utility functions for generating collection information or parsing collection information
  * from a Cumulus message
@@ -9,8 +11,6 @@
  * @example
  * const Collections = require('@cumulus/message/Collections');
  */
-
-const get = require('lodash/get');
 
 /**
  * Returns the collection ID.
@@ -28,16 +28,21 @@ function constructCollectionId(name, version) {
 /**
  * Get collection ID from execution message.
  *
- * @param {Object} message - An execution message
- * @returns {string} - A collection ID
+ * @param {Object} message       - An execution message
+ * @returns {string | undefined} - A collection ID or undefined if
+ *                                 message.meta.collection isn't
+ *                                 present
  *
  * @alias module:Collections
  */
-const getCollectionIdFromMessage = (message) =>
-  constructCollectionId(
-    get(message, 'meta.collection.name'), get(message, 'meta.collection.version')
-  );
-
+const getCollectionIdFromMessage = (message) => {
+  const collectionName = get(message, 'meta.collection.name');
+  const collectionVersion = get(message, 'meta.collection.version');
+  if (!collectionName || !collectionVersion) {
+    return undefined;
+  }
+  return constructCollectionId(collectionName, collectionVersion);
+};
 module.exports = {
   constructCollectionId,
   getCollectionIdFromMessage

@@ -454,3 +454,142 @@ test("getUrlPath() returns the collection's url_path if there is a matching coll
 
   t.is(granuleFetcher.getUrlPath(file), 'collection-url-path');
 });
+
+test('addChecksumsToFiles adds checksums correctly if checksumFor is defined', async (t) => {
+  const { internalBucket } = t.context;
+  const provider = { protocol: 's3', host: internalBucket };
+
+  const dataFileRegex = '.*\.hdf';
+  const collectionConfig = {
+    name: 'testName',
+    version: 'testVersion',
+    files: [{
+      regex: dataFileRegex
+    },
+    {
+      regex: '.*\.md5',
+      checksumFor: dataFileRegex
+    }]
+  };
+
+  const fetcher = new GranuleFetcher({
+    collection: collectionConfig,
+    provider
+  });
+
+  const dataFile = {
+    name: 'dataFile.hdf',
+    path: ''
+  };
+  const checksumFile = {
+    name: 'dataChecksum.md5',
+    path: ''
+  };
+
+  const files = [dataFile, checksumFile];
+
+  const fakeChecksum = 'abcd1234';
+  const Key = path.join(checksumFile.name);
+  const params = { Bucket: internalBucket, Key, Body: fakeChecksum };
+  await S3.s3PutObject(params);
+
+  const filesWithChecksums = await fetcher.addChecksumsToFiles(files);
+  t.deepEqual(
+    filesWithChecksums.find((file) => file.name === dataFile.name),
+    {
+      ...dataFile,
+      checksumType: 'md5',
+      checksum: fakeChecksum
+    }
+  );
+});
+
+test('addChecksumsToFiles falls back to dataFileExt.checksumExt assumption if checksumFor is not defined', async (t) => {
+  const { internalBucket } = t.context;
+  const provider = { protocol: 's3', host: internalBucket };
+
+  const dataFileRegex = '.*\.hdf';
+  const collectionConfig = {
+    name: 'testName',
+    version: 'testVersion',
+    files: [{
+      regex: dataFileRegex
+    },
+    {
+      regex: '.*\.md5'
+    }]
+  };
+
+  const fetcher = new GranuleFetcher({
+    collection: collectionConfig,
+    provider
+  });
+
+  const dataFile = {
+    name: 'dataFile.hdf',
+    path: ''
+  };
+  const checksumFile = {
+    name: 'dataFile.hdf.md5',
+    path: ''
+  };
+
+  const files = [dataFile, checksumFile];
+
+  const fakeChecksum = 'abcd1234';
+  const Key = path.join(checksumFile.name);
+  const params = { Bucket: internalBucket, Key, Body: fakeChecksum };
+  await S3.s3PutObject(params);
+
+  const filesWithChecksums = await fetcher.addChecksumsToFiles(files);
+  t.deepEqual(
+    filesWithChecksums.find((file) => file.name === dataFile.name),
+    {
+      ...dataFile,
+      checksumType: 'md5',
+      checksum: fakeChecksum
+    }
+  );
+});
+
+test('addChecksumsToFiles throws an error if no file matches the checksumFor config', async (t) => {
+  const { internalBucket } = t.context;
+  const provider = { protocol: 's3', host: internalBucket };
+
+  const checksumFor = '.*\.nc';
+  const collectionConfig = {
+    name: 'testName',
+    version: 'testVersion',
+    files: [{
+      regex: '.*\.hdf'
+    },
+    {
+      regex: '.*\.md5',
+      checksumFor
+    }]
+  };
+
+  const fetcher = new GranuleFetcher({
+    collection: collectionConfig,
+    provider
+  });
+
+  const dataFile = {
+    name: 'dataFile.hdf',
+    path: ''
+  };
+  const checksumFile = {
+    name: 'dataFile.md5',
+    path: ''
+  };
+
+  const files = [dataFile, checksumFile];
+
+  await t.throwsAsync(
+    () => fetcher.addChecksumsToFiles(files),
+    {
+      instanceOf: errors.FileNotFound,
+      message: `Could not find file to match ${checksumFile.name} checksumFor ${checksumFor}`
+    }
+  );
+});
