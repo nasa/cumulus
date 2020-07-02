@@ -21,7 +21,10 @@ const {
   isNil,
   removeNilProperties
 } = require('@cumulus/common/util');
-const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
+const {
+  getBucketsConfigKey,
+  getDistributionBucketMapKey
+} = require('@cumulus/common/stack');
 const {
   DeletePublishedGranule
 } = require('@cumulus/errors');
@@ -33,6 +36,7 @@ const {
 const StepFunctionUtils = require('../lib/StepFunctionUtils');
 const Manager = require('./base');
 
+const { CumulusModelError } = require('./errors');
 const FileUtils = require('../lib/FileUtils');
 const { translateGranule } = require('../lib/granules');
 const GranuleSearchQueue = require('../lib/GranuleSearchQueue');
@@ -118,7 +122,7 @@ class Granule extends Manager {
     log.info(`granules.removeGranuleFromCmrByGranule ${granule.granuleId}`);
 
     if (!granule.published || !granule.cmrLink) {
-      throw new Error(`Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
+      throw new CumulusModelError(`Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
     }
 
     const cmrSettings = await cmrUtils.getCmrSettings();
@@ -222,6 +226,17 @@ class Granule extends Manager {
   async move(g, destinations, distEndpoint) {
     log.info(`granules.move ${g.granuleId}`);
 
+    const bucketsConfig = await s3Utils.getJsonS3Object(
+      process.env.system_bucket,
+      getBucketsConfigKey(process.env.stackName)
+    );
+
+    const bucketTypes = Object.values(bucketsConfig)
+      .reduce(
+        (acc, { name, type }) => ({ ...acc, [name]: type }),
+        {}
+      );
+
     const distributionBucketMap = await s3Utils.getJsonS3Object(
       process.env.system_bucket,
       getDistributionBucketMapKey(process.env.stackName)
@@ -233,7 +248,8 @@ class Granule extends Manager {
       updatedFiles,
       distEndpoint,
       published: g.published,
-      distributionBucketMap
+      distributionBucketMap,
+      bucketTypes
     });
 
     return this.update(
@@ -299,9 +315,11 @@ class Granule extends Manager {
     executionUrl,
     executionDescription = {}
   }) {
-    if (!granule.granuleId) throw new Error(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
+    if (!granule.granuleId) throw new CumulusModelError(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
     const collectionId = getCollectionIdFromMessage(message);
-
+    if (!collectionId) {
+      throw new CumulusModelError('meta.collection required to generate a granule record');
+    }
     const granuleFiles = await FileUtils.buildDatabaseFiles({
       s3,
       providerURL: buildURL({
