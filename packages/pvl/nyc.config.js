@@ -5,6 +5,5 @@ module.exports = {
   include: [
     '*.js',
     'lib/*.js'
-  ],
-  'exclude-after-remap': false
+  ]
 };

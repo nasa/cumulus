@@ -13,11 +13,11 @@
     "node": ">=12.18.0"
   },
   "scripts": {
-    "test": "../../node_modules/.bin/ava",
-    "test-coverage": "../../node_modules/.bin/nyc npm test",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack",
-    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
-    "package": "npm run build && (cd dist && node ../../../bin/zip.js lambda.zip index.js schemas)"
+    "package": "npm run build && (cd dist && node ../../../bin/zip.js lambda.zip index.js schemas)",
+    "test:ava": "../../node_modules/.bin/ava",
+    "test": "../../node_modules/.bin/nyc npm run test:ava",
+    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w"
   },
   "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/pdr-status-check",
   "repository": {
@@ -29,11 +29,6 @@
   "ava": {
     "serial": true,
     "timeout": "15m"
-  },
-  "nyc": {
-    "exclude": [
-      "tests"
-    ]
   },
   "dependencies": {
     "@cumulus/aws-client": "1.24.0",
