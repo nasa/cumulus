@@ -2,18 +2,13 @@
 
 const test = require('ava');
 const sinon = require('sinon');
-const rewire = require('rewire');
 const range = require('lodash/range');
 const { randomId } = require('@cumulus/common/test-utils');
 const indexer = require('../../es/indexer');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
-const esFileSearchQueue = rewire('../../es/esFileSearchQueue');
+const { ESFileSearchQueue } = require('../../es/esFileSearchQueue');
 const { Search } = require('../../es/search');
-
-let esObject = { };
-esFileSearchQueue.__set__('Search', { es: () => Promise.resolve(esObject) });
-const ESFileSearchQueue = esFileSearchQueue.__get__('ESFileSearchQueue');
 
 const sandbox = sinon.createSandbox();
 
@@ -28,7 +23,6 @@ test.beforeEach(async (t) => {
   );
   t.context.esClient = await Search.es();
   t.context.esClientSpy = sinon.spy(t.context.esClient, 'scroll');
-  esObject = t.context.esClient;
 });
 
 test.afterEach.always(async (t) => {
@@ -133,9 +127,6 @@ test.serial('esFileSearchQueue can handle paging.', async (t) => {
   /* eslint-enable no-await-in-loop */
 
   t.true(spiedSq.getCalls().length >= numGrans / pageLengh);
-  t.true(t.context.esClientSpy.called);
-  t.true(t.context.esClientSpy.calledWithMatch(sinon.match.has('scrollId')));
-  t.true(t.context.esClientSpy.calledWithMatch({ scroll: '30s' }));
   t.is(fetched.length, numGrans);
   delete process.env.ES_SCROLL_SIZE;
 });

@@ -42,7 +42,10 @@ const getLocalEsHost = () => {
 
 const esTestConfig = () => ({
   node: getLocalEsHost(),
-  requestTimeout: 5000
+  requestTimeout: 5000,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 const esProdConfig = async (host) => {
