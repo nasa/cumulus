@@ -1,7 +1,6 @@
 const test = require('ava');
 const rewire = require('rewire');
 
-const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { randomId } = require('@cumulus/common/test-utils');
 const omit = require('lodash/omit');
 
@@ -23,7 +22,13 @@ test.beforeEach((t) => {
     protected: { name: randomId('protected'), type: 'protected' },
     public: { name: randomId('public'), type: 'public' }
   };
-  t.context.buckets = new BucketsConfig(t.context.bucketConfig);
+
+  t.context.bucketTypes = Object.values(t.context.bucketConfig)
+    .reduce(
+      (acc, { name, type }) => ({ ...acc, [name]: type }),
+      {}
+    );
+
   t.context.distributionBucketMap = {
     [t.context.bucketConfig.protected.name]: t.context.bucketConfig.protected.name,
     [t.context.bucketConfig.public.name]: t.context.bucketConfig.public.name
@@ -61,7 +66,7 @@ test('returns correct url for protected data', async (t) => {
   const actual = await constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets,
+    bucketTypes: t.context.bucketTypes,
     distributionBucketMap: t.context.distributionBucketMap
   });
 
@@ -88,7 +93,7 @@ test('Returns correct url object for public data.', async (t) => {
   const actual = await constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets,
+    bucketTypes: t.context.bucketTypes,
     distributionBucketMap: t.context.distributionBucketMap
   });
 
@@ -106,7 +111,7 @@ test('Returns empty list for private data.', async (t) => {
   const actual = await constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets,
+    bucketTypes: t.context.bucketTypes,
     distributionBucketMap: t.context.distributionBucketMap
   });
 
@@ -150,7 +155,7 @@ test('returns an array of correct url objects given a list of moved files.', asy
   const actual = await constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets,
+    bucketTypes: t.context.bucketTypes,
     distributionBucketMap: t.context.distributionBucketMap
   });
 
@@ -190,7 +195,7 @@ test('constructRelatedUrls returns expected array when called with file list', a
   const actual = await constructRelatedUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets,
+    bucketTypes: t.context.bucketTypes,
     distributionBucketMap: t.context.distributionBucketMap
   });
 
@@ -204,7 +209,7 @@ test('constructRelatedUrls returns expected array when called with an empty file
   const actual = await constructRelatedUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets,
+    bucketsTypes: t.context.bucketTypes,
     distributionBucketMap: t.context.distributionBucketMap
   });
 
@@ -233,7 +238,7 @@ test.serial('returns correct links with s3 cmrGranuleUrlType', async (t) => {
   const actual = await constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets,
+    bucketTypes: t.context.bucketTypes,
     cmrGranuleUrlType: 's3',
     distributionBucketMap: t.context.distributionBucketMap
   });
@@ -254,7 +259,7 @@ test.serial('returns no links when cmrGranuleUrlType is none', async (t) => {
   const actual = await constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets,
+    bucketTypes: t.context.bucketTypes,
     cmrGranuleUrlType: 'none',
     distributionBucketMap: t.context.distributionBucketMap
   });
@@ -284,7 +289,7 @@ test('constructRelatedUrls returns s3 urls when cmrGranuleUrlType is s3', async 
   const actual = await constructRelatedUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets,
+    bucketTypes: t.context.bucketTypes,
     cmrGranuleUrlType: 's3',
     distributionBucketMap: t.context.distributionBucketMap
   });
@@ -305,7 +310,7 @@ test('constructRelatedUrls returns just s3 credentials url when cmrGranuleUrlTyp
   const actual = await constructRelatedUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets,
+    bucketTypes: t.context.bucketTypes,
     cmrGranuleUrlType: 'none',
     distributionBucketMap: t.context.distributionBucketMap
   });
