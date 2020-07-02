@@ -4,4 +4,4 @@ set -ex
 . ./bamboo/abort-if-not-pr.sh
 docker ps -a ## Show running containers for output logs
 
-docker exec -i ${container_id}\_build_env_1 /bin/bash -c "cd $UNIT_TEST_BUILD_DIR && npm test"
+docker exec -i ${container_id}\_build_env_1 /bin/bash -c "cd $UNIT_TEST_BUILD_DIR && npm run test:ci"
