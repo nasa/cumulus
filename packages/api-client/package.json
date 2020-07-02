@@ -13,14 +13,19 @@
   "publishConfig": {
     "access": "public"
   },
-  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/api-client",
+  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/api-client#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nasa/cumulus"
+    "url": "https://github.com/nasa/cumulus.git",
+    "directory": "packages/api-client"
   },
   "scripts": {
+    "clean": "rm -f ./*.js ./*.d.ts",
+    "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/nyc npm run test:ava",
-    "test:ava": "../../node_modules/.bin/ava"
+    "test:ava": "../../node_modules/.bin/ava",
+    "tsc": "../../node_modules/.bin/tsc",
+    "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'env NYC_SILENT=true npm test'"
   },
   "ava": {
     "files": [
