@@ -8,6 +8,8 @@ tmp/**
 docs/**
 _book/**
 website/**
+/packages/api-client/*.d.ts
+/packages/api-client/*.js
 /packages/aws-client/*.d.ts
 /packages/aws-client/*.js
 /packages/aws-client/lib/*.d.ts
