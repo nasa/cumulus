@@ -51,10 +51,10 @@ class S3ProviderClient {
     return objects.map(({ Key, Size, LastModified }) => ({
       name: basename(Key),
       // If the object is at the top level of the bucket, path.dirname is going
-      // to return "." as the dirname.  It should instead be null.
-      path: dirname(Key) === '.' ? null : dirname(Key),
+      // to return "." as the dirname.  It should instead be undefined.
+      path: dirname(Key) === '.' ? undefined : dirname(Key),
       size: Size,
-      time: (new Date(LastModified)).valueOf()
+      time: LastModified.valueOf()
     }));
   }
 
@@ -70,7 +70,7 @@ class S3ProviderClient {
   async sync(sourceKey, destinationBucket, destinationKey) {
     try {
       const s3uri = S3.buildS3Uri(destinationBucket, destinationKey);
-      const { ETag: etag } = await S3.multipartCopyObject({
+      const { etag } = await S3.multipartCopyObject({
         sourceBucket: this.bucket,
         sourceKey,
         destinationBucket,

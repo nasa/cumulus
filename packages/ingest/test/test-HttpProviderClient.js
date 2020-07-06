@@ -205,6 +205,7 @@ test.serial('list() returns an exception with helpful information if a fetcherro
   const response = new Readable({
     read() {
       this.push(nextChunk);
+      // eslint-disable-next-line unicorn/no-null
       nextChunk = null;
     }
   });
