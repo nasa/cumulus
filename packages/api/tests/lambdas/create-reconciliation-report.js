@@ -23,7 +23,6 @@ const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
-const GranuleFilesCache = require('../../lib/GranuleFilesCache');
 const { Search } = require('../../es/search');
 const {
   handler, reconciliationReportForGranules, reconciliationReportForGranuleFiles
@@ -171,7 +170,6 @@ test.beforeEach(async (t) => {
 
   await new models.Collection().createTable();
   await new models.Granule().createTable();
-  await GranuleFilesCache.createCacheTable();
   await new models.ReconciliationReport().createTable();
 
   sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => []);
@@ -191,7 +189,6 @@ test.afterEach.always(async (t) => {
       t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket),
       new models.Collection().deleteTable(),
       new models.Granule().deleteTable(),
-      GranuleFilesCache.deleteCacheTable(),
       new models.ReconciliationReport().deleteTable()
     ])
   );
@@ -263,7 +260,7 @@ test.serial('A valid reconciliation report is generated when everything is in sy
     granuleId: randomId('granuleId')
   }));
 
-  // Store the files to S3 and DynamoDB
+  // Store the files to S3 and Elasticsearch
   await Promise.all([
     storeFilesToS3(files),
     storeFilesToES(files),
@@ -333,7 +330,7 @@ test.serial('A valid reconciliation report is generated when there are extra S3 
   const extraS3File1 = { bucket: sample(dataBuckets), key: randomId('key') };
   const extraS3File2 = { bucket: sample(dataBuckets), key: randomId('key') };
 
-  // Store the files to S3 and DynamoDB
+  // Store the files to S3 and Elasticsearch
   await storeFilesToS3(matchingFiles.concat([extraS3File1, extraS3File2]));
   await storeFilesToES(matchingFiles);
 
@@ -393,7 +390,7 @@ test.serial('A valid reconciliation report is generated when there are extra Ela
     granuleId: randomString()
   };
 
-  // Store the files to S3 and DynamoDB
+  // Store the files to S3 and Elasticsearch
   await storeFilesToS3(matchingFiles);
   await storeFilesToES(matchingFiles.concat([extraDbFile1, extraDbFile2]));
 
