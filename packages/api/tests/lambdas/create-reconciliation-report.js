@@ -293,7 +293,6 @@ test.serial('A valid reconciliation report is generated when everything is in sy
   await Promise.all([
     storeFilesToS3(files),
     storeFilesToES(files),
-    GranuleFilesCache.batchUpdate({ puts: files })
   ]);
 
   // Create collections that are in sync
@@ -309,12 +308,6 @@ test.serial('A valid reconciliation report is generated when everything is in sy
 
   CMR.prototype.searchCollections.restore();
   sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => cmrCollections);
-
-  //TODO [MHS, 2020-07-06]  remove when dynamo isn't used anymore.
-  await storeCollectionsToDynamoDb(
-    process.env.CollectionsTable,
-    sortBy(matchingColls, ['name', 'version'])
-  );
 
   await storeCollectionsToElasticsearch(matchingColls);
 
@@ -369,7 +362,6 @@ test.serial('A valid reconciliation report is generated when there are extra S3 
   // Store the files to S3 and DynamoDB
   await storeFilesToS3(matchingFiles.concat([extraS3File1, extraS3File2]));
   await storeFilesToES(matchingFiles);
-  await GranuleFilesCache.batchUpdate({ puts: matchingFiles });
 
   const event = {
     systemBucket: t.context.systemBucket,
@@ -430,9 +422,6 @@ test.serial('A valid reconciliation report is generated when there are extra Ela
   // Store the files to S3 and DynamoDB
   await storeFilesToS3(matchingFiles);
   await storeFilesToES(matchingFiles.concat([extraDbFile1, extraDbFile2]));
-  await GranuleFilesCache.batchUpdate({
-    puts: matchingFiles.concat([extraDbFile1, extraDbFile2])
-  });
 
   const event = {
     systemBucket: t.context.systemBucket,
@@ -504,9 +493,6 @@ test.serial('A valid reconciliation report is generated when there are both extr
   // Store the files to S3 and Elasticsearch
   await storeFilesToS3(matchingFiles.concat([extraS3File1, extraS3File2]));
   await storeFilesToES(matchingFiles.concat([extraDbFile1, extraDbFile2]));
-  await GranuleFilesCache.batchUpdate({
-    puts: matchingFiles.concat([extraDbFile1, extraDbFile2])
-  });
 
   const event = {
     systemBucket: t.context.systemBucket,
@@ -575,10 +561,6 @@ test.serial('A valid reconciliation report is generated when there are both extr
   CMR.prototype.searchCollections.restore();
   sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => cmrCollections);
 
-  await storeCollectionsToDynamoDb(
-    process.env.CollectionsTable,
-    sortBy(matchingColls.concat(extraDbColls), ['name', 'version'])
-  );
   await storeCollectionsToElasticsearch(matchingColls.concat(extraDbColls));
 
   const event = {

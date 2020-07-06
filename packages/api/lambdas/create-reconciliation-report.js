@@ -117,7 +117,7 @@ async function reconciliationReportForCollections() {
   const cmrCollectionIds = cmrCollectionItems.map((item) =>
     constructCollectionId(item.umm.ShortName, item.umm.Version)).sort();
 
-  // get all collections from database and sort them, since the scan result is not ordered
+  // get all collections from Elasticsearch database and sort them.
   const esCollection = new ESSearchQueue({}, 'collection', process.env.ES_INDEX);
   const esCollectionItems = await esCollection.empty();
   const esCollectionIds = esCollectionItems.map(
