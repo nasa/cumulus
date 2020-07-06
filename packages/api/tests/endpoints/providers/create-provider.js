@@ -197,7 +197,7 @@ test('POST returns a 400 response if invalid hostname is provided', async (t) =>
   t.is(response.status, 400);
 });
 
-test('CUMULUS-176 POST returns a 404 if ', async (t) => {
+test('CUMULUS-176 POST returns a 404 if the requested path does not exist', async (t) => {
   const newProvider = fakeProviderFactory();
 
   const response = await request(app)
