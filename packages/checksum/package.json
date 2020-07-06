@@ -13,19 +13,14 @@
   ],
   "scripts": {
     "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md -t templates/README.md.hbs ./dist/*.js > README.md",
-    "test": "../../node_modules/.bin/ava",
-    "test-coverage": "../../node_modules/.bin/nyc npm test",
-    "debug": "NODE_ENV=test node --inspect-brk node_modules/ava/profile.js --serial tests/*.js",
-    "tsc": "../../node_modules/.bin/tsc",
-    "prepare": "npm run tsc"
+    "clean": "rm -rf dist",
+    "prepare": "npm run tsc",
+    "test": "../../node_modules/.bin/nyc npm run test:ava",
+    "test:ava": "../../node_modules/.bin/ava",
+    "tsc": "../../node_modules/.bin/tsc"
   },
   "ava": {
     "timeout": "15m"
-  },
-  "nyc": {
-    "exclude": [
-      "tests"
-    ]
   },
   "keywords": [
     "CUMULUS"

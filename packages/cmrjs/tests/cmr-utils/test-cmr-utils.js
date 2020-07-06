@@ -15,7 +15,6 @@ const {
   s3TagSetToQueryString
 } = require('@cumulus/aws-client/S3');
 const { s3, secretsManager } = require('@cumulus/aws-client/services');
-const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { randomId, readJsonFixture } = require('@cumulus/common/test-utils');
 const errors = require('@cumulus/errors');
 const launchpad = require('@cumulus/launchpad-auth');
@@ -74,6 +73,20 @@ test.before(async (t) => {
 
   t.context.launchpadStub = sinon.stub(launchpad, 'getLaunchpadToken')
     .callsFake((config) => Promise.resolve(`${config.passphrase}-${config.api}-${config.certificate}`));
+
+  const bucketsJson = await readJsonFixture('./tests/fixtures/buckets.json');
+
+  t.context.bucketTypes = Object.values(bucketsJson)
+    .reduce(
+      (acc, { name, type }) => ({ ...acc, [name]: type }),
+      {}
+    );
+
+  t.context.distributionBucketMap = Object.values(bucketsJson)
+    .reduce(
+      (acc, { name }) => ({ ...acc, [name]: name }),
+      {}
+    );
 });
 
 test.after.always(async (t) => {
@@ -221,15 +234,12 @@ test.serial('uploadUMMGJSONCMRFile uploads CMR File to S3 correctly, preserving 
 });
 
 test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAccessURLs/OnlineResources', async (t) => {
+  const { bucketTypes, distributionBucketMap } = t.context;
+
   const uploadEchoSpy = sinon.spy(() => Promise.resolve);
   const cmrXml = await fs.readFile('./tests/fixtures/cmrFileUpdateFixture.cmr.xml', 'utf8');
   const cmrMetadata = await (promisify(xml2js.parseString))(cmrXml, xmlParseOptions);
   const filesObject = await readJsonFixture('./tests/fixtures/filesObjectFixture.json');
-  const buckets = new BucketsConfig(await readJsonFixture('./tests/fixtures/buckets.json'));
-
-  const distributionBucketMap = {};
-  Object.values(buckets.buckets)
-    .forEach(({ name }) => Object.assign(distributionBucketMap, ({ [name]: name })));
 
   const distEndpoint = 'https://distendpoint.com';
 
@@ -273,7 +283,7 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
       cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
       files: filesObject,
       distEndpoint,
-      buckets,
+      bucketTypes,
       distributionBucketMap
     });
   } finally {
@@ -288,15 +298,13 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
 });
 
 test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule files', async (t) => {
+  const { bucketTypes, distributionBucketMap } = t.context;
+
   const uploadEchoSpy = sinon.spy(() => Promise.resolve);
 
   const cmrJSON = await fs.readFile('./tests/fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json', 'utf8');
   const cmrMetadata = JSON.parse(cmrJSON);
   const filesObject = await readJsonFixture('./tests/fixtures/UMMGFilesObjectFixture.json');
-  const buckets = new BucketsConfig(await readJsonFixture('./tests/fixtures/buckets.json'));
-  const distributionBucketMap = {};
-  Object.values(buckets.buckets)
-    .forEach(({ name }) => Object.assign(distributionBucketMap, ({ [name]: name })));
 
   const distEndpoint = 'https://distendpoint.com';
 
@@ -337,7 +345,7 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
       cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
       files: filesObject,
       distEndpoint,
-      buckets,
+      bucketTypes,
       distributionBucketMap
     });
   } finally {
