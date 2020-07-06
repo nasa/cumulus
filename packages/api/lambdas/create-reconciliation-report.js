@@ -19,19 +19,11 @@ const { ESSearchQueue } = require('../es/esSearchQueue');
 const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
 const { ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');
-const { ESFileSearchQueue } = require('../es/esFileSearchQueue');
+const { ESFileQueue } = require('../es/esFileQueue');
 
 const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
 
 const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includes(bucketConfig.type);
-
-/**
- * return the queue of the files for a given bucket,
- * the items should be ordered by the range key which is the 'key' attribute
- * @param {string} bucket - bucket name
- * @returns {Array<Object>} the files' queue for a given bucket.
- */
-const createESSearchQueueForBucket = (bucket) => new ESFileSearchQueue({ bucket });
 
 /**
  * Verify that all objects in an S3 bucket contain corresponding entries in
@@ -42,7 +34,7 @@ const createESSearchQueueForBucket = (bucket) => new ESFileSearchQueue({ bucket 
  */
 async function createReconciliationReportForBucket(Bucket) {
   const s3ObjectsQueue = new S3ListObjectsV2Queue({ Bucket });
-  const esFilesLister = createESSearchQueueForBucket(Bucket);
+  const esFilesLister = new ESFileQueue({ bucket: Bucket });
 
   let okCount = 0;
   const onlyInS3 = [];

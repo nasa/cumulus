@@ -4,9 +4,9 @@ const fs = require('fs-extra');
 const test = require('ava');
 const rewire = require('rewire');
 
-const esFileSearchQueue = rewire('../../es/esFileSearchQueue');
+const esFileQueue = rewire('../../es/esFileQueue');
 
-const buildFilesResponse = esFileSearchQueue.__get__('buildFilesResponse');
+const buildFilesResponse = esFileQueue.__get__('buildFilesResponse');
 
 const granuleFileList = JSON.parse(
   fs.readFileSync(`${__dirname}/fixtures/granulesFileList.json`, 'utf8')

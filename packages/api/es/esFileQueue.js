@@ -32,7 +32,11 @@ const buildFilesResponse = (granuleFilesList, bucket) =>
       })))
   );
 
-class ESFileSearchQueue {
+/**
+ * Class that returns a queue of files for an input bucket.  Items are returned
+ * in the order by the 'Key' attribute.
+ */
+class ESFileQueue {
   constructor({ bucket, esIndex }) {
     this.items = [];
     this.bucket = bucket;
@@ -79,7 +83,7 @@ class ESFileSearchQueue {
   }
 
   /**
-   * A esFileSearchQueue instance stores the list of items to be returned in
+   * A esFileQueue instance stores the list of items to be returned in
    * the `this.items` array. When that list is empty, the `fetchItems()` method
    * is called to repopulate `this.items`.
    */
@@ -98,4 +102,4 @@ class ESFileSearchQueue {
   }
 }
 
-module.exports = { ESFileSearchQueue };
+module.exports = { ESFileQueue };

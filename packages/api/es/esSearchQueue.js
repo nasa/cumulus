@@ -6,6 +6,10 @@ const ESScrollSearch = require('./esScrollSearch');
 // TODO [MHS, 2020-07-06]  leave until you find out if you need it.
 const buildResponse = (response) => response;
 
+/**
+ * Class to create a queuable elasticsearch query.  It creates and manages a
+ * scollSearch. Providing peek(), and shift() operations.
+ */
 class ESSearchQueue {
   constructor(queryStringParameters, type = 'collection', esIndex) {
     this.items = [];
@@ -43,7 +47,7 @@ class ESSearchQueue {
    * @returns {Promise<Object>} an item from Elasticsearch.
    */
   async peek() {
-    if (this.items.length === 0) await this.fetchItems();
+    if (this.items.length === 0) await this._fetchItems();
     return this.items[0];
   }
 
@@ -55,16 +59,16 @@ class ESSearchQueue {
    * @returns {Promise<Object>} an item from the Elasticsearch
    */
   async shift() {
-    if (this.items.length === 0) await this.fetchItems();
+    if (this.items.length === 0) await this._fetchItems();
     return this.items.shift();
   }
 
   /**
-   * A esFileSearchQueue instance stores the list of items to be returned in
-   * the `this.items` array. When that list is empty, the `fetchItems()` method
+   * A esFileQueue instance stores the list of items to be returned in
+   * the `this.items` array. When that list is empty, the `_fetchItems()` method
    * is called to repopulate `this.items`.
    */
-  async fetchItems() {
+  async _fetchItems() {
     if (!this.scrollClient) {
       this.scrollClient = new ESScrollSearch(
         {
