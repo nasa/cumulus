@@ -24,9 +24,10 @@
   },
   "scripts": {
     "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md --template templates/docs-API.hbs URLUtils.js util.js > docs/API.md",
+    "clean": "rm -f *.d.ts *.map",
     "prepare": "npm run tsc",
-    "test": "../../node_modules/.bin/ava",
-    "test-coverage": "../../node_modules/.bin/nyc npm test",
+    "test": "../../node_modules/.bin/nyc npm run test:ava",
+    "test:ava": "../../node_modules/.bin/ava",
     "tsc": "../../node_modules/.bin/tsc"
   },
   "ava": {
@@ -34,12 +35,6 @@
       "tests/**"
     ],
     "verbose": true
-  },
-  "nyc": {
-    "exclude": [
-      "tests",
-      "test"
-    ]
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
