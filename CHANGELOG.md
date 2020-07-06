@@ -68,6 +68,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1977**
   - Moved bulk granule deletion endpoint from `/bulkDelete` to
     `/granules/bulkDelete`
+- **CUMULUS-1991**
+  - Updated CMR metadata generation to use "Download file.hdf" (where `file.hdf` is the filename of the given resource) as the resource description instead of "File to download"
+  - CMR metadata updates now respect changes to resource descriptions (previously only changes to resource URLs were respected)
 
 ### Added
 
