@@ -3,7 +3,6 @@
 const pMap = require('p-map');
 const test = require('ava');
 const moment = require('moment');
-const chunk = require('lodash/chunk');
 const flatten = require('lodash/flatten');
 const map = require('lodash/map');
 const range = require('lodash/range');
@@ -140,43 +139,6 @@ async function storeGranulesToElasticsearch(granules) {
   await Promise.all(
     granules.map((granule) => indexer.indexGranule(esClient, granule, esAlias))
   );
-}
-
-/**
- * store data to database
- *
- * @param {string} tableName table name to store data
- * @param {Array<Object>} putRequests list of put requests
- * @returns {Promise} promise of the store requests
- */
-function storeToDynamoDb(tableName, putRequests) {
-  // Break the requests into groups of 25
-  const putRequestsChunks = chunk(putRequests, 25);
-
-  const putRequestParams = putRequestsChunks.map((requests) => ({
-    RequestItems: {
-      [tableName]: requests
-    }
-  }));
-
-  return pMap(
-    putRequestParams,
-    (params) => awsServices.dynamodb().batchWriteItem(params).promise(),
-    { concurrency: 1 }
-  );
-}
-
-function storeCollectionsToDynamoDb(tableName, collections) {
-  const putRequests = collections.map((collection) => ({
-    PutRequest: {
-      Item: {
-        name: { S: collection.name },
-        version: { S: collection.version }
-      }
-    }
-  }));
-
-  return storeToDynamoDb(tableName, putRequests);
 }
 
 async function fetchCompletedReport(reportRecord) {
@@ -525,12 +487,18 @@ test.serial('A valid reconciliation report is generated when there are both extr
   t.true(filesInCumulus.onlyInS3.includes(buildS3Uri(extraS3File2.bucket, extraS3File2.key)));
 
   t.is(filesInCumulus.onlyInElasticsearch.length, 2);
-  t.truthy(filesInCumulus.onlyInElasticsearch.find((f) =>
-    f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key)
-                                                   && f.granuleId === extraDbFile1.granuleId));
-  t.truthy(filesInCumulus.onlyInElasticsearch.find((f) =>
-    f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key)
-                                                   && f.granuleId === extraDbFile2.granuleId));
+  t.truthy(
+    filesInCumulus.onlyInElasticsearch.find(
+      (f) => f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key)
+        && f.granuleId === extraDbFile1.granuleId
+    )
+  );
+  t.truthy(
+    filesInCumulus.onlyInElasticsearch.find(
+      (f) => f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key)
+        && f.granuleId === extraDbFile2.granuleId
+    )
+  );
 
   const createStartTime = moment(report.createStartTime);
   const createEndTime = moment(report.createEndTime);

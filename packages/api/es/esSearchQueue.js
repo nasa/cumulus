@@ -3,16 +3,8 @@
 const { defaultIndexAlias } = require('./search');
 const ESScrollSearch = require('./esScrollSearch');
 
-// const collection = new Collection(
-//   { queryStringParameters: req.query },
-//   null,
-//   process.env.ES_INDEX
-// );
-// const result = await collection.query();
-
-const buildResponse = (response) => {
-  return response;
-};
+// TODO [MHS, 2020-07-06]  leave until you find out if you need it.
+const buildResponse = (response) => response;
 
 class ESSearchQueue {
   constructor(queryStringParameters, type = 'collection', esIndex) {
