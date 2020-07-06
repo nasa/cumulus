@@ -53,6 +53,18 @@ function getFilename(file) {
   throw new Error(`Unable to determine name of file: ${JSON.stringify(file)}`);
 }
 
+function getFileDescription(file) {
+  // Fallback if no file name can be determined
+  let fileDescription = 'File to download';
+  try {
+    const filename = getFilename(file);
+    fileDescription = `Download ${filename}`;
+  } catch (error) {
+    log.error(error);
+  }
+  return fileDescription;
+}
+
 const isECHO10File = (filename) => filename.endsWith('cmr.xml');
 const isUMMGFile = (filename) => filename.endsWith('cmr.json');
 const isCMRFilename = (filename) => isECHO10File(filename) || isUMMGFile(filename);
@@ -326,11 +338,11 @@ async function constructOnlineAccessUrl({
   if (distributionApiBuckets.includes(bucketType)) {
     const fileUrl = await generateFileUrl({ file, distEndpoint, cmrGranuleUrlType, distributionBucketMap });
     if (fileUrl) {
-      const filename = getFilename(file);
+      const fileDescription = getFileDescription(file);
       return {
         URL: fileUrl,
-        URLDescription: `Download ${filename}`, // used by ECHO10
-        Description: `Download ${filename}`, // used by UMMG
+        URLDescription: fileDescription, // used by ECHO10
+        Description: fileDescription, // used by UMMG
         Type: mapCNMTypeToCMRType(file.type) // used by UMMG
       };
     }
@@ -857,6 +869,7 @@ module.exports = {
   generateEcho10XMLString,
   generateFileUrl,
   getCmrSettings,
+  getFileDescription,
   getFilename,
   getGranuleTemporalInfo,
   granulesToCmrFileObjects,

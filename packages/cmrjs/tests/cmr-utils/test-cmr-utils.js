@@ -640,3 +640,23 @@ test('getFilename returns correct value', (t) => {
     'foo5.txt'
   );
 });
+
+test('getFilename throws error if file name cannot be determined', (t) => {
+  t.throws(
+    () => cmrUtil.getFilename({})
+  );
+});
+
+test('getFileDescription returns correct description', (t) => {
+  t.is(
+    cmrUtil.getFileDescription({ fileName: 'foo.txt' }),
+    'Download foo.txt'
+  );
+});
+
+test('getFileDescription returns fallback if file name cannot be determined', (t) => {
+  t.is(
+    cmrUtil.getFileDescription({}),
+    'File to download'
+  );
+});
