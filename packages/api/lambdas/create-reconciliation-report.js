@@ -15,8 +15,8 @@ const CMR = require('@cumulus/cmr-client/CMR');
 const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue');
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
+const { ESSearchQueue } = require('../es/esSearchQueue');
 const ESCollection = require('../es/collections');
-
 const { Collection, Granule, ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');
 const { ESFileSearchQueue } = require('../es/esFileSearchQueue');
@@ -118,8 +118,8 @@ async function reconciliationReportForCollections() {
     constructCollectionId(item.umm.ShortName, item.umm.Version)).sort();
 
   // get all collections from database and sort them, since the scan result is not ordered
-  const esCollection = new ESCollection({}, 'collection', process.env.ES_INDEX);
-  const esCollectionItems = await esCollection.query();
+  const esCollection = new ESSearchQueue({}, 'collection', process.env.ES_INDEX);
+  const esCollectionItems = await esCollection.empty();
   const esCollectionIds = esCollectionItems.map(
     (item) => constructCollectionId(item.name, item.version)
   ).sort();

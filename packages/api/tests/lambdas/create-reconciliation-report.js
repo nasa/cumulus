@@ -107,7 +107,7 @@ function fileToGranuleDoc(file) {
 }
 
 /**
- * Index files to ES for testing.
+ * Index files to ES for testing
  *
  * @param {Array<Object>} files - list of file objects with bucket, key and granuleId
  */
@@ -115,6 +115,18 @@ async function storeFilesToES(files) {
   const granuleDocs = files.map(fileToGranuleDoc);
   await Promise.all(
     granuleDocs.map((granule) => indexer.indexGranule(esClient, granule, esAlias))
+  );
+}
+
+/**
+ * Index collections to ES for testing
+ *
+ * @param {Array<Object>} collections - list of collection objects
+ * @returns {Promise} - Promise of collections indexed
+ */
+async function storeCollectionsToElasticsearch(collections) {
+  await Promise.all(
+    collections.map((collection) => indexer.indexCollection(esClient, collection, esAlias))
   );
 }
 
@@ -168,12 +180,6 @@ test.before(async () => {
     Name: process.env.cmr_password_secret_name,
     SecretString: randomId('cmr-password')
   }).promise();
-
-  esAlias = randomId('esalias');
-  esIndex = randomId('esindex');
-  process.env.ES_INDEX = esAlias;
-  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
-  esClient = await Search.es();
 });
 
 test.beforeEach(async (t) => {
@@ -197,6 +203,12 @@ test.beforeEach(async (t) => {
   sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => []);
   sinon.stub(CMRSearchConceptQueue.prototype, 'peek').callsFake(() => undefined);
   sinon.stub(CMRSearchConceptQueue.prototype, 'shift').callsFake(() => undefined);
+
+  esAlias = randomId('esalias');
+  esIndex = randomId('esindex');
+  process.env.ES_INDEX = esAlias;
+  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  esClient = await Search.es();
 });
 
 test.afterEach.always(async (t) => {
@@ -298,10 +310,13 @@ test.serial('A valid reconciliation report is generated when everything is in sy
   CMR.prototype.searchCollections.restore();
   sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => cmrCollections);
 
+  //TODO [MHS, 2020-07-06]  remove when dynamo isn't used anymore.
   await storeCollectionsToDynamoDb(
     process.env.CollectionsTable,
     sortBy(matchingColls, ['name', 'version'])
   );
+
+  await storeCollectionsToElasticsearch(matchingColls);
 
   const event = {
     systemBucket: t.context.systemBucket,
@@ -435,12 +450,18 @@ test.serial('A valid reconciliation report is generated when there are extra Ela
   t.is(filesInCumulus.onlyInS3.length, 0);
 
   t.is(filesInCumulus.onlyInElasticsearch.length, 2);
-  t.truthy(filesInCumulus.onlyInElasticsearch.find((f) =>
-    f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key)
-    && f.granuleId === extraDbFile1.granuleId));
-  t.truthy(filesInCumulus.onlyInElasticsearch.find((f) =>
-    f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key)
-    && f.granuleId === extraDbFile2.granuleId));
+  t.truthy(
+    filesInCumulus.onlyInElasticsearch.find(
+      (f) => f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key)
+        && f.granuleId === extraDbFile1.granuleId
+    )
+  );
+  t.truthy(
+    filesInCumulus.onlyInElasticsearch.find(
+      (f) => f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key)
+        && f.granuleId === extraDbFile2.granuleId
+    )
+  );
 
   const createStartTime = moment(report.createStartTime);
   const createEndTime = moment(report.createEndTime);
@@ -508,17 +529,17 @@ test.serial('A valid reconciliation report is generated when there are both extr
   t.is(filesInCumulus.onlyInElasticsearch.length, 2);
   t.truthy(filesInCumulus.onlyInElasticsearch.find((f) =>
     f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key)
-    && f.granuleId === extraDbFile1.granuleId));
+                                                   && f.granuleId === extraDbFile1.granuleId));
   t.truthy(filesInCumulus.onlyInElasticsearch.find((f) =>
     f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key)
-    && f.granuleId === extraDbFile2.granuleId));
+                                                   && f.granuleId === extraDbFile2.granuleId));
 
   const createStartTime = moment(report.createStartTime);
   const createEndTime = moment(report.createEndTime);
   t.true(createStartTime <= createEndTime);
 });
 
-test.serial('A valid reconciliation report is generated when there are both extra DB and CMR collections', async (t) => {
+test.serial('A valid reconciliation report is generated when there are both extra ES and CMR collections', async (t) => {
   const dataBuckets = range(2).map(() => randomString());
   await Promise.all(dataBuckets.map((bucket) =>
     createBucket(bucket)
@@ -558,6 +579,7 @@ test.serial('A valid reconciliation report is generated when there are both extr
     process.env.CollectionsTable,
     sortBy(matchingColls.concat(extraDbColls), ['name', 'version'])
   );
+  await storeCollectionsToElasticsearch(matchingColls.concat(extraDbColls));
 
   const event = {
     systemBucket: t.context.systemBucket,
