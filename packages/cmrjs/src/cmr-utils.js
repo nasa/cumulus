@@ -44,6 +44,14 @@ function getS3UrlOfFile(file) {
   throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
 }
 
+function getFilename (file) {
+  if (file.name) return file.name;
+  if (file.filename) return path.basename(file.filename);
+  if (file.filepath) return path.basename(file.filepath);
+  if (file.key) return path.basename(file.key);
+  throw new Error(`Unable to determine name of file: ${JSON.stringify(file)}`);
+}
+
 const isECHO10File = (filename) => filename.endsWith('cmr.xml');
 const isUMMGFile = (filename) => filename.endsWith('cmr.json');
 const isCMRFilename = (filename) => isECHO10File(filename) || isUMMGFile(filename);
@@ -317,7 +325,7 @@ async function constructOnlineAccessUrl({
   if (distributionApiBuckets.includes(bucketType)) {
     const fileUrl = await generateFileUrl({ file, distEndpoint, cmrGranuleUrlType, distributionBucketMap });
     if (fileUrl) {
-      const filename = path.basename(file.key);
+      const filename = getFilename(file);
       return {
         URL: fileUrl,
         URLDescription: `Download ${filename}`, // used by ECHO10
@@ -455,7 +463,15 @@ function mergeURLs(original, updated = [], removed = []) {
     if (matchedOriginal.length === 1) {
       // merge original urlObject into the updated urlObject,
       // preferring all metadata from original except the new url.URL
-      return { ...url, ...matchedOriginal[0], ...{ URL: url.URL } };
+      // and url.Description
+      return {
+        ...url,
+        ...matchedOriginal[0],
+        ...{
+          URL: url.URL,
+          Description: url.Description
+        }
+      };
     }
     return url;
   });
