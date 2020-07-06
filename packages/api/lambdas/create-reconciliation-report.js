@@ -16,8 +16,8 @@ const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
 const { ESSearchQueue } = require('../es/esSearchQueue');
-const ESCollection = require('../es/collections');
-const { Collection, Granule, ReconciliationReport } = require('../models');
+const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
+const { Granule, ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');
 const { ESFileSearchQueue } = require('../es/esFileSearchQueue');
 
@@ -292,7 +292,7 @@ async function reconciliationReportForGranules(params) {
     format: 'umm_json'
   });
 
-  const dbGranulesIterator = new Granule().getGranulesForCollection(collectionId, 'completed');
+  const esGranulesIterator = new ESCollectionGranuleQueue({ collectionId }, 'granule', process.env.ES_INDEX);
 
   const granulesReport = {
     okCount: 0,
@@ -306,7 +306,7 @@ async function reconciliationReportForGranules(params) {
     onlyInCmr: []
   };
 
-  let [nextDbItem, nextCmrItem] = await Promise.all([dbGranulesIterator.peek(), cmrGranulesIterator.peek()]); // eslint-disable-line max-len
+  let [nextDbItem, nextCmrItem] = await Promise.all([esGranulesIterator.peek(), cmrGranulesIterator.peek()]); // eslint-disable-line max-len
 
   while (nextDbItem && nextCmrItem) {
     const nextDbGranuleId = nextDbItem.granuleId;
@@ -318,7 +318,7 @@ async function reconciliationReportForGranules(params) {
         granuleId: nextDbGranuleId,
         collectionId: collectionId
       });
-      await dbGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+      await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
     } else if (nextDbGranuleId > nextCmrGranuleId) {
       // Found an item that is only in CMR and not in Cumulus database
       granulesReport.onlyInCmr.push({
@@ -341,7 +341,7 @@ async function reconciliationReportForGranules(params) {
         Version: nextCmrItem.umm.CollectionReference.Version,
         RelatedUrls: nextCmrItem.umm.RelatedUrls
       };
-      await dbGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+      await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
       await cmrGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
 
       // compare the files now to avoid keeping the granules' information in memory
@@ -354,12 +354,12 @@ async function reconciliationReportForGranules(params) {
       filesReport.onlyInCmr = filesReport.onlyInCmr.concat(fileReport.onlyInCmr);
     }
 
-    [nextDbItem, nextCmrItem] = await Promise.all([dbGranulesIterator.peek(), cmrGranulesIterator.peek()]); // eslint-disable-line max-len, no-await-in-loop
+    [nextDbItem, nextCmrItem] = await Promise.all([esGranulesIterator.peek(), cmrGranulesIterator.peek()]); // eslint-disable-line max-len, no-await-in-loop
   }
 
   // Add any remaining DynamoDB items to the report
-  while (await dbGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
-    const dbItem = await dbGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+  while (await esGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
+    const dbItem = await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
     granulesReport.onlyInCumulus.push({
       granuleId: dbItem.granuleId,
       collectionId: collectionId

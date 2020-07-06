@@ -131,6 +131,18 @@ async function storeCollectionsToElasticsearch(collections) {
 }
 
 /**
+ * Index granules to ES for testing
+ *
+ * @param {Array<Object>} granules - list of granules objects
+ * @returns {Promise} - Promise of indexed granules
+ */
+async function storeGranulesToElasticsearch(granules) {
+  await Promise.all(
+    granules.map((granule) => indexer.indexGranule(esClient, granule, esAlias))
+  );
+}
+
+/**
  * store data to database
  *
  * @param {string} tableName table name to store data
@@ -224,6 +236,7 @@ test.afterEach.always(async (t) => {
   CMR.prototype.searchCollections.restore();
   CMRSearchConceptQueue.prototype.peek.restore();
   CMRSearchConceptQueue.prototype.shift.restore();
+  await esClient.indices.delete({ index: esIndex });
 });
 
 test.after.always(async () => {
@@ -232,7 +245,6 @@ test.after.always(async () => {
     ForceDeleteWithoutRecovery: true
   }).promise();
   delete process.env.cmr_password_secret_name;
-  await esClient.indices.delete({ index: esIndex });
 });
 
 test.serial('A valid reconciliation report is generated for no buckets', async (t) => {
@@ -622,7 +634,7 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
   sinon.stub(CMRSearchConceptQueue.prototype, 'peek').callsFake(() => cmrGranules[0]);
   sinon.stub(CMRSearchConceptQueue.prototype, 'shift').callsFake(() => cmrGranules.shift());
 
-  await new models.Granule().create(matchingGrans.concat(extraDbGrans));
+  await storeGranulesToElasticsearch(matchingGrans.concat(extraDbGrans));
 
   const { granulesReport, filesReport } = await reconciliationReportForGranules({
     collectionId,
