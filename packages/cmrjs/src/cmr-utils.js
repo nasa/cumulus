@@ -44,7 +44,7 @@ function getS3UrlOfFile(file) {
   throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
 }
 
-function getFilename (file) {
+function getFilename(file) {
   if (file.name) return file.name;
   if (file.filename) return path.basename(file.filename);
   if (file.filepath) return path.basename(file.filepath);
@@ -463,14 +463,20 @@ function mergeURLs(original, updated = [], removed = []) {
     if (matchedOriginal.length === 1) {
       // merge original urlObject into the updated urlObject,
       // preferring all metadata from original except the new url.URL
-      // and url.Description
+      // and description
+      const updatedMetadata = {
+        URL: url.URL
+      };
+      if (url.Description) {
+        updatedMetadata.Description = url.Description;
+      }
+      if (url.URLDescription) {
+        updatedMetadata.URLDescription = url.URLDescription;
+      }
       return {
         ...url,
         ...matchedOriginal[0],
-        ...{
-          URL: url.URL,
-          Description: url.Description
-        }
+        ...updatedMetadata
       };
     }
     return url;
