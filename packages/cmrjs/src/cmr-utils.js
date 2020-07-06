@@ -317,10 +317,11 @@ async function constructOnlineAccessUrl({
   if (distributionApiBuckets.includes(bucketType)) {
     const fileUrl = await generateFileUrl({ file, distEndpoint, cmrGranuleUrlType, distributionBucketMap });
     if (fileUrl) {
+      const filename = path.basename(file.key);
       return {
         URL: fileUrl,
-        URLDescription: 'File to download', // used by ECHO10
-        Description: 'File to download', // used by UMMG
+        URLDescription: `Download ${filename}`, // used by ECHO10
+        Description: `Download ${filename}`, // used by UMMG
         Type: mapCNMTypeToCMRType(file.type) // used by UMMG
       };
     }
