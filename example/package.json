@@ -15,14 +15,15 @@
     "timeout": "15m"
   },
   "scripts": {
-    "test": "../node_modules/.bin/ava && for x in lambdas/*; do cd $x && npm run test && cd -; done",
-    "int-test": "../node_modules/.bin/jasmine && npm run parallel-tests",
-    "parallel-tests": "sh scripts/tests-parallel.sh",
-    "redeploy-test": "../node_modules/.bin/jasmine spec/standalone/redeployment/*.js",
     "all-tests": "npm run parallel-tests && ../node_modules/.bin/jasmine && npm run redeploy-test",
+    "install-python-deps": "for x in lambdas/*; do cd $x && npm run install-python-deps || true && cd -; done",
+    "int-test": "../node_modules/.bin/jasmine && npm run parallel-tests",
     "package": "for x in lambdas/*; do cd $x && npm run package && cd -; done",
+    "parallel-tests": "sh scripts/tests-parallel.sh",
     "python-lint": "for x in lambdas/*; do cd $x && npm run python-lint && cd -; done",
-    "install-python-deps": "for x in lambdas/*; do cd $x && npm run install-python-deps || true && cd -; done"
+    "redeploy-test": "../node_modules/.bin/jasmine spec/standalone/redeployment/*.js",
+    "test": "../node_modules/.bin/nyc npm run test:ava && for x in lambdas/*; do cd $x && npm run test && cd -; done",
+    "test:ava": "../node_modules/.bin/ava"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",

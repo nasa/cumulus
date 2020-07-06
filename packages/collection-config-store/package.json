@@ -19,8 +19,8 @@
   },
   "scripts": {
     "build-docs": "../../node_modules/.bin/jsdoc2md --template templates/docs-API.hbs index.js > docs/API.md",
-    "test": "../../node_modules/.bin/ava",
-    "test-coverage": "../../node_modules/.bin/nyc npm test"
+    "test": "../../node_modules/.bin/nyc npm run test:ava",
+    "test:ava": "../../node_modules/.bin/ava"
   },
   "ava": {
     "files": [
@@ -28,12 +28,6 @@
     ],
     "verbose": true,
     "timeout": "15m"
-  },
-  "nyc": {
-    "exclude": [
-      "tests",
-      "test"
-    ]
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
