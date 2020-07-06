@@ -613,3 +613,30 @@ test('getCmrSettings uses values in config for launchpad oauth', async (t) => {
     }).promise();
   }
 });
+
+test('getFilename returns correct value', (t) => {
+  t.is(
+    cmrUtil.getFilename({ fileName: 'foo.txt' }),
+    'foo.txt'
+  );
+
+  t.is(
+    cmrUtil.getFilename({ name: 'foo2.txt' }),
+    'foo2.txt'
+  );
+
+  t.is(
+    cmrUtil.getFilename({ filename: '/path/to/foo3.txt' }),
+    'foo3.txt'
+  );
+
+  t.is(
+    cmrUtil.getFilename({ filepath: '/path/to/foo4.txt' }),
+    'foo4.txt'
+  );
+
+  t.is(
+    cmrUtil.getFilename({ key: '/path/to/foo5.txt' }),
+    'foo5.txt'
+  );
+});

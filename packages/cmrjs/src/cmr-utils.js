@@ -45,6 +45,7 @@ function getS3UrlOfFile(file) {
 }
 
 function getFilename(file) {
+  if (file.fileName) return file.fileName;
   if (file.name) return file.name;
   if (file.filename) return path.basename(file.filename);
   if (file.filepath) return path.basename(file.filepath);
@@ -856,6 +857,7 @@ module.exports = {
   generateEcho10XMLString,
   generateFileUrl,
   getCmrSettings,
+  getFilename,
   getGranuleTemporalInfo,
   granulesToCmrFileObjects,
   isCMRFile,
