@@ -10,8 +10,8 @@ module "kinesis_trigger_test_workflow" {
   state_machine_definition = templatefile(
     "${path.module}/kinesis_trigger_test_workflow.asl.json",
     {
-      cnm_to_cma_task_arn: module.cumulus.cnm_to_cma_task.task_arn,
-      cma_repsonse_task_arn: module.cumulus.cma_repsonse_task.task_arn,
+      cnm_to_cma_task_arn: aws_lambda_function.cnm_to_cma_task.arn,
+      cnm_response_task_arn: aws_lambda_function.cnm_response_task.arn,
       sync_granule_task_arn: module.cumulus.sync_granule_task.task_arn
     }
   )

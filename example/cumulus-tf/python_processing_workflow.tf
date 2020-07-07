@@ -49,7 +49,7 @@ module "python_test_python_processing_workflow" {
   state_machine_definition = templatefile(
     "${path.module}/python_processing_workflow.asl.json",
     {
-      files_to_granule_task_arn: module.cumulus.files_to_granule_task.task_arn,
+      files_to_granules_task_arn: module.cumulus.files_to_granules_task.task_arn,
       move_granules_task_arn: module.cumulus.move_granules_task.task_arn,
       sync_granule_task_arn: module.cumulus.sync_granule_task.task_arn,
       python_test_ingest_processing_service_id: aws_sfn_activity.ecs_task_python_test_ingest_processing_service.id

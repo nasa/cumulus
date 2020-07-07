@@ -13,36 +13,4 @@ module "retry_fail_workflow" {
       hello_world_task_arn: module.cumulus.hello_world_task.task_arn
     }
   )
-
-  state_machine_definition = <<JSON
-{
-  "Comment": "Tests Retries and Fail",
-  "StartAt": "HelloWorld",
-  "States": {
-    "HelloWorld": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "task_config": {
-            "fail": true
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${module.cumulus.hello_world_task.task_arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "IntervalSeconds": 2,
-          "BackoffRate": 2,
-          "MaxAttempts": 3
-        }
-      ],
-      "End": true
-    }
-  }
-}
-JSON
 }

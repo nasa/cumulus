@@ -125,7 +125,7 @@
         }
       },
       "Type": "Task",
-      "Resource": "${cma_repsonse_task_arn}",
+      "Resource": "${cnm_response_task_arn}",
       "Retry": [
         {
           "ErrorEquals": [
@@ -175,7 +175,7 @@
         }
       },
       "Type": "Task",
-      "Resource": "${cma_repsonse_task_arn}",
+      "Resource": "${cnm_response_task_arn}",
       "Retry": [
         {
           "ErrorEquals": [
@@ -225,7 +225,7 @@
         }
       },
       "Type": "Task",
-      "Resource": "${cma_repsonse_task_arn}",
+      "Resource": "${cnm_response_task_arn}",
       "Retry": [
         {
           "ErrorEquals": [
