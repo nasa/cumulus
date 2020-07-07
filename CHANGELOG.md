@@ -126,6 +126,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     10 seconds to 5 minutes (300 seconds) in the model schema as well as the
     provider code.
 
+- **CUMULUS-176**
+  - The API will now respond with a 400 status code when a request body contains
+    invalid JSON. It had previously returned a 500 status code.
 - **CUMULUS-1861**
   - Updates Rule objects to no longer require a collection.
   - Changes the DLQ behavior for `sfEventSqsToDbRecords` and
@@ -134,7 +137,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     logs.   The lambda has been updated to manually add a record to
     the `sfEventSqsToDbRecordsDeadLetterQueue` if the granule, execution, *or*
     pdr record fails to write, in addition to the previous error logging.
-
 - **CUMULUS-1956**
   - The `/s3credentials` endpoint that is deployed as part of distribution now
     supports authentication using tokens created by a different application. If
