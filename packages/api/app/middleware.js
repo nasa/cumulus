@@ -1,3 +1,7 @@
+'use strict';
+
+const bodyParser = require('body-parser');
+const has = require('lodash/has');
 const { EcsStartTaskError } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
@@ -21,7 +25,38 @@ const asyncOperationEndpointErrorHandler = async (err, req, res, next) => {
   return res.boom.badImplementation();
 };
 
+// https://www.npmjs.com/package/body-parser#errors
+const isBodyParserError = (error) =>
+  has(error, 'statusCode') && has(error, 'expose');
+
+const handleBodyParserError = (res, error) => {
+  res.status(error.statusCode);
+
+  if (error.expose) {
+    res.json({ error: error.message });
+  } else {
+    res.end();
+  }
+};
+
+const jsonBodyParser = (req, res, next) => {
+  const nextWithErrorHandling = (error) => {
+    if (error) {
+      if (isBodyParserError(error)) {
+        handleBodyParserError(res, error);
+      } else {
+        next(error);
+      }
+    } else {
+      next();
+    }
+  };
+
+  bodyParser.json()(req, res, nextWithErrorHandling);
+};
+
 module.exports = {
   asyncOperationEndpointErrorHandler,
-  defaultErrorHandler
+  defaultErrorHandler,
+  jsonBodyParser
 };
