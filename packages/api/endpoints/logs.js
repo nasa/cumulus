@@ -53,6 +53,9 @@ async function list(req, res) {
 
   try {
     const result = await search.query();
+
+    console.log('result:', JSON.stringify(result, undefined, 2));
+
     return res.send(result);
   } catch (error) {
     console.log('GOT AN ERROR IN list()');
