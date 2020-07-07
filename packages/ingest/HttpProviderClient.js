@@ -19,6 +19,8 @@ const log = require('@cumulus/common/log');
 const isValidHostname = require('is-valid-hostname');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const errors = require('@cumulus/errors');
+const get = require('lodash/get');
+
 const { lookupMimeType, decrypt } = require('./util');
 
 const validateHost = (host) => {
@@ -26,6 +28,7 @@ const validateHost = (host) => {
 
   throw new TypeError(`provider.host is not a valid hostname or IP: ${host}`);
 };
+const HTTP_REQUEST_TIMEOUT_SECONDS = 5 * 60; // Timeout for simplecrawler's headers response
 
 class HttpProviderClient {
   constructor(providerConfig) {
@@ -33,6 +36,8 @@ class HttpProviderClient {
     this.protocol = providerConfig.protocol;
     this.host = providerConfig.host;
     this.port = providerConfig.port;
+    this.httpRequestTimeoutMs = get(providerConfig,
+      'httpConfiguration.httpRequestTimeout', HTTP_REQUEST_TIMEOUT_SECONDS * 1000);
     this.gotOptions = {};
     this.certificateUri = providerConfig.certificateUri;
     if (providerConfig.username && !providerConfig.password) {
@@ -101,7 +106,7 @@ class HttpProviderClient {
     if (this.protocol === 'https' && this.certificate !== undefined) {
       c.httpsAgent = new https.Agent({ ca: this.certificate });
     }
-    c.timeout = 2000;
+    c.timeout = this.httpRequestTimeoutMs;
     c.interval = 0;
     c.maxConcurrency = 10;
     c.respectRobotsTxt = false;

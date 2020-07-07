@@ -1,13 +1,15 @@
 'use strict';
 
+const EventEmitter = require('events');
 const fs = require('fs');
+const nock = require('nock');
+const path = require('path');
 const rewire = require('rewire');
 const test = require('ava');
-const EventEmitter = require('events');
-const path = require('path');
 const { promisify } = require('util');
 const { tmpdir } = require('os');
 const { Readable } = require('stream');
+const errors = require('@cumulus/errors');
 const {
   calculateS3ObjectChecksum,
   fileExists,
@@ -38,7 +40,11 @@ test.before((t) => {
   });
 });
 
-test('sync() downloads remote file to s3 with correct content-type', async (t) => {
+test.afterEach(() => {
+  nock.cleanAll();
+});
+
+test.serial('sync() downloads remote file to s3 with correct content-type', async (t) => {
   const bucket = randomString();
   const key = randomString();
   const expectedContentType = 'application/x-hdf';
@@ -243,4 +249,55 @@ test.serial('download() downloads a file', async (t) => {
   } finally {
     await promisify(fs.unlink)(localPath);
   }
+});
+
+test.serial('list succeeds if server wait time is unexpectedly slow', async (t) => {
+  const httpProviderClient = new HttpProviderClient({
+    protocol: 'http',
+    host: 'localhost',
+    port: 3030,
+    httpConfiguration: {
+      httpRequestTimeout: 1001
+    }
+  });
+
+  nock('http://localhost:3030')
+    .replyContentLength()
+    .get('/test_url')
+    .times(1)
+    .delay(1000)
+    .reply(200, '<html><a href="foo.pdr">foo.pdr</a>\n<a href="bar.pdr">bar.pdr</a></html>');
+
+  const result = await httpProviderClient.list('test_url');
+  t.deepEqual(
+    [{ path: 'test_url', name: 'foo.pdr' },
+      { path: 'test_url', name: 'bar.pdr' }],
+    result
+  );
+});
+
+test.serial('list fails if client wait time is set less than the response delay', async (t) => {
+  const httpProviderClient = new HttpProviderClient({
+    protocol: 'http',
+    host: 'testhost',
+    port: 3030,
+    httpConfiguration: {
+      httpRequestTimeout: 1
+    }
+  });
+
+  nock('http://testhost:3030')
+    .replyContentLength()
+    .get('/test_url')
+    .delay(50)
+    .times(1)
+    .reply(200, '');
+
+  await t.throwsAsync(
+    async () => httpProviderClient.list('test_url'),
+    {
+      message: 'Connection timed out',
+      instanceOf: errors.RemoteResourceError
+    }
+  );
 });

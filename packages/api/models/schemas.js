@@ -592,6 +592,16 @@ module.exports.provider = {
       title: 'Port',
       type: 'number'
     },
+    httpConfiguration: {
+      title: 'Configuration for http provider types',
+      type: 'object',
+      properties: {
+        httpRequestTimeout: {
+          title: 'Timeout (milliseconds) for HTTP provider crawl request',
+          type: 'number'
+        }
+      }
+    },
     username: {
       type: 'string'
     },
