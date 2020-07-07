@@ -641,9 +641,10 @@ test('getFilename returns correct value', (t) => {
   );
 });
 
-test('getFilename throws error if file name cannot be determined', (t) => {
-  t.throws(
-    () => cmrUtil.getFilename({})
+test('getFilename returns undefined if file name cannot be determined', (t) => {
+  t.is(
+    cmrUtil.getFilename({}),
+    undefined
   );
 });
 

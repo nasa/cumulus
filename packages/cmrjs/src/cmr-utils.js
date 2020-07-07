@@ -50,19 +50,12 @@ function getFilename(file) {
   if (file.filename) return path.basename(file.filename);
   if (file.filepath) return path.basename(file.filepath);
   if (file.key) return path.basename(file.key);
-  throw new Error(`Unable to determine name of file: ${JSON.stringify(file)}`);
+  return undefined;
 }
 
 function getFileDescription(file) {
-  // Fallback if no file name can be determined
-  let fileDescription = 'File to download';
-  try {
-    const filename = getFilename(file);
-    fileDescription = `Download ${filename}`;
-  } catch (error) {
-    log.error(error);
-  }
-  return fileDescription;
+  const filename = getFilename(file);
+  return filename ? `Download ${filename}` : 'File to download';
 }
 
 const isECHO10File = (filename) => filename.endsWith('cmr.xml');
