@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- **CUMULUS-2032**
+  - Added `httpConfiguration.httpRequestTimeout` to the `Provider` schema.  This
+    optional field allows users to specify a timeout for http/https provider
+    requests.   The default is 5 minutes (300 seconds).
+
 - **CUMULUS-2011**
   - Added `Reconciliation Report` as an async operation `operationType`
 

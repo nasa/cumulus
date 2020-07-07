@@ -55,7 +55,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-1417**
-  - Added a `checksumFor` property to collection `files` config. Set this property on a checksum file's definition matching the `regex` of the target file. More details in the ['Data Cookbooks Setup'](https://nasa.github.io/cumulus/docs/next/data-cookbooks/setup) documentation.
+  - Added a `checksumFor` property to collection `files` config. Set this
+    property on a checksum file's definition matching the `regex` of the target
+    file. More details in the ['Data Cookbooks
+    Setup'](https://nasa.github.io/cumulus/docs/next/data-cookbooks/setup)
+    documentation.
   - Added `checksumFor` validation to collections model.
 - **CUMULUS-1956**
   - Added `@cumulus/earthata-login-client` package
@@ -97,6 +101,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     support partial matching of the keywords
 
 ### Changed
+
+- **CUMULUS-2032**
+  - Updates the HTTP/HTTPS providers to allow for configuration of a
+    `httpConfiguration.httpRequestTimeout` value that changes the default
+    timeout configuration for the request.    The default has been adjusted from
+    10 seconds to 5 minutes (300 seconds) in the model schema as well as the
+    provider code.
 
 - **CUMULUS-1861**
   - Updates Rule objects to no longer require a collection.

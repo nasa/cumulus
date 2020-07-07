@@ -597,8 +597,9 @@ module.exports.provider = {
       type: 'object',
       properties: {
         httpRequestTimeout: {
-          title: 'Timeout (milliseconds) for HTTP provider crawl request',
-          type: 'number'
+          title: 'Timeout in seconds for HTTP provider request',
+          type: 'number',
+          default: 300
         }
       }
     },

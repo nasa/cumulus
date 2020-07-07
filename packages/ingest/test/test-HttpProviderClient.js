@@ -257,7 +257,7 @@ test.serial('list succeeds if server wait time is unexpectedly slow', async (t) 
     host: 'localhost',
     port: 3030,
     httpConfiguration: {
-      httpRequestTimeout: 1001
+      httpRequestTimeout: 1005
     }
   });
 
@@ -289,7 +289,7 @@ test.serial('list fails if client wait time is set less than the response delay'
   nock('http://testhost:3030')
     .replyContentLength()
     .get('/test_url')
-    .delay(50)
+    .delay(1005)
     .times(1)
     .reply(200, '');
 

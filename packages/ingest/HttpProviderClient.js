@@ -36,8 +36,8 @@ class HttpProviderClient {
     this.protocol = providerConfig.protocol;
     this.host = providerConfig.host;
     this.port = providerConfig.port;
-    this.httpRequestTimeoutMs = get(providerConfig,
-      'httpConfiguration.httpRequestTimeout', HTTP_REQUEST_TIMEOUT_SECONDS * 1000);
+    this.httpRequestTimeoutSeconds = get(providerConfig,
+      'httpConfiguration.httpRequestTimeout', HTTP_REQUEST_TIMEOUT_SECONDS);
     this.gotOptions = {};
     this.certificateUri = providerConfig.certificateUri;
     if (providerConfig.username && !providerConfig.password) {
@@ -106,7 +106,7 @@ class HttpProviderClient {
     if (this.protocol === 'https' && this.certificate !== undefined) {
       c.httpsAgent = new https.Agent({ ca: this.certificate });
     }
-    c.timeout = this.httpRequestTimeoutMs;
+    c.timeout = this.httpRequestTimeoutSeconds * 1000;
     c.interval = 0;
     c.maxConcurrency = 10;
     c.respectRobotsTxt = false;
