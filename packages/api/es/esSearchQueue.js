@@ -3,7 +3,7 @@
 const { defaultIndexAlias } = require('./search');
 const ESScrollSearch = require('./esScrollSearch');
 
-// TODO [MHS, 2020-07-06]  leave until you find out if you need it.
+// TODO [MHS, ]  leave until you find out if you need it.
 const buildResponse = (response) => response;
 
 /**
