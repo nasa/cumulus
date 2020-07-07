@@ -12,6 +12,7 @@ const awsServerlessExpress = require('aws-serverless-express');
 const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware');
 
 const router = require('./routes');
+const { jsonBodyParser } = require('./middleware');
 
 const app = express();
 app.use(awsServerlessExpressMiddleware.eventContext());
@@ -35,7 +36,7 @@ app.use(morgan('combined'));
 app.use(cors());
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json()); // for parsing application/json
+app.use(jsonBodyParser);
 app.use(hsts({ maxAge: 31536000 }));
 
 // v1 routes
@@ -45,19 +46,22 @@ app.use('/v1', router);
 app.use('/', router);
 
 // global 404 response when page is not found
-app.use((req, res) => {
+app.use((_req, res) => {
   res.boom.notFound('requested page not found');
 });
 
 // catch all error handling
-app.use((err, req, res, _next) => {
+app.use((err, _req, res, _next) => {
   res.error = JSON.stringify(err, Object.getOwnPropertyNames(err));
   return res.boom.badImplementation('Something broke!');
 });
 
-const server = awsServerlessExpress.createServer(app, null);
+const server = awsServerlessExpress.createServer(app);
+
+const handler = (event, context) =>
+  awsServerlessExpress.proxy(server, event, context);
 
 module.exports = {
   app,
-  handler: (event, context) => awsServerlessExpress.proxy(server, event, context)
+  handler
 };
