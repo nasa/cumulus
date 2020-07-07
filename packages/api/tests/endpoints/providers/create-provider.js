@@ -218,4 +218,8 @@ test('CUMULUS-176 POST returns a 400 response if invalid JSON provided', async (
     .send('asdf');
 
   t.is(response.statusCode, 400);
+  t.true(
+    /Unexpected.*JSON/.test(response.text),
+    `response.text: ${response.text}`
+  );
 });
