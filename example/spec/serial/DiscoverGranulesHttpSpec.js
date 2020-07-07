@@ -96,7 +96,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
   });
 
   describe('the DiscoverGranules Lambda', () => {
-    let lambdaOutput;
+    let lambdaOutput = null;
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(
@@ -104,7 +104,6 @@ describe('The Discover Granules workflow with http Protocol', () => {
         'DiscoverGranules'
       );
     });
-
     it('has expected granules output', () => {
       expect(lambdaOutput.payload.granules.length).toEqual(3);
       expect(lambdaOutput.payload.granules[0].granuleId).toEqual('granule-1');
@@ -169,17 +168,12 @@ describe('The Discover Granules workflow with http Protocol', () => {
       it('returns logs with sender set', async () => {
         const getLogsResponse = await apiTestUtils.getLogs({ prefix: config.stackName });
         const logs = JSON.parse(getLogsResponse.body);
-
-        // Debugging intermittent test failures
-        if (!logs.results) {
-          console.log('logs:', JSON.stringify(logs, undefined, 2));
-        }
-
-        const cumulusLogEntries = logs.results.filter(isCumulusLogEntry);
+        const logEntries = logs.results;
+        const cumulusLogEntries = logEntries.filter(isCumulusLogEntry);
 
         cumulusLogEntries.forEach((logEntry) => {
           if (!logEntry.sender) {
-            console.log('Expected a sender property:', JSON.stringify(logEntry, undefined, 2));
+            console.log('Expected a sender property:', JSON.stringify(logEntry, null, 2));
           }
           expect(logEntry.sender).not.toBe(undefined);
         });

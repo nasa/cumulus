@@ -1,4 +1,3 @@
-/* eslint-disable max-classes-per-file */
 /* This code is copied from sat-api-lib library
  * with some alterations.
  * source: https://raw.githubusercontent.com/sat-utils/sat-api-lib/master/libs/search.js
@@ -93,8 +92,6 @@ const esConfig = async (host, metrics = false) => {
   } else {
     config = await esProdConfig(host);
   }
-
-  console.log('config from esConfig:', JSON.stringify(config, undefined, 2));
 
   return config;
 };
