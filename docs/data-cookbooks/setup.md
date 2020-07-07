@@ -66,7 +66,10 @@ Providers generate and distribute input data that Cumulus obtains and sends to w
 |username|`${username}`|No|Username for access to the provider. Plain-text or encrypted. Encrypted is highly encouraged|
 |password|`${password}`|No|Password for acccess to the provider. Plain-text or encrypted. Encrypted is highly encouraged|
 
-**Note:** The above optional attributes are not shown in the example provided, but they have been included in this document for completeness.
+**Note:** The above optional attributes are not shown in the example provided,
+and this example does not show all possible options.  See the
+[schema](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js)
+for up-to-date documentation of all available options.
 
 ## Rules
 
