@@ -51,7 +51,7 @@ module "python_reference_workflow" {
     "${path.module}/python_reference_workflow.asl.json",
     {
       python_reference_task_arn: aws_lambda_function.python_reference_task.arn,
-      python_processing_service_id: aws_sfn_activity.ecs_task_python_test_ingest_processing_service.id
+      python_processing_service_id: aws_sfn_activity.ecs_task_python_processing_service.id
     }
   )
 }
