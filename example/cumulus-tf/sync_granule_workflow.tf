@@ -7,73 +7,10 @@ module "sync_granule_workflow" {
   system_bucket   = var.system_bucket
   tags            = local.tags
 
-  state_machine_definition = <<JSON
-{
-  "Comment": "Sync Granule",
-  "StartAt": "SyncGranule",
-  "States": {
-    "SyncGranule": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "task_config": {
-            "buckets": "{$.meta.buckets}",
-            "provider": "{$.meta.provider}",
-            "collection": "{$.meta.collection}",
-            "stack": "{$.meta.stack}",
-            "fileStagingDir": "custom-staging-dir",
-            "downloadBucket": "{$.cumulus_meta.system_bucket}",
-            "duplicateHandling": "{$.meta.collection.duplicateHandling}",
-            "cumulus_message": {
-              "input": "{$.payload}",
-              "outputs": [
-                {
-                  "source": "{$.granules}",
-                  "destination": "{$.meta.input_granules}"
-                },
-                {
-                  "source": "{$}",
-                  "destination": "{$.payload}"
-                },
-                {
-                  "source": "{$.process}",
-                  "destination": "{$.meta.process}"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${module.cumulus.sync_granule_task.task_arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "ResultPath": "$.exception",
-          "Next": "WorkflowFailed"
-        }
-      ],
-      "End": true
-    },
-    "WorkflowFailed": {
-      "Type": "Fail",
-      "Cause": "Workflow failed"
+  state_machine_definition = templatefile(
+    "${path.module}/sync_granule_catch_duplicate_error_test_workflow.asl.json",
+    {
+      sync_granule_task_arn: module.cumulus.sync_granule_task.task_arn
     }
-  }
-}
-JSON
+  )
 }

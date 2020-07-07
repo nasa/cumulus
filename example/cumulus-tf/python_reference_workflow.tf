@@ -47,6 +47,14 @@ module "python_reference_workflow" {
   system_bucket   = var.system_bucket
   tags            = local.tags
 
+  state_machine_definition = templatefile(
+    "${path.module}/python_reference_workflow.asl.json",
+    {
+      python_reference_task_arn: aws_lambda_function.python_reference_task.arn,
+      python_processing_service_id: aws_sfn_activity.ecs_task_python_test_ingest_processing_service.id
+    }
+  )
+
   state_machine_definition = <<JSON
 {
   "Comment": "Runs Python reference task and activity",
