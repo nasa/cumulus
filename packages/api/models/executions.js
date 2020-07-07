@@ -2,8 +2,6 @@
 
 const get = require('lodash/get');
 const pLimit = require('p-limit');
-
-const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const {
   getMessageExecutionArn,
@@ -11,6 +9,7 @@ const {
 } = require('@cumulus/message/Executions');
 const { isNil, removeNilProperties } = require('@cumulus/common/util');
 
+const StepFunctionUtils = require('../lib/StepFunctionUtils');
 const executionSchema = require('./schemas').execution;
 const Manager = require('./base');
 const { parseException } = require('../lib/utils');
@@ -41,16 +40,18 @@ class Execution extends Manager {
     const workflowStartTime = get(cumulusMessage, 'cumulus_meta.workflow_start_time');
     const workflowStopTime = get(cumulusMessage, 'cumulus_meta.workflow_stop_time');
 
+    const collectionId = getCollectionIdFromMessage(cumulusMessage);
+
     const record = {
       name: getMessageExecutionName(cumulusMessage),
       arn,
       asyncOperationId: get(cumulusMessage, 'cumulus_meta.asyncOperationId'),
       parentArn: get(cumulusMessage, 'cumulus_meta.parentExecutionArn'),
-      execution: StepFunctions.getExecutionUrl(arn),
+      execution: StepFunctionUtils.getExecutionUrl(arn),
       tasks: get(cumulusMessage, 'meta.workflow_tasks'),
       error: parseException(cumulusMessage.exception),
       type: get(cumulusMessage, 'meta.workflow_name'),
-      collectionId: getCollectionIdFromMessage(cumulusMessage),
+      collectionId,
       status,
       createdAt: workflowStartTime,
       timestamp: now,

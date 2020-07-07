@@ -19,16 +19,12 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
-    "test": "../../node_modules/.bin/ava"
+    "test": "../../node_modules/.bin/nyc npm run test:ava",
+    "test:ava": "../../node_modules/.bin/ava"
   },
   "ava": {
     "verbose": true,
     "timeout": "15m"
-  },
-  "nyc": {
-    "exclude": [
-      "tests"
-    ]
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",

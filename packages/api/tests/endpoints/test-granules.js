@@ -23,7 +23,7 @@ const {
 } = require('@cumulus/cmrjs/cmr-utils');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
+const { getBucketsConfigKey, getDistributionBucketMapKey } = require('@cumulus/common/stack');
 const assertions = require('../../lib/assertions');
 const models = require('../../models');
 const bootstrap = require('../../lambdas/bootstrap');
@@ -705,6 +705,12 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
           filepath: destinationFilepath
         }
       ];
+
+      await putJsonS3Object(
+        process.env.system_bucket,
+        getBucketsConfigKey(process.env.stackName),
+        {}
+      );
 
       await putJsonS3Object(
         process.env.system_bucket,

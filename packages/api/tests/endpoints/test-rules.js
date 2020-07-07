@@ -311,7 +311,7 @@ test('POST returns a 400 response if record is missing a required property', asy
   const newRule = fakeRuleFactoryV2();
 
   // Remove required property to trigger create error
-  delete newRule.collection;
+  delete newRule.workflow;
 
   const response = await request(app)
     .post('/rules')

@@ -7,17 +7,12 @@
     "node": ">=12.18.0"
   },
   "scripts": {
-    "test": "../../node_modules/.bin/ava",
-    "test-coverage": "../../node_modules/.bin/ npm test"
+    "test": "../../node_modules/.bin/nyc npm run test:ava",
+    "test:ava": "../../node_modules/.bin/ava"
   },
   "ava": {
     "serial": true,
     "timeout": "15m"
-  },
-  "nyc": {
-    "exclude": [
-      "test"
-    ]
   },
   "publishConfig": {
     "access": "public"

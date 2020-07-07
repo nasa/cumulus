@@ -7,8 +7,9 @@
     "node": ">=12.18.0"
   },
   "scripts": {
-    "test": "../../node_modules/.bin/ava",
-    "package": "rm -Rf ./dist/ && mkdir dist && zip -r -q ./dist/lambda.zip *.js node_modules"
+    "package": "rm -Rf ./dist/ && mkdir dist && zip -r -q ./dist/lambda.zip *.js node_modules",
+    "test:ava": "../../node_modules/.bin/ava",
+    "test": "../../node_modules/.bin/nyc npm run test:ava"
   },
   "ava": {
     "files": [

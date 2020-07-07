@@ -121,9 +121,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
   let lambdaStep;
   let postRule;
   let prefix;
-  let testSuffix;
   let updatedCheck;
-  const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -132,15 +130,11 @@ describe('When I create a one-time rule via the Cumulus API', () => {
 
     lambdaStep = new LambdaStep();
 
-    const testId = createTimestampedTestId(config.stackName, 'Rule');
-    testSuffix = createTestSuffix(testId);
-
     const oneTimeRuleName = timestampedName('HelloWorldIntegrationTestRule');
     createdCheck = timestampedName('Created');
     updatedCheck = timestampedName('Updated');
     helloWorldRule = {
       name: oneTimeRuleName,
-      collection: { name: `MOD09GQ${testSuffix}`, version: '006' },
       workflow: 'HelloWorldWorkflow',
       rule: {
         type: 'onetime'
@@ -150,8 +144,6 @@ describe('When I create a one-time rule via the Cumulus API', () => {
       }
     };
 
-    await addCollections(config.stackName, config.bucket, collectionsDir,
-      testSuffix, testId);
     // Create a one-time rule
     const postRuleResponse = await rulesApi.postRule({
       prefix: config.stackName,
@@ -162,13 +154,10 @@ describe('When I create a one-time rule via the Cumulus API', () => {
 
   afterAll(async () => {
     console.log(`deleting rule ${helloWorldRule.name}`);
-
     await rulesApi.deleteRule({
       prefix: config.stackName,
       ruleName: helloWorldRule.name
     });
-    await cleanupCollections(config.stackName, config.bucket, collectionsDir,
-      testSuffix);
   });
 
   describe('Upon rule creation', () => {

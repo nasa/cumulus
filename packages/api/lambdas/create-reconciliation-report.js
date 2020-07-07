@@ -190,6 +190,12 @@ async function reconciliationReportForGranuleFiles(params) {
   const cmrGetDataTypes = ['GET DATA', 'GET RELATED VISUALIZATION'];
   const cmrRelatedDataTypes = ['VIEW RELATED INFORMATION'];
 
+  const bucketTypes = Object.values(bucketsConfig.buckets)
+    .reduce(
+      (acc, { name, type }) => ({ ...acc, [name]: type }),
+      {}
+    );
+
   // check each URL entry against database records
   const relatedUrlPromises = granuleInCmr.RelatedUrls.map(async (relatedUrl) => {
     // only check URL types for downloading granule files and related data (such as documents)
@@ -203,7 +209,7 @@ async function reconciliationReportForGranuleFiles(params) {
         const distributionAccessUrl = await constructOnlineAccessUrl({
           file: granuleFiles[urlFileName],
           distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
-          buckets: bucketsConfig,
+          bucketTypes,
           cmrGranuleUrlType: 'distribution',
           distributionBucketMap
         });
@@ -211,7 +217,7 @@ async function reconciliationReportForGranuleFiles(params) {
         const s3AccessUrl = await constructOnlineAccessUrl({
           file: granuleFiles[urlFileName],
           distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
-          buckets: bucketsConfig,
+          bucketTypes,
           cmrGranuleUrlType: 's3',
           distributionBucketMap
         });
