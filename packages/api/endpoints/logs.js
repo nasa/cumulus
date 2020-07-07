@@ -42,6 +42,8 @@ const esConfig = () => (metrics() ? metricsConfig() : cumulusDefaultConfig());
 async function list(req, res) {
   const config = esConfig();
 
+  console.log('config:', JSON.stringify(config, undefined, 2));
+
   const search = new Search(
     { queryStringParameters: convertLogLevelForQuery(req.query) },
     config.type,
@@ -49,8 +51,14 @@ async function list(req, res) {
     config.metrics
   );
 
-  const result = await search.query();
-  return res.send(result);
+  try {
+    const result = await search.query();
+    return res.send(result);
+  } catch (error) {
+    console.log('GOT AN ERROR IN list()');
+    console.log('error:', JSON.stringify(error, undefined, 2));
+    throw error;
+  }
 }
 
 /**
