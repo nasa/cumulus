@@ -86,7 +86,7 @@ test('multipartCopyObject() copies a file between buckets', async (t) => {
   });
 
   t.is(sourceChecksum, destinationChecksum, 'Source and destination checksums do not match');
-  t.truthy(etag, 'Missing ETag in copy response');
+  t.truthy(etag, 'Missing etag in copy response');
 });
 
 test("multipartCopyObject() sets the object's ACL", async (t) => {

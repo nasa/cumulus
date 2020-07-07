@@ -51,6 +51,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1955**
   - `@cumulus/aws-client/S3.multipartCopyObject` now returns an object with the
     AWS `etag` of the destination object
+  - `@cumulus/ingest/S3ProviderClient.list` now sets a file object's `path`
+    property to `undefined` instead of `null` when the file is at the top level
+    of its bucket
   - The `sync` methods of the following classes in the `@cumulus/ingest` package
     now return an object with the AWS `s3uri` and `etag` of the destination file
     (they previously returned only a string representing the S3 URI)
