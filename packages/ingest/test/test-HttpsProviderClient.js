@@ -134,9 +134,13 @@ test('sync() downloads remote file to s3 with correct content-type', async (t) =
 
   try {
     await s3().createBucket({ Bucket: bucket }).promise();
-    await t.context.httpsProviderClient.sync(
-      publicFile, bucket, key
+    const { s3uri, etag } = await t.context.httpsProviderClient.sync(
+      publicFile,
+      bucket,
+      key
     );
+    t.truthy(s3uri, 'Missing s3uri');
+    t.truthy(etag, 'Missing etag');
     t.truthy(fileExists(bucket, key));
     const syncedContent = await getTextObject(bucket, key);
     t.is(syncedContent, remoteContent);
