@@ -9,8 +9,8 @@
   "scripts": {
     "build": "../../node_modules/.bin/webpack && (cd dist && rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js)",
     "package": "npm run build",
-    "test": "../../node_modules/.bin/nyc npm run test:ava",
-    "test:ava": "../../node_modules/.bin/ava"
+    "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test"
   },
   "ava": {
     "timeout": "15m"
