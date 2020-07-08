@@ -48,6 +48,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     were added rather than the count of added collections
 - **CUMULUS-1930**
   - The `@cumulus/common/util.uuid()` function has been removed
+- **CUMULUS-1955**
+  - `@cumulus/aws-client/S3.multipartCopyObject` now returns an object with the
+    AWS `etag` of the destination object
+  - `@cumulus/ingest/S3ProviderClient.list` now sets a file object's `path`
+    property to `undefined` instead of `null` when the file is at the top level
+    of its bucket
+  - The `sync` methods of the following classes in the `@cumulus/ingest` package
+    now return an object with the AWS `s3uri` and `etag` of the destination file
+    (they previously returned only a string representing the S3 URI)
+    - `FtpProviderClient`
+    - `HttpProviderClient`
+    - `S3ProviderClient`
+    - `SftpProviderClient`
 - **CUMULUS-1958**
   - The following methods exported from `@cumulus/cmr-js/cmr-utils` were made
     async, and added distributionBucketMap as a parameter:
@@ -118,6 +131,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-176**
+  - The API will now respond with a 400 status code when a request body contains
+    invalid JSON. It had previously returned a 500 status code.
 - **CUMULUS-1861**
   - Updates Rule objects to no longer require a collection.
   - Changes the DLQ behavior for `sfEventSqsToDbRecords` and
@@ -126,7 +142,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     logs.   The lambda has been updated to manually add a record to
     the `sfEventSqsToDbRecordsDeadLetterQueue` if the granule, execution, *or*
     pdr record fails to write, in addition to the previous error logging.
-
 - **CUMULUS-1956**
   - The `/s3credentials` endpoint that is deployed as part of distribution now
     supports authentication using tokens created by a different application. If

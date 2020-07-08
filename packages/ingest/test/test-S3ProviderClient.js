@@ -77,8 +77,17 @@ test.serial('S3ProviderClient.sync syncs a file to a target S3 location', async 
   const s3ProviderClient = new S3ProviderClient({ bucket: t.context.sourceBucket });
   const targetKey = 'target.json';
 
-  await s3ProviderClient.sync(t.context.sourceKey, t.context.targetBucket, targetKey);
-  t.is(await S3.getTextObject(t.context.targetBucket, targetKey), t.context.fileContent);
+  const { s3uri, etag } = await s3ProviderClient.sync(
+    t.context.sourceKey,
+    t.context.targetBucket,
+    targetKey
+  );
+  t.truthy(s3uri, 'Missing s3uri');
+  t.truthy(etag, 'Missing etag');
+  t.is(
+    await S3.getTextObject(t.context.targetBucket, targetKey),
+    t.context.fileContent
+  );
 });
 
 test.serial('S3ProviderClient.sync throws an error if the source file does not exist', async (t) => {

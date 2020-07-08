@@ -101,3 +101,12 @@ test.serial('GET returns an existing collection', async (t) => {
   stub.restore();
   t.is(name, t.context.testCollection.name);
 });
+
+test('CUMULUS-176 GET without a version returns a 404', async (t) => {
+  const response = await request(app)
+    .get(`/collections/${t.context.testCollection.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+
+  t.is(response.statusCode, 404);
+});
