@@ -84,7 +84,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### MIGRATION STEPS
 
-- Due to an issue with the AWS API Gateway and how the egress CF applies updates, you may need to redeploy your
+- Due to an issue with the AWS API Gateway and how the Thin Egress App Cloudformation template applies updates, you may need to redeploy your
   `thin-egress-app-EgressGateway` manually as a one time migration step.    If your deployment fails with an
   error similar to:
 
