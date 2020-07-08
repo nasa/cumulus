@@ -20,6 +20,7 @@ const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
 const { ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');
 const { ESFileQueue } = require('../es/esFileQueue');
+const { getBucket, getKey } = require('../lib/FileUtils');
 
 const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
 
@@ -42,9 +43,18 @@ async function createReconciliationReportForBucket(Bucket) {
 
   let [nextS3Object, nextESItem] = await Promise.all([s3ObjectsQueue.peek(), esFilesLister.peek()]);
   while (nextS3Object && nextESItem) {
-    const nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
-    const nextESUri = buildS3Uri(Bucket, nextESItem.key);
-
+    let nextS3Uri;
+    let nextESUri;
+    try {
+      nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
+      nextESUri = buildS3Uri(Bucket, nextESItem.key);
+    } catch (error) {
+      log.error(error);
+      log.info(`bad ES Record? ${JSON.stringify(nextESItem)}`);
+      log.info(`bad S3 Record? ${JSON.stringify(nextS3Object)}`);
+      nextESUri = buildS3Uri(getBucket(nextESItem), getKey(nextESItem));
+      log.info(`Fellback to getBucket, getKey: ${nextESUri}`);
+    }
     if (nextS3Uri < nextESUri) {
       // Found an item that is only in S3 and not in Elasticsearch
       onlyInS3.push(nextS3Uri);
