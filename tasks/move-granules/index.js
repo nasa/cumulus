@@ -316,9 +316,9 @@ async function moveGranules(event) {
 
   let movedGranules;
 
-  if (cmrGranuleUrlType === 'distribution' && !config.distribution_endpoint) {
-    throw new Error('cmrGranuleUrlType is distribution, but no distribution endpoint is configured.');
-  }
+  // if (cmrGranuleUrlType === 'distribution' && !config.distribution_endpoint) {
+  //   throw new Error('cmrGranuleUrlType is distribution, but no distribution endpoint is configured.');
+  // }
 
   // allows us to disable moving the files
   if (moveStagedFiles) {
