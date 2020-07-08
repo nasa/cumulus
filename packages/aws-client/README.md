@@ -322,7 +322,7 @@ Invoke a Lambda function
     * [.validateS3ObjectChecksum(params)](#module_S3.validateS3ObjectChecksum) ⇒ <code>Promise.&lt;boolean&gt;</code>
     * [.getFileBucketAndKey(pathParams)](#module_S3.getFileBucketAndKey) ⇒ <code>Array.&lt;string&gt;</code>
     * [.createBucket(Bucket)](#module_S3.createBucket) ⇒ <code>Promise</code>
-    * [.multipartCopyObject(params)](#module_S3.multipartCopyObject) ⇒ <code>Promise.&lt;undefined&gt;</code>
+    * [.multipartCopyObject(params)](#module_S3.multipartCopyObject) ⇒ <code>Promise.&lt;{etag: string}&gt;</code>
     * [.moveObject(params)](#module_S3.moveObject) ⇒ <code>Promise.&lt;undefined&gt;</code>
 
 <a name="module_S3.deleteS3Object"></a>
@@ -795,10 +795,12 @@ Create an S3 bucket
 
 <a name="module_S3.multipartCopyObject"></a>
 
-### S3.multipartCopyObject(params) ⇒ <code>Promise.&lt;undefined&gt;</code>
+### S3.multipartCopyObject(params) ⇒ <code>Promise.&lt;{etag: string}&gt;</code>
 Copy an S3 object to another location in S3 using a multipart copy
 
 **Kind**: static method of [<code>S3</code>](#module_S3)  
+**Returns**: <code>Promise.&lt;{etag: string}&gt;</code> - object containing the ETag of the
+   destination object  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
