@@ -92,7 +92,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   Error: Lambda function (<stack>-tf-TeaCache) returned error: ({"errorType":"HTTPError","errorMessage":"Response code 404 (Not Found)"})
   ```
 
-  If this occurs, follow the [AWS
+  Then follow the [AWS
   instructions](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api-with-console.html)
   to `Redeploy a REST API to a stage` for your egress API and re-run `terraform
   apply`.
