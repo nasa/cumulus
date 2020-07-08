@@ -26,8 +26,8 @@
     "clean": "rm -rf dist",
     "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md -t templates/README.md.hbs dist/src/*.js > README.md",
     "prepare": "npm run tsc",
-    "test": "../../node_modules/.bin/nyc npm run test:ava",
-    "test:ava": "../../node_modules/.bin/ava",
+    "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
     "tsc": "rm -rf dist && ../../node_modules/.bin/tsc"
   },
   "ava": {
