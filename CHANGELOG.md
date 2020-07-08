@@ -85,6 +85,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated CMR metadata generation to use "Download file.hdf" (where `file.hdf` is the filename of the given resource) as the resource description instead of "File to download"
   - CMR metadata updates now respect changes to resource descriptions (previously only changes to resource URLs were respected)
 
+### MIGRATION STEPS
+
+- Due to an issue with the AWS API Gateway and how the Thin Egress App Cloudformation template applies updates, you may need to redeploy your
+  `thin-egress-app-EgressGateway` manually as a one time migration step.    If your deployment fails with an
+  error similar to:
+
+  ```bash
+  Error: Lambda function (<stack>-tf-TeaCache) returned error: ({"errorType":"HTTPError","errorMessage":"Response code 404 (Not Found)"})
+  ```
+
+  Then follow the [AWS
+  instructions](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api-with-console.html)
+  to `Redeploy a REST API to a stage` for your egress API and re-run `terraform
+  apply`.
+
 ### Added
 
 - **CUMULUS-1417**
