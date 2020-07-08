@@ -176,6 +176,13 @@ test('mapACNMTypeToCMRType returns a default mapping if non CNM mapping specifie
   t.is('GET DATA', mapCNMTypeToCMRType('NOTAREALVALUE'));
 });
 
+test('constructOnlineAccessUrls throws error if URL type is distribution and distribution endpoint is missing', (t) => {
+  t.throws(() => cmrUtil.constructOnlineAccessUrls({
+    distEndpoint: {},
+    cmrGranuleUrlType: 'distribution'
+  }));
+});
+
 test.serial('uploadEcho10CMRFile uploads CMR File to S3 correctly, preserving tags and setting ContentType', async (t) => {
   const cmrFile = {
     bucket: 'Echo10FileBucket',

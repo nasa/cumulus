@@ -362,6 +362,10 @@ async function constructOnlineAccessUrls({
   cmrGranuleUrlType = 'distribution',
   distributionBucketMap
 }) {
+  if (cmrGranuleUrlType === 'distribution' && !distEndpoint) {
+    throw new Error('cmrGranuleUrlType is distribution, but no distribution endpoint is configured.');
+  }
+
   const urlListPromises = files.map((file) => constructOnlineAccessUrl({
     file,
     distEndpoint,
@@ -859,6 +863,7 @@ async function getGranuleTemporalInfo(granule) {
 
 module.exports = {
   constructOnlineAccessUrl,
+  constructOnlineAccessUrls,
   generateEcho10XMLString,
   generateFileUrl,
   getCmrSettings,
