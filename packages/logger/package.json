@@ -27,8 +27,8 @@
   "scripts": {
     "clean": "rm -rf dist",
     "prepare": "npm run tsc",
-    "test": "../../node_modules/.bin/nyc npm run test:ava",
-    "test:ava": "../../node_modules/.bin/ava",
+    "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
     "tsc": "../../node_modules/.bin/tsc"
   },
   "ava": {
