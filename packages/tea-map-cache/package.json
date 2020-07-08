@@ -9,7 +9,7 @@
   "scripts": {
     "package": "rm -Rf ./dist/ && mkdir dist && zip -r -q ./dist/lambda.zip *.js node_modules",
     "test": "../../node_modules/.bin/ava",
-    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "test:coverage": "../../node_modules/.bin/nyc npm test"
   },
   "ava": {
     "files": [
