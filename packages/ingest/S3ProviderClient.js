@@ -51,10 +51,10 @@ class S3ProviderClient {
     return objects.map(({ Key, Size, LastModified }) => ({
       name: basename(Key),
       // If the object is at the top level of the bucket, path.dirname is going
-      // to return "." as the dirname.  It should instead be null.
-      path: dirname(Key) === '.' ? null : dirname(Key),
+      // to return "." as the dirname.  It should instead be undefined.
+      path: dirname(Key) === '.' ? undefined : dirname(Key),
       size: Size,
-      time: (new Date(LastModified)).valueOf()
+      time: LastModified.valueOf()
     }));
   }
 
@@ -64,11 +64,13 @@ class S3ProviderClient {
    * @param {string} sourceKey - the full path to the remote file to be fetched
    * @param {string} destinationBucket - destination s3 bucket of the file
    * @param {string} destinationKey - destination s3 key of the file
-   * @returns {Promise<string>} s3 uri of destination file
+   * @returns {Promise.<{ s3uri: string, etag: string }>} an object containing
+   *    the S3 URI and ETag of the destination file
    */
   async sync(sourceKey, destinationBucket, destinationKey) {
     try {
-      await S3.multipartCopyObject({
+      const s3uri = S3.buildS3Uri(destinationBucket, destinationKey);
+      const { etag } = await S3.multipartCopyObject({
         sourceBucket: this.bucket,
         sourceKey,
         destinationBucket,
@@ -76,6 +78,8 @@ class S3ProviderClient {
         ACL: 'private',
         copyTags: true
       });
+
+      return { s3uri, etag };
     } catch (error) {
       if (error.code === 'NotFound' || error.code === 'NoSuchKey') {
         const sourceUrl = S3.buildS3Uri(this.bucket, sourceKey);
@@ -84,8 +88,6 @@ class S3ProviderClient {
 
       throw error;
     }
-
-    return S3.buildS3Uri(destinationBucket, destinationKey);
   }
 }
 
