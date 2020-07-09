@@ -474,9 +474,9 @@ async function createReconciliationReport(params) {
 
   let report = {
     reportStartTime: reportStartTime.toISOString(),
-    reportEndTime: undefined,
+    reportEndTime: null,
     status: 'RUNNING',
-    error: undefined,
+    error: null,
     filesInCumulus,
     collectionsInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
     granulesInCumulusCmr: cloneDeep(reportFormatCumulusCmr),

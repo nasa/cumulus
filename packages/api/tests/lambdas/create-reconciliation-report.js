@@ -208,7 +208,7 @@ test.serial('A valid reconciliation report is generated for no buckets', async (
   const report = await fetchCompletedReport(reportRecord);
   const filesInCumulus = report.filesInCumulus;
   t.is(report.status, 'SUCCESS');
-  t.is(report.error, undefined);
+  t.is(report.error, null);
   t.is(filesInCumulus.okCount, 0);
   t.is(filesInCumulus.onlyInS3.length, 0);
   t.is(filesInCumulus.onlyInDynamoDb.length, 0);
@@ -275,7 +275,7 @@ test.serial('A valid reconciliation report is generated when everything is in sy
   const filesInCumulus = report.filesInCumulus;
   const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
   t.is(report.status, 'SUCCESS');
-  t.is(report.error, undefined);
+  t.is(report.error, null);
   t.is(filesInCumulus.okCount, files.length);
   t.is(filesInCumulus.onlyInS3.length, 0);
   t.is(filesInCumulus.onlyInDynamoDb.length, 0);
@@ -326,7 +326,7 @@ test.serial('A valid reconciliation report is generated when there are extra S3 
   const report = await fetchCompletedReport(reportRecord);
   const filesInCumulus = report.filesInCumulus;
   t.is(report.status, 'SUCCESS');
-  t.is(report.error, undefined);
+  t.is(report.error, null);
   t.is(filesInCumulus.okCount, matchingFiles.length);
 
   t.is(filesInCumulus.onlyInS3.length, 2);
@@ -388,7 +388,7 @@ test.serial('A valid reconciliation report is generated when there are extra Dyn
   const report = await fetchCompletedReport(reportRecord);
   const filesInCumulus = report.filesInCumulus;
   t.is(report.status, 'SUCCESS');
-  t.is(report.error, undefined);
+  t.is(report.error, null);
   t.is(filesInCumulus.okCount, matchingFiles.length);
   t.is(filesInCumulus.onlyInS3.length, 0);
 
@@ -455,7 +455,7 @@ test.serial('A valid reconciliation report is generated when there are both extr
   const report = await fetchCompletedReport(reportRecord);
   const filesInCumulus = report.filesInCumulus;
   t.is(report.status, 'SUCCESS');
-  t.is(report.error, undefined);
+  t.is(report.error, null);
   t.is(filesInCumulus.okCount, matchingFiles.length);
 
   t.is(filesInCumulus.onlyInS3.length, 2);
@@ -527,7 +527,7 @@ test.serial('A valid reconciliation report is generated when there are both extr
   const report = await fetchCompletedReport(reportRecord);
   const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
   t.is(report.status, 'SUCCESS');
-  t.is(report.error, undefined);
+  t.is(report.error, null);
   t.is(collectionsInCumulusCmr.okCount, matchingColls.length);
 
   t.is(collectionsInCumulusCmr.onlyInCumulus.length, 2);
